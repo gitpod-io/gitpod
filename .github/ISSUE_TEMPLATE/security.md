@@ -1,6 +1,6 @@
 ---
-name: Security issue
-about: DO NOT REPORT HERE! MAIL TO [security@typefox.io](mailto:security@typefox.io)
+name: Security issue (NOT HERE!)
+about: DO NOT REPORT HERE! MAIL TO security@typefox.io
 
 ---
 
