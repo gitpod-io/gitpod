@@ -1,3 +1,5 @@
+[![Chat](https://img.shields.io/badge/chat-on%20discord-7289da.svg)](https://discord.gg/h2t28eQ)
+
 # Gitpod - One-Click Online IDE for GitHub
 
 [Gitpod](https://gitpod.io) provides an online IDE with a complete terminal for any GitHub project.
