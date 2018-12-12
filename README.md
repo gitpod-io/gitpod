@@ -1,4 +1,4 @@
-[![Chat](https://img.shields.io/badge/chat-on%20discord-7289da.svg)](https://discord.gg/h2t28eQ)
+[![Chat](https://img.shields.io/badge/chat-on%20spectrum-7289da.svg)](https://spectrum.chat/gitpod)
 
 # Gitpod - One-Click Online IDE for GitHub
 
