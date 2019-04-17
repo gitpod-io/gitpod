@@ -1,9 +1,8 @@
-[![Chat](https://img.shields.io/badge/chat-on%20spectrum-7289da.svg)](https://spectrum.chat/gitpod)
+[![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/gitpod)
 
 # Gitpod - One-Click Online IDE for GitHub
 
-[Gitpod](https://gitpod.io) provides an online IDE with a complete terminal for any GitHub project.
-It comes with tight GitHub-integration to keep you in the flow.
+[Gitpod](https://gitpod.io) provides instant dev environments for any GitHub project in your browser.
 
 Simply prefix any GitHub URL with `gitpod.io/#`.
 
