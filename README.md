@@ -8,4 +8,4 @@ Simply prefix any GitHub URL with `gitpod.io/#`.
 
 This repository is used for bug tracking and feature requests. Feedback is welcome! :heart:
 
-![Screenshot](screenshot.png)
+![Gitpod in Action](https://user-images.githubusercontent.com/372735/56346717-0f04ca80-61c3-11e9-8be1-2fe5e46f2335.png)
