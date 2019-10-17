@@ -12,3 +12,6 @@ about: Create a report to help us improve
 
 **Expected behavior**
 <!-- A clear and concise description of what you expected to happen. -->
+
+**Error Logs**
+<!-- Copy paste relavant logs. -->
