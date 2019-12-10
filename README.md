@@ -1,10 +1,10 @@
 [![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/gitpod)
 
-# Gitpod - One-Click Online IDE for GitHub
+# Gitpod - Ready-to-Code Development Environments for GitHub and GitLab
 
 [Gitpod](https://gitpod.io) provides instant dev environments for any GitHub project in your browser.
 
-Simply prefix any GitHub URL with `gitpod.io/#`.
+Simply prefix any GitHub or GitLab URL with `gitpod.io/#`.
 
 ## How to use Gitpod?
 
