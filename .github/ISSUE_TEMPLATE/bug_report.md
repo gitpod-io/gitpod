@@ -14,4 +14,4 @@ about: Create a report to help us improve
 <!-- A clear and concise description of what you expected to happen. -->
 
 **Additional Information**
-<!-- For instance, relevant logs from terminals or the browser's devtool console. -->
+<!-- For instance, relevant logs from terminals or the browser's Dev-Tools console. -->
