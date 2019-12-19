@@ -1,4 +1,5 @@
-[![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/gitpod)
+[![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/gitpod-io/gitpod)
+[![Discourse Community](https://img.shields.io/badge/Join%20the%20community-on%20Discourse-9cf?logo=discourse)](https://community.gitpod.io/)
 
 # Gitpod - Ready-to-Code Development Environments for GitHub and GitLab
 
