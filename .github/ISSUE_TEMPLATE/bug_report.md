@@ -15,3 +15,6 @@ about: Create a report to help us improve
 
 **Additional Information**
 <!-- For instance, relevant logs from terminals or the browser's Dev-Tools console. -->
+
+**Example Repository**
+<!-- For instance, the repository where the error occured-->
