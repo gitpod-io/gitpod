@@ -14,7 +14,7 @@ about: Create a report to help us improve
 <!-- A clear and concise description of what you expected to happen. -->
 
 **Additional Information**
-<!-- For instance, relevant logs from terminals or the browser's Dev-Tools console. -->
+<!-- For instance, relevant logs from terminals or the browser's DevTools console. -->
 
 **Example Repository**
 <!-- For instance, the repository where the error occured-->
