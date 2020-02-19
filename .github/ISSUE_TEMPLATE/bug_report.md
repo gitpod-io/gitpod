@@ -13,8 +13,8 @@ about: Create a report to help us improve
 ### Expected behavior
 <!-- A clear and concise description of what you expected to happen -->
 
-### Additional Information
-<!-- For instance, relevant logs from terminals or the browser's devtool console -->
+### Additional information
+<!-- For instance, workspace IDs; URLs; relevant logs from terminals or the browser's devtool console -->
 
-### Example Repository
-<!-- For instance, the repository where the error occured-->
+### Example repository
+<!-- For instance, the repository where the error occurred -->
