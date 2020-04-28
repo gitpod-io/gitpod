@@ -1,3 +1,5 @@
+[![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-Ready--to--Code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/gitpod-io/gitpod) 
+
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/gitpod-io/gitpod)
 [![Discourse Community](https://img.shields.io/badge/Join%20the%20community-on%20Discourse-9cf?logo=discourse)](https://community.gitpod.io/)
 
