@@ -1,11 +1,11 @@
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/gitpod-io/gitpod)
 [![Discourse Community](https://img.shields.io/badge/Join%20the%20community-on%20Discourse-9cf?logo=discourse)](https://community.gitpod.io/)
 
-# Gitpod - Ready-to-Code Development Environments for GitHub, GitLab and BitBucket
+# Gitpod - Ready-to-Code Development Environments for GitHub, GitLab and Bitbucket
 
 [Gitpod](https://gitpod.io) provides instant dev environments for any GitHub project in your browser.
 
-Simply prefix any GitHub, GitLab or BitBucket URL with `gitpod.io/#`.
+Simply prefix any GitHub, GitLab or Bitbucket URL with `gitpod.io/#`.
 
 ## How to use Gitpod?
 
