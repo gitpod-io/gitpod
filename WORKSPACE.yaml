@@ -1,0 +1,23 @@
+# this file makes this a leeway workspace
+defaultTarget: components:all
+defaultArgs:
+  coreYarnLockBase: ../..
+
+variants:
+- name: oss
+  components:
+    exclude:
+      - components/ee/ws-scheduler
+      - components/ee/cerc
+  srcs:
+    exclude:
+    - "**/ee"
+    - "**/ee/**"
+    - "**/*_ee.*"
+    - "**/*_ee_*.*"
+  env:
+  - GITPOD_OSS_BUILD=true
+  config:
+    go:
+      buildTags:
+      - -tags oss

@@ -1,0 +1,61 @@
+# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{- $comp := .Values.components.cerc -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if not $comp.disabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cerc
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: cerc
+    kind: deployment
+    stage: {{ .Values.installation.stage }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: cerc
+      kind: pod
+      stage: {{ .Values.installation.stage }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "gitpod.fullname" . }}
+        component: cerc
+        kind: pod
+        stage: {{ .Values.installation.stage }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8080"
+{{ include "gitpod.pod.dependsOn" $this | indent 8 }}
+    spec:
+{{ include "gitpod.pod.affinity" $this | indent 6 }}
+      serviceAccountName: cerc
+      securityContext:
+        runAsUser: 1000
+      containers:
+      - name: cerc
+        image: {{ template "gitpod.comp.imageFull" $this }}
+        args:
+        - /config/config.json
+{{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
+{{ include "gitpod.container.resources" $this | indent 8 }}
+{{ include "gitpod.container.ports" $this | indent 8 }}
+        readinessProbe:
+          httpGet:
+            path: "/trigger/selftest"
+            port: 8080
+        volumeMounts:
+        - name: config
+          mountPath: /config
+      volumes:
+        - name: config
+          configMap:
+            name: {{.Release.Name}}-cerc-config
+{{ toYaml .Values.defaults | indent 6 }}
+{{- end -}}

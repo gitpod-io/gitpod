@@ -1,0 +1,20 @@
+packages:
+  - name: lib
+    type: yarn
+    srcs:
+      - "src/**"
+      - "test/**"
+      - package.json
+      - mocha.opts
+      - "data/*.json"
+    config:
+      packaging: library
+      yarnLock: ${coreYarnLockBase}/yarn.lock
+      tsconfig: tsconfig.json
+  - name: theia-plugin-list
+    type: generic
+    srcs:
+      - data/builtin-theia-plugins.json
+    config:
+      commands:
+        - ["mv", "data/builtin-theia-plugins.json", "manifest.json"]

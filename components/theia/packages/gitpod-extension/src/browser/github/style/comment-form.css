@@ -1,0 +1,29 @@
+/**
+ * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
+.github-comment-form {
+    flex: 1;
+}
+
+.github-comment-form .p-TabBar {
+    height:26px;
+    overflow-x: auto;
+    background: none;
+}
+
+.github-comment-form .p-TabBar[data-orientation='horizontal'] .p-TabBar-tab:last-child {
+    border-right: none;
+}
+
+.github-comment-form .p-TabBar.theia-app-centers .p-TabBar-tab.p-mod-current {
+    background: var(--theia-editor-background);
+    border-top: var(--theia-border-width) solid var(--theia-editorWidget-border);
+}
+
+.github-comment-form .actions {
+    display: flex;
+    justify-content: flex-end;
+}

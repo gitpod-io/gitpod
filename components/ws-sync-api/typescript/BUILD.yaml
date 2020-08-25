@@ -1,0 +1,16 @@
+packages:
+  - name: lib
+    type: yarn
+    deps:
+      - components/content-service-api/typescript:lib
+    srcs:
+      - "src/*.ts"
+      - "src/*.js"
+      - package.json
+    config:
+      packaging: library
+      dontTest: true
+      commands:
+        build: ["yarn", "build"]
+      yarnLock: ${coreYarnLockBase}/../yarn.lock
+      tsconfig: tsconfig.json

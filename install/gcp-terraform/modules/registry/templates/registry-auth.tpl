@@ -1,0 +1,7 @@
+{
+	"auths": {
+		"${hostname}": {
+			"auth": "${auth}"
+		}
+	}
+}

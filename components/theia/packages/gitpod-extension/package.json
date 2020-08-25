@@ -1,0 +1,99 @@
+{
+  "name": "@gitpod/gitpod-extension",
+  "license": "UNLICENSED",
+  "keywords": [
+    "theia-extension"
+  ],
+  "version": "0.1.7",
+  "files": [
+    "lib",
+    "src",
+    "styles/*"
+  ],
+  "dependencies": {
+    "@octokit/rest": "~16.43.1",
+    "@theia/core": "next",
+    "@theia/filesystem": "next",
+    "@theia/git": "next",
+    "@theia/markers": "next",
+    "@theia/mini-browser": "next",
+    "@theia/monaco": "next",
+    "@theia/navigator": "next",
+    "@theia/plugin-ext": "next",
+    "@theia/preferences": "next",
+    "@theia/preview": "next",
+    "@theia/scm": "next",
+    "@theia/terminal": "next",
+    "@theia/userstorage": "next",
+    "@theia/vsx-registry": "next",
+    "@theia/workspace": "next",
+    "@gitpod/gitpod-protocol": "0.1.5",
+    "bitbucket": "^2.1.0",
+    "decompress": "^4.2.0",
+    "diff": "^3.4.0",
+    "filenamify": "^4.1.0",
+    "gitlab": "^14.2.2",
+    "install": "^0.13.0",
+    "js-cookie": "^2.2.1",
+    "json-query": "^2.2.2",
+    "lodash.throttle": "^4.1.1",
+    "moment": "^2.20.1",
+    "node-ssh": "^5.1.2",
+    "octicons": "^7.1.0",
+    "ovsx": "0.1.0-next.9b4e999",
+    "prom-client": "^10.2.0",
+    "react": "^16.4.1",
+    "react-dom": "^16.4.1",
+    "requestretry": "^4.0.0",
+    "yaml": "^1.5.1"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.1.2",
+    "@types/decompress": "^4.2.3",
+    "@types/diff": "^3.2.2",
+    "@types/filenamify": "^2.0.2",
+    "@types/js-cookie": "^2.2.4",
+    "@types/json-query": "^2.2.0",
+    "@types/requestretry": "^1.12.4",
+    "@types/tmp": "^0.2.0",
+    "@types/yaml": "^1.0.2",
+    "chai": "^4.1.2",
+    "mocha-typescript": "^1.1.17",
+    "rimraf": "^2.6.2",
+    "typescript": "^3.9.3",
+    "mocha": "^5.0.0",
+    "ts-node": "<7.0.0"
+  },
+  "scripts": {
+    "prepare": "yarn run clean && yarn run build",
+    "clean": "npx rimraf lib",
+    "test": "npx mocha --opts mocha.opts 'src/**/*.spec.ts'",
+    "build": "npx tsc",
+    "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput"
+  },
+  "theiaExtensions": [
+    {
+      "frontend": "lib/browser/githoster/githoster-frontend-module"
+    },
+    {
+      "frontend": "lib/browser/github/github-frontend-module"
+    },
+    {
+      "frontend": "lib/browser/gitlab/gitlab-frontend-module"
+    },
+    {
+      "frontend": "lib/browser/gitpod-frontend-module",
+      "backend": "lib/node/gitpod-backend-module"
+    }
+  ],
+  "resolutions": {
+    "@types/react": "16.4.2",
+    "vscode-uri": "^2.1.1",
+    "vscode-languageserver-protocol": "3.15.3",
+    "vscode-languageserver-types": "3.15.1",
+    "uuid": "7.0.3",
+    "@types/uuid": "7.0.3",
+    "nan": "2.14.1",
+    "oniguruma": "7.2.1"
+  }
+}

@@ -1,0 +1,27 @@
+packages:
+  - name: app
+    type: go
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    deps:
+      - components/common-go:lib
+      - components/content-service-api/go:lib
+      - components/content-service:lib
+      - components/ws-sync-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    config:
+      packaging: app
+  - name: docker
+    type: docker
+    deps:
+      - :app
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      image:
+        - ${imageRepoBase}/ws-sync:${version}

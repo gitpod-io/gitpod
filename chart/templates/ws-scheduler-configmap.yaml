@@ -1,0 +1,43 @@
+# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{- $comp := .Values.components.wsScheduler -}}
+{{- if not $comp.disabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ws-scheduler-config
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  config.json: |-
+    {
+        "scheduler": {
+            "schedulerName": "{{ $comp.schedulerName }}",
+            "namespace": "{{ .Release.Namespace }}",
+            "nodeLabelSelector": {},
+            "strategyName": "DensityAndExperience",
+            "densityAndExperienceConfig": {
+                "workspaceFreshPeriodSeconds": 120,
+                "nodeFreshWorkspaceLimit": 2
+            }
+        }{{ if not $comp.scalerDisabled }},
+        "scaler": {
+            "namespace": "{{ .Release.Namespace }}",
+            "scalingPeriod": "{{ $comp.scalerConfig.scalingPeriod }}",
+            "bufferRuntime": "{{ $comp.scalerConfig.bufferRuntime }}",
+            "slotFactor": {{ $comp.scalerConfig.slotFactor }},
+            "bufferFactor": {{ $comp.scalerConfig.bufferFactor }},
+            "nodeLabelSelector": {
+                "gitpod.io/workload_workspace": "true"
+            },
+            "schedulerName": "{{ .Values.workspaceScheduler }}",
+            "stage": "{{ .Values.installation.stage }}",
+            "pullSecrets": [{{ .Values.components.workspace.pullSecret.secretName | quote }}]
+        }
+{{- end }}
+    }
+{{- end -}}

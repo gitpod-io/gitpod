@@ -1,0 +1,12 @@
+packages:
+  - name: docker
+    type: docker
+    argdeps:
+      - imageRepoBase
+    srcs:
+      - gcloud-default-config
+      - kubeconfig.yaml
+    config:
+      dockerfile: Dockerfile
+      image:
+        - ${imageRepoBase}/dev-environment:${version}

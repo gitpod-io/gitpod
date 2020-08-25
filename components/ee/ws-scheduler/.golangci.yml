@@ -1,0 +1,9 @@
+issues:
+  exclude:
+  # we need to exclude the following two issues to allow the span, ctx := ... pattern
+  - ineffectual assignment to `ctx`
+  - this value of `ctx` is never used
+  exclude-rules:
+  - path: _test\.go
+    linters:
+    - errcheck

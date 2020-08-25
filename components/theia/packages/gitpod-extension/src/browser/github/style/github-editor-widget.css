@@ -1,0 +1,125 @@
+/**
+ * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
+.monaco-editor .icon-comment-discussion.new {
+    opacity: 0.6;
+}
+
+.github-editor-widget {
+    background-color: var(--theia-editorWidget-background);
+    font-family: var(--theia-ui-font-family);
+}
+
+.github-editor-widget .conversation-panel {
+    border: solid var(--theia-editorWidget-border);
+    border-width: var(--theia-border-width) 0;
+}
+
+.github-editor-widget .comment-form {
+    padding: 8px;
+    margin: 8px;
+    border: var(--theia-border-width) solid var(--theia-editorWidget-border);
+}
+
+.github-editor-widget .comment {
+    display: flex;
+    padding: 8px 16px;
+    padding-top: 16px;
+}
+
+.github-editor-widget .comment ~ .comment {
+    padding-top: 8px;
+}
+
+.github-editor-widget .comment .content {
+    width: 100%
+}
+
+.github-editor-widget .comment .info {
+    display: flex;
+}
+
+.github-editor-widget .comment .header {
+    flex: 1;
+}
+
+.github-editor-widget .pending-badge {
+    margin-left: 10px;
+    padding: 2px 5px;
+    border-radius: 2px;
+    background-color: var(--theia-editorWarning-foreground);
+    font-size: var(--theia-ui-font-size0);
+    color: var(--theia-editor-background);
+}
+
+.github-editor-widget .comment .actions {
+    margin-right: -5px;
+    margin-left: 10px;
+    display: inline-flex;
+    flex: 0;
+    opacity: 0;
+}
+
+.github-editor-widget .comment .content:hover .actions {
+    opacity: 1;
+}
+
+.github-editor-widget .comment .action {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    opacity: 0.6;
+    background-color: var(--theia-icon-foreground);
+    padding: 0px 5px;
+}
+
+.github-editor-widget .comment .action:hover {
+    opacity: 1;
+    background-color: var(--theia-list-highlightForeground);
+}
+
+.github-editor-widget button.reply {
+    color: var(--theia-editor-foreground);
+    width: 100%;
+    padding: 3px 8px;
+    cursor: text;
+    text-align: left;
+    border: 1px solid var(--theia-editorWidget-border);
+    background: var(--theia-editor-background);
+}
+
+.github-editor-widget .reply {
+    border-top: var(--theia-border-width) solid var(--theia-editorWidget-border);
+    padding: 8px;
+    display: flex;
+}
+
+/* .github-editor-widget .new-conversation {
+    border-top: 1px solid #007acc;
+} */
+
+.github-editor-widget .new-conversation-panel {
+    padding: 8px;
+}
+
+.github-editor-widget button.start-new-conversation {
+    margin: 10px;
+}
+
+.monaco-editor.gp-review-editor .overflow-guard .icon-comment-discussion {
+    width: 24px !important;
+    z-index: 10;
+}
+
+.monaco-editor.gp-review-editor .overflow-guard .insert-sign,
+.monaco-editor.gp-review-editor .overflow-guard .delete-sign {
+    width: 14px !important;
+    margin-left: 18px;
+}
+
+.monaco-editor.gp-review-editor .margin-view-overlays .folding {
+    margin-left: 18px;
+}

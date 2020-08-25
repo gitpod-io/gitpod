@@ -1,0 +1,218 @@
+# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{- define "ws-manager-list" -}}
+{{- $ := .root -}}
+{{- $comp := .comp -}}
+manager:
+  - name: "local"
+    address: "ws-manager:8080"
+  - name: "{{ template "gitpod.installation.shortname" . }}"
+    address: "ws-manager:8080"
+{{ if $comp.wsman -}}
+{{ $comp.wsman | toYaml | indent 2 }}
+{{- end -}}
+{{- end -}}
+
+{{- $comp := .Values.components.server -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- $thisWorkspace := dict "root" . "comp" .Values.components.workspace -}}
+{{- if not $comp.disabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: server
+    kind: deployment
+    stage: {{ .Values.installation.stage }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: server
+      kind: pod
+      stage: {{ .Values.installation.stage }}
+  replicas: {{ $comp.replicas | default 1 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      name: server
+      labels:
+        app: {{ template "gitpod.fullname" . }}
+        component: server
+        kind: pod
+        stage: {{ .Values.installation.stage }}
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: '9500'
+{{ include "gitpod.pod.dependsOn" $this | indent 8 }}
+    spec:
+{{ include "gitpod.pod.affinity" $this | indent 6 }}
+      serviceAccountName: server
+      initContainers:
+{{ include "gitpod.msgbusWaiter.container" $this | indent 6 }}
+{{ include "gitpod.databaseWaiter.container" $this | indent 6 }}
+      containers:
+      - name: server
+        image: {{ template "gitpod.comp.imageFull" $this }}
+{{ include "gitpod.container.resources" $this | indent 8 }}
+{{ include "gitpod.container.ports" $this | indent 8 }}
+        securityContext:
+          privileged: false
+          runAsUser: 31001
+        volumeMounts:
+{{- if .Values.components.server.storage }}
+        - name: storage-key
+          mountPath: "/storageKeySecret"
+          readOnly: true
+{{- end }}
+{{- if $comp.github.app }}
+        - name: github-app-cert-secret
+          mountPath: "/github-app-cert"
+          readOnly: true
+{{- end }}
+{{- if .Values.components.server.serverContainer.volumeMounts }}
+{{ toYaml .Values.components.server.serverContainer.volumeMounts | indent 8 }}
+{{- end }}
+{{ include "gitpod.container.defaultEnv" $this | indent 8 }}
+{{ include "gitpod.container.dbEnv" $this | indent 8 }}
+{{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+{{ include "gitpod.container.messagebusEnv" $this | indent 8 }}
+{{- if eq .Values.ingressMode "noDomain" }}
+        - name: SERVE_INSECURE_NO_DOMAIN
+          value: "true"
+{{- end  }}
+        - name: GITPOD_LICENSE
+          value: "{{ .Values.license }}"
+{{- if $comp.github.app }}
+        - name: GITPOD_GITHUB_APP_ENABLED
+          value: "{{ $comp.github.app.enabled | default "false" }}"
+        - name: GITPOD_GITHUB_APP_ID
+          value: "{{ $comp.github.app.appId }}"
+        - name: GITPOD_GITHUB_APP_WEBHOOK_SECRET
+          value: "{{ $comp.github.app.webhookSecret }}"
+        - name: GITPOD_GITHUB_APP_AUTH_PROVIDER_ID
+          value: "{{ $comp.github.app.authProviderId }}"
+{{- if $comp.github.app.githubHost }}
+        - name: GHE_HOST
+          value: "{{ $comp.github.app.githubHost }}"
+{{- end }}
+        - name: GITPOD_GITHUB_APP_CERT_PATH
+          value: "/github-app-cert/cert"
+        - name: GITPOD_GITHUB_APP_MKT_NAME
+          value: "{{ $comp.github.app.marketPlaceName }}"
+{{- end }}
+        - name: LOG_LEVEL
+          value: "trace"
+        - name: NODE_ENV
+          value: "{{ .Values.installation.stage }}"
+        - name: SERVER_VERSION
+          value: "{{ template "gitpod.comp.version" $this }}"
+        - name: SHLVL
+          value: "1"
+        - name: THEIA_PORT
+          value: "{{ .Values.components.workspace.ports.http.containerPort | toString }}"
+        - name: WORKSPACE_DEFAULT_IMAGE
+          value: "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.defaultImage) }}"
+    {{- if $comp.blockNewUsers }}
+        - name: BLOCK_NEW_USERS
+          value: {{ $comp.blockNewUsers | quote }}
+    {{- end }}
+    {{- if $comp.makeNewUsersAdmin }}
+        - name: MAKE_NEW_USERS_ADMIN
+          value: {{ $comp.makeNewUsersAdmin | quote }}
+    {{- end }}
+    {{- if .Values.components.server.portAccessForUsersOnly }}
+        - name: PORT_ACCESS_FOR_USERS_ONLY
+          value: "true"
+    {{- end }}
+    {{- if .Values.components.server.sessionMaxAgeMs }}
+        - name: SESSION_MAX_AGE_MS
+          value: {{ .Values.components.server.sessionMaxAgeMs | quote }}
+    {{- end }}
+        - name: SESSION_SECRET
+          value: {{ $comp.sessionSecret | quote }}
+    {{- if eq .Values.components.wsSync.remoteStorage.kind "minio" }}
+        - name: GITPOD_STORAGE_CLIENT
+          value: minio
+        - name: MINIO_END_POINT
+          value: minio.{{ .Release.Namespace }}.svc.cluster.local
+        - name: MINIO_PORT
+          value: "9000"
+        - name: MINIO_ACCESS_KEY
+          value: {{ .Values.minio.accessKey }}
+        - name: MINIO_SECRET_KEY
+          value: {{ .Values.minio.secretKey }}
+        - name: MINIO_REGION
+          value: {{ .Values.minio.region }}
+    {{- end }}
+    {{- if .Values.components.workspace.localTheia }}
+        - name: LOCAL_THEIA
+          value: "true"
+    {{- end }}
+    {{- if .Values.components.server.theiaPluginsBucketName }}
+        - name: THEIA_PLUGINS_BUCKET_NAME_OVERRIDE
+          value: {{ .Values.components.server.theiaPluginsBucketName }}
+    {{- end }}
+    {{- if .Values.devBranch }}
+        - name: DEV_BRANCH
+          value: "{{ .Values.devBranch }}"
+    {{- end }}
+        - name: WSMAN_CFG_DEFAULT
+          value: "local"
+        - name: WSMAN_CFG_MANAGERS
+          value: {{ index (include "ws-manager-list" $this | fromYaml) "manager" | default dict | toJson | b64enc | quote }}
+        - name: GITPOD_BASEIMG_REGISTRY_WHITELIST
+          value: {{ $comp.defaultBaseImageRegistryWhitelist | toJson | quote }}
+        - name: AUTH_PROVIDERS_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              name: auth-providers-config
+              key: auth-providers.json
+        - name: BRANDING_CONFIG
+          value: {{ .Values.branding | toJson | quote }}
+    {{- if $comp.runDbDeleter }}
+        - name: RUN_DB_DELETER
+          value: {{ $comp.runDbDeleter | quote }}
+    {{- end }}
+        - name: SERVER_PROXY_APIKEY
+          valueFrom:
+            secretKeyRef:
+              name: server-proxy-apikey
+              key: apikey
+{{- if (or .Values.components.wsSync.remoteStorage.gcloud .Values.components.server.storage) }}
+        - name: GCLOUD_PROJECT_ID
+          value: {{ .Values.components.wsSync.remoteStorage.gcloud.projectId }}
+        - name: GCLOUD_REGION
+          value: {{ .Values.components.wsSync.remoteStorage.gcloud.region }}
+        - name: GCLOUD_CREDENTIALS_FILE
+          value: {{ base .Values.components.wsSync.remoteStorage.gcloud.credentialsFile }}
+{{- end }}
+        - name: GITPOD_GARBAGE_COLLECTION_DISABLED
+          value: {{ $comp.garbageCollection.disabled | default "false" | quote }}
+{{- if .Values.components.server.serverContainer.env }}
+{{ toYaml .Values.components.server.serverContainer.env | indent 8 }}
+{{- end }}
+      volumes:
+{{- if .Values.components.server.storage.secretName }}
+      - name: storage-key
+        secret:
+          secretName: {{ .Values.components.server.storage.secretName }}
+{{- end }}
+{{- if $comp.github.app }}
+      - name: github-app-cert-secret
+        secret:
+          secretName: {{ $comp.github.app.appCert }}
+{{- end }}
+{{- if .Values.components.server.volumes }}
+{{ toYaml .Values.components.server.volumes | indent 6 }}
+{{- end }}
+{{ toYaml .Values.defaults | indent 6 }}
+{{ end }}

@@ -1,0 +1,265 @@
+/**
+ * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
+.pull-request-view {
+    --pr-view-margin: calc(var(--theia-ui-padding)*1.5);
+    --pr-view-padding: calc(var(--theia-ui-padding)*3);
+    --pr-view-invert-padding: calc(var(--pr-view-padding)*-1);
+    padding: var(--pr-view-padding);
+    padding-top: 0;
+    color: var(--theia-foreground);
+    display: flex;
+    flex-direction: column;
+}
+
+.pull-request-view .pr-header {
+    flex-shrink: 0;
+}
+
+.pull-request-view .pr-content {
+    height: 100%;
+    overflow-y: auto;
+    flex-grow: 1;
+    margin: var(--pr-view-invert-padding);
+    padding: var(--pr-view-padding);
+    margin-top: 0px;
+    padding-top: 0px;
+    position: relative;
+}
+
+.pull-request-view .pr-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.pull-request-view .pr-panel > div {
+    margin-bottom: var(--pr-view-margin);
+    display: flex;
+}
+
+.pull-request-view .pr-panel > .github-comment-form {
+    display: block;
+}
+
+.pull-request-view .pr-panel > .pr-timeline {
+    display: block;
+    flex-grow: 1;
+}
+
+.pull-request-view .pr-panel > .pr-body {
+    display: block;
+    margin-bottom: 0px;
+}
+
+.pull-request-view .pr-panel > .pr-merge {
+    display: flex;
+    align-items: center;
+}
+
+.pull-request-view .pr-panel > .pr-merge .merge-status {
+    flex: 1;
+}
+
+.pull-request-view .pr-panel > .pr-merge .merge-icon {
+    margin-right: 4px;
+}
+
+.pull-request-view .pr-badge {
+    padding: 0.375em 0.6em;
+    margin-right: var(--pr-view-margin);
+    border-radius: 3px;
+    align-self: center;
+    display: flex;
+}
+
+.pull-request-view .pr-badge.open {
+    color: white;
+    background-color: #28a745;
+}
+
+.pull-request-view .pr-badge.closed {
+    color: white;
+    background-color: #cb2431;
+}
+
+.pull-request-view .pr-badge.merged {
+    color: white;
+    background-color: #6f42c1;
+}
+
+.pull-request-view .pr-link {
+    flex: 1;
+    margin-right: var(--pr-view-margin);
+    display: flex;
+    align-items: center;
+}
+
+.pull-request-view .pr-link a {
+    display: flex;
+    align-items: flex-end;
+}
+
+.pull-request-view .refresh-view {
+    display: flex;
+    width: 100%;
+}
+
+.pull-request-view .refresh-icon {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.pull-request-view .pr-title {
+    font-size: var(--theia-ui-font-size2);
+}
+
+.pull-request-view .commit-count {
+    flex: 1;
+    display: inline-flex;
+    cursor: pointer;
+}
+
+.pull-request-view .commit-count .icon-git-commit {
+    margin-right: 4px;
+}
+
+.pr-review-button {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.pr-review-button button {
+    white-space: nowrap;
+}
+
+.pull-request-view .pr-conversations .icon-comment-discussion {
+    min-height: 16px;
+    min-width: 16px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.pull-request-view .pr-body {
+    margin-left: 7px;
+}
+
+.pull-request-view .counter {
+    padding: 2px 5px;
+    font-weight: 600;
+    font-size: var(--theia-ui-font-size0);
+    margin-left: .25em;
+    margin-right: .25em;
+    color: var(--theia-badge-foreground);
+    background-color: var(--theia-badge-background);
+    border-radius: 20px;
+    line-height: 1;
+    display: inline-block;
+}
+
+.pull-request-view .timeline-item {
+    padding: 10px 0px;
+    margin-left: 30px;
+    border-bottom: var(--theia-border-width) solid var(--theia-contrastBorder);
+}
+
+.pull-request-view .timeline-item .icon-eye,
+.pull-request-view .timeline-item .icon-comment {
+    margin-left: -25px;
+    margin-right: 10px;
+}
+
+.pull-request-view .timeline-item .icon-git-commit {
+    margin-left: -24px;
+    margin-right: 11px;
+}
+
+.pull-request-view .timeline-item .icon-repo-push {
+    margin-left: -23px;
+    margin-right: 10px;
+}
+
+.pull-request-view .timeline-item .info {
+    display: flex;
+    align-items: center;
+}
+
+.pull-request-view .timeline-item .info.summary {
+    padding-bottom: var(--pr-view-margin);
+}
+
+.pull-request-view .header {
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    align-self: center;
+}
+
+.pull-request-view .pr-base {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.pull-request-view .pr-base .icon-git-compare {
+    min-width: 16px;
+    min-height: 16px;
+    margin-right: 4px;
+    display: inline-block;
+}
+
+.pull-request-view .pr-title-input {
+    flex: 1;
+    margin-right: var(--pr-view-margin);
+}
+
+.pull-request-view textarea {
+    min-height: 200px;
+    height: 200px;
+}
+
+.pull-request-view .no-changes {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.pull-request-view .pr-base-action {
+    color: var(--theia-textLink-foreground);
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-block;
+}
+
+.pull-request-view .pr-base-action:hover {
+    color: var(--theia-textLink-activeForeground);
+}
+
+.pull-request-view .sync-view {
+    background-color: var(--theia-editorMarkerNavigationWarning-background);
+    color: #735c0f;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.pull-request-view .sync-view .sync-warn {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.pull-request-view .sync-view .sync-icon {
+    margin-right: 5px;
+}
+
+.pull-request-view .sync-view .sync-action {
+    align-self: flex-end;
+}

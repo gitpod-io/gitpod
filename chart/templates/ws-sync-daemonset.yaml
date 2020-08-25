@@ -1,0 +1,127 @@
+# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{- $comp := .Values.components.wsSync -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if not $comp.disabled -}}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ws-sync
+  labels:
+    app: {{ template "gitpod.fullname" $ }}
+    component: ws-sync
+    kind: daemonset
+    stage: {{ .Values.installation.stage }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" $ }}
+      component: ws-sync
+      kind: daemonset
+      stage: {{ .Values.installation.stage }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "gitpod.fullname" $ }}
+        component: ws-sync
+        kind: daemonset
+        stage: {{ .Values.installation.stage }}
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: '9500'
+        checksum/tlskey: {{ include (print $.Template.BasePath "/ws-sync-tlssecret.yaml") $ | sha256sum }}
+    spec:
+{{ include "gitpod.workspaceAffinity" $this | indent 6 }}
+      # see https://kubernetes.io/docs/tasks/administer-cluster/guaranteed-scheduling-critical-addon-pods/ for more
+      # details on this priority class.
+      # Pior to Kubernetes 1.17 critical pods can only be scheduled in kube-system: https://github.com/kubernetes/kubernetes/pull/76310
+      # Leaving this in here so that others might enable it and we don't forget about this when 1.17 comes around in GKE.
+      # priorityClassName: system-node-critical
+      tolerations:
+      - key: node.kubernetes.io/disk-pressure
+        operator: "Exists"
+        effect: "NoExecute"
+      - key: node.kubernetes.io/memory-pressure
+        operator: "Exists"
+        effect: "NoExecute"
+      - key: node.kubernetes.io/out-of-disk
+        operator: "Exists"
+        effect: "NoExecute"
+      serviceAccountName: ws-sync
+      volumes:
+      - hostPath:
+          path: {{ $comp.hostWorkspaceArea }}
+          type: DirectoryOrCreate
+        name: working-area
+      - name: tls-certs
+        secret:
+          secretName: ws-sync-tls
+      - name: config
+        configMap:
+          name: ws-sync-config
+      {{- if $comp.fullWorkspaceBackup.enabled }}
+      - name: containerd-socket
+        hostPath:
+          path: {{ $comp.fullWorkspaceBackup.containerd.socket }}
+          type: Socket
+      {{- range $idx, $pth := $comp.fullWorkspaceBackup.nodeRoots }}
+      - name: node-fs{{ $idx }}
+        hostPath:
+          path: {{ $pth }}
+          type: Directory
+      {{- end }}
+      - name: node-mounts
+        hostPath:
+          path: /proc/mounts
+          type: File
+      {{- end }}
+{{- if $comp.volumes }}
+{{ toYaml $comp.volumes | indent 6 }}
+{{- end }}
+      containers:
+      - name: ws-sync
+        volumeMounts:
+        - mountPath: /mnt/workingarea
+          name: working-area
+          mountPropagation: Bidirectional
+        - mountPath: /config
+          name: config
+        {{- if $comp.fullWorkspaceBackup.enabled }}
+        - mountPath: /mnt/containerd.sock
+          name: containerd-socket
+        {{- range $idx, $pth := $comp.fullWorkspaceBackup.nodeRoots }}
+        - mountPath: /mnt/node{{ $idx }}
+          name: node-fs{{ $idx }}
+        {{- end }}
+        - mountPath: /mnt/mounts
+          name: node-mounts
+          readOnly: true
+          mountPropagation: HostToContainer
+        {{- end }}
+        - mountPath: /certs
+          name: tls-certs
+{{- if $comp.volumeMounts }}
+{{ toYaml $comp.volumeMounts | indent 8 }}
+{{- end }}
+        args: ["run", "-v", "--config", "/config/config.json"]
+        image: {{ template "gitpod.comp.imageFull" $this }}
+{{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
+{{ include "gitpod.container.resources" $this | indent 8 }}
+{{ include "gitpod.container.defaultEnv" $this | indent 8 }}
+{{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+        - name: NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        ports:
+        - name: rpc
+          containerPort: {{ $comp.servicePort }}
+          hostPort: {{ $comp.servicePort }}
+        - name: metrics
+          containerPort: 9500
+        securityContext:
+          privileged: true
+{{ toYaml .Values.defaults | indent 6 }}
+{{ end }}

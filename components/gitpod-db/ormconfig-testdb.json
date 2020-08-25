@@ -1,0 +1,20 @@
+{
+    "type": "mysql",
+    "database": "gitpod",
+    "host": "gitpod.io-local",
+    "username": "gitpod",
+    "password": "test",
+    "synchronize": false,
+    "logging": true,
+    "connectTimeout": 20000,
+    "timezone": "utc",
+    "charset": "utf8mb4",
+    "entities": [ "lib/typeorm/entity/**/*.js" ],
+    "migrations": [ "lib/typeorm/migration/**/*.js" ],
+    "subscribers": [ "lib/typeorm/subscriber/**/*.js" ],
+    "cli": {
+       "entitiesDir": "src/typeorm/entity",
+       "migrationsDir":  "src/typeorm/migration",
+       "subscribersDir":  "src/typeorm/subscriber"
+    }
+}

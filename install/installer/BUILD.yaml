@@ -1,0 +1,30 @@
+packages:
+  - name: app
+    type: go
+    srcs:
+      - "go.mod"
+      - "go.sum"
+      - "**/*.go"
+      - "**/*.sum"
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+  - name: docker
+    type: docker
+    srcs:
+      - layout.yaml
+      - entrypoint.sh
+    deps:
+      - :app
+      - chart:helm
+      - install/gcp-terraform:lib
+      - install/aws-terraform:lib
+    argdeps:
+      - version
+    config:
+      dockerfile: leeway.Dockerfile
+      image:
+        - ${imageRepoBase}/installer:${version}
+      buildArgs:
+        VERSION: ${version}
+        IMAGE_PREFIX: ${imageRepoBase}

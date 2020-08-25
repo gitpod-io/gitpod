@@ -1,0 +1,85 @@
+{
+  "private": true,
+  "name": "@gitpod/gitpod-ide",
+  "version": "0.1.2",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@theia/callhierarchy": "next",
+    "@theia/console": "next",
+    "@theia/core": "next",
+    "@theia/debug": "next",
+    "@theia/editor": "next",
+    "@theia/file-search": "next",
+    "@theia/filesystem": "next",
+    "@theia/git": "next",
+    "@theia/keymaps": "next",
+    "@theia/markers": "next",
+    "@theia/messages": "next",
+    "@theia/metrics": "next",
+    "@theia/mini-browser": "next",
+    "@theia/monaco": "next",
+    "@theia/navigator": "next",
+    "@theia/outline-view": "next",
+    "@theia/output": "next",
+    "@theia/plugin-ext": "next",
+    "@theia/plugin-ext-vscode": "next",
+    "@theia/preferences": "next",
+    "@theia/preview": "next",
+    "@theia/process": "next",
+    "@theia/scm": "next",
+    "@theia/search-in-workspace": "next",
+    "@theia/terminal": "next",
+    "@theia/userstorage": "next",
+    "@theia/variable-resolver": "next",
+    "@theia/workspace": "next",
+    "@theia/asciidoc": "next",
+    "@gitpod/gitpod-extension": "0.1.7",
+    "@gitpod/gitpod-protocol": "0.1.5"
+  },
+  "devDependencies": {
+    "@theia/cli": "next"
+  },
+  "files": [
+    "/lib",
+    "/favicon.ico",
+    "/startup.sh",
+    "/src-gen"
+  ],
+  "scripts": {
+    "prepare": "yarn run build:theia",
+    "start": "yarn start:theia --port=23000",
+    "start:theia": "theia start --inspect=9229",
+    "start:dev-staging": "node in-dev-staging.js yarn start:dev",
+    "start:dev": "yarn start:theia --port=4000 | grep '^{' | jq -r .message",
+    "debug": "nodemon -w ../packages --ignore src/ --inspect=9301 src-gen/backend/main.js",
+    "debug:local": "./local-startup.sh",
+    "build": "export NODE_OPTIONS=\"--max_old_space_size=3192\" && theia build && yarn run post-generate",
+    "build:theia": "theia build --mode development",
+    "watch": "yarn build:theia --watch",
+    "post-generate": "node ./scripts/post-generate.js",
+    "cachify-bundle": "node ./scripts/cachify-bundle.js",
+    "upload-to-cdn": "node ./scripts/cachify-bundle-upload.js"
+  },
+  "theia": {
+    "target": "browser",
+    "frontend": {
+      "config": {
+        "preferences": {
+          "files.enableTrash": false,
+          "editor.minimap.enabled": false,
+          "python.jediEnabled": false,
+          "python.languageServer": "Microsoft",
+          "go.useLanguageServer": true
+        }
+      }
+    }
+  },
+  "resolutions": {
+    "@types/react": "16.4.2",
+    "vscode-uri": "^2.1.1",
+    "vscode-languageserver-protocol": "3.15.3",
+    "vscode-languageserver-types": "3.15.1",
+    "uuid": "7.0.3",
+    "@types/uuid": "7.0.3"
+  }
+}

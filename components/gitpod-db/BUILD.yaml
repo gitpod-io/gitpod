@@ -1,0 +1,79 @@
+packages:
+  - name: lib
+    type: yarn
+    srcs:
+      - "src/**/*.ts"
+      - package.json
+      - mocha.opts
+    deps:
+      - :dbtest
+      - components/gitpod-protocol:lib
+    config:
+      packaging: library
+      yarnLock: ${coreYarnLockBase}/yarn.lock
+      tsconfig: tsconfig.json
+      dontTest: true
+  - name: migrations
+    type: yarn
+    srcs:
+      - "src/typeorm/migration/**/*.ts"
+      - "src/typeorm/entity/*.ts"
+      - "src/typeorm/ormconfig.ts"
+      - "src/typeorm/typeorm.ts"
+      - "src/typeorm/user-db-impl.ts"
+      - "src/typeorm/transformer.ts"
+      - "src/config.ts"
+      - "src/wait-for-db.ts"
+      - "src/user-db.ts"
+      - "package.json"
+    deps:
+      - components/gitpod-protocol:lib
+    config:
+      dontTest: true
+      packaging: offline-mirror
+      yarnLock: ${coreYarnLockBase}/yarn.lock
+      tsconfig: tsconfig.json
+  - name: dbtest
+    type: yarn
+    srcs:
+      - "src/**/*.ts"
+      - package.json
+      - mocha.opts
+    deps:
+      - :dbtest-init
+      - components/gitpod-protocol:lib
+    config:
+      packaging: library
+      yarnLock: ${coreYarnLockBase}/yarn.lock
+      tsconfig: tsconfig.json
+      commands:
+        test: ["yarn", "db-test"]
+        build: ["npx", "tsc"]
+  - name: dbtest-init
+    type: generic
+    srcs:
+      - package.json
+    deps:
+      - :migrations
+      - chart/config/db/init:init-scripts
+    env:
+      - DB_HOST=127.0.0.1
+      - DB_PORT=23306
+      - DB_USER=root
+      - DB_PASSWORD=test
+    ephemeral: true
+    config:
+      commands:
+        - ["sh", "-c", "find chart-config-db-init--init-scripts -name \"*.sql\" | xargs cat |mysql -h \"$DB_HOST\" -P \"$DB_PORT\" -p$DB_PASSWORD -u $DB_USER"]
+        - ["sh", "-c", "mkdir -p mig; cd mig; ../components-gitpod-db--migrations/install.sh"]
+        - ["yarn", "--cwd", "mig/node_modules/@gitpod/gitpod-db", "typeorm", "migrations:run"]
+  - name: docker
+    type: docker
+    deps:
+      - :migrations
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      image:
+        - ${imageRepoBase}/db-migrations:${version}

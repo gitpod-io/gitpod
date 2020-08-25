@@ -1,0 +1,28 @@
+/**
+ * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
+.write-permissions-view {
+    background-color: var(--theia-editorMarkerNavigationWarning-background);
+    color: #735c0f;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    margin: 2px 2px 8px 2px;
+}
+
+.write-permissions-view .write-permissions-warn {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+}
+
+.write-permissions-view .write-permissions-icon {
+    margin-right: 5px;
+}
+
+.write-permissions-view .write-permissions-action {
+    align-self: flex-end;
+}

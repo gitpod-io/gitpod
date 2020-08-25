@@ -1,0 +1,1 @@
+../../../chart/config/db/init/03-recreate-gitpod-db.sql

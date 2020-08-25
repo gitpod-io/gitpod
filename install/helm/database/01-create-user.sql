@@ -1,0 +1,1 @@
+../../../chart/config/db/init/01-create-user.sql

@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package wsbs;
+
+import "content-service-api/initializer.proto";
+
+option go_package = "github.com/gitpod-io/gitpod/ws-sync/api";
+
+service InWorkspaceHelper {
+    // BackupCanary can prepare workspace content backups. The canary is supposed to be triggered
+    // when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
+    //
+    // Note that the request/response flow is inverted here, as it's the server (supervisor) which requests a backup
+    // from the client (ws-sync).
+    rpc BackupCanary(stream BackupCanaryResponse) returns (stream BackupCanaryRequest) {}
+
+    // PauseTheia can pause the Theia process and all its children. As long as the request stream
+    // is held Theia will be paused.
+    // This is a stop-the-world mechanism for preventing concurrent modification during backup.
+    rpc PauseTheia(stream PauseTheiaRequest) returns (PauseTheiaResponse) {}
+
+    rpc GitStatus(GitStatusRequest) returns (GitStatusResponse) {}
+}
+
+message BackupCanaryRequest {
+}
+message BackupCanaryResponse {
+    bool success = 2;
+}
+
+message PauseTheiaRequest {}
+message PauseTheiaResponse {}
+
+message GitStatusRequest {}
+message GitStatusResponse {
+    contentservice.GitStatus repo = 1;
+}

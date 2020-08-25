@@ -1,0 +1,76 @@
+syntax = "proto3";
+
+package supervisor;
+
+import "google/api/annotations.proto";
+
+option go_package = "supervisor";
+
+// BackupService provides workspace-facing, backup related services
+service BackupService {
+    // Prepare prepares a workspace backup and is intended to be called by the PreStop
+    // hook of the container. It should hardly ever be neccesary to call this from any
+    // other point.
+    rpc Prepare(PrepareBackupRequest) returns (PrepareBackupResponse) {
+        option (google.api.http) = {
+            get: "/v1/backup/prepare"
+        };
+    }
+
+    // Status offers feedback on the workspace backup status. This status information can
+    // be relayed to the user to provide transparency as to how "safe" their files/content
+    // data are w.r.t. to being lost.
+    rpc Status(StatusRequest) returns (StatusResponse) {
+        option (google.api.http) = {
+            get: "/v1/backup/status"
+        };
+    }
+
+    // DebugPauseTheia is just for demo purpose and will be removed.
+    rpc DebugPauseTheia(DebugPauseTheiaRequest) returns (DebugPauseTheiaResponse) {
+        option (google.api.http) = {
+            get: "/v1/backup/pause-theia"
+        };
+    }
+
+    // ContentStatus returns the status of the workspace content
+    rpc ContentStatus(ContentStatusRequest) returns (ContentStatusResponse) {
+        option (google.api.http) = {
+            get: "/v1/content/status",
+            additional_bindings {
+                get: "/v1/content/status/wait/{wait=true}",
+            }
+        };
+    }
+}
+
+message PrepareBackupRequest {}
+message PrepareBackupResponse {}
+
+message StatusRequest {}
+message StatusResponse {
+    bool canary_available = 1;
+}
+
+message DebugPauseTheiaRequest {}
+message DebugPauseTheiaResponse {}
+
+message ContentStatusRequest {
+    // if true this request will return either when it times out or when the workspace content 
+    // has become available.
+    bool wait = 1;
+}
+
+message ContentStatusResponse {
+    // true if the workspace content is available
+    bool available = 1;
+
+    // source indicates where the workspace content came from
+    ContentSource source = 2;
+}
+
+enum ContentSource {
+    from_other = 0;
+    from_backup = 1;
+    from_prebuild = 2;
+}

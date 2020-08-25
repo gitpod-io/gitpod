@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$ref": "#/definitions/InitWorkspaceRequest",
+  "title": "ws-manager config schema - generated using wsman generate init-request",
+  "definitions": {
+    "InitWorkspaceRequest": {
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "initializer": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/WorkspaceInitializer"
+        },
+        "metadata": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/WorkspaceMetadata"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "WorkspaceInitializer": {
+      "properties": {
+        "spec": {
+          "additionalProperties": true,
+          "type": "object"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "WorkspaceMetadata": {
+      "properties": {
+        "metaId": {
+          "type": "string"
+        },
+        "owner": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    }
+  }
+}

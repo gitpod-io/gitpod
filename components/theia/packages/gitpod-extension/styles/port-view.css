@@ -1,0 +1,69 @@
+/**
+ * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
+.portlist .row {
+    width:  100%;
+    padding: var(--theia-ui-padding) 0 var(--theia-ui-padding) 0;
+    display: flex;
+    align-items: center;
+    min-height: 21px;
+}
+.portlist .row:hover {
+    cursor: pointer;
+    background: var(--theia-list-hoverBackground);
+    color: var(--theia-list-hoverForeground);
+}
+
+.portlist .cell {
+    min-width: 20%;
+    display:  inline-block;
+}
+
+.portlist .status-ib-ie {
+    color: var(--theia-notificationsInfoIcon-foreground);
+}
+.portlist .status-ib-ie:before {
+    content: "\f111";
+}
+.portlist .status-nb-ie {
+    color: var(--theia-notificationsWarningIcon-foreground);
+}
+.portlist .status-nb-ie:before {
+    content: "\f1db";
+}
+.portlist .status-ib-ne {
+    color: var(--theia-notificationsErrorIcon-foreground);
+}
+.portlist .status-ib-ne:before {
+    content: "\f05e";
+}
+.portlist .status-lb-ne:before {
+    content: "\f05e";
+}
+
+.portlist .useindicator {
+    margin-left: var(--theia-ui-padding);
+}
+.portlist .number {
+    margin-left: var(--theia-ui-padding);
+}
+.portlist .name {
+    margin-left: var(--theia-ui-padding);
+    color: var(--theia-descriptionForeground);
+}
+
+.portlist .actions {
+    flex: 1;
+    justify-self:  flex-end;
+    display: flex;
+    justify-content: flex-end;
+    align-content:  center;
+    margin-right: var(--theia-ui-padding);
+}
+
+.portlist .actions i {
+    margin-left:  5px;
+}

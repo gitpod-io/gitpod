@@ -1,0 +1,73 @@
+packages:
+  - name: all
+    type: generic
+    argdeps:
+      - version
+    deps:
+      - components/dashboard:docker
+      - components/ee/cerc:docker
+      - components/ee/ws-scheduler:docker
+      - components/gitpod-db:docker
+      - components/gitpod-messagebus:docker
+      - components/image-builder:docker
+      - components/node-daemon:docker
+      - components/proxy:docker
+      - components/registry-facade:docker
+      - components/server:docker
+      - components/service-waiter:docker
+      - components/theia/app:docker
+      - components/theia/static-server:docker
+      - components/ws-manager-bridge:docker
+      - components/ws-manager-node:docker
+      - components/ws-manager:docker
+      - components/ws-proxy:docker
+      - components/ws-sync:docker
+      - install/installer:docker
+      - install/docker/gitpod-image:docker
+      - install/docker/examples/gitpod-gitlab/gitlab:docker
+  - name: all-apps
+    type: generic
+    deps:
+      - components/ee/cerc:app
+      - components/dashboard:app
+      - components/image-builder:app
+      - components/registry-facade:app
+      - components/server:app
+      - components/service-waiter:app
+      - components/theia/static-server:app
+      - components/ws-manager-bridge:app
+      - components/ws-manager-node:app
+      - components/ws-manager:app
+      - components/ee/ws-scheduler:app
+      - components/ws-sync:app
+scripts:
+  - name: update-license-header
+    deps:
+      - dev/addlicense:app
+    script: |
+      tmpdir=$(mktemp -d)
+      echo "Temp Dir: $tmpdir"
+      
+      leeway collect files               --format-string '{{ range . }}{{ .Name }}{{"\n"}}{{ end }}' | uniq > $tmpdir/all
+      leeway collect files --variant oss --format-string '{{ range . }}{{ .Name }}{{"\n"}}{{ end }}' | uniq > $tmpdir/oss
+      
+      grep -v -f $tmpdir/oss $tmpdir/all > $tmpdir/ee
+      grep -E "^components\/ee\/" $tmpdir/oss >> $tmpdir/ee
+      grep -v -E "^chart\/" $tmpdir/oss | grep -v -E "^install\/" > $tmpdir/agpl
+      grep -E "^install\/installer" $tmpdir/oss >> $tmpdir/agpl
+      grep -v -f $tmpdir/agpl $tmpdir/oss > $tmpdir/mit
+
+      cat $tmpdir/ee   | while read f; do echo "$PWD/../$f"; done | addlicense -s -l gpshf .
+      cat $tmpdir/agpl | while read f; do echo "$PWD/../$f"; done | addlicense -s -l agpl  .
+      cat $tmpdir/mit  | while read f; do echo "$PWD/../$f"; done | addlicense -s -l mit   .
+  - name: dejson-log-output
+    script: |-
+      jq -Rr '. as $line |
+      try (
+          fromjson |
+          .time + " " + .component + " " + .severity
+              + if .message == null then "" else .message | " \"" + tostring + "\"" end
+              + if .context == null then "" else .context | " context:" + tostring end
+              + if .payload == null then "" else .payload | " payload:" + tostring end
+              + if .error == null then "" else .error | "\n" + tostring end
+      ) catch $line'

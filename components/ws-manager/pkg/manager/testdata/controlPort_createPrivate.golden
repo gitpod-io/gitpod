@@ -1,0 +1,42 @@
+{
+    "portsService": {
+        "metadata": {
+            "name": "ws-servicePrefix-ports",
+            "creationTimestamp": null,
+            "labels": {
+                "gpwsman": "true",
+                "metaID": "",
+                "workspaceID": "foobar"
+            },
+            "annotations": {
+                "gitpod/ingressPorts": "",
+                "gitpod/port-url-3000": "3000--servicePrefix-gitpod.io"
+            }
+        },
+        "spec": {
+            "ports": [
+                {
+                    "name": "p3000-private",
+                    "protocol": "TCP",
+                    "port": 3000,
+                    "targetPort": 0
+                }
+            ],
+            "selector": {
+                "gpwsman": "true",
+                "workspaceID": "foobar"
+            },
+            "type": "ClusterIP"
+        },
+        "status": {
+            "loadBalancer": {}
+        }
+    },
+    "response": {},
+    "postChangeStatus": [
+        {
+            "port": 3000,
+            "url": "3000--servicePrefix-gitpod.io"
+        }
+    ]
+}

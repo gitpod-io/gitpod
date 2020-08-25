@@ -1,0 +1,86 @@
+# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{- $comp := .Values.components.wsProxy -}}
+{{- $gp := .Values -}}
+{{- $this := dict "root" . "gp" $gp "comp" $comp -}}
+{{- if not $comp.disabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ws-proxy-config
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  config.json: |-
+    {
+        "ingress": {
+            {{- if eq .Values.ingressMode "noDomain" }}
+            "kind": "pathAndPorts",
+            "pathAndPorts": {
+                "address": ":8080",
+                "https": {{ $comp.useHTTPS }},
+                "trimPrefix": "/workspace/",
+                "start": 10000,
+                "end": 11000
+            }
+            {{- else if eq .Values.ingressMode "pathAndHost" }}
+            "kind": "pathAndHost",
+            "pathAndHost": {
+                "address": ":8080",
+                "https": {{ $comp.useHTTPS }},
+                "header": "x-wsproxy-host",
+                "trimPrefix": "/workspace/"
+            }
+            {{- else }}
+            "kind": "host",
+            "host": {
+                "address": ":8080",
+                "https": {{ $comp.useHTTPS }},
+                "header": "x-wsproxy-host"
+            }
+            {{- end }}
+        },
+        "workspaceInfoProviderConfig": {
+            "wsManagerAddr": "ws-manager:8080",
+            "reconnectInterval": "3s"
+        },
+        "proxy": {
+            {{- if and $comp.useHTTPS $.Values.certificatesSecret.secretName }}
+            "https": {
+                "enabled": true,
+                "crt": "/mnt/certificates/fullchain.pem",
+                "key": "/mnt/certificates/privkey.pem"
+            },
+            {{- end }}
+            "transportConfig": {
+                "connectTimeout": "10s",
+                "idleConnTimeout": "60s",
+                "websocketIdleConnTimeout": "180s",
+                "maxIdleConns": 100
+            },
+            "theiaServer": {
+                "scheme": "http",
+                "host": "theia-server.{{- .Release.Namespace -}}.svc.cluster.local:80",
+                "staticVersionPathPrefix": ""
+            },
+            "gitpodInstallation": {
+                "scheme": "{{- template "gitpod.scheme" $this -}}",
+                "hostName": "{{- $gp.hostname -}}",
+                "workspaceHostSuffix": ".{{- if $gp.installation.shortname -}}ws-{{ $gp.installation.shortname }}{{- else -}}ws{{- end -}}.{{- $gp.hostname -}}"
+            },
+            "workspacePodConfig": {
+                "serviceTemplate": "http://ws-{{"{{ .workspaceID }}"}}-theia.{{- .Release.Namespace -}}.svc.cluster.local:{{"{{ .port }}"}}",
+                "portServiceTemplate": "http://ws-{{"{{ .workspaceID }}"}}-ports.{{- .Release.Namespace -}}.svc.cluster.local:{{"{{ .port }}"}}",
+                "theiaPort": {{ .Values.components.workspace.ports.http.containerPort }},
+                "supervisorPort": {{ .Values.components.workspace.ports.http.supervisorPort }}
+            }
+        },
+        "pprofAddr": ":60060",
+        "readinessProbeAddr": ":60088",
+        "prometheusAddr": ":60095"
+    }
+{{- end -}}

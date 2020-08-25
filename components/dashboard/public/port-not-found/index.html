@@ -1,0 +1,85 @@
+<!doctype html>
+<!--
+ Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ Licensed under the GNU Affero General Public License (AGPL).
+ See License-AGPL.txt in the project root for license information.
+-->
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="user-scalable=0, initial-scale=1, minimum-scale=1, width=device-width, height=device-height">
+    <!-- PWA primary color -->
+    <meta name="theme-color" content="#000000">
+    <link rel="manifest" href="https://gitpod.io/manifest.json">
+    <link rel="apple-touch-icon" type="image/png" href="https://gitpod.io/images/apple-touch-icon.png" sizes="180x180"/>
+    <link rel="icon" type="image/png" href="https://gitpod.io/images/gitpod-196x196.png" sizes="196x196"/>
+    <link rel="icon" type="image/svg+xml" href="https://gitpod.io/images/gitpod.svg" sizes="any"/>
+    <link rel="stylesheet" href="https://gitpod.io/styles.css"/>
+    <link rel="stylesheet" href="//fonts.googleapis.com/css?family=Montserrat" />
+    <title>Workspace Port Not Found - Gitpod</title>
+    <meta name="description" content="Describe your dev environment as code and get fully prebuilt, ready-to-code development environments for any GitLab, GitHub, and Bitbucket project.">
+    <meta name="keywords" content="dev environment, development environment, devops, cloud ide, github ide, gitlab ide, javascript, online ide, web ide, code review">
+  </head>
+  <body>
+    <noscript>
+      You need to enable JavaScript to run this app.
+    </noscript>
+    <style>
+      html {
+        box-sizing: border-box;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      *, *::before, *::after {
+        box-sizing: inherit;
+      }
+      button {
+        border: 1px solid rgba(26, 166, 228, 0.5);
+        box-shadow: 0px 0px 1px #1aa6e4;
+        border-color: #1aa6e4;
+        padding: 5px 16px;
+        font-size: 16px;
+        min-width: 64px;
+        box-sizing: border-box;
+        border-radius: 2px;
+        margin: 0;
+        cursor: pointer;
+        background-color: transparent;
+        -webkit-appearance: none;
+      }
+      button:hover {
+        box-shadow: inset 0px 0px 3px #1aa6e4, 0px 0px 3px #1aa6e4;
+        background-color: rgba(26, 166, 228, 0.1);
+      }
+      button span {
+        color: #1aa6e4;
+        font-size: 16px;
+        line-height: 1.45;
+        font-weight: 400;
+        font-family: "Roboto", "Helvetica", "Arial", sans-serif;
+      }
+    </style>
+    <div id="root">
+      <div style="max-width: 64em; margin: auto; padding: 6em 2em;">
+        <div class="sorry">
+            <h3>Nothing to see here... 🦗</h3>
+            <h2>Port <span id="port"></span> didn't respond</h2>
+            <p style="margin-top: 60px;">Please make sure this port is exposed and your app is running.</p>
+            <button id="refresh" tabindex="0" type="button">
+              <span>Try again</span>
+            </button>
+        </div>
+      </div>
+    </div>
+    <script>
+      let port = parseInt(window.location.hostname.split('-')[0], 10);
+      if (port) {
+        document.getElementById('port').textContent = port;
+      }
+      document.getElementById('refresh').addEventListener('click', function () {
+        window.location.reload(true);
+      });
+    </script>
+  </body>
+</html>

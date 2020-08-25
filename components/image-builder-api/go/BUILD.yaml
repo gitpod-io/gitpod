@@ -1,0 +1,13 @@
+packages:
+  - name: lib
+    type: go
+    deps:
+      - components/common-go:lib
+      - components/content-service-api/go:lib
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    config:
+      packaging: library
+      dontTest: false

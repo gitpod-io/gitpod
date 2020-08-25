@@ -1,0 +1,30 @@
+{	
+    "dockerAuth": "/home/gitpod/.docker/config.json",	
+    "registry": {	
+        "port": 8080,	
+        "staticLayer": [	
+            { "type": "file", "ref": "example-layer.tar.gz" }
+        ],
+        "theiaLayer": {
+            "repo": "eu.gcr.io/gitpod-dev/theia-ide",
+            "defaultVersion": "cw-registry.68"
+        },
+        "store": "/tmp/store",	
+        "requireAuth": false	
+    },
+    "blobserve": {
+        "port": 8081,
+        "timeout": "5s",
+        "mapping": {
+            "theia": {
+                "repo": "eu.gcr.io/gitpod-dev/theia-ide",
+                "workdir": "/theia/node_modules/@gitpod/gitpod-ide/lib"
+            }
+        },
+        "blobSpace": {
+            "location": "/tmp/bs",
+            "maxSizeBytes": 44631060
+        }
+    },
+    "pprofAddr": ":6060"
+}

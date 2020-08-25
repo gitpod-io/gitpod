@@ -1,0 +1,63 @@
+# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{- $comp := .Values.components.wsSync -}}
+{{- if not $comp.disabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ws-sync-config
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  config.json: |-
+    {
+        "syncd": {
+            "workingArea": "/mnt/workingarea",
+            "backup": {
+                "timeout": "5m",
+                "attempts": 3
+            },
+            {{- if (and $comp.workspaceSizeLimit (not (eq $comp.workspaceSizeLimit ""))) }}
+            "workspaceSizeLimit": {{ ($comp.workspaceSizeLimit | default "0g") | quote }},
+            {{- end }}
+            "storage": {{ toJson $comp.remoteStorage }},
+            "fullWorkspaceBackup": {
+                "enabled": {{ $comp.fullWorkspaceBackup.enabled }},
+                "workdir": "/mnt/node0/gitpod-{{ .Release.Namespace }}",
+                "cri": {
+                    "mounts": {
+                        "proc": "/mnt/mounts",
+                        "paths": {
+                            {{- range $idx, $pth := $comp.fullWorkspaceBackup.nodeRoots }}
+                            {{ if gt $idx 0 }},{{ end -}}{{ $pth | quote }}: "/mnt/node{{ $idx }}"
+                            {{- end }}
+                        }
+                    },
+                    "runtime": "containerd",
+                    "containerd": {
+                        "socket": "/mnt/containerd.sock"
+                    }
+                }
+            },
+            "namespace": "{{ .Release.Namespace }}"
+        },
+        "service": {
+            "address": ":{{ $comp.servicePort }}",
+            "tls": {
+                "ca": "/certs/ca.crt",
+                "crt": "/certs/tls.crt",
+                "key": "/certs/tls.key"
+            }
+        },
+        "prometheus": {
+            "address": ":9500"
+        },
+        "pprof": {
+            "address": "localhost:6060"
+        }
+    }
+{{- end -}}

@@ -1,0 +1,11 @@
+packages:
+  - name: app
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+      - "testdata/**/*"
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux

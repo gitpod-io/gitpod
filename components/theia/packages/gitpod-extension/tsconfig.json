@@ -1,0 +1,29 @@
+{
+    "compilerOptions": {
+        "rootDir": "src",
+        "outDir": "lib",
+        "baseUrl": ".",
+        "strict": true,
+        "noEmitOnError": false,
+        "noUnusedLocals": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "strictPropertyInitialization": false,
+        "downlevelIteration": true,
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "target": "es5",
+        "jsx": "react",
+        "lib": [
+            "es6",
+            "dom"
+        ],
+        "sourceMap": true,
+        "declaration": true,
+        "declarationMap": true,
+        "skipLibCheck": true
+    },
+    "include": [
+        "src"
+    ]
+}

@@ -1,0 +1,34 @@
+packages:
+  - name: app
+    type: yarn
+    srcs:
+      - "**/*.ts"
+      - package.json
+    deps:
+      - components/gitpod-db:lib
+      - components/gitpod-messagebus:lib
+      - components/gitpod-protocol:lib
+      - components/ws-manager-api/typescript:lib
+      - components/ws-sync-api/typescript:lib
+    config:
+      packaging: offline-mirror
+      yarnLock: ${coreYarnLockBase}/yarn.lock
+      tsconfig: tsconfig.json
+      dontTest: true
+  - name: docker
+    type: docker
+    deps:
+      - :app
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      image:
+        - ${imageRepoBase}/ws-manager-bridge:${version}
+scripts:
+  - name: telepresence
+    script: |-
+      telepresence --swap-deployment ws-manager-bridge \
+                   --method inject-tcp \
+                   --run node --inspect ./dist/ee/src/index.js | \
+        leeway run gitpod-core/components:dejson-log-output

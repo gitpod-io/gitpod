@@ -1,0 +1,32 @@
+{
+  "id": "654fc38d-57c2-4787-8d2b-6c95a30bf534",
+  "workspaceId": "bbc0338d-9676-4f6a-9f20-edce4d83f14c",
+  "creationTime": "2018-03-23T16:12:51.234Z",
+  "ideUrl": "https://bbc0338d-9676-4f6a-9f20-edce4d83f14c.ws.gitpod.io/",
+  "status": "Starting",
+  "events": [
+    {
+      "type": "Started",
+      "creationTime": "2018-03-23T16:12:51.234Z",
+      "heading": "Gitpod is Starting ...",
+      "severity": "Normal"
+    },
+    {
+      "type": "Heartbeat",
+      "heading": "Heartbeat From Client",
+      "creationTime": "2018-03-23T16:12:51.685Z",
+      "internal": true,
+      "severity": "Normal",
+      "lastUpdatedTime": "2018-03-23T16:13:22.742Z"
+    },
+    {
+      "type": "PodScheduled",
+      "heading": "PodScheduled",
+      "creationTime": "2018-03-23T16:14:03.151Z",
+      "inProgress": true,
+      "message": "No nodes are available that match all of the predicates: Insufficient cpu (2), MatchNodeSelector (1).",
+      "severity": "Normal",
+      "lastUpdatedTime": "2018-03-23T16:14:03.165Z"
+    }
+  ]
+}

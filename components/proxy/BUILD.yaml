@@ -1,0 +1,14 @@
+packages:
+  - name: docker
+    type: docker
+    srcs:
+      - "conf/**"
+      - "startup/**"
+      - "nodomain-certs/**"
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: Dockerfile
+      image:
+        - ${imageRepoBase}/proxy:${version}
+        - ${imageRepoBase}/proxy:${__pkg_version}

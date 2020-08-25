@@ -1,0 +1,115 @@
+/**
+ * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
+.gitpod-logo,
+.p-Widget.theia-icon {
+    background-image: url(gitpod-logo.svg);
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.p-Widget.theia-icon {
+    margin: 3.5px 0px;
+    min-width: var(--theia-private-sidebar-tab-width);
+    max-width: var(--theia-private-sidebar-tab-width);
+    height: calc(var(--theia-private-sidebar-tab-width)/2);
+    background-position-x: 14.0px;
+}
+
+#share-widget {
+    font-size: 12pt;
+    margin-top: 0px;
+    margin-right: 10px;
+    height: 28px;
+    text-align: right;
+    display: inline-flex;
+    align-items: center;
+}
+
+#share-widget > div > div {
+    display: flex;
+}
+
+#share-widget .active-users {
+    margin-right: 5px;
+    display: inline;
+}
+
+#share-widget .avatar {
+    width: 20px;
+    height: 20px;
+    display: inline-flex;
+    position: relative;
+    overflow: hidden;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    align-items: center;
+    user-select: none;
+    border-radius: 50%;
+    justify-content: center;
+    border: 2px solid var(--theia-editorWidget-background);
+    margin-right: -5px;
+}
+#share-widget .avatar img {
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    object-fit: cover;
+}
+
+.gitpod-dropdown-main {
+    min-width: var(--theia-private-sidebar-tab-width);
+    max-width: var(--theia-private-sidebar-tab-width);
+    text-align: center;
+}
+
+.gitpod-dropdown, .gitpod-dropdown-entries {
+    display: block;
+}
+.gitpod-dropdown {
+    position: relative;
+    display: inline-block;
+}
+.gitpod-dropdown-icon {
+    margin: 3.5px 0px;
+    width: calc(var(--theia-private-sidebar-tab-width)/2);
+    height: calc(var(--theia-private-sidebar-tab-width)/2);
+    display: inline-flex;
+    overflow: hidden;
+    cursor: pointer;
+    user-select: none;
+    border-radius: 50%;
+}
+.gitpod-dropdown-entries {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    padding: 12px 16px;
+    z-index: 1;
+}
+
+.linkbox {
+    background-color: var(--theia-editor-background);
+    border: 1px solid var(--theia-contrastBorder);
+    padding: var(--theia-ui-padding);
+    width: calc(100%-2*var(--theia-ui-padding));
+    display: flex;
+    align-items: center;
+}
+
+.linkbox span {
+    width: 100%;
+}
+.linkbox i {
+    cursor: pointer;
+}
+
+.dialogContent .welcome {
+    height: 600px;
+    width: 800px;
+}

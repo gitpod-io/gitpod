@@ -1,0 +1,127 @@
+/**
+ * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
+.github-view-icon {
+    mask-image: url('~octicons/build/svg/mark-github.svg');
+    -webkit-mask-image: url('~octicons/build/svg/mark-github.svg');
+}
+
+.icon-git-pull-request {
+    width: 12px;
+    min-width: 12px;
+    height: 16px;
+    margin-right: 4px;
+    background-color: white;
+    mask-image: url('~octicons/build/svg/git-pull-request.svg');
+    -webkit-mask-image: url('~octicons/build/svg/git-pull-request.svg');
+}
+
+.icon-git-merge {
+    width: 12px;
+    min-width: 12px;
+    height: 16px;
+    margin-right: 4px;
+    background-color: white;
+    mask-image: url('~octicons/build/svg/git-merge.svg');
+    -webkit-mask-image: url('~octicons/build/svg/git-merge.svg');
+}
+
+.icon-git-commit {
+    width: 14px;
+    min-width: 14px;
+    height: 16px;
+    background-color: var(--theia-icon-foreground);
+    mask-image: url('~octicons/build/svg/git-commit.svg');
+    -webkit-mask-image: url('~octicons/build/svg/git-commit.svg');
+}
+
+.icon-github-logo {
+    width: 17px;
+    min-width: 17px;
+    height: 17px;
+    background-color: var(--theia-icon-foreground);
+    display: inline-block;
+    margin-right: 4px;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+    mask-position: 1px;
+    -webkit-mask-position: 1px;
+    mask-image: url('~octicons/build/svg/mark-github.svg');
+    -webkit-mask-image: url('~octicons/build/svg/mark-github.svg');
+}
+
+.icon-eye {
+    width: 16px;
+    min-width: 16px;
+    height: 16px;
+    background-color: var(--theia-icon-foreground);
+    mask-image: url('~octicons/build/svg/eye.svg');
+    -webkit-mask-image: url('~octicons/build/svg/eye.svg');
+}
+
+.icon-comment {
+    width: 16px;
+    min-width: 16px;
+    height: 16px;
+    background-color: var(--theia-icon-foreground);
+    mask-image: url('~octicons/build/svg/comment.svg');
+    -webkit-mask-image: url('~octicons/build/svg/comment.svg');
+}
+
+.icon-repo-push {
+    width: 12px;
+    min-width: 12px;
+    height: 16px;
+    background-color: var(--theia-icon-foreground);
+    mask-image: url('~octicons/build/svg/repo-push.svg');
+    -webkit-mask-image: url('~octicons/build/svg/repo-push.svg');
+}
+
+.icon-pencil {
+    width: 16px;
+    height: 16px;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    background-color: var(--theia-icon-foreground);
+    mask-image: url('~octicons/build/svg/pencil.svg');
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-image: url('~octicons/build/svg/pencil.svg');
+    cursor: pointer;
+}
+
+.icon-trashcan {
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-image: url('~octicons/build/svg/trashcan.svg');
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-image: url('~octicons/build/svg/trashcan.svg');
+}
+
+.icon-comment-discussion {
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-image: url('~octicons/build/svg/comment-discussion.svg');
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-image: url('~octicons/build/svg/comment-discussion.svg');
+    background-color: var(--theia-icon-foreground);
+}
+.p-TabBar-tabIcon.icon-comment-discussion {
+    min-width: 18px;
+    margin-right: 4px;
+}
+
+.icon-git-compare {
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-image: url('~octicons/build/svg/git-compare.svg');
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-image: url('~octicons/build/svg/git-compare.svg');
+    background-color: var(--theia-icon-foreground);
+}

@@ -1,0 +1,79 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jaeger
+  labels:
+    app: jaeger
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jaeger
+      chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+      release: "{{ .Release.Name }}"
+      heritage: "{{ .Release.Service }}"
+  template:
+    metadata:
+      labels:
+        app: jaeger
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        release: "{{ .Release.Name }}"
+        heritage: "{{ .Release.Service }}"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "16686"
+    spec:
+      serviceAccountName: monitoring-jaeger
+      securityContext:
+        runAsUser: 1000
+      containers:
+      - image: jaegertracing/all-in-one:1.14
+        imagePullPolicy: Always
+        name: jaeger
+{{- if eq .Values.jaeger.storage "badger" }}
+        args:
+        - "--badger.directory-value=/data/value"
+        - "--badger.directory-key=/data/key"
+        - "--badger.ephemeral=false"
+        env:
+        - name: SPAN_STORAGE_TYPE
+          value: badger
+{{- else if eq .Values.jaeger.storage "elasticsearch" }}
+        env:
+        - name: SPAN_STORAGE_TYPE
+          value: elasticsearch
+        - name: ES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: elastic-credentials
+              key: password
+        - name: ES_SERVER_URLS
+          value: http://elasticsearch-master:9200
+        - name: ES_USERNAME
+          value: elastic
+{{- end }}
+        ports:
+        - containerPort: 16686
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: "/"
+            port: 16686
+{{- if eq .Values.jaeger.storage "badger" }}
+        volumeMounts:
+        - name: storage-volume
+          mountPath: /data
+{{- end }}
+      {{- if .Values.jaeger.affinity }}
+      affinity:
+{{ toYaml .Values.jaeger.affinity | indent 8 }}
+      {{- end }}
+{{- if eq .Values.jaeger.storage "badger" }}
+      volumes:
+        - name: storage-volume
+          persistentVolumeClaim:
+            claimName: {{ .Release.Name }}-jaeger-pvc-{{ .Values.global.timestamp }}
+{{- end }}

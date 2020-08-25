@@ -1,0 +1,28 @@
+# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+packages:
+  - name: helm
+    type: generic
+    srcs:
+      - "**/*.yaml"
+      - "**/*.tpl"
+      - "secrets/**/*"
+      - "config/**/*"
+    argdeps:
+      - version
+      - imageRepoBase
+    config:
+      commands:
+        # set values
+        - ["yq", "w", "-i", "Chart.yaml", "version", "${version}"]
+        - ["yq", "w", "-i", "values.yaml", "version", "${version}"]
+        - ["yq", "w", "-i", "values.yaml", "imagePrefix", "${imageRepoBase}"]
+        # prepare chart
+        - ["sh", "-c", "ls -A | grep -v BUILD.yaml | grep -v original_files > original_files.txt"]
+        - ["mkdir", "gitpod"]
+        - ["sh", "-c", "mv $(cat original_files.txt) gitpod"]
+        # pack up
+        - ["helm", "dependency", "build", "gitpod"]
+        - ["helm", "package", "gitpod", "--destination", "."]
+        - ["rm", "-rf", "yq", "gitpod", "BUILD.yaml", "original_files.txt"]

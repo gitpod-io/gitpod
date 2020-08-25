@@ -1,0 +1,471 @@
+{
+  "push": {
+    "changes": [
+      {
+        "forced": false,
+        "old": null,
+        "links": {
+          "commits": {
+            "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commits?include=1b283e4d7a849a89151548398cc836d15149179c"
+          },
+          "html": {
+            "href": "https://bitbucket.org/sefftinge/sample-repository/branch/foo/bar-bazz"
+          }
+        },
+        "created": true,
+        "commits": [
+          {
+            "rendered": {},
+            "hash": "1b283e4d7a849a89151548398cc836d15149179c",
+            "links": {
+              "self": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commit/1b283e4d7a849a89151548398cc836d15149179c"
+              },
+              "comments": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commit/1b283e4d7a849a89151548398cc836d15149179c/comments"
+              },
+              "patch": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/patch/1b283e4d7a849a89151548398cc836d15149179c"
+              },
+              "html": {
+                "href": "https://bitbucket.org/sefftinge/sample-repository/commits/1b283e4d7a849a89151548398cc836d15149179c"
+              },
+              "diff": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/diff/1b283e4d7a849a89151548398cc836d15149179c"
+              },
+              "approve": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commit/1b283e4d7a849a89151548398cc836d15149179c/approve"
+              },
+              "statuses": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commit/1b283e4d7a849a89151548398cc836d15149179c/statuses"
+              }
+            },
+            "author": {
+              "raw": "sefftinge <sven.efftinge@typefox.io>",
+              "type": "author",
+              "user": {
+                "display_name": "Sven Efftinge",
+                "account_id": "557058:964d5de0-9ae8-47e7-9ca2-9448caeb50ea",
+                "links": {
+                  "self": {
+                    "href": "https://api.bitbucket.org/2.0/users/%7B5a2edac8-2bdf-4ecf-b13f-0d617d385906%7D"
+                  },
+                  "html": {
+                    "href": "https://bitbucket.org/%7B5a2edac8-2bdf-4ecf-b13f-0d617d385906%7D/"
+                  },
+                  "avatar": {
+                    "href": "https://secure.gravatar.com/avatar/412638567358064fbfa1d430b87a8057?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSE-2.png"
+                  }
+                },
+                "nickname": "Sven Efftinge",
+                "type": "user",
+                "uuid": "{5a2edac8-2bdf-4ecf-b13f-0d617d385906}"
+              }
+            },
+            "summary": {
+              "raw": "testing\n",
+              "markup": "markdown",
+              "html": "<p>testing</p>",
+              "type": "rendered"
+            },
+            "parents": [
+              {
+                "hash": "669b020644f284fe56ca2e3db1d5bf4c84a715bd",
+                "type": "commit",
+                "links": {
+                  "self": {
+                    "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commit/669b020644f284fe56ca2e3db1d5bf4c84a715bd"
+                  },
+                  "html": {
+                    "href": "https://bitbucket.org/sefftinge/sample-repository/commits/669b020644f284fe56ca2e3db1d5bf4c84a715bd"
+                  }
+                }
+              }
+            ],
+            "date": "2020-06-12T14:03:27+00:00",
+            "message": "testing\n",
+            "type": "commit",
+            "properties": {}
+          },
+          {
+            "rendered": {},
+            "hash": "669b020644f284fe56ca2e3db1d5bf4c84a715bd",
+            "links": {
+              "self": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commit/669b020644f284fe56ca2e3db1d5bf4c84a715bd"
+              },
+              "comments": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commit/669b020644f284fe56ca2e3db1d5bf4c84a715bd/comments"
+              },
+              "patch": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/patch/669b020644f284fe56ca2e3db1d5bf4c84a715bd"
+              },
+              "html": {
+                "href": "https://bitbucket.org/sefftinge/sample-repository/commits/669b020644f284fe56ca2e3db1d5bf4c84a715bd"
+              },
+              "diff": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/diff/669b020644f284fe56ca2e3db1d5bf4c84a715bd"
+              },
+              "approve": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commit/669b020644f284fe56ca2e3db1d5bf4c84a715bd/approve"
+              },
+              "statuses": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commit/669b020644f284fe56ca2e3db1d5bf4c84a715bd/statuses"
+              }
+            },
+            "author": {
+              "raw": "sefftinge <sven.efftinge@typefox.io>",
+              "type": "author",
+              "user": {
+                "display_name": "Sven Efftinge",
+                "account_id": "557058:964d5de0-9ae8-47e7-9ca2-9448caeb50ea",
+                "links": {
+                  "self": {
+                    "href": "https://api.bitbucket.org/2.0/users/%7B5a2edac8-2bdf-4ecf-b13f-0d617d385906%7D"
+                  },
+                  "html": {
+                    "href": "https://bitbucket.org/%7B5a2edac8-2bdf-4ecf-b13f-0d617d385906%7D/"
+                  },
+                  "avatar": {
+                    "href": "https://secure.gravatar.com/avatar/412638567358064fbfa1d430b87a8057?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSE-2.png"
+                  }
+                },
+                "nickname": "Sven Efftinge",
+                "type": "user",
+                "uuid": "{5a2edac8-2bdf-4ecf-b13f-0d617d385906}"
+              }
+            },
+            "summary": {
+              "raw": "foo\n",
+              "markup": "markdown",
+              "html": "<p>foo</p>",
+              "type": "rendered"
+            },
+            "parents": [
+              {
+                "hash": "2e7b46d9e54e3481e563c66084c470ac0e48681e",
+                "type": "commit",
+                "links": {
+                  "self": {
+                    "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commit/2e7b46d9e54e3481e563c66084c470ac0e48681e"
+                  },
+                  "html": {
+                    "href": "https://bitbucket.org/sefftinge/sample-repository/commits/2e7b46d9e54e3481e563c66084c470ac0e48681e"
+                  }
+                }
+              }
+            ],
+            "date": "2020-06-11T06:19:08+00:00",
+            "message": "foo\n",
+            "type": "commit",
+            "properties": {}
+          },
+          {
+            "rendered": {},
+            "hash": "2e7b46d9e54e3481e563c66084c470ac0e48681e",
+            "links": {
+              "self": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commit/2e7b46d9e54e3481e563c66084c470ac0e48681e"
+              },
+              "comments": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commit/2e7b46d9e54e3481e563c66084c470ac0e48681e/comments"
+              },
+              "patch": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/patch/2e7b46d9e54e3481e563c66084c470ac0e48681e"
+              },
+              "html": {
+                "href": "https://bitbucket.org/sefftinge/sample-repository/commits/2e7b46d9e54e3481e563c66084c470ac0e48681e"
+              },
+              "diff": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/diff/2e7b46d9e54e3481e563c66084c470ac0e48681e"
+              },
+              "approve": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commit/2e7b46d9e54e3481e563c66084c470ac0e48681e/approve"
+              },
+              "statuses": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commit/2e7b46d9e54e3481e563c66084c470ac0e48681e/statuses"
+              }
+            },
+            "author": {
+              "raw": "sefftinge <sven.efftinge@typefox.io>",
+              "type": "author",
+              "user": {
+                "display_name": "Sven Efftinge",
+                "account_id": "557058:964d5de0-9ae8-47e7-9ca2-9448caeb50ea",
+                "links": {
+                  "self": {
+                    "href": "https://api.bitbucket.org/2.0/users/%7B5a2edac8-2bdf-4ecf-b13f-0d617d385906%7D"
+                  },
+                  "html": {
+                    "href": "https://bitbucket.org/%7B5a2edac8-2bdf-4ecf-b13f-0d617d385906%7D/"
+                  },
+                  "avatar": {
+                    "href": "https://secure.gravatar.com/avatar/412638567358064fbfa1d430b87a8057?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSE-2.png"
+                  }
+                },
+                "nickname": "Sven Efftinge",
+                "type": "user",
+                "uuid": "{5a2edac8-2bdf-4ecf-b13f-0d617d385906}"
+              }
+            },
+            "summary": {
+              "raw": "test\n",
+              "markup": "markdown",
+              "html": "<p>test</p>",
+              "type": "rendered"
+            },
+            "parents": [
+              {
+                "hash": "da2119f51b0e744cb6b36399f8433b477a4174ef",
+                "type": "commit",
+                "links": {
+                  "self": {
+                    "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commit/da2119f51b0e744cb6b36399f8433b477a4174ef"
+                  },
+                  "html": {
+                    "href": "https://bitbucket.org/sefftinge/sample-repository/commits/da2119f51b0e744cb6b36399f8433b477a4174ef"
+                  }
+                }
+              }
+            ],
+            "date": "2020-05-26T11:47:04+00:00",
+            "message": "test\n",
+            "type": "commit",
+            "properties": {}
+          },
+          {
+            "rendered": {},
+            "hash": "da2119f51b0e744cb6b36399f8433b477a4174ef",
+            "links": {
+              "self": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commit/da2119f51b0e744cb6b36399f8433b477a4174ef"
+              },
+              "comments": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commit/da2119f51b0e744cb6b36399f8433b477a4174ef/comments"
+              },
+              "patch": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/patch/da2119f51b0e744cb6b36399f8433b477a4174ef"
+              },
+              "html": {
+                "href": "https://bitbucket.org/sefftinge/sample-repository/commits/da2119f51b0e744cb6b36399f8433b477a4174ef"
+              },
+              "diff": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/diff/da2119f51b0e744cb6b36399f8433b477a4174ef"
+              },
+              "approve": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commit/da2119f51b0e744cb6b36399f8433b477a4174ef/approve"
+              },
+              "statuses": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commit/da2119f51b0e744cb6b36399f8433b477a4174ef/statuses"
+              }
+            },
+            "author": {
+              "raw": "Gitpod <cornelius.ludmann+atlassian-gitpod@typefox.io>",
+              "type": "author",
+              "user": {
+                "display_name": "Gitpod",
+                "account_id": "5eb417d896bbcb0b85844b89",
+                "links": {
+                  "self": {
+                    "href": "https://api.bitbucket.org/2.0/users/%7B7d3643e3-6182-4191-a1e7-7559658f698b%7D"
+                  },
+                  "html": {
+                    "href": "https://bitbucket.org/%7B7d3643e3-6182-4191-a1e7-7559658f698b%7D/"
+                  },
+                  "avatar": {
+                    "href": "https://secure.gravatar.com/avatar/7b0cf857bd37fd64637b700b29aa8193?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FG-6.png"
+                  }
+                },
+                "nickname": "Gitpod",
+                "type": "user",
+                "uuid": "{7d3643e3-6182-4191-a1e7-7559658f698b}"
+              }
+            },
+            "summary": {
+              "raw": "Initial commit",
+              "markup": "markdown",
+              "html": "<p>Initial commit</p>",
+              "type": "rendered"
+            },
+            "parents": [],
+            "date": "2020-05-07T14:16:46+00:00",
+            "message": "Initial commit",
+            "type": "commit",
+            "properties": {}
+          }
+        ],
+        "truncated": false,
+        "closed": false,
+        "new": {
+          "name": "foo/bar-bazz",
+          "links": {
+            "commits": {
+              "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commits/foo/bar-bazz"
+            },
+            "self": {
+              "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/refs/branches/foo/bar-bazz"
+            },
+            "html": {
+              "href": "https://bitbucket.org/sefftinge/sample-repository/branch/foo/bar-bazz"
+            }
+          },
+          "default_merge_strategy": "merge_commit",
+          "merge_strategies": [
+            "merge_commit",
+            "squash",
+            "fast_forward"
+          ],
+          "type": "branch",
+          "target": {
+            "rendered": {},
+            "hash": "1b283e4d7a849a89151548398cc836d15149179c",
+            "links": {
+              "self": {
+                "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commit/1b283e4d7a849a89151548398cc836d15149179c"
+              },
+              "html": {
+                "href": "https://bitbucket.org/sefftinge/sample-repository/commits/1b283e4d7a849a89151548398cc836d15149179c"
+              }
+            },
+            "author": {
+              "raw": "sefftinge <sven.efftinge@typefox.io>",
+              "type": "author",
+              "user": {
+                "display_name": "Sven Efftinge",
+                "account_id": "557058:964d5de0-9ae8-47e7-9ca2-9448caeb50ea",
+                "links": {
+                  "self": {
+                    "href": "https://api.bitbucket.org/2.0/users/%7B5a2edac8-2bdf-4ecf-b13f-0d617d385906%7D"
+                  },
+                  "html": {
+                    "href": "https://bitbucket.org/%7B5a2edac8-2bdf-4ecf-b13f-0d617d385906%7D/"
+                  },
+                  "avatar": {
+                    "href": "https://secure.gravatar.com/avatar/412638567358064fbfa1d430b87a8057?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSE-2.png"
+                  }
+                },
+                "nickname": "Sven Efftinge",
+                "type": "user",
+                "uuid": "{5a2edac8-2bdf-4ecf-b13f-0d617d385906}"
+              }
+            },
+            "summary": {
+              "raw": "testing\n",
+              "markup": "markdown",
+              "html": "<p>testing</p>",
+              "type": "rendered"
+            },
+            "parents": [
+              {
+                "hash": "669b020644f284fe56ca2e3db1d5bf4c84a715bd",
+                "type": "commit",
+                "links": {
+                  "self": {
+                    "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository/commit/669b020644f284fe56ca2e3db1d5bf4c84a715bd"
+                  },
+                  "html": {
+                    "href": "https://bitbucket.org/sefftinge/sample-repository/commits/669b020644f284fe56ca2e3db1d5bf4c84a715bd"
+                  }
+                }
+              }
+            ],
+            "date": "2020-06-12T14:03:27+00:00",
+            "message": "testing\n",
+            "type": "commit",
+            "properties": {}
+          }
+        }
+      }
+    ]
+  },
+  "actor": {
+    "display_name": "Sven Efftinge",
+    "account_id": "557058:964d5de0-9ae8-47e7-9ca2-9448caeb50ea",
+    "links": {
+      "self": {
+        "href": "https://api.bitbucket.org/2.0/users/%7B5a2edac8-2bdf-4ecf-b13f-0d617d385906%7D"
+      },
+      "html": {
+        "href": "https://bitbucket.org/%7B5a2edac8-2bdf-4ecf-b13f-0d617d385906%7D/"
+      },
+      "avatar": {
+        "href": "https://secure.gravatar.com/avatar/412638567358064fbfa1d430b87a8057?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSE-2.png"
+      }
+    },
+    "nickname": "Sven Efftinge",
+    "type": "user",
+    "uuid": "{5a2edac8-2bdf-4ecf-b13f-0d617d385906}"
+  },
+  "repository": {
+    "scm": "git",
+    "website": null,
+    "uuid": "{d4e9105b-3a7d-4147-bdad-7d1d39245a41}",
+    "parent": {
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/repositories/gitpod/sample-repository"
+        },
+        "html": {
+          "href": "https://bitbucket.org/gitpod/sample-repository"
+        },
+        "avatar": {
+          "href": "https://bytebucket.org/ravatar/%7B1351a853-bde6-4be3-966e-37e3624972ca%7D?ts=markdown"
+        }
+      },
+      "type": "repository",
+      "name": "Sample Repository",
+      "full_name": "gitpod/sample-repository",
+      "uuid": "{1351a853-bde6-4be3-966e-37e3624972ca}"
+    },
+    "links": {
+      "self": {
+        "href": "https://api.bitbucket.org/2.0/repositories/sefftinge/sample-repository"
+      },
+      "html": {
+        "href": "https://bitbucket.org/sefftinge/sample-repository"
+      },
+      "avatar": {
+        "href": "https://bytebucket.org/ravatar/%7Bd4e9105b-3a7d-4147-bdad-7d1d39245a41%7D?ts=markdown"
+      }
+    },
+    "project": {
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/workspaces/sefftinge/projects/MYF"
+        },
+        "html": {
+          "href": "https://bitbucket.org/sefftinge/workspace/projects/MYF"
+        },
+        "avatar": {
+          "href": "https://bitbucket.org/account/user/sefftinge/projects/MYF/avatar/32?ts=1590493035"
+        }
+      },
+      "type": "project",
+      "name": "my-fork",
+      "key": "MYF",
+      "uuid": "{d0fe763c-e942-4f3d-8697-d9e8706a9831}"
+    },
+    "full_name": "sefftinge/sample-repository",
+    "owner": {
+      "display_name": "Sven Efftinge",
+      "account_id": "557058:964d5de0-9ae8-47e7-9ca2-9448caeb50ea",
+      "links": {
+        "self": {
+          "href": "https://api.bitbucket.org/2.0/users/%7B5a2edac8-2bdf-4ecf-b13f-0d617d385906%7D"
+        },
+        "html": {
+          "href": "https://bitbucket.org/%7B5a2edac8-2bdf-4ecf-b13f-0d617d385906%7D/"
+        },
+        "avatar": {
+          "href": "https://secure.gravatar.com/avatar/412638567358064fbfa1d430b87a8057?d=https%3A%2F%2Favatar-management--avatars.us-west-2.prod.public.atl-paas.net%2Finitials%2FSE-2.png"
+        }
+      },
+      "nickname": "Sven Efftinge",
+      "type": "user",
+      "uuid": "{5a2edac8-2bdf-4ecf-b13f-0d617d385906}"
+    },
+    "type": "repository",
+    "is_private": true,
+    "name": "Sample Repository"
+  }
+}

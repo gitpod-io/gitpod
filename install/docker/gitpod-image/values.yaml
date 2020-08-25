@@ -1,0 +1,19 @@
+# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+hostname: $DOMAIN
+
+authProviders: null
+
+components:
+  wsManagerNode:
+    containerdSocket: /run/k3s/containerd/containerd.sock
+  wsSync:
+    fullWorkspaceBackup:
+      containerd:
+          socket: /run/k3s/containerd/containerd.sock
+  workspace:
+    template:
+      spec:
+        dnsConfig: null
+        dnsPolicy: ClusterFirst

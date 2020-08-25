@@ -1,0 +1,259 @@
+{
+  "pod": {
+    "metadata": {
+      "name": "ws-64f47106-40bb-4dd3-a33e-ccb9d7a09052",
+      "namespace": "staging-cw-integrate-wsman-server",
+      "selfLink": "/api/v1/namespaces/staging-cw-integrate-wsman-server/pods/ws-64f47106-40bb-4dd3-a33e-ccb9d7a09052",
+      "uid": "dba34509-76db-11e9-8a1b-42010a840224",
+      "resourceVersion": "99677944",
+      "creationTimestamp": "2019-05-15T06:37:06Z",
+      "labels": {
+        "gpwsman": "true",
+        "headless": "true",
+        "metaID": "c8b465cb-8039-4c5f-a9c6-2496d9589414",
+        "owner": "c558ce76-6cf3-4548-a9fe-97375d75c1ef",
+        "workspaceID": "64f47106-40bb-4dd3-a33e-ccb9d7a09052",
+        "workspaceType": "prebuild"
+      },
+      "annotations": {
+        "cni.projectcalico.org/podIP": "10.0.205.57/32",
+        "gitpod/id": "64f47106-40bb-4dd3-a33e-ccb9d7a09052",
+        "gitpod/servicePrefix": "c8b465cb-8039-4c5f-a9c6-2496d9589414",
+        "gitpod/snapshot": "workspaces/64f47106-40bb-4dd3-a33e-ccb9d7a09052/dd8fca84-76db-11e9-b431-1a98a86a11e4.tar@gitpod-dev-user-c558ce76-6cf3-4548-a9fe-97375d75c1ef",
+        "gitpod/url": "http://c8b465cb-8039-4c5f-a9c6-2496d9589414.ws-eu.cw-integrate-wsman-server.staging.gitpod.io",
+        "gitpod/never-ready": "true",
+        "prometheus.io/path": "/metrics",
+        "prometheus.io/port": "23000",
+        "prometheus.io/scrape": "true"
+      }
+    },
+    "spec": {
+      "volumes": [
+        {
+          "name": "vol-this-workspace",
+          "hostPath": {
+            "path": "/mnt/disks/ssd0/workspaces/64f47106-40bb-4dd3-a33e-ccb9d7a09052",
+            "type": "DirectoryOrCreate"
+          }
+        },
+        {
+            "name": "vol-this-theia",
+            "hostPath": {
+              "path": "/mnt/disks/ssd0/theia/theia-xyz",
+              "type": "Directory"
+            }
+          },
+        {
+          "name": "vol-sync-tmp",
+          "hostPath": {
+            "path": "/mnt/disks/ssd0/workspaces/sync-tmp",
+            "type": "DirectoryOrCreate"
+          }
+        },
+        {
+          "name": "default-token-bknqv",
+          "secret": {
+            "secretName": "default-token-bknqv",
+            "defaultMode": 420
+          }
+        }
+      ],
+      "containers": [
+        {
+          "name": "workspace",
+          "image": "eu.gcr.io/gitpod-dev/workspace-images/86986a733691178abdcfb50447c82ba5958ba341/eu.gcr.io/gitpod-dev/workspace-full:sha256-9c0892d1901210f3999c9bd64e371038bfc0505f04858e959e1bb3778dcf19c1",
+          "ports": [
+            {
+              "containerPort": 23000,
+              "protocol": "TCP"
+            }
+          ],
+          "env": [
+            {
+              "name": "THEIA_WORKSPACE_ROOT",
+              "value": "/workspace"
+            },
+            {
+              "name": "GITPOD_THEIA_PORT",
+              "value": "23000"
+            },
+            {
+              "name": "GITPOD_HOST",
+              "value": "http://cw-integrate-wsman-server.staging.gitpod.io"
+            },
+            {
+              "name": "GITPOD_INTERVAL",
+              "value": "30"
+            },
+            {
+              "name": "GITPOD_HEADLESS",
+              "value": "true"
+            },
+            {
+              "name": "GITPOD_WSSYNC_APITOKEN",
+              "value": "2346d8e1-0145-41d4-ab1d-34b740306e0b"
+            },
+            {
+              "name": "GITPOD_WSSYNC_APIPORT",
+              "value": "44444"
+            },
+            {
+              "name": "GITPOD_LOGIN_PUBLIC_KEY",
+              "value": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQDAhxeFQRCdDNegKsXODNY3mewqkBIo3yv0Lg+MUxWQ3jcgGpQz+r5uIAUxXTxTCm7GY/wT9mIo1ZTtWvxiPhYGRB7d1RlwdotmZmgypWxyQWXt5fbfl9MGvGq8/DEVPTygc9sGP69fz7rAkpNKrAfgDSEV7pVknZdW7ZnxyXObCQ==\n"
+            },
+            {
+              "name": "GITPOD_REPO_ROOT",
+              "value": "/workspace/bel"
+            },
+            {
+              "name": "GITPOD_CLI_APITOKEN",
+              "value": "685a86de-a98d-440f-a4ab-54464577082d"
+            },
+            {
+              "name": "GITPOD_WORKSPACE_ID",
+              "value": "c8b465cb-8039-4c5f-a9c6-2496d9589414"
+            },
+            {
+              "name": "GITPOD_GIT_USER_NAME",
+              "value": "Christian Weichel"
+            },
+            {
+              "name": "GITPOD_GIT_USER_EMAIL",
+              "value": "some@user.com"
+            }
+          ],
+          "resources": {
+            "limits": {
+              "cpu": "7",
+              "memory": "3246Mi"
+            },
+            "requests": {
+              "cpu": "1m",
+              "memory": "3246Mi"
+            }
+          },
+          "volumeMounts": [
+            {
+              "name": "vol-this-workspace",
+              "mountPath": "/workspace"
+            },
+            {
+              "name": "vol-this-theia",
+              "mountPath": "/theia"
+            },
+            {
+              "name": "default-token-bknqv",
+              "readOnly": true,
+              "mountPath": "/var/run/secrets/kubernetes.io/serviceaccount"
+            }
+          ],
+          "livenessProbe": {
+            "httpGet": {
+              "path": "/",
+              "port": 23000,
+              "scheme": "HTTP"
+            },
+            "timeoutSeconds": 1,
+            "periodSeconds": 30,
+            "successThreshold": 1,
+            "failureThreshold": 3
+          },
+          "readinessProbe": {
+            "httpGet": {
+              "path": "/",
+              "port": 23000,
+              "scheme": "HTTP"
+            },
+            "timeoutSeconds": 1,
+            "periodSeconds": 1,
+            "successThreshold": 1,
+            "failureThreshold": 3
+          },
+          "terminationMessagePath": "/dev/termination-log",
+          "terminationMessagePolicy": "File",
+          "imagePullPolicy": "IfNotPresent"
+        }
+      ],
+      "restartPolicy": "Always",
+      "terminationGracePeriodSeconds": 30,
+      "dnsPolicy": "ClusterFirst",
+      "serviceAccountName": "default",
+      "serviceAccount": "default",
+      "nodeName": "gke-gitpod-dev-worker-pool-2-184c607e-845g",
+      "securityContext": {},
+      "schedulerName": "default-scheduler",
+      "tolerations": [
+        {
+          "key": "node.kubernetes.io/not-ready",
+          "operator": "Exists",
+          "effect": "NoExecute",
+          "tolerationSeconds": 300
+        },
+        {
+          "key": "node.kubernetes.io/unreachable",
+          "operator": "Exists",
+          "effect": "NoExecute",
+          "tolerationSeconds": 300
+        }
+      ],
+      "priority": 0
+    },
+    "status": {
+      "phase": "Running",
+      "conditions": [
+        {
+          "type": "Initialized",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2019-05-15T06:37:06Z"
+        },
+        {
+          "type": "Ready",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2019-05-15T06:37:10Z"
+        },
+        {
+          "type": "PodScheduled",
+          "status": "True",
+          "lastProbeTime": null,
+          "lastTransitionTime": "2019-05-15T06:37:06Z"
+        }
+      ],
+      "hostIP": "10.132.0.18",
+      "podIP": "10.0.205.57",
+      "startTime": "2019-05-15T06:37:06Z",
+      "containerStatuses": [
+        {
+          "name": "sync",
+          "state": {
+            "running": {
+              "startedAt": "2019-05-15T06:37:08Z"
+            }
+          },
+          "lastState": {},
+          "ready": true,
+          "restartCount": 0,
+          "image": "eu.gcr.io/gitpod-dev/gitpod-ws-sync:cw-integrate-wsman-server.45",
+          "imageID": "docker-pullable://eu.gcr.io/gitpod-dev/gitpod-ws-sync@sha256:cc21efdbebcf0d800e9d1f2a9346d346ca2757a79bc255a4098f8544efb8aaa3",
+          "containerID": "docker://5208401cb3cb46103dcab5d8c9858d54edebb2c37810f827de27185fe3628f4e"
+        },
+        {
+          "name": "workspace",
+          "state": {
+            "running": {
+              "startedAt": "2019-05-15T06:37:08Z"
+            }
+          },
+          "lastState": {},
+          "ready": true,
+          "restartCount": 0,
+          "image": "eu.gcr.io/gitpod-dev/workspace-images/86986a733691178abdcfb50447c82ba5958ba341/eu.gcr.io/gitpod-dev/workspace-full:sha256-9c0892d1901210f3999c9bd64e371038bfc0505f04858e959e1bb3778dcf19c1",
+          "imageID": "docker-pullable://eu.gcr.io/gitpod-dev/workspace-images/86986a733691178abdcfb50447c82ba5958ba341/eu.gcr.io/gitpod-dev/workspace-full@sha256:713ea577fd314b0f474a27ba1f2d8032638a180f6f0b97955dbcd36f753fa0bf",
+          "containerID": "docker://e0cd3f805f005570a8955316261e6404ce3192888efe6c3a52b5e46d97638944"
+        }
+      ],
+      "qosClass": "Burstable"
+    }
+  }
+}

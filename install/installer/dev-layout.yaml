@@ -1,0 +1,4 @@
+helm: "../../chart"
+terraform:
+  gcp: "../gcp-terraform"
+  aws: "../aws-terraform"

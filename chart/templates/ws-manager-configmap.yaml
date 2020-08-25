@@ -1,0 +1,114 @@
+# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{- $comp := .Values.components.wsManager -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- $wscomp := .Values.components.workspace -}}
+{{- $wsproxy := .Values.components.wsProxy -}}
+{{- if not $comp.disabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ws-manager-config
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  config.json: |-
+    {
+        "manager": {
+            "namespace": "{{ .Release.Namespace }}",
+            "schedulerName": "{{ .Values.workspaceScheduler }}",
+            "dryRun": false,
+            "wssync": {
+                "port": {{ .Values.components.wsSync.servicePort }},
+                "tls": {
+                    "ca": "/certs/ca.crt",
+                    "crt": "/certs/tls.crt",
+                    "key": "/certs/tls.key"
+                }
+            },
+            "container": {
+                "workspace": {
+                    {{- if .Values.workspaceSizing.memoryRequest }}
+                    "requests": {
+                        "cpu": "1m",
+                        "memory": "{{ .Values.workspaceSizing.memoryRequest }}Mi"
+                    },
+                    "limits": {
+                        "cpu": "5",
+                        "memory": "{{ .Values.workspaceSizing.memoryLimit }}Mi"
+                    },
+                    {{ else -}}
+                    {{- if .Values.workspaceSizing.requests }}
+                    "requests": {{ toJson .Values.workspaceSizing.requests }},
+                    {{ end -}}
+                    {{- if .Values.workspaceSizing.limits }}
+                    "limits": {{ toJson .Values.workspaceSizing.limits }},
+                    {{ end -}}
+                    {{ end -}}
+                    "image": "OVERWRITTEN-IN-REQUEST"
+                }
+            },
+            "heartbeatInterval": "30s",
+            "hostURL": "{{- template "gitpod.scheme" $this -}}://{{ $.Values.hostname }}",
+            "initProbe": {
+                "timeout": "1s"
+                {{- if eq .Values.ingressMode "noDomain" }}
+                ,"disabled": true
+                {{- end }}
+            },
+            {{- if eq .Values.ingressMode "hosts" }}
+            "urlTemplate":     "{{- template "gitpod.scheme" $this -}}://{{"{{ .Prefix }}"}}.ws{{- if $.Values.installation.shortname -}}-{{ $.Values.installation.shortname }}{{- end -}}.{{ $.Values.hostname }}",
+            "portUrlTemplate": "{{- template "gitpod.scheme" $this -}}://{{"{{ .WorkspacePort }}"}}-{{"{{ .Prefix }}"}}.ws{{- if $.Values.installation.shortname -}}-{{ $.Values.installation.shortname }}{{- end -}}.{{ $.Values.hostname }}",
+            {{- else if eq .Values.ingressMode "pathAndHost" }}
+            "urlTemplate":     "{{- template "gitpod.scheme" $this -}}://{{ $.Values.hostname }}/workspace/{{"{{ .Prefix }}"}}/",
+            "portUrlTemplate": "http://{{"{{ .WorkspacePort }}"}}-{{"{{ .Prefix }}"}}.ws{{- if $.Values.installation.shortname -}}-{{ $.Values.installation.shortname }}{{- end -}}.{{ $.Values.hostname }}",
+            {{- else }}
+            "urlTemplate":     "{{- template "gitpod.scheme" $this -}}://{{ $.Values.hostname }}/workspace/{{"{{ .Prefix }}"}}/",
+            "portUrlTemplate": "{{- template "gitpod.scheme" $this -}}://{{"{{ .WorkspacePort }}"}}-{{"{{ .Prefix }}"}}.ws{{- if $.Values.installation.shortname -}}-{{ $.Values.installation.shortname }}{{- end -}}.{{ $.Values.hostname }}",
+            {{- end }}
+            "workspaceHostPath": "{{ .Values.components.wsSync.hostWorkspaceArea }}",
+            "theiaHostPath": "{{ .Values.components.nodeDaemon.theiaHostBasePath }}/theia/theia-{{ .Values.version }}",
+            "podTemplate": {
+                {{- if $wscomp.templates }}
+                {{ if (or $wscomp.templates.prebuild $wscomp.affinity) -}}"prebuildPath": "/workspace-template/prebuild.yaml",{{- end }}
+                {{ if (or $wscomp.templates.probe $wscomp.affinity) -}}"probePath": "/workspace-template/probe.yaml",{{- end }}
+                {{ if (or $wscomp.templates.regular $wscomp.affinity) -}}"regularPath": "/workspace-template/regular.yaml",{{- end }}
+                {{ end -}}
+                "defaultPath": "/workspace-template/default.yaml"
+            },
+            "timeouts": {
+                "afterClose": "2m",
+                "headlessWorkspace": "60m",
+                "initialization": "30m",
+                "regularWorkspace": "30m",
+                "startup": "60m",
+                "contentFinalization": "15m",
+                "stopping": "60m",
+                "interrupted": "5m"
+            },
+            {{ if $comp.eventTraceLogLocation }}"eventTraceLog": "{{ $comp.eventTraceLogLocation }}",{{- end }}
+            "reconnectionInterval": "30s",
+            "registryFacadeHost": {{ (printf "reg.%s:%v" (.Values.components.registryFacade.hostname | default .Values.hostname) .Values.components.wsManagerNode.registryProxyPort) | quote }}
+            {{- if and (not $wsproxy.disabled) (eq .Values.ingressMode "noDomain") -}}
+            , "ingressPortAllocator": {
+                "ingressRange": {
+                    "start": {{ $wsproxy.ingress.portRange.start }},
+                    "end": {{ $wsproxy.ingress.portRange.end }}
+                },
+               "stateResyncInterval": "30m"
+            }
+            {{- end }}
+            {{ if $comp.additionalConfig }}, {{ $comp.additionalConfig | toJson | trim | trimPrefix "{" | trimSuffix "}" }}{{- end }}
+        },
+        "content": {
+            "storage": {{ toJson .Values.components.wsSync.remoteStorage }}
+        },
+        "rpcServerAddr": ":8080",
+        "pprofAddr": "localhost:6060",
+        "prometheusAddr": ":9500"
+    }
+{{- end -}}

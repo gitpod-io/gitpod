@@ -1,0 +1,6 @@
+packages:
+  - name: all
+    type: generic
+    deps:
+      - dev/image:docker
+      - dev/sweeper:docker

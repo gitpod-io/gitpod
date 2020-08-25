@@ -1,0 +1,108 @@
+/**
+ * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
+.gitpod-extension-ellipsis {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.gitpod-upload-extension {
+    text-align: center;
+    padding-top: 22px;
+    padding-bottom: 22px;
+    white-space: normal;
+}
+
+.gitpod-upload-extension .link {
+    color: var(--theia-textLink-foreground);
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-block;
+}
+
+.gitpod-upload-extension .link:hover {
+    color: var(--theia-textLink-activeForeground);
+}
+
+.gitpod-extensions-view {
+    height: 100%;
+}
+
+.gitpod-extensions-view-icon {
+    -webkit-mask: url('extensions.svg');
+    mask: url('extensions.svg');
+}
+
+.gitpod-extension {
+    display: flex;
+    flex-direction: row;
+    min-height: calc(var(--theia-content-line-height)*3);
+    align-items: center;
+}
+
+.gitpod-extension-icon {
+    height: 42px;
+    width: 42px;
+    background-size: 42px;
+    background-repeat: no-repeat;
+    background-image: url('defaultIcon.png');
+    align-self: center;
+    padding-right: calc(var(--theia-ui-padding)*2.5);
+    flex-shrink: 0;
+}
+
+.gitpod-extension-content {
+    display: flex;
+    flex-direction: column;
+    width: calc(100% - 42px - var(--theia-ui-padding)*2.5);
+    line-height: calc(var(--theia-content-line-height)*17/22);
+}
+
+.gitpod-extension-name {
+    font-weight: bold;
+}
+
+.gitpod-extension-version {
+    opacity: .85;
+    font-size: 80%;
+}
+
+.gitpod-extension-description {
+    padding-right: calc(var(--theia-ui-padding)*2);
+}
+
+.gitpod-extension-publisher {
+    font-weight: 600;
+    font-size: 90%;
+}
+
+.gitpod-extension-action-bar {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.gitpod-extension-action {
+    font-size: 80%;
+    min-width: auto !important;
+    padding: 2px var(--theia-ui-padding) !important;
+    margin-top: 2px;
+}
+
+.theia-vsx-extension-editor .theia-vsx-extension-action-bar {
+    justify-content: left;
+}
+
+.theia-vsx-extension-editor .theia-vsx-extension-action-bar .action {
+    margin-left: calc(var(--theia-ui-padding)*2);
+}
+
+.theia-vsx-extension-editor .theia-vsx-extension-action-bar > :first-child {
+    margin-left: 0;
+}

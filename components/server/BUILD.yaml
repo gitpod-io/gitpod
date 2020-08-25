@@ -1,0 +1,63 @@
+packages:
+  - name: app
+    type: yarn
+    srcs:
+      - "src/**"
+      - "ee/**"
+      - "test/**"
+      - package.json
+      - mocha.opts
+    deps:
+      - components/content-service-api/typescript:lib
+      - components/gitpod-db:lib
+      - components/gitpod-messagebus:lib
+      - components/gitpod-protocol:lib
+      - components/image-builder-api/typescript:lib
+      - components/licensor/typescript:lib
+      - components/ws-manager-api/typescript:lib
+    config:
+      packaging: offline-mirror
+      yarnLock: ${coreYarnLockBase}/yarn.lock
+      tsconfig: tsconfig.json
+  - name: docker
+    type: docker
+    deps:
+      - :app
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      image:
+        - ${imageRepoBase}/server:${version}
+  - name: lib
+    type: yarn
+    srcs:
+      - "src/**"
+      - "ee/**"
+      - "test/**"
+      - package.json
+      - mocha.opts
+    deps:
+      - components/content-service-api/typescript:lib
+      - components/gitpod-db:lib
+      - components/gitpod-messagebus:lib
+      - components/gitpod-protocol:lib
+      - components/image-builder-api/typescript:lib
+      - components/licensor/typescript:lib
+      - components/ws-manager-api/typescript:lib
+    config:
+      packaging: library
+      yarnLock: ${coreYarnLockBase}/yarn.lock
+      tsconfig: tsconfig.json
+      commands:
+        test: ["yarn", "test"]
+        build: ["npx", "tsc"]
+scripts:
+  - name: telepresence
+    script: |
+      export GITPOD_LAYER_NAME=`git log -n 1 --pretty=format:%H -- ../../devops/images/workspace-image-builder/`
+
+      telepresence --swap-deployment server \
+                   --method vpn-tcp \
+                   --run yarn start-ee-inspect | \
+        leeway run gitpod-core/components:dejson-log-output

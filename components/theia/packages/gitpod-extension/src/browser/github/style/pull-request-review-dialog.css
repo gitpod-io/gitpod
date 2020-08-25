@@ -1,0 +1,26 @@
+/**
+ * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
+.pull-request-review-dialog .label {
+    margin: 2px 0;
+}
+
+.pull-request-review-dialog .state-option {
+    margin-bottom: 8px;
+}
+
+.pull-request-review-dialog .state-option label {
+    display: flex;
+}
+
+.pull-request-review-dialog .state-option .radiobox {
+    margin-right: 8px;
+    margin-left: 8px;
+}
+
+.pull-request-review-dialog .state-option .description {
+    color: var(--theia-descriptionForeground);
+}

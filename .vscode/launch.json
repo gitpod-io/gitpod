@@ -1,0 +1,18 @@
+{
+    "configurations": [
+        {
+            "name": "Attach to Node",
+            "type": "node",
+            "request": "attach",
+            "smartStep": true,
+            "port": 9229
+        },
+        {
+            "name": "Attach to Delve",
+            "type": "go",
+            "request": "attach",
+            "port": 32991,
+            "mode": "remote"     
+        }
+    ]
+}

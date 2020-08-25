@@ -1,0 +1,35 @@
+{
+  "hostBasedIngress": ":8080",
+  "portBasedIngress": {
+    "start": 10000,
+    "end": 11000
+  },
+  "workspaceInfoProviderConfig": {
+    "wsManagerAddr": "ws-manager:8080",
+    "reconnectInterval": "3s"
+  },
+  "proxy": {
+    "transportConfig": {
+      "connectTimeout": "10s",
+      "idleConnTimeout": "60s",
+      "websocketIdleConnTimeout": "180s",
+      "maxIdleConns": 100
+    },
+    "theiaServer": {
+      "scheme": "http",
+      "host": "theia-server.staging-gpl-portal.svc.cluster.local:80",
+      "staticVersionPathPrefix": "/gpl-portal.3"
+    },
+    "gitpodInstallation": {
+      "scheme": "http",
+      "hostName": "gpl-portal.staging.gitpod-dev.com",
+      "workspaceHostSuffix": ".ws-dev.gpl-portal.staging.gitpod-dev.com"
+    },
+    "workspacePodConfig": {
+      "serviceTemplate": "http://ws-{{ .workspaceID }}-theia.staging-gpl-portal.svc.cluster.local:{{ .port }}",
+      "portServiceTemplate": "http://ws-{{ .workspaceID }}-ports.staging-gpl-portal.svc.cluster.local:{{ .port }}",
+      "theiaPort": 23000,
+      "supervisorPort": 22999
+    }
+  }
+}

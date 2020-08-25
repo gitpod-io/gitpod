@@ -1,0 +1,10 @@
+{
+    "private": true,
+    "name": "@gitpod/ws-proxy",
+    "version": "0.1.5",
+    "license": "UNLICENSED",
+    "scripts": {
+      "preflight": "go fmt ./... && go test -v ./... && golangci-lint run"
+    }
+  }
+  

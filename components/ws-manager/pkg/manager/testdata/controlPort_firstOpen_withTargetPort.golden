@@ -1,0 +1,44 @@
+{
+    "portsService": {
+        "metadata": {
+            "name": "ws-servicePrefix-ports",
+            "creationTimestamp": null,
+            "labels": {
+                "gpwsman": "true",
+                "metaID": "",
+                "workspaceID": "foobar"
+            },
+            "annotations": {
+                "gitpod/ingressPorts": "{\"8080\":{\"workspacePort\":8080,\"ingressPort\":10887}}",
+                "gitpod/port-url-8080": "gitpod.io:10887"
+            }
+        },
+        "spec": {
+            "ports": [
+                {
+                    "name": "p8080-public",
+                    "protocol": "TCP",
+                    "port": 8080,
+                    "targetPort": 38080
+                }
+            ],
+            "selector": {
+                "gpwsman": "true",
+                "workspaceID": "foobar"
+            },
+            "type": "ClusterIP"
+        },
+        "status": {
+            "loadBalancer": {}
+        }
+    },
+    "response": {},
+    "postChangeStatus": [
+        {
+            "port": 8080,
+            "target": 38080,
+            "visibility": 1,
+            "url": "gitpod.io:10887"
+        }
+    ]
+}

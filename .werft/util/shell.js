@@ -1,0 +1,73 @@
+const shell = require('shelljs');
+const fs = require('fs');
+
+// werft helps produce werft related log output
+const werft = {
+    phase: (name, desc) => console.log(`[${name}|PHASE] ${desc || name}`),
+    log: (slice, msg) => console.log(`[${slice}] ${msg}`),
+    logOutput: (slice, cmd) => {
+        console.log(cmd.toString().split("\n").map(l => `[${slice}] ${l}`).join("\n"))
+    },
+    fail: (slice, err) => {
+        console.log(`[${slice}|FAIL] ${err}`);
+        throw err;
+    },
+    done: (slice) => console.log(`[${slice}|DONE]`),
+}
+
+// exec executes a command and throws an exception if that command exits with a non-zero exit code
+const exec = (cmd, options) => {
+    if (options && options.slice) {
+        options.silent = true;
+    }
+
+    const handleResult = (result, options) => {
+        if (options && options.slice) {
+            werft.logOutput(options.slice, result.stderr || result.stdout);
+        }
+
+        if ((!options || !options.dontCheckRc) && result.code !== 0) {
+            throw new Error(`${cmd} exit with non-zero status code`);
+        }
+    };
+
+    if (options && options.async) {
+        return new Promise((resolve, reject) => {
+            shell.exec(cmd, options, (code, stdout, stderr) => {
+                try {
+                    const result = { code, stdout, stderr };
+                    handleResult(result, options);
+                    resolve(result);
+                } catch (err) {
+                    reject(err)
+                }
+            });
+        });
+    } else {
+        const result = shell.exec(cmd, options);
+        handleResult(result, options);
+        return result;
+    }
+}
+
+// gitTag tags the current state and pushes that tag to the repo origin
+const gitTag = (tag) => {
+    shell.mkdir("/root/.ssh")
+    fs.writeFileSync("/root/.ssh/config", `Host github.com
+    UserKnownHostsFile=/dev/null
+    StrictHostKeyChecking no
+    IdentitiesOnly yes
+    IdentityFile /mnt/secrets/github-ssh-key/github-ssh-key.pem`)
+    shell.chmod(600, '/root/.ssh/*')
+    shell.chmod(700, '/root/.ssh')
+
+    exec("git config --global url.ssh://git@github.com/.insteadOf https://github.com/")
+    exec(`git tag -f ${tag}`)
+    exec(`git push -f origin ${tag}`)
+}
+
+module.exports = {
+    werft: werft,
+    exec: exec,
+    gitTag: gitTag
+}

@@ -1,0 +1,16 @@
+packages:
+  - name: lib
+    type: go
+    srcs:
+      - "go.mod"
+      - "go.sum"
+      - "ee/pkg/**/*.go"
+    config:
+      packaging: library
+  - name: app
+    type: go
+    srcs:
+      - "go.mod"
+      - "go.sum"
+      - "**/*.go"
+      - "*.go"

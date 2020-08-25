@@ -1,0 +1,51 @@
+args:
+- name: namespace
+  desc: "The namespace to remove - if left empty this job removes all preview environments"
+  required: false
+pod:
+  serviceAccount: werft
+  nodeSelector:
+    cloud.google.com/gke-nodepool: workload
+  imagePullSecrets:
+  - name: eu-gcr-io-pull-secret
+  volumes:
+  - name: gcp-sa
+    secret:
+      secretName: gcp-sa-gitpod-dev-deployer
+  containers:
+  - name: wipe-devstaging
+    image: eu.gcr.io/gitpod-core-dev/dev-environment:cw-dev.1
+    workingDir: /workspace
+    imagePullPolicy: Always
+    volumeMounts:
+    - name: gcp-sa
+      mountPath: /mnt/secrets/gcp-sa
+      readOnly: true
+    command:
+    - bash 
+    - -c
+    - |
+      sleep 1
+      set -Eeuo pipefail
+
+      werft log phase prepare
+      gcloud auth activate-service-account --key-file /mnt/secrets/gcp-sa/service-account.json
+      gcloud container clusters get-credentials dev --zone europe-west1-b --project gitpod-core-dev
+
+      NAMESPACE="{{ .Annotations.namespace }}"
+      if [ "$NAMESPACE" = "<no value>" ]; then
+        NAMESPACE=""
+        echo "Going to wipe all namespaces"
+      else
+        echo "Going to wipe namespace '$NAMESPACE'"
+      fi
+
+      for obj in clusterrole clusterrolebinding podsecuritypolicy namespace; do
+        werft log phase $obj Deleting old ${obj}...
+        OBJS_FILE=$(mktemp)
+        kubectl get $obj --no-headers -o=custom-columns=:metadata.name | grep -e staging -e testing | (grep "$NAMESPACE" || true) | tee "$OBJS_FILE"
+        if [ $(cat "$OBJS_FILE" | wc -l) -gt 0 ]; then
+          cat "$OBJS_FILE" | xargs kubectl delete $obj
+        fi
+        werft log phase $obj Deleted old ${obj}.
+      done

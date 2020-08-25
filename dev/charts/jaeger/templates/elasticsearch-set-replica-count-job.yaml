@@ -1,0 +1,43 @@
+{{ if .Values.elasticsearch.enabled -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: elasticsearch-set-replica-count
+  labels:
+    kind: job
+    component: elasticsearch-set-replica-count
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+  annotations:
+    # This is what defines this resource as a hook. Without this line, the
+    # job is considered part of the release.
+    # see https://github.com/helm/helm/blob/master/docs/charts_hooks.md
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded,hook-failed
+    "helm.sh/hook-delete-timeout": "0"
+spec:
+  template:
+    metadata:
+      name: elasticsearch-set-replica-count
+      labels:
+        kind: job
+        component: elasticsearch-set-replica-count
+        chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+        release: "{{ .Release.Name }}"
+        heritage: "{{ .Release.Service }}"
+    spec:
+      restartPolicy: Never
+      serviceAccountName: monitoring-jaeger
+      containers:
+      - name: elasticsearch-set-replica-count
+        image: "csweichel/alpine-curl:latest"
+        command:
+        - sh
+        - -c
+        - |
+          sleep 60;
+          curl -XPUT -H 'Content-Type: application/json' 'http://elasticsearch-master:9200/_all/_settings' -d '{"index.number_of_replicas" : "0"}';
+          curl -XPUT -H "Content-Type: application/json" 'http://elasticsearch-master:9200/_template/all' -d '{"template": "*", "settings": { "number_of_replicas": 0 }}';
+{{- end }}

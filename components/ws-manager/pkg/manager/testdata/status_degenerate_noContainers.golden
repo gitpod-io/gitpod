@@ -1,0 +1,4 @@
+{
+    "status": null,
+    "error": "workspace pod for foobaz is degenerate - does not have workspace container"
+}

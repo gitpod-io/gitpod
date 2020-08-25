@@ -1,0 +1,27 @@
+{
+  "private": true,
+  "name": "@gitpod/content-service",
+  "version": "0.1.5",
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "mkdir -p lib; tsc && cp -f src/*.js src/*d.ts lib"
+  },
+  "files": [
+    ".",
+    "lib"
+  ],
+  "dependencies": {
+    "grpc": "^1.21.1",
+    "google-protobuf": "^3.8.0-rc.1",
+    "inversify": "^5.0.1",
+    "opentracing": "^0.14.4",
+    "node-pre-gyp": "^0.13.0",
+    "request": "^2.88.2"
+  },
+  "devDependencies": {
+    "@types/google-protobuf": "^3.2.7",
+    "grpc-tools": "^1.7.2",
+    "grpc_tools_node_protoc_ts": "^2.5.0",
+    "typescript-formatter": "^7.2.2"
+  }
+}

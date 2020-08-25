@@ -1,0 +1,27 @@
+{
+    "status": {
+        "id": "64f47106-40bb-4dd3-a33e-ccb9d7a09052",
+        "metadata": {
+            "owner": "c558ce76-6cf3-4548-a9fe-97375d75c1ef",
+            "meta_id": "c8b465cb-8039-4c5f-a9c6-2496d9589414",
+            "started_at": {
+                "seconds": 1557902226
+            }
+        },
+        "spec": {
+            "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images/86986a733691178abdcfb50447c82ba5958ba341/eu.gcr.io/gitpod-dev/workspace-full:sha256-9c0892d1901210f3999c9bd64e371038bfc0505f04858e959e1bb3778dcf19c1",
+            "headless": true,
+            "url": "http://c8b465cb-8039-4c5f-a9c6-2496d9589414.ws-eu.cw-integrate-wsman-server.staging.gitpod.io",
+            "type": 1
+        },
+        "phase": 4,
+        "conditions": {
+            "snapshot": "workspaces/64f47106-40bb-4dd3-a33e-ccb9d7a09052/dd8fca84-76db-11e9-b431-1a98a86a11e4.tar@gitpod-dev-user-c558ce76-6cf3-4548-a9fe-97375d75c1ef",
+            "deployed": 1
+        },
+        "runtime": {
+            "node_name": "gke-gitpod-dev-worker-pool-2-184c607e-845g"
+        },
+        "auth": {}
+    }
+}

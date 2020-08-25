@@ -1,0 +1,17 @@
+/**
+ * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
+/* TODO parametrize with variables */
+/* TODO support light theme */
+/* TODO support dark theme */
+
+@import './github-views.css';
+@import './github-icons.css';
+@import './comment-form.css';
+@import './pull-request-widget.css';
+@import './github-git-widget.css';
+@import './github-editor-widget.css';
+@import './pull-request-review-dialog.css';

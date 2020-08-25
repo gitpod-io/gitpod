@@ -1,0 +1,17 @@
+# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+# requirements.yaml
+dependencies:
+- name: docker-registry
+  version: 1.8.x
+  repository: https://kubernetes-charts.storage.googleapis.com/
+  condition: docker-registry.enabled
+- name: minio
+  version: 2.5.x
+  repository: https://kubernetes-charts.storage.googleapis.com/
+  condition: minio.enabled
+- name: mysql
+  version: 1.6.3
+  repository: https://kubernetes-charts.storage.googleapis.com
+  condition: mysql.enabled 
