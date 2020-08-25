@@ -146,6 +146,9 @@ components:
     name: "dashboard"
     dependsOn:
     - "dashboard-configmap.yaml"
+    resources:
+      cpu: 100m
+      memory: 32Mi
     ports:
       http:
         expose: true
@@ -172,7 +175,7 @@ components:
     dindResources:
       requests:
         cpu: 100m
-        memory: 256Mi
+        memory: 128Mi
     ports:
       rpc:
         expose: true
@@ -187,6 +190,9 @@ components:
     dependsOn:
     - "registry-facade-configmap.yaml"
     certificatesSecret: {}
+    resources:
+      cpu: 100m
+      memory: 32Mi
     ports:
       registry:
         expose: true
@@ -261,6 +267,9 @@ components:
 
   messagebus:
     name: "messagebus"
+    resources:
+      cpu: 100m
+      memory: 128Mi
     ports:
       amqp:
         expose: true
@@ -303,6 +312,9 @@ components:
   theiaServer:
     name: "theia-server"
     replicas: 1
+    resources:
+      cpu: 100m
+      memory: 16Mi
     ports:
       http:
         expose: true
@@ -312,6 +324,9 @@ components:
 
   wsManager:
     name: "ws-manager"
+    resources:
+      cpu: 100m
+      memory: 32Mi
     ports:
       rpc:
         expose: true
@@ -323,6 +338,9 @@ components:
   wsManagerBridge:
     name: "ws-manager-bridge"
     defaultConfig: true
+    resources:
+      cpu: 100m
+      memory: 64Mi
     ports:
       metrics:
         expose: false
@@ -331,6 +349,9 @@ components:
   wsManagerNode:
     name: "ws-manager-node"
     registryProxyPort: 8081
+    resources:
+      cpu: 100m
+      memory: 32Mi
 
   wsSync:
     name: "ws-sync"
@@ -356,6 +377,9 @@ components:
   wsScheduler:
     name: "ws-scheduler"
     disabled: false
+    resources:
+      cpu: 100m
+      memory: 32Mi
     schedulerName: "workspace-scheduler"
     scalerDisabled: true
     scalerConfig:
@@ -367,6 +391,9 @@ components:
   cerc:
     name: cerc
     disabled: true
+    resources:
+      cpu: 100m
+      memory: 32Mi
     dependsOn:
       - "cerc-configmap.yaml"
     ports:
@@ -391,7 +418,10 @@ components:
   wsProxy:
     name: "ws-proxy"
     disabled: true
-    replicas: 2
+    resources:
+      cpu: 100m
+      memory: 64Mi
+    replicas: 1
     useHTTPS: false
     ports:
       httpProxy:
