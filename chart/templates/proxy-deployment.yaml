@@ -1,7 +1,7 @@
 # Copyright (c) 2020 TypeFox GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
-{{- define "gitpod.container.configmap.volumeMounts" -}}
+{{ define "gitpod.container.configmap.volumeMounts" -}}
 {{- $ := .root -}}
 {{- $gp := .gp -}}
 {{- $comp := .comp -}}
@@ -25,7 +25,7 @@
 {{- end }}
 {{- end -}}
 
-{{- $comp := .Values.components.proxy -}}
+{{ $comp := .Values.components.proxy -}}
 {{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
 {{- $wsProxy := .Values.components.wsProxy -}}
 {{- $thisWsProxy := dict "root" . "gp" $.Values "comp" $wsProxy -}}
