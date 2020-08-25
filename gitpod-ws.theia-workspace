@@ -1,9 +1,11 @@
 {
    "folders": [
       { "path": "" },
-      { "path": "components/ee/cerc" },
       { "path": "components/common-go" },
       { "path": "components/content-service" },
+      { "path": "components/ee/cerc" },
+      { "path": "components/ee/ws-manager" },
+      { "path": "components/ee/ws-scheduler" },
       { "path": "components/gitpod-cli" },
       { "path": "components/image-builder" },
       { "path": "components/licensor" },
@@ -11,9 +13,7 @@
       { "path": "components/service-waiter" },
       { "path": "components/theia/supervisor" },
       { "path": "components/ws-manager-node" },
-      { "path": "components/ee/ws-manager" },
       { "path": "components/ws-proxy" },
-      { "path": "components/ws-scheduler" },
       { "path": "components/ws-sync" },
       { "path": "install/installer" }
    ],
