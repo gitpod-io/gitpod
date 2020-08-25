@@ -10,7 +10,7 @@ import { suite, test } from "mocha-typescript"
 import { TEST_TOKENS, TestGitHubComRestApi } from '../github-model/setup.test';
 import { GitHubApiError } from './github';
 
-@suite
+@suite.skip
 export class GitHubRestApiTests {
 
     static before() {
