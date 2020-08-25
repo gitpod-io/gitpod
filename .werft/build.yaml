@@ -10,9 +10,6 @@ pod:
   - name: gcp-sa-release
     secret:
       secretName: gcp-sa-gitpod-release-deployer
-  - name: gcp-sa-gitpod-helmchartregistry
-    secret:
-      secretName: gcp-sa-gitpod-helmchartregistry-deployer
   # - name: deploy-key
   #   secret:
   #     secretName: deploy-key
@@ -42,9 +39,6 @@ pod:
       readOnly: true
     - name: gcp-sa-release
       mountPath: /mnt/secrets/gcp-sa-release
-      readOnly: true
-    - name: gcp-sa-gitpod-helmchartregistry
-      mountPath: /mnt/secrets/gcp-sa-gitpod-helmchartregistry
       readOnly: true
     # - name: deploy-key
     #   mountPath: /mnt/secrets/deploy-key
