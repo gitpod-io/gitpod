@@ -15,6 +15,9 @@ DOMAIN=${DOMAIN:-}
 DNSSERVER=${DNSSERVER:-}
 
 
+mkdir -p /values
+
+
 if [ ! -z "$BASEDOMAIN" ] && [ -z "$DOMAIN" ]; then
     DOMAIN="gitpod.$BASEDOMAIN"
     export DOMAIN
@@ -60,7 +63,7 @@ data:
   privkey.pem: $PRIVKEY
 EOF
 
-    cat << EOF >> /default_values.yaml
+    cat << EOF > /values/_certificates_secret.yaml
 certificatesSecret:
   secretName: proxy-config-certificates
 EOF
@@ -69,9 +72,9 @@ fi
 
 case "$DOMAIN" in 
   *ip.mygitpod.com)
-    cat << EOF >> /default_values.yaml
-echo "forceHTTPS: true
-echo "ingressMode: pathAndHost
+    cat << EOF > /values/_ip_mygitpod_com.yaml
+forceHTTPS: true
+ingressMode: pathAndHost
 components:
   wsProxy:
     disabled: false
