@@ -1,5 +1,4 @@
-
-![image](https://user-images.githubusercontent.com/372735/89756447-d76e1000-dae2-11ea-8f34-29048130a1ba.png)
+<img alt="Gitpod Logo" src="https://raw.githubusercontent.com/gitpod-io/gitpod/master/components/dashboard/public/images/gitpod-ddd_light.svg" width="300">
 
 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/from-referrer/)
 [![Werft.dev - Gitpod CI](https://img.shields.io/badge/Werft.dev-CI--builds-green)](https://werft.gitpod-dev.com/)
