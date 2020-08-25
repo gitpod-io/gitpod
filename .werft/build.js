@@ -135,6 +135,18 @@ async function deployToDev(version) {
         werft.fail('secret', err);
     }
 
+    werft.log("authProviders", "copy authProviders")
+    try {
+        exec(`kubectl get secret preview-envs-authproviders --namespace=keys --export -o yaml \
+                | yq r - data.authProviders \
+                | base64 -d -w 0 \
+                > authProviders`, {silent: true}).stdout.trim();
+        exec(`yq merge --inplace .werft/values.dev.yaml ./authProviders`)
+        werft.done('authProviders');
+    } catch (err) {
+        werft.fail('authProviders', err);
+    }
+
     // TODO [geropl] Now that the certs reside in a separate namespaces, start the actual certificate issuing _before_ the namespace cleanup
     werft.log('certificate', "organizing a certificate for the preview environment...");
     const certificatePromise = issueAndInstallCertficate(namespace, domain);
