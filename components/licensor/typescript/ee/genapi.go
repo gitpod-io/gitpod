@@ -17,6 +17,15 @@ import (
 const (
 	defaultSrcPath = "../../ee/pkg/licensor"
 	leewaySrcPath  = "../components-licensor--lib/ee/pkg/licensor"
+
+	preamble = `/**
+ * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Licensed under the Gitpod Enterprise Source Code License,
+ * See License.enterprise.txt in the project root folder.
+ */
+
+// generated using github.com/32leaves/bel
+// DO NOT MODIFY`
 )
 
 func main() {
@@ -70,5 +79,8 @@ func main() {
 		panic(err)
 	}
 	defer f.Close()
-	bel.Render(res, bel.GenerateOutputTo(f), bel.GeneratePreamble("// generated using github.com/32leaves/bel\n// DO NOT MODIFY"))
+	bel.Render(res,
+		bel.GenerateOutputTo(f),
+		bel.GeneratePreamble(preamble),
+	)
 }
