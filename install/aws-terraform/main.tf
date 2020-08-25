@@ -73,9 +73,11 @@ module "gitpod" {
       wsProxy:
         disabled: false
 
-    # for debugging
-    # imagePrefix: eu.gcr.io/gitpod-core-dev/build/
-    # version: gpl-streamline-aws.7
+      proxy:
+        certbot:
+          enabled: ${var.certbot_enabled}
+          email: ${var.certificate_email}
+      
     EOT
   ]
 
