@@ -25,4 +25,4 @@ packages:
         # pack up
         - ["helm", "dependency", "build", "gitpod"]
         - ["helm", "package", "gitpod", "--destination", "."]
-        - ["rm", "-rf", "yq", "gitpod", "BUILD.yaml", "original_files.txt"]
+        - ["rm", "-rf", "yq", "BUILD.yaml", "original_files.txt"]
