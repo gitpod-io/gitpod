@@ -1,7 +1,7 @@
 # Copyright (c) 2020 TypeFox GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
-{{- if .Values.installPodSecurityPolicies -}}
+{{ if .Values.installPodSecurityPolicies -}}
 # Taken from the examples here:
 # Examples: https://kubernetes.io/docs/concepts/policy/pod-security-policy/#example-policies
 # File: https://raw.githubusercontent.com/kubernetes/website/master/content/en/examples/policy/restricted-psp.yaml

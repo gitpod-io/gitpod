@@ -1,7 +1,7 @@
 # Copyright (c) 2020 TypeFox GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
-{{- define "ws-manager-list" -}}
+{{ define "ws-manager-list" -}}
 {{- $ := .root -}}
 {{- $comp := .comp -}}
 manager:
@@ -14,7 +14,7 @@ manager:
 {{- end -}}
 {{- end -}}
 
-{{- $comp := .Values.components.server -}}
+{{ $comp := .Values.components.server -}}
 {{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
 {{- $thisWorkspace := dict "root" . "comp" .Values.components.workspace -}}
 {{- if not $comp.disabled -}}
