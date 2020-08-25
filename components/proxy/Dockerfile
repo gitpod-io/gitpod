@@ -41,6 +41,7 @@ RUN apt-get update && apt-get install -yq \
 
 # Include certbot into the proxy for HTTPS termination
 RUN curl -o /usr/bin/lama -L https://github.com/csweichel/lama/releases/download/v0.3.0/lama_0.3.0_Linux_x86_64 && \
+    chmod +x /usr/bin/lama ** \
     mkdir -p /var/www/lama/nginx && \
     touch /var/www/lama/nginx/status && \
     apt-get update && \

@@ -67,6 +67,32 @@ var gcpCmd = &cobra.Command{
 			if err != nil {
 				ui.Fatalf("cannot update the \"domain\" terraform variables:\n\t%q", err)
 			}
+		} else {
+			err = terraform.PersistVariable(tfvarsfn,
+				terraform.PersistVariableOpts{
+					Name:    "force_https",
+					Sources: []terraform.VariableValueSource{func(name string, spec terraform.VariableSpec) (value string, ok bool) { return "true", true }},
+				},
+				terraform.PersistVariableOpts{
+					Name:    "certbot_enabled",
+					Sources: []terraform.VariableValueSource{func(name string, spec terraform.VariableSpec) (value string, ok bool) { return "true", true }},
+				},
+				terraform.PersistVariableOpts{
+					Name: "certificate_email",
+					Spec: terraform.VariableSpec{
+						Description: "Gitpod will attempt to issue HTTPS certificates for you. Please provide an email that's used with Let's Encrypt to do so.",
+						Validate: func(val string) error {
+							if !strings.Contains(val, "@") {
+								return fmt.Errorf("not a valid email address")
+							}
+							return nil
+						},
+					},
+				},
+			)
+			if err != nil {
+				ui.Fatalf("cannot update the \"domain\" terraform variables:\n\t%q", err)
+			}
 		}
 
 		terraform.Run([]string{"init"}, terraform.WithBasedir(basedir), terraform.WithFatalErrors)

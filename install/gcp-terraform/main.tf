@@ -70,6 +70,8 @@ module "helm" {
   ]
 
   forceHTTPS = var.force_https
+  certificateEmail = var.certificate_email
+  certbotEnabled = var.certbot_enabled
 
   requirements = [
     module.network.done,

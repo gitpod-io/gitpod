@@ -60,6 +60,16 @@ resource "helm_release" "gitpod" {
     value = "[]"
   }
 
+  set {
+    name = "components.proxy.certbot.enaled"
+    value = var.certbotEnabled
+  }
+
+  set {
+    name = "components.proxy.certbot.email"
+    value = var.certificateEmail
+  }
+
   depends_on = [
     var.requirements
   ]
