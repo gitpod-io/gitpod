@@ -10,7 +10,7 @@ import { suite, test } from "mocha-typescript"
 import { TEST_TOKENS } from './github/github-model/setup.test';
 import { GitpodGitTokenValidator } from './gitpod-git-token-validator';
 
-@suite
+@suite.skip
 export class GitpodGitTokenValidatorTests {
 
     static before() {

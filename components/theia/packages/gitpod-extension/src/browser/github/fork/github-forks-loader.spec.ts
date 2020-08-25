@@ -11,7 +11,7 @@ import { GitHubForksLoader } from './github-forks-loader';
 import { BatchLoader } from '../github-model/batch-loader';
 import { TEST_TOKENS, TestGitHubComEndpoint, TestGitHubComRestApi } from '../github-model/setup.test';
 
-@suite
+@suite.skip
 export class ForksLoaderTests {
 
     static before() {
