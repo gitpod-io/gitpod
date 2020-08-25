@@ -4,7 +4,7 @@
       { "path": "components/common-go" },
       { "path": "components/content-service" },
       { "path": "components/ee/cerc" },
-      { "path": "components/ee/ws-manager" },
+      { "path": "components/ws-manager" },
       { "path": "components/ee/ws-scheduler" },
       { "path": "components/gitpod-cli" },
       { "path": "components/image-builder" },
