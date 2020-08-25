@@ -67,7 +67,7 @@ var gcpCmd = &cobra.Command{
 			if err != nil {
 				ui.Fatalf("cannot update the \"domain\" terraform variables:\n\t%q", err)
 			}
-		} else {
+		} else if !strings.Contains(domain, "ip.mygitpod.com") {
 			err = terraform.PersistVariable(tfvarsfn,
 				terraform.PersistVariableOpts{
 					Name:    "force_https",

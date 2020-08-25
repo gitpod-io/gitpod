@@ -71,10 +71,36 @@ var awsCmd = &cobra.Command{
 			if err != nil {
 				ui.Fatalf("cannot update the \"domain\" terraform variables.\n\t%q", err)
 			}
+		} else if !strings.Contains(domain, "ip.mygitpod.com") {
+			err = terraform.PersistVariable(tfvarsfn,
+				terraform.PersistVariableOpts{
+					Name:    "force_https",
+					Sources: []terraform.VariableValueSource{func(name string, spec terraform.VariableSpec) (value string, ok bool) { return "true", true }},
+				},
+				terraform.PersistVariableOpts{
+					Name:    "certbot_enabled",
+					Sources: []terraform.VariableValueSource{func(name string, spec terraform.VariableSpec) (value string, ok bool) { return "true", true }},
+				},
+				terraform.PersistVariableOpts{
+					Name: "certificate_email",
+					Spec: terraform.VariableSpec{
+						Description: "Gitpod will attempt to issue HTTPS certificates for you. Please provide an email that's used with Let's Encrypt to do so.",
+						Validate: func(val string) error {
+							if !strings.Contains(val, "@") {
+								return fmt.Errorf("not a valid email address")
+							}
+							return nil
+						},
+					},
+				},
+			)
+			if err != nil {
+				ui.Fatalf("cannot update the \"domain\" terraform variables:\n\t%q", err)
+			}
 		}
 
 		terraform.Run([]string{"init"}, terraform.WithBasedir(basedir), terraform.WithFatalErrors)
-		terraform.Run([]string{"apply"}, terraform.WithBasedir(basedir), terraform.WithRetry(aws.TerraformErrorRetry(
+		err = terraform.Run([]string{"apply"}, terraform.WithBasedir(basedir), terraform.WithRetry(aws.TerraformErrorRetry(
 			func(name string) {
 				err := terraform.UnsetVariable(tfvarsfn, name)
 				if err != nil {
@@ -82,6 +108,9 @@ var awsCmd = &cobra.Command{
 				}
 			},
 		), 0*time.Second))
+		if err != nil {
+			ui.Fatalf("terraform failed:\n\t%q", err)
+		}
 
 		// lookup the domain and ensure it matches the static ip from the terraform run
 		// if it doesn't, tell the user to modify their DNS records, wait for confirmation and try again
@@ -115,14 +144,12 @@ var awsCmd = &cobra.Command{
 			}
 			ui.Infof("re-running terraform to use the new domain %s", domain)
 			terraform.Run([]string{"apply", "-auto-approve"}, terraform.WithBasedir(basedir), terraform.WithFatalErrors)
-
-			ui.Infof("🎉  Your installation is ready at https://%s/workspaces/", domain)
 		} else {
 			ui.Infof("Please update your DNS records so that %s points to %s.", domain, ingressHostname)
-			ui.Infof("🎉  Then your installation is ready at https://%s/workspaces/", domain)
 		}
 
 		// TODO(cw): smoke-test the installation
+		ui.Infof("🎉  Your installation is ready at https://%s/workspaces/", domain)
 	},
 }
 
