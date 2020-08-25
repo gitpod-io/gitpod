@@ -21,7 +21,7 @@ affinity:
           operator: In
           values:
           - "true"
-
+authProviders: []
 tracing:
   endoint: http://jaeger-collector:14268/api/traces
   samplerType: const
