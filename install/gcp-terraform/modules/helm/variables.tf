@@ -53,3 +53,14 @@ variable "forceHTTPS" {
   type = bool
   default = false
 }
+
+variable "certbotEnabled" {
+  type = bool
+  default = false
+}
+
+variable "certificateEmail" {
+  type = string
+}
+
+
