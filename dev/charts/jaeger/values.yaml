@@ -13,6 +13,3 @@ jaeger:
                 operator: In
                 values:
                   - 'true'
-
-elasticsearch:
-  enabled: false
