@@ -17,7 +17,7 @@ packages:
         # set values
         - ["yq", "w", "-i", "Chart.yaml", "version", "${version}"]
         - ["yq", "w", "-i", "values.yaml", "version", "${version}"]
-        - ["yq", "w", "-i", "values.yaml", "imagePrefix", "${imageRepoBase}"]
+        - ["yq", "w", "-i", "values.yaml", "imagePrefix", "${imageRepoBase}/"]
         # prepare chart
         - ["sh", "-c", "ls -A | grep -v BUILD.yaml | grep -v original_files > original_files.txt"]
         - ["mkdir", "gitpod"]
