@@ -3,7 +3,6 @@
  * Licensed under the Gitpod Enterprise Source Code License,
  * See License.enterprise.txt in the project root folder.
  */
-
 // generated using github.com/32leaves/bel
 // DO NOT MODIFY
 export enum Feature {
