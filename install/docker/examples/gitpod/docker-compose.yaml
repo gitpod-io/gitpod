@@ -4,10 +4,6 @@ services:
   gitpod:
     image: eu.gcr.io/gitpod-core-dev/build/gitpod-k3s:${VERSION:-latest}
     privileged: true
-    # tmpfs:
-    #   - /run
-    #   - /var/run
-    #   - /var/gitpod/workspaces
     volumes:
       - ./values:/values
       # - ./certs:/certs
@@ -17,4 +13,3 @@ services:
     environment:
       - DOMAIN=${DOMAIN}
       - DNSSERVER=${DNSSERVER:-}
-      - GITPOD_CHART_VERSION=${GITPOD_CHART_VERSION:-}
