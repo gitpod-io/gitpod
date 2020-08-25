@@ -43,7 +43,7 @@ async function build(context, version) {
     const masterBuild = context.Repository.ref.includes("refs/heads/master");
     const dontTest = "no-test" in buildConfig;
     const cacheLevel = "no-cache" in buildConfig ? "remote-push" : "remote";
-    const publishRelease = "publishRelease" in buildConfig;
+    const publishRelease = "publish-release" in buildConfig;
     werft.log("job config", JSON.stringify({
         buildConfig,
         version,
@@ -67,8 +67,8 @@ async function build(context, version) {
     exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DremoveSources=false -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build`, buildEnv);
     if(publishRelease) {
         exec(`gcloud auth activate-service-account --key-file "/mnt/secrets/gcp-sa-release/service-account.json"`);
-        exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DremoveSources=false -DimageRepoBase=eu.gcr.io/gitpod-io/self-hosted-ee`, buildEnv);
-        publishHelmChart("eu.gcr.io/gitpod-io/self-hosted-ee")
+        exec(`leeway build --werft=true -Dversion=${version} -DremoveSources=false -DimageRepoBase=eu.gcr.io/gitpod-io/self-hosted`, buildEnv);
+        publishHelmChart("eu.gcr.io/gitpod-io/self-hosted")
         exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
     }
     // gitTag(`build/${version}`);
@@ -257,14 +257,15 @@ async function issueAndInstallCertficate(namespace, domain) {
 async function publishHelmChart(imageRepoBase) {
     werft.phase("publish-charts", "Publish charts");
     [
+        "gcloud config set project gitpod-io",
         `leeway build -Dversion=${version} -DimageRepoBase=${imageRepoBase} --save helm-repo.tar.gz chart:helm`,
+        "tar xzfv helm-repo.tar.gz",
         "mkdir helm-repo",
-        "tar xzfv helm-repo.tar.gz -C helm-repo",
-        "gsutil cp gs://charts-gitpod-io/index.yaml old-index.yaml",
-        "helm3 repo index --merge ../old-index.yaml helm-repo",
-        "gcloud auth activate-service-account --key-file /mnt/secrets/gcp-sa-gitpod-helmchartregistry/service-account.json",
-        "gcloud config set project gitpod-191109",
-        "gsutil -m rsync -r helm-repo gs://charts-gitpod-io/"
+        "cp gitpod*tgz helm-repo/",
+        "gsutil cp gs://charts-gitpod-io-public/index.yaml old-index.yaml",
+        "cp gitpod*.tgz helm-repo/",
+        "helm3 repo index --merge old-index.yaml helm-repo",
+        "gsutil -m rsync -r helm-repo/ gs://charts-gitpod-io-public/"
     ].forEach(cmd => {
         exec(cmd, {slice: 'publish-charts'});
     });
