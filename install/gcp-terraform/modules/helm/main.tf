@@ -20,7 +20,10 @@ resource "helm_release" "gitpod" {
   create_namespace = true
   timeout          = "300"
   wait             = false
-  values           = var.values
+  values           = flatten([
+      data.template_file.gitpod_values_node_layout.rendered,
+      var.values,
+  ])
 
   set {
     name  = "hostname"
