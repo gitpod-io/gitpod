@@ -101,7 +101,7 @@ async function deployToDev(version) {
     const destname = version.split(".")[0];
     const namespace = `staging-${destname}`;
     const domain = `${destname}.staging.gitpod-dev.com`;
-    const url = `http://${domain}`;
+    const url = `https://${domain}`;
     const wssyncPort = `1${Math.floor(Math.random()*1000)}`;
     const wsmanNodePort = `2${Math.floor(Math.random()*1000)}`;
     const registryNodePort = `${30000 + Math.floor(Math.random()*1000)}`;
@@ -135,9 +135,9 @@ async function deployToDev(version) {
         werft.fail('secret', err);
     }
 
-    // // TODO [geropl] Now that the certs reside in a separate namespaces, start the actual certificate issuing _before_ the namespace cleanup
-    // werft.log('certificate', "organizing a certificate for the preview environment...");
-    // const certificatePromise = issueAndInstallCertficate(namespace, domain);
+    // TODO [geropl] Now that the certs reside in a separate namespaces, start the actual certificate issuing _before_ the namespace cleanup
+    werft.log('certificate', "organizing a certificate for the preview environment...");
+    const certificatePromise = issueAndInstallCertficate(namespace, domain);
 
     werft.log("predeploy cleanup", "removing old unnamespaced objects - this might take a while");
     try {
@@ -210,14 +210,14 @@ async function deployToDev(version) {
         exec(`werft log result -d "dev installation" -c github url ${url}/workspaces/`);
     }
 
-    // // Delay success until certificate is actually present
-    // werft.log('certificate', "awaiting promised certificate")
-    // try {
-    //     await certificatePromise;
-    //     werft.done('certificate');
-    // } catch (err) {
-    //     werft.fail('certificate', err);
-    // }
+    // Delay success until certificate is actually present
+    werft.log('certificate', "awaiting promised certificate")
+    try {
+        await certificatePromise;
+        werft.done('certificate');
+    } catch (err) {
+        werft.fail('certificate', err);
+    }
 }
 
 async function issueAndInstallCertficate(namespace, domain) {
@@ -241,7 +241,7 @@ async function issueAndInstallCertficate(namespace, domain) {
             break;
         }
 
-        sleep(3000);
+        sleep(5000);
     }
 
     werft.log('certificate', `copying certificate from "certs/${namespace}" to "${namespace}/proxy-config-certificates"`);
