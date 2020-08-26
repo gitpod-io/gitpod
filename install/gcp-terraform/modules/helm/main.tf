@@ -61,7 +61,7 @@ resource "helm_release" "gitpod" {
   }
 
   set {
-    name = "components.proxy.certbot.enaled"
+    name = "components.proxy.certbot.enabled"
     value = var.certbotEnabled
   }
 
