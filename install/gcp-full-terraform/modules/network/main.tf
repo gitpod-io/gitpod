@@ -16,7 +16,7 @@ data "google_compute_zones" "available" {
 
 # https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id
 resource "random_id" "gitpod" {
-    byte_length = 2
+  byte_length = 2
 }
 
 

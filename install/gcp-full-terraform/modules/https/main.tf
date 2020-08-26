@@ -129,8 +129,8 @@ data "template_file" "certificate" {
   template = file("${path.module}/templates/cert-manager_certificate.tpl")
   vars = {
     secretName = "proxy-config-certificates"
-    dns_zone  = trimsuffix(var.dns_name, ".")
-    namespace = var.gitpod.namespace
+    dns_zone   = trimsuffix(var.dns_name, ".")
+    namespace  = var.gitpod.namespace
   }
 }
 
@@ -156,10 +156,10 @@ resource "null_resource" "cert_manager_certificate" {
 data "template_file" "gitpod_https_values" {
   template = file("${path.module}/templates/values.tpl")
   vars = {
-    secretName = "proxy-config-certificates"
+    secretName    = "proxy-config-certificates"
     fullChainName = "tls.crt"
-    chainName = "tls.crt"
-    keyName = "tls.key"
+    chainName     = "tls.crt"
+    keyName       = "tls.key"
   }
 }
 

@@ -50,12 +50,12 @@ variable "gitpod" {
 }
 
 variable "forceHTTPS" {
-  type = bool
+  type    = bool
   default = false
 }
 
 variable "certbotEnabled" {
-  type = bool
+  type    = bool
   default = false
 }
 

@@ -7,8 +7,13 @@ variable "project" {
 
 variable "gitpod" {
   type = object({
-    namespace = string
+    namespace  = string
+    valueFiles = list(string)
   })
+  default = {
+    namespace  = "default"
+    valueFiles = ["./values.yml"]
+  }
 }
 
 variable "database" {

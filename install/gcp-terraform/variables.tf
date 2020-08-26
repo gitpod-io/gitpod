@@ -41,16 +41,16 @@ variable "image_prefix" {
 }
 
 variable "force_https" {
-    type = bool
-    default = false
+  type    = bool
+  default = false
 }
 
 variable "certbot_enabled" {
-    type = bool
-    default = false
+  type    = bool
+  default = false
 }
 
 variable "certificate_email" {
-  type = string
+  type    = string
   default = "someone@somewhere.com"
 }

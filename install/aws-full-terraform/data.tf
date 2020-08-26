@@ -17,9 +17,3 @@ data "aws_eks_cluster_auth" "default" {
 data "aws_eks_cluster" "gitpod_cluster" {
   name = module.kubernetes.cluster_id
 }
-
-resource "random_password" "mysql_password" {
-  length           = 16
-  special          = true
-  override_special = "_%@"
-}

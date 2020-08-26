@@ -15,6 +15,11 @@ variable "region" {
 
 variable "gitpod" {
   type = object({
-    namespace = string
+    namespace  = string
+    valueFiles = list(string)
   })
+  default = {
+    namespace  = "default"
+    valueFiles = ["./values.yml"]
+  }
 }

@@ -43,7 +43,7 @@ variable "username" {
 #
 
 variable "network" {
-  type    = string
+  type = string
 }
 
 variable "subnets" {
