@@ -1,6 +1,6 @@
 #!/bin/bash
 # #### Instructions to fill the GCP_ADC_FILE env var
-#  1. `gcloud auth login <your-typefox-email>` and authenticate
+#  1. `gcloud auth login <gcp-email>` and authenticate
 #  2. `gcloud auth application-default login` and authenticate
 #  3. `cat ~/.config/gcloud/application_default_credentials.json` and copy the output
 #  4. Go to https://gitpod.io/environment-variables/ and create:
