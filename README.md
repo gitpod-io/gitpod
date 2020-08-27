@@ -17,7 +17,7 @@ Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and 
  - Integrated Docker build
  - GitLab, GitHub, and Bitbucket integration
  - Integrated code reviews
- - Snapshots - Snapshot any stat of your dev environment and let others create clones
+ - Snapshots - Snapshot any state of your dev environment and let others create clones
  - Collaboration - Invite team members to your environments
  - Gitpod CLI to automate your experience
  - [learn more](https://www.gitpod.io/features/)
