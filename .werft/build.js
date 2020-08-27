@@ -44,13 +44,15 @@ async function build(context, version) {
     const dontTest = "no-test" in buildConfig;
     const cacheLevel = "no-cache" in buildConfig ? "remote-push" : "remote";
     const publishRelease = "publish-release" in buildConfig;
+    const previewWithHttps = "https" in buildConfig;
     werft.log("job config", JSON.stringify({
         buildConfig,
         version,
         masterBuild,
         dontTest,
         cacheLevel,
-        publishRelease
+        publishRelease,
+        previewWithHttps
     }));
 
     /**
@@ -65,7 +67,7 @@ async function build(context, version) {
     exec(`leeway vet --ignore-warnings`);
     exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`, buildEnv);
     exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DremoveSources=false -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build`, buildEnv);
-    if(publishRelease) {
+    if (publishRelease) {
         exec(`gcloud auth activate-service-account --key-file "/mnt/secrets/gcp-sa-release/service-account.json"`);
         exec(`leeway build --werft=true -Dversion=${version} -DremoveSources=false -DimageRepoBase=eu.gcr.io/gitpod-io/self-hosted`, buildEnv);
         publishHelmChart("eu.gcr.io/gitpod-io/self-hosted")
@@ -88,7 +90,7 @@ async function build(context, version) {
         werft.phase("deploy", "not deploying");
         console.log("no-preview is set");
     } else {
-        await deployToDev(version);
+        await deployToDev(version, previewWithHttps);
     }
 }
 
@@ -96,12 +98,12 @@ async function build(context, version) {
 /**
  * Deploy dev
  */
-async function deployToDev(version) {
+async function deployToDev(version, previewWithHttps) {
     werft.phase("deploy", "deploying to dev");
     const destname = version.split(".")[0];
     const namespace = `staging-${destname}`;
     const domain = `${destname}.staging.gitpod-dev.com`;
-    const url = `https://${domain}`;
+    const url = `${!!previewWithHttps ? "https" : "http"}://${domain}`;
     const wssyncPort = `1${Math.floor(Math.random()*1000)}`;
     const wsmanNodePort = `2${Math.floor(Math.random()*1000)}`;
     const registryNodePort = `${30000 + Math.floor(Math.random()*1000)}`;
@@ -147,9 +149,12 @@ async function deployToDev(version) {
         werft.fail('authProviders', err);
     }
 
-    // TODO [geropl] Now that the certs reside in a separate namespaces, start the actual certificate issuing _before_ the namespace cleanup
-    werft.log('certificate', "organizing a certificate for the preview environment...");
-    const certificatePromise = issueAndInstallCertficate(namespace, domain);
+    let certificatePromise = undefined;
+    if (previewWithHttps) {
+        // TODO [geropl] Now that the certs reside in a separate namespaces, start the actual certificate issuing _before_ the namespace cleanup
+        werft.log('certificate', "organizing a certificate for the preview environment...");
+        certificatePromise = issueAndInstallCertficate(namespace, domain);
+    }
 
     werft.log("predeploy cleanup", "removing old unnamespaced objects - this might take a while");
     try {
@@ -222,13 +227,15 @@ async function deployToDev(version) {
         exec(`werft log result -d "dev installation" -c github url ${url}/workspaces/`);
     }
 
-    // Delay success until certificate is actually present
-    werft.log('certificate', "awaiting promised certificate")
-    try {
-        await certificatePromise;
-        werft.done('certificate');
-    } catch (err) {
-        werft.fail('certificate', err);
+    if (certificatePromise) {
+        // Delay success until certificate is actually present
+        werft.log('certificate', "awaiting promised certificate")
+        try {
+            await certificatePromise;
+            werft.done('certificate');
+        } catch (err) {
+            werft.fail('certificate', err);
+        }
     }
 }
 
