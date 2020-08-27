@@ -9,13 +9,13 @@
 
 # https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password
 resource "random_password" "gitpod_database_root" {
-  length = 16
+  length  = 16
   special = false
 }
 
 # https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/password
 resource "random_password" "gitpod_database_user" {
-  length = 16
+  length  = 16
   special = false
 }
 
@@ -102,8 +102,8 @@ resource "kubernetes_job" "mysql_initializer" {
             name = "MYSQL_ROOT_PASSWORD"
             value_from {
               secret_key_ref {
-                name  = "${var.database.name}-${random_id.gitpod_database.hex}-mysql"
-                key   = "mysql-root-password"
+                name = "${var.database.name}-${random_id.gitpod_database.hex}-mysql"
+                key  = "mysql-root-password"
               }
             }
           }

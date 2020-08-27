@@ -1,11 +1,11 @@
 variable "gitpod" {
   type = object({
-    valuesFiles = list(string)
-    namespace   = string
+    valueFiles = list(string)
+    namespace  = string
   })
   default = {
-    valuesFiles = ["./values.yml"]
-    namespace   = "default"
+    valueFiles = ["./values.yml"]
+    namespace  = "default"
   }
 }
 

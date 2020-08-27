@@ -12,6 +12,11 @@ resource "aws_db_subnet_group" "gitpod" {
   }
 }
 
+resource "random_password" "mysql_password" {
+  length           = 16
+  special          = true
+  override_special = "_%@"
+}
 
 # https://www.terraform.io/docs/providers/aws/r/db_instance.html
 resource "aws_db_instance" "gitpod" {
@@ -22,7 +27,7 @@ resource "aws_db_instance" "gitpod" {
   username       = var.database.user_name
   # Fixes an issue when destroying instance
   skip_final_snapshot  = true
-  password             = var.database.password
+  password             = var.database.password == "" ? random_password.mysql_password.result : var.database.password
   port                 = var.database.port
   allocated_storage    = 20
   db_subnet_group_name = aws_db_subnet_group.gitpod.id

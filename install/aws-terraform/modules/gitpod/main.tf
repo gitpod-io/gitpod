@@ -7,10 +7,10 @@
 
 # https://www.terraform.io/docs/providers/helm/r/release.html
 resource "helm_release" "gitpod" {
-  name          = "gitpod"
-  chart         = var.helm.chart
-  wait          = true
-  timeout       = 600
+  name    = "gitpod"
+  chart   = var.helm.chart
+  wait    = true
+  timeout = 600
   # Is buggy: https://github.com/hashicorp/terraform-provider-helm/issues/405
   # see below for workaround
   #dependency_update = true

@@ -8,7 +8,7 @@ gitpod = {
   # What namespace should Gitpod be installed into? (Namespace is creaed if does not exist)
   namespace = "default"
   # Place any additional values in this file
-  valuesFile = "./values.yml"
+  valueFiles = ["./values.yml"]
 }
 
 dns = {

@@ -36,11 +36,11 @@ variable "force_https" {
 }
 
 variable "certbot_enabled" {
-    type = bool
-    default = false
+  type    = bool
+  default = false
 }
 
 variable "certificate_email" {
-  type = string
+  type    = string
   default = "someone@somewhere.com"
 }

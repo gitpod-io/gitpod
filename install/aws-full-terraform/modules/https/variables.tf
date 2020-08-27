@@ -29,11 +29,14 @@ variable "cluster_name" {
 
 variable "gitpod" {
   type = object({
-    valuesFile = string
     namespace  = string
+    valueFiles = list(string)
   })
+  default = {
+    namespace  = "default"
+    valueFiles = ["./values.yml"]
+  }
 }
-
 variable "cert_manager" {
   type = object({
     chart     = string

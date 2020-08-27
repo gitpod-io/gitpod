@@ -20,9 +20,9 @@ resource "helm_release" "gitpod" {
   create_namespace = true
   timeout          = "300"
   wait             = false
-  values           = flatten([
-      data.template_file.gitpod_values_node_layout.rendered,
-      var.values,
+  values = flatten([
+    data.template_file.gitpod_values_node_layout.rendered,
+    var.values,
   ])
 
   set {
@@ -41,32 +41,32 @@ resource "helm_release" "gitpod" {
   }
 
   set {
-    name = "ingressMode"
+    name  = "ingressMode"
     value = "pathAndHost"
   }
 
   set {
-    name = "components.wsProxy.disabled"
+    name  = "components.wsProxy.disabled"
     value = false
   }
 
   set {
-    name = "forceHTTPS"
+    name  = "forceHTTPS"
     value = var.forceHTTPS
   }
 
   set {
-    name = "authProviders"
+    name  = "authProviders"
     value = "[]"
   }
 
   set {
-    name = "components.proxy.certbot.enabled"
+    name  = "components.proxy.certbot.enabled"
     value = var.certbotEnabled
   }
 
   set {
-    name = "components.proxy.certbot.email"
+    name  = "components.proxy.certbot.email"
     value = var.certificateEmail
   }
 

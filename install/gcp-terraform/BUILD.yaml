@@ -4,6 +4,8 @@
 packages:
   - name: lib
     type: generic
+    deps:
+      - :test
     srcs:
       - "**/*.tf"
       - "**/*.tfvars"
@@ -13,3 +15,16 @@ packages:
     config:
       commands:
         - ["echo"]
+  - name: test
+    type: generic
+    srcs:
+      - "**/*.tf"
+      - "**/*.tfvars"
+      - "**/*.yaml"
+      - "**/*.md"
+      - "**/*.tpl"
+    config:
+      commands:
+        - ["terraform", "init", "-backend=false"]
+        - ["terraform", "fmt", "-recursive", "-check"]
+        - ["terraform", "validate"]

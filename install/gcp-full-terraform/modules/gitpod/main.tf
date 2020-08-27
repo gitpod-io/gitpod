@@ -17,7 +17,7 @@ data "template_file" "gitpod_values_node_layout" {
 
 resource "helm_release" "gitpod" {
   name  = "gitpod-self-hosted"
-  chart = "${var.path}"
+  chart = var.path
 
   namespace        = var.kubernetes.namespace
   create_namespace = true

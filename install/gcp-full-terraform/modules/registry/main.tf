@@ -111,7 +111,7 @@ resource "kubernetes_secret" "gitpod_registry_auth" {
 data "template_file" "gitpod_values_registry" {
   template = file("${path.module}/templates/values.tpl")
   vars = {
-    hostname = var.hostname
+    hostname    = var.hostname
     project     = var.project
     secret_name = kubernetes_secret.gitpod_registry_auth.metadata[0].name
   }
