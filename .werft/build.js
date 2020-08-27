@@ -19,7 +19,7 @@ function parseVersion(context) {
         return explicitVersion;
     }
     let version = context.Name;
-    const PREFIX_TO_STRIP = "gitpod-core-build-";
+    const PREFIX_TO_STRIP = "gitpod-build-";
     if (version.substr(0, PREFIX_TO_STRIP.length) === PREFIX_TO_STRIP) {
         version = version.substr(PREFIX_TO_STRIP.length);
     }
