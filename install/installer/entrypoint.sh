@@ -4,6 +4,6 @@
 # See License-AGPL.txt in the project root for license information.
 
 
-source /google-cloud-sdk/path.bash.inc
+source $HOME/google-cloud-sdk/path.bash.inc
 
 gp-install $*
