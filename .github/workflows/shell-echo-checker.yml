@@ -1,0 +1,38 @@
+name: Shell-echo-checker
+
+# Relevant to events - https://help.github.com/en/actions/automating-your-workflow-with-github-actions/events-that-trigger-workflows
+on: 
+  pull_request:
+    types: [ ready_for_review ]
+    paths:
+    - '**.bash'
+    - '**.sh'
+
+jobs:
+  # Linting
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pulling git dir..
+        uses: actions/checkout@v2
+      - name: Processing files..
+        # Make sure that bash is used
+        shell: bash
+        run: |
+          cd "$GITHUB_WORKSPACE"
+
+          # Process files
+          ## NOTICE: Do not use for loop to avoid pitfall https://mywiki.wooledge.org/BashPitfalls#pf1
+          git --git-dir="$GITHUB_WORKSPACE/.git" ls-files -z -- '*.sh$' '*.bash$' | while IFS= read -rd '' file; do
+              printf "Checking file %s for command 'echo'..\\n" "$file"
+              # Check if echo is present
+              if grep -q "echo " "$file"; then
+                printf 'WARNING: %s\n' "File '$file' contains command 'echo' which is non-standard and breaks the runtime on platforms like Darwin, see https://unix.stackexchange.com/a/65819 for more info"
+                exit 1
+              elif ! grep -q "echo " "$file"; then
+                printf 'INFO: %s\n' "Determined that file '$file' does not contain command 'echo', all good!"
+              else
+                printf 'BUG: %s\n' "Unexpected happend while processing file '$file'"
+                exit 255
+              fi
+          done

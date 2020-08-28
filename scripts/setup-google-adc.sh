@@ -12,11 +12,11 @@ GCLOUD_ADC_PATH="/home/gitpod/.config/gcloud/application_default_credentials.jso
 
 if [ ! -f "$GCLOUD_ADC_PATH" ]; then
     if [ -z "$GCP_ADC_FILE" ]; then
-        echo "GCP_ADC_FILE not set, doing nothing."
+        printf '%s\n' "GCP_ADC_FILE not set, doing nothing."
         return;
     fi
-    echo "$GCP_ADC_FILE" > "$GCLOUD_ADC_PATH"
-    echo "Set GOOGLE_APPLICATION_CREDENTIALS value based on contents from GCP_ADC_FILE"
+    printf '%s\n' "$GCP_ADC_FILE" > "$GCLOUD_ADC_PATH"
+    printf '%s\n' "Set GOOGLE_APPLICATION_CREDENTIALS value based on contents from GCP_ADC_FILE"
 fi
 export GOOGLE_APPLICATION_CREDENTIALS="$GCLOUD_ADC_PATH"
 

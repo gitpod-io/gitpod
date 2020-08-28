@@ -1,7 +1,7 @@
 #!/bin/sh
 
 if [ "A$GITHUB_TOKEN" = "A" ]; then
-    echo "Please set the GITHUB_TOKEN env var to a personal access token. Otherwise this script won't work."
+    printf '%s\n' "Please set the GITHUB_TOKEN env var to a personal access token. Otherwise this script won't work."
     exit 1
 fi
 
@@ -14,11 +14,11 @@ golicense=$tmpdir/golicense
 
 for i in $(ls components); do
     if [ -f "components/$i/go.mod" ]; then
-        echo "building $i"
+        printf '%s\n' "building $i"
         cd components/$i
         go build -o exec
 
-        echo "checking $i"
+        printf '%s\n' "checking $i"
         timeout 60 $golicense -plain -license=true exec >> $out/licenses.$i.txt
         rm exec
         cd -
@@ -26,4 +26,4 @@ for i in $(ls components); do
 done
 
 cat licenses.*.txt | sort | tr -s ' ' | uniq | sed -r 's/\s+/,/' | column -s , -t > $out/License.third-party.go.txt
-echo "Output written to $out/License.third-party.go.txt"
+printf '%s\n' "Output written to $out/License.third-party.go.txt"
