@@ -1,0 +1,124 @@
+name: Dockerfile
+
+# Relevant to events - https://help.github.com/en/actions/automating-your-workflow-with-github-actions/events-that-trigger-workflows
+on: 
+  pull_request:
+    types: [ ready_for_review ]
+    paths:
+    - '**.Dockerfile'
+    - '**.dockerfile'
+
+jobs:
+  # Linting
+  lint:
+    runs-on: ubuntu-latest
+    container: debian:stable
+    steps:
+      - name: Installing dependencies..
+        shell: bash
+        run: |
+          # Install git
+          if ! command -v git 1>/dev/null; then
+            # Check if we can install git, sync if not
+            if ! apt list git | grep -qP "^git/.*"; then
+              apt-get update || exit 1
+            elif apt list git | grep -qP "^git/.*"; then
+              true
+            else
+              exit 250
+            fi
+
+            apt-get install git --yes
+          elif command -v git 1>/dev/null; then
+            true
+          else
+            exit 250
+          fi
+
+          # Install Hadolint
+          if ! command -v hadolint 1>/dev/null; then
+            # Check if we need to apt update
+            if ! apt list hadolint | grep -qP "^hadolint/.*"; then
+              apt-get update || exit 1
+
+              # Check if target apt distro provides hadolint
+              if apt list hadolint | grep -qP "^hadolint/.*"; then
+                apt-get install hadolint --yes
+              elif ! apt list hadolint | grep -qP "^hadolint/.*"; then
+                # Check if we have curl
+                if command -v curl 1>/dev/null; then
+                  true
+                elif ! command -v curl 1>/dev/null; then
+                  apt-get install curl --yes || exit 1
+                else
+                  exit 250
+                fi
+
+                # Check if we have wget
+                if command -v wget 1>/dev/null; then
+                  true
+                elif ! command -v wget 1>/dev/null; then
+                  apt-get install wget --yes || exit 1
+                else
+                  exit 250
+                fi
+
+                # https://regex101.com/r/FueTCm/1
+                githubApiLatest="$(curl https://api.github.com/repos/hadolint/hadolint/releases/latest 2>/dev/null)"
+                latestRelease="$(printf '%s\n' "$githubApiLatest" | grep tag_name | sed -E "s#^\s+\"\w+\"\:\s+\"v([^\"]+).*#\1#gm")"
+
+                case "$latestRelease" in
+                  [0-9].[0-9].[0-9]|[0-9][0-9].[0-9].[0-9]|[0-9][0-9].[0-9][0-9].[0-9]|[0-9][0-9].[0-9][0-9].[0-9][0-9]|[0-9].[0-9][0-9].[0-9]|[0-9].[0-9].[0-9][0-9]|[0-9].[0-9][0-9].[0-9][0-9]|[0-9].[0-9][0-9].[0-9][0-9][0-9]|[0-9].[0-9].[0-9][0-9][0-9])
+                    printf 'INFO: %s\n' "GitHub API returned sane latest release '$latestRelease'"
+                  ;;
+                  ""|*)
+                    latest="1.18.0"
+                    printf 'WARNING: %s\n' "GitHub API returned insane latest release '$githubApiLatest', using hardcoded '$latestRelease'"
+                esac
+
+                tries=0
+                while [ "$tries" != 5 ]; do
+                  if [ -s /usr/bin/hadolint ]; then
+                    break
+                  elif [ ! -f /usr/bin/hadolint ] && [ ! -s /usr/bin/hadolint ]; then
+                    # NOTICE(Krey): We can't use curl because of GitHub's redirects
+                    wget https://github.com/hadolint/hadolint/releases/download/v$latestRelease/hadolint-Linux-x86_64 -O /usr/bin/hadolint || true
+                  else
+                    exit 250
+                  fi
+
+                  [ "$tries" != 5 ] || printf 'FATAL: %s\n' "Unable to get hadolint executable, exitting.."
+                  tries="$(( tries + 1 ))"
+                done
+
+                # Check if hadolint is executable
+                if [ ! -x /usr/bin/hadolint ]; then
+                  chmod +x /usr/bin/hadolint
+                elif [ -x /usr/bin/hadolint ]; then
+                  true
+                else
+                  exit 250
+                fi
+              else
+                exit 250
+              fi
+            elif apt list hadolint | grep -qP "^hadolint/.*"; then
+              apt-get install hadolint --yes
+            else
+              exit 250
+            fi
+          fi
+      - name: Pulling git dir..
+        uses: actions/checkout@v2
+      - name: Linting..
+        # Make sure that bash is used
+        shell: bash
+        run: |
+          cd "$GITHUB_WORKSPACE"
+
+          # Process files
+          ## NOTICE: Do not use for loop to avoid pitfall https://mywiki.wooledge.org/BashPitfalls#pf1
+          git --git-dir="$GITHUB_WORKSPACE/.git" ls-files -z -- '*.dockerfile' '*.Dockerfile' | while IFS= read -rd '' file; do
+              printf 'linting dockerfile file %s\n' "$file"
+              hadolint "$file"
+          done
