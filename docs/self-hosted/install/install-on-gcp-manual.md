@@ -1,5 +1,5 @@
 ---
-url: /docs/self-hosted/0.5.0/install/install-on-gcp-manual/
+url: /docs/self-hosted/latest/install/install-on-gcp-manual/
 ---
 
 # Manually Install Gitpod on Google Cloud Platform

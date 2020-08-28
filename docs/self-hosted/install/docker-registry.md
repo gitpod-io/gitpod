@@ -1,5 +1,5 @@
 ---
-url: /docs/self-hosted/0.5.0/install/docker-registry/
+url: /docs/self-hosted/latest/install/docker-registry/
 ---
 
 # Docker Registry

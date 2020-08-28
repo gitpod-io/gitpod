@@ -1,5 +1,5 @@
 ---
-url: /docs/self-hosted/0.5.0/install/domain/
+url: /docs/self-hosted/latest/install/domain/
 ---
 
 # Domain

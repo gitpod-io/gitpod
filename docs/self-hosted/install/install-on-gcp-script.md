@@ -1,5 +1,5 @@
 ---
-url: /docs/self-hosted/0.5.0/install/install-on-gcp-script/
+url: /docs/self-hosted/latest/install/install-on-gcp-script/
 ---
 
 # Getting started with Gitpod on GCP
