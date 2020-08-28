@@ -206,6 +206,11 @@ async function deployToDev(version, previewWithHttps) {
     } else {
         werft.log(`versions file not found at '${pathToVersions}', not using it.`);
     }
+    if (!certificatePromise) {
+        // it's not possible to set certificatesSecret={} so we set secretName to empty string
+        flags+=` --set certificatesSecret.secretName=""`;
+    }
+    
     try {
         shell.cd("chart");
         werft.log('helm', 'installing Gitpod');
