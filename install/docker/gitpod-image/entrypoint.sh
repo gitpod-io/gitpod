@@ -63,22 +63,62 @@ data:
   privkey.pem: $PRIVKEY
 EOF
 
-    cat << EOF > /values/_certificates_secret.yaml
+    cat << EOF > /default_values/02_certificates_secret.yaml
 certificatesSecret:
   secretName: proxy-config-certificates
 EOF
 fi
 
 
+prepare_builtin_registry_for_k3s() {
+
+    # config builtin registry for k3s
+    mkdir -p /etc/rancher/k3s/
+    cat << EOF > /etc/rancher/k3s/registries.yaml
+mirrors:
+  registry.default.svc.cluster.local:
+    endpoint:
+      - "https://registry.default.svc.cluster.local:443"
+configs:
+  "registry.default.svc.cluster.local:443":
+    tls:
+      cert_file: /registry/tls.cert
+      key_file:  /registry/tls.key
+      ca_file:   /registry/ca.crt
+EOF
+
+    echo "Waiting for builtin-registry-certs secrets ..."
+    while [ -z "$(kubectl get secrets builtin-registry-certs |  grep builtin-registry-certs | grep Opaque)" ]; do sleep 10; done
+
+    # save registry certs for k3s
+    mkdir -p /registry
+    kubectl get secrets builtin-registry-certs -o=jsonpath='{.data.ca\.crt}' | base64 --decode > /registry/ca.crt
+    kubectl get secrets builtin-registry-certs -o=jsonpath='{.data.tls\.key}' | base64 --decode > /registry/tls.key
+    kubectl get secrets builtin-registry-certs -o=jsonpath='{.data.tls\.cert}' | base64 --decode > /registry/tls.cert
+
+    # modify resolv.conf so that registry.default.svc.cluster.local can be resolved from the node
+    KUBE_DNS_IP=$(kubectl -n kube-system get service kube-dns -o jsonpath='{.spec.clusterIP}')
+    TMP_FILE=$(mktemp)
+    sed "s/nameserver.*/nameserver $KUBE_DNS_IP/g" /etc/resolv.conf > "$TMP_FILE"
+    cp "$TMP_FILE" /etc/resolv.conf
+    rm "$TMP_FILE"
+    cat /etc/resolv.conf
+}
+
+
 case "$DOMAIN" in 
   *ip.mygitpod.com)
-    cat << EOF > /values/_ip_mygitpod_com.yaml
+    cat << EOF > /default_values/03_ip_mygitpod_com.yaml
 forceHTTPS: true
 ingressMode: pathAndHost
 components:
   wsProxy:
     disabled: false
+  imageBuilder:
+    registry:
+      bypassProxy: true
 EOF
+    prepare_builtin_registry_for_k3s &
     ;;
 esac
 
@@ -86,17 +126,20 @@ esac
 # prepare Gitpod helm installer
 GITPOD_HELM_INSTALLER_FILE=/var/lib/rancher/k3s/server/manifests/gitpod-helm-installer.yaml
 
-if [ -f /values.yaml ]; then
-    # merge values and update default_values.yaml
-    yq m -ixa /default_values.yaml /values.yaml
-fi
-if [ -d /values ]; then
-    for values_file in /values/*.y*ml; do
-        # merge values and update default_values.yaml
-        yq m -ixa /default_values.yaml "$values_file"
+touch /values.yaml
+if [ -d /default_values ] && [ "$(ls /default_values/*.y*ml)" ]; then
+    for values_file in /default_values/*.y*ml; do
+        # merge values and update /values.yaml
+        yq m -ixa /values.yaml "$values_file"
     done
 fi
-sed 's/^/    /' /default_values.yaml >> "$GITPOD_HELM_INSTALLER_FILE"
+if [ -d /values ]&& [ "$(ls /values/*.y*ml)" ]; then
+    for values_file in /values/*.y*ml; do
+        # merge values and update /values.yaml
+        yq m -ixa /values.yaml "$values_file"
+    done
+fi
+sed 's/^/    /' /values.yaml >> "$GITPOD_HELM_INSTALLER_FILE"
 
 sed -i "s/\$DOMAIN/$DOMAIN/g" "$GITPOD_HELM_INSTALLER_FILE"
 sed -i "s/\$BASEDOMAIN/$BASEDOMAIN/g" "$GITPOD_HELM_INSTALLER_FILE"

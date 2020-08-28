@@ -12,7 +12,7 @@ RUN chmod +x /bin/yq
 VOLUME /var/gitpod/workspaces
 
 COPY gitpod-helm-installer.yaml /var/lib/rancher/k3s/server/manifests/
-COPY values.yaml /default_values.yaml
+COPY values.yaml /default_values/01_values.yaml
 COPY chart--helm/gitpod /chart
 
 COPY entrypoint.sh /entrypoint
