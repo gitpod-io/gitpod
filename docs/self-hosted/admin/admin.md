@@ -1,5 +1,5 @@
 ---
-url: /docs/self-hosted/0.5.0/admin/admin/
+url: /docs/self-hosted/latest/admin/admin/
 ---
 
 # Administrate Gitpod Self-Hosted

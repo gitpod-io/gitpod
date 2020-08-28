@@ -1,5 +1,5 @@
 ---
-url: /docs/self-hosted/0.5.0/install/helm-2x/
+url: /docs/self-hosted/latest/install/helm-2x/
 ---
 
 # Helm
