@@ -21,7 +21,7 @@ variable "domain" {
 
 variable "chart_location" {
   type    = string
-  default = "${path.root}/../../chart"
+  default = "../../chart"
 }
 
 variable "image_version" {
