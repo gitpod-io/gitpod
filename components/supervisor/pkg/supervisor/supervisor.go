@@ -24,8 +24,8 @@ import (
 
 	"github.com/gitpod-io/gitpod/content-service/pkg/executor"
 	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
-	"github.com/gitpod-io/gitpod/theia/supervisor/pkg/backup"
-	"github.com/gitpod-io/gitpod/theia/supervisor/pkg/dropwriter"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/backup"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/dropwriter"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"

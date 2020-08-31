@@ -10,5 +10,5 @@ packages:
       dontTest: true
       commands:
         build: ["yarn", "build"]
-      yarnLock: ${coreYarnLockBase}/../../yarn.lock
+      yarnLock: ${coreYarnLockBase}/../yarn.lock
       tsconfig: tsconfig.json

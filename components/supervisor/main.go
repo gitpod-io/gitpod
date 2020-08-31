@@ -5,7 +5,7 @@
 package main
 
 import (
-	"github.com/gitpod-io/gitpod/theia/supervisor/pkg/supervisor"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/supervisor"
 )
 
 func main() {

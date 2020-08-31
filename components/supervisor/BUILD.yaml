@@ -9,7 +9,7 @@ packages:
       - components/common-go:lib
       - components/content-service-api/go:lib
       - components/content-service:lib
-      - components/theia/supervisor-api/go:lib
+      - components/supervisor-api/go:lib
       - components/ws-sync-api/go:lib
     env:
       - CGO_ENABLED=0
