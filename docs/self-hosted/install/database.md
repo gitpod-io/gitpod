@@ -11,7 +11,7 @@ The database uses a Kubernetes PersistentVolume. We do not recommend using this 
 
 * Own MySQL database: Gitpod requires MySQL in version 5.7 or newer.
 
-This chart installs a MySQL database which gets Gitpod up and running but is not suitable for production (the data is lost on each restart of the DB pod). To connect to a porper MySQL installation:
+This chart installs a MySQL database which gets Gitpod up and running but is not suitable for production (the data is lost on each restart of the DB pod). To connect to a proper MySQL installation:
    - initialize your MySQL database using the SQL files in `database/`. E.g. in a mysql session connected to your database server run:
      ```
      SET @gitpodDbPassword = IFNULL(@gitpodDbPassword, 'your-password-goes-here');
