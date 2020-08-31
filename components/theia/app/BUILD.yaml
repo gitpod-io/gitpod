@@ -35,7 +35,7 @@ packages:
     deps:
       - :installer
       - :builtin-plugins
-      - components/theia/supervisor:app
+      - components/supervisor:app
     argdeps:
       - imageRepoBase
     config:

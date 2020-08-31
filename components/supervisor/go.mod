@@ -1,4 +1,4 @@
-module github.com/gitpod-io/gitpod/theia/supervisor
+module github.com/gitpod-io/gitpod/supervisor
 
 go 1.14
 
@@ -19,15 +19,15 @@ require (
 	google.golang.org/grpc v1.29.1
 )
 
-replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway
+replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
 
-replace github.com/gitpod-io/gitpod/content-service => ../../content-service // leeway
+replace github.com/gitpod-io/gitpod/content-service => ../content-service // leeway
 
-replace github.com/gitpod-io/gitpod/content-service/api => ../../content-service-api/go // leeway
+replace github.com/gitpod-io/gitpod/content-service/api => ../content-service-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/supervisor/api => ../supervisor-api/go // leeway
 
-replace github.com/gitpod-io/gitpod/ws-sync/api => ../../ws-sync-api/go // leeway
+replace github.com/gitpod-io/gitpod/ws-sync/api => ../ws-sync-api/go // leeway
 
 replace k8s.io/api => k8s.io/api v0.0.0-20190620084959-7cf5895f2711 // leeway indirect from components/common-go:lib
 

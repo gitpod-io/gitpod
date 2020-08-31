@@ -48,7 +48,7 @@ COPY --from=builder_alpine /theia/node/bin/node /theia/node/bin/gitpod-node
 ENV GITPOD_BUILT_IN_PLUGINS /theia/node_modules/@gitpod/gitpod-ide/plugins/
 COPY components-theia-app--builtin-plugins/plugins/ ${GITPOD_BUILT_IN_PLUGINS}
 
-COPY components-theia-supervisor--app/supervisor /theia/supervisor
+COPY components-supervisor--app/supervisor /theia/supervisor
 COPY supervisor-config.json /theia/
 
 WORKDIR "/theia"

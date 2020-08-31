@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gitpod-io/gitpod/theia/supervisor/pkg/dropwriter"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/dropwriter"
 )
 
 func TestBucket(t *testing.T) {
