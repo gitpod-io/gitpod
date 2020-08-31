@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gorilla/handlers"
@@ -169,10 +170,31 @@ func TheiaReadyHandler(r *mux.Router, config *RouteHandlerConfig) {
 
 // TheiaSupervisorReadyHandler handles /supervisor/ready
 func TheiaSupervisorReadyHandler(r *mux.Router, config *RouteHandlerConfig) {
+	// We MUST NOT proxy-pass to the workspace-internal supervisor endpoint.
+	// There's a lot going on there that's not supposed to be available from outside.
 	r.Use(config.CorsHandler)
-	r.NewRoute().
-		HandlerFunc(proxyPass(config, workspacePodSupervisorResolver,
-			withOnProxyErrorRedirectToWorkspaceStartHandler(config.Config)))
+	r.NewRoute().HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+		url, err := workspacePodSupervisorResolver(config.Config, req)
+		if err != nil {
+			log.WithError(err).Error("cannot answer supervisor/ready call")
+			http.Error(resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		timeout := 2 * time.Second
+		if dl, ok := req.Context().Deadline(); ok {
+			timeout = time.Until(dl)
+		}
+		client := http.Client{Timeout: timeout}
+		rresp, err := client.Get(url.String())
+		if err != nil {
+			log.WithError(err).Error("cannot answer supervisor/ready call")
+			http.Error(resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
+
+		rresp.Write(resp)
+	})
 }
 
 // TheiaWebviewHandler handles /webview
