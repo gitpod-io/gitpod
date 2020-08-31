@@ -83,7 +83,8 @@ data:
                 "serviceTemplate": "http://ws-{{"{{ .workspaceID }}"}}-theia.{{- .Release.Namespace -}}.svc.cluster.local:{{"{{ .port }}"}}",
                 "portServiceTemplate": "http://ws-{{"{{ .workspaceID }}"}}-ports.{{- .Release.Namespace -}}.svc.cluster.local:{{"{{ .port }}"}}",
                 "theiaPort": {{ .Values.components.workspace.ports.http.containerPort }},
-                "supervisorPort": {{ .Values.components.workspace.ports.http.supervisorPort }}
+                "supervisorPort": {{ .Values.components.workspace.ports.http.supervisorPort }},
+                "staticFrontendPort": {{ .Values.components.workspace.ports.http.staticFrontendPort }}
             }
         },
         "pprofAddr": ":60060",

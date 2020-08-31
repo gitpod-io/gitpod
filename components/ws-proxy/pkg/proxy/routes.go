@@ -64,6 +64,7 @@ type RouteHandler = func(r *mux.Router, config *RouteHandlerConfig)
 
 // RouteHandlers is the struct that configures the ws-proxys HTTP routes
 type RouteHandlers struct {
+	workspaceRootHandler        RouteHandler
 	theiaRootHandler            RouteHandler
 	theiaMiniBrowserHandler     RouteHandler
 	theiaFileHandler            RouteHandler
@@ -77,26 +78,31 @@ type RouteHandlers struct {
 
 // installTheiaRoutes configures routing of Theia requests
 func installTheiaRoutes(r *mux.Router, config *RouteHandlerConfig, rh *RouteHandlers) {
+	// Note: for all routes defined in here, precedence depends on order!
 	r.Use(logHandler)
 	r.Use(handlers.CompressHandler)
 
-	// Precedence depends on order
-	rh.theiaMiniBrowserHandler(r.PathPrefix("/mini-browser").Subrouter(), config)
-
-	rh.theiaServiceHandler(r.Path("/services").Subrouter(), config)
-	rh.theiaFileUploadHandler(r.Path("/file-upload").Subrouter(), config)
-
-	rh.theiaFileHandler(r.PathPrefix("/file").Subrouter(), config)
-	rh.theiaFileHandler(r.PathPrefix("/files").Subrouter(), config)
-
-	rh.theiaHostedPluginHandler(r.PathPrefix("/hostedPlugin").Subrouter(), config)
-
 	rh.theiaReadyHandler(r.Path("/gitpod/ready").Subrouter(), config)
 	rh.theiaSupervisorReadyHandler(r.Path("/supervisor/ready").Subrouter(), config)
+	rh.workspaceRootHandler(r.NewRoute().Subrouter(), config)
 
-	rh.theiaWebviewHandler(r.PathPrefix("/webview").Subrouter(), config)
+	// if enabled, we serve the static frontend on the root, and the IDE on `/ide`
+	ideR := r
+	if config.Config.WorkspacePodConfig.StaticFrontendPort > 0 {
+		ideR = r.PathPrefix("/ide").Subrouter()
+		ideR.Use(func(h http.Handler) http.Handler {
+			return http.StripPrefix("/ide", h)
+		})
+	}
 
-	rh.theiaRootHandler(r.NewRoute().Subrouter(), config)
+	rh.theiaMiniBrowserHandler(ideR.PathPrefix("/mini-browser").Subrouter(), config)
+	rh.theiaServiceHandler(r.Path("/services").Subrouter(), config)
+	rh.theiaFileUploadHandler(r.Path("/file-upload").Subrouter(), config)
+	rh.theiaFileHandler(ideR.PathPrefix("/file").Subrouter(), config)
+	rh.theiaFileHandler(ideR.PathPrefix("/files").Subrouter(), config)
+	rh.theiaHostedPluginHandler(ideR.PathPrefix("/hostedPlugin").Subrouter(), config)
+	rh.theiaWebviewHandler(ideR.PathPrefix("/webview").Subrouter(), config)
+	rh.theiaRootHandler(ideR.NewRoute().Subrouter(), config)
 }
 
 // TheiaRootHandler handles all requests under / that are not handled by any special case above (expected to be static resources only)
@@ -216,6 +222,27 @@ func TheiaWebviewHandler(r *mux.Router, config *RouteHandlerConfig) {
 			withWebsocketSupport()))
 }
 
+// WorkspaceRootHandler handles /
+func WorkspaceRootHandler(r *mux.Router, config *RouteHandlerConfig) {
+	if config.Config.WorkspacePodConfig.StaticFrontendPort == 0 {
+		return
+	}
+
+	r.Use(config.CorsHandler)
+	r.NewRoute().
+		HandlerFunc(proxyPass(config,
+			// Use the static theia server as primary source for resources
+			// TODO(cw): resolve to the blobserve instead
+			StaticTheiaResolver,
+			// On 50x while connecting to workspace pod, redirect to /start
+			withOnProxyErrorRedirectToWorkspaceStartHandler(config.Config)))
+
+	// If the static theia server returns 404, re-route to the pod itself instead
+	r.NotFoundHandler = config.WorkspaceAuthHandler(
+		proxyPass(config, workspacePodStaticFrontendResolver,
+			withOnProxyErrorRedirectToWorkspaceStartHandler(config.Config)))
+}
+
 // installWorkspacePortRoutes configures routing for exposed ports
 func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig) {
 	// filter all session cookies
@@ -245,6 +272,12 @@ func workspacePodPortResolver(config *Config, req *http.Request) (url *url.URL, 
 func workspacePodSupervisorResolver(config *Config, req *http.Request) (url *url.URL, err error) {
 	coords := getWorkspaceCoords(req)
 	return buildWorkspacePodURL(config.WorkspacePodConfig.ServiceTemplate, coords.ID, fmt.Sprint(config.WorkspacePodConfig.SupervisorPort))
+}
+
+// workspacePodStaticFrontendResolver resolves to the workspace pods static frontend URL from the given request
+func workspacePodStaticFrontendResolver(config *Config, req *http.Request) (url *url.URL, err error) {
+	coords := getWorkspaceCoords(req)
+	return buildWorkspacePodURL(config.WorkspacePodConfig.ServiceTemplate, coords.ID, fmt.Sprint(config.WorkspacePodConfig.StaticFrontendPort))
 }
 
 // StaticTheiaResolver resolves to static theia server with the statically configured version

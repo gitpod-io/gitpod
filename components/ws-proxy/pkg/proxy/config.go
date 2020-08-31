@@ -52,6 +52,7 @@ type WorkspacePodConfig struct {
 	PortServiceTemplate string `json:"portServiceTemplate"`
 	TheiaPort           uint16 `json:"theiaPort"`
 	SupervisorPort      uint16 `json:"supervisorPort"`
+	StaticFrontendPort  uint16 `json:"staticFrontendPort"`
 }
 
 // Validate validates the configuration to catch issues during startup and not at runtime

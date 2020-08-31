@@ -75,8 +75,13 @@ type Config struct {
 	TheiaRatelimitLog     string `json:"ratelimitLogs"`
 	HealthEndpointAddr    string `json:"healthEndpoint"`
 	PreventMetadataAccess bool   `json:"preventMetadataAccess"`
-	SupervisorAuthToken   string `json:"-"`
-	Git                   struct {
+	StaticFrontend        struct {
+		Enabled bool   `json:"enabled"`
+		Addr    string `json:"addr"`
+		Path    string `json:"path"`
+	}
+	SupervisorAuthToken string `json:"-"`
+	Git                 struct {
 		Name  string
 		Email string
 	} `json:"-"`
@@ -256,7 +261,8 @@ func Run(options ...RunOption) {
 	)
 
 	var wg sync.WaitGroup
-	wg.Add(3)
+	wg.Add(4)
+	go startStaticFrontend(ctx, cfg, &wg)
 	go startAndWatchTheia(ctx, cfg, &wg, pauseTheia)
 	go startHealthEndpoint(ctx, cfg, &wg, iwh, &opts)
 	go startContentInit(ctx, cfg, &wg, iwh)
@@ -328,6 +334,18 @@ func hasMetadataAccess() bool {
 
 	// if we see any error here we're good because then the request timed out or failed for some other reason.
 	return false
+}
+
+func startStaticFrontend(ctx context.Context, cfg *Config, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	if !cfg.StaticFrontend.Enabled {
+		return
+	}
+	err := http.ListenAndServe(cfg.StaticFrontend.Addr, http.FileServer(http.Dir(cfg.StaticFrontend.Path)))
+	if err != nil {
+		log.WithError(err).Fatal("cannot serve static frontend")
+	}
 }
 
 func startAndWatchTheia(ctx context.Context, cfg *Config, wg *sync.WaitGroup, pauseChan <-chan bool) {

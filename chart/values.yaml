@@ -255,14 +255,17 @@ components:
   workspace:
     ports:
       http:
-        containerPort: 23000
         supervisorPort: 22999
+        containerPort: 23000
+        staticFrontendPort: 24000
     defaultImage: 
       imagePrefix: "gitpod/"
       imageName: "workspace-full"
       version: "latest"
     theiaImage: 
       imageName: "theia-ide"
+    supervisorImage:
+      imageName: "supervisor"
     pullSecret:
       secretName: builtin-registry-auth
     template:
