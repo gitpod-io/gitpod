@@ -233,14 +233,14 @@ func WorkspaceRootHandler(r *mux.Router, config *RouteHandlerConfig) {
 		HandlerFunc(proxyPass(config,
 			// Use the static theia server as primary source for resources
 			// TODO(cw): resolve to the blobserve instead
-			StaticTheiaResolver,
+			workspacePodStaticFrontendResolver,
 			// On 50x while connecting to workspace pod, redirect to /start
 			withOnProxyErrorRedirectToWorkspaceStartHandler(config.Config)))
 
 	// If the static theia server returns 404, re-route to the pod itself instead
-	r.NotFoundHandler = config.WorkspaceAuthHandler(
-		proxyPass(config, workspacePodStaticFrontendResolver,
-			withOnProxyErrorRedirectToWorkspaceStartHandler(config.Config)))
+	// r.NotFoundHandler = config.WorkspaceAuthHandler(
+	//	proxyPass(config, workspacePodStaticFrontendResolver,
+	//		withOnProxyErrorRedirectToWorkspaceStartHandler(config.Config)))
 }
 
 // installWorkspacePortRoutes configures routing for exposed ports

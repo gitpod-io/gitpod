@@ -20,7 +20,7 @@ packages:
   - name: docker
     type: docker
     srcs:
-      - "supervisor-config-example.json"
+      - "supervisor-config.json"
     deps:
       - :app
       - components/supervisor/web:app

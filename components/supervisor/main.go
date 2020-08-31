@@ -5,9 +5,13 @@
 package main
 
 import (
+	"time"
+
 	"github.com/gitpod-io/gitpod/supervisor/pkg/supervisor"
 )
 
 func main() {
+	defer time.Sleep(5 * time.Minute)
+
 	supervisor.Run()
 }

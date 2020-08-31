@@ -31,11 +31,9 @@ packages:
     type: docker
     srcs:
       - "package-libs.sh"
-      - "supervisor-config.json"
     deps:
       - :installer
       - :builtin-plugins
-      - components/supervisor:app
     argdeps:
       - imageRepoBase
     config:

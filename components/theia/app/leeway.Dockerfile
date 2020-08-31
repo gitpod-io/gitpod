@@ -42,14 +42,10 @@ RUN find /theia/node_modules/ -iname *.node -exec package-libs.sh {} \;
 
 
 FROM scratch
-COPY --from=builder_alpine /theia/ /theia/
-COPY --from=builder_alpine /theia/node/bin/node /theia/node/bin/gitpod-node
+COPY --from=builder_alpine /theia/ /ide/
+COPY --from=builder_alpine /theia/node/bin/node /ide/node/bin/gitpod-node
 
-ENV GITPOD_BUILT_IN_PLUGINS /theia/node_modules/@gitpod/gitpod-ide/plugins/
+ENV GITPOD_BUILT_IN_PLUGINS /ide/node_modules/@gitpod/gitpod-ide/plugins/
 COPY components-theia-app--builtin-plugins/plugins/ ${GITPOD_BUILT_IN_PLUGINS}
 
-COPY components-supervisor--app/supervisor /theia/supervisor
-COPY supervisor-config.json /theia/
-
-WORKDIR "/theia"
-ENTRYPOINT ["/theia/supervisor"]
+WORKDIR "/ide"

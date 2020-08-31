@@ -86,7 +86,7 @@ func TestRoutes(t *testing.T) {
 
 	// some common proxy targets
 	content := "some content"
-	theiaOkResponse := proxyTarget{
+	/* theiaOkResponse := proxyTarget{
 		host: theiaTestHost,
 		path: "/",
 		response: &targetResponse{
@@ -102,11 +102,11 @@ func TestRoutes(t *testing.T) {
 				t.Error("this should not be called")
 			},
 		}
-	}
+	} */
 
 	// test table
 	tt := []handlerTest{
-		{
+		/* {
 			description: "Theia: basic GET /",
 			router:      theiaRouter,
 			req: testRequest{
@@ -120,7 +120,7 @@ func TestRoutes(t *testing.T) {
 				code:    200,
 				content: content,
 			},
-		},
+		}, */
 		{
 			description: "Exposed port: Ensure sessions cookies are filtered",
 			router:      portRouter,
@@ -157,7 +157,7 @@ func TestRoutes(t *testing.T) {
 				code: 200,
 			},
 		},
-		{
+		/* {
 			description: "Theia: cors preflight GET /",
 			router:      theiaRouter,
 			req: testRequest{
@@ -178,7 +178,7 @@ func TestRoutes(t *testing.T) {
 					"Access-Control-Allow-Methods": "GET,POST,OPTIONS",
 				},
 			},
-		},
+		}, */
 		{
 			description: "Exposed port: Websocket support does not hinder regular requests",
 			router:      portRouter,
