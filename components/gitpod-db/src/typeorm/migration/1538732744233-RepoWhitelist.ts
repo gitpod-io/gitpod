@@ -15,7 +15,7 @@ export class RepoWhitelist1538732744233 implements MigrationInterface {
         { url: 'https://github.com/sibtc/django-beginners-guide', description: '**Python** - A Complete Beginners Guide to Django', priority: 10 },
         { url: 'https://github.com/spring-guides/gs-spring-boot.git', description: '**Java** - Building an Application with Spring Boot', priority: 9 },
         { url: 'https://github.com/symfony/demo.git', description: '**PHP** - Symfony Demo Application', priority: 5 },
-        { url: 'https://github.com/theia-ide/theia.git', description: '**Theia** - Deep dive into Gitpods open-source IDE. (TypeScript)', priority: 4 }
+        { url: 'https://github.com/theia-ide/theia.git', description: '**Theia** - Deep dive into Gitpod\'s open-source IDE (written in TypeScript).', priority: 4 }
     ]
 
     public async up(queryRunner: QueryRunner): Promise<any> {
