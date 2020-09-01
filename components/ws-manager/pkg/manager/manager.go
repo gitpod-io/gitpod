@@ -65,15 +65,16 @@ type Manager struct {
 }
 
 type startWorkspaceContext struct {
-	Request             *api.StartWorkspaceRequest `json:"request"`
-	Labels              map[string]string          `json:"labels"`
-	CLIAPIKey           string                     `json:"cliApiKey"`
-	OwnerToken          string                     `json:"ownerToken"`
-	TheiaPort           int32                      `json:"theiaPort"`
-	TheiaSupervisorPort int32                      `json:"theiaSupervisorPort"`
-	WorkspaceURL        string                     `json:"workspaceURL"`
-	TraceID             string                     `json:"traceID"`
-	Headless            bool                       `json:"headless"`
+	Request                     *api.StartWorkspaceRequest `json:"request"`
+	Labels                      map[string]string          `json:"labels"`
+	CLIAPIKey                   string                     `json:"cliApiKey"`
+	OwnerToken                  string                     `json:"ownerToken"`
+	TheiaPort                   int32                      `json:"theiaPort"`
+	TheiaSupervisorPort         int32                      `json:"theiaSupervisorPort"`
+	StaticFronendSupervisorPort int32                      `json:"staticFronendSupervisorPort"`
+	WorkspaceURL                string                     `json:"workspaceURL"`
+	TraceID                     string                     `json:"traceID"`
+	Headless                    bool                       `json:"headless"`
 }
 
 const (
@@ -239,6 +240,10 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 				{
 					Name: "supervisor",
 					Port: startContext.TheiaSupervisorPort,
+				},
+				{
+					Name: "static-frontend",
+					Port: startContext.StaticFronendSupervisorPort,
 				},
 			},
 			Selector: startContext.Labels,

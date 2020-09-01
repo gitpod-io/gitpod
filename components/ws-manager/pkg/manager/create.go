@@ -753,14 +753,15 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 			headlessLabel:          fmt.Sprintf("%v", headless),
 			markerLabel:            "true",
 		},
-		CLIAPIKey:           cliAPIKey,
-		OwnerToken:          ownerToken,
-		Request:             req,
-		TheiaPort:           23000,
-		TheiaSupervisorPort: 22999,
-		WorkspaceURL:        workspaceURL,
-		TraceID:             traceID,
-		Headless:            headless,
+		CLIAPIKey:                   cliAPIKey,
+		OwnerToken:                  ownerToken,
+		Request:                     req,
+		TheiaPort:                   23000,
+		TheiaSupervisorPort:         22999,
+		StaticFronendSupervisorPort: 24000,
+		WorkspaceURL:                workspaceURL,
+		TraceID:                     traceID,
+		Headless:                    headless,
 	}, nil
 }
 

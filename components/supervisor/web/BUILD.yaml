@@ -2,13 +2,9 @@ packages:
   - name: app
     type: yarn
     srcs:
-      - "public/**"
-      - "src/**/*.ts"
-      - "src/**/*.tsx"
-      - "src/**/*.css"
+      - "src/**"
       - package.json
       - webpack.config.js
-      - webpack.entrypoints.js
       - tsconfig.json
     config:
       yarnLock: ${coreYarnLockBase}/../yarn.lock

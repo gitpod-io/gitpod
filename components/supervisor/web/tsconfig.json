@@ -1,27 +1,17 @@
 {
   "compilerOptions": {
-    "outDir": "build/dist",
+    "rootDir": "src",
+    "outDir": "lib",
     "module": "commonjs",
     "target": "es5",
-    "lib": ["es6", "dom"],
-    "sourceMap": true,
-    "allowJs": true,
-    "jsx": "react",
-    "moduleResolution": "node",
-    "forceConsistentCasingInFileNames": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "suppressImplicitAnyIndexErrors": true,
-    "noUnusedLocals": true,
+    "lib": [
+      "es6",
+      "dom"
+    ],
+    "strict": true,
     "skipLibCheck": true
   },
   "include": [
-      "ee/src",
-      "src"
-  ],
-  "exclude": [
-    "src/setupTests.ts"
+    "src"
   ]
 }
