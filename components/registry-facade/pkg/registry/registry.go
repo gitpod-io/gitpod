@@ -121,9 +121,7 @@ func NewRegistry(cfg Config, newResolver ResolverProvider) (*Registry, error) {
 	}
 	layerSources = append(layerSources, clsrc)
 
-	specProvider := map[string]ImageSpecProvider{
-		api.ProviderPrefixBase32: Base32SpecProvider,
-	}
+	specProvider := map[string]ImageSpecProvider{}
 	if cfg.RemoteSpecProvider != nil {
 		opts := []grpc.DialOption{
 			grpc.WithUnaryInterceptor(grpc_opentracing.UnaryClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer()))),
