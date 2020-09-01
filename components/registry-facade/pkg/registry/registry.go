@@ -41,10 +41,6 @@ type Config struct {
 		Ref  string `json:"ref"`
 		Type string `json:"type"`
 	} `json:"staticLayer"`
-	TheiaLayer struct {
-		Repository     string `json:"repo,omitempty"`
-		DefaultVersion string `json:"defaultVersion,omitempty"`
-	} `json:"theiaLayer"`
 	RemoteSpecProvider *struct {
 		Addr string `json:"addr"`
 		TLS  *struct {
@@ -90,24 +86,15 @@ func NewRegistry(cfg Config, newResolver ResolverProvider) (*Registry, error) {
 	defer cancel()
 
 	var layerSources []LayerSource
-	if cfg.TheiaLayer.Repository != "" {
-		log.WithField("repo", cfg.TheiaLayer.Repository).WithField("defaultVersion", cfg.TheiaLayer.DefaultVersion).Info("preparing Theia layer")
-		theiaRefSource := func(s *api.ImageSpec) (ref string, err error) {
-			version := s.TheiaVersion
-			if version == "" {
-				version = cfg.TheiaLayer.DefaultVersion
-			}
-			if version == "" {
-				return "", fmt.Errorf("missing Theia version")
-			}
-			return fmt.Sprintf("%s:%s", cfg.TheiaLayer.Repository, version), nil
-		}
-		theiaLayerSource, err := NewSpecMappedImageSource(newResolver, theiaRefSource)
-		if err != nil {
-			return nil, err
-		}
-		layerSources = append(layerSources, theiaLayerSource)
+
+	ideRefSource := func(s *api.ImageSpec) (ref string, err error) {
+		return s.IdeRef, nil
 	}
+	ideLayerSource, err := NewSpecMappedImageSource(newResolver, ideRefSource)
+	if err != nil {
+		return nil, err
+	}
+	layerSources = append(layerSources, ideLayerSource)
 
 	log.Info("preparing static layer")
 	for _, sl := range cfg.StaticLayer {

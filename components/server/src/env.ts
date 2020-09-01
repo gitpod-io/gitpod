@@ -33,6 +33,7 @@ export class Env extends AbstractComponentEnv {
     }
 
     readonly theiaVersion = process.env.THEIA_VERSION || this.serverVersion;
+    readonly theiaImageRepo = process.env.THEIA_IMAGE_REPO || 'unknown';
     readonly theiaMounted = process.env.THEIA_MOUNTED === "true";
 
     readonly gitpodRegion: string = process.env.GITPOD_REGION || 'unknown';

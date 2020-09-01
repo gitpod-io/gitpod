@@ -92,7 +92,7 @@ func forTestingOnlyCreateStartWorkspaceContext(manager *Manager, id string, tpe 
 		},
 		Spec: &api.StartWorkspaceSpec{
 			WorkspaceImage: "foobar",
-			TheiaVersion:   "doesNotExist",
+			IdeImage:       "someide:version.0",
 			Ports:          []*api.PortSpec{},
 			Initializer:    &csapi.WorkspaceInitializer{},
 		},

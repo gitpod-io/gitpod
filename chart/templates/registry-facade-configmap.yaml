@@ -31,10 +31,6 @@ data:
             },
             {{ end -}}
             {{ end -}}
-            "theiaLayer": {
-                "repo": "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) }}",
-                "defaultVersion": "{{ .Values.version }}"
-            },
             "remoteSpecProvider": {
                 "addr": "ws-manager:{{ .Values.components.wsManager.ports.rpc.containerPort }}"
             },

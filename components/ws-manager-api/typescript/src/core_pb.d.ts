@@ -1,9 +1,3 @@
-/**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
- * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
- */
-
 // package: wsman
 // file: core.proto
 
@@ -776,8 +770,8 @@ export class StartWorkspaceSpec extends jspb.Message {
     getWorkspaceImage(): string;
     setWorkspaceImage(value: string): void;
 
-    getTheiaVersion(): string;
-    setTheiaVersion(value: string): void;
+    getIdeImage(): string;
+    setIdeImage(value: string): void;
 
     clearFeatureFlagsList(): void;
     getFeatureFlagsList(): Array<WorkspaceFeatureFlag>;
@@ -832,7 +826,7 @@ export class StartWorkspaceSpec extends jspb.Message {
 export namespace StartWorkspaceSpec {
     export type AsObject = {
         workspaceImage: string,
-        theiaVersion: string,
+        ideImage: string,
         featureFlagsList: Array<WorkspaceFeatureFlag>,
         initializer?: content_service_api_initializer_pb.WorkspaceInitializer.AsObject,
         portsList: Array<PortSpec.AsObject>,

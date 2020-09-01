@@ -382,8 +382,8 @@ message StartWorkspaceSpec {
     // workspace_image is the Docker image name of the workspace container
     string workspace_image = 1;
 
-    // theia_version is the version of Theia we wish to start
-    string theia_version = 2;
+    // ide_image is the Docker image name of the IDE image
+    string ide_image = 2;
 
     // feature_flags provide a means for starting variants of workspaces (e.g. a privileged one)
     repeated WorkspaceFeatureFlag feature_flags = 3;

@@ -520,7 +520,7 @@ export class WorkspaceStarter {
         spec.setGit(this.createGitSpec(workspace, user));
         spec.setPortsList(ports);
         spec.setInitializer(await initializerPromise);
-        spec.setTheiaVersion(instance.configuration!.theiaVersion);
+        spec.setIdeImage(`${this.env.theiaImageRepo}:${instance.configuration!.theiaVersion}`);
         spec.setWorkspaceImage(instance.workspaceImage);
         spec.setWorkspaceLocation(workspace.config.workspaceLocation || spec.getCheckoutLocation());
         spec.setFeatureFlagsList(this.toWorkspaceFeatureFlags(instance.configuration!.featureFlags || []));
