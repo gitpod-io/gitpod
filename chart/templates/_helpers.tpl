@@ -288,7 +288,7 @@ env:
 
 {{- define "gitpod.pull-secret" -}}
 {{- $ := .root -}}
-{{- if (and .secret .secret.secretName .secret.path) -}}
+{{- if (and .secret .secret.secretName .secret.path (not (eq ($.Files.Get .secret.path) ""))) -}}
 {{- $name := .secret.secretName -}}
 {{- $path := .secret.path -}}
 apiVersion: v1
