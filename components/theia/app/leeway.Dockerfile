@@ -44,6 +44,7 @@ RUN find /theia/node_modules/ -iname *.node -exec package-libs.sh {} \;
 FROM scratch
 COPY --from=builder_alpine /theia/ /ide/
 COPY --from=builder_alpine /theia/node/bin/node /ide/node/bin/gitpod-node
+COPY startup.sh /ide/startup.sh
 
 ENV GITPOD_BUILT_IN_PLUGINS /ide/node_modules/@gitpod/gitpod-ide/plugins/
 COPY components-theia-app--builtin-plugins/plugins/ ${GITPOD_BUILT_IN_PLUGINS}

@@ -5,7 +5,6 @@ packages:
       - package.json
       - "scripts/post-generate.js"
       - "webpack.config.js"
-      - "startup.sh"
       - "**/*.ico"
     deps:
       - components/gitpod-protocol:lib
@@ -31,6 +30,7 @@ packages:
     type: docker
     srcs:
       - "package-libs.sh"
+      - "startup.sh"
     deps:
       - :installer
       - :builtin-plugins
