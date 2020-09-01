@@ -4024,7 +4024,7 @@ proto.wsman.WorkspaceStatus.prototype.hasAuth = function() {
  * @private {!Array<number>}
  * @const
  */
-proto.wsman.WorkspaceSpec.repeatedFields_ = [4];
+proto.wsman.WorkspaceSpec.repeatedFields_ = [5];
 
 
 
@@ -4056,12 +4056,13 @@ proto.wsman.WorkspaceSpec.prototype.toObject = function(opt_includeInstance) {
 proto.wsman.WorkspaceSpec.toObject = function(includeInstance, msg) {
   var f, obj = {
     workspaceImage: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    headless: jspb.Message.getFieldWithDefault(msg, 2, false),
-    url: jspb.Message.getFieldWithDefault(msg, 3, ""),
+    ideImage: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    headless: jspb.Message.getFieldWithDefault(msg, 3, false),
+    url: jspb.Message.getFieldWithDefault(msg, 4, ""),
     exposedPortsList: jspb.Message.toObjectList(msg.getExposedPortsList(),
     proto.wsman.PortSpec.toObject, includeInstance),
-    type: jspb.Message.getFieldWithDefault(msg, 5, 0),
-    timeout: jspb.Message.getFieldWithDefault(msg, 6, "")
+    type: jspb.Message.getFieldWithDefault(msg, 6, 0),
+    timeout: jspb.Message.getFieldWithDefault(msg, 7, "")
   };
 
   if (includeInstance) {
@@ -4103,23 +4104,27 @@ proto.wsman.WorkspaceSpec.deserializeBinaryFromReader = function(msg, reader) {
       msg.setWorkspaceImage(value);
       break;
     case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setIdeImage(value);
+      break;
+    case 3:
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setHeadless(value);
       break;
-    case 3:
+    case 4:
       var value = /** @type {string} */ (reader.readString());
       msg.setUrl(value);
       break;
-    case 4:
+    case 5:
       var value = new proto.wsman.PortSpec;
       reader.readMessage(value,proto.wsman.PortSpec.deserializeBinaryFromReader);
       msg.addExposedPorts(value);
       break;
-    case 5:
+    case 6:
       var value = /** @type {!proto.wsman.WorkspaceType} */ (reader.readEnum());
       msg.setType(value);
       break;
-    case 6:
+    case 7:
       var value = /** @type {string} */ (reader.readString());
       msg.setTimeout(value);
       break;
@@ -4159,24 +4164,31 @@ proto.wsman.WorkspaceSpec.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
+  f = message.getIdeImage();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
   f = message.getHeadless();
   if (f) {
     writer.writeBool(
-      2,
+      3,
       f
     );
   }
   f = message.getUrl();
   if (f.length > 0) {
     writer.writeString(
-      3,
+      4,
       f
     );
   }
   f = message.getExposedPortsList();
   if (f.length > 0) {
     writer.writeRepeatedMessage(
-      4,
+      5,
       f,
       proto.wsman.PortSpec.serializeBinaryToWriter
     );
@@ -4184,14 +4196,14 @@ proto.wsman.WorkspaceSpec.serializeBinaryToWriter = function(message, writer) {
   f = message.getType();
   if (f !== 0.0) {
     writer.writeEnum(
-      5,
+      6,
       f
     );
   }
   f = message.getTimeout();
   if (f.length > 0) {
     writer.writeString(
-      6,
+      7,
       f
     );
   }
@@ -4214,50 +4226,65 @@ proto.wsman.WorkspaceSpec.prototype.setWorkspaceImage = function(value) {
 
 
 /**
- * optional bool headless = 2;
+ * optional string ide_image = 2;
+ * @return {string}
+ */
+proto.wsman.WorkspaceSpec.prototype.getIdeImage = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/** @param {string} value */
+proto.wsman.WorkspaceSpec.prototype.setIdeImage = function(value) {
+  jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional bool headless = 3;
  * Note that Boolean fields may be set to 0/1 when serialized from a Java server.
  * You should avoid comparisons like {@code val === true/false} in those cases.
  * @return {boolean}
  */
 proto.wsman.WorkspaceSpec.prototype.getHeadless = function() {
-  return /** @type {boolean} */ (jspb.Message.getFieldWithDefault(this, 2, false));
+  return /** @type {boolean} */ (jspb.Message.getFieldWithDefault(this, 3, false));
 };
 
 
 /** @param {boolean} value */
 proto.wsman.WorkspaceSpec.prototype.setHeadless = function(value) {
-  jspb.Message.setProto3BooleanField(this, 2, value);
+  jspb.Message.setProto3BooleanField(this, 3, value);
 };
 
 
 /**
- * optional string url = 3;
+ * optional string url = 4;
  * @return {string}
  */
 proto.wsman.WorkspaceSpec.prototype.getUrl = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
 };
 
 
 /** @param {string} value */
 proto.wsman.WorkspaceSpec.prototype.setUrl = function(value) {
-  jspb.Message.setProto3StringField(this, 3, value);
+  jspb.Message.setProto3StringField(this, 4, value);
 };
 
 
 /**
- * repeated PortSpec exposed_ports = 4;
+ * repeated PortSpec exposed_ports = 5;
  * @return {!Array<!proto.wsman.PortSpec>}
  */
 proto.wsman.WorkspaceSpec.prototype.getExposedPortsList = function() {
   return /** @type{!Array<!proto.wsman.PortSpec>} */ (
-    jspb.Message.getRepeatedWrapperField(this, proto.wsman.PortSpec, 4));
+    jspb.Message.getRepeatedWrapperField(this, proto.wsman.PortSpec, 5));
 };
 
 
 /** @param {!Array<!proto.wsman.PortSpec>} value */
 proto.wsman.WorkspaceSpec.prototype.setExposedPortsList = function(value) {
-  jspb.Message.setRepeatedWrapperField(this, 4, value);
+  jspb.Message.setRepeatedWrapperField(this, 5, value);
 };
 
 
@@ -4267,7 +4294,7 @@ proto.wsman.WorkspaceSpec.prototype.setExposedPortsList = function(value) {
  * @return {!proto.wsman.PortSpec}
  */
 proto.wsman.WorkspaceSpec.prototype.addExposedPorts = function(opt_value, opt_index) {
-  return jspb.Message.addToRepeatedWrapperField(this, 4, opt_value, proto.wsman.PortSpec, opt_index);
+  return jspb.Message.addToRepeatedWrapperField(this, 5, opt_value, proto.wsman.PortSpec, opt_index);
 };
 
 
@@ -4280,32 +4307,32 @@ proto.wsman.WorkspaceSpec.prototype.clearExposedPortsList = function() {
 
 
 /**
- * optional WorkspaceType type = 5;
+ * optional WorkspaceType type = 6;
  * @return {!proto.wsman.WorkspaceType}
  */
 proto.wsman.WorkspaceSpec.prototype.getType = function() {
-  return /** @type {!proto.wsman.WorkspaceType} */ (jspb.Message.getFieldWithDefault(this, 5, 0));
+  return /** @type {!proto.wsman.WorkspaceType} */ (jspb.Message.getFieldWithDefault(this, 6, 0));
 };
 
 
 /** @param {!proto.wsman.WorkspaceType} value */
 proto.wsman.WorkspaceSpec.prototype.setType = function(value) {
-  jspb.Message.setProto3EnumField(this, 5, value);
+  jspb.Message.setProto3EnumField(this, 6, value);
 };
 
 
 /**
- * optional string timeout = 6;
+ * optional string timeout = 7;
  * @return {string}
  */
 proto.wsman.WorkspaceSpec.prototype.getTimeout = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 6, ""));
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 7, ""));
 };
 
 
 /** @param {string} value */
 proto.wsman.WorkspaceSpec.prototype.setTimeout = function(value) {
-  jspb.Message.setProto3StringField(this, 6, value);
+  jspb.Message.setProto3StringField(this, 7, value);
 };
 
 

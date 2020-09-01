@@ -229,20 +229,23 @@ message WorkspaceSpec {
     // workspace_image is the name of the Docker image this workspace runs
     string workspace_image = 1;
 
+    // ide_image is the name of the Docker image used as IDE
+    string ide_image = 2;
+
     // headless marks this workspace a headless one - headless workspaces are not intended for users but for automation
-    bool headless = 2;
+    bool headless = 3;
 
     // URL is the external URL of the workspace
-    string url = 3;
+    string url = 4;
 
     // exposed_ports lists all ports which this workspace has exposed to the outside world
-    repeated PortSpec exposed_ports = 4;
+    repeated PortSpec exposed_ports = 5;
 
     // workspace type denotes what kind of workspace this is, e.g. if it's user-facing, prebuilding content or probing the service
-    WorkspaceType type = 5;
+    WorkspaceType type = 6;
 
     // The intervals in which a heartbeat must be received for the workspace not to time out
-    string timeout = 6;
+    string timeout = 7;
 }
 
 // PortSpec describes a networking port exposed on a workspace

@@ -238,6 +238,15 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	}
 	theiaVersionLabel := fmt.Sprintf(theiaVersionLabelFmt, theiaVersion)
 
+	spec := regapi.ImageSpec{
+		BaseRef: startContext.Request.Spec.WorkspaceImage,
+		IdeRef:  startContext.Request.Spec.IdeImage,
+	}
+	imageSpec, err := spec.ToBase64()
+	if err != nil {
+		return nil, xerrors.Errorf("cannot create remarshal image spec: %w", err)
+	}
+
 	initCfg, err := proto.Marshal(startContext.Request.Spec.Initializer)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create remarshal initializer: %w", err)
@@ -270,6 +279,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		workspaceInitializerAnnotation: initializerConfig,
 		workspaceNeverReadyAnnotation:  "true",
 		workspaceAdmissionAnnotation:   admissionLevel,
+		workspaceImageSpecAnnotation:   imageSpec,
 		ownerTokenAnnotation:           startContext.OwnerToken,
 		wsk8s.TraceIDAnnotation:        startContext.TraceID,
 	}
@@ -376,16 +386,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			fallthrough
 		case api.WorkspaceFeatureFlag_REGISTRY_FACADE:
 			removeVolume(&pod, theiaVolumeName)
-
-			spec := regapi.ImageSpec{
-				BaseRef: startContext.Request.Spec.WorkspaceImage,
-				IdeRef:  startContext.Request.Spec.IdeImage,
-			}
-			ispec, err := spec.ToBase64()
-			if err != nil {
-				return nil, xerrors.Errorf("cannot create remarshal image spec: %w", err)
-			}
-			annotations[workspaceImageSpecAnnotation] = ispec
 
 			image := fmt.Sprintf("%s/%s/%s", m.Config.RegistryFacadeHost, regapi.ProviderPrefixRemote, startContext.Request.Id)
 			for i, c := range pod.Spec.Containers {

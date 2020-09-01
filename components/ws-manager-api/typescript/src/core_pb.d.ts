@@ -560,6 +560,9 @@ export class WorkspaceSpec extends jspb.Message {
     getWorkspaceImage(): string;
     setWorkspaceImage(value: string): void;
 
+    getIdeImage(): string;
+    setIdeImage(value: string): void;
+
     getHeadless(): boolean;
     setHeadless(value: boolean): void;
 
@@ -591,6 +594,7 @@ export class WorkspaceSpec extends jspb.Message {
 export namespace WorkspaceSpec {
     export type AsObject = {
         workspaceImage: string,
+        ideImage: string,
         headless: boolean,
         url: string,
         exposedPortsList: Array<PortSpec.AsObject>,
