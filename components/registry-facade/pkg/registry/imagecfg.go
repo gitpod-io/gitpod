@@ -27,20 +27,6 @@ type ImageSpecProvider interface {
 	GetSpec(ctx context.Context, ref string) (*api.ImageSpec, error)
 }
 
-// Base32SpecProvider uses api.ImageSpecFromRef to decode a ref
-var Base32SpecProvider ImageSpecProvider = base32SpecProvider{}
-
-type base32SpecProvider struct{}
-
-// GetSpec returns the spec for the image or a wrapped ErrRefInvalid
-func (base32SpecProvider) GetSpec(ctx context.Context, ref string) (*api.ImageSpec, error) {
-	spec, err := api.ImageSpecFromRef(ref)
-	if err != nil {
-		return nil, xerrors.Errorf("%w: %s", ErrRefInvalid, err.Error())
-	}
-	return spec, nil
-}
-
 // RemoteSpecProvider queries a remote spec provider using gRPC
 type RemoteSpecProvider struct {
 	addr string
