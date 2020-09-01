@@ -59,9 +59,9 @@ func (c *WorkspaceInfoProviderConfig) Validate() error {
 
 // WorkspaceInfo is all the infos ws-proxy needs to know about a workspace
 type WorkspaceInfo struct {
-	ID         string
-	InstanceID string
-	URL        string
+	WorkspaceID string
+	InstanceID  string
+	URL         string
 
 	// (parsed from URL)
 	IdePublicPort string
@@ -236,7 +236,7 @@ func mapWorkspaceStatusToInfo(status *wsapi.WorkspaceStatus) *WorkspaceInfo {
 	}
 
 	return &WorkspaceInfo{
-		ID:            status.Metadata.MetaId,
+		WorkspaceID:   status.Metadata.MetaId,
 		InstanceID:    status.Id,
 		URL:           status.Spec.Url,
 		IdePublicPort: getPortStr(status.Spec.Url),
@@ -309,14 +309,14 @@ func (c *workspaceInfoCache) insert(info *WorkspaceInfo) {
 }
 
 func (c *workspaceInfoCache) doInsert(info *WorkspaceInfo) {
-	c.infos[info.ID] = info
+	c.infos[info.WorkspaceID] = info
 	c.coordsByPublicPort[info.IdePublicPort] = &WorkspaceCoords{
-		ID: info.ID,
+		ID: info.WorkspaceID,
 	}
 
 	for _, p := range info.Ports {
 		c.coordsByPublicPort[p.PublicPort] = &WorkspaceCoords{
-			ID:   info.ID,
+			ID:   info.WorkspaceID,
 			Port: strconv.Itoa(int(p.Port)),
 		}
 	}
