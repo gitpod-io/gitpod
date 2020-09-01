@@ -45,6 +45,7 @@ async function build(context, version) {
     const cacheLevel = "no-cache" in buildConfig ? "remote-push" : "remote";
     const publishRelease = "publish-release" in buildConfig;
     const previewWithHttps = "https" in buildConfig;
+    const workspaceFeatureFlags = (buildConfig["ws-feature-flags"] || "").split(",").map(e => e.trim())
     werft.log("job config", JSON.stringify({
         buildConfig,
         version,
@@ -52,7 +53,8 @@ async function build(context, version) {
         dontTest,
         cacheLevel,
         publishRelease,
-        previewWithHttps
+        previewWithHttps,
+        workspaceFeatureFlags,
     }));
 
     /**
@@ -90,7 +92,7 @@ async function build(context, version) {
         werft.phase("deploy", "not deploying");
         console.log("no-preview is set");
     } else {
-        await deployToDev(version, previewWithHttps);
+        await deployToDev(version, previewWithHttps, workspaceFeatureFlags);
     }
 }
 
@@ -98,7 +100,7 @@ async function build(context, version) {
 /**
  * Deploy dev
  */
-async function deployToDev(version, previewWithHttps) {
+async function deployToDev(version, previewWithHttps, workspaceFeatureFlags) {
     werft.phase("deploy", "deploying to dev");
     const destname = version.split(".")[0];
     const namespace = `staging-${destname}`;
@@ -185,7 +187,7 @@ async function deployToDev(version, previewWithHttps) {
     werft.log("deploy", "extracting versions");
     try {
         // TODO [geropl] versions is not a core component yet
-        exec(`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${version} cat /versions.yaml | tee versions.yaml`);
+        // exec(`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${version} cat /versions.yaml | tee versions.yaml`);
         werft.done('deploy');
     } catch (err) {
         werft.fail('deploy', err);
@@ -200,12 +202,15 @@ async function deployToDev(version, previewWithHttps) {
     flags+=` --set components.wsSync.servicePort=${wssyncPort}`;
     flags+=` --set components.wsManagerNode.registryProxyPort=${wsmanNodePort}`;
     flags+=` --set ingressMode=${context.Annotations.ingressMode || "hosts"}`;
-    const pathToVersions = `${shell.pwd().toString()}/versions.yaml`;
-    if (fs.existsSync(pathToVersions)) {
-        flags+=` -f ${pathToVersions}`;
-    } else {
-        werft.log(`versions file not found at '${pathToVersions}', not using it.`);
-    }
+    workspaceFeatureFlags.forEach((f, i) => {
+        flags+=` --set components.server.defaultFeatureFlags[${i}]='${f}'`
+    })
+    // const pathToVersions = `${shell.pwd().toString()}/versions.yaml`;
+    // if (fs.existsSync(pathToVersions)) {
+    //     flags+=` -f ${pathToVersions}`;
+    // } else {
+    //     werft.log(`versions file not found at '${pathToVersions}', not using it.`);
+    // }
     if (!certificatePromise) {
         // it's not possible to set certificatesSecret={} so we set secretName to empty string
         flags+=` --set certificatesSecret.secretName=""`;
