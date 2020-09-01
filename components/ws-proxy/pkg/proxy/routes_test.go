@@ -320,7 +320,7 @@ type fakeWsInfoProvider struct {
 // GetWsInfoByID returns the workspace for the given ID
 func (p *fakeWsInfoProvider) WorkspaceInfo(workspaceID string) *WorkspaceInfo {
 	for _, nfo := range p.infos {
-		if nfo.ID == workspaceID {
+		if nfo.WorkspaceID == workspaceID {
 			return &nfo
 		}
 	}
@@ -333,7 +333,7 @@ func (p *fakeWsInfoProvider) WorkspaceCoords(wsProxyPort string) *WorkspaceCoord
 	for _, info := range p.infos {
 		if info.IdePublicPort == wsProxyPort {
 			return &WorkspaceCoords{
-				ID:   info.ID,
+				ID:   info.WorkspaceID,
 				Port: "",
 			}
 		}
@@ -341,7 +341,7 @@ func (p *fakeWsInfoProvider) WorkspaceCoords(wsProxyPort string) *WorkspaceCoord
 		for _, portInfo := range info.Ports {
 			if portInfo.PublicPort == wsProxyPort {
 				return &WorkspaceCoords{
-					ID:   info.ID,
+					ID:   info.WorkspaceID,
 					Port: strconv.Itoa(int(portInfo.Port)),
 				}
 			}

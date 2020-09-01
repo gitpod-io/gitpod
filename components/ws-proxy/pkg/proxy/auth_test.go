@@ -35,8 +35,8 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 	var (
 		ownerOnlyInfos = map[string]*WorkspaceInfo{
 			workspaceID: {
-				ID:         workspaceID,
-				InstanceID: instanceID,
+				WorkspaceID: workspaceID,
+				InstanceID:  instanceID,
 				Auth: &api.WorkspaceAuthentication{
 					Admission:  api.AdmissionLevel_ADMIT_OWNER_ONLY,
 					OwnerToken: ownerToken,
@@ -46,8 +46,8 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 		}
 		publicPortInfos = map[string]*WorkspaceInfo{
 			workspaceID: {
-				ID:         workspaceID,
-				InstanceID: instanceID,
+				WorkspaceID: workspaceID,
+				InstanceID:  instanceID,
 				Auth: &api.WorkspaceAuthentication{
 					Admission:  api.AdmissionLevel_ADMIT_OWNER_ONLY,
 					OwnerToken: ownerToken,
@@ -57,9 +57,9 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 		}
 		admitEveryoneInfos = map[string]*WorkspaceInfo{
 			workspaceID: {
-				ID:         workspaceID,
-				InstanceID: instanceID,
-				Auth:       &api.WorkspaceAuthentication{Admission: api.AdmissionLevel_ADMIT_EVERYONE},
+				WorkspaceID: workspaceID,
+				InstanceID:  instanceID,
+				Auth:        &api.WorkspaceAuthentication{Admission: api.AdmissionLevel_ADMIT_EVERYONE},
 			},
 		}
 	)

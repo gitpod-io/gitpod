@@ -69,7 +69,7 @@ func TestWorkspaceRouter(t *testing.T) {
 			},
 			Infos: []WorkspaceInfo{
 				{
-					ID:            "c65376da-3406-4cf3-a80b-99ce5f750235",
+					WorkspaceID:   "c65376da-3406-4cf3-a80b-99ce5f750235",
 					URL:           "http://gitpod-dev.com:10001/",
 					IdePublicPort: "10001",
 					Ports: []PortInfo{
@@ -97,8 +97,8 @@ func TestWorkspaceRouter(t *testing.T) {
 			},
 			Infos: []WorkspaceInfo{
 				{
-					ID:  "c65376da-3406-4cf3-a80b-99ce5f750235",
-					URL: "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235",
+					WorkspaceID: "c65376da-3406-4cf3-a80b-99ce5f750235",
+					URL:         "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235",
 				},
 			},
 			Expected: Expectation{
@@ -115,8 +115,8 @@ func TestWorkspaceRouter(t *testing.T) {
 			},
 			Infos: []WorkspaceInfo{
 				{
-					ID:  "c65376da-3406-4cf3-a80b-99ce5f750235",
-					URL: "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235",
+					WorkspaceID: "c65376da-3406-4cf3-a80b-99ce5f750235",
+					URL:         "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235",
 				},
 			},
 			Expected: Expectation{
@@ -133,8 +133,8 @@ func TestWorkspaceRouter(t *testing.T) {
 			},
 			Infos: []WorkspaceInfo{
 				{
-					ID:  "c65376da-3406-4cf3-a80b-99ce5f750235",
-					URL: "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235",
+					WorkspaceID: "c65376da-3406-4cf3-a80b-99ce5f750235",
+					URL:         "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235",
 				},
 			},
 			Expected: Expectation{
@@ -149,8 +149,8 @@ func TestWorkspaceRouter(t *testing.T) {
 			Router: PathAndPortRouter("/workspace/"),
 			Infos: []WorkspaceInfo{
 				{
-					ID:  "c65376da-3406-4cf3-a80b-99ce5f750235",
-					URL: "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235",
+					WorkspaceID: "c65376da-3406-4cf3-a80b-99ce5f750235",
+					URL:         "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235",
 				},
 			},
 			Expected: Expectation{
@@ -165,8 +165,8 @@ func TestWorkspaceRouter(t *testing.T) {
 			Router: PathAndPortRouter("/workspace/"),
 			Infos: []WorkspaceInfo{
 				{
-					ID:  "c65376da-3406-4cf3-a80b-99ce5f750235",
-					URL: "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235",
+					WorkspaceID: "c65376da-3406-4cf3-a80b-99ce5f750235",
+					URL:         "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235",
 					Ports: []PortInfo{
 						{
 							PublicPort: "10343",
@@ -193,8 +193,8 @@ func TestWorkspaceRouter(t *testing.T) {
 			},
 			Infos: []WorkspaceInfo{
 				{
-					ID:  "c65376da-3406-4cf3-a80b-99ce5f750235",
-					URL: "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235",
+					WorkspaceID: "c65376da-3406-4cf3-a80b-99ce5f750235",
+					URL:         "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235",
 				},
 			},
 			Expected: Expectation{
@@ -212,8 +212,8 @@ func TestWorkspaceRouter(t *testing.T) {
 			Router: PathAndHostRouter("/workspace/", forwardedHostnameHeader, wsHostSuffix),
 			Infos: []WorkspaceInfo{
 				{
-					ID:  "de5ce5ec-a9ac-49e4-aadc-4827d2dcb189",
-					URL: "http://localhost/de5ce5ec-a9ac-49e4-aadc-4827d2dcb189",
+					WorkspaceID: "de5ce5ec-a9ac-49e4-aadc-4827d2dcb189",
+					URL:         "http://localhost/de5ce5ec-a9ac-49e4-aadc-4827d2dcb189",
 					Ports: []PortInfo{
 						{
 							PublicPort: "10343",
