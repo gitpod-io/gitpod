@@ -352,8 +352,8 @@ func (test *SingleWorkspaceIntegrationTest) Run(t *testing.T) {
 				Email:    "none@none.com",
 				Username: "integration-test",
 			},
-			TheiaVersion:      deployedVersion,
 			WorkspaceImage:    "gitpod/workspace-full:latest",
+			IdeImage:          "gitpod/theia:" + deployedVersion,
 			WorkspaceLocation: "/workspace",
 			Initializer: &csapi.WorkspaceInitializer{
 				Spec: &csapi.WorkspaceInitializer_Empty{Empty: &csapi.EmptyInitializer{}},

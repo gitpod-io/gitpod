@@ -7,8 +7,8 @@ option go_package = "api";
 message ImageSpec {
     // base_ref points to an image in another registry
     string base_ref = 1;
-    // theia_version contains an image tag denoting the Theia version to add
-    string theia_version = 2;
+    // ide_ref points to an image denoting the IDE to use
+    string ide_ref = 2;
     // content_layer describe the last few layers which provide the workspace's content
     repeated ContentLayer content_layer = 3;
 }

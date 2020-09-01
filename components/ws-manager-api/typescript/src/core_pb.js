@@ -1,10 +1,4 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
- * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
- */
-
-/**
  * @fileoverview
  * @enhanceable
  * @suppress {messageConventions} JS Compiler reports an error if a variable or
@@ -5396,7 +5390,7 @@ proto.wsman.StartWorkspaceSpec.prototype.toObject = function(opt_includeInstance
 proto.wsman.StartWorkspaceSpec.toObject = function(includeInstance, msg) {
   var f, obj = {
     workspaceImage: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    theiaVersion: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    ideImage: jspb.Message.getFieldWithDefault(msg, 2, ""),
     featureFlagsList: jspb.Message.getRepeatedField(msg, 3),
     initializer: (f = msg.getInitializer()) && content$service$api_initializer_pb.WorkspaceInitializer.toObject(includeInstance, f),
     portsList: jspb.Message.toObjectList(msg.getPortsList(),
@@ -5450,7 +5444,7 @@ proto.wsman.StartWorkspaceSpec.deserializeBinaryFromReader = function(msg, reade
       break;
     case 2:
       var value = /** @type {string} */ (reader.readString());
-      msg.setTheiaVersion(value);
+      msg.setIdeImage(value);
       break;
     case 3:
       var value = /** @type {!Array<!proto.wsman.WorkspaceFeatureFlag>} */ (reader.readPackedEnum());
@@ -5528,7 +5522,7 @@ proto.wsman.StartWorkspaceSpec.serializeBinaryToWriter = function(message, write
       f
     );
   }
-  f = message.getTheiaVersion();
+  f = message.getIdeImage();
   if (f.length > 0) {
     writer.writeString(
       2,
@@ -5621,16 +5615,16 @@ proto.wsman.StartWorkspaceSpec.prototype.setWorkspaceImage = function(value) {
 
 
 /**
- * optional string theia_version = 2;
+ * optional string ide_image = 2;
  * @return {string}
  */
-proto.wsman.StartWorkspaceSpec.prototype.getTheiaVersion = function() {
+proto.wsman.StartWorkspaceSpec.prototype.getIdeImage = function() {
   return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
 };
 
 
 /** @param {string} value */
-proto.wsman.StartWorkspaceSpec.prototype.setTheiaVersion = function(value) {
+proto.wsman.StartWorkspaceSpec.prototype.setIdeImage = function(value) {
   jspb.Message.setProto3StringField(this, 2, value);
 };
 

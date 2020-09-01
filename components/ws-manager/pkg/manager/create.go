@@ -226,7 +226,17 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	for k, v := range startContext.Labels {
 		labels[k] = v
 	}
-	theiaVersionLabel := fmt.Sprintf(theiaVersionLabelFmt, req.Spec.TheiaVersion)
+
+	// TODO(cw): once migrated to registry-facade, remove this bit
+	// We're moving away from a fixed Theia image/version coupling and towards specifying a proper IDE image.
+	// Once we're exclusively using registry-facade, we won't need this label anymore.
+	var theiaVersion string
+	if s := strings.Split(req.Spec.IdeImage, ":"); len(s) == 2 {
+		theiaVersion = s[1]
+	} else {
+		return nil, xerrors.Errorf("IDE image ref does not have a label")
+	}
+	theiaVersionLabel := fmt.Sprintf(theiaVersionLabelFmt, theiaVersion)
 
 	initCfg, err := proto.Marshal(startContext.Request.Spec.Initializer)
 	if err != nil {
@@ -368,8 +378,8 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			removeVolume(&pod, theiaVolumeName)
 
 			spec := regapi.ImageSpec{
-				BaseRef:      startContext.Request.Spec.WorkspaceImage,
-				TheiaVersion: startContext.Request.Spec.TheiaVersion,
+				BaseRef: startContext.Request.Spec.WorkspaceImage,
+				IdeRef:  startContext.Request.Spec.IdeImage,
 			}
 			ispec, err := spec.ToBase64()
 			if err != nil {

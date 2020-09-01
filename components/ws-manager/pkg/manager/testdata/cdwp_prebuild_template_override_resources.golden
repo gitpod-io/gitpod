@@ -207,7 +207,7 @@
                             {
                                 "matchExpressions": [
                                     {
-                                        "key": "gitpod.io/theia.foobar",
+                                        "key": "gitpod.io/theia.someversion",
                                         "operator": "Exists"
                                     },
                                     {
