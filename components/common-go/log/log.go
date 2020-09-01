@@ -6,6 +6,9 @@ package log
 
 import (
 	"fmt"
+	"os"
+
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -86,4 +89,36 @@ func (f *gcpFormatter) Format(entry *log.Entry) ([]byte, error) {
 	}
 
 	return f.JSONFormatter.Format(entry)
+}
+
+// KubernetesTerminationLogHook writes to the kubernetes termination log if the application exits with Fatal
+type KubernetesTerminationLogHook struct {
+	TerminationLogPath string
+}
+
+// Levels returns the levels this hook should fire at
+func (h *KubernetesTerminationLogHook) Levels() []logrus.Level {
+	return []logrus.Level{
+		log.FatalLevel,
+	}
+}
+
+// Fire executes the hook
+func (h *KubernetesTerminationLogHook) Fire(e *logrus.Entry) error {
+	f, err := os.OpenFile(h.TerminationLogPath, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+	if err != nil {
+		return fmt.Errorf("cannot open termination log: %w", err)
+	}
+	defer f.Close()
+
+	l, err := e.String()
+	if err != nil {
+		return fmt.Errorf("cannot serialize log entry: %w", err)
+	}
+	_, err = f.WriteString(l + "\n")
+	if err != nil {
+		return fmt.Errorf("cannot write to termination log: %w", err)
+	}
+
+	return nil
 }

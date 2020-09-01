@@ -250,6 +250,9 @@ func Run(options ...RunOption) {
 	}
 
 	log.Init(ServiceName, Version, true, true)
+	log.Log.Logger.AddHook(&log.KubernetesTerminationLogHook{
+		TerminationLogPath: "/dev/termination-log",
+	})
 	buildTheiaEnv(&Config{})
 	configureGit(cfg)
 
