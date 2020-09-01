@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
@@ -32,19 +31,17 @@ type Server struct {
 }
 
 // Config configures a server.
-// Mapping maps a single path prefix to an image name, e.g.
-//    { "theia": "eu.gcr.io/typefox/gitpod/theia-ide:" } maps an incoming request from
-//    /theia/foobar.1/index.html to a file named index.html in the first layer blob of
-//    the eu.gcr.io/typefox/gitpod/theia-ide:foobar.1 image.
 type Config struct {
 	Port    int           `json:"port"`
 	Timeout util.Duration `json:"timeout,omitempty"`
-	Mapping map[string]struct {
-		Repository string `json:"repo"`
-		Workdir    string `json:"workdir,omitempty"`
-	} `json:"mapping"`
-	Preparation []string `json:"preparation,omitempty"`
-	BlobSpace   struct {
+	Repos   map[string]struct {
+		PrePull []string `json:"prePull,omitempty"`
+		Workdir string   `json:"workdir,omitempty"`
+	} `json:"repos"`
+	// AllowAnyRepo enables users to access any repo/image, irregardles if they're listed in the
+	// ref config or not.
+	AllowAnyRepo bool `json:"allowAnyRepo"`
+	BlobSpace    struct {
 		Location string `json:"location"`
 		MaxSize  int64  `json:"maxSizeBytes,omitempty"`
 	} `json:"blobSpace"`
@@ -63,11 +60,14 @@ func NewServer(cfg Config, resolver registry.ResolverProvider) (*Server, error) 
 		blobspace: bs,
 		refcache:  make(map[string]string),
 	}
-	for _, ref := range cfg.Preparation {
-		log.WithField("ref", ref).Info("preparing blob server")
-		err := s.Prepare(context.Background(), ref)
-		if err != nil {
-			return nil, err
+	for repo, repoCfg := range cfg.Repos {
+		for _, ver := range repoCfg.PrePull {
+			ref := repo + ":" + ver
+			log.WithField("ref", ref).Info("preparing blob server")
+			err := s.Prepare(context.Background(), ref)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 	return s, nil
@@ -76,7 +76,7 @@ func NewServer(cfg Config, resolver registry.ResolverProvider) (*Server, error) 
 // Serve serves the registry on the given port
 func (reg *Server) Serve() error {
 	r := mux.NewRouter()
-	r.PathPrefix("/{prefix:[a-z]+}/{tag:[a-z][a-z0-9-\\.]*}").HandlerFunc(reg.serve)
+	r.PathPrefix(`/{repo:[a-zA-Z0-9\/\-\.]+}:{tag:[a-z][a-z0-9-\.]+}`).HandlerFunc(reg.serve)
 
 	var h http.Handler = r
 	if reg.Config.Timeout > 0 {
@@ -98,15 +98,18 @@ func (reg *Server) MustServe() {
 // serve serves a single file from an image
 func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	prefix, tag := vars["prefix"], vars["tag"]
+	repo, tag := vars["repo"], vars["tag"]
 
-	mapping, ok := reg.Config.Mapping[prefix]
-	if !ok {
-		http.Error(w, fmt.Sprintf("unknown mapping: %s", mapping), http.StatusNotFound)
+	var workdir string
+	if cfg, ok := reg.Config.Repos[repo]; ok {
+		workdir = cfg.Workdir
+	} else if !reg.Config.AllowAnyRepo {
+		log.WithField("repo", repo).Debug("forbidden repo access attempt")
+		http.Error(w, fmt.Sprintf("forbidden repo: %s", repo), http.StatusForbidden)
 		return
 	}
 
-	ref := fmt.Sprintf("%s:%s", strings.TrimPrefix(mapping.Repository, ":"), tag)
+	ref := fmt.Sprintf("%s:%s", repo, tag)
 
 	// The blobFor operation's context must be independent of this request. Even if we do not
 	// serve this request in time, we might want to serve another from the same ref in the future.
@@ -121,11 +124,11 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 
 	var fs http.FileSystem
 	fs = blob
-	if mapping.Workdir != "" {
-		fs = prefixingFilesystem{Prefix: mapping.Workdir, FS: fs}
+	if workdir != "" {
+		fs = prefixingFilesystem{Prefix: workdir, FS: fs}
 	}
 
-	http.StripPrefix(fmt.Sprintf("/%s/%s", prefix, tag), http.FileServer(fs)).ServeHTTP(w, req)
+	http.StripPrefix(fmt.Sprintf("/%s:%s", repo, tag), http.FileServer(fs)).ServeHTTP(w, req)
 }
 
 // Prepare downloads a blob and prepares it for use independently of any request
@@ -152,6 +155,9 @@ func (reg *Server) blobFor(ctx context.Context, ref string) (fs http.FileSystem,
 }
 
 func (reg *Server) downloadBlobFor(ctx context.Context, ref string) (fs http.FileSystem, err error) {
+	// TODO(cw): If multiple requests are made while the download happens we'll start multiple downloads (one per request).
+	//           Instead we should properly sync/manage/timeout state here.
+
 	resolver := reg.Resolver()
 	_, desc, err := resolver.Resolve(ctx, ref)
 	if err != nil {
