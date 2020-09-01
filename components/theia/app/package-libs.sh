@@ -17,7 +17,7 @@
 # This allows to have self-contained and thereby portable linux executables.
 
 BINARY=$1
-DST=/theia/node/lib/
+DST=/ide/node/lib/
 
 echo "$BINARY: Starting rewiring libs to $DST"
 

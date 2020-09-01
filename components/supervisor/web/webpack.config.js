@@ -16,5 +16,18 @@ module.exports = {
         chunkFilename: '[name].js',
         path: path.resolve(__dirname, 'dist')
     },
-    plugins: [new HtmlWebpackPlugin()]
+    plugins: [new HtmlWebpackPlugin({
+        meta: {
+            "referrer": "origin"
+        },
+        favicon: 'public/favicon.ico'
+    })],
+    module: {
+        rules: [
+            {
+                test: /\.css$/i,
+                use: ['style-loader', 'css-loader']
+            }
+        ]
+    }
 };

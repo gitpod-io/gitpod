@@ -3,7 +3,6 @@ packages:
     type: yarn
     srcs:
       - package.json
-      - "scripts/post-generate.js"
       - "webpack.config.js"
       - "**/*.ico"
     deps:

@@ -3,6 +3,7 @@ packages:
     type: yarn
     srcs:
       - "src/**"
+      - "public/**"
       - package.json
       - webpack.config.js
       - tsconfig.json

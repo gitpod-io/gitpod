@@ -82,10 +82,6 @@ func installTheiaRoutes(r *mux.Router, config *RouteHandlerConfig, rh *RouteHand
 	r.Use(logHandler)
 	r.Use(handlers.CompressHandler)
 
-	rh.theiaReadyHandler(r.Path("/gitpod/ready").Subrouter(), config)
-	rh.theiaSupervisorReadyHandler(r.Path("/supervisor/ready").Subrouter(), config)
-	rh.workspaceRootHandler(r.NewRoute().Subrouter(), config)
-
 	// if enabled, we serve the static frontend on the root, and the IDE on `/ide`
 	ideR := r
 	if config.Config.WorkspacePodConfig.StaticFrontendPort > 0 {
@@ -96,13 +92,17 @@ func installTheiaRoutes(r *mux.Router, config *RouteHandlerConfig, rh *RouteHand
 	}
 
 	rh.theiaMiniBrowserHandler(ideR.PathPrefix("/mini-browser").Subrouter(), config)
-	rh.theiaServiceHandler(r.Path("/services").Subrouter(), config)
-	rh.theiaFileUploadHandler(r.Path("/file-upload").Subrouter(), config)
+	rh.theiaServiceHandler(ideR.Path("/services").Subrouter(), config)
+	rh.theiaFileUploadHandler(ideR.Path("/file-upload").Subrouter(), config)
 	rh.theiaFileHandler(ideR.PathPrefix("/file").Subrouter(), config)
 	rh.theiaFileHandler(ideR.PathPrefix("/files").Subrouter(), config)
 	rh.theiaHostedPluginHandler(ideR.PathPrefix("/hostedPlugin").Subrouter(), config)
 	rh.theiaWebviewHandler(ideR.PathPrefix("/webview").Subrouter(), config)
 	rh.theiaRootHandler(ideR.NewRoute().Subrouter(), config)
+
+	rh.theiaReadyHandler(r.Path("/gitpod/ready").Subrouter(), config)
+	rh.theiaSupervisorReadyHandler(r.Path("/supervisor/ready").Subrouter(), config)
+	rh.workspaceRootHandler(r.NewRoute().Subrouter(), config)
 }
 
 // TheiaRootHandler handles all requests under / that are not handled by any special case above (expected to be static resources only)

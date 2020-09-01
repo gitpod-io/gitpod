@@ -53,10 +53,9 @@
     "start:dev": "yarn start:theia --port=4000 | grep '^{' | jq -r .message",
     "debug": "nodemon -w ../packages --ignore src/ --inspect=9301 src-gen/backend/main.js",
     "debug:local": "./local-startup.sh",
-    "build": "export NODE_OPTIONS=\"--max_old_space_size=3192\" && theia build && yarn run post-generate",
+    "build": "export NODE_OPTIONS=\"--max_old_space_size=3192\" && theia build",
     "build:theia": "theia build --mode development",
     "watch": "yarn build:theia --watch",
-    "post-generate": "node ./scripts/post-generate.js",
     "cachify-bundle": "node ./scripts/cachify-bundle.js",
     "upload-to-cdn": "node ./scripts/cachify-bundle-upload.js"
   },
