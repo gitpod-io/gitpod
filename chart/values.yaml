@@ -227,6 +227,7 @@ components:
     storage: {}
     wsman: []
     defaultBaseImageRegistryWhitelist: []
+    defaultFeatureFlags: []
     ports:
       http:
         expose: true

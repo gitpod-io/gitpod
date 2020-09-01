@@ -11,7 +11,7 @@ import { AbstractComponentEnv, getEnvVar } from '@gitpod/gitpod-protocol/lib/env
 import { AuthProviderParams, parseAuthProviderParamsFromEnv } from './auth/auth-provider';
 
 import * as fs from "fs";
-import { Branding } from '@gitpod/gitpod-protocol';
+import { Branding, NamedWorkspaceFeatureFlag, WorkspaceFeatureFlags } from '@gitpod/gitpod-protocol';
 
 import { BrandingParser } from './branding-parser';
 
@@ -136,6 +136,20 @@ export class Env extends AbstractComponentEnv {
 
         return JSON.parse(wljson);
     })()
+
+    readonly defaultFeatureFlags: NamedWorkspaceFeatureFlag[] = (() => {
+        const json = process.env.GITPOD_DEFAULT_FEATURE_FLAGS;
+        if (!json) {
+            return [];
+        }
+
+        let r = JSON.parse(json);
+        if (!Array.isArray(r)) {
+            return [];
+        }
+        r = r.filter(e => e in WorkspaceFeatureFlags);
+        return r;
+    })();
 
     /** defaults to: false */
     readonly portAccessForUsersOnly: boolean = this.parsePortAccessForUsersOnly();

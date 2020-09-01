@@ -68,7 +68,7 @@ spec:
           privileged: false
           runAsUser: 31001
         volumeMounts:
-{{- if .Values.components.server.storage }}
+{{- if $comp.storage }}
         - name: storage-key
           mountPath: "/storageKeySecret"
           readOnly: true
@@ -78,8 +78,8 @@ spec:
           mountPath: "/github-app-cert"
           readOnly: true
 {{- end }}
-{{- if .Values.components.server.serverContainer.volumeMounts }}
-{{ toYaml .Values.components.server.serverContainer.volumeMounts | indent 8 }}
+{{- if $comp.serverContainer.volumeMounts }}
+{{ toYaml $comp.serverContainer.volumeMounts | indent 8 }}
 {{- end }}
 {{ include "gitpod.container.defaultEnv" $this | indent 8 }}
 {{ include "gitpod.container.dbEnv" $this | indent 8 }}
@@ -129,13 +129,13 @@ spec:
         - name: MAKE_NEW_USERS_ADMIN
           value: {{ $comp.makeNewUsersAdmin | quote }}
     {{- end }}
-    {{- if .Values.components.server.portAccessForUsersOnly }}
+    {{- if $comp.portAccessForUsersOnly }}
         - name: PORT_ACCESS_FOR_USERS_ONLY
           value: "true"
     {{- end }}
-    {{- if .Values.components.server.sessionMaxAgeMs }}
+    {{- if $comp.sessionMaxAgeMs }}
         - name: SESSION_MAX_AGE_MS
-          value: {{ .Values.components.server.sessionMaxAgeMs | quote }}
+          value: {{ $comp.sessionMaxAgeMs | quote }}
     {{- end }}
         - name: SESSION_SECRET
           value: {{ $comp.sessionSecret | quote }}
@@ -157,9 +157,9 @@ spec:
         - name: LOCAL_THEIA
           value: "true"
     {{- end }}
-    {{- if .Values.components.server.theiaPluginsBucketName }}
+    {{- if $comp.theiaPluginsBucketName }}
         - name: THEIA_PLUGINS_BUCKET_NAME_OVERRIDE
-          value: {{ .Values.components.server.theiaPluginsBucketName }}
+          value: {{ $comp.theiaPluginsBucketName }}
     {{- end }}
     {{- if .Values.devBranch }}
         - name: DEV_BRANCH
@@ -171,6 +171,8 @@ spec:
           value: {{ index (include "ws-manager-list" $this | fromYaml) "manager" | default dict | toJson | b64enc | quote }}
         - name: GITPOD_BASEIMG_REGISTRY_WHITELIST
           value: {{ $comp.defaultBaseImageRegistryWhitelist | toJson | quote }}
+        - name: GITPOD_DEFAULT_FEATURE_FLAGS
+          value: {{ $comp.defaultFeatureFlags | toJson | quote }}
         - name: AUTH_PROVIDERS_CONFIG
           valueFrom:
             configMapKeyRef:
@@ -187,7 +189,7 @@ spec:
             secretKeyRef:
               name: server-proxy-apikey
               key: apikey
-{{- if (or .Values.components.wsSync.remoteStorage.gcloud .Values.components.server.storage) }}
+{{- if (or .Values.components.wsSync.remoteStorage.gcloud $comp.storage) }}
         - name: GCLOUD_PROJECT_ID
           value: {{ .Values.components.wsSync.remoteStorage.gcloud.projectId }}
         - name: GCLOUD_REGION
@@ -197,22 +199,22 @@ spec:
 {{- end }}
         - name: GITPOD_GARBAGE_COLLECTION_DISABLED
           value: {{ $comp.garbageCollection.disabled | default "false" | quote }}
-{{- if .Values.components.server.serverContainer.env }}
-{{ toYaml .Values.components.server.serverContainer.env | indent 8 }}
+{{- if $comp.serverContainer.env }}
+{{ toYaml $comp.serverContainer.env | indent 8 }}
 {{- end }}
       volumes:
-{{- if .Values.components.server.storage.secretName }}
+{{- if $comp.storage.secretName }}
       - name: storage-key
         secret:
-          secretName: {{ .Values.components.server.storage.secretName }}
+          secretName: {{ $comp.storage.secretName }}
 {{- end }}
 {{- if $comp.github.app }}
       - name: github-app-cert-secret
         secret:
           secretName: {{ $comp.github.app.appCert }}
 {{- end }}
-{{- if .Values.components.server.volumes }}
-{{ toYaml .Values.components.server.volumes | indent 6 }}
+{{- if $comp.volumes }}
+{{ toYaml $comp.volumes | indent 6 }}
 {{- end }}
 {{ toYaml .Values.defaults | indent 6 }}
 {{ end }}
