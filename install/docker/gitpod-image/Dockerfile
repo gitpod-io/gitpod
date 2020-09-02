@@ -17,4 +17,4 @@ COPY chart--helm/gitpod /chart
 
 COPY entrypoint.sh /entrypoint
 
-ENTRYPOINT [ "/tini", "--", "/entrypoint" ]
+ENTRYPOINT [ "/tini", "-g", "--", "/entrypoint" ]

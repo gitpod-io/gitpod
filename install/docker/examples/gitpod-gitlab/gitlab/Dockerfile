@@ -10,4 +10,4 @@ COPY gitlab-helm-installer.yaml /var/lib/rancher/k3s/server/manifests/
 
 COPY entrypoint.sh /entrypoint
 
-ENTRYPOINT [ "/tini", "--", "/entrypoint" ]
+ENTRYPOINT [ "/tini", "-g", "--", "/entrypoint" ]
