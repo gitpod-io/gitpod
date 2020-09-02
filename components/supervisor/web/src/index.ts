@@ -8,6 +8,20 @@ require('../public/index.css');
 
 // TODO document.title = 
 
+const fetchContentReady: () => Promise<void> = () => fetch(window.location.protocol + '//' + window.location.host + '/supervisor/ready').then(response => {
+    if (response.ok) {
+        console.info('content is ready, revealing IDE...');
+        return;
+    }
+    console.error('failed to check whether content is ready, trying again...', response.status, response.statusText);
+    return fetchContentReady();
+}, e => {
+    console.error('failed to check whether content is ready, trying again...', e);
+    return fetchContentReady();
+});
+
+const contentReady = fetchContentReady();
+
 window.addEventListener('DOMContentLoaded', () => {
     const ideFrame = document.createElement('iframe');
     ideFrame.src = window.location.protocol + '//' + window.location.host + '/ide/'
@@ -26,4 +40,6 @@ window.addEventListener('DOMContentLoaded', () => {
     loadingFrame.src = startURL;
     loadingFrame.className = 'gitpod-frame loading';
     document.body.appendChild(loadingFrame);
+
+    contentReady.then(() => loadingFrame.remove());
 });
