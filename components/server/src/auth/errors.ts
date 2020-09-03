@@ -13,7 +13,7 @@ export namespace TosNotAcceptedYetException {
     export function create(identity: Identity) {
         return Object.assign(new Error("TosNotAcceptedYetException"), { identity });
     }
-    export function is(error: Error | null): error is TosNotAcceptedYetException {
+    export function is(error: any): error is TosNotAcceptedYetException {
         return !!error && error.message === 'TosNotAcceptedYetException';
     }
 }

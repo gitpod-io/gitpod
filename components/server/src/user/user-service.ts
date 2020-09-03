@@ -9,9 +9,9 @@ import { User, Identity, WorkspaceTimeoutDuration } from "@gitpod/gitpod-protoco
 import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { TokenProvider } from "./token-provider";
 import { Env } from "../env";
 import { AuthProviderParams } from "../auth/auth-provider";
+import { TosNotAcceptedYetException } from "../auth/errors";
 
 export interface FindUserByIdentityStrResult {
     user: User;
@@ -28,7 +28,6 @@ export interface CheckSignUpParams {
 export class UserService {
     @inject(UserDB) protected readonly userDb: UserDB;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
-    @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
     @inject(Env) protected readonly env: Env;
 
     /**
@@ -95,14 +94,9 @@ export class UserService {
     }
     protected handleNewUser(newUser: User) {
         if (this.env.blockNewUsers) {
-            // By default we block all new users on staging as we don't expected that many new ones.
-            // Any legitimate new user on gitpod-staging can talk to the team to get unblocked.
-            // TODO Replace this with a more precise mechanism, maybe based on email domains
             newUser.blocked = true;
         }
-
         if (this.env.makeNewUsersAdmin) {
-            // In devstaging we want all users to become admins to make debugging easier.
             newUser.rolesOrPermissions = ['admin'];
         }
     }
@@ -117,6 +111,12 @@ export class UserService {
     }
 
     async checkSignUp(params: CheckSignUpParams) {
-        // no-op here
+        const { identity, config } = params;
+        if (config.requireTOS !== false) {
+            const userCount = await this.userDb.getUserCount();
+            if (userCount === 0) {
+                throw TosNotAcceptedYetException.create(identity);
+            }
+        }
     }
 }

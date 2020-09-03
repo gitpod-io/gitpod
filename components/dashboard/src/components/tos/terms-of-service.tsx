@@ -20,7 +20,6 @@ interface TermsOfServiceProps {
 }
 interface TermsOfServiceState {
     acceptsTos?: boolean;
-    acceptsComs?: boolean;
 }
 export class TermsOfService extends React.Component<TermsOfServiceProps, TermsOfServiceState> {
 
@@ -28,7 +27,6 @@ export class TermsOfService extends React.Component<TermsOfServiceProps, TermsOf
         super(props);
         this.state = {
             acceptsTos: false,
-            acceptsComs: false
         };
     }
 
@@ -62,17 +60,9 @@ export class TermsOfService extends React.Component<TermsOfServiceProps, TermsOf
                     </Toolbar>
                 </AppBar>
                 <div className='content content-area'>
-                    <h1>Create account</h1>
+                    <h1>Before we proceed</h1>
                     <form action={ gitpodHost.withApi({ pathname: '/tos/proceed' }).toString() } method="post" id="accept-tos-form">
                         <div className="tos-checks">
-                            <p><label style={{ display: 'flex', alignItems: 'center' }}>
-                                <Checkbox
-                                    value="true"
-                                    name="agreeCOMS"
-                                    checked={this.state.acceptsComs}
-                                    onChange={() => this.setState({ acceptsComs: !this.state.acceptsComs })} />
-                                I wish to receive news and updates via email
-                            </label></p>
                             <p><label style={{ display: 'flex', alignItems: 'center' }}>
                                 <Checkbox
                                     value="true"
@@ -80,7 +70,7 @@ export class TermsOfService extends React.Component<TermsOfServiceProps, TermsOf
                                     checked={this.state.acceptsTos}
                                     onChange={() => this.setState({ acceptsTos: !this.state.acceptsTos })} />
                                 <span>
-                                    I agree to the <a target="_blank" href="https://www.gitpod.io/terms/" rel="noopener">terms of service</a>
+                                    I agree to the <a target="_blank" href="https://www.gitpod.io/self-hosted-terms/" rel="noopener">terms</a>
                                 </span>
                             </label></p>
                         </div>
@@ -92,7 +82,7 @@ export class TermsOfService extends React.Component<TermsOfServiceProps, TermsOf
                                 color={this.state.acceptsTos ? 'secondary' : 'primary'}
                                 onClick={this.submitForm.bind(this)}
                                 data-testid="submit">
-                                { this.state.acceptsTos ? 'Create Free Account' : 'Please Accept the Terms of Service' }
+                                { this.state.acceptsTos ? 'Continue' : 'Please Accept the Terms' }
                             </ButtonWithProgress>
                         </div>
                     </form>

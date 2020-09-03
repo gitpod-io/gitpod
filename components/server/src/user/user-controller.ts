@@ -19,9 +19,10 @@ import { WorkspacePortAuthorizationService } from "./workspace-port-auth-service
 import { parseWorkspaceIdFromHostname } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
 import { SessionHandlerProvider } from "../session-handler";
 import { URL } from 'url';
-import { saveSession, getRequestingClientInfo } from "../express-util";
-import { User } from "@gitpod/gitpod-protocol";
+import { saveSession, getRequestingClientInfo, destroySession } from "../express-util";
+import { Identity, User } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
+import { AuthBag } from "../auth/auth-provider";
 
 @injectable()
 export class UserController {
@@ -234,8 +235,70 @@ export class UserController {
 
             res.sendStatus(403);
         });
+        router.get("/tos", async (req, res, next) => {
+            const clientInfo = getRequestingClientInfo(req);
+            log.info({ sessionId: req.sessionID }, "(TOS) Redirecting to /tos. (Request to /login is expected next.)", { 'login-flow': true, clientInfo });
+            res.redirect(this.env.hostUrl.with(() => ({ pathname: '/tos/' })).toString());
+        });
+        router.post("/tos/proceed", async (req, res, next) => {
+            const clientInfo = getRequestingClientInfo(req);
+            const dashboardUrl = this.env.hostUrl.asDashboard().toString();
+            if (req.isAuthenticated() && User.is(req.user)) {
+                res.redirect(dashboardUrl);
+                return;
+            }
+            const authBag = AuthBag.get(req.session);
+            if (!req.session || !authBag || authBag.requestType !== "authenticate" || !authBag.identity) {
+                log.info({ sessionId: req.sessionID }, '(TOS) No identity.', { 'login-flow': true, session: req.session, clientInfo });
+                res.redirect(this.getSorryUrl("Oops! Something went wrong in the previous step."));
+                return;
+            }
+            const agreeTOS = req.body.agreeTOS;
+            if (!agreeTOS) {
+                /* The user did not accept our Terms of Service, thus we must not store any of their data.
+                 * For good measure we destroy the user session, so that any data we may have stored in there
+                 * gets removed from our session cache.
+                 */
+                log.info({ sessionId: req.sessionID }, '(TOS) User did NOT agree. Aborting sign-up.', { 'login-flow': true, clientInfo });
+                try {
+                    await destroySession(req.session)
+                } catch (error) {
+                    log.warn('(TOS) Unable to destroy session.', { error, 'login-flow': true, clientInfo });
+                }
+                res.redirect(dashboardUrl);
+                return;
+            }
+
+            // The user has accepted our Terms of Service. Create the identity/user in the database and repeat login.
+            log.info({ sessionId: req.sessionID }, '(TOS) User did agree. Creating new user in database', { 'login-flow': true, clientInfo });
+
+            const identity = authBag.identity;
+            await AuthBag.attach(req.session, { ...authBag, identity: undefined });
+            try {
+                await this.createUserAfterTosAgreement(identity, req.body);
+            } catch (error) {
+                log.error({ sessionId: req.sessionID }, '(TOS) Unable to create create the user in database.', error, { 'login-flow': true, error, clientInfo });
+                res.redirect(this.getSorryUrl("Oops! Something went wrong during the login."));
+                return;
+            }
+
+            // Make sure, the session is stored
+            try {
+                await retryAsync(3, saveSession(req));
+            } catch (error) {
+                log.error({ sessionId: req.sessionID }, `(TOS) Login failed due to session save error; redirecting to /sorry`, { req, error, clientInfo });
+                res.redirect(this.getSorryUrl("Login failed 🦄 Please try again"));
+                return;
+            }
+
+            // Continue with login after ToS
+            res.redirect(authBag.returnToAfterTos);
+        });
 
         return router;
+    }
+    protected async createUserAfterTosAgreement(identity: Identity, tosProceedParams: any) {
+        await this.userService.createUserForIdentity(identity);
     }
 
     protected getSorryUrl(message: string) {
@@ -299,7 +362,7 @@ export class UserController {
 
             if (!!contextUrlHost && authProvidersOnDashboard.find(a => a === contextUrlHost)) {
                 req.query.host = contextUrlHost;
-                log.debug({ sessionId: req.sessionID }, "Guessed auth provider from returnTo URL: " + contextUrlHost, { 'login-flow': true, query: req.query});
+                log.debug({ sessionId: req.sessionID }, "Guessed auth provider from returnTo URL: " + contextUrlHost, { 'login-flow': true, query: req.query });
                 return;
             }
         }

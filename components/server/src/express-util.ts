@@ -110,6 +110,18 @@ export function saveSession(reqOrSession: express.Request | Express.Session): Pr
         });
     });
 }
+export function destroySession(reqOrSession: express.Request | Express.Session): Promise<void> {
+    const session = reqOrSession.session ? reqOrSession.session : reqOrSession;
+    return new Promise<void>((resolve, reject) => {
+        session.destroy((error: any) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve();
+            }
+        });
+    });
+}
 
 /**
  * https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Forwarded-For

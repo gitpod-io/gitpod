@@ -274,9 +274,13 @@ export class GenericAuthProvider implements AuthProvider {
 
         const handledError = await this.authErrorHandler.check(err);
         if (handledError) {
+            if (request.session) {
+                await AuthBag.attach(request.session, { ...authBag, ...handledError});
+            }
             const { redirectToUrl } = handledError;
             log.info(context, `(${strategyName}) Handled auth error. Redirecting to ${redirectToUrl}`, { ...logPayload, err });
             response.redirect(redirectToUrl);
+            return;
         }
         if (err) {
             let message = 'Authorization failed. Please try again.';
