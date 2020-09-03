@@ -202,7 +202,8 @@ components:
         containerPort: 32223
         servicePort: 3000
     blobserve:
-      name: "blobserve"
+      name: "registry-facade"
+      svcName: "blobserve"
       disabled: false
       ports:
         service:

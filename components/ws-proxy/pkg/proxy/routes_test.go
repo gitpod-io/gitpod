@@ -24,7 +24,7 @@ import (
 // TestRoutes tests the routing behavior - and thus the backend - of ws-proxy. The behavior of the host should be
 // completely host-agnostic, so the tests are carried out without any specfic host information
 func TestRoutes(t *testing.T) {
-	type routerFactory = func(*RouteHandlerConfig) *mux.Router
+	type routerFactory = func(*RouteHandlerConfig, WorkspaceInfoProvider) *mux.Router
 	type testRequest struct {
 		method  string
 		url     string
@@ -250,7 +250,7 @@ func TestRoutes(t *testing.T) {
 			if err != nil {
 				t.Fatalf("error while creating RouteHandlerConfig: %s", err.Error())
 			}
-			r := tc.router(handlerConfig)
+			r := tc.router(handlerConfig, nil)
 
 			// create artificial request
 			req, err := http.NewRequest(tc.req.method, tc.req.url, nil)
@@ -290,11 +290,11 @@ func TestRoutes(t *testing.T) {
 	}
 }
 
-func theiaRouter(handlerConfig *RouteHandlerConfig) *mux.Router {
+func theiaRouter(handlerConfig *RouteHandlerConfig, infoProvider WorkspaceInfoProvider) *mux.Router {
 	r := mux.NewRouter()
 
 	handlers := &RouteHandlers{
-		theiaRootHandler:            TheiaRootHandler,
+		theiaRootHandler:            TheiaRootHandler(infoProvider),
 		theiaMiniBrowserHandler:     TheiaMiniBrowserHandler,
 		theiaFileHandler:            TheiaFileHandler,
 		theiaHostedPluginHandler:    TheiaHostedPluginHandler,
@@ -307,7 +307,7 @@ func theiaRouter(handlerConfig *RouteHandlerConfig) *mux.Router {
 	installTheiaRoutes(r, handlerConfig, handlers)
 	return r
 }
-func portRouter(handlerConfig *RouteHandlerConfig) *mux.Router {
+func portRouter(handlerConfig *RouteHandlerConfig, infoProvider WorkspaceInfoProvider) *mux.Router {
 	r := mux.NewRouter()
 	installWorkspacePortRoutes(r, handlerConfig)
 	return r
@@ -331,7 +331,7 @@ func (p *fakeWsInfoProvider) WorkspaceInfo(workspaceID string) *WorkspaceInfo {
 // WorkspaceCoords returns the workspace coords for a public port
 func (p *fakeWsInfoProvider) WorkspaceCoords(wsProxyPort string) *WorkspaceCoords {
 	for _, info := range p.infos {
-		if info.IdePublicPort == wsProxyPort {
+		if info.IDEPublicPort == wsProxyPort {
 			return &WorkspaceCoords{
 				ID:   info.WorkspaceID,
 				Port: "",

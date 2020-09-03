@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 
 	"github.com/koding/websocketproxy"
@@ -72,7 +73,10 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 				return xerrors.Errorf("response's request without URL")
 			}
 
-			log.Debugf("%s: %s", url.String(), resp.Status)
+			if log.Log.Level <= logrus.DebugLevel && resp.StatusCode != http.StatusOK {
+				dmp, _ := httputil.DumpRequest(resp.Request, false)
+				log.WithField("url", url.String()).WithField("req", dmp).WithField("status", resp.Status).Debug("proxied request failed")
+			}
 			return nil
 		}
 		return proxy
@@ -81,7 +85,7 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 	return func(w http.ResponseWriter, req *http.Request) {
 		targetURL, err := h.TargetResolver(config.Config, req)
 		if err != nil {
-			log.Errorf("Unable to resolve targetURL: %s", req.URL.String())
+			log.WithError(err).Errorf("Unable to resolve targetURL: %s", req.URL.String())
 			return
 		}
 
