@@ -4,10 +4,8 @@
 
 package main
 
-import (
-	"github.com/gitpod-io/gitpod/supervisor/pkg/supervisor"
-)
+import "github.com/gitpod-io/gitpod/supervisor/cmd"
 
 func main() {
-	supervisor.Run()
+	cmd.Execute()
 }

@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -26,6 +25,7 @@ import (
 	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/backup"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/dropwriter"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
@@ -70,10 +70,10 @@ type Config struct {
 	TheiaWorkspaceRoot    string `json:"workspaceRoot"`
 	RepoRoot              string `json:"repoRoot"`
 	GitpodTheiaPort       int    `json:"theiaPort"`
+	APIEndpointPort       int    `json:"apiEndpointPort"`
 	TheiaShellArgs        string `json:"shellArgs"`
 	TheiaArgsAdd          string
 	TheiaRatelimitLog     string `json:"ratelimitLogs"`
-	HealthEndpointAddr    string `json:"healthEndpoint"`
 	PreventMetadataAccess bool   `json:"preventMetadataAccess"`
 	SupervisorAuthToken   string `json:"-"`
 	Git                   struct {
@@ -82,8 +82,8 @@ type Config struct {
 	} `json:"-"`
 }
 
-// GetConfigFromEnv extracts the config from environment variables
-func getConfig() (*Config, error) {
+// GetConfig extracts the config from environment variables
+func GetConfig() (*Config, error) {
 	var cfg Config
 	loadConfigFromFile(&cfg)
 
@@ -130,11 +130,13 @@ func getConfig() (*Config, error) {
 		cfg.TheiaRatelimitLog = os.Getenv("THEIA_RATELIMIT_LOG")
 	}
 
-	if cfg.HealthEndpointAddr == "" {
-		cfg.HealthEndpointAddr = os.Getenv("THEIA_SUPERVISOR_ENDPOINT")
-	}
-	if cfg.HealthEndpointAddr == "" {
-		return nil, fmt.Errorf("THEIA_SUPERVISOR_ENDPOINT envvar is mandatory")
+	if cfg.APIEndpointPort == 0 {
+		prt := os.Getenv("THEIA_SUPERVISOR_ENDPOINT_PORT")
+		port, err := strconv.Atoi(prt)
+		if err != nil {
+			return nil, fmt.Errorf("cannot parse $THEIA_SUPERVISOR_ENDPOINT_PORT (=%s): %v", prt, err)
+		}
+		cfg.APIEndpointPort = port
 	}
 
 	pmd := os.Getenv("THEIA_PREVENT_METADATA_ACCESS")
@@ -181,7 +183,7 @@ func loadConfigFromFile(cfg *Config) {
 
 type runOptions struct {
 	Args                   []string
-	AdditionalServices     []func(*grpc.Server)
+	AdditionalServices     []RegisterableService
 	HealthEndpointGRPCOpts []grpc.ServerOption
 }
 
@@ -196,7 +198,7 @@ func WithArgs(args []string) RunOption {
 }
 
 // WithAdditionalService registers an additional gRPC service on the health endpoint
-func WithAdditionalService(register func(*grpc.Server)) RunOption {
+func WithAdditionalService(register RegisterableService) RunOption {
 	return func(r *runOptions) {
 		r.AdditionalServices = append(r.AdditionalServices, register)
 	}
@@ -218,26 +220,9 @@ func Run(options ...RunOption) {
 		o(&opts)
 	}
 
-	if len(opts.Args) > 1 && opts.Args[1] == "help" {
-		fmt.Println(help)
-		return
-	}
-	if len(opts.Args) < 2 || opts.Args[1] == "drop" {
-		out := dropwriter.Writer(os.Stdout, dropwriter.NewBucket(128, 64))
-		io.Copy(out, os.Stdin)
-		return
-	}
-
-	cfg, err := getConfig()
+	cfg, err := GetConfig()
 	if err != nil {
 		log.WithError(err).Fatal("configuration error")
-	}
-	if len(os.Args) > 1 && os.Args[1] == "backup" {
-		err := triggerAndWaitForBackup(cfg)
-		if err != nil {
-			log.WithError(err).Fatal("cannot produce backup")
-		}
-		return
 	}
 	if len(os.Args) < 2 || os.Args[1] != "run" {
 		fmt.Println("supervisor makes sure your workspace/Theia keeps running smoothly.\nYou don't have to call this thing, Gitpod calls it for you.")
@@ -255,11 +240,16 @@ func Run(options ...RunOption) {
 		iwh        = backup.NewInWorkspaceHelper(cfg.RepoRoot, pauseTheia)
 	)
 
+	var apiServices []RegisterableService
+	apiServices = append(apiServices, iwh)
+	apiServices = append(apiServices, &statusService{IWH: iwh})
+	apiServices = append(apiServices, opts.AdditionalServices...)
+
 	var wg sync.WaitGroup
 	wg.Add(3)
 	go startAndWatchTheia(ctx, cfg, &wg, pauseTheia)
-	go startHealthEndpoint(ctx, cfg, &wg, iwh, &opts)
 	go startContentInit(ctx, cfg, &wg, iwh)
+	go startAPIEndpoint(ctx, cfg, &wg, apiServices)
 
 	if cfg.PreventMetadataAccess {
 		go func() {
@@ -503,41 +493,38 @@ func isBlacklistedEnvvar(name string) bool {
 	return false
 }
 
-func startHealthEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, iwh *backup.InWorkspaceHelper, opts *runOptions) {
+func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, services []RegisterableService, opts ...grpc.ServerOption) {
 	defer wg.Done()
 
-	l, err := net.Listen("tcp", cfg.HealthEndpointAddr)
+	l, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.APIEndpointPort))
 	if err != nil {
 		log.WithError(err).Fatal("cannot start health endpoint")
 	}
 
 	m := cmux.New(l)
+	restMux := runtime.NewServeMux(
+		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{EnumsAsInts: false, EmitDefaults: true}),
+	)
 	grpcMux := m.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
-	grpcServer := grpc.NewServer(opts.HealthEndpointGRPCOpts...)
-	iwh.Register(grpcServer)
-	for _, reg := range opts.AdditionalServices {
-		reg(grpcServer)
+	grpcServer := grpc.NewServer(opts...)
+	for _, reg := range services {
+		reg.RegisterGRPC(grpcServer)
+		err := reg.RegisterREST(restMux)
+		if err != nil {
+			log.WithError(err).Fatal("cannot register REST service")
+		}
 	}
 	go grpcServer.Serve(grpcMux)
 
 	httpMux := m.Match(cmux.HTTP1Fast())
 	routes := http.NewServeMux()
-	routes.HandleFunc("/", func(resp http.ResponseWriter, req *http.Request) {
-		select {
-		case <-req.Context().Done():
-			resp.WriteHeader(http.StatusNotAcceptable)
-		case <-iwh.ContentReady():
-			resp.WriteHeader(http.StatusOK)
-			resp.Write([]byte("OK"))
-		}
-	})
-	routes.Handle("/api/", http.StripPrefix("/api", iwh.HTTPMux(cfg.HealthEndpointAddr)))
+	routes.Handle("/api", http.StripPrefix("/api", restMux))
 	go http.Serve(httpMux, routes)
 
 	go m.Serve()
 
 	<-ctx.Done()
-	log.Info("shutting down health endpoint")
+	log.Info("shutting down API endpoint")
 	l.Close()
 }
 
@@ -614,27 +601,4 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 
 	log.WithField("source", src).Info("supervisor: workspace content init finished")
 	cst.MarkContentReady(src)
-}
-
-func triggerAndWaitForBackup(cfg *Config) (err error) {
-	var (
-		segs       = strings.Split(cfg.HealthEndpointAddr, ":")
-		prt  int64 = 80
-	)
-	if len(segs) > 1 {
-		prt, err = strconv.ParseInt(segs[1], 10, 64)
-		if err != nil {
-			return err
-		}
-	}
-
-	resp, err := http.Get(fmt.Sprintf("http://localhost:%d/api/v1/backup/prepare", int(prt)))
-	if err != nil {
-		return err
-	}
-	bd := resp.Body
-	defer bd.Close()
-	io.Copy(os.Stdout, bd)
-
-	return nil
 }

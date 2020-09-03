@@ -4,17 +4,17 @@ go 1.14
 
 require (
 	cloud.google.com/go v0.48.0 // indirect
-	github.com/grpc-ecosystem/grpc-gateway v1.14.6
-	github.com/prometheus/procfs v0.0.8 // indirect
-	github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337 // indirect
-	github.com/soheilhy/cmux v0.1.4
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-sync/api v0.0.0-00010101000000-000000000000
+	github.com/grpc-ecosystem/grpc-gateway v1.14.6
+	github.com/prometheus/procfs v0.0.8 // indirect
+	github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337 // indirect
+	github.com/soheilhy/cmux v0.1.4
+	github.com/spf13/cobra v1.0.0
 	golang.org/x/crypto v0.0.0-20191112222119-e1110fd1c708 // indirect
-	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
 	google.golang.org/appengine v1.6.5 // indirect
 	google.golang.org/grpc v1.29.1
 )

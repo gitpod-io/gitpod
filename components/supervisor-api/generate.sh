@@ -16,7 +16,7 @@ protoc $PROTOC_INCLUDE --grpc-gateway_out=logtostderr=true,paths=source_relative
 # generate typescript client
 cd typescript
 # rm src/core_*.ts src/core_*.js
-export PATH=$PWD/../../../../node_modules/.bin:$PATH
+export PATH=$PWD/../../../node_modules/.bin:$PATH
 protoc $PROTOC_INCLUDE --plugin=protoc-gen-grpc=`which grpc_tools_node_protoc_plugin` --js_out=import_style=commonjs,binary:src --grpc_out=src -I.. ../supervisor.proto
 protoc $PROTOC_INCLUDE --plugin=protoc-gen-ts=`which protoc-gen-ts` --ts_out=src -I.. ../supervisor.proto
 cd ..

@@ -6,7 +6,6 @@ package backup
 
 import (
 	"context"
-	"net/http"
 	"sync/atomic"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -16,7 +15,6 @@ import (
 	wssync "github.com/gitpod-io/gitpod/ws-sync/api"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -74,102 +72,44 @@ func (iwh *InWorkspaceHelper) ContentSource() (src csapi.WorkspaceInitSource, ok
 	return iwh.contentSource, true
 }
 
-// PrepareBackup prepares a workspace content backup, e.g. when the container is about to shut down
-func (iwh *InWorkspaceHelper) PrepareBackup(ctx context.Context) error {
+// Prepare prepares a workspace content backup, e.g. when the container is about to shut down
+func (iwh *InWorkspaceHelper) Prepare(ctx context.Context, req *supervisor.PrepareBackupRequest) (*supervisor.PrepareBackupResponse, error) {
 	rc := make(chan bool)
 
 	select {
 	case iwh.triggerBackup <- rc:
 	case <-ctx.Done():
-		return ctx.Err()
+		return nil, status.Error(codes.DeadlineExceeded, ctx.Err().Error())
 	default:
-		return xerrors.Errorf("no backup canary available")
+		return nil, status.Error(codes.Unavailable, "no backup canary available")
 	}
 
 	select {
 	case success := <-rc:
 		if !success {
-			return xerrors.Errorf("backup preparation failed")
+			return nil, status.Error(codes.Internal, "backup preparation failed")
 		}
-		return nil
 	case <-ctx.Done():
-		return ctx.Err()
-	}
-}
-
-// HTTPMux produces an HTTP handler serving supervisor's REST API
-func (iwh *InWorkspaceHelper) HTTPMux(grpcEndpoint string) http.Handler {
-	mux := runtime.NewServeMux(
-		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{EnumsAsInts: false, EmitDefaults: true}),
-	)
-	err := supervisor.RegisterBackupServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithInsecure()})
-	if err != nil {
-		log.WithError(err).Error("cannot register REST API service handler")
-	}
-	return mux
-}
-
-// Register registers an InWorkspaceHelperServer gRPC service using this helper implementation
-func (iwh *InWorkspaceHelper) Register(srv *grpc.Server) {
-	wssync.RegisterInWorkspaceHelperServer(srv, &iwhserver{iwh})
-	supervisor.RegisterBackupServiceServer(srv, &wsserver{iwh})
-}
-
-type wsserver struct {
-	*InWorkspaceHelper
-}
-
-func (wss *wsserver) Prepare(ctx context.Context, req *supervisor.PrepareBackupRequest) (*supervisor.PrepareBackupResponse, error) {
-	err := wss.PrepareBackup(ctx)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, status.Error(codes.DeadlineExceeded, ctx.Err().Error())
 	}
 
 	return &supervisor.PrepareBackupResponse{}, nil
 }
 
-func (wss *wsserver) Status(ctx context.Context, req *supervisor.StatusRequest) (*supervisor.StatusResponse, error) {
-	return &supervisor.StatusResponse{
-		CanaryAvailable: atomic.LoadInt32(&wss.canaryAvailable) > 0,
-	}, nil
+// RegisterREST registers the rest-mapped gRPC service
+func (iwh *InWorkspaceHelper) RegisterREST(mux *runtime.ServeMux) error {
+	return nil
 }
 
-func (wss *wsserver) DebugPauseTheia(ctx context.Context, req *supervisor.DebugPauseTheiaRequest) (*supervisor.DebugPauseTheiaResponse, error) {
-	wss.pauseChan <- true
-	return &supervisor.DebugPauseTheiaResponse{}, nil
+// RegisterGRPC registers an InWorkspaceHelperServer gRPC service using this helper implementation
+func (iwh *InWorkspaceHelper) RegisterGRPC(srv *grpc.Server) {
+	wssync.RegisterInWorkspaceHelperServer(srv, &iwhserver{iwh})
+	supervisor.RegisterBackupServiceServer(srv, &iwhserver{iwh})
 }
 
-func (wss *wsserver) ContentStatus(ctx context.Context, req *supervisor.ContentStatusRequest) (*supervisor.ContentStatusResponse, error) {
-	srcmap := map[csapi.WorkspaceInitSource]supervisor.ContentSource{
-		csapi.WorkspaceInitFromOther:    supervisor.ContentSource_from_other,
-		csapi.WorkspaceInitFromBackup:   supervisor.ContentSource_from_backup,
-		csapi.WorkspaceInitFromPrebuild: supervisor.ContentSource_from_prebuild,
-	}
-
-	log.WithField("source", wss.contentSource).WithField("wait", req.Wait).Debug("ContentStatus called")
-	if req.Wait {
-		select {
-		case <-wss.ContentReady():
-			return &supervisor.ContentStatusResponse{
-				Available: true,
-				Source:    srcmap[wss.contentSource],
-			}, nil
-		case <-ctx.Done():
-			return nil, status.Error(codes.Aborted, ctx.Err().Error())
-		}
-	}
-
-	select {
-	case <-wss.contentReadyChan:
-		return &supervisor.ContentStatusResponse{
-			Available: true,
-			Source:    srcmap[wss.contentSource],
-		}, nil
-	default:
-		return &supervisor.ContentStatusResponse{
-			Available: false,
-		}, nil
-	}
+// CanaryAvailable returns true if there's a backup canary available
+func (iwh *InWorkspaceHelper) CanaryAvailable() bool {
+	return atomic.LoadInt32(&iwh.canaryAvailable) > 0
 }
 
 type iwhserver struct {

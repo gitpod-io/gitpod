@@ -1,9 +1,3 @@
-/**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
- * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
- */
-
 // package: supervisor
 // file: supervisor.proto
 
@@ -14,9 +8,6 @@ import * as supervisor_pb from "./supervisor_pb";
 
 interface IBackupServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
     prepare: IBackupServiceService_IPrepare;
-    status: IBackupServiceService_IStatus;
-    debugPauseTheia: IBackupServiceService_IDebugPauseTheia;
-    contentStatus: IBackupServiceService_IContentStatus;
 }
 
 interface IBackupServiceService_IPrepare extends grpc.MethodDefinition<supervisor_pb.PrepareBackupRequest, supervisor_pb.PrepareBackupResponse> {
@@ -28,26 +19,62 @@ interface IBackupServiceService_IPrepare extends grpc.MethodDefinition<superviso
     responseSerialize: grpc.serialize<supervisor_pb.PrepareBackupResponse>;
     responseDeserialize: grpc.deserialize<supervisor_pb.PrepareBackupResponse>;
 }
-interface IBackupServiceService_IStatus extends grpc.MethodDefinition<supervisor_pb.StatusRequest, supervisor_pb.StatusResponse> {
-    path: string; // "/supervisor.BackupService/Status"
+
+export const BackupServiceService: IBackupServiceService;
+
+export interface IBackupServiceServer {
+    prepare: grpc.handleUnaryCall<supervisor_pb.PrepareBackupRequest, supervisor_pb.PrepareBackupResponse>;
+}
+
+export interface IBackupServiceClient {
+    prepare(request: supervisor_pb.PrepareBackupRequest, callback: (error: grpc.ServiceError | null, response: supervisor_pb.PrepareBackupResponse) => void): grpc.ClientUnaryCall;
+    prepare(request: supervisor_pb.PrepareBackupRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: supervisor_pb.PrepareBackupResponse) => void): grpc.ClientUnaryCall;
+    prepare(request: supervisor_pb.PrepareBackupRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: supervisor_pb.PrepareBackupResponse) => void): grpc.ClientUnaryCall;
+}
+
+export class BackupServiceClient extends grpc.Client implements IBackupServiceClient {
+    constructor(address: string, credentials: grpc.ChannelCredentials, options?: object);
+    public prepare(request: supervisor_pb.PrepareBackupRequest, callback: (error: grpc.ServiceError | null, response: supervisor_pb.PrepareBackupResponse) => void): grpc.ClientUnaryCall;
+    public prepare(request: supervisor_pb.PrepareBackupRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: supervisor_pb.PrepareBackupResponse) => void): grpc.ClientUnaryCall;
+    public prepare(request: supervisor_pb.PrepareBackupRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: supervisor_pb.PrepareBackupResponse) => void): grpc.ClientUnaryCall;
+}
+
+interface IStatusServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
+    supervisorStatus: IStatusServiceService_ISupervisorStatus;
+    iDEStatus: IStatusServiceService_IIDEStatus;
+    backupStatus: IStatusServiceService_IBackupStatus;
+    contentStatus: IStatusServiceService_IContentStatus;
+}
+
+interface IStatusServiceService_ISupervisorStatus extends grpc.MethodDefinition<supervisor_pb.SupervisorStatusRequest, supervisor_pb.SupervisorStatusResponse> {
+    path: string; // "/supervisor.StatusService/SupervisorStatus"
     requestStream: boolean; // false
     responseStream: boolean; // false
-    requestSerialize: grpc.serialize<supervisor_pb.StatusRequest>;
-    requestDeserialize: grpc.deserialize<supervisor_pb.StatusRequest>;
-    responseSerialize: grpc.serialize<supervisor_pb.StatusResponse>;
-    responseDeserialize: grpc.deserialize<supervisor_pb.StatusResponse>;
+    requestSerialize: grpc.serialize<supervisor_pb.SupervisorStatusRequest>;
+    requestDeserialize: grpc.deserialize<supervisor_pb.SupervisorStatusRequest>;
+    responseSerialize: grpc.serialize<supervisor_pb.SupervisorStatusResponse>;
+    responseDeserialize: grpc.deserialize<supervisor_pb.SupervisorStatusResponse>;
 }
-interface IBackupServiceService_IDebugPauseTheia extends grpc.MethodDefinition<supervisor_pb.DebugPauseTheiaRequest, supervisor_pb.DebugPauseTheiaResponse> {
-    path: string; // "/supervisor.BackupService/DebugPauseTheia"
+interface IStatusServiceService_IIDEStatus extends grpc.MethodDefinition<supervisor_pb.IDEStatusRequest, supervisor_pb.IDEStatusResponse> {
+    path: string; // "/supervisor.StatusService/IDEStatus"
     requestStream: boolean; // false
     responseStream: boolean; // false
-    requestSerialize: grpc.serialize<supervisor_pb.DebugPauseTheiaRequest>;
-    requestDeserialize: grpc.deserialize<supervisor_pb.DebugPauseTheiaRequest>;
-    responseSerialize: grpc.serialize<supervisor_pb.DebugPauseTheiaResponse>;
-    responseDeserialize: grpc.deserialize<supervisor_pb.DebugPauseTheiaResponse>;
+    requestSerialize: grpc.serialize<supervisor_pb.IDEStatusRequest>;
+    requestDeserialize: grpc.deserialize<supervisor_pb.IDEStatusRequest>;
+    responseSerialize: grpc.serialize<supervisor_pb.IDEStatusResponse>;
+    responseDeserialize: grpc.deserialize<supervisor_pb.IDEStatusResponse>;
 }
-interface IBackupServiceService_IContentStatus extends grpc.MethodDefinition<supervisor_pb.ContentStatusRequest, supervisor_pb.ContentStatusResponse> {
-    path: string; // "/supervisor.BackupService/ContentStatus"
+interface IStatusServiceService_IBackupStatus extends grpc.MethodDefinition<supervisor_pb.BackupStatusRequest, supervisor_pb.BackupStatusResponse> {
+    path: string; // "/supervisor.StatusService/BackupStatus"
+    requestStream: boolean; // false
+    responseStream: boolean; // false
+    requestSerialize: grpc.serialize<supervisor_pb.BackupStatusRequest>;
+    requestDeserialize: grpc.deserialize<supervisor_pb.BackupStatusRequest>;
+    responseSerialize: grpc.serialize<supervisor_pb.BackupStatusResponse>;
+    responseDeserialize: grpc.deserialize<supervisor_pb.BackupStatusResponse>;
+}
+interface IStatusServiceService_IContentStatus extends grpc.MethodDefinition<supervisor_pb.ContentStatusRequest, supervisor_pb.ContentStatusResponse> {
+    path: string; // "/supervisor.StatusService/ContentStatus"
     requestStream: boolean; // false
     responseStream: boolean; // false
     requestSerialize: grpc.serialize<supervisor_pb.ContentStatusRequest>;
@@ -56,41 +83,41 @@ interface IBackupServiceService_IContentStatus extends grpc.MethodDefinition<sup
     responseDeserialize: grpc.deserialize<supervisor_pb.ContentStatusResponse>;
 }
 
-export const BackupServiceService: IBackupServiceService;
+export const StatusServiceService: IStatusServiceService;
 
-export interface IBackupServiceServer {
-    prepare: grpc.handleUnaryCall<supervisor_pb.PrepareBackupRequest, supervisor_pb.PrepareBackupResponse>;
-    status: grpc.handleUnaryCall<supervisor_pb.StatusRequest, supervisor_pb.StatusResponse>;
-    debugPauseTheia: grpc.handleUnaryCall<supervisor_pb.DebugPauseTheiaRequest, supervisor_pb.DebugPauseTheiaResponse>;
+export interface IStatusServiceServer {
+    supervisorStatus: grpc.handleUnaryCall<supervisor_pb.SupervisorStatusRequest, supervisor_pb.SupervisorStatusResponse>;
+    iDEStatus: grpc.handleUnaryCall<supervisor_pb.IDEStatusRequest, supervisor_pb.IDEStatusResponse>;
+    backupStatus: grpc.handleUnaryCall<supervisor_pb.BackupStatusRequest, supervisor_pb.BackupStatusResponse>;
     contentStatus: grpc.handleUnaryCall<supervisor_pb.ContentStatusRequest, supervisor_pb.ContentStatusResponse>;
 }
 
-export interface IBackupServiceClient {
-    prepare(request: supervisor_pb.PrepareBackupRequest, callback: (error: grpc.ServiceError | null, response: supervisor_pb.PrepareBackupResponse) => void): grpc.ClientUnaryCall;
-    prepare(request: supervisor_pb.PrepareBackupRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: supervisor_pb.PrepareBackupResponse) => void): grpc.ClientUnaryCall;
-    prepare(request: supervisor_pb.PrepareBackupRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: supervisor_pb.PrepareBackupResponse) => void): grpc.ClientUnaryCall;
-    status(request: supervisor_pb.StatusRequest, callback: (error: grpc.ServiceError | null, response: supervisor_pb.StatusResponse) => void): grpc.ClientUnaryCall;
-    status(request: supervisor_pb.StatusRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: supervisor_pb.StatusResponse) => void): grpc.ClientUnaryCall;
-    status(request: supervisor_pb.StatusRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: supervisor_pb.StatusResponse) => void): grpc.ClientUnaryCall;
-    debugPauseTheia(request: supervisor_pb.DebugPauseTheiaRequest, callback: (error: grpc.ServiceError | null, response: supervisor_pb.DebugPauseTheiaResponse) => void): grpc.ClientUnaryCall;
-    debugPauseTheia(request: supervisor_pb.DebugPauseTheiaRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: supervisor_pb.DebugPauseTheiaResponse) => void): grpc.ClientUnaryCall;
-    debugPauseTheia(request: supervisor_pb.DebugPauseTheiaRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: supervisor_pb.DebugPauseTheiaResponse) => void): grpc.ClientUnaryCall;
+export interface IStatusServiceClient {
+    supervisorStatus(request: supervisor_pb.SupervisorStatusRequest, callback: (error: grpc.ServiceError | null, response: supervisor_pb.SupervisorStatusResponse) => void): grpc.ClientUnaryCall;
+    supervisorStatus(request: supervisor_pb.SupervisorStatusRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: supervisor_pb.SupervisorStatusResponse) => void): grpc.ClientUnaryCall;
+    supervisorStatus(request: supervisor_pb.SupervisorStatusRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: supervisor_pb.SupervisorStatusResponse) => void): grpc.ClientUnaryCall;
+    iDEStatus(request: supervisor_pb.IDEStatusRequest, callback: (error: grpc.ServiceError | null, response: supervisor_pb.IDEStatusResponse) => void): grpc.ClientUnaryCall;
+    iDEStatus(request: supervisor_pb.IDEStatusRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: supervisor_pb.IDEStatusResponse) => void): grpc.ClientUnaryCall;
+    iDEStatus(request: supervisor_pb.IDEStatusRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: supervisor_pb.IDEStatusResponse) => void): grpc.ClientUnaryCall;
+    backupStatus(request: supervisor_pb.BackupStatusRequest, callback: (error: grpc.ServiceError | null, response: supervisor_pb.BackupStatusResponse) => void): grpc.ClientUnaryCall;
+    backupStatus(request: supervisor_pb.BackupStatusRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: supervisor_pb.BackupStatusResponse) => void): grpc.ClientUnaryCall;
+    backupStatus(request: supervisor_pb.BackupStatusRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: supervisor_pb.BackupStatusResponse) => void): grpc.ClientUnaryCall;
     contentStatus(request: supervisor_pb.ContentStatusRequest, callback: (error: grpc.ServiceError | null, response: supervisor_pb.ContentStatusResponse) => void): grpc.ClientUnaryCall;
     contentStatus(request: supervisor_pb.ContentStatusRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: supervisor_pb.ContentStatusResponse) => void): grpc.ClientUnaryCall;
     contentStatus(request: supervisor_pb.ContentStatusRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: supervisor_pb.ContentStatusResponse) => void): grpc.ClientUnaryCall;
 }
 
-export class BackupServiceClient extends grpc.Client implements IBackupServiceClient {
+export class StatusServiceClient extends grpc.Client implements IStatusServiceClient {
     constructor(address: string, credentials: grpc.ChannelCredentials, options?: object);
-    public prepare(request: supervisor_pb.PrepareBackupRequest, callback: (error: grpc.ServiceError | null, response: supervisor_pb.PrepareBackupResponse) => void): grpc.ClientUnaryCall;
-    public prepare(request: supervisor_pb.PrepareBackupRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: supervisor_pb.PrepareBackupResponse) => void): grpc.ClientUnaryCall;
-    public prepare(request: supervisor_pb.PrepareBackupRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: supervisor_pb.PrepareBackupResponse) => void): grpc.ClientUnaryCall;
-    public status(request: supervisor_pb.StatusRequest, callback: (error: grpc.ServiceError | null, response: supervisor_pb.StatusResponse) => void): grpc.ClientUnaryCall;
-    public status(request: supervisor_pb.StatusRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: supervisor_pb.StatusResponse) => void): grpc.ClientUnaryCall;
-    public status(request: supervisor_pb.StatusRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: supervisor_pb.StatusResponse) => void): grpc.ClientUnaryCall;
-    public debugPauseTheia(request: supervisor_pb.DebugPauseTheiaRequest, callback: (error: grpc.ServiceError | null, response: supervisor_pb.DebugPauseTheiaResponse) => void): grpc.ClientUnaryCall;
-    public debugPauseTheia(request: supervisor_pb.DebugPauseTheiaRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: supervisor_pb.DebugPauseTheiaResponse) => void): grpc.ClientUnaryCall;
-    public debugPauseTheia(request: supervisor_pb.DebugPauseTheiaRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: supervisor_pb.DebugPauseTheiaResponse) => void): grpc.ClientUnaryCall;
+    public supervisorStatus(request: supervisor_pb.SupervisorStatusRequest, callback: (error: grpc.ServiceError | null, response: supervisor_pb.SupervisorStatusResponse) => void): grpc.ClientUnaryCall;
+    public supervisorStatus(request: supervisor_pb.SupervisorStatusRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: supervisor_pb.SupervisorStatusResponse) => void): grpc.ClientUnaryCall;
+    public supervisorStatus(request: supervisor_pb.SupervisorStatusRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: supervisor_pb.SupervisorStatusResponse) => void): grpc.ClientUnaryCall;
+    public iDEStatus(request: supervisor_pb.IDEStatusRequest, callback: (error: grpc.ServiceError | null, response: supervisor_pb.IDEStatusResponse) => void): grpc.ClientUnaryCall;
+    public iDEStatus(request: supervisor_pb.IDEStatusRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: supervisor_pb.IDEStatusResponse) => void): grpc.ClientUnaryCall;
+    public iDEStatus(request: supervisor_pb.IDEStatusRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: supervisor_pb.IDEStatusResponse) => void): grpc.ClientUnaryCall;
+    public backupStatus(request: supervisor_pb.BackupStatusRequest, callback: (error: grpc.ServiceError | null, response: supervisor_pb.BackupStatusResponse) => void): grpc.ClientUnaryCall;
+    public backupStatus(request: supervisor_pb.BackupStatusRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: supervisor_pb.BackupStatusResponse) => void): grpc.ClientUnaryCall;
+    public backupStatus(request: supervisor_pb.BackupStatusRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: supervisor_pb.BackupStatusResponse) => void): grpc.ClientUnaryCall;
     public contentStatus(request: supervisor_pb.ContentStatusRequest, callback: (error: grpc.ServiceError | null, response: supervisor_pb.ContentStatusResponse) => void): grpc.ClientUnaryCall;
     public contentStatus(request: supervisor_pb.ContentStatusRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: supervisor_pb.ContentStatusResponse) => void): grpc.ClientUnaryCall;
     public contentStatus(request: supervisor_pb.ContentStatusRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: supervisor_pb.ContentStatusResponse) => void): grpc.ClientUnaryCall;

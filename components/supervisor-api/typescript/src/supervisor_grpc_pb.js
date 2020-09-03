@@ -1,15 +1,31 @@
-/**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
- * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
- */
-
 // GENERATED CODE -- DO NOT EDIT!
 
 'use strict';
 var grpc = require('grpc');
 var supervisor_pb = require('./supervisor_pb.js');
 var google_api_annotations_pb = require('./google/api/annotations_pb.js');
+
+function serialize_supervisor_BackupStatusRequest(arg) {
+  if (!(arg instanceof supervisor_pb.BackupStatusRequest)) {
+    throw new Error('Expected argument of type supervisor.BackupStatusRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_supervisor_BackupStatusRequest(buffer_arg) {
+  return supervisor_pb.BackupStatusRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_supervisor_BackupStatusResponse(arg) {
+  if (!(arg instanceof supervisor_pb.BackupStatusResponse)) {
+    throw new Error('Expected argument of type supervisor.BackupStatusResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_supervisor_BackupStatusResponse(buffer_arg) {
+  return supervisor_pb.BackupStatusResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
 
 function serialize_supervisor_ContentStatusRequest(arg) {
   if (!(arg instanceof supervisor_pb.ContentStatusRequest)) {
@@ -33,26 +49,26 @@ function deserialize_supervisor_ContentStatusResponse(buffer_arg) {
   return supervisor_pb.ContentStatusResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-function serialize_supervisor_DebugPauseTheiaRequest(arg) {
-  if (!(arg instanceof supervisor_pb.DebugPauseTheiaRequest)) {
-    throw new Error('Expected argument of type supervisor.DebugPauseTheiaRequest');
+function serialize_supervisor_IDEStatusRequest(arg) {
+  if (!(arg instanceof supervisor_pb.IDEStatusRequest)) {
+    throw new Error('Expected argument of type supervisor.IDEStatusRequest');
   }
   return Buffer.from(arg.serializeBinary());
 }
 
-function deserialize_supervisor_DebugPauseTheiaRequest(buffer_arg) {
-  return supervisor_pb.DebugPauseTheiaRequest.deserializeBinary(new Uint8Array(buffer_arg));
+function deserialize_supervisor_IDEStatusRequest(buffer_arg) {
+  return supervisor_pb.IDEStatusRequest.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-function serialize_supervisor_DebugPauseTheiaResponse(arg) {
-  if (!(arg instanceof supervisor_pb.DebugPauseTheiaResponse)) {
-    throw new Error('Expected argument of type supervisor.DebugPauseTheiaResponse');
+function serialize_supervisor_IDEStatusResponse(arg) {
+  if (!(arg instanceof supervisor_pb.IDEStatusResponse)) {
+    throw new Error('Expected argument of type supervisor.IDEStatusResponse');
   }
   return Buffer.from(arg.serializeBinary());
 }
 
-function deserialize_supervisor_DebugPauseTheiaResponse(buffer_arg) {
-  return supervisor_pb.DebugPauseTheiaResponse.deserializeBinary(new Uint8Array(buffer_arg));
+function deserialize_supervisor_IDEStatusResponse(buffer_arg) {
+  return supervisor_pb.IDEStatusResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
 function serialize_supervisor_PrepareBackupRequest(arg) {
@@ -77,26 +93,26 @@ function deserialize_supervisor_PrepareBackupResponse(buffer_arg) {
   return supervisor_pb.PrepareBackupResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-function serialize_supervisor_StatusRequest(arg) {
-  if (!(arg instanceof supervisor_pb.StatusRequest)) {
-    throw new Error('Expected argument of type supervisor.StatusRequest');
+function serialize_supervisor_SupervisorStatusRequest(arg) {
+  if (!(arg instanceof supervisor_pb.SupervisorStatusRequest)) {
+    throw new Error('Expected argument of type supervisor.SupervisorStatusRequest');
   }
   return Buffer.from(arg.serializeBinary());
 }
 
-function deserialize_supervisor_StatusRequest(buffer_arg) {
-  return supervisor_pb.StatusRequest.deserializeBinary(new Uint8Array(buffer_arg));
+function deserialize_supervisor_SupervisorStatusRequest(buffer_arg) {
+  return supervisor_pb.SupervisorStatusRequest.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-function serialize_supervisor_StatusResponse(arg) {
-  if (!(arg instanceof supervisor_pb.StatusResponse)) {
-    throw new Error('Expected argument of type supervisor.StatusResponse');
+function serialize_supervisor_SupervisorStatusResponse(arg) {
+  if (!(arg instanceof supervisor_pb.SupervisorStatusResponse)) {
+    throw new Error('Expected argument of type supervisor.SupervisorStatusResponse');
   }
   return Buffer.from(arg.serializeBinary());
 }
 
-function deserialize_supervisor_StatusResponse(buffer_arg) {
-  return supervisor_pb.StatusResponse.deserializeBinary(new Uint8Array(buffer_arg));
+function deserialize_supervisor_SupervisorStatusResponse(buffer_arg) {
+  return supervisor_pb.SupervisorStatusResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
 
@@ -116,35 +132,53 @@ var BackupServiceService = exports.BackupServiceService = {
     responseSerialize: serialize_supervisor_PrepareBackupResponse,
     responseDeserialize: deserialize_supervisor_PrepareBackupResponse,
   },
-  // Status offers feedback on the workspace backup status. This status information can
+};
+
+exports.BackupServiceClient = grpc.makeGenericClientConstructor(BackupServiceService);
+// StatusService provides status feedback for the various in-workspace services.
+var StatusServiceService = exports.StatusServiceService = {
+  // SupervisorStatus returns once supervisor is running.
+  supervisorStatus: {
+    path: '/supervisor.StatusService/SupervisorStatus',
+    requestStream: false,
+    responseStream: false,
+    requestType: supervisor_pb.SupervisorStatusRequest,
+    responseType: supervisor_pb.SupervisorStatusResponse,
+    requestSerialize: serialize_supervisor_SupervisorStatusRequest,
+    requestDeserialize: deserialize_supervisor_SupervisorStatusRequest,
+    responseSerialize: serialize_supervisor_SupervisorStatusResponse,
+    responseDeserialize: deserialize_supervisor_SupervisorStatusResponse,
+  },
+  // IDEStatus returns OK if the IDE can serve requests.
+  iDEStatus: {
+    path: '/supervisor.StatusService/IDEStatus',
+    requestStream: false,
+    responseStream: false,
+    requestType: supervisor_pb.IDEStatusRequest,
+    responseType: supervisor_pb.IDEStatusResponse,
+    requestSerialize: serialize_supervisor_IDEStatusRequest,
+    requestDeserialize: deserialize_supervisor_IDEStatusRequest,
+    responseSerialize: serialize_supervisor_IDEStatusResponse,
+    responseDeserialize: deserialize_supervisor_IDEStatusResponse,
+  },
+  // BackupStatus offers feedback on the workspace backup status. This status information can
   // be relayed to the user to provide transparency as to how "safe" their files/content
   // data are w.r.t. to being lost.
-  status: {
-    path: '/supervisor.BackupService/Status',
+  backupStatus: {
+    path: '/supervisor.StatusService/BackupStatus',
     requestStream: false,
     responseStream: false,
-    requestType: supervisor_pb.StatusRequest,
-    responseType: supervisor_pb.StatusResponse,
-    requestSerialize: serialize_supervisor_StatusRequest,
-    requestDeserialize: deserialize_supervisor_StatusRequest,
-    responseSerialize: serialize_supervisor_StatusResponse,
-    responseDeserialize: deserialize_supervisor_StatusResponse,
+    requestType: supervisor_pb.BackupStatusRequest,
+    responseType: supervisor_pb.BackupStatusResponse,
+    requestSerialize: serialize_supervisor_BackupStatusRequest,
+    requestDeserialize: deserialize_supervisor_BackupStatusRequest,
+    responseSerialize: serialize_supervisor_BackupStatusResponse,
+    responseDeserialize: deserialize_supervisor_BackupStatusResponse,
   },
-  // DebugPauseTheia is just for demo purpose and will be removed.
-  debugPauseTheia: {
-    path: '/supervisor.BackupService/DebugPauseTheia',
-    requestStream: false,
-    responseStream: false,
-    requestType: supervisor_pb.DebugPauseTheiaRequest,
-    responseType: supervisor_pb.DebugPauseTheiaResponse,
-    requestSerialize: serialize_supervisor_DebugPauseTheiaRequest,
-    requestDeserialize: deserialize_supervisor_DebugPauseTheiaRequest,
-    responseSerialize: serialize_supervisor_DebugPauseTheiaResponse,
-    responseDeserialize: deserialize_supervisor_DebugPauseTheiaResponse,
-  },
-  // ContentStatus returns the status of the workspace content
+  // ContentStatus returns the status of the workspace content. When used with `wait`, the call
+  // returns when the content has become available.
   contentStatus: {
-    path: '/supervisor.BackupService/ContentStatus',
+    path: '/supervisor.StatusService/ContentStatus',
     requestStream: false,
     responseStream: false,
     requestType: supervisor_pb.ContentStatusRequest,
@@ -156,4 +190,4 @@ var BackupServiceService = exports.BackupServiceService = {
   },
 };
 
-exports.BackupServiceClient = grpc.makeGenericClientConstructor(BackupServiceService);
+exports.StatusServiceClient = grpc.makeGenericClientConstructor(StatusServiceService);
