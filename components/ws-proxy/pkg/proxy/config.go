@@ -19,6 +19,7 @@ type Config struct {
 	} `json:"https,omitempty"`
 
 	TransportConfig    *TransportConfig    `json:"transportConfig"`
+	IDEServer          *IDEServerConfig    `json:"ideServer"`
 	TheiaServer        *TheiaServer        `json:"theiaServer"`
 	GitpodInstallation *GitpodInstallation `json:"gitpodInstallation"`
 	WorkspacePodConfig *WorkspacePodConfig `json:"workspacePodConfig"`
@@ -26,23 +27,23 @@ type Config struct {
 
 // Validate validates the configuration to catch issues during startup and not at runtime
 func (c *Config) Validate() error {
-	err := c.TransportConfig.Validate()
-	if err != nil {
-		return err
+	type validatable interface {
+		Validate() error
 	}
-	err = c.TheiaServer.Validate()
-	if err != nil {
-		return err
+	for _, v := range []validatable{
+		c.TransportConfig,
+		c.TheiaServer,
+		c.IDEServer,
+		c.GitpodInstallation,
+		c.WorkspacePodConfig,
+	} {
+		err := v.Validate()
+		if err != nil {
+			return err
+		}
 	}
-	err = c.GitpodInstallation.Validate()
-	if err != nil {
-		return err
-	}
-	err = c.WorkspacePodConfig.Validate()
-	if err != nil {
-		return err
-	}
-	return err
+
+	return nil
 }
 
 // WorkspacePodConfig contains config around the workspace pod
@@ -81,12 +82,29 @@ func (c *GitpodInstallation) Validate() error {
 		return xerrors.Errorf("GitpodInstallation not configured")
 	}
 
-	err := validation.ValidateStruct(c,
+	return validation.ValidateStruct(c,
 		validation.Field(&c.Scheme, validation.Required),
 		validation.Field(&c.HostName, validation.Required),            // TODO IP ONLY: Check if there is any dependency. If yes, remove it.
 		validation.Field(&c.WorkspaceHostSuffix, validation.Required), // TODO IP ONLY: Check if there is any dependency. If yes, remove it.
 	)
-	return err
+}
+
+// IDEServerConfig configures where to serve the IDE from
+type IDEServerConfig struct {
+	Scheme string `json:"scheme"`
+	Host   string `json:"host"`
+}
+
+// Validate validates the configuration to catch issues during startup and not at runtime
+func (c *IDEServerConfig) Validate() error {
+	if c == nil {
+		return nil
+	}
+
+	return validation.ValidateStruct(c,
+		validation.Field(&c.Scheme, validation.Required),
+		validation.Field(&c.Host, validation.Required),
+	)
 }
 
 // TheiaServer configures where to serve theia from
@@ -99,15 +117,14 @@ type TheiaServer struct {
 // Validate validates the configuration to catch issues during startup and not at runtime
 func (c *TheiaServer) Validate() error {
 	if c == nil {
-		return xerrors.Errorf("TheiaServer not configured")
+		return nil
 	}
 
-	err := validation.ValidateStruct(c,
+	return validation.ValidateStruct(c,
 		validation.Field(&c.Scheme, validation.Required),
 		validation.Field(&c.Host, validation.Required),
 		// StaticVersionPathPrefix might very well be ""
 	)
-	return err
 }
 
 // TransportConfig configures the way how ws-proxy connects to it's backend services
@@ -124,11 +141,10 @@ func (c *TransportConfig) Validate() error {
 		return xerrors.Errorf("TransportConfig not configured")
 	}
 
-	err := validation.ValidateStruct(c,
+	return validation.ValidateStruct(c,
 		validation.Field(&c.ConnectTimeout, validation.Required),
 		validation.Field(&c.IdleConnTimeout, validation.Required),
 		validation.Field(&c.WebsocketIdleConnTimeout, validation.Required),
 		validation.Field(&c.MaxIdleConns, validation.Required, validation.Min(1)),
 	)
-	return err
 }

@@ -71,7 +71,7 @@ func TestWorkspaceRouter(t *testing.T) {
 				{
 					WorkspaceID:   "c65376da-3406-4cf3-a80b-99ce5f750235",
 					URL:           "http://gitpod-dev.com:10001/",
-					IdePublicPort: "10001",
+					IDEPublicPort: "10001",
 					Ports: []PortInfo{
 						{
 							PublicPort: "10343",

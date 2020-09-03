@@ -360,7 +360,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
             if (this.state.inTheiaAlready) {
                 message = <div className='message'></div>;
             } else {
-                this.ensureWorkspaceAuth(this.state.workspaceInstance.workspaceId)
+                this.ensureWorkspaceAuth(this.state.workspaceInstance.id)
                     .then(() => { window.location.href = this.state.workspaceInstance!.ideUrl; });
             }
         }

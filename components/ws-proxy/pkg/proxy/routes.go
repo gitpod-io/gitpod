@@ -99,19 +99,28 @@ func installTheiaRoutes(r *mux.Router, config *RouteHandlerConfig, rh *RouteHand
 }
 
 // TheiaRootHandler handles all requests under / that are not handled by any special case above (expected to be static resources only)
-func TheiaRootHandler(r *mux.Router, config *RouteHandlerConfig) {
-	r.Use(config.CorsHandler)
-	r.NewRoute().
-		HandlerFunc(proxyPass(config,
-			// Use the static theia server as primary source for resources
-			StaticTheiaResolver,
-			// On 50x while connecting to workspace pod, redirect to /start
-			withOnProxyErrorRedirectToWorkspaceStartHandler(config.Config)))
+func TheiaRootHandler(infoProvider WorkspaceInfoProvider) RouteHandler {
+	return func(r *mux.Router, config *RouteHandlerConfig) {
+		var resolver targetResolver
+		if config.Config.IDEServer != nil {
+			resolver = dynamicTheiaResolver(infoProvider)
+		} else {
+			resolver = StaticTheiaResolver
+		}
 
-	// If the static theia server returns 404, re-route to the pod itself instead
-	r.NotFoundHandler = config.WorkspaceAuthHandler(
-		proxyPass(config, workspacePodResolver,
-			withOnProxyErrorRedirectToWorkspaceStartHandler(config.Config)))
+		r.Use(config.CorsHandler)
+		r.NewRoute().
+			HandlerFunc(proxyPass(config,
+				// Use the static theia server as primary source for resources
+				resolver,
+				// On 50x while connecting to workspace pod, redirect to /start
+				withOnProxyErrorRedirectToWorkspaceStartHandler(config.Config)))
+
+		// If the static theia server returns 404, re-route to the pod itself instead
+		r.NotFoundHandler = config.WorkspaceAuthHandler(
+			proxyPass(config, workspacePodResolver,
+				withOnProxyErrorRedirectToWorkspaceStartHandler(config.Config)))
+	}
 }
 
 // TheiaMiniBrowserHandler handles /mini-browser
@@ -223,6 +232,24 @@ func StaticTheiaResolver(config *Config, req *http.Request) (url *url.URL, err e
 	targetURL.Host = config.TheiaServer.Host
 	targetURL.Path = config.TheiaServer.StaticVersionPathPrefix
 	return &targetURL, nil
+}
+
+func dynamicTheiaResolver(infoProvider WorkspaceInfoProvider) targetResolver {
+	return func(config *Config, req *http.Request) (res *url.URL, err error) {
+		coords := getWorkspaceCoords(req)
+		info := infoProvider.WorkspaceInfo(coords.ID)
+		if info == nil {
+			log.WithFields(log.OWI("", coords.ID, "")).Warn("no workspace info available - cannot resolve Theia route")
+			return nil, xerrors.Errorf("no workspace information available - cannot resolve Theia route")
+		}
+
+		var dst url.URL
+		dst.Scheme = config.IDEServer.Scheme
+		dst.Host = config.IDEServer.Host
+		dst.Path = "/" + info.IDEImage
+
+		return &dst, nil
+	}
 }
 
 // TODO This is currently executed per request: cache/use more performant solution?

@@ -63,8 +63,10 @@ type WorkspaceInfo struct {
 	InstanceID  string
 	URL         string
 
+	IDEImage string
+
 	// (parsed from URL)
-	IdePublicPort string
+	IDEPublicPort string
 
 	Ports []PortInfo
 	Auth  *wsapi.WorkspaceAuthentication
@@ -239,7 +241,8 @@ func mapWorkspaceStatusToInfo(status *wsapi.WorkspaceStatus) *WorkspaceInfo {
 		WorkspaceID:   status.Metadata.MetaId,
 		InstanceID:    status.Id,
 		URL:           status.Spec.Url,
-		IdePublicPort: getPortStr(status.Spec.Url),
+		IDEImage:      status.Spec.IdeImage,
+		IDEPublicPort: getPortStr(status.Spec.Url),
 		Ports:         portInfos,
 		Auth:          status.Auth,
 	}
@@ -310,7 +313,7 @@ func (c *workspaceInfoCache) insert(info *WorkspaceInfo) {
 
 func (c *workspaceInfoCache) doInsert(info *WorkspaceInfo) {
 	c.infos[info.WorkspaceID] = info
-	c.coordsByPublicPort[info.IdePublicPort] = &WorkspaceCoords{
+	c.coordsByPublicPort[info.IDEPublicPort] = &WorkspaceCoords{
 		ID: info.WorkspaceID,
 	}
 
@@ -330,7 +333,7 @@ func (c *workspaceInfoCache) delete(workspaceID string) {
 	if !present || info == nil {
 		return
 	}
-	delete(c.coordsByPublicPort, info.IdePublicPort)
+	delete(c.coordsByPublicPort, info.IDEPublicPort)
 	delete(c.infos, workspaceID)
 }
 

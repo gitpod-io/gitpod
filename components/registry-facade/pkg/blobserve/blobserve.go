@@ -77,6 +77,10 @@ func NewServer(cfg Config, resolver registry.ResolverProvider) (*Server, error) 
 func (reg *Server) Serve() error {
 	r := mux.NewRouter()
 	r.PathPrefix(`/{repo:[a-zA-Z0-9\/\-\.]+}:{tag:[a-z][a-z0-9-\.]+}`).HandlerFunc(reg.serve)
+	r.NewRoute().HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+		log.WithField("path", req.URL.Path).Warn("unmapped request")
+		http.Error(resp, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+	})
 
 	var h http.Handler = r
 	if reg.Config.Timeout > 0 {
@@ -128,7 +132,13 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 		fs = prefixingFilesystem{Prefix: workdir, FS: fs}
 	}
 
-	http.StripPrefix(fmt.Sprintf("/%s:%s", repo, tag), http.FileServer(fs)).ServeHTTP(w, req)
+	log.WithField("path", req.URL.Path).Debug("handling blobserve")
+	pathPrefix := fmt.Sprintf("/%s:%s", repo, tag)
+	if req.URL.Path == pathPrefix {
+		req.URL.Path += "/"
+	}
+
+	http.StripPrefix(pathPrefix, http.FileServer(fs)).ServeHTTP(w, req)
 }
 
 // Prepare downloads a blob and prepares it for use independently of any request
