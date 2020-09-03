@@ -263,7 +263,7 @@ components:
       imageName: "workspace-full"
       version: "latest"
     theiaImage: 
-      imageName: "theia-ide"
+      imageName: "ide/code"
     supervisorImage:
       imageName: "supervisor"
     pullSecret:
