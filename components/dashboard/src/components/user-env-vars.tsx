@@ -206,7 +206,7 @@ class UserEnvVarComponent extends React.Component<UserEnvVarComponentProps, User
             return 'Must not be empty.';
         }
         const split = pattern.split('/');
-        if (split.length !== 2) {
+        if (split.length < 2) {
             return "Please use the form 'organization/repo'.";
         }
         for (const name of split) {

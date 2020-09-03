@@ -149,13 +149,12 @@ export interface UserEnvVar extends UserEnvVarValue {
 export namespace UserEnvVar {
 
     export function normalizeRepoPattern(pattern: string) {
-        const [owner, repo] = pattern.split('/');
-        return `${owner.toLocaleLowerCase()}/${repo.toLocaleLowerCase()}`;
+        return pattern.toLocaleLowerCase();
     }
 
     export function filter<T extends UserEnvVarValue>(vars: T[], owner: string, repo: string): T[] {
         let result = vars.filter(e => {
-            const [ownerPattern, repoPattern] = e.repositoryPattern.split('/');
+            const [ownerPattern, repoPattern] = splitRepositoryPattern(e.repositoryPattern);
             if (ownerPattern !== '*' && ownerPattern !== '#' && (!!owner && ownerPattern !== owner.toLocaleLowerCase())) {
                 return false;
             }
@@ -195,7 +194,7 @@ export namespace UserEnvVar {
                 //      */*         = 3
                 //      #/#         = 4 (used for env vars passed through the URL)
                 // the lower the score, the higher the precedence.
-                const [ownerPattern, repoPattern] = e.repositoryPattern.split('/');
+                const [ownerPattern, repoPattern] = splitRepositoryPattern(e.repositoryPattern);
                 let score = 0;
                 if (repoPattern == "*") {
                     score += 1;
@@ -216,6 +215,13 @@ export namespace UserEnvVar {
         }
 
         return result;
+    }
+
+    function splitRepositoryPattern(repositoryPattern: string): string[] {
+        const patterns = repositoryPattern.split('/');
+        const repoPattern = patterns.pop() || "";
+        const ownerPattern = patterns.join('/');
+        return [ownerPattern, repoPattern];
     }
 }
 
