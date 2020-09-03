@@ -1,9 +1,3 @@
-/**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
- * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
- */
-
 // package: supervisor
 // file: supervisor.proto
 
@@ -45,75 +39,117 @@ export namespace PrepareBackupResponse {
     }
 }
 
-export class StatusRequest extends jspb.Message { 
+export class SupervisorStatusRequest extends jspb.Message { 
 
     serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): StatusRequest.AsObject;
-    static toObject(includeInstance: boolean, msg: StatusRequest): StatusRequest.AsObject;
+    toObject(includeInstance?: boolean): SupervisorStatusRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: SupervisorStatusRequest): SupervisorStatusRequest.AsObject;
     static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
     static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: StatusRequest, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): StatusRequest;
-    static deserializeBinaryFromReader(message: StatusRequest, reader: jspb.BinaryReader): StatusRequest;
+    static serializeBinaryToWriter(message: SupervisorStatusRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): SupervisorStatusRequest;
+    static deserializeBinaryFromReader(message: SupervisorStatusRequest, reader: jspb.BinaryReader): SupervisorStatusRequest;
 }
 
-export namespace StatusRequest {
+export namespace SupervisorStatusRequest {
     export type AsObject = {
     }
 }
 
-export class StatusResponse extends jspb.Message { 
+export class SupervisorStatusResponse extends jspb.Message { 
+    getOk(): boolean;
+    setOk(value: boolean): void;
+
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): SupervisorStatusResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: SupervisorStatusResponse): SupervisorStatusResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: SupervisorStatusResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): SupervisorStatusResponse;
+    static deserializeBinaryFromReader(message: SupervisorStatusResponse, reader: jspb.BinaryReader): SupervisorStatusResponse;
+}
+
+export namespace SupervisorStatusResponse {
+    export type AsObject = {
+        ok: boolean,
+    }
+}
+
+export class IDEStatusRequest extends jspb.Message { 
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): IDEStatusRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: IDEStatusRequest): IDEStatusRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: IDEStatusRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): IDEStatusRequest;
+    static deserializeBinaryFromReader(message: IDEStatusRequest, reader: jspb.BinaryReader): IDEStatusRequest;
+}
+
+export namespace IDEStatusRequest {
+    export type AsObject = {
+    }
+}
+
+export class IDEStatusResponse extends jspb.Message { 
+    getOk(): boolean;
+    setOk(value: boolean): void;
+
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): IDEStatusResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: IDEStatusResponse): IDEStatusResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: IDEStatusResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): IDEStatusResponse;
+    static deserializeBinaryFromReader(message: IDEStatusResponse, reader: jspb.BinaryReader): IDEStatusResponse;
+}
+
+export namespace IDEStatusResponse {
+    export type AsObject = {
+        ok: boolean,
+    }
+}
+
+export class BackupStatusRequest extends jspb.Message { 
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): BackupStatusRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: BackupStatusRequest): BackupStatusRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: BackupStatusRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): BackupStatusRequest;
+    static deserializeBinaryFromReader(message: BackupStatusRequest, reader: jspb.BinaryReader): BackupStatusRequest;
+}
+
+export namespace BackupStatusRequest {
+    export type AsObject = {
+    }
+}
+
+export class BackupStatusResponse extends jspb.Message { 
     getCanaryAvailable(): boolean;
     setCanaryAvailable(value: boolean): void;
 
 
     serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): StatusResponse.AsObject;
-    static toObject(includeInstance: boolean, msg: StatusResponse): StatusResponse.AsObject;
+    toObject(includeInstance?: boolean): BackupStatusResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: BackupStatusResponse): BackupStatusResponse.AsObject;
     static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
     static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: StatusResponse, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): StatusResponse;
-    static deserializeBinaryFromReader(message: StatusResponse, reader: jspb.BinaryReader): StatusResponse;
+    static serializeBinaryToWriter(message: BackupStatusResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): BackupStatusResponse;
+    static deserializeBinaryFromReader(message: BackupStatusResponse, reader: jspb.BinaryReader): BackupStatusResponse;
 }
 
-export namespace StatusResponse {
+export namespace BackupStatusResponse {
     export type AsObject = {
         canaryAvailable: boolean,
-    }
-}
-
-export class DebugPauseTheiaRequest extends jspb.Message { 
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): DebugPauseTheiaRequest.AsObject;
-    static toObject(includeInstance: boolean, msg: DebugPauseTheiaRequest): DebugPauseTheiaRequest.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: DebugPauseTheiaRequest, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): DebugPauseTheiaRequest;
-    static deserializeBinaryFromReader(message: DebugPauseTheiaRequest, reader: jspb.BinaryReader): DebugPauseTheiaRequest;
-}
-
-export namespace DebugPauseTheiaRequest {
-    export type AsObject = {
-    }
-}
-
-export class DebugPauseTheiaResponse extends jspb.Message { 
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): DebugPauseTheiaResponse.AsObject;
-    static toObject(includeInstance: boolean, msg: DebugPauseTheiaResponse): DebugPauseTheiaResponse.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: DebugPauseTheiaResponse, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): DebugPauseTheiaResponse;
-    static deserializeBinaryFromReader(message: DebugPauseTheiaResponse, reader: jspb.BinaryReader): DebugPauseTheiaResponse;
-}
-
-export namespace DebugPauseTheiaResponse {
-    export type AsObject = {
     }
 }
 

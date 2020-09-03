@@ -147,7 +147,7 @@
                     ],
                     "readinessProbe": {
                         "httpGet": {
-                            "path": "/",
+                            "path": "/api/v1/status/content/wait/true",
                             "port": 22999,
                             "scheme": "HTTP"
                         },

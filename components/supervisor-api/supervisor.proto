@@ -4,10 +4,11 @@ package supervisor;
 
 import "google/api/annotations.proto";
 
-option go_package = "supervisor";
+option go_package = "api";
 
 // BackupService provides workspace-facing, backup related services
 service BackupService {
+
     // Prepare prepares a workspace backup and is intended to be called by the PreStop
     // hook of the container. It should hardly ever be neccesary to call this from any
     // other point.
@@ -16,44 +17,65 @@ service BackupService {
             get: "/v1/backup/prepare"
         };
     }
+    
+}
 
-    // Status offers feedback on the workspace backup status. This status information can
+// StatusService provides status feedback for the various in-workspace services.
+service StatusService {
+
+    // SupervisorStatus returns once supervisor is running.
+    rpc SupervisorStatus(SupervisorStatusRequest) returns (SupervisorStatusResponse) {
+        option (google.api.http) = {
+            get: "/v1/status/supervisor"
+        };
+    }
+
+    // IDEStatus returns OK if the IDE can serve requests.
+    rpc IDEStatus(IDEStatusRequest) returns (IDEStatusResponse) {
+        option (google.api.http) = {
+            get: "/v1/status/ide"
+        };
+    }
+
+    // BackupStatus offers feedback on the workspace backup status. This status information can
     // be relayed to the user to provide transparency as to how "safe" their files/content
     // data are w.r.t. to being lost.
-    rpc Status(StatusRequest) returns (StatusResponse) {
+    rpc BackupStatus(BackupStatusRequest) returns (BackupStatusResponse) {
         option (google.api.http) = {
-            get: "/v1/backup/status"
+            get: "/v1/status/backup"
         };
     }
 
-    // DebugPauseTheia is just for demo purpose and will be removed.
-    rpc DebugPauseTheia(DebugPauseTheiaRequest) returns (DebugPauseTheiaResponse) {
-        option (google.api.http) = {
-            get: "/v1/backup/pause-theia"
-        };
-    }
-
-    // ContentStatus returns the status of the workspace content
+    // ContentStatus returns the status of the workspace content. When used with `wait`, the call
+    // returns when the content has become available.
     rpc ContentStatus(ContentStatusRequest) returns (ContentStatusResponse) {
         option (google.api.http) = {
-            get: "/v1/content/status",
+            get: "/v1/status/content",
             additional_bindings {
-                get: "/v1/content/status/wait/{wait=true}",
+                get: "/v1/status/content/wait/{wait=true}",
             }
         };
     }
+
 }
 
 message PrepareBackupRequest {}
 message PrepareBackupResponse {}
 
-message StatusRequest {}
-message StatusResponse {
-    bool canary_available = 1;
+message SupervisorStatusRequest {}
+message SupervisorStatusResponse {
+    bool ok = 1;
 }
 
-message DebugPauseTheiaRequest {}
-message DebugPauseTheiaResponse {}
+message IDEStatusRequest {}
+message IDEStatusResponse {
+    bool ok = 1;
+}
+
+message BackupStatusRequest {}
+message BackupStatusResponse {
+    bool canary_available = 1;
+}
 
 message ContentStatusRequest {
     // if true this request will return either when it times out or when the workspace content 
