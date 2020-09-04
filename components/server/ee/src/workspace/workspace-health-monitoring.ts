@@ -62,7 +62,7 @@ export class WorkspaceHealthMonitoring {
         }
     }
 
-    // probeAllRunningWorkspaces tries to reach /gitpod/ready on all workspaces currently running in this region
+    // probeAllRunningWorkspaces tries to reach all workspaces currently running in this region
     async probeAllRunningWorkspaces(ctx: TraceContext): Promise<ProbeResult[]> {
         const span = TraceContext.startSpan("probeAllRunningWorkspaces", ctx)
 
@@ -98,11 +98,11 @@ export class WorkspaceHealthMonitoring {
         const probeURLs: URL[] = [];
 
         const primaryProbeURL = new URL(wsi.ideUrl);
-        primaryProbeURL.pathname = "/gitpod/ready";
+        primaryProbeURL.pathname = "/api/v1/status/ide";
         probeURLs.push(primaryProbeURL);
 
         const fallbackProbeURL = new URL(wsi.ideUrl);
-        fallbackProbeURL.pathname = "/supervisor/ready";
+        fallbackProbeURL.pathname = "/api/v1/status/supervisor";
         probeURLs.push(fallbackProbeURL);
 
         let result: ProbeResult = { workspaceID: wsi.workspaceId, instanceID: wsi.id, ok: false };
