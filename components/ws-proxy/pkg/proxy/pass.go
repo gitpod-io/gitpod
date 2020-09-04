@@ -131,6 +131,14 @@ func connectErrorToCause(err error) string {
 	return "unknown"
 }
 
+func withErrorHandler(errorHandler http.Handler) proxyPassOpt {
+	return func(h *proxyPassConfig) {
+		h.ErrorHandler = func(resp http.ResponseWriter, req *http.Request, err error) {
+			errorHandler.ServeHTTP(resp, req)
+		}
+	}
+}
+
 // withOnProxyErrorRedirectToWorkspaceStartHandler is an error handler that redirects to gitpod.io/start/#<wsid>
 func withOnProxyErrorRedirectToWorkspaceStartHandler(config *Config) proxyPassOpt {
 	return func(h *proxyPassConfig) {
