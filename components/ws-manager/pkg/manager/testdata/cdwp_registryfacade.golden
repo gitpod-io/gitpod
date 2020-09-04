@@ -130,7 +130,7 @@
                     ],
                     "readinessProbe": {
                         "httpGet": {
-                            "path": "/api/v1/status/content/wait/true",
+                            "path": "/_supervisor/v1/status/content/wait/true",
                             "port": 22999,
                             "scheme": "HTTP"
                         },

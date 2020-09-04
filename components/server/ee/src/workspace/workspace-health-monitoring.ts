@@ -98,11 +98,11 @@ export class WorkspaceHealthMonitoring {
         const probeURLs: URL[] = [];
 
         const primaryProbeURL = new URL(wsi.ideUrl);
-        primaryProbeURL.pathname = "/api/v1/status/ide";
+        primaryProbeURL.pathname = "/_supervisor/v1/status/ide";
         probeURLs.push(primaryProbeURL);
 
         const fallbackProbeURL = new URL(wsi.ideUrl);
-        fallbackProbeURL.pathname = "/api/v1/status/supervisor";
+        fallbackProbeURL.pathname = "/_supervisor/v1/status/supervisor";
         probeURLs.push(fallbackProbeURL);
 
         let result: ProbeResult = { workspaceID: wsi.workspaceId, instanceID: wsi.id, ok: false };

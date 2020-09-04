@@ -107,9 +107,10 @@ func installTheiaRoutes(r *mux.Router, config *RouteHandlerConfig, rh *RouteHand
 
 	rh.theiaHostedPluginHandler(r.PathPrefix("/hostedPlugin").Subrouter(), config)
 
-	rh.supervisorUnauthenticatedAPIHandler(r.PathPrefix("/api/v1/status/supervisor").Subrouter(), config)
-	rh.supervisorUnauthenticatedAPIHandler(r.PathPrefix("/api/v1/status/ide").Subrouter(), config)
-	rh.supervisorAuthenticatedAPIHandler(r.PathPrefix("/api/v1").Subrouter(), config)
+	rh.supervisorUnauthenticatedAPIHandler(r.PathPrefix("/_supervisor/v1/status/supervisor").Subrouter(), config)
+	rh.supervisorUnauthenticatedAPIHandler(r.PathPrefix("/_supervisor/v1/status/ide").Subrouter(), config)
+	rh.supervisorAuthenticatedAPIHandler(r.PathPrefix("/_supervisor/v1").Subrouter(), config)
+	rh.supervisorAuthenticatedAPIHandler(r.PathPrefix("/_supervisor").Subrouter(), config)
 
 	rh.theiaWebviewHandler(r.PathPrefix("/webview").Subrouter(), config)
 
