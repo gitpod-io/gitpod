@@ -1,0 +1,10 @@
+packages:
+  - name: lib
+    type: yarn
+    srcs:
+      - "src/**"
+      - package.json
+    config:
+      packaging: library
+      yarnLock: ${coreYarnLockBase}/yarn.lock
+      tsconfig: tsconfig.json

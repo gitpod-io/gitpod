@@ -1,0 +1,58 @@
+extend type Query {
+
+    me: User!
+
+    """ Get user by ID """
+    user (userId: ID!): User
+
+    """ Get users """
+    users (
+        offset: Int! = 0,
+        limit: Int! = 10,
+        orderBy: USER_ORDER_KEYS! = id,
+        orderDir: ORDER_DIR! = ASC,
+        searchTerm: String,
+        """ The minimum creation date/time like "2020-04-20T12:09:02.490Z" (inclusive). """
+        minCreationDate: String,
+        """ The maximum creation date/time like "2020-04-20T12:09:02.490Z" (exclusive). """
+        maxCreationDate: String
+    ): UserPaginationResult
+
+    """ Get the number of users """
+    userCount: Int!
+}
+
+# An object with a Globally Unique ID
+interface Node {
+  # The ID of the object.
+  id: ID!
+}
+
+type User implements Node {
+    id: ID!
+    creationDate: String!
+    avatarUrl: String
+    name: String
+    fullName: String
+    displayName: String
+    email: String
+    blocked: Boolean
+    deleted: Boolean
+    workspaces: [Workspace!]!
+}
+
+type UserPaginationResult {
+    total: Int!
+    hasMore: Boolean!
+    items: [User!]!
+}
+
+enum USER_ORDER_KEYS {
+    id
+    creationDate
+}
+
+enum ORDER_DIR {
+    ASC
+    DESC
+}

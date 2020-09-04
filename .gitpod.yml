@@ -30,10 +30,11 @@ ports:
   - port: 13444
 tasks:
   - before: scripts/branch-namespace.sh
-    init: yarn && yarn build
+    init: yarn --network-timeout 100000 && yarn build
   - name: Go
     init: leeway exec --filter-type go -v -- go get -v ./...
     openMode: split-right
+privileged: true
 vscode:
   extensions:
     - hangxingliu.vscode-nginx-conf-hint@0.1.0:UATTe2sTFfCYWQ3jw4IRsw==
@@ -42,4 +43,4 @@ vscode:
     - bajdzis.vscode-database@2.2.1:uXdjV53wtoTevFK6HOh3pQ==
     - hashicorp.terraform@2.1.1:QEP7gdWtMuY+j8RZ5OLDkA==
     - stkb.rewrap@1.13.0:yEx8nRSXlfXAHqsbkTJpdA==
-privileged: true
+    - Prisma.vscode-graphql@0.3.1:ag8/e7lOqzFeN6jbi02nRA==
