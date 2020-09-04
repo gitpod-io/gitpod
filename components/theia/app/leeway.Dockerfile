@@ -40,10 +40,10 @@ RUN package-libs.sh /theia/node/bin/node
 # copy native dependencies of node modules
 RUN find /theia/node_modules/ -iname *.node -exec package-libs.sh {} \;
 
+RUN cp /theia/node/bin/node /theia/node/bin/gitpod-node && rm /theia/node/bin/node
 
 FROM scratch
 COPY --from=builder_alpine /theia/ /theia/
-COPY --from=builder_alpine /theia/node/bin/node /theia/node/bin/gitpod-node
 
 ENV GITPOD_BUILT_IN_PLUGINS /theia/node_modules/@gitpod/gitpod-ide/plugins/
 COPY components-theia-app--builtin-plugins/plugins/ ${GITPOD_BUILT_IN_PLUGINS}
