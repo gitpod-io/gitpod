@@ -15,6 +15,9 @@ metadata:
     component: {{ $comp.name }}
     kind: service
     stage: {{ $gp.installation.stage }}
+    {{- range $k, $v := $comp.svcLabels }}
+    {{ $k }}: {{ $v }}
+    {{- end }}
 spec:
   ports:
   {{- range $key, $val := $comp.ports }}

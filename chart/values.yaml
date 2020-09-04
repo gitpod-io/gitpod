@@ -201,9 +201,13 @@ components:
         expose: true
         containerPort: 32223
         servicePort: 3000
+    svcLabels:
+      feature: registry
     blobserve:
       name: "registry-facade"
       svcName: "blobserve"
+      svcLabels:
+        feature: blobserve
       disabled: false
       ports:
         service:
