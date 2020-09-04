@@ -201,6 +201,42 @@ func TestRoutes(t *testing.T) {
 				content: content,
 			},
 		},
+		{
+			description: "Unauthenticated supervisor API (supervisor status)",
+			router:      theiaRouter,
+			req:         testRequest{method: "GET", url: "/api/v1/status/supervisor"},
+			targets:     []proxyTarget{theiaOkResponse},
+			response: expectedResponse{
+				code: 200,
+			},
+		},
+		{
+			description: "Unauthenticated supervisor API (IDE status)",
+			router:      theiaRouter,
+			req:         testRequest{method: "GET", url: "/api/v1/status/ide"},
+			targets:     []proxyTarget{theiaOkResponse},
+			response: expectedResponse{
+				code: 200,
+			},
+		},
+		{
+			description: "Unauthenticated req against authenticated supervisor API",
+			router:      theiaRouter,
+			req:         testRequest{method: "GET", url: "/api/v1/status/backup"},
+			targets:     []proxyTarget{theiaOkResponse},
+			response: expectedResponse{
+				code: 401,
+			},
+		},
+		{
+			description: "Authenticated req against authenticated supervisor API",
+			router:      theiaRouter,
+			req:         testRequest{method: "GET", url: "/api/v1/status/backup", headers: map[string]string{"Authenticated": "yes"}},
+			targets:     []proxyTarget{theiaOkResponse},
+			response: expectedResponse{
+				code: 200,
+			},
+		},
 	}
 
 	// execute each proxy test
@@ -247,6 +283,16 @@ func TestRoutes(t *testing.T) {
 
 			// setup test handler
 			handlerConfig, err := NewRouteHandlerConfig(config)
+			handlerConfig.WorkspaceAuthHandler = func(h http.Handler) http.Handler {
+				return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+					header, ok := req.Header["Authenticated"]
+					if !ok || len(header) == 0 || header[0] != "yes" {
+						http.Error(resp, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+					}
+
+					h.ServeHTTP(resp, req)
+				})
+			}
 			if err != nil {
 				t.Fatalf("error while creating RouteHandlerConfig: %s", err.Error())
 			}
@@ -293,17 +339,7 @@ func TestRoutes(t *testing.T) {
 func theiaRouter(handlerConfig *RouteHandlerConfig, infoProvider WorkspaceInfoProvider) *mux.Router {
 	r := mux.NewRouter()
 
-	handlers := &RouteHandlers{
-		theiaRootHandler:            TheiaRootHandler(infoProvider),
-		theiaMiniBrowserHandler:     TheiaMiniBrowserHandler,
-		theiaFileHandler:            TheiaFileHandler,
-		theiaHostedPluginHandler:    TheiaHostedPluginHandler,
-		theiaServiceHandler:         TheiaServiceHandler,
-		theiaFileUploadHandler:      TheiaFileUploadHandler,
-		theiaReadyHandler:           TheiaReadyHandler,
-		theiaSupervisorReadyHandler: TheiaSupervisorReadyHandler,
-		theiaWebviewHandler:         TheiaWebviewHandler,
-	}
+	handlers := DefaultRouteHandlers(infoProvider)
 	installTheiaRoutes(r, handlerConfig, handlers)
 	return r
 }

@@ -13,7 +13,6 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
-	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gorilla/handlers"
@@ -64,15 +63,31 @@ type RouteHandler = func(r *mux.Router, config *RouteHandlerConfig)
 
 // RouteHandlers is the struct that configures the ws-proxys HTTP routes
 type RouteHandlers struct {
-	theiaRootHandler            RouteHandler
-	theiaMiniBrowserHandler     RouteHandler
-	theiaFileHandler            RouteHandler
-	theiaHostedPluginHandler    RouteHandler
-	theiaServiceHandler         RouteHandler
-	theiaFileUploadHandler      RouteHandler
-	theiaReadyHandler           RouteHandler
-	theiaSupervisorReadyHandler RouteHandler
-	theiaWebviewHandler         RouteHandler
+	theiaRootHandler         RouteHandler
+	theiaMiniBrowserHandler  RouteHandler
+	theiaFileHandler         RouteHandler
+	theiaHostedPluginHandler RouteHandler
+	theiaServiceHandler      RouteHandler
+	theiaFileUploadHandler   RouteHandler
+	theiaWebviewHandler      RouteHandler
+
+	supervisorAuthenticatedAPIHandler   RouteHandler
+	supervisorUnauthenticatedAPIHandler RouteHandler
+}
+
+// DefaultRouteHandlers installs the default route handlers
+func DefaultRouteHandlers(ip WorkspaceInfoProvider) *RouteHandlers {
+	return &RouteHandlers{
+		theiaRootHandler:                    TheiaRootHandler(ip),
+		theiaFileHandler:                    TheiaFileHandler,
+		theiaFileUploadHandler:              TheiaFileUploadHandler,
+		theiaHostedPluginHandler:            TheiaHostedPluginHandler,
+		theiaMiniBrowserHandler:             TheiaMiniBrowserHandler,
+		theiaServiceHandler:                 TheiaServiceHandler,
+		theiaWebviewHandler:                 TheiaWebviewHandler,
+		supervisorAuthenticatedAPIHandler:   SupervisorAPIHandler(true),
+		supervisorUnauthenticatedAPIHandler: SupervisorAPIHandler(false),
+	}
 }
 
 // installTheiaRoutes configures routing of Theia requests
@@ -80,7 +95,8 @@ func installTheiaRoutes(r *mux.Router, config *RouteHandlerConfig, rh *RouteHand
 	r.Use(logHandler)
 	r.Use(handlers.CompressHandler)
 
-	// Precedence depends on order
+	// Precedence depends on order - the further down a route is, the later it comes,
+	// the less priority it has.
 	rh.theiaMiniBrowserHandler(r.PathPrefix("/mini-browser").Subrouter(), config)
 
 	rh.theiaServiceHandler(r.Path("/services").Subrouter(), config)
@@ -91,8 +107,9 @@ func installTheiaRoutes(r *mux.Router, config *RouteHandlerConfig, rh *RouteHand
 
 	rh.theiaHostedPluginHandler(r.PathPrefix("/hostedPlugin").Subrouter(), config)
 
-	rh.theiaReadyHandler(r.Path("/gitpod/ready").Subrouter(), config)
-	rh.theiaSupervisorReadyHandler(r.Path("/supervisor/ready").Subrouter(), config)
+	rh.supervisorUnauthenticatedAPIHandler(r.PathPrefix("/api/v1/status/supervisor").Subrouter(), config)
+	rh.supervisorUnauthenticatedAPIHandler(r.PathPrefix("/api/v1/status/ide").Subrouter(), config)
+	rh.supervisorAuthenticatedAPIHandler(r.PathPrefix("/api/v1").Subrouter(), config)
 
 	rh.theiaWebviewHandler(r.PathPrefix("/webview").Subrouter(), config)
 
@@ -170,41 +187,17 @@ func TheiaFileUploadHandler(r *mux.Router, config *RouteHandlerConfig) {
 			withOnProxyErrorRedirectToWorkspaceStartHandler(config.Config)))
 }
 
-// TheiaReadyHandler handles /gitpod/ready
-func TheiaReadyHandler(r *mux.Router, config *RouteHandlerConfig) {
-	r.Use(config.CorsHandler)
-	r.NewRoute().
-		HandlerFunc(proxyPass(config, workspacePodResolver,
-			withOnProxyErrorRedirectToWorkspaceStartHandler(config.Config)))
-}
-
-// TheiaSupervisorReadyHandler handles /supervisor/ready
-func TheiaSupervisorReadyHandler(r *mux.Router, config *RouteHandlerConfig) {
-	// We MUST NOT proxy-pass to the workspace-internal supervisor endpoint.
-	// There's a lot going on there that's not supposed to be available from outside.
-	r.Use(config.CorsHandler)
-	r.NewRoute().HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-		url, err := workspacePodSupervisorResolver(config.Config, req)
-		if err != nil {
-			log.WithError(err).Error("cannot answer supervisor/ready call")
-			http.Error(resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
+// SupervisorAPIHandler handles requests for supervisor's API endpoint
+func SupervisorAPIHandler(authenticated bool) RouteHandler {
+	return func(r *mux.Router, config *RouteHandlerConfig) {
+		r.Use(config.CorsHandler)
+		if authenticated {
+			r.Use(config.WorkspaceAuthHandler)
 		}
 
-		timeout := 2 * time.Second
-		if dl, ok := req.Context().Deadline(); ok {
-			timeout = time.Until(dl)
-		}
-		client := http.Client{Timeout: timeout}
-		rresp, err := client.Get(url.String())
-		if err != nil {
-			log.WithError(err).Error("cannot answer supervisor/ready call")
-			http.Error(resp, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-			return
-		}
-
-		rresp.Write(resp)
-	})
+		r.NewRoute().
+			HandlerFunc(proxyPass(config, workspacePodSupervisorResolver))
+	}
 }
 
 // TheiaWebviewHandler handles /webview
