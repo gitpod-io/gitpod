@@ -1,3 +1,8 @@
+/**
+ * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+ */
+
 # Derived from https://learn.hashicorp.com/terraform/kubernetes/provision-eks-cluster
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
