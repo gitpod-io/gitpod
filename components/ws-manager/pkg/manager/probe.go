@@ -39,7 +39,7 @@ type WorkspaceReadyProbe struct {
 
 // NewWorkspaceReadyProbe creates a new workspace probe
 func NewWorkspaceReadyProbe(workspaceID string, workspaceURL url.URL) WorkspaceReadyProbe {
-	workspaceURL.Path += "/gitpod/ready"
+	workspaceURL.Path += "/api/v1/status/ide"
 	readyURL := workspaceURL.String()
 
 	return WorkspaceReadyProbe{
