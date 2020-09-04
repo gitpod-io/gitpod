@@ -204,7 +204,7 @@ func TestRoutes(t *testing.T) {
 		{
 			description: "Unauthenticated supervisor API (supervisor status)",
 			router:      theiaRouter,
-			req:         testRequest{method: "GET", url: "/api/v1/status/supervisor"},
+			req:         testRequest{method: "GET", url: "/_supervisor/v1/status/supervisor"},
 			targets:     []proxyTarget{theiaOkResponse},
 			response: expectedResponse{
 				code: 200,
@@ -213,7 +213,7 @@ func TestRoutes(t *testing.T) {
 		{
 			description: "Unauthenticated supervisor API (IDE status)",
 			router:      theiaRouter,
-			req:         testRequest{method: "GET", url: "/api/v1/status/ide"},
+			req:         testRequest{method: "GET", url: "/_supervisor/v1/status/ide"},
 			targets:     []proxyTarget{theiaOkResponse},
 			response: expectedResponse{
 				code: 200,
@@ -222,7 +222,7 @@ func TestRoutes(t *testing.T) {
 		{
 			description: "Unauthenticated req against authenticated supervisor API",
 			router:      theiaRouter,
-			req:         testRequest{method: "GET", url: "/api/v1/status/backup"},
+			req:         testRequest{method: "GET", url: "/_supervisor/v1/status/backup"},
 			targets:     []proxyTarget{theiaOkResponse},
 			response: expectedResponse{
 				code: 401,
@@ -231,7 +231,7 @@ func TestRoutes(t *testing.T) {
 		{
 			description: "Authenticated req against authenticated supervisor API",
 			router:      theiaRouter,
-			req:         testRequest{method: "GET", url: "/api/v1/status/backup", headers: map[string]string{"Authenticated": "yes"}},
+			req:         testRequest{method: "GET", url: "/_supervisor/v1/status/backup", headers: map[string]string{"Authenticated": "yes"}},
 			targets:     []proxyTarget{theiaOkResponse},
 			response: expectedResponse{
 				code: 200,

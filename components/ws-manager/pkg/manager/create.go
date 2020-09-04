@@ -496,7 +496,7 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 		ReadinessProbe: &corev1.Probe{
 			Handler: corev1.Handler{
 				HTTPGet: &corev1.HTTPGetAction{
-					Path:   "/api/v1/status/content/wait/true",
+					Path:   "/_supervisor/v1/status/content/wait/true",
 					Port:   intstr.FromInt((int)(startContext.TheiaSupervisorPort)),
 					Scheme: corev1.URISchemeHTTP,
 				},

@@ -518,7 +518,7 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 
 	httpMux := m.Match(cmux.HTTP1Fast())
 	routes := http.NewServeMux()
-	routes.Handle("/api", http.StripPrefix("/api", restMux))
+	routes.Handle("/_supervisor/v1/", http.StripPrefix("/_supervisor", restMux))
 	go http.Serve(httpMux, routes)
 
 	go m.Serve()
