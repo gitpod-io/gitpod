@@ -58,7 +58,7 @@ data:
                     "enabled": true,
                     "mapping": [
                         {
-                            "selector": "component=registry-facade",
+                            "selector": "component=registry-facade,feature=registry",
                             "alias": {{ (printf "reg.%s" (.Values.components.registryFacade.hostname | default .Values.hostname)) | quote }},
                             "proxyPort": {{ $comp.registryProxyPort }}
                         }
