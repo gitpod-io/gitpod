@@ -6,7 +6,7 @@
 
 # 1. At this point we'll have copied Theia to the node. We must mark the node with the Theia label so that workspaces get scheduled to it.
 for i in $(seq 1 10); do
-    if kubectl get node $EXECUTING_NODE_NAME -o template='{{ range $k, $v := .metadata.labels}}{{ $k }}{{"\n"}}{{ end }}' | grep -q "gitpod.io/theia.'$VERSION'"; then
+    if kubectl get node $EXECUTING_NODE_NAME -o template='{{ range $k, $v := .metadata.labels}}{{ $k }}{{"\n"}}{{ end }}' | grep -q "gitpod.io/theia.$VERSION"; then
         echo "Theia (version $VERSION) is already available - node is marked"
         break
     fi
