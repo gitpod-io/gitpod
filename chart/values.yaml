@@ -426,7 +426,7 @@ components:
 
   wsProxy:
     name: "ws-proxy"
-    disabled: true
+    disabled: false
     resources:
       cpu: 100m
       memory: 64Mi
