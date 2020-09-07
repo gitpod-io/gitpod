@@ -23,6 +23,7 @@ packages:
       - "supervisor-config-example.json"
     deps:
       - :app
+      - components/supervisor/ide-host:app
     argdeps:
       - imageRepoBase
     config:

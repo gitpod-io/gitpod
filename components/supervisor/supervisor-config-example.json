@@ -1,5 +1,0 @@
-{
-  "entrypoint": "/some-ide/startup.sh",
-  "theiaPort": 23000,
-  "healthEndpoint": ":22999"
-}
