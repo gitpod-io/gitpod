@@ -35,7 +35,13 @@ data:
                 "addr": "ws-manager:{{ .Values.components.wsManager.ports.rpc.containerPort }}"
             },
             "store": "/mnt/cache/registry",
-            "requireAuth": false
+            "requireAuth": false,
+            "staticLayer": [
+                {
+                    "ref": "{{ template "gitpod.comp.imageRef" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) }}",
+                    "type": "image"
+                }
+            ]
         },
         "pprofAddr": ":6060",
         "prometheusAddr": ":9500"
@@ -47,6 +53,10 @@ data:
                 "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) }}": {
                     "prePull": ["{{- template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) -}}"],
                     "workdir": "/theia/node_modules/@gitpod/gitpod-ide/lib"
+                }
+                "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) }}": {
+                    "prePull": ["{{- template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) -}}"],
+                    "workdir": "/.supervisor/frontend"
                 }
             },
             "blobSpace": {

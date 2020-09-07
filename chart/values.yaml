@@ -263,6 +263,8 @@ components:
       version: "latest"
     theiaImage: 
       imageName: "theia-ide"
+    supervisor:
+      imageName: "supervisor"
     pullSecret:
       secretName: builtin-registry-auth
     template:
