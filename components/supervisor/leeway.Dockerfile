@@ -1,10 +1,11 @@
 FROM scratch
 
-WORKDIR "/.supervisor"
-
 # BEWARE: This must be the first layer in the image, s.t. that blobserve
-#         can serve the IDE host.
-COPY components-supervisor-ide-host--app/* /.supervisor/ide-host/
+#         can serve the IDE host. Even moving WORKDIR before this line
+#         would break things.
+COPY components-supervisor-frontend--app/* /.supervisor/frontend/
+
+WORKDIR "/.supervisor"
 COPY components-supervisor--app/supervisor /.supervisor/supervisor
 COPY supervisor-config.json /.supervisor/supervisor-config.json
 
