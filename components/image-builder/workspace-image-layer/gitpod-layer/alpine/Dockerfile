@@ -32,8 +32,3 @@ RUN \
     cat /var/gitpod/.bashrc-prepend > "$BASH_RC"                            && \
     cat ~/.bashrc-org >> "$BASH_RC"                                         && \
     cat /var/gitpod/.bashrc-append >> "$BASH_RC"
-
-# This is necessary to override potential entrypoints in the base image which otherwise would have control over the startup process
-# In most cases the workspace start just fails
-ENTRYPOINT ["/theia/supervisor"]
-CMD ["run"]
