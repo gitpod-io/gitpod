@@ -3,7 +3,6 @@ package supervisor
 import (
 	"context"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/backup"
@@ -23,7 +22,8 @@ type RegisterableService interface {
 }
 
 type statusService struct {
-	IWH *backup.InWorkspaceHelper
+	IWH   *backup.InWorkspaceHelper
+	Ports *portsManager
 }
 
 func (s *statusService) RegisterGRPC(srv *grpc.Server) {
@@ -43,12 +43,6 @@ func (s *statusService) IDEStatus(context.Context, *api.IDEStatusRequest) (*api.
 	return &api.IDEStatusResponse{Ok: true}, nil
 }
 
-func (s *statusService) BackupStatus(ctx context.Context, req *api.BackupStatusRequest) (*api.BackupStatusResponse, error) {
-	return &api.BackupStatusResponse{
-		CanaryAvailable: s.IWH.CanaryAvailable(),
-	}, nil
-}
-
 // ContentStatus provides feedback regarding the workspace content readiness
 func (s *statusService) ContentStatus(ctx context.Context, req *api.ContentStatusRequest) (*api.ContentStatusResponse, error) {
 	srcmap := map[csapi.WorkspaceInitSource]api.ContentSource{
@@ -57,7 +51,6 @@ func (s *statusService) ContentStatus(ctx context.Context, req *api.ContentStatu
 		csapi.WorkspaceInitFromPrebuild: api.ContentSource_from_prebuild,
 	}
 
-	log.WithField("wait", req.Wait).Debug("ContentStatus called")
 	if req.Wait {
 		select {
 		case <-s.IWH.ContentReady():
@@ -82,4 +75,43 @@ func (s *statusService) ContentStatus(ctx context.Context, req *api.ContentStatu
 		Available: true,
 		Source:    srcmap[src],
 	}, nil
+}
+
+func (s *statusService) BackupStatus(ctx context.Context, req *api.BackupStatusRequest) (*api.BackupStatusResponse, error) {
+	return &api.BackupStatusResponse{
+		CanaryAvailable: s.IWH.CanaryAvailable(),
+	}, nil
+}
+
+func (s *statusService) PortsStatus(req *api.PortsStatusRequest, srv api.StatusService_PortsStatusServer) error {
+	err := srv.Send(&api.PortsStatusResponse{
+		Ports: s.Ports.ServedPorts(),
+	})
+	if err != nil {
+		return err
+	}
+	if !req.Observe {
+		return nil
+	}
+
+	sub := s.Ports.Subscribe()
+	if sub == nil {
+		return status.Error(codes.ResourceExhausted, "too many subscriptions")
+	}
+	defer sub.Close()
+
+	for {
+		select {
+		case <-srv.Context().Done():
+			return nil
+		case update := <-sub.Updates():
+			if update == nil {
+				return nil
+			}
+			err := srv.Send(&api.PortsStatusResponse{Ports: update})
+			if err != nil {
+				return err
+			}
+		}
+	}
 }

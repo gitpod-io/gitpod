@@ -239,18 +239,23 @@ func Run(options ...RunOption) {
 		shutdown   = make(chan struct{})
 		pauseTheia = make(chan bool)
 		iwh        = backup.NewInWorkspaceHelper(cfg.RepoRoot, pauseTheia)
+		portMgmt   = newPortsManager(
+			uint32(cfg.GitpodTheiaPort),
+			uint32(cfg.APIEndpointPort),
+		)
 	)
 
 	var apiServices []RegisterableService
 	apiServices = append(apiServices, iwh)
-	apiServices = append(apiServices, &statusService{IWH: iwh})
+	apiServices = append(apiServices, &statusService{IWH: iwh, Ports: portMgmt})
 	apiServices = append(apiServices, opts.AdditionalServices...)
 
 	var wg sync.WaitGroup
-	wg.Add(3)
+	wg.Add(4)
 	go startAndWatchTheia(ctx, cfg, &wg, pauseTheia)
 	go startContentInit(ctx, cfg, &wg, iwh)
 	go startAPIEndpoint(ctx, cfg, &wg, apiServices)
+	go portMgmt.Run(ctx, &wg)
 
 	if cfg.PreventMetadataAccess {
 		go func() {
