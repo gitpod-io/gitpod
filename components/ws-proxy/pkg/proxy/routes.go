@@ -117,6 +117,13 @@ func installTheiaRoutes(r *mux.Router, config *RouteHandlerConfig, rh *RouteHand
 	rh.supervisorUnauthenticatedAPIHandler(r.PathPrefix("/_supervisor/v1/status/supervisor").Subrouter(), config)
 	rh.supervisorUnauthenticatedAPIHandler(r.PathPrefix("/_supervisor/v1/status/ide").Subrouter(), config)
 	rh.supervisorAuthenticatedAPIHandler(r.PathPrefix("/_supervisor/v1").Subrouter(), config)
+	// TODO(cw): remove this distinction once blobserve is standard. Then we always want to use blobserve.
+	if config.Config.BlobServer != nil {
+		rh.supervisorIDEHostHandler(r.PathPrefix("/_supervisor/frontend").Subrouter(), config)
+	} else {
+		rh.supervisorUnauthenticatedAPIHandler(r.PathPrefix("/_supervisor/frontend").Subrouter(), config)
+	}
+
 	rh.supervisorAuthenticatedAPIHandler(r.PathPrefix("/_supervisor").Subrouter(), config)
 
 	// TODO(cw): we just enable the IDE host route if blobserver is active. Once blobserve is standard,
@@ -165,10 +172,6 @@ func TheiaRootHandler(infoProvider WorkspaceInfoProvider) RouteHandler {
 		resolver := func(config *Config, req *http.Request) (*url.URL, error) {
 			if ideQueryMatch(req, nil) {
 				req.URL.Path = "/index.html"
-
-				q := req.URL.Query()
-				q.Del(ideIndexQueryMarker)
-				req.URL.RawQuery = q.Encode()
 			}
 			return reslv(config, req)
 		}
