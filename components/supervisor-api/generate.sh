@@ -4,8 +4,8 @@ PROTOC_INCLUDE="-I. -I $GOPATH/src/github.com/grpc-ecosystem/grpc-gateway/third_
 
 GO111MODULE=on  go get github.com/golang/protobuf/protoc-gen-go@v1.3.5 
 GO111MODULE=off go get github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
-protoc $PROTOC_INCLUDE --go_out=plugins=grpc:go supervisor.proto
-protoc $PROTOC_INCLUDE --grpc-gateway_out=logtostderr=true,paths=source_relative:go supervisor.proto
+protoc $PROTOC_INCLUDE --go_out=plugins=grpc:go *.proto
+protoc $PROTOC_INCLUDE --grpc-gateway_out=logtostderr=true,paths=source_relative:go *.proto
 
 # GO111MODULE=on go get github.com/golang/mock/mockgen@latest
 # cd go
@@ -17,6 +17,6 @@ protoc $PROTOC_INCLUDE --grpc-gateway_out=logtostderr=true,paths=source_relative
 cd typescript
 # rm src/core_*.ts src/core_*.js
 export PATH=$PWD/../../../node_modules/.bin:$PATH
-protoc $PROTOC_INCLUDE --plugin=protoc-gen-grpc=`which grpc_tools_node_protoc_plugin` --js_out=import_style=commonjs,binary:src --grpc_out=src -I.. ../supervisor.proto
-protoc $PROTOC_INCLUDE --plugin=protoc-gen-ts=`which protoc-gen-ts` --ts_out=src -I.. ../supervisor.proto
+protoc $PROTOC_INCLUDE --plugin=protoc-gen-grpc=`which grpc_tools_node_protoc_plugin` --js_out=import_style=commonjs,binary:src --grpc_out=src -I.. ../*.proto
+protoc $PROTOC_INCLUDE --plugin=protoc-gen-ts=`which protoc-gen-ts` --ts_out=src -I.. ../*.proto
 cd ..

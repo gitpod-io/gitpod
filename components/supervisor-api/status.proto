@@ -6,20 +6,6 @@ import "google/api/annotations.proto";
 
 option go_package = "api";
 
-// BackupService provides workspace-facing, backup related services
-service BackupService {
-
-    // Prepare prepares a workspace backup and is intended to be called by the PreStop
-    // hook of the container. It should hardly ever be neccesary to call this from any
-    // other point.
-    rpc Prepare(PrepareBackupRequest) returns (PrepareBackupResponse) {
-        option (google.api.http) = {
-            get: "/v1/backup/prepare"
-        };
-    }
-    
-}
-
 // StatusService provides status feedback for the various in-workspace services.
 service StatusService {
 
@@ -37,15 +23,6 @@ service StatusService {
         };
     }
 
-    // BackupStatus offers feedback on the workspace backup status. This status information can
-    // be relayed to the user to provide transparency as to how "safe" their files/content
-    // data are w.r.t. to being lost.
-    rpc BackupStatus(BackupStatusRequest) returns (BackupStatusResponse) {
-        option (google.api.http) = {
-            get: "/v1/status/backup"
-        };
-    }
-
     // ContentStatus returns the status of the workspace content. When used with `wait`, the call
     // returns when the content has become available.
     rpc ContentStatus(ContentStatusRequest) returns (ContentStatusResponse) {
@@ -57,10 +34,26 @@ service StatusService {
         };
     }
 
-}
+    // BackupStatus offers feedback on the workspace backup status. This status information can
+    // be relayed to the user to provide transparency as to how "safe" their files/content
+    // data are w.r.t. to being lost.
+    rpc BackupStatus(BackupStatusRequest) returns (BackupStatusResponse) {
+        option (google.api.http) = {
+            get: "/v1/status/backup"
+        };
+    }
 
-message PrepareBackupRequest {}
-message PrepareBackupResponse {}
+    // PortsStatus provides feedback about the network ports currently in use.
+    rpc PortsStatus(PortsStatusRequest) returns (stream PortsStatusResponse) {
+        option (google.api.http) = {
+            get: "/v1/status/ports"
+            additional_bindings {
+                get: "/v1/status/ports/observe/{observe=true}",
+            }
+        };
+    }
+
+}
 
 message SupervisorStatusRequest {}
 message SupervisorStatusResponse {
@@ -70,11 +63,6 @@ message SupervisorStatusResponse {
 message IDEStatusRequest {}
 message IDEStatusResponse {
     bool ok = 1;
-}
-
-message BackupStatusRequest {}
-message BackupStatusResponse {
-    bool canary_available = 1;
 }
 
 message ContentStatusRequest {
@@ -95,4 +83,28 @@ enum ContentSource {
     from_other = 0;
     from_backup = 1;
     from_prebuild = 2;
+}
+
+message BackupStatusRequest {}
+message BackupStatusResponse {
+    bool canary_available = 1;
+}
+
+message PortsStatusRequest {
+    // if observe is true, we'll return a stream of changes rather than just the
+    // current state of affairs.
+    bool observe = 1;
+}
+message PortsStatusResponse {
+    repeated PortsStatus ports = 1;
+}
+message PortsStatus {
+    // local_port is the port a service actually bound to. Some services bind
+    // to localhost:<port>, in which case they cannot be made accessible from
+    // outside the container. To help with this, supervisor then starts a proxy
+    // that forwards traffic to this local port. In those cases, global_port
+    // contains the port where the proxy is listening on.
+    uint32 local_port = 1;
+
+    uint32 global_port = 2;
 }

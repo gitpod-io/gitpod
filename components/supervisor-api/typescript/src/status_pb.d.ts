@@ -1,43 +1,9 @@
 // package: supervisor
-// file: supervisor.proto
+// file: status.proto
 
 /* tslint:disable */
 
 import * as jspb from "google-protobuf";
-
-export class PrepareBackupRequest extends jspb.Message { 
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): PrepareBackupRequest.AsObject;
-    static toObject(includeInstance: boolean, msg: PrepareBackupRequest): PrepareBackupRequest.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: PrepareBackupRequest, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): PrepareBackupRequest;
-    static deserializeBinaryFromReader(message: PrepareBackupRequest, reader: jspb.BinaryReader): PrepareBackupRequest;
-}
-
-export namespace PrepareBackupRequest {
-    export type AsObject = {
-    }
-}
-
-export class PrepareBackupResponse extends jspb.Message { 
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): PrepareBackupResponse.AsObject;
-    static toObject(includeInstance: boolean, msg: PrepareBackupResponse): PrepareBackupResponse.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: PrepareBackupResponse, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): PrepareBackupResponse;
-    static deserializeBinaryFromReader(message: PrepareBackupResponse, reader: jspb.BinaryReader): PrepareBackupResponse;
-}
-
-export namespace PrepareBackupResponse {
-    export type AsObject = {
-    }
-}
 
 export class SupervisorStatusRequest extends jspb.Message { 
 
@@ -115,44 +81,6 @@ export namespace IDEStatusResponse {
     }
 }
 
-export class BackupStatusRequest extends jspb.Message { 
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): BackupStatusRequest.AsObject;
-    static toObject(includeInstance: boolean, msg: BackupStatusRequest): BackupStatusRequest.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: BackupStatusRequest, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): BackupStatusRequest;
-    static deserializeBinaryFromReader(message: BackupStatusRequest, reader: jspb.BinaryReader): BackupStatusRequest;
-}
-
-export namespace BackupStatusRequest {
-    export type AsObject = {
-    }
-}
-
-export class BackupStatusResponse extends jspb.Message { 
-    getCanaryAvailable(): boolean;
-    setCanaryAvailable(value: boolean): void;
-
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): BackupStatusResponse.AsObject;
-    static toObject(includeInstance: boolean, msg: BackupStatusResponse): BackupStatusResponse.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: BackupStatusResponse, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): BackupStatusResponse;
-    static deserializeBinaryFromReader(message: BackupStatusResponse, reader: jspb.BinaryReader): BackupStatusResponse;
-}
-
-export namespace BackupStatusResponse {
-    export type AsObject = {
-        canaryAvailable: boolean,
-    }
-}
-
 export class ContentStatusRequest extends jspb.Message { 
     getWait(): boolean;
     setWait(value: boolean): void;
@@ -196,6 +124,113 @@ export namespace ContentStatusResponse {
     export type AsObject = {
         available: boolean,
         source: ContentSource,
+    }
+}
+
+export class BackupStatusRequest extends jspb.Message { 
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): BackupStatusRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: BackupStatusRequest): BackupStatusRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: BackupStatusRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): BackupStatusRequest;
+    static deserializeBinaryFromReader(message: BackupStatusRequest, reader: jspb.BinaryReader): BackupStatusRequest;
+}
+
+export namespace BackupStatusRequest {
+    export type AsObject = {
+    }
+}
+
+export class BackupStatusResponse extends jspb.Message { 
+    getCanaryAvailable(): boolean;
+    setCanaryAvailable(value: boolean): void;
+
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): BackupStatusResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: BackupStatusResponse): BackupStatusResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: BackupStatusResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): BackupStatusResponse;
+    static deserializeBinaryFromReader(message: BackupStatusResponse, reader: jspb.BinaryReader): BackupStatusResponse;
+}
+
+export namespace BackupStatusResponse {
+    export type AsObject = {
+        canaryAvailable: boolean,
+    }
+}
+
+export class PortsStatusRequest extends jspb.Message { 
+    getObserve(): boolean;
+    setObserve(value: boolean): void;
+
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): PortsStatusRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: PortsStatusRequest): PortsStatusRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: PortsStatusRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): PortsStatusRequest;
+    static deserializeBinaryFromReader(message: PortsStatusRequest, reader: jspb.BinaryReader): PortsStatusRequest;
+}
+
+export namespace PortsStatusRequest {
+    export type AsObject = {
+        observe: boolean,
+    }
+}
+
+export class PortsStatusResponse extends jspb.Message { 
+    clearPortsList(): void;
+    getPortsList(): Array<PortsStatus>;
+    setPortsList(value: Array<PortsStatus>): void;
+    addPorts(value?: PortsStatus, index?: number): PortsStatus;
+
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): PortsStatusResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: PortsStatusResponse): PortsStatusResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: PortsStatusResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): PortsStatusResponse;
+    static deserializeBinaryFromReader(message: PortsStatusResponse, reader: jspb.BinaryReader): PortsStatusResponse;
+}
+
+export namespace PortsStatusResponse {
+    export type AsObject = {
+        portsList: Array<PortsStatus.AsObject>,
+    }
+}
+
+export class PortsStatus extends jspb.Message { 
+    getLocalPort(): number;
+    setLocalPort(value: number): void;
+
+    getGlobalPort(): number;
+    setGlobalPort(value: number): void;
+
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): PortsStatus.AsObject;
+    static toObject(includeInstance: boolean, msg: PortsStatus): PortsStatus.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: PortsStatus, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): PortsStatus;
+    static deserializeBinaryFromReader(message: PortsStatus, reader: jspb.BinaryReader): PortsStatus;
+}
+
+export namespace PortsStatus {
+    export type AsObject = {
+        localPort: number,
+        globalPort: number,
     }
 }
 
