@@ -36,6 +36,10 @@
                 {
                     "name": "workspace",
                     "image": "registry-facade:8080/remote/test",
+                    "command": [
+                        "/.supervisor/supervisor",
+                        "run"
+                    ],
                     "ports": [
                         {
                             "containerPort": 23000
