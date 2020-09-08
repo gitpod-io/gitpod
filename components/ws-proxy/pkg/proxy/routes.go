@@ -129,7 +129,14 @@ func installTheiaRoutes(r *mux.Router, config *RouteHandlerConfig, rh *RouteHand
 	// TODO(cw): we just enable the IDE host route if blobserver is active. Once blobserve is standard,
 	//           remove this branch and always register the handler.
 	if config.Config.BlobServer != nil {
-		rh.supervisorIDEHostHandler(r.Path("/").MatcherFunc(matchIDEQuery(false)).Subrouter(), config)
+		rh.supervisorIDEHostHandler(
+			r.Path("/").
+				MatcherFunc(func(req *http.Request, match *mux.RouteMatch) bool {
+					return matchIDEQuery(false)(req, match) && !isWebsocketRequest(req)
+				}).
+				Subrouter(),
+			config,
+		)
 		rh.supervisorIDEHostHandler(r.Path("/index.html").MatcherFunc(matchIDEQuery(false)).Subrouter(), config)
 	}
 	rh.theiaRootHandler(r.NewRoute().Subrouter(), config)
@@ -150,6 +157,14 @@ func matchIDEQuery(mustBePresent bool) mux.MatcherFunc {
 
 // SupervisorIDEHostHandler matches only when the request is / or /index.html and serves supervisor's IDE host index.html
 func SupervisorIDEHostHandler(r *mux.Router, config *RouteHandlerConfig) {
+	r.Use(logRouteHandlerHandler("SupervisorIDEHostHandler"))
+	// strip the frontend prefix, just for good measure
+	r.Use(func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+			req.URL.Path = strings.TrimPrefix(req.URL.Path, "/_supervisor/frontend")
+			h.ServeHTTP(resp, req)
+		})
+	})
 	r.NewRoute().Handler(proxyPass(config, func(cfg *Config, req *http.Request) (tgt *url.URL, err error) {
 		var dst url.URL
 		dst.Scheme = cfg.BlobServer.Scheme
@@ -163,6 +178,7 @@ func SupervisorIDEHostHandler(r *mux.Router, config *RouteHandlerConfig) {
 func TheiaRootHandler(infoProvider WorkspaceInfoProvider) RouteHandler {
 	ideQueryMatch := matchIDEQuery(true)
 	return func(r *mux.Router, config *RouteHandlerConfig) {
+		r.Use(logRouteHandlerHandler("TheiaRootHandler"))
 		var reslv targetResolver
 		if config.Config.BlobServer != nil {
 			reslv = dynamicTheiaResolver(infoProvider)
@@ -177,22 +193,26 @@ func TheiaRootHandler(infoProvider WorkspaceInfoProvider) RouteHandler {
 		}
 
 		r.Use(config.CorsHandler)
-		r.NewRoute().
-			HandlerFunc(proxyPass(config,
-				// Use the static theia server as primary source for resources
-				resolver,
-				// On 50x while connecting to workspace pod, redirect to /start
-				withOnProxyErrorRedirectToWorkspaceStartHandler(config.Config)))
-
-		// If the static theia server returns 404, re-route to the pod itself instead
-		r.NotFoundHandler = config.WorkspaceAuthHandler(
-			proxyPass(config, workspacePodResolver,
-				withOnProxyErrorRedirectToWorkspaceStartHandler(config.Config)))
+		r.NewRoute().HandlerFunc(
+			// Use the static theia server as primary source for resources
+			proxyPass(config, resolver,
+				// If the static theia server returns 404, re-route to the pod itself instead
+				withErrorHandler(
+					config.WorkspaceAuthHandler(
+						proxyPass(config, workspacePodResolver,
+							withWebsocketSupport(),
+							withOnProxyErrorRedirectToWorkspaceStartHandler(config.Config),
+						),
+					),
+				),
+			),
+		)
 	}
 }
 
 // TheiaMiniBrowserHandler handles /mini-browser
 func TheiaMiniBrowserHandler(r *mux.Router, config *RouteHandlerConfig) {
+	r.Use(logRouteHandlerHandler("TheiaMiniBrowserHandler"))
 	r.Use(config.CorsHandler)
 	r.Use(config.WorkspaceAuthHandler)
 	r.NewRoute().
@@ -201,6 +221,7 @@ func TheiaMiniBrowserHandler(r *mux.Router, config *RouteHandlerConfig) {
 
 // TheiaFileHandler handles /file and /files
 func TheiaFileHandler(r *mux.Router, config *RouteHandlerConfig) {
+	r.Use(logRouteHandlerHandler("TheiaFileHandler"))
 	r.Use(config.CorsHandler)
 	r.Use(config.WorkspaceAuthHandler)
 	r.NewRoute().
@@ -211,6 +232,7 @@ func TheiaFileHandler(r *mux.Router, config *RouteHandlerConfig) {
 
 // TheiaHostedPluginHandler handles /hostedPlugin
 func TheiaHostedPluginHandler(r *mux.Router, config *RouteHandlerConfig) {
+	r.Use(logRouteHandlerHandler("TheiaHostedPluginHandler"))
 	r.Use(config.CorsHandler)
 	r.Use(config.WorkspaceAuthHandler)
 	r.NewRoute().
@@ -219,6 +241,7 @@ func TheiaHostedPluginHandler(r *mux.Router, config *RouteHandlerConfig) {
 
 // TheiaServiceHandler handles /service
 func TheiaServiceHandler(r *mux.Router, config *RouteHandlerConfig) {
+	r.Use(logRouteHandlerHandler("TheiaServiceHandler"))
 	r.Use(config.CorsHandler)
 	r.Use(config.WorkspaceAuthHandler)
 	r.NewRoute().
@@ -229,6 +252,7 @@ func TheiaServiceHandler(r *mux.Router, config *RouteHandlerConfig) {
 
 // TheiaFileUploadHandler handles /file-upload
 func TheiaFileUploadHandler(r *mux.Router, config *RouteHandlerConfig) {
+	r.Use(logRouteHandlerHandler("TheiaFileUploadHandler"))
 	r.Use(config.CorsHandler)
 	r.Use(config.WorkspaceAuthHandler)
 	r.NewRoute().
@@ -242,7 +266,10 @@ func SupervisorAPIHandler(authenticated bool) RouteHandler {
 	return func(r *mux.Router, config *RouteHandlerConfig) {
 		r.Use(config.CorsHandler)
 		if authenticated {
+			r.Use(logRouteHandlerHandler("SupervisorAuthenticatedAPIHandler"))
 			r.Use(config.WorkspaceAuthHandler)
+		} else {
+			r.Use(logRouteHandlerHandler("SupervisorUnauthenticatedAPIHandler"))
 		}
 
 		r.NewRoute().
@@ -252,6 +279,7 @@ func SupervisorAPIHandler(authenticated bool) RouteHandler {
 
 // TheiaWebviewHandler handles /webview
 func TheiaWebviewHandler(r *mux.Router, config *RouteHandlerConfig) {
+	r.Use(logRouteHandlerHandler("TheiaWebviewHandler"))
 	r.Use(config.CorsHandler)
 	r.Use(config.WorkspaceAuthHandler)
 	r.NewRoute().
@@ -398,6 +426,15 @@ func logHandler(h http.Handler) http.Handler {
 
 		h.ServeHTTP(resp, req)
 	})
+}
+
+func logRouteHandlerHandler(routeHandlerName string) mux.MiddlewareFunc {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+			getLog(req.Context()).WithField("routeHandler", routeHandlerName).Info("hit route handler")
+			h.ServeHTTP(resp, req)
+		})
+	}
 }
 
 func getLog(ctx context.Context) *logrus.Entry {

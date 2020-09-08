@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"syscall"
 	"time"
 
@@ -49,6 +50,10 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 
 	errorHandler := func(w http.ResponseWriter, req *http.Request, connectErr error) {
 		log.Debugf("could not connect to backend %s: %s", req.URL.String(), connectErrorToCause(connectErr))
+		if _, ok := req.URL.Query()["reconnectionToken"]; ok {
+			fmt.Println("bingo")
+		}
+
 		if h.ErrorHandler != nil {
 			h.ErrorHandler(w, req, connectErr)
 		}
@@ -59,9 +64,6 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 		// TODO configure custom IdleConnTimeout for websockets
 		proxy := websocketproxy.NewProxy(targetURL)
 		return proxy
-	}
-	isWebsocketRequest := func(req *http.Request) bool {
-		return req.Header.Get("Connection") == "upgrade" && req.Header.Get("Upgrade") == "websocket"
 	}
 	createRegularProxy := func(h *proxyPassConfig, targetURL *url.URL) http.Handler {
 		proxy := httputil.NewSingleHostReverseProxy(targetURL)
@@ -77,6 +79,10 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 				dmp, _ := httputil.DumpRequest(resp.Request, false)
 				log.WithField("url", url.String()).WithField("req", dmp).WithField("status", resp.Status).Debug("proxied request failed")
 			}
+			if resp.StatusCode == http.StatusNotFound {
+				return fmt.Errorf("not found")
+			}
+
 			return nil
 		}
 		return proxy
@@ -90,7 +96,11 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 		}
 
 		// TODO Would it make sense to cache these constructs per target URL?
-		var proxy http.Handler
+		var (
+			proxy       http.Handler
+			proxyType   string
+			originalURL = *req.URL
+		)
 		if h.WebsocketSupport && isWebsocketRequest(req) {
 			if targetURL.Scheme == "https" {
 				targetURL.Scheme = "wss"
@@ -98,11 +108,27 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 				targetURL.Scheme = "ws"
 			}
 			proxy = createWebsocketProxy(&h, targetURL)
+			proxyType = "websocket"
 		} else {
 			proxy = createRegularProxy(&h, targetURL)
+			proxyType = "regular"
 		}
+
+		if proxy, ok := proxy.(*httputil.ReverseProxy); ok {
+			orgErrHndlr := proxy.ErrorHandler
+			proxy.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
+				req.URL = &originalURL
+				orgErrHndlr(w, req, err)
+			}
+		}
+
+		getLog(req.Context()).WithField("targetURL", targetURL.String()).WithField("proxyType", proxyType).Debug("proxy-passing request")
 		proxy.ServeHTTP(w, req)
 	}
+}
+
+func isWebsocketRequest(req *http.Request) bool {
+	return strings.ToLower(req.Header.Get("Connection")) == "upgrade" && strings.ToLower(req.Header.Get("Upgrade")) == "websocket"
 }
 
 func connectErrorToCause(err error) string {
@@ -139,6 +165,14 @@ func withOnProxyErrorRedirectToWorkspaceStartHandler(config *Config) proxyPassOp
 			ws := getWorkspaceCoords(req)
 			redirectURL := fmt.Sprintf("%s://%s/start/#%s", config.GitpodInstallation.Scheme, config.GitpodInstallation.HostName, ws.ID)
 			http.Redirect(w, req, redirectURL, 302)
+		}
+	}
+}
+
+func withErrorHandler(h http.Handler) proxyPassOpt {
+	return func(cfg *proxyPassConfig) {
+		cfg.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
+			h.ServeHTTP(w, req)
 		}
 	}
 }

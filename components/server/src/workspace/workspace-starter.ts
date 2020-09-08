@@ -534,7 +534,11 @@ export class WorkspaceStarter {
         spec.setGit(this.createGitSpec(workspace, user));
         spec.setPortsList(ports);
         spec.setInitializer(await initializerPromise);
-        spec.setIdeImage(`${this.env.theiaImageRepo}:${instance.configuration!.theiaVersion}`);
+        if (workspace.config.ide === 'code') {
+            spec.setIdeImage(`${this.env.codeImageRepo}:${instance.configuration!.theiaVersion}`);
+        } else {
+            spec.setIdeImage(`${this.env.theiaImageRepo}:${instance.configuration!.theiaVersion}`);
+        }
         spec.setWorkspaceImage(instance.workspaceImage);
         spec.setWorkspaceLocation(workspace.config.workspaceLocation || spec.getCheckoutLocation());
         spec.setFeatureFlagsList(this.toWorkspaceFeatureFlags(instance.configuration!.featureFlags || []));

@@ -32,6 +32,8 @@ export class Env extends AbstractComponentEnv {
         return envValue ? parseInt(envValue, 10) : 5 * this.theiaHeartbeatInterval;
     }
 
+    readonly codeImageRepo = process.env.CODE_IMAGE_REPO || 'unknown';
+    
     readonly theiaVersion = process.env.THEIA_VERSION || this.serverVersion;
     readonly theiaImageRepo = process.env.THEIA_IMAGE_REPO || 'unknown';
     readonly theiaMounted = process.env.THEIA_MOUNTED === "true";
