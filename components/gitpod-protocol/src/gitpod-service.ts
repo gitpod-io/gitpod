@@ -56,7 +56,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
      * @return WorkspaceCreationResult
      */
     createWorkspace(options: GitpodServer.CreateWorkspaceOptions): Promise<WorkspaceCreationResult>;
-    startWorkspace(id: string): Promise<StartWorkspaceResult>;
+    startWorkspace(id: string, options: {forceDefaultImage: boolean}): Promise<StartWorkspaceResult>;
     stopWorkspace(id: string): Promise<void>;
     deleteWorkspace(id: string): Promise<void>;
     setWorkspaceDescription(id: string, desc: string): Promise<void>;

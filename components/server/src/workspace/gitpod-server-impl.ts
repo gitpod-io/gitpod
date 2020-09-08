@@ -325,7 +325,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         }
     }
 
-    public async startWorkspace(workspaceId: string): Promise<StartWorkspaceResult> {
+    public async startWorkspace(workspaceId: string, options: {forceDefaultImage: boolean}): Promise<StartWorkspaceResult> {
         const span = opentracing.globalTracer().startSpan("startWorkspace");
         span.setTag("workspaceId", workspaceId);
 
@@ -365,12 +365,11 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             if (workspace.deleted) {
                 throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Cannot (re-)start a deleted workspace.");
             }
-
             const envVars = this.userDB.getEnvVars(user.id);
 
             await mayStartPromise;
 
-            return await this.workspaceStarter.startWorkspace({ span }, workspace, user, await envVars);
+            return await this.workspaceStarter.startWorkspace({ span }, workspace, user, await envVars, options);
         } catch (e) {
             TraceContext.logError({ span }, e);
             throw e;
