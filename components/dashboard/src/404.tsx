@@ -21,7 +21,7 @@ export class NotFound extends React.Component<{}, {}> {
         return (
             <ApplicationFrame service={this.service}>
                 <ShowGenericError
-                    heading={'Sorry, this page can\'t be found 😳'}
+                    heading={'Sorry, this page can\'t be found 😳.'}
                     errorMessage='404'
                     showNewIssueLink={false} />
             </ApplicationFrame>
