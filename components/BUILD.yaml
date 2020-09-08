@@ -22,9 +22,6 @@ packages:
       - components/ws-manager:docker
       - components/ws-proxy:docker
       - components/ws-sync:docker
-      - install/installer:docker
-      - install/docker/gitpod-image:docker
-      - install/docker/examples/gitpod-gitlab/gitlab:docker
   - name: all-apps
     type: generic
     deps:
