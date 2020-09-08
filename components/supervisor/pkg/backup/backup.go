@@ -97,7 +97,7 @@ func (iwh *InWorkspaceHelper) Prepare(ctx context.Context, req *supervisor.Prepa
 }
 
 // RegisterREST registers the rest-mapped gRPC service
-func (iwh *InWorkspaceHelper) RegisterREST(mux *runtime.ServeMux) error {
+func (iwh *InWorkspaceHelper) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
 	return nil
 }
 
