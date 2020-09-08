@@ -75,7 +75,7 @@ type Config struct {
 	TheiaArgsAdd          string
 	TheiaRatelimitLog     string `json:"ratelimitLogs"`
 	PreventMetadataAccess bool   `json:"preventMetadataAccess"`
-	IDEHostLocation       string `json:"ideHostLocation"`
+	FrontendLocation      string `json:"frontendLocation"`
 	SupervisorAuthToken   string `json:"-"`
 	Git                   struct {
 		Name  string
@@ -520,7 +520,7 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	httpMux := m.Match(cmux.HTTP1Fast())
 	routes := http.NewServeMux()
 	routes.Handle("/_supervisor/v1/", http.StripPrefix("/_supervisor", restMux))
-	routes.Handle("/", http.FileServer(http.Dir(cfg.IDEHostLocation)))
+	routes.Handle("/_supervisor/frontend", http.FileServer(http.Dir(cfg.FrontendLocation)))
 	go http.Serve(httpMux, routes)
 
 	go m.Serve()
