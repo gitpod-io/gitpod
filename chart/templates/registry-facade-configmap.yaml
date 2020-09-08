@@ -38,7 +38,7 @@ data:
             "requireAuth": false,
             "staticLayer": [
                 {
-                    "ref": "{{ template "gitpod.comp.imageRef" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) }}",
+                    "ref": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) }}",
                     "type": "image"
                 }
             ]
@@ -53,7 +53,7 @@ data:
                 "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) }}": {
                     "prePull": ["{{- template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) -}}"],
                     "workdir": "/theia/node_modules/@gitpod/gitpod-ide/lib"
-                }
+                },
                 "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) }}": {
                     "prePull": ["{{- template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) -}}"],
                     "workdir": "/.supervisor/frontend"

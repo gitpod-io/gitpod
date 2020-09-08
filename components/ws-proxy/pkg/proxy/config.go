@@ -5,6 +5,8 @@
 package proxy
 
 import (
+	"fmt"
+
 	"github.com/gitpod-io/gitpod/common-go/util"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"golang.org/x/xerrors"
@@ -19,7 +21,7 @@ type Config struct {
 	} `json:"https,omitempty"`
 
 	TransportConfig    *TransportConfig    `json:"transportConfig"`
-	IDEServer          *IDEServerConfig    `json:"ideServer"`
+	BlobServer         *BlobServerConfig   `json:"blobServer"`
 	TheiaServer        *TheiaServer        `json:"theiaServer"`
 	GitpodInstallation *GitpodInstallation `json:"gitpodInstallation"`
 	WorkspacePodConfig *WorkspacePodConfig `json:"workspacePodConfig"`
@@ -33,7 +35,7 @@ func (c *Config) Validate() error {
 	for _, v := range []validatable{
 		c.TransportConfig,
 		c.TheiaServer,
-		c.IDEServer,
+		c.BlobServer,
 		c.GitpodInstallation,
 		c.WorkspacePodConfig,
 	} {
@@ -52,6 +54,7 @@ type WorkspacePodConfig struct {
 	PortServiceTemplate string `json:"portServiceTemplate"`
 	TheiaPort           uint16 `json:"theiaPort"`
 	SupervisorPort      uint16 `json:"supervisorPort"`
+	SupervisorImage     string `json:"supervisorImage"`
 }
 
 // Validate validates the configuration to catch issues during startup and not at runtime
@@ -65,6 +68,7 @@ func (c *WorkspacePodConfig) Validate() error {
 		validation.Field(&c.PortServiceTemplate, validation.Required),
 		validation.Field(&c.TheiaPort, validation.Required),
 		validation.Field(&c.SupervisorPort, validation.Required),
+		validation.Field(&c.SupervisorImage, validation.Required),
 	)
 	return err
 }
@@ -89,22 +93,26 @@ func (c *GitpodInstallation) Validate() error {
 	)
 }
 
-// IDEServerConfig configures where to serve the IDE from
-type IDEServerConfig struct {
+// BlobServerConfig configures where to serve the IDE from
+type BlobServerConfig struct {
 	Scheme string `json:"scheme"`
 	Host   string `json:"host"`
 }
 
 // Validate validates the configuration to catch issues during startup and not at runtime
-func (c *IDEServerConfig) Validate() error {
+func (c *BlobServerConfig) Validate() error {
 	if c == nil {
 		return nil
 	}
 
-	return validation.ValidateStruct(c,
-		validation.Field(&c.Scheme, validation.Required),
+	err := validation.ValidateStruct(c,
+		validation.Field(&c.Scheme, validation.Required, validation.In("http", "https")),
 		validation.Field(&c.Host, validation.Required),
 	)
+	if err != nil {
+		return fmt.Errorf("invalid blobserver config: %w", err)
+	}
+	return nil
 }
 
 // TheiaServer configures where to serve theia from

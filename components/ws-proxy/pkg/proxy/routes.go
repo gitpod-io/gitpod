@@ -21,6 +21,10 @@ import (
 	"golang.org/x/xerrors"
 )
 
+const (
+	ideIndexQueryMarker = "gitpod-ide-index"
+)
+
 // RouteHandlerConfig configures a RouteHandler
 type RouteHandlerConfig struct {
 	Config               *Config
@@ -73,6 +77,7 @@ type RouteHandlers struct {
 
 	supervisorAuthenticatedAPIHandler   RouteHandler
 	supervisorUnauthenticatedAPIHandler RouteHandler
+	supervisorIDEHostHandler            RouteHandler
 }
 
 // DefaultRouteHandlers installs the default route handlers
@@ -87,6 +92,7 @@ func DefaultRouteHandlers(ip WorkspaceInfoProvider) *RouteHandlers {
 		theiaWebviewHandler:                 TheiaWebviewHandler,
 		supervisorAuthenticatedAPIHandler:   SupervisorAPIHandler(true),
 		supervisorUnauthenticatedAPIHandler: SupervisorAPIHandler(false),
+		supervisorIDEHostHandler:            SupervisorIDEHostHandler,
 	}
 }
 
@@ -106,25 +112,65 @@ func installTheiaRoutes(r *mux.Router, config *RouteHandlerConfig, rh *RouteHand
 	rh.theiaFileHandler(r.PathPrefix("/files").Subrouter(), config)
 
 	rh.theiaHostedPluginHandler(r.PathPrefix("/hostedPlugin").Subrouter(), config)
+	rh.theiaWebviewHandler(r.PathPrefix("/webview").Subrouter(), config)
 
 	rh.supervisorUnauthenticatedAPIHandler(r.PathPrefix("/_supervisor/v1/status/supervisor").Subrouter(), config)
 	rh.supervisorUnauthenticatedAPIHandler(r.PathPrefix("/_supervisor/v1/status/ide").Subrouter(), config)
 	rh.supervisorAuthenticatedAPIHandler(r.PathPrefix("/_supervisor/v1").Subrouter(), config)
 	rh.supervisorAuthenticatedAPIHandler(r.PathPrefix("/_supervisor").Subrouter(), config)
 
-	rh.theiaWebviewHandler(r.PathPrefix("/webview").Subrouter(), config)
-
+	// TODO(cw): we just enable the IDE host route if blobserver is active. Once blobserve is standard,
+	//           remove this branch and always register the handler.
+	if config.Config.BlobServer != nil {
+		rh.supervisorIDEHostHandler(r.Path("/").MatcherFunc(matchIDEQuery(false)).Subrouter(), config)
+		rh.supervisorIDEHostHandler(r.Path("/index.html").MatcherFunc(matchIDEQuery(false)).Subrouter(), config)
+	}
 	rh.theiaRootHandler(r.NewRoute().Subrouter(), config)
+}
+
+func matchIDEQuery(mustBePresent bool) mux.MatcherFunc {
+	return func(req *http.Request, match *mux.RouteMatch) bool {
+		_, present := req.URL.Query()[ideIndexQueryMarker]
+		if mustBePresent && present {
+			return true
+		}
+		if !mustBePresent && !present {
+			return true
+		}
+		return false
+	}
+}
+
+// SupervisorIDEHostHandler matches only when the request is / or /index.html and serves supervisor's IDE host index.html
+func SupervisorIDEHostHandler(r *mux.Router, config *RouteHandlerConfig) {
+	r.NewRoute().Handler(proxyPass(config, func(cfg *Config, req *http.Request) (tgt *url.URL, err error) {
+		var dst url.URL
+		dst.Scheme = cfg.BlobServer.Scheme
+		dst.Host = cfg.BlobServer.Host
+		dst.Path = "/" + cfg.WorkspacePodConfig.SupervisorImage
+		return &dst, nil
+	}))
 }
 
 // TheiaRootHandler handles all requests under / that are not handled by any special case above (expected to be static resources only)
 func TheiaRootHandler(infoProvider WorkspaceInfoProvider) RouteHandler {
+	ideQueryMatch := matchIDEQuery(true)
 	return func(r *mux.Router, config *RouteHandlerConfig) {
-		var resolver targetResolver
-		if config.Config.IDEServer != nil {
-			resolver = dynamicTheiaResolver(infoProvider)
+		var reslv targetResolver
+		if config.Config.BlobServer != nil {
+			reslv = dynamicTheiaResolver(infoProvider)
 		} else {
-			resolver = StaticTheiaResolver
+			reslv = staticTheiaResolver
+		}
+		resolver := func(config *Config, req *http.Request) (*url.URL, error) {
+			if ideQueryMatch(req, nil) {
+				req.URL.Path = "/index.html"
+
+				q := req.URL.Query()
+				q.Del(ideIndexQueryMarker)
+				req.URL.RawQuery = q.Encode()
+			}
+			return reslv(config, req)
 		}
 
 		r.Use(config.CorsHandler)
@@ -241,8 +287,8 @@ func workspacePodSupervisorResolver(config *Config, req *http.Request) (url *url
 	return buildWorkspacePodURL(config.WorkspacePodConfig.ServiceTemplate, coords.ID, fmt.Sprint(config.WorkspacePodConfig.SupervisorPort))
 }
 
-// StaticTheiaResolver resolves to static theia server with the statically configured version
-func StaticTheiaResolver(config *Config, req *http.Request) (url *url.URL, err error) {
+// staticTheiaResolver resolves to static theia server with the statically configured version
+func staticTheiaResolver(config *Config, req *http.Request) (url *url.URL, err error) {
 	targetURL := *req.URL
 	targetURL.Scheme = config.TheiaServer.Scheme
 	targetURL.Host = config.TheiaServer.Host
@@ -260,8 +306,8 @@ func dynamicTheiaResolver(infoProvider WorkspaceInfoProvider) targetResolver {
 		}
 
 		var dst url.URL
-		dst.Scheme = config.IDEServer.Scheme
-		dst.Host = config.IDEServer.Host
+		dst.Scheme = config.BlobServer.Scheme
+		dst.Host = config.BlobServer.Host
 		dst.Path = "/" + info.IDEImage
 
 		return &dst, nil
