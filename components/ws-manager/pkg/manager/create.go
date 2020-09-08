@@ -378,7 +378,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 				pod.Spec.Containers[i].Lifecycle = &corev1.Lifecycle{
 					PreStop: &corev1.Handler{
 						Exec: &corev1.ExecAction{
-							Command: []string{"/theia/supervisor", "container", "backup"},
+							Command: []string{"/.supervisor/supervisor", "container", "backup"},
 						},
 					},
 				}

@@ -30,5 +30,5 @@ export USER=gitpod
 [ -s /home/gitpod/.sdkman/bin/sdkman-init.sh ] && [ -z "$SDKMAN_VERSION" ] && source "/home/gitpod/.sdkman/bin/sdkman-init.sh"
 [ -s ~/.nvm/nvm-lazy.sh ] && source ~/.nvm/nvm-lazy.sh
 
-cd /theia/node_modules/@gitpod/gitpod-ide
-exec /theia/node/bin/gitpod-node ./src-gen/backend/main.js $*
+cd /ide/node_modules/@gitpod/gitpod-ide
+exec /ide/node/bin/gitpod-node ./src-gen/backend/main.js $*

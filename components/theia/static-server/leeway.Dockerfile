@@ -7,5 +7,5 @@ ARG BASE
 FROM ${BASE}
 
 COPY components-theia-static-server--app/static-server /server
-WORKDIR /theia/node_modules/@gitpod/gitpod-ide/lib
+WORKDIR /ide/node_modules/@gitpod/gitpod-ide/lib
 ENTRYPOINT [ "/server" ]

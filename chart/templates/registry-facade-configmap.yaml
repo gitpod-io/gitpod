@@ -52,7 +52,7 @@ data:
             "repos": {
                 "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) }}": {
                     "prePull": ["{{- template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) -}}"],
-                    "workdir": "/theia/node_modules/@gitpod/gitpod-ide/lib"
+                    "workdir": "/ide/node_modules/@gitpod/gitpod-ide/lib"
                 },
                 "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) }}": {
                     "prePull": ["{{- template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) -}}"],

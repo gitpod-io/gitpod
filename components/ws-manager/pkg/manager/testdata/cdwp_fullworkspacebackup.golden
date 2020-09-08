@@ -133,7 +133,7 @@
                         "preStop": {
                             "exec": {
                                 "command": [
-                                    "/theia/supervisor",
+                                    "/.supervisor/supervisor",
                                     "container",
                                     "backup"
                                 ]

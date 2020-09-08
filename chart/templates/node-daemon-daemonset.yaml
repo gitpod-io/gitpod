@@ -72,7 +72,7 @@ spec:
         - --copy-to
         - /mnt/theia-storage/theia/theia-{{ .Values.version }}
         - -d
-        - /theia
+        - /ide
         securityContext:
           privileged: true
         resources:

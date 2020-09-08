@@ -5,6 +5,7 @@ packages:
       - "**/*.go"
       - "go.mod"
       - "go.sum"
+      - "supervisor-config.json"
     deps:
       - components/common-go:lib
       - components/content-service-api/go:lib
