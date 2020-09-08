@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -126,18 +127,40 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var fs http.FileSystem
-	fs = blob
-	if workdir != "" {
-		fs = prefixingFilesystem{Prefix: workdir, FS: fs}
-	}
-
 	log.WithField("path", req.URL.Path).Debug("handling blobserve")
 	pathPrefix := fmt.Sprintf("/%s:%s", repo, tag)
 	if req.URL.Path == pathPrefix {
 		req.URL.Path += "/"
 	}
 
+	// http.FileServer has a special case where ServeFile redirects any request where r.URL.Path
+	// ends in "/index.html" to the same path, without the final "index.html".
+	// We do not want this behaviour to make the gitpod-ide-index mechanism in ws-proxy work.
+	if strings.TrimPrefix(req.URL.Path, pathPrefix) == "/index.html" {
+		fn := filepath.Join(workdir, "index.html")
+
+		fc, err := blob.Open(fn)
+		if err != nil {
+			log.WithError(err).WithField("fn", fn).Debug("cannot stat index.html")
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
+		}
+		defer fc.Close()
+
+		var modTime time.Time
+		if s, err := fc.Stat(); err == nil {
+			modTime = s.ModTime()
+		}
+
+		http.ServeContent(w, req, "index.html", modTime, fc)
+		return
+	}
+
+	var fs http.FileSystem
+	fs = blob
+	if workdir != "" {
+		fs = prefixingFilesystem{Prefix: workdir, FS: fs}
+	}
 	http.StripPrefix(pathPrefix, http.FileServer(fs)).ServeHTTP(w, req)
 }
 

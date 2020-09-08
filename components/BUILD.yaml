@@ -15,6 +15,7 @@ packages:
       - components/registry-facade:docker
       - components/server:docker
       - components/service-waiter:docker
+      - components/supervisor:docker
       - components/theia/app:docker
       - components/theia/static-server:docker
       - components/ws-manager-bridge:docker
@@ -31,6 +32,7 @@ packages:
       - components/registry-facade:app
       - components/server:app
       - components/service-waiter:app
+      - components/supervisor:app
       - components/theia/static-server:app
       - components/ws-manager-bridge:app
       - components/ws-manager-node:app
@@ -44,10 +46,10 @@ scripts:
     script: |
       tmpdir=$(mktemp -d)
       echo "Temp Dir: $tmpdir"
-      
+
       leeway collect files               --format-string '{{ range . }}{{ .Name }}{{"\n"}}{{ end }}' | uniq > $tmpdir/all
       leeway collect files --variant oss --format-string '{{ range . }}{{ .Name }}{{"\n"}}{{ end }}' | uniq > $tmpdir/oss
-      
+
       grep -v -f $tmpdir/oss $tmpdir/all > $tmpdir/ee
       grep -E "^components\/ee\/" $tmpdir/oss >> $tmpdir/ee
       grep -v -E "^chart\/" $tmpdir/oss | grep -v -E "^install\/" > $tmpdir/agpl

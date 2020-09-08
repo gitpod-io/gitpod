@@ -69,7 +69,7 @@ data:
                 "staticVersionPathPrefix": ""
             },
             {{- else }}
-            "ideServer": {
+            "blobServer": {
                 "scheme": "http",
                 "host": "blobserve.{{- .Release.Namespace -}}.svc.cluster.local:{{ .Values.components.registryFacade.blobserve.ports.service.servicePort }}"
             },
@@ -83,7 +83,8 @@ data:
                 "serviceTemplate": "http://ws-{{"{{ .workspaceID }}"}}-theia.{{- .Release.Namespace -}}.svc.cluster.local:{{"{{ .port }}"}}",
                 "portServiceTemplate": "http://ws-{{"{{ .workspaceID }}"}}-ports.{{- .Release.Namespace -}}.svc.cluster.local:{{"{{ .port }}"}}",
                 "theiaPort": {{ .Values.components.workspace.ports.http.containerPort }},
-                "supervisorPort": {{ .Values.components.workspace.ports.http.supervisorPort }}
+                "supervisorPort": {{ .Values.components.workspace.ports.http.supervisorPort }},
+                "supervisorImage": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) }}"
             }
         },
         "pprofAddr": ":60060",
