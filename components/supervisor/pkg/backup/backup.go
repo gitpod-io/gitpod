@@ -14,7 +14,6 @@ import (
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	wssync "github.com/gitpod-io/gitpod/ws-sync/api"
 
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -94,11 +93,6 @@ func (iwh *InWorkspaceHelper) Prepare(ctx context.Context, req *supervisor.Prepa
 	}
 
 	return &supervisor.PrepareBackupResponse{}, nil
-}
-
-// RegisterREST registers the rest-mapped gRPC service
-func (iwh *InWorkspaceHelper) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
-	return nil
 }
 
 // RegisterGRPC registers an InWorkspaceHelperServer gRPC service using this helper implementation

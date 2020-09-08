@@ -14,9 +14,16 @@ import (
 )
 
 // RegisterableService can register a service
-type RegisterableService interface {
+type RegisterableService interface{}
+
+// RegisterableGRPCService can register gRPC services
+type RegisterableGRPCService interface {
 	// RegisterGRPC registers a gRPC service
 	RegisterGRPC(*grpc.Server)
+}
+
+// RegisterableRESTService can register REST services
+type RegisterableRESTService interface {
 	// RegisterREST registers a REST service
 	RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error
 }
