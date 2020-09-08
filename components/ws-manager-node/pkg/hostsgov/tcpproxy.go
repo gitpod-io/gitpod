@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/google/tcpproxy"
@@ -41,18 +42,7 @@ func (p *tcpProxy) Listen(port string) (err error) {
 }
 
 func (p *tcpProxy) serveConn(c net.Conn) {
-	p.mu.RLock()
-	var (
-		t    tcpproxy.Target
-		i    = 0
-		keys = make([]string, len(p.targets))
-	)
-	for k := range p.targets {
-		keys[i] = k
-	}
-	t = p.targets[keys[rand.Intn(len(p.targets))]]
-	p.mu.RUnlock()
-
+	t := p.findTarget()
 	if t == nil {
 		log.WithField("proxy", p.Name).WithField("conn", c.RemoteAddr().String()).Errorf("no target available")
 		c.Close()
@@ -60,6 +50,23 @@ func (p *tcpProxy) serveConn(c net.Conn) {
 	}
 
 	t.HandleConn(c)
+}
+
+func (p *tcpProxy) findTarget() tcpproxy.Target {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+
+	if len(p.targets) == 0 {
+		return nil
+	}
+
+	var keys = make([]string, len(p.targets))
+	var i = 0
+	for k := range p.targets {
+		keys[i] = k
+		i++
+	}
+	return p.targets[keys[rand.Intn(len(p.targets))]]
 }
 
 // UpdateTargets updates the list of available target candidates
@@ -82,7 +89,8 @@ func (p *tcpProxy) UpdateTargets(targets []string) {
 		}
 
 		p.targets[t] = &tcpproxy.DialProxy{
-			Addr: t,
+			Addr:        t,
+			DialTimeout: 1 * time.Minute, // the docs are a lie: DialTimeout defaults to "disabled" (cmp. https://github.com/inetaf/tcpproxy/issues/28)
 			OnDialError: func(src net.Conn, err error) {
 				destAddr := t
 				log.WithField("src-addr", src.RemoteAddr().String()).WithField("dest-addr", destAddr).WithError(err).Error("cannot dial target")
