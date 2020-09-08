@@ -507,9 +507,10 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	)
 	grpcMux := m.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
 	grpcServer := grpc.NewServer(opts...)
+	grpcEndpoint := fmt.Sprintf("localhost:%d", cfg.APIEndpointPort)
 	for _, reg := range services {
 		reg.RegisterGRPC(grpcServer)
-		err := reg.RegisterREST(restMux)
+		err := reg.RegisterREST(restMux, grpcEndpoint)
 		if err != nil {
 			log.WithError(err).Fatal("cannot register REST service")
 		}

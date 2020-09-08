@@ -19,7 +19,7 @@ type RegisterableService interface {
 	// RegisterGRPC registers a gRPC service
 	RegisterGRPC(*grpc.Server)
 	// RegisterREST registers a REST service
-	RegisterREST(*runtime.ServeMux) error
+	RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error
 }
 
 type statusService struct {
@@ -30,8 +30,8 @@ func (s *statusService) RegisterGRPC(srv *grpc.Server) {
 	api.RegisterStatusServiceServer(srv, s)
 }
 
-func (s *statusService) RegisterREST(mux *runtime.ServeMux) error {
-	return api.RegisterStatusServiceHandlerServer(context.Background(), mux, s)
+func (s *statusService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
+	return api.RegisterStatusServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithInsecure()})
 }
 
 func (s *statusService) SupervisorStatus(context.Context, *api.SupervisorStatusRequest) (*api.SupervisorStatusResponse, error) {
