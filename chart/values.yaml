@@ -263,6 +263,8 @@ components:
       version: "latest"
     theiaImage: 
       imageName: "theia-ide"
+    codeImage:
+      imageName: "ide/code"
     supervisor:
       imageName: "supervisor"
     pullSecret:

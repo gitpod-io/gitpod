@@ -16,6 +16,7 @@ packages:
       - components/server:docker
       - components/service-waiter:docker
       - components/supervisor:docker
+      - components/ide/code:docker
       - components/theia/app:docker
       - components/theia/static-server:docker
       - components/ws-manager-bridge:docker

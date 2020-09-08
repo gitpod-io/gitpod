@@ -4,6 +4,14 @@
     "title": "Gitpod Config",
     "type": "object",
     "properties": {
+        "ide": {
+            "type": "string",
+            "enum": [
+                "theia",
+                "code"
+            ],
+            "default": "theia"
+        },
         "ports": {
             "type": "array",
             "description": "List of exposed ports.",
