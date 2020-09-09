@@ -43,8 +43,6 @@ export interface ServedPortsServiceClient {
 export const ServedPortsServiceServer = Symbol('ServedPortsServiceServer');
 export interface ServedPortsServiceServer extends JsonRpcServer<ServedPortsServiceClient> {
     getOpenPorts(): Promise<ServedPort[]>;
-    isPortReady(port: number): Promise<boolean>;
-    waitUntilPortIsReady(port: number, timeoutMillis: number): Promise<boolean>;
     disposeClient(client: ServedPortsServiceClient): void;
 }
 
@@ -67,14 +65,6 @@ export class ServedPortsService implements ServedPortsServiceClient, Disposable 
 
     async onServedPortsChanged(event: ServedPortsChangeEvent): Promise<void> {
         this.onServedPortsChangeEventEmitter.fire(event);
-    }
-
-    async isPortReady(port: number): Promise<boolean> {
-        return this.server.isPortReady(port);
-    }
-
-    async waitUntilPortIsReady(port: number, timeoutMillis: number): Promise<boolean> {
-        return this.server.waitUntilPortIsReady(port, timeoutMillis);
     }
 
     dispose(): void {

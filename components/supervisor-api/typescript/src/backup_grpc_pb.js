@@ -1,7 +1,7 @@
 // GENERATED CODE -- DO NOT EDIT!
 
 'use strict';
-var grpc = require('grpc');
+var grpc = require('@grpc/grpc-js');
 var backup_pb = require('./backup_pb.js');
 
 function serialize_supervisor_PrepareBackupRequest(arg) {
@@ -30,9 +30,9 @@ function deserialize_supervisor_PrepareBackupResponse(buffer_arg) {
 // BackupService provides workspace-facing, backup related services
 var BackupServiceService = exports.BackupServiceService = {
   // Prepare prepares a workspace backup and is intended to be called by the PreStop
-  // hook of the container. It should hardly ever be neccesary to call this from any
-  // other point.
-  prepare: {
+// hook of the container. It should hardly ever be neccesary to call this from any
+// other point.
+prepare: {
     path: '/supervisor.BackupService/Prepare',
     requestStream: false,
     responseStream: false,
