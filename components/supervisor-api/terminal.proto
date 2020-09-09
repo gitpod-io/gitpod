@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package supervisor;
+
+import "google/api/annotations.proto";
+
+option go_package = "api";
+
+service TerminalService {
+    // Open opens a new terminal running the login shell
+    rpc Open(OpenTerminalRequest) returns (OpenTerminalResponse) {}
+    // List lists all open terminals
+    rpc List(ListTerminalsRequest) returns (ListTerminalsResponse) {}
+    // Listen listens to a terminal
+    rpc Listen(ListenTerminalRequest) returns (stream ListenTerminalResponse) {}
+    // Write writes to a terminal
+    rpc Write(WriteTerminalRequest) returns (WriteTerminalResponse) {}
+    // SetSize sets the terminal's size
+    rpc SetSize(SetTerminalSizeRequest) returns (SetTerminalSizeResponse) {}
+}
+
+message OpenTerminalRequest {}
+message OpenTerminalResponse {
+    string alias = 1;
+
+    // starter_token can be used to change the terminal size if there are
+    // multiple listerns, without having to force your way in.
+    string starter_token = 2;
+}
+
+message ListTerminalsRequest {}
+message ListTerminalsResponse {
+    message Terminal {
+        string alias = 1;
+        repeated string command = 2;
+        string title = 3;
+    }
+
+    repeated Terminal terminals = 1;
+}
+
+message ListenTerminalRequest {
+    string alias = 1;
+}
+message ListenTerminalResponse {
+    oneof output {
+        bytes stdout = 1;
+        bytes stderr = 2;
+    };
+}
+
+message WriteTerminalRequest {
+    string alias = 1;
+    bytes stdin = 2;
+}
+message WriteTerminalResponse {
+    uint32 bytes_written = 1;
+}
+
+message SetTerminalSizeRequest {
+    string alias = 1;
+    
+    // token is the starter_token that Open() returned.
+    // Without token it's possible that the request is ignored.
+    // If you want to force your size, indendently of all other listener,
+    // use force.
+    oneof priority {
+        string token = 2;
+        bool force = 3;
+    };
+
+    uint32 rows = 4;
+    uint32 cols = 5;
+    uint32 widthPx = 6;
+    uint32 heightPx = 7;
+}
+message SetTerminalSizeResponse {}
