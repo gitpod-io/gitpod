@@ -288,19 +288,7 @@ export class GitpodPortsService {
         });
         await this.service.server.openPort(this.workspaceId, cfg);
 
-        const portIsReady = new Promise(async (resolve) => {
-            this.servedPortsService.waitUntilPortIsReady(cfg.port, 5000)
-                .then((isPortReady: boolean) => {
-                    if (isPortReady) {
-                        resolve();
-                    }
-                });
-        });
-
-        await Promise.all([
-            portOpenedInK8s,
-            portIsReady
-        ]);
+        await portOpenedInK8s;
     }
 
 }

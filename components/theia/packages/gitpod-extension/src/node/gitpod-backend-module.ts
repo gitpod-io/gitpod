@@ -20,7 +20,6 @@ import { ServedPortsServiceClient, ServedPortsService, ServedPortsServiceServer 
 import { GitpodEnvVariablesServer } from "./gitpod-env-variables-server";
 import { ShellProcess } from "@theia/terminal/lib/node/shell-process";
 import { GitpodShellProcess } from "./gitpod-shell-process";
-import { ServedPortsServiceServerImpl } from "./served-ports-service-server";
 import { CliServiceServer, CliServiceServerImpl } from "./cli-service-server";
 import { ILoggerServer } from "@theia/core/lib/common/logger-protocol";
 import { JsonConsoleLoggerServer } from "./json-console-logger-server";
@@ -45,6 +44,8 @@ import { OpenVSXExtensionProviderImpl } from "./extensions/openvsx-extension-pro
 import { openVSXExtensionProviderPath } from "../common/openvsx-extension-provider";
 import { EnvVariablesServer } from "@theia/core/lib/common/env-variables";
 import { RemoteFileSystemServer, FileSystemProviderServer } from "@theia/filesystem/lib/common/remote-file-system-provider";
+import { SupervisorServedPortsServiceImpl } from "./supervisor-serverd-ports-service";
+import { SupervisorClientProvider } from "./supervisor-client-provider";
 
 export default new ContainerModule((bind, unbind, isBound, rebind) => {
     rebind(ShellProcess).to(GitpodShellProcess).inTransientScope();
@@ -63,7 +64,8 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(GitPodExpressService).toSelf().inSingletonScope();
     bind(BackendApplicationContribution).toService(GitPodExpressService);
 
-    bind(ServedPortsServiceServer).to(ServedPortsServiceServerImpl).inSingletonScope();
+    bind(SupervisorClientProvider).toSelf().inSingletonScope();
+    bind(ServedPortsServiceServer).to(SupervisorServedPortsServiceImpl).inSingletonScope();
     bind(ConnectionHandler).toDynamicValue(context =>
         new JsonRpcConnectionHandler<ServedPortsServiceClient>(ServedPortsService.SERVICE_PATH, client => {
             const server = context.container.get<ServedPortsServiceServer>(ServedPortsServiceServer);

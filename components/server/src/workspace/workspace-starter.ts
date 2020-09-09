@@ -485,10 +485,7 @@ export class WorkspaceStarter {
             portIndex.add(p.port);
 
             const spec = new PortSpec();
-            let target = p.port + 30000;
-            if (target > 65535) {
-                target = p.port;
-            }
+            let target = p.port;
 
             spec.setPort(p.port);
             spec.setTarget(target);

@@ -28,6 +28,7 @@
     "@theia/vsx-registry": "next",
     "@theia/workspace": "next",
     "@gitpod/gitpod-protocol": "0.1.5",
+    "@gitpod/supervisor": "0.1.5",
     "bitbucket": "^2.1.0",
     "decompress": "^4.2.0",
     "diff": "^3.4.0",
@@ -45,7 +46,9 @@
     "react": "^16.4.1",
     "react-dom": "^16.4.1",
     "requestretry": "^4.0.0",
-    "yaml": "^1.5.1"
+    "yaml": "^1.5.1",
+    "google-protobuf": "^3.8.0-rc.1",
+    "@grpc/grpc-js": "^1.1.5"
   },
   "devDependencies": {
     "@types/chai": "^4.1.2",

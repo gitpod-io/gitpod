@@ -928,11 +928,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             if (!!port.targetPort) {
                 spec.setTarget(port.targetPort);
             } else {
-                let target = port.port + 30000;
-                if (target > 65535) {
-                    target = port.port;
-                }
-                spec.setTarget(target);
+                spec.setTarget(port.port);
             }
             spec.setVisibility(this.portVisibilityToProto(port.visibility))
             req.setSpec(spec);

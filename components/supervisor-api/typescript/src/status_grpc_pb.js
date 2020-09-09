@@ -1,9 +1,8 @@
 // GENERATED CODE -- DO NOT EDIT!
 
 'use strict';
-var grpc = require('grpc');
+var grpc = require('@grpc/grpc-js');
 var status_pb = require('./status_pb.js');
-var google_api_annotations_pb = require('./google/api/annotations_pb.js');
 
 function serialize_supervisor_BackupStatusRequest(arg) {
   if (!(arg instanceof status_pb.BackupStatusRequest)) {
@@ -119,7 +118,7 @@ function deserialize_supervisor_SupervisorStatusResponse(buffer_arg) {
 // StatusService provides status feedback for the various in-workspace services.
 var StatusServiceService = exports.StatusServiceService = {
   // SupervisorStatus returns once supervisor is running.
-  supervisorStatus: {
+supervisorStatus: {
     path: '/supervisor.StatusService/SupervisorStatus',
     requestStream: false,
     responseStream: false,
@@ -131,7 +130,7 @@ var StatusServiceService = exports.StatusServiceService = {
     responseDeserialize: deserialize_supervisor_SupervisorStatusResponse,
   },
   // IDEStatus returns OK if the IDE can serve requests.
-  iDEStatus: {
+iDEStatus: {
     path: '/supervisor.StatusService/IDEStatus',
     requestStream: false,
     responseStream: false,
@@ -143,8 +142,8 @@ var StatusServiceService = exports.StatusServiceService = {
     responseDeserialize: deserialize_supervisor_IDEStatusResponse,
   },
   // ContentStatus returns the status of the workspace content. When used with `wait`, the call
-  // returns when the content has become available.
-  contentStatus: {
+// returns when the content has become available.
+contentStatus: {
     path: '/supervisor.StatusService/ContentStatus',
     requestStream: false,
     responseStream: false,
@@ -156,9 +155,9 @@ var StatusServiceService = exports.StatusServiceService = {
     responseDeserialize: deserialize_supervisor_ContentStatusResponse,
   },
   // BackupStatus offers feedback on the workspace backup status. This status information can
-  // be relayed to the user to provide transparency as to how "safe" their files/content
-  // data are w.r.t. to being lost.
-  backupStatus: {
+// be relayed to the user to provide transparency as to how "safe" their files/content
+// data are w.r.t. to being lost.
+backupStatus: {
     path: '/supervisor.StatusService/BackupStatus',
     requestStream: false,
     responseStream: false,
@@ -170,7 +169,7 @@ var StatusServiceService = exports.StatusServiceService = {
     responseDeserialize: deserialize_supervisor_BackupStatusResponse,
   },
   // PortsStatus provides feedback about the network ports currently in use.
-  portsStatus: {
+portsStatus: {
     path: '/supervisor.StatusService/PortsStatus',
     requestStream: false,
     responseStream: true,

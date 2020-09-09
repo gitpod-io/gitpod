@@ -15,8 +15,12 @@ protoc $PROTOC_INCLUDE --grpc-gateway_out=logtostderr=true,paths=source_relative
 
 # generate typescript client
 cd typescript
-# rm src/core_*.ts src/core_*.js
 export PATH=$PWD/../../../node_modules/.bin:$PATH
-protoc $PROTOC_INCLUDE --plugin=protoc-gen-grpc=`which grpc_tools_node_protoc_plugin` --js_out=import_style=commonjs,binary:src --grpc_out=src -I.. ../*.proto
-protoc $PROTOC_INCLUDE --plugin=protoc-gen-ts=`which protoc-gen-ts` --ts_out=src -I.. ../*.proto
+protoc $PROTOC_INCLUDE --plugin=protoc-gen-grpc=`which grpc_tools_node_protoc_plugin` --js_out=import_style=commonjs,binary:src --grpc_out=grpc_js:src -I.. ../*.proto
+protoc $PROTOC_INCLUDE --plugin=protoc-gen-ts=`which protoc-gen-ts` --ts_out=grpc_js:src -I.. ../*.proto
+
+## HACK: we don't care for the API annotations in the generated Javascript/Typescript code.
+##       Rather than trying to make the dependencies work, we just remove the respective code.
+sed -i '/google_api_annotations_pb/d' src/*.js
+
 cd ..

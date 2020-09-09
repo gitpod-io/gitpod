@@ -8,7 +8,7 @@ packages:
       - mocha.opts
     deps:
       - components/gitpod-protocol:lib
-      - components/gitpod-protocol:lib
+      - components/supervisor-api/typescript:lib
     config:
       packaging: library
       yarnLock: ${coreYarnLockBase}/../../yarn.lock
