@@ -369,7 +369,9 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
             await mayStartPromise;
 
-            return await this.workspaceStarter.startWorkspace({ span }, workspace, user, await envVars, options);
+            return await this.workspaceStarter.startWorkspace({ span }, workspace, user, await envVars, {
+                forceDefaultImage: !!options.forceDefaultImage
+            });
         } catch (e) {
             TraceContext.logError({ span }, e);
             throw e;
