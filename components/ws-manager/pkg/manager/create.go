@@ -378,7 +378,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 				pod.Spec.Containers[i].Lifecycle = &corev1.Lifecycle{
 					PreStop: &corev1.Handler{
 						Exec: &corev1.ExecAction{
-							Command: []string{"/theia/supervisor", "container", "backup"},
+							Command: []string{"/.supervisor/supervisor", "container", "backup"},
 						},
 					},
 				}
@@ -391,6 +391,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			for i, c := range pod.Spec.Containers {
 				if c.Name == "workspace" {
 					pod.Spec.Containers[i].Image = image
+					pod.Spec.Containers[i].Command = []string{"/.supervisor/supervisor", "run"}
 				}
 			}
 
@@ -509,7 +510,8 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 			SuccessThreshold: 1,
 			TimeoutSeconds:   1,
 		},
-		Env: env,
+		Env:     env,
+		Command: []string{"/theia/supervisor", "run"},
 	}, nil
 }
 
