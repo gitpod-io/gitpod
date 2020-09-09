@@ -8,7 +8,7 @@ export class SupervisorClientProvider {
     
     public async getStatusClient(): Promise<IStatusServiceClient> {
         if (!this.statusClient) {
-            this.statusClient = new StatusServiceClient("localhost:22999", grpc.credentials.createInsecure());
+            this.statusClient = new StatusServiceClient(process.env.SUPERVISOR_ADDR || "localhost:22999", grpc.credentials.createInsecure());
         }
         
         return this.statusClient;
