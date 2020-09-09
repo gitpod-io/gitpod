@@ -24,7 +24,7 @@ import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url"
 export async function start(Component: React.ComponentType<CreateWorkspaceProps>) {
     function getContextUrl() {
         const ctxUrl = window.location.hash || window.location.pathname;
-        return ctxUrl ? ctxUrl.replace(/^[#/]+/g, '') : undefined;
+        return ctxUrl ? decodeURIComponent(ctxUrl.substr(1)) : undefined;
     }
     async function redirectNotAuthenticated(service: GitpodService) {
         let tgt = await getWayoutURL(service);
