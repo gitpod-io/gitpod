@@ -6,7 +6,7 @@
     "devDependencies": {
         "@theia/cli": "next",
         "@types/node": "^10.14.8",
-        "concurrently": "^3.5.1",
+        "concurrently": "^5.3.0",
         "envfile": "^2.1.1",
         "json": "^9.0.6",
         "lerna": "^2.5.1",
@@ -25,6 +25,7 @@
         "packages": [
             "components/*",
             "components/*/typescript",
+            "components/supervisor/frontend",
             "components/theia/packages/*",
             "components/theia/*",
             "charts/"

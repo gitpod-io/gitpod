@@ -50,10 +50,6 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 
 	errorHandler := func(w http.ResponseWriter, req *http.Request, connectErr error) {
 		log.Debugf("could not connect to backend %s: %s", req.URL.String(), connectErrorToCause(connectErr))
-		if _, ok := req.URL.Query()["reconnectionToken"]; ok {
-			fmt.Println("bingo")
-		}
-
 		if h.ErrorHandler != nil {
 			h.ErrorHandler(w, req, connectErr)
 		}
