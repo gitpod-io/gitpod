@@ -45,11 +45,14 @@ RUN cp /theia/node/bin/node /theia/node/bin/gitpod-node && rm /theia/node/bin/no
 FROM scratch
 COPY --from=builder_alpine /theia/ /theia/
 
+# standard supervisor entrypoint used when supervisor isn't coming from this image
+WORKDIR /ide/
+COPY --from=builder_alpine /theia/node_modules/@gitpod/gitpod-ide/startup.sh /ide/
+
 ENV GITPOD_BUILT_IN_PLUGINS /theia/node_modules/@gitpod/gitpod-ide/plugins/
 COPY components-theia-app--builtin-plugins/plugins/ ${GITPOD_BUILT_IN_PLUGINS}
 
+# supervisor is still needed here to work without registry-facade
+# TODO(cw): remove once registry-facade is standard
 COPY components-supervisor--app/supervisor /theia/supervisor
 COPY supervisor-config.json /theia/
-
-WORKDIR "/theia"
-ENTRYPOINT ["/theia/supervisor"]
