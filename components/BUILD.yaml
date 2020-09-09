@@ -33,6 +33,7 @@ packages:
       - components/registry-facade:app
       - components/server:app
       - components/service-waiter:app
+      - components/supervisor/frontend:app
       - components/supervisor:app
       - components/theia/static-server:app
       - components/ws-manager-bridge:app

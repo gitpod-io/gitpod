@@ -24,8 +24,8 @@
     },
     "scripts": {
         "prepare": "yarn run clean && yarn run build",
-        "clean": "npx rimraf lib",
-        "build": "npx tsc",
+        "clean": "rimraf lib",
+        "build": "tsc",
         "test": "mocha --opts mocha.opts '**/*.spec.ts'",
         "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput"
     },

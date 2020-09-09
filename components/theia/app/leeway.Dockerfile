@@ -7,9 +7,9 @@
 # copy nodejs from the official alpine-based image because of https://github.com/TypeFox/gitpod/issues/2579
 FROM node:12.18.3-alpine AS node_installer
 RUN mkdir -p /theia/node/bin \
-             /theia/node/include/node/ \
-             /theia/node/lib/node_modules/npm/ \
-             /theia/node/lib/ && \
+    /theia/node/include/node/ \
+    /theia/node/lib/node_modules/npm/ \
+    /theia/node/lib/ && \
     cp -a  /usr/local/bin/node              /theia/node/bin/ && \
     cp -a  /usr/local/bin/npm               /theia/node/bin/ && \
     cp -a  /usr/local/bin/npx               /theia/node/bin/ && \
@@ -47,7 +47,7 @@ COPY --from=builder_alpine /theia/ /theia/
 
 # standard supervisor entrypoint used when supervisor isn't coming from this image
 WORKDIR /ide/
-COPY --from=builder_alpine /theia/node_modules/@gitpod/gitpod-ide/startup.sh /ide/
+COPY supervisor-ide-config.json /ide/
 
 ENV GITPOD_BUILT_IN_PLUGINS /theia/node_modules/@gitpod/gitpod-ide/plugins/
 COPY components-theia-app--builtin-plugins/plugins/ ${GITPOD_BUILT_IN_PLUGINS}

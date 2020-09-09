@@ -113,4 +113,19 @@ export class GitpodHostUrl {
         }
         return result;
     }
+
+    get workspaceId(): string | undefined {
+        const hostSegs = window.location.host.split(".");
+        if (hostSegs.length > 1 && hostSegs[0].match(workspaceIDRegex)) {
+            // URL has a workspace prefix
+            return hostSegs[0];
+        }
+
+        const pathSegs = window.location.pathname.split("/")
+        if (pathSegs.length > 3 && pathSegs[1] === "workspace") {
+            return pathSegs[2];
+        }
+
+        return undefined;
+    }
 }
