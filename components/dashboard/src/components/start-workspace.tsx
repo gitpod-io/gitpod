@@ -7,7 +7,7 @@
 import * as React from 'react';
 
 // tslint:disable-next-line:max-line-length
-import { GitpodService, GitpodClient, WorkspaceInstance, Disposable, WorkspaceInstanceStatus, WorkspaceImageBuild, WithPrebuild, Branding, Workspace } from '@gitpod/gitpod-protocol';
+import { GitpodService, GitpodClient, WorkspaceInstance, Disposable, WorkspaceInstanceStatus, WorkspaceImageBuild, WithPrebuild, Branding, Workspace, StartWorkspaceResult } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { ShowWorkspaceBuildLogs, WorkspaceBuildLog } from './show-workspace-build-logs';
 import { WorkspaceLogView } from './workspace-log-view';
@@ -107,7 +107,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         this.startWorkspace(nextProps.workspaceId);
     }
 
-    protected startWorkspace(workspaceId: string | undefined, restart: boolean = false) {
+    protected startWorkspace(workspaceId: string | undefined, restart: boolean = false, forceDefaultImage: boolean = false) {
         if (!workspaceId) {
             return;
         }
@@ -120,8 +120,8 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         }
 
         const defaultErrMessage = `Error while starting workspace ${workspaceId}`;
-        this.props.service.server.startWorkspace(workspaceId)
-            .then(workspaceStartedResult => {
+        this.props.service.server.startWorkspace(workspaceId, {forceDefaultImage})
+            .then((workspaceStartedResult: StartWorkspaceResult) => {
                 if (!workspaceStartedResult) {
                     this.setErrorState(defaultErrMessage);
                 } else {
@@ -322,7 +322,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
 
         const startErrorRenderer = this.props.startErrorRenderer;
         if (startErrorRenderer && errorCode) {
-            const rendered = startErrorRenderer(errorCode, this.props.service, () => this.startWorkspace(this.props.workspaceId, true));
+            const rendered = startErrorRenderer(errorCode, this.props.service, () => this.startWorkspace(this.props.workspaceId, true, false));
             if (rendered) {
                 return rendered;
             }
@@ -352,9 +352,18 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         }
 
         if (isError) {
-            message = <div className="message action">
-                <Button className='button' variant='outlined' color='secondary' onClick={() => this.redirectToDashboard()}>Go to Workspaces</Button>
-            </div>;
+            // If docker build failed
+            if (isBuildingWorkspaceImage) {
+              message = <div className="message action">
+                  <Button className='button' variant='outlined' color='secondary' onClick={() => {
+                    this.startWorkspace(this.props.workspaceId, true, true);
+                  }}>Start with Default Docker Image</Button>
+              </div>;
+            } else {
+              message = <div className="message action">
+                  <Button className='button' variant='outlined' color='secondary' onClick={() => this.redirectToDashboard()}>Go to Workspaces</Button>
+              </div>;
+            }
         }
         if (this.state && this.state.workspaceInstance && this.state.workspaceInstance.status.phase == 'running') {
             if (this.state.inTheiaAlready) {
