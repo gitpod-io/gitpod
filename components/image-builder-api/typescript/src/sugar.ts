@@ -80,7 +80,7 @@ export class PromisifiedImageBuilderClient {
             const span = TraceContext.startSpan(`/image-builder/resolveBaseImage`, ctx);
             this.client.resolveBaseImage(request, withTracing({span}), (err, resp) => {
                 if (err) {
-                    if (err.code == grpc.status.NOT_FOUND) {
+                    if (err.code == grpc.status.PERMISSION_DENIED || grpc.status.NOT_FOUND) {
                       reject(`The image "${request.getRef()}" was not found or is private.`)
                     }
                     TraceContext.logError({ span }, err);
