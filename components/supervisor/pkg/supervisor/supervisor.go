@@ -45,17 +45,17 @@ const (
 	help       = `This program launches Theia and keeps it alive.
 
 Configuration is done using env vars:
-         THEIA_ENTRYPOINT  The entrypoint/executable to run when starting Theia.
-	 THEIA_WORKSPACE_ROOT  The location in the filesystem where the workspace lives.
-	 	 GITPOD_REPO_ROOT  The absolute checkout location of the Git repo. If there's no Git repo, leave this empty.
-        GITPOD_THEIA_PORT  The port Theia will listen on.
-THEIA_SUPERVISOR_ENDPOINT  The address on which the supervisor health endpoint is served on.
-     THEIA_SUPERVISOR_KEY  Bearer token for the health endpoint.
-         THEIA_SHELL_ARGS  Optional. Sets arguments passed to shells spawned by Theia.
-		   THEIA_ARGS_ADD  Optional. Sets arguments wich get appended to the Theia arguments.
-	  THEIA_RATELIMIT_LOG  Optional. Sets a rate limit for Theia log output in kib/sec.
-	 GITPOD_GIT_USER_NAME  Optional. Makes supervisor configure the global user.name Git setting.
-	GITPOD_GIT_USER_EMAIL  Optional. Makes supervisor configure the global user.email Git setting.
+              THEIA_ENTRYPOINT  The entrypoint/executable to run when starting Theia.
+	 	  THEIA_WORKSPACE_ROOT  The location in the filesystem where the workspace lives.
+	 	   	  GITPOD_REPO_ROOT  The absolute checkout location of the Git repo. If there's no Git repo, leave this empty.
+        	 GITPOD_THEIA_PORT The port Theia will listen on.
+THEIA_SUPERVISOR_ENDPOINT_PORT The port on which the supervisor health endpoint is served on.
+          THEIA_SUPERVISOR_KEY  Bearer token for the health endpoint.
+              THEIA_SHELL_ARGS  Optional. Sets arguments passed to shells spawned by Theia.
+		        THEIA_ARGS_ADD  Optional. Sets arguments wich get appended to the Theia arguments.
+	       THEIA_RATELIMIT_LOG  Optional. Sets a rate limit for Theia log output in kib/sec.
+	      GITPOD_GIT_USER_NAME  Optional. Makes supervisor configure the global user.name Git setting.
+	     GITPOD_GIT_USER_EMAIL  Optional. Makes supervisor configure the global user.email Git setting.
 
 Additionally to env vars, supervisor attempts to read a file supervisor-config.json in the current
 working directory. See the Config struct for more details. Envvar values overwrite config file values.
@@ -470,6 +470,7 @@ func buildTheiaEnv(cfg *Config) []string {
 
 	ce := map[string]string{
 		"THEIA_SHELL_ARGS": cfg.TheiaShellArgs,
+		"SUPERVISOR_ADDR":  fmt.Sprintf("localhost:%d", cfg.APIEndpointPort),
 	}
 	for nme, val := range ce {
 		log.WithField("envvar", nme).Debug("passing environment variable to Theia")
