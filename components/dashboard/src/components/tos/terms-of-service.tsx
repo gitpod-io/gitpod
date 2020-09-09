@@ -70,7 +70,7 @@ export class TermsOfService extends React.Component<TermsOfServiceProps, TermsOf
                                     checked={this.state.acceptsTos}
                                     onChange={() => this.setState({ acceptsTos: !this.state.acceptsTos })} />
                                 <span>
-                                    I agree to the <a target="_blank" href="https://www.gitpod.io/self-hosted-terms/" rel="noopener">terms</a>
+                                    I agree to the <a target="_blank" href="https://www.gitpod.io/self-hosted-terms/" rel="noopener">terms of service.</a>
                                 </span>
                             </label></p>
                         </div>
@@ -82,7 +82,7 @@ export class TermsOfService extends React.Component<TermsOfServiceProps, TermsOf
                                 color={this.state.acceptsTos ? 'secondary' : 'primary'}
                                 onClick={this.submitForm.bind(this)}
                                 data-testid="submit">
-                                { this.state.acceptsTos ? 'Continue' : 'Please Accept the Terms' }
+                                { this.state.acceptsTos ? 'Continue' : 'Please Accept the Terms Of Service' }
                             </ButtonWithProgress>
                         </div>
                     </form>
