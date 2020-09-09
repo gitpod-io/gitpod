@@ -263,6 +263,14 @@ class TestGithubContextParser {
         })
     }
 
+    @test public async testTreeContext_08() {
+        const result = await this.parser.handle({}, this.user, 'https://github.com/Kreyren/gitpod-PoC-hashtag-in-branch-name/tree/breakedpod%23');
+        expect(result).to.deep.include({
+            "ref": "breakedpod#",
+            "refType": "branch",
+        })
+    }
+
     @test public async testTreeContext_tag_01() {
         const result = await this.parser.handle({}, this.user, 'https://github.com/eclipse-theia/theia/tree/v0.1.0');
         expect(result).to.deep.include(
