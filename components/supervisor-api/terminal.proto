@@ -9,12 +9,28 @@ option go_package = "api";
 service TerminalService {
     // Open opens a new terminal running the login shell
     rpc Open(OpenTerminalRequest) returns (OpenTerminalResponse) {}
+    
     // List lists all open terminals
-    rpc List(ListTerminalsRequest) returns (ListTerminalsResponse) {}
+    rpc List(ListTerminalsRequest) returns (ListTerminalsResponse) {
+        option (google.api.http) = {
+            get: "/v1/terminal/list"
+        };
+    }
+    
     // Listen listens to a terminal
-    rpc Listen(ListenTerminalRequest) returns (stream ListenTerminalResponse) {}
+    rpc Listen(ListenTerminalRequest) returns (stream ListenTerminalResponse) {
+        option (google.api.http) = {
+            get: "/v1/terminal/listen/{alias}"
+        };
+    }
+
     // Write writes to a terminal
-    rpc Write(WriteTerminalRequest) returns (WriteTerminalResponse) {}
+    rpc Write(WriteTerminalRequest) returns (WriteTerminalResponse) {
+        option (google.api.http) = {
+            post: "/v1/terminal/write/{alias}"
+        };
+    }
+    
     // SetSize sets the terminal's size
     rpc SetSize(SetTerminalSizeRequest) returns (SetTerminalSizeResponse) {}
 }
