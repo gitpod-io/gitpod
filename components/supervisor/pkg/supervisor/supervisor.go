@@ -110,7 +110,7 @@ func Run(options ...RunOption) {
 		termMuxSrv = terminal.NewMuxTerminalService(termMux)
 	)
 
-	termMuxSrv.DefaultWorkdir = cfg.TheiaWorkspaceRoot
+	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
 
 	var apiServices []RegisterableService
 	apiServices = append(apiServices, iwh)

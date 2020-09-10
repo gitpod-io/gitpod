@@ -1,7 +1,6 @@
 package terminal
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"os"
@@ -10,112 +9,9 @@ import (
 
 	"github.com/creack/pty"
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/google/uuid"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"golang.org/x/xerrors"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
-
-type multiWriter struct {
-	closed   bool
-	mu       sync.Mutex
-	listener map[io.WriteCloser]struct{}
-}
-
-func (mw *multiWriter) Listen() io.ReadCloser {
-	mw.mu.Lock()
-	defer mw.mu.Unlock()
-
-	r, w := io.Pipe()
-	res := opCloser{
-		Reader: r,
-		Op: func() error {
-			mw.mu.Lock()
-			defer mw.mu.Unlock()
-			delete(mw.listener, w)
-			return nil
-		},
-	}
-	mw.listener[w] = struct{}{}
-
-	return &res
-}
-
-type opCloser struct {
-	io.Reader
-	Op func() error
-}
-
-func (c *opCloser) Close() error { return c.Op() }
-
-func (mw *multiWriter) Write(p []byte) (n int, err error) {
-	mw.mu.Lock()
-	defer mw.mu.Unlock()
-
-	for w := range mw.listener {
-		n, err = w.Write(p)
-		if err != nil {
-			return
-		}
-		if n != len(p) {
-			err = io.ErrShortWrite
-			return
-		}
-	}
-	return len(p), nil
-}
-
-func (mw *multiWriter) Close() error {
-	mw.mu.Lock()
-	defer mw.mu.Unlock()
-
-	mw.closed = true
-
-	var err error
-	for w := range mw.listener {
-		cerr := w.Close()
-		if cerr != nil {
-			err = cerr
-		}
-	}
-	return err
-}
-
-func (mw *multiWriter) ListenerCount() int {
-	mw.mu.Lock()
-	defer mw.mu.Unlock()
-
-	return len(mw.listener)
-}
-
-func newTerm(pty *os.File, cmd *exec.Cmd) (*term, error) {
-	token, err := uuid.NewRandom()
-	if err != nil {
-		return nil, err
-	}
-
-	res := &term{
-		PTY:     pty,
-		Command: cmd,
-		Stdout:  &multiWriter{listener: make(map[io.WriteCloser]struct{})},
-
-		StarterToken: token.String(),
-	}
-	go io.Copy(res.Stdout, pty)
-	return res, nil
-}
-
-type term struct {
-	PTY          *os.File
-	Command      *exec.Cmd
-	Title        string
-	StarterToken string
-
-	Stdout *multiWriter
-}
 
 // NewMux creates a new terminal mux
 func NewMux() *Mux {
@@ -192,155 +88,105 @@ func (m *Mux) Close(alias string) error {
 	return nil
 }
 
-// NewMuxTerminalService creates a new terminal service
-func NewMuxTerminalService(m *Mux) *MuxTerminalService {
-	return &MuxTerminalService{
-		Mux:            m,
-		DefaultWorkdir: "/workspace",
-		LoginShell:     []string{"/bin/bash", "-i", "-l"},
-	}
-}
-
-// MuxTerminalService implements the terminal service API using a terminal Mux
-type MuxTerminalService struct {
-	Mux *Mux
-
-	DefaultWorkdir string
-	LoginShell     []string
-
-	tokens map[*term]string
-}
-
-// RegisterGRPC registers a gRPC service
-func (srv *MuxTerminalService) RegisterGRPC(s *grpc.Server) {
-	api.RegisterTerminalServiceServer(s, srv)
-}
-
-// RegisterREST registers a REST service
-func (srv *MuxTerminalService) RegisterREST(mux *runtime.ServeMux) error {
-	return nil
-}
-
-// Open opens a new terminal running the login shell
-func (srv *MuxTerminalService) Open(ctx context.Context, req *api.OpenTerminalRequest) (*api.OpenTerminalResponse, error) {
-	cmd := exec.Command(srv.LoginShell[0], srv.LoginShell[1:]...)
-	cmd.Dir = srv.DefaultWorkdir
-	cmd.Env = append(os.Environ(), "TERM=xterm-color")
-	alias, err := srv.Mux.Start(cmd)
+func newTerm(pty *os.File, cmd *exec.Cmd) (*term, error) {
+	token, err := uuid.NewRandom()
 	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+		return nil, err
 	}
 
-	// starterToken is just relevant for the service, hence it's not exposed at the Start() call
-	var starterToken string
-	term := srv.Mux.terms[alias]
-	if term != nil {
-		starterToken = term.StarterToken
-	}
+	res := &term{
+		PTY:     pty,
+		Command: cmd,
+		Stdout:  &multiWriter{listener: make(map[io.WriteCloser]struct{})},
 
-	return &api.OpenTerminalResponse{
-		Alias:        alias,
-		StarterToken: starterToken,
-	}, nil
+		StarterToken: token.String(),
+	}
+	go io.Copy(res.Stdout, pty)
+	return res, nil
 }
 
-// List lists all open terminals
-func (srv *MuxTerminalService) List(ctx context.Context, req *api.ListTerminalsRequest) (*api.ListTerminalsResponse, error) {
-	srv.Mux.mu.RLock()
-	defer srv.Mux.mu.RUnlock()
+type term struct {
+	PTY          *os.File
+	Command      *exec.Cmd
+	Title        string
+	StarterToken string
 
-	res := make([]*api.ListTerminalsResponse_Terminal, 0, len(srv.Mux.terms))
-	for alias, term := range srv.Mux.terms {
-		res = append(res, &api.ListTerminalsResponse_Terminal{
-			Alias:   alias,
-			Command: term.Command.Args,
-		})
-	}
-
-	return &api.ListTerminalsResponse{
-		Terminals: res,
-	}, nil
+	Stdout *multiWriter
 }
 
-// Listen listens to a terminal
-func (srv *MuxTerminalService) Listen(req *api.ListenTerminalRequest, resp api.TerminalService_ListenServer) error {
-	srv.Mux.mu.RLock()
-	term, ok := srv.Mux.terms[req.Alias]
-	srv.Mux.mu.RUnlock()
-	if !ok {
-		return status.Error(codes.NotFound, "terminal not found")
+// multiWriter is like io.MultiWriter, except that we can listener at runtime.
+//
+// TODO(cw): if one listener blocks, all others are blocked, too. Instead we should
+//           ignore or even drop the listener.
+type multiWriter struct {
+	closed   bool
+	mu       sync.Mutex
+	listener map[io.WriteCloser]struct{}
+}
+
+// Listen listens in on the multi-writer stream
+func (mw *multiWriter) Listen() io.ReadCloser {
+	mw.mu.Lock()
+	defer mw.mu.Unlock()
+
+	r, w := io.Pipe()
+	res := opCloser{
+		Reader: r,
+		Op: func() error {
+			mw.mu.Lock()
+			defer mw.mu.Unlock()
+			delete(mw.listener, w)
+			return nil
+		},
 	}
-	stdout := term.Stdout.Listen()
+	mw.listener[w] = struct{}{}
 
-	log.WithField("alias", req.Alias).Info("new terminal client")
-	defer log.WithField("alias", req.Alias).Info("terminal client left")
+	return &res
+}
 
-	errchan := make(chan error, 1)
-	go func() {
-		buf := make([]byte, 4096)
-		for {
-			n, err := stdout.Read(buf)
-			if err != nil {
-				errchan <- err
-				return
-			}
+func (mw *multiWriter) Write(p []byte) (n int, err error) {
+	mw.mu.Lock()
+	defer mw.mu.Unlock()
 
-			// TODO(cw): find out how to separate stdout/stderr
-			err = resp.Send(&api.ListenTerminalResponse{Output: &api.ListenTerminalResponse_Stdout{Stdout: buf[:n]}})
-			if err != nil {
-				errchan <- err
-				return
-			}
+	for w := range mw.listener {
+		n, err = w.Write(p)
+		if err != nil {
+			return
 		}
-	}()
-	select {
-	case err := <-errchan:
-		return status.Error(codes.Internal, err.Error())
-	case <-resp.Context().Done():
-		return status.Error(codes.DeadlineExceeded, resp.Context().Err().Error())
+		if n != len(p) {
+			err = io.ErrShortWrite
+			return
+		}
 	}
+	return len(p), nil
 }
 
-// Write writes to a terminal
-func (srv *MuxTerminalService) Write(ctx context.Context, req *api.WriteTerminalRequest) (*api.WriteTerminalResponse, error) {
-	srv.Mux.mu.RLock()
-	term, ok := srv.Mux.terms[req.Alias]
-	srv.Mux.mu.RUnlock()
-	if !ok {
-		return nil, status.Error(codes.NotFound, "terminal not found")
-	}
+func (mw *multiWriter) Close() error {
+	mw.mu.Lock()
+	defer mw.mu.Unlock()
 
-	n, err := term.PTY.Write(req.Stdin)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
+	mw.closed = true
+
+	var err error
+	for w := range mw.listener {
+		cerr := w.Close()
+		if cerr != nil {
+			err = cerr
+		}
 	}
-	return &api.WriteTerminalResponse{BytesWritten: uint32(n)}, nil
+	return err
 }
 
-// SetSize sets the terminal's size
-func (srv *MuxTerminalService) SetSize(ctx context.Context, req *api.SetTerminalSizeRequest) (*api.SetTerminalSizeResponse, error) {
-	srv.Mux.mu.RLock()
-	term, ok := srv.Mux.terms[req.Alias]
-	srv.Mux.mu.RUnlock()
-	if !ok {
-		return nil, status.Error(codes.NotFound, "terminal not found")
-	}
+func (mw *multiWriter) ListenerCount() int {
+	mw.mu.Lock()
+	defer mw.mu.Unlock()
 
-	// Setting the size only works with the starter token or when forcing it.
-	// This protects us from multiple listener mangling the terminal.
-	if !(req.GetForce() || req.GetToken() == term.StarterToken) {
-		return nil, status.Error(codes.FailedPrecondition, "wrong token or force not set")
-	}
-
-	err := pty.Setsize(term.PTY, &pty.Winsize{
-		Cols: uint16(req.Cols),
-		Rows: uint16(req.Rows),
-		X:    uint16(req.WidthPx),
-		Y:    uint16(req.HeightPx),
-	})
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-
-	return &api.SetTerminalSizeResponse{}, nil
+	return len(mw.listener)
 }
+
+type opCloser struct {
+	io.Reader
+	Op func() error
+}
+
+func (c *opCloser) Close() error { return c.Op() }
