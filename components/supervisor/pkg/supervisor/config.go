@@ -80,6 +80,17 @@ func (c StaticConfig) Validate() error {
 	return nil
 }
 
+// ReadinessProbeType determines the IDE readiness probe type
+type ReadinessProbeType string
+
+const (
+	// ReadinessProcessProbe returns ready once the IDE process has been started
+	ReadinessProcessProbe ReadinessProbeType = ""
+
+	// ReadinessHTTPProbe returns ready once a single HTTP request against the IDE was successful
+	ReadinessHTTPProbe ReadinessProbeType = "http"
+)
+
 // IDEConfig is the IDE specific configuration
 type IDEConfig struct {
 	// Entrypoint is the command that gets executed by supervisor to start
@@ -92,6 +103,19 @@ type IDEConfig struct {
 	// Any output that exceeds this limit is silently dropped.
 	// Expressed in kb/sec. Can be overriden by the workspace config (smallest value wins).
 	IDELogRateLimit int `json:"logRateLimit"`
+
+	// ReadinessProbe configures the probe used to serve the IDE status
+	ReadinessProbe struct {
+		// Type determines the type of readiness probe we'll use.
+		// Defaults to process.
+		Type ReadinessProbeType `json:"type"`
+
+		// HTTPProbe configures the HTTP readiness probe.
+		HTTPProbe struct {
+			// Path is the path to make requests to. Defaults to "/"
+			Path string `json:"path"`
+		} `json:"http"`
+	} `json:"readinessProbe"`
 }
 
 // Validate validates this configuration

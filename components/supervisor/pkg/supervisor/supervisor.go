@@ -34,13 +34,13 @@ import (
 
 var (
 	// ServiceName is the name we use for tracing/logging
-	ServiceName = "theia-supervisor"
+	ServiceName = "supervisor"
 	// Version of this service - set during build
 	Version = ""
 )
 
 const (
-	maxTheiaPause = 20 * time.Second
+	maxIDEPause = 20 * time.Second
 )
 
 type runOptions struct {
@@ -87,20 +87,21 @@ func Run(options ...RunOption) {
 		log.WithError(err).Fatal("configuration error")
 	}
 	if len(os.Args) < 2 || os.Args[1] != "run" {
-		fmt.Println("supervisor makes sure your workspace/Theia keeps running smoothly.\nYou don't have to call this thing, Gitpod calls it for you.")
+		fmt.Println("supervisor makes sure your workspace/IDE keeps running smoothly.\nYou don't have to call this thing, Gitpod calls it for you.")
 		return
 	}
 
 	log.Init(ServiceName, Version, true, true)
-	buildTheiaEnv(&Config{})
+	buildIDEEnv(&Config{})
 	configureGit(cfg)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	var (
-		shutdown   = make(chan struct{})
-		pauseTheia = make(chan bool)
-		iwh        = backup.NewInWorkspaceHelper(cfg.RepoRoot, pauseTheia)
-		portMgmt   = newPortsManager(
+		shutdown = make(chan struct{})
+		ideReady = make(chan struct{})
+		pauseIDE = make(chan bool)
+		iwh      = backup.NewInWorkspaceHelper(cfg.RepoRoot, pauseIDE)
+		portMgmt = newPortsManager(
 			uint32(cfg.IDEPort),
 			uint32(cfg.APIEndpointPort),
 		)
@@ -108,12 +109,16 @@ func Run(options ...RunOption) {
 
 	var apiServices []RegisterableService
 	apiServices = append(apiServices, iwh)
-	apiServices = append(apiServices, &statusService{IWH: iwh, Ports: portMgmt})
+	apiServices = append(apiServices, &statusService{
+		IWH:      iwh,
+		Ports:    portMgmt,
+		IDEReady: ideReady,
+	})
 	apiServices = append(apiServices, opts.AdditionalServices...)
 
 	var wg sync.WaitGroup
 	wg.Add(4)
-	go startAndWatchTheia(ctx, cfg, &wg, pauseTheia)
+	go startAndWatchIDE(ctx, cfg, &wg, ideReady, pauseIDE)
 	go startContentInit(ctx, cfg, &wg, iwh)
 	go startAPIEndpoint(ctx, cfg, &wg, apiServices)
 	go portMgmt.Run(ctx, &wg)
@@ -187,7 +192,7 @@ func hasMetadataAccess() bool {
 	return false
 }
 
-func startAndWatchTheia(ctx context.Context, cfg *Config, wg *sync.WaitGroup, pauseChan <-chan bool) {
+func startAndWatchIDE(ctx context.Context, cfg *Config, wg *sync.WaitGroup, ideReady chan<- struct{}, pauseChan <-chan bool) {
 	defer wg.Done()
 
 	type status int
@@ -199,36 +204,38 @@ func startAndWatchTheia(ctx context.Context, cfg *Config, wg *sync.WaitGroup, pa
 	s := statusNeverRan
 
 	var (
-		cmd          *exec.Cmd
-		theiaStopped chan struct{}
+		cmd        *exec.Cmd
+		ideStopped chan struct{}
 	)
 supervisorLoop:
 	for {
 		if s != statusShouldShutdown {
-			theiaStopped = make(chan struct{}, 1)
+			ideStopped = make(chan struct{}, 1)
 
-			cmd = prepareTheiaLaunch(cfg)
+			cmd = prepareIDELaunch(cfg)
 			err := cmd.Start()
 			if err != nil {
 				if s == statusNeverRan {
-					log.WithError(err).Fatal("Theia failed to start")
+					log.WithError(err).Fatal("IDE failed to start")
 				}
 
 				continue
 			}
 			s = statusShouldRun
 
+			go runIDEReadinessProbe(cfg, ideReady)
+
 			go func() {
 				var (
 					paused bool
-					t      = time.NewTimer(maxTheiaPause)
+					t      = time.NewTimer(maxIDEPause)
 				)
 				for {
 					select {
 					case pause := <-pauseChan:
 						if pause {
 							t.Stop()
-							t.Reset(maxTheiaPause)
+							t.Reset(maxIDEPause)
 							paused = true
 
 							cmd.Process.Signal(syscall.SIGTSTP)
@@ -241,7 +248,7 @@ supervisorLoop:
 							paused = false
 							cmd.Process.Signal(syscall.SIGCONT)
 						}
-					case <-theiaStopped:
+					case <-ideStopped:
 						return
 					}
 				}
@@ -249,15 +256,15 @@ supervisorLoop:
 
 			go func() {
 				err := cmd.Wait()
-				log.WithError(err).Warn("Theia was stopped")
+				log.WithError(err).Warn("IDE was stopped")
 
-				close(theiaStopped)
+				close(ideStopped)
 			}()
 		}
 
 		select {
-		case <-theiaStopped:
-			// Theia was stopped - let's just restart it after a small delay (in case Theia doesn't start at all) in the next round
+		case <-ideStopped:
+			// IDE was stopped - let's just restart it after a small delay (in case the IDE doesn't start at all) in the next round
 			if s == statusShouldShutdown {
 				break supervisorLoop
 			}
@@ -270,30 +277,30 @@ supervisorLoop:
 		}
 	}
 
-	log.Info("Theia supervisor loop ended - waiting for Theia to come down")
+	log.Info("IDE supervisor loop ended - waiting for IDE to come down")
 	select {
-	case <-theiaStopped:
+	case <-ideStopped:
 		return
 	case <-time.After(30 * time.Second):
-		log.Fatal("Theia did not stop after 30 seconds")
+		log.Fatal("IDE did not stop after 30 seconds")
 	}
 }
 
-func prepareTheiaLaunch(cfg *Config) *exec.Cmd {
+func prepareIDELaunch(cfg *Config) *exec.Cmd {
 	var args []string
 	args = append(args, cfg.WorkspaceRoot)
 	args = append(args, "--port", strconv.Itoa(cfg.IDEPort))
 	args = append(args, "--hostname", "0.0.0.0")
-	log.WithField("args", args).WithField("entrypoint", cfg.Entrypoint).Info("launching Theia")
+	log.WithField("args", args).WithField("entrypoint", cfg.Entrypoint).Info("launching IDE")
 
 	cmd := exec.Command(cfg.Entrypoint, args...)
-	cmd.Env = buildTheiaEnv(cfg)
+	cmd.Env = buildIDEEnv(cfg)
 
-	// We need Theia to run in its own process group, s.t. we can suspend and resume
-	// theia and its children.
+	// We need the IDE to run in its own process group, s.t. we can suspend and resume
+	// IDE and its children.
 	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 
-	// Here we must resist the temptation to "neaten up" the Theia output for headless builds.
+	// Here we must resist the temptation to "neaten up" the IDE output for headless builds.
 	// This would break the JSON parsing of the headless builds.
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -307,12 +314,12 @@ func prepareTheiaLaunch(cfg *Config) *exec.Cmd {
 	return cmd
 }
 
-func buildTheiaEnv(cfg *Config) []string {
-	var env []string
+func buildIDEEnv(cfg *Config) []string {
+	var env, envn []string
 	for _, e := range os.Environ() {
 		segs := strings.Split(e, "=")
 		if len(segs) < 2 {
-			log.Printf("\"%s\" has invalid format, not including in Theia environment", e)
+			log.Printf("\"%s\" has invalid format, not including in IDE environment", e)
 			continue
 		}
 		nme := segs[0]
@@ -321,19 +328,52 @@ func buildTheiaEnv(cfg *Config) []string {
 			continue
 		}
 
-		log.WithField("envvar", nme).Debug("passing environment variable to Theia")
 		env = append(env, e)
+		envn = append(envn, nme)
 	}
 
 	ce := map[string]string{
 		"SUPERVISOR_ADDR": fmt.Sprintf("localhost:%d", cfg.APIEndpointPort),
 	}
 	for nme, val := range ce {
-		log.WithField("envvar", nme).Debug("passing environment variable to Theia")
+		log.WithField("envvar", nme).Debug("passing environment variable to IDE")
 		env = append(env, fmt.Sprintf("%s=%s", nme, val))
+		envn = append(envn, nme)
 	}
 
+	log.WithField("envvar", envn).Debug("passing environment variables to IDE")
+
 	return env
+}
+
+func runIDEReadinessProbe(cfg *Config, ideReady chan<- struct{}) {
+	defer close(ideReady)
+	defer log.Info("IDE is ready")
+
+	switch cfg.ReadinessProbe.Type {
+	case ReadinessProcessProbe:
+		return
+
+	case ReadinessHTTPProbe:
+		var (
+			url    = fmt.Sprintf("http://localhost:%d/%s", cfg.IDEPort, strings.TrimPrefix(cfg.ReadinessProbe.HTTPProbe.Path, "/"))
+			client = http.Client{Timeout: 5 * time.Second}
+			tick   = time.NewTicker(5 * time.Second)
+		)
+		defer tick.Stop()
+		for {
+			resp, err := client.Get(url)
+			if err != nil {
+				log.WithError(err).Info("IDE is not ready yet")
+			} else if resp.StatusCode != http.StatusOK {
+				log.WithField("status", resp.StatusCode).Info("IDE readiness probe came back with non-200 status code")
+			} else {
+				break
+			}
+
+			<-tick.C
+		}
+	}
 }
 
 func isBlacklistedEnvvar(name string) bool {

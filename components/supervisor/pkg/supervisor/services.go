@@ -29,8 +29,9 @@ type RegisterableRESTService interface {
 }
 
 type statusService struct {
-	IWH   *backup.InWorkspaceHelper
-	Ports *portsManager
+	IWH      *backup.InWorkspaceHelper
+	Ports    *portsManager
+	IDEReady <-chan struct{}
 }
 
 func (s *statusService) RegisterGRPC(srv *grpc.Server) {
@@ -45,9 +46,24 @@ func (s *statusService) SupervisorStatus(context.Context, *api.SupervisorStatusR
 	return &api.SupervisorStatusResponse{Ok: true}, nil
 }
 
-func (s *statusService) IDEStatus(context.Context, *api.IDEStatusRequest) (*api.IDEStatusResponse, error) {
-	// TODO(cw): actually map this to the IDE status
-	return &api.IDEStatusResponse{Ok: true}, nil
+func (s *statusService) IDEStatus(ctx context.Context, req *api.IDEStatusRequest) (*api.IDEStatusResponse, error) {
+	if req.Wait {
+		select {
+		case <-s.IDEReady:
+			return &api.IDEStatusResponse{Ok: true}, nil
+		case <-ctx.Done():
+			return nil, status.Error(codes.DeadlineExceeded, ctx.Err().Error())
+		}
+	}
+
+	var ok bool
+	select {
+	case <-s.IDEReady:
+		ok = true
+	default:
+		ok = false
+	}
+	return &api.IDEStatusResponse{Ok: ok}, nil
 }
 
 // ContentStatus provides feedback regarding the workspace content readiness

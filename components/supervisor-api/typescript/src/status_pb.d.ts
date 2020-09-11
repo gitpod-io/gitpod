@@ -44,6 +44,9 @@ export namespace SupervisorStatusResponse {
 }
 
 export class IDEStatusRequest extends jspb.Message { 
+    getWait(): boolean;
+    setWait(value: boolean): void;
+
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): IDEStatusRequest.AsObject;
@@ -57,6 +60,7 @@ export class IDEStatusRequest extends jspb.Message {
 
 export namespace IDEStatusRequest {
     export type AsObject = {
+        wait: boolean,
     }
 }
 
