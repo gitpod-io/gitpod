@@ -8,11 +8,14 @@ service EditorService {
   rpc List(ListEditorsRequest) returns (ListEditorsResponse) {}
   rpc Open(OpenEditorRequest) returns (OpenEditorResponse) {}
   rpc Close(CloseEditorRequest) returns (CloseEditorResponse) {}
+  rpc GetActive(GetActiveEditorRequest) returns (GetActiveEditorResponse) {}
+  rpc SetActive(SetActiveEditorRequest) returns (SetActiveEditorResponse) {}
 }
 
 message Editor {
   string title = 1;
   string filename = 2;
+  int32 index = 3;
 }
 
 message ListEditorsRequest {}
@@ -32,3 +35,15 @@ message CloseEditorRequest {
 }
 
 message CloseEditorResponse {}
+
+message GetActiveEditorRequest {}
+
+message GetActiveEditorResponse {
+  Editor active = 1;
+}
+
+message SetActiveEditorRequest {
+  string path = 1;
+}
+
+message SetActiveEditorResponse {}

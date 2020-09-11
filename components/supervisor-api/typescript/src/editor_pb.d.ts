@@ -12,6 +12,9 @@ export class Editor extends jspb.Message {
     getFilename(): string;
     setFilename(value: string): void;
 
+    getIndex(): number;
+    setIndex(value: number): void;
+
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): Editor.AsObject;
@@ -27,6 +30,7 @@ export namespace Editor {
     export type AsObject = {
         title: string,
         filename: string,
+        index: number,
     }
 }
 
@@ -142,6 +146,85 @@ export class CloseEditorResponse extends jspb.Message {
 }
 
 export namespace CloseEditorResponse {
+    export type AsObject = {
+    }
+}
+
+export class GetActiveEditorRequest extends jspb.Message { 
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): GetActiveEditorRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: GetActiveEditorRequest): GetActiveEditorRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: GetActiveEditorRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): GetActiveEditorRequest;
+    static deserializeBinaryFromReader(message: GetActiveEditorRequest, reader: jspb.BinaryReader): GetActiveEditorRequest;
+}
+
+export namespace GetActiveEditorRequest {
+    export type AsObject = {
+    }
+}
+
+export class GetActiveEditorResponse extends jspb.Message { 
+
+    hasActive(): boolean;
+    clearActive(): void;
+    getActive(): Editor | undefined;
+    setActive(value?: Editor): void;
+
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): GetActiveEditorResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: GetActiveEditorResponse): GetActiveEditorResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: GetActiveEditorResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): GetActiveEditorResponse;
+    static deserializeBinaryFromReader(message: GetActiveEditorResponse, reader: jspb.BinaryReader): GetActiveEditorResponse;
+}
+
+export namespace GetActiveEditorResponse {
+    export type AsObject = {
+        active?: Editor.AsObject,
+    }
+}
+
+export class SetActiveEditorRequest extends jspb.Message { 
+    getPath(): string;
+    setPath(value: string): void;
+
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): SetActiveEditorRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: SetActiveEditorRequest): SetActiveEditorRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: SetActiveEditorRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): SetActiveEditorRequest;
+    static deserializeBinaryFromReader(message: SetActiveEditorRequest, reader: jspb.BinaryReader): SetActiveEditorRequest;
+}
+
+export namespace SetActiveEditorRequest {
+    export type AsObject = {
+        path: string,
+    }
+}
+
+export class SetActiveEditorResponse extends jspb.Message { 
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): SetActiveEditorResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: SetActiveEditorResponse): SetActiveEditorResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: SetActiveEditorResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): SetActiveEditorResponse;
+    static deserializeBinaryFromReader(message: SetActiveEditorResponse, reader: jspb.BinaryReader): SetActiveEditorResponse;
+}
+
+export namespace SetActiveEditorResponse {
     export type AsObject = {
     }
 }

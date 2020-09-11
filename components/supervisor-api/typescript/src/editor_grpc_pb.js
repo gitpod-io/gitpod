@@ -26,6 +26,28 @@ function deserialize_supervisor_CloseEditorResponse(buffer_arg) {
   return editor_pb.CloseEditorResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_supervisor_GetActiveEditorRequest(arg) {
+  if (!(arg instanceof editor_pb.GetActiveEditorRequest)) {
+    throw new Error('Expected argument of type supervisor.GetActiveEditorRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_supervisor_GetActiveEditorRequest(buffer_arg) {
+  return editor_pb.GetActiveEditorRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_supervisor_GetActiveEditorResponse(arg) {
+  if (!(arg instanceof editor_pb.GetActiveEditorResponse)) {
+    throw new Error('Expected argument of type supervisor.GetActiveEditorResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_supervisor_GetActiveEditorResponse(buffer_arg) {
+  return editor_pb.GetActiveEditorResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_supervisor_ListEditorsRequest(arg) {
   if (!(arg instanceof editor_pb.ListEditorsRequest)) {
     throw new Error('Expected argument of type supervisor.ListEditorsRequest');
@@ -70,6 +92,28 @@ function deserialize_supervisor_OpenEditorResponse(buffer_arg) {
   return editor_pb.OpenEditorResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_supervisor_SetActiveEditorRequest(arg) {
+  if (!(arg instanceof editor_pb.SetActiveEditorRequest)) {
+    throw new Error('Expected argument of type supervisor.SetActiveEditorRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_supervisor_SetActiveEditorRequest(buffer_arg) {
+  return editor_pb.SetActiveEditorRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_supervisor_SetActiveEditorResponse(arg) {
+  if (!(arg instanceof editor_pb.SetActiveEditorResponse)) {
+    throw new Error('Expected argument of type supervisor.SetActiveEditorResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_supervisor_SetActiveEditorResponse(buffer_arg) {
+  return editor_pb.SetActiveEditorResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 
 var EditorServiceService = exports.EditorServiceService = {
   list: {
@@ -104,6 +148,28 @@ var EditorServiceService = exports.EditorServiceService = {
     requestDeserialize: deserialize_supervisor_CloseEditorRequest,
     responseSerialize: serialize_supervisor_CloseEditorResponse,
     responseDeserialize: deserialize_supervisor_CloseEditorResponse,
+  },
+  getActive: {
+    path: '/supervisor.EditorService/GetActive',
+    requestStream: false,
+    responseStream: false,
+    requestType: editor_pb.GetActiveEditorRequest,
+    responseType: editor_pb.GetActiveEditorResponse,
+    requestSerialize: serialize_supervisor_GetActiveEditorRequest,
+    requestDeserialize: deserialize_supervisor_GetActiveEditorRequest,
+    responseSerialize: serialize_supervisor_GetActiveEditorResponse,
+    responseDeserialize: deserialize_supervisor_GetActiveEditorResponse,
+  },
+  setActive: {
+    path: '/supervisor.EditorService/SetActive',
+    requestStream: false,
+    responseStream: false,
+    requestType: editor_pb.SetActiveEditorRequest,
+    responseType: editor_pb.SetActiveEditorResponse,
+    requestSerialize: serialize_supervisor_SetActiveEditorRequest,
+    requestDeserialize: deserialize_supervisor_SetActiveEditorRequest,
+    responseSerialize: serialize_supervisor_SetActiveEditorResponse,
+    responseDeserialize: deserialize_supervisor_SetActiveEditorResponse,
   },
 };
 
