@@ -35,6 +35,7 @@ html, body, #root, .page-container {
 
 body {
   background-color: transparent !important;
+  overflow: hidden;
 }
 
 a {
@@ -255,6 +256,21 @@ h4, h5, h6 {
 
 .workspace-details .fav-column .fav.active:hover {
     color: var(--brand-color1);
+}
+
+@media(max-width: 690px) {
+    .workspace-details .stage {
+        flex-direction: column;
+    }
+
+    .workspace-details .fav-column {
+        flex-direction: row;
+        padding-left: 10px;
+    }
+    
+    .workspace-details .main {
+        padding: 20px; 
+    }
 }
 
 .workspace-details .main {

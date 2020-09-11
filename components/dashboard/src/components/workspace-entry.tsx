@@ -367,8 +367,8 @@ export default class WorkspaceEntry extends React.Component<WorkspaceEntryProps,
                 </DialogActions>
             </Dialog>
             <Paper className={'workspace-details ' + (errorMessage ? 'error' : status)} style={{ borderLeftWidth: 3 }}>
-                <Grid container className='stage'>
-                    <Grid item xs={1} className='fav-column'>
+                <div className='stage'>
+                    <div className='fav-column'>
                         <div onClick={this.handleTogglePinned}
                             className={'fav' + (this.props.workspace.pinned ? ' active' : '')}
                             dangerouslySetInnerHTML={{ __html: Pin }} />
@@ -384,30 +384,30 @@ export default class WorkspaceEntry extends React.Component<WorkspaceEntryProps,
                             className='fav'>
                             <Delete style={{ fontSize: 40 }} />
                         </div>
-                    </Grid>
-                    <Grid item xs={11} className='main'>
-                        <Grid container>
-                            <Grid item xs={12}>
+                    </div>
+                    <div className='main'>
+                        <div>
+                            <div>
                                 <Typography variant="caption">
                                     {this.props.workspace.id}
                                 </Typography>
-                            </Grid>
-                            <Grid item xs={10} className='title'>
+                            </div>
+                            <div className='title'>
                                 <EditableDescription service={this.props.service} workspace={this.props.workspace} />
-                            </Grid>
-                            <Grid item xs={2} style={{ textAlign: 'right' }} className='creation-time'>
+                            </div>
+                            <div style={{ textAlign: 'right' }} className='creation-time'>
                                 <Typography>
                                     Created {moment(new Date(this.props.workspace.creationTime)).fromNow()}
                                 </Typography>
-                            </Grid>
-                            <Grid item xs={4}>
+                            </div>
+                            <div>
                                 <IconDetail
                                     text={Workspace.getFullRepositoryName(this.props.workspace)}
                                     iconSrc={repositoryIcon}
                                     link={Workspace.getFullRepositoryUrl(this.props.workspace)}
                                 />
-                            </Grid>
-                            <Grid item xs={8}>
+                            </div>
+                            <div>
                                 {pullRequestNumber ? (
                                     <IconDetail
                                         text={(this.props.workspace.contextURL.toLowerCase().indexOf('gitlab') !== -1 ? 'Merge' : 'Pull')+' Request ' + pullRequestNumber}
@@ -424,32 +424,32 @@ export default class WorkspaceEntry extends React.Component<WorkspaceEntryProps,
                                     />
                                 ) : <div />
                                 }
-                            </Grid>
-                            <Grid item xs={4}>
+                            </div>
+                            <div>
                                 <IconDetail
                                     text={latestBranchName || Workspace.getBranchName(this.props.workspace)}
                                     iconSrc={gitBranch}
                                     link={Workspace.getFullRepositoryUrl(this.props.workspace) + '/tree/' + (latestBranchName || Workspace.getBranchName(this.props.workspace))}
                                 />
-                            </Grid>
-                            <Grid item xs={8}>
+                            </div>
+                            <div>
                                 <IconDetail
-                                    text={latestCommit || Workspace.getCommit(this.props.workspace)}
+                                    text={(latestCommit || Workspace.getCommit(this.props.workspace)).substring(0, 12)}
                                     iconSrc={gitCommit}
                                     link={Workspace.getFullRepositoryUrl(this.props.workspace) + '/commits/' + (latestCommit || Workspace.getCommit(this.props.workspace))}
                                 />
-                            </Grid>
-                            <Grid item xs={8} style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                                 <Typography>
                                     {bottomMessage}
                                 </Typography>
-                            </Grid>
-                            <Grid item xs={4} style={{ textAlign: 'right' }}>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
                                 {buttons}
-                            </Grid>
-                        </Grid>
-                    </Grid>
-                </Grid>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 {this.props.currentInstance && this.props.currentInstance.status && this.props.currentInstance && this.props.currentInstance.status.repo && pendingChangesMsg &&
                     <Grid container className="repo">
                         <Grid item xs={1}>
