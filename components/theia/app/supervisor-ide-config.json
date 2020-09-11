@@ -1,0 +1,3 @@
+{
+  "entrypoint": "/theia/node_modules/@gitpod/gitpod-ide/startup.sh"
+}

@@ -32,6 +32,7 @@ packages:
     srcs:
       - "package-libs.sh"
       - "supervisor-config.json"
+      - "supervisor-ide-config.json"
     deps:
       - :installer
       - :builtin-plugins
