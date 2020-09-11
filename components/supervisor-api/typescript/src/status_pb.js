@@ -510,7 +510,7 @@ proto.supervisor.IDEStatusRequest.prototype.toObject = function(opt_includeInsta
  */
 proto.supervisor.IDEStatusRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-
+    wait: jspb.Message.getFieldWithDefault(msg, 1, false)
   };
 
   if (includeInstance) {
@@ -547,6 +547,10 @@ proto.supervisor.IDEStatusRequest.deserializeBinaryFromReader = function(msg, re
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setWait(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -576,6 +580,30 @@ proto.supervisor.IDEStatusRequest.prototype.serializeBinary = function() {
  */
 proto.supervisor.IDEStatusRequest.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getWait();
+  if (f) {
+    writer.writeBool(
+      1,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional bool wait = 1;
+ * Note that Boolean fields may be set to 0/1 when serialized from a Java server.
+ * You should avoid comparisons like {@code val === true/false} in those cases.
+ * @return {boolean}
+ */
+proto.supervisor.IDEStatusRequest.prototype.getWait = function() {
+  return /** @type {boolean} */ (jspb.Message.getFieldWithDefault(this, 1, false));
+};
+
+
+/** @param {boolean} value */
+proto.supervisor.IDEStatusRequest.prototype.setWait = function(value) {
+  jspb.Message.setProto3BooleanField(this, 1, value);
 };
 
 
