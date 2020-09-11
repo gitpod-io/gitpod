@@ -53,6 +53,6 @@ ENV GITPOD_BUILT_IN_PLUGINS /theia/node_modules/@gitpod/gitpod-ide/plugins/
 COPY components-theia-app--builtin-plugins/plugins/ ${GITPOD_BUILT_IN_PLUGINS}
 
 # supervisor is still needed here to work without registry-facade
-# TODO(cw): remove once registry-facade is standard
+# TODO(cw): remove once registry-facade is standard (except for supervisor-ide-config.json)
 COPY components-supervisor--app/supervisor /theia/supervisor
-COPY supervisor-config.json /theia/
+COPY supervisor-config.json supervisor-ide-config.json /theia/

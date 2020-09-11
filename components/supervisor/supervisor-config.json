@@ -1,6 +1,5 @@
 {
-  "entrypoint": "/ide/startup.sh",
-  "theiaPort": 23000,
-  "apiEndpointPort": 22999,
-  "frontendLocation": "/.supervisor/frontend/"
+  "ideConfigLocation": "/ide/supervisor-ide-config.json",
+  "frontendLocation": "/.supervisor/frontend/",
+  "apiEndpointPort": 22999
 }

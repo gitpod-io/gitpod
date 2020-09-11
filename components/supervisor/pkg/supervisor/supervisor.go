@@ -14,7 +14,6 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -41,146 +40,8 @@ var (
 )
 
 const (
-	configFile = "supervisor-config.json"
-	help       = `This program launches Theia and keeps it alive.
-
-Configuration is done using env vars:
-              THEIA_ENTRYPOINT  The entrypoint/executable to run when starting Theia.
-	 	  THEIA_WORKSPACE_ROOT  The location in the filesystem where the workspace lives.
-	 	   	  GITPOD_REPO_ROOT  The absolute checkout location of the Git repo. If there's no Git repo, leave this empty.
-        	 GITPOD_THEIA_PORT The port Theia will listen on.
-THEIA_SUPERVISOR_ENDPOINT_PORT The port on which the supervisor health endpoint is served on.
-          THEIA_SUPERVISOR_KEY  Bearer token for the health endpoint.
-              THEIA_SHELL_ARGS  Optional. Sets arguments passed to shells spawned by Theia.
-		        THEIA_ARGS_ADD  Optional. Sets arguments wich get appended to the Theia arguments.
-	       THEIA_RATELIMIT_LOG  Optional. Sets a rate limit for Theia log output in kib/sec.
-	      GITPOD_GIT_USER_NAME  Optional. Makes supervisor configure the global user.name Git setting.
-	     GITPOD_GIT_USER_EMAIL  Optional. Makes supervisor configure the global user.email Git setting.
-
-Additionally to env vars, supervisor attempts to read a file supervisor-config.json in the current
-working directory. See the Config struct for more details. Envvar values overwrite config file values.
-`
-
 	maxTheiaPause = 20 * time.Second
 )
-
-// Config is the configuration of the Theia watchdog
-type Config struct {
-	Entrypoint            string `json:"entrypoint"`
-	TheiaWorkspaceRoot    string `json:"workspaceRoot"`
-	RepoRoot              string `json:"repoRoot"`
-	GitpodTheiaPort       int    `json:"theiaPort"`
-	APIEndpointPort       int    `json:"apiEndpointPort"`
-	TheiaShellArgs        string `json:"shellArgs"`
-	TheiaArgsAdd          string
-	TheiaRatelimitLog     string `json:"ratelimitLogs"`
-	PreventMetadataAccess bool   `json:"preventMetadataAccess"`
-	FrontendLocation      string `json:"frontendLocation"`
-	SupervisorAuthToken   string `json:"-"`
-	Git                   struct {
-		Name  string
-		Email string
-	} `json:"-"`
-}
-
-// GetConfig extracts the config from environment variables
-func GetConfig() (*Config, error) {
-	var cfg Config
-	loadConfigFromFile(&cfg)
-
-	if cfg.Entrypoint == "" {
-		cfg.Entrypoint = os.Getenv("THEIA_ENTRYPOINT")
-	}
-	if cfg.Entrypoint == "" {
-		return nil, fmt.Errorf("THEIA_ENTRYPOINT envvar is mandatory")
-	}
-	if stat, err := os.Stat(cfg.Entrypoint); os.IsNotExist(err) {
-		return nil, fmt.Errorf("$THEIA_ENTRYPOINT (=%s) does not exist", cfg.Entrypoint)
-	} else if err != nil {
-		return nil, err
-	} else if stat.IsDir() {
-		return nil, fmt.Errorf("$THEIA_ENTRYPOINT (=%s) is not a file", cfg.Entrypoint)
-	}
-
-	if cfg.TheiaWorkspaceRoot == "" {
-		cfg.TheiaWorkspaceRoot = os.Getenv("THEIA_WORKSPACE_ROOT")
-	}
-	if cfg.TheiaWorkspaceRoot == "" {
-		return nil, fmt.Errorf("THEIA_WORKSPACE_ROOT envvar is mandatory")
-	}
-	if cfg.RepoRoot == "" {
-		cfg.RepoRoot = os.Getenv("GITPOD_REPO_ROOT")
-	}
-
-	if cfg.GitpodTheiaPort == 0 {
-		gpTheiaPort := os.Getenv("GITPOD_THEIA_PORT")
-		port, err := strconv.Atoi(gpTheiaPort)
-		if err != nil {
-			return nil, fmt.Errorf("cannot parse $GITPOD_THEIA_PORT (=%s): %v", gpTheiaPort, err)
-		}
-		cfg.GitpodTheiaPort = port
-	}
-
-	if cfg.TheiaShellArgs == "" {
-		cfg.TheiaShellArgs = os.Getenv("THEIA_SHELL_ARGS")
-	}
-	if cfg.TheiaArgsAdd == "" {
-		cfg.TheiaArgsAdd = os.Getenv("THEIA_ARGS_ADD")
-	}
-	if cfg.TheiaRatelimitLog == "" {
-		cfg.TheiaRatelimitLog = os.Getenv("THEIA_RATELIMIT_LOG")
-	}
-
-	if cfg.APIEndpointPort == 0 {
-		prt := os.Getenv("THEIA_SUPERVISOR_ENDPOINT_PORT")
-		port, err := strconv.Atoi(prt)
-		if err != nil {
-			return nil, fmt.Errorf("cannot parse $THEIA_SUPERVISOR_ENDPOINT_PORT (=%s): %v", prt, err)
-		}
-		cfg.APIEndpointPort = port
-	}
-
-	pmd := os.Getenv("THEIA_PREVENT_METADATA_ACCESS")
-	if pmd == "true" {
-		cfg.PreventMetadataAccess = true
-	}
-
-	cfg.SupervisorAuthToken = os.Getenv("THEIA_SUPERVISOR_TOKEN")
-
-	cfg.Git.Name = os.Getenv("GITPOD_GIT_USER_NAME")
-	cfg.Git.Email = os.Getenv("GITPOD_GIT_USER_EMAIL")
-
-	return &cfg, nil
-}
-
-func loadConfigFromFile(cfg *Config) {
-	loc, err := os.Executable()
-	if err != nil {
-		log.WithError(err).WithField("configFile", configFile).Debug("cannot get executable path - dismissing any config file")
-		return
-	}
-	candidates := []string{
-		configFile,
-		filepath.Join(filepath.Dir(loc), configFile),
-	}
-
-	for _, loc := range candidates {
-		fc, err := ioutil.ReadFile(loc)
-		if err != nil {
-			log.WithField("configFile", loc).WithError(err).Debug("config file cannot be read - ignoring")
-			continue
-		}
-
-		err = json.Unmarshal(fc, &cfg)
-		if err != nil {
-			log.WithError(err).WithField("configFile", loc).Warn("cannot unmarshal config file - ignoring")
-			continue
-		}
-
-		log.WithField("configFile", loc).WithField("config", cfg).Info("read config file")
-		break
-	}
-}
 
 type runOptions struct {
 	Args                   []string
@@ -240,7 +101,7 @@ func Run(options ...RunOption) {
 		pauseTheia = make(chan bool)
 		iwh        = backup.NewInWorkspaceHelper(cfg.RepoRoot, pauseTheia)
 		portMgmt   = newPortsManager(
-			uint32(cfg.GitpodTheiaPort),
+			uint32(cfg.IDEPort),
 			uint32(cfg.APIEndpointPort),
 		)
 	)
@@ -285,11 +146,11 @@ func configureGit(cfg *Config) {
 		{"alias.lg", "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"},
 		{"credential.helper", "/usr/bin/gp credential-helper"},
 	}
-	if cfg.Git.Name != "" {
-		settings = append(settings, []string{"user.name", cfg.Git.Name})
+	if cfg.GitUsername != "" {
+		settings = append(settings, []string{"user.name", cfg.GitUsername})
 	}
-	if cfg.Git.Email != "" {
-		settings = append(settings, []string{"user.email", cfg.Git.Email})
+	if cfg.GitEmail != "" {
+		settings = append(settings, []string{"user.email", cfg.GitEmail})
 	}
 
 	for _, s := range settings {
@@ -420,10 +281,9 @@ supervisorLoop:
 
 func prepareTheiaLaunch(cfg *Config) *exec.Cmd {
 	var args []string
-	args = append(args, cfg.TheiaWorkspaceRoot)
-	args = append(args, "--port", strconv.Itoa(cfg.GitpodTheiaPort))
+	args = append(args, cfg.WorkspaceRoot)
+	args = append(args, "--port", strconv.Itoa(cfg.IDEPort))
 	args = append(args, "--hostname", "0.0.0.0")
-	args = append(args, strings.Split(cfg.TheiaArgsAdd, " ")...)
 	log.WithField("args", args).WithField("entrypoint", cfg.Entrypoint).Info("launching Theia")
 
 	cmd := exec.Command(cfg.Entrypoint, args...)
@@ -437,15 +297,11 @@ func prepareTheiaLaunch(cfg *Config) *exec.Cmd {
 	// This would break the JSON parsing of the headless builds.
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	if cfg.TheiaRatelimitLog != "" {
-		limit, err := strconv.ParseInt(cfg.TheiaRatelimitLog, 10, 64)
-		if err != nil {
-			log.WithError(err).WithField("ratelimit", cfg.TheiaRatelimitLog).Warn("cannot to parse log rate limit, not rate limiting")
-		} else {
-			log.WithField("limit_kb_per_sec", limit).Info("rate limiting Theia log output")
-			cmd.Stdout = dropwriter.Writer(cmd.Stdout, dropwriter.NewBucket(limit*1024*3, limit*1024))
-			cmd.Stderr = dropwriter.Writer(cmd.Stderr, dropwriter.NewBucket(limit*1024*3, limit*1024))
-		}
+	if lrr := cfg.LogRateLimit(); lrr > 0 {
+		limit := int64(lrr)
+		cmd.Stdout = dropwriter.Writer(cmd.Stdout, dropwriter.NewBucket(limit*1024*3, limit*1024))
+		cmd.Stderr = dropwriter.Writer(cmd.Stderr, dropwriter.NewBucket(limit*1024*3, limit*1024))
+		log.WithField("limit_kb_per_sec", limit).Info("rate limiting IDE log output")
 	}
 
 	return cmd
@@ -470,8 +326,7 @@ func buildTheiaEnv(cfg *Config) []string {
 	}
 
 	ce := map[string]string{
-		"THEIA_SHELL_ARGS": cfg.TheiaShellArgs,
-		"SUPERVISOR_ADDR":  fmt.Sprintf("localhost:%d", cfg.APIEndpointPort),
+		"SUPERVISOR_ADDR": fmt.Sprintf("localhost:%d", cfg.APIEndpointPort),
 	}
 	for nme, val := range ce {
 		log.WithField("envvar", nme).Debug("passing environment variable to Theia")

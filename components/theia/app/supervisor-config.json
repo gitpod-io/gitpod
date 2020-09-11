@@ -1,5 +1,5 @@
 {
-  "entrypoint": "/theia/node_modules/@gitpod/gitpod-ide/startup.sh",
-  "theiaPort": 23000,
+  "ideConfigLocation": "/theia/supervisor-ide-config.json",
+  "frontendLocation": "/theia/frontend/",
   "apiEndpointPort": 22999
 }
