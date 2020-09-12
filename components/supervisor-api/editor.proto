@@ -5,11 +5,12 @@ package supervisor;
 option go_package = "api";
 
 service EditorService {
-  rpc List(ListEditorsRequest) returns (ListEditorsResponse) {}
-  rpc Open(OpenEditorRequest) returns (OpenEditorResponse) {}
-  rpc Close(CloseEditorRequest) returns (CloseEditorResponse) {}
-  rpc GetActive(GetActiveEditorRequest) returns (GetActiveEditorResponse) {}
-  rpc SetActive(SetActiveEditorRequest) returns (SetActiveEditorResponse) {}
+  rpc List(ListEditorsRequest) returns (ListEditorsResponse);
+  rpc Open(OpenEditorRequest) returns (OpenEditorResponse);
+  rpc Close(CloseEditorRequest) returns (CloseEditorResponse);
+  rpc GetActive(GetActiveEditorRequest) returns (GetActiveEditorResponse);
+  rpc SetActive(SetActiveEditorRequest) returns (SetActiveEditorResponse);
+  rpc Write(WriteEditorRequest) returns (WriteEditorResponse);
 }
 
 message Editor {
@@ -47,3 +48,10 @@ message SetActiveEditorRequest {
 }
 
 message SetActiveEditorResponse {}
+
+message WriteEditorRequest {
+  string path = 1;
+  string text = 2;
+}
+
+message WriteEditorResponse {}
