@@ -228,3 +228,45 @@ export namespace SetActiveEditorResponse {
     export type AsObject = {
     }
 }
+
+export class WriteEditorRequest extends jspb.Message { 
+    getPath(): string;
+    setPath(value: string): void;
+
+    getText(): string;
+    setText(value: string): void;
+
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): WriteEditorRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: WriteEditorRequest): WriteEditorRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: WriteEditorRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): WriteEditorRequest;
+    static deserializeBinaryFromReader(message: WriteEditorRequest, reader: jspb.BinaryReader): WriteEditorRequest;
+}
+
+export namespace WriteEditorRequest {
+    export type AsObject = {
+        path: string,
+        text: string,
+    }
+}
+
+export class WriteEditorResponse extends jspb.Message { 
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): WriteEditorResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: WriteEditorResponse): WriteEditorResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: WriteEditorResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): WriteEditorResponse;
+    static deserializeBinaryFromReader(message: WriteEditorResponse, reader: jspb.BinaryReader): WriteEditorResponse;
+}
+
+export namespace WriteEditorResponse {
+    export type AsObject = {
+    }
+}

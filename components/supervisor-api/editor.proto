@@ -2,15 +2,25 @@ syntax = "proto3";
 
 package supervisor;
 
+import "google/api/annotations.proto";
+
 option go_package = "api";
 
 service EditorService {
-  rpc List(ListEditorsRequest) returns (ListEditorsResponse);
-  rpc Open(OpenEditorRequest) returns (OpenEditorResponse);
-  rpc Close(CloseEditorRequest) returns (CloseEditorResponse);
-  rpc GetActive(GetActiveEditorRequest) returns (GetActiveEditorResponse);
-  rpc SetActive(SetActiveEditorRequest) returns (SetActiveEditorResponse);
-  rpc Write(WriteEditorRequest) returns (WriteEditorResponse);
+  rpc List(ListEditorsRequest) returns (ListEditorsResponse) {
+    option (google.api.http) = {
+      get: "/v1/editor/list"
+    };
+  }
+  rpc Open(OpenEditorRequest) returns (OpenEditorResponse) {}
+  rpc Close(CloseEditorRequest) returns (CloseEditorResponse) {}
+  rpc GetActive(GetActiveEditorRequest) returns (GetActiveEditorResponse) {}
+  rpc SetActive(SetActiveEditorRequest) returns (SetActiveEditorResponse) {}
+  rpc Write(WriteEditorRequest) returns (WriteEditorResponse) {
+    option (google.api.http) = {
+      post: "/v1/editor/write/{text}"
+    };
+  }
 }
 
 message Editor {

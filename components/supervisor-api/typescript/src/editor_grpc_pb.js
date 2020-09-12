@@ -114,6 +114,28 @@ function deserialize_supervisor_SetActiveEditorResponse(buffer_arg) {
   return editor_pb.SetActiveEditorResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_supervisor_WriteEditorRequest(arg) {
+  if (!(arg instanceof editor_pb.WriteEditorRequest)) {
+    throw new Error('Expected argument of type supervisor.WriteEditorRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_supervisor_WriteEditorRequest(buffer_arg) {
+  return editor_pb.WriteEditorRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_supervisor_WriteEditorResponse(arg) {
+  if (!(arg instanceof editor_pb.WriteEditorResponse)) {
+    throw new Error('Expected argument of type supervisor.WriteEditorResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_supervisor_WriteEditorResponse(buffer_arg) {
+  return editor_pb.WriteEditorResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 
 var EditorServiceService = exports.EditorServiceService = {
   list: {
@@ -170,6 +192,17 @@ var EditorServiceService = exports.EditorServiceService = {
     requestDeserialize: deserialize_supervisor_SetActiveEditorRequest,
     responseSerialize: serialize_supervisor_SetActiveEditorResponse,
     responseDeserialize: deserialize_supervisor_SetActiveEditorResponse,
+  },
+  write: {
+    path: '/supervisor.EditorService/Write',
+    requestStream: false,
+    responseStream: false,
+    requestType: editor_pb.WriteEditorRequest,
+    responseType: editor_pb.WriteEditorResponse,
+    requestSerialize: serialize_supervisor_WriteEditorRequest,
+    requestDeserialize: deserialize_supervisor_WriteEditorRequest,
+    responseSerialize: serialize_supervisor_WriteEditorResponse,
+    responseDeserialize: deserialize_supervisor_WriteEditorResponse,
   },
 };
 

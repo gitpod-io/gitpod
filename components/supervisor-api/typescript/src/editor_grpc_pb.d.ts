@@ -12,6 +12,7 @@ interface IEditorServiceService extends grpc.ServiceDefinition<grpc.UntypedServi
     close: IEditorServiceService_IClose;
     getActive: IEditorServiceService_IGetActive;
     setActive: IEditorServiceService_ISetActive;
+    write: IEditorServiceService_IWrite;
 }
 
 interface IEditorServiceService_IList extends grpc.MethodDefinition<editor_pb.ListEditorsRequest, editor_pb.ListEditorsResponse> {
@@ -59,6 +60,15 @@ interface IEditorServiceService_ISetActive extends grpc.MethodDefinition<editor_
     responseSerialize: grpc.serialize<editor_pb.SetActiveEditorResponse>;
     responseDeserialize: grpc.deserialize<editor_pb.SetActiveEditorResponse>;
 }
+interface IEditorServiceService_IWrite extends grpc.MethodDefinition<editor_pb.WriteEditorRequest, editor_pb.WriteEditorResponse> {
+    path: string; // "/supervisor.EditorService/Write"
+    requestStream: boolean; // false
+    responseStream: boolean; // false
+    requestSerialize: grpc.serialize<editor_pb.WriteEditorRequest>;
+    requestDeserialize: grpc.deserialize<editor_pb.WriteEditorRequest>;
+    responseSerialize: grpc.serialize<editor_pb.WriteEditorResponse>;
+    responseDeserialize: grpc.deserialize<editor_pb.WriteEditorResponse>;
+}
 
 export const EditorServiceService: IEditorServiceService;
 
@@ -68,6 +78,7 @@ export interface IEditorServiceServer {
     close: grpc.handleUnaryCall<editor_pb.CloseEditorRequest, editor_pb.CloseEditorResponse>;
     getActive: grpc.handleUnaryCall<editor_pb.GetActiveEditorRequest, editor_pb.GetActiveEditorResponse>;
     setActive: grpc.handleUnaryCall<editor_pb.SetActiveEditorRequest, editor_pb.SetActiveEditorResponse>;
+    write: grpc.handleUnaryCall<editor_pb.WriteEditorRequest, editor_pb.WriteEditorResponse>;
 }
 
 export interface IEditorServiceClient {
@@ -86,6 +97,9 @@ export interface IEditorServiceClient {
     setActive(request: editor_pb.SetActiveEditorRequest, callback: (error: grpc.ServiceError | null, response: editor_pb.SetActiveEditorResponse) => void): grpc.ClientUnaryCall;
     setActive(request: editor_pb.SetActiveEditorRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: editor_pb.SetActiveEditorResponse) => void): grpc.ClientUnaryCall;
     setActive(request: editor_pb.SetActiveEditorRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: editor_pb.SetActiveEditorResponse) => void): grpc.ClientUnaryCall;
+    write(request: editor_pb.WriteEditorRequest, callback: (error: grpc.ServiceError | null, response: editor_pb.WriteEditorResponse) => void): grpc.ClientUnaryCall;
+    write(request: editor_pb.WriteEditorRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: editor_pb.WriteEditorResponse) => void): grpc.ClientUnaryCall;
+    write(request: editor_pb.WriteEditorRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: editor_pb.WriteEditorResponse) => void): grpc.ClientUnaryCall;
 }
 
 export class EditorServiceClient extends grpc.Client implements IEditorServiceClient {
@@ -105,4 +119,7 @@ export class EditorServiceClient extends grpc.Client implements IEditorServiceCl
     public setActive(request: editor_pb.SetActiveEditorRequest, callback: (error: grpc.ServiceError | null, response: editor_pb.SetActiveEditorResponse) => void): grpc.ClientUnaryCall;
     public setActive(request: editor_pb.SetActiveEditorRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: editor_pb.SetActiveEditorResponse) => void): grpc.ClientUnaryCall;
     public setActive(request: editor_pb.SetActiveEditorRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: editor_pb.SetActiveEditorResponse) => void): grpc.ClientUnaryCall;
+    public write(request: editor_pb.WriteEditorRequest, callback: (error: grpc.ServiceError | null, response: editor_pb.WriteEditorResponse) => void): grpc.ClientUnaryCall;
+    public write(request: editor_pb.WriteEditorRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: editor_pb.WriteEditorResponse) => void): grpc.ClientUnaryCall;
+    public write(request: editor_pb.WriteEditorRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: editor_pb.WriteEditorResponse) => void): grpc.ClientUnaryCall;
 }
