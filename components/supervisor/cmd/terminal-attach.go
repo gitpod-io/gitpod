@@ -118,14 +118,17 @@ func attachToTerminal(ctx context.Context, client api.TerminalServiceClient, ali
 					HeightPx: uint32(size.Y),
 				}
 
+				var expectResize bool
 				if opts.ForceResize {
 					req.Priority = &api.SetTerminalSizeRequest_Force{Force: true}
+					expectResize = true
 				} else if opts.Token != "" {
 					req.Priority = &api.SetTerminalSizeRequest_Token{Token: opts.Token}
+					expectResize = true
 				}
 
 				_, err = client.SetSize(ctx, req)
-				if err != nil {
+				if err != nil && expectResize {
 					log.WithError(err).Error("cannot set terminal size")
 					continue
 				}
