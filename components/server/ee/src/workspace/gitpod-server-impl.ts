@@ -7,7 +7,7 @@
 import { injectable, inject } from "inversify";
 import { GitpodServerImpl } from "../../../src/workspace/gitpod-server-impl";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { GitpodServer, GitpodClient, AdminGetListRequest, User, AdminGetListResult, Permission, AdminBlockUserRequest, AdminModifyRoleOrPermissionRequest, RoleOrPermission, AdminModifyPermanentWorkspaceFeatureFlagRequest, UserFeatureSettings, AdminGetWorkspacesRequest, WorkspaceAndInstance, GetWorkspaceTimeoutResult, WorkspaceTimeoutDuration, WorkspaceTimeoutValues, SetWorkspaceTimeoutResult, WorkspaceContext, CreateWorkspaceMode, WorkspaceCreationResult, PrebuiltWorkspaceContext, CommitContext, PrebuiltWorkspace } from "@gitpod/gitpod-protocol";
+import { GitpodServer, GitpodClient, User, Permission, RoleOrPermission, UserFeatureSettings, GetWorkspaceTimeoutResult, WorkspaceTimeoutDuration, WorkspaceTimeoutValues, SetWorkspaceTimeoutResult, WorkspaceContext, CreateWorkspaceMode, WorkspaceCreationResult, PrebuiltWorkspaceContext, CommitContext, PrebuiltWorkspace, AdminServer } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import { TakeSnapshotRequest, AdmissionLevel, ControlAdmissionRequest, StopWorkspacePolicy, DescribeWorkspaceRequest, SetTimeoutRequest } from "@gitpod/ws-manager/lib";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -16,7 +16,7 @@ import * as uuidv4 from 'uuid/v4';
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { LicenseEvaluator, LicenseKeySource } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
-import { LicenseValidationResult, GetLicenseInfoResult, LicenseFeature } from '@gitpod/gitpod-protocol/lib/license-protocol';
+import { LicenseValidationResult, GetLicenseInfoResult } from '@gitpod/gitpod-protocol/lib/license-protocol';
 import { PrebuildManager } from "../prebuilds/prebuild-manager";
 import { LicenseDB } from "@gitpod/gitpod-db/lib/license-db";
 
@@ -52,9 +52,10 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
         return { valid: true };
     }
 
-    public async setWorkspaceTimeout(workspaceId: string, duration: WorkspaceTimeoutDuration): Promise<SetWorkspaceTimeoutResult> {
+    public async setWorkspaceTimeout(params: GitpodServer.SetWorkspaceTimeoutParams): Promise<SetWorkspaceTimeoutResult> {
         this.requireEELicense(Feature.FeatureSetTimeout);
 
+        const { workspaceId, duration } = params;
         const user = this.checkUser("setWorkspaceTimeout");
         const span = opentracing.globalTracer().startSpan("setWorkspaceTimeout");
         span.setTag("workspaceId", workspaceId);
@@ -113,26 +114,26 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
         }
     }
 
-    public async getWorkspaceTimeout(workspaceId: string): Promise<GetWorkspaceTimeoutResult> {
+    public async getWorkspaceTimeout(params: GitpodServer.GetWorkspaceTimeoutParams): Promise<GetWorkspaceTimeoutResult> {
         // Allowed in the free version, because it is read only.
         // this.requireEELicense(Feature.FeatureSetTimeout);
 
         const user = this.checkUser("getWorkspaceTimeout");
         const span = opentracing.globalTracer().startSpan("getWorkspaceTimeout");
-        span.setTag("workspaceId", workspaceId);
+        span.setTag("workspaceId", params.workspaceId);
         span.setTag("userId", user.id);
 
         try {
             const canChange = await this.maySetTimeout(user);
 
-            const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace({ span }));
+            const workspace = await this.internalGetWorkspace(params.workspaceId, this.workspaceDb.trace({ span }));
             if (user.id != workspace.ownerId) {
                 throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Only the owner may get the workspace keep-alive.");
             }
 
-            const runningInstance = await this.workspaceDb.trace({ span }).findRunningInstance(workspaceId);
+            const runningInstance = await this.workspaceDb.trace({ span }).findRunningInstance(params.workspaceId);
             if (!runningInstance) {
-                log.warn({ userId: user.id, workspaceId }, 'Can only get keep-alive for running workspaces');
+                log.warn({ userId: user.id, workspaceId: params.workspaceId }, 'Can only get keep-alive for running workspaces');
                 return { duration: "30m", canChange };
             }
 
@@ -152,15 +153,15 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
     }
 
 
-    public async isPrebuildAvailable(pwsid: string): Promise<boolean> {
+    public async isPrebuildAvailable(params: GitpodServer.IsPrebuildAvailableParams): Promise<boolean> {
         // Allowed in the free version, because it is read only.
         // this.requireEELicense(Feature.FeaturePrebuild);
 
         const span = opentracing.globalTracer().startSpan("isPrebuildAvailable");
-        span.setTag("pwsid", pwsid);
+        span.setTag("pwsid", params.pwsid);
         const ctx: TraceContext = { span };
         try {
-            const pws = await this.workspaceDb.trace(ctx).findPrebuildByID(pwsid);
+            const pws = await this.workspaceDb.trace(ctx).findPrebuildByID(params.pwsid);
             if (!pws) {
                 // there is no prebuild - that's as good one being done
                 return true;
@@ -182,9 +183,11 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
         return true;
     }
 
-    public async controlAdmission(id: string, level: "owner" | "everyone"): Promise<void> {
+    public async controlAdmission(params: GitpodServer.ControlAdmissionParams): Promise<void> {
         this.requireEELicense(Feature.FeatureWorkspaceSharing);
 
+        const id = params.workspaceId;
+        const level = params.level;
         const user = this.checkAndBlockUser('controlAdmission');
         const span = opentracing.globalTracer().startSpan("controlAdmission");
         span.setTag("workspaceId", id);
@@ -226,11 +229,11 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
         }
     }
 
-    async takeSnapshot(options: GitpodServer.TakeSnapshotOptions): Promise<string> {
+    async takeSnapshot(params: GitpodServer.TakeSnapshotParams): Promise<string> {
         this.requireEELicense(Feature.FeatureSnapshot);
 
         const user = this.checkAndBlockUser("takeSnapshot");
-        const { workspaceId, layoutData } = options;
+        const { workspaceId, layoutData } = params;
 
         const span = opentracing.globalTracer().startSpan("takeSnapshot");
         span.setTag("workspaceId", workspaceId);
@@ -271,23 +274,23 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
         }
     }
 
-    async getSnapshots(workspaceId: string): Promise<string[]> {
+    async getSnapshots(params: GitpodServer.GetSnapshotsParams): Promise<string[]> {
         // Allowed in the free version, because it is read only.
         // this.requireEELicense(Feature.FeatureSnapshot);
 
         const user = this.checkAndBlockUser("getSnapshots");
 
         const span = opentracing.globalTracer().startSpan("getSnapshots");
-        span.setTag("workspaceId", workspaceId);
+        span.setTag("workspaceId", params.workspaceId);
         span.setTag("userId", user.id);
 
         try {
-            const workspace = await this.workspaceDb.trace({ span }).findById(workspaceId);
+            const workspace = await this.workspaceDb.trace({ span }).findById(params.workspaceId);
             if (!workspace || workspace.ownerId !== user.id) {
-                throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} does not exist.`);
+                throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${params.workspaceId} does not exist.`);
             }
 
-            const snapshots = await this.workspaceDb.trace({ span }).findSnapshotsByWorkspaceId(workspaceId);
+            const snapshots = await this.workspaceDb.trace({ span }).findSnapshotsByWorkspaceId(params.workspaceId);
             return snapshots.map(s => s.id);
         } catch (e) {
             TraceContext.logError({ span }, e);
@@ -298,7 +301,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
     }
 
 
-    async adminGetUsers(req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>> {
+    async adminGetUsers(params: AdminServer.AdminGetUsersParams): Promise<AdminServer.AdminGetListResult<User>> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         const user = this.checkAndBlockUser("adminGetUsers");
@@ -308,7 +311,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
 
         const span = opentracing.globalTracer().startSpan("adminGetUsers");
         try {
-            const res = await this.userDB.findAllUsers(req.offset, req.limit, req.orderBy, req.orderDir === "asc" ? "ASC" : "DESC", req.searchTerm);
+            const res = await this.userDB.findAllUsers(params.offset, params.limit, params.orderBy, params.orderDir === "asc" ? "ASC" : "DESC", params.searchTerm);
             res.rows = res.rows.map(this.censorUser);
             return res;
         } catch (e) {
@@ -319,7 +322,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
         }
     }
 
-    async adminGetUser(id: string): Promise<User> {
+    async adminGetUser(params: AdminServer.AdminGetUserParams): Promise<User> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         const user = this.checkAndBlockUser("adminGetUser");
@@ -330,7 +333,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
         let result: User | undefined;
         const span = opentracing.globalTracer().startSpan("adminGetUser");
         try {
-            result = await this.userDB.findUserById(id);
+            result = await this.userDB.findUserById(params.id);
         } catch (e) {
             TraceContext.logError({ span }, e);
             throw new ResponseError(500, e.toString());
@@ -344,7 +347,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
         return this.censorUser(result);
     }
 
-    async adminBlockUser(req: AdminBlockUserRequest): Promise<User> {
+    async adminBlockUser(params: AdminServer.AdminBlockUserParams): Promise<User> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         const user = this.checkAndBlockUser("adminBlockUser");
@@ -354,16 +357,16 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
 
         const span = opentracing.globalTracer().startSpan("adminBlockUser");
         try {
-            const target = await this.userDB.findUserById(req.id);
+            const target = await this.userDB.findUserById(params.id);
             if (!target) {
                 throw new ResponseError(ErrorCodes.NOT_FOUND, "not found")
             }
 
-            target.blocked = !!req.blocked;
+            target.blocked = !!params.blocked;
             await this.userDB.storeUser(target);
 
             const workspaceDb = this.workspaceDb.trace({ span });
-            const workspaces = await workspaceDb.findWorkspacesByUser(req.id);
+            const workspaces = await workspaceDb.findWorkspacesByUser(params.id);
             const isDefined = <T>(x: T | undefined): x is T => x !== undefined;
             (await Promise.all(workspaces.map((workspace) => workspaceDb.findRunningInstance(workspace.id))))
                 .filter(isDefined)
@@ -380,7 +383,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
         }
     }
 
-    async adminModifyRoleOrPermission(req: AdminModifyRoleOrPermissionRequest): Promise<User> {
+    async adminModifyRoleOrPermission(params: AdminServer.AdminModifyRoleOrPermissionParams): Promise<User> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         const user = this.checkAndBlockUser("adminModifyRoleOrPermission");
@@ -389,15 +392,15 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
         }
 
         const span = opentracing.globalTracer().startSpan("adminModifyRoleOrPermission");
-        span.log(req);
+        span.log(params);
         try {
-            const target = await this.userDB.findUserById(req.id);
+            const target = await this.userDB.findUserById(params.id);
             if (!target) {
                 throw new ResponseError(ErrorCodes.NOT_FOUND, "not found")
             }
 
             const rolesOrPermissions = new Set((target.rolesOrPermissions || []) as string[]);
-            req.rpp.forEach(e => {
+            params.rpp.forEach(e => {
                 if (e.add) {
                     rolesOrPermissions.add(e.r as string);
                 } else {
@@ -410,7 +413,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
             // For some reason, neither returning the result of `this.userDB.storeUser(target)` nor returning `target` work.
             // The response never arrives the caller.
             // Returning the following works at the cost of an additional DB query:
-            return this.censorUser((await this.userDB.findUserById(req.id))!);
+            return this.censorUser((await this.userDB.findUserById(params.id))!);
         } catch (e) {
             TraceContext.logError({ span }, e);
             throw new ResponseError(500, e.toString());
@@ -419,7 +422,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
         }
     }
 
-    async adminModifyPermanentWorkspaceFeatureFlag(req: AdminModifyPermanentWorkspaceFeatureFlagRequest): Promise<User> {
+    async adminModifyPermanentWorkspaceFeatureFlag(params: AdminServer.AdminModifyPermanentWorkspaceFeatureFlagParams): Promise<User> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         const user = this.checkAndBlockUser("adminModifyPermanentWorkspaceFeatureFlag");
@@ -428,9 +431,9 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
         }
 
         const span = opentracing.globalTracer().startSpan("adminModifyPermanentWorkspaceFeatureFlag");
-        span.log(req);
+        span.log(params);
         try {
-            const target = await this.userDB.findUserById(req.id);
+            const target = await this.userDB.findUserById(params.id);
             if (!target) {
                 throw new ResponseError(ErrorCodes.NOT_FOUND, "not found")
             }
@@ -438,7 +441,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
             const featureSettings: UserFeatureSettings = target.featureFlags || {};
             const featureFlags = new Set(featureSettings.permanentWSFeatureFlags || []);
 
-            req.changes.forEach(e => {
+            params.changes.forEach(e => {
                 if (e.add) {
                     featureFlags.add(e.featureFlag);
                 } else {
@@ -460,7 +463,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
         }
     }
 
-    async adminGetWorkspaces(req: AdminGetWorkspacesRequest): Promise<AdminGetListResult<WorkspaceAndInstance>> {
+    async adminGetWorkspaces(params: AdminServer.AdminGetWorkspacesParams): Promise<AdminServer.AdminGetListResult<AdminServer.WorkspaceAndInstance>> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         const user = this.checkAndBlockUser("adminGetWorkspaces");
@@ -470,7 +473,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
 
         const span = opentracing.globalTracer().startSpan("adminGetWorkspaces");
         try {
-            return await this.workspaceDb.trace({ span }).findAllWorkspaceAndInstances(req.offset, req.limit, req.orderBy, req.orderDir === "asc" ? "ASC" : "DESC", req.ownerId, req.searchTerm);
+            return await this.workspaceDb.trace({ span }).findAllWorkspaceAndInstances(params.offset, params.limit, params.orderBy, params.orderDir === "asc" ? "ASC" : "DESC", params.ownerId, params.searchTerm);
         } catch (e) {
             TraceContext.logError({ span }, e);
             throw new ResponseError(500, e.toString());
@@ -479,7 +482,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
         }
     }
 
-    async adminGetWorkspace(id: string): Promise<WorkspaceAndInstance> {
+    async adminGetWorkspace(params: AdminServer.AdminGetWorkspaceParams): Promise<AdminServer.WorkspaceAndInstance> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         const user = this.checkAndBlockUser("adminGetWorkspace");
@@ -487,10 +490,10 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
         }
 
-        let result: WorkspaceAndInstance | undefined;
+        let result: AdminServer.WorkspaceAndInstance | undefined;
         const span = opentracing.globalTracer().startSpan("adminGetWorkspace");
         try {
-            result = await this.workspaceDb.trace({ span }).findWorkspaceAndInstance(id);
+            result = await this.workspaceDb.trace({ span }).findWorkspaceAndInstance(params.workspaceId);
         } catch (e) {
             TraceContext.logError({ span }, e);
             throw new ResponseError(500, e.toString());
@@ -504,7 +507,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
         return result;
     }
 
-    async adminForceStopWorkspace(id: string): Promise<void> {
+    async adminForceStopWorkspace(params: AdminServer.adminForceStopWorkspaceParams): Promise<void> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         const user = this.checkAndBlockUser("adminForceStopWorkspace");
@@ -512,7 +515,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
         }
         const span = opentracing.globalTracer().startSpan("adminForceStopWorkspace");
-        await this.internalStopWorkspace({ span }, id, StopWorkspacePolicy.IMMEDIATELY);
+        await this.internalStopWorkspace({ span }, params.workspaceId, StopWorkspacePolicy.IMMEDIATELY);
     }
 
     protected async findPrebuiltWorkspace(ctx: TraceContext, user: User, context: WorkspaceContext, mode: CreateWorkspaceMode): Promise<WorkspaceCreationResult | PrebuiltWorkspaceContext | undefined> {
@@ -617,14 +620,14 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
         }
     }
 
-    async adminSetLicense(key: string): Promise<void> {
+    async adminSetLicense(params: AdminServer.AdminSetLicenseParams): Promise<void> {
         const user = this.checkAndBlockUser("adminSetLicense");
 
         if (!this.authorizationService.hasPermission(user, Permission.ADMIN_API)) {
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
         }
 
-        await this.licenseDB.store(uuidv4(), key);
+        await this.licenseDB.store(uuidv4(), params.key);
         await this.licenseEvaluator.reloadLicense();
     }
 
@@ -646,22 +649,6 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
                 validUntil
             }
         };
-    }
-
-    async licenseIncludesFeature(licenseFeature: LicenseFeature): Promise<boolean> {
-        this.checkAndBlockUser("getLicenseInfo");
-
-        let feature: Feature | undefined;
-        switch (licenseFeature) {
-            case LicenseFeature.CreateSnapshot:
-                feature = Feature.FeatureSnapshot
-            // room for more
-            default:
-        }
-        if (feature) {
-            return this.licenseEvaluator.isEnabled(feature);
-        }
-        return false;
     }
 
 }

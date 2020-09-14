@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject } from 'inversify';
-import { ResolvePluginsParams, ResolvedPlugins, TheiaPlugin, PreparePluginUploadParams, InstallPluginsParams, UninstallPluginParams, ResolvedPluginKind } from '@gitpod/gitpod-protocol';
+import { ResolvedPlugins, TheiaPlugin, ResolvedPluginKind, GitpodServer } from '@gitpod/gitpod-protocol';
 import { TheiaPluginDB } from "@gitpod/gitpod-db/lib/theia-plugin-db";
 import { Env } from '../env';
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
@@ -113,7 +113,7 @@ export class TheiaPluginService {
      *
      * @returns a public facing URL for the upload which contains the ID of a newly created DB entry for the plugin
      */
-    async preparePluginUpload(params: PreparePluginUploadParams, userId: string): Promise<string> {
+    async preparePluginUpload(params: GitpodServer.PreparePluginUploadParams, userId: string): Promise<string> {
         const { fullPluginName } = params;
         const pathFn = (pluginEntryId: string) => this.toObjectPath(pluginEntryId, userId, fullPluginName);
         const pluginEntry = await this.pluginDB.newPlugin(userId, fullPluginName, this.bucketName, pathFn);
@@ -145,7 +145,7 @@ export class TheiaPluginService {
             }).toString();
     }
 
-    async resolvePlugins(userId: string, { config, builtins }: ResolvePluginsParams): Promise<ResolvedPlugins> {
+    async resolvePlugins(userId: string, { config, builtins }: Pick<GitpodServer.ResolvePluginsParams, "builtins"|"config">): Promise<ResolvedPlugins> {
         const resolved: ResolvedPlugins = {};
         const addedPlugins = new Set<string>();
         const resolvePlugin = async (extension: string, kind: ResolvedPluginKind) => {
@@ -194,7 +194,7 @@ export class TheiaPluginService {
         return this.getPublicPluginURL(pluginEntry.id)
     }
 
-    async installUserPlugins(userId: string, params: InstallPluginsParams): Promise<boolean> {
+    async installUserPlugins(userId: string, params: GitpodServer.InstallUserPluginsParams): Promise<boolean> {
         if (!params.pluginIds.length) {
             return false;
         }
@@ -210,7 +210,7 @@ export class TheiaPluginService {
         });
     }
 
-    async uninstallUserPlugin(userId: string, params: UninstallPluginParams): Promise<boolean> {
+    async uninstallUserPlugin(userId: string, params: GitpodServer.UninstallUserPluginParams): Promise<boolean> {
         return await this.updateUserPlugins(userId, pluginIds =>
             pluginIds.delete(params.pluginId)
         );
