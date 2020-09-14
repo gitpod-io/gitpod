@@ -32,7 +32,15 @@ export enum LicenseFeature {
 }
 
 export interface LicenseService {
-    validateLicense(): Promise<LicenseValidationResult>;
-    getLicenseInfo(): Promise<GetLicenseInfoResult>;
-    licenseIncludesFeature(feature: LicenseFeature): Promise<boolean>
+    validateLicense(params: LicenseService.ValidateLicenseParams): Promise<LicenseValidationResult>;
+    getLicenseInfo(params: LicenseService.GetLicenseInfoParams): Promise<GetLicenseInfoResult>;
+    licenseIncludesFeature(params: LicenseService.LicenseIncludesFeatureParams): Promise<boolean>
+}
+
+export namespace LicenseService {
+    export interface ValidateLicenseParams {}
+    export interface GetLicenseInfoParams {}
+    export interface LicenseIncludesFeatureParams {
+        readonly feature: LicenseFeature;
+    }
 }
