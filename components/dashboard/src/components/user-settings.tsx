@@ -57,12 +57,12 @@ export class UserSettings extends React.Component<UserSettingsProps, UserSetting
         settings.disallowTransactionalEmails = !allowsTransactionalMail;
         const additionalData = { ...this.state.additionalData };
         additionalData.emailNotificationSettings!.disallowTransactionalEmails = !allowsTransactionalMail;
-        const user = await this.props.service.server.updateLoggedInUser({ additionalData });
+        const user = await this.props.service.server.updateLoggedInUser({ user: { additionalData } });
         this.update(user);
     }
 
     private async updateAllowsMarketingCommunication(allowsMarketingCommunication: boolean): Promise<void> {
-        const user = await this.props.service.server.updateLoggedInUser({ allowsMarketingCommunication });
+        const user = await this.props.service.server.updateLoggedInUser({ user: { allowsMarketingCommunication } });
         this.update(user);
     }
 

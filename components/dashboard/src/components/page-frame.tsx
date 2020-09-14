@@ -47,10 +47,10 @@ export class ApplicationFrame extends React.Component<ApplicationProps, Applicat
             return;
         }
         const server = this.props.service.server;
-        const userPromise = this.props.userPromise || server.getLoggedInUser();
+        const userPromise = this.props.userPromise || server.getLoggedInUser({});
         const [user, authProviders] = await Promise.all([
             userPromise.catch(log.error),
-            server.getAuthProviders().catch(log.error),
+            server.getAuthProviders({}).catch(log.error),
         ]);
         this.setState({
             user: user || undefined,

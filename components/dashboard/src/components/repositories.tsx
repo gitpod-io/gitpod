@@ -37,9 +37,9 @@ export class FeaturedRepositories extends React.Component<FeaturedRepositoryProp
 		this.disposables.dispose();
 	}
 
-	private async updateRepositoryList(options?: GitpodServer.GetWorkspacesOptions) {
+	private async updateRepositoryList(options?: GitpodServer.GetWorkspacesParams) {
 		try {
-			const repositories = await this.props.service.server.getFeaturedRepositories();
+			const repositories = await this.props.service.server.getFeaturedRepositories({});
 			this.setState({ repositories });
 		} catch (err) {
 			log.error(err);

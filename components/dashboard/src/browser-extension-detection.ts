@@ -14,13 +14,13 @@ export namespace browserExtension {
     const cookieName = 'user-platform';
 
     export async function getUserPlatform(service: GitpodService): Promise<UserPlatform | undefined> {
-        const user = await service.server.getLoggedInUser();
+        const user = await service.server.getLoggedInUser({});
         const uid = Cookies.get(cookieName);
         return user.additionalData && user.additionalData.platforms && user.additionalData.platforms.find(p => p.uid === uid);
     }
 
     export async function updatePlatformInformation(service: GitpodService): Promise<void> {
-        const user = await service.server.getLoggedInUser();
+        const user = await service.server.getLoggedInUser({});
         const now = new Date().toISOString();
         let uid: string | undefined = Cookies.get(cookieName);
         const parser = new UAParser();
@@ -80,7 +80,7 @@ export namespace browserExtension {
         }
 
         // update user data
-        service.server.updateLoggedInUser({ additionalData: user.additionalData });
+        service.server.updateLoggedInUser({ user: { additionalData: user.additionalData } });
         Cookies.set(cookieName, uid!, { expires: 365 });
     }
 

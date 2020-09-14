@@ -57,9 +57,9 @@ export class UserView extends React.Component<UserViewProps, UserViewState> {
 
     async componentDidMount() {
         try {
-            const loggedInUser = await this.props.service.server.getLoggedInUser();
+            const loggedInUser = await this.props.service.server.getLoggedInUser({});
             const [ user ] = await Promise.all([
-                this.props.service.server.adminGetUser(this.props.userID)
+                this.props.service.server.adminGetUser({id: this.props.userID})
             ]);
             this.setState({user, ourself: loggedInUser.id === this.props.userID});
         } catch (err) {

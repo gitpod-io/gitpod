@@ -80,7 +80,7 @@ export class AuthProviders extends React.Component<AuthProvidersProps, AuthProvi
         if (!this.noUserMode && !this.props.user) {
             return;
         }
-        const ownAuthProviders = await this.props.service.server.getOwnAuthProviders();
+        const ownAuthProviders = await this.props.service.server.getOwnAuthProviders({});
         this.setState({ ownAuthProviders });
     }
 

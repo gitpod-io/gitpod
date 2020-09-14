@@ -112,14 +112,14 @@ export class DeleteAccountView extends React.Component<DeleteAccountViewProps, D
     }
 
     protected async getUsername() {
-        const user = await this.props.service.server.getLoggedInUser();
+        const user = await this.props.service.server.getLoggedInUser({});
         this.setState({ username: user.name });
     }
 
     protected async deleteAccount() {
         this.setState({ status: "in-progress" });
         try {
-            await this.props.service.server.deleteAccount();
+            await this.props.service.server.deleteAccount({});
 
             this.setState({ status: "done" });
         } catch (err) {

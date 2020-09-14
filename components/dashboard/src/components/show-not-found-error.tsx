@@ -32,7 +32,7 @@ export default class ShowNotFoundError extends React.Component<ShowNotFoundError
 
     protected async onLoad(): Promise<void> {
         try {
-            const authProviders = await this.props.service.server.getAuthProviders();
+            const authProviders = await this.props.service.server.getAuthProviders({});
             this.setState({ authProviders });
         } catch (err) {
             this.setState({});

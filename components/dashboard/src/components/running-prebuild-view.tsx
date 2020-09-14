@@ -57,7 +57,7 @@ export class RunningPrebuildView extends React.Component<RunningPrebuildViewProp
     }
 
     componentWillMount() {
-        this.props.service.server.watchHeadlessWorkspaceLogs(this.props.prebuildingWorkspaceId);
+        this.props.service.server.watchHeadlessWorkspaceLogs({workspaceId: this.props.prebuildingWorkspaceId});
     }
 
     public render() {

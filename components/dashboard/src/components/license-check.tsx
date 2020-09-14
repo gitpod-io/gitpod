@@ -25,7 +25,7 @@ export class LicenseCheck extends React.Component<LicenseCheckProps, LicenseChec
     }
 
     public async componentWillMount() {
-        this.setState({ result: await this.props.service.validateLicense() });
+        this.setState({ result: await this.props.service.validateLicense({}) });
     }
 
     public render() {

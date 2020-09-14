@@ -115,7 +115,7 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
 
     protected pollWorkspacePrebuild(pwsid: string) {
         this.timeout = setInterval(async () => {
-            const isAvailable = await this.props.service.server.isPrebuildAvailable(pwsid);
+            const isAvailable = await this.props.service.server.isPrebuildAvailable({ pwsid });
             if (!isAvailable) {
                 return;
             }

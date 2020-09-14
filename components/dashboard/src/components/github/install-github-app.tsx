@@ -54,7 +54,7 @@ export class InstallGithubApp extends React.Component<{}, InstallGithubAppState>
 
     async componentWillMount() {
         try {
-            await this.service.server.getLoggedInUser();
+            await this.service.server.getLoggedInUser({});
             this.setState({ isLoggedIn: true });
         } catch (e) {
             if (e instanceof ResponseError) {
@@ -163,7 +163,7 @@ export class InstallGithubApp extends React.Component<{}, InstallGithubAppState>
 
     protected async registerApp(installationId: string) {
         try {
-            await this.service.server.registerGithubApp(installationId);
+            await this.service.server.registerGithubApp({installationId});
 
             const thisUrl = new GitpodHostUrl(new URL(window.location.toString()));
             const returnTo = encodeURIComponent(thisUrl.with({ search: `installation_id=${installationId}&done=true` }).toString());

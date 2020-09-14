@@ -7,7 +7,7 @@
 import * as React from 'react';
 
 // tslint:disable-next-line:max-line-length
-import { GitpodService, GitpodClient, WorkspaceInstance, Disposable, WorkspaceInstanceStatus, WorkspaceImageBuild, WithPrebuild, Branding, Workspace, StartWorkspaceResult } from '@gitpod/gitpod-protocol';
+import { GitpodService, GitpodClient, WorkspaceInstance, Disposable, WorkspaceInstanceStatus, WorkspaceImageBuild, WithPrebuild, Branding, Workspace } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { ShowWorkspaceBuildLogs, WorkspaceBuildLog } from './show-workspace-build-logs';
 import { WorkspaceLogView } from './workspace-log-view';
@@ -120,8 +120,8 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         }
 
         const defaultErrMessage = `Error while starting workspace ${workspaceId}`;
-        this.props.service.server.startWorkspace(workspaceId, {forceDefaultImage})
-            .then((workspaceStartedResult: StartWorkspaceResult) => {
+        this.props.service.server.startWorkspace({workspaceId, forceDefaultImage})
+            .then(workspaceStartedResult => {
                 if (!workspaceStartedResult) {
                     this.setErrorState(defaultErrMessage);
                 } else {
@@ -133,7 +133,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                     this.setState({ startedInstanceId: workspaceStartedResult.instanceID, errorMessage: undefined, errorCode: undefined });
                     // Explicitly query state to guarantee we get at least one update
                     // (needed for already started workspaces, and not hanging in 'Starting ...' for too long)
-                    this.props.service.server.getWorkspace(workspaceId).then(ws => {
+                    this.props.service.server.getWorkspace({workspaceId}).then(ws => {
                         if (ws.latestInstance) {
                             this.onInstanceUpdate(ws.latestInstance);
                         }
@@ -184,7 +184,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         }
 
         if (workspaceInstance.status.phase === 'preparing') {
-            this.props.service.server.watchWorkspaceImageBuildLogs(workspaceInstance.workspaceId);
+            this.props.service.server.watchWorkspaceImageBuildLogs({workspaceId: workspaceInstance.workspaceId});
         }
         if (workspaceInstance.status.phase === 'pending') {
             if (this.isPrebuilt) {
@@ -222,7 +222,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         }
         if (workspaceInstance.status.phase === 'running') {
             if (this.isHeadless) {
-                this.props.service.server.watchHeadlessWorkspaceLogs(workspaceInstance.workspaceId);
+                this.props.service.server.watchHeadlessWorkspaceLogs({workspaceId: workspaceInstance.workspaceId});
             }
         }
         if (workspaceInstance.status.phase === 'stopping') {
@@ -249,7 +249,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
     protected async ensureWorkspaceInfo() {
         if (this.props.workspaceId && !this.workspaceInfoReceived) {
             try {
-                const info = await this.props.service.server.getWorkspace(this.props.workspaceId);
+                const info = await this.props.service.server.getWorkspace({workspaceId: this.props.workspaceId});
                 this.workspace = info.workspace;
                 this.isHeadless = info.workspace.type != 'regular';
                 this.isPrebuilt = WithPrebuild.is(info.workspace.context);

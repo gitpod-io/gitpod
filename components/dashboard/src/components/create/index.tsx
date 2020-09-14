@@ -37,7 +37,7 @@ export async function start(Component: React.ComponentType<CreateWorkspaceProps>
     }
     async function showWelcome(_contextUrl?: string) {
         const moveOn = new Deferred<void>();
-        service.server.getLoggedInUser().then(user => {
+        service.server.getLoggedInUser({}).then(user => {
             // when logged in proceed, just in case the cookie was deleted manually
             if (user) {
                 moveOn.resolve();
@@ -57,7 +57,7 @@ export async function start(Component: React.ComponentType<CreateWorkspaceProps>
             return redirectNotAuthenticated(service);
         }
         try {
-            await service.server.getLoggedInUser();
+            await service.server.getLoggedInUser({});
             // if logged in without context -> go to workspaces
             window.location.href = getWorkspacesUrl();
             return;

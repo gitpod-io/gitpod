@@ -72,7 +72,10 @@ class EditableDescription extends React.Component<EditableDescriptionProps, Edit
     protected readonly handleEnter = () => this.doHandleEnter();
     protected doHandleEnter() {
         if (!this.isEmpty()) {
-            this.props.service.server.setWorkspaceDescription(this.props.workspace.id, this.newDescription);
+            this.props.service.server.setWorkspaceDescription({
+                desc: this.newDescription,
+                workspaceId: this.props.workspace.id,
+            });
             this.setState({
                 editDescription: !this.state.editDescription,
                 description: this.newDescription
@@ -188,13 +191,13 @@ export default class WorkspaceEntry extends React.Component<WorkspaceEntryProps,
     }
 
     handleStop = () => {
-        this.props.service.server.stopWorkspace(this.props.workspace.id);
+        this.props.service.server.stopWorkspace({workspaceId: this.props.workspace.id});
     }
 
     deleteWorkspace = async () => {
         try {
             if (!this.state || this.state.hasSnaphots === undefined) {
-                const snapshots = await this.props.service.server.getSnapshots(this.props.workspace.id);
+                const snapshots = await this.props.service.server.getSnapshots({workspaceId: this.props.workspace.id});
                 this.setState({ hasSnaphots: snapshots.length > 0 });
             }
 
@@ -207,7 +210,7 @@ export default class WorkspaceEntry extends React.Component<WorkspaceEntryProps,
 
     doDeleteWorkspace = async () => {
         try {
-            await this.props.service.server.deleteWorkspace(this.props.workspace.id);
+            await this.props.service.server.deleteWorkspace({workspaceId: this.props.workspace.id});
             this.props.handleWorkspaceDeleted(this.props.workspace);
         } catch (err) {
             console.log(err);
@@ -245,7 +248,7 @@ export default class WorkspaceEntry extends React.Component<WorkspaceEntryProps,
         } else if (status === 'running') {
             buttons.push((
                 <Button key='stop' className='button' variant='outlined' color='primary' 
-                    onClick={() => this.props.service.server.stopWorkspace(this.props.workspace.id)} 
+                    onClick={() => this.props.service.server.stopWorkspace({workspaceId: this.props.workspace.id})} 
                     title={stopTooltip}>
                     Stop
                 </Button>

@@ -60,7 +60,9 @@ export class ApiTokenView extends React.Component<ApiTokenViewProps, ApiTokenVie
     }
 
     protected async hasApiPermission() {
-        return this.props.service.server.hasPermission(Permission.ADMIN_API);
+        return this.props.service.server.hasPermission({
+            permission: Permission.ADMIN_API,
+        });
     }
 
     render() {
@@ -184,7 +186,7 @@ export class ApiTokenView extends React.Component<ApiTokenViewProps, ApiTokenVie
 
     protected async deleteToken(tokenHash: string) {
         try {
-            await this.props.service.server.deleteGitpodToken(tokenHash);
+            await this.props.service.server.deleteGitpodToken({tokenHash});
             await this.updateTokens();
         } catch (e) {
             this.setState({error: e.toString(), showDialog: "error"});
@@ -208,7 +210,7 @@ export class ApiTokenView extends React.Component<ApiTokenViewProps, ApiTokenVie
     }
 
     protected async updateTokens() {
-        const tokens = ((await this.props.service.server.getGitpodTokens())||[]).filter(token => token.type === GitpodTokenType.API_AUTH_TOKEN);
+        const tokens = ((await this.props.service.server.getGitpodTokens({}))||[]).filter(token => token.type === GitpodTokenType.API_AUTH_TOKEN);
         this.setState({ tokens });
     }
 }

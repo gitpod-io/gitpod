@@ -13,5 +13,5 @@ import { License, LicenseProps } from "./components/license";
 export { License, LicenseProps };
 
 const service = createGitpodService();
-const user = service.server.getLoggedInUser();
+const user = service.server.getLoggedInUser({});
 renderEntrypoint(License, { service, user });

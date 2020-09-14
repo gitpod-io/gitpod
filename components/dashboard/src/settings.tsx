@@ -11,5 +11,5 @@ import { renderEntrypoint } from './entrypoint';
 import { Settings } from "./components/settings";
 
 const service = createGitpodService();
-const user = service.server.getLoggedInUser();
+const user = service.server.getLoggedInUser({});
 renderEntrypoint(Settings, { service, user });

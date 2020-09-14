@@ -11,7 +11,7 @@ import { TermsOfService } from "./components/tos/terms-of-service";
 import { renderEntrypoint } from "./entrypoint";
 
 const service = createGitpodService();
-const user = service.server.getLoggedInUser();
+const user = service.server.getLoggedInUser({});
 
 export class TosIndex extends React.Component {
     render() {

@@ -41,7 +41,7 @@ export class WithBranding extends React.Component<WithBrandingProps, WithBrandin
     static async getBranding(service?: GitpodService, forceRefresh?: boolean): Promise<Branding | undefined> {
         let b = WithBranding.getCachedBranding();
         if ((!b || forceRefresh) && !!service) {
-            b = await service.server.getBranding();
+            b = await service.server.getBranding({});
             setCacheItem('branding_v1', JSON.stringify(b));
 
             updateBrowserTab();

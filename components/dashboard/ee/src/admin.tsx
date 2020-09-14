@@ -27,7 +27,7 @@ export interface AdminIndexProps {
 export const AdminIndex: React.SFC<AdminIndexProps | undefined> = (_props: AdminIndexProps) => {
     const props = _props || {};
     const service = createGitpodService();
-    service.server.getLoggedInUser().catch(e => {
+    service.server.getLoggedInUser({}).catch(e => {
         console.error(e);
         window.location.href = new GitpodHostUrl(window.location.toString()).asDashboard().toString();
     });

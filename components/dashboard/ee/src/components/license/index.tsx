@@ -59,7 +59,7 @@ export class License extends React.Component<LicenseProps, LicenseState> {
         })();
     }
     protected async updateLicense() {
-        const { isAdmin, licenseInfo } = await this.props.service.server.getLicenseInfo();
+        const { isAdmin, licenseInfo } = await this.props.service.server.getLicenseInfo({});
         this.setState({
             isAdmin,
             licenseInfo
@@ -171,7 +171,7 @@ export class License extends React.Component<LicenseProps, LicenseState> {
         if (!newKey) {
             return;
         }
-        await this.props.service.server.adminSetLicense(newKey);
+        await this.props.service.server.adminSetLicense({key: newKey});
         this.setState({ newKey: undefined });
         await this.updateLicense();
     };

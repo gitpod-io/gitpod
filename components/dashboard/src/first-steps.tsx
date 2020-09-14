@@ -18,7 +18,7 @@ import { AuthProviders } from './components/auth-providers';
 import { GitpodService } from '@gitpod/gitpod-protocol';
 
 const service = createGitpodService();
-const userPromise = service.server.getLoggedInUser();
+const userPromise = service.server.getLoggedInUser({});
 
 // redirect asap, if already logged in
 userPromise.then(() => {

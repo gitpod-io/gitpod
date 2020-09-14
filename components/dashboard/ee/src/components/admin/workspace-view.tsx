@@ -5,7 +5,7 @@
  */
 
 import * as React from 'react';
-import { GitpodService, WorkspaceAndInstance } from '@gitpod/gitpod-protocol';
+import { GitpodService, AdminServer } from '@gitpod/gitpod-protocol';
 import Typography from '@material-ui/core/Typography';
 import Table from '@material-ui/core/Table';
 import TableRow from '@material-ui/core/TableRow';
@@ -23,13 +23,13 @@ export interface WorkspaceViewProps {
 }
 
 interface WorkspaceViewState {
-    workspace?: WorkspaceAndInstance;
+    workspace?: AdminServer.WorkspaceAndInstance;
 }
 
 interface DetailRowSpec {
     name: string;
-    actions?: (u: WorkspaceAndInstance) => JSX.Element;
-    render?: (u: WorkspaceAndInstance) => any;
+    actions?: (u: AdminServer.WorkspaceAndInstance) => JSX.Element;
+    render?: (u: AdminServer.WorkspaceAndInstance) => any;
 }
 
 export class WorkspaceView extends React.Component<WorkspaceViewProps, WorkspaceViewState> {
@@ -41,7 +41,7 @@ export class WorkspaceView extends React.Component<WorkspaceViewProps, Workspace
 
     async componentDidMount() {
         try {
-            const workspace = await this.props.service.server.adminGetWorkspace(this.props.workspaceID);
+            const workspace = await this.props.service.server.adminGetWorkspace({workspaceId: this.props.workspaceID});
             this.setState({workspace});
         } catch (err) {
             var rerr: ResponseError<any> = err;
@@ -57,7 +57,7 @@ export class WorkspaceView extends React.Component<WorkspaceViewProps, Workspace
 
     render() {
         const workspace = this.state.workspace;
-        const fields: { [P in keyof Partial<WorkspaceAndInstance>]: DetailRowSpec } = {
+        const fields: { [P in keyof Partial<AdminServer.WorkspaceAndInstance>]: DetailRowSpec } = {
             workspaceId: { 
                 name: "ID" 
             },

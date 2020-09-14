@@ -12,8 +12,8 @@ import { renderEntrypoint } from "./entrypoint";
 import { Login } from './components/login/login';
 
 const service = createGitpodService();
-const user = service.server.getLoggedInUser();
-const authProviders = service.server.getAuthProviders().then(list => list.filter(p => !p.disallowLogin));
+const user = service.server.getLoggedInUser({});
+const authProviders = service.server.getAuthProviders({}).then(list => list.filter(p => !p.disallowLogin));
 
 export class LoginIndex extends React.Component {
     render() {

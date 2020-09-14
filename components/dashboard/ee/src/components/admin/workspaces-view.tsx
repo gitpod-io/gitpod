@@ -5,7 +5,7 @@
  */
 
 import * as React from 'react';
-import { GitpodService, WorkspaceAndInstance } from '@gitpod/gitpod-protocol';
+import { GitpodService, AdminServer } from '@gitpod/gitpod-protocol';
 import { DataTable, SearchSpec, ColSpec } from './datatable';
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 import Link from '@material-ui/core/Link';
@@ -19,7 +19,7 @@ export interface WorkspacesViewProps {
 }
 
 export const WorkspacesView: React.SFC<WorkspacesViewProps> = props => {
-    const update = async (q: SearchSpec<WorkspaceAndInstance>) => {
+    const update = async (q: SearchSpec<AdminServer.WorkspaceAndInstance>) => {
         try {
             return props.service.server.adminGetWorkspaces({
                 limit: q.rowsPerPage,
@@ -40,7 +40,7 @@ export const WorkspacesView: React.SFC<WorkspacesViewProps> = props => {
             throw err;
         }
     }
-    const columns: ColSpec<WorkspaceAndInstance>[] = [
+    const columns: ColSpec<AdminServer.WorkspaceAndInstance>[] = [
         {
             header: "ID",
             property: "workspaceId",
@@ -73,7 +73,7 @@ export const WorkspacesView: React.SFC<WorkspacesViewProps> = props => {
         })
     }
 
-    return <DataTable<WorkspaceAndInstance> 
+    return <DataTable<AdminServer.WorkspaceAndInstance> 
         columns={columns} 
         defaultOrderCol="instanceCreationTime" 
         defaultOrderDir="desc"

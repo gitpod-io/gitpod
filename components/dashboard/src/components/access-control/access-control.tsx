@@ -44,7 +44,7 @@ interface AccessControlProps {
 
 export class AccessControl extends React.Component<AccessControlProps, AccessControlState> {
 
-    protected authProvidersPromise = this.props.service.server.getAuthProviders();
+    protected authProvidersPromise = this.props.service.server.getAuthProviders({});
 
     constructor(props: AccessControlProps) {
         super(props);
@@ -59,7 +59,7 @@ export class AccessControl extends React.Component<AccessControlProps, AccessCon
 
     protected async onLoad(): Promise<void> {
         try {
-            const [authProviders, user] = await Promise.all([this.authProvidersPromise, this.props.service.server.getLoggedInUser()]);
+            const [authProviders, user] = await Promise.all([this.authProvidersPromise, this.props.service.server.getLoggedInUser({})]);
             const oldScopes = await this.getOldScopes(authProviders);
             const newScopes = this.addNewScopesFromQuery(authProviders, this.clone(oldScopes));
             const notification = this.getNotificationsFromQuery(authProviders);

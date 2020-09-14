@@ -53,19 +53,19 @@ export class UserEnvVars extends React.Component<UserEnvVarsProps, UserEnvVarsSt
     }
 
     protected async update() {
-        const envVars = await this.props.service.server.getEnvVars();
+        const envVars = await this.props.service.server.getEnvVars({});
         this.setState({
             envVars: envVars.sort((a, b) => a.name.localeCompare(b.name))
         });
     }
 
     protected deleteEnvVar = async (envVar: UserEnvVarValue) => {
-        await this.props.service.server.deleteEnvVar(envVar);
+        await this.props.service.server.deleteEnvVar({variable: envVar});
         this.update();
     };
 
     protected updateEnvVar = async (oldEnv: UserEnvVarValue, newEnv: UserEnvVarValue) => {
-        await this.props.service.server.setEnvVar(newEnv);
+        await this.props.service.server.setEnvVar({variable: newEnv});
         this.update();
     };
 
@@ -82,9 +82,11 @@ export class UserEnvVars extends React.Component<UserEnvVarsProps, UserEnvVarsSt
         }
 
         await this.props.service.server.setEnvVar({
-            name,
-            value: 'my value',
-            repositoryPattern: `*/*`
+            variable: {
+                name,
+                value: 'my value',
+                repositoryPattern: `*/*`
+            }
         });
         this.update();
     };

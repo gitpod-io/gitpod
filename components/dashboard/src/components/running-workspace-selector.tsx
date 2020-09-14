@@ -87,12 +87,18 @@ export class RunningWorkspaceSelector extends React.Component<RunningWorkspaceSe
     }
 
     protected async onToggleShareable(ws: Workspace) {
-        await this.props.service.server.controlAdmission(ws.id, ws.shareable ? "owner" : "everyone");
+        await this.props.service.server.controlAdmission({
+            workspaceId: ws.id,
+            level: ws.shareable ? "owner" : "everyone",
+        });
         await this.props.requestUpdate();
     }
 
     protected async onTogglePinned(ws: Workspace) {
-        await this.props.service.server.updateWorkspaceUserPin(ws.id, "toggle")
+        await this.props.service.server.updateWorkspaceUserPin({
+            action: "toggle",
+            workspaceId: ws.id,
+        })
         await this.props.requestUpdate();
     }
 

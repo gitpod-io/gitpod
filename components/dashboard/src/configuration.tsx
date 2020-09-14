@@ -11,6 +11,6 @@ import { globalCache } from "./util";
 export async function getGitpodConfiguration(): Promise<Configuration> {
     return globalCache('config', () => {
         const service = createGitpodService();
-        return service.server.getConfiguration();
+        return service.server.getConfiguration({});
     });
 }

@@ -61,7 +61,7 @@ class Workspaces extends React.Component<WorkspacesProps, WorkspacesState> {
             // local storage not supported: ignore
         }
 
-		this.props.service.server.getFeaturedRepositories()
+		this.props.service.server.getFeaturedRepositories({})
 			.then(repos => this.setState({ featuredRepositories: repos }))
 			.catch( /* We did not get our repos. UX is slightly degraded as the featured repos are not shown. */ );
 	}
@@ -70,7 +70,7 @@ class Workspaces extends React.Component<WorkspacesProps, WorkspacesState> {
 		this.disposables.dispose();
 	}
 
-	private async updateWorkspaces(options?: GitpodServer.GetWorkspacesOptions) {
+	private async updateWorkspaces(options?: GitpodServer.GetWorkspacesParams) {
 		try {
 			const workspaces = await this.props.service.server.getWorkspaces({
 				limit: this.getLimit(),
@@ -158,7 +158,10 @@ class Workspaces extends React.Component<WorkspacesProps, WorkspacesState> {
 	}
 
 	private handleTogglePinned = async (ws: Workspace) => {
-        await this.props.service.server.updateWorkspaceUserPin(ws.id, "toggle")
+        await this.props.service.server.updateWorkspaceUserPin({
+            action: "toggle",
+            workspaceId: ws.id,
+        })
         this.updateWorkspaces();
 	};
 
@@ -168,7 +171,10 @@ class Workspaces extends React.Component<WorkspacesProps, WorkspacesState> {
 
 	private handleToggleShareable = async (ws: Workspace) => {
         try {
-            await this.props.service.server.controlAdmission(ws.id, ws.shareable ? "owner" : "everyone");
+            await this.props.service.server.controlAdmission({
+                workspaceId: ws.id,
+                level: ws.shareable ? "owner" : "everyone",
+            });
         } catch (e) {
             this.setState(() => {throw e});
         }
