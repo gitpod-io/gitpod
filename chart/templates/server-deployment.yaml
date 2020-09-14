@@ -125,6 +125,8 @@ spec:
           value: "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) }}"
         - name: WORKSPACE_DEFAULT_IMAGE
           value: "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.defaultImage) }}"
+        - name: IDE_IMAGE_ALIASES
+          value: {{ (dict "code" (include "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage))) | toJson | quote }}
     {{- if $comp.blockNewUsers }}
         - name: BLOCK_NEW_USERS
           value: {{ $comp.blockNewUsers | quote }}

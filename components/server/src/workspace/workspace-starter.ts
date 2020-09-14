@@ -28,7 +28,6 @@ import { UserService } from "../user/user-service";
 import { HeadlessLogEvent, HeadlessWorkspaceEventType } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { TheiaPluginService } from "../theia-plugin/theia-plugin-service";
 import { OneTimeSecretServer } from "../one-time-secret-server";
-import { ConfigProvider } from "./config-provider";
 
 @injectable()
 export class WorkspaceStarter {
@@ -65,7 +64,7 @@ export class WorkspaceStarter {
 
             if (options.forceDefaultImage) {
                 const req = new ResolveBaseImageRequest();
-                req.setRef(ConfigProvider.DEFAULT_IMAGE);
+                req.setRef(this.env.workspaceDefaultImage);
                 const allowAll = new BuildRegistryAuthTotal();
                 allowAll.setAllowAll(true);
                 const auth = new BuildRegistryAuth();
@@ -534,11 +533,7 @@ export class WorkspaceStarter {
         spec.setGit(this.createGitSpec(workspace, user));
         spec.setPortsList(ports);
         spec.setInitializer(await initializerPromise);
-        if (workspace.config.ide === 'code') {
-            spec.setIdeImage(`${this.env.codeImageRepo}:${instance.configuration!.theiaVersion}`);
-        } else {
-            spec.setIdeImage(`${this.env.theiaImageRepo}:${instance.configuration!.theiaVersion}`);
-        }
+        spec.setIdeImage(workspace.config.ide || `${this.env.theiaImageRepo}:${instance.configuration!.theiaVersion}`);
         spec.setWorkspaceImage(instance.workspaceImage);
         spec.setWorkspaceLocation(workspace.config.workspaceLocation || spec.getCheckoutLocation());
         spec.setFeatureFlagsList(this.toWorkspaceFeatureFlags(instance.configuration!.featureFlags || []));
