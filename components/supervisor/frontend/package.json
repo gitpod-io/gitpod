@@ -4,7 +4,9 @@
   "license": "UNLICENSED",
   "version": "0.0.0",
   "dependencies": {
-    "@gitpod/gitpod-protocol": "0.1.5"
+    "@gitpod/gitpod-protocol": "0.1.5",
+    "@grpc/grpc-js": "1.1.6",
+    "@gitpod/supervisor": "0.1.7"
   },
   "devDependencies": {
     "concurrently": "^5.3.0",
