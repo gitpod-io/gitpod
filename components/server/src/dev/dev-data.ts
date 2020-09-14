@@ -4,10 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { IssueContext, Workspace, User, PullRequestContext, Repository, Token } from "@gitpod/gitpod-protocol";
+import { IssueContext, User, PullRequestContext, Repository, Token } from "@gitpod/gitpod-protocol";
 import { GitHubScope } from "../github/scopes";
 import { GitLabScope } from "../gitlab/scopes";
-import { ConfigProvider } from "../workspace/config-provider";
 import { TokenService } from "../user/token-service";
 
 export namespace DevData {
@@ -99,7 +98,7 @@ export namespace DevData {
         };
     }
 
-    function createPrContext(user: User): PullRequestContext {
+    export function createPrContext(user: User): PullRequestContext {
         const repository: Repository = {
             host: 'github.com',
             owner: user.identities[0].authName,
@@ -119,21 +118,7 @@ export namespace DevData {
         }
     };
 
-    export function createTestWorkspacePR(user: User): Workspace {
-        const config = ConfigProvider.defaultConfig()
-        return {
-            id: "a12-345",
-            type: "regular",
-            creationTime: new Date().toISOString(),
-            contextURL: 'github.com/TypeFox/gitpod-test-repo',
-            description: "Test Workspace, connecting to local Theia",
-            ownerId: user.id,
-            context: createPrContext(user),
-            config
-        }
-    };
-
-    function createIssueContext(user: User): IssueContext {
+    export function createIssueContext(user: User): IssueContext {
         const repository: Repository = {
             host: 'github.com',
             owner: user.identities[0].authName,
@@ -146,20 +131,6 @@ export namespace DevData {
             title: 'My First Issue',
             nr: 15,
             revision: "",
-        }
-    };
-
-    export function createTestWorkspaceISSUE(user: User): Workspace {
-        const config = ConfigProvider.defaultConfig();
-        return {
-            id: "a12-321",
-            type: "regular",
-            creationTime: new Date().toISOString(),
-            contextURL: 'github.com/TypeFox/gitpod-test-repo',
-            description: "Test Workspace, connecting to local Theia",
-            ownerId: user.id,
-            context: createIssueContext(user),
-            config
         }
     };
 

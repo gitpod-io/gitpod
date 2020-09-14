@@ -18,6 +18,7 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { AuthorizationService } from "../user/authorization-service";
 import { TheiaPluginService } from "../theia-plugin/theia-plugin-service";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { Env } from "../env";
 
 const POD_PATH_WORKSPACE_BASE = "/workspace";
 
@@ -35,6 +36,7 @@ export class ConfigProvider {
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
     @inject(TheiaPluginService) protected readonly pluginService: TheiaPluginService;
+    @inject(Env) protected readonly env: Env;
 
     public async fetchConfig(ctx: TraceContext, user: User, commit: CommitContext): Promise<WorkspaceConfig> {
         const span = TraceContext.startSpan("fetchConfig", ctx);
@@ -93,7 +95,7 @@ export class ConfigProvider {
 
             if (!customConfig) {
                 log.debug(logContext, 'Config string undefined, using default config', { repoCloneUrl: commit.repository.cloneUrl, revision: commit.revision });
-                const config = ConfigProvider.defaultConfig();
+                const config = this.defaultConfig();
                 if (!ImageConfigString.is(config.image)) {
                     throw new Error(`Default config must contain a base image!`);
                 }
@@ -103,7 +105,7 @@ export class ConfigProvider {
 
             const config = customConfig;
             if (!config.image) {
-                config.image = ConfigProvider.DEFAULT_IMAGE;
+                config.image = this.env.workspaceDefaultImage;
             } else if (ImageConfigFile.is(config.image)) {
                 let dockerfilePath = [configBasePath, config.image.file].filter(s => !!s).join('/');
                 let repo = commit.repository;
@@ -137,6 +139,13 @@ export class ConfigProvider {
                 config._featureFlags = workspacePersistedFlags.filter(f => (user.featureFlags!.permanentWSFeatureFlags || []).includes(f));
             }
 
+            if (!!config.ide) {
+                const mapped = this.env.ideImageAliases[config.ide];
+                if (!!mapped) {
+                    config.ide = mapped;
+                }
+            }
+
             return config;
         } catch (e) {
             TraceContext.logError({span}, e);
@@ -144,6 +153,17 @@ export class ConfigProvider {
         } finally {
             span.finish();
         }
+    }
+
+    public defaultConfig(): WorkspaceConfig {
+        return {
+            ports: [{
+                port: 3000
+            }],
+            tasks: [],
+            ide: this.env.ideDefaultImage,
+            image: this.env.workspaceDefaultImage
+        };
     }
 
     protected async fetchWorkspaceImageSourceDocker(ctx: TraceContext, repository: Repository, revisionOrTagOrBranch: string, user: User, dockerFilePath: string): Promise<Commit> {
@@ -276,21 +296,6 @@ export class ConfigProvider {
     protected leavesWorkspaceBase(normalizedPath: string) {
         const pathSegments = normalizedPath.split(path.sep);
         return normalizedPath.includes('..') || pathSegments.slice(0, 2).join('/') != POD_PATH_WORKSPACE_BASE;
-    }
-
-}
-
-export namespace ConfigProvider {
-    export const DEFAULT_IMAGE = process.env.WORKSPACE_DEFAULT_IMAGE || "gitpod/workspace-full:latest";
-
-    export function defaultConfig(): WorkspaceConfig {
-        return {
-            ports: [{
-                port: 3000
-            }],
-            tasks: [],
-            image: DEFAULT_IMAGE
-        };
     }
 
 }
