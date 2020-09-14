@@ -5,7 +5,7 @@
  */
 
 import { CancellationToken } from '@theia/core/lib/common/cancellation';
-import { ResolvedPlugins, ResolvedPluginKind, ResolvePluginsParams, InstallPluginsParams, UninstallPluginParams } from "@gitpod/gitpod-protocol";
+import { ResolvedPlugins, ResolvedPluginKind, GitpodServer } from "@gitpod/gitpod-protocol";
 import { PluginModel } from '@theia/plugin-ext/lib/common/plugin-protocol';
 
 export const gitpodPluginPath = '/services/gitpodPlugin';
@@ -19,9 +19,9 @@ export interface GitpodPluginService {
 
     find(params: FindExtensionsParams, token: CancellationToken): Promise<FindExtensionsResult>;
 
-    install(params: InstallPluginsParams, token: CancellationToken): Promise<void>;
+    install(params: GitpodServer.InstallUserPluginsParams, token: CancellationToken): Promise<void>;
 
-    uninstall(params: UninstallPluginParams, token: CancellationToken): Promise<void>;
+    uninstall(params: GitpodServer.UninstallUserPluginParams, token: CancellationToken): Promise<void>;
 
     upload(params: UploadExtensionParams): Promise<string>;
 
@@ -42,7 +42,7 @@ export interface GitpodPluginClientEventEmitter {
 }
 
 export interface GitpodPluginClient extends GitpodPluginClientEventEmitter {
-    resolve(params: ResolvePluginsParams): Promise<ResolvedPlugins>;
+    resolve(params: Pick<GitpodServer.ResolvePluginsParams, "builtins"|"config">): Promise<ResolvedPlugins>;
 }
 
 export interface FindExtensionsParams {

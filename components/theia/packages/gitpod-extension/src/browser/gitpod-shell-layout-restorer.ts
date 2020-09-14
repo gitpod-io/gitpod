@@ -41,7 +41,7 @@ export class GitpodLayoutRestorer extends ShellLayoutRestorer {
         super(widgetManager, logger, storageService);
         const service = this.serviceProvider.getService()
         const workspaceId = getWorkspaceID();
-        service.server.getLayout(workspaceId).then(layout => {
+        service.server.getLayout({workspaceId}).then(layout => {
             // update placeholders with new workspace id
             const replaced = layout && replaceAll(layout, workspaceIdPlaceHolder, workspaceId);
             this.layoutData.resolve(replaced);

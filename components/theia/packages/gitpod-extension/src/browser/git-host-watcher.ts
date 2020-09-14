@@ -60,7 +60,7 @@ export class GitHostWatcher implements FrontendApplicationContribution {
             return this.authProviders;
         }
         const service = await this.serviceProvider.getService();
-        this.authProviders = await service.server.getAuthProviders();
+        this.authProviders = await service.server.getAuthProviders({});
         return this.authProviders;
     }
 

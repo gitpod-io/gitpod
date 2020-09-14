@@ -40,7 +40,7 @@ export class GitpodOpenContext implements FrontendApplicationContribution, Initi
     async onStart(app: FrontendApplication) {
         const info = await this.GitpodInfoService.getInfo();
         const service = await this.gitpodServiceProvider.getService();
-        this.workspace = (await service.server.getWorkspace(info.workspaceId)).workspace;
+        this.workspace = (await service.server.getWorkspace({workspaceId: info.workspaceId})).workspace;
         await this.refresh();
     }
 

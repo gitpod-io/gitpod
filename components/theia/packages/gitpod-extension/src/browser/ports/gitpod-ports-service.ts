@@ -117,7 +117,7 @@ export class GitpodPortsService {
                 // if the response arrives before the event add `didOpen` ports
                 this.updateServedPorts({ ports: servedPorts, didOpen: receivedServedPortsEvent ? [] : servedPorts, didClose: [] });
             }),
-            this.service.server.getOpenPorts(this.workspaceId).then(openPorts => {
+            this.service.server.getOpenPorts({workspaceId: this.workspaceId}).then(openPorts => {
                 if (!receivedInstanceUpdate) {
                     this.updateInstancePortConfig(openPorts);
                 }
@@ -179,7 +179,7 @@ export class GitpodPortsService {
 
     protected workspaceConfigPorts: PortConfig[] = [];
     protected async loadWorkspaceConfigPorts(workspaceId: string) {
-        const workspaceInfo = await this.service.server.getWorkspace(workspaceId);
+        const workspaceInfo = await this.service.server.getWorkspace({workspaceId});
         const config = workspaceInfo.workspace.config;
         this.workspaceConfigPorts = config.ports ? config.ports : [];
     }
@@ -286,7 +286,7 @@ export class GitpodPortsService {
                 }
             });
         });
-        await this.service.server.openPort(this.workspaceId, cfg);
+        await this.service.server.openPort({workspaceId: this.workspaceId, port: cfg});
 
         await portOpenedInK8s;
     }

@@ -192,7 +192,7 @@ export class GitpodNotRunningOverlay extends BaseWidget {
                 }
             }
             connectionStatus.onStatusChange(async () => {
-                const wsInfo = await service.server.getWorkspace(info.workspaceId);
+                const wsInfo = await service.server.getWorkspace({workspaceId: info.workspaceId});
                 if (wsInfo.latestInstance) {
                     onInstanceUpdate(wsInfo.latestInstance);
                 }
@@ -200,7 +200,7 @@ export class GitpodNotRunningOverlay extends BaseWidget {
             const doc = window.document;
             doc.addEventListener('visibilitychange', async () => {
                 if (doc.visibilityState === 'visible') {
-                    const wsInfo = await service.server.getWorkspace(info.workspaceId);
+                    const wsInfo = await service.server.getWorkspace({workspaceId: info.workspaceId});
                     if (wsInfo.latestInstance) {
                         onInstanceUpdate(wsInfo.latestInstance);
                     }
@@ -234,7 +234,7 @@ export class GitpodNotRunningOverlay extends BaseWidget {
     }
 
     private async getContextUrl(info: GitpodInfo, service: GitpodService): Promise<string> {
-        const workspace = await service.server.getWorkspace(info.workspaceId);
+        const workspace = await service.server.getWorkspace({workspaceId: info.workspaceId});
         return workspace.workspace.contextURL;
     }
 }

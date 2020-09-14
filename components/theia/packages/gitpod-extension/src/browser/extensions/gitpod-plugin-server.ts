@@ -32,7 +32,7 @@ export class GitpodPluginServer implements PluginServer {
         if (!this.workspaceStorageURI) {
             const info = await this.info.getInfo();
             const service = await this.serviceProvider.getService();
-            const ws = await service.server.getWorkspace(info.workspaceId);
+            const ws = await service.server.getWorkspace({workspaceId: info.workspaceId});
             if (CommitContext.is(ws.workspace.context)) {
                 this.workspaceStorageURI = 'workspace-storage:/' + encodeURIComponent(ws.workspace.context.repository.cloneUrl) +'/';
             }

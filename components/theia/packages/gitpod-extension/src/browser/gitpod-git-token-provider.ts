@@ -45,7 +45,7 @@ export class GitpodGitTokenProvider {
     @postConstruct()
     protected async init() {
         const { server } = this.serviceProvider.getService();
-        const [gitpodInfo, authProviders] = await Promise.all([this.infoProvider.getInfo(), server.getAuthProviders()]);
+        const [gitpodInfo, authProviders] = await Promise.all([this.infoProvider.getInfo(), server.getAuthProviders({})]);
         this.gitpodInfo = gitpodInfo;
         this.authProviders = authProviders;
     }

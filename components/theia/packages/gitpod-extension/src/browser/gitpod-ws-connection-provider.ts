@@ -85,7 +85,7 @@ export class GitpodWebSocketConnectionProvider extends WebSocketConnectionProvid
         s.registerClient({ onInstanceUpdate })
         const doc = window.document;
         const update = async () => {
-            const wsInfo = await s.server.getWorkspace(workspaceId);
+            const wsInfo = await s.server.getWorkspace({workspaceId});
             onInstanceUpdate(wsInfo.latestInstance);
         }
         doc.addEventListener('visibilitychange', async () => {

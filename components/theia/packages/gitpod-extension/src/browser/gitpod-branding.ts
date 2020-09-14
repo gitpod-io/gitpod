@@ -19,7 +19,7 @@ export class GitpodBranding {
     @postConstruct()
     protected async init() {
         const service = await this.serviceProvider.getService();
-        this.brandingPromise.resolve(await service.server.getBranding());
+        this.brandingPromise.resolve(await service.server.getBranding({}));
     }
 
     get branding(): Promise<Branding> {

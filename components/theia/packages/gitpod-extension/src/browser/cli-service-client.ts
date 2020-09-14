@@ -42,7 +42,7 @@ export class CliServiceClientImpl implements CliServiceClient {
     protected async init() {
         this.gitpodInfo = await this.infoProvider.getInfo();
         const service = await this.serviceProvider.getService();
-        this.isWorkspaceOwner.resolve(await service.server.isWorkspaceOwner(this.gitpodInfo.workspaceId));
+        this.isWorkspaceOwner.resolve(await service.server.isWorkspaceOwner({workspaceId: this.gitpodInfo.workspaceId}));
     }
 
     protected async checkWorkspaceOwner() {
@@ -92,7 +92,7 @@ export class CliServiceClientImpl implements CliServiceClient {
         const service = await this.serviceProvider.getService();
 
         const matchedVariables = await this.matchWithApplicableVars(params.variables, service.server);
-        await Promise.all(matchedVariables.map(v => service.server.setEnvVar(v)));
+        await Promise.all(matchedVariables.map(v => service.server.setEnvVar({variable: v})));
 
         return {};
     }
@@ -103,7 +103,7 @@ export class CliServiceClientImpl implements CliServiceClient {
         const vars = params.variables.map(v => { return { name: v, value: "" } });
         const matchedVariables = await this.matchWithApplicableVars(vars, service.server);
         const candidates = matchedVariables.filter(v => !!v.id);
-        await Promise.all(candidates.map(v => service.server.deleteEnvVar(v)));
+        await Promise.all(candidates.map(v => service.server.deleteEnvVar({variable: v})));
 
         return {
             deleted: candidates.map(v => v.name),
@@ -143,7 +143,7 @@ export class CliServiceClientImpl implements CliServiceClient {
     }
 
     protected async getApplicableEnvvars(service: GitpodServer): Promise<UserEnvVarValue[]> {
-        const ws = await service.getWorkspace(this.gitpodInfo.workspaceId);
+        const ws = await service.getWorkspace({workspaceId: this.gitpodInfo.workspaceId});
 
         const context = ws.workspace.context;
         if (!("repository" in context)) {
@@ -154,13 +154,13 @@ export class CliServiceClientImpl implements CliServiceClient {
         const owner = repository.owner;
         const repo = repository.name;
 
-        const vars = await service.getEnvVars();
+        const vars = await service.getEnvVars({});
         return UserEnvVar.filter(vars, owner, repo);
 
     }
 
     protected async getRepo(service: GitpodServer): Promise<{ owner: string, repo: string } | undefined> {
-        const ws = await service.getWorkspace(this.gitpodInfo.workspaceId);
+        const ws = await service.getWorkspace({workspaceId: this.gitpodInfo.workspaceId});
 
         const context = ws.workspace.context;
         if (!CommitContext.is(context)) {
@@ -175,7 +175,7 @@ export class CliServiceClientImpl implements CliServiceClient {
     async getPortURL(params: GetPortURLRequest): Promise<GetPortURLResponse> {
         const service = await this.serviceProvider.getService();
         
-        const ws = await service.server.getWorkspace(this.gitpodInfo.workspaceId);
+        const ws = await service.server.getWorkspace({workspaceId: this.gitpodInfo.workspaceId});
         if (!ws.latestInstance) {
             throw new Error("workspace has no instance");
         }

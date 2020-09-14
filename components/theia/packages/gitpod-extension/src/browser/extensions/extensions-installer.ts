@@ -10,7 +10,7 @@ import { MessageService } from '@theia/core/lib/common/message-service';
 import { LabelProvider } from '@theia/core/lib/browser/label-provider';
 import { CancellationTokenSource, CancellationToken } from '@theia/core/lib/common/cancellation';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
-import { InstallPluginsParams, ResolvedPluginKind } from '@gitpod/gitpod-protocol';
+import { ResolvedPluginKind, GitpodServer } from '@gitpod/gitpod-protocol';
 import { GitpodPluginService, DeployedPlugin } from '../../common/gitpod-plugin-service';
 import { OpenVSXExtensionProvider } from '../../common/openvsx-extension-provider';
 import { GitpodServiceProvider } from '../gitpod-service-provider';
@@ -98,7 +98,7 @@ export class ExtensionsInstaller {
         }
     }
 
-    protected async installPlugins(params: InstallPluginsParams, pluginKind: ResolvedPluginKind, token: CancellationToken): Promise<void> {
+    protected async installPlugins(params: GitpodServer.InstallUserPluginsParams, pluginKind: ResolvedPluginKind, token: CancellationToken): Promise<void> {
         if (pluginKind === 'user') {
             const { server } = await this.serviceProvider.getService();
             if (token.isCancellationRequested) {

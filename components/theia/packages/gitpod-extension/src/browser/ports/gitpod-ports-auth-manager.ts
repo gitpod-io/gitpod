@@ -46,7 +46,7 @@ export class GitpodPortsAuthManger {
         //  - the cookie (which carries the token) expires 5mins after the token itself
         const updateCookie = async () => {
             const service = await this.serviceProvider.getService();
-            const token = await service.server.getPortAuthenticationToken(workspaceId);
+            const token = await service.server.getPortAuthenticationToken({workspaceId});
 
             let expires: Date | undefined = undefined;
             if (token.expiryDate) {

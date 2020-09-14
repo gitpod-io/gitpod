@@ -69,7 +69,7 @@ export class GitpodAccountInfoDialog extends AbstractDialog<void> {
 
     async open() {
         const service = await this.gitpodServiceProvider.getService();
-        this.user.textContent = '' + (await service.server.getLoggedInUser()).name;
+        this.user.textContent = '' + (await service.server.getLoggedInUser({})).name;
         super.open();
     }
 }

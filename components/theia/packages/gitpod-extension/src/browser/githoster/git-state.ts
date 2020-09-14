@@ -191,7 +191,7 @@ export abstract class GitState {
             }
         }
         const info = await this.infoService.getInfo();
-        const ws = await this.serviceProvider.getService().server.getWorkspace(info.workspaceId);
+        const ws = await this.serviceProvider.getService().server.getWorkspace({workspaceId: info.workspaceId});
         if (IssueContext.is(ws.workspace.context)) {
             return {
                 label: `${ws.workspace.context.repository.owner}/${ws.workspace.context.repository.name}#${ws.workspace.context.nr}`,

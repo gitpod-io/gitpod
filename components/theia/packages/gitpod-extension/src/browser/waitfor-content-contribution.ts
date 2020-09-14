@@ -46,7 +46,7 @@ export class WaitForContentContribution implements FrontendApplicationContributi
         let iv: number | undefined;
         const resolveIfRunning = async () => {
             try {
-                const wsinfo = await this.serviceProvider.getService().server.getWorkspace(info.workspaceId);
+                const wsinfo = await this.serviceProvider.getService().server.getWorkspace({workspaceId: info.workspaceId});
                 if (!wsinfo.latestInstance) {
                     console.warn("getWorkspace did not return a workspace instance");
                     return;

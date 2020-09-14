@@ -56,7 +56,7 @@ export class GitpodPortViewWidget extends ReactWidget {
     @postConstruct()
     protected async initialize() {
         this.workspaceId = getWorkspaceID();
-        this.isWorkspaceOwner = await (this.serviceProvider.getService()).server.isWorkspaceOwner(this.workspaceId);
+        this.isWorkspaceOwner = await (this.serviceProvider.getService()).server.isWorkspaceOwner({ workspaceId: this.workspaceId });
         this.update();
     }
 

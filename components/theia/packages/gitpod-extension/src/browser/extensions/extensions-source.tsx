@@ -86,11 +86,11 @@ export class ExtensionNodes {
             this.serviceProvider.getService()
         ]);
         const [workspaceOwner, isWorkspaceOwner] = await Promise.all([
-            server.getWorkspaceOwner(gitpodInfo.workspaceId),
-            server.isWorkspaceOwner(gitpodInfo.workspaceId)
+            server.getWorkspaceOwner({workspaceId: gitpodInfo.workspaceId}),
+            server.isWorkspaceOwner({workspaceId: gitpodInfo.workspaceId})
         ])
         this._workspaceOwner = workspaceOwner;
-        this.isWorkspaceOwner = isWorkspaceOwner;
+        this.isWorkspaceOwner = isWorkspaceOwner || false;
         this.update();
         this.pluginSupport.onDidChangePlugins(() => this.update());
     }

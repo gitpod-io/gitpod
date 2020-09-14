@@ -31,7 +31,7 @@ export class GitpodShareWidget extends ReactWidget {
     protected async onAfterAttach() {
         const info = await this.infoProvider.getInfo();
         const service = await this.serviceProvider.getService();
-        this.isWorkspaceOwner = await service.server.isWorkspaceOwner(info.workspaceId);
+        this.isWorkspaceOwner = await service.server.isWorkspaceOwner({workspaceId: info.workspaceId});
         this.update();
 
         this.startWorkspaceUserPolling(info.workspaceId);
@@ -44,8 +44,8 @@ export class GitpodShareWidget extends ReactWidget {
         if (this.isWorkspaceOwner) {
             this.workspaceUserPoll = setInterval(async () => {
                 const gitpodService = await this.serviceProvider.getService();
-                const user = await gitpodService.server.getLoggedInUser();
-                this.workspaceUsers = (await gitpodService.server.getWorkspaceUsers(workspaceId)).filter(u => u.userId != user.id);
+                const user = await gitpodService.server.getLoggedInUser({});
+                this.workspaceUsers = (await gitpodService.server.getWorkspaceUsers({workspaceId})).filter(u => u.userId != user.id);
                 this.update();
             }, 10000);
         }
@@ -151,15 +151,15 @@ export class GitpodShareDialog extends AbstractDialog<boolean> {
     protected async setWorkspaceShareable(shareable: boolean): Promise<void> {
         const info = await this.infoProvider.getInfo();
         const gitpodService = this.serviceProvider.getService();
-        await gitpodService.server.controlAdmission(info.workspaceId, shareable ? "everyone" : "owner");
+        await gitpodService.server.controlAdmission({workspaceId: info.workspaceId, level: shareable ? "everyone" : "owner"});
         const layout = this.layoutRestorer.captureLayout();
-        gitpodService.server.storeLayout(info.workspaceId, layout);
+        gitpodService.server.storeLayout({workspaceId: info.workspaceId, layoutData: layout});
     }
 
     protected async isWorkspaceShared(): Promise<boolean> {
         const info = await this.infoProvider.getInfo();
         const gitpodService = this.serviceProvider.getService();
-        const workspace = await gitpodService.server.getWorkspace(info.workspaceId);
+        const workspace = await gitpodService.server.getWorkspace({ workspaceId: info.workspaceId });
         return workspace.workspace.shareable || false;
     }
 

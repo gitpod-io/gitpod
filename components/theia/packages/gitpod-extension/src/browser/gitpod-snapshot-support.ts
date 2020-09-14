@@ -72,7 +72,7 @@ export class SnapshotTakenDialog extends AbstractDialog<boolean> {
     }
 
     public async open() {
-        const canCreateSnapshot = await this.service.server.licenseIncludesFeature(LicenseFeature.CreateSnapshot);
+        const canCreateSnapshot = await this.service.server.licenseIncludesFeature({feature: LicenseFeature.CreateSnapshot});
         if (!canCreateSnapshot) {
             this.showNoLicenseContent();
         }

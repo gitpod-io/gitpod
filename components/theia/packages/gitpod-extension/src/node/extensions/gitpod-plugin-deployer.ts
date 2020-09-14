@@ -27,7 +27,7 @@ import { GitpodPluginDeployerHandler } from "./gitpod-plugin-deployer-handler";
 import { GitpodPluginModel } from './gitpod-plugin-model';
 import { GitpodPluginResolver } from './gitpod-plugin-resolver';
 import { CancellationToken } from '@theia/core/lib/common/cancellation';
-import { WorkspaceConfig, ResolvedPlugins, ResolvedPlugin, InstallPluginsParams, UninstallPluginParams } from '@gitpod/gitpod-protocol';
+import { WorkspaceConfig, ResolvedPlugins, ResolvedPlugin, GitpodServer } from '@gitpod/gitpod-protocol';
 import filenamify = require('filenamify');
 import { ApplicationPackage } from '@theia/application-package/lib/application-package';
 import { PluginIndexEntry } from '@gitpod/gitpod-protocol/lib/theia-plugins';
@@ -257,10 +257,10 @@ export class GitpodPluginDeployer implements GitpodPluginService {
 
     protected async resolvePlugins(): Promise<ResolvedPlugins | undefined> {
         try {
-            const value: GitpodPluginClient = this.clients.values().next().value;
-            if (value) {
+            const client: GitpodPluginClient = this.clients.values().next().value;
+            if (client) {
                 const config = await this.parse();
-                const resolved = await value.resolve({ config, builtins: this.getBuiltins() });
+                const resolved = await client.resolve({ config, builtins: this.getBuiltins() });
                 return resolved;
             }
         } catch (e) {
@@ -428,7 +428,7 @@ export class GitpodPluginDeployer implements GitpodPluginService {
         }
     }
 
-    async install({ pluginIds }: InstallPluginsParams, token: CancellationToken): Promise<void> {
+    async install({ pluginIds }: GitpodServer.InstallUserPluginsParams, token: CancellationToken): Promise<void> {
         await this.updateGitpodFile(async (gitpodFilePath) => {
             let content = '';
             try {
@@ -444,7 +444,7 @@ export class GitpodPluginDeployer implements GitpodPluginService {
         }, token);
     }
 
-    async uninstall({ pluginId }: UninstallPluginParams, token: CancellationToken): Promise<void> {
+    async uninstall({ pluginId }: GitpodServer.UninstallUserPluginParams, token: CancellationToken): Promise<void> {
         return this.updateGitpodFile(async (gitpodFilePath) => {
             let content = '';
             try {

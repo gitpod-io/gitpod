@@ -86,11 +86,11 @@ export class GitpodUiContribution implements FrontendApplicationContribution, Co
         const workspaceId = getWorkspaceID();
         try {
             const service = this.serviceProvider.getService();
-            const user = await service.server.getLoggedInUser();
-            service.server.isWorkspaceOwner(workspaceId).then((isOwner) => {
+            const user = await service.server.getLoggedInUser({});
+            service.server.isWorkspaceOwner({workspaceId}).then((isOwner) => {
                 this.isWorkspaceOwner.resolve(isOwner);
             });
-            service.server.getWorkspaceTimeout(workspaceId).then(resp => {
+            service.server.getWorkspaceTimeout({workspaceId}).then(resp => {
                 this.canChangeTimeout.resolve(resp.canChange);
             });
 
@@ -106,7 +106,7 @@ export class GitpodUiContribution implements FrontendApplicationContribution, Co
                     this.onInstanceUpdate(i);
                 }
             });
-            service.server.getWorkspace(workspaceId).then(ws => {
+            service.server.getWorkspace({workspaceId}).then(ws => {
                 if (!ws.latestInstance) {
                     return;
                 }
@@ -245,8 +245,8 @@ export class GitpodUiContribution implements FrontendApplicationContribution, Co
         const service = await this.serviceProvider.getService();
         const info = await this.infoProvider.getInfo();
 
-        if (await service.server.isWorkspaceOwner(info.workspaceId)) {
-            service.server.stopWorkspace(info.workspaceId);
+        if (await service.server.isWorkspaceOwner({workspaceId: info.workspaceId})) {
+            service.server.stopWorkspace({workspaceId: info.workspaceId});
         } else {
             this.showNoPermissionMessage();
         }
@@ -327,9 +327,9 @@ export class GitpodUiContribution implements FrontendApplicationContribution, Co
         const service = await this.serviceProvider.getService();
         const info = await this.infoProvider.getInfo();
 
-        if (await service.server.isWorkspaceOwner(info.workspaceId)) {
+        if (await service.server.isWorkspaceOwner({workspaceId: info.workspaceId})) {
             try {
-                const result = await service.server.setWorkspaceTimeout(info.workspaceId, "180m");
+                const result = await service.server.setWorkspaceTimeout({ workspaceId: info.workspaceId, duration: "180m" });
                 if (!!result.resetTimeoutOnWorkspaces && result.resetTimeoutOnWorkspaces.length > 0) {
                     this.messageService.warn(`Workspace timeout has been extended to three hours. This reset the workspace timeout for other workspaces.`);
                 } else {
