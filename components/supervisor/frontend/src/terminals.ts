@@ -11,6 +11,7 @@ import { createGitpodService } from "@gitpod/gitpod-protocol";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 
 import * as grpc from "@grpc/grpc-js";
+
 import {
   ListTerminalsRequest,
   ListTerminalsResponse
@@ -66,7 +67,7 @@ let terminalClient = new TerminalServiceClient(
 let req = new ListTerminalsRequest();
 let body = document.createElement("p");
 
-terminalClient.list(req, (err, response) => {
+terminalClient.list(req, (err: grpc.ServiceError | null, response: ListTerminalsResponse) => {
   body.innerHTML = JSON.stringify(response.getTerminalsList());
 });
 

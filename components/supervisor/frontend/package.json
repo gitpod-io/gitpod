@@ -6,7 +6,7 @@
   "dependencies": {
     "@gitpod/gitpod-protocol": "0.1.5",
     "@grpc/grpc-js": "1.1.6",
-    "@gitpod/supervisor": "0.1.7"
+    "@gitpod/supervisor": "0.1.5"
   },
   "devDependencies": {
     "concurrently": "^5.3.0",
