@@ -7,7 +7,7 @@
 import { injectable, inject } from "inversify";
 import { Repository, EntityManager, DeepPartial, UpdateQueryBuilder } from "typeorm";
 import { AbstractWorkspaceDB, MaybeWorkspace, MaybeWorkspaceInstance, WorkspaceDB, FindWorkspacesOptions, PrebuiltUpdatableAndWorkspace, WorkspaceInstanceSessionWithWorkspace, PrebuildWithWorkspace, WorkspaceAndOwner, WorkspacePortsAuthData, WorkspaceOwnerAndSoftDeleted } from "../workspace-db";
-import { Workspace, WorkspaceInstance, WorkspaceInfo, WorkspaceInstanceUser, WhitelistedRepository, Snapshot, LayoutData, PrebuiltWorkspace, RunningWorkspaceInfo, PrebuiltWorkspaceUpdatable, WorkspaceAndInstance, WorkspaceType } from "@gitpod/gitpod-protocol";
+import { Workspace, WorkspaceInstance, WorkspaceInfo, WorkspaceInstanceUser, WhitelistedRepository, Snapshot, LayoutData, PrebuiltWorkspace, RunningWorkspaceInfo, PrebuiltWorkspaceUpdatable, WorkspaceType, AdminServer } from "@gitpod/gitpod-protocol";
 import { TypeORM } from "./typeorm";
 import { DBWorkspace } from "./entity/db-workspace";
 import { DBWorkspaceInstance } from "./entity/db-workspace-instance";
@@ -695,7 +695,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl extends AbstractWorkspaceDB
 
 
 
-    public async findAllWorkspaceAndInstances(offset: number, limit: number, orderBy: keyof WorkspaceAndInstance, orderDir: "ASC" | "DESC", ownerId?: string, searchTerm?: string): Promise<{ total: number, rows: WorkspaceAndInstance[] }> {
+    public async findAllWorkspaceAndInstances(offset: number, limit: number, orderBy: keyof AdminServer.WorkspaceAndInstance, orderDir: "ASC" | "DESC", ownerId?: string, searchTerm?: string): Promise<{ total: number, rows: AdminServer.WorkspaceAndInstance[] }> {
         let joinConditions = [];
         let joinConditionParams: any = {};
         if (!!ownerId) {
@@ -750,13 +750,13 @@ export abstract class AbstractTypeORMWorkspaceDBImpl extends AbstractWorkspaceDB
             delete res["creationTime"];
             delete res["instance"];
 
-            return <WorkspaceAndInstance>(res);
+            return <AdminServer.WorkspaceAndInstance>(res);
         });
 
         return { rows, total };
     }
 
-    async findWorkspaceAndInstance(id: string): Promise<WorkspaceAndInstance | undefined> {
+    async findWorkspaceAndInstance(id: string): Promise<AdminServer.WorkspaceAndInstance | undefined> {
         const workspaceRepo = await this.getWorkspaceRepo();
         const workspace = await workspaceRepo.findOneById(id);
         if (!workspace) {
@@ -780,7 +780,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl extends AbstractWorkspaceDB
         delete res["id"];
         delete res["creationTime"];
 
-        return <WorkspaceAndInstance>(res);
+        return <AdminServer.WorkspaceAndInstance>(res);
     }
 
 }
