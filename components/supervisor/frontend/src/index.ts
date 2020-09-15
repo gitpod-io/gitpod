@@ -14,7 +14,7 @@ const workspaceUrl = new GitpodHostUrl(window.location.href);
 const { workspaceId } = workspaceUrl;
 if (workspaceId) {
     const gitpodService = createGitpodService(workspaceUrl.withoutWorkspacePrefix().toString());
-    gitpodService.server.getWorkspace(workspaceId).then(info => {
+    gitpodService.server.getWorkspace({workspaceId}).then(info => {
         document.title = info.workspace.description;
     });
 } else {
