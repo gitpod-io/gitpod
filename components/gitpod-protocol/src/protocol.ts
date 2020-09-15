@@ -468,23 +468,6 @@ export namespace Workspace {
     }
 }
 
-export interface PreparePluginUploadParams {
-    fullPluginName: string;
-}
-
-export interface ResolvePluginsParams {
-    config?: WorkspaceConfig
-    builtins?: ResolvedPlugins
-}
-
-export interface InstallPluginsParams {
-    pluginIds: string[]
-}
-
-export interface UninstallPluginParams {
-    pluginId: string;
-}
-
 export type ResolvedPluginKind = 'user' | 'workspace' | 'builtin';
 
 export interface ResolvedPlugins {

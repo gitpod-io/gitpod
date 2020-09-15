@@ -6,8 +6,8 @@
 
 import { User, WorkspaceInfo, WorkspaceCreationResult, UserMessage, WorkspaceInstanceUser,
     WhitelistedRepository, WorkspaceImageBuild, AuthProviderInfo, Branding, CreateWorkspaceMode,
-    Token, UserEnvVarValue, ResolvePluginsParams, PreparePluginUploadParams,
-    ResolvedPlugins, Configuration, InstallPluginsParams, UninstallPluginParams, UserInfo, GitpodTokenType, GitpodToken, AuthProviderEntry, WorkspaceConfig } from './protocol';
+    Token, UserEnvVarValue, ResolvedPlugins, Configuration, UserInfo, GitpodTokenType, GitpodToken,
+    AuthProviderEntry, WorkspaceConfig } from './protocol';
 import { JsonRpcProxy, JsonRpcServer } from './messaging/proxy-factory';
 import { injectable, inject } from 'inversify';
 import { Disposable } from 'vscode-jsonrpc';
@@ -132,114 +132,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     resolvePlugins(params: GitpodServer.ResolvePluginsParams): Promise<ResolvedPlugins>;
     installUserPlugins(params: GitpodServer.InstallUserPluginsParams): Promise<boolean>;
     uninstallUserPlugin(params: GitpodServer.UninstallUserPluginParams): Promise<boolean>;
-}
-
-
-export interface GitpodServerV0 extends JsonRpcServer<GitpodClient>, AdminServer, LicenseService {
-    // User related API
-    getLoggedInUser(): Promise<User>;
-    updateLoggedInUser(user: Partial<User>): Promise<User>;
-    getAuthProviders(): Promise<AuthProviderInfo[]>;
-    getOwnAuthProviders(): Promise<AuthProviderEntry[]>;
-    updateOwnAuthProvider(params: GitpodServer.UpdateOwnAuthProviderParams): Promise<void>;
-    deleteOwnAuthProvider(params: GitpodServer.DeleteOwnAuthProviderParams): Promise<void>;
-    getBranding(): Promise<Branding>;
-    getConfiguration(): Promise<Configuration>;
-    getToken(query: GitpodServerV0.GetTokenSearchOptions): Promise<Token | undefined>;
-    getPortAuthenticationToken(workspaceId: string): Promise<Token>;
-    deleteAccount(): Promise<void>;
-    getClientRegion(): Promise<string | undefined>;
-    hasPermission(permission: PermissionName): Promise<boolean>;
-
-    // Query/retrieve workspaces
-    getWorkspaces(options: GitpodServerV0.GetWorkspacesOptions): Promise<WorkspaceInfo[]>;
-    getWorkspaceOwner(workspaceId: string): Promise<UserInfo | undefined>;
-    getWorkspaceUsers(workspaceId: string): Promise<WorkspaceInstanceUser[]>;
-    getFeaturedRepositories(): Promise<WhitelistedRepository[]>;
-    getWorkspace(id: string): Promise<WorkspaceInfo>;
-    isWorkspaceOwner(workspaceId: string): Promise<boolean>;
-
-    /**
-     * Creates and starts a workspace for the given context URL.
-     * @param options GitpodServer.CreateWorkspaceOptions
-     * @return WorkspaceCreationResult
-     */
-    createWorkspace(options: GitpodServerV0.CreateWorkspaceOptions): Promise<WorkspaceCreationResult>;
-    startWorkspace(id: string, options: {forceDefaultImage: boolean}): Promise<StartWorkspaceResult>;
-    stopWorkspace(id: string): Promise<void>;
-    deleteWorkspace(id: string): Promise<void>;
-    setWorkspaceDescription(id: string, desc: string): Promise<void>;
-    controlAdmission(id: string, level: "owner" | "everyone"): Promise<void>;
-
-    updateWorkspaceUserPin(id: string, action: "pin" | "unpin" | "toggle"): Promise<void>;
-    sendHeartBeat(options: GitpodServerV0.SendHeartBeatOptions): Promise<void>;
-    watchWorkspaceImageBuildLogs(workspaceId: string): Promise<void>;
-    watchHeadlessWorkspaceLogs(workspaceId: string): Promise<void>;
-    isPrebuildAvailable(pwsid: string): Promise<boolean>;
-    
-    // Workspace timeout
-    setWorkspaceTimeout(workspaceId: string, duration: WorkspaceTimeoutDuration): Promise<SetWorkspaceTimeoutResult>;
-    getWorkspaceTimeout(workspaceId: string): Promise<GetWorkspaceTimeoutResult>;
-    sendHeartBeat(options: GitpodServerV0.SendHeartBeatOptions): Promise<void>;
-
-    updateWorkspaceUserPin(id: string, action: "pin" | "unpin" | "toggle"): Promise<void>;
-
-    // Port management
-    getOpenPorts(workspaceId: string): Promise<WorkspaceInstancePort[]>;
-    openPort(workspaceId: string, port: WorkspaceInstancePort): Promise<WorkspaceInstancePort | undefined>;
-    closePort(workspaceId: string, port: number): Promise<void>;
-
-    // User messages
-    getUserMessages(options: GitpodServerV0.GetUserMessagesOptions): Promise<UserMessage[]>;
-    updateUserMessages(options: GitpodServerV0.UpdateUserMessagesOptions): Promise<void>;
-
-    // User storage
-    getUserStorageResource(options: GitpodServerV0.GetUserStorageResourceOptions): Promise<string>;
-    updateUserStorageResource(options: GitpodServerV0.UpdateUserStorageResourceOptions): Promise<void>;
-
-    // user env vars
-    getEnvVars(): Promise<UserEnvVarValue[]>;
-    setEnvVar(variable: UserEnvVarValue): Promise<void>;
-    deleteEnvVar(variable: UserEnvVarValue): Promise<void>;
-
-    // Gitpod token
-    getGitpodTokens(): Promise<GitpodToken[]>;
-    generateNewGitpodToken(options: { name?: string, type: GitpodTokenType, scopes?: [] }): Promise<string>;
-    deleteGitpodToken(tokenHash: string): Promise<void>;
-
-    // misc
-    sendFeedback(feedback: string): Promise<string | undefined>;
-    registerGithubApp(installationId: string): Promise<void>;
-
-    /**
-     * Stores a new snapshot for the given workspace and bucketId
-     * @return the snapshot id
-     */
-    takeSnapshot(options: GitpodServerV0.TakeSnapshotOptions): Promise<string>;
-
-    /**
-     * Returns the list of snapshots that exist for a workspace.
-     */
-    getSnapshots(workspaceID: string): Promise<string[]>;
-
-    /**
-     * stores/updates layout information for the given workspace
-     */
-    storeLayout(workspaceId: string, layoutData: string): Promise<void>;
-
-    /**
-     * retrieves layout information for the given workspace
-     */
-    getLayout(workspaceId: string): Promise<string | undefined>;
-
-    /**
-     * @param params
-     * @returns promise resolves to an URL to be used for the upload
-     */
-    preparePluginUpload(params: PreparePluginUploadParams): Promise<string>
-    resolvePlugins(workspaceId: string, params: ResolvePluginsParams): Promise<ResolvedPlugins>;
-    installUserPlugins(params: InstallPluginsParams): Promise<boolean>;
-    uninstallUserPlugin(params: UninstallPluginParams): Promise<boolean>;
 }
 
 export const WorkspaceTimeoutValues = ["30m", "60m", "180m"] as const;
@@ -509,53 +401,6 @@ export namespace GitpodServer {
 
     export interface UninstallUserPluginParams {
         readonly pluginId: string;
-    }
-}
-
-export namespace GitpodServerV0 {
-    export interface GetWorkspacesOptions {
-        limit?: number;
-        searchString?: string;
-        pinnedOnly?: boolean;
-    }
-    export interface GetAccountStatementOptions {
-        date?: string;
-    }
-    export interface CreateWorkspaceOptions {
-        contextUrl: string;
-        mode?: CreateWorkspaceMode;
-    }
-    export interface TakeSnapshotOptions {
-        workspaceId: string;
-        layoutData?: string;
-    }
-    export interface GetUserMessagesOptions {
-        readonly releaseNotes?: boolean;
-        readonly workspaceInstanceId: string;
-    }
-    export interface UpdateUserMessagesOptions {
-        readonly messageIds: string[];
-    }
-    export interface GetUserStorageResourceOptions {
-        readonly uri: string;
-    }
-    export interface UpdateUserStorageResourceOptions {
-        readonly uri: string;
-        readonly content: string;
-    }
-    export interface GetTokenSearchOptions {
-        readonly host: string;
-    }
-    export interface SendHeartBeatOptions {
-        readonly instanceId: string;
-        readonly wasClosed?: boolean;
-        readonly roundTripTime?: number;
-    }
-    export interface UpdateOwnAuthProviderParams {
-        readonly entry: AuthProviderEntry.UpdateEntry | AuthProviderEntry.NewEntry
-    }
-    export interface DeleteOwnAuthProviderParams {
-        readonly id: string
     }
 }
 
