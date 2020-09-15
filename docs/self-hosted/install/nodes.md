@@ -12,7 +12,7 @@ Depending on your cluster size that may not be feasible though. Either way, you 
 - `gitpod.io/workload_meta=true` which marks the "meta" nodes and
 - `gitpod.io/workload_workspace=true ` which marks the workspace nodes.
 
-If you want to "mix 'n match", i.e. don't seperate the nodes you can simply run:
+If you want to "mix 'n match", i.e., don't separate the nodes, you can simply run:
 ```
 kubectl label node --all gitpod.io/workload_meta=true gitpod.io/workload_workspace=true
 ```
