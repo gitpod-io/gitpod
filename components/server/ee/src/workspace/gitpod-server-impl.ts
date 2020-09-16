@@ -71,15 +71,12 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
             }
 
             const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace({ span }));
-            if (user.id != workspace.ownerId) {
-                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Only the owner may set the workspace timeout");
-            }
-
             const runningInstances = await this.workspaceDb.trace({ span }).findRegularRunningInstances(user.id);
             const runningInstance = runningInstances.find(i => i.workspaceId === workspaceId);
             if (!runningInstance) {
                 throw new ResponseError(ErrorCodes.NOT_FOUND, "Can only set keep-alive for running workspaces");
             }
+            await this.guardAccess({kind: "workspaceInstance", subject: runningInstance, workspaceOwnerID: workspace.ownerId}, "update");
 
             // if any other running instance has a custom timeout other than the user's default, we'll reset that timeout
             const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
@@ -126,15 +123,12 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
             const canChange = await this.maySetTimeout(user);
 
             const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace({ span }));
-            if (user.id != workspace.ownerId) {
-                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Only the owner may get the workspace keep-alive.");
-            }
-
             const runningInstance = await this.workspaceDb.trace({ span }).findRunningInstance(workspaceId);
             if (!runningInstance) {
                 log.warn({ userId: user.id, workspaceId }, 'Can only get keep-alive for running workspaces');
                 return { duration: "30m", canChange };
             }
+            await this.guardAccess({kind: "workspaceInstance", subject: runningInstance, workspaceOwnerID: workspace.ownerId}, "get");
 
             const req = new DescribeWorkspaceRequest();
             req.setId(runningInstance.id);
@@ -200,12 +194,12 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
 
         try {
             const workspace = await this.internalGetWorkspace(id, this.workspaceDb.trace({ span }));
-            if (user.id != workspace.ownerId) {
-                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Only the owner may share/unshare a workspace.");
-            }
+            await this.guardAccess({kind: "workspace", subject: workspace}, "update");
 
             const instance = await this.workspaceDb.trace({ span }).findRunningInstance(id);
             if (instance) {
+                await this.guardAccess({kind: "workspaceInstance", subject: instance, workspaceOwnerID: workspace.ownerId}, "update");
+
                 const req = new ControlAdmissionRequest();
                 req.setId(instance.id);
                 req.setLevel(lvlmap.get(level)!);
@@ -246,6 +240,9 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
             if (!instance) {
                 throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} has no running instance`);
             }
+
+            await this.guardAccess({kind: "workspaceInstance", subject: instance, workspaceOwnerID: workspace.ownerId}, "get");
+            await this.guardAccess({kind: "snapshot", subject: undefined, workspaceOwnerID: workspaceId}, "create");
 
             const client = await this.workspaceManagerClientProvider.get(instance.region);
             const request = new TakeSnapshotRequest();
@@ -288,6 +285,8 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
             }
 
             const snapshots = await this.workspaceDb.trace({ span }).findSnapshotsByWorkspaceId(workspaceId);
+            await Promise.all(snapshots.map(s => this.guardAccess({kind: "snapshot", subject: s, workspaceOwnerID: workspace.ownerId}, "get")));
+
             return snapshots.map(s => s.id);
         } catch (e) {
             TraceContext.logError({ span }, e);
@@ -512,7 +511,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
             throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
         }
         const span = opentracing.globalTracer().startSpan("adminForceStopWorkspace");
-        await this.internalStopWorkspace({ span }, id, StopWorkspacePolicy.IMMEDIATELY);
+        await this.internalStopWorkspace({ span }, id, undefined,  StopWorkspacePolicy.IMMEDIATELY);
     }
 
     protected async findPrebuiltWorkspace(ctx: TraceContext, user: User, context: WorkspaceContext, mode: CreateWorkspaceMode): Promise<WorkspaceCreationResult | PrebuiltWorkspaceContext | undefined> {
