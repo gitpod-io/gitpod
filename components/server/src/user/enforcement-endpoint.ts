@@ -18,6 +18,7 @@ import { Permission } from '@gitpod/gitpod-protocol/lib/permission';
 import { ResponseError } from 'vscode-jsonrpc';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 import { GitpodServerImpl } from '../workspace/gitpod-server-impl';
+import { ResourceAccessGuard, OwnerResourceGuard } from '../auth/resource-access';
 
 @injectable()
 export class EnforcementController {
@@ -28,6 +29,7 @@ export class EnforcementController {
     @inject(UserDeletionService) protected readonly userDeletionService: UserDeletionService;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
     @inject(GitpodServerImpl) protected readonly _gitpodServer: GitpodServerImpl<GitpodClient, GitpodServer>;
+    // @inject(ResourceAccessGuard) protected readonly resourceAccessGuard: ResourceAccessGuard;
 
     get apiRouter(): express.Router {
         const router = express.Router();
@@ -37,7 +39,7 @@ export class EnforcementController {
         return router;
     }
 
-    protected gitpodServer(user: User) {
+    protected gitpodServer(user: User, resourceAccessGuard: ResourceAccessGuard) {
         /*
             This initialize call is a hack. GitpodServer is intended to be accessed via Wbsocket/JsonRpc (see WebsocketConnectionManager).
             Thus, initialize() needs a GitpodClient. For the methods we use here from GitpodServer we do not need this client.
@@ -45,11 +47,11 @@ export class EnforcementController {
             Since we want to get rid of this enforcement endpoint in the long term having this hack does not harm and looking for
             another architecture is not necessary.
         */
-        this._gitpodServer.initialize({} as GitpodClient, undefined, user);
+        this._gitpodServer.initialize({} as GitpodClient, undefined, user, resourceAccessGuard);
         return this._gitpodServer;
     }
 
-    protected getAuthorizedUser(req: express.Request): User | undefined {
+    protected getAuthorizedUser(req: express.Request): { callingUser: User, resourceAccessGuard: ResourceAccessGuard } | undefined {
         if (!req.isAuthenticated() || !req.user) {
             return;
         }
@@ -60,7 +62,7 @@ export class EnforcementController {
         }
 
         if (this.authService.hasPermission(user, Permission.ENFORCEMENT)) {
-            return user;
+            return { callingUser: user, resourceAccessGuard: new OwnerResourceGuard(user.id) };
         } else {
             return undefined;
         }
@@ -68,8 +70,8 @@ export class EnforcementController {
 
     protected addRouteToBlockUser(router: express.Router) {
         router.get("/block-user/:userid", async (req, res, next) => {
-            const callingUser = this.getAuthorizedUser(req);
-            if (!callingUser) {
+            const auth = this.getAuthorizedUser(req);
+            if (!auth) {
                 log.warn("Unauthorized user attempted to access enforcement endpoint", req);
                 // don't tell the world we exist
                 res.sendStatus(404);
@@ -87,17 +89,18 @@ export class EnforcementController {
             res.send(`<html><body><h1>Click button below</h1><p>User will be blocked and all running workspaces will be stopped.</p><form method="post" action="${actionUrl}"><input type="submit" value="Do it"></form></body></html>`);
         });
         router.post("/block-user/:userid", async (req, res, next) => {
-            const callingUser = this.getAuthorizedUser(req);
-            if (!callingUser) {
+            const auth = this.getAuthorizedUser(req);
+            if (!auth) {
                 log.warn("Unauthorized user attempted to access enforcement endpoint", req);
                 // don't tell the world we exist
                 res.sendStatus(404);
                 return;
             }
+            const { callingUser, resourceAccessGuard } = auth;
 
             const targetUserID = req.params.userid;
             try {
-                await this.gitpodServer(callingUser).adminBlockUser({ id: targetUserID, blocked: true });
+                await this.gitpodServer(callingUser, resourceAccessGuard).adminBlockUser({ id: targetUserID, blocked: true });
                 res.sendStatus(200);
             } catch (e) {
                 if (e instanceof ResponseError && e.code === ErrorCodes.NOT_FOUND) {
@@ -115,8 +118,8 @@ export class EnforcementController {
 
     protected addRouteToKillWorkspace(router: express.Router) {
         router.get("/kill-workspace/:wsid", async (req, res, next) => {
-            const callingUser = this.getAuthorizedUser(req);
-            if (!callingUser) {
+            const auth = this.getAuthorizedUser(req);
+            if (!auth) {
                 log.warn("Unauthorized user attempted to access enforcement endpoint", req);
                 // don't tell the world we exist
                 res.sendStatus(404);
@@ -127,17 +130,18 @@ export class EnforcementController {
             res.send(`<html><body><h1>Click button below</h1><form method="post" action="${actionUrl}"><input type="submit" value="Do it"></form></body></html>`)
         });
         router.post("/kill-workspace/:wsid", async (req, res, next) => {
-            const callingUser = this.getAuthorizedUser(req);
-            if (!callingUser) {
+            const auth = this.getAuthorizedUser(req);
+            if (!auth) {
                 log.warn("Unauthorized user attempted to access enforcement endpoint", req);
                 // don't tell the world we exist
                 res.sendStatus(404);
                 return;
             }
+            const { callingUser, resourceAccessGuard } = auth;
 
             const targetWsID = req.params.wsid;
             try {
-                await this.gitpodServer(callingUser).adminForceStopWorkspace(targetWsID);
+                await this.gitpodServer(callingUser, resourceAccessGuard).adminForceStopWorkspace(targetWsID);
 
                 const target = (await this.workspaceDb.findById(targetWsID))!;
                 const owner = await this.userDB.findUserById(target!.ownerId);
@@ -168,26 +172,29 @@ export class EnforcementController {
 
     protected addRouteToDeleteUser(router: express.Router) {
         router.get("/delete-user/:userid", async (req, res, next) => {
-            const callingUser = this.getAuthorizedUser(req);
-            if (!callingUser) {
+            const auth = this.getAuthorizedUser(req);
+            if (!auth) {
                 log.warn("Unauthorized user attempted to access enforcement endpoint", req);
                 // don't tell the world we exist
                 res.sendStatus(404);
                 return;
             }
+            
             const targetUserID = req.params.userid;
             const actionUrl = this.deleteUserUrl(targetUserID);
             res.send(`<html><body><h1>Click button below</h1><form method="post" action="${actionUrl}"><input type="submit" value="Do it"></form></body></html>`)
         });
 
         router.post("/delete-user/:userid", async (req, res, next) => {
-            const callingUser = this.getAuthorizedUser(req);
-            if (!callingUser) {
+            const auth = this.getAuthorizedUser(req);
+            if (!auth) {
                 log.warn("Unauthorized user attempted to access enforcement endpoint", req);
                 // don't tell the world we exist
                 res.sendStatus(404);
                 return;
             }
+            const { callingUser } = auth;
+
             const logCtx: LogContext = { userId: callingUser.id };
             const targetUserID = req.params.userid;
             try {
