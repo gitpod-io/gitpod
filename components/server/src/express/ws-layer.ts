@@ -12,7 +12,7 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 export interface WsLayer {
     handleError: WsErrorHandler;
     handleRequest: WsRequestHandler;
-    dispatch: (ws: websocket, req: express.Request) => MaybePromise;
+    dispatch: (ws: websocket, req: express.Request) => Promise<void>;
     next: (ws: websocket, req: express.Request, err?: any) => MaybePromise;
 }
 
@@ -58,7 +58,7 @@ export class WsLayerImpl implements WsLayer {
         }
     }
 
-    async dispatch(ws: websocket, req: express.Request) {
+    async dispatch(ws: websocket, req: express.Request): Promise<void> {
         try {
             return this.next(ws, req);
         } catch (err) {
