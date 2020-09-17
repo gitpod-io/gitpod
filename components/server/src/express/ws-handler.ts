@@ -55,7 +55,10 @@ export class WsExpressHandler {
         const stack = WsLayer.createStack(...handlers);
         const dispatch = (ws: websocket, request: express.Request) => {
             handler(ws, request);
-            stack.dispatch(ws, request);
+            stack.dispatch(ws, request).catch(err => {
+                log.error("websocket stack error", err);
+                ws.terminate();
+            });
         }
 
         this.httpServer.on('upgrade', (request: http.IncomingMessage, socket: net.Socket, head: Buffer) => {
