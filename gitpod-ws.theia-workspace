@@ -6,6 +6,7 @@
       { "path": "components/ee/cerc" },
       { "path": "components/ee/ws-scheduler" },
       { "path": "components/gitpod-cli" },
+      { "path": "components/grpc-jsonrpc-proxy" },
       { "path": "components/image-builder" },
       { "path": "components/licensor" },
       { "path": "components/registry-facade" },
