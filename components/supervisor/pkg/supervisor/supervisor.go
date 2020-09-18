@@ -120,6 +120,7 @@ func Run(options ...RunOption) {
 		IDEReady: ideReady,
 	})
 	apiServices = append(apiServices, termMuxSrv)
+	apiServices = append(apiServices, &RegistrableTokenService{NewInMemoryTokenService()})
 	apiServices = append(apiServices, opts.AdditionalServices...)
 
 	var wg sync.WaitGroup
