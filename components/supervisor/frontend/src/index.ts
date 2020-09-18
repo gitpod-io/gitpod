@@ -52,12 +52,20 @@ const loadingFrame = document.createElement('iframe');
 loadingFrame.src = startURL;
 loadingFrame.className = 'gitpod-frame loading';
 
-const onDOMContentLoaded = new Promise(resolve => window.addEventListener('DOMContentLoaded', resolve));
+const onDOMContentLoaded = new Promise(resolve => window.addEventListener('DOMContentLoaded', resolve, { once: true }));
 
 Promise.all([onDOMContentLoaded, checkReady('ide'), checkReady('content')]).then(() => {
-    console.info('IDE backend and content are ready, revealing IDE frontend...');
+    console.info('IDE backend and content are ready, attaching IDE frontend...');
     ideFrame.onload = () => loadingFrame.remove();
     document.body.appendChild(ideFrame);
+    ideFrame.contentWindow?.addEventListener('DOMContentLoaded', () => {
+        if (navigator.keyboard?.getLayoutMap && ideFrame.contentWindow?.navigator.keyboard?.getLayoutMap) {
+            ideFrame.contentWindow.navigator.keyboard.getLayoutMap = navigator.keyboard.getLayoutMap.bind(navigator.keyboard);
+        }
+        if (navigator.keyboard?.addEventListener && ideFrame.contentWindow?.navigator.keyboard?.addEventListener) {
+            ideFrame.contentWindow.navigator.keyboard.addEventListener = navigator.keyboard.addEventListener.bind(navigator.keyboard);
+        }
+    }, { once: true });
 });
 
 onDOMContentLoaded.then(() => {
