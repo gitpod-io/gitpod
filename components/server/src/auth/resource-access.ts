@@ -1,5 +1,7 @@
 import { Workspace, WorkspaceInstance, User, Snapshot, GitpodToken, Token } from "@gitpod/gitpod-protocol";
-import { injectable } from "inversify";
+
+declare var resourceInstance: GuardedResource;
+export type GuardedResourceKind = typeof resourceInstance.kind;
 
 export type GuardedResource =
     GuardedWorkspace |
@@ -63,6 +65,11 @@ export interface ResourceAccessGuard {
     canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean>;
 }
 
+
+export interface WithResourceAccessGuard {
+    resourceGuard?: ResourceAccessGuard;
+}
+
 /**
  * CompositeResourceAccessGuard grants access to resources if at least one of its children does.
  */
@@ -81,7 +88,6 @@ export class CompositeResourceAccessGuard implements ResourceAccessGuard {
  * OwnerResourceGuard grants access to resources if the user asking for access is the owner of that
  * resource.
  */
-@injectable()
 export class OwnerResourceGuard implements ResourceAccessGuard {
 
     constructor(readonly userId: string) {}
@@ -103,6 +109,156 @@ export class OwnerResourceGuard implements ResourceAccessGuard {
             case "workspaceInstance":
                 return resource.workspaceOwnerID === this.userId;
         }
+    }
+
+}
+
+export class ScopedResourceGuard implements ResourceAccessGuard {
+    protected readonly scopes: { [index: string]: ScopedResourceGuard.ResourceScope } = {};
+
+    constructor(scopes: ScopedResourceGuard.ResourceScope[]) {
+        scopes.forEach(s => this.scopes[`${s.kind}::${s.subjectID}`] = s);
+    }
+
+    async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
+        const subjectID = ScopedResourceGuard.subjectID(resource);
+        if (!subjectID) {
+            return false;
+        }
+
+        const scope = this.scopes[`${resource.kind}::${subjectID}`];
+        if (!scope) {
+            return false;
+        }
+
+        return scope.operations.some(op => op === operation);
+    }
+
+}
+
+export namespace ScopedResourceGuard {
+    export interface ResourceScope {
+        kind: GuardedResourceKind;
+        subjectID: string;
+        operations: ResourceAccessOp[];
+    }
+
+    export function isAllowedUnder(parent: ResourceScope, child: ResourceScope): boolean {
+        if (child.kind !== parent.kind) {
+            return false;
+        }
+        if (child.subjectID !== parent.subjectID) {
+            return false;
+        }
+        if (child.operations.some(co => !parent.operations.includes(co))) {
+            return false;
+        }
+
+        return true;
+    }
+
+    export function unmarshalResourceScope(scope: string): ResourceScope {
+        const segs = scope.split("::");
+        if (segs.length != 3) {
+            throw new Error("invalid scope")
+        }
+
+        return {
+            kind: segs[0] as GuardedResourceKind,
+            subjectID: segs[1],
+            operations: segs[2].split(",").map(o => o.trim()) as ResourceAccessOp[],
+        };
+    }
+
+    export function marshalResourceScope(resource: GuardedResource, ops: ResourceAccessOp[]): string {
+        const subjectID = ScopedResourceGuard.subjectID(resource);
+        if (!subjectID) {
+            throw new Error("resource has no subject ID");
+        }
+
+        return `${resource.kind}::${subjectID}::${ops.join(",")}`;
+    }
+
+    export function subjectID(resource: GuardedResource): string | undefined {
+        switch (resource.kind) {
+            case "gitpodToken":
+                return resource.subject.tokenHash;
+            case "snapshot":
+                return resource.subject ? resource.subject.id : undefined;
+            case "token":
+                return;
+            case "user":
+                return resource.subject.id;
+            case "userStorage":
+                return `${resource.userID}:${resource.uri}`;
+            case "workspace":
+                return resource.subject.id;
+            case "workspaceInstance":
+                return resource.subject ? resource.subject.id : undefined;
+        }
+    }
+}
+
+export class TokenResourceGuard implements ResourceAccessGuard {
+    protected readonly delegate: ResourceAccessGuard;
+
+    constructor(userID: string, protected readonly allTokenScopes: string[]) {
+        const hasDefaultResourceScope = allTokenScopes.some(s => s === TokenResourceGuard.DefaultResourceScope);
+        if (hasDefaultResourceScope) {
+            this.delegate = new OwnerResourceGuard(userID);
+        } else {
+            const resourceScopes = TokenResourceGuard.getResourceScopes(allTokenScopes);
+            this.delegate = new ScopedResourceGuard(resourceScopes);
+        }
+    }
+
+    async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
+        if (resource.kind === "gitpodToken" && operation === "create") {
+            return TokenResourceGuard.areScopesSubsetOf(this.allTokenScopes, resource.subject.scopes);
+        }
+
+        return this.delegate.canAccess(resource, operation);
+    }
+
+}
+
+export namespace TokenResourceGuard {
+    
+    export const DefaultResourceScope = "resource:default";
+
+    export function getResourceScopes(s: string[]): ScopedResourceGuard.ResourceScope[] {
+        return s.filter(s => s.startsWith("resource:") && s !== DefaultResourceScope)
+                .map(s => ScopedResourceGuard.unmarshalResourceScope(s.substring("resource:".length)));
+    }
+
+    export function areScopesSubsetOf(upperScopes: string[], lowerScopes: string[]) {
+        /*
+         * We need to ensure that the new token we're about to create doesn't exceed our own privileges.
+         * For all "resource scopes" that means no new resource scope for which we don't have a corresponding one (ops_new <= ops_old).
+         * For all "function scopes" that means no new function scopes for which we don't have a corresponding one.
+         */
+
+        // special case: default resource scope
+        if (lowerScopes.includes(DefaultResourceScope) && !upperScopes.includes(DefaultResourceScope)) {
+            return false;
+        }
+
+        const upperResourceScopes = TokenResourceGuard.getResourceScopes(upperScopes);
+        const lowerResourceScopes = TokenResourceGuard.getResourceScopes(lowerScopes);
+
+        const allNewScopesAllowed = lowerResourceScopes.every(lrs => upperResourceScopes.some(urs => ScopedResourceGuard.isAllowedUnder(urs, lrs)));
+        if (!allNewScopesAllowed) {
+            return false;
+        }
+
+        const functionsAllowed = lowerScopes
+            .filter(s => s.startsWith("function:"))
+            .every(ns => upperScopes.includes(ns));
+        if (!functionsAllowed) {
+            return false;
+        }
+
+        return true;
     }
 
 }

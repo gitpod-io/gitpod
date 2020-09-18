@@ -250,7 +250,8 @@ export interface GitpodToken {
 }
 
 export enum GitpodTokenType {
-    API_AUTH_TOKEN = 0
+    API_AUTH_TOKEN = 0,
+    MACHINE_AUTH_TOKEN = 1
 }
 
 export interface OneTimeSecret {

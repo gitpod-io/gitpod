@@ -6,12 +6,15 @@
 
 import { GitpodServerImpl } from "./workspace/gitpod-server-impl";
 import { GitpodServerPath, User, GitpodClient, Disposable, GitpodServer } from "@gitpod/gitpod-protocol";
-import { JsonRpcConnectionHandler, JsonRpcProxy } from "@gitpod/gitpod-protocol/lib/messaging/proxy-factory";
+import { JsonRpcConnectionHandler, JsonRpcProxy, JsonRpcProxyFactory } from "@gitpod/gitpod-protocol/lib/messaging/proxy-factory";
 import { ConnectionHandler } from "@gitpod/gitpod-protocol/lib/messaging/handler";
-import { MessageConnection } from "vscode-jsonrpc";
+import { MessageConnection, ResponseError, ErrorCodes as RPCErrorCodes } from "vscode-jsonrpc";
 import { EventEmitter } from "events";
 import * as express from "express";
-import { OwnerResourceGuard, ResourceAccessGuard } from "./auth/resource-access";
+import { OwnerResourceGuard, WithResourceAccessGuard } from "./auth/resource-access";
+import { WithFunctionAccessGuard, AllAccessFunctionGuard, FunctionAccessGuard } from "./auth/function-access";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 
 export type GitpodServiceFactory<C extends GitpodClient, S extends GitpodServer> = () => GitpodServerImpl<C, S>;
 
@@ -29,11 +32,19 @@ export class WebsocketConnectionManager<C extends GitpodClient, S extends Gitpod
     protected readonly servers: GitpodServerImpl<C, S>[] = [];
 
     constructor(protected readonly serverFactory: GitpodServiceFactory<C, S>) {
-        this.jsonRpcConnectionHandler = new JsonRpcConnectionHandler<C>(this.path, this.createProxyTarget.bind(this));
+        this.jsonRpcConnectionHandler = new GitpodJsonRpcConnectionHandler<C>(
+            this.path, 
+            this.createProxyTarget.bind(this),
+            this.createAccessGuard.bind(this),
+        );
     }
 
     public onConnection(connection: MessageConnection, session?: object) {
         this.jsonRpcConnectionHandler.onConnection(connection, session);
+    }
+
+    protected createAccessGuard(request?: object): FunctionAccessGuard {
+        return (request && (request as WithFunctionAccessGuard).functionGuard) || new AllAccessFunctionGuard();
     }
 
     protected createProxyTarget(client: JsonRpcProxy<C>, request?: object): GitpodServerImpl<C, S> {
@@ -43,13 +54,9 @@ export class WebsocketConnectionManager<C extends GitpodClient, S extends Gitpod
         const gitpodServer = this.serverFactory();
         const clientRegion = (expressReq as any).headers["x-glb-client-region"];
         const user = expressReq.user as User;
-        
-        let resourceGuard: ResourceAccessGuard;
-        if (!!user) {
-            resourceGuard = new OwnerResourceGuard(user.id);
-        } else {
-            resourceGuard = {canAccess: async () => false };
-        }
+        const resourceGuard = 
+            (expressReq as WithResourceAccessGuard).resourceGuard ||
+            (!!user ? new OwnerResourceGuard(user.id) : {canAccess: async () => false });
 
         gitpodServer.initialize(client, clientRegion, user, resourceGuard);
         client.onDidCloseConnection(() => {
@@ -64,9 +71,9 @@ export class WebsocketConnectionManager<C extends GitpodClient, S extends Gitpod
 
         return new Proxy<GitpodServerImpl<C, S>>(gitpodServer, {
             get: (target, property: keyof GitpodServerImpl<C, S>) => {
-                const result = target[property];
                 if (session) session.touch(console.error);
-                return result;
+
+                return target[property];
             }
         });
     }
@@ -95,4 +102,51 @@ export class WebsocketConnectionManager<C extends GitpodClient, S extends Gitpod
             this.servers.splice(index);
         }
     }
+}
+
+class GitpodJsonRpcConnectionHandler<T extends object> extends JsonRpcConnectionHandler<T> {
+    constructor(
+        readonly path: string,
+        readonly targetFactory: (proxy: JsonRpcProxy<T>, request?: object) => any,
+        readonly accessGuard: (request?: object) => FunctionAccessGuard
+    ) { 
+        super(path, targetFactory);
+    }
+
+    onConnection(connection: MessageConnection, request?: object): void {
+        const factory = new GitpodJsonRpcProxyFactory<T>(this.accessGuard(request));
+        const proxy = factory.createProxy();
+        factory.target = this.targetFactory(proxy, request);
+        factory.listen(connection);
+    }
+}
+
+class GitpodJsonRpcProxyFactory<T extends object> extends JsonRpcProxyFactory<T> {
+
+    constructor(protected readonly accessGuard: FunctionAccessGuard) { 
+        super();
+    }
+    
+    protected async onRequest(method: string, ...args: any[]): Promise<any> {
+        if (!this.accessGuard.canAccess(method)) {
+            log.error(`Request ${method} is not allowed`, {method, args});
+            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
+        }
+
+        try {
+            return await this.target[method](...args);
+        } catch (e) {
+            if (e instanceof ResponseError) {
+                log.info(`Request ${method} unsuccessful: ${e.code}/"${e.message}"`, { method, args });
+            } else {
+                log.error(`Request ${method} failed with internal server error`, e, { method, args });
+            }
+            throw e;
+        }
+    }
+
+    protected onNotification(method: string, ...args: any[]): void {
+        throw new ResponseError(RPCErrorCodes.InvalidRequest, "notifications are not supported");
+    }
+
 }

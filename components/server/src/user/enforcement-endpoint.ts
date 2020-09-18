@@ -29,7 +29,6 @@ export class EnforcementController {
     @inject(UserDeletionService) protected readonly userDeletionService: UserDeletionService;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
     @inject(GitpodServerImpl) protected readonly _gitpodServer: GitpodServerImpl<GitpodClient, GitpodServer>;
-    // @inject(ResourceAccessGuard) protected readonly resourceAccessGuard: ResourceAccessGuard;
 
     get apiRouter(): express.Router {
         const router = express.Router();

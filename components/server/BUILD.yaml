@@ -60,4 +60,4 @@ scripts:
       telepresence --swap-deployment server \
                    --method vpn-tcp \
                    --run yarn start-ee-inspect | \
-        leeway run gitpod-core/components:dejson-log-output
+        leeway run components:dejson-log-output

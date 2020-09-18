@@ -136,5 +136,3 @@ export function getRequestingClientInfo(req: express.Request) {
     const fingerprint = crypto.createHash('sha256').update(`${ip}–${ua}`).digest('hex');
     return { ua, fingerprint };
 }
-
-

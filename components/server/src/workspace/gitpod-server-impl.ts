@@ -139,7 +139,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
     protected async guardAccess(resource: GuardedResource, op: ResourceAccessOp) {
         if (!(await this.resourceAccessGuard.canAccess(resource, op))) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "operation not permitted");
+            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `operation not permitted: missing ${op} permission on ${resource.kind}`);
         }
     }
 

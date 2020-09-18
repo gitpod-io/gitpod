@@ -20,7 +20,7 @@ import { AuthProviderService } from './auth-provider-service';
 export class Authenticator {
 
     protected passportInitialize: express.Handler;
-    protected passportsession: express.Handler;
+    protected passportSession: express.Handler;
 
     @inject(Env) protected env: Env;
     @inject(UserDB) protected userDb: UserDB;
@@ -32,7 +32,7 @@ export class Authenticator {
     protected setup() {
         // Setup passport
         this.passportInitialize = passport.initialize();
-        this.passportsession = passport.session();
+        this.passportSession = passport.session();
         passport.serializeUser((user: User, done) => {
             if (user) {
                 done(null, user.id);
@@ -57,7 +57,7 @@ export class Authenticator {
     get initHandlers(): express.Handler[] {
         return [
             this.passportInitialize,    // adds `passport.user` to session
-            this.passportsession        // deserializes session user into  `req.user`
+            this.passportSession        // deserializes session user into  `req.user`
         ];
     }
 

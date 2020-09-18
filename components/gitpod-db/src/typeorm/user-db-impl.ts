@@ -148,7 +148,7 @@ export class TypeORMUserDBImpl implements UserDB {
         return result.sort(order);
     }
 
-    public async findUserByGitpodToken(tokenHash: string, tokenType?: GitpodTokenType): Promise<User | undefined> {
+    public async findUserByGitpodToken(tokenHash: string, tokenType?: GitpodTokenType): Promise<{user: User, token: GitpodToken} | undefined> {
         const repo = await this.getGitpodTokenRepo();
         const qBuilder = repo.createQueryBuilder('gitpodToken')
             .leftJoinAndSelect("gitpodToken.user", "user");
@@ -159,7 +159,11 @@ export class TypeORMUserDBImpl implements UserDB {
         }
         qBuilder.andWhere("gitpodToken.deleted <> TRUE AND user.markedDeleted <> TRUE AND user.blocked <> TRUE");
         const token = await qBuilder.getOne();
-        return token && token.user;
+        if (!token) {
+            return;
+        }
+
+        return {user: token.user, token};
     }
 
     public async findAllGitpodTokensOfUser(userId: string): Promise<GitpodToken[]> {

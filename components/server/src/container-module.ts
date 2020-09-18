@@ -65,7 +65,7 @@ import { HostContextProviderImpl } from './auth/host-context-provider-impl';
 import { AuthProviderParams } from './auth/auth-provider';
 import { AuthErrorHandler } from './auth/auth-error-handler';
 import { MonitoringEndpointsApp } from './monitoring-endpoints';
-import { ResourceAccessGuard, OwnerResourceGuard } from './auth/resource-access';
+import { BearerAuth } from './auth/bearer-authenticator';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Env).toSelf().inSingletonScope();
@@ -109,7 +109,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(WebsocketConnectionManager).toDynamicValue(ctx =>
         new WebsocketConnectionManager<GitpodClient, GitpodServer>(() => ctx.container.get<GitpodServerImpl<GitpodClient, GitpodServer>>(GitpodServerImpl))
     ).inSingletonScope();
-    bind(ResourceAccessGuard).to(OwnerResourceGuard).inSingletonScope();
 
     bind(ImageBuilderClientConfig).toDynamicValue(() => {
         return { address: "image-builder:8080" }
@@ -191,4 +190,5 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(AuthProviderEntryDB).to(AuthProviderEntryDBImpl).inSingletonScope();
     bind(AuthProviderService).toSelf().inSingletonScope();
+    bind(BearerAuth).toSelf().inSingletonScope();
 });
