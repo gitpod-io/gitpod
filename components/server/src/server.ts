@@ -35,6 +35,7 @@ import { DeletedEntryGC } from '@gitpod/gitpod-db/lib/typeorm/deleted-entry-gc';
 import { PeriodicDbDeleter } from '@gitpod/gitpod-db/lib/periodic-deleter';
 import { OneTimeSecretServer } from './one-time-secret-server';
 import { GitpodClient, GitpodServer } from '@gitpod/gitpod-protocol';
+import { BearerAuth } from './auth/bearer-authenticator';
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -58,6 +59,8 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(OneTimeSecretServer) protected readonly oneTimeSecretServer: OneTimeSecretServer;
 
     @inject(PeriodicDbDeleter) protected readonly periodicDbDeleter: PeriodicDbDeleter;
+
+    @inject(BearerAuth) protected readonly bearerAuth: BearerAuth;
 
     protected readonly eventEmitter = new EventEmitter();
     protected app?: express.Application;
@@ -129,6 +132,12 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                 const websocket = toIWebSocket(ws);
                 (request as any).wsConnection = createWebSocketConnection(websocket, console);
             }, handleSession, ...initSessionHandlers, handleError, pingPong, (ws: ws, req: express.Request) => {
+                websocketConnectionHandler.onConnection((req as any).wsConnection, req);
+            });
+            wsHandler.ws("/v1", (ws, request) => {
+                const websocket = toIWebSocket(ws);
+                (request as any).wsConnection = createWebSocketConnection(websocket, console);
+            }, this.bearerAuth.websocketHandler, handleError, pingPong, (ws: ws, req: express.Request) => {
                 websocketConnectionHandler.onConnection((req as any).wsConnection, req);
             });
         })

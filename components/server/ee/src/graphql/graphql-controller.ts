@@ -35,7 +35,10 @@ export class GraphQLController {
             const ctx = request as any as Context;
             ctx.authToken = this.bearerToken(request.headers);
             if (!ctx.user && !!ctx.authToken) {
-                ctx.user = await this.userDb.findUserByGitpodToken(ctx.authToken, GitpodTokenType.API_AUTH_TOKEN);
+                const ut = await this.userDb.findUserByGitpodToken(ctx.authToken, GitpodTokenType.API_AUTH_TOKEN);
+                if (!!ut) {
+                    ctx.user = ut.user;
+                }
             }
             return {
                 schema,

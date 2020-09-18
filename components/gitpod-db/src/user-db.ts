@@ -110,7 +110,7 @@ export interface UserDB {
     findAllUsers(offset: number, limit: number, orderBy: keyof User, orderDir: "ASC" | "DESC", searchTerm?: string, minCreationDate?: Date, maxCreationDate?: Date, excludeBuiltinUsers?: boolean): Promise<{total: number, rows: User[]}>;
     findUserByName(name: string): Promise<User | undefined>;
 
-    findUserByGitpodToken(tokenHash: string, tokenType?: GitpodTokenType): Promise<MaybeUser>;
+    findUserByGitpodToken(tokenHash: string, tokenType?: GitpodTokenType): Promise<{user: User, token: GitpodToken} | undefined>;
     findAllGitpodTokensOfUser(userId: string): Promise<GitpodToken[]>;
     storeGitpodToken(token: GitpodToken & { user: DBUser }): Promise<void>;
     deleteGitpodToken(tokenHash: string): Promise<void>;
