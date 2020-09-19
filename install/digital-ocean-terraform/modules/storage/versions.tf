@@ -1,14 +1,7 @@
 terraform {
   required_providers {
     digitalocean = {
-      source  = "terraform-providers/digitalocean"
-      version = ">= 1.22.2"
-    }
-    helm = {
-      source = "hashicorp/helm"
-    }
-    kubernetes = {
-      source = "hashicorp/kubernetes"
+      source = "terraform-providers/digitalocean"
     }
     random = {
       source = "hashicorp/random"
