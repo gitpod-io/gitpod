@@ -1,5 +1,4 @@
 {
-  "private": true,
   "name": "@gitpod/supervisor",
   "version": "0.1.5",
   "license": "UNLICENSED",
@@ -8,8 +7,8 @@
     "preflight": "go fmt ./... && go test -v ./... && golangci-lint run"
   },
   "files": [
-    ".",
-    "lib"
+    "lib",
+    "src"
   ],
   "dependencies": {
     "@grpc/grpc-js": "^1.1.5",

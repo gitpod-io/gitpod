@@ -12,3 +12,14 @@ packages:
         build: ["yarn", "build"]
       yarnLock: ${coreYarnLockBase}/../yarn.lock
       tsconfig: tsconfig.json
+  - name: publish
+    type: generic
+    srcs:
+      - "scripts/publish.js"
+    deps:
+      - :lib
+    argdeps:
+      - version
+    config:
+      commands:
+        - ["node", "scripts/publish.js", "${version}"]
