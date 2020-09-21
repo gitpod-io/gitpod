@@ -18,3 +18,14 @@ packages:
     config:
       commands:
         - ["mv", "data/builtin-theia-plugins.json", "manifest.json"]
+  - name: publish
+    type: generic
+    srcs:
+      - "scripts/publish.js"
+    deps:
+      - :lib
+    argdeps:
+      - version
+    config:
+      commands:
+        - ["node", "scripts/publish.js", "${version}"]

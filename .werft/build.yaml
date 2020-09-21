@@ -63,6 +63,11 @@ pod:
       valueFrom:
         fieldRef:
           fieldPath: spec.nodeName
+    - name: NPM_AUTH_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: npm-auth-token
+          key: npm-auth-token.json
     # - name: GITPOD_TEST_TOKEN_GITHUB
     #   valueFrom:
     #     secretKeyRef:
