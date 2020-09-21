@@ -7,21 +7,24 @@
 require('../public/index.css');
 
 import "reflect-metadata";
-import { createGitpodService } from "@gitpod/gitpod-protocol";
+import { SetTokenRequest, TokenReuse } from "@gitpod/supervisor/lib/token_pb";
+import { createGitpodService, GitpodTokenType } from "@gitpod/gitpod-protocol";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 
 const workspaceUrl = new GitpodHostUrl(window.location.href);
+const gitpodService = createGitpodService(workspaceUrl.withoutWorkspacePrefix().toString());
 const { workspaceId } = workspaceUrl;
-if (workspaceId) {
-    const gitpodService = createGitpodService(workspaceUrl.withoutWorkspacePrefix().toString());
-    gitpodService.server.getWorkspace(workspaceId).then(info => {
+const pendingInfo = workspaceId && gitpodService.server.getWorkspace(workspaceId);
+if (!workspaceId) {
+    document.title += ': Unknown workspace';
+    console.error(`Failed to extract a workpace id from '${window.location.href}' url.`);
+} else if (pendingInfo) {
+    pendingInfo.then(info => {
         document.title = info.workspace.description;
     });
-} else {
-    document.title += ': Unknown workspace';
 }
 
-const checkReady: (kind: 'content' | 'ide') => Promise<void> = kind =>
+const checkReady: (kind: 'content' | 'ide' | 'supervisor') => Promise<void> = kind =>
     fetch(window.location.protocol + '//' + window.location.host + '/_supervisor/v1/status/' + kind + '/wait/true').then(response => {
         if (response.ok) {
             return;
@@ -32,6 +35,9 @@ const checkReady: (kind: 'content' | 'ide') => Promise<void> = kind =>
         console.debug(`failed to check whether ${kind} is ready, trying again...`, e);
         return checkReady(kind);
     });
+const supervisorReady = checkReady('supervisor');
+const ideReady = supervisorReady.then(() => checkReady('ide'));
+const contentReady = supervisorReady.then(() => checkReady('content'));
 
 const ideURL = new URL(window.location.href);
 ideURL.searchParams.append('gitpod-ide-index', 'true');
@@ -54,7 +60,7 @@ loadingFrame.className = 'gitpod-frame loading';
 
 const onDOMContentLoaded = new Promise(resolve => window.addEventListener('DOMContentLoaded', resolve));
 
-Promise.all([onDOMContentLoaded, checkReady('ide'), checkReady('content')]).then(() => {
+Promise.all([onDOMContentLoaded, ideReady, contentReady]).then(() => {
     console.info('IDE backend and content are ready, revealing IDE frontend...');
     ideFrame.onload = () => loadingFrame.remove();
     document.body.appendChild(ideFrame);
@@ -65,3 +71,40 @@ onDOMContentLoaded.then(() => {
         document.body.appendChild(loadingFrame);
     }
 });
+
+async function updateToken(): Promise<void> {
+    try {
+        await supervisorReady;
+        const token = workspaceId && 'supervisor-frontend-' + workspaceId;
+        if (!token) {
+            return;
+        }
+        let tokens = await gitpodService.server.getGitpodTokens();
+        if (!tokens.filter(t => t.name === token)) {
+            try {
+                await gitpodService.server.generateNewGitpodToken({ name: token, type: GitpodTokenType.MACHINE_AUTH_TOKEN });
+            } catch (e) {
+                tokens = await gitpodService.server.getGitpodTokens();
+                if (tokens.filter(t => t.name === token)) {
+                    // continue if another supervisor frontend generated a token in the meantime
+                } else {
+                    throw e;
+                }
+            }
+        }
+        const host = window.location.host;
+        const setTokenRequest: SetTokenRequest.AsObject = {
+            host,
+            scopeList: ['resource:default'],
+            token,
+            reuse: TokenReuse.REUSE_WHEN_POSSIBLE
+        };
+        await fetch(window.location.protocol + '//' + window.location.host + '/_supervisor/v1/token/' + encodeURIComponent(host), {
+            method: 'POST',
+            body: JSON.stringify(setTokenRequest)
+        });
+    } catch (e) {
+        console.error('failed to set a supervisor frontend token: ', e);
+    }
+}
+updateToken();
