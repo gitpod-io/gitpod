@@ -24,6 +24,7 @@ packages:
       - components/ws-manager:docker
       - components/ws-proxy:docker
       - components/ws-sync:docker
+      - components/gitpod-protocol:publish
   - name: all-apps
     type: generic
     deps:
