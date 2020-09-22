@@ -35,7 +35,7 @@ export const pingPong: WsRequestHandler = (ws, req, next) => {
     ws.on('close', () => {
         clearInterval(timer);
     })
-    next();
+    return next();
 }
 
 export const handleError: WsRequestHandler = (ws, req, next) => {
@@ -45,7 +45,7 @@ export const handleError: WsRequestHandler = (ws, req, next) => {
         }
         ws.terminate();
     });
-    next();
+    return next();
 }
 
 export const query = (...tuples: [string, string][]) => {
