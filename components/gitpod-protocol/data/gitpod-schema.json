@@ -5,12 +5,20 @@
     "type": "object",
     "properties": {
         "ide": {
-            "type": "string",
-            "enum": [
+          "oneOf":[
+            {
+              "type":"string"
+            },
+            {
+              "enum": [
                 "theia",
                 "code"
-            ],
-            "default": "theia"
+              ]
+            }
+          ],
+          "default": "theia",
+          "description": "Controls what ide should be used for a workspace.",
+          "deprecationMessage": "The 'ide' property is an experimental feature and enabled only for some users."
         },
         "ports": {
             "type": "array",
