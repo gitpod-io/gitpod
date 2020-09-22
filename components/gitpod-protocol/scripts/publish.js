@@ -13,7 +13,7 @@ const child_process = require('child_process');
 const qualifier = process.argv[2];
 
 const rootDir = process.cwd();
-const pckDir = path.join(rootDir, "components-gitpod-protocol--lib/package");
+const pckDir = path.join(rootDir, process.argv[3]);
 
 if (process.env.NPM_AUTH_TOKEN) {
     fs.writeFileSync(path.join(pckDir, '.npmrc'), `//registry.npmjs.org/:_authToken=${process.env.NPM_AUTH_TOKEN}\n`, 'utf-8');

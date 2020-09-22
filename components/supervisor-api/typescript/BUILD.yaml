@@ -14,12 +14,11 @@ packages:
       tsconfig: tsconfig.json
   - name: publish
     type: generic
-    srcs:
-      - "scripts/publish.js"
     deps:
       - :lib
+      - components/gitpod-protocol:scripts
     argdeps:
       - version
     config:
       commands:
-        - ["node", "scripts/publish.js", "${version}"]
+        - ["node", "components-gitpod-protocol--scripts/publish.js", "${version}", "components-supervisor-api-typescript--lib/package"]
