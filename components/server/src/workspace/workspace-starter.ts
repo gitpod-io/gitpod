@@ -4,15 +4,16 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import * as crypto from 'crypto';
 import { injectable, inject } from "inversify";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { Workspace, User, WorkspaceInstance, CommitContext, WithEnvvarsContext, UserEnvVarValue, WithPrebuild, IssueContext, PullRequestContext, WorkspaceInstanceStatus, RefType, WorkspaceProbeContext, WorkspaceImageSourceDocker, WorkspaceImageSourceReference, WorkspaceContext, ImageConfigFile, StartWorkspaceResult, SnapshotContext, NamedWorkspaceFeatureFlag, WorkspaceInstanceConfiguration, Disposable } from "@gitpod/gitpod-protocol";
+import { Workspace, User, WorkspaceInstance, CommitContext, WithEnvvarsContext, UserEnvVarValue, WithPrebuild, IssueContext, PullRequestContext, WorkspaceInstanceStatus, RefType, WorkspaceProbeContext, WorkspaceImageSourceDocker, WorkspaceImageSourceReference, WorkspaceContext, ImageConfigFile, StartWorkspaceResult, SnapshotContext, NamedWorkspaceFeatureFlag, WorkspaceInstanceConfiguration, Disposable, GitpodTokenType, GitpodToken } from "@gitpod/gitpod-protocol";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import { Env } from "../env";
 import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
 import { WorkspaceImageSource, UserEnvVar } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { TracedWorkspaceDB, DBWithTracing } from '@gitpod/gitpod-db/lib/traced-db';
+import { TracedWorkspaceDB, DBWithTracing, TracedUserDB } from '@gitpod/gitpod-db/lib/traced-db';
 import * as uuidv4 from 'uuid/v4';
 import { StartWorkspaceRequest, WorkspaceMetadata, EnvironmentVariable, GitSpec, PortSpec, WorkspaceType, PortVisibility, AdmissionLevel } from "@gitpod/ws-manager/lib/core_pb";
 import { HostContextProvider } from "../auth/host-context-provider";
@@ -28,12 +29,16 @@ import { UserService } from "../user/user-service";
 import { HeadlessLogEvent, HeadlessWorkspaceEventType } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { TheiaPluginService } from "../theia-plugin/theia-plugin-service";
 import { OneTimeSecretServer } from "../one-time-secret-server";
+import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
+import { DBUser } from '@gitpod/gitpod-db/lib/typeorm/entity/db-user';
+import { ScopedResourceGuard } from '../auth/resource-access';
 
 @injectable()
 export class WorkspaceStarter {
     @inject(WorkspaceManagerClientProvider) protected readonly clientProvider: WorkspaceManagerClientProvider;
     @inject(Env) protected readonly env: Env;
     @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
+    @inject(TracedUserDB) protected readonly userDB: DBWithTracing<UserDB>;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(MessageBusIntegration) protected readonly messageBus: MessageBusIntegration;
@@ -491,6 +496,38 @@ export class WorkspaceStarter {
                 }
             }
         )
+        const createGitpodTokenPromise = (async () => {
+            const scopes = this.createDefaultGitpodAPITokenScopes(workspace, instance);
+            const token = crypto.randomBytes(30).toString('hex');
+            const tokenHash = crypto.createHash('sha256').update(token, 'utf8').digest("hex");
+            const dbToken: GitpodToken & { user: DBUser } = {
+                tokenHash,
+                name: `${instance.id}-default`,
+                type: GitpodTokenType.MACHINE_AUTH_TOKEN,
+                user: user as DBUser,
+                scopes,
+                created: new Date().toISOString(),
+            };
+            await this.userDB.trace(traceCtx).storeGitpodToken(dbToken);
+
+            const otsExpirationTime = new Date();
+            otsExpirationTime.setMinutes(otsExpirationTime.getMinutes() + 30);
+            const tokenExpirationTime = new Date();
+            tokenExpirationTime.setMinutes(tokenExpirationTime.getMinutes() + (24 * 60));
+            const ots = await this.otsServer.serve(traceCtx, token, otsExpirationTime);
+
+            const ev = new EnvironmentVariable();
+            ev.setName("THEIA_SUPERVISOR_TOKENS");
+            ev.setValue(JSON.stringify([{
+                tokenOTS: ots.token,
+                token: "ots",
+                host: this.env.hostUrl.url.host,
+                scope: scopes,
+                expiryDate: tokenExpirationTime.toISOString(),
+                reuse: 2
+            }]));
+            envvars.push(ev);
+        })();
 
         const portIndex = new Set<number>();
         const ports = (workspace.config.ports || []).map(p => {
@@ -529,6 +566,7 @@ export class WorkspaceStarter {
         const spec = new StartWorkspaceSpec();
         spec.setCheckoutLocation(checkoutLocation!);
         await addExtensionsToEnvvarPromise;
+        await createGitpodTokenPromise;
         spec.setEnvvarsList(envvars);
         spec.setGit(this.createGitSpec(workspace, user));
         spec.setPortsList(ports);
@@ -540,6 +578,37 @@ export class WorkspaceStarter {
         spec.setTimeout(await userTimeoutPromise);
         spec.setAdmission(admissionLevel);
         return spec;
+    }
+
+    protected createDefaultGitpodAPITokenScopes(workspace: Workspace, instance: WorkspaceInstance): string[] {
+        return [
+            "function:getWorkspace",
+            "function:getLoggedInUser",
+            "function:getPortAuthenticationToken",
+            "function:getWorkspaceOwner",
+            "function:getWorkspaceUsers",
+            "function:isWorkspaceOwner",
+            "function:controlAdmission",
+            "function:setWorkspaceTimeout",
+            "function:getWorkspaceTimeout",
+            "function:sendHeartBeat",
+            "function:getOpenPorts",
+            "function:openPort",
+            "function:closePort",
+            "function:getLayout",
+
+            ScopedResourceGuard.marshalResourceScope({kind: "workspace", subject: workspace}, ["get", "update"]),
+            ScopedResourceGuard.marshalResourceScope({kind: "workspaceInstance", subject: instance, workspaceOwnerID: workspace.ownerId}, ["get", "update", "delete"]),
+            "resource:default",
+            // TODO(cw): the resource scoping doesn't work for us. E.g. we cannot express that we want to allow the creation of snapshots.
+            //         Hence, we're falling back to resource:default. That scope is way to permissive for some functions though.
+            //         We should fix this resource scoping issue (e.g. something like resource:snapshot::*::create) and then we can
+            //         allow the functions below.
+            
+            // "function:generateNewGitpodToken",
+            // "function:takeSnapshot",
+            // "function:storeLayout",
+        ]
     }
 
     protected createGitSpec(workspace: Workspace, user: User): GitSpec {

@@ -6,13 +6,14 @@
 
 import { inject, injectable } from "inversify";
 import { MessageBusIntegration } from "./messagebus-integration";
-import { Disposable, WorkspaceInstance, Queue, WorkspaceInstancePort, PortVisibility } from "@gitpod/gitpod-protocol";
+import { Disposable, WorkspaceInstance, Queue, WorkspaceInstancePort, PortVisibility, RunningWorkspaceInfo } from "@gitpod/gitpod-protocol";
 import { WorkspaceManagerClient, WorkspaceStatus, WorkspacePhase, GetWorkspacesRequest, GetWorkspacesResponse, WorkspaceConditionBool, WorkspaceLogMessage, PortVisibility as WsManPortVisibility } from "@gitpod/ws-manager/lib";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
+import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { HeadlessLogEvent } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { TracedWorkspaceDB, DBWithTracing } from '@gitpod/gitpod-db/lib/traced-db';
+import { TracedWorkspaceDB, TracedUserDB, DBWithTracing } from '@gitpod/gitpod-db/lib/traced-db';
 import { PrometheusMetricsExporter } from "./prometheus-metrics-exporter";
 import { ClientProvider, WsmanSubscriber } from "./wsman-subscriber";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
@@ -30,6 +31,7 @@ function toBool(b: WorkspaceConditionBool | undefined): boolean | undefined {
 @injectable()
 export class WorkspaceManagerBridge implements Disposable {
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
+    @inject(TracedUserDB) protected readonly userDB: DBWithTracing<UserDB>;
     @inject(MessageBusIntegration) protected readonly messagebus: MessageBusIntegration;
     @inject(PrometheusMetricsExporter) protected readonly prometheusExporter: PrometheusMetricsExporter;
     protected readonly disposables: Disposable[] = [];
@@ -139,6 +141,7 @@ export class WorkspaceManagerBridge implements Disposable {
                 instance.deployedTime = new Date().toISOString();
             }
 
+            let lifecycleHandler: (() => Promise<void>) | undefined;
             switch (status.phase) {
                 case WorkspacePhase.PENDING:
                     instance.status.phase = "pending";
@@ -166,6 +169,7 @@ export class WorkspaceManagerBridge implements Disposable {
                 case WorkspacePhase.STOPPED:
                     instance.stoppedTime = new Date().toISOString();
                     instance.status.phase = "stopped";
+                    lifecycleHandler = () => this.onInstanceStopped({span}, userId, instance);
                     break;
             }
 
@@ -177,6 +181,10 @@ export class WorkspaceManagerBridge implements Disposable {
 
             // important: call this after the DB update
             await this.cleanupProbeWorkspace({span}, status);
+
+            if (!!lifecycleHandler) {
+                await lifecycleHandler();
+            }
         } catch (e) {
             TraceContext.logError({ span }, e);
             throw e;
@@ -220,14 +228,15 @@ export class WorkspaceManagerBridge implements Disposable {
         log.debug("controlling instances", { installation });
 
         const runningInstances = await this.workspaceDB.trace({}).findRunningInstancesWithWorkspaces(installation);
-        const runningInstacesIdx = new Map<string, WorkspaceInstance>();
-        runningInstances.forEach(i => runningInstacesIdx.set(i.latestInstance.id, i.latestInstance));
+        const runningInstacesIdx = new Map<string, RunningWorkspaceInfo>();
+        runningInstances.forEach(i => runningInstacesIdx.set(i.latestInstance.id, i));
 
         const actuallyRunningInstances = await new Promise<GetWorkspacesResponse>((resolve, reject) => manager.getWorkspaces(new GetWorkspacesRequest(), (err, res) => { if (err) reject(err); else resolve(res); }));
         actuallyRunningInstances.getStatusList().forEach(s => runningInstacesIdx.delete(s.getId()));
 
         const promises: Promise<any>[] = [];
-        for (const [instanceId, instance] of runningInstacesIdx.entries()) {
+        for (const [instanceId, ri] of runningInstacesIdx.entries()) {
+            const instance = ri.latestInstance;
             if (!(instance.status.phase === 'running' || durationLongerThanSeconds(Date.parse(instance.creationTime), maxTimeToRunningPhaseSeconds))) {
                 log.debug({ instanceId }, "skipping instance", { phase: instance.status.phase, creationTime: instance.creationTime, region: instance.region });
                 continue;
@@ -237,7 +246,7 @@ export class WorkspaceManagerBridge implements Disposable {
             instance.status.phase = "stopped";
             instance.stoppedTime = new Date().toISOString();
             promises.push(this.workspaceDB.trace({}).storeInstance(instance));
-
+            promises.push(this.onInstanceStopped({}, ri.workspace.ownerId, instance));
             promises.push(this.controlPrebuildInstance(instance));
         }
         await Promise.all(promises);
@@ -253,6 +262,19 @@ export class WorkspaceManagerBridge implements Disposable {
 
     protected async controlPrebuildInstance(instance: WorkspaceInstance): Promise<void> {
         // prebuilds are an EE feature - we just need the hook here
+    }
+
+    protected async onInstanceStopped(ctx: TraceContext, ownerUserID: string, instance: WorkspaceInstance): Promise<void> {
+        const span = TraceContext.startSpan("onInstanceStopped", ctx);
+
+        try {
+            await this.userDB.trace({span}).deleteGitpodTokensNamedLike(ownerUserID, `${instance.id}-%`);
+        } catch (err) {
+            TraceContext.logError({span}, err);
+            throw err;
+        } finally {
+            span.finish();
+        }
     }
 
     public dispose() {

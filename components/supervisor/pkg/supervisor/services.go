@@ -173,7 +173,7 @@ type token struct {
 	Token      string
 	Host       string
 	Scope      map[string]struct{}
-	ExpiryDate time.Time
+	ExpiryDate *time.Time
 	Reuse      api.TokenReuse
 }
 
@@ -226,7 +226,7 @@ func (s *InMemoryTokenService) getCachedTokenFor(host string, scopes []string) (
 			continue
 		}
 
-		if time.Now().After(tkn.ExpiryDate) {
+		if tkn.ExpiryDate != nil && time.Now().After(*tkn.ExpiryDate) {
 			continue
 		}
 
@@ -268,17 +268,10 @@ func (s *InMemoryTokenService) cacheToken(tkn *token) {
 	defer s.mu.Unlock()
 
 	s.token = append(s.token, tkn)
-	log.WithField("host", tkn.Host).WithField("scopes", tkn.Scope).Info("registered new token")
+	log.WithField("host", tkn.Host).WithField("scopes", tkn.Scope).WithField("reuse", tkn.Reuse.String()).Info("registered new token")
 }
 
 func convertReceivedToken(req *api.SetTokenRequest) (tkn *token, err error) {
-	expiryDate, err := ptypes.Timestamp(req.GetExpiryDate())
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid expiry date: %q", err)
-	}
-	if time.Now().After(expiryDate) {
-		return nil, status.Error(codes.InvalidArgument, "invalid expiry date: already expired")
-	}
 	if req.Token == "" {
 		return nil, status.Error(codes.InvalidArgument, "token is required")
 	}
@@ -286,13 +279,24 @@ func convertReceivedToken(req *api.SetTokenRequest) (tkn *token, err error) {
 		return nil, status.Error(codes.InvalidArgument, "host is required")
 	}
 
-	return &token{
-		Host:       req.Host,
-		ExpiryDate: expiryDate,
-		Scope:      mapScopes(req.Scope),
-		Token:      req.Token,
-		Reuse:      req.Reuse,
-	}, nil
+	tkn = &token{
+		Host:  req.Host,
+		Scope: mapScopes(req.Scope),
+		Token: req.Token,
+		Reuse: req.Reuse,
+	}
+	if req.ExpiryDate != nil {
+		te, err := ptypes.Timestamp(req.GetExpiryDate())
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid expiry date: %q", err)
+		}
+		if time.Now().After(te) {
+			return nil, status.Error(codes.InvalidArgument, "invalid expiry date: already expired")
+		}
+		tkn.ExpiryDate = &te
+	}
+
+	return
 }
 
 func mapScopes(s []string) map[string]struct{} {

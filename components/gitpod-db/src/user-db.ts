@@ -114,6 +114,7 @@ export interface UserDB {
     findAllGitpodTokensOfUser(userId: string): Promise<GitpodToken[]>;
     storeGitpodToken(token: GitpodToken & { user: DBUser }): Promise<void>;
     deleteGitpodToken(tokenHash: string): Promise<void>;
+    deleteGitpodTokensNamedLike(userId: string, namePattern: string): Promise<void>;
 }
 export type PartialUserUpdate = Partial<Without<User, "identities">> & Pick<User, "id">
 
