@@ -18,14 +18,20 @@ packages:
     config:
       commands:
         - ["mv", "data/builtin-theia-plugins.json", "manifest.json"]
-  - name: publish
+  - name: scripts
     type: generic
     srcs:
-      - "scripts/publish.js"
+      - "scripts/*"
+    config:
+      commands:
+        - ["sh", "-c", "mv scripts/* ."]
+  - name: publish
+    type: generic
     deps:
       - :lib
+      - :scripts
     argdeps:
       - version
     config:
       commands:
-        - ["node", "scripts/publish.js", "${version}"]
+        - ["node", "components-gitpod-protocol--scripts/publish.js", "${version}", "components-gitpod-protocol--lib/package"]
