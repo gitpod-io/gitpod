@@ -122,7 +122,7 @@ export class OwnerResourceGuard implements ResourceAccessGuard {
 export class ScopedResourceGuard implements ResourceAccessGuard {
     protected readonly scopes: { [index: string]: ScopedResourceGuard.ResourceScope } = {};
 
-    constructor(scopes: ScopedResourceGuard.ResourceScope[]) {
+    constructor(scopes: ScopedResourceGuard.ResourceScope[], protected readonly delegate?: ResourceAccessGuard) {
         scopes.forEach(s => this.scopes[`${s.kind}::${s.subjectID}`] = s);
     }
 
@@ -130,6 +130,11 @@ export class ScopedResourceGuard implements ResourceAccessGuard {
         const subjectID = ScopedResourceGuard.subjectID(resource);
         if (!subjectID) {
             return false;
+        }
+
+        const defaultScope = this.scopes[`${resource.kind}::*`];
+        if (!!this.delegate && !!defaultScope && defaultScope.operations.some(op => op === operation)) {
+            return await this.delegate.canAccess(resource, operation);
         }
 
         const scope = this.scopes[`${resource.kind}::${subjectID}`];
@@ -176,13 +181,21 @@ export namespace ScopedResourceGuard {
         };
     }
 
-    export function marshalResourceScope(resource: GuardedResource, ops: ResourceAccessOp[]): string {
+    export function marshalResourceScopeFromResource(resource: GuardedResource, ops: ResourceAccessOp[]): string {
         const subjectID = ScopedResourceGuard.subjectID(resource);
         if (!subjectID) {
             throw new Error("resource has no subject ID");
         }
 
-        return `${resource.kind}::${subjectID}::${ops.join(",")}`;
+        return marshalResourceScope({
+            kind: resource.kind,
+            subjectID,
+            operations: ops,
+        });
+    }
+
+    export function marshalResourceScope(scope: ResourceScope): string {
+        return `${scope.kind}::${scope.subjectID}::${scope.operations.join(",")}`;
     }
 
     export function subjectID(resource: GuardedResource): string | undefined {
@@ -210,11 +223,13 @@ export class TokenResourceGuard implements ResourceAccessGuard {
 
     constructor(userID: string, protected readonly allTokenScopes: string[]) {
         const hasDefaultResourceScope = allTokenScopes.some(s => s === TokenResourceGuard.DefaultResourceScope);
+        const ownerResourceGuard = new OwnerResourceGuard(userID);
+
         if (hasDefaultResourceScope) {
-            this.delegate = new OwnerResourceGuard(userID);
+            this.delegate = ownerResourceGuard;
         } else {
             const resourceScopes = TokenResourceGuard.getResourceScopes(allTokenScopes);
-            this.delegate = new ScopedResourceGuard(resourceScopes);
+            this.delegate = new ScopedResourceGuard(resourceScopes, ownerResourceGuard);
         }
     }
 

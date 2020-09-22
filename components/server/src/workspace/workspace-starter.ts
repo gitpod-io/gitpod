@@ -596,18 +596,15 @@ export class WorkspaceStarter {
             "function:openPort",
             "function:closePort",
             "function:getLayout",
+            "function:generateNewGitpodToken",
+            "function:takeSnapshot",
+            "function:storeLayout",
 
-            ScopedResourceGuard.marshalResourceScope({kind: "workspace", subject: workspace}, ["get", "update"]),
-            ScopedResourceGuard.marshalResourceScope({kind: "workspaceInstance", subject: instance, workspaceOwnerID: workspace.ownerId}, ["get", "update", "delete"]),
-            "resource:default",
-            // TODO(cw): the resource scoping doesn't work for us. E.g. we cannot express that we want to allow the creation of snapshots.
-            //         Hence, we're falling back to resource:default. That scope is way to permissive for some functions though.
-            //         We should fix this resource scoping issue (e.g. something like resource:snapshot::*::create) and then we can
-            //         allow the functions below.
-            
-            // "function:generateNewGitpodToken",
-            // "function:takeSnapshot",
-            // "function:storeLayout",
+            "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspace", subjectID: workspace.id, operations: ["get", "update"]}),
+            "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspaceInstance", subjectID: instance.id, operations: ["get", "update", "delete"]}),
+            "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "snapshot", subjectID: "*", operations: ["create", "get"]}),
+            "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "gitpodToken", subjectID: "*", operations: ["create"]}),
+            "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "userStorage", subjectID: "*", operations: ["create", "get", "update"]}),
         ]
     }
 
