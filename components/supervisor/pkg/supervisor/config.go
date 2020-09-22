@@ -9,10 +9,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math"
+	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	env "github.com/Netflix/go-env"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 	"golang.org/x/xerrors"
 )
 
@@ -167,6 +170,15 @@ type WorkspaceConfig struct {
 	GitUsername string `env:"GITPOD_GIT_USER_NAME"`
 	// GitEmail makes supervisor configure the global user.email Git setting.
 	GitEmail string `env:"GITPOD_GIT_USER_EMAIL"`
+
+	// Tokens is a JSON encoded list of WorkspaceGitpodToken
+	Tokens string `env:"THEIA_SUPERVISOR_TOKENS"`
+}
+
+// WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service
+type WorkspaceGitpodToken struct {
+	api.SetTokenRequest
+	TokenOTS string `json:"tokenOTS"`
 }
 
 // Validate validates this configuration
@@ -183,7 +195,49 @@ func (c WorkspaceConfig) Validate() error {
 		return fmt.Errorf("logRateLimit must be >= 0")
 	}
 
+	if _, err := c.GetTokens(false); err != nil {
+		return err
+	}
+
 	return nil
+}
+
+// GetTokens parses tokens from GITPOD_TOKENS and possibly downloads OTS.
+func (c WorkspaceConfig) GetTokens(downloadOTS bool) ([]WorkspaceGitpodToken, error) {
+	if c.Tokens == "" {
+		return nil, nil
+	}
+
+	var tks []WorkspaceGitpodToken
+	err := json.Unmarshal([]byte(c.Tokens), &tks)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse tokens: %w", err)
+	}
+
+	if downloadOTS {
+		client := http.Client{
+			Timeout: 5 * time.Second,
+		}
+
+		for i, tk := range tks {
+			if tk.TokenOTS == "" {
+				continue
+			}
+
+			resp, err := client.Get(tk.TokenOTS)
+			if err != nil {
+				return nil, fmt.Errorf("cannot download token OTS: %w", err)
+			}
+			tkn, err := ioutil.ReadAll(resp.Body)
+			resp.Body.Close()
+			if err != nil {
+				return nil, fmt.Errorf("cannot download token OTS: %w", err)
+			}
+			tks[i].Token = string(tkn)
+		}
+	}
+
+	return tks, nil
 }
 
 // GetConfig loads the supervisor configuration

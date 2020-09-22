@@ -185,6 +185,16 @@ export class TypeORMUserDBImpl implements UserDB {
             `, [tokenHash]);
     }
 
+    public async deleteGitpodTokensNamedLike(userId: string, namePattern: string): Promise<void> {
+        const repo = await this.getGitpodTokenRepo();
+        await repo.query(`
+            UPDATE d_b_gitpod_token AS gt
+            SET gt.deleted = TRUE
+            WHERE userId = ?
+              AND name LIKE ?
+        `, [userId, namePattern]);
+    }
+
     public async findIdentitiesByName(identity: Identity): Promise<Identity[]> {
         const userRepo = await this.getIdentitiesRepo();
         const qBuilder = userRepo.createQueryBuilder('identity')

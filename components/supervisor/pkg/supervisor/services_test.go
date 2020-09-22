@@ -28,9 +28,10 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 		errNoToken = status.Error(codes.NotFound, "no token available").Error()
 	)
 	newToken := func(scopes ...string) *token {
+		expiry := time.Now().Add(1 * time.Hour)
 		return &token{
 			Host:       defaultHost,
-			ExpiryDate: time.Now().Add(1 * time.Hour),
+			ExpiryDate: &expiry,
 			Scope:      mapScopes(scopes),
 			Token:      defaultToken,
 			Reuse:      api.TokenReuse_REUSE_WHEN_POSSIBLE,
@@ -87,16 +88,31 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 				Scope: []string{"a1", "a2"},
 			},
 			Cache: []*token{
-				{
-					Host:       defaultHost,
-					ExpiryDate: time.Now().Add(-2 * time.Hour),
-					Scope:      mapScopes([]string{"a1", "a2"}),
-					Token:      defaultToken,
-				},
+				func(t *token) *token {
+					exp := time.Now().Add(-2 * time.Hour)
+					t.ExpiryDate = &exp
+					return t
+				}(newToken("a1", "a2")),
 				{Host: "foo." + defaultHost},
 			},
 			Expectation: Expectation{
 				Err: errNoToken,
+			},
+		},
+		{
+			Desc: "cached token (no expiry)",
+			Req: &api.GetTokenRequest{
+				Host:  defaultHost,
+				Scope: []string{"a1", "a2"},
+			},
+			Cache: []*token{
+				func(t *token) *token {
+					t.ExpiryDate = nil
+					return t
+				}(newToken("a1", "a2")),
+			},
+			Expectation: Expectation{
+				Resp: &api.GetTokenResponse{Token: defaultToken},
 			},
 		},
 		{

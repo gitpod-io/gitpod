@@ -923,7 +923,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
         try {
             const instance = await this.workspaceDb.trace({ span }).findRunningInstance(workspaceId);
-            const workspace = await this.workspaceDb.trace({ span }).findByInstanceId(workspaceId);
+            const workspace = await this.workspaceDb.trace({ span }).findById(workspaceId);
             if (!instance || !workspace) {
                 throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} has no running instance`);
             }

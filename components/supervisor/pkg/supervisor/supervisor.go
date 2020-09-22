@@ -96,6 +96,18 @@ func Run(options ...RunOption) {
 	buildIDEEnv(&Config{})
 	configureGit(cfg)
 
+	tokenService := NewInMemoryTokenService()
+	tkns, err := cfg.GetTokens(true)
+	if err != nil {
+		log.WithError(err).Warn("cannot prepare tokens")
+	}
+	for _, tks := range tkns {
+		_, err = tokenService.SetToken(context.Background(), &tks.SetTokenRequest)
+		if err != nil {
+			log.WithError(err).Warn("cannot prepare tokens")
+		}
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	var (
 		shutdown = make(chan struct{})
@@ -120,7 +132,7 @@ func Run(options ...RunOption) {
 		IDEReady: ideReady,
 	})
 	apiServices = append(apiServices, termMuxSrv)
-	apiServices = append(apiServices, &RegistrableTokenService{NewInMemoryTokenService()})
+	apiServices = append(apiServices, &RegistrableTokenService{tokenService})
 	apiServices = append(apiServices, opts.AdditionalServices...)
 
 	var wg sync.WaitGroup
@@ -387,6 +399,7 @@ func isBlacklistedEnvvar(name string) bool {
 	// exclude blacklisted
 	prefixBlacklist := []string{
 		"THEIA_SUPERVISOR_",
+		"GITPOD_TOKENS",
 		// The following vars are meant to filter out the kubernetes-injected env vars that we do not know how to turn of (yet)
 		"KUBERNETES_SERVICE",
 		"KUBERNETES_PORT",
