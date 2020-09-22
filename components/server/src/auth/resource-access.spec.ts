@@ -82,7 +82,7 @@ import { TokenResourceGuard, ScopedResourceGuard, GuardedResource } from "./reso
             {
                 name: "explicit scope", 
                 guard: new TokenResourceGuard(workspaceResource.subject.ownerId, [
-                    "resource:"+ScopedResourceGuard.marshalResourceScope(workspaceResource, ["get"]),
+                    "resource:"+ScopedResourceGuard.marshalResourceScopeFromResource(workspaceResource, ["get"]),
                 ]), 
                 expectation: true,
             },
@@ -90,10 +90,81 @@ import { TokenResourceGuard, ScopedResourceGuard, GuardedResource } from "./reso
                 name: "default and explicit scope", 
                 guard: new TokenResourceGuard(workspaceResource.subject.ownerId, [
                     "resource:default",
-                    "resource:"+ScopedResourceGuard.marshalResourceScope(workspaceResource, ["create"]),
+                    "resource:"+ScopedResourceGuard.marshalResourceScopeFromResource(workspaceResource, ["create"]),
                 ]), 
                 expectation: true,
             },
+            {
+                name: "delegate scopes delegate to owner resource guard",
+                guard: new TokenResourceGuard(workspaceResource.subject.ownerId, [
+                    "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspace", subjectID: "*", operations: ["get"]}),
+                ]), 
+                expectation: true,
+            }
+        ]
+
+        await Promise.all(tests.map(async t => {
+            const res = await t.guard.canAccess(workspaceResource, "get")
+            expect(res).to.be.eq(t.expectation, `"${t.name}" expected canAccess(...) === ${t.expectation}, but was ${res}`);
+        }))
+    }
+
+    @test public async scopedResourceGuardCanAccess() {
+        const workspaceResource: GuardedResource = {kind: "workspace", subject: {id:"wsid", ownerId: "foo"} as any};
+        const tests: {
+            name: string
+            guard: ScopedResourceGuard
+            expectation: boolean
+        }[] = [
+            {
+                name: "no scopes",
+                guard: new ScopedResourceGuard([]),
+                expectation: false
+            },
+            {
+                name: "explicit scope",
+                guard: new ScopedResourceGuard([
+                    {kind: workspaceResource.kind, subjectID: workspaceResource.subject.id, operations: ["get"]}
+                ]),
+                expectation: true
+            },
+            {
+                name: "explicit scope with different op",
+                guard: new ScopedResourceGuard([
+                    {kind: workspaceResource.kind, subjectID: workspaceResource.subject.id, operations: ["create"]}
+                ]),
+                expectation: false
+            },
+            {
+                name: "delegate scope",
+                guard: new ScopedResourceGuard([
+                    {kind: workspaceResource.kind, subjectID: "*", operations: ["get"]}
+                ], { canAccess: async () => true }),
+                expectation: true
+            },
+            {
+                name: "delegate scope has precedence",
+                guard: new ScopedResourceGuard([
+                    {kind: workspaceResource.kind, subjectID: workspaceResource.subject.id, operations: ["get"]},
+                    {kind: workspaceResource.kind, subjectID: "*", operations: ["get"]},
+                ], { canAccess: async () => "actually comes from delegate" as any }),
+                expectation: "actually comes from delegate" as any
+            },
+            {
+                name: "delegate scope matches ops",
+                guard: new ScopedResourceGuard([
+                    {kind: workspaceResource.kind, subjectID: workspaceResource.subject.id, operations: ["get"]},
+                    {kind: workspaceResource.kind, subjectID: "*", operations: ["create"]},
+                ], { canAccess: async () => "actually comes from delegate" as any }),
+                expectation: true
+            },
+            {
+                name: "delegate scope not configured",
+                guard: new ScopedResourceGuard([
+                    {kind: workspaceResource.kind, subjectID: "*", operations: ["get"]},
+                ]),
+                expectation: false
+            }
         ]
 
         await Promise.all(tests.map(async t => {
