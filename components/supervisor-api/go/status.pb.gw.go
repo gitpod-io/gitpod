@@ -679,21 +679,21 @@ func RegisterStatusServiceHandlerClient(ctx context.Context, mux *runtime.ServeM
 }
 
 var (
-	pattern_StatusService_SupervisorStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "status", "supervisor"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_StatusService_SupervisorStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "status", "supervisor"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_StatusService_IDEStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "status", "ide"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_StatusService_IDEStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "status", "ide"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_StatusService_IDEStatus_1 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 4, 1, 5, 3}, []string{"v1", "status", "ide", "wait", "true"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_StatusService_IDEStatus_1 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 4, 1, 5, 3}, []string{"v1", "status", "ide", "wait", "true"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_StatusService_ContentStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "status", "content"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_StatusService_ContentStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "status", "content"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_StatusService_ContentStatus_1 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 4, 1, 5, 3}, []string{"v1", "status", "content", "wait", "true"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_StatusService_ContentStatus_1 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 4, 1, 5, 3}, []string{"v1", "status", "content", "wait", "true"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_StatusService_BackupStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "status", "backup"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_StatusService_BackupStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "status", "backup"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_StatusService_PortsStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "status", "ports"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_StatusService_PortsStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "status", "ports"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_StatusService_PortsStatus_1 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 4, 1, 5, 3}, []string{"v1", "status", "ports", "observe", "true"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_StatusService_PortsStatus_1 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 4, 1, 5, 3}, []string{"v1", "status", "ports", "observe", "true"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (

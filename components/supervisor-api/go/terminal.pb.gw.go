@@ -326,11 +326,11 @@ func RegisterTerminalServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 }
 
 var (
-	pattern_TerminalService_List_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "terminal", "list"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_TerminalService_List_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "terminal", "list"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_TerminalService_Listen_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "terminal", "listen", "alias"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_TerminalService_Listen_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "terminal", "listen", "alias"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_TerminalService_Write_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "terminal", "write", "alias"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_TerminalService_Write_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "terminal", "write", "alias"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (

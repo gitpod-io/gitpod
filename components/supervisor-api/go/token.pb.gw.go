@@ -590,11 +590,11 @@ func RegisterTokenServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 var (
 	pattern_TokenService_GetToken_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "token", "host", "scope"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_TokenService_SetToken_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "token", "host"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_TokenService_SetToken_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "token", "host"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_TokenService_ClearToken_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "token", "value"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_TokenService_ClearToken_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "token", "value"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_TokenService_ClearToken_1 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 4, 1, 5, 3}, []string{"v1", "token", "clear", "all", "true"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_TokenService_ClearToken_1 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 4, 1, 5, 3}, []string{"v1", "token", "clear", "all", "true"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
