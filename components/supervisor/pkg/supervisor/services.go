@@ -6,6 +6,7 @@ package supervisor
 
 import (
 	"context"
+	"os"
 	"sync"
 	"time"
 
@@ -453,4 +454,45 @@ func (rt *remoteTokenProvider) GetToken(ctx context.Context, req *api.GetTokenRe
 	case tkn = <-rr.Resp:
 	}
 	return
+}
+
+// InfoService implements the api.InfoService
+type InfoService struct {
+	cfg *Config
+}
+
+// RegisterGRPC registers the gRPC info service
+func (is *InfoService) RegisterGRPC(srv *grpc.Server) {
+	api.RegisterInfoServiceServer(srv, is)
+}
+
+// RegisterREST registers the REST info service
+func (is *InfoService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
+	return api.RegisterInfoServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithInsecure()})
+}
+
+// WorkspaceInfo provides information about the workspace
+func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest) (*api.WorkspaceInfoResponse, error) {
+	resp := &api.WorkspaceInfoResponse{
+		CheckoutLocation: is.cfg.RepoRoot,
+		InstanceId:       is.cfg.WorkspaceInstanceID,
+		WorkspaceId:      is.cfg.WorkspaceID,
+	}
+
+	stat, err := os.Stat(is.cfg.WorkspaceRoot)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	if stat.IsDir() {
+		resp.WorkspaceLocation = &api.WorkspaceInfoResponse_WorkspaceLocationFolder{WorkspaceLocationFolder: is.cfg.WorkspaceRoot}
+	} else {
+		resp.WorkspaceLocation = &api.WorkspaceInfoResponse_WorkspaceLocationFile{WorkspaceLocationFile: is.cfg.WorkspaceRoot}
+	}
+
+	resp.UserHome, err = os.UserHomeDir()
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return resp, nil
 }
