@@ -133,6 +133,7 @@ func Run(options ...RunOption) {
 	})
 	apiServices = append(apiServices, termMuxSrv)
 	apiServices = append(apiServices, &RegistrableTokenService{tokenService})
+	apiServices = append(apiServices, &InfoService{cfg: cfg})
 	apiServices = append(apiServices, opts.AdditionalServices...)
 
 	var wg sync.WaitGroup

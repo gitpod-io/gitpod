@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package supervisor;
+
+import "google/api/annotations.proto";
+
+option go_package = "api";
+
+service InfoService {
+
+    rpc WorkspaceInfo(WorkspaceInfoRequest) returns (WorkspaceInfoResponse) {
+        option (google.api.http) = {
+            get: "/v1/info/workspace"
+        };
+    }
+
+}
+
+message WorkspaceInfoRequest {}
+
+message WorkspaceInfoResponse {
+    // workspace_id is the workspace ID of this workspace.
+    string workspace_id = 1;
+
+    // instance_id is the instance ID of this workspace.
+    string instance_id = 2;
+
+    // checkout_location is the path where we initialized the workspace content
+    string checkout_location = 3;
+    
+    // workspace_location is the location of the IDE workspace
+    oneof workspace_location {
+        // file means the workspace root is a file describing the workspace layout.
+        string workspace_location_file = 4;
+        // folder means the workspace root is a simple folder.
+        string workspace_location_folder = 5;
+    };
+
+    // user_home is the path to the user's home.
+    string user_home = 6;
+}

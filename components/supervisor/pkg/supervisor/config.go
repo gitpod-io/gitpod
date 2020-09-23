@@ -173,6 +173,12 @@ type WorkspaceConfig struct {
 
 	// Tokens is a JSON encoded list of WorkspaceGitpodToken
 	Tokens string `env:"THEIA_SUPERVISOR_TOKENS"`
+
+	// WorkspaceID is the ID of the workspace
+	WorkspaceID string `env:"GITPOD_WORKSPACE_ID"`
+
+	// WorkspaceInstanceID is the instance ID of the workspace
+	WorkspaceInstanceID string `env:"GITPOD_INSTANCE_ID"`
 }
 
 // WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service
