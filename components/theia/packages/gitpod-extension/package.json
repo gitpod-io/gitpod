@@ -28,7 +28,7 @@
     "@theia/vsx-registry": "next",
     "@theia/workspace": "next",
     "@gitpod/gitpod-protocol": "0.1.5",
-    "@gitpod/supervisor": "0.1.5",
+    "@gitpod/supervisor-api-grpc": "0.1.5",
     "bitbucket": "^2.1.0",
     "decompress": "^4.2.0",
     "diff": "^3.4.0",

@@ -25,6 +25,7 @@
         "packages": [
             "components/*",
             "components/*/typescript",
+            "components/*/typescript-*",
             "components/supervisor/frontend",
             "components/theia/packages/*",
             "components/theia/*",

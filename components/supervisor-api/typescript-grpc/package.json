@@ -1,0 +1,23 @@
+{
+  "name": "@gitpod/supervisor-api-grpc",
+  "version": "0.1.5",
+  "license": "UNLICENSED",
+  "scripts": {
+    "prepare": "mkdir -p src; protoc -I ${PROTOLOC:-$GOPATH/src/github.com/grpc-ecosystem/grpc-gateway}/third_party/googleapis -I /usr/lib/protoc/include --plugin=protoc-gen-grpc=`which grpc_tools_node_protoc_plugin` --js_out=import_style=commonjs,binary:src --grpc_out=grpc_js:src -I${PROTOLOC:-..} ${PROTOLOC:-..}/*.proto && protoc -I ${PROTOLOC:-$GOPATH/src/github.com/grpc-ecosystem/grpc-gateway}/third_party/googleapis -I /usr/lib/protoc/include --plugin=protoc-gen-ts=`which protoc-gen-ts` --ts_out=grpc_js:src -I${PROTOLOC:-..} ${PROTOLOC:-..}/*.proto && sed -i '/google_api_annotations_pb/d' src/*.js",
+    "build": "mkdir -p lib; tsc && cp -f src/*.js src/*d.ts lib"
+  },
+  "files": [
+    "lib",
+    "src"
+  ],
+  "dependencies": {
+    "@grpc/grpc-js": "^1.1.5",
+    "google-protobuf": "^3.8.0-rc.1"
+  },
+  "devDependencies": {
+    "@types/google-protobuf": "^3.2.7",
+    "grpc-tools": "^1.7.2",
+    "grpc_tools_node_protoc_ts": "^2.5.0",
+    "typescript-formatter": "^7.2.2"
+  }
+}

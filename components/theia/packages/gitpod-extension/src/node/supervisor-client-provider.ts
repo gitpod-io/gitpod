@@ -5,7 +5,7 @@
  */
 
 import { injectable } from "inversify";
-import { IStatusServiceClient, StatusServiceClient } from "@gitpod/supervisor/lib/status_grpc_pb";
+import { IStatusServiceClient, StatusServiceClient } from "@gitpod/supervisor-api-grpc/lib/status_grpc_pb";
 import * as grpc from "@grpc/grpc-js";
 
 @injectable()
