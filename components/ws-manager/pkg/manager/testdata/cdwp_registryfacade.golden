@@ -160,9 +160,7 @@
                                 "DAC_OVERRIDE",
                                 "FOWNER",
                                 "SYS_CHROOT",
-                                "SETFCAP",
-                                "SETUID",
-                                "SETGID"
+                                "SETFCAP"
                             ]
                         },
                         "privileged": false,

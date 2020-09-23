@@ -634,8 +634,8 @@ func (m *Manager) createDefaultSecurityContext() (*corev1.SecurityContext, error
 				"FOWNER",       // Bypass permission checks on operations that normally require the file system UID of the process to match the UID of the file.
 				"SYS_CHROOT",   // Use chroot(2), change root directory.
 				"SETFCAP",      // Set file capabilities.
-				"SETUID",       // Make arbitrary manipulations of process UIDs.
-				"SETGID",       // Make arbitrary manipulations of process GIDs and supplementary GID list.
+				// "SETUID",       // Make arbitrary manipulations of process UIDs.
+				// "SETGID",       // Make arbitrary manipulations of process GIDs and supplementary GID list.
 			},
 		},
 		Privileged:             &boolFalse,
