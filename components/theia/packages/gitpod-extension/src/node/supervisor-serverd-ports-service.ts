@@ -7,7 +7,7 @@
 import { inject, injectable, postConstruct } from "inversify";
 import { ServedPortsServiceServer, ServedPort, ServedPortsServiceClient, ServedPortsChangeEvent } from "src/common/served-ports-service";
 import { SupervisorClientProvider } from "./supervisor-client-provider";
-import { PortsStatusRequest, PortsStatusResponse } from "@gitpod/supervisor/lib/status_pb";
+import { PortsStatusRequest, PortsStatusResponse } from "@gitpod/supervisor-api-grpc/lib/status_pb";
 
 @injectable()
 export class SupervisorServedPortsServiceImpl implements ServedPortsServiceServer {

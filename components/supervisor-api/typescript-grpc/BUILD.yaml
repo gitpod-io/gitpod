@@ -2,9 +2,11 @@ packages:
   - name: lib
     type: yarn
     srcs:
-      - "src/*.ts"
-      - "src/*.js"
       - package.json
+    deps:
+      - components/supervisor-api:proto
+    env:
+      - PROTOLOC=components-supervisor-api--proto
     config:
       packaging: library
       dontTest: true
@@ -21,4 +23,4 @@ packages:
       - version
     config:
       commands:
-        - ["node", "components-gitpod-protocol--scripts/publish.js", "${version}", "components-supervisor-api-typescript--lib/package"]
+        - ["node", "components-gitpod-protocol--scripts/publish.js", "${version}", "components-supervisor-api-typescript-grpc--lib/package"]
