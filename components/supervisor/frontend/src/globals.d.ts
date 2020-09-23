@@ -4,6 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+/// <reference types='@gitpod/gitpod-protocol/lib/typings/globals'/>
+
 /**
 * API specified by https://wicg.github.io/keyboard-map/
 */

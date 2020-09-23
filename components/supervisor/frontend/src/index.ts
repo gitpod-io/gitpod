@@ -11,14 +11,18 @@ import { createGitpodService } from "@gitpod/gitpod-protocol";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 
 const workspaceUrl = new GitpodHostUrl(window.location.href);
+window.gitpod = {
+    service: createGitpodService(workspaceUrl.withoutWorkspacePrefix().toString())
+};
 const { workspaceId } = workspaceUrl;
-if (workspaceId) {
-    const gitpodService = createGitpodService(workspaceUrl.withoutWorkspacePrefix().toString());
-    gitpodService.server.getWorkspace(workspaceId).then(info => {
+const workspaceInfo = workspaceId ? window.gitpod.service.server.getWorkspace(workspaceId) : undefined;
+if (!workspaceId) {
+    document.title += ': Unknown workspace';
+    console.error(`Failed to extract a workspace id from '${window.location.href}'.`)
+} else if (workspaceInfo) {
+    workspaceInfo.then(info => {
         document.title = info.workspace.description;
     });
-} else {
-    document.title += ': Unknown workspace';
 }
 
 const checkReady: (kind: 'content' | 'ide') => Promise<void> = kind =>
@@ -59,6 +63,9 @@ Promise.all([onDOMContentLoaded, checkReady('ide'), checkReady('content')]).then
     ideFrame.onload = () => loadingFrame.remove();
     document.body.appendChild(ideFrame);
     ideFrame.contentWindow?.addEventListener('DOMContentLoaded', () => {
+        if (ideFrame.contentWindow) {
+            ideFrame.contentWindow.gitpod = window.gitpod;
+        }
         if (navigator.keyboard?.getLayoutMap && ideFrame.contentWindow?.navigator.keyboard?.getLayoutMap) {
             ideFrame.contentWindow.navigator.keyboard.getLayoutMap = navigator.keyboard.getLayoutMap.bind(navigator.keyboard);
         }
