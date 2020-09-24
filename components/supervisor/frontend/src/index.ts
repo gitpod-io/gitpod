@@ -9,6 +9,7 @@ require('../public/index.css');
 import "reflect-metadata";
 import { createGitpodService } from "@gitpod/gitpod-protocol";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
+import { WorkspaceInfoResponse } from '@gitpod/supervisor-api-grpc/lib/info_pb';
 
 const workspaceUrl = new GitpodHostUrl(window.location.href);
 window.gitpod = {
@@ -25,7 +26,7 @@ if (!workspaceId) {
     });
 }
 
-const checkReady: (kind: 'content' | 'ide') => Promise<void> = kind =>
+const checkReady: (kind: 'content' | 'ide' | 'supervisor') => Promise<void> = kind =>
     fetch(window.location.protocol + '//' + window.location.host + '/_supervisor/v1/status/' + kind + '/wait/true').then(response => {
         if (response.ok) {
             return;
@@ -36,6 +37,9 @@ const checkReady: (kind: 'content' | 'ide') => Promise<void> = kind =>
         console.debug(`failed to check whether ${kind} is ready, trying again...`, e);
         return checkReady(kind);
     });
+const supervisorReady = checkReady('supervisor');
+const ideReady = supervisorReady.then(() => checkReady('ide'));
+const contentReady = supervisorReady.then(() => checkReady('content'));
 
 const ideURL = new URL(window.location.href);
 ideURL.searchParams.append('gitpod-ide-index', 'true');
@@ -58,12 +62,13 @@ loadingFrame.className = 'gitpod-frame loading';
 
 const onDOMContentLoaded = new Promise(resolve => window.addEventListener('DOMContentLoaded', resolve, { once: true }));
 
-Promise.all([onDOMContentLoaded, checkReady('ide'), checkReady('content')]).then(() => {
+Promise.all([onDOMContentLoaded, ideReady, contentReady]).then(() => {
     console.info('IDE backend and content are ready, attaching IDE frontend...');
     ideFrame.onload = () => loadingFrame.remove();
     document.body.appendChild(ideFrame);
     ideFrame.contentWindow?.addEventListener('DOMContentLoaded', () => {
         if (ideFrame.contentWindow) {
+            trackLastActivity(ideFrame.contentWindow);
             ideFrame.contentWindow.gitpod = window.gitpod;
         }
         if (navigator.keyboard?.getLayoutMap && ideFrame.contentWindow?.navigator.keyboard?.getLayoutMap) {
@@ -78,5 +83,43 @@ Promise.all([onDOMContentLoaded, checkReady('ide'), checkReady('content')]).then
 onDOMContentLoaded.then(() => {
     if (!ideFrame.parentElement) {
         document.body.appendChild(loadingFrame);
+        loadingFrame.contentWindow?.addEventListener('DOMContentLoaded', () => {
+            if (loadingFrame.contentWindow) {
+                trackLastActivity(loadingFrame.contentWindow);
+            }
+        }, { once: true });
     }
+});
+
+
+let lastActivity = 0;
+const updateLastActivitiy = () => {
+    lastActivity = new Date().getTime();
+};
+const trackLastActivity = (w: Window) => {
+    w.document.addEventListener('mousemove', updateLastActivitiy, { capture: true });
+    w.document.addEventListener('keydown', updateLastActivitiy, { capture: true });
+}
+trackLastActivity(window);
+supervisorReady.then(async () => {
+    const response = await fetch(window.location.protocol + '//' + window.location.host + '/_supervisor/v1/info/workspace', { credentials: 'include' });
+    const { instanceId }: WorkspaceInfoResponse.AsObject = await response.json();
+    const sendHeartBeat = async (wasClosed?: true) => {
+        try {
+            await window.gitpod.service.server.sendHeartBeat({ instanceId, wasClosed });
+        } catch (err) {
+            console.error('Failed to send hearbeat:', err);
+        }
+    }
+    sendHeartBeat();
+    window.addEventListener('beforeunload', () => sendHeartBeat(true), { once: true });
+
+    let activityInterval = 10000;
+    setInterval(() => {
+        if (lastActivity + activityInterval < new Date().getTime()) {
+            // no activity, no heartbeat
+            return;
+        }
+        sendHeartBeat();
+    }, activityInterval);
 });

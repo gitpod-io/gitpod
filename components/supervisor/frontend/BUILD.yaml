@@ -9,6 +9,7 @@ packages:
       - tsconfig.json
     deps:
       - components/gitpod-protocol:lib
+      - components/supervisor-api/typescript-grpc:lib
     config:
       dontTest: true
       yarnLock: ${coreYarnLockBase}/../yarn.lock
