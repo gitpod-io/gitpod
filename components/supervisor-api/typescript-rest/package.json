@@ -3,7 +3,7 @@
   "version": "0.1.5",
   "license": "UNLICENSED",
   "scripts": {
-    "build": "mkdir -p lib; protoc -I ${PROTOLOC:-$GOPATH/src/github.com/grpc-ecosystem/grpc-gateway}/third_party/googleapis -I /usr/lib/protoc/include --swagger_out=logtostderr=true:. -I${PROTOLOC:-..} ${PROTOLOC:-..}/*.proto && mv *.swagger.json lib && for f in $(ls lib/*.swagger.json); do yarn dtsgen -o ${f%.swagger.json}.dt.ts $f; done"
+    "build": "sh build.sh"
   },
   "files": [
     "lib"

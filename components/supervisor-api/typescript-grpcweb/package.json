@@ -3,13 +3,10 @@
   "version": "0.1.5",
   "license": "UNLICENSED",
   "scripts": {
-    "prepare": "mkdir -p src; protoc -I ${PROTOLOC:-$GOPATH/src/github.com/grpc-ecosystem/grpc-gateway}/third_party/googleapis -I /usr/lib/protoc/include --plugin=\"protoc-gen-ts=`which protoc-gen-ts`\" --js_out=\"import_style=commonjs,binary:src\" --ts_out=\"service=grpc-web:src\" -I${PROTOLOC:-..} ${PROTOLOC:-..}/*.proto",
-    "build": "mkdir -p lib; tsc && cp -f src/*.js src/*d.ts lib",
-    "full-build": "yarn prepare && yarn build"
+    "build": "sh build.sh"
   },
   "files": [
-    "lib",
-    "src"
+    "lib"
   ],
   "dependencies": {},
   "devDependencies": {
