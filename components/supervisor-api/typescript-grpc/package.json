@@ -3,12 +3,10 @@
   "version": "0.1.5",
   "license": "UNLICENSED",
   "scripts": {
-    "prepare": "mkdir -p src; protoc -I ${PROTOLOC:-$GOPATH/src/github.com/grpc-ecosystem/grpc-gateway}/third_party/googleapis -I /usr/lib/protoc/include --plugin=protoc-gen-grpc=`which grpc_tools_node_protoc_plugin` --js_out=import_style=commonjs,binary:src --grpc_out=grpc_js:src -I${PROTOLOC:-..} ${PROTOLOC:-..}/*.proto && protoc -I ${PROTOLOC:-$GOPATH/src/github.com/grpc-ecosystem/grpc-gateway}/third_party/googleapis -I /usr/lib/protoc/include --plugin=protoc-gen-ts=`which protoc-gen-ts` --ts_out=grpc_js:src -I${PROTOLOC:-..} ${PROTOLOC:-..}/*.proto && sed -i '/google_api_annotations_pb/d' src/*.js",
-    "build": "mkdir -p lib; tsc && cp -f src/*.js src/*d.ts lib"
+    "build": "sh build.sh"
   },
   "files": [
-    "lib",
-    "src"
+    "lib"
   ],
   "dependencies": {
     "@grpc/grpc-js": "^1.1.5",
