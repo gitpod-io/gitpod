@@ -542,7 +542,7 @@ export class WorkspaceStarter {
 
             spec.setPort(p.port);
             spec.setTarget(target);
-            spec.setVisibility(PortVisibility.PORT_VISIBILITY_PUBLIC);
+            spec.setVisibility(p.visibility == 'private' ? PortVisibility.PORT_VISIBILITY_PRIVATE : PortVisibility.PORT_VISIBILITY_PUBLIC);
             return spec;
         }).filter(spec => !!spec) as PortSpec[];
 
