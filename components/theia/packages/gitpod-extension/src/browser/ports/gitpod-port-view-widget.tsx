@@ -169,7 +169,7 @@ class GitpodPortViewComponent extends React.Component<GitpodPortViewProps, Gitpo
                 actions.push(<button className="theia-button" data-port={port.port} onClick={this.onOpenBrowser}>Open Browser</button>);
 
                 // TODO: extract serving process name (e.g. use netstat instead of /proc/net/tcp) and show here, i.e. don't override the label
-                label = 'open';
+                label = `open ${port.visibility === 'public' ? '(public)' : '(private)'}`;
             } else if (port.served == 'locally') {
                 label = 'served on localhost only, thus cannot be exposed';
             } else {
