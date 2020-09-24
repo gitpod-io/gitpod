@@ -108,6 +108,8 @@ h4, h5, h6 {
 }
 
 .content.toolbar {
+    display: flex;
+    justify-content: space-between;
     margin-top: 15px;
     min-height: 60px;
     padding: 0 1.5rem;
@@ -127,6 +129,18 @@ h4, h5, h6 {
     font-weight: 500;
 }
 
+@media(max-width: 680px) {
+    .content.toolbar .gitpod-links {
+        display: none;
+    }
+}
+
+@media(min-width: 681px) {
+    .content.toolbar .mobile-menu {
+        display: none;    
+    }
+}
+
 .content.toolbar .gitpod-links .link-container a {
     color: var(--font-color1);
     text-decoration: none;
@@ -138,7 +152,6 @@ h4, h5, h6 {
 }
 
 .content.toolbar .user-section {
-    width: 130px;
     display: flex;
     justify-content: flex-end;
 }
