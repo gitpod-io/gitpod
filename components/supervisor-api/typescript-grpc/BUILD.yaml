@@ -3,6 +3,7 @@ packages:
     type: yarn
     srcs:
       - package.json
+      - build.sh
     deps:
       - components/supervisor-api:proto
     env:
