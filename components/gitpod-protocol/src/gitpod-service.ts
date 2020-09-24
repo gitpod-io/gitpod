@@ -44,7 +44,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
 
     // Query/retrieve workspaces
     getWorkspaces(options: GitpodServer.GetWorkspacesOptions): Promise<WorkspaceInfo[]>;
-    getWorkspaceOwner(workspaceId: string): Promise<UserInfo | undefined>;
+    getWorkspaceOwner(workspaceId: string): Promise<UserInfo | undefined>;
     getWorkspaceUsers(workspaceId: string): Promise<WorkspaceInstanceUser[]>;
     getFeaturedRepositories(): Promise<WhitelistedRepository[]>;
     getWorkspace(id: string): Promise<WorkspaceInfo>;
@@ -56,13 +56,13 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
      * @return WorkspaceCreationResult
      */
     createWorkspace(options: GitpodServer.CreateWorkspaceOptions): Promise<WorkspaceCreationResult>;
-    startWorkspace(id: string, options: {forceDefaultImage: boolean}): Promise<StartWorkspaceResult>;
+    startWorkspace(id: string, options: GitpodServer.StartWorkspaceOptions): Promise<StartWorkspaceResult>;
     stopWorkspace(id: string): Promise<void>;
     deleteWorkspace(id: string): Promise<void>;
     setWorkspaceDescription(id: string, desc: string): Promise<void>;
-    controlAdmission(id: string, level: "owner" | "everyone"): Promise<void>;
+    controlAdmission(id: string, level: GitpodServer.AdmissionLevel): Promise<void>;
 
-    updateWorkspaceUserPin(id: string, action: "pin" | "unpin" | "toggle"): Promise<void>;
+    updateWorkspaceUserPin(id: string, action: GitpodServer.PinAction): Promise<void>;
     sendHeartBeat(options: GitpodServer.SendHeartBeatOptions): Promise<void>;
     watchWorkspaceImageBuildLogs(workspaceId: string): Promise<void>;
     watchHeadlessWorkspaceLogs(workspaceId: string): Promise<void>;
@@ -73,7 +73,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getWorkspaceTimeout(workspaceId: string): Promise<GetWorkspaceTimeoutResult>;
     sendHeartBeat(options: GitpodServer.SendHeartBeatOptions): Promise<void>;
 
-    updateWorkspaceUserPin(id: string, action: "pin" | "unpin" | "toggle"): Promise<void>;
+    updateWorkspaceUserPin(id: string, action: GitpodServer.PinAction): Promise<void>;
 
     // Port management
     getOpenPorts(workspaceId: string): Promise<WorkspaceInstancePort[]>;
@@ -95,7 +95,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
 
     // Gitpod token
     getGitpodTokens(): Promise<GitpodToken[]>;
-    generateNewGitpodToken(options: { name?: string, type: GitpodTokenType, scopes?: [] }): Promise<string>;
+    generateNewGitpodToken(options: GitpodServer.GenerateNewGitpodTokenOptions): Promise<string>;
     deleteGitpodToken(tokenHash: string): Promise<void>;
 
     // misc
@@ -183,6 +183,9 @@ export namespace GitpodServer {
         contextUrl: string;
         mode?: CreateWorkspaceMode;
     }
+    export interface StartWorkspaceOptions {
+        forceDefaultImage: boolean;
+    }
     export interface TakeSnapshotOptions {
         workspaceId: string;
         layoutData?: string;
@@ -214,6 +217,13 @@ export namespace GitpodServer {
     }
     export interface DeleteOwnAuthProviderParams {
         readonly id: string
+    }
+    export type AdmissionLevel = "owner" | "everyone";
+    export type PinAction = "pin" | "unpin" | "toggle";
+    export interface GenerateNewGitpodTokenOptions {
+        name?: string
+        type: GitpodTokenType
+        scopes?: string[] 
     }
 }
 
