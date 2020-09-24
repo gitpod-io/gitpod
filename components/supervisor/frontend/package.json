@@ -4,7 +4,8 @@
   "license": "UNLICENSED",
   "version": "0.0.0",
   "dependencies": {
-    "@gitpod/gitpod-protocol": "0.1.5"
+    "@gitpod/gitpod-protocol": "0.1.5",
+    "@gitpod/supervisor-api-grpc": "0.1.5"
   },
   "devDependencies": {
     "concurrently": "^5.3.0",
@@ -17,6 +18,6 @@
   },
   "scripts": {
     "build": "tsc && webpack --mode=production",
-    "watch": "leeway exec --package .:app --transitive-dependencies --filter-type yarn --components --parallel -- concurrently \"tsc --watch --preserveWatchOutput\" \"webpack --mode=development\""
+    "watch": "concurrently \"tsc --watch --preserveWatchOutput\" \"webpack --mode=development\""
   }
 }
