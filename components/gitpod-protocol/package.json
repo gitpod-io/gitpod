@@ -14,13 +14,15 @@
         "@types/js-yaml": "^3.10.1",
         "@types/uuid": "^3.4.5",
         "@types/ws": "^5.1.2",
+        "chai": "^4.1.2",
         "chai-subset": "^1.6.0",
+        "mocha": "^5.0.0",
         "mocha-typescript": "^1.1.11",
         "rimraf": "^2.6.2",
-        "chai": "^4.1.2",
-        "mocha": "^5.0.0",
-        "ts-node": "<7.0.0",
-        "typescript": "^3.1.3"
+        "ts-node": "^9.0.0",
+        "typescript": "^3.1.3",
+        "typescript-json-schema": "^0.43.0",
+        "typescript-parser": "^2.6.1"
     },
     "scripts": {
         "prepare": "yarn run clean && yarn run build",
@@ -37,10 +39,10 @@
         "opentracing": "^0.14.4",
         "prom-client": "^10.2.0",
         "reconnecting-websocket": "^4.2.0",
+        "reflect-metadata": "^0.1.10",
         "uuid": "^3.3.3",
         "vscode-uri": "^1.0.1",
         "vscode-ws-jsonrpc": "^0.2.0",
-        "ws": "^5.2.2",
-        "reflect-metadata": "^0.1.10"
+        "ws": "^5.2.2"
     }
 }
