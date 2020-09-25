@@ -177,7 +177,7 @@ export namespace ScopedResourceGuard {
         return {
             kind: segs[0] as GuardedResourceKind,
             subjectID: segs[1],
-            operations: segs[2].split(",").map(o => o.trim()) as ResourceAccessOp[],
+            operations: segs[2].split("/").map(o => o.trim()) as ResourceAccessOp[],
         };
     }
 
@@ -195,7 +195,7 @@ export namespace ScopedResourceGuard {
     }
 
     export function marshalResourceScope(scope: ResourceScope): string {
-        return `${scope.kind}::${scope.subjectID}::${scope.operations.join(",")}`;
+        return `${scope.kind}::${scope.subjectID}::${scope.operations.join("/")}`;
     }
 
     export function subjectID(resource: GuardedResource): string | undefined {
