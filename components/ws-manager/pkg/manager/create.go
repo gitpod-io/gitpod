@@ -565,8 +565,9 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 			SuccessThreshold: 1,
 			TimeoutSeconds:   1,
 		},
-		Env:     env,
-		Command: []string{"/theia/supervisor", "run"},
+		Env:                      env,
+		Command:                  []string{"/theia/supervisor", "run"},
+		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 	}, nil
 }
 

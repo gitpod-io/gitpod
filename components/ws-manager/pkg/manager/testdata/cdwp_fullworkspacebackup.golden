@@ -130,6 +130,18 @@
                         "successThreshold": 1,
                         "failureThreshold": 600
                     },
+                    "lifecycle": {
+                        "preStop": {
+                            "exec": {
+                                "command": [
+                                    "/.supervisor/supervisor",
+                                    "container",
+                                    "backup"
+                                ]
+                            }
+                        }
+                    },
+                    "terminationMessagePolicy": "FallbackToLogsOnError",
                     "imagePullPolicy": "Always",
                     "securityContext": {
                         "capabilities": {
