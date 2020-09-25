@@ -494,5 +494,14 @@ func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest)
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
+	endpoint, host, err := is.cfg.GitpodAPIEndpoint()
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	resp.GitpodApi = &api.WorkspaceInfoResponse_GitpodAPI{
+		Endpoint: endpoint,
+		Host:     host,
+	}
+
 	return resp, nil
 }

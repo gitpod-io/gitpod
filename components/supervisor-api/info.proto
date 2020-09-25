@@ -1,3 +1,7 @@
+// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
 syntax = "proto3";
 
 package supervisor;
@@ -19,6 +23,13 @@ service InfoService {
 message WorkspaceInfoRequest {}
 
 message WorkspaceInfoResponse {
+    message GitpodAPI {
+        // endpoint is the websocket URL on which the token-accessible Gitpod API is served on
+        string endpoint = 1;
+        // host is the host of the endpoint. Use this host to ask supervisor a token.
+        string host = 2;
+    }
+
     // workspace_id is the workspace ID of this workspace.
     string workspace_id = 1;
 
@@ -38,4 +49,7 @@ message WorkspaceInfoResponse {
 
     // user_home is the path to the user's home.
     string user_home = 6;
+
+    // GitpodAPI provides information to reach the Gitpod server API.
+    GitpodAPI gitpod_api = 7;
 }

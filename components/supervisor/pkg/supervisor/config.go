@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"math"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"time"
@@ -179,6 +180,9 @@ type WorkspaceConfig struct {
 
 	// WorkspaceInstanceID is the instance ID of the workspace
 	WorkspaceInstanceID string `env:"GITPOD_INSTANCE_ID"`
+
+	// GitpodHost points to the Gitpod API server we're to talk to
+	GitpodHost string `env:"GITPOD_HOST"`
 }
 
 // WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service
@@ -202,6 +206,10 @@ func (c WorkspaceConfig) Validate() error {
 	}
 
 	if _, err := c.GetTokens(false); err != nil {
+		return err
+	}
+
+	if _, _, err := c.GitpodAPIEndpoint(); err != nil {
 		return err
 	}
 
@@ -244,6 +252,22 @@ func (c WorkspaceConfig) GetTokens(downloadOTS bool) ([]WorkspaceGitpodToken, er
 	}
 
 	return tks, nil
+}
+
+// GitpodAPIEndpoint produces the data required to connect to the Gitpod API
+func (c WorkspaceConfig) GitpodAPIEndpoint() (endpoint, host string, err error) {
+	gphost, err := url.Parse(c.GitpodHost)
+	if err != nil {
+		return
+	}
+
+	wsScheme := "wss"
+	if gphost.Scheme == "http" {
+		wsScheme = "ws"
+	}
+	endpoint = fmt.Sprintf("%s://%s/api/v1", wsScheme, gphost.Host)
+	host = gphost.Host
+	return
 }
 
 // GetConfig loads the supervisor configuration
