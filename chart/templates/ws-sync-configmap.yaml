@@ -29,13 +29,13 @@ data:
                 "enabled": {{ $comp.fullWorkspaceBackup.enabled }},
                 "workdir": "/mnt/node0/gitpod-{{ .Release.Namespace }}",
                 "cri": {
+                    "nodeToContainerMapping": {
+                        {{- range $idx, $pth := $comp.fullWorkspaceBackup.nodeRoots }}
+                        {{ if gt $idx 0 }},{{ end -}}{{ $pth | quote }}: "/mnt/node{{ $idx }}"
+                        {{- end }}
+                    },
                     "mounts": {
                         "proc": "/mnt/mounts",
-                        "paths": {
-                            {{- range $idx, $pth := $comp.fullWorkspaceBackup.nodeRoots }}
-                            {{ if gt $idx 0 }},{{ end -}}{{ $pth | quote }}: "/mnt/node{{ $idx }}"
-                            {{- end }}
-                        }
                     },
                     "runtime": "containerd",
                     "containerd": {

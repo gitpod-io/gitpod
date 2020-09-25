@@ -30,6 +30,12 @@ data:
         "daemon": {
             "namespace": "{{ .Release.Namespace }}",
             "containerd": "/mnt/containerd.sock",
+            "containerRuntime": {
+                "runtime": "containerd",
+                "containerd": {
+                    "socket": "/mnt/containerd.sock"
+                }
+            },
             "resources": {
                 "cgroupBasePath": "/mnt/node-cgroups",
                 "cpuBuckets": [
