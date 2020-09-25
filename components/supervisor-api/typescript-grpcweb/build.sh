@@ -1,4 +1,8 @@
 #!/bin/bash
+# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
 
 THIRD_PARTY_INCLUDES=${PROTOLOC:-$GOPATH/src/github.com/grpc-ecosystem/grpc-gateway}
 if [ ! -d $THIRD_PARTY_INCLUDES/third_party/googleapis ]; then
