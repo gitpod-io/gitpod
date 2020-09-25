@@ -3,27 +3,38 @@ module github.com/gitpod-io/gitpod/common-go
 go 1.12
 
 require (
+	github.com/Microsoft/hcsshim v0.8.10 // indirect
+	github.com/Microsoft/hcsshim/test v0.0.0-20200923174857-380508768ed2 // indirect
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
+	github.com/containerd/containerd v1.4.1
+	github.com/containerd/continuity v0.0.0-20200710164510-efbc4488d8fe // indirect
+	github.com/containerd/fifo v0.0.0-20200410184934-f15a3290365b // indirect
+	github.com/containerd/ttrpc v1.0.2 // indirect
+	github.com/containerd/typeurl v1.0.1
 	github.com/go-test/deep v1.0.5
-	github.com/gogo/protobuf v1.3.1 // indirect
+	github.com/gogo/googleapis v1.4.0 // indirect
 	github.com/golang/protobuf v1.3.3
-	github.com/google/go-cmp v0.3.1
+	github.com/google/go-cmp v0.4.0
 	github.com/kr/pretty v0.2.0 // indirect
+	github.com/opencontainers/go-digest v1.0.0 // indirect
+	github.com/opencontainers/image-spec v1.0.1 // indirect
+	github.com/opencontainers/runc v0.1.1 // indirect
+	github.com/opencontainers/selinux v1.6.0 // indirect
 	github.com/opentracing/opentracing-go v1.1.0
-	github.com/pkg/errors v0.8.1 // indirect
 	github.com/prometheus/client_golang v1.1.0
-	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4 // indirect
-	github.com/sirupsen/logrus v1.4.1
-	github.com/stretchr/testify v1.4.0 // indirect
+	github.com/sirupsen/logrus v1.4.2
+	github.com/syndtr/gocapability v0.0.0-20200815063812-42c35b437635 // indirect
 	github.com/uber-go/atomic v1.4.0 // indirect
 	github.com/uber/jaeger-client-go v2.16.1-0.20190821210114-30e625686abe+incompatible
 	github.com/uber/jaeger-lib v2.0.0+incompatible // indirect
+	go.etcd.io/bbolt v1.3.5 // indirect
 	go.uber.org/atomic v1.4.0 // indirect
 	golang.org/x/net v0.0.0-20191112182307-2180aed22343 // indirect
-	golang.org/x/sys v0.0.0-20191113165036-4c7a9d0fe056 // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
+	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
+	google.golang.org/grpc v1.32.0 // indirect
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
-	gopkg.in/yaml.v2 v2.2.5 // indirect
+	gotest.tools/v3 v3.0.2 // indirect
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v0.0.0
 	k8s.io/utils v0.0.0-20191030222137-2b95a09bc58d // indirect

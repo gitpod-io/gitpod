@@ -20,7 +20,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
-	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
 const (
@@ -44,7 +43,7 @@ func NewContainerdCRI(cfg *ContainerdConfig, mounts *NodeMountsLookup) (*Contain
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	_, err = cc.HealthService().Check(ctx, &grpc_health_v1.HealthCheckRequest{Service: ""})
+	_, err = cc.Version(ctx)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot connect to containerd: %w", err)
 	}
