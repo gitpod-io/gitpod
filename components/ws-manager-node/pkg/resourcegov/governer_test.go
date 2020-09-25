@@ -37,9 +37,9 @@ func TestControlCPU(t *testing.T) {
 	clampingBktLimiter := func() *ClampingBucketLimiter {
 		return &ClampingBucketLimiter{
 			Buckets: []Bucket{
-				Bucket{Budget: 2 * 60 * 500, Limit: 500},
-				Bucket{Budget: 4 * 60 * 400, Limit: 400},
-				Bucket{Budget: 5 * 60 * 180, Limit: 200},
+				{Budget: 2 * 60 * 500, Limit: 500},
+				{Budget: 4 * 60 * 400, Limit: 400},
+				{Budget: 5 * 60 * 180, Limit: 200},
 			},
 		}
 	}

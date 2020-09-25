@@ -7,10 +7,10 @@ package syncd
 import (
 	"path/filepath"
 
+	"github.com/gitpod-io/gitpod/common-go/cri"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
-	"github.com/gitpod-io/gitpod/ws-sync/pkg/cri"
 	"github.com/gitpod-io/gitpod/ws-sync/pkg/quota"
 	"github.com/gitpod-io/gitpod/ws-sync/pkg/safetynet"
 )
