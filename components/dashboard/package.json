@@ -36,7 +36,7 @@
     "html-webpack-plugin": "^4.4.1",
     "request": "^2.88.2",
     "source-map-loader": "^0.2.3",
-    "style-loader": "^1.2.1",
+    "style-loader": "^0.23.1",
     "svg-inline-loader": "^0.8.0",
     "ts-loader": "^4.1.0",
     "tslint": "^5.7.0",

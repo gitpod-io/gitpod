@@ -46,16 +46,16 @@
     "/src-gen"
   ],
   "scripts": {
-    "prepare": "yarn run build:theia",
     "start": "yarn start:theia --port=23000",
     "start:theia": "theia start --inspect=9229",
     "start:dev-staging": "node in-dev-staging.js yarn start:dev",
     "start:dev": "yarn start:theia --port=4000 | grep '^{' | jq -r .message",
     "debug": "nodemon -w ../packages --ignore src/ --inspect=9301 src-gen/backend/main.js",
     "debug:local": "./local-startup.sh",
-    "build": "export NODE_OPTIONS=\"--max_old_space_size=3192\" && theia build && yarn run post-generate",
-    "build:theia": "theia build --mode development",
-    "watch": "yarn build:theia --watch",
+    "build:prod": "export NODE_OPTIONS=\"--max_old_space_size=3192\" && theia build && yarn run post-generate",
+    "build:dev": "theia build --mode development",
+    "build": "yarn build:dev",
+    "watch": "yarn build:dev --watch",
     "post-generate": "node ./scripts/post-generate.js",
     "cachify-bundle": "node ./scripts/cachify-bundle.js",
     "upload-to-cdn": "node ./scripts/cachify-bundle-upload.js"
