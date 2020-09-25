@@ -128,7 +128,8 @@ func TestRoutes(t *testing.T) {
 				method: "GET",
 				url:    "/some/path/on/an/exposed/port",
 				headers: map[string]string{
-					"Cookie": "_gitpod_io_=s%3Af2da2196-4afe-46e7-97b6-00eadfb4e373.KuHVEHhTuNln8RiegerwgSsAYF0LqwV5wI18tVeUNUw; ",
+					"Cookie":        "_gitpod_io_=s%3Af2da2196-4afe-46e7-97b6-00eadfb4e373.KuHVEHhTuNln8RiegerwgSsAYF0LqwV5wI18tVeUNUw; ",
+					"Authenticated": "yes",
 				},
 			},
 			targets: []proxyTarget{
@@ -183,8 +184,9 @@ func TestRoutes(t *testing.T) {
 			description: "Exposed port: Websocket support does not hinder regular requests",
 			router:      portRouter,
 			req: testRequest{
-				method: "GET",
-				url:    "/some/path",
+				method:  "GET",
+				url:     "/some/path",
+				headers: map[string]string{"Authenticated": "yes"},
 			},
 			targets: []proxyTarget{
 				{
