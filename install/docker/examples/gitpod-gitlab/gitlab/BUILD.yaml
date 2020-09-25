@@ -4,6 +4,7 @@ packages:
     srcs:
       - entrypoint.sh
       - gitlab-helm-installer.yaml
+      - persistent-volumes.yaml
     deps:
       - chart:helm
     argdeps:

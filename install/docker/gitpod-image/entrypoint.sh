@@ -5,14 +5,13 @@
 
 set -eu
 
-mount --make-shared /sys/fs/cgroup
 mount --make-shared /var/gitpod/workspaces
+mount --make-shared /sys/fs/cgroup
 mount --make-shared /proc
 
 
 BASEDOMAIN=${BASEDOMAIN:-}
 DOMAIN=${DOMAIN:-}
-DNSSERVER=${DNSSERVER:-}
 
 
 mkdir -p /values
@@ -34,13 +33,40 @@ if [ -z "$DOMAIN" ]; then
 fi
 
 
-GITPOD_CHART_VERSION=${GITPOD_CHART_VERSION:-0.5.0}
-
-
 echo "DOMAIN:               $DOMAIN"
 echo "BASEDOMAIN:           $BASEDOMAIN"
-echo "DNSSERVER:            $DNSSERVER"
-echo "GITPOD_CHART_VERSION: $GITPOD_CHART_VERSION"
+
+
+# Fix docker-registry volume ownership
+[ -d "/var/gitpod/docker-registry" ] && chown 1000 /var/gitpod/docker-registry
+
+
+# Add IP tables rules to access Docker's internal DNS 127.0.0.11 from outside
+# based on https://serverfault.com/a/826424
+
+TCP_DNS_ADDR=$(iptables-save | grep DOCKER_OUTPUT | grep tcp | grep -o '127\.0\.0\.11:.*$')
+UDP_DNS_ADDR=$(iptables-save | grep DOCKER_OUTPUT | grep udp | grep -o '127\.0\.0\.11:.*$')
+
+iptables -t nat -A PREROUTING -p tcp --dport 53 -j DNAT --to "$TCP_DNS_ADDR"
+iptables -t nat -A PREROUTING -p udp --dport 53 -j DNAT --to "$UDP_DNS_ADDR"
+
+
+# Add this IP to resolv.conf since CoreDNS of k3s uses this file
+create_resolv_conf() {
+    TMP_FILE=$(mktemp)
+    echo "nameserver 127.0.0.11" > "$TMP_FILE"
+    echo "nameserver $(hostname -i | cut -f1 -d' ')" >> "$TMP_FILE"
+    additional_nameserver=${1:-}
+    if [ -n "$additional_nameserver" ]; then
+        echo "nameserver $additional_nameserver" >> "$TMP_FILE"
+    fi
+    echo "options ndots:0" >>  "$TMP_FILE"
+    cp "$TMP_FILE" /etc/resolv.conf
+    rm "$TMP_FILE"
+}
+create_resolv_conf
+
+
 
 
 # add HTTPS certs secret if certs a given
@@ -98,11 +124,7 @@ EOF
 
     # modify resolv.conf so that registry.default.svc.cluster.local can be resolved from the node
     KUBE_DNS_IP=$(kubectl -n kube-system get service kube-dns -o jsonpath='{.spec.clusterIP}')
-    TMP_FILE=$(mktemp)
-    sed "s/nameserver.*/nameserver $KUBE_DNS_IP/g" /etc/resolv.conf > "$TMP_FILE"
-    cp "$TMP_FILE" /etc/resolv.conf
-    rm "$TMP_FILE"
-    cat /etc/resolv.conf
+    create_resolv_conf "$KUBE_DNS_IP"
 }
 
 
@@ -143,7 +165,6 @@ sed 's/^/    /' /values.yaml >> "$GITPOD_HELM_INSTALLER_FILE"
 
 sed -i "s/\$DOMAIN/$DOMAIN/g" "$GITPOD_HELM_INSTALLER_FILE"
 sed -i "s/\$BASEDOMAIN/$BASEDOMAIN/g" "$GITPOD_HELM_INSTALLER_FILE"
-sed -i "s/\$GITPOD_CHART_VERSION/$GITPOD_CHART_VERSION/g" "$GITPOD_HELM_INSTALLER_FILE"
 
 # gitpod-helm-installer.yaml needs access to kubernetes by the public host IP.
 kubeconfig_replaceip() {
@@ -161,30 +182,6 @@ installation_completed_hook() {
 }
 installation_completed_hook &
 
-
-
-# patch DNS config if DNSSERVER environment variable is given
-if [ -n "$BASEDOMAIN" ] && [ -n "$DNSSERVER" ]; then
-    patchdns() {
-        echo "Waiting for CoreDNS to patch config ..."
-        while [ -z "$(kubectl get pods -n kube-system | grep coredns | grep Running)" ]; do sleep 10; done
-
-        BASEDOMAIN=$1
-        DNSSERVER=$2
-
-        if [ -z "$(kubectl get configmap -n kube-system coredns -o json | grep $BASEDOMAIN)" ]; then
-            echo "Patching CoreDNS config ..."
-
-            kubectl get configmap -n kube-system coredns -o json | \
-                sed -e "s+.:53+$BASEDOMAIN {\\\\n  forward . $DNSSERVER\\\\n}\\\\n.:53+g" | \
-                kubectl apply -f -
-            echo "CoreDNS config patched."
-        else
-            echo "CoreDNS has been patched already."
-        fi
-    }
-    patchdns "$BASEDOMAIN" "$DNSSERVER" &
-fi
 
 
 # start k3s

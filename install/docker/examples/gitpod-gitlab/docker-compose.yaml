@@ -18,17 +18,37 @@ services:
     image: eu.gcr.io/gitpod-core-dev/build/gitpod-k3s:${VERSION:-latest}
     privileged: true
     volumes:
+      - gitpod-docker:/var/gitpod/docker
+      - gitpod-docker-registry:/var/gitpod/docker-registry
+      - gitpod-minio:/var/gitpod/minio
+      - gitpod-mysql:/var/gitpod/mysql
+      - gitpod-workspaces:/var/gitpod/workspaces
       - ./values:/values
       - ./certs:/certs
     environment:
       - BASEDOMAIN=${BASEDOMAIN}
-      - DNSSERVER=${DNSSERVER:-}
 
   gitlab:
     image: eu.gcr.io/gitpod-core-dev/build/gitlab-k3s:${VERSION:-latest}
     privileged: true
     volumes:
+      - gitlab-gitaly:/var/gitlab/gitaly
+      - gitlab-minio:/var/gitlab/minio
+      - gitlab-postgresql:/var/gitlab/postgresql
+      - gitlab-redis:/var/gitlab/redis
+      - gitlab-secrets-backup:/var/gitlab/secrets-backup
       - ./certs:/certs
     environment:
       - BASEDOMAIN=${BASEDOMAIN}
-      - DNSSERVER=${DNSSERVER:-}
+
+volumes:
+  gitpod-docker:
+  gitpod-docker-registry:
+  gitpod-minio:
+  gitpod-mysql:
+  gitpod-workspaces:
+  gitlab-gitaly:
+  gitlab-minio:
+  gitlab-postgresql:
+  gitlab-redis:
+  gitlab-secrets-backup:

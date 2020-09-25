@@ -17,3 +17,16 @@ components:
       spec:
         dnsConfig: null
         dnsPolicy: ClusterFirst
+  imageBuilder:
+    dindImage: docker:19.03-dind
+
+docker-registry:
+  persistence:
+    enabled: true
+    existingClaim: docker-registry
+minio:
+  persistence:
+    existingClaim: minio
+mysql:
+  persistence:
+    existingClaim: mysql
