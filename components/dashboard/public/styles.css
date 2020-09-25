@@ -793,3 +793,26 @@ footer .logo-icon {
 .upgrade-hours .button {
     margin-left: 1em;
 }
+
+/* ----------------------------------------- */
+/* ----- Access Control ----- */
+/* ----------------------------------------- */
+
+@media(max-width: 620px) {
+    .access-control__card {
+        padding: 20px 10px !important;
+    }
+}
+
+
+.access-control__card-container {
+    width: 31%;
+    min-width: 300px;
+    margin-bottom: 30px !important;
+}
+
+@media(max-width: 340px) {
+    .access-control__card-container {
+        min-width: 280px;
+    }
+}

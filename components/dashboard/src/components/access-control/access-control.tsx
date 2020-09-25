@@ -255,7 +255,7 @@ export class AccessControl extends React.Component<AccessControlProps, AccessCon
                 const oldProviderScopes = oldScopes.get(authProvider.host);
                 const newProviderScopes = newScopes.get(authProvider.host);
                 if (oldProviderScopes && newProviderScopes) {
-                    renderedTokens.push(<Grid item style={{ width: '31%' }}>
+                    renderedTokens.push(<Grid item className="access-control__card-container">
                         {this.renderProviderTokens(authProvider, oldProviderScopes, newProviderScopes)}
                     </Grid>);
                 }
@@ -264,6 +264,7 @@ export class AccessControl extends React.Component<AccessControlProps, AccessCon
         return (<Grid
             container
             alignItems="stretch"
+            wrap="wrap"
             justify="space-evenly">
             {renderedTokens}
         </Grid>);
@@ -327,7 +328,9 @@ export class AccessControl extends React.Component<AccessControlProps, AccessCon
                 minHeight: '100%',
                 display: 'flex',
                 flexDirection: 'column'
-            }}>
+            }}
+                className="access-control__card"
+            >
             <Grid item>
                 <Typography variant="h5" component="h3">
                     {icon && (<img src={icon} className={'provider-icon'} />)}
