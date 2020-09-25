@@ -20,3 +20,24 @@ spec:
         tls:
           secretName: tls-cert
     certmanager.install: false
+
+    gitlab:
+      gitaly:
+        persistence:
+          storageClass: manual
+          matchLabels:
+            app: gitaly
+    minio:
+      persistence:
+        storageClass: manual
+        matchLabels:
+          app: minio
+    postgresql:
+      persistence:
+        existingClaim: postgresql
+    redis:
+      master:
+        persistence:
+          storageClass: manual
+          matchLabels:
+            app: redis

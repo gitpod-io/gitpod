@@ -11,6 +11,32 @@ if [ -z "$BASEDOMAIN" ]; then
 fi
 
 
+# Fix volume ownerships
+[ -d "/var/gitlab/gitaly" ] && chown 1000 /var/gitlab/gitaly
+[ -d "/var/gitlab/minio" ] && chown 1000 /var/gitlab/minio
+[ -d "/var/gitlab/postgresql" ] && chown 1001 /var/gitlab/postgresql
+[ -d "/var/gitlab/redis" ] && chown 1001 /var/gitlab/redis
+
+
+# Add IP tables rules to access Docker's internal DNS 127.0.0.11 from outside
+# based on https://serverfault.com/a/826424
+
+TCP_DNS_ADDR=$(iptables-save | grep DOCKER_OUTPUT | grep tcp | grep -o '127\.0\.0\.11:.*$')
+UDP_DNS_ADDR=$(iptables-save | grep DOCKER_OUTPUT | grep udp | grep -o '127\.0\.0\.11:.*$')
+
+iptables -t nat -A PREROUTING -p tcp --dport 53 -j DNAT --to "$TCP_DNS_ADDR"
+iptables -t nat -A PREROUTING -p udp --dport 53 -j DNAT --to "$UDP_DNS_ADDR"
+
+
+# Add this IP to resolv.conf since CoreDNS of k3s uses this file
+
+TMP_FILE=$(mktemp)
+sed "/nameserver.*/ a nameserver $(hostname -i | cut -f1 -d' ')" /etc/resolv.conf > "$TMP_FILE"
+cp "$TMP_FILE" /etc/resolv.conf
+rm "$TMP_FILE"
+
+
+
 # prepare GitLab helm installer
 GITLAB_HELM_INSTALLER_FILE=/var/lib/rancher/k3s/server/manifests/gitlab-helm-installer.yaml
 
@@ -45,6 +71,28 @@ installation_completed_hook() {
 
     echo "Removing installer manifest ..."
     rm -f /var/lib/rancher/k3s/server/manifests/gitlab-helm-intaller.yaml
+
+
+    echo "Backup secrets ..."
+    mkdir -p /var/gitlab/secrets-backup && cd /var/gitlab/secrets-backup
+
+    while [ -z "$(kubectl get secrets gitlab-rails-secret | grep Opaque)" ]; do sleep 10; done
+    [ -f gitlab-rails-secret ] && cp gitlab-rails-secret .gitlab-rails-secret_$(date -Iseconds).backup
+    printf "secrets.yml: %s\n" "$(kubectl get secrets gitlab-rails-secret -o jsonpath="{.data['secrets\.yml']}")" > gitlab-rails-secret
+    
+    while [ -z "$(kubectl get secrets gitlab-postgresql-password | grep Opaque)" ]; do sleep 10; done
+    [ -f gitlab-postgresql-password ] && cp gitlab-postgresql-password .gitlab-postgresql-password_$(date -Iseconds).backup
+    printf "postgresql-password: %s\n" "$(kubectl get secrets gitlab-postgresql-password -o jsonpath='{.data.postgresql-password}')" > gitlab-postgresql-password
+    printf "postgresql-postgres-password: %s\n" "$(kubectl get secrets gitlab-postgresql-password -o jsonpath='{.data.postgresql-postgres-password}')" >> gitlab-postgresql-password
+
+    while [ -z "$(kubectl get secrets gitlab-gitlab-runner-secret | grep Opaque)" ]; do sleep 10; done
+    [ -f gitlab-gitlab-runner-secret ] && cp gitlab-gitlab-runner-secret .gitlab-gitlab-runner-secret_$(date -Iseconds).backup
+    printf "runner-registration-token: %s\n" "$(kubectl get secrets gitlab-gitlab-runner-secret -o jsonpath='{.data.runner-registration-token}')" > gitlab-gitlab-runner-secret
+    printf "runner-token: %s\n" "$(kubectl get secrets gitlab-gitlab-runner-secret -o jsonpath='{.data.runner-token}')" >> gitlab-gitlab-runner-secret
+
+    while [ -z "$(kubectl get secrets gitlab-gitlab-initial-root-password | grep Opaque)" ]; do sleep 10; done
+    [ -f gitlab-gitlab-initial-root-password ] && cp gitlab-gitlab-initial-root-password .gitlab-gitlab-initial-root-password_$(date -Iseconds).backup
+    printf "password: %s\n" "$(kubectl get secrets gitlab-gitlab-initial-root-password -o jsonpath='{.data.password}')" > gitlab-gitlab-initial-root-password
 }
 installation_completed_hook &
 
@@ -64,28 +112,26 @@ data:
 EOF
 
 
-# patch DNS config if DNSSERVER environment variable is given
-if [ -n "$BASEDOMAIN" ] && [ -n "$DNSSERVER" ]; then
-    patchdns() {
-        echo "Waiting for CoreDNS to patch config ..."
-        while [ -z "$(kubectl get pods -n kube-system | grep coredns | grep Running)" ]; do sleep 10; done
-
-        BASEDOMAIN=$1
-        DNSSERVER=$2
-
-        if [ -z "$(kubectl get configmap -n kube-system coredns -o json | grep $BASEDOMAIN)" ]; then
-            echo "Patching CoreDNS config ..."
-
-            kubectl get configmap -n kube-system coredns -o json | \
-                sed -e "s+.:53+$BASEDOMAIN {\\\\n  forward . $DNSSERVER\\\\n}\\\\n.:53+g" | \
-                kubectl apply -f -
-            echo "CoreDNS config patched."
-        else
-            echo "CoreDNS has been patched already."
-        fi
-    }
-    patchdns "$BASEDOMAIN" "$DNSSERVER" &
+# restore secrets
+if [ -d /var/gitlab/secrets-backup ]; then
+    cd /var/gitlab/secrets-backup
+    for s in $(ls); do
+        echo "Restoring secret $s ..."
+        cat << EOF > "/var/lib/rancher/k3s/server/manifests/$s.yaml"
+apiVersion: v1
+kind: Secret
+metadata:
+  name: $s
+  labels:
+    app: shared-secrets
+type: Opaque
+data:
+EOF
+        sed 's/^/  /' "$s" >> "/var/lib/rancher/k3s/server/manifests/$s.yaml"
+    done
+    cd -
 fi
 
+
 # start k3s
-/bin/k3s server --disable traefik --cluster-cidr 10.52.0.0/16 --service-cidr 10.53.0.0/16 --cluster-dns 10.53.0.10
+/bin/k3s server --disable traefik
