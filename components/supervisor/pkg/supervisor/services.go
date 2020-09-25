@@ -14,8 +14,9 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/backup"
-	"github.com/golang/protobuf/ptypes"
+	ndeapi "github.com/gitpod-io/gitpod/ws-manager-node/api"
 
+	"github.com/golang/protobuf/ptypes"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -504,4 +505,43 @@ func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest)
 	}
 
 	return resp, nil
+}
+
+// ControlService implements the supervisor control service
+type ControlService struct {
+	UidmapCanary *ndeapi.InWorkspaceHelper
+}
+
+// RegisterGRPC registers the gRPC info service
+func (c *ControlService) RegisterGRPC(srv *grpc.Server) {
+	api.RegisterControlServiceServer(srv, c)
+}
+
+// Newuidmap establishes a new UID mapping in a user namespace
+func (c *ControlService) Newuidmap(ctx context.Context, req *api.NewuidmapRequest) (*api.NewuidmapResponse, error) {
+	if !c.UidmapCanary.CanaryAvailable() {
+		return nil, status.Error(codes.Unavailable, "service unavailable")
+	}
+
+	mapping := make([]*ndeapi.UidmapCanaryRequest_Mapping, len(req.Mapping))
+	for i, m := range req.Mapping {
+		mapping[i] = &ndeapi.UidmapCanaryRequest_Mapping{
+			ContainerId: m.ContainerId,
+			HostId:      m.HostId,
+			Size:        m.Size,
+		}
+	}
+
+	ndereq := &ndeapi.UidmapCanaryRequest{
+		Pid:     req.Pid,
+		Gid:     req.Gid,
+		Mapping: mapping,
+	}
+
+	err := c.UidmapCanary.Newuidmap(ctx, ndereq)
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.NewuidmapResponse{}, nil
 }

@@ -1,0 +1,32 @@
+// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package wsmannode;
+
+option go_package = "github.com/gitpod-io/gitpod/ws-manager-node/api";
+
+service InWorkspaceHelper {
+    
+    // UidmapCanary can establish a uid mapping of a new user namespace spawned within the workspace.
+    rpc UidmapCanary(stream UidmapCanaryResponse) returns (stream UidmapCanaryRequest) {}
+
+}
+
+message UidmapCanaryResponse {
+    string message = 1;
+    uint32 error_code = 2;
+}
+message UidmapCanaryRequest {
+    message Mapping {
+        uint32 container_id = 1;
+        uint32 host_id = 2;
+        uint32 size = 3;
+    }
+
+    int64 pid = 1;
+    bool gid = 2;
+    repeated Mapping mapping = 3;
+}
