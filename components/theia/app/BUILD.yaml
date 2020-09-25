@@ -14,7 +14,7 @@ packages:
       packaging: offline-mirror
       dontTest: true
       commands:
-        build: ["yarn", "build"]
+        build: ["yarn", "build:prod"]
       yarnLock: ${coreYarnLockBase}/../yarn.lock
   - name: builtin-plugins
     type: generic
