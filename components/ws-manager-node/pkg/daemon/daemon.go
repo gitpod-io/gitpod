@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containerd/containerd"
+	"github.com/gitpod-io/gitpod/common-go/cri"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-manager-node/pkg/diskguard"
 	"github.com/gitpod-io/gitpod/ws-manager-node/pkg/hostsgov"
@@ -22,19 +22,18 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-const (
-	kubernetesNamespace            = "k8s.io"
-	containerLabelCRIKind          = "io.cri-containerd.kind"
-	containerLabelK8sContainerName = "io.kubernetes.container.name"
-	containerLabelK8sPodName       = "io.kubernetes.pod.name"
-	containerLabelK8sNamespace     = "io.kubernetes.pod.namespace"
-)
-
 // New creates a new daemon for the given configuration
 func New(cfg Configuration, reg prometheus.Registerer) (*Daemon, error) {
 	clientset, err := newClientSet(cfg.Kubeconfig)
 	if err != nil {
 		return nil, err
+	}
+	containerRuntime, err := cri.FromConfig(cfg.ContainerRuntime)
+	if err != nil {
+		return nil, err
+	}
+	if containerRuntime == nil {
+		return nil, xerrors.Errorf("no container runtime configured")
 	}
 
 	d := &Daemon{
@@ -43,11 +42,7 @@ func New(cfg Configuration, reg prometheus.Registerer) (*Daemon, error) {
 		close:      make(chan struct{}),
 	}
 	if cfg.Resources != nil {
-		client, err := containerd.New(cfg.ContainerdSocket, containerd.WithDefaultNamespace(kubernetesNamespace))
-		if err != nil {
-			return nil, err
-		}
-		d.Resources = resourcegov.NewWorkspaceDispatch(client, clientset, cfg.KubernetesNamespace, *cfg.Resources, reg)
+		d.Resources = resourcegov.NewWorkspaceDispatch(containerRuntime, clientset, cfg.KubernetesNamespace, *cfg.Resources, reg)
 	}
 	if len(cfg.DiskSpaceGuard) > 0 {
 		nodename := os.Getenv("NODENAME")

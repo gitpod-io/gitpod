@@ -6,9 +6,7 @@ package cri
 
 import (
 	"bufio"
-	"io/ioutil"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"golang.org/x/xerrors"
@@ -18,16 +16,6 @@ import (
 func NewNodeMountsLookup(cfg *NodeMountsLookupConfig) (*NodeMountsLookup, error) {
 	if cfg == nil {
 		return nil, xerrors.Errorf("config must not be nil")
-	}
-	if _, err := ioutil.ReadFile(cfg.ProcLoc); err != nil {
-		return nil, xerrors.Errorf("cannot read mount table from %s: %w", cfg.ProcLoc, err)
-	}
-	for _, cp := range cfg.Mapping {
-		if stat, err := os.Stat(cp); err != nil {
-			return nil, xerrors.Errorf("invalid container prefix: %w", err)
-		} else if !stat.IsDir() {
-			return nil, xerrors.Errorf("container prefix is not a directory")
-		}
 	}
 
 	return &NodeMountsLookup{cfg}, nil
@@ -39,7 +27,8 @@ type NodeMountsLookup struct {
 	Config *NodeMountsLookupConfig
 }
 
-// GetUpperdir finds the upperdir of an overlayfs mount by matching the mountpoint
+// GetUpperdir finds the upperdir of an overlayfs mount by matching the mountpoint.
+// The returned path exists in the node's root mount namespace.
 func (n *NodeMountsLookup) GetUpperdir(matcher func(mountPoint string) bool) (upperdir string, err error) {
 	entry, err := n.getEntry(matcher)
 	if err != nil {
@@ -60,7 +49,7 @@ func (n *NodeMountsLookup) GetUpperdir(matcher func(mountPoint string) bool) (up
 		return "", ErrNoUpperdir
 	}
 
-	return n.mapNodePath(pth)
+	return pth, nil
 }
 
 func (n *NodeMountsLookup) getEntry(matcher func(mountPoint string) bool) (entry []string, err error) {
@@ -89,26 +78,4 @@ func (n *NodeMountsLookup) getEntry(matcher func(mountPoint string) bool) (entry
 	}
 
 	return nil, ErrNotFound
-}
-
-// mapNodePath maps a node-level (root mount namespace) path to a container-level path
-func (n *NodeMountsLookup) mapNodePath(nodePath string) (inContainerPath string, err error) {
-	for np, cp := range n.Config.Mapping {
-		if !strings.HasPrefix(nodePath, np) {
-			continue
-		}
-		pth := filepath.Join(cp, strings.TrimPrefix(nodePath, np))
-
-		if stat, err := os.Stat(pth); os.IsNotExist(err) {
-			return "", xerrors.Errorf("mount entry does not exist in container at %s", pth)
-		} else if err != nil {
-			return "", err
-		} else if !stat.IsDir() {
-			return "", xerrors.Errorf("mount entry is not a directory in the container at %s", pth)
-		}
-
-		return pth, nil
-	}
-
-	return "", xerrors.Errorf("mount entry %s has no appropriate mapping", nodePath)
 }

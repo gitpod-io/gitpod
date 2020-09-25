@@ -6,6 +6,7 @@ package cri
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 	"sync"
 	"time"
@@ -18,6 +19,7 @@ import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	ocispecs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
 )
@@ -36,7 +38,7 @@ const (
 )
 
 // NewContainerdCRI creates a new containerd adapter
-func NewContainerdCRI(cfg *ContainerdConfig, mounts *NodeMountsLookup) (*ContainerdCRI, error) {
+func NewContainerdCRI(cfg *ContainerdConfig, mounts *NodeMountsLookup, pathMapping PathMapping) (*ContainerdCRI, error) {
 	cc, err := containerd.New(cfg.SocketPath, containerd.WithDefaultNamespace(kubernetesNamespace))
 	if err != nil {
 		return nil, xerrors.Errorf("cannot connect to containerd at %s: %w", cfg.SocketPath, err)
@@ -49,8 +51,9 @@ func NewContainerdCRI(cfg *ContainerdConfig, mounts *NodeMountsLookup) (*Contain
 	}
 
 	res := &ContainerdCRI{
-		Client: cc,
-		Mounts: mounts,
+		Client:  cc,
+		Mounts:  mounts,
+		Mapping: pathMapping,
 
 		cond:    sync.NewCond(&sync.Mutex{}),
 		cntIdx:  make(map[string]*containerInfo),
@@ -67,8 +70,9 @@ func NewContainerdCRI(cfg *ContainerdConfig, mounts *NodeMountsLookup) (*Contain
 
 // ContainerdCRI implements the ws-sync CRI for containerd
 type ContainerdCRI struct {
-	Client *containerd.Client
-	Mounts *NodeMountsLookup
+	Client  *containerd.Client
+	Mounts  *NodeMountsLookup
+	Mapping PathMapping
 
 	cond    *sync.Cond
 	podIdx  map[string]*containerInfo
@@ -85,6 +89,7 @@ type containerInfo struct {
 	PodName     string
 	SeenTask    bool
 	UpperDir    string
+	CGroupPath  string
 }
 
 // start listening to containerd
@@ -189,6 +194,12 @@ func (s *ContainerdCRI) handleNewContainer(c containers.Container) {
 			return
 		}
 
+		var err error
+		info.CGroupPath, err = ExtractCGroupPathFromContainer(c)
+		if err != nil {
+			log.WithError(err).WithFields(log.OWI(info.OwnerID, info.WorkspaceID, info.InstanceID)).Warn("cannot extract cgroup path")
+		}
+
 		info.ContainerID = c.ID
 		s.cntIdx[c.ID] = info
 		log.WithField("podname", podName).WithFields(log.OWI(info.OwnerID, info.WorkspaceID, info.InstanceID)).Debug("found workspace container - updating label cache")
@@ -272,11 +283,86 @@ func (s *ContainerdCRI) WaitForContainer(ctx context.Context, workspaceInstanceI
 	}
 }
 
+// WaitForContainerStop waits for workspace container to be deleted.
+func (s *ContainerdCRI) WaitForContainerStop(ctx context.Context, workspaceInstanceID string) (err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "WaitForContainerStop")
+	defer tracing.FinishSpan(span, &err)
+
+	rchan := make(chan struct{}, 1)
+	go func() {
+		s.cond.L.Lock()
+		defer s.cond.L.Unlock()
+
+		_, ok := s.wsiIdx[workspaceInstanceID]
+		if !ok {
+			// container is already gone
+			return
+		}
+
+		for {
+			s.cond.Wait()
+			_, ok := s.wsiIdx[workspaceInstanceID]
+
+			if !ok {
+				select {
+				case rchan <- struct{}{}:
+				default:
+					// just to make sure this isn't blocking and we're not holding
+					// the cond Lock too long.
+				}
+
+				break
+			}
+
+			if ctx.Err() != nil {
+				break
+			}
+		}
+	}()
+
+	select {
+	case <-rchan:
+		return
+	case <-ctx.Done():
+		err = ctx.Err()
+		return
+	}
+}
+
 // ContainerUpperdir finds the workspace container's overlayfs upperdir.
 func (s *ContainerdCRI) ContainerUpperdir(ctx context.Context, id ContainerID) (loc string, err error) {
 	info, ok := s.cntIdx[string(id)]
 	if !ok {
 		return "", ErrNotFound
 	}
-	return s.Mounts.mapNodePath(info.UpperDir)
+
+	return s.Mapping.Translate(info.UpperDir)
+}
+
+// ContainerCGroupPath finds the container's cgroup path on the node.
+func (s *ContainerdCRI) ContainerCGroupPath(ctx context.Context, id ContainerID) (loc string, err error) {
+	info, ok := s.cntIdx[string(id)]
+	if !ok {
+		return "", ErrNotFound
+	}
+
+	if info.CGroupPath == "" {
+		return "", ErrNoCGroup
+	}
+
+	return s.Mapping.Translate(info.CGroupPath)
+}
+
+// ExtractCGroupPathFromContainer retrieves the CGroupPath from the linux section
+// in a container's OCI spec.
+func ExtractCGroupPathFromContainer(container containers.Container) (cgroupPath string, err error) {
+	var spec ocispecs.Spec
+	err = json.Unmarshal(container.Spec.Value, &spec)
+	if err != nil {
+		return
+	}
+	if spec.Linux == nil {
+		return "", xerrors.Errorf("container spec has no Linux section")
+	}
+	return spec.Linux.CgroupsPath, nil
 }

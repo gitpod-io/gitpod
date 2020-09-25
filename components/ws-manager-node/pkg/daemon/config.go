@@ -7,14 +7,15 @@ package daemon
 import (
 	"fmt"
 
+	"github.com/gitpod-io/gitpod/common-go/cri"
 	"github.com/gitpod-io/gitpod/ws-manager-node/pkg/resourcegov"
 )
 
 // Configuration configures a daemon
 type Configuration struct {
-	ContainerdSocket    string `json:"containerd"`
-	KubernetesNamespace string `json:"namespace"`
-	Kubeconfig          string `json:"kubeconfig"`
+	ContainerRuntime    *cri.Config `json:"containerRuntime"`
+	KubernetesNamespace string      `json:"namespace"`
+	Kubeconfig          string      `json:"kubeconfig"`
 
 	Resources *resourcegov.WorkspaceDispatchConfig `json:"resources"`
 	Hosts     *struct {
@@ -38,9 +39,6 @@ type Configuration struct {
 // Validate ensures the configuration is valid
 func (c Configuration) Validate() error {
 	if c.Resources != nil {
-		if c.ContainerdSocket == "" {
-			return fmt.Errorf("containerd socket is mandatory")
-		}
 		if c.Resources.CGroupsBasePath == "" {
 			return fmt.Errorf("cgroupBasePath is mandatory")
 		}

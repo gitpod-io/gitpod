@@ -6,17 +6,13 @@ package resourcegov
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/cri"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 
-	"github.com/containerd/containerd"
-	"github.com/containerd/containerd/api/events"
-	"github.com/containerd/containerd/containers"
-	"github.com/containerd/typeurl"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
@@ -48,29 +44,29 @@ type WorkspaceDispatchConfig struct {
 }
 
 // NewWorkspaceDispatch creates a new container dispatch
-func NewWorkspaceDispatch(containerd *containerd.Client, kubernetes kubernetes.Interface, kubernetesNamespace string, config WorkspaceDispatchConfig, prom prometheus.Registerer) *WorkspaceDispatch {
+func NewWorkspaceDispatch(containerRuntime cri.ContainerRuntimeInterface, kubernetes kubernetes.Interface, kubernetesNamespace string, config WorkspaceDispatchConfig, prom prometheus.Registerer) *WorkspaceDispatch {
 	return &WorkspaceDispatch{
-		Containerd:          containerd,
+		CRI:                 containerRuntime,
 		Kubernetes:          kubernetes,
 		KubernetesNamespace: kubernetesNamespace,
 		Config:              config,
 		Prometheus:          prom,
-		governer:            make(map[string]*Governer),
-		wsiContainerID:      make(map[string]string),
+		governer:            make(map[cri.ContainerID]*Governer),
+		wsiContainerID:      make(map[string]cri.ContainerID),
 		labelCache:          newExpiringCache(30 * time.Second), // we don't expect a container to be created more than 30 seconds after the sandbox
 	}
 }
 
 // WorkspaceDispatch listens to containerd to dispatch new governer when a new continer startss
 type WorkspaceDispatch struct {
-	Containerd          *containerd.Client
+	CRI                 cri.ContainerRuntimeInterface
 	Kubernetes          kubernetes.Interface
 	KubernetesNamespace string
 	Config              WorkspaceDispatchConfig
 	Prometheus          prometheus.Registerer
 
-	governer       map[string]*Governer
-	wsiContainerID map[string]string
+	governer       map[cri.ContainerID]*Governer
+	wsiContainerID map[string]cri.ContainerID
 	mu             sync.RWMutex
 	labelCache     *expiringCache
 }
@@ -89,49 +85,17 @@ func (d *WorkspaceDispatch) Start() error {
 		}),
 	)
 
-	filter := []string{"labels.io.kubernetes.pod.name", fmt.Sprintf("%s==%s", containerLabelK8sNamespace, d.KubernetesNamespace)}
-	container, err := d.Containerd.ContainerService().List(context.Background(), filter...)
-	if err != nil {
-		log.WithError(err).Fatal("cannot start daemon")
-	}
-
-	for _, c := range container {
-		podName := c.Labels[containerLabelK8sPodName]
-		if podName == "" {
-			continue
-		}
-		if c.Labels[containerLabelK8sNamespace] != d.KubernetesNamespace {
-			continue
-		}
-		if c.Labels[containerLabelCRIKind] != "sandbox" {
-			continue
-		}
-
-		d.labelCache.Set(podName, c.Labels)
-	}
-	for _, c := range container {
-		podName := c.Labels[containerLabelK8sPodName]
-		if podName == "" {
-			continue
-		}
-		if c.Labels[containerLabelK8sNamespace] != d.KubernetesNamespace {
-			continue
-		}
-		if c.Labels[containerLabelCRIKind] != "container" {
-			continue
-		}
-
-		workspaceID, instanceID, workspaceType := d.getGitpodInfoFromLabelCache(podName)
-		if workspaceID == "" || instanceID == "" || workspaceType != "regular" {
-			log.WithField("containerID", c.ID).WithField("labels", c.Labels).Debug("not a workspace container")
-			continue
-		}
-		d.govern(c, podName, workspaceID, instanceID)
-	}
-
 	ifac := informers.NewSharedInformerFactory(d.Kubernetes, podInformerResyncInterval)
 	podInformer := ifac.Core().V1().Pods().Informer()
 	podInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			pod, ok := obj.(*corev1.Pod)
+			if !ok {
+				return
+			}
+
+			d.handlePodAdded(pod)
+		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
 			oldPod, ok := oldObj.(*corev1.Pod)
 			if !ok {
@@ -160,70 +124,39 @@ func (d *WorkspaceDispatch) Start() error {
 			return xerrors.Errorf("pod informer did not sync")
 		}
 	}
-
-	// Using the filter expression for subscribe does not seem to work. We simply don't get any events.
-	// That's ok as the event handler below are capable of ignoring any event that's not for them.
-	evts, errchan := d.Containerd.Subscribe(context.Background())
-	for {
-		select {
-		case evt := <-evts:
-			var ev interface{}
-			ev, err = typeurl.UnmarshalAny(evt.Event)
-			if err != nil {
-				log.WithError(err).Warn("cannot unmarshal containerd event")
-				continue
-			}
-			d.handleContainerdEvent(ev)
-		case err := <-errchan:
-			if err != nil {
-				return xerrors.Errorf("failed to listen to containerd: %w")
-			}
-			return nil
-		}
-	}
+	return nil
 }
 
-func (d *WorkspaceDispatch) handleContainerdEvent(ev interface{}) {
-	switch evt := ev.(type) {
-	case *events.ContainerCreate:
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		c, err := d.Containerd.ContainerService().Get(ctx, evt.ID)
-		if err != nil {
-			log.WithError(err).WithField("containerID", evt.ID).WithField("containerImage", evt.Image).Warn("cannot find container we just received a create event for")
-			return
-		}
-		podName := c.Labels[containerLabelK8sPodName]
-		if c.Labels[containerLabelK8sNamespace] != d.KubernetesNamespace {
-			return
-		}
-		if c.Labels[containerLabelCRIKind] == "sandbox" {
-			d.labelCache.Set(podName, c.Labels)
-			log.WithField("name", podName).Debug("found sandbox - adding to label cache")
-			return
-		}
-		if c.Labels[containerLabelCRIKind] != "container" {
-			return
-		}
-
-		workspaceID, instanceID, workspaceType := d.getGitpodInfoFromLabelCache(podName)
-		if workspaceID == "" || instanceID == "" || workspaceType != "regular" {
-			lbls, _ := d.labelCache.Get(podName)
-			log.WithField("containerID", c.ID).WithField("labels", lbls).Debug("not a workspace container")
-			return
-		}
-		d.govern(c, podName, workspaceID, instanceID)
-
-	case *events.ContainerDelete:
-		d.mu.Lock()
-		defer d.mu.Unlock()
-		if gov, ok := d.governer[evt.ID]; ok {
-			gov.Stop()
-			delete(d.wsiContainerID, gov.InstanceID)
-			delete(d.governer, evt.ID)
-		}
+func (d *WorkspaceDispatch) handlePodAdded(pod *corev1.Pod) {
+	workspaceID, ok := pod.Labels[wsk8s.MetaIDLabel]
+	if !ok {
+		log.WithField("name", pod.Name).Debug("pod has no workspace ID - probably not a workspace. Not governing.")
+		return
 	}
+	workspaceInstanceID, ok := pod.Labels[wsk8s.WorkspaceIDLabel]
+	if !ok {
+		log.WithField("name", pod.Name).Debug("pod has no workspace instance ID - probably not a workspace. Not governing.")
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	go func() {
+		containerID, err := d.CRI.WaitForContainer(ctx, workspaceInstanceID)
+		if err != nil && err != context.Canceled {
+			log.WithError(err).WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Warn("cannot wait for container")
+		}
+
+		d.govern(containerID, pod.Name, workspaceID, workspaceInstanceID)
+	}()
+	go func() {
+		err := d.CRI.WaitForContainerStop(ctx, workspaceInstanceID)
+		if err != nil && err != context.Canceled {
+			log.WithError(err).WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Warn("cannot wait for container to be deleted")
+		}
+		// no matter if the container was deleted or not - we've lost our guard that was waiting for that to happen.
+		// Hence, we must stop listening for it to come into existence and cancel the context.
+		cancel()
+	}()
 }
 
 func (d *WorkspaceDispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
@@ -269,9 +202,7 @@ func (d *WorkspaceDispatch) getGitpodInfoFromLabelCache(podName string) (workspa
 }
 
 // govern starts controlling a container
-func (d *WorkspaceDispatch) govern(container containers.Container, podName, workspaceID, instanceID string) {
-	id := container.ID
-
+func (d *WorkspaceDispatch) govern(id cri.ContainerID, podName, workspaceID, instanceID string) {
 	d.mu.Lock()
 	if _, ok := d.governer[id]; ok {
 		d.mu.Unlock()
@@ -284,7 +215,7 @@ func (d *WorkspaceDispatch) govern(container containers.Container, podName, work
 		totalBudget += bkt.Budget
 	}
 
-	cgroupPath, err := ExtractCGroupPathFromContainer(container)
+	cgroupPath, err := d.CRI.ContainerCGroupPath(context.Background(), id)
 	if err != nil {
 		log.WithError(err).Error("cannot start governer")
 		return
@@ -306,7 +237,7 @@ func (d *WorkspaceDispatch) govern(container containers.Container, podName, work
 	}
 
 	log := log.WithFields(log.OWI("", workspaceID, instanceID)).WithField("containerID", id)
-	g, err := NewGoverner(container.ID, instanceID, cgroupPath,
+	g, err := NewGoverner(string(id), instanceID, cgroupPath,
 		WithCGroupBasePath(d.Config.CGroupsBasePath),
 		WithCPULimiter(cpuLimiter),
 		WithGitpodIDs(workspaceID, instanceID),
