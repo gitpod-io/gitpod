@@ -43,11 +43,25 @@ export class SessionHandlerProvider {
     }
 
     protected getCookieOptions(env: Env): express.CookieOptions {
-        const hostParts = env.hostUrl.url.host.split('.');
-        const baseDomain = hostParts.slice(hostParts.length - 2).join('.');
-        let domain = `.${baseDomain}`;
+        const hostName = env.hostUrl.url.host;
+
+        let domain = hostName;
+        if (env.devBranch) {
+            // Use cookie for base domain to allow cookies being sent via ingress proxy in preview environments
+            //
+            // Otherwise, clients (in this case Chrome) may ignore (as in: save it, but don't send it on consequent requests) the 'Set-Cookie:...' send with a redirect (302, to github oauth)
+            // For details, see:
+            // - RFC draft sameSite: http://httpwg.org/http-extensions/draft-ietf-httpbis-cookie-same-site.html
+            // - https://bugs.chromium.org/p/chromium/issues/detail?id=150066
+            // - google: chromium not sending cookies set with redirect
+            
+            const hostParts = hostName.split('.');
+            const baseDomain = hostParts.slice(hostParts.length - 2).join('.');
+            domain = `.${baseDomain}`;
+        }
+
         if (this.env.insecureNoDomain) {
-            domain = baseDomain.split(":")[0];
+            domain = hostName.split(":")[0];
         }
 
         return {
@@ -56,12 +70,7 @@ export class SessionHandlerProvider {
             secure: false,                // default, TODO SSL! Config proxy
             maxAge: env.sessionMaxAgeMs,  // configured in Helm chart, defaults to 3 days.
             sameSite: "lax",              // default: true. "Lax" needed for OAuth.
-            domain: `${domain}`           // Use cookie for base domain (works for *.staging.gitpod.io because of the name, see below)
-            // Otherwise, clients (in this case Chrome) may ignore (as in: save it, but don't send it on consequent requests) the 'Set-Cookie:...' send with a redirect (302, to github oauth)
-            // For details, see:
-            // - RFC draft sameSite: http://httpwg.org/http-extensions/draft-ietf-httpbis-cookie-same-site.html
-            // - https://bugs.chromium.org/p/chromium/issues/detail?id=150066
-            // - google: chromium not sending cookies set with redirect
+            domain: `${domain}`
         };
     }
 
