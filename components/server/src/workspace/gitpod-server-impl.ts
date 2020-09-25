@@ -448,7 +448,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             ownerId = ws.ownerId;
         }
 
-        await this.guardAccess({kind: "workspaceInstance", subject: undefined, workspaceOwnerID: ownerId}, "update");
+        await this.guardAccess({kind: "workspaceInstance", subject: instance, workspaceOwnerID: ownerId}, "update");
         await this.internalStopWorkspaceInstance(ctx, instance.id, instance.region, policy);
     }
 
