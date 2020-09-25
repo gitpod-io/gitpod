@@ -1,0 +1,30 @@
+// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package supervisor;
+
+option go_package = "api";
+
+// ControlService provides workspace-facing, misc control related services
+service ControlService {
+
+    // Newuidmap sets sthe UID/GID map of a user namespace
+    rpc Newuidmap(NewuidmapRequest) returns (NewuidmapResponse) {}
+    
+}
+
+message NewuidmapRequest {
+    message Mapping {
+        uint32 container_id = 1;
+        uint32 host_id = 2;
+        uint32 size = 3;
+    }
+
+    int64 pid = 1;
+    bool gid = 2;
+    repeated Mapping mapping = 3;
+}
+message NewuidmapResponse {}
