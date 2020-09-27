@@ -17,7 +17,7 @@ type Configuration struct {
 	KubernetesNamespace string      `json:"namespace"`
 	Kubeconfig          string      `json:"kubeconfig"`
 
-	Resources *resourcegov.WorkspaceDispatchConfig `json:"resources"`
+	Resources *resourcegov.DispatchListenerConfig `json:"resources"`
 	Hosts     *struct {
 		NodeHostsFile string            `json:"nodeHostsFile"`
 		FromNodeIPs   map[string]string `json:"fromPodNodeIP"`

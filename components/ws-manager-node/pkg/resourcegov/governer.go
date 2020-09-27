@@ -6,6 +6,7 @@ package resourcegov
 
 import (
 	"container/ring"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -170,7 +171,7 @@ func (gov *Governer) registerPrometheusGauges() (err error) {
 }
 
 // Start actually starts governing. This function is meant to be called as a Go-routine.
-func (gov *Governer) Start() {
+func (gov *Governer) Start(ctx context.Context) {
 	t := time.NewTicker(gov.SamplingPeriod)
 	for {
 		gov.controlCPU()
@@ -180,6 +181,9 @@ func (gov *Governer) Start() {
 		select {
 		case <-t.C:
 			continue
+		case <-ctx.Done():
+			gov.log.Debug("resource governer shutting down")
+			return
 		case <-gov.stop:
 			gov.log.Debug("resource governer shutting down")
 			return
