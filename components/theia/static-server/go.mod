@@ -3,8 +3,8 @@ module github.com/gitpod-io/gitpod/theia/static-server
 go 1.13
 
 require (
-	github.com/otiai10/copy v1.1.0
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
+	github.com/otiai10/copy v1.1.0
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway

@@ -9,7 +9,6 @@ replace github.com/docker/docker v1.13.1 => github.com/docker/engine v0.0.0-2019
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
-	github.com/Microsoft/go-winio v0.4.14 // indirect
 	github.com/alecthomas/jsonschema v0.0.0-20190504002508-159cbd5dba26
 	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2
 	github.com/cyphar/filepath-securejoin v0.2.2
@@ -18,14 +17,12 @@ require (
 	github.com/docker/docker v1.13.1
 	github.com/docker/docker-credential-helpers v0.6.3 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
-	github.com/docker/go-units v0.4.0 // indirect
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/image-builder/api v0.0.0-00010101000000-000000000000
-	github.com/golang/mock v1.4.3
-	github.com/golang/protobuf v1.4.1
+	github.com/golang/mock v1.4.4
+	github.com/golang/protobuf v1.4.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/mattn/go-isatty v0.0.9
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0
@@ -34,9 +31,8 @@ require (
 	github.com/prometheus/client_golang v1.1.0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.3
-	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
-	google.golang.org/grpc v1.29.1
-	gotest.tools v2.2.0+incompatible // indirect
+	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
+	google.golang.org/grpc v1.32.0
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway

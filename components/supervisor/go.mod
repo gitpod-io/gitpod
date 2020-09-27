@@ -12,7 +12,7 @@ require (
 	github.com/gitpod-io/gitpod/ws-manager-node/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-sync/api v0.0.0-00010101000000-000000000000
 	github.com/golang/protobuf v1.4.2
-	github.com/google/go-cmp v0.5.1
+	github.com/google/go-cmp v0.5.2
 	github.com/google/uuid v1.0.0
 	github.com/grpc-ecosystem/grpc-gateway v1.14.8
 	github.com/prometheus/procfs v0.0.8 // indirect
@@ -21,7 +21,7 @@ require (
 	github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37
 	github.com/spf13/cobra v1.0.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/net v0.0.0-20200707034311-ab3426394381
+	golang.org/x/net v0.0.0-20200822124328-c89045814202
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	google.golang.org/grpc v1.32.0
 	google.golang.org/grpc/examples v0.0.0-20200902210233-8630cac324bf // indirect

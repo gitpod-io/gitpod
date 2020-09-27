@@ -3,13 +3,12 @@ module github.com/gitpod-io/gitpod/service-waiter
 go 1.12
 
 require (
+	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/sirupsen/logrus v1.4.2 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.3.2
 	github.com/streadway/amqp v0.0.0-20190404075320-75d898a42a94
-	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway

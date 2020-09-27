@@ -3,12 +3,9 @@ module github.com/gitpod-io/gitpod/content-service/api
 go 1.14
 
 require (
-	github.com/golang/mock v1.4.3
 	github.com/golang/protobuf v1.3.5
-	github.com/google/go-cmp v0.4.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.0.1
-	google.golang.org/grpc v1.29.1
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway

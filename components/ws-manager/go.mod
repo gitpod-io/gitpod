@@ -6,9 +6,15 @@ require (
 	github.com/alecthomas/jsonschema v0.0.0-20190504002508-159cbd5dba26
 	github.com/alecthomas/repr v0.0.0-20200325044227-4184120f674c
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535 // indirect
+	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/registry-facade/api v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/ws-sync/api v0.0.0-00010101000000-000000000000
 	github.com/go-ozzo/ozzo-validation v3.5.0+incompatible
-	github.com/golang/mock v1.4.3
-	github.com/golang/protobuf v1.4.0
+	github.com/golang/mock v1.4.4
+	github.com/golang/protobuf v1.4.2
 	github.com/google/uuid v1.1.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4
 	github.com/imdario/mergo v0.3.8
@@ -18,15 +24,9 @@ require (
 	github.com/sirupsen/logrus v1.5.0
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/cobra v0.0.5
-	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/registry-facade/api v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/ws-sync/api v0.0.0-00010101000000-000000000000
-	golang.org/x/sync v0.0.0-20190423024810-112230192c58
-	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
-	google.golang.org/grpc v1.29.1
+	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
+	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
+	google.golang.org/grpc v1.32.0
 	k8s.io/api v0.0.0-20191112020540-7f9008e52f64
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v0.0.0

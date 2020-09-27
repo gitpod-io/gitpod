@@ -10,37 +10,24 @@ replace github.com/docker/docker v1.13.1 => github.com/docker/engine v0.0.0-2019
 replace github.com/Sirupsen/logrus v1.6.0 => github.com/sirupsen/logrus v1.6.0 // leeway ignore
 
 require (
-	github.com/Microsoft/hcsshim v0.8.7 // indirect
 	github.com/alecthomas/jsonschema v0.0.0-20190504002508-159cbd5dba26
 	github.com/alecthomas/repr v0.0.0-20200325044227-4184120f674c
-	github.com/containerd/cgroups v0.0.0-20200407151229-7fc7a507c04c // indirect
-	github.com/containerd/containerd v1.3.3
-	github.com/containerd/continuity v0.0.0-20200228182428-0f16d7a0959c // indirect
-	github.com/containerd/fifo v0.0.0-20191213151349-ff969a566b00 // indirect
-	github.com/containerd/ttrpc v1.0.0 // indirect
-	github.com/containerd/typeurl v1.0.0
-	github.com/docker/distribution v2.7.1+incompatible // indirect
 	github.com/docker/docker v1.13.1 // indirect
 	github.com/docker/engine v17.12.0-ce-rc1.0.20200514230353-811a247d06e8+incompatible
-	github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c // indirect
-	github.com/gogo/googleapis v1.4.0 // indirect
-	github.com/google/go-cmp v0.5.0
-	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
-	github.com/opencontainers/go-digest v1.0.0
-	github.com/opencontainers/image-spec v1.0.1
-	github.com/opencontainers/runc v0.1.1 // indirect
-	github.com/opentracing/opentracing-go v1.1.0
-	github.com/prometheus/client_golang v1.1.0
-	github.com/sirupsen/logrus v1.4.2
-	github.com/spf13/cobra v0.0.3
-	github.com/syndtr/gocapability v0.0.0-20180916011248-d98352740cb2 // indirect
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-sync/api v0.0.0-00010101000000-000000000000
-	go.etcd.io/bbolt v1.3.4 // indirect
-	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
-	google.golang.org/grpc v1.29.1
+	github.com/google/go-cmp v0.5.2
+	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
+	github.com/opencontainers/go-digest v1.0.0
+	github.com/opencontainers/image-spec v1.0.1
+	github.com/opentracing/opentracing-go v1.1.0
+	github.com/prometheus/client_golang v1.1.0
+	github.com/sirupsen/logrus v1.4.2
+	github.com/spf13/cobra v0.0.3
+	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
+	google.golang.org/grpc v1.32.0
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
