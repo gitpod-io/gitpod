@@ -27,6 +27,8 @@ packages:
         - ["sh", "-c", "mv scripts/* ."]
   - name: publish
     type: generic
+    env:
+      - DO_PUBLISH=${publishToNPM}
     deps:
       - :lib
       - :scripts

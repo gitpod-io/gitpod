@@ -2,6 +2,7 @@
 defaultTarget: components:all
 defaultArgs:
   coreYarnLockBase: ../..
+  publishToNPM: true
 
 variants:
 - name: oss
