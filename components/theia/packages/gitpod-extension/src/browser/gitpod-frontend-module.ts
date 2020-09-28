@@ -8,7 +8,7 @@ import '../../src/browser/extensions/style/extensions.css'
 
 import { ContainerModule } from "inversify";
 import { GitHubTokenProvider, InitialGitHubDataProvider, GetGitHubTokenParams } from "./github";
-import { GitpodKeepAlivePolling } from './activity/gitpod-keep-alive-polling';
+import { GitpodCreditAlerContribution } from './gitpod-credit-alert-contribution';
 import { FrontendApplicationContribution, WebSocketConnectionProvider, WidgetFactory, bindViewContribution, ShellLayoutRestorer, CommonFrontendContribution } from '@theia/core/lib/browser';
 import { StorageService } from '@theia/core/lib/browser/storage-service';
 import { GitpodLocalStorageService } from './gitpod-local-storage-service';
@@ -75,10 +75,8 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
         }
     }).inSingletonScope();
 
-    bind(GitpodKeepAlivePolling).toSelf().inSingletonScope();
-    bind(FrontendApplicationContribution).toDynamicValue(ctx => {
-        return ctx.container.get(GitpodKeepAlivePolling);
-    });
+    bind(GitpodCreditAlerContribution).toSelf().inSingletonScope();
+    bind(FrontendApplicationContribution).toService(GitpodCreditAlerContribution);
 
     bind(GitpodOpenContext).toSelf().inSingletonScope();
     bind(FrontendApplicationContribution).toService(GitpodOpenContext);

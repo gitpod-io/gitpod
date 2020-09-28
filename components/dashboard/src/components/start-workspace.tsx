@@ -32,6 +32,7 @@ interface StartWorkspaceState {
     progress: number;
     startedInstanceId?: string;
     inTheiaAlready?: boolean;
+    remainingUsageHours?: number;
 }
 
 export interface StartWorkspaceProps {
@@ -120,7 +121,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         }
 
         const defaultErrMessage = `Error while starting workspace ${workspaceId}`;
-        this.props.service.server.startWorkspace(workspaceId, {forceDefaultImage})
+        this.props.service.server.startWorkspace(workspaceId, { forceDefaultImage })
             .then((workspaceStartedResult: StartWorkspaceResult) => {
                 if (!workspaceStartedResult) {
                     this.setErrorState(defaultErrMessage);
@@ -167,6 +168,10 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         }
     }
 
+    onCreditAlert({ remainingUsageHours }: { remainingUsageHours: number }) {
+        this.setState({ remainingUsageHours });
+    }
+
     async onInstanceUpdate(workspaceInstance: WorkspaceInstance) {
         const startedInstanceId = this.state && this.state.startedInstanceId;
         if (workspaceInstance.workspaceId !== this.props.workspaceId
@@ -210,7 +215,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                         (workspaceInstance.status.phase as (WorkspaceInstanceStatus | 'restoring-prebuild')) = 'restoring-prebuild';
                         this.setState({ workspaceInstance });
                     }
-                // tslint:disable-next-line:align
+                    // tslint:disable-next-line:align
                 }, this.process.stages['initializing'].expectedTime);
 
                 if (workspaceInstance && workspaceInstance.status.phase === 'initializing'
@@ -230,7 +235,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                 if (this.workspace) {
                     const ctxUrl = this.workspace.contextURL.replace('prebuild/', '');
                     this.redirectTo(new GitpodHostUrl(window.location.toString()).withContext(ctxUrl).toString());
-                } else {
+                } else if (!this.runsInIFrame()) {
                     this.redirectToDashboard();
                 }
             }
@@ -330,11 +335,41 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
 
         let message = <div className='message'>Starting...</div>;
         if (this.state && this.state.workspaceInstance) {
-            message = <React.Fragment>
-                <div className='message'>
-                    {this.process.getLabel(this.state.workspaceInstance.status.phase)}
-                </div>
-            </React.Fragment>;
+            let stoppedReason;
+            if (this.state.workspaceInstance.status.phase === 'stopping'
+                || this.state.workspaceInstance.status.phase === 'stopped') {
+                if (this.state.workspaceInstance.status.conditions.timeout) {
+                    stoppedReason = "Workspace has timed out.";
+                } else if (this.state.workspaceInstance.status.conditions.failed) {
+                    stoppedReason = this.state.workspaceInstance.status.conditions.failed;
+                } else if (this.state.workspaceInstance.status.message) {
+                    stoppedReason = this.state.workspaceInstance.status.message;
+                }
+                if (stoppedReason) {
+                    // capitalize message
+                    stoppedReason = stoppedReason.charAt(0).toUpperCase() + stoppedReason.slice(1);
+
+                    if (!stoppedReason.endsWith(".")) {
+                        stoppedReason += ".";
+                    }
+                    stoppedReason = <div>{stoppedReason}</div>;
+                }
+            }
+            let startButton;
+            if (this.state.workspaceInstance.status.phase === 'stopped') {
+                startButton = <Button className='button' variant='outlined' color='secondary' onClick={() =>
+                    this.startWorkspace(this.props.workspaceId, true, false)
+                }>Start Workspace</Button>
+            }
+            message = <div className='message'>
+                {this.process.getLabel(this.state.workspaceInstance.status.phase)}
+                {(stoppedReason || startButton) &&
+                    <div>
+                        {stoppedReason}
+                        {startButton}
+                    </div>
+                }
+            </div>;
         }
 
         let logs: JSX.Element | undefined;
@@ -345,7 +380,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         const isError = this.state && !!this.state.errorMessage;
         let errorMessage = this.state && this.state.errorMessage;
         if (isBuildingWorkspaceImage) {
-            logs = <ShowWorkspaceBuildLogs buildLog={this.state.buildLog} errorMessage={errorMessage} showPhase={!isError}/>;
+            logs = <ShowWorkspaceBuildLogs buildLog={this.state.buildLog} errorMessage={errorMessage} showPhase={!isError} />;
             errorMessage = ""; // errors will be shown in the output already
         } else if (isHeadlessBuildRunning) {
             logs = <WorkspaceLogView content={this.state.headlessLog} />;
@@ -354,19 +389,27 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         if (isError) {
             // If docker build failed
             if (isBuildingWorkspaceImage) {
-              message = <div className="message action">
-                  <Button className='button' variant='outlined' color='secondary' onClick={() => {
-                    this.startWorkspace(this.props.workspaceId, true, true);
-                  }}>Start with Default Docker Image</Button>
-              </div>;
+                message = <div className="message action">
+                    <Button className='button' variant='outlined' color='secondary' onClick={() => {
+                        this.startWorkspace(this.props.workspaceId, true, true);
+                    }}>Start with Default Docker Image</Button>
+                </div>;
             } else {
-              message = <div className="message action">
-                  <Button className='button' variant='outlined' color='secondary' onClick={() => this.redirectToDashboard()}>Go to Workspaces</Button>
-              </div>;
+                message = <div className="message action">
+                    <Button className='button' variant='outlined' color='secondary' onClick={() => this.redirectToDashboard()}>Go to Workspaces</Button>
+                </div>;
             }
         }
         if (this.state && this.state.workspaceInstance && this.state.workspaceInstance.status.phase == 'running') {
-            if (this.state.inTheiaAlready) {
+            if (this.state.remainingUsageHours !== undefined && this.state.remainingUsageHours <= 0) {
+                errorMessage = 'You have run out of Gitpod Hours.';
+                message = <div className='message'>
+                    <div>Gitpod Credit Alert</div>
+                    <Button className='button' variant='outlined' color='secondary' onClick={() =>
+                        window.open(new GitpodHostUrl(window.location.toString()).asUpgradeSubscription().toString(), '_blank')
+                    }>Upgrade Subscription</Button>
+                </div>;
+            } else if (this.state.inTheiaAlready) {
                 message = <div className='message'></div>;
             } else {
                 this.ensureWorkspaceAuth(this.state.workspaceInstance.id)
