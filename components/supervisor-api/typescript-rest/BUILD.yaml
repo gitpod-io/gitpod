@@ -16,6 +16,8 @@ packages:
       tsconfig: tsconfig.json
   - name: publish
     type: generic
+    env:
+      - DO_PUBLISH=${publishToNPM}
     deps:
       - :lib
       - components/gitpod-protocol:scripts
