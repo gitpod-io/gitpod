@@ -9,7 +9,8 @@
       "dom"
     ],
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "sourceMap": true
   },
   "include": [
     "src"
