@@ -289,6 +289,7 @@ func TheiaWebviewHandler(r *mux.Router, config *RouteHandlerConfig) {
 
 // installWorkspacePortRoutes configures routing for exposed ports
 func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig) {
+	r.Use(config.WorkspaceAuthHandler)
 	// filter all session cookies
 	r.Use(sensitiveCookieHandler(config.Config.GitpodInstallation.HostName))
 	r.Use(handlers.CompressHandler)

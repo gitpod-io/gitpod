@@ -270,7 +270,16 @@ func (p *RemoteWorkspaceInfoProvider) WorkspaceCoords(publicPort string) *Worksp
 func getPortStr(urlStr string) string {
 	portURL, err := url.Parse(urlStr)
 	if err != nil {
+		log.WithField("url", urlStr).WithError(err).Error("error parsing URL while getting URL port")
 		return ""
+	}
+	if portURL.Port() == "" {
+		switch scheme := portURL.Scheme; scheme {
+		case "http":
+			return "80"
+		case "https":
+			return "443"
+		}
 	}
 	return portURL.Port()
 }
