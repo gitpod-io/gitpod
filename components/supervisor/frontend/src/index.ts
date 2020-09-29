@@ -14,14 +14,18 @@ import * as LoadingFrame from "./loading-frame";
 import * as IdeFrame from "./ide-frame";
 import * as GitpodServiceClient from "./gitpod-service-client";
 import * as SupervisorServiceClient from "./supervisor-service-client";
+import { JsonRpcProxyFactory } from '@gitpod/gitpod-protocol/lib/messaging/proxy-factory';
 
 (async () => {
     // first fetch loading screen to ensure that the owner token cookie is set
-    const loadingFrame = await LoadingFrame.load();
+    const loading = await LoadingFrame.load();
 
     window.gitpod = {
         service: createGitpodService(serverUrl.toString())
     };
+    const factory = new JsonRpcProxyFactory<GitpodClient>(window.gitpod.service.server);
+    window.gitpod.service.registerClient(factory.createProxy());
+    factory.listen(loading.connection);
 
     const gitpodServiceClient = await GitpodServiceClient.create();
     document.title = gitpodServiceClient.info.workspace.description;
@@ -29,7 +33,7 @@ import * as SupervisorServiceClient from "./supervisor-service-client";
     const ideFrame = await IdeFrame.load();
 
     //#region current-frame
-    let currentFrame: HTMLIFrameElement = loadingFrame;
+    let currentFrame: HTMLIFrameElement = loading.frame;
     let stopped = false;
     const nextFrame = () => {
         const instance = gitpodServiceClient.info.latestInstance;
@@ -51,7 +55,7 @@ import * as SupervisorServiceClient from "./supervisor-service-client";
                 window.location.href = startUrl;
             }
         }
-        return loadingFrame;
+        return loading.frame;
     }
     const updateCurrentFrame = () => {
         const newCurrentFrame = nextFrame();

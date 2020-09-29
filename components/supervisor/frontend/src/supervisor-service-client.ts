@@ -7,7 +7,7 @@
 import { WorkspaceInfoResponse } from "@gitpod/supervisor-api-grpc/lib/info_pb";
 
 const checkReady: (kind: 'content' | 'ide' | 'supervisor') => Promise<void> = kind =>
-    fetch(window.location.protocol + '//' + window.location.host + '/_supervisor/v1/status/' + kind + '/wait/true').then(response => {
+    fetch(window.location.protocol + '//' + window.location.host + '/_supervisor/v1/status/' + kind + '/wait/true', { credentials: 'include' }).then(response => {
         if (response.ok) {
             return;
         }

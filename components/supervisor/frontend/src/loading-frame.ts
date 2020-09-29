@@ -5,6 +5,9 @@
  */
 
 import { startUrl } from "./urls";
+import { WindowMessageReader, WindowMessageWriter } from "@gitpod/gitpod-protocol/lib/messaging/browser/window-connection";
+import { MessageConnection, createMessageConnection } from 'vscode-jsonrpc/lib/main';
+import { ConsoleLogger } from 'vscode-ws-jsonrpc';
 
 const serverOrigin = new URL(startUrl).origin;
 window.addEventListener('message', event => {
@@ -16,12 +19,20 @@ window.addEventListener('message', event => {
     }
 }, false)
 
-export function load(): Promise<HTMLIFrameElement> {
+export function load(): Promise<{
+    frame: HTMLIFrameElement,
+    connection: MessageConnection
+}> {
     return new Promise(resolve => {
-        const loadingFrame = document.createElement('iframe');
-        loadingFrame.src = startUrl;
-        loadingFrame.className = 'gitpod-frame loading';
-        document.body.appendChild(loadingFrame);
-        loadingFrame.onload = () => resolve(loadingFrame);
+        const frame = document.createElement('iframe');
+        frame.src = startUrl;
+        frame.className = 'gitpod-frame loading';
+        document.body.appendChild(frame);
+        const reader = new WindowMessageReader('gitpodServer', serverOrigin);
+        frame.onload = () => {
+            const writer = new WindowMessageWriter('gitpodServer', frame.contentWindow!, serverOrigin);
+            const connection = createMessageConnection(reader, writer, new ConsoleLogger())
+            resolve({ frame, connection });
+        }
     });
 }
