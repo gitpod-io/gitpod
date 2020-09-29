@@ -24,7 +24,6 @@ import { Context } from '../context';
 
 interface StartWorkspaceState {
     workspaceInstance?: WorkspaceInstance;
-    message?: string;
     errorMessage?: string;
     errorCode?: number;
     buildLog?: WorkspaceBuildLog;
@@ -245,7 +244,6 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
 
         this.setState({
             workspaceInstance,
-            message: this.process.getLabel(workspaceInstance.status.phase),
             errorMessage: workspaceInstance.status.conditions.failed,
             errorCode: undefined
         });
@@ -335,9 +333,12 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
 
         let message = <div className='message'>Starting...</div>;
         if (this.state && this.state.workspaceInstance) {
-            let stoppedReason;
+            message = <div className='message'>
+                {this.process.getLabel(this.state.workspaceInstance.status.phase)}
+            </div>;
             if (this.state.workspaceInstance.status.phase === 'stopping'
                 || this.state.workspaceInstance.status.phase === 'stopped') {
+                let stoppedReason;
                 if (this.state.workspaceInstance.status.conditions.timeout) {
                     stoppedReason = "Workspace has timed out.";
                 } else if (this.state.workspaceInstance.status.conditions.failed) {
@@ -352,24 +353,20 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                     if (!stoppedReason.endsWith(".")) {
                         stoppedReason += ".";
                     }
-                    stoppedReason = <div>{stoppedReason}</div>;
+                    message = <React.Fragment>
+                        {message}
+                        <div className='message stopped-reason'>{stoppedReason}</div>
+                    </React.Fragment>;
                 }
             }
-            let startButton;
             if (this.state.workspaceInstance.status.phase === 'stopped') {
-                startButton = <Button className='button' variant='outlined' color='secondary' onClick={() =>
-                    this.startWorkspace(this.props.workspaceId, true, false)
-                }>Start Workspace</Button>
+                message = <React.Fragment>
+                    {message}
+                    <div className='message start-action'><Button className='button' variant='outlined' color='secondary' onClick={() =>
+                        this.startWorkspace(this.props.workspaceId, true, false)
+                    }>Start Workspace</Button></div>
+                </React.Fragment>;
             }
-            message = <div className='message'>
-                {this.process.getLabel(this.state.workspaceInstance.status.phase)}
-                {(stoppedReason || startButton) &&
-                    <div>
-                        {stoppedReason}
-                        {startButton}
-                    </div>
-                }
-            </div>;
         }
 
         let logs: JSX.Element | undefined;
@@ -403,8 +400,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         if (this.state && this.state.workspaceInstance && this.state.workspaceInstance.status.phase == 'running') {
             if (this.state.remainingUsageHours !== undefined && this.state.remainingUsageHours <= 0) {
                 errorMessage = 'You have run out of Gitpod Hours.';
-                message = <div className='message'>
-                    <div>Gitpod Credit Alert</div>
+                message = <div className='message action'>
                     <Button className='button' variant='outlined' color='secondary' onClick={() =>
                         window.open(new GitpodHostUrl(window.location.toString()).asUpgradeSubscription().toString(), '_blank')
                     }>Upgrade Subscription</Button>
@@ -418,7 +414,8 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         }
 
         const showProductivityTips = this.branding ? this.branding.showProductivityTips : false;
-        const shouldRenderTips = showProductivityTips && !logs && !isError && this.userHasAlreadyCreatedWorkspaces !== undefined && this.runsInIFrame();
+        const shouldRenderTips = showProductivityTips && !logs && !isError && this.userHasAlreadyCreatedWorkspaces !== undefined && this.runsInIFrame() &&
+            !(this.state.workspaceInstance && (this.state.workspaceInstance.status.phase === 'stopping' || this.state.workspaceInstance.status.phase === 'stopped'));
         const productivityTip = shouldRenderTips ? <ProductivityTips userHasCreatedWorkspaces={this.userHasAlreadyCreatedWorkspaces} /> : undefined;
         return (
             <WithBranding service={this.props.service}>

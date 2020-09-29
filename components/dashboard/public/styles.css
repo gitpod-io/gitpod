@@ -477,6 +477,15 @@ footer .logo-icon {
     user-select: none;
 }
 
+.start .message.stopped-reason {
+    top: 43vh;
+}
+
+.start .message.start-action {
+    top: 50vh;
+    z-index: 1001;
+}
+
 .start .error.message {
     top: 43vh;
     width: 90vw;
