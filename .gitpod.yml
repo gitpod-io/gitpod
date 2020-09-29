@@ -30,7 +30,7 @@ ports:
   - port: 13444
 tasks:
   - before: scripts/branch-namespace.sh
-    init: yarn && yarn build
+    init: yarn --network-timeout 100000 && yarn build
   - name: Go
     init: leeway exec --filter-type go -v -- go get -v ./...
     openMode: split-right
