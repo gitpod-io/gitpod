@@ -5,6 +5,7 @@
  */
 
 import {MigrationInterface, QueryRunner} from "typeorm";
+import { tableExists } from "./helper/helper";
 
 export class LicenseDB1593167873419 implements MigrationInterface {
 
@@ -13,7 +14,9 @@ export class LicenseDB1593167873419 implements MigrationInterface {
     }
 
     public async down(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query("DROP TABLE `d_b_license_key`");
+        if (await tableExists(queryRunner, "d_b_license_key")) {
+            await queryRunner.query("DROP TABLE `d_b_license_key`");
+        }
     }
 
 }

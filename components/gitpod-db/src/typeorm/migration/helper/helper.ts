@@ -38,3 +38,14 @@ export async function columnExists(queryRunner: QueryRunner, tableName: string, 
     );
     return countResult[0].cnt === 1; 
 };
+
+export async function tableExists(queryRunner: QueryRunner, tableName: string): Promise<boolean> {
+    const database = queryRunner.connection.options.database;
+    const countResult = await queryRunner.query(
+        `SELECT COUNT(1) AS cnt FROM INFORMATION_SCHEMA.TABLES 
+            WHERE table_schema = '${database}' 
+                AND table_name = '${tableName}'`
+    );
+    return countResult[0].cnt === 1; 
+};
+
