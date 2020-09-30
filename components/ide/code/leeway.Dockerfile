@@ -19,8 +19,6 @@ RUN cp /ide/node/bin/node /ide/node/bin/gitpod-node && rm /ide/node/bin/node
 
 FROM mcr.microsoft.com/vscode/devcontainers/typescript-node:0-12 as code_installer
 
-# change this counter to fetch latest changes
-ENV TRIGGER_REBUILD 13
 
 # see https://github.com/gitpod-io/vscode/blob/bdeca3f8709b70b339f41fc2a14e94f83d6475ac/.github/workflows/ci.yml#L130
 RUN sudo apt-get update \
@@ -30,8 +28,10 @@ RUN sudo apt-get update \
     && sudo apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
+ENV GP_CODE_COMMIT f8db5f48de4c0169bef40eb6cf79a9125369f6e9
 RUN git clone https://github.com/gitpod-io/vscode.git --branch gp-code --single-branch gp-code
 WORKDIR /gp-code
+RUN git reset --hard $GP_CODE_COMMIT
 RUN yarn
 RUN yarn gulp gitpod
 
