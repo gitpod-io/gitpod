@@ -15,8 +15,8 @@ metadata:
 data:
   # We don't split our actual budget equally amongst participants. Instead we assume we have a maximum
   # number of over-consumers. We hand out CPU in buckets:
-  #   three minutes of 5 CPUs: 5 [numCPU] * 100 [jiffies/sec] * (3 * 60) [seconds] = 90000
-  #   five minutes  of 4 CPUs: 4 [numCPU] * 100 [jiffies/sec] * (5 * 60) [seconds] = 120000
+  #   four minutes of 6 CPUs: 6 [numCPU] * 100 [jiffies/sec] * (4 * 60) [seconds] = 144000
+  #   six minutes of 4 CPUs: 4 [numCPU] * 100 [jiffies/sec] * (6 * 60) [seconds] = 144000
   #   remainder of 2 CPUs where a user has to stay below sustained use of 1.8 CPUs for 5 minutes:
   #                          1.8 [numCPU] * 100 [jiffies/sec] * (5 * 60) [seconds] = 54000
   # 
@@ -33,8 +33,8 @@ data:
             "resources": {
                 "cgroupBasePath": "/mnt/node-cgroups",
                 "cpuBuckets": [
-                    {"budget": 90000,  "limit": 500},
-                    {"budget": 120000, "limit": 400},
+                    {"budget": 144000,  "limit": 600},
+                    {"budget": 144000, "limit": 400},
                     {"budget": 54000,  "limit": 200}
                 ],
                 "processPriorities": {
