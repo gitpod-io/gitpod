@@ -41,7 +41,7 @@
     "moment": "^2.20.1",
     "node-ssh": "^5.1.2",
     "octicons": "^7.1.0",
-    "ovsx": "0.1.0-next.9b4e999",
+    "ovsx": "0.1.0-next.e000fdb",
     "prom-client": "^10.2.0",
     "react": "^16.4.1",
     "react-dom": "^16.4.1",
