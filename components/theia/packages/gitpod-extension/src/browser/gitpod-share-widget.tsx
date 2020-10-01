@@ -11,7 +11,6 @@ import { GitpodServiceProvider } from "./gitpod-service-provider";
 import { GitpodInfoService } from "../common/gitpod-info";
 import { WorkspaceInstanceUser } from "@gitpod/gitpod-protocol";
 import { GitpodLayoutRestorer } from "./gitpod-shell-layout-restorer";
-import { ResponseError } from 'vscode-jsonrpc';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 
@@ -108,7 +107,7 @@ export class GitpodShareDialog extends AbstractDialog<boolean> {
             this.shareWorkspace = true;
             this.updateUI();
         } catch (e) {
-            if (e instanceof ResponseError && (e.code == ErrorCodes.EE_FEATURE || e.code == ErrorCodes.EE_LICENSE_REQUIRED)) {
+            if ('code' in e && (e.code == ErrorCodes.EE_FEATURE || e.code == ErrorCodes.EE_LICENSE_REQUIRED)) {
                 this.showNoLicenseContent();
             }
         }
