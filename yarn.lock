@@ -9442,6 +9442,11 @@ follow-redirects@^1.0.0:
   dependencies:
     debug "=3.1.0"
 
+follow-redirects@^1.13.0:
+  version "1.13.0"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.13.0.tgz#b42e8d93a2a7eea5ed88633676d6597bc8e384db"
+  integrity sha512-aq6gF1BEKje4a9i9+5jimNFIpq4Q1WiwBToeRK5NvZBd/TRsmW8BsJfOEGkr76TbOyPVD3OVDN910EcUNtRYEA==
+
 font-awesome-webpack@0.0.5-beta.2:
   version "0.0.5-beta.2"
   resolved "https://registry.yarnpkg.com/font-awesome-webpack/-/font-awesome-webpack-0.0.5-beta.2.tgz#9ea5f22f0615d08e76d8db341563649a726286d6"
@@ -14039,12 +14044,13 @@ osenv@^0.1.3, osenv@^0.1.4:
     os-homedir "^1.0.0"
     os-tmpdir "^1.0.0"
 
-ovsx@0.1.0-next.9b4e999:
-  version "0.1.0-next.9b4e999"
-  resolved "https://registry.yarnpkg.com/ovsx/-/ovsx-0.1.0-next.9b4e999.tgz#b4c9727f8cd24ca275da97679679da7045d00c3d"
-  integrity sha512-V6zzqObZRcpwDBC6CZC+M2U3ZtoHZ6eMWk/2Cl3Fo11ITlSt+0RNwWPaTl4RT6Ubc7h4jEDOCLjL3cSau+fiWg==
+ovsx@0.1.0-next.e000fdb:
+  version "0.1.0-next.e000fdb"
+  resolved "https://registry.yarnpkg.com/ovsx/-/ovsx-0.1.0-next.e000fdb.tgz#a183d1725869945ed5c517646abe55ff2cf5dad8"
+  integrity sha512-U+4hWGhir0J9E2LEZCrMN1WVHGEPQqKPb/pKiMvipL95ZZzQ/BMN3NltdlSbGAzaMsindlFd+2ABpIHbbda9/g==
   dependencies:
-    vsce "^1.75.0"
+    follow-redirects "^1.13.0"
+    vsce "~1.79.5"
 
 p-cancelable@^0.3.0:
   version "0.3.0"
@@ -18473,10 +18479,10 @@ vm-browserify@^1.0.1:
   resolved "https://registry.yarnpkg.com/vm-browserify/-/vm-browserify-1.1.0.tgz#bd76d6a23323e2ca8ffa12028dc04559c75f9019"
   integrity sha512-iq+S7vZJE60yejDYM0ek6zg308+UZsdtPExWP9VZoCFCz1zkJoXFnAX7aZfd/ZwrkidzdUZL0C/ryW+JwAiIGw==
 
-vsce@^1.75.0:
-  version "1.75.0"
-  resolved "https://registry.yarnpkg.com/vsce/-/vsce-1.75.0.tgz#1207e12ca632cd41ac66c33d23c3a09d74a75525"
-  integrity sha512-qyAQTmolxKWc9bV1z0yBTSH4WEIWhDueBJMKB0GUFD6lM4MiaU1zJ9BtzekUORZu094YeNSKz0RmVVuxfqPq0g==
+vsce@~1.79.5:
+  version "1.79.5"
+  resolved "https://registry.yarnpkg.com/vsce/-/vsce-1.79.5.tgz#622d947aed97632d460e68ec774eac41f550102d"
+  integrity sha512-KZFOthGwxWFwoGqwrkzfTfyCZGuniTofnJ1a/dCzQ2HP93u1UuCKrTQyGT+SuGHu8sNqdBYNe0hb9GC3qCN7fg==
   dependencies:
     azure-devops-node-api "^7.2.0"
     chalk "^2.4.2"
