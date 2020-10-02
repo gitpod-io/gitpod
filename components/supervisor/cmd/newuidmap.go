@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/spf13/cobra"
@@ -61,7 +62,9 @@ var newuidmapCmd = &cobra.Command{
 			return fmt.Errorf("arguments must be tripples")
 		}
 
-		_, err = client.Newuidmap(context.Background(), &api.NewuidmapRequest{
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		_, err = client.Newuidmap(ctx, &api.NewuidmapRequest{
 			Pid:     pid,
 			Gid:     newuidmapCmdOpts.GID,
 			Mapping: mapping,

@@ -6,8 +6,9 @@ require (
 	cloud.google.com/go v0.48.0 // indirect
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/ws-manager-node/api v0.0.0-00010101000000-000000000000
 	github.com/go-ole/go-ole v1.2.4 // indirect
-	github.com/golang/protobuf v1.3.3
+	github.com/golang/protobuf v1.4.2
 	github.com/google/go-cmp v0.4.0
 	github.com/google/tcpproxy v0.0.0-20200125044825-b6bb9b5b8252
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
@@ -28,11 +29,13 @@ require (
 	k8s.io/client-go v0.0.0
 )
 
+replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
+
 replace github.com/gitpod-io/gitpod/content-service/api => ../content-service-api/go // leeway
 
-replace github.com/gitpod-io/gitpod/ws-sync/api => ../ws-sync-api/go // leeway
+replace github.com/gitpod-io/gitpod/ws-manager-node/api => ../ws-manager-node-api/go // leeway
 
-replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
+replace github.com/gitpod-io/gitpod/ws-sync/api => ../ws-sync-api/go // leeway
 
 replace k8s.io/api => k8s.io/api v0.0.0-20190620084959-7cf5895f2711 // leeway indirect from components/common-go:lib
 

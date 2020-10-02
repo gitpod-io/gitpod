@@ -13,6 +13,7 @@ import (
 
 	"github.com/containerd/containerd"
 	"github.com/containerd/containerd/api/events"
+	"github.com/containerd/containerd/api/services/tasks/v1"
 	"github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/containers"
 	"github.com/containerd/typeurl"
@@ -61,10 +62,8 @@ func NewContainerdCRI(cfg *ContainerdConfig, mounts *NodeMountsLookup, pathMappi
 		wsiIdx:  make(map[string]*containerInfo),
 		errchan: make(chan error),
 	}
-	err = res.start()
-	if err != nil {
-		return nil, err
-	}
+	go res.start()
+
 	return res, nil
 }
 
@@ -90,42 +89,68 @@ type containerInfo struct {
 	SeenTask    bool
 	UpperDir    string
 	CGroupPath  string
+	PID         uint32
 }
 
 // start listening to containerd
-func (s *ContainerdCRI) start() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	cs, err := s.Client.ContainerService().List(ctx)
-	if err != nil {
-		return xerrors.Errorf("cannot list container: %w", err)
-	}
-	for _, c := range cs {
-		s.handleNewContainer(c)
-	}
-
+func (s *ContainerdCRI) start() {
 	// Using the filter expression for subscribe does not seem to work. We simply don't get any events.
 	// That's ok as the event handler below are capable of ignoring any event that's not for them.
-	evts, errchan := s.Client.Subscribe(context.Background())
-	go func() {
+
+	reconnectionInterval := 2 * time.Second
+	for {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		cs, err := s.Client.ContainerService().List(ctx)
+		if err != nil {
+			log.WithError(err).Error("cannot list container")
+			s.errchan <- xerrors.Errorf("cannot list container: %w", err)
+			time.Sleep(reconnectionInterval)
+			continue
+		}
+
+		// we have to loop through the containers twice because we don't know in which order
+		// the sandbox and workspace container are in. handleNewContainer expects to see the
+		// sandbox before the actual workspace. Hence, the first pass is for the sandboxes,
+		// the second pass for workspaces.
+		for _, c := range cs {
+			s.handleNewContainer(c)
+		}
+		for _, c := range cs {
+			s.handleNewContainer(c)
+		}
+
+		tsks, err := s.Client.TaskService().List(ctx, &tasks.ListTasksRequest{})
+		if err != nil {
+			log.WithError(err).Error("cannot list tasks")
+			s.errchan <- xerrors.Errorf("cannot list tasks: %w", err)
+			time.Sleep(reconnectionInterval)
+			continue
+		}
+		for _, t := range tsks.Tasks {
+			s.handleNewTask(t.ID, nil, t.Pid)
+		}
+
+		evts, errchan := s.Client.Subscribe(context.Background())
+		log.Info("containerd subscription established")
 		for {
 			select {
 			case evt := <-evts:
-				var ev interface{}
-				ev, err = typeurl.UnmarshalAny(evt.Event)
+				ev, err := typeurl.UnmarshalAny(evt.Event)
 				if err != nil {
 					log.WithError(err).Warn("cannot unmarshal containerd event")
 					continue
 				}
 				s.handleContainerdEvent(ev)
 			case err := <-errchan:
-				log.WithError(err).Error("containerd CRI error")
+				log.WithError(err).Error("lost connection to containerd - will attempt to reconnect")
 				s.errchan <- err
+				time.Sleep(reconnectionInterval)
+				break
 			}
 		}
-	}()
-	return nil
+	}
 }
 
 func (s *ContainerdCRI) handleContainerdEvent(ev interface{}) {
@@ -141,7 +166,7 @@ func (s *ContainerdCRI) handleContainerdEvent(ev interface{}) {
 		}
 		s.handleNewContainer(c)
 	case *events.TaskCreate:
-		s.handleNewTask(evt.ContainerID, evt.Rootfs)
+		s.handleNewTask(evt.ContainerID, evt.Rootfs, evt.Pid)
 
 	case *events.TaskDelete:
 
@@ -160,14 +185,21 @@ func (s *ContainerdCRI) handleContainerdEvent(ev interface{}) {
 }
 
 func (s *ContainerdCRI) handleNewContainer(c containers.Container) {
-	// TODO: check kubernetes namespace
+	// TODO(cw): check kubernetes namespace
 	podName := c.Labels[containerLabelK8sPodName]
 	if podName == "" {
 		return
 	}
+
 	if c.Labels[containerLabelCRIKind] == "sandbox" && c.Labels[wsk8s.WorkspaceIDLabel] != "" {
 		s.cond.L.Lock()
 		defer s.cond.L.Unlock()
+
+		if _, ok := s.podIdx[podName]; ok {
+			// we've already seen the pod - no need to add it to the info again,
+			// thereby possibly overwriting previously attached info.
+			return
+		}
 
 		info := &containerInfo{
 			InstanceID:  c.Labels[wsk8s.WorkspaceIDLabel],
@@ -188,6 +220,12 @@ func (s *ContainerdCRI) handleNewContainer(c containers.Container) {
 	if c.Labels[containerLabelCRIKind] == "container" && c.Labels[containerLabelK8sContainerName] == "workspace" {
 		s.cond.L.Lock()
 		defer s.cond.L.Unlock()
+		if _, ok := s.cntIdx[c.ID]; ok {
+			// we've already seen this container - no need to add it to the info again,
+			// thereby possibly overwriting previously attached info.
+			return
+		}
+
 		info, ok := s.podIdx[podName]
 		if !ok {
 			// we haven't seen this container's sandbox, hence have no info about it
@@ -202,18 +240,39 @@ func (s *ContainerdCRI) handleNewContainer(c containers.Container) {
 
 		info.ContainerID = c.ID
 		s.cntIdx[c.ID] = info
-		log.WithField("podname", podName).WithFields(log.OWI(info.OwnerID, info.WorkspaceID, info.InstanceID)).Debug("found workspace container - updating label cache")
+		log.WithField("podname", podName).WithFields(log.OWI(info.OwnerID, info.WorkspaceID, info.InstanceID)).WithField("containerID", c.ID).Debug("found workspace container - updating label cache")
 	}
 }
 
-func (s *ContainerdCRI) handleNewTask(cid string, rootfs []*types.Mount) {
+func (s *ContainerdCRI) handleNewTask(cid string, rootfs []*types.Mount, pid uint32) {
 	s.cond.L.Lock()
 	defer s.cond.L.Unlock()
 
 	info, ok := s.cntIdx[cid]
 	if !ok {
-		// we don't care for this task
+		// we don't care for this task as we haven't seen a workspace container for it
 		return
+	}
+	if info.SeenTask {
+		// we've already seen this task - no need to add it to the info again,
+		// thereby possibly overwriting previously attached info.
+		return
+	}
+
+	if rootfs == nil {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		mnts, err := s.Client.SnapshotService("overlayfs").Mounts(ctx, cid)
+		cancel()
+		if err != nil {
+			log.WithError(err).Warnf("cannot get mounts for container %v", cid)
+		}
+		for _, m := range mnts {
+			rootfs = append(rootfs, &types.Mount{
+				Source:  m.Source,
+				Options: m.Options,
+				Type:    m.Type,
+			})
+		}
 	}
 
 	for _, rfs := range rootfs {
@@ -232,6 +291,7 @@ func (s *ContainerdCRI) handleNewTask(cid string, rootfs []*types.Mount) {
 		}
 	}
 
+	info.PID = pid
 	info.SeenTask = true
 
 	log.WithFields(log.OWI(info.OwnerID, info.WorkspaceID, info.InstanceID)).WithField("cid", cid).WithField("upperdir", info.UpperDir).Debug("found task")
@@ -254,7 +314,6 @@ func (s *ContainerdCRI) WaitForContainer(ctx context.Context, workspaceInstanceI
 		defer s.cond.L.Unlock()
 
 		for {
-			s.cond.Wait()
 			info, ok := s.wsiIdx[workspaceInstanceID]
 
 			if ok && info.SeenTask {
@@ -271,6 +330,8 @@ func (s *ContainerdCRI) WaitForContainer(ctx context.Context, workspaceInstanceI
 			if ctx.Err() != nil {
 				break
 			}
+
+			s.cond.Wait()
 		}
 	}()
 
@@ -339,7 +400,7 @@ func (s *ContainerdCRI) ContainerUpperdir(ctx context.Context, id ContainerID) (
 	return s.Mapping.Translate(info.UpperDir)
 }
 
-// ContainerCGroupPath finds the container's cgroup path on the node.
+// ContainerCGroupPath finds the container's cgroup path suffix
 func (s *ContainerdCRI) ContainerCGroupPath(ctx context.Context, id ContainerID) (loc string, err error) {
 	info, ok := s.cntIdx[string(id)]
 	if !ok {
@@ -350,7 +411,17 @@ func (s *ContainerdCRI) ContainerCGroupPath(ctx context.Context, id ContainerID)
 		return "", ErrNoCGroup
 	}
 
-	return s.Mapping.Translate(info.CGroupPath)
+	return info.CGroupPath, nil
+}
+
+// ContainerPID finds the workspace container's PID
+func (s *ContainerdCRI) ContainerPID(ctx context.Context, id ContainerID) (pid uint64, err error) {
+	info, ok := s.cntIdx[string(id)]
+	if !ok {
+		return 0, ErrNotFound
+	}
+
+	return uint64(info.PID), nil
 }
 
 // ExtractCGroupPathFromContainer retrieves the CGroupPath from the linux section
