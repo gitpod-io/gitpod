@@ -5,34 +5,23 @@
 package cmd
 
 import (
-	"context"
 	"fmt"
 	"strconv"
-	"time"
 
-	"github.com/gitpod-io/gitpod/supervisor/api"
+	ndeapi "github.com/gitpod-io/gitpod/ws-manager-node/api"
+	"github.com/gitpod-io/gitpod/ws-manager-node/pkg/uidmap"
 	"github.com/spf13/cobra"
 )
 
-var newuidmapCmdOpts = struct {
-	GID bool
-}{}
-
 var newuidmapCmd = &cobra.Command{
-	Use:    "newuidmap <pid> <inContainerID> <hostID> <size> ... [<inContainerID> <hostID> <size>]",
-	Short:  "establishes a new UID mapping for a user-namespace",
-	Hidden: true,
-	Args:   cobra.MinimumNArgs(4),
+	Use:  "newuidmap <pid> <mapping>",
+	Args: cobra.MinimumNArgs(4),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		conn := dialSupervisor()
-		client := api.NewControlServiceClient(conn)
-
-		pid, err := strconv.ParseInt(args[0], 10, 64)
+		pid, err := strconv.ParseUint(args[0], 10, 64)
 		if err != nil {
-			return fmt.Errorf("cannot parse PID: %w", err)
+			panic(err)
 		}
-
-		mapping := make([]*api.NewuidmapRequest_Mapping, 0, (len(args)-1)/3)
+		mapping := make([]*ndeapi.UidmapCanaryRequest_Mapping, 0, (len(args)-1)/3)
 		for i := 1; i < len(args); i++ {
 			icid, err := strconv.ParseUint(args[i], 10, 32)
 			if err != nil {
@@ -51,7 +40,7 @@ var newuidmapCmd = &cobra.Command{
 				return fmt.Errorf("cannot parse inContainerID (arg %d): %w", i, err)
 			}
 
-			mapping = append(mapping, &api.NewuidmapRequest_Mapping{
+			mapping = append(mapping, &ndeapi.UidmapCanaryRequest_Mapping{
 				ContainerId: uint32(icid),
 				HostId:      uint32(hid),
 				Size:        uint32(sze),
@@ -62,19 +51,6 @@ var newuidmapCmd = &cobra.Command{
 			return fmt.Errorf("arguments must be tripples")
 		}
 
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		_, err = client.Newuidmap(ctx, &api.NewuidmapRequest{
-			Pid:     pid,
-			Gid:     newuidmapCmdOpts.GID,
-			Mapping: mapping,
-		})
-		return err
+		return uidmap.WriteMapping(pid, false, mapping)
 	},
-}
-
-func init() {
-	rootCmd.AddCommand(newuidmapCmd)
-
-	newuidmapCmd.Flags().BoolVarP(&newuidmapCmdOpts.GID, "gid", "g", false, "create GID mapping rather than UID")
 }

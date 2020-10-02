@@ -7,6 +7,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -20,7 +21,16 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
+	var c *cobra.Command
+	if strings.Contains(os.Args[0], "newuidmap") {
+		c = newuidmapCmd
+	} else if strings.Contains(os.Args[0], "newgidmap") {
+		c = newgidmapCmd
+	} else {
+		c = rootCmd
+	}
+
+	if err := c.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
