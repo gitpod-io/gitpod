@@ -32,6 +32,7 @@ func NewDispatchListener(cfg *DispatchListenerConfig, prom prometheus.Registerer
 	d := &DispatchListener{
 		Prometheus: prom,
 		Config:     cfg,
+		governer:   make(map[cri.ContainerID]*Governer),
 	}
 	prom.MustRegister(
 		prometheus.NewGaugeFunc(prometheus.GaugeOpts{

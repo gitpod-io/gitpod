@@ -9,6 +9,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/cri"
 	"github.com/gitpod-io/gitpod/ws-manager-node/pkg/resourcegov"
+	"github.com/gitpod-io/gitpod/ws-manager-node/pkg/uidmap"
 )
 
 // Configuration configures a daemon
@@ -17,6 +18,7 @@ type Configuration struct {
 	KubernetesNamespace string      `json:"namespace"`
 	Kubeconfig          string      `json:"kubeconfig"`
 
+	Uidmapper *uidmap.UidmapperConfig             `json:"uidmapper"`
 	Resources *resourcegov.DispatchListenerConfig `json:"resources"`
 	Hosts     *struct {
 		NodeHostsFile string            `json:"nodeHostsFile"`

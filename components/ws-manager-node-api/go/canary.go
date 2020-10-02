@@ -1,24 +1,35 @@
+// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
 package api
 
 import (
 	context "context"
 	"sync/atomic"
+
+	grpc "google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // NewInWorkspaceHelper produces a new InWorkspaceHelper
 func NewInWorkspaceHelper() *InWorkspaceHelper {
 	return &InWorkspaceHelper{
-		triggerUIDMap: make(chan *UidmapCanaryRequest),
-		errchan:       make(chan error, 10),
+		triggerUIDMap: make(chan *triggerNewuidmapReq),
 	}
+}
+
+type triggerNewuidmapReq struct {
+	Req  *UidmapCanaryRequest
+	Resp chan error
 }
 
 // InWorkspaceHelper implements InWorkspaceHelperServer
 type InWorkspaceHelper struct {
 	canaryAvailable int32
 
-	triggerUIDMap chan *UidmapCanaryRequest
-	errchan       chan error
+	triggerUIDMap chan *triggerNewuidmapReq
 }
 
 // Server produces a registrable InWorkspaceHelper server
@@ -36,13 +47,19 @@ func (iwh *InWorkspaceHelper) CanaryAvailable() bool {
 // available, this function will block until one becomes available or the
 // context is canceled.
 func (iwh *InWorkspaceHelper) Newuidmap(ctx context.Context, req *UidmapCanaryRequest) error {
+	trigger := &triggerNewuidmapReq{
+		Req:  req,
+		Resp: make(chan error, 1),
+	}
+
 	select {
-	case iwh.triggerUIDMap <- req:
+	case iwh.triggerUIDMap <- trigger:
 	case <-ctx.Done():
 		return ctx.Err()
 	}
+
 	select {
-	case err := <-iwh.errchan:
+	case err := <-trigger.Resp:
 		return err
 	case <-ctx.Done():
 		return ctx.Err()
@@ -53,6 +70,10 @@ type iwhserver struct {
 	*InWorkspaceHelper
 }
 
+func (iwh *iwhserver) RegisterGRPC(srv *grpc.Server) {
+	RegisterInWorkspaceHelperServer(srv, iwh)
+}
+
 func (iwh *iwhserver) UidmapCanary(srv InWorkspaceHelper_UidmapCanaryServer) error {
 	atomic.AddInt32(&iwh.canaryAvailable, 1)
 	defer atomic.AddInt32(&iwh.canaryAvailable, -1)
@@ -60,19 +81,21 @@ func (iwh *iwhserver) UidmapCanary(srv InWorkspaceHelper_UidmapCanaryServer) err
 	for {
 		select {
 		case req := <-iwh.triggerUIDMap:
-			err := srv.Send(req)
+			err := srv.Send(req.Req)
 			if err != nil {
-				iwh.errchan <- err
+				req.Resp <- err
 			}
-			_, err = srv.Recv()
+			resp, err := srv.Recv()
+			if err != nil {
+				req.Resp <- err
+			}
+			if resp.ErrorCode > 0 {
+				req.Resp <- status.Error(codes.Code(resp.ErrorCode), resp.Message)
+			}
 
-			// we put the error back in, no matter if its nil or not. If it isn't
-			// that's the signal that the uidmap was set.
-			iwh.errchan <- err
+			req.Resp <- nil
 		case <-srv.Context().Done():
-			err := srv.Context().Err()
-			iwh.errchan <- err
-			return err
+			// canary dropped out - we're done here
 		}
 	}
 }

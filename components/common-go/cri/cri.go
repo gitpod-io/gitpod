@@ -37,6 +37,9 @@ type ContainerRuntimeInterface interface {
 	// If the container has no cgroup ErrNoCGroup is returned.
 	ContainerCGroupPath(ctx context.Context, id ContainerID) (loc string, err error)
 
+	// ContainerPID returns the PID of the container's namespace root process, e.g. the container shim.
+	ContainerPID(ctx context.Context, id ContainerID) (pid uint64, err error)
+
 	// Error listens for errors in the interaction with the container runtime
 	Error() <-chan error
 }
