@@ -177,7 +177,7 @@ func (m *Uidmapper) handleUIDMappingRequest(ctx context.Context, disp *dispatch.
 	}
 	fields["hostPID"] = hostPID
 
-	err = m.writeMapping(hostPID, req.Gid, req.Mapping)
+	err = WriteMapping(hostPID, req.Gid, req.Mapping)
 	if err != nil {
 		log.WithError(err).WithFields(fields).Error("handleUIDMappingRequest: cannot write mapping")
 		return status.Error(codes.FailedPrecondition, "cannot write mapping")
@@ -209,7 +209,12 @@ func (m *Uidmapper) validateMapping(mapping []*ndeapi.UidmapCanaryRequest_Mappin
 	return nil
 }
 
-func (m *Uidmapper) writeMapping(hostPID uint64, gid bool, mapping []*ndeapi.UidmapCanaryRequest_Mapping) (err error) {
+// WriteMapping writes uid_map and gid_map
+func WriteMapping(hostPID uint64, gid bool, mapping []*ndeapi.UidmapCanaryRequest_Mapping) (err error) {
+	// Note: unlike shadow's newuidmap/newgidmap we do not set /proc/PID/setgroups to deny because:
+	//    - we're writing from a privileged process, hence don't trip that restriction introduced in Linux 3.39
+	//    - denying setgroups would prevent any meaningfull use of the NS mapped "root" user (e.g. breaks apt-get)
+
 	var fc string
 	for _, m := range mapping {
 		fc += fmt.Sprintf("%d %d %d\n", m.ContainerId, m.HostId, m.Size)
