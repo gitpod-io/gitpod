@@ -8,19 +8,15 @@ daysUntilStale: 30
 daysUntilClose: 7
 
 # Only issues or pull requests with all of these labels are check if stale. Defaults to `[]` (disabled)
-onlyLabels:
-  # Issues that we cannot process since the information from the reporter is not sufficient:
-  - reporter-feedback-needed
-  # Issues that were probably solved by a comment and which will not be processed further as long as the reporter does not get in touch again:
-  - solved
-  # Issues that are not Gitpod issues in the strict sense and that are not pursued further:
-  - not-a-gitpod-issue
-  # Issues that should be discussed at community.gitpod.io instead:
-  - ask-the-community
+onlyLabels: []
 
 # Issues or Pull Requests with these labels will never be considered stale. Set to `[]` to disable
 exemptLabels:
   - pinned
+  - bug
+  - enhancement
+  - docs
+  - fixed-not-deployed
 
 # Set to true to ignore issues in a project (defaults to false)
 exemptProjects: false
