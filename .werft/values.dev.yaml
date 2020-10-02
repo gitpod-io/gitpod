@@ -43,7 +43,7 @@ components:
     pullSecret:
       secretName: gcp-sa-registry-auth
     affinity:
-      default: "gitpod.io/workload_workspace"
+      default: "gitpod.io/workload_workspace_ubuntu"
     templates:
       default:
         spec:
