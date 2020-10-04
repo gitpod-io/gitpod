@@ -36,7 +36,7 @@
     "@types/ua-parser-js": "^0.7.33",
     "@types/uuid": "^3.1.0",
     "babel-loader": "^8.0.6",
-    "css-loader": "^4.2.2",
+    "css-loader": "^0.28.11",
     "file-loader": "^1.1.11",
     "html-webpack-plugin": "^4.4.1",
     "request": "^2.88.2",
