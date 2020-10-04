@@ -234,7 +234,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                 if (this.workspace) {
                     const ctxUrl = this.workspace.contextURL.replace('prebuild/', '');
                     this.redirectTo(new GitpodHostUrl(window.location.toString()).withContext(ctxUrl).toString());
-                } else if (!this.runsInIFrame()) {
+                } else {
                     this.redirectToDashboard();
                 }
             }

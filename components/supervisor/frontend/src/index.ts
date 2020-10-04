@@ -13,7 +13,7 @@ import * as heartBeat from "./heart-beat";
 import * as LoadingFrame from "./loading-frame";
 import * as IdeFrame from "./ide-frame";
 import * as GitpodServiceClient from "./gitpod-service-client";
-import * as SupervisorServiceClient from "./supervisor-service-client";
+import { SupervisorServiceClient } from "./supervisor-service-client";
 import { JsonRpcProxyFactory } from '@gitpod/gitpod-protocol/lib/messaging/proxy-factory';
 
 (async () => {
@@ -30,7 +30,12 @@ import { JsonRpcProxyFactory } from '@gitpod/gitpod-protocol/lib/messaging/proxy
     const gitpodServiceClient = await GitpodServiceClient.create();
     document.title = gitpodServiceClient.info.workspace.description;
 
-    const ideFrame = await IdeFrame.load();
+    if (gitpodServiceClient.info.workspace.type !== 'regular') {
+        return;
+    }
+
+    const supervisorServiceClient = new SupervisorServiceClient();
+    const ideFrame = await IdeFrame.load(supervisorServiceClient);
 
     //#region current-frame
     let currentFrame: HTMLIFrameElement = loading.frame;
@@ -72,12 +77,11 @@ import { JsonRpcProxyFactory } from '@gitpod/gitpod-protocol/lib/messaging/proxy
     //#endregion
 
     //#region heart-beat
-    const workspaceInfo = await SupervisorServiceClient.fetchWorkspaceInfo();
     heartBeat.track(window);
     heartBeat.track(ideFrame.contentWindow!);
     const updateHeartBeat = () => {
         if (gitpodServiceClient.info.latestInstance?.status.phase === 'running') {
-            heartBeat.schedule(workspaceInfo);
+            heartBeat.schedule(gitpodServiceClient.info.latestInstance.id);
         } else {
             heartBeat.cancel();
         }
