@@ -4,9 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { fetchWorkspaceInfo } from "./supervisor-service-client";
-import { WorkspaceInfoResponse } from "@gitpod/supervisor-api-grpc/lib/info_pb";
-
 let lastActivity = 0;
 const updateLastActivitiy = () => {
     lastActivity = new Date().getTime();
@@ -17,8 +14,8 @@ export const track = (w: Window) => {
 }
 
 let intervalHandle: NodeJS.Timer | undefined;
-export function schedule({ instanceId }: WorkspaceInfoResponse.AsObject): void {
-    if (intervalHandle === undefined) {
+export function schedule(instanceId: string): void {
+    if (intervalHandle !== undefined) {
         return;
     }
     const sendHeartBeat = async (wasClosed?: true) => {

@@ -11,10 +11,7 @@ import { ConsoleLogger } from 'vscode-ws-jsonrpc';
 
 const serverOrigin = new URL(startUrl).origin;
 window.addEventListener('message', event => {
-    if (event.origin === serverOrigin) {
-        return;
-    }
-    if (event.isTrusted && event.data.type == 'relocate' && event.data.url) {
+    if (event.origin === serverOrigin && event.data.type == 'relocate' && event.data.url) {
         window.location.href = event.data.url;
     }
 }, false)
