@@ -19,6 +19,7 @@ export function load(supervisorServiceClient: SupervisorServiceClient): Promise<
             console.info('IDE backend and content are ready, attaching IDE frontend...');
             document.body.appendChild(ideFrame);
             ideFrame.contentWindow?.addEventListener('DOMContentLoaded', () => {
+                ideFrame.contentWindow?.history.replaceState(null, '', window.location.href);
                 if (ideFrame.contentWindow) {
                     ideFrame.contentWindow.gitpod = window.gitpod;
                 }
