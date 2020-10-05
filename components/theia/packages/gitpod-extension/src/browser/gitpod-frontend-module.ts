@@ -6,7 +6,7 @@
 
 import '../../src/browser/extensions/style/extensions.css'
 
-import { ContainerModule } from "inversify";
+import { ContainerModule, inject, injectable } from "inversify";
 import { GitHubTokenProvider, InitialGitHubDataProvider, GetGitHubTokenParams } from "./github";
 import { GitpodCreditAlerContribution } from './gitpod-credit-alert-contribution';
 import { FrontendApplicationContribution, WebSocketConnectionProvider, WidgetFactory, bindViewContribution, ShellLayoutRestorer, CommonFrontendContribution } from '@theia/core/lib/browser';
@@ -62,8 +62,37 @@ import { ConnectionStatusOptions } from '@theia/core/lib/browser/connection-stat
 import { extensionsModule } from './extensions/extensions-module';
 import { GitpodUserStorageContribution } from './gitpod-user-storage-contribution';
 import { GitpodUserStorageProvider } from './gitpod-user-storage-provider';
+import { IDEService, IDEState } from '@gitpod/gitpod-protocol/lib/ide-service';
+import { Emitter } from '@gitpod/gitpod-protocol/lib/util/event';
+import { FrontendApplicationStateService } from '@theia/core/lib/browser/frontend-application-state';
+
+@injectable()
+class IDEServiceContribution implements FrontendApplicationContribution, IDEService {
+
+    get state(): IDEState {
+        return this.stateService.state === 'ready' ? 'ready' : 'init';
+    }
+
+    private readonly onDidChangeEmitter = new Emitter<void>();
+    readonly onDidChange = this.onDidChangeEmitter.event;
+
+    @inject(FrontendApplicationStateService)
+    private readonly stateService: FrontendApplicationStateService;
+
+    initialize(): void {
+        window.gitpod.ideService = this;
+        if (this.stateService.state !== 'ready') {
+            this.stateService.reachedState('ready').then(() =>
+                this.onDidChangeEmitter.fire()
+            );
+        }
+    }
+}
+//#endregion
 
 export default new ContainerModule((bind, unbind, isBound, rebind) => {
+    bind(FrontendApplicationContribution).to(IDEServiceContribution).inSingletonScope();
+
     rebind(CommonFrontendContribution).to(GitpodCommonFrontendContribution).inSingletonScope();
 
     bind(GitpodGitTokenValidator).toSelf().inSingletonScope();

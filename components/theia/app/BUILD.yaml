@@ -3,6 +3,7 @@ packages:
     type: yarn
     srcs:
       - package.json
+      - preload.html
       - "webpack.config.js"
       - "startup.sh"
       - "**/*.ico"
