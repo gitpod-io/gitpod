@@ -165,13 +165,15 @@ func SupervisorIDEHostHandler(r *mux.Router, config *RouteHandlerConfig) {
 			h.ServeHTTP(resp, req)
 		})
 	})
-	r.NewRoute().Handler(proxyPass(config, func(cfg *Config, req *http.Request) (tgt *url.URL, err error) {
+
+	targetResolver := func(cfg *Config, req *http.Request) (tgt *url.URL, err error) {
 		var dst url.URL
 		dst.Scheme = cfg.BlobServer.Scheme
 		dst.Host = cfg.BlobServer.Host
 		dst.Path = "/" + cfg.WorkspacePodConfig.SupervisorImage
 		return &dst, nil
-	}))
+	}
+	r.NewRoute().Handler(proxyPass(config, targetResolver))
 }
 
 // TheiaRootHandler handles all requests under / that are not handled by any special case above (expected to be static resources only)
@@ -197,7 +199,7 @@ func TheiaRootHandler(infoProvider WorkspaceInfoProvider) RouteHandler {
 			// Use the static theia server as primary source for resources
 			proxyPass(config, resolver,
 				// If the static theia server returns 404, re-route to the pod itself instead
-				withErrorHandler(
+				withHTTPErrorHandler(
 					config.WorkspaceAuthHandler(
 						proxyPass(config, workspacePodResolver,
 							withWebsocketSupport(),
