@@ -18,16 +18,24 @@ export class SupervisorServiceClient {
         return result as WorkspaceInfoResponse.AsObject;
     }
 
-    private async checkReady(kind: 'content' | 'ide' | 'supervisor'): Promise<void> {
-        await fetch(window.location.protocol + '//' + window.location.host + '/_supervisor/v1/status/' + kind + '/wait/true', { credentials: 'include' }).then(response => {
+    private async checkReady(kind: 'content' | 'ide' | 'supervisor', delay?: boolean): Promise<void> {
+        if (delay) {
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+        }
+
+        let wait = "/wait/true";
+        if (kind == "supervisor") {
+            wait = "";
+        }
+        return fetch(window.location.protocol + '//' + window.location.host + '/_supervisor/v1/status/' + kind + wait, { credentials: 'include' }).then(response => {
             if (response.ok) {
                 return;
             }
             console.debug(`failed to check whether ${kind} is ready, trying again...`, response.status, response.statusText);
-            return this.checkReady(kind);
+            return this.checkReady(kind, true);
         }, e => {
             console.debug(`failed to check whether ${kind} is ready, trying again...`, e);
-            return this.checkReady(kind);
+            return this.checkReady(kind, true);
         });
     }
 
