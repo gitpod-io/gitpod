@@ -87,10 +87,6 @@ export class SupervisorServedPortsServiceImpl implements ServedPortsServiceServe
         if (idx > -1) {
             this.clients.splice(idx, 1);
         }
-
-        if (this.clients.length == 0) {
-            this.dispose();
-        }
     }
     
     dispose(): void {
