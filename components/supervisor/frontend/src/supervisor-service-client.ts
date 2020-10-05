@@ -4,19 +4,12 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceInfoResponse } from "@gitpod/supervisor-api-grpc/lib/info_pb";
+import { SupervisorStatusResponse, IDEStatusResponse, ContentStatusResponse } from '@gitpod/supervisor-api-grpc/lib/status_pb'
 
 export class SupervisorServiceClient {
     readonly supervisorReady = this.checkReady('supervisor');
     readonly ideReady = this.supervisorReady.then(() => this.checkReady('ide'))
     readonly contentReady = this.supervisorReady.then(() => this.checkReady('content'));
-
-    async fetchWorkspaceInfo(): Promise<WorkspaceInfoResponse.AsObject> {
-        await this.supervisorReady;
-        const response = await fetch(window.location.protocol + '//' + window.location.host + '/_supervisor/v1/info/workspace', { credentials: 'include' });
-        const result = await response.json();
-        return result as WorkspaceInfoResponse.AsObject;
-    }
 
     private async checkReady(kind: 'content' | 'ide' | 'supervisor', delay?: boolean): Promise<void> {
         if (delay) {
@@ -27,16 +20,26 @@ export class SupervisorServiceClient {
         if (kind == "supervisor") {
             wait = "";
         }
-        return fetch(window.location.protocol + '//' + window.location.host + '/_supervisor/v1/status/' + kind + wait, { credentials: 'include' }).then(response => {
+        try {
+            const response = await fetch(window.location.protocol + '//' + window.location.host + '/_supervisor/v1/status/' + kind + wait, { credentials: 'include' });
+            let result;
             if (response.ok) {
-                return;
+                result = await response.json();
+                if (kind === 'supervisor' && (result as SupervisorStatusResponse.AsObject).ok) {
+                    return;
+                }
+                if (kind === 'content' && (result as ContentStatusResponse.AsObject).available) {
+                    return;
+                }
+                if (kind === 'ide' && (result as IDEStatusResponse.AsObject).ok) {
+                    return;
+                }
             }
-            console.debug(`failed to check whether ${kind} is ready, trying again...`, response.status, response.statusText);
-            return this.checkReady(kind, true);
-        }, e => {
+            console.debug(`failed to check whether ${kind} is ready, trying again...`, response.status, response.statusText, JSON.stringify(result, undefined, 2));
+        } catch (e) {
             console.debug(`failed to check whether ${kind} is ready, trying again...`, e);
-            return this.checkReady(kind, true);
-        });
+        }
+        return this.checkReady(kind, true);
     }
 
 }
