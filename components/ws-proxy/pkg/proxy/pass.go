@@ -48,9 +48,11 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 	}
 	h.TargetResolver = resolver
 
-	errorHandler := func(w http.ResponseWriter, req *http.Request, connectErr error) {
-		log.Debugf("could not connect to backend %s: %s", req.URL.String(), connectErrorToCause(connectErr))
-		if h.ErrorHandler != nil {
+	var eh errorHandler
+	if h.ErrorHandler != nil {
+		eh = func(w http.ResponseWriter, req *http.Request, connectErr error) {
+			log.Debugf("could not connect to backend %s: %s", req.URL.String(), connectErrorToCause(connectErr))
+
 			h.ErrorHandler(w, req, connectErr)
 		}
 	}
@@ -64,7 +66,7 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 	createRegularProxy := func(h *proxyPassConfig, targetURL *url.URL) http.Handler {
 		proxy := httputil.NewSingleHostReverseProxy(targetURL)
 		proxy.Transport = h.Transport
-		proxy.ErrorHandler = errorHandler
+		proxy.ErrorHandler = eh
 		proxy.ModifyResponse = func(resp *http.Response) error {
 			url := resp.Request.URL
 			if url == nil {
@@ -110,7 +112,7 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 			proxyType = "regular"
 		}
 
-		if proxy, ok := proxy.(*httputil.ReverseProxy); ok {
+		if proxy, ok := proxy.(*httputil.ReverseProxy); ok && proxy.ErrorHandler != nil {
 			orgErrHndlr := proxy.ErrorHandler
 			proxy.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
 				req.URL = &originalURL
@@ -150,7 +152,7 @@ func connectErrorToCause(err error) string {
 		}
 	}
 
-	return "unknown"
+	return err.Error()
 }
 
 // withOnProxyErrorRedirectToWorkspaceStartHandler is an error handler that redirects to gitpod.io/start/#<wsid>
@@ -165,11 +167,17 @@ func withOnProxyErrorRedirectToWorkspaceStartHandler(config *Config) proxyPassOp
 	}
 }
 
-func withErrorHandler(h http.Handler) proxyPassOpt {
+func withHTTPErrorHandler(h http.Handler) proxyPassOpt {
 	return func(cfg *proxyPassConfig) {
 		cfg.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
 			h.ServeHTTP(w, req)
 		}
+	}
+}
+
+func withErrorHandler(h errorHandler) proxyPassOpt {
+	return func(cfg *proxyPassConfig) {
+		cfg.ErrorHandler = h
 	}
 }
 
