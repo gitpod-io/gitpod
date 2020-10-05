@@ -35,7 +35,7 @@ import { JsonRpcProxyFactory } from '@gitpod/gitpod-protocol/lib/messaging/proxy
     }
 
     const supervisorServiceClient = new SupervisorServiceClient();
-    const ideFrame = await IdeFrame.load(supervisorServiceClient);
+    const ide = await IdeFrame.load(supervisorServiceClient);
 
     //#region current-frame
     let currentFrame: HTMLIFrameElement = loading.frame;
@@ -43,8 +43,8 @@ import { JsonRpcProxyFactory } from '@gitpod/gitpod-protocol/lib/messaging/proxy
     const nextFrame = () => {
         const instance = gitpodServiceClient.info.latestInstance;
         if (instance) {
-            if (instance.status.phase === 'running' && ideFrame.parentElement) {
-                return ideFrame;
+            if (instance.status.phase === 'running' && ide.service.state === 'ready') {
+                return ide.frame;
             }
             if (instance.status.phase === 'stopped') {
                 stopped = true;
@@ -74,11 +74,12 @@ import { JsonRpcProxyFactory } from '@gitpod/gitpod-protocol/lib/messaging/proxy
 
     updateCurrentFrame();
     gitpodServiceClient.onDidChangeInfo(() => updateCurrentFrame());
+    ide.service.onDidChange(() => updateCurrentFrame());
     //#endregion
 
     //#region heart-beat
     heartBeat.track(window);
-    heartBeat.track(ideFrame.contentWindow!);
+    heartBeat.track(ide.frame.contentWindow!);
     const updateHeartBeat = () => {
         if (gitpodServiceClient.info.latestInstance?.status.phase === 'running') {
             heartBeat.schedule(gitpodServiceClient.info.latestInstance.id);

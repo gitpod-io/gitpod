@@ -4,9 +4,11 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-interface Window {
-    gitpod: {
-        service: import('../gitpod-service').GitpodService
-        ideService?: import('../ide-service').IDEService
-    }
+import { Event } from "./util/event";
+
+export type IDEState = 'init' | 'ready';
+
+export interface IDEService {
+    readonly state: IDEState;
+    readonly onDidChange: Event<void>;
 }

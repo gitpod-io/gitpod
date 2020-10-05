@@ -71,6 +71,11 @@
           "go.useLanguageServer": true
         }
       }
+    },
+    "generator": {
+        "config": {
+            "preloadTemplate": "preload.html"
+        }
     }
   },
   "resolutions": {
