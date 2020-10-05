@@ -200,6 +200,11 @@ func (p *RemoteWorkspaceInfoProvider) listen(client wsapi.WorkspaceManagerClient
 		}
 
 		status := resp.GetStatus()
+		if status == nil {
+			// some subscription responses contain log output rather than status updates.
+			continue
+		}
+
 		if status.Phase == wsapi.WorkspacePhase_STOPPED {
 			p.cache.delete(status.Metadata.MetaId)
 		} else {
