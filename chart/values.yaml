@@ -88,8 +88,8 @@ authProviders:
   description: ""
   icon: ""
 branding:
-  logo: /images/gitpod-ddd.svg
-  homepage: https://www.gitpod.io/
+  logo: https://www.devgraph.com/wp-content/uploads/2020/08/devspace-logo1.png
+  homepage: https://www.devgraph.com/devspaces
   links:
     header:
       - name: Workspaces
@@ -105,8 +105,6 @@ branding:
         url: https://www.gitpod.io/docs/
       - name: Blog
         url: https://www.gitpod.io/blog/
-      - name: Status
-        url: https://status.gitpod.io/
     social:
       - type: GitHub
         url: https://github.com/gitpod-io/gitpod
@@ -115,12 +113,8 @@ branding:
       - type: Twitter
         url: https://twitter.com/gitpod
     legal:
-      - name: Imprint
-        url: https://www.gitpod.io/imprint/
-      - name: Privacy Policy
-        url: https://www.gitpod.io/privacy/
-      - name: Terms of Service
-        url: https://www.gitpod.io/terms/
+      - name: Terms and conditions
+        url: https://www.devgraph.com/terms-and-conditions/
 workspaceScheduler: workspace-scheduler
 serverProxyApiKey: "fF7+aCPvF9Pa0AEjmoZ+yWVh6PqBjM5VEA0wyQs3FH4="
 
