@@ -13,6 +13,7 @@ import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url'
 import { ResponseError } from 'vscode-jsonrpc';
 
 import { UserSettings } from '../user-settings';
+import { IDESettings } from '../ide-settings';
 import { DeleteAccountView } from '../delete-account-view';
 import Paper from '@material-ui/core/Paper';
 import { ApiTokenView } from '../api-tokens';
@@ -26,6 +27,7 @@ interface SettingsProps {
 
 interface SettingsState {
     user?: User;
+    hasIDESettingsPermission?: boolean
 }
 
 export class Settings extends React.Component<SettingsProps, SettingsState> {
@@ -36,7 +38,11 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
         this.state = {};
         (async () => {
             try {
-                this.setState({ user: await this.props.user });
+                const [user, hasIDESettingsPermission] = await Promise.all([
+                    this.props.user,
+                    this.props.service.server.hasPermission('ide-settings')
+                ]);
+                this.setState({ user, hasIDESettingsPermission });
             } catch (e) {
                 if (e instanceof ResponseError) {
                     switch (e.code) {
@@ -63,6 +69,10 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
                 <Paper style={{ padding: 20 }}>
                     <h3>Email Settings</h3>
                     <UserSettings service={this.props.service} user={this.state.user} />
+                    {this.state.user && this.state.hasIDESettingsPermission && <React.Fragment>
+                        <h3 style={{ marginTop: 50 }}>IDE Settings</h3>
+                        <IDESettings service={this.props.service} user={this.state.user} />
+                    </React.Fragment>}
                     <h3 style={{ marginTop: 50 }}>Environment Variables</h3>
                     <UserEnvVars service={this.props.service} user={this.state.user} />
                     <ApiTokenView service={this.props.service} />

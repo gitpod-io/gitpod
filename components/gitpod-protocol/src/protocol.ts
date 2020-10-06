@@ -7,7 +7,7 @@
 import { WorkspaceInstance, PortVisibility } from "./workspace-instance";
 import { RoleOrPermission } from "./permission";
 
-export interface UserInfo {
+export interface UserInfo {
     name?: string
 }
 
@@ -74,7 +74,7 @@ export namespace User {
         if (name) {
             return name;
         }
-        
+
         for (const id of user.identities) {
             if (id.authName !== "") {
                 return id.authName;
@@ -87,10 +87,15 @@ export namespace User {
 export interface AdditionalUserData {
     platforms?: UserPlatform[];
     emailNotificationSettings?: EmailNotificationSettings;
+    ideSettings?: IDESettings;
 }
 
 export interface EmailNotificationSettings {
     disallowTransactionalEmails?: boolean;
+}
+
+export type IDESettings = {
+    defaultIde?: string
 }
 
 export interface UserPlatform {
@@ -104,7 +109,7 @@ export interface UserPlatform {
      * Since when does the user have the browser extension installe don this device.
      */
     browserExtensionInstalledSince?: string;
-    
+
     /**
      * Since when does the user not have the browser extension installed anymore (but previously had).
      */
@@ -132,7 +137,7 @@ export interface UserFeatureSettings {
  * If they don't we'll break things during workspace startup.
  */
 export const WorkspaceFeatureFlags = { "privileged": undefined, "registry_facade": undefined, "full_workspace_backup": undefined, "fixed_resources": undefined };
-export type NamedWorkspaceFeatureFlag = keyof(typeof WorkspaceFeatureFlags);
+export type NamedWorkspaceFeatureFlag = keyof (typeof WorkspaceFeatureFlags);
 
 export interface UserEnvVarValue {
     id?: string;
@@ -238,13 +243,13 @@ export interface GitpodToken {
 
     /** The user the token belongs to. */
     user: User
-    
+
     /** Scopes (e.g. limition to read-only) */
     scopes: string[]
 
     /** Created timestamp */
     created: string
-    
+
     // token is deleted on the database and about to be collected by db-sync
     deleted?: boolean
 }
@@ -370,7 +375,7 @@ export interface Workspace {
     ownerId: string;
     context: WorkspaceContext;
     config: WorkspaceConfig;
-    
+
     /**
      * The source where to get the workspace base image from. This source is resolved
      * during workspace creation. Once a base image has been built the information in here
@@ -760,7 +765,7 @@ export interface SnapshotContext extends WorkspaceContext, WithSnapshot {
 
 export namespace SnapshotContext {
     export function is(context: any): context is SnapshotContext {
-        return context 
+        return context
             && WithSnapshot.is(context)
             && 'snapshotId' in context;
     }
