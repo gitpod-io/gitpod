@@ -98,10 +98,10 @@ export class GitpodHostUrl {
         return this.with(url => ({ pathname: '/graphql/' }));
     }
 
-    asStart(): GitpodHostUrl {
+    asStart(workspaceId = this.workspaceId): GitpodHostUrl {
         return this.with({
             pathname: '/start/',
-            hash: '#' + this.workspaceId
+            hash: '#' + workspaceId
         });
     }
 

@@ -79,6 +79,7 @@ import { JsonRpcProxyFactory } from '@gitpod/gitpod-protocol/lib/messaging/proxy
 
     //#region heart-beat
     heartBeat.track(window);
+    heartBeat.track(loading.frame.contentWindow!);
     heartBeat.track(ide.frame.contentWindow!);
     const updateHeartBeat = () => {
         if (gitpodServiceClient.info.latestInstance?.status.phase === 'running') {
