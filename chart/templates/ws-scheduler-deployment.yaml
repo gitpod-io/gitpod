@@ -42,7 +42,7 @@ spec:
       volumes:
       - name: config
         configMap:
-          name: ws-scheduler-config
+          name: {{ template "gitpod.comp.configMap" $this }}
       containers:
       - name: scheduler
         args: ["run", "-v", "--config", "/config/config.json"]

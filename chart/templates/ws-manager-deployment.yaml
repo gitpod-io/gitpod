@@ -47,7 +47,7 @@ spec:
       volumes:
       - name: config
         configMap:
-          name: ws-manager-config
+          name: {{ template "gitpod.comp.configMap" $this }}
       - name: tls-certs
         secret:
           secretName: ws-sync-tls

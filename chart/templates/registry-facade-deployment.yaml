@@ -71,7 +71,7 @@ spec:
         emptyDir: {}
       - name: config
         configMap:
-          name: registry-facade-config
+          name: {{ template "gitpod.comp.configMap" $this }}
       {{- if .Values.components.workspace.pullSecret.secretName }}
       - name: pull-secret
         secret:
