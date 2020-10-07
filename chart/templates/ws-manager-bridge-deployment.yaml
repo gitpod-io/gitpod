@@ -67,6 +67,6 @@ spec:
       volumes:
       - name: config
         configMap:
-          name: ws-manager-bridge-config
+          name: {{ template "gitpod.comp.configMap" $this }}
 {{ toYaml .Values.defaults | indent 6 }}
 {{ end }}

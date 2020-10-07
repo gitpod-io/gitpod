@@ -46,7 +46,7 @@ spec:
       volumes:
       - name: configuration
         configMap:
-          name: image-builder-config
+          name: {{ template "gitpod.comp.configMap" $this }}
       - name: dind-storage
         {{- if $comp.hostDindData }}
         hostPath:

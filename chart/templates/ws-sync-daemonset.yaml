@@ -60,7 +60,7 @@ spec:
           secretName: ws-sync-tls
       - name: config
         configMap:
-          name: ws-sync-config
+          name: {{ template "gitpod.comp.configMap" $this }}
       {{- if $comp.fullWorkspaceBackup.enabled }}
       - name: containerd-socket
         hostPath:
