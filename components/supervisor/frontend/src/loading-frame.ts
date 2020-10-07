@@ -10,11 +10,13 @@ import { MessageConnection, createMessageConnection } from 'vscode-jsonrpc/lib/m
 import { ConsoleLogger } from 'vscode-ws-jsonrpc';
 
 const serverOrigin = new URL(startUrl).origin;
-window.addEventListener('message', event => {
+const relocateListener = (event: MessageEvent) => {
     if (event.origin === serverOrigin && event.data.type == 'relocate' && event.data.url) {
+        window.removeEventListener('message', relocateListener);
         window.location.href = event.data.url;
     }
-}, false)
+};
+window.addEventListener('message', relocateListener, false);
 
 export function load(): Promise<{
     frame: HTMLIFrameElement,

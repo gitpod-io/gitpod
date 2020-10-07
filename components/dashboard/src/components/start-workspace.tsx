@@ -359,12 +359,13 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                     </React.Fragment>;
                 }
             }
-            if (this.state.workspaceInstance.status.phase === 'stopped') {
+            if (this.state.workspaceInstance.status.phase === 'stopped' && this.props.workspaceId) {
+                const startUrl = new GitpodHostUrl(window.location.toString()).asStart(this.props.workspaceId).toString();
                 message = <React.Fragment>
                     {message}
-                    <div className='message start-action'><Button className='button' variant='outlined' color='secondary' onClick={() =>
-                        this.startWorkspace(this.props.workspaceId, true, false)
-                    }>Start Workspace</Button></div>
+                    <div className='message start-action'><Button className='button' variant='outlined' color='secondary' onClick={() => {
+                        this.redirectTo(startUrl)
+                    }}>Start Workspace</Button></div>
                 </React.Fragment>;
             }
         }
