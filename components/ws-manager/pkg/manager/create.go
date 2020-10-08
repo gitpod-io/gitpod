@@ -359,7 +359,13 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		},
 	}
 
+	ffidx := make(map[api.WorkspaceFeatureFlag]struct{})
 	for _, feature := range startContext.Request.Spec.FeatureFlags {
+		if _, seen := ffidx[feature]; seen {
+			continue
+		}
+		ffidx[feature] = struct{}{}
+
 		switch feature {
 		case api.WorkspaceFeatureFlag_PRIVILEGED:
 			// privileged workspaces get a different security contex and a service account that allows that context to take effect.
@@ -394,6 +400,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 					MountPath: "/dev/net/tun",
 					Name:      "dev-net-tun",
 				})
+				break
 			}
 		case api.WorkspaceFeatureFlag_FULL_WORKSPACE_BACKUP:
 			removeVolume(&pod, workspaceVolumeName)
