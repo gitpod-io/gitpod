@@ -36,12 +36,19 @@ import (
 //
 
 const (
+	// timeBetweenConnectionAttempts is the time we wait until we make another connection attempt to a workspace
+	timeBetweenConnectionAttempts = 1 * time.Second
+
 	// time between calls is the time that has to pass until we answer an RPC call again
 	timeBetweenCalls = 10 * time.Second
 
 	// requestsBeforeBreak is the number of requests a client can make to the canary before the canary
 	// disconnects and waits timeBetweenCalls.
 	requestsBeforeBreak = 10
+
+	// withUsernamespaceAnnotation is set on workspaces which are wrapped in a user namespace (or have some form of user namespace support)
+	// Beware: this annotation is duplicated/copied in ws-manager
+	withUsernamespaceAnnotation = "gitpod/withUsernamespace"
 )
 
 // Uidmapper provides UID mapping services for creating Linux user namespaces
@@ -77,22 +84,45 @@ func (r UIDRange) Contains(start, size uint32) bool {
 	return true
 }
 
+type connectionError struct {
+	error
+}
+
+func (c connectionError) Error() string {
+	return fmt.Sprintf("cannot dial workspace: %s", c.error.Error())
+}
+
+func (c connectionError) Unwrap() error {
+	return c.error
+}
+
 // WorkspaceAdded is called when a new workspace is added
 func (m *Uidmapper) WorkspaceAdded(ctx context.Context, ws *dispatch.Workspace) error {
+	if _, ok := ws.Pod.Annotations[withUsernamespaceAnnotation]; !ok {
+		// this isn't a user namespaced workspace - nothing to do here
+		return nil
+	}
+
 	disp := dispatch.GetFromContext(ctx)
 	if disp == nil {
 		return xerrors.Errorf("no dispatch available")
 	}
 
+	var connectionAttempts int
 	for {
 		err := m.establishUIDCanary(ctx, ws, disp)
+
 		delay := timeBetweenCalls
-		if err != nil {
+		if cerr, ok := err.(connectionError); ok {
+			if connectionAttempts > 10 {
+				log.WithFields(ws.OWI()).WithError(cerr.Unwrap()).Warn("UID mapper canary connection error")
+			}
+			connectionAttempts++
+
+			delay = timeBetweenConnectionAttempts
+		} else if err != nil {
 			log.WithFields(ws.OWI()).WithError(err).Warn("UID mapper canary error")
-			// cut the delay in half to facilitate quick retries during workspace startup
-			delay /= 2
-		}
-		if ctx.Err() != nil {
+		} else if ctx.Err() != nil {
 			break
 		}
 
@@ -111,9 +141,11 @@ func (m *Uidmapper) establishUIDCanary(ctx context.Context, ws *dispatch.Workspa
 	}
 
 	host := wsk8s.WorkspaceSupervisorEndpoint(ws.WorkspaceID, disp.KubernetesNamespace)
-	conn, err := grpc.DialContext(ctx, host, grpc.WithInsecure())
+	dialCtx, cancel := context.WithTimeout(ctx, timeBetweenConnectionAttempts)
+	defer cancel()
+	conn, err := grpc.DialContext(dialCtx, host, grpc.WithInsecure())
 	if err != nil {
-		return xerrors.Errorf("cannot dial workspace: %w", err)
+		return connectionError{err}
 	}
 	iwh := ndeapi.NewInWorkspaceHelperClient(conn)
 
@@ -121,7 +153,7 @@ func (m *Uidmapper) establishUIDCanary(ctx context.Context, ws *dispatch.Workspa
 	if err != nil {
 		return err
 	}
-	log.WithFields(ws.OWI()).Error("installed uid mapper canary")
+	log.WithFields(ws.OWI()).Info("installed uid mapper canary")
 
 	for i := 0; i < requestsBeforeBreak; i++ {
 		if ctx.Err() != nil {

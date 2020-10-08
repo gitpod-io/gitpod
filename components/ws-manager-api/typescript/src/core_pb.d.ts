@@ -969,6 +969,7 @@ export enum WorkspaceFeatureFlag {
     REGISTRY_FACADE = 3,
     FULL_WORKSPACE_BACKUP = 4,
     FIXED_RESOURCES = 5,
+    USER_NAMESPACE = 6,
 }
 
 export enum WorkspaceType {

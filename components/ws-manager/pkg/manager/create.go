@@ -366,6 +366,35 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			workspaceContainer.SecurityContext.AllowPrivilegeEscalation = &boolTrue
 			workspaceContainer.SecurityContext.Privileged = &boolTrue
 			pod.Spec.ServiceAccountName = "workspace-privileged"
+		case api.WorkspaceFeatureFlag_USER_NAMESPACE:
+			// Beware: this allows setuid binaries in the workspace - supervisor needs to set no_new_privs now.
+			workspaceContainer.SecurityContext.AllowPrivilegeEscalation = &boolTrue
+			// TODO(cw): post Kubernetes 1.19 use GA form for settings those profiles
+			pod.Annotations["container.apparmor.security.beta.kubernetes.io/workspace"] = "unconfined"
+			pod.Annotations[withUsernamespaceAnnotation] = "true"
+			// Mounting /dev/net/tun should be fine security-wise, because:
+			//   - the TAP driver documentation says so (see https://www.kernel.org/doc/Documentation/networking/tuntap.txt)
+			//   - systemd's nspawn does the same thing (if it's good enough for them, it's good enough for us)
+			devType := corev1.HostPathFile
+			pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
+				Name: "dev-net-tun",
+				VolumeSource: corev1.VolumeSource{
+					HostPath: &corev1.HostPathVolumeSource{
+						Path: "/dev/net/tun",
+						Type: &devType,
+					},
+				},
+			})
+			for i, c := range pod.Spec.Containers {
+				if c.Name != "workspace" {
+					continue
+				}
+
+				pod.Spec.Containers[i].VolumeMounts = append(c.VolumeMounts, corev1.VolumeMount{
+					MountPath: "/dev/net/tun",
+					Name:      "dev-net-tun",
+				})
+			}
 		case api.WorkspaceFeatureFlag_FULL_WORKSPACE_BACKUP:
 			removeVolume(&pod, workspaceVolumeName)
 			pod.Labels[fullWorkspaceBackupAnnotation] = "true"

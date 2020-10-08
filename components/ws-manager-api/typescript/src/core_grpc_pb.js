@@ -235,7 +235,7 @@ function deserialize_wsman_TakeSnapshotResponse(buffer_arg) {
 
 var WorkspaceManagerService = exports.WorkspaceManagerService = {
   // getWorkspaces produces a list of running workspaces and their status
-  getWorkspaces: {
+getWorkspaces: {
     path: '/wsman.WorkspaceManager/GetWorkspaces',
     requestStream: false,
     responseStream: false,
@@ -247,7 +247,7 @@ var WorkspaceManagerService = exports.WorkspaceManagerService = {
     responseDeserialize: deserialize_wsman_GetWorkspacesResponse,
   },
   // startWorkspace creates a new running workspace within the manager's cluster
-  startWorkspace: {
+startWorkspace: {
     path: '/wsman.WorkspaceManager/StartWorkspace',
     requestStream: false,
     responseStream: false,
@@ -259,7 +259,7 @@ var WorkspaceManagerService = exports.WorkspaceManagerService = {
     responseDeserialize: deserialize_wsman_StartWorkspaceResponse,
   },
   // stopWorkspace stops a running workspace
-  stopWorkspace: {
+stopWorkspace: {
     path: '/wsman.WorkspaceManager/StopWorkspace',
     requestStream: false,
     responseStream: false,
@@ -271,7 +271,7 @@ var WorkspaceManagerService = exports.WorkspaceManagerService = {
     responseDeserialize: deserialize_wsman_StopWorkspaceResponse,
   },
   // describeWorkspace investigates a workspace and returns its status, and configuration
-  describeWorkspace: {
+describeWorkspace: {
     path: '/wsman.WorkspaceManager/DescribeWorkspace',
     requestStream: false,
     responseStream: false,
@@ -283,7 +283,7 @@ var WorkspaceManagerService = exports.WorkspaceManagerService = {
     responseDeserialize: deserialize_wsman_DescribeWorkspaceResponse,
   },
   // subscribe streams all status updates to a client
-  subscribe: {
+subscribe: {
     path: '/wsman.WorkspaceManager/Subscribe',
     requestStream: false,
     responseStream: true,
@@ -295,7 +295,7 @@ var WorkspaceManagerService = exports.WorkspaceManagerService = {
     responseDeserialize: deserialize_wsman_SubscribeResponse,
   },
   // markActive records a workspace as being active which prevents it from timing out
-  markActive: {
+markActive: {
     path: '/wsman.WorkspaceManager/MarkActive',
     requestStream: false,
     responseStream: false,
@@ -307,7 +307,7 @@ var WorkspaceManagerService = exports.WorkspaceManagerService = {
     responseDeserialize: deserialize_wsman_MarkActiveResponse,
   },
   // setTimeout changes the default timeout for a running workspace
-  setTimeout: {
+setTimeout: {
     path: '/wsman.WorkspaceManager/SetTimeout',
     requestStream: false,
     responseStream: false,
@@ -319,7 +319,7 @@ var WorkspaceManagerService = exports.WorkspaceManagerService = {
     responseDeserialize: deserialize_wsman_SetTimeoutResponse,
   },
   // controlPort publicly exposes or un-exposes a network port for a workspace
-  controlPort: {
+controlPort: {
     path: '/wsman.WorkspaceManager/ControlPort',
     requestStream: false,
     responseStream: false,
@@ -331,7 +331,7 @@ var WorkspaceManagerService = exports.WorkspaceManagerService = {
     responseDeserialize: deserialize_wsman_ControlPortResponse,
   },
   // takeSnapshot creates a copy of the workspace content which can initialize a new workspace.
-  takeSnapshot: {
+takeSnapshot: {
     path: '/wsman.WorkspaceManager/TakeSnapshot',
     requestStream: false,
     responseStream: false,
@@ -343,7 +343,7 @@ var WorkspaceManagerService = exports.WorkspaceManagerService = {
     responseDeserialize: deserialize_wsman_TakeSnapshotResponse,
   },
   // controlAdmission makes a workspace accessible for everyone or for the owner only
-  controlAdmission: {
+controlAdmission: {
     path: '/wsman.WorkspaceManager/ControlAdmission',
     requestStream: false,
     responseStream: false,
