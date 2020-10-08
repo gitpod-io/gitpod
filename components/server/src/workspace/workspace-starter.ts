@@ -244,9 +244,9 @@ export class WorkspaceStarter {
         if (user.featureFlags && user.featureFlags.permanentWSFeatureFlags) {
             featureFlags = featureFlags.concat(featureFlags, user.featureFlags.permanentWSFeatureFlags);
         }
-        // privileged is a special case which requires the privileged-ws permission
-        if (featureFlags.includes("privileged") && !this.authService.hasPermission(user, "privileged-ws")) {
-            featureFlags = featureFlags.filter(f => f != "privileged");
+        // privileged and user_namespace are special cases which require the privileged-ws permission
+        if (!this.authService.hasPermission(user, "privileged-ws")) {
+            featureFlags = featureFlags.filter(f => f != "privileged" && f != "user_namespace");
         }
         if (!!featureFlags) {
             // only set feature flags if there actually are any. Otherwise we waste the
