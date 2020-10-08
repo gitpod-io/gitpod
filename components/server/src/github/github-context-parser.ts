@@ -145,9 +145,10 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                         }
                     }
                 `);
+                console.log(`IMPORTANT: ${result}`)
                 span.log({"request.finished": ""});
 
-                const repo = result.data.repository;
+                const repo = result.data.repository;              
                 if (repo === null) {
                     throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, this.config.host, owner, repoName);
                 }
