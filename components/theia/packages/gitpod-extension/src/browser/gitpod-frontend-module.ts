@@ -70,7 +70,13 @@ import { FrontendApplicationStateService } from '@theia/core/lib/browser/fronten
 class IDEServiceContribution implements FrontendApplicationContribution, IDEService {
 
     get state(): IDEState {
-        return this.stateService.state === 'ready' ? 'ready' : 'init';
+        if (this.stateService.state === 'ready') {
+            return 'ready';
+        }
+        if (this.stateService.state === 'closing_window') {
+            return 'terminated';
+        }
+        return 'init';
     }
 
     private readonly onDidChangeEmitter = new Emitter<void>();
@@ -81,11 +87,7 @@ class IDEServiceContribution implements FrontendApplicationContribution, IDEServ
 
     initialize(): void {
         window.gitpod.ideService = this;
-        if (this.stateService.state !== 'ready') {
-            this.stateService.reachedState('ready').then(() =>
-                this.onDidChangeEmitter.fire()
-            );
-        }
+        this.stateService.onStateChanged(() => this.onDidChangeEmitter.fire());
     }
 }
 //#endregion

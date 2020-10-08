@@ -6,7 +6,7 @@
 
 import { Event } from "./util/event";
 
-export type IDEState = 'init' | 'ready';
+export type IDEState = 'init' | 'ready' | 'terminated';
 
 export interface IDEService {
     readonly state: IDEState;
