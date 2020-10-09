@@ -21,10 +21,6 @@ import (
 	"golang.org/x/xerrors"
 )
 
-const (
-	ideIndexQueryMarker = "gitpod-ide-index"
-)
-
 // RouteHandlerConfig configures a RouteHandler
 type RouteHandlerConfig struct {
 	Config               *Config
@@ -65,97 +61,53 @@ func NewRouteHandlerConfig(config *Config, opts ...RouteHandlerConfigOpt) (*Rout
 // RouteHandler is a function that handles a HTTP route
 type RouteHandler = func(r *mux.Router, config *RouteHandlerConfig)
 
-// RouteHandlers is the struct that configures the ws-proxys HTTP routes
-type RouteHandlers struct {
-	theiaRootHandler         RouteHandler
-	theiaMiniBrowserHandler  RouteHandler
-	theiaFileHandler         RouteHandler
-	theiaHostedPluginHandler RouteHandler
-	theiaServiceHandler      RouteHandler
-	theiaFileUploadHandler   RouteHandler
-	theiaWebviewHandler      RouteHandler
-
-	supervisorAuthenticatedAPIHandler   RouteHandler
-	supervisorUnauthenticatedAPIHandler RouteHandler
-	supervisorIDEHostHandler            RouteHandler
-}
-
-// DefaultRouteHandlers installs the default route handlers
-func DefaultRouteHandlers(ip WorkspaceInfoProvider) *RouteHandlers {
-	return &RouteHandlers{
-		theiaRootHandler:                    TheiaRootHandler(ip),
-		theiaFileHandler:                    TheiaFileHandler,
-		theiaFileUploadHandler:              TheiaFileUploadHandler,
-		theiaHostedPluginHandler:            TheiaHostedPluginHandler,
-		theiaMiniBrowserHandler:             TheiaMiniBrowserHandler,
-		theiaServiceHandler:                 TheiaServiceHandler,
-		theiaWebviewHandler:                 TheiaWebviewHandler,
-		supervisorAuthenticatedAPIHandler:   SupervisorAPIHandler(true),
-		supervisorUnauthenticatedAPIHandler: SupervisorAPIHandler(false),
-		supervisorIDEHostHandler:            SupervisorIDEHostHandler,
-	}
-}
-
 // installTheiaRoutes configures routing of Theia requests
-func installTheiaRoutes(r *mux.Router, config *RouteHandlerConfig, rh *RouteHandlers) {
+func installTheiaRoutes(r *mux.Router, config *RouteHandlerConfig, ip WorkspaceInfoProvider) {
 	r.Use(logHandler)
 	r.Use(handlers.CompressHandler)
 
 	// Precedence depends on order - the further down a route is, the later it comes,
 	// the less priority it has.
-	rh.theiaMiniBrowserHandler(r.PathPrefix("/mini-browser").Subrouter(), config)
+	TheiaMiniBrowserHandler(r.PathPrefix("/mini-browser").Subrouter(), config)
 
-	rh.theiaServiceHandler(r.Path("/services").Subrouter(), config)
-	rh.theiaFileUploadHandler(r.Path("/file-upload").Subrouter(), config)
+	TheiaServiceHandler(r.Path("/services").Subrouter(), config)
+	TheiaFileUploadHandler(r.Path("/file-upload").Subrouter(), config)
 
-	rh.theiaFileHandler(r.PathPrefix("/file").Subrouter(), config)
-	rh.theiaFileHandler(r.PathPrefix("/files").Subrouter(), config)
+	TheiaFileHandler(r.PathPrefix("/file").Subrouter(), config)
+	TheiaFileHandler(r.PathPrefix("/files").Subrouter(), config)
 
-	rh.theiaHostedPluginHandler(r.PathPrefix("/hostedPlugin").Subrouter(), config)
-	rh.theiaWebviewHandler(r.PathPrefix("/webview").Subrouter(), config)
+	TheiaHostedPluginHandler(r.PathPrefix("/hostedPlugin").Subrouter(), config)
+	TheiaWebviewHandler(r.PathPrefix("/webview").Subrouter(), config)
 
-	rh.supervisorUnauthenticatedAPIHandler(r.PathPrefix("/_supervisor/v1/status/supervisor").Subrouter(), config)
-	rh.supervisorUnauthenticatedAPIHandler(r.PathPrefix("/_supervisor/v1/status/ide").Subrouter(), config)
-	rh.supervisorAuthenticatedAPIHandler(r.PathPrefix("/_supervisor/v1").Subrouter(), config)
+	supervisorUnauthenticatedAPIHandler := SupervisorAPIHandler(false)
+	supervisorAuthenticatedAPIHandler := SupervisorAPIHandler(true)
+	supervisorUnauthenticatedAPIHandler(r.PathPrefix("/_supervisor/v1/status/supervisor").Subrouter(), config)
+	supervisorUnauthenticatedAPIHandler(r.PathPrefix("/_supervisor/v1/status/ide").Subrouter(), config)
+	supervisorAuthenticatedAPIHandler(r.PathPrefix("/_supervisor/v1").Subrouter(), config)
+
+	faviconRouter := r.Path("/favicon.ico").Subrouter()
+	faviconRouter.Use(func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+			req.URL.Path = "/_supervisor/frontend/favicon.ico"
+			h.ServeHTTP(resp, req)
+		})
+	})
+
 	// TODO(cw): remove this distinction once blobserve is standard. Then we always want to use blobserve.
 	if config.Config.BlobServer != nil {
-		rh.supervisorIDEHostHandler(r.PathPrefix("/_supervisor/frontend").Subrouter(), config)
+		SupervisorIDEHostHandler(r.PathPrefix("/_supervisor/frontend").Subrouter(), config)
+		SupervisorIDEHostHandler(faviconRouter, config)
 	} else {
-		rh.supervisorUnauthenticatedAPIHandler(r.PathPrefix("/_supervisor/frontend").Subrouter(), config)
+		supervisorUnauthenticatedAPIHandler(r.PathPrefix("/_supervisor/frontend").Subrouter(), config)
+		supervisorUnauthenticatedAPIHandler(faviconRouter, config)
 	}
 
-	rh.supervisorAuthenticatedAPIHandler(r.PathPrefix("/_supervisor").Subrouter(), config)
+	supervisorAuthenticatedAPIHandler(r.PathPrefix("/_supervisor").Subrouter(), config)
 
-	// TODO(cw): we just enable the IDE host route if blobserver is active. Once blobserve is standard,
-	//           remove this branch and always register the handler.
-	if config.Config.BlobServer != nil {
-		rh.supervisorIDEHostHandler(
-			r.Path("/").
-				MatcherFunc(func(req *http.Request, match *mux.RouteMatch) bool {
-					return matchIDEQuery(false)(req, match) && !isWebsocketRequest(req)
-				}).
-				Subrouter(),
-			config,
-		)
-		rh.supervisorIDEHostHandler(r.Path("/index.html").MatcherFunc(matchIDEQuery(false)).Subrouter(), config)
-	}
-	rh.theiaRootHandler(r.NewRoute().Subrouter(), config)
+	TheiaRootHandler(ip)(r.NewRoute().Subrouter(), config)
 }
 
-func matchIDEQuery(mustBePresent bool) mux.MatcherFunc {
-	return func(req *http.Request, match *mux.RouteMatch) bool {
-		_, present := req.URL.Query()[ideIndexQueryMarker]
-		if mustBePresent && present {
-			return true
-		}
-		if !mustBePresent && !present {
-			return true
-		}
-		return false
-	}
-}
-
-// SupervisorIDEHostHandler matches only when the request is / or /index.html and serves supervisor's IDE host index.html
+// SupervisorIDEHostHandler serves supervisor's IDE host
 func SupervisorIDEHostHandler(r *mux.Router, config *RouteHandlerConfig) {
 	r.Use(logRouteHandlerHandler("SupervisorIDEHostHandler"))
 	// strip the frontend prefix, just for good measure
@@ -178,7 +130,6 @@ func SupervisorIDEHostHandler(r *mux.Router, config *RouteHandlerConfig) {
 
 // TheiaRootHandler handles all requests under / that are not handled by any special case above (expected to be static resources only)
 func TheiaRootHandler(infoProvider WorkspaceInfoProvider) RouteHandler {
-	ideQueryMatch := matchIDEQuery(true)
 	return func(r *mux.Router, config *RouteHandlerConfig) {
 		r.Use(logRouteHandlerHandler("TheiaRootHandler"))
 		var reslv targetResolver
@@ -188,7 +139,7 @@ func TheiaRootHandler(infoProvider WorkspaceInfoProvider) RouteHandler {
 			reslv = staticTheiaResolver
 		}
 		resolver := func(config *Config, req *http.Request) (*url.URL, error) {
-			if ideQueryMatch(req, nil) {
+			if req.URL.Path == "/" {
 				req.URL.Path = "/index.html"
 			}
 			return reslv(config, req)

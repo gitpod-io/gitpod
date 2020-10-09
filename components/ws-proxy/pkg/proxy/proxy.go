@@ -69,7 +69,7 @@ func (p *WorkspaceProxy) Server() (*http.Server, error) {
 		return nil, err
 	}
 	theiaRouter, portRouter := p.WorkspaceRouter(r, p.WorkspaceInfoProvider)
-	installTheiaRoutes(theiaRouter, handlerConfig, DefaultRouteHandlers(p.WorkspaceInfoProvider))
+	installTheiaRoutes(theiaRouter, handlerConfig, p.WorkspaceInfoProvider)
 	installWorkspacePortRoutes(portRouter, handlerConfig)
 
 	return &http.Server{Addr: p.Address, Handler: r}, nil
