@@ -14,8 +14,8 @@
     "@babel/preset-env": "^7.10.0",
     "babel-loader": "^8.0.6",
     "concurrently": "^5.3.0",
+    "copy-webpack-plugin": "^6.2.0",
     "css-loader": "^0.28.11",
-    "html-webpack-plugin": "^4.4.1",
     "source-map-loader": "^1.1.0",
     "style-loader": "^0.23.1",
     "typescript": "^3.9.3",
@@ -24,6 +24,7 @@
   },
   "scripts": {
     "build": "tsc && webpack --mode=production",
-    "watch": "concurrently \"tsc --watch --preserveWatchOutput\" \"webpack --mode=development\""
+    "watch": "concurrently \"tsc --watch --preserveWatchOutput\" \"webpack --mode=development\"",
+    "clean": "rm -rf lib && rm -rf dist"
   }
 }

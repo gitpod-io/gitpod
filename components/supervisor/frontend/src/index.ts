@@ -4,47 +4,68 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-require('../public/index.css');
+require('../src/shared/index.css');
+require("reflect-metadata");
 
-import "reflect-metadata";
-import { createGitpodService, GitpodClient } from "@gitpod/gitpod-protocol";
-import { serverUrl, startUrl } from "./urls";
-import * as heartBeat from "./heart-beat";
-import * as LoadingFrame from "./loading-frame";
-import * as IdeFrame from "./ide-frame";
-import * as GitpodServiceClient from "./gitpod-service-client";
-import { SupervisorServiceClient } from "./supervisor-service-client";
-import { JsonRpcProxyFactory } from '@gitpod/gitpod-protocol/lib/messaging/proxy-factory';
+import { createGitpodService } from "@gitpod/gitpod-protocol";
+import * as GitpodServiceClient from "./ide/gitpod-service-client";
+import * as heartBeat from "./ide/heart-beat";
+import * as IDEService from "./ide/ide-service-impl";
+import * as LoadingFrame from "./shared/loading-frame";
+import { SupervisorServiceClient } from "./ide/supervisor-service-client";
+import { serverUrl, startUrl } from "./shared/urls";
+import * as IDEWebSocket from "./ide/ide-web-socket";
 
+window.gitpod = {
+    service: createGitpodService(serverUrl.toString())
+};
+IDEWebSocket.install();
+const pendingGitpodServiceClient = GitpodServiceClient.create();
 (async () => {
-    // first fetch loading screen to ensure that the owner token cookie is set
-    const loading = await LoadingFrame.load();
+    const gitpodServiceClient = await pendingGitpodServiceClient;
 
-    window.gitpod = {
-        service: createGitpodService(serverUrl.toString())
-    };
-    const factory = new JsonRpcProxyFactory<GitpodClient>(window.gitpod.service.server);
-    window.gitpod.service.registerClient(factory.createProxy());
-    factory.listen(loading.connection);
-
-    const gitpodServiceClient = await GitpodServiceClient.create();
     document.title = gitpodServiceClient.info.workspace.description;
 
     if (gitpodServiceClient.info.workspace.type !== 'regular') {
         return;
     }
 
-    const supervisorServiceClient = new SupervisorServiceClient();
-    const ide = await IdeFrame.load(supervisorServiceClient);
+    //#region web socket
+    const supervisorServiceClinet = new SupervisorServiceClient(gitpodServiceClient)
+    await Promise.all([supervisorServiceClinet.ideReady, supervisorServiceClinet.contentReady]);
+    IDEWebSocket.connectWorkspace();
+    const listener = gitpodServiceClient.onDidChangeInfo(() => {
+        const phase = gitpodServiceClient.info.latestInstance?.status.phase;
+        if (phase === 'stopping' || phase === 'stopped') {
+            listener.dispose();
+            IDEWebSocket.disconnectWorkspace();
+        }
+    });
+    //#endregion
+})();
+
+window.addEventListener('DOMContentLoaded', async () => {
+    document.body.style.visibility = 'hidden';
+
+    const [loading, gitpodServiceClient] = await Promise.all([
+        LoadingFrame.load({ gitpodService: window.gitpod.service }),
+        pendingGitpodServiceClient
+    ]);
+
+    if (gitpodServiceClient.info.workspace.type !== 'regular') {
+        return;
+    }
+
+    const ideService = IDEService.create();
 
     //#region current-frame
-    let currentFrame: HTMLIFrameElement = loading.frame;
+    let currentFrame: HTMLElement = loading.frame;
     let stopped = false;
     const nextFrame = () => {
         const instance = gitpodServiceClient.info.latestInstance;
         if (instance) {
-            if (instance.status.phase === 'running' && ide.service.state === 'ready') {
-                return ide.frame;
+            if (instance.status.phase === 'running' && ideService.state === 'ready') {
+                return document.body;
             }
             if (instance.status.phase === 'stopped') {
                 stopped = true;
@@ -57,7 +78,7 @@ import { JsonRpcProxyFactory } from '@gitpod/gitpod-protocol/lib/messaging/proxy
                 // reload the page if the workspace was restarted to ensure:
                 // - graceful reconnection of IDEs
                 // - new owner token is set
-                window.location.href = startUrl;
+                window.location.href = startUrl.toString();
             }
         }
         return loading.frame;
@@ -74,13 +95,11 @@ import { JsonRpcProxyFactory } from '@gitpod/gitpod-protocol/lib/messaging/proxy
 
     updateCurrentFrame();
     gitpodServiceClient.onDidChangeInfo(() => updateCurrentFrame());
-    ide.service.onDidChange(() => updateCurrentFrame());
+    ideService.onDidChange(() => updateCurrentFrame());
     //#endregion
 
     //#region heart-beat
     heartBeat.track(window);
-    heartBeat.track(loading.frame.contentWindow!);
-    heartBeat.track(ide.frame.contentWindow!);
     const updateHeartBeat = () => {
         if (gitpodServiceClient.info.latestInstance?.status.phase === 'running') {
             heartBeat.schedule(gitpodServiceClient.info.latestInstance.id);
@@ -91,4 +110,4 @@ import { JsonRpcProxyFactory } from '@gitpod/gitpod-protocol/lib/messaging/proxy
     updateHeartBeat();
     gitpodServiceClient.onDidChangeInfo(() => updateHeartBeat());
     //#endregion
-})();
+}, { once: true });

@@ -5,11 +5,19 @@
  */
 
 import { SupervisorStatusResponse, IDEStatusResponse, ContentStatusResponse } from '@gitpod/supervisor-api-grpc/lib/status_pb'
+import { GitpodServiceClient } from './gitpod-service-client';
 
 export class SupervisorServiceClient {
     readonly supervisorReady = this.checkReady('supervisor');
     readonly ideReady = this.supervisorReady.then(() => this.checkReady('ide'))
-    readonly contentReady = this.supervisorReady.then(() => this.checkReady('content'));
+    readonly contentReady = Promise.all([
+        this.supervisorReady,
+        this.gitpodServiceClient.auth
+    ]).then(() => this.checkReady('content'));
+
+    constructor(
+        private readonly gitpodServiceClient: GitpodServiceClient
+    ) { }
 
     private async checkReady(kind: 'content' | 'ide' | 'supervisor', delay?: boolean): Promise<void> {
         if (delay) {

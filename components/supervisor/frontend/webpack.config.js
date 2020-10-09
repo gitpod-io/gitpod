@@ -7,23 +7,17 @@
 // @ts-check
 
 const path = require('path');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
-    entry: path.resolve(__dirname, 'lib/index.js'),
+    entry: {
+        main: path.resolve(__dirname, 'lib/index.js')
+    },
     output: {
         filename: '[name].js',
         chunkFilename: '[name].js',
         path: path.resolve(__dirname, 'dist')
     },
-    plugins: [new HtmlWebpackPlugin({
-        meta: {
-            "referrer": "origin"
-        },
-        favicon: 'public/favicon.ico',
-        base: '_supervisor/frontend/',
-        title: 'Gitpod'
-    })],
     module: {
         rules: [
             {
@@ -64,5 +58,10 @@ module.exports = {
         crypto: 'empty',
         tls: 'empty'
     },
-    devtool: 'source-map'
+    devtool: 'source-map',
+    plugins: [new CopyWebpackPlugin({
+        patterns: [
+            { from: 'public', to: '.' }
+        ]
+    })]
 }; 
