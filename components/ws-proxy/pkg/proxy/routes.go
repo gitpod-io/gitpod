@@ -139,9 +139,6 @@ func TheiaRootHandler(infoProvider WorkspaceInfoProvider) RouteHandler {
 			reslv = staticTheiaResolver
 		}
 		resolver := func(config *Config, req *http.Request) (*url.URL, error) {
-			if req.URL.Path == "/" {
-				req.URL.Path = "/index.html"
-			}
 			return reslv(config, req)
 		}
 

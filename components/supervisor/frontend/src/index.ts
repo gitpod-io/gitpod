@@ -11,7 +11,7 @@ import { createGitpodService } from "@gitpod/gitpod-protocol";
 import { DisposableCollection } from '@gitpod/gitpod-protocol/lib/util/disposable';
 import * as GitpodServiceClient from "./ide/gitpod-service-client";
 import * as heartBeat from "./ide/heart-beat";
-import * as IDEService from "./ide/ide-service-impl";
+import * as IDEFrontendService from "./ide/ide-frontend-service-impl";
 import * as IDEWebSocket from "./ide/ide-web-socket";
 import { SupervisorServiceClient } from "./ide/supervisor-service-client";
 import * as LoadingFrame from "./shared/loading-frame";
@@ -21,7 +21,7 @@ window.gitpod = {
     service: createGitpodService(serverUrl.toString())
 };
 IDEWebSocket.install();
-const ideService = IDEService.create();
+const ideService = IDEFrontendService.create();
 const pendingGitpodServiceClient = GitpodServiceClient.create();
 (async () => {
     const gitpodServiceClient = await pendingGitpodServiceClient;
@@ -62,7 +62,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     //#region current-frame
-    let currentFrame: HTMLElement = loading.frame;
+    let current: HTMLElement = loading.frame;
     let stopped = false;
     const nextFrame = () => {
         const instance = gitpodServiceClient.info.latestInstance;
@@ -87,13 +87,21 @@ window.addEventListener('DOMContentLoaded', async () => {
         return loading.frame;
     }
     const updateCurrentFrame = () => {
-        const newCurrentFrame = nextFrame();
-        if (currentFrame === newCurrentFrame) {
+        const newCurrent = nextFrame();
+        if (current === newCurrent) {
             return;
         }
-        currentFrame.style.visibility = 'hidden';
-        newCurrentFrame.style.visibility = 'visible';
-        currentFrame = newCurrentFrame;
+        current.style.visibility = 'hidden';
+        newCurrent.style.visibility = 'visible';
+        if (current === document.body) {
+            while (document.body.firstChild && document.body.firstChild !== newCurrent) {
+                document.body.removeChild(document.body.firstChild);
+            }
+            while (document.body.lastChild && document.body.lastChild !== newCurrent) {
+                document.body.removeChild(document.body.lastChild);
+            }
+        }
+        current = newCurrent;
     }
 
     updateCurrentFrame();
