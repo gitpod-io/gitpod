@@ -4,18 +4,18 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { IDEService, IDEState } from "@gitpod/gitpod-protocol/lib/ide-service";
+import { IDEFrontendService, IDEFrontendState } from "@gitpod/gitpod-protocol/lib/ide-frontend-service";
 import { Disposable, DisposableCollection } from "@gitpod/gitpod-protocol/lib/util/disposable";
 import { Emitter } from "@gitpod/gitpod-protocol/lib/util/event";
 
-interface IDECapabilities {
+interface IDEFrontendCapabilities {
     /**
-     * Controls whether IDE frame can provide IDE service.
+     * Controls whether IDE window can provide the IDE frontend service.
      */
     readonly service?: boolean
 }
 
-let state: IDEState = 'init';
+let state: IDEFrontendState = 'init';
 window.addEventListener('beforeunload', e => {
     if (state === 'terminated') {
         // workspace is stopping or stopped avoid to prompt a user with confirmation dialogs
@@ -23,13 +23,13 @@ window.addEventListener('beforeunload', e => {
     }
 }, { capture: true });
 
-export function create(): IDEService {
-    let capabilities: IDECapabilities = { service: false };
+export function create(): IDEFrontendService {
+    let capabilities: IDEFrontendCapabilities = { service: false };
     const onDidChangeEmitter = new Emitter<void>();
-    let _delegate: IDEService | undefined;
+    let _delegate: IDEFrontendService | undefined;
     const toStop = new DisposableCollection();
     toStop.push(onDidChangeEmitter);
-    const service: IDEService = {
+    const service: IDEFrontendService = {
         get state() {
             if (state === 'terminated') {
                 return 'terminated';
@@ -61,7 +61,7 @@ export function create(): IDEService {
         get() {
             return _delegate;
         },
-        set(delegate: IDEService) {
+        set(delegate: IDEFrontendService) {
             if (_delegate) {
                 console.error(new Error('ideService is already set'));
                 return;

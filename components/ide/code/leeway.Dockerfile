@@ -28,7 +28,7 @@ RUN sudo apt-get update \
     && sudo apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-ENV GP_CODE_COMMIT f8db5f48de4c0169bef40eb6cf79a9125369f6e9
+ENV GP_CODE_COMMIT 074132acc5f9cf4aa27bbde1e57500e083414769
 RUN git clone https://github.com/gitpod-io/vscode.git --branch gp-code --single-branch gp-code
 WORKDIR /gp-code
 RUN git reset --hard $GP_CODE_COMMIT

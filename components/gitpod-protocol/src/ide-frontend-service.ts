@@ -7,13 +7,13 @@
 import { Event } from "./util/event";
 import { Disposable } from "./util/disposable";
 
-export type IDEState = 'init' | 'ready' | 'terminated';
+export type IDEFrontendState = 'init' | 'ready' | 'terminated';
 
-export interface IDEService {
-    readonly state: IDEState;
+export interface IDEFrontendService {
+    readonly state: IDEFrontendState;
     readonly onDidChange: Event<void>;
     /**
-     * Starts the ide application.
+     * Starts the ide frontend application.
      * Returns the disposable object which is triggered when the ide application should be stopped.
      *
      * On stop the application should store the unsaved changes.
