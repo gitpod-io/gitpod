@@ -8,18 +8,20 @@ require('../src/shared/index.css');
 require("reflect-metadata");
 
 import { createGitpodService } from "@gitpod/gitpod-protocol";
+import { DisposableCollection } from '@gitpod/gitpod-protocol/lib/util/disposable';
 import * as GitpodServiceClient from "./ide/gitpod-service-client";
 import * as heartBeat from "./ide/heart-beat";
 import * as IDEService from "./ide/ide-service-impl";
-import * as LoadingFrame from "./shared/loading-frame";
-import { SupervisorServiceClient } from "./ide/supervisor-service-client";
-import { serverUrl, startUrl } from "./shared/urls";
 import * as IDEWebSocket from "./ide/ide-web-socket";
+import { SupervisorServiceClient } from "./ide/supervisor-service-client";
+import * as LoadingFrame from "./shared/loading-frame";
+import { serverUrl, startUrl } from "./shared/urls";
 
 window.gitpod = {
     service: createGitpodService(serverUrl.toString())
 };
 IDEWebSocket.install();
+const ideService = IDEService.create();
 const pendingGitpodServiceClient = GitpodServiceClient.create();
 (async () => {
     const gitpodServiceClient = await pendingGitpodServiceClient;
@@ -30,17 +32,20 @@ const pendingGitpodServiceClient = GitpodServiceClient.create();
         return;
     }
 
-    //#region web socket
-    const supervisorServiceClinet = new SupervisorServiceClient(gitpodServiceClient)
+    //#region ide lifecycle
+    const supervisorServiceClinet = new SupervisorServiceClient(gitpodServiceClient);
     await Promise.all([supervisorServiceClinet.ideReady, supervisorServiceClinet.contentReady]);
-    IDEWebSocket.connectWorkspace();
-    const listener = gitpodServiceClient.onDidChangeInfo(() => {
-        const phase = gitpodServiceClient.info.latestInstance?.status.phase;
-        if (phase === 'stopping' || phase === 'stopped') {
-            listener.dispose();
-            IDEWebSocket.disconnectWorkspace();
-        }
-    });
+    const toStop = new DisposableCollection();
+    toStop.pushAll([
+        IDEWebSocket.connectWorkspace(),
+        ideService.start(),
+        gitpodServiceClient.onDidChangeInfo(() => {
+            const phase = gitpodServiceClient.info.latestInstance?.status.phase;
+            if (phase === 'stopping' || phase === 'stopped') {
+                toStop.dispose();
+            }
+        })
+    ]);
     //#endregion
 })();
 
@@ -55,8 +60,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (gitpodServiceClient.info.workspace.type !== 'regular') {
         return;
     }
-
-    const ideService = IDEService.create();
 
     //#region current-frame
     let currentFrame: HTMLElement = loading.frame;

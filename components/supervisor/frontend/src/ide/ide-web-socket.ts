@@ -5,6 +5,7 @@
  */
 
 import ReconnectingWebSocket from 'reconnecting-websocket';
+import { Disposable } from '@gitpod/gitpod-protocol/lib/util/disposable';
 
 let connected = false;
 const workspaceSockets = new Set<IDEWebSocket>();
@@ -39,14 +40,15 @@ export function install(): void {
     window.WebSocket = IDEWebSocket as any;
 }
 
-export function connectWorkspace(): void {
+export function connectWorkspace(): Disposable {
     if (connected) {
-        return;
+        return Disposable.NULL;
     }
     connected = true;
     for (const socket of workspaceSockets) {
         socket.reconnect();
     }
+    return Disposable.create(() => disconnectWorkspace());
 }
 
 export function disconnectWorkspace(): void {
