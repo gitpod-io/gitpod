@@ -14,7 +14,9 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"sync"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sourcegraph/jsonrpc2"
 	"golang.org/x/net/websocket"
 	"golang.org/x/xerrors"
@@ -77,6 +79,8 @@ type APIInterface interface {
 	ResolvePlugins(ctx context.Context, workspaceID string, params *ResolvePluginsParams) (res *ResolvedPlugins, err error)
 	InstallUserPlugins(ctx context.Context, params *InstallPluginsParams) (res bool, err error)
 	UninstallUserPlugin(ctx context.Context, params *UninstallPluginParams) (res bool, err error)
+
+	InstanceUpdates(ctx context.Context, instanceID string) <-chan *WorkspaceInstance
 }
 
 // FunctionName is the name of an RPC function
@@ -193,6 +197,9 @@ const (
 	FunctionInstallUserPlugins FunctionName = "installUserPlugins"
 	// FunctionUninstallUserPlugin is the name of the uninstallUserPlugin function
 	FunctionUninstallUserPlugin FunctionName = "uninstallUserPlugin"
+
+	// FunctionOnInstanceUpdate is the name of the onInstanceUpdate callback function
+	FunctionOnInstanceUpdate = "onInstanceUpdate"
 )
 
 // ConnectToServerOpts configures the server connection
@@ -203,39 +210,108 @@ type ConnectToServerOpts struct {
 
 // ConnectToServer establishes a new websocket connection to the server
 func ConnectToServer(endpoint string, opts ConnectToServerOpts) (*APIoverJSONRPC, error) {
-	if opts.Context == nil {
-		opts.Context = context.Background()
-	}
+	var res APIoverJSONRPC
+	res.C = &reconnectingJSONRPCOverWS{
+		Handler: res.handler,
+		Connector: func(h jsonrpcHandlerFunc) (conn *jsonrpc2.Conn, ws *websocket.Conn, err error) {
+			if opts.Context == nil {
+				opts.Context = context.Background()
+			}
 
-	epURL, err := url.Parse(endpoint)
+			epURL, err := url.Parse(endpoint)
+			if err != nil {
+				err = xerrors.Errorf("invalid endpoint URL: %w", err)
+				return
+			}
+
+			var protocol string
+			if epURL.Scheme == "wss:" {
+				protocol = "https"
+			} else {
+				protocol = "http"
+			}
+			origin := fmt.Sprintf("%s://%s/", protocol, epURL.Hostname())
+
+			wscfg, err := websocket.NewConfig(endpoint, origin)
+			if err != nil {
+				return
+			}
+			if opts.Token != "" {
+				wscfg.Header.Set("Authorization", "Bearer "+opts.Token)
+			}
+			wsconn, err := websocket.DialConfig(wscfg)
+			if err != nil {
+				err = xerrors.Errorf("cannot dial endpoint %s: %w", endpoint, err)
+				return
+			}
+
+			conn = jsonrpc2.NewConn(opts.Context, jsonrpc2.NewBufferedStream(wsconn, simpleCodec{}), jsonrpc2.HandlerWithError(h))
+			ws = wsconn
+			return
+		},
+	}
+	return &res, nil
+}
+
+type jsonrpcHandlerFunc func(context.Context, *jsonrpc2.Conn, *jsonrpc2.Request) (result interface{}, err error)
+
+type reconnectingJSONRPCOverWS struct {
+	mu   sync.RWMutex
+	ws   *websocket.Conn
+	conn *jsonrpc2.Conn
+
+	Connector func(h jsonrpcHandlerFunc) (conn *jsonrpc2.Conn, ws *websocket.Conn, err error)
+	Handler   jsonrpcHandlerFunc
+}
+
+// Call issues a standard request (http://www.jsonrpc.org/specification#request_object).
+func (c *reconnectingJSONRPCOverWS) Call(ctx context.Context, method string, params, result interface{}, opt ...jsonrpc2.CallOption) error {
+	return c.retryWithConnection(func(conn jsonrpc2.JSONRPC2) error {
+		return conn.Call(ctx, method, params, result, opt...)
+	})
+}
+
+// Notify issues a notification request (http://www.jsonrpc.org/specification#notification).
+func (c *reconnectingJSONRPCOverWS) Notify(ctx context.Context, method string, params interface{}, opt ...jsonrpc2.CallOption) error {
+	return c.retryWithConnection(func(conn jsonrpc2.JSONRPC2) error {
+		return conn.Notify(ctx, method, params, opt...)
+	})
+}
+
+// Close closes the underlying connection, if it exists.
+func (c *reconnectingJSONRPCOverWS) Close() error {
+	return nil
+}
+
+func (c *reconnectingJSONRPCOverWS) retryWithConnection(cb func(conn jsonrpc2.JSONRPC2) error) error {
+	conn, err := c.getConnection()
 	if err != nil {
-		return nil, xerrors.Errorf("invalid endpoint URL: %w", err)
+		return err
 	}
 
-	var protocol string
-	if epURL.Scheme == "wss:" {
-		protocol = "https"
-	} else {
-		protocol = "http"
-	}
-	origin := fmt.Sprintf("%s://%s/", protocol, epURL.Hostname())
+	err = cb(conn)
 
-	wscfg, err := websocket.NewConfig(endpoint, origin)
+	// TODO(cw): detect connection issues and try again
+
+	return err
+}
+
+func (c *reconnectingJSONRPCOverWS) getConnection() (jsonrpc2.JSONRPC2, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if c.conn != nil {
+		return c.conn, nil
+	}
+
+	var err error
+	c.conn, c.ws, err = c.Connector(c.Handler)
 	if err != nil {
+		// TODO(cw): attempt to reconnect with exponential backoff
 		return nil, err
 	}
-	if opts.Token != "" {
-		wscfg.Header.Set("Authorization", "Bearer "+opts.Token)
-	}
-	wsconn, err := websocket.DialConfig(wscfg)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot dial endpoint %s: %w", endpoint, err)
-	}
 
-	var res APIoverJSONRPC
-	res.W = wsconn
-	res.C = jsonrpc2.NewConn(opts.Context, jsonrpc2.NewBufferedStream(wsconn, simpleCodec{}), jsonrpc2.HandlerWithError(res.handler))
-	return &res, nil
+	return c.conn, nil
 }
 
 type simpleCodec struct{}
@@ -253,24 +329,74 @@ func (s simpleCodec) ReadObject(stream *bufio.Reader, v interface{}) error {
 
 // APIoverJSONRPC makes JSON RPC calls to the Gitpod server is the APIoverJSONRPC message type
 type APIoverJSONRPC struct {
-	W *websocket.Conn
-	C *jsonrpc2.Conn
+	C jsonrpc2.JSONRPC2
+
+	mu   sync.RWMutex
+	subs map[string][]chan *WorkspaceInstance
 }
 
 // Close closes the connection
 func (gp *APIoverJSONRPC) Close() (err error) {
 	e1 := gp.C.Close()
-	e2 := gp.W.Close()
 	if e1 != nil {
 		return e1
-	}
-	if e2 != nil {
-		return e2
 	}
 	return nil
 }
 
-func (gp *APIoverJSONRPC) handler(context.Context, *jsonrpc2.Conn, *jsonrpc2.Request) (result interface{}, err error) {
+// InstanceUpdates subscribes to workspace instance updates until the context is canceled or the workspace
+// instance is stopped.
+func (gp *APIoverJSONRPC) InstanceUpdates(ctx context.Context, instanceID string) <-chan *WorkspaceInstance {
+	chn := make(chan *WorkspaceInstance)
+
+	gp.mu.Lock()
+	if gp.subs == nil {
+		gp.subs = make(map[string][]chan *WorkspaceInstance)
+	}
+	gp.subs[instanceID] = append(gp.subs[instanceID], chn)
+	gp.mu.Unlock()
+
+	go func() {
+		<-ctx.Done()
+
+		gp.mu.Lock()
+		close(chn)
+		n := 0
+		for _, x := range gp.subs[instanceID] {
+			if x == chn {
+				continue
+			}
+			gp.subs[instanceID][n] = x
+			n++
+		}
+		gp.mu.Unlock()
+	}()
+
+	return chn
+}
+
+func (gp *APIoverJSONRPC) handler(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
+	log.WithField("req", fmt.Sprintf("%+v", req)).Debug("APIoverJSONRPC handler")
+	if req.Method != FunctionOnInstanceUpdate {
+		return
+	}
+
+	var instance WorkspaceInstance
+	err = json.Unmarshal(*req.Params, &instance)
+	if err != nil {
+		log.WithError(err).WithField("raw", string(*req.Params)).Error("cannot unmarshal instance update")
+		return
+	}
+
+	gp.mu.RLock()
+	defer gp.mu.RUnlock()
+	for _, chn := range gp.subs[instance.ID] {
+		select {
+		case chn <- &instance:
+		default:
+		}
+	}
+
 	return
 }
 

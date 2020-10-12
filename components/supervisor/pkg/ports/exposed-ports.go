@@ -6,7 +6,6 @@ package ports
 
 import (
 	"context"
-	"time"
 
 	"github.com/gitpod-io/gitpod/supervisor/pkg/gitpod"
 )
@@ -49,6 +48,7 @@ func (*NoopExposedPorts) Expose(ctx context.Context, local, global uint32, publi
 // the ExposedPortsInterface.
 type GitpodExposedPorts struct {
 	WorkspaceID string
+	InstanceID  string
 	C           gitpod.APIInterface
 }
 
@@ -63,38 +63,30 @@ func (g *GitpodExposedPorts) Observe(ctx context.Context) (<-chan []ExposedPort,
 		defer close(reschan)
 		defer close(errchan)
 
-		// TODO(cw): base on instance updates rather than polling
-		t := time.NewTicker(10 * time.Second)
+		updates := g.C.InstanceUpdates(ctx, g.InstanceID)
 		for {
-			prts, err := g.C.GetOpenPorts(ctx, g.WorkspaceID)
-			if err != nil {
-				errchan <- err
-				continue
-			}
-
-			res := make([]ExposedPort, len(prts))
-			for i, p := range prts {
-				var localport = p.TargetPort
-				if localport == 0 {
-					// Ports exposed through confighuration (e.g. .gitpod.yml) do not have explicit target ports,
-					// but rather implicitaly forward to their "port".
-					localport = p.Port
-				}
-
-				res[i] = ExposedPort{
-					GlobalPort: uint32(p.Port),
-					LocalPort:  uint32(localport),
-					Public:     p.Visibility == "public",
-					URL:        p.URL,
-				}
-			}
-
-			reschan <- res
-
 			select {
+			case u := <-updates:
+				res := make([]ExposedPort, len(u.Status.ExposedPorts))
+				for i, p := range u.Status.ExposedPorts {
+					var localport = p.TargetPort
+					if localport == 0 {
+						// Ports exposed through confighuration (e.g. .gitpod.yml) do not have explicit target ports,
+						// but rather implicitaly forward to their "port".
+						localport = p.Port
+					}
+
+					res[i] = ExposedPort{
+						GlobalPort: uint32(p.Port),
+						LocalPort:  uint32(localport),
+						Public:     p.Visibility == "public",
+						URL:        p.URL,
+					}
+				}
+
+				reschan <- res
 			case <-ctx.Done():
 				return
-			case <-t.C:
 			}
 		}
 	}()
