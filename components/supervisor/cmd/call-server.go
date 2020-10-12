@@ -21,10 +21,11 @@ var callServerCmd = &cobra.Command{
 	Args:   cobra.MinimumNArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		var (
-			ctx   = context.Background()
-			host  = args[0]
-			token = args[1]
+			ctx, cancel = context.WithCancel(context.Background())
+			host        = args[0]
+			token       = args[1]
 		)
+		defer cancel()
 
 		api, err := gitpod.ConnectToServer(fmt.Sprintf("ws://%s/api/v1", host), gitpod.ConnectToServerOpts{
 			Token: token,
@@ -39,9 +40,21 @@ var callServerCmd = &cobra.Command{
 			log.Fatal("GetLoggedInUser", err)
 		}
 		json.NewEncoder(os.Stdout).Encode(usr)
+
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetEscapeHTML(false)
+		enc.SetIndent("", "  ")
+
+		instanceID, _ := cmd.Flags().GetString("instance-id")
+		updates := api.InstanceUpdates(ctx, instanceID)
+		for u := range updates {
+			enc.Encode(u)
+		}
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(callServerCmd)
+
+	callServerCmd.Flags().String("instance-id", os.Getenv("GITPOD_INSTANCE_ID"), "instance ID to listen for")
 }

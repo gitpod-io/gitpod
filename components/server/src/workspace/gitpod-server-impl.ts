@@ -126,6 +126,8 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
                 }
             }
 
+            // TODO(cw): the instance update is not subject to resource access guards, hence provides instance info
+            //           to clients who might not otherwise have access to that information.
             this.messageBusIntegration.listenForWorkspaceInstanceUpdates(
                 this.user.id,
                 (ctx: TraceContext, instance: WorkspaceInstance) => withTrace(ctx, () => this.client.onInstanceUpdate(this.censorInstance(instance)))

@@ -38,7 +38,7 @@ type Method struct {
 const tpl = `package rpc
 
 // GitpodServerInterface wraps the Gitpod server
-type GitpodServerInterface interface {
+type APIInterface interface {
 	{{- range $m := . }}
 	{{ .GoName }}({{ .GoParams }}) {{ .GoReturnType }}
 	{{- end }}
@@ -54,14 +54,14 @@ const (
 	{{- end }}
 )
 
-// GitpodServer makes JSON RPC calls to the Gitpod server
-type GitpodServer struct {
+// APIoverJSONRPC makes JSON RPC calls to the Gitpod server
+type APIoverJSONRPC struct {
 	C *jsonrpc2.Conn
 }
 
 {{- range $m := . }}
 // {{ .GoName }} calls {{ .Name }} on the server
-func (gp *GitpodServer) {{ .GoName }}({{ .GoParams }}) {{ .GoReturnType }} {
+func (gp *APIoverJSONRPC) {{ .GoName }}({{ .GoParams }}) {{ .GoReturnType }} {
 	var _params []interface{}
 	{{ range $p := .Params }}
 	_params = append(_params, {{ .GoName }})
