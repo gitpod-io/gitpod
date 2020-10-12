@@ -120,6 +120,13 @@ message PortsStatusResponse {
     repeated PortsStatus ports = 1;
 }
 message PortsStatus {
+    message ExposedPortInfo {
+        // public determines if the port is available without authentication or not
+        bool public = 1;
+        // url is the URL at which the port is available
+        string url = 2;
+    }
+
     // local_port is the port a service actually bound to. Some services bind
     // to localhost:<port>, in which case they cannot be made accessible from
     // outside the container. To help with this, supervisor then starts a proxy
@@ -128,6 +135,13 @@ message PortsStatus {
     uint32 local_port = 1;
 
     uint32 global_port = 2;
+
+    // served is true if there is a process in the workspace that serves this port.
+    bool served = 4;
+
+    // Exposed provides information when a port is exposed. If this field isn't set,
+    // the port is not available from outside the workspace (i.e. the internet).
+    ExposedPortInfo exposed = 5;
 }
 
 message TasksStatusRequest {
