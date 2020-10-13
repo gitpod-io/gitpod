@@ -418,6 +418,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         const shouldRenderTips = showProductivityTips && !logs && !isError && this.userHasAlreadyCreatedWorkspaces !== undefined && this.runsInIFrame() &&
             !(this.state.workspaceInstance && (this.state.workspaceInstance.status.phase === 'stopping' || this.state.workspaceInstance.status.phase === 'stopped'));
         const productivityTip = shouldRenderTips ? <ProductivityTips userHasCreatedWorkspaces={this.userHasAlreadyCreatedWorkspaces} /> : undefined;
+        const isStopped = this.state.workspaceInstance && this.state.workspaceInstance.status.phase === 'stopped';
         return (
             <WithBranding service={this.props.service}>
                 <Context.Consumer>
@@ -425,7 +426,8 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                         <CubeFrame
                             errorMessage={errorMessage}
                             errorMode={isError}
-                            branding={ctx.branding}>
+                            branding={ctx.branding}
+                            stoppedAnimation={isStopped}>
                             <LicenseCheck service={this.props.service.server} />
                             <div className="progress"><div className="runner" style={{ width: this.getProgress() + "%" }}></div></div>
                             {message}

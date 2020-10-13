@@ -12,6 +12,7 @@ export interface CubeFrameProps {
     errorMode: boolean;
     errorMessage?: string;
     branding?: Branding;
+    stoppedAnimation?: boolean;
 }
 
 export interface CubeFrameState {
@@ -59,6 +60,9 @@ export class CubeFrame extends React.Component<CubeFrameProps, CubeFrameState> {
     render() {
         if (this.bootanimation) {
             this.bootanimation.setInErrorMode(this.props.errorMode);
+            if (!!this.props.stoppedAnimation) {
+                this.bootanimation.stop();
+            }
         }
 
         return (
