@@ -26,6 +26,7 @@ export class Bootanimation {
     };
     protected buffers: { position: WebGLBuffer | null; normals: WebGLBuffer | null; indices: WebGLBuffer | null; };
     protected inErrorMode: boolean = false;
+    protected isStopped: boolean = false;
 
     protected projectionMatrix = new mat4();
     protected modelViewMatrix = new mat4();
@@ -194,6 +195,10 @@ export class Bootanimation {
     }
 
     start() {
+        if (!!this.isStopped) {
+            this.isStopped = false;
+            return;
+        }
         let then = 0;
 
         // Draw the scene repeatedly
@@ -203,7 +208,7 @@ export class Bootanimation {
                 return;
             }
 
-            now *= 0.001;  // convert to seconds
+            now = !this.isStopped ? now * 0.001 : then; // convert to seconds
             const deltaTime = now - then;
             then = now;
 
@@ -220,7 +225,14 @@ export class Bootanimation {
         this.onResize();
     }
 
+    stop() {
+        this.isStopped = true;
+    }
+
     protected updateMousePosition(evt: MouseEvent) {
+        if (!!this.isStopped) {
+            return;
+        }
         this.mousePosition = [(evt.clientX / this.canvas.clientWidth) - 0.5, (evt.clientY / this.canvas.clientHeight) - 0.5];
     }
 
