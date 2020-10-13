@@ -280,7 +280,7 @@ export class ConfigProvider {
 
     protected async validateConfig(config: WorkspaceConfig, user: User): Promise<void> {
         // Make sure the projectRoot does not leave POD_PATH_WORKSPACE_BASE as that's a common
-        // assumption throughout the code (e.g. ws-sync)
+        // assumption throughout the code (e.g. ws-daemon)
         const checkoutLocation = config.checkoutLocation;
         if (checkoutLocation) {
             const normalizedPath = path.join(POD_PATH_WORKSPACE_BASE, checkoutLocation);

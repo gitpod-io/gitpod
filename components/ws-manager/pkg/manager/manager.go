@@ -23,9 +23,9 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
+	wssync "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/grpcpool"
-	wssync "github.com/gitpod-io/gitpod/ws-sync/api"
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/opentracing/opentracing-go"
@@ -92,8 +92,8 @@ const (
 
 	// theiaVersionLabelFmt is the format to produce the label a node has if Theia is available on it in a particular version
 	theiaVersionLabelFmt = "gitpod.io/theia.%s"
-	// wssyncLabel is the label a node has if ws-sync is running on it
-	wssyncLabel = "gitpod.io/ws-sync"
+	// wssyncLabel is the label a node has if ws-daemon is running on it
+	wssyncLabel = "gitpod.io/ws-daemon"
 )
 
 const (
@@ -101,7 +101,7 @@ const (
 	stopWorkspaceNormallyGracePeriod = 30 * time.Second
 	// stopWorkspaceImmediatelyGracePeriod is the grace period we use when stopping a pod as soon as possbile
 	stopWorkspaceImmediatelyGracePeriod = 1 * time.Second
-	// wssyncDialTimeout is the time we allow for trying to connect to ws-sync.
+	// wssyncDialTimeout is the time we allow for trying to connect to ws-daemon.
 	// Note: this is NOT the time we allow for RPC calls to wssync, but just for establishing the connection.
 	wssyncDialTimeout = 10 * time.Second
 )
@@ -1103,7 +1103,7 @@ func isKubernetesObjNotFoundError(err error) bool {
 	return false
 }
 
-// connectToWorkspaceSync establishes a connection to the ws-sync daemon running on the node of the pod/workspace.
+// connectToWorkspaceSync establishes a connection to the ws-daemon daemon running on the node of the pod/workspace.
 func (m *Manager) connectToWorkspaceSync(ctx context.Context, wso workspaceObjects) (wssync.WorkspaceContentServiceClient, error) {
 	span, ctx := tracing.FromContext(ctx, "connectToWorkspaceSync")
 	tracing.ApplyOWI(span, wso.GetOWI())
@@ -1115,7 +1115,7 @@ func (m *Manager) connectToWorkspaceSync(ctx context.Context, wso workspaceObjec
 	}
 	conn, err := m.wssyncPool.Get(host)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot connect to ws-sync: %w", err)
+		return nil, xerrors.Errorf("cannot connect to ws-daemon: %w", err)
 	}
 
 	return wssync.NewWorkspaceContentServiceClient(conn), nil
@@ -1123,8 +1123,8 @@ func (m *Manager) connectToWorkspaceSync(ctx context.Context, wso workspaceObjec
 
 // newWssyncConnectionFactory creates a new wssync connection factory based on the wsmanager configuration
 func newWssyncConnectionFactory(managerConfig Configuration) (grpcpool.Factory, error) {
-	// We use client-side retry when ws-sync is unavilable. The unavailability need just cover the time ws-sync
-	// needs to restart. If ws-sync is unavailable during a connection attempt, the WithBlock and WithBackoffMaxDelay
+	// We use client-side retry when ws-daemon is unavilable. The unavailability need just cover the time ws-daemon
+	// needs to restart. If ws-daemon is unavailable during a connection attempt, the WithBlock and WithBackoffMaxDelay
 	// configure the behaviour.
 	// Once the connection has been established, but becomes unavailable during a call, this retry mechanism takes hold.
 	//
@@ -1176,8 +1176,8 @@ func newWssyncConnectionFactory(managerConfig Configuration) (grpcpool.Factory, 
 
 		certificate, err := tls.LoadX509KeyPair(crt, key)
 		if err != nil {
-			log.WithField("config", cfg.TLS).Error("Cannot load ws-sync certs - this is a configuration issue.")
-			return nil, xerrors.Errorf("cannot load ws-sync certs: %w", err)
+			log.WithField("config", cfg.TLS).Error("Cannot load ws-daemon certs - this is a configuration issue.")
+			return nil, xerrors.Errorf("cannot load ws-daemon certs: %w", err)
 		}
 
 		creds := credentials.NewTLS(&tls.Config{
@@ -1203,7 +1203,7 @@ func newWssyncConnectionFactory(managerConfig Configuration) (grpcpool.Factory, 
 
 		conn, err := grpc.DialContext(conctx, addr, opts...)
 		if err != nil {
-			log.WithError(err).WithField("host", host).Error("cannot connect to ws-sync")
+			log.WithError(err).WithField("host", host).Error("cannot connect to ws-daemon")
 
 			// we deliberately swallow the error here as users might see this one.
 			return nil, xerrors.Errorf("cannot connect to workspace sync")

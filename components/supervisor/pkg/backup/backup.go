@@ -12,7 +12,7 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/git"
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
-	wssync "github.com/gitpod-io/gitpod/ws-sync/api"
+	wssync "github.com/gitpod-io/gitpod/ws-daemon/api"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -36,7 +36,7 @@ func NewInWorkspaceHelper(checkoutLocation string, pauseTheia chan<- bool) *InWo
 	}
 }
 
-// InWorkspaceHelper implements the in-workspace helper for ws-sync
+// InWorkspaceHelper implements the in-workspace helper for ws-daemon
 type InWorkspaceHelper struct {
 	checkoutLocation string
 	pauseChan        chan<- bool
@@ -167,7 +167,7 @@ const (
 func (iwh *iwhserver) GitStatus(ctx context.Context, req *wssync.GitStatusRequest) (*wssync.GitStatusResponse, error) {
 	//
 	// BEWARE
-	// This functionality is duplicated in ws-sync.
+	// This functionality is duplicated in ws-daemon.
 	// When we make the backup work without the PLIS we should de-duplicate this implementation.
 	//
 

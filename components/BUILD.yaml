@@ -23,8 +23,8 @@ packages:
       - components/ws-manager-node:docker
       - components/ws-manager:docker
       - components/ws-proxy:docker
-      - components/ws-sync:docker
-      - components/ws-sync/shiftfs-module-loader:docker
+      - components/ws-daemon:docker
+      - components/ws-daemon/shiftfs-module-loader:docker
       - components/gitpod-protocol:publish
       - components/supervisor-api/typescript-grpc:publish
   - name: all-apps
@@ -43,7 +43,7 @@ packages:
       - components/ws-manager-node:app
       - components/ws-manager:app
       - components/ee/ws-scheduler:app
-      - components/ws-sync:app
+      - components/ws-daemon:app
 scripts:
   - name: update-license-header
     deps:

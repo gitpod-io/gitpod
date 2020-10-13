@@ -38,7 +38,7 @@ spec:
         prometheus.io/scrape: 'true'
         prometheus.io/path: "/metrics"
         prometheus.io/port: '9500'
-        checksum/tlskey: {{ include (print $.Template.BasePath "/ws-sync-tlssecret.yaml") $ | sha256sum }}
+        checksum/tlskey: {{ include (print $.Template.BasePath "/ws-daemon-tlssecret.yaml") $ | sha256sum }}
     spec:
 {{ include "gitpod.pod.affinity" $this | indent 6 }}
       serviceAccountName: ws-manager
@@ -50,7 +50,7 @@ spec:
           name: {{ template "gitpod.comp.configMap" $this }}
       - name: tls-certs
         secret:
-          secretName: ws-sync-tls
+          secretName: ws-daemon-tls
       - name: workspace-template
         configMap:
           name: workspace-template

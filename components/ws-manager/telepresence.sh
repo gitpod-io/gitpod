@@ -7,8 +7,8 @@ if [ "$1" == "intp" ]; then
 fi
 
 alsoProxy=""
-for h in $(kubectl get pods -l component=ws-sync --no-headers -o=custom-columns=:status.hostIP | grep -v none); do
-    echo "Also proxying ws-sync daemon on ${h}"
+for h in $(kubectl get pods -l component=ws-daemon --no-headers -o=custom-columns=:status.hostIP | grep -v none); do
+    echo "Also proxying ws-daemon daemon on ${h}"
     alsoProxy="${alsoProxy} --also-proxy ${h}"
 done
 

@@ -16,7 +16,7 @@
         }
       },
       "sync": {
-        "image": "eu.gcr.io/gitpod-dev/gitpod-ws-sync:cw-ws-manager.24",
+        "image": "eu.gcr.io/gitpod-dev/gitpod-ws-daemon:cw-ws-manager.24",
         "requests": {
           "cpu": "1m",
           "memory": "1073741824m"

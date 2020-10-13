@@ -7,7 +7,7 @@
 import { KubeStage } from "@gitpod/gitpod-protocol/lib/env";
 
 /**
- * This is the analogon to the code in ws-sync/pkg/storage/storage_gcloud.go:bucketName
+ * This is the analogon to the code in ws-daemon/pkg/storage/storage_gcloud.go:bucketName
  * @param userId
  * @param stage
  */
@@ -17,7 +17,7 @@ export function getBucketName(userId: string, stage: KubeStage): string {
 }
 
 /**
- * This is the analogon to the code in ws-sync/pkg/syncd/config.go:NewStorage
+ * This is the analogon to the code in ws-daemon/pkg/syncd/config.go:NewStorage
  * @param stage 
  */
 export function getBucketNamePrefix(stage: KubeStage): string {

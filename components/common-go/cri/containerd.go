@@ -27,7 +27,7 @@ import (
 
 const (
 	// labelCacheSize configures how big our label cache is, i.e. how many workspace pods
-	// we can handle in this ws-sync instance at the same time. 1024 is way more than we
+	// we can handle in this ws-daemon instance at the same time. 1024 is way more than we
 	// will ever have on a single machine. A single label is about 200 byte.
 	labelCacheSize = 1024
 
@@ -67,7 +67,7 @@ func NewContainerdCRI(cfg *ContainerdConfig, mounts *NodeMountsLookup, pathMappi
 	return res, nil
 }
 
-// ContainerdCRI implements the ws-sync CRI for containerd
+// ContainerdCRI implements the ws-daemon CRI for containerd
 type ContainerdCRI struct {
 	Client  *containerd.Client
 	Mounts  *NodeMountsLookup

@@ -44,7 +44,7 @@ const (
 	workspaceSnapshotAnnotation = "gitpod/snapshot"
 
 	// workspaceInitializerAnnotation contains the protobuf serialized initializer config in base64 encoding. We need to keep this around post-request
-	// as we'll pass on the request to ws-sync later in the workspace's lifecycle. This is not a configmap as we cannot create the map prior to the pod,
+	// as we'll pass on the request to ws-daemon later in the workspace's lifecycle. This is not a configmap as we cannot create the map prior to the pod,
 	// because then we would not know which configmaps to delete; we cannot create the map after the pod as then the pod could reach the state what the
 	// configmap is needed, but isn't present yet.
 	// According to the K8S documentation, storing "large" amounts of data in annotations is not an issue:

@@ -39,12 +39,12 @@ spec:
         matchLabels:
           app: {{ template "gitpod.fullname" . }}
           component: agent-smith
-  # ALLOW ingress from ws-sync
+  # ALLOW ingress from ws-daemon
   - from:
     - podSelector:
         matchLabels:
           app: {{ template "gitpod.fullname" . }}
-          component: ws-sync
+          component: ws-daemon
   # ALLOW prometheus scraping from theia backend
   - ports:
     - protocol: TCP

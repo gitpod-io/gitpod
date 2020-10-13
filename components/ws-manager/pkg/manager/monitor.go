@@ -23,9 +23,9 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	wssync "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/internal/util"
-	wssync "github.com/gitpod-io/gitpod/ws-sync/api"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -52,13 +52,13 @@ const (
 )
 
 var (
-	// wssyncMaxAttempts is the number of times we'll attempt to work with ws-sync when a former attempt returned unavailable.
+	// wssyncMaxAttempts is the number of times we'll attempt to work with ws-daemon when a former attempt returned unavailable.
 	// We rety for two minutes every 5 seconds (see wssyncRetryInterval).
 	//
 	// Note: this is a variable rather than a constant so that tests can modify this value.
 	wssyncMaxAttempts = 120 / 5
 
-	// wssyncRetryInterval is the time in between attempts to work with ws-sync.
+	// wssyncRetryInterval is the time in between attempts to work with ws-daemon.
 	//
 	// Note: this is a variable rather than a constant so that tests can modify this value.
 	wssyncRetryInterval = 5 * time.Second
@@ -313,7 +313,7 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 	}
 
 	// There's one bit of the status which we cannot infere from Kubernetes alone, and that's the Git repo status
-	// inside the workspace. To get this information, we have to ask ws-sync. At the moment we only care about this
+	// inside the workspace. To get this information, we have to ask ws-daemon. At the moment we only care about this
 	// information during shutdown, as we're only showing it for stopped workspaces.
 
 	if evt.Type == watch.Deleted {
@@ -544,7 +544,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 func (m *Monitor) actOnHeadlessDone(pod *corev1.Pod, failed bool) (err error) {
 	wso := workspaceObjects{Pod: pod}
 
-	// This timeout is really a catch-all safety net in case any of the ws-sync interaction
+	// This timeout is really a catch-all safety net in case any of the ws-daemon interaction
 	// goes out of hand. Really it should never play a role.
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Hour)
 	defer cancel()
@@ -920,12 +920,12 @@ func (m *Monitor) waitForWorkspaceReady(ctx context.Context, pod *corev1.Pod) (e
 	})
 	if st, ok := grpc_status.FromError(err); ok && st.Code() == codes.NotFound {
 		// Looks like we have missed the CREATING phase in which we'd otherwise start the workspace content initialization.
-		// Let's see if we're initializing already. If so, there's something very wrong because ws-sync does not know about
+		// Let's see if we're initializing already. If so, there's something very wrong because ws-daemon does not know about
 		// this workspace yet. In that case we'll run another desperate attempt to initialize the workspace.
 		m.initializerMapLock.Lock()
 		if _, alreadyInitializing := m.initializerMap[pod.Name]; alreadyInitializing {
 			// we're already initializing but wssync does not know about this workspace. That's very bad.
-			log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Error("we were already initializing but wssync does not know about this workspace (bug in ws-sync?). Trying again!")
+			log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Error("we were already initializing but wssync does not know about this workspace (bug in ws-daemon?). Trying again!")
 			delete(m.initializerMap, pod.Name)
 		}
 		m.initializerMapLock.Unlock()
@@ -1015,7 +1015,7 @@ func (m *Monitor) probeWorkspaceReady(ctx context.Context, pod *corev1.Pod) (res
 	return &probeResult, nil
 }
 
-// initializeWorkspaceContent talks to a ws-sync daemon on the node of the pod and initializes the workspace content.
+// initializeWorkspaceContent talks to a ws-daemon daemon on the node of the pod and initializes the workspace content.
 // If we're already initializing the workspace, thus function will return immediately. If we were not initializing,
 // prior to this call this function returns once initialization is complete.
 func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Pod) (err error) {
@@ -1076,10 +1076,10 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 			}
 		}
 
-		// connect to the appropriate ws-sync
+		// connect to the appropriate ws-daemon
 		snc, err = m.manager.connectToWorkspaceSync(ctx, workspaceObjects{Pod: pod})
 		if err != nil {
-			return xerrors.Errorf("cannot connect to ws-sync: %w", err)
+			return xerrors.Errorf("cannot connect to ws-daemon: %w", err)
 		}
 
 		// mark that we're already initialising this workspace
@@ -1147,7 +1147,7 @@ func retryIfUnavailable(ctx context.Context, op func(ctx context.Context) error)
 	return grpc_status.Error(codes.Unavailable, "workspace content initialization is currently unavailable")
 }
 
-// finalizeWorkspaceContent talks to a ws-sync daemon on the node of the pod and initializes the workspace content.
+// finalizeWorkspaceContent talks to a ws-daemon daemon on the node of the pod and initializes the workspace content.
 func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceObjects) {
 	span, ctx := tracing.FromContext(ctx, "finalizeWorkspaceContent")
 	defer tracing.FinishSpan(span, nil)
@@ -1191,12 +1191,12 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		}
 
 		// Maybe the workspace never made it to a phase where we actually initialized a workspace.
-		// Assuming that once we've had a hostIP we've spoken to ws-sync it's safe to assume that if
+		// Assuming that once we've had a hostIP we've spoken to ws-daemon it's safe to assume that if
 		// we don't have a hostIP we don't need to dipose the workspace.
 		// Obviously that only holds if we do not require a backup. If we do require one, we want to
 		// fail as loud as we can in this case.
 		if !doBackup && wso.HostIP() == "" {
-			// we don't need a backup and have never spoken to ws-sync: we're good here.
+			// we don't need a backup and have never spoken to ws-daemon: we're good here.
 			m.finalizerMapLock.Unlock()
 			return true, &csapi.GitStatus{}, nil
 		}
@@ -1269,7 +1269,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		if doBackup && isGRPCError {
 			switch st.Code() {
 			case codes.DataLoss:
-				// ws-sync told us that it's lost data
+				// ws-daemon told us that it's lost data
 				dataloss = true
 			case codes.FailedPrecondition:
 				// the workspace content was not in the state we thought it was

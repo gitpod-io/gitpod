@@ -216,7 +216,7 @@
                                         "operator": "Exists"
                                     },
                                     {
-                                        "key": "gitpod.io/ws-sync",
+                                        "key": "gitpod.io/ws-daemon",
                                         "operator": "Exists"
                                     },
                                     {

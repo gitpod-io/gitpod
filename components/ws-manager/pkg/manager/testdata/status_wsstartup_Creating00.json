@@ -234,8 +234,8 @@
           "lastState": {},
           "ready": false,
           "restartCount": 0,
-          "image": "eu.gcr.io/gitpod-dev/gitpod-ws-sync:cw-ws-manager.14",
-          "imageID": "docker-pullable://eu.gcr.io/gitpod-dev/gitpod-ws-sync@sha256:be172b330ca6bbea9437c0dfb1cb84d67bd387a61295be6023f4273eba0ed6c2",
+          "image": "eu.gcr.io/gitpod-dev/gitpod-ws-daemon:cw-ws-manager.14",
+          "imageID": "docker-pullable://eu.gcr.io/gitpod-dev/gitpod-ws-daemon@sha256:be172b330ca6bbea9437c0dfb1cb84d67bd387a61295be6023f4273eba0ed6c2",
           "containerID": "docker://350b2aab9bec5b6e507980d2a68dd70cc73c1dd40961614a3e32032c7ffb027c"
         },
         {
