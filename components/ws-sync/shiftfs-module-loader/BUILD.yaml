@@ -1,0 +1,13 @@
+packages:
+  - name: docker
+    type: docker
+    argdeps:
+      - imageRepoBase
+    srcs:
+      - entrypoint.sh
+      - dkms.conf
+      - Makefile
+    config:
+      dockerfile: leeway.Dockerfile
+      image:
+        - ${imageRepoBase}/shiftfs-module-loader:${version}

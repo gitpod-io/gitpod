@@ -126,6 +126,9 @@ components:
     volumeMounts:
     - mountPath: /mnt/sync-tmp
       name: gcloud-tmp
+    userNamespaces:
+      shiftfsModuleLoader:
+        enabled: true
 
   # Enable ws-proxy in dev
   wsProxy:

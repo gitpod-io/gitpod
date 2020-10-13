@@ -24,6 +24,7 @@ packages:
       - components/ws-manager:docker
       - components/ws-proxy:docker
       - components/ws-sync:docker
+      - components/ws-sync/shiftfs-module-loader:docker
       - components/gitpod-protocol:publish
       - components/supervisor-api/typescript-grpc:publish
   - name: all-apps

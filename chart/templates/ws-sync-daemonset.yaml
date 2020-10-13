@@ -32,6 +32,9 @@ spec:
         prometheus.io/path: "/metrics"
         prometheus.io/port: '9500'
         checksum/tlskey: {{ include (print $.Template.BasePath "/ws-sync-tlssecret.yaml") $ | sha256sum }}
+        {{- if $comp.userNamespaces.shiftfsModuleLoader.enabled }}
+        seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
+        {{- end }}
     spec:
 {{ include "gitpod.workspaceAffinity" $this | indent 6 }}
       # see https://kubernetes.io/docs/tasks/administer-cluster/guaranteed-scheduling-critical-addon-pods/ for more
@@ -77,8 +80,25 @@ spec:
           path: /proc/mounts
           type: File
       {{- end }}
+      {{- if $comp.userNamespaces.shiftfsModuleLoader.enabled }}
+      - name: node-linux-src
+        hostPath: 
+          path: /usr/src
+          type: Directory
+      {{- end }}
 {{- if $comp.volumes }}
 {{ toYaml $comp.volumes | indent 6 }}
+{{- end }}
+{{- if $comp.userNamespaces.shiftfsModuleLoader.enabled }}
+      initContainers:
+      - name: shiftfs-module-loader
+        volumeMounts:
+        - mountPath: /usr/src
+          name: node-linux-src
+          readOnly: true
+        image: {{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" $comp.userNamespaces.shiftfsModuleLoader) }}
+        securityContext:
+          privileged: true
 {{- end }}
       containers:
       - name: ws-sync
