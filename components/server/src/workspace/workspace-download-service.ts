@@ -49,8 +49,8 @@ export class WorkspaceDownloadService {
                     return;
                 }
 
-                // we must harmonize this with https://github.com/TypeFox/gitpod/blob/8fc0c82a55da1ca4b5f6ab61deb9c9cd49eff644/components/ws-sync/pkg/storage/storage.go
-                // Beware: do NOT use env.kube_stage which has some "legacy" translation mechanism which doesn't fit the ws-sync mapping.
+                // we must harmonize this with https://github.com/TypeFox/gitpod/blob/8fc0c82a55da1ca4b5f6ab61deb9c9cd49eff644/components/ws-daemon/pkg/storage/storage.go
+                // Beware: do NOT use env.kube_stage which has some "legacy" translation mechanism which doesn't fit the ws-daemon mapping.
                 const stage: string = ({
                     "production": "prod",
                     "staging": "prodcopy",

@@ -142,7 +142,7 @@
                     "key": "gitpod.io/theia.master.2563"
                   },
                   {
-                    "key": "gitpod.io/ws-sync",
+                    "key": "gitpod.io/ws-daemon",
                     "operator": "Exists"
                   },
                   {

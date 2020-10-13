@@ -367,7 +367,7 @@ components:
       memory: 32Mi
 
   wsSync:
-    name: "ws-sync"
+    name: "ws-daemon"
     hostWorkspaceArea: /var/gitpod/workspaces
     servicePort: 8080
     workspaceSizeLimit: ""

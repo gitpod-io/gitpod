@@ -487,7 +487,7 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 	if os.IsNotExist(err) {
 		log.WithError(err).Info("no content init descriptor found - not trying to run it")
 
-		// If there is no content descriptor the content must have come from somewhere (i.e. a layer or ws-sync).
+		// If there is no content descriptor the content must have come from somewhere (i.e. a layer or ws-daemon).
 		// Let's wait for that to happen.
 		// TODO: rewrite using fsnotify
 		t := time.NewTicker(100 * time.Millisecond)

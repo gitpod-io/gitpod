@@ -13,8 +13,8 @@
       { "path": "components/supervisor" },
       { "path": "components/ws-manager-node" },
       { "path": "components/ws-manager" },
+      { "path": "components/ws-daemon" },
       { "path": "components/ws-proxy" },
-      { "path": "components/ws-sync" },
       { "path": "install/installer" }
    ],
    "settings": {

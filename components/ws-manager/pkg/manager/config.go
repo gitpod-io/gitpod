@@ -130,9 +130,9 @@ type WorkspacePodTemplateConfiguration struct {
 
 // WorkspaceSyncConfiguration configures our connection to the workspace sync daemons runnin on the nodes
 type WorkspaceSyncConfiguration struct {
-	// Port is the port on the node on which the ws-sync is listening
+	// Port is the port on the node on which the ws-daemon is listening
 	Port int `json:"port"`
-	// TLS is the certificate/key config to connect to ws-sync
+	// TLS is the certificate/key config to connect to ws-daemon
 	TLS struct {
 		// Authority is the root certificate that was used to sign the certificate itself
 		Authority string `json:"ca"`

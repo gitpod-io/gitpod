@@ -16,8 +16,8 @@ import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	wssync "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
-	wssync "github.com/gitpod-io/gitpod/ws-sync/api"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

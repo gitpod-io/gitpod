@@ -28,7 +28,7 @@ import (
 
 const (
 	// BEWARE:
-	// these formats duplicate naming conventions embedded in the remote storage implementations or ws-sync.
+	// these formats duplicate naming conventions embedded in the remote storage implementations or ws-daemon.
 	fmtWorkspaceManifest = "workspaces/%s/wsfull.json"
 	fmtLegacyBackupName  = "workspaces/%s/full.tar"
 )

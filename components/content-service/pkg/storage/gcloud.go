@@ -212,7 +212,7 @@ func (rs *DirectGCPStorage) download(ctx context.Context, destination string, bk
 }
 
 /* tar files produced by the previous sync process contain their workspace ID in the filenames.
- * This behavior is difficult for snapshot backups, thus ws-syncd does not do that. However,
+ * This behavior is difficult for snapshot backups, thus ws-daemond does not do that. However,
  * we need to be able to handle the "old" tar files, hence this legacy mode. See #1559.
  */
 func (rs *DirectGCPStorage) fixLegacyFilenames(ctx context.Context, destination string) (err error) {
