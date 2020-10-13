@@ -60,6 +60,16 @@ service StatusService {
         };
     }
 
+    // TasksStatus provides tasks status information.
+    rpc TasksStatus(TasksStatusRequest) returns (stream TasksStatusResponse) {
+        option (google.api.http) = {
+            get: "/v1/status/tasks"
+            additional_bindings {
+                get: "/v1/status/ports/observe/{observe=true}",
+            }
+        };
+    }
+
 }
 
 message SupervisorStatusRequest {}
@@ -118,4 +128,29 @@ message PortsStatus {
     uint32 local_port = 1;
 
     uint32 global_port = 2;
+}
+
+message TasksStatusRequest {
+    // if observe is true, we'll return a stream of changes rather than just the
+    // current state of affairs.
+    bool observe = 1;
+}
+message TasksStatusResponse {
+    repeated TaskStatus tasks = 1;
+}
+message TaskStatus {
+    string id = 1;
+    TaskState state = 2;
+    string terminal = 3;
+    TaskPresentation presentation = 4;
+}
+enum TaskState {
+    opening = 0;
+    running = 1;
+    closed = 2;
+}
+message TaskPresentation {
+    string name = 1;
+    string open_in = 2;
+    string open_mode = 3;
 }

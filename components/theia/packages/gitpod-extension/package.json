@@ -11,6 +11,9 @@
     "styles/*"
   ],
   "dependencies": {
+    "@gitpod/gitpod-protocol": "0.1.5",
+    "@gitpod/supervisor-api-grpc": "0.1.5",
+    "@grpc/grpc-js": "^1.1.5",
     "@octokit/rest": "~16.43.1",
     "@theia/core": "next",
     "@theia/filesystem": "next",
@@ -27,13 +30,12 @@
     "@theia/userstorage": "next",
     "@theia/vsx-registry": "next",
     "@theia/workspace": "next",
-    "@gitpod/gitpod-protocol": "0.1.5",
-    "@gitpod/supervisor-api-grpc": "0.1.5",
     "bitbucket": "^2.1.0",
     "decompress": "^4.2.0",
     "diff": "^3.4.0",
     "filenamify": "^4.1.0",
     "gitlab": "^14.2.2",
+    "google-protobuf": "^3.8.0-rc.1",
     "install": "^0.13.0",
     "js-cookie": "^2.2.1",
     "json-query": "^2.2.2",
@@ -43,12 +45,11 @@
     "octicons": "^7.1.0",
     "ovsx": "0.1.0-next.e000fdb",
     "prom-client": "^10.2.0",
+    "ps-tree": "^1.2.0",
     "react": "^16.4.1",
     "react-dom": "^16.4.1",
     "requestretry": "^4.0.0",
-    "yaml": "^1.5.1",
-    "google-protobuf": "^3.8.0-rc.1",
-    "@grpc/grpc-js": "^1.1.5"
+    "yaml": "^1.5.1"
   },
   "devDependencies": {
     "@types/chai": "^4.1.2",
@@ -57,15 +58,16 @@
     "@types/filenamify": "^2.0.2",
     "@types/js-cookie": "^2.2.4",
     "@types/json-query": "^2.2.0",
+    "@types/ps-tree": "^1.1.0",
     "@types/requestretry": "^1.12.4",
     "@types/tmp": "^0.2.0",
     "@types/yaml": "^1.0.2",
     "chai": "^4.1.2",
+    "mocha": "^5.0.0",
     "mocha-typescript": "^1.1.17",
     "rimraf": "^2.6.2",
-    "typescript": "^3.9.3",
-    "mocha": "^5.0.0",
-    "ts-node": "<7.0.0"
+    "ts-node": "<7.0.0",
+    "typescript": "^3.9.3"
   },
   "scripts": {
     "prepare": "yarn run clean && yarn run build",

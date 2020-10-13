@@ -89,17 +89,22 @@ func (hl *HeadlessListener) Listen(ctx context.Context, pod *corev1.Pod) error {
 }
 
 func (hl *HeadlessListener) handleLogLine(pod *corev1.Pod, line string) (continueListening bool) {
-	var originalMsg theiaLogMessage
+	var taskMsg taskLogMessage
+	var originalMsg workspaceLogMessage
 	err := json.Unmarshal([]byte(line), &originalMsg)
 	if err != nil {
-		return true
+		var legacyOriginalMsg theiaLogMessage
+		err := json.Unmarshal([]byte(line), &legacyOriginalMsg)
+		if err != nil || legacyOriginalMsg.Component != "workspace" {
+			return true
+		}
+		taskMsg = legacyOriginalMsg.Message
+	} else {
+		if originalMsg.Component != "workspace" {
+			return true
+		}
+		taskMsg = originalMsg.taskLogMessage
 	}
-
-	if originalMsg.Component != "workspace" {
-		return true
-	}
-
-	taskMsg := originalMsg.Message
 	if taskMsg.Type == "workspaceTaskOutput" {
 		hl.OnHeadlessLog(pod, taskMsg.Data)
 		return true
@@ -115,15 +120,23 @@ func (hl *HeadlessListener) handleLogLine(pod *corev1.Pod, line string) (continu
 	return true
 }
 
-type theiaLogMessage struct {
-	Message   theiaTaskLogMessage `json:"message"`
-	Component string              `json:"component"`
-}
-
-type theiaTaskLogMessage struct {
+type taskLogMessage struct {
 	Type string `json:"type"`
 	Data string `json:"data"`
 }
+
+type workspaceLogMessage struct {
+	taskLogMessage
+	Component string `json:"component"`
+}
+
+//region backward compatibility
+type theiaLogMessage struct {
+	Message   taskLogMessage `json:"message"`
+	Component string         `json:"component"`
+}
+
+//endregion
 
 const (
 	// timeout in seconds, default 3 seconds. Actual timeout is this number multiplied by the number of retries.
@@ -161,7 +174,6 @@ func (hl *HeadlessListener) listenAndRetry(ctx context.Context, pod *corev1.Pod,
 				if len(l) == 0 {
 					continue
 				}
-
 				lastLineReadChan <- l
 			}
 
