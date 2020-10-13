@@ -378,6 +378,10 @@ components:
       runtime: containerd
       containerd:
         socket: /run/containerd/containerd.sock
+    userNamespaces:
+      shiftfsModuleLoader:
+        enabled: false
+        imageName: "shiftfs-module-loader"
     remoteStorage:
       kind: minio
       minio:
