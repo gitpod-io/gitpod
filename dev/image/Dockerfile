@@ -4,7 +4,7 @@
 
 FROM gitpod/workspace-full-vnc:latest
 
-ENV TRIGGER_REBUILD 1
+ENV TRIGGER_REBUILD 2
 
 USER root
 
@@ -54,7 +54,9 @@ RUN cd /usr/bin && curl -L https://github.com/TypeFox/leeway/releases/download/v
 RUN cd /usr/bin && curl -L https://github.com/32leaves/dazzle/releases/download/v0.0.3/dazzle_0.0.3_Linux_x86_64.tar.gz | tar xz
 
 # werft CLI
-RUN cd /usr/bin && curl -L https://github.com/csweichel/werft/releases/download/v0.0.4/werft-client-linux-amd64.tar.gz | tar xz && mv werft-client-linux-amd64 werft
+ENV WERFT_K8S_NAMESPACE=werft
+ENV WERFT_DIAL_MODE=kubernetes
+RUN cd /usr/bin && curl -L https://github.com/csweichel/werft/releases/download/v0.0.5rc/werft-client-linux-amd64.tar.gz | tar xz && mv werft-client-linux-amd64 werft
 
 # yq - jq for YAML files
 RUN cd /usr/bin && curl -L https://github.com/mikefarah/yq/releases/download/2.4.0/yq_linux_amd64 > yq && chmod +x yq

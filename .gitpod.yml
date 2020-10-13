@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:me-cercscheduler.3
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-pull-latest-werft.4
 workspaceLocation: gitpod/gitpod-ws.theia-workspace
 checkoutLocation: gitpod
 ports:
