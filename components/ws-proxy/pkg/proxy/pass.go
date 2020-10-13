@@ -24,6 +24,7 @@ import (
 // ProxyPassConfig is used as intermediate struct to assemble a configurable proxy
 type proxyPassConfig struct {
 	TargetResolver   targetResolver
+	ResponseHandler  responseHandler
 	ErrorHandler     errorHandler
 	Transport        http.RoundTripper
 	WebsocketSupport bool
@@ -37,6 +38,8 @@ type errorHandler func(http.ResponseWriter, *http.Request, error)
 
 // targetResolver is a function that determines to which target to forward the given HTTP request to
 type targetResolver func(*Config, *http.Request) (*url.URL, error)
+
+type responseHandler func(*http.Response, *http.Request) error
 
 // proxyPass is the function that assembles a ProxyHandler from the config, a resolver and various options and returns a http.HandlerFunc
 func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...proxyPassOpt) http.HandlerFunc {
@@ -80,7 +83,6 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 			if resp.StatusCode == http.StatusNotFound {
 				return fmt.Errorf("not found")
 			}
-
 			return nil
 		}
 		return proxy
@@ -112,11 +114,23 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 			proxyType = "regular"
 		}
 
-		if proxy, ok := proxy.(*httputil.ReverseProxy); ok && proxy.ErrorHandler != nil {
-			orgErrHndlr := proxy.ErrorHandler
-			proxy.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
-				req.URL = &originalURL
-				orgErrHndlr(w, req, err)
+		if proxy, ok := proxy.(*httputil.ReverseProxy); ok {
+			if proxy.ErrorHandler != nil {
+				orgErrHndlr := proxy.ErrorHandler
+				proxy.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
+					req.URL = &originalURL
+					orgErrHndlr(w, req, err)
+				}
+			}
+			if h.ResponseHandler != nil {
+				originalModifyResponse := proxy.ModifyResponse
+				proxy.ModifyResponse = func(resp *http.Response) error {
+					err := originalModifyResponse(resp)
+					if err != nil {
+						return err
+					}
+					return h.ResponseHandler(resp, req)
+				}
 			}
 		}
 
