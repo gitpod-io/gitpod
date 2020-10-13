@@ -13,6 +13,14 @@ option go_package = "api";
 service TerminalService {
     // Open opens a new terminal running the login shell
     rpc Open(OpenTerminalRequest) returns (OpenTerminalResponse) {}
+
+    // Close closes a terminal for the given alias, SIGKILL'ing all child processes
+    // before closing the pseudo-terminal.
+    rpc Close(CloseTerminalRequest) returns (CloseTerminalResponse) {
+        option (google.api.http) = {
+            get: "/v1/terminal/close/{alias}"
+        };
+    }
     
     // List lists all open terminals
     rpc List(ListTerminalsRequest) returns (ListTerminalsResponse) {
@@ -39,7 +47,9 @@ service TerminalService {
     rpc SetSize(SetTerminalSizeRequest) returns (SetTerminalSizeResponse) {}
 }
 
-message OpenTerminalRequest {}
+message OpenTerminalRequest {
+    map<string, string> env = 2;
+}
 message OpenTerminalResponse {
     string alias = 1;
 
@@ -47,6 +57,11 @@ message OpenTerminalResponse {
     // multiple listerns, without having to force your way in.
     string starter_token = 2;
 }
+
+message CloseTerminalRequest {
+    string alias = 1;
+}
+message CloseTerminalResponse {}
 
 message ListTerminalsRequest {}
 message ListTerminalsResponse {

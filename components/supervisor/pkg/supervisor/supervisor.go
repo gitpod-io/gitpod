@@ -121,6 +121,7 @@ func Run(options ...RunOption) {
 		termMux    = terminal.NewMux()
 		termMuxSrv = terminal.NewMuxTerminalService(termMux)
 	)
+	taskManager := newTasksManager(cfg, termMuxSrv, iwh)
 
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
 
@@ -129,6 +130,7 @@ func Run(options ...RunOption) {
 	apiServices = append(apiServices, &statusService{
 		IWH:      iwh,
 		Ports:    portMgmt,
+		Tasks:    taskManager,
 		IDEReady: ideReady,
 	})
 	apiServices = append(apiServices, termMuxSrv)
@@ -142,6 +144,7 @@ func Run(options ...RunOption) {
 	go startContentInit(ctx, cfg, &wg, iwh)
 	go startAPIEndpoint(ctx, cfg, &wg, apiServices)
 	go portMgmt.Run(ctx, &wg)
+	go taskManager.Run(ctx, &wg)
 
 	if cfg.PreventMetadataAccess {
 		go func() {

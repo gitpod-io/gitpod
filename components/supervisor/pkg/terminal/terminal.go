@@ -21,14 +21,22 @@ import (
 // NewMux creates a new terminal mux
 func NewMux() *Mux {
 	return &Mux{
-		terms: make(map[string]*term),
+		terms: make(map[string]*Term),
 	}
 }
 
 // Mux can mux pseudo-terminals
 type Mux struct {
-	terms map[string]*term
+	terms map[string]*Term
 	mu    sync.RWMutex
+}
+
+// Get returns a terminal for the given alias
+func (m *Mux) Get(alias string) (*Term, bool) {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	term, ok := m.terms[alias]
+	return term, ok
 }
 
 // Start starts a new command in its own pseudo-terminal and returns an alias
@@ -94,16 +102,29 @@ func (m *Mux) Close(alias string) error {
 	return nil
 }
 
-func newTerm(pty *os.File, cmd *exec.Cmd) (*term, error) {
+// terminalBacklogSize is the number of bytes of output we'll store in RAM for each terminal.
+// The higher this number is, the better the UX, but the higher the resource requirements are.
+// For now we assume an average of five terminals per workspace, which makes this consume 1MiB of RAM.
+const terminalBacklogSize = 256 << 10
+
+func newTerm(pty *os.File, cmd *exec.Cmd) (*Term, error) {
 	token, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
 	}
 
-	res := &term{
+	recorder, err := NewRingBuffer(terminalBacklogSize)
+	if err != nil {
+		return nil, err
+	}
+
+	res := &Term{
 		PTY:     pty,
 		Command: cmd,
-		Stdout:  &multiWriter{listener: make(map[*multiWriterListener]struct{})},
+		Stdout: &multiWriter{
+			listener: make(map[*multiWriterListener]struct{}),
+			recorder: recorder,
+		},
 
 		StarterToken: token.String(),
 	}
@@ -111,7 +132,8 @@ func newTerm(pty *os.File, cmd *exec.Cmd) (*term, error) {
 	return res, nil
 }
 
-type term struct {
+// Term is a pseudo-terminal
+type Term struct {
 	PTY          *os.File
 	Command      *exec.Cmd
 	Title        string
@@ -123,8 +145,11 @@ type term struct {
 // multiWriter is like io.MultiWriter, except that we can listener at runtime.
 type multiWriter struct {
 	closed   bool
-	mu       sync.Mutex
+	mu       sync.RWMutex
 	listener map[*multiWriterListener]struct{}
+	// ring buffer to record last 256kb of pty output
+	// new listener is initialized with the latest recodring first
+	recorder *RingBuffer
 }
 
 type multiWriterListener struct {
@@ -134,6 +159,7 @@ type multiWriterListener struct {
 	once      sync.Once
 	closeChan chan struct{}
 	cchan     chan []byte
+	done      chan struct{}
 }
 
 func (l *multiWriterListener) Close() error {
@@ -156,19 +182,29 @@ func (mw *multiWriter) Listen() *multiWriterListener {
 	defer mw.mu.Unlock()
 
 	r, w := io.Pipe()
-	cchan, closeChan := make(chan []byte), make(chan struct{}, 1)
+	cchan, done, closeChan := make(chan []byte), make(chan struct{}, 1), make(chan struct{}, 1)
 	res := &multiWriterListener{
 		Reader:    r,
 		cchan:     cchan,
+		done:      done,
 		closeChan: closeChan,
 	}
 
 	go func() {
+		mw.mu.RLock()
+		recording := mw.recorder.Bytes()
+		mw.mu.RUnlock()
+		w.Write(recording)
+
 		// copy bytes from channel to writer.
 		// Note: we close the writer independently of the write operation s.t. we don't
 		//       block the closing because the write's blocking.
 		for b := range cchan {
-			_, err := w.Write(b)
+			n, err := w.Write(b)
+			done <- struct{}{}
+			if err == nil && n != len(b) {
+				err = io.ErrShortWrite
+			}
 			if err != nil {
 				log.WithError(err).Error("terminal listener droped out")
 				res.Close()
@@ -195,6 +231,8 @@ func (mw *multiWriter) Write(p []byte) (n int, err error) {
 	mw.mu.Lock()
 	defer mw.mu.Unlock()
 
+	mw.recorder.Write(p)
+
 	for lstr := range mw.listener {
 		if lstr.closed {
 			continue
@@ -202,6 +240,12 @@ func (mw *multiWriter) Write(p []byte) (n int, err error) {
 
 		select {
 		case lstr.cchan <- p:
+		case <-time.After(5 * time.Second):
+			lstr.Close()
+		}
+
+		select {
+		case <-lstr.done:
 		case <-time.After(5 * time.Second):
 			lstr.Close()
 		}

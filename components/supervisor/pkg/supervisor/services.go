@@ -40,6 +40,7 @@ type RegisterableRESTService interface {
 type statusService struct {
 	IWH      *backup.InWorkspaceHelper
 	Ports    *portsManager
+	Tasks    *tasksManager
 	IDEReady <-chan struct{}
 }
 
@@ -141,6 +142,45 @@ func (s *statusService) PortsStatus(req *api.PortsStatusRequest, srv api.StatusS
 				return nil
 			}
 			err := srv.Send(&api.PortsStatusResponse{Ports: update})
+			if err != nil {
+				return err
+			}
+		}
+	}
+}
+
+func (s *statusService) TasksStatus(req *api.TasksStatusRequest, srv api.StatusService_TasksStatusServer) error {
+	select {
+	case <-srv.Context().Done():
+		return nil
+	case <-s.Tasks.ready:
+	}
+
+	err := srv.Send(&api.TasksStatusResponse{
+		Tasks: s.Tasks.getStatus(),
+	})
+	if err != nil {
+		return err
+	}
+	if !req.Observe {
+		return nil
+	}
+
+	sub := s.Tasks.Subscribe()
+	if sub == nil {
+		return status.Error(codes.ResourceExhausted, "too many subscriptions")
+	}
+	defer sub.Close()
+
+	for {
+		select {
+		case <-srv.Context().Done():
+			return nil
+		case update := <-sub.Updates():
+			if update == nil {
+				return nil
+			}
+			err := srv.Send(&api.TasksStatusResponse{Tasks: update})
 			if err != nil {
 				return err
 			}
