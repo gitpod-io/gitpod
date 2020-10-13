@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gorilla/handlers"
@@ -104,7 +105,66 @@ func installTheiaRoutes(r *mux.Router, config *RouteHandlerConfig, ip WorkspaceI
 
 	supervisorAuthenticatedAPIHandler(r.PathPrefix("/_supervisor").Subrouter(), config)
 
-	TheiaRootHandler(ip)(r.NewRoute().Subrouter(), config)
+	TheiaRootHandler(r.NewRoute().Subrouter(), config, ip)
+}
+
+const imagePathSeparator = "/__files__"
+
+// installBlobserveRoutes  implements long-lived caching with versioned URLs, see https://web.dev/http-cache/#versioned-urls
+func installBlobserveRoutes(r *mux.Router, config *RouteHandlerConfig) {
+	r.Use(logHandler)
+	r.Use(handlers.CompressHandler)
+	r.Use(logRouteHandlerHandler("BlobserveRootHandler"))
+	r.Use(handlers.CORS(
+		// CORS headers are stored in the browser cache, we cannot be specific here to allow resuse between workspaces
+		handlers.AllowedOrigins([]string{"*"}),
+		handlers.AllowedMethods([]string{"GET"}),
+	))
+
+	targetResolver := func(cfg *Config, req *http.Request) (tgt *url.URL, err error) {
+		segments := strings.SplitN(req.URL.Path, imagePathSeparator, 2)
+		image, path := segments[0], segments[1]
+
+		req.URL.Path = path
+		req.Header.Add("X-BlobServe-ReadOnly", "true")
+
+		var dst url.URL
+		dst.Scheme = cfg.BlobServer.Scheme
+		dst.Host = cfg.BlobServer.Host
+		dst.Path = image
+		return &dst, nil
+	}
+	r.NewRoute().Handler(proxyPass(config, targetResolver, func(cfg *proxyPassConfig) {
+		cfg.ResponseHandler = func(resp *http.Response, req *http.Request) error {
+			// tell the browser to cache for 1 year and don't ask the server during this period
+			resp.Header.Set("Cache-Control", "public, max-age=31536000")
+			return nil
+		}
+	}))
+}
+
+func redirectToBlobserve(w http.ResponseWriter, req *http.Request, config *RouteHandlerConfig, image string) {
+	var redirectURL string
+	if config.Config.GitpodInstallation.WorkspaceHostSuffix != "" {
+		redirectURL = fmt.Sprintf("%s://%s%s/%s%s%s",
+			config.Config.GitpodInstallation.Scheme,
+			"blobserve",
+			config.Config.GitpodInstallation.WorkspaceHostSuffix,
+			image,
+			imagePathSeparator,
+			req.URL.Path,
+		)
+	} else {
+		redirectURL = fmt.Sprintf("%s://%s/%s/%s%s%s",
+			config.Config.GitpodInstallation.Scheme,
+			config.Config.GitpodInstallation.HostName,
+			"blobserve",
+			image,
+			imagePathSeparator,
+			req.URL.Path,
+		)
+	}
+	http.Redirect(w, req, redirectURL, 303)
 }
 
 // SupervisorIDEHostHandler serves supervisor's IDE host
@@ -118,46 +178,57 @@ func SupervisorIDEHostHandler(r *mux.Router, config *RouteHandlerConfig) {
 		})
 	})
 
-	targetResolver := func(cfg *Config, req *http.Request) (tgt *url.URL, err error) {
-		var dst url.URL
-		dst.Scheme = cfg.BlobServer.Scheme
-		dst.Host = cfg.BlobServer.Host
-		dst.Path = "/" + cfg.WorkspacePodConfig.SupervisorImage
-		return &dst, nil
-	}
-	r.NewRoute().Handler(proxyPass(config, targetResolver))
+	r.NewRoute().HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		redirectToBlobserve(w, req, config, config.Config.WorkspacePodConfig.SupervisorImage)
+	})
 }
 
 // TheiaRootHandler handles all requests under / that are not handled by any special case above (expected to be static resources only)
-func TheiaRootHandler(infoProvider WorkspaceInfoProvider) RouteHandler {
-	return func(r *mux.Router, config *RouteHandlerConfig) {
-		r.Use(logRouteHandlerHandler("TheiaRootHandler"))
-		var reslv targetResolver
-		if config.Config.BlobServer != nil {
-			reslv = dynamicTheiaResolver(infoProvider)
-		} else {
-			reslv = staticTheiaResolver
-		}
-		resolver := func(config *Config, req *http.Request) (*url.URL, error) {
-			return reslv(config, req)
-		}
+func TheiaRootHandler(r *mux.Router, config *RouteHandlerConfig, infoProvider WorkspaceInfoProvider) {
+	r.Use(logRouteHandlerHandler("TheiaRootHandler"))
+	r.Use(config.CorsHandler)
 
-		r.Use(config.CorsHandler)
-		r.NewRoute().HandlerFunc(
-			// Use the static theia server as primary source for resources
-			proxyPass(config, resolver,
-				// If the static theia server returns 404, re-route to the pod itself instead
-				withHTTPErrorHandler(
-					config.WorkspaceAuthHandler(
-						proxyPass(config, workspacePodResolver,
-							withWebsocketSupport(),
-							withOnProxyErrorRedirectToWorkspaceStartHandler(config.Config),
-						),
+	var resolver targetResolver
+	if config.Config.BlobServer != nil {
+		resolver = dynamicTheiaResolver(infoProvider)
+	} else {
+		resolver = staticTheiaResolver
+	}
+	theiaProxyPass := // Use the static theia server as primary source for resources
+		proxyPass(config, resolver,
+			// If the static theia server returns 404, re-route to the pod itself instead
+			withHTTPErrorHandler(
+				config.WorkspaceAuthHandler(
+					proxyPass(config, workspacePodResolver,
+						withWebsocketSupport(),
+						withOnProxyErrorRedirectToWorkspaceStartHandler(config.Config),
 					),
 				),
 			),
 		)
+
+	if config.Config.BlobServer == nil {
+		r.NewRoute().HandlerFunc(theiaProxyPass)
+		return
 	}
+
+	client := http.Client{Timeout: 30 * time.Second}
+	r.NewRoute().HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		coords := getWorkspaceCoords(req)
+		info := infoProvider.WorkspaceInfo(coords.ID)
+		if info == nil {
+			theiaProxyPass.ServeHTTP(w, req)
+			return
+		}
+
+		resp, err := client.Get(fmt.Sprintf("%s://%s/%s%s", config.Config.BlobServer.Scheme, config.Config.BlobServer.Host, info.IDEImage, req.URL.Path))
+		if err != nil || strings.Contains(strings.ToLower(resp.Header.Get("Content-Type")), "text/html") {
+			theiaProxyPass.ServeHTTP(w, req)
+			return
+		}
+		defer resp.Body.Close()
+		redirectToBlobserve(w, req, config, info.IDEImage)
+	})
 }
 
 // TheiaMiniBrowserHandler handles /mini-browser

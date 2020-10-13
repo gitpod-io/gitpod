@@ -118,7 +118,7 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 
 	// The blobFor operation's context must be independent of this request. Even if we do not
 	// serve this request in time, we might want to serve another from the same ref in the future.
-	blob, err := reg.blobFor(context.Background(), ref)
+	blob, err := reg.blobFor(context.Background(), ref, req.Header.Get("X-BlobServe-ReadOnly") == "true")
 	if err == errdefs.ErrNotFound {
 		http.Error(w, fmt.Sprintf("image %s not found: %q", ref, err), http.StatusNotFound)
 		return
@@ -176,16 +176,19 @@ func isNoWebsocketRequest(req *http.Request, match *mux.RouteMatch) bool {
 
 // Prepare downloads a blob and prepares it for use independently of any request
 func (reg *Server) Prepare(ctx context.Context, ref string) (err error) {
-	_, err = reg.blobFor(ctx, ref)
+	_, err = reg.blobFor(ctx, ref, false)
 	return
 }
 
-func (reg *Server) blobFor(ctx context.Context, ref string) (fs http.FileSystem, err error) {
+func (reg *Server) blobFor(ctx context.Context, ref string, readOnly bool) (fs http.FileSystem, err error) {
 	reg.mu.RLock()
 	dgst := reg.refcache[ref]
 	reg.mu.RUnlock()
 
 	if dgst == "" {
+		if readOnly {
+			return nil, errdefs.ErrNotFound
+		}
 		return reg.downloadBlobFor(ctx, ref)
 	}
 

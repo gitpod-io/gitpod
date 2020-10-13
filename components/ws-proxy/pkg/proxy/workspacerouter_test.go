@@ -62,10 +62,23 @@ func TestWorkspaceRouter(t *testing.T) {
 			},
 		},
 		{
+			Name: "host-based blobserve access",
+			URL:  "http://blobserve.ws.gitpod.dev/image:version:/foo/main.js",
+			Headers: map[string]string{
+				forwardedHostnameHeader: "blobserve.ws.gitpod.dev",
+			},
+			Router:       HostBasedRouter(forwardedHostnameHeader, wsHostSuffix),
+			WSHostSuffix: wsHostSuffix,
+			Expected: Expectation{
+				Status: http.StatusOK,
+				URL:    "http://blobserve.ws.gitpod.dev/image:version:/foo/main.js",
+			},
+		},
+		{
 			Name: "port-based port access",
 			URL:  "http://localhost:10343/",
-			Router: func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (theiaRouter *mux.Router, portRouter *mux.Router) {
-				return nil, portBasedRouter(r, wsInfoProvider, true)
+			Router: func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (theiaRouter *mux.Router, portRouter *mux.Router, blobserveRouter *mux.Router) {
+				return nil, portBasedRouter(r, wsInfoProvider, true), nil
 			},
 			Infos: []WorkspaceInfo{
 				{
@@ -92,8 +105,8 @@ func TestWorkspaceRouter(t *testing.T) {
 		{
 			Name: "path-based workspace access",
 			URL:  "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235",
-			Router: func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (theiaRouter *mux.Router, portRouter *mux.Router) {
-				return pathBasedTheiaRouter(r, wsInfoProvider, ""), nil
+			Router: func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (theiaRouter *mux.Router, portRouter *mux.Router, blobserveRouter *mux.Router) {
+				return pathBasedTheiaRouter(r, wsInfoProvider, ""), nil, nil
 			},
 			Infos: []WorkspaceInfo{
 				{
@@ -110,8 +123,8 @@ func TestWorkspaceRouter(t *testing.T) {
 		{
 			Name: "path-based workspace path access",
 			URL:  "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235/services",
-			Router: func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (theiaRouter *mux.Router, portRouter *mux.Router) {
-				return pathBasedTheiaRouter(r, wsInfoProvider, ""), nil
+			Router: func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (theiaRouter *mux.Router, portRouter *mux.Router, blobserveRouter *mux.Router) {
+				return pathBasedTheiaRouter(r, wsInfoProvider, ""), nil, nil
 			},
 			Infos: []WorkspaceInfo{
 				{
@@ -128,8 +141,8 @@ func TestWorkspaceRouter(t *testing.T) {
 		{
 			Name: "path-based workspace access with prefix",
 			URL:  "http://localhost/workspace/c65376da-3406-4cf3-a80b-99ce5f750235/services",
-			Router: func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (theiaRouter *mux.Router, portRouter *mux.Router) {
-				return pathBasedTheiaRouter(r, wsInfoProvider, "/workspace/"), nil
+			Router: func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (theiaRouter *mux.Router, portRouter *mux.Router, blobserveRouter *mux.Router) {
+				return pathBasedTheiaRouter(r, wsInfoProvider, "/workspace/"), nil, nil
 			},
 			Infos: []WorkspaceInfo{
 				{
@@ -185,6 +198,15 @@ func TestWorkspaceRouter(t *testing.T) {
 			},
 		},
 		{
+			Name:   "path-and-port router: blobserve access",
+			URL:    "http://localhost/blobserve/image:version:/foo/main.js",
+			Router: PathAndPortRouter("/workspace/"),
+			Expected: Expectation{
+				Status: http.StatusOK,
+				URL:    "http://localhost/image:version:/foo/main.js",
+			},
+		},
+		{
 			Name:   "path-and-host router: workspace access",
 			URL:    "http://localhost/workspace/c65376da-3406-4cf3-a80b-99ce5f750235/services",
 			Router: PathAndHostRouter("/workspace/", forwardedHostnameHeader, wsHostSuffix),
@@ -231,12 +253,24 @@ func TestWorkspaceRouter(t *testing.T) {
 				URL:           "http://8080-de5ce5ec-a9ac-49e4-aadc-4827d2dcb189.ws.gitpod.dev/",
 			},
 		},
+		{
+			Name:   "path-and-host router: blobserve access",
+			URL:    "http://localhost/blobserve/image:version:/foo/main.js",
+			Router: PathAndHostRouter("/workspace/", forwardedHostnameHeader, wsHostSuffix),
+			Headers: map[string]string{
+				forwardedHostnameHeader: "localhost",
+			},
+			Expected: Expectation{
+				Status: http.StatusOK,
+				URL:    "http://localhost/image:version:/foo/main.js",
+			},
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			r := mux.NewRouter()
-			theiaRouter, portRouter := test.Router(r, &fakeWsInfoProvider{infos: test.Infos})
+			theiaRouter, portRouter, blobserveRouter := test.Router(r, &fakeWsInfoProvider{infos: test.Infos})
 			var act Expectation
 			actRecorder := func(w http.ResponseWriter, req *http.Request) {
 				defer w.WriteHeader(200)
@@ -258,6 +292,10 @@ func TestWorkspaceRouter(t *testing.T) {
 			}
 			if portRouter != nil {
 				portRouter.HandleFunc("/", actRecorder)
+			}
+			if blobserveRouter != nil {
+				blobserveRouter.HandleFunc("/", actRecorder)
+				blobserveRouter.HandleFunc("/image:version:/foo/main.js", actRecorder)
 			}
 
 			// build artificial request
