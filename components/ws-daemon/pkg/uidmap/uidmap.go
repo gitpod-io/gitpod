@@ -195,7 +195,7 @@ func (m *Uidmapper) handleUIDMappingRequest(ctx context.Context, disp *dispatch.
 		return err
 	}
 
-	containerPID, err := disp.CRI.ContainerPID(ctx, ws.ContainerID)
+	containerPID, err := disp.Runtime.ContainerPID(ctx, ws.ContainerID)
 	if err != nil {
 		log.WithError(err).WithFields(fields).Error("handleUIDMappingRequest: cannot get containerPID")
 		return status.Error(codes.Internal, "cannot establish mapping")

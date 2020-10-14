@@ -8,9 +8,9 @@ import (
 	"context"
 	"sync"
 
-	"github.com/gitpod-io/gitpod/common-go/cri"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -32,7 +32,7 @@ func NewDispatchListener(cfg *Config, prom prometheus.Registerer) *DispatchListe
 	d := &DispatchListener{
 		Prometheus: prom,
 		Config:     cfg,
-		governer:   make(map[cri.ContainerID]*Controller),
+		governer:   make(map[container.ID]*Controller),
 	}
 	prom.MustRegister(
 		prometheus.NewGaugeFunc(prometheus.GaugeOpts{
@@ -54,7 +54,7 @@ type DispatchListener struct {
 	Prometheus prometheus.Registerer
 	Config     *Config
 
-	governer map[cri.ContainerID]*Controller
+	governer map[container.ID]*Controller
 	mu       sync.Mutex
 }
 
@@ -77,7 +77,7 @@ func (d *DispatchListener) WorkspaceAdded(ctx context.Context, ws *dispatch.Work
 		return xerrors.Errorf("no dispatch available")
 	}
 
-	cgroupPath, err := disp.CRI.ContainerCGroupPath(context.Background(), ws.ContainerID)
+	cgroupPath, err := disp.Runtime.ContainerCGroupPath(context.Background(), ws.ContainerID)
 	if err != nil {
 		return xerrors.Errorf("cannot start governer: %w", err)
 	}
