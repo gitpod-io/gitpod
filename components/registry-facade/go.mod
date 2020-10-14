@@ -3,7 +3,9 @@ module github.com/gitpod-io/gitpod/registry-facade
 go 1.14
 
 require (
+	github.com/Microsoft/hcsshim v0.8.10 // indirect
 	github.com/containerd/containerd v1.4.1
+	github.com/containerd/continuity v0.0.0-20200928162600-f2cc35102c2a // indirect
 	github.com/docker/cli v0.0.0-20200113155311-34d848623701
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker-credential-helpers v0.6.3 // indirect
@@ -22,6 +24,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	google.golang.org/grpc v1.32.0
+	gotest.tools/v3 v3.0.3 // indirect
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
