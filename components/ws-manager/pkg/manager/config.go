@@ -69,8 +69,8 @@ type Configuration struct {
 	ReconnectionInterval util.Duration `json:"reconnectionInterval"`
 	// DryRun prevents us from ever stopping a pod. It is considered equivalent to a listener mode
 	DryRun bool `json:"dryRun,omitempty"`
-	// WorkspaceSync configures our connection to the workspace sync daemons runnin on the nodes
-	WorkspaceSync WorkspaceSyncConfiguration `json:"wssync"`
+	// WorkspaceDaemon configures our connection to the workspace sync daemons runnin on the nodes
+	WorkspaceDaemon WorkspaceDaemonConfiguration `json:"wsdaemon"`
 	// TheiaSupervisorToken is the bearer token required to talk to the sentinel part of the supervisor health endpoint
 	TheiaSupervisorToken string `json:"theiaSupervisorToken"`
 	// RegistryFacadeHost is the host (possibly including port) on which the registry facade resolves
@@ -128,8 +128,8 @@ type WorkspacePodTemplateConfiguration struct {
 	ProbePath string `json:"probePath,omitempty"`
 }
 
-// WorkspaceSyncConfiguration configures our connection to the workspace sync daemons runnin on the nodes
-type WorkspaceSyncConfiguration struct {
+// WorkspaceDaemonConfiguration configures our connection to the workspace sync daemons runnin on the nodes
+type WorkspaceDaemonConfiguration struct {
 	// Port is the port on the node on which the ws-daemon is listening
 	Port int `json:"port"`
 	// TLS is the certificate/key config to connect to ws-daemon

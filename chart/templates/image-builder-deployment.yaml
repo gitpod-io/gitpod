@@ -3,7 +3,6 @@
 
 {{ $comp := .Values.components.imageBuilder -}}
 {{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
-{{- $thisWsSync := dict "root" . "comp" .Values.components.wsSync -}}
 {{- if not $comp.disabled -}}
 apiVersion: apps/v1
 kind: Deployment

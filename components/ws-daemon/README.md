@@ -2,9 +2,9 @@
 
 ### Run unit tests
 The unit tests in `pkg/sync` must be run as `root` because they create files with various permissions/ownership.
-It's easiest to run them using `cd pkg/syncd && go test -c && sudo ./syncd.test -test.v`.
+It's easiest to run them using `cd pkg/content && go test -c && sudo ./content.test -test.v`.
 Once you have build the test executable using `go test -c`, you can also run specific test or even testcases.
-To run a specific test use `sudo ./syncd.test -test.run TestName`, to run a specific testcase use `sudo ./syncd.test -test.run TestName -execute testcaseName`.
+To run a specific test use `sudo ./content.test -test.run TestName`, to run a specific testcase use `sudo ./content.test -test.run TestName -execute testcaseName`.
 
 _Beware_: when running all testcases (i.e. without `-execute`) the test itself will spawn a child process to recover from the permission drop across test cases.
 This also means that not all `-test.` flags will be passed on to the children. At the moment it's only `-test.v`.

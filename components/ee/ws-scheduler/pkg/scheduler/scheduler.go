@@ -377,7 +377,7 @@ func (s *Scheduler) gatherPotentialNodesFor(ctx context.Context, pod *corev1.Pod
 		if node.Spec.Unschedulable {
 			continue
 		}
-		// filter: 4: our own diskpressure signal coming from ws-manager-node.
+		// filter: 4: our own diskpressure signal coming from ws-daemon.
 		//            This is not part of the label selector as labelSets cannot negate
 		//            labels. Otherwise !gitpod.io/diskPressure would be a valid selector.
 		if _, fullDisk := node.Labels["gitpod.io/diskPressure"]; fullDisk {

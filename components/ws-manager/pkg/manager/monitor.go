@@ -52,16 +52,16 @@ const (
 )
 
 var (
-	// wssyncMaxAttempts is the number of times we'll attempt to work with ws-daemon when a former attempt returned unavailable.
-	// We rety for two minutes every 5 seconds (see wssyncRetryInterval).
+	// wsdaemonMaxAttempts is the number of times we'll attempt to work with ws-daemon when a former attempt returned unavailable.
+	// We rety for two minutes every 5 seconds (see wwsdaemonRetryInterval).
 	//
 	// Note: this is a variable rather than a constant so that tests can modify this value.
-	wssyncMaxAttempts = 120 / 5
+	wsdaemonMaxAttempts = 120 / 5
 
-	// wssyncRetryInterval is the time in between attempts to work with ws-daemon.
+	// wsdaemonRetryInterval is the time in between attempts to work with ws-daemon.
 	//
 	// Note: this is a variable rather than a constant so that tests can modify this value.
-	wssyncRetryInterval = 5 * time.Second
+	wsdaemonRetryInterval = 5 * time.Second
 )
 
 // Monitor listens for kubernetes events and periodically checks if everything is still ok.
@@ -592,7 +592,7 @@ func (m *Monitor) actOnHeadlessDone(pod *corev1.Pod, failed bool) (err error) {
 		tpe = api.WorkspaceType_PREBUILD
 	}
 	if tpe == api.WorkspaceType_PREBUILD {
-		snc, err := m.manager.connectToWorkspaceSync(ctx, wso)
+		snc, err := m.manager.connectToWorkspaceDaemon(ctx, wso)
 		if err != nil {
 			tracing.LogError(span, err)
 			return handleFailure(fmt.Sprintf("cannot take snapshot: %v", err))
@@ -906,9 +906,9 @@ func (m *Monitor) waitForWorkspaceReady(ctx context.Context, pod *corev1.Pod) (e
 	}
 
 	// Theia is available - let's wait until the workspace is initialized
-	snc, err := m.manager.connectToWorkspaceSync(ctx, workspaceObjects{Pod: pod})
+	snc, err := m.manager.connectToWorkspaceDaemon(ctx, workspaceObjects{Pod: pod})
 	if err != nil {
-		return xerrors.Errorf("cannot connect to workspace sync: %w", err)
+		return xerrors.Errorf("cannot connect to workspace daemon: %w", err)
 	}
 
 	// Note: we don't have to use the same cancelable context that we used for the original Init call.
@@ -1077,9 +1077,9 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 		}
 
 		// connect to the appropriate ws-daemon
-		snc, err = m.manager.connectToWorkspaceSync(ctx, workspaceObjects{Pod: pod})
+		snc, err = m.manager.connectToWorkspaceDaemon(ctx, workspaceObjects{Pod: pod})
 		if err != nil {
-			return xerrors.Errorf("cannot connect to ws-daemon: %w", err)
+			return err
 		}
 
 		// mark that we're already initialising this workspace
@@ -1127,13 +1127,13 @@ func retryIfUnavailable(ctx context.Context, op func(ctx context.Context) error)
 	span, ctx := tracing.FromContext(ctx, "retryIfUnavailable")
 	defer tracing.FinishSpan(span, &err)
 
-	for i := 0; i < wssyncMaxAttempts; i++ {
+	for i := 0; i < wsdaemonMaxAttempts; i++ {
 		err := op(ctx)
 		span.LogKV("attempt", i)
 
 		if st, ok := grpc_status.FromError(err); ok && st.Code() == codes.Unavailable {
 			// service is unavailable - try again after some time
-			time.Sleep(wssyncRetryInterval)
+			time.Sleep(wsdaemonRetryInterval)
 		} else if err != nil {
 			// some other error happened, we'done done here
 			return err
@@ -1202,7 +1202,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		}
 
 		// we're not yet finalizing - start the process
-		snc, err := m.manager.connectToWorkspaceSync(ctx, *wso)
+		snc, err := m.manager.connectToWorkspaceDaemon(ctx, *wso)
 		if err != nil {
 			m.finalizerMapLock.Unlock()
 			return true, nil, err
@@ -1235,7 +1235,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		backupError error
 		gitStatus   *csapi.GitStatus
 	)
-	for i := 0; i < wssyncMaxAttempts; i++ {
+	for i := 0; i < wsdaemonMaxAttempts; i++ {
 		tracing.LogKV(span, "attempt", strconv.Itoa(i))
 		didSometing, gs, err := doFinalize()
 		if !didSometing {
@@ -1261,7 +1261,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			st.Code() == codes.Unavailable ||
 			st.Code() == codes.Canceled {
 			// service is currently unavailable or we did not finish in time - let's wait some time and try again
-			time.Sleep(wssyncRetryInterval)
+			time.Sleep(wsdaemonRetryInterval)
 			continue
 		}
 

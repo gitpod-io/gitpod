@@ -23,7 +23,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
-	wssync "github.com/gitpod-io/gitpod/ws-daemon/api"
+	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/grpcpool"
 
@@ -56,7 +56,7 @@ type Manager struct {
 
 	ingressPortAllocator IngressPortAllocator
 
-	wssyncPool *grpcpool.Pool
+	wsdaemonPool *grpcpool.Pool
 
 	subscribers    map[string]chan *api.SubscribeResponse
 	subscriberLock sync.RWMutex
@@ -92,8 +92,8 @@ const (
 
 	// theiaVersionLabelFmt is the format to produce the label a node has if Theia is available on it in a particular version
 	theiaVersionLabelFmt = "gitpod.io/theia.%s"
-	// wssyncLabel is the label a node has if ws-daemon is running on it
-	wssyncLabel = "gitpod.io/ws-daemon"
+	// wsdaemonLabel is the label a node has if ws-daemon is running on it
+	wsdaemonLabel = "gitpod.io/ws-daemon"
 )
 
 const (
@@ -120,7 +120,7 @@ func New(config Configuration, clientset kubernetes.Interface, cp *layer.Provide
 		Content:              cp,
 		activity:             make(map[string]time.Time),
 		subscribers:          make(map[string]chan *api.SubscribeResponse),
-		wssyncPool:           grpcpool.New(wssyncConnfactory),
+		wsdaemonPool:         grpcpool.New(wssyncConnfactory),
 		ingressPortAllocator: ingressPortAllocator,
 	}
 	m.metrics = newMetrics(m)
@@ -137,7 +137,7 @@ func Register(grpcServer *grpc.Server, manager *Manager) {
 // Close disposes some of the resources held by the manager. After calling close, the manager is not guaranteed
 // to function properly anymore.
 func (m *Manager) Close() {
-	m.wssyncPool.Close()
+	m.wsdaemonPool.Close()
 	m.ingressPortAllocator.Stop()
 }
 
@@ -1103,22 +1103,22 @@ func isKubernetesObjNotFoundError(err error) bool {
 	return false
 }
 
-// connectToWorkspaceSync establishes a connection to the ws-daemon daemon running on the node of the pod/workspace.
-func (m *Manager) connectToWorkspaceSync(ctx context.Context, wso workspaceObjects) (wssync.WorkspaceContentServiceClient, error) {
-	span, ctx := tracing.FromContext(ctx, "connectToWorkspaceSync")
+// connectToWorkspaceDaemon establishes a connection to the ws-daemon daemon running on the node of the pod/workspace.
+func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObjects) (wsdaemon.WorkspaceContentServiceClient, error) {
+	span, ctx := tracing.FromContext(ctx, "connectToWorkspaceDaemon")
 	tracing.ApplyOWI(span, wso.GetOWI())
 	defer tracing.FinishSpan(span, nil)
 
 	host := wso.HostIP()
 	if host == "" {
-		return nil, xerrors.Errorf("pod has no hostIP")
+		return nil, xerrors.Errorf("cannot connect to ws-daemon: pod has no hostIP")
 	}
-	conn, err := m.wssyncPool.Get(host)
+	conn, err := m.wsdaemonPool.Get(host)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot connect to ws-daemon: %w", err)
+		return nil, err
 	}
 
-	return wssync.NewWorkspaceContentServiceClient(conn), nil
+	return wsdaemon.NewWorkspaceContentServiceClient(conn), nil
 }
 
 // newWssyncConnectionFactory creates a new wssync connection factory based on the wsmanager configuration
@@ -1132,7 +1132,7 @@ func newWssyncConnectionFactory(managerConfig Configuration) (grpcpool.Factory, 
 	//       see https://github.com/grpc/grpc-go/blob/506b7730668b5a13465224b0d8133f974a3f843d/dialoptions.go#L522-L524
 	var retryPolicy = `{
 		"methodConfig": [{
-			"name": [{"service": "wssync.WorkspaceContentService"}],
+			"name": [{"service": "wsdaemon.WorkspaceContentService"}],
 			"waitForReady": true,
 
 			"retryPolicy": {
@@ -1145,7 +1145,7 @@ func newWssyncConnectionFactory(managerConfig Configuration) (grpcpool.Factory, 
 		}]
 	}`
 
-	cfg := managerConfig.WorkspaceSync
+	cfg := managerConfig.WorkspaceDaemon
 	opts := []grpc.DialOption{
 		grpc.WithUnaryInterceptor(grpc_opentracing.UnaryClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer()))),
 		grpc.WithStreamInterceptor(grpc_opentracing.StreamClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer()))),
@@ -1181,7 +1181,7 @@ func newWssyncConnectionFactory(managerConfig Configuration) (grpcpool.Factory, 
 		}
 
 		creds := credentials.NewTLS(&tls.Config{
-			ServerName:   "wssync",
+			ServerName:   "wsdaemon",
 			Certificates: []tls.Certificate{certificate},
 			RootCAs:      certPool,
 		})
@@ -1203,10 +1203,10 @@ func newWssyncConnectionFactory(managerConfig Configuration) (grpcpool.Factory, 
 
 		conn, err := grpc.DialContext(conctx, addr, opts...)
 		if err != nil {
-			log.WithError(err).WithField("host", host).Error("cannot connect to ws-daemon")
+			log.WithError(err).WithField("addr", addr).Error("cannot connect to ws-daemon")
 
 			// we deliberately swallow the error here as users might see this one.
-			return nil, xerrors.Errorf("cannot connect to workspace sync")
+			return nil, xerrors.Errorf("cannot connect to workspace daemon")
 		}
 		return conn, nil
 	}, nil

@@ -19,7 +19,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/supervisor/api"
-	"github.com/gitpod-io/gitpod/supervisor/pkg/backup"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/iwh"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
 )
 
@@ -77,10 +77,10 @@ type tasksManager struct {
 	mu              sync.RWMutex
 	ready           chan struct{}
 	terminalService *terminal.MuxTerminalService
-	contentState    backup.ContentState
+	contentState    iwh.ContentState
 }
 
-func newTasksManager(config *Config, terminalService *terminal.MuxTerminalService, contentState backup.ContentState) *tasksManager {
+func newTasksManager(config *Config, terminalService *terminal.MuxTerminalService, contentState iwh.ContentState) *tasksManager {
 	return &tasksManager{
 		config:          config,
 		terminalService: terminalService,

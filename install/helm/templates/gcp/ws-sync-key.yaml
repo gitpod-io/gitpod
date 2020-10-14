@@ -6,7 +6,7 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: gcp-ws-sync-key
+  name: gcp-ws-daemon-key
   labels:
     app: {{ template "gitpod.fullname" . }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"

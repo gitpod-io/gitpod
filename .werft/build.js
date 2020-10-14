@@ -110,8 +110,8 @@ async function deployToDev(version, previewWithHttps, workspaceFeatureFlags) {
     const namespace = `staging-${destname}`;
     const domain = `${destname}.staging.gitpod-dev.com`;
     const url = `${!!previewWithHttps ? "https" : "http"}://${domain}`;
-    const wssyncPort = `1${Math.floor(Math.random()*1000)}`;
-    const wsmanNodePort = `2${Math.floor(Math.random()*1000)}`;
+    const wsdaemonPort = `1${Math.floor(Math.random()*1000)}`;
+    const registryProxyPort = `2${Math.floor(Math.random()*1000)}`;
     const registryNodePort = `${30000 + Math.floor(Math.random()*1000)}`;
 
     try {
@@ -168,7 +168,7 @@ async function deployToDev(version, previewWithHttps, workspaceFeatureFlags) {
         exec(`/usr/local/bin/helm3 delete jaeger-${destname} || echo jaeger-${destname} was not installed yet`, {slice: 'predeploy cleanup'});
 
         let objs = [];
-        ["ws-scheduler", "node-daemon", "cluster", "workspace", "jaeger", "jaeger-agent", "ws-sync", "ws-manager-node"].forEach(comp => 
+        ["ws-scheduler", "node-daemon", "cluster", "workspace", "jaeger", "jaeger-agent", "ws-sync", "ws-manager-node", "ws-daemon"].forEach(comp => 
             ["ClusterRole", "ClusterRoleBinding", "PodSecurityPolicy"].forEach(kind =>
                 shell
                     .exec(`kubectl get ${kind} -l component=${comp} --no-headers -o=custom-columns=:metadata.name | grep ${namespace}-ns`)
@@ -203,8 +203,8 @@ async function deployToDev(version, previewWithHttps, workspaceFeatureFlags) {
     flags+=` --set version=${version}`;
     flags+=` --set hostname=${domain}`;
     flags+=` --set devBranch=${destname}`;
-    flags+=` --set components.wsSync.servicePort=${wssyncPort}`;
-    flags+=` --set components.wsManagerNode.registryProxyPort=${wsmanNodePort}`;
+    flags+=` --set components.wsDaemon.servicePort=${wsdaemonPort}`;
+    flags+=` --set components.wsDaemon.registryProxyPort=${registryProxyPort}`;
     flags+=` --set ingressMode=${context.Annotations.ingressMode || "hosts"}`;
     workspaceFeatureFlags.forEach((f, i) => {
         flags+=` --set components.server.defaultFeatureFlags[${i}]='${f}'`

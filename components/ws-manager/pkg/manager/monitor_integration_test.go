@@ -54,7 +54,7 @@ func TestIntegrationWorkspaceDisposal(t *testing.T) {
 				StartRequestModifier: func(t *testing.T, r *api.StartWorkspaceRequest) {
 					r.Spec.WorkspaceImage = "does-not-exist"
 				},
-				MockWssync: func(t *testing.T, s *wssync_mock.MockWorkspaceContentServiceServer) {
+				MockWsdaemon: func(t *testing.T, s *wssync_mock.MockWorkspaceContentServiceServer) {
 					s.EXPECT().InitWorkspace(gomock.Any(), gomock.Any()).DoAndReturn(func(a, b interface{}) { time.Sleep(1 * time.Second) }).Return(&wssync.InitWorkspaceResponse{}, nil)
 					s.EXPECT().WaitForInit(gomock.Any(), gomock.Any()).Return(&wssync.WaitForInitResponse{}, nil).AnyTimes()
 					s.EXPECT().DisposeWorkspace(gomock.Any(), matches(func(a interface{}) bool {
@@ -87,7 +87,7 @@ func TestIntegrationWorkspaceDisposal(t *testing.T) {
 				StartRequestModifier: func(t *testing.T, r *api.StartWorkspaceRequest) {
 					r.Spec.WorkspaceImage = "gitpod/workspace-full"
 				},
-				MockWssync: func(t *testing.T, s *wssync_mock.MockWorkspaceContentServiceServer) {
+				MockWsdaemon: func(t *testing.T, s *wssync_mock.MockWorkspaceContentServiceServer) {
 					s.EXPECT().InitWorkspace(gomock.Any(), gomock.Any()).DoAndReturn(func(a, b interface{}) { time.Sleep(1 * time.Second) }).Return(nil, status.Error(codes.Internal, "fail intentionally"))
 					s.EXPECT().WaitForInit(gomock.Any(), gomock.Any()).Return(&wssync.WaitForInitResponse{}, nil).AnyTimes()
 					s.EXPECT().DisposeWorkspace(gomock.Any(), matches(func(a interface{}) bool {
@@ -116,7 +116,7 @@ func TestIntegrationWorkspaceDisposal(t *testing.T) {
 				StartRequestModifier: func(t *testing.T, s *api.StartWorkspaceRequest) {
 					s.Spec.WorkspaceImage = "csweichel/noop:latest"
 				},
-				MockWssync: func(t *testing.T, s *wssync_mock.MockWorkspaceContentServiceServer) {
+				MockWsdaemon: func(t *testing.T, s *wssync_mock.MockWorkspaceContentServiceServer) {
 					initCall := s.EXPECT().InitWorkspace(gomock.Any(), gomock.Any()).Return(&wssync.InitWorkspaceResponse{}, nil)
 					s.EXPECT().WaitForInit(gomock.Any(), gomock.Any()).Return(&wssync.WaitForInitResponse{}, nil).MinTimes(1).After(initCall)
 					s.EXPECT().DisposeWorkspace(gomock.Any(), matches(func(a interface{}) bool {
@@ -162,12 +162,12 @@ func TestIntegrationWorkspaceDisposal(t *testing.T) {
 				StartRequestModifier: func(t *testing.T, s *api.StartWorkspaceRequest) {
 					s.Spec.WorkspaceImage = "csweichel/noop:latest"
 				},
-				MockWssync: func(t *testing.T, s *wssync_mock.MockWorkspaceContentServiceServer) {
+				MockWsdaemon: func(t *testing.T, s *wssync_mock.MockWorkspaceContentServiceServer) {
 					initCall := s.EXPECT().InitWorkspace(gomock.Any(), gomock.Any()).Return(&wssync.InitWorkspaceResponse{}, nil)
 					s.EXPECT().WaitForInit(gomock.Any(), gomock.Any()).Return(&wssync.WaitForInitResponse{}, nil).MinTimes(1).After(initCall)
 					s.EXPECT().DisposeWorkspace(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, req interface{}) (resp *wssync.DisposeWorkspaceRequest, err error) {
 						return nil, context.DeadlineExceeded
-					}).MinTimes(wssyncMaxAttempts)
+					}).MinTimes(wsdaemonMaxAttempts)
 				},
 				PostStart: func(t *testing.T, monitor *Monitor, id string, updates *StatusRecoder) {
 					ok := updates.WaitFor(func(s *api.WorkspaceStatus) bool {

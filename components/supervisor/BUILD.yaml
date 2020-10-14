@@ -11,7 +11,6 @@ packages:
       - components/content-service:lib
       - components/supervisor-api/go:lib
       - components/ws-daemon-api/go:lib
-      - components/ws-manager-node-api/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux

@@ -1,6 +1,6 @@
 {
     "$schema": "./config-schema.json",
-    "syncd": {
+    "content": {
         "workingArea": "/tmp/wssync",
         "backupPeriod": "30m",
         "workspaceSizeLimit": "20g",
@@ -8,7 +8,7 @@
             "kind": "minio",
             "stage": "dev",
             "gcloud": {
-                "credentialsFile": "/workspace/gitpod/charts/gitpod_io/secrets/storage/gitpod-dev-syncd-key.json",
+                "credentialsFile": "/workspace/gitpod/charts/gitpod_io/secrets/storage/gitpod-dev-content-key.json",
                 "region": "europe-west1",
                 "project": "gitpod-dev",
                 "parallelUpload": 4,

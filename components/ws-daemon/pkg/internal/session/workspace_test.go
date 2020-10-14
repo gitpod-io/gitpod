@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/safetynet"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/sirupsen/logrus"
@@ -30,14 +29,6 @@ type emptySP struct{}
 
 func (*emptySP) NewStorage() (storage.DirectAccess, error) {
 	return &storage.DirectNoopStorage{}, nil
-}
-
-// emptyLiveBackupProvider is a provider that returns no live backups
-type emptyLiveBackupProvider struct{}
-
-// NewLiveBackup produces a new live backup
-func (*emptyLiveBackupProvider) NewLiveBackup(instanceID string, src string) (*safetynet.LiveWorkspaceBackup, error) {
-	return nil, nil
 }
 
 func getTestStore() (*Store, error) {

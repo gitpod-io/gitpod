@@ -16,7 +16,7 @@ import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
-	wssync "github.com/gitpod-io/gitpod/ws-daemon/api"
+	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 
 	"google.golang.org/grpc/codes"
@@ -53,12 +53,12 @@ func (m *Manager) TakeSnapshot(ctx context.Context, req *api.TakeSnapshotRequest
 		return nil, status.Errorf(codes.FailedPrecondition, "can only take snapshots of running workspaces")
 	}
 
-	sync, err := m.connectToWorkspaceSync(ctx, workspaceObjects{Pod: pod})
+	sync, err := m.connectToWorkspaceDaemon(ctx, workspaceObjects{Pod: pod})
 	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "cannot connect to workspace sync: %q", err)
+		return nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
 	}
 
-	r, err := sync.TakeSnapshot(ctx, &wssync.TakeSnapshotRequest{Id: req.Id})
+	r, err := sync.TakeSnapshot(ctx, &wsdaemon.TakeSnapshotRequest{Id: req.Id})
 	if err != nil {
 		// err is already a grpc error - no need to faff with that
 		return nil, err

@@ -5,7 +5,6 @@
 package cmd
 
 import (
-	"context"
 	"net"
 	"net/http"
 	"os"
@@ -13,14 +12,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gitpod-io/gitpod/ws-daemon/api"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/syncd"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/daemon"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	"github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -34,10 +33,10 @@ var runCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg := getConfig()
-
-		service, err := syncd.NewWorkspaceService(context.Background(), cfg.Syncd)
+		promreg := prometheus.NewRegistry()
+		dmn, err := daemon.NewDaemon(cfg.Daemon, promreg)
 		if err != nil {
-			log.WithError(err).Fatal("cannot create service")
+			log.WithError(err).Fatal("cannot create daemon")
 		}
 
 		grpcOpts := []grpc.ServerOption{
@@ -63,7 +62,7 @@ var runCmd = &cobra.Command{
 		}
 
 		server := grpc.NewServer(grpcOpts...)
-		api.RegisterWorkspaceContentServiceServer(server, service)
+		dmn.Register(server)
 		lis, err := net.Listen("tcp", cfg.Service.Addr)
 		if err != nil {
 			log.WithError(err).Fatalf("cannot listen on %s", cfg.Service.Addr)
@@ -74,11 +73,16 @@ var runCmd = &cobra.Command{
 				log.WithError(err).Fatal("cannot start server")
 			}
 		}()
-		log.WithField("addr", cfg.Service.Addr).Info("started workspace content server")
+		log.WithField("addr", cfg.Service.Addr).Info("started gRPC server")
 
 		if cfg.Prometheus.Addr != "" {
+			promreg.MustRegister(
+				prometheus.NewGoCollector(),
+				prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
+			)
+
 			handler := http.NewServeMux()
-			handler.Handle("/metrics", promhttp.Handler())
+			handler.Handle("/metrics", promhttp.HandlerFor(promreg, promhttp.HandlerOpts{}))
 
 			go func() {
 				err := http.ListenAndServe(cfg.Prometheus.Addr, handler)
@@ -93,13 +97,21 @@ var runCmd = &cobra.Command{
 			go pprof.Serve(cfg.PProf.Addr)
 		}
 
+		err = dmn.Start()
+		if err != nil {
+			log.WithError(err).Fatal("cannot start daemon")
+		}
+
 		// run until we're told to stop
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 		log.Info("🧫 ws-daemon is up and running. Stop with SIGINT or CTRL+C")
 		<-sigChan
 		server.Stop()
-		service.Stop()
+		err = dmn.Stop()
+		if err != nil {
+			log.WithError(err).Error("cannot shut down gracefully")
+		}
 		log.Info("Received SIGINT - shutting down")
 	},
 }

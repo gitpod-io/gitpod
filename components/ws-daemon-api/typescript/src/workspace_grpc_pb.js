@@ -77,14 +77,36 @@ function deserialize_wsbs_PauseTheiaResponse(buffer_arg) {
   return workspace_pb.PauseTheiaResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_wsbs_UidmapCanaryRequest(arg) {
+  if (!(arg instanceof workspace_pb.UidmapCanaryRequest)) {
+    throw new Error('Expected argument of type wsbs.UidmapCanaryRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsbs_UidmapCanaryRequest(buffer_arg) {
+  return workspace_pb.UidmapCanaryRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_wsbs_UidmapCanaryResponse(arg) {
+  if (!(arg instanceof workspace_pb.UidmapCanaryResponse)) {
+    throw new Error('Expected argument of type wsbs.UidmapCanaryResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsbs_UidmapCanaryResponse(buffer_arg) {
+  return workspace_pb.UidmapCanaryResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 
 var InWorkspaceHelperService = exports.InWorkspaceHelperService = {
   // BackupCanary can prepare workspace content backups. The canary is supposed to be triggered
-  // when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
-  //
-  // Note that the request/response flow is inverted here, as it's the server (supervisor) which requests a backup
-  // from the client (ws-daemon).
-  backupCanary: {
+// when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
+//
+// Note that the request/response flow is inverted here, as it's the server (supervisor) which requests a backup
+// from the client (ws-daemon).
+backupCanary: {
     path: '/wsbs.InWorkspaceHelper/BackupCanary',
     requestStream: true,
     responseStream: true,
@@ -96,9 +118,9 @@ var InWorkspaceHelperService = exports.InWorkspaceHelperService = {
     responseDeserialize: deserialize_wsbs_BackupCanaryRequest,
   },
   // PauseTheia can pause the Theia process and all its children. As long as the request stream
-  // is held Theia will be paused.
-  // This is a stop-the-world mechanism for preventing concurrent modification during backup.
-  pauseTheia: {
+// is held Theia will be paused.
+// This is a stop-the-world mechanism for preventing concurrent modification during backup.
+pauseTheia: {
     path: '/wsbs.InWorkspaceHelper/PauseTheia',
     requestStream: true,
     responseStream: false,
@@ -119,6 +141,18 @@ var InWorkspaceHelperService = exports.InWorkspaceHelperService = {
     requestDeserialize: deserialize_wsbs_GitStatusRequest,
     responseSerialize: serialize_wsbs_GitStatusResponse,
     responseDeserialize: deserialize_wsbs_GitStatusResponse,
+  },
+  // UidmapCanary can establish a uid mapping of a new user namespace spawned within the workspace.
+uidmapCanary: {
+    path: '/wsbs.InWorkspaceHelper/UidmapCanary',
+    requestStream: true,
+    responseStream: true,
+    requestType: workspace_pb.UidmapCanaryResponse,
+    responseType: workspace_pb.UidmapCanaryRequest,
+    requestSerialize: serialize_wsbs_UidmapCanaryResponse,
+    requestDeserialize: deserialize_wsbs_UidmapCanaryResponse,
+    responseSerialize: serialize_wsbs_UidmapCanaryRequest,
+    responseDeserialize: deserialize_wsbs_UidmapCanaryRequest,
   },
 };
 
