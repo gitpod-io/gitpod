@@ -26,8 +26,7 @@ export class GitlabFileProvider implements FileProvider {
 
     public async getLastChangeRevision(repository: Repository, revisionOrBranch: string, user: User, path: string): Promise<string> {
         const result = await this.gitlabApi.run<GitLab.Commit[]>(user, async g => {
-            const encodedPath = encodeURIComponent(path);
-            return g.Commits.all(`${repository.owner}/${repository.name}`, { path: encodedPath, ref_name: revisionOrBranch });
+            return g.Commits.all(`${repository.owner}/${repository.name}`, { path, ref_name: revisionOrBranch });
         });
 
         if (GitLab.ApiError.is(result)) {
