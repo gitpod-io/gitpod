@@ -1,7 +1,7 @@
 # Copyright (c) 2020 TypeFox GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
-{{ $comp := .Values.components.wsSync -}}
+{{ $comp := .Values.components.wsDaemon -}}
 {{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
 {{- if not $comp.disabled -}}
 apiVersion: apps/v1
@@ -53,6 +53,7 @@ spec:
         operator: "Exists"
         effect: "NoExecute"
       serviceAccountName: ws-daemon
+      hostPID: true
       volumes:
       - hostPath:
           path: {{ $comp.hostWorkspaceArea }}
@@ -64,12 +65,11 @@ spec:
       - name: config
         configMap:
           name: {{ template "gitpod.comp.configMap" $this }}
-      {{- if $comp.fullWorkspaceBackup.enabled }}
       - name: containerd-socket
         hostPath:
-          path: {{ $comp.fullWorkspaceBackup.containerd.socket }}
+          path: {{ $comp.containerRuntime.containerd.socket }}
           type: Socket
-      {{- range $idx, $pth := $comp.fullWorkspaceBackup.nodeRoots }}
+      {{- range $idx, $pth := $comp.containerRuntime.nodeRoots }}
       - name: node-fs{{ $idx }}
         hostPath:
           path: {{ $pth }}
@@ -79,7 +79,14 @@ spec:
         hostPath:
           path: /proc/mounts
           type: File
-      {{- end }}
+      - name: node-cgroups
+        hostPath:
+          path: {{ $comp.cgroupsRoot | default "/sys/fs/cgroup" }}
+          type: Directory
+      - name: node-hosts
+        hostPath:
+          path: {{ $comp.nodeHosts | default "/etc/hosts" }}
+          type: File
       {{- if $comp.userNamespaces.shiftfsModuleLoader.enabled }}
       - name: node-linux-src
         hostPath: 
@@ -108,10 +115,9 @@ spec:
           mountPropagation: Bidirectional
         - mountPath: /config
           name: config
-        {{- if $comp.fullWorkspaceBackup.enabled }}
         - mountPath: /mnt/containerd.sock
           name: containerd-socket
-        {{- range $idx, $pth := $comp.fullWorkspaceBackup.nodeRoots }}
+        {{- range $idx, $pth := $comp.containerRuntime.nodeRoots }}
         - mountPath: /mnt/node{{ $idx }}
           name: node-fs{{ $idx }}
         {{- end }}
@@ -119,7 +125,11 @@ spec:
           name: node-mounts
           readOnly: true
           mountPropagation: HostToContainer
-        {{- end }}
+        - mountPath: /mnt/node-cgroups
+          name: node-cgroups
+          mountPropagation: HostToContainer
+        - mountPath: /mnt/hosts
+          name: node-hosts
         - mountPath: /certs
           name: tls-certs
 {{- if $comp.volumeMounts }}
@@ -139,6 +149,9 @@ spec:
         - name: rpc
           containerPort: {{ $comp.servicePort }}
           hostPort: {{ $comp.servicePort }}
+        - name: registry-proxy
+          containerPort: {{ $comp.registryProxyPort }}
+          hostPort: {{ $comp.registryProxyPort }}
         - name: metrics
           containerPort: 9500
         securityContext:

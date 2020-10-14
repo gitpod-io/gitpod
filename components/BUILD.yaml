@@ -20,7 +20,6 @@ packages:
       - components/theia/app:docker
       - components/theia/static-server:docker
       - components/ws-manager-bridge:docker
-      - components/ws-manager-node:docker
       - components/ws-manager:docker
       - components/ws-proxy:docker
       - components/ws-daemon:docker
@@ -40,7 +39,6 @@ packages:
       - components/supervisor:app
       - components/theia/static-server:app
       - components/ws-manager-bridge:app
-      - components/ws-manager-node:app
       - components/ws-manager:app
       - components/ee/ws-scheduler:app
       - components/ws-daemon:app

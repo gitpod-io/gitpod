@@ -316,7 +316,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 										Operator: corev1.NodeSelectorOpExists,
 									},
 									{
-										Key:      wssyncLabel,
+										Key:      wsdaemonLabel,
 										Operator: corev1.NodeSelectorOpExists,
 									},
 								},

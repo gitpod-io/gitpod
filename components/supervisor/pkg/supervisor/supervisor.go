@@ -20,16 +20,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gitpod-io/gitpod/content-service/pkg/executor"
-	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
-	"github.com/gitpod-io/gitpod/supervisor/pkg/backup"
-	"github.com/gitpod-io/gitpod/supervisor/pkg/dropwriter"
-	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-
 	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
-	ndeapi "github.com/gitpod-io/gitpod/ws-manager-node/api"
+	"github.com/gitpod-io/gitpod/content-service/pkg/executor"
+	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/dropwriter"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/iwh"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
+
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
 )
@@ -114,16 +113,15 @@ func Run(options ...RunOption) {
 		shutdown = make(chan struct{})
 		ideReady = make(chan struct{})
 		pauseIDE = make(chan bool)
-		iwh      = backup.NewInWorkspaceHelper(cfg.RepoRoot, pauseIDE)
+		iwh      = iwh.NewInWorkspaceHelper(cfg.RepoRoot, pauseIDE)
 		portMgmt = newPortsManager(
 			uint32(cfg.IDEPort),
 			uint32(cfg.APIEndpointPort),
 		)
-		termMux      = terminal.NewMux()
-		termMuxSrv   = terminal.NewMuxTerminalService(termMux)
-		uidmapCanary = ndeapi.NewInWorkspaceHelper()
+		termMux    = terminal.NewMux()
+		termMuxSrv = terminal.NewMuxTerminalService(termMux)
 	)
-	taskManager := newTasksManager(cfg, termMuxSrv, iwh)
+	taskManager := newTasksManager(cfg, termMuxSrv, iwh.ContentState())
 
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
 
@@ -138,14 +136,13 @@ func Run(options ...RunOption) {
 	apiServices = append(apiServices, termMuxSrv)
 	apiServices = append(apiServices, &RegistrableTokenService{tokenService})
 	apiServices = append(apiServices, &InfoService{cfg: cfg})
-	apiServices = append(apiServices, uidmapCanary.Server())
-	apiServices = append(apiServices, &ControlService{UidmapCanary: uidmapCanary})
+	apiServices = append(apiServices, &ControlService{UidmapCanary: iwh.IDMapperService()})
 	apiServices = append(apiServices, opts.AdditionalServices...)
 
 	var wg sync.WaitGroup
 	wg.Add(4)
 	go startAndWatchIDE(ctx, cfg, &wg, ideReady, pauseIDE)
-	go startContentInit(ctx, cfg, &wg, iwh)
+	go startContentInit(ctx, cfg, &wg, iwh.ContentState())
 	go startAPIEndpoint(ctx, cfg, &wg, apiServices)
 	go portMgmt.Run(ctx, &wg)
 	go taskManager.Run(ctx, &wg)
@@ -464,7 +461,7 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	l.Close()
 }
 
-func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst backup.ContentState) {
+func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst iwh.ContentState) {
 	defer wg.Done()
 	defer log.Info("supervisor: workspace content available")
 

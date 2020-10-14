@@ -20,6 +20,9 @@ service InWorkspaceHelper {
     rpc PauseTheia(stream PauseTheiaRequest) returns (PauseTheiaResponse) {}
 
     rpc GitStatus(GitStatusRequest) returns (GitStatusResponse) {}
+
+    // UidmapCanary can establish a uid mapping of a new user namespace spawned within the workspace.
+    rpc UidmapCanary(stream UidmapCanaryResponse) returns (stream UidmapCanaryRequest) {}
 }
 
 message BackupCanaryRequest {
@@ -34,4 +37,20 @@ message PauseTheiaResponse {}
 message GitStatusRequest {}
 message GitStatusResponse {
     contentservice.GitStatus repo = 1;
+}
+
+message UidmapCanaryResponse {
+    string message = 1;
+    uint32 error_code = 2;
+}
+message UidmapCanaryRequest {
+    message Mapping {
+        uint32 container_id = 1;
+        uint32 host_id = 2;
+        uint32 size = 3;
+    }
+
+    int64 pid = 1;
+    bool gid = 2;
+    repeated Mapping mapping = 3;
 }

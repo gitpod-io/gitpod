@@ -4,5 +4,4 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-export * from './wssync_grpc_pb'
-export * from './wssync_pb'
+export * from './daemon_pb'

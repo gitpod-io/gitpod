@@ -13,8 +13,8 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/supervisor/api"
-	"github.com/gitpod-io/gitpod/supervisor/pkg/backup"
-	ndeapi "github.com/gitpod-io/gitpod/ws-manager-node/api"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/iwh"
+	daemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -39,7 +39,7 @@ type RegisterableRESTService interface {
 }
 
 type statusService struct {
-	IWH      *backup.InWorkspaceHelper
+	IWH      *iwh.InWorkspaceHelper
 	Ports    *portsManager
 	Tasks    *tasksManager
 	IDEReady <-chan struct{}
@@ -85,10 +85,11 @@ func (s *statusService) ContentStatus(ctx context.Context, req *api.ContentStatu
 		csapi.WorkspaceInitFromPrebuild: api.ContentSource_from_prebuild,
 	}
 
+	cs := s.IWH.ContentState()
 	if req.Wait {
 		select {
-		case <-s.IWH.ContentReady():
-			src, _ := s.IWH.ContentSource()
+		case <-cs.ContentReady():
+			src, _ := cs.ContentSource()
 			return &api.ContentStatusResponse{
 				Available: true,
 				Source:    srcmap[src],
@@ -98,7 +99,7 @@ func (s *statusService) ContentStatus(ctx context.Context, req *api.ContentStatu
 		}
 	}
 
-	src, ok := s.IWH.ContentSource()
+	src, ok := cs.ContentSource()
 	if !ok {
 		return &api.ContentStatusResponse{
 			Available: false,
@@ -113,7 +114,7 @@ func (s *statusService) ContentStatus(ctx context.Context, req *api.ContentStatu
 
 func (s *statusService) BackupStatus(ctx context.Context, req *api.BackupStatusRequest) (*api.BackupStatusResponse, error) {
 	return &api.BackupStatusResponse{
-		CanaryAvailable: s.IWH.CanaryAvailable(),
+		CanaryAvailable: s.IWH.BackupService().Available(),
 	}, nil
 }
 
@@ -549,7 +550,7 @@ func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest)
 
 // ControlService implements the supervisor control service
 type ControlService struct {
-	UidmapCanary *ndeapi.InWorkspaceHelper
+	UidmapCanary iwh.IDMapperService
 }
 
 // RegisterGRPC registers the gRPC info service
@@ -559,26 +560,26 @@ func (c *ControlService) RegisterGRPC(srv *grpc.Server) {
 
 // Newuidmap establishes a new UID mapping in a user namespace
 func (c *ControlService) Newuidmap(ctx context.Context, req *api.NewuidmapRequest) (*api.NewuidmapResponse, error) {
-	if !c.UidmapCanary.CanaryAvailable() {
+	if !c.UidmapCanary.Available() {
 		return nil, status.Error(codes.Unavailable, "service unavailable")
 	}
 
-	mapping := make([]*ndeapi.UidmapCanaryRequest_Mapping, len(req.Mapping))
+	mapping := make([]*daemon.UidmapCanaryRequest_Mapping, len(req.Mapping))
 	for i, m := range req.Mapping {
-		mapping[i] = &ndeapi.UidmapCanaryRequest_Mapping{
+		mapping[i] = &daemon.UidmapCanaryRequest_Mapping{
 			ContainerId: m.ContainerId,
 			HostId:      m.HostId,
 			Size:        m.Size,
 		}
 	}
 
-	ndereq := &ndeapi.UidmapCanaryRequest{
+	ndereq := &daemon.UidmapCanaryRequest{
 		Pid:     req.Pid,
 		Gid:     req.Gid,
 		Mapping: mapping,
 	}
 
-	err := c.UidmapCanary.Newuidmap(ctx, ndereq)
+	err := c.UidmapCanary.WriteIDMap(ctx, ndereq)
 	if err != nil {
 		return nil, err
 	}

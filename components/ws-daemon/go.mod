@@ -10,6 +10,7 @@ replace github.com/docker/docker v1.13.1 => github.com/docker/engine v0.0.0-2019
 replace github.com/Sirupsen/logrus v1.6.0 => github.com/sirupsen/logrus v1.6.0 // leeway ignore
 
 require (
+	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/alecthomas/jsonschema v0.0.0-20190504002508-159cbd5dba26
 	github.com/alecthomas/repr v0.0.0-20200325044227-4184120f674c
 	github.com/docker/docker v1.13.1 // indirect
@@ -18,19 +19,24 @@ require (
 	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-daemon/api v0.0.0-00010101000000-000000000000
+	github.com/go-ole/go-ole v1.2.4 // indirect
+	github.com/golang/protobuf v1.4.2
 	github.com/google/go-cmp v0.5.2
+	github.com/google/tcpproxy v0.0.0-20200125044825-b6bb9b5b8252
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/prometheus/client_golang v1.1.0
+	github.com/shirou/gopsutil v2.20.9+incompatible
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.3
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	google.golang.org/grpc v1.32.0
+	k8s.io/api v0.0.0-20190620084959-7cf5895f2711
+	k8s.io/apimachinery v0.0.0
+	k8s.io/client-go v0.0.0
 )
-
-replace github.com/gitpod-io/gitpod/ws-daemon/api => ../ws-daemon-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
 

@@ -9,13 +9,14 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"golang.org/x/xerrors"
 	"io/ioutil"
 	"os"
 
+	"golang.org/x/xerrors"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/syncd"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/daemon"
 	"github.com/spf13/cobra"
 
 	"google.golang.org/grpc"
@@ -75,7 +76,7 @@ func init() {
 }
 
 type config struct {
-	Syncd   syncd.Configuration `json:"syncd"`
+	Daemon  daemon.Config `json:"daemon"`
 	Service struct {
 		Addr string    `json:"address"`
 		TLS  tlsConfig `json:"tls"`

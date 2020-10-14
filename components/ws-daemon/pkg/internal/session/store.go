@@ -154,36 +154,34 @@ func (s *Store) Get(name string) *Workspace {
 	return s.workspaces[name]
 }
 
-// StartHousekeeping starts garbage collection and regular cleanup
+// StartHousekeeping starts garbage collection and regular cleanup.
+// This function returns when the context is canceled.
 func (s *Store) StartHousekeeping(ctx context.Context, interval time.Duration) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Store.StartHousekeeping")
 	defer tracing.FinishSpan(span, nil)
+	log.WithField("interval", interval.String()).Debug("started workspace housekeeping")
 
 	ticker := time.NewTicker(interval)
-	go func() {
-		log.WithField("interval", interval.String()).Debug("started workspace housekeeping")
-		span := opentracing.StartSpan("housekeeping", opentracing.FollowsFrom(span.Context()))
-		ctx := opentracing.ContextWithSpan(ctx, span)
+	defer ticker.Stop()
 
-		run := true
-		for run {
-			var errs []error
-			select {
-			case <-ticker.C:
-				errs = s.doHousekeeping(ctx)
-			case <-ctx.Done():
-				run = false
-				break
-			}
-
-			for _, err := range errs {
-				log.WithError(err).Error("error during housekeeping")
-			}
+	run := true
+	for run {
+		var errs []error
+		select {
+		case <-ticker.C:
+			errs = s.doHousekeeping(ctx)
+		case <-ctx.Done():
+			run = false
+			break
 		}
 
-		span.Finish()
-		log.Debug("stopping workspace housekeeping")
-	}()
+		for _, err := range errs {
+			log.WithError(err).Error("error during housekeeping")
+		}
+	}
+
+	span.Finish()
+	log.Debug("stopping workspace housekeeping")
 }
 
 func (s *Store) doHousekeeping(ctx context.Context) (errs []error) {

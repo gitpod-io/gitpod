@@ -9,7 +9,6 @@ require (
 	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/ws-manager-node/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-daemon/api v0.0.0-00010101000000-000000000000
 	github.com/golang/protobuf v1.4.2
 	github.com/google/go-cmp v0.5.2
@@ -34,8 +33,6 @@ replace github.com/gitpod-io/gitpod/content-service => ../content-service // lee
 replace github.com/gitpod-io/gitpod/content-service/api => ../content-service-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/supervisor/api => ../supervisor-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/ws-manager-node/api => ../ws-manager-node-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/ws-daemon/api => ../ws-daemon-api/go // leeway
 

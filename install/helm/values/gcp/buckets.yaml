@@ -6,11 +6,11 @@
 
 gitpod:
   components:
-    wsSync:
+    wsDaemon:
       volumes:
       - name: gcloud-creds
         secret:
-          secretName: gcp-ws-sync-key
+          secretName: gcp-ws-daemon-key
       - name: gcloud-tmp
         hostPath:
           path: /mnt/disks/ssd0/sync-tmp

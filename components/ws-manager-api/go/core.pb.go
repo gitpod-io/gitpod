@@ -221,7 +221,7 @@ const (
 	//
 	// This flag implies REGISTRY_FACADE
 	WorkspaceFeatureFlag_FULL_WORKSPACE_BACKUP WorkspaceFeatureFlag = 4
-	// FixedResources ensures this workspace is not subject to ws-manager-node's dynamic resource limits.
+	// FixedResources ensures this workspace is not subject to ws-daemon's dynamic resource limits.
 	// In this sence it's akin to "guaranteed" (as compared to burstable) resources for workspaces.
 	WorkspaceFeatureFlag_FIXED_RESOURCES WorkspaceFeatureFlag = 5
 	// UserNamespace enables user namespace specific behaviour in the pod. It disables a host of

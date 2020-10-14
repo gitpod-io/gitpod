@@ -359,29 +359,22 @@ components:
         expose: false
         containerPort: 9500
 
-  wsManagerNode:
-    name: "ws-manager-node"
-    registryProxyPort: 8081
-    resources:
-      cpu: 100m
-      memory: 32Mi
-
-  wsSync:
+  wsDaemon:
     name: "ws-daemon"
     hostWorkspaceArea: /var/gitpod/workspaces
     servicePort: 8080
     workspaceSizeLimit: ""
-    fullWorkspaceBackup:
-      enabled: true
-      nodeRoots: 
-      - /var/lib
+    containerRuntime:
       runtime: containerd
       containerd:
         socket: /run/containerd/containerd.sock
+      nodeRoots: 
+      - /var/lib
     userNamespaces:
       shiftfsModuleLoader:
         enabled: false
         imageName: "shiftfs-module-loader"
+    registryProxyPort: 8081
     remoteStorage:
       kind: minio
       minio:
