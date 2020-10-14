@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package cri
+package container
 
 import (
 	"os"
@@ -51,7 +51,7 @@ type ContainerdConfig struct {
 }
 
 // FromConfig produces a container runtime interface instance from the configuration
-func FromConfig(cfg *Config) (cric ContainerRuntimeInterface, err error) {
+func FromConfig(cfg *Config) (rt Runtime, err error) {
 	if cfg == nil {
 		return
 	}
@@ -66,7 +66,7 @@ func FromConfig(cfg *Config) (cric ContainerRuntimeInterface, err error) {
 		if cfg.Containerd == nil {
 			return nil, xerrors.Errorf("runtime is set to containerd, but not containerd config is provided")
 		}
-		return NewContainerdCRI(cfg.Containerd, mounts, cfg.Mapping)
+		return NewContainerd(cfg.Containerd, mounts, cfg.Mapping)
 	default:
 		return nil, xerrors.Errorf("unknown runtime type: %s", cfg.Runtime)
 	}

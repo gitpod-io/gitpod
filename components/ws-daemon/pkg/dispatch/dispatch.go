@@ -9,9 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/cri"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/sirupsen/logrus"
 
 	"golang.org/x/xerrors"
@@ -28,7 +28,7 @@ const (
 
 // Workspace represents all the info we have about a workspace
 type Workspace struct {
-	ContainerID cri.ContainerID
+	ContainerID container.ID
 	WorkspaceID string
 	InstanceID  string
 	Pod         *corev1.Pod
@@ -50,9 +50,9 @@ type UpdateListener interface {
 }
 
 // NewDispatch starts a new workspace dispatch
-func NewDispatch(runtime cri.ContainerRuntimeInterface, kubernetes kubernetes.Interface, k8sNamespace, nodename string, listener ...Listener) (*Dispatch, error) {
+func NewDispatch(runtime container.Runtime, kubernetes kubernetes.Interface, k8sNamespace, nodename string, listener ...Listener) (*Dispatch, error) {
 	d := &Dispatch{
-		CRI:                 runtime,
+		Runtime:             runtime,
 		Kubernetes:          kubernetes,
 		KubernetesNamespace: k8sNamespace,
 		Listener:            listener,
@@ -68,7 +68,7 @@ func NewDispatch(runtime cri.ContainerRuntimeInterface, kubernetes kubernetes.In
 // context when the workspace goes away. If the dispatch is closed, all active contexts
 // will be canceled, too.
 type Dispatch struct {
-	CRI                 cri.ContainerRuntimeInterface
+	Runtime             container.Runtime
 	Kubernetes          kubernetes.Interface
 	KubernetesNamespace string
 	NodeName            string
@@ -192,7 +192,7 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 		containerCtx, containerCtxCancel := context.WithCancel(context.Background())
 		containerCtx = context.WithValue(containerCtx, contextDispatch, d)
 		go func() {
-			containerID, err := d.CRI.WaitForContainer(waitForPodCtx, workspaceInstanceID)
+			containerID, err := d.Runtime.WaitForContainer(waitForPodCtx, workspaceInstanceID)
 			if err != nil && err != context.Canceled {
 				log.WithError(err).WithFields(owi).Warn("cannot wait for container")
 			}
@@ -224,7 +224,7 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 		go func() {
 			// no matter if the container was deleted or not - we've lost our guard that was waiting for that to happen.
 			// Hence, we must stop listening for it to come into existence and cancel the context.
-			d.CRI.WaitForContainerStop(waitForPodCtx, workspaceInstanceID)
+			d.Runtime.WaitForContainerStop(waitForPodCtx, workspaceInstanceID)
 			cancel()
 		}()
 

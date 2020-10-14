@@ -8,9 +8,9 @@ import (
 	"context"
 	"os"
 
-	"github.com/gitpod-io/gitpod/common-go/cri"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/diskguard"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
@@ -31,7 +31,7 @@ func NewDaemon(config Config, prom prometheus.Registerer) (*Daemon, error) {
 	if err != nil {
 
 	}
-	containerRuntime, err := cri.FromConfig(config.Runtime.CRI)
+	containerRuntime, err := container.FromConfig(config.Runtime.Container)
 	if err != nil {
 		return nil, err
 	}

@@ -5,7 +5,7 @@
 package daemon
 
 import (
-	"github.com/gitpod-io/gitpod/common-go/cri"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/diskguard"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/hosts"
@@ -16,9 +16,9 @@ import (
 // Config configures the workspace node daemon
 type Config struct {
 	Runtime struct {
-		CRI                 *cri.Config `json:"containerRuntime"`
-		Kubeconfig          string      `json:"kubeconfig"`
-		KubernetesNamespace string      `json:"namespace"`
+		Container           *container.Config `json:"containerRuntime"`
+		Kubeconfig          string            `json:"kubeconfig"`
+		KubernetesNamespace string            `json:"namespace"`
 	} `json:"runtime"`
 
 	Content        content.Config   `json:"content"`

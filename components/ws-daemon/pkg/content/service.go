@@ -15,13 +15,13 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/cri"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	wsinit "github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/archive"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
 
@@ -44,11 +44,11 @@ type WorkspaceService struct {
 	ctx         context.Context
 	stopService context.CancelFunc
 	sandboxes   quota.SandboxProvider
-	cric        cri.ContainerRuntimeInterface
+	runtime     container.Runtime
 }
 
 // NewWorkspaceService creates a new workspce initialization service, starts housekeeping and the Prometheus integration
-func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace string, cri cri.ContainerRuntimeInterface) (res *WorkspaceService, err error) {
+func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace string, runtime container.Runtime) (res *WorkspaceService, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "NewWorkspaceService")
 	defer tracing.FinishSpan(span, &err)
 
@@ -74,7 +74,7 @@ func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace st
 		store:       store,
 		ctx:         ctx,
 		stopService: stopService,
-		cric:        cri,
+		runtime:     runtime,
 	}, nil
 }
 
@@ -141,7 +141,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		upperdir string
 	)
 	if req.FullWorkspaceBackup {
-		if s.cric == nil {
+		if s.runtime == nil {
 			return nil, status.Errorf(codes.FailedPrecondition, "full workspace backup is not available - not connected to container runtime")
 		}
 		var mf csapi.WorkspaceContentManifest
@@ -153,11 +153,11 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 			return nil, status.Errorf(codes.InvalidArgument, "invalid content manifest: %s", err.Error())
 		}
 
-		wscont, err := s.cric.WaitForContainer(ctx, req.Id)
+		wscont, err := s.runtime.WaitForContainer(ctx, req.Id)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "cannot find workspace container: %s", err.Error())
 		}
-		upperdir, err = s.cric.ContainerUpperdir(ctx, wscont)
+		upperdir, err = s.runtime.ContainerUpperdir(ctx, wscont)
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "cannot find workspace upperdir: %s", err.Error())
 		}

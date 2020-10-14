@@ -13,6 +13,8 @@ require (
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/alecthomas/jsonschema v0.0.0-20190504002508-159cbd5dba26
 	github.com/alecthomas/repr v0.0.0-20200325044227-4184120f674c
+	github.com/containerd/containerd v1.4.1
+	github.com/containerd/typeurl v1.0.1
 	github.com/docker/docker v1.13.1 // indirect
 	github.com/docker/engine v17.12.0-ce-rc1.0.20200514230353-811a247d06e8+incompatible
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
@@ -26,6 +28,7 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.0.1
+	github.com/opencontainers/runtime-spec v1.0.2
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/prometheus/client_golang v1.1.0
 	github.com/shirou/gopsutil v2.20.9+incompatible
