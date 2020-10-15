@@ -35,15 +35,16 @@ const (
 // WorkspaceRouter is a function that configures subrouters (one for theia, one for the exposed ports) on the given router
 // which resolve workspace coordinates (ID, port?) from each request. The contract is to store those in the request's mux.Vars
 // with the keys workspacePortIdentifier and workspaceIDIdentifier
-type WorkspaceRouter func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (theiaRouter *mux.Router, portRouter *mux.Router)
+type WorkspaceRouter func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (theiaRouter *mux.Router, portRouter *mux.Router, blobserveRouter *mux.Router)
 
 // HostBasedRouter is a WorkspaceRouter that routes simply based on the "Host" header
 func HostBasedRouter(header, wsHostSuffix string) WorkspaceRouter {
-	return func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (*mux.Router, *mux.Router) {
+	return func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (*mux.Router, *mux.Router, *mux.Router) {
 		var (
-			getHostHeader = func(req *http.Request) string { return req.Header.Get(header) }
-			portRouter    = r.MatcherFunc(matchWorkspacePortHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
-			theiaRouter   = r.MatcherFunc(matchWorkspaceHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
+			getHostHeader   = func(req *http.Request) string { return req.Header.Get(header) }
+			blobserveRouter = r.MatcherFunc(matchBlobserveHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
+			portRouter      = r.MatcherFunc(matchWorkspacePortHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
+			theiaRouter     = r.MatcherFunc(matchWorkspaceHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
 		)
 
 		r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -51,7 +52,7 @@ func HostBasedRouter(header, wsHostSuffix string) WorkspaceRouter {
 			log.Debugf("no match for path %s, host: %s", req.URL.Path, hostname)
 			w.WriteHeader(404)
 		})
-		return theiaRouter, portRouter
+		return theiaRouter, portRouter, blobserveRouter
 	}
 }
 
@@ -111,6 +112,23 @@ func matchWorkspacePortHostHeader(wsHostSuffix string, headerProvider hostHeader
 		}
 		m.Vars[workspaceIDIdentifier] = workspaceID
 		m.Vars[workspacePortIdentifier] = workspacePort
+		return true
+	}
+}
+
+func matchBlobserveHostHeader(wsHostSuffix string, headerProvider hostHeaderProvider) mux.MatcherFunc {
+	r := regexp.MustCompile("^blobserve" + wsHostSuffix)
+	return func(req *http.Request, m *mux.RouteMatch) bool {
+		hostname := headerProvider(req)
+		if hostname == "" {
+			return false
+		}
+
+		matches := r.FindStringSubmatch(hostname)
+		if len(matches) < 1 {
+			return false
+		}
+
 		return true
 	}
 }
@@ -237,10 +255,35 @@ func pathBasedTheiaRouter(r *mux.Router, wsInfoProvider WorkspaceInfoProvider, t
 	}).Subrouter()
 }
 
+func pathBasedBlobserveRouter(r *mux.Router) *mux.Router {
+	return r.MatcherFunc(func(req *http.Request, match *mux.RouteMatch) (res bool) {
+		if _, ok := match.Vars["blobserve"]; ok {
+			return true
+		}
+
+		if !strings.HasPrefix(req.URL.Path, "/blobserve") {
+			return false
+		}
+
+		req.URL.Path = strings.TrimPrefix(req.URL.Path, "/blobserve")
+		if req.URL.Path == "" {
+			req.URL.Path = "/"
+		}
+
+		if match.Vars == nil {
+			match.Vars = make(map[string]string)
+		}
+		match.Vars["blobserve"] = "true"
+
+		return true
+	}).Subrouter()
+}
+
 // PathAndPortRouter routes workspace access using the URL's path (/wsid prefix) and port access using the request's port
 func PathAndPortRouter(trimPrefix string) WorkspaceRouter {
-	return func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (theiaRouter *mux.Router, portRouter *mux.Router) {
+	return func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (theiaRouter *mux.Router, portRouter *mux.Router, blobserveRouter *mux.Router) {
 		theiaRouter = pathBasedTheiaRouter(r, wsInfoProvider, trimPrefix)
+		blobserveRouter = pathBasedBlobserveRouter(r)
 		portRouter = portBasedRouter(r, wsInfoProvider, true)
 		return
 	}
@@ -248,9 +291,10 @@ func PathAndPortRouter(trimPrefix string) WorkspaceRouter {
 
 // PathAndHostRouter routes workspace access using the URL's path (/wsid prefix) and port access using the Host header
 func PathAndHostRouter(trimPrefix, header, wsHostSuffix string) WorkspaceRouter {
-	return func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (theiaRouter *mux.Router, portRouter *mux.Router) {
+	return func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (theiaRouter *mux.Router, portRouter *mux.Router, blobserveRouter *mux.Router) {
 		theiaRouter = pathBasedTheiaRouter(r, wsInfoProvider, trimPrefix)
-		_, portRouter = HostBasedRouter(header, wsHostSuffix)(r, wsInfoProvider)
+		blobserveRouter = pathBasedBlobserveRouter(r)
+		_, portRouter, _ = HostBasedRouter(header, wsHostSuffix)(r, wsInfoProvider)
 		return
 	}
 }

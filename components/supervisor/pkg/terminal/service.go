@@ -35,7 +35,7 @@ type MuxTerminalService struct {
 	DefaultWorkdir string
 	LoginShell     []string
 
-	tokens map[*term]string
+	tokens map[*Term]string
 }
 
 // RegisterGRPC registers a gRPC service
@@ -53,6 +53,9 @@ func (srv *MuxTerminalService) Open(ctx context.Context, req *api.OpenTerminalRe
 	cmd := exec.Command(srv.LoginShell[0], srv.LoginShell[1:]...)
 	cmd.Dir = srv.DefaultWorkdir
 	cmd.Env = append(os.Environ(), "TERM=xterm-color")
+	for key, value := range req.Env {
+		cmd.Env = append(cmd.Env, key+"="+value)
+	}
 	alias, err := srv.Mux.Start(cmd)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
@@ -69,6 +72,15 @@ func (srv *MuxTerminalService) Open(ctx context.Context, req *api.OpenTerminalRe
 		Alias:        alias,
 		StarterToken: starterToken,
 	}, nil
+}
+
+// Close closes a terminal for the given alias
+func (srv *MuxTerminalService) Close(ctx context.Context, req *api.CloseTerminalRequest) (*api.CloseTerminalResponse, error) {
+	err := srv.Mux.Close(req.Alias)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &api.CloseTerminalResponse{}, nil
 }
 
 // List lists all open terminals

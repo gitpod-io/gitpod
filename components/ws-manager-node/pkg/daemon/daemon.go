@@ -10,24 +10,18 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containerd/containerd"
+	"github.com/gitpod-io/gitpod/common-go/cri"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-manager-node/pkg/diskguard"
+	"github.com/gitpod-io/gitpod/ws-manager-node/pkg/dispatch"
 	"github.com/gitpod-io/gitpod/ws-manager-node/pkg/hostsgov"
 	"github.com/gitpod-io/gitpod/ws-manager-node/pkg/resourcegov"
+	"github.com/gitpod-io/gitpod/ws-manager-node/pkg/uidmap"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/xerrors"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-)
-
-const (
-	kubernetesNamespace            = "k8s.io"
-	containerLabelCRIKind          = "io.cri-containerd.kind"
-	containerLabelK8sContainerName = "io.kubernetes.container.name"
-	containerLabelK8sPodName       = "io.kubernetes.pod.name"
-	containerLabelK8sNamespace     = "io.kubernetes.pod.namespace"
 )
 
 // New creates a new daemon for the given configuration
@@ -36,19 +30,40 @@ func New(cfg Configuration, reg prometheus.Registerer) (*Daemon, error) {
 	if err != nil {
 		return nil, err
 	}
+	containerRuntime, err := cri.FromConfig(cfg.ContainerRuntime)
+	if err != nil {
+		return nil, err
+	}
+	if containerRuntime == nil {
+		return nil, xerrors.Errorf("no container runtime configured")
+	}
+	go func() {
+		// TODO(cw): handle this case more gracefully
+		err := <-containerRuntime.Error()
+		log.WithError(err).Fatal("container runtime interface error")
+	}()
+
+	var listener []dispatch.Listener
+	if cfg.Uidmapper != nil {
+		log.Info("setting up UID mapper service")
+		listener = append(listener, &uidmap.Uidmapper{Config: *cfg.Uidmapper})
+	}
+	if cfg.Resources != nil {
+		listener = append(listener, resourcegov.NewDispatchListener(cfg.Resources, reg))
+	}
+
+	disp, err := dispatch.NewDispatch(containerRuntime, clientset, cfg.KubernetesNamespace, listener...)
+	if err != nil {
+		return nil, err
+	}
 
 	d := &Daemon{
 		Config:     cfg,
 		Prometheus: reg,
+		Dispatch:   disp,
 		close:      make(chan struct{}),
 	}
-	if cfg.Resources != nil {
-		client, err := containerd.New(cfg.ContainerdSocket, containerd.WithDefaultNamespace(kubernetesNamespace))
-		if err != nil {
-			return nil, err
-		}
-		d.Resources = resourcegov.NewWorkspaceDispatch(client, clientset, cfg.KubernetesNamespace, *cfg.Resources, reg)
-	}
+
 	if len(cfg.DiskSpaceGuard) > 0 {
 		nodename := os.Getenv("NODENAME")
 		if nodename == "" {
@@ -125,7 +140,7 @@ func newClientSet(kubeconfig string) (*kubernetes.Clientset, error) {
 type Daemon struct {
 	Config     Configuration
 	Prometheus prometheus.Registerer
-	Resources  *resourcegov.WorkspaceDispatch
+	Dispatch   *dispatch.Dispatch
 	DiskGuards []*diskguard.Guard
 	Hosts      hostsgov.Governer
 
@@ -136,9 +151,12 @@ type Daemon struct {
 // Start begins observing workspace pods.
 // This function does not return until Close() is called.
 func (d *Daemon) Start() {
-	if d.Resources != nil {
-		go d.Resources.Start()
+	err := d.Dispatch.Start()
+	if err != nil {
+		log.WithError(err).Fatal("cannot start dispatch")
 	}
+	log.Info("started workspace dispatch")
+
 	for _, g := range d.DiskGuards {
 		go g.Start(30 * time.Second)
 		log.WithField("path", g.Path).Info("started disk guard")
@@ -151,6 +169,7 @@ func (d *Daemon) Start() {
 // Close stops the daemon
 func (d *Daemon) Close() error {
 	d.closeOnce.Do(func() {
+		d.Dispatch.Close()
 		close(d.close)
 	})
 	return nil

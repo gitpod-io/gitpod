@@ -78,6 +78,10 @@ const (
 
 	// ingressPortsAnnotation holds the mapping workspace port -> allocated ingress port on kubernetes services
 	ingressPortsAnnotation = "gitpod/ingressPorts"
+
+	// withUsernamespaceAnnotation is set on workspaces which are wrapped in a user namespace (or have some form of user namespace support)
+	// Beware: this annotation is duplicated/copied in ws-manager-node
+	withUsernamespaceAnnotation = "gitpod/withUsernamespace"
 )
 
 // markWorkspaceAsReady adds annotations to a workspace pod

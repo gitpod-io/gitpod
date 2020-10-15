@@ -5,14 +5,3 @@
  */
 
 /// <reference types='@gitpod/gitpod-protocol/lib/typings/globals'/>
-
-/**
-* API specified by https://wicg.github.io/keyboard-map/
-*/
-interface Navigator {
-    keyboard?: Keyboard;
-}
-interface Keyboard {
-    getLayoutMap?(): Promise<Map<string, string>>;
-    addEventListener?(type: 'layoutchange', listener: EventListenerOrEventListenerObject): void;
-}

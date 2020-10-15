@@ -4,22 +4,28 @@
 
 package cri
 
-import "golang.org/x/xerrors"
+import (
+	"os"
+	"path/filepath"
+	"strings"
+
+	"golang.org/x/xerrors"
+)
 
 // NodeMountsLookupConfig confiugures the node mount/fs access
 type NodeMountsLookupConfig struct {
 	// ProcLoc is the path to the node's /proc/mounts -
 	ProcLoc string `json:"proc"`
-
-	// Mapping mapps a path from the ndoe to the container by stripping the key and prepending the value of this map.
-	// For example {"/var/lib/containerd": "/mnt/snapshots"} would translate /var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/ to /mnt/snapshots/io.containerd.snapshotter.v1.overlayfs/snapshots/
-	Mapping map[string]string `json:"paths"`
 }
 
 // Config configures the container runtime interface
 type Config struct {
 	// Mounts configures the node mounts lookup
 	Mounts NodeMountsLookupConfig `json:"mounts"`
+
+	// Mapping mapps a path from the node to the container by stripping the key and prepending the value of this map.
+	// For example {"/var/lib/containerd": "/mnt/snapshots"} would translate /var/lib/containerd/io.containerd.snapshotter.v1.overlayfs/snapshots/ to /mnt/snapshots/io.containerd.snapshotter.v1.overlayfs/snapshots/
+	Mapping map[string]string `json:"nodeToContainerMapping"`
 
 	// Runtime marks the container runtime we ought to connect to.
 	// Depending on the value set here we expect the corresponding config struct to have a value.
@@ -60,8 +66,31 @@ func FromConfig(cfg *Config) (cric ContainerRuntimeInterface, err error) {
 		if cfg.Containerd == nil {
 			return nil, xerrors.Errorf("runtime is set to containerd, but not containerd config is provided")
 		}
-		return NewContainerdCRI(cfg.Containerd, mounts)
+		return NewContainerdCRI(cfg.Containerd, mounts, cfg.Mapping)
 	default:
 		return nil, xerrors.Errorf("unknown runtime type: %s", cfg.Runtime)
 	}
+}
+
+// PathMapping maps a node path to a path in the container
+type PathMapping map[string]string
+
+// Translate maps a node-level (root mount namespace) path to a container-level path
+func (mapping PathMapping) Translate(from string) (result string, err error) {
+	for np, cp := range mapping {
+		if !strings.HasPrefix(from, np) {
+			continue
+		}
+		pth := filepath.Join(cp, strings.TrimPrefix(from, np))
+
+		if _, err := os.Stat(pth); os.IsNotExist(err) {
+			return "", xerrors.Errorf("path does not exist in container at %s", pth)
+		} else if err != nil {
+			return "", err
+		}
+
+		return pth, nil
+	}
+
+	return "", xerrors.Errorf("mount entry %s has no appropriate mapping", from)
 }

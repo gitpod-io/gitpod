@@ -5,9 +5,10 @@
  */
 
 import { WorkspaceInfo, Event, Emitter } from "@gitpod/gitpod-protocol";
-import { workspaceUrl } from "./urls";
+import { workspaceUrl, serverUrl } from "../shared/urls";
 
 export interface GitpodServiceClient {
+    readonly auth: Promise<void>;
     readonly info: WorkspaceInfo;
     readonly onDidChangeInfo: Event<void>;
 }
@@ -17,6 +18,7 @@ export async function create(): Promise<GitpodServiceClient> {
         throw new Error(`Failed to extract a workspace id from '${window.location.href}'.`);
     }
 
+    //#region info
     let info = await window.gitpod.service.server.getWorkspace(workspaceUrl.workspaceId);
     const onDidChangeEmitter = new Emitter<void>();
 
@@ -39,8 +41,47 @@ export async function create(): Promise<GitpodServiceClient> {
             }
         }
     });
+    //#endregion
+
+    //#region auth
+    let resolveAuth: () => void;
+    let rejectAuth: (reason?: any) => void;
+    const _auth = new Promise<void>((resolve, reject) => {
+        resolveAuth = resolve
+        rejectAuth = reject
+    });
+    async function auth(workspaceInstanceId: string): Promise<void> {
+        if (document.cookie.includes(`${workspaceInstanceId}_owner_`)) {
+            resolveAuth!();
+            return;
+        }
+        try {
+            const response = await fetch(serverUrl.asWorkspaceAuth(workspaceInstanceId).toString(), {
+                credentials: 'include'
+            });
+            if (response.ok) {
+                resolveAuth!();
+            } else {
+                rejectAuth!(new Error('authentication failed'));
+            }
+        } catch (e) {
+            rejectAuth!(e);
+        }
+    }
+    if (info.latestInstance) {
+        auth(info.latestInstance.id);
+    } else {
+        const authListener = onDidChangeEmitter.event(() => {
+            if (info.latestInstance) {
+                authListener.dispose();
+                auth(info.latestInstance.id);
+            }
+        });
+    }
+    //#endregion
 
     return {
+        get auth() { return _auth },
         get info() { return info },
         onDidChangeInfo: onDidChangeEmitter.event
     }

@@ -10,30 +10,23 @@ replace github.com/docker/docker v1.13.1 => github.com/docker/engine v0.0.0-2019
 replace github.com/Sirupsen/logrus v1.6.0 => github.com/sirupsen/logrus v1.6.0 // leeway ignore
 
 require (
-	cloud.google.com/go v0.37.2
+	cloud.google.com/go/storage v1.10.0
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
+	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	github.com/go-ozzo/ozzo-validation v3.5.0+incompatible
-	github.com/golang/protobuf v1.3.5
-	github.com/google/go-cmp v0.5.0
-	github.com/hashicorp/golang-lru v0.5.4 // indirect
+	github.com/golang/protobuf v1.4.2
+	github.com/google/go-cmp v0.5.2
 	github.com/konsorten/go-windows-terminal-sequences v1.0.3 // indirect
 	github.com/minio/minio-go/v6 v6.0.34
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/opentracing/opentracing-go v1.1.0
-	github.com/pkg/errors v0.9.1 // indirect
-	github.com/prometheus/procfs v0.0.5 // indirect
 	github.com/sirupsen/logrus v1.4.2
-	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
-	go.opencensus.io v0.22.0 // indirect
-	golang.org/x/net v0.0.0-20200222125558-5a598a2470a0 // indirect
-	golang.org/x/oauth2 v0.0.0-20190402181905-9f3314589c9a
-	golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae // indirect
-	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
-	google.golang.org/api v0.3.0
-	google.golang.org/genproto v0.0.0-20200218151345-dad8c97a84f5 // indirect
-	google.golang.org/grpc v1.29.1
+	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
+	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
+	google.golang.org/api v0.32.0
+	google.golang.org/grpc v1.32.0
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway

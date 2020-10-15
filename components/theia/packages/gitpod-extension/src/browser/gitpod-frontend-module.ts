@@ -6,10 +6,10 @@
 
 import '../../src/browser/extensions/style/extensions.css'
 
-import { ContainerModule, inject, injectable } from "inversify";
+import { ContainerModule, injectable } from "inversify";
 import { GitHubTokenProvider, InitialGitHubDataProvider, GetGitHubTokenParams } from "./github";
 import { GitpodCreditAlerContribution } from './gitpod-credit-alert-contribution';
-import { FrontendApplicationContribution, WebSocketConnectionProvider, WidgetFactory, bindViewContribution, ShellLayoutRestorer, CommonFrontendContribution } from '@theia/core/lib/browser';
+import { FrontendApplicationContribution, WebSocketConnectionProvider, WidgetFactory, bindViewContribution, ShellLayoutRestorer, CommonFrontendContribution, FrontendApplication } from '@theia/core/lib/browser';
 import { StorageService } from '@theia/core/lib/browser/storage-service';
 import { GitpodLocalStorageService } from './gitpod-local-storage-service';
 import { GitpodOpenContext, GitpodWorkspaceService } from './gitpod-open-context';
@@ -45,7 +45,6 @@ import { GitpodPreviewLinkNormalizer } from "./user-message/GitpodPreviewLinkNor
 import { PreviewLinkNormalizer } from "@theia/preview/lib/browser/preview-link-normalizer";
 import { GitpodMenuModelRegistry } from "./gitpod-menu";
 import { WaitForContentContribution } from './waitfor-content-contribution';
-import { ContentReadyServiceServer, ContentReadyService } from '../common/content-ready-service';
 import { GitpodWebSocketConnectionProvider } from './gitpod-ws-connection-provider';
 import { GitHostWatcher } from './git-host-watcher';
 import { GitpodExternalUriService } from './gitpod-external-uri-service';
@@ -62,36 +61,52 @@ import { ConnectionStatusOptions } from '@theia/core/lib/browser/connection-stat
 import { extensionsModule } from './extensions/extensions-module';
 import { GitpodUserStorageContribution } from './gitpod-user-storage-contribution';
 import { GitpodUserStorageProvider } from './gitpod-user-storage-provider';
-import { IDEService, IDEState } from '@gitpod/gitpod-protocol/lib/ide-service';
-import { Emitter } from '@gitpod/gitpod-protocol/lib/util/event';
-import { FrontendApplicationStateService } from '@theia/core/lib/browser/frontend-application-state';
+import { Emitter } from '@theia/core/lib/common/event';
+import { Disposable, DisposableCollection } from '@theia/core/lib/common/disposable';
+import { Deferred } from '@theia/core/lib/common/promise-util';
+import { GitpodTaskContribution } from './gitpod-task-contribution';
+import { GitpodTaskServer, gitpodTaskServicePath } from '../common/gitpod-task-protocol';
 
 @injectable()
-class IDEServiceContribution implements FrontendApplicationContribution, IDEService {
+class GitpodFrontendApplication extends FrontendApplication {
 
-    get state(): IDEState {
-        return this.stateService.state === 'ready' ? 'ready' : 'init';
+    async start(): Promise<void> {
+        const pendingStart = new Deferred<void>();
+        const stateService = this.stateService;
+        const onDidChangeEmitter = new Emitter<void>();
+        const toStop = new DisposableCollection(
+            onDidChangeEmitter,
+            Disposable.create(() => {
+                // save state on workspace stop
+                this.layoutRestorer.storeLayout(this);
+                this.stopContributions();
+            })
+        );
+        window.gitpod.ideService = {
+            get state() {
+                if (toStop.disposed) {
+                    return 'terminated';
+                }
+                // closing_window because of https://github.com/eclipse-theia/theia/issues/8618
+                if (stateService.state === 'ready' || stateService.state === 'closing_window') {
+                    return 'ready';
+                }
+                return 'init';
+            },
+            onDidChange: onDidChangeEmitter.event,
+            start: () => {
+                super.start().then(pendingStart.resolve, pendingStart.reject);
+                return toStop;
+            }
+        };
+        stateService.onStateChanged(() => onDidChangeEmitter.fire());
+        return pendingStart.promise;
     }
 
-    private readonly onDidChangeEmitter = new Emitter<void>();
-    readonly onDidChange = this.onDidChangeEmitter.event;
-
-    @inject(FrontendApplicationStateService)
-    private readonly stateService: FrontendApplicationStateService;
-
-    initialize(): void {
-        window.gitpod.ideService = this;
-        if (this.stateService.state !== 'ready') {
-            this.stateService.reachedState('ready').then(() =>
-                this.onDidChangeEmitter.fire()
-            );
-        }
-    }
 }
-//#endregion
 
 export default new ContainerModule((bind, unbind, isBound, rebind) => {
-    bind(FrontendApplicationContribution).to(IDEServiceContribution).inSingletonScope();
+    rebind(FrontendApplication).to(GitpodFrontendApplication).inSingletonScope();
 
     rebind(CommonFrontendContribution).to(GitpodCommonFrontendContribution).inSingletonScope();
 
@@ -110,6 +125,9 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(GitpodOpenContext).toSelf().inSingletonScope();
     bind(FrontendApplicationContribution).toService(GitpodOpenContext);
     rebind(InitialGitHubDataProvider).toService(GitpodOpenContext);
+
+    bind(GitpodTaskServer).toDynamicValue(context => WebSocketConnectionProvider.createProxy(context.container, gitpodTaskServicePath)).inSingletonScope();
+    bind(FrontendApplicationContribution).to(GitpodTaskContribution).inSingletonScope();
 
     bind(GitpodShareWidget).toSelf().inSingletonScope();
     bind(GitpodShareDialog).toSelf().inSingletonScope();
@@ -144,9 +162,6 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
 
     bind(CliServiceContribution).toSelf().inSingletonScope();
     bind(FrontendApplicationContribution).toService(CliServiceContribution);
-
-    bind(ContentReadyServiceServer).toDynamicValue(context => WebSocketConnectionProvider.createProxy(context.container, ContentReadyService.SERVICE_PATH)).inSingletonScope();
-    bind(ContentReadyService).toSelf().inSingletonScope();
 
     bind(GitpodPortsService).toSelf().inSingletonScope();
 

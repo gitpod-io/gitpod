@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:me-cercscheduler.3
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-pull-latest-werft.4
 workspaceLocation: gitpod/gitpod-ws.theia-workspace
 checkoutLocation: gitpod
 ports:
@@ -42,4 +42,3 @@ vscode:
     - bajdzis.vscode-database@2.2.1:uXdjV53wtoTevFK6HOh3pQ==
     - hashicorp.terraform@2.1.1:QEP7gdWtMuY+j8RZ5OLDkA==
     - stkb.rewrap@1.13.0:yEx8nRSXlfXAHqsbkTJpdA==
-privileged: true

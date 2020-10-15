@@ -131,7 +131,7 @@ spec:
 {{ include "gitpod.container.defaultEnv" (dict "root" . "gp" $.Values "comp" $wsProxy "noVersion" true) | indent 8 }}
         volumeMounts:
 {{- if (and $wsProxy (not $wsProxy.disabled) $wsProxy.portRange) }}
-        - name: ws-proxy-config
+        - name: {{ template "gitpod.comp.configMap" $this }}
           mountPath: "/config"
           readOnly: true
 {{- end }}

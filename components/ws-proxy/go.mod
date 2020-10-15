@@ -4,6 +4,8 @@ go 1.14
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535 // indirect
+	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
 	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
 	github.com/google/go-cmp v0.4.0
 	github.com/gorilla/handlers v1.4.2
@@ -11,12 +13,10 @@ require (
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/koding/websocketproxy v0.0.0-20181220232114-7ed82d81a28c
 	github.com/prometheus/client_golang v1.1.0
-	github.com/sirupsen/logrus v1.4.1
+	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
-	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
-	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543
-	google.golang.org/grpc v1.29.1
+	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
+	google.golang.org/grpc v1.32.0
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway

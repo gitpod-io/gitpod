@@ -30,6 +30,22 @@ data:
         "daemon": {
             "namespace": "{{ .Release.Namespace }}",
             "containerd": "/mnt/containerd.sock",
+            "containerRuntime": {
+                "runtime": "containerd",
+                "containerd": {
+                    "socket": "/mnt/containerd.sock"
+                }
+            },
+            "uidmapper": {
+                "procLocation": "/proc",
+                "rootUIDRange": {
+                    "start": 33333,
+                    "size": 1
+                },
+                "userUIDRange": [
+                    {"start": 100000, "size": 70000}
+                ]
+            },
             "resources": {
                 "cgroupBasePath": "/mnt/node-cgroups",
                 "cpuBuckets": [

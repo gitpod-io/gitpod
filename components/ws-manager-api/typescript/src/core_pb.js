@@ -6446,7 +6446,8 @@ proto.wsman.WorkspaceFeatureFlag = {
   PRIVILEGED: 1,
   REGISTRY_FACADE: 3,
   FULL_WORKSPACE_BACKUP: 4,
-  FIXED_RESOURCES: 5
+  FIXED_RESOURCES: 5,
+  USER_NAMESPACE: 6
 };
 
 /**

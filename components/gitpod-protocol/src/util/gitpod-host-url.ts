@@ -98,10 +98,10 @@ export class GitpodHostUrl {
         return this.with(url => ({ pathname: '/graphql/' }));
     }
 
-    asStart(): GitpodHostUrl {
-        return this.with({
+    asStart(workspaceId = this.workspaceId): GitpodHostUrl {
+        return this.withoutWorkspacePrefix().with({
             pathname: '/start/',
-            hash: '#' + this.workspaceId
+            hash: '#' + workspaceId
         });
     }
 
@@ -122,13 +122,13 @@ export class GitpodHostUrl {
     }
 
     get workspaceId(): string | undefined {
-        const hostSegs = window.location.host.split(".");
+        const hostSegs = this.url.host.split(".");
         if (hostSegs.length > 1 && hostSegs[0].match(workspaceIDRegex)) {
             // URL has a workspace prefix
             return hostSegs[0];
         }
 
-        const pathSegs = window.location.pathname.split("/")
+        const pathSegs = this.url.pathname.split("/")
         if (pathSegs.length > 3 && pathSegs[1] === "workspace") {
             return pathSegs[2];
         }

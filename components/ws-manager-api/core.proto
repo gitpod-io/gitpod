@@ -443,6 +443,12 @@ enum WorkspaceFeatureFlag {
     // FixedResources ensures this workspace is not subject to ws-manager-node's dynamic resource limits.
     // In this sence it's akin to "guaranteed" (as compared to burstable) resources for workspaces.
     FIXED_RESOURCES = 5;
+
+    // UserNamespace enables user namespace specific behaviour in the pod. It disables a host of 
+    // security features and - for now - should be considered equivalent to PRIVILEGED.
+    //
+    // TODO(cw): update this comment when userns are more secure.
+    USER_NAMESPACE = 6;
 }
 
 // GitSpec configures the Git available within the workspace

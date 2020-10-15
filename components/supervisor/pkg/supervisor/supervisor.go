@@ -29,6 +29,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	ndeapi "github.com/gitpod-io/gitpod/ws-manager-node/api"
 	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
 )
@@ -118,9 +119,11 @@ func Run(options ...RunOption) {
 			uint32(cfg.IDEPort),
 			uint32(cfg.APIEndpointPort),
 		)
-		termMux    = terminal.NewMux()
-		termMuxSrv = terminal.NewMuxTerminalService(termMux)
+		termMux      = terminal.NewMux()
+		termMuxSrv   = terminal.NewMuxTerminalService(termMux)
+		uidmapCanary = ndeapi.NewInWorkspaceHelper()
 	)
+	taskManager := newTasksManager(cfg, termMuxSrv, iwh)
 
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
 
@@ -129,11 +132,14 @@ func Run(options ...RunOption) {
 	apiServices = append(apiServices, &statusService{
 		IWH:      iwh,
 		Ports:    portMgmt,
+		Tasks:    taskManager,
 		IDEReady: ideReady,
 	})
 	apiServices = append(apiServices, termMuxSrv)
 	apiServices = append(apiServices, &RegistrableTokenService{tokenService})
 	apiServices = append(apiServices, &InfoService{cfg: cfg})
+	apiServices = append(apiServices, uidmapCanary.Server())
+	apiServices = append(apiServices, &ControlService{UidmapCanary: uidmapCanary})
 	apiServices = append(apiServices, opts.AdditionalServices...)
 
 	var wg sync.WaitGroup
@@ -142,6 +148,7 @@ func Run(options ...RunOption) {
 	go startContentInit(ctx, cfg, &wg, iwh)
 	go startAPIEndpoint(ctx, cfg, &wg, apiServices)
 	go portMgmt.Run(ctx, &wg)
+	go taskManager.Run(ctx, &wg)
 
 	if cfg.PreventMetadataAccess {
 		go func() {

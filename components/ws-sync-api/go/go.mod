@@ -3,10 +3,9 @@ module github.com/gitpod-io/gitpod/ws-sync/api
 go 1.14
 
 require (
-	github.com/fatih/gomodifytags v1.6.0 // indirect
+	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	github.com/golang/mock v1.4.3
 	github.com/golang/protobuf v1.3.5
-	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.29.1
 )
 

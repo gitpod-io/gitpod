@@ -39,7 +39,7 @@ export class WebSocketConnectionProvider {
      */
     listen(handler: ConnectionHandler, options?: WebSocketOptions): void {
         const url = handler.path;
-        const webSocket = this.createWebSocket(url, options);
+        const webSocket = this.createWebSocket(url);
 
         const logger = this.createLogger();
         if (options && options.onerror) {
@@ -66,16 +66,15 @@ export class WebSocketConnectionProvider {
     /**
      * Creates a web socket for the given url
      */
-    createWebSocket(url: string, options?: WebSocketOptions): WebSocket {
-        const socketOptions = {
+    createWebSocket(url: string): WebSocket {
+        return new ReconnectingWebSocket(url, undefined, {
             maxReconnectionDelay: 10000,
             minReconnectionDelay: 1000,
             reconnectionDelayGrowFactor: 1.3,
             maxRetries: Infinity,
-            debug: false
-        };
-        const result = new ReconnectingWebSocket(url, undefined, socketOptions);
-        return result as any; //HACK ReconnectingWebScoket does not fully implement the WebScoket type.
+            debug: false,
+            WebSocket: WebSocket
+        }) as any;
     }
 
 }

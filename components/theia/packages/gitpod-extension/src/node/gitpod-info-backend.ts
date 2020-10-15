@@ -4,14 +4,11 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable, inject } from "inversify";
-import { GitpodInfo, GitpodInfoService, TerminalProcessInfo } from "../common/gitpod-info";
-import { GitpodTaskStarter } from "./gitpod-task-starter";
+import { injectable } from "inversify";
+import { GitpodInfo, GitpodInfoService } from "../common/gitpod-info";
 
 @injectable()
 export class GitpodInfoProviderNodeImpl implements GitpodInfoService {
-    @inject(GitpodTaskStarter) protected taskStarter: GitpodTaskStarter;
-
     private info: GitpodInfo = {
         host: process.env.GITPOD_HOST || 'http://localhost:3000',
         // workspaceId: process.env.GITPOD_WORKSPACE_ID || 'a12-321', // Issue workspace
@@ -25,7 +22,4 @@ export class GitpodInfoProviderNodeImpl implements GitpodInfoService {
         return this.info;
     }
 
-    async getTerminalProcessInfos(): Promise<TerminalProcessInfo[]> {
-        return this.taskStarter.terminalProcessInfos;
-    }
 }

@@ -292,6 +292,11 @@ registry.{{ .Values.hostname }}
 {{ template "gitpod.comp.imageRepo" . }}:{{- template "gitpod.comp.version" . -}}
 {{- end -}}
 
+{{- define "gitpod.comp.configMap" -}}
+{{- $comp := .comp -}}
+{{ $comp.configMapName | default (printf "%s-config" $comp.name) }}
+{{- end -}}
+
 {{- define "gitpod.pull-secret" -}}
 {{- $ := .root -}}
 {{- if (and .secret .secret.secretName .secret.path (not (eq ($.Files.Get .secret.path) ""))) -}}

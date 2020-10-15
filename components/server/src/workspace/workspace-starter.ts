@@ -244,9 +244,9 @@ export class WorkspaceStarter {
         if (user.featureFlags && user.featureFlags.permanentWSFeatureFlags) {
             featureFlags = featureFlags.concat(featureFlags, user.featureFlags.permanentWSFeatureFlags);
         }
-        // privileged is a special case which requires the privileged-ws permission
-        if (featureFlags.includes("privileged") && !this.authService.hasPermission(user, "privileged-ws")) {
-            featureFlags = featureFlags.filter(f => f != "privileged");
+        // privileged and user_namespace are special cases which require the privileged-ws permission
+        if (!this.authService.hasPermission(user, "privileged-ws")) {
+            featureFlags = featureFlags.filter(f => f != "privileged" && f != "user_namespace");
         }
         if (!!featureFlags) {
             // only set feature flags if there actually are any. Otherwise we waste the
@@ -563,6 +563,13 @@ export class WorkspaceStarter {
         }
         const initializerPromise = this.createInitializer(traceCtx, workspace, workspace.context, user);
         const userTimeoutPromise = this.userService.getDefaultWorkspaceTimeout(user);
+
+        const featureFlags = instance.configuration!.featureFlags || [];
+        let ideImage = workspace.config.ide;
+        if (!ideImage || featureFlags.every(f => f !== 'registry_facade')) {
+            ideImage = `${this.env.theiaImageRepo}:${instance.configuration!.theiaVersion}`
+        }
+
         const spec = new StartWorkspaceSpec();
         spec.setCheckoutLocation(checkoutLocation!);
         await addExtensionsToEnvvarPromise;
@@ -571,10 +578,10 @@ export class WorkspaceStarter {
         spec.setGit(this.createGitSpec(workspace, user));
         spec.setPortsList(ports);
         spec.setInitializer(await initializerPromise);
-        spec.setIdeImage(workspace.config.ide || `${this.env.theiaImageRepo}:${instance.configuration!.theiaVersion}`);
+        spec.setIdeImage(ideImage);
         spec.setWorkspaceImage(instance.workspaceImage);
         spec.setWorkspaceLocation(workspace.config.workspaceLocation || spec.getCheckoutLocation());
-        spec.setFeatureFlagsList(this.toWorkspaceFeatureFlags(instance.configuration!.featureFlags || []));
+        spec.setFeatureFlagsList(this.toWorkspaceFeatureFlags(featureFlags));
         spec.setTimeout(await userTimeoutPromise);
         spec.setAdmission(admissionLevel);
         return spec;

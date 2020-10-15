@@ -34,27 +34,6 @@ export class GitpodTerminalWidget extends TerminalWidgetImpl {
         }
     }
 
-    // on restoreState, let's not immediately start the terminal but keep the state and wait for an external start call
-    private oldState: any;
-    restoreState(oldState: object) {
-        this.oldState = oldState;
-    }
-
-    public getTerminalId(): number | undefined {
-        if (this.terminalId) {
-            return this.terminalId;
-        }
-        return this.oldState && this.oldState.terminalId;
-    }
-
-    async start(id?: number): Promise<number> {
-        if (id === undefined && this.oldState !== undefined) {
-            super.restoreState(this.oldState);
-            return this.terminalId;
-        }
-        return super.start(id);
-    }
-
 }
 
 export namespace GitpodTerminalWidget {
@@ -95,7 +74,7 @@ export namespace GitpodTerminalWidget {
         return url.port;
     }
 
-    export function toURL(uri: string) : URL | undefined {
+    export function toURL(uri: string): URL | undefined {
         let url;
         try {
             if (!uri.startsWith("http")) {

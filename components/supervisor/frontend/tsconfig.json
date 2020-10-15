@@ -10,7 +10,8 @@
     ],
     "strict": true,
     "skipLibCheck": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "downlevelIteration": true
   },
   "include": [
     "src"

@@ -341,8 +341,7 @@ func TestRoutes(t *testing.T) {
 func theiaRouter(handlerConfig *RouteHandlerConfig, infoProvider WorkspaceInfoProvider) *mux.Router {
 	r := mux.NewRouter()
 
-	handlers := DefaultRouteHandlers(infoProvider)
-	installTheiaRoutes(r, handlerConfig, handlers)
+	installTheiaRoutes(r, handlerConfig, infoProvider)
 	return r
 }
 func portRouter(handlerConfig *RouteHandlerConfig, infoProvider WorkspaceInfoProvider) *mux.Router {

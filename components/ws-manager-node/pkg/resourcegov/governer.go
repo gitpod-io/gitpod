@@ -6,7 +6,7 @@ package resourcegov
 
 import (
 	"container/ring"
-	"encoding/json"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -16,9 +16,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containerd/containerd/containers"
 	"github.com/gitpod-io/gitpod/common-go/log"
-	ocispecs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/shirou/gopsutil/process"
 	"github.com/sirupsen/logrus"
@@ -118,20 +116,6 @@ const (
 	ProcessDefault ProcessType = "default"
 )
 
-// ExtractCGroupPathFromContainer retrieves the CGroupPath from the linux section
-// in a container's OCI spec.
-func ExtractCGroupPathFromContainer(container containers.Container) (cgroupPath string, err error) {
-	var spec ocispecs.Spec
-	err = json.Unmarshal(container.Spec.Value, &spec)
-	if err != nil {
-		return
-	}
-	if spec.Linux == nil {
-		return "", xerrors.Errorf("container spec has no Linux section")
-	}
-	return spec.Linux.CgroupsPath, nil
-}
-
 // NewGoverner creates a new resource governer for a container
 func NewGoverner(containerID, instanceID string, cgroupPath string, opts ...GovernerOpt) (gov *Governer, err error) {
 	gov = &Governer{
@@ -187,7 +171,7 @@ func (gov *Governer) registerPrometheusGauges() (err error) {
 }
 
 // Start actually starts governing. This function is meant to be called as a Go-routine.
-func (gov *Governer) Start() {
+func (gov *Governer) Start(ctx context.Context) {
 	t := time.NewTicker(gov.SamplingPeriod)
 	for {
 		gov.controlCPU()
@@ -197,6 +181,9 @@ func (gov *Governer) Start() {
 		select {
 		case <-t.C:
 			continue
+		case <-ctx.Done():
+			gov.log.Debug("resource governer shutting down")
+			return
 		case <-gov.stop:
 			gov.log.Debug("resource governer shutting down")
 			return

@@ -13,7 +13,8 @@ export const Permissions = {
     "registry-access": undefined,
     "admin-users": undefined,
     "admin-workspaces": undefined,
-    "admin-api": undefined
+    "admin-api": undefined,
+    "ide-settings": undefined
 };
 export type PermissionName = keyof (typeof Permissions);
 export const Roles = {"devops": undefined, "viewer": undefined, "admin": undefined };
@@ -54,6 +55,9 @@ export namespace Permission {
     /** The permission to access the admin API */
     export const ADMIN_API: PermissionName = "admin-api";
 
+    /** The permission to access the IDE settings */
+    export const IDE_SETTINGS: PermissionName = "ide-settings";
+
     export const is = (o: any): o is PermissionName => {
         return typeof(o) === 'string'
             && Permission.all().some(p => p === o);
@@ -75,6 +79,7 @@ export namespace Role {
             Permission.ENFORCEMENT,
             Permission.PRIVILEGED_WORKSPACE,
             Permission.REGISTRY_ACCESS,
+            Permission.IDE_SETTINGS
         ]
     };
 

@@ -16,7 +16,7 @@ metadata:
   annotations:
     apparmor.security.beta.kubernetes.io/allowedProfileNames: 'unconfined'
     apparmor.security.beta.kubernetes.io/defaultProfileName:  'unconfined'
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'runtime/default'
+    seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'runtime/default,unconfined'
     seccomp.security.alpha.kubernetes.io/defaultProfileName:  'runtime/default'
 spec:
   privileged: true

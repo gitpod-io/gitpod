@@ -7,6 +7,7 @@ packages:
       - "go.sum"
     deps:
       - components/common-go:lib
+      - components/ws-manager-node-api/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux
@@ -17,6 +18,7 @@ packages:
     deps:
       - components/common-go:lib
       - components/ws-sync-api/go:lib
+      - components/ws-manager-node-api/go:lib
     srcs:
       - "pkg/protocol/**"
       - "go.mod"

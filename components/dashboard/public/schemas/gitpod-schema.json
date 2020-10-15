@@ -5,11 +5,12 @@
     "type": "object",
     "properties": {
         "ide": {
-          "oneOf":[
+          "anyOf": [
             {
-              "type":"string"
+              "type": "string"
             },
             {
+              "type": "string",
               "enum": [
                 "theia",
                 "code"

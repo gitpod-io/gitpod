@@ -5,7 +5,7 @@
  */
 
 import { GraphQLResolveInfo } from 'graphql';
-import { User, Workspace, WorkspaceInstance } from '@gitpod/gitpod-protocol';
+import * as protocol from '@gitpod/gitpod-protocol';
 import { Context } from './graphql-controller';
 export type Maybe<T> = T | undefined;
 export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
@@ -32,9 +32,9 @@ export enum Order_Dir {
 
 export type Query = {
    __typename?: 'Query';
-  me: User;
+  me: protocol.User;
   /**  Get user by ID  */
-  user?: Maybe<User>;
+  user?: Maybe<protocol.User>;
   /**  Get users  */
   users?: Maybe<UserPaginationResult>;
   /**  Get the number of users  */
@@ -98,7 +98,7 @@ export type User = Node & {
   email?: Maybe<Scalars['String']>;
   blocked?: Maybe<Scalars['Boolean']>;
   deleted?: Maybe<Scalars['Boolean']>;
-  workspaces: Array<Workspace>;
+  workspaces: Array<protocol.Workspace>;
 };
 
 export enum User_Order_Keys {
@@ -110,7 +110,7 @@ export type UserPaginationResult = {
    __typename?: 'UserPaginationResult';
   total: Scalars['Int'];
   hasMore: Scalars['Boolean'];
-  items: Array<User>;
+  items: Array<protocol.User>;
 };
 
 export type Workspace = Node & {
@@ -124,11 +124,11 @@ export type Workspace = Node & {
   /**  A description string  */
   description: Scalars['String'];
   /**  User that owns this workspace  */
-  owner: User;
+  owner: protocol.User;
   /**  Workspace type  */
   type: Workspace_Type;
   /**  Instances (sessions) of this workspace  */
-  instances: Array<WorkspaceInstance>;
+  instances: Array<protocol.WorkspaceInstance>;
 };
 
 export enum Workspace_Instance_Order_Keys {
@@ -153,7 +153,7 @@ export type WorkspaceInstance = Node & {
   /**  ID is the unique identifier of this instance  */
   id: Scalars['ID'];
   /** the workspace this is an instance of */
-  workspace?: Maybe<Workspace>;
+  workspace?: Maybe<protocol.Workspace>;
   /** The time an instance has been created in the backend (before DB!) */
   creationTime: Scalars['String'];
   /** The time an instance has switched phase to 'Pending' */
@@ -202,7 +202,7 @@ export type WorkspaceInstancePaginationResult = {
    __typename?: 'WorkspaceInstancePaginationResult';
   total: Scalars['Int'];
   hasMore: Scalars['Boolean'];
-  items: Array<WorkspaceInstance>;
+  items: Array<protocol.WorkspaceInstance>;
 };
 
 export type WorkspaceInstanceStatus = {
@@ -215,7 +215,7 @@ export type WorkspacePaginationResult = {
    __typename?: 'WorkspacePaginationResult';
   total: Scalars['Int'];
   hasMore: Scalars['Boolean'];
-  items: Array<Workspace>;
+  items: Array<protocol.Workspace>;
 };
 
 export type WithIndex<TObject> = TObject & Record<string, any>;
@@ -293,14 +293,14 @@ export type DirectiveResolverFn<TResult = {}, TParent = {}, TContext = {}, TArgs
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = ResolversObject<{
   Query: ResolverTypeWrapper<{}>,
-  User: ResolverTypeWrapper<User>,
+  User: ResolverTypeWrapper<protocol.User>,
   Node: ResolversTypes['User'] | ResolversTypes['Workspace'] | ResolversTypes['WorkspaceInstance'],
   ID: ResolverTypeWrapper<Scalars['ID']>,
   String: ResolverTypeWrapper<Scalars['String']>,
   Boolean: ResolverTypeWrapper<Scalars['Boolean']>,
-  Workspace: ResolverTypeWrapper<Workspace>,
+  Workspace: ResolverTypeWrapper<protocol.Workspace>,
   WORKSPACE_TYPE: Workspace_Type,
-  WorkspaceInstance: ResolverTypeWrapper<WorkspaceInstance>,
+  WorkspaceInstance: ResolverTypeWrapper<protocol.WorkspaceInstance>,
   WorkspaceInstanceStatus: ResolverTypeWrapper<WorkspaceInstanceStatus>,
   WorkspaceInstanceConditions: ResolverTypeWrapper<WorkspaceInstanceConditions>,
   Int: ResolverTypeWrapper<Scalars['Int']>,
@@ -316,14 +316,14 @@ export type ResolversTypes = ResolversObject<{
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = ResolversObject<{
   Query: {},
-  User: User,
+  User: protocol.User,
   Node: ResolversParentTypes['User'] | ResolversParentTypes['Workspace'] | ResolversParentTypes['WorkspaceInstance'],
   ID: Scalars['ID'],
   String: Scalars['String'],
   Boolean: Scalars['Boolean'],
-  Workspace: Workspace,
+  Workspace: protocol.Workspace,
   WORKSPACE_TYPE: Workspace_Type,
-  WorkspaceInstance: WorkspaceInstance,
+  WorkspaceInstance: protocol.WorkspaceInstance,
   WorkspaceInstanceStatus: WorkspaceInstanceStatus,
   WorkspaceInstanceConditions: WorkspaceInstanceConditions,
   Int: Scalars['Int'],

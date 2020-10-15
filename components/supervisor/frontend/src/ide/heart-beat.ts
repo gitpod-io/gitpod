@@ -26,7 +26,9 @@ export function schedule(instanceId: string): void {
         }
     }
     sendHeartBeat();
-    window.addEventListener('beforeunload', () => sendHeartBeat(true), { once: true });
+    window.addEventListener('beforeunload', () => {
+        sendHeartBeat(true);
+    }, { once: true });
 
     let activityInterval = 10000;
     intervalHandle = setInterval(() => {

@@ -58,7 +58,7 @@ spec:
           secretName: ws-manager-node-tls
       - name: config
         configMap:
-          name: ws-manager-node-config
+          name: {{ template "gitpod.comp.configMap" $this }}
 {{- if $comp.volumes }}
 {{ toYaml $comp.volumes | indent 6 }}
 {{- end }}

@@ -49,7 +49,7 @@ data:
       echo "Installing Gitpod from charts.gitpod.io"
       helm repo add gitpod https://charts.gitpod.io
       helm repo update
-      helm install gitpod gitpod/gitpod --timeout 60m --version "$GITPOD_CHART_VERSION" --values /root/install/values.yaml
+      helm install gitpod gitpod/gitpod --timeout 60m --values /root/install/values.yaml
     else
       echo "Installing Gitpod from local chart folder"
       cd /root/chart
