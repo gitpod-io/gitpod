@@ -133,10 +133,11 @@
                 "object",
                 "string"
             ],
-            "description": "List of tasks to run on start.",
+            "description": "The Docker image to run your workspace in.",
             "required": [
                 "file"
             ],
+            "default": "gitpod/workspace-full",
             "properties": {
                 "file": {
                     "type": "string",
