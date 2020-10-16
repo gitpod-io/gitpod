@@ -842,3 +842,17 @@ func (mr *MockAPIInterfaceMockRecorder) UninstallUserPlugin(ctx, params interfac
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UninstallUserPlugin", reflect.TypeOf((*MockAPIInterface)(nil).UninstallUserPlugin), ctx, params)
 }
+
+// InstanceUpdates mocks base method
+func (m *MockAPIInterface) InstanceUpdates(ctx context.Context, instanceID string) <-chan *WorkspaceInstance {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InstanceUpdates", ctx, instanceID)
+	ret0, _ := ret[0].(<-chan *WorkspaceInstance)
+	return ret0
+}
+
+// InstanceUpdates indicates an expected call of InstanceUpdates
+func (mr *MockAPIInterfaceMockRecorder) InstanceUpdates(ctx, instanceID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstanceUpdates", reflect.TypeOf((*MockAPIInterface)(nil).InstanceUpdates), ctx, instanceID)
+}

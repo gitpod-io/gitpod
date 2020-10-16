@@ -7,7 +7,6 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/spf13/cobra"
@@ -31,16 +30,7 @@ var (
 func Execute() {
 	log.Init(ServiceName, Version, true, true)
 
-	var c *cobra.Command
-	if strings.Contains(os.Args[0], "newuidmap") {
-		c = newuidmapCmd
-	} else if strings.Contains(os.Args[0], "newgidmap") {
-		c = newgidmapCmd
-	} else {
-		c = rootCmd
-	}
-
-	if err := c.Execute(); err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}

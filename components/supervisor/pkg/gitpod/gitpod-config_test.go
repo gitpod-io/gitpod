@@ -81,9 +81,11 @@ vscode:
 			}
 			defer os.RemoveAll(tempDir)
 
-			configService := NewConfigService(tempDir + "/.gitpod.yml")
+			locationReady := make(chan struct{})
+			configService := NewConfigService(tempDir+"/.gitpod.yml", locationReady)
 			context, cancel := context.WithCancel(context.Background())
 			defer cancel()
+			close(locationReady)
 
 			configs, errors := configService.Observe(context)
 			for i := 0; i < 2; i++ {

@@ -71,9 +71,9 @@
   },
   "scripts": {
     "prepare": "yarn run clean && yarn run build",
-    "clean": "npx rimraf lib",
-    "test": "npx mocha --opts mocha.opts 'src/**/*.spec.ts'",
-    "build": "npx tsc",
+    "clean": "rimraf lib",
+    "test": "mocha --opts mocha.opts 'src/**/*.spec.ts'",
+    "build": "tsc",
     "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput"
   },
   "theiaExtensions": [

@@ -9,27 +9,25 @@ import { ExternalUriService } from '@theia/core/lib/browser/external-uri-service
 import URI from '@theia/core/lib/common/uri';
 import { GitpodPortsService } from './ports/gitpod-ports-service';
 import { parseLocalhost } from './gitpod-parse-localhost';
+import { MaybePromise } from '@theia/core/lib/common/types';
 
 @injectable()
 export class GitpodExternalUriService extends ExternalUriService {
     @inject(GitpodPortsService) protected readonly portsService: GitpodPortsService;
 
-    async resolve(uri: URI): Promise<URI> {
+    resolve(uri: URI): MaybePromise<URI> {
         const localhost = this.parseLocalhost(uri);
         if (!localhost) {
             return uri;
         }
-
-        // Actually expose the port
-        let { config } = await this.portsService.findPortConfig(localhost.port);
-        if (!config) {
-            await this.portsService.openPort({
-                port: localhost.port,
-                onOpen: 'ignore'
-            }, 'private');
+        const remoteUrl = this.toRemoteUrl(uri, localhost)
+        const exposing = this.portsService.exposePort({
+            port: localhost.port
+        });
+        if (exposing) {
+            return exposing.then(() => remoteUrl);
         }
-
-        return this.toRemoteUrl(uri, localhost);
+        return remoteUrl;
     }
 
     protected toRemoteHost(localhost: { address: string, port: number }): string {

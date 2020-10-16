@@ -25,7 +25,6 @@ import (
 	"github.com/gitpod-io/gitpod/content-service/pkg/executor"
 	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/supervisor/api"
-	"github.com/gitpod-io/gitpod/supervisor/pkg/backup"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/dropwriter"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/gitpod"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
@@ -114,15 +113,17 @@ func Run(options ...RunOption) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	var (
-		shutdown = make(chan struct{})
-		ideReady = make(chan struct{})
-		cstate   = NewInMemoryContentState(cfg.RepoRoot)
-		portMgmt = ports.NewManager(
-			createExposedPortsImpl(cfg, tokenService),
+		shutdown            = make(chan struct{})
+		ideReady            = make(chan struct{})
+		cstate              = NewInMemoryContentState(cfg.RepoRoot)
+		gitpodService       = createGitpodService(cfg, tokenService)
+		gitpodConfigService = gitpod.NewConfigService(cfg.RepoRoot+"/.gitpod.yml", cstate.ContentReady())
+		portMgmt            = ports.NewManager(
+			createExposedPortsImpl(cfg, gitpodService),
 			&ports.PollingServedPortsObserver{
 				RefreshInterval: 2 * time.Second,
 			},
-			&ports.FixedPortConfigProvider{},
+			ports.NewConfigService(cfg.WorkspaceID, gitpodConfigService, gitpodService),
 			uint32(cfg.IDEPort),
 			uint32(cfg.APIEndpointPort),
 		)
@@ -143,6 +144,7 @@ func Run(options ...RunOption) {
 		termMuxSrv,
 		RegistrableTokenService{tokenService},
 		&InfoService{cfg: cfg},
+		&ControlService{portsManager: portMgmt},
 	}
 	apiServices = append(apiServices, additionalServices...)
 
@@ -182,10 +184,11 @@ func Run(options ...RunOption) {
 	wg.Wait()
 }
 
-func createExposedPortsImpl(cfg *Config, tknsrv api.TokenServiceServer) (res ports.ExposedPortsInterface) {
+func createGitpodService(cfg *Config, tknsrv api.TokenServiceServer) *gitpod.APIoverJSONRPC {
 	endpoint, host, err := cfg.GitpodAPIEndpoint()
 	if err != nil {
 		log.WithError(err).Fatal("cannot find Gitpod API endpoint")
+		return nil
 	}
 	tknres, err := tknsrv.GetToken(context.Background(), &api.GetTokenRequest{
 		Host: host,
@@ -195,15 +198,23 @@ func createExposedPortsImpl(cfg *Config, tknsrv api.TokenServiceServer) (res por
 		},
 	})
 	if err != nil {
-		log.WithError(err).Error("cannot get token for Gitpod API - auto-port exposure won't work")
-		return &ports.NoopExposedPorts{}
+		log.WithError(err).Error("cannot get token for Gitpod API")
+		return nil
 	}
 
 	gitpodService, err := gitpod.ConnectToServer(endpoint, gitpod.ConnectToServerOpts{
 		Token: tknres.Token,
 	})
 	if err != nil {
-		log.WithError(err).Error("cannot connect to Gitpod API - auto-port exposure won't work")
+		log.WithError(err).Error("cannot connect to Gitpod API")
+		return nil
+	}
+	return gitpodService
+}
+
+func createExposedPortsImpl(cfg *Config, gitpodService *gitpod.APIoverJSONRPC) (res ports.ExposedPortsInterface) {
+	if gitpodService == nil {
+		log.Error("auto-port exposure won't work")
 		return &ports.NoopExposedPorts{}
 	}
 

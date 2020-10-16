@@ -21,7 +21,6 @@ import { GitpodServiceProvider } from "./gitpod-service-provider";
 import { GitpodService, GitpodServiceImpl } from "@gitpod/gitpod-protocol/lib/gitpod-service";
 import { GitpodUiContribution } from "./gitpod-ui-contribution";
 import { CommandContribution, MenuContribution, MenuModelRegistry } from "@theia/core";
-import { ServedPortsService, ServedPortsServiceServer } from "../common/served-ports-service";
 import { GitpodAccountInfoDialog, GitpodAccountInfoDialogProps } from "./gitpod-account-info";
 import { UserMessageContribution } from "./user-message/user-message-contribution";
 import { GitpodShareWidget, GitpodShareDialog, GitpodShareDialogProps } from "./gitpod-share-widget";
@@ -50,7 +49,6 @@ import { GitHostWatcher } from './git-host-watcher';
 import { GitpodExternalUriService } from './gitpod-external-uri-service';
 import { ExternalUriService } from '@theia/core/lib/browser/external-uri-service';
 import { GitpodGitTokenProvider } from './gitpod-git-token-provider';
-import { GitpodPortsAuthManger } from './ports/gitpod-ports-auth-manager';
 import { setupModule } from './setup/setup-module';
 import { GitpodBranding } from './gitpod-branding';
 import { GitpodMainMenuFactory } from './gitpod-main-menu';
@@ -66,6 +64,7 @@ import { Disposable, DisposableCollection } from '@theia/core/lib/common/disposa
 import { Deferred } from '@theia/core/lib/common/promise-util';
 import { GitpodTaskContribution } from './gitpod-task-contribution';
 import { GitpodTaskServer, gitpodTaskServicePath } from '../common/gitpod-task-protocol';
+import { GitpodPortServer, gitpodPortServicePath } from '../common/gitpod-port-server';
 
 @injectable()
 class GitpodFrontendApplication extends FrontendApplication {
@@ -149,9 +148,8 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
 
     rebind(TerminalWidget).to(GitpodTerminalWidget).inTransientScope();
 
-    bind(ServedPortsServiceServer).toDynamicValue(context => WebSocketConnectionProvider.createProxy(context.container, ServedPortsService.SERVICE_PATH)).inSingletonScope();
-    bind(ServedPortsService).toSelf().inSingletonScope();
-    bind(GitpodPortsAuthManger).toSelf().inSingletonScope();
+    bind(GitpodPortServer).toDynamicValue(context => WebSocketConnectionProvider.createProxy(context.container, gitpodPortServicePath)).inSingletonScope();
+    bind(GitpodPortsService).toSelf().inSingletonScope();
 
     bind(CliServiceClientImpl).toSelf().inSingletonScope();
     bind(CliServiceClient).toDynamicValue(context => {
@@ -162,8 +160,6 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
 
     bind(CliServiceContribution).toSelf().inSingletonScope();
     bind(FrontendApplicationContribution).toService(CliServiceContribution);
-
-    bind(GitpodPortsService).toSelf().inSingletonScope();
 
     bind(UserMessageContribution).toSelf().inSingletonScope();
     bind(FrontendApplicationContribution).toService(UserMessageContribution);

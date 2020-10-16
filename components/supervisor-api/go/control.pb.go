@@ -28,151 +28,97 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
-type NewuidmapRequest struct {
-	Pid                  int64                       `protobuf:"varint,1,opt,name=pid,proto3" json:"pid,omitempty"`
-	Gid                  bool                        `protobuf:"varint,2,opt,name=gid,proto3" json:"gid,omitempty"`
-	Mapping              []*NewuidmapRequest_Mapping `protobuf:"bytes,3,rep,name=mapping,proto3" json:"mapping,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                    `json:"-"`
-	XXX_unrecognized     []byte                      `json:"-"`
-	XXX_sizecache        int32                       `json:"-"`
+type ExposePortRequest struct {
+	// local port
+	Port uint32 `protobuf:"varint,1,opt,name=port,proto3" json:"port,omitempty"`
+	// external port if missing the the same as port
+	TargetPort           uint32   `protobuf:"varint,2,opt,name=target_port,json=targetPort,proto3" json:"target_port,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *NewuidmapRequest) Reset()         { *m = NewuidmapRequest{} }
-func (m *NewuidmapRequest) String() string { return proto.CompactTextString(m) }
-func (*NewuidmapRequest) ProtoMessage()    {}
-func (*NewuidmapRequest) Descriptor() ([]byte, []int) {
+func (m *ExposePortRequest) Reset()         { *m = ExposePortRequest{} }
+func (m *ExposePortRequest) String() string { return proto.CompactTextString(m) }
+func (*ExposePortRequest) ProtoMessage()    {}
+func (*ExposePortRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_0c5120591600887d, []int{0}
 }
 
-func (m *NewuidmapRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_NewuidmapRequest.Unmarshal(m, b)
+func (m *ExposePortRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ExposePortRequest.Unmarshal(m, b)
 }
-func (m *NewuidmapRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_NewuidmapRequest.Marshal(b, m, deterministic)
+func (m *ExposePortRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ExposePortRequest.Marshal(b, m, deterministic)
 }
-func (m *NewuidmapRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_NewuidmapRequest.Merge(m, src)
+func (m *ExposePortRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ExposePortRequest.Merge(m, src)
 }
-func (m *NewuidmapRequest) XXX_Size() int {
-	return xxx_messageInfo_NewuidmapRequest.Size(m)
+func (m *ExposePortRequest) XXX_Size() int {
+	return xxx_messageInfo_ExposePortRequest.Size(m)
 }
-func (m *NewuidmapRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_NewuidmapRequest.DiscardUnknown(m)
+func (m *ExposePortRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ExposePortRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_NewuidmapRequest proto.InternalMessageInfo
+var xxx_messageInfo_ExposePortRequest proto.InternalMessageInfo
 
-func (m *NewuidmapRequest) GetPid() int64 {
+func (m *ExposePortRequest) GetPort() uint32 {
 	if m != nil {
-		return m.Pid
+		return m.Port
 	}
 	return 0
 }
 
-func (m *NewuidmapRequest) GetGid() bool {
+func (m *ExposePortRequest) GetTargetPort() uint32 {
 	if m != nil {
-		return m.Gid
+		return m.TargetPort
 	}
-	return false
+	return 0
 }
 
-func (m *NewuidmapRequest) GetMapping() []*NewuidmapRequest_Mapping {
-	if m != nil {
-		return m.Mapping
-	}
-	return nil
-}
-
-type NewuidmapRequest_Mapping struct {
-	ContainerId          uint32   `protobuf:"varint,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
-	HostId               uint32   `protobuf:"varint,2,opt,name=host_id,json=hostId,proto3" json:"host_id,omitempty"`
-	Size                 uint32   `protobuf:"varint,3,opt,name=size,proto3" json:"size,omitempty"`
+type ExposePortResponse struct {
+	Error                string   `protobuf:"bytes,1,opt,name=error,proto3" json:"error,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *NewuidmapRequest_Mapping) Reset()         { *m = NewuidmapRequest_Mapping{} }
-func (m *NewuidmapRequest_Mapping) String() string { return proto.CompactTextString(m) }
-func (*NewuidmapRequest_Mapping) ProtoMessage()    {}
-func (*NewuidmapRequest_Mapping) Descriptor() ([]byte, []int) {
-	return fileDescriptor_0c5120591600887d, []int{0, 0}
-}
-
-func (m *NewuidmapRequest_Mapping) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_NewuidmapRequest_Mapping.Unmarshal(m, b)
-}
-func (m *NewuidmapRequest_Mapping) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_NewuidmapRequest_Mapping.Marshal(b, m, deterministic)
-}
-func (m *NewuidmapRequest_Mapping) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_NewuidmapRequest_Mapping.Merge(m, src)
-}
-func (m *NewuidmapRequest_Mapping) XXX_Size() int {
-	return xxx_messageInfo_NewuidmapRequest_Mapping.Size(m)
-}
-func (m *NewuidmapRequest_Mapping) XXX_DiscardUnknown() {
-	xxx_messageInfo_NewuidmapRequest_Mapping.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_NewuidmapRequest_Mapping proto.InternalMessageInfo
-
-func (m *NewuidmapRequest_Mapping) GetContainerId() uint32 {
-	if m != nil {
-		return m.ContainerId
-	}
-	return 0
-}
-
-func (m *NewuidmapRequest_Mapping) GetHostId() uint32 {
-	if m != nil {
-		return m.HostId
-	}
-	return 0
-}
-
-func (m *NewuidmapRequest_Mapping) GetSize() uint32 {
-	if m != nil {
-		return m.Size
-	}
-	return 0
-}
-
-type NewuidmapResponse struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *NewuidmapResponse) Reset()         { *m = NewuidmapResponse{} }
-func (m *NewuidmapResponse) String() string { return proto.CompactTextString(m) }
-func (*NewuidmapResponse) ProtoMessage()    {}
-func (*NewuidmapResponse) Descriptor() ([]byte, []int) {
+func (m *ExposePortResponse) Reset()         { *m = ExposePortResponse{} }
+func (m *ExposePortResponse) String() string { return proto.CompactTextString(m) }
+func (*ExposePortResponse) ProtoMessage()    {}
+func (*ExposePortResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_0c5120591600887d, []int{1}
 }
 
-func (m *NewuidmapResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_NewuidmapResponse.Unmarshal(m, b)
+func (m *ExposePortResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ExposePortResponse.Unmarshal(m, b)
 }
-func (m *NewuidmapResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_NewuidmapResponse.Marshal(b, m, deterministic)
+func (m *ExposePortResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ExposePortResponse.Marshal(b, m, deterministic)
 }
-func (m *NewuidmapResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_NewuidmapResponse.Merge(m, src)
+func (m *ExposePortResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ExposePortResponse.Merge(m, src)
 }
-func (m *NewuidmapResponse) XXX_Size() int {
-	return xxx_messageInfo_NewuidmapResponse.Size(m)
+func (m *ExposePortResponse) XXX_Size() int {
+	return xxx_messageInfo_ExposePortResponse.Size(m)
 }
-func (m *NewuidmapResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_NewuidmapResponse.DiscardUnknown(m)
+func (m *ExposePortResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ExposePortResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_NewuidmapResponse proto.InternalMessageInfo
+var xxx_messageInfo_ExposePortResponse proto.InternalMessageInfo
+
+func (m *ExposePortResponse) GetError() string {
+	if m != nil {
+		return m.Error
+	}
+	return ""
+}
 
 func init() {
-	proto.RegisterType((*NewuidmapRequest)(nil), "supervisor.NewuidmapRequest")
-	proto.RegisterType((*NewuidmapRequest_Mapping)(nil), "supervisor.NewuidmapRequest.Mapping")
-	proto.RegisterType((*NewuidmapResponse)(nil), "supervisor.NewuidmapResponse")
+	proto.RegisterType((*ExposePortRequest)(nil), "supervisor.ExposePortRequest")
+	proto.RegisterType((*ExposePortResponse)(nil), "supervisor.ExposePortResponse")
 }
 
 func init() {
@@ -180,23 +126,19 @@ func init() {
 }
 
 var fileDescriptor_0c5120591600887d = []byte{
-	// 249 bytes of a gzipped FileDescriptorProto
+	// 184 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4d, 0xce, 0xcf, 0x2b,
 	0x29, 0xca, 0xcf, 0xd1, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2a, 0x2e, 0x2d, 0x48, 0x2d,
-	0x2a, 0xcb, 0x2c, 0xce, 0x2f, 0x52, 0xba, 0xc8, 0xc8, 0x25, 0xe0, 0x97, 0x5a, 0x5e, 0x9a, 0x99,
-	0x92, 0x9b, 0x58, 0x10, 0x94, 0x5a, 0x58, 0x9a, 0x5a, 0x5c, 0x22, 0x24, 0xc0, 0xc5, 0x5c, 0x90,
-	0x99, 0x22, 0xc1, 0xa8, 0xc0, 0xa8, 0xc1, 0x1c, 0x04, 0x62, 0x82, 0x44, 0xd2, 0x33, 0x53, 0x24,
-	0x98, 0x14, 0x18, 0x35, 0x38, 0x82, 0x40, 0x4c, 0x21, 0x3b, 0x2e, 0xf6, 0xdc, 0xc4, 0x82, 0x82,
-	0xcc, 0xbc, 0x74, 0x09, 0x66, 0x05, 0x66, 0x0d, 0x6e, 0x23, 0x15, 0x3d, 0x84, 0xb1, 0x7a, 0xe8,
-	0x46, 0xea, 0xf9, 0x42, 0xd4, 0x06, 0xc1, 0x34, 0x49, 0x45, 0x72, 0xb1, 0x43, 0xc5, 0x84, 0x14,
-	0xb9, 0x78, 0x40, 0x0e, 0x4c, 0xcc, 0xcc, 0x4b, 0x2d, 0x8a, 0x87, 0xda, 0xcb, 0x1b, 0xc4, 0x0d,
-	0x17, 0xf3, 0x4c, 0x11, 0x12, 0xe7, 0x62, 0xcf, 0xc8, 0x2f, 0x2e, 0x89, 0x87, 0xba, 0x81, 0x37,
-	0x88, 0x0d, 0xc4, 0xf5, 0x4c, 0x11, 0x12, 0xe2, 0x62, 0x29, 0xce, 0xac, 0x4a, 0x95, 0x60, 0x06,
-	0x8b, 0x82, 0xd9, 0x4a, 0xc2, 0x5c, 0x82, 0x48, 0xf6, 0x17, 0x17, 0xe4, 0xe7, 0x15, 0xa7, 0x1a,
-	0xc5, 0x70, 0xf1, 0x39, 0x43, 0x42, 0x21, 0x18, 0xe4, 0xc8, 0xe4, 0x54, 0x21, 0x2f, 0x2e, 0x4e,
-	0xb8, 0x32, 0x21, 0x19, 0x7c, 0xae, 0x97, 0x92, 0xc5, 0x21, 0x0b, 0x31, 0x5b, 0x89, 0xc1, 0x89,
-	0x35, 0x8a, 0x39, 0xb1, 0x20, 0x33, 0x89, 0x0d, 0x1c, 0xc0, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff,
-	0xff, 0x93, 0x20, 0x59, 0xd8, 0x71, 0x01, 0x00, 0x00,
+	0x2a, 0xcb, 0x2c, 0xce, 0x2f, 0x52, 0xf2, 0xe0, 0x12, 0x74, 0xad, 0x28, 0xc8, 0x2f, 0x4e, 0x0d,
+	0xc8, 0x2f, 0x2a, 0x09, 0x4a, 0x2d, 0x2c, 0x4d, 0x2d, 0x2e, 0x11, 0x12, 0xe2, 0x62, 0x29, 0xc8,
+	0x2f, 0x2a, 0x91, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x0d, 0x02, 0xb3, 0x85, 0xe4, 0xb9, 0xb8, 0x4b,
+	0x12, 0x8b, 0xd2, 0x53, 0x4b, 0xe2, 0xc1, 0x52, 0x4c, 0x60, 0x29, 0x2e, 0x88, 0x10, 0x48, 0xaf,
+	0x92, 0x16, 0x97, 0x10, 0xb2, 0x49, 0xc5, 0x05, 0xf9, 0x79, 0xc5, 0xa9, 0x42, 0x22, 0x5c, 0xac,
+	0xa9, 0x45, 0x45, 0xf9, 0x45, 0x60, 0xb3, 0x38, 0x83, 0x20, 0x1c, 0xa3, 0x78, 0x2e, 0x3e, 0x67,
+	0x88, 0x93, 0x82, 0x41, 0x0e, 0x49, 0x4e, 0x15, 0xf2, 0xe5, 0xe2, 0x42, 0xe8, 0x16, 0x92, 0xd5,
+	0x43, 0x38, 0x51, 0x0f, 0xc3, 0x7d, 0x52, 0x72, 0xb8, 0xa4, 0x21, 0x96, 0x2a, 0x31, 0x38, 0xb1,
+	0x46, 0x31, 0x27, 0x16, 0x64, 0x26, 0xb1, 0x81, 0x3d, 0x6c, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff,
+	0xed, 0x86, 0x25, 0x69, 0x01, 0x01, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -211,8 +153,8 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type ControlServiceClient interface {
-	// Newuidmap sets sthe UID/GID map of a user namespace
-	Newuidmap(ctx context.Context, in *NewuidmapRequest, opts ...grpc.CallOption) (*NewuidmapResponse, error)
+	// ExposePort exposes a port
+	ExposePort(ctx context.Context, in *ExposePortRequest, opts ...grpc.CallOption) (*ExposePortResponse, error)
 }
 
 type controlServiceClient struct {
@@ -223,9 +165,9 @@ func NewControlServiceClient(cc grpc.ClientConnInterface) ControlServiceClient {
 	return &controlServiceClient{cc}
 }
 
-func (c *controlServiceClient) Newuidmap(ctx context.Context, in *NewuidmapRequest, opts ...grpc.CallOption) (*NewuidmapResponse, error) {
-	out := new(NewuidmapResponse)
-	err := c.cc.Invoke(ctx, "/supervisor.ControlService/Newuidmap", in, out, opts...)
+func (c *controlServiceClient) ExposePort(ctx context.Context, in *ExposePortRequest, opts ...grpc.CallOption) (*ExposePortResponse, error) {
+	out := new(ExposePortResponse)
+	err := c.cc.Invoke(ctx, "/supervisor.ControlService/ExposePort", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -234,36 +176,36 @@ func (c *controlServiceClient) Newuidmap(ctx context.Context, in *NewuidmapReque
 
 // ControlServiceServer is the server API for ControlService service.
 type ControlServiceServer interface {
-	// Newuidmap sets sthe UID/GID map of a user namespace
-	Newuidmap(context.Context, *NewuidmapRequest) (*NewuidmapResponse, error)
+	// ExposePort exposes a port
+	ExposePort(context.Context, *ExposePortRequest) (*ExposePortResponse, error)
 }
 
 // UnimplementedControlServiceServer can be embedded to have forward compatible implementations.
 type UnimplementedControlServiceServer struct {
 }
 
-func (*UnimplementedControlServiceServer) Newuidmap(ctx context.Context, req *NewuidmapRequest) (*NewuidmapResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Newuidmap not implemented")
+func (*UnimplementedControlServiceServer) ExposePort(ctx context.Context, req *ExposePortRequest) (*ExposePortResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ExposePort not implemented")
 }
 
 func RegisterControlServiceServer(s *grpc.Server, srv ControlServiceServer) {
 	s.RegisterService(&_ControlService_serviceDesc, srv)
 }
 
-func _ControlService_Newuidmap_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NewuidmapRequest)
+func _ControlService_ExposePort_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExposePortRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ControlServiceServer).Newuidmap(ctx, in)
+		return srv.(ControlServiceServer).ExposePort(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/supervisor.ControlService/Newuidmap",
+		FullMethod: "/supervisor.ControlService/ExposePort",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ControlServiceServer).Newuidmap(ctx, req.(*NewuidmapRequest))
+		return srv.(ControlServiceServer).ExposePort(ctx, req.(*ExposePortRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -273,8 +215,8 @@ var _ControlService_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*ControlServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Newuidmap",
-			Handler:    _ControlService_Newuidmap_Handler,
+			MethodName: "ExposePort",
+			Handler:    _ControlService_ExposePort_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
