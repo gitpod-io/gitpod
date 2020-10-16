@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 	"time"
 
@@ -126,12 +127,11 @@ func (rs *DirectMinIOStorage) defaultObjectAccess(ctx context.Context, bkt, obj 
 
 	object, err := rs.client.GetObjectWithContext(ctx, bkt, obj, minio.GetObjectOptions{})
 	if err != nil {
-		return nil, err
+		return nil, translateMinioError(err)
 	}
 	_, err = object.Stat()
 	if err != nil {
-		// TODO: if !obj.exists => return nil, nil
-		return nil, err
+		return nil, translateMinioError(err)
 	}
 
 	return object, nil
@@ -252,7 +252,7 @@ func (rs *DirectMinIOStorage) bucketName() string {
 }
 
 func (rs *DirectMinIOStorage) objectName(name string) string {
-	return fmt.Sprintf("workspaces/%s/%s.tar", rs.WorkspaceName, name)
+	return fmt.Sprintf("workspaces/%s/%s", rs.WorkspaceName, name)
 }
 
 func newPresignedMinIOAccess(cfg MinIOConfig) (*presignedMinIOStorage, error) {
@@ -268,32 +268,61 @@ type presignedMinIOStorage struct {
 }
 
 func (s *presignedMinIOStorage) Download(ctx context.Context, bucket, object string) (info *DownloadInfo, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.Download")
+	defer tracing.FinishSpan(span, &err)
+
 	obj, err := s.client.GetObject(bucket, object, minio.GetObjectOptions{})
 	if err != nil {
-		// TODO discern NotFound
-		return nil, err
+		return nil, translateMinioError(err)
 	}
 	stat, err := obj.Stat()
 	if err != nil {
-		return nil, err
+		return nil, translateMinioError(err)
 	}
 	url, err := s.client.PresignedGetObject(bucket, object, 30*time.Minute, nil)
 	if err != nil {
-		return nil, err
+		return nil, translateMinioError(err)
 	}
+	span.LogKV("stat", stat)
 	return &DownloadInfo{
 		Meta: ObjectMeta{
 			ContentType:        stat.ContentType,
-			OCIMediaType:       stat.Metadata.Get(ObjectAnnotationOCIContentType),
-			Digest:             stat.Metadata.Get(ObjectAnnotationDigest),
-			UncompressedDigest: stat.Metadata.Get(ObjectAnnotationUncompressedDigest),
+			OCIMediaType:       stat.Metadata.Get(annotationToAmzMetaHeader(ObjectAnnotationOCIContentType)),
+			Digest:             stat.Metadata.Get(annotationToAmzMetaHeader(ObjectAnnotationDigest)),
+			UncompressedDigest: stat.Metadata.Get(annotationToAmzMetaHeader(ObjectAnnotationUncompressedDigest)),
 		},
 		Size: stat.Size,
 		URL:  url.String(),
 	}, nil
 }
 
+func annotationToAmzMetaHeader(annotation string) string {
+	return http.CanonicalHeaderKey(fmt.Sprintf("X-Amz-Meta-%s", annotation))
+}
+
 // Bucket provides the bucket name for a particular user
 func (s *presignedMinIOStorage) Bucket(ownerID string) string {
 	return minioBucketName(ownerID)
+}
+
+func translateMinioError(err error) error {
+	if err == nil {
+		return nil
+	}
+
+	aerr, ok := err.(*minio.ErrorResponse)
+	if ok {
+		if aerr.StatusCode == http.StatusNotFound || aerr.Code == "NoSuchKey" || aerr.Code == "NoSuchBucket" {
+			return ErrNotFound
+		}
+	}
+
+	if strings.Contains(err.Error(), "bucket does not exist") {
+		return ErrNotFound
+	}
+	if strings.Contains(err.Error(), "key does not exist") {
+		return ErrNotFound
+	}
+
+	return err
 }
