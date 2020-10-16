@@ -69,16 +69,16 @@ func (g *GitpodExposedPorts) Observe(ctx context.Context) (<-chan []ExposedPort,
 			case u := <-updates:
 				res := make([]ExposedPort, len(u.Status.ExposedPorts))
 				for i, p := range u.Status.ExposedPorts {
-					var localport = p.TargetPort
-					if localport == 0 {
+					var globalport = p.TargetPort
+					if globalport == 0 {
 						// Ports exposed through confighuration (e.g. .gitpod.yml) do not have explicit target ports,
 						// but rather implicitaly forward to their "port".
-						localport = p.Port
+						globalport = p.Port
 					}
 
 					res[i] = ExposedPort{
-						GlobalPort: uint32(p.Port),
-						LocalPort:  uint32(localport),
+						LocalPort:  uint32(p.Port),
+						GlobalPort: uint32(globalport),
 						Public:     p.Visibility == "public",
 						URL:        p.URL,
 					}

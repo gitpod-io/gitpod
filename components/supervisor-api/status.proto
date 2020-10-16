@@ -125,6 +125,16 @@ message PortsStatus {
         bool public = 1;
         // url is the URL at which the port is available
         string url = 2;
+
+        enum OnPortExposed {
+            ignore = 0;
+            open_browser = 1;
+            open_preview = 2;
+            notify = 3;
+            notify_private = 4;
+        }
+        // action hint on expose
+        OnPortExposed on_exposed = 3;
     }
 
     // local_port is the port a service actually bound to. Some services bind

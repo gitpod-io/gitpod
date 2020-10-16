@@ -14,9 +14,7 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 
-	"github.com/gitpod-io/gitpod/supervisor/pkg/backup"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
-	daemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/golang/protobuf/ptypes"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -546,6 +544,22 @@ func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest)
 	}
 
 	return resp, nil
+}
+
+// ControlService implements the supervisor control service
+type ControlService struct {
+	portsManager *ports.Manager
+}
+
+// RegisterGRPC registers the gRPC info service
+func (c *ControlService) RegisterGRPC(srv *grpc.Server) {
+	api.RegisterControlServiceServer(srv, c)
+}
+
+// ExposePort exposes a port
+func (c *ControlService) ExposePort(ctx context.Context, req *api.ExposePortRequest) (*api.ExposePortResponse, error) {
+	err := c.portsManager.Expose(req.Port, req.TargetPort)
+	return &api.ExposePortResponse{Error: err}, nil
 }
 
 // ContentState signals the workspace content state

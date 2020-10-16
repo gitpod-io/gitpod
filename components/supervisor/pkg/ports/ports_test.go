@@ -13,6 +13,8 @@ import (
 	"testing"
 
 	"github.com/gitpod-io/gitpod/supervisor/api"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/gitpod"
+	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -21,14 +23,17 @@ func TestPortsUpdateState(t *testing.T) {
 	type ExposureExpectation []ExposedPort
 	type UpdateExpectation [][]*api.PortsStatus
 	type Change struct {
+		Config     *gitpod.GitpodConfig
 		Served     []ServedPort
 		Exposed    []ExposedPort
+		ConfigErr  error
 		ServedErr  error
 		ExposedErr error
 	}
 	tests := []struct {
 		Desc             string
 		InternalPorts    []uint32
+		WorkspacePorts   []*gitpod.PortConfig
 		Changes          []Change
 		ExpectedState    StateExpectation
 		ExpectedExposure ExposureExpectation
@@ -81,14 +86,14 @@ func TestPortsUpdateState(t *testing.T) {
 				{Served: []ServedPort{{Port: 8080}}},
 			},
 			ExpectedState: StateExpectation{
-				[]managedPort{{Exposed: true, GlobalPort: 8080, LocalhostPort: 8080, Public: false, URL: "foobar"}},
-				[]managedPort{{Exposed: true, GlobalPort: 8080, LocalhostPort: 8080, Public: true, URL: "foobar"}},
-				[]managedPort{{Exposed: true, GlobalPort: 8080, LocalhostPort: 8080, Public: true, URL: "foobar", Served: true}},
+				[]managedPort{{Exposed: true, GlobalPort: 8080, LocalhostPort: 8080, Public: false, URL: "foobar", OnExposed: api.PortsStatus_ExposedPortInfo_notify_private}},
+				[]managedPort{{Exposed: true, GlobalPort: 8080, LocalhostPort: 8080, Public: true, URL: "foobar", OnExposed: api.PortsStatus_ExposedPortInfo_notify_private}},
+				[]managedPort{{Exposed: true, GlobalPort: 8080, LocalhostPort: 8080, Public: true, URL: "foobar", Served: true, OnExposed: api.PortsStatus_ExposedPortInfo_notify_private}},
 			},
 			ExpectedUpdates: UpdateExpectation{
-				{{LocalPort: 8080, GlobalPort: 8080, Exposed: &api.PortsStatus_ExposedPortInfo{Public: false, Url: "foobar"}}},
-				{{LocalPort: 8080, GlobalPort: 8080, Exposed: &api.PortsStatus_ExposedPortInfo{Public: true, Url: "foobar"}}},
-				{{LocalPort: 8080, GlobalPort: 8080, Served: true, Exposed: &api.PortsStatus_ExposedPortInfo{Public: true, Url: "foobar"}}},
+				{{LocalPort: 8080, GlobalPort: 8080, Exposed: &api.PortsStatus_ExposedPortInfo{Public: false, Url: "foobar", OnExposed: api.PortsStatus_ExposedPortInfo_notify_private}}},
+				{{LocalPort: 8080, GlobalPort: 8080, Exposed: &api.PortsStatus_ExposedPortInfo{Public: true, Url: "foobar", OnExposed: api.PortsStatus_ExposedPortInfo_notify_private}}},
+				{{LocalPort: 8080, GlobalPort: 8080, Served: true, Exposed: &api.PortsStatus_ExposedPortInfo{Public: true, Url: "foobar", OnExposed: api.PortsStatus_ExposedPortInfo_notify_private}}},
 			},
 		},
 		{
@@ -104,6 +109,52 @@ func TestPortsUpdateState(t *testing.T) {
 			ExpectedExposure: ExposureExpectation(nil),
 			ExpectedUpdates:  UpdateExpectation(nil),
 		},
+		{
+			Desc: "workspace port config",
+			WorkspacePorts: []*gitpod.PortConfig{
+				{Port: 8080, OnOpen: "open-browser"},
+				{Port: 9229, OnOpen: "ignore", Visibility: "private"},
+			},
+			Changes: []Change{
+				{
+					Exposed: []ExposedPort{
+						{LocalPort: 8080, GlobalPort: 8080, Public: true, URL: "8080-foobar"},
+						{LocalPort: 9229, GlobalPort: 9229, Public: false, URL: "9229-foobar"},
+					},
+				},
+				{
+					Served: []ServedPort{
+						{8080, false},
+						{9229, true},
+					},
+				},
+			},
+			ExpectedState: StateExpectation{
+				[]managedPort{
+					{LocalhostPort: 8080, OnExposed: api.PortsStatus_ExposedPortInfo_open_browser},
+					{LocalhostPort: 9229, OnExposed: api.PortsStatus_ExposedPortInfo_ignore},
+				},
+				[]managedPort{
+					{LocalhostPort: 8080, GlobalPort: 8080, Exposed: true, Public: true, URL: "8080-foobar", OnExposed: api.PortsStatus_ExposedPortInfo_open_browser},
+					{LocalhostPort: 9229, GlobalPort: 9229, Exposed: true, URL: "9229-foobar", OnExposed: api.PortsStatus_ExposedPortInfo_ignore},
+				},
+				[]managedPort{
+					{LocalhostPort: 8080, GlobalPort: 8080, Served: true, Exposed: true, Public: true, URL: "8080-foobar", OnExposed: api.PortsStatus_ExposedPortInfo_open_browser},
+					{LocalhostPort: 9229, GlobalPort: 9229, Served: true, Exposed: true, URL: "9229-foobar", OnExposed: api.PortsStatus_ExposedPortInfo_ignore},
+				},
+			},
+			ExpectedExposure: []ExposedPort{
+				{LocalPort: 8080, Public: true},
+				{LocalPort: 9229},
+			},
+			ExpectedUpdates: UpdateExpectation{
+				{{LocalPort: 8080}, {LocalPort: 9229}},
+				{
+					{LocalPort: 8080, GlobalPort: 8080, Exposed: &api.PortsStatus_ExposedPortInfo{Public: true, Url: "8080-foobar", OnExposed: api.PortsStatus_ExposedPortInfo_open_browser}},
+					{LocalPort: 9229, GlobalPort: 9229, Exposed: &api.PortsStatus_ExposedPortInfo{Public: false, Url: "9229-foobar", OnExposed: api.PortsStatus_ExposedPortInfo_ignore}},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -117,11 +168,28 @@ func TestPortsUpdateState(t *testing.T) {
 					Changes: make(chan []ServedPort),
 					Error:   make(chan error),
 				}
-				cfgprov = &FixedPortConfigProvider{}
-				pm      = NewManager(exposed, served, cfgprov, test.InternalPorts...)
-				act     = make(StateExpectation, 0, len(test.Changes))
-				updts   [][]*api.PortsStatus
+
+				context, cancel = context.WithCancel(context.Background())
+				configService   = &testGitpodConfigService{
+					configs: make(chan *gitpod.GitpodConfig),
+					errors:  make(chan error),
+				}
+				ctrl        = gomock.NewController(t)
+				gitpodAPI   = gitpod.NewMockAPIInterface(ctrl)
+				workspaceID = "test"
+				config      = NewConfigService(workspaceID, configService, gitpodAPI)
+
+				pm    = NewManager(exposed, served, config, test.InternalPorts...)
+				act   = make(StateExpectation, 0, len(test.Changes))
+				updts [][]*api.PortsStatus
 			)
+			gitpodAPI.EXPECT().GetWorkspace(context, workspaceID).Times(1).Return(&gitpod.WorkspaceInfo{
+				Workspace: &gitpod.Workspace{
+					Config: &gitpod.WorkspaceConfig{
+						Ports: test.WorkspacePorts,
+					},
+				},
+			}, nil)
 			pm.proxyStarter = func(dst *managedPort, openPorts map[uint32]struct{}) (err error) {
 				dst.GlobalPort = 60000
 				dst.Proxy = ioutil.NopCloser(nil)
@@ -149,13 +217,21 @@ func TestPortsUpdateState(t *testing.T) {
 			}()
 			go func() {
 				defer wg.Done()
+				defer cancel()
+				defer close(configService.configs)
+				defer close(configService.errors)
 				defer close(served.Error)
 				defer close(served.Changes)
 				defer close(exposed.Error)
 				defer close(exposed.Changes)
 
+				configService.configs <- nil
 				for _, c := range test.Changes {
-					if c.Served != nil {
+					if c.Config != nil {
+						configService.configs <- c.Config
+					} else if c.ConfigErr != nil {
+						configService.errors <- c.ConfigErr
+					} else if c.Served != nil {
 						served.Changes <- c.Served
 					} else if c.ServedErr != nil {
 						served.Error <- c.ServedErr

@@ -11,20 +11,16 @@ option go_package = "api";
 // ControlService provides workspace-facing, misc control related services
 service ControlService {
 
-    // Newuidmap sets sthe UID/GID map of a user namespace
-    rpc Newuidmap(NewuidmapRequest) returns (NewuidmapResponse) {}
-    
+  // ExposePort exposes a port
+  rpc ExposePort(ExposePortRequest) returns (ExposePortResponse) {}
 }
 
-message NewuidmapRequest {
-    message Mapping {
-        uint32 container_id = 1;
-        uint32 host_id = 2;
-        uint32 size = 3;
-    }
-
-    int64 pid = 1;
-    bool gid = 2;
-    repeated Mapping mapping = 3;
+message ExposePortRequest {
+  // local port
+  uint32 port = 1;
+  // external port if missing the the same as port
+  uint32 target_port = 2;
 }
-message NewuidmapResponse {}
+message ExposePortResponse {
+    string error = 1;
+}
