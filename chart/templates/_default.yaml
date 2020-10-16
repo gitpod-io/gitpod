@@ -19,10 +19,8 @@ metadata:
     {{ $k }}: {{ $v }}
     {{- end }}
 {{- if $comp.serviceAnnotations }}
-{{- with $comp.serviceAnnotations }}
   annotations:
-{{ toYaml . | indent 4 }}
-{{- end }}
+{{ toYaml $comp.serviceAnnotations | indent 4 }}
 {{- end }}
 spec:
   ports:
