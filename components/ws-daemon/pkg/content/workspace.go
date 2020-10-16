@@ -60,7 +60,10 @@ func serveWorkspace(namespace string) func(ctx context.Context, ws *session.Work
 		serviceCtx, cancel := context.WithCancel(context.Background())
 		ws.NonPersistentAttrs[session.AttrWorkspaceServer] = cancel
 
-		cl := api.NewInWorkspaceHelperClient(conn)
+		var (
+			cl       = api.NewInWorkspaceHelperClient(conn)
+			attempts = 0
+		)
 		go func() {
 			log.WithFields(ws.OWI()).Info("serving workspace helper")
 			for {
@@ -72,7 +75,10 @@ func serveWorkspace(namespace string) func(ctx context.Context, ws *session.Work
 				bkpcl, err := cl.BackupCanary(serviceCtx)
 				if err != nil {
 					if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
-						log.WithFields(ws.OWI()).WithError(err).Debug("backup canary unavailable - maybe because of workspace shutdown")
+						attempts++
+						if attempts%10 == 0 {
+							log.WithFields(ws.OWI()).WithError(err).WithField("attempts", attempts).Debug("backup canary unavailable - maybe because of workspace shutdown")
+						}
 					} else {
 						log.WithFields(ws.OWI()).WithError(err).Warn("backup canary failure")
 					}

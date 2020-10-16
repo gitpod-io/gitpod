@@ -125,18 +125,20 @@ func Run(options ...RunOption) {
 
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
 
-	var apiServices []RegisterableService
-	apiServices = append(apiServices, iwh)
-	apiServices = append(apiServices, &statusService{
-		IWH:      iwh,
-		Ports:    portMgmt,
-		Tasks:    taskManager,
-		IDEReady: ideReady,
-	})
-	apiServices = append(apiServices, termMuxSrv)
-	apiServices = append(apiServices, &RegistrableTokenService{tokenService})
-	apiServices = append(apiServices, &InfoService{cfg: cfg})
-	apiServices = append(apiServices, &ControlService{UidmapCanary: iwh.IDMapperService()})
+	apiServices := []RegisterableService{
+		iwh,
+		&statusService{
+			IWH:      iwh,
+			Ports:    portMgmt,
+			Tasks:    taskManager,
+			IDEReady: ideReady,
+		},
+		termMuxSrv,
+		RegistrableTokenService{tokenService},
+		RegisterableBackupService{iwh.BackupService()},
+		&InfoService{cfg: cfg},
+		&ControlService{UidmapCanary: iwh.IDMapperService()},
+	}
 	apiServices = append(apiServices, opts.AdditionalServices...)
 
 	var wg sync.WaitGroup
