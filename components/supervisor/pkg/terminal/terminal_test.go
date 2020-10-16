@@ -10,7 +10,6 @@ import (
 	"io"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/google/go-cmp/cmp"
@@ -20,7 +19,6 @@ func TestTerminals(t *testing.T) {
 	tests := []struct {
 		Desc        string
 		Stdin       []string
-		Delay       time.Duration
 		Expectation func(terminal *Term) string
 	}{
 		{
@@ -31,7 +29,6 @@ func TestTerminals(t *testing.T) {
 				"echo \"yarn --cwd theia-training watch\"",
 				"history",
 			},
-			Delay: 1000 * time.Millisecond,
 			Expectation: func(terminal *Term) string {
 				return string(terminal.Stdout.recorder.Bytes())
 			},
@@ -49,15 +46,12 @@ func TestTerminals(t *testing.T) {
 				t.Fatal("no terminal")
 			}
 			stdoutOutput := bytes.NewBuffer(nil)
-			go io.Copy(stdoutOutput, terminal.Stdout.Listen())
-
-			for _, stdin := range test.Stdin {
-				terminal.PTY.Write([]byte(stdin + "\r\n"))
-				time.Sleep(test.Delay)
-			}
-
-			err = terminalService.Mux.Close(resp.Alias)
-			if err != nil {
+			go func() {
+				command := strings.Join(append(test.Stdin, "sleep 1", "exit\r\n"), " && ")
+				terminal.PTY.Write([]byte(command))
+			}()
+			_, err = io.Copy(stdoutOutput, terminal.Stdout.Listen())
+			if err != nil && err != io.EOF {
 				t.Fatal(err)
 			}
 
