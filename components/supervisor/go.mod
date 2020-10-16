@@ -5,6 +5,7 @@ go 1.14
 require (
 	github.com/Netflix/go-env v0.0.0-20200908232752-3e802f601e28
 	github.com/creack/pty v1.1.11
+	github.com/fsnotify/fsnotify v1.4.7
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
@@ -26,6 +27,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	google.golang.org/grpc v1.32.0
 	google.golang.org/grpc/examples v0.0.0-20200902210233-8630cac324bf // indirect
+	gopkg.in/yaml.v2 v2.2.8
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
