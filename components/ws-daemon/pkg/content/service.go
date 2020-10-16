@@ -755,10 +755,10 @@ func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string) map[session
 
 		lbr, ok := ws.NonPersistentAttrs[session.AttrLiveBackup]
 		if lbr == nil || !ok {
-			log.WithFields(log.OWI(ws.Owner, ws.WorkspaceID, ws.InstanceID)).Warn("workspace is ready but did not have a live backup")
+			log.WithFields(ws.OWI()).Warn("workspace is ready but did not have a live backup")
 
 			ws.NonPersistentAttrs[session.AttrLiveBackup] = &LiveWorkspaceBackup{
-				OWI:         log.OWI("", "", ws.InstanceID),
+				OWI:         ws.OWI(),
 				Location:    ws.UpperdirLocation,
 				Destination: filepath.Join(cfg.FullWorkspaceBackup.WorkDir, ws.InstanceID),
 			}

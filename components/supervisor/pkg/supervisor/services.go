@@ -196,12 +196,12 @@ type RegistrableTokenService struct {
 }
 
 // RegisterGRPC registers a gRPC service
-func (s *RegistrableTokenService) RegisterGRPC(srv *grpc.Server) {
+func (s RegistrableTokenService) RegisterGRPC(srv *grpc.Server) {
 	api.RegisterTokenServiceServer(srv, s.Service)
 }
 
 // RegisterREST registers a REST service
-func (s *RegistrableTokenService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
+func (s RegistrableTokenService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
 	return api.RegisterTokenServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithInsecure()})
 }
 
@@ -585,4 +585,14 @@ func (c *ControlService) Newuidmap(ctx context.Context, req *api.NewuidmapReques
 	}
 
 	return &api.NewuidmapResponse{}, nil
+}
+
+// RegisterableBackupService can register the BackupService
+type RegisterableBackupService struct {
+	iwh.BackupService
+}
+
+// RegisterGRPC registers the gRPC info service
+func (b RegisterableBackupService) RegisterGRPC(srv *grpc.Server) {
+	api.RegisterBackupServiceServer(srv, b)
 }
