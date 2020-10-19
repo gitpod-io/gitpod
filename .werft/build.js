@@ -262,6 +262,7 @@ async function issueAndInstallCertficate(namespace, domain) {
             -var 'namespace=${namespace}' \
             -var 'dns_zone_domain=gitpod-dev.com' \
             -var 'domain=${domain}' \
+            -var 'public_ip='34.76.116.244' \
             -var 'subdomains=["", "*.", "*.ws-dev."]'`, {slice: 'certificate', async: true});
 
     werft.log('certificate', `waiting until certificate certs/${namespace} is ready...`)

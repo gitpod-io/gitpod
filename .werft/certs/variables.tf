@@ -16,3 +16,7 @@ variable "domain" {
 variable "subdomains" {
     type = list(string)
 }
+
+variable "public_ip" {
+    type = string
+}

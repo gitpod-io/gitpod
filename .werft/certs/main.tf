@@ -8,7 +8,7 @@ module "cert" {
   dns_zone_domain = var.dns_zone_domain
   domain = var.domain
   subdomains = var.subdomains
-  public_ip = "34.76.116.244"
+  public_ip = var.public_ip
   
   cert_name = var.namespace
   cert_namespace = "certs"
