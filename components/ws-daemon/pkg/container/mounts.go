@@ -27,6 +27,16 @@ type NodeMountsLookup struct {
 	Config *NodeMountsLookupConfig
 }
 
+// GetMountpoint scans the mount table for a mount point and returns one if found
+func (n *NodeMountsLookup) GetMountpoint(matcher func(mountPoint string) bool) (mountPoint string, err error) {
+	entry, err := n.getEntry(matcher)
+	if err != nil {
+		return
+	}
+
+	return entry[1], nil
+}
+
 // GetUpperdir finds the upperdir of an overlayfs mount by matching the mountpoint.
 // The returned path exists in the node's root mount namespace.
 func (n *NodeMountsLookup) GetUpperdir(matcher func(mountPoint string) bool) (upperdir string, err error) {

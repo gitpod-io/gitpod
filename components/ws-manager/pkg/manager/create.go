@@ -381,25 +381,48 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			// Mounting /dev/net/tun should be fine security-wise, because:
 			//   - the TAP driver documentation says so (see https://www.kernel.org/doc/Documentation/networking/tuntap.txt)
 			//   - systemd's nspawn does the same thing (if it's good enough for them, it's good enough for us)
-			devType := corev1.HostPathFile
-			pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
-				Name: "dev-net-tun",
-				VolumeSource: corev1.VolumeSource{
-					HostPath: &corev1.HostPathVolumeSource{
-						Path: "/dev/net/tun",
-						Type: &devType,
+			var (
+				devType          = corev1.HostPathFile
+				hostPathOrCreate = corev1.HostPathDirectoryOrCreate
+				markVolumeName   = "mark-mount"
+				mountPropagation = corev1.MountPropagationHostToContainer
+			)
+			pod.Spec.Volumes = append(pod.Spec.Volumes,
+				corev1.Volume{
+					Name: "dev-net-tun",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/dev/net/tun",
+							Type: &devType,
+						},
 					},
 				},
-			})
+				corev1.Volume{
+					Name: markVolumeName,
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: filepath.Join(m.Config.WorkspaceHostPath, startContext.Request.Id+"-mark"),
+							Type: &hostPathOrCreate,
+						},
+					},
+				},
+			)
 			for i, c := range pod.Spec.Containers {
 				if c.Name != "workspace" {
 					continue
 				}
 
-				pod.Spec.Containers[i].VolumeMounts = append(c.VolumeMounts, corev1.VolumeMount{
-					MountPath: "/dev/net/tun",
-					Name:      "dev-net-tun",
-				})
+				pod.Spec.Containers[i].VolumeMounts = append(c.VolumeMounts,
+					corev1.VolumeMount{
+						MountPath: "/dev/net/tun",
+						Name:      "dev-net-tun",
+					},
+					corev1.VolumeMount{
+						MountPath:        "/.mark",
+						Name:             markVolumeName,
+						MountPropagation: &mountPropagation,
+					},
+				)
 				break
 			}
 		case api.WorkspaceFeatureFlag_FULL_WORKSPACE_BACKUP:

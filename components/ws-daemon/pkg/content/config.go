@@ -15,6 +15,12 @@ type Config struct {
 	// WorkingArea is the location on-disk where we create workspaces
 	WorkingArea string `json:"workingArea"`
 
+	// WorkingAreaNode is the location on-disk where we create workspaces,
+	// as seen from the root/node mount namespace. This is the same path as WorkingArea,
+	// except not from within the container, but on the node (the "other side" of the hostPath volume
+	// of the ws-daemon pod).
+	WorkingAreaNode string `json:"workingAreaNode"`
+
 	// TmpDir is the temp working diretory for creating tar files during upload
 	TmpDir string `json:"tempDir"`
 

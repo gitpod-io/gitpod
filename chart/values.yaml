@@ -365,11 +365,13 @@ components:
     servicePort: 8080
     workspaceSizeLimit: ""
     containerRuntime:
+      enabled: true
       runtime: containerd
       containerd:
         socket: /run/containerd/containerd.sock
       nodeRoots: 
       - /var/lib
+      - /run/containerd/io.containerd.runtime.v1.linux/k8s.io
     userNamespaces:
       shiftfsModuleLoader:
         enabled: false
