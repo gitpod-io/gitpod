@@ -7,12 +7,12 @@ import "content-service-api/initializer.proto";
 option go_package = "github.com/gitpod-io/gitpod/ws-daemon/api";
 
 service InWorkspaceHelper {
-    // BackupCanary can prepare workspace content backups. The canary is supposed to be triggered
+    // Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
     // when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
     //
-    // Note that the request/response flow is inverted here, as it's the server (supervisor) which requests a backup
+    // Note that the request/response flow is inverted here, as it's the server (supervisor) which requests the teardown
     // from the client (ws-daemon).
-    rpc BackupCanary(stream BackupCanaryResponse) returns (stream BackupCanaryRequest) {}
+    rpc TeardownCanary(stream TeardownResponse) returns (stream TeardownRequest) {}
 
     // PauseTheia can pause the Theia process and all its children. As long as the request stream
     // is held Theia will be paused.
@@ -25,9 +25,9 @@ service InWorkspaceHelper {
     rpc UidmapCanary(stream UidmapCanaryResponse) returns (stream UidmapCanaryRequest) {}
 }
 
-message BackupCanaryRequest {
+message TeardownRequest {
 }
-message BackupCanaryResponse {
+message TeardownResponse {
     bool success = 2;
 }
 

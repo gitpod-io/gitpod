@@ -43,11 +43,11 @@ type InWorkspaceHelper struct {
 // RegisterGRPC registers a gRPC service
 func (iwh *InWorkspaceHelper) RegisterGRPC(srv *grpc.Server) {
 	type grpcIWH struct {
-		*backupIWH
+		*teardownIWH
 		*idmapperIWH
 	}
 	daemon.RegisterInWorkspaceHelperServer(srv, grpcIWH{
-		backupIWH:   &backupIWH{iwh.backup},
+		teardownIWH: &teardownIWH{iwh.backup},
 		idmapperIWH: &idmapperIWH{iwh.idmapper},
 	})
 }
@@ -146,13 +146,13 @@ func (iwh *backupService) Available() bool {
 	return atomic.LoadInt32(&iwh.canaryAvailable) > 0
 }
 
-type backupIWH struct {
+type teardownIWH struct {
 	*backupService
 }
 
 // BackupCanary can prepare workspace content backups. The canary is supposed to be triggered
 // when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
-func (iwh *backupIWH) BackupCanary(srv daemon.InWorkspaceHelper_BackupCanaryServer) error {
+func (iwh *teardownIWH) TeardownCanary(srv daemon.InWorkspaceHelper_TeardownCanaryServer) error {
 	atomic.AddInt32(&iwh.canaryAvailable, 1)
 	defer atomic.AddInt32(&iwh.canaryAvailable, -1)
 
@@ -161,7 +161,7 @@ func (iwh *backupIWH) BackupCanary(srv daemon.InWorkspaceHelper_BackupCanaryServ
 		return status.Error(codes.FailedPrecondition, "trigger chan closed")
 	}
 
-	err := srv.Send(&daemon.BackupCanaryRequest{})
+	err := srv.Send(&daemon.TeardownRequest{})
 	if err != nil {
 		return err
 	}
@@ -179,7 +179,7 @@ func (iwh *backupIWH) BackupCanary(srv daemon.InWorkspaceHelper_BackupCanaryServ
 // PauseTheia can pause the Theia process and all its children. As long as the request stream
 // is held Theia will be paused.
 // This is a stop-the-world mechanism for preventing concurrent modification during backup.
-func (iwh *backupIWH) PauseTheia(srv daemon.InWorkspaceHelper_PauseTheiaServer) error {
+func (iwh *teardownIWH) PauseTheia(srv daemon.InWorkspaceHelper_PauseTheiaServer) error {
 	iwh.pauseChan <- true
 	defer func() {
 		iwh.pauseChan <- false
@@ -204,7 +204,7 @@ const (
 )
 
 // GitStatus provides the current state of the main Git repo at the workspace's checkout location
-func (iwh *backupIWH) GitStatus(ctx context.Context, req *daemon.GitStatusRequest) (*daemon.GitStatusResponse, error) {
+func (iwh *teardownIWH) GitStatus(ctx context.Context, req *daemon.GitStatusRequest) (*daemon.GitStatusResponse, error) {
 	//
 	// BEWARE
 	// This functionality is duplicated in ws-daemon.
