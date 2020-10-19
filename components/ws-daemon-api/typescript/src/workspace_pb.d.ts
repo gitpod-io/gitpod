@@ -1,40 +1,46 @@
+/**
+ * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
 // package: wsbs
 // file: workspace.proto
 
 import * as jspb from "google-protobuf";
 import * as content_service_api_initializer_pb from "@gitpod/content-service/lib";
 
-export class BackupCanaryRequest extends jspb.Message {
+export class TeardownRequest extends jspb.Message {
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): BackupCanaryRequest.AsObject;
-  static toObject(includeInstance: boolean, msg: BackupCanaryRequest): BackupCanaryRequest.AsObject;
+  toObject(includeInstance?: boolean): TeardownRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: TeardownRequest): TeardownRequest.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: BackupCanaryRequest, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): BackupCanaryRequest;
-  static deserializeBinaryFromReader(message: BackupCanaryRequest, reader: jspb.BinaryReader): BackupCanaryRequest;
+  static serializeBinaryToWriter(message: TeardownRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): TeardownRequest;
+  static deserializeBinaryFromReader(message: TeardownRequest, reader: jspb.BinaryReader): TeardownRequest;
 }
 
-export namespace BackupCanaryRequest {
+export namespace TeardownRequest {
   export type AsObject = {
   }
 }
 
-export class BackupCanaryResponse extends jspb.Message {
+export class TeardownResponse extends jspb.Message {
   getSuccess(): boolean;
   setSuccess(value: boolean): void;
 
   serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): BackupCanaryResponse.AsObject;
-  static toObject(includeInstance: boolean, msg: BackupCanaryResponse): BackupCanaryResponse.AsObject;
+  toObject(includeInstance?: boolean): TeardownResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: TeardownResponse): TeardownResponse.AsObject;
   static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
   static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: BackupCanaryResponse, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): BackupCanaryResponse;
-  static deserializeBinaryFromReader(message: BackupCanaryResponse, reader: jspb.BinaryReader): BackupCanaryResponse;
+  static serializeBinaryToWriter(message: TeardownResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): TeardownResponse;
+  static deserializeBinaryFromReader(message: TeardownResponse, reader: jspb.BinaryReader): TeardownResponse;
 }
 
-export namespace BackupCanaryResponse {
+export namespace TeardownResponse {
   export type AsObject = {
     success: boolean,
   }

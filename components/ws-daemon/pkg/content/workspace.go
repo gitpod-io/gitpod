@@ -7,6 +7,7 @@ package content
 import (
 	"context"
 	"math/rand"
+	"os/exec"
 	"sync"
 	"time"
 
@@ -72,15 +73,15 @@ func serveWorkspace(namespace string) func(ctx context.Context, ws *session.Work
 					return
 				}
 
-				bkpcl, err := cl.BackupCanary(serviceCtx)
+				teardownCanary, err := cl.TeardownCanary(serviceCtx)
 				if err != nil {
 					if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
 						attempts++
 						if attempts%10 == 0 {
-							log.WithFields(ws.OWI()).WithError(err).WithField("attempts", attempts).Debug("backup canary unavailable - maybe because of workspace shutdown")
+							log.WithFields(ws.OWI()).WithError(err).WithField("attempts", attempts).Debug("teardown canary unavailable - maybe because of workspace shutdown")
 						}
 					} else {
-						log.WithFields(ws.OWI()).WithError(err).Warn("backup canary failure")
+						log.WithFields(ws.OWI()).WithError(err).Warn("teardown canary failure")
 					}
 
 					// we want to retry quickly here to establish the backup ability ASAP
@@ -88,36 +89,49 @@ func serveWorkspace(namespace string) func(ctx context.Context, ws *session.Work
 					continue
 				}
 
-				_, err = bkpcl.Recv()
+				_, err = teardownCanary.Recv()
 				if err != nil {
 					if ctx.Err() == nil {
 						// we weren't asked to stop serving the workspace yet, and still
 						// something has failed. We should be loud about that.
-						log.WithFields(ws.OWI()).WithError(err).Warn("backup canary failure")
+						log.WithFields(ws.OWI()).WithError(err).Warn("teardown canary failure")
 					}
 
-					bkpcl.CloseSend()
+					teardownCanary.CloseSend()
 					time.Sleep(time.Duration(rand.Intn(5)) * time.Second)
 					continue
 				}
 
+				var success bool
 				_, err = lb.Backup()
 				if err != nil {
+					success = false
 					log.WithFields(ws.OWI()).WithError(err).Error("live backup failure")
-					bkpcl.Send(&api.BackupCanaryResponse{Success: false})
 				} else {
 					log.WithFields(ws.OWI()).WithError(err).Info("live backup succeeded")
-					bkpcl.Send(&api.BackupCanaryResponse{Success: true})
 				}
 
 				gitStatus, err := cl.GitStatus(serviceCtx, &api.GitStatusRequest{})
 				if err != nil {
+					success = false
 					log.WithFields(ws.OWI()).WithError(err).Warn("cannot get Git status")
 				} else {
 					ws.SetGitStatus(gitStatus.Repo)
 				}
 
-				bkpcl.CloseSend()
+				if ws.ShiftfsMarkMount != "" {
+					// We cannot use the nsenter syscall here because mount namespaces affect the whole process, not just the current thread.
+					// That's why we resort to exec'ing "nsenter ... unmount ...".
+					mntout, err := exec.Command("nsenter", "-t", "1", "-m", "--", "umount", ws.ShiftfsMarkMount).CombinedOutput()
+					if err != nil {
+						log.WithFields(ws.OWI()).WithField("shiftfsMarkMount", ws.ShiftfsMarkMount).WithField("mntout", string(mntout)).WithError(err).Error("cannot unmount shiftfs mark")
+						success = false
+					}
+				}
+
+				teardownCanary.Send(&api.TeardownResponse{Success: success})
+
+				teardownCanary.CloseSend()
 				time.Sleep(timeBetweenCalls)
 			}
 		}()
