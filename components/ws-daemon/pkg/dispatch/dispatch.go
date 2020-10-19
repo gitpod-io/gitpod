@@ -156,6 +156,16 @@ func (d *Dispatch) Close() error {
 	return nil
 }
 
+// WorkspaceExistsOnNode returns true if there is a workspace pod on this node and this
+// dispatch knows about it.
+func (d *Dispatch) WorkspaceExistsOnNode(instanceID string) (ok bool) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	_, ok = d.ctxs[instanceID]
+	return
+}
+
 func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 	workspaceID, ok := newPod.Labels[wsk8s.MetaIDLabel]
 	if !ok {
@@ -172,14 +182,11 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	state, ok := d.ctxs[oldPod.Name]
+	state, ok := d.ctxs[workspaceInstanceID]
 	if !ok {
 		// we haven't seen this pod before - add it, and wait for the container
-		var (
-			podName = newPod.Name
-			owi     = wsk8s.GetOWIFromObject(&newPod.ObjectMeta)
-		)
-		d.ctxs[podName] = &workspaceState{
+		owi := wsk8s.GetOWIFromObject(&newPod.ObjectMeta)
+		d.ctxs[workspaceInstanceID] = &workspaceState{
 			SeenContainer: false,
 			Workspace: &Workspace{
 				InstanceID:  workspaceInstanceID,
@@ -199,7 +206,7 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 			log.WithFields(owi).WithField("container", containerID).Info("dispatch found new workspace container")
 
 			d.mu.Lock()
-			s := d.ctxs[podName]
+			s := d.ctxs[workspaceInstanceID]
 			if s == nil {
 				log.WithFields(owi).Error("pod disappaered from dispatch state before container was ready")
 				d.mu.Unlock()
@@ -254,15 +261,15 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 }
 
 func (d *Dispatch) handlePodDeleted(pod *corev1.Pod) {
-	if _, ok := pod.Labels[wsk8s.MetaIDLabel]; !ok {
-		log.WithField("name", pod.Name).Debug("pod has no workspace ID - probably not a workspace. Not dispatching.")
+	instanceID, ok := pod.Labels[wsk8s.WorkspaceIDLabel]
+	if !ok {
 		return
 	}
 
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	state, ok := d.ctxs[pod.Name]
+	state, ok := d.ctxs[instanceID]
 	if !ok {
 		log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Error("received pod deletion for a workspace, but have not seen it before. Ignoring update.")
 		return
@@ -270,5 +277,5 @@ func (d *Dispatch) handlePodDeleted(pod *corev1.Pod) {
 	if state.Cancel != nil {
 		state.Cancel()
 	}
-	delete(d.ctxs, pod.Name)
+	delete(d.ctxs, instanceID)
 }

@@ -65,15 +65,15 @@ type Manager struct {
 }
 
 type startWorkspaceContext struct {
-	Request             *api.StartWorkspaceRequest `json:"request"`
-	Labels              map[string]string          `json:"labels"`
-	CLIAPIKey           string                     `json:"cliApiKey"`
-	OwnerToken          string                     `json:"ownerToken"`
-	TheiaPort           int32                      `json:"theiaPort"`
-	TheiaSupervisorPort int32                      `json:"theiaSupervisorPort"`
-	WorkspaceURL        string                     `json:"workspaceURL"`
-	TraceID             string                     `json:"traceID"`
-	Headless            bool                       `json:"headless"`
+	Request        *api.StartWorkspaceRequest `json:"request"`
+	Labels         map[string]string          `json:"labels"`
+	CLIAPIKey      string                     `json:"cliApiKey"`
+	OwnerToken     string                     `json:"ownerToken"`
+	IDEPort        int32                      `json:"idePort"`
+	SupervisorPort int32                      `json:"supervisorPort"`
+	WorkspaceURL   string                     `json:"workspaceURL"`
+	TraceID        string                     `json:"traceID"`
+	Headless       bool                       `json:"headless"`
 }
 
 const (
@@ -213,7 +213,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	// mandatory Theia service
 	servicePrefix := getServicePrefix(req)
 	theiaServiceName := getTheiaServiceName(servicePrefix)
-	alloc, err := m.ingressPortAllocator.UpdateAllocatedPorts(req.Metadata.MetaId, theiaServiceName, []int{int(startContext.TheiaPort)})
+	alloc, err := m.ingressPortAllocator.UpdateAllocatedPorts(req.Metadata.MetaId, theiaServiceName, []int{int(startContext.IDEPort)})
 	if err != nil {
 		return nil, err
 	}
@@ -233,12 +233,12 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 			Type: corev1.ServiceTypeClusterIP,
 			Ports: []corev1.ServicePort{
 				{
-					Name: "theia",
-					Port: startContext.TheiaPort,
+					Name: "ide",
+					Port: startContext.IDEPort,
 				},
 				{
 					Name: "supervisor",
-					Port: startContext.TheiaSupervisorPort,
+					Port: startContext.SupervisorPort,
 				},
 			},
 			Selector: startContext.Labels,

@@ -56,7 +56,7 @@ func NewDaemon(config Config, prom prometheus.Registerer) (*Daemon, error) {
 		return nil, err
 	}
 
-	contentService, err := content.NewWorkspaceService(context.Background(), config.Content, config.Runtime.KubernetesNamespace, containerRuntime)
+	contentService, err := content.NewWorkspaceService(context.Background(), config.Content, config.Runtime.KubernetesNamespace, containerRuntime, dsptch.WorkspaceExistsOnNode)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create content service: %w", err)
 	}

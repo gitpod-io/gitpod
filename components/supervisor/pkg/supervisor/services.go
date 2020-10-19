@@ -113,8 +113,16 @@ func (s *statusService) ContentStatus(ctx context.Context, req *api.ContentStatu
 }
 
 func (s *statusService) BackupStatus(ctx context.Context, req *api.BackupStatusRequest) (*api.BackupStatusResponse, error) {
+	var avail bool
+	select {
+	case <-s.IWH.TeardownService().Available():
+		avail = true
+	default:
+		avail = false
+	}
+
 	return &api.BackupStatusResponse{
-		CanaryAvailable: s.IWH.TeardownService().Available(),
+		CanaryAvailable: avail,
 	}, nil
 }
 
@@ -560,10 +568,6 @@ func (c *ControlService) RegisterGRPC(srv *grpc.Server) {
 
 // Newuidmap establishes a new UID mapping in a user namespace
 func (c *ControlService) Newuidmap(ctx context.Context, req *api.NewuidmapRequest) (*api.NewuidmapResponse, error) {
-	if !c.UidmapCanary.Available() {
-		return nil, status.Error(codes.Unavailable, "service unavailable")
-	}
-
 	mapping := make([]*daemon.UidmapCanaryRequest_Mapping, len(req.Mapping))
 	for i, m := range req.Mapping {
 		mapping[i] = &daemon.UidmapCanaryRequest_Mapping{

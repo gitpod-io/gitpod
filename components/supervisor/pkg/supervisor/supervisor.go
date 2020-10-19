@@ -48,6 +48,7 @@ type runOptions struct {
 	Args                   []string
 	AdditionalServices     []RegisterableService
 	HealthEndpointGRPCOpts []grpc.ServerOption
+	WithoutTeardownCanary  bool
 }
 
 // RunOption customizes the run behaviour
@@ -71,6 +72,13 @@ func WithAdditionalService(register RegisterableService) RunOption {
 func WithHealthEndpointGRPCOpt(opt grpc.ServerOption) RunOption {
 	return func(r *runOptions) {
 		r.HealthEndpointGRPCOpts = append(r.HealthEndpointGRPCOpts, opt)
+	}
+}
+
+// WithoutTeardownCanary prevents supervisor from triggering the teardown canary
+func WithoutTeardownCanary() RunOption {
+	return func(ro *runOptions) {
+		ro.WithoutTeardownCanary = true
 	}
 }
 
@@ -167,9 +175,11 @@ func Run(options ...RunOption) {
 	}
 
 	log.Info("received SIGTERM - tearing down")
-	err = teardown(iwh.TeardownService())
-	if err != nil {
-		log.WithError(err).Error("ungraceful shutdown - teardown was unsuccessful")
+	if !opts.WithoutTeardownCanary {
+		err = iwh.TeardownService().Teardown(context.Background())
+		if err != nil {
+			log.WithError(err).Error("ungraceful shutdown - teardown was unsuccessful")
+		}
 	}
 
 	cancel()
@@ -541,11 +551,4 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 
 	log.WithField("source", src).Info("supervisor: workspace content init finished")
 	cst.MarkContentReady(src)
-}
-
-// teardown gets called when the workspace is shut down.
-// This function must perform all actions that need to run before the container is stopped.
-// Beware: we only have terminationGracePeriod seconds time to do that.
-func teardown(teardownCanary iwh.TeardownService) error {
-	return teardownCanary.Teardown(context.Background())
 }
