@@ -20,7 +20,6 @@ func TestTerminals(t *testing.T) {
 	tests := []struct {
 		Desc        string
 		Stdin       []string
-		Delay       time.Duration
 		Expectation func(terminal *Term) string
 	}{
 		{
@@ -30,8 +29,8 @@ func TestTerminals(t *testing.T) {
 				"echo \"gp sync-done init\"",
 				"echo \"yarn --cwd theia-training watch\"",
 				"history",
+				"exit",
 			},
-			Delay: 1000 * time.Millisecond,
 			Expectation: func(terminal *Term) string {
 				return string(terminal.Stdout.recorder.Bytes())
 			},
@@ -49,17 +48,16 @@ func TestTerminals(t *testing.T) {
 				t.Fatal("no terminal")
 			}
 			stdoutOutput := bytes.NewBuffer(nil)
-			go io.Copy(stdoutOutput, terminal.Stdout.Listen())
 
-			for _, stdin := range test.Stdin {
-				terminal.PTY.Write([]byte(stdin + "\r\n"))
-				time.Sleep(test.Delay)
-			}
+			go func() {
+				// give the io.Copy some time to start
+				time.Sleep(500 * time.Millisecond)
 
-			err = terminalService.Mux.Close(resp.Alias)
-			if err != nil {
-				t.Fatal(err)
-			}
+				for _, stdin := range test.Stdin {
+					terminal.PTY.Write([]byte(stdin + "\r\n"))
+				}
+			}()
+			io.Copy(stdoutOutput, terminal.Stdout.Listen())
 
 			expectation := strings.Split(test.Expectation(terminal), "\r\n")
 			actual := strings.Split(string(stdoutOutput.Bytes()), "\r\n")
