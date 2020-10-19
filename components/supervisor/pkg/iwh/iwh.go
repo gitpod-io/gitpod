@@ -6,7 +6,7 @@ package iwh
 
 import (
 	"context"
-	"sync/atomic"
+	"sync"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
@@ -27,9 +27,11 @@ func NewInWorkspaceHelper(checkoutLocation string, pauseTheia chan<- bool) *InWo
 			pauseChan:        pauseTheia,
 		},
 		teardown: &teardownService{
+			cond:          sync.NewCond(&sync.Mutex{}),
 			triggerBackup: make(chan chan<- bool),
 		},
 		idmapper: &idmapperService{
+			cond:          sync.NewCond(&sync.Mutex{}),
 			triggerUIDMap: make(chan *triggerNewuidmapReq),
 		},
 	}
@@ -80,7 +82,7 @@ type ContentState interface {
 
 // TeardownService is the supervisor-facing, canary backed, backup service
 type TeardownService interface {
-	Available() bool
+	Available() <-chan struct{}
 	Teardown(ctx context.Context) error
 }
 
@@ -120,6 +122,7 @@ func (iwh *backupService) ContentSource() (src csapi.WorkspaceInitSource, ok boo
 
 type teardownService struct {
 	triggerBackup   chan chan<- bool
+	cond            *sync.Cond
 	canaryAvailable int32
 }
 
@@ -148,8 +151,20 @@ func (iwh *teardownService) Teardown(ctx context.Context) error {
 }
 
 // CanaryAvailable returns true if there's a backup canary available
-func (iwh *teardownService) Available() bool {
-	return atomic.LoadInt32(&iwh.canaryAvailable) > 0
+func (iwh *teardownService) Available() <-chan struct{} {
+	res := make(chan struct{})
+	go func() {
+		iwh.cond.L.Lock()
+		defer iwh.cond.L.Unlock()
+
+		for iwh.canaryAvailable <= 0 {
+			iwh.cond.Wait()
+		}
+
+		close(res)
+	}()
+
+	return res
 }
 
 type teardownIWH struct {
@@ -159,8 +174,17 @@ type teardownIWH struct {
 // BackupCanary can prepare workspace content backups. The canary is supposed to be triggered
 // when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
 func (iwh *teardownIWH) TeardownCanary(srv daemon.InWorkspaceHelper_TeardownCanaryServer) error {
-	atomic.AddInt32(&iwh.canaryAvailable, 1)
-	defer atomic.AddInt32(&iwh.canaryAvailable, -1)
+	iwh.cond.L.Lock()
+	iwh.canaryAvailable++
+	iwh.cond.Broadcast()
+	iwh.cond.L.Unlock()
+
+	defer func() {
+		iwh.cond.L.Lock()
+		iwh.canaryAvailable--
+		iwh.cond.Broadcast()
+		iwh.cond.L.Unlock()
+	}()
 
 	rc := <-iwh.triggerBackup
 	if rc == nil {
@@ -233,7 +257,7 @@ func (iwh *backupIWH) GitStatus(ctx context.Context, req *daemon.GitStatusReques
 
 // IDMapperService is the supervisor-facing, canary-backed UID/GID mapping service for user namespace support
 type IDMapperService interface {
-	Available() bool
+	Available() <-chan struct{}
 	WriteIDMap(ctx context.Context, req *daemon.UidmapCanaryRequest) error
 }
 
@@ -246,19 +270,39 @@ var _ IDMapperService = &idmapperService{}
 
 type idmapperService struct {
 	canaryAvailable int32
+	cond            *sync.Cond
 	triggerUIDMap   chan *triggerNewuidmapReq
 }
 
 // CanaryAvailable returns true if there's a canaray available.
 // If there isn't, calling Newuidmap or Newguidmap won't succeed.
-func (iwh *idmapperService) Available() bool {
-	return atomic.LoadInt32(&iwh.canaryAvailable) > 0
+func (iwh *idmapperService) Available() <-chan struct{} {
+	res := make(chan struct{})
+	go func() {
+		iwh.cond.L.Lock()
+		defer iwh.cond.L.Unlock()
+
+		for iwh.canaryAvailable <= 0 {
+			iwh.cond.Wait()
+		}
+
+		close(res)
+	}()
+
+	return res
 }
 
 // WriteIDMap asks the canary to create a new uidmap. If there's no canary
 // available, this function will block until one becomes available or the
 // context is canceled.
 func (iwh *idmapperService) WriteIDMap(ctx context.Context, req *daemon.UidmapCanaryRequest) error {
+	iwh.cond.L.Lock()
+	avail := iwh.canaryAvailable > 0
+	iwh.cond.L.Unlock()
+	if !avail {
+		return status.Error(codes.Unavailable, "not available")
+	}
+
 	trigger := &triggerNewuidmapReq{
 		Req:  req,
 		Resp: make(chan error, 1),
@@ -283,8 +327,17 @@ type idmapperIWH struct {
 }
 
 func (iwh *idmapperIWH) UidmapCanary(srv daemon.InWorkspaceHelper_UidmapCanaryServer) error {
-	atomic.AddInt32(&iwh.canaryAvailable, 1)
-	defer atomic.AddInt32(&iwh.canaryAvailable, -1)
+	iwh.cond.L.Lock()
+	iwh.canaryAvailable++
+	iwh.cond.Broadcast()
+	iwh.cond.L.Unlock()
+
+	defer func() {
+		iwh.cond.L.Lock()
+		iwh.canaryAvailable--
+		iwh.cond.Broadcast()
+		iwh.cond.L.Unlock()
+	}()
 
 	for {
 		select {

@@ -9,6 +9,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var runCmdOpts struct {
+	NoTeardownCanary bool
+}
+
 var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "starts the supervisor",
@@ -20,4 +24,6 @@ var runCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(runCmd)
+
+	runCmd.Flags().BoolVar(&runCmdOpts.NoTeardownCanary, "without-teardown-canary", false, "disables the teardown canary")
 }

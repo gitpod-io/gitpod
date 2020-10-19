@@ -108,6 +108,8 @@ func (m *Uidmapper) WorkspaceAdded(ctx context.Context, ws *dispatch.Workspace) 
 		return xerrors.Errorf("no dispatch available")
 	}
 
+	defer log.WithFields(ws.OWI()).Info("UID mapper canary shutting down")
+
 	var connectionAttempts int
 	for {
 		err := m.establishUIDCanary(ctx, ws, disp)
@@ -120,10 +122,10 @@ func (m *Uidmapper) WorkspaceAdded(ctx context.Context, ws *dispatch.Workspace) 
 			connectionAttempts++
 
 			delay = timeBetweenConnectionAttempts
-		} else if err != nil {
-			log.WithFields(ws.OWI()).WithError(err).Warn("UID mapper canary error")
 		} else if ctx.Err() != nil {
 			break
+		} else if err != nil {
+			log.WithFields(ws.OWI()).WithError(err).Warn("UID mapper canary error")
 		}
 
 		time.Sleep(delay)

@@ -43,7 +43,7 @@ type WorkspaceBackupServer struct {
 
 // serveWorkspace creates a new WorkspaceBackupServer and makes it available in the workspace
 // using a Unix socket serving a gRPC server.
-func serveWorkspace(namespace string) func(ctx context.Context, ws *session.Workspace) error {
+func serveWorkspace(namespace string, workspaceExistenceCheck func(instanceID string) bool) func(ctx context.Context, ws *session.Workspace) error {
 	return func(ctx context.Context, ws *session.Workspace) error {
 		lb, ok := ws.NonPersistentAttrs[session.AttrLiveBackup].(*LiveWorkspaceBackup)
 		if ws.FullWorkspaceBackup && (lb == nil || !ok) {
@@ -78,7 +78,12 @@ func serveWorkspace(namespace string) func(ctx context.Context, ws *session.Work
 					if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
 						attempts++
 						if attempts%10 == 0 {
-							log.WithFields(ws.OWI()).WithError(err).WithField("attempts", attempts).Debug("teardown canary unavailable - maybe because of workspace shutdown")
+							if !workspaceExistenceCheck(ws.InstanceID) {
+								log.WithFields(ws.OWI()).WithError(err).WithField("attempts", attempts).Debug("teardown canary unavailable and dispatch doesn't know about this workspace - giving up")
+								break
+							} else {
+								log.WithFields(ws.OWI()).WithError(err).WithField("attempts", attempts).Debug("teardown canary unavailable")
+							}
 						}
 					} else {
 						log.WithFields(ws.OWI()).WithError(err).Warn("teardown canary failure")

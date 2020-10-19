@@ -272,7 +272,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	annotations := map[string]string{
 		"prometheus.io/scrape":         "true",
 		"prometheus.io/path":           "/metrics",
-		"prometheus.io/port":           strconv.Itoa(int(startContext.TheiaPort)),
+		"prometheus.io/port":           strconv.Itoa(int(startContext.IDEPort)),
 		workspaceIDAnnotation:          req.Id,
 		servicePrefixAnnotation:        getServicePrefix(req),
 		workspaceURLAnnotation:         startContext.WorkspaceURL,
@@ -423,6 +423,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 						MountPropagation: &mountPropagation,
 					},
 				)
+				pod.Spec.Containers[i].Command = []string{pod.Spec.Containers[i].Command[0], "ring0"}
 				break
 			}
 		case api.WorkspaceFeatureFlag_FULL_WORKSPACE_BACKUP:
@@ -437,7 +438,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			for i, c := range pod.Spec.Containers {
 				if c.Name == "workspace" {
 					pod.Spec.Containers[i].Image = image
-					pod.Spec.Containers[i].Command = []string{"/.supervisor/supervisor", "run"}
+					pod.Spec.Containers[i].Command = []string{"/.supervisor/supervisor", pod.Spec.Containers[i].Command[1]}
 				}
 			}
 
@@ -521,7 +522,7 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 		SecurityContext: sec,
 		ImagePullPolicy: corev1.PullAlways,
 		Ports: []corev1.ContainerPort{
-			{ContainerPort: startContext.TheiaPort},
+			{ContainerPort: startContext.IDEPort},
 		},
 		Resources: corev1.ResourceRequirements{
 			Limits:   limits,
@@ -544,7 +545,7 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 			Handler: corev1.Handler{
 				HTTPGet: &corev1.HTTPGetAction{
 					Path:   "/_supervisor/v1/status/content/wait/true",
-					Port:   intstr.FromInt((int)(startContext.TheiaSupervisorPort)),
+					Port:   intstr.FromInt((int)(startContext.SupervisorPort)),
 					Scheme: corev1.URISchemeHTTP,
 				},
 			},
@@ -574,12 +575,12 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	result = append(result, corev1.EnvVar{Name: "GITPOD_CLI_APITOKEN", Value: startContext.CLIAPIKey})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_WORKSPACE_ID", Value: startContext.Request.Metadata.MetaId})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_INSTANCE_ID", Value: startContext.Request.Id})
-	result = append(result, corev1.EnvVar{Name: "GITPOD_THEIA_PORT", Value: strconv.Itoa(int(startContext.TheiaPort))})
+	result = append(result, corev1.EnvVar{Name: "GITPOD_THEIA_PORT", Value: strconv.Itoa(int(startContext.IDEPort))})
 	result = append(result, corev1.EnvVar{Name: "THEIA_WORKSPACE_ROOT", Value: getWorkspaceRelativePath(spec.WorkspaceLocation)})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_HOST", Value: m.Config.GitpodHostURL})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_WORKSPACE_URL", Value: startContext.WorkspaceURL})
 	result = append(result, corev1.EnvVar{Name: "THEIA_SUPERVISOR_TOKEN", Value: m.Config.TheiaSupervisorToken})
-	result = append(result, corev1.EnvVar{Name: "THEIA_SUPERVISOR_ENDPOINT", Value: fmt.Sprintf(":%d", startContext.TheiaSupervisorPort)})
+	result = append(result, corev1.EnvVar{Name: "THEIA_SUPERVISOR_ENDPOINT", Value: fmt.Sprintf(":%d", startContext.SupervisorPort)})
 	result = append(result, corev1.EnvVar{Name: "THEIA_WEBVIEW_EXTERNAL_ENDPOINT", Value: "webview-{{hostname}}"})
 
 	// We don't require that Git be configured for workspaces
@@ -800,14 +801,14 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 			headlessLabel:          fmt.Sprintf("%v", headless),
 			markerLabel:            "true",
 		},
-		CLIAPIKey:           cliAPIKey,
-		OwnerToken:          ownerToken,
-		Request:             req,
-		TheiaPort:           23000,
-		TheiaSupervisorPort: 22999,
-		WorkspaceURL:        workspaceURL,
-		TraceID:             traceID,
-		Headless:            headless,
+		CLIAPIKey:      cliAPIKey,
+		OwnerToken:     ownerToken,
+		Request:        req,
+		IDEPort:        23000,
+		SupervisorPort: 22999,
+		WorkspaceURL:   workspaceURL,
+		TraceID:        traceID,
+		Headless:       headless,
 	}, nil
 }
 

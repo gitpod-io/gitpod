@@ -48,8 +48,11 @@ type WorkspaceService struct {
 	runtime     container.Runtime
 }
 
+// WorkspaceExistenceCheck is a check that can determine if a workspace container currently exists on this node.
+type WorkspaceExistenceCheck func(instanceID string) bool
+
 // NewWorkspaceService creates a new workspce initialization service, starts housekeeping and the Prometheus integration
-func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace string, runtime container.Runtime) (res *WorkspaceService, err error) {
+func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace string, runtime container.Runtime, wec WorkspaceExistenceCheck) (res *WorkspaceService, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "NewWorkspaceService")
 	defer tracing.FinishSpan(span, &err)
 
@@ -60,7 +63,7 @@ func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace st
 	}
 
 	// read all session json files
-	store, err := session.NewStore(ctx, cfg.WorkingArea, workspaceLifecycleHooks(cfg, kubernetesNamespace))
+	store, err := session.NewStore(ctx, cfg.WorkingArea, workspaceLifecycleHooks(cfg, kubernetesNamespace, wec))
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create session store: %w", err)
 	}
@@ -753,7 +756,7 @@ func (c *cannotCancelContext) Value(key interface{}) interface{} {
 	return c.Delegate.Value(key)
 }
 
-func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string) map[session.WorkspaceState][]session.WorkspaceLivecycleHook {
+func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceExistenceCheck WorkspaceExistenceCheck) map[session.WorkspaceState][]session.WorkspaceLivecycleHook {
 	var setupWorkspace session.WorkspaceLivecycleHook = func(ctx context.Context, ws *session.Workspace) error {
 		if _, ok := ws.NonPersistentAttrs[session.AttrRemoteStorage]; !ok {
 			remoteStorage, err := storage.NewDirectAccess(&cfg.Storage)
@@ -810,7 +813,7 @@ func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string) map[session
 
 	return map[session.WorkspaceState][]session.WorkspaceLivecycleHook{
 		session.WorkspaceInitializing: {setupWorkspace},
-		session.WorkspaceReady:        {setupWorkspace, startLiveBackup, serveWorkspace(kubernetesNamespace)},
+		session.WorkspaceReady:        {setupWorkspace, startLiveBackup, serveWorkspace(kubernetesNamespace, workspaceExistenceCheck)},
 		session.WorkspaceDisposing:    {stopServingWorkspace},
 	}
 }
