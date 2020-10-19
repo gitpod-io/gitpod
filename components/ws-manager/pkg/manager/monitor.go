@@ -23,7 +23,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
-	wssync "github.com/gitpod-io/gitpod/ws-daemon/api"
+	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/internal/util"
 
@@ -597,7 +597,7 @@ func (m *Monitor) actOnHeadlessDone(pod *corev1.Pod, failed bool) (err error) {
 			tracing.LogError(span, err)
 			return handleFailure(fmt.Sprintf("cannot take snapshot: %v", err))
 		}
-		res, err := snc.TakeSnapshot(ctx, &wssync.TakeSnapshotRequest{Id: id})
+		res, err := snc.TakeSnapshot(ctx, &wsdaemon.TakeSnapshotRequest{Id: id})
 		if err != nil {
 			tracing.LogError(span, err)
 			return handleFailure(fmt.Sprintf("cannot take snapshot: %v", err))
@@ -913,9 +913,9 @@ func (m *Monitor) waitForWorkspaceReady(ctx context.Context, pod *corev1.Pod) (e
 
 	// Note: we don't have to use the same cancelable context that we used for the original Init call.
 	//       If the init call gets canceled, WaitForInit will return as well. We're synchronizing through
-	//		 wssync here.
+	//		 wsdaemon here.
 	err = retryIfUnavailable(ctx, func(ctx context.Context) error {
-		_, err = snc.WaitForInit(ctx, &wssync.WaitForInitRequest{Id: workspaceID})
+		_, err = snc.WaitForInit(ctx, &wsdaemon.WaitForInitRequest{Id: workspaceID})
 		return err
 	})
 	if st, ok := grpc_status.FromError(err); ok && st.Code() == codes.NotFound {
@@ -924,8 +924,8 @@ func (m *Monitor) waitForWorkspaceReady(ctx context.Context, pod *corev1.Pod) (e
 		// this workspace yet. In that case we'll run another desperate attempt to initialize the workspace.
 		m.initializerMapLock.Lock()
 		if _, alreadyInitializing := m.initializerMap[pod.Name]; alreadyInitializing {
-			// we're already initializing but wssync does not know about this workspace. That's very bad.
-			log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Error("we were already initializing but wssync does not know about this workspace (bug in ws-daemon?). Trying again!")
+			// we're already initializing but wsdaemon does not know about this workspace. That's very bad.
+			log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Error("we were already initializing but wsdaemon does not know about this workspace (bug in ws-daemon?). Trying again!")
 			delete(m.initializerMap, pod.Name)
 		}
 		m.initializerMapLock.Unlock()
@@ -1036,7 +1036,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 
 	var (
 		initializer     csapi.WorkspaceInitializer
-		snc             wssync.WorkspaceContentServiceClient
+		snc             wsdaemon.WorkspaceContentServiceClient
 		contentManifest []byte
 	)
 	// The function below deliniates the initializer lock. It's just there so that we can
@@ -1097,9 +1097,9 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 	}
 
 	err = retryIfUnavailable(ctx, func(ctx context.Context) error {
-		_, err = snc.InitWorkspace(ctx, &wssync.InitWorkspaceRequest{
+		_, err = snc.InitWorkspace(ctx, &wsdaemon.InitWorkspaceRequest{
 			Id: workspaceID,
-			Metadata: &wssync.WorkspaceMetadata{
+			Metadata: &wsdaemon.WorkspaceMetadata{
 				Owner:  workspaceMeta.Owner,
 				MetaId: workspaceMeta.MetaId,
 			},
@@ -1214,7 +1214,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 
 		// DiposeWorkspace will "degenerate" to a simple wait if the finalization/disposal process is already running.
 		// This is unlike the initialization process where we wait for things to finish in a later phase.
-		resp, err := snc.DisposeWorkspace(ctx, &wssync.DisposeWorkspaceRequest{
+		resp, err := snc.DisposeWorkspace(ctx, &wsdaemon.DisposeWorkspaceRequest{
 			Id:     workspaceID,
 			Backup: doBackup,
 		})

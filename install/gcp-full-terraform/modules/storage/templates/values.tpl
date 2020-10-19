@@ -1,5 +1,5 @@
 components:
-  wsSync:
+  wsDaemon:
     volumes:
     - name: gcloud-creds
       secret:

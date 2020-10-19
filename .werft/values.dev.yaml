@@ -116,7 +116,7 @@ components:
       path: gcp-sa-registry-auth
     registryCerts: []
 
-  wsSync:
+  wsDaemon:
     hostWorkspaceArea: /mnt/disks/ssd0/workspaces
     volumes:
     - name: gcloud-tmp

@@ -49,7 +49,7 @@
         "heartbeatInterval",
         "hostURL",
         "reconnectionInterval",
-        "wssync",
+        "wsdaemon",
         "theiaSupervisorToken"
       ],
       "properties": {
@@ -101,7 +101,7 @@
         "workspaceHostPath": {
           "type": "string"
         },
-        "wssync": {
+        "wsdaemon": {
           "$schema": "http://json-schema.org/draft-04/schema#",
           "$ref": "#/definitions/WorkspaceSyncConfiguration"
         }

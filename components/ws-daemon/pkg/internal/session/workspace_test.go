@@ -32,7 +32,7 @@ func (*emptySP) NewStorage() (storage.DirectAccess, error) {
 }
 
 func getTestStore() (*Store, error) {
-	loc, err := ioutil.TempDir("", "wssync-test")
+	loc, err := ioutil.TempDir("", "wsdaemon-test")
 	if err != nil {
 		return nil, err
 	}

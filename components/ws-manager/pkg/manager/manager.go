@@ -101,9 +101,9 @@ const (
 	stopWorkspaceNormallyGracePeriod = 30 * time.Second
 	// stopWorkspaceImmediatelyGracePeriod is the grace period we use when stopping a pod as soon as possbile
 	stopWorkspaceImmediatelyGracePeriod = 1 * time.Second
-	// wssyncDialTimeout is the time we allow for trying to connect to ws-daemon.
-	// Note: this is NOT the time we allow for RPC calls to wssync, but just for establishing the connection.
-	wssyncDialTimeout = 10 * time.Second
+	// wsdaemonDialTimeout is the time we allow for trying to connect to ws-daemon.
+	// Note: this is NOT the time we allow for RPC calls to wsdaemon, but just for establishing the connection.
+	wsdaemonDialTimeout = 10 * time.Second
 )
 
 // New creates a new workspace manager
@@ -113,14 +113,14 @@ func New(config Configuration, clientset kubernetes.Interface, cp *layer.Provide
 		return nil, xerrors.Errorf("error initializing IngressPortAllocator: %w", err)
 	}
 
-	wssyncConnfactory, _ := newWssyncConnectionFactory(config)
+	wsdaemonConnfactory, _ := newWssyncConnectionFactory(config)
 	m := &Manager{
 		Config:               config,
 		Clientset:            clientset,
 		Content:              cp,
 		activity:             make(map[string]time.Time),
 		subscribers:          make(map[string]chan *api.SubscribeResponse),
-		wsdaemonPool:         grpcpool.New(wssyncConnfactory),
+		wsdaemonPool:         grpcpool.New(wsdaemonConnfactory),
 		ingressPortAllocator: ingressPortAllocator,
 	}
 	m.metrics = newMetrics(m)
@@ -1121,7 +1121,7 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 	return wsdaemon.NewWorkspaceContentServiceClient(conn), nil
 }
 
-// newWssyncConnectionFactory creates a new wssync connection factory based on the wsmanager configuration
+// newWssyncConnectionFactory creates a new wsdaemon connection factory based on the wsmanager configuration
 func newWssyncConnectionFactory(managerConfig Configuration) (grpcpool.Factory, error) {
 	// We use client-side retry when ws-daemon is unavilable. The unavailability need just cover the time ws-daemon
 	// needs to restart. If ws-daemon is unavailable during a connection attempt, the WithBlock and WithBackoffMaxDelay
@@ -1194,7 +1194,7 @@ func newWssyncConnectionFactory(managerConfig Configuration) (grpcpool.Factory, 
 	return func(host string) (*grpc.ClientConn, error) {
 		var (
 			addr           = fmt.Sprintf("%s:%d", host, port)
-			conctx, cancel = context.WithTimeout(context.Background(), wssyncDialTimeout)
+			conctx, cancel = context.WithTimeout(context.Background(), wsdaemonDialTimeout)
 		)
 		// Canceling conctx becomes a no-op once the connection is established.
 		// Because we use WithBlock in the opts DialContext will only return once the connection is established.
