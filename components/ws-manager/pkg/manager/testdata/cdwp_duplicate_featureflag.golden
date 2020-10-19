@@ -53,6 +53,13 @@
                         "path": "/dev/net/tun",
                         "type": "File"
                     }
+                },
+                {
+                    "name": "mark-mount",
+                    "hostPath": {
+                        "path": "/tmp/workspaces/test-mark",
+                        "type": "DirectoryOrCreate"
+                    }
                 }
             ],
             "containers": [
@@ -155,6 +162,11 @@
                         {
                             "name": "dev-net-tun",
                             "mountPath": "/dev/net/tun"
+                        },
+                        {
+                            "name": "mark-mount",
+                            "mountPath": "/.mark",
+                            "mountPropagation": "HostToContainer"
                         }
                     ],
                     "readinessProbe": {

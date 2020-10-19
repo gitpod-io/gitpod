@@ -41,6 +41,9 @@ message InitWorkspaceRequest {
     // This manifest is not used to actually download content, but to produce a new manifest for snapshots and backups.
     // This field is ignored if full_workspace_backup is false.
     bytes content_manifest = 5;
+
+    // shiftfs_mark_mount makes ws-sync create a mark mount of the container's rootfs in the container's mark mount location.
+    bool shiftfs_mark_mount = 6;
 }
 
 // WorkspaceMetadata is data associated with a workspace that's required for other parts of the system to function

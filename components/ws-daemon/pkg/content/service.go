@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"math"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"syscall"
 	"time"
@@ -137,8 +138,9 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 	log.Info("InitWorkspace called")
 
 	var (
-		wsloc    string
-		upperdir string
+		wsloc         string
+		upperdir      string
+		wscontainerID container.ID
 	)
 	if req.FullWorkspaceBackup {
 		if s.runtime == nil {
@@ -161,16 +163,12 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		if err != nil {
 			return nil, status.Errorf(codes.Internal, "cannot find workspace upperdir: %s", err.Error())
 		}
-		log.WithField("cid", wscont).WithField("upperdir", upperdir).Debug("workspace container found")
+		log.WithField("cid", wscontainerID).WithField("upperdir", upperdir).Debug("workspace container found")
 
 		// This this point the workspace content is present and initialized because it was part of the container image.
 		// There is no need to wait for the ready file here.
 	} else {
 		wsloc = filepath.Join(s.store.Location, req.Id)
-
-		// This task/call cannot be canceled. Once it's started it's brought to a conclusion, independent of the caller disconnecting
-		// or not. To achieve this we need to wrap the context in something that alters the cancelation behaviour.
-		ctx = &cannotCancelContext{Delegate: ctx}
 	}
 
 	workspace, err := s.store.NewWorkspace(ctx, req.Id, wsloc, s.creator(req, upperdir))
@@ -187,7 +185,40 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		return nil, status.Error(codes.Internal, "workspace has no remote storage")
 	}
 
+	if req.ShiftfsMarkMount {
+		// we're asked to create the shiftfs mark mount, for which we need to find the container's
+		// rootfs directory. If the workspace is an FWB workspace, we'll have waited for the container
+		// already, otherwise we'll need to do that here
+		if !req.FullWorkspaceBackup {
+			if s.runtime == nil {
+				return nil, status.Errorf(codes.FailedPrecondition, "not connected to container runtime")
+			}
+			wscontainerID, err = s.runtime.WaitForContainer(ctx, req.Id)
+			if err != nil {
+				return nil, status.Errorf(codes.Internal, "cannot find workspace container: %s", err.Error())
+			}
+		}
+
+		rootfs, err := s.runtime.ContainerRootfs(ctx, wscontainerID)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "cannot find workspace rootfs: %s", err.Error())
+		}
+
+		markDst := filepath.Join(s.config.WorkingAreaNode, req.Id+"-mark")
+		// We cannot use the nsenter syscall here because mount namespaces affect the whole process, not just the current thread.
+		// That's why we resort to exec'ing "nsenter ... mount ...".
+		mntout, err := exec.Command("nsenter", "-t", "1", "-m", "--", "mount", "-t", "shiftfs", "-o", "mark", rootfs, markDst).CombinedOutput()
+		if err != nil {
+			log.WithField("rootfs", rootfs).WithField("markDst", markDst).WithField("mntout", string(mntout)).WithError(err).Error("cannot mount shiftfs mark")
+			return nil, status.Errorf(codes.Internal, "cannot create shiftfs mark: %s", err.Error())
+		}
+	}
+
 	if !req.FullWorkspaceBackup {
+		// This task/call cannot be canceled. Once it's started it's brought to a conclusion, independent of the caller disconnecting
+		// or not. To achieve this we need to wrap the context in something that alters the cancelation behaviour.
+		ctx = &cannotCancelContext{Delegate: ctx}
+
 		// Initialize workspace.
 		// FWB workspaces initialize without the help of ws-daemon, but using their supervisor or the registry-facade.
 		initializer, err := wsinit.NewFromRequest(ctx, workspace.Location, rs, req.Initializer)

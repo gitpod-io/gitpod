@@ -1024,6 +1024,8 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 
 	_, fullWorkspaceBackup := pod.Labels[fullWorkspaceBackupAnnotation]
 	span.SetTag("fullWorkspaceBackup", fullWorkspaceBackup)
+	_, withUsernamespace := pod.Annotations[withUsernamespaceAnnotation]
+	span.SetTag("withUsernamespace", withUsernamespace)
 
 	workspaceID, ok := pod.Annotations[workspaceIDAnnotation]
 	if !ok {
@@ -1106,6 +1108,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 			Initializer:         &initializer,
 			FullWorkspaceBackup: fullWorkspaceBackup,
 			ContentManifest:     contentManifest,
+			ShiftfsMarkMount:    withUsernamespace,
 		})
 		return err
 	})

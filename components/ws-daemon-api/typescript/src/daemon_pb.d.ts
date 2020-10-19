@@ -1,9 +1,3 @@
-/**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
- * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
- */
-
 // package: wsdaemon
 // file: daemon.proto
 
@@ -32,6 +26,9 @@ export class InitWorkspaceRequest extends jspb.Message {
   getContentManifest_asB64(): string;
   setContentManifest(value: Uint8Array | string): void;
 
+  getShiftfsMarkMount(): boolean;
+  setShiftfsMarkMount(value: boolean): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): InitWorkspaceRequest.AsObject;
   static toObject(includeInstance: boolean, msg: InitWorkspaceRequest): InitWorkspaceRequest.AsObject;
@@ -49,6 +46,7 @@ export namespace InitWorkspaceRequest {
     initializer?: content_service_api_initializer_pb.WorkspaceInitializer.AsObject,
     fullWorkspaceBackup: boolean,
     contentManifest: Uint8Array | string,
+    shiftfsMarkMount: boolean,
   }
 }
 
