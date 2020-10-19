@@ -18,6 +18,10 @@ metadata:
     {{- range $k, $v := $comp.svcLabels }}
     {{ $k }}: {{ $v }}
     {{- end }}
+{{- if $comp.serviceAnnotations }}
+  annotations:
+{{ toYaml $comp.serviceAnnotations | indent 4 }}
+{{- end }}
 spec:
   ports:
   {{- range $key, $val := $comp.ports }}
