@@ -429,19 +429,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			removeVolume(&pod, workspaceVolumeName)
 			pod.Labels[fullWorkspaceBackupAnnotation] = "true"
 			pod.Annotations[fullWorkspaceBackupAnnotation] = "true"
-			for i, c := range pod.Spec.Containers {
-				if c.Name != "workspace" {
-					continue
-				}
-
-				pod.Spec.Containers[i].Lifecycle = &corev1.Lifecycle{
-					PreStop: &corev1.Handler{
-						Exec: &corev1.ExecAction{
-							Command: []string{"/.supervisor/supervisor", "container", "backup"},
-						},
-					},
-				}
-			}
 			fallthrough
 		case api.WorkspaceFeatureFlag_REGISTRY_FACADE:
 			removeVolume(&pod, theiaVolumeName)

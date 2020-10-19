@@ -108,7 +108,7 @@ func serveWorkspace(namespace string) func(ctx context.Context, ws *session.Work
 					success = false
 					log.WithFields(ws.OWI()).WithError(err).Error("live backup failure")
 				} else {
-					log.WithFields(ws.OWI()).WithError(err).Info("live backup succeeded")
+					log.WithFields(ws.OWI()).Info("live backup succeeded")
 				}
 
 				gitStatus, err := cl.GitStatus(serviceCtx, &api.GitStatusRequest{})

@@ -135,7 +135,6 @@ func Run(options ...RunOption) {
 		},
 		termMuxSrv,
 		RegistrableTokenService{tokenService},
-		RegisterableBackupService{iwh.BackupService()},
 		&InfoService{cfg: cfg},
 		&ControlService{UidmapCanary: iwh.IDMapperService()},
 	}
@@ -165,6 +164,12 @@ func Run(options ...RunOption) {
 	select {
 	case <-sigChan:
 	case <-shutdown:
+	}
+
+	log.Info("received SIGTERM - tearing down")
+	err = teardown(iwh.TeardownService())
+	if err != nil {
+		log.WithError(err).Error("ungraceful shutdown - teardown was unsuccessful")
 	}
 
 	cancel()
@@ -536,4 +541,11 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 
 	log.WithField("source", src).Info("supervisor: workspace content init finished")
 	cst.MarkContentReady(src)
+}
+
+// teardown gets called when the workspace is shut down.
+// This function must perform all actions that need to run before the container is stopped.
+// Beware: we only have terminationGracePeriod seconds time to do that.
+func teardown(teardownCanary iwh.TeardownService) error {
+	return teardownCanary.Teardown(context.Background())
 }
