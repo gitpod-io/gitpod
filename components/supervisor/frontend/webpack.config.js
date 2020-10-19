@@ -11,7 +11,8 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
     entry: {
-        main: path.resolve(__dirname, 'lib/index.js')
+        main: path.resolve(__dirname, 'lib/main/main.js'),
+        'service-worker': path.resolve(__dirname, 'lib/service-worker/service-worker.js')
     },
     output: {
         filename: '[name].js',
@@ -48,7 +49,7 @@ module.exports = {
                         cacheDirectory: true
                     }
                 }
-            }
+            },
         ]
     },
     node: {

@@ -1,0 +1,10 @@
+{
+    "extends": "../base.tsconfig",
+    "compilerOptions": {
+        "lib": [
+            "es6",
+            "webworker"
+        ],
+        "composite": true
+    }
+}

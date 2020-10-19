@@ -4,7 +4,11 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-require('../src/shared/index.css');
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('service-worker.js');
+}
+
+require('../../src/main/shared/index.css');
 require("reflect-metadata");
 
 import { createGitpodService } from "@gitpod/gitpod-protocol";

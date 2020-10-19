@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "outDir": "../lib",
+        "rootDir": ".",
+        "module": "commonjs",
+        "target": "es5",
+        "strict": true,
+        "skipLibCheck": true,
+        "sourceMap": true,
+        "downlevelIteration": true
+    }
+}

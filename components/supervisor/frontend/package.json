@@ -23,8 +23,8 @@
     "webpack-cli": "^3.1.1"
   },
   "scripts": {
-    "build": "tsc && webpack --mode=production",
-    "watch": "concurrently \"tsc --watch --preserveWatchOutput\" \"webpack --mode=development\"",
+    "build": "tsc --build src/main && webpack --mode=production",
+    "watch": "concurrently \"tsc --build --watch --preserveWatchOutput src/main\" \"webpack --mode=development\"",
     "clean": "rm -rf lib && rm -rf dist"
   }
 }
