@@ -77,11 +77,11 @@ type InitWorkspaceRequest struct {
 	Initializer *api.WorkspaceInitializer `protobuf:"bytes,3,opt,name=initializer,proto3" json:"initializer,omitempty"`
 	// full_workspace_backup means we ignore the initializer and wait for a workspace pod with the given instance ID to
 	// appear at our local containerd.
-	FullWorkspaceBackup bool `protobuf:"varint,4,opt,name=full_workspace_backup,json=fullWorkspaceBackup,proto3" json:"full_workspace_backup,omitempty"`
+	FullWorkspaceBackup bool `protobuf:"varint,4,opt,name=full_workspace_backup,json=fullWorkspaceBackup,proto3" json:"fullWorkspaceBackup,omitempty"`
 	// content_manifest describes the layers that comprise the workspace image content.
 	// This manifest is not used to actually download content, but to produce a new manifest for snapshots and backups.
 	// This field is ignored if full_workspace_backup is false.
-	ContentManifest      []byte   `protobuf:"bytes,5,opt,name=content_manifest,json=contentManifest,proto3" json:"content_manifest,omitempty"`
+	ContentManifest      []byte   `protobuf:"bytes,5,opt,name=content_manifest,json=contentManifest,proto3" json:"contentManifest,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -152,7 +152,7 @@ type WorkspaceMetadata struct {
 	// owner is the ID of the Gitpod user to whom we'll bill this workspace and who we consider responsible for its content
 	Owner string `protobuf:"bytes,1,opt,name=owner,proto3" json:"owner,omitempty"`
 	// meta_id is the workspace ID of this currently running workspace instance on the "meta pool" side
-	MetaId               string   `protobuf:"bytes,2,opt,name=meta_id,json=metaId,proto3" json:"meta_id,omitempty"`
+	MetaId               string   `protobuf:"bytes,2,opt,name=meta_id,json=metaId,proto3" json:"metaId,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -433,7 +433,7 @@ func (m *DisposeWorkspaceRequest) GetBackup() bool {
 type DisposeWorkspaceResponse struct {
 	// git_status is the current state of the Git repo in this workspace prior to disposal.
 	// If the workspace has no Git repo at its checkout location, this is nil.
-	GitStatus            *api.GitStatus `protobuf:"bytes,1,opt,name=git_status,json=gitStatus,proto3" json:"git_status,omitempty"`
+	GitStatus            *api.GitStatus `protobuf:"bytes,1,opt,name=git_status,json=gitStatus,proto3" json:"gitStatus,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
 	XXX_unrecognized     []byte         `json:"-"`
 	XXX_sizecache        int32          `json:"-"`
@@ -553,7 +553,7 @@ type WorkspaceContentServiceClient interface {
 }
 
 type workspaceContentServiceClient struct {
-	cc grpc.ClientConnInterface
+	cc grpc.ClientConnInterface `json:"cc,omitempty"`
 }
 
 func NewWorkspaceContentServiceClient(cc grpc.ClientConnInterface) WorkspaceContentServiceClient {

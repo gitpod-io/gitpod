@@ -7,7 +7,7 @@ components:
     volumeMounts:
     - mountPath: /credentials
       name: gcloud-creds
-  wsSync:
+  wsDaemon:
     volumes:
     - name: gcloud-creds
       secret:

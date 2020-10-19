@@ -1,7 +1,7 @@
 {
     "$schema": "./config-schema.json",
     "content": {
-        "workingArea": "/tmp/wssync",
+        "workingArea": "/tmp/wsdaemon",
         "backupPeriod": "30m",
         "workspaceSizeLimit": "20g",
         "storage": {

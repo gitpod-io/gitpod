@@ -64,7 +64,7 @@ module "gitpod" {
     
     components:
       # Necessary to make minio send the right header to S3 (region headers must match)
-      wsSync:
+      wsDaemon:
         remoteStorage:
           minio:
             region: ${var.region}

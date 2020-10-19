@@ -6,19 +6,19 @@ mv github.com/gitpod-io/gitpod/ws-daemon/api/* go && rm -rf github.com
 
 GO111MODULE=on go get github.com/golang/mock/mockgen@latest
 cd go
-mockgen -package mock -source=wssync.pb.go > mock/mock_wssync.go
+mockgen -package mock -source=daemon.pb.go > mock/mock_wsdaemon.go
 
 
 echo "updating JSON tags"
 go get github.com/fatih/gomodifytags
 # remove depreated json tags
-gomodifytags -line 0,$(cat wssync.pb.go|wc -l) -file wssync.pb.go -remove-tags json -w >/dev/null
+gomodifytags -line 0,$(cat daemon.pb.go|wc -l) -file daemon.pb.go -remove-tags json -w >/dev/null
 # add new JSON tags
-gomodifytags -line 0,$(cat wssync.pb.go|wc -l) -file wssync.pb.go -add-tags json -transform camelcase -add-options json=omitempty -w >/dev/null
+gomodifytags -line 0,$(cat daemon.pb.go|wc -l) -file daemon.pb.go -add-tags json -transform camelcase -add-options json=omitempty -w >/dev/null
 # remove JSON tags for XXX_
-for line in $(grep -n xxx wssync.pb.go | cut -f1 -d: | paste -sd " " -); do
-    gomodifytags -line $line -file wssync.pb.go -remove-tags json -w >/dev/null
-    gomodifytags -line $line -file wssync.pb.go -add-tags json:"-" -w >/dev/null
+for line in $(grep -n xxx daemon.pb.go | cut -f1 -d: | paste -sd " " -); do
+    gomodifytags -line $line -file daemon.pb.go -remove-tags json -w >/dev/null
+    gomodifytags -line $line -file daemon.pb.go -add-tags json:"-" -w >/dev/null
 done
 cd ..
 

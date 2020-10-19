@@ -8,7 +8,7 @@ authProviders: null
 components:
   wsManagerNode:
     containerdSocket: /run/k3s/containerd/containerd.sock
-  wsSync:
+  wsDaemon:
     fullWorkspaceBackup:
       containerd:
           socket: /run/k3s/containerd/containerd.sock
