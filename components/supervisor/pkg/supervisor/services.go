@@ -114,7 +114,7 @@ func (s *statusService) ContentStatus(ctx context.Context, req *api.ContentStatu
 
 func (s *statusService) BackupStatus(ctx context.Context, req *api.BackupStatusRequest) (*api.BackupStatusResponse, error) {
 	return &api.BackupStatusResponse{
-		CanaryAvailable: s.IWH.BackupService().Available(),
+		CanaryAvailable: s.IWH.TeardownService().Available(),
 	}, nil
 }
 
@@ -585,14 +585,4 @@ func (c *ControlService) Newuidmap(ctx context.Context, req *api.NewuidmapReques
 	}
 
 	return &api.NewuidmapResponse{}, nil
-}
-
-// RegisterableBackupService can register the BackupService
-type RegisterableBackupService struct {
-	iwh.BackupService
-}
-
-// RegisterGRPC registers the gRPC info service
-func (b RegisterableBackupService) RegisterGRPC(srv *grpc.Server) {
-	api.RegisterBackupServiceServer(srv, b)
 }

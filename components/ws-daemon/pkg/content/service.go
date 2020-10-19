@@ -204,12 +204,11 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 			return nil, status.Errorf(codes.Internal, "cannot find workspace rootfs: %s", err.Error())
 		}
 
-		markDst := filepath.Join(s.config.WorkingAreaNode, req.Id+"-mark")
 		// We cannot use the nsenter syscall here because mount namespaces affect the whole process, not just the current thread.
 		// That's why we resort to exec'ing "nsenter ... mount ...".
-		mntout, err := exec.Command("nsenter", "-t", "1", "-m", "--", "mount", "-t", "shiftfs", "-o", "mark", rootfs, markDst).CombinedOutput()
+		mntout, err := exec.Command("nsenter", "-t", "1", "-m", "--", "mount", "-t", "shiftfs", "-o", "mark", rootfs, workspace.ShiftfsMarkMount).CombinedOutput()
 		if err != nil {
-			log.WithField("rootfs", rootfs).WithField("markDst", markDst).WithField("mntout", string(mntout)).WithError(err).Error("cannot mount shiftfs mark")
+			log.WithField("rootfs", rootfs).WithField("markDst", workspace.ShiftfsMarkMount).WithField("mntout", string(mntout)).WithError(err).Error("cannot mount shiftfs mark")
 			return nil, status.Errorf(codes.Internal, "cannot create shiftfs mark: %s", err.Error())
 		}
 	}
@@ -257,6 +256,11 @@ func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest, upperdir strin
 			return nil, err
 		}
 
+		var markMount string
+		if req.ShiftfsMarkMount {
+			markMount = filepath.Join(s.config.WorkingAreaNode, req.Id+"-mark")
+		}
+
 		return &session.Workspace{
 			Location:            location,
 			UpperdirLocation:    upperdir,
@@ -266,6 +270,7 @@ func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest, upperdir strin
 			WorkspaceID:         req.Metadata.MetaId,
 			InstanceID:          req.Id,
 			FullWorkspaceBackup: req.FullWorkspaceBackup,
+			ShiftfsMarkMount:    markMount,
 			ContentManifest:     req.ContentManifest,
 		}, nil
 	}

@@ -129,17 +129,6 @@
                         "successThreshold": 1,
                         "failureThreshold": 600
                     },
-                    "lifecycle": {
-                        "preStop": {
-                            "exec": {
-                                "command": [
-                                    "/.supervisor/supervisor",
-                                    "container",
-                                    "backup"
-                                ]
-                            }
-                        }
-                    },
                     "imagePullPolicy": "Always",
                     "securityContext": {
                         "capabilities": {

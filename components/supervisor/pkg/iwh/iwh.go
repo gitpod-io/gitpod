@@ -11,7 +11,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/git"
-	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	daemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 
 	"google.golang.org/grpc"
@@ -26,7 +25,9 @@ func NewInWorkspaceHelper(checkoutLocation string, pauseTheia chan<- bool) *InWo
 			checkoutLocation: checkoutLocation,
 			contentReadyChan: make(chan struct{}),
 			pauseChan:        pauseTheia,
-			triggerBackup:    make(chan chan<- bool),
+		},
+		teardown: &teardownService{
+			triggerBackup: make(chan chan<- bool),
 		},
 		idmapper: &idmapperService{
 			triggerUIDMap: make(chan *triggerNewuidmapReq),
@@ -36,6 +37,7 @@ func NewInWorkspaceHelper(checkoutLocation string, pauseTheia chan<- bool) *InWo
 
 // InWorkspaceHelper provides services backed by ws-daemon canaries
 type InWorkspaceHelper struct {
+	teardown *teardownService
 	backup   *backupService
 	idmapper *idmapperService
 }
@@ -44,10 +46,12 @@ type InWorkspaceHelper struct {
 func (iwh *InWorkspaceHelper) RegisterGRPC(srv *grpc.Server) {
 	type grpcIWH struct {
 		*teardownIWH
+		*backupIWH
 		*idmapperIWH
 	}
 	daemon.RegisterInWorkspaceHelperServer(srv, grpcIWH{
-		teardownIWH: &teardownIWH{iwh.backup},
+		teardownIWH: &teardownIWH{iwh.teardown},
+		backupIWH:   &backupIWH{iwh.backup},
 		idmapperIWH: &idmapperIWH{iwh.idmapper},
 	})
 }
@@ -57,9 +61,9 @@ func (iwh *InWorkspaceHelper) ContentState() ContentState {
 	return iwh.backup
 }
 
-// BackupService provides access to the canary-backed backup service
-func (iwh *InWorkspaceHelper) BackupService() BackupService {
-	return iwh.backup
+// TeardownService provides access to the canary-backed backup service
+func (iwh *InWorkspaceHelper) TeardownService() TeardownService {
+	return iwh.teardown
 }
 
 // IDMapperService provides access to the canary-backed id mapper service
@@ -74,24 +78,21 @@ type ContentState interface {
 	ContentSource() (src csapi.WorkspaceInitSource, ok bool)
 }
 
-// BackupService is the supervisor-facing, canary backed, backup service
-type BackupService interface {
+// TeardownService is the supervisor-facing, canary backed, backup service
+type TeardownService interface {
 	Available() bool
-	Prepare(ctx context.Context, req *supervisor.PrepareBackupRequest) (*supervisor.PrepareBackupResponse, error)
+	Teardown(ctx context.Context) error
 }
 
 var _ ContentState = &backupService{}
-var _ BackupService = &backupService{}
+var _ TeardownService = &teardownService{}
 
 type backupService struct {
 	checkoutLocation string
 	pauseChan        chan<- bool
-	triggerBackup    chan chan<- bool
 
 	contentReadyChan chan struct{}
 	contentSource    csapi.WorkspaceInitSource
-
-	canaryAvailable int32
 }
 
 // MarkContentReady marks the workspace content as available.
@@ -117,37 +118,42 @@ func (iwh *backupService) ContentSource() (src csapi.WorkspaceInitSource, ok boo
 	return iwh.contentSource, true
 }
 
-// Prepare prepares a workspace content backup, e.g. when the container is about to shut down
-func (iwh *backupService) Prepare(ctx context.Context, req *supervisor.PrepareBackupRequest) (*supervisor.PrepareBackupResponse, error) {
+type teardownService struct {
+	triggerBackup   chan chan<- bool
+	canaryAvailable int32
+}
+
+// Teardown prepares a workspace content backup and unmounts the shiftfs mark
+func (iwh *teardownService) Teardown(ctx context.Context) error {
 	rc := make(chan bool)
 
 	select {
 	case iwh.triggerBackup <- rc:
 	case <-ctx.Done():
-		return nil, status.Error(codes.DeadlineExceeded, ctx.Err().Error())
+		return status.Error(codes.DeadlineExceeded, ctx.Err().Error())
 	default:
-		return nil, status.Error(codes.Unavailable, "no backup canary available")
+		return status.Error(codes.Unavailable, "no teardown canary available")
 	}
 
 	select {
 	case success := <-rc:
 		if !success {
-			return nil, status.Error(codes.Internal, "backup preparation failed")
+			return status.Error(codes.Internal, "teardown failed")
 		}
 	case <-ctx.Done():
-		return nil, status.Error(codes.DeadlineExceeded, ctx.Err().Error())
+		return status.Error(codes.DeadlineExceeded, ctx.Err().Error())
 	}
 
-	return &supervisor.PrepareBackupResponse{}, nil
+	return nil
 }
 
 // CanaryAvailable returns true if there's a backup canary available
-func (iwh *backupService) Available() bool {
+func (iwh *teardownService) Available() bool {
 	return atomic.LoadInt32(&iwh.canaryAvailable) > 0
 }
 
 type teardownIWH struct {
-	*backupService
+	*teardownService
 }
 
 // BackupCanary can prepare workspace content backups. The canary is supposed to be triggered
@@ -176,10 +182,14 @@ func (iwh *teardownIWH) TeardownCanary(srv daemon.InWorkspaceHelper_TeardownCana
 	return nil
 }
 
+type backupIWH struct {
+	*backupService
+}
+
 // PauseTheia can pause the Theia process and all its children. As long as the request stream
 // is held Theia will be paused.
 // This is a stop-the-world mechanism for preventing concurrent modification during backup.
-func (iwh *teardownIWH) PauseTheia(srv daemon.InWorkspaceHelper_PauseTheiaServer) error {
+func (iwh *backupIWH) PauseTheia(srv daemon.InWorkspaceHelper_PauseTheiaServer) error {
 	iwh.pauseChan <- true
 	defer func() {
 		iwh.pauseChan <- false
@@ -204,7 +214,7 @@ const (
 )
 
 // GitStatus provides the current state of the main Git repo at the workspace's checkout location
-func (iwh *teardownIWH) GitStatus(ctx context.Context, req *daemon.GitStatusRequest) (*daemon.GitStatusResponse, error) {
+func (iwh *backupIWH) GitStatus(ctx context.Context, req *daemon.GitStatusRequest) (*daemon.GitStatusResponse, error) {
 	//
 	// BEWARE
 	// This functionality is duplicated in ws-daemon.
