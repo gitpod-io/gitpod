@@ -64,18 +64,13 @@ func (p *PrebuildInitializer) Run(ctx context.Context) (src csapi.WorkspaceInitS
 		)
 		_, err = p.Prebuild.Run(ctx)
 		if err != nil {
-			log.WithError(err).Warnf("prebuilt init did was unable to restore snapshot %s. Resorting the regular Git init", snapshot)
+			log.WithError(err).Warnf("prebuilt init was unable to restore snapshot %s. Resorting the regular Git init", snapshot)
 
 			if err := clearWorkspace(location); err != nil {
 				return csapi.WorkspaceInitFromOther, xerrors.Errorf("prebuild initializer: %w", err)
 			}
 
 			return p.Git.Run(ctx)
-		}
-
-		err = recursiveChown(ctx, location)
-		if err != nil {
-			return src, err
 		}
 	}
 

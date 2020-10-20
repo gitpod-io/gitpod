@@ -375,6 +375,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			pod.Spec.ServiceAccountName = "workspace-privileged"
 		case api.WorkspaceFeatureFlag_USER_NAMESPACE:
 			// Beware: this allows setuid binaries in the workspace - supervisor needs to set no_new_privs now.
+			// However: the whole user workload now runs in a user namespace, which makes this acceptable.
 			workspaceContainer.SecurityContext.AllowPrivilegeEscalation = &boolTrue
 			// TODO(cw): post Kubernetes 1.19 use GA form for settings those profiles
 			pod.Annotations["container.apparmor.security.beta.kubernetes.io/workspace"] = "unconfined"

@@ -130,8 +130,6 @@ github.com/dgrijalva/jwt-go v0.0.0-20160705203006-01aeca54ebda/go.mod h1:E3ru+11
 github.com/dgrijalva/jwt-go v0.0.0-20170104182250-a601269ab70c/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dnaeon/go-vcr v1.0.1/go.mod h1:aBB1+wY4s93YsC3HHjMBMrwTj2R9FHDzUr9KyGc8n1E=
 github.com/docker/distribution v0.0.0-20190905152932-14b96e55d84c/go.mod h1:0+TTO4EOBfRPhZXAeF1Vu+W3hHZ8eLp8PgKVZlcvtFY=
-github.com/docker/engine v0.0.0-20190822205725-ed20165a37b4 h1:hB02X3RT4IZUr/dm+zIXpAlpvQPtRyKBEA/CbzshNZ8=
-github.com/docker/engine v0.0.0-20190822205725-ed20165a37b4/go.mod h1:3CPr2caMgTHxxIAZgEMd3uLYPDlRvPqCpyeRf6ncPcY=
 github.com/docker/engine v17.12.0-ce-rc1.0.20200514230353-811a247d06e8+incompatible h1:bfMxnwcVz7E94VNnHW0Z/KhQR1dj8Awk0nZD4YWB7Ok=
 github.com/docker/engine v17.12.0-ce-rc1.0.20200514230353-811a247d06e8+incompatible/go.mod h1:3CPr2caMgTHxxIAZgEMd3uLYPDlRvPqCpyeRf6ncPcY=
 github.com/docker/go-events v0.0.0-20190806004212-e31b211e4f1c h1:+pKlWGMw7gf6bQ+oDZB4KHQFypsfjYlq/C4rfL7D3g8=

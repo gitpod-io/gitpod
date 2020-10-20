@@ -200,14 +200,29 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 			log.WithError(err).WithField("instanceId", req.Id).Error("cannot initialize workspace")
 			return nil, err
 		}
-		initSource, err := wsinit.InitializeWorkspace(ctx, workspace.Location, rs, wsinit.WithInitializer(initializer), wsinit.WithCleanSlate)
+
+		var (
+			uid = wsinit.GitpodUID
+			gid = wsinit.GitpodGID
+		)
+		if req.ShiftfsMarkMount {
+			// This is a bit of a hack as it makes hard assumptions about the nature of the UID mapping.
+			// With FWB this becomes unneccesary.
+			uid = wsinit.GitpodUID + 100000 - 1
+			gid = wsinit.GitpodGID + 100000 - 1
+		}
+		initSource, err := wsinit.InitializeWorkspace(ctx, workspace.Location, rs,
+			wsinit.WithInitializer(initializer),
+			wsinit.WithCleanSlate,
+			wsinit.WithChown(uid, gid),
+		)
 		if err != nil {
 			log.WithError(err).WithField("workspaceId", req.Id).Error("cannot initialize workspace")
 			return nil, status.Error(codes.Internal, fmt.Sprintf("cannot initialize workspace: %s", err.Error()))
 		}
 
 		// Place the ready file to make Theia "open its gates"
-		err = wsinit.PlaceWorkspaceReadyFile(ctx, workspace.Location, initSource)
+		err = wsinit.PlaceWorkspaceReadyFile(ctx, workspace.Location, initSource, uid, gid)
 		if err != nil {
 			tracing.LogError(span, err)
 			log.WithField("workspaceId", req.Id).WithError(err).Warn("did not place auth token - workspace will have no access to our service")
@@ -452,7 +467,19 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 			}
 		}()
 
-		err = archive.BuildTarbal(ctx, loc, tmpf.Name())
+		var opts []archive.BuildTarbalOption
+		if sess.ShiftfsMarkMount && !sess.FullWorkspaceBackup {
+			mappings := []archive.IDMapping{
+				{ContainerID: 0, HostID: wsinit.GitpodUID, Size: 1},
+				{ContainerID: 1, HostID: 100000, Size: 65534},
+			}
+			opts = append(opts,
+				archive.WithUIDMapping(mappings),
+				archive.WithGIDMapping(mappings),
+			)
+		}
+
+		err = archive.BuildTarbal(ctx, loc, tmpf.Name(), opts...)
 		if err != nil {
 			return
 		}

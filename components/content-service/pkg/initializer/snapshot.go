@@ -37,10 +37,5 @@ func (s *SnapshotInitializer) Run(ctx context.Context) (src csapi.WorkspaceInitS
 		return src, xerrors.Errorf("did not find snapshot %s", s.Snapshot)
 	}
 
-	err = recursiveChown(ctx, s.Location)
-	if err != nil {
-		return src, err
-	}
-
 	return
 }
