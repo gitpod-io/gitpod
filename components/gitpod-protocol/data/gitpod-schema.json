@@ -51,6 +51,7 @@
                             "private",
                             "public"
                         ],
+                        "default": "public",
                         "description": "Whether the port visibility should be private or public. 'public' (default) will allow everyone with the port URL to access the port. 'private' will only allow users with workspace access to access the port."
                     },
                     "name": {
