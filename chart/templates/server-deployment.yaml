@@ -200,8 +200,8 @@ spec:
           value: {{ .Values.components.wsDaemon.remoteStorage.gcloud.projectId }}
         - name: GCLOUD_REGION
           value: {{ .Values.components.wsDaemon.remoteStorage.gcloud.region }}
-        - name: GCLOUD_CREDENTIALS_FILE
 {{- if .Values.components.wsDaemon.remoteStorage.gcloud.credentialsFile }}
+        - name: GCLOUD_CREDENTIALS_FILE
           value: {{ base .Values.components.wsDaemon.remoteStorage.gcloud.credentialsFile }}
 {{- end }}
 {{- end }}
