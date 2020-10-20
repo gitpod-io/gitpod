@@ -55,9 +55,9 @@
                     }
                 },
                 {
-                    "name": "mark-mount",
+                    "name": "daemon-mount",
                     "hostPath": {
-                        "path": "/tmp/workspaces/test-mark",
+                        "path": "/tmp/workspaces/test-daemon",
                         "type": "DirectoryOrCreate"
                     }
                 }
@@ -164,8 +164,8 @@
                             "mountPath": "/dev/net/tun"
                         },
                         {
-                            "name": "mark-mount",
-                            "mountPath": "/.mark",
+                            "name": "daemon-mount",
+                            "mountPath": "/.workspace",
                             "mountPropagation": "HostToContainer"
                         }
                     ],

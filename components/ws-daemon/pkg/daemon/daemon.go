@@ -15,8 +15,8 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/diskguard"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/hosts"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iwh"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/resources"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/uidmap"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -49,14 +49,20 @@ func NewDaemon(config Config, prom prometheus.Registerer) (*Daemon, error) {
 		return nil, xerrors.Errorf("NODENAME env var isn't set")
 	}
 	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename,
-		&uidmap.Uidmapper{Config: config.Uidmapper},
 		resources.NewDispatchListener(&config.Resources, prom),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	contentService, err := content.NewWorkspaceService(context.Background(), config.Content, config.Runtime.KubernetesNamespace, containerRuntime, dsptch.WorkspaceExistsOnNode)
+	contentService, err := content.NewWorkspaceService(
+		context.Background(),
+		config.Content,
+		config.Runtime.KubernetesNamespace,
+		containerRuntime,
+		dsptch.WorkspaceExistsOnNode,
+		&iwh.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
+	)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create content service: %w", err)
 	}

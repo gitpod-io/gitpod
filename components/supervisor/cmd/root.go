@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/spf13/cobra"
 )
 
@@ -18,9 +19,18 @@ var rootCmd = &cobra.Command{
 	Short: "Workspace container init process",
 }
 
+var (
+	// ServiceName is the name we use for tracing/logging
+	ServiceName = "supervisor"
+	// Version of this service - set during build
+	Version = ""
+)
+
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
+	log.Init(ServiceName, Version, true, true)
+
 	var c *cobra.Command
 	if strings.Contains(os.Args[0], "newuidmap") {
 		c = newuidmapCmd

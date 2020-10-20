@@ -13,8 +13,6 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/supervisor/api"
-	"github.com/gitpod-io/gitpod/supervisor/pkg/iwh"
-	daemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -39,10 +37,10 @@ type RegisterableRESTService interface {
 }
 
 type statusService struct {
-	IWH      *iwh.InWorkspaceHelper
-	Ports    *portsManager
-	Tasks    *tasksManager
-	IDEReady <-chan struct{}
+	ContentState ContentState
+	Ports        *portsManager
+	Tasks        *tasksManager
+	IDEReady     <-chan struct{}
 }
 
 func (s *statusService) RegisterGRPC(srv *grpc.Server) {
@@ -85,7 +83,7 @@ func (s *statusService) ContentStatus(ctx context.Context, req *api.ContentStatu
 		csapi.WorkspaceInitFromPrebuild: api.ContentSource_from_prebuild,
 	}
 
-	cs := s.IWH.ContentState()
+	cs := s.ContentState
 	if req.Wait {
 		select {
 		case <-cs.ContentReady():
@@ -113,17 +111,7 @@ func (s *statusService) ContentStatus(ctx context.Context, req *api.ContentStatu
 }
 
 func (s *statusService) BackupStatus(ctx context.Context, req *api.BackupStatusRequest) (*api.BackupStatusResponse, error) {
-	var avail bool
-	select {
-	case <-s.IWH.TeardownService().Available():
-		avail = true
-	default:
-		avail = false
-	}
-
-	return &api.BackupStatusResponse{
-		CanaryAvailable: avail,
-	}, nil
+	return nil, status.Error(codes.Unimplemented, "not implemented")
 }
 
 func (s *statusService) PortsStatus(req *api.PortsStatusRequest, srv api.StatusService_PortsStatusServer) error {
@@ -556,37 +544,48 @@ func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest)
 	return resp, nil
 }
 
-// ControlService implements the supervisor control service
-type ControlService struct {
-	UidmapCanary iwh.IDMapperService
+// ContentState signals the workspace content state
+type ContentState interface {
+	MarkContentReady(src csapi.WorkspaceInitSource)
+	ContentReady() <-chan struct{}
+	ContentSource() (src csapi.WorkspaceInitSource, ok bool)
 }
 
-// RegisterGRPC registers the gRPC info service
-func (c *ControlService) RegisterGRPC(srv *grpc.Server) {
-	api.RegisterControlServiceServer(srv, c)
+// NewInMemoryContentState creates a new InMemoryContentState
+func NewInMemoryContentState(checkoutLocation string) *InMemoryContentState {
+	return &InMemoryContentState{
+		checkoutLocation: checkoutLocation,
+		contentReadyChan: make(chan struct{}),
+	}
 }
 
-// Newuidmap establishes a new UID mapping in a user namespace
-func (c *ControlService) Newuidmap(ctx context.Context, req *api.NewuidmapRequest) (*api.NewuidmapResponse, error) {
-	mapping := make([]*daemon.UidmapCanaryRequest_Mapping, len(req.Mapping))
-	for i, m := range req.Mapping {
-		mapping[i] = &daemon.UidmapCanaryRequest_Mapping{
-			ContainerId: m.ContainerId,
-			HostId:      m.HostId,
-			Size:        m.Size,
-		}
-	}
+// InMemoryContentState implements the ContentState interface in-memory
+type InMemoryContentState struct {
+	checkoutLocation string
 
-	ndereq := &daemon.UidmapCanaryRequest{
-		Pid:     req.Pid,
-		Gid:     req.Gid,
-		Mapping: mapping,
-	}
+	contentReadyChan chan struct{}
+	contentSource    csapi.WorkspaceInitSource
+}
 
-	err := c.UidmapCanary.WriteIDMap(ctx, ndereq)
-	if err != nil {
-		return nil, err
-	}
+// MarkContentReady marks the workspace content as available.
+// This function is not synchronized and must be called from a single thread/go routine only.
+func (state *InMemoryContentState) MarkContentReady(src csapi.WorkspaceInitSource) {
+	state.contentSource = src
+	close(state.contentReadyChan)
+}
 
-	return &api.NewuidmapResponse{}, nil
+// ContentReady returns a chan that closes when the content becomes available
+func (state *InMemoryContentState) ContentReady() <-chan struct{} {
+	return state.contentReadyChan
+}
+
+// ContentSource returns the init source of the workspace content.
+// The value returned here is only OK after ContentReady() was closed.
+func (state *InMemoryContentState) ContentSource() (src csapi.WorkspaceInitSource, ok bool) {
+	select {
+	case <-state.contentReadyChan:
+	default:
+		return "", false
+	}
+	return state.contentSource, true
 }

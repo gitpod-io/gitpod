@@ -25,3 +25,15 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/ws-daemon:${version}
+scripts:
+  - name: enabled-userns-ff
+    description: Updates the permissions and feature flags of all users in the database, s.t. they start user namespaced workspaces
+    script: |
+      set -eox pipefail
+      
+      kubectl port-forward deployment/mysql 3306 &
+      PID=$!
+      sleep 2
+
+      echo "update d_b_user set rolesOrPermissions='[\"privileged-ws\"]', featureFlags='{\"permanentWSFeatureFlags\":[\"user_namespace\"]}';" | mysql -u root -ptest -h 127.0.0.1 gitpod
+      kill $PID

@@ -9,8 +9,8 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/diskguard"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/hosts"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iwh"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/resources"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/uidmap"
 )
 
 // Config configures the workspace node daemon
@@ -21,9 +21,9 @@ type Config struct {
 		KubernetesNamespace string            `json:"namespace"`
 	} `json:"runtime"`
 
-	Content        content.Config   `json:"content"`
-	Uidmapper      uidmap.Config    `json:"uidmapper"`
-	Resources      resources.Config `json:"resources"`
-	Hosts          hosts.Config     `json:"hosts"`
-	DiskSpaceGuard diskguard.Config `json:"disk"`
+	Content        content.Config      `json:"content"`
+	Uidmapper      iwh.UidmapperConfig `json:"uidmapper"`
+	Resources      resources.Config    `json:"resources"`
+	Hosts          hosts.Config        `json:"hosts"`
+	DiskSpaceGuard diskguard.Config    `json:"disk"`
 }

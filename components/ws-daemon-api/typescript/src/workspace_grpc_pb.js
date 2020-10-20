@@ -33,6 +33,28 @@ function deserialize_wsbs_GitStatusResponse(buffer_arg) {
   return workspace_pb.GitStatusResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_wsbs_MountShiftfsMarkRequest(arg) {
+  if (!(arg instanceof workspace_pb.MountShiftfsMarkRequest)) {
+    throw new Error('Expected argument of type wsbs.MountShiftfsMarkRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsbs_MountShiftfsMarkRequest(buffer_arg) {
+  return workspace_pb.MountShiftfsMarkRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_wsbs_MountShiftfsMarkResponse(arg) {
+  if (!(arg instanceof workspace_pb.MountShiftfsMarkResponse)) {
+    throw new Error('Expected argument of type wsbs.MountShiftfsMarkResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_wsbs_MountShiftfsMarkResponse(buffer_arg) {
+  return workspace_pb.MountShiftfsMarkResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_wsbs_PauseTheiaRequest(arg) {
   if (!(arg instanceof workspace_pb.PauseTheiaRequest)) {
     throw new Error('Expected argument of type wsbs.PauseTheiaRequest');
@@ -101,13 +123,72 @@ function deserialize_wsbs_UidmapCanaryResponse(buffer_arg) {
 
 
 var InWorkspaceHelperService = exports.InWorkspaceHelperService = {
+  mountShiftfsMark: {
+    path: '/wsbs.InWorkspaceHelper/MountShiftfsMark',
+    requestStream: false,
+    responseStream: false,
+    requestType: workspace_pb.MountShiftfsMarkRequest,
+    responseType: workspace_pb.MountShiftfsMarkResponse,
+    requestSerialize: serialize_wsbs_MountShiftfsMarkRequest,
+    requestDeserialize: deserialize_wsbs_MountShiftfsMarkRequest,
+    responseSerialize: serialize_wsbs_MountShiftfsMarkResponse,
+    responseDeserialize: deserialize_wsbs_MountShiftfsMarkResponse,
+  },
+  teardown: {
+    path: '/wsbs.InWorkspaceHelper/Teardown',
+    requestStream: false,
+    responseStream: false,
+    requestType: workspace_pb.TeardownRequest,
+    responseType: workspace_pb.TeardownResponse,
+    requestSerialize: serialize_wsbs_TeardownRequest,
+    requestDeserialize: deserialize_wsbs_TeardownRequest,
+    responseSerialize: serialize_wsbs_TeardownResponse,
+    responseDeserialize: deserialize_wsbs_TeardownResponse,
+  },
+  pauseTheiaCanary: {
+    path: '/wsbs.InWorkspaceHelper/PauseTheiaCanary',
+    requestStream: true,
+    responseStream: true,
+    requestType: workspace_pb.PauseTheiaResponse,
+    responseType: workspace_pb.PauseTheiaRequest,
+    requestSerialize: serialize_wsbs_PauseTheiaResponse,
+    requestDeserialize: deserialize_wsbs_PauseTheiaResponse,
+    responseSerialize: serialize_wsbs_PauseTheiaRequest,
+    responseDeserialize: deserialize_wsbs_PauseTheiaRequest,
+  },
+  gitStatusCanary: {
+    path: '/wsbs.InWorkspaceHelper/GitStatusCanary',
+    requestStream: true,
+    responseStream: true,
+    requestType: workspace_pb.GitStatusResponse,
+    responseType: workspace_pb.GitStatusRequest,
+    requestSerialize: serialize_wsbs_GitStatusResponse,
+    requestDeserialize: deserialize_wsbs_GitStatusResponse,
+    responseSerialize: serialize_wsbs_GitStatusRequest,
+    responseDeserialize: deserialize_wsbs_GitStatusRequest,
+  },
+  writeIDMapping: {
+    path: '/wsbs.InWorkspaceHelper/WriteIDMapping',
+    requestStream: false,
+    responseStream: false,
+    requestType: workspace_pb.UidmapCanaryRequest,
+    responseType: workspace_pb.UidmapCanaryResponse,
+    requestSerialize: serialize_wsbs_UidmapCanaryRequest,
+    requestDeserialize: deserialize_wsbs_UidmapCanaryRequest,
+    responseSerialize: serialize_wsbs_UidmapCanaryResponse,
+    responseDeserialize: deserialize_wsbs_UidmapCanaryResponse,
+  },
+};
+
+exports.InWorkspaceHelperClient = grpc.makeGenericClientConstructor(InWorkspaceHelperService);
+var InWorkspaceHelperOldService = exports.InWorkspaceHelperOldService = {
   // Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
 // when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
 //
 // Note that the request/response flow is inverted here, as it's the server (supervisor) which requests the teardown
 // from the client (ws-daemon).
 teardownCanary: {
-    path: '/wsbs.InWorkspaceHelper/TeardownCanary',
+    path: '/wsbs.InWorkspaceHelperOld/TeardownCanary',
     requestStream: true,
     responseStream: true,
     requestType: workspace_pb.TeardownResponse,
@@ -121,7 +202,7 @@ teardownCanary: {
 // is held Theia will be paused.
 // This is a stop-the-world mechanism for preventing concurrent modification during backup.
 pauseTheia: {
-    path: '/wsbs.InWorkspaceHelper/PauseTheia',
+    path: '/wsbs.InWorkspaceHelperOld/PauseTheia',
     requestStream: true,
     responseStream: false,
     requestType: workspace_pb.PauseTheiaRequest,
@@ -132,7 +213,7 @@ pauseTheia: {
     responseDeserialize: deserialize_wsbs_PauseTheiaResponse,
   },
   gitStatus: {
-    path: '/wsbs.InWorkspaceHelper/GitStatus',
+    path: '/wsbs.InWorkspaceHelperOld/GitStatus',
     requestStream: false,
     responseStream: false,
     requestType: workspace_pb.GitStatusRequest,
@@ -144,7 +225,7 @@ pauseTheia: {
   },
   // UidmapCanary can establish a uid mapping of a new user namespace spawned within the workspace.
 uidmapCanary: {
-    path: '/wsbs.InWorkspaceHelper/UidmapCanary',
+    path: '/wsbs.InWorkspaceHelperOld/UidmapCanary',
     requestStream: true,
     responseStream: true,
     requestType: workspace_pb.UidmapCanaryResponse,
@@ -156,4 +237,4 @@ uidmapCanary: {
   },
 };
 
-exports.InWorkspaceHelperClient = grpc.makeGenericClientConstructor(InWorkspaceHelperService);
+exports.InWorkspaceHelperOldClient = grpc.makeGenericClientConstructor(InWorkspaceHelperOldService);

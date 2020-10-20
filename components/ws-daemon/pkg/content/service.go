@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	"math"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"syscall"
 	"time"
@@ -24,6 +23,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/archive"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iwh"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -52,7 +52,7 @@ type WorkspaceService struct {
 type WorkspaceExistenceCheck func(instanceID string) bool
 
 // NewWorkspaceService creates a new workspce initialization service, starts housekeeping and the Prometheus integration
-func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace string, runtime container.Runtime, wec WorkspaceExistenceCheck) (res *WorkspaceService, err error) {
+func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace string, runtime container.Runtime, wec WorkspaceExistenceCheck, uidmapper *iwh.Uidmapper) (res *WorkspaceService, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "NewWorkspaceService")
 	defer tracing.FinishSpan(span, &err)
 
@@ -63,7 +63,7 @@ func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace st
 	}
 
 	// read all session json files
-	store, err := session.NewStore(ctx, cfg.WorkingArea, workspaceLifecycleHooks(cfg, kubernetesNamespace, wec))
+	store, err := session.NewStore(ctx, cfg.WorkingArea, workspaceLifecycleHooks(cfg, kubernetesNamespace, wec, uidmapper))
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create session store: %w", err)
 	}
@@ -188,34 +188,6 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		return nil, status.Error(codes.Internal, "workspace has no remote storage")
 	}
 
-	if req.ShiftfsMarkMount {
-		// we're asked to create the shiftfs mark mount, for which we need to find the container's
-		// rootfs directory. If the workspace is an FWB workspace, we'll have waited for the container
-		// already, otherwise we'll need to do that here
-		if !req.FullWorkspaceBackup {
-			if s.runtime == nil {
-				return nil, status.Errorf(codes.FailedPrecondition, "not connected to container runtime")
-			}
-			wscontainerID, err = s.runtime.WaitForContainer(ctx, req.Id)
-			if err != nil {
-				return nil, status.Errorf(codes.Internal, "cannot find workspace container: %s", err.Error())
-			}
-		}
-
-		rootfs, err := s.runtime.ContainerRootfs(ctx, wscontainerID)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "cannot find workspace rootfs: %s", err.Error())
-		}
-
-		// We cannot use the nsenter syscall here because mount namespaces affect the whole process, not just the current thread.
-		// That's why we resort to exec'ing "nsenter ... mount ...".
-		mntout, err := exec.Command("nsenter", "-t", "1", "-m", "--", "mount", "-t", "shiftfs", "-o", "mark", rootfs, workspace.ShiftfsMarkMount).CombinedOutput()
-		if err != nil {
-			log.WithField("rootfs", rootfs).WithField("markDst", workspace.ShiftfsMarkMount).WithField("mntout", string(mntout)).WithError(err).Error("cannot mount shiftfs mark")
-			return nil, status.Errorf(codes.Internal, "cannot create shiftfs mark: %s", err.Error())
-		}
-	}
-
 	if !req.FullWorkspaceBackup {
 		// This task/call cannot be canceled. Once it's started it's brought to a conclusion, independent of the caller disconnecting
 		// or not. To achieve this we need to wrap the context in something that alters the cancelation behaviour.
@@ -259,11 +231,6 @@ func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest, upperdir strin
 			return nil, err
 		}
 
-		var markMount string
-		if req.ShiftfsMarkMount {
-			markMount = filepath.Join(s.config.WorkingAreaNode, req.Id+"-mark")
-		}
-
 		return &session.Workspace{
 			Location:            location,
 			UpperdirLocation:    upperdir,
@@ -273,8 +240,11 @@ func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest, upperdir strin
 			WorkspaceID:         req.Metadata.MetaId,
 			InstanceID:          req.Id,
 			FullWorkspaceBackup: req.FullWorkspaceBackup,
-			ShiftfsMarkMount:    markMount,
 			ContentManifest:     req.ContentManifest,
+
+			ShiftfsMarkMount: req.ShiftfsMarkMount,
+			ServiceLocDaemon: filepath.Join(s.config.WorkingArea, req.Id+"-daemon"),
+			ServiceLocNode:   filepath.Join(s.config.WorkingAreaNode, req.Id+"-daemon"),
 		}, nil
 	}
 }
@@ -433,7 +403,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		mf   csapi.WorkspaceContentManifest
 	)
 	if sess.FullWorkspaceBackup {
-		lb, ok := sess.NonPersistentAttrs[session.AttrLiveBackup].(*LiveWorkspaceBackup)
+		lb, ok := sess.NonPersistentAttrs[session.AttrLiveBackup].(*iwh.LiveWorkspaceBackup)
 		if lb == nil || !ok {
 			return xerrors.Errorf("workspace has no live backup configured")
 		}
@@ -680,7 +650,7 @@ func (s *WorkspaceService) TakeSnapshot(ctx context.Context, req *api.TakeSnapsh
 		return nil, status.Error(codes.Internal, "workspace has no remote storage")
 	}
 	if sess.FullWorkspaceBackup {
-		lb, ok := sess.NonPersistentAttrs[session.AttrLiveBackup].(*LiveWorkspaceBackup)
+		lb, ok := sess.NonPersistentAttrs[session.AttrLiveBackup].(*iwh.LiveWorkspaceBackup)
 		if lb == nil || !ok {
 			log.WithFields(sess.OWI()).WithError(err).Error("cannot upload snapshot: no live backup available")
 			return nil, status.Error(codes.Internal, "workspace has no live backup")
@@ -756,7 +726,7 @@ func (c *cannotCancelContext) Value(key interface{}) interface{} {
 	return c.Delegate.Value(key)
 }
 
-func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceExistenceCheck WorkspaceExistenceCheck) map[session.WorkspaceState][]session.WorkspaceLivecycleHook {
+func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceExistenceCheck WorkspaceExistenceCheck, uidmapper *iwh.Uidmapper) map[session.WorkspaceState][]session.WorkspaceLivecycleHook {
 	var setupWorkspace session.WorkspaceLivecycleHook = func(ctx context.Context, ws *session.Workspace) error {
 		if _, ok := ws.NonPersistentAttrs[session.AttrRemoteStorage]; !ok {
 			remoteStorage, err := storage.NewDirectAccess(&cfg.Storage)
@@ -778,8 +748,8 @@ func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceEx
 		}
 
 		if _, ok := ws.NonPersistentAttrs[session.AttrLiveBackup]; ws.FullWorkspaceBackup && !ok {
-			ws.NonPersistentAttrs[session.AttrLiveBackup] = &LiveWorkspaceBackup{
-				OWI:         log.OWI("", "", ws.InstanceID),
+			ws.NonPersistentAttrs[session.AttrLiveBackup] = &iwh.LiveWorkspaceBackup{
+				OWI:         ws.OWI(),
 				Location:    ws.UpperdirLocation,
 				Destination: filepath.Join(cfg.FullWorkspaceBackup.WorkDir, ws.InstanceID),
 			}
@@ -796,14 +766,14 @@ func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceEx
 		if lbr == nil || !ok {
 			log.WithFields(ws.OWI()).Warn("workspace is ready but did not have a live backup")
 
-			ws.NonPersistentAttrs[session.AttrLiveBackup] = &LiveWorkspaceBackup{
+			ws.NonPersistentAttrs[session.AttrLiveBackup] = &iwh.LiveWorkspaceBackup{
 				OWI:         ws.OWI(),
 				Location:    ws.UpperdirLocation,
 				Destination: filepath.Join(cfg.FullWorkspaceBackup.WorkDir, ws.InstanceID),
 			}
 		}
 
-		lb, ok := lbr.(*LiveWorkspaceBackup)
+		lb, ok := lbr.(*iwh.LiveWorkspaceBackup)
 		if lbr == nil || !ok {
 			return xerrors.Errorf("cannot start live backup - expected *LiveWorkspaceBackup")
 		}
@@ -813,7 +783,7 @@ func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceEx
 
 	return map[session.WorkspaceState][]session.WorkspaceLivecycleHook{
 		session.WorkspaceInitializing: {setupWorkspace},
-		session.WorkspaceReady:        {setupWorkspace, startLiveBackup, serveWorkspace(kubernetesNamespace, workspaceExistenceCheck)},
-		session.WorkspaceDisposing:    {stopServingWorkspace},
+		session.WorkspaceReady:        {setupWorkspace, startLiveBackup, iwh.ServeWorkspace(uidmapper)},
+		session.WorkspaceDisposing:    {iwh.StopServingWorkspace},
 	}
 }
