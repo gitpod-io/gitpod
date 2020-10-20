@@ -29,6 +29,68 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
+type MountShiftfsMarkRequest struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *MountShiftfsMarkRequest) Reset()         { *m = MountShiftfsMarkRequest{} }
+func (m *MountShiftfsMarkRequest) String() string { return proto.CompactTextString(m) }
+func (*MountShiftfsMarkRequest) ProtoMessage()    {}
+func (*MountShiftfsMarkRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_dac718ecaafc2333, []int{0}
+}
+
+func (m *MountShiftfsMarkRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MountShiftfsMarkRequest.Unmarshal(m, b)
+}
+func (m *MountShiftfsMarkRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MountShiftfsMarkRequest.Marshal(b, m, deterministic)
+}
+func (m *MountShiftfsMarkRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MountShiftfsMarkRequest.Merge(m, src)
+}
+func (m *MountShiftfsMarkRequest) XXX_Size() int {
+	return xxx_messageInfo_MountShiftfsMarkRequest.Size(m)
+}
+func (m *MountShiftfsMarkRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_MountShiftfsMarkRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MountShiftfsMarkRequest proto.InternalMessageInfo
+
+type MountShiftfsMarkResponse struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *MountShiftfsMarkResponse) Reset()         { *m = MountShiftfsMarkResponse{} }
+func (m *MountShiftfsMarkResponse) String() string { return proto.CompactTextString(m) }
+func (*MountShiftfsMarkResponse) ProtoMessage()    {}
+func (*MountShiftfsMarkResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_dac718ecaafc2333, []int{1}
+}
+
+func (m *MountShiftfsMarkResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_MountShiftfsMarkResponse.Unmarshal(m, b)
+}
+func (m *MountShiftfsMarkResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_MountShiftfsMarkResponse.Marshal(b, m, deterministic)
+}
+func (m *MountShiftfsMarkResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MountShiftfsMarkResponse.Merge(m, src)
+}
+func (m *MountShiftfsMarkResponse) XXX_Size() int {
+	return xxx_messageInfo_MountShiftfsMarkResponse.Size(m)
+}
+func (m *MountShiftfsMarkResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MountShiftfsMarkResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MountShiftfsMarkResponse proto.InternalMessageInfo
+
 type TeardownRequest struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -39,7 +101,7 @@ func (m *TeardownRequest) Reset()         { *m = TeardownRequest{} }
 func (m *TeardownRequest) String() string { return proto.CompactTextString(m) }
 func (*TeardownRequest) ProtoMessage()    {}
 func (*TeardownRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{0}
+	return fileDescriptor_dac718ecaafc2333, []int{2}
 }
 
 func (m *TeardownRequest) XXX_Unmarshal(b []byte) error {
@@ -71,7 +133,7 @@ func (m *TeardownResponse) Reset()         { *m = TeardownResponse{} }
 func (m *TeardownResponse) String() string { return proto.CompactTextString(m) }
 func (*TeardownResponse) ProtoMessage()    {}
 func (*TeardownResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{1}
+	return fileDescriptor_dac718ecaafc2333, []int{3}
 }
 
 func (m *TeardownResponse) XXX_Unmarshal(b []byte) error {
@@ -109,7 +171,7 @@ func (m *PauseTheiaRequest) Reset()         { *m = PauseTheiaRequest{} }
 func (m *PauseTheiaRequest) String() string { return proto.CompactTextString(m) }
 func (*PauseTheiaRequest) ProtoMessage()    {}
 func (*PauseTheiaRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{2}
+	return fileDescriptor_dac718ecaafc2333, []int{4}
 }
 
 func (m *PauseTheiaRequest) XXX_Unmarshal(b []byte) error {
@@ -140,7 +202,7 @@ func (m *PauseTheiaResponse) Reset()         { *m = PauseTheiaResponse{} }
 func (m *PauseTheiaResponse) String() string { return proto.CompactTextString(m) }
 func (*PauseTheiaResponse) ProtoMessage()    {}
 func (*PauseTheiaResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{3}
+	return fileDescriptor_dac718ecaafc2333, []int{5}
 }
 
 func (m *PauseTheiaResponse) XXX_Unmarshal(b []byte) error {
@@ -171,7 +233,7 @@ func (m *GitStatusRequest) Reset()         { *m = GitStatusRequest{} }
 func (m *GitStatusRequest) String() string { return proto.CompactTextString(m) }
 func (*GitStatusRequest) ProtoMessage()    {}
 func (*GitStatusRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{4}
+	return fileDescriptor_dac718ecaafc2333, []int{6}
 }
 
 func (m *GitStatusRequest) XXX_Unmarshal(b []byte) error {
@@ -203,7 +265,7 @@ func (m *GitStatusResponse) Reset()         { *m = GitStatusResponse{} }
 func (m *GitStatusResponse) String() string { return proto.CompactTextString(m) }
 func (*GitStatusResponse) ProtoMessage()    {}
 func (*GitStatusResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{5}
+	return fileDescriptor_dac718ecaafc2333, []int{7}
 }
 
 func (m *GitStatusResponse) XXX_Unmarshal(b []byte) error {
@@ -243,7 +305,7 @@ func (m *UidmapCanaryResponse) Reset()         { *m = UidmapCanaryResponse{} }
 func (m *UidmapCanaryResponse) String() string { return proto.CompactTextString(m) }
 func (*UidmapCanaryResponse) ProtoMessage()    {}
 func (*UidmapCanaryResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{6}
+	return fileDescriptor_dac718ecaafc2333, []int{8}
 }
 
 func (m *UidmapCanaryResponse) XXX_Unmarshal(b []byte) error {
@@ -291,7 +353,7 @@ func (m *UidmapCanaryRequest) Reset()         { *m = UidmapCanaryRequest{} }
 func (m *UidmapCanaryRequest) String() string { return proto.CompactTextString(m) }
 func (*UidmapCanaryRequest) ProtoMessage()    {}
 func (*UidmapCanaryRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{7}
+	return fileDescriptor_dac718ecaafc2333, []int{9}
 }
 
 func (m *UidmapCanaryRequest) XXX_Unmarshal(b []byte) error {
@@ -346,7 +408,7 @@ func (m *UidmapCanaryRequest_Mapping) Reset()         { *m = UidmapCanaryRequest
 func (m *UidmapCanaryRequest_Mapping) String() string { return proto.CompactTextString(m) }
 func (*UidmapCanaryRequest_Mapping) ProtoMessage()    {}
 func (*UidmapCanaryRequest_Mapping) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{7, 0}
+	return fileDescriptor_dac718ecaafc2333, []int{9, 0}
 }
 
 func (m *UidmapCanaryRequest_Mapping) XXX_Unmarshal(b []byte) error {
@@ -389,6 +451,8 @@ func (m *UidmapCanaryRequest_Mapping) GetSize() uint32 {
 }
 
 func init() {
+	proto.RegisterType((*MountShiftfsMarkRequest)(nil), "wsbs.MountShiftfsMarkRequest")
+	proto.RegisterType((*MountShiftfsMarkResponse)(nil), "wsbs.MountShiftfsMarkResponse")
 	proto.RegisterType((*TeardownRequest)(nil), "wsbs.TeardownRequest")
 	proto.RegisterType((*TeardownResponse)(nil), "wsbs.TeardownResponse")
 	proto.RegisterType((*PauseTheiaRequest)(nil), "wsbs.PauseTheiaRequest")
@@ -405,38 +469,45 @@ func init() {
 }
 
 var fileDescriptor_dac718ecaafc2333 = []byte{
-	// 485 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x53, 0xd1, 0x6e, 0xd3, 0x30,
-	0x14, 0x5d, 0xd6, 0x6a, 0xa5, 0xb7, 0x2b, 0x6b, 0xbd, 0x41, 0xb3, 0x48, 0x48, 0x5d, 0x24, 0xa4,
-	0x22, 0x68, 0x8a, 0xca, 0x23, 0x12, 0x0f, 0xab, 0x10, 0x54, 0x08, 0x81, 0xc2, 0x10, 0x82, 0x97,
-	0xca, 0x8d, 0xaf, 0x52, 0x8b, 0xc5, 0x36, 0xb6, 0x43, 0xc5, 0xbe, 0x89, 0x9f, 0xe1, 0x8f, 0x50,
-	0x12, 0x67, 0x2d, 0xed, 0x78, 0xbb, 0x3e, 0xb9, 0x3e, 0x3e, 0xe7, 0x9e, 0x1b, 0x38, 0x59, 0x4b,
-	0xfd, 0xdd, 0x28, 0x9a, 0x60, 0xa4, 0xb4, 0xb4, 0x92, 0x34, 0xd7, 0x66, 0x69, 0x82, 0xc7, 0x89,
-	0x14, 0x16, 0x85, 0x1d, 0x1b, 0xd4, 0x3f, 0x79, 0x82, 0x63, 0xaa, 0xf8, 0x84, 0x0b, 0x6e, 0x39,
-	0xbd, 0xe6, 0x37, 0xa8, 0xab, 0xe6, 0xb0, 0x0f, 0x27, 0x57, 0x48, 0x35, 0x93, 0x6b, 0x11, 0xe3,
-	0x8f, 0x1c, 0x8d, 0x0d, 0x9f, 0x41, 0x6f, 0x03, 0x19, 0x25, 0x85, 0x41, 0xe2, 0x43, 0xcb, 0xe4,
-	0x49, 0x82, 0xc6, 0xf8, 0x87, 0x43, 0x6f, 0x74, 0x2f, 0xae, 0x8f, 0xe1, 0x29, 0xf4, 0x3f, 0xd2,
-	0xdc, 0xe0, 0xd5, 0x0a, 0x39, 0xad, 0x29, 0xce, 0x80, 0x6c, 0x83, 0x15, 0x49, 0x48, 0xa0, 0xf7,
-	0x86, 0xdb, 0x4f, 0x96, 0xda, 0xdc, 0xd4, 0x9d, 0x97, 0xd0, 0xdf, 0xc2, 0xdc, 0x6b, 0x63, 0x68,
-	0x6a, 0x54, 0xd2, 0xf7, 0x86, 0xde, 0xa8, 0x33, 0x3d, 0x8f, 0x9c, 0x15, 0xe7, 0x24, 0xda, 0x5c,
-	0x28, 0xdb, 0xc2, 0x0f, 0x70, 0xf6, 0x99, 0xb3, 0x8c, 0xaa, 0x19, 0x15, 0x54, 0xff, 0xda, 0x16,
-	0x9d, 0xa1, 0x31, 0x34, 0xc5, 0x92, 0xa9, 0x1d, 0xd7, 0x47, 0xf2, 0x08, 0x00, 0xb5, 0x96, 0x7a,
-	0x91, 0x48, 0x86, 0xa5, 0xa3, 0x6e, 0xdc, 0x2e, 0x91, 0x99, 0x64, 0x18, 0xfe, 0xf1, 0xe0, 0xf4,
-	0x5f, 0xc6, 0x52, 0x2c, 0xe9, 0x41, 0x43, 0x71, 0x56, 0x92, 0x35, 0xe2, 0xa2, 0x2c, 0x90, 0x94,
-	0x33, 0x37, 0x93, 0xa2, 0x24, 0x2f, 0xa1, 0x95, 0x51, 0xa5, 0xb8, 0x48, 0xfd, 0xc6, 0xb0, 0x31,
-	0xea, 0x4c, 0x2f, 0xa2, 0x22, 0x8f, 0xe8, 0x0e, 0xbe, 0xe8, 0x7d, 0xd5, 0x18, 0xd7, 0x37, 0x82,
-	0xaf, 0xd0, 0x72, 0x18, 0xb9, 0x80, 0xe3, 0xc2, 0x36, 0xe5, 0x02, 0xf5, 0xc2, 0x3d, 0xda, 0x8d,
-	0x3b, 0xb7, 0xd8, 0x9c, 0x91, 0x01, 0xb4, 0x56, 0xd2, 0xd8, 0x85, 0x13, 0xd0, 0x8d, 0x8f, 0x8a,
-	0xe3, 0x9c, 0x11, 0x02, 0x4d, 0xc3, 0x6f, 0xd0, 0x6f, 0x94, 0x68, 0x59, 0x4f, 0x7f, 0x1f, 0x42,
-	0x7f, 0x2e, 0xbe, 0xd4, 0xbb, 0xf2, 0x16, 0xaf, 0x15, 0x6a, 0xf2, 0x1a, 0xee, 0xd7, 0x59, 0x57,
-	0xd2, 0xc8, 0xc3, 0x4a, 0xee, 0xee, 0x06, 0x04, 0x0f, 0x76, 0xf1, 0x2a, 0xbf, 0x83, 0x91, 0xf7,
-	0xdc, 0x23, 0x33, 0x80, 0x4d, 0xde, 0x64, 0x50, 0xb5, 0xee, 0xad, 0x45, 0xe0, 0xef, 0x7f, 0x70,
-	0xab, 0x71, 0x30, 0xf2, 0xc8, 0x2b, 0x68, 0xdf, 0x26, 0x5b, 0xcb, 0xd8, 0xdd, 0x97, 0x60, 0xb0,
-	0x87, 0xd7, 0x0c, 0xe4, 0x1d, 0x1c, 0x6f, 0x0f, 0x99, 0x04, 0x77, 0x0d, 0xde, 0xb9, 0x39, 0xff,
-	0x6f, 0x28, 0x95, 0xa3, 0xcb, 0xa7, 0xdf, 0x9e, 0xa4, 0xdc, 0xae, 0xf2, 0x65, 0x94, 0xc8, 0x6c,
-	0x92, 0x72, 0xab, 0x24, 0x1b, 0x73, 0xe9, 0xaa, 0xc9, 0xda, 0x8c, 0x19, 0xc5, 0x4c, 0x8a, 0x09,
-	0x55, 0x7c, 0x79, 0x54, 0xfe, 0x4b, 0x2f, 0xfe, 0x06, 0x00, 0x00, 0xff, 0xff, 0xb8, 0x0f, 0xfd,
-	0x81, 0x8b, 0x03, 0x00, 0x00,
+	// 595 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x54, 0xef, 0x4e, 0xdb, 0x3e,
+	0x14, 0xa5, 0x04, 0x51, 0xb8, 0xfc, 0x6b, 0x0d, 0xbf, 0x1f, 0xc1, 0x12, 0x13, 0x44, 0x9a, 0xd4,
+	0x69, 0x6b, 0x3a, 0x75, 0x1f, 0x91, 0xf6, 0x01, 0x36, 0x8d, 0x6a, 0x42, 0x4c, 0x81, 0x09, 0x6d,
+	0x5f, 0x90, 0x49, 0x2e, 0xad, 0x05, 0x8d, 0x3d, 0xdb, 0x59, 0x35, 0x5e, 0x60, 0x8f, 0xb3, 0x67,
+	0xd9, 0x1b, 0x4d, 0x49, 0xec, 0xb6, 0x23, 0x64, 0xdf, 0x9c, 0xe3, 0x73, 0x8f, 0xef, 0x3d, 0xf7,
+	0x28, 0xb0, 0x35, 0x11, 0xea, 0x4e, 0x4b, 0x16, 0x63, 0x28, 0x95, 0x30, 0x82, 0x2c, 0x4d, 0xf4,
+	0x8d, 0xa6, 0xcf, 0x63, 0x91, 0x1a, 0x4c, 0x4d, 0x57, 0xa3, 0xfa, 0xce, 0x63, 0xec, 0x32, 0xc9,
+	0x7b, 0x3c, 0xe5, 0x86, 0xb3, 0x7b, 0xfe, 0x80, 0xaa, 0x24, 0x07, 0x7b, 0xb0, 0x7b, 0x26, 0xb2,
+	0xd4, 0x5c, 0x8c, 0xf8, 0xad, 0xb9, 0xd5, 0x67, 0x4c, 0xdd, 0x45, 0xf8, 0x2d, 0x43, 0x6d, 0x02,
+	0x0a, 0x7e, 0xf5, 0x4a, 0x4b, 0x91, 0x6a, 0x0c, 0xda, 0xb0, 0x75, 0x89, 0x4c, 0x25, 0x62, 0x92,
+	0x3a, 0xfa, 0x2b, 0x68, 0xcd, 0xa0, 0x92, 0x46, 0x7c, 0x68, 0xea, 0x2c, 0x8e, 0x51, 0x6b, 0x7f,
+	0xf1, 0xa0, 0xd1, 0x59, 0x89, 0xdc, 0x67, 0xb0, 0x0d, 0xed, 0x4f, 0x2c, 0xd3, 0x78, 0x39, 0x42,
+	0xce, 0x9c, 0xc4, 0x0e, 0x90, 0x79, 0xd0, 0xbe, 0x45, 0xa0, 0xf5, 0x81, 0x9b, 0x0b, 0xc3, 0x4c,
+	0xa6, 0x1d, 0xf3, 0x18, 0xda, 0x73, 0x98, 0x7d, 0xad, 0x0b, 0x4b, 0x0a, 0xa5, 0xf0, 0x1b, 0x07,
+	0x8d, 0xce, 0x5a, 0x7f, 0x2f, 0xb4, 0x0e, 0x58, 0x03, 0xc2, 0x59, 0x41, 0x41, 0x0b, 0xce, 0x61,
+	0xe7, 0x33, 0x4f, 0xc6, 0x4c, 0x9e, 0xb0, 0x94, 0xa9, 0x1f, 0xf3, 0x4d, 0x8f, 0x51, 0x6b, 0x36,
+	0xc4, 0x42, 0x69, 0x35, 0x72, 0x9f, 0x64, 0x1f, 0x00, 0x95, 0x12, 0xea, 0x3a, 0x16, 0x09, 0x16,
+	0x13, 0x6d, 0x44, 0xab, 0x05, 0x72, 0x22, 0x12, 0x0c, 0x7e, 0x37, 0x60, 0xfb, 0x6f, 0xc5, 0xa2,
+	0x59, 0xd2, 0x02, 0x4f, 0xf2, 0xa4, 0x10, 0xf3, 0xa2, 0xfc, 0x98, 0x23, 0x43, 0x9e, 0x58, 0x4f,
+	0xf2, 0x23, 0x39, 0x82, 0xe6, 0x98, 0x49, 0xc9, 0xd3, 0xa1, 0xef, 0x1d, 0x78, 0x9d, 0xb5, 0xfe,
+	0x61, 0x98, 0xaf, 0x31, 0x7c, 0x42, 0x2f, 0x3c, 0x2b, 0x89, 0x91, 0xab, 0xa0, 0x5f, 0xa0, 0x69,
+	0x31, 0x72, 0x08, 0xeb, 0xf9, 0xd8, 0x8c, 0xa7, 0xa8, 0xae, 0xed, 0xa3, 0x1b, 0xd1, 0xda, 0x14,
+	0x1b, 0x24, 0x64, 0x17, 0x9a, 0x23, 0xa1, 0xcd, 0xb5, 0x6d, 0x60, 0x23, 0x5a, 0xce, 0x3f, 0x07,
+	0x09, 0x21, 0xb0, 0xa4, 0xf9, 0x03, 0xfa, 0x5e, 0x81, 0x16, 0xe7, 0xfe, 0x4f, 0x0f, 0xda, 0x83,
+	0xf4, 0xca, 0x45, 0xec, 0x14, 0xef, 0x25, 0x2a, 0x72, 0x01, 0xad, 0xc7, 0xd1, 0x20, 0xfb, 0x65,
+	0xc3, 0x35, 0x69, 0xa2, 0xcf, 0xea, 0xae, 0xed, 0x96, 0x17, 0xc8, 0x11, 0xac, 0xb8, 0x00, 0x91,
+	0xff, 0x4a, 0xf6, 0xa3, 0x8c, 0xd1, 0xff, 0x1f, 0xc3, 0xd3, 0xe2, 0x8f, 0xd0, 0x9a, 0x45, 0xa7,
+	0xb4, 0x8b, 0xf8, 0x25, 0xbb, 0x1a, 0x29, 0xba, 0x5b, 0xbd, 0x29, 0x73, 0xb5, 0xd0, 0x69, 0xbc,
+	0x6e, 0x90, 0x53, 0xd8, 0x9a, 0x86, 0xc5, 0x6a, 0xd9, 0x8a, 0x4a, 0xe8, 0x5c, 0x4b, 0x95, 0x84,
+	0x96, 0x4a, 0x03, 0xd8, 0xbc, 0x52, 0xdc, 0xe0, 0xe0, 0x9d, 0x5b, 0xd0, 0x5e, 0xed, 0x5e, 0x29,
+	0x7d, 0xea, 0xca, 0x4d, 0xd8, 0xff, 0xb5, 0x08, 0x3b, 0x95, 0x4d, 0x9c, 0xdf, 0x27, 0xe4, 0x3d,
+	0x6c, 0x3a, 0x43, 0x6c, 0xb3, 0x35, 0x36, 0xd1, 0xa7, 0x5d, 0xb5, 0xad, 0x9e, 0x00, 0xcc, 0xfc,
+	0x20, 0x75, 0x0e, 0xd1, 0x5a, 0x53, 0x73, 0x19, 0xf2, 0x16, 0x56, 0xa7, 0x4e, 0x90, 0x1a, 0x6b,
+	0x68, 0x9d, 0x97, 0xc5, 0x1a, 0xd7, 0xe7, 0xc7, 0x27, 0xff, 0xb0, 0x84, 0xd6, 0x3b, 0x59, 0x4e,
+	0x74, 0xfc, 0xf2, 0xeb, 0x8b, 0x21, 0x37, 0xa3, 0xec, 0x26, 0x8c, 0xc5, 0xb8, 0x37, 0xe4, 0x46,
+	0x8a, 0xa4, 0xcb, 0x85, 0x3d, 0xf5, 0x26, 0xba, 0x9b, 0x30, 0x1c, 0x8b, 0xb4, 0xc7, 0x24, 0xbf,
+	0x59, 0x2e, 0xfe, 0x87, 0x6f, 0xfe, 0x04, 0x00, 0x00, 0xff, 0xff, 0xc3, 0x89, 0xa6, 0x63, 0x4f,
+	0x05, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -451,19 +522,11 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type InWorkspaceHelperClient interface {
-	// Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
-	// when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
-	//
-	// Note that the request/response flow is inverted here, as it's the server (supervisor) which requests the teardown
-	// from the client (ws-daemon).
-	TeardownCanary(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelper_TeardownCanaryClient, error)
-	// PauseTheia can pause the Theia process and all its children. As long as the request stream
-	// is held Theia will be paused.
-	// This is a stop-the-world mechanism for preventing concurrent modification during backup.
-	PauseTheia(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelper_PauseTheiaClient, error)
-	GitStatus(ctx context.Context, in *GitStatusRequest, opts ...grpc.CallOption) (*GitStatusResponse, error)
-	// UidmapCanary can establish a uid mapping of a new user namespace spawned within the workspace.
-	UidmapCanary(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelper_UidmapCanaryClient, error)
+	MountShiftfsMark(ctx context.Context, in *MountShiftfsMarkRequest, opts ...grpc.CallOption) (*MountShiftfsMarkResponse, error)
+	Teardown(ctx context.Context, in *TeardownRequest, opts ...grpc.CallOption) (*TeardownResponse, error)
+	PauseTheiaCanary(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelper_PauseTheiaCanaryClient, error)
+	GitStatusCanary(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelper_GitStatusCanaryClient, error)
+	WriteIDMapping(ctx context.Context, in *UidmapCanaryRequest, opts ...grpc.CallOption) (*UidmapCanaryResponse, error)
 }
 
 type inWorkspaceHelperClient struct {
@@ -474,30 +537,319 @@ func NewInWorkspaceHelperClient(cc grpc.ClientConnInterface) InWorkspaceHelperCl
 	return &inWorkspaceHelperClient{cc}
 }
 
-func (c *inWorkspaceHelperClient) TeardownCanary(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelper_TeardownCanaryClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_InWorkspaceHelper_serviceDesc.Streams[0], "/wsbs.InWorkspaceHelper/TeardownCanary", opts...)
+func (c *inWorkspaceHelperClient) MountShiftfsMark(ctx context.Context, in *MountShiftfsMarkRequest, opts ...grpc.CallOption) (*MountShiftfsMarkResponse, error) {
+	out := new(MountShiftfsMarkResponse)
+	err := c.cc.Invoke(ctx, "/wsbs.InWorkspaceHelper/MountShiftfsMark", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &inWorkspaceHelperTeardownCanaryClient{stream}
+	return out, nil
+}
+
+func (c *inWorkspaceHelperClient) Teardown(ctx context.Context, in *TeardownRequest, opts ...grpc.CallOption) (*TeardownResponse, error) {
+	out := new(TeardownResponse)
+	err := c.cc.Invoke(ctx, "/wsbs.InWorkspaceHelper/Teardown", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *inWorkspaceHelperClient) PauseTheiaCanary(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelper_PauseTheiaCanaryClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_InWorkspaceHelper_serviceDesc.Streams[0], "/wsbs.InWorkspaceHelper/PauseTheiaCanary", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &inWorkspaceHelperPauseTheiaCanaryClient{stream}
 	return x, nil
 }
 
-type InWorkspaceHelper_TeardownCanaryClient interface {
+type InWorkspaceHelper_PauseTheiaCanaryClient interface {
+	Send(*PauseTheiaResponse) error
+	Recv() (*PauseTheiaRequest, error)
+	grpc.ClientStream
+}
+
+type inWorkspaceHelperPauseTheiaCanaryClient struct {
+	grpc.ClientStream
+}
+
+func (x *inWorkspaceHelperPauseTheiaCanaryClient) Send(m *PauseTheiaResponse) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *inWorkspaceHelperPauseTheiaCanaryClient) Recv() (*PauseTheiaRequest, error) {
+	m := new(PauseTheiaRequest)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *inWorkspaceHelperClient) GitStatusCanary(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelper_GitStatusCanaryClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_InWorkspaceHelper_serviceDesc.Streams[1], "/wsbs.InWorkspaceHelper/GitStatusCanary", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &inWorkspaceHelperGitStatusCanaryClient{stream}
+	return x, nil
+}
+
+type InWorkspaceHelper_GitStatusCanaryClient interface {
+	Send(*GitStatusResponse) error
+	Recv() (*GitStatusRequest, error)
+	grpc.ClientStream
+}
+
+type inWorkspaceHelperGitStatusCanaryClient struct {
+	grpc.ClientStream
+}
+
+func (x *inWorkspaceHelperGitStatusCanaryClient) Send(m *GitStatusResponse) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *inWorkspaceHelperGitStatusCanaryClient) Recv() (*GitStatusRequest, error) {
+	m := new(GitStatusRequest)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *inWorkspaceHelperClient) WriteIDMapping(ctx context.Context, in *UidmapCanaryRequest, opts ...grpc.CallOption) (*UidmapCanaryResponse, error) {
+	out := new(UidmapCanaryResponse)
+	err := c.cc.Invoke(ctx, "/wsbs.InWorkspaceHelper/WriteIDMapping", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// InWorkspaceHelperServer is the server API for InWorkspaceHelper service.
+type InWorkspaceHelperServer interface {
+	MountShiftfsMark(context.Context, *MountShiftfsMarkRequest) (*MountShiftfsMarkResponse, error)
+	Teardown(context.Context, *TeardownRequest) (*TeardownResponse, error)
+	PauseTheiaCanary(InWorkspaceHelper_PauseTheiaCanaryServer) error
+	GitStatusCanary(InWorkspaceHelper_GitStatusCanaryServer) error
+	WriteIDMapping(context.Context, *UidmapCanaryRequest) (*UidmapCanaryResponse, error)
+}
+
+// UnimplementedInWorkspaceHelperServer can be embedded to have forward compatible implementations.
+type UnimplementedInWorkspaceHelperServer struct {
+}
+
+func (*UnimplementedInWorkspaceHelperServer) MountShiftfsMark(ctx context.Context, req *MountShiftfsMarkRequest) (*MountShiftfsMarkResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MountShiftfsMark not implemented")
+}
+func (*UnimplementedInWorkspaceHelperServer) Teardown(ctx context.Context, req *TeardownRequest) (*TeardownResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Teardown not implemented")
+}
+func (*UnimplementedInWorkspaceHelperServer) PauseTheiaCanary(srv InWorkspaceHelper_PauseTheiaCanaryServer) error {
+	return status.Errorf(codes.Unimplemented, "method PauseTheiaCanary not implemented")
+}
+func (*UnimplementedInWorkspaceHelperServer) GitStatusCanary(srv InWorkspaceHelper_GitStatusCanaryServer) error {
+	return status.Errorf(codes.Unimplemented, "method GitStatusCanary not implemented")
+}
+func (*UnimplementedInWorkspaceHelperServer) WriteIDMapping(ctx context.Context, req *UidmapCanaryRequest) (*UidmapCanaryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method WriteIDMapping not implemented")
+}
+
+func RegisterInWorkspaceHelperServer(s *grpc.Server, srv InWorkspaceHelperServer) {
+	s.RegisterService(&_InWorkspaceHelper_serviceDesc, srv)
+}
+
+func _InWorkspaceHelper_MountShiftfsMark_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MountShiftfsMarkRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InWorkspaceHelperServer).MountShiftfsMark(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/wsbs.InWorkspaceHelper/MountShiftfsMark",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InWorkspaceHelperServer).MountShiftfsMark(ctx, req.(*MountShiftfsMarkRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InWorkspaceHelper_Teardown_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TeardownRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InWorkspaceHelperServer).Teardown(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/wsbs.InWorkspaceHelper/Teardown",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InWorkspaceHelperServer).Teardown(ctx, req.(*TeardownRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InWorkspaceHelper_PauseTheiaCanary_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(InWorkspaceHelperServer).PauseTheiaCanary(&inWorkspaceHelperPauseTheiaCanaryServer{stream})
+}
+
+type InWorkspaceHelper_PauseTheiaCanaryServer interface {
+	Send(*PauseTheiaRequest) error
+	Recv() (*PauseTheiaResponse, error)
+	grpc.ServerStream
+}
+
+type inWorkspaceHelperPauseTheiaCanaryServer struct {
+	grpc.ServerStream
+}
+
+func (x *inWorkspaceHelperPauseTheiaCanaryServer) Send(m *PauseTheiaRequest) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *inWorkspaceHelperPauseTheiaCanaryServer) Recv() (*PauseTheiaResponse, error) {
+	m := new(PauseTheiaResponse)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _InWorkspaceHelper_GitStatusCanary_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(InWorkspaceHelperServer).GitStatusCanary(&inWorkspaceHelperGitStatusCanaryServer{stream})
+}
+
+type InWorkspaceHelper_GitStatusCanaryServer interface {
+	Send(*GitStatusRequest) error
+	Recv() (*GitStatusResponse, error)
+	grpc.ServerStream
+}
+
+type inWorkspaceHelperGitStatusCanaryServer struct {
+	grpc.ServerStream
+}
+
+func (x *inWorkspaceHelperGitStatusCanaryServer) Send(m *GitStatusRequest) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *inWorkspaceHelperGitStatusCanaryServer) Recv() (*GitStatusResponse, error) {
+	m := new(GitStatusResponse)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _InWorkspaceHelper_WriteIDMapping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UidmapCanaryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InWorkspaceHelperServer).WriteIDMapping(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/wsbs.InWorkspaceHelper/WriteIDMapping",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InWorkspaceHelperServer).WriteIDMapping(ctx, req.(*UidmapCanaryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var _InWorkspaceHelper_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "wsbs.InWorkspaceHelper",
+	HandlerType: (*InWorkspaceHelperServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "MountShiftfsMark",
+			Handler:    _InWorkspaceHelper_MountShiftfsMark_Handler,
+		},
+		{
+			MethodName: "Teardown",
+			Handler:    _InWorkspaceHelper_Teardown_Handler,
+		},
+		{
+			MethodName: "WriteIDMapping",
+			Handler:    _InWorkspaceHelper_WriteIDMapping_Handler,
+		},
+	},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "PauseTheiaCanary",
+			Handler:       _InWorkspaceHelper_PauseTheiaCanary_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "GitStatusCanary",
+			Handler:       _InWorkspaceHelper_GitStatusCanary_Handler,
+			ServerStreams: true,
+			ClientStreams: true,
+		},
+	},
+	Metadata: "workspace.proto",
+}
+
+// InWorkspaceHelperOldClient is the client API for InWorkspaceHelperOld service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
+type InWorkspaceHelperOldClient interface {
+	// Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
+	// when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
+	//
+	// Note that the request/response flow is inverted here, as it's the server (supervisor) which requests the teardown
+	// from the client (ws-daemon).
+	TeardownCanary(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelperOld_TeardownCanaryClient, error)
+	// PauseTheia can pause the Theia process and all its children. As long as the request stream
+	// is held Theia will be paused.
+	// This is a stop-the-world mechanism for preventing concurrent modification during backup.
+	PauseTheia(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelperOld_PauseTheiaClient, error)
+	GitStatus(ctx context.Context, in *GitStatusRequest, opts ...grpc.CallOption) (*GitStatusResponse, error)
+	// UidmapCanary can establish a uid mapping of a new user namespace spawned within the workspace.
+	UidmapCanary(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelperOld_UidmapCanaryClient, error)
+}
+
+type inWorkspaceHelperOldClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewInWorkspaceHelperOldClient(cc grpc.ClientConnInterface) InWorkspaceHelperOldClient {
+	return &inWorkspaceHelperOldClient{cc}
+}
+
+func (c *inWorkspaceHelperOldClient) TeardownCanary(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelperOld_TeardownCanaryClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_InWorkspaceHelperOld_serviceDesc.Streams[0], "/wsbs.InWorkspaceHelperOld/TeardownCanary", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &inWorkspaceHelperOldTeardownCanaryClient{stream}
+	return x, nil
+}
+
+type InWorkspaceHelperOld_TeardownCanaryClient interface {
 	Send(*TeardownResponse) error
 	Recv() (*TeardownRequest, error)
 	grpc.ClientStream
 }
 
-type inWorkspaceHelperTeardownCanaryClient struct {
+type inWorkspaceHelperOldTeardownCanaryClient struct {
 	grpc.ClientStream
 }
 
-func (x *inWorkspaceHelperTeardownCanaryClient) Send(m *TeardownResponse) error {
+func (x *inWorkspaceHelperOldTeardownCanaryClient) Send(m *TeardownResponse) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *inWorkspaceHelperTeardownCanaryClient) Recv() (*TeardownRequest, error) {
+func (x *inWorkspaceHelperOldTeardownCanaryClient) Recv() (*TeardownRequest, error) {
 	m := new(TeardownRequest)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -505,30 +857,30 @@ func (x *inWorkspaceHelperTeardownCanaryClient) Recv() (*TeardownRequest, error)
 	return m, nil
 }
 
-func (c *inWorkspaceHelperClient) PauseTheia(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelper_PauseTheiaClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_InWorkspaceHelper_serviceDesc.Streams[1], "/wsbs.InWorkspaceHelper/PauseTheia", opts...)
+func (c *inWorkspaceHelperOldClient) PauseTheia(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelperOld_PauseTheiaClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_InWorkspaceHelperOld_serviceDesc.Streams[1], "/wsbs.InWorkspaceHelperOld/PauseTheia", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &inWorkspaceHelperPauseTheiaClient{stream}
+	x := &inWorkspaceHelperOldPauseTheiaClient{stream}
 	return x, nil
 }
 
-type InWorkspaceHelper_PauseTheiaClient interface {
+type InWorkspaceHelperOld_PauseTheiaClient interface {
 	Send(*PauseTheiaRequest) error
 	CloseAndRecv() (*PauseTheiaResponse, error)
 	grpc.ClientStream
 }
 
-type inWorkspaceHelperPauseTheiaClient struct {
+type inWorkspaceHelperOldPauseTheiaClient struct {
 	grpc.ClientStream
 }
 
-func (x *inWorkspaceHelperPauseTheiaClient) Send(m *PauseTheiaRequest) error {
+func (x *inWorkspaceHelperOldPauseTheiaClient) Send(m *PauseTheiaRequest) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *inWorkspaceHelperPauseTheiaClient) CloseAndRecv() (*PauseTheiaResponse, error) {
+func (x *inWorkspaceHelperOldPauseTheiaClient) CloseAndRecv() (*PauseTheiaResponse, error) {
 	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
@@ -539,39 +891,39 @@ func (x *inWorkspaceHelperPauseTheiaClient) CloseAndRecv() (*PauseTheiaResponse,
 	return m, nil
 }
 
-func (c *inWorkspaceHelperClient) GitStatus(ctx context.Context, in *GitStatusRequest, opts ...grpc.CallOption) (*GitStatusResponse, error) {
+func (c *inWorkspaceHelperOldClient) GitStatus(ctx context.Context, in *GitStatusRequest, opts ...grpc.CallOption) (*GitStatusResponse, error) {
 	out := new(GitStatusResponse)
-	err := c.cc.Invoke(ctx, "/wsbs.InWorkspaceHelper/GitStatus", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/wsbs.InWorkspaceHelperOld/GitStatus", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *inWorkspaceHelperClient) UidmapCanary(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelper_UidmapCanaryClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_InWorkspaceHelper_serviceDesc.Streams[2], "/wsbs.InWorkspaceHelper/UidmapCanary", opts...)
+func (c *inWorkspaceHelperOldClient) UidmapCanary(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelperOld_UidmapCanaryClient, error) {
+	stream, err := c.cc.NewStream(ctx, &_InWorkspaceHelperOld_serviceDesc.Streams[2], "/wsbs.InWorkspaceHelperOld/UidmapCanary", opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &inWorkspaceHelperUidmapCanaryClient{stream}
+	x := &inWorkspaceHelperOldUidmapCanaryClient{stream}
 	return x, nil
 }
 
-type InWorkspaceHelper_UidmapCanaryClient interface {
+type InWorkspaceHelperOld_UidmapCanaryClient interface {
 	Send(*UidmapCanaryResponse) error
 	Recv() (*UidmapCanaryRequest, error)
 	grpc.ClientStream
 }
 
-type inWorkspaceHelperUidmapCanaryClient struct {
+type inWorkspaceHelperOldUidmapCanaryClient struct {
 	grpc.ClientStream
 }
 
-func (x *inWorkspaceHelperUidmapCanaryClient) Send(m *UidmapCanaryResponse) error {
+func (x *inWorkspaceHelperOldUidmapCanaryClient) Send(m *UidmapCanaryResponse) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *inWorkspaceHelperUidmapCanaryClient) Recv() (*UidmapCanaryRequest, error) {
+func (x *inWorkspaceHelperOldUidmapCanaryClient) Recv() (*UidmapCanaryRequest, error) {
 	m := new(UidmapCanaryRequest)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -579,63 +931,63 @@ func (x *inWorkspaceHelperUidmapCanaryClient) Recv() (*UidmapCanaryRequest, erro
 	return m, nil
 }
 
-// InWorkspaceHelperServer is the server API for InWorkspaceHelper service.
-type InWorkspaceHelperServer interface {
+// InWorkspaceHelperOldServer is the server API for InWorkspaceHelperOld service.
+type InWorkspaceHelperOldServer interface {
 	// Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
 	// when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
 	//
 	// Note that the request/response flow is inverted here, as it's the server (supervisor) which requests the teardown
 	// from the client (ws-daemon).
-	TeardownCanary(InWorkspaceHelper_TeardownCanaryServer) error
+	TeardownCanary(InWorkspaceHelperOld_TeardownCanaryServer) error
 	// PauseTheia can pause the Theia process and all its children. As long as the request stream
 	// is held Theia will be paused.
 	// This is a stop-the-world mechanism for preventing concurrent modification during backup.
-	PauseTheia(InWorkspaceHelper_PauseTheiaServer) error
+	PauseTheia(InWorkspaceHelperOld_PauseTheiaServer) error
 	GitStatus(context.Context, *GitStatusRequest) (*GitStatusResponse, error)
 	// UidmapCanary can establish a uid mapping of a new user namespace spawned within the workspace.
-	UidmapCanary(InWorkspaceHelper_UidmapCanaryServer) error
+	UidmapCanary(InWorkspaceHelperOld_UidmapCanaryServer) error
 }
 
-// UnimplementedInWorkspaceHelperServer can be embedded to have forward compatible implementations.
-type UnimplementedInWorkspaceHelperServer struct {
+// UnimplementedInWorkspaceHelperOldServer can be embedded to have forward compatible implementations.
+type UnimplementedInWorkspaceHelperOldServer struct {
 }
 
-func (*UnimplementedInWorkspaceHelperServer) TeardownCanary(srv InWorkspaceHelper_TeardownCanaryServer) error {
+func (*UnimplementedInWorkspaceHelperOldServer) TeardownCanary(srv InWorkspaceHelperOld_TeardownCanaryServer) error {
 	return status.Errorf(codes.Unimplemented, "method TeardownCanary not implemented")
 }
-func (*UnimplementedInWorkspaceHelperServer) PauseTheia(srv InWorkspaceHelper_PauseTheiaServer) error {
+func (*UnimplementedInWorkspaceHelperOldServer) PauseTheia(srv InWorkspaceHelperOld_PauseTheiaServer) error {
 	return status.Errorf(codes.Unimplemented, "method PauseTheia not implemented")
 }
-func (*UnimplementedInWorkspaceHelperServer) GitStatus(ctx context.Context, req *GitStatusRequest) (*GitStatusResponse, error) {
+func (*UnimplementedInWorkspaceHelperOldServer) GitStatus(ctx context.Context, req *GitStatusRequest) (*GitStatusResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GitStatus not implemented")
 }
-func (*UnimplementedInWorkspaceHelperServer) UidmapCanary(srv InWorkspaceHelper_UidmapCanaryServer) error {
+func (*UnimplementedInWorkspaceHelperOldServer) UidmapCanary(srv InWorkspaceHelperOld_UidmapCanaryServer) error {
 	return status.Errorf(codes.Unimplemented, "method UidmapCanary not implemented")
 }
 
-func RegisterInWorkspaceHelperServer(s *grpc.Server, srv InWorkspaceHelperServer) {
-	s.RegisterService(&_InWorkspaceHelper_serviceDesc, srv)
+func RegisterInWorkspaceHelperOldServer(s *grpc.Server, srv InWorkspaceHelperOldServer) {
+	s.RegisterService(&_InWorkspaceHelperOld_serviceDesc, srv)
 }
 
-func _InWorkspaceHelper_TeardownCanary_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(InWorkspaceHelperServer).TeardownCanary(&inWorkspaceHelperTeardownCanaryServer{stream})
+func _InWorkspaceHelperOld_TeardownCanary_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(InWorkspaceHelperOldServer).TeardownCanary(&inWorkspaceHelperOldTeardownCanaryServer{stream})
 }
 
-type InWorkspaceHelper_TeardownCanaryServer interface {
+type InWorkspaceHelperOld_TeardownCanaryServer interface {
 	Send(*TeardownRequest) error
 	Recv() (*TeardownResponse, error)
 	grpc.ServerStream
 }
 
-type inWorkspaceHelperTeardownCanaryServer struct {
+type inWorkspaceHelperOldTeardownCanaryServer struct {
 	grpc.ServerStream
 }
 
-func (x *inWorkspaceHelperTeardownCanaryServer) Send(m *TeardownRequest) error {
+func (x *inWorkspaceHelperOldTeardownCanaryServer) Send(m *TeardownRequest) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *inWorkspaceHelperTeardownCanaryServer) Recv() (*TeardownResponse, error) {
+func (x *inWorkspaceHelperOldTeardownCanaryServer) Recv() (*TeardownResponse, error) {
 	m := new(TeardownResponse)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -643,25 +995,25 @@ func (x *inWorkspaceHelperTeardownCanaryServer) Recv() (*TeardownResponse, error
 	return m, nil
 }
 
-func _InWorkspaceHelper_PauseTheia_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(InWorkspaceHelperServer).PauseTheia(&inWorkspaceHelperPauseTheiaServer{stream})
+func _InWorkspaceHelperOld_PauseTheia_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(InWorkspaceHelperOldServer).PauseTheia(&inWorkspaceHelperOldPauseTheiaServer{stream})
 }
 
-type InWorkspaceHelper_PauseTheiaServer interface {
+type InWorkspaceHelperOld_PauseTheiaServer interface {
 	SendAndClose(*PauseTheiaResponse) error
 	Recv() (*PauseTheiaRequest, error)
 	grpc.ServerStream
 }
 
-type inWorkspaceHelperPauseTheiaServer struct {
+type inWorkspaceHelperOldPauseTheiaServer struct {
 	grpc.ServerStream
 }
 
-func (x *inWorkspaceHelperPauseTheiaServer) SendAndClose(m *PauseTheiaResponse) error {
+func (x *inWorkspaceHelperOldPauseTheiaServer) SendAndClose(m *PauseTheiaResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *inWorkspaceHelperPauseTheiaServer) Recv() (*PauseTheiaRequest, error) {
+func (x *inWorkspaceHelperOldPauseTheiaServer) Recv() (*PauseTheiaRequest, error) {
 	m := new(PauseTheiaRequest)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -669,43 +1021,43 @@ func (x *inWorkspaceHelperPauseTheiaServer) Recv() (*PauseTheiaRequest, error) {
 	return m, nil
 }
 
-func _InWorkspaceHelper_GitStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _InWorkspaceHelperOld_GitStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GitStatusRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(InWorkspaceHelperServer).GitStatus(ctx, in)
+		return srv.(InWorkspaceHelperOldServer).GitStatus(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/wsbs.InWorkspaceHelper/GitStatus",
+		FullMethod: "/wsbs.InWorkspaceHelperOld/GitStatus",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InWorkspaceHelperServer).GitStatus(ctx, req.(*GitStatusRequest))
+		return srv.(InWorkspaceHelperOldServer).GitStatus(ctx, req.(*GitStatusRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _InWorkspaceHelper_UidmapCanary_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(InWorkspaceHelperServer).UidmapCanary(&inWorkspaceHelperUidmapCanaryServer{stream})
+func _InWorkspaceHelperOld_UidmapCanary_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(InWorkspaceHelperOldServer).UidmapCanary(&inWorkspaceHelperOldUidmapCanaryServer{stream})
 }
 
-type InWorkspaceHelper_UidmapCanaryServer interface {
+type InWorkspaceHelperOld_UidmapCanaryServer interface {
 	Send(*UidmapCanaryRequest) error
 	Recv() (*UidmapCanaryResponse, error)
 	grpc.ServerStream
 }
 
-type inWorkspaceHelperUidmapCanaryServer struct {
+type inWorkspaceHelperOldUidmapCanaryServer struct {
 	grpc.ServerStream
 }
 
-func (x *inWorkspaceHelperUidmapCanaryServer) Send(m *UidmapCanaryRequest) error {
+func (x *inWorkspaceHelperOldUidmapCanaryServer) Send(m *UidmapCanaryRequest) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func (x *inWorkspaceHelperUidmapCanaryServer) Recv() (*UidmapCanaryResponse, error) {
+func (x *inWorkspaceHelperOldUidmapCanaryServer) Recv() (*UidmapCanaryResponse, error) {
 	m := new(UidmapCanaryResponse)
 	if err := x.ServerStream.RecvMsg(m); err != nil {
 		return nil, err
@@ -713,30 +1065,30 @@ func (x *inWorkspaceHelperUidmapCanaryServer) Recv() (*UidmapCanaryResponse, err
 	return m, nil
 }
 
-var _InWorkspaceHelper_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "wsbs.InWorkspaceHelper",
-	HandlerType: (*InWorkspaceHelperServer)(nil),
+var _InWorkspaceHelperOld_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "wsbs.InWorkspaceHelperOld",
+	HandlerType: (*InWorkspaceHelperOldServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
 			MethodName: "GitStatus",
-			Handler:    _InWorkspaceHelper_GitStatus_Handler,
+			Handler:    _InWorkspaceHelperOld_GitStatus_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "TeardownCanary",
-			Handler:       _InWorkspaceHelper_TeardownCanary_Handler,
+			Handler:       _InWorkspaceHelperOld_TeardownCanary_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},
 		{
 			StreamName:    "PauseTheia",
-			Handler:       _InWorkspaceHelper_PauseTheia_Handler,
+			Handler:       _InWorkspaceHelperOld_PauseTheia_Handler,
 			ClientStreams: true,
 		},
 		{
 			StreamName:    "UidmapCanary",
-			Handler:       _InWorkspaceHelper_UidmapCanary_Handler,
+			Handler:       _InWorkspaceHelperOld_UidmapCanary_Handler,
 			ServerStreams: true,
 			ClientStreams: true,
 		},

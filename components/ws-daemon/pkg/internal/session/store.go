@@ -147,11 +147,11 @@ func (s *Store) Delete(ctx context.Context, name string) (err error) {
 }
 
 // Get retrieves a workspace
-func (s *Store) Get(name string) *Workspace {
+func (s *Store) Get(instanceID string) *Workspace {
 	s.workspacesLock.Lock()
 	defer s.workspacesLock.Unlock()
 
-	return s.workspaces[name]
+	return s.workspaces[instanceID]
 }
 
 // StartHousekeeping starts garbage collection and regular cleanup.

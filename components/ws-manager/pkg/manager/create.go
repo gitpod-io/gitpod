@@ -384,7 +384,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			var (
 				devType          = corev1.HostPathFile
 				hostPathOrCreate = corev1.HostPathDirectoryOrCreate
-				markVolumeName   = "mark-mount"
+				daemonVolumeName = "daemon-mount"
 				mountPropagation = corev1.MountPropagationHostToContainer
 			)
 			pod.Spec.Volumes = append(pod.Spec.Volumes,
@@ -398,10 +398,10 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 					},
 				},
 				corev1.Volume{
-					Name: markVolumeName,
+					Name: daemonVolumeName,
 					VolumeSource: corev1.VolumeSource{
 						HostPath: &corev1.HostPathVolumeSource{
-							Path: filepath.Join(m.Config.WorkspaceHostPath, startContext.Request.Id+"-mark"),
+							Path: filepath.Join(m.Config.WorkspaceHostPath, startContext.Request.Id+"-daemon"),
 							Type: &hostPathOrCreate,
 						},
 					},
@@ -418,8 +418,8 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 						Name:      "dev-net-tun",
 					},
 					corev1.VolumeMount{
-						MountPath:        "/.mark",
-						Name:             markVolumeName,
+						MountPath:        "/.workspace",
+						Name:             daemonVolumeName,
 						MountPropagation: &mountPropagation,
 					},
 				)

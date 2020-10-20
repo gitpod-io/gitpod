@@ -7,6 +7,14 @@ import "content-service-api/initializer.proto";
 option go_package = "github.com/gitpod-io/gitpod/ws-daemon/api";
 
 service InWorkspaceHelper {
+    rpc MountShiftfsMark(MountShiftfsMarkRequest) returns (MountShiftfsMarkResponse) {}
+    rpc Teardown(TeardownRequest) returns (TeardownResponse) {}
+    rpc PauseTheiaCanary(stream PauseTheiaResponse) returns (stream PauseTheiaRequest) {}
+    rpc GitStatusCanary(stream GitStatusResponse) returns (stream GitStatusRequest) {}
+    rpc WriteIDMapping(UidmapCanaryRequest) returns (UidmapCanaryResponse) {}
+}
+
+service InWorkspaceHelperOld {
     // Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
     // when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
     //
@@ -24,6 +32,9 @@ service InWorkspaceHelper {
     // UidmapCanary can establish a uid mapping of a new user namespace spawned within the workspace.
     rpc UidmapCanary(stream UidmapCanaryResponse) returns (stream UidmapCanaryRequest) {}
 }
+
+message MountShiftfsMarkRequest {}
+message MountShiftfsMarkResponse {}
 
 message TeardownRequest {
 }

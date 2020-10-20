@@ -18,7 +18,12 @@ var runCmd = &cobra.Command{
 	Short: "starts the supervisor",
 
 	Run: func(cmd *cobra.Command, args []string) {
-		supervisor.Run()
+		var opts []supervisor.RunOption
+		if runCmdOpts.NoTeardownCanary {
+			opts = append(opts, supervisor.WithoutTeardownCanary())
+		}
+
+		supervisor.Run(opts...)
 	},
 }
 

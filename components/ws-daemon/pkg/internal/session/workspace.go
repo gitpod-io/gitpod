@@ -68,8 +68,11 @@ type Workspace struct {
 	InstanceID          string           `json:"workspaceID"`
 	LastGitStatus       *csapi.GitStatus `json:"lastGitStatus"`
 	FullWorkspaceBackup bool             `json:"fullWorkspaceBackup"`
-	ShiftfsMarkMount    string           `json:"shiftfsMarkMount"`
 	ContentManifest     []byte           `json:"contentManifest"`
+
+	ServiceLocNode   string `json:"serviceLocNode"`
+	ServiceLocDaemon string `json:"serviceLocDaemon"`
+	ShiftfsMarkMount bool   `json:"shiftfsMarkMount"`
 
 	NonPersistentAttrs map[string]interface{} `json:"-"`
 

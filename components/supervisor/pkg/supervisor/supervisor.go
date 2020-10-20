@@ -27,17 +27,11 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/pkg/dropwriter"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/iwh"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
+	daemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
-)
-
-var (
-	// ServiceName is the name we use for tracing/logging
-	ServiceName = "supervisor"
-	// Version of this service - set during build
-	Version = ""
 )
 
 const (
@@ -100,7 +94,6 @@ func Run(options ...RunOption) {
 		return
 	}
 
-	log.Init(ServiceName, Version, true, true)
 	buildIDEEnv(&Config{})
 	configureGit(cfg)
 
@@ -120,8 +113,7 @@ func Run(options ...RunOption) {
 	var (
 		shutdown = make(chan struct{})
 		ideReady = make(chan struct{})
-		pauseIDE = make(chan bool)
-		iwh      = iwh.NewInWorkspaceHelper(cfg.RepoRoot, pauseIDE)
+		cstate   = NewInMemoryContentState(cfg.RepoRoot)
 		portMgmt = newPortsManager(
 			uint32(cfg.IDEPort),
 			uint32(cfg.APIEndpointPort),
@@ -129,29 +121,27 @@ func Run(options ...RunOption) {
 		termMux    = terminal.NewMux()
 		termMuxSrv = terminal.NewMuxTerminalService(termMux)
 	)
-	taskManager := newTasksManager(cfg, termMuxSrv, iwh.ContentState())
+	taskManager := newTasksManager(cfg, termMuxSrv, cstate)
 
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
 
 	apiServices := []RegisterableService{
-		iwh,
 		&statusService{
-			IWH:      iwh,
-			Ports:    portMgmt,
-			Tasks:    taskManager,
-			IDEReady: ideReady,
+			ContentState: cstate,
+			Ports:        portMgmt,
+			Tasks:        taskManager,
+			IDEReady:     ideReady,
 		},
 		termMuxSrv,
 		RegistrableTokenService{tokenService},
 		&InfoService{cfg: cfg},
-		&ControlService{UidmapCanary: iwh.IDMapperService()},
 	}
 	apiServices = append(apiServices, opts.AdditionalServices...)
 
 	var wg sync.WaitGroup
-	wg.Add(4)
-	go startAndWatchIDE(ctx, cfg, &wg, ideReady, pauseIDE)
-	go startContentInit(ctx, cfg, &wg, iwh.ContentState())
+	wg.Add(5)
+	go startAndWatchIDE(ctx, cfg, &wg, ideReady)
+	go startContentInit(ctx, cfg, &wg, cstate)
 	go startAPIEndpoint(ctx, cfg, &wg, apiServices)
 	go portMgmt.Run(ctx, &wg)
 	go taskManager.Run(ctx, &wg)
@@ -175,12 +165,7 @@ func Run(options ...RunOption) {
 	}
 
 	log.Info("received SIGTERM - tearing down")
-	if !opts.WithoutTeardownCanary {
-		err = iwh.TeardownService().Teardown(context.Background())
-		if err != nil {
-			log.WithError(err).Error("ungraceful shutdown - teardown was unsuccessful")
-		}
-	}
+	teardown(!opts.WithoutTeardownCanary)
 
 	cancel()
 	wg.Wait()
@@ -233,7 +218,7 @@ func hasMetadataAccess() bool {
 	return false
 }
 
-func startAndWatchIDE(ctx context.Context, cfg *Config, wg *sync.WaitGroup, ideReady chan<- struct{}, pauseChan <-chan bool) {
+func startAndWatchIDE(ctx context.Context, cfg *Config, wg *sync.WaitGroup, ideReady chan<- struct{}) {
 	defer wg.Done()
 
 	type status int
@@ -267,37 +252,10 @@ supervisorLoop:
 			go runIDEReadinessProbe(cfg, ideReady)
 
 			go func() {
-				var (
-					paused bool
-					t      = time.NewTimer(maxIDEPause)
-				)
-				for {
-					select {
-					case pause := <-pauseChan:
-						if pause {
-							t.Stop()
-							t.Reset(maxIDEPause)
-							paused = true
-
-							cmd.Process.Signal(syscall.SIGTSTP)
-						} else {
-							paused = false
-							cmd.Process.Signal(syscall.SIGCONT)
-						}
-					case <-t.C:
-						if paused {
-							paused = false
-							cmd.Process.Signal(syscall.SIGCONT)
-						}
-					case <-ideStopped:
-						return
-					}
-				}
-			}()
-
-			go func() {
 				err := cmd.Wait()
-				log.WithError(err).Warn("IDE was stopped")
+				if err != nil && !strings.Contains(err.Error(), "signal: interrupt") {
+					log.WithError(err).Warn("IDE was stopped")
+				}
 
 				close(ideStopped)
 			}()
@@ -478,7 +436,7 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	l.Close()
 }
 
-func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst iwh.ContentState) {
+func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst ContentState) {
 	defer wg.Done()
 	defer log.Info("supervisor: workspace content available")
 
@@ -551,4 +509,21 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 
 	log.WithField("source", src).Info("supervisor: workspace content init finished")
 	cst.MarkContentReady(src)
+}
+
+func teardown(withDaemonCall bool) {
+	if withDaemonCall {
+		log.Info("asking ws-daemon to tear down this workspace")
+		client, conn, err := iwh.NewInWorkspaceHelper(context.Background())
+		if err != nil {
+			log.WithError(err).Error("ungraceful shutdown - teardown was unsuccessful")
+			return
+		}
+
+		defer conn.Close()
+		_, err = client.Teardown(context.Background(), &daemon.TeardownRequest{})
+		if err != nil {
+			log.WithError(err).Error("ungraceful shutdown - teardown was unsuccessful")
+		}
+	}
 }
