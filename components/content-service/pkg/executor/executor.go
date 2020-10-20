@@ -81,7 +81,7 @@ func Execute(ctx context.Context, destination string, cfgin io.Reader, opts ...i
 		return "", err
 	}
 
-	err = initializer.PlaceWorkspaceReadyFile(ctx, destination, src)
+	err = initializer.PlaceWorkspaceReadyFile(ctx, destination, src, initializer.GitpodUID, initializer.GitpodGID)
 	if err != nil {
 		return src, err
 	}

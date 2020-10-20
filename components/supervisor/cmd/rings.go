@@ -153,6 +153,11 @@ var ring2Cmd = &cobra.Command{
 		log := log.WithField("ring", 2)
 		defer log.Info("done")
 
+		// BEWARE: there's a host of Fatal logs in here.
+		//         Fatal logs call os.Exit which prevents defers from running.
+		//         If you ever introduce more defers, particularly some that MUST run,
+		//         make sure to replace the fatal logs with error logs like in ring1.
+
 		tmpdir, err := ioutil.TempDir("", "supervisor")
 		if err != nil {
 			log.WithError(err).Fatal("cannot create tempdir")
@@ -191,24 +196,26 @@ var ring2Cmd = &cobra.Command{
 
 			err = syscall.Mount(m.Source, dst, m.FSType, m.Flags, "")
 			if err != nil {
-				log.WithError(err).WithField("dest", dst).Error("cannot establish mount")
-				// exit without fatal s.t. the defers still run
+				log.WithError(err).WithField("dest", dst).Fatal("cannot establish mount")
 				return
 			}
 		}
 
 		err = syscall.Chroot(tmpdir)
 		if err != nil {
-			log.WithError(err).WithField("tmpdir", tmpdir).Error("cannot chroot")
+			log.WithError(err).WithField("tmpdir", tmpdir).Fatal("cannot chroot")
 			return
 		}
 
-		// TODO(cw) set no_new_priv
-
 		cmd := exec.Command("/proc/self/exe", "run", "--without-teardown-canary")
 		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Pdeathsig:  syscall.SIGKILL,
-			Cloneflags: syscall.CLONE_NEWPID | syscall.CLONE_NEWNS,
+			Pdeathsig: syscall.SIGKILL,
+			// TODO(cw): once we have proc mounts figured out, use syscall.CLONE_NEWPID here to hide the rings from the workload
+			Cloneflags: syscall.CLONE_NEWNS,
+			Credential: &syscall.Credential{
+				Uid: 33333,
+				Gid: 33333,
+			},
 		}
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
@@ -223,8 +230,7 @@ var ring2Cmd = &cobra.Command{
 
 		err = cmd.Wait()
 		if err != nil {
-			log.WithError(err).Error("unexpected exit")
-			return
+			log.WithError(err).Fatal("unexpected exit")
 		}
 	},
 }

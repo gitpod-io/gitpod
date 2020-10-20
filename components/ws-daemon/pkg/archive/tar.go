@@ -11,7 +11,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/docker/engine/pkg/archive"
+	"github.com/docker/docker/pkg/archive"
+	"github.com/docker/docker/pkg/idtools"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
@@ -19,6 +20,8 @@ import (
 
 type buildTarbalConfig struct {
 	MaxSizeBytes int64
+	UIDMaps      []idtools.IDMap
+	GIDMaps      []idtools.IDMap
 }
 
 // BuildTarbalOption configures the tarbal creation
@@ -28,6 +31,41 @@ type BuildTarbalOption func(o *buildTarbalConfig)
 func TarbalMaxSize(n int64) BuildTarbalOption {
 	return func(o *buildTarbalConfig) {
 		o.MaxSizeBytes = n
+	}
+}
+
+// IDMapping maps user or group IDs
+type IDMapping struct {
+	ContainerID int
+	HostID      int
+	Size        int
+}
+
+// WithUIDMapping reverses the given user ID mapping during archive creation
+func WithUIDMapping(mappings []IDMapping) BuildTarbalOption {
+	return func(o *buildTarbalConfig) {
+		o.UIDMaps = make([]idtools.IDMap, len(mappings))
+		for i, m := range mappings {
+			o.UIDMaps[i] = idtools.IDMap{
+				ContainerID: m.ContainerID,
+				HostID:      m.HostID,
+				Size:        m.Size,
+			}
+		}
+	}
+}
+
+// WithGIDMapping reverses the given user ID mapping during archive creation
+func WithGIDMapping(mappings []IDMapping) BuildTarbalOption {
+	return func(o *buildTarbalConfig) {
+		o.GIDMaps = make([]idtools.IDMap, len(mappings))
+		for i, m := range mappings {
+			o.GIDMaps[i] = idtools.IDMap{
+				ContainerID: m.ContainerID,
+				HostID:      m.HostID,
+				Size:        m.Size,
+			}
+		}
 	}
 }
 
@@ -52,6 +90,8 @@ func BuildTarbal(ctx context.Context, src string, dst string, opts ...BuildTarba
 		Compression:    archive.Uncompressed,
 		WhiteoutFormat: archive.OverlayWhiteoutFormat,
 		InUserNS:       true,
+		UIDMaps:        cfg.UIDMaps,
+		GIDMaps:        cfg.GIDMaps,
 	})
 	if err != nil {
 		return xerrors.Errorf("cannot create tar: %w", err)

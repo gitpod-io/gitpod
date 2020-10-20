@@ -5,7 +5,7 @@ go 1.14
 // containerd, see https://github.com/containerd/containerd/issues/3031
 replace github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible // leeway ignore
 
-replace github.com/docker/docker v1.13.1 => github.com/docker/engine v0.0.0-20190822205725-ed20165a37b4 // leeway ignore
+replace github.com/docker/docker v1.13.1 => github.com/docker/engine v17.12.0-ce-rc1.0.20200514230353-811a247d06e8+incompatible // leeway ignore
 
 replace github.com/Sirupsen/logrus v1.6.0 => github.com/sirupsen/logrus v1.6.0 // leeway ignore
 
@@ -22,8 +22,7 @@ require (
 	github.com/containerd/go-runc v0.0.0-20200930051345-7c5957f67ef4 // indirect
 	github.com/containerd/ttrpc v1.0.2 // indirect
 	github.com/containerd/typeurl v1.0.1
-	github.com/docker/docker v1.13.1 // indirect
-	github.com/docker/engine v17.12.0-ce-rc1.0.20200514230353-811a247d06e8+incompatible
+	github.com/docker/docker v1.13.1
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
