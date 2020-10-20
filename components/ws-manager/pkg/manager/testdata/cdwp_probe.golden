@@ -190,6 +190,7 @@
                     }
                 }
             ],
+            "restartPolicy": "Never",
             "serviceAccountName": "workspace",
             "automountServiceAccountToken": false,
             "affinity": {

@@ -332,6 +332,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			Containers: []corev1.Container{
 				*workspaceContainer,
 			},
+			RestartPolicy: corev1.RestartPolicyNever,
 			Volumes: []corev1.Volume{
 				theiaVolume,
 				workspaceVolume,
