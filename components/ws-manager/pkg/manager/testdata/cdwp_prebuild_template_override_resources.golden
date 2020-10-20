@@ -194,6 +194,7 @@
                     }
                 }
             ],
+            "restartPolicy": "Never",
             "dnsPolicy": "None",
             "serviceAccountName": "workspace",
             "automountServiceAccountToken": false,
