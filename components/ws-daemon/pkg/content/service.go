@@ -23,7 +23,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/archive"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iwh"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -52,7 +52,7 @@ type WorkspaceService struct {
 type WorkspaceExistenceCheck func(instanceID string) bool
 
 // NewWorkspaceService creates a new workspce initialization service, starts housekeeping and the Prometheus integration
-func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace string, runtime container.Runtime, wec WorkspaceExistenceCheck, uidmapper *iwh.Uidmapper) (res *WorkspaceService, err error) {
+func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace string, runtime container.Runtime, wec WorkspaceExistenceCheck, uidmapper *iws.Uidmapper) (res *WorkspaceService, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "NewWorkspaceService")
 	defer tracing.FinishSpan(span, &err)
 
@@ -418,7 +418,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		mf   csapi.WorkspaceContentManifest
 	)
 	if sess.FullWorkspaceBackup {
-		lb, ok := sess.NonPersistentAttrs[session.AttrLiveBackup].(*iwh.LiveWorkspaceBackup)
+		lb, ok := sess.NonPersistentAttrs[session.AttrLiveBackup].(*iws.LiveWorkspaceBackup)
 		if lb == nil || !ok {
 			return xerrors.Errorf("workspace has no live backup configured")
 		}
@@ -677,7 +677,7 @@ func (s *WorkspaceService) TakeSnapshot(ctx context.Context, req *api.TakeSnapsh
 		return nil, status.Error(codes.Internal, "workspace has no remote storage")
 	}
 	if sess.FullWorkspaceBackup {
-		lb, ok := sess.NonPersistentAttrs[session.AttrLiveBackup].(*iwh.LiveWorkspaceBackup)
+		lb, ok := sess.NonPersistentAttrs[session.AttrLiveBackup].(*iws.LiveWorkspaceBackup)
 		if lb == nil || !ok {
 			log.WithFields(sess.OWI()).WithError(err).Error("cannot upload snapshot: no live backup available")
 			return nil, status.Error(codes.Internal, "workspace has no live backup")
@@ -753,7 +753,7 @@ func (c *cannotCancelContext) Value(key interface{}) interface{} {
 	return c.Delegate.Value(key)
 }
 
-func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceExistenceCheck WorkspaceExistenceCheck, uidmapper *iwh.Uidmapper) map[session.WorkspaceState][]session.WorkspaceLivecycleHook {
+func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceExistenceCheck WorkspaceExistenceCheck, uidmapper *iws.Uidmapper) map[session.WorkspaceState][]session.WorkspaceLivecycleHook {
 	var setupWorkspace session.WorkspaceLivecycleHook = func(ctx context.Context, ws *session.Workspace) error {
 		if _, ok := ws.NonPersistentAttrs[session.AttrRemoteStorage]; !ok {
 			remoteStorage, err := storage.NewDirectAccess(&cfg.Storage)
@@ -775,7 +775,7 @@ func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceEx
 		}
 
 		if _, ok := ws.NonPersistentAttrs[session.AttrLiveBackup]; ws.FullWorkspaceBackup && !ok {
-			ws.NonPersistentAttrs[session.AttrLiveBackup] = &iwh.LiveWorkspaceBackup{
+			ws.NonPersistentAttrs[session.AttrLiveBackup] = &iws.LiveWorkspaceBackup{
 				OWI:         ws.OWI(),
 				Location:    ws.UpperdirLocation,
 				Destination: filepath.Join(cfg.FullWorkspaceBackup.WorkDir, ws.InstanceID),
@@ -793,14 +793,14 @@ func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceEx
 		if lbr == nil || !ok {
 			log.WithFields(ws.OWI()).Warn("workspace is ready but did not have a live backup")
 
-			ws.NonPersistentAttrs[session.AttrLiveBackup] = &iwh.LiveWorkspaceBackup{
+			ws.NonPersistentAttrs[session.AttrLiveBackup] = &iws.LiveWorkspaceBackup{
 				OWI:         ws.OWI(),
 				Location:    ws.UpperdirLocation,
 				Destination: filepath.Join(cfg.FullWorkspaceBackup.WorkDir, ws.InstanceID),
 			}
 		}
 
-		lb, ok := lbr.(*iwh.LiveWorkspaceBackup)
+		lb, ok := lbr.(*iws.LiveWorkspaceBackup)
 		if lbr == nil || !ok {
 			return xerrors.Errorf("cannot start live backup - expected *LiveWorkspaceBackup")
 		}
@@ -810,7 +810,7 @@ func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceEx
 
 	return map[session.WorkspaceState][]session.WorkspaceLivecycleHook{
 		session.WorkspaceInitializing: {setupWorkspace},
-		session.WorkspaceReady:        {setupWorkspace, startLiveBackup, iwh.ServeWorkspace(uidmapper)},
-		session.WorkspaceDisposing:    {iwh.StopServingWorkspace},
+		session.WorkspaceReady:        {setupWorkspace, startLiveBackup, iws.ServeWorkspace(uidmapper)},
+		session.WorkspaceDisposing:    {iws.StopServingWorkspace},
 	}
 }

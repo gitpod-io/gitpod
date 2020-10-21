@@ -15,7 +15,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/diskguard"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/hosts"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iwh"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/resources"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/xerrors"
@@ -61,7 +61,7 @@ func NewDaemon(config Config, prom prometheus.Registerer) (*Daemon, error) {
 		config.Runtime.KubernetesNamespace,
 		containerRuntime,
 		dsptch.WorkspaceExistsOnNode,
-		&iwh.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
+		&iws.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
 	)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create content service: %w", err)

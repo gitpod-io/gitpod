@@ -9,7 +9,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/diskguard"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/hosts"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iwh"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/resources"
 )
 
@@ -22,7 +22,7 @@ type Config struct {
 	} `json:"runtime"`
 
 	Content        content.Config      `json:"content"`
-	Uidmapper      iwh.UidmapperConfig `json:"uidmapper"`
+	Uidmapper      iws.UidmapperConfig `json:"uidmapper"`
 	Resources      resources.Config    `json:"resources"`
 	Hosts          hosts.Config        `json:"hosts"`
 	DiskSpaceGuard diskguard.Config    `json:"disk"`

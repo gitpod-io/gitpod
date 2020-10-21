@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package iwh
+package iws
 
 import (
 	"context"
@@ -11,12 +11,15 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"sync"
+	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
 	"github.com/opentracing/opentracing-go"
+	"golang.org/x/time/rate"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -29,22 +32,22 @@ import (
 // by user-reachable code. There's no server or ws-man in front of this interface. Keep this interface minimal, and
 // be defensive!
 //
-// IWH services are made available to workspaces through the workspace dispatch.
+// IWS services are made available to workspaces through the workspace dispatch.
 // When a new workspace is added, the dispatch listener creates a new gRPC server socket,
 // and tears it down when the workspace is removed (i.e. the workspace context is canceled).
 //
 
-// ServeWorkspace establishes the IWH server for a workspace
+// ServeWorkspace establishes the IWS server for a workspace
 func ServeWorkspace(uidmapper *Uidmapper) func(ctx context.Context, ws *session.Workspace) error {
 	return func(ctx context.Context, ws *session.Workspace) (err error) {
 		if !ws.FullWorkspaceBackup && !ws.ShiftfsMarkMount {
 			return nil
 		}
 
-		span, ctx := opentracing.StartSpanFromContext(ctx, "iwh.ServeWorkspace")
+		span, ctx := opentracing.StartSpanFromContext(ctx, "iws.ServeWorkspace")
 		defer tracing.FinishSpan(span, &err)
 
-		helper := &InWorkspaceHelperServer{
+		helper := &InWorkspaceServiceServer{
 			Uidmapper: uidmapper,
 			Session:   ws,
 		}
@@ -53,7 +56,7 @@ func ServeWorkspace(uidmapper *Uidmapper) func(ctx context.Context, ws *session.
 			return xerrors.Errorf("cannot start in-workspace-helper server: %w", err)
 		}
 
-		log.WithFields(ws.OWI()).Info("established IWH server")
+		log.WithFields(ws.OWI()).Info("established IWS server")
 		ws.NonPersistentAttrs[session.AttrWorkspaceServer] = helper.Stop
 
 		return nil
@@ -73,12 +76,12 @@ func StopServingWorkspace(ctx context.Context, ws *session.Workspace) error {
 	}
 
 	stopFn()
-	log.WithFields(ws.OWI()).Info("stopped IWH server")
+	log.WithFields(ws.OWI()).Info("stopped IWS server")
 	return nil
 }
 
-// InWorkspaceHelperServer implements the workspace facing backup services
-type InWorkspaceHelperServer struct {
+// InWorkspaceServiceServer implements the workspace facing backup services
+type InWorkspaceServiceServer struct {
 	Uidmapper *Uidmapper
 	Session   *session.Workspace
 
@@ -86,8 +89,8 @@ type InWorkspaceHelperServer struct {
 	sckt io.Closer
 }
 
-// Start creates the unix socket the IWH server listens on, and starts the gRPC server on it
-func (wbs *InWorkspaceHelperServer) Start() error {
+// Start creates the unix socket the IWS server listens on, and starts the gRPC server on it
+func (wbs *InWorkspaceServiceServer) Start() error {
 	socketFN := filepath.Join(wbs.Session.ServiceLocDaemon, "daemon.sock")
 	if _, err := os.Stat(socketFN); err == nil {
 		// a former ws-daemon instance left their sockets laying around.
@@ -96,32 +99,44 @@ func (wbs *InWorkspaceHelperServer) Start() error {
 	}
 	sckt, err := net.Listen("unix", socketFN)
 	if err != nil {
-		return xerrors.Errorf("cannot create IWH socket: %w", err)
+		return xerrors.Errorf("cannot create IWS socket: %w", err)
 	}
 	err = os.Chmod(socketFN, 0777)
 	if err != nil {
-		return xerrors.Errorf("cannot chmod IWH socket: %w", err)
+		return xerrors.Errorf("cannot chmod IWS socket: %w", err)
 	}
 
-	srv := grpc.NewServer()
-	api.RegisterInWorkspaceHelperServer(srv, wbs)
+	limits := ratelimitingInterceptor{
+		"/iws.InWorkspaceService/MountShiftfsMark": ratelimit{
+			UseOnce: true,
+		},
+		"/iws.InWorkspaceService/WriteIDMapping": ratelimit{
+			Limiter: rate.NewLimiter(rate.Every(2500*time.Millisecond), 4),
+		},
+		"/iws.InWorkspaceService/Teardown": ratelimit{
+			UseOnce: true,
+		},
+	}
+
+	srv := grpc.NewServer(grpc.ChainUnaryInterceptor(limits.UnaryInterceptor()))
+	api.RegisterInWorkspaceServiceServer(srv, wbs)
 	go func() {
 		err := srv.Serve(sckt)
 		if err != nil {
-			log.WithError(err).WithFields(wbs.Session.OWI()).Error("IWH server failed")
+			log.WithError(err).WithFields(wbs.Session.OWI()).Error("IWS server failed")
 		}
 	}()
 	return nil
 }
 
 // Stop stops the service and closes the socket
-func (wbs *InWorkspaceHelperServer) Stop() {
+func (wbs *InWorkspaceServiceServer) Stop() {
 	defer wbs.sckt.Close()
 	wbs.srv.GracefulStop()
 }
 
 // MountShiftfsMark mounts the workspace's shiftfs mark
-func (wbs *InWorkspaceHelperServer) MountShiftfsMark(ctx context.Context, req *api.MountShiftfsMarkRequest) (*api.MountShiftfsMarkResponse, error) {
+func (wbs *InWorkspaceServiceServer) MountShiftfsMark(ctx context.Context, req *api.MountShiftfsMarkRequest) (resp *api.MountShiftfsMarkResponse, err error) {
 	rt := wbs.Uidmapper.Runtime
 	if rt == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "not connected to container runtime")
@@ -152,7 +167,7 @@ func (wbs *InWorkspaceHelperServer) MountShiftfsMark(ctx context.Context, req *a
 }
 
 // WriteIDMapping writes /proc/.../uid_map and /proc/.../gid_map for a workapce container
-func (wbs *InWorkspaceHelperServer) WriteIDMapping(ctx context.Context, req *api.UidmapCanaryRequest) (*api.UidmapCanaryResponse, error) {
+func (wbs *InWorkspaceServiceServer) WriteIDMapping(ctx context.Context, req *api.WriteIDMappingRequest) (*api.WriteIDMappingResponse, error) {
 	cid, err := wbs.Uidmapper.Runtime.WaitForContainer(ctx, wbs.Session.InstanceID)
 	if err != nil {
 		log.WithFields(wbs.Session.OWI()).WithError(err).Error("cannot write ID mapping, because we cannot find the container")
@@ -164,11 +179,11 @@ func (wbs *InWorkspaceHelperServer) WriteIDMapping(ctx context.Context, req *api
 		return nil, err
 	}
 
-	return &api.UidmapCanaryResponse{}, nil
+	return &api.WriteIDMappingResponse{}, nil
 }
 
 // Teardown triggers the final liev backup and possibly shiftfs mark unmount
-func (wbs *InWorkspaceHelperServer) Teardown(ctx context.Context, req *api.TeardownRequest) (*api.TeardownResponse, error) {
+func (wbs *InWorkspaceServiceServer) Teardown(ctx context.Context, req *api.TeardownRequest) (*api.TeardownResponse, error) {
 	owi := wbs.Session.OWI()
 
 	var (
@@ -190,7 +205,7 @@ func (wbs *InWorkspaceHelperServer) Teardown(ctx context.Context, req *api.Teard
 	return &api.TeardownResponse{Success: success}, nil
 }
 
-func (wbs *InWorkspaceHelperServer) performLiveBackup() error {
+func (wbs *InWorkspaceServiceServer) performLiveBackup() error {
 	if !wbs.Session.FullWorkspaceBackup {
 		return nil
 	}
@@ -208,7 +223,7 @@ func (wbs *InWorkspaceHelperServer) performLiveBackup() error {
 	return nil
 }
 
-func (wbs *InWorkspaceHelperServer) unmountShiftfsMark() error {
+func (wbs *InWorkspaceServiceServer) unmountShiftfsMark() error {
 	if !wbs.Session.ShiftfsMarkMount {
 		return nil
 	}
@@ -224,12 +239,37 @@ func (wbs *InWorkspaceHelperServer) unmountShiftfsMark() error {
 	return nil
 }
 
-// PauseTheiaCanary is not yet implemented
-func (wbs *InWorkspaceHelperServer) PauseTheiaCanary(srv api.InWorkspaceHelper_PauseTheiaCanaryServer) error {
-	return nil
+type ratelimitingInterceptor map[string]ratelimit
+
+type ratelimit struct {
+	Limiter *rate.Limiter
+	UseOnce bool
 }
 
-// GitStatusCanary is not yet implemented
-func (wbs *InWorkspaceHelperServer) GitStatusCanary(srv api.InWorkspaceHelper_GitStatusCanaryServer) error {
-	return nil
+func (rli ratelimitingInterceptor) UnaryInterceptor() grpc.UnaryServerInterceptor {
+	var (
+		mu   sync.Mutex
+		used = make(map[string]struct{})
+	)
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
+		limit, ok := rli[info.FullMethod]
+		if ok {
+			if limit.UseOnce {
+				mu.Lock()
+				_, ran := used[info.FullMethod]
+				used[info.FullMethod] = struct{}{}
+				mu.Unlock()
+
+				if ran {
+					return nil, status.Error(codes.ResourceExhausted, "can be used only once")
+				}
+			}
+
+			if limit.Limiter != nil && !limit.Limiter.Allow() {
+				return nil, status.Error(codes.ResourceExhausted, "too many requests")
+			}
+		}
+
+		return handler(ctx, req)
+	}
 }

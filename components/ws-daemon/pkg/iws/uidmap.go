@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package iwh
+package iws
 
 import (
 	"bufio"
@@ -15,7 +15,7 @@ import (
 	"strings"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	ndeapi "github.com/gitpod-io/gitpod/ws-daemon/api"
+	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/sirupsen/logrus"
@@ -60,7 +60,7 @@ func (r UIDRange) Contains(start, size uint32) bool {
 }
 
 // HandleUIDMappingRequest performs a UID mapping request
-func (m *Uidmapper) HandleUIDMappingRequest(ctx context.Context, req *ndeapi.UidmapCanaryRequest, containerID container.ID, instanceID string) (err error) {
+func (m *Uidmapper) HandleUIDMappingRequest(ctx context.Context, req *api.WriteIDMappingRequest, containerID container.ID, instanceID string) (err error) {
 	reqjson, _ := (&jsonpb.Marshaler{}).MarshalToString(req)
 	fields := logrus.Fields{"req": reqjson, "containerID": containerID, "instanceId": instanceID}
 	log.WithFields(fields).Info("received UID mapping request")
@@ -95,7 +95,7 @@ func (m *Uidmapper) HandleUIDMappingRequest(ctx context.Context, req *ndeapi.Uid
 	return nil
 }
 
-func (m *Uidmapper) validateMapping(mapping []*ndeapi.UidmapCanaryRequest_Mapping) error {
+func (m *Uidmapper) validateMapping(mapping []*api.WriteIDMappingRequest_Mapping) error {
 	for _, mp := range mapping {
 		if mp.ContainerId == 0 && !m.Config.RootRange.Contains(mp.HostId, mp.Size) {
 			return status.Error(codes.InvalidArgument, "mapping for UID 0 is out of range")
@@ -117,7 +117,7 @@ func (m *Uidmapper) validateMapping(mapping []*ndeapi.UidmapCanaryRequest_Mappin
 }
 
 // WriteMapping writes uid_map and gid_map
-func WriteMapping(hostPID uint64, gid bool, mapping []*ndeapi.UidmapCanaryRequest_Mapping) (err error) {
+func WriteMapping(hostPID uint64, gid bool, mapping []*api.WriteIDMappingRequest_Mapping) (err error) {
 	// Note: unlike shadow's newuidmap/newgidmap we do not set /proc/PID/setgroups to deny because:
 	//    - we're writing from a privileged process, hence don't trip that restriction introduced in Linux 3.39
 	//    - denying setgroups would prevent any meaningfull use of the NS mapped "root" user (e.g. breaks apt-get)

@@ -1,60 +1,28 @@
 syntax = "proto3";
 
-package wsbs;
-
-import "content-service-api/initializer.proto";
+package iws;
 
 option go_package = "github.com/gitpod-io/gitpod/ws-daemon/api";
 
-service InWorkspaceHelper {
-    rpc MountShiftfsMark(MountShiftfsMarkRequest) returns (MountShiftfsMarkResponse) {}
-    rpc Teardown(TeardownRequest) returns (TeardownResponse) {}
-    rpc PauseTheiaCanary(stream PauseTheiaResponse) returns (stream PauseTheiaRequest) {}
-    rpc GitStatusCanary(stream GitStatusResponse) returns (stream GitStatusRequest) {}
-    rpc WriteIDMapping(UidmapCanaryRequest) returns (UidmapCanaryResponse) {}
-}
+service InWorkspaceService {
+    // WriteIDMapping writes a new user/group ID mapping to /proc/<pid>/uid_map (gid_map respectively). This is used
+    // for user namespaces and is available four times every 10 seconds.
+    rpc WriteIDMapping(WriteIDMappingRequest) returns (WriteIDMappingResponse) {}
 
-service InWorkspaceHelperOld {
+    // MountShiftfsMark mounts the workspace contiainer's rootfs as a shiftfs mark under `/.workspace/mark` if the
+    // workspace has the daemon hostPath mount. Can only be used once per workspace.
+    rpc MountShiftfsMark(MountShiftfsMarkRequest) returns (MountShiftfsMarkResponse) {}
+
     // Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
     // when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
-    //
-    // Note that the request/response flow is inverted here, as it's the server (supervisor) which requests the teardown
-    // from the client (ws-daemon).
-    rpc TeardownCanary(stream TeardownResponse) returns (stream TeardownRequest) {}
-
-    // PauseTheia can pause the Theia process and all its children. As long as the request stream
-    // is held Theia will be paused.
-    // This is a stop-the-world mechanism for preventing concurrent modification during backup.
-    rpc PauseTheia(stream PauseTheiaRequest) returns (PauseTheiaResponse) {}
-
-    rpc GitStatus(GitStatusRequest) returns (GitStatusResponse) {}
-
-    // UidmapCanary can establish a uid mapping of a new user namespace spawned within the workspace.
-    rpc UidmapCanary(stream UidmapCanaryResponse) returns (stream UidmapCanaryRequest) {}
+    rpc Teardown(TeardownRequest) returns (TeardownResponse) {}
 }
 
-message MountShiftfsMarkRequest {}
-message MountShiftfsMarkResponse {}
-
-message TeardownRequest {
-}
-message TeardownResponse {
-    bool success = 2;
-}
-
-message PauseTheiaRequest {}
-message PauseTheiaResponse {}
-
-message GitStatusRequest {}
-message GitStatusResponse {
-    contentservice.GitStatus repo = 1;
-}
-
-message UidmapCanaryResponse {
+message WriteIDMappingResponse {
     string message = 1;
     uint32 error_code = 2;
 }
-message UidmapCanaryRequest {
+message WriteIDMappingRequest {
     message Mapping {
         uint32 container_id = 1;
         uint32 host_id = 2;
@@ -64,4 +32,13 @@ message UidmapCanaryRequest {
     int64 pid = 1;
     bool gid = 2;
     repeated Mapping mapping = 3;
+}
+
+message MountShiftfsMarkRequest {}
+message MountShiftfsMarkResponse {}
+
+message TeardownRequest {
+}
+message TeardownResponse {
+    bool success = 2;
 }
