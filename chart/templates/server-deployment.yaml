@@ -200,9 +200,11 @@ spec:
           value: {{ .Values.components.wsDaemon.remoteStorage.gcloud.projectId }}
         - name: GCLOUD_REGION
           value: {{ .Values.components.wsDaemon.remoteStorage.gcloud.region }}
-{{- if .Values.components.wsDaemon.remoteStorage.gcloud.credentialsFile }}
         - name: GCLOUD_CREDENTIALS_FILE
+{{- if .Values.components.wsDaemon.remoteStorage.gcloud.credentialsFile }}
           value: {{ base .Values.components.wsDaemon.remoteStorage.gcloud.credentialsFile }}
+{{- else }}
+          value: key.json
 {{- end }}
 {{- end }}
         - name: GITPOD_GARBAGE_COLLECTION_DISABLED
