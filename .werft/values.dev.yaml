@@ -139,3 +139,8 @@ components:
 # configure GCP registry
 docker-registry:
   enabled: false
+
+minio:
+  serviceAccount:
+    name: ws-daemon
+    create: false
