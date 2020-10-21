@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/supervisor/pkg/iwh"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/supervisor"
 	daemonapi "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/rootless-containers/rootlesskit/pkg/sigproxy"
 	sigproxysignal "github.com/rootless-containers/rootlesskit/pkg/sigproxy/signal"
@@ -76,7 +76,7 @@ var ring1Cmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		client, conn, err := iwh.NewInWorkspaceHelper(ctx)
+		client, conn, err := supervisor.ConnectToInWorkspaceDaemonService(ctx)
 		if err != nil {
 			log.WithError(err).Error("cannot connect to daemon")
 			failed = true
@@ -84,17 +84,17 @@ var ring1Cmd = &cobra.Command{
 		}
 		defer conn.Close()
 
-		mapping := []*daemonapi.UidmapCanaryRequest_Mapping{
+		mapping := []*daemonapi.WriteIDMappingRequest_Mapping{
 			{ContainerId: 0, HostId: 33333, Size: 1},
 			{ContainerId: 1, HostId: 100000, Size: 65534},
 		}
-		_, err = client.WriteIDMapping(ctx, &daemonapi.UidmapCanaryRequest{Pid: int64(os.Getpid()), Gid: false, Mapping: mapping})
+		_, err = client.WriteIDMapping(ctx, &daemonapi.WriteIDMappingRequest{Pid: int64(os.Getpid()), Gid: false, Mapping: mapping})
 		if err != nil {
 			log.WithError(err).Error("cannot establish UID mapping")
 			failed = true
 			return
 		}
-		_, err = client.WriteIDMapping(ctx, &daemonapi.UidmapCanaryRequest{Pid: int64(os.Getpid()), Gid: true, Mapping: mapping})
+		_, err = client.WriteIDMapping(ctx, &daemonapi.WriteIDMappingRequest{Pid: int64(os.Getpid()), Gid: true, Mapping: mapping})
 		if err != nil {
 			log.WithError(err).Error("cannot establish GID mapping")
 			failed = true

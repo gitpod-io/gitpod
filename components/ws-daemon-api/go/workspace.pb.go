@@ -10,7 +10,6 @@ package api
 import (
 	context "context"
 	fmt "fmt"
-	api "github.com/gitpod-io/gitpod/content-service/api"
 	proto "github.com/golang/protobuf/proto"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -29,6 +28,163 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
+type WriteIDMappingResponse struct {
+	Message              string   `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	ErrorCode            uint32   `protobuf:"varint,2,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *WriteIDMappingResponse) Reset()         { *m = WriteIDMappingResponse{} }
+func (m *WriteIDMappingResponse) String() string { return proto.CompactTextString(m) }
+func (*WriteIDMappingResponse) ProtoMessage()    {}
+func (*WriteIDMappingResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_dac718ecaafc2333, []int{0}
+}
+
+func (m *WriteIDMappingResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WriteIDMappingResponse.Unmarshal(m, b)
+}
+func (m *WriteIDMappingResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WriteIDMappingResponse.Marshal(b, m, deterministic)
+}
+func (m *WriteIDMappingResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WriteIDMappingResponse.Merge(m, src)
+}
+func (m *WriteIDMappingResponse) XXX_Size() int {
+	return xxx_messageInfo_WriteIDMappingResponse.Size(m)
+}
+func (m *WriteIDMappingResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_WriteIDMappingResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WriteIDMappingResponse proto.InternalMessageInfo
+
+func (m *WriteIDMappingResponse) GetMessage() string {
+	if m != nil {
+		return m.Message
+	}
+	return ""
+}
+
+func (m *WriteIDMappingResponse) GetErrorCode() uint32 {
+	if m != nil {
+		return m.ErrorCode
+	}
+	return 0
+}
+
+type WriteIDMappingRequest struct {
+	Pid                  int64                            `protobuf:"varint,1,opt,name=pid,proto3" json:"pid,omitempty"`
+	Gid                  bool                             `protobuf:"varint,2,opt,name=gid,proto3" json:"gid,omitempty"`
+	Mapping              []*WriteIDMappingRequest_Mapping `protobuf:"bytes,3,rep,name=mapping,proto3" json:"mapping,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}                         `json:"-"`
+	XXX_unrecognized     []byte                           `json:"-"`
+	XXX_sizecache        int32                            `json:"-"`
+}
+
+func (m *WriteIDMappingRequest) Reset()         { *m = WriteIDMappingRequest{} }
+func (m *WriteIDMappingRequest) String() string { return proto.CompactTextString(m) }
+func (*WriteIDMappingRequest) ProtoMessage()    {}
+func (*WriteIDMappingRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_dac718ecaafc2333, []int{1}
+}
+
+func (m *WriteIDMappingRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WriteIDMappingRequest.Unmarshal(m, b)
+}
+func (m *WriteIDMappingRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WriteIDMappingRequest.Marshal(b, m, deterministic)
+}
+func (m *WriteIDMappingRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WriteIDMappingRequest.Merge(m, src)
+}
+func (m *WriteIDMappingRequest) XXX_Size() int {
+	return xxx_messageInfo_WriteIDMappingRequest.Size(m)
+}
+func (m *WriteIDMappingRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_WriteIDMappingRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WriteIDMappingRequest proto.InternalMessageInfo
+
+func (m *WriteIDMappingRequest) GetPid() int64 {
+	if m != nil {
+		return m.Pid
+	}
+	return 0
+}
+
+func (m *WriteIDMappingRequest) GetGid() bool {
+	if m != nil {
+		return m.Gid
+	}
+	return false
+}
+
+func (m *WriteIDMappingRequest) GetMapping() []*WriteIDMappingRequest_Mapping {
+	if m != nil {
+		return m.Mapping
+	}
+	return nil
+}
+
+type WriteIDMappingRequest_Mapping struct {
+	ContainerId          uint32   `protobuf:"varint,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
+	HostId               uint32   `protobuf:"varint,2,opt,name=host_id,json=hostId,proto3" json:"host_id,omitempty"`
+	Size                 uint32   `protobuf:"varint,3,opt,name=size,proto3" json:"size,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *WriteIDMappingRequest_Mapping) Reset()         { *m = WriteIDMappingRequest_Mapping{} }
+func (m *WriteIDMappingRequest_Mapping) String() string { return proto.CompactTextString(m) }
+func (*WriteIDMappingRequest_Mapping) ProtoMessage()    {}
+func (*WriteIDMappingRequest_Mapping) Descriptor() ([]byte, []int) {
+	return fileDescriptor_dac718ecaafc2333, []int{1, 0}
+}
+
+func (m *WriteIDMappingRequest_Mapping) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_WriteIDMappingRequest_Mapping.Unmarshal(m, b)
+}
+func (m *WriteIDMappingRequest_Mapping) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_WriteIDMappingRequest_Mapping.Marshal(b, m, deterministic)
+}
+func (m *WriteIDMappingRequest_Mapping) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_WriteIDMappingRequest_Mapping.Merge(m, src)
+}
+func (m *WriteIDMappingRequest_Mapping) XXX_Size() int {
+	return xxx_messageInfo_WriteIDMappingRequest_Mapping.Size(m)
+}
+func (m *WriteIDMappingRequest_Mapping) XXX_DiscardUnknown() {
+	xxx_messageInfo_WriteIDMappingRequest_Mapping.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_WriteIDMappingRequest_Mapping proto.InternalMessageInfo
+
+func (m *WriteIDMappingRequest_Mapping) GetContainerId() uint32 {
+	if m != nil {
+		return m.ContainerId
+	}
+	return 0
+}
+
+func (m *WriteIDMappingRequest_Mapping) GetHostId() uint32 {
+	if m != nil {
+		return m.HostId
+	}
+	return 0
+}
+
+func (m *WriteIDMappingRequest_Mapping) GetSize() uint32 {
+	if m != nil {
+		return m.Size
+	}
+	return 0
+}
+
 type MountShiftfsMarkRequest struct {
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -39,7 +195,7 @@ func (m *MountShiftfsMarkRequest) Reset()         { *m = MountShiftfsMarkRequest
 func (m *MountShiftfsMarkRequest) String() string { return proto.CompactTextString(m) }
 func (*MountShiftfsMarkRequest) ProtoMessage()    {}
 func (*MountShiftfsMarkRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{0}
+	return fileDescriptor_dac718ecaafc2333, []int{2}
 }
 
 func (m *MountShiftfsMarkRequest) XXX_Unmarshal(b []byte) error {
@@ -70,7 +226,7 @@ func (m *MountShiftfsMarkResponse) Reset()         { *m = MountShiftfsMarkRespon
 func (m *MountShiftfsMarkResponse) String() string { return proto.CompactTextString(m) }
 func (*MountShiftfsMarkResponse) ProtoMessage()    {}
 func (*MountShiftfsMarkResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{1}
+	return fileDescriptor_dac718ecaafc2333, []int{3}
 }
 
 func (m *MountShiftfsMarkResponse) XXX_Unmarshal(b []byte) error {
@@ -101,7 +257,7 @@ func (m *TeardownRequest) Reset()         { *m = TeardownRequest{} }
 func (m *TeardownRequest) String() string { return proto.CompactTextString(m) }
 func (*TeardownRequest) ProtoMessage()    {}
 func (*TeardownRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{2}
+	return fileDescriptor_dac718ecaafc2333, []int{4}
 }
 
 func (m *TeardownRequest) XXX_Unmarshal(b []byte) error {
@@ -133,7 +289,7 @@ func (m *TeardownResponse) Reset()         { *m = TeardownResponse{} }
 func (m *TeardownResponse) String() string { return proto.CompactTextString(m) }
 func (*TeardownResponse) ProtoMessage()    {}
 func (*TeardownResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{3}
+	return fileDescriptor_dac718ecaafc2333, []int{5}
 }
 
 func (m *TeardownResponse) XXX_Unmarshal(b []byte) error {
@@ -161,307 +317,14 @@ func (m *TeardownResponse) GetSuccess() bool {
 	return false
 }
 
-type PauseTheiaRequest struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *PauseTheiaRequest) Reset()         { *m = PauseTheiaRequest{} }
-func (m *PauseTheiaRequest) String() string { return proto.CompactTextString(m) }
-func (*PauseTheiaRequest) ProtoMessage()    {}
-func (*PauseTheiaRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{4}
-}
-
-func (m *PauseTheiaRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PauseTheiaRequest.Unmarshal(m, b)
-}
-func (m *PauseTheiaRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PauseTheiaRequest.Marshal(b, m, deterministic)
-}
-func (m *PauseTheiaRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PauseTheiaRequest.Merge(m, src)
-}
-func (m *PauseTheiaRequest) XXX_Size() int {
-	return xxx_messageInfo_PauseTheiaRequest.Size(m)
-}
-func (m *PauseTheiaRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_PauseTheiaRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PauseTheiaRequest proto.InternalMessageInfo
-
-type PauseTheiaResponse struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *PauseTheiaResponse) Reset()         { *m = PauseTheiaResponse{} }
-func (m *PauseTheiaResponse) String() string { return proto.CompactTextString(m) }
-func (*PauseTheiaResponse) ProtoMessage()    {}
-func (*PauseTheiaResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{5}
-}
-
-func (m *PauseTheiaResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_PauseTheiaResponse.Unmarshal(m, b)
-}
-func (m *PauseTheiaResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_PauseTheiaResponse.Marshal(b, m, deterministic)
-}
-func (m *PauseTheiaResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PauseTheiaResponse.Merge(m, src)
-}
-func (m *PauseTheiaResponse) XXX_Size() int {
-	return xxx_messageInfo_PauseTheiaResponse.Size(m)
-}
-func (m *PauseTheiaResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_PauseTheiaResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_PauseTheiaResponse proto.InternalMessageInfo
-
-type GitStatusRequest struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *GitStatusRequest) Reset()         { *m = GitStatusRequest{} }
-func (m *GitStatusRequest) String() string { return proto.CompactTextString(m) }
-func (*GitStatusRequest) ProtoMessage()    {}
-func (*GitStatusRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{6}
-}
-
-func (m *GitStatusRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_GitStatusRequest.Unmarshal(m, b)
-}
-func (m *GitStatusRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_GitStatusRequest.Marshal(b, m, deterministic)
-}
-func (m *GitStatusRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GitStatusRequest.Merge(m, src)
-}
-func (m *GitStatusRequest) XXX_Size() int {
-	return xxx_messageInfo_GitStatusRequest.Size(m)
-}
-func (m *GitStatusRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_GitStatusRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_GitStatusRequest proto.InternalMessageInfo
-
-type GitStatusResponse struct {
-	Repo                 *api.GitStatus `protobuf:"bytes,1,opt,name=repo,proto3" json:"repo,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
-	XXX_unrecognized     []byte         `json:"-"`
-	XXX_sizecache        int32          `json:"-"`
-}
-
-func (m *GitStatusResponse) Reset()         { *m = GitStatusResponse{} }
-func (m *GitStatusResponse) String() string { return proto.CompactTextString(m) }
-func (*GitStatusResponse) ProtoMessage()    {}
-func (*GitStatusResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{7}
-}
-
-func (m *GitStatusResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_GitStatusResponse.Unmarshal(m, b)
-}
-func (m *GitStatusResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_GitStatusResponse.Marshal(b, m, deterministic)
-}
-func (m *GitStatusResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_GitStatusResponse.Merge(m, src)
-}
-func (m *GitStatusResponse) XXX_Size() int {
-	return xxx_messageInfo_GitStatusResponse.Size(m)
-}
-func (m *GitStatusResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_GitStatusResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_GitStatusResponse proto.InternalMessageInfo
-
-func (m *GitStatusResponse) GetRepo() *api.GitStatus {
-	if m != nil {
-		return m.Repo
-	}
-	return nil
-}
-
-type UidmapCanaryResponse struct {
-	Message              string   `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
-	ErrorCode            uint32   `protobuf:"varint,2,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *UidmapCanaryResponse) Reset()         { *m = UidmapCanaryResponse{} }
-func (m *UidmapCanaryResponse) String() string { return proto.CompactTextString(m) }
-func (*UidmapCanaryResponse) ProtoMessage()    {}
-func (*UidmapCanaryResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{8}
-}
-
-func (m *UidmapCanaryResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_UidmapCanaryResponse.Unmarshal(m, b)
-}
-func (m *UidmapCanaryResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_UidmapCanaryResponse.Marshal(b, m, deterministic)
-}
-func (m *UidmapCanaryResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UidmapCanaryResponse.Merge(m, src)
-}
-func (m *UidmapCanaryResponse) XXX_Size() int {
-	return xxx_messageInfo_UidmapCanaryResponse.Size(m)
-}
-func (m *UidmapCanaryResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_UidmapCanaryResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_UidmapCanaryResponse proto.InternalMessageInfo
-
-func (m *UidmapCanaryResponse) GetMessage() string {
-	if m != nil {
-		return m.Message
-	}
-	return ""
-}
-
-func (m *UidmapCanaryResponse) GetErrorCode() uint32 {
-	if m != nil {
-		return m.ErrorCode
-	}
-	return 0
-}
-
-type UidmapCanaryRequest struct {
-	Pid                  int64                          `protobuf:"varint,1,opt,name=pid,proto3" json:"pid,omitempty"`
-	Gid                  bool                           `protobuf:"varint,2,opt,name=gid,proto3" json:"gid,omitempty"`
-	Mapping              []*UidmapCanaryRequest_Mapping `protobuf:"bytes,3,rep,name=mapping,proto3" json:"mapping,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}                       `json:"-"`
-	XXX_unrecognized     []byte                         `json:"-"`
-	XXX_sizecache        int32                          `json:"-"`
-}
-
-func (m *UidmapCanaryRequest) Reset()         { *m = UidmapCanaryRequest{} }
-func (m *UidmapCanaryRequest) String() string { return proto.CompactTextString(m) }
-func (*UidmapCanaryRequest) ProtoMessage()    {}
-func (*UidmapCanaryRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{9}
-}
-
-func (m *UidmapCanaryRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_UidmapCanaryRequest.Unmarshal(m, b)
-}
-func (m *UidmapCanaryRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_UidmapCanaryRequest.Marshal(b, m, deterministic)
-}
-func (m *UidmapCanaryRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UidmapCanaryRequest.Merge(m, src)
-}
-func (m *UidmapCanaryRequest) XXX_Size() int {
-	return xxx_messageInfo_UidmapCanaryRequest.Size(m)
-}
-func (m *UidmapCanaryRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_UidmapCanaryRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_UidmapCanaryRequest proto.InternalMessageInfo
-
-func (m *UidmapCanaryRequest) GetPid() int64 {
-	if m != nil {
-		return m.Pid
-	}
-	return 0
-}
-
-func (m *UidmapCanaryRequest) GetGid() bool {
-	if m != nil {
-		return m.Gid
-	}
-	return false
-}
-
-func (m *UidmapCanaryRequest) GetMapping() []*UidmapCanaryRequest_Mapping {
-	if m != nil {
-		return m.Mapping
-	}
-	return nil
-}
-
-type UidmapCanaryRequest_Mapping struct {
-	ContainerId          uint32   `protobuf:"varint,1,opt,name=container_id,json=containerId,proto3" json:"container_id,omitempty"`
-	HostId               uint32   `protobuf:"varint,2,opt,name=host_id,json=hostId,proto3" json:"host_id,omitempty"`
-	Size                 uint32   `protobuf:"varint,3,opt,name=size,proto3" json:"size,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *UidmapCanaryRequest_Mapping) Reset()         { *m = UidmapCanaryRequest_Mapping{} }
-func (m *UidmapCanaryRequest_Mapping) String() string { return proto.CompactTextString(m) }
-func (*UidmapCanaryRequest_Mapping) ProtoMessage()    {}
-func (*UidmapCanaryRequest_Mapping) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{9, 0}
-}
-
-func (m *UidmapCanaryRequest_Mapping) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_UidmapCanaryRequest_Mapping.Unmarshal(m, b)
-}
-func (m *UidmapCanaryRequest_Mapping) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_UidmapCanaryRequest_Mapping.Marshal(b, m, deterministic)
-}
-func (m *UidmapCanaryRequest_Mapping) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UidmapCanaryRequest_Mapping.Merge(m, src)
-}
-func (m *UidmapCanaryRequest_Mapping) XXX_Size() int {
-	return xxx_messageInfo_UidmapCanaryRequest_Mapping.Size(m)
-}
-func (m *UidmapCanaryRequest_Mapping) XXX_DiscardUnknown() {
-	xxx_messageInfo_UidmapCanaryRequest_Mapping.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_UidmapCanaryRequest_Mapping proto.InternalMessageInfo
-
-func (m *UidmapCanaryRequest_Mapping) GetContainerId() uint32 {
-	if m != nil {
-		return m.ContainerId
-	}
-	return 0
-}
-
-func (m *UidmapCanaryRequest_Mapping) GetHostId() uint32 {
-	if m != nil {
-		return m.HostId
-	}
-	return 0
-}
-
-func (m *UidmapCanaryRequest_Mapping) GetSize() uint32 {
-	if m != nil {
-		return m.Size
-	}
-	return 0
-}
-
 func init() {
-	proto.RegisterType((*MountShiftfsMarkRequest)(nil), "wsbs.MountShiftfsMarkRequest")
-	proto.RegisterType((*MountShiftfsMarkResponse)(nil), "wsbs.MountShiftfsMarkResponse")
-	proto.RegisterType((*TeardownRequest)(nil), "wsbs.TeardownRequest")
-	proto.RegisterType((*TeardownResponse)(nil), "wsbs.TeardownResponse")
-	proto.RegisterType((*PauseTheiaRequest)(nil), "wsbs.PauseTheiaRequest")
-	proto.RegisterType((*PauseTheiaResponse)(nil), "wsbs.PauseTheiaResponse")
-	proto.RegisterType((*GitStatusRequest)(nil), "wsbs.GitStatusRequest")
-	proto.RegisterType((*GitStatusResponse)(nil), "wsbs.GitStatusResponse")
-	proto.RegisterType((*UidmapCanaryResponse)(nil), "wsbs.UidmapCanaryResponse")
-	proto.RegisterType((*UidmapCanaryRequest)(nil), "wsbs.UidmapCanaryRequest")
-	proto.RegisterType((*UidmapCanaryRequest_Mapping)(nil), "wsbs.UidmapCanaryRequest.Mapping")
+	proto.RegisterType((*WriteIDMappingResponse)(nil), "iws.WriteIDMappingResponse")
+	proto.RegisterType((*WriteIDMappingRequest)(nil), "iws.WriteIDMappingRequest")
+	proto.RegisterType((*WriteIDMappingRequest_Mapping)(nil), "iws.WriteIDMappingRequest.Mapping")
+	proto.RegisterType((*MountShiftfsMarkRequest)(nil), "iws.MountShiftfsMarkRequest")
+	proto.RegisterType((*MountShiftfsMarkResponse)(nil), "iws.MountShiftfsMarkResponse")
+	proto.RegisterType((*TeardownRequest)(nil), "iws.TeardownRequest")
+	proto.RegisterType((*TeardownResponse)(nil), "iws.TeardownResponse")
 }
 
 func init() {
@@ -469,45 +332,32 @@ func init() {
 }
 
 var fileDescriptor_dac718ecaafc2333 = []byte{
-	// 595 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x54, 0xef, 0x4e, 0xdb, 0x3e,
-	0x14, 0xa5, 0x04, 0x51, 0xb8, 0xfc, 0x6b, 0x0d, 0xbf, 0x1f, 0xc1, 0x12, 0x13, 0x44, 0x9a, 0xd4,
-	0x69, 0x6b, 0x3a, 0x75, 0x1f, 0x91, 0xf6, 0x01, 0x36, 0x8d, 0x6a, 0x42, 0x4c, 0x81, 0x09, 0x6d,
-	0x5f, 0x90, 0x49, 0x2e, 0xad, 0x05, 0x8d, 0x3d, 0xdb, 0x59, 0x35, 0x5e, 0x60, 0x8f, 0xb3, 0x67,
-	0xd9, 0x1b, 0x4d, 0x49, 0xec, 0xb6, 0x23, 0x64, 0xdf, 0x9c, 0xe3, 0x73, 0x8f, 0xef, 0x3d, 0xf7,
-	0x28, 0xb0, 0x35, 0x11, 0xea, 0x4e, 0x4b, 0x16, 0x63, 0x28, 0x95, 0x30, 0x82, 0x2c, 0x4d, 0xf4,
-	0x8d, 0xa6, 0xcf, 0x63, 0x91, 0x1a, 0x4c, 0x4d, 0x57, 0xa3, 0xfa, 0xce, 0x63, 0xec, 0x32, 0xc9,
-	0x7b, 0x3c, 0xe5, 0x86, 0xb3, 0x7b, 0xfe, 0x80, 0xaa, 0x24, 0x07, 0x7b, 0xb0, 0x7b, 0x26, 0xb2,
-	0xd4, 0x5c, 0x8c, 0xf8, 0xad, 0xb9, 0xd5, 0x67, 0x4c, 0xdd, 0x45, 0xf8, 0x2d, 0x43, 0x6d, 0x02,
-	0x0a, 0x7e, 0xf5, 0x4a, 0x4b, 0x91, 0x6a, 0x0c, 0xda, 0xb0, 0x75, 0x89, 0x4c, 0x25, 0x62, 0x92,
-	0x3a, 0xfa, 0x2b, 0x68, 0xcd, 0xa0, 0x92, 0x46, 0x7c, 0x68, 0xea, 0x2c, 0x8e, 0x51, 0x6b, 0x7f,
-	0xf1, 0xa0, 0xd1, 0x59, 0x89, 0xdc, 0x67, 0xb0, 0x0d, 0xed, 0x4f, 0x2c, 0xd3, 0x78, 0x39, 0x42,
-	0xce, 0x9c, 0xc4, 0x0e, 0x90, 0x79, 0xd0, 0xbe, 0x45, 0xa0, 0xf5, 0x81, 0x9b, 0x0b, 0xc3, 0x4c,
-	0xa6, 0x1d, 0xf3, 0x18, 0xda, 0x73, 0x98, 0x7d, 0xad, 0x0b, 0x4b, 0x0a, 0xa5, 0xf0, 0x1b, 0x07,
-	0x8d, 0xce, 0x5a, 0x7f, 0x2f, 0xb4, 0x0e, 0x58, 0x03, 0xc2, 0x59, 0x41, 0x41, 0x0b, 0xce, 0x61,
-	0xe7, 0x33, 0x4f, 0xc6, 0x4c, 0x9e, 0xb0, 0x94, 0xa9, 0x1f, 0xf3, 0x4d, 0x8f, 0x51, 0x6b, 0x36,
-	0xc4, 0x42, 0x69, 0x35, 0x72, 0x9f, 0x64, 0x1f, 0x00, 0x95, 0x12, 0xea, 0x3a, 0x16, 0x09, 0x16,
-	0x13, 0x6d, 0x44, 0xab, 0x05, 0x72, 0x22, 0x12, 0x0c, 0x7e, 0x37, 0x60, 0xfb, 0x6f, 0xc5, 0xa2,
-	0x59, 0xd2, 0x02, 0x4f, 0xf2, 0xa4, 0x10, 0xf3, 0xa2, 0xfc, 0x98, 0x23, 0x43, 0x9e, 0x58, 0x4f,
-	0xf2, 0x23, 0x39, 0x82, 0xe6, 0x98, 0x49, 0xc9, 0xd3, 0xa1, 0xef, 0x1d, 0x78, 0x9d, 0xb5, 0xfe,
-	0x61, 0x98, 0xaf, 0x31, 0x7c, 0x42, 0x2f, 0x3c, 0x2b, 0x89, 0x91, 0xab, 0xa0, 0x5f, 0xa0, 0x69,
-	0x31, 0x72, 0x08, 0xeb, 0xf9, 0xd8, 0x8c, 0xa7, 0xa8, 0xae, 0xed, 0xa3, 0x1b, 0xd1, 0xda, 0x14,
-	0x1b, 0x24, 0x64, 0x17, 0x9a, 0x23, 0xa1, 0xcd, 0xb5, 0x6d, 0x60, 0x23, 0x5a, 0xce, 0x3f, 0x07,
-	0x09, 0x21, 0xb0, 0xa4, 0xf9, 0x03, 0xfa, 0x5e, 0x81, 0x16, 0xe7, 0xfe, 0x4f, 0x0f, 0xda, 0x83,
-	0xf4, 0xca, 0x45, 0xec, 0x14, 0xef, 0x25, 0x2a, 0x72, 0x01, 0xad, 0xc7, 0xd1, 0x20, 0xfb, 0x65,
-	0xc3, 0x35, 0x69, 0xa2, 0xcf, 0xea, 0xae, 0xed, 0x96, 0x17, 0xc8, 0x11, 0xac, 0xb8, 0x00, 0x91,
-	0xff, 0x4a, 0xf6, 0xa3, 0x8c, 0xd1, 0xff, 0x1f, 0xc3, 0xd3, 0xe2, 0x8f, 0xd0, 0x9a, 0x45, 0xa7,
-	0xb4, 0x8b, 0xf8, 0x25, 0xbb, 0x1a, 0x29, 0xba, 0x5b, 0xbd, 0x29, 0x73, 0xb5, 0xd0, 0x69, 0xbc,
-	0x6e, 0x90, 0x53, 0xd8, 0x9a, 0x86, 0xc5, 0x6a, 0xd9, 0x8a, 0x4a, 0xe8, 0x5c, 0x4b, 0x95, 0x84,
-	0x96, 0x4a, 0x03, 0xd8, 0xbc, 0x52, 0xdc, 0xe0, 0xe0, 0x9d, 0x5b, 0xd0, 0x5e, 0xed, 0x5e, 0x29,
-	0x7d, 0xea, 0xca, 0x4d, 0xd8, 0xff, 0xb5, 0x08, 0x3b, 0x95, 0x4d, 0x9c, 0xdf, 0x27, 0xe4, 0x3d,
-	0x6c, 0x3a, 0x43, 0x6c, 0xb3, 0x35, 0x36, 0xd1, 0xa7, 0x5d, 0xb5, 0xad, 0x9e, 0x00, 0xcc, 0xfc,
-	0x20, 0x75, 0x0e, 0xd1, 0x5a, 0x53, 0x73, 0x19, 0xf2, 0x16, 0x56, 0xa7, 0x4e, 0x90, 0x1a, 0x6b,
-	0x68, 0x9d, 0x97, 0xc5, 0x1a, 0xd7, 0xe7, 0xc7, 0x27, 0xff, 0xb0, 0x84, 0xd6, 0x3b, 0x59, 0x4e,
-	0x74, 0xfc, 0xf2, 0xeb, 0x8b, 0x21, 0x37, 0xa3, 0xec, 0x26, 0x8c, 0xc5, 0xb8, 0x37, 0xe4, 0x46,
-	0x8a, 0xa4, 0xcb, 0x85, 0x3d, 0xf5, 0x26, 0xba, 0x9b, 0x30, 0x1c, 0x8b, 0xb4, 0xc7, 0x24, 0xbf,
-	0x59, 0x2e, 0xfe, 0x87, 0x6f, 0xfe, 0x04, 0x00, 0x00, 0xff, 0xff, 0xc3, 0x89, 0xa6, 0x63, 0x4f,
-	0x05, 0x00, 0x00,
+	// 398 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x52, 0xc1, 0x6e, 0xd3, 0x40,
+	0x10, 0xc5, 0x18, 0xd5, 0xed, 0x94, 0xd0, 0xb0, 0xa2, 0xd4, 0x18, 0x2a, 0x05, 0x9f, 0x82, 0xa0,
+	0x8e, 0x54, 0x4e, 0x48, 0x9c, 0x80, 0x8b, 0x85, 0x72, 0xa8, 0x8b, 0x54, 0xc1, 0x25, 0xda, 0x7a,
+	0xa7, 0xce, 0x2a, 0xf2, 0xee, 0xb2, 0xbb, 0xc6, 0x12, 0xdf, 0xc9, 0x7f, 0xf0, 0x0b, 0xc8, 0x1b,
+	0x6f, 0x22, 0xdc, 0xe4, 0x36, 0xef, 0xcd, 0xbc, 0xe7, 0x99, 0xe7, 0x85, 0x93, 0x56, 0xea, 0x95,
+	0x51, 0xb4, 0xc4, 0x4c, 0x69, 0x69, 0x25, 0x09, 0x79, 0x6b, 0xd2, 0x2b, 0x78, 0x7e, 0xa3, 0xb9,
+	0xc5, 0xfc, 0xcb, 0x9c, 0x2a, 0xc5, 0x45, 0x55, 0xa0, 0x51, 0x52, 0x18, 0x24, 0x31, 0x44, 0x35,
+	0x1a, 0x43, 0x2b, 0x8c, 0x83, 0x49, 0x30, 0x3d, 0x2a, 0x3c, 0x24, 0xe7, 0x00, 0xa8, 0xb5, 0xd4,
+	0x8b, 0x52, 0x32, 0x8c, 0x1f, 0x4e, 0x82, 0xe9, 0xa8, 0x38, 0x72, 0xcc, 0x67, 0xc9, 0x30, 0xfd,
+	0x13, 0xc0, 0xe9, 0xd0, 0xf3, 0x67, 0x83, 0xc6, 0x92, 0x31, 0x84, 0x8a, 0x33, 0x67, 0x17, 0x16,
+	0x5d, 0xd9, 0x31, 0x15, 0x67, 0xce, 0xe3, 0xb0, 0xe8, 0x4a, 0xf2, 0x11, 0xa2, 0x7a, 0xad, 0x8a,
+	0xc3, 0x49, 0x38, 0x3d, 0xbe, 0x4c, 0x33, 0xde, 0x9a, 0x6c, 0xa7, 0x61, 0xe6, 0xa1, 0x97, 0x24,
+	0xdf, 0x21, 0xea, 0x39, 0xf2, 0x1a, 0x1e, 0x97, 0x52, 0x58, 0xca, 0x05, 0xea, 0x45, 0xff, 0xd5,
+	0x51, 0x71, 0xbc, 0xe1, 0x72, 0x46, 0xce, 0x20, 0x5a, 0x4a, 0x63, 0x17, 0xfd, 0x06, 0xa3, 0xe2,
+	0xa0, 0x83, 0x39, 0x23, 0x04, 0x1e, 0x19, 0xfe, 0x1b, 0xe3, 0xd0, 0xb1, 0xae, 0x4e, 0x5f, 0xc0,
+	0xd9, 0x5c, 0x36, 0xc2, 0x5e, 0x2f, 0xf9, 0x9d, 0xbd, 0x33, 0x73, 0xaa, 0x57, 0xfd, 0x1a, 0x69,
+	0x02, 0xf1, 0xfd, 0xd6, 0x3a, 0xc6, 0xf4, 0x29, 0x9c, 0x7c, 0x43, 0xaa, 0x99, 0x6c, 0x85, 0x1f,
+	0x7f, 0x07, 0xe3, 0x2d, 0xb5, 0x4d, 0xdb, 0x34, 0x65, 0x89, 0xc6, 0xf4, 0x61, 0x78, 0x78, 0xf9,
+	0x37, 0x00, 0x92, 0x8b, 0x1b, 0xff, 0xf3, 0xae, 0x51, 0xff, 0xe2, 0x25, 0x92, 0xaf, 0xf0, 0xe4,
+	0xff, 0x4c, 0x48, 0xb2, 0x3f, 0xa8, 0xe4, 0xe5, 0xce, 0x5e, 0xbf, 0xe2, 0x03, 0x72, 0x05, 0xe3,
+	0xe1, 0x01, 0xe4, 0x95, 0x93, 0xec, 0x39, 0x39, 0x39, 0xdf, 0xd3, 0xdd, 0x58, 0x7e, 0x80, 0x43,
+	0x7f, 0x24, 0x79, 0xe6, 0x86, 0x07, 0x31, 0x24, 0xa7, 0x03, 0xd6, 0x4b, 0x3f, 0xbd, 0xfd, 0xf1,
+	0xa6, 0xe2, 0x76, 0xd9, 0xdc, 0x66, 0xa5, 0xac, 0x67, 0x15, 0xb7, 0x4a, 0xb2, 0x0b, 0x2e, 0xfb,
+	0x6a, 0xd6, 0x9a, 0x0b, 0x46, 0xb1, 0x96, 0x62, 0x46, 0x15, 0xbf, 0x3d, 0x70, 0x8f, 0xf9, 0xfd,
+	0xbf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x49, 0x78, 0x76, 0xc6, 0xdf, 0x02, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -518,580 +368,158 @@ var _ grpc.ClientConnInterface
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion6
 
-// InWorkspaceHelperClient is the client API for InWorkspaceHelper service.
+// InWorkspaceServiceClient is the client API for InWorkspaceService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type InWorkspaceHelperClient interface {
+type InWorkspaceServiceClient interface {
+	// WriteIDMapping writes a new user/group ID mapping to /proc/<pid>/uid_map (gid_map respectively). This is used
+	// for user namespaces and is available four times every 10 seconds.
+	WriteIDMapping(ctx context.Context, in *WriteIDMappingRequest, opts ...grpc.CallOption) (*WriteIDMappingResponse, error)
+	// MountShiftfsMark mounts the workspace contiainer's rootfs as a shiftfs mark under `/.workspace/mark` if the
+	// workspace has the daemon hostPath mount. Can only be used once per workspace.
 	MountShiftfsMark(ctx context.Context, in *MountShiftfsMarkRequest, opts ...grpc.CallOption) (*MountShiftfsMarkResponse, error)
+	// Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
+	// when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
 	Teardown(ctx context.Context, in *TeardownRequest, opts ...grpc.CallOption) (*TeardownResponse, error)
-	PauseTheiaCanary(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelper_PauseTheiaCanaryClient, error)
-	GitStatusCanary(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelper_GitStatusCanaryClient, error)
-	WriteIDMapping(ctx context.Context, in *UidmapCanaryRequest, opts ...grpc.CallOption) (*UidmapCanaryResponse, error)
 }
 
-type inWorkspaceHelperClient struct {
+type inWorkspaceServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewInWorkspaceHelperClient(cc grpc.ClientConnInterface) InWorkspaceHelperClient {
-	return &inWorkspaceHelperClient{cc}
+func NewInWorkspaceServiceClient(cc grpc.ClientConnInterface) InWorkspaceServiceClient {
+	return &inWorkspaceServiceClient{cc}
 }
 
-func (c *inWorkspaceHelperClient) MountShiftfsMark(ctx context.Context, in *MountShiftfsMarkRequest, opts ...grpc.CallOption) (*MountShiftfsMarkResponse, error) {
+func (c *inWorkspaceServiceClient) WriteIDMapping(ctx context.Context, in *WriteIDMappingRequest, opts ...grpc.CallOption) (*WriteIDMappingResponse, error) {
+	out := new(WriteIDMappingResponse)
+	err := c.cc.Invoke(ctx, "/iws.InWorkspaceService/WriteIDMapping", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *inWorkspaceServiceClient) MountShiftfsMark(ctx context.Context, in *MountShiftfsMarkRequest, opts ...grpc.CallOption) (*MountShiftfsMarkResponse, error) {
 	out := new(MountShiftfsMarkResponse)
-	err := c.cc.Invoke(ctx, "/wsbs.InWorkspaceHelper/MountShiftfsMark", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/iws.InWorkspaceService/MountShiftfsMark", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *inWorkspaceHelperClient) Teardown(ctx context.Context, in *TeardownRequest, opts ...grpc.CallOption) (*TeardownResponse, error) {
+func (c *inWorkspaceServiceClient) Teardown(ctx context.Context, in *TeardownRequest, opts ...grpc.CallOption) (*TeardownResponse, error) {
 	out := new(TeardownResponse)
-	err := c.cc.Invoke(ctx, "/wsbs.InWorkspaceHelper/Teardown", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/iws.InWorkspaceService/Teardown", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *inWorkspaceHelperClient) PauseTheiaCanary(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelper_PauseTheiaCanaryClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_InWorkspaceHelper_serviceDesc.Streams[0], "/wsbs.InWorkspaceHelper/PauseTheiaCanary", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &inWorkspaceHelperPauseTheiaCanaryClient{stream}
-	return x, nil
-}
-
-type InWorkspaceHelper_PauseTheiaCanaryClient interface {
-	Send(*PauseTheiaResponse) error
-	Recv() (*PauseTheiaRequest, error)
-	grpc.ClientStream
-}
-
-type inWorkspaceHelperPauseTheiaCanaryClient struct {
-	grpc.ClientStream
-}
-
-func (x *inWorkspaceHelperPauseTheiaCanaryClient) Send(m *PauseTheiaResponse) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *inWorkspaceHelperPauseTheiaCanaryClient) Recv() (*PauseTheiaRequest, error) {
-	m := new(PauseTheiaRequest)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *inWorkspaceHelperClient) GitStatusCanary(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelper_GitStatusCanaryClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_InWorkspaceHelper_serviceDesc.Streams[1], "/wsbs.InWorkspaceHelper/GitStatusCanary", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &inWorkspaceHelperGitStatusCanaryClient{stream}
-	return x, nil
-}
-
-type InWorkspaceHelper_GitStatusCanaryClient interface {
-	Send(*GitStatusResponse) error
-	Recv() (*GitStatusRequest, error)
-	grpc.ClientStream
-}
-
-type inWorkspaceHelperGitStatusCanaryClient struct {
-	grpc.ClientStream
-}
-
-func (x *inWorkspaceHelperGitStatusCanaryClient) Send(m *GitStatusResponse) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *inWorkspaceHelperGitStatusCanaryClient) Recv() (*GitStatusRequest, error) {
-	m := new(GitStatusRequest)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *inWorkspaceHelperClient) WriteIDMapping(ctx context.Context, in *UidmapCanaryRequest, opts ...grpc.CallOption) (*UidmapCanaryResponse, error) {
-	out := new(UidmapCanaryResponse)
-	err := c.cc.Invoke(ctx, "/wsbs.InWorkspaceHelper/WriteIDMapping", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// InWorkspaceHelperServer is the server API for InWorkspaceHelper service.
-type InWorkspaceHelperServer interface {
+// InWorkspaceServiceServer is the server API for InWorkspaceService service.
+type InWorkspaceServiceServer interface {
+	// WriteIDMapping writes a new user/group ID mapping to /proc/<pid>/uid_map (gid_map respectively). This is used
+	// for user namespaces and is available four times every 10 seconds.
+	WriteIDMapping(context.Context, *WriteIDMappingRequest) (*WriteIDMappingResponse, error)
+	// MountShiftfsMark mounts the workspace contiainer's rootfs as a shiftfs mark under `/.workspace/mark` if the
+	// workspace has the daemon hostPath mount. Can only be used once per workspace.
 	MountShiftfsMark(context.Context, *MountShiftfsMarkRequest) (*MountShiftfsMarkResponse, error)
+	// Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
+	// when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
 	Teardown(context.Context, *TeardownRequest) (*TeardownResponse, error)
-	PauseTheiaCanary(InWorkspaceHelper_PauseTheiaCanaryServer) error
-	GitStatusCanary(InWorkspaceHelper_GitStatusCanaryServer) error
-	WriteIDMapping(context.Context, *UidmapCanaryRequest) (*UidmapCanaryResponse, error)
 }
 
-// UnimplementedInWorkspaceHelperServer can be embedded to have forward compatible implementations.
-type UnimplementedInWorkspaceHelperServer struct {
+// UnimplementedInWorkspaceServiceServer can be embedded to have forward compatible implementations.
+type UnimplementedInWorkspaceServiceServer struct {
 }
 
-func (*UnimplementedInWorkspaceHelperServer) MountShiftfsMark(ctx context.Context, req *MountShiftfsMarkRequest) (*MountShiftfsMarkResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method MountShiftfsMark not implemented")
-}
-func (*UnimplementedInWorkspaceHelperServer) Teardown(ctx context.Context, req *TeardownRequest) (*TeardownResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Teardown not implemented")
-}
-func (*UnimplementedInWorkspaceHelperServer) PauseTheiaCanary(srv InWorkspaceHelper_PauseTheiaCanaryServer) error {
-	return status.Errorf(codes.Unimplemented, "method PauseTheiaCanary not implemented")
-}
-func (*UnimplementedInWorkspaceHelperServer) GitStatusCanary(srv InWorkspaceHelper_GitStatusCanaryServer) error {
-	return status.Errorf(codes.Unimplemented, "method GitStatusCanary not implemented")
-}
-func (*UnimplementedInWorkspaceHelperServer) WriteIDMapping(ctx context.Context, req *UidmapCanaryRequest) (*UidmapCanaryResponse, error) {
+func (*UnimplementedInWorkspaceServiceServer) WriteIDMapping(ctx context.Context, req *WriteIDMappingRequest) (*WriteIDMappingResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WriteIDMapping not implemented")
 }
-
-func RegisterInWorkspaceHelperServer(s *grpc.Server, srv InWorkspaceHelperServer) {
-	s.RegisterService(&_InWorkspaceHelper_serviceDesc, srv)
+func (*UnimplementedInWorkspaceServiceServer) MountShiftfsMark(ctx context.Context, req *MountShiftfsMarkRequest) (*MountShiftfsMarkResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MountShiftfsMark not implemented")
+}
+func (*UnimplementedInWorkspaceServiceServer) Teardown(ctx context.Context, req *TeardownRequest) (*TeardownResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Teardown not implemented")
 }
 
-func _InWorkspaceHelper_MountShiftfsMark_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func RegisterInWorkspaceServiceServer(s *grpc.Server, srv InWorkspaceServiceServer) {
+	s.RegisterService(&_InWorkspaceService_serviceDesc, srv)
+}
+
+func _InWorkspaceService_WriteIDMapping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(WriteIDMappingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InWorkspaceServiceServer).WriteIDMapping(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/iws.InWorkspaceService/WriteIDMapping",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InWorkspaceServiceServer).WriteIDMapping(ctx, req.(*WriteIDMappingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InWorkspaceService_MountShiftfsMark_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MountShiftfsMarkRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(InWorkspaceHelperServer).MountShiftfsMark(ctx, in)
+		return srv.(InWorkspaceServiceServer).MountShiftfsMark(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/wsbs.InWorkspaceHelper/MountShiftfsMark",
+		FullMethod: "/iws.InWorkspaceService/MountShiftfsMark",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InWorkspaceHelperServer).MountShiftfsMark(ctx, req.(*MountShiftfsMarkRequest))
+		return srv.(InWorkspaceServiceServer).MountShiftfsMark(ctx, req.(*MountShiftfsMarkRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _InWorkspaceHelper_Teardown_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _InWorkspaceService_Teardown_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TeardownRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(InWorkspaceHelperServer).Teardown(ctx, in)
+		return srv.(InWorkspaceServiceServer).Teardown(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/wsbs.InWorkspaceHelper/Teardown",
+		FullMethod: "/iws.InWorkspaceService/Teardown",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InWorkspaceHelperServer).Teardown(ctx, req.(*TeardownRequest))
+		return srv.(InWorkspaceServiceServer).Teardown(ctx, req.(*TeardownRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _InWorkspaceHelper_PauseTheiaCanary_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(InWorkspaceHelperServer).PauseTheiaCanary(&inWorkspaceHelperPauseTheiaCanaryServer{stream})
-}
-
-type InWorkspaceHelper_PauseTheiaCanaryServer interface {
-	Send(*PauseTheiaRequest) error
-	Recv() (*PauseTheiaResponse, error)
-	grpc.ServerStream
-}
-
-type inWorkspaceHelperPauseTheiaCanaryServer struct {
-	grpc.ServerStream
-}
-
-func (x *inWorkspaceHelperPauseTheiaCanaryServer) Send(m *PauseTheiaRequest) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *inWorkspaceHelperPauseTheiaCanaryServer) Recv() (*PauseTheiaResponse, error) {
-	m := new(PauseTheiaResponse)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func _InWorkspaceHelper_GitStatusCanary_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(InWorkspaceHelperServer).GitStatusCanary(&inWorkspaceHelperGitStatusCanaryServer{stream})
-}
-
-type InWorkspaceHelper_GitStatusCanaryServer interface {
-	Send(*GitStatusRequest) error
-	Recv() (*GitStatusResponse, error)
-	grpc.ServerStream
-}
-
-type inWorkspaceHelperGitStatusCanaryServer struct {
-	grpc.ServerStream
-}
-
-func (x *inWorkspaceHelperGitStatusCanaryServer) Send(m *GitStatusRequest) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *inWorkspaceHelperGitStatusCanaryServer) Recv() (*GitStatusResponse, error) {
-	m := new(GitStatusResponse)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func _InWorkspaceHelper_WriteIDMapping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UidmapCanaryRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(InWorkspaceHelperServer).WriteIDMapping(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/wsbs.InWorkspaceHelper/WriteIDMapping",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InWorkspaceHelperServer).WriteIDMapping(ctx, req.(*UidmapCanaryRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-var _InWorkspaceHelper_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "wsbs.InWorkspaceHelper",
-	HandlerType: (*InWorkspaceHelperServer)(nil),
+var _InWorkspaceService_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "iws.InWorkspaceService",
+	HandlerType: (*InWorkspaceServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "WriteIDMapping",
+			Handler:    _InWorkspaceService_WriteIDMapping_Handler,
+		},
+		{
 			MethodName: "MountShiftfsMark",
-			Handler:    _InWorkspaceHelper_MountShiftfsMark_Handler,
+			Handler:    _InWorkspaceService_MountShiftfsMark_Handler,
 		},
 		{
 			MethodName: "Teardown",
-			Handler:    _InWorkspaceHelper_Teardown_Handler,
-		},
-		{
-			MethodName: "WriteIDMapping",
-			Handler:    _InWorkspaceHelper_WriteIDMapping_Handler,
+			Handler:    _InWorkspaceService_Teardown_Handler,
 		},
 	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "PauseTheiaCanary",
-			Handler:       _InWorkspaceHelper_PauseTheiaCanary_Handler,
-			ServerStreams: true,
-			ClientStreams: true,
-		},
-		{
-			StreamName:    "GitStatusCanary",
-			Handler:       _InWorkspaceHelper_GitStatusCanary_Handler,
-			ServerStreams: true,
-			ClientStreams: true,
-		},
-	},
-	Metadata: "workspace.proto",
-}
-
-// InWorkspaceHelperOldClient is the client API for InWorkspaceHelperOld service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type InWorkspaceHelperOldClient interface {
-	// Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
-	// when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
-	//
-	// Note that the request/response flow is inverted here, as it's the server (supervisor) which requests the teardown
-	// from the client (ws-daemon).
-	TeardownCanary(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelperOld_TeardownCanaryClient, error)
-	// PauseTheia can pause the Theia process and all its children. As long as the request stream
-	// is held Theia will be paused.
-	// This is a stop-the-world mechanism for preventing concurrent modification during backup.
-	PauseTheia(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelperOld_PauseTheiaClient, error)
-	GitStatus(ctx context.Context, in *GitStatusRequest, opts ...grpc.CallOption) (*GitStatusResponse, error)
-	// UidmapCanary can establish a uid mapping of a new user namespace spawned within the workspace.
-	UidmapCanary(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelperOld_UidmapCanaryClient, error)
-}
-
-type inWorkspaceHelperOldClient struct {
-	cc grpc.ClientConnInterface
-}
-
-func NewInWorkspaceHelperOldClient(cc grpc.ClientConnInterface) InWorkspaceHelperOldClient {
-	return &inWorkspaceHelperOldClient{cc}
-}
-
-func (c *inWorkspaceHelperOldClient) TeardownCanary(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelperOld_TeardownCanaryClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_InWorkspaceHelperOld_serviceDesc.Streams[0], "/wsbs.InWorkspaceHelperOld/TeardownCanary", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &inWorkspaceHelperOldTeardownCanaryClient{stream}
-	return x, nil
-}
-
-type InWorkspaceHelperOld_TeardownCanaryClient interface {
-	Send(*TeardownResponse) error
-	Recv() (*TeardownRequest, error)
-	grpc.ClientStream
-}
-
-type inWorkspaceHelperOldTeardownCanaryClient struct {
-	grpc.ClientStream
-}
-
-func (x *inWorkspaceHelperOldTeardownCanaryClient) Send(m *TeardownResponse) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *inWorkspaceHelperOldTeardownCanaryClient) Recv() (*TeardownRequest, error) {
-	m := new(TeardownRequest)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *inWorkspaceHelperOldClient) PauseTheia(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelperOld_PauseTheiaClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_InWorkspaceHelperOld_serviceDesc.Streams[1], "/wsbs.InWorkspaceHelperOld/PauseTheia", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &inWorkspaceHelperOldPauseTheiaClient{stream}
-	return x, nil
-}
-
-type InWorkspaceHelperOld_PauseTheiaClient interface {
-	Send(*PauseTheiaRequest) error
-	CloseAndRecv() (*PauseTheiaResponse, error)
-	grpc.ClientStream
-}
-
-type inWorkspaceHelperOldPauseTheiaClient struct {
-	grpc.ClientStream
-}
-
-func (x *inWorkspaceHelperOldPauseTheiaClient) Send(m *PauseTheiaRequest) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *inWorkspaceHelperOldPauseTheiaClient) CloseAndRecv() (*PauseTheiaResponse, error) {
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	m := new(PauseTheiaResponse)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func (c *inWorkspaceHelperOldClient) GitStatus(ctx context.Context, in *GitStatusRequest, opts ...grpc.CallOption) (*GitStatusResponse, error) {
-	out := new(GitStatusResponse)
-	err := c.cc.Invoke(ctx, "/wsbs.InWorkspaceHelperOld/GitStatus", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *inWorkspaceHelperOldClient) UidmapCanary(ctx context.Context, opts ...grpc.CallOption) (InWorkspaceHelperOld_UidmapCanaryClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_InWorkspaceHelperOld_serviceDesc.Streams[2], "/wsbs.InWorkspaceHelperOld/UidmapCanary", opts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &inWorkspaceHelperOldUidmapCanaryClient{stream}
-	return x, nil
-}
-
-type InWorkspaceHelperOld_UidmapCanaryClient interface {
-	Send(*UidmapCanaryResponse) error
-	Recv() (*UidmapCanaryRequest, error)
-	grpc.ClientStream
-}
-
-type inWorkspaceHelperOldUidmapCanaryClient struct {
-	grpc.ClientStream
-}
-
-func (x *inWorkspaceHelperOldUidmapCanaryClient) Send(m *UidmapCanaryResponse) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *inWorkspaceHelperOldUidmapCanaryClient) Recv() (*UidmapCanaryRequest, error) {
-	m := new(UidmapCanaryRequest)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-// InWorkspaceHelperOldServer is the server API for InWorkspaceHelperOld service.
-type InWorkspaceHelperOldServer interface {
-	// Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
-	// when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
-	//
-	// Note that the request/response flow is inverted here, as it's the server (supervisor) which requests the teardown
-	// from the client (ws-daemon).
-	TeardownCanary(InWorkspaceHelperOld_TeardownCanaryServer) error
-	// PauseTheia can pause the Theia process and all its children. As long as the request stream
-	// is held Theia will be paused.
-	// This is a stop-the-world mechanism for preventing concurrent modification during backup.
-	PauseTheia(InWorkspaceHelperOld_PauseTheiaServer) error
-	GitStatus(context.Context, *GitStatusRequest) (*GitStatusResponse, error)
-	// UidmapCanary can establish a uid mapping of a new user namespace spawned within the workspace.
-	UidmapCanary(InWorkspaceHelperOld_UidmapCanaryServer) error
-}
-
-// UnimplementedInWorkspaceHelperOldServer can be embedded to have forward compatible implementations.
-type UnimplementedInWorkspaceHelperOldServer struct {
-}
-
-func (*UnimplementedInWorkspaceHelperOldServer) TeardownCanary(srv InWorkspaceHelperOld_TeardownCanaryServer) error {
-	return status.Errorf(codes.Unimplemented, "method TeardownCanary not implemented")
-}
-func (*UnimplementedInWorkspaceHelperOldServer) PauseTheia(srv InWorkspaceHelperOld_PauseTheiaServer) error {
-	return status.Errorf(codes.Unimplemented, "method PauseTheia not implemented")
-}
-func (*UnimplementedInWorkspaceHelperOldServer) GitStatus(ctx context.Context, req *GitStatusRequest) (*GitStatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GitStatus not implemented")
-}
-func (*UnimplementedInWorkspaceHelperOldServer) UidmapCanary(srv InWorkspaceHelperOld_UidmapCanaryServer) error {
-	return status.Errorf(codes.Unimplemented, "method UidmapCanary not implemented")
-}
-
-func RegisterInWorkspaceHelperOldServer(s *grpc.Server, srv InWorkspaceHelperOldServer) {
-	s.RegisterService(&_InWorkspaceHelperOld_serviceDesc, srv)
-}
-
-func _InWorkspaceHelperOld_TeardownCanary_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(InWorkspaceHelperOldServer).TeardownCanary(&inWorkspaceHelperOldTeardownCanaryServer{stream})
-}
-
-type InWorkspaceHelperOld_TeardownCanaryServer interface {
-	Send(*TeardownRequest) error
-	Recv() (*TeardownResponse, error)
-	grpc.ServerStream
-}
-
-type inWorkspaceHelperOldTeardownCanaryServer struct {
-	grpc.ServerStream
-}
-
-func (x *inWorkspaceHelperOldTeardownCanaryServer) Send(m *TeardownRequest) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *inWorkspaceHelperOldTeardownCanaryServer) Recv() (*TeardownResponse, error) {
-	m := new(TeardownResponse)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func _InWorkspaceHelperOld_PauseTheia_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(InWorkspaceHelperOldServer).PauseTheia(&inWorkspaceHelperOldPauseTheiaServer{stream})
-}
-
-type InWorkspaceHelperOld_PauseTheiaServer interface {
-	SendAndClose(*PauseTheiaResponse) error
-	Recv() (*PauseTheiaRequest, error)
-	grpc.ServerStream
-}
-
-type inWorkspaceHelperOldPauseTheiaServer struct {
-	grpc.ServerStream
-}
-
-func (x *inWorkspaceHelperOldPauseTheiaServer) SendAndClose(m *PauseTheiaResponse) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *inWorkspaceHelperOldPauseTheiaServer) Recv() (*PauseTheiaRequest, error) {
-	m := new(PauseTheiaRequest)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-func _InWorkspaceHelperOld_GitStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GitStatusRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(InWorkspaceHelperOldServer).GitStatus(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/wsbs.InWorkspaceHelperOld/GitStatus",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InWorkspaceHelperOldServer).GitStatus(ctx, req.(*GitStatusRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _InWorkspaceHelperOld_UidmapCanary_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(InWorkspaceHelperOldServer).UidmapCanary(&inWorkspaceHelperOldUidmapCanaryServer{stream})
-}
-
-type InWorkspaceHelperOld_UidmapCanaryServer interface {
-	Send(*UidmapCanaryRequest) error
-	Recv() (*UidmapCanaryResponse, error)
-	grpc.ServerStream
-}
-
-type inWorkspaceHelperOldUidmapCanaryServer struct {
-	grpc.ServerStream
-}
-
-func (x *inWorkspaceHelperOldUidmapCanaryServer) Send(m *UidmapCanaryRequest) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *inWorkspaceHelperOldUidmapCanaryServer) Recv() (*UidmapCanaryResponse, error) {
-	m := new(UidmapCanaryResponse)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
-}
-
-var _InWorkspaceHelperOld_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "wsbs.InWorkspaceHelperOld",
-	HandlerType: (*InWorkspaceHelperOldServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "GitStatus",
-			Handler:    _InWorkspaceHelperOld_GitStatus_Handler,
-		},
-	},
-	Streams: []grpc.StreamDesc{
-		{
-			StreamName:    "TeardownCanary",
-			Handler:       _InWorkspaceHelperOld_TeardownCanary_Handler,
-			ServerStreams: true,
-			ClientStreams: true,
-		},
-		{
-			StreamName:    "PauseTheia",
-			Handler:       _InWorkspaceHelperOld_PauseTheia_Handler,
-			ClientStreams: true,
-		},
-		{
-			StreamName:    "UidmapCanary",
-			Handler:       _InWorkspaceHelperOld_UidmapCanary_Handler,
-			ServerStreams: true,
-			ClientStreams: true,
-		},
-	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "workspace.proto",
 }

@@ -25,7 +25,6 @@ import (
 	"github.com/gitpod-io/gitpod/content-service/pkg/executor"
 	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/dropwriter"
-	"github.com/gitpod-io/gitpod/supervisor/pkg/iwh"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
 	daemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 
@@ -514,7 +513,7 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 func teardown(withDaemonCall bool) {
 	if withDaemonCall {
 		log.Info("asking ws-daemon to tear down this workspace")
-		client, conn, err := iwh.NewInWorkspaceHelper(context.Background())
+		client, conn, err := ConnectToInWorkspaceDaemonService(context.Background())
 		if err != nil {
 			log.WithError(err).Error("ungraceful shutdown - teardown was unsuccessful")
 			return
@@ -526,4 +525,30 @@ func teardown(withDaemonCall bool) {
 			log.WithError(err).Error("ungraceful shutdown - teardown was unsuccessful")
 		}
 	}
+}
+
+// ConnectToInWorkspaceDaemonService attempts to connect to the InWorkspaceService offered by the ws-daemon.
+func ConnectToInWorkspaceDaemonService(ctx context.Context) (daemon.InWorkspaceServiceClient, *grpc.ClientConn, error) {
+	const socketFN = "/.workspace/daemon.sock"
+
+	t := time.NewTicker(500 * time.Millisecond)
+	defer t.Stop()
+	for {
+		if _, err := os.Stat(socketFN); err == nil {
+			break
+		}
+
+		select {
+		case <-t.C:
+			continue
+		case <-ctx.Done():
+			return nil, nil, fmt.Errorf("socket did not appear before context was canceled")
+		}
+	}
+
+	conn, err := grpc.DialContext(ctx, "unix://"+socketFN, grpc.WithInsecure())
+	if err != nil {
+		return nil, nil, err
+	}
+	return daemon.NewInWorkspaceServiceClient(conn), conn, nil
 }
