@@ -8,7 +8,7 @@ gitpod:
       registry:
         # name must not end with a "/"
         name: your.registry.com/gitpod
-        secretName: image-builder-registry-secret
+        secretName: external-registry-auth
         path: secrets/registry-auth.json
 
     # server:
@@ -17,7 +17,7 @@ gitpod:
 
     workspace:
       pullSecret:
-        secretName: image-builder-registry-secret
+        secretName: external-registry-auth
 
   docker-registry:
     enabled: false

@@ -464,7 +464,7 @@ gitpod:
       registry:
         # name must not end with a "/"
         name: gcr.io/`+projectID+`
-        secretName: image-builder-registry-secret
+        secretName: external-registry-auth
         path: secrets/registry-auth.json
 
     workspace:
