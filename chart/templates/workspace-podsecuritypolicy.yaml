@@ -16,7 +16,7 @@ metadata:
     stage: {{ .Values.installation.stage }}
   annotations:
     seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'runtime/default'
-    apparmor.security.beta.kubernetes.io/allowedProfileNames: 'runtime/default'
+    apparmor.security.beta.kubernetes.io/allowedProfileNames: 'runtime/default,unconfined'
     seccomp.security.alpha.kubernetes.io/defaultProfileName:  'runtime/default'
     apparmor.security.beta.kubernetes.io/defaultProfileName:  'runtime/default'
 spec:
@@ -25,8 +25,7 @@ spec:
   #####
   ### TODO root sync
   privileged: false
-  # # Required to prevent escalations to root.
-  allowPrivilegeEscalation: false
+  allowPrivilegeEscalation: true
   # # This is redundant with non-root + disallow privilege escalation,
   # # but we can provide it for defense in depth.
   allowedCapabilities:
@@ -35,21 +34,11 @@ spec:
     - KILL
     - NET_BIND_SERVICE
     - SYS_PTRACE
-  ### TODO root sync
-  # Allow core volume types.
   volumes:
     - 'configMap'
     - 'projected'
     - 'secret'
     - 'hostPath'
-  # See https://kubernetes.io/docs/concepts/policy/pod-security-policy/#volumes-and-file-systems
-  # TODO security hostPath: Use emptyDir an alternative?
-  #allowedHostPaths:
-  # This allows "/foo", "/foo/", "/foo/bar" etc., but
-  # disallows "/fool", "/etc/foo" etc.
-  # "/foo/../" is never valid.
-  #- pathPrefix: "/foo"
-  #  readOnly: false
   hostNetwork: false
   hostIPC: false
   hostPID: false
