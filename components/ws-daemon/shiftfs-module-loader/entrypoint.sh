@@ -17,6 +17,6 @@ fi
 
 set -ex
 mkdir -p /lib/modules/${KERNEL_RELEASE}
-ln -s /usr/src/linux-headers-${KERNEL_RELEASE} /lib/modules/${KERNEL_RELEASE}/build
-dkms install -m ${DRIVER_NAME} -v ${DRIVER_VERSION} -k $KERNEL_RELEASE --kernelsourcedir /usr/src/linux-headers-${KERNEL_RELEASE}
+ln -s /usr/src_node/linux-headers-${KERNEL_RELEASE} /lib/modules/${KERNEL_RELEASE}/build
+dkms install -m ${DRIVER_NAME} -v ${DRIVER_VERSION} -k $KERNEL_RELEASE --kernelsourcedir /usr/src_node/linux-headers-${KERNEL_RELEASE}
 insmod /var/lib/dkms/${DRIVER_NAME}/${DRIVER_VERSION}/${KERNEL_RELEASE}/${ARCH}/module/${DRIVER_NAME}.ko
