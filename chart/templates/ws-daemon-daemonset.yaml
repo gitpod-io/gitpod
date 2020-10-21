@@ -100,7 +100,7 @@ spec:
       initContainers:
       - name: shiftfs-module-loader
         volumeMounts:
-        - mountPath: /usr/src
+        - mountPath: /usr/src_node
           name: node-linux-src
           readOnly: true
         image: {{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" $comp.userNamespaces.shiftfsModuleLoader) }}
