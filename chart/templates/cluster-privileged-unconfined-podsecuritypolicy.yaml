@@ -30,7 +30,7 @@ spec:
   - min: 0
     max: 65535
   hostIPC: false
-  hostPID: false
+  hostPID: true
   runAsUser:
     rule: 'RunAsAny'
   seLinux:
