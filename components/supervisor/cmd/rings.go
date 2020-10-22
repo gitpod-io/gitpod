@@ -40,7 +40,9 @@ var ring0Cmd = &cobra.Command{
 		cmd.Env = os.Environ()
 
 		if err := cmd.Start(); err != nil {
-			log.WithError(err).Fatal("failed to start the child")
+			log.WithError(err).Error("failed to start ring0 - sleeping for five minutes to allow debugging")
+			time.Sleep(5 * time.Minute)
+			os.Exit(1)
 		}
 		sigc := sigproxy.ForwardAllSignals(context.Background(), cmd.Process.Pid)
 		defer sigproxysignal.StopCatch(sigc)
@@ -122,6 +124,7 @@ var ring1Cmd = &cobra.Command{
 		cmd := exec.Command("/proc/self/exe", "ring2")
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Pdeathsig: syscall.SIGKILL,
+			// Cloneflags: syscall.CLONE_NEWNS,
 		}
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout

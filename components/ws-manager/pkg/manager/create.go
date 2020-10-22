@@ -377,9 +377,12 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			// Beware: this allows setuid binaries in the workspace - supervisor needs to set no_new_privs now.
 			// However: the whole user workload now runs in a user namespace, which makes this acceptable.
 			workspaceContainer.SecurityContext.AllowPrivilegeEscalation = &boolTrue
+			pod.Annotations[withUsernamespaceAnnotation] = "true"
 			// TODO(cw): post Kubernetes 1.19 use GA form for settings those profiles
 			pod.Annotations["container.apparmor.security.beta.kubernetes.io/workspace"] = "unconfined"
-			pod.Annotations[withUsernamespaceAnnotation] = "true"
+			// TODO(cw): understand why this is neccesary for the `clone` syscalls to work,
+			//           and devise means to bring back sensible seccomp filter.
+			pod.Annotations["seccomp.security.alpha.kubernetes.io/pod"] = "unconfined"
 			// Mounting /dev/net/tun should be fine security-wise, because:
 			//   - the TAP driver documentation says so (see https://www.kernel.org/doc/Documentation/networking/tuntap.txt)
 			//   - systemd's nspawn does the same thing (if it's good enough for them, it's good enough for us)
