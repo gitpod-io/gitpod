@@ -296,7 +296,7 @@ func dockerErrToGRPC(err error, msg string) error {
 	if docker.IsErrConnectionFailed(err) {
 		return status.Error(codes.Unavailable, msg+": daemon is not available")
 	}
-	if docker.IsErrNotFound(err) || strings.Contains(err.Error(), dockerErrResp+"manifest unknown") {
+	if docker.IsErrNotFound(err) || strings.Contains(err.Error(), dockerErrResp+"manifest unknown") || strings.Contains(err.Error(), dockerErrResp+"name unknown") {
 		return status.Error(codes.NotFound, msg+": not found")
 	}
 	if docker.IsErrUnauthorized(err) {
