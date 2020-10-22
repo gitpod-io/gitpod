@@ -19,8 +19,11 @@ import (
 
 // HTTPTheiaService provides access to Theia's CLI service
 type HTTPTheiaService struct {
-	URL   string
-	Token string
+	URL       string
+	Token     string
+	ideReady  chan struct{}
+	ideError  error
+	ideClient *http.Client
 }
 
 var _ TheiaCLIService = &HTTPTheiaService{}
@@ -38,10 +41,28 @@ func NewServiceFromEnv() (*HTTPTheiaService, error) {
 		return nil, fmt.Errorf("No GITPOD_CLI_APITOKEN environment variable set")
 	}
 
-	return &HTTPTheiaService{
-		URL:   url,
-		Token: apiToken,
-	}, nil
+	service := &HTTPTheiaService{
+		URL:       url,
+		Token:     apiToken,
+		ideReady:  make(chan struct{}),
+		ideClient: &http.Client{Timeout: 30 * time.Second},
+	}
+	go func() {
+		defer close(service.ideReady)
+		supervisorAddr := os.Getenv("SUPERVISOR_ADDR")
+		if supervisorAddr == "" {
+			supervisorAddr = "localhost:22999"
+		}
+		resp, err := http.Get(fmt.Sprintf("http://%s/_supervisor/v1/status/ide/wait/true", supervisorAddr))
+		if err != nil {
+			service.ideError = err
+		}
+		if resp.StatusCode != http.StatusOK {
+			service.ideError = fmt.Errorf("IDE is not ready, %d %s", resp.StatusCode, resp.Status)
+		}
+	}()
+
+	return service, nil
 }
 
 type request struct {
@@ -50,21 +71,23 @@ type request struct {
 }
 
 func (service *HTTPTheiaService) sendRequest(req request) ([]byte, error) {
+	<-service.ideReady
+	if service.ideError != nil {
+		return nil, service.ideError
+	}
+
 	body, err := json.Marshal(req)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot marshal request body")
 	}
 
-	client := &http.Client{
-		Timeout: 30 * time.Second,
-	}
 	httpreq, err := http.NewRequest("POST", service.URL, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot create new request")
 	}
 	httpreq.Header.Set("Content-Type", "application/json")
 	httpreq.Header["X-AuthToken"] = []string{service.Token}
-	resp, err := client.Do(httpreq)
+	resp, err := service.ideClient.Do(httpreq)
 	if err != nil {
 		return nil, errors.Wrap(err, "error while issuing request")
 	}
