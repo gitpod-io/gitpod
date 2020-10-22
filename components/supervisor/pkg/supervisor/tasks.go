@@ -357,8 +357,6 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 
 				endMessage := "\r\n🍌 This task ran as part of a workspace prebuild.\r\n" + duration + "\r\n"
 				fileWriter.WriteString(endMessage)
-				workspaceLog.WithField("type", "workspaceTaskOutput").WithField("data", endMessage).Info()
-
 				fileWriter.Flush()
 				success = true
 				break
