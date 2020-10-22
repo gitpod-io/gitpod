@@ -199,8 +199,6 @@ func createExposedPortsImpl(cfg *Config, tknsrv api.TokenServiceServer) (res por
 		return &ports.NoopExposedPorts{}
 	}
 
-	// TODO(cw): don't just connect once and expect the connection to live forever,
-	//           instead reconnect if need be.
 	gitpodService, err := gitpod.ConnectToServer(endpoint, gitpod.ConnectToServerOpts{
 		Token: tknres.Token,
 	})
