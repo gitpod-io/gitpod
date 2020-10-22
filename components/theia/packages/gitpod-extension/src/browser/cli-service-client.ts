@@ -4,18 +4,18 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable, inject, postConstruct } from 'inversify';
-import { TheiaCLIService, GetGitTokenRequest, GetGitTokenResponse, OpenFileRequest, OpenFileResponse, OpenPreviewRequest, OpenPreviewResponse, GetEnvvarsRequest, GetEnvvarsResponse, EnvironmentVariable, SetEnvvarRequest, SetEnvvarResponse, DeleteEnvvarRequest, DeleteEnvvarResponse, IsFileOpenRequest, IsFileOpenResponse, GetPortURLRequest, GetPortURLResponse } from '../common/cli-service';
-import { GitpodServiceProvider } from './gitpod-service-provider';
-import { OpenerService, ApplicationShell, Widget, WidgetOpenerOptions } from '@theia/core/lib/browser';
-import URI from '@theia/core/lib/common/uri';
-import { GitpodInfoService, GitpodInfo } from '../common/gitpod-info';
-import { UserEnvVar, CommitContext, GitpodServer, UserEnvVarValue } from '@gitpod/gitpod-protocol';
-import { Deferred } from "@theia/core/lib/common/promise-util";
-import { MiniBrowserOpenHandler } from '@theia/mini-browser/lib/browser/mini-browser-open-handler';
+import { CommitContext, GitpodServer, UserEnvVar, UserEnvVarValue } from '@gitpod/gitpod-protocol';
+import { ApplicationShell, OpenerService, Widget, WidgetOpenerOptions } from '@theia/core/lib/browser';
 import { FrontendApplicationStateService } from '@theia/core/lib/browser/frontend-application-state';
-import { GitpodGitTokenProvider } from './gitpod-git-token-provider';
+import URI from '@theia/core/lib/common/uri';
 import { EditorManager, EditorWidget } from '@theia/editor/lib/browser';
+import { MiniBrowserOpenHandler } from '@theia/mini-browser/lib/browser/mini-browser-open-handler';
+import { inject, injectable } from 'inversify';
+import { DeleteEnvvarRequest, DeleteEnvvarResponse, EnvironmentVariable, GetEnvvarsRequest, GetEnvvarsResponse, GetGitTokenRequest, GetGitTokenResponse, GetPortURLRequest, GetPortURLResponse, IsFileOpenRequest, IsFileOpenResponse, OpenFileRequest, OpenFileResponse, OpenPreviewRequest, OpenPreviewResponse, SetEnvvarRequest, SetEnvvarResponse, TheiaCLIService } from '../common/cli-service';
+import { GitpodInfoService } from '../common/gitpod-info';
+import { GitpodGitTokenProvider } from './gitpod-git-token-provider';
+import { GitpodServiceProvider } from './gitpod-service-provider';
+import { getWorkspaceID } from './utils';
 
 export const CliServiceClient = Symbol('CliServiceClient');
 export interface CliServiceClient extends TheiaCLIService {
@@ -25,8 +25,9 @@ export interface CliServiceClient extends TheiaCLIService {
 @injectable()
 export class CliServiceClientImpl implements CliServiceClient {
 
+    private readonly workspaceID = getWorkspaceID();
+
     @inject(GitpodInfoService) protected infoProvider: GitpodInfoService;
-    @inject(GitpodServiceProvider) protected serviceProvider: GitpodServiceProvider;
     @inject(OpenerService) protected readonly openerService: OpenerService;
     @inject(ApplicationShell) protected readonly shell: ApplicationShell;
     @inject(MiniBrowserOpenHandler) protected miniBrowserOpenHandler: MiniBrowserOpenHandler;
@@ -34,19 +35,17 @@ export class CliServiceClientImpl implements CliServiceClient {
     @inject(GitpodGitTokenProvider) protected gitTokenProvider: GitpodGitTokenProvider;
     @inject(EditorManager) protected readonly editorManager: EditorManager;
 
+    private readonly isWorkspaceOwner: Promise<boolean>;
 
-    protected isWorkspaceOwner = new Deferred<boolean>();
-    protected gitpodInfo: GitpodInfo;
-
-    @postConstruct()
-    protected async init() {
-        this.gitpodInfo = await this.infoProvider.getInfo();
-        const service = await this.serviceProvider.getService();
-        this.isWorkspaceOwner.resolve(await service.server.isWorkspaceOwner(this.gitpodInfo.workspaceId));
+    constructor(
+        @inject(GitpodServiceProvider)
+        private readonly serviceProvider: GitpodServiceProvider
+    ) {
+        this.isWorkspaceOwner = serviceProvider.getService().server.isWorkspaceOwner(this.workspaceID)
     }
 
     protected async checkWorkspaceOwner() {
-        if (!(await this.isWorkspaceOwner.promise)) {
+        if (!(await this.isWorkspaceOwner)) {
             throw new Error(`Only the workspace owner can handle this request.`);
         }
     }
@@ -143,7 +142,7 @@ export class CliServiceClientImpl implements CliServiceClient {
     }
 
     protected async getApplicableEnvvars(service: GitpodServer): Promise<UserEnvVarValue[]> {
-        const ws = await service.getWorkspace(this.gitpodInfo.workspaceId);
+        const ws = await service.getWorkspace(this.workspaceID);
 
         const context = ws.workspace.context;
         if (!("repository" in context)) {
@@ -160,7 +159,7 @@ export class CliServiceClientImpl implements CliServiceClient {
     }
 
     protected async getRepo(service: GitpodServer): Promise<{ owner: string, repo: string } | undefined> {
-        const ws = await service.getWorkspace(this.gitpodInfo.workspaceId);
+        const ws = await service.getWorkspace(this.workspaceID);
 
         const context = ws.workspace.context;
         if (!CommitContext.is(context)) {
@@ -173,9 +172,7 @@ export class CliServiceClientImpl implements CliServiceClient {
     }
 
     async getPortURL(params: GetPortURLRequest): Promise<GetPortURLResponse> {
-        const service = await this.serviceProvider.getService();
-        
-        const ws = await service.server.getWorkspace(this.gitpodInfo.workspaceId);
+        const ws = await this.serviceProvider.getService().server.getWorkspace(this.workspaceID);
         if (!ws.latestInstance) {
             throw new Error("workspace has no instance");
         }
