@@ -91,7 +91,11 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 	return func(w http.ResponseWriter, req *http.Request) {
 		targetURL, err := h.TargetResolver(config.Config, req)
 		if err != nil {
-			log.WithError(err).Errorf("Unable to resolve targetURL: %s", req.URL.String())
+			if eh != nil {
+				eh(w, req, err)
+			} else {
+				log.WithError(err).Errorf("Unable to resolve targetURL: %s", req.URL.String())
+			}
 			return
 		}
 
