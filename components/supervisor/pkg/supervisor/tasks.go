@@ -138,7 +138,7 @@ func (tm *tasksManager) init(ctx context.Context) *runContext {
 
 	tasks, err := tm.config.getGitpodTasks()
 	if err != nil {
-		log.WithError(err).Fatal()
+		log.WithError(err).Error()
 		return nil
 	}
 	if tasks == nil {
@@ -214,7 +214,7 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup) {
 		}
 		resp, err := tm.terminalService.Open(ctx, openRequest)
 		if err != nil {
-			taskLog.WithError(err).Fatal("cannot open new task terminal")
+			taskLog.WithError(err).Error("cannot open new task terminal")
 			tm.setTaskState(t, api.TaskState_closed)
 			continue
 		}
@@ -222,7 +222,7 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup) {
 		taskLog = taskLog.WithField("terminal", resp.Alias)
 		terminal, ok := tm.terminalService.Mux.Get(resp.Alias)
 		if !ok {
-			taskLog.Fatal("cannot find a task terminal")
+			taskLog.Error("cannot find a task terminal")
 			tm.setTaskState(t, api.TaskState_closed)
 			continue
 		}
@@ -279,7 +279,7 @@ func (task *task) getCommand(context *runContext) string {
 		format:   "%s\r\n",
 	})), 0644)
 	if err != nil {
-		log.WithField("histfile", histfile).WithError(err).Fatal("cannot write histfile")
+		log.WithField("histfile", histfile).WithError(err).Error("cannot write histfile")
 		return command
 	}
 	// the space at beginning of the HISTFILE command prevents the HISTFILE command itself from appearing in
@@ -328,7 +328,7 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 		fileName := task.prebuildLogFileName()
 		file, err := os.Create(fileName)
 		if err != nil {
-			workspaceLog.WithError(err).Fatal("cannot create a prebuild log file")
+			workspaceLog.WithError(err).Error("cannot create a prebuild log file")
 			return
 		}
 		defer file.Close()
@@ -362,7 +362,7 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 				break
 			}
 			if err != nil {
-				workspaceLog.WithError(err).Fatal("cannot read from a task terminal")
+				workspaceLog.WithError(err).Error("cannot read from a task terminal")
 				return
 			}
 			data := string(buf[:n])
