@@ -22,7 +22,7 @@ export class GitpodPortServerImpl implements GitpodPortServer {
     private run = true;
     private stopUpdates: (() => void) | undefined;
 
-    private ports: PortsStatus.AsObject[] = [];
+    private readonly ports = new Map<number, PortsStatus.AsObject>();
 
     @postConstruct()
     async start(): Promise<void> {
@@ -38,9 +38,25 @@ export class GitpodPortServerImpl implements GitpodPortServer {
                     evts.on('close', resolve);
                     evts.on('error', reject);
                     evts.on('data', (update: PortsStatusResponse) => {
-                        const ports = this.ports = update.getPortsList().map(p => p.toObject());
+                        let added: PortsStatus.AsObject[] | undefined
+                        for (const port of update.getAddedList()) {
+                            const object = port.toObject();
+                            this.ports.set(port.getLocalPort(), object);
+                            (added = added || []).push(object);
+                        }
+                        let updated: PortsStatus.AsObject[] | undefined
+                        for (const port of update.getUpdatedList()) {
+                            const object = port.toObject();
+                            this.ports.set(port.getLocalPort(), object);
+                            (updated = updated || []).push(object);
+                        }
+                        let removed: number[] | undefined
+                        for (const port of update.getRemovedList()) {
+                            this.ports.delete(port);
+                            (removed = removed || []).push(port);
+                        }
                         for (const client of this.clients) {
-                            client.onDidChange({ ports });
+                            client.onDidChange({ added, updated, removed });
                         }
                     });
                 });
@@ -52,7 +68,7 @@ export class GitpodPortServerImpl implements GitpodPortServer {
     }
 
     async getPorts(): Promise<PortsStatus.AsObject[]> {
-        return this.ports;
+        return [...this.ports.values()];
     }
 
     async exposePort(params: ExposeGitpodPortParams): Promise<void> {
@@ -62,11 +78,7 @@ export class GitpodPortServerImpl implements GitpodPortServer {
         if (params.targetPort) {
             request.setTargetPort(params.targetPort);
         }
-        const response = await util.promisify<ExposePortRequest, ExposePortResponse>(controlClient.exposePort)(request);
-        const error = response.getError();
-        if (!error) {
-            throw new Error(error)
-        }
+        await util.promisify<ExposePortRequest, ExposePortResponse>(controlClient.exposePort).bind(controlClient)(request);
     }
 
     setClient(client: GitpodPortClient): void {

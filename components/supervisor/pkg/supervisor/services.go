@@ -118,7 +118,7 @@ func (s *statusService) BackupStatus(ctx context.Context, req *api.BackupStatusR
 
 func (s *statusService) PortsStatus(req *api.PortsStatusRequest, srv api.StatusService_PortsStatusServer) error {
 	err := srv.Send(&api.PortsStatusResponse{
-		Ports: s.Ports.Status(),
+		Added: s.Ports.Status(),
 	})
 	if err != nil {
 		return err
@@ -141,7 +141,11 @@ func (s *statusService) PortsStatus(req *api.PortsStatusRequest, srv api.StatusS
 			if update == nil {
 				return nil
 			}
-			err := srv.Send(&api.PortsStatusResponse{Ports: update})
+			err := srv.Send(&api.PortsStatusResponse{
+				Added:   update.Added,
+				Updated: update.Updated,
+				Removed: update.Removed,
+			})
 			if err != nil {
 				return err
 			}
@@ -559,7 +563,7 @@ func (c *ControlService) RegisterGRPC(srv *grpc.Server) {
 // ExposePort exposes a port
 func (c *ControlService) ExposePort(ctx context.Context, req *api.ExposePortRequest) (*api.ExposePortResponse, error) {
 	err := c.portsManager.Expose(req.Port, req.TargetPort)
-	return &api.ExposePortResponse{Error: err}, nil
+	return &api.ExposePortResponse{}, err
 }
 
 // ContentState signals the workspace content state

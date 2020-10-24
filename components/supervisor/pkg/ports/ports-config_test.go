@@ -119,24 +119,31 @@ func TestPortsConfig(t *testing.T) {
 			service := NewConfigService(workspaceID, configService, gitpodAPI)
 			updates, errors := service.Observe(context)
 
-			go func() {
-				configService.configs <- test.GitpodConfig
-			}()
-
+			actual := &PortConfigTestExpectations{}
 			select {
 			case err := <-errors:
 				t.Fatal(err)
-			case <-updates:
+			case change := <-updates:
+				for _, config := range change.workspaceConfigs {
+					actual.WorkspaceConfigs = append(actual.WorkspaceConfigs, config)
+				}
 			}
-			actual := &PortConfigTestExpectations{
-				InstanceRangeConfigs: service.instanceRangeConfigs,
+
+			if test.GitpodConfig != nil {
+				go func() {
+					configService.configs <- test.GitpodConfig
+				}()
+				select {
+				case err := <-errors:
+					t.Fatal(err)
+				case change := <-updates:
+					actual.InstanceRangeConfigs = change.instanceRangeConfigs
+					for _, config := range change.instancePortConfigs {
+						actual.InstancePortConfigs = append(actual.InstancePortConfigs, config)
+					}
+				}
 			}
-			for _, config := range service.workspaceConfigs {
-				actual.WorkspaceConfigs = append(actual.WorkspaceConfigs, config)
-			}
-			for _, config := range service.instancePortConfigs {
-				actual.InstancePortConfigs = append(actual.InstancePortConfigs, config)
-			}
+
 			if diff := cmp.Diff(test.Expectation, actual); diff != "" {
 				t.Errorf("unexpected output (-want +got):\n%s", diff)
 			}

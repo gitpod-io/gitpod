@@ -11,8 +11,8 @@ import { PROBLEM_KIND } from "@theia/markers/lib/common/problem-marker";
 import { MiniBrowserOpenHandler } from "@theia/mini-browser/lib/browser/mini-browser-open-handler";
 import { inject, postConstruct } from "inversify";
 import { GitpodPortViewWidget, PORT_WIDGET_FACTORY_ID } from "./gitpod-port-view-widget";
-import { ExposedServedPort, GitpodPortsService } from "./gitpod-ports-service";
-import { PortsStatus } from "@gitpod/supervisor-api-grpc/lib/status_pb";
+import { ExposedServedPort, GitpodPortsService, isExposedServedPort } from "./gitpod-ports-service";
+import { PortVisibility, OnPortExposedAction } from "@gitpod/supervisor-api-grpc/lib/status_pb";
 
 export namespace PORT_COMMANDS {
     export const SHOW_VIEW = {
@@ -60,27 +60,27 @@ export class GitpodPortViewContribution extends AbstractViewContribution<GitpodP
     }
 
     protected async handleDidExposeServedPort(port: ExposedServedPort): Promise<any> {
-        if (port.exposed.onExposed === PortsStatus.ExposedPortInfo.OnPortExposed.IGNORE) {
+        if (port.exposed.onExposed === OnPortExposedAction.IGNORE) {
             return;
         }
 
-        if (port.exposed.onExposed === PortsStatus.ExposedPortInfo.OnPortExposed.OPEN_BROWSER) {
+        if (port.exposed.onExposed === OnPortExposedAction.OPEN_BROWSER) {
             return this.windowService.openNewWindow(port.exposed.url, {
                 external: true
             });
         }
 
-        if (port.exposed.onExposed === PortsStatus.ExposedPortInfo.OnPortExposed.OPEN_PREVIEW) {
+        if (port.exposed.onExposed === OnPortExposedAction.OPEN_PREVIEW) {
             await new Promise(resolve => setTimeout(resolve, 2000));
             return this.miniBrowserOpenHandler.openPreview(port.exposed.url);
         }
 
-        if (port.exposed.onExposed === PortsStatus.ExposedPortInfo.OnPortExposed.NOTIFY) {
+        if (port.exposed.onExposed === OnPortExposedAction.NOTIFY) {
             return this.showOpenServiceNotification(port);
         }
 
-        if (port.exposed.onExposed === PortsStatus.ExposedPortInfo.OnPortExposed.NOTIFY_PRIVATE) {
-            return this.showOpenServiceNotification(port, !port.exposed.pb_public);
+        if (port.exposed.onExposed === OnPortExposedAction.NOTIFY_PRIVATE) {
+            return this.showOpenServiceNotification(port, port.exposed.visibility !== PortVisibility.PUBLIC);
         }
     }
 
@@ -118,8 +118,8 @@ export class GitpodPortViewContribution extends AbstractViewContribution<GitpodP
         const exposedPrivate: number[] = [];
 
         for (const port of this.portsService.ports) {
-            if (port.exposed) {
-                (port.exposed.pb_public ? exposedPublic : exposedPrivate).push(port.localPort);
+            if (isExposedServedPort(port)) {
+                (port.exposed.visibility === PortVisibility.PUBLIC ? exposedPublic : exposedPrivate).push(port.localPort);
             }
         }
 
