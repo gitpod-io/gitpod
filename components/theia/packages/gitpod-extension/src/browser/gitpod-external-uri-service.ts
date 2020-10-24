@@ -20,14 +20,13 @@ export class GitpodExternalUriService extends ExternalUriService {
         if (!localhost) {
             return uri;
         }
-        const remoteUrl = this.toRemoteUrl(uri, localhost)
-        const exposing = this.portsService.exposePort({
+        const maybePublicUrl = this.portsService.exposePort({
             port: localhost.port
         });
-        if (exposing) {
-            return exposing.then(() => remoteUrl);
+        if (typeof maybePublicUrl === "string") {
+            return new URI(maybePublicUrl);
         }
-        return remoteUrl;
+        return maybePublicUrl.then(publicUrl => new URI(publicUrl));
     }
 
     protected toRemoteHost(localhost: { address: string, port: number }): string {

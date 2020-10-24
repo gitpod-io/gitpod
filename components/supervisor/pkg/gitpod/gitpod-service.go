@@ -287,7 +287,6 @@ func (gp *APIoverJSONRPC) InstanceUpdates(ctx context.Context, instanceID string
 }
 
 func (gp *APIoverJSONRPC) handler(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
-	log.WithField("req", fmt.Sprintf("%+v", req)).Debug("APIoverJSONRPC handler")
 	if req.Method != FunctionOnInstanceUpdate {
 		return
 	}

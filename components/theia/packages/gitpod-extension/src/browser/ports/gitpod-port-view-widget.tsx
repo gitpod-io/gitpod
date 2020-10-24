@@ -6,7 +6,7 @@
 
 require("../../../styles/port-view.css");
 
-import { PortsStatus } from "@gitpod/supervisor-api-grpc/lib/status_pb";
+import { PortsStatus, PortVisibility } from "@gitpod/supervisor-api-grpc/lib/status_pb";
 import { Message } from "@phosphor/messaging";
 import { ReactWidget } from "@theia/core/lib/browser/widgets/react-widget";
 import { WindowService } from '@theia/core/lib/browser/window/window-service';
@@ -94,11 +94,14 @@ class GitpodPortComponent extends React.Component<GitpodPortComponentProps> {
             label = 'detecting...'
         } else {
             // TODO: extract serving process name (e.g. use netstat instead of /proc/net/tcp) and show here, i.e. don't override the label
-            label = `open ${port.exposed.pb_public ? '(public)' : '(private)'}`;
+            label = `open ${port.exposed.visibility === PortVisibility.PUBLIC ? '(public)' : '(private)'}`;
 
             actions.push(<button className="theia-button" onClick={this.onOpenPreview}>Open Preview</button>);
             actions.push(<button className="theia-button" onClick={this.onOpenBrowser}>Open Browser</button>);
-            actions.push(<button className="theia-button" onClick={this.toggleVisiblity}>Make {port.exposed.pb_public ? 'Private' : 'Public'}</button>);
+        }
+
+        if (port.exposed) {
+            actions.push(<button className="theia-button" onClick={this.toggleVisiblity}>Make {port.exposed.visibility === PortVisibility.PUBLIC ? 'Private' : 'Public'}</button>);
         }
 
         const useIndicatorClass = `status-${port.served ? 'ib' : 'nb'}-${port.exposed ? 'ie' : 'ne'}`;
@@ -126,7 +129,7 @@ class GitpodPortComponent extends React.Component<GitpodPortComponentProps> {
 
     private readonly toggleVisiblity = () => {
         if (this.props.port.exposed) {
-            this.props.service.setVisibility(this.props.port, this.props.port.exposed.pb_public ? 'private' : 'public');
+            this.props.service.setVisibility(this.props.port, this.props.port.exposed.visibility === PortVisibility.PUBLIC ? 'private' : 'public');
         }
     }
 }

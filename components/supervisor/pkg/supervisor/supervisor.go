@@ -220,6 +220,7 @@ func createExposedPortsImpl(cfg *Config, gitpodService *gitpod.APIoverJSONRPC) (
 
 	return &ports.GitpodExposedPorts{
 		WorkspaceID: cfg.WorkspaceID,
+		InstanceID:  cfg.WorkspaceInstanceID,
 		C:           gitpodService,
 	}
 }
