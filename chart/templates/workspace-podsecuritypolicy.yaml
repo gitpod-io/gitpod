@@ -15,15 +15,11 @@ metadata:
     kind: podsecuritypolicy
     stage: {{ .Values.installation.stage }}
   annotations:
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'runtime/default'
+    seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'runtime/default,unconfined'
     apparmor.security.beta.kubernetes.io/allowedProfileNames: 'runtime/default,unconfined'
     seccomp.security.alpha.kubernetes.io/defaultProfileName:  'runtime/default'
     apparmor.security.beta.kubernetes.io/defaultProfileName:  'runtime/default'
 spec:
-  #####
-  # The sync containers currently run as root
-  #####
-  ### TODO root sync
   privileged: false
   allowPrivilegeEscalation: true
   # # This is redundant with non-root + disallow privilege escalation,
@@ -34,6 +30,9 @@ spec:
     - KILL
     - NET_BIND_SERVICE
     - SYS_PTRACE
+  allowedProcMountTypes:
+    - Default
+    - Unmasked
   volumes:
     - 'configMap'
     - 'projected'
@@ -43,9 +42,7 @@ spec:
   hostIPC: false
   hostPID: false
   runAsUser:
-    ### TODO root sync
     rule: 'RunAsAny'
-    ### TODO root sync
   seLinux:
     # This policy assumes the nodes are using AppArmor rather than SELinux.
     rule: 'RunAsAny'

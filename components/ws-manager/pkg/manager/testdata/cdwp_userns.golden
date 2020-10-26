@@ -28,7 +28,8 @@
                 "gitpod/withUsernamespace": "true",
                 "prometheus.io/path": "/metrics",
                 "prometheus.io/port": "23000",
-                "prometheus.io/scrape": "true"
+                "prometheus.io/scrape": "true",
+                "seccomp.security.alpha.kubernetes.io/pod": "unconfined"
             }
         },
         "spec": {
@@ -207,7 +208,8 @@
                         "runAsGroup": 33333,
                         "runAsNonRoot": true,
                         "readOnlyRootFilesystem": false,
-                        "allowPrivilegeEscalation": true
+                        "allowPrivilegeEscalation": true,
+                        "procMount": "Unmasked"
                     }
                 }
             ],
