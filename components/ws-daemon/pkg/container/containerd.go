@@ -411,7 +411,7 @@ func (s *Containerd) ContainerUpperdir(ctx context.Context, id ID) (loc string, 
 }
 
 // ContainerRootfs finds the workspace container's rootfs.
-func (s *Containerd) ContainerRootfs(ctx context.Context, id ID) (loc string, err error) {
+func (s *Containerd) ContainerRootfs(ctx context.Context, id ID, opts OptsContainerRootfs) (loc string, err error) {
 	info, ok := s.cntIdx[string(id)]
 	if !ok {
 		return "", ErrNotFound
@@ -428,7 +428,11 @@ func (s *Containerd) ContainerRootfs(ctx context.Context, id ID) (loc string, er
 		return
 	}
 
-	return mnt, nil
+	if opts.Unmapped {
+		return mnt, nil
+	}
+
+	return s.Mapping.Translate(mnt)
 }
 
 // ContainerCGroupPath finds the container's cgroup path suffix

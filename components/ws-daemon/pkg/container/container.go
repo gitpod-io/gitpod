@@ -29,11 +29,13 @@ type Runtime interface {
 	// If the container has no upperdir ErrNoUpperdir is returned.
 	ContainerUpperdir(ctx context.Context, id ID) (loc string, err error)
 
-	// ContainerUpperdir finds the workspace container's rootfs.
-	// The location returned here is relative to root mount namespace, i.e. not the container.
+	// ContainerUpperdir finds the workspace container's rootfs. By default the location returned here has to be accessible from
+	// the calling process (i.e. if the calling process runs in a container itself, the returned location has to be accessible from
+	// within that container).
+	// If opts.Unmapped == true, the location returned here is relative to root mount namespace, i.e. not the container.
 	//
 	// If the container, or its rootfs, is not found ErrNotFound is returned.
-	ContainerRootfs(ctx context.Context, id ID) (loc string, err error)
+	ContainerRootfs(ctx context.Context, id ID, opts OptsContainerRootfs) (loc string, err error)
 
 	// ContainerCGroupPath finds the container's cgroup path on the node. Note: this path is not the complete path to the container's cgroup,
 	// but merely the suffix. To make it a complete path you need to add the cgroup base path (e.g. /sys/fs/cgroup) and the type of cgroup
@@ -63,3 +65,8 @@ var (
 
 // ID represents the ID of a CRI container
 type ID string
+
+// OptsContainerRootfs provides options for the ContainerRootfs function
+type OptsContainerRootfs struct {
+	Unmapped bool
+}

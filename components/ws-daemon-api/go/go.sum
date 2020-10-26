@@ -10,6 +10,10 @@ github.com/fatih/camelcase v1.0.0 h1:hxNvNX/xYBp0ovncs8WyWZrOrpBNub/JfaMvbURyft8
 github.com/fatih/camelcase v1.0.0/go.mod h1:yN2Sb0lFhZJUdVvtELVWefmrXpuZESvPmqwoZc+/fpc=
 github.com/fatih/gomodifytags v1.9.0 h1:57iX6liPpgl5LiFIc/gf6opTK5jkBSjuZPsKvRJKvFU=
 github.com/fatih/gomodifytags v1.9.0/go.mod h1:TbUyEjH1Zo0GkJd2Q52oVYqYcJ0eGNqG8bsiOb75P9c=
+github.com/fatih/gomodifytags v1.11.0 h1:Vz8KYUXf0RoxGuV91RbJX7G2BoSqjLsIvlYrrvu49V4=
+github.com/fatih/gomodifytags v1.11.0/go.mod h1:TbUyEjH1Zo0GkJd2Q52oVYqYcJ0eGNqG8bsiOb75P9c=
+github.com/fatih/gomodifytags v1.12.0 h1:Wh/d0fQ9C/V1x4PaFr0RE4T17Fu6sg/tcSZTZrBvJds=
+github.com/fatih/gomodifytags v1.12.0/go.mod h1:TbUyEjH1Zo0GkJd2Q52oVYqYcJ0eGNqG8bsiOb75P9c=
 github.com/fatih/structtag v1.2.0 h1:/OdNE99OxoI/PqaW/SuSK9uxxT3f/tcSZgon/ssNSx4=
 github.com/fatih/structtag v1.2.0/go.mod h1:mBJUNpUnHmRKrKlQQlmCrh5PuhftFbNv8Ys4/aAZl94=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=

@@ -123,6 +123,46 @@ export namespace MountShiftfsMarkResponse {
   }
 }
 
+export class MountProcRequest extends jspb.Message {
+  getTarget(): string;
+  setTarget(value: string): void;
+
+  getPid(): number;
+  setPid(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MountProcRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: MountProcRequest): MountProcRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: MountProcRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MountProcRequest;
+  static deserializeBinaryFromReader(message: MountProcRequest, reader: jspb.BinaryReader): MountProcRequest;
+}
+
+export namespace MountProcRequest {
+  export type AsObject = {
+    target: string,
+    pid: number,
+  }
+}
+
+export class MountProcResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): MountProcResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: MountProcResponse): MountProcResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: MountProcResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): MountProcResponse;
+  static deserializeBinaryFromReader(message: MountProcResponse, reader: jspb.BinaryReader): MountProcResponse;
+}
+
+export namespace MountProcResponse {
+  export type AsObject = {
+  }
+}
+
 export class TeardownRequest extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): TeardownRequest.AsObject;

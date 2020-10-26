@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
 import { Message } from 'vscode-jsonrpc/lib/messages';
 import { AbstractMessageWriter, MessageWriter } from 'vscode-jsonrpc/lib/messageWriter';
 import { AbstractMessageReader, MessageReader, DataCallback } from 'vscode-jsonrpc/lib/messageReader';
