@@ -9,9 +9,13 @@ service InWorkspaceService {
     // for user namespaces and is available four times every 10 seconds.
     rpc WriteIDMapping(WriteIDMappingRequest) returns (WriteIDMappingResponse) {}
 
-    // MountShiftfsMark mounts the workspace contiainer's rootfs as a shiftfs mark under `/.workspace/mark` if the
+    // MountShiftfsMark mounts the workspace container's rootfs as a shiftfs mark under `/.workspace/mark` if the
     // workspace has the daemon hostPath mount. Can only be used once per workspace.
     rpc MountShiftfsMark(MountShiftfsMarkRequest) returns (MountShiftfsMarkResponse) {}
+
+    // MountProc mounts a masked proc in the container's rootfs.
+    // For now this can be used only once per workspace.
+    rpc MountProc(MountProcRequest) returns (MountProcResponse) {}
 
     // Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
     // when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
@@ -36,6 +40,12 @@ message WriteIDMappingRequest {
 
 message MountShiftfsMarkRequest {}
 message MountShiftfsMarkResponse {}
+
+message MountProcRequest {
+    string target = 1;
+    int64 pid = 2;
+}
+message MountProcResponse {}
 
 message TeardownRequest {
 }

@@ -10,6 +10,28 @@
 var grpc = require('grpc');
 var workspace_pb = require('./workspace_pb.js');
 
+function serialize_iws_MountProcRequest(arg) {
+  if (!(arg instanceof workspace_pb.MountProcRequest)) {
+    throw new Error('Expected argument of type iws.MountProcRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_MountProcRequest(buffer_arg) {
+  return workspace_pb.MountProcRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_iws_MountProcResponse(arg) {
+  if (!(arg instanceof workspace_pb.MountProcResponse)) {
+    throw new Error('Expected argument of type iws.MountProcResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_MountProcResponse(buffer_arg) {
+  return workspace_pb.MountProcResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_iws_MountShiftfsMarkRequest(arg) {
   if (!(arg instanceof workspace_pb.MountShiftfsMarkRequest)) {
     throw new Error('Expected argument of type iws.MountShiftfsMarkRequest');
@@ -91,7 +113,7 @@ writeIDMapping: {
     responseSerialize: serialize_iws_WriteIDMappingResponse,
     responseDeserialize: deserialize_iws_WriteIDMappingResponse,
   },
-  // MountShiftfsMark mounts the workspace contiainer's rootfs as a shiftfs mark under `/.workspace/mark` if the
+  // MountShiftfsMark mounts the workspace container's rootfs as a shiftfs mark under `/.workspace/mark` if the
 // workspace has the daemon hostPath mount. Can only be used once per workspace.
 mountShiftfsMark: {
     path: '/iws.InWorkspaceService/MountShiftfsMark',
@@ -103,6 +125,19 @@ mountShiftfsMark: {
     requestDeserialize: deserialize_iws_MountShiftfsMarkRequest,
     responseSerialize: serialize_iws_MountShiftfsMarkResponse,
     responseDeserialize: deserialize_iws_MountShiftfsMarkResponse,
+  },
+  // MountProc mounts a masked proc in the container's rootfs.
+// For now this can be used only once per workspace.
+mountProc: {
+    path: '/iws.InWorkspaceService/MountProc',
+    requestStream: false,
+    responseStream: false,
+    requestType: workspace_pb.MountProcRequest,
+    responseType: workspace_pb.MountProcResponse,
+    requestSerialize: serialize_iws_MountProcRequest,
+    requestDeserialize: deserialize_iws_MountProcRequest,
+    responseSerialize: serialize_iws_MountProcResponse,
+    responseDeserialize: deserialize_iws_MountProcResponse,
   },
   // Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
 // when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.

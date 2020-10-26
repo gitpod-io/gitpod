@@ -174,7 +174,7 @@ var ring2Cmd = &cobra.Command{
 		}{
 			// TODO(cw): pull mark mount location from config
 			{Target: "/", Source: "/.workspace/mark", FSType: "shiftfs"},
-			{Target: "/proc", Flags: syscall.MS_BIND | syscall.MS_REC},
+			// {Target: "/proc", Flags: syscall.MS_BIND | syscall.MS_REC},
 			{Target: "/sys", Flags: syscall.MS_BIND | syscall.MS_REC},
 			{Target: "/dev", Flags: syscall.MS_BIND | syscall.MS_REC},
 			// TODO(cw): only mount /theia if it's in the mount table, i.e. this isn't a registry-facade workspace
@@ -203,6 +203,31 @@ var ring2Cmd = &cobra.Command{
 				return
 			}
 		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		client, conn, err := supervisor.ConnectToInWorkspaceDaemonService(ctx)
+		if err != nil {
+			log.WithError(err).Fatal("cannot connect to daemon")
+			return
+		}
+
+		procLoc := filepath.Join(tmpdir, "proc")
+		err = os.MkdirAll(procLoc, 0755)
+		if err != nil {
+			log.WithError(err).Fatal("cannot mount proc")
+			return
+		}
+		_, err = client.MountProc(ctx, &daemonapi.MountProcRequest{
+			Target: procLoc,
+			Pid:    int64(os.Getpid()),
+		})
+		if err != nil {
+			log.WithError(err).Error("cannot mount proc")
+			time.Sleep(5 * time.Minute)
+			return
+		}
+		defer conn.Close()
 
 		err = syscall.Chroot(tmpdir)
 		if err != nil {

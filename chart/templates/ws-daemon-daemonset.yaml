@@ -174,5 +174,6 @@ spec:
           containerPort: 9500
         securityContext:
           privileged: true
+          procMount: unmasked
 {{ toYaml .Values.defaults | indent 6 }}
 {{ end }}
