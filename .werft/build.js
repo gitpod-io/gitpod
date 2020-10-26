@@ -205,6 +205,7 @@ async function deployToDev(version, previewWithHttps, workspaceFeatureFlags) {
     flags+=` --set devBranch=${destname}`;
     flags+=` --set components.wsDaemon.servicePort=${wsdaemonPort}`;
     flags+=` --set components.wsDaemon.registryProxyPort=${registryProxyPort}`;
+    flags+=` --set components.registryFacade.ports.registry.servicePort=${registryNodePort}`;
     flags+=` --set ingressMode=${context.Annotations.ingressMode || "hosts"}`;
     workspaceFeatureFlags.forEach((f, i) => {
         flags+=` --set components.server.defaultFeatureFlags[${i}]='${f}'`
@@ -255,7 +256,8 @@ async function deployToDev(version, previewWithHttps, workspaceFeatureFlags) {
 
 async function issueAndInstallCertficate(namespace, domain) {
     // Always use 'terraform apply' to make sure the certificate is present and up-to-date
-    await exec(`cd .werft/certs \
+    await exec(`set -x \
+        && cd .werft/certs \
         && terraform init \
         && export GOOGLE_APPLICATION_CREDENTIALS="${GCLOUD_SERVICE_ACCOUNT_PATH}" \
         && terraform apply -auto-approve \

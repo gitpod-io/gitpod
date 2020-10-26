@@ -71,10 +71,17 @@ daemon:
     nodeHostsFile: "/mnt/hosts"
     serviceProxy:
       enabled: true
+{{- if .Values.components.registryFacade }}
+      fixedHosts:
+        registryFacade:
+          - alias: {{ (printf "reg.%s" (.Values.components.registryFacade.hostname | default .Values.hostname)) | quote }}
+            addr: 127.0.0.1
+{{- else }}
       mapping:
         - selector: "component=registry-facade,feature=registry"
           alias: {{ (printf "reg.%s" (.Values.components.registryFacade.hostname | default .Values.hostname)) | quote }}
           proxyPort: {{ $comp.registryProxyPort }}
+{{- end }}
   disk:
     path: "/mnt/wsdaemon-workingarea"
     minBytesAvail: 21474836480

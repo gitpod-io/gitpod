@@ -92,7 +92,7 @@ data:
             },
             {{ if $comp.eventTraceLogLocation }}"eventTraceLog": "{{ $comp.eventTraceLogLocation }}",{{- end }}
             "reconnectionInterval": "30s",
-            "registryFacadeHost": {{ (printf "reg.%s:%v" (.Values.components.registryFacade.hostname | default .Values.hostname) .Values.components.wsDaemon.registryProxyPort) | quote }}
+            "registryFacadeHost": {{ (printf "reg.%s:%v" (.Values.components.registryFacade.hostname | default .Values.hostname) (ternary .Values.components.registryFacade.ports.registry.servicePort .Values.components.wsDaemon.registryProxyPort .Values.components.registryFacade.daemonSet)) | quote }}
             {{- if and (not $wsproxy.disabled) (eq .Values.ingressMode "noDomain") -}}
             , "ingressPortAllocator": {
                 "ingressRange": {

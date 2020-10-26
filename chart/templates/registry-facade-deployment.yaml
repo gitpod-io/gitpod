@@ -5,7 +5,11 @@
 {{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
 {{- if not $comp.disabled -}}
 apiVersion: apps/v1
+{{- if $comp.daemonSet }}
+kind: DaemonSet
+{{- else }}
 kind: Deployment
+{{- end }}
 metadata:
   name: registry-facade
   labels:
@@ -20,12 +24,14 @@ spec:
       component: registry-facade
       kind: pod
       stage: {{ .Values.installation.stage }}
+{{- if not $comp.daemonSet }}
   replicas: {{ $comp.replicas | default 1 }}
   strategy:
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 0
     type: RollingUpdate
+{{- end }}
   template:
     metadata:
       name: registry-facade
@@ -35,7 +41,11 @@ spec:
         kind: pod
         stage: {{ .Values.installation.stage }}
     spec:
+{{- if $comp.daemonSet }}
+{{ include "gitpod.workspaceAffinity" $this | indent 6 }}
+{{- else }}
 {{ include "gitpod.pod.affinity" $this | indent 6 }}
+{{- end }}
       serviceAccountName: registry-facade
       containers:
       - name: registry-facade
@@ -46,6 +56,9 @@ spec:
         ports:
         - name: registry
           containerPort: {{ $comp.ports.registry.containerPort }}
+{{- if $comp.daemonSet }}
+          hostPort: {{ $comp.ports.registry.servicePort }}
+{{- end }}
         securityContext:
           privileged: false
           runAsUser: 1000

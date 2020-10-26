@@ -16,6 +16,7 @@ type Config struct {
 	Enabled       bool              `json:"enabled"`
 	NodeHostsFile string            `json:"nodeHostsFile"`
 	FromNodeIPs   map[string]string `json:"fromPodNodeIP"`
+	FixedHosts    map[string][]Host `json:"fixedHosts"`
 	ServiceProxy  struct {
 		Enabled     bool `json:"enabled,omitempty"`
 		PortMapping []struct {
@@ -59,6 +60,12 @@ func FromConfig(cfg Config, clientset kubernetes.Interface, kubernetesNamespace 
 			Namespace: kubernetesNamespace,
 			Selector:  src,
 			Alias:     alias,
+		})
+	}
+	for alias, entry := range cfg.FixedHosts {
+		provider = append(provider, FixedIPSource{
+			Alias: alias,
+			Hosts: entry,
 		})
 	}
 	hg, err := NewDirectController(kubernetesNamespace, cfg.NodeHostsFile, provider...)
