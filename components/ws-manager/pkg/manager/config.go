@@ -32,6 +32,8 @@ type Configuration struct {
 	Namespace string `json:"namespace"`
 	// SchedulerName is the name of the workspace scheduler all pods are created with
 	SchedulerName string `json:"schedulerName"`
+	// SeccompProfile names the seccomp profile workspaces will use
+	SeccompProfile string `json:"seccompProfile"`
 	// Container configures all three workspace containers
 	Container AllContainerConfiguration `json:"container"`
 	// Timeouts configures how long workspaces can be without activity before they're shut down.

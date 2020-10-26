@@ -15,7 +15,7 @@ metadata:
     kind: podsecuritypolicy
     stage: {{ .Values.installation.stage }}
   annotations:
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'runtime/default,unconfined'
+    seccomp.security.alpha.kubernetes.io/allowedProfileNames: '*'
     apparmor.security.beta.kubernetes.io/allowedProfileNames: 'runtime/default,unconfined'
     seccomp.security.alpha.kubernetes.io/defaultProfileName:  'runtime/default'
     apparmor.security.beta.kubernetes.io/defaultProfileName:  'runtime/default'

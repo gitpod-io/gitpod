@@ -29,7 +29,7 @@
                 "prometheus.io/path": "/metrics",
                 "prometheus.io/port": "23000",
                 "prometheus.io/scrape": "true",
-                "seccomp.security.alpha.kubernetes.io/pod": "unconfined"
+                "seccomp.security.alpha.kubernetes.io/pod": "localhost/workspace-default"
             }
         },
         "spec": {

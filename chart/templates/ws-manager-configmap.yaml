@@ -3,8 +3,10 @@
 
 {{ $comp := .Values.components.wsManager -}}
 {{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- $gp := $.Values -}}
 {{- $wscomp := .Values.components.workspace -}}
 {{- $wsproxy := .Values.components.wsProxy -}}
+{{- $wsdaemon := .Values.components.wsDaemon -}}
 {{- if not $comp.disabled -}}
 apiVersion: v1
 kind: ConfigMap
@@ -21,6 +23,11 @@ data:
         "manager": {
             "namespace": "{{ .Release.Namespace }}",
             "schedulerName": "{{ .Values.workspaceScheduler }}",
+{{- if $wsdaemon.userNamespaces.seccompProfileInstaller.enabled }}
+            "seccompProfile": "localhost/workspace_default_{{ $gp.version }}.json",
+{{- else }}
+            "seccompProfile": "runtime/default",
+{{- end }}
             "dryRun": false,
             "wsdaemon": {
                 "port": {{ .Values.components.wsDaemon.servicePort }},
