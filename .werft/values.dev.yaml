@@ -38,6 +38,9 @@ components:
     - name: "dev"
       address: "ws-manager-dev:8080"
 
+  registryFacade:
+    daemonSet: true
+
   workspace:
     # configure GCP registry
     pullSecret:

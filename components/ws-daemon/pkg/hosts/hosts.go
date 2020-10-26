@@ -20,8 +20,8 @@ import (
 
 // Host maps an IP address to a hostname
 type Host struct {
-	Addr string
-	Name string
+	Addr string `json:"addr"`
+	Name string `json:"name"`
 }
 
 // HostSource provides a hostname and its corresponding IP address

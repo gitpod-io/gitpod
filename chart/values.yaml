@@ -193,6 +193,7 @@ components:
     dependsOn:
     - "registry-facade-configmap.yaml"
     certificatesSecret: {}
+    daemonSet: false
     resources:
       cpu: 100m
       memory: 32Mi

@@ -170,6 +170,34 @@ func (s *ServiceClusterIPSource) Source() <-chan []Host {
 	return s.src
 }
 
+// FixedIPSource is a Host source that's fixed at configuration time
+type FixedIPSource struct {
+	Alias string
+	Hosts []Host
+}
+
+// Name returns the ID of this source
+func (fi FixedIPSource) Name() string {
+	return fi.Alias
+}
+
+// Start starts the source
+func (fi FixedIPSource) Start() error {
+	return nil
+}
+
+// Source provides hosts on the channel
+func (fi FixedIPSource) Source() <-chan []Host {
+	res := make(chan []Host)
+	go func() {
+		res <- fi.Hosts
+	}()
+	return res
+}
+
+// Stop stops this source from providing hosts
+func (fi FixedIPSource) Stop() {}
+
 // PodHostIPSource provides hosts based on Kubernetes pods
 type PodHostIPSource struct {
 	ID        string
