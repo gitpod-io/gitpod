@@ -377,6 +377,9 @@ components:
       shiftfsModuleLoader:
         enabled: false
         imageName: "shiftfs-module-loader"
+      seccompProfileInstaller:
+        enabled: true
+        imageName: "seccomp-profile-installer"
     registryProxyPort: 8081
     remoteStorage:
       kind: minio

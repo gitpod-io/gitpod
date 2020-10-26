@@ -3,6 +3,7 @@
 
 {{ $comp := .Values.components.wsDaemon -}}
 {{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- $gp := $.Values -}}
 {{- if not $comp.disabled -}}
 apiVersion: apps/v1
 kind: DaemonSet
@@ -93,11 +94,18 @@ spec:
           path: /usr/src
           type: Directory
       {{- end }}
+      {{- if $comp.userNamespaces.seccompProfileInstaller.enabled }}
+      - name: hostseccomp
+        hostPath:
+          path: /var/lib/kubelet/seccomp
+      {{- end }}
 {{- if $comp.volumes }}
 {{ toYaml $comp.volumes | indent 6 }}
 {{- end }}
-{{- if $comp.userNamespaces.shiftfsModuleLoader.enabled }}
+{{- if (or $comp.userNamespaces.shiftfsModuleLoader.enabled $comp.userNamespaces.seccompProfileInstaller.enabled) }}
       initContainers:
+{{- end }}
+{{- if $comp.userNamespaces.shiftfsModuleLoader.enabled }}
       - name: shiftfs-module-loader
         volumeMounts:
         - mountPath: /usr/src_node
@@ -106,6 +114,16 @@ spec:
         image: {{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" $comp.userNamespaces.shiftfsModuleLoader) }}
         securityContext:
           privileged: true
+{{- end }}
+{{- if $comp.userNamespaces.seccompProfileInstaller.enabled }}
+      - name: seccomp-profile-installer
+        volumeMounts:
+        - mountPath: /mnt/dst
+          name: hostseccomp
+        image: {{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" $comp.userNamespaces.seccompProfileInstaller) }}
+        securityContext:
+          privileged: true
+        command: ["/bin/sh", "-c", "cp -f /installer/workspace_default.json /mnt/dst/workspace_default_{{ $gp.version }}.json"]
 {{- end }}
       containers:
       - name: ws-daemon
