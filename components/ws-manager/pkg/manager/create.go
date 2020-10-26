@@ -391,6 +391,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 				hostPathOrCreate = corev1.HostPathDirectoryOrCreate
 				daemonVolumeName = "daemon-mount"
 				mountPropagation = corev1.MountPropagationHostToContainer
+				newGitpodID      = int64(30003)
 			)
 			pod.Spec.Volumes = append(pod.Spec.Volumes,
 				corev1.Volume{
@@ -429,6 +430,8 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 					},
 				)
 				pod.Spec.Containers[i].Command = []string{pod.Spec.Containers[i].Command[0], "ring0"}
+				pod.Spec.Containers[i].SecurityContext.RunAsUser = &newGitpodID
+				pod.Spec.Containers[i].SecurityContext.RunAsGroup = &newGitpodID
 				break
 			}
 		case api.WorkspaceFeatureFlag_FULL_WORKSPACE_BACKUP:

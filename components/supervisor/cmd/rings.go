@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -124,7 +125,6 @@ var ring1Cmd = &cobra.Command{
 		cmd := exec.Command("/proc/self/exe", "ring2")
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Pdeathsig: syscall.SIGKILL,
-			// Cloneflags: syscall.CLONE_NEWNS,
 		}
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
@@ -155,6 +155,23 @@ var ring2Cmd = &cobra.Command{
 	Run: func(_cmd *cobra.Command, args []string) {
 		log := log.WithField("ring", 2)
 		defer log.Info("done")
+
+		// We've just arrived in this brand new user namespace. Ring1 will have just cloned,
+		// but cannot set the UID/GID of ring2 because the UID/GID mapping doesn't apply to
+		// it yet.
+		// Instead of introducing yet another ring, we try and setuid/setgid here, which is
+		// possible because we have a full set of capabilities in the user namesapce.
+		var err error
+		runtime.LockOSThread()
+		defer runtime.UnlockOSThread()
+		err = syscall.Setuid(0)
+		if err != nil {
+			log.WithError(err).Fatal("cannot setuid to 0")
+		}
+		err = syscall.Setgid(0)
+		if err != nil {
+			log.WithError(err).Fatal("cannot setgid to 0")
+		}
 
 		// BEWARE: there's a host of Fatal logs in here.
 		//         Fatal logs call os.Exit which prevents defers from running.

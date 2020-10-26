@@ -204,8 +204,8 @@
                             ]
                         },
                         "privileged": false,
-                        "runAsUser": 33333,
-                        "runAsGroup": 33333,
+                        "runAsUser": 30003,
+                        "runAsGroup": 30003,
                         "runAsNonRoot": true,
                         "readOnlyRootFilesystem": false,
                         "allowPrivilegeEscalation": true
