@@ -282,6 +282,9 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		workspaceImageSpecAnnotation:   imageSpec,
 		ownerTokenAnnotation:           startContext.OwnerToken,
 		wsk8s.TraceIDAnnotation:        startContext.TraceID,
+		// TODO(cw): once userns workspaces become standard, set this to m.Config.SeccompProfile.
+		//           Until then, the custom seccomp profile isn't suitable for workspaces.
+		"seccomp.security.alpha.kubernetes.io/pod": "runtime/default",
 	}
 	if req.Spec.Timeout != "" {
 		_, err := time.ParseDuration(req.Spec.Timeout)
@@ -380,9 +383,9 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			pod.Annotations[withUsernamespaceAnnotation] = "true"
 			// TODO(cw): post Kubernetes 1.19 use GA form for settings those profiles
 			pod.Annotations["container.apparmor.security.beta.kubernetes.io/workspace"] = "unconfined"
-			// TODO(cw): understand why this is neccesary for the `clone` syscalls to work,
-			//           and devise means to bring back sensible seccomp filter.
-			pod.Annotations["seccomp.security.alpha.kubernetes.io/pod"] = "unconfined"
+			// We're using a custom seccomp profile for user namespaces to allow clone, mount and chroot.
+			// Those syscalls don't make much sense in a non-userns setting, where we default to runtime/default using the PodSecurityPolicy.
+			pod.Annotations["seccomp.security.alpha.kubernetes.io/pod"] = m.Config.SeccompProfile
 			// Mounting /dev/net/tun should be fine security-wise, because:
 			//   - the TAP driver documentation says so (see https://www.kernel.org/doc/Documentation/networking/tuntap.txt)
 			//   - systemd's nspawn does the same thing (if it's good enough for them, it's good enough for us)

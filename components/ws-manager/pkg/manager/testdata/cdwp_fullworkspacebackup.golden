@@ -28,7 +28,8 @@
                 "gitpod/url": "test-foobarservice-gitpod.io",
                 "prometheus.io/path": "/metrics",
                 "prometheus.io/port": "23000",
-                "prometheus.io/scrape": "true"
+                "prometheus.io/scrape": "true",
+                "seccomp.security.alpha.kubernetes.io/pod": "runtime/default"
             }
         },
         "spec": {

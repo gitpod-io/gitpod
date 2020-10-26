@@ -30,6 +30,7 @@ func forTestingOnlyGetManager(t *testing.T, objects ...runtime.Object) *Manager 
 	config := Configuration{
 		Namespace:                "default",
 		SchedulerName:            "workspace-scheduler",
+		SeccompProfile:           "localhost/workspace-default",
 		HeartbeatInterval:        util.Duration(30 * time.Second),
 		TheiaHostPath:            "/tmp/theia/theia-xyz",
 		WorkspaceHostPath:        "/tmp/workspaces",
