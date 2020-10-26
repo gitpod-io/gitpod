@@ -39,6 +39,13 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/ws-manager:${version}
+  - name: userns-test-fixtures
+    type: generic
+    srcs:
+      - "pkg/manager/testdata/cdwp_userns.golden"
+    config:
+      commands:
+        - ["mv", "pkg/manager/testdata/cdwp_userns.golden", "pod.json"]
   - name: integration-test
     type: generic
     deps:

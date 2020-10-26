@@ -24,6 +24,7 @@ packages:
       - components/ws-proxy:docker
       - components/ws-daemon:docker
       - components/ws-daemon/shiftfs-module-loader:docker
+      - components/ws-daemon/seccomp-profile-installer:docker
       - components/gitpod-protocol:publish
       - components/supervisor-api/typescript-grpc:publish
   - name: all-apps

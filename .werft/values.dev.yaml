@@ -132,6 +132,8 @@ components:
     userNamespaces:
       shiftfsModuleLoader:
         enabled: true
+      seccompProfileInstaller:
+        enabled: true
 
   # Enable ws-proxy in dev
   wsProxy:
