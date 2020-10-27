@@ -7,7 +7,6 @@ import (
 
 	"github.com/containerd/containerd/contrib/seccomp"
 	"github.com/opencontainers/runtime-spec/specs-go"
-	"golang.org/x/sys/unix"
 )
 
 func main() {
@@ -27,30 +26,10 @@ func main() {
 	s.Syscalls = append(s.Syscalls, specs.LinuxSyscall{
 		Names: []string{
 			"clone",
+			"mount",
+			"chroot",
 		},
 		Action: specs.ActAllow,
-		Args: []specs.LinuxSeccompArg{
-			{
-				Index:    0,
-				Value:    unix.CLONE_NEWNS | unix.CLONE_NEWUSER,
-				ValueTwo: 0,
-				Op:       specs.OpMaskedEqual,
-			},
-		},
-	})
-	s.Syscalls = append(s.Syscalls, specs.LinuxSyscall{
-		Names: []string{
-			"clone",
-		},
-		Action: specs.ActAllow,
-		Args: []specs.LinuxSeccompArg{
-			{
-				Index:    0,
-				Value:    unix.CLONE_NEWNS,
-				ValueTwo: 0,
-				Op:       specs.OpMaskedEqual,
-			},
-		},
 	})
 
 	err := enc.Encode(s)
