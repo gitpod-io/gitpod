@@ -216,7 +216,9 @@ var ring2Cmd = &cobra.Command{
 
 			err = syscall.Mount(m.Source, dst, m.FSType, m.Flags, "")
 			if err != nil {
-				log.WithError(err).WithField("dest", dst).Fatal("cannot establish mount")
+				log.WithError(err).WithField("dest", dst).WithField("source", m.Source).WithField("fstype", m.FSType).Error("cannot establish mount")
+				time.Sleep(5 * time.Minute)
+				os.Exit(1)
 				return
 			}
 		}
