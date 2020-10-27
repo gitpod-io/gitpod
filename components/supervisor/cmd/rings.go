@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"syscall"
 	"time"
 
@@ -57,6 +56,9 @@ var ring0Cmd = &cobra.Command{
 	},
 }
 
+var ring1CmdOpts struct {
+	mappingEstablished bool
+}
 var ring1Cmd = &cobra.Command{
 	Use:    "ring1",
 	Short:  "starts the supervisor ring1",
@@ -87,20 +89,29 @@ var ring1Cmd = &cobra.Command{
 		}
 		defer conn.Close()
 
-		mapping := []*daemonapi.WriteIDMappingRequest_Mapping{
-			{ContainerId: 0, HostId: 33333, Size: 1},
-			{ContainerId: 1, HostId: 100000, Size: 65534},
-		}
-		_, err = client.WriteIDMapping(ctx, &daemonapi.WriteIDMappingRequest{Pid: int64(os.Getpid()), Gid: false, Mapping: mapping})
-		if err != nil {
-			log.WithError(err).Error("cannot establish UID mapping")
-			failed = true
-			return
-		}
-		_, err = client.WriteIDMapping(ctx, &daemonapi.WriteIDMappingRequest{Pid: int64(os.Getpid()), Gid: true, Mapping: mapping})
-		if err != nil {
-			log.WithError(err).Error("cannot establish GID mapping")
-			failed = true
+		if !ring1CmdOpts.mappingEstablished {
+			mapping := []*daemonapi.WriteIDMappingRequest_Mapping{
+				{ContainerId: 0, HostId: 33333, Size: 1},
+				{ContainerId: 1, HostId: 100000, Size: 65534},
+			}
+			_, err = client.WriteIDMapping(ctx, &daemonapi.WriteIDMappingRequest{Pid: int64(os.Getpid()), Gid: false, Mapping: mapping})
+			if err != nil {
+				log.WithError(err).Error("cannot establish UID mapping")
+				failed = true
+				return
+			}
+			_, err = client.WriteIDMapping(ctx, &daemonapi.WriteIDMappingRequest{Pid: int64(os.Getpid()), Gid: true, Mapping: mapping})
+			if err != nil {
+				log.WithError(err).Error("cannot establish GID mapping")
+				failed = true
+				return
+			}
+
+			log.Info("re-executing ring1")
+			err := syscall.Exec("/proc/self/exe", append(os.Args, "--mapping-established"), os.Environ())
+			if err != nil {
+				log.WithError(err).Fatal("cannot re-exec ring1")
+			}
 			return
 		}
 
@@ -125,6 +136,10 @@ var ring1Cmd = &cobra.Command{
 		cmd := exec.Command("/proc/self/exe", "ring2")
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Pdeathsig: syscall.SIGKILL,
+			Credential: &syscall.Credential{
+				Gid: 0,
+				Uid: 0,
+			},
 		}
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
@@ -132,7 +147,7 @@ var ring1Cmd = &cobra.Command{
 		cmd.Env = os.Environ()
 
 		if err := cmd.Start(); err != nil {
-			log.WithError(err).Error("failed to start the child")
+			log.WithError(err).WithField("uid", os.Getuid()).Error("failed to start the child")
 			failed = true
 			return
 		}
@@ -153,25 +168,8 @@ var ring2Cmd = &cobra.Command{
 	Short:  "starts the supervisor ring2",
 	Hidden: true,
 	Run: func(_cmd *cobra.Command, args []string) {
-		log := log.WithField("ring", 2)
+		log := log.WithField("ring", 2).WithField("uid", os.Getuid())
 		defer log.Info("done")
-
-		// We've just arrived in this brand new user namespace. Ring1 will have just cloned,
-		// but cannot set the UID/GID of ring2 because the UID/GID mapping doesn't apply to
-		// it yet.
-		// Instead of introducing yet another ring, we try and setuid/setgid here, which is
-		// possible because we have a full set of capabilities in the user namesapce.
-		var err error
-		runtime.LockOSThread()
-		defer runtime.UnlockOSThread()
-		err = syscall.Setuid(0)
-		if err != nil {
-			log.WithError(err).Fatal("cannot setuid to 0")
-		}
-		err = syscall.Setgid(0)
-		if err != nil {
-			log.WithError(err).Fatal("cannot setgid to 0")
-		}
 
 		// BEWARE: there's a host of Fatal logs in here.
 		//         Fatal logs call os.Exit which prevents defers from running.
@@ -258,6 +256,8 @@ var ring2Cmd = &cobra.Command{
 }
 
 func init() {
+	ring1Cmd.Flags().BoolVar(&ring1CmdOpts.mappingEstablished, "mapping-established", false, "signals that the mapping has been established")
+
 	rootCmd.AddCommand(ring0Cmd)
 	rootCmd.AddCommand(ring1Cmd)
 	rootCmd.AddCommand(ring2Cmd)
