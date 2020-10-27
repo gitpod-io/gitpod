@@ -152,7 +152,7 @@ func (tm *tasksManager) init(ctx context.Context) *runContext {
 	}
 
 	contentSource, _ := tm.contentState.ContentSource()
-	headless := tm.config.GitpodHeadless != nil && *tm.config.GitpodHeadless == "true"
+	headless := tm.config.GitpodHeadless == "true"
 	runContext := &runContext{
 		contentSource: contentSource,
 		headless:      headless,

@@ -185,10 +185,15 @@ type WorkspaceConfig struct {
 	GitpodHost string `env:"GITPOD_HOST"`
 
 	// GitpodTasks is the task configuration of the workspace
-	GitpodTasks *string `env:"GITPOD_TASKS"`
+	GitpodTasks string `env:"GITPOD_TASKS"`
 
 	// GitpodHeadless controls whether the workspace is running headless
-	GitpodHeadless *string `env:"GITPOD_HEADLESS"`
+	GitpodHeadless string `env:"GITPOD_HEADLESS"`
+
+	// GitpodSupervisorDebug controls the use of supervisor's debug mode. If this is set to
+	// "true", supervisor will start - and monitor - itself, which allows for restarting
+	// supervisor in a running workspace.
+	GitpodSupervisorDebug string `env:"GITPOD_SUPERVISOR_DEBUG"`
 }
 
 // WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service
@@ -290,10 +295,10 @@ func (c WorkspaceConfig) GitpodAPIEndpoint() (endpoint, host string, err error) 
 
 // getGitpodTasks parses gitpod tasks
 func (c WorkspaceConfig) getGitpodTasks() (tasks *[]TaskConfig, err error) {
-	if c.GitpodTasks == nil {
+	if c.GitpodTasks == "" {
 		return
 	}
-	err = json.Unmarshal([]byte(*c.GitpodTasks), &tasks)
+	err = json.Unmarshal([]byte(c.GitpodTasks), &tasks)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse tasks: %w", err)
 	}

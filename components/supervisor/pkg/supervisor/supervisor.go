@@ -42,6 +42,7 @@ type runOptions struct {
 	AdditionalServices     []RegisterableService
 	HealthEndpointGRPCOpts []grpc.ServerOption
 	WithoutTeardownCanary  bool
+	WithoutDebug           bool
 }
 
 // RunOption customizes the run behaviour
@@ -75,6 +76,13 @@ func WithoutTeardownCanary() RunOption {
 	}
 }
 
+// WithoutDebug overrides the GITPOD_SUPERVISOR_DEBUG env var and forces it to false.
+func WithoutDebug() RunOption {
+	return func(ro *runOptions) {
+		ro.WithoutDebug = true
+	}
+}
+
 // Run serves as main entrypoint to the supervisor
 func Run(options ...RunOption) {
 	opts := runOptions{
@@ -88,9 +96,12 @@ func Run(options ...RunOption) {
 	if err != nil {
 		log.WithError(err).Fatal("configuration error")
 	}
-	if len(os.Args) < 2 || os.Args[1] != "run" {
-		fmt.Println("supervisor makes sure your workspace/IDE keeps running smoothly.\nYou don't have to call this thing, Gitpod calls it for you.")
-		return
+
+	if !opts.WithoutDebug && cfg.GitpodSupervisorDebug == "true" {
+		err = runInDebugMode(cfg)
+		if err != nil {
+			log.WithError(err).Fatal("error while running in debug mode")
+		}
 	}
 
 	buildIDEEnv(&Config{})
@@ -168,6 +179,92 @@ func Run(options ...RunOption) {
 
 	cancel()
 	wg.Wait()
+}
+
+// runInDebugMode starts, watches, and restarts supervisor itself. This is useful for debugging
+// supervisor. When a file /tmp/supervisor.debug exists, we'll consider that file to be a shell
+// script that starts supervisor.
+//
+// Beware: this mechanism must only be used for "supervisor run", never "below" that s.t. we don't
+//         inadvertently introduce security issues.
+func runInDebugMode(cfg *Config) error {
+	log.WithField("pid", os.Getpid()).Info("[gitpod-debug] starting supervisor debug loop")
+	var (
+		run        = true
+		ideStopped chan struct{}
+		pid        int
+	)
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+	for run {
+		var (
+			cmdnme = "/proc/self/exe"
+			args   = []string{"run", "--without-debug", "--without-teardown-canary"}
+		)
+
+		fn := "/tmp/supervisor.debug"
+		if stat, err := os.Stat(fn); err == nil {
+			_ = os.Chmod(fn, 0755)
+			if stat.Mode()&0111 == 0 {
+				log.Warnf("%s is not executable - ignoring it", fn)
+			} else {
+				cmdnme = fn
+				args = nil
+			}
+		}
+
+		log.WithField("cmd", cmdnme).WithField("args", args).Info("[gitpod-debug] starting supervisor")
+		cmd := exec.Command(cmdnme, args...)
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			Setpgid:   true,
+			Pdeathsig: syscall.SIGKILL,
+		}
+		cmd.Stderr = os.Stderr
+		cmd.Stdout = os.Stdout
+		cmd.Stdin = os.Stdin
+
+		err := cmd.Start()
+		if err != nil {
+			log.WithError(err).Warn("[gitpod-debug] cannot start supervisor")
+
+			continue
+		}
+		pid = cmd.Process.Pid
+		err = ioutil.WriteFile("/tmp/supervisor.pid", []byte(fmt.Sprint(cmd.Process.Pid)), 0644)
+		if err != nil {
+			log.WithError(err).Warn("[gitpod-debug] cannot write supervisor PID file")
+		}
+
+		ideStopped = make(chan struct{})
+		go func() {
+			err := cmd.Wait()
+			if err != nil && !strings.Contains(err.Error(), "signal: interrupt") {
+				log.WithError(err).Warn("[gitpod-debug] supervisor debug was stopped")
+			}
+
+			close(ideStopped)
+		}()
+
+		select {
+		case <-ideStopped:
+			// IDE was stopped - let's just restart it after a small delay (in case the IDE doesn't start at all) in the next round
+			time.Sleep(5 * time.Second)
+		case <-sigChan:
+			// we've been asked to shut down
+			run = false
+			cmd.Process.Signal(os.Interrupt)
+		}
+	}
+
+	log.Info("[gitpod-debug] supervisor loop ended")
+	select {
+	case <-ideStopped:
+		return nil
+	case <-time.After(20 * time.Second):
+		// last desparate attempt to kill supervisor
+		_ = syscall.Kill(-pid, syscall.SIGKILL)
+		return fmt.Errorf("supervisor did not stop in time")
+	}
 }
 
 func configureGit(cfg *Config) {
@@ -296,7 +393,10 @@ func prepareIDELaunch(cfg *Config) *exec.Cmd {
 
 	// We need the IDE to run in its own process group, s.t. we can suspend and resume
 	// IDE and its children.
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setpgid:   true,
+		Pdeathsig: syscall.SIGKILL,
+	}
 
 	// Here we must resist the temptation to "neaten up" the IDE output for headless builds.
 	// This would break the JSON parsing of the headless builds.

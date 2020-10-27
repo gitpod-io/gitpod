@@ -11,6 +11,7 @@ import (
 
 var runCmdOpts struct {
 	NoTeardownCanary bool
+	NoDebug          bool
 }
 
 var runCmd = &cobra.Command{
@@ -22,6 +23,9 @@ var runCmd = &cobra.Command{
 		if runCmdOpts.NoTeardownCanary {
 			opts = append(opts, supervisor.WithoutTeardownCanary())
 		}
+		if runCmdOpts.NoDebug {
+			opts = append(opts, supervisor.WithoutDebug())
+		}
 
 		supervisor.Run(opts...)
 	},
@@ -31,4 +35,5 @@ func init() {
 	rootCmd.AddCommand(runCmd)
 
 	runCmd.Flags().BoolVar(&runCmdOpts.NoTeardownCanary, "without-teardown-canary", false, "disables the teardown canary")
+	runCmd.Flags().BoolVar(&runCmdOpts.NoDebug, "without-debug", false, "disables the supervisor debug functionality")
 }

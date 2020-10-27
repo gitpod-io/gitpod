@@ -30,3 +30,38 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/supervisor:${version}
+scripts:
+  - name: debug
+    description: replaces a workspace's supervisor with a freshly built, debuggable one
+    script: |-
+      [ -z "$TARGET_WORKSPACE" ] && {
+        echo "usage: TARGET_WORKSPACE=<your-workspace-id> leeway run components/supervisor:debug"
+        echo ""
+        echo "Possible target workspaces:"
+        kubectl get pod -o json -l component=workspace | jq -r '.items[].metadata.name'
+        exit -1
+      }
+
+      set -eox pipefail
+      CGO_ENABLED=0 go build .
+      kubectl cp supervisor $TARGET_WORKSPACE:/tmp/new-supervisor
+      rm supervisor
+      kubectl exec -it $TARGET_WORKSPACE sh <<EOF
+      cd /tmp
+      echo "#!/bin/sh" > /tmp/supervisor.debug
+      echo "chmod +x /tmp/new-supervisor" >> /tmp/supervisor.debug
+      echo "exec \$GOPATH/bin/dlv exec --listen=0.0.0.0:32991 --headless --api-version=2 /tmp/new-supervisor -- run --without-debug --without-teardown-canary" >> /tmp/supervisor.debug
+      chmod +x supervisor.debug
+      cp /theia/supervisor-config.json /tmp
+      cp /.supervisor/supervisor-config.json /tmp
+      echo "installing dlv in the workspace"
+      go get github.com/go-delve/delve/cmd/dlv
+      echo "killing supervisor in the workspace"
+      kill \$(cat /tmp/supervisor.pid)
+      EOF
+
+      trap "exit" INT TERM ERR
+      trap "kill 0" EXIT
+
+      kubectl port-forward $TARGET_WORKSPACE 32991 &
+      kubectl logs -f $TARGET_WORKSPACE

@@ -65,6 +65,8 @@ components:
             env:
             - name: THEIA_RATELIMIT_LOG
               value: "50"
+            - name: GITPOD_SUPERVISOR_DEBUG
+              value: "true"
       prebuild:
         spec:
           containers:
