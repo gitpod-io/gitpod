@@ -115,6 +115,17 @@ async function deployToDev(version, previewWithHttps, workspaceFeatureFlags) {
     const registryNodePort = `${30000 + Math.floor(Math.random()*1000)}`;
 
     try {
+        const objs = shell
+            .exec(`kubectl get pod -l component=workspace --namespace ${namespace} --no-headers -o=custom-columns=:metadata.name`)
+            .split("\n")
+            .map(o => o.trim())
+            .filter(o => o.length > 0);
+
+        objs.forEach(o => {
+            werft.log("prep", `deleting workspace ${o}`);
+            exec(`kubectl delete pod --namespace ${namespace} ${o}`, {slice: 'prep'});
+        });
+
         recreateNamespace(namespace, {slice: 'prep'});
         [
             "kubectl config current-context",
