@@ -71,7 +71,7 @@ spec:
         securityContext:
           privileged: true
           runAsUser: 0
-        args: [ "dockerd", "--userns-remap=default", "-H tcp://127.0.0.1:2375" ]
+        args: [ "dockerd", "--userns-remap=default", "-H tcp://127.0.0.1:2375" {{- if $comp.dindMtu -}}, "--mtu={{ $comp.dindMtu}}"{{- end -}} ]
         volumeMounts:
         - mountPath: /var/lib/docker
           name: dind-storage

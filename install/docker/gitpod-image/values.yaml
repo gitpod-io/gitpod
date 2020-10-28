@@ -18,7 +18,7 @@ components:
         dnsConfig: null
         dnsPolicy: ClusterFirst
   imageBuilder:
-    dindImage: docker:19.03-dind
+    dindMtu: 1450
 
 docker-registry:
   persistence:
