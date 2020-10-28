@@ -5,8 +5,7 @@
 
 # Derived from https://learn.hashicorp.com/terraform/kubernetes/provision-eks-cluster
 module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "2.44.0"
+  source = "terraform-aws-modules/vpc/aws"
 
   name                 = "gitpod"
   cidr                 = "10.0.0.0/16"

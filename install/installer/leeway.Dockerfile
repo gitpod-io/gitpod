@@ -35,7 +35,7 @@ ENV GITPOD_INSTALLER_IN_DOCKER="true"
 ENV KUBECONFIG="/workspace/kubectl"
 RUN apk add --no-cache aws-cli python3 curl git bash ncurses
 
-RUN curl -o terraform.zip -L https://releases.hashicorp.com/terraform/0.13.4/terraform_0.13.4_linux_amd64.zip && \
+RUN curl -o terraform.zip -L https://releases.hashicorp.com/terraform/0.13.5/terraform_0.13.5_linux_amd64.zip && \
     unzip terraform.zip && \
     rm terraform.zip && \
     mv terraform /usr/bin
