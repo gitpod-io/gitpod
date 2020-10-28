@@ -171,7 +171,7 @@ RUN sudo curl -o aws-iam-authenticator "https://amazon-eks.s3-us-west-2.amazonaw
     && sudo cp ./aws-iam-authenticator $HOME/.aws-iam/aws-iam-authenticator
 
 # Install Terraform
-ARG RELEASE_URL="https://releases.hashicorp.com/terraform/0.13.0/terraform_0.13.0_linux_amd64.zip"
+ARG RELEASE_URL="https://releases.hashicorp.com/terraform/0.13.5/terraform_0.13.5_linux_amd64.zip"
 RUN mkdir -p ~/.terraform \
     && cd ~/.terraform \
     && wget ${RELEASE_URL} \
