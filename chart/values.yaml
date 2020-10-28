@@ -174,7 +174,8 @@ components:
     registryCerts:
     - name: builtin
       secret: builtin-registry-certs
-    dindImage: docker:18.06-dind
+    dindImage: docker:19.03-dind
+    dindMtu: ""
     dindResources:
       requests:
         cpu: 100m
