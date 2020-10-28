@@ -54,7 +54,7 @@ export class TheiaPluginController {
 
             try {
                 const url = await this.pluginService.preflight(id, type);
-                res.send(encodeURI(url));
+                res.send(url);
             } catch (err) {
                 log.warn("Upload failed (Step: preflight)", err, { req });
 
