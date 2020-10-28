@@ -33,15 +33,29 @@ import (
 	"google.golang.org/grpc"
 )
 
+var (
+	additionalServices []RegisterableService
+	apiEndpointOpts    []grpc.ServerOption
+)
+
+// RegisterAdditionalService registers additional services for the API endpoint
+// of supervisor.
+func RegisterAdditionalService(services ...RegisterableService) {
+	additionalServices = append(additionalServices, services...)
+}
+
+// AddAPIEndpointOpts adds additional grpc server options for the API endpoint
+func AddAPIEndpointOpts(opts ...grpc.ServerOption) {
+	apiEndpointOpts = append(apiEndpointOpts, opts...)
+}
+
 const (
 	maxIDEPause = 20 * time.Second
 )
 
 type runOptions struct {
-	Args                   []string
-	AdditionalServices     []RegisterableService
-	HealthEndpointGRPCOpts []grpc.ServerOption
-	WithoutTeardownCanary  bool
+	Args                  []string
+	WithoutTeardownCanary bool
 }
 
 // RunOption customizes the run behaviour
@@ -51,20 +65,6 @@ type RunOption func(*runOptions)
 func WithArgs(args []string) RunOption {
 	return func(r *runOptions) {
 		r.Args = args
-	}
-}
-
-// WithAdditionalService registers an additional gRPC service on the health endpoint
-func WithAdditionalService(register RegisterableService) RunOption {
-	return func(r *runOptions) {
-		r.AdditionalServices = append(r.AdditionalServices, register)
-	}
-}
-
-// WithHealthEndpointGRPCOpt adds server options to the health endpoint gRPC server
-func WithHealthEndpointGRPCOpt(opt grpc.ServerOption) RunOption {
-	return func(r *runOptions) {
-		r.HealthEndpointGRPCOpts = append(r.HealthEndpointGRPCOpts, opt)
 	}
 }
 
@@ -135,13 +135,13 @@ func Run(options ...RunOption) {
 		RegistrableTokenService{tokenService},
 		&InfoService{cfg: cfg},
 	}
-	apiServices = append(apiServices, opts.AdditionalServices...)
+	apiServices = append(apiServices, additionalServices...)
 
 	var wg sync.WaitGroup
 	wg.Add(5)
 	go startAndWatchIDE(ctx, cfg, &wg, ideReady)
 	go startContentInit(ctx, cfg, &wg, cstate)
-	go startAPIEndpoint(ctx, cfg, &wg, apiServices)
+	go startAPIEndpoint(ctx, cfg, &wg, apiServices, apiEndpointOpts...)
 	go portMgmt.Run(ctx, &wg)
 	go taskManager.Run(ctx, &wg)
 
