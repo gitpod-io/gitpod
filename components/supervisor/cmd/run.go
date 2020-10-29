@@ -10,7 +10,7 @@ import (
 )
 
 var runCmdOpts struct {
-	NoTeardownCanary bool
+	InNamespace bool
 }
 
 var runCmd = &cobra.Command{
@@ -19,8 +19,10 @@ var runCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		var opts []supervisor.RunOption
-		if runCmdOpts.NoTeardownCanary {
-			opts = append(opts, supervisor.WithoutTeardownCanary())
+		if runCmdOpts.InNamespace {
+			opts = append(opts,
+				supervisor.InNamespace(),
+			)
 		}
 
 		supervisor.Run(opts...)
@@ -30,5 +32,5 @@ var runCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(runCmd)
 
-	runCmd.Flags().BoolVar(&runCmdOpts.NoTeardownCanary, "without-teardown-canary", false, "disables the teardown canary")
+	runCmd.Flags().BoolVar(&runCmdOpts.InNamespace, "inns", false, "disables teardown canary.")
 }

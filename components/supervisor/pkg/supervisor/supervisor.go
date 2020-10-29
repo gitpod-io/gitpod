@@ -57,8 +57,8 @@ const (
 )
 
 type runOptions struct {
-	Args                  []string
-	WithoutTeardownCanary bool
+	Args        []string
+	InNamespace bool
 }
 
 // RunOption customizes the run behaviour
@@ -71,10 +71,10 @@ func WithArgs(args []string) RunOption {
 	}
 }
 
-// WithoutTeardownCanary prevents supervisor from triggering the teardown canary
-func WithoutTeardownCanary() RunOption {
+// InNamespace pivots to a root filesystem
+func InNamespace() RunOption {
 	return func(ro *runOptions) {
-		ro.WithoutTeardownCanary = true
+		ro.InNamespace = true
 	}
 }
 
@@ -178,7 +178,7 @@ func Run(options ...RunOption) {
 	}
 
 	log.Info("received SIGTERM - tearing down")
-	teardown(!opts.WithoutTeardownCanary)
+	teardown(!opts.InNamespace)
 
 	cancel()
 	wg.Wait()

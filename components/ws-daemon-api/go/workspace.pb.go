@@ -28,6 +28,68 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
+type PrepareForUserNSRequest struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *PrepareForUserNSRequest) Reset()         { *m = PrepareForUserNSRequest{} }
+func (m *PrepareForUserNSRequest) String() string { return proto.CompactTextString(m) }
+func (*PrepareForUserNSRequest) ProtoMessage()    {}
+func (*PrepareForUserNSRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_dac718ecaafc2333, []int{0}
+}
+
+func (m *PrepareForUserNSRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PrepareForUserNSRequest.Unmarshal(m, b)
+}
+func (m *PrepareForUserNSRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PrepareForUserNSRequest.Marshal(b, m, deterministic)
+}
+func (m *PrepareForUserNSRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrepareForUserNSRequest.Merge(m, src)
+}
+func (m *PrepareForUserNSRequest) XXX_Size() int {
+	return xxx_messageInfo_PrepareForUserNSRequest.Size(m)
+}
+func (m *PrepareForUserNSRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_PrepareForUserNSRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PrepareForUserNSRequest proto.InternalMessageInfo
+
+type PrepareForUserNSResponse struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *PrepareForUserNSResponse) Reset()         { *m = PrepareForUserNSResponse{} }
+func (m *PrepareForUserNSResponse) String() string { return proto.CompactTextString(m) }
+func (*PrepareForUserNSResponse) ProtoMessage()    {}
+func (*PrepareForUserNSResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_dac718ecaafc2333, []int{1}
+}
+
+func (m *PrepareForUserNSResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_PrepareForUserNSResponse.Unmarshal(m, b)
+}
+func (m *PrepareForUserNSResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_PrepareForUserNSResponse.Marshal(b, m, deterministic)
+}
+func (m *PrepareForUserNSResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PrepareForUserNSResponse.Merge(m, src)
+}
+func (m *PrepareForUserNSResponse) XXX_Size() int {
+	return xxx_messageInfo_PrepareForUserNSResponse.Size(m)
+}
+func (m *PrepareForUserNSResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_PrepareForUserNSResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_PrepareForUserNSResponse proto.InternalMessageInfo
+
 type WriteIDMappingResponse struct {
 	Message              string   `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
 	ErrorCode            uint32   `protobuf:"varint,2,opt,name=error_code,json=errorCode,proto3" json:"error_code,omitempty"`
@@ -40,7 +102,7 @@ func (m *WriteIDMappingResponse) Reset()         { *m = WriteIDMappingResponse{}
 func (m *WriteIDMappingResponse) String() string { return proto.CompactTextString(m) }
 func (*WriteIDMappingResponse) ProtoMessage()    {}
 func (*WriteIDMappingResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{0}
+	return fileDescriptor_dac718ecaafc2333, []int{2}
 }
 
 func (m *WriteIDMappingResponse) XXX_Unmarshal(b []byte) error {
@@ -88,7 +150,7 @@ func (m *WriteIDMappingRequest) Reset()         { *m = WriteIDMappingRequest{} }
 func (m *WriteIDMappingRequest) String() string { return proto.CompactTextString(m) }
 func (*WriteIDMappingRequest) ProtoMessage()    {}
 func (*WriteIDMappingRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{1}
+	return fileDescriptor_dac718ecaafc2333, []int{3}
 }
 
 func (m *WriteIDMappingRequest) XXX_Unmarshal(b []byte) error {
@@ -143,7 +205,7 @@ func (m *WriteIDMappingRequest_Mapping) Reset()         { *m = WriteIDMappingReq
 func (m *WriteIDMappingRequest_Mapping) String() string { return proto.CompactTextString(m) }
 func (*WriteIDMappingRequest_Mapping) ProtoMessage()    {}
 func (*WriteIDMappingRequest_Mapping) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{1, 0}
+	return fileDescriptor_dac718ecaafc2333, []int{3, 0}
 }
 
 func (m *WriteIDMappingRequest_Mapping) XXX_Unmarshal(b []byte) error {
@@ -184,68 +246,6 @@ func (m *WriteIDMappingRequest_Mapping) GetSize() uint32 {
 	}
 	return 0
 }
-
-type MountShiftfsMarkRequest struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *MountShiftfsMarkRequest) Reset()         { *m = MountShiftfsMarkRequest{} }
-func (m *MountShiftfsMarkRequest) String() string { return proto.CompactTextString(m) }
-func (*MountShiftfsMarkRequest) ProtoMessage()    {}
-func (*MountShiftfsMarkRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{2}
-}
-
-func (m *MountShiftfsMarkRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_MountShiftfsMarkRequest.Unmarshal(m, b)
-}
-func (m *MountShiftfsMarkRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_MountShiftfsMarkRequest.Marshal(b, m, deterministic)
-}
-func (m *MountShiftfsMarkRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MountShiftfsMarkRequest.Merge(m, src)
-}
-func (m *MountShiftfsMarkRequest) XXX_Size() int {
-	return xxx_messageInfo_MountShiftfsMarkRequest.Size(m)
-}
-func (m *MountShiftfsMarkRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_MountShiftfsMarkRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MountShiftfsMarkRequest proto.InternalMessageInfo
-
-type MountShiftfsMarkResponse struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *MountShiftfsMarkResponse) Reset()         { *m = MountShiftfsMarkResponse{} }
-func (m *MountShiftfsMarkResponse) String() string { return proto.CompactTextString(m) }
-func (*MountShiftfsMarkResponse) ProtoMessage()    {}
-func (*MountShiftfsMarkResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_dac718ecaafc2333, []int{3}
-}
-
-func (m *MountShiftfsMarkResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_MountShiftfsMarkResponse.Unmarshal(m, b)
-}
-func (m *MountShiftfsMarkResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_MountShiftfsMarkResponse.Marshal(b, m, deterministic)
-}
-func (m *MountShiftfsMarkResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MountShiftfsMarkResponse.Merge(m, src)
-}
-func (m *MountShiftfsMarkResponse) XXX_Size() int {
-	return xxx_messageInfo_MountShiftfsMarkResponse.Size(m)
-}
-func (m *MountShiftfsMarkResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MountShiftfsMarkResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MountShiftfsMarkResponse proto.InternalMessageInfo
 
 type MountProcRequest struct {
 	Target               string   `protobuf:"bytes,1,opt,name=target,proto3" json:"target,omitempty"`
@@ -396,11 +396,11 @@ func (m *TeardownResponse) GetSuccess() bool {
 }
 
 func init() {
+	proto.RegisterType((*PrepareForUserNSRequest)(nil), "iws.PrepareForUserNSRequest")
+	proto.RegisterType((*PrepareForUserNSResponse)(nil), "iws.PrepareForUserNSResponse")
 	proto.RegisterType((*WriteIDMappingResponse)(nil), "iws.WriteIDMappingResponse")
 	proto.RegisterType((*WriteIDMappingRequest)(nil), "iws.WriteIDMappingRequest")
 	proto.RegisterType((*WriteIDMappingRequest_Mapping)(nil), "iws.WriteIDMappingRequest.Mapping")
-	proto.RegisterType((*MountShiftfsMarkRequest)(nil), "iws.MountShiftfsMarkRequest")
-	proto.RegisterType((*MountShiftfsMarkResponse)(nil), "iws.MountShiftfsMarkResponse")
 	proto.RegisterType((*MountProcRequest)(nil), "iws.MountProcRequest")
 	proto.RegisterType((*MountProcResponse)(nil), "iws.MountProcResponse")
 	proto.RegisterType((*TeardownRequest)(nil), "iws.TeardownRequest")
@@ -412,35 +412,35 @@ func init() {
 }
 
 var fileDescriptor_dac718ecaafc2333 = []byte{
-	// 446 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x93, 0xc1, 0x6e, 0xd3, 0x40,
-	0x10, 0x86, 0x49, 0x8c, 0x92, 0x66, 0x4a, 0x68, 0xba, 0x90, 0xd4, 0x18, 0x2a, 0x05, 0x9f, 0x82,
-	0xa0, 0x8e, 0x54, 0x4e, 0x48, 0x39, 0x01, 0x97, 0x08, 0x45, 0xa2, 0x2e, 0x52, 0x05, 0x97, 0x68,
-	0xeb, 0x9d, 0x3a, 0xab, 0x2a, 0x1e, 0xb3, 0xbb, 0xc1, 0x12, 0xef, 0xc4, 0xdb, 0xf0, 0x40, 0x28,
-	0xdb, 0x5d, 0x27, 0xa4, 0xcd, 0x6d, 0xe6, 0x9f, 0xfd, 0x7f, 0x8f, 0x3f, 0x7b, 0xe1, 0xa8, 0x22,
-	0x75, 0xab, 0x4b, 0x9e, 0x61, 0x52, 0x2a, 0x32, 0xc4, 0x02, 0x59, 0xe9, 0xf8, 0x02, 0x06, 0x57,
-	0x4a, 0x1a, 0x9c, 0x7e, 0x9e, 0xf1, 0xb2, 0x94, 0x45, 0x9e, 0xa2, 0x2e, 0xa9, 0xd0, 0xc8, 0x42,
-	0x68, 0x2f, 0x51, 0x6b, 0x9e, 0x63, 0xd8, 0x18, 0x36, 0x46, 0x9d, 0xd4, 0xb7, 0xec, 0x14, 0x00,
-	0x95, 0x22, 0x35, 0xcf, 0x48, 0x60, 0xd8, 0x1c, 0x36, 0x46, 0xdd, 0xb4, 0x63, 0x95, 0x4f, 0x24,
-	0x30, 0xfe, 0xdb, 0x80, 0xfe, 0x6e, 0xe6, 0xcf, 0x15, 0x6a, 0xc3, 0x7a, 0x10, 0x94, 0x52, 0xd8,
-	0xb8, 0x20, 0x5d, 0x97, 0x6b, 0x25, 0x97, 0xc2, 0x66, 0x1c, 0xa4, 0xeb, 0x92, 0x4d, 0xa0, 0xbd,
-	0xbc, 0x73, 0x85, 0xc1, 0x30, 0x18, 0x1d, 0x9e, 0xc7, 0x89, 0xac, 0x74, 0xf2, 0x60, 0x60, 0xe2,
-	0x5b, 0x6f, 0x89, 0xbe, 0x43, 0xdb, 0x69, 0xec, 0x35, 0x3c, 0xc9, 0xa8, 0x30, 0x5c, 0x16, 0xa8,
-	0xe6, 0xee, 0xa9, 0xdd, 0xf4, 0xb0, 0xd6, 0xa6, 0x82, 0x9d, 0x40, 0x7b, 0x41, 0xda, 0xcc, 0xdd,
-	0x06, 0xdd, 0xb4, 0xb5, 0x6e, 0xa7, 0x82, 0x31, 0x78, 0xac, 0xe5, 0x6f, 0x0c, 0x03, 0xab, 0xda,
-	0x3a, 0x7e, 0x01, 0x27, 0x33, 0x5a, 0x15, 0xe6, 0x72, 0x21, 0x6f, 0xcc, 0x8d, 0x9e, 0x71, 0x75,
-	0xeb, 0xd6, 0x88, 0x23, 0x08, 0xef, 0x8f, 0xee, 0x30, 0xc6, 0x13, 0xe8, 0xd9, 0xd9, 0x57, 0x45,
-	0x99, 0xe7, 0x30, 0x80, 0x96, 0xe1, 0x2a, 0x47, 0xe3, 0xc8, 0xba, 0xce, 0xf3, 0x69, 0xd6, 0x7c,
-	0xe2, 0x67, 0x70, 0xbc, 0xe5, 0x76, 0x91, 0xc7, 0x70, 0xf4, 0x0d, 0xb9, 0x12, 0x54, 0x15, 0x7e,
-	0x83, 0x77, 0xd0, 0xdb, 0x48, 0x9b, 0x0f, 0xa8, 0x57, 0x59, 0x86, 0x5a, 0x3b, 0xbe, 0xbe, 0x3d,
-	0xff, 0xd3, 0x04, 0x36, 0x2d, 0xae, 0xfc, 0xff, 0x70, 0x89, 0xea, 0x97, 0xcc, 0x90, 0x7d, 0x81,
-	0xa7, 0xff, 0x63, 0x66, 0xd1, 0x7e, 0xf6, 0xd1, 0xcb, 0x07, 0x67, 0x6e, 0xc5, 0x47, 0xec, 0xc2,
-	0xbd, 0xf7, 0x16, 0x13, 0xf6, 0xca, 0x5a, 0xf6, 0x50, 0x8c, 0x4e, 0xf7, 0x4c, 0xeb, 0xc8, 0x09,
-	0x74, 0x6a, 0x18, 0xac, 0xbf, 0x39, 0xbd, 0x85, 0x36, 0x1a, 0xec, 0xca, 0xb5, 0xfb, 0x03, 0x1c,
-	0x78, 0x44, 0xec, 0xb9, 0x3d, 0xb5, 0x03, 0x31, 0xea, 0xef, 0xa8, 0xde, 0xfa, 0xf1, 0xed, 0x8f,
-	0x37, 0xb9, 0x34, 0x8b, 0xd5, 0x75, 0x92, 0xd1, 0x72, 0x9c, 0x4b, 0x53, 0x92, 0x38, 0x93, 0xe4,
-	0xaa, 0x71, 0xa5, 0xcf, 0x04, 0xc7, 0x25, 0x15, 0x63, 0x5e, 0xca, 0xeb, 0x96, 0xbd, 0x5d, 0xef,
-	0xff, 0x05, 0x00, 0x00, 0xff, 0xff, 0x7c, 0x05, 0x16, 0x6b, 0x70, 0x03, 0x00, 0x00,
+	// 447 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x53, 0xd1, 0x6e, 0xd3, 0x30,
+	0x14, 0xa5, 0x0b, 0x6a, 0xd7, 0x3b, 0xca, 0x3a, 0x43, 0xbb, 0x10, 0x98, 0x54, 0xf2, 0x54, 0x04,
+	0x4b, 0xa5, 0xf1, 0x84, 0xd4, 0x27, 0x40, 0x48, 0x15, 0x1a, 0xda, 0x32, 0xd0, 0x04, 0x2f, 0x95,
+	0x17, 0x5f, 0x65, 0x16, 0x6a, 0xae, 0xb1, 0x5d, 0x22, 0xf1, 0x4f, 0xfc, 0x0d, 0x1f, 0x84, 0x6a,
+	0xec, 0x0c, 0xc2, 0xfa, 0x76, 0xef, 0xb9, 0x3e, 0x27, 0xbe, 0xe7, 0x38, 0xb0, 0x5f, 0x93, 0xfe,
+	0x6a, 0x14, 0x2f, 0x30, 0x53, 0x9a, 0x2c, 0xb1, 0x48, 0xd6, 0x26, 0x7d, 0x04, 0x87, 0x67, 0x1a,
+	0x15, 0xd7, 0xf8, 0x8e, 0xf4, 0x27, 0x83, 0xfa, 0xc3, 0x45, 0x8e, 0xdf, 0xd6, 0x68, 0x6c, 0x9a,
+	0x40, 0xfc, 0xff, 0xc8, 0x28, 0xaa, 0x0c, 0xa6, 0xe7, 0x30, 0xbe, 0xd4, 0xd2, 0xe2, 0xe2, 0xed,
+	0x29, 0x57, 0x4a, 0x56, 0x65, 0x98, 0xb0, 0x18, 0x7a, 0x2b, 0x34, 0x86, 0x97, 0x18, 0x77, 0x26,
+	0x9d, 0x69, 0x3f, 0x0f, 0x2d, 0x3b, 0x02, 0x40, 0xad, 0x49, 0x2f, 0x0b, 0x12, 0x18, 0xef, 0x4c,
+	0x3a, 0xd3, 0x41, 0xde, 0x77, 0xc8, 0x1b, 0x12, 0x98, 0xfe, 0xea, 0xc0, 0xa8, 0xad, 0xe9, 0x2e,
+	0xc2, 0x86, 0x10, 0x29, 0x29, 0x9c, 0x5c, 0x94, 0x6f, 0xca, 0x0d, 0x52, 0x4a, 0xe1, 0x34, 0x76,
+	0xf3, 0x4d, 0xc9, 0xe6, 0xd0, 0x5b, 0xfd, 0x61, 0xc5, 0xd1, 0x24, 0x9a, 0xee, 0x9d, 0xa4, 0x99,
+	0xac, 0x4d, 0x76, 0xab, 0x60, 0x16, 0xda, 0x40, 0x49, 0x3e, 0x43, 0xcf, 0x63, 0xec, 0x29, 0xdc,
+	0x2b, 0xa8, 0xb2, 0x5c, 0x56, 0xa8, 0x97, 0xfe, 0xab, 0x83, 0x7c, 0xaf, 0xc1, 0x16, 0x82, 0x1d,
+	0x42, 0xef, 0x9a, 0x8c, 0x5d, 0xfa, 0x1b, 0x0c, 0xf2, 0xee, 0xa6, 0x5d, 0x08, 0xc6, 0xe0, 0xae,
+	0x91, 0x3f, 0x30, 0x8e, 0x1c, 0xea, 0xea, 0x74, 0x0e, 0xc3, 0x53, 0x5a, 0x57, 0xf6, 0x4c, 0x53,
+	0x11, 0x16, 0x1a, 0x43, 0xd7, 0x72, 0x5d, 0xa2, 0xf5, 0x16, 0xf9, 0x2e, 0x2c, 0xba, 0xd3, 0x2c,
+	0x9a, 0x3e, 0x80, 0x83, 0xbf, 0xd8, 0xde, 0xfc, 0x03, 0xd8, 0xff, 0x88, 0x5c, 0x0b, 0xaa, 0xab,
+	0x90, 0xd5, 0x0b, 0x18, 0xde, 0x40, 0x37, 0x49, 0x98, 0x75, 0x51, 0xa0, 0x31, 0xde, 0xa8, 0xd0,
+	0x9e, 0xfc, 0xdc, 0x01, 0xb6, 0xa8, 0x2e, 0xc3, 0x7b, 0xb8, 0x40, 0xfd, 0x5d, 0x16, 0xc8, 0xce,
+	0x61, 0xd8, 0x0e, 0x9c, 0x3d, 0x71, 0x36, 0x6e, 0x79, 0x22, 0xc9, 0xd1, 0x96, 0xa9, 0xbf, 0xe8,
+	0x1d, 0xf6, 0x1e, 0xee, 0xff, 0x1b, 0x01, 0x4b, 0xb6, 0xe7, 0x92, 0x3c, 0xbe, 0x75, 0xd6, 0x88,
+	0xcd, 0xa1, 0xdf, 0x98, 0xc1, 0x46, 0xee, 0x6c, 0xdb, 0xda, 0x64, 0xdc, 0x86, 0x1b, 0xf6, 0x2b,
+	0xd8, 0x0d, 0x16, 0xb1, 0x87, 0xee, 0x54, 0xcb, 0xc4, 0x64, 0xd4, 0x42, 0x03, 0xf5, 0xf5, 0xf3,
+	0x2f, 0xcf, 0x4a, 0x69, 0xaf, 0xd7, 0x57, 0x59, 0x41, 0xab, 0x59, 0x29, 0xad, 0x22, 0x71, 0x2c,
+	0xc9, 0x57, 0xb3, 0xda, 0x1c, 0x0b, 0x8e, 0x2b, 0xaa, 0x66, 0x5c, 0xc9, 0xab, 0xae, 0xfb, 0xbb,
+	0x5e, 0xfe, 0x0e, 0x00, 0x00, 0xff, 0xff, 0x0d, 0x70, 0x6c, 0x8d, 0x70, 0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -455,12 +455,16 @@ const _ = grpc.SupportPackageIsVersion6
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type InWorkspaceServiceClient interface {
+	// PrepareForUserNS prepares a workspace container for wrapping it in a user namespace.
+	// A container that called this function MUST call Teardown.
+	//
+	// This call will make the workspace container's rootfs shared, and mount the workspace
+	// container's rootfs as a shiftfs mark under `/.workspace/mark` if the workspace has
+	// the daemon hostPath mount. Can only be used once per workspace.
+	PrepareForUserNS(ctx context.Context, in *PrepareForUserNSRequest, opts ...grpc.CallOption) (*PrepareForUserNSResponse, error)
 	// WriteIDMapping writes a new user/group ID mapping to /proc/<pid>/uid_map (gid_map respectively). This is used
 	// for user namespaces and is available four times every 10 seconds.
 	WriteIDMapping(ctx context.Context, in *WriteIDMappingRequest, opts ...grpc.CallOption) (*WriteIDMappingResponse, error)
-	// MountShiftfsMark mounts the workspace container's rootfs as a shiftfs mark under `/.workspace/mark` if the
-	// workspace has the daemon hostPath mount. Can only be used once per workspace.
-	MountShiftfsMark(ctx context.Context, in *MountShiftfsMarkRequest, opts ...grpc.CallOption) (*MountShiftfsMarkResponse, error)
 	// MountProc mounts a masked proc in the container's rootfs.
 	// For now this can be used only once per workspace.
 	MountProc(ctx context.Context, in *MountProcRequest, opts ...grpc.CallOption) (*MountProcResponse, error)
@@ -477,18 +481,18 @@ func NewInWorkspaceServiceClient(cc grpc.ClientConnInterface) InWorkspaceService
 	return &inWorkspaceServiceClient{cc}
 }
 
-func (c *inWorkspaceServiceClient) WriteIDMapping(ctx context.Context, in *WriteIDMappingRequest, opts ...grpc.CallOption) (*WriteIDMappingResponse, error) {
-	out := new(WriteIDMappingResponse)
-	err := c.cc.Invoke(ctx, "/iws.InWorkspaceService/WriteIDMapping", in, out, opts...)
+func (c *inWorkspaceServiceClient) PrepareForUserNS(ctx context.Context, in *PrepareForUserNSRequest, opts ...grpc.CallOption) (*PrepareForUserNSResponse, error) {
+	out := new(PrepareForUserNSResponse)
+	err := c.cc.Invoke(ctx, "/iws.InWorkspaceService/PrepareForUserNS", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *inWorkspaceServiceClient) MountShiftfsMark(ctx context.Context, in *MountShiftfsMarkRequest, opts ...grpc.CallOption) (*MountShiftfsMarkResponse, error) {
-	out := new(MountShiftfsMarkResponse)
-	err := c.cc.Invoke(ctx, "/iws.InWorkspaceService/MountShiftfsMark", in, out, opts...)
+func (c *inWorkspaceServiceClient) WriteIDMapping(ctx context.Context, in *WriteIDMappingRequest, opts ...grpc.CallOption) (*WriteIDMappingResponse, error) {
+	out := new(WriteIDMappingResponse)
+	err := c.cc.Invoke(ctx, "/iws.InWorkspaceService/WriteIDMapping", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -515,12 +519,16 @@ func (c *inWorkspaceServiceClient) Teardown(ctx context.Context, in *TeardownReq
 
 // InWorkspaceServiceServer is the server API for InWorkspaceService service.
 type InWorkspaceServiceServer interface {
+	// PrepareForUserNS prepares a workspace container for wrapping it in a user namespace.
+	// A container that called this function MUST call Teardown.
+	//
+	// This call will make the workspace container's rootfs shared, and mount the workspace
+	// container's rootfs as a shiftfs mark under `/.workspace/mark` if the workspace has
+	// the daemon hostPath mount. Can only be used once per workspace.
+	PrepareForUserNS(context.Context, *PrepareForUserNSRequest) (*PrepareForUserNSResponse, error)
 	// WriteIDMapping writes a new user/group ID mapping to /proc/<pid>/uid_map (gid_map respectively). This is used
 	// for user namespaces and is available four times every 10 seconds.
 	WriteIDMapping(context.Context, *WriteIDMappingRequest) (*WriteIDMappingResponse, error)
-	// MountShiftfsMark mounts the workspace container's rootfs as a shiftfs mark under `/.workspace/mark` if the
-	// workspace has the daemon hostPath mount. Can only be used once per workspace.
-	MountShiftfsMark(context.Context, *MountShiftfsMarkRequest) (*MountShiftfsMarkResponse, error)
 	// MountProc mounts a masked proc in the container's rootfs.
 	// For now this can be used only once per workspace.
 	MountProc(context.Context, *MountProcRequest) (*MountProcResponse, error)
@@ -533,11 +541,11 @@ type InWorkspaceServiceServer interface {
 type UnimplementedInWorkspaceServiceServer struct {
 }
 
+func (*UnimplementedInWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *PrepareForUserNSRequest) (*PrepareForUserNSResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PrepareForUserNS not implemented")
+}
 func (*UnimplementedInWorkspaceServiceServer) WriteIDMapping(ctx context.Context, req *WriteIDMappingRequest) (*WriteIDMappingResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WriteIDMapping not implemented")
-}
-func (*UnimplementedInWorkspaceServiceServer) MountShiftfsMark(ctx context.Context, req *MountShiftfsMarkRequest) (*MountShiftfsMarkResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method MountShiftfsMark not implemented")
 }
 func (*UnimplementedInWorkspaceServiceServer) MountProc(ctx context.Context, req *MountProcRequest) (*MountProcResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method MountProc not implemented")
@@ -548,6 +556,24 @@ func (*UnimplementedInWorkspaceServiceServer) Teardown(ctx context.Context, req 
 
 func RegisterInWorkspaceServiceServer(s *grpc.Server, srv InWorkspaceServiceServer) {
 	s.RegisterService(&_InWorkspaceService_serviceDesc, srv)
+}
+
+func _InWorkspaceService_PrepareForUserNS_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PrepareForUserNSRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InWorkspaceServiceServer).PrepareForUserNS(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/iws.InWorkspaceService/PrepareForUserNS",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InWorkspaceServiceServer).PrepareForUserNS(ctx, req.(*PrepareForUserNSRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _InWorkspaceService_WriteIDMapping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -564,24 +590,6 @@ func _InWorkspaceService_WriteIDMapping_Handler(srv interface{}, ctx context.Con
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(InWorkspaceServiceServer).WriteIDMapping(ctx, req.(*WriteIDMappingRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _InWorkspaceService_MountShiftfsMark_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MountShiftfsMarkRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(InWorkspaceServiceServer).MountShiftfsMark(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/iws.InWorkspaceService/MountShiftfsMark",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(InWorkspaceServiceServer).MountShiftfsMark(ctx, req.(*MountShiftfsMarkRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -627,12 +635,12 @@ var _InWorkspaceService_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*InWorkspaceServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "WriteIDMapping",
-			Handler:    _InWorkspaceService_WriteIDMapping_Handler,
+			MethodName: "PrepareForUserNS",
+			Handler:    _InWorkspaceService_PrepareForUserNS_Handler,
 		},
 		{
-			MethodName: "MountShiftfsMark",
-			Handler:    _InWorkspaceService_MountShiftfsMark_Handler,
+			MethodName: "WriteIDMapping",
+			Handler:    _InWorkspaceService_WriteIDMapping_Handler,
 		},
 		{
 			MethodName: "MountProc",
