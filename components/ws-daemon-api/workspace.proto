@@ -5,13 +5,17 @@ package iws;
 option go_package = "github.com/gitpod-io/gitpod/ws-daemon/api";
 
 service InWorkspaceService {
+    // PrepareForUserNS prepares a workspace container for wrapping it in a user namespace.
+    // A container that called this function MUST call Teardown.
+    //
+    // This call will make the workspace container's rootfs shared, and mount the workspace
+    // container's rootfs as a shiftfs mark under `/.workspace/mark` if the workspace has
+    // the daemon hostPath mount. Can only be used once per workspace.
+    rpc PrepareForUserNS(PrepareForUserNSRequest) returns (PrepareForUserNSResponse) {}
+
     // WriteIDMapping writes a new user/group ID mapping to /proc/<pid>/uid_map (gid_map respectively). This is used
     // for user namespaces and is available four times every 10 seconds.
     rpc WriteIDMapping(WriteIDMappingRequest) returns (WriteIDMappingResponse) {}
-
-    // MountShiftfsMark mounts the workspace container's rootfs as a shiftfs mark under `/.workspace/mark` if the
-    // workspace has the daemon hostPath mount. Can only be used once per workspace.
-    rpc MountShiftfsMark(MountShiftfsMarkRequest) returns (MountShiftfsMarkResponse) {}
 
     // MountProc mounts a masked proc in the container's rootfs.
     // For now this can be used only once per workspace.
@@ -21,6 +25,9 @@ service InWorkspaceService {
     // when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
     rpc Teardown(TeardownRequest) returns (TeardownResponse) {}
 }
+
+message PrepareForUserNSRequest {}
+message PrepareForUserNSResponse {}
 
 message WriteIDMappingResponse {
     string message = 1;
@@ -37,9 +44,6 @@ message WriteIDMappingRequest {
     bool gid = 2;
     repeated Mapping mapping = 3;
 }
-
-message MountShiftfsMarkRequest {}
-message MountShiftfsMarkResponse {}
 
 message MountProcRequest {
     string target = 1;

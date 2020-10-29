@@ -9,6 +9,38 @@
 
 import * as jspb from "google-protobuf";
 
+export class PrepareForUserNSRequest extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): PrepareForUserNSRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: PrepareForUserNSRequest): PrepareForUserNSRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: PrepareForUserNSRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): PrepareForUserNSRequest;
+  static deserializeBinaryFromReader(message: PrepareForUserNSRequest, reader: jspb.BinaryReader): PrepareForUserNSRequest;
+}
+
+export namespace PrepareForUserNSRequest {
+  export type AsObject = {
+  }
+}
+
+export class PrepareForUserNSResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): PrepareForUserNSResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: PrepareForUserNSResponse): PrepareForUserNSResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: PrepareForUserNSResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): PrepareForUserNSResponse;
+  static deserializeBinaryFromReader(message: PrepareForUserNSResponse, reader: jspb.BinaryReader): PrepareForUserNSResponse;
+}
+
+export namespace PrepareForUserNSResponse {
+  export type AsObject = {
+  }
+}
+
 export class WriteIDMappingResponse extends jspb.Message {
   getMessage(): string;
   setMessage(value: string): void;
@@ -88,38 +120,6 @@ export namespace WriteIDMappingRequest {
       hostId: number,
       size: number,
     }
-  }
-}
-
-export class MountShiftfsMarkRequest extends jspb.Message {
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): MountShiftfsMarkRequest.AsObject;
-  static toObject(includeInstance: boolean, msg: MountShiftfsMarkRequest): MountShiftfsMarkRequest.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: MountShiftfsMarkRequest, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): MountShiftfsMarkRequest;
-  static deserializeBinaryFromReader(message: MountShiftfsMarkRequest, reader: jspb.BinaryReader): MountShiftfsMarkRequest;
-}
-
-export namespace MountShiftfsMarkRequest {
-  export type AsObject = {
-  }
-}
-
-export class MountShiftfsMarkResponse extends jspb.Message {
-  serializeBinary(): Uint8Array;
-  toObject(includeInstance?: boolean): MountShiftfsMarkResponse.AsObject;
-  static toObject(includeInstance: boolean, msg: MountShiftfsMarkResponse): MountShiftfsMarkResponse.AsObject;
-  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-  static serializeBinaryToWriter(message: MountShiftfsMarkResponse, writer: jspb.BinaryWriter): void;
-  static deserializeBinary(bytes: Uint8Array): MountShiftfsMarkResponse;
-  static deserializeBinaryFromReader(message: MountShiftfsMarkResponse, reader: jspb.BinaryReader): MountShiftfsMarkResponse;
-}
-
-export namespace MountShiftfsMarkResponse {
-  export type AsObject = {
   }
 }
 

@@ -32,26 +32,26 @@ function deserialize_iws_MountProcResponse(buffer_arg) {
   return workspace_pb.MountProcResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-function serialize_iws_MountShiftfsMarkRequest(arg) {
-  if (!(arg instanceof workspace_pb.MountShiftfsMarkRequest)) {
-    throw new Error('Expected argument of type iws.MountShiftfsMarkRequest');
+function serialize_iws_PrepareForUserNSRequest(arg) {
+  if (!(arg instanceof workspace_pb.PrepareForUserNSRequest)) {
+    throw new Error('Expected argument of type iws.PrepareForUserNSRequest');
   }
   return Buffer.from(arg.serializeBinary());
 }
 
-function deserialize_iws_MountShiftfsMarkRequest(buffer_arg) {
-  return workspace_pb.MountShiftfsMarkRequest.deserializeBinary(new Uint8Array(buffer_arg));
+function deserialize_iws_PrepareForUserNSRequest(buffer_arg) {
+  return workspace_pb.PrepareForUserNSRequest.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
-function serialize_iws_MountShiftfsMarkResponse(arg) {
-  if (!(arg instanceof workspace_pb.MountShiftfsMarkResponse)) {
-    throw new Error('Expected argument of type iws.MountShiftfsMarkResponse');
+function serialize_iws_PrepareForUserNSResponse(arg) {
+  if (!(arg instanceof workspace_pb.PrepareForUserNSResponse)) {
+    throw new Error('Expected argument of type iws.PrepareForUserNSResponse');
   }
   return Buffer.from(arg.serializeBinary());
 }
 
-function deserialize_iws_MountShiftfsMarkResponse(buffer_arg) {
-  return workspace_pb.MountShiftfsMarkResponse.deserializeBinary(new Uint8Array(buffer_arg));
+function deserialize_iws_PrepareForUserNSResponse(buffer_arg) {
+  return workspace_pb.PrepareForUserNSResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
 function serialize_iws_TeardownRequest(arg) {
@@ -100,6 +100,23 @@ function deserialize_iws_WriteIDMappingResponse(buffer_arg) {
 
 
 var InWorkspaceServiceService = exports.InWorkspaceServiceService = {
+  // PrepareForUserNS prepares a workspace container for wrapping it in a user namespace.
+// A container that called this function MUST call Teardown.
+//
+// This call will make the workspace container's rootfs shared, and mount the workspace
+// container's rootfs as a shiftfs mark under `/.workspace/mark` if the workspace has
+// the daemon hostPath mount. Can only be used once per workspace.
+prepareForUserNS: {
+    path: '/iws.InWorkspaceService/PrepareForUserNS',
+    requestStream: false,
+    responseStream: false,
+    requestType: workspace_pb.PrepareForUserNSRequest,
+    responseType: workspace_pb.PrepareForUserNSResponse,
+    requestSerialize: serialize_iws_PrepareForUserNSRequest,
+    requestDeserialize: deserialize_iws_PrepareForUserNSRequest,
+    responseSerialize: serialize_iws_PrepareForUserNSResponse,
+    responseDeserialize: deserialize_iws_PrepareForUserNSResponse,
+  },
   // WriteIDMapping writes a new user/group ID mapping to /proc/<pid>/uid_map (gid_map respectively). This is used
 // for user namespaces and is available four times every 10 seconds.
 writeIDMapping: {
@@ -112,19 +129,6 @@ writeIDMapping: {
     requestDeserialize: deserialize_iws_WriteIDMappingRequest,
     responseSerialize: serialize_iws_WriteIDMappingResponse,
     responseDeserialize: deserialize_iws_WriteIDMappingResponse,
-  },
-  // MountShiftfsMark mounts the workspace container's rootfs as a shiftfs mark under `/.workspace/mark` if the
-// workspace has the daemon hostPath mount. Can only be used once per workspace.
-mountShiftfsMark: {
-    path: '/iws.InWorkspaceService/MountShiftfsMark',
-    requestStream: false,
-    responseStream: false,
-    requestType: workspace_pb.MountShiftfsMarkRequest,
-    responseType: workspace_pb.MountShiftfsMarkResponse,
-    requestSerialize: serialize_iws_MountShiftfsMarkRequest,
-    requestDeserialize: deserialize_iws_MountShiftfsMarkRequest,
-    responseSerialize: serialize_iws_MountShiftfsMarkResponse,
-    responseDeserialize: deserialize_iws_MountShiftfsMarkResponse,
   },
   // MountProc mounts a masked proc in the container's rootfs.
 // For now this can be used only once per workspace.
