@@ -214,6 +214,11 @@ func TheiaRootHandler(r *mux.Router, config *RouteHandlerConfig, infoProvider Wo
 
 	client := http.Client{Timeout: 30 * time.Second}
 	r.NewRoute().HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if req.URL.RawQuery != "" || req.URL.RawFragment != "" {
+			theiaProxyPass.ServeHTTP(w, req)
+			return
+		}
+
 		coords := getWorkspaceCoords(req)
 		info := infoProvider.WorkspaceInfo(coords.ID)
 		if info == nil {
