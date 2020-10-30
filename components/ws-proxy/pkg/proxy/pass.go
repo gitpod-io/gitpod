@@ -68,6 +68,11 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 	}
 	createRegularProxy := func(h *proxyPassConfig, targetURL *url.URL) http.Handler {
 		proxy := httputil.NewSingleHostReverseProxy(targetURL)
+		originalDirector := proxy.Director
+		proxy.Director = func(req *http.Request) {
+			req.Host = targetURL.Host
+			originalDirector(req)
+		}
 		proxy.Transport = h.Transport
 		proxy.ErrorHandler = eh
 		proxy.ModifyResponse = func(resp *http.Response) error {
