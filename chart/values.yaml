@@ -269,6 +269,8 @@ components:
       imageName: "ide/code"
     supervisor:
       imageName: "supervisor"
+    dockerUp:
+      imageName: "docker-up"
     pullSecret:
       secretName: builtin-registry-auth
     template:

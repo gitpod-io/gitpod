@@ -36,7 +36,9 @@ packages:
     deps:
       - :installer
       - :builtin-plugins
+      # TODO(cw): remove these dependencies when registry-facade is standard
       - components/supervisor:app
+      - components/docker-up:app
     argdeps:
       - imageRepoBase
     config:
