@@ -55,4 +55,5 @@ COPY components-theia-app--builtin-plugins/plugins/ ${GITPOD_BUILT_IN_PLUGINS}
 # supervisor is still needed here to work without registry-facade
 # TODO(cw): remove once registry-facade is standard (except for supervisor-ide-config.json)
 COPY components-supervisor--app/supervisor /theia/supervisor
+COPY components-docker-up--app/* /theia/
 COPY supervisor-config.json supervisor-ide-config.json /theia/

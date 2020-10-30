@@ -27,6 +27,7 @@ packages:
       - components/ws-daemon/seccomp-profile-installer:docker
       - components/gitpod-protocol:publish
       - components/supervisor-api/typescript-grpc:publish
+      - components/docker-up:docker
   - name: all-apps
     type: generic
     deps:
@@ -43,6 +44,7 @@ packages:
       - components/ws-manager:app
       - components/ee/ws-scheduler:app
       - components/ws-daemon:app
+      - components/docker-up:app
 scripts:
   - name: update-license-header
     deps:
