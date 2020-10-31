@@ -214,7 +214,13 @@ func TheiaRootHandler(r *mux.Router, config *RouteHandlerConfig, infoProvider Wo
 
 	client := http.Client{Timeout: 30 * time.Second}
 	r.NewRoute().HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if req.URL.RawQuery != "" || req.URL.RawFragment != "" {
+		mode := req.Header.Get("Sec-Fetch-Mode")
+		if mode == "navigate" || mode == "nested-navigate" || mode == "same-origin" || mode == "websocket" {
+			theiaProxyPass.ServeHTTP(w, req)
+			return
+		}
+
+		if req.URL.RawQuery != "" {
 			theiaProxyPass.ServeHTTP(w, req)
 			return
 		}
@@ -227,7 +233,11 @@ func TheiaRootHandler(r *mux.Router, config *RouteHandlerConfig, infoProvider Wo
 		}
 
 		resp, err := client.Get(fmt.Sprintf("%s://%s/%s%s", config.Config.BlobServer.Scheme, config.Config.BlobServer.Host, info.IDEImage, req.URL.Path))
-		if err != nil || strings.Contains(strings.ToLower(resp.Header.Get("Content-Type")), "text/html") {
+		if err != nil {
+			theiaProxyPass.ServeHTTP(w, req)
+			return
+		}
+		if mode == "" && strings.Contains(strings.ToLower(resp.Header.Get("Content-Type")), "text/html") {
 			theiaProxyPass.ServeHTTP(w, req)
 			return
 		}
