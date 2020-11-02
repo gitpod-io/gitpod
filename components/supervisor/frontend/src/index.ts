@@ -5,6 +5,7 @@
  */
 
 require('../src/shared/index.css');
+// TODO get rid of inversify deps
 require("reflect-metadata");
 
 import { createGitpodService } from "@gitpod/gitpod-protocol";
@@ -12,6 +13,7 @@ import { DisposableCollection } from '@gitpod/gitpod-protocol/lib/util/disposabl
 import * as GitpodServiceClient from "./ide/gitpod-service-client";
 import * as heartBeat from "./ide/heart-beat";
 import * as IDEFrontendService from "./ide/ide-frontend-service-impl";
+import * as IDEWorker from "./ide/ide-worker";
 import * as IDEWebSocket from "./ide/ide-web-socket";
 import { SupervisorServiceClient } from "./ide/supervisor-service-client";
 import * as LoadingFrame from "./shared/loading-frame";
@@ -20,6 +22,7 @@ import { serverUrl, startUrl } from "./shared/urls";
 window.gitpod = {
     service: createGitpodService(serverUrl.toString())
 };
+IDEWorker.install();
 IDEWebSocket.install();
 const ideService = IDEFrontendService.create();
 const pendingGitpodServiceClient = GitpodServiceClient.create();
