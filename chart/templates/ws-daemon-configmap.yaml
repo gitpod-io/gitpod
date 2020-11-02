@@ -71,7 +71,7 @@ daemon:
     nodeHostsFile: "/mnt/hosts"
     serviceProxy:
       enabled: true
-{{- if .Values.components.registryFacade }}
+{{- if .Values.components.registryFacade.daemonSet }}
       fixedHosts:
         registryFacade:
           - alias: {{ (printf "reg.%s" (.Values.components.registryFacade.hostname | default .Values.hostname)) | quote }}
