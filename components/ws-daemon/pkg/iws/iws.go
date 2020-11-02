@@ -130,7 +130,7 @@ func (wbs *InWorkspaceServiceServer) Start() error {
 		// Let's clean up after them.
 		_ = os.Remove(socketFN)
 	}
-	sckt, err := net.Listen("syscall", socketFN)
+	sckt, err := net.Listen("unix", socketFN)
 	if err != nil {
 		return xerrors.Errorf("cannot create IWS socket: %w", err)
 	}
