@@ -22,6 +22,7 @@ import (
 	"github.com/rootless-containers/rootlesskit/pkg/sigproxy"
 	sigproxysignal "github.com/rootless-containers/rootlesskit/pkg/sigproxy/signal"
 	"github.com/spf13/cobra"
+	"golang.org/x/sys/unix"
 )
 
 var ring0Cmd = &cobra.Command{
@@ -162,16 +163,15 @@ var ring1Cmd = &cobra.Command{
 		}{
 			// TODO(cw): pull mark mount location from config
 			{Target: "/", Source: "/.workspace/mark", FSType: "shiftfs"},
-			// {Target: "/proc", Flags: syscall.MS_BIND | syscall.MS_REC},
-			{Target: "/sys", Flags: syscall.MS_BIND | syscall.MS_REC},
-			{Target: "/dev", Flags: syscall.MS_BIND | syscall.MS_REC},
+			{Target: "/sys", Flags: unix.MS_BIND | unix.MS_REC},
+			{Target: "/dev", Flags: unix.MS_BIND | unix.MS_REC},
 			// TODO(cw): only mount /theia if it's in the mount table, i.e. this isn't a registry-facade workspace
-			{Target: "/theia", Flags: syscall.MS_BIND | syscall.MS_REC},
+			{Target: "/theia", Flags: unix.MS_BIND | unix.MS_REC},
 			// TODO(cw): only mount /workspace if it's in the mount table, i.e. this isn't an FWB workspace
-			{Target: "/workspace", Flags: syscall.MS_BIND | syscall.MS_REC},
-			{Target: "/etc/hosts", Flags: syscall.MS_BIND | syscall.MS_REC},
-			{Target: "/etc/hostname", Flags: syscall.MS_BIND | syscall.MS_REC},
-			{Target: "/etc/resolv.conf", Flags: syscall.MS_BIND | syscall.MS_REC},
+			{Target: "/workspace", Flags: unix.MS_BIND | unix.MS_REC},
+			{Target: "/etc/hosts", Flags: unix.MS_BIND | unix.MS_REC},
+			{Target: "/etc/hostname", Flags: unix.MS_BIND | unix.MS_REC},
+			{Target: "/etc/resolv.conf", Flags: unix.MS_BIND | unix.MS_REC},
 			{Target: "/tmp", Source: "tmpfs", FSType: "tmpfs"},
 		}
 		for _, m := range mnts {
@@ -191,7 +191,7 @@ var ring1Cmd = &cobra.Command{
 				"fstype": m.FSType,
 				"flags":  m.Flags,
 			}).Debug("mounting new rootfs")
-			err = syscall.Mount(m.Source, dst, m.FSType, m.Flags, "")
+			err = unix.Mount(m.Source, dst, m.FSType, m.Flags, "")
 			if err != nil {
 				log.WithError(err).WithField("dest", dst).Error("cannot establish mount")
 				failed = true
@@ -244,7 +244,10 @@ var ring1Cmd = &cobra.Command{
 		}
 
 		log.Info("signaling to child process")
-		_, err = msgutil.MarshalToWriter(pipeW, ringSyncMsg{Stage: 1})
+		_, err = msgutil.MarshalToWriter(pipeW, ringSyncMsg{
+			Stage:  1,
+			Rootfs: tmpdir,
+		})
 		if err != nil {
 			log.WithError(err).Error("cannot send signal to child process")
 			failed = true
@@ -292,7 +295,7 @@ var ring2Cmd = &cobra.Command{
 			return
 		}
 
-		err = syscall.PivotRoot(".", ".")
+		err = pivotRoot(msg.Rootfs)
 		if err != nil {
 			log.WithError(err).Error("cannot pivot root")
 			failed = true
@@ -328,6 +331,67 @@ var ring2Cmd = &cobra.Command{
 	},
 }
 
+// pivotRoot will call pivot_root such that rootfs becomes the new root
+// filesystem, and everything else is cleaned up.
+//
+// copied from runc: https://github.com/opencontainers/runc/blob/cf6c074115d00c932ef01dedb3e13ba8b8f964c3/libcontainer/rootfs_linux.go#L760
+func pivotRoot(rootfs string) error {
+	// While the documentation may claim otherwise, pivot_root(".", ".") is
+	// actually valid. What this results in is / being the new root but
+	// /proc/self/cwd being the old root. Since we can play around with the cwd
+	// with pivot_root this allows us to pivot without creating directories in
+	// the rootfs. Shout-outs to the LXC developers for giving us this idea.
+
+	oldroot, err := unix.Open("/", unix.O_DIRECTORY|unix.O_RDONLY, 0)
+	if err != nil {
+		return err
+	}
+	defer unix.Close(oldroot)
+
+	newroot, err := unix.Open(rootfs, unix.O_DIRECTORY|unix.O_RDONLY, 0)
+	if err != nil {
+		return err
+	}
+	defer unix.Close(newroot)
+
+	// Change to the new root so that the pivot_root actually acts on it.
+	if err := unix.Fchdir(newroot); err != nil {
+		return err
+	}
+
+	if err := unix.PivotRoot(".", "."); err != nil {
+		return fmt.Errorf("pivot_root %s", err)
+	}
+
+	// Currently our "." is oldroot (according to the current kernel code).
+	// However, purely for safety, we will fchdir(oldroot) since there isn't
+	// really any guarantee from the kernel what /proc/self/cwd will be after a
+	// pivot_root(2).
+
+	if err := unix.Fchdir(oldroot); err != nil {
+		return err
+	}
+
+	// Make oldroot rslave to make sure our unmounts don't propagate to the
+	// host (and thus bork the machine). We don't use rprivate because this is
+	// known to cause issues due to races where we still have a reference to a
+	// mount while a process in the host namespace are trying to operate on
+	// something they think has no mounts (devicemapper in particular).
+	if err := unix.Mount("", ".", "", unix.MS_SLAVE|unix.MS_REC, ""); err != nil {
+		return err
+	}
+	// Preform the unmount. MNT_DETACH allows us to unmount /proc/self/cwd.
+	if err := unix.Unmount(".", unix.MNT_DETACH); err != nil {
+		return err
+	}
+
+	// Switch back to our shiny new root.
+	if err := unix.Chdir("/"); err != nil {
+		return fmt.Errorf("chdir / %s", err)
+	}
+	return nil
+}
+
 func sleepForDebugging() {
 	log.Info("sleeping five minutes to allow debugging")
 	sigChan := make(chan os.Signal, 1)
@@ -340,7 +404,8 @@ func sleepForDebugging() {
 }
 
 type ringSyncMsg struct {
-	Stage int `json:"stage"`
+	Stage  int    `json:"stage"`
+	Rootfs string `json:"rootfs"`
 }
 
 func init() {
