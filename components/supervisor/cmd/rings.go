@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -17,6 +18,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/supervisor"
 	daemonapi "github.com/gitpod-io/gitpod/ws-daemon/api"
+	"github.com/rootless-containers/rootlesskit/pkg/msgutil"
 	"github.com/rootless-containers/rootlesskit/pkg/sigproxy"
 	sigproxysignal "github.com/rootless-containers/rootlesskit/pkg/sigproxy/signal"
 	"github.com/spf13/cobra"
@@ -197,11 +199,20 @@ var ring1Cmd = &cobra.Command{
 			}
 		}
 
+		pipeR, pipeW, err := os.Pipe()
+		if err != nil {
+			log.WithError(err).Error("cannot mount create pipe")
+			failed = true
+			return
+		}
+		defer pipeW.Close()
+
 		cmd := exec.Command("/proc/self/exe", "ring2")
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Pdeathsig:  syscall.SIGKILL,
 			Cloneflags: syscall.CLONE_NEWNS | syscall.CLONE_NEWPID,
 		}
+		cmd.ExtraFiles = []*os.File{pipeR}
 		cmd.Dir = tmpdir
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
@@ -232,10 +243,10 @@ var ring1Cmd = &cobra.Command{
 			return
 		}
 
-		log.Info("sending SIGCONT to child process")
-		err = cmd.Process.Signal(syscall.SIGCONT)
+		log.Info("signaling to child process")
+		_, err = msgutil.MarshalToWriter(pipeW, ringSyncMsg{Stage: 1})
 		if err != nil {
-			log.WithError(err).Error("cannot send SIGCONT to child process")
+			log.WithError(err).Error("cannot send signal to child process")
 			failed = true
 			return
 		}
@@ -265,20 +276,23 @@ var ring2Cmd = &cobra.Command{
 			sleepForDebugging()
 		}()
 
-		// if we don't have /proc already, wait for it
-		if _, err := os.Stat("/proc/self/exe"); err != nil {
-			log.Info("waiting for SIGCONT")
-			sigChan := make(chan os.Signal, 1)
-			signal.Notify(sigChan, syscall.SIGCONT, syscall.SIGTERM)
-			sig := <-sigChan
-			if sig == syscall.SIGTERM {
-				log.Info("received SIGTERM - exiting")
-				return
-			}
-			log.Info("received SIGCONT - contiuing startup")
+		// wait for /proc by listening on the parent's pipe.
+		// fd=3 is the pipe's FD passed in from the parent via extraFiles.
+		pipeR := os.NewFile(uintptr(3), "")
+		var msg ringSyncMsg
+		_, err := msgutil.UnmarshalFromReader(pipeR, &msg)
+		if err != nil {
+			log.WithError(err).Error("cannot read from parent pipe")
+			failed = true
+			return
+		}
+		if msg.Stage != 1 {
+			log.WithError(err).WithField("msg", fmt.Sprintf("%+q", msg)).Error("expected stage 1 sync message")
+			failed = true
+			return
 		}
 
-		err := syscall.PivotRoot(".", ".")
+		err = syscall.PivotRoot(".", ".")
 		if err != nil {
 			log.WithError(err).Error("cannot pivot root")
 			failed = true
@@ -323,6 +337,10 @@ func sleepForDebugging() {
 	case <-time.After(5 * time.Minute):
 	}
 	os.Exit(1)
+}
+
+type ringSyncMsg struct {
+	Stage int `json:"stage"`
 }
 
 func init() {
