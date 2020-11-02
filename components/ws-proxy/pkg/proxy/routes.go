@@ -134,13 +134,17 @@ func installBlobserveRoutes(r *mux.Router, config *RouteHandlerConfig) {
 		dst.Path = image
 		return &dst, nil
 	}
-	r.NewRoute().Handler(proxyPass(config, targetResolver, func(cfg *proxyPassConfig) {
+	r.NewRoute().Handler(blobserveProxyPass(config, targetResolver))
+}
+
+func blobserveProxyPass(config *RouteHandlerConfig, resolver targetResolver) http.HandlerFunc {
+	return proxyPass(config, resolver, func(cfg *proxyPassConfig) {
 		cfg.ResponseHandler = func(resp *http.Response, req *http.Request) error {
 			// tell the browser to cache for 1 year and don't ask the server during this period
 			resp.Header.Set("Cache-Control", "public, max-age=31536000")
 			return nil
 		}
-	}))
+	})
 }
 
 func redirectToBlobserve(w http.ResponseWriter, req *http.Request, config *RouteHandlerConfig, image string) {
@@ -178,7 +182,19 @@ func SupervisorIDEHostHandler(r *mux.Router, config *RouteHandlerConfig) {
 		})
 	})
 
+	supervisorProxyPass := blobserveProxyPass(config, func(cfg *Config, req *http.Request) (tgt *url.URL, err error) {
+		var dst url.URL
+		dst.Scheme = cfg.BlobServer.Scheme
+		dst.Host = cfg.BlobServer.Host
+		dst.Path = "/" + cfg.WorkspacePodConfig.SupervisorImage
+		return &dst, nil
+	})
 	r.NewRoute().HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if req.URL.Path == "/worker-proxy.js" {
+			// worker must be served from the same origin
+			supervisorProxyPass.ServeHTTP(w, req)
+			return
+		}
 		redirectToBlobserve(w, req, config, config.Config.WorkspacePodConfig.SupervisorImage)
 	})
 }
@@ -214,13 +230,24 @@ func TheiaRootHandler(r *mux.Router, config *RouteHandlerConfig, infoProvider Wo
 
 	client := http.Client{Timeout: 30 * time.Second}
 	r.NewRoute().HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		// use fetch metadata to avoid redirections https://developer.mozilla.org/en-US/docs/Glossary/Fetch_metadata_request_header
 		mode := req.Header.Get("Sec-Fetch-Mode")
-		if mode == "navigate" || mode == "nested-navigate" || mode == "same-origin" || mode == "websocket" {
+		dest := req.Header.Get("Sec-Fetch-Dest")
+		if mode == "navigate" || mode == "nested-navigate" || mode == "websocket" {
+			// user navigation and websocket requests should not be redirected
+			theiaProxyPass.ServeHTTP(w, req)
+			return
+		}
+
+		if mode == "same-origin" && !(dest == "worker" || dest == "sharedworker") {
+			// same origin should not be redirected, except workers
+			// supervisor installs the worker proxy from the workspace origin serving content from the blobserve origin
 			theiaProxyPass.ServeHTTP(w, req)
 			return
 		}
 
 		if req.URL.RawQuery != "" {
+			// URLs with query cannot be static, i.e. the server is required to resolve the query
 			theiaProxyPass.ServeHTTP(w, req)
 			return
 		}
@@ -238,6 +265,7 @@ func TheiaRootHandler(r *mux.Router, config *RouteHandlerConfig, infoProvider Wo
 			return
 		}
 		if mode == "" && strings.Contains(strings.ToLower(resp.Header.Get("Content-Type")), "text/html") {
+			// fallback for user agents not supporting fetch metadata to avoid redirecting on user navigation
 			theiaProxyPass.ServeHTTP(w, req)
 			return
 		}
