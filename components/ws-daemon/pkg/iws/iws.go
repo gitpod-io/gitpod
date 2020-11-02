@@ -73,7 +73,7 @@ var (
 // ServeWorkspace establishes the IWS server for a workspace
 func ServeWorkspace(uidmapper *Uidmapper) func(ctx context.Context, ws *session.Workspace) error {
 	return func(ctx context.Context, ws *session.Workspace) (err error) {
-		if !ws.FullWorkspaceBackup && !ws.ShiftfsMarkMount {
+		if !ws.FullWorkspaceBackup && !ws.UserNamespaced {
 			return nil
 		}
 
@@ -170,6 +170,10 @@ func (wbs *InWorkspaceServiceServer) Stop() {
 
 // PrepareForUserNS mounts the workspace's shiftfs mark
 func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *api.PrepareForUserNSRequest) (*api.PrepareForUserNSResponse, error) {
+	if !wbs.Session.UserNamespaced {
+		return nil, status.Error(codes.FailedPrecondition, "not supported for this workspace")
+	}
+
 	rt := wbs.Uidmapper.Runtime
 	if rt == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "not connected to container runtime")
@@ -213,6 +217,10 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 
 // MountProc mounts a proc filesystem
 func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.MountProcRequest) (resp *api.MountProcResponse, err error) {
+	if !wbs.Session.UserNamespaced {
+		return nil, status.Error(codes.FailedPrecondition, "not supported for this workspace")
+	}
+
 	defer func() {
 		if err == nil {
 			return
@@ -321,6 +329,10 @@ func readonlyPath(path string) error {
 
 // WriteIDMapping writes /proc/.../uid_map and /proc/.../gid_map for a workapce container
 func (wbs *InWorkspaceServiceServer) WriteIDMapping(ctx context.Context, req *api.WriteIDMappingRequest) (*api.WriteIDMappingResponse, error) {
+	if !wbs.Session.UserNamespaced {
+		return nil, status.Error(codes.FailedPrecondition, "not supported for this workspace")
+	}
+
 	cid, err := wbs.Uidmapper.Runtime.WaitForContainer(ctx, wbs.Session.InstanceID)
 	if err != nil {
 		log.WithFields(wbs.Session.OWI()).WithError(err).Error("cannot write ID mapping, because we cannot find the container")
@@ -377,7 +389,7 @@ func (wbs *InWorkspaceServiceServer) performLiveBackup() error {
 }
 
 func (wbs *InWorkspaceServiceServer) unPrepareForUserNS() error {
-	if !wbs.Session.ShiftfsMarkMount {
+	if !wbs.Session.UserNamespaced {
 		return nil
 	}
 
