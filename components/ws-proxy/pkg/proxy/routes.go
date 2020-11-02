@@ -215,7 +215,13 @@ func TheiaRootHandler(r *mux.Router, config *RouteHandlerConfig, infoProvider Wo
 	client := http.Client{Timeout: 30 * time.Second}
 	r.NewRoute().HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		mode := req.Header.Get("Sec-Fetch-Mode")
-		if mode == "navigate" || mode == "nested-navigate" || mode == "same-origin" || mode == "websocket" {
+		dest := req.Header.Get("Sec-Fetch-Dest")
+		if mode == "navigate" || mode == "nested-navigate" || mode == "websocket" {
+			theiaProxyPass.ServeHTTP(w, req)
+			return
+		}
+
+		if mode == "same-origin" && !(dest == "worker" || dest == "sharedworker") {
 			theiaProxyPass.ServeHTTP(w, req)
 			return
 		}
