@@ -15,7 +15,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -24,6 +23,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
 	"github.com/opentracing/opentracing-go"
+	"golang.org/x/sys/unix"
 	"golang.org/x/time/rate"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -297,9 +297,9 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 //
 // Blatant copy from runc: https://github.com/opencontainers/runc/blob/master/libcontainer/rootfs_linux.go#L946-L959
 func maskPath(path string) error {
-	if err := syscall.Mount("/dev/null", path, "", syscall.MS_BIND, ""); err != nil && !os.IsNotExist(err) {
-		if err == syscall.ENOTDIR {
-			return syscall.Mount("tmpfs", path, "tmpfs", syscall.MS_RDONLY, "")
+	if err := unix.Mount("/dev/null", path, "", unix.MS_BIND, ""); err != nil && !os.IsNotExist(err) {
+		if err == unix.ENOTDIR {
+			return unix.Mount("tmpfs", path, "tmpfs", unix.MS_RDONLY, "")
 		}
 		return err
 	}
@@ -310,13 +310,13 @@ func maskPath(path string) error {
 //
 // Blatant copy from runc: https://github.com/opencontainers/runc/blob/master/libcontainer/rootfs_linux.go#L907-L916
 func readonlyPath(path string) error {
-	if err := syscall.Mount(path, path, "", syscall.MS_BIND|syscall.MS_REC, ""); err != nil {
+	if err := unix.Mount(path, path, "", unix.MS_BIND|unix.MS_REC, ""); err != nil {
 		if os.IsNotExist(err) {
 			return nil
 		}
 		return err
 	}
-	return syscall.Mount(path, path, "", syscall.MS_BIND|syscall.MS_REMOUNT|syscall.MS_RDONLY|syscall.MS_REC, "")
+	return unix.Mount(path, path, "", unix.MS_BIND|unix.MS_REMOUNT|unix.MS_RDONLY|unix.MS_REC, "")
 }
 
 // WriteIDMapping writes /proc/.../uid_map and /proc/.../gid_map for a workapce container
