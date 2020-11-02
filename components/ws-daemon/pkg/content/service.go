@@ -205,7 +205,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 			uid = wsinit.GitpodUID
 			gid = wsinit.GitpodGID
 		)
-		if req.ShiftfsMarkMount {
+		if req.UserNamespaced {
 			// This is a bit of a hack as it makes hard assumptions about the nature of the UID mapping.
 			// With FWB this becomes unneccesary.
 			uid = wsinit.GitpodUID + 100000 - 1
@@ -257,7 +257,7 @@ func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest, upperdir strin
 			FullWorkspaceBackup: req.FullWorkspaceBackup,
 			ContentManifest:     req.ContentManifest,
 
-			ShiftfsMarkMount: req.ShiftfsMarkMount,
+			UserNamespaced:   req.UserNamespaced,
 			ServiceLocDaemon: filepath.Join(s.config.WorkingArea, req.Id+"-daemon"),
 			ServiceLocNode:   filepath.Join(s.config.WorkingAreaNode, req.Id+"-daemon"),
 		}, nil
@@ -468,7 +468,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		}()
 
 		var opts []archive.BuildTarbalOption
-		if sess.ShiftfsMarkMount && !sess.FullWorkspaceBackup {
+		if sess.UserNamespaced && !sess.FullWorkspaceBackup {
 			mappings := []archive.IDMapping{
 				{ContainerID: 0, HostID: wsinit.GitpodUID, Size: 1},
 				{ContainerID: 1, HostID: 100000, Size: 65534},

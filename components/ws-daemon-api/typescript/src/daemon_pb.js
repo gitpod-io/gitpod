@@ -253,7 +253,7 @@ proto.wsdaemon.InitWorkspaceRequest.toObject = function(includeInstance, msg) {
     initializer: (f = msg.getInitializer()) && content$service$api_initializer_pb.WorkspaceInitializer.toObject(includeInstance, f),
     fullWorkspaceBackup: jspb.Message.getFieldWithDefault(msg, 4, false),
     contentManifest: msg.getContentManifest_asB64(),
-    shiftfsMarkMount: jspb.Message.getFieldWithDefault(msg, 6, false)
+    userNamespaced: jspb.Message.getFieldWithDefault(msg, 6, false)
   };
 
   if (includeInstance) {
@@ -314,7 +314,7 @@ proto.wsdaemon.InitWorkspaceRequest.deserializeBinaryFromReader = function(msg, 
       break;
     case 6:
       var value = /** @type {boolean} */ (reader.readBool());
-      msg.setShiftfsMarkMount(value);
+      msg.setUserNamespaced(value);
       break;
     default:
       reader.skipField();
@@ -382,7 +382,7 @@ proto.wsdaemon.InitWorkspaceRequest.serializeBinaryToWriter = function(message, 
       f
     );
   }
-  f = message.getShiftfsMarkMount();
+  f = message.getUserNamespaced();
   if (f) {
     writer.writeBool(
       6,
@@ -530,18 +530,18 @@ proto.wsdaemon.InitWorkspaceRequest.prototype.setContentManifest = function(valu
 
 
 /**
- * optional bool shiftfs_mark_mount = 6;
+ * optional bool user_namespaced = 6;
  * Note that Boolean fields may be set to 0/1 when serialized from a Java server.
  * You should avoid comparisons like {@code val === true/false} in those cases.
  * @return {boolean}
  */
-proto.wsdaemon.InitWorkspaceRequest.prototype.getShiftfsMarkMount = function() {
+proto.wsdaemon.InitWorkspaceRequest.prototype.getUserNamespaced = function() {
   return /** @type {boolean} */ (jspb.Message.getFieldWithDefault(this, 6, false));
 };
 
 
 /** @param {boolean} value */
-proto.wsdaemon.InitWorkspaceRequest.prototype.setShiftfsMarkMount = function(value) {
+proto.wsdaemon.InitWorkspaceRequest.prototype.setUserNamespaced = function(value) {
   jspb.Message.setProto3BooleanField(this, 6, value);
 };
 

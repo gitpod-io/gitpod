@@ -72,7 +72,7 @@ type Workspace struct {
 
 	ServiceLocNode   string `json:"serviceLocNode"`
 	ServiceLocDaemon string `json:"serviceLocDaemon"`
-	ShiftfsMarkMount bool   `json:"shiftfsMarkMount"`
+	UserNamespaced   bool   `json:"userNamespaced"`
 
 	NonPersistentAttrs map[string]interface{} `json:"-"`
 

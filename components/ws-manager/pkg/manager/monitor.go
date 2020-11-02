@@ -1108,7 +1108,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 			Initializer:         &initializer,
 			FullWorkspaceBackup: fullWorkspaceBackup,
 			ContentManifest:     contentManifest,
-			ShiftfsMarkMount:    withUsernamespace,
+			UserNamespaced:      withUsernamespace,
 		})
 		return err
 	})
