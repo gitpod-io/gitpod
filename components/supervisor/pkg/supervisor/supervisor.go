@@ -114,7 +114,7 @@ func Run(options ...RunOption) {
 	ctx, cancel := context.WithCancel(context.Background())
 	var (
 		shutdown            = make(chan struct{})
-		ideReady            = make(chan struct{})
+		ideReady            = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
 		cstate              = NewInMemoryContentState(cfg.RepoRoot)
 		gitpodService       = createGitpodService(cfg, tokenService)
 		gitpodConfigService = gitpod.NewConfigService(cfg.RepoRoot+"/.gitpod.yml", cstate.ContentReady())
@@ -139,7 +139,7 @@ func Run(options ...RunOption) {
 			ContentState: cstate,
 			Ports:        portMgmt,
 			Tasks:        taskManager,
-			IDEReady:     ideReady,
+			ideReady:     ideReady,
 		},
 		termMuxSrv,
 		RegistrableTokenService{tokenService},
@@ -272,7 +272,7 @@ func hasMetadataAccess() bool {
 	return false
 }
 
-func startAndWatchIDE(ctx context.Context, cfg *Config, wg *sync.WaitGroup, ideReady chan<- struct{}) {
+func startAndWatchIDE(ctx context.Context, cfg *Config, wg *sync.WaitGroup, ideReady *ideReadyState) {
 	defer wg.Done()
 
 	type status int
@@ -303,14 +303,17 @@ supervisorLoop:
 			}
 			s = statusShouldRun
 
-			go runIDEReadinessProbe(cfg, ideReady)
+			go func() {
+				runIDEReadinessProbe(cfg)
+				ideReady.Set(true)
+			}()
 
 			go func() {
 				err := cmd.Wait()
 				if err != nil && !strings.Contains(err.Error(), "signal: interrupt") {
 					log.WithError(err).Warn("IDE was stopped")
 				}
-
+				ideReady.Set(false)
 				close(ideStopped)
 			}()
 		}
@@ -399,8 +402,7 @@ func buildIDEEnv(cfg *Config) []string {
 	return env
 }
 
-func runIDEReadinessProbe(cfg *Config, ideReady chan<- struct{}) {
-	defer close(ideReady)
+func runIDEReadinessProbe(cfg *Config) {
 	defer log.Info("IDE is ready")
 
 	switch cfg.ReadinessProbe.Type {

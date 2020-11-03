@@ -5,6 +5,7 @@
  */
 
 import { TasksStatusRequest, TasksStatusResponse } from '@gitpod/supervisor-api-grpc/lib/status_pb';
+import { JsonRpcProxy } from '@theia/core/lib/common/messaging/proxy-factory';
 import { ApplicationShell } from '@theia/core/lib/browser';
 import { Deferred } from '@theia/core/lib/common/promise-util';
 import { ProcessManager, TerminalProcess } from '@theia/process/lib/node';
@@ -79,10 +80,10 @@ export class GitpodTaskServerImpl implements GitpodTaskServer {
                             this.tasks.set(task.getId(), update);
                             updated.push(update);
                         }
-                        this.deferredReady.resolve();
                         for (const client of this.clients) {
                             client.onDidChange({ updated });
                         }
+                        this.deferredReady.resolve();
                     });
                 });
             } catch (err) {
@@ -90,11 +91,6 @@ export class GitpodTaskServerImpl implements GitpodTaskServer {
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
         }
-    }
-
-    async getTasks(): Promise<GitpodTask[]> {
-        await this.deferredReady.promise;
-        return [...this.tasks.values()];
     }
 
     async attach({ terminalId, remoteTerminal }: AttachTaskTerminalParams): Promise<void> {
@@ -113,11 +109,21 @@ export class GitpodTaskServerImpl implements GitpodTaskServer {
         terminalProcess.write(`${supervisorBin} terminal attach -ir ${remoteTerminal}\r\n`);
     }
 
-    setClient(client: GitpodTaskClient): void {
-        this.clients.add(client);
-    }
-    disposeClient(client: GitpodTaskClient): void {
-        this.clients.delete(client);
+    setClient(client: JsonRpcProxy<GitpodTaskClient>): void {
+        let closed = false;
+        this.deferredReady.promise.then(() => {
+            if (closed) {
+                return;
+            }
+            this.clients.add(client);
+            client.onDidChange({
+                updated: [...this.tasks.values()]
+            })
+        });
+        client.onDidCloseConnection(() => {
+            closed = true;
+            this.clients.delete(client);
+        });
     }
 
     dispose(): void {
