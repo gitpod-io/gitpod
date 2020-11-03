@@ -168,7 +168,8 @@ func redirectToBlobserve(w http.ResponseWriter, req *http.Request, config *Route
 			req.URL.Path,
 		)
 	}
-	http.Redirect(w, req, redirectURL, 303)
+	// permament redirect to tell the browser to cache redirect request and don't ask the server again
+	http.Redirect(w, req, redirectURL, 308)
 }
 
 // SupervisorIDEHostHandler serves supervisor's IDE host
