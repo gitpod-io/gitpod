@@ -10,6 +10,8 @@ import { inject, injectable, postConstruct } from 'inversify';
 import { GitpodPortClient, GitpodPortServer, ExposeGitpodPortParams } from '../common/gitpod-port-server';
 import { SupervisorClientProvider } from './supervisor-client-provider';
 import { ExposePortRequest, ExposePortResponse } from '@gitpod/supervisor-api-grpc/lib/control_pb';
+import { Deferred } from '@theia/core/lib/common/promise-util';
+import { JsonRpcProxy } from '@gitpod/gitpod-protocol/lib/messaging/proxy-factory';
 
 @injectable()
 export class GitpodPortServerImpl implements GitpodPortServer {
@@ -23,11 +25,13 @@ export class GitpodPortServerImpl implements GitpodPortServer {
     private stopUpdates: (() => void) | undefined;
 
     private readonly ports = new Map<number, PortsStatus.AsObject>();
+    private readonly deferredReady = new Deferred<void>();
 
     @postConstruct()
     async start(): Promise<void> {
         const client = await this.supervisorClientProvider.getStatusClient();
         while (this.run) {
+            let initial = true;
             try {
                 const req = new PortsStatusRequest();
                 req.setObserve(true);
@@ -38,6 +42,10 @@ export class GitpodPortServerImpl implements GitpodPortServer {
                     evts.on('close', resolve);
                     evts.on('error', reject);
                     evts.on('data', (update: PortsStatusResponse) => {
+                        if (initial) {
+                            this.ports.clear();
+                            initial = false;
+                        }
                         let added: PortsStatus.AsObject[] | undefined
                         for (const port of update.getAddedList()) {
                             const object = port.toObject();
@@ -58,6 +66,7 @@ export class GitpodPortServerImpl implements GitpodPortServer {
                         for (const client of this.clients) {
                             client.onDidChange({ added, updated, removed });
                         }
+                        this.deferredReady.resolve();
                     });
                 });
             } catch (err) {
@@ -65,10 +74,6 @@ export class GitpodPortServerImpl implements GitpodPortServer {
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
         }
-    }
-
-    async getPorts(): Promise<PortsStatus.AsObject[]> {
-        return [...this.ports.values()];
     }
 
     async exposePort(params: ExposeGitpodPortParams): Promise<void> {
@@ -81,11 +86,22 @@ export class GitpodPortServerImpl implements GitpodPortServer {
         await util.promisify<ExposePortRequest, ExposePortResponse>(controlClient.exposePort).bind(controlClient)(request);
     }
 
-    setClient(client: GitpodPortClient): void {
-        this.clients.add(client);
-    }
-    disposeClient(client: GitpodPortClient): void {
-        this.clients.delete(client);
+    setClient(client: JsonRpcProxy<GitpodPortClient>): void {
+        let closed = false;
+        this.deferredReady.promise.then(() => {
+            if (closed) {
+                return;
+            }
+            this.clients.add(client);
+            client.onDidChange({
+                initial: true,
+                added: [...this.ports.values()]
+            })
+        });
+        client.onDidCloseConnection(() => {
+            closed = true;
+            this.clients.delete(client);
+        });
     }
 
     dispose(): void {

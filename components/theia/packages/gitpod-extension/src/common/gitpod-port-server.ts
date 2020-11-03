@@ -11,7 +11,6 @@ export const gitpodPortServicePath = '/services/gitpodPorts';
 
 export const GitpodPortServer = Symbol('GitpodPortServer');
 export interface GitpodPortServer extends JsonRpcServer<GitpodPortClient> {
-    getPorts(): Promise<PortsStatus.AsObject[]>;
     exposePort(params: ExposeGitpodPortParams): Promise<void>;
 }
 
@@ -20,6 +19,7 @@ export interface GitpodPortClient {
 }
 
 export interface DidChangeGitpodPortsEvent {
+    initial?: boolean
     added?: PortsStatus.AsObject[]
     updated?: PortsStatus.AsObject[]
     removed?: number[]

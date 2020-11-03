@@ -28,7 +28,6 @@ export const gitpodTaskServicePath = "/services/gitpodTasks";
 
 export const GitpodTaskServer = Symbol('GitpodTaskServer');
 export interface GitpodTaskServer extends JsonRpcServer<GitpodTaskClient> {
-    getTasks(): Promise<GitpodTask[]>;
     attach(params: AttachTaskTerminalParams): Promise<void>
 }
 export interface GitpodTaskClient {

@@ -60,7 +60,6 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
         new JsonRpcConnectionHandler<GitpodPortClient>(gitpodPortServicePath, client => {
             const server = context.container.get<GitpodPortServerImpl>(GitpodPortServer);
             server.setClient(client);
-            client.onDidCloseConnection(() => server.disposeClient(client));
             return server;
         })
     ).inSingletonScope();
@@ -69,7 +68,6 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
         new JsonRpcConnectionHandler<GitpodTaskClient>(gitpodTaskServicePath, client => {
             const server = context.container.get<GitpodTaskServerImpl>(GitpodTaskServer);
             server.setClient(client);
-            client.onDidCloseConnection(() => server.disposeClient(client));
             return server;
         })
     ).inSingletonScope();

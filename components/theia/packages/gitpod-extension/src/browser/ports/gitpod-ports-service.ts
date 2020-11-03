@@ -47,19 +47,20 @@ export class GitpodPortsService {
         this.server.setClient({
             onDidChange: event => this.updatePorts(event)
         });
-        this.server.getPorts().then(added => this.updatePorts({ added }));
     }
 
     get ports(): IterableIterator<PortsStatus.AsObject> {
         return this._ports.values();
     }
 
-    private updatePorts({ added, updated, removed }: DidChangeGitpodPortsEvent): void {
+    private updatePorts({ added, updated, removed, initial }: DidChangeGitpodPortsEvent): void {
+        const toClean = initial ? new Set<number>(this._ports.keys()) : undefined;
         for (const ports of [added, updated]) {
             if (ports === undefined) {
                 continue;
             }
             for (const port of ports) {
+                toClean?.delete(port.localPort)
                 const current = this._ports.get(port.localPort);
                 this._ports.set(port.localPort, port);
                 if (isExposedServedPort(port) && !isExposedServedPort(current)) {
@@ -67,8 +68,11 @@ export class GitpodPortsService {
                 }
             }
         }
-        if (removed) {
-            for (const port of removed) {
+        for (const ports of [removed, toClean]) {
+            if (ports === undefined) {
+                continue;
+            }
+            for (const port of ports) {
                 this._ports.delete(port);
             }
         }
