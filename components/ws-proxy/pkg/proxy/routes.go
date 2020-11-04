@@ -62,30 +62,17 @@ func NewRouteHandlerConfig(config *Config, opts ...RouteHandlerConfigOpt) (*Rout
 // RouteHandler is a function that handles a HTTP route
 type RouteHandler = func(r *mux.Router, config *RouteHandlerConfig)
 
-// installTheiaRoutes configures routing of Theia requests
-func installTheiaRoutes(r *mux.Router, config *RouteHandlerConfig, ip WorkspaceInfoProvider) {
+// installWorkspaceRoutes configures routing of workspace and IDE requests
+func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip WorkspaceInfoProvider) {
 	r.Use(logHandler)
 	r.Use(handlers.CompressHandler)
 
-	// Precedence depends on order - the further down a route is, the later it comes,
-	// the less priority it has.
-	TheiaMiniBrowserHandler(r.PathPrefix("/mini-browser").Subrouter(), config)
+	// Note: the order of routes defines their priority.
+	//       Routes registered first have priority over those that come afterwards.
+	routes := newIDERoutes(config, ip)
 
-	TheiaServiceHandler(r.Path("/services").Subrouter(), config)
-	TheiaFileUploadHandler(r.Path("/file-upload").Subrouter(), config)
-
-	TheiaFileHandler(r.PathPrefix("/file").Subrouter(), config)
-	TheiaFileHandler(r.PathPrefix("/files").Subrouter(), config)
-
-	TheiaHostedPluginHandler(r.PathPrefix("/hostedPlugin").Subrouter(), config)
-	TheiaWebviewHandler(r.PathPrefix("/webview").Subrouter(), config)
-
-	supervisorUnauthenticatedAPIHandler := SupervisorAPIHandler(false)
-	supervisorAuthenticatedAPIHandler := SupervisorAPIHandler(true)
-	supervisorUnauthenticatedAPIHandler(r.PathPrefix("/_supervisor/v1/status/supervisor").Subrouter(), config)
-	supervisorUnauthenticatedAPIHandler(r.PathPrefix("/_supervisor/v1/status/ide").Subrouter(), config)
-	supervisorAuthenticatedAPIHandler(r.PathPrefix("/_supervisor/v1").Subrouter(), config)
-
+	// The favicon warants special handling, because we pull that from the supervisor frontend
+	// rather than the IDE.
 	faviconRouter := r.Path("/favicon.ico").Subrouter()
 	faviconRouter.Use(func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
@@ -93,19 +80,175 @@ func installTheiaRoutes(r *mux.Router, config *RouteHandlerConfig, ip WorkspaceI
 			h.ServeHTTP(resp, req)
 		})
 	})
+	routes.HandleSupervisorFrontendRoute(faviconRouter.NewRoute())
 
-	// TODO(cw): remove this distinction once blobserve is standard. Then we always want to use blobserve.
-	if config.Config.BlobServer != nil {
-		SupervisorIDEHostHandler(r.PathPrefix("/_supervisor/frontend").Subrouter(), config)
-		SupervisorIDEHostHandler(faviconRouter, config)
-	} else {
-		supervisorUnauthenticatedAPIHandler(r.PathPrefix("/_supervisor/frontend").Subrouter(), config)
-		supervisorUnauthenticatedAPIHandler(faviconRouter, config)
+	// Theia has a bunch of special routes it probably requires.
+	// TODO(cw): figure out if these routes are still required, and how we deal with specialties of other IDEs.
+	for _, pp := range []string{"/services", "/file-upload"} {
+		routes.HandleDirectIDERoute(r.Path(pp))
+	}
+	for _, pp := range []string{"/mini-browser", "/file", "/files", "/hostedPlugin", "/webview"} {
+		routes.HandleDirectIDERoute(r.PathPrefix(pp))
 	}
 
-	supervisorAuthenticatedAPIHandler(r.PathPrefix("/_supervisor").Subrouter(), config)
+	routes.HandleSupervisorFrontendRoute(r.PathPrefix("/_supervisor/frontend"))
+	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor/v1/status/supervisor"), false)
+	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor/v1/status/ide"), false)
+	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor/v1"), true)
+	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor"), true)
 
-	TheiaRootHandler(r.NewRoute().Subrouter(), config, ip)
+	routes.HandleRoot(r.NewRoute())
+}
+
+func newIDERoutes(config *RouteHandlerConfig, ip WorkspaceInfoProvider) *ideRoutes {
+	return &ideRoutes{
+		Config:                    config,
+		InfoProvider:              ip,
+		workspaceMustExistHandler: workspaceMustExistHandler(config.Config, ip),
+	}
+}
+
+type ideRoutes struct {
+	Config       *RouteHandlerConfig
+	InfoProvider WorkspaceInfoProvider
+
+	workspaceMustExistHandler mux.MiddlewareFunc
+}
+
+func (ir *ideRoutes) HandleDirectIDERoute(route *mux.Route) {
+	r := route.Subrouter()
+	r.Use(logRouteHandlerHandler("HandleDirectIDERoute"))
+	r.Use(ir.Config.CorsHandler)
+	r.Use(ir.Config.WorkspaceAuthHandler)
+	r.Use(ir.workspaceMustExistHandler)
+
+	r.NewRoute().HandlerFunc(proxyPass(ir.Config, workspacePodResolver, withWebsocketSupport()))
+}
+
+func (ir *ideRoutes) HandleDirectSupervisorRoute(route *mux.Route, authenticated bool) {
+	r := route.Subrouter()
+	r.Use(logRouteHandlerHandler(fmt.Sprintf("HandleDirectSupervisorRoute (authenticated: %v)", authenticated)))
+	r.Use(ir.Config.CorsHandler)
+	r.Use(ir.workspaceMustExistHandler)
+	if authenticated {
+		r.Use(ir.Config.WorkspaceAuthHandler)
+	}
+
+	r.NewRoute().HandlerFunc(proxyPass(ir.Config, workspacePodSupervisorResolver))
+}
+
+func (ir *ideRoutes) HandleSupervisorFrontendRoute(route *mux.Route) {
+	if ir.Config.Config.BlobServer == nil {
+		// if we don't have blobserve, we serve the supervisor frontend from supervisor directly
+		ir.HandleDirectSupervisorRoute(route, false)
+		return
+	}
+
+	r := route.Subrouter()
+	r.Use(logRouteHandlerHandler("SupervisorIDEHostHandler"))
+	// strip the frontend prefix, just for good measure
+	r.Use(func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+			req.URL.Path = strings.TrimPrefix(req.URL.Path, "/_supervisor/frontend")
+			h.ServeHTTP(resp, req)
+		})
+	})
+
+	supervisorProxyPass := blobserveProxyPass(ir.Config, func(cfg *Config, req *http.Request) (tgt *url.URL, err error) {
+		var dst url.URL
+		dst.Scheme = cfg.BlobServer.Scheme
+		dst.Host = cfg.BlobServer.Host
+		dst.Path = "/" + cfg.WorkspacePodConfig.SupervisorImage
+		return &dst, nil
+	})
+	r.NewRoute().HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		if req.URL.Path == "/worker-proxy.js" {
+			// worker must be served from the same origin
+			supervisorProxyPass.ServeHTTP(w, req)
+			return
+		}
+		redirectToBlobserve(w, req, ir.Config, ir.Config.Config.WorkspacePodConfig.SupervisorImage)
+	})
+}
+
+func (ir *ideRoutes) HandleRoot(route *mux.Route) {
+	if ir.Config.Config.BlobServer == nil {
+		ir.handleRootWithoutBlobserve(route)
+		return
+	}
+
+	r := route.Subrouter()
+	r.Use(logRouteHandlerHandler("handleRoot"))
+	r.Use(ir.Config.CorsHandler)
+	r.Use(ir.workspaceMustExistHandler)
+
+	var (
+		client           = http.Client{Timeout: 30 * time.Second}
+		blobserver       = ir.Config.Config.BlobServer
+		workspaceIDEPass = ir.Config.WorkspaceAuthHandler(
+			proxyPass(ir.Config, workspacePodResolver, withWebsocketSupport()),
+		)
+		ideProxyPass = proxyPass(ir.Config, dynamicIDEResolver, withHTTPErrorHandler(workspaceIDEPass))
+	)
+	r.NewRoute().HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		// use fetch metadata to avoid redirections https://developer.mozilla.org/en-US/docs/Glossary/Fetch_metadata_request_header
+		mode := req.Header.Get("Sec-Fetch-Mode")
+		dest := req.Header.Get("Sec-Fetch-Dest")
+		if mode == "navigate" || mode == "nested-navigate" || mode == "websocket" {
+			// user navigation and websocket requests should not be redirected
+			ideProxyPass.ServeHTTP(w, req)
+			return
+		}
+
+		if mode == "same-origin" && !(dest == "worker" || dest == "sharedworker") {
+			// same origin should not be redirected, except workers
+			// supervisor installs the worker proxy from the workspace origin serving content from the blobserve origin
+			ideProxyPass.ServeHTTP(w, req)
+			return
+		}
+
+		if req.URL.RawQuery != "" {
+			// URLs with query cannot be static, i.e. the server is required to resolve the query
+			ideProxyPass.ServeHTTP(w, req)
+			return
+		}
+
+		info := getWorkspaceInfoFromContext(req.Context())
+		if info == nil {
+			ideProxyPass.ServeHTTP(w, req)
+			return
+		}
+
+		resp, err := client.Get(fmt.Sprintf("%s://%s/%s%s", blobserver.Scheme, blobserver.Host, info.IDEImage, req.URL.Path))
+		if err != nil {
+			ideProxyPass.ServeHTTP(w, req)
+			return
+		}
+
+		if mode == "" && strings.Contains(strings.ToLower(resp.Header.Get("Content-Type")), "text/html") {
+			// fallback for user agents not supporting fetch metadata to avoid redirecting on user navigation
+			ideProxyPass.ServeHTTP(w, req)
+			return
+		}
+
+		defer resp.Body.Close()
+		redirectToBlobserve(w, req, ir.Config, info.IDEImage)
+	})
+}
+
+func (ir *ideRoutes) handleRootWithoutBlobserve(route *mux.Route) {
+	r := route.Subrouter()
+	r.Use(logRouteHandlerHandler("handleRootWithoutBlobserve"))
+	r.Use(ir.Config.CorsHandler)
+	r.Use(ir.workspaceMustExistHandler)
+
+	// We first try and service the request using the static IDE server or blobserve.
+	// If that fails, we proxy-pass to the workspace.
+	workspaceIDEPass := ir.Config.WorkspaceAuthHandler(
+		proxyPass(ir.Config, workspacePodResolver, withWebsocketSupport()),
+	)
+	ideAssetPass := proxyPass(ir.Config, staticIDEResolver, withHTTPErrorHandler(workspaceIDEPass))
+	r.NewRoute().HandlerFunc(ideAssetPass)
 }
 
 const imagePathSeparator = "/__files__"
@@ -172,186 +315,6 @@ func redirectToBlobserve(w http.ResponseWriter, req *http.Request, config *Route
 	http.Redirect(w, req, redirectURL, 308)
 }
 
-// SupervisorIDEHostHandler serves supervisor's IDE host
-func SupervisorIDEHostHandler(r *mux.Router, config *RouteHandlerConfig) {
-	r.Use(logRouteHandlerHandler("SupervisorIDEHostHandler"))
-	// strip the frontend prefix, just for good measure
-	r.Use(func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-			req.URL.Path = strings.TrimPrefix(req.URL.Path, "/_supervisor/frontend")
-			h.ServeHTTP(resp, req)
-		})
-	})
-
-	supervisorProxyPass := blobserveProxyPass(config, func(cfg *Config, req *http.Request) (tgt *url.URL, err error) {
-		var dst url.URL
-		dst.Scheme = cfg.BlobServer.Scheme
-		dst.Host = cfg.BlobServer.Host
-		dst.Path = "/" + cfg.WorkspacePodConfig.SupervisorImage
-		return &dst, nil
-	})
-	r.NewRoute().HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		if req.URL.Path == "/worker-proxy.js" {
-			// worker must be served from the same origin
-			supervisorProxyPass.ServeHTTP(w, req)
-			return
-		}
-		redirectToBlobserve(w, req, config, config.Config.WorkspacePodConfig.SupervisorImage)
-	})
-}
-
-// TheiaRootHandler handles all requests under / that are not handled by any special case above (expected to be static resources only)
-func TheiaRootHandler(r *mux.Router, config *RouteHandlerConfig, infoProvider WorkspaceInfoProvider) {
-	r.Use(logRouteHandlerHandler("TheiaRootHandler"))
-	r.Use(config.CorsHandler)
-
-	var resolver targetResolver
-	if config.Config.BlobServer != nil {
-		resolver = dynamicTheiaResolver(infoProvider)
-	} else {
-		resolver = staticTheiaResolver
-	}
-	theiaProxyPass := // Use the static theia server as primary source for resources
-		proxyPass(config, resolver,
-			// If the static theia server returns 404, re-route to the pod itself instead
-			withHTTPErrorHandler(
-				config.WorkspaceAuthHandler(
-					proxyPass(config, workspacePodResolver,
-						withWebsocketSupport(),
-						withOnProxyErrorRedirectToWorkspaceStartHandler(config.Config),
-					),
-				),
-			),
-		)
-
-	if config.Config.BlobServer == nil {
-		r.NewRoute().HandlerFunc(theiaProxyPass)
-		return
-	}
-
-	client := http.Client{Timeout: 30 * time.Second}
-	r.NewRoute().HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		// use fetch metadata to avoid redirections https://developer.mozilla.org/en-US/docs/Glossary/Fetch_metadata_request_header
-		mode := req.Header.Get("Sec-Fetch-Mode")
-		dest := req.Header.Get("Sec-Fetch-Dest")
-		if mode == "navigate" || mode == "nested-navigate" || mode == "websocket" {
-			// user navigation and websocket requests should not be redirected
-			theiaProxyPass.ServeHTTP(w, req)
-			return
-		}
-
-		if mode == "same-origin" && !(dest == "worker" || dest == "sharedworker") {
-			// same origin should not be redirected, except workers
-			// supervisor installs the worker proxy from the workspace origin serving content from the blobserve origin
-			theiaProxyPass.ServeHTTP(w, req)
-			return
-		}
-
-		if req.URL.RawQuery != "" {
-			// URLs with query cannot be static, i.e. the server is required to resolve the query
-			theiaProxyPass.ServeHTTP(w, req)
-			return
-		}
-
-		coords := getWorkspaceCoords(req)
-		info := infoProvider.WorkspaceInfo(coords.ID)
-		if info == nil {
-			theiaProxyPass.ServeHTTP(w, req)
-			return
-		}
-
-		resp, err := client.Get(fmt.Sprintf("%s://%s/%s%s", config.Config.BlobServer.Scheme, config.Config.BlobServer.Host, info.IDEImage, req.URL.Path))
-		if err != nil {
-			theiaProxyPass.ServeHTTP(w, req)
-			return
-		}
-		if mode == "" && strings.Contains(strings.ToLower(resp.Header.Get("Content-Type")), "text/html") {
-			// fallback for user agents not supporting fetch metadata to avoid redirecting on user navigation
-			theiaProxyPass.ServeHTTP(w, req)
-			return
-		}
-		defer resp.Body.Close()
-		redirectToBlobserve(w, req, config, info.IDEImage)
-	})
-}
-
-// TheiaMiniBrowserHandler handles /mini-browser
-func TheiaMiniBrowserHandler(r *mux.Router, config *RouteHandlerConfig) {
-	r.Use(logRouteHandlerHandler("TheiaMiniBrowserHandler"))
-	r.Use(config.CorsHandler)
-	r.Use(config.WorkspaceAuthHandler)
-	r.NewRoute().
-		HandlerFunc(proxyPass(config, workspacePodResolver))
-}
-
-// TheiaFileHandler handles /file and /files
-func TheiaFileHandler(r *mux.Router, config *RouteHandlerConfig) {
-	r.Use(logRouteHandlerHandler("TheiaFileHandler"))
-	r.Use(config.CorsHandler)
-	r.Use(config.WorkspaceAuthHandler)
-	r.NewRoute().
-		HandlerFunc(proxyPass(config,
-			workspacePodResolver,
-			withOnProxyErrorRedirectToWorkspaceStartHandler(config.Config)))
-}
-
-// TheiaHostedPluginHandler handles /hostedPlugin
-func TheiaHostedPluginHandler(r *mux.Router, config *RouteHandlerConfig) {
-	r.Use(logRouteHandlerHandler("TheiaHostedPluginHandler"))
-	r.Use(config.CorsHandler)
-	r.Use(config.WorkspaceAuthHandler)
-	r.NewRoute().
-		HandlerFunc(proxyPass(config, workspacePodResolver))
-}
-
-// TheiaServiceHandler handles /service
-func TheiaServiceHandler(r *mux.Router, config *RouteHandlerConfig) {
-	r.Use(logRouteHandlerHandler("TheiaServiceHandler"))
-	r.Use(config.CorsHandler)
-	r.Use(config.WorkspaceAuthHandler)
-	r.NewRoute().
-		HandlerFunc(proxyPass(config, workspacePodResolver,
-			withWebsocketSupport(),
-			withOnProxyErrorRedirectToWorkspaceStartHandler(config.Config)))
-}
-
-// TheiaFileUploadHandler handles /file-upload
-func TheiaFileUploadHandler(r *mux.Router, config *RouteHandlerConfig) {
-	r.Use(logRouteHandlerHandler("TheiaFileUploadHandler"))
-	r.Use(config.CorsHandler)
-	r.Use(config.WorkspaceAuthHandler)
-	r.NewRoute().
-		HandlerFunc(proxyPass(config, workspacePodResolver,
-			withWebsocketSupport(),
-			withOnProxyErrorRedirectToWorkspaceStartHandler(config.Config)))
-}
-
-// SupervisorAPIHandler handles requests for supervisor's API endpoint
-func SupervisorAPIHandler(authenticated bool) RouteHandler {
-	return func(r *mux.Router, config *RouteHandlerConfig) {
-		r.Use(config.CorsHandler)
-		if authenticated {
-			r.Use(logRouteHandlerHandler("SupervisorAuthenticatedAPIHandler"))
-			r.Use(config.WorkspaceAuthHandler)
-		} else {
-			r.Use(logRouteHandlerHandler("SupervisorUnauthenticatedAPIHandler"))
-		}
-
-		r.NewRoute().
-			HandlerFunc(proxyPass(config, workspacePodSupervisorResolver))
-	}
-}
-
-// TheiaWebviewHandler handles /webview
-func TheiaWebviewHandler(r *mux.Router, config *RouteHandlerConfig) {
-	r.Use(logRouteHandlerHandler("TheiaWebviewHandler"))
-	r.Use(config.CorsHandler)
-	r.Use(config.WorkspaceAuthHandler)
-	r.NewRoute().
-		HandlerFunc(proxyPass(config, workspacePodResolver,
-			withWebsocketSupport()))
-}
-
 // installWorkspacePortRoutes configures routing for exposed ports
 func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig) {
 	r.Use(logHandler)
@@ -366,7 +329,7 @@ func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig) {
 			withWebsocketSupport()))
 }
 
-// workspacePodResolver resolves to the workspace pods Theia url from the given request
+// workspacePodResolver resolves to the workspace pod's url from the given request
 func workspacePodResolver(config *Config, req *http.Request) (url *url.URL, err error) {
 	coords := getWorkspaceCoords(req)
 	return buildWorkspacePodURL(config.WorkspacePodConfig.ServiceTemplate, coords.ID, fmt.Sprint(config.WorkspacePodConfig.TheiaPort))
@@ -384,8 +347,8 @@ func workspacePodSupervisorResolver(config *Config, req *http.Request) (url *url
 	return buildWorkspacePodURL(config.WorkspacePodConfig.ServiceTemplate, coords.ID, fmt.Sprint(config.WorkspacePodConfig.SupervisorPort))
 }
 
-// staticTheiaResolver resolves to static theia server with the statically configured version
-func staticTheiaResolver(config *Config, req *http.Request) (url *url.URL, err error) {
+// staticIDEResolver resolves to static IDE server with the statically configured version
+func staticIDEResolver(config *Config, req *http.Request) (url *url.URL, err error) {
 	targetURL := *req.URL
 	targetURL.Scheme = config.TheiaServer.Scheme
 	targetURL.Host = config.TheiaServer.Host
@@ -393,25 +356,22 @@ func staticTheiaResolver(config *Config, req *http.Request) (url *url.URL, err e
 	return &targetURL, nil
 }
 
-func dynamicTheiaResolver(infoProvider WorkspaceInfoProvider) targetResolver {
-	return func(config *Config, req *http.Request) (res *url.URL, err error) {
-		coords := getWorkspaceCoords(req)
-		info := infoProvider.WorkspaceInfo(coords.ID)
-		if info == nil {
-			log.WithFields(log.OWI("", coords.ID, "")).Warn("no workspace info available - cannot resolve Theia route")
-			return nil, xerrors.Errorf("no workspace information available - cannot resolve Theia route")
-		}
-
-		var dst url.URL
-		dst.Scheme = config.BlobServer.Scheme
-		dst.Host = config.BlobServer.Host
-		dst.Path = "/" + info.IDEImage
-
-		return &dst, nil
+func dynamicIDEResolver(config *Config, req *http.Request) (res *url.URL, err error) {
+	info := getWorkspaceInfoFromContext(req.Context())
+	if info == nil {
+		log.WithFields(log.OWI("", getWorkspaceCoords(req).ID, "")).Warn("no workspace info available - cannot resolve Theia route")
+		return nil, xerrors.Errorf("no workspace information available - cannot resolve Theia route")
 	}
+
+	var dst url.URL
+	dst.Scheme = config.BlobServer.Scheme
+	dst.Host = config.BlobServer.Host
+	dst.Path = "/" + info.IDEImage
+
+	return &dst, nil
 }
 
-// TODO This is currently executed per request: cache/use more performant solution?
+// TODO(gpl) This is currently executed per request: cache/use more performant solution?
 func buildWorkspacePodURL(tmpl string, workspaceID string, port string) (*url.URL, error) {
 	tpl, err := template.New("host").Parse(tmpl)
 	if err != nil {
@@ -446,7 +406,7 @@ func corsHandler(scheme, hostname string) (mux.MiddlewareFunc, error) {
 			matches := originRegex.Match([]byte(origin))
 			return matches
 		}),
-		// TODO For domain-based workspace access with authentication (for accessing Theia) we need to respond with the precise Origin header that was sent
+		// TODO(gpl) For domain-based workspace access with authentication (for accessing the IDE) we need to respond with the precise Origin header that was sent
 		handlers.AllowedOrigins([]string{origin}),
 		handlers.AllowedMethods([]string{
 			"GET",
@@ -474,7 +434,10 @@ func corsHandler(scheme, hostname string) (mux.MiddlewareFunc, error) {
 
 type wsproxyContextKey struct{}
 
-var logContextValueKey = wsproxyContextKey{}
+var (
+	logContextValueKey  = wsproxyContextKey{}
+	infoContextValueKey = wsproxyContextKey{}
+)
 
 func logHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
@@ -526,6 +489,34 @@ func sensitiveCookieHandler(domain string) func(h http.Handler) http.Handler {
 			h.ServeHTTP(resp, req)
 		})
 	}
+}
+
+// workspaceMustExistHandler redirects if we don't know about a workspace yet.
+func workspaceMustExistHandler(config *Config, infoProvider WorkspaceInfoProvider) mux.MiddlewareFunc {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+			coords := getWorkspaceCoords(req)
+			info := infoProvider.WorkspaceInfo(coords.ID)
+			if info == nil {
+				log.WithFields(log.OWI("", coords.ID, "")).Info("no workspace info found - redirecting to start")
+				redirectURL := fmt.Sprintf("%s://%s/start/#%s", config.GitpodInstallation.Scheme, config.GitpodInstallation.HostName, coords.ID)
+				http.Redirect(resp, req, redirectURL, 302)
+				return
+			}
+
+			h.ServeHTTP(resp, req.WithContext(context.WithValue(req.Context(), infoContextValueKey, info)))
+		})
+	}
+}
+
+// getWorkspaceInfoFromContext retrieves workspace information put there by the workspaceMustExistHandler
+func getWorkspaceInfoFromContext(ctx context.Context) *WorkspaceInfo {
+	r := ctx.Value(infoContextValueKey)
+	rl, ok := r.(*WorkspaceInfo)
+	if !ok {
+		return nil
+	}
+	return rl
 }
 
 // removeSensitiveCookies all sensitive cookies from the list.

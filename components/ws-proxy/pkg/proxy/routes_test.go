@@ -5,6 +5,7 @@
 package proxy
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -12,54 +13,47 @@ import (
 	"net/http/httptest"
 	"strconv"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
+	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/google/go-cmp/cmp"
-	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 )
 
-// TestRoutes tests the routing behavior - and thus the backend - of ws-proxy. The behavior of the host should be
-// completely host-agnostic, so the tests are carried out without any specfic host information
-func TestRoutes(t *testing.T) {
-	type routerFactory = func(*RouteHandlerConfig, WorkspaceInfoProvider) *mux.Router
-	type testRequest struct {
-		method  string
-		url     string
-		headers map[string]string
-	}
-	type targetResponse struct {
-		code    int
-		content string
-	}
-	type proxyTarget struct {
-		host     string
-		path     string
-		response *targetResponse
-		handler  http.HandlerFunc
-	}
-	type expectedResponse struct {
-		code    int
-		content string
-		headers map[string]string
-	}
-	type handlerTest struct {
-		description string
-		router      routerFactory
-		req         testRequest
-		targets     []proxyTarget
-		response    expectedResponse
+const (
+	hostBasedHeader = "x-host-header"
+	wsHostSuffix    = ".gitpod.io"
+)
+
+var (
+	workspaces = []WorkspaceInfo{
+		{
+			IDEImage: "gitpod-io/ide:latest",
+			Auth: &api.WorkspaceAuthentication{
+				Admission:  api.AdmissionLevel_ADMIT_OWNER_ONLY,
+				OwnerToken: "owner-token",
+			},
+			IDEPublicPort: "23000",
+			InstanceID:    "1943c611-a014-4f4d-bf5d-14ccf0123c60",
+			Ports: []PortInfo{
+				{PortSpec: api.PortSpec{Port: 8080, Target: 38080, Url: "https://8080-c95fd41c-13d9-4d51-b282-e2be09de207f.gitpod.io/", Visibility: api.PortVisibility_PORT_VISIBILITY_PUBLIC}},
+			},
+			URL:         "https://c95fd41c-13d9-4d51-b282-e2be09de207f.gitpod.io/",
+			WorkspaceID: "c95fd41c-13d9-4d51-b282-e2be09de207f",
+		},
 	}
 
-	// config which configures all possible proxy target to reside on "localhost"
-	theiaTestPort := uint16(1234)
-	theiaTestHost := fmt.Sprintf("localhost:%d", theiaTestPort)
-	theiaTestURL := "http://" + theiaTestHost
-	portTestHost := "localhost:1236"
-	portTestURL := "http://" + portTestHost
-	config := &Config{
+	ideServerHost  = "localhost:20000"
+	workspacePort  = uint16(20001)
+	supervisorPort = uint16(20002)
+	workspaceHost  = fmt.Sprintf("localhost:%d", workspacePort)
+	portServeHost  = fmt.Sprintf("localhost:%d", workspaces[0].Ports[0].Target)
+	blobServeHost  = "localhost:20003"
+
+	config = Config{
 		TransportConfig: &TransportConfig{
 			ConnectTimeout:           util.Duration(10 * time.Second),
 			IdleConnTimeout:          util.Duration(60 * time.Second),
@@ -67,7 +61,7 @@ func TestRoutes(t *testing.T) {
 			MaxIdleConns:             100,
 		},
 		TheiaServer: &TheiaServer{
-			Host:                    theiaTestHost,
+			Host:                    ideServerHost,
 			Scheme:                  "http",
 			StaticVersionPathPrefix: "/test-version.1234",
 		},
@@ -77,277 +71,413 @@ func TestRoutes(t *testing.T) {
 			WorkspaceHostSuffix: "",
 		},
 		WorkspacePodConfig: &WorkspacePodConfig{
-			ServiceTemplate:     theiaTestURL,
-			PortServiceTemplate: portTestURL,
-			TheiaPort:           theiaTestPort,
-			SupervisorPort:      1235,
+			ServiceTemplate:     "http://localhost:{{ .port }}",
+			PortServiceTemplate: "http://localhost:{{ .port }}",
+			TheiaPort:           workspacePort,
+			SupervisorPort:      supervisorPort,
+		},
+	}
+)
+
+func configWithBlobserve() *Config {
+	cfg := config
+	cfg.BlobServer = &BlobServerConfig{
+		Host:   blobServeHost,
+		Scheme: "http",
+	}
+	return &cfg
+}
+
+// startTestTarget starts a new HTTP server that serves as some test target during the unit tests
+func startTestTarget(t *testing.T, host, name string) func() {
+	l, err := net.Listen("tcp", host)
+	if err != nil {
+		t.Fatalf("cannot start fake IDE host: %q", err)
+		return nil
+	}
+
+	srv := &http.Server{Addr: host, Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		// for k, h := range r.Header {
+		// 	w.Header().Set("x-req-"+k, strings.Join(h, ","))
+		// }
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, "%s hit: %s\n", name, r.URL.String())
+	})}
+	go srv.Serve(l)
+
+	t.Logf("serving %s target on %s", name, host)
+	return func() {
+		t.Logf("shutting down %s target on %s", name, host)
+		l.Close()
+		srv.Shutdown(context.Background())
+	}
+}
+
+type requestModifier func(r *http.Request)
+
+func addHeader(name string, val string) requestModifier {
+	return func(r *http.Request) {
+		r.Header.Add(name, val)
+	}
+}
+
+func addHostHeader(r *http.Request) {
+	r.Header.Add(hostBasedHeader, r.Host)
+}
+
+func addOwnerToken(instanceID, token string) requestModifier {
+	return func(r *http.Request) {
+		setOwnerTokenCookie(r, instanceID, token)
+	}
+}
+
+func modifyRequest(r *http.Request, mod ...requestModifier) *http.Request {
+	for _, m := range mod {
+		m(r)
+	}
+	return r
+}
+
+func TestRoutes(t *testing.T) {
+	type RouterFactory func(cfg *Config) WorkspaceRouter
+	type Expectation struct {
+		Status int
+		Header http.Header
+		Body   string
+	}
+	type Targets struct {
+		IDE        bool
+		Blobserve  bool
+		Workspace  bool
+		Supervisor bool
+		Port       bool
+	}
+	tests := []struct {
+		Desc        string
+		Config      *Config
+		Request     *http.Request
+		Workspaces  []WorkspaceInfo
+		Router      RouterFactory
+		Targets     *Targets
+		Expectation Expectation
+	}{
+		{
+			Desc: "favicon",
+			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"favicon.ico", nil),
+				addHostHeader,
+			),
+			Expectation: Expectation{
+				Status: http.StatusOK,
+				Header: http.Header{"Content-Length": {"50"}, "Content-Type": {"text/plain; charset=utf-8"}},
+				Body:   "supervisor hit: /_supervisor/frontend/favicon.ico\n",
+			},
+		},
+		{
+			Desc: "IDE unauthorized GET /",
+			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL, nil),
+				addHostHeader,
+			),
+			Expectation: Expectation{
+				Status: http.StatusOK,
+				Header: http.Header{"Content-Length": {"29"}, "Content-Type": {"text/plain; charset=utf-8"}},
+				Body:   "IDE hit: /test-version.1234/\n",
+			},
+		},
+		{
+			Desc:   "blobserve IDE unauthorized GET /",
+			Config: configWithBlobserve(),
+			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL, nil),
+				addHostHeader,
+			),
+			Expectation: Expectation{
+				Status: http.StatusPermanentRedirect,
+				Header: http.Header{
+					"Content-Type": {"text/html; charset=utf-8"},
+					"Location":     {"https://gitpod.io/blobserve/gitpod-io/ide:latest/__files__/"},
+				},
+				Body: "<a href=\"https://gitpod.io/blobserve/gitpod-io/ide:latest/__files__/\">Permanent Redirect</a>.\n\n",
+			},
+		},
+		{
+			Desc:   "blobserve IDE unauthorized navigate /",
+			Config: configWithBlobserve(),
+			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL, nil),
+				addHostHeader,
+				addHeader("Sec-Fetch-Mode", "navigate"),
+			),
+			Expectation: Expectation{
+				Status: http.StatusOK,
+				Header: http.Header{
+					"Content-Length": {"38"},
+					"Content-Type":   {"text/plain; charset=utf-8"},
+				},
+				Body: "blobserve hit: /gitpod-io/ide:latest/\n",
+			},
+		},
+		{
+			Desc:   "blobserve IDE unauthorized same-origin /",
+			Config: configWithBlobserve(),
+			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL, nil),
+				addHostHeader,
+				addHeader("Sec-Fetch-Mode", "same-origin"),
+			),
+			Expectation: Expectation{
+				Status: http.StatusOK,
+				Header: http.Header{
+					"Content-Length": {"38"},
+					"Content-Type":   {"text/plain; charset=utf-8"},
+				},
+				Body: "blobserve hit: /gitpod-io/ide:latest/\n",
+			},
+		},
+		{
+			Desc:   "blobserve IDE authorized GET /?foobar",
+			Config: configWithBlobserve(),
+			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"?foobar", nil),
+				addHostHeader,
+				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+			),
+			Targets: &Targets{Workspace: true},
+			Expectation: Expectation{
+				Status: http.StatusOK,
+				Header: http.Header{
+					"Content-Length": {"24"},
+					"Content-Type":   {"text/plain; charset=utf-8"},
+				},
+				Body: "workspace hit: /?foobar\n",
+			},
+		},
+		{
+			Desc:   "blobserve IDE authorized GET /not-from-blobserve",
+			Config: configWithBlobserve(),
+			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"not-from-blobserve", nil),
+				addHostHeader,
+				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+			),
+			Targets: &Targets{Workspace: true, Blobserve: false},
+			Expectation: Expectation{
+				Status: http.StatusOK,
+				Header: http.Header{
+					"Content-Length": {"35"},
+					"Content-Type":   {"text/plain; charset=utf-8"},
+				},
+				Body: "workspace hit: /not-from-blobserve\n",
+			},
+		},
+		{
+			Desc: "IDE authorized GET /",
+			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL, nil),
+				addHostHeader,
+				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+			),
+			Expectation: Expectation{
+				Status: http.StatusOK,
+				Header: http.Header{
+					"Content-Length": {"29"},
+					"Content-Type":   {"text/plain; charset=utf-8"},
+				},
+				Body: "IDE hit: /test-version.1234/\n",
+			},
+		},
+		{
+			Desc: "CORS preflight",
+			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL, nil),
+				addHostHeader,
+				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+				addHeader("Origin", config.GitpodInstallation.HostName),
+				addHeader("Access-Control-Request-Method", "OPTIONS"),
+			),
+			Expectation: Expectation{
+				Status: http.StatusOK,
+				Header: http.Header{
+					"Access-Control-Allow-Credentials": {"true"},
+					"Access-Control-Allow-Origin":      {"gitpod.io"},
+					"Access-Control-Expose-Headers":    {"Authorization"},
+					"Content-Length":                   {"29"},
+					"Content-Type":                     {"text/plain; charset=utf-8"},
+				},
+				Body: "IDE hit: /test-version.1234/\n",
+			},
+		},
+		{
+			Desc: "unauthenticated supervisor API (supervisor status)",
+			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"_supervisor/v1/status/supervisor", nil),
+				addHostHeader,
+			),
+			Expectation: Expectation{
+				Status: http.StatusOK,
+				Header: http.Header{
+					"Content-Length": {"50"},
+					"Content-Type":   {"text/plain; charset=utf-8"},
+				},
+				Body: "supervisor hit: /_supervisor/v1/status/supervisor\n",
+			},
+		},
+		{
+			Desc: "unauthenticated supervisor API (IDE status)",
+			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"_supervisor/v1/status/ide", nil),
+				addHostHeader,
+			),
+			Expectation: Expectation{
+				Status: http.StatusOK,
+				Header: http.Header{
+					"Content-Length": {"43"},
+					"Content-Type":   {"text/plain; charset=utf-8"},
+				},
+				Body: "supervisor hit: /_supervisor/v1/status/ide\n",
+			},
+		},
+		{
+			Desc: "unauthenticated supervisor API (content status)",
+			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"_supervisor/v1/status/content", nil),
+				addHostHeader,
+			),
+			Expectation: Expectation{
+				Status: http.StatusUnauthorized,
+			},
+		},
+		{
+			Desc: "authenticated supervisor API (content status)",
+			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"_supervisor/v1/status/content", nil),
+				addHostHeader,
+				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+			),
+			Expectation: Expectation{
+				Status: http.StatusOK,
+				Header: http.Header{
+					"Content-Length": {"47"},
+					"Content-Type":   {"text/plain; charset=utf-8"},
+				},
+				Body: "supervisor hit: /_supervisor/v1/status/content\n",
+			},
+		},
+		{
+			Desc: "non-existent authorized GET /",
+			Request: modifyRequest(httptest.NewRequest("GET", strings.ReplaceAll(workspaces[0].URL, "c95fd41c", "00000000"), nil),
+				addHostHeader,
+				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+			),
+			Expectation: Expectation{
+				Status: http.StatusFound,
+				Header: http.Header{
+					"Content-Type": {"text/html; charset=utf-8"},
+					"Location":     {"https://gitpod.io/start/#00000000-13d9-4d51-b282-e2be09de207f"},
+				},
+				Body: ("<a href=\"https://gitpod.io/start/#00000000-13d9-4d51-b282-e2be09de207f\">Found</a>.\n\n"),
+			},
+		},
+		{
+			Desc: "non-existent unauthorized GET /",
+			Request: modifyRequest(httptest.NewRequest("GET", strings.ReplaceAll(workspaces[0].URL, "c95fd41c", "00000000"), nil),
+				addHostHeader,
+			),
+			Expectation: Expectation{
+				Status: http.StatusFound,
+				Header: http.Header{
+					"Content-Type": {"text/html; charset=utf-8"},
+					"Location":     {"https://gitpod.io/start/#00000000-13d9-4d51-b282-e2be09de207f"},
+				},
+				Body: ("<a href=\"https://gitpod.io/start/#00000000-13d9-4d51-b282-e2be09de207f\">Found</a>.\n\n"),
+			},
+		},
+		{
+			Desc:   "blobserve supervisor frontend /worker-proxy.js",
+			Config: configWithBlobserve(),
+			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"_supervisor/frontend/worker-proxy.js", nil),
+				addHostHeader,
+			),
+			Expectation: Expectation{
+				Status: http.StatusOK,
+				Header: http.Header{
+					"Cache-Control":  {"public, max-age=31536000"},
+					"Content-Length": {"32"},
+					"Content-Type":   {"text/plain; charset=utf-8"},
+				},
+				Body: "blobserve hit: /worker-proxy.js\n",
+			},
 		},
 	}
 
-	// some common proxy targets
-	content := "some content"
-	theiaOkResponse := proxyTarget{
-		host: theiaTestHost,
-		path: "/",
-		response: &targetResponse{
-			code:    200,
-			content: content,
-		},
+	log.Init("ws-proxy-test", "", false, true)
+	log.Log.Logger.SetLevel(logrus.ErrorLevel)
+
+	defaultTargets := &Targets{
+		IDE:        true,
+		Blobserve:  true,
+		Port:       true,
+		Supervisor: true,
+		Workspace:  true,
 	}
-	failOnRequest := func(t *testing.T, host string, path string) proxyTarget {
-		return proxyTarget{
-			host: host,
-			path: path,
-			handler: func(w http.ResponseWriter, req *http.Request) {
-				t.Error("this should not be called")
-			},
+	targets := make(map[string]func())
+	controlTarget := func(enable bool, name, host string) {
+		_, runs := targets[name]
+		if !runs && enable {
+			targets[name] = startTestTarget(t, host, name)
+			return
+		}
+		if runs && !enable {
+			targets[name]()
+			delete(targets, name)
+			return
 		}
 	}
+	defer func() {
+		for _, c := range targets {
+			c()
+		}
+	}()
 
-	// test table
-	tt := []handlerTest{
-		{
-			description: "Theia: basic GET /",
-			router:      theiaRouter,
-			req: testRequest{
-				method: "GET",
-				url:    "/",
-			},
-			targets: []proxyTarget{
-				theiaOkResponse,
-			},
-			response: expectedResponse{
-				code:    200,
-				content: content,
-			},
-		},
-		{
-			description: "Exposed port: Ensure sessions cookies are filtered",
-			router:      portRouter,
-			req: testRequest{
-				method: "GET",
-				url:    "/some/path/on/an/exposed/port",
-				headers: map[string]string{
-					"Cookie":        "_gitpod_io_=s%3Af2da2196-4afe-46e7-97b6-00eadfb4e373.KuHVEHhTuNln8RiegerwgSsAYF0LqwV5wI18tVeUNUw; ",
-					"Authenticated": "yes",
-				},
-			},
-			targets: []proxyTarget{
-				{
-					host: portTestHost,
-					path: "/",
-					handler: func(w http.ResponseWriter, req *http.Request) {
-						hostnameSuffix := config.GitpodInstallation.HostName
-						hostnameSuffix = strings.ReplaceAll(hostnameSuffix, " ", "_")
-						hostnameSuffix = strings.ReplaceAll(hostnameSuffix, "-", "_")
-						hostnameSuffix = strings.ReplaceAll(hostnameSuffix, ".", "_")
-						hostnameSuffix = strings.ToLower(hostnameSuffix)
-						hostnameSuffix = fmt.Sprintf("_%s_", hostnameSuffix)
-						for _, cookie := range req.Cookies() {
-							if strings.HasSuffix(cookie.Name, "_port_auth_") || strings.HasSuffix(cookie.Name, hostnameSuffix) {
-								t.Errorf("requests contained cookie which should have been filtered by name: %s", cookie.Name)
-								w.WriteHeader(404)
-								return
-							}
-						}
-						w.WriteHeader(200)
-					},
-				},
-			},
-			response: expectedResponse{
-				code: 200,
-			},
-		},
-		{
-			description: "Theia: cors preflight GET /",
-			router:      theiaRouter,
-			req: testRequest{
-				method: "OPTIONS",
-				url:    "/",
-				headers: map[string]string{
-					"Origin":                        config.GitpodInstallation.HostName,
-					"Access-Control-Request-Method": "OPTIONS",
-				},
-			},
-			targets: []proxyTarget{
-				failOnRequest(t, theiaTestHost, "/"),
-			},
-			response: expectedResponse{
-				code: 200,
-				headers: map[string]string{
-					"Origin":                       config.GitpodInstallation.HostName,
-					"Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-				},
-			},
-		},
-		{
-			description: "Exposed port: Websocket support does not hinder regular requests",
-			router:      portRouter,
-			req: testRequest{
-				method:  "GET",
-				url:     "/some/path",
-				headers: map[string]string{"Authenticated": "yes"},
-			},
-			targets: []proxyTarget{
-				{
-					host: portTestHost,
-					path: "/some/path",
-					response: &targetResponse{
-						code:    200,
-						content: content,
-					},
-				},
-			},
-			response: expectedResponse{
-				code:    200,
-				content: content,
-			},
-		},
-		{
-			description: "Unauthenticated supervisor API (supervisor status)",
-			router:      theiaRouter,
-			req:         testRequest{method: "GET", url: "/_supervisor/v1/status/supervisor"},
-			targets:     []proxyTarget{theiaOkResponse},
-			response: expectedResponse{
-				code: 200,
-			},
-		},
-		{
-			description: "Unauthenticated supervisor API (IDE status)",
-			router:      theiaRouter,
-			req:         testRequest{method: "GET", url: "/_supervisor/v1/status/ide"},
-			targets:     []proxyTarget{theiaOkResponse},
-			response: expectedResponse{
-				code: 200,
-			},
-		},
-		{
-			description: "Unauthenticated req against authenticated supervisor API",
-			router:      theiaRouter,
-			req:         testRequest{method: "GET", url: "/_supervisor/v1/status/backup"},
-			targets:     []proxyTarget{theiaOkResponse},
-			response: expectedResponse{
-				code: 401,
-			},
-		},
-		{
-			description: "Authenticated req against authenticated supervisor API",
-			router:      theiaRouter,
-			req:         testRequest{method: "GET", url: "/_supervisor/v1/status/backup", headers: map[string]string{"Authenticated": "yes"}},
-			targets:     []proxyTarget{theiaOkResponse},
-			response: expectedResponse{
-				code: 200,
-			},
-		},
-	}
+	for _, test := range tests {
+		if test.Targets == nil {
+			test.Targets = defaultTargets
+		}
 
-	// execute each proxy test
-	for _, tc := range tt {
-		t.Run(tc.description, func(t *testing.T) {
-			// setup fake proxy target(s)
-			var wg sync.WaitGroup
-			proxyTargetHandler := http.NewServeMux()
-			var netListeners []net.Listener
-			for _, target := range tc.targets {
-				wg.Add(1)
+		t.Run(test.Desc, func(t *testing.T) {
+			controlTarget(test.Targets.IDE, "IDE", ideServerHost)
+			controlTarget(test.Targets.Blobserve, "blobserve", blobServeHost)
+			controlTarget(test.Targets.Port, "port", portServeHost)
+			controlTarget(test.Targets.Workspace, "workspace", workspaceHost)
+			controlTarget(test.Targets.Supervisor, "supervisor", fmt.Sprintf("localhost:%d", supervisorPort))
 
-				tResponse := target.response
-				if tResponse != nil {
-					proxyTargetHandler.HandleFunc(target.path, func(w http.ResponseWriter, req *http.Request) {
-						w.WriteHeader(tResponse.code)
-						if tResponse.content != "" {
-							_, err := w.Write([]byte(tResponse.content))
-							if err != nil {
-								t.Fatal("error writing result to response")
-							}
-						}
-					})
-				} else if target.handler != nil {
-					proxyTargetHandler.HandleFunc(target.path, target.handler)
-				}
-
-				srv := &http.Server{Addr: target.host, Handler: proxyTargetHandler}
-				// TODO ignore err until we can reliably filter out Accept errors provoked by l.Close below
-				//nolint:errcheck
-				l, _ := net.Listen("tcp", target.host)
-				// if err != nil {
-				// 	t.Fatalf("error setting up fake proxy target: %w", err)
-				// }
-				netListeners = append(netListeners, l)
-
-				go func(t *testing.T, host string) {
-					wg.Done()
-					//nolint:errcheck
-					srv.Serve(l)
-				}(t, target.host)
+			cfg := config
+			if test.Config != nil {
+				cfg = *test.Config
 			}
-			wg.Wait()
-
-			// setup test handler
-			handlerConfig, err := NewRouteHandlerConfig(config)
-			handlerConfig.WorkspaceAuthHandler = func(h http.Handler) http.Handler {
-				return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-					header, ok := req.Header["Authenticated"]
-					if !ok || len(header) == 0 || header[0] != "yes" {
-						http.Error(resp, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-					}
-
-					h.ServeHTTP(resp, req)
-				})
+			router := HostBasedRouter(hostBasedHeader, wsHostSuffix)
+			if test.Router != nil {
+				router = test.Router(&cfg)
 			}
+
+			proxy := NewWorkspaceProxy(":8080", cfg, router, &fakeWsInfoProvider{infos: workspaces})
+			handler, err := proxy.Handler()
 			if err != nil {
-				t.Fatalf("error while creating RouteHandlerConfig: %s", err.Error())
-			}
-			r := tc.router(handlerConfig, nil)
-
-			// create artificial request
-			req, err := http.NewRequest(tc.req.method, tc.req.url, nil)
-			if err != nil {
-				t.Fatal("error sending test request: %s" + err.Error())
-			}
-			for k, v := range tc.req.headers {
-				req.Header.Add(k, v)
+				t.Fatalf("cannot create proxy handler: %q", err)
 			}
 
-			// "send" artificial request
-			rr := httptest.NewRecorder()
-			r.ServeHTTP(rr, req)
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, test.Request)
+			resp := rec.Result()
 
-			// check result
-			if rr.Code != tc.response.code {
-				t.Errorf("expected code %d, got %d!", tc.response.code, rr.Code)
+			body, _ := ioutil.ReadAll(resp.Body)
+			resp.Body.Close()
+			act := Expectation{
+				Status: resp.StatusCode,
+				Body:   string(body),
+				Header: resp.Header,
 			}
-			if tc.response.content != "" {
-				body, err := ioutil.ReadAll(rr.Body)
-				if err != nil {
-					t.Fatalf("error reading body from fake response: %s", err.Error())
-				}
-
-				actualContent := string(body)
-				if actualContent != tc.response.content {
-					t.Errorf("expected content '%s', got '%s'!", tc.response.content, actualContent)
-				}
+			if _, ok := act.Header["Date"]; ok {
+				delete(act.Header, "Date")
+			}
+			if len(act.Header) == 0 {
+				act.Header = nil
 			}
 
-			for _, l := range netListeners {
-				if err := l.Close(); err != nil {
-					t.Fatalf("error shutting down fake proxy target: %s", err.Error())
-				}
+			if diff := cmp.Diff(test.Expectation, act); diff != "" {
+				t.Errorf("Expectation mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
-}
-
-func theiaRouter(handlerConfig *RouteHandlerConfig, infoProvider WorkspaceInfoProvider) *mux.Router {
-	r := mux.NewRouter()
-
-	installTheiaRoutes(r, handlerConfig, infoProvider)
-	return r
-}
-func portRouter(handlerConfig *RouteHandlerConfig, infoProvider WorkspaceInfoProvider) *mux.Router {
-	r := mux.NewRouter()
-	installWorkspacePortRoutes(r, handlerConfig)
-	return r
 }
 
 type fakeWsInfoProvider struct {
