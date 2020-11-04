@@ -230,7 +230,7 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/", domain), nil)
 			if test.OwnerCookie != "" {
-				req.AddCookie(&http.Cookie{Name: "_gitpod_io_ws_" + instanceID + "_owner_", Value: test.OwnerCookie})
+				setOwnerTokenCookie(req, instanceID, test.OwnerCookie)
 			}
 			vars := map[string]string{
 				workspaceIDIdentifier: test.WorkspaceID,
@@ -248,4 +248,9 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 			}
 		})
 	}
+}
+
+func setOwnerTokenCookie(r *http.Request, instanceID, token string) *http.Request {
+	r.AddCookie(&http.Cookie{Name: "_gitpod_io_ws_" + instanceID + "_owner_", Value: token})
+	return r
 }
