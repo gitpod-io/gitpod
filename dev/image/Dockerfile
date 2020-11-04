@@ -168,7 +168,8 @@ RUN pip install awscli
 RUN sudo curl -o aws-iam-authenticator "https://amazon-eks.s3-us-west-2.amazonaws.com/1.13.7/2019-06-11/bin/linux/amd64/aws-iam-authenticator" \
     && sudo chmod +x ./aws-iam-authenticator \
     && sudo mkdir -p $HOME/.aws-iam \
-    && sudo cp ./aws-iam-authenticator $HOME/.aws-iam/aws-iam-authenticator
+    && sudo mv ./aws-iam-authenticator $HOME/.aws-iam/aws-iam-authenticator \
+    && sudo chown -R gitpod:gitpod $HOME/.aws-iam
 
 # Install Terraform
 ARG RELEASE_URL="https://releases.hashicorp.com/terraform/0.13.5/terraform_0.13.5_linux_amd64.zip"
