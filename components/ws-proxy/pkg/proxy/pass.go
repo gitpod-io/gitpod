@@ -17,17 +17,14 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
-
-	"github.com/koding/websocketproxy"
 )
 
 // ProxyPassConfig is used as intermediate struct to assemble a configurable proxy
 type proxyPassConfig struct {
-	TargetResolver   targetResolver
-	ResponseHandler  responseHandler
-	ErrorHandler     errorHandler
-	Transport        http.RoundTripper
-	WebsocketSupport bool
+	TargetResolver  targetResolver
+	ResponseHandler responseHandler
+	ErrorHandler    errorHandler
+	Transport       http.RoundTripper
 }
 
 // proxyPassOpt allows to compose ProxyHandler options
@@ -51,25 +48,31 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 	}
 	h.TargetResolver = resolver
 
-	var eh errorHandler
+	var errorHandler errorHandler
 	if h.ErrorHandler != nil {
-		eh = func(w http.ResponseWriter, req *http.Request, connectErr error) {
+		errorHandler = func(w http.ResponseWriter, req *http.Request, connectErr error) {
 			log.Debugf("could not connect to backend %s: %s", req.URL.String(), connectErrorToCause(connectErr))
 
 			h.ErrorHandler(w, req, connectErr)
 		}
 	}
 
-	// proxy constructors
-	createWebsocketProxy := func(h *proxyPassConfig, targetURL *url.URL) http.Handler {
-		// TODO configure custom IdleConnTimeout for websockets
-		proxy := websocketproxy.NewProxy(targetURL)
-		return proxy
-	}
-	createRegularProxy := func(h *proxyPassConfig, targetURL *url.URL) http.Handler {
+	return func(w http.ResponseWriter, req *http.Request) {
+		targetURL, err := h.TargetResolver(config.Config, req)
+		if err != nil {
+			if errorHandler != nil {
+				errorHandler(w, req, err)
+			} else {
+				log.WithError(err).Errorf("Unable to resolve targetURL: %s", req.URL.String())
+			}
+			return
+		}
+
+		var originalURL = *req.URL
+
+		// TODO(cw): we should cache the proxy for some time for each target URL
 		proxy := httputil.NewSingleHostReverseProxy(targetURL)
 		proxy.Transport = h.Transport
-		proxy.ErrorHandler = eh
 		proxy.ModifyResponse = func(resp *http.Response) error {
 			url := resp.Request.URL
 			if url == nil {
@@ -85,60 +88,25 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 			}
 			return nil
 		}
-		return proxy
-	}
 
-	return func(w http.ResponseWriter, req *http.Request) {
-		targetURL, err := h.TargetResolver(config.Config, req)
-		if err != nil {
-			if eh != nil {
-				eh(w, req, err)
-			} else {
-				log.WithError(err).Errorf("Unable to resolve targetURL: %s", req.URL.String())
+		if errorHandler != nil {
+			proxy.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
+				req.URL = &originalURL
+				errorHandler(w, req, err)
 			}
-			return
 		}
-
-		// TODO Would it make sense to cache these constructs per target URL?
-		var (
-			proxy       http.Handler
-			proxyType   string
-			originalURL = *req.URL
-		)
-		if h.WebsocketSupport && isWebsocketRequest(req) {
-			if targetURL.Scheme == "https" {
-				targetURL.Scheme = "wss"
-			} else if targetURL.Scheme == "http" {
-				targetURL.Scheme = "ws"
-			}
-			proxy = createWebsocketProxy(&h, targetURL)
-			proxyType = "websocket"
-		} else {
-			proxy = createRegularProxy(&h, targetURL)
-			proxyType = "regular"
-		}
-
-		if proxy, ok := proxy.(*httputil.ReverseProxy); ok {
-			if proxy.ErrorHandler != nil {
-				orgErrHndlr := proxy.ErrorHandler
-				proxy.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
-					req.URL = &originalURL
-					orgErrHndlr(w, req, err)
+		if h.ResponseHandler != nil {
+			originalModifyResponse := proxy.ModifyResponse
+			proxy.ModifyResponse = func(resp *http.Response) error {
+				err := originalModifyResponse(resp)
+				if err != nil {
+					return err
 				}
-			}
-			if h.ResponseHandler != nil {
-				originalModifyResponse := proxy.ModifyResponse
-				proxy.ModifyResponse = func(resp *http.Response) error {
-					err := originalModifyResponse(resp)
-					if err != nil {
-						return err
-					}
-					return h.ResponseHandler(resp, req)
-				}
+				return h.ResponseHandler(resp, req)
 			}
 		}
 
-		getLog(req.Context()).WithField("targetURL", targetURL.String()).WithField("proxyType", proxyType).Debug("proxy-passing request")
+		getLog(req.Context()).WithField("targetURL", targetURL.String()).Debug("proxy-passing request")
 		proxy.ServeHTTP(w, req)
 	}
 }
@@ -196,20 +164,6 @@ func withHTTPErrorHandler(h http.Handler) proxyPassOpt {
 func withErrorHandler(h errorHandler) proxyPassOpt {
 	return func(cfg *proxyPassConfig) {
 		cfg.ErrorHandler = h
-	}
-}
-
-// // withTransport allows to configure a http.RoundTripper that handles the actual sending and receiving of the HTTP request to the proxy target
-// func withTransport(transport http.RoundTripper) proxyPassOpt {
-// 	return func(h *proxyPassConfig) {
-// 		h.Transport = transport
-// 	}
-// }
-
-// withWebsocketSupport treats this route as websocket route
-func withWebsocketSupport() proxyPassOpt {
-	return func(h *proxyPassConfig) {
-		h.WebsocketSupport = true
 	}
 }
 
