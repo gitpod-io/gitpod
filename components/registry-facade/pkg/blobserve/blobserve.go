@@ -185,14 +185,18 @@ func (reg *Server) blobFor(ctx context.Context, ref string, readOnly bool) (fs h
 	dgst := reg.refcache[ref]
 	reg.mu.RUnlock()
 
-	if dgst == "" {
+	state := blobUnknown
+	if dgst != "" {
+		fs, state = reg.blobspace.Get(dgst)
+	}
+
+	if state == blobUnknown {
 		if readOnly {
 			return nil, errdefs.ErrNotFound
 		}
 		return reg.downloadBlobFor(ctx, ref)
 	}
 
-	fs, state := reg.blobspace.Get(dgst)
 	if state != blobReady {
 		return nil, xerrors.Errorf("unready blob for %s", dgst)
 	}
