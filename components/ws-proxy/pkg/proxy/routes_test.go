@@ -39,7 +39,7 @@ var (
 			IDEPublicPort: "23000",
 			InstanceID:    "1943c611-a014-4f4d-bf5d-14ccf0123c60",
 			Ports: []PortInfo{
-				{PortSpec: api.PortSpec{Port: 8080, Target: 38080, Url: "https://8080-c95fd41c-13d9-4d51-b282-e2be09de207f.gitpod.io/", Visibility: api.PortVisibility_PORT_VISIBILITY_PUBLIC}},
+				{PortSpec: api.PortSpec{Port: 28080, Target: 38080, Url: "https://28080-c95fd41c-13d9-4d51-b282-e2be09de207f.gitpod.io/", Visibility: api.PortVisibility_PORT_VISIBILITY_PUBLIC}},
 			},
 			URL:         "https://c95fd41c-13d9-4d51-b282-e2be09de207f.gitpod.io/",
 			WorkspaceID: "c95fd41c-13d9-4d51-b282-e2be09de207f",
@@ -50,7 +50,7 @@ var (
 	workspacePort  = uint16(20001)
 	supervisorPort = uint16(20002)
 	workspaceHost  = fmt.Sprintf("localhost:%d", workspacePort)
-	portServeHost  = fmt.Sprintf("localhost:%d", workspaces[0].Ports[0].Target)
+	portServeHost  = fmt.Sprintf("localhost:%d", workspaces[0].Ports[0].Port)
 	blobServeHost  = "localhost:20003"
 
 	config = Config{
@@ -88,30 +88,43 @@ func configWithBlobserve() *Config {
 	return &cfg
 }
 
+type testTarget struct {
+	Status   int
+	listener net.Listener
+	server   *http.Server
+}
+
+func (tt *testTarget) Close() {
+	tt.listener.Close()
+	tt.server.Shutdown(context.Background())
+}
+
 // startTestTarget starts a new HTTP server that serves as some test target during the unit tests
-func startTestTarget(t *testing.T, host, name string) func() {
+func startTestTarget(t *testing.T, host, name string) *testTarget {
 	l, err := net.Listen("tcp", host)
 	if err != nil {
 		t.Fatalf("cannot start fake IDE host: %q", err)
 		return nil
 	}
 
+	tt := &testTarget{
+		Status:   http.StatusOK,
+		listener: l,
+	}
 	srv := &http.Server{Addr: host, Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		// for k, h := range r.Header {
-		// 	w.Header().Set("x-req-"+k, strings.Join(h, ","))
-		// }
-		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "%s hit: %s\n", name, r.URL.String())
+		if tt.Status == http.StatusOK {
+			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+			w.WriteHeader(http.StatusOK)
+			fmt.Fprintf(w, "%s hit: %s\n", name, r.URL.String())
+			return
+		}
+
+		w.WriteHeader(tt.Status)
 	})}
 	go srv.Serve(l)
+	tt.server = srv
 
-	t.Logf("serving %s target on %s", name, host)
-	return func() {
-		t.Logf("shutting down %s target on %s", name, host)
-		l.Close()
-		srv.Shutdown(context.Background())
-	}
+	return tt
 }
 
 type requestModifier func(r *http.Request)
@@ -147,11 +160,11 @@ func TestRoutes(t *testing.T) {
 		Body   string
 	}
 	type Targets struct {
-		IDE        bool
-		Blobserve  bool
-		Workspace  bool
-		Supervisor bool
-		Port       bool
+		IDE        int
+		Blobserve  int
+		Workspace  int
+		Supervisor int
+		Port       int
 	}
 	tests := []struct {
 		Desc        string
@@ -238,7 +251,7 @@ func TestRoutes(t *testing.T) {
 				addHostHeader,
 				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
 			),
-			Targets: &Targets{Workspace: true},
+			Targets: &Targets{Workspace: http.StatusOK},
 			Expectation: Expectation{
 				Status: http.StatusOK,
 				Header: http.Header{
@@ -255,7 +268,7 @@ func TestRoutes(t *testing.T) {
 				addHostHeader,
 				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
 			),
-			Targets: &Targets{Workspace: true, Blobserve: false},
+			Targets: &Targets{Workspace: http.StatusOK, Blobserve: http.StatusNotFound},
 			Expectation: Expectation{
 				Status: http.StatusOK,
 				Header: http.Header{
@@ -397,34 +410,51 @@ func TestRoutes(t *testing.T) {
 				Body: "blobserve hit: /worker-proxy.js\n",
 			},
 		},
+		{
+			Desc: "port GET 404",
+			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].Ports[0].Url+"this-does-not-exist", nil),
+				addHostHeader,
+				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+			),
+			Targets: &Targets{Port: http.StatusNotFound},
+			Expectation: Expectation{
+				Header: http.Header{"Content-Length": {"0"}},
+				Status: http.StatusNotFound,
+			},
+		},
 	}
 
 	log.Init("ws-proxy-test", "", false, true)
 	log.Log.Logger.SetLevel(logrus.ErrorLevel)
 
 	defaultTargets := &Targets{
-		IDE:        true,
-		Blobserve:  true,
-		Port:       true,
-		Supervisor: true,
-		Workspace:  true,
+		IDE:        http.StatusOK,
+		Blobserve:  http.StatusOK,
+		Port:       http.StatusOK,
+		Supervisor: http.StatusOK,
+		Workspace:  http.StatusOK,
 	}
-	targets := make(map[string]func())
-	controlTarget := func(enable bool, name, host string) {
+	targets := make(map[string]*testTarget)
+	controlTarget := func(status int, name, host string) {
 		_, runs := targets[name]
-		if !runs && enable {
-			targets[name] = startTestTarget(t, host, name)
-			return
-		}
-		if runs && !enable {
-			targets[name]()
+		if runs && status == 0 {
+			targets[name].Close()
 			delete(targets, name)
 			return
+		}
+
+		if !runs && status != 0 {
+			targets[name] = startTestTarget(t, host, name)
+			runs = true
+		}
+
+		if runs {
+			targets[name].Status = status
 		}
 	}
 	defer func() {
 		for _, c := range targets {
-			c()
+			c.Close()
 		}
 	}()
 
