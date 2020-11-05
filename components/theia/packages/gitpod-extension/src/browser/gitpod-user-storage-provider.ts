@@ -10,13 +10,18 @@ import { GitpodServiceProvider } from "./gitpod-service-provider";
 import { GitpodService } from "@gitpod/gitpod-protocol";
 import URI from "@theia/core/lib/common/uri";
 import { Emitter, Event, Disposable } from "@theia/core";
-import { FileWriteOptions, FileSystemProviderCapabilities, FileChange, WatchOptions, Stat, FileType, FileDeleteOptions, FileOverwriteOptions, FileSystemProviderWithFileReadWriteCapability, FileChangeType, FileSystemProviderErrorCode, createFileSystemProviderError } from "@theia/filesystem/lib/common/files";
+import { FileWriteOptions, FileSystemProviderCapabilities, FileChange, WatchOptions, Stat, FileType, FileDeleteOptions, FileOverwriteOptions, FileSystemProviderWithFileReadWriteCapability, FileChangeType, FileSystemProviderErrorCode, createFileSystemProviderError, FileSystemProvider } from "@theia/filesystem/lib/common/files";
 import { EncodingService } from "@theia/core/lib/common/encoding-service";
 import { BinaryBuffer } from "@theia/core/lib/common/buffer";
 import { UserStorageUri } from "@theia/userstorage/lib/browser/user-storage-uri";
 
 @injectable()
 export class GitpodUserStorageProvider implements FileSystemProviderWithFileReadWriteCapability {
+
+    /**
+     * Threshold for content length, when reached it should be written to disk instead to DB.
+     */
+    static readonly MAX_NUM_BYTES = 1024 * 1024;
 
     @inject(GitpodInfoService) protected infoProvider: GitpodInfoService;
     @inject(GitpodServiceProvider) protected serviceProvider: GitpodServiceProvider;
@@ -68,6 +73,16 @@ export class GitpodUserStorageProvider implements FileSystemProviderWithFileRead
     }
 
     async readFile(resource: URI): Promise<Uint8Array> {
+        if (this.delegate && this.delegate.readFile) {
+            try {
+                const content = await this.delegate.readFile(resource);
+                this.updateStat(resource, content);
+                return content;
+            } catch (error) {
+                // ignore
+            }
+        }
+
         const service = this.getService();
         const server = service.server;
         // TODO server could resolve binary instead
@@ -79,6 +94,12 @@ export class GitpodUserStorageProvider implements FileSystemProviderWithFileRead
     }
 
     async writeFile(resource: URI, value: Uint8Array, opts: FileWriteOptions): Promise<void> {
+        if (value.length > GitpodUserStorageProvider.MAX_NUM_BYTES) {
+            if (this.delegate && this.delegate.writeFile) {
+                return this.delegate.writeFile(resource, value, opts);
+            }
+        }
+
         const service = this.getService();
         const server = service.server;
         const content = this.encodingService.decode(BinaryBuffer.wrap(value));
@@ -111,6 +132,11 @@ export class GitpodUserStorageProvider implements FileSystemProviderWithFileRead
 
     rename(from: URI, to: URI, opts: FileOverwriteOptions): Promise<void> {
         return Promise.resolve();
+    }
+
+    protected delegate: FileSystemProvider | undefined;
+    setDelegate(delegate: FileSystemProvider) {
+        this.delegate = delegate;
     }
 
 }

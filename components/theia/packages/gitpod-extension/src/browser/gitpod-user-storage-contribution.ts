@@ -17,6 +17,8 @@ export class GitpodUserStorageContribution extends UserStorageContribution {
     protected readonly provider: GitpodUserStorageProvider;
 
     protected async createProvider(service: FileService): Promise<FileSystemProvider> {
+        const delegate = await super.createProvider(service);
+        this.provider.setDelegate(delegate);
         return this.provider;
     }
 
