@@ -122,7 +122,7 @@ func (ir *ideRoutes) HandleDirectIDERoute(route *mux.Route) {
 	r.Use(ir.Config.WorkspaceAuthHandler)
 	r.Use(ir.workspaceMustExistHandler)
 
-	r.NewRoute().HandlerFunc(proxyPass(ir.Config, workspacePodResolver, withWebsocketSupport()))
+	r.NewRoute().HandlerFunc(proxyPass(ir.Config, workspacePodResolver))
 }
 
 func (ir *ideRoutes) HandleDirectSupervisorRoute(route *mux.Route, authenticated bool) {
@@ -186,7 +186,7 @@ func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 		client           = http.Client{Timeout: 30 * time.Second}
 		blobserver       = ir.Config.Config.BlobServer
 		workspaceIDEPass = ir.Config.WorkspaceAuthHandler(
-			proxyPass(ir.Config, workspacePodResolver, withWebsocketSupport()),
+			proxyPass(ir.Config, workspacePodResolver),
 		)
 		ideProxyPass = proxyPass(ir.Config, dynamicIDEResolver, withHTTPErrorHandler(workspaceIDEPass))
 	)
@@ -245,7 +245,7 @@ func (ir *ideRoutes) handleRootWithoutBlobserve(route *mux.Route) {
 	// We first try and service the request using the static IDE server or blobserve.
 	// If that fails, we proxy-pass to the workspace.
 	workspaceIDEPass := ir.Config.WorkspaceAuthHandler(
-		proxyPass(ir.Config, workspacePodResolver, withWebsocketSupport()),
+		proxyPass(ir.Config, workspacePodResolver),
 	)
 	ideAssetPass := proxyPass(ir.Config, staticIDEResolver, withHTTPErrorHandler(workspaceIDEPass))
 	r.NewRoute().HandlerFunc(ideAssetPass)
@@ -325,8 +325,7 @@ func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig) {
 	// forward request to workspace port
 	r.NewRoute().
 		HandlerFunc(proxyPass(config,
-			workspacePodPortResolver,
-			withWebsocketSupport()))
+			workspacePodPortResolver))
 }
 
 // workspacePodResolver resolves to the workspace pod's url from the given request
