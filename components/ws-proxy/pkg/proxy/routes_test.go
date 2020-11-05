@@ -75,6 +75,7 @@ var (
 			PortServiceTemplate: "http://localhost:{{ .port }}",
 			TheiaPort:           workspacePort,
 			SupervisorPort:      supervisorPort,
+			SupervisorImage:     "gitpod-io/supervisor:latest",
 		},
 	}
 )
@@ -206,8 +207,9 @@ func TestRoutes(t *testing.T) {
 			Expectation: Expectation{
 				Status: http.StatusPermanentRedirect,
 				Header: http.Header{
-					"Content-Type": {"text/html; charset=utf-8"},
-					"Location":     {"https://gitpod.io/blobserve/gitpod-io/ide:latest/__files__/"},
+					"Cache-Control": {"public, max-age=31536000"},
+					"Content-Type":  {"text/html; charset=utf-8"},
+					"Location":      {"https://gitpod.io/blobserve/gitpod-io/ide:latest/__files__/"},
 				},
 				Body: "<a href=\"https://gitpod.io/blobserve/gitpod-io/ide:latest/__files__/\">Permanent Redirect</a>.\n\n",
 			},
@@ -222,6 +224,7 @@ func TestRoutes(t *testing.T) {
 			Expectation: Expectation{
 				Status: http.StatusOK,
 				Header: http.Header{
+					"Cache-Control":  {"public, max-age=31536000"},
 					"Content-Length": {"38"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
 				},
@@ -238,6 +241,7 @@ func TestRoutes(t *testing.T) {
 			Expectation: Expectation{
 				Status: http.StatusOK,
 				Header: http.Header{
+					"Cache-Control":  {"public, max-age=31536000"},
 					"Content-Length": {"38"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
 				},
@@ -403,11 +407,25 @@ func TestRoutes(t *testing.T) {
 			Expectation: Expectation{
 				Status: http.StatusOK,
 				Header: http.Header{
-					"Cache-Control":  {"public, max-age=31536000"},
-					"Content-Length": {"32"},
+					"Content-Length": {"60"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
 				},
-				Body: "blobserve hit: /worker-proxy.js\n",
+				Body: "blobserve hit: /gitpod-io/supervisor:latest/worker-proxy.js\n",
+			},
+		},
+		{
+			Desc:   "blobserve supervisor frontend /main.js",
+			Config: configWithBlobserve(),
+			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"_supervisor/frontend/main.js", nil),
+				addHostHeader,
+			),
+			Expectation: Expectation{
+				Status: http.StatusSeeOther,
+				Header: http.Header{
+					"Content-Type": {"text/html; charset=utf-8"},
+					"Location":     {"https://gitpod.io/blobserve/gitpod-io/supervisor:latest/__files__/main.js"},
+				},
+				Body: "<a href=\"https://gitpod.io/blobserve/gitpod-io/supervisor:latest/__files__/main.js\">See Other</a>.\n\n",
 			},
 		},
 		{

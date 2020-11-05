@@ -198,3 +198,13 @@ func createDefaultTransport(config *TransportConfig) *http.Transport {
 		ExpectContinueTimeout: 1 * time.Second,
 	}
 }
+
+// tell the browser to cache for 1 year and don't ask the server during this period
+func withLongTermCaching() proxyPassOpt {
+	return func(cfg *proxyPassConfig) {
+		cfg.ResponseHandler = func(resp *http.Response, req *http.Request) error {
+			resp.Header.Set("Cache-Control", "public, max-age=31536000")
+			return nil
+		}
+	}
+}
