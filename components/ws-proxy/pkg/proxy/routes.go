@@ -188,7 +188,7 @@ func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 		workspaceIDEPass = ir.Config.WorkspaceAuthHandler(
 			proxyPass(ir.Config, workspacePodResolver),
 		)
-		ideProxyPass = proxyPass(ir.Config, dynamicIDEResolver, withHTTPErrorHandler(workspaceIDEPass))
+		ideProxyPass = proxyPass(ir.Config, dynamicIDEResolver, withHTTPErrorHandler(workspaceIDEPass), withNotFoundHandler(workspaceIDEPass))
 	)
 	r.NewRoute().HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		// use fetch metadata to avoid redirections https://developer.mozilla.org/en-US/docs/Glossary/Fetch_metadata_request_header
@@ -224,6 +224,12 @@ func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 			ideProxyPass.ServeHTTP(w, req)
 			return
 		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode == http.StatusNotFound {
+			ideProxyPass.ServeHTTP(w, req)
+			return
+		}
 
 		if mode == "" && strings.Contains(strings.ToLower(resp.Header.Get("Content-Type")), "text/html") {
 			// fallback for user agents not supporting fetch metadata to avoid redirecting on user navigation
@@ -231,7 +237,6 @@ func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 			return
 		}
 
-		defer resp.Body.Close()
 		redirectToBlobserve(w, req, ir.Config, info.IDEImage)
 	})
 }
@@ -323,9 +328,16 @@ func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig) {
 	r.Use(sensitiveCookieHandler(config.Config.GitpodInstallation.HostName))
 
 	// forward request to workspace port
-	r.NewRoute().
-		HandlerFunc(proxyPass(config,
-			workspacePodPortResolver))
+	r.NewRoute().HandlerFunc(
+		proxyPass(
+			config,
+			workspacePodPortResolver,
+			withErrorHandler(func(w http.ResponseWriter, req *http.Request, e error) {
+				w.WriteHeader(http.StatusInternalServerError)
+				fmt.Fprintf(w, e.Error())
+			}),
+		),
+	)
 }
 
 // workspacePodResolver resolves to the workspace pod's url from the given request
