@@ -35,5 +35,5 @@ scripts:
       PID=$!
       sleep 2
 
-      echo "update d_b_user set rolesOrPermissions='[\"privileged-ws\"]', featureFlags='{\"permanentWSFeatureFlags\":[\"user_namespace\"]}';" | mysql -u root -ptest -h 127.0.0.1 gitpod
+      echo "update d_b_user set featureFlags='{\"permanentWSFeatureFlags\":[\"user_namespace\"]}';" | mysql -u root -ptest -h 127.0.0.1 gitpod
       kill $PID
