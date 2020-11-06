@@ -219,11 +219,12 @@ func (reg *Server) downloadBlobFor(ctx context.Context, ref string) (fs http.Fil
 		return nil, err
 	}
 
-	if len(manifest.Layers) == 0 {
+	layerCount := len(manifest.Layers)
+	if layerCount <= 0 {
 		log.WithField("ref", ref).Error("image has no layers - cannot serve its blob")
 		return nil, errdefs.ErrNotFound
 	}
-	if len(manifest.Layers) > 1 {
+	if layerCount > 1 {
 		log.WithField("ref", ref).Warn("image has more than one layers - serving from first layer only")
 	}
 	blobLayer := manifest.Layers[0]
