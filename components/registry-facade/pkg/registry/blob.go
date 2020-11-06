@@ -287,7 +287,7 @@ func (pbs *configBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, d
 
 func (pbs *configBlobSource) getConfig(ctx context.Context) (rawCfg []byte, err error) {
 	manifest := *pbs.Manifest
-	cfg, err := downloadConfig(ctx, pbs.Fetcher, manifest.Config)
+	cfg, err := DownloadConfig(ctx, pbs.Fetcher, manifest.Config)
 	if err != nil {
 		return
 	}

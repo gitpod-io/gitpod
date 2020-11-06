@@ -11,6 +11,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"strconv"
 	"sync"
 
 	"github.com/containerd/containerd/errdefs"
@@ -21,6 +22,14 @@ import (
 	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"golang.org/x/xerrors"
+)
+
+const (
+	// labelSkipNLayer is a label on images that tells registry-facade to discard the first N layer.
+	// If the value of this label
+	//   - is not a number (cannot be parsed by strconv.ParseUint), registry-facade fails to use the image,
+	//   - is larger than the number of layers in the image, the image is considered empty (i.e. to have no layer).
+	labelSkipNLayer = "skip-n.registry-facade.gitpod.io"
 )
 
 // LayerSource provides layers for a workspace image
@@ -208,23 +217,49 @@ func NewStaticSourceFromImage(ctx context.Context, resolver remotes.Resolver, re
 		return nil, err
 	}
 
-	cfg, err := downloadConfig(ctx, fetcher, manifest.Config)
+	cfg, err := DownloadConfig(ctx, fetcher, manifest.Config)
 	if err != nil {
 		return nil, err
 	}
 
-	res := make([]imagebackedLayer, len(manifest.Layers))
-	for i := range res {
-		res[i] = imagebackedLayer{
+	// images can mark the first N layers as irrelevant.
+	// We use labels for that to ship that information with the image.
+	skipN, err := getSkipNLabelValue(&cfg.Config)
+	if err != nil {
+		return nil, err
+	}
+
+	res := make([]imagebackedLayer, 0, len(manifest.Layers))
+	for i, ml := range manifest.Layers {
+		if i < skipN {
+			continue
+		}
+
+		l := imagebackedLayer{
 			AddonLayer: AddonLayer{
-				Descriptor: manifest.Layers[i],
+				Descriptor: ml,
 				DiffID:     cfg.RootFS.DiffIDs[i],
 			},
 			Fetcher: fetcher,
 		}
+		res = append(res, l)
 	}
 
 	return res, nil
+}
+
+// getSkipNLabelValue returns the parsed label value of the LabelSkipNLayer label.
+func getSkipNLabelValue(cfg *ociv1.ImageConfig) (skipN int, err error) {
+	v, ok := cfg.Labels[labelSkipNLayer]
+	if !ok {
+		return 0, nil
+	}
+
+	vi, err := strconv.ParseUint(v, 10, 16)
+	if err != nil {
+		return 0, xerrors.Errorf("skipN layer label: %w", err)
+	}
+	return int(vi), nil
 }
 
 // CompositeLayerSource appends layers from different sources
