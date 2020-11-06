@@ -5,6 +5,8 @@
 package manager
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -605,7 +607,7 @@ func extractFailure(wso workspaceObjects) (string, *api.WorkspacePhase) {
 	}
 
 	status := pod.Status
-	if status.Phase == corev1.PodFailed {
+	if status.Phase == corev1.PodFailed && (status.Reason != "" || status.Message != "") {
 		// Don't force the phase to UNKNONWN here to leave a chance that we may detect the actual phase of
 		// the workspace, e.g. stopping.
 		return fmt.Sprintf("%s: %s", status.Reason, status.Message), nil
@@ -637,7 +639,7 @@ func extractFailure(wso workspaceObjects) (string, *api.WorkspacePhase) {
 			// container is terminating.
 			if terminationState.Message != "" {
 				// the container itself told us why it was terminated - use that as failure reason
-				return terminationState.Message, nil
+				return extractFailureFromLogs([]byte(terminationState.Message)), nil
 			} else if terminationState.Reason == "Error" {
 				if !isPodBeingDeleted(pod) && terminationState.ExitCode != containerKilledExitCode {
 					return fmt.Sprintf("container %s ran with an error: exit code %d", cs.Name, terminationState.ExitCode), nil
@@ -675,6 +677,42 @@ func extractFailure(wso workspaceObjects) (string, *api.WorkspacePhase) {
 	}
 
 	return "", nil
+}
+
+// extractFailureFromLogs attempts to extract the last error message from a workspace
+// container's log output.
+func extractFailureFromLogs(logs []byte) string {
+	var sep = []byte("\n")
+	var msg struct {
+		Error   string `json:"error"`
+		Message string `json:"message"`
+	}
+
+	var nidx int
+	for idx := bytes.LastIndex(logs, sep); idx > 0; idx = nidx {
+		nidx = bytes.LastIndex(logs[:idx], sep)
+		if nidx < 0 {
+			nidx = 0
+		}
+
+		line := logs[nidx:idx]
+		err := json.Unmarshal(line, &msg)
+		if err != nil {
+			continue
+		}
+
+		if msg.Message == "" {
+			continue
+		}
+
+		if msg.Error == "" {
+			return msg.Message
+		}
+
+		return msg.Message + ": " + msg.Error
+	}
+
+	return string(logs)
 }
 
 // isPodBeingDeleted returns true if the pod is currently being stopped/deleted
