@@ -5,6 +5,8 @@ packages:
       - "**/*.go"
       - "go.mod"
       - "go.sum"
+      - "pkg/**/*.json"
+      - "pkg/**/*.golden"
     deps:
       - components/common-go:lib
       - components/registry-facade-api/go:lib
