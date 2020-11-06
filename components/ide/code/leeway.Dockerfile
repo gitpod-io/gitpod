@@ -29,9 +29,13 @@ RUN sudo apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 ENV GP_CODE_COMMIT 02021b3f4267917afb774747dcca21601fce52cb
-RUN git clone https://github.com/gitpod-io/vscode.git --branch gp-code --single-branch gp-code
+RUN mkdir gp-code \
+    && cd gp-code \
+    && git init \
+    && git remote add origin https://github.com/gitpod-io/vscode \
+    && git fetch origin $GP_CODE_COMMIT \
+    && git reset --hard FETCH_HEAD
 WORKDIR /gp-code
-RUN git reset --hard $GP_CODE_COMMIT
 RUN yarn
 RUN yarn gulp gitpod
 
