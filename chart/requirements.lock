@@ -1,0 +1,12 @@
+dependencies:
+- name: docker-registry
+  repository: https://kubernetes-charts.storage.googleapis.com/
+  version: 1.8.x
+- name: minio
+  repository: https://kubernetes-charts.storage.googleapis.com/
+  version: 2.5.x
+- name: mysql
+  repository: https://kubernetes-charts.storage.googleapis.com
+  version: 1.6.3
+digest: sha256:e7e3de6560335214b11e880d8ccdd11fa40f75e412c9024e52b1c35f9e93200e
+generated: "2020-11-07T09:58:01.90035771Z"

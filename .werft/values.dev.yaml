@@ -140,6 +140,8 @@ components:
     name: "ws-proxy"
     disabled: false
     replicas: 1
+    sshProxy:
+      disabled: true
 
 # configure GCP registry
 docker-registry:

@@ -58,6 +58,7 @@ type WorkspacePodConfig struct {
 	PortServiceTemplate string `json:"portServiceTemplate"`
 	TheiaPort           uint16 `json:"theiaPort"`
 	SupervisorPort      uint16 `json:"supervisorPort"`
+	SSHPort             uint16 `json:"sshPort"`
 	SupervisorImage     string `json:"supervisorImage"`
 }
 

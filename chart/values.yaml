@@ -471,6 +471,16 @@ components:
       metrics:
         expose: false
         containerPort: 9500
+    sshProxy:
+      disabled: true
+      name: ws-proxy-ssh
+      ports:
+        ssh:
+          expose: true
+          containerPort: 2222
+          nodePort: 32222
+      loadBalancerIP: null
+      serviceType: "LoadBalancer"
 
 docker-registry:
   enabled: true

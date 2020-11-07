@@ -5,7 +5,10 @@
 package cmd
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -15,9 +18,11 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/sshproxy"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh"
 )
 
 var jsonLog bool
@@ -77,6 +82,26 @@ var runCmd = &cobra.Command{
 			log.WithField("ingress", cfg.Ingress.Kind).Infof("started proxying on port range :%d-:%d", cfg.Ingress.PathAndPortIngress.Start, cfg.Ingress.PathAndPortIngress.End)
 		default:
 			log.Fatalf("unknown ingress kind %s", cfg.Ingress.Kind)
+		}
+
+		if cfg.SSHProxy.Enabled {
+			l, err := net.Listen("tcp", cfg.SSHProxy.Addr)
+			if err != nil {
+				log.WithError(err).Fatalf("cannot listen on %s for SSH proxy", cfg.SSHProxy.Addr)
+			}
+
+			key, err := rsa.GenerateKey(rand.Reader, 2048)
+			if err != nil {
+				log.WithError(err).Fatalf("cannot produce random host key")
+			}
+			hostKey, err := ssh.NewSignerFromKey(key)
+			if err != nil {
+				log.WithError(err).Fatalf("cannot produce random host key")
+			}
+
+			prxy := sshproxy.NewProxy(workspaceInfoProvider, cfg.Proxy.WorkspacePodConfig, hostKey)
+			go prxy.Serve(l)
+			log.WithField("addr", cfg.SSHProxy.Addr).Info("serving SSH proxy")
 		}
 
 		if cfg.PProfAddr != "" {

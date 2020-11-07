@@ -90,6 +90,10 @@ data:
                 "location": "/app/public"
             }
         },
+        "sshProxy": {
+            "enabled": {{ not $comp.sshProxy.disabled }},
+            "addr": ":{{ $comp.sshProxy.ports.ssh.containerPort }}"
+        },
         "pprofAddr": ":60060",
         "readinessProbeAddr": ":60088",
         "prometheusAddr": ":60095"

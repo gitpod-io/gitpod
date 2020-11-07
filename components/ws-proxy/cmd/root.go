@@ -55,8 +55,12 @@ func init() {
 
 // Config configures this servuce
 type Config struct {
-	Ingress                     IngressConfig                     `json:"ingress"`
-	Proxy                       proxy.Config                      `json:"proxy"`
+	Ingress  IngressConfig `json:"ingress"`
+	Proxy    proxy.Config  `json:"proxy"`
+	SSHProxy struct {
+		Enabled bool   `json:"enabled"`
+		Addr    string `json:"addr"`
+	} `json:"sshProxy"`
 	WorkspaceInfoProviderConfig proxy.WorkspaceInfoProviderConfig `json:"workspaceInfoProviderConfig"`
 	PProfAddr                   string                            `json:"pprofAddr"`
 	PrometheusAddr              string                            `json:"prometheusAddr"`

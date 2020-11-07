@@ -283,19 +283,19 @@ func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig) error
 // workspacePodResolver resolves to the workspace pod's url from the given request
 func workspacePodResolver(config *Config, req *http.Request) (url *url.URL, err error) {
 	coords := getWorkspaceCoords(req)
-	return buildWorkspacePodURL(config.WorkspacePodConfig.ServiceTemplate, coords.ID, fmt.Sprint(config.WorkspacePodConfig.TheiaPort))
+	return buildDirectWorkspacePodURL(config.WorkspacePodConfig.ServiceTemplate, coords.ID, fmt.Sprint(config.WorkspacePodConfig.TheiaPort))
 }
 
 // workspacePodPortResolver resolves to the workspace pods ports
 func workspacePodPortResolver(config *Config, req *http.Request) (url *url.URL, err error) {
 	coords := getWorkspaceCoords(req)
-	return buildWorkspacePodURL(config.WorkspacePodConfig.PortServiceTemplate, coords.ID, coords.Port)
+	return buildDirectWorkspacePodURL(config.WorkspacePodConfig.PortServiceTemplate, coords.ID, coords.Port)
 }
 
 // workspacePodSupervisorResolver resolves to the workspace pods Supervisor url from the given request
 func workspacePodSupervisorResolver(config *Config, req *http.Request) (url *url.URL, err error) {
 	coords := getWorkspaceCoords(req)
-	return buildWorkspacePodURL(config.WorkspacePodConfig.ServiceTemplate, coords.ID, fmt.Sprint(config.WorkspacePodConfig.SupervisorPort))
+	return buildDirectWorkspacePodURL(config.WorkspacePodConfig.ServiceTemplate, coords.ID, fmt.Sprint(config.WorkspacePodConfig.SupervisorPort))
 }
 
 // staticIDEResolver resolves to static IDE server with the statically configured version
@@ -323,7 +323,7 @@ func dynamicIDEResolver(config *Config, req *http.Request) (res *url.URL, err er
 }
 
 // TODO(gpl) This is currently executed per request: cache/use more performant solution?
-func buildWorkspacePodURL(tmpl string, workspaceID string, port string) (*url.URL, error) {
+func buildDirectWorkspacePodURL(tmpl string, workspaceID string, port string) (*url.URL, error) {
 	tpl, err := template.New("host").Parse(tmpl)
 	if err != nil {
 		return nil, err
