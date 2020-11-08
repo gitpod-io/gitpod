@@ -5,7 +5,6 @@
 package proxy
 
 import (
-	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -25,7 +24,6 @@ type proxyPassConfig struct {
 	TargetResolver  targetResolver
 	ResponseHandler responseHandler
 	ErrorHandler    errorHandler
-	NotFoundHandler http.Handler
 	Transport       http.RoundTripper
 }
 
@@ -39,8 +37,6 @@ type errorHandler func(http.ResponseWriter, *http.Request, error)
 type targetResolver func(*Config, *http.Request) (*url.URL, error)
 
 type responseHandler func(*http.Response, *http.Request) error
-
-var errNotFound = errors.New("not found")
 
 // proxyPass is the function that assembles a ProxyHandler from the config, a resolver and various options and returns a http.HandlerFunc
 func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...proxyPassOpt) http.HandlerFunc {
@@ -86,9 +82,6 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 				dmp, _ := httputil.DumpRequest(resp.Request, false)
 				log.WithField("url", url.String()).WithField("req", dmp).WithField("status", resp.Status).Debug("proxied request failed")
 			}
-			if h.NotFoundHandler != nil && resp.StatusCode == http.StatusNotFound {
-				return errNotFound
-			}
 
 			if h.ResponseHandler != nil {
 				return h.ResponseHandler(resp, req)
@@ -98,12 +91,6 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 		}
 
 		proxy.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, err error) {
-			if h.NotFoundHandler != nil && err == errNotFound {
-				req.URL = &originalURL
-				h.NotFoundHandler.ServeHTTP(rw, req)
-				return
-			}
-
 			if h.ErrorHandler != nil {
 				req.URL = &originalURL
 				h.ErrorHandler(w, req, err)
@@ -166,12 +153,6 @@ func withHTTPErrorHandler(h http.Handler) proxyPassOpt {
 		cfg.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
 			h.ServeHTTP(w, req)
 		}
-	}
-}
-
-func withNotFoundHandler(h http.Handler) proxyPassOpt {
-	return func(cfg *proxyPassConfig) {
-		cfg.NotFoundHandler = h
 	}
 }
 
