@@ -137,84 +137,6 @@ func (ir *ideRoutes) HandleDirectSupervisorRoute(route *mux.Route, authenticated
 	r.NewRoute().HandlerFunc(proxyPass(ir.Config, workspacePodSupervisorResolver))
 }
 
-func (ir *ideRoutes) redirect(image string, path string, permanent bool, req *http.Request) (*http.Response, error) {
-	var (
-		location = ir.resolveRedirectLocation(image, path)
-		header   = make(http.Header, 2)
-	)
-	header.Set("Location", location)
-	header.Set("Content-Type", "text/html; charset=utf-8")
-
-	code := http.StatusSeeOther
-	if permanent {
-		code = http.StatusPermanentRedirect
-	}
-	var (
-		status  = http.StatusText(code)
-		content = []byte("<a href=\"" + location + "\">" + status + "</a>.\n\n")
-	)
-
-	return &http.Response{
-		Request:       req,
-		Header:        header,
-		Body:          ioutil.NopCloser(bytes.NewReader(content)),
-		ContentLength: int64(len(content)),
-		StatusCode:    code,
-		Status:        status,
-	}, nil
-}
-
-func (ir *ideRoutes) resolveRedirectLocation(image string, path string) string {
-	if ir.Config.Config.GitpodInstallation.WorkspaceHostSuffix != "" {
-		return fmt.Sprintf("%s://%s%s/%s%s%s",
-			ir.Config.Config.GitpodInstallation.Scheme,
-			"blobserve",
-			ir.Config.Config.GitpodInstallation.WorkspaceHostSuffix,
-			image,
-			imagePathSeparator,
-			path,
-		)
-	}
-	return fmt.Sprintf("%s://%s/%s/%s%s%s",
-		ir.Config.Config.GitpodInstallation.Scheme,
-		ir.Config.Config.GitpodInstallation.HostName,
-		"blobserve",
-		image,
-		imagePathSeparator,
-		path,
-	)
-}
-
-type supervisorFrontendBlobserveTransport struct {
-	http.RoundTripper
-	*ideRoutes
-}
-
-func (t *supervisorFrontendBlobserveTransport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	resp, err = t.RoundTripper.RoundTrip(req)
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode != http.StatusOK {
-		// failed requests should not be redirected
-		return resp, nil
-	}
-
-	var (
-		image = t.Config.Config.WorkspacePodConfig.SupervisorImage
-		path  = strings.TrimPrefix(req.URL.Path, "/"+image)
-	)
-	if path == "/worker-proxy.js" {
-		// worker must be served from the same origin
-		return resp, nil
-	}
-	resp.Body.Close()
-
-	// redirects cannot be cached since the supervisor image can be changed between workspace restarts
-	permanent := false
-	return t.redirect(image, path, permanent, req)
-}
-
 func (ir *ideRoutes) HandleSupervisorFrontendRoute(route *mux.Route) {
 	if ir.Config.Config.BlobServer == nil {
 		// if we don't have blobserve, we serve the supervisor frontend from supervisor directly
@@ -239,68 +161,24 @@ func (ir *ideRoutes) HandleSupervisorFrontendRoute(route *mux.Route) {
 		dst.Path = "/" + cfg.WorkspacePodConfig.SupervisorImage
 		return &dst, nil
 	}, func(h *proxyPassConfig) {
-		h.Transport = &supervisorFrontendBlobserveTransport{
-			RoundTripper: h.Transport,
-			ideRoutes:    ir,
+		h.Transport = &blobserveTransport{
+			transport: h.Transport,
+			Config:    ir.Config.Config,
+			// redirects cannot be cached since the supervisor image can be changed between workspace restarts
+			redirectPermanent: false,
+			resolveImage: func(req *http.Request) string {
+				var (
+					image = ir.Config.Config.WorkspacePodConfig.SupervisorImage
+					path  = strings.TrimPrefix(req.URL.Path, "/"+image)
+				)
+				if path == "/worker-proxy.js" {
+					// worker must be served from the same origin
+					return ""
+				}
+				return image
+			},
 		}
 	}))
-}
-
-type ideBlobserveTransport struct {
-	http.RoundTripper
-	*ideRoutes
-}
-
-func (t *ideBlobserveTransport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
-	resp, err = t.RoundTripper.RoundTrip(req)
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		// failed requests should not be redirected
-		return resp, nil
-	}
-
-	if req.URL.RawQuery != "" {
-		// URLs with query cannot be static, i.e. the server is required to resolve the query
-		return resp, nil
-	}
-
-	// region use fetch metadata to avoid redirections https://developer.mozilla.org/en-US/docs/Glossary/Fetch_metadata_request_header
-	mode := req.Header.Get("Sec-Fetch-Mode")
-	dest := req.Header.Get("Sec-Fetch-Dest")
-	if mode == "" && strings.Contains(strings.ToLower(resp.Header.Get("Content-Type")), "text/html") {
-		// fallback for user agents not supporting fetch metadata to avoid redirecting on user navigation
-		mode = "navigate"
-	}
-	if mode == "navigate" || mode == "nested-navigate" || mode == "websocket" {
-		// user navigation and websocket requests should not be redirected
-		return resp, nil
-	}
-
-	if mode == "same-origin" && !(dest == "worker" || dest == "sharedworker") {
-		// same origin should not be redirected, except workers
-		// supervisor installs the worker proxy from the workspace origin serving content from the blobserve origin
-		return resp, nil
-	}
-	// endregion
-
-	info := getWorkspaceInfoFromContext(req.Context())
-	if info == nil {
-		// no workspace information available - cannot resolve Theia image and path
-		return resp, nil
-	}
-
-	resp.Body.Close()
-	var (
-		image = info.IDEImage
-		path  = strings.TrimPrefix(req.URL.Path, "/"+image)
-		// redirects can be cached since the ide image is fixed and cannot be changed between workspace restarts
-		permanent = true
-	)
-	return t.redirect(image, path, permanent, req)
-
 }
 
 func (ir *ideRoutes) HandleRoot(route *mux.Route) {
@@ -319,11 +197,21 @@ func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 	)
 	// always hit the blobserver to ensure that blob is downloaded
 	r.NewRoute().HandlerFunc(proxyPass(ir.Config, dynamicIDEResolver, func(h *proxyPassConfig) {
-		h.Transport = &ideBlobserveTransport{
-			RoundTripper: h.Transport,
-			ideRoutes:    ir,
+		h.Transport = &blobserveTransport{
+			transport: h.Transport,
+			Config:    ir.Config.Config,
+			// redirects can be cached since the ide image is fixed and cannot be changed between workspace restarts
+			redirectPermanent: true,
+			resolveImage: func(req *http.Request) string {
+				info := getWorkspaceInfoFromContext(req.Context())
+				if info == nil {
+					// no workspace information available - cannot resolve IDE image and path
+					return ""
+				}
+				return info.IDEImage
+			},
 		}
-	}, withLongTermCaching(), withHTTPErrorHandler(workspaceIDEPass), withNotFoundHandler(workspaceIDEPass)))
+	}, withLongTermCaching(), withHTTPErrorHandler(workspaceIDEPass)))
 }
 
 func (ir *ideRoutes) handleRootWithoutBlobserve(route *mux.Route) {
@@ -609,3 +497,124 @@ func removeSensitiveCookies(cookies []*http.Cookie, domain string) []*http.Cooki
 	}
 	return cookies[:n]
 }
+
+// region blobserve transport
+type blobserveTransport struct {
+	transport         http.RoundTripper
+	Config            *Config
+	resolveImage      func(req *http.Request) string
+	redirectPermanent bool
+}
+
+func (t *blobserveTransport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
+	for {
+		resp, err = t.transport.RoundTrip(req)
+		if err != nil {
+			return nil, err
+		}
+
+		if resp.StatusCode >= http.StatusBadRequest {
+			respBody, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return nil, err
+			}
+			resp.Body.Close()
+
+			if resp.StatusCode == http.StatusServiceUnavailable && string(respBody) == "timeout" {
+				// on timeout try again till the client request is cancelled
+				// blob server sometimes takes time to pull a new image
+				continue
+			}
+
+			// treat any client or server error code as a http error
+			return nil, fmt.Errorf("blobserver error: (%d) %s", resp.StatusCode, string(respBody))
+		}
+		break
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		// only redirect successful responses
+		return resp, nil
+	}
+
+	if req.URL.RawQuery != "" {
+		// URLs with query cannot be static, i.e. the server is required to resolve the query
+		return resp, nil
+	}
+
+	// region use fetch metadata to avoid redirections https://developer.mozilla.org/en-US/docs/Glossary/Fetch_metadata_request_header
+	mode := req.Header.Get("Sec-Fetch-Mode")
+	dest := req.Header.Get("Sec-Fetch-Dest")
+	if mode == "" && strings.Contains(strings.ToLower(resp.Header.Get("Content-Type")), "text/html") {
+		// fallback for user agents not supporting fetch metadata to avoid redirecting on user navigation
+		mode = "navigate"
+	}
+	if mode == "navigate" || mode == "nested-navigate" || mode == "websocket" {
+		// user navigation and websocket requests should not be redirected
+		return resp, nil
+	}
+
+	if mode == "same-origin" && !(dest == "worker" || dest == "sharedworker") {
+		// same origin should not be redirected, except workers
+		// supervisor installs the worker proxy from the workspace origin serving content from the blobserve origin
+		return resp, nil
+	}
+	// endregion
+
+	image := t.resolveImage(req)
+	if image == "" {
+		return resp, nil
+	}
+
+	resp.Body.Close()
+	return t.redirect(image, req)
+}
+
+func (t *blobserveTransport) redirect(image string, req *http.Request) (*http.Response, error) {
+	path := strings.TrimPrefix(req.URL.Path, "/"+image)
+
+	var location string
+	if t.Config.GitpodInstallation.WorkspaceHostSuffix != "" {
+		location = fmt.Sprintf("%s://%s%s/%s%s%s",
+			t.Config.GitpodInstallation.Scheme,
+			"blobserve",
+			t.Config.GitpodInstallation.WorkspaceHostSuffix,
+			image,
+			imagePathSeparator,
+			path,
+		)
+	} else {
+		location = fmt.Sprintf("%s://%s/%s/%s%s%s",
+			t.Config.GitpodInstallation.Scheme,
+			t.Config.GitpodInstallation.HostName,
+			"blobserve",
+			image,
+			imagePathSeparator,
+			path,
+		)
+	}
+
+	header := make(http.Header, 2)
+	header.Set("Location", location)
+	header.Set("Content-Type", "text/html; charset=utf-8")
+
+	code := http.StatusSeeOther
+	if t.redirectPermanent {
+		code = http.StatusPermanentRedirect
+	}
+	var (
+		status  = http.StatusText(code)
+		content = []byte("<a href=\"" + location + "\">" + status + "</a>.\n\n")
+	)
+
+	return &http.Response{
+		Request:       req,
+		Header:        header,
+		Body:          ioutil.NopCloser(bytes.NewReader(content)),
+		ContentLength: int64(len(content)),
+		StatusCode:    code,
+		Status:        status,
+	}, nil
+}
+
+// endregion
