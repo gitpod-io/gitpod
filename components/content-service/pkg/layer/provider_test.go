@@ -211,7 +211,7 @@ func (*testStorage) Bucket(userID string) string {
 	return "bucket-" + userID
 }
 
-func (s *testStorage) Download(ctx context.Context, bucket, obj string) (info *storage.DownloadInfo, err error) {
+func (s *testStorage) SignDownload(ctx context.Context, bucket, obj string) (info *storage.DownloadInfo, err error) {
 	info, ok := s.Objs[obj]
 	if !ok || info == nil {
 		return nil, storage.ErrNotFound

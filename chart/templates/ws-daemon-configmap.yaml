@@ -30,6 +30,8 @@ daemon:
       attempts: 3
     fullWorkspaceBackup:
       workdir: "/mnt/node0/gitpod-{{ .Release.Namespace }}"
+    initializer:
+      command: "/app/content-initializer"
   uidmapper:
     procLocation: "/proc"
     rootUIDRange:

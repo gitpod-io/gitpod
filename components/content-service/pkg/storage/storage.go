@@ -31,18 +31,24 @@ var (
 	ErrNotFound = fmt.Errorf("not found")
 )
 
-// Namer provides names for storage objects
-type Namer interface {
+// BucketNamer provides names for storage buckets
+type BucketNamer interface {
 	// Bucket provides the bucket name for a particular user
 	Bucket(userID string) string
 }
 
+// ObjectNamer provides names for storage objects
+type ObjectNamer interface {
+	// BackupObject returns a backup's object name that a direct downloader would download
+	BackupObject(name string) string
+}
+
 // PresignedAccess provides presigned URLs to access remote storage objects
 type PresignedAccess interface {
-	Namer
+	BucketNamer
 
-	// Download describes an object for download - if the object is not found, ErrNotFound is returned
-	Download(ctx context.Context, bucket, obj string) (info *DownloadInfo, err error)
+	// SignDownload describes an object for download - if the object is not found, ErrNotFound is returned
+	SignDownload(ctx context.Context, bucket, obj string) (info *DownloadInfo, err error)
 }
 
 // ObjectMeta describtes the metadata of a remote object
@@ -71,7 +77,8 @@ type DirectDownloader interface {
 
 // DirectAccess represents a remote location where we can store data
 type DirectAccess interface {
-	Namer
+	BucketNamer
+	ObjectNamer
 	DirectDownloader
 
 	// Init initializes the remote storage - call this before calling anything else on the interface

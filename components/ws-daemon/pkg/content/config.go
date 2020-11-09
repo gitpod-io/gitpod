@@ -51,4 +51,13 @@ type Config struct {
 		// WorkDir is a directory located on the same disk as the upperdir of containers
 		WorkDir string `json:"workdir"`
 	} `json:"fullWorkspaceBackup,omitempty"`
+
+	// Initializer configures the isolated content initializer runtime
+	Initializer struct {
+		// Command is the path to content-initializer executable
+		Command string `json:"command"`
+
+		// Args are additional arguments to pass to the CI runtime
+		Args []string `json:"args"`
+	} `json:"initializer"`
 }
