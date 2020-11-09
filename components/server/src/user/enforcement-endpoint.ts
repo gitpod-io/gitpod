@@ -46,7 +46,7 @@ export class EnforcementController {
             Since we want to get rid of this enforcement endpoint in the long term having this hack does not harm and looking for
             another architecture is not necessary.
         */
-        this._gitpodServer.initialize({} as GitpodClient, undefined, user, resourceAccessGuard);
+        this._gitpodServer.initialize(undefined, undefined, user, resourceAccessGuard);
         return this._gitpodServer;
     }
 

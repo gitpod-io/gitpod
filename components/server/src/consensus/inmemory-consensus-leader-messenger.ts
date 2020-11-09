@@ -21,7 +21,7 @@ export class InMemoryConsensusLeaderMessenger implements ConsensusLeaderMessenge
         return uid;
     }
 
-    async on(event: ConsensusLeaderMessageType, cb: (msg: any) => void): Promise<Disposable> {
+    on(event: ConsensusLeaderMessageType, cb: (msg: any) => void): Disposable {
         this.events.on(event, cb);
         return {dispose: () => this.events.off(event, cb)};
     }

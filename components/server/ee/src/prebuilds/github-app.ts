@@ -228,7 +228,7 @@ export class GithubApp extends Probot {
             const config = await this.prebuildManager.fetchConfig({ span }, user, contextURL);
 
             const prebuildStartPromise = this.onPrStartPrebuild({ span }, config, user, ctx);
-            this.onPrAddCheck({span}, config, user, ctx, prebuildStartPromise);
+            this.onPrAddCheck({ span }, config, user, ctx, prebuildStartPromise);
             this.onPrAddBadge(config, user, ctx);
             this.onPrAddLabel(config, user, ctx, prebuildStartPromise);
             this.onPrAddComment(config, user, ctx);
@@ -252,18 +252,18 @@ export class GithubApp extends Probot {
         const span = TraceContext.startSpan("onPrAddCheck", ctx);
         try {
             const spr = await start;
-            const pws = await this.workspaceDB.trace({span}).findPrebuildByWorkspaceID(spr.wsid);
+            const pws = await this.workspaceDB.trace({ span }).findPrebuildByWorkspaceID(spr.wsid);
             if (!pws) {
                 return;
             }
 
-            await this.statusMaintainer.registerCheckRun({span}, cri.payload.installation.id, pws, {
+            await this.statusMaintainer.registerCheckRun({ span }, cri.payload.installation.id, pws, {
                 ...cri.repo(),
                 head_sha: cri.payload.pull_request.head.sha,
                 details_url: this.env.hostUrl.withContext(cri.payload.pull_request.html_url).toString()
             });
         } catch (err) {
-            TraceContext.logError({span}, err);
+            TraceContext.logError({ span }, err);
             throw err;
         } finally {
             span.finish();
@@ -423,19 +423,19 @@ export namespace GithubApp {
 }
 
 class PrebuildListener {
-    protected readonly disposable: Promise<Disposable>;
+    protected readonly disposable: Disposable;
 
     constructor(protected readonly messageBus: MessageBusIntegration, workspaceID: string, protected readonly onBuildDone: (success: HeadlessWorkspaceEventType, msg: string) => void) {
         this.disposable = this.messageBus.listenForHeadlessWorkspaceLogs(workspaceID, this.handleMessage.bind(this));
     }
 
-    protected async handleMessage(ctx: TraceContext, evt: HeadlessLogEvent) {
+    protected handleMessage(ctx: TraceContext, evt: HeadlessLogEvent) {
         if (HeadlessWorkspaceEventType.isRunning(evt.type)) {
             return;
         }
 
         this.onBuildDone(evt.type, evt.text);
-        (await this.disposable).dispose();
+        this.disposable.dispose();
     }
 
 }

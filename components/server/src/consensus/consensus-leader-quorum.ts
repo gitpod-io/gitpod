@@ -69,9 +69,9 @@ export class ConsensusLeaderQorum implements Disposable {
 
         this.clock = setInterval(() => this.beatClock().catch((err) => log.error("consensus beatClock", err)), this.clockPeriod);
         this.disposables.push({ dispose: () => clearTimeout(this.clock!) });
-        this.disposables.push(await this.messenger.on("heartbeat", msg => this.messages.push(msg)));
-        this.disposables.push(await this.messenger.on("requestVote", msg => this.messages.push(msg)));
-        this.disposables.push(await this.messenger.on("castVote", msg => this.messages.push(msg)));
+        this.disposables.push(this.messenger.on("heartbeat", msg => this.messages.push(msg)));
+        this.disposables.push(this.messenger.on("requestVote", msg => this.messages.push(msg)));
+        this.disposables.push(this.messenger.on("castVote", msg => this.messages.push(msg)));
     }
 
     protected async beatClock() {

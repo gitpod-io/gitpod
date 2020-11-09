@@ -13,6 +13,7 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { MessagebusConfiguration } from "./config";
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { globalTracer, FORMAT_HTTP_HEADERS, childOf } from "opentracing";
+import { CancellationToken } from 'vscode-jsonrpc/lib/cancellation';
 
 export interface MessageBusHelper {
     /**
@@ -288,12 +289,12 @@ export abstract class AbstractMessageBusIntegration {
     protected doCloseConnection() {
         if (this.channel !== undefined) {
             this.channel.close()
-                .catch((err) => {});
+                .catch((err) => { });
             this.channel = undefined;
         }
         if (this.connection != undefined) {
             this.connection.close()
-                .catch((err) => {});
+                .catch((err) => { });
             this.connection = undefined;
         }
     }
@@ -368,34 +369,39 @@ export abstract class AbstractMessageBusIntegration {
 
         await new Promise(async (resolve, reject) => {
             channel.sendToQueue(queue, content, msgOptions,
-            (err, ok) => {
-                if (!!err) {
-                    reject(err);
-                } else {
-                    resolve(ok);
-                }
-            });
+                (err, ok) => {
+                    if (!!err) {
+                        reject(err);
+                    } else {
+                        resolve(ok);
+                    }
+                });
         });
     }
 
-    protected async listen<T>(listener: MessagebusListener) {
+    protected async listen<T>(listener: MessagebusListener, token: CancellationToken): Promise<void> {
         // if we have a connection, establish a channel
         if (this.channel !== undefined) {
-            await listener.establish(this.channel);
-        }
-
-        this.listeners.push(listener);
-        return {
-            dispose: async () => {
-                // remove listener from list of registered listeners
-                var index = this.listeners.indexOf(listener, 0);
-                if (index > -1) {
-                    this.listeners.splice(index, 1);
-                }
-
-                await listener.dispose();
+            try {
+                await listener.establish(this.channel);
+            } catch (e) {
+                console.error('Failed connecting to RabbitMQ', e);
             }
-        };
+        }
+        if (token.isCancellationRequested) {
+            listener.dispose();
+            return
+        }
+        this.listeners.push(listener);
+        token.onCancellationRequested(() => {
+            // remove listener from list of registered listeners
+            var index = this.listeners.indexOf(listener, 0);
+            if (index > -1) {
+                this.listeners.splice(index, 1);
+            }
+
+            listener.dispose();
+        })
     }
 
     protected get connectOptions() {
@@ -407,8 +413,8 @@ export abstract class AbstractMessageBusIntegration {
             cert: this.config.amqpCert!,
             key: this.config.amqpKey,
             ca: [this.config.amqpCa]
-        // The typings do not include the TLS options mentioned in the docs
-        // (http://www.squaremobius.net/amqp.node/ssl.html), so we need to satisfy the compiler here
+            // The typings do not include the TLS options mentioned in the docs
+            // (http://www.squaremobius.net/amqp.node/ssl.html), so we need to satisfy the compiler here
         } as Options.Connect;
 
         return {
@@ -482,7 +488,7 @@ export abstract class AbstractTopicListener<T> implements MessagebusListener {
 
         if (msg) {
             const spanCtx = globalTracer().extract(FORMAT_HTTP_HEADERS, message.properties.headers);
-            const span = !!spanCtx ? globalTracer().startSpan(`/messagebus/${this.exchangeName}`, {references: [childOf(spanCtx!)]}) : undefined;
+            const span = !!spanCtx ? globalTracer().startSpan(`/messagebus/${this.exchangeName}`, { references: [childOf(spanCtx!)] }) : undefined;
 
             try {
                 this.listener({ span }, msg);
