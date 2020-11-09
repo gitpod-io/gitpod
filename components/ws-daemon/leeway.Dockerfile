@@ -5,7 +5,7 @@
 FROM alpine:latest
 
 ## Installing coreutils is super important here as otherwise the loopback device creation fails!
-RUN apk add --no-cache git bash openssh-client lz4 e2fsprogs coreutils tar
+RUN apk add --no-cache git bash openssh-client lz4 e2fsprogs coreutils tar runc strace
 
 # Add gitpod user for operations (e.g. checkout because of the post-checkout hook!)
 RUN addgroup -g 33333 gitpod \
@@ -13,6 +13,7 @@ RUN addgroup -g 33333 gitpod \
     && echo "gitpod:gitpod" | chpasswd
 
 COPY components-ws-daemon--app/ws-daemon /app/ws-daemond
+COPY components-ws-daemon--content-initializer/ws-daemon /app/content-initializer
 
 USER root
 ENTRYPOINT [ "/app/ws-daemond" ]

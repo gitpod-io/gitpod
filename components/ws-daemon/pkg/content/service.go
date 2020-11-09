@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"math"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"syscall"
 	"time"
@@ -182,50 +183,57 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		return nil, err
 	}
 
-	rs, ok := workspace.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
-	if rs == nil || !ok {
-		log.Error("workspace has no remote storage")
-		return nil, status.Error(codes.Internal, "workspace has no remote storage")
-	}
-
 	if !req.FullWorkspaceBackup {
+		rs, ok := workspace.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
+		if rs == nil || !ok {
+			log.Error("workspace has no remote storage")
+			return nil, status.Error(codes.Internal, "workspace has no remote storage")
+		}
+		ps, err := storage.NewPresignedAccess(&s.config.Storage)
+		if err != nil {
+			log.WithError(err).Error("cannot create presigned storage")
+			return nil, status.Error(codes.Internal, "no presigned storage available")
+		}
+
+		remoteContent, err := collectRemoteContent(ctx, rs, ps, workspace.Owner, req.Initializer)
+		if err != nil {
+			log.WithError(err).Error("cannot collect remote content")
+			return nil, status.Error(codes.Internal, "remote content error")
+		}
+
 		// This task/call cannot be canceled. Once it's started it's brought to a conclusion, independent of the caller disconnecting
 		// or not. To achieve this we need to wrap the context in something that alters the cancelation behaviour.
 		ctx = &cannotCancelContext{Delegate: ctx}
 
 		// Initialize workspace.
 		// FWB workspaces initialize without the help of ws-daemon, but using their supervisor or the registry-facade.
-		initializer, err := wsinit.NewFromRequest(ctx, workspace.Location, rs, req.Initializer)
-		if err != nil {
-			log.WithError(err).WithField("instanceId", req.Id).Error("cannot initialize workspace")
-			return nil, err
+		opts := RunInitializerOpts{
+			Command: s.config.Initializer.Command,
+			Args:    s.config.Initializer.Args,
+			UID:     wsinit.GitpodUID,
+			GID:     wsinit.GitpodGID,
 		}
-
-		var (
-			uid = wsinit.GitpodUID
-			gid = wsinit.GitpodGID
-		)
-		if req.UserNamespaced {
-			// This is a bit of a hack as it makes hard assumptions about the nature of the UID mapping.
-			// With FWB this becomes unneccesary.
-			uid = wsinit.GitpodUID + 100000 - 1
-			gid = wsinit.GitpodGID + 100000 - 1
-		}
-		initSource, err := wsinit.InitializeWorkspace(ctx, workspace.Location, rs,
-			wsinit.WithInitializer(initializer),
-			wsinit.WithCleanSlate,
-			wsinit.WithChown(uid, gid),
-		)
+		err = RunInitializer(ctx, workspace.Location, req.Initializer, remoteContent, opts)
 		if err != nil {
 			log.WithError(err).WithField("workspaceId", req.Id).Error("cannot initialize workspace")
 			return nil, status.Error(codes.Internal, fmt.Sprintf("cannot initialize workspace: %s", err.Error()))
 		}
 
-		// Place the ready file to make Theia "open its gates"
-		err = wsinit.PlaceWorkspaceReadyFile(ctx, workspace.Location, initSource, uid, gid)
-		if err != nil {
-			tracing.LogError(span, err)
-			log.WithField("workspaceId", req.Id).WithError(err).Warn("did not place auth token - workspace will have no access to our service")
+		if req.UserNamespaced {
+			// This is a bit of a hack as it makes hard assumptions about the nature of the UID mapping.
+			// Also, we cannot do this in wsinit because we're dropping all the privileges that would be
+			// required for this operation.
+			//
+			// With FWB this bit becomes unneccesary.
+			var (
+				uid = wsinit.GitpodUID + 100000 - 1
+				gid = wsinit.GitpodGID + 100000 - 1
+			)
+			out, err := exec.Command("chown", "-R", fmt.Sprintf("%d:%d", uid, gid), workspace.Location).CombinedOutput()
+			if err != nil {
+				log.WithError(err).WithField("workspaceId", req.Id).WithField("msg", string(out)).Error("cannot chown workspace")
+				return nil, status.Error(codes.Internal, "cannot prepare workspace")
+			}
 		}
 	}
 

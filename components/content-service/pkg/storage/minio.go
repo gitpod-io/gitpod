@@ -192,13 +192,11 @@ func (rs *DirectMinIOStorage) Download(ctx context.Context, destination string, 
 
 // DownloadSnapshot downloads a snapshot. The snapshot name is expected to be one produced by Qualify
 func (rs *DirectMinIOStorage) DownloadSnapshot(ctx context.Context, destination string, name string) (bool, error) {
-	segments := strings.Split(name, "@")
-	if len(segments) != 2 {
-		return false, xerrors.Errorf("%s is not a valid MinIO remote storage FQN", name)
+	bkt, obj, err := ParseSnapshotName(name)
+	if err != nil {
+		return false, err
 	}
 
-	obj := segments[0]
-	bkt := segments[1]
 	return rs.download(ctx, destination, bkt, obj)
 }
 
@@ -247,6 +245,11 @@ func (rs *DirectMinIOStorage) Bucket(ownerID string) string {
 	return minioBucketName(ownerID)
 }
 
+// BackupObject returns a backup's object name that a direct downloader would download
+func (rs *DirectMinIOStorage) BackupObject(name string) string {
+	return rs.objectName(name)
+}
+
 func (rs *DirectMinIOStorage) bucketName() string {
 	return minioBucketName(rs.Username)
 }
@@ -267,9 +270,17 @@ type presignedMinIOStorage struct {
 	client *minio.Client
 }
 
-func (s *presignedMinIOStorage) Download(ctx context.Context, bucket, object string) (info *DownloadInfo, err error) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.Download")
-	defer tracing.FinishSpan(span, &err)
+func (s *presignedMinIOStorage) SignDownload(ctx context.Context, bucket, object string) (info *DownloadInfo, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.SignDownload")
+	defer func() {
+		if err == ErrNotFound {
+			span.LogKV("found", false)
+			tracing.FinishSpan(span, nil)
+			return
+		}
+
+		tracing.FinishSpan(span, &err)
+	}()
 
 	obj, err := s.client.GetObject(bucket, object, minio.GetObjectOptions{})
 	if err != nil {

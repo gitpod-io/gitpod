@@ -48,11 +48,21 @@ func (rs *DirectNoopStorage) Bucket(string) string {
 	return ""
 }
 
+// BackupObject returns a backup's object name that a direct downloader would download
+func (rs *DirectNoopStorage) BackupObject(name string) string {
+	return ""
+}
+
+// SnapshotObject returns a snapshot's object name that a direct downloer would download
+func (rs *DirectNoopStorage) SnapshotObject(name string) string {
+	return ""
+}
+
 // PresignedNoopStorage does nothing
 type PresignedNoopStorage struct{}
 
-// Download returns ErrNotFound
-func (*PresignedNoopStorage) Download(ctx context.Context, bucket, obj string) (info *DownloadInfo, err error) {
+// SignDownload returns ErrNotFound
+func (*PresignedNoopStorage) SignDownload(ctx context.Context, bucket, obj string) (info *DownloadInfo, err error) {
 	return nil, ErrNotFound
 }
 
