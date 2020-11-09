@@ -15,9 +15,9 @@ export interface ConsensusLeaderMessenger {
     // The UID is optional. If not given, the messenger will come up with one and return it.
     register(uid?: string): Promise<string>;
 
-    on(event: 'heartbeat', cb: (msg: HeartbeatMessage) => void): Promise<Disposable>,
-    on(event: 'requestVote', cb: (msg: RequestVoteMessage) => void): Promise<Disposable>,
-    on(event: 'castVote', cb: (msg: CastVoteMessage) => void): Promise<Disposable>;
+    on(event: 'heartbeat', cb: (msg: HeartbeatMessage) => void): Disposable,
+    on(event: 'requestVote', cb: (msg: RequestVoteMessage) => void): Disposable,
+    on(event: 'castVote', cb: (msg: CastVoteMessage) => void): Disposable;
 
     // requestVote is invoked by candidates to gather votes.
     requestVote(sender: string, term: number): Promise<void>;

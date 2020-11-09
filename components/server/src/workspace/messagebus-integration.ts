@@ -12,6 +12,7 @@ import { HeadlessLogEvent, HeadlessWorkspaceEventType } from "@gitpod/gitpod-pro
 import { Channel, Message } from "amqplib";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
+import { CancellationTokenSource } from "vscode-ws-jsonrpc";
 
 export class WorkspaceInstanceUpdateListener extends AbstractTopicListener<WorkspaceInstance> {
 
@@ -112,19 +113,25 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
         }
     }
 
-    async listenForHeadlessWorkspaceLogs(workspaceID: string, callback: (ctx: TraceContext, evt: HeadlessLogEvent) => void): Promise<Disposable> {
+    listenForHeadlessWorkspaceLogs(workspaceID: string, callback: (ctx: TraceContext, evt: HeadlessLogEvent) => void): Disposable {
         const listener = new HeadlessWorkspaceLogListener(this.messageBusHelper, callback, workspaceID);
-        return this.listen(listener);
+        const cancellationTokenSource = new CancellationTokenSource()
+        this.listen(listener, cancellationTokenSource.token);
+        return Disposable.create(() => cancellationTokenSource.cancel())
     }
 
-    async listenForPrebuildUpdatableQueue(callback: (ctx: TraceContext, evt: HeadlessLogEvent) => void): Promise<Disposable> {
+    listenForPrebuildUpdatableQueue(callback: (ctx: TraceContext, evt: HeadlessLogEvent) => void): Disposable {
         const listener = new PrebuildUpdatableQueueListener(callback);
-        return this.listen(listener);
+        const cancellationTokenSource = new CancellationTokenSource()
+        this.listen(listener, cancellationTokenSource.token);
+        return Disposable.create(() => cancellationTokenSource.cancel())
     }
 
-    async listenForWorkspaceInstanceUpdates(userId: string | undefined, callback: (ctx: TraceContext, workspaceInstance: WorkspaceInstance) => void): Promise<Disposable> {
+    listenForWorkspaceInstanceUpdates(userId: string | undefined, callback: (ctx: TraceContext, workspaceInstance: WorkspaceInstance) => void): Disposable {
         const listener = new WorkspaceInstanceUpdateListener(this.messageBusHelper, callback, userId);
-        return this.listen(listener);
+        const cancellationTokenSource = new CancellationTokenSource()
+        this.listen(listener, cancellationTokenSource.token);
+        return Disposable.create(() => cancellationTokenSource.cancel())
     }
 
     async notifyOnInstanceUpdate(userId: string, instance: WorkspaceInstance) {

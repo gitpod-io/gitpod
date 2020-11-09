@@ -37,11 +37,11 @@ export class PrebuildStatusMaintainer implements Disposable {
     protected messagebusListener?: Disposable;
     protected periodicChecker?: NodeJS.Timer;
 
-    public async start(authProvider: AuthenticatedGithubProvider): Promise<void> {
+    start(authProvider: AuthenticatedGithubProvider): void {
         // set github before registering the msgbus listener - otherwise an incoming message and the github set might race
         this.authProvider = authProvider;
 
-        this.messagebusListener = await this.messagebus.listenForPrebuildUpdatableQueue((ctx, msg) => this.handlePrebuildFinished(ctx, msg));
+        this.messagebusListener = this.messagebus.listenForPrebuildUpdatableQueue((ctx, msg) => this.handlePrebuildFinished(ctx, msg));
         this.periodicChecker = setInterval(this.periodicUpdatableCheck.bind(this), 60 * 1000) as any as NodeJS.Timer;
         log.debug("prebuild updatatable status maintainer started");
     }
