@@ -4,6 +4,8 @@
 
 FROM node:12.18.3-slim as builder
 
+RUN apt-get update && apt-get install -y build-essential python
+
 COPY components-server--app /installer/
 
 WORKDIR /app
