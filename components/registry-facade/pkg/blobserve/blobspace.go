@@ -23,12 +23,17 @@ import (
 	"golang.org/x/xerrors"
 )
 
-type blobspace struct {
+type blobspace interface {
+	Get(name string) (fs http.FileSystem, state blobstate)
+	AddFromTarGzip(ctx context.Context, name string, in io.Reader) (err error)
+}
+
+type diskBlobspace struct {
 	Location string
 	MaxSize  int64
 }
 
-func newBlobSpace(loc string, maxSize int64, housekeepingInterval time.Duration) (bs *blobspace, err error) {
+func newBlobSpace(loc string, maxSize int64, housekeepingInterval time.Duration) (bs *diskBlobspace, err error) {
 	if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
 		loc = filepath.Join(tproot, loc)
 	}
@@ -38,7 +43,7 @@ func newBlobSpace(loc string, maxSize int64, housekeepingInterval time.Duration)
 		return
 	}
 
-	bs = &blobspace{
+	bs = &diskBlobspace{
 		Location: loc,
 		MaxSize:  maxSize,
 	}
@@ -60,7 +65,7 @@ const (
 	minBlobAge = 20 * time.Minute
 )
 
-func (b *blobspace) collectGarbage(interval time.Duration) {
+func (b *diskBlobspace) collectGarbage(interval time.Duration) {
 	t := time.NewTicker(interval)
 	defer t.Stop()
 
@@ -159,7 +164,7 @@ func getGCBlob(wd string, f os.FileInfo) (blob gcBlob) {
 	return
 }
 
-func (b *blobspace) Get(name string) (fs http.FileSystem, state blobstate) {
+func (b *diskBlobspace) Get(name string) (fs http.FileSystem, state blobstate) {
 	fn := filepath.Join(b.Location, name)
 	if _, err := os.Stat(fn); os.IsNotExist(err) {
 		return nil, blobUnknown
@@ -174,7 +179,7 @@ func (b *blobspace) Get(name string) (fs http.FileSystem, state blobstate) {
 
 // AddFromTar adds content to this store under the given name.
 // In is expected to yield an uncompressed tar stream.
-func (b *blobspace) AddFromTar(ctx context.Context, name string, in io.Reader) (err error) {
+func (b *diskBlobspace) AddFromTar(ctx context.Context, name string, in io.Reader) (err error) {
 	fn := filepath.Join(b.Location, name)
 	if _, err := os.Stat(fn); !os.IsNotExist(err) {
 		return errdefs.ErrAlreadyExists
@@ -210,7 +215,7 @@ func (b *blobspace) AddFromTar(ctx context.Context, name string, in io.Reader) (
 
 // AddFromTarGzip adds content to this store under the given name.
 // In is expected to yield a gzip compressed tar stream.
-func (b *blobspace) AddFromTarGzip(ctx context.Context, name string, in io.Reader) (err error) {
+func (b *diskBlobspace) AddFromTarGzip(ctx context.Context, name string, in io.Reader) (err error) {
 	gin, err := gzip.NewReader(in)
 	if err != nil {
 		return err
