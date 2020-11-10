@@ -12,6 +12,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -149,6 +150,15 @@ var ring1Cmd = &cobra.Command{
 			}
 			return
 		}
+
+		// The parent calls child with Pdeathsig, but it is cleared when the UID/GID mapping is written.
+		// (see also https://github.com/rootless-containers/rootlesskit/issues/65#issuecomment-492343646).
+		//
+		// (cw) I have been able to reproduce this issue without newuidmap/newgidmap.
+		//      See https://gist.github.com/csweichel/3fc9d4b0752367d4a436f969c8685c06
+		runtime.LockOSThread()
+		err = unix.Prctl(unix.PR_SET_PDEATHSIG, uintptr(unix.SIGKILL), 0, 0, 0)
+		runtime.UnlockOSThread()
 
 		tmpdir, err := ioutil.TempDir("", "supervisor")
 		if err != nil {
