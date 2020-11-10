@@ -3,10 +3,10 @@
 #  1. `gcloud auth login <gcp-email>` and authenticate
 #  2. `gcloud auth application-default login` and authenticate
 #  3. `cat ~/.config/gcloud/application_default_credentials.json` and copy the output
-#  4. Go to https://gitpod.io/environment-variables/ and create:
+#  4. Go to https://gitpod.io/settings/ and create:
 #     - name: GCP_ADC_FILE
 #     - value: paste-the-output
-#     - repo: typefox/gitpod-core
+#     - repo: gitpod-io/gitpod
 
 GCLOUD_ADC_PATH="/home/gitpod/.config/gcloud/application_default_credentials.json"
 
