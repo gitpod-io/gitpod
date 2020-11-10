@@ -23,7 +23,7 @@ import { IContextParser, IPrefixContextParser } from './workspace/context-parser
 import { ContextParser } from './workspace/context-parser-service';
 import { SnapshotContextParser } from './workspace/snapshot-context-parser';
 import { GitpodCookie } from './auth/gitpod-cookie';
-import { EnforcementController } from './user/enforcement-endpoint';
+import { EnforcementController, EnforcementControllerServerFactory } from './user/enforcement-endpoint';
 import { MessagebusConfiguration } from '@gitpod/gitpod-messagebus/lib/config';
 import { HostContextProvider, HostContextProviderFactory } from './auth/host-context-provider';
 import { TokenService } from './user/token-service';
@@ -96,6 +96,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(ImageSourceProvider).toSelf().inSingletonScope();
 
     bind(UserController).toSelf().inSingletonScope();
+    bind(EnforcementControllerServerFactory).toAutoFactory(GitpodServerImpl);
     bind(EnforcementController).toSelf().inSingletonScope();
     bind(TheiaPluginController).toSelf().inSingletonScope();
 
