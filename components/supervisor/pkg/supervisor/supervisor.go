@@ -14,6 +14,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -31,7 +32,7 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
 	daemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
 )
@@ -78,8 +79,17 @@ func InNamespace() RunOption {
 	}
 }
 
+// The sum of those timeBudget* times has to fit within the terminationGracePeriod of the workspace pod.
+const (
+	timeBudgetIDEShutdown      = 5 * time.Second
+	timeBudgetTeardownCommands = 15 * time.Second
+	timeBudgetDaemonTeardown   = 10 * time.Second
+)
+
 // Run serves as main entrypoint to the supervisor
 func Run(options ...RunOption) {
+	defer log.Info("supervisor shut down")
+
 	opts := runOptions{
 		Args: os.Args,
 	}
@@ -289,17 +299,30 @@ func startAndWatchIDE(ctx context.Context, cfg *Config, wg *sync.WaitGroup, ideR
 	)
 supervisorLoop:
 	for {
-		if s != statusShouldShutdown {
-			ideStopped = make(chan struct{}, 1)
+		if s == statusShouldShutdown {
+			break
+		}
 
+		ideStopped = make(chan struct{}, 1)
+		go func() {
 			cmd = prepareIDELaunch(cfg)
+
+			// prepareIDELaunch sets Pdeathsig, which on on Linux, will kill the
+			// child process when the thread dies, not when the process dies.
+			// runtime.LockOSThread ensures that as long as this function is
+			// executing that OS thread will still be around.
+			//
+			// see https://github.com/golang/go/issues/27505#issuecomment-713706104
+			runtime.LockOSThread()
+			defer runtime.UnlockOSThread()
+
 			err := cmd.Start()
 			if err != nil {
 				if s == statusNeverRan {
 					log.WithError(err).Fatal("IDE failed to start")
 				}
 
-				continue
+				return
 			}
 			s = statusShouldRun
 
@@ -308,15 +331,14 @@ supervisorLoop:
 				ideReady.Set(true)
 			}()
 
-			go func() {
-				err := cmd.Wait()
-				if err != nil && !strings.Contains(err.Error(), "signal: interrupt") {
-					log.WithError(err).Warn("IDE was stopped")
-				}
-				ideReady.Set(false)
-				close(ideStopped)
-			}()
-		}
+			err = cmd.Wait()
+			if err != nil && !strings.Contains(err.Error(), "signal: interrupt") {
+				log.WithError(err).Warn("IDE was stopped")
+			}
+
+			ideReady.Set(false)
+			close(ideStopped)
+		}()
 
 		select {
 		case <-ideStopped:
@@ -333,12 +355,13 @@ supervisorLoop:
 		}
 	}
 
-	log.Info("IDE supervisor loop ended - waiting for IDE to come down")
+	log.WithField("budget", timeBudgetIDEShutdown.String()).Info("IDE supervisor loop ended - waiting for IDE to come down")
 	select {
 	case <-ideStopped:
 		return
-	case <-time.After(30 * time.Second):
-		log.Fatal("IDE did not stop after 30 seconds")
+	case <-time.After(timeBudgetIDEShutdown):
+		log.Error("IDE did not stop in time - sending SIGKILL")
+		cmd.Process.Signal(syscall.SIGKILL)
 	}
 }
 
@@ -354,7 +377,10 @@ func prepareIDELaunch(cfg *Config) *exec.Cmd {
 
 	// We need the IDE to run in its own process group, s.t. we can suspend and resume
 	// IDE and its children.
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setpgid:   true,
+		Pdeathsig: syscall.SIGKILL,
+	}
 
 	// Here we must resist the temptation to "neaten up" the IDE output for headless builds.
 	// This would break the JSON parsing of the headless builds.
@@ -460,8 +486,8 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	}
 
 	m := cmux.New(l)
-	restMux := runtime.NewServeMux(
-		runtime.WithMarshalerOption(runtime.MIMEWildcard, &runtime.JSONPb{EnumsAsInts: false, EmitDefaults: true}),
+	restMux := grpcruntime.NewServeMux(
+		grpcruntime.WithMarshalerOption(grpcruntime.MIMEWildcard, &grpcruntime.JSONPb{EnumsAsInts: false, EmitDefaults: true}),
 	)
 	grpcMux := m.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
 	grpcServer := grpc.NewServer(opts...)
@@ -570,14 +596,17 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 func teardown(withDaemonCall bool) {
 	if withDaemonCall {
 		log.Info("asking ws-daemon to tear down this workspace")
-		client, conn, err := ConnectToInWorkspaceDaemonService(context.Background())
+		ctx, cancel := context.WithTimeout(context.Background(), timeBudgetDaemonTeardown)
+		defer cancel()
+
+		client, conn, err := ConnectToInWorkspaceDaemonService(ctx)
 		if err != nil {
 			log.WithError(err).Error("ungraceful shutdown - teardown was unsuccessful")
 			return
 		}
 
 		defer conn.Close()
-		_, err = client.Teardown(context.Background(), &daemon.TeardownRequest{})
+		_, err = client.Teardown(ctx, &daemon.TeardownRequest{})
 		if err != nil {
 			log.WithError(err).Error("ungraceful shutdown - teardown was unsuccessful")
 		}
