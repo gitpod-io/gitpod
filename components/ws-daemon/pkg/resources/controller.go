@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -196,7 +197,12 @@ const userHZ = 100
 
 func (gov *Controller) controlCPU() {
 	sample, err := gov.cfsController.GetUsage()
-	if err != nil {
+	if xerrors.Is(err, os.ErrNotExist) {
+		// the cgroup doesn't exist (yet or anymore). That's ok.
+		// If the cgroup doesn't exist, we don't have much to control,
+		// and chances are the container isn't running anyways.
+		return
+	} else if err != nil {
 		gov.log.WithError(err).Warn("cannot sample cpuacct.usage")
 		return
 	}
@@ -249,7 +255,12 @@ func (gov *Controller) controlCPU() {
 	gov.mu.RUnlock()
 
 	_, err = gov.enforceCPULimit(newLimit)
-	if err != nil {
+	if xerrors.Is(err, os.ErrNotExist) {
+		// the cgroup doesn't exist (yet or anymore). That's ok.
+		// If the cgroup doesn't exist, we don't have much to control,
+		// and chances are the container isn't running anyways.
+		return
+	} else if err != nil {
 		gov.log.WithError(err).WithField("newLimit", newLimit).Warn("cannot set new CPU limit")
 		return
 	}
@@ -262,6 +273,7 @@ func (gov *Controller) SetFixedCPULimit(jiffiesPerSec int64) {
 
 	if jiffiesPerSec > 0 {
 		gov.cpuLimiterOverride = FixedLimiter(jiffiesPerSec)
+		gov.log.WithField("limit", jiffiesPerSec).Info("set fixed CPU limit for workspace")
 	} else {
 		gov.cpuLimiterOverride = nil
 	}

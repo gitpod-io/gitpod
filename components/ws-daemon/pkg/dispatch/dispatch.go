@@ -241,7 +241,6 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 	if !state.SeenContainer {
 		return
 	}
-	log.WithFields(wsk8s.GetOWIFromObject(&oldPod.ObjectMeta)).Info("received received pod update for a workspace")
 
 	state.Workspace.Pod = newPod
 

@@ -134,6 +134,5 @@ func (d *DispatchListener) WorkspaceUpdated(ctx context.Context, ws *dispatch.Wo
 	}
 
 	gov.SetFixedCPULimit(scaledLimit)
-	gov.log.WithField("limit", scaledLimit).Info("set fixed CPU limit for workspace")
 	return nil
 }
