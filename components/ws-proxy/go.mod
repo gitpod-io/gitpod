@@ -10,8 +10,6 @@ require (
 	github.com/google/go-cmp v0.4.0
 	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.7.4
-	github.com/gorilla/websocket v1.4.2 // indirect
-	github.com/koding/websocketproxy v0.0.0-20181220232114-7ed82d81a28c
 	github.com/prometheus/client_golang v1.1.0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.5
