@@ -16,6 +16,7 @@ import (
 	"github.com/containerd/containerd/api/services/tasks/v1"
 	"github.com/containerd/containerd/api/types"
 	"github.com/containerd/containerd/containers"
+	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/typeurl"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -398,6 +399,19 @@ func (s *Containerd) WaitForContainerStop(ctx context.Context, workspaceInstance
 		err = ctx.Err()
 		return
 	}
+}
+
+// ContainerExists finds out if a container with the given ID exists.
+func (s *Containerd) ContainerExists(ctx context.Context, id ID) (exists bool, err error) {
+	_, err = s.Client.ContainerService().Get(ctx, string(id))
+	if err == errdefs.ErrNotFound {
+		return false, nil
+	}
+	if err == nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 // ContainerUpperdir finds the workspace container's overlayfs upperdir.

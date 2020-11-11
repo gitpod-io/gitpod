@@ -21,6 +21,10 @@ type Runtime interface {
 	// Implementors have to respect context cancelation.
 	WaitForContainerStop(ctx context.Context, workspaceInstanceID string) error
 
+	// ContainerExists finds out if a container with the given ID exists. The existence of the container says nothing about the
+	// container's state, which may be running, stopped, deleted, unkown or something else.
+	ContainerExists(ctx context.Context, id ID) (exists bool, err error)
+
 	// ContainerUpperdir finds the workspace container's overlayfs upperdir. The location returned here has to be accessible from
 	// the calling process (i.e. if the calling process runs in a container itself, the returned location has to be accessible from
 	// within that container).
