@@ -64,7 +64,7 @@ func (rc *ReconnectingWebsocket) WriteObject(v interface{}) error {
 		if err == nil {
 			return nil
 		}
-		if !websocket.IsCloseError(err) {
+		if !websocket.IsUnexpectedCloseError(err) {
 			return err
 		}
 		select {
@@ -90,7 +90,7 @@ func (rc *ReconnectingWebsocket) ReadObject(v interface{}) error {
 		if err == nil {
 			return nil
 		}
-		if !websocket.IsCloseError(err) {
+		if !websocket.IsUnexpectedCloseError(err) {
 			return err
 		}
 		select {
