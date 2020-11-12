@@ -15,7 +15,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/docker/docker/pkg/archive"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	wsinit "github.com/gitpod-io/gitpod/content-service/pkg/initializer"
@@ -297,9 +296,13 @@ func (rs *remoteContentStorage) Download(ctx context.Context, destination string
 	}
 	defer resp.Body.Close()
 
-	err = archive.Untar(resp.Body, destination, &archive.TarOptions{})
+	tarcmd := exec.Command("tar", "x")
+	tarcmd.Dir = destination
+	tarcmd.Stdin = resp.Body
+
+	msg, err := tarcmd.CombinedOutput()
 	if err != nil {
-		return true, err
+		return true, xerrors.Errorf("tar %s: %s", destination, err.Error()+";"+string(msg))
 	}
 
 	return true, nil
