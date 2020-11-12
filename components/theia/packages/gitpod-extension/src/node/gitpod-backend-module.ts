@@ -43,6 +43,7 @@ import { SupervisorClientProvider } from "./supervisor-client-provider";
 import { GitpodTaskServer, GitpodTaskClient, gitpodTaskServicePath } from "../common/gitpod-task-protocol";
 import { GitpodTaskServerImpl } from "./gitpod-task-server-impl";
 import { GitpodPortServer, GitpodPortClient, gitpodPortServicePath } from "../common/gitpod-port-server";
+import { GitpodTaskTerminalProcess, GitpodTaskTerminalProcessFactory, GitpodTaskTerminalProcessOptions } from "./gitpod-task-terminal-process";
 
 export default new ContainerModule((bind, unbind, isBound, rebind) => {
     rebind(ShellProcess).to(GitpodShellProcess).inTransientScope();
@@ -63,6 +64,15 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
             return server;
         })
     ).inSingletonScope();
+
+    bind(GitpodTaskTerminalProcessFactory).toFactory(context =>
+        (options: GitpodTaskTerminalProcessOptions) => {
+            const child = context.container.createChild();
+            child.bind(GitpodTaskTerminalProcessOptions).toConstantValue(options);
+            child.bind(GitpodTaskTerminalProcess).toSelf().inSingletonScope();
+            return child.get(GitpodTaskTerminalProcess);
+        }
+    );
     bind(GitpodTaskServer).to(GitpodTaskServerImpl).inSingletonScope();
     bind(ConnectionHandler).toDynamicValue(context =>
         new JsonRpcConnectionHandler<GitpodTaskClient>(gitpodTaskServicePath, client => {
