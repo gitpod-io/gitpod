@@ -4,11 +4,10 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable, inject, postConstruct } from "inversify";
 import { WebSocketConnectionProvider } from "@theia/core/lib/browser";
+import { inject, injectable, postConstruct } from "inversify";
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import { GitpodServiceProvider } from "./gitpod-service-provider";
-import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { getWorkspaceID } from "./utils";
 
 /**
@@ -71,37 +70,13 @@ export class GitpodWebSocketConnectionProvider extends WebSocketConnectionProvid
 
     @postConstruct()
     protected async init(): Promise<void> {
-        const s = this.serviceProvider.getService();
-        const workspaceId = getWorkspaceID();
-        const onInstanceUpdate = (instance?: WorkspaceInstance) => {
-            if (!instance) {
-                this.setShouldReconnect(false);
-                return;
-            }
-            if (workspaceId === instance.workspaceId) {
-                this.setShouldReconnect(instance.status.phase === 'running');
-            }
+        const service = this.serviceProvider.getService();
+        const listener = await service.listenToInstance(getWorkspaceID());
+        const update = () => {
+            this.setShouldReconnect(listener.info.latestInstance?.status.phase === 'running');
         }
-        s.registerClient({ onInstanceUpdate })
-        const doc = window.document;
-        const update = async () => {
-            const wsInfo = await s.server.getWorkspace(workspaceId);
-            onInstanceUpdate(wsInfo.latestInstance);
-        }
-        doc.addEventListener('visibilitychange', async () => {
-            if (doc.visibilityState === 'visible') {
-                console.log('Window became visible, fetching')
-                update();
-            }
-        });
-
-        const regularUpdate = () => {
-            update();
-            // we might have missed the stopping events because no internet connection or the computer was in suspend mode.
-            // so let's just poll every 5 minutes
-            setTimeout(regularUpdate, 5 * 60 * 1000);
-        };
-        regularUpdate();
+        update();
+        listener.onDidChange(() => update());
     }
 
     protected createWebSocket(url: string): ReconnectingWebSocket {

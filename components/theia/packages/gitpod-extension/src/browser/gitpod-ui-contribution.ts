@@ -94,24 +94,14 @@ export class GitpodUiContribution implements FrontendApplicationContribution, Co
                 this.canChangeTimeout.resolve(resp.canChange);
             });
 
-            service.registerClient({
-                onInstanceUpdate: i => {
-                    if (!i) {
-                        return;
+            service.listenToInstance(workspaceId).then(listener => {
+                const update = () => {
+                    if (listener.info.latestInstance) {
+                        this.onInstanceUpdate(listener.info.latestInstance);
                     }
-                    if (i.workspaceId != workspaceId) {
-                        return;
-                    }
-
-                    this.onInstanceUpdate(i);
                 }
-            });
-            service.server.getWorkspace(workspaceId).then(ws => {
-                if (!ws.latestInstance) {
-                    return;
-                }
-
-                this.onInstanceUpdate(ws.latestInstance);
+                update();
+                listener.onDidChange(() => update());
             });
 
             const branding = await this.gitpodBranding.branding;
