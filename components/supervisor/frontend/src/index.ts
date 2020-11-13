@@ -10,8 +10,6 @@
  */
 
 require('../src/shared/index.css');
-// TODO get rid of inversify deps
-require("reflect-metadata");
 
 import { createGitpodService } from "@gitpod/gitpod-protocol";
 import { DisposableCollection } from '@gitpod/gitpod-protocol/lib/util/disposable';
