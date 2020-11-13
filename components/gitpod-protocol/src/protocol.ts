@@ -87,6 +87,7 @@ export namespace User {
 export interface AdditionalUserData {
     platforms?: UserPlatform[];
     emailNotificationSettings?: EmailNotificationSettings;
+    experimentalFeatures?: boolean;
     ideSettings?: IDESettings;
 }
 
