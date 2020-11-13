@@ -5,7 +5,6 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import { injectable } from "inversify";
 import { listen as doListen, Logger, ConsoleLogger } from "vscode-ws-jsonrpc";
 import { JsonRpcProxyFactory, JsonRpcProxy } from "../proxy-factory";
 import { ConnectionHandler } from "../handler";
@@ -15,7 +14,6 @@ export interface WebSocketOptions {
     onerror?: (event: Event) => void;
 }
 
-@injectable()
 export class WebSocketConnectionProvider {
 
     /**

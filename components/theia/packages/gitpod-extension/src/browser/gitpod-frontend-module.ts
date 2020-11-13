@@ -18,7 +18,6 @@ import { TerminalWidget } from "@theia/terminal/lib/browser/base/terminal-widget
 import { GitpodTerminalWidget } from "./gitpod-terminal-widget";
 import { GitpodInfoService, gitpodInfoPath } from "../common/gitpod-info";
 import { GitpodServiceProvider } from "./gitpod-service-provider";
-import { GitpodService, GitpodServiceImpl } from "@gitpod/gitpod-protocol/lib/gitpod-service";
 import { GitpodUiContribution } from "./gitpod-ui-contribution";
 import { CommandContribution, MenuContribution, MenuModelRegistry } from "@theia/core";
 import { GitpodAccountInfoDialog, GitpodAccountInfoDialogProps } from "./gitpod-account-info";
@@ -141,7 +140,6 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(GitpodAccountInfoDialogProps).toConstantValue({ title: 'Account' });
 
     bind(GitpodServiceProvider).toSelf().inSingletonScope();
-    bind(GitpodService).to(GitpodServiceImpl).inSingletonScope();
 
     rebind(StorageService).to(GitpodLocalStorageService).inSingletonScope();
     rebind(WorkspaceService).to(GitpodWorkspaceService).inSingletonScope();

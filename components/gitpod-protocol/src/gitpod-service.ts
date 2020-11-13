@@ -9,7 +9,6 @@ import { User, WorkspaceInfo, WorkspaceCreationResult, UserMessage, WorkspaceIns
     Token, UserEnvVarValue, ResolvePluginsParams, PreparePluginUploadParams,
     ResolvedPlugins, Configuration, InstallPluginsParams, UninstallPluginParams, UserInfo, GitpodTokenType, GitpodToken, AuthProviderEntry } from './protocol';
 import { JsonRpcProxy, JsonRpcServer } from './messaging/proxy-factory';
-import { injectable, inject } from 'inversify';
 import { Disposable } from 'vscode-jsonrpc';
 import { HeadlessLogEvent } from './headless-workspace-log';
 import { WorkspaceInstance, WorkspaceInstancePort } from './workspace-instance';
@@ -286,15 +285,13 @@ export class GitpodCompositeClient<Client extends GitpodClient> implements Gitpo
     }
 }
 
-export const GitpodService = Symbol('GitpodService');
 export type GitpodService = GitpodServiceImpl<GitpodClient, GitpodServer>
 
-@injectable()
 export class GitpodServiceImpl<Client extends GitpodClient, Server extends GitpodServer> {
 
     protected compositeClient = new GitpodCompositeClient<Client>();
 
-    constructor(@inject(GitpodServer) public readonly server: JsonRpcProxy<Server>) {
+    constructor(public readonly server: JsonRpcProxy<Server>) {
         server.setClient(this.compositeClient);
     }
 
