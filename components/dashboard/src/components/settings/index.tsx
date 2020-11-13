@@ -13,12 +13,12 @@ import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url'
 import { ResponseError } from 'vscode-jsonrpc';
 
 import { UserSettings } from '../user-settings';
-import { IDESettings } from '../ide-settings';
 import { DeleteAccountView } from '../delete-account-view';
 import Paper from '@material-ui/core/Paper';
 import { ApiTokenView } from '../api-tokens';
 import { AuthProviders } from '../auth-providers';
 import { User, GitpodService } from '@gitpod/gitpod-protocol';
+import { FeatureSettings } from '../feature-settings';
 
 interface SettingsProps {
     service: GitpodService;
@@ -69,15 +69,17 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
                 <Paper style={{ padding: 20 }}>
                     <h3>Email Settings</h3>
                     <UserSettings service={this.props.service} user={this.state.user} />
-                    {this.state.user && this.state.hasIDESettingsPermission && <React.Fragment>
-                        <h3 style={{ marginTop: 50 }}>IDE Settings</h3>
-                        <IDESettings service={this.props.service} user={this.state.user} />
-                    </React.Fragment>}
+                    
                     <h3 style={{ marginTop: 50 }}>Environment Variables</h3>
                     <UserEnvVars service={this.props.service} user={this.state.user} />
                     <ApiTokenView service={this.props.service} />
+                    
                     <h3 style={{ marginTop: 50 }}>Git Provider Integrations</h3>
                     <AuthProviders service={this.props.service} user={this.state.user} mode="user-settings" />
+
+                    <h3 style={{ marginTop: 50 }}>Feature Preview</h3>
+                    { this.state.user && <FeatureSettings service={this.props.service} user={this.state.user} /> }
+
                     <DeleteAccountView service={this.props.service} />
                 </Paper>
             </ApplicationFrame>
