@@ -19,28 +19,7 @@ export async function create(): Promise<GitpodServiceClient> {
     }
 
     //#region info
-    let info = await window.gitpod.service.server.getWorkspace(workspaceUrl.workspaceId);
-    const onDidChangeEmitter = new Emitter<void>();
-
-    async function updateInfo(): Promise<void> {
-        info = await window.gitpod.service.server.getWorkspace(info.workspace.id);
-        onDidChangeEmitter.fire();
-    }
-    updateInfo();
-    window.gitpod.service.server.onDidOpenConnection(updateInfo);
-    window.document.addEventListener('visibilitychange', async () => {
-        if (window.document.visibilityState === 'visible') {
-            updateInfo();
-        }
-    });
-    window.gitpod.service.registerClient({
-        onInstanceUpdate: instance => {
-            if (instance.workspaceId === info.workspace.id) {
-                info.latestInstance = instance;
-                onDidChangeEmitter.fire();
-            }
-        }
-    });
+    const listener = await window.gitpod.service.listenToInstance(workspaceUrl.workspaceId);
     //#endregion
 
     //#region auth
@@ -68,13 +47,13 @@ export async function create(): Promise<GitpodServiceClient> {
             rejectAuth!(e);
         }
     }
-    if (info.latestInstance) {
-        auth(info.latestInstance.id);
+    if (listener.info.latestInstance) {
+        auth(listener.info.latestInstance.id);
     } else {
-        const authListener = onDidChangeEmitter.event(() => {
-            if (info.latestInstance) {
+        const authListener = listener.onDidChange(() => {
+            if (listener.info.latestInstance) {
                 authListener.dispose();
-                auth(info.latestInstance.id);
+                auth(listener.info.latestInstance.id);
             }
         });
     }
@@ -82,7 +61,7 @@ export async function create(): Promise<GitpodServiceClient> {
 
     return {
         get auth() { return _auth },
-        get info() { return info },
-        onDidChangeInfo: onDidChangeEmitter.event
+        get info() { return listener.info },
+        onDidChangeInfo: listener.onDidChange
     }
 }

@@ -42,7 +42,6 @@ import { GitpodMarkdownPreviewHandler } from "./user-message/GitpodMarkdownPrevi
 import { GitpodPreviewLinkNormalizer } from "./user-message/GitpodPreviewLinkNormalizer";
 import { PreviewLinkNormalizer } from "@theia/preview/lib/browser/preview-link-normalizer";
 import { GitpodMenuModelRegistry } from "./gitpod-menu";
-import { WaitForContentContribution } from './waitfor-content-contribution';
 import { GitpodWebSocketConnectionProvider } from './gitpod-ws-connection-provider';
 import { GitHostWatcher } from './git-host-watcher';
 import { GitpodExternalUriService } from './gitpod-external-uri-service';
@@ -206,8 +205,6 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
         const provider = ctx.container.get(WebSocketConnectionProvider);
         return provider.createProxy<GitpodInfoService>(gitpodInfoPath);
     });
-
-    bind(FrontendApplicationContribution).to(WaitForContentContribution).inSingletonScope();
 
     bind(FrontendApplicationContribution).to(GitHostWatcher).inSingletonScope();
 
