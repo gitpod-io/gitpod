@@ -46,6 +46,7 @@ async function build(context, version) {
     const publishRelease = "publish-release" in buildConfig;
     const previewWithHttps = "https" in buildConfig;
     const workspaceFeatureFlags = (buildConfig["ws-feature-flags"] || "").split(",").map(e => e.trim())
+    const dynamicCPULimits = "dynamic-cpu-limits" in buildConfig;
     const withInstaller = "with-installer" in buildConfig || masterBuild;
     werft.log("job config", JSON.stringify({
         buildConfig,
@@ -56,6 +57,7 @@ async function build(context, version) {
         publishRelease,
         previewWithHttps,
         workspaceFeatureFlags,
+        dynamicCPULimits,
     }));
 
     /**
@@ -76,7 +78,7 @@ async function build(context, version) {
     if (publishRelease) {
         exec(`gcloud auth activate-service-account --key-file "/mnt/secrets/gcp-sa-release/service-account.json"`);
         exec(`leeway build --werft=true -Dversion=${version} -DremoveSources=false -DimageRepoBase=eu.gcr.io/gitpod-io/self-hosted`, buildEnv);
-        publishHelmChart("eu.gcr.io/gitpod-io/self-hosted")
+        publishHelmChart("eu.gcr.io/gitpod-io/self-hosted");
         exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
     }
     // gitTag(`build/${version}`);
@@ -96,7 +98,7 @@ async function build(context, version) {
         werft.phase("deploy", "not deploying");
         console.log("no-preview is set");
     } else {
-        await deployToDev(version, previewWithHttps, workspaceFeatureFlags);
+        await deployToDev(version, previewWithHttps, workspaceFeatureFlags, dynamicCPULimits);
     }
 }
 
@@ -104,7 +106,7 @@ async function build(context, version) {
 /**
  * Deploy dev
  */
-async function deployToDev(version, previewWithHttps, workspaceFeatureFlags) {
+async function deployToDev(version, previewWithHttps, workspaceFeatureFlags, dynamicCPULimits) {
     werft.phase("deploy", "deploying to dev");
     const destname = version.split(".")[0];
     const namespace = `staging-${destname}`;
@@ -221,6 +223,9 @@ async function deployToDev(version, previewWithHttps, workspaceFeatureFlags) {
     workspaceFeatureFlags.forEach((f, i) => {
         flags+=` --set components.server.defaultFeatureFlags[${i}]='${f}'`
     })
+    if (dynamicCPULimits) {
+        flags+=` -f ../.werft/values.variant.cpuLimits.yaml`;
+    }
     // const pathToVersions = `${shell.pwd().toString()}/versions.yaml`;
     // if (fs.existsSync(pathToVersions)) {
     //     flags+=` -f ${pathToVersions}`;

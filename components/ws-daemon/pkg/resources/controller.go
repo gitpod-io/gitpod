@@ -127,7 +127,6 @@ func NewController(containerID, instanceID string, cgroupPath string, opts ...Co
 		InstanceID:     instanceID,
 		SamplingPeriod: 10 * time.Second,
 		ControlPeriod:  15 * time.Minute,
-		cpuLimiter:     FixedLimiter(7000),
 		Prometheus:     prometheus.DefaultRegisterer,
 	}
 	for _, o := range opts {
@@ -196,6 +195,10 @@ func (gov *Controller) Start(ctx context.Context) {
 const userHZ = 100
 
 func (gov *Controller) controlCPU() {
+	if gov.cpuLimiter == nil {
+		return
+	}
+
 	sample, err := gov.cfsController.GetUsage()
 	if xerrors.Is(err, os.ErrNotExist) {
 		// the cgroup doesn't exist (yet or anymore). That's ok.

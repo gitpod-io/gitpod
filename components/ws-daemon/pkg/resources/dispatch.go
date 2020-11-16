@@ -82,7 +82,7 @@ func (d *DispatchListener) WorkspaceAdded(ctx context.Context, ws *dispatch.Work
 		return xerrors.Errorf("cannot start governer: %w", err)
 	}
 
-	var cpuLimiter ResourceLimiter = &ClampingBucketLimiter{Buckets: d.Config.CPUBuckets}
+	var cpuLimiter ResourceLimiter
 	if fixedLimit, ok := ws.Pod.Annotations[wsk8s.CPULimitAnnotation]; ok && fixedLimit != "" {
 		var scaledLimit int64
 		limit, err := resource.ParseQuantity(fixedLimit)
@@ -92,6 +92,11 @@ func (d *DispatchListener) WorkspaceAdded(ctx context.Context, ws *dispatch.Work
 		// we need to scale from milli jiffie to jiffie - see governer code for details
 		scaledLimit = limit.MilliValue() / 10
 		cpuLimiter = FixedLimiter(scaledLimit)
+	} else if len(d.Config.CPUBuckets) > 0 {
+		cpuLimiter = &ClampingBucketLimiter{Buckets: d.Config.CPUBuckets}
+	} else {
+		// There's no limiter configured - neither buckets nor a fixed one.
+		// We'll leave cpuLimiter nil which effectively disables the CPU limiting.
 	}
 
 	log := log.WithFields(wsk8s.GetOWIFromObject(&ws.Pod.ObjectMeta)).WithField("containerID", ws.ContainerID)

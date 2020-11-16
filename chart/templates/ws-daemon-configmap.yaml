@@ -42,32 +42,15 @@ daemon:
         size: 70000
   resources:
     cgroupBasePath: "/mnt/node-cgroups"
-    # We don't split our actual budget equally amongst participants. Instead we assume we have a maximum
-    # number of over-consumers. We hand out CPU in buckets:
-    #   three minutes of 5 CPUs: 5 [numCPU] * 100 [jiffies/sec] * (3 * 60) [seconds] = 90000
-    #   five minutes  of 4 CPUs: 4 [numCPU] * 100 [jiffies/sec] * (5 * 60) [seconds] = 120000
-    #   remainder of 2 CPUs where a user has to stay below sustained use of 1.8 CPUs for 5 minutes:
-    #                          1.8 [numCPU] * 100 [jiffies/sec] * (5 * 60) [seconds] = 54000
-    # 
-    # Compared to the actual budget, this is severe overbooking:
-    # budget is (numCPU * overbookingFactor * jiffies/sec * controlPeriod[sec]) / numWS = [jiffies / workspace]
-    #           (16     * 1                 * 100         * (15 * 60))          / 25    = 57600
-    #
-    # We express everything in jiffies/sec where 1 jiffie is 1% of a CPU core.
     cpuBuckets: 
-      - budget: 90000
-        limit: 500
-      - budget: 120000
-        limit: 400
-      - budget: 54000
-        limit: 200
+{{ .Values.workspaceSizing.dynamic.cpu.buckets | toYaml | indent 6 }}
     processPriorities:
       supervisor: 0
       theia: 5
       shell: 6
       default: 10
-    controlPeriod: "15m"
-    samplingPeriod: "10s"
+    controlPeriod: {{ .Values.workspaceSizing.dynamic.cpu.controlPeriod | quote }}
+    samplingPeriod: {{ .Values.workspaceSizing.dynamic.cpu.samplingPeriod | quote }}
   hosts:
     enabled: true
     nodeHostsFile: "/mnt/hosts"
