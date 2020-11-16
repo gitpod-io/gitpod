@@ -64,9 +64,9 @@ export class UserController {
                 return;
             }
 
-            // Make sure, the session is stored before we eagerly redirect to GitHub/GitLab/...
+            // Make sure, the session is stored before we initialize the OAuth flow
             try {
-                await retryAsync(3, saveSession(req));
+                await saveSession(req);
             } catch (error) {
                 log.error(`Login failed due to session save error; redirecting to /sorry`, { req, error, clientInfo });
                 res.redirect(this.getSorryUrl("Login failed 🦄 Please try again"));
@@ -76,7 +76,7 @@ export class UserController {
             this.authenticator.authenticate(req, res, next);
         });
         router.get("/authorize", (req: express.Request, res: express.Response, next: express.NextFunction) => {
-            if (!req.user) {
+            if (!User.is(req.user)) {
                 res.sendStatus(401);
                 return;
             }
@@ -284,7 +284,7 @@ export class UserController {
 
             // Make sure, the session is stored
             try {
-                await retryAsync(3, saveSession(req));
+                await saveSession(req);
             } catch (error) {
                 log.error({ sessionId: req.sessionID }, `(TOS) Login failed due to session save error; redirecting to /sorry`, { req, error, clientInfo });
                 res.redirect(this.getSorryUrl("Login failed 🦄 Please try again"));
@@ -303,11 +303,6 @@ export class UserController {
 
     protected getSorryUrl(message: string) {
         return this.env.hostUrl.with({ pathname: '/sorry', hash: message }).toString();
-    }
-
-    getUser(req: express.Request, res: express.Response, next: express.NextFunction): any {
-        res.send(req.user);
-        next();
     }
 
     protected async augmentLoginRequest(req: express.Request) {
@@ -377,16 +372,4 @@ export class UserController {
             }
         }
     }
-}
-
-async function retryAsync(count: number, promise: Promise<any>) {
-    let lastError;
-    for (let i = 0; i < count; i++) {
-        try {
-            return await promise;
-        } catch (error) {
-            lastError = error;
-        }
-    }
-    throw lastError;
 }

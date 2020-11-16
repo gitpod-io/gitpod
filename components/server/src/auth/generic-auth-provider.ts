@@ -28,6 +28,33 @@ import { BlockedUserFilter } from "./blocked-user-filter";
 import { AuthProviderService } from './auth-provider-service';
 import { AuthErrorHandler } from './auth-error-handler';
 
+/**
+ * This is a generic implementation of OAuth2-based AuthProvider.
+ * --
+ * The main entrypoints go along the phases of the OAuth2 Authorization Code Flow:  
+ * 
+ * 1. `authorize` – this is called by the `Authenticator` to handle login/authorization requests.
+ * 
+ *   The OAuth2 library under the hood will redirect send a redirect response to initialize the OAuth2 flow with the 
+ *   authorization service.
+ * 
+ *   The continuation of the flow is an expected incoming request on the callback path. Between those two phases the 
+ *   AuthProvider needs to persist an intermediate state in order to preserve the original parameters.
+ * 
+ * 2. `callback` – the `Authenticator` handles requests matching the `/auth/*` paths and delegates to the responsible AuthProvider.
+ *  
+ *   The complex operation combines the token exchanges (which happens under the hood) with unverified authentication of
+ *   the user.
+ * 
+ *   Once `access_token` is provided, the `readAuthUserSetup` is executed to query the specific auth server APIs and 
+ *   obtain the information needed to create new users or identify existing users. 
+ * 
+ * 3. `refreshToken` – the `TokenService` may call this if the token aquired by this AuthProvider.
+ * 
+ *   The AuthProvider requests to renew an `access_token` if supported, i.e. a `refresh_token` is provided in the original
+ *   token response.
+ *  
+ */
 @injectable()
 export class GenericAuthProvider implements AuthProvider {
 
@@ -41,10 +68,13 @@ export class GenericAuthProvider implements AuthProvider {
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
     @inject(AuthErrorHandler) protected readonly authErrorHandler: AuthErrorHandler;
 
+    protected strategy: GenericOAuth2Strategy;
+
     @postConstruct()
     init() {
-        this.initPassportStrategy();
+        this.strategy = new GenericOAuth2Strategy(this.strategyName, { ...this.defaultStrategyOptions }, this.verify.bind(this));
         this.initAuthUserSetup();
+        log.info(`(${this.strategyName}) Initialized.`, { defaultStrategyOptions: this.defaultStrategyOptions });
     }
 
     get info(): AuthProviderInfo {
@@ -212,65 +242,104 @@ export class GenericAuthProvider implements AuthProvider {
         return new URL(this.oauthConfig.callBackUrl).pathname;
     }
 
+    /**
+     * Once the auth service and the user agreed to continue with the OAuth2 flow, this callback function
+     * initializes the continuation of the auth process:
+     * 
+     * - (1) `passport.authenticate` is called to handle the token exchange; once done, the following happens...
+     * - (2) the so called "verify" function is called by passport, which is expected to find/create/update 
+     *   user instances after requesting user information from the auth service.
+     * - (3) the result of the "verify" function is first handled by passport internally and then passed to the
+     *   callback from the `passport.authenticate` call (1) 
+     */
     readonly callback: express.RequestHandler = (request, response, next) => {
-        // Once the 3rd party Auth Service is done it will redirect user's browser to the callback URL which is handled here:
-
+        const authProviderId = this.authProviderId;
         const strategyName = this.strategyName;
         const clientInfo = getRequestingClientInfo(request);
         if (response.headersSent) {
             log.warn(`(${strategyName}) Callback called repeatedly.`, { request, clientInfo });
             return;
         }
+        log.info(`(${strategyName}) OAuth2 callback call. `, { clientInfo, authProviderId, requestUrl: request.originalUrl });
+
+        const isAlreadyLoggedIn = request.isAuthenticated() && User.is(request.user);
         const authBag = AuthBag.get(request.session);
+        if (isAlreadyLoggedIn) {
+            if (!authBag || authBag.requestType === "authenticate") {
+                log.warn({}, `(${strategyName}) User is already logged in. No auth info provided. Redirecting to dashboard.`, { request, clientInfo });
+                response.redirect(this.env.hostUrl.asDashboard().toString());
+                return;
+            }
+        }
+
+        // assert additional infomation is attached to current session
         if (!authBag) {
-            log.error({}, `(${strategyName}) No session found during auth callback.`, { request, 'login-flow': true, clientInfo });
+            log.error({}, `(${strategyName}) No session found during auth callback.`, { request, clientInfo });
             response.redirect(this.getSorryUrl(`Please allow Cookies in your browser and try to log in again.`));
             return;
         }
-        const authProviderId = this.authProviderId;
-        const defaultLogPayload = { "authorize-flow": authBag.requestType === "authorize", "login-flow": authBag.requestType === "authenticate", clientInfo, authProviderId };
-        const requestUrl = new URL(formatURL({ protocol: request.protocol, host: request.get('host'), pathname: request.originalUrl }));
-        const error = requestUrl.searchParams.get("error");
+
+        const defaultLogPayload = { authBag, clientInfo, authProviderId };
+
+        // check OAuth2 errors
+        const error = new URL(formatURL({ protocol: request.protocol, host: request.get('host'), pathname: request.originalUrl })).searchParams.get("error");
         if (error) { // e.g. "access_denied"
-            log.info(`(${strategyName}) Callback with error.`, { ...defaultLogPayload, requestUrl });
-            response.redirect(this.getSorryUrl(`Authorization was cancelled. (${error})`));
+            log.info(`(${strategyName}) Received OAuth2 error, thus redirecting to /sorry (${error})`, { ...defaultLogPayload, requestUrl: request.originalUrl });
+            response.redirect(this.getSorryUrl(`OAuth2 error. (${error})`));
             return;
         }
 
-        if (authBag.requestType === 'authorize') {
-            // Authorization branch
-            passport.authenticate(this.strategy as any, (err, user: User | undefined) => {
-                this.authorizeCallbackHandler(err, user, authBag, response, defaultLogPayload);
-            })(request, response, next);
-        } else {
-            // Login branch
-            passport.authenticate(this.strategy as any, async (err, user: User | undefined) => {
-                await this.loginCallbackHandler(err, user, authBag, request, response, defaultLogPayload);
-            })(request, response, next);
-        }
+        const passportAuthHandler = passport.authenticate(this.strategy as any, async (...[err, user, info]: Parameters<OAuth2Strategy.VerifyCallback>) => {
+            /*
+             * (3) this callback function is called after the "verify" function as the final step in the authentication process in passport.
+             * 
+             * - the `err` parameter may include any error raised from the "verify" function call.
+             * - the `user` parameter may include the accepted user instance.
+             * - the `info` parameter may include additional info to the process.
+             * 
+             * given that everything relevant to the state is already processed, this callback is supposed to finally handle the
+             * incoming `/callback` request:
+             * 
+             * - redirect to handle/display errors
+             * - redirect to terms acceptance request page
+             * - call `request.login` on new sessions
+             * - redirect to `returnTo` (from request parameter)
+             */
+
+            if (authBag.requestType === 'authenticate') {
+                await this.loginCallbackHandler(authBag, request, response, defaultLogPayload, err, user, info);
+            } else {
+                await this.authorizeCallbackHandler(authBag, request, response, defaultLogPayload, err, user, info);
+            }
+        });
+        passportAuthHandler(request, response, next);
     }
-    protected authorizeCallbackHandler(err: any, user: User | undefined, authBag: AuthBag, response: express.Response, logPayload: object) {
+    protected async authorizeCallbackHandler(authBag: AuthBag, request: express.Request, response: express.Response, logPayload: object, ...[err, user, info]: Parameters<OAuth2Strategy.VerifyCallback>) {
         const { id, verified, ownerId } = this.config;
         const strategyName = this.strategyName;
-        const context: LogContext = user ? { userId: user.id } : {};
+        const context: LogContext = User.is(user) ? { userId: user.id } : {};
         log.info(context, `(${strategyName}) Callback (authorize)`, { ...logPayload });
-        if (err || !user) {
+        if (err || !User.is(user)) {
             const message = this.isOAuthError(err) ?
                 'OAuth Error. Please try again.' : // this is a 5xx responsefrom
                 'Authorization failed. Please try again.'; // this might be a race of our API calls
-            log.error(context, `(${strategyName}) Redirect to /sorry (OAuth Error)`, err, { ...logPayload, err });
+            log.error(context, `(${strategyName}) Redirect to /sorry from authorizeCallbackHandler`, { ...logPayload, err });
             response.redirect(this.getSorryUrl(message));
             return;
         }
-        if (!verified && user.id === ownerId) {
-            this.authProviderService.markAsVerified({ id, ownerId });
+        if (!verified && User.is(user) && user.id === ownerId) {
+            try {
+                await this.authProviderService.markAsVerified({ id, ownerId });
+            } catch (error) {
+                log.error(context, `(${strategyName}) Redirect to /sorry (OAuth Error)`, { ...logPayload, err });
+            }
         }
         response.redirect(authBag.returnTo);
     }
-    protected async loginCallbackHandler(err: any, user: User | undefined, authBag: AuthBag, request: express.Request, response: express.Response, logPayload: object) {
+    protected async loginCallbackHandler(authBag: AuthBag, request: express.Request, response: express.Response, logPayload: object, ...[err, user, info]: Parameters<OAuth2Strategy.VerifyCallback>) {
         const { id, verified, ownerId } = this.config;
         const strategyName = this.strategyName;
-        const context: LogContext = user ? { userId: user.id } : {};
+        const context: LogContext = User.is(user) ? { userId: user.id } : {};
         log.info(context, `(${strategyName}) Callback (login)`, { ...logPayload });
 
         const handledError = await this.authErrorHandler.check(err);
@@ -291,24 +360,24 @@ export class GenericAuthProvider implements AuthProvider {
             if (this.isOAuthError(err)) {
                 message = 'OAuth Error. Please try again.'; // this is a 5xx response from authorization service
             }
-            log.error(context, `(${strategyName}) Redirect to /sorry (OAuth Error)`, err, { ...logPayload, err });
+            log.error(context, `(${strategyName}) Redirect to /sorry from loginCallbackHandler`, err, { ...logPayload, err });
             response.redirect(this.getSorryUrl(message));
             return;
         }
-        if (!user) {
+        if (!User.is(user)) {
             log.error(context, `(${strategyName}) Redirect to /sorry (NO user)`, { request, ...logPayload });
             response.redirect(this.getSorryUrl('Login with failed.'));
             return;
         }
 
         const userCount = await this.userDb.getUserCount();
-        if (userCount === 1) {
+        if (User.is(user) && userCount === 1) {
             // assuming the single user was just created, we can mark the user as admin
             user.rolesOrPermissions = ['admin'];
             user = await this.userDb.storeUser(user);
 
             // we can now enable the first auth provider
-            if (this.config.builtin === false && !verified) {
+            if (this.config.builtin === false && !verified && User.is(user)) {
                 this.authProviderService.markAsVerified({ id, ownerId, newOwnerId: user.id });
             }
         }
@@ -325,7 +394,7 @@ export class GenericAuthProvider implements AuthProvider {
                 return;
             }
             let returnTo = authBag.returnTo;
-            const context: LogContext = user ? { userId: user.id } : {};
+            const context: LogContext = User.is(user) ? { userId: user.id } : {};
             if (authBag.elevateScopes) {
                 const elevateScopesUrl = this.env.hostUrl.withApi({
                     pathname: '/authorize',
@@ -344,16 +413,15 @@ export class GenericAuthProvider implements AuthProvider {
         });
     }
 
-    protected strategy: GenericOAuth2Strategy;
-    protected initPassportStrategy(): void {
-        const { defaultStrategyOptions, strategyName } = this;
-        log.info(`Auth strategy initialized (${strategyName})`, { defaultStrategyOptions });
-        this.strategy = new GenericOAuth2Strategy(strategyName, { ...defaultStrategyOptions },
-            async (req: express.Request, accessToken: string, refreshToken: string | undefined, tokenResponse: any, _profile: undefined, done: OAuth2Strategy.VerifyCallback) => {
-                await this.verify(req, accessToken, refreshToken, tokenResponse, _profile, done);
-            }
-        );
-    }
+    /**
+     * cf. (2) of `callback` function (a.k.a. `/callback` handler)
+     * 
+     * - `access_token` is provided
+     * - it's expected to fetch the user info (see `fetchAuthUserSetup`)
+     * - it's expected to handle the state persisted in the database in order to find/create/update the user instance
+     * - it's expected to identify missing requirements, e.g. missing terms acceptance
+     * - finally, it's expected to call `done` and provide the computed result in order to finalize the auth process
+     */
     protected async verify(req: express.Request, accessToken: string, refreshToken: string | undefined, tokenResponse: any, _profile: undefined, done: OAuth2Strategy.VerifyCallback) {
         const { strategyName } = this;
         const clientInfo = getRequestingClientInfo(req);
@@ -364,7 +432,7 @@ export class GenericAuthProvider implements AuthProvider {
             done(new Error("Invalid Auth Session!"));
             return;
         }
-        const defaultLogPayload = { "authorize-flow": authBag.requestType === "authorize", "login-flow": authBag.requestType === "authenticate", clientInfo, authProviderId };
+        const defaultLogPayload = { authBag, clientInfo, authProviderId };
         try {
             const tokenResponseObject = this.ensureIsObject(tokenResponse);
             const { authUser, blockUser, currentScopes, envVars } = await this.fetchAuthUserSetup(accessToken, tokenResponseObject);
@@ -548,7 +616,7 @@ export class GenericAuthProvider implements AuthProvider {
         }
     }
 
-    protected async createGhProxyIdentityOnDemand(user: User, ghIdentity: Identity) {
+    protected async createGhProxyIdentityOnDemand(user: User, originalIdentity: Identity) {
         const githubTokenValue = this.config.params && this.config.params.githubToken;
         if (!githubTokenValue) {
             return;
@@ -560,9 +628,9 @@ export class GenericAuthProvider implements AuthProvider {
 
         const githubIdentity: Identity = {
             authProviderId: publicGitHubAuthProviderId,
-            authId: `proxy-${ghIdentity.authId}`,
-            authName: `proxy-${ghIdentity.authName}`,
-            primaryEmail: ghIdentity.primaryEmail,
+            authId: `proxy-${originalIdentity.authId}`,
+            authName: `proxy-${originalIdentity.authName}`,
+            primaryEmail: originalIdentity.primaryEmail,
             readonly: false // THIS ENABLES US TO UPGRADE FROM PROXY TO REAL GITHUB ACCOUNT
         }
         // create a proxy identity to allow access GitHub API
@@ -606,19 +674,6 @@ export class GenericAuthProvider implements AuthProvider {
 
     protected getSorryUrl(message: string) {
         return this.env.hostUrl.with({ pathname: `/sorry`, hash: message }).toString();
-    }
-
-    protected retry = async <T>(fn: () => Promise<T>) => {
-        let lastError;
-        for (let i = 1; i <= 10; i++) {
-            try {
-                return await fn();
-            } catch (error) {
-                lastError = error;
-            }
-            await new Promise(resolve => setTimeout(resolve, 200));
-        }
-        throw lastError;
     }
 
 }
