@@ -26,6 +26,16 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+const (
+	// ring1ShutdownTimeout is the time ring1 gets between SIGTERM and SIGKILL.
+	// We do this to ensure we have enough time left for ring0 to clean up prior
+	// to receiving SIGKILL from the kubelet.
+	//
+	// This time must give ring1 enough time to shut down (see time budgets in supervisor.go),
+	// and to talk to ws-daemon within the terminationGracePeriod of the workspace pod.
+	ring1ShutdownTimeout = 20 * time.Second
+)
+
 var ring0Cmd = &cobra.Command{
 	Use:    "ring0",
 	Short:  "starts the supervisor ring0",
@@ -83,10 +93,49 @@ var ring0Cmd = &cobra.Command{
 			failed = true
 			return
 		}
-		sigc := sigproxy.ForwardAllSignals(context.Background(), cmd.Process.Pid)
-		defer sigproxysignal.StopCatch(sigc)
+
+		sigc := make(chan os.Signal, 128)
+		signal.Notify(sigc)
+		go func() {
+			defer func() {
+				// This is a 'just in case' fallback, in case we're racing the cmd.Process and it's become
+				// nil in the time since we checked.
+				err := recover()
+				if err != nil {
+					log.WithField("recovered", err).Error("recovered from panic")
+				}
+			}()
+
+			for {
+				sig := <-sigc
+				if sig != unix.SIGTERM {
+					cmd.Process.Signal(sig)
+					continue
+				}
+
+				cmd.Process.Signal(unix.SIGTERM)
+				time.Sleep(ring1ShutdownTimeout)
+				if cmd.Process == nil {
+					return
+				}
+
+				log.Warn("ring1 did not shut down in time - sending sigkill")
+				err = cmd.Process.Kill()
+				if err != nil {
+					log.WithError(err).Error("cannot kill ring1")
+				}
+				return
+			}
+		}()
 
 		err = cmd.Wait()
+		if eerr, ok := err.(*exec.ExitError); ok {
+			state, ok := eerr.ProcessState.Sys().(syscall.WaitStatus)
+			if ok && state.Signal() == syscall.SIGKILL {
+				log.Warn("ring1 was killed")
+				return
+			}
+		}
 		if err != nil {
 			log.WithError(err).Error("unexpected exit")
 			failed = true
