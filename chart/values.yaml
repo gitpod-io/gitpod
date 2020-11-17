@@ -409,7 +409,7 @@ components:
       kind: minio
       minio:
         endpoint: minio
-        port: "9000"
+        port: 9000
         accessKey: EXAMPLEvalue
         secretKey: Someone.Should/ReallyChangeThisKey!!
         tmpdir: /tmp
