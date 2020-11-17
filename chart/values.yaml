@@ -409,7 +409,8 @@ components:
     remoteStorage:
       kind: minio
       minio:
-        endpoint: minio:9000
+        endpoint: minio
+        port: 9000
         accessKey: EXAMPLEvalue
         secretKey: Someone.Should/ReallyChangeThisKey!!
         tmpdir: /tmp
