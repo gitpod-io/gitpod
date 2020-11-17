@@ -151,7 +151,7 @@ spec:
         - name: MINIO_END_POINT
           value: minio.{{ .Release.Namespace }}.svc.cluster.local
         - name: MINIO_PORT
-          value: "9000"
+          value: {{ .Values.minio.port | default "9000" }}
         - name: MINIO_ACCESS_KEY
           value: {{ .Values.minio.accessKey }}
         - name: MINIO_SECRET_KEY
