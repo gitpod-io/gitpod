@@ -87,7 +87,7 @@ export namespace User {
 export interface AdditionalUserData {
     platforms?: UserPlatform[];
     emailNotificationSettings?: EmailNotificationSettings;
-    experimentalFeatures?: boolean;
+    featurePreview?: boolean;
     ideSettings?: IDESettings;
 }
 
@@ -518,8 +518,7 @@ export interface WorkspaceConfig {
     gitConfig?: { [config: string]: string };
     github?: GithubAppConfig;
     vscode?: VSCodeConfig;
-    ide?: 'theia' | 'code' | string;
-
+    
     /**
      * Where the config object originates from.
      * 

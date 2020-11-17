@@ -139,20 +139,6 @@ export class ConfigProvider {
                 config._featureFlags = workspacePersistedFlags.filter(f => (user.featureFlags!.permanentWSFeatureFlags || []).includes(f));
             }
 
-            if (this.authService.hasPermission(user, 'ide-settings')) {
-                if (!config.ide) {
-                    config.ide = user.additionalData?.ideSettings?.defaultIde;
-                }
-                if (config.ide) {
-                    const mapped = this.env.ideImageAliases[config.ide];
-                    if (!!mapped) {
-                        config.ide = mapped;
-                    }
-                }
-            } else {
-                delete config.ide;
-            }
-
             return config;
         } catch (e) {
             TraceContext.logError({ span }, e);
@@ -168,7 +154,6 @@ export class ConfigProvider {
                 port: 3000
             }],
             tasks: [],
-            ide: this.env.ideDefaultImage,
             image: this.env.workspaceDefaultImage
         };
     }
