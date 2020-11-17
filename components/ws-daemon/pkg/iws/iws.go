@@ -124,6 +124,12 @@ type InWorkspaceServiceServer struct {
 
 // Start creates the syscall socket the IWS server listens on, and starts the gRPC server on it
 func (wbs *InWorkspaceServiceServer) Start() error {
+	// It's possible that the kubelet hasn't create the ServiceLocDaemon directory yet.
+	err := os.MkdirAll(wbs.Session.ServiceLocDaemon, 0755)
+	if err != nil && !os.IsExist(err) {
+		return xerrors.Errorf("cannot create ServiceLocDaemon: %w", err)
+	}
+
 	socketFN := filepath.Join(wbs.Session.ServiceLocDaemon, "daemon.sock")
 	if _, err := os.Stat(socketFN); err == nil {
 		// a former ws-daemon instance left their sockets laying around.
