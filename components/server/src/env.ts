@@ -45,6 +45,11 @@ export class Env extends AbstractComponentEnv {
         return res;
     })()
 
+    readonly previewFeatureFlags: NamedWorkspaceFeatureFlag[] = (() => {
+        const v = process.env.EXPERIMENTAL_FEATURE_FLAGS;
+        return !!v ? JSON.parse(v) : [];
+    })();
+
     readonly gitpodRegion: string = process.env.GITPOD_REGION || 'unknown';
 
     readonly sessionMaxAgeMs: number = Number.parseInt(process.env.SESSION_MAX_AGE_MS || '259200000' /* 3 days */, 10);

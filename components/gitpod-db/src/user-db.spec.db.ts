@@ -195,7 +195,8 @@ namespace TestData {
             conditions: {},
         },
         configuration: {
-            theiaVersion: "unknown"
+            theiaVersion: "unknown",
+            ideImage: "unknown"
         },
         deleted: false
     };

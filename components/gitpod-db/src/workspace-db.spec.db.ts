@@ -54,7 +54,8 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
             conditions: {},
         },
         configuration: {
-            theiaVersion: "unknown"
+            theiaVersion: "unknown",
+            ideImage: "unknown"
         },
         deleted: false
     };
@@ -73,7 +74,8 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
             conditions: {},
         },
         configuration: {
-            theiaVersion: "unknown"
+            theiaVersion: "unknown",
+            ideImage: "unknown"
         },
         deleted: false
     };
