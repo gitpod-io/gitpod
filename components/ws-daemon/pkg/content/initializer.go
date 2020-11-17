@@ -62,7 +62,7 @@ func collectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps stora
 			return nil, xerrors.Errorf("cannot find snapshot: %w", err)
 		}
 
-		rc[storage.DefaultBackup] = *info
+		rc[si.Snapshot] = *info
 	}
 	if si := initializer.GetPrebuild(); si != nil && si.Prebuild != nil {
 		bkt, obj, err := storage.ParseSnapshotName(si.Prebuild.Snapshot)
@@ -74,7 +74,7 @@ func collectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps stora
 			return nil, xerrors.Errorf("cannot find prebuild: %w", err)
 		}
 
-		rc[storage.DefaultBackup] = *info
+		rc[si.Prebuild.Snapshot] = *info
 	}
 
 	return rc, nil
