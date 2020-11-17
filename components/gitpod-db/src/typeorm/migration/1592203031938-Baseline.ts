@@ -60,7 +60,7 @@ export class Baseline1592203031938 implements MigrationInterface {
                     { url: 'https://github.com/gitpod-io/django-locallibrary-tutorial', description: '**Python** - Tutorial "Local Library" website written in Django', priority: 10 },
                     { url: 'https://github.com/gitpod-io/gs-spring-boot.git', description: '**Java** - Building an Application with Spring Boot', priority: 9 },
                     { url: 'https://github.com/gitpod-io/symfony-demo.git', description: '**PHP** - Symfony Demo Application', priority: 5 },
-                    { url: 'https://github.com/theia-ide/theia.git', description: '**Theia** - Deep dive into Gitpods open-source IDE. (TypeScript)', priority: 4 }
+                    { url: 'https://github.com/theia-ide/theia.git', description: "**Typescript** - Deep dive into Gitpod's open-source IDE, Theia.", priority: 4 }
                 ]
                 const values = entries.map(e => `('${e.url}', '${e.description}', ${e.priority})`).join(",");
                 await queryRunner.query(`INSERT IGNORE INTO d_b_repository_white_list (url, description, priority) VALUES ${values}`);
