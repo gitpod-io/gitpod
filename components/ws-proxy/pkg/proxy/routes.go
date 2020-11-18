@@ -164,8 +164,6 @@ func (ir *ideRoutes) HandleSupervisorFrontendRoute(route *mux.Route) {
 		h.Transport = &blobserveTransport{
 			transport: h.Transport,
 			Config:    ir.Config.Config,
-			// redirects cannot be cached since the supervisor image can be changed between workspace restarts
-			redirectPermanent: false,
 			resolveImage: func(req *http.Request) string {
 				var (
 					image = ir.Config.Config.WorkspacePodConfig.SupervisorImage
@@ -200,8 +198,6 @@ func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 		h.Transport = &blobserveTransport{
 			transport: h.Transport,
 			Config:    ir.Config.Config,
-			// redirects can be cached since the ide image is fixed and cannot be changed between workspace restarts
-			redirectPermanent: true,
 			resolveImage: func(req *http.Request) string {
 				info := getWorkspaceInfoFromContext(req.Context())
 				if info == nil {
@@ -211,7 +207,7 @@ func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 				return info.IDEImage
 			},
 		}
-	}, withLongTermCaching(), withHTTPErrorHandler(workspaceIDEPass)))
+	}, withHTTPErrorHandler(workspaceIDEPass)))
 }
 
 func (ir *ideRoutes) handleRootWithoutBlobserve(route *mux.Route) {
@@ -500,10 +496,9 @@ func removeSensitiveCookies(cookies []*http.Cookie, domain string) []*http.Cooki
 
 // region blobserve transport
 type blobserveTransport struct {
-	transport         http.RoundTripper
-	Config            *Config
-	resolveImage      func(req *http.Request) string
-	redirectPermanent bool
+	transport    http.RoundTripper
+	Config       *Config
+	resolveImage func(req *http.Request) string
 }
 
 func (t *blobserveTransport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
@@ -599,9 +594,6 @@ func (t *blobserveTransport) redirect(image string, req *http.Request) (*http.Re
 	header.Set("Content-Type", "text/html; charset=utf-8")
 
 	code := http.StatusSeeOther
-	if t.redirectPermanent {
-		code = http.StatusPermanentRedirect
-	}
 	var (
 		status  = http.StatusText(code)
 		content = []byte("<a href=\"" + location + "\">" + status + "</a>.\n\n")

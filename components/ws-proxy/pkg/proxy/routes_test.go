@@ -224,13 +224,12 @@ func TestRoutes(t *testing.T) {
 				addHostHeader,
 			),
 			Expectation: Expectation{
-				Status: http.StatusPermanentRedirect,
+				Status: http.StatusSeeOther,
 				Header: http.Header{
-					"Cache-Control": {"public, max-age=31536000"},
-					"Content-Type":  {"text/html; charset=utf-8"},
-					"Location":      {"https://gitpod.io/blobserve/gitpod-io/ide:latest/__files__/"},
+					"Content-Type": {"text/html; charset=utf-8"},
+					"Location":     {"https://gitpod.io/blobserve/gitpod-io/ide:latest/__files__/"},
 				},
-				Body: "<a href=\"https://gitpod.io/blobserve/gitpod-io/ide:latest/__files__/\">Permanent Redirect</a>.\n\n",
+				Body: "<a href=\"https://gitpod.io/blobserve/gitpod-io/ide:latest/__files__/\">See Other</a>.\n\n",
 			},
 		},
 		{
@@ -243,7 +242,6 @@ func TestRoutes(t *testing.T) {
 			Expectation: Expectation{
 				Status: http.StatusOK,
 				Header: http.Header{
-					"Cache-Control":  {"public, max-age=31536000"},
 					"Content-Length": {"38"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
 				},
@@ -260,7 +258,6 @@ func TestRoutes(t *testing.T) {
 			Expectation: Expectation{
 				Status: http.StatusOK,
 				Header: http.Header{
-					"Cache-Control":  {"public, max-age=31536000"},
 					"Content-Length": {"38"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
 				},
