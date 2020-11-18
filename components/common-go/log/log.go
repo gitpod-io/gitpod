@@ -6,6 +6,8 @@ package log
 
 import (
 	"fmt"
+
+	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -55,11 +57,13 @@ func Init(service, version string, json, verbose bool) {
 				},
 			},
 		})
-		Log.Info("enabled JSON logging")
+	} else {
+		log.SetFormatter(&logrus.TextFormatter{})
 	}
 	if verbose {
 		log.SetLevel(log.DebugLevel)
-		Log.Info("enabled verbose logging")
+	} else {
+		log.SetLevel(log.InfoLevel)
 	}
 }
 
