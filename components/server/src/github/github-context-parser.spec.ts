@@ -190,7 +190,7 @@ class TestGithubContextParser {
     }
 
     @test public async testTreeContext_04() {
-        const result = await this.parser.handle({}, this.user, 'https://github.com/TypeFox/gitpod-test-repo/blob/nametest/src/src/server.ts');
+        const result = await this.parser.handle({}, this.user, 'https://github.com/gitpod-io/gitpod-test-repo/blob/nametest/src/src/server.ts');
         expect(result).to.deep.include({
             "ref": "nametest/src",
             "refType": "branch",
@@ -200,23 +200,23 @@ class TestGithubContextParser {
                 "host": "github.com",
                 "owner": "TypeFox",
                 "name": "gitpod-test-repo",
-                "cloneUrl": "https://github.com/TypeFox/gitpod-test-repo.git",
+                "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
                 "private": true
             },
-            "title": "TypeFox/gitpod-test-repo - nametest/src"
+            "title": "gitpod-io/gitpod-test-repo - nametest/src"
         })
     }
 
     @test public async testTreeContext_05() {
-        const result = await this.parser.handle({}, this.user, 'https://github.com/TypeFox/gitpod-test-repo/tree/499efbbcb50e7e6e5e2883053f72a34cd5396be3/folder1/folder2');
+        const result = await this.parser.handle({}, this.user, 'https://github.com/gitpod-io/gitpod-test-repo/tree/499efbbcb50e7e6e5e2883053f72a34cd5396be3/folder1/folder2');
         expect(result).to.deep.include(
             {
-                "title": "TypeFox/gitpod-test-repo - 499efbbc:folder1/folder2",
+                "title": "gitpod-io/gitpod-test-repo - 499efbbc:folder1/folder2",
                 "repository": {
                     "host": "github.com",
                     "owner": "TypeFox",
                     "name": "gitpod-test-repo",
-                    "cloneUrl": "https://github.com/TypeFox/gitpod-test-repo.git",
+                    "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
                     "private": true
                 },
                 "revision": "499efbbcb50e7e6e5e2883053f72a34cd5396be3",
@@ -284,7 +284,7 @@ class TestGithubContextParser {
     }
 
     @test public async testCommitsContext_01() {
-        const result = await this.parser.handle({}, this.user, 'https://github.com/TypeFox/gitpod-test-repo/commits/4test');
+        const result = await this.parser.handle({}, this.user, 'https://github.com/gitpod-io/gitpod-test-repo/commits/4test');
         expect(result).to.deep.include({
             "ref": "4test",
             "refType": "branch",
@@ -294,15 +294,15 @@ class TestGithubContextParser {
                 "host": "github.com",
                 "owner": "TypeFox",
                 "name": "gitpod-test-repo",
-                "cloneUrl": "https://github.com/TypeFox/gitpod-test-repo.git",
+                "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
                 "private": true
             },
-            "title": "TypeFox/gitpod-test-repo - 4test"
+            "title": "gitpod-io/gitpod-test-repo - 4test"
         })
     }
 
     @test public async testCommitContext_01() {
-        const result = await this.parser.handle({}, this.user, 'https://github.com/TypeFox/gitpod-test-repo/commit/409ac2de49a53d679989d438735f78204f441634');
+        const result = await this.parser.handle({}, this.user, 'https://github.com/gitpod-io/gitpod-test-repo/commit/409ac2de49a53d679989d438735f78204f441634');
         expect(result).to.deep.include({
             "ref": "",
             "refType": "revision",
@@ -313,17 +313,17 @@ class TestGithubContextParser {
                 "host": "github.com",
                 "owner": "TypeFox",
                 "name": "gitpod-test-repo",
-                "cloneUrl": "https://github.com/TypeFox/gitpod-test-repo.git",
+                "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
                 "private": true
             },
-            "title": "TypeFox/gitpod-test-repo - Test 3"
+            "title": "gitpod-io/gitpod-test-repo - Test 3"
         })
     }
 
 
     @test public async testCommitContext_02_notExistingCommit() {
         try {
-            await this.parser.handle({}, this.user, 'https://github.com/TypeFox/gitpod-test-repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
+            await this.parser.handle({}, this.user, 'https://github.com/gitpod-io/gitpod-test-repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
             // ensure that an error has been thrown
             chai.assert.fail();
         } catch (e) {
@@ -333,7 +333,7 @@ class TestGithubContextParser {
 
     @test public async testCommitContext_02_invalidSha() {
         try {
-            await this.parser.handle({}, this.user, 'https://github.com/TypeFox/gitpod-test-repo/commit/invalid');
+            await this.parser.handle({}, this.user, 'https://github.com/gitpod-io/gitpod-test-repo/commit/invalid');
             // ensure that an error has been thrown
             chai.assert.fail();
         } catch (e) {
@@ -420,7 +420,7 @@ class TestGithubContextParser {
     }
 
     @test public async testIssueContext_01() {
-        const result = await this.parser.handle({}, this.user, 'https://github.com/TypeFox/gitpod-test-repo/issues/42');
+        const result = await this.parser.handle({}, this.user, 'https://github.com/gitpod-io/gitpod-test-repo/issues/42');
         expect(result).to.deep.include(
             {
                 "title": "Test issue web-extension",
@@ -428,7 +428,7 @@ class TestGithubContextParser {
                     "host": "github.com",
                     "owner": "TypeFox",
                     "name": "gitpod-test-repo",
-                    "cloneUrl": "https://github.com/TypeFox/gitpod-test-repo.git",
+                    "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
                     "private": true
                 },
                 "owner": "TypeFox",
@@ -441,7 +441,7 @@ class TestGithubContextParser {
     }
 
     @test public async testIssueThroughPullRequestContext() {
-        const result = await this.parser.handle({}, this.user, 'https://github.com/TypeFox/gitpod-test-repo/pull/42');
+        const result = await this.parser.handle({}, this.user, 'https://github.com/gitpod-io/gitpod-test-repo/pull/42');
         expect(result).to.deep.include(
             {
                 "title": "Test issue web-extension",
@@ -449,7 +449,7 @@ class TestGithubContextParser {
                     "host": "github.com",
                     "owner": "TypeFox",
                     "name": "gitpod-test-repo",
-                    "cloneUrl": "https://github.com/TypeFox/gitpod-test-repo.git",
+                    "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
                     "private": true
                 },
                 "owner": "TypeFox",
@@ -462,15 +462,15 @@ class TestGithubContextParser {
     }
 
     @test public async testBlobContext_01() {
-        const result = await this.parser.handle({}, this.user, 'https://github.com/TypeFox/gitpod-test-repo/blob/aba298d5084a817cdde3dd1f26692bc2a216e2b9/test-comment-01.md');
+        const result = await this.parser.handle({}, this.user, 'https://github.com/gitpod-io/gitpod-test-repo/blob/aba298d5084a817cdde3dd1f26692bc2a216e2b9/test-comment-01.md');
         expect(result).to.deep.include(
             {
-                "title": "TypeFox/gitpod-test-repo - aba298d5:test-comment-01.md",
+                "title": "gitpod-io/gitpod-test-repo - aba298d5:test-comment-01.md",
                 "repository": {
                     "host": "github.com",
                     "owner": "TypeFox",
                     "name": "gitpod-test-repo",
-                    "cloneUrl": "https://github.com/TypeFox/gitpod-test-repo.git",
+                    "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
                     "private": true
                 },
                 "revision": "aba298d5084a817cdde3dd1f26692bc2a216e2b9",
@@ -481,15 +481,15 @@ class TestGithubContextParser {
     }
 
     @test public async testBlobContext_02() {
-        const result = await this.parser.handle({}, this.user, 'https://github.com/TypeFox/gitpod-test-repo/blob/499efbbcb50e7e6e5e2883053f72a34cd5396be3/folder1/folder2/content2');
+        const result = await this.parser.handle({}, this.user, 'https://github.com/gitpod-io/gitpod-test-repo/blob/499efbbcb50e7e6e5e2883053f72a34cd5396be3/folder1/folder2/content2');
         expect(result).to.deep.include(
             {
-                "title": "TypeFox/gitpod-test-repo - 499efbbc:folder1/folder2/content2",
+                "title": "gitpod-io/gitpod-test-repo - 499efbbc:folder1/folder2/content2",
                 "repository": {
                     "host": "github.com",
                     "owner": "TypeFox",
                     "name": "gitpod-test-repo",
-                    "cloneUrl": "https://github.com/TypeFox/gitpod-test-repo.git",
+                    "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
                     "private": true
                 },
                 "revision": "499efbbcb50e7e6e5e2883053f72a34cd5396be3",
@@ -500,15 +500,15 @@ class TestGithubContextParser {
     }
 
     @test public async testBlobContextShort_01() {
-        const result = await this.parser.handle({}, this.user, 'https://github.com/TypeFox/gitpod-test-repo/blob/499efbbc/folder1/folder2/content2');
+        const result = await this.parser.handle({}, this.user, 'https://github.com/gitpod-io/gitpod-test-repo/blob/499efbbc/folder1/folder2/content2');
         expect(result).to.deep.include(
             {
-                "title": "TypeFox/gitpod-test-repo - 499efbbc:folder1/folder2/content2",
+                "title": "gitpod-io/gitpod-test-repo - 499efbbc:folder1/folder2/content2",
                 "repository": {
                     "host": "github.com",
                     "owner": "TypeFox",
                     "name": "gitpod-test-repo",
-                    "cloneUrl": "https://github.com/TypeFox/gitpod-test-repo.git",
+                    "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
                     "private": true
                 },
                 "revision": "499efbbcb50e7e6e5e2883053f72a34cd5396be3",
@@ -519,15 +519,15 @@ class TestGithubContextParser {
     }
 
     @test public async testBlobContextShort_02() {
-        const result = await this.parser.handle({}, this.user, 'https://github.com/TypeFox/gitpod-test-repo/blob/499ef/folder1/folder2/content2');
+        const result = await this.parser.handle({}, this.user, 'https://github.com/gitpod-io/gitpod-test-repo/blob/499ef/folder1/folder2/content2');
         expect(result).to.deep.include(
             {
-                "title": "TypeFox/gitpod-test-repo - 499efbbc:folder1/folder2/content2",
+                "title": "gitpod-io/gitpod-test-repo - 499efbbc:folder1/folder2/content2",
                 "repository": {
                     "host": "github.com",
                     "owner": "TypeFox",
                     "name": "gitpod-test-repo",
-                    "cloneUrl": "https://github.com/TypeFox/gitpod-test-repo.git",
+                    "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
                     "private": true
                 },
                 "revision": "499efbbcb50e7e6e5e2883053f72a34cd5396be3",
