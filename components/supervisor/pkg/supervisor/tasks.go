@@ -248,7 +248,7 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup) {
 		if runContext.headless {
 			tm.watch(t, terminal)
 		}
-		terminal.PTY.Write([]byte(t.command + "\r\n"))
+		terminal.PTY.Write([]byte(t.command + "\n"))
 	}
 
 	if runContext.headless {
@@ -260,7 +260,7 @@ func (task *task) getCommand(context *runContext) string {
 	commands := task.getCommands(context)
 	command := composeCommand(composeCommandOptions{
 		commands: commands,
-		format:   "{\r\n%s\r\n}",
+		format:   "{\n%s\n}",
 		sep:      " && ",
 	})
 
@@ -354,13 +354,13 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 					if elapsedInMinutes != "1" {
 						duration += "s"
 					}
-					duration += " of watching your code build.\r\n"
+					duration += " of watching your code build.\n"
 				}
 				data := string(buf[:n])
 				fileWriter.Write(buf[:n])
 				workspaceLog.WithField("type", "workspaceTaskOutput").WithField("data", data).Info()
 
-				endMessage := "\r\n🍌 This task ran as part of a workspace prebuild.\r\n" + duration + "\r\n"
+				endMessage := "\n🍌 This task ran as part of a workspace prebuild.\n" + duration + "\n"
 				fileWriter.WriteString(endMessage)
 				fileWriter.Flush()
 				success = true
