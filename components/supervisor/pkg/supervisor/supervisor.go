@@ -31,6 +31,7 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
 	daemon "github.com/gitpod-io/gitpod/ws-daemon/api"
+	"golang.org/x/sys/unix"
 
 	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/soheilhy/cmux"
@@ -159,7 +160,8 @@ func Run(options ...RunOption) {
 	apiServices = append(apiServices, additionalServices...)
 
 	var wg sync.WaitGroup
-	wg.Add(5)
+	wg.Add(6)
+	go reaper(ctx, &wg)
 	go startAndWatchIDE(ctx, cfg, &wg, ideReady)
 	go startContentInit(ctx, cfg, &wg, cstate)
 	go startAPIEndpoint(ctx, cfg, &wg, apiServices, apiEndpointOpts...)
@@ -280,6 +282,29 @@ func hasMetadataAccess() bool {
 
 	// if we see any error here we're good because then the request timed out or failed for some other reason.
 	return false
+}
+
+func reaper(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	sigs := make(chan os.Signal, 128)
+	signal.Notify(sigs, syscall.SIGCHLD)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-sigs:
+		}
+
+		pid, err := unix.Wait4(-1, nil, 0, nil)
+
+		if err == unix.ECHILD {
+			// The calling process does not have any unwaited-for children.
+			continue
+		}
+
+		log.WithField("pid", pid).Debug("reaped child process")
+	}
 }
 
 func startAndWatchIDE(ctx context.Context, cfg *Config, wg *sync.WaitGroup, ideReady *ideReadyState) {
