@@ -144,6 +144,7 @@ func Run(options ...RunOption) {
 	taskManager := newTasksManager(cfg, termMuxSrv, cstate)
 
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
+	termMuxSrv.Env = buildIDEEnv(cfg)
 
 	apiServices := []RegisterableService{
 		&statusService{
