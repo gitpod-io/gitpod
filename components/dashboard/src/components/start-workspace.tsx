@@ -7,7 +7,7 @@
 import * as React from 'react';
 
 // tslint:disable-next-line:max-line-length
-import { GitpodService, GitpodClient, WorkspaceInstance, Disposable, WorkspaceInstanceStatus, WorkspaceImageBuild, WithPrebuild, Branding, Workspace, StartWorkspaceResult } from '@gitpod/gitpod-protocol';
+import { GitpodService, GitpodClient, WorkspaceInstance, WorkspaceInstanceStatus, WorkspaceImageBuild, WithPrebuild, Branding, Workspace, StartWorkspaceResult, DisposableCollection } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { ShowWorkspaceBuildLogs, WorkspaceBuildLog } from './show-workspace-build-logs';
 import { WorkspaceLogView } from './workspace-log-view';
@@ -46,8 +46,7 @@ export interface StartWorkspaceProps {
 }
 export type StartErrorRenderer = (errorCode: number, service: GitpodService, onResolved: () => void) => JSX.Element | undefined;
 
-export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWorkspaceState> implements GitpodClient {
-    private unregister?: Disposable;
+export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWorkspaceState> implements Partial<GitpodClient> {
     private process: StartupProcess;
     private isHeadless: boolean = false;
     private isPrebuilt: boolean | undefined;
@@ -76,9 +75,14 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         }
     }
 
+    private readonly toDispose = new DisposableCollection();
     componentWillMount() {
         this.queryInitialState();
         this.startWorkspace(this.props.workspaceId);
+    }
+
+    notifyDidOpenConnection(): void {
+        this.ensureWorkspaceInfo({ force: true });
     }
 
     protected async queryInitialState() {
@@ -90,10 +94,10 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
             .catch(e => console.log("cannot update branding", e));
 
         const createWorkspacesBeforePromise = this.didUserCreateWorkspaceBefore();
-        const workspaceInfoPromise = this.ensureWorkspaceInfo();
+        const workspaceInfoPromise = this.ensureWorkspaceInfo({ force: false });
 
         try {
-            this.unregister = this.props.service.registerClient(this);
+            this.toDispose.push(this.props.service.registerClient(this));
         } catch (err) {
             log.error(err);
             this.setErrorState(err);
@@ -161,10 +165,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
     }
 
     componentWillUnmount() {
-        if (this.unregister) {
-            this.unregister.dispose();
-            this.unregister = undefined;
-        }
+        this.toDispose.dispose();
     }
 
     onCreditAlert({ remainingUsageHours }: { remainingUsageHours: number }) {
@@ -178,7 +179,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
             return;
         }
 
-        await this.ensureWorkspaceInfo();
+        await this.ensureWorkspaceInfo({ force: false });
         await this.ensureWorkspaceAuth(workspaceInstance.id);
 
         // redirect to workspaceURL if we are not yet running in an iframe
@@ -249,8 +250,8 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         });
     }
 
-    protected async ensureWorkspaceInfo() {
-        if (this.props.workspaceId && !this.workspaceInfoReceived) {
+    protected async ensureWorkspaceInfo({ force }: { force: boolean }) {
+        if (this.props.workspaceId && (force || !this.workspaceInfoReceived)) {
             try {
                 const info = await this.props.service.server.getWorkspace(this.props.workspaceId);
                 this.workspace = info.workspace;
