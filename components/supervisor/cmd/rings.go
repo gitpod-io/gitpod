@@ -41,6 +41,7 @@ var ring0Cmd = &cobra.Command{
 	Short:  "starts the supervisor ring0",
 	Hidden: true,
 	Run: func(_ *cobra.Command, args []string) {
+		log.Init(ServiceName, Version, true, true)
 		log := log.WithField("ring", 0)
 
 		var failed bool
@@ -152,6 +153,7 @@ var ring1Cmd = &cobra.Command{
 	Short:  "starts the supervisor ring1",
 	Hidden: true,
 	Run: func(_cmd *cobra.Command, args []string) {
+		log.Init(ServiceName, Version, true, true)
 		log := log.WithField("ring", 1)
 		defer log.Info("done")
 
@@ -327,6 +329,7 @@ var ring2Cmd = &cobra.Command{
 	Short:  "starts the supervisor ring2",
 	Hidden: true,
 	Run: func(_cmd *cobra.Command, args []string) {
+		log.Init(ServiceName, Version, true, true)
 		log := log.WithField("ring", 2)
 		defer log.Info("done")
 

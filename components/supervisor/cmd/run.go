@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/supervisor"
 	"github.com/spf13/cobra"
 )
@@ -18,6 +19,8 @@ var runCmd = &cobra.Command{
 	Short: "starts the supervisor",
 
 	Run: func(cmd *cobra.Command, args []string) {
+		log.Init(ServiceName, Version, true, true)
+
 		var opts []supervisor.RunOption
 		if runCmdOpts.InNamespace {
 			opts = append(opts,
