@@ -151,9 +151,9 @@ spec:
         - name: GITPOD_STORAGE_CLIENT
           value: minio
         - name: MINIO_END_POINT
-          value: minio.{{ .Release.Namespace }}.svc.cluster.local
+          value: {{ (split ":" (.Values.minio.endpoint | toString))._0 | default "minio.{{ .Release.Namespace }}.svc.cluster.local" | quote }}
         - name: MINIO_PORT
-          value: {{ (split ":" .Values.minio.endpoint)._1 | default 9000 | quote }}
+          value: {{ (split ":" (.Values.minio.endpoint | toString))._1 | default 9000 | quote }}
         - name: MINIO_ACCESS_KEY
           value: {{ .Values.minio.accessKey }}
         - name: MINIO_SECRET_KEY
