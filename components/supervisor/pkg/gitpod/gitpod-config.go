@@ -117,23 +117,24 @@ func (service *ConfigService) start() error {
 	return nil
 }
 
-func (service *ConfigService) watch(ctx context.Context) error {
-	watcher, startErr := fsnotify.NewWatcher()
+func (service *ConfigService) watch(ctx context.Context) (err error) {
+	watcher, err := fsnotify.NewWatcher()
 	defer func() {
-		if startErr != nil {
-			log.WithField("location", service.location).WithError(startErr).Error("Failed to start watching...")
-		} else {
-			log.WithField("location", service.location).Info("Started watching")
+		if err != nil {
+			log.WithField("location", service.location).WithError(err).Error("Failed to start watching...")
+			return
 		}
+
+		log.WithField("location", service.location).Info("Started watching")
 	}()
-	if startErr != nil {
-		return startErr
+	if err != nil {
+		return err
 	}
 
-	startErr = watcher.Add(service.location)
-	if startErr != nil {
+	err = watcher.Add(service.location)
+	if err != nil {
 		watcher.Close()
-		return startErr
+		return err
 	}
 
 	go func() {
