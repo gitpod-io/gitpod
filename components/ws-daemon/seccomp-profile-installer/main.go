@@ -56,7 +56,7 @@ func main() {
 				},
 			},
 		},
-		// slirp4netns requires setns
+		// slirp4netns requires setns, as do we for debugging
 		// TODO(cw): find means to make this more precise, maybe an eBPF program that checks if
 		//           arg zero is a child of this netns. The kernel already does that (from the setns(2) man page):
 		//              In order to reassociate itself with a new network, IPC, time,
@@ -66,14 +66,6 @@ func main() {
 		specs.LinuxSyscall{
 			Names:  []string{"setns"},
 			Action: specs.ActAllow,
-			Args: []specs.LinuxSeccompArg{
-				{
-					Index:    1,
-					Op:       specs.OpMaskedEqual,
-					Value:    syscall.CLONE_NEWNET,
-					ValueTwo: syscall.CLONE_NEWNET,
-				},
-			},
 		},
 		specs.LinuxSyscall{
 			Names: []string{
