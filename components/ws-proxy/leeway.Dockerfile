@@ -6,6 +6,7 @@ FROM alpine
 RUN apk add ca-certificates && \
     adduser -S -D -H -h /app -u 1000 appuser
 COPY components-ws-proxy--app/ws-proxy /app/ws-proxy
+COPY public /app/public
 RUN chown -R appuser /app
 
 USER appuser

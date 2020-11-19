@@ -31,5 +31,8 @@
       "theiaPort": 23000,
       "supervisorPort": 22999
     }
+  },
+  "builtinPages": {
+    "location": "public/"
   }
 }
