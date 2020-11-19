@@ -66,7 +66,7 @@ resource "google_container_cluster" "gitpod" {
   }
 
   network            = var.network
-  min_master_version = "1.15.12-gke.9"
+  min_master_version = "1.16.15-gke.4300"
 }
 
 resource "google_container_node_pool" "gitpod_cluster" {
