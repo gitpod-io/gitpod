@@ -85,6 +85,9 @@ data:
                 "theiaPort": {{ .Values.components.workspace.ports.http.containerPort }},
                 "supervisorPort": {{ .Values.components.workspace.ports.http.supervisorPort }},
                 "supervisorImage": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) }}"
+            },
+            "builtinPages": {
+                "location": "/app/public"
             }
         },
         "pprofAddr": ":60060",

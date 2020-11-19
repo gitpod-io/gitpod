@@ -11,6 +11,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"text/template"
@@ -255,7 +257,12 @@ func installBlobserveRoutes(r *mux.Router, config *RouteHandlerConfig) {
 }
 
 // installWorkspacePortRoutes configures routing for exposed ports
-func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig) {
+func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig) error {
+	showPortNotFoundPage, err := servePortNotFoundPage(config.Config)
+	if err != nil {
+		return err
+	}
+
 	r.Use(logHandler)
 	r.Use(config.WorkspaceAuthHandler)
 	// filter all session cookies
@@ -266,12 +273,11 @@ func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig) {
 		proxyPass(
 			config,
 			workspacePodPortResolver,
-			withErrorHandler(func(w http.ResponseWriter, req *http.Request, e error) {
-				w.WriteHeader(http.StatusInternalServerError)
-				fmt.Fprintf(w, e.Error())
-			}),
+			withHTTPErrorHandler(showPortNotFoundPage),
 		),
 	)
+
+	return nil
 }
 
 // workspacePodResolver resolves to the workspace pod's url from the given request
@@ -610,3 +616,24 @@ func (t *blobserveTransport) redirect(image string, req *http.Request) (*http.Re
 }
 
 // endregion
+
+const (
+	builtinPagePortNotFound = "port-not-found.html"
+)
+
+func servePortNotFoundPage(config *Config) (http.Handler, error) {
+	fn := filepath.Join(config.BuiltinPages.Location, builtinPagePortNotFound)
+	if tp := os.Getenv("TELEPRESENCE_ROOT"); tp != "" {
+		fn = filepath.Join(tp, fn)
+	}
+	page, err := ioutil.ReadFile(fn)
+	if err != nil {
+		return nil, err
+	}
+	page = bytes.ReplaceAll(page, []byte("https://gitpod.io"), []byte(fmt.Sprintf("%s://%s", config.GitpodInstallation.Scheme, config.GitpodInstallation.HostName)))
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		w.Write(page)
+	}), nil
+}
