@@ -235,14 +235,10 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                 this.props.service.server.watchHeadlessWorkspaceLogs(workspaceInstance.workspaceId);
             }
         }
-        if (workspaceInstance.status.phase === 'stopping') {
-            if (this.isHeadless) {
-                if (this.workspace) {
-                    const ctxUrl = this.workspace.contextURL.replace('prebuild/', '');
-                    this.redirectTo(new GitpodHostUrl(window.location.toString()).withContext(ctxUrl).toString());
-                } else {
-                    this.redirectToDashboard();
-                }
+        if (workspaceInstance.status.phase === 'stopped') {
+            if (this.isHeadless && this.workspace) {
+                const contextUrl = this.workspace.contextURL.replace('prebuild/', '');
+                this.redirectTo(new GitpodHostUrl(window.location.toString()).withContext(contextUrl).toString());
             }
         }
 
@@ -343,8 +339,8 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                 {this.process.getLabel(this.state.workspaceInstance.status.phase)}
             </div>;
             const phase = this.state.workspaceInstance.status.phase;
-            if (phase === 'stopped' ||
-                phase === 'stopping') {
+            if (!this.isHeadless && (phase === 'stopped' ||
+                phase === 'stopping')) {
                 let stoppedReason = `The workspace ${phase === 'stopped' ? 'has stopped' : 'is stopping'}.`;
                 if (this.state.workspaceInstance.status.conditions.timeout) {
                     stoppedReason = `The workspace timed out and ${phase === 'stopped' ? 'has stopped' : 'is stopping'}.`;
@@ -404,17 +400,17 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                                                     - {i}
                                                 </code></div>
                                             })}
-                                            </React.Fragment>
+                                        </React.Fragment>
                                     })}
                                 </div>
-                            )): undefined}
+                            )) : undefined}
                             <div className='start-action'>
-                            <Button className='button' variant='outlined' color='primary'
-                                onClick={() => this.redirectTo(this.state.workspace!.contextURL)}>{host}</Button>
-                            <Button className='button' variant='outlined' color={ pendingChanges.length !== 0 ? 'secondary' : 'primary'}
-                                disabled={phase!=='stopped'}
-                                onClick={() => this.redirectTo(startUrl)}>Start Workspace</Button></div>
-                    </div>
+                                <Button className='button' variant='outlined' color='primary'
+                                    onClick={() => this.redirectTo(this.state.workspace!.contextURL)}>{host}</Button>
+                                <Button className='button' variant='outlined' color={pendingChanges.length !== 0 ? 'secondary' : 'primary'}
+                                    disabled={phase !== 'stopped'}
+                                    onClick={() => this.redirectTo(startUrl)}>Start Workspace</Button></div>
+                        </div>
                     </div>
                 </React.Fragment >;
             }
@@ -424,14 +420,15 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         const instance = this.state && this.state.workspaceInstance;
         // stopped status happens when the build failed. We still want to see the log output in that case
         const isBuildingWorkspaceImage = instance && (instance.status.phase === 'preparing' || instance.status.phase === 'stopped' && this.state.buildLog);
-        const isHeadlessBuildRunning = this.isHeadless && instance && instance.status.phase === 'running' && this.state.headlessLog;
-        const isError = this.state && !!this.state.errorMessage;
+        const isHeadlessBuildRunning = this.isHeadless && instance && (instance.status.phase === 'running' || instance.status.phase === 'stopping');
+        let isError = this.state && !!this.state.errorMessage;
         let errorMessage = this.state && this.state.errorMessage;
         if (isBuildingWorkspaceImage) {
             logs = <ShowWorkspaceBuildLogs buildLog={this.state.buildLog} errorMessage={errorMessage} showPhase={!isError} />;
             errorMessage = ""; // errors will be shown in the output already
         } else if (isHeadlessBuildRunning) {
             logs = <WorkspaceLogView content={this.state.headlessLog} />;
+            errorMessage = "";
         }
 
         if (isError) {
@@ -442,7 +439,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                         this.startWorkspace(this.props.workspaceId, true, true);
                     }}>Start with Default Docker Image</Button>
                 </div>;
-            } else {
+            } else if (!isHeadlessBuildRunning) {
                 message = <div className="message action">
                     <Button className='button' variant='outlined' color='secondary' onClick={() => this.redirectToDashboard()}>Go to Workspaces</Button>
                 </div>;
