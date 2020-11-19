@@ -188,7 +188,7 @@ func (tm *tasksManager) init(ctx context.Context) *runContext {
 			config: config,
 		}
 		task.command = task.getCommand(runContext)
-		if task.command == "" {
+		if runContext.headless && task.command == "" {
 			task.State = api.TaskState_closed
 		} else {
 			runContext.tasks = append(runContext.tasks, task)
@@ -248,7 +248,9 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup) {
 		if runContext.headless {
 			tm.watch(t, terminal)
 		}
-		terminal.PTY.Write([]byte(t.command + "\n"))
+		if t.command != "" {
+			terminal.PTY.Write([]byte(t.command + "\n"))
+		}
 	}
 
 	if runContext.headless {
@@ -264,32 +266,48 @@ func (task *task) getCommand(context *runContext) string {
 		sep:      " && ",
 	})
 
-	if strings.TrimSpace(command) == "" {
-		return ""
-	}
-
 	if context.headless {
+		if strings.TrimSpace(command) == "" {
+			return ""
+		}
 		// it's important that prebuild tasks exit eventually
 		// also, we need to save the log output in the workspace
 		return command + "; exit"
 	}
 
-	histfile := "/workspace/.gitpod/cmd-" + task.Id
+	histfileCommand := task.getHistfileCommand(context, commands)
+	if strings.TrimSpace(command) == "" {
+		return histfileCommand
+	}
+	if histfileCommand == "" {
+		return command
+	}
+	return histfileCommand + "; " + command
+}
+
+func (task *task) getHistfileCommand(context *runContext, commands []*string) string {
 	histfileCommands := commands
 	if context.contentSource == csapi.WorkspaceInitFromPrebuild {
 		histfileCommands = []*string{task.config.Before, task.config.Init, task.config.Prebuild, task.config.Command}
 	}
-	err := ioutil.WriteFile(histfile, []byte(composeCommand(composeCommandOptions{
+	histfileContent := composeCommand(composeCommandOptions{
 		commands: histfileCommands,
 		format:   "%s\r\n",
-	})), 0644)
+	})
+	if strings.TrimSpace(histfileContent) == "" {
+		return ""
+	}
+
+	histfile := "/workspace/.gitpod/cmd-" + task.Id
+	err := ioutil.WriteFile(histfile, []byte(histfileContent), 0644)
 	if err != nil {
 		log.WithField("histfile", histfile).WithError(err).Error("cannot write histfile")
-		return command
+		return ""
 	}
+
 	// the space at beginning of the HISTFILE command prevents the HISTFILE command itself from appearing in
 	// the bash history.
-	return " HISTFILE=" + histfile + " history -r; " + command
+	return " HISTFILE=" + histfile + " history -r"
 }
 
 func (task *task) getCommands(context *runContext) []*string {
