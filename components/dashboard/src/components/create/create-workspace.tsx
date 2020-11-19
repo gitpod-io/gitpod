@@ -123,7 +123,7 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
             if (token.isCancellationRequested) {
                 return;
             }
-            available = await this.props.service.server.isPrebuildAvailable(prebuildID);
+            available = await this.props.service.server.isPrebuildDone(prebuildID);
         }
         if (available) {
             this.doCreateWorkspaceWithMode(CreateWorkspaceMode.UsePrebuild);

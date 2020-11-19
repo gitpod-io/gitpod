@@ -146,11 +146,11 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
     }
 
 
-    public async isPrebuildAvailable(pwsid: string): Promise<boolean> {
+    public async isPrebuildDone(pwsid: string): Promise<boolean> {
         // Allowed in the free version, because it is read only.
         // this.requireEELicense(Feature.FeaturePrebuild);
 
-        const span = opentracing.globalTracer().startSpan("isPrebuildAvailable");
+        const span = opentracing.globalTracer().startSpan("isPrebuildDone");
         span.setTag("pwsid", pwsid);
         const ctx: TraceContext = { span };
         try {
@@ -160,7 +160,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
                 return true;
             }
 
-            return PrebuiltWorkspace.isAvailable(pws);
+            return PrebuiltWorkspace.isDone(pws);
         } catch (e) {
             TraceContext.logError({ span }, e);
             throw e;

@@ -611,15 +611,6 @@ func (m *Monitor) actOnHeadlessDone(pod *corev1.Pod, failed bool) (err error) {
 		}
 	}
 
-	// if the workspace task failed, that means the headless workspace failed
-	if failed {
-		err := handleFailure("task failed")
-		if err != nil {
-			tracing.LogError(span, err)
-			log.WithError(err).Warn("cannot stop failed headless workspace")
-		}
-	}
-
 	// healthy prebuilds don't fail the workspace, thus we have to stop them ourselves
 	err = m.manager.stopWorkspace(ctx, id, stopWorkspaceNormallyGracePeriod)
 	if err != nil {

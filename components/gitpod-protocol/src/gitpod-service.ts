@@ -76,7 +76,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     sendHeartBeat(options: GitpodServer.SendHeartBeatOptions): Promise<void>;
     watchWorkspaceImageBuildLogs(workspaceId: string): Promise<void>;
     watchHeadlessWorkspaceLogs(workspaceId: string): Promise<void>;
-    isPrebuildAvailable(pwsid: string): Promise<boolean>;
+    isPrebuildDone(pwsid: string): Promise<boolean>;
 
     // Workspace timeout
     setWorkspaceTimeout(workspaceId: string, duration: WorkspaceTimeoutDuration): Promise<SetWorkspaceTimeoutResult>;

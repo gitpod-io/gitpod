@@ -461,19 +461,19 @@ func (mr *MockAPIInterfaceMockRecorder) WatchHeadlessWorkspaceLogs(ctx, workspac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WatchHeadlessWorkspaceLogs", reflect.TypeOf((*MockAPIInterface)(nil).WatchHeadlessWorkspaceLogs), ctx, workspaceID)
 }
 
-// IsPrebuildAvailable mocks base method
-func (m *MockAPIInterface) IsPrebuildAvailable(ctx context.Context, pwsid string) (bool, error) {
+// IsPrebuildDone mocks base method
+func (m *MockAPIInterface) IsPrebuildDone(ctx context.Context, pwsid string) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsPrebuildAvailable", ctx, pwsid)
+	ret := m.ctrl.Call(m, "IsPrebuildDone", ctx, pwsid)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// IsPrebuildAvailable indicates an expected call of IsPrebuildAvailable
-func (mr *MockAPIInterfaceMockRecorder) IsPrebuildAvailable(ctx, pwsid interface{}) *gomock.Call {
+// IsPrebuildDone indicates an expected call of IsPrebuildDone
+func (mr *MockAPIInterfaceMockRecorder) IsPrebuildDone(ctx, pwsid interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsPrebuildAvailable", reflect.TypeOf((*MockAPIInterface)(nil).IsPrebuildAvailable), ctx, pwsid)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsPrebuildDone", reflect.TypeOf((*MockAPIInterface)(nil).IsPrebuildDone), ctx, pwsid)
 }
 
 // SetWorkspaceTimeout mocks base method

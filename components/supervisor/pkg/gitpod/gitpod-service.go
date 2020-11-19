@@ -51,7 +51,7 @@ type APIInterface interface {
 	SendHeartBeat(ctx context.Context, options *SendHeartBeatOptions) (err error)
 	WatchWorkspaceImageBuildLogs(ctx context.Context, workspaceID string) (err error)
 	WatchHeadlessWorkspaceLogs(ctx context.Context, workspaceID string) (err error)
-	IsPrebuildAvailable(ctx context.Context, pwsid string) (res bool, err error)
+	IsPrebuildDone(ctx context.Context, pwsid string) (res bool, err error)
 	SetWorkspaceTimeout(ctx context.Context, workspaceID string, duration *WorkspaceTimeoutDuration) (res *SetWorkspaceTimeoutResult, err error)
 	GetWorkspaceTimeout(ctx context.Context, workspaceID string) (res *GetWorkspaceTimeoutResult, err error)
 	GetOpenPorts(ctx context.Context, workspaceID string) (res []*WorkspaceInstancePort, err error)
@@ -143,8 +143,8 @@ const (
 	FunctionWatchWorkspaceImageBuildLogs FunctionName = "watchWorkspaceImageBuildLogs"
 	// FunctionWatchHeadlessWorkspaceLogs is the name of the watchHeadlessWorkspaceLogs function
 	FunctionWatchHeadlessWorkspaceLogs FunctionName = "watchHeadlessWorkspaceLogs"
-	// FunctionIsPrebuildAvailable is the name of the isPrebuildAvailable function
-	FunctionIsPrebuildAvailable FunctionName = "isPrebuildAvailable"
+	// FunctionIsPrebuildDone is the name of the isPrebuildDone function
+	FunctionIsPrebuildDone FunctionName = "isPrebuildDone"
 	// FunctionSetWorkspaceTimeout is the name of the setWorkspaceTimeout function
 	FunctionSetWorkspaceTimeout FunctionName = "setWorkspaceTimeout"
 	// FunctionGetWorkspaceTimeout is the name of the getWorkspaceTimeout function
@@ -708,14 +708,14 @@ func (gp *APIoverJSONRPC) WatchHeadlessWorkspaceLogs(ctx context.Context, worksp
 	return
 }
 
-// IsPrebuildAvailable calls isPrebuildAvailable on the server
-func (gp *APIoverJSONRPC) IsPrebuildAvailable(ctx context.Context, pwsid string) (res bool, err error) {
+// IsPrebuildDone calls isPrebuildDone on the server
+func (gp *APIoverJSONRPC) IsPrebuildDone(ctx context.Context, pwsid string) (res bool, err error) {
 	var _params []interface{}
 
 	_params = append(_params, pwsid)
 
 	var result bool
-	err = gp.C.Call(ctx, "isPrebuildAvailable", _params, &result)
+	err = gp.C.Call(ctx, "isPrebuildDone", _params, &result)
 	if err != nil {
 		return
 	}

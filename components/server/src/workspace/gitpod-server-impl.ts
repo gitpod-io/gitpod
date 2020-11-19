@@ -695,7 +695,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         }
     }
 
-    public async isPrebuildAvailable(pwsid: string): Promise<boolean> {
+    public async isPrebuildDone(pwsid: string): Promise<boolean> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, "Prebuilds are implemented in Gitpod's enterprise edition")
     }
 
