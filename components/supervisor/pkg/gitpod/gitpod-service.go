@@ -243,7 +243,7 @@ type APIoverJSONRPC struct {
 	C jsonrpc2.JSONRPC2
 
 	mu   sync.RWMutex
-	subs map[string][]chan *WorkspaceInstance
+	subs map[string]map[chan *WorkspaceInstance]struct{}
 }
 
 // Close closes the connection
@@ -262,24 +262,21 @@ func (gp *APIoverJSONRPC) InstanceUpdates(ctx context.Context, instanceID string
 
 	gp.mu.Lock()
 	if gp.subs == nil {
-		gp.subs = make(map[string][]chan *WorkspaceInstance)
+		gp.subs = make(map[string]map[chan *WorkspaceInstance]struct{})
 	}
-	gp.subs[instanceID] = append(gp.subs[instanceID], chn)
+	if sub, ok := gp.subs[instanceID]; ok {
+		sub[chn] = struct{}{}
+	} else {
+		gp.subs[instanceID] = map[chan *WorkspaceInstance]struct{}{chn: {}}
+	}
 	gp.mu.Unlock()
 
 	go func() {
 		<-ctx.Done()
 
 		gp.mu.Lock()
+		delete(gp.subs[instanceID], chn)
 		close(chn)
-		n := 0
-		for _, x := range gp.subs[instanceID] {
-			if x == chn {
-				continue
-			}
-			gp.subs[instanceID][n] = x
-			n++
-		}
 		gp.mu.Unlock()
 	}()
 
@@ -300,7 +297,7 @@ func (gp *APIoverJSONRPC) handler(ctx context.Context, conn *jsonrpc2.Conn, req 
 
 	gp.mu.RLock()
 	defer gp.mu.RUnlock()
-	for _, chn := range gp.subs[instance.ID] {
+	for chn := range gp.subs[instance.ID] {
 		select {
 		case chn <- &instance:
 		default:
