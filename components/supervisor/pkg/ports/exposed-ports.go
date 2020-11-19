@@ -67,6 +67,10 @@ func (g *GitpodExposedPorts) Observe(ctx context.Context) (<-chan []ExposedPort,
 		for {
 			select {
 			case u := <-updates:
+				if u == nil {
+					return
+				}
+
 				res := make([]ExposedPort, len(u.Status.ExposedPorts))
 				for i, p := range u.Status.ExposedPorts {
 					var globalport = p.TargetPort
