@@ -81,7 +81,7 @@ resource "google_container_cluster" "gitpod" {
   subnetwork = var.subnets[0]
 
 
-  min_master_version = "1.15.12-gke.9"
+  min_master_version = "1.16.15-gke.4300"
 
 }
 
