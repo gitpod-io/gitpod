@@ -64,7 +64,7 @@ func collectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps stora
 
 		rc[si.Snapshot] = *info
 	}
-	if si := initializer.GetPrebuild(); si != nil && si.Prebuild != nil {
+	if si := initializer.GetPrebuild(); si != nil && si.Prebuild != nil && si.Prebuild.Snapshot != "" {
 		bkt, obj, err := storage.ParseSnapshotName(si.Prebuild.Snapshot)
 		if err != nil {
 			return nil, err
