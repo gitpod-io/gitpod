@@ -73,7 +73,7 @@ type task struct {
 
 type tasksManager struct {
 	config          *Config
-	tasks           map[string]*task
+	tasks           []*task
 	subscriptions   map[*tasksSubscription]struct{}
 	mu              sync.RWMutex
 	ready           chan struct{}
@@ -86,7 +86,6 @@ func newTasksManager(config *Config, terminalService *terminal.MuxTerminalServic
 		config:          config,
 		terminalService: terminalService,
 		contentState:    contentState,
-		tasks:           make(map[string]*task),
 		subscriptions:   make(map[*tasksSubscription]struct{}),
 		ready:           make(chan struct{}),
 	}
@@ -96,11 +95,9 @@ func (tm *tasksManager) getStatus() []*api.TaskStatus {
 	tm.mu.RLock()
 	defer tm.mu.RUnlock()
 
-	i := 0
 	status := make([]*api.TaskStatus, len(tm.tasks))
-	for _, task := range tm.tasks {
+	for i, task := range tm.tasks {
 		status[i] = &task.TaskStatus
-		i++
 	}
 	return status
 }
@@ -193,7 +190,7 @@ func (tm *tasksManager) init(ctx context.Context) *runContext {
 		} else {
 			runContext.tasks = append(runContext.tasks, task)
 		}
-		tm.tasks[id] = task
+		tm.tasks = append(tm.tasks, task)
 	}
 	return runContext
 }
@@ -232,6 +229,7 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup) {
 			continue
 		}
 
+		taskLog = taskLog.WithField("pid", terminal.Command.Process.Pid)
 		taskLog.Info("task terminal has been started")
 		tm.updateState(func() bool {
 			t.Terminal = resp.Alias
@@ -337,7 +335,7 @@ func (task *task) prebuildLogFileName() string {
 
 func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 	var (
-		workspaceLog = log.WithField("component", "workspace")
+		workspaceLog = log.WithField("component", "workspace").WithField("pid", terminal.Command.Process.Pid)
 		stdout       = terminal.Stdout.Listen()
 		start        = time.Now()
 	)
