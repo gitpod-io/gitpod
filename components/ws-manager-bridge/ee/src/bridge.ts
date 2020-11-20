@@ -74,11 +74,14 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
                     prebuild.state = "timeout";
                     prebuild.error = status.conditions!.timeout;
                     headlessUpdateType = HeadlessWorkspaceEventType.AbortedTimedOut;
+                } else if (!!status.conditions!.failed) {
+                    prebuild.state = "aborted";
+                    prebuild.error = status.conditions!.failed;
+                    headlessUpdateType = HeadlessWorkspaceEventType.FinishedButFailed;
                 } else {
                     prebuild.state = "available";
-                    prebuild.error = status.conditions!.failed;
                     prebuild.snapshot = status.conditions!.snapshot;
-                    headlessUpdateType = !!status.conditions!.failed ? HeadlessWorkspaceEventType.FinishedButFailed : HeadlessWorkspaceEventType.FinishedSuccessfully;
+                    headlessUpdateType = HeadlessWorkspaceEventType.FinishedSuccessfully;
                 }
                 await this.workspaceDB.trace({span}).storePrebuiltWorkspace(prebuild);
 
