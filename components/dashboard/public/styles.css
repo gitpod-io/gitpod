@@ -477,17 +477,19 @@ footer .logo-icon {
     right: 0;
     margin: auto;
     text-align: center;
-    z-index: 999;
-    user-select: none;
+    z-index: 1001;
 }
 
 .start .message.stopped-reason {
-    top: 43vh;
+    top: 39vh;
 }
 
-.start .message.start-action {
-    top: 50vh;
-    z-index: 1001;
+.start .message .start-action {
+    margin: 20px 0;
+}
+
+.start .message .start-action .button {
+    margin: 0 20px;
 }
 
 .start .error.message {

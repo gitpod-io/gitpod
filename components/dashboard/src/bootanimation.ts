@@ -269,7 +269,7 @@ export class Bootanimation {
         var rotateX = Math.sin(now) * 0.1 + 0.75 + this.mousePosition[1];
         var rotateY = Math.cos(now) * 0.1 - 0.75 + this.mousePosition[0];
 
-        if (this.inErrorMode) {
+        if (this.isStopped) {
             xoffset = yoffset = 0;
             rotateX = 0.75;
             rotateY = -0.75;
@@ -323,7 +323,7 @@ export class Bootanimation {
             glow);
         this.gl.uniform3fv(
             this.programInfo.uniformLocations.baseColor,
-            this.inErrorMode ? [0.83, 0.153, 0.243] : [0, 0.53, 0.75]);
+            this.inErrorMode ? [0.83, 0.153, 0.243] : (this.isStopped ? [0.53, 0.53, 0.53] :[0, 0.53, 0.75]));
 
         this.gl.drawElements(this.gl.TRIANGLES, 90, this.gl.UNSIGNED_SHORT, 0);
     }
