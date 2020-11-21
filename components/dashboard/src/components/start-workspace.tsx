@@ -21,8 +21,10 @@ import Button from '@material-ui/core/Button';
 import { ResponseError } from 'vscode-jsonrpc';
 import { WithBranding } from './with-branding';
 import { Context } from '../context';
+import { colors } from '../withRoot';
 
 interface StartWorkspaceState {
+    workspace?: Workspace;
     workspaceInstance?: WorkspaceInstance;
     errorMessage?: string;
     errorCode?: number;
@@ -135,6 +137,9 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                     // (needed for already started workspaces, and not hanging in 'Starting ...' for too long)
                     this.props.service.server.getWorkspace(workspaceId).then(ws => {
                         if (ws.latestInstance) {
+                            this.setState({
+                                workspace: ws.workspace
+                            });
                             this.onInstanceUpdate(ws.latestInstance);
                         }
                     });
@@ -336,37 +341,81 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
             message = <div className='message'>
                 {this.process.getLabel(this.state.workspaceInstance.status.phase)}
             </div>;
-            if (this.state.workspaceInstance.status.phase === 'stopping'
-                || this.state.workspaceInstance.status.phase === 'stopped') {
-                let stoppedReason;
+            const phase = this.state.workspaceInstance.status.phase;
+            if (phase === 'stopped' ||
+                phase === 'stopping') {
+                let stoppedReason = `The workspace ${phase === 'stopped' ? 'has stopped' : 'is stopping'}.`;
                 if (this.state.workspaceInstance.status.conditions.timeout) {
-                    stoppedReason = "Workspace has timed out.";
+                    stoppedReason = `The workspace timed out and ${phase === 'stopped' ? 'has stopped' : 'is stopping'}.`;
                 } else if (this.state.workspaceInstance.status.conditions.failed) {
                     stoppedReason = this.state.workspaceInstance.status.conditions.failed;
                 } else if (this.state.workspaceInstance.status.message) {
                     stoppedReason = this.state.workspaceInstance.status.message;
                 }
-                if (stoppedReason) {
-                    // capitalize message
-                    stoppedReason = stoppedReason.charAt(0).toUpperCase() + stoppedReason.slice(1);
+                // capitalize message
+                stoppedReason = stoppedReason.charAt(0).toUpperCase() + stoppedReason.slice(1);
 
-                    if (!stoppedReason.endsWith(".")) {
-                        stoppedReason += ".";
-                    }
-                    message = <React.Fragment>
-                        {message}
-                        <div className='message stopped-reason'>{stoppedReason}</div>
-                    </React.Fragment>;
+                if (!stoppedReason.endsWith(".")) {
+                    stoppedReason += ".";
                 }
-            }
-            if (this.state.workspaceInstance.status.phase === 'stopped' && this.props.workspaceId) {
-                const startUrl = new GitpodHostUrl(window.location.toString()).asStart(this.props.workspaceId).toString();
+
+                const pendingChanges: { message: string, items: string[] }[] = [];
+                const repo = this.state.workspaceInstance && this.state.workspaceInstance.status && this.state.workspaceInstance.status.repo;
+                if (repo) {
+                    if (repo.totalUncommitedFiles || 0 > 0) {
+                        pendingChanges.push({
+                            message: repo.totalUncommitedFiles === 1 ? 'an uncommited file' : `${repo.totalUncommitedFiles} uncommited files`,
+                            items: repo.uncommitedFiles || []
+                        });
+                    }
+                    if (repo.totalUntrackedFiles || 0 > 0) {
+                        pendingChanges.push({
+                            message: repo.totalUntrackedFiles === 1 ? 'an untracked file' : `${repo.totalUntrackedFiles} untracked files`,
+                            items: repo.untrackedFiles || []
+                        });
+                    }
+                    if (repo.totalUnpushedCommits || 0 > 0) {
+                        pendingChanges.push({
+                            message: repo.totalUnpushedCommits === 1 ? 'an unpushed commit' : `${repo.totalUnpushedCommits} unpushed commits`,
+                            items: repo.unpushedCommits || []
+                        });
+                    }
+                }
+
+                const urls = new GitpodHostUrl(window.location.toString());
+                const startUrl = urls.asStart(this.props.workspaceId).toString();
+                const ctxURL = new URL(this.state.workspace?.contextURL || urls.asDashboard().toString())
+                const host = "Back to " + ctxURL.host;
                 message = <React.Fragment>
-                    {message}
-                    <div className='message start-action'><Button className='button' variant='outlined' color='secondary' onClick={() => {
-                        this.redirectTo(startUrl)
-                    }}>Start Workspace</Button></div>
-                </React.Fragment>;
+                    <div className='message'>
+                        <div style={{ display: '' }}>
+                            <div style={{ fontWeight: 800 }}>{stoppedReason}</div>
+                            {phase === 'stopped' ? (pendingChanges.length === 0 ? <div style={{ color: colors.fontColor3 }}>There are no pending changes. All good.</div> : (
+                                <div style={{ margin: "20px auto", width: '30%', textAlign: 'left', overflow: 'scroll', maxHeight: 150 }}>
+                                    <div style={{ color: colors.brand2, fontWeight: 800 }}>The workspace has pending changes.  You can restart it to continue your work.</div>
+                                    {pendingChanges.map(c => {
+                                        return <React.Fragment>
+                                            <div style={{ marginLeft: 0, color: colors.fontColor3 }}>
+                                                {c.message}
+                                            </div>
+                                            {c.items.map(i => {
+                                                return <div><code style={{ marginLeft: 20, whiteSpace: 'nowrap' }}>
+                                                    - {i}
+                                                </code></div>
+                                            })}
+                                            </React.Fragment>
+                                    })}
+                                </div>
+                            )): undefined}
+                            <div className='start-action'>
+                            <Button className='button' variant='outlined' color='primary'
+                                onClick={() => this.redirectTo(this.state.workspace!.contextURL)}>{host}</Button>
+                            <Button className='button' variant='outlined' color={ pendingChanges.length !== 0 ? 'secondary' : 'primary'}
+                                disabled={phase!=='stopped'}
+                                onClick={() => this.redirectTo(startUrl)}>Start Workspace</Button></div>
+                    </div>
+                    </div>
+                </React.Fragment >;
             }
         }
 
