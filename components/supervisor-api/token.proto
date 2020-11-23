@@ -9,7 +9,7 @@ package supervisor;
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "api";
+option go_package = ".;api";
 
 service TokenService {
     rpc GetToken(GetTokenRequest) returns (GetTokenResponse) {
