@@ -806,7 +806,7 @@ var (
 
 	pattern_StatusService_TasksStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "status", "tasks"}, ""))
 
-	pattern_StatusService_TasksStatus_1 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 4, 1, 5, 3}, []string{"v1", "status", "ports", "observe", "true"}, ""))
+	pattern_StatusService_TasksStatus_1 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 4, 1, 5, 3}, []string{"v1", "status", "tasks", "observe", "true"}, ""))
 )
 
 var (
