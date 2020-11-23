@@ -65,7 +65,7 @@ service StatusService {
         option (google.api.http) = {
             get: "/v1/status/tasks"
             additional_bindings {
-                get: "/v1/status/ports/observe/{observe=true}",
+                get: "/v1/status/tasks/observe/{observe=true}",
             }
         };
     }
