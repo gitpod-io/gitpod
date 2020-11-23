@@ -251,12 +251,12 @@ func (c WorkspaceConfig) GetTokens(downloadOTS bool) ([]WorkspaceGitpodToken, er
 			Timeout: 5 * time.Second,
 		}
 
-		for i, tk := range tks {
-			if tk.TokenOTS == "" {
+		for i := range tks {
+			if tks[i].TokenOTS == "" {
 				continue
 			}
 
-			resp, err := client.Get(tk.TokenOTS)
+			resp, err := client.Get(tks[i].TokenOTS)
 			if err != nil {
 				return nil, fmt.Errorf("cannot download token OTS: %w", err)
 			}
