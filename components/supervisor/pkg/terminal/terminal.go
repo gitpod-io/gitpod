@@ -5,6 +5,7 @@
 package terminal
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -41,7 +42,7 @@ func (m *Mux) Get(alias string) (*Term, bool) {
 
 // Start starts a new command in its own pseudo-terminal and returns an alias
 // for that pseudo terminal.
-func (m *Mux) Start(cmd *exec.Cmd) (alias string, err error) {
+func (m *Mux) Start(cmd *exec.Cmd, options TermOptions) (alias string, err error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -56,7 +57,7 @@ func (m *Mux) Start(cmd *exec.Cmd) (alias string, err error) {
 	}
 	alias = uid.String()
 
-	term, err := newTerm(pty, cmd)
+	term, err := newTerm(pty, cmd, options)
 	if err != nil {
 		pty.Close()
 		return "", err
@@ -107,7 +108,7 @@ func (m *Mux) Close(alias string) error {
 // For now we assume an average of five terminals per workspace, which makes this consume 1MiB of RAM.
 const terminalBacklogSize = 256 << 10
 
-func newTerm(pty *os.File, cmd *exec.Cmd) (*Term, error) {
+func newTerm(pty *os.File, cmd *exec.Cmd, options TermOptions) (*Term, error) {
 	token, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
@@ -118,10 +119,15 @@ func newTerm(pty *os.File, cmd *exec.Cmd) (*Term, error) {
 		return nil, err
 	}
 
+	timeout := options.ReadTimeout
+	if timeout == 0 {
+		timeout = 1<<63 - 1
+	}
 	res := &Term{
 		PTY:     pty,
 		Command: cmd,
 		Stdout: &multiWriter{
+			timeout:  timeout,
 			listener: make(map[*multiWriterListener]struct{}),
 			recorder: recorder,
 		},
@@ -130,6 +136,12 @@ func newTerm(pty *os.File, cmd *exec.Cmd) (*Term, error) {
 	}
 	go io.Copy(res.Stdout, pty)
 	return res, nil
+}
+
+// TermOptions is a pseudo-terminal configuration
+type TermOptions struct {
+	// timeout after which a listener is dropped. Use 0 for no timeout.
+	ReadTimeout time.Duration
 }
 
 // Term is a pseudo-terminal
@@ -144,6 +156,7 @@ type Term struct {
 
 // multiWriter is like io.MultiWriter, except that we can listener at runtime.
 type multiWriter struct {
+	timeout  time.Duration
 	closed   bool
 	mu       sync.RWMutex
 	listener map[*multiWriterListener]struct{}
@@ -152,18 +165,25 @@ type multiWriter struct {
 	recorder *RingBuffer
 }
 
+// ErrReadTimeout happens when a listener takes too long to read
+var ErrReadTimeout = errors.New("read timeout")
+
 type multiWriterListener struct {
 	io.Reader
 
 	closed    bool
 	once      sync.Once
+	closeErr  error
 	closeChan chan struct{}
 	cchan     chan []byte
 	done      chan struct{}
 }
 
-func (l *multiWriterListener) Close() error {
+func (l *multiWriterListener) Close(err error) error {
 	l.once.Do(func() {
+		if err != nil {
+			l.closeErr = err
+		}
 		close(l.closeChan)
 		l.closed = true
 
@@ -176,10 +196,23 @@ func (l *multiWriterListener) Done() <-chan struct{} {
 	return l.closeChan
 }
 
+type closedTerminalListener struct {
+}
+
+func (closedTerminalListener) Read(p []byte) (n int, err error) {
+	return 0, errors.New("terminal is closed")
+}
+
+var closedListener = closedTerminalListener{}
+
 // Listen listens in on the multi-writer stream
-func (mw *multiWriter) Listen() *multiWriterListener {
+func (mw *multiWriter) Listen() io.Reader {
 	mw.mu.Lock()
 	defer mw.mu.Unlock()
+
+	if mw.closed {
+		return closedListener
+	}
 
 	r, w := io.Pipe()
 	cchan, done, closeChan := make(chan []byte), make(chan struct{}, 1), make(chan struct{}, 1)
@@ -190,10 +223,8 @@ func (mw *multiWriter) Listen() *multiWriterListener {
 		closeChan: closeChan,
 	}
 
+	recording := mw.recorder.Bytes()
 	go func() {
-		mw.mu.RLock()
-		recording := mw.recorder.Bytes()
-		mw.mu.RUnlock()
 		w.Write(recording)
 
 		// copy bytes from channel to writer.
@@ -206,15 +237,19 @@ func (mw *multiWriter) Listen() *multiWriterListener {
 				err = io.ErrShortWrite
 			}
 			if err != nil {
-				log.WithError(err).Error("terminal listener droped out")
-				res.Close()
+				res.Close(err)
 			}
 		}
 	}()
 	go func() {
 		// listener cleanup on close
 		<-closeChan
-		w.Close()
+		if res.closeErr != nil {
+			log.WithError(res.closeErr).Error("terminal listener droped out")
+			w.CloseWithError(res.closeErr)
+		} else {
+			w.Close()
+		}
 		close(cchan)
 
 		mw.mu.Lock()
@@ -240,14 +275,14 @@ func (mw *multiWriter) Write(p []byte) (n int, err error) {
 
 		select {
 		case lstr.cchan <- p:
-		case <-time.After(5 * time.Second):
-			lstr.Close()
+		case <-time.After(mw.timeout):
+			lstr.Close(ErrReadTimeout)
 		}
 
 		select {
 		case <-lstr.done:
-		case <-time.After(5 * time.Second):
-			lstr.Close()
+		case <-time.After(mw.timeout):
+			lstr.Close(ErrReadTimeout)
 		}
 	}
 	return len(p), nil
@@ -261,7 +296,7 @@ func (mw *multiWriter) Close() error {
 
 	var err error
 	for w := range mw.listener {
-		cerr := w.Close()
+		cerr := w.Close(nil)
 		if cerr != nil {
 			err = cerr
 		}
