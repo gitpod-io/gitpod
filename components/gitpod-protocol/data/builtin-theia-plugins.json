@@ -175,6 +175,11 @@
     "url": "https://open-vsx.org/api/vscode/ruby/1.44.2/file/vscode.ruby-1.44.2.vsix"
   },
   {
+    "loc": "rebornix.ruby-0.27.0.vsix",
+    "name": "rebornix.ruby@0.27.0",
+    "url": "https://open-vsx.org/api/rebornix/ruby/0.27.0/file/rebornix.ruby-0.27.0.vsix"
+  },
+  {
     "loc": "vscode.rust-1.44.2.vsix",
     "name": "vscode.rust@1.44.2",
     "url": "https://open-vsx.org/api/vscode/rust/1.44.2/file/vscode.rust-1.44.2.vsix"
