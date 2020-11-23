@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -17,6 +18,8 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/supervisor/api"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/isolation"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/supervisor"
 	daemonapi "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/rootless-containers/rootlesskit/pkg/msgutil"
@@ -24,6 +27,7 @@ import (
 	sigproxysignal "github.com/rootless-containers/rootlesskit/pkg/sigproxy/signal"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
+	"google.golang.org/grpc"
 )
 
 const (
@@ -216,11 +220,27 @@ var ring1Cmd = &cobra.Command{
 			log.WithError(err).Fatal("cannot create tempdir")
 		}
 
+		isosrv := grpc.NewServer()
+		api.RegisterIsolationServiceServer(isosrv, &isolation.Ring1IsolationService{
+			Client:         client,
+			RootfsLocation: tmpdir,
+		})
+		isosockFN := filepath.Join(os.TempDir(), fmt.Sprintf("isolation-%d.sock", time.Now().Unix()))
+		defer os.Remove(isosockFN)
+
+		sock, err := net.Listen("unix", isosockFN)
+		if err != nil {
+			log.WithError(err).WithField("fn", isosockFN).Fatal("cannot listen on socket for ring1 isolation services")
+		}
+		defer sock.Close()
+		go isosrv.Serve(sock)
+
 		mnts := []struct {
 			Target string
 			Source string
 			FSType string
 			Flags  uintptr
+			File   bool
 		}{
 			// TODO(cw): pull mark mount location from config
 			{Target: "/", Source: "/.workspace/mark", FSType: "shiftfs"},
@@ -230,14 +250,25 @@ var ring1Cmd = &cobra.Command{
 			{Target: "/theia", Flags: unix.MS_BIND | unix.MS_REC},
 			// TODO(cw): only mount /workspace if it's in the mount table, i.e. this isn't an FWB workspace
 			{Target: "/workspace", Flags: unix.MS_BIND | unix.MS_REC},
-			{Target: "/etc/hosts", Flags: unix.MS_BIND | unix.MS_REC},
-			{Target: "/etc/hostname", Flags: unix.MS_BIND | unix.MS_REC},
-			{Target: "/etc/resolv.conf", Flags: unix.MS_BIND | unix.MS_REC},
+			{Target: "/etc/hosts", Flags: unix.MS_BIND | unix.MS_REC, File: true},
+			{Target: "/etc/hostname", Flags: unix.MS_BIND | unix.MS_REC, File: true},
+			{Target: "/etc/resolv.conf", Flags: unix.MS_BIND | unix.MS_REC, File: true},
 			{Target: "/tmp", Source: "tmpfs", FSType: "tmpfs"},
+			{Target: "/.supervisor/isolation.sock", Source: isosockFN, Flags: unix.MS_BIND | unix.MS_REC, File: true},
 		}
 		for _, m := range mnts {
 			dst := filepath.Join(tmpdir, m.Target)
-			_ = os.MkdirAll(dst, 0644)
+			if m.File {
+				_ = os.MkdirAll(filepath.Dir(dst), 0644)
+				err = ioutil.WriteFile(dst, nil, 0644)
+				if err != nil {
+					log.WithError(err).WithField("dest", dst).Error("prepare file mount")
+					failed = true
+					return
+				}
+			} else {
+				_ = os.MkdirAll(dst, 0644)
+			}
 
 			if m.Source == "" {
 				m.Source = m.Target

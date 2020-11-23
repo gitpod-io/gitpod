@@ -1,0 +1,27 @@
+// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package supervisor;
+
+option go_package = ".;api";
+
+// IsolationService is not available on the TCP server, but as socket at /var/run/supervisor.sock
+service IsolationService {
+
+    // MountProc can mount a proc filesystem in some location
+    rpc MountProc(MountProcRequest) returns (MountProcResponse) { }
+
+}
+
+// MountProcRequest mounts a proc filesystem for a particular PID namespace
+message MountProcRequest {
+    // target is the target location where to mount the filesystem
+    string target = 1;
+    // pid is the PID of the process to mount proc for
+    int64 pid = 2;
+}
+
+message MountProcResponse {}
