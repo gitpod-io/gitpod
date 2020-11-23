@@ -8,7 +8,7 @@ package supervisor;
 
 import "google/api/annotations.proto";
 
-option go_package = "api";
+option go_package = ".;api";
 
 service TerminalService {
     // Open opens a new terminal running the login shell
