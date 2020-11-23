@@ -214,7 +214,13 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup) {
 		if t.config.Env != nil {
 			openRequest.Env = *t.config.Env
 		}
-		resp, err := tm.terminalService.Open(ctx, openRequest)
+		var ReadTimeout time.Duration
+		if !runContext.headless {
+			ReadTimeout = 5 * time.Second
+		}
+		resp, err := tm.terminalService.OpenWithOptions(ctx, openRequest, terminal.TermOptions{
+			ReadTimeout: ReadTimeout,
+		})
 		if err != nil {
 			taskLog.WithError(err).Error("cannot open new task terminal")
 			tm.setTaskState(t, api.TaskState_closed)

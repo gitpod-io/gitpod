@@ -9,6 +9,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/creack/pty"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -54,15 +55,22 @@ func (srv *MuxTerminalService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint 
 	return api.RegisterTerminalServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithInsecure()})
 }
 
-// Open opens a new terminal running the login shell
+// Open opens a new terminal running the shell
 func (srv *MuxTerminalService) Open(ctx context.Context, req *api.OpenTerminalRequest) (*api.OpenTerminalResponse, error) {
+	return srv.OpenWithOptions(ctx, req, TermOptions{
+		ReadTimeout: 5 * time.Second,
+	})
+}
+
+// OpenWithOptions opens a new terminal running the shell with given options
+func (srv *MuxTerminalService) OpenWithOptions(ctx context.Context, req *api.OpenTerminalRequest, options TermOptions) (*api.OpenTerminalResponse, error) {
 	cmd := exec.Command(srv.DefaultShell)
 	cmd.Dir = srv.DefaultWorkdir
 	cmd.Env = append(srv.Env, "TERM=xterm-color")
 	for key, value := range req.Env {
 		cmd.Env = append(cmd.Env, key+"="+value)
 	}
-	alias, err := srv.Mux.Start(cmd)
+	alias, err := srv.Mux.Start(cmd, options)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

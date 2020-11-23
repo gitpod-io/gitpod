@@ -8,12 +8,14 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"os/exec"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/google/go-cmp/cmp"
+	"golang.org/x/sync/errgroup"
 )
 
 func TestTerminals(t *testing.T) {
@@ -65,5 +67,48 @@ func TestTerminals(t *testing.T) {
 				t.Errorf("unexpected output (-want +got):\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestConcurrent(t *testing.T) {
+	var (
+		terminals     = NewMux()
+		terminalCount = 2
+		listenerCount = 2
+	)
+
+	eg, _ := errgroup.WithContext(context.Background())
+	for i := 0; i < terminalCount; i++ {
+		alias, err := terminals.Start(exec.Command("/bin/bash", "-i"), TermOptions{
+			ReadTimeout: 0,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		term, ok := terminals.Get(alias)
+		if !ok {
+			t.Fatal("terminal is not found")
+		}
+
+		for j := 0; j < listenerCount; j++ {
+			stdout := term.Stdout.Listen()
+			eg.Go(func() error {
+				buf := new(strings.Builder)
+				_, err = io.Copy(buf, stdout)
+				if err != nil {
+					return err
+				}
+				return nil
+			})
+		}
+
+		_, err = term.PTY.Write([]byte("echo \"Hello World\"; exit\n"))
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	err := eg.Wait()
+	if err != nil {
+		t.Fatal(err)
 	}
 }
