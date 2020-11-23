@@ -12,6 +12,7 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -200,7 +201,7 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 				res.Err = err.Error()
 			}
 
-			if diff := cmp.Diff(test.Expectation, res); diff != "" {
+			if diff := cmp.Diff(test.Expectation, res, cmpopts.IgnoreUnexported(api.GetTokenResponse{})); diff != "" {
 				t.Errorf("unexpected status (-want +got):\n%s", diff)
 			}
 		})
@@ -316,7 +317,7 @@ func TestInMemoryTokenServiceSetToken(t *testing.T) {
 				res.Err = err.Error()
 			}
 
-			if diff := cmp.Diff(test.Expectation, res); diff != "" {
+			if diff := cmp.Diff(test.Expectation, res, cmpopts.IgnoreUnexported(api.GetTokenResponse{})); diff != "" {
 				t.Errorf("unexpected status (-want +got):\n%s", diff)
 			}
 		})
