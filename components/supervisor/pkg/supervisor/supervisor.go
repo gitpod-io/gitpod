@@ -33,7 +33,7 @@ import (
 	daemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"golang.org/x/sys/unix"
 
-	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
+	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/soheilhy/cmux"
 	"google.golang.org/grpc"
 )
@@ -115,8 +115,8 @@ func Run(options ...RunOption) {
 	if err != nil {
 		log.WithError(err).Warn("cannot prepare tokens")
 	}
-	for _, tks := range tkns {
-		_, err = tokenService.SetToken(context.Background(), &tks.SetTokenRequest)
+	for i := range tkns {
+		_, err = tokenService.SetToken(context.Background(), &tkns[i].SetTokenRequest)
 		if err != nil {
 			log.WithError(err).Warn("cannot prepare tokens")
 		}
@@ -511,9 +511,7 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	}
 
 	m := cmux.New(l)
-	restMux := grpcruntime.NewServeMux(
-		grpcruntime.WithMarshalerOption(grpcruntime.MIMEWildcard, &grpcruntime.JSONPb{EnumsAsInts: false, EmitDefaults: true}),
-	)
+	restMux := grpcruntime.NewServeMux()
 	grpcMux := m.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
 	grpcServer := grpc.NewServer(opts...)
 	grpcEndpoint := fmt.Sprintf("localhost:%d", cfg.APIEndpointPort)

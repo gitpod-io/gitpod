@@ -296,14 +296,20 @@ func TestPortsUpdateState(t *testing.T) {
 
 			wg.Wait()
 
-			sortExposed := cmpopts.SortSlices(func(x, y ExposedPort) bool { return x.LocalPort < y.LocalPort })
-			if diff := cmp.Diff(test.ExpectedExposure, ExposureExpectation(exposed.Exposures), sortExposed); diff != "" {
+			var (
+				sorPorts         = cmpopts.SortSlices(func(x, y uint32) bool { return x < y })
+				sortPortStatus   = cmpopts.SortSlices(func(x, y *api.PortsStatus) bool { return x.LocalPort < y.LocalPort })
+				sortExposed      = cmpopts.SortSlices(func(x, y ExposedPort) bool { return x.LocalPort < y.LocalPort })
+				ignoreUnexported = cmpopts.IgnoreUnexported(
+					api.PortsStatus{},
+					api.PortsStatus_ExposedPortInfo{},
+				)
+			)
+			if diff := cmp.Diff(test.ExpectedExposure, ExposureExpectation(exposed.Exposures), sortExposed, ignoreUnexported); diff != "" {
 				t.Errorf("unexpected exposures (-want +got):\n%s", diff)
 			}
 
-			sorPorts := cmpopts.SortSlices(func(x, y uint32) bool { return x < y })
-			sortPortStatus := cmpopts.SortSlices(func(x, y *api.PortsStatus) bool { return x.LocalPort < y.LocalPort })
-			if diff := cmp.Diff(test.ExpectedUpdates, UpdateExpectation(updts), sorPorts, sortPortStatus); diff != "" {
+			if diff := cmp.Diff(test.ExpectedUpdates, UpdateExpectation(updts), sorPorts, sortPortStatus, ignoreUnexported); diff != "" {
 				t.Errorf("unexpected updates (-want +got):\n%s", diff)
 			}
 		})
