@@ -163,7 +163,7 @@ export class MainMenu extends React.Component<MainMenuProps, MainMenuState> {
             <AppBar position='static'>
                 <Toolbar className="content toolbar">
                     <div className="gitpod-logo">
-                        <a href={this.props.branding ? this.props.branding.homepage : 'javascript:void(0)'}>
+                        <a href="/">
                             <img src={getLogoPath(this.props.branding)} aria-hidden="true" className="logo" />
                         </a>
                     </div>
