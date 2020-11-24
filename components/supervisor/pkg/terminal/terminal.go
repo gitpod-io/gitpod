@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"sync"
@@ -67,7 +68,8 @@ func (m *Mux) Start(cmd *exec.Cmd, options TermOptions) (alias string, err error
 	log.WithField("alias", alias).WithField("cmd", cmd.Path).Info("started new terminal")
 
 	go func() {
-		cmd.Process.Wait()
+		term.waitErr = cmd.Wait()
+		close(term.waitDone)
 		m.Close(alias)
 	}()
 
@@ -133,6 +135,8 @@ func newTerm(pty *os.File, cmd *exec.Cmd, options TermOptions) (*Term, error) {
 		},
 
 		StarterToken: token.String(),
+
+		waitDone: make(chan struct{}),
 	}
 	go io.Copy(res.Stdout, pty)
 	return res, nil
@@ -152,6 +156,17 @@ type Term struct {
 	StarterToken string
 
 	Stdout *multiWriter
+
+	waitErr  error
+	waitDone chan struct{}
+}
+
+// Wait waits for the terminal to exit and returns the resulted process state
+func (term *Term) Wait() (*os.ProcessState, error) {
+	select {
+	case <-term.waitDone:
+	}
+	return term.Command.ProcessState, term.waitErr
 }
 
 // multiWriter is like io.MultiWriter, except that we can listener at runtime.
@@ -179,7 +194,11 @@ type multiWriterListener struct {
 	done      chan struct{}
 }
 
-func (l *multiWriterListener) Close(err error) error {
+func (l *multiWriterListener) Close() error {
+	return l.CloseWithError(nil)
+}
+
+func (l *multiWriterListener) CloseWithError(err error) error {
 	l.once.Do(func() {
 		if err != nil {
 			l.closeErr = err
@@ -200,13 +219,13 @@ type closedTerminalListener struct {
 }
 
 func (closedTerminalListener) Read(p []byte) (n int, err error) {
-	return 0, errors.New("terminal is closed")
+	return 0, io.EOF
 }
 
-var closedListener = closedTerminalListener{}
+var closedListener = ioutil.NopCloser(closedTerminalListener{})
 
 // Listen listens in on the multi-writer stream
-func (mw *multiWriter) Listen() io.Reader {
+func (mw *multiWriter) Listen() io.ReadCloser {
 	mw.mu.Lock()
 	defer mw.mu.Unlock()
 
@@ -237,7 +256,7 @@ func (mw *multiWriter) Listen() io.Reader {
 				err = io.ErrShortWrite
 			}
 			if err != nil {
-				res.Close(err)
+				res.CloseWithError(err)
 			}
 		}
 	}()
@@ -276,13 +295,13 @@ func (mw *multiWriter) Write(p []byte) (n int, err error) {
 		select {
 		case lstr.cchan <- p:
 		case <-time.After(mw.timeout):
-			lstr.Close(ErrReadTimeout)
+			lstr.CloseWithError(ErrReadTimeout)
 		}
 
 		select {
 		case <-lstr.done:
 		case <-time.After(mw.timeout):
-			lstr.Close(ErrReadTimeout)
+			lstr.CloseWithError(ErrReadTimeout)
 		}
 	}
 	return len(p), nil
@@ -296,7 +315,7 @@ func (mw *multiWriter) Close() error {
 
 	var err error
 	for w := range mw.listener {
-		cerr := w.Close(nil)
+		cerr := w.Close()
 		if cerr != nil {
 			err = cerr
 		}

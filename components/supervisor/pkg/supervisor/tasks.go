@@ -22,12 +22,6 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
 )
 
-type runContext struct {
-	contentSource csapi.WorkspaceInitSource
-	headless      bool
-	tasks         []*task
-}
-
 type tasksSubscription struct {
 	updates chan []*api.TaskStatus
 	Close   func() error
@@ -66,28 +60,38 @@ func (tm *tasksManager) Subscribe() *tasksSubscription {
 
 type task struct {
 	api.TaskStatus
-	config       TaskConfig
-	command      string
-	prebuildChan chan bool
+	config      TaskConfig
+	command     string
+	successChan chan bool
+}
+
+type headlessTaskProgressReporter interface {
+	write(data string, task *task, terminal *terminal.Term)
+	done(success bool)
 }
 
 type tasksManager struct {
 	config          *Config
+	storeLocation   string
+	contentSource   csapi.WorkspaceInitSource
 	tasks           []*task
 	subscriptions   map[*tasksSubscription]struct{}
 	mu              sync.RWMutex
 	ready           chan struct{}
 	terminalService *terminal.MuxTerminalService
 	contentState    ContentState
+	reporter        headlessTaskProgressReporter
 }
 
-func newTasksManager(config *Config, terminalService *terminal.MuxTerminalService, contentState ContentState) *tasksManager {
+func newTasksManager(config *Config, terminalService *terminal.MuxTerminalService, contentState ContentState, reporter headlessTaskProgressReporter) *tasksManager {
 	return &tasksManager{
 		config:          config,
 		terminalService: terminalService,
 		contentState:    contentState,
+		reporter:        reporter,
 		subscriptions:   make(map[*tasksSubscription]struct{}),
 		ready:           make(chan struct{}),
+		storeLocation:   "/workspace/.gitpod",
 	}
 }
 
@@ -135,32 +139,26 @@ func (tm *tasksManager) setTaskState(t *task, newState api.TaskState) {
 	})
 }
 
-func (tm *tasksManager) init(ctx context.Context) *runContext {
+func (tm *tasksManager) init(ctx context.Context) {
 	defer close(tm.ready)
 
 	tasks, err := tm.config.getGitpodTasks()
 	if err != nil {
 		log.WithError(err).Error()
-		return nil
+		return
 	}
 	if tasks == nil {
-		log.Info("no gitpod tasks found")
-		return nil
+		return
 	}
 
 	select {
 	case <-ctx.Done():
-		return nil
+		return
 	case <-tm.contentState.ContentReady():
 	}
 
 	contentSource, _ := tm.contentState.ContentSource()
-	headless := tm.config.GitpodHeadless != nil && *tm.config.GitpodHeadless == "true"
-	runContext := &runContext{
-		contentSource: contentSource,
-		headless:      headless,
-		tasks:         make([]*task, 0),
-	}
+	tm.contentSource = contentSource
 
 	for i, config := range *tasks {
 		id := strconv.Itoa(i)
@@ -184,42 +182,35 @@ func (tm *tasksManager) init(ctx context.Context) *runContext {
 			},
 			config: config,
 		}
-		task.command = task.getCommand(runContext)
-		if runContext.headless && task.command == "" {
+		task.command = tm.getCommand(task)
+		if tm.config.isHeadless() && task.command == "exit" {
 			task.State = api.TaskState_closed
-		} else {
-			runContext.tasks = append(runContext.tasks, task)
 		}
 		tm.tasks = append(tm.tasks, task)
 	}
-	return runContext
 }
 
 func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
+	defer tm.report(ctx)
+	tm.init(ctx)
 
-	runContext := tm.init(ctx)
-	if runContext == nil {
-		return
-	}
-	if len(runContext.tasks) == 0 {
-		log.Info("no gitpod tasks to run")
-		return
-	}
-
-	for _, t := range runContext.tasks {
+	for _, t := range tm.tasks {
+		if t.State == api.TaskState_closed {
+			continue
+		}
 		taskLog := log.WithField("command", t.command)
 		taskLog.Info("starting a task terminal...")
 		openRequest := &api.OpenTerminalRequest{}
 		if t.config.Env != nil {
 			openRequest.Env = *t.config.Env
 		}
-		var ReadTimeout time.Duration
-		if !runContext.headless {
-			ReadTimeout = 5 * time.Second
+		var readTimeout time.Duration
+		if !tm.config.isHeadless() {
+			readTimeout = 5 * time.Second
 		}
 		resp, err := tm.terminalService.OpenWithOptions(ctx, openRequest, terminal.TermOptions{
-			ReadTimeout: ReadTimeout,
+			ReadTimeout: readTimeout,
 		})
 		if err != nil {
 			taskLog.WithError(err).Error("cannot open new task terminal")
@@ -228,14 +219,14 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup) {
 		}
 
 		taskLog = taskLog.WithField("terminal", resp.Alias)
-		terminal, ok := tm.terminalService.Mux.Get(resp.Alias)
+		term, ok := tm.terminalService.Mux.Get(resp.Alias)
 		if !ok {
 			taskLog.Error("cannot find a task terminal")
 			tm.setTaskState(t, api.TaskState_closed)
 			continue
 		}
 
-		taskLog = taskLog.WithField("pid", terminal.Command.Process.Pid)
+		taskLog = taskLog.WithField("pid", term.Command.Process.Pid)
 		taskLog.Info("task terminal has been started")
 		tm.updateState(func() bool {
 			t.Terminal = resp.Alias
@@ -243,43 +234,44 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup) {
 			return true
 		})
 
-		go func(t *task) {
-			terminal.Command.Process.Wait()
+		t.successChan = make(chan bool)
+		go func(t *task, term *terminal.Term) {
+			state, _ := term.Wait()
+			if state != nil {
+				t.successChan <- state.Success()
+			} else {
+				t.successChan <- false
+			}
 			taskLog.Info("task terminal has been closed")
 			tm.setTaskState(t, api.TaskState_closed)
-		}(t)
+		}(t, term)
 
-		if runContext.headless {
-			tm.watch(t, terminal)
-		}
+		tm.watch(t, term)
+
 		if t.command != "" {
-			terminal.PTY.Write([]byte(t.command + "\n"))
+			term.PTY.Write([]byte(t.command + "\n"))
 		}
-	}
-
-	if runContext.headless {
-		tm.report(ctx)
 	}
 }
 
-func (task *task) getCommand(context *runContext) string {
-	commands := task.getCommands(context)
+func (tm *tasksManager) getCommand(task *task) string {
+	commands := tm.getCommands(task)
 	command := composeCommand(composeCommandOptions{
 		commands: commands,
 		format:   "{\n%s\n}",
 		sep:      " && ",
 	})
 
-	if context.headless {
-		if strings.TrimSpace(command) == "" {
-			return ""
-		}
+	if tm.config.isHeadless() {
 		// it's important that prebuild tasks exit eventually
 		// also, we need to save the log output in the workspace
+		if strings.TrimSpace(command) == "" {
+			return "exit"
+		}
 		return command + "; exit"
 	}
 
-	histfileCommand := task.getHistfileCommand(context, commands)
+	histfileCommand := tm.getHistfileCommand(task, commands)
 	if strings.TrimSpace(command) == "" {
 		return histfileCommand
 	}
@@ -289,9 +281,9 @@ func (task *task) getCommand(context *runContext) string {
 	return histfileCommand + "; " + command
 }
 
-func (task *task) getHistfileCommand(context *runContext, commands []*string) string {
+func (tm *tasksManager) getHistfileCommand(task *task, commands []*string) string {
 	histfileCommands := commands
-	if context.contentSource == csapi.WorkspaceInitFromPrebuild {
+	if tm.contentSource == csapi.WorkspaceInitFromPrebuild {
 		histfileCommands = []*string{task.config.Before, task.config.Init, task.config.Prebuild, task.config.Command}
 	}
 	histfileContent := composeCommand(composeCommandOptions{
@@ -302,7 +294,7 @@ func (task *task) getHistfileCommand(context *runContext, commands []*string) st
 		return ""
 	}
 
-	histfile := "/workspace/.gitpod/cmd-" + task.Id
+	histfile := tm.storeLocation + "/cmd-" + task.Id
 	err := ioutil.WriteFile(histfile, []byte(histfileContent), 0644)
 	if err != nil {
 		log.WithField("histfile", histfile).WithError(err).Error("cannot write histfile")
@@ -314,19 +306,19 @@ func (task *task) getHistfileCommand(context *runContext, commands []*string) st
 	return " HISTFILE=" + histfile + " history -r"
 }
 
-func (task *task) getCommands(context *runContext) []*string {
-	if context.headless {
+func (tm *tasksManager) getCommands(task *task) []*string {
+	if tm.config.isHeadless() {
 		// prebuild
 		return []*string{task.config.Before, task.config.Init, task.config.Prebuild}
 	}
-	if context.contentSource == csapi.WorkspaceInitFromPrebuild {
+	if tm.contentSource == csapi.WorkspaceInitFromPrebuild {
 		// prebuilt
-		prebuildLogFileName := task.prebuildLogFileName()
+		prebuildLogFileName := tm.prebuildLogFileName(task)
 		legacyPrebuildLogFileName := "/workspace/.prebuild-log-" + task.Id
 		printlogs := "[ -r " + legacyPrebuildLogFileName + " ] && cat " + legacyPrebuildLogFileName + "; [ -r " + prebuildLogFileName + " ] && cat " + prebuildLogFileName + "; true"
 		return []*string{task.config.Before, &printlogs, task.config.Command}
 	}
-	if context.contentSource == csapi.WorkspaceInitFromBackup {
+	if tm.contentSource == csapi.WorkspaceInitFromBackup {
 		// restart
 		return []*string{task.config.Before, task.config.Command}
 	}
@@ -335,34 +327,35 @@ func (task *task) getCommands(context *runContext) []*string {
 
 }
 
-func (task *task) prebuildLogFileName() string {
-	return "/workspace/.gitpod/prebuild-log-" + task.Id
+func (tm *tasksManager) prebuildLogFileName(task *task) string {
+	return tm.storeLocation + "/prebuild-log-" + task.Id
 }
 
 func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
+	if !tm.config.isHeadless() {
+		return
+	}
+
 	var (
-		workspaceLog = log.WithField("component", "workspace").WithField("pid", terminal.Command.Process.Pid)
-		stdout       = terminal.Stdout.Listen()
-		start        = time.Now()
+		terminalLog = log.WithField("pid", terminal.Command.Process.Pid)
+		stdout      = terminal.Stdout.Listen()
+		start       = time.Now()
 	)
-	task.prebuildChan = make(chan bool)
 	go func() {
-		success := false
-		defer func() {
-			task.prebuildChan <- success
-		}()
+		defer stdout.Close()
 
-		fileName := task.prebuildLogFileName()
+		fileName := tm.prebuildLogFileName(task)
 		file, err := os.Create(fileName)
+		var fileWriter *bufio.Writer
 		if err != nil {
-			workspaceLog.WithError(err).Error("cannot create a prebuild log file")
-			return
+			terminalLog.WithError(err).Error("cannot create a prebuild log file")
+			fileWriter = bufio.NewWriter(ioutil.Discard)
+		} else {
+			defer file.Close()
+			terminalLog.Info("Writing build output to " + fileName)
+			fileWriter = bufio.NewWriter(file)
+			defer fileWriter.Flush()
 		}
-		defer file.Close()
-
-		fileWriter := bufio.NewWriter(file)
-
-		workspaceLog.Info("Writing build output to " + fileName)
 
 		buf := make([]byte, 4096)
 		for {
@@ -380,46 +373,42 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 				}
 				data := string(buf[:n])
 				fileWriter.Write(buf[:n])
-				workspaceLog.WithField("type", "workspaceTaskOutput").WithField("data", data).Info()
+				tm.reporter.write(data, task, terminal)
 
 				endMessage := "\n🍌 This task ran as part of a workspace prebuild.\n" + duration + "\n"
 				fileWriter.WriteString(endMessage)
-				fileWriter.Flush()
-				success = true
 				break
 			}
 			if err != nil {
-				workspaceLog.WithError(err).Error("cannot read from a task terminal")
+				terminalLog.WithError(err).Error("cannot read from a task terminal")
 				return
 			}
 			data := string(buf[:n])
 			fileWriter.Write(buf[:n])
-			workspaceLog.WithField("type", "workspaceTaskOutput").WithField("data", data).Info()
+			tm.reporter.write(data, task, terminal)
 		}
 	}()
 }
 
 func (tm *tasksManager) report(ctx context.Context) {
-	workspaceLog := log.WithField("component", "workspace")
-	ok := true
+	if !tm.config.isHeadless() {
+		return
+	}
+
+	success := true
 	for _, task := range tm.tasks {
-		if task.prebuildChan != nil {
+		if task.successChan != nil {
 			select {
 			case <-ctx.Done():
 				return
-			case prebuildOk := <-task.prebuildChan:
-				if !prebuildOk {
-					ok = false
+			case taskSuccess := <-task.successChan:
+				if !taskSuccess {
+					success = false
 				}
 			}
 		}
 	}
-	workspaceLog.WithField("type", "workspaceTaskOutput").WithField("data", "🚛 uploading prebuilt workspace").Info()
-	if !ok {
-		workspaceLog.WithField("type", "workspaceTaskFailed").WithField("error", "one of the tasks failed with non-zero exit code").Info()
-		return
-	}
-	workspaceLog.WithField("type", "workspaceTaskDone").Info()
+	tm.reporter.done(success)
 }
 
 type composeCommandOptions struct {
@@ -436,4 +425,21 @@ func composeCommand(options composeCommandOptions) string {
 		}
 	}
 	return strings.Join(commands, options.sep)
+}
+
+type loggingHeadlessTaskProgressReporter struct {
+}
+
+func (r *loggingHeadlessTaskProgressReporter) write(data string, task *task, terminal *terminal.Term) {
+	log.WithField("component", "workspace").WithField("pid", terminal.Command.Process.Pid).WithField("type", "workspaceTaskOutput").WithField("data", data).Info()
+}
+
+func (r *loggingHeadlessTaskProgressReporter) done(success bool) {
+	workspaceLog := log.WithField("component", "workspace")
+	workspaceLog.WithField("type", "workspaceTaskOutput").WithField("data", "🚛 uploading prebuilt workspace").Info()
+	if !success {
+		workspaceLog.WithField("type", "workspaceTaskFailed").WithField("error", "one of the tasks failed with non-zero exit code").Info()
+		return
+	}
+	workspaceLog.WithField("type", "workspaceTaskDone").Info()
 }
