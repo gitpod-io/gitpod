@@ -41,9 +41,9 @@ replace github.com/gitpod-io/gitpod/content-service/api => ../content-service-ap
 
 replace github.com/gitpod-io/gitpod/registry-facade/api => ../registry-facade-api/go // leeway
 
-replace github.com/gitpod-io/gitpod/ws-manager/api => ../ws-manager-api/go // leeway
-
 replace github.com/gitpod-io/gitpod/ws-daemon/api => ../ws-daemon-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/ws-manager/api => ../ws-manager-api/go // leeway
 
 replace k8s.io/api => k8s.io/api v0.0.0-20190620084959-7cf5895f2711 // leeway indirect from components/common-go:lib
 

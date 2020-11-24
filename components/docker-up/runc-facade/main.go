@@ -5,14 +5,20 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"syscall"
+	"time"
+
+	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -65,6 +71,24 @@ func mountProc() error {
 	}
 
 	err = ioutil.WriteFile("/tmp/runc-facade-mount", []byte(wd+"\n"+fmt.Sprint(os.Args)), 0644)
+	if err != nil {
+		return err
+	}
+
+	conn, err := grpc.Dial("unix:///var/run/ring1.sock", grpc.WithInsecure())
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	client := supervisor.NewIsolationServiceClient(conn)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_, err = client.MountProc(ctx, &supervisor.MountProcRequest{
+		Pid:    -1,
+		Target: filepath.Join(wd, "rootfs", "proc"),
+	})
 	if err != nil {
 		return err
 	}

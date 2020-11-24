@@ -14,6 +14,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
@@ -254,12 +255,28 @@ var ring1Cmd = &cobra.Command{
 			{Target: "/etc/hostname", Flags: unix.MS_BIND | unix.MS_REC, File: true},
 			{Target: "/etc/resolv.conf", Flags: unix.MS_BIND | unix.MS_REC, File: true},
 			{Target: "/tmp", Source: "tmpfs", FSType: "tmpfs"},
-			{Target: "/.supervisor/isolation.sock", Source: isosockFN, Flags: unix.MS_BIND | unix.MS_REC, File: true},
+			{Target: "/var/run/ring1.sock", Source: isosockFN, Flags: unix.MS_BIND | unix.MS_REC, File: true},
 		}
 		for _, m := range mnts {
 			dst := filepath.Join(tmpdir, m.Target)
+
 			if m.File {
-				_ = os.MkdirAll(filepath.Dir(dst), 0644)
+				parent := filepath.Dir(dst)
+
+				// if parent is a symlink we need to navigate that symlink within the new rootfs (tmpdir)
+				parent, err = filepath.EvalSymlinks(parent)
+				if err != nil {
+					log.WithError(err).WithField("dest", dst).WithField("parent", parent).Error("cannot resolve parent symlinks")
+					failed = true
+					return
+				}
+				if !strings.HasPrefix(parent, tmpdir) {
+					// we've moved out of the tmpdir - get back inside
+					parent = filepath.Join(tmpdir, parent)
+					dst = filepath.Join(parent, filepath.Base(m.Target))
+				}
+
+				_ = os.MkdirAll(parent, 0644)
 				err = ioutil.WriteFile(dst, nil, 0644)
 				if err != nil {
 					log.WithError(err).WithField("dest", dst).Error("prepare file mount")

@@ -5,6 +5,8 @@ packages:
       - go.mod
       - go.sum
       - "docker-up/**"
+    deps:
+      - components/supervisor-api/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux
@@ -19,6 +21,8 @@ packages:
       - go.mod
       - go.sum
       - "runc-facade/**"
+    deps:
+      - components/supervisor-api/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux
@@ -33,6 +37,8 @@ packages:
       - go.mod
       - go.sum
       - "slirp-docker-proxy/**"
+    deps:
+      - components/supervisor-api/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux
