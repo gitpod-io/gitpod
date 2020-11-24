@@ -141,7 +141,7 @@ func Run(options ...RunOption) {
 		termMux    = terminal.NewMux()
 		termMuxSrv = terminal.NewMuxTerminalService(termMux)
 	)
-	taskManager := newTasksManager(cfg, termMuxSrv, cstate)
+	taskManager := newTasksManager(cfg, termMuxSrv, cstate, &loggingHeadlessTaskProgressReporter{})
 
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
 	termMuxSrv.Env = buildIDEEnv(cfg)
