@@ -435,7 +435,10 @@ func sensitiveCookieHandler(domain string) func(h http.Handler) http.Handler {
 			for i, c := range cookies {
 				header[i] = c.String()
 			}
-			req.Header["Cookie"] = header
+
+			// using the header string slice here directly would result in multiple cookie header
+			// being sent. See https://github.com/gitpod-io/gitpod/issues/2121.
+			req.Header["Cookie"] = []string{strings.Join(header, ";")}
 
 			h.ServeHTTP(resp, req)
 		})
