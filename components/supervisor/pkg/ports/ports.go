@@ -71,9 +71,11 @@ type Manager struct {
 	exposed []ExposedPort
 	served  []ServedPort
 
-	state         map[uint32]*managedPort
+	state map[uint32]*managedPort
+	mu    sync.RWMutex
+
 	subscriptions map[*Subscription]struct{}
-	mu            sync.RWMutex
+	submu         sync.Mutex
 }
 
 type managedPort struct {
@@ -111,12 +113,12 @@ func (pm *Manager) Run() {
 	defer func() {
 		// We copy the subscriptions to a list prior to closing them, to prevent a data race
 		// between the map iteration and entry removal when closing the subscription.
-		pm.mu.RLock()
+		pm.submu.Lock()
 		subs := make([]*Subscription, 0, len(pm.subscriptions))
 		for s := range pm.subscriptions {
 			subs = append(subs, s)
 		}
-		pm.mu.RUnlock()
+		pm.submu.Unlock()
 
 		for _, s := range subs {
 			s.Close()
@@ -128,39 +130,28 @@ func (pm *Manager) Run() {
 	servedUpdates, servedErrors := pm.S.Observe(ctx)
 	configUpdates, configErrors := pm.C.Observe(ctx)
 	for {
+		var (
+			exposed    []ExposedPort
+			served     []ServedPort
+			configured *Configs
+		)
 		select {
-		case exposed := <-exposedUpdates:
+		case exposed = <-exposedUpdates:
 			if exposed == nil {
 				log.Error("exposed ports observer stopped")
 				return
 			}
-			pm.mu.Lock()
-			if !reflect.DeepEqual(pm.exposed, exposed) {
-				pm.exposed = exposed
-				pm.updateState()
-			}
-			pm.mu.Unlock()
-		case served := <-servedUpdates:
+		case served = <-servedUpdates:
 			if served == nil {
 				log.Error("served ports observer stopped")
 				return
 			}
-			pm.mu.Lock()
-			if !reflect.DeepEqual(pm.served, served) {
-				pm.served = served
-				pm.updateProxies()
-				pm.updateState()
-			}
-			pm.mu.Unlock()
-		case configs := <-configUpdates:
-			if configs == nil {
+		case configured = <-configUpdates:
+			if configured == nil {
 				log.Error("configured ports observer stopped")
 				return
 			}
-			pm.mu.Lock()
-			pm.configs = configs
-			pm.updateState()
-			pm.mu.Unlock()
+
 		case err := <-exposedErrors:
 			if err == nil {
 				log.Error("exposed ports observer stopped")
@@ -180,6 +171,12 @@ func (pm *Manager) Run() {
 			}
 			log.WithError(err).Warn("error while observing served port configs")
 		}
+
+		if exposed == nil && served == nil && configured == nil {
+			// we received just an error, but no update
+			continue
+		}
+		pm.updateState(exposed, served, configured)
 	}
 }
 
@@ -191,73 +188,21 @@ func (pm *Manager) Status() []*api.PortsStatus {
 	return pm.getStatus()
 }
 
-func (pm *Manager) updateProxies() {
-	opened := make(map[uint32]struct{}, len(pm.served))
-	for _, p := range pm.served {
-		opened[p.Port] = struct{}{}
+func (pm *Manager) updateState(exposed []ExposedPort, served []ServedPort, configured *Configs) {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+
+	if exposed != nil && !reflect.DeepEqual(pm.exposed, exposed) {
+		pm.exposed = exposed
+	}
+	if served != nil && !reflect.DeepEqual(pm.served, served) {
+		pm.served = served
+		pm.updateProxies()
+	}
+	if configured != nil {
+		pm.configs = configured
 	}
 
-	for localPort, proxy := range pm.proxies {
-		globalPort := proxy.proxyPort
-		_, openedLocal := opened[localPort]
-		_, openedGlobal := opened[globalPort]
-
-		if !openedLocal && openedGlobal {
-			delete(pm.proxies, localPort)
-
-			err := proxy.Close()
-			if err != nil {
-				log.WithError(err).WithField("globalPort", globalPort).WithField("localPort", localPort).Warn("cannot stop localhost proxy")
-			} else {
-				log.WithField("globalPort", globalPort).WithField("localPort", localPort).Info("localhost proxy has been stopped")
-			}
-		}
-
-		if !openedGlobal {
-			delete(pm.internal, globalPort)
-		}
-	}
-
-	for _, served := range pm.served {
-		localPort := served.Port
-		_, exists := pm.proxies[localPort]
-		if exists || !served.BoundToLocalhost {
-			continue
-		}
-
-		var globalPort uint32
-		for port := proxyPortRangeHi; port >= proxyPortRangeLo; port-- {
-			if _, used := opened[port]; used {
-				continue
-			}
-			if _, used := pm.internal[port]; used {
-				continue
-			}
-
-			globalPort = port
-			break
-		}
-		if globalPort == 0 {
-			log.WithField("port", localPort).Error("cannot find a free proxy port")
-			continue
-		}
-
-		proxy, err := pm.proxyStarter(localPort, globalPort)
-		if err != nil {
-			log.WithError(err).WithField("globalPort", globalPort).WithField("localPort", localPort).Warn("cannot start localhost proxy")
-			continue
-		}
-		log.WithField("globalPort", globalPort).WithField("localPort", localPort).Info("localhost proxy has been started")
-
-		pm.internal[globalPort] = struct{}{}
-		pm.proxies[localPort] = &localhostProxy{
-			Closer:    proxy,
-			proxyPort: globalPort,
-		}
-	}
-}
-
-func (pm *Manager) updateState() {
 	var added, updated, removed []uint32
 	newState := pm.nextState()
 	for port := range newState {
@@ -395,6 +340,72 @@ func (pm *Manager) nextState() map[uint32]*managedPort {
 	return state
 }
 
+func (pm *Manager) updateProxies() {
+	opened := make(map[uint32]struct{}, len(pm.served))
+	for _, p := range pm.served {
+		opened[p.Port] = struct{}{}
+	}
+
+	for localPort, proxy := range pm.proxies {
+		globalPort := proxy.proxyPort
+		_, openedLocal := opened[localPort]
+		_, openedGlobal := opened[globalPort]
+
+		if !openedLocal && openedGlobal {
+			delete(pm.proxies, localPort)
+
+			err := proxy.Close()
+			if err != nil {
+				log.WithError(err).WithField("globalPort", globalPort).WithField("localPort", localPort).Warn("cannot stop localhost proxy")
+			} else {
+				log.WithField("globalPort", globalPort).WithField("localPort", localPort).Info("localhost proxy has been stopped")
+			}
+		}
+
+		if !openedGlobal {
+			delete(pm.internal, globalPort)
+		}
+	}
+
+	for _, served := range pm.served {
+		localPort := served.Port
+		_, exists := pm.proxies[localPort]
+		if exists || !served.BoundToLocalhost {
+			continue
+		}
+
+		var globalPort uint32
+		for port := proxyPortRangeHi; port >= proxyPortRangeLo; port-- {
+			if _, used := opened[port]; used {
+				continue
+			}
+			if _, used := pm.internal[port]; used {
+				continue
+			}
+
+			globalPort = port
+			break
+		}
+		if globalPort == 0 {
+			log.WithField("port", localPort).Error("cannot find a free proxy port")
+			continue
+		}
+
+		proxy, err := pm.proxyStarter(localPort, globalPort)
+		if err != nil {
+			log.WithError(err).WithField("globalPort", globalPort).WithField("localPort", localPort).Warn("cannot start localhost proxy")
+			continue
+		}
+		log.WithField("globalPort", globalPort).WithField("localPort", localPort).Info("localhost proxy has been started")
+
+		pm.internal[globalPort] = struct{}{}
+		pm.proxies[localPort] = &localhostProxy{
+			Closer:    proxy,
+			proxyPort: globalPort,
+		}
+	}
+}
+
 func getOnExposedAction(config *gitpod.PortConfig, port uint32) api.OnPortExposedAction {
 	if config == nil {
 		// anything above 32767 seems odd (e.g. used by language servers)
@@ -423,9 +434,14 @@ func (pm *Manager) boundInternally(port uint32) bool {
 }
 
 // Expose exposes a port
-func (pm *Manager) Expose(port uint32, targetPort uint32) error {
-	pm.mu.Lock()
-	defer pm.mu.Unlock()
+func (pm *Manager) Expose(ctx context.Context, port uint32, targetPort uint32) error {
+	unlock := true
+	pm.mu.RLock()
+	defer func() {
+		if unlock {
+			pm.mu.RUnlock()
+		}
+	}()
 
 	mp, ok := pm.state[port]
 	if ok {
@@ -443,7 +459,12 @@ func (pm *Manager) Expose(port uint32, targetPort uint32) error {
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	// we don't need the lock anymore. Let's unlock and make sure the defer doesn't try
+	// the same thing again.
+	pm.mu.RUnlock()
+	unlock = false
+
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	global := targetPort
 	if global == 0 {
@@ -460,8 +481,8 @@ func (pm *Manager) Expose(port uint32, targetPort uint32) error {
 
 // Subscribe subscribes for status updates
 func (pm *Manager) Subscribe() *Subscription {
-	pm.mu.Lock()
-	defer pm.mu.Unlock()
+	pm.submu.Lock()
+	defer pm.submu.Unlock()
 
 	if len(pm.subscriptions) > maxSubscriptions {
 		return nil
@@ -470,8 +491,8 @@ func (pm *Manager) Subscribe() *Subscription {
 	sub := &Subscription{updates: make(chan *Diff, 5)}
 	var once sync.Once
 	sub.Close = func() error {
-		pm.mu.Lock()
-		defer pm.mu.Unlock()
+		pm.submu.Lock()
+		defer pm.submu.Unlock()
 
 		once.Do(func() { close(sub.updates) })
 		delete(pm.subscriptions, sub)
@@ -499,6 +520,9 @@ func (pm *Manager) publishStatus(added []uint32, updated []uint32, removed []uin
 	}
 
 	log.WithField("ports", fmt.Sprintf("%+v", diff)).Debug("ports changed")
+
+	pm.submu.Lock()
+	defer pm.submu.Unlock()
 
 	for sub := range pm.subscriptions {
 		select {
