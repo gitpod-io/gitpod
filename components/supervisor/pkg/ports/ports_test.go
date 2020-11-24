@@ -11,10 +11,12 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/gitpod"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/sirupsen/logrus"
 )
 
 func TestPortsUpdateState(t *testing.T) {
@@ -224,20 +226,22 @@ func TestPortsUpdateState(t *testing.T) {
 		},
 	}
 
+	log.Log.Logger.SetLevel(logrus.FatalLevel)
+
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
 			var (
 				exposed = &testExposedPorts{
 					Changes: make(chan []ExposedPort),
-					Error:   make(chan error),
+					Error:   make(chan error, 1),
 				}
 				served = &testServedPorts{
 					Changes: make(chan []ServedPort),
-					Error:   make(chan error),
+					Error:   make(chan error, 1),
 				}
 				config = &testConfigService{
 					Changes: make(chan *Configs),
-					Error:   make(chan error),
+					Error:   make(chan error, 1),
 				}
 
 				pm    = NewManager(exposed, served, config, test.InternalPorts...)
@@ -247,11 +251,25 @@ func TestPortsUpdateState(t *testing.T) {
 				return ioutil.NopCloser(nil), nil
 			}
 
-			var wg sync.WaitGroup
+			var (
+				wg        sync.WaitGroup
+				listening = make(chan struct{})
+			)
 			wg.Add(3)
 			go func() {
 				defer wg.Done()
 				pm.Run()
+			}()
+			go func() {
+				defer wg.Done()
+
+				sub := pm.Subscribe()
+				defer sub.Close()
+				close(listening)
+
+				for up := range sub.Updates() {
+					updts = append(updts, up)
+				}
 			}()
 			go func() {
 				defer wg.Done()
@@ -262,6 +280,7 @@ func TestPortsUpdateState(t *testing.T) {
 				defer close(exposed.Error)
 				defer close(exposed.Changes)
 
+				<-listening
 				for _, c := range test.Changes {
 					if c.Config != nil {
 						change := &Configs{}
@@ -281,16 +300,6 @@ func TestPortsUpdateState(t *testing.T) {
 					} else if c.ExposedErr != nil {
 						exposed.Error <- c.ExposedErr
 					}
-				}
-			}()
-			go func() {
-				defer wg.Done()
-
-				sub := pm.Subscribe()
-				defer sub.Close()
-
-				for up := range sub.Updates() {
-					updts = append(updts, up)
 				}
 			}()
 
