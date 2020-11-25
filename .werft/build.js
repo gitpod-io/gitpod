@@ -65,10 +65,14 @@ async function build(context, version) {
      */
     werft.phase("build", "build running");
     // Build using the dev-http-cache gitpod-dev to make 'yarn install' more stable
+    const cachingHttpProxyUrl = "http://dev-http-cache:3129";
     const buildEnv = {
-        "HTTP_PROXY": "http://dev-http-cache:3129",
-        "HTTPS_PROXY": "http://dev-http-cache:3129",
+        "HTTP_PROXY": cachingHttpProxyUrl,
+        "HTTPS_PROXY": cachingHttpProxyUrl,
     };
+    // Make sure containers receive proxy env vars at runtime
+    setHttpProxyToDockerClientConfig(cachingHttpProxyUrl);
+
     exec(`leeway vet --ignore-warnings`);
     exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`, buildEnv);
     exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DremoveSources=false -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build`, buildEnv);
@@ -100,6 +104,22 @@ async function build(context, version) {
     } else {
         await deployToDev(version, previewWithHttps, workspaceFeatureFlags, dynamicCPULimits);
     }
+}
+
+function setHttpProxyToDockerClientConfig(cachingHttpProxyUrl) {
+    const DOCKER_CLIENT_CONFIG_PATH = "/home/gitpod/.docker/config.json";
+    const priorConfig = JSON.parse(fs.readFileSync(DOCKER_CLIENT_CONFIG_PATH));
+    const newConfig = {
+        ...priorConfig,
+        // Following: https://docs.docker.com/network/proxy/#configure-the-docker-client
+        proxies: {
+            default: {
+                httpProxy: cachingHttpProxyUrl,
+                httpsProxy: cachingHttpProxyUrl
+            }
+        }
+    };
+    fs.writeFileSync(DOCKER_CLIENT_CONFIG_PATH, JSON.stringify(newConfig));
 }
 
 
