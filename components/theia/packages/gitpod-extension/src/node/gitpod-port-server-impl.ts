@@ -31,7 +31,6 @@ export class GitpodPortServerImpl implements GitpodPortServer {
     async start(): Promise<void> {
         const client = await this.supervisorClientProvider.getStatusClient();
         while (this.run) {
-            let initial = true;
             try {
                 const req = new PortsStatusRequest();
                 req.setObserve(true);
@@ -42,29 +41,15 @@ export class GitpodPortServerImpl implements GitpodPortServer {
                     evts.on('close', resolve);
                     evts.on('error', reject);
                     evts.on('data', (update: PortsStatusResponse) => {
-                        if (initial) {
-                            this.ports.clear();
-                            initial = false;
-                        }
-                        let added: PortsStatus.AsObject[] | undefined
-                        for (const port of update.getAddedList()) {
+                        this.ports.clear();
+                        let ports: PortsStatus.AsObject[] = [];
+                        for (const port of update.getPortsList()) {
                             const object = port.toObject();
                             this.ports.set(port.getLocalPort(), object);
-                            (added = added || []).push(object);
-                        }
-                        let updated: PortsStatus.AsObject[] | undefined
-                        for (const port of update.getUpdatedList()) {
-                            const object = port.toObject();
-                            this.ports.set(port.getLocalPort(), object);
-                            (updated = updated || []).push(object);
-                        }
-                        let removed: number[] | undefined
-                        for (const port of update.getRemovedList()) {
-                            this.ports.delete(port);
-                            (removed = removed || []).push(port);
+                            ports.push(object);
                         }
                         for (const client of this.clients) {
-                            client.onDidChange({ added, updated, removed });
+                            client.onDidChange({ ports });
                         }
                         this.deferredReady.resolve();
                     });
@@ -94,8 +79,7 @@ export class GitpodPortServerImpl implements GitpodPortServer {
             }
             this.clients.add(client);
             client.onDidChange({
-                initial: true,
-                added: [...this.ports.values()]
+                ports: [...this.ports.values()]
             })
         });
         client.onDidCloseConnection(() => {

@@ -5,7 +5,7 @@
  */
 
 import { PortVisibility } from '@gitpod/gitpod-protocol';
-import type { PortsStatus } from '@gitpod/supervisor-api-grpc/lib/status_pb';
+import type { PortsStatus, ExposedPortInfo } from '@gitpod/supervisor-api-grpc/lib/status_pb';
 import { Emitter } from '@theia/core/lib/common/event';
 import { Deferred } from '@theia/core/lib/common/promise-util';
 import { inject, injectable, postConstruct } from 'inversify';
@@ -16,7 +16,7 @@ import { MaybePromise } from '@theia/core/lib/common/types';
 
 export interface ExposedServedPort extends PortsStatus.AsObject {
     served: true
-    exposed: PortsStatus.ExposedPortInfo.AsObject
+    exposed: ExposedPortInfo.AsObject
 }
 export function isExposedServedPort(port: PortsStatus.AsObject | undefined): port is ExposedServedPort {
     return !!port?.exposed && !!port.served;
@@ -53,28 +53,22 @@ export class GitpodPortsService {
         return this._ports.values();
     }
 
-    private updatePorts({ added, updated, removed, initial }: DidChangeGitpodPortsEvent): void {
-        const toClean = initial ? new Set<number>(this._ports.keys()) : undefined;
-        for (const ports of [added, updated]) {
-            if (ports === undefined) {
-                continue;
-            }
+    private updatePorts({ ports }: DidChangeGitpodPortsEvent): void {
+        const toClean = new Set<number>(this._ports.keys());
+        if (ports !== undefined) {
             for (const port of ports) {
                 toClean?.delete(port.localPort)
+
                 const current = this._ports.get(port.localPort);
                 this._ports.set(port.localPort, port);
+                
                 if (isExposedServedPort(port) && !isExposedServedPort(current)) {
                     this.onDidExposeServedPortEmitter.fire(port);
                 }
             }
         }
-        for (const ports of [removed, toClean]) {
-            if (ports === undefined) {
-                continue;
-            }
-            for (const port of ports) {
-                this._ports.delete(port);
-            }
+        for (const port of toClean) {
+            this._ports.delete(port);
         }
         this.onDidChangeEmitter.fire();
     }

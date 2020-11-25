@@ -19,10 +19,7 @@ export interface GitpodPortClient {
 }
 
 export interface DidChangeGitpodPortsEvent {
-    initial?: boolean
-    added?: PortsStatus.AsObject[]
-    updated?: PortsStatus.AsObject[]
-    removed?: number[]
+    ports: PortsStatus.AsObject[]
 }
 
 export interface ExposeGitpodPortParams {
