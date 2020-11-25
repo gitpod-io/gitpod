@@ -64,9 +64,11 @@ async function build(context, version) {
      * Build
      */
     werft.phase("build", "build running");
+    
     // Build using the dev-http-cache gitpod-dev to make 'yarn install' more stable
-    const proxyName = "dev-http-cache";
-    const clusterLocalProxyAddr = exec(`dig +short ${proxyName}}`, { silent: true }).stdout.trim();
+    const proxySvcName = "dev-http-cache";
+    const proxyNamespace = "dev-http-cache";
+    const clusterLocalProxyAddr = exec(`dig +short ${proxySvcName}.${proxyNamespace}.svc.cluster.local}`, { silent: true }).stdout.trim();
     werft.log(`Resolved dev: '${clusterLocalProxyAddr}'`);
     const cachingHttpProxyUrl = `http://${clusterLocalProxyAddr}:3129`;
     const buildEnv = {
