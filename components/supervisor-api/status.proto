@@ -116,20 +116,10 @@ message PortsStatusRequest {
     // current state of affairs.
     bool observe = 1;
 }
-// PortsStatusResponse indicates that information about some ports has been changed.
-// First event provides information about all ports accessible via `added` field.
-// Subsequent events from the same stream provides the diff against the previous event.
 message PortsStatusResponse {
-    // First even provides information about all ports.
-    // Subsequent events from the same stream provides information about new ports.
-    repeated PortsStatus added = 1;
-    // Omitted for first event.
-    // Subsequent events from the same stream provides information about changed ports.
-    repeated PortsStatus updated = 2;
-    // Omitted for first event.
-    // Subsequent events from the same stream provides information about removed ports.
-    repeated uint32 removed = 3;
+    repeated PortsStatus ports = 1;
 }
+
 enum PortVisibility {
     private = 0;
     public = 1;
@@ -141,16 +131,15 @@ enum OnPortExposedAction {
     notify = 3;
     notify_private = 4;
 }
+message ExposedPortInfo {
+    // public determines if the port is available without authentication or not
+    PortVisibility visibility = 1;
+    // url is the URL at which the port is available
+    string url = 2;
+    // action hint on expose
+    OnPortExposedAction on_exposed = 3;
+}
 message PortsStatus {
-    message ExposedPortInfo {
-        // public determines if the port is available without authentication or not
-        PortVisibility visibility = 1;
-        // url is the URL at which the port is available
-        string url = 2;
-        // action hint on expose
-        OnPortExposedAction on_exposed = 3;
-    }
-
     // local_port is the port a service actually bound to. Some services bind
     // to localhost:<port>, in which case they cannot be made accessible from
     // outside the container. To help with this, supervisor then starts a proxy
