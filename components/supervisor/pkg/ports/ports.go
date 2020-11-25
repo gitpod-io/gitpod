@@ -89,21 +89,14 @@ type managedPort struct {
 	GlobalPort    uint32
 }
 
-// Diff provides the diff against previous state
-type Diff struct {
-	Added   []*api.PortsStatus
-	Updated []*api.PortsStatus
-	Removed []uint32
-}
-
 // Subscription is a Subscription to status updates
 type Subscription struct {
-	updates chan *Diff
+	updates chan []*api.PortsStatus
 	Close   func() error
 }
 
 // Updates returns the updates channel
-func (s *Subscription) Updates() <-chan *Diff {
+func (s *Subscription) Updates() <-chan []*api.PortsStatus {
 	return s.updates
 }
 
@@ -203,27 +196,23 @@ func (pm *Manager) updateState(exposed []ExposedPort, served []ServedPort, confi
 		pm.configs = configured
 	}
 
-	var added, updated, removed []uint32
 	newState := pm.nextState()
-	for port := range newState {
-		_, exists := pm.state[port]
-		if !exists {
-			added = append(added, port)
-		}
-	}
-	for port, mp := range pm.state {
-		newMp, exists := newState[port]
-		if !exists {
-			removed = append(removed, port)
-			continue
-		}
-		if reflect.DeepEqual(newMp, mp) {
-			continue
-		}
-		updated = append(updated, port)
-	}
+	stateChanged := !reflect.DeepEqual(newState, pm.state)
 	pm.state = newState
-	pm.publishStatus(added, updated, removed)
+
+	if !stateChanged {
+		return
+	}
+
+	status := pm.getStatus()
+	log.WithField("ports", fmt.Sprintf("%+v", status)).Debug("ports changed")
+	for sub := range pm.subscriptions {
+		select {
+		case sub.updates <- status:
+		default:
+			log.Warn("port status subscriber's queue is full - dropping update for this subscriber")
+		}
+	}
 }
 
 func (pm *Manager) nextState() map[uint32]*managedPort {
@@ -488,13 +477,15 @@ func (pm *Manager) Subscribe() *Subscription {
 		return nil
 	}
 
-	sub := &Subscription{updates: make(chan *Diff, 5)}
+	sub := &Subscription{updates: make(chan []*api.PortsStatus, 5)}
 	var once sync.Once
 	sub.Close = func() error {
 		pm.submu.Lock()
 		defer pm.submu.Unlock()
 
-		once.Do(func() { close(sub.updates) })
+		once.Do(func() {
+			close(sub.updates)
+		})
 		delete(pm.subscriptions, sub)
 
 		return nil
@@ -502,35 +493,6 @@ func (pm *Manager) Subscribe() *Subscription {
 	pm.subscriptions[sub] = struct{}{}
 
 	return sub
-}
-
-// publishStatus pushes status updates to all subscribers.
-// Callers are expected to hold mu.
-func (pm *Manager) publishStatus(added []uint32, updated []uint32, removed []uint32) {
-	if len(added) == 0 && len(updated) == 0 && len(removed) == 0 {
-		return
-	}
-
-	diff := &Diff{Removed: removed}
-	for _, port := range added {
-		diff.Added = append(diff.Added, pm.getPortStatus(port))
-	}
-	for _, port := range updated {
-		diff.Updated = append(diff.Updated, pm.getPortStatus(port))
-	}
-
-	log.WithField("ports", fmt.Sprintf("%+v", diff)).Debug("ports changed")
-
-	pm.submu.Lock()
-	defer pm.submu.Unlock()
-
-	for sub := range pm.subscriptions {
-		select {
-		case sub.updates <- diff:
-		default:
-			log.Warn("cannot to push ports update to a subscriber")
-		}
-	}
 }
 
 // getStatus produces an API compatible port status list.
@@ -551,7 +513,7 @@ func (pm *Manager) getPortStatus(port uint32) *api.PortsStatus {
 		Served:     mp.Served,
 	}
 	if mp.Exposed {
-		ps.Exposed = &api.PortsStatus_ExposedPortInfo{
+		ps.Exposed = &api.ExposedPortInfo{
 			Visibility: mp.Visibility,
 			Url:        mp.URL,
 			OnExposed:  mp.OnExposed,
