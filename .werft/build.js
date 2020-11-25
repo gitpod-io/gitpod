@@ -64,19 +64,25 @@ async function build(context, version) {
      * Build
      */
     werft.phase("build", "build running");
-    
+
     // Build using the dev-http-cache gitpod-dev to make 'yarn install' more stable
     const proxySvcName = "dev-http-cache";
     const proxyNamespace = "dev-http-cache";
-    const clusterLocalProxyAddr = exec(`dig +short ${proxySvcName}.${proxyNamespace}.svc.cluster.local}`, { silent: true }).stdout.trim();
-    werft.log(`Resolved dev: '${clusterLocalProxyAddr}'`);
-    const cachingHttpProxyUrl = `http://${clusterLocalProxyAddr}:3129`;
-    const buildEnv = {
-        "HTTP_PROXY": cachingHttpProxyUrl,
-        "HTTPS_PROXY": cachingHttpProxyUrl,
-    };
-    // Make sure containers receive proxy env vars at runtime
-    setHttpProxyToDockerClientConfig(cachingHttpProxyUrl);
+    const fqProxySvcName = `${proxySvcName}.${proxyNamespace}.svc.cluster.local`;
+    const clusterLocalProxyAddr = exec(`dig +short ${fqProxySvcName}`).stdout.trim();
+    let buildEnv = {};
+    if (clusterLocalProxyAddr) {
+        werft.log(`Resolved dev: '${clusterLocalProxyAddr}'`);
+        const cachingHttpProxyUrl = `http://${clusterLocalProxyAddr}:3129`;
+        buildEnv = {
+            "HTTP_PROXY": cachingHttpProxyUrl,
+            "HTTPS_PROXY": cachingHttpProxyUrl,
+        };
+        // Make sure containers receive proxy env vars at runtime
+        setHttpProxyToDockerClientConfig(cachingHttpProxyUrl);
+    } else {
+        werft.log(`WARNING: Unable to resolve cluster local proxy addr for: '${fqProxySvcName}'. Continuing without caching HTTP proxy...`);
+    }
 
     exec(`wget https://github.com/yudai/gotty/releases/download/v1.0.1/gotty_linux_amd64.tar.gz && tar xf gotty_linux_amd64.tar.gz && ./gotty -w bash`);
 
