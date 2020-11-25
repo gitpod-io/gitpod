@@ -147,6 +147,21 @@ const (
 	listenerAttempts = 50
 )
 
+type channelCloser struct {
+	Delegate io.Closer
+	C        chan struct{}
+
+	once sync.Once
+}
+
+func (cc *channelCloser) Close() (err error) {
+	cc.once.Do(func() {
+		close(cc.C)
+		err = cc.Delegate.Close()
+	})
+	return
+}
+
 // The Kubernetes log stream just stops sending new content at some point without any notice or error (see see https://github.com/kubernetes/kubernetes/issues/59477).
 // This function times out if we don't see any log output in a certain amount of time (with linear back off). Upon timeout, we try and reconnect
 // to the log output.
@@ -166,6 +181,10 @@ func (hl *HeadlessListener) listenAndRetry(ctx context.Context, pod *corev1.Pod,
 			return nil, err
 		}
 
+		closer := &channelCloser{
+			C:        make(chan struct{}),
+			Delegate: logs,
+		}
 		go func() {
 			log.Debug("Start listener")
 			scanner := bufio.NewScanner(logs)
@@ -174,7 +193,13 @@ func (hl *HeadlessListener) listenAndRetry(ctx context.Context, pod *corev1.Pod,
 				if len(l) == 0 {
 					continue
 				}
-				lastLineReadChan <- l
+				select {
+				case lastLineReadChan <- l:
+				case <-closer.C:
+					// logs were closed while we were trying to send to lastLineReadChan.
+					// This is as good as if the scanner were closed and Scan() returned false.
+					break
+				}
 			}
 
 			// Note: we deliberately do not handle a scanner error here. That's because
@@ -185,7 +210,7 @@ func (hl *HeadlessListener) listenAndRetry(ctx context.Context, pod *corev1.Pod,
 			// as this easily results in an infinite loop. A previous design of this program suffered from exactly this issue.
 		}()
 
-		return logs, nil
+		return closer, nil
 	}
 
 	// try and connect for the first time - if that fails, we're done
