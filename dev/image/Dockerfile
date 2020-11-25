@@ -138,6 +138,12 @@ RUN sudo apt-get update -qq \
     && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/* /tmp/*
 RUN bash -c "pip uninstall crcmod; pip install --no-cache-dir -U crcmod"
 
+# Install tools for dnsutils
+RUN sudo apt-get update -qq \
+    && sudo apt-get install -qq -y \
+        dnsutils \
+    && sudo apt-get clean && sudo rm -rf /var/lib/apt/lists/* /tmp/*
+
 ### gitpod-core specific gcloud/kubectl config
 # Copy GCloud default config that points to gitpod-dev
 ARG GCLOUD_CONFIG_DIR=/home/gitpod/.config/gcloud
