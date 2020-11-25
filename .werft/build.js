@@ -65,16 +65,16 @@ async function build(context, version) {
      */
     werft.phase("build", "build running");
     // Build using the dev-http-cache gitpod-dev to make 'yarn install' more stable
-    // const proxyName = "dev-http-cache";
-    // const clusterLocalProxyAddr = exec(`dig +short ${proxyName}}`, { silent: true }).stdout.trim();
-    // werft.log(`Resolved dev: '${clusterLocalProxyAddr}'`);
-    const cachingHttpProxyUrl = `http://dev-http-cache:3129`;
+    const proxyName = "dev-http-cache";
+    const clusterLocalProxyAddr = exec(`dig +short ${proxyName}}`, { silent: true }).stdout.trim();
+    werft.log(`Resolved dev: '${clusterLocalProxyAddr}'`);
+    const cachingHttpProxyUrl = `http://${clusterLocalProxyAddr}:3129`;
     const buildEnv = {
         "HTTP_PROXY": cachingHttpProxyUrl,
         "HTTPS_PROXY": cachingHttpProxyUrl,
     };
     // Make sure containers receive proxy env vars at runtime
-    // setHttpProxyToDockerClientConfig(cachingHttpProxyUrl);
+    setHttpProxyToDockerClientConfig(cachingHttpProxyUrl);
 
     exec(`leeway vet --ignore-warnings`);
     exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`, buildEnv);
