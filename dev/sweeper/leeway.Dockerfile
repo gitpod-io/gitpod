@@ -5,7 +5,7 @@
 FROM alpine:latest
 
 RUN apk add --no-cache ca-certificates curl git
-RUN curl https://github.com/csweichel/werft/releases/download/v0.0.4rc/werft-client-linux-amd64.tar.gz | tar xz && \
+RUN curl -L https://github.com/csweichel/werft/releases/download/v0.0.4rc/werft-client-linux-amd64.tar.gz | tar xz && \
     mv werft-client-linux-amd64 /usr/bin/werft
 
 COPY dev-sweeper--app/sweeper /app/
