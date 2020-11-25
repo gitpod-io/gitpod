@@ -105,16 +105,19 @@ func (tm *tasksManager) getStatus() []*api.TaskStatus {
 	return status
 }
 
-func (tm *tasksManager) updateState(doUpdate func() *task) {
+func (tm *tasksManager) updateState(doUpdate func() (changed bool)) {
 	tm.mu.Lock()
 	defer tm.mu.Unlock()
 
-	updated := doUpdate()
-	if updated == nil {
+	changed := doUpdate()
+	if !changed {
 		return
 	}
-	updates := make([]*api.TaskStatus, 1)
-	updates[0] = &updated.TaskStatus
+
+	updates := make([]*api.TaskStatus, 0, len(tm.tasks))
+	for _, t := range tm.tasks {
+		updates = append(updates, &t.TaskStatus)
+	}
 	for sub := range tm.subscriptions {
 		select {
 		case sub.updates <- updates:
@@ -125,12 +128,13 @@ func (tm *tasksManager) updateState(doUpdate func() *task) {
 }
 
 func (tm *tasksManager) setTaskState(t *task, newState api.TaskState) {
-	tm.updateState(func() *task {
+	tm.updateState(func() bool {
 		if t.State == newState {
-			return nil
+			return false
 		}
+
 		t.State = newState
-		return t
+		return true
 	})
 }
 
@@ -229,10 +233,10 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup) {
 		}
 
 		taskLog.Info("task terminal has been started")
-		tm.updateState(func() *task {
+		tm.updateState(func() bool {
 			t.Terminal = resp.Alias
 			t.State = api.TaskState_running
-			return t
+			return true
 		})
 
 		go func(t *task) {
