@@ -20,6 +20,7 @@ pod:
   # - name: gitpod-test-tokens
   #   secret:
   #     secretName: gitpod-test-tokens
+  dnsPolicy: ClusterFirst
   containers:
   - name: testdb
     image: mysql:5.7
