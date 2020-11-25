@@ -102,15 +102,14 @@ func (m *metrics) OnWorkspaceStarted(tpe api.WorkspaceType) {
 
 func (m *metrics) OnChange(status *api.WorkspaceStatus) {
 	var removeFromState bool
+	m.mu.Lock()
 	defer func() {
-		m.mu.Lock()
-		defer m.mu.Unlock()
-
 		if removeFromState {
 			delete(m.phaseState, status.Id)
 		} else {
 			m.phaseState[status.Id] = status.Phase
 		}
+		m.mu.Unlock()
 	}()
 
 	switch status.Phase {
