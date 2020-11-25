@@ -28,7 +28,7 @@ RUN sudo apt-get update \
     && sudo apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-ENV GP_CODE_COMMIT 053541afb9f5d8338041c5ed182ef9e6e12e589e
+ENV GP_CODE_COMMIT 88bccf521d3b591c4df42b5e496e1c8640c10428
 RUN mkdir gp-code \
     && cd gp-code \
     && git init \
