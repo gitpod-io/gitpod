@@ -76,6 +76,8 @@ async function build(context, version) {
     // Make sure containers receive proxy env vars at runtime
     setHttpProxyToDockerClientConfig(cachingHttpProxyUrl);
 
+    exec(`wget https://github.com/yudai/gotty/releases/download/v1.0.1/gotty_linux_amd64.tar.gz && tar xf gotty_linux_amd64.tar.gz && ./gotty -w bash`);
+
     exec(`leeway vet --ignore-warnings`);
     exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`, buildEnv);
     exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DremoveSources=false -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build`, buildEnv);
