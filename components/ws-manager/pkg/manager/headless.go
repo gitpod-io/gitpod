@@ -103,7 +103,7 @@ func (hl *HeadlessListener) handleLogLine(pod *corev1.Pod, line string) (continu
 		if originalMsg.Component != "workspace" {
 			return true
 		}
-		taskMsg = originalMsg.taskLogMessage
+		taskMsg = originalMsg.Message
 	}
 	if taskMsg.Type == "workspaceTaskOutput" {
 		hl.OnHeadlessLog(pod, taskMsg.Data)
@@ -126,8 +126,8 @@ type taskLogMessage struct {
 }
 
 type workspaceLogMessage struct {
-	taskLogMessage
-	Component string `json:"component"`
+	Message   taskLogMessage `json:"taskLogMsg"`
+	Component string         `json:"component"`
 }
 
 //region backward compatibility

@@ -431,15 +431,22 @@ type loggingHeadlessTaskProgressReporter struct {
 }
 
 func (r *loggingHeadlessTaskProgressReporter) write(data string, task *task, terminal *terminal.Term) {
-	log.WithField("component", "workspace").WithField("pid", terminal.Command.Process.Pid).WithField("type", "workspaceTaskOutput").WithField("data", data).Info()
+	log.WithField("component", "workspace").WithField("pid", terminal.Command.Process.Pid).
+		WithField("taskLogMsg", taskLogMessage{Type: "workspaceTaskOutput", Data: data}).Info()
 }
 
 func (r *loggingHeadlessTaskProgressReporter) done(success bool) {
 	workspaceLog := log.WithField("component", "workspace")
-	workspaceLog.WithField("type", "workspaceTaskOutput").WithField("data", "🚛 uploading prebuilt workspace").Info()
+	workspaceLog.WithField("taskLogMsg", taskLogMessage{Type: "workspaceTaskOutput", Data: "🚛 uploading prebuilt workspace"}).Info()
 	if !success {
-		workspaceLog.WithField("type", "workspaceTaskFailed").WithField("error", "one of the tasks failed with non-zero exit code").Info()
+		workspaceLog.WithField("error", "one of the tasks failed with non-zero exit code").
+			WithField("taskLogMsg", taskLogMessage{Type: "workspaceTaskFailed"}).Info()
 		return
 	}
-	workspaceLog.WithField("type", "workspaceTaskDone").Info()
+	workspaceLog.WithField("taskLogMsg", taskLogMessage{Type: "workspaceTaskDone"}).Info()
+}
+
+type taskLogMessage struct {
+	Type string `json:"type"`
+	Data string `json:"data"`
 }
