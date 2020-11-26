@@ -24,23 +24,8 @@ type State struct {
 type Node struct {
 	Node *corev1.Node
 
-	RAM struct {
-		// Total RAM available in this machine, used or not.
-		Total *res.Quantity
-
-		// RAM avialable/free on the node in total.
-		// This figure is: total - (headlessWorkspaces + regularWorkspaces + allOtherPods)
-		Available *res.Quantity
-
-		// RAM used by all headless workspaces
-		UsedHeadless *res.Quantity
-
-		// RAM used by all regular workspaces
-		UsedRegular *res.Quantity
-
-		// RAM used by non-workspace pods
-		UsedOther *res.Quantity
-	}
+	RAM              ResourceUsage
+	EphemeralStorage ResourceUsage
 
 	// The number of pods on a node is limited by the resources available and by the kubelet.
 	PodSlots struct {
@@ -63,11 +48,23 @@ type Binding struct {
 	NodeName string
 }
 
-// Resource models a resource
-type Resource struct {
-	Total     res.Quantity
-	Used      res.Quantity
-	Available res.Quantity
+// ResourceUsage models various quantities of a resource on a given node
+type ResourceUsage struct {
+	// Total quantity of resource available on this machine, used or not.
+	Total *res.Quantity
+
+	// Quantity avialable/free on the node in total.
+	// This figure is: total - (headlessWorkspaces + regularWorkspaces + allOtherPods)
+	Available *res.Quantity
+
+	// Resource used by all headless workspaces
+	UsedHeadless *res.Quantity
+
+	// Resource used by all regular workspaces
+	UsedRegular *res.Quantity
+
+	// Resource used by non-workspace pods
+	UsedOther *res.Quantity
 }
 
 // NewState creates a fresh, clean state
@@ -233,32 +230,56 @@ func GetRequestedRAMForPod(pod *corev1.Pod) res.Quantity {
 	return *requestedRAM
 }
 
+// GetRequestedEphemeralStorageForPod calculates the amount of ephemeral storage requested by all containers of the given pod
+func GetRequestedEphemeralStorageForPod(pod *corev1.Pod) res.Quantity {
+	requestedEphStorage := res.NewQuantity(0, res.BinarySI)
+	for _, c := range pod.Spec.Containers {
+		requestedEphStorage.Add(*c.Resources.Requests.StorageEphemeral())
+	}
+	return *requestedEphStorage
+}
+
 func (s *State) updateAssignedPods(node *Node) {
 	assignedPods := s.GetAssignedPods(node)
 
 	usedOtherRAM := res.NewQuantity(0, res.BinarySI)
 	usedHeadlessRAM := res.NewQuantity(0, res.BinarySI)
 	usedRegularRAM := res.NewQuantity(0, res.BinarySI)
+	usedOtherEphStorage := res.NewQuantity(0, res.BinarySI)
+	usedHeadlessEphStorage := res.NewQuantity(0, res.BinarySI)
+	usedRegularEphStorage := res.NewQuantity(0, res.BinarySI)
 	for _, p := range assignedPods {
-		request := GetRequestedRAMForPod(p.Pod)
+		ramReq := GetRequestedRAMForPod(p.Pod)
+		ephStorageReq := GetRequestedEphemeralStorageForPod(p.Pod)
 		if isHeadlessWorkspace(p.Pod) {
-			usedHeadlessRAM.Add(request)
+			usedHeadlessRAM.Add(ramReq)
+			usedHeadlessEphStorage.Add(ephStorageReq)
 		} else if isWorkspace(p.Pod) {
-			usedRegularRAM.Add(request)
+			usedRegularRAM.Add(ramReq)
+			usedRegularEphStorage.Add(ephStorageReq)
 		} else {
-			usedOtherRAM.Add(request)
+			usedOtherRAM.Add(ramReq)
+			usedOtherEphStorage.Add(ephStorageReq)
 		}
 	}
 
-	av := node.RAM.Total.DeepCopy()
-	node.RAM.Available = &av
+	avRAM := node.RAM.Total.DeepCopy()
+	node.RAM.Available = &avRAM
 	node.RAM.Available.Sub(*usedOtherRAM)
 	node.RAM.Available.Sub(*usedHeadlessRAM)
 	node.RAM.Available.Sub(*usedRegularRAM)
-
 	node.RAM.UsedOther = usedOtherRAM
 	node.RAM.UsedHeadless = usedHeadlessRAM
 	node.RAM.UsedRegular = usedRegularRAM
+
+	avEphStorage := node.EphemeralStorage.Total.DeepCopy()
+	node.EphemeralStorage.Available = &avEphStorage
+	node.EphemeralStorage.Available.Sub(*usedOtherEphStorage)
+	node.EphemeralStorage.Available.Sub(*usedHeadlessEphStorage)
+	node.EphemeralStorage.Available.Sub(*usedRegularEphStorage)
+	node.EphemeralStorage.UsedOther = usedOtherEphStorage
+	node.EphemeralStorage.UsedHeadless = usedHeadlessEphStorage
+	node.EphemeralStorage.UsedRegular = usedRegularEphStorage
 
 	node.PodSlots.Available = node.PodSlots.Total - int64(len(assignedPods))
 }
@@ -282,9 +303,15 @@ func (n *Node) update(node *corev1.Node) {
 	n.Node = node
 
 	totalRAM := node.Status.Allocatable.Memory().DeepCopy()
-	avilableRAM := node.Status.Allocatable.Memory().DeepCopy()
+	availableRAM := node.Status.Allocatable.Memory().DeepCopy()
 	n.RAM.Total = &totalRAM
-	n.RAM.Available = &avilableRAM
+	n.RAM.Available = &availableRAM
+
+	totalEphemeralStorage := node.Status.Allocatable.StorageEphemeral().DeepCopy()
+	availableEphemeralStorage := node.Status.Allocatable.StorageEphemeral().DeepCopy()
+	n.EphemeralStorage.Total = &totalEphemeralStorage
+	n.EphemeralStorage.Available = &availableEphemeralStorage
+
 	n.PodSlots.Total = node.Status.Capacity.Pods().Value()
 	n.PodSlots.Available = n.PodSlots.Total
 }
