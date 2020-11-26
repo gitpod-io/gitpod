@@ -4,9 +4,9 @@ go 1.14
 
 require (
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
+	github.com/google/uuid v1.1.1
 	github.com/jeremywohl/flatten v1.0.1
 	github.com/prometheus/client_golang v1.1.0
-	github.com/satori/go.uuid v1.2.0
 	github.com/sirupsen/logrus v1.4.2
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 )
