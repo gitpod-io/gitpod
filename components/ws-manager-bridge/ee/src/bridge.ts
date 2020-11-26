@@ -94,7 +94,7 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
                 await this.messagebus.notifyHeadlessUpdate({}, userId, workspaceId, <HeadlessLogEvent>{
                     type: HeadlessWorkspaceEventType.LogOutput,
                     workspaceID: workspaceId,
-                    text: status.message
+                    text: status.message + "\n"
                 });
             }
         } catch (e) {
