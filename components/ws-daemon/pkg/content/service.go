@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	"math"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"syscall"
 	"time"
@@ -213,27 +212,19 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 			UID:     wsinit.GitpodUID,
 			GID:     wsinit.GitpodGID,
 		}
-		err = RunInitializer(ctx, workspace.Location, req.Initializer, remoteContent, opts)
-		if err != nil {
-			log.WithError(err).WithField("workspaceId", req.Id).Error("cannot initialize workspace")
-			return nil, status.Error(codes.Internal, fmt.Sprintf("cannot initialize workspace: %s", err.Error()))
-		}
-
 		if req.UserNamespaced {
 			// This is a bit of a hack as it makes hard assumptions about the nature of the UID mapping.
 			// Also, we cannot do this in wsinit because we're dropping all the privileges that would be
 			// required for this operation.
 			//
 			// With FWB this bit becomes unneccesary.
-			var (
-				uid = wsinit.GitpodUID + 100000 - 1
-				gid = wsinit.GitpodGID + 100000 - 1
-			)
-			out, err := exec.Command("chown", "-R", fmt.Sprintf("%d:%d", uid, gid), workspace.Location).CombinedOutput()
-			if err != nil {
-				log.WithError(err).WithField("workspaceId", req.Id).WithField("msg", string(out)).Error("cannot chown workspace")
-				return nil, status.Error(codes.Internal, "cannot prepare workspace")
-			}
+			opts.UID = wsinit.GitpodUID + 100000 - 1
+			opts.GID = wsinit.GitpodGID + 100000 - 1
+		}
+		err = RunInitializer(ctx, workspace.Location, req.Initializer, remoteContent, opts)
+		if err != nil {
+			log.WithError(err).WithField("workspaceId", req.Id).Error("cannot initialize workspace")
+			return nil, status.Error(codes.Internal, fmt.Sprintf("cannot initialize workspace: %s", err.Error()))
 		}
 	}
 
