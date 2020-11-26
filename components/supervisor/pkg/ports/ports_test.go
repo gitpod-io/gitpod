@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/supervisor/api"
@@ -17,6 +18,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 )
 
 func TestPortsUpdateState(t *testing.T) {
@@ -54,6 +56,7 @@ func TestPortsUpdateState(t *testing.T) {
 				{LocalPort: 8080, GlobalPort: 60000},
 			},
 			ExpectedUpdates: UpdateExpectation{
+				{},
 				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 60000, Served: true}},
 				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 60000, Served: true, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private}}},
 				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 60000, Served: false, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private}}},
@@ -69,6 +72,7 @@ func TestPortsUpdateState(t *testing.T) {
 				{LocalPort: 8080, GlobalPort: 8080},
 			},
 			ExpectedUpdates: UpdateExpectation{
+				{},
 				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 8080, Served: true}},
 				{},
 			},
@@ -81,6 +85,7 @@ func TestPortsUpdateState(t *testing.T) {
 				{Served: []ServedPort{{Port: 8080}}},
 			},
 			ExpectedUpdates: UpdateExpectation{
+				{},
 				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, Url: "foobar", OnExposed: api.OnPortExposedAction_notify_private}}},
 				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "foobar", OnExposed: api.OnPortExposedAction_notify_private}}},
 				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 8080, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "foobar", OnExposed: api.OnPortExposedAction_notify_private}}},
@@ -95,7 +100,7 @@ func TestPortsUpdateState(t *testing.T) {
 			},
 
 			ExpectedExposure: ExposureExpectation(nil),
-			ExpectedUpdates:  UpdateExpectation(nil),
+			ExpectedUpdates:  UpdateExpectation{{}},
 		},
 		{
 			Desc: "serving configured workspace port",
@@ -125,6 +130,7 @@ func TestPortsUpdateState(t *testing.T) {
 				{LocalPort: 9229, GlobalPort: 60000},
 			},
 			ExpectedUpdates: UpdateExpectation{
+				{},
 				[]*api.PortsStatus{{LocalPort: 8080}, {LocalPort: 9229}},
 				[]*api.PortsStatus{
 					{LocalPort: 8080, GlobalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "8080-foobar", OnExposed: api.OnPortExposedAction_open_browser}},
@@ -153,6 +159,7 @@ func TestPortsUpdateState(t *testing.T) {
 				{LocalPort: 4040, GlobalPort: 60000, Public: true},
 			},
 			ExpectedUpdates: UpdateExpectation{
+				{},
 				[]*api.PortsStatus{{LocalPort: 4040, GlobalPort: 60000, Served: true}},
 				[]*api.PortsStatus{
 					{LocalPort: 4040, GlobalPort: 60000, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "4040-foobar", OnExposed: api.OnPortExposedAction_open_browser}},
@@ -198,6 +205,7 @@ func TestPortsUpdateState(t *testing.T) {
 				{LocalPort: 8080, GlobalPort: 8080, Public: true},
 			},
 			ExpectedUpdates: UpdateExpectation{
+				{},
 				[]*api.PortsStatus{{LocalPort: 8080}},
 				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
 				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
@@ -218,6 +226,7 @@ func TestPortsUpdateState(t *testing.T) {
 				{LocalPort: 3000, GlobalPort: 59999},
 			},
 			ExpectedUpdates: UpdateExpectation{
+				{},
 				{
 					{LocalPort: 8080, GlobalPort: 60000, Served: true},
 					{LocalPort: 3000, GlobalPort: 59999, Served: true},
@@ -251,21 +260,19 @@ func TestPortsUpdateState(t *testing.T) {
 				return ioutil.NopCloser(nil), nil
 			}
 
-			var (
-				wg        sync.WaitGroup
-				listening = make(chan struct{})
-			)
+			var wg sync.WaitGroup
 			wg.Add(3)
 			go func() {
 				defer wg.Done()
 				pm.Run()
 			}()
+			sub, err := pm.Subscribe()
+			if err != nil {
+				t.Fatal(err)
+			}
 			go func() {
 				defer wg.Done()
-
-				sub := pm.Subscribe()
 				defer sub.Close()
-				close(listening)
 
 				for up := range sub.Updates() {
 					updts = append(updts, up)
@@ -280,7 +287,6 @@ func TestPortsUpdateState(t *testing.T) {
 				defer close(exposed.Error)
 				defer close(exposed.Changes)
 
-				<-listening
 				for _, c := range test.Changes {
 					if c.Config != nil {
 						change := &Configs{}
@@ -365,4 +371,85 @@ type testServedPorts struct {
 
 func (tps *testServedPorts) Observe(ctx context.Context) (<-chan []ServedPort, <-chan error) {
 	return tps.Changes, tps.Error
+}
+
+// testing for deadlocks between subscribing and processing events
+func TestPortsConcurrentSubscribe(t *testing.T) {
+	var (
+		subscribes  = 100
+		subscribing = make(chan struct{})
+		exposed     = &testExposedPorts{
+			Changes: make(chan []ExposedPort),
+			Error:   make(chan error, 1),
+		}
+		served = &testServedPorts{
+			Changes: make(chan []ServedPort),
+			Error:   make(chan error, 1),
+		}
+		config = &testConfigService{
+			Changes: make(chan *Configs),
+			Error:   make(chan error, 1),
+		}
+		pm = NewManager(exposed, served, config)
+	)
+	pm.proxyStarter = func(localPort uint32, globalPort uint32) (io.Closer, error) {
+		return ioutil.NopCloser(nil), nil
+	}
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		pm.Run()
+	}()
+	go func() {
+		defer wg.Done()
+		defer close(config.Error)
+		defer close(config.Changes)
+		defer close(served.Error)
+		defer close(served.Changes)
+		defer close(exposed.Error)
+		defer close(exposed.Changes)
+
+		var j uint32
+		for {
+
+			select {
+			case <-time.After(50 * time.Millisecond):
+				served.Changes <- []ServedPort{{Port: j}}
+				j++
+			case <-subscribing:
+				return
+			}
+		}
+	}()
+
+	eg, _ := errgroup.WithContext(context.Background())
+	for i := 0; i < maxSubscriptions; i++ {
+		eg.Go(func() error {
+			for j := 0; j < subscribes; j++ {
+				sub, err := pm.Subscribe()
+				if err != nil {
+					return err
+				}
+				// status
+				select {
+				case <-sub.Updates():
+				}
+				// update
+				select {
+				case <-sub.Updates():
+				}
+				sub.Close()
+			}
+			return nil
+		})
+	}
+	err := eg.Wait()
+	close(subscribing)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	wg.Wait()
 }
