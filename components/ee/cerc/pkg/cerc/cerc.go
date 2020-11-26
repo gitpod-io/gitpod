@@ -17,7 +17,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/satori/go.uuid"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 )
@@ -203,10 +203,13 @@ const (
 )
 
 func (r *runner) Probe() (*probe, error) {
-
 	log.WithField("pathway", r.P.Name).Debug("probe started")
 
-	tkn := uuid.NewV4().String()
+	uid, err := uuid.NewRandom()
+	if err != nil {
+		return nil, err
+	}
+	tkn := uid.String()
 
 	r.C.Reporter.ProbeStarted(r.P.Name)
 
