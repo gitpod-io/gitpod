@@ -129,6 +129,7 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.Header().Set("ETag", hash)
+	w.Header().Set("Cache-Control", "no-cache")
 
 	// http.FileServer has a special case where ServeFile redirects any request where r.URL.Path
 	// ends in "/index.html" to the same path, without the final "index.html".
