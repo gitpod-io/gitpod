@@ -124,9 +124,9 @@ func (s *Scaler) scalingPeriod(ctx context.Context) (err error) {
 
 	// Create as many buffer pods as configured
 	for i := 0; i < s.Config.BufferFactor; i++ {
-		uuid, uuidErr := uuid.NewUUID()
-		if uuidErr != nil {
-			return uuidErr
+		uuid, err := uuid.NewRandom()
+		if err != nil {
+			return err
 		}
 		pod := renderBufferPod(s.Config, uuid.String(), staticBufferLabels())
 		log.Debugf("created buffer pod: %s", pod.Name)
