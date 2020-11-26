@@ -31,16 +31,26 @@ func TestDensityAndExperience(t *testing.T) {
 		ExpectedError string
 	}{
 		{
-			Desc:          "no node",
-			ScheduledPod:  &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "testpod"}},
-			ExpectedError: "No node with enough RAM available!\nRequested by pod: 0\nNodes:\n",
+			Desc:         "no node",
+			ScheduledPod: &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "testpod"}},
+			ExpectedError: `No node with enough resources available!
+RAM requested: 0
+Eph. Storage requested: 0
+Nodes:
+`,
 		},
 		{
-			Desc:          "no node with enough RAM",
-			Nodes:         []*corev1.Node{createNode("node1", "10Gi", "0Gi", false, 100)},
-			Pods:          []*corev1.Pod{createNonWorkspacePod("existingPod1", "8Gi", "0Gi", "node1", 10)},
-			ScheduledPod:  createWorkspacePod("pod", "6Gi", "0Gi", "", 1000),
-			ExpectedError: "No node with enough RAM available!\nRequested by pod: 6Gi\nNodes:\n- node1: used 0.000+0.000+8.000 of 10.000, avail 2.000 GiB",
+			Desc:         "no node with enough RAM",
+			Nodes:        []*corev1.Node{createNode("node1", "10Gi", "0Gi", false, 100)},
+			Pods:         []*corev1.Pod{createNonWorkspacePod("existingPod1", "8Gi", "0Gi", "node1", 10)},
+			ScheduledPod: createWorkspacePod("pod", "6Gi", "0Gi", "", 1000),
+			ExpectedError: `No node with enough resources available!
+RAM requested: 6Gi
+Eph. Storage requested: 0
+Nodes:
+- node1:
+  RAM: used 0.000+0.000+8.000 of 10.000, avail 2.000 GiB
+  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB`,
 		},
 		{
 			Desc:         "single empty node",

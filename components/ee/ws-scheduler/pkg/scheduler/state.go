@@ -335,17 +335,24 @@ func NodeMapToList(m map[string]*Node) []*Node {
 	return nodes
 }
 
-// DebugRAMPerNodeAsStr prints available RAM per node as string for debug purposes
-func DebugRAMPerNodeAsStr(nodes []*Node) string {
-	segs := make([]string, len(nodes))
-	for i, node := range nodes {
-		usedRegularGibs := float64(node.RAM.UsedRegular.Value()/1024/1024) / float64(1024)
-		usedHeadlessGibs := float64(node.RAM.UsedHeadless.Value()/1024/1024) / float64(1024)
-		usedOtherGibs := float64(node.RAM.UsedOther.Value()/1024/1024) / float64(1024)
-		totalGibs := float64(node.RAM.Total.Value()/1024/1024) / float64(1024)
-		availableGibs := float64(node.RAM.Available.Value()/1024/1024) / float64(1024)
+// DebugStringResourceUsage returns a debug string describing the used resources
+func (ru *ResourceUsage) DebugStringResourceUsage() string {
+	usedRegularGibs := float64(ru.UsedRegular.Value()/1024/1024) / float64(1024)
+	usedHeadlessGibs := float64(ru.UsedHeadless.Value()/1024/1024) / float64(1024)
+	usedOtherGibs := float64(ru.UsedOther.Value()/1024/1024) / float64(1024)
+	totalGibs := float64(ru.Total.Value()/1024/1024) / float64(1024)
+	availableGibs := float64(ru.Available.Value()/1024/1024) / float64(1024)
 
-		segs[i] = fmt.Sprintf("- %s: used %0.03f+%0.03f+%0.3f of %0.3f, avail %0.03f GiB", node.Node.Name, usedRegularGibs, usedHeadlessGibs, usedOtherGibs, totalGibs, availableGibs)
+	return fmt.Sprintf("used %0.03f+%0.03f+%0.3f of %0.3f, avail %0.03f GiB", usedRegularGibs, usedHeadlessGibs, usedOtherGibs, totalGibs, availableGibs)
+}
+
+// DebugStringNodes prints available RAM per node as string for debug purposes
+func DebugStringNodes(nodes []*Node) string {
+	lines := make([]string, 0, len(nodes)*3)
+	for _, node := range nodes {
+		lines = append(lines, fmt.Sprintf("- %s:", node.Node.Name))
+		lines = append(lines, fmt.Sprintf("  RAM: %s", node.RAM.DebugStringResourceUsage()))
+		lines = append(lines, fmt.Sprintf("  Eph. Storage: %s", node.EphemeralStorage.DebugStringResourceUsage()))
 	}
-	return strings.Join(segs, "\n")
+	return strings.Join(lines, "\n")
 }
