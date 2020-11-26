@@ -303,8 +303,9 @@ func reaper(ctx context.Context, wg *sync.WaitGroup) {
 			// The calling process does not have any unwaited-for children.
 			continue
 		}
-
-		log.WithField("pid", pid).Debug("reaped child process")
+		if err != nil {
+			log.WithField("pid", pid).WithError(err).Debug("cannot call waitpid() for re-parented child")
+		}
 	}
 }
 
