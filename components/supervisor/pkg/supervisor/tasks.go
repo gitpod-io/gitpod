@@ -55,6 +55,8 @@ func (tm *tasksManager) Subscribe() *tasksSubscription {
 	}
 	tm.subscriptions[sub] = struct{}{}
 
+	// makes sure that no updates can happen between clients receiving an initial status and subscribing
+	sub.updates <- tm.getStatus()
 	return sub
 }
 
@@ -95,13 +97,19 @@ func newTasksManager(config *Config, terminalService *terminal.MuxTerminalServic
 	}
 }
 
-func (tm *tasksManager) getStatus() []*api.TaskStatus {
+func (tm *tasksManager) Status() []*api.TaskStatus {
 	tm.mu.RLock()
 	defer tm.mu.RUnlock()
 
-	status := make([]*api.TaskStatus, len(tm.tasks))
-	for i, task := range tm.tasks {
-		status[i] = &task.TaskStatus
+	return tm.getStatus()
+}
+
+// getStatus produces an API compatible task status list.
+// Callers are expected to hold mu.
+func (tm *tasksManager) getStatus() []*api.TaskStatus {
+	status := make([]*api.TaskStatus, 0, len(tm.tasks))
+	for _, t := range tm.tasks {
+		status = append(status, &t.TaskStatus)
 	}
 	return status
 }
@@ -115,10 +123,7 @@ func (tm *tasksManager) updateState(doUpdate func() (changed bool)) {
 		return
 	}
 
-	updates := make([]*api.TaskStatus, 0, len(tm.tasks))
-	for _, t := range tm.tasks {
-		updates = append(updates, &t.TaskStatus)
-	}
+	updates := tm.getStatus()
 	for sub := range tm.subscriptions {
 		select {
 		case sub.updates <- updates:
@@ -180,11 +185,13 @@ func (tm *tasksManager) init(ctx context.Context) {
 				State:        api.TaskState_opening,
 				Presentation: presentation,
 			},
-			config: config,
+			config:      config,
+			successChan: make(chan bool, 1),
 		}
 		task.command = tm.getCommand(task)
 		if tm.config.isHeadless() && task.command == "exit" {
 			task.State = api.TaskState_closed
+			task.successChan <- true
 		}
 		tm.tasks = append(tm.tasks, task)
 	}
@@ -192,7 +199,6 @@ func (tm *tasksManager) init(ctx context.Context) {
 
 func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
-	defer tm.report(ctx)
 	tm.init(ctx)
 
 	for _, t := range tm.tasks {
@@ -214,6 +220,7 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup) {
 		})
 		if err != nil {
 			taskLog.WithError(err).Error("cannot open new task terminal")
+			t.successChan <- false
 			tm.setTaskState(t, api.TaskState_closed)
 			continue
 		}
@@ -222,6 +229,7 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup) {
 		term, ok := tm.terminalService.Mux.Get(resp.Alias)
 		if !ok {
 			taskLog.Error("cannot find a task terminal")
+			t.successChan <- false
 			tm.setTaskState(t, api.TaskState_closed)
 			continue
 		}
@@ -234,7 +242,6 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup) {
 			return true
 		})
 
-		t.successChan = make(chan bool)
 		go func(t *task, term *terminal.Term) {
 			state, _ := term.Wait()
 			if state != nil {
@@ -251,6 +258,21 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup) {
 		if t.command != "" {
 			term.PTY.Write([]byte(t.command + "\n"))
 		}
+	}
+
+	success := true
+	for _, task := range tm.tasks {
+		select {
+		case <-ctx.Done():
+			return
+		case taskSuccess := <-task.successChan:
+			if !taskSuccess {
+				success = false
+			}
+		}
+	}
+	if tm.config.isHeadless() {
+		tm.reporter.done(success)
 	}
 }
 
@@ -388,27 +410,6 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 			tm.reporter.write(data, task, terminal)
 		}
 	}()
-}
-
-func (tm *tasksManager) report(ctx context.Context) {
-	if !tm.config.isHeadless() {
-		return
-	}
-
-	success := true
-	for _, task := range tm.tasks {
-		if task.successChan != nil {
-			select {
-			case <-ctx.Done():
-				return
-			case taskSuccess := <-task.successChan:
-				if !taskSuccess {
-					success = false
-				}
-			}
-		}
-	}
-	tm.reporter.done(success)
 }
 
 type composeCommandOptions struct {

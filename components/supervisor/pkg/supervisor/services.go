@@ -149,19 +149,18 @@ func (s *statusService) BackupStatus(ctx context.Context, req *api.BackupStatusR
 }
 
 func (s *statusService) PortsStatus(req *api.PortsStatusRequest, srv api.StatusService_PortsStatusServer) error {
-	err := srv.Send(&api.PortsStatusResponse{
-		Ports: s.Ports.Status(),
-	})
-	if err != nil {
-		return err
-	}
 	if !req.Observe {
-		return nil
+		return srv.Send(&api.PortsStatusResponse{
+			Ports: s.Ports.Status(),
+		})
 	}
 
-	sub := s.Ports.Subscribe()
-	if sub == nil {
+	sub, err := s.Ports.Subscribe()
+	if err == ports.ErrTooManySubscriptions {
 		return status.Error(codes.ResourceExhausted, "too many subscriptions")
+	}
+	if err != nil {
+		return status.Error(codes.Internal, err.Error())
 	}
 	defer sub.Close()
 
@@ -190,14 +189,10 @@ func (s *statusService) TasksStatus(req *api.TasksStatusRequest, srv api.StatusS
 	case <-s.Tasks.ready:
 	}
 
-	err := srv.Send(&api.TasksStatusResponse{
-		Tasks: s.Tasks.getStatus(),
-	})
-	if err != nil {
-		return err
-	}
 	if !req.Observe {
-		return nil
+		return srv.Send(&api.TasksStatusResponse{
+			Tasks: s.Tasks.Status(),
+		})
 	}
 
 	sub := s.Tasks.Subscribe()

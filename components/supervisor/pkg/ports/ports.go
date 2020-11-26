@@ -6,6 +6,7 @@ package ports
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -47,8 +48,7 @@ func NewManager(exposed ExposedPortsInterface, served ServedPortsObserver, confi
 
 		state:         state,
 		subscriptions: make(map[*Subscription]struct{}),
-		proxyStarter:  startLocalhostProxy,
-	}
+		proxyStarter:  startLocalhostProxy}
 }
 
 type localhostProxy struct {
@@ -76,6 +76,7 @@ type Manager struct {
 
 	subscriptions map[*Subscription]struct{}
 	submu         sync.Mutex
+	closed        bool
 }
 
 type managedPort struct {
@@ -107,6 +108,7 @@ func (pm *Manager) Run() {
 		// We copy the subscriptions to a list prior to closing them, to prevent a data race
 		// between the map iteration and entry removal when closing the subscription.
 		pm.submu.Lock()
+		pm.closed = true
 		subs := make([]*Subscription, 0, len(pm.subscriptions))
 		for s := range pm.subscriptions {
 			subs = append(subs, s)
@@ -468,13 +470,24 @@ func (pm *Manager) Expose(ctx context.Context, port uint32, targetPort uint32) e
 	return nil
 }
 
+var (
+	// ErrClosed when the port management is stopped
+	ErrClosed = errors.New("closed")
+	// ErrTooManySubscriptions when max allowed subscriptions exceed
+	ErrTooManySubscriptions = errors.New("too many subscriptions")
+)
+
 // Subscribe subscribes for status updates
-func (pm *Manager) Subscribe() *Subscription {
+func (pm *Manager) Subscribe() (*Subscription, error) {
 	pm.submu.Lock()
 	defer pm.submu.Unlock()
 
+	if pm.closed {
+		return nil, ErrClosed
+	}
+
 	if len(pm.subscriptions) > maxSubscriptions {
-		return nil
+		return nil, ErrTooManySubscriptions
 	}
 
 	sub := &Subscription{updates: make(chan []*api.PortsStatus, 5)}
@@ -492,7 +505,11 @@ func (pm *Manager) Subscribe() *Subscription {
 	}
 	pm.subscriptions[sub] = struct{}{}
 
-	return sub
+	// makes sure that no updates can happen between clients receiving an initial status and subscribing
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+	sub.updates <- pm.getStatus()
+	return sub, nil
 }
 
 // getStatus produces an API compatible port status list.
