@@ -159,11 +159,6 @@
             "type": "string",
             "description": "Path to where the IDE's workspace should be opened."
         },
-        "privileged": {
-            "type": "boolean",
-            "deprecationMessage": "The 'privileged' property only works for privileged users.",
-            "description": "Whether the workspace is started in privileged mode."
-        },
         "gitConfig": {
             "type": [
                 "object"

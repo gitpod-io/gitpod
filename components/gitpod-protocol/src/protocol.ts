@@ -514,7 +514,6 @@ export interface WorkspaceConfig {
     tasks?: TaskConfig[];
     checkoutLocation?: string;
     workspaceLocation?: string;
-    privileged?: boolean;
     gitConfig?: { [config: string]: string };
     github?: GithubAppConfig;
     vscode?: VSCodeConfig;

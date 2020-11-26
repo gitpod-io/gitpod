@@ -242,9 +242,6 @@ export class WorkspaceStarter {
         };
 
         let featureFlags: NamedWorkspaceFeatureFlag[] = workspace.config._featureFlags || [];
-        if (workspace.config.privileged) {
-            featureFlags.push("privileged");
-        }
         featureFlags = featureFlags.concat(this.env.defaultFeatureFlags);
         if (user.featureFlags && user.featureFlags.permanentWSFeatureFlags) {
             featureFlags = featureFlags.concat(featureFlags, user.featureFlags.permanentWSFeatureFlags);
