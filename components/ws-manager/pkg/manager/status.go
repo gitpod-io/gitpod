@@ -862,6 +862,10 @@ func formatDuration(d time.Duration) string {
 	return fmt.Sprintf("%02dh%02dm", h, m)
 }
 
+// errNoPLIS is returned by getWorkspaceStatusFromPLIS if the PLIS configMap is present, but
+// does not contain a PLIS annotation.
+var errNoPLIS = xerrors.Errorf("workspace has no pod lifecycle independent state")
+
 // getWorkspaceStatusFromPLIS tries to compute the workspace status from the pod lifecycle independent state alone.
 // For this to work the PLIS must be set and contain the last pod-based status.
 func (m *Manager) getWorkspaceStatusFromPLIS(wso workspaceObjects) (*api.WorkspaceStatus, error) {
@@ -874,7 +878,7 @@ func (m *Manager) getWorkspaceStatusFromPLIS(wso workspaceObjects) (*api.Workspa
 		return nil, xerrors.Errorf("cannot get status from pod lifecycle independent state: %w", err)
 	}
 	if plis == nil {
-		return nil, xerrors.Errorf("workspace has no pod lifecycle independent state")
+		return nil, errNoPLIS
 	}
 
 	if plis.LastPodStatus == nil {

@@ -1472,6 +1472,15 @@ func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 		}
 
 		timedout, err := m.manager.isWorkspaceTimedOut(workspaceObjects{PLIS: &plis})
+		if xerrors.Is(err, errNoPLIS) {
+			// The pod is gone and the PLIS hasn't been patched yet - there's not much we can do here, except
+			// to ignore the workspace.
+			//
+			// Note: although tempting it would be dangerous to try and patch the PLIS now, because we'd race
+			//       the stopping/stopped PLIS patching, possibly destroying state along the way. Patching the PLIS
+			//       is not an atomic operation.
+			continue
+		}
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("workspaceId=%s: %q", workspaceID, err))
 			continue
