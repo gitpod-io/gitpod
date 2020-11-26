@@ -79,14 +79,19 @@ func TestBlobFor(t *testing.T) {
 				hashLayer:     provideLayer,
 			},
 			ExtraAction: func(t *testing.T, s *refstore) (err error) {
-				_, err = s.BlobFor(context.Background(), refDescriptor, false)
+				_, _, err = s.BlobFor(context.Background(), refDescriptor, false)
 				if err != nil {
 					return err
 				}
 
 				// fetching again with an empty fake fetcher should work just fine - everything is cached now
 				s.Resolver = func() remotes.Resolver { return &fakeFetcher{} }
-				_, err = s.BlobFor(context.Background(), "test", false)
+				_, hash, err := s.BlobFor(context.Background(), "test", false)
+
+				if diff := cmp.Diff(hashLayer, hash); diff != "" {
+					t.Errorf("unexpected blob hash (-want +got):\n%s", diff)
+				}
+
 				return err
 			},
 			Expectation: Expectation{
@@ -166,7 +171,7 @@ func TestBlobFor(t *testing.T) {
 				hashManifest:  provideManifest,
 			},
 			ExtraAction: func(t *testing.T, s *refstore) (err error) {
-				_, err = s.BlobFor(context.Background(), refDescriptor, false)
+				_, _, err = s.BlobFor(context.Background(), refDescriptor, false)
 				if err == nil {
 					return fmt.Errorf("found layer although we shouldn't have")
 				}
@@ -179,7 +184,7 @@ func TestBlobFor(t *testing.T) {
 						},
 					}
 				}
-				_, err = s.BlobFor(context.Background(), refDescriptor, false)
+				_, _, err = s.BlobFor(context.Background(), refDescriptor, false)
 				if err != nil {
 					return err
 				}
@@ -227,7 +232,7 @@ func TestBlobFor(t *testing.T) {
 						if i == 100 {
 							close(run)
 						}
-						_, err := s.BlobFor(ctx, refDescriptor, false)
+						_, _, err := s.BlobFor(ctx, refDescriptor, false)
 						if err != nil {
 							return fmt.Errorf("client %03d: %w", i, err)
 						}
@@ -250,11 +255,11 @@ func TestBlobFor(t *testing.T) {
 				hashLayer:     provideLayer,
 			},
 			ExtraAction: func(t *testing.T, s *refstore) error {
-				_, err := s.BlobFor(context.Background(), refDescriptor, false)
+				_, _, err := s.BlobFor(context.Background(), refDescriptor, false)
 				if err != nil {
 					return err
 				}
-				_, err = s.BlobFor(context.Background(), refDescriptor, true)
+				_, _, err = s.BlobFor(context.Background(), refDescriptor, true)
 				if err != nil {
 					return err
 				}
@@ -273,7 +278,7 @@ func TestBlobFor(t *testing.T) {
 				hashLayer:     provideLayer,
 			},
 			ExtraAction: func(t *testing.T, s *refstore) error {
-				_, err := s.BlobFor(context.Background(), refDescriptor, true)
+				_, _, err := s.BlobFor(context.Background(), refDescriptor, true)
 				if err != nil {
 					return err
 				}
@@ -291,14 +296,14 @@ func TestBlobFor(t *testing.T) {
 				hashLayer:     provideLayer,
 			},
 			ExtraAction: func(t *testing.T, s *refstore) error {
-				_, err := s.BlobFor(context.Background(), refDescriptor, false)
+				_, _, err := s.BlobFor(context.Background(), refDescriptor, false)
 				if err != nil {
 					return err
 				}
 
 				delete(s.blobspace.(*inMemoryBlobspace).Content, hashLayer)
 
-				_, err = s.BlobFor(context.Background(), refDescriptor, false)
+				_, _, err = s.BlobFor(context.Background(), refDescriptor, false)
 				if err != nil {
 					return err
 				}
@@ -319,14 +324,14 @@ func TestBlobFor(t *testing.T) {
 				hashLayer:     provideLayer,
 			},
 			ExtraAction: func(t *testing.T, s *refstore) error {
-				_, err := s.BlobFor(context.Background(), refDescriptor, false)
+				_, _, err := s.BlobFor(context.Background(), refDescriptor, false)
 				if err != nil {
 					return err
 				}
 
 				delete(s.blobspace.(*inMemoryBlobspace).Content, hashLayer)
 
-				_, err = s.BlobFor(context.Background(), refDescriptor, true)
+				_, _, err = s.BlobFor(context.Background(), refDescriptor, true)
 				if err != nil {
 					return err
 				}
@@ -353,13 +358,13 @@ func TestBlobFor(t *testing.T) {
 				bs.Adder = func(ctx context.Context, name string, in io.Reader) (err error) {
 					return fmt.Errorf("failed to download")
 				}
-				_, err := s.BlobFor(context.Background(), refDescriptor, false)
+				_, _, err := s.BlobFor(context.Background(), refDescriptor, false)
 				if err == nil {
 					return fmt.Errorf("first download didn't fail")
 				}
 
 				bs.Adder = oadd
-				_, err = s.BlobFor(context.Background(), refDescriptor, false)
+				_, _, err = s.BlobFor(context.Background(), refDescriptor, false)
 				if err != nil {
 					return err
 				}
@@ -404,7 +409,7 @@ func TestBlobFor(t *testing.T) {
 
 			var err error
 			if test.ExtraAction == nil {
-				_, err = s.BlobFor(context.Background(), refDescriptor, false)
+				_, _, err = s.BlobFor(context.Background(), refDescriptor, false)
 			} else {
 				err = test.ExtraAction(t, s)
 			}

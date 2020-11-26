@@ -84,7 +84,7 @@ func (r *refstate) MarkDone() {
 	close(r.ch)
 }
 
-func (store *refstore) BlobFor(ctx context.Context, ref string, readOnly bool) (fs http.FileSystem, err error) {
+func (store *refstore) BlobFor(ctx context.Context, ref string, readOnly bool) (fs http.FileSystem, hash string, err error) {
 	store.mu.RLock()
 	rs, exists := store.refcache[ref]
 	store.mu.RUnlock()
@@ -92,11 +92,11 @@ func (store *refstore) BlobFor(ctx context.Context, ref string, readOnly bool) (
 	if exists {
 		err = rs.Wait(ctx)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 	}
 	if !exists && readOnly {
-		return nil, errdefs.ErrNotFound
+		return nil, "", errdefs.ErrNotFound
 	}
 
 	blobState := blobUnknown
@@ -109,7 +109,7 @@ func (store *refstore) BlobFor(ctx context.Context, ref string, readOnly bool) (
 		// if refcache thinks the blob should exist, but it doesn't, we force a redownload.
 		err = store.downloadBlobFor(ctx, ref, exists)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 		store.mu.RLock()
 		rs, exists = store.refcache[ref]
@@ -120,18 +120,18 @@ func (store *refstore) BlobFor(ctx context.Context, ref string, readOnly bool) (
 		// We have to wait for the download to actually finish.
 		err = rs.Wait(ctx)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 
 		// now that we've (re-)attempted to download the blob, it must exist.
 		// if it doesn't something went wrong while trying to download this thing.
 		fs, blobState = store.blobspace.Get(rs.Digest)
 		if blobState != blobReady {
-			return nil, errdefs.ErrNotFound
+			return nil, "", errdefs.ErrNotFound
 		}
 	}
 
-	return fs, nil
+	return fs, rs.Digest, nil
 }
 
 func (store *refstore) Close() {
