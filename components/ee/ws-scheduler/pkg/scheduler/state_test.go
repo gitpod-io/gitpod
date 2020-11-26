@@ -28,9 +28,17 @@ func TestState(t *testing.T) {
 		Expectation string
 	}{
 		{
-			Desc:        "no pods",
-			Nodes:       defaultNodeSet(),
-			Expectation: "- node1: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB\n- node2: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB\n- node3: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB",
+			Desc:  "no pods",
+			Nodes: defaultNodeSet(),
+			Expectation: `- node1:
+  RAM: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB
+  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
+- node2:
+  RAM: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB
+  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
+- node3:
+  RAM: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB
+  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB`,
 		},
 		{
 			Desc:  "other pods only",
@@ -39,7 +47,15 @@ func TestState(t *testing.T) {
 				createNonWorkspacePod("existingPod1", "1.5Gi", "0Gi", "node1", 10),
 				createNonWorkspacePod("existingPod2", "1Gi", "0Gi", "node2", 10),
 			},
-			Expectation: "- node1: used 0.000+0.000+1.500 of 10.000, avail 8.500 GiB\n- node2: used 0.000+0.000+1.000 of 10.000, avail 9.000 GiB\n- node3: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB",
+			Expectation: `- node1:
+  RAM: used 0.000+0.000+1.500 of 10.000, avail 8.500 GiB
+  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
+- node2:
+  RAM: used 0.000+0.000+1.000 of 10.000, avail 9.000 GiB
+  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
+- node3:
+  RAM: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB
+  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB`,
 		},
 		{
 			Desc:  "some headless pods",
@@ -50,7 +66,15 @@ func TestState(t *testing.T) {
 				createHeadlessWorkspacePod("hp1", "1Gi", "0Gi", "node2", 10),
 				createHeadlessWorkspacePod("hp2", "2.22Gi", "0Gi", "node2", 10),
 			},
-			Expectation: "- node1: used 0.000+0.000+1.500 of 10.000, avail 8.500 GiB\n- node2: used 0.000+3.220+1.000 of 10.000, avail 5.779 GiB\n- node3: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB",
+			Expectation: `- node1:
+  RAM: used 0.000+0.000+1.500 of 10.000, avail 8.500 GiB
+  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
+- node2:
+  RAM: used 0.000+3.220+1.000 of 10.000, avail 5.779 GiB
+  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
+- node3:
+  RAM: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB
+  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB`,
 		},
 		{
 			Desc:  "some regular pods",
@@ -61,7 +85,15 @@ func TestState(t *testing.T) {
 				createWorkspacePod("hp1", "1Gi", "0Gi", "node1", 10),
 				createWorkspacePod("hp2", "3.44Gi", "0Gi", "node1", 10),
 			},
-			Expectation: "- node1: used 4.439+0.000+1.500 of 10.000, avail 4.060 GiB\n- node2: used 0.000+0.000+1.000 of 10.000, avail 9.000 GiB\n- node3: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB",
+			Expectation: `- node1:
+  RAM: used 4.439+0.000+1.500 of 10.000, avail 4.060 GiB
+  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
+- node2:
+  RAM: used 0.000+0.000+1.000 of 10.000, avail 9.000 GiB
+  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
+- node3:
+  RAM: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB
+  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB`,
 		},
 	}
 
@@ -76,9 +108,9 @@ func TestState(t *testing.T) {
 			// This would intermittently break tests. We instead sort by name.
 			sort.Slice(nodes, func(i, j int) bool { return nodes[i].Node.Name < nodes[j].Node.Name })
 
-			actual := sched.DebugRAMPerNodeAsStr(nodes)
+			actual := sched.DebugStringNodes(nodes)
 			if test.Expectation != actual {
-				t.Errorf("expected RAM to be:\n%s, was:\n%s", test.Expectation, actual)
+				t.Errorf("expected debug string to be:\n%s, was:\n%s", test.Expectation, actual)
 				return
 			}
 		})

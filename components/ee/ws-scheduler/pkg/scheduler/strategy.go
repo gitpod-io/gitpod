@@ -30,7 +30,7 @@ const (
 )
 
 const (
-	errorNoNodeWithEnoughRAMAvailable = "No node with enough RAM available!\nRequested by pod: %s\nNodes:\n%s"
+	errorNoNodeWithEnoughResourcesAvailable = "No node with enough resources available!\nRAM requested: %s\nEph. Storage requested: %s\nNodes:\n%s"
 )
 
 // Strategy is the interface that make the actual scheduling interchangable
@@ -123,15 +123,17 @@ func (e *EvenLoad) Select(state *State, pod *corev1.Pod) (string, error) {
 
 	if len(sortedNodes) == 0 {
 		requestedRAM := GetRequestedRAMForPod(pod)
-		ramPerNode := DebugRAMPerNodeAsStr(sortedNodes)
-		return "", xerrors.Errorf(errorNoNodeWithEnoughRAMAvailable, requestedRAM.String(), ramPerNode)
+		requestedEphStorage := GetRequestedEphemeralStorageForPod(pod)
+		debugStr := DebugStringNodes(sortedNodes)
+		return "", xerrors.Errorf(errorNoNodeWithEnoughResourcesAvailable, requestedRAM.String(), requestedEphStorage.String(), debugStr)
 	}
 
 	candidate := sortedNodes[0]
 	if !fitsOnNode(pod, candidate) {
 		requestedRAM := GetRequestedRAMForPod(pod)
-		ramPerNode := DebugRAMPerNodeAsStr(sortedNodes)
-		return "", xerrors.Errorf(errorNoNodeWithEnoughRAMAvailable, requestedRAM.String(), ramPerNode)
+		requestedEphStorage := GetRequestedEphemeralStorageForPod(pod)
+		debugStr := DebugStringNodes(sortedNodes)
+		return "", xerrors.Errorf(errorNoNodeWithEnoughResourcesAvailable, requestedRAM.String(), requestedEphStorage.String(), debugStr)
 	}
 
 	return candidate.Node.Name, nil
@@ -162,8 +164,9 @@ func (s *DensityAndExperience) Select(state *State, pod *corev1.Pod) (string, er
 
 	if len(candidates) == 0 {
 		requestedRAM := GetRequestedRAMForPod(pod)
-		ramPerNode := DebugRAMPerNodeAsStr(sortedNodes)
-		return "", xerrors.Errorf(errorNoNodeWithEnoughRAMAvailable, requestedRAM.String(), ramPerNode)
+		requestedEphStorage := GetRequestedEphemeralStorageForPod(pod)
+		debugStr := DebugStringNodes(sortedNodes)
+		return "", xerrors.Errorf(errorNoNodeWithEnoughResourcesAvailable, requestedRAM.String(), requestedEphStorage.String(), debugStr)
 	}
 
 	// From this point on we're safe: Choosing any of the candidates would work.
