@@ -9,6 +9,7 @@ import { injectable, inject } from 'inversify';
 import { WorkspaceManagerClient } from './core_grpc_pb';
 import { PromisifiedWorkspaceManagerClient, linearBackoffStrategy } from "./promisified-client";
 import { Disposable } from "@gitpod/gitpod-protocol";
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
 export const WorkspaceManagerClientProviderConfig = Symbol("WorkspaceManagerClientProviderConfig");
 export interface WorkspaceManagerClientProviderConfig {
@@ -18,6 +19,7 @@ export interface WorkspaceManagerClientProviderConfig {
 
     defaultManager: string;
     getAddress(name: string): string | undefined;
+    isLegacy(name: string): boolean | undefined;
     getAvailableManager(): string[];
 }
 
@@ -41,15 +43,19 @@ export class WorkspaceManagerClientProvider implements Disposable {
             throw new Error(`Unknown workspace manager \"${name}\"`);
         }
 
+        // The following should probably be removed as soon as we do not need to talk to legacy WorkspaceManagers anymore.
+        const legacy = !!this.config.isLegacy(name);
+        const options = legacy ? { interceptors: [this.legacyInterceptor()] } : {};
+
         let client = this.connectionCache.get(name);
         if (!client) {
-            client = new WorkspaceManagerClient(addr, grpc.credentials.createInsecure());
+            client = new WorkspaceManagerClient(addr, grpc.credentials.createInsecure(), options);
             this.connectionCache.set(name, client);
         } else if(client.getChannel().getConnectivityState(true) != grpc.connectivityState.READY) {
             client.close();
 
             console.warn(`Lost connection to workspace manager \"${name}\" - attempting to reestablish`);
-            client = new WorkspaceManagerClient(addr, grpc.credentials.createInsecure());
+            client = new WorkspaceManagerClient(addr, grpc.credentials.createInsecure(), options);
             this.connectionCache.set(name, client);
         }
         return new PromisifiedWorkspaceManagerClient(client, linearBackoffStrategy(30, 1000));
@@ -59,6 +65,23 @@ export class WorkspaceManagerClientProvider implements Disposable {
         Array.from(this.connectionCache.values()).map(c => c.close());
     }
 
+    /**
+     * The gRPC call namespace for WorkspaceManager has been changed from `protocol` to `wsman`.
+     * To be able to talk to older WorkspaceManagers one can set the flag `legacy = true` to the wsman config.
+     * 
+     * This method returns an interceptor that replaces the namespace from `wsman` to `protocol`.
+     * 
+     * This method should probably be removed as soon as we do not need to talk to legacy WorkspaceManagers anymore.
+     */
+    private legacyInterceptor() {
+        const interceptor = (options: any, nextCall: Function) => {
+            log.debug("LegacyInterceptor: changing gRPC namespace of WorkspaceManager from 'wsman' to 'protocol'")
+            const path = options.method_definition.path as string;
+            options.method_definition.path = path.replace("wsman.WorkspaceManager", "protocol.WorkspaceManager");
+            return new grpc.InterceptingCall(nextCall(options));
+        }
+        return interceptor;
+    }
 }
 
 interface ManagerClientEnvConfig {
@@ -88,6 +111,21 @@ export class WorkspaceManagerClientProviderEnvConfig implements WorkspaceManager
     public getAddress(name: string): string | undefined {
         const result = this.managers.find(m => m.name === name);
         return result ? result.address : undefined;
+    }
+
+    /**
+     * The gRPC call namespace for WorkspaceManager has been changed from `protocol` to `wsman`.
+     * To be able to talk to older WorkspaceManagers one can set the flag `legacy = true` to the wsman config.
+     * 
+     * This method returns `true` iff `legacy` is configured to be `true`.
+     * 
+     * This method should probably be removed as soon as we do not need to talk to legacy WorkspaceManagers anymore.
+     * 
+     * @param name Name of the WorkspaceManager
+     */
+    public isLegacy(name: string): boolean | undefined {
+        const result = this.managers.find(m => m.name === name);
+        return (result && 'legacy' in result) ? result['legacy'] as boolean : undefined;
     }
 
     public getAvailableManager(): string[] {
