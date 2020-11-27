@@ -39,11 +39,20 @@ const (
 	// ServiceTypeLabel help differentiate between port service and IDE service
 	ServiceTypeLabel = "serviceType"
 
+	// GitpodDiskPressureLabel marks a node as having disk pressure (besides the root disk - used for the workspace SSDs, set by ws-daemon)
+	GitpodDiskPressureLabel = "gitpod.io/diskPressure"
+
+	// GitpodNodeServiceLabel marks a pod as providing a particular service to a node
+	GitpodNodeServiceLabel = "gitpod.io/nodeService"
+
 	// TraceIDAnnotation adds a Jaeger/OpenTracing header to the pod so that we can trace it's behaviour
 	TraceIDAnnotation = "gitpod/traceid"
 
 	// CPULimitAnnotation enforces a strict CPU limit on a workspace by virtue of ws-daemon
 	CPULimitAnnotation = "gitpod/cpuLimit"
+
+	// RequiredNodeServicesAnnotation lists all Gitpod services required on the node
+	RequiredNodeServicesAnnotation = "gitpod.io/requiredNodeServices"
 )
 
 // WorkspaceSupervisorEndpoint produces the supervisor endpoint of a workspace.
