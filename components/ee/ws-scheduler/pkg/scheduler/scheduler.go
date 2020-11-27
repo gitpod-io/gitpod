@@ -350,6 +350,27 @@ func (s *Scheduler) buildState(ctx context.Context, pod *corev1.Pod) (state *Sta
 	// Don't forget to take into account the bindings we just created (e.g., are still in the cache)
 	// to avoid assigning slots multiple times
 	state.UpdateBindings(s.localBindingCache.getListOfBindings())
+
+	// The required node services is basically PodAffinity light. They limit the nodes we can schedule
+	// workspace pods to based on other pods running on that node. We do this because we require that
+	// ws-daemon and registry-facade run on the node.
+	//
+	// Alternatively, we could have implemented PodAffinity in ws-scheduler, but that's conceptually
+	// much heavier and more difficult to handle.
+	//
+	// TODO(cw): if we ever implement PodAffinity, use that instead of requiredNodeServices.
+	if rs, ok := pod.Annotations[wsk8s.RequiredNodeServicesAnnotation]; ok {
+		req := strings.Split(rs, ",")
+		state.FilterNodes(func(n *Node) bool {
+			for _, requiredService := range req {
+				if _, present := n.Services[requiredService]; !present {
+					return false
+				}
+			}
+			return true
+		})
+	}
+
 	return state, nil
 }
 
@@ -380,7 +401,7 @@ func (s *Scheduler) gatherPotentialNodesFor(ctx context.Context, pod *corev1.Pod
 		// filter: 4: our own diskpressure signal coming from ws-daemon.
 		//            This is not part of the label selector as labelSets cannot negate
 		//            labels. Otherwise !gitpod.io/diskPressure would be a valid selector.
-		if _, fullDisk := node.Labels["gitpod.io/diskPressure"]; fullDisk {
+		if _, fullDisk := node.Labels[wsk8s.GitpodDiskPressureLabel]; fullDisk {
 			continue
 		}
 

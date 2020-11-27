@@ -9,6 +9,8 @@ import (
 	"sort"
 	"strings"
 
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+
 	corev1 "k8s.io/api/core/v1"
 	res "k8s.io/apimachinery/pkg/api/resource"
 )
@@ -26,6 +28,8 @@ type Node struct {
 
 	RAM              ResourceUsage
 	EphemeralStorage ResourceUsage
+
+	Services map[string]struct{}
 
 	// The number of pods on a node is limited by the resources available and by the kubelet.
 	PodSlots struct {
@@ -123,6 +127,21 @@ func (s *State) UpdateBindings(bindings []*Binding) {
 
 	for _, n := range s.Nodes {
 		s.updateAssignedPods(n)
+	}
+}
+
+// FilterNodes removes all nodes for which the predicate does not return true
+func (s *State) FilterNodes(predicate func(*Node) (include bool)) {
+	var goner []string
+	for k, n := range s.Nodes {
+		if predicate(n) {
+			continue
+		}
+		goner = append(goner, k)
+	}
+
+	for _, k := range goner {
+		delete(s.Nodes, k)
 	}
 }
 
@@ -282,6 +301,15 @@ func (s *State) updateAssignedPods(node *Node) {
 	node.EphemeralStorage.UsedRegular = usedRegularEphStorage
 
 	node.PodSlots.Available = node.PodSlots.Total - int64(len(assignedPods))
+
+	node.Services = make(map[string]struct{})
+	for _, p := range assignedPods {
+		service, ok := p.Pod.ObjectMeta.Labels[wsk8s.GitpodNodeServiceLabel]
+		if !ok {
+			continue
+		}
+		node.Services[service] = struct{}{}
+	}
 }
 
 func (s *State) findPodByName(pod *corev1.Pod) *Pod {
