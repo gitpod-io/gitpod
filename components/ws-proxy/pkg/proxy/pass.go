@@ -22,9 +22,13 @@ import (
 // ProxyPassConfig is used as intermediate struct to assemble a configurable proxy
 type proxyPassConfig struct {
 	TargetResolver  targetResolver
-	ResponseHandler responseHandler
+	ResponseHandler []responseHandler
 	ErrorHandler    errorHandler
 	Transport       http.RoundTripper
+}
+
+func (ppc *proxyPassConfig) appendResponseHandler(handler responseHandler) {
+	ppc.ResponseHandler = append(ppc.ResponseHandler, handler)
 }
 
 // proxyPassOpt allows to compose ProxyHandler options
@@ -83,8 +87,12 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 				log.WithField("url", url.String()).WithField("req", dmp).WithField("status", resp.Status).Debug("proxied request failed")
 			}
 
-			if h.ResponseHandler != nil {
-				return h.ResponseHandler(resp, req)
+			// execute response handlers in order of registration
+			for _, handler := range h.ResponseHandler {
+				err := handler(resp, req)
+				if err != nil {
+					return err
+				}
 			}
 
 			return nil
@@ -183,9 +191,9 @@ func createDefaultTransport(config *TransportConfig) *http.Transport {
 // tell the browser to cache for 1 year and don't ask the server during this period
 func withLongTermCaching() proxyPassOpt {
 	return func(cfg *proxyPassConfig) {
-		cfg.ResponseHandler = func(resp *http.Response, req *http.Request) error {
+		cfg.appendResponseHandler(func(resp *http.Response, req *http.Request) error {
 			resp.Header.Set("Cache-Control", "public, max-age=31536000")
 			return nil
-		}
+		})
 	}
 }
