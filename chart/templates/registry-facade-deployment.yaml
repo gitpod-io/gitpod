@@ -17,6 +17,7 @@ metadata:
     component: registry-facade
     kind: deployment
     stage: {{ .Values.installation.stage }}
+    gitpod.io/nodeService: registry-facade
 spec:
   selector:
     matchLabels:
@@ -24,6 +25,7 @@ spec:
       component: registry-facade
       kind: pod
       stage: {{ .Values.installation.stage }}
+      gitpod.io/nodeService: registry-facade
 {{- if not $comp.daemonSet }}
   replicas: {{ $comp.replicas | default 1 }}
   strategy:
@@ -40,6 +42,7 @@ spec:
         component: registry-facade
         kind: pod
         stage: {{ .Values.installation.stage }}
+        gitpod.io/nodeService: registry-facade
     spec:
 {{- if $comp.daemonSet }}
 {{ include "gitpod.workspaceAffinity" $this | indent 6 }}
