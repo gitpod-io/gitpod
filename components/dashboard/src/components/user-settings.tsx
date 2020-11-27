@@ -77,6 +77,7 @@ export class UserSettings extends React.Component<UserSettingsProps, UserSetting
                 <Checkbox
                     onChange={() => this.updateTransactionalMailSettings(!allowsTransactionalMail)}
                     checked={allowsTransactionalMail}
+                    color="primary"
                 />
                 Receive important emails about changes to my account
             </Grid>
@@ -84,6 +85,7 @@ export class UserSettings extends React.Component<UserSettingsProps, UserSetting
                 <Checkbox
                     onChange={() => this.updateAllowsMarketingCommunication(!allowsMarketingCommunication)}
                     checked={allowsMarketingCommunication}
+                    color="primary"
                 />
                 Receive marketing emails (for example, the Gitpod newsletter)
             </Grid>
