@@ -191,7 +191,13 @@ func Run(options ...RunOption) {
 	}
 
 	log.Info("received SIGTERM - tearing down")
-	teardown(!opts.InNamespace)
+	err = termMux.Close()
+	if err != nil {
+		log.WithError(err).Error("terminal closure failed")
+	}
+	if !opts.InNamespace {
+		callDaemonTeardown()
+	}
 
 	cancel()
 	wg.Wait()
@@ -618,23 +624,21 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 	cst.MarkContentReady(src)
 }
 
-func teardown(withDaemonCall bool) {
-	if withDaemonCall {
-		log.Info("asking ws-daemon to tear down this workspace")
-		ctx, cancel := context.WithTimeout(context.Background(), timeBudgetDaemonTeardown)
-		defer cancel()
+func callDaemonTeardown() {
+	log.Info("asking ws-daemon to tear down this workspace")
+	ctx, cancel := context.WithTimeout(context.Background(), timeBudgetDaemonTeardown)
+	defer cancel()
 
-		client, conn, err := ConnectToInWorkspaceDaemonService(ctx)
-		if err != nil {
-			log.WithError(err).Error("ungraceful shutdown - teardown was unsuccessful")
-			return
-		}
+	client, conn, err := ConnectToInWorkspaceDaemonService(ctx)
+	if err != nil {
+		log.WithError(err).Error("ungraceful shutdown - teardown was unsuccessful")
+		return
+	}
 
-		defer conn.Close()
-		_, err = client.Teardown(ctx, &daemon.TeardownRequest{})
-		if err != nil {
-			log.WithError(err).Error("ungraceful shutdown - teardown was unsuccessful")
-		}
+	defer conn.Close()
+	_, err = client.Teardown(ctx, &daemon.TeardownRequest{})
+	if err != nil {
+		log.WithError(err).Error("ungraceful shutdown - teardown was unsuccessful")
 	}
 }
 

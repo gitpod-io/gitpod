@@ -20,6 +20,12 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+const (
+	// closeTerminaldefaultGracePeriod is the time terminal
+	// processes get between SIGTERM and SIGKILL.
+	closeTerminaldefaultGracePeriod = 10 * time.Second
+)
+
 // NewMuxTerminalService creates a new terminal service
 func NewMuxTerminalService(m *Mux) *MuxTerminalService {
 	shell := os.Getenv("SHELL")
@@ -90,7 +96,7 @@ func (srv *MuxTerminalService) OpenWithOptions(ctx context.Context, req *api.Ope
 
 // Close closes a terminal for the given alias
 func (srv *MuxTerminalService) Close(ctx context.Context, req *api.CloseTerminalRequest) (*api.CloseTerminalResponse, error) {
-	err := srv.Mux.Close(req.Alias)
+	err := srv.Mux.CloseTerminal(req.Alias, closeTerminaldefaultGracePeriod)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

@@ -17,6 +17,7 @@ import (
 	"github.com/creack/pty"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/google/uuid"
+	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 )
 
@@ -70,17 +71,44 @@ func (m *Mux) Start(cmd *exec.Cmd, options TermOptions) (alias string, err error
 	go func() {
 		term.waitErr = cmd.Wait()
 		close(term.waitDone)
-		m.Close(alias)
+		m.CloseTerminal(alias, 0*time.Second)
 	}()
 
 	return alias, nil
 }
 
-// Close closes a terminal and ends the process that runs in it
-func (m *Mux) Close(alias string) error {
+// Close closes all terminals with closeTerminaldefaultGracePeriod.
+func (m *Mux) Close() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	var err error
+	for k := range m.terms {
+		cerr := m.doClose(k, closeTerminaldefaultGracePeriod)
+		if cerr == nil {
+			log.WithError(err).WithField("alias", k).Warn("cannot properly close terminal")
+			if err != nil {
+				err = cerr
+			}
+		}
+	}
+	return err
+}
+
+// CloseTerminal closes a terminal and ends the process that runs in it
+func (m *Mux) CloseTerminal(alias string, gracePeriod time.Duration) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	return m.doClose(alias, gracePeriod)
+}
+
+// doClose closes a terminal and ends the process that runs in it.
+// First, the process receives SIGTERM and is given gracePeriod time
+// to stop. If it still runs after that time, it receives SIGKILL.
+//
+// Callers are expected to hold mu.
+func (m *Mux) doClose(alias string, gracePeriod time.Duration) error {
 	term, ok := m.terms[alias]
 	if !ok {
 		return fmt.Errorf("not found")
@@ -88,11 +116,11 @@ func (m *Mux) Close(alias string) error {
 
 	log := log.WithField("alias", alias)
 	log.Info("closing terminal")
-	if term.Command.ProcessState == nil || !term.Command.ProcessState.Exited() {
-		log.WithField("cmd", term.Command.Args).Debug("killing process")
-		term.Command.Process.Kill()
+	err := gracefullyShutdownProcess(term.Command.Process, gracePeriod)
+	if err != nil {
+		log.WithError(err).Warn("did not gracefully shut down terminal")
 	}
-	err := term.Stdout.Close()
+	err = term.Stdout.Close()
 	if err != nil {
 		log.WithError(err).Warn("cannot close connection to terminal clients")
 	}
@@ -103,6 +131,37 @@ func (m *Mux) Close(alias string) error {
 	delete(m.terms, alias)
 
 	return nil
+}
+
+func gracefullyShutdownProcess(p *os.Process, gracePeriod time.Duration) error {
+	if p == nil {
+		// process is alrady gone
+		return nil
+	}
+	if gracePeriod == 0 {
+		return p.Kill()
+	}
+
+	err := p.Signal(unix.SIGINT)
+	if err != nil {
+		return err
+	}
+	schan := make(chan error)
+	go func() {
+		_, err := p.Wait()
+		schan <- err
+	}()
+	select {
+	case err = <-schan:
+		if err == nil {
+			// process is gone now - we're good
+			return nil
+		}
+	case <-time.After(gracePeriod):
+	}
+
+	// process did not exit in time. Let's kill.
+	return p.Kill()
 }
 
 // terminalBacklogSize is the number of bytes of output we'll store in RAM for each terminal.
