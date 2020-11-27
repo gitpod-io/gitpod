@@ -127,8 +127,9 @@ func (tm *tasksManager) updateState(doUpdate func() (changed bool)) {
 	for sub := range tm.subscriptions {
 		select {
 		case sub.updates <- updates:
-		default:
-			log.Warn("cannot to push tasks update to a subscriber")
+		case <-time.After(5 * time.Second):
+			log.Error("tasks subscription droped out")
+			sub.Close()
 		}
 	}
 }

@@ -75,7 +75,6 @@ type Manager struct {
 	mu    sync.RWMutex
 
 	subscriptions map[*Subscription]struct{}
-	submu         sync.Mutex
 	closed        bool
 }
 
@@ -107,13 +106,13 @@ func (pm *Manager) Run() {
 	defer func() {
 		// We copy the subscriptions to a list prior to closing them, to prevent a data race
 		// between the map iteration and entry removal when closing the subscription.
-		pm.submu.Lock()
+		pm.mu.Lock()
 		pm.closed = true
 		subs := make([]*Subscription, 0, len(pm.subscriptions))
 		for s := range pm.subscriptions {
 			subs = append(subs, s)
 		}
-		pm.submu.Unlock()
+		pm.mu.Unlock()
 
 		for _, s := range subs {
 			s.Close()
@@ -211,8 +210,9 @@ func (pm *Manager) updateState(exposed []ExposedPort, served []ServedPort, confi
 	for sub := range pm.subscriptions {
 		select {
 		case sub.updates <- status:
-		default:
-			log.Warn("port status subscriber's queue is full - dropping update for this subscriber")
+		case <-time.After(5 * time.Second):
+			log.Error("ports subscription droped out")
+			sub.Close()
 		}
 	}
 }
@@ -479,8 +479,8 @@ var (
 
 // Subscribe subscribes for status updates
 func (pm *Manager) Subscribe() (*Subscription, error) {
-	pm.submu.Lock()
-	defer pm.submu.Unlock()
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
 
 	if pm.closed {
 		return nil, ErrClosed
@@ -493,8 +493,8 @@ func (pm *Manager) Subscribe() (*Subscription, error) {
 	sub := &Subscription{updates: make(chan []*api.PortsStatus, 5)}
 	var once sync.Once
 	sub.Close = func() error {
-		pm.submu.Lock()
-		defer pm.submu.Unlock()
+		pm.mu.Lock()
+		defer pm.mu.Unlock()
 
 		once.Do(func() {
 			close(sub.updates)
@@ -506,8 +506,6 @@ func (pm *Manager) Subscribe() (*Subscription, error) {
 	pm.subscriptions[sub] = struct{}{}
 
 	// makes sure that no updates can happen between clients receiving an initial status and subscribing
-	pm.mu.Lock()
-	defer pm.mu.Unlock()
 	sub.updates <- pm.getStatus()
 	return sub, nil
 }
