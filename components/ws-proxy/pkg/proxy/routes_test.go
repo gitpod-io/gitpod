@@ -583,6 +583,25 @@ func TestRoutes(t *testing.T) {
 				Body:   "[\"foobar=baz;another=cookie\"]\n",
 			},
 		},
+		{
+			Desc: "port GET 200 w/o X-Frame-Options header",
+			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].Ports[0].Url+"returns-200-with-frame-options-header", nil),
+				addHostHeader,
+				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+			),
+			Targets: &Targets{
+				Port: &Target{
+					Handler: func(w http.ResponseWriter, r *http.Request, requestCount uint8) {
+						w.Header().Add("X-Frame-Options", "sameorigin")
+						w.WriteHeader(http.StatusOK)
+					},
+				},
+			},
+			Expectation: Expectation{
+				Header: http.Header{"Content-Length": {"0"}},
+				Status: http.StatusOK,
+			},
+		},
 	}
 
 	log.Init("ws-proxy-test", "", false, true)
