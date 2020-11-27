@@ -36,7 +36,7 @@ var _ = utilities.NewDoubleArray
 var _ = metadata.Join
 
 var (
-	filter_TokenService_GetToken_0 = &utilities.DoubleArray{Encoding: map[string]int{"host": 0, "scope": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
+	filter_TokenService_GetToken_0 = &utilities.DoubleArray{Encoding: map[string]int{"kind": 0, "host": 1, "scope": 2}, Base: []int{1, 1, 2, 3, 0, 0, 0}, Check: []int{0, 1, 1, 1, 2, 3, 4}}
 )
 
 func request_TokenService_GetToken_0(ctx context.Context, marshaler runtime.Marshaler, client TokenServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -49,6 +49,16 @@ func request_TokenService_GetToken_0(ctx context.Context, marshaler runtime.Mars
 		err error
 		_   = err
 	)
+
+	val, ok = pathParams["kind"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "kind")
+	}
+
+	protoReq.Kind, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "kind", err)
+	}
 
 	val, ok = pathParams["host"]
 	if !ok {
@@ -92,6 +102,16 @@ func local_request_TokenService_GetToken_0(ctx context.Context, marshaler runtim
 		err error
 		_   = err
 	)
+
+	val, ok = pathParams["kind"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "kind")
+	}
+
+	protoReq.Kind, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "kind", err)
+	}
 
 	val, ok = pathParams["host"]
 	if !ok {
@@ -144,6 +164,16 @@ func request_TokenService_SetToken_0(ctx context.Context, marshaler runtime.Mars
 		_   = err
 	)
 
+	val, ok = pathParams["kind"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "kind")
+	}
+
+	protoReq.Kind, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "kind", err)
+	}
+
 	val, ok = pathParams["host"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "host")
@@ -178,6 +208,16 @@ func local_request_TokenService_SetToken_0(ctx context.Context, marshaler runtim
 		_   = err
 	)
 
+	val, ok = pathParams["kind"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "kind")
+	}
+
+	protoReq.Kind, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "kind", err)
+	}
+
 	val, ok = pathParams["host"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "host")
@@ -194,7 +234,7 @@ func local_request_TokenService_SetToken_0(ctx context.Context, marshaler runtim
 }
 
 var (
-	filter_TokenService_ClearToken_0 = &utilities.DoubleArray{Encoding: map[string]int{"value": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+	filter_TokenService_ClearToken_0 = &utilities.DoubleArray{Encoding: map[string]int{"kind": 0, "value": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
 )
 
 func request_TokenService_ClearToken_0(ctx context.Context, marshaler runtime.Marshaler, client TokenServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -207,6 +247,16 @@ func request_TokenService_ClearToken_0(ctx context.Context, marshaler runtime.Ma
 		err error
 		_   = err
 	)
+
+	val, ok = pathParams["kind"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "kind")
+	}
+
+	protoReq.Kind, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "kind", err)
+	}
 
 	val, ok = pathParams["value"]
 	if !ok {
@@ -246,6 +296,16 @@ func local_request_TokenService_ClearToken_0(ctx context.Context, marshaler runt
 		_   = err
 	)
 
+	val, ok = pathParams["kind"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "kind")
+	}
+
+	protoReq.Kind, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "kind", err)
+	}
+
 	val, ok = pathParams["value"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "value")
@@ -274,7 +334,7 @@ func local_request_TokenService_ClearToken_0(ctx context.Context, marshaler runt
 }
 
 var (
-	filter_TokenService_ClearToken_1 = &utilities.DoubleArray{Encoding: map[string]int{"all": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+	filter_TokenService_ClearToken_1 = &utilities.DoubleArray{Encoding: map[string]int{"kind": 0, "all": 1}, Base: []int{1, 1, 2, 0, 0}, Check: []int{0, 1, 1, 2, 3}}
 )
 
 func request_TokenService_ClearToken_1(ctx context.Context, marshaler runtime.Marshaler, client TokenServiceClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
@@ -287,6 +347,16 @@ func request_TokenService_ClearToken_1(ctx context.Context, marshaler runtime.Ma
 		err error
 		_   = err
 	)
+
+	val, ok = pathParams["kind"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "kind")
+	}
+
+	protoReq.Kind, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "kind", err)
+	}
 
 	val, ok = pathParams["all"]
 	if !ok {
@@ -325,6 +395,16 @@ func local_request_TokenService_ClearToken_1(ctx context.Context, marshaler runt
 		err error
 		_   = err
 	)
+
+	val, ok = pathParams["kind"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "kind")
+	}
+
+	protoReq.Kind, err = runtime.String(val)
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "kind", err)
+	}
 
 	val, ok = pathParams["all"]
 	if !ok {
@@ -576,13 +656,13 @@ func RegisterTokenServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 }
 
 var (
-	pattern_TokenService_GetToken_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "token", "host", "scope"}, ""))
+	pattern_TokenService_GetToken_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 1, 0, 4, 1, 5, 3, 1, 0, 4, 1, 5, 4}, []string{"v1", "token", "kind", "host", "scope"}, ""))
 
-	pattern_TokenService_SetToken_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "token", "host"}, ""))
+	pattern_TokenService_SetToken_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "token", "kind", "host"}, ""))
 
-	pattern_TokenService_ClearToken_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2}, []string{"v1", "token", "value"}, ""))
+	pattern_TokenService_ClearToken_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 1, 0, 4, 1, 5, 3}, []string{"v1", "token", "kind", "value"}, ""))
 
-	pattern_TokenService_ClearToken_1 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 4, 1, 5, 3}, []string{"v1", "token", "clear", "all", "true"}, ""))
+	pattern_TokenService_ClearToken_1 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 1, 0, 4, 1, 5, 2, 2, 3, 2, 4, 2, 5, 4, 1, 5, 4}, []string{"v1", "token", "kind", "clear", "all", "true"}, ""))
 )
 
 var (

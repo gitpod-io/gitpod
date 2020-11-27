@@ -542,6 +542,7 @@ export class WorkspaceStarter {
             ev.setValue(JSON.stringify([{
                 tokenOTS: ots.token,
                 token: "ots",
+                kind: "gitpod",
                 host: this.env.hostUrl.url.host,
                 scope: scopes,
                 expiryDate: tokenExpirationTime.toISOString(),

@@ -210,6 +210,7 @@ func createGitpodService(cfg *Config, tknsrv api.TokenServiceServer) *gitpod.API
 		return nil
 	}
 	tknres, err := tknsrv.GetToken(context.Background(), &api.GetTokenRequest{
+		Kind: "gitpod",
 		Host: host,
 		Scope: []string{
 			"function:openPort",

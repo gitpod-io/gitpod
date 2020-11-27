@@ -235,6 +235,7 @@ func (s RegistrableTokenService) RegisterREST(mux *runtime.ServeMux, grpcEndpoin
 // NewInMemoryTokenService produces a new InMemoryTokenService
 func NewInMemoryTokenService() *InMemoryTokenService {
 	return &InMemoryTokenService{
+		token:    make(map[string][]*token),
 		provider: make(map[string][]tokenProvider),
 	}
 }
@@ -253,45 +254,46 @@ type tokenProvider interface {
 
 // InMemoryTokenService provides an in-memory caching token service
 type InMemoryTokenService struct {
-	token    []*token
+	token    map[string][]*token
 	provider map[string][]tokenProvider
 	mu       sync.RWMutex
 }
 
 // GetToken returns a token for a host
 func (s *InMemoryTokenService) GetToken(ctx context.Context, req *api.GetTokenRequest) (*api.GetTokenResponse, error) {
-	tkn, ok := s.getCachedTokenFor(req.Host, req.Scope)
+	tkn, ok := s.getCachedTokenFor(req.Kind, req.Host, req.Scope)
 	if ok {
 		return &api.GetTokenResponse{Token: tkn}, nil
 	}
 
 	s.mu.RLock()
-	prov := s.provider[req.Host]
+	prov := s.provider[req.Kind]
 	s.mu.RUnlock()
 	for _, p := range prov {
 		tkn, err := p.GetToken(ctx, req)
 		if err != nil {
-			log.WithError(err).WithField("host", req.Host).Warn("cannot get token from registered provider")
+			log.WithError(err).WithField("kind", req.Kind).WithField("host", req.Host).Warn("cannot get token from registered provider")
 			continue
 		}
 		if tkn == nil {
-			log.WithField("host", req.Host).Warn("got no token from registered provider")
+			log.WithField("kind", req.Kind).WithField("host", req.Host).Warn("got no token from registered provider")
 			continue
 		}
 
-		s.cacheToken(tkn)
+		s.cacheToken(req.Kind, tkn)
 		return &api.GetTokenResponse{Token: tkn.Token}, nil
 	}
 
 	return nil, status.Error(codes.NotFound, "no token available")
 }
 
-func (s *InMemoryTokenService) getCachedTokenFor(host string, scopes []string) (tkn string, ok bool) {
+func (s *InMemoryTokenService) getCachedTokenFor(kind string, host string, scopes []string) (tkn string, ok bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	var res *token
-	for _, tkn := range s.token {
+	token := s.token[kind]
+	for _, tkn := range token {
 		if tkn.Host != host {
 			continue
 		}
@@ -328,7 +330,7 @@ func (s *InMemoryTokenService) getCachedTokenFor(host string, scopes []string) (
 	return res.Token, true
 }
 
-func (s *InMemoryTokenService) cacheToken(tkn *token) {
+func (s *InMemoryTokenService) cacheToken(kind string, tkn *token) {
 	if tkn.Reuse == api.TokenReuse_REUSE_NEVER {
 		// we just don't cache non-reuse tokens
 		return
@@ -337,8 +339,8 @@ func (s *InMemoryTokenService) cacheToken(tkn *token) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.token = append(s.token, tkn)
-	log.WithField("host", tkn.Host).WithField("scopes", tkn.Scope).WithField("reuse", tkn.Reuse.String()).Info("registered new token")
+	s.token[kind] = append(s.token[kind], tkn)
+	log.WithField("kind", kind).WithField("host", tkn.Host).WithField("scopes", tkn.Scope).WithField("reuse", tkn.Reuse.String()).Info("registered new token")
 }
 
 func convertReceivedToken(req *api.SetTokenRequest) (tkn *token, err error) {
@@ -383,7 +385,7 @@ func (s *InMemoryTokenService) SetToken(ctx context.Context, req *api.SetTokenRe
 	if err != nil {
 		return nil, err
 	}
-	s.cacheToken(tkn)
+	s.cacheToken(req.Kind, tkn)
 
 	return &api.SetTokenResponse{}, nil
 }
@@ -394,9 +396,9 @@ func (s *InMemoryTokenService) ClearToken(ctx context.Context, req *api.ClearTok
 		s.mu.Lock()
 		defer s.mu.Unlock()
 
-		s.token = nil
+		s.token[req.Kind] = nil
 
-		log.Info("cleared all cached tokens")
+		log.WithField("kind", req.Kind).Info("cleared all cached tokens")
 		return &api.ClearTokenResponse{}, nil
 	}
 	if tkn := req.GetValue(); tkn != "" {
@@ -404,16 +406,18 @@ func (s *InMemoryTokenService) ClearToken(ctx context.Context, req *api.ClearTok
 		defer s.mu.Unlock()
 
 		var found bool
-		for i, t := range s.token {
+		token := s.token[req.Kind]
+		for i, t := range token {
 			if t.Token != tkn {
 				continue
 			}
 
 			found = true
-			s.token = append(s.token[:i], s.token[i+1:]...)
-			log.WithField("host", t.Host).WithField("scopes", t.Scope).Info("cleared token")
+			token = append(token[:i], token[i+1:]...)
+			log.WithField("kind", req.Kind).WithField("host", t.Host).WithField("scopes", t.Scope).Info("cleared token")
 			break
 		}
+		s.token[req.Kind] = token
 		if !found {
 			return nil, status.Error(codes.NotFound, "token not found")
 		}
@@ -435,21 +439,21 @@ func (s *InMemoryTokenService) ProvideToken(srv api.TokenService_ProvideTokenSer
 	if reg == nil {
 		return status.Error(codes.FailedPrecondition, "must register first")
 	}
-	if reg.Host == "" {
-		return status.Error(codes.InvalidArgument, "host is required")
+	if reg.Kind == "" {
+		return status.Error(codes.InvalidArgument, "kind is required")
 	}
 
 	rt := &remoteTokenProvider{srv, make(chan *remoteTknReq)}
 	s.mu.Lock()
-	s.provider[reg.Host] = append(s.provider[reg.Host], rt)
+	s.provider[reg.Kind] = append(s.provider[reg.Kind], rt)
 	s.mu.Unlock()
 
 	err = rt.Serve()
 
 	s.mu.Lock()
-	for i, p := range s.provider[reg.Host] {
+	for i, p := range s.provider[reg.Kind] {
 		if p == rt {
-			s.provider[reg.Host] = append(s.provider[reg.Host][:i], s.provider[reg.Host][i+1:]...)
+			s.provider[reg.Kind] = append(s.provider[reg.Kind][:i], s.provider[reg.Kind][i+1:]...)
 		}
 	}
 	s.mu.Unlock()
