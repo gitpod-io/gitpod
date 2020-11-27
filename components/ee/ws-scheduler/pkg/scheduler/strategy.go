@@ -240,8 +240,8 @@ func (s *DensityAndExperience) Select(state *State, pod *corev1.Pod) (string, er
 func fitsOnNode(pod *corev1.Pod, node *Node) bool {
 	ramReq := podRAMRequest(pod)
 	ephStorageReq := podEphemeralStorageRequest(pod)
-	return ramReq.Cmp(*node.RAM.Available) < 0 &&
-		(ephStorageReq.CmpInt64(0) == 0 || ephStorageReq.Cmp(*node.EphemeralStorage.Available) < 0)
+	return ramReq.Cmp(*node.RAM.Available) <= 0 &&
+		(ephStorageReq.CmpInt64(0) == 0 || ephStorageReq.Cmp(*node.EphemeralStorage.Available) <= 0)
 }
 
 func freshWorkspaceCount(state *State, node *Node, freshSeconds int) int {
