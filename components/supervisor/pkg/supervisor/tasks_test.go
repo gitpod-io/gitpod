@@ -13,16 +13,19 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
+
 	"github.com/google/go-cmp/cmp"
+	"github.com/sirupsen/logrus"
 )
 
 var skipCommand = "echo \"skip\""
 var failCommand = "exit 1"
 
 func TestTaskManager(t *testing.T) {
-
+	log.Log.Logger.SetLevel(logrus.FatalLevel)
 	tests := []struct {
 		Desc        string
 		Headless    bool
