@@ -45,6 +45,8 @@ message GetTokenRequest {
 }
 message GetTokenResponse {
     string token = 1;
+    /** The username of the account associated with the token. */
+    string user = 2;
 }
 
 message SetTokenRequest {

@@ -299,7 +299,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     public async getToken(query: GitpodServer.GetTokenSearchOptions): Promise<Token | undefined> {
         await this.doUpdateUser();
         const user = this.checkUser("getToken");
-
+        const logCtx = { userId: user.id, host: query.host };
 
         const { host } = query;
         try {
@@ -308,7 +308,8 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
             return token;
         } catch (error) {
-            // no token found
+            log.error(logCtx, "failed to find token: ", error);
+            return undefined
         }
     }
 

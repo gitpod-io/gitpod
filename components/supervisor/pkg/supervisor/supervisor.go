@@ -87,6 +87,14 @@ const (
 	timeBudgetDaemonTeardown   = 10 * time.Second
 )
 
+const (
+	// KindGitpod marks tokens that provide access to the Gitpod server API
+	KindGitpod = "gitpod"
+
+	// KindGit marks any kind of Git access token
+	KindGit = "git"
+)
+
 // Run serves as main entrypoint to the supervisor
 func Run(options ...RunOption) {
 	defer log.Info("supervisor shut down")
@@ -138,10 +146,11 @@ func Run(options ...RunOption) {
 			uint32(cfg.IDEPort),
 			uint32(cfg.APIEndpointPort),
 		)
-		termMux    = terminal.NewMux()
-		termMuxSrv = terminal.NewMuxTerminalService(termMux)
+		termMux     = terminal.NewMux()
+		termMuxSrv  = terminal.NewMuxTerminalService(termMux)
+		taskManager = newTasksManager(cfg, termMuxSrv, cstate, &loggingHeadlessTaskProgressReporter{})
 	)
-	taskManager := newTasksManager(cfg, termMuxSrv, cstate, &loggingHeadlessTaskProgressReporter{})
+	tokenService.provider[KindGit] = []tokenProvider{NewGitTokenProvider(gitpodService)}
 
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
 	termMuxSrv.Env = buildIDEEnv(cfg)
@@ -210,9 +219,10 @@ func createGitpodService(cfg *Config, tknsrv api.TokenServiceServer) *gitpod.API
 		return nil
 	}
 	tknres, err := tknsrv.GetToken(context.Background(), &api.GetTokenRequest{
-		Kind: "gitpod",
+		Kind: KindGitpod,
 		Host: host,
 		Scope: []string{
+			"function:getToken",
 			"function:openPort",
 			"function:getOpenPorts",
 		},
