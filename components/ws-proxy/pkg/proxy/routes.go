@@ -274,6 +274,7 @@ func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig) error
 			config,
 			workspacePodPortResolver,
 			withHTTPErrorHandler(showPortNotFoundPage),
+			withXFrameOptionsFilter(),
 		),
 	)
 

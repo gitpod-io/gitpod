@@ -197,3 +197,12 @@ func withLongTermCaching() proxyPassOpt {
 		})
 	}
 }
+
+func withXFrameOptionsFilter() proxyPassOpt {
+	return func(cfg *proxyPassConfig) {
+		cfg.appendResponseHandler(func(resp *http.Response, req *http.Request) error {
+			resp.Header.Del("X-Frame-Options")
+			return nil
+		})
+	}
+}
