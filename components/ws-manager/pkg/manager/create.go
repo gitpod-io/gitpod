@@ -319,10 +319,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 										Key:      theiaVersionLabel,
 										Operator: corev1.NodeSelectorOpExists,
 									},
-									{
-										Key:      wsdaemonLabel,
-										Operator: corev1.NodeSelectorOpExists,
-									},
 								},
 							},
 						},

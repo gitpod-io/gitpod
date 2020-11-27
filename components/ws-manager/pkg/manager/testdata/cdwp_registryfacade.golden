@@ -184,14 +184,7 @@
                 "nodeAffinity": {
                     "requiredDuringSchedulingIgnoredDuringExecution": {
                         "nodeSelectorTerms": [
-                            {
-                                "matchExpressions": [
-                                    {
-                                        "key": "gitpod.io/ws-daemon",
-                                        "operator": "Exists"
-                                    }
-                                ]
-                            }
+                            {}
                         ]
                     }
                 }

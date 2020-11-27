@@ -92,8 +92,6 @@ const (
 
 	// theiaVersionLabelFmt is the format to produce the label a node has if Theia is available on it in a particular version
 	theiaVersionLabelFmt = "gitpod.io/theia.%s"
-	// wsdaemonLabel is the label a node has if ws-daemon is running on it
-	wsdaemonLabel = "gitpod.io/ws-daemon"
 )
 
 const (
