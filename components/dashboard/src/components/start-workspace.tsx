@@ -7,7 +7,7 @@
 import * as React from 'react';
 
 // tslint:disable-next-line:max-line-length
-import { GitpodService, GitpodClient, WorkspaceInstance, WorkspaceInstanceStatus, WorkspaceImageBuild, WithPrebuild, Branding, Workspace, StartWorkspaceResult, DisposableCollection } from '@gitpod/gitpod-protocol';
+import { GitpodService, GitpodClient, WorkspaceInstance, WorkspaceInstanceStatus, WorkspaceImageBuild, WithPrebuild, Branding, Workspace, StartWorkspaceResult, DisposableCollection, WorkspaceInstanceUpdateListener } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { ShowWorkspaceBuildLogs, WorkspaceBuildLog } from './show-workspace-build-logs';
 import { WorkspaceLogView } from './workspace-log-view';
@@ -24,16 +24,15 @@ import { Context } from '../context';
 import { colors } from '../withRoot';
 
 interface StartWorkspaceState {
-    workspace?: Workspace;
+    wsListener?: WorkspaceInstanceUpdateListener;
     workspaceInstance?: WorkspaceInstance;
     errorMessage?: string;
     errorCode?: number;
     buildLog?: WorkspaceBuildLog;
     headlessLog?: string;
     progress: number;
-    startedInstanceId?: string;
-    inTheiaAlready?: boolean;
     remainingUsageHours?: number;
+    userHasAlreadyCreatedWorkspaces?: boolean;
 }
 
 export interface StartWorkspaceProps {
@@ -50,11 +49,17 @@ export type StartErrorRenderer = (errorCode: number, service: GitpodService, onR
 
 export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWorkspaceState> implements Partial<GitpodClient> {
     private process: StartupProcess;
-    private isHeadless: boolean = false;
-    private isPrebuilt: boolean | undefined;
+
+    private getWorkspace(): Workspace | undefined {
+        return this.state && this.state.wsListener && this.state.wsListener.info && this.state.wsListener.info.workspace;
+    }
+    private isHeadless(): boolean {
+        return !!(this.getWorkspace()?.type !== 'regular');
+    }
+    private isPrebuilt(): boolean {
+        return WithPrebuild.is(this.getWorkspace()?.context);
+    }
     private workspaceInfoReceived: boolean = false;
-    private userHasAlreadyCreatedWorkspaces?: boolean;
-    private workspace: Workspace | undefined;
     private branding: Branding | undefined;
 
     constructor(props: StartWorkspaceProps) {
@@ -79,8 +84,9 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
 
     private readonly toDispose = new DisposableCollection();
     componentWillMount() {
-        this.queryInitialState();
-        this.startWorkspace(this.props.workspaceId);
+        this.startWorkspace(this.props.workspaceId).then(() => {
+            this.queryInitialState();
+        });
     }
 
     notifyDidOpenConnection(): void {
@@ -88,9 +94,6 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
     }
 
     protected async queryInitialState() {
-        if (window.self !== window.top) {
-            this.setState({ inTheiaAlready: true });
-        }
         WithBranding.getBranding(this.props.service, true)
             .then(branding => this.branding = branding)
             .catch(e => console.log("cannot update branding", e));
@@ -106,53 +109,46 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         }
 
         await workspaceInfoPromise;
-        this.userHasAlreadyCreatedWorkspaces = await createWorkspacesBeforePromise;
+        createWorkspacesBeforePromise.then(userHasAlreadyCreatedWorkspaces => {
+            this.setState({userHasAlreadyCreatedWorkspaces});
+        });
     }
 
     componentWillReceiveProps(nextProps: StartWorkspaceProps) {
         this.startWorkspace(nextProps.workspaceId);
     }
 
-    protected startWorkspace(workspaceId: string | undefined, restart: boolean = false, forceDefaultImage: boolean = false) {
+    private startedInstanceId(): string | undefined {
+        return this.state && this.state.workspaceInstance && this.state.workspaceInstance.id;
+    }
+
+    protected async startWorkspace(workspaceId: string | undefined, restart: boolean = false, forceDefaultImage: boolean = false) {
         if (!workspaceId) {
             return;
         }
         const state = this.state;
         if (state) {
-            if (!restart && (state.startedInstanceId || state.errorMessage)) {
+            if (!restart && (this.startedInstanceId() || state.errorMessage)) {
                 // We stick with a started instance until we're explicitly told not to
                 return;
             }
         }
 
         const defaultErrMessage = `Error while starting workspace ${workspaceId}`;
-        this.props.service.server.startWorkspace(workspaceId, { forceDefaultImage })
-            .then((workspaceStartedResult: StartWorkspaceResult) => {
-                if (!workspaceStartedResult) {
-                    this.setErrorState(defaultErrMessage);
-                } else {
-                    console.log("/start: started workspace instance: " + workspaceStartedResult.instanceID);
-                    // redirect to workspaceURL if we are not yet running in an iframe
-                    if (!this.runsInIFrame() && workspaceStartedResult.workspaceURL) {
-                        this.redirectTo(workspaceStartedResult.workspaceURL);
-                    }
-                    this.setState({ startedInstanceId: workspaceStartedResult.instanceID, errorMessage: undefined, errorCode: undefined });
-                    // Explicitly query state to guarantee we get at least one update
-                    // (needed for already started workspaces, and not hanging in 'Starting ...' for too long)
-                    this.props.service.server.getWorkspace(workspaceId).then(ws => {
-                        if (ws.latestInstance) {
-                            this.setState({
-                                workspace: ws.workspace
-                            });
-                            this.onInstanceUpdate(ws.latestInstance);
-                        }
-                    });
-                }
-            })
-            .catch(err => {
-                this.setErrorState(err, defaultErrMessage);
-                console.error(err);
+        const workspaceStartedResult: StartWorkspaceResult = await this.props.service.server.startWorkspace(workspaceId, { forceDefaultImage });
+        if (!workspaceStartedResult) {
+            this.setErrorState(defaultErrMessage);
+            return;
+        } else {
+            // redirect to workspaceURL if we are not yet running in an iframe
+            if (!this.runsInIFrame() && workspaceStartedResult.workspaceURL) {
+                this.redirectTo(workspaceStartedResult.workspaceURL);
+            }
+            this.setState({
+                errorMessage: undefined, 
+                errorCode: undefined 
             });
+        }
     }
 
     protected setErrorState(err: any, defaultErrorMessage?: string) {
@@ -178,9 +174,9 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
     }
 
     async onInstanceUpdate(workspaceInstance: WorkspaceInstance) {
-        const startedInstanceId = this.state && this.state.startedInstanceId;
         if (workspaceInstance.workspaceId !== this.props.workspaceId
-            || startedInstanceId !== workspaceInstance.id) {
+            || (this.startedInstanceId() !== undefined
+            && this.startedInstanceId() !== workspaceInstance.id)) {
             return;
         }
 
@@ -197,7 +193,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
             this.props.service.server.watchWorkspaceImageBuildLogs(workspaceInstance.workspaceId);
         }
         if (workspaceInstance.status.phase === 'pending') {
-            if (this.isPrebuilt) {
+            if (this.isPrebuilt()) {
                 this.process.stages['restoring-prebuild'].expectedTime = 30 * 1000;
             } else {
                 // remove RestoringPrebuild phase to prevent stray stage when not starting from a prebuild
@@ -208,7 +204,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         if (workspaceInstance.status.phase === 'initializing') {
             this.process.startProcess();
 
-            if (this.isPrebuilt) {
+            if (this.isPrebuilt()) {
                 // for good measure: try and start the process just in case we missed the previous events. startProcess is idempotent.
                 this.process.startProcess();
 
@@ -231,13 +227,13 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
             }
         }
         if (workspaceInstance.status.phase === 'running') {
-            if (this.isHeadless) {
+            if (this.isHeadless()) {
                 this.props.service.server.watchHeadlessWorkspaceLogs(workspaceInstance.workspaceId);
             }
         }
         if (workspaceInstance.status.phase === 'stopped') {
-            if (this.isHeadless && this.workspace) {
-                const contextUrl = this.workspace.contextURL.replace('prebuild/', '');
+            if (this.isHeadless() && this.getWorkspace()) {
+                const contextUrl = this.getWorkspace()?.contextURL.replace('prebuild/', '')!;
                 this.redirectTo(new GitpodHostUrl(window.location.toString()).withContext(contextUrl).toString());
             }
         }
@@ -254,16 +250,18 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
     protected async ensureWorkspaceInfo({ force }: { force: boolean }) {
         if (this.props.workspaceId && (force || !this.workspaceInfoReceived)) {
             try {
-                const info = await this.props.service.server.getWorkspace(this.props.workspaceId);
-                this.workspace = info.workspace;
-                this.isHeadless = info.workspace.type != 'regular';
-                this.isPrebuilt = WithPrebuild.is(info.workspace.context);
+                const wsListener = await this.props.service.listenToInstance(this.props.workspaceId);
+                this.setState({
+                    wsListener
+                });
+                const update = () => {
+                    if (wsListener.info.latestInstance) {
+                        this.onInstanceUpdate(wsListener.info.latestInstance);
+                    }
+                };
+                update();
+                wsListener.onDidChange(update);
                 this.workspaceInfoReceived = true;
-
-                if (info.latestInstance) {
-                    // Potentially indirect recursive call, guarded by workspaceInfoReceived
-                    this.onInstanceUpdate(info.latestInstance);
-                }
             } catch (err) {
                 log.error(err);
                 this.setErrorState(err);
@@ -325,6 +323,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
     render() {
         const errorCode = this.state && this.state.errorCode;
 
+        const isError = this.state && !!this.state.errorMessage;
         const startErrorRenderer = this.props.startErrorRenderer;
         if (startErrorRenderer && errorCode) {
             const rendered = startErrorRenderer(errorCode, this.props.service, () => this.startWorkspace(this.props.workspaceId, true, false));
@@ -332,14 +331,14 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                 return rendered;
             }
         }
-
+        
         let message = <div className='message'>Starting...</div>;
-        if (this.state && this.state.workspaceInstance) {
+        if (!isError && this.state && this.state.workspaceInstance) {
             message = <div className='message'>
                 {this.process.getLabel(this.state.workspaceInstance.status.phase)}
             </div>;
             const phase = this.state.workspaceInstance.status.phase;
-            if (!this.isHeadless && (phase === 'stopped' ||
+            if (!this.isHeadless() && (phase === 'stopped' ||
                 phase === 'stopping')) {
                 let stoppedReason = `The workspace ${phase === 'stopped' ? 'has stopped' : 'is stopping'}.`;
                 if (this.state.workspaceInstance.status.conditions.timeout) {
@@ -381,7 +380,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
 
                 const urls = new GitpodHostUrl(window.location.toString());
                 const startUrl = urls.asStart(this.props.workspaceId).toString();
-                const ctxURL = new URL(this.state.workspace?.contextURL || urls.asDashboard().toString())
+                const ctxURL = new URL(this.getWorkspace()?.contextURL || urls.asDashboard().toString())
                 const host = "Back to " + ctxURL.host;
                 message = <React.Fragment>
                     <div className='message'>
@@ -406,7 +405,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                             )) : undefined}
                             <div className='start-action'>
                                 <Button className='button' variant='outlined' color='primary'
-                                    onClick={() => this.redirectTo(this.state.workspace!.contextURL)}>{host}</Button>
+                                    onClick={() => this.redirectTo(ctxURL.toString())}>{host}</Button>
                                 <Button className='button' variant='outlined' color={pendingChanges.length !== 0 ? 'secondary' : 'primary'}
                                     disabled={phase !== 'stopped'}
                                     onClick={() => this.redirectTo(startUrl)}>Start Workspace</Button></div>
@@ -420,8 +419,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         const instance = this.state && this.state.workspaceInstance;
         // stopped status happens when the build failed. We still want to see the log output in that case
         const isBuildingWorkspaceImage = instance && (instance.status.phase === 'preparing' || instance.status.phase === 'stopped' && this.state.buildLog);
-        const isHeadlessBuildRunning = this.isHeadless && instance && (instance.status.phase === 'running' || instance.status.phase === 'stopping');
-        let isError = this.state && !!this.state.errorMessage;
+        const isHeadlessBuildRunning = this.isHeadless() && instance && (instance.status.phase === 'running' || instance.status.phase === 'stopping');
         let errorMessage = this.state && this.state.errorMessage;
         if (isBuildingWorkspaceImage) {
             logs = <ShowWorkspaceBuildLogs buildLog={this.state.buildLog} errorMessage={errorMessage} showPhase={!isError} />;
@@ -453,7 +451,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                         window.open(new GitpodHostUrl(window.location.toString()).asUpgradeSubscription().toString(), '_blank')
                     }>Upgrade Subscription</Button>
                 </div>;
-            } else if (this.state.inTheiaAlready) {
+            } else if (this.runsInIFrame()) {
                 message = <div className='message'></div>;
             } else {
                 this.ensureWorkspaceAuth(this.state.workspaceInstance.id)
@@ -462,9 +460,9 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         }
 
         const showProductivityTips = this.branding ? this.branding.showProductivityTips : false;
-        const shouldRenderTips = showProductivityTips && !logs && !isError && this.userHasAlreadyCreatedWorkspaces !== undefined && this.runsInIFrame() &&
+        const shouldRenderTips = showProductivityTips && !logs && !isError && this.state.userHasAlreadyCreatedWorkspaces !== undefined && this.runsInIFrame() &&
             !(this.state.workspaceInstance && (this.state.workspaceInstance.status.phase === 'stopping' || this.state.workspaceInstance.status.phase === 'stopped'));
-        const productivityTip = shouldRenderTips ? <ProductivityTips userHasCreatedWorkspaces={this.userHasAlreadyCreatedWorkspaces} /> : undefined;
+        const productivityTip = shouldRenderTips ? <ProductivityTips userHasCreatedWorkspaces={this.state.userHasAlreadyCreatedWorkspaces} /> : undefined;
         const isStopped = this.state.workspaceInstance && this.state.workspaceInstance.status.phase === 'stopped';
         return (
             <WithBranding service={this.props.service}>
