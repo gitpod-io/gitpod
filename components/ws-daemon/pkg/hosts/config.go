@@ -63,10 +63,7 @@ func FromConfig(cfg Config, clientset kubernetes.Interface, kubernetesNamespace 
 		})
 	}
 	for alias, entry := range cfg.FixedHosts {
-		provider = append(provider, FixedIPSource{
-			Alias: alias,
-			Hosts: entry,
-		})
+		provider = append(provider, NewFixedIPSource(alias, entry))
 	}
 	hg, err := NewDirectController(kubernetesNamespace, cfg.NodeHostsFile, provider...)
 	if err != nil {

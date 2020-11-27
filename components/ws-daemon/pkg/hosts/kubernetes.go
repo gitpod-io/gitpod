@@ -170,6 +170,15 @@ func (s *ServiceClusterIPSource) Source() <-chan []Host {
 	return s.src
 }
 
+// NewFixedIPSource creates a new fixed IP source
+func NewFixedIPSource(alias string, hosts []Host) *FixedIPSource {
+	return &FixedIPSource{
+		Alias: alias,
+		Hosts: hosts,
+		c:     make(chan []Host),
+	}
+}
+
 // FixedIPSource is a Host source that's fixed at configuration time
 type FixedIPSource struct {
 	Alias string
@@ -185,7 +194,6 @@ func (fi FixedIPSource) Name() string {
 
 // Start starts the source
 func (fi FixedIPSource) Start() error {
-	fi.c = make(chan []Host)
 	fi.c <- fi.Hosts
 	return nil
 }
