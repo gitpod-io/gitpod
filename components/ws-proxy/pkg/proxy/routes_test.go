@@ -677,7 +677,7 @@ type fakeWsInfoProvider struct {
 }
 
 // GetWsInfoByID returns the workspace for the given ID
-func (p *fakeWsInfoProvider) WorkspaceInfo(workspaceID string) *WorkspaceInfo {
+func (p *fakeWsInfoProvider) WorkspaceInfo(ctx context.Context, workspaceID string) *WorkspaceInfo {
 	for _, nfo := range p.infos {
 		if nfo.WorkspaceID == workspaceID {
 			return &nfo

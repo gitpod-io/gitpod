@@ -243,7 +243,7 @@ func pathBasedTheiaRouter(r *mux.Router, wsInfoProvider WorkspaceInfoProvider, t
 
 		path := strings.TrimPrefix(req.URL.Path, trimPrefix)
 		wsID = strings.Split(path, "/")[0]
-		if wsInfoProvider.WorkspaceInfo(wsID) == nil {
+		if wsInfoProvider.WorkspaceInfo(req.Context(), wsID) == nil {
 			log.WithFields(log.OWI("", wsID, "")).Debug("PathBasedTheiaRouter: no workspace info found")
 			return false
 		}

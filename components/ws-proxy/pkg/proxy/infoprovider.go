@@ -32,7 +32,7 @@ type WorkspaceCoords struct {
 // WorkspaceInfoProvider is an entity that is able to provide workspaces related information
 type WorkspaceInfoProvider interface {
 	// WorkspaceInfo returns the workspace information of a workspace using it's workspace ID
-	WorkspaceInfo(workspaceID string) *WorkspaceInfo
+	WorkspaceInfo(ctx context.Context, workspaceID string) *WorkspaceInfo
 
 	// WorkspaceCoords provides workspace coordinates for a workspace using the public port
 	// exposed by this service.
@@ -83,39 +83,51 @@ type PortInfo struct {
 // RemoteWorkspaceInfoProvider provides (cached) infos about running workspaces that it queries from ws-manager
 type RemoteWorkspaceInfoProvider struct {
 	Config WorkspaceInfoProviderConfig
+	Dialer WSManagerDialer
 
+	stop  chan struct{}
 	ready bool
 	mu    sync.Mutex
 	cache *workspaceInfoCache
 }
 
+// WSManagerDialer dials out to a ws-manager instance
+type WSManagerDialer func(target string) (io.Closer, wsapi.WorkspaceManagerClient, error)
+
 // NewRemoteWorkspaceInfoProvider creates a fresh WorkspaceInfoProvider
 func NewRemoteWorkspaceInfoProvider(config WorkspaceInfoProviderConfig) *RemoteWorkspaceInfoProvider {
 	return &RemoteWorkspaceInfoProvider{
 		Config: config,
+		Dialer: defaultWsmanagerDialer,
 		cache:  newWorkspaceInfoCache(),
+		stop:   make(chan struct{}),
 	}
+}
+
+// Close prevents the info provider from connecting
+func (p *RemoteWorkspaceInfoProvider) Close() {
+	close(p.stop)
+}
+
+func defaultWsmanagerDialer(target string) (io.Closer, wsapi.WorkspaceManagerClient, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	conn, err := grpc.DialContext(ctx, target, grpc.WithInsecure(), grpc.WithBlock())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	client := wsapi.NewWorkspaceManagerClient(conn)
+	return conn, client, err
 }
 
 // Run is meant to be called as a go-routine and streams the current state of all workspace statuus from ws-manager,
 // transforms the relevent pieces into WorkspaceInfos and stores them in the cache
 func (p *RemoteWorkspaceInfoProvider) Run() (err error) {
-	connect := func(target string) (*grpc.ClientConn, wsapi.WorkspaceManagerClient, error) {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		conn, err := grpc.DialContext(ctx, target, grpc.WithInsecure(), grpc.WithBlock())
-		if err != nil {
-			return nil, nil, err
-		}
-
-		client := wsapi.NewWorkspaceManagerClient(conn)
-		return conn, client, err
-	}
-
 	// create initial connection
 	target := p.Config.WsManagerAddr
-	conn, client, err := connect(target)
+	conn, client, err := p.Dialer(target)
 	if err != nil {
 		return xerrors.Errorf("error while connecting to ws-manager: %w", err)
 	}
@@ -127,10 +139,10 @@ func (p *RemoteWorkspaceInfoProvider) Run() (err error) {
 	if err != nil {
 		return err
 	}
-	p.cache.reinit(infos)
+	p.cache.Reinit(infos)
 
 	// maintain connection and stream workspace statuus
-	go func(conn *grpc.ClientConn, client wsapi.WorkspaceManagerClient) {
+	go func(conn io.Closer, client wsapi.WorkspaceManagerClient) {
 		for {
 			p.mu.Lock()
 			p.ready = true
@@ -148,10 +160,20 @@ func (p *RemoteWorkspaceInfoProvider) Run() (err error) {
 			p.ready = false
 			p.mu.Unlock()
 
+			var stop bool
+			select {
+			case <-p.stop:
+				stop = true
+			default:
+			}
+			if stop {
+				break
+			}
+
 			for {
 				time.Sleep(time.Duration(p.Config.ReconnectInterval))
 
-				conn, client, err = connect(target)
+				conn, client, err = p.Dialer(target)
 				if err != nil {
 					log.WithError(err).Warnf("error while connecting to ws-manager, reconnecting after timeout...")
 					continue
@@ -186,7 +208,7 @@ func (p *RemoteWorkspaceInfoProvider) listen(client wsapi.WorkspaceManagerClient
 	if err != nil {
 		return err
 	}
-	p.cache.reinit(infos)
+	p.cache.Reinit(infos)
 
 	// start streaming status updates
 	stream, err := client.Subscribe(ctx, &wsapi.SubscribeRequest{})
@@ -206,10 +228,10 @@ func (p *RemoteWorkspaceInfoProvider) listen(client wsapi.WorkspaceManagerClient
 		}
 
 		if status.Phase == wsapi.WorkspacePhase_STOPPED {
-			p.cache.delete(status.Metadata.MetaId)
+			p.cache.Delete(status.Metadata.MetaId)
 		} else {
 			info := mapWorkspaceStatusToInfo(status)
-			p.cache.insert(info)
+			p.cache.Insert(info)
 		}
 	}
 }
@@ -254,8 +276,8 @@ func mapWorkspaceStatusToInfo(status *wsapi.WorkspaceStatus) *WorkspaceInfo {
 }
 
 // WorkspaceInfo return the WorkspaceInfo avaiable for the given workspaceID
-func (p *RemoteWorkspaceInfoProvider) WorkspaceInfo(workspaceID string) *WorkspaceInfo {
-	info, present := p.cache.getByID(workspaceID)
+func (p *RemoteWorkspaceInfoProvider) WorkspaceInfo(ctx context.Context, workspaceID string) *WorkspaceInfo {
+	info, present := p.cache.WaitFor(ctx, workspaceID)
 	if !present {
 		return nil
 	}
@@ -264,7 +286,7 @@ func (p *RemoteWorkspaceInfoProvider) WorkspaceInfo(workspaceID string) *Workspa
 
 // WorkspaceCoords returns the WorkspaceCoords the given publicPort is associated with
 func (p *RemoteWorkspaceInfoProvider) WorkspaceCoords(publicPort string) *WorkspaceCoords {
-	coords, present := p.cache.getCoordsByPublicPort(publicPort)
+	coords, present := p.cache.GetCoordsByPublicPort(publicPort)
 	if !present {
 		return nil
 	}
@@ -296,19 +318,25 @@ type workspaceInfoCache struct {
 	// WorkspaceCoords indexed by public (proxy) port (string)
 	coordsByPublicPort map[string]*WorkspaceCoords
 
-	mu sync.RWMutex
+	// cond signals the arrival of new workspace info
+	cond *sync.Cond
+	// mu is cond's Locker
+	mu *sync.RWMutex
 }
 
 func newWorkspaceInfoCache() *workspaceInfoCache {
+	var mu sync.RWMutex
 	return &workspaceInfoCache{
 		infos:              make(map[string]*WorkspaceInfo),
 		coordsByPublicPort: make(map[string]*WorkspaceCoords),
+		mu:                 &mu,
+		cond:               sync.NewCond(&mu),
 	}
 }
 
-func (c *workspaceInfoCache) reinit(infos []*WorkspaceInfo) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+func (c *workspaceInfoCache) Reinit(infos []*WorkspaceInfo) {
+	c.cond.L.Lock()
+	defer c.cond.L.Unlock()
 
 	c.infos = make(map[string]*WorkspaceInfo, len(infos))
 	c.coordsByPublicPort = make(map[string]*WorkspaceCoords, len(c.coordsByPublicPort))
@@ -316,13 +344,15 @@ func (c *workspaceInfoCache) reinit(infos []*WorkspaceInfo) {
 	for _, info := range infos {
 		c.doInsert(info)
 	}
+	c.cond.Broadcast()
 }
 
-func (c *workspaceInfoCache) insert(info *WorkspaceInfo) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+func (c *workspaceInfoCache) Insert(info *WorkspaceInfo) {
+	c.cond.L.Lock()
+	defer c.cond.L.Unlock()
 
 	c.doInsert(info)
+	c.cond.Broadcast()
 }
 
 func (c *workspaceInfoCache) doInsert(info *WorkspaceInfo) {
@@ -339,9 +369,9 @@ func (c *workspaceInfoCache) doInsert(info *WorkspaceInfo) {
 	}
 }
 
-func (c *workspaceInfoCache) delete(workspaceID string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+func (c *workspaceInfoCache) Delete(workspaceID string) {
+	c.cond.L.Lock()
+	defer c.cond.L.Unlock()
 
 	info, present := c.infos[workspaceID]
 	if !present || info == nil {
@@ -351,15 +381,49 @@ func (c *workspaceInfoCache) delete(workspaceID string) {
 	delete(c.infos, workspaceID)
 }
 
-func (c *workspaceInfoCache) getByID(workspaceID string) (*WorkspaceInfo, bool) {
+// WaitFor waits for workspace info until that info is available or the context is canceled.
+func (c *workspaceInfoCache) WaitFor(ctx context.Context, workspaceID string) (w *WorkspaceInfo, ok bool) {
 	c.mu.RLock()
-	defer c.mu.RUnlock()
+	w, ok = c.infos[workspaceID]
+	c.mu.RUnlock()
+	if ok {
+		return
+	}
 
-	info, ok := c.infos[workspaceID]
-	return info, ok
+	inc := make(chan *WorkspaceInfo)
+	go func() {
+		defer close(inc)
+
+		c.cond.L.Lock()
+		defer c.cond.L.Unlock()
+		for {
+			c.cond.Wait()
+			if ctx.Err() != nil {
+				return
+			}
+
+			info, ok := c.infos[workspaceID]
+			if !ok {
+				continue
+			}
+
+			inc <- info
+			return
+		}
+	}()
+
+	select {
+	case w = <-inc:
+		if w == nil {
+			return nil, false
+		}
+		return w, true
+	case <-ctx.Done():
+		return nil, false
+	}
 }
 
-func (c *workspaceInfoCache) getCoordsByPublicPort(wsProxyPort string) (*WorkspaceCoords, bool) {
+func (c *workspaceInfoCache) GetCoordsByPublicPort(wsProxyPort string) (*WorkspaceCoords, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -373,7 +437,7 @@ type fixedInfoProvider struct {
 }
 
 // WorkspaceInfo returns the workspace information of a workspace using it's workspace ID
-func (fp *fixedInfoProvider) WorkspaceInfo(workspaceID string) *WorkspaceInfo {
+func (fp *fixedInfoProvider) WorkspaceInfo(ctx context.Context, workspaceID string) *WorkspaceInfo {
 	if fp.Infos == nil {
 		return nil
 	}
