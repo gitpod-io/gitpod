@@ -56,7 +56,7 @@ daemon:
     nodeHostsFile: "/mnt/hosts"
     fixedHosts:
       registryFacade:
-        - alias: {{ (printf "reg.%s" (.Values.components.registryFacade.hostname | default .Values.hostname)) | quote }}
+        - name: {{ (printf "reg.%s" (.Values.components.registryFacade.hostname | default .Values.hostname)) | quote }}
           addr: 127.0.0.1
   disk:
     path: "/mnt/wsdaemon-workingarea"
