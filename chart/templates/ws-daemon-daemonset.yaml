@@ -8,7 +8,7 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: ws-daemon
+  name: ws-daemon1
   labels:
     app: {{ template "gitpod.fullname" $ }}
     component: ws-daemon
