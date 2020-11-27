@@ -24,6 +24,7 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 	}
 	var (
 		defaultToken = "foobar"
+		defaultKind  = "myprovider"
 		defaultHost  = "gitpod.io"
 
 		errNoToken = status.Error(codes.NotFound, "no token available").Error()
@@ -42,13 +43,14 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 	tests := []struct {
 		Desc        string
 		Req         *api.GetTokenRequest
-		Cache       []*token
+		Cache       map[string][]*token
 		Provider    map[string][]tokenProvider
 		Expectation Expectation
 	}{
 		{
 			Desc: "no provider",
 			Req: &api.GetTokenRequest{
+				Kind: defaultKind,
 				Host: defaultHost,
 			},
 			Expectation: Expectation{
@@ -58,14 +60,17 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 		{
 			Desc: "cached token (no reuse)",
 			Req: &api.GetTokenRequest{
+				Kind:  defaultKind,
 				Host:  defaultHost,
 				Scope: []string{"a1", "a2"},
 			},
-			Cache: []*token{
-				func(t *token) *token {
-					t.Reuse = api.TokenReuse_REUSE_NEVER
-					return t
-				}(newToken("a1", "a2")),
+			Cache: map[string][]*token{
+				defaultKind: {
+					func(t *token) *token {
+						t.Reuse = api.TokenReuse_REUSE_NEVER
+						return t
+					}(newToken("a1", "a2")),
+				},
 			},
 			Expectation: Expectation{
 				Err: errNoToken,
@@ -74,10 +79,13 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 		{
 			Desc: "cached token (exact, reuse when possible)",
 			Req: &api.GetTokenRequest{
+				Kind:  defaultKind,
 				Host:  defaultHost,
 				Scope: []string{"a1", "a2"},
 			},
-			Cache: []*token{newToken("a1", "a2")},
+			Cache: map[string][]*token{
+				defaultKind: {newToken("a1", "a2")},
+			},
 			Expectation: Expectation{
 				Resp: &api.GetTokenResponse{Token: defaultToken},
 			},
@@ -85,16 +93,19 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 		{
 			Desc: "cached token (expired)",
 			Req: &api.GetTokenRequest{
+				Kind:  defaultKind,
 				Host:  defaultHost,
 				Scope: []string{"a1", "a2"},
 			},
-			Cache: []*token{
-				func(t *token) *token {
-					exp := time.Now().Add(-2 * time.Hour)
-					t.ExpiryDate = &exp
-					return t
-				}(newToken("a1", "a2")),
-				{Host: "foo." + defaultHost},
+			Cache: map[string][]*token{
+				defaultKind: {
+					func(t *token) *token {
+						exp := time.Now().Add(-2 * time.Hour)
+						t.ExpiryDate = &exp
+						return t
+					}(newToken("a1", "a2")),
+					{Host: "foo." + defaultHost},
+				},
 			},
 			Expectation: Expectation{
 				Err: errNoToken,
@@ -103,14 +114,17 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 		{
 			Desc: "cached token (no expiry)",
 			Req: &api.GetTokenRequest{
+				Kind:  defaultKind,
 				Host:  defaultHost,
 				Scope: []string{"a1", "a2"},
 			},
-			Cache: []*token{
-				func(t *token) *token {
-					t.ExpiryDate = nil
-					return t
-				}(newToken("a1", "a2")),
+			Cache: map[string][]*token{
+				defaultKind: {
+					func(t *token) *token {
+						t.ExpiryDate = nil
+						return t
+					}(newToken("a1", "a2")),
+				},
 			},
 			Expectation: Expectation{
 				Resp: &api.GetTokenResponse{Token: defaultToken},
@@ -119,10 +133,13 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 		{
 			Desc: "cached token (fewer scopes)",
 			Req: &api.GetTokenRequest{
+				Kind:  defaultKind,
 				Host:  defaultHost,
 				Scope: []string{"a1", "a2"},
 			},
-			Cache: []*token{newToken("a1")},
+			Cache: map[string][]*token{
+				defaultKind: {newToken("a1")},
+			},
 			Expectation: Expectation{
 				Err: errNoToken,
 			},
@@ -130,10 +147,13 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 		{
 			Desc: "cached token (more scopes, reuse when possible)",
 			Req: &api.GetTokenRequest{
+				Kind:  defaultKind,
 				Host:  defaultHost,
 				Scope: []string{"a1", "a2"},
 			},
-			Cache: []*token{newToken("a1", "a2", "a3")},
+			Cache: map[string][]*token{
+				defaultKind: {newToken("a1", "a2", "a3")},
+			},
 			Expectation: Expectation{
 				Resp: &api.GetTokenResponse{Token: defaultToken},
 			},
@@ -141,14 +161,17 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 		{
 			Desc: "cached token (more scopes, exact reuse)",
 			Req: &api.GetTokenRequest{
+				Kind:  defaultKind,
 				Host:  defaultHost,
 				Scope: []string{"a1", "a2"},
 			},
-			Cache: []*token{
-				func(t *token) *token {
-					t.Reuse = api.TokenReuse_REUSE_EXACTLY
-					return t
-				}(newToken("a1", "a2", "a3")),
+			Cache: map[string][]*token{
+				defaultKind: {
+					func(t *token) *token {
+						t.Reuse = api.TokenReuse_REUSE_EXACTLY
+						return t
+					}(newToken("a1", "a2", "a3")),
+				},
 			},
 			Expectation: Expectation{
 				Err: errNoToken,
@@ -157,11 +180,12 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 		{
 			Desc: "token provider (no token)",
 			Req: &api.GetTokenRequest{
+				Kind:  defaultKind,
 				Host:  defaultHost,
 				Scope: []string{"a1", "a2"},
 			},
 			Provider: map[string][]tokenProvider{
-				defaultHost: {tokenProviderFunc(func(ctx context.Context, req *api.GetTokenRequest) (tkn *token, err error) {
+				defaultKind: {tokenProviderFunc(func(ctx context.Context, req *api.GetTokenRequest) (tkn *token, err error) {
 					return
 				})},
 			},
@@ -172,16 +196,43 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 		{
 			Desc: "token provider",
 			Req: &api.GetTokenRequest{
+				Kind:  defaultKind,
 				Host:  defaultHost,
 				Scope: []string{"a1", "a2"},
 			},
 			Provider: map[string][]tokenProvider{
-				defaultHost: {tokenProviderFunc(func(ctx context.Context, req *api.GetTokenRequest) (tkn *token, err error) {
+				defaultKind: {tokenProviderFunc(func(ctx context.Context, req *api.GetTokenRequest) (tkn *token, err error) {
 					return newToken("a1", "a2"), nil
+				})},
+				defaultKind + "2": {tokenProviderFunc(func(ctx context.Context, req *api.GetTokenRequest) (tkn *Token, err error) {
+					t := newToken("a1", "a2")
+					t.Token += "2"
+					return t, nil
 				})},
 			},
 			Expectation: Expectation{
 				Resp: &api.GetTokenResponse{Token: defaultToken},
+			},
+		},
+		{
+			Desc: "token provider (another kind)",
+			Req: &api.GetTokenRequest{
+				Kind:  defaultKind + "2",
+				Host:  defaultHost,
+				Scope: []string{"a1", "a2"},
+			},
+			Provider: map[string][]tokenProvider{
+				defaultKind: {tokenProviderFunc(func(ctx context.Context, req *api.GetTokenRequest) (tkn *Token, err error) {
+					return newToken("a1", "a2"), nil
+				})},
+				defaultKind + "2": {tokenProviderFunc(func(ctx context.Context, req *api.GetTokenRequest) (tkn *Token, err error) {
+					t := newToken("a1", "a2")
+					t.Token += "2"
+					return t, nil
+				})},
+			},
+			Expectation: Expectation{
+				Resp: &api.GetTokenResponse{Token: defaultToken + "2"},
 			},
 		},
 	}
@@ -189,7 +240,9 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
 			service := NewInMemoryTokenService()
-			service.token = test.Cache
+			if test.Cache != nil {
+				service.token = test.Cache
+			}
 			service.provider = test.Provider
 
 			resp, err := service.GetToken(context.Background(), test.Req)
