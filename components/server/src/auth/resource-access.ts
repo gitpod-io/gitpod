@@ -205,7 +205,7 @@ export namespace ScopedResourceGuard {
             case "snapshot":
                 return resource.subject ? resource.subject.id : undefined;
             case "token":
-                return;
+                return resource.subject.value;
             case "user":
                 return resource.subject.id;
             case "userStorage":

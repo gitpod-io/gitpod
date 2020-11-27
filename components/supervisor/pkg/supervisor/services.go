@@ -235,12 +235,14 @@ func (s RegistrableTokenService) RegisterREST(mux *runtime.ServeMux, grpcEndpoin
 // NewInMemoryTokenService produces a new InMemoryTokenService
 func NewInMemoryTokenService() *InMemoryTokenService {
 	return &InMemoryTokenService{
-		token:    make(map[string][]*token),
+		token:    make(map[string][]*Token),
 		provider: make(map[string][]tokenProvider),
 	}
 }
 
-type token struct {
+// Token can be used to access the host limited to the granted scopes
+type Token struct {
+	User       string
 	Token      string
 	Host       string
 	Scope      map[string]struct{}
@@ -249,12 +251,12 @@ type token struct {
 }
 
 type tokenProvider interface {
-	GetToken(ctx context.Context, req *api.GetTokenRequest) (tkn *token, err error)
+	GetToken(ctx context.Context, req *api.GetTokenRequest) (tkn *Token, err error)
 }
 
 // InMemoryTokenService provides an in-memory caching token service
 type InMemoryTokenService struct {
-	token    map[string][]*token
+	token    map[string][]*Token
 	provider map[string][]tokenProvider
 	mu       sync.RWMutex
 }
@@ -281,7 +283,7 @@ func (s *InMemoryTokenService) GetToken(ctx context.Context, req *api.GetTokenRe
 		}
 
 		s.cacheToken(req.Kind, tkn)
-		return &api.GetTokenResponse{Token: tkn.Token}, nil
+		return &api.GetTokenResponse{Token: tkn.Token, User: tkn.User}, nil
 	}
 
 	return nil, status.Error(codes.NotFound, "no token available")
@@ -291,7 +293,7 @@ func (s *InMemoryTokenService) getCachedTokenFor(kind string, host string, scope
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	var res *token
+	var res *Token
 	token := s.token[kind]
 	for _, tkn := range token {
 		if tkn.Host != host {
@@ -330,7 +332,7 @@ func (s *InMemoryTokenService) getCachedTokenFor(kind string, host string, scope
 	return res.Token, true
 }
 
-func (s *InMemoryTokenService) cacheToken(kind string, tkn *token) {
+func (s *InMemoryTokenService) cacheToken(kind string, tkn *Token) {
 	if tkn.Reuse == api.TokenReuse_REUSE_NEVER {
 		// we just don't cache non-reuse tokens
 		return
@@ -343,7 +345,7 @@ func (s *InMemoryTokenService) cacheToken(kind string, tkn *token) {
 	log.WithField("kind", kind).WithField("host", tkn.Host).WithField("scopes", tkn.Scope).WithField("reuse", tkn.Reuse.String()).Info("registered new token")
 }
 
-func convertReceivedToken(req *api.SetTokenRequest) (tkn *token, err error) {
+func convertReceivedToken(req *api.SetTokenRequest) (tkn *Token, err error) {
 	if req.Token == "" {
 		return nil, status.Error(codes.InvalidArgument, "token is required")
 	}
@@ -351,7 +353,7 @@ func convertReceivedToken(req *api.SetTokenRequest) (tkn *token, err error) {
 		return nil, status.Error(codes.InvalidArgument, "host is required")
 	}
 
-	tkn = &token{
+	tkn = &Token{
 		Host:  req.Host,
 		Scope: mapScopes(req.Scope),
 		Token: req.Token,
@@ -463,7 +465,7 @@ func (s *InMemoryTokenService) ProvideToken(srv api.TokenService_ProvideTokenSer
 
 type remoteTknReq struct {
 	Req  *api.GetTokenRequest
-	Resp chan *token
+	Resp chan *Token
 	Err  chan error
 }
 
@@ -512,11 +514,11 @@ func (rt *remoteTokenProvider) Serve() (err error) {
 	}
 }
 
-func (rt *remoteTokenProvider) GetToken(ctx context.Context, req *api.GetTokenRequest) (tkn *token, err error) {
+func (rt *remoteTokenProvider) GetToken(ctx context.Context, req *api.GetTokenRequest) (tkn *Token, err error) {
 	rr := &remoteTknReq{
 		Req:  req,
 		Err:  make(chan error, 1),
-		Resp: make(chan *token, 1),
+		Resp: make(chan *Token, 1),
 	}
 	rt.inc <- rr
 
