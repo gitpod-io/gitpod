@@ -450,7 +450,7 @@ func workspaceMustExistHandler(config *Config, infoProvider WorkspaceInfoProvide
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 			coords := getWorkspaceCoords(req)
-			info := infoProvider.WorkspaceInfo(coords.ID)
+			info := infoProvider.WorkspaceInfo(req.Context(), coords.ID)
 			if info == nil {
 				log.WithFields(log.OWI("", coords.ID, "")).Info("no workspace info found - redirecting to start")
 				redirectURL := fmt.Sprintf("%s://%s/start/#%s", config.GitpodInstallation.Scheme, config.GitpodInstallation.HostName, coords.ID)
