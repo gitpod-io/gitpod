@@ -201,10 +201,6 @@
                                     {
                                         "key": "gitpod.io/theia.someversion",
                                         "operator": "Exists"
-                                    },
-                                    {
-                                        "key": "gitpod.io/ws-daemon",
-                                        "operator": "Exists"
                                     }
                                 ]
                             }

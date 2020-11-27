@@ -216,10 +216,6 @@
                                         "operator": "Exists"
                                     },
                                     {
-                                        "key": "gitpod.io/ws-daemon",
-                                        "operator": "Exists"
-                                    },
-                                    {
                                         "key": "gitpod.io/workload_workspace",
                                         "operator": "In",
                                         "values": [
