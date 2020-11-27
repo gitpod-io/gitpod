@@ -95,6 +95,29 @@ func TestState(t *testing.T) {
   RAM: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB
   Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB`,
 		},
+		{
+			Desc: "some regular pods with ",
+			Nodes: []*corev1.Node{
+				createNode("node1", "10Gi", "20Gi", false, 100),
+				createNode("node2", "10Gi", "10Gi", false, 100),
+				createNode("node3", "10Gi", "10Gi", true, 100),
+			},
+			Pods: []*corev1.Pod{
+				createNonWorkspacePod("existingPod1", "1.5Gi", "5Gi", "node1", 10),
+				createNonWorkspacePod("existingPod2", "1Gi", "2Gi", "node2", 10),
+				createWorkspacePod("hp1", "1Gi", "5Gi", "node1", 10),
+				createWorkspacePod("hp2", "3.44Gi", "5Gi", "node1", 10),
+			},
+			Expectation: `- node1:
+  RAM: used 4.439+0.000+1.500 of 10.000, avail 4.060 GiB
+  Eph. Storage: used 10.000+0.000+5.000 of 20.000, avail 5.000 GiB
+- node2:
+  RAM: used 0.000+0.000+1.000 of 10.000, avail 9.000 GiB
+  Eph. Storage: used 0.000+0.000+2.000 of 10.000, avail 8.000 GiB
+- node3:
+  RAM: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB
+  Eph. Storage: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB`,
+		},
 	}
 
 	for _, test := range tests {

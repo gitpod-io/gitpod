@@ -158,6 +158,57 @@ Nodes:
 			ScheduledPod: createWorkspacePod("new pod", "4Gi", "0Gi", "node1", 10),
 			ExpectedNode: "node2",
 		},
+		{
+			// Should choose node1 because it has more free RAM but chooses 2 because node1's ephemeral storage is depleted
+			Desc: "respect node's ephemeral storage",
+			Nodes: []*corev1.Node{
+				createNode("node1", "10Gi", "3Gi", false, 100),
+				createNode("node2", "10Gi", "15Gi", false, 100),
+			},
+			Pods: []*corev1.Pod{
+				createWorkspacePod("existingPod1", "4Gi", "5Gi", "node2", 10),
+			},
+			ScheduledPod: createWorkspacePod("new pod", "4Gi", "5Gi", "node1", 10),
+			ExpectedNode: "node2",
+		},
+		{
+			// Throws an error because both nodes have enough RAM but not enough ephemeral storage
+			Desc: "enough RAM but no more ephemeral storage",
+			Nodes: []*corev1.Node{
+				createNode("node1", "10Gi", "3Gi", false, 100),
+				createNode("node2", "10Gi", "7Gi", false, 100),
+			},
+			Pods: []*corev1.Pod{
+				createWorkspacePod("existingPod1", "4Gi", "5Gi", "node2", 10),
+			},
+			ScheduledPod: createWorkspacePod("new pod", "4Gi", "5Gi", "node1", 10),
+			ExpectedError: `No node with enough resources available!
+RAM requested: 4Gi
+Eph. Storage requested: 5Gi
+Nodes:
+- node2:
+  RAM: used 4.000+0.000+0.000 of 10.000, avail 6.000 GiB
+  Eph. Storage: used 5.000+0.000+0.000 of 7.000, avail 2.000 GiB
+- node1:
+  RAM: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB
+  Eph. Storage: used 0.000+0.000+0.000 of 3.000, avail 3.000 GiB`,
+		},
+		{
+			// Should prefer 1 and 2 over 3, but 1 has not enough pod slots and 2 not enough ephemeral storage
+			Desc: "filter nodes without enough pod slots and ephemeral storage",
+			Nodes: []*corev1.Node{
+				createNode("node1", "20Gi", "10Gi", false, 0),
+				createNode("node2", "20Gi", "10Gi", false, 100),
+				createNode("node3", "20Gi", "10Gi", false, 100),
+			},
+			Pods: []*corev1.Pod{
+				createWorkspacePod("existingPod1", "4Gi", "5Gi", "node2", 10),
+				createWorkspacePod("existingPod2", "4Gi", "5Gi", "node2", 10),
+				createWorkspacePod("existingPod3", "4Gi", "5Gi", "node3", 10),
+			},
+			ScheduledPod: createWorkspacePod("new pod", "4Gi", "5Gi", "node1", 10),
+			ExpectedNode: "node3",
+		},
 	}
 
 	for _, test := range tests {
