@@ -174,6 +174,8 @@ func (s *ServiceClusterIPSource) Source() <-chan []Host {
 type FixedIPSource struct {
 	Alias string
 	Hosts []Host
+
+	c chan []Host
 }
 
 // Name returns the ID of this source
@@ -183,16 +185,14 @@ func (fi FixedIPSource) Name() string {
 
 // Start starts the source
 func (fi FixedIPSource) Start() error {
+	fi.c = make(chan []Host)
+	fi.c <- fi.Hosts
 	return nil
 }
 
 // Source provides hosts on the channel
 func (fi FixedIPSource) Source() <-chan []Host {
-	res := make(chan []Host)
-	go func() {
-		res <- fi.Hosts
-	}()
-	return res
+	return fi.c
 }
 
 // Stop stops this source from providing hosts
