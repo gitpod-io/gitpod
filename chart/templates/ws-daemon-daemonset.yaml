@@ -14,6 +14,7 @@ metadata:
     component: ws-daemon
     kind: daemonset
     stage: {{ .Values.installation.stage }}
+    gitpod.io/nodeService: ws-daemon
 spec:
   selector:
     matchLabels:
@@ -21,6 +22,7 @@ spec:
       component: ws-daemon
       kind: daemonset
       stage: {{ .Values.installation.stage }}
+      gitpod.io/nodeService: ws-daemon
   template:
     metadata:
       labels:
@@ -28,6 +30,7 @@ spec:
         component: ws-daemon
         kind: daemonset
         stage: {{ .Values.installation.stage }}
+        gitpod.io/nodeService: ws-daemon
       annotations:
         prometheus.io/scrape: 'true'
         prometheus.io/path: "/metrics"

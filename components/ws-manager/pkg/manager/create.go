@@ -270,18 +270,19 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	}
 
 	annotations := map[string]string{
-		"prometheus.io/scrape":         "true",
-		"prometheus.io/path":           "/metrics",
-		"prometheus.io/port":           strconv.Itoa(int(startContext.IDEPort)),
-		workspaceIDAnnotation:          req.Id,
-		servicePrefixAnnotation:        getServicePrefix(req),
-		workspaceURLAnnotation:         startContext.WorkspaceURL,
-		workspaceInitializerAnnotation: initializerConfig,
-		workspaceNeverReadyAnnotation:  "true",
-		workspaceAdmissionAnnotation:   admissionLevel,
-		workspaceImageSpecAnnotation:   imageSpec,
-		ownerTokenAnnotation:           startContext.OwnerToken,
-		wsk8s.TraceIDAnnotation:        startContext.TraceID,
+		"prometheus.io/scrape":               "true",
+		"prometheus.io/path":                 "/metrics",
+		"prometheus.io/port":                 strconv.Itoa(int(startContext.IDEPort)),
+		workspaceIDAnnotation:                req.Id,
+		servicePrefixAnnotation:              getServicePrefix(req),
+		workspaceURLAnnotation:               startContext.WorkspaceURL,
+		workspaceInitializerAnnotation:       initializerConfig,
+		workspaceNeverReadyAnnotation:        "true",
+		workspaceAdmissionAnnotation:         admissionLevel,
+		workspaceImageSpecAnnotation:         imageSpec,
+		ownerTokenAnnotation:                 startContext.OwnerToken,
+		wsk8s.TraceIDAnnotation:              startContext.TraceID,
+		wsk8s.RequiredNodeServicesAnnotation: "ws-daemon",
 		// TODO(cw): once userns workspaces become standard, set this to m.Config.SeccompProfile.
 		//           Until then, the custom seccomp profile isn't suitable for workspaces.
 		"seccomp.security.alpha.kubernetes.io/pod": "runtime/default",
@@ -462,6 +463,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 				nst[i].MatchExpressions = nt
 			}
 			pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms = nst
+			pod.Annotations[wsk8s.RequiredNodeServicesAnnotation] += ",registry-facade"
 
 		case api.WorkspaceFeatureFlag_FIXED_RESOURCES:
 			var cpuLimit string
