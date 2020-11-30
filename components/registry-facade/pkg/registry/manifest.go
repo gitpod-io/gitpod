@@ -14,6 +14,7 @@ import (
 	"mime"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/errdefs"
@@ -70,7 +71,13 @@ func (reg *Registry) handleManifest(ctx context.Context, r *http.Request) http.H
 		"DELETE": http.HandlerFunc(manifestHandler.deleteManifest),
 	}
 
-	return mhandler
+	res := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t0 := time.Now()
+		mhandler.ServeHTTP(w, r)
+		dt := time.Since(t0)
+		reg.metrics.ManifestHist.Observe(dt.Seconds())
+	})
+	return res
 }
 
 type manifestHandler struct {
