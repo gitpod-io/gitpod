@@ -43,13 +43,20 @@ func index(w http.ResponseWriter, r *http.Request) {
 		var (
 			name          = strings.TrimPrefix(r.URL.Path, "/debug/pprof/")
 			seconds, serr = strconv.ParseInt(r.URL.Query().Get("seconds"), 10, 64)
-			frac, ferr    = strconv.ParseInt(r.URL.Query().Get("frac"), 10, 64)
 		)
 		if name == "mutex" {
+			frac, ferr := strconv.ParseInt(r.URL.Query().Get("frac"), 10, 64)
 			if serr == nil && ferr == nil && seconds > 0 && frac > 0 {
 				runtime.SetMutexProfileFraction(int(frac))
 				sleep(w, time.Duration(seconds)*time.Second)
 				runtime.SetMutexProfileFraction(0)
+			}
+		} else if name == "block" {
+			rate, rerr := strconv.ParseInt(r.URL.Query().Get("rate"), 10, 64)
+			if rerr == nil && rate > 0 && serr == nil && seconds > 0 {
+				runtime.SetBlockProfileRate(int(rate))
+				sleep(w, time.Duration(seconds)*time.Second)
+				runtime.SetBlockProfileRate(0)
 			}
 		}
 	}
