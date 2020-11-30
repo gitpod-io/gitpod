@@ -28,6 +28,7 @@ packages:
       - components/gitpod-protocol:publish
       - components/supervisor-api/typescript-grpc:publish
       - components/docker-up:docker
+      - dev/blowtorch:app
   - name: all-apps
     type: generic
     deps:

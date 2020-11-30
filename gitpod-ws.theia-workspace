@@ -15,7 +15,8 @@
       { "path": "components/ws-daemon" },
       { "path": "components/ws-manager" },
       { "path": "components/ws-proxy" },
-      { "path": "install/installer" }
+      { "path": "install/installer" },
+      { "path": "dev/blowtorch" },
    ],
    "settings": {
       "typescript.tsdk": "gitpod/node_modules/typescript/lib",
