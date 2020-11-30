@@ -56,11 +56,20 @@ var runCmd = &cobra.Command{
 			log.WithField("fn", authCfg).Info("using authentication for backing registries")
 		}
 
+		reg := prometheus.NewRegistry()
+		rtt, err := registry.NewMeasuringRegistryRoundTripper(http.DefaultTransport, prometheus.WrapRegistererWithPrefix("downstream_", reg))
+		if err != nil {
+			log.WithError(err).Fatal("cannot registry metrics")
+		}
+
 		resolverProvider := func() remotes.Resolver {
 			var resolverOpts docker.ResolverOptions
 			if dockerCfg != nil {
 				resolverOpts.Hosts = docker.ConfigureDefaultRegistries(
 					docker.WithAuthorizer(authorizerFromDockerConfig(dockerCfg)),
+					docker.WithClient(&http.Client{
+						Transport: rtt,
+					}),
 				)
 			}
 
@@ -68,7 +77,7 @@ var runCmd = &cobra.Command{
 		}
 
 		if cfg.Registry != nil {
-			reg, err := registry.NewRegistry(*cfg.Registry, resolverProvider)
+			reg, err := registry.NewRegistry(*cfg.Registry, resolverProvider, prometheus.WrapRegistererWithPrefix("registry_", reg))
 			if err != nil {
 				log.WithError(err).Fatal("cannot create registry")
 			}
@@ -85,7 +94,6 @@ var runCmd = &cobra.Command{
 			go pprof.Serve(cfg.PProfAddr)
 		}
 		if cfg.PrometheusAddr != "" {
-			reg := prometheus.NewRegistry()
 			reg.MustRegister(
 				prometheus.NewGoCollector(),
 				prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),

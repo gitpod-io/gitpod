@@ -67,8 +67,12 @@ func (reg *Registry) handleBlob(ctx context.Context, r *http.Request) http.Handl
 		"GET":  http.HandlerFunc(blobHandler.getBlob),
 		"HEAD": http.HandlerFunc(blobHandler.getBlob),
 	}
+	res := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		reg.metrics.BlobCounter.Inc()
+		mhandler.ServeHTTP(w, r)
+	})
 
-	return mhandler
+	return res
 }
 
 type blobHandler struct {

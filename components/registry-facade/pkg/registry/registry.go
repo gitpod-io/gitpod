@@ -28,6 +28,7 @@ import (
 	"github.com/gorilla/mux"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	"github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -68,10 +69,12 @@ type Registry struct {
 	LayerSource    LayerSource
 	ConfigModifier ConfigModifier
 	SpecProvider   map[string]ImageSpecProvider
+
+	metrics *metrics
 }
 
 // NewRegistry creates a new registry
-func NewRegistry(cfg Config, newResolver ResolverProvider) (*Registry, error) {
+func NewRegistry(cfg Config, newResolver ResolverProvider, reg prometheus.Registerer) (*Registry, error) {
 	storePath := cfg.Store
 	if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
 		storePath = filepath.Join(tproot, storePath)
@@ -84,6 +87,11 @@ func NewRegistry(cfg Config, newResolver ResolverProvider) (*Registry, error) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+
+	metrics, err := newMetrics(reg)
+	if err != nil {
+		return nil, err
+	}
 
 	var layerSources []LayerSource
 
@@ -180,6 +188,7 @@ func NewRegistry(cfg Config, newResolver ResolverProvider) (*Registry, error) {
 		SpecProvider:   specProvider,
 		LayerSource:    layerSource,
 		ConfigModifier: NewConfigModifierFromLayerSource(layerSource),
+		metrics:        metrics,
 	}, nil
 }
 
