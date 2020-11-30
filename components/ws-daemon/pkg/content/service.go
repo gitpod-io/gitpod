@@ -52,7 +52,7 @@ type WorkspaceService struct {
 type WorkspaceExistenceCheck func(instanceID string) bool
 
 // NewWorkspaceService creates a new workspce initialization service, starts housekeeping and the Prometheus integration
-func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace string, runtime container.Runtime, wec WorkspaceExistenceCheck, uidmapper *iws.Uidmapper) (res *WorkspaceService, err error) {
+func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace string, runtime container.Runtime, wec WorkspaceExistenceCheck, uidmapper *iws.Uidmapper, reg prometheus.Registerer) (res *WorkspaceService, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "NewWorkspaceService")
 	defer tracing.FinishSpan(span, &err)
 
@@ -69,7 +69,7 @@ func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace st
 	}
 	ctx, stopService := context.WithCancel(ctx)
 
-	if err := registerWorkingAreaDiskspaceGauge(cfg.WorkingArea); err != nil {
+	if err := registerWorkingAreaDiskspaceGauge(cfg.WorkingArea, reg); err != nil {
 		log.WithError(err).Warn("cannot register Prometheus gauge for working area diskspace")
 	}
 
@@ -83,8 +83,8 @@ func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace st
 }
 
 // registerWorkingAreaDiskspaceGauge registers a free disk space Prometheus gauge for a working area.
-func registerWorkingAreaDiskspaceGauge(workingArea string) error {
-	return prometheus.Register(prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+func registerWorkingAreaDiskspaceGauge(workingArea string, reg prometheus.Registerer) error {
+	return reg.Register(prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 		Name: "working_area_free_bytes",
 		Help: "Amount of free disk space in the working area",
 		ConstLabels: map[string]string{

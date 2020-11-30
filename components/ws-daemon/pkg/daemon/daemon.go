@@ -27,7 +27,7 @@ import (
 )
 
 // NewDaemon produces a new daemon
-func NewDaemon(config Config, prom prometheus.Registerer) (*Daemon, error) {
+func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	clientset, err := newClientSet(config.Runtime.Kubeconfig)
 	if err != nil {
 
@@ -50,7 +50,7 @@ func NewDaemon(config Config, prom prometheus.Registerer) (*Daemon, error) {
 		return nil, xerrors.Errorf("NODENAME env var isn't set")
 	}
 	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename,
-		resources.NewDispatchListener(&config.Resources, prom),
+		resources.NewDispatchListener(&config.Resources, reg),
 		&Containerd4214Workaround{},
 	)
 	if err != nil {
@@ -64,6 +64,7 @@ func NewDaemon(config Config, prom prometheus.Registerer) (*Daemon, error) {
 		containerRuntime,
 		dsptch.WorkspaceExistsOnNode,
 		&iws.Uidmapper{Config: config.Uidmapper, Runtime: containerRuntime},
+		reg,
 	)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create content service: %w", err)
