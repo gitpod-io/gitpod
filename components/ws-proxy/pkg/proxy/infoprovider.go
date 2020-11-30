@@ -85,10 +85,13 @@ type RemoteWorkspaceInfoProvider struct {
 	Config WorkspaceInfoProviderConfig
 	Dialer WSManagerDialer
 
-	stop  chan struct{}
-	ready bool
-	mu    sync.Mutex
-	cache *workspaceInfoCache
+	refreshRequests chan refreshReq
+	stop            chan struct{}
+	ready           bool
+	mu              sync.Mutex
+	cache           *workspaceInfoCache
+
+	refreshInterval time.Duration
 }
 
 // WSManagerDialer dials out to a ws-manager instance
@@ -97,10 +100,13 @@ type WSManagerDialer func(target string) (io.Closer, wsapi.WorkspaceManagerClien
 // NewRemoteWorkspaceInfoProvider creates a fresh WorkspaceInfoProvider
 func NewRemoteWorkspaceInfoProvider(config WorkspaceInfoProviderConfig) *RemoteWorkspaceInfoProvider {
 	return &RemoteWorkspaceInfoProvider{
-		Config: config,
-		Dialer: defaultWsmanagerDialer,
-		cache:  newWorkspaceInfoCache(),
-		stop:   make(chan struct{}),
+		Config:          config,
+		Dialer:          defaultWsmanagerDialer,
+		refreshRequests: make(chan refreshReq, 10),
+		cache:           newWorkspaceInfoCache(),
+		stop:            make(chan struct{}),
+
+		refreshInterval: 3 * time.Second,
 	}
 }
 
@@ -141,9 +147,14 @@ func (p *RemoteWorkspaceInfoProvider) Run() (err error) {
 	}
 	p.cache.Reinit(infos)
 
+	clients := make(chan wsapi.WorkspaceManagerClient, 1)
+	go p.refreshWorkspaceInfo(clients)
+
 	// maintain connection and stream workspace statuus
 	go func(conn io.Closer, client wsapi.WorkspaceManagerClient) {
 		for {
+			clients <- client
+
 			p.mu.Lock()
 			p.ready = true
 			p.mu.Unlock()
@@ -275,13 +286,87 @@ func mapWorkspaceStatusToInfo(status *wsapi.WorkspaceStatus) *WorkspaceInfo {
 	}
 }
 
+type refreshReq chan<- chan struct{}
+
+func (p *RemoteWorkspaceInfoProvider) refreshWorkspaceInfo(clients <-chan wsapi.WorkspaceManagerClient) {
+	var (
+		tick     = time.NewTicker(p.refreshInterval)
+		client   = <-clients
+		resp     = make(chan struct{})
+		listener int
+	)
+	for {
+		select {
+		case client = <-clients:
+			continue
+		case r := <-p.refreshRequests:
+			listener++
+			r <- resp
+		case <-tick.C:
+			if listener > 0 {
+				log.WithField("listener", listener).Info("refreshing info from ws-manager")
+				ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+				infos, err := p.fetchInitialWorkspaceInfo(ctx, client)
+				cancel()
+				if err != nil {
+					log.WithError(err).Warn("cannot refresh workspace info")
+				} else {
+					p.cache.Reinit(infos)
+				}
+
+				close(resp)
+				resp = make(chan struct{})
+				listener = 0
+			}
+		}
+	}
+}
+
 // WorkspaceInfo return the WorkspaceInfo avaiable for the given workspaceID
 func (p *RemoteWorkspaceInfoProvider) WorkspaceInfo(ctx context.Context, workspaceID string) *WorkspaceInfo {
-	info, present := p.cache.WaitFor(ctx, workspaceID)
-	if !present {
+	info, present := p.cache.Get(workspaceID)
+	if present {
+		return info
+	}
+
+	var (
+		wfchan = make(chan *WorkspaceInfo, 1)
+		pchan  = make(chan *WorkspaceInfo, 1)
+	)
+	go func() {
+		defer close(wfchan)
+		w, ok := p.cache.WaitFor(ctx, workspaceID)
+		if ok {
+			wfchan <- w
+		}
+	}()
+	go func() {
+		defer close(pchan)
+
+		// Here we request a "state fresh" from the refreshWorkspaceInfo Go routine.
+		// We do that by writing a channel response to refreshRequests.
+		// On this response channel we receive a third channel which gets closed when
+		// the update is done.
+		//
+		// While this design looks complicated it means we don't need any locking, or
+		// keep references to channels in a list. All state is local to refreshWorkspaceInfo.
+		resp := make(chan chan struct{})
+		p.refreshRequests <- refreshReq(resp)
+		waitForRefresh := <-resp
+		<-waitForRefresh
+
+		nfo, _ := p.cache.Get(workspaceID)
+		pchan <- nfo
+	}()
+
+	select {
+	case info = <-wfchan:
+		return info
+	case info = <-pchan:
+		return info
+	case <-ctx.Done():
 		return nil
 	}
-	return info
 }
 
 // WorkspaceCoords returns the WorkspaceCoords the given publicPort is associated with
@@ -379,6 +464,15 @@ func (c *workspaceInfoCache) Delete(workspaceID string) {
 	}
 	delete(c.coordsByPublicPort, info.IDEPublicPort)
 	delete(c.infos, workspaceID)
+}
+
+// Get returns workspace info from the cache
+func (c *workspaceInfoCache) Get(workspaceID string) (w *WorkspaceInfo, ok bool) {
+	c.mu.RLock()
+	w, ok = c.infos[workspaceID]
+	c.mu.RUnlock()
+
+	return
 }
 
 // WaitFor waits for workspace info until that info is available or the context is canceled.

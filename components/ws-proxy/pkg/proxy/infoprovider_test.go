@@ -26,8 +26,10 @@ func TestRemoteInfoProvider(t *testing.T) {
 		DelayUpdate time.Duration
 	}
 	tests := []struct {
-		Name  string
-		Steps []Step
+		Name                 string
+		Steps                []Step
+		RefreshInterval      time.Duration
+		MinGetWorkspacesCall int
 	}{
 		{
 			Name: "direct get",
@@ -105,6 +107,25 @@ func TestRemoteInfoProvider(t *testing.T) {
 				},
 			},
 		},
+		{
+			Name:                 "refreshing not present",
+			MinGetWorkspacesCall: 2,
+			RefreshInterval:      1 * time.Millisecond,
+			Steps: []Step{
+				{
+					Action: func(t *testing.T, prov WorkspaceInfoProvider) *Expectation {
+						ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
+						nfo := prov.WorkspaceInfo(ctx, testWorkspaceStatus.Metadata.MetaId)
+						cancel()
+
+						return &Expectation{
+							WorkspaceInfo: nfo,
+						}
+					},
+					Expectation: &Expectation{},
+				},
+			},
+		},
 	}
 
 	for _, test := range tests {
@@ -127,9 +148,17 @@ func TestRemoteInfoProvider(t *testing.T) {
 			}).AnyTimes()
 			cl := wsmock.NewMockWorkspaceManagerClient(ctrl)
 			cl.EXPECT().Subscribe(gomock.Any(), gomock.Any()).Return(srv, nil).AnyTimes()
-			cl.EXPECT().GetWorkspaces(gomock.Any(), gomock.Any()).Return(&wsapi.GetWorkspacesResponse{}, nil).AnyTimes()
+			gwc := cl.EXPECT().GetWorkspaces(gomock.Any(), gomock.Any()).Return(&wsapi.GetWorkspacesResponse{}, nil)
+			if test.MinGetWorkspacesCall > 0 {
+				gwc.MinTimes(test.MinGetWorkspacesCall)
+			} else {
+				gwc.AnyTimes()
+			}
 
 			prov := NewRemoteWorkspaceInfoProvider(WorkspaceInfoProviderConfig{WsManagerAddr: "target"})
+			if test.RefreshInterval > 0 {
+				prov.refreshInterval = test.RefreshInterval
+			}
 			prov.Dialer = func(target string) (io.Closer, wsapi.WorkspaceManagerClient, error) {
 				return ioutil.NopCloser(nil), cl, nil
 			}
@@ -155,7 +184,7 @@ func TestRemoteInfoProvider(t *testing.T) {
 						updates <- step.Update
 						// Give the update some time to propagate.
 						// This is not the most elegant way of doing that, but in > 10k tests it didn't fail once.
-						time.Sleep(1 * time.Millisecond)
+						time.Sleep(10 * time.Millisecond)
 					}
 
 					if step.Action != nil {

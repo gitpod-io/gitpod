@@ -452,8 +452,9 @@ func workspaceMustExistHandler(config *Config, infoProvider WorkspaceInfoProvide
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 			coords := getWorkspaceCoords(req)
-			// it might take some time until the event comes in. Let's wait for it at most 3 secs.
-			ctx, cancel := context.WithTimeout(req.Context(), 3*time.Second)
+			// it might take some time until the event comes in.
+			// we must wait at least long enough for the info refresh to work.
+			ctx, cancel := context.WithTimeout(req.Context(), 5*time.Second)
 			defer cancel()
 			info := infoProvider.WorkspaceInfo(ctx, coords.ID)
 			if info == nil {
