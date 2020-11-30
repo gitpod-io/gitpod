@@ -6,6 +6,8 @@
 
 import * as React from 'react';
 import "reflect-metadata";
+import debounce = require('lodash.debounce');
+import { CancellationTokenSource, CancellationToken } from 'vscode-jsonrpc/lib/cancellation'
 import { UserEnvVars } from '../user-env-vars';
 import { ApplicationFrame } from '../page-frame';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
@@ -68,21 +70,47 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
             <ApplicationFrame service={this.props.service}>
                 <Paper style={{ padding: 20 }}>
                     <h3>Email Settings</h3>
-                    <UserSettings service={this.props.service} user={this.state.user} />
-                    
+                    <UserSettings service={this.props.service} user={this.state.user} onChange={this.onChange} />
+
                     <h3 style={{ marginTop: 50 }}>Environment Variables</h3>
                     <UserEnvVars service={this.props.service} user={this.state.user} />
                     <ApiTokenView service={this.props.service} />
-                    
+
                     <h3 style={{ marginTop: 50 }}>Git Provider Integrations</h3>
                     <AuthProviders service={this.props.service} user={this.state.user} mode="user-settings" />
 
                     <h3 style={{ marginTop: 50 }}>Feature Preview</h3>
-                    { this.state.user && <FeatureSettings service={this.props.service} user={this.state.user} /> }
+                    {this.state.user && <FeatureSettings service={this.props.service} user={this.state.user} onChange={this.onChange} />}
 
                     <DeleteAccountView service={this.props.service} />
                 </Paper>
             </ApplicationFrame>
         );
     }
+
+    private onChange = (update: Partial<User>) => {
+        const user = Object.assign(this.state.user!, update);
+        this.setState({ user });
+
+        if (this.commitTokenSource) {
+            this.commitTokenSource.cancel();
+        }
+        this.commitTokenSource = new CancellationTokenSource();
+        const token = this.commitTokenSource.token;
+        this.commit(update, token);
+    }
+
+    private commitTokenSource: CancellationTokenSource | undefined;
+    private commit = debounce(async (update: Partial<User>, token: CancellationToken) => {
+        try {
+            const user = await this.props.service.server.updateLoggedInUser(update);
+            if (token.isCancellationRequested) {
+                return;
+            }
+            this.setState({ user });
+        } catch (e) {
+            console.error('Failed to commit settings:', e);
+        }
+    }, 150);
+
 }
