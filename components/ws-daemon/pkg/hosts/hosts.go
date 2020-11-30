@@ -48,6 +48,8 @@ const (
 type Controller interface {
 	io.Closer
 	Start()
+
+	DidUpdate() bool
 }
 
 // NewDirectController creates a new hosts file controller
@@ -73,9 +75,10 @@ type DirectController struct {
 	Name    string
 	Sources []HostSource
 
-	hostsFD *os.File
-	lockFD  int
-	stop    chan struct{}
+	hostsFD   *os.File
+	lockFD    int
+	stop      chan struct{}
+	didUpdate bool
 }
 
 type hostUpdate struct {
@@ -115,6 +118,11 @@ func (g *DirectController) Start() {
 			log.WithField("name", src.Name()).Info("start hosts source")
 		}
 	}
+}
+
+// DidUpdate returns true if the host controller wrote its first update
+func (g *DirectController) DidUpdate() bool {
+	return g.didUpdate
 }
 
 // Close stops this controller
@@ -188,6 +196,7 @@ func (g *DirectController) updateHostsFile(inc <-chan hostUpdate) {
 			if err != nil {
 				return xerrors.Errorf("cannot write hosts file after truncating it - this will break hosts resolution on the node: %w", err)
 			}
+			g.didUpdate = true
 			log.WithField("hosts", newhostsfc).Debug("updated hosts file")
 			return
 		}()

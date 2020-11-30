@@ -6,6 +6,7 @@ package daemon
 
 import (
 	"context"
+	"net/http"
 	"os"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -132,12 +133,38 @@ func (d *Daemon) Start() error {
 		go d.hosts.Start()
 	}
 
+	if d.Config.ReadinessSignal.Enabled {
+		go d.startReadinessSignal()
+	}
+
 	return nil
 }
 
 // Register registers all gRPC services provided by this daemon
 func (d *Daemon) Register(srv *grpc.Server) {
 	api.RegisterWorkspaceContentServiceServer(srv, d.content)
+}
+
+func (d *Daemon) startReadinessSignal() {
+	path := d.Config.ReadinessSignal.Path
+	if path == "" {
+		path = "/"
+	}
+
+	mux := http.NewServeMux()
+	mux.Handle(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if d.hosts != nil && !d.hosts.DidUpdate() {
+			http.Error(w, "host controller not ready yet", http.StatusTooEarly)
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+	}))
+	log.WithField("addr", d.Config.ReadinessSignal.Addr).Info("started readiness signal")
+	err := http.ListenAndServe(d.Config.ReadinessSignal.Addr, mux)
+	if err != nil {
+		log.WithError(err).Error("cannot start readiness probe")
+	}
 }
 
 // Stop gracefully shuts down the daemon. Once stopped, it
