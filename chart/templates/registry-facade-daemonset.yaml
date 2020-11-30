@@ -31,6 +31,10 @@ spec:
         kind: pod
         stage: {{ .Values.installation.stage }}
         gitpod.io/nodeService: registry-facade
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: '9500'
     spec:
 {{ include "gitpod.workspaceAffinity" $this | indent 6 }}
       serviceAccountName: registry-facade
