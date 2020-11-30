@@ -308,6 +308,17 @@ func (s *State) updateAssignedPods(node *Node) {
 		if !ok {
 			continue
 		}
+		var ready bool
+		for _, c := range p.Pod.Status.Conditions {
+			if c.Type != corev1.ContainersReady {
+				continue
+			}
+			ready = c.Status == corev1.ConditionTrue
+			break
+		}
+		if !ready {
+			continue
+		}
 		node.Services[service] = struct{}{}
 	}
 }

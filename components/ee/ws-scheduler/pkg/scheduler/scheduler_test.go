@@ -327,6 +327,14 @@ func createPod(name string, tolerations []corev1.Toleration) *corev1.Pod {
 			Name:              name,
 			CreationTimestamp: metav1.NewTime(time.Now()),
 		},
+		Status: corev1.PodStatus{
+			Conditions: []corev1.PodCondition{
+				{
+					Type:   corev1.ContainersReady,
+					Status: corev1.ConditionTrue,
+				},
+			},
+		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
