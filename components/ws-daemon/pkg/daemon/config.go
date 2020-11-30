@@ -21,6 +21,12 @@ type Config struct {
 		KubernetesNamespace string            `json:"namespace"`
 	} `json:"runtime"`
 
+	ReadinessSignal struct {
+		Enabled bool   `json:"enabled"`
+		Addr    string `json:"addr"`
+		Path    string `json:"path"`
+	} `json:"readiness"`
+
 	Content        content.Config      `json:"content"`
 	Uidmapper      iws.UidmapperConfig `json:"uidmapper"`
 	Resources      resources.Config    `json:"resources"`
