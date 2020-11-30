@@ -40,7 +40,7 @@ export class IDESettings extends React.Component<IDESettingsProps> {
     private renderRadio(label: string, value: IDEKind) {
         const checked = value === this.value;
         return <Grid item xs={12}>
-            <FormControlLabel control={<Radio />} label={label} value={value} checked={checked} onChange={this.updateDefaultIde} />
+            <FormControlLabel control={<Radio color="default" />} label={label} value={value} checked={checked} onChange={this.updateDefaultIde} />
             {value === 'image' && <Input value={this.image} onChange={this.updateDefaultIde} />}
         </Grid>;
     }
