@@ -16,6 +16,7 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gorilla/handlers"
@@ -451,7 +452,10 @@ func workspaceMustExistHandler(config *Config, infoProvider WorkspaceInfoProvide
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 			coords := getWorkspaceCoords(req)
-			info := infoProvider.WorkspaceInfo(req.Context(), coords.ID)
+			// it might take some time until the event comes in. Let's wait for it at most 3 secs.
+			ctx, cancel := context.WithTimeout(req.Context(), 3*time.Second)
+			defer cancel()
+			info := infoProvider.WorkspaceInfo(ctx, coords.ID)
 			if info == nil {
 				log.WithFields(log.OWI("", coords.ID, "")).Info("no workspace info found - redirecting to start")
 				redirectURL := fmt.Sprintf("%s://%s/start/#%s", config.GitpodInstallation.Scheme, config.GitpodInstallation.HostName, coords.ID)
