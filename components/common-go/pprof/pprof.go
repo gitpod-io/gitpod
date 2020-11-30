@@ -5,6 +5,7 @@
 package pprof
 
 import (
+	"math/rand"
 	"net/http"
 	"net/http/pprof"
 	"runtime"
@@ -47,16 +48,26 @@ func index(w http.ResponseWriter, r *http.Request) {
 		if name == "mutex" {
 			frac, ferr := strconv.ParseInt(r.URL.Query().Get("frac"), 10, 64)
 			if serr == nil && ferr == nil && seconds > 0 && frac > 0 {
+				id := rand.Uint32()
+				log.WithField("id", id).WithField("frac", frac).WithField("seconds", seconds).Debug("enabled mutex profiling")
+
 				runtime.SetMutexProfileFraction(int(frac))
-				sleep(w, time.Duration(seconds)*time.Second)
-				runtime.SetMutexProfileFraction(0)
+				defer func() {
+					runtime.SetMutexProfileFraction(0)
+					log.WithField("id", id).WithField("frac", frac).WithField("seconds", seconds).Debug("disabled mutex profiling")
+				}()
 			}
 		} else if name == "block" {
 			rate, rerr := strconv.ParseInt(r.URL.Query().Get("rate"), 10, 64)
 			if rerr == nil && rate > 0 && serr == nil && seconds > 0 {
+				id := rand.Uint32()
+				log.WithField("id", id).WithField("rate", rate).WithField("seconds", seconds).Debug("enabled mutex block sampling")
 				runtime.SetBlockProfileRate(int(rate))
-				sleep(w, time.Duration(seconds)*time.Second)
-				runtime.SetBlockProfileRate(0)
+
+				defer func() {
+					runtime.SetBlockProfileRate(0)
+					log.WithField("id", id).WithField("rate", rate).WithField("seconds", seconds).Debug("disabled mutex block sampling")
+				}()
 			}
 		}
 	}
