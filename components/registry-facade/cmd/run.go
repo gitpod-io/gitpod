@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"syscall"
 
 	"github.com/containerd/containerd/remotes"
@@ -102,6 +103,19 @@ var runCmd = &cobra.Command{
 			}()
 			log.WithField("addr", cfg.PrometheusAddr).Info("started Prometheus metrics server")
 		}
+
+		sigUsr2Chan := make(chan os.Signal, 1)
+		signal.Notify(sigUsr2Chan, os.Interrupt, syscall.SIGUSR2)
+		go func(sigUsr2Chan <-chan os.Signal) {
+			for {
+				select {
+				case <-sigUsr2Chan:
+					log.Warn("received SIGUSR2, calling runtime.GC()...")
+					runtime.GC()
+					log.Warn("runtime.GC() done.")
+				}
+			}
+		}(sigUsr2Chan)
 
 		log.Info("🏪 registry facade is up and running")
 		sigChan := make(chan os.Signal, 1)
