@@ -552,6 +552,7 @@ func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest)
 		CheckoutLocation: is.cfg.RepoRoot,
 		InstanceId:       is.cfg.WorkspaceInstanceID,
 		WorkspaceId:      is.cfg.WorkspaceID,
+		GitpodHost:       is.cfg.GitpodHost,
 	}
 
 	stat, err := os.Stat(is.cfg.WorkspaceRoot)
