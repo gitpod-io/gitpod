@@ -7,10 +7,10 @@ package scheduler
 import (
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/common-go/log"
 
 	corev1 "k8s.io/api/core/v1"
 	res "k8s.io/apimachinery/pkg/api/resource"
@@ -26,6 +26,7 @@ type State struct {
 // Node models a k8s node
 type Node struct {
 	Node *corev1.Node
+	Pods []*corev1.Pod
 
 	RAM              ResourceUsage
 	EphemeralStorage ResourceUsage
@@ -67,56 +68,117 @@ type ResourceUsage struct {
 	UsedOther *res.Quantity
 }
 
-// NewState creates a fresh, clean state
-func NewState() *State {
+func newResourceUsage(total *res.Quantity) ResourceUsage {
+	return ResourceUsage{
+		Total:        total.Copy(),
+		Available:    res.NewQuantity(0, res.BinarySI),
+		UsedHeadless: res.NewQuantity(0, res.BinarySI),
+		UsedOther:    res.NewQuantity(0, res.BinarySI),
+		UsedRegular:  res.NewQuantity(0, res.BinarySI),
+	}
+}
+
+func (r *ResourceUsage) updateAvailable() {
+	r.Available = r.Total.Copy()
+	r.Available.Sub(*r.UsedHeadless)
+	r.Available.Sub(*r.UsedOther)
+	r.Available.Sub(*r.UsedRegular)
+}
+
+// ComputeState builds a new state based on the current world view
+func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding) *State {
+	var (
+		nds       = make(map[string]*Node)
+		pds       = make(map[string]*corev1.Pod)
+		podToNode = make(map[string]string)
+	)
+
+	// We need a unique assignment of pod to node, as no pod can be scheduled on two nodes
+	// at the same time. Also, we assume that our bindings are more accurate/up to date than
+	// the pods, hence given them precedence when it comes to computing this assignment.
+	for _, p := range pods {
+		pds[p.Name] = p
+
+		if p.Spec.NodeName == "" {
+			continue
+		}
+		podToNode[p.Name] = p.Spec.NodeName
+	}
+	for _, b := range bindings {
+		podToNode[b.Pod.Name] = b.NodeName
+	}
+
+	// With a unique pod to node assignment, we can invert that relationship and compute
+	// which node has which pods. If we did this right away, we might assign the same pod
+	// to multiple nodes.
+	nodeToPod := make(map[string]map[string]struct{}, len(nodes))
+	for _, n := range nodes {
+		nds[n.Name] = &Node{
+			Node:     n,
+			Services: make(map[string]struct{}),
+		}
+		nodeToPod[n.Name] = make(map[string]struct{})
+	}
+	for pod, node := range podToNode {
+		ntp, ok := nodeToPod[node]
+		if !ok {
+			log.WithField("podName", pod).WithField("nodeName", node).Warn("pod is bound to unknown node")
+			continue
+		}
+		ntp[pod] = struct{}{}
+	}
+
+	for nodeName, node := range nds {
+		node.PodSlots.Total = node.Node.Status.Capacity.Pods().Value()
+		node.PodSlots.Available = node.PodSlots.Total
+
+		assignedPods := nodeToPod[nodeName]
+		node.RAM = newResourceUsage(node.Node.Status.Allocatable.Memory())
+		node.EphemeralStorage = newResourceUsage(node.Node.Status.Allocatable.StorageEphemeral())
+		node.Pods = make([]*corev1.Pod, 0, len(assignedPods))
+		for pn := range assignedPods {
+			pod := pds[pn]
+			node.Pods = append(node.Pods, pds[pn])
+			node.PodSlots.Available--
+
+			service, ok := pod.ObjectMeta.Labels[wsk8s.GitpodNodeServiceLabel]
+			if ok {
+				var ready bool
+				for _, c := range pod.Status.Conditions {
+					if c.Type != corev1.ContainersReady {
+						continue
+					}
+					ready = c.Status == corev1.ConditionTrue
+					break
+				}
+				if !ready {
+					continue
+				}
+				node.Services[service] = struct{}{}
+			}
+
+			var ram, eph *res.Quantity
+			if isHeadlessWorkspace(pod) {
+				ram = node.RAM.UsedHeadless
+				eph = node.EphemeralStorage.UsedHeadless
+			} else if isWorkspace(pod) {
+				ram = node.RAM.UsedRegular
+				eph = node.EphemeralStorage.UsedRegular
+			} else {
+				ram = node.RAM.UsedOther
+				eph = node.EphemeralStorage.UsedOther
+			}
+			ram.Add(GetRequestedRAMForPod(pod))
+			eph.Add(GetRequestedEphemeralStorageForPod(pod))
+		}
+		node.RAM.updateAvailable()
+		node.EphemeralStorage.updateAvailable()
+	}
+
 	return &State{
-		Nodes: make(map[string]*Node),
-		Pods:  make(map[string]*corev1.Pod),
-	}
-}
-
-// UpdateNodes integrates the given node into the current state
-func (s *State) UpdateNodes(nodes []*corev1.Node) {
-	for _, node := range nodes {
-		s.UpdateNode(node)
-	}
-}
-
-// UpdateNode integrates the given node into the current state
-func (s *State) UpdateNode(node *corev1.Node) {
-	n := s.Nodes[node.Name]
-	if n == nil {
-		n = createNodeFrom(node)
-		s.Nodes[node.Name] = n
-	} else {
-		n.update(node)
-	}
-
-	s.updateAssignedPods(n)
-}
-
-// UpdatePods integrates the given pods into the current state
-func (s *State) UpdatePods(pods []*corev1.Pod) {
-	for _, pod := range pods {
-		s.UpdatePod(pod)
-	}
-}
-
-// UpdatePod integrates the given pod into the current state
-func (s *State) UpdatePod(pod *corev1.Pod) {
-	s.Pods[pod.Name] = pod
-
-	for _, n := range s.Nodes {
-		s.updateAssignedPods(n)
-	}
-}
-
-// UpdateBindings integrates the given bindings into the current state
-func (s *State) UpdateBindings(bindings []*Binding) {
-	s.Bindings = bindings
-
-	for _, n := range s.Nodes {
-		s.updateAssignedPods(n)
+		Nodes:    nds,
+		Pods:     pds,
+		Bindings: bindings,
 	}
 }
 
@@ -186,73 +248,6 @@ func (s *State) SortNodesByAvailableRAMAsc() []*Node {
 	return nodes
 }
 
-// GetAssignedPods returns the list of pods for the given node
-func (s *State) GetAssignedPods(node *Node) []*corev1.Pod {
-	var assignedPods []*corev1.Pod
-	for _, p := range s.Pods {
-		if p.Spec.NodeName == node.Node.Name {
-			assignedPods = append(assignedPods, p)
-		}
-	}
-	for _, b := range s.Bindings {
-		if b.NodeName == node.Node.Name {
-			assignedPods = append(assignedPods, b.Pod)
-		}
-	}
-
-	// Now, as we merge from two different sources, have to make sure that we remove duplicates
-	// (precedence for the newest) so that we do not calculate pods twice
-	return uniquePods(assignedPods)
-}
-
-func uniquePods(pods []*corev1.Pod) []*corev1.Pod {
-	if len(pods) == 0 {
-		return pods
-	}
-
-	type value struct {
-		pod   *corev1.Pod
-		index int
-	}
-	uniqueKeys := make(map[string]value)
-	var uniqueList []*corev1.Pod
-	for i := 0; i < len(pods); i++ {
-		p := pods[i]
-		existingPod, present := uniqueKeys[p.Name]
-
-		if !present {
-			uniqueKeys[p.Name] = value{
-				pod:   p,
-				index: len(uniqueList),
-			}
-			uniqueList = append(uniqueList, p)
-			continue
-		}
-		if existingPod.pod.Generation != 0 || p.Generation != 0 {
-			// we first had to check if any generation field was non-zero, because the Generation field
-			// is optional. It depends on the Kubernetes implementation if it's present at all.
-			if p.Generation > existingPod.pod.Generation {
-				// the other pod is newer than the one already in the uniqueList: take that!
-				existingPod.pod = p
-				uniqueList[existingPod.index] = p
-			}
-			continue
-		}
-		if existingPod.pod.ResourceVersion != "" && p.ResourceVersion != "" {
-			// The docs say to intepret this value as opaque - in most cases the resource version is
-			// a sequence number coming from etcd, hence can be used to impose order.
-			existingRev, err0 := strconv.ParseInt(existingPod.pod.ResourceVersion, 10, 64)
-			newRev, err1 := strconv.ParseInt(p.ResourceVersion, 10, 64)
-			if (err0 == nil && err1 == nil) && newRev > existingRev {
-				// the other pod is newer than the one already in the uniqueList: take that!
-				existingPod.pod = p
-				uniqueList[existingPod.index] = p
-			}
-		}
-	}
-	return uniqueList
-}
-
 // GetRequestedRAMForPod calculates the amount of RAM requested by all containers of the given pod
 func GetRequestedRAMForPod(pod *corev1.Pod) res.Quantity {
 	requestedRAM := res.NewQuantity(0, res.BinarySI)
@@ -271,94 +266,6 @@ func GetRequestedEphemeralStorageForPod(pod *corev1.Pod) res.Quantity {
 	return *requestedEphStorage
 }
 
-func (s *State) updateAssignedPods(node *Node) {
-	assignedPods := s.GetAssignedPods(node)
-
-	usedOtherRAM := res.NewQuantity(0, res.BinarySI)
-	usedHeadlessRAM := res.NewQuantity(0, res.BinarySI)
-	usedRegularRAM := res.NewQuantity(0, res.BinarySI)
-	usedOtherEphStorage := res.NewQuantity(0, res.BinarySI)
-	usedHeadlessEphStorage := res.NewQuantity(0, res.BinarySI)
-	usedRegularEphStorage := res.NewQuantity(0, res.BinarySI)
-	for _, p := range assignedPods {
-		ramReq := GetRequestedRAMForPod(p)
-		ephStorageReq := GetRequestedEphemeralStorageForPod(p)
-		if isHeadlessWorkspace(p) {
-			usedHeadlessRAM.Add(ramReq)
-			usedHeadlessEphStorage.Add(ephStorageReq)
-		} else if isWorkspace(p) {
-			usedRegularRAM.Add(ramReq)
-			usedRegularEphStorage.Add(ephStorageReq)
-		} else {
-			usedOtherRAM.Add(ramReq)
-			usedOtherEphStorage.Add(ephStorageReq)
-		}
-	}
-
-	avRAM := node.RAM.Total.DeepCopy()
-	node.RAM.Available = &avRAM
-	node.RAM.Available.Sub(*usedOtherRAM)
-	node.RAM.Available.Sub(*usedHeadlessRAM)
-	node.RAM.Available.Sub(*usedRegularRAM)
-	node.RAM.UsedOther = usedOtherRAM
-	node.RAM.UsedHeadless = usedHeadlessRAM
-	node.RAM.UsedRegular = usedRegularRAM
-
-	avEphStorage := node.EphemeralStorage.Total.DeepCopy()
-	node.EphemeralStorage.Available = &avEphStorage
-	node.EphemeralStorage.Available.Sub(*usedOtherEphStorage)
-	node.EphemeralStorage.Available.Sub(*usedHeadlessEphStorage)
-	node.EphemeralStorage.Available.Sub(*usedRegularEphStorage)
-	node.EphemeralStorage.UsedOther = usedOtherEphStorage
-	node.EphemeralStorage.UsedHeadless = usedHeadlessEphStorage
-	node.EphemeralStorage.UsedRegular = usedRegularEphStorage
-
-	node.PodSlots.Available = node.PodSlots.Total - int64(len(assignedPods))
-
-	node.Services = make(map[string]struct{})
-	for _, p := range assignedPods {
-		service, ok := p.ObjectMeta.Labels[wsk8s.GitpodNodeServiceLabel]
-		if !ok {
-			continue
-		}
-		var ready bool
-		for _, c := range p.Status.Conditions {
-			if c.Type != corev1.ContainersReady {
-				continue
-			}
-			ready = c.Status == corev1.ConditionTrue
-			break
-		}
-		if !ready {
-			continue
-		}
-		node.Services[service] = struct{}{}
-	}
-}
-
-func createNodeFrom(node *corev1.Node) *Node {
-	n := &Node{}
-	n.update(node)
-	return n
-}
-
-func (n *Node) update(node *corev1.Node) {
-	n.Node = node
-
-	totalRAM := node.Status.Allocatable.Memory().DeepCopy()
-	availableRAM := node.Status.Allocatable.Memory().DeepCopy()
-	n.RAM.Total = &totalRAM
-	n.RAM.Available = &availableRAM
-
-	totalEphemeralStorage := node.Status.Allocatable.StorageEphemeral().DeepCopy()
-	availableEphemeralStorage := node.Status.Allocatable.StorageEphemeral().DeepCopy()
-	n.EphemeralStorage.Total = &totalEphemeralStorage
-	n.EphemeralStorage.Available = &availableEphemeralStorage
-
-	n.PodSlots.Total = node.Status.Capacity.Pods().Value()
-	n.PodSlots.Available = n.PodSlots.Total
-}
-
 // NodeMapToList returns a slice of entry of the map
 func NodeMapToList(m map[string]*Node) []*Node {
 	nodes := make([]*Node, 0, len(m))
@@ -369,12 +276,12 @@ func NodeMapToList(m map[string]*Node) []*Node {
 }
 
 // DebugStringResourceUsage returns a debug string describing the used resources
-func (ru *ResourceUsage) DebugStringResourceUsage() string {
-	usedRegularGibs := float64(ru.UsedRegular.Value()/1024/1024) / float64(1024)
-	usedHeadlessGibs := float64(ru.UsedHeadless.Value()/1024/1024) / float64(1024)
-	usedOtherGibs := float64(ru.UsedOther.Value()/1024/1024) / float64(1024)
-	totalGibs := float64(ru.Total.Value()/1024/1024) / float64(1024)
-	availableGibs := float64(ru.Available.Value()/1024/1024) / float64(1024)
+func (r *ResourceUsage) DebugStringResourceUsage() string {
+	usedRegularGibs := float64(r.UsedRegular.Value()/1024/1024) / float64(1024)
+	usedHeadlessGibs := float64(r.UsedHeadless.Value()/1024/1024) / float64(1024)
+	usedOtherGibs := float64(r.UsedOther.Value()/1024/1024) / float64(1024)
+	totalGibs := float64(r.Total.Value()/1024/1024) / float64(1024)
+	availableGibs := float64(r.Available.Value()/1024/1024) / float64(1024)
 
 	return fmt.Sprintf("used %0.03f+%0.03f+%0.3f of %0.3f, avail %0.03f GiB", usedRegularGibs, usedHeadlessGibs, usedOtherGibs, totalGibs, availableGibs)
 }
