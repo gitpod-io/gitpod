@@ -127,7 +127,8 @@ func TestState(t *testing.T) {
   Eph. Storage: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB`,
 		},
 		{
-			Desc: "bound but not listed",
+			Desc:            "bound but not listed",
+			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
 				createNode("node1", "10Gi", "20Gi", false, 100),
 			},
@@ -138,7 +139,7 @@ func TestState(t *testing.T) {
 				},
 			},
 			Expectation: `- node1:
-  RAM: used 1.000+0.000+0.000 of 10.000, avail 9.000 GiB
+  RAM: used 1.000+0.000+0.000 of 9.500, avail 8.500 GiB
   Eph. Storage: used 5.000+0.000+0.000 of 20.000, avail 15.000 GiB`,
 		},
 	}
