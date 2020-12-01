@@ -124,7 +124,7 @@ func TestState(t *testing.T) {
 		t.Run(test.Desc, func(t *testing.T) {
 			state := sched.ComputeState(test.Nodes, test.Pods, nil)
 
-			nodes := state.SortNodesByAvailableRAMAsc()
+			nodes := state.SortNodesByAvailableRAM(sched.SortAsc)
 			// in some tests the RAM sort order is not stable as nodes have the same amount of RAM.
 			// This would intermittently break tests. We instead sort by name.
 			sort.Slice(nodes, func(i, j int) bool { return nodes[i].Node.Name < nodes[j].Node.Name })
