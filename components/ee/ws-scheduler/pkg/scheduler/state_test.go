@@ -10,6 +10,7 @@ import (
 
 	sched "github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler"
 	corev1 "k8s.io/api/core/v1"
+	res "k8s.io/apimachinery/pkg/api/resource"
 )
 
 func TestState(t *testing.T) {
@@ -22,45 +23,49 @@ func TestState(t *testing.T) {
 	}
 
 	tests := []struct {
-		Desc        string
-		Nodes       []*corev1.Node
-		Pods        []*corev1.Pod
-		Bindings    []*sched.Binding
-		Expectation string
+		Desc            string
+		RAMSafetyBuffer string
+		Nodes           []*corev1.Node
+		Pods            []*corev1.Pod
+		Bindings        []*sched.Binding
+		Expectation     string
 	}{
 		{
-			Desc:  "no pods",
-			Nodes: defaultNodeSet(),
+			Desc:            "no pods",
+			RAMSafetyBuffer: "512Mi",
+			Nodes:           defaultNodeSet(),
 			Expectation: `- node1:
-  RAM: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB
+  RAM: used 0.000+0.000+0.000 of 9.500, avail 9.500 GiB
   Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
 - node2:
-  RAM: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB
+  RAM: used 0.000+0.000+0.000 of 9.500, avail 9.500 GiB
   Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
 - node3:
-  RAM: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB
+  RAM: used 0.000+0.000+0.000 of 9.500, avail 9.500 GiB
   Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB`,
 		},
 		{
-			Desc:  "other pods only",
-			Nodes: defaultNodeSet(),
+			Desc:            "other pods only",
+			RAMSafetyBuffer: "512Mi",
+			Nodes:           defaultNodeSet(),
 			Pods: []*corev1.Pod{
 				createNonWorkspacePod("existingPod1", "1.5Gi", "0Gi", "node1", 10),
 				createNonWorkspacePod("existingPod2", "1Gi", "0Gi", "node2", 10),
 			},
 			Expectation: `- node1:
-  RAM: used 0.000+0.000+1.500 of 10.000, avail 8.500 GiB
+  RAM: used 0.000+0.000+1.500 of 9.500, avail 8.000 GiB
   Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
 - node2:
-  RAM: used 0.000+0.000+1.000 of 10.000, avail 9.000 GiB
+  RAM: used 0.000+0.000+1.000 of 9.500, avail 8.500 GiB
   Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
 - node3:
-  RAM: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB
+  RAM: used 0.000+0.000+0.000 of 9.500, avail 9.500 GiB
   Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB`,
 		},
 		{
-			Desc:  "some headless pods",
-			Nodes: defaultNodeSet(),
+			Desc:            "some headless pods",
+			RAMSafetyBuffer: "512Mi",
+			Nodes:           defaultNodeSet(),
 			Pods: []*corev1.Pod{
 				createNonWorkspacePod("existingPod1", "1.5Gi", "0Gi", "node1", 10),
 				createNonWorkspacePod("existingPod2", "1Gi", "0Gi", "node2", 10),
@@ -68,18 +73,19 @@ func TestState(t *testing.T) {
 				createHeadlessWorkspacePod("hp2", "2.22Gi", "0Gi", "node2", 10),
 			},
 			Expectation: `- node1:
-  RAM: used 0.000+0.000+1.500 of 10.000, avail 8.500 GiB
+  RAM: used 0.000+0.000+1.500 of 9.500, avail 8.000 GiB
   Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
 - node2:
-  RAM: used 0.000+3.220+1.000 of 10.000, avail 5.779 GiB
+  RAM: used 0.000+3.220+1.000 of 9.500, avail 5.279 GiB
   Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
 - node3:
-  RAM: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB
+  RAM: used 0.000+0.000+0.000 of 9.500, avail 9.500 GiB
   Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB`,
 		},
 		{
-			Desc:  "some regular pods",
-			Nodes: defaultNodeSet(),
+			Desc:            "some regular pods",
+			RAMSafetyBuffer: "512Mi",
+			Nodes:           defaultNodeSet(),
 			Pods: []*corev1.Pod{
 				createNonWorkspacePod("existingPod1", "1.5Gi", "0Gi", "node1", 10),
 				createNonWorkspacePod("existingPod2", "1Gi", "0Gi", "node2", 10),
@@ -87,17 +93,18 @@ func TestState(t *testing.T) {
 				createWorkspacePod("hp2", "3.44Gi", "0Gi", "node1", 10),
 			},
 			Expectation: `- node1:
-  RAM: used 4.439+0.000+1.500 of 10.000, avail 4.060 GiB
+  RAM: used 4.439+0.000+1.500 of 9.500, avail 3.560 GiB
   Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
 - node2:
-  RAM: used 0.000+0.000+1.000 of 10.000, avail 9.000 GiB
+  RAM: used 0.000+0.000+1.000 of 9.500, avail 8.500 GiB
   Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
 - node3:
-  RAM: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB
+  RAM: used 0.000+0.000+0.000 of 9.500, avail 9.500 GiB
   Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB`,
 		},
 		{
-			Desc: "some regular pods with ",
+			Desc:            "some regular pods with ",
+			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
 				createNode("node1", "10Gi", "20Gi", false, 100),
 				createNode("node2", "10Gi", "10Gi", false, 100),
@@ -110,13 +117,13 @@ func TestState(t *testing.T) {
 				createWorkspacePod("hp2", "3.44Gi", "5Gi", "node1", 10),
 			},
 			Expectation: `- node1:
-  RAM: used 4.439+0.000+1.500 of 10.000, avail 4.060 GiB
+  RAM: used 4.439+0.000+1.500 of 9.500, avail 3.560 GiB
   Eph. Storage: used 10.000+0.000+5.000 of 20.000, avail 5.000 GiB
 - node2:
-  RAM: used 0.000+0.000+1.000 of 10.000, avail 9.000 GiB
+  RAM: used 0.000+0.000+1.000 of 9.500, avail 8.500 GiB
   Eph. Storage: used 0.000+0.000+2.000 of 10.000, avail 8.000 GiB
 - node3:
-  RAM: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB
+  RAM: used 0.000+0.000+0.000 of 9.500, avail 9.500 GiB
   Eph. Storage: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB`,
 		},
 		{
@@ -138,7 +145,8 @@ func TestState(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
-			state := sched.ComputeState(test.Nodes, test.Pods, test.Bindings)
+			ramSafetyBuffer := res.MustParse(test.RAMSafetyBuffer)
+			state := sched.ComputeState(test.Nodes, test.Pods, test.Bindings, &ramSafetyBuffer)
 
 			nodes := state.SortNodesByAvailableRAM(sched.SortAsc)
 			// in some tests the RAM sort order is not stable as nodes have the same amount of RAM.

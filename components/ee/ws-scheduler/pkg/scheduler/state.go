@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
-	"github.com/gitpod-io/gitpod/common-go/log"
 
 	corev1 "k8s.io/api/core/v1"
 	res "k8s.io/apimachinery/pkg/api/resource"
@@ -86,7 +85,7 @@ func (r *ResourceUsage) updateAvailable() {
 }
 
 // ComputeState builds a new state based on the current world view
-func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding) *State {
+func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding, ramSafetyBuffer *res.Quantity) *State {
 	var (
 		nds       = make(map[string]*Node)
 		pds       = make(map[string]*corev1.Pod)
@@ -128,7 +127,6 @@ func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding)
 	for pod, node := range podToNode {
 		ntp, ok := nodeToPod[node]
 		if !ok {
-			log.WithField("podName", pod).WithField("nodeName", node).Warn("pod is bound to unknown node")
 			continue
 		}
 		ntp[pod] = struct{}{}
@@ -139,7 +137,9 @@ func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding)
 		node.PodSlots.Available = node.PodSlots.Total
 
 		assignedPods := nodeToPod[nodeName]
-		node.RAM = newResourceUsage(node.Node.Status.Allocatable.Memory())
+		allocatableRAMWithSafetyBuffer := node.Node.Status.Allocatable.Memory().Copy()
+		allocatableRAMWithSafetyBuffer.Sub(*ramSafetyBuffer)
+		node.RAM = newResourceUsage(allocatableRAMWithSafetyBuffer)
 		node.EphemeralStorage = newResourceUsage(node.Node.Status.Allocatable.StorageEphemeral())
 		node.Pods = make([]*corev1.Pod, 0, len(assignedPods))
 		for pn := range assignedPods {

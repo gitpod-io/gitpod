@@ -39,7 +39,10 @@ var runCmd = &cobra.Command{
 		}
 		log.Info("connected to Kubernetes")
 
-		scheduler := scheduler.NewScheduler(config.Scheduler, clientSet)
+		scheduler, err := scheduler.NewScheduler(config.Scheduler, clientSet)
+		if err != nil {
+			log.WithError(err).Fatal("cannot create scheduler")
+		}
 		schedulerCtx, cancelScheduler := context.WithCancel(context.Background())
 		err = scheduler.Start(schedulerCtx)
 		if err != nil {
