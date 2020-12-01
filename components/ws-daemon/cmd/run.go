@@ -33,8 +33,8 @@ var runCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg := getConfig()
-		promreg := prometheus.NewRegistry()
-		dmn, err := daemon.NewDaemon(cfg.Daemon, promreg)
+		reg := prometheus.NewRegistry()
+		dmn, err := daemon.NewDaemon(cfg.Daemon, prometheus.WrapRegistererWithPrefix("gitpod_ws_daemon_", reg))
 		if err != nil {
 			log.WithError(err).Fatal("cannot create daemon")
 		}
@@ -76,13 +76,13 @@ var runCmd = &cobra.Command{
 		log.WithField("addr", cfg.Service.Addr).Info("started gRPC server")
 
 		if cfg.Prometheus.Addr != "" {
-			promreg.MustRegister(
+			reg.MustRegister(
 				prometheus.NewGoCollector(),
 				prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
 			)
 
 			handler := http.NewServeMux()
-			handler.Handle("/metrics", promhttp.HandlerFor(promreg, promhttp.HandlerOpts{}))
+			handler.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 
 			go func() {
 				err := http.ListenAndServe(cfg.Prometheus.Addr, handler)

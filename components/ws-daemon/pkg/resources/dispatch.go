@@ -36,7 +36,7 @@ func NewDispatchListener(cfg *Config, prom prometheus.Registerer) *DispatchListe
 	}
 	prom.MustRegister(
 		prometheus.NewGaugeFunc(prometheus.GaugeOpts{
-			Name: "wsman_node_resource_governer_total",
+			Name: "resource_governer_total",
 			Help: "Number active workspace resource governer",
 		}, func() float64 {
 			d.mu.Lock()
