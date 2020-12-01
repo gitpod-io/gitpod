@@ -129,7 +129,7 @@ func TestState(t *testing.T) {
 			// This would intermittently break tests. We instead sort by name.
 			sort.Slice(nodes, func(i, j int) bool { return nodes[i].Node.Name < nodes[j].Node.Name })
 
-			actual := sched.DebugStringNodes(nodes)
+			actual := sched.DebugStringNodes(nodes...)
 			if test.Expectation != actual {
 				t.Errorf("expected debug string to be:\n%s, was:\n%s", test.Expectation, actual)
 				return

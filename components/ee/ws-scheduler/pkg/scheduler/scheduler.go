@@ -96,6 +96,7 @@ func (s *Scheduler) Start(ctx context.Context) error {
 
 			owi := wsk8s.GetOWIFromObject(&pod.ObjectMeta)
 			log.WithField("pod", pod.Name).WithFields(owi).Debug("scheduling pod")
+
 			err := s.schedulePod(ctx, pod)
 			if err != nil {
 				log.WithError(err).WithField("pod", pod.Name).Error("unable to schedule pod: %w", err)
@@ -321,14 +322,18 @@ func (s *Scheduler) selectNodeForPod(ctx context.Context, pod *corev1.Pod) (node
 
 	state, err := s.buildState(ctx, pod)
 	if err != nil {
-		return "", xerrors.Errorf("unable to buildState: %w", err)
+		return "", xerrors.Errorf("unable to build state: %w", err)
 	}
 	if len(state.Nodes) == 0 {
-		return "", xerrors.Errorf("Zero nodes available!")
+		return "", xerrors.Errorf("zero nodes available")
 	}
 	node, err = s.strategy.Select(state, pod)
+	if err != nil {
+		span.LogKV("no-node", err.Error())
+		return "", err
+	}
 
-	span.LogFields(tracelog.String("nodeFound", node))
+	span.LogKV("node", DebugStringNodes(state.Nodes[node]))
 	return
 }
 
@@ -433,6 +438,7 @@ func (s *Scheduler) gatherPotentialNodesFor(ctx context.Context, pod *corev1.Pod
 func (s *Scheduler) bindPodToNode(ctx context.Context, pod *corev1.Pod, nodeName string) (err error) {
 	span, ctx := tracing.FromContext(ctx, "bindPodToNode")
 	defer tracing.FinishSpan(span, nil) // let caller decide whether this is an actual error or not
+	span.LogKV("nodeName", nodeName, "podName", pod.Name)
 
 	binding := &corev1.Binding{
 		ObjectMeta: metav1.ObjectMeta{
@@ -450,6 +456,7 @@ func (s *Scheduler) bindPodToNode(ctx context.Context, pod *corev1.Pod, nodeName
 	if err != nil {
 		return xerrors.Errorf("cannot bind pod %s to %s: %w", pod.Name, nodeName, err)
 	}
+	span.LogKV("event", "binding created")
 
 	// The default Kubernetes scheduler publishes an event upon successful scheduling.
 	// This is not really neccesary for the scheduling itself, but helps to debug things.
@@ -478,6 +485,7 @@ func (s *Scheduler) bindPodToNode(ctx context.Context, pod *corev1.Pod, nodeName
 	if err != nil {
 		return xerrors.Errorf("cannot emit event for pod %s: %w", pod.Name, err)
 	}
+	span.LogKV("event", "event created")
 
 	return nil
 }

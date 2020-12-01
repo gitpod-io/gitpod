@@ -282,7 +282,7 @@ func (r *ResourceUsage) DebugStringResourceUsage() string {
 }
 
 // DebugStringNodes prints available RAM per node as string for debug purposes
-func DebugStringNodes(nodes []*Node) string {
+func DebugStringNodes(nodes ...*Node) string {
 	lines := make([]string, 0, len(nodes)*3)
 	for _, node := range nodes {
 		lines = append(lines, fmt.Sprintf("- %s:", node.Node.Name))
