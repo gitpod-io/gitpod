@@ -15,6 +15,12 @@ metadata:
 data:
   config.json: |-
     {
+        "pprof": {
+            "addr": "localhost:6060"
+        },
+        "prometheus": {
+            "addr": ":9500"
+        },
         "scheduler": {
             "schedulerName": "{{ $comp.schedulerName }}",
             "namespace": "{{ .Release.Namespace }}",
