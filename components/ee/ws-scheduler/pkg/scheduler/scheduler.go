@@ -295,10 +295,10 @@ func (s *Scheduler) schedulePod(ctx context.Context, pod *corev1.Pod) (err error
 func (s *Scheduler) checkForAndEnqueuePendingPods(ctx context.Context, schedulerQueue chan<- *corev1.Pod) error {
 	tracing.FromContext(ctx, "checkForAndEnqueuePendingPods")
 
-	// We want to scan for pods we have to schedule. As we have a) no local queue and b) can only filter by labels,
-	// we query all here and filter later, manually. Sadly, this polls the Kubernetes api quite often.
+	// We want to scan the namespace for pods we have to schedule. As we have a) no local queue and b) can only filter
+	// by labels, we query all here and filter later, manually. Sadly, this polls the Kubernetes api quite often.
 	// TODO Consider using a local queue of pending pods and try to do the full ".List" only very rarely
-	allPods, podsErr := s.pods.Lister().List(labels.Everything())
+	allPods, podsErr := s.pods.Lister().Pods(s.Config.Namespace).List(labels.Everything())
 	if podsErr != nil {
 		return xerrors.Errorf("cannot list all pods: %w", podsErr)
 	}
@@ -342,8 +342,10 @@ func (s *Scheduler) buildState(ctx context.Context, pod *corev1.Pod) (state *Sta
 		return nil, err
 	}
 
-	// We need to take _all_ pods into account to accurately calculate available RAM per node
-	allPods, podsErr := s.pods.Lister().List(labels.Everything())
+	// We need to take into account _all_ pods in _all_ namespaces to accurately calculate available RAM per node
+	// NOTE: .Pods("") - in contrast to omitting it and calling .Lister().List(...) directly - means:
+	//       List from _all_ namespaces !!!
+	allPods, podsErr := s.pods.Lister().Pods(metav1.NamespaceAll).List(labels.Everything())
 	if podsErr != nil {
 		return nil, xerrors.Errorf("cannot list all pods: %w", podsErr)
 	}
