@@ -52,4 +52,7 @@ message WorkspaceInfoResponse {
 
     // GitpodAPI provides information to reach the Gitpod server API.
     GitpodAPI gitpod_api = 7;
+
+    // gitpod_host provides Gitpod host URL.
+    string gitpod_host = 8;
 }
