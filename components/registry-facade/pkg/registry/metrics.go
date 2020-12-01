@@ -47,7 +47,7 @@ type metrics struct {
 
 func newMetrics(reg prometheus.Registerer) (*metrics, error) {
 	manifestHist := prometheus.NewHistogram(prometheus.HistogramOpts{
-		Name:    "manifest_req_sec",
+		Name:    "manifest_req_seconds",
 		Help:    "time of manifest requests made to the downstream registry",
 		Buckets: []float64{0.1, 0.5, 1, 2, 5, 10},
 	})
@@ -57,7 +57,7 @@ func newMetrics(reg prometheus.Registerer) (*metrics, error) {
 	}
 
 	blobCounter := prometheus.NewCounter(prometheus.CounterOpts{
-		Name: "blob_req_count",
+		Name: "blob_req_total",
 		Help: "number of blob requests made to the downstream registry",
 	})
 	err = reg.Register(blobCounter)

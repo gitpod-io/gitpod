@@ -57,7 +57,8 @@ var runCmd = &cobra.Command{
 		}
 
 		reg := prometheus.NewRegistry()
-		rtt, err := registry.NewMeasuringRegistryRoundTripper(http.DefaultTransport, prometheus.WrapRegistererWithPrefix("downstream_", reg))
+		gpreg := prometheus.WrapRegistererWithPrefix("gitpod_registry_facade_", reg)
+		rtt, err := registry.NewMeasuringRegistryRoundTripper(http.DefaultTransport, prometheus.WrapRegistererWithPrefix("downstream_", gpreg))
 		if err != nil {
 			log.WithError(err).Fatal("cannot registry metrics")
 		}
@@ -77,7 +78,7 @@ var runCmd = &cobra.Command{
 		}
 
 		if cfg.Registry != nil {
-			reg, err := registry.NewRegistry(*cfg.Registry, resolverProvider, prometheus.WrapRegistererWithPrefix("registry_", reg))
+			reg, err := registry.NewRegistry(*cfg.Registry, resolverProvider, prometheus.WrapRegistererWithPrefix("registry_", gpreg))
 			if err != nil {
 				log.WithError(err).Fatal("cannot create registry")
 			}
