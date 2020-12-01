@@ -124,7 +124,7 @@ func (e *EvenLoad) Select(state *State, pod *corev1.Pod) (string, error) {
 	if len(sortedNodes) == 0 {
 		requestedRAM := podRAMRequest(pod)
 		requestedEphStorage := podEphemeralStorageRequest(pod)
-		debugStr := DebugStringNodes(sortedNodes)
+		debugStr := DebugStringNodes(sortedNodes...)
 		return "", xerrors.Errorf(errorNoNodeWithEnoughResourcesAvailable, requestedRAM.String(), requestedEphStorage.String(), debugStr)
 	}
 
@@ -132,7 +132,7 @@ func (e *EvenLoad) Select(state *State, pod *corev1.Pod) (string, error) {
 	if !fitsOnNode(pod, candidate) {
 		requestedRAM := podRAMRequest(pod)
 		requestedEphStorage := podEphemeralStorageRequest(pod)
-		debugStr := DebugStringNodes(sortedNodes)
+		debugStr := DebugStringNodes(sortedNodes...)
 		return "", xerrors.Errorf(errorNoNodeWithEnoughResourcesAvailable, requestedRAM.String(), requestedEphStorage.String(), debugStr)
 	}
 
@@ -165,7 +165,7 @@ func (s *DensityAndExperience) Select(state *State, pod *corev1.Pod) (string, er
 	if len(candidates) == 0 {
 		requestedRAM := podRAMRequest(pod)
 		requestedEphStorage := podEphemeralStorageRequest(pod)
-		debugStr := DebugStringNodes(sortedNodes)
+		debugStr := DebugStringNodes(sortedNodes...)
 		return "", xerrors.Errorf(errorNoNodeWithEnoughResourcesAvailable, requestedRAM.String(), requestedEphStorage.String(), debugStr)
 	}
 
