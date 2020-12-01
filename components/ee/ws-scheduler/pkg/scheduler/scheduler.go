@@ -617,7 +617,7 @@ func (c *localBindingCache) markAsScheduled(pod *corev1.Pod, nodeName string) {
 	defer c.mu.Unlock()
 
 	c.bindings[pod.Name] = &Binding{
-		Pod:      &Pod{Pod: pod},
+		Pod:      pod,
 		NodeName: nodeName,
 	}
 }

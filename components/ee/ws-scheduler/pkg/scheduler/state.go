@@ -18,7 +18,7 @@ import (
 // State holds alle node
 type State struct {
 	Nodes    map[string]*Node
-	Pods     []*Pod
+	Pods     map[string]*corev1.Pod
 	Bindings []*Binding
 }
 
@@ -41,14 +41,9 @@ type Node struct {
 	}
 }
 
-// Pod models a k8s pod
-type Pod struct {
-	Pod *corev1.Pod
-}
-
 // Binding models a k8s binding pod -> node
 type Binding struct {
-	Pod      *Pod
+	Pod      *corev1.Pod
 	NodeName string
 }
 
@@ -75,7 +70,7 @@ type ResourceUsage struct {
 func NewState() *State {
 	return &State{
 		Nodes: make(map[string]*Node),
-		Pods:  []*Pod{},
+		Pods:  make(map[string]*corev1.Pod),
 	}
 }
 
@@ -108,13 +103,7 @@ func (s *State) UpdatePods(pods []*corev1.Pod) {
 
 // UpdatePod integrates the given pod into the current state
 func (s *State) UpdatePod(pod *corev1.Pod) {
-	p := s.findPodByName(pod)
-	if p == nil {
-		p = createPodFrom(pod)
-		s.Pods = append(s.Pods, p)
-	} else {
-		p.update(pod)
-	}
+	s.Pods[pod.Name] = pod
 
 	for _, n := range s.Nodes {
 		s.updateAssignedPods(n)
@@ -197,10 +186,10 @@ func (s *State) SortNodesByAvailableRAMAsc() []*Node {
 }
 
 // GetAssignedPods returns the list of pods for the given node
-func (s *State) GetAssignedPods(node *Node) []*Pod {
-	assignedPods := make([]*Pod, 0)
+func (s *State) GetAssignedPods(node *Node) []*corev1.Pod {
+	var assignedPods []*corev1.Pod
 	for _, p := range s.Pods {
-		if p.Pod.Spec.NodeName == node.Node.Name {
+		if p.Spec.NodeName == node.Node.Name {
 			assignedPods = append(assignedPods, p)
 		}
 	}
@@ -215,23 +204,23 @@ func (s *State) GetAssignedPods(node *Node) []*Pod {
 	return uniquePods(assignedPods)
 }
 
-func uniquePods(pods []*Pod) []*Pod {
+func uniquePods(pods []*corev1.Pod) []*corev1.Pod {
 	type value struct {
-		pod   *Pod
+		pod   *corev1.Pod
 		index int
 	}
 	uniqueKeys := make(map[string]value)
-	uniqueList := []*Pod{}
+	var uniqueList []*corev1.Pod
 	for i := 0; i < len(pods); i++ {
 		p := pods[i]
-		existingPod, present := uniqueKeys[p.Pod.Name]
+		existingPod, present := uniqueKeys[p.Name]
 		if !present {
-			uniqueKeys[p.Pod.Name] = value{
+			uniqueKeys[p.Name] = value{
 				pod:   p,
 				index: len(uniqueList),
 			}
 			uniqueList = append(uniqueList, p)
-		} else if existingPod.pod.Pod.Generation < p.Pod.Generation {
+		} else if existingPod.pod.Generation < p.Generation {
 			// the other pod is newer than the one already in the uniqueList: take that!
 			existingPod.pod = p
 			uniqueList[existingPod.index] = p
@@ -268,12 +257,12 @@ func (s *State) updateAssignedPods(node *Node) {
 	usedHeadlessEphStorage := res.NewQuantity(0, res.BinarySI)
 	usedRegularEphStorage := res.NewQuantity(0, res.BinarySI)
 	for _, p := range assignedPods {
-		ramReq := GetRequestedRAMForPod(p.Pod)
-		ephStorageReq := GetRequestedEphemeralStorageForPod(p.Pod)
-		if isHeadlessWorkspace(p.Pod) {
+		ramReq := GetRequestedRAMForPod(p)
+		ephStorageReq := GetRequestedEphemeralStorageForPod(p)
+		if isHeadlessWorkspace(p) {
 			usedHeadlessRAM.Add(ramReq)
 			usedHeadlessEphStorage.Add(ephStorageReq)
-		} else if isWorkspace(p.Pod) {
+		} else if isWorkspace(p) {
 			usedRegularRAM.Add(ramReq)
 			usedRegularEphStorage.Add(ephStorageReq)
 		} else {
@@ -304,12 +293,12 @@ func (s *State) updateAssignedPods(node *Node) {
 
 	node.Services = make(map[string]struct{})
 	for _, p := range assignedPods {
-		service, ok := p.Pod.ObjectMeta.Labels[wsk8s.GitpodNodeServiceLabel]
+		service, ok := p.ObjectMeta.Labels[wsk8s.GitpodNodeServiceLabel]
 		if !ok {
 			continue
 		}
 		var ready bool
-		for _, c := range p.Pod.Status.Conditions {
+		for _, c := range p.Status.Conditions {
 			if c.Type != corev1.ContainersReady {
 				continue
 			}
@@ -321,15 +310,6 @@ func (s *State) updateAssignedPods(node *Node) {
 		}
 		node.Services[service] = struct{}{}
 	}
-}
-
-func (s *State) findPodByName(pod *corev1.Pod) *Pod {
-	for _, p := range s.Pods {
-		if p.Pod.Name == pod.Name {
-			return p
-		}
-	}
-	return nil
 }
 
 func createNodeFrom(node *corev1.Node) *Node {
@@ -353,16 +333,6 @@ func (n *Node) update(node *corev1.Node) {
 
 	n.PodSlots.Total = node.Status.Capacity.Pods().Value()
 	n.PodSlots.Available = n.PodSlots.Total
-}
-
-func createPodFrom(pod *corev1.Pod) *Pod {
-	p := &Pod{}
-	p.update(pod)
-	return p
-}
-
-func (p *Pod) update(pod *corev1.Pod) {
-	p.Pod = pod
 }
 
 // NodeMapToList returns a slice of entry of the map

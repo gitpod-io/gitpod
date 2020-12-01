@@ -154,8 +154,8 @@ func playScaleupScenario(clientSet *kubernetes.Clientset, stopChan chan struct{}
 
 	// 2.3 No OutOfMemory
 	for _, p := range stateOverflow.Pods {
-		if p.Pod.Status.Phase == corev1.PodFailed && p.Pod.Status.Reason == "OutOfMemory" {
-			return xerrors.Errorf("OutOfMemory error: %s", p.Pod.Name)
+		if p.Status.Phase == corev1.PodFailed && p.Status.Reason == "OutOfMemory" {
+			return xerrors.Errorf("OutOfMemory error: %s", p.Name)
 		}
 	}
 	log.Infof("No OutOfMemory error detected")
@@ -260,9 +260,9 @@ func startTestPod(clientSet *kubernetes.Clientset, nr int, suffix string) error 
 				NodeAffinity: &corev1.NodeAffinity{
 					RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
 						NodeSelectorTerms: []corev1.NodeSelectorTerm{
-							corev1.NodeSelectorTerm{
+							{
 								MatchExpressions: []corev1.NodeSelectorRequirement{
-									corev1.NodeSelectorRequirement{
+									{
 										Key:      "gitpod.io/workload_workspace",
 										Operator: corev1.NodeSelectorOpIn,
 										Values:   []string{"true"},
@@ -274,7 +274,7 @@ func startTestPod(clientSet *kubernetes.Clientset, nr int, suffix string) error 
 				},
 			},
 			Containers: []corev1.Container{
-				corev1.Container{
+				{
 					Name:    "main",
 					Image:   "alpine:latest",
 					Command: []string{"bash", "-c", "while true; do sleep 2; echo 'sleeping...'; done"},
