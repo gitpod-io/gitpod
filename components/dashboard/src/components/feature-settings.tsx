@@ -24,7 +24,7 @@ export class FeatureSettings extends React.Component<FeatureSettingsProps> {
         const { featurePreview } = this;
         return <Grid xs={12}>
             <FormControlLabel
-                control={<Checkbox color="primary" checked={featurePreview} onChange={this.updateFeatureFlags} />}
+                control={<Checkbox color="default" checked={featurePreview} onChange={this.updateFeatureFlags} />}
                 label={
                     <>
                         Enable Feature Preview
