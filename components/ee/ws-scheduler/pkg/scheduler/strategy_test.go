@@ -22,17 +22,19 @@ var (
 
 func TestDensityAndExperience(t *testing.T) {
 	tests := []struct {
-		Desc          string
-		Broken        string
-		Nodes         []*corev1.Node
-		Pods          []*corev1.Pod
-		ScheduledPod  *corev1.Pod
-		ExpectedNode  string
-		ExpectedError string
+		Desc            string
+		Broken          string
+		RAMSafetyBuffer string
+		Nodes           []*corev1.Node
+		Pods            []*corev1.Pod
+		ScheduledPod    *corev1.Pod
+		ExpectedNode    string
+		ExpectedError   string
 	}{
 		{
-			Desc:         "no node",
-			ScheduledPod: &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "testpod"}},
+			Desc:            "no node",
+			RAMSafetyBuffer: "512Mi",
+			ScheduledPod:    &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "testpod"}},
 			ExpectedError: `No node with enough resources available!
 RAM requested: 0
 Eph. Storage requested: 0
@@ -40,26 +42,29 @@ Nodes:
 `,
 		},
 		{
-			Desc:         "no node with enough RAM",
-			Nodes:        []*corev1.Node{createNode("node1", "10Gi", "0Gi", false, 100)},
-			Pods:         []*corev1.Pod{createNonWorkspacePod("existingPod1", "8Gi", "0Gi", "node1", 10)},
-			ScheduledPod: createWorkspacePod("pod", "6Gi", "0Gi", "", 1000),
+			Desc:            "no node with enough RAM",
+			RAMSafetyBuffer: "512Mi",
+			Nodes:           []*corev1.Node{createNode("node1", "10Gi", "0Gi", false, 100)},
+			Pods:            []*corev1.Pod{createNonWorkspacePod("existingPod1", "8Gi", "0Gi", "node1", 10)},
+			ScheduledPod:    createWorkspacePod("pod", "6Gi", "0Gi", "", 1000),
 			ExpectedError: `No node with enough resources available!
 RAM requested: 6Gi
 Eph. Storage requested: 0
 Nodes:
 - node1:
-  RAM: used 0.000+0.000+8.000 of 10.000, avail 2.000 GiB
+  RAM: used 0.000+0.000+8.000 of 9.500, avail 1.500 GiB
   Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB`,
 		},
 		{
-			Desc:         "single empty node",
-			Nodes:        []*corev1.Node{createNode("node1", "10Gi", "0Gi", false, 100)},
-			ScheduledPod: createWorkspacePod("pod", "6Gi", "0Gi", "", 1000),
-			ExpectedNode: "node1",
+			Desc:            "single empty node",
+			RAMSafetyBuffer: "512Mi",
+			Nodes:           []*corev1.Node{createNode("node1", "10Gi", "0Gi", false, 100)},
+			ScheduledPod:    createWorkspacePod("pod", "6Gi", "0Gi", "", 1000),
+			ExpectedNode:    "node1",
 		},
 		{
-			Desc: "two nodes, one full",
+			Desc:            "two nodes, one full",
+			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
 				createNode("node1", "10Gi", "0Gi", false, 100),
 				createNode("node2", "10Gi", "0Gi", false, 100),
@@ -69,7 +74,8 @@ Nodes:
 			ExpectedNode: "node2",
 		},
 		{
-			Desc: "two nodes, prefer density",
+			Desc:            "two nodes, prefer density",
+			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
 				createNode("node1", "10Gi", "0Gi", false, 100),
 				createNode("node2", "10Gi", "0Gi", false, 100),
@@ -79,7 +85,8 @@ Nodes:
 			ExpectedNode: "node1",
 		},
 		{
-			Desc: "three nodes, prefer with image",
+			Desc:            "three nodes, prefer with image",
+			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
 				createNode("node1", "10Gi", "0Gi", false, 100),
 				createNode("node2", "10Gi", "0Gi", true, 100),
@@ -93,7 +100,8 @@ Nodes:
 			ExpectedNode: "node2",
 		},
 		{
-			Desc: "three nodes, prefer with image in class",
+			Desc:            "three nodes, prefer with image in class",
+			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
 				createNode("node1", "10Gi", "0Gi", false, 100),
 				createNode("node2", "10Gi", "0Gi", false, 100),
@@ -108,7 +116,8 @@ Nodes:
 		},
 		{
 			// We musn't place headless pods on nodes without regular workspaces
-			Desc: "three nodes, place headless pod",
+			Desc:            "three nodes, place headless pod",
+			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
 				createNode("node1", "10Gi", "0Gi", false, 100),
 				createNode("node2", "10Gi", "0Gi", true, 100),
@@ -123,7 +132,8 @@ Nodes:
 			ExpectedNode: "node2",
 		},
 		{
-			Desc: "three empty nodes, place headless pod",
+			Desc:            "three empty nodes, place headless pod",
+			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
 				createNode("node1", "10Gi", "0Gi", false, 100),
 				createNode("node2", "10Gi", "0Gi", true, 100),
@@ -133,7 +143,8 @@ Nodes:
 			ExpectedNode: "node1",
 		},
 		{
-			Desc: "filter full nodes, headless workspaces",
+			Desc:            "filter full nodes, headless workspaces",
+			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
 				createNode("node1", "10Gi", "0Gi", false, 100),
 				createNode("node2", "10Gi", "0Gi", false, 100),
@@ -147,7 +158,8 @@ Nodes:
 		},
 		{
 			// Should choose node1 because it has more free RAM but chooses 2 because node1's pod capacity is depleted
-			Desc: "respect node's pod capacity",
+			Desc:            "respect node's pod capacity",
+			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
 				createNode("node1", "10Gi", "0Gi", false, 0),
 				createNode("node2", "10Gi", "0Gi", false, 100),
@@ -160,7 +172,8 @@ Nodes:
 		},
 		{
 			// Should choose node1 because it has more free RAM but chooses 2 because node1's ephemeral storage is depleted
-			Desc: "respect node's ephemeral storage",
+			Desc:            "respect node's ephemeral storage",
+			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
 				createNode("node1", "10Gi", "3Gi", false, 100),
 				createNode("node2", "10Gi", "15Gi", false, 100),
@@ -173,7 +186,8 @@ Nodes:
 		},
 		{
 			// Throws an error because both nodes have enough RAM but not enough ephemeral storage
-			Desc: "enough RAM but no more ephemeral storage",
+			Desc:            "enough RAM but no more ephemeral storage",
+			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
 				createNode("node1", "10Gi", "3Gi", false, 100),
 				createNode("node2", "10Gi", "7Gi", false, 100),
@@ -187,15 +201,16 @@ RAM requested: 4Gi
 Eph. Storage requested: 5Gi
 Nodes:
 - node2:
-  RAM: used 4.000+0.000+0.000 of 10.000, avail 6.000 GiB
+  RAM: used 4.000+0.000+0.000 of 9.500, avail 5.500 GiB
   Eph. Storage: used 5.000+0.000+0.000 of 7.000, avail 2.000 GiB
 - node1:
-  RAM: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB
+  RAM: used 0.000+0.000+0.000 of 9.500, avail 9.500 GiB
   Eph. Storage: used 0.000+0.000+0.000 of 3.000, avail 3.000 GiB`,
 		},
 		{
 			// Should prefer 1 and 2 over 3, but 1 has not enough pod slots and 2 not enough ephemeral storage
-			Desc: "filter nodes without enough pod slots and ephemeral storage",
+			Desc:            "filter nodes without enough pod slots and ephemeral storage",
+			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
 				createNode("node1", "20Gi", "10Gi", false, 0),
 				createNode("node2", "20Gi", "10Gi", false, 100),
@@ -217,7 +232,8 @@ Nodes:
 				t.Skip(test.Broken)
 			}
 
-			state := sched.ComputeState(test.Nodes, test.Pods, nil)
+			ramSafetyBuffer := res.MustParse(test.RAMSafetyBuffer)
+			state := sched.ComputeState(test.Nodes, test.Pods, nil, &ramSafetyBuffer)
 
 			densityAndExperienceConfig := sched.DefaultDensityAndExperienceConfig()
 			strategy, err := sched.CreateStrategy(sched.StrategyDensityAndExperience, sched.Configuration{

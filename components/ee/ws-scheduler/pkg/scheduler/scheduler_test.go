@@ -93,7 +93,11 @@ func TestGatherPotentialNodesFor(t *testing.T) {
 			objs = append(objs, test.Pod)
 
 			client := fakek8s.NewSimpleClientset(objs...)
-			scheduler := NewScheduler(Configuration{}, client)
+			scheduler, err := NewScheduler(Configuration{}, client)
+			if err != nil {
+				t.Errorf("unexpected error: %+q", err)
+				return
+			}
 
 			ctx, cancel := context.WithCancel(context.Background())
 			scheduler.startInformer(ctx)
@@ -279,7 +283,11 @@ func TestRequiredServices(t *testing.T) {
 			}
 
 			client := fakek8s.NewSimpleClientset(objs...)
-			scheduler := NewScheduler(Configuration{}, client)
+			scheduler, err := NewScheduler(Configuration{}, client)
+			if err != nil {
+				t.Errorf("unexpected error: %+q", err)
+				return
+			}
 
 			ctx, cancel := context.WithCancel(context.Background())
 			scheduler.startInformer(ctx)
