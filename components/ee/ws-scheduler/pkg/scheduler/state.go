@@ -168,8 +168,8 @@ func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding)
 				ram = node.RAM.UsedOther
 				eph = node.EphemeralStorage.UsedOther
 			}
-			ram.Add(GetRequestedRAMForPod(pod))
-			eph.Add(GetRequestedEphemeralStorageForPod(pod))
+			ram.Add(podRAMRequest(pod))
+			eph.Add(podEphemeralStorageRequest(pod))
 		}
 		node.RAM.updateAvailable()
 		node.EphemeralStorage.updateAvailable()
@@ -230,26 +230,21 @@ func (s *State) SortNodesByUsedRegularWorkspaceRAM(order SortOrder) []*Node {
 	return nodes
 }
 
-// SortNodesByAvailableRAMDesc returns the list of nodes from state sorted by .RAM.Available (descending)
-func (s *State) SortNodesByAvailableRAMDesc() []*Node {
+// SortNodesByAvailableRAM returns the list of nodes from state sorted by .RAM.Available
+func (s *State) SortNodesByAvailableRAM(order SortOrder) []*Node {
 	nodes := NodeMapToList(s.Nodes)
 	sort.Slice(nodes, func(i, j int) bool {
+		if order == SortAsc {
+			return nodes[i].RAM.Available.AsDec().Cmp(nodes[j].RAM.Available.AsDec()) <= 0
+		}
+
 		return nodes[i].RAM.Available.AsDec().Cmp(nodes[j].RAM.Available.AsDec()) > 0
 	})
 	return nodes
 }
 
-// SortNodesByAvailableRAMAsc returns the list of nodes from state sorted by .RAM.Available (ascending)
-func (s *State) SortNodesByAvailableRAMAsc() []*Node {
-	nodes := NodeMapToList(s.Nodes)
-	sort.Slice(nodes, func(i, j int) bool {
-		return nodes[i].RAM.Available.AsDec().Cmp(nodes[j].RAM.Available.AsDec()) <= 0
-	})
-	return nodes
-}
-
-// GetRequestedRAMForPod calculates the amount of RAM requested by all containers of the given pod
-func GetRequestedRAMForPod(pod *corev1.Pod) res.Quantity {
+// podRAMRequest calculates the amount of RAM requested by all containers of the given pod
+func podRAMRequest(pod *corev1.Pod) res.Quantity {
 	requestedRAM := res.NewQuantity(0, res.BinarySI)
 	for _, c := range pod.Spec.Containers {
 		requestedRAM.Add(*c.Resources.Requests.Memory())
@@ -257,8 +252,8 @@ func GetRequestedRAMForPod(pod *corev1.Pod) res.Quantity {
 	return *requestedRAM
 }
 
-// GetRequestedEphemeralStorageForPod calculates the amount of ephemeral storage requested by all containers of the given pod
-func GetRequestedEphemeralStorageForPod(pod *corev1.Pod) res.Quantity {
+// podEphemeralStorageRequest calculates the amount of ephemeral storage requested by all containers of the given pod
+func podEphemeralStorageRequest(pod *corev1.Pod) res.Quantity {
 	requestedEphStorage := res.NewQuantity(0, res.BinarySI)
 	for _, c := range pod.Spec.Containers {
 		requestedEphStorage.Add(*c.Resources.Requests.StorageEphemeral())

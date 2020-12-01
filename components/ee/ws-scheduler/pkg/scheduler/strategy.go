@@ -14,7 +14,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	corev1 "k8s.io/api/core/v1"
-	res "k8s.io/apimachinery/pkg/api/resource"
 )
 
 // StrategyName is the type that identifies strategies
@@ -75,7 +74,8 @@ func (e *EvenLoadSpots) Select(state *State, pod *corev1.Pod) (string, error) {
 	allNodes := state.Nodes
 	availableNodes := make([]candidateNode, 0)
 	for _, n := range allNodes {
-		spotsAvailable := int(n.Node.Status.Allocatable.Memory().Value() / podRAMRequest(pod).Value())
+		req := podRAMRequest(pod)
+		spotsAvailable := int(n.Node.Status.Allocatable.Memory().Value() / req.Value())
 		if int64(spotsAvailable) > n.PodSlots.Available {
 			spotsAvailable = int(n.PodSlots.Available)
 		}
@@ -119,19 +119,19 @@ type EvenLoad struct {
 
 // Select will assign pods to the node with the least ressources used
 func (e *EvenLoad) Select(state *State, pod *corev1.Pod) (string, error) {
-	sortedNodes := state.SortNodesByAvailableRAMDesc()
+	sortedNodes := state.SortNodesByAvailableRAM(SortDesc)
 
 	if len(sortedNodes) == 0 {
-		requestedRAM := GetRequestedRAMForPod(pod)
-		requestedEphStorage := GetRequestedEphemeralStorageForPod(pod)
+		requestedRAM := podRAMRequest(pod)
+		requestedEphStorage := podEphemeralStorageRequest(pod)
 		debugStr := DebugStringNodes(sortedNodes)
 		return "", xerrors.Errorf(errorNoNodeWithEnoughResourcesAvailable, requestedRAM.String(), requestedEphStorage.String(), debugStr)
 	}
 
 	candidate := sortedNodes[0]
 	if !fitsOnNode(pod, candidate) {
-		requestedRAM := GetRequestedRAMForPod(pod)
-		requestedEphStorage := GetRequestedEphemeralStorageForPod(pod)
+		requestedRAM := podRAMRequest(pod)
+		requestedEphStorage := podEphemeralStorageRequest(pod)
 		debugStr := DebugStringNodes(sortedNodes)
 		return "", xerrors.Errorf(errorNoNodeWithEnoughResourcesAvailable, requestedRAM.String(), requestedEphStorage.String(), debugStr)
 	}
@@ -163,8 +163,8 @@ func (s *DensityAndExperience) Select(state *State, pod *corev1.Pod) (string, er
 	}
 
 	if len(candidates) == 0 {
-		requestedRAM := GetRequestedRAMForPod(pod)
-		requestedEphStorage := GetRequestedEphemeralStorageForPod(pod)
+		requestedRAM := podRAMRequest(pod)
+		requestedEphStorage := podEphemeralStorageRequest(pod)
 		debugStr := DebugStringNodes(sortedNodes)
 		return "", xerrors.Errorf(errorNoNodeWithEnoughResourcesAvailable, requestedRAM.String(), requestedEphStorage.String(), debugStr)
 	}
@@ -325,20 +325,4 @@ func isHeadlessWorkspace(pod *corev1.Pod) bool {
 
 	val, ok := pod.ObjectMeta.Labels["headless"]
 	return ok && val == "true"
-}
-
-func podRAMRequest(pod *corev1.Pod) *res.Quantity {
-	result := res.NewQuantity(0, res.DecimalSI)
-	for _, c := range pod.Spec.Containers {
-		result.Add(*c.Resources.Requests.Memory())
-	}
-	return result
-}
-
-func podEphemeralStorageRequest(pod *corev1.Pod) *res.Quantity {
-	result := res.NewQuantity(0, res.DecimalSI)
-	for _, c := range pod.Spec.Containers {
-		result.Add(*c.Resources.Requests.StorageEphemeral())
-	}
-	return result
 }
