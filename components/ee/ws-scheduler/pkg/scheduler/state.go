@@ -7,6 +7,7 @@ package scheduler
 import (
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
@@ -205,6 +206,10 @@ func (s *State) GetAssignedPods(node *Node) []*corev1.Pod {
 }
 
 func uniquePods(pods []*corev1.Pod) []*corev1.Pod {
+	if len(pods) == 0 {
+		return pods
+	}
+
 	type value struct {
 		pod   *corev1.Pod
 		index int
@@ -214,16 +219,35 @@ func uniquePods(pods []*corev1.Pod) []*corev1.Pod {
 	for i := 0; i < len(pods); i++ {
 		p := pods[i]
 		existingPod, present := uniqueKeys[p.Name]
+
 		if !present {
 			uniqueKeys[p.Name] = value{
 				pod:   p,
 				index: len(uniqueList),
 			}
 			uniqueList = append(uniqueList, p)
-		} else if existingPod.pod.Generation < p.Generation {
-			// the other pod is newer than the one already in the uniqueList: take that!
-			existingPod.pod = p
-			uniqueList[existingPod.index] = p
+			continue
+		}
+		if existingPod.pod.Generation != 0 || p.Generation != 0 {
+			// we first had to check if any generation field was non-zero, because the Generation field
+			// is optional. It depends on the Kubernetes implementation if it's present at all.
+			if p.Generation > existingPod.pod.Generation {
+				// the other pod is newer than the one already in the uniqueList: take that!
+				existingPod.pod = p
+				uniqueList[existingPod.index] = p
+			}
+			continue
+		}
+		if existingPod.pod.ResourceVersion != "" && p.ResourceVersion != "" {
+			// The docs say to intepret this value as opaque - in most cases the resource version is
+			// a sequence number coming from etcd, hence can be used to impose order.
+			existingRev, err0 := strconv.ParseInt(existingPod.pod.ResourceVersion, 10, 64)
+			newRev, err1 := strconv.ParseInt(p.ResourceVersion, 10, 64)
+			if (err0 == nil && err1 == nil) && newRev > existingRev {
+				// the other pod is newer than the one already in the uniqueList: take that!
+				existingPod.pod = p
+				uniqueList[existingPod.index] = p
+			}
 		}
 	}
 	return uniqueList
