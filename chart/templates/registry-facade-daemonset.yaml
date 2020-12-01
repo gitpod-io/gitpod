@@ -48,6 +48,8 @@ spec:
         - name: registry
           containerPort: {{ $comp.ports.registry.containerPort }}
           hostPort: {{ $comp.ports.registry.servicePort }}
+        - name: metrics
+          containerPort: 9500
         securityContext:
           privileged: false
           runAsUser: 1000
