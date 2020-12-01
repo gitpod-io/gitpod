@@ -13,6 +13,7 @@ require (
 	github.com/googleapis/gnostic v0.3.1 // indirect
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/opentracing/opentracing-go v1.1.0
+	github.com/prometheus/client_golang v1.1.0
 	github.com/sirupsen/logrus v1.4.2
 	github.com/spf13/cobra v0.0.4
 	golang.org/x/crypto v0.0.0-20191112222119-e1110fd1c708 // indirect

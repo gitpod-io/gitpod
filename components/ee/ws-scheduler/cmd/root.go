@@ -82,8 +82,14 @@ func getConfig() *config {
 }
 
 type config struct {
-	Scheduler scheduler.Configuration `json:"scheduler"`
-	Scaler    *scaler.Configuration   `json:"scaler,omitempty"`
+	Scheduler  scheduler.Configuration `json:"scheduler"`
+	Scaler     *scaler.Configuration   `json:"scaler,omitempty"`
+	Prometheus struct {
+		Addr string `json:"address"`
+	} `json:"prometheus"`
+	PProf struct {
+		Addr string `json:"address"`
+	} `json:"pprof"`
 }
 
 func newClientSet() (*kubernetes.Clientset, error) {
