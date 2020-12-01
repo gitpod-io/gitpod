@@ -30,6 +30,7 @@ packages:
       - components/docker-up:docker
       - dev/blowtorch:app
       - dev/gpctl:app
+      - dev/loadgen:app
   - name: all-apps
     type: generic
     deps:
