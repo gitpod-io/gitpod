@@ -34,6 +34,15 @@ tasks:
   - name: Go
     init: leeway exec --filter-type go -v -- go get -v ./...
     openMode: split-right
+  - name: Docker
+    command: |
+      if [ -x "$(which docker-up)" ] 
+      then
+        sudo docker-up
+      else 
+        echo "Enable 'Feature Preview' in your Gitpod profile for Docker support."
+      fi
+    openMode: tab-after
 vscode:
   extensions:
     - hangxingliu.vscode-nginx-conf-hint@0.1.0:UATTe2sTFfCYWQ3jw4IRsw==
