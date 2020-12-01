@@ -27,6 +27,7 @@ import (
 	"golang.org/x/xerrors"
 
 	corev1 "k8s.io/api/core/v1"
+	res "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/informers"
@@ -48,13 +49,19 @@ const (
 
 	// rescheduleInterval is the interval in which we scan for yet-unschedulable pods and try to schedule them again
 	rescheduleInterval = 2 * time.Second
+
+	// This value serves as safety-buffer to make sure we do not overbook nodes.
+	// Test have shown that we tend to do that, allthough we currently are not able to understand why that is the case.
+	// It seems that "available RAM" calculation is slightly off between kubernetes master and scheduler
+	defaultRAMSafetyBuffer = "512Mi"
 )
 
 // Scheduler tries to pack workspaces as closely as possible while trying to keep
 // an even load across nodes.
 type Scheduler struct {
-	Config    Configuration
-	Clientset kubernetes.Interface
+	Config          Configuration
+	Clientset       kubernetes.Interface
+	RAMSafetyBuffer res.Quantity
 
 	pods              infov1.PodInformer
 	nodes             infov1.NodeInformer
@@ -65,13 +72,22 @@ type Scheduler struct {
 }
 
 // NewScheduler creates a new scheduler
-func NewScheduler(config Configuration, clientset kubernetes.Interface) *Scheduler {
+func NewScheduler(config Configuration, clientset kubernetes.Interface) (*Scheduler, error) {
+	ramSafetyBuffer, err := res.ParseQuantity(config.RAMSafetyBuffer)
+	if err != nil {
+		ramSafetyBuffer, err = res.ParseQuantity(defaultRAMSafetyBuffer)
+		if err != nil {
+			return nil, xerrors.Errorf("unable to parse RAMSafetBuffer")
+		}
+	}
+
 	return &Scheduler{
-		Config:    config,
-		Clientset: clientset,
+		Config:          config,
+		Clientset:       clientset,
+		RAMSafetyBuffer: ramSafetyBuffer,
 
 		didShutdown: make(chan bool, 1),
-	}
+	}, nil
 }
 
 // Start starts the scheduler - this function returns once we're connected to Kubernetes proper
@@ -355,7 +371,7 @@ func (s *Scheduler) buildState(ctx context.Context, pod *corev1.Pod) (state *Sta
 		return nil, xerrors.Errorf("cannot list all pods: %w", podsErr)
 	}
 
-	state = ComputeState(potentialNodes, allPods, s.localBindingCache.getListOfBindings())
+	state = ComputeState(potentialNodes, allPods, s.localBindingCache.getListOfBindings(), &s.RAMSafetyBuffer)
 
 	// The required node services is basically PodAffinity light. They limit the nodes we can schedule
 	// workspace pods to based on other pods running on that node. We do this because we require that

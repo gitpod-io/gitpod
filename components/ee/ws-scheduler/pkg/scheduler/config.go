@@ -22,6 +22,8 @@ type Configuration struct {
 	StrategyName StrategyName `json:"strategyName"`
 	// DensityAndExperienceConfig is the (optional) config for the DensityAndExperience strategy
 	DensityAndExperienceConfig *DensityAndExperienceConfig `json:"densityAndExperienceConfig,omitempty"`
+	// RAMSafetyBuffer reduces the amount of available RAM per node and is meant to make sure we do not overbook nodes
+	RAMSafetyBuffer string `json:"ramSafetyBuffer,omitempty"`
 }
 
 // DensityAndExperienceConfig is the config for the DensityAndExperience strategy

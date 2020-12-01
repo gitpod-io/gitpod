@@ -228,7 +228,9 @@ func buildCurrentState(clientSet *kubernetes.Clientset) (*scheduler.State, error
 	for i := range allPods.Items {
 		pods[i] = &allPods.Items[i]
 	}
-	state := scheduler.ComputeState(potentialNodes, pods, nil)
+
+	ramSafetyBuffer := res.MustParse("0Mi")
+	state := scheduler.ComputeState(potentialNodes, pods, nil, &ramSafetyBuffer)
 	return state, nil
 }
 
