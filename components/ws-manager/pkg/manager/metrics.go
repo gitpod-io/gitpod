@@ -22,7 +22,7 @@ func (m *Manager) RegisterMetrics(reg prometheus.Registerer) error {
 }
 
 const (
-	metricsNamespace          = "wsman"
+	metricsNamespace          = "gitpod_ws_manager"
 	metricsWorkspaceSubsystem = "workspace"
 )
 
