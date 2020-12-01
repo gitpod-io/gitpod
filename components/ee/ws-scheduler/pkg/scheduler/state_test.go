@@ -25,6 +25,7 @@ func TestState(t *testing.T) {
 		Desc        string
 		Nodes       []*corev1.Node
 		Pods        []*corev1.Pod
+		Bindings    []*sched.Binding
 		Expectation string
 	}{
 		{
@@ -118,11 +119,26 @@ func TestState(t *testing.T) {
   RAM: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB
   Eph. Storage: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB`,
 		},
+		{
+			Desc: "bound but not listed",
+			Nodes: []*corev1.Node{
+				createNode("node1", "10Gi", "20Gi", false, 100),
+			},
+			Bindings: []*sched.Binding{
+				{
+					Pod:      createWorkspacePod("hp1", "1Gi", "5Gi", "node1", 10),
+					NodeName: "node1",
+				},
+			},
+			Expectation: `- node1:
+  RAM: used 1.000+0.000+0.000 of 10.000, avail 9.000 GiB
+  Eph. Storage: used 5.000+0.000+0.000 of 20.000, avail 15.000 GiB`,
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
-			state := sched.ComputeState(test.Nodes, test.Pods, nil)
+			state := sched.ComputeState(test.Nodes, test.Pods, test.Bindings)
 
 			nodes := state.SortNodesByAvailableRAM(sched.SortAsc)
 			// in some tests the RAM sort order is not stable as nodes have the same amount of RAM.

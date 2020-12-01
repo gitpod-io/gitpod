@@ -105,6 +105,12 @@ func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding)
 		podToNode[p.Name] = p.Spec.NodeName
 	}
 	for _, b := range bindings {
+		if _, exists := pds[b.Pod.Name]; !exists {
+			// We've found a binding for a pod that we don't yet see in the list of pods.
+			// This can happen if we're listing faster than the Pod informer updates.
+			pds[b.Pod.Name] = b.Pod
+		}
+
 		podToNode[b.Pod.Name] = b.NodeName
 	}
 
