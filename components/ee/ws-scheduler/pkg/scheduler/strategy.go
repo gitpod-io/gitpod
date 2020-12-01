@@ -248,10 +248,10 @@ func freshWorkspaceCount(state *State, node *Node, freshSeconds int) int {
 	assignedPods := state.GetAssignedPods(node)
 	var count int
 	for _, p := range assignedPods {
-		if !isWorkspace(p.Pod) {
+		if !isWorkspace(p) {
 			continue
 		}
-		if time.Since(p.Pod.ObjectMeta.CreationTimestamp.Time).Seconds() < float64(freshSeconds) {
+		if time.Since(p.ObjectMeta.CreationTimestamp.Time).Seconds() < float64(freshSeconds) {
 			count = count + 1
 		}
 	}
@@ -303,10 +303,10 @@ func regularWorkspaceCount(state *State, node *Node) int {
 	assignedPods := state.GetAssignedPods(node)
 	var count int
 	for _, p := range assignedPods {
-		if !isWorkspace(p.Pod) {
+		if !isWorkspace(p) {
 			continue
 		}
-		if isHeadlessWorkspace(p.Pod) {
+		if isHeadlessWorkspace(p) {
 			continue
 		}
 

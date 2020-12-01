@@ -109,9 +109,9 @@ func createPod(clientSet *kubernetes.Clientset, scheduler string, namespace stri
 				NodeAffinity: &corev1.NodeAffinity{
 					RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
 						NodeSelectorTerms: []corev1.NodeSelectorTerm{
-							corev1.NodeSelectorTerm{
+							{
 								MatchExpressions: []corev1.NodeSelectorRequirement{
-									corev1.NodeSelectorRequirement{
+									{
 										Key:      "gitpod.io/workload_workspace",
 										Operator: corev1.NodeSelectorOpIn,
 										Values:   []string{"true"},
@@ -127,7 +127,7 @@ func createPod(clientSet *kubernetes.Clientset, scheduler string, namespace stri
 				RunAsNonRoot: &boolTrue,
 			},
 			Containers: []corev1.Container{
-				corev1.Container{
+				{
 					Name:    "main",
 					Image:   "eu.gcr.io/gitpod-dev/workspace-images:7e01b3299b178278c88c5a4606bdeed09059e94e8a7a193b249606028cfd13dd",
 					Command: []string{"bash", "-c", "while true; do sleep 2; echo 'sleeping...'; done"},
