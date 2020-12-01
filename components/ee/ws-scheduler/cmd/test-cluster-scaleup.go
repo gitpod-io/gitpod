@@ -224,14 +224,11 @@ func buildCurrentState(clientSet *kubernetes.Clientset) (*scheduler.State, error
 		return nil, err
 	}
 
-	state := scheduler.NewState()
-	for i := 0; i < len(allPods.Items); i++ {
-		state.UpdatePod(&allPods.Items[i])
+	pods := make([]*corev1.Pod, len(allPods.Items))
+	for i := range allPods.Items {
+		pods[i] = &allPods.Items[i]
 	}
-	for _, n := range potentialNodes {
-		state.UpdateNode(n)
-	}
-
+	state := scheduler.ComputeState(potentialNodes, pods, nil)
 	return state, nil
 }
 

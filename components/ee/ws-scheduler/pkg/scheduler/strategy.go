@@ -245,9 +245,8 @@ func fitsOnNode(pod *corev1.Pod, node *Node) bool {
 }
 
 func freshWorkspaceCount(state *State, node *Node, freshSeconds int) int {
-	assignedPods := state.GetAssignedPods(node)
 	var count int
-	for _, p := range assignedPods {
+	for _, p := range node.Pods {
 		if !isWorkspace(p) {
 			continue
 		}
@@ -300,9 +299,8 @@ func classifyNode(state *State, node *Node) int {
 // The returned count will not include headless workspaces. E.g. if a node has only headless
 // workspaces running on it we'd return zero.
 func regularWorkspaceCount(state *State, node *Node) int {
-	assignedPods := state.GetAssignedPods(node)
 	var count int
-	for _, p := range assignedPods {
+	for _, p := range node.Pods {
 		if !isWorkspace(p) {
 			continue
 		}

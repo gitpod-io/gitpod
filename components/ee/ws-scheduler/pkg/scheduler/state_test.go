@@ -122,9 +122,7 @@ func TestState(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
-			state := sched.NewState()
-			state.UpdateNodes(test.Nodes)
-			state.UpdatePods(test.Pods)
+			state := sched.ComputeState(test.Nodes, test.Pods, nil)
 
 			nodes := state.SortNodesByAvailableRAMAsc()
 			// in some tests the RAM sort order is not stable as nodes have the same amount of RAM.

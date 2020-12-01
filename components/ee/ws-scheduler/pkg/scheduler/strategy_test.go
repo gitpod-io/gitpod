@@ -217,9 +217,7 @@ Nodes:
 				t.Skip(test.Broken)
 			}
 
-			state := sched.NewState()
-			state.UpdateNodes(test.Nodes)
-			state.UpdatePods(test.Pods)
+			state := sched.ComputeState(test.Nodes, test.Pods, nil)
 
 			densityAndExperienceConfig := sched.DefaultDensityAndExperienceConfig()
 			strategy, err := sched.CreateStrategy(sched.StrategyDensityAndExperience, sched.Configuration{

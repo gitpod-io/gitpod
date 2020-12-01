@@ -350,12 +350,7 @@ func (s *Scheduler) buildState(ctx context.Context, pod *corev1.Pod) (state *Sta
 		return nil, xerrors.Errorf("cannot list all pods: %w", podsErr)
 	}
 
-	state = NewState()
-	state.UpdateNodes(potentialNodes)
-	state.UpdatePods(allPods)
-	// Don't forget to take into account the bindings we just created (e.g., are still in the cache)
-	// to avoid assigning slots multiple times
-	state.UpdateBindings(s.localBindingCache.getListOfBindings())
+	state = ComputeState(potentialNodes, allPods, s.localBindingCache.getListOfBindings())
 
 	// The required node services is basically PodAffinity light. They limit the nodes we can schedule
 	// workspace pods to based on other pods running on that node. We do this because we require that
