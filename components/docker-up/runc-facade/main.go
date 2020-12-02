@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"syscall"
 
 	"github.com/opencontainers/runtime-spec/specs-go"
@@ -30,6 +31,12 @@ func main() {
 	log := logrus.New()
 	log.SetLevel(logrus.DebugLevel)
 
+	var err error
+	runcPath, err := exec.LookPath("runc")
+	if err != nil {
+		log.WithError(err).Fatal("runc not found")
+	}
+
 	var runcDirect bool
 	for _, arg := range os.Args {
 		if arg == "-v" || arg == "--version" {
@@ -38,20 +45,19 @@ func main() {
 		}
 	}
 	if runcDirect {
-		err := syscall.Exec("/usr/sbin/runc", os.Args, os.Environ())
+		err = syscall.Exec(runcPath, os.Args, os.Environ())
 		if err != nil {
 			panic(err)
 		}
 	}
 
-	var err error
 	switch os.Args[0] {
 	case cmdMountProc:
 		err = mountProc()
 	case cmdUnmountProc:
 		err = unmountProc()
 	default:
-		err = runc()
+		err = runc(runcPath)
 	}
 	if err != nil {
 		log.WithError(err).Fatal("failed")
@@ -86,7 +92,7 @@ func unmountProc() error {
 	return nil
 }
 
-func runc() error {
+func runc(runcPath string) error {
 	fc, err := ioutil.ReadFile("config.json")
 	if err != nil {
 		return fmt.Errorf("cannot read config.json: %w", err)
@@ -117,9 +123,9 @@ func runc() error {
 		}
 	}
 
-	err = syscall.Exec("/usr/sbin/runc", os.Args, os.Environ())
+	err = syscall.Exec(runcPath, os.Args, os.Environ())
 	if err != nil {
-		return fmt.Errorf("exec runc: %w", err)
+		return fmt.Errorf("exec %s: %w", runcPath, err)
 	}
 	return nil
 }
