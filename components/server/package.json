@@ -49,7 +49,7 @@
     "express-mysql-session": "^2.1.0",
     "express-session": "^1.15.6",
     "fs-extra": "^6.0.1",
-    "gitlab": "^14.2.2",
+    "@gitbeaker/node": "^25.6.0",
     "google-protobuf": "^3.8.0-rc.1",
     "graphql": "^14.6.0",
     "graphql-tools": "^4.0.7",
