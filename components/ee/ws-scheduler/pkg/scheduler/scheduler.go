@@ -219,10 +219,12 @@ func (s *Scheduler) startInformer(ctx context.Context) (schedulerQueue chan *cor
 			}
 
 			// If we see a pod that has been scheduled successfully: Delete from local scheduled_store to avoid leaking memory
-			// Note: Make sure we do not clear the entry to early, especially if the scheduling might still fail.
-			//       'nodename != "" && note: phase == "pending"' for instance might fail with 'OutOfMemory'. Removing this
-			//		entry to early might lead to us making the same mistake again.
-			if pod.Spec.NodeName != "" && pod.Status.Phase != corev1.PodPending {
+			// Note: We _might_ delete entries from localBindingCache too early here, leading to 'OutOfMemory'.
+			//       This might happen if a pod has been scheduled (phase=="pending" && nodeName!=""), we removed it, and the
+			//		scheduler cannot take that info into account because we just removed.
+			//      But we cannot implement an exception for that case, because it leads to leaking localBindingCache entries,
+			//      because some pods are removed in the "pending" phase directly.
+			if pod.Spec.NodeName != "" {
 				s.localBindingCache.delete(pod.Name)
 			}
 
