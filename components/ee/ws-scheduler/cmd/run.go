@@ -44,12 +44,13 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal("cannot create scheduler")
 		}
 		schedulerCtx, cancelScheduler := context.WithCancel(context.Background())
-		err = scheduler.Start(schedulerCtx)
-		if err != nil {
-			log.WithError(err).Fatal("cannot start scheduler")
-			cancelScheduler()
-			return
-		}
+		go func() {
+			err = scheduler.Start(schedulerCtx)
+			if err != nil {
+				cancelScheduler()
+				log.WithError(err).Fatal("cannot start scheduler")
+			}
+		}()
 		defer func() {
 			log.Info("ws-scheduler interrupted; shutting down...")
 			cancelScheduler()
