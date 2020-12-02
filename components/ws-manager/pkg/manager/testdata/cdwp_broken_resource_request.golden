@@ -1,0 +1,12 @@
+{
+    "reason": {
+        "metadata": {
+            "creationTimestamp": null
+        },
+        "spec": {
+            "containers": null
+        },
+        "status": {}
+    },
+    "error": "cannot create definite workspace pod: cannot create workspace container: cannot parse workspace container requests: cpu: quantities must match the regular expression '^([+-]?[0-9.]+)([eEinumkKMGTP]*[-+]?[0-9]*)$'"
+}

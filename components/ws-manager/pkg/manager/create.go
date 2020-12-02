@@ -506,15 +506,15 @@ func removeVolume(pod *corev1.Pod, name string) {
 func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) (*corev1.Container, error) {
 	limits, err := m.Config.Container.Workspace.Limits.ResourceList()
 	if err != nil {
-		return nil, xerrors.Errorf("cannot parse Workspace container limits: %w", err)
+		return nil, xerrors.Errorf("cannot parse workspace container limits: %w", err)
 	}
 	requests, err := m.Config.Container.Workspace.Requests.ResourceList()
 	if err != nil {
-		return nil, xerrors.Errorf("cannot parse Workspace container requests: %w", err)
+		return nil, xerrors.Errorf("cannot parse workspace container requests: %w", err)
 	}
 	env, err := m.createWorkspaceEnvironment(startContext)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot create Workspace env: %w", err)
+		return nil, xerrors.Errorf("cannot create workspace env: %w", err)
 	}
 	sec, err := m.createDefaultSecurityContext()
 	if err != nil {
