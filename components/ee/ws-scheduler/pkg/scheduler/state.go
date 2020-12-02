@@ -278,13 +278,20 @@ func NodeMapToList(m map[string]*Node) []*Node {
 
 // DebugStringResourceUsage returns a debug string describing the used resources
 func (r *ResourceUsage) DebugStringResourceUsage() string {
-	usedRegularGibs := float64(r.UsedRegular.Value()/1024/1024) / float64(1024)
-	usedHeadlessGibs := float64(r.UsedHeadless.Value()/1024/1024) / float64(1024)
-	usedOtherGibs := float64(r.UsedOther.Value()/1024/1024) / float64(1024)
-	totalGibs := float64(r.Total.Value()/1024/1024) / float64(1024)
-	availableGibs := float64(r.Available.Value()/1024/1024) / float64(1024)
+	usedRegularGibs := toMiString(r.UsedRegular)
+	usedHeadlessGibs := toMiString(r.UsedHeadless)
+	usedOtherGibs := toMiString(r.UsedOther)
+	totalGibs := toMiString(r.Total)
+	availableGibs := toMiString(r.Available)
 
-	return fmt.Sprintf("used %0.03f+%0.03f+%0.3f of %0.3f, avail %0.03f GiB", usedRegularGibs, usedHeadlessGibs, usedOtherGibs, totalGibs, availableGibs)
+	return fmt.Sprintf("used %s+%s+%s of %s, avail %s Mi", usedRegularGibs, usedHeadlessGibs, usedOtherGibs, totalGibs, availableGibs)
+}
+
+func toMiString(q *res.Quantity) string {
+	cv, _ := q.AsScale(res.Mega) // we don't care about sub-meg precision because it is for displaying only
+	var out []byte
+	out, _ = cv.AsCanonicalBytes(out) // we already know the exponent as we set scale above
+	return string(out)
 }
 
 // DebugStringNodes prints available RAM per node as string for debug purposes

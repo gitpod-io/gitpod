@@ -44,74 +44,74 @@ Nodes:
 		{
 			Desc:            "no node with enough RAM",
 			RAMSafetyBuffer: "512Mi",
-			Nodes:           []*corev1.Node{createNode("node1", "10Gi", "0Gi", false, 100)},
-			Pods:            []*corev1.Pod{createNonWorkspacePod("existingPod1", "8Gi", "0Gi", "node1", 10)},
-			ScheduledPod:    createWorkspacePod("pod", "6Gi", "0Gi", "", 1000),
+			Nodes:           []*corev1.Node{createNode("node1", "10000Mi", "0Mi", false, 100)},
+			Pods:            []*corev1.Pod{createNonWorkspacePod("existingPod1", "8000Mi", "0Mi", "node1", 10)},
+			ScheduledPod:    createWorkspacePod("pod", "6000Mi", "0Mi", "", 1000),
 			ExpectedError: `No node with enough resources available!
-RAM requested: 6Gi
+RAM requested: 6000Mi
 Eph. Storage requested: 0
 Nodes:
 - node1:
-  RAM: used 0.000+0.000+8.000 of 9.500, avail 1.500 GiB
-  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB`,
+  RAM: used 0+0+8389 of 9949, avail 1561 Mi
+  Eph. Storage: used 0+0+0 of 0, avail 0 Mi`,
 		},
 		{
 			Desc:            "single empty node",
 			RAMSafetyBuffer: "512Mi",
-			Nodes:           []*corev1.Node{createNode("node1", "10Gi", "0Gi", false, 100)},
-			ScheduledPod:    createWorkspacePod("pod", "6Gi", "0Gi", "", 1000),
+			Nodes:           []*corev1.Node{createNode("node1", "10000Mi", "0Mi", false, 100)},
+			ScheduledPod:    createWorkspacePod("pod", "6000Mi", "0Mi", "", 1000),
 			ExpectedNode:    "node1",
 		},
 		{
 			Desc:            "two nodes, one full",
 			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
-				createNode("node1", "10Gi", "0Gi", false, 100),
-				createNode("node2", "10Gi", "0Gi", false, 100),
+				createNode("node1", "10000Mi", "0Mi", false, 100),
+				createNode("node2", "10000Mi", "0Mi", false, 100),
 			},
-			Pods:         []*corev1.Pod{createNonWorkspacePod("existingPod1", "8Gi", "0Gi", "node1", 10)},
-			ScheduledPod: createWorkspacePod("pod", "6Gi", "0Gi", "", 1000),
+			Pods:         []*corev1.Pod{createNonWorkspacePod("existingPod1", "8000Mi", "0Mi", "node1", 10)},
+			ScheduledPod: createWorkspacePod("pod", "6000Mi", "0Mi", "", 1000),
 			ExpectedNode: "node2",
 		},
 		{
 			Desc:            "two nodes, prefer density",
 			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
-				createNode("node1", "10Gi", "0Gi", false, 100),
-				createNode("node2", "10Gi", "0Gi", false, 100),
+				createNode("node1", "10000Mi", "0Mi", false, 100),
+				createNode("node2", "10000Mi", "0Mi", false, 100),
 			},
-			Pods:         []*corev1.Pod{createWorkspacePod("existingPod1", "1Gi", "0Gi", "node1", 10)},
-			ScheduledPod: createWorkspacePod("pod", "6Gi", "0Gi", "", 1000),
+			Pods:         []*corev1.Pod{createWorkspacePod("existingPod1", "1000Mi", "0Mi", "node1", 10)},
+			ScheduledPod: createWorkspacePod("pod", "6000Mi", "0Mi", "", 1000),
 			ExpectedNode: "node1",
 		},
 		{
 			Desc:            "three nodes, prefer with image",
 			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
-				createNode("node1", "10Gi", "0Gi", false, 100),
-				createNode("node2", "10Gi", "0Gi", true, 100),
-				createNode("node3", "10Gi", "0Gi", false, 100),
+				createNode("node1", "10000Mi", "0Mi", false, 100),
+				createNode("node2", "10000Mi", "0Mi", true, 100),
+				createNode("node3", "10000Mi", "0Mi", false, 100),
 			},
 			Pods: []*corev1.Pod{
-				createWorkspacePod("existingPod1", "1.5Gi", "0Gi", "node1", 10),
-				createWorkspacePod("existingPod2", "1Gi", "0Gi", "node2", 10),
+				createWorkspacePod("existingPod1", "1500Mi", "0Mi", "node1", 10),
+				createWorkspacePod("existingPod2", "1000Mi", "0Mi", "node2", 10),
 			},
-			ScheduledPod: createWorkspacePod("pod", "6Gi", "0Gi", "", 1000),
+			ScheduledPod: createWorkspacePod("pod", "6000Mi", "0Mi", "", 1000),
 			ExpectedNode: "node2",
 		},
 		{
 			Desc:            "three nodes, prefer with image in class",
 			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
-				createNode("node1", "10Gi", "0Gi", false, 100),
-				createNode("node2", "10Gi", "0Gi", false, 100),
-				createNode("node3", "10Gi", "0Gi", true, 100),
+				createNode("node1", "10000Mi", "0Mi", false, 100),
+				createNode("node2", "10000Mi", "0Mi", false, 100),
+				createNode("node3", "10000Mi", "0Mi", true, 100),
 			},
 			Pods: []*corev1.Pod{
-				createWorkspacePod("existingPod1", "1.5Gi", "0Gi", "node1", 10),
-				createWorkspacePod("existingPod2", "1Gi", "0Gi", "node2", 10),
+				createWorkspacePod("existingPod1", "1500Mi", "0Mi", "node1", 10),
+				createWorkspacePod("existingPod2", "1000Mi", "0Mi", "node2", 10),
 			},
-			ScheduledPod: createWorkspacePod("pod", "6Gi", "0Gi", "", 1000),
+			ScheduledPod: createWorkspacePod("pod", "6000Mi", "0Mi", "", 1000),
 			ExpectedNode: "node1",
 		},
 		{
@@ -119,41 +119,41 @@ Nodes:
 			Desc:            "three nodes, place headless pod",
 			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
-				createNode("node1", "10Gi", "0Gi", false, 100),
-				createNode("node2", "10Gi", "0Gi", true, 100),
-				createNode("node3", "10Gi", "0Gi", true, 100),
+				createNode("node1", "10000Mi", "0Mi", false, 100),
+				createNode("node2", "10000Mi", "0Mi", true, 100),
+				createNode("node3", "10000Mi", "0Mi", true, 100),
 			},
 			Pods: []*corev1.Pod{
-				createWorkspacePod("existingPod1", "1.5Gi", "0Gi", "node1", 10),
-				createWorkspacePod("existingPod2", "1Gi", "0Gi", "node2", 10),
-				createHeadlessWorkspacePod("hpod", "0.5Gi", "0Gi", "node3", 1000),
+				createWorkspacePod("existingPod1", "1500Mi", "0Mi", "node1", 10),
+				createWorkspacePod("existingPod2", "1000Mi", "0Mi", "node2", 10),
+				createHeadlessWorkspacePod("hpod", "500Mi", "0Mi", "node3", 1000),
 			},
-			ScheduledPod: createHeadlessWorkspacePod("pod", "6Gi", "0Gi", "", 1000),
+			ScheduledPod: createHeadlessWorkspacePod("pod", "6000Mi", "0Mi", "", 1000),
 			ExpectedNode: "node2",
 		},
 		{
 			Desc:            "three empty nodes, place headless pod",
 			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
-				createNode("node1", "10Gi", "0Gi", false, 100),
-				createNode("node2", "10Gi", "0Gi", true, 100),
-				createNode("node3", "10Gi", "0Gi", true, 100),
+				createNode("node1", "10000Mi", "0Mi", false, 100),
+				createNode("node2", "10000Mi", "0Mi", true, 100),
+				createNode("node3", "10000Mi", "0Mi", true, 100),
 			},
-			ScheduledPod: createHeadlessWorkspacePod("pod", "6Gi", "0Gi", "", 1000),
+			ScheduledPod: createHeadlessWorkspacePod("pod", "6000Mi", "0Mi", "", 1000),
 			ExpectedNode: "node1",
 		},
 		{
 			Desc:            "filter full nodes, headless workspaces",
 			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
-				createNode("node1", "10Gi", "0Gi", false, 100),
-				createNode("node2", "10Gi", "0Gi", false, 100),
+				createNode("node1", "10000Mi", "0Mi", false, 100),
+				createNode("node2", "10000Mi", "0Mi", false, 100),
 			},
 			Pods: []*corev1.Pod{
-				createHeadlessWorkspacePod("existingPod1", "4Gi", "0Gi", "node1", 10),
-				createWorkspacePod("existingPod2", "4Gi", "0Gi", "node1", 10),
+				createHeadlessWorkspacePod("existingPod1", "4000Mi", "0Mi", "node1", 10),
+				createWorkspacePod("existingPod2", "4000Mi", "0Mi", "node1", 10),
 			},
-			ScheduledPod: createWorkspacePod("pod", "4Gi", "0Gi", "", 10),
+			ScheduledPod: createWorkspacePod("pod", "4000Mi", "0Mi", "", 10),
 			ExpectedNode: "node2",
 		},
 		{
@@ -161,13 +161,13 @@ Nodes:
 			Desc:            "respect node's pod capacity",
 			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
-				createNode("node1", "10Gi", "0Gi", false, 0),
-				createNode("node2", "10Gi", "0Gi", false, 100),
+				createNode("node1", "10000Mi", "0Mi", false, 0),
+				createNode("node2", "10000Mi", "0Mi", false, 100),
 			},
 			Pods: []*corev1.Pod{
-				createWorkspacePod("existingPod1", "4Gi", "0Gi", "node2", 10),
+				createWorkspacePod("existingPod1", "4000Mi", "0Mi", "node2", 10),
 			},
-			ScheduledPod: createWorkspacePod("new pod", "4Gi", "0Gi", "node1", 10),
+			ScheduledPod: createWorkspacePod("new pod", "4000Mi", "0Mi", "node1", 10),
 			ExpectedNode: "node2",
 		},
 		{
@@ -175,13 +175,13 @@ Nodes:
 			Desc:            "respect node's ephemeral storage",
 			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
-				createNode("node1", "10Gi", "3Gi", false, 100),
-				createNode("node2", "10Gi", "15Gi", false, 100),
+				createNode("node1", "10000Mi", "3000Mi", false, 100),
+				createNode("node2", "10000Mi", "15000Mi", false, 100),
 			},
 			Pods: []*corev1.Pod{
-				createWorkspacePod("existingPod1", "4Gi", "5Gi", "node2", 10),
+				createWorkspacePod("existingPod1", "4000Mi", "5000Mi", "node2", 10),
 			},
-			ScheduledPod: createWorkspacePod("new pod", "4Gi", "5Gi", "node1", 10),
+			ScheduledPod: createWorkspacePod("new pod", "4000Mi", "5000Mi", "node1", 10),
 			ExpectedNode: "node2",
 		},
 		{
@@ -189,39 +189,39 @@ Nodes:
 			Desc:            "enough RAM but no more ephemeral storage",
 			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
-				createNode("node1", "10Gi", "3Gi", false, 100),
-				createNode("node2", "10Gi", "7Gi", false, 100),
+				createNode("node1", "10000Mi", "3000Mi", false, 100),
+				createNode("node2", "10000Mi", "7000Mi", false, 100),
 			},
 			Pods: []*corev1.Pod{
-				createWorkspacePod("existingPod1", "4Gi", "5Gi", "node2", 10),
+				createWorkspacePod("existingPod1", "4000Mi", "5000Mi", "node2", 10),
 			},
-			ScheduledPod: createWorkspacePod("new pod", "4Gi", "5Gi", "node1", 10),
+			ScheduledPod: createWorkspacePod("new pod", "4000Mi", "5000Mi", "node1", 10),
 			ExpectedError: `No node with enough resources available!
-RAM requested: 4Gi
-Eph. Storage requested: 5Gi
+RAM requested: 4000Mi
+Eph. Storage requested: 5000Mi
 Nodes:
 - node2:
-  RAM: used 4.000+0.000+0.000 of 9.500, avail 5.500 GiB
-  Eph. Storage: used 5.000+0.000+0.000 of 7.000, avail 2.000 GiB
+  RAM: used 4195+0+0 of 9949, avail 5755 Mi
+  Eph. Storage: used 5243+0+0 of 7341, avail 2098 Mi
 - node1:
-  RAM: used 0.000+0.000+0.000 of 9.500, avail 9.500 GiB
-  Eph. Storage: used 0.000+0.000+0.000 of 3.000, avail 3.000 GiB`,
+  RAM: used 0+0+0 of 9949, avail 9949 Mi
+  Eph. Storage: used 0+0+0 of 3146, avail 3146 Mi`,
 		},
 		{
 			// Should prefer 1 and 2 over 3, but 1 has not enough pod slots and 2 not enough ephemeral storage
 			Desc:            "filter nodes without enough pod slots and ephemeral storage",
 			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
-				createNode("node1", "20Gi", "10Gi", false, 0),
-				createNode("node2", "20Gi", "10Gi", false, 100),
-				createNode("node3", "20Gi", "10Gi", false, 100),
+				createNode("node1", "20000Mi", "10000Mi", false, 0),
+				createNode("node2", "20000Mi", "10000Mi", false, 100),
+				createNode("node3", "20000Mi", "10000Mi", false, 100),
 			},
 			Pods: []*corev1.Pod{
-				createWorkspacePod("existingPod1", "4Gi", "5Gi", "node2", 10),
-				createWorkspacePod("existingPod2", "4Gi", "5Gi", "node2", 10),
-				createWorkspacePod("existingPod3", "4Gi", "5Gi", "node3", 10),
+				createWorkspacePod("existingPod1", "4000Mi", "5000Mi", "node2", 10),
+				createWorkspacePod("existingPod2", "4000Mi", "5000Mi", "node2", 10),
+				createWorkspacePod("existingPod3", "4000Mi", "5000Mi", "node3", 10),
 			},
-			ScheduledPod: createWorkspacePod("new pod", "4Gi", "5Gi", "node1", 10),
+			ScheduledPod: createWorkspacePod("new pod", "4000Mi", "5000Mi", "node1", 10),
 			ExpectedNode: "node3",
 		},
 	}

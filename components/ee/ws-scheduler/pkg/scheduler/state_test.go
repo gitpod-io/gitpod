@@ -16,9 +16,9 @@ import (
 func TestState(t *testing.T) {
 	defaultNodeSet := func() []*corev1.Node {
 		return []*corev1.Node{
-			createNode("node1", "10Gi", "0Gi", false, 100),
-			createNode("node2", "10Gi", "0Gi", false, 100),
-			createNode("node3", "10Gi", "0Gi", true, 100),
+			createNode("node1", "10000Mi", "0Mi", false, 100),
+			createNode("node2", "10000Mi", "0Mi", false, 100),
+			createNode("node3", "10000Mi", "0Mi", true, 100),
 		}
 	}
 
@@ -35,112 +35,112 @@ func TestState(t *testing.T) {
 			RAMSafetyBuffer: "512Mi",
 			Nodes:           defaultNodeSet(),
 			Expectation: `- node1:
-  RAM: used 0.000+0.000+0.000 of 9.500, avail 9.500 GiB
-  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
+  RAM: used 0+0+0 of 9949, avail 9949 Mi
+  Eph. Storage: used 0+0+0 of 0, avail 0 Mi
 - node2:
-  RAM: used 0.000+0.000+0.000 of 9.500, avail 9.500 GiB
-  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
+  RAM: used 0+0+0 of 9949, avail 9949 Mi
+  Eph. Storage: used 0+0+0 of 0, avail 0 Mi
 - node3:
-  RAM: used 0.000+0.000+0.000 of 9.500, avail 9.500 GiB
-  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB`,
+  RAM: used 0+0+0 of 9949, avail 9949 Mi
+  Eph. Storage: used 0+0+0 of 0, avail 0 Mi`,
 		},
 		{
 			Desc:            "other pods only",
 			RAMSafetyBuffer: "512Mi",
 			Nodes:           defaultNodeSet(),
 			Pods: []*corev1.Pod{
-				createNonWorkspacePod("existingPod1", "1.5Gi", "0Gi", "node1", 10),
-				createNonWorkspacePod("existingPod2", "1Gi", "0Gi", "node2", 10),
+				createNonWorkspacePod("existingPod1", "1500Mi", "0Mi", "node1", 10),
+				createNonWorkspacePod("existingPod2", "1000Mi", "0Mi", "node2", 10),
 			},
 			Expectation: `- node1:
-  RAM: used 0.000+0.000+1.500 of 9.500, avail 8.000 GiB
-  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
+  RAM: used 0+0+1573 of 9949, avail 8377 Mi
+  Eph. Storage: used 0+0+0 of 0, avail 0 Mi
 - node2:
-  RAM: used 0.000+0.000+1.000 of 9.500, avail 8.500 GiB
-  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
+  RAM: used 0+0+1049 of 9949, avail 8901 Mi
+  Eph. Storage: used 0+0+0 of 0, avail 0 Mi
 - node3:
-  RAM: used 0.000+0.000+0.000 of 9.500, avail 9.500 GiB
-  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB`,
+  RAM: used 0+0+0 of 9949, avail 9949 Mi
+  Eph. Storage: used 0+0+0 of 0, avail 0 Mi`,
 		},
 		{
 			Desc:            "some headless pods",
 			RAMSafetyBuffer: "512Mi",
 			Nodes:           defaultNodeSet(),
 			Pods: []*corev1.Pod{
-				createNonWorkspacePod("existingPod1", "1.5Gi", "0Gi", "node1", 10),
-				createNonWorkspacePod("existingPod2", "1Gi", "0Gi", "node2", 10),
-				createHeadlessWorkspacePod("hp1", "1Gi", "0Gi", "node2", 10),
-				createHeadlessWorkspacePod("hp2", "2.22Gi", "0Gi", "node2", 10),
+				createNonWorkspacePod("existingPod1", "1500Mi", "0Mi", "node1", 10),
+				createNonWorkspacePod("existingPod2", "1000Mi", "0Mi", "node2", 10),
+				createHeadlessWorkspacePod("hp1", "1000Mi", "0Mi", "node2", 10),
+				createHeadlessWorkspacePod("hp2", "2220Mi", "0Mi", "node2", 10),
 			},
 			Expectation: `- node1:
-  RAM: used 0.000+0.000+1.500 of 9.500, avail 8.000 GiB
-  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
+  RAM: used 0+0+1573 of 9949, avail 8377 Mi
+  Eph. Storage: used 0+0+0 of 0, avail 0 Mi
 - node2:
-  RAM: used 0.000+3.220+1.000 of 9.500, avail 5.279 GiB
-  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
+  RAM: used 0+3377+1049 of 9949, avail 5524 Mi
+  Eph. Storage: used 0+0+0 of 0, avail 0 Mi
 - node3:
-  RAM: used 0.000+0.000+0.000 of 9.500, avail 9.500 GiB
-  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB`,
+  RAM: used 0+0+0 of 9949, avail 9949 Mi
+  Eph. Storage: used 0+0+0 of 0, avail 0 Mi`,
 		},
 		{
 			Desc:            "some regular pods",
 			RAMSafetyBuffer: "512Mi",
 			Nodes:           defaultNodeSet(),
 			Pods: []*corev1.Pod{
-				createNonWorkspacePod("existingPod1", "1.5Gi", "0Gi", "node1", 10),
-				createNonWorkspacePod("existingPod2", "1Gi", "0Gi", "node2", 10),
-				createWorkspacePod("hp1", "1Gi", "0Gi", "node1", 10),
-				createWorkspacePod("hp2", "3.44Gi", "0Gi", "node1", 10),
+				createNonWorkspacePod("existingPod1", "1500Mi", "0Mi", "node1", 10),
+				createNonWorkspacePod("existingPod2", "1000Mi", "0Mi", "node2", 10),
+				createWorkspacePod("hp1", "1000Mi", "0Mi", "node1", 10),
+				createWorkspacePod("hp2", "3440Mi", "0Mi", "node1", 10),
 			},
 			Expectation: `- node1:
-  RAM: used 4.439+0.000+1.500 of 9.500, avail 3.560 GiB
-  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
+  RAM: used 4656+0+1573 of 9949, avail 3721 Mi
+  Eph. Storage: used 0+0+0 of 0, avail 0 Mi
 - node2:
-  RAM: used 0.000+0.000+1.000 of 9.500, avail 8.500 GiB
-  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB
+  RAM: used 0+0+1049 of 9949, avail 8901 Mi
+  Eph. Storage: used 0+0+0 of 0, avail 0 Mi
 - node3:
-  RAM: used 0.000+0.000+0.000 of 9.500, avail 9.500 GiB
-  Eph. Storage: used 0.000+0.000+0.000 of 0.000, avail 0.000 GiB`,
+  RAM: used 0+0+0 of 9949, avail 9949 Mi
+  Eph. Storage: used 0+0+0 of 0, avail 0 Mi`,
 		},
 		{
 			Desc:            "some regular pods with ",
 			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
-				createNode("node1", "10Gi", "20Gi", false, 100),
-				createNode("node2", "10Gi", "10Gi", false, 100),
-				createNode("node3", "10Gi", "10Gi", true, 100),
+				createNode("node1", "10000Mi", "20000Mi", false, 100),
+				createNode("node2", "10000Mi", "10000Mi", false, 100),
+				createNode("node3", "10000Mi", "10000Mi", true, 100),
 			},
 			Pods: []*corev1.Pod{
-				createNonWorkspacePod("existingPod1", "1.5Gi", "5Gi", "node1", 10),
-				createNonWorkspacePod("existingPod2", "1Gi", "2Gi", "node2", 10),
-				createWorkspacePod("hp1", "1Gi", "5Gi", "node1", 10),
-				createWorkspacePod("hp2", "3.44Gi", "5Gi", "node1", 10),
+				createNonWorkspacePod("existingPod1", "1500Mi", "5000Mi", "node1", 10),
+				createNonWorkspacePod("existingPod2", "1000Mi", "2000Mi", "node2", 10),
+				createWorkspacePod("hp1", "1000Mi", "5000Mi", "node1", 10),
+				createWorkspacePod("hp2", "3440Mi", "5000Mi", "node1", 10),
 			},
 			Expectation: `- node1:
-  RAM: used 4.439+0.000+1.500 of 9.500, avail 3.560 GiB
-  Eph. Storage: used 10.000+0.000+5.000 of 20.000, avail 5.000 GiB
+  RAM: used 4656+0+1573 of 9949, avail 3721 Mi
+  Eph. Storage: used 10486+0+5243 of 20972, avail 5243 Mi
 - node2:
-  RAM: used 0.000+0.000+1.000 of 9.500, avail 8.500 GiB
-  Eph. Storage: used 0.000+0.000+2.000 of 10.000, avail 8.000 GiB
+  RAM: used 0+0+1049 of 9949, avail 8901 Mi
+  Eph. Storage: used 0+0+2098 of 10486, avail 8389 Mi
 - node3:
-  RAM: used 0.000+0.000+0.000 of 9.500, avail 9.500 GiB
-  Eph. Storage: used 0.000+0.000+0.000 of 10.000, avail 10.000 GiB`,
+  RAM: used 0+0+0 of 9949, avail 9949 Mi
+  Eph. Storage: used 0+0+0 of 10486, avail 10486 Mi`,
 		},
 		{
 			Desc:            "bound but not listed",
 			RAMSafetyBuffer: "512Mi",
 			Nodes: []*corev1.Node{
-				createNode("node1", "10Gi", "20Gi", false, 100),
+				createNode("node1", "10000Mi", "20000Mi", false, 100),
 			},
 			Bindings: []*sched.Binding{
 				{
-					Pod:      createWorkspacePod("hp1", "1Gi", "5Gi", "node1", 10),
+					Pod:      createWorkspacePod("hp1", "1000Mi", "5000Mi", "node1", 10),
 					NodeName: "node1",
 				},
 			},
 			Expectation: `- node1:
-  RAM: used 1.000+0.000+0.000 of 9.500, avail 8.500 GiB
-  Eph. Storage: used 5.000+0.000+0.000 of 20.000, avail 15.000 GiB`,
+  RAM: used 1049+0+0 of 9949, avail 8901 Mi
+  Eph. Storage: used 5243+0+0 of 20972, avail 15729 Mi`,
 		},
 	}
 
