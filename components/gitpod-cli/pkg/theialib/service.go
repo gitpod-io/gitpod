@@ -70,6 +70,11 @@ type request struct {
 	Params interface{} `json:"params"`
 }
 
+var (
+	// ErrNotFound is returned when an object is not found
+	ErrNotFound = fmt.Errorf("not found")
+)
+
 func (service *HTTPTheiaService) sendRequest(req request) ([]byte, error) {
 	<-service.ideReady
 	if service.ideError != nil {
@@ -101,6 +106,8 @@ func (service *HTTPTheiaService) sendRequest(req request) ([]byte, error) {
 
 	if resp.StatusCode == 403 {
 		return nil, fmt.Errorf("not authenticated")
+	} else if resp.StatusCode == 404 {
+		return nil, ErrNotFound
 	} else if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("invalid request: %v", resp.StatusCode)
 	}
