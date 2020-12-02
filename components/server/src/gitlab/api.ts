@@ -7,7 +7,10 @@
 import { injectable, inject } from "inversify";
 import { User } from "@gitpod/gitpod-protocol"
 
-import { Gitlab as GitlabBundle, Users, Projects, Repositories, Branches, MergeRequests, Issues, Tags, ProjectHooks, Commits, RepositoryFiles, UserSchema, ProjectSchema } from "gitlab";
+import { Gitlab } from "@gitbeaker/node";
+import { Projects, Users, Commits, ProjectHooks, Repositories, Branches, Tags, MergeRequests, Issues, RepositoryFiles } from "@gitbeaker/core";
+import { ProjectSchemaDefault } from "@gitbeaker/core/dist/types/services/Projects";
+import { UserSchemaDefault } from "@gitbeaker/core/dist/types/services/Users";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { GitLabScope } from "./scopes";
 import { AuthProviderParams } from "../auth/auth-provider";
@@ -60,8 +63,8 @@ export class GitLabApi {
     }
 }
 export namespace GitLab {
-    export function create(options: { host: string, oauthToken: string }) {
-        return new GitlabBundle(options) as GitLab.Api;
+    export function create(options: { host: string, oauthToken: string }): GitLab.Api {
+        return new Gitlab(options) as unknown as Api;
     }
     export interface Api {
         Users: Users;
@@ -91,7 +94,7 @@ export namespace GitLab {
     /**
      * https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/projects.md#get-single-project
      */
-    export interface Project extends ProjectSchema {
+    export interface Project extends ProjectSchemaDefault {
         visibility: 'public' | 'private' | 'internal';
         archived: boolean;
         path: string; // "diaspora-project-site"
@@ -105,6 +108,8 @@ export namespace GitLab {
         forks_count: number;
         star_count: number;
         forked_from_project?: Project;
+        default_branch: string;
+        web_url: string;
     }
     export interface TreeObject {
         id: string;
@@ -176,7 +181,7 @@ export namespace GitLab {
         merge_requests_count: number;
     }
     // https://docs.gitlab.com/ee/api/users.html#list-current-user-for-normal-users
-    export interface User extends UserSchema {
+    export interface User extends UserSchemaDefault {
         email: string;
         state: "active" | string;
         confirmed_at: string | undefined,

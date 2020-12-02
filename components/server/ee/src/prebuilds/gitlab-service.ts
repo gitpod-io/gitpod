@@ -33,11 +33,11 @@ export class GitlabService extends RepositoryService {
     async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {
         const api = await this.api.create(user);
         const { owner, repoName } = await this.gitlabContextParser.parseURL(user, cloneUrl);
-        const response = await api.Projects.show(`${owner}/${repoName}`);
+        const response = (await api.Projects.show(`${owner}/${repoName}`)) as unknown as GitLab.Project;
         if (GitLab.ApiError.is(response)) {
             throw response;
         }
-        const hooks = await api.ProjectHooks.all(response.id) as GitLab.ProjectHook[];
+        const hooks = (await api.ProjectHooks.all(response.id)) as unknown as GitLab.ProjectHook[];
         if (GitLab.ApiError.is(hooks)) {
             throw hooks;
         }
