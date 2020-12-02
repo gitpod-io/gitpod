@@ -27,6 +27,7 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 		PrebuildTemplate *corev1.Pod            `json:"prebuildTemplate,omitempty"`
 		ProbeTemplate    *corev1.Pod            `json:"probeTemplate,omitempty"`
 		RegularTemplate  *corev1.Pod            `json:"regularTemplate,omitempty"`
+		ResourceRequests *ResourceConfiguration `json:"resourceRequests,omitempty"`
 	}
 	type gold struct {
 		Pod   corev1.Pod `json:"reason,omitempty"`
@@ -39,6 +40,17 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 		Test: func(t *testing.T, input interface{}) interface{} {
 			manager := forTestingOnlyGetManager(t)
 			fixture := input.(*fixture)
+			if fixture.ResourceRequests != nil {
+				var (
+					cfg  = manager.Config
+					cont = cfg.Container
+					ws   = cont.Workspace
+				)
+				ws.Requests = *fixture.ResourceRequests
+				cont.Workspace = ws
+				cfg.Container = cont
+				manager.Config = cfg
+			}
 
 			fs = afero.NewMemMapFs()
 			files := []struct {

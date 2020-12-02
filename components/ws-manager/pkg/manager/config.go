@@ -266,19 +266,21 @@ func (r *ResourceConfiguration) ResourceList() (corev1.ResourceList, error) {
 		corev1.ResourceEphemeralStorage: r.Storage,
 	}
 
-	var (
-		l   = make(corev1.ResourceList)
-		err error
-	)
+	var l = make(corev1.ResourceList)
 	for k, v := range res {
 		if v == "" {
 			continue
 		}
 
-		l[k], err = resource.ParseQuantity(v)
+		q, err := resource.ParseQuantity(v)
 		if err != nil {
 			return nil, xerrors.Errorf("%s: %w", k, err)
 		}
+		if q.Value() == 0 {
+			continue
+		}
+
+		l[k] = q
 	}
 	return l, nil
 }
