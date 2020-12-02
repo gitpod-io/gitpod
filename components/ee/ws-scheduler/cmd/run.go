@@ -17,7 +17,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/gitpod-io/gitpod/common-go/pprof"
-	"github.com/gitpod-io/gitpod/ws-scheduler/pkg/scaler"
 	"github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler"
 )
 
@@ -59,17 +58,7 @@ var runCmd = &cobra.Command{
 		}()
 
 		if config.Scaler != nil {
-			scaler := scaler.NewScaler(*config.Scaler, clientSet)
-			scalerCtx, cancelScaler := context.WithCancel(context.Background())
-			scaler.Start(scalerCtx)
-
-			defer func() {
-				log.Info("ws-scaler interrupted; shutting down...")
-				cancelScaler()
-				scaler.WaitForShutdown()
-				log.Info("ws-scaler shut down")
-			}()
-			log.Info("scaler is up and running")
+			log.Warn("the scaler is currently broken and will not be started")
 		}
 
 		if config.Prometheus.Addr != "" {
