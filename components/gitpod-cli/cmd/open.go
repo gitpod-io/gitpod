@@ -6,7 +6,10 @@ package cmd
 
 import (
 	"log"
+	"os"
+	"os/exec"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
@@ -30,6 +33,19 @@ var openCmd = &cobra.Command{
 		var wg sync.WaitGroup
 		for _, fn := range args {
 			_, err := service.OpenFile(theialib.OpenFileRequest{Path: fn})
+			if err == theialib.ErrNotFound {
+				// Code cannot provide cli service and return 404 use vi instead for now
+				// later Code CLI should be used
+				argv0, err := exec.LookPath("vi")
+				if err != nil {
+					log.Fatal(err)
+				}
+				err = syscall.Exec(argv0, append([]string{"vi"}, args...), os.Environ())
+				if err != nil {
+					log.Fatal(err)
+				}
+				return
+			}
 			if err != nil {
 				log.Println(err)
 				continue
