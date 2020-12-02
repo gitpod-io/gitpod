@@ -224,7 +224,6 @@ func (s *Scheduler) startInformer(ctx context.Context) (schedulerQueue chan *cor
 			//		entry to early might lead to us making the same mistake again.
 			if pod.Spec.NodeName != "" && pod.Status.Phase != corev1.PodPending {
 				s.localBindingCache.delete(pod.Name)
-				log.WithField("pod", pod.Name).WithField("node", pod.Spec.NodeName).WithField("phase", pod.Status.Phase).Debug("removed from localBindingCache")
 			}
 
 			if pod.Status.Phase == corev1.PodFailed && pod.Status.Reason == "OutOfMemory" {

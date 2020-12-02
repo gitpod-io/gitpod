@@ -56,7 +56,6 @@ var runCmd = &cobra.Command{
 			scheduler.WaitForShutdown()
 			log.Info("ws-scheduler shut down")
 		}()
-		log.Info("ws-scheduler is up and running. Stop with SIGINT or CTRL+C")
 
 		if config.Scaler != nil {
 			scaler := scaler.NewScaler(*config.Scaler, clientSet)
@@ -69,7 +68,7 @@ var runCmd = &cobra.Command{
 				scaler.WaitForShutdown()
 				log.Info("ws-scaler shut down")
 			}()
-			log.Info("ws-scaler is up and running. Stop with SIGINT or CTRL+C")
+			log.Info("scaler is up and running")
 		}
 
 		if config.Prometheus.Addr != "" {
@@ -94,6 +93,8 @@ var runCmd = &cobra.Command{
 		if config.PProf.Addr != "" {
 			go pprof.Serve(config.PProf.Addr)
 		}
+
+		log.Info("🗓️ ws-scheduler is up and running. Stop with SIGINT or CTRL+C")
 
 		// Run until we're told to stop
 		sigChan := make(chan os.Signal, 1)
