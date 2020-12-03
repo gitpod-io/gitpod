@@ -43,8 +43,9 @@ func NewManager(exposed ExposedPortsInterface, served ServedPortsObserver, confi
 		S: served,
 		C: config,
 
-		internal: internal,
-		proxies:  make(map[uint32]*localhostProxy),
+		internal:    internal,
+		proxies:     make(map[uint32]*localhostProxy),
+		autoExposed: make(map[uint32]uint32),
 
 		state:         state,
 		subscriptions: make(map[*Subscription]struct{}),
@@ -66,6 +67,7 @@ type Manager struct {
 	internal     map[uint32]struct{}
 	proxies      map[uint32]*localhostProxy
 	proxyStarter func(LocalhostPort uint32, GlobalPort uint32) (proxy io.Closer, err error)
+	autoExposed  map[uint32]uint32
 
 	configs *Configs
 	exposed []ExposedPort
@@ -263,17 +265,18 @@ func (pm *Manager) nextState() map[uint32]*managedPort {
 				return
 			}
 			mp.OnExposed = getOnExposedAction(config, port)
+
+			_, autoExposed := pm.autoExposed[port]
+			if autoExposed {
+				return
+			}
+			mp.GlobalPort = port
 			mp.Visibility = api.PortVisibility_public
 			if config.Visibility == "private" {
 				mp.Visibility = api.PortVisibility_private
 			}
 			public := mp.Visibility == api.PortVisibility_public
-			err := pm.E.Expose(ctx, mp.LocalhostPort, mp.GlobalPort, public)
-			if err != nil {
-				log.WithError(err).WithField("port", *mp).Warn("cannot auto-expose port")
-				return
-			}
-			log.WithField("port", *mp).Warn("auto-expose port")
+			pm.autoExpose(ctx, mp, public)
 		})
 	}
 
@@ -295,7 +298,11 @@ func (pm *Manager) nextState() map[uint32]*managedPort {
 		mp.LocalhostPort = port
 		mp.Served = true
 
-		exposedGlobalPort := mp.GlobalPort
+		exposedGlobalPort, autoExposed := pm.autoExposed[port]
+		if mp.Exposed {
+			exposedGlobalPort = mp.GlobalPort
+		}
+
 		if served.BoundToLocalhost {
 			proxy, exists := pm.proxies[port]
 			if exists {
@@ -308,7 +315,7 @@ func (pm *Manager) nextState() map[uint32]*managedPort {
 			mp.GlobalPort = port
 		}
 
-		if mp.GlobalPort == 0 || (mp.Exposed && mp.GlobalPort == exposedGlobalPort) {
+		if mp.GlobalPort == 0 || ((mp.Exposed || autoExposed) && mp.GlobalPort == exposedGlobalPort) {
 			continue
 		}
 
@@ -321,14 +328,19 @@ func (pm *Manager) nextState() map[uint32]*managedPort {
 			public = exists && config.Visibility != "private"
 		}
 
-		err := pm.E.Expose(ctx, mp.LocalhostPort, mp.GlobalPort, public)
-		if err != nil {
-			log.WithError(err).WithField("port", *mp).Warn("cannot auto-expose port")
-			continue
-		}
-		log.WithField("port", *mp).Warn("auto-expose port")
+		pm.autoExpose(ctx, mp, public)
 	}
 	return state
+}
+
+func (pm *Manager) autoExpose(ctx context.Context, mp *managedPort, public bool) {
+	err := pm.E.Expose(ctx, mp.LocalhostPort, mp.GlobalPort, public)
+	if err != nil {
+		log.WithError(err).WithField("port", *mp).Warn("cannot auto-expose port")
+		return
+	}
+	pm.autoExposed[mp.LocalhostPort] = mp.GlobalPort
+	log.WithField("port", *mp).Info("auto-expose port")
 }
 
 func (pm *Manager) updateProxies() {
@@ -527,7 +539,7 @@ func (pm *Manager) getPortStatus(port uint32) *api.PortsStatus {
 		LocalPort:  mp.LocalhostPort,
 		Served:     mp.Served,
 	}
-	if mp.Exposed {
+	if mp.Exposed && mp.URL != "" {
 		ps.Exposed = &api.ExposedPortInfo{
 			Visibility: mp.Visibility,
 			Url:        mp.URL,

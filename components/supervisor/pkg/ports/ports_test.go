@@ -47,7 +47,7 @@ func TestPortsUpdateState(t *testing.T) {
 			Desc: "basic locally served",
 			Changes: []Change{
 				{Served: []ServedPort{{8080, true}}},
-				{Exposed: []ExposedPort{{LocalPort: 8080, GlobalPort: 60000}}},
+				{Exposed: []ExposedPort{{LocalPort: 8080, GlobalPort: 60000, URL: "foobar"}}},
 				{Served: []ServedPort{{8080, true}, {60000, false}}},
 				{Served: []ServedPort{{60000, false}}},
 				{Served: []ServedPort{}},
@@ -58,8 +58,8 @@ func TestPortsUpdateState(t *testing.T) {
 			ExpectedUpdates: UpdateExpectation{
 				{},
 				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 60000, Served: true}},
-				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 60000, Served: true, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private}}},
-				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 60000, Served: false, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private}}},
+				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 60000, Served: true, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}},
+				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 60000, Served: false, Exposed: &api.ExposedPortInfo{OnExposed: api.OnPortExposedAction_notify_private, Visibility: api.PortVisibility_private, Url: "foobar"}}},
 			},
 		},
 		{
@@ -125,13 +125,13 @@ func TestPortsUpdateState(t *testing.T) {
 				},
 			},
 			ExpectedExposure: []ExposedPort{
-				{LocalPort: 8080, Public: true},
-				{LocalPort: 9229},
+				{LocalPort: 8080, GlobalPort: 8080, Public: true},
+				{LocalPort: 9229, GlobalPort: 9229},
 				{LocalPort: 9229, GlobalPort: 60000},
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				[]*api.PortsStatus{{LocalPort: 8080}, {LocalPort: 9229}},
+				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 8080}, {LocalPort: 9229, GlobalPort: 9229}},
 				[]*api.PortsStatus{
 					{LocalPort: 8080, GlobalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, Url: "8080-foobar", OnExposed: api.OnPortExposedAction_open_browser}},
 					{LocalPort: 9229, GlobalPort: 9229, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, Url: "9229-foobar", OnExposed: api.OnPortExposedAction_ignore}},
@@ -200,13 +200,13 @@ func TestPortsUpdateState(t *testing.T) {
 				},
 			},
 			ExpectedExposure: []ExposedPort{
-				{LocalPort: 8080, Public: false},
+				{LocalPort: 8080, GlobalPort: 8080, Public: false},
 				{LocalPort: 8080, GlobalPort: 60000, Public: true},
 				{LocalPort: 8080, GlobalPort: 8080, Public: true},
 			},
 			ExpectedUpdates: UpdateExpectation{
 				{},
-				[]*api.PortsStatus{{LocalPort: 8080}},
+				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 8080}},
 				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
 				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 8080, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
 				[]*api.PortsStatus{{LocalPort: 8080, GlobalPort: 60000, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_public, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
@@ -231,6 +231,31 @@ func TestPortsUpdateState(t *testing.T) {
 					{LocalPort: 8080, GlobalPort: 60000, Served: true},
 					{LocalPort: 3000, GlobalPort: 59999, Served: true},
 				},
+			},
+		},
+		{
+			Desc: "served between auto exposing configured and exposed update",
+			Changes: []Change{
+				{
+					Config: &ConfigChange{workspace: []*gitpod.PortConfig{
+						{Port: 8080, Visibility: "private"},
+					}},
+				},
+				{
+					Served: []ServedPort{{8080, false}},
+				},
+				{
+					Exposed: []ExposedPort{{LocalPort: 8080, GlobalPort: 8080, Public: false, URL: "foobar"}},
+				},
+			},
+			ExpectedExposure: []ExposedPort{
+				{LocalPort: 8080, GlobalPort: 8080},
+			},
+			ExpectedUpdates: UpdateExpectation{
+				{},
+				{{LocalPort: 8080, GlobalPort: 8080}},
+				{{LocalPort: 8080, GlobalPort: 8080, Served: true}},
+				{{LocalPort: 8080, GlobalPort: 8080, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
 			},
 		},
 	}
