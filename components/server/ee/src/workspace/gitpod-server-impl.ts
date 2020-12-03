@@ -76,7 +76,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
             if (!runningInstance) {
                 throw new ResponseError(ErrorCodes.NOT_FOUND, "Can only set keep-alive for running workspaces");
             }
-            await this.guardAccess({kind: "workspaceInstance", subject: runningInstance, workspaceOwnerID: workspace.ownerId}, "update");
+            await this.guardAccess({kind: "workspaceInstance", subject: runningInstance, workspaceOwnerID: workspace.ownerId, workspaceIsShared: workspace.shareable || false}, "update");
 
             // if any other running instance has a custom timeout other than the user's default, we'll reset that timeout
             const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
@@ -128,7 +128,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
                 log.warn({ userId: user.id, workspaceId }, 'Can only get keep-alive for running workspaces');
                 return { duration: "30m", canChange };
             }
-            await this.guardAccess({kind: "workspaceInstance", subject: runningInstance, workspaceOwnerID: workspace.ownerId}, "get");
+            await this.guardAccess({kind: "workspaceInstance", subject: runningInstance, workspaceOwnerID: workspace.ownerId, workspaceIsShared: workspace.shareable || false}, "get");
 
             const req = new DescribeWorkspaceRequest();
             req.setId(runningInstance.id);
@@ -198,7 +198,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
 
             const instance = await this.workspaceDb.trace({ span }).findRunningInstance(id);
             if (instance) {
-                await this.guardAccess({kind: "workspaceInstance", subject: instance, workspaceOwnerID: workspace.ownerId}, "update");
+                await this.guardAccess({kind: "workspaceInstance", subject: instance, workspaceOwnerID: workspace.ownerId, workspaceIsShared: workspace.shareable || false}, "update");
 
                 const req = new ControlAdmissionRequest();
                 req.setId(instance.id);
@@ -241,7 +241,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
                 throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} has no running instance`);
             }
 
-            await this.guardAccess({kind: "workspaceInstance", subject: instance, workspaceOwnerID: workspace.ownerId}, "get");
+            await this.guardAccess({kind: "workspaceInstance", subject: instance, workspaceOwnerID: workspace.ownerId, workspaceIsShared: workspace.shareable || false}, "get");
             await this.guardAccess({kind: "snapshot", subject: undefined, workspaceOwnerID: workspace.ownerId}, "create");
 
             const client = await this.workspaceManagerClientProvider.get(instance.region);

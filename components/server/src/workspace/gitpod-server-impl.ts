@@ -350,7 +350,12 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
             const latestInstance = await this.workspaceDb.trace({}).findCurrentInstance(id);
             if (!!latestInstance) {
-                await this.guardAccess({ kind: "workspaceInstance", subject: latestInstance, workspaceOwnerID: workspace.ownerId }, "get");
+                await this.guardAccess({ 
+                    kind: "workspaceInstance", 
+                    subject: latestInstance, 
+                    workspaceOwnerID: workspace.ownerId,
+                    workspaceIsShared: workspace.shareable || false,
+                }, "get");
             }
 
             return {
@@ -383,7 +388,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
                 // Note: ownership doesn't matter here as this is basically a noop. It's not StartWorkspace's concern
                 //       to guard workspace access - just to prevent non-owners from starting workspaces.
 
-                await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspaceOwnerID: workspace.ownerId }, "get");
+                await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspaceOwnerID: workspace.ownerId, workspaceIsShared: workspace.shareable || false }, "get");
                 return {
                     instanceID: runningInstance.id,
                     workspaceURL: runningInstance.ideUrl,
@@ -394,7 +399,8 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
                 throw new ResponseError(ErrorCodes.NOT_FOUND, "Workspace not found!");
             }
 
-            await this.guardAccess({ kind: "workspaceInstance", subject: undefined, workspaceOwnerID: workspace.ownerId }, "create");
+            // no matter if the workspace is shared or not, you cannot create a new instance
+            await this.guardAccess({ kind: "workspaceInstance", subject: undefined, workspaceOwnerID: workspace.ownerId, workspaceIsShared: false }, "create");
 
             if (workspace.type !== "regular") {
                 throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Cannot (re-)start irregular workspace.");
@@ -458,7 +464,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             ownerId = ws.ownerId;
         }
 
-        await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspaceOwnerID: ownerId }, "update");
+        await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspaceOwnerID: ownerId, workspaceIsShared: false }, "update");
         await this.internalStopWorkspaceInstance(ctx, instance.id, instance.region, policy);
     }
 
@@ -561,7 +567,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             includeHeadless: false,
         });
         await Promise.all(res.map(ws => this.guardAccess({ kind: "workspace", subject: ws.workspace }, "get")));
-        await Promise.all(res.map(ws => this.guardAccess({ kind: "workspaceInstance", subject: ws.latestInstance, workspaceOwnerID: ws.workspace.ownerId }, "get")));
+        await Promise.all(res.map(ws => this.guardAccess({ kind: "workspaceInstance", subject: ws.latestInstance, workspaceOwnerID: ws.workspace.ownerId, workspaceIsShared: ws.workspace.shareable || false }, "get")));
         return res;
     }
 
@@ -594,7 +600,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             if (!ws) {
                 throw new ResponseError(ErrorCodes.NOT_FOUND, "workspace does not exist");
             }
-            await this.guardAccess({ kind: "workspaceInstance", subject: wsi, workspaceOwnerID: ws.ownerId }, "update");
+            await this.guardAccess({ kind: "workspaceInstance", subject: wsi, workspaceOwnerID: ws.ownerId, workspaceIsShared: ws.shareable || false }, "update");
 
             const wasClosed = !!(options && options.wasClosed);
             await this.workspaceDb.trace({ span }).updateLastHeartbeat(instanceId, user.id, new Date(), wasClosed);
@@ -938,7 +944,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
                 throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} has no running instance`);
             }
 
-            await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspaceOwnerID: workspace.ownerId }, "get");
+            await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspaceOwnerID: workspace.ownerId, workspaceIsShared: workspace.shareable || false }, "get");
 
             const req = new DescribeWorkspaceRequest();
             req.setId(instance.id);
@@ -980,7 +986,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
                 log.warn({ userId: user.id, workspaceId }, 'Cannot open port for workspace with no running instance', { port });
                 return;
             }
-            await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspaceOwnerID: workspace.ownerId }, "update");
+            await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspaceOwnerID: workspace.ownerId, workspaceIsShared: false }, "update");
 
             const req = new ControlPortRequest();
             req.setId(runningInstance.id);
@@ -1038,7 +1044,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
                 log.warn({ userId: user.id, workspaceId }, 'Cannot close a port for a workspace which has no running instance', { port });
                 return;
             }
-            await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspaceOwnerID: workspace.ownerId }, "update");
+            await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspaceOwnerID: workspace.ownerId, workspaceIsShared: false }, "update");
 
             const req = new ControlPortRequest();
             req.setId(instance.id);
@@ -1076,7 +1082,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             return;
         }
 
-        await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspaceOwnerID: workspace.ownerId }, "get");
+        await this.guardAccess({ kind: "workspaceInstance", subject: instance, workspaceOwnerID: workspace.ownerId, workspaceIsShared: workspace.shareable || false }, "get");
         if (!this.client) {
             return;
         }
