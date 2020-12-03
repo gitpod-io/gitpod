@@ -1337,7 +1337,7 @@ func (m *Monitor) deleteDanglingServices() error {
 
 		// this relies on the Kubernetes convention that endpoints have the same name as their services
 		err = servicesClient.Delete(e.Name, &metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
-		if err != nil {
+		if err != nil && !isKubernetesObjNotFoundError(err) {
 			m.OnError(xerrors.Errorf("deleteDanglingServices: %w", err))
 			continue
 		}
