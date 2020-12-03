@@ -18,7 +18,8 @@ VOLUME /var/gitpod/workspaces
 COPY gitpod-helm-installer.yaml /var/lib/rancher/k3s/server/manifests/
 COPY persistent-volumes.yaml /var/lib/rancher/k3s/server/manifests/
 COPY values.yaml /default_values/01_values.yaml
-COPY chart--helm/gitpod /chart
+#COPY chart--helm/gitpod /chart
+
 
 COPY entrypoint.sh /entrypoint
 
