@@ -52,8 +52,7 @@ func Init(service, version string, json, verbose bool) {
 		log.SetFormatter(&gcpFormatter{
 			log.JSONFormatter{
 				FieldMap: log.FieldMap{
-					log.FieldKeyLevel: "severity",
-					log.FieldKeyMsg:   "message",
+					log.FieldKeyMsg: "message",
 				},
 			},
 		})
@@ -85,6 +84,25 @@ func (f *gcpFormatter) Format(entry *log.Entry) ([]byte, error) {
 			hasError = true
 		}
 	}
+	// map to gcp severity. See https://cloud.google.com/logging/docs/reference/v2/rest/v2/LogEntry#LogSeverity
+	var severity string = "INFO"
+	switch entry.Level {
+	case logrus.TraceLevel:
+		severity = "DEBUG"
+	case logrus.DebugLevel:
+		severity = "DEBUG"
+	case logrus.InfoLevel:
+		severity = "INFO"
+	case logrus.WarnLevel:
+		severity = "WARNING"
+	case logrus.ErrorLevel:
+		severity = "ERROR"
+	case logrus.FatalLevel:
+		severity = "CRITICAL"
+	case logrus.PanicLevel:
+		severity = "EMERGENCY"
+	}
+	entry.Data["severity"] = severity
 	if entry.Level <= log.WarnLevel && hasError {
 		entry.Data["@type"] = "type.googleapis.com/google.devtools.clouderrorreporting.v1beta1.ReportedErrorEvent"
 	}
