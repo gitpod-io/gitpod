@@ -93,7 +93,7 @@ func (service *HTTPTheiaService) sendRequest(req request) ([]byte, error) {
 	httpreq.Header.Set("Content-Type", "application/json")
 	httpreq.Header["X-AuthToken"] = []string{service.Token}
 	resp, err := service.ideClient.Do(httpreq)
-	if resp.StatusCode == 404 && req.Method == "getGitToken" {
+	if resp != nil && resp.StatusCode == 404 && req.Method == "getGitToken" {
 		supervisorAddr := os.Getenv("SUPERVISOR_ADDR")
 		if supervisorAddr == "" {
 			supervisorAddr = "localhost:22999"
