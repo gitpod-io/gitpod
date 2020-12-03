@@ -28,6 +28,7 @@ export interface GuardedWorkspaceInstance {
     kind: "workspaceInstance";
     subject: WorkspaceInstance | undefined;
     workspaceOwnerID: string;
+    workspaceIsShared: boolean;
 }
 
 export interface GuardedUser {
@@ -117,6 +118,20 @@ export class OwnerResourceGuard implements ResourceAccessGuard {
         }
     }
 
+}
+
+export class SharedWorkspaceAccessGuard implements ResourceAccessGuard {
+
+    async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
+        switch (resource.kind) {
+            case "workspace":
+                return resource.subject.shareable === true;
+            case "workspaceInstance":
+                return !!resource.workspaceIsShared;
+            default:
+                return false;
+        }
+    }
 }
 
 export class ScopedResourceGuard implements ResourceAccessGuard {
