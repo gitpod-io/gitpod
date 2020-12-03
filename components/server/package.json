@@ -36,6 +36,7 @@
     "@gitpod/ws-manager": "0.1.5",
     "@google-cloud/storage": "^2.5.0",
     "@octokit/rest": "16.35.0",
+    "agent-base": "4.2.1",
     "amqplib": "^0.5.2",
     "base-64": "^0.1.0",
     "bitbucket": "^2.1.0",
