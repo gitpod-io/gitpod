@@ -43,8 +43,18 @@ export class GitLabApi {
             const response = (await operation(userApi) as R);
             return response as R;
         } catch (error) {
-            if (error && error.response && error.response.status !== 200) {
+            if (error && typeof error?.response?.status === "number" && error?.response?.status !== 200) {
                 return new GitLab.ApiError(`GitLab responded with code ${error.response.status}`, error);
+            }
+            if (error && error?.name === "HTTPError") {
+                // e.g.
+                //     {
+                //         "name": "HTTPError",
+                //         "timings": { },
+                //         "description": "404 Commit Not Found"
+                //     }
+
+                return new GitLab.ApiError(`GitLab Request Error: ${error?.description}`, error);
             }
             log.error(`GitLab request error`, error);
             throw error;
@@ -79,8 +89,8 @@ export namespace GitLab {
         RepositoryFiles: RepositoryFiles;
     }
     export class ApiError extends Error {
-        readonly httpError: Error | undefined;
-        constructor(msg?: string, httpError?: Error) {
+        readonly httpError: { name: string, description: string } | undefined;
+        constructor(msg?: string, httpError?: any) {
             super(msg);
             this.httpError = httpError;
             this.name = 'GitLabApiError';
