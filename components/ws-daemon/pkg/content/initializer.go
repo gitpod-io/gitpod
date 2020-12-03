@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	wsinit "github.com/gitpod-io/gitpod/content-service/pkg/initializer"
@@ -234,7 +235,13 @@ func RunInitializerChild() (err error) {
 		return err
 	}
 
-	span := opentracing.StartSpan("RunInitializerChild", opentracing.FollowsFrom(tracing.FromTraceID(initmsg.TraceInfo)))
+	defer func() {
+		if err != nil {
+			log.WithError(err).WithFields(initmsg.OWI).Error("content init failed")
+		}
+	}()
+
+	span := opentracing.StartSpan("RunInitializerChild", opentracing.ChildOf(tracing.FromTraceID(initmsg.TraceInfo)))
 	defer tracing.FinishSpan(span, &err)
 	ctx := opentracing.ContextWithSpan(context.Background(), span)
 

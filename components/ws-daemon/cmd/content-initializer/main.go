@@ -18,7 +18,6 @@ func main() {
 
 	err := content.RunInitializerChild()
 	if err != nil {
-		log.WithError(err).Error("content init failed")
 		os.Exit(42)
 	}
 }
