@@ -6,12 +6,11 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"os"
 	"strconv"
+	"strings"
 
-	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
 	"github.com/spf13/cobra"
 )
 
@@ -41,19 +40,22 @@ will print the URL of a service/server exposed on port 8080.`,
 			return
 		}
 
-		service, err := theialib.NewServiceFromEnv()
-		if err != nil {
-			log.Fatal(err)
-		}
-		resp, err := service.GetPortURL(theialib.GetPortURLRequest{Port: uint16(port)})
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		fmt.Println(resp.URL)
+		fmt.Println(getWorkspaceURL(port))
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(urlCmd)
+}
+
+func getWorkspaceURL(port int) (url string) {
+	wsurl := os.Getenv("GITPOD_WORKSPACE_URL")
+	if port == 0 {
+		return wsurl
+	}
+
+	serviceurl := wsurl
+	serviceurl = strings.Replace(serviceurl, "https://", fmt.Sprintf("https://%d-", port), -1)
+	serviceurl = strings.Replace(serviceurl, "http://", fmt.Sprintf("http://%d-", port), -1)
+	return serviceurl
 }
