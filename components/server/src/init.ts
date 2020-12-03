@@ -89,3 +89,7 @@ export async function start(container: Container) {
         await server.stop();
     });
 }
+
+// The module `agent-base@4.2.1` contains a bad patch for nodejs, this should fix it.
+// cf. https://github.com/gitpod-io/gitpod/pull/2375
+import "./patch-agent-base";

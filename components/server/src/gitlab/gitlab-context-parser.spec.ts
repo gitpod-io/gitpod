@@ -20,6 +20,9 @@ import { TokenProvider } from "../user/token-provider";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { skipIfEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 
+
+import "../patch-agent-base";
+
 @suite(timeout(10000), retries(2), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_GITLAB"))
 class TestGitlabContextParser {
 
@@ -68,7 +71,7 @@ class TestGitlabContextParser {
         }
     }
 
-    @test public async testTreeContext_01() {
+    @test.only public async testTreeContext_01() {
         const result = await this.parser.handle({}, this.user, 'https://gitlab.com/AlexTugarev/gp-test');
         expect(result).to.deep.include({
             "ref": "master",
