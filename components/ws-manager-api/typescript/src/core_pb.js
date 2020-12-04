@@ -6456,7 +6456,8 @@ proto.wsman.WorkspaceFeatureFlag = {
 proto.wsman.WorkspaceType = {
   REGULAR: 0,
   PREBUILD: 1,
-  PROBE: 2
+  PROBE: 2,
+  GHOST: 3
 };
 
 goog.object.extend(exports, proto.wsman);

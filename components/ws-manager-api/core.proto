@@ -477,6 +477,10 @@ enum WorkspaceType {
     // Probe workspaces are used to perform end-to-end health checks on the system. They require little to no resources, run headless and never
     // interact with users directly.
     PROBE = 2;
+
+    // Ghost workspaces are placeholders that pre-scale a cluster for faster workspace startup. They request the same amount of resources
+    // as a regular workspace, but run no actual load. They're removed at will to make space for an actual workspace.
+    GHOST = 3;
 }
 
 // HeadlessWorkspaceEvent is a log statement issued by a headless workspace

@@ -976,4 +976,5 @@ export enum WorkspaceType {
     REGULAR = 0,
     PREBUILD = 1,
     PROBE = 2,
+    GHOST = 3,
 }
