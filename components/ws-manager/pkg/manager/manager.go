@@ -8,6 +8,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -142,7 +143,7 @@ func (m *Manager) Close() {
 // StartWorkspace creates a new running workspace within the manager's cluster
 func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceRequest) (res *api.StartWorkspaceResponse, err error) {
 	owi := log.OWI(req.Metadata.Owner, req.Metadata.MetaId, req.Id)
-	log := log.WithFields(owi)
+	clog := log.WithFields(owi)
 	span, ctx := tracing.FromContext(ctx, "StartWorkspace")
 	tracing.LogRequestSafe(span, req)
 	tracing.ApplyOWI(span, owi)
@@ -168,16 +169,31 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		return nil, xerrors.Errorf("cannot create context: %w", err)
 	}
 	tracing.LogEvent(span, "created start workspace context")
-	log.Info("starting new workspace")
+	clog.Info("starting new workspace")
 	client := m.Clientset.CoreV1()
+
+	// if there's a ghost workspace running, let's take its place
+	if req.Type == api.WorkspaceType_REGULAR {
+		err = m.deleteGhostWorkspace(ctx)
+		if err != nil {
+			clog.WithError(err).Warn("cannot delete a ghost workspace")
+		}
+		tracing.LogEvent(span, "ghost pod deleted")
+	}
 
 	// we must create the workspace pod first to make sure we don't clean up the services or configmap we're about to create
 	// because they're "dangling".
 	pod, err := m.createWorkspacePod(startContext)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
+	}
 	tracing.LogEvent(span, "pod description created")
 	_, err = client.Pods(m.Config.Namespace).Create(pod)
 	if err != nil {
-		log.WithError(err).WithField("req", req).Error("was unable to start workspace")
+		m, _ := json.Marshal(pod)
+		safePod, _ := log.RedactJSON(m)
+
+		clog.WithError(err).WithField("req", req).WithField("pod", safePod).Error("was unable to start workspace")
 		return nil, err
 	}
 	tracing.LogEvent(span, "pod created")
@@ -197,7 +213,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	}
 	_, err = client.ConfigMaps(m.Config.Namespace).Create(plisConfigMap)
 	if err != nil {
-		log.WithError(err).WithField("req", req).Error("was unable to start workspace")
+		clog.WithError(err).WithField("req", req).Error("was unable to start workspace")
 		return nil, xerrors.Errorf("cannot create workspace's lifecycle independent state: %w", err)
 	}
 	tracing.LogEvent(span, "PLIS config map created")
@@ -245,7 +261,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 
 	_, err = client.Services(m.Config.Namespace).Create(&theiaService)
 	if err != nil {
-		log.WithError(err).WithField("req", req).Error("was unable to start workspace")
+		clog.WithError(err).WithField("req", req).Error("was unable to start workspace")
 		// could not create Theia service
 		return nil, xerrors.Errorf("cannot create workspace's Theia service: %w", err)
 	}
@@ -259,7 +275,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		}
 		_, err = client.Services(m.Config.Namespace).Create(portService)
 		if err != nil {
-			log.WithError(err).WithField("req", req).Error("was unable to start workspace")
+			clog.WithError(err).WithField("req", req).Error("was unable to start workspace")
 			// could not create ports service
 			return nil, xerrors.Errorf("cannot create workspace's public service: %w", err)
 		}
@@ -1208,4 +1224,30 @@ func newWssyncConnectionFactory(managerConfig Configuration) (grpcpool.Factory, 
 		}
 		return conn, nil
 	}, nil
+}
+
+func (m *Manager) deleteGhostWorkspace(ctx context.Context) (err error) {
+	span, ctx := tracing.FromContext(ctx, "deleteGhostWorkspace")
+	defer tracing.FinishSpan(span, &err)
+
+	gps, err := m.Clientset.CoreV1().Pods(m.Config.Namespace).List(metav1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s", wsk8s.TypeLabel, "ghost"),
+	})
+	if err != nil {
+		return xerrors.Errorf("cannot list ghost pods: %w", err)
+	}
+	for _, p := range gps.Items {
+		err := m.Clientset.CoreV1().Pods(m.Config.Namespace).Delete(p.Name, metav1.NewDeleteOptions(2))
+		if isKubernetesObjNotFoundError(err) {
+			continue
+		}
+		if err != nil {
+			return err
+		}
+
+		log.WithField("podName", p.Name).Debug("deleted ghost workspace")
+		break
+	}
+
+	return nil
 }

@@ -52,6 +52,8 @@ func (m *Manager) createWorkspacePod(startContext *startWorkspaceContext) (*core
 		typeSpecificTpl, err = getWorkspacePodTemplate(m.Config.WorkspacePodTemplate.PrebuildPath)
 	case api.WorkspaceType_PROBE:
 		typeSpecificTpl, err = getWorkspacePodTemplate(m.Config.WorkspacePodTemplate.ProbePath)
+	case api.WorkspaceType_GHOST:
+		typeSpecificTpl, err = getWorkspacePodTemplate(m.Config.WorkspacePodTemplate.GhostPath)
 	}
 	if err != nil {
 		return nil, xerrors.Errorf("cannot read type-specific pod template - this is a configuration problem: %w", err)
@@ -265,6 +267,8 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		prefix = "prebuild"
 	case api.WorkspaceType_PROBE:
 		prefix = "probe"
+	case api.WorkspaceType_GHOST:
+		prefix = "ghost"
 	default:
 		prefix = "ws"
 	}
@@ -522,6 +526,31 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 	}
 	mountPropagation := corev1.MountPropagationHostToContainer
 
+	var (
+		command        = []string{"/theia/supervisor", "run"}
+		readinessProbe = &corev1.Probe{
+			Handler: corev1.Handler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path:   "/_supervisor/v1/status/content/wait/true",
+					Port:   intstr.FromInt((int)(startContext.SupervisorPort)),
+					Scheme: corev1.URISchemeHTTP,
+				},
+			},
+			// We make the readiness probe more difficult to fail than the liveness probe.
+			// This way, if the workspace really has a problem it will be shut down by Kubernetes rather than end up in
+			// some undefined state.
+			FailureThreshold: 600,
+			PeriodSeconds:    1,
+			SuccessThreshold: 1,
+			TimeoutSeconds:   1,
+		}
+	)
+
+	if startContext.Request.Type == api.WorkspaceType_GHOST {
+		command[1] = "ghost"
+		readinessProbe = nil
+	}
+
 	return &corev1.Container{
 		Name:            "workspace",
 		Image:           startContext.Request.Spec.WorkspaceImage,
@@ -547,24 +576,9 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 				ReadOnly:  true,
 			},
 		},
-		ReadinessProbe: &corev1.Probe{
-			Handler: corev1.Handler{
-				HTTPGet: &corev1.HTTPGetAction{
-					Path:   "/_supervisor/v1/status/content/wait/true",
-					Port:   intstr.FromInt((int)(startContext.SupervisorPort)),
-					Scheme: corev1.URISchemeHTTP,
-				},
-			},
-			// We make the readiness probe more difficult to fail than the liveness probe.
-			// This way, if the workspace really has a problem it will be shut down by Kubernetes rather than end up in
-			// some undefined state.
-			FailureThreshold: 600,
-			PeriodSeconds:    1,
-			SuccessThreshold: 1,
-			TimeoutSeconds:   1,
-		},
+		ReadinessProbe:           readinessProbe,
 		Env:                      env,
-		Command:                  []string{"/theia/supervisor", "run"},
+		Command:                  command,
 		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 	}, nil
 }
