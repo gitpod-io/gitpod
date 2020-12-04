@@ -13,13 +13,6 @@ ARG CLOUD_SQL_PROXY=/usr/local/bin/cloud_sql_proxy
 RUN curl -fsSL https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 > $CLOUD_SQL_PROXY \
     && chmod +x $CLOUD_SQL_PROXY
 
-### Docker client ###
-RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - \
-    # 'cosmic' not supported
-    && add-apt-repository -yu "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable" \
-    && apt-get install -yq docker-ce-cli=5:18.09.0~3-0~ubuntu-bionic \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
-
 ### Helm3 ###
 RUN mkdir -p /tmp/helm/ \
     && curl -fsSL https://get.helm.sh/helm-v3.0.3-linux-amd64.tar.gz | tar -xzvC /tmp/helm/ --strip-components=1 \
