@@ -24,9 +24,6 @@ rules:
     resources:
     - "pods"
     verbs:
-    # "create" and "delete" needed for ws-scaler
-    - "create"
-    - "delete"
     - "get"
     - "list"
     - "watch"

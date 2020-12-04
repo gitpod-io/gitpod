@@ -135,6 +135,14 @@ components:
       seccompProfileInstaller:
         enabled: true
 
+  wsScheduler:
+    scaler:
+      enabled: true
+      controller:
+        kind: "constant"
+        constant:
+          setpoint: 1
+
   # Enable ws-proxy in dev
   wsProxy:
     name: "ws-proxy"
