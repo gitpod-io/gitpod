@@ -421,13 +421,17 @@ components:
       cpu: 100m
       memory: 32Mi
     schedulerName: "workspace-scheduler"
-    scalerDisabled: true
-    scalerConfig:
-      scalingPeriod: "60s"
-      bufferRuntime: "5s"
-      slotFactor: 6
-      bufferFactor: 1
-  
+    scaler:
+      enabled: false
+      maxGhostWorkspaces: 10
+      renewal:
+        interval: "5m"
+        percentage: 20
+      controller:
+        kind: "constant"
+        constant:
+          setpoint: 5
+
   cerc:
     name: cerc
     disabled: true

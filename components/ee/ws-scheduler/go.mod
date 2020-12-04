@@ -6,8 +6,12 @@ require (
 	cloud.google.com/go v0.48.0 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20190424111038-f61b66f89f4a // indirect
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
+	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
 	github.com/go-ozzo/ozzo-validation v3.5.0+incompatible
 	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
+	github.com/golang/mock v1.4.3
+	github.com/golang/protobuf v1.3.5
 	github.com/google/go-cmp v0.4.0
 	github.com/google/uuid v1.1.1
 	github.com/googleapis/gnostic v0.3.1 // indirect
@@ -19,6 +23,7 @@ require (
 	golang.org/x/crypto v0.0.0-20191112222119-e1110fd1c708 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	google.golang.org/appengine v1.6.5 // indirect
+	google.golang.org/grpc v1.29.1
 	k8s.io/api v0.0.0
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v0.0.0
@@ -26,6 +31,10 @@ require (
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway
+
+replace github.com/gitpod-io/gitpod/content-service/api => ../../content-service-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/ws-manager/api => ../../ws-manager-api/go // leeway
 
 replace k8s.io/api => k8s.io/api v0.0.0-20190620084959-7cf5895f2711 // leeway indirect from components/common-go:lib
 

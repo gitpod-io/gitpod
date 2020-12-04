@@ -82,8 +82,12 @@ func getConfig() *config {
 }
 
 type config struct {
-	Scheduler  scheduler.Configuration `json:"scheduler"`
-	Scaler     *scaler.Configuration   `json:"scaler,omitempty"`
+	Scheduler scheduler.Configuration `json:"scheduler"`
+	Scaler    struct {
+		Enabled    bool                                        `json:"enabled"`
+		Driver     scaler.WorkspaceManagerPrescaleDriverConfig `json:"driver"`
+		Controller scaler.ControllerConfig                     `json:"controller"`
+	}
 	Prometheus struct {
 		Addr string `json:"addr"`
 	} `json:"prometheus"`

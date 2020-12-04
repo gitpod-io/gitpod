@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/gitpod-io/gitpod/common-go/pprof"
+	"github.com/gitpod-io/gitpod/ws-scheduler/pkg/scaler"
 	"github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler"
 )
 
@@ -57,8 +58,19 @@ var runCmd = &cobra.Command{
 			log.Info("ws-scheduler shut down")
 		}()
 
-		if config.Scaler != nil {
-			log.Warn("the scaler is currently broken and will not be started")
+		if config.Scaler.Enabled {
+			controller, err := scaler.NewController(config.Scaler.Controller)
+			if err != nil {
+				log.WithError(err).Fatal("cannot create scaler controller")
+			}
+			driver, err := scaler.NewWorkspaceManagerPrescaleDriver(config.Scaler.Driver, controller)
+			if err != nil {
+				log.WithError(err).Fatal("cannot create scaler driver")
+			}
+			go driver.Run()
+			defer driver.Stop()
+
+			log.WithField("controller", config.Scaler.Controller.Kind).Info("started scaler")
 		}
 
 		if config.Prometheus.Addr != "" {

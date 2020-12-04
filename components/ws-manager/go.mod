@@ -15,6 +15,7 @@ require (
 	github.com/go-ozzo/ozzo-validation v3.5.0+incompatible
 	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.4.2
+	github.com/google/go-cmp v0.5.2
 	github.com/google/uuid v1.1.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4
 	github.com/imdario/mergo v0.3.8
@@ -41,9 +42,9 @@ replace github.com/gitpod-io/gitpod/content-service/api => ../content-service-ap
 
 replace github.com/gitpod-io/gitpod/registry-facade/api => ../registry-facade-api/go // leeway
 
-replace github.com/gitpod-io/gitpod/ws-manager/api => ../ws-manager-api/go // leeway
-
 replace github.com/gitpod-io/gitpod/ws-daemon/api => ../ws-daemon-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/ws-manager/api => ../ws-manager-api/go // leeway
 
 replace k8s.io/api => k8s.io/api v0.0.0-20190620084959-7cf5895f2711 // leeway indirect from components/common-go:lib
 
