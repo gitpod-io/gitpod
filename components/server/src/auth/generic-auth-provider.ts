@@ -140,6 +140,7 @@ export class GenericAuthProvider implements AuthProvider {
             const expiryDate = tokenExpiresInSeconds ? new Date(now.getTime() + tokenExpiresInSeconds * 1000).toISOString() : undefined;
             const newToken: Token = {
                 value: access_token,
+                username: this.tokenUsername,
                 scopes: token.scopes,
                 updateDate,
                 expiryDate,
