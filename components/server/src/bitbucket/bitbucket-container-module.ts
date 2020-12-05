@@ -8,7 +8,7 @@ import { ContainerModule } from "inversify";
 import { AuthProvider } from "../auth/auth-provider";
 import { FileProvider, LanguagesProvider, RepositoryHost, RepositoryProvider } from "../repohost";
 import { IContextParser } from "../workspace/context-parser";
-import BitbucketApiFactory from "./bitbucket-api-factory";
+import { BitbucketApiFactory } from './bitbucket-api-factory';
 import { BitbucketAuthProvider } from "./bitbucket-auth-provider";
 import { BitbucketContextParser } from "./bitbucket-context-parser";
 import { BitbucketFileProvider } from "./bitbucket-file-provider";
