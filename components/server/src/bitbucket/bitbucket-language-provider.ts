@@ -7,7 +7,7 @@
 import { Repository, User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from 'inversify';
 import { LanguagesProvider } from '../repohost/languages-provider';
-import BitbucketApiFactory from './bitbucket-api-factory';
+import { BitbucketApiFactory } from './bitbucket-api-factory';
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()

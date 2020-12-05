@@ -5812,14 +5812,14 @@ bintrees@1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/bintrees/-/bintrees-1.0.1.tgz#0e655c9b9c2435eaab68bf4027226d2b55a34524"
 
-bitbucket@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/bitbucket/-/bitbucket-2.1.0.tgz#12436e329b690f922ef02322e0e5dd1bfde83dfe"
-  integrity sha512-4mv8QWPgfjoiqD3PThGkgpZ5EJgyDrpnJipRF+4Ccn8MT+K0ua/gePaRkRAIt2kHdTWsTKuLjDi4pIGxPFws7w==
+bitbucket@^2.4.2:
+  version "2.4.2"
+  resolved "https://registry.yarnpkg.com/bitbucket/-/bitbucket-2.4.2.tgz#00a80d4e6193b2b383494e5563e4f01fa6b6354e"
+  integrity sha512-+JVdVm5Rug3M6+apqUJUcrrsyXgBAp8S1fRvmLBjxKrv9Mhh0AP/610x3g94wwB4Aq/H8IGS3+C6mHwrIVMpDA==
   dependencies:
     before-after-hook "^2.1.0"
     btoa-lite "^1.0.0"
-    deepmerge "^4.0.0"
+    deepmerge "^4.2.2"
     is-plain-object "^3.0.0"
     node-fetch "^2.6.0"
     url-template "^2.0.8"
@@ -7903,7 +7903,7 @@ deepmerge@2.0.1:
   resolved "https://registry.yarnpkg.com/deepmerge/-/deepmerge-2.0.1.tgz#25c1c24f110fb914f80001b925264dd77f3f4312"
   integrity sha512-VIPwiMJqJ13ZQfaCsIFnp5Me9tnjURiaIFxfz7EH0Ci0dTSQpZtSLrqOicXqEd/z2r+z+Klk9GzmnRsgpgbOsQ==
 
-deepmerge@4.2.2, deepmerge@^4.0.0:
+deepmerge@4.2.2, deepmerge@^4.2.2:
   version "4.2.2"
   resolved "https://registry.yarnpkg.com/deepmerge/-/deepmerge-4.2.2.tgz#44d2ea3679b8f4d4ffba33f03d865fc1e7bf4955"
   integrity sha512-FJ3UgI4gIl+PHZm53knsuSFpE+nESMr7M4v9QcgB7S63Kj/6WqMiFQJpBBYz1Pt+66bZpP3Q7Lye0Oo9MPKEdg==

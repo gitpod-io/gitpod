@@ -7,18 +7,18 @@
 import { User } from "@gitpod/gitpod-protocol";
 import * as chai from 'chai';
 import { Container, ContainerModule } from "inversify";
-import { retries, suite, test, timeout } from "mocha-typescript";
+import { suite, test, timeout } from "mocha-typescript";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { DevData } from "../dev/dev-data";
 import { TokenProvider } from "../user/token-provider";
-import BitbucketApiFactory from "./bitbucket-api-factory";
+import { BitbucketApiFactory, BasicAuthBitbucketApiFactory } from './bitbucket-api-factory';
 import { BitbucketContextParser } from "./bitbucket-context-parser";
 import { BitbucketTokenHelper } from "./bitbucket-token-handler";
 const expect = chai.expect;
 import { skipIfEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 
-@suite(timeout(10000), retries(2), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET"))
+@suite.only(timeout(10000), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET"))
 class TestBitbucketContextParser {
 
     protected parser: BitbucketContextParser;
@@ -51,7 +51,7 @@ class TestBitbucketContextParser {
                 getTokenForHost: async () => DevData.createBitbucketTestToken(),
                 getFreshPortAuthenticationToken: async (user: User, workspaceId: string) => DevData.createPortAuthTestToken(workspaceId),
             });
-            bind(BitbucketApiFactory).toSelf().inSingletonScope();
+            bind(BitbucketApiFactory).to(BasicAuthBitbucketApiFactory).inSingletonScope();
             bind(HostContextProvider).toConstantValue({
                 get: (hostname: string) => { authProvider: { "Public-Bitbucket" } }
             });

@@ -8,7 +8,7 @@ import { Repository, User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from 'inversify';
 import { parseRepoUrl } from '../repohost/repo-url';
 import { RepositoryProvider } from '../repohost/repository-provider';
-import BitbucketApiFactory from './bitbucket-api-factory';
+import { BitbucketApiFactory } from './bitbucket-api-factory';
 
 @injectable()
 export class BitbucketRepositoryProvider implements RepositoryProvider {

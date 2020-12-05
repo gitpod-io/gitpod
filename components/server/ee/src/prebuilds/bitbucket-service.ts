@@ -7,7 +7,7 @@
 import { RepositoryService } from "../../../src/repohost/repo-service";
 import { User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
-import BitbucketApiFactory from "../../../src/bitbucket/bitbucket-api-factory";
+import { BitbucketApiFactory } from "../../../src/bitbucket/bitbucket-api-factory";
 import { AuthProviderParams } from "../../../src/auth/auth-provider";
 import { BitbucketApp } from "./bitbucket-app";
 import { Env } from "../../../src/env";
