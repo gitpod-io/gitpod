@@ -6,6 +6,7 @@ package main
 
 import (
 	"flag"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
@@ -56,16 +57,31 @@ func main() {
 
 	if *copyTo != "" {
 		log.WithField("source", *directory).WithField("dest", *copyTo).Info("copying theia")
-		if _, err := os.Stat(*copyTo); err == nil {
-			log.WithField("dest", *copyTo).Warn("destination exists already - doing nothing")
+
+		doneFile := *copyTo + ".done"
+		if _, err := os.Stat(doneFile); err == nil {
+			log.WithField("doneFile", doneFile).Warn("done file exists already - doing nothing")
 			return
+		}
+		if _, err := os.Stat(*copyTo); err == nil {
+			log.WithField("dest", *copyTo).Warn("destination exists already - removing")
+			err := os.RemoveAll(*copyTo)
+			if err != nil {
+				log.WithError(err).Fatal("cannot remove destination")
+			}
 		}
 
 		err := copy.Copy(*directory, *copyTo)
 		if err != nil {
 			log.WithError(err).Fatal("cannot copy Theia")
 		}
-		log.WithField("source", *directory).WithField("dest", *copyTo).Info("copied theia")
+		log.WithField("source", *directory).WithField("dest", *copyTo).Info("copied theia - placing done file")
+
+		err = ioutil.WriteFile(doneFile, nil, 0644)
+		if err != nil {
+			log.WithError(err).Fatal("cannot place done file")
+		}
+
 		return
 	}
 
