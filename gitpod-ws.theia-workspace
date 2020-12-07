@@ -1,6 +1,6 @@
 {
    "folders": [
-      { "path": "" },
+      { "path": "." },
       { "path": "components/common-go" },
       { "path": "components/content-service" },
       { "path": "components/ee/cerc" },
