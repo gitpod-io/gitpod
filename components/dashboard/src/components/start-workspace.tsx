@@ -22,12 +22,17 @@ import { ResponseError } from 'vscode-jsonrpc';
 import { WithBranding } from './with-branding';
 import { Context } from '../context';
 import { colors } from '../withRoot';
+import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
+import { ApplicationFrame } from './page-frame';
+import ShowUnauthorizedError from './show-unauthorized-error';
+import { getBlockedUrl } from '../routing';
 
 interface StartWorkspaceState {
     workspace?: Workspace;
     workspaceInstance?: WorkspaceInstance;
     errorMessage?: string;
     errorCode?: number;
+    errorData?: any;
     buildLog?: WorkspaceBuildLog;
     headlessLog?: string;
     progress: number;
@@ -136,7 +141,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                     if (!this.runsInIFrame() && workspaceStartedResult.workspaceURL) {
                         this.redirectTo(workspaceStartedResult.workspaceURL);
                     }
-                    this.setState({ startedInstanceId: workspaceStartedResult.instanceID, errorMessage: undefined, errorCode: undefined });
+                    this.setState({ startedInstanceId: workspaceStartedResult.instanceID, errorMessage: undefined, errorCode: undefined, errorData: undefined });
                     // Explicitly query state to guarantee we get at least one update
                     // (needed for already started workspaces, and not hanging in 'Starting ...' for too long)
                     this.props.service.server.getWorkspace(workspaceId).then(ws => {
@@ -158,15 +163,43 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
     protected setErrorState(err: any, defaultErrorMessage?: string) {
         let errorMessage = defaultErrorMessage;
         let errorCode = undefined;
+        let errorData = undefined;
         if (err instanceof ResponseError) {
             errorCode = err.code;
+            errorData = err.data;
+            errorMessage = err.message;
+
+            switch (err.code) {
+                case ErrorCodes.USER_BLOCKED:
+                    this.redirectTo(getBlockedUrl());
+                    return;
+                case ErrorCodes.SETUP_REQUIRED:
+                    this.redirectTo(new GitpodHostUrl(window.location.toString()).with({ pathname: "first-steps" }).toString());
+                    return;
+                case ErrorCodes.USER_TERMS_ACCEPTANCE_REQUIRED:
+                    const thisUrl = window.location.toString();
+                    this.redirectTo(new GitpodHostUrl(thisUrl).withApi({ pathname: "/tos", search: `returnTo=${encodeURIComponent(thisUrl)}` }).toString());
+                    return;
+                case ErrorCodes.NOT_AUTHENTICATED:
+                    if (err.data) {
+                        this.setState({ errorMessage, errorCode, errorData });
+                    } else {
+                        const url = new GitpodHostUrl(window.location.toString()).withApi({
+                            pathname: '/login/',
+                            search: 'returnTo=' + encodeURIComponent(window.location.toString())
+                        }).toString();
+                        this.redirectTo(url);
+                    }
+                    return;
+                default:
+            }
         }
         if (err && err.message) {
             errorMessage = err.message;
         } else if (err && typeof err === 'string') {
             errorMessage = err;
         }
-        this.setState({ errorMessage, errorCode });
+        this.setState({ errorMessage, errorCode, errorData });
     }
 
     componentWillUnmount() {
@@ -256,7 +289,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
             try {
                 const info = await this.props.service.server.getWorkspace(this.props.workspaceId);
                 this.workspace = info.workspace;
-                this.isHeadless = info.workspace.type != 'regular';
+                this.isHeadless = info.workspace.type !== 'regular';
                 this.isPrebuilt = WithPrebuild.is(info.workspace.context);
                 this.workspaceInfoReceived = true;
 
@@ -322,14 +355,40 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         return window.top !== window.self;
     }
 
-    render() {
-        const errorCode = this.state && this.state.errorCode;
-
+    protected renderError() {
+        const { errorCode, errorData } = this.state;
         const startErrorRenderer = this.props.startErrorRenderer;
         if (startErrorRenderer && errorCode) {
             const rendered = startErrorRenderer(errorCode, this.props.service, () => this.startWorkspace(this.props.workspaceId, true, false));
             if (rendered) {
                 return rendered;
+            }
+        }
+        if (errorCode === ErrorCodes.SETUP_REQUIRED) {
+            return <ApplicationFrame />;
+        }
+        if (errorCode === ErrorCodes.USER_TERMS_ACCEPTANCE_REQUIRED) {
+            return <ApplicationFrame />;
+        }
+        if (errorCode === ErrorCodes.NOT_AUTHENTICATED) {
+            if (errorData?.host && errorData?.scopes && errorData?.messageHint) {
+                return (
+                    <ApplicationFrame service={this.props.service}>
+                        <ShowUnauthorizedError data={errorData} />
+                    </ApplicationFrame>
+                );
+            }
+        }
+        return undefined;
+    }
+
+    render() {
+        const { errorCode, errorMessage } = this.state;
+
+        if (errorCode) {
+            const handled = this.renderError();
+            if (handled) {
+                return handled;
             }
         }
 
@@ -421,14 +480,15 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         // stopped status happens when the build failed. We still want to see the log output in that case
         const isBuildingWorkspaceImage = instance && (instance.status.phase === 'preparing' || instance.status.phase === 'stopped' && this.state.buildLog);
         const isHeadlessBuildRunning = this.isHeadless && instance && (instance.status.phase === 'running' || instance.status.phase === 'stopping');
-        let isError = this.state && !!this.state.errorMessage;
-        let errorMessage = this.state && this.state.errorMessage;
+        const isError = !!errorMessage;
+        let cubeErrorMessage = errorMessage;
+
         if (isBuildingWorkspaceImage) {
             logs = <ShowWorkspaceBuildLogs buildLog={this.state.buildLog} errorMessage={errorMessage} showPhase={!isError} />;
-            errorMessage = ""; // errors will be shown in the output already
+            cubeErrorMessage = ""; // errors will be shown in the output already
         } else if (isHeadlessBuildRunning) {
             logs = <WorkspaceLogView content={this.state.headlessLog} />;
-            errorMessage = "";
+            cubeErrorMessage = "";
         }
 
         if (isError) {
@@ -445,9 +505,9 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                 </div>;
             }
         }
-        if (this.state && this.state.workspaceInstance && this.state.workspaceInstance.status.phase == 'running') {
+        if (this.state && this.state.workspaceInstance && this.state.workspaceInstance.status.phase === 'running') {
             if (this.state.remainingUsageHours !== undefined && this.state.remainingUsageHours <= 0) {
-                errorMessage = 'You have run out of Gitpod Hours.';
+                cubeErrorMessage = 'You have run out of Gitpod Hours.';
                 message = <div className='message action'>
                     <Button className='button' variant='outlined' color='secondary' onClick={() =>
                         window.open(new GitpodHostUrl(window.location.toString()).asUpgradeSubscription().toString(), '_blank')
@@ -471,7 +531,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                 <Context.Consumer>
                     {(ctx) =>
                         <CubeFrame
-                            errorMessage={errorMessage}
+                            errorMessage={cubeErrorMessage}
                             errorMode={isError}
                             branding={ctx.branding}
                             stoppedAnimation={isStopped}>

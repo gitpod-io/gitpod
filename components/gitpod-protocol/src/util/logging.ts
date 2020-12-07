@@ -16,6 +16,14 @@ export interface LogContext {
     userId?: string;
     workspaceId?: string;
 };
+export namespace LogContext {
+    export function from(params : { userId?: string, user?: any, request?: any } ) {
+        return <LogContext>{
+            sessionId: params.request?.requestID,
+            userId: params.userId || params.user?.id
+        }
+    }
+}
 
 export interface LogPayload {
     // placeholder to indicate that only dictionary-style objects should be passed as payload

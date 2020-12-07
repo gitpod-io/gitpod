@@ -5,13 +5,16 @@
  */
 
 import { injectable, inject } from "inversify";
-import { User, Identity, WorkspaceTimeoutDuration } from "@gitpod/gitpod-protocol";
+import { User, Identity, WorkspaceTimeoutDuration, UserEnvVarValue, Token } from "@gitpod/gitpod-protocol";
 import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
+import { TermsAcceptanceDB } from "@gitpod/gitpod-db/lib/terms-acceptance-db";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Env } from "../env";
-import { AuthProviderParams } from "../auth/auth-provider";
-import { TosNotAcceptedYetException } from "../auth/errors";
+import { AuthProviderParams, AuthUser } from "../auth/auth-provider";
+import { BlockedUserFilter } from "../auth/blocked-user-filter";
+import * as uuidv4 from 'uuid/v4';
+import { TermsProvider } from "../terms/terms-provider";
 
 export interface FindUserByIdentityStrResult {
     user: User;
@@ -24,11 +27,31 @@ export interface CheckSignUpParams {
     identity: Identity;
 }
 
+export interface CheckTermsParams {
+    config: AuthProviderParams;
+    identity?: Identity;
+    user?: User;
+}
+export interface CreateUserParams {
+    identity: Identity;
+    token?: Token;
+    userUpdate?: (user: User) => void;
+}
+
+export interface CheckIsBlockedParams {
+    primaryEmail?: string;
+    user?: User;
+}
+
 @injectable()
 export class UserService {
+
+    @inject(BlockedUserFilter) protected readonly blockedUserFilter: BlockedUserFilter;
     @inject(UserDB) protected readonly userDb: UserDB;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(Env) protected readonly env: Env;
+    @inject(TermsAcceptanceDB) protected readonly termsAcceptanceDb: TermsAcceptanceDB;
+    @inject(TermsProvider) protected readonly termsProvider: TermsProvider;
 
     /**
      * Takes strings in the form of <authHost>/<authName> and returns the matching User
@@ -85,18 +108,31 @@ export class UserService {
         }
     }
 
-    public async createUserForIdentity(identity: Identity): Promise<User> {
-        log.debug('(Auth) Creating new user.', { identity, 'login-flow': true });
-        const newUser = await this.userDb.newUser();
+    private cachedIsFirstUser: true | undefined = undefined;
+    public async createUser({identity, token, userUpdate }: CreateUserParams): Promise<User> {
+        log.debug('Creating new user.', { identity, 'login-flow': true });
+
+        const prevIsFirstUser = this.cachedIsFirstUser;
+        this.cachedIsFirstUser = true; // avoid races
+        const isFirstUser = prevIsFirstUser || (await this.userDb.getUserCount() === 0);
+
+        let newUser = await this.userDb.newUser();
+        if (userUpdate) {
+            userUpdate(newUser);
+        }
         newUser.identities.push(identity);
-        this.handleNewUser(newUser);
-        return await this.userDb.storeUser(newUser);
+        this.handleNewUser(newUser, isFirstUser);
+        newUser = await this.userDb.storeUser(newUser);
+        if (token) {
+            await this.userDb.storeSingleToken(identity, token);
+        }
+        return newUser;
     }
-    protected handleNewUser(newUser: User) {
+    protected handleNewUser(newUser: User, isFirstUser: boolean) {
         if (this.env.blockNewUsers) {
             newUser.blocked = true;
         }
-        if (this.env.makeNewUsersAdmin) {
+        if (isFirstUser || this.env.makeNewUsersAdmin) {
             newUser.rolesOrPermissions = ['admin'];
         }
     }
@@ -110,12 +146,118 @@ export class UserService {
         return "30m";
     }
 
+    /**
+     * This might throw `AuthError`s.
+     *
+     * @param params
+     */
     async checkSignUp(params: CheckSignUpParams) {
-        const { identity, config } = params;
-        if (config.requireTOS !== false) {
+        // no-op
+    }
+
+    async checkTermsAcceptanceRequired(params: CheckTermsParams): Promise<boolean> {
+        // todo@alex: clarify if this would be a loophole for Gitpod SH.
+        // if (params.config.requireTOS === false) {
+        //     // AuthProvider config might disable terms acceptance
+        //     return false;
+        // }
+
+        const { user } = params;
+        if (!user) {
             const userCount = await this.userDb.getUserCount();
             if (userCount === 0) {
-                throw TosNotAcceptedYetException.create(identity);
+                // the very first user, which will become admin, needs to accept the terms. always.
+                return true;
+            }
+        }
+
+        // admin users need to accept the terms.
+        if (user && user.rolesOrPermissions && user.rolesOrPermissions.some(r => r === "admin")) {
+            return (await this.checkTermsAccepted(user)) === false;
+        }
+
+        // non-admin users won't need to accept the terms.
+        return false;
+    }
+
+    async acceptCurrentTerms(user: User) {
+        const terms = this.termsProvider.getCurrent();
+        return await this.termsAcceptanceDb.updateAcceptedRevision(user.id, terms.revision);
+    }
+
+    async checkTermsAccepted(user: User) {
+        const terms = this.termsProvider.getCurrent();
+        const accepted = await this.termsAcceptanceDb.getAcceptedRevision(user.id);
+        return !!accepted && (accepted.termsRevision === terms.revision);
+    }
+
+    async isBlocked(params: CheckIsBlockedParams): Promise<boolean> {
+        if (params.user && params.user.blocked) {
+            return true;
+        }
+        if (params.primaryEmail) {
+            return this.blockedUserFilter.isBlocked(params.primaryEmail);
+        }
+        return false;
+    }
+
+    /**
+     * Try to find the Gitpod user ...
+     *  1. by identity
+     *  2. by email
+     */
+    async findUserForLogin(params: { candidate: Identity, primaryEmail?: string }) {
+        let user = await this.userDb.findUserByIdentity(params.candidate);
+        if (!user && params.primaryEmail) {
+            // - findUsersByEmail is supposed to return users ordered descending by last login time
+            // - we pick the most recently used one and let the old onces "dry out"
+            const usersWithPrimaryEmail = await this.userDb.findUsersByEmail(params.primaryEmail);
+            if (usersWithPrimaryEmail.length > 0) {
+                user = usersWithPrimaryEmail[0];
+            }
+        }
+        return user;
+    }
+
+    async updateUserOnLogin(user: User, authUser: AuthUser, candidate: Identity, token: Token) {
+        // update user
+        user.name = user.name || authUser.name || authUser.primaryEmail;
+        user.avatarUrl = user.avatarUrl || authUser.avatarUrl;
+
+        await this.updateUserIdentity(user, candidate, token);
+    }
+
+    async updateUserIdentity(user: User, candidate: Identity, token: Token) {
+        // ensure single identity per auth provider instance
+        user.identities = user.identities.filter(i => i.authProviderId !== candidate.authProviderId);
+        user.identities.push(candidate);
+
+        await this.userDb.storeUser(user);
+        await this.userDb.storeSingleToken(candidate, token);
+    }
+
+    async updateUserEnvVarsOnLogin(user: User, envVars?: UserEnvVarValue[]) {
+        if (!envVars) {
+            return;
+        }
+        const userId = user.id;
+        const currentEnvVars = await this.userDb.getEnvVars(userId);
+        const findEnvVar = (name: string, repositoryPattern: string) => currentEnvVars.find(env => env.repositoryPattern === repositoryPattern && env.name === name);
+        for (const { name, value, repositoryPattern } of envVars) {
+            try {
+                const existingEnvVar = findEnvVar(name, repositoryPattern);
+                await this.userDb.setEnvVar(existingEnvVar ? {
+                    ...existingEnvVar,
+                    value
+                } : {
+                        repositoryPattern,
+                        name,
+                        userId,
+                        id: uuidv4(),
+                        value
+                    });
+            } catch (error) {
+                log.error(`Failed update user EnvVar on login!`, { error, user: User.censor(user), envVar: { name, value, repositoryPattern } });
             }
         }
     }

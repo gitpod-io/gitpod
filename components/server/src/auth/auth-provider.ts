@@ -6,7 +6,7 @@
 
 
 import * as express from 'express';
-import { Identity, AuthProviderInfo, User, OAuth2Config, AuthProviderEntry } from "@gitpod/gitpod-protocol";
+import { AuthProviderInfo, User, OAuth2Config, AuthProviderEntry } from "@gitpod/gitpod-protocol";
 import { saveSession } from '../express-util';
 
 import { UserEnvVarValue } from "@gitpod/gitpod-protocol";
@@ -80,28 +80,18 @@ export interface AuthProvider {
     refreshToken?(user: User): Promise<void>;
 }
 
-export type AuthBag = AuthBag.AuthorizeBag | AuthBag.AuthenticateBag;
-export namespace AuthBag {
-    export interface AuthorizeBag {
-        readonly requestType: "authorize";
-        readonly host: string;
-        readonly returnTo: string;
-        readonly override: boolean;
-    }
-    export interface AuthenticateBag {
-        readonly requestType: "authenticate";
-        readonly host: string;
-        readonly returnTo: string;
-        readonly identity?: Identity;
-        readonly returnToAfterTos: string;
-        readonly elevateScopes?: string[];
-    }
-    export function get(session: Express.Session | undefined): AuthBag | undefined {
+export interface AuthFlow {
+    readonly host: string;
+    readonly returnTo: string;
+    readonly returnToAfterTos?: string;
+}
+export namespace AuthFlow {
+    export function get(session: Express.Session | undefined): AuthFlow | undefined {
         if (session) {
-            return session['authBag'] as AuthBag | undefined;
+            return session['authBag'] as AuthFlow | undefined;
         }
     }
-    export async function attach(session: Express.Session, authBag: AuthBag): Promise<void> {
+    export async function attach(session: Express.Session, authBag: AuthFlow): Promise<void> {
         session['authBag'] = authBag;
         return saveSession(session);
     }

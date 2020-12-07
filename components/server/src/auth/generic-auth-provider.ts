@@ -9,51 +9,49 @@ import * as express from "express"
 import * as passport from "passport"
 import * as OAuth2Strategy from "passport-oauth2";
 import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
-import { AuthProviderInfo, Identity, Token, User, UserEnvVarValue } from '@gitpod/gitpod-protocol';
+import { AuthProviderInfo, Identity, Token, User, UserEnvVar } from '@gitpod/gitpod-protocol';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
 import fetch from "node-fetch";
 import { oauth2tokenCallback, OAuth2 } from 'oauth';
 import { format as formatURL, URL } from 'url';
-import * as uuidv4 from 'uuid/v4';
 import { runInNewContext } from "vm";
-import { AuthBag, AuthProvider } from "../auth/auth-provider";
+import { AuthFlow, AuthProvider, AuthUser } from "../auth/auth-provider";
 import { AuthProviderParams, AuthUserSetup } from "../auth/auth-provider";
-import { AuthException, EMailDomainFilterException } from "../auth/errors";
+import { AuthException } from "../auth/errors";
 import { GitpodCookie } from "../auth/gitpod-cookie";
 import { Env } from "../env";
-import { getRequestingClientInfo } from "../express-util";
+import { getRequestingClientInfo, saveSession } from "../express-util";
 import { TokenProvider } from '../user/token-provider';
 import { UserService } from "../user/user-service";
-import { BlockedUserFilter } from "./blocked-user-filter";
 import { AuthProviderService } from './auth-provider-service';
-import { AuthErrorHandler } from './auth-error-handler';
+import { LoginCompletionHandler } from './login-completion-handler';
 
 /**
  * This is a generic implementation of OAuth2-based AuthProvider.
  * --
- * The main entrypoints go along the phases of the OAuth2 Authorization Code Flow:  
- * 
+ * The main entrypoints go along the phases of the OAuth2 Authorization Code Flow:
+ *
  * 1. `authorize` – this is called by the `Authenticator` to handle login/authorization requests.
- * 
- *   The OAuth2 library under the hood will redirect send a redirect response to initialize the OAuth2 flow with the 
+ *
+ *   The OAuth2 library under the hood will redirect send a redirect response to initialize the OAuth2 flow with the
  *   authorization service.
- * 
- *   The continuation of the flow is an expected incoming request on the callback path. Between those two phases the 
+ *
+ *   The continuation of the flow is an expected incoming request on the callback path. Between those two phases the
  *   AuthProvider needs to persist an intermediate state in order to preserve the original parameters.
- * 
+ *
  * 2. `callback` – the `Authenticator` handles requests matching the `/auth/*` paths and delegates to the responsible AuthProvider.
- *  
+ *
  *   The complex operation combines the token exchanges (which happens under the hood) with unverified authentication of
  *   the user.
- * 
- *   Once `access_token` is provided, the `readAuthUserSetup` is executed to query the specific auth server APIs and 
- *   obtain the information needed to create new users or identify existing users. 
- * 
+ *
+ *   Once `access_token` is provided, the `readAuthUserSetup` is executed to query the specific auth server APIs and
+ *   obtain the information needed to create new users or identify existing users.
+ *
  * 3. `refreshToken` – the `TokenService` may call this if the token aquired by this AuthProvider.
- * 
+ *
  *   The AuthProvider requests to renew an `access_token` if supported, i.e. a `refresh_token` is provided in the original
  *   token response.
- *  
+ *
  */
 @injectable()
 export class GenericAuthProvider implements AuthProvider {
@@ -63,10 +61,9 @@ export class GenericAuthProvider implements AuthProvider {
     @inject(UserDB) protected userDb: UserDB;
     @inject(Env) protected env: Env;
     @inject(GitpodCookie) protected gitpodCookie: GitpodCookie;
-    @inject(BlockedUserFilter) protected readonly blockedUserFilter: BlockedUserFilter;
     @inject(UserService) protected readonly userService: UserService;
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
-    @inject(AuthErrorHandler) protected readonly authErrorHandler: AuthErrorHandler;
+    @inject(LoginCompletionHandler) protected readonly loginCompletionHandler: LoginCompletionHandler;
 
     protected strategy: GenericOAuth2Strategy;
 
@@ -242,31 +239,33 @@ export class GenericAuthProvider implements AuthProvider {
         return new URL(this.oauthConfig.callBackUrl).pathname;
     }
 
+
     /**
      * Once the auth service and the user agreed to continue with the OAuth2 flow, this callback function
      * initializes the continuation of the auth process:
-     * 
+     *
      * - (1) `passport.authenticate` is called to handle the token exchange; once done, the following happens...
-     * - (2) the so called "verify" function is called by passport, which is expected to find/create/update 
+     * - (2) the so called "verify" function is called by passport, which is expected to find/create/update
      *   user instances after requesting user information from the auth service.
      * - (3) the result of the "verify" function is first handled by passport internally and then passed to the
-     *   callback from the `passport.authenticate` call (1) 
+     *   callback from the `passport.authenticate` call (1)
      */
     readonly callback: express.RequestHandler = (request, response, next) => {
         const authProviderId = this.authProviderId;
         const strategyName = this.strategyName;
         const clientInfo = getRequestingClientInfo(request);
+        const cxt = LogContext.from({ user: request.user, request});
         if (response.headersSent) {
-            log.warn(`(${strategyName}) Callback called repeatedly.`, { request, clientInfo });
+            log.warn(cxt, `(${strategyName}) Callback called repeatedly.`, { request, clientInfo });
             return;
         }
-        log.info(`(${strategyName}) OAuth2 callback call. `, { clientInfo, authProviderId, requestUrl: request.originalUrl });
+        log.info(cxt, `(${strategyName}) OAuth2 callback call. `, { clientInfo, authProviderId, requestUrl: request.originalUrl });
 
         const isAlreadyLoggedIn = request.isAuthenticated() && User.is(request.user);
-        const authBag = AuthBag.get(request.session);
+        const authBag = AuthFlow.get(request.session);
         if (isAlreadyLoggedIn) {
-            if (!authBag || authBag.requestType === "authenticate") {
-                log.warn({}, `(${strategyName}) User is already logged in. No auth info provided. Redirecting to dashboard.`, { request, clientInfo });
+            if (!authBag) {
+                log.warn(cxt, `(${strategyName}) User is already logged in. No auth info provided. Redirecting to dashboard.`, { request, clientInfo });
                 response.redirect(this.env.hostUrl.asDashboard().toString());
                 return;
             }
@@ -274,7 +273,7 @@ export class GenericAuthProvider implements AuthProvider {
 
         // assert additional infomation is attached to current session
         if (!authBag) {
-            log.error({}, `(${strategyName}) No session found during auth callback.`, { request, clientInfo });
+            log.error(cxt, `(${strategyName}) No session found during auth callback.`, { request, clientInfo });
             response.redirect(this.getSorryUrl(`Please allow Cookies in your browser and try to log in again.`));
             return;
         }
@@ -284,277 +283,189 @@ export class GenericAuthProvider implements AuthProvider {
         // check OAuth2 errors
         const error = new URL(formatURL({ protocol: request.protocol, host: request.get('host'), pathname: request.originalUrl })).searchParams.get("error");
         if (error) { // e.g. "access_denied"
-            log.info(`(${strategyName}) Received OAuth2 error, thus redirecting to /sorry (${error})`, { ...defaultLogPayload, requestUrl: request.originalUrl });
+            // Clean up the session
+            AuthFlow.clear(request.session);
+
+            log.info(cxt, `(${strategyName}) Received OAuth2 error, thus redirecting to /sorry (${error})`, { ...defaultLogPayload, requestUrl: request.originalUrl });
             response.redirect(this.getSorryUrl(`OAuth2 error. (${error})`));
             return;
         }
 
-        const passportAuthHandler = passport.authenticate(this.strategy as any, async (...[err, user, info]: Parameters<OAuth2Strategy.VerifyCallback>) => {
+        const passportAuthHandler = passport.authenticate(this.strategy as any, async (...[err, user, flowContext]: Parameters<VerifyCallback>) => {
             /*
              * (3) this callback function is called after the "verify" function as the final step in the authentication process in passport.
-             * 
+             *
              * - the `err` parameter may include any error raised from the "verify" function call.
              * - the `user` parameter may include the accepted user instance.
              * - the `info` parameter may include additional info to the process.
-             * 
+             *
              * given that everything relevant to the state is already processed, this callback is supposed to finally handle the
              * incoming `/callback` request:
-             * 
+             *
              * - redirect to handle/display errors
              * - redirect to terms acceptance request page
              * - call `request.login` on new sessions
              * - redirect to `returnTo` (from request parameter)
              */
 
-            if (authBag.requestType === 'authenticate') {
-                await this.loginCallbackHandler(authBag, request, response, defaultLogPayload, err, user, info);
-            } else {
-                await this.authorizeCallbackHandler(authBag, request, response, defaultLogPayload, err, user, info);
+            const context = LogContext.from( { user: User.is(user) ? { userId: user.id } : undefined, request} );
+
+            if (err) {
+                if (request.session) {
+                    AuthFlow.clear(request.session);
+                }
+
+                let message = 'Authorization failed. Please try again.';
+                if (AuthException.is(err)) {
+                    message = `Login was interrupted: ${err.message}`;
+                }
+                if (this.isOAuthError(err)) {
+                    message = 'OAuth Error. Please try again.'; // this is a 5xx response from authorization service
+                }
+                log.error(context, `(${strategyName}) Redirect to /sorry from verify callback`, err, { ...defaultLogPayload, err });
+                response.redirect(this.getSorryUrl(message));
+                return;
+            }
+
+            if (flowContext) {
+
+                if (VerifyResultWithIdentity.is(flowContext) || (VerifyResultWithUser.is(flowContext) && flowContext.termsAcceptanceRequired)) {
+                    // This is the regular path on sign up. We just went through the OAuth2 flow but didn't create a Gitpod
+                    // account yet, as we require to accept the terms first.
+                    log.info(context, `(${strategyName}) Redirect to /api/tos`, { info: flowContext });
+
+                    // attach the sign up info to the session, in order to proceed after acceptance of terms
+                    request.session!.tosFlowInfo = flowContext;
+                    await saveSession(request);
+    
+                    response.redirect(this.env.hostUrl.withApi({ pathname: '/tos' }).toString());
+                    return;
+                } else  {
+                    const { user, elevateScopes } = flowContext as VerifyResultWithUser;
+                    log.info(context, `(${strategyName}) Directly log in and proceed.`, { info: flowContext });
+
+                    // Complete login
+                    const { host, returnTo } = authBag;
+                    await this.loginCompletionHandler.complete(request, response, { user, returnToUrl: returnTo, authHost: host, elevateScopes });
+                }
             }
         });
         passportAuthHandler(request, response, next);
     }
-    protected async authorizeCallbackHandler(authBag: AuthBag, request: express.Request, response: express.Response, logPayload: object, ...[err, user, info]: Parameters<OAuth2Strategy.VerifyCallback>) {
-        const { id, verified, ownerId } = this.config;
-        const strategyName = this.strategyName;
-        const context: LogContext = User.is(user) ? { userId: user.id } : {};
-        log.info(context, `(${strategyName}) Callback (authorize)`, { ...logPayload });
-        if (err || !User.is(user)) {
-            const message = this.isOAuthError(err) ?
-                'OAuth Error. Please try again.' : // this is a 5xx responsefrom
-                'Authorization failed. Please try again.'; // this might be a race of our API calls
-            log.error(context, `(${strategyName}) Redirect to /sorry from authorizeCallbackHandler`, { ...logPayload, err });
-            response.redirect(this.getSorryUrl(message));
-            return;
-        }
-        if (!verified && User.is(user) && user.id === ownerId) {
-            try {
-                await this.authProviderService.markAsVerified({ id, ownerId });
-            } catch (error) {
-                log.error(context, `(${strategyName}) Redirect to /sorry (OAuth Error)`, { ...logPayload, err });
-            }
-        }
-        response.redirect(authBag.returnTo);
-    }
-    protected async loginCallbackHandler(authBag: AuthBag, request: express.Request, response: express.Response, logPayload: object, ...[err, user, info]: Parameters<OAuth2Strategy.VerifyCallback>) {
-        const { id, verified, ownerId } = this.config;
-        const strategyName = this.strategyName;
-        const context: LogContext = User.is(user) ? { userId: user.id } : {};
-        log.info(context, `(${strategyName}) Callback (login)`, { ...logPayload });
-
-        const handledError = await this.authErrorHandler.check(err);
-        if (handledError) {
-            if (request.session) {
-                await AuthBag.attach(request.session, { ...authBag, ...handledError});
-            }
-            const { redirectToUrl } = handledError;
-            log.info(context, `(${strategyName}) Handled auth error. Redirecting to ${redirectToUrl}`, { ...logPayload, err });
-            response.redirect(redirectToUrl);
-            return;
-        }
-        if (err) {
-            let message = 'Authorization failed. Please try again.';
-            if (AuthException.is(err)) {
-                message = `Login was interrupted: ${err.message}`;
-            }
-            if (this.isOAuthError(err)) {
-                message = 'OAuth Error. Please try again.'; // this is a 5xx response from authorization service
-            }
-            log.error(context, `(${strategyName}) Redirect to /sorry from loginCallbackHandler`, err, { ...logPayload, err });
-            response.redirect(this.getSorryUrl(message));
-            return;
-        }
-        if (!User.is(user)) {
-            log.error(context, `(${strategyName}) Redirect to /sorry (NO user)`, { request, ...logPayload });
-            response.redirect(this.getSorryUrl('Login with failed.'));
-            return;
-        }
-
-        const userCount = await this.userDb.getUserCount();
-        if (User.is(user) && userCount === 1) {
-            // assuming the single user was just created, we can mark the user as admin
-            user.rolesOrPermissions = ['admin'];
-            user = await this.userDb.storeUser(user);
-
-            // we can now enable the first auth provider
-            if (this.config.builtin === false && !verified && User.is(user)) {
-                this.authProviderService.markAsVerified({ id, ownerId, newOwnerId: user.id });
-            }
-        }
-
-        // Finally login and redirect.
-        request.login(user, err => {
-            if (err) {
-                throw err;
-            }
-            // re-read the session info, as it might have changed in the authenticator
-            const authBag = AuthBag.get(request.session);
-            if (!authBag || authBag.requestType !== 'authenticate') {
-                response.redirect(this.getSorryUrl('Session not found.'));
-                return;
-            }
-            let returnTo = authBag.returnTo;
-            const context: LogContext = User.is(user) ? { userId: user.id } : {};
-            if (authBag.elevateScopes) {
-                const elevateScopesUrl = this.env.hostUrl.withApi({
-                    pathname: '/authorize',
-                    search: `returnTo=${encodeURIComponent(returnTo)}&host=${authBag.host}&scopes=${authBag.elevateScopes.join(',')}`
-                }).toString();
-                returnTo = elevateScopesUrl;
-            }
-            log.info(context, `(${strategyName}) User is logged in successfully. Redirect to: ${returnTo}`, { ...logPayload });
-
-            // Clean up the session
-            AuthBag.clear(request.session);
-
-            // Create Gitpod 🍪 before the redirect
-            this.gitpodCookie.setCookie(response);
-            response.redirect(returnTo);
-        });
-    }
 
     /**
-     * cf. (2) of `callback` function (a.k.a. `/callback` handler)
-     * 
+     * cf. part (2) of `callback` function
+     *
      * - `access_token` is provided
      * - it's expected to fetch the user info (see `fetchAuthUserSetup`)
      * - it's expected to handle the state persisted in the database in order to find/create/update the user instance
      * - it's expected to identify missing requirements, e.g. missing terms acceptance
      * - finally, it's expected to call `done` and provide the computed result in order to finalize the auth process
      */
-    protected async verify(req: express.Request, accessToken: string, refreshToken: string | undefined, tokenResponse: any, _profile: undefined, done: OAuth2Strategy.VerifyCallback) {
-        const { strategyName } = this;
+    protected async verify(req: express.Request, accessToken: string, refreshToken: string | undefined, tokenResponse: any, _profile: undefined, done: VerifyCallback) {
+        let flowContext: VerifyResult = {};
+        const { strategyName, config } = this;
         const clientInfo = getRequestingClientInfo(req);
         const authProviderId = this.authProviderId;
-        const authBag = AuthBag.get(req.session);
-        if (!authBag) {
-            log.info(`(${strategyName}) Invalid Auth Session. No Auth Bag attached.`, { req, clientInfo, tokenResponse });
-            done(new Error("Invalid Auth Session!"));
-            return;
-        }
+        const authBag = AuthFlow.get(req.session)!; // asserted in `callback` allready
         const defaultLogPayload = { authBag, clientInfo, authProviderId };
+        let currentGitpodUser: User | undefined = User.is(req.user) ? req.user : undefined;
+        let candidate: Identity;
+
+        const fail = (err: any) => done(err, currentGitpodUser || candidate, flowContext);
+        const complete = () => done(undefined, currentGitpodUser || candidate, flowContext);
+
+        const isIdentityLinked = (user: User, candidate: Identity) => user.identities.some(i => Identity.equals(i, candidate));
+
         try {
             const tokenResponseObject = this.ensureIsObject(tokenResponse);
-            const { authUser, blockUser, currentScopes, envVars } = await this.fetchAuthUserSetup(accessToken, tokenResponseObject);
-            const { authId, authName, primaryEmail } = authUser;
-            let identity: Identity = { authProviderId, authId, authName, primaryEmail };
+            const { authUser, currentScopes, envVars } = await this.fetchAuthUserSetup(accessToken, tokenResponseObject);
+            const { authName, primaryEmail } = authUser;
+            candidate = { authProviderId, ...authUser };
 
-            log.info(`(${strategyName}) Verify for authName: ${authName}`, { ...defaultLogPayload, authUser });
+            log.info(`(${strategyName}) Verify function called for ${authName}`, { ...defaultLogPayload, authUser });
 
-            let currentGitpodUser = req.user as User | undefined;
-
-            if (!User.is(currentGitpodUser)) { // no user in sessino, thus login-flow
-
-                // handle blacklisted users
-                if (await this.blockedUserFilter.isBlocked(primaryEmail)) {
-                    done(EMailDomainFilterException.create(primaryEmail));
-                    return;
-                }
-
-                // first try to find a user by identity/email.
-                currentGitpodUser = await this.userDb.findUserByIdentity(identity);
-                if (!currentGitpodUser) {
-                    // 1) findUsersByEmail is supposed to return users ordered descending by last login time
-                    // 2) we pick the most recently used one and let the old onces "dry out"
-                    const usersWithSamePrimaryEmail = await this.userDb.findUsersByEmail(primaryEmail);
-                    if (usersWithSamePrimaryEmail.length > 0) {
-                        currentGitpodUser = usersWithSamePrimaryEmail[0];
-                        log.info(`(${strategyName}) Found user by email address. Log in...`, { ...defaultLogPayload, identity, usersWithSamePrimaryEmail, authUser });
-                    }
-                }
-
-                if (!currentGitpodUser) {
-                    // handle additional requirements
-                    await this.userService.checkSignUp({ config: this.config, identity });
-
-                    // We have never seen this user before, create new user and continue.
-                    currentGitpodUser = await this.userService.createUserForIdentity(identity);
-                }
-
-                // block new users per request
-                if (blockUser) {
-                    currentGitpodUser.blocked = true;
-                }
-            } else { // current Gitpod user known from session
-                let identity = currentGitpodUser.identities.find(i => i.authId === authId);
-
-                if (!identity) {
-
-                    // 1) there might be another Gitpod user linked with this identity, let's associate with current user
-                    const userWithSameIdentity = await this.userDb.findUserByIdentity({ authProviderId, authId });
+            if (currentGitpodUser) { // user is already logged in
+                if (!isIdentityLinked(currentGitpodUser, candidate)) {
+                    const userWithSameIdentity = await this.userService.findUserForLogin({ candidate });
                     if (userWithSameIdentity) {
-                        identity = userWithSameIdentity.identities.find(identity => Identity.equals(identity, { authId, authProviderId }));
-                        log.info(`(${strategyName}) Moving identity to most recently used user.`, { ...defaultLogPayload, authUser, currentGitpodUser, userWithSameIdentity, identity, clientInfo });
+                        // another Gitpod user is linked with this identity, this will change on completion, we're logging this action.
+                        log.info(`(${strategyName}) Moving identity to the current Gitpod user.`, { ...defaultLogPayload, authUser, candidate, currentGitpodUser, userWithSameIdentity, clientInfo });
                     }
-
-                    // 2) this identity is linked for the first time
-                    if (!identity) {
-                        identity = { authProviderId, authId, authName, primaryEmail };
-                    }
-
                 }
+            } else { // no user session, login
+                currentGitpodUser = await this.userService.findUserForLogin({ candidate, primaryEmail });
             }
 
+            const token = this.createToken(this.tokenUsername, accessToken, refreshToken, currentScopes, tokenResponse.expires_in);
+            
+            if (currentGitpodUser) {
+                const termsAcceptanceRequired = await this.userService.checkTermsAcceptanceRequired({ config, identity: candidate, user: currentGitpodUser });
+                const elevateScopes = await this.getMissingScopeForElevation(currentGitpodUser, currentScopes);
+                const isBlocked = await this.userService.isBlocked({ user: currentGitpodUser });
 
-            /*
-             * At this point we have found/created a Gitpod user and the user profile/setup is fetched, let's update the link!
-             */
+                await this.userService.updateUserOnLogin(currentGitpodUser, authUser, candidate, token)
+                await this.userService.updateUserEnvVarsOnLogin(currentGitpodUser, envVars); // derived from AuthProvider 
 
-            const existingIdentity = currentGitpodUser.identities.find(i => Identity.equals(i, identity));
-            if (existingIdentity) {
-                let shouldElevate = false;
-                let prevScopes: string[] = [];
-                try {
-                    const token = await this.getCurrentToken(currentGitpodUser);
-                    prevScopes = token ? token.scopes : prevScopes;
-                    shouldElevate = this.prevScopesAreMissing(currentScopes, prevScopes);
-                } catch {
-                    // no token
+                flowContext = <VerifyResultWithUser>{
+                    user: User.censor(currentGitpodUser),
+                    isBlocked,
+                    termsAcceptanceRequired,
+                    returnToUrl: authBag.returnTo,
+                    authHost: this.host,
+                    elevateScopes
                 }
-                if (shouldElevate) {
-                    log.info(`(${strategyName}) Existing user needs to elevate scopes.`, { ...defaultLogPayload, identity });
-                    const authBag = AuthBag.get(req.session);
-                    if (req.session && authBag && authBag.requestType === "authenticate") {
-                        await AuthBag.attach(req.session, { ...authBag, elevateScopes: prevScopes });
-                    }
+            } else {
+                // `checkSignUp` might throgh `AuthError`s with the intention to block the signup process.
+                await this.userService.checkSignUp({ config, identity: candidate });
+
+                const isBlocked = await this.userService.isBlocked({ primaryEmail });
+                const { githubIdentity, githubToken } = this.createGhProxyIdentity(candidate);
+                flowContext = <VerifyResultWithIdentity>{
+                    candidate,
+                    token,
+                    authUser,
+                    envVars,
+                    additionalIdentity: githubIdentity,
+                    additionalToken: githubToken,
+                    isBlocked
                 }
-                identity = existingIdentity;
             }
-
-            // ensure single identity per auth provider instance
-            currentGitpodUser.identities = currentGitpodUser.identities.filter(i => i.authProviderId !== authProviderId);
-            currentGitpodUser.identities.push(identity);
-
-            // update user
-            currentGitpodUser.name = authUser.authName || currentGitpodUser.name;
-            currentGitpodUser.avatarUrl = authUser.avatarUrl || currentGitpodUser.avatarUrl;
-
-            // update token, scopes, and email
-            const now = new Date();
-            const updateDate = now.toISOString();
-            const tokenExpiresInSeconds = typeof tokenResponse.expires_in === "number" ? tokenResponse.expires_in : undefined;
-            const expiryDate = tokenExpiresInSeconds ? new Date(now.getTime() + tokenExpiresInSeconds * 1000).toISOString() : undefined;
-            const token: Token = {
-                value: accessToken,
-                username: this.tokenUsername,
-                scopes: currentScopes,
-                updateDate,
-                expiryDate,
-                refreshToken
-            };
-            identity.primaryEmail = authUser.primaryEmail; // case: changed email
-            identity.authName = authUser.authName; // case: renamed account
-
-            await this.userDb.storeUser(currentGitpodUser),
-                await this.userDb.storeSingleToken(identity, token),
-                await this.updateEnvVars(currentGitpodUser, envVars),
-                await this.createGhProxyIdentityOnDemand(currentGitpodUser, identity)
-
-            done(null, currentGitpodUser);
+            complete()
         } catch (err) {
-            log.error(`(${strategyName}) Exception in verify function`, err, { ...defaultLogPayload, err });
-            done(err);
+            log.error(`(${strategyName}) Exception in verify function`, err, { ...defaultLogPayload, err, authBag });
+            fail(err);
         }
+    }
+
+    protected async getMissingScopeForElevation(user: User, currentScopes: string[]) {
+        let shouldElevate = false;
+        let prevScopes: string[] = [];
+        try {
+            const token = await this.getCurrentToken(user);
+            prevScopes = token ? token.scopes : prevScopes;
+            shouldElevate = this.prevScopesAreMissing(currentScopes, prevScopes);
+        } catch {
+            // no token
+        }
+        if (shouldElevate) {
+            return prevScopes;
+        }
+    }
+
+    protected createToken(username: string, value: string, refreshToken: string | undefined, scopes: string[], expires_in: any): Token {
+        const now = new Date();
+        const updateDate = now.toISOString();
+        const tokenExpiresInSeconds = typeof expires_in === "number" ? expires_in : undefined;
+        const expiryDate = tokenExpiresInSeconds ? new Date(now.getTime() + tokenExpiresInSeconds * 1000).toISOString() : undefined;
+        return {
+            value,
+            username,
+            scopes,
+            updateDate,
+            expiryDate,
+            refreshToken
+        };
     }
 
     protected get tokenUsername(): string {
@@ -590,41 +501,12 @@ export class GenericAuthProvider implements AuthProvider {
         return set.size > 0;
     }
 
-    protected async updateEnvVars(user: User, envVars?: UserEnvVarValue[]) {
-        if (!envVars) {
-            return;
-        }
-        const userId = user.id;
-        const currentEnvVars = await this.userDb.getEnvVars(userId);
-        const findEnvVar = (name: string, repositoryPattern: string) => currentEnvVars.find(env => env.repositoryPattern === repositoryPattern && env.name === name);
-        for (const { name, value, repositoryPattern } of envVars) {
-            try {
-                const existingEnvVar = findEnvVar(name, repositoryPattern);
-                await this.userDb.setEnvVar(existingEnvVar ? {
-                    ...existingEnvVar,
-                    value
-                } : {
-                        repositoryPattern,
-                        name,
-                        userId,
-                        id: uuidv4(),
-                        value
-                    });
-            } catch (error) {
-                log.error(`(${this.strategyName}) Failed update Env Vars`, { error, user, envVars });
-            }
-        }
-    }
-
-    protected async createGhProxyIdentityOnDemand(user: User, originalIdentity: Identity) {
+    protected createGhProxyIdentity(originalIdentity: Identity) {
         const githubTokenValue = this.config.params && this.config.params.githubToken;
         if (!githubTokenValue) {
-            return;
+            return {};
         }
         const publicGitHubAuthProviderId = "Public-GitHub";
-        if (user.identities.some(i => i.authProviderId === publicGitHubAuthProviderId)) {
-            return;
-        }
 
         const githubIdentity: Identity = {
             authProviderId: publicGitHubAuthProviderId,
@@ -633,18 +515,14 @@ export class GenericAuthProvider implements AuthProvider {
             primaryEmail: originalIdentity.primaryEmail,
             readonly: false // THIS ENABLES US TO UPGRADE FROM PROXY TO REAL GITHUB ACCOUNT
         }
-        // create a proxy identity to allow access GitHub API
-        user.identities.push(githubIdentity);
+        // this proxy identity should allow instant read access for GitHub API
         const githubToken: Token = {
             value: githubTokenValue,
             username: "oauth2",
             scopes: ["user:email"],
             updateDate: new Date().toISOString()
         };
-        await Promise.all([
-            this.userDb.storeUser(user),
-            this.userDb.storeSingleToken(githubIdentity, githubToken)
-        ]);
+        return { githubIdentity, githubToken };
     }
 
     protected isOAuthError(err: any): boolean {
@@ -673,9 +551,60 @@ export class GenericAuthProvider implements AuthProvider {
     }
 
     protected getSorryUrl(message: string) {
-        return this.env.hostUrl.with({ pathname: `/sorry`, hash: message }).toString();
+        return this.env.hostUrl.asSorry(message).toString();
     }
 
+    protected retry = async <T>(fn: () => Promise<T>) => {
+        let lastError;
+        for (let i = 1; i <= 10; i++) {
+            try {
+                return await fn();
+            } catch (error) {
+                lastError = error;
+            }
+            await new Promise(resolve => setTimeout(resolve, 200));
+        }
+        throw lastError;
+    }
+
+}
+
+export interface TosFlow {
+    candidate: Identity;
+    authUser: AuthUser;
+    token: Token;
+    additionalIdentity?: Identity;
+    additionalToken?: Token;
+    envVars?: UserEnvVar[]
+}
+
+export interface VerifyResult {
+    termsAcceptanceRequired?: boolean;
+    isBlocked?: boolean;
+}
+export interface VerifyResultWithIdentity extends VerifyResult {
+    candidate: Identity;
+    authUser: AuthUser;
+    token: Token;
+    additionalIdentity?: Identity;
+    additionalToken?: Token;
+    envVars?: UserEnvVar[]
+}
+export namespace VerifyResultWithIdentity {
+    export function is(data?: VerifyResult): data is VerifyResultWithIdentity {
+        return !!data && "candidate" in data;
+    }
+}
+export interface VerifyResultWithUser extends VerifyResult {
+    user: User;
+    elevateScopes?: string[] | undefined;
+    authHost?: string;
+    returnToUrl?: string;
+}
+export namespace VerifyResultWithUser {
+    export function is(data?: VerifyResult): data is VerifyResultWithUser {
+        return !!data && "user" in data;
+    }
 }
 
 interface GenericOAuthStrategyOptions {
@@ -693,6 +622,11 @@ interface GenericOAuthStrategyOptions {
      */
     authorizationParams?: object;
 }
+
+/**
+ * Refinement of OAuth2Strategy.VerifyCallback
+ */
+type VerifyCallback = (err?: Error | undefined, user?: User | Identity, info?: VerifyResult) => void
 
 export interface StrategyOptionsWithRequest extends OAuth2Strategy.StrategyOptionsWithRequest, GenericOAuthStrategyOptions { }
 

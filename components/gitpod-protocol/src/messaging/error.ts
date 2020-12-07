@@ -37,8 +37,11 @@ export namespace ErrorCodes {
     // 470 User Blocked (custom status code)
     export const USER_BLOCKED = 470;
 
-    // 471 User Blocked (custom status code)
+    // 471 User Deleted (custom status code)
     export const USER_DELETED = 471;
+
+    // 472 Terms Acceptance Required (custom status code)
+    export const USER_TERMS_ACCEPTANCE_REQUIRED = 472;
 
     // 480 Plan does not allow private repos
     export const PLAN_DOES_NOT_ALLOW_PRIVATE_REPOS = 480;

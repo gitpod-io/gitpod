@@ -61,6 +61,20 @@ export namespace User {
     export function getIdentity(user: User, authProviderId: string): Identity | undefined {
         return user.identities.find(id => id.authProviderId === authProviderId);
     }
+    export function censor(user: User): User {
+        const res = { ...user };
+        delete (res.additionalData);
+        res.identities = res.identities.map(i => {
+            delete (i.tokens);
+
+            // The user field is not in the Identity shape, but actually exists on DBIdentity.
+            // Trying to push this object out via JSON RPC will fail because of the cyclic nature
+            // of this field.
+            delete ((i as any).user);
+            return i;
+        });
+        return res;
+    }
     export function getPrimaryEmail(user: User): string {
         const identities = user.identities.filter(i => !!i.primaryEmail);
         if (identities.length <= 0) {
@@ -1107,4 +1121,19 @@ export namespace TheiaPlugin {
         Uploaded = "uploaded",
         CheckinFailed = "checkin-failed",
     }
+}
+
+export interface TermsAcceptanceEntry {
+    readonly userId: string;
+    readonly termsRevision: string;
+    readonly acceptionTime: string;
+}
+
+export interface Terms {
+    readonly revision: string;
+    readonly activeSince: string;
+    readonly adminOnlyTerms: boolean;
+    readonly updateMessage: string;
+    readonly content: string;
+    readonly formElements?: object;
 }

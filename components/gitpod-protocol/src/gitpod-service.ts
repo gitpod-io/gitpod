@@ -7,7 +7,7 @@
 import {
     User, WorkspaceInfo, WorkspaceCreationResult, UserMessage, WorkspaceInstanceUser,
     WhitelistedRepository, WorkspaceImageBuild, AuthProviderInfo, Branding, CreateWorkspaceMode,
-    Token, UserEnvVarValue, ResolvePluginsParams, PreparePluginUploadParams,
+    Token, UserEnvVarValue, ResolvePluginsParams, PreparePluginUploadParams, Terms,
     ResolvedPlugins, Configuration, InstallPluginsParams, UninstallPluginParams, UserInfo, GitpodTokenType, GitpodToken, AuthProviderEntry
 } from './protocol';
 import { JsonRpcProxy, JsonRpcServer } from './messaging/proxy-factory';
@@ -36,6 +36,7 @@ export const GitpodServer = Symbol('GitpodServer');
 export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, LicenseService {
     // User related API
     getLoggedInUser(): Promise<User>;
+    getTerms(): Promise<Terms>;
     updateLoggedInUser(user: Partial<User>): Promise<User>;
     getAuthProviders(): Promise<AuthProviderInfo[]>;
     getOwnAuthProviders(): Promise<AuthProviderEntry[]>;
