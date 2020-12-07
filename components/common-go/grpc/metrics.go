@@ -17,34 +17,27 @@ import (
 // and error rate metrics.
 func NewUnaryCallMetricsInterceptor(reg prometheus.Registerer) (grpc.UnaryServerInterceptor, error) {
 	const (
-		labelMethod = "method"
-		labelCode   = "code"
+		labelMethod   = "method"
+		labelResponse = "response"
 	)
 	callCountVec := prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "grpc_call_total",
-		Help: "total call per function",
-	}, []string{labelMethod})
+		Help: "total calls per function",
+	}, []string{labelMethod, labelResponse})
 	err := reg.Register(callCountVec)
-	if err != nil {
-		return nil, err
-	}
-	errorCountVec := prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name: "grpc_error_total",
-		Help: "total error responses per function",
-	}, []string{labelMethod, labelCode})
-	err = reg.Register(callCountVec)
 	if err != nil {
 		return nil, err
 	}
 
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
-		callCountVec.With(prometheus.Labels{labelMethod: info.FullMethod}).Inc()
-
 		resp, err = handler(ctx, req)
 
-		if s, ok := status.FromError(err); ok && s.Code() != codes.OK {
-			errorCountVec.With(prometheus.Labels{labelMethod: info.FullMethod, labelCode: s.Code().String()}).Inc()
+		code := codes.OK
+		if s, ok := status.FromError(err); ok {
+			code = s.Code()
 		}
+		callCountVec.With(prometheus.Labels{labelMethod: info.FullMethod, labelResponse: code.String()}).Inc()
+
 		return
 	}, nil
 }

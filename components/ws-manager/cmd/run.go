@@ -63,8 +63,14 @@ var runCmd = &cobra.Command{
 		if len(cfg.RPCServer.RateLimits) > 0 {
 			log.WithField("ratelimits", cfg.RPCServer.RateLimits).Info("imposing rate limits on the gRPC interface")
 		}
-
 		ratelimits := grpc_gitpod.NewRatelimitingInterceptor(cfg.RPCServer.RateLimits)
+
+		reg := prometheus.NewRegistry()
+		callMetrics, err := grpc_gitpod.NewUnaryCallMetricsInterceptor(prometheus.WrapRegistererWithPrefix("gitpod_ws_manager_", reg))
+		if err != nil {
+			log.WithError(err).Fatal("cannot register gRPC call metrics")
+		}
+
 		grpcOpts := []grpc.ServerOption{
 			// We don't know how good our cients are at closing connections. If they don't close them properly
 			// we'll be leaking goroutines left and right. Closing Idle connections should prevent that.
@@ -73,6 +79,8 @@ var runCmd = &cobra.Command{
 				grpc_opentracing.StreamServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
 			)),
 			grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+				// add call metrics first to capture ratelimit errors
+				callMetrics,
 				ratelimits.UnaryInterceptor(),
 				grpc_opentracing.UnaryServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
 			)),
@@ -116,7 +124,6 @@ var runCmd = &cobra.Command{
 		}
 
 		if cfg.Prometheus.Addr != "" {
-			reg := prometheus.NewRegistry()
 			reg.MustRegister(
 				prometheus.NewGoCollector(),
 				prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
