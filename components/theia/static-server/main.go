@@ -53,6 +53,7 @@ func (fs FileSystem) Open(path string) (http.File, error) {
 }
 
 func main() {
+	log.Init("static-server", "", true, true)
 	flag.Parse()
 
 	if *copyTo != "" {
