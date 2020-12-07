@@ -146,4 +146,8 @@ export class GitpodHostUrl {
         return pathSegments[0] === "blobserve";
     }
 
+    asSorry(message: string) {
+        return this.with({ pathname: '/sorry', hash: message });
+    }
+
 }

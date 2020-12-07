@@ -711,6 +711,11 @@ footer .logo-icon {
     margin-left: 1em;
 }
 
+.tos-content li, .tos-content p {
+    line-height: 1.4;
+    font-size: 16px;
+}
+
 .loading-skeleton {
     background-color: var(--background-color2) !important;
     box-shadow:  none !important;

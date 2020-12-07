@@ -4,59 +4,69 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
-import * as crypto from 'crypto';
-import {
-    DisposableCollection, GitpodServer, GitpodClient, UserInfo, User, Workspace, WorkspaceCreationResult,
-    WorkspaceInfo, WorkspaceInstance, UserMessage, WorkspaceInstanceUser,
-    WhitelistedRepository, AuthProviderInfo, Branding, CommitContext, PrebuiltWorkspaceContext, WorkspaceContext,
-    CreateWorkspaceMode, PrebuiltWorkspace, Token, UserEnvVarValue, UserEnvVar, ResolvePluginsParams,
-    ResolvedPlugins, PreparePluginUploadParams, WorkspaceImageBuild, StartWorkspaceResult,
-    StartPrebuildContext, WorkspaceTimeoutDuration,
-    SetWorkspaceTimeoutResult, GetWorkspaceTimeoutResult, Configuration, PortVisibility, InstallPluginsParams, UninstallPluginParams, PermissionName, GitpodTokenType, GitpodToken, AuthProviderEntry, WorkspaceInstancePort
-} from '@gitpod/gitpod-protocol';
-import { LicenseValidationResult, GetLicenseInfoResult, LicenseFeature } from '@gitpod/gitpod-protocol/lib/license-protocol';
-import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
-import { inject, injectable } from 'inversify';
-import { Disposable, ResponseError } from 'vscode-jsonrpc';
-import { WorkspaceFactory } from './workspace-factory';
-import { MessageBusIntegration } from './messagebus-integration';
-import { UserMessageViewsDB } from '@gitpod/gitpod-db/lib/user-message-views-db';
-import { UserStorageResourcesDB } from '@gitpod/gitpod-db/lib/user-storage-resources-db';
-import { Env } from '../env';
-import { NotFoundError, UnauthorizedError } from '../errors';
-import { IClientDataPrometheusAdapter } from './client-data-prometheus-adapter';
-import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { ContextParser } from './context-parser-service';
-import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
 import { AppInstallationDB } from '@gitpod/gitpod-db/lib/app-installation-db';
-import { parseRepoUrl } from '../repohost/repo-url';
-import { HostContextProvider } from '../auth/host-context-provider';
-import { Cancelable } from '@gitpod/gitpod-protocol/lib/util/cancelable';
-import { UserService } from '../user/user-service';
-import { UserDeletionService } from '../user/user-deletion-service';
-import { WorkspaceDeletionService } from './workspace-deletion-service';
-import * as opentracing from 'opentracing';
-import { TracedWorkspaceDB, DBWithTracing } from '@gitpod/gitpod-db/lib/traced-db';
-import * as uuidv4 from 'uuid/v4';
-import { WorkspaceStarter } from './workspace-starter';
-import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
-import { StopWorkspaceRequest, StopWorkspacePolicy, DescribeWorkspaceRequest, ControlPortRequest, PortSpec, MarkActiveRequest, PortVisibility as ProtoPortVisibility } from '@gitpod/ws-manager/lib/core_pb';
-import { TheiaPluginService } from '../theia-plugin/theia-plugin-service';
-import { ImageBuilderClientProvider, LogsRequest } from '@gitpod/image-builder/lib';
-import { URL } from 'url';
-import { TokenProvider } from '../user/token-provider';
-import { AuthorizationService } from '../user/authorization-service';
-import { AdminGetListRequest, AdminGetListResult, AdminGetWorkspacesRequest, WorkspaceAndInstance, AdminBlockUserRequest, AdminModifyRoleOrPermissionRequest, AdminModifyPermanentWorkspaceFeatureFlagRequest } from '@gitpod/gitpod-protocol/lib/admin-protocol';
+import { DBWithTracing, TracedWorkspaceDB } from '@gitpod/gitpod-db/lib/traced-db';
 import { DBGitpodToken } from '@gitpod/gitpod-db/lib/typeorm/entity/db-gitpod-token';
 import { DBUser } from '@gitpod/gitpod-db/lib/typeorm/entity/db-user';
+import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
+import { UserMessageViewsDB } from '@gitpod/gitpod-db/lib/user-message-views-db';
+import { UserStorageResourcesDB } from '@gitpod/gitpod-db/lib/user-storage-resources-db';
+import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
+import {
+    AuthProviderEntry, AuthProviderInfo, Branding, CommitContext,
+    Configuration, CreateWorkspaceMode, DisposableCollection,
+    GetWorkspaceTimeoutResult, GitpodClient, GitpodServer,
+    GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext,
+    PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams,
+    SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult,
+    Terms, Token,
+    UninstallPluginParams, User,
+    UserEnvVar, UserEnvVarValue, UserInfo,
+    UserMessage,
+    WhitelistedRepository, Workspace,
+    WorkspaceContext, WorkspaceCreationResult,
+    WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance,
+    WorkspaceInstancePort, WorkspaceInstanceUser,
+    WorkspaceTimeoutDuration
+} from '@gitpod/gitpod-protocol';
+import { AdminBlockUserRequest, AdminGetListRequest, AdminGetListResult, AdminGetWorkspacesRequest, AdminModifyPermanentWorkspaceFeatureFlagRequest, AdminModifyRoleOrPermissionRequest, WorkspaceAndInstance } from '@gitpod/gitpod-protocol/lib/admin-protocol';
+import { GetLicenseInfoResult, LicenseFeature, LicenseValidationResult } from '@gitpod/gitpod-protocol/lib/license-protocol';
+import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
+import { Cancelable } from '@gitpod/gitpod-protocol/lib/util/cancelable';
+import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
+import { ImageBuilderClientProvider, LogsRequest } from '@gitpod/image-builder/lib';
+import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
+import { ControlPortRequest, DescribeWorkspaceRequest, MarkActiveRequest, PortSpec, PortVisibility as ProtoPortVisibility, StopWorkspacePolicy, StopWorkspaceRequest } from '@gitpod/ws-manager/lib/core_pb';
+import * as crypto from 'crypto';
+import { inject, injectable } from 'inversify';
+import * as opentracing from 'opentracing';
+import { URL } from 'url';
+import * as uuidv4 from 'uuid/v4';
+import { Disposable, ResponseError } from 'vscode-jsonrpc';
 import { AuthProviderService } from '../auth/auth-provider-service';
-import { ResourceAccessGuard, GuardedResource, ResourceAccessOp } from '../auth/resource-access';
+import { HostContextProvider } from '../auth/host-context-provider';
+import { GuardedResource, ResourceAccessGuard, ResourceAccessOp } from '../auth/resource-access';
+import { Env } from '../env';
+import { NotFoundError, UnauthorizedError } from '../errors';
+import { parseRepoUrl } from '../repohost/repo-url';
+import { TermsProvider } from '../terms/terms-provider';
+import { TheiaPluginService } from '../theia-plugin/theia-plugin-service';
+import { AuthorizationService } from '../user/authorization-service';
+import { TokenProvider } from '../user/token-provider';
+import { UserDeletionService } from '../user/user-deletion-service';
+import { UserService } from '../user/user-service';
+import { IClientDataPrometheusAdapter } from './client-data-prometheus-adapter';
+import { ContextParser } from './context-parser-service';
+import { MessageBusIntegration } from './messagebus-integration';
+import { WorkspaceDeletionService } from './workspace-deletion-service';
+import { WorkspaceFactory } from './workspace-factory';
+import { WorkspaceStarter } from './workspace-starter';
 
 
 @injectable()
 export class GitpodServerImpl<Client extends GitpodClient, Server extends GitpodServer> implements GitpodServer, Disposable {
+
     @inject(Env) protected readonly env: Env;
     @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
     @inject(WorkspaceFactory) protected readonly workspaceFactory: WorkspaceFactory;
@@ -84,6 +94,8 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     @inject(TheiaPluginService) protected readonly pluginService: TheiaPluginService;
 
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
+
+    @inject(TermsProvider) protected readonly termsProvider: TermsProvider;
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
@@ -213,13 +225,13 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         return user;
     }
 
+
     public async getLoggedInUser(): Promise<User> {
         await this.doUpdateUser();
         return this.checkUser("getLoggedInUser");
     }
 
     protected setupRequired: boolean = false;
-
     protected async doUpdateUser(): Promise<void> {
         const hasAnyStaticProviders = this.hostContextProvider.getAll().some(hc => hc.authProvider.config.builtin === true);
         if (!hasAnyStaticProviders) {
@@ -232,6 +244,17 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             if (updatedUser) {
                 this.user = updatedUser;
             }
+        }
+    }
+    protected termsAccepted: boolean | undefined;
+    protected async checkTermsAcceptance() {
+        if (!this.termsAccepted) {
+            if (this.user) {
+                this.termsAccepted = await this.userService.checkTermsAccepted(this.user);
+            }
+        }
+        if (!this.termsAccepted) {
+            throw new ResponseError(ErrorCodes.USER_TERMS_ACCEPTANCE_REQUIRED, "You need to accept the terms.");
         }
     }
 
@@ -376,6 +399,8 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
         try {
             const user = this.checkAndBlockUser();
+            await this.checkTermsAcceptance();
+
             log.info({ userId: user.id, workspaceId }, 'startWorkspace');
 
             const mayStartPromise = this.mayStartWorkspace({ span }, user, this.workspaceDb.trace({ span }).findRegularRunningInstances(user.id));
@@ -718,6 +743,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         const ctx: TraceContext = { span };
         try {
             const user = this.checkAndBlockUser("createWorkspace", { mode });
+            await this.checkTermsAcceptance();
             span.setTag("userId", user.id);
 
             const envVars = this.userDB.getEnvVars(user.id);
@@ -1512,6 +1538,12 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             const message = error && error.message ? error.message : "Failed to delete the provider.";
             throw new ResponseError(ErrorCodes.CONFLICT, message);
         }
+    }
+
+    async getTerms(): Promise<Terms> {
+        // Terms are publicly available, thus no user check here.
+
+        return this.termsProvider.getCurrent();
     }
 
 }

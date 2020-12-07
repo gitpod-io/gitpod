@@ -12,7 +12,7 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
 import { Env } from '../env';
 import { HostContextProvider } from './host-context-provider';
-import { AuthProvider, AuthBag } from './auth-provider';
+import { AuthProvider, AuthFlow } from './auth-provider';
 import { TokenProvider } from '../user/token-provider';
 import { AuthProviderService } from './auth-provider-service';
 
@@ -129,8 +129,7 @@ export class Authenticator {
             pathname: '/login/',
             search: `returnTo=${encodeURIComponent(returnTo)}&host=${host}`
         }).toString();
-        await AuthBag.attach(req.session, {
-            requestType: "authenticate",
+        await AuthFlow.attach(req.session, {
             host,
             returnTo,
             returnToAfterTos
@@ -180,12 +179,7 @@ export class Authenticator {
         }
 
         // prepare session
-        await AuthBag.attach(req.session, {
-            requestType: "authorize",
-            host,
-            returnTo,
-            override,
-        });
+        await AuthFlow.attach(req.session, { host, returnTo });
         let wantedScopes = scopes.split(',');
         if (wantedScopes.length === 0) {
             if (authProvider.info.requirements) {
