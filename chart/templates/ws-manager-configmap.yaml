@@ -114,8 +114,28 @@ data:
         "content": {
             "storage": {{ toJson .Values.components.wsDaemon.remoteStorage }}
         },
-        "rpcServerAddr": ":8080",
-        "pprofAddr": "localhost:6060",
-        "prometheusAddr": ":9500"
+        "rpcServer": {
+            {{- if $comp.rpc }}
+            {{- if $comp.rpc.ratelimit }}
+            "ratelimits": { {{ range $i, $v := $comp.rpc.ratelimit }}
+                {{ if (gt $i 0) }},
+                {{- end }}
+                {{ $v.method | quote }}: {
+                    "block": {{ $v.block | default false }},
+                    "bucketSize": {{ $v.bucketSize }},
+                    "refillInterval": {{ $v.refillInterval | quote }}
+                }
+                {{- end }}
+            },
+            {{- end }}
+            {{- end }}
+            "addr": ":{{ $comp.ports.rpc.containerPort }}"
+        },
+        "pprof": {
+            "addr": "localhost:6060"
+        },
+        "prometheus": {
+            "addr": ":9500"
+        }
     }
 {{- end -}}

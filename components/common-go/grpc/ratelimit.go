@@ -53,7 +53,9 @@ func (r RatelimitingInterceptor) UnaryInterceptor() grpc.UnaryServerInterceptor 
 				if err == context.Canceled || err == context.DeadlineExceeded {
 					return nil, err
 				}
-				return nil, status.Error(codes.ResourceExhausted, err.Error())
+				if err != nil {
+					return nil, status.Error(codes.ResourceExhausted, err.Error())
+				}
 			} else if !f.L.Allow() {
 				return nil, status.Error(codes.ResourceExhausted, "too many requests")
 			}
