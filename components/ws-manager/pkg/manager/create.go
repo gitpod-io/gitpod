@@ -451,18 +451,39 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 				}
 			}
 
-			nst := pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms
-			for i, term := range nst {
+			onst := pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms
+			nst := make([]corev1.NodeSelectorTerm, 0, len(onst))
+			for _, term := range onst {
+				var notEmpty bool
 				nt := term.MatchExpressions[:0]
 				for _, expr := range term.MatchExpressions {
 					if strings.HasPrefix(expr.Key, "gitpod.io/theia.") {
 						continue
 					}
 					nt = append(nt, expr)
+					notEmpty = true
 				}
-				nst[i].MatchExpressions = nt
+				if !notEmpty {
+					continue
+				}
+				term.MatchExpressions = nt
+				nst = append(nst, term)
 			}
-			pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms = nst
+
+			if len(nst) == 0 {
+				// if there wasn't a template that added additional terms here we'd be left with an empty term
+				// which would prevent this pod from ever being scheduled.
+				pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution = nil
+			} else {
+				pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms = nst
+			}
+			if pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution == nil && len(pod.Spec.Affinity.NodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution) == 0 {
+				pod.Spec.Affinity.NodeAffinity = nil
+			}
+			if pod.Spec.Affinity.NodeAffinity == nil && pod.Spec.Affinity.PodAffinity == nil && pod.Spec.Affinity.PodAntiAffinity == nil {
+				pod.Spec.Affinity = nil
+			}
+
 			pod.Annotations[wsk8s.RequiredNodeServicesAnnotation] += ",registry-facade"
 
 		case api.WorkspaceFeatureFlag_FIXED_RESOURCES:

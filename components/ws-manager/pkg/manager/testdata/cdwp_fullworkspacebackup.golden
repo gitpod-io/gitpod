@@ -166,15 +166,6 @@
             "restartPolicy": "Never",
             "serviceAccountName": "workspace",
             "automountServiceAccountToken": false,
-            "affinity": {
-                "nodeAffinity": {
-                    "requiredDuringSchedulingIgnoredDuringExecution": {
-                        "nodeSelectorTerms": [
-                            {}
-                        ]
-                    }
-                }
-            },
             "schedulerName": "workspace-scheduler",
             "tolerations": [
                 {
