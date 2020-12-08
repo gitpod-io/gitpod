@@ -366,6 +366,16 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 			},
 		},
 		{
+			Name:       "mini browser workspace match",
+			HostHeader: "browser-efb3a500-1491-48a1-9ab4-86569a2008de" + wsHostSuffix,
+			Expected: matchResult{
+				MatchesWorkspace: true,
+				WorkspaceVars: map[string]string{
+					workspaceIDIdentifier: "efb3a500-1491-48a1-9ab4-86569a2008de",
+				},
+			},
+		},
+		{
 			Name:       "port match",
 			HostHeader: "8080-efb3a500-1491-48a1-9ab4-86569a2008de" + wsHostSuffix,
 			Expected: matchResult{

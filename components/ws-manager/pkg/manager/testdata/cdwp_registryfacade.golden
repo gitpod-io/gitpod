@@ -96,6 +96,10 @@
                             "value": "webview-{{hostname}}"
                         },
                         {
+                            "name": "THEIA_MINI_BROWSER_HOST_PATTERN",
+                            "value": "browser-{{hostname}}"
+                        },
+                        {
                             "name": "GITPOD_GIT_USER_NAME",
                             "value": "usernameGoesHere"
                         },
