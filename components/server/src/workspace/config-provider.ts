@@ -246,7 +246,7 @@ export class ConfigProvider {
         span.setTag("filePath", filePath);
 
         try {
-            const url = `https://raw.githubusercontent.com/TypeFox/definitely-gp/master/${filePath}`;
+            const url = `https://raw.githubusercontent.com/gitpod-io/definitely-gp/master/${filePath}`;
             const response = await fetch(url, { method: 'GET' });
             let content;
             if (response.ok) {

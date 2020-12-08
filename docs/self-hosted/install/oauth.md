@@ -15,7 +15,7 @@ Gitpod supports the following authentication providers:
 * GitLab Community Edition in version 11.7.x and higher
 * GitLab Enterprise Edition in version 11.7.x and higher
 * Bitbucket — coming soon
-* Custom Auth Provider – Inquiry TypeFox for a quote
+* Custom Auth Provider – Inquiry Gitpod GmbH for a quote
 
 ## GitHub
 To authenticate your users with GitHub you need to create a [GitHub OAuth App](https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/).

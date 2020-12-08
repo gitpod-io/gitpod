@@ -48,11 +48,11 @@ export class GitpodAboutView extends React.Component<{ branding?: Branding, host
         const customized = branding && !!branding.ide;
         if (customized) {
             return (<span>
-                Copyright {year} TypeFox. All Rights Reserved
+                Copyright {year} GitPod. All Rights Reserved
             </span>);
         } else {
             return (<span>
-                Copyright {year} TypeFox. All Rights Reserved | <a className="theia-href" target="_blank" href="https://www.gitpod.io/terms/">Terms of Service</a>
+                Copyright {year} Gitpod. All Rights Reserved | <a className="theia-href" target="_blank" href="https://www.gitpod.io/terms/">Terms of Service</a>
             </span>);
         }
     }
