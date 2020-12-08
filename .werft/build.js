@@ -47,7 +47,7 @@ async function build(context, version) {
     const previewWithHttps = "https" in buildConfig;
     const workspaceFeatureFlags = (buildConfig["ws-feature-flags"] || "").split(",").map(e => e.trim())
     const dynamicCPULimits = "dynamic-cpu-limits" in buildConfig;
-    const withInstaller = "with-installer" in buildConfig || masterBuild || publishRelease;
+    const withInstaller = "with-installer" in buildConfig || masterBuild;
     const noPreview = "no-preview" in buildConfig || publishRelease;
     werft.log("job config", JSON.stringify({
         buildConfig,
@@ -71,15 +71,18 @@ async function build(context, version) {
         "HTTP_PROXY": "http://dev-http-cache:3129",
         "HTTPS_PROXY": "http://dev-http-cache:3129",
     };
+    const imageRepo = publishRelease ? "eu.gcr.io/gitpod-io/self-hosted" : "eu.gcr.io/gitpod-core-dev/build";
+
     exec(`leeway vet --ignore-warnings`);
     exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`, buildEnv);
-    exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DremoveSources=false -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build`, buildEnv);
-    if (withInstaller) {
-        exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build install:all`, buildEnv);
+    if (withInstaller || publishRelease) {
+        exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=${imageRepo} install:all`, buildEnv);
     }
     if (publishRelease) {
         exec(`gcloud auth activate-service-account --key-file "/mnt/secrets/gcp-sa-release/service-account.json"`);
-        exec(`leeway build --werft=true -Dversion=${version} -DremoveSources=false -DimageRepoBase=eu.gcr.io/gitpod-io/self-hosted`, buildEnv);
+    }
+    exec(`leeway build --werft=true -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo}`, buildEnv);
+    if (publishRelease) {
         publishHelmChart("eu.gcr.io/gitpod-io/self-hosted");
         exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
     }
