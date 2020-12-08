@@ -47,7 +47,8 @@ async function build(context, version) {
     const previewWithHttps = "https" in buildConfig;
     const workspaceFeatureFlags = (buildConfig["ws-feature-flags"] || "").split(",").map(e => e.trim())
     const dynamicCPULimits = "dynamic-cpu-limits" in buildConfig;
-    const withInstaller = "with-installer" in buildConfig || masterBuild;
+    const withInstaller = "with-installer" in buildConfig || masterBuild || publishRelease;
+    const noPreview = "no-preview" in buildConfig || publishRelease;
     werft.log("job config", JSON.stringify({
         buildConfig,
         version,
@@ -58,6 +59,7 @@ async function build(context, version) {
         previewWithHttps,
         workspaceFeatureFlags,
         dynamicCPULimits,
+        noPreview,
     }));
 
     /**
@@ -94,9 +96,9 @@ async function build(context, version) {
         // return;
     // }
 
-    if ("no-preview" in buildConfig) {
+    if (noPreview) {
         werft.phase("deploy", "not deploying");
-        console.log("no-preview is set");
+        console.log("no-preview or publish-release is set");
     } else {
         await deployToDev(version, previewWithHttps, workspaceFeatureFlags, dynamicCPULimits);
     }
