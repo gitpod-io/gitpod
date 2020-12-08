@@ -63,6 +63,9 @@ import { Deferred } from '@theia/core/lib/common/promise-util';
 import { GitpodTaskContribution } from './gitpod-task-contribution';
 import { GitpodTaskServer, gitpodTaskServicePath } from '../common/gitpod-task-protocol';
 import { GitpodPortServer, gitpodPortServicePath } from '../common/gitpod-port-server';
+import { LocationMapper, LocationMapperService } from '@theia/mini-browser/lib/browser/location-mapper-service';
+import { GitpodLocationMapperService, SecureFileLocationMapper } from './mini-browser/gitpod-location-mapper-service';
+import { MiniBrowserEnvironment } from './mini-browser/mini-browser-environment';
 
 @injectable()
 class GitpodFrontendApplication extends FrontendApplication {
@@ -220,4 +223,11 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(ConnectionStatusOptions).toConstantValue({
         offlineTimeout: 20000
     });
+
+    //#region mini-browser run local files in own origin, should be reverted after next upgrade
+    rebind(LocationMapperService).to(GitpodLocationMapperService).inSingletonScope();
+    bind(LocationMapper).to(SecureFileLocationMapper).inSingletonScope();
+    bind(MiniBrowserEnvironment).toSelf().inSingletonScope();
+    bind(FrontendApplicationContribution).toService(MiniBrowserEnvironment);
+    //#endregion
 });

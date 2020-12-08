@@ -44,6 +44,8 @@ import { GitpodTaskServer, GitpodTaskClient, gitpodTaskServicePath } from "../co
 import { GitpodTaskServerImpl } from "./gitpod-task-server-impl";
 import { GitpodPortServer, GitpodPortClient, gitpodPortServicePath } from "../common/gitpod-port-server";
 import { GitpodTaskTerminalProcess, GitpodTaskTerminalProcessFactory, GitpodTaskTerminalProcessOptions } from "./gitpod-task-terminal-process";
+import { MiniBrowserEndpoint } from "@theia/mini-browser/lib/node/mini-browser-endpoint";
+import { GitpodMiniBrowserEndpoint } from "./gitpod-mini-browser-endpoint";
 
 export default new ContainerModule((bind, unbind, isBound, rebind) => {
     rebind(ShellProcess).to(GitpodShellProcess).inTransientScope();
@@ -131,4 +133,8 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
             return service;
         })
     ).inSingletonScope();
+
+    //#region mini-browser run local files in own origin, should be reverted after next upgrade
+    rebind(MiniBrowserEndpoint).to(GitpodMiniBrowserEndpoint).inSingletonScope();
+    //#endregion
 });
