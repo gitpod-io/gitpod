@@ -71,7 +71,7 @@ export namespace Permission {
 }
 
 export namespace Role {
-    /** The default role for all Typefox developers */
+    /** The default role for all Gitpod developers */
     export const DEVOPS: Role = {
         name: "devops",
         permissions: [
