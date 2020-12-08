@@ -9,22 +9,23 @@ import * as express from "express"
 import * as passport from "passport"
 import * as OAuth2Strategy from "passport-oauth2";
 import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
-import { AuthProviderInfo, Identity, Token, User, UserEnvVar } from '@gitpod/gitpod-protocol';
+import { AuthProviderInfo, Identity, Token, User } from '@gitpod/gitpod-protocol';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
 import fetch from "node-fetch";
 import { oauth2tokenCallback, OAuth2 } from 'oauth';
 import { format as formatURL, URL } from 'url';
 import { runInNewContext } from "vm";
-import { AuthFlow, AuthProvider, AuthUser } from "../auth/auth-provider";
+import { AuthFlow, AuthProvider } from "../auth/auth-provider";
 import { AuthProviderParams, AuthUserSetup } from "../auth/auth-provider";
 import { AuthException } from "../auth/errors";
 import { GitpodCookie } from "../auth/gitpod-cookie";
 import { Env } from "../env";
-import { getRequestingClientInfo, saveSession } from "../express-util";
+import { getRequestingClientInfo } from "../express-util";
 import { TokenProvider } from '../user/token-provider';
 import { UserService } from "../user/user-service";
 import { AuthProviderService } from './auth-provider-service';
 import { LoginCompletionHandler } from './login-completion-handler';
+import { TosFlow } from '../terms/tos-flow';
 
 /**
  * This is a generic implementation of OAuth2-based AuthProvider.
@@ -250,7 +251,7 @@ export class GenericAuthProvider implements AuthProvider {
      * - (3) the result of the "verify" function is first handled by passport internally and then passed to the
      *   callback from the `passport.authenticate` call (1)
      */
-    readonly callback: express.RequestHandler = (request, response, next) => {
+    readonly callback: express.RequestHandler = async (request, response, next) => {
         const authProviderId = this.authProviderId;
         const strategyName = this.strategyName;
         const clientInfo = getRequestingClientInfo(request);
@@ -262,9 +263,9 @@ export class GenericAuthProvider implements AuthProvider {
         log.info(cxt, `(${strategyName}) OAuth2 callback call. `, { clientInfo, authProviderId, requestUrl: request.originalUrl });
 
         const isAlreadyLoggedIn = request.isAuthenticated() && User.is(request.user);
-        const authBag = AuthFlow.get(request.session);
+        const authFlow = AuthFlow.get(request.session);
         if (isAlreadyLoggedIn) {
-            if (!authBag) {
+            if (!authFlow) {
                 log.warn(cxt, `(${strategyName}) User is already logged in. No auth info provided. Redirecting to dashboard.`, { request, clientInfo });
                 response.redirect(this.env.hostUrl.asDashboard().toString());
                 return;
@@ -272,19 +273,20 @@ export class GenericAuthProvider implements AuthProvider {
         }
 
         // assert additional infomation is attached to current session
-        if (!authBag) {
+        if (!authFlow) {
             log.error(cxt, `(${strategyName}) No session found during auth callback.`, { request, clientInfo });
             response.redirect(this.getSorryUrl(`Please allow Cookies in your browser and try to log in again.`));
             return;
         }
 
-        const defaultLogPayload = { authBag, clientInfo, authProviderId };
+        const defaultLogPayload = { authFlow, clientInfo, authProviderId };
 
         // check OAuth2 errors
         const error = new URL(formatURL({ protocol: request.protocol, host: request.get('host'), pathname: request.originalUrl })).searchParams.get("error");
         if (error) { // e.g. "access_denied"
             // Clean up the session
-            AuthFlow.clear(request.session);
+            await AuthFlow.clear(request.session);
+            await TosFlow.clear(request.session);
 
             log.info(cxt, `(${strategyName}) Received OAuth2 error, thus redirecting to /sorry (${error})`, { ...defaultLogPayload, requestUrl: request.originalUrl });
             response.redirect(this.getSorryUrl(`OAuth2 error. (${error})`));
@@ -311,9 +313,8 @@ export class GenericAuthProvider implements AuthProvider {
             const context = LogContext.from( { user: User.is(user) ? { userId: user.id } : undefined, request} );
 
             if (err) {
-                if (request.session) {
-                    AuthFlow.clear(request.session);
-                }
+                await AuthFlow.clear(request.session);
+                await TosFlow.clear(request.session);
 
                 let message = 'Authorization failed. Please try again.';
                 if (AuthException.is(err)) {
@@ -329,23 +330,22 @@ export class GenericAuthProvider implements AuthProvider {
 
             if (flowContext) {
 
-                if (VerifyResultWithIdentity.is(flowContext) || (VerifyResultWithUser.is(flowContext) && flowContext.termsAcceptanceRequired)) {
+                if (TosFlow.WithIdentity.is(flowContext) || (TosFlow.WithUser.is(flowContext) && flowContext.termsAcceptanceRequired)) {
                     // This is the regular path on sign up. We just went through the OAuth2 flow but didn't create a Gitpod
                     // account yet, as we require to accept the terms first.
                     log.info(context, `(${strategyName}) Redirect to /api/tos`, { info: flowContext });
 
                     // attach the sign up info to the session, in order to proceed after acceptance of terms
-                    request.session!.tosFlowInfo = flowContext;
-                    await saveSession(request);
-    
-                    response.redirect(this.env.hostUrl.withApi({ pathname: '/tos' }).toString());
+                    await TosFlow.attach(request.session!, flowContext);
+
+                    response.redirect(this.env.hostUrl.withApi({ pathname: '/tos', search: "mode=login" }).toString());
                     return;
                 } else  {
-                    const { user, elevateScopes } = flowContext as VerifyResultWithUser;
+                    const { user, elevateScopes } = flowContext as TosFlow.WithUser;
                     log.info(context, `(${strategyName}) Directly log in and proceed.`, { info: flowContext });
 
                     // Complete login
-                    const { host, returnTo } = authBag;
+                    const { host, returnTo } = authFlow;
                     await this.loginCompletionHandler.complete(request, response, { user, returnToUrl: returnTo, authHost: host, elevateScopes });
                 }
             }
@@ -363,12 +363,12 @@ export class GenericAuthProvider implements AuthProvider {
      * - finally, it's expected to call `done` and provide the computed result in order to finalize the auth process
      */
     protected async verify(req: express.Request, accessToken: string, refreshToken: string | undefined, tokenResponse: any, _profile: undefined, done: VerifyCallback) {
-        let flowContext: VerifyResult = {};
+        let flowContext: VerifyResult;
         const { strategyName, config } = this;
         const clientInfo = getRequestingClientInfo(req);
         const authProviderId = this.authProviderId;
-        const authBag = AuthFlow.get(req.session)!; // asserted in `callback` allready
-        const defaultLogPayload = { authBag, clientInfo, authProviderId };
+        const authFlow = AuthFlow.get(req.session)!; // asserted in `callback` allready
+        const defaultLogPayload = { authFlow, clientInfo, authProviderId };
         let currentGitpodUser: User | undefined = User.is(req.user) ? req.user : undefined;
         let candidate: Identity;
 
@@ -398,20 +398,20 @@ export class GenericAuthProvider implements AuthProvider {
             }
 
             const token = this.createToken(this.tokenUsername, accessToken, refreshToken, currentScopes, tokenResponse.expires_in);
-            
+
             if (currentGitpodUser) {
                 const termsAcceptanceRequired = await this.userService.checkTermsAcceptanceRequired({ config, identity: candidate, user: currentGitpodUser });
                 const elevateScopes = await this.getMissingScopeForElevation(currentGitpodUser, currentScopes);
                 const isBlocked = await this.userService.isBlocked({ user: currentGitpodUser });
 
                 await this.userService.updateUserOnLogin(currentGitpodUser, authUser, candidate, token)
-                await this.userService.updateUserEnvVarsOnLogin(currentGitpodUser, envVars); // derived from AuthProvider 
+                await this.userService.updateUserEnvVarsOnLogin(currentGitpodUser, envVars); // derived from AuthProvider
 
-                flowContext = <VerifyResultWithUser>{
+                flowContext = <TosFlow.WithUser>{
                     user: User.censor(currentGitpodUser),
                     isBlocked,
                     termsAcceptanceRequired,
-                    returnToUrl: authBag.returnTo,
+                    returnToUrl: authFlow.returnTo,
                     authHost: this.host,
                     elevateScopes
                 }
@@ -421,7 +421,7 @@ export class GenericAuthProvider implements AuthProvider {
 
                 const isBlocked = await this.userService.isBlocked({ primaryEmail });
                 const { githubIdentity, githubToken } = this.createGhProxyIdentity(candidate);
-                flowContext = <VerifyResultWithIdentity>{
+                flowContext = <TosFlow.WithIdentity>{
                     candidate,
                     token,
                     authUser,
@@ -433,7 +433,7 @@ export class GenericAuthProvider implements AuthProvider {
             }
             complete()
         } catch (err) {
-            log.error(`(${strategyName}) Exception in verify function`, err, { ...defaultLogPayload, err, authBag });
+            log.error(`(${strategyName}) Exception in verify function`, err, { ...defaultLogPayload, err, authFlow });
             fail(err);
         }
     }
@@ -569,43 +569,7 @@ export class GenericAuthProvider implements AuthProvider {
 
 }
 
-export interface TosFlow {
-    candidate: Identity;
-    authUser: AuthUser;
-    token: Token;
-    additionalIdentity?: Identity;
-    additionalToken?: Token;
-    envVars?: UserEnvVar[]
-}
-
-export interface VerifyResult {
-    termsAcceptanceRequired?: boolean;
-    isBlocked?: boolean;
-}
-export interface VerifyResultWithIdentity extends VerifyResult {
-    candidate: Identity;
-    authUser: AuthUser;
-    token: Token;
-    additionalIdentity?: Identity;
-    additionalToken?: Token;
-    envVars?: UserEnvVar[]
-}
-export namespace VerifyResultWithIdentity {
-    export function is(data?: VerifyResult): data is VerifyResultWithIdentity {
-        return !!data && "candidate" in data;
-    }
-}
-export interface VerifyResultWithUser extends VerifyResult {
-    user: User;
-    elevateScopes?: string[] | undefined;
-    authHost?: string;
-    returnToUrl?: string;
-}
-export namespace VerifyResultWithUser {
-    export function is(data?: VerifyResult): data is VerifyResultWithUser {
-        return !!data && "user" in data;
-    }
-}
+export type VerifyResult = TosFlow.WithIdentity | TosFlow.WithUser;
 
 interface GenericOAuthStrategyOptions {
     scope?: string | string[];

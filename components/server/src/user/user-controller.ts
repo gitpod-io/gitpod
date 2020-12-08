@@ -23,9 +23,9 @@ import { saveSession, getRequestingClientInfo, destroySession } from "../express
 import { User } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { AuthFlow } from "../auth/auth-provider";
-import { VerifyResultWithIdentity, VerifyResultWithUser } from "../auth/generic-auth-provider";
 import { LoginCompletionHandler } from "../auth/login-completion-handler";
 import { TosCookie } from "./tos-cookie";
+import { TosFlow } from "../terms/tos-flow";
 
 @injectable()
 export class UserController {
@@ -249,49 +249,59 @@ export class UserController {
 
             res.sendStatus(403);
         });
-        const isTosFlowInfo = (data: any) => VerifyResultWithIdentity.is(data) || VerifyResultWithUser.is(data);
         router.get("/tos", async (req: express.Request, res: express.Response) => {
+            const mode = req.query["mode"] as "login" | "update" | unknown;
             const clientInfo = getRequestingClientInfo(req);
-            let tosFlowInfo = req.session?.tosFlowInfo;
+            let tosFlowInfo = TosFlow.get(req.session);
             const authFlow = AuthFlow.get(req.session);
-            const isInLoginProcess = !!authFlow;
-            const isUpdate = !VerifyResultWithIdentity.is(tosFlowInfo);
 
             const logContext = LogContext.from({ user: req.user, request: req });
-            const logPayload = { session: req.session, clientInfo, tosFlowInfo, authBag: authFlow };
+            const logPayload = { session: req.session, clientInfo, tosFlowInfo, authFlow, mode };
 
-            const redirectOnInvalidSession = () => {
-                log.info(logContext, '(TOS) Invalid session. (/tos)', logPayload);
-                res.redirect(this.getSorryUrl("Oops! Something went wrong in the previous step."));
+            const redirectOnInvalidRequest = async () => {
+                // just don't forget
+                this.tosCookie.unset(res);
+                await AuthFlow.clear(req.session);
+                await TosFlow.clear(req.session);
+
+                log.info(logContext, '(TOS) Invalid request. (/tos)', logPayload);
+                res.redirect(this.getSorryUrl("Oops! Something went wrong. (invalid request)"));
             }
 
-            if (isInLoginProcess) {
-                if (!isTosFlowInfo(tosFlowInfo)) {
-                    redirectOnInvalidSession();
+            if (mode !== "login" && mode !== "update") {
+                await redirectOnInvalidRequest();
+                return;
+            }
+
+            if (mode === "login") {
+                if (!authFlow || !TosFlow.is(tosFlowInfo)) {
+                    await redirectOnInvalidRequest();
                     return;
                 }
 
                 // in a special case of the signup process, we're redirecting to /tos even if not required.
-                if (!isUpdate && VerifyResultWithIdentity.is(tosFlowInfo) && tosFlowInfo.termsAcceptanceRequired === false) {
+                if (TosFlow.WithIdentity.is(tosFlowInfo) && tosFlowInfo.termsAcceptanceRequired === false) {
                     log.info(logContext, '(TOS) Not required.', logPayload);
-                    await this.handleTosProceedForNewUser(req, res, authFlow!, tosFlowInfo);
+                    await this.handleTosProceedForNewUser(req, res, authFlow, tosFlowInfo);
                     return;
                 }
             } else { // we are in tos update process
 
                 const user = User.is(req.user) ? req.user : undefined;
                 if (!user) {
-                    redirectOnInvalidSession();
+                    await redirectOnInvalidRequest();
                     return;
                 }
 
                 // initializing flow here!
-                req.session!.tosFlowInfo = tosFlowInfo = <VerifyResultWithUser>{
+                tosFlowInfo = <TosFlow.WithUser>{
                     user: User.censor(user),
                     returnToUrl: req.query.returnTo
-                }
+                };
+                await TosFlow.attach(req.session!, tosFlowInfo);
             }
 
+            const isUpdate = !TosFlow.WithIdentity.is(tosFlowInfo);
             const userInfo = tosFlowUserInfo(tosFlowInfo);
             const tosHints = {
                 isUpdate,   // indicate whether to show the "we've updated ..." message
@@ -302,14 +312,14 @@ export class UserController {
             log.info(logContext, "(TOS) Redirecting to /tos.", { tosHints, ...logPayload });
             res.redirect(this.env.hostUrl.with(() => ({ pathname: '/tos/' })).toString());
         });
-        const tosFlowUserInfo = (tosFlowInfo: any) => {
-            if (VerifyResultWithIdentity.is(tosFlowInfo)) {
+        const tosFlowUserInfo = (tosFlowInfo: TosFlow) => {
+            if (TosFlow.WithIdentity.is(tosFlowInfo)) {
                 return {
                     name: tosFlowInfo.authUser.name || tosFlowInfo.authUser.authName,
                     avatarUrl: tosFlowInfo.authUser.avatarUrl
                 }
             }
-            if (VerifyResultWithUser.is(tosFlowInfo)) {
+            if (TosFlow.WithUser.is(tosFlowInfo)) {
                 return {
                     name: tosFlowInfo.user.name,
                     avatarUrl: tosFlowInfo.user.avatarUrl
@@ -322,20 +332,23 @@ export class UserController {
             this.tosCookie.unset(res);
 
             const clientInfo = getRequestingClientInfo(req);
-            const tosFlowInfo = req.session!.tosFlowInfo;
+            const tosFlowInfo = TosFlow.get(req.session);
             const authFlow = AuthFlow.get(req.session);
             const isInLoginProcess = !!authFlow;
 
             const logContext = LogContext.from({ user: req.user, request: req });
-            const logPayload = { session: req.session, clientInfo, tosFlowInfo, authBag: authFlow };
+            const logPayload = { session: req.session, clientInfo, tosFlowInfo, authFlow };
 
-            const redirectOnInvalidSession = () => {
+            const redirectOnInvalidSession = async () => {
+                await AuthFlow.clear(req.session);
+                await TosFlow.clear(req.session);
+
                 log.info(logContext, '(TOS) Invalid session. (/tos/proceed)', logPayload);
-                res.redirect(this.getSorryUrl("Oops! Something went wrong in the previous step."));
+                res.redirect(this.getSorryUrl("Oops! Something went wrong. (invalid session)"));
             }
 
-            if (!isTosFlowInfo(tosFlowInfo)) {
-                redirectOnInvalidSession();
+            if (!TosFlow.is(tosFlowInfo)) {
+                await redirectOnInvalidSession();
                 return;
             }
 
@@ -355,13 +368,13 @@ export class UserController {
             // The user has accepted the terms.
             log.info(logContext, '(TOS) User did agree.', logPayload);
 
-            if (VerifyResultWithIdentity.is(tosFlowInfo)) {
+            if (TosFlow.WithIdentity.is(tosFlowInfo)) {
                 if (!authFlow) {
-                    redirectOnInvalidSession();
+                    await redirectOnInvalidSession();
                     return;
                 }
                 await this.handleTosProceedForNewUser(req, res, authFlow, tosFlowInfo, req.body);
-            } else if (VerifyResultWithUser.is(tosFlowInfo)) {
+            } else if (TosFlow.WithUser.is(tosFlowInfo)) {
                 const { user, returnToUrl } = tosFlowInfo;
 
                 await this.userService.acceptCurrentTerms(user);
@@ -380,7 +393,7 @@ export class UserController {
         return router;
     }
 
-    protected async handleTosProceedForNewUser(req: express.Request, res: express.Response, authFlow: AuthFlow, tosFlowInfo: VerifyResultWithIdentity, tosProceedParams?: any) {
+    protected async handleTosProceedForNewUser(req: express.Request, res: express.Response, authFlow: AuthFlow, tosFlowInfo: TosFlow.WithIdentity, tosProceedParams?: any) {
         const { candidate, token } = tosFlowInfo;
         const { returnToAfterTos, host } = authFlow;
         const user = await this.userService.createUser({
@@ -401,7 +414,7 @@ export class UserController {
         await this.loginCompletionHandler.complete(req, res, { user, returnToUrl: returnToAfterTos, authHost: host });
     }
 
-    protected updateNewUserAfterTos(newUser: User, tosFlowInfo: VerifyResultWithIdentity, tosProceedParams?: any) {
+    protected updateNewUserAfterTos(newUser: User, tosFlowInfo: TosFlow.WithIdentity, tosProceedParams?: any) {
         const { authUser } = tosFlowInfo;
         newUser.name = authUser.name || authUser.primaryEmail;
         newUser.avatarUrl = authUser.avatarUrl;

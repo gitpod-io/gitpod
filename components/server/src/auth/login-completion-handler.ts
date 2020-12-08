@@ -13,6 +13,7 @@ import { Env } from "../env";
 import { AuthFlow } from './auth-provider';
 import { HostContextProvider } from './host-context-provider';
 import { AuthProviderService } from './auth-provider-service';
+import { TosFlow } from '../terms/tos-flow';
 
 /**
  * The login completion handler pulls the strings between the OAuth2 flow, the ToS flow, and the session management.
@@ -37,6 +38,10 @@ export class LoginCompletionHandler {
             const logContext = LogContext.from({ user, request });
 
             if (err) {
+                // Clean up the session & avoid loops
+                await TosFlow.clear(request.session);
+                await AuthFlow.clear(request.session);
+
                 log.error(logContext, `Redirect to /sorry on login`, err, { err });
                 response.redirect(this.env.hostUrl.asSorry("Oops! Something went wrong during login.").toString());
                 rejectFn(err);
@@ -54,7 +59,7 @@ export class LoginCompletionHandler {
             log.info(logContext, `User is logged in successfully. Redirect to: ${returnTo}`, { });
 
             // Clean up the session & avoid loops
-            request.session!['tosFlowInfo'] = undefined;
+            await TosFlow.clear(request.session);
             await AuthFlow.clear(request.session);
 
             // Create Gitpod 🍪 before the redirect
