@@ -12,4 +12,3 @@ services:
       - 80:80
     environment:
       - DOMAIN=${DOMAIN}
-      - DNSSERVER=${DNSSERVER:-}
