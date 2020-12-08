@@ -589,6 +589,7 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	result = append(result, corev1.EnvVar{Name: "THEIA_SUPERVISOR_TOKEN", Value: m.Config.TheiaSupervisorToken})
 	result = append(result, corev1.EnvVar{Name: "THEIA_SUPERVISOR_ENDPOINT", Value: fmt.Sprintf(":%d", startContext.SupervisorPort)})
 	result = append(result, corev1.EnvVar{Name: "THEIA_WEBVIEW_EXTERNAL_ENDPOINT", Value: "webview-{{hostname}}"})
+	result = append(result, corev1.EnvVar{Name: "THEIA_MINI_BROWSER_HOST_PATTERN", Value: "browser-{{hostname}}"})
 
 	// We don't require that Git be configured for workspaces
 	if spec.Git != nil {

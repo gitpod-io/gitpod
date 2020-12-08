@@ -59,7 +59,7 @@ func HostBasedRouter(header, wsHostSuffix string) WorkspaceRouter {
 type hostHeaderProvider func(req *http.Request) string
 
 func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProvider) mux.MatcherFunc {
-	r := regexp.MustCompile("^(webview-)?" + workspaceIDRegex + wsHostSuffix)
+	r := regexp.MustCompile("^(webview-|browser-)?" + workspaceIDRegex + wsHostSuffix)
 	return func(req *http.Request, m *mux.RouteMatch) bool {
 		hostname := headerProvider(req)
 		if hostname == "" {
@@ -85,7 +85,7 @@ func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 }
 
 func matchWorkspacePortHostHeader(wsHostSuffix string, headerProvider hostHeaderProvider) mux.MatcherFunc {
-	r := regexp.MustCompile("^(webview-)?" + workspacePortRegex + workspaceIDRegex + wsHostSuffix)
+	r := regexp.MustCompile("^(webview-|browser-)?" + workspacePortRegex + workspaceIDRegex + wsHostSuffix)
 	return func(req *http.Request, m *mux.RouteMatch) bool {
 		hostname := headerProvider(req)
 		if hostname == "" {
