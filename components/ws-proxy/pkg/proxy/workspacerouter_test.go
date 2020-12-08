@@ -351,6 +351,7 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 			Expected: matchResult{
 				MatchesWorkspace: true,
 				WorkspaceVars: map[string]string{
+					foreignOriginPrefix:   "",
 					workspaceIDIdentifier: "efb3a500-1491-48a1-9ab4-86569a2008de",
 				},
 			},
@@ -361,6 +362,7 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 			Expected: matchResult{
 				MatchesWorkspace: true,
 				WorkspaceVars: map[string]string{
+					foreignOriginPrefix:   "webview-",
 					workspaceIDIdentifier: "efb3a500-1491-48a1-9ab4-86569a2008de",
 				},
 			},
@@ -371,6 +373,7 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 			Expected: matchResult{
 				MatchesWorkspace: true,
 				WorkspaceVars: map[string]string{
+					foreignOriginPrefix:   "browser-",
 					workspaceIDIdentifier: "efb3a500-1491-48a1-9ab4-86569a2008de",
 				},
 			},
@@ -381,6 +384,7 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 			Expected: matchResult{
 				MatchesPort: true,
 				PortVars: map[string]string{
+					foreignOriginPrefix:     "",
 					workspaceIDIdentifier:   "efb3a500-1491-48a1-9ab4-86569a2008de",
 					workspacePortIdentifier: "8080",
 				},
@@ -392,6 +396,19 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 			Expected: matchResult{
 				MatchesPort: true,
 				PortVars: map[string]string{
+					foreignOriginPrefix:     "webview-",
+					workspaceIDIdentifier:   "efb3a500-1491-48a1-9ab4-86569a2008de",
+					workspacePortIdentifier: "8080",
+				},
+			},
+		},
+		{
+			Name:       "mini browser port match",
+			HostHeader: "browser-8080-efb3a500-1491-48a1-9ab4-86569a2008de" + wsHostSuffix,
+			Expected: matchResult{
+				MatchesPort: true,
+				PortVars: map[string]string{
+					foreignOriginPrefix:     "browser-",
 					workspaceIDIdentifier:   "efb3a500-1491-48a1-9ab4-86569a2008de",
 					workspacePortIdentifier: "8080",
 				},

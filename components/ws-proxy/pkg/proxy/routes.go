@@ -100,6 +100,10 @@ func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip Worksp
 	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor/v1"), true)
 	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor"), true)
 
+	routes.HandleDirectIDERoute(r.MatcherFunc(func(req *http.Request, m *mux.RouteMatch) bool {
+		return m.Vars != nil && m.Vars[foreignOriginPrefix] != ""
+	}))
+
 	routes.HandleRoot(r.NewRoute())
 }
 

@@ -22,6 +22,9 @@ const (
 	// Used as key for storing the workspace ID in the requests mux.Vars() map
 	workspaceIDIdentifier = "workspaceID"
 
+	// Used as key for storing the origin prefix to fetch foreign content
+	foreignOriginPrefix = "foreignOriginPrefix"
+
 	// The header that is used to communicate the "Host" from proxy -> ws-proxy in scenarios where ws-proxy is _not_ directly exposed
 	forwardedHostnameHeader = "x-wsproxy-host"
 
@@ -80,6 +83,9 @@ func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 			m.Vars = make(map[string]string)
 		}
 		m.Vars[workspaceIDIdentifier] = workspaceID
+		if len(matches) == 3 {
+			m.Vars[foreignOriginPrefix] = matches[1]
+		}
 		return true
 	}
 }
@@ -112,6 +118,9 @@ func matchWorkspacePortHostHeader(wsHostSuffix string, headerProvider hostHeader
 		}
 		m.Vars[workspaceIDIdentifier] = workspaceID
 		m.Vars[workspacePortIdentifier] = workspacePort
+		if len(matches) == 4 {
+			m.Vars[foreignOriginPrefix] = matches[1]
+		}
 		return true
 	}
 }
