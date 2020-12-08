@@ -86,18 +86,19 @@ export interface AuthFlow {
     readonly returnToAfterTos?: string;
 }
 export namespace AuthFlow {
+    const storageKey = "authFlow";
     export function get(session: Express.Session | undefined): AuthFlow | undefined {
         if (session) {
-            return session['authBag'] as AuthFlow | undefined;
+            return session[storageKey] as AuthFlow | undefined;
         }
     }
-    export async function attach(session: Express.Session, authBag: AuthFlow): Promise<void> {
-        session['authBag'] = authBag;
+    export async function attach(session: Express.Session, authFlow: AuthFlow): Promise<void> {
+        session[storageKey] = authFlow;
         return saveSession(session);
     }
     export async function clear(session: Express.Session | undefined) {
         if (session) {
-            session['authBag'] = undefined;
+            session[storageKey] = undefined;
             return saveSession(session);
         }
     }

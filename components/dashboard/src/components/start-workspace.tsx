@@ -178,7 +178,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                     return;
                 case ErrorCodes.USER_TERMS_ACCEPTANCE_REQUIRED:
                     const thisUrl = window.location.toString();
-                    this.redirectTo(new GitpodHostUrl(thisUrl).withApi({ pathname: "/tos", search: `returnTo=${encodeURIComponent(thisUrl)}` }).toString());
+                    this.redirectTo(new GitpodHostUrl(thisUrl).withApi({ pathname: "/tos", search: `mode=update&returnTo=${encodeURIComponent(thisUrl)}` }).toString());
                     return;
                 case ErrorCodes.NOT_AUTHENTICATED:
                     if (err.data) {

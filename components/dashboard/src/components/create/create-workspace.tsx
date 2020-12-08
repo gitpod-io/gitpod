@@ -149,7 +149,7 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
                     return;
                 case ErrorCodes.USER_TERMS_ACCEPTANCE_REQUIRED:
                     const thisUrl = window.location.toString();
-                    window.location.href = new GitpodHostUrl(thisUrl).withApi({ pathname: "/tos", search: `returnTo=${encodeURIComponent(thisUrl)}` }).toString();
+                    window.location.href = new GitpodHostUrl(thisUrl).withApi({ pathname: "/tos", search: `mode=update&returnTo=${encodeURIComponent(thisUrl)}` }).toString();
                     return;
                 case ErrorCodes.NOT_AUTHENTICATED:
                     if (data) {

@@ -217,6 +217,6 @@ export class Authenticator {
         return [];
     }
     protected getSorryUrl(message: string) {
-        return this.env.hostUrl.with({ pathname: '/sorry', hash: message }).toString();
+        return this.env.hostUrl.asSorry(message).toString();
     }
 }
