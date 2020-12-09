@@ -106,6 +106,7 @@ export class HostContextProviderImpl implements HostContextProvider {
 
     get(hostname: string): HostContext | undefined {
         this.ensureInitialized();
+        hostname = hostname.toLowerCase();
         const hostContext = this.fixedHosts.get(hostname) || this.dynamicHosts.get(hostname);
         if (!hostContext) {
             log.debug("No HostContext for " + hostname);
