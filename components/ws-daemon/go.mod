@@ -48,7 +48,7 @@ require (
 	golang.org/x/sys v0.0.0-20200905004654-be1d3432aa8f
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
-	google.golang.org/grpc v1.32.0
+	google.golang.org/grpc v1.34.0
 	gotest.tools/v3 v3.0.3 // indirect
 	k8s.io/api v0.0.0-20190620084959-7cf5895f2711
 	k8s.io/apimachinery v0.0.0
