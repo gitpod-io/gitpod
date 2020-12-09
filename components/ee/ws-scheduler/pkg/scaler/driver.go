@@ -289,7 +289,7 @@ func (wspd *WorkspaceManagerPrescaleDriver) stopGhostWorkspaces(ctx context.Cont
 	}()
 
 	for _, id := range ids {
-		_, err := wspd.Client.StopWorkspace(ctx, &api.StopWorkspaceRequest{Id: id, Policy: api.StopWorkspacePolicy_NORMALLY})
+		_, err := wspd.Client.StopWorkspace(ctx, &api.StopWorkspaceRequest{Id: id, Policy: api.StopWorkspacePolicy_IMMEDIATELY})
 		if status.Code(err) == codes.NotFound {
 			continue
 		}
