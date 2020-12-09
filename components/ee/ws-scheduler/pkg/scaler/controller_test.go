@@ -6,6 +6,7 @@ package scaler
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -199,6 +200,43 @@ func TestSwitchedSetpointController(t *testing.T) {
 						t.Errorf("unexpected result (-want +got):\n%s", diff)
 					}
 				})
+			}
+		})
+	}
+}
+
+func TestTimeOfDayUnmarshalJSON(t *testing.T) {
+	tests := []struct {
+		Input       string
+		Expectation time.Time
+		Error       string
+	}{
+		{"00:00:00", time.Date(0, 1, 1, 0, 0, 0, 0, time.UTC), ""},
+		{"23:59:59", time.Date(0, 1, 1, 23, 59, 59, 0, time.UTC), ""},
+		{"12:00:00", time.Date(0, 1, 1, 12, 0, 0, 0, time.UTC), ""},
+		{"24:00:00", time.Date(0, 1, 1, 0, 0, 0, 0, time.UTC), "parsing time \"24:00:00\": hour out of range"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Input, func(t *testing.T) {
+			var act TimeOfDay
+			err := json.Unmarshal([]byte(fmt.Sprintf("\"%s\"", test.Input)), &act)
+
+			var errmsg string
+			if err != nil {
+				errmsg = err.Error()
+			}
+			if errmsg != test.Error {
+				t.Fatalf("unepxected error: want %v, got %v", test.Error, errmsg)
+				return
+			}
+			if err != nil {
+				return
+			}
+
+			if time.Time(act) != test.Expectation {
+				t.Fatalf("unepxected result: want %v, got %v", test.Expectation.String(), time.Time(act).String())
+				return
 			}
 		})
 	}

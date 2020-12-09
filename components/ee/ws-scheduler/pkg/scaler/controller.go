@@ -7,6 +7,7 @@ package scaler
 import (
 	"context"
 	"sort"
+	"strings"
 	"time"
 
 	"golang.org/x/xerrors"
@@ -96,7 +97,8 @@ type TimeOfDay time.Time
 
 // UnmarshalJSON unmarshales a time of day
 func (t *TimeOfDay) UnmarshalJSON(data []byte) error {
-	res, err := time.Parse("15:04:05", string(data))
+	input := strings.Trim(string(data), "\"")
+	res, err := time.Parse("15:04:05", input)
 	if err != nil {
 		return err
 	}
