@@ -58,6 +58,8 @@ var runCmd = &cobra.Command{
 			log.Info("ws-scheduler shut down")
 		}()
 
+		reg := prometheus.NewRegistry()
+
 		if config.Scaler.Enabled {
 			controller, err := scaler.NewController(config.Scaler.Controller)
 			if err != nil {
@@ -67,14 +69,17 @@ var runCmd = &cobra.Command{
 			if err != nil {
 				log.WithError(err).Fatal("cannot create scaler driver")
 			}
+			err = driver.RegisterMetrics(prometheus.WrapRegistererWithPrefix("gitpod_ws_scaler_", reg))
+			if err != nil {
+				log.WithError(err).Fatal("cannot register metrics")
+			}
+
 			go driver.Run()
 			defer driver.Stop()
-
 			log.WithField("controller", config.Scaler.Controller.Kind).Info("started scaler")
 		}
 
 		if config.Prometheus.Addr != "" {
-			reg := prometheus.NewRegistry()
 			reg.MustRegister(
 				prometheus.NewGoCollector(),
 				prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),

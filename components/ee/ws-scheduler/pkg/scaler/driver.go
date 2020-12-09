@@ -16,6 +16,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -80,7 +81,8 @@ type WorkspaceManagerPrescaleDriver struct {
 
 	Controller Controller
 
-	time timer
+	time    timer
+	metrics *metrics
 
 	stop chan struct{}
 	once sync.Once
@@ -89,6 +91,12 @@ type WorkspaceManagerPrescaleDriver struct {
 type workspaceStatus struct {
 	Count              WorkspaceCount
 	DeletionCandidates []string
+}
+
+// RegisterMetrics registers prometheus metrics for this driver
+func (wspd *WorkspaceManagerPrescaleDriver) RegisterMetrics(reg prometheus.Registerer) error {
+	wspd.metrics = newMetrics()
+	return wspd.metrics.Register(reg)
 }
 
 // Run runs the prescale driver until Stop() is called
@@ -141,6 +149,7 @@ func (wspd *WorkspaceManagerPrescaleDriver) Run() {
 			}
 			status.Count.Ghost += len(startingGhosts)
 			counts <- status.Count
+			wspd.metrics.OnGhostCountChange(status.Count.Ghost)
 			log.WithField("counts", status.Count).Debug("status update")
 		case <-houseKeeping:
 			for id, t1 := range startingGhosts {
@@ -179,6 +188,7 @@ func (wspd *WorkspaceManagerPrescaleDriver) Run() {
 			log.WithField("delta", d).Info("renewed ghost workspaces")
 		case setpoint = <-cchan:
 			// we've already set the new setpoint - wait for scheduleGhosts to act on it.
+			wspd.metrics.OnSetpointChange(setpoint)
 		case <-scheduleGhosts:
 			d := setpoint - status.Count.Ghost
 			if d == 0 {
