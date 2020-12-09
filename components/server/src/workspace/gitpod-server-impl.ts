@@ -1475,6 +1475,9 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         throw error;
     }
 
+    // from https://stackoverflow.com/questions/106179/regular-expression-to-match-dns-hostname-or-ip-address/106223#106223
+    protected validHostNameRegexp = /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/;
+
     async updateOwnAuthProvider({ entry }: GitpodServer.UpdateOwnAuthProviderParams): Promise<void> {
         let userId: string;
         try {
@@ -1492,7 +1495,14 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             if ("host" in safeProvider) {
                 // on creating we're are checking for already existing runtime providers
 
-                const hostContext = this.hostContextProvider.get(safeProvider.host);
+                const host = safeProvider.host && safeProvider.host.toLowerCase();
+
+                if (!this.validHostNameRegexp.exec(host)) {
+                    log.debug(`Invalid auth provider host.`, { entry, safeProvider });
+                    throw new Error("Invalid host name.");
+                }
+
+                const hostContext = this.hostContextProvider.get(host);
                 if (hostContext) {
                     const builtInExists = hostContext.authProvider.config.ownerId === undefined;
                     log.debug(`Attempt to override existing auth provider.`, { entry, safeProvider, builtInExists });
