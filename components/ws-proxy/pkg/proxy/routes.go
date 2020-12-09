@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"os"
@@ -432,10 +433,35 @@ func getLog(ctx context.Context) *logrus.Entry {
 func sensitiveCookieHandler(domain string) func(h http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-			cookies := removeSensitiveCookies(req.Cookies(), domain)
-			header := make([]string, len(cookies))
-			for i, c := range cookies {
-				header[i] = c.String()
+			cookies := removeSensitiveCookies(readCookies(req.Header, ""), domain)
+			header := make([]string, 0, len(cookies))
+			for _, c := range cookies {
+				if c == nil {
+					continue
+				}
+
+				cookie := c.String()
+				if cookie == "" {
+					// because we're checking for nil above, it must be that the cookie name is invalid.
+					// Some languages have no quarels with producing invalid cookie names, so we must too.
+					// See https://github.com/gitpod-io/gitpod/issues/2470 for more details.
+					var (
+						originalName    = c.Name
+						replacementName = fmt.Sprintf("name%d%d", rand.Uint64(), time.Now().Unix())
+					)
+					c.Name = replacementName
+					cookie = c.String()
+					if cookie == "" {
+						// despite our best efforts, we still couldn't render the cookie. We'll just drop
+						// it at this point
+						continue
+					}
+
+					cookie = strings.Replace(cookie, replacementName, originalName, 1)
+					c.Name = originalName
+				}
+
+				header = append(header, cookie)
 			}
 
 			// using the header string slice here directly would result in multiple cookie header
