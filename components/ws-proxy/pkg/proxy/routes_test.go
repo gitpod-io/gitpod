@@ -731,11 +731,12 @@ func (p *fakeWsInfoProvider) WorkspaceCoords(wsProxyPort string) *WorkspaceCoord
 
 func TestRemoveSensitiveCookies(t *testing.T) {
 	var (
-		domain         = "test-domain.com"
-		sessionCookie  = &http.Cookie{Domain: domain, Name: "_test_domain_com_", Value: "fobar"}
-		portAuthCookie = &http.Cookie{Domain: domain, Name: "_test_domain_com_ws_77f6b236_3456_4b88_8284_81ca543a9d65_port_auth_", Value: "some-token"}
-		ownerCookie    = &http.Cookie{Domain: domain, Name: "_test_domain_com_ws_77f6b236_3456_4b88_8284_81ca543a9d65_owner_", Value: "some-other-token"}
-		miscCookie     = &http.Cookie{Domain: domain, Name: "some-other-cookie", Value: "I like cookies"}
+		domain            = "test-domain.com"
+		sessionCookie     = &http.Cookie{Domain: domain, Name: "_test_domain_com_", Value: "fobar"}
+		portAuthCookie    = &http.Cookie{Domain: domain, Name: "_test_domain_com_ws_77f6b236_3456_4b88_8284_81ca543a9d65_port_auth_", Value: "some-token"}
+		ownerCookie       = &http.Cookie{Domain: domain, Name: "_test_domain_com_ws_77f6b236_3456_4b88_8284_81ca543a9d65_owner_", Value: "some-other-token"}
+		miscCookie        = &http.Cookie{Domain: domain, Name: "some-other-cookie", Value: "I like cookies"}
+		invalidCookieName = &http.Cookie{Domain: domain, Name: "foobar[0]", Value: "violates RFC6266"}
 	)
 
 	tests := []struct {
@@ -748,11 +749,48 @@ func TestRemoveSensitiveCookies(t *testing.T) {
 		{"portAuth cookie", []*http.Cookie{portAuthCookie, miscCookie}, []*http.Cookie{miscCookie}},
 		{"owner cookie", []*http.Cookie{ownerCookie, miscCookie}, []*http.Cookie{miscCookie}},
 		{"misc cookie", []*http.Cookie{miscCookie}, []*http.Cookie{miscCookie}},
+		{"invalid cookie name", []*http.Cookie{invalidCookieName}, []*http.Cookie{invalidCookieName}},
 	}
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			res := removeSensitiveCookies(test.Input, domain)
 			if diff := cmp.Diff(test.Expected, res); diff != "" {
+				t.Errorf("unexpected result (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestSensitiveCookieHandler(t *testing.T) {
+	var (
+		domain     = "test-domain.com"
+		miscCookie = &http.Cookie{Domain: domain, Name: "some-other-cookie", Value: "I like cookies"}
+	)
+	tests := []struct {
+		Name     string
+		Input    string
+		Expected string
+	}{
+		{"no cookies", "", ""},
+		{"valid cookie", miscCookie.String(), `some-other-cookie="I like cookies";Domain=test-domain.com`},
+		{"invalid cookie", `foobar[0]="violates RFC6266"`, `foobar[0]="violates RFC6266"`},
+	}
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+
+			req := httptest.NewRequest("GET", "http://"+domain, nil)
+			if test.Input != "" {
+				req.Header.Set("cookie", test.Input)
+			}
+			rec := httptest.NewRecorder()
+
+			var act string
+			sensitiveCookieHandler(domain)(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+				act = r.Header.Get("cookie")
+				rw.WriteHeader(http.StatusOK)
+			})).ServeHTTP(rec, req)
+
+			if diff := cmp.Diff(test.Expected, act); diff != "" {
 				t.Errorf("unexpected result (-want +got):\n%s", diff)
 			}
 		})
