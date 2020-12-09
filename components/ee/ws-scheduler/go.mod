@@ -11,9 +11,9 @@ require (
 	github.com/go-ozzo/ozzo-validation v3.5.0+incompatible
 	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
 	github.com/golang/mock v1.4.3
-	github.com/golang/protobuf v1.3.5
-	github.com/google/go-cmp v0.4.0
-	github.com/google/uuid v1.1.1
+	github.com/golang/protobuf v1.4.2
+	github.com/google/go-cmp v0.5.0
+	github.com/google/uuid v1.1.2
 	github.com/googleapis/gnostic v0.3.1 // indirect
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/opentracing/opentracing-go v1.1.0
@@ -23,7 +23,7 @@ require (
 	golang.org/x/crypto v0.0.0-20191112222119-e1110fd1c708 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	google.golang.org/appengine v1.6.5 // indirect
-	google.golang.org/grpc v1.29.1
+	google.golang.org/grpc v1.34.0
 	k8s.io/api v0.0.0
 	k8s.io/apimachinery v0.0.0
 	k8s.io/client-go v0.0.0
