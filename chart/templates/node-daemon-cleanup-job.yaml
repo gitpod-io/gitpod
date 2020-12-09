@@ -1,0 +1,41 @@
+# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.nodeDaemon -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: node-daemon-cleanup
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: node-daemon-cleanup
+    kind: job
+    stage: {{ .Values.installation.stage }}
+  annotations:
+    "helm.sh/hook": "post-delete"
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": hook-succeeded,hook-failed
+    "helm.sh/hook-delete-timeout": "0"
+spec:
+  template:
+    metadata:
+      name: node-daemon-cleanup
+      labels:
+        app: {{ template "gitpod.fullname" . }}
+        component: node-daemon-cleanup
+        kind: job
+        stage: {{ .Values.installation.stage }}
+    spec:
+      containers:
+      - name: node-daemon-cleanup
+        image: {{ template "gitpod.comp.imageFull" $this }}
+
+        command: ['sh', '-c', '/app/post-delete-cleanup.sh']
+
+      restartPolicy: Never
+      serviceAccountName: node-daemon
+      imagePullSecrets:
+{{- range $key, $value := .Values.defaults.imagePullSecrets }}
+      - name: {{ $value.name }}
+

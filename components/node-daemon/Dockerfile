@@ -10,4 +10,5 @@ RUN wget https://storage.googleapis.com/kubernetes-release/release/v1.11.0/bin/l
 
 WORKDIR /app
 COPY node-daemon.sh /app
+COPY post-delete-cleanup.sh /app
 ENTRYPOINT ["/bin/bash", "/app/node-daemon.sh"]
