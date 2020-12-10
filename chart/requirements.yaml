@@ -8,8 +8,8 @@ dependencies:
   repository: https://kubernetes-charts.storage.googleapis.com/
   condition: docker-registry.enabled
 - name: minio
-  version: 2.5.x
-  repository: https://kubernetes-charts.storage.googleapis.com/
+  version: 8.0.7
+  repository: https://helm.min.io/
   condition: minio.enabled
 - name: mysql
   version: 1.6.3
