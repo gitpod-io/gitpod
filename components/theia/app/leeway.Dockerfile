@@ -37,6 +37,10 @@ RUN /theia-installer/install.sh
 COPY package-libs.sh /usr/bin/
 RUN package-libs.sh /theia/node/bin/node
 
+# patching plugin ext host process to fix css extension compatibility, see https://github.com/gitpod-io/gitpod/pull/2483
+RUN cp -r /theia/node_modules/@gitpod/gitpod-ide/patches /theia/patches 
+RUN yarn patch-package
+
 # copy native dependencies of node modules
 RUN find /theia/node_modules/ -iname *.node -exec package-libs.sh {} \;
 

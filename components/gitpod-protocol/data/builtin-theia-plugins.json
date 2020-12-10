@@ -30,9 +30,14 @@
     "url": "https://open-vsx.org/api/llvm-vs-code-extensions/vscode-clangd/0.1.5/file/llvm-vs-code-extensions.vscode-clangd-0.1.5.vsix"
   },
   {
-    "loc": "vscode.css-1.44.2.vsix",
-    "name": "vscode.css@1.44.2",
-    "url": "https://open-vsx.org/api/vscode/css/1.44.2/file/vscode.css-1.44.2.vsix"
+    "loc": "vscode.css-1.51.1.vsix",
+    "name": "vscode.css@1.51.1",
+    "url": "https://open-vsx.org/api/vscode/css/1.51.1/file/vscode.css-1.51.1.vsix"
+  },
+  {
+    "loc": "vscode.css-language-features-1.51.1.vsix",
+    "name": "vscode.css-language-features@1.51.1",
+    "url": "https://open-vsx.org/api/vscode/css-language-features/1.51.1/file/vscode.css-language-features-1.51.1.vsix"
   },
   {
     "loc": "vscode.debug-auto-launch-1.44.2.vsix",
@@ -70,9 +75,14 @@
     "url": "https://open-vsx.org/api/vscode/hlsl/1.44.2/file/vscode.hlsl-1.44.2.vsix"
   },
   {
-    "loc": "vscode.html-1.44.2.vsix",
-    "name": "vscode.html@1.44.2",
-    "url": "https://open-vsx.org/api/vscode/html/1.44.2/file/vscode.html-1.44.2.vsix"
+    "loc": "vscode.html-1.51.1.vsix",
+    "name": "vscode.html@1.51.1",
+    "url": "https://open-vsx.org/api/vscode/html/1.51.1/file/vscode.html-1.51.1.vsix"
+  },
+  {
+    "loc": "vscode.html-language-features-1.51.1.vsix",
+    "name": "vscode.html-language-features@1.51.1",
+    "url": "https://open-vsx.org/api/vscode/html-language-features/1.51.1/file/vscode.html-language-features-1.51.1.vsix"
   },
   {
     "loc": "vscode.ini-1.44.2.vsix",
