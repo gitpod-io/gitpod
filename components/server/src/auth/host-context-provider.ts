@@ -10,6 +10,7 @@ import { AuthProviderParams } from "./auth-provider";
 export const HostContextProvider = Symbol("HostContextProvider");
 
 export interface HostContextProvider {
+    init(): Promise<void>;
     getAll(): HostContext[];
     get(hostname: string): HostContext | undefined;
 }

@@ -28,11 +28,22 @@ export class AuthProviderService {
      */
     async getAllAuthProviders(): Promise<AuthProviderParams[]> {
         const all = await this.authProviderDB.findAll();
-        return all.map(this.toAuthProviderParams.bind(this));
+        const transformed = all.map(this.toAuthProviderParams.bind(this));
+
+        // as a precaution, let's remove duplicates
+        const unique = transformed.reduce((prev, current) => {
+            const duplicate = prev.some(a => a.host === current.host);
+            if (duplicate) {
+                log.warn(`Duplicate dynamic Auth Provider detected.`, { rawResult: all, duplicate: current.host });
+            }
+            return duplicate ? prev : [...prev, current];
+        }, [] as AuthProviderParams[]);
+        return unique;
     }
 
     protected toAuthProviderParams = (oap: AuthProviderEntry) => <AuthProviderParams>{
         ...oap,
+        host: oap.host.toLowerCase(),
         verified: oap.status === "verified",
         builtin: false,
         // hiddenOnDashboard: true, // i.e. show only if it's used
