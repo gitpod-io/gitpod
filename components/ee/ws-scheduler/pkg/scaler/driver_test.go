@@ -78,7 +78,6 @@ func TestWorkspaceManagerPrescaleDriverRenewal(t *testing.T) {
 				sub.EXPECT().Recv().Do(func() { <-ctx.Done() })
 				return sub, nil
 			}).AnyTimes()
-			wsman.EXPECT().StartWorkspace(gomock.Any(), gomock.Any()).AnyTimes()
 
 			delchan := make(chan string)
 			wsman.EXPECT().StopWorkspace(gomock.Any(), gomock.Any()).Do(func(ctx context.Context, req *api.StopWorkspaceRequest) (*api.StopWorkspaceResponse, error) {
