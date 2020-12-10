@@ -36,6 +36,7 @@ import { PeriodicDbDeleter } from '@gitpod/gitpod-db/lib/periodic-deleter';
 import { OneTimeSecretServer } from './one-time-secret-server';
 import { GitpodClient, GitpodServer } from '@gitpod/gitpod-protocol';
 import { BearerAuth } from './auth/bearer-authenticator';
+import { HostContextProvider } from './auth/host-context-provider';
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -62,6 +63,8 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
 
     @inject(BearerAuth) protected readonly bearerAuth: BearerAuth;
 
+    @inject(HostContextProvider) protected readonly hostCtxProvider: HostContextProvider;
+
     protected readonly eventEmitter = new EventEmitter();
     protected app?: express.Application;
     protected httpServer?: http.Server;
@@ -82,6 +85,9 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
 
         // Install passport
         await this.authenticator.init(app);
+
+        // Ensure that host contexts of dynamic auth providers are initialized.
+        await this.hostCtxProvider.init();
 
         // Websocket for client connection
         const websocketConnectionHandler = this.websocketConnectionHandler;

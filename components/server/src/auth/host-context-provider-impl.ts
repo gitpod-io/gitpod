@@ -28,17 +28,30 @@ export class HostContextProviderImpl implements HostContextProvider {
     @inject(HostContextProviderFactory)
     protected factory: HostContextProviderFactory;
 
+    async init() {
+        await this.ensureInitialized();
+    }
+
     protected initialized = false;
-    protected ensureInitialized() {
+    protected async ensureInitialized() {
         if (this.initialized) {
             return;
         }
-        this.createFixedHosts()
-        this.updateDynamicHosts();
+        this.createFixedHosts();
+
+        try {
+            await this.updateDynamicHosts();
+        } catch (error) {
+            log.error(`Failed to update dynamic hosts.`, error);
+        }
 
         // schedule periodic update of dynamic hosts
         const scheduler = () => setTimeout(async () => {
-            await this.updateDynamicHosts();
+            try {
+                await this.updateDynamicHosts();
+            } catch (error) {
+                log.error(`Failed to update dynamic hosts.`, error);
+            }
             scheduler();
         }, 1999);
         scheduler();
@@ -58,7 +71,7 @@ export class HostContextProviderImpl implements HostContextProvider {
     protected async updateDynamicHosts() {
         const all = await this.authProviderService.getAllAuthProviders();
 
-        const currentHosts = all.map(p => p.host);
+        const currentHosts = new Set(all.map(p => p.host.toLowerCase()));
         for (const config of all) {
             const { host } = config;
 
@@ -88,7 +101,7 @@ export class HostContextProviderImpl implements HostContextProvider {
         }
 
         // remove obsolete entries
-        const tobeRemoved = [...this.dynamicHosts.keys()].filter(h => !currentHosts.includes(h));
+        const tobeRemoved = [...this.dynamicHosts.keys()].filter(h => !currentHosts.has(h));
         for (const host of tobeRemoved) {
             const hostContext = this.dynamicHosts.get(host);
             log.debug("Disposing dynamic Auth Provider: " + host, { host, hostContext });
