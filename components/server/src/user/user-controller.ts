@@ -417,7 +417,7 @@ export class UserController {
     protected updateNewUserAfterTos(newUser: User, tosFlowInfo: TosFlow.WithIdentity, tosProceedParams?: any) {
         const { authUser } = tosFlowInfo;
         newUser.name = authUser.authName;
-        newUser.fullName = authUser.name;
+        newUser.fullName = authUser.name || undefined;
         newUser.avatarUrl = authUser.avatarUrl;
     }
 
