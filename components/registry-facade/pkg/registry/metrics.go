@@ -14,7 +14,7 @@ import (
 
 // NewMeasuringRegistryRoundTripper produces a round tripper that exposes registry access metrics
 func NewMeasuringRegistryRoundTripper(delegate http.RoundTripper, reg prometheus.Registerer) (http.RoundTripper, error) {
-	metrics, err := newMetrics(reg)
+	metrics, err := newMetrics(reg, false)
 	if err != nil {
 		return nil, err
 	}
@@ -45,11 +45,12 @@ func (m *measuringRegistryRoundTripper) RoundTrip(req *http.Request) (*http.Resp
 
 // Metrics combine custom metrics exported by registry facade
 type metrics struct {
-	ManifestHist prometheus.Histogram
-	BlobCounter  prometheus.Counter
+	ManifestHist          prometheus.Histogram
+	BlobCounter           prometheus.Counter
+	BlobDownloadSpeedHist prometheus.Histogram
 }
 
-func newMetrics(reg prometheus.Registerer) (*metrics, error) {
+func newMetrics(reg prometheus.Registerer, upstream bool) (*metrics, error) {
 	manifestHist := prometheus.NewHistogram(prometheus.HistogramOpts{
 		Name:    "manifest_req_seconds",
 		Help:    "time of manifest requests made to the downstream registry",
@@ -68,8 +69,22 @@ func newMetrics(reg prometheus.Registerer) (*metrics, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	blobDownloadSpeedHist := prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "blob_req_bytes_second",
+		Help:    "blob download speed in bytes per second",
+		Buckets: prometheus.ExponentialBuckets(1024*1024, 2, 10),
+	})
+	if upstream {
+		err = reg.Register(blobDownloadSpeedHist)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return &metrics{
-		ManifestHist: manifestHist,
-		BlobCounter:  blobCounter,
+		ManifestHist:          manifestHist,
+		BlobCounter:           blobCounter,
+		BlobDownloadSpeedHist: blobDownloadSpeedHist,
 	}, nil
 }

@@ -88,7 +88,7 @@ func NewRegistry(cfg Config, newResolver ResolverProvider, reg prometheus.Regist
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	metrics, err := newMetrics(reg)
+	metrics, err := newMetrics(reg, true)
 	if err != nil {
 		return nil, err
 	}

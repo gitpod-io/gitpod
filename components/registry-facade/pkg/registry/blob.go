@@ -13,6 +13,7 @@ import (
 	"mime"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/errdefs"
@@ -61,6 +62,8 @@ func (reg *Registry) handleBlob(ctx context.Context, r *http.Request) http.Handl
 			reg.LayerSource,
 		},
 		ConfigModifier: reg.ConfigModifier,
+
+		Metrics: reg.metrics,
 	}
 
 	mhandler := handlers.MethodHandler{
@@ -85,6 +88,8 @@ type blobHandler struct {
 	Store             content.Store
 	AdditionalSources []BlobSource
 	ConfigModifier    ConfigModifier
+
+	Metrics *metrics
 }
 
 func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
@@ -148,7 +153,13 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", mediaType)
 		w.Header().Set("Etag", bh.Digest.String())
-		io.Copy(w, rc)
+		t0 := time.Now()
+		n, err := io.Copy(w, rc)
+		dt := time.Since(t0)
+		if err != nil {
+			return err
+		}
+		bh.Metrics.BlobDownloadSpeedHist.Observe(float64(n) / dt.Seconds())
 
 		return nil
 	}()
