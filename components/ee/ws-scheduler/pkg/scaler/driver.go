@@ -181,30 +181,19 @@ func (wspd *WorkspaceManagerPrescaleDriver) Run() {
 			if d > len(status.DeletionCandidates) {
 				d = len(status.DeletionCandidates)
 			}
-			log.WithField("count", d).Info("attempting to renew ghost workspaces")
+			// we're only deleting ghosts here, not starting any. In the next scheduling interval, we'll restart
+			// the neccesary ghosts.
 			err := wspd.stopGhostWorkspaces(ctx, status.DeletionCandidates[:d])
 			if err != nil {
 				log.WithError(err).Error("cannot stop ghost workspaces during renewal")
 				continue
 			}
-			ids, err := wspd.startGhostWorkspaces(ctx, d, status)
-			if err != nil {
-				log.WithError(err).Error("cannot start ghost workspaces during renewal")
-				continue
-			}
-			for _, id := range ids {
-				startingGhosts[id] = time.Now()
-				status.Count.Ghost++
-			}
-			log.WithField("delta", d).Info("renewed ghost workspaces")
+			log.WithField("delta", d).WithField("ghostCount", status.Count.Ghost).Info("deleted ghost workspaces for renewal")
 		case setpoint = <-cchan:
 			// we've already set the new setpoint - wait for scheduleGhosts to act on it.
 			wspd.metrics.OnSetpointChange(setpoint)
 		case <-scheduleGhosts:
 			d := setpoint - status.Count.Ghost
-			if d == 0 {
-				continue
-			}
 
 			var (
 				err error
@@ -216,9 +205,10 @@ func (wspd *WorkspaceManagerPrescaleDriver) Run() {
 					d = len(status.DeletionCandidates)
 				}
 				err = wspd.stopGhostWorkspaces(ctx, status.DeletionCandidates[:d])
-			}
-			if d > 0 {
+			} else if d > 0 {
 				ids, err = wspd.startGhostWorkspaces(ctx, d, status)
+			} else {
+				continue
 			}
 			if err != nil {
 				log.WithError(err).Error("failed to realise ghost workspace delta")
