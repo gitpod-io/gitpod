@@ -107,14 +107,19 @@ func (wspd *WorkspaceManagerPrescaleDriver) Run() {
 	statusChan := make(chan workspaceStatus)
 	go func() {
 		for {
-			err := wspd.maintainWorkspaceStatus(ctx, statusChan)
+			wasAvailable, err := wspd.maintainWorkspaceStatus(ctx, statusChan)
 			if err == context.Canceled {
 				return
 			}
-			if err != nil {
+			if s, ok := status.FromError(err); ok && s.Code() == codes.Unavailable {
+				if wasAvailable {
+					log.WithError(err).Error("ws-manager is unavailable")
+				}
+			} else if err != nil {
 				log.WithError(err).Error("cannot maintain workspace count")
-				time.Sleep(1 * time.Second)
 			}
+			// we don't have to wait here until we retry, because the RPC calls
+			// in maintainWorkspaceStatus will wait for us.
 		}
 	}()
 
@@ -162,10 +167,16 @@ func (wspd *WorkspaceManagerPrescaleDriver) Run() {
 				log.WithFields(log.OWI("", "", id)).Warn("ghost took too long to start - or we missed an update")
 			}
 		case <-renewal:
+			if len(status.DeletionCandidates) == 0 {
+				// no deletion candidates means there's nothing to renew
+				continue
+			}
 			d := int(float64(len(status.DeletionCandidates)) * float64(wspd.Config.Renewal.Percentage) * 0.01)
 			if d == 0 {
-				log.WithField("len(status.DeletionCandidates)", len(status.DeletionCandidates)).Warn("should have renewed ghost workspaces, but found no suitable candidates")
-				continue
+				// we have deletion candidates, but the percentage was so low that it wasn't enough for a single
+				// candidate to be selected. If we left it at that, we might never renew anything, hence forcing
+				// the renewal of at least one candidate.
+				d = 1
 			}
 			if d > len(status.DeletionCandidates) {
 				d = len(status.DeletionCandidates)
@@ -301,7 +312,7 @@ func (wspd *WorkspaceManagerPrescaleDriver) stopGhostWorkspaces(ctx context.Cont
 	return nil
 }
 
-func (wspd *WorkspaceManagerPrescaleDriver) maintainWorkspaceStatus(ctx context.Context, counts chan<- workspaceStatus) error {
+func (wspd *WorkspaceManagerPrescaleDriver) maintainWorkspaceStatus(ctx context.Context, counts chan<- workspaceStatus) (wasAvailable bool, err error) {
 	type workspaceState struct {
 		Started time.Time
 		Type    api.WorkspaceType
@@ -309,8 +320,9 @@ func (wspd *WorkspaceManagerPrescaleDriver) maintainWorkspaceStatus(ctx context.
 
 	wss, err := wspd.Client.GetWorkspaces(ctx, &api.GetWorkspacesRequest{})
 	if err != nil {
-		return err
+		return
 	}
+	wasAvailable = true
 
 	state := make(map[string]workspaceState)
 	produceStatus := func() workspaceStatus {
@@ -349,18 +361,18 @@ func (wspd *WorkspaceManagerPrescaleDriver) maintainWorkspaceStatus(ctx context.
 	}
 	select {
 	case <-ctx.Done():
-		return ctx.Err()
+		return wasAvailable, ctx.Err()
 	case counts <- produceStatus():
 	}
 
 	sub, err := wspd.Client.Subscribe(ctx, &api.SubscribeRequest{})
 	if err != nil {
-		return err
+		return wasAvailable, err
 	}
 	for {
 		resp, err := sub.Recv()
 		if err != nil {
-			return err
+			return wasAvailable, err
 		}
 		s := resp.GetStatus()
 		if s == nil {
@@ -390,7 +402,7 @@ func (wspd *WorkspaceManagerPrescaleDriver) maintainWorkspaceStatus(ctx context.
 
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return wasAvailable, ctx.Err()
 		case counts <- produceStatus():
 		}
 	}
