@@ -61,6 +61,21 @@ case:
   mustpass: true
   mintestercount: 1
   annotations: {}
+- id: vue-router
+  name: vuejs/vue-router (HTML/CSS)
+  group: Repositories
+  description: Check the HTML/CSS dev experience in the Vue Router repo
+  steps: |
+    - Open https://gitpod-staging.com#https://github.com/vuejs/vue-router in Gitpod
+    - Open an `*.html` file (e.g. `/examples/index.html`)
+    - Add a new paragraph after the heading (`h1`) element
+    - Type `<p>` and it should autocomplete itself with a closing tag like `<p></p>`
+    - Open a `*.css` file (e.g. `/examples/global.css` )
+    - Add a background property in the `a` selector
+    - Type `background: red;` inside the `a { }` selector under the `text-decoration` property
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
 - id: change_color_theme
   name: Change color theme
   group: IDE
