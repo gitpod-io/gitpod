@@ -1183,7 +1183,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     }
 
     async getUserStorageResource(options: GitpodServer.GetUserStorageResourceOptions): Promise<string> {
-        const userId = this.checkUser("getUserStorageResource").id;
+        const userId = this.checkUser("getUserStorageResource", { uri: options.uri }).id;
         const uri = options.uri;
 
         await this.guardAccess({ kind: "userStorage", uri, userID: userId }, "get");
@@ -1192,7 +1192,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     }
 
     async updateUserStorageResource(options: GitpodServer.UpdateUserStorageResourceOptions): Promise<void> {
-        const userId = this.checkAndBlockUser("updateUserStorageResource").id;
+        const userId = this.checkAndBlockUser("updateUserStorageResource", { uri: options.uri }).id;
         const uri = options.uri;
         const content = options.content;
 

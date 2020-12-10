@@ -66,6 +66,7 @@ import { GitpodPortServer, gitpodPortServicePath } from '../common/gitpod-port-s
 import { LocationMapper, LocationMapperService } from '@theia/mini-browser/lib/browser/location-mapper-service';
 import { GitpodLocationMapperService, SecureFileLocationMapper } from './mini-browser/gitpod-location-mapper-service';
 import { MiniBrowserEnvironment } from './mini-browser/mini-browser-environment';
+import { CachedUserStorage } from './gitpod-user-storage-cached';
 
 @injectable()
 class GitpodFrontendApplication extends FrontendApplication {
@@ -182,6 +183,7 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
 
     bind(GitpodUserStorageProvider).toSelf().inSingletonScope();
     rebind(UserStorageContribution).to(GitpodUserStorageContribution).inSingletonScope();
+    bind(CachedUserStorage).toSelf().inSingletonScope();
 
     bind(SnapshotSupport).toSelf().inSingletonScope();
     bind(CommandContribution).toService(SnapshotSupport);
