@@ -1,0 +1,70 @@
+diff --git a/node_modules/@theia/plugin-ext/lib/plugin/languages/completion.js b/node_modules/@theia/plugin-ext/lib/plugin/languages/completion.js
+index 1df12cc..32b63d8 100644
+--- a/node_modules/@theia/plugin-ext/lib/plugin/languages/completion.js
++++ b/node_modules/@theia/plugin-ext/lib/plugin/languages/completion.js
+@@ -152,6 +152,7 @@ var CompletionAdapter = /** @class */ (function () {
+     };
+     CompletionAdapter.prototype.convertCompletionItem = function (item, id, parentId, defaultInserting, defaultReplacing) {
+         var _a;
++        var _b;
+         if (typeof item.label !== 'string' || item.label.length === 0) {
+             console.warn('Invalid Completion Item -> must have at least a label');
+             return undefined;
+@@ -183,6 +184,9 @@ var CompletionAdapter = /** @class */ (function () {
+                 replace: Converter.fromRange(itemRange.replacing)
+             };
+         }
++        var tags = (!!((_b = item.tags) === null || _b === void 0 ? void 0 : _b.length) || item.deprecated === true)
++            ? [types_impl_1.CompletionItemTag.Deprecated]
++            : undefined;
+         return {
+             id: id,
+             parentId: parentId,
+@@ -198,7 +202,8 @@ var CompletionAdapter = /** @class */ (function () {
+             range: range,
+             additionalTextEdits: item.additionalTextEdits && item.additionalTextEdits.map(Converter.fromTextEdit),
+             command: this.commands.converter.toSafeCommand(item.command, toDispose),
+-            commitCharacters: item.commitCharacters
++            commitCharacters: item.commitCharacters,
++            tags: tags
+         };
+     };
+     CompletionAdapter.hasResolveSupport = function (provider) {
+diff --git a/node_modules/@theia/plugin-ext/lib/plugin/plugin-context.js b/node_modules/@theia/plugin-ext/lib/plugin/plugin-context.js
+index 8a80cb1..a2880be 100644
+--- a/node_modules/@theia/plugin-ext/lib/plugin/plugin-context.js
++++ b/node_modules/@theia/plugin-ext/lib/plugin/plugin-context.js
+@@ -781,6 +781,7 @@ function createAPIFactory(rpc, pluginManager, envExt, debugExt, preferenceRegist
+             Location: types_impl_1.Location,
+             LogLevel: types_impl_1.LogLevel,
+             DiagnosticTag: types_impl_1.DiagnosticTag,
++            CompletionItemTag: types_impl_1.CompletionItemTag,
+             Diagnostic: types_impl_1.Diagnostic,
+             CompletionTriggerKind: types_impl_1.CompletionTriggerKind,
+             TextEdit: types_impl_1.TextEdit,
+diff --git a/node_modules/@theia/plugin-ext/lib/plugin/types-impl.js b/node_modules/@theia/plugin-ext/lib/plugin/types-impl.js
+index f8edaf0..c393beb 100644
+--- a/node_modules/@theia/plugin-ext/lib/plugin/types-impl.js
++++ b/node_modules/@theia/plugin-ext/lib/plugin/types-impl.js
+@@ -60,7 +60,7 @@ var __read = (this && this.__read) || function (o, n) {
+     return ar;
+ };
+ Object.defineProperty(exports, "__esModule", { value: true });
+-exports.CallHierarchyOutgoingCall = exports.CallHierarchyIncomingCall = exports.CallHierarchyItem = exports.UIKind = exports.WebviewPanelTargetArea = exports.OperatingSystem = exports.SelectionRange = exports.FoldingRangeKind = exports.FoldingRange = exports.ColorFormat = exports.ColorPresentation = exports.ColorInformation = exports.Color = exports.FunctionBreakpoint = exports.SourceBreakpoint = exports.Breakpoint = exports.LogLevel = exports.DebugAdapterServer = exports.DebugAdapterExecutable = exports.Task2 = exports.Task = exports.TaskScope = exports.TaskGroup = exports.ShellExecution = exports.TaskRevealKind = exports.TaskPanelKind = exports.ShellQuoting = exports.ProcessExecution = exports.ProgressLocation = exports.Progress = exports.ProgressOptions = exports.FileType = exports.FileSystemError = exports.FileChangeType = exports.CommentMode = exports.QuickInputButtons = exports.CommentThreadCollapsibleState = exports.DocumentSymbol = exports.SymbolInformation = exports.SymbolTag = exports.TreeItemCollapsibleState = exports.TreeItem = exports.WorkspaceEdit = exports.CodeAction = exports.TextDocumentSaveReason = exports.CodeActionKind = exports.CodeActionTrigger = exports.CodeLens = exports.DocumentLink = exports.DocumentHighlight = exports.DocumentHighlightKind = exports.Hover = exports.SignatureHelp = exports.SignatureHelpTriggerKind = exports.SignatureInformation = exports.ParameterInformation = exports.MarkerTag = exports.MarkerSeverity = exports.Diagnostic = exports.DiagnosticTag = exports.Location = exports.DiagnosticRelatedInformation = exports.DiagnosticSeverity = exports.CompletionList = exports.CompletionItem = exports.CompletionItemKind = exports.CompletionTriggerKind = exports.TextEdit = exports.IndentAction = exports.RelativePattern = exports.ConfigurationTarget = exports.OverviewRulerLane = exports.DecorationRangeBehavior = exports.TextEditorRevealType = exports.ThemeIcon = exports.ThemeColor = exports.SnippetString = exports.EndOfLine = exports.Selection = exports.Range = exports.Position = exports.TextEditorSelectionChangeKind = exports.ViewColumn = exports.TextEditorLineNumbersStyle = exports.StatusBarAlignment = exports.Disposable = void 0;
++exports.CallHierarchyOutgoingCall = exports.CallHierarchyIncomingCall = exports.CallHierarchyItem = exports.UIKind = exports.WebviewPanelTargetArea = exports.OperatingSystem = exports.SelectionRange = exports.FoldingRangeKind = exports.FoldingRange = exports.ColorFormat = exports.ColorPresentation = exports.ColorInformation = exports.Color = exports.FunctionBreakpoint = exports.SourceBreakpoint = exports.Breakpoint = exports.LogLevel = exports.DebugAdapterServer = exports.DebugAdapterExecutable = exports.Task2 = exports.Task = exports.TaskScope = exports.TaskGroup = exports.ShellExecution = exports.TaskRevealKind = exports.TaskPanelKind = exports.ShellQuoting = exports.ProcessExecution = exports.ProgressLocation = exports.Progress = exports.ProgressOptions = exports.FileType = exports.FileSystemError = exports.FileChangeType = exports.CommentMode = exports.QuickInputButtons = exports.CommentThreadCollapsibleState = exports.DocumentSymbol = exports.SymbolInformation = exports.SymbolTag = exports.TreeItemCollapsibleState = exports.TreeItem = exports.WorkspaceEdit = exports.CodeAction = exports.TextDocumentSaveReason = exports.CodeActionKind = exports.CodeActionTrigger = exports.CodeLens = exports.DocumentLink = exports.DocumentHighlight = exports.DocumentHighlightKind = exports.Hover = exports.SignatureHelp = exports.SignatureHelpTriggerKind = exports.SignatureInformation = exports.ParameterInformation = exports.MarkerTag = exports.MarkerSeverity = exports.Diagnostic = exports.DiagnosticTag = exports.CompletionItemTag = exports.Location = exports.DiagnosticRelatedInformation = exports.DiagnosticSeverity = exports.CompletionList = exports.CompletionItem = exports.CompletionItemKind = exports.CompletionTriggerKind = exports.TextEdit = exports.IndentAction = exports.RelativePattern = exports.ConfigurationTarget = exports.OverviewRulerLane = exports.DecorationRangeBehavior = exports.TextEditorRevealType = exports.ThemeIcon = exports.ThemeColor = exports.SnippetString = exports.EndOfLine = exports.Selection = exports.Range = exports.Position = exports.TextEditorSelectionChangeKind = exports.ViewColumn = exports.TextEditorLineNumbersStyle = exports.StatusBarAlignment = exports.Disposable = void 0;
+ /* eslint-disable no-null/no-null */
+ /* eslint-disable @typescript-eslint/no-explicit-any */
+ var uuid_1 = require("@phosphor/coreutils/lib/uuid");
+@@ -844,6 +844,12 @@ var Location = /** @class */ (function () {
+     return Location;
+ }());
+ exports.Location = Location;
++
++var CompletionItemTag;
++(function (DiagnCompletionItemTagosticTag) {
++    CompletionItemTag[CompletionItemTag["Deprecated"] = 1] = "Deprecated";
++})(CompletionItemTag = exports.CompletionItemTag || (exports.CompletionItemTag = {}));
++
+ var DiagnosticTag;
+ (function (DiagnosticTag) {
+     DiagnosticTag[DiagnosticTag["Unnecessary"] = 1] = "Unnecessary";

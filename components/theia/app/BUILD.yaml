@@ -7,6 +7,7 @@ packages:
       - "webpack.config.js"
       - "startup.sh"
       - "**/*.ico"
+      - "patches/*.patch"
     deps:
       - components/gitpod-protocol:lib
       - components/theia/packages/gitpod-extension:lib
