@@ -137,7 +137,7 @@ type SwitchedSetpointController struct {
 
 // Control starts this controller
 func (c *SwitchedSetpointController) Control(ctx context.Context, workspaceCount <-chan WorkspaceCount) (ghostCount <-chan int) {
-	res := make(chan int)
+	res := make(chan int, 100)
 
 	setpoint := c.DefaultSetpoint
 	if csp := c.findSwitchpoint(c.time.Now()); csp != nil {

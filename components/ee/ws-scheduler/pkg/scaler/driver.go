@@ -137,7 +137,7 @@ func (wspd *WorkspaceManagerPrescaleDriver) Run() {
 	defer stopSchedulingGhosts()
 
 	var (
-		counts         = make(chan WorkspaceCount)
+		counts         = make(chan WorkspaceCount, 100)
 		status         workspaceStatus
 		startingGhosts = make(map[string]time.Time)
 		setpoint       int
