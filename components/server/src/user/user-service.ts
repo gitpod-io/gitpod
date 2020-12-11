@@ -108,13 +108,20 @@ export class UserService {
         }
     }
 
-    private cachedIsFirstUser: true | undefined = undefined;
+    private cachedIsFirstUser: boolean | undefined = undefined;
     public async createUser({identity, token, userUpdate }: CreateUserParams): Promise<User> {
         log.debug('Creating new user.', { identity, 'login-flow': true });
 
         const prevIsFirstUser = this.cachedIsFirstUser;
-        this.cachedIsFirstUser = true; // avoid races
-        const isFirstUser = prevIsFirstUser || (await this.userDb.getUserCount() === 0);
+        // immediately updating the cached value here without awaiting the async user count
+        // in order to make sure there is no race.
+        this.cachedIsFirstUser = false;
+
+        let isFirstUser = false;
+        if (prevIsFirstUser === undefined) {
+            // check user count only once
+            isFirstUser = (await this.userDb.getUserCount() === 0);
+        }
 
         let newUser = await this.userDb.newUser();
         if (userUpdate) {
