@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: poolkeeper-config
+  labels:
+    {{- include "poolkeeper.labels" . | nindent 4 }}
+data:
+  config.json: |-
+    {
+        "poolkeeper": {
+            "tasks": {{ .Values.tasks | toJson }}
+        }
+    }

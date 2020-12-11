@@ -17,7 +17,9 @@
       { "path": "components/ws-proxy" },
       { "path": "install/installer" },
       { "path": "dev/blowtorch" },
-      { "path": "dev/loadgen" }
+      { "path": "dev/loadgen" },
+      { "path": "dev/sweeper" },
+      { "path": "dev/poolkeeper" }
    ],
    "settings": {
       "typescript.tsdk": "gitpod/node_modules/typescript/lib",

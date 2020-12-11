@@ -24,7 +24,6 @@ affinity:
     requiredDuringSchedulingIgnoredDuringExecution:
       nodeSelectorTerms:
         - matchExpressions:
-            - key: gitpod.io/workload_meta
-              operator: In
-              values:
-                - 'true'
+          - key: cloud.google.com/gke-nodepool
+            operator: In
+            values: ["services"]
