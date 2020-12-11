@@ -46,10 +46,10 @@ func TestPortsUpdateState(t *testing.T) {
 		{
 			Desc: "basic locally served",
 			Changes: []Change{
-				{Served: []ServedPort{{8080, true}}},
+				{Served: []ServedPort{{"0100007F", 8080, true}}},
 				{Exposed: []ExposedPort{{LocalPort: 8080, GlobalPort: 60000, URL: "foobar"}}},
-				{Served: []ServedPort{{8080, true}, {60000, false}}},
-				{Served: []ServedPort{{60000, false}}},
+				{Served: []ServedPort{{"0100007F", 8080, true}, {"00000000", 60000, false}}},
+				{Served: []ServedPort{{"00000000", 60000, false}}},
 				{Served: []ServedPort{}},
 			},
 			ExpectedExposure: []ExposedPort{
@@ -65,7 +65,7 @@ func TestPortsUpdateState(t *testing.T) {
 		{
 			Desc: "basic globally served",
 			Changes: []Change{
-				{Served: []ServedPort{{8080, false}}},
+				{Served: []ServedPort{{"00000000", 8080, false}}},
 				{Served: []ServedPort{}},
 			},
 			ExpectedExposure: []ExposedPort{
@@ -96,7 +96,7 @@ func TestPortsUpdateState(t *testing.T) {
 			InternalPorts: []uint32{8080},
 			Changes: []Change{
 				{Served: []ServedPort{}},
-				{Served: []ServedPort{{8080, false}}},
+				{Served: []ServedPort{{"00000000", 8080, false}}},
 			},
 
 			ExpectedExposure: ExposureExpectation(nil),
@@ -119,8 +119,8 @@ func TestPortsUpdateState(t *testing.T) {
 				},
 				{
 					Served: []ServedPort{
-						{8080, false},
-						{9229, true},
+						{"00000000", 8080, false},
+						{"0100007F", 9229, true},
 					},
 				},
 			},
@@ -151,9 +151,9 @@ func TestPortsUpdateState(t *testing.T) {
 						Port:   "4000-5000",
 					}},
 				}},
-				{Served: []ServedPort{{4040, true}}},
+				{Served: []ServedPort{{"0100007F", 4040, true}}},
 				{Exposed: []ExposedPort{{LocalPort: 4040, GlobalPort: 60000, Public: true, URL: "4040-foobar"}}},
-				{Served: []ServedPort{{4040, true}, {60000, false}}},
+				{Served: []ServedPort{{"0100007F", 4040, true}, {"00000000", 60000, false}}},
 			},
 			ExpectedExposure: []ExposedPort{
 				{LocalPort: 4040, GlobalPort: 60000, Public: true},
@@ -181,22 +181,22 @@ func TestPortsUpdateState(t *testing.T) {
 					Exposed: []ExposedPort{{LocalPort: 8080, GlobalPort: 8080, Public: true, URL: "foobar"}},
 				},
 				{
-					Served: []ServedPort{{8080, true}},
+					Served: []ServedPort{{"0100007F", 8080, true}},
 				},
 				{
 					Exposed: []ExposedPort{{LocalPort: 8080, GlobalPort: 60000, Public: true, URL: "foobar"}},
 				},
 				{
-					Served: []ServedPort{{8080, true}, {60000, false}},
+					Served: []ServedPort{{"0100007F", 8080, true}, {"00000000", 60000, false}},
 				},
 				{
-					Served: []ServedPort{{60000, false}},
+					Served: []ServedPort{{"00000000", 60000, false}},
 				},
 				{
 					Served: []ServedPort{},
 				},
 				{
-					Served: []ServedPort{{8080, false}},
+					Served: []ServedPort{{"0100007F", 8080, false}},
 				},
 			},
 			ExpectedExposure: []ExposedPort{
@@ -218,7 +218,7 @@ func TestPortsUpdateState(t *testing.T) {
 			Desc: "starting multiple proxies for the same served event",
 			Changes: []Change{
 				{
-					Served: []ServedPort{{8080, true}, {3000, true}},
+					Served: []ServedPort{{"0100007F", 8080, true}, {"00000000", 3000, true}},
 				},
 			},
 			ExpectedExposure: []ExposedPort{
@@ -242,7 +242,7 @@ func TestPortsUpdateState(t *testing.T) {
 					}},
 				},
 				{
-					Served: []ServedPort{{8080, false}},
+					Served: []ServedPort{{"00000000", 8080, false}},
 				},
 				{
 					Exposed: []ExposedPort{{LocalPort: 8080, GlobalPort: 8080, Public: false, URL: "foobar"}},
@@ -256,6 +256,192 @@ func TestPortsUpdateState(t *testing.T) {
 				{{LocalPort: 8080, GlobalPort: 8080}},
 				{{LocalPort: 8080, GlobalPort: 8080, Served: true}},
 				{{LocalPort: 8080, GlobalPort: 8080, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify, Url: "foobar"}}},
+			},
+		},
+		{
+			Desc: "the same port served locally and then globally too, prefer globally (exposed in between)",
+			Changes: []Change{
+				{
+					Served: []ServedPort{{"0100007F", 5900, true}},
+				},
+				{
+					Exposed: []ExposedPort{{LocalPort: 5900, GlobalPort: 60000, URL: "foobar"}},
+				},
+				{
+					Served: []ServedPort{{"0100007F", 5900, true}, {"00000000", 5900, false}},
+				},
+				{
+					Exposed: []ExposedPort{{LocalPort: 5900, GlobalPort: 5900, URL: "foobar"}},
+				},
+			},
+			ExpectedExposure: []ExposedPort{
+				{LocalPort: 5900, GlobalPort: 60000},
+				{LocalPort: 5900, GlobalPort: 5900},
+			},
+			ExpectedUpdates: UpdateExpectation{
+				{},
+				{{LocalPort: 5900, GlobalPort: 60000, Served: true}},
+				{{LocalPort: 5900, GlobalPort: 60000, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+				{{LocalPort: 5900, GlobalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+			},
+		},
+		{
+			Desc: "the same port served locally and then globally too, prefer globally (exposed after)",
+			Changes: []Change{
+				{
+					Served: []ServedPort{{"0100007F", 5900, true}},
+				},
+				{
+					Served: []ServedPort{{"0100007F", 5900, true}, {"00000000", 5900, false}},
+				},
+				{
+					Exposed: []ExposedPort{{LocalPort: 5900, GlobalPort: 60000, URL: "foobar"}},
+				},
+				{
+					Exposed: []ExposedPort{{LocalPort: 5900, GlobalPort: 5900, URL: "foobar"}},
+				},
+			},
+			ExpectedExposure: []ExposedPort{
+				{LocalPort: 5900, GlobalPort: 60000},
+				{LocalPort: 5900, GlobalPort: 5900},
+			},
+			ExpectedUpdates: UpdateExpectation{
+				{},
+				{{LocalPort: 5900, GlobalPort: 60000, Served: true}},
+				{{LocalPort: 5900, GlobalPort: 5900, Served: true}},
+				{{LocalPort: 5900, GlobalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+			},
+		},
+		{
+			Desc: "the same port served globally and then locally too, prefer globally (exposed in between)",
+			Changes: []Change{
+				{
+					Served: []ServedPort{{"00000000", 5900, false}},
+				},
+				{
+					Exposed: []ExposedPort{{LocalPort: 5900, GlobalPort: 5900, URL: "foobar"}},
+				},
+				{
+					Served: []ServedPort{{"00000000", 5900, false}, {"0100007F", 5900, true}},
+				},
+			},
+			ExpectedExposure: []ExposedPort{
+				{LocalPort: 5900, GlobalPort: 5900},
+			},
+			ExpectedUpdates: UpdateExpectation{
+				{},
+				{{LocalPort: 5900, GlobalPort: 5900, Served: true}},
+				{{LocalPort: 5900, GlobalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+			},
+		},
+		{
+			Desc: "the same port served globally and then locally too, prefer globally (exposed after)",
+			Changes: []Change{
+				{
+					Served: []ServedPort{{"00000000", 5900, false}},
+				},
+				{
+					Served: []ServedPort{{"00000000", 5900, false}, {"0100007F", 5900, true}},
+				},
+				{
+					Exposed: []ExposedPort{{LocalPort: 5900, GlobalPort: 5900, URL: "foobar"}},
+				},
+			},
+			ExpectedExposure: []ExposedPort{
+				{LocalPort: 5900, GlobalPort: 5900},
+			},
+			ExpectedUpdates: UpdateExpectation{
+				{},
+				{{LocalPort: 5900, GlobalPort: 5900, Served: true}},
+				{{LocalPort: 5900, GlobalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+			},
+		},
+		{
+			Desc: "the same port served locally on ip4 and then locally on ip6 too, prefer first (exposed in between)",
+			Changes: []Change{
+				{
+					Served: []ServedPort{{"0100007F", 5900, true}},
+				},
+				{
+					Exposed: []ExposedPort{{LocalPort: 5900, GlobalPort: 60000, URL: "foobar"}},
+				},
+				{
+					Served: []ServedPort{{"0100007F", 5900, true}, {"00000000000000000000010000000000", 5900, true}},
+				},
+			},
+			ExpectedExposure: []ExposedPort{
+				{LocalPort: 5900, GlobalPort: 60000},
+			},
+			ExpectedUpdates: UpdateExpectation{
+				{},
+				{{LocalPort: 5900, GlobalPort: 60000, Served: true}},
+				{{LocalPort: 5900, GlobalPort: 60000, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+			},
+		},
+		{
+			Desc: "the same port served locally on ip4 and then locally on ip6 too, prefer first (exposed after)",
+			Changes: []Change{
+				{
+					Served: []ServedPort{{"0100007F", 5900, true}},
+				},
+				{
+					Served: []ServedPort{{"0100007F", 5900, true}, {"00000000000000000000010000000000", 5900, true}},
+				},
+				{
+					Exposed: []ExposedPort{{LocalPort: 5900, GlobalPort: 60000, URL: "foobar"}},
+				},
+			},
+			ExpectedExposure: []ExposedPort{
+				{LocalPort: 5900, GlobalPort: 60000},
+			},
+			ExpectedUpdates: UpdateExpectation{
+				{},
+				{{LocalPort: 5900, GlobalPort: 60000, Served: true}},
+				{{LocalPort: 5900, GlobalPort: 60000, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+			},
+		},
+		{
+			Desc: "the same port served locally on ip4 and then globally on ip6 too, prefer first (exposed in between)",
+			Changes: []Change{
+				{
+					Served: []ServedPort{{"00000000", 5900, false}},
+				},
+				{
+					Exposed: []ExposedPort{{LocalPort: 5900, GlobalPort: 5900, URL: "foobar"}},
+				},
+				{
+					Served: []ServedPort{{"00000000", 5900, false}, {"00000000000000000000000000000000", 5900, false}},
+				},
+			},
+			ExpectedExposure: []ExposedPort{
+				{LocalPort: 5900, GlobalPort: 5900},
+			},
+			ExpectedUpdates: UpdateExpectation{
+				{},
+				{{LocalPort: 5900, GlobalPort: 5900, Served: true}},
+				{{LocalPort: 5900, GlobalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
+			},
+		},
+		{
+			Desc: "the same port served locally on ip4 and then globally on ip6 too, prefer first (exposed after)",
+			Changes: []Change{
+				{
+					Served: []ServedPort{{"00000000", 5900, false}},
+				},
+				{
+					Served: []ServedPort{{"00000000", 5900, false}, {"00000000000000000000000000000000", 5900, false}},
+				},
+				{
+					Exposed: []ExposedPort{{LocalPort: 5900, GlobalPort: 5900, URL: "foobar"}},
+				},
+			},
+			ExpectedExposure: []ExposedPort{
+				{LocalPort: 5900, GlobalPort: 5900},
+			},
+			ExpectedUpdates: UpdateExpectation{
+				{},
+				{{LocalPort: 5900, GlobalPort: 5900, Served: true}},
+				{{LocalPort: 5900, GlobalPort: 5900, Served: true, Exposed: &api.ExposedPortInfo{Visibility: api.PortVisibility_private, OnExposed: api.OnPortExposedAction_notify_private, Url: "foobar"}}},
 			},
 		},
 	}

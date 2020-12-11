@@ -71,7 +71,7 @@ type Manager struct {
 
 	configs *Configs
 	exposed []ExposedPort
-	served  []ServedPort
+	served  map[uint32]ServedPort
 
 	state map[uint32]*managedPort
 	mu    sync.RWMutex
@@ -191,10 +191,21 @@ func (pm *Manager) updateState(exposed []ExposedPort, served []ServedPort, confi
 	if exposed != nil && !reflect.DeepEqual(pm.exposed, exposed) {
 		pm.exposed = exposed
 	}
-	if served != nil && !reflect.DeepEqual(pm.served, served) {
-		pm.served = served
-		pm.updateProxies()
+
+	if served != nil {
+		newServed := make(map[uint32]ServedPort)
+		for _, port := range served {
+			current, exists := newServed[port.Port]
+			if !exists || (!port.BoundToLocalhost && current.BoundToLocalhost) {
+				newServed[port.Port] = port
+			}
+		}
+		if !reflect.DeepEqual(pm.served, newServed) {
+			pm.served = newServed
+			pm.updateProxies()
+		}
 	}
+
 	if configured != nil {
 		pm.configs = configured
 	}
@@ -299,7 +310,7 @@ func (pm *Manager) nextState() map[uint32]*managedPort {
 		mp.Served = true
 
 		exposedGlobalPort, autoExposed := pm.autoExposed[port]
-		if mp.Exposed {
+		if !autoExposed && mp.Exposed {
 			exposedGlobalPort = mp.GlobalPort
 		}
 
