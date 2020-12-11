@@ -178,6 +178,9 @@ func Run(options ...RunOption) {
 	go taskManager.Run(ctx, &wg)
 	go func() {
 		defer wg.Done()
+		if cfg.isHeadless() {
+			return
+		}
 		portMgmt.Run()
 	}()
 
@@ -328,6 +331,9 @@ func reaper(ctx context.Context, wg *sync.WaitGroup) {
 
 func startAndWatchIDE(ctx context.Context, cfg *Config, wg *sync.WaitGroup, ideReady *ideReadyState) {
 	defer wg.Done()
+	if cfg.isHeadless() {
+		return
+	}
 
 	type status int
 	const (
