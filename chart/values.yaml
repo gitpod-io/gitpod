@@ -2,8 +2,8 @@
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 version: v0.4.0
-hostname: localhost
 
+hostname: localhost
 # ingressModes determines how Gitpod makes workspaces and their ports available. Possible values are:
 #           hosts: where workspaces and their ports are made available on subdomains of the hostname, e.g.
 #                  a workspace is made available at <wsid>.<installation.shortname>.<hostname>. This mode provides
@@ -18,7 +18,8 @@ hostname: localhost
 #                  Workspace ports are made available on individual ports exposed through the LoadBalancer.
 #                  This mode primarily makes sense if you don't have a domain available, but need to run on an IP address only.
 #                  In this mode there is no HTTPS and CORS support, some secrets get transmitted unencrypted (no one-time-secret support) and all exposed ports are public.
-ingressMode: hosts
+ingressMode: noDomain
+certificatesSecret: {}
 
 imagePrefix: gcr.io/gitpod-io/
 installation:
@@ -28,19 +29,13 @@ installation:
   cluster: "00"
   shortname: ""
 license: ""
-certificatesSecret: {}
 installPodSecurityPolicies: true
 imagePullPolicy: Always
 resources:
   default:
     cpu: 100m
     memory: 200Mi
-workspaceSizing:  # for n1-standard-16 (16 vCPUs, 60 GB memory)
-  ## deprecated settings
-  # memoryRequest: 2150   # 2.25 GB in MiB
-  # memoryLimit: 11444   # 12 GB in MiB
-  #
-  # new sizing settings
+workspaceSizing:
   requests:
     cpu: "1m"
     memory: "2.25Gi"

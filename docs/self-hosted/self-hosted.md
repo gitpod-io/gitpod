@@ -10,9 +10,9 @@ Gitpod, just as you know it from [gitpod.io](https://gitpod.io), can be deployed
 
 ## Installation
 
-You can find all configuration templates and installation scripts in this repository:
+You can find all configuration templates and installation scripts in the Gitpod repository:
 
-  > https://github.com/gitpod-io/self-hosted/
+  > https://github.com/gitpod-io/gitpod
 
 ### Install on Google Cloud Platform
 
@@ -20,10 +20,16 @@ The easiest way to install Gitpod Self-Hosted is currently on Google Cloud Platf
 
 * [Install Gitpod on Google Cloud Platform](../install/install-on-gcp-script/)
 
+### Install on AWS
+
+Alternatively, Gitpod comes with a setup for AWS that integrates with some AWS resource, like Load Balancers or S3 for storing workspace data:
+
+* [Install Gitpod on AWS](../install/install-on-aws-script/)
+
 ### Install on any Kubernetes cluster
 
-If you manage your own Kubernetes cluster, please follow this guide:
+If you already have a Kubernetes cluster, or don't want/cannot use AWS or GCP, please follow the generic guide:
 
-* [Install Gitpod on self-managed Kubernetes](../install/install-on-kubernetes/)
+* [Install Gitpod on Kubernetes](../install/install-on-kubernetes/)
 
-Note: Dedicated installation steps for AWS, Azure, and OpenShift are coming soon.
+Note: Dedicated installation steps for Azure and OpenShift are on our roadmap.
