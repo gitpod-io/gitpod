@@ -5,7 +5,7 @@
 
 ################ Alpine ####################
 # copy nodejs from the official alpine-based image because of https://github.com/TypeFox/gitpod/issues/2579
-FROM node:12.18.3-alpine AS node_installer
+FROM node:12.14.1-alpine AS node_installer
 RUN mkdir -p /theia/node/bin \
     /theia/node/include/node/ \
     /theia/node/lib/node_modules/npm/ \
