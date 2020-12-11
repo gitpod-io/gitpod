@@ -1,11 +1,36 @@
 ---
-url: /docs/self-hosted/latest/install/https-certs/
+url: /docs/self-hosted/latest/install/configure-ingress/
 ---
 
+# Ingress, Domain and HTTPS
 
-### HTTPS certificates
+There are several modes of ingress into your Gitpod installation. They mostly hinge on the fact which kind of certificate are available:
+ - `noDomain` requires no domain nor certificate but offers HTTP only
+ - `hosts` enables all features and full HTTPS support but requires wilcard HTTPS certificates
+ - `pathAndHost` is a tradeoff that works with non-wildcard HTTPS certificates
+Compare [values.yaml](https://github.com/gitpod-io/gitpod/blob/master/chart/values.yaml) for details.
 
 
+## Example
+
+#####TODO
+
+### Domain
+Gitpod requires a domain resolvable by some nameserver (typically a public domain name, e.g. `your-domain.com`).
+As Gitpod launches services and workspaces on additional subdomains it also needs two wildcard domains.
+For example:
+
+    your-domain.com
+    *.your-domain.com
+    *.ws.your-domain.com
+
+Installing Gitpod on a subdomain works as well. For example:
+
+    gitpod.your-domain.com
+    *.gitpod.your-domain.com
+    *.ws.gitpod.your-domain.com
+
+### HTTPS
 While we highly recommend operating Gitpod using HTTPS, Gitpod is able to run on insecure HTTP.
 If you use Gitpod's internal Docker registry, the downside of not using HTTPS is that Kubernetes won't be able to pull images from the registry because it considers the registry insecure.
 You can either resort to using an [external registry](#docker-registry-optional) or use HTTPS. For running Gitpod on insecure HTTP, no HTTPS certificates are needed and you can skip this section.

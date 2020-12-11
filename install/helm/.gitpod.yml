@@ -1,9 +1,0 @@
-# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
-# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
-
-image:
-  file: .gitpod.Dockerfile
-tasks:
-  - command: |
-      gp open values.yaml
-      ./utils/create-gcp-resources.go

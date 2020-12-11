@@ -2,6 +2,7 @@
 url: /docs/self-hosted/latest/install/docker-registry/
 ---
 
+#####TODO
 # Docker Registry
 
 Gitpod builds Docker images during workspace startup. This enables custom Dockerfiles as part of your workspace config, but is also required for Gitpod itself to function.

@@ -1,1 +1,0 @@
-../../../chart/config/db/init/02-create-and-init-sessions-db.sql

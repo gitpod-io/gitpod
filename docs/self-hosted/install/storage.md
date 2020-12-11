@@ -2,6 +2,8 @@
 url: /docs/self-hosted/latest/install/storage/
 ---
 
+
+#####TODO
 # Workspace Storage
 
 Gitpod uses bucket storage to persist the contents of workspaces. Each workspace is tarballed into a single archive file which is then uploaded to the bucket.
