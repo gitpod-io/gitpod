@@ -496,6 +496,7 @@ export interface PreparePluginUploadParams {
 export interface ResolvePluginsParams {
     config?: WorkspaceConfig
     builtins?: ResolvedPlugins
+    vsxRegistryUrl?: string
 }
 
 export interface InstallPluginsParams {

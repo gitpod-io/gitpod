@@ -30,7 +30,7 @@ export class GitpodPluginLocatorImpl implements GitpodPluginLocator {
             if (pck && pck.publisher && pck.name && pck.version) {
                 await this.decompressVSCodeBuiltInExtension(extensionPath);
                 const { publisher, name, version } = pck;
-                const fullPluginName = `${publisher}.${name}@${version}`;
+                const fullPluginName = `${publisher}.${name}@${version}`.toLowerCase();
                 const resolvedExtensionPath = path.join(extensionsPath, filenamify(fullPluginName));
                 await fs.remove(resolvedExtensionPath);
                 await fs.rename(extensionPath, resolvedExtensionPath);
