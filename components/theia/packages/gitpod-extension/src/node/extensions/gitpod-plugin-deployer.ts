@@ -31,6 +31,7 @@ import { WorkspaceConfig, ResolvedPlugins, ResolvedPlugin, InstallPluginsParams,
 import filenamify = require('filenamify');
 import { ApplicationPackage } from '@theia/application-package/lib/application-package';
 import { PluginIndexEntry } from '@gitpod/gitpod-protocol/lib/theia-plugins';
+import { VSXEnvironment } from '@theia/vsx-registry/lib/common/vsx-environment';
 
 @injectable()
 export class GitpodPluginDeployer implements GitpodPluginService {
@@ -61,6 +62,9 @@ export class GitpodPluginDeployer implements GitpodPluginService {
 
     @inject(ApplicationPackage)
     protected readonly pkg: ApplicationPackage;
+
+    @inject(VSXEnvironment)
+    private readonly vsxEnvironment: VSXEnvironment;
 
     constructor() {
         this.downloadPath = path.resolve(os.tmpdir(), 'download-vscode-extensions');
@@ -257,10 +261,11 @@ export class GitpodPluginDeployer implements GitpodPluginService {
 
     protected async resolvePlugins(): Promise<ResolvedPlugins | undefined> {
         try {
+            const vsxRegistryUri = await this.vsxEnvironment.getRegistryUri();
             const value: GitpodPluginClient = this.clients.values().next().value;
             if (value) {
                 const config = await this.parse();
-                const resolved = await value.resolve({ config, builtins: this.getBuiltins() });
+                const resolved = await value.resolve({ config, builtins: this.getBuiltins(), vsxRegistryUrl: vsxRegistryUri.toString() });
                 return resolved;
             }
         } catch (e) {
@@ -306,10 +311,6 @@ export class GitpodPluginDeployer implements GitpodPluginService {
             requestretry({
                 url,
                 method: 'GET',
-                headers: {
-                    // Content-Type has to match exactly
-                    'Content-Type': '*/*',
-                },
                 // if we cannot establish connection in 5s then try again in 2s 5 times
                 // if we cannot read then timeout in 5s
                 maxAttempts: 5,
@@ -353,9 +354,6 @@ export class GitpodPluginDeployer implements GitpodPluginService {
                 .pipe(request.put({
                     url: targetUrl,
                     headers: {
-                        // Content-Type has to match exactly with the `getSignedUrl` request from gcloud-storage-client.ts
-                        // otherwise the upload will fail with a "signature does not match" error.
-                        'Content-Type': '*/*',
                         'Content-Length': stat.size
                     }
                 }, (err, response) => {
