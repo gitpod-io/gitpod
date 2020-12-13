@@ -45,7 +45,11 @@ data:
                     "ref": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.dockerUp) }}",
                     "type": "image"
                 }
-            ]
+            ],
+            "handover": {
+                "enabled": {{ $comp.handover.enabled }},
+                "sockets": "/mnt/handover"
+            }
         },
         "pprofAddr": ":6060",
         "prometheusAddr": ":9500"

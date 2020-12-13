@@ -56,6 +56,7 @@ async function build(context, version) {
     const dynamicCPULimits = "dynamic-cpu-limits" in buildConfig;
     const withInstaller = "with-installer" in buildConfig || masterBuild;
     const noPreview = "no-preview" in buildConfig || publishRelease;
+    const registryFacadeHandover = "registry-facade-handover" in buildConfig;
     werft.log("job config", JSON.stringify({
         buildConfig,
         version,
@@ -67,6 +68,7 @@ async function build(context, version) {
         workspaceFeatureFlags,
         dynamicCPULimits,
         noPreview,
+        registryFacadeHandover,
     }));
 
     /**
@@ -111,7 +113,7 @@ async function build(context, version) {
         werft.phase("deploy", "not deploying");
         console.log("no-preview or publish-release is set");
     } else {
-        await deployToDev(version, previewWithHttps, workspaceFeatureFlags, dynamicCPULimits);
+        await deployToDev(version, previewWithHttps, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover);
     }
 }
 
@@ -119,7 +121,7 @@ async function build(context, version) {
 /**
  * Deploy dev
  */
-async function deployToDev(version, previewWithHttps, workspaceFeatureFlags, dynamicCPULimits) {
+async function deployToDev(version, previewWithHttps, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover) {
     werft.phase("deploy", "deploying to dev");
     const destname = version.split(".")[0];
     const namespace = `staging-${destname}`;
@@ -239,6 +241,11 @@ async function deployToDev(version, previewWithHttps, workspaceFeatureFlags, dyn
     if (dynamicCPULimits) {
         flags+=` -f ../.werft/values.variant.cpuLimits.yaml`;
     }
+    if (registryFacadeHandover) {
+        flags+=` --set components.registryFacade.handover.enabled=true`;
+        flags+=` --set components.registryFacade.handover.socket=/var/lib/gitpod/registry-facade-${namespace}`;
+    }
+
     // const pathToVersions = `${shell.pwd().toString()}/versions.yaml`;
     // if (fs.existsSync(pathToVersions)) {
     //     flags+=` -f ${pathToVersions}`;
