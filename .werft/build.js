@@ -49,6 +49,7 @@ async function build(context, version) {
     const dynamicCPULimits = "dynamic-cpu-limits" in buildConfig;
     const withInstaller = "with-installer" in buildConfig || masterBuild;
     const noPreview = "no-preview" in buildConfig || publishRelease;
+    const registryFacadeHandover = "registry-facade-handover" in buildConfig;
     werft.log("job config", JSON.stringify({
         buildConfig,
         version,
@@ -60,6 +61,7 @@ async function build(context, version) {
         workspaceFeatureFlags,
         dynamicCPULimits,
         noPreview,
+        registryFacadeHandover,
     }));
 
     /**
@@ -230,6 +232,9 @@ async function deployToDev(version, previewWithHttps, workspaceFeatureFlags, dyn
     })
     if (dynamicCPULimits) {
         flags+=` -f ../.werft/values.variant.cpuLimits.yaml`;
+    }
+    if (registryFacadeHandover) {
+        flags+=` --set components.registryFacade.handover.enabled=true --set components.registryFacade.handover.socket=/var/lib/gitpod/registry-facade-${namespace}`
     }
     // const pathToVersions = `${shell.pwd().toString()}/versions.yaml`;
     // if (fs.existsSync(pathToVersions)) {

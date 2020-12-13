@@ -76,11 +76,16 @@ var runCmd = &cobra.Command{
 			return docker.NewResolver(resolverOpts)
 		}
 
+		registryDoneChan := make(chan struct{})
 		reg, err := registry.NewRegistry(cfg.Registry, resolverProvider, prometheus.WrapRegistererWithPrefix("registry_", gpreg))
 		if err != nil {
 			log.WithError(err).Fatal("cannot create registry")
 		}
-		go reg.MustServe()
+		go func() {
+			defer close(registryDoneChan)
+			reg.MustServe()
+		}()
+
 		if cfg.PProfAddr != "" {
 			go pprof.Serve(cfg.PProfAddr)
 		}
@@ -105,7 +110,10 @@ var runCmd = &cobra.Command{
 		log.Info("🏪 registry facade is up and running")
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-		<-sigChan
+		select {
+		case <-sigChan:
+		case <-registryDoneChan:
+		}
 	},
 }
 

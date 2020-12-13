@@ -38,6 +38,21 @@ spec:
     spec:
 {{ include "gitpod.workspaceAffinity" $this | indent 6 }}
       serviceAccountName: registry-facade
+{{- if $comp.handover.enabled }}
+      initContainers:
+      - name: handover-ownership
+        image: {{ template "gitpod.comp.imageFull" $this }}
+        command:
+        - "/bin/sh"
+        - "-c"
+        - "chown -R 1000:1000 /mnt/handover"
+        volumeMounts:
+        - name: handover
+          mountPath: "/mnt/handover"
+        securityContext:
+          privileged: false
+          runAsUser: 0
+{{- end }}
       containers:
       - name: registry-facade
         image: {{ template "gitpod.comp.imageFull" $this }}
@@ -56,11 +71,15 @@ spec:
 {{ include "gitpod.container.defaultEnv" $this | indent 8 }}
 {{ include "gitpod.container.tracingEnv" $this | indent 8 }}
         volumeMounts:
+        - name: cache
+          mountPath: "/mnt/cache"
         - name: config
           mountPath: "/mnt/config"
           readOnly: true
-        - name: cache
-          mountPath: "/mnt/cache"
+        {{- if $comp.handover.enabled }}
+        - name: handover
+          mountPath: "/mnt/handover"
+        {{- end }}
         {{- if .Values.components.workspace.pullSecret.secretName }}
         - name: pull-secret
           mountPath: /mnt/pull-secret.json
@@ -76,6 +95,12 @@ spec:
       - name: config
         configMap:
           name: {{ template "gitpod.comp.configMap" $this }}
+      {{- if $comp.handover.enabled }}
+      - name: handover
+        hostPath:
+          path: {{ $comp.handover.socket | quote }}
+          type: DirectoryOrCreate
+      {{- end }}
       {{- if .Values.components.workspace.pullSecret.secretName }}
       - name: pull-secret
         secret:

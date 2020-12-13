@@ -10,11 +10,17 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/registry-facade/api"
+	"github.com/gitpod-io/gitpod/registry-facade/pkg/handover"
 
 	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/content/local"
@@ -23,8 +29,6 @@ import (
 	"github.com/docker/distribution/reference"
 	"github.com/docker/distribution/registry/api/errcode"
 	distv2 "github.com/docker/distribution/registry/api/v2"
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/gorilla/mux"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	"github.com/opentracing/opentracing-go"
@@ -56,6 +60,9 @@ type Config struct {
 		Certificate string `json:"crt"`
 		PrivateKey  string `json:"key"`
 	} `json:"tls"`
+	Handover struct {
+		Sockets string `json:"sockets"`
+	} `json:"handover"`
 }
 
 // ResolverProvider provides new resolver
@@ -71,6 +78,7 @@ type Registry struct {
 	SpecProvider   map[string]ImageSpecProvider
 
 	metrics *metrics
+	srv     *http.Server
 }
 
 // NewRegistry creates a new registry
@@ -214,8 +222,41 @@ func (reg *Registry) Serve() error {
 		go http.ListenAndServe(addr, mux)
 	}
 
+	addr := fmt.Sprintf(":%d", reg.Config.Port)
+	var (
+		l   net.Listener
+		err error
+	)
+	if fn := reg.Config.Handover.Sockets; fn != "" {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		l, err = ReceiveHandover(ctx, reg.Config.Handover.Sockets)
+		cancel()
+		if err != nil {
+			log.WithError(err).Warn("handover failed - attempting to start socket directly")
+		}
+	}
+	if l == nil {
+		// there was no handover configured or available - start our own listener
+		l, err = net.Listen("tcp", addr)
+		if err != nil {
+			return err
+		}
+	}
+
+	reg.srv = &http.Server{
+		Addr:    addr,
+		Handler: mux,
+	}
+
+	hoctx, cancelHO := context.WithCancel(context.Background())
+	defer cancelHO()
+	hoc, err := OfferHandover(hoctx, reg.Config.Handover.Sockets, l, reg.srv)
+	if err != nil {
+		return err
+	}
+
 	if reg.Config.TLS != nil {
-		log.WithField("addr", fmt.Sprintf(":%d", reg.Config.Port)).Info("HTTPS server listening")
+		log.WithField("addr", addr).Info("HTTPS registry server listening")
 
 		cert, key := reg.Config.TLS.Certificate, reg.Config.TLS.PrivateKey
 		if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
@@ -223,11 +264,26 @@ func (reg *Registry) Serve() error {
 			key = filepath.Join(tproot, key)
 		}
 
-		return http.ListenAndServeTLS(fmt.Sprintf(":%d", reg.Config.Port), cert, key, mux)
+		return reg.srv.ServeTLS(l, cert, key)
 	}
 
-	log.WithField("addr", fmt.Sprintf(":%d", reg.Config.Port)).Info("registry server listening")
-	return http.ListenAndServe(fmt.Sprintf(":%d", reg.Config.Port), mux)
+	srvErrChan := make(chan error, 1)
+	go func() {
+		log.WithField("addr", addr).Info("HTTP registry server listening")
+		srvErrChan <- reg.srv.Serve(l)
+	}()
+
+	select {
+	case err := <-srvErrChan:
+		return err
+	case handingOver := <-hoc:
+		if !handingOver {
+			return nil
+		}
+		// we are handing over and must wait for the server to shut down
+		<-hoc
+		return nil
+	}
 }
 
 // MustServe calls serve and logs any error as Fatal
@@ -236,6 +292,77 @@ func (reg *Registry) MustServe() {
 	if err != nil {
 		log.WithError(err).Fatal("cannot serve registry")
 	}
+}
+
+// ReceiveHandover lists all Unix sockets in loc, finds the latest and attempts a Listener
+// handover from that socket. If loc == "", this function returns nil, nil.
+func ReceiveHandover(ctx context.Context, loc string) (l net.Listener, err error) {
+	if loc == "" {
+		return nil, nil
+	}
+	fs, err := ioutil.ReadDir(loc)
+	if err != nil {
+		return nil, err
+	}
+	var fn string
+	for _, f := range fs {
+		if f.Mode()*os.ModeSocket == 0 {
+			continue
+		}
+		if f.Name() > fn {
+			fn = f.Name()
+		}
+	}
+	if fn == "" {
+		return nil, nil
+	}
+	fn = filepath.Join(loc, fn)
+
+	log.WithField("fn", fn).Debug("found handover socket - attempting listener handover")
+	return handover.ReceiveHandover(ctx, fn)
+}
+
+// Shutdowner is a process that can be shut down
+type Shutdowner interface {
+	Shutdown(context.Context) error
+}
+
+// OfferHandover offers the registry-facade listener handover on a Unix socket
+func OfferHandover(ctx context.Context, loc string, l net.Listener, s Shutdowner) (handingOver <-chan bool, err error) {
+	socketFN := filepath.Join(loc, fmt.Sprintf("rf-handover-%d.sock", time.Now().Unix()))
+	if socketFN == "" {
+		return nil, nil
+	}
+	tcpL, ok := l.(*net.TCPListener)
+	if !ok {
+		return nil, xerrors.Errorf("can only offer handovers for *net.TCPListener")
+	}
+
+	handingOverC := make(chan bool)
+	go func() {
+		defer close(handingOverC)
+
+		err := handover.OfferHandover(ctx, socketFN, tcpL)
+		if err != nil {
+			log.WithError(err).Error("listener handover offer failed")
+			return
+		}
+
+		log.Warn("listener handover initiated - not accepting new connections and stopping server")
+		handingOverC <- true
+
+		if s == nil {
+			return
+		}
+		err = s.Shutdown(ctx)
+		if err != nil {
+			log.WithError(err).Warn("error during server shutdown")
+			return
+		}
+		log.Warn("server shutdown complete")
+	}()
+	log.WithField("socket", socketFN).Info("offering listener handover")
+	return handingOverC, nil
 }
 
 func (reg *Registry) requireAuthentication(h http.Handler) http.Handler {
