@@ -175,15 +175,6 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	clog.Info("starting new workspace")
 	client := m.Clientset.CoreV1()
 
-	// if there's a ghost workspace running, let's take its place
-	if req.Type == api.WorkspaceType_REGULAR {
-		err = m.deleteGhostWorkspace(ctx)
-		if err != nil {
-			clog.WithError(err).Warn("cannot delete a ghost workspace")
-		}
-		tracing.LogEvent(span, "ghost pod deleted")
-	}
-
 	// we must create the workspace pod first to make sure we don't clean up the services or configmap we're about to create
 	// because they're "dangling".
 	pod, err := m.createWorkspacePod(startContext)
@@ -1237,31 +1228,4 @@ func newWssyncConnectionFactory(managerConfig Configuration) (grpcpool.Factory, 
 		}
 		return conn, nil
 	}, nil
-}
-
-func (m *Manager) deleteGhostWorkspace(ctx context.Context) (err error) {
-	//nolint:ineffassign
-	span, ctx := tracing.FromContext(ctx, "deleteGhostWorkspace")
-	defer tracing.FinishSpan(span, &err)
-
-	gps, err := m.Clientset.CoreV1().Pods(m.Config.Namespace).List(ctx, metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("%s=%s", wsk8s.TypeLabel, "ghost"),
-	})
-	if err != nil {
-		return xerrors.Errorf("cannot list ghost pods: %w", err)
-	}
-	for _, p := range gps.Items {
-		err := m.Clientset.CoreV1().Pods(m.Config.Namespace).Delete(ctx, p.Name, *metav1.NewDeleteOptions(2))
-		if isKubernetesObjNotFoundError(err) {
-			continue
-		}
-		if err != nil {
-			return err
-		}
-
-		log.WithField("podName", p.Name).Debug("deleted ghost workspace")
-		break
-	}
-
-	return nil
 }
