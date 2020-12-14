@@ -63,9 +63,11 @@ type Scheduler struct {
 	Clientset       kubernetes.Interface
 	RAMSafetyBuffer res.Quantity
 
-	pods              infov1.PodInformer
-	nodes             infov1.NodeInformer
-	strategy          Strategy
+	pods     infov1.PodInformer
+	nodes    infov1.NodeInformer
+	strategy Strategy
+
+	schedulingPodMap  *schedulingPodMap
 	localBindingCache *localBindingCache
 
 	didShutdown chan bool
@@ -115,7 +117,7 @@ func (s *Scheduler) Start(ctx context.Context) error {
 
 			err := s.schedulePod(ctx, pod)
 			if err != nil {
-				log.WithError(err).WithField("pod", pod.Name).Error("unable to schedule pod: %w", err)
+				log.WithError(err).WithField("pod", pod.Name).Error("unable to schedule pod")
 			}
 		}
 	}()
@@ -137,13 +139,13 @@ func (s *Scheduler) Start(ctx context.Context) error {
 				// a new node was added: do we have pending pods to re-schedule?
 				err := s.checkForAndEnqueuePendingPods(ctx, schedulerQueue)
 				if err != nil {
-					log.WithError(err).Debug("error during pending pod check: %w", err)
+					log.WithError(err).Debug("error during pending pod check")
 				}
 			case <-rescheduleTicker.C:
 				// rescheduleInterval is over: do regular scan
 				err := s.checkForAndEnqueuePendingPods(ctx, schedulerQueue)
 				if err != nil {
-					log.WithError(err).Debug("error during pending pod check", err)
+					log.WithError(err).Debug("error during pending pod check")
 				}
 			}
 		}
@@ -174,6 +176,7 @@ func (s *Scheduler) startInformer(ctx context.Context) (schedulerQueue chan *cor
 	// Whenever we find a new node we'll enqueue it to a range of workers that will check if we have pending
 	newNodeQueue = make(chan *corev1.Node, schedulerQueueSize)
 
+	s.schedulingPodMap = newSchedulingPodMap()
 	s.localBindingCache = newLocalBindingCache()
 
 	// Informers replicate state to a Kubernetes client. We'll use them so we don't have to query the K8S master
@@ -265,6 +268,15 @@ func (s *Scheduler) schedulePod(ctx context.Context, pod *corev1.Pod) (err error
 	tracing.ApplyOWI(span, owi)
 	defer tracing.FinishSpan(span, &err)
 
+	// if the pod is in the process of being scheduled, return here.
+	if isSchedulingPod := s.schedulingPodMap.tryAdd(pod.Name); isSchedulingPod {
+		// Here we drop the request for scheduling and rely on our polling mechanism to re-queue the pod for
+		// scheduling if necessary (e.g., 1. scheduling attempt failed)
+		span.LogFields(tracelog.String("schedulingResult", "alreadyBeingScheduled"))
+		log.WithFields(owi).WithField("name", pod.Name).Debugf("pod is already being scheduled, dropping.")
+		return nil
+	}
+
 	// if the pod is known to have already been scheduled (locally): drop.
 	if s.localBindingCache.hasAlreadyBeenScheduled(pod.Name) {
 		span.LogFields(tracelog.String("schedulingResult", "alreadyScheduled"))
@@ -290,22 +302,29 @@ func (s *Scheduler) schedulePod(ctx context.Context, pod *corev1.Pod) (err error
 		return nil
 	}
 
-	// we found a node for this pod - bind it to the node
-	err = s.bindPodToNode(ctx, pod, nodeName)
-	if err != nil {
-		errStr := err.Error()
-		if strings.Contains(errStr, "is already assigned to node") {
-			// some other worker was faster: This can happen and is good: do nothing
-			log.WithFields(owi).WithField("name", pod.Name).Debugf("pod already bound - someone was faster than me!")
-			return nil
-		}
-
-		return xerrors.Errorf("cannot bind pod: %w", err)
-	}
-	log.WithFields(owi).WithField("name", pod.Name).Debugf("bound to node: %s", nodeName)
-
-	// mark as already scheduled (locally)
+	// mark as already scheduled (locally), even if it is has not yet been successfully bound to it!
 	s.localBindingCache.markAsScheduled(pod, nodeName)
+
+	// we found a node for this pod: (asynchronously) bind it to the node! schedulingPodMap makes sure we do not try to
+	go func() {
+		defer s.schedulingPodMap.remove(pod.Name)
+
+		// actually bind the pod to the node
+		err = s.bindPodToNode(ctx, pod, nodeName)
+		if err != nil {
+			errStr := err.Error()
+			if strings.Contains(errStr, "is already assigned to node") {
+				// some other worker was faster: This can happen and is good: do nothing
+				log.WithFields(owi).WithField("name", pod.Name).Debugf("pod already bound - someone was faster than me!")
+				return
+			}
+
+			s.localBindingCache.delete(pod.Name) // Do not forget to release the slot when we're not successful
+			log.WithFields(owi).WithField("name", pod.Name).WithError(err).Error("cannot bind pod")
+			return
+		}
+		log.WithFields(owi).WithField("name", pod.Name).Debugf("bound to node: %s", nodeName)
+	}()
 
 	return nil
 }
@@ -676,4 +695,36 @@ func newLocalBindingCache() *localBindingCache {
 	return &localBindingCache{
 		bindings: make(map[string]*Binding),
 	}
+}
+
+// schedulingPodMap is a map of pods that are actively being scheduled at this very moment.
+type schedulingPodMap struct {
+	pods map[string]bool
+	mu   sync.RWMutex
+}
+
+func newSchedulingPodMap() *schedulingPodMap {
+	return &schedulingPodMap{
+		pods: make(map[string]bool),
+	}
+}
+
+// tryAdd tries to add the given pod into the map. If the pod is already being scheduled and thus could not be added, false is returned.
+func (m *schedulingPodMap) tryAdd(name string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if _, alreadyPresent := m.pods[name]; alreadyPresent {
+		return false
+	}
+
+	m.pods[name] = true
+	return true
+}
+
+func (m *schedulingPodMap) remove(name string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	delete(m.pods, name)
 }
