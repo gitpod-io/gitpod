@@ -7,6 +7,7 @@ package content
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -41,6 +42,12 @@ type RunInitializerOpts struct {
 	OWI map[string]interface{}
 }
 
+// errors to be tested with errors.Is
+var (
+	// cannot find snapshot
+	errCannotFindSnapshot = errors.New("cannot find snapshot")
+)
+
 func collectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps storage.PresignedAccess, workspaceOwner string, initializer *csapi.WorkspaceInitializer) (rc map[string]storage.DownloadInfo, err error) {
 	rc = make(map[string]storage.DownloadInfo)
 
@@ -59,6 +66,9 @@ func collectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps stora
 			return nil, err
 		}
 		info, err := ps.SignDownload(ctx, bkt, obj)
+		if err == storage.ErrNotFound {
+			return nil, errCannotFindSnapshot
+		}
 		if err != nil {
 			return nil, xerrors.Errorf("cannot find snapshot: %w", err)
 		}
@@ -71,7 +81,9 @@ func collectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps stora
 			return nil, err
 		}
 		info, err := ps.SignDownload(ctx, bkt, obj)
-		if err != nil {
+		if err == storage.ErrNotFound {
+			// no prebuild found - that's fine
+		} else if err != nil {
 			return nil, xerrors.Errorf("cannot find prebuild: %w", err)
 		}
 
