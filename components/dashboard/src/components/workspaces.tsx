@@ -37,7 +37,6 @@ interface WorkspacesState {
 	searchString?: string;
 	featuredRepositories?: WhitelistedRepository[];
     configuration?: Configuration;
-    hideGcMessage?: boolean;
 }
 
 class Workspaces extends React.Component<WorkspacesProps, WorkspacesState> {
@@ -52,13 +51,6 @@ class Workspaces extends React.Component<WorkspacesProps, WorkspacesState> {
 	componentWillMount() {
 		this.updateWorkspaces();
         this.listenForInstanceUpdates();
-
-        try {
-            const hideGcMessage = localStorage.getItem("hideGcMessage") === "true";
-            this.setState({ hideGcMessage });
-        } catch {
-            // local storage not supported: ignore
-        }
 
 		this.props.service.server.getFeaturedRepositories()
 			.then(repos => this.setState({ featuredRepositories: repos }))
@@ -282,7 +274,7 @@ class Workspaces extends React.Component<WorkspacesProps, WorkspacesState> {
 		return (
 			<Fade in={true}>
 				<Grid container spacing={8} className="workspace-list">
-                    {this.state.hideGcMessage ? undefined : gcMessage}
+                    {gcMessage}
                     <Grid item xs={12} className="search" style={showSearchBar ? {} : {display: "none"}}>
                         <Input placeholder="Search" aria-label="Search" className="input" defaultValue={this.state.searchString} onChange={this.onSearchChange}/>
 						<div className="limit">
