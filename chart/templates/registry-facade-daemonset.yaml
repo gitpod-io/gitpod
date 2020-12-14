@@ -53,6 +53,9 @@ spec:
           privileged: false
           runAsUser: 0
 {{- end }}
+      {{- if $comp.handover.enabled }}
+      hostNetwork: true
+      {{- end }}
       containers:
       - name: registry-facade
         image: {{ template "gitpod.comp.imageFull" $this }}
@@ -61,10 +64,15 @@ spec:
 {{ include "gitpod.container.resources" $this | indent 8 }}
         ports:
         - name: registry
+          {{- if $comp.handover.enabled }}
+          # if hostNetwork == true then containerPort == hostPort
+          containerPort: {{ $comp.ports.registry.servicePort }}
+          {{- else }}
           containerPort: {{ $comp.ports.registry.containerPort }}
           hostPort: {{ $comp.ports.registry.servicePort }}
         - name: metrics
           containerPort: 9500
+          {{- end }}
         securityContext:
           privileged: false
           runAsUser: 1000

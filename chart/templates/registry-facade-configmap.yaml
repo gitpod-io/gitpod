@@ -17,7 +17,11 @@ data:
     {
         {{ if .Values.components.workspace.pullSecret.secretName -}}"dockerAuth": "/mnt/pull-secret.json",{{- end }}
         "registry": {
+            {{- if $comp.handover.enabled }}
+            "port": {{ $comp.ports.registry.servicePort }},
+            {{- else }}
             "port": {{ $comp.ports.registry.containerPort }},
+            {{- end }}
             {{- if (or .Values.certificatesSecret.secretName $comp.certificatesSecret.secretName) }}
             {{- if (or .Values.certificatesSecret.certManager $comp.certificatesSecret.certManager) }}
             "tls": {

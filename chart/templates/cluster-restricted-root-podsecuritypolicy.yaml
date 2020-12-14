@@ -40,7 +40,7 @@ spec:
     - 'emptyDir'
     - 'persistentVolumeClaim'
     - 'hostPath'
-  hostNetwork: false
+  hostNetwork: true
   hostIPC: false
   hostPID: false
   hostPorts: 
