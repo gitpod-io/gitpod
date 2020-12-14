@@ -233,7 +233,7 @@ Nodes:
 			}
 
 			ramSafetyBuffer := res.MustParse(test.RAMSafetyBuffer)
-			state := sched.ComputeState(test.Nodes, test.Pods, nil, &ramSafetyBuffer)
+			state := sched.ComputeState(test.Nodes, test.Pods, nil, &ramSafetyBuffer, false)
 
 			densityAndExperienceConfig := sched.DefaultDensityAndExperienceConfig()
 			strategy, err := sched.CreateStrategy(sched.StrategyDensityAndExperience, sched.Configuration{

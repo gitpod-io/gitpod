@@ -24,8 +24,9 @@ type State struct {
 
 // Node models a k8s node
 type Node struct {
-	Node *corev1.Node
-	Pods []*corev1.Pod
+	Node   *corev1.Node
+	Pods   []*corev1.Pod
+	Ghosts []*corev1.Pod
 
 	RAM              ResourceUsage
 	EphemeralStorage ResourceUsage
@@ -87,11 +88,15 @@ func (r *ResourceUsage) updateAvailable() {
 }
 
 // ComputeState builds a new state based on the current world view
-func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding, ramSafetyBuffer *res.Quantity) *State {
+func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding, ramSafetyBuffer *res.Quantity, ghostsAreInvisible bool) *State {
+	type podAndNode struct {
+		pod      *corev1.Pod
+		nodeName string
+	}
 	var (
 		nds       = make(map[string]*Node)
 		pds       = make(map[string]*corev1.Pod)
-		podToNode = make(map[string]string)
+		podToNode = make(map[string]*podAndNode)
 	)
 
 	// We need a unique assignment of pod to node, as no pod can be scheduled on two nodes
@@ -103,7 +108,10 @@ func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding,
 		if p.Spec.NodeName == "" {
 			continue
 		}
-		podToNode[p.Name] = p.Spec.NodeName
+		podToNode[p.Name] = &podAndNode{
+			pod:      p,
+			nodeName: p.Spec.NodeName,
+		}
 	}
 	for _, b := range bindings {
 		if _, exists := pds[b.Pod.Name]; !exists {
@@ -112,33 +120,51 @@ func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding,
 			pds[b.Pod.Name] = b.Pod
 		}
 
-		podToNode[b.Pod.Name] = b.NodeName
+		podToNode[b.Pod.Name] = &podAndNode{
+			pod:      b.Pod,
+			nodeName: b.NodeName,
+		}
 	}
 
 	// With a unique pod to node assignment, we can invert that relationship and compute
 	// which node has which pods. If we did this right away, we might assign the same pod
 	// to multiple nodes.
-	nodeToPod := make(map[string]map[string]struct{}, len(nodes))
+	type ntp struct {
+		pods   map[string]struct{}
+		ghosts map[string]struct{}
+	}
+	nodeToPod := make(map[string]*ntp, len(nodes))
 	for _, n := range nodes {
 		nds[n.Name] = &Node{
 			Node:     n,
 			Services: make(map[string]struct{}),
 		}
-		nodeToPod[n.Name] = make(map[string]struct{})
+		nodeToPod[n.Name] = &ntp{
+			pods:   make(map[string]struct{}),
+			ghosts: make(map[string]struct{}),
+		}
 	}
-	for pod, node := range podToNode {
-		ntp, ok := nodeToPod[node]
+	for podName, podAndNode := range podToNode {
+		ntp, ok := nodeToPod[podAndNode.nodeName]
 		if !ok {
 			continue
 		}
-		ntp[pod] = struct{}{}
+		if isGhostWorkspace(podAndNode.pod) {
+			ntp.ghosts[podName] = struct{}{}
+			if !ghostsAreInvisible {
+				ntp.pods[podName] = struct{}{}
+			}
+		} else {
+			ntp.pods[podName] = struct{}{}
+		}
 	}
 
 	for nodeName, node := range nds {
 		node.PodSlots.Total = node.Node.Status.Capacity.Pods().Value()
 		node.PodSlots.Available = node.PodSlots.Total
 
-		assignedPods := nodeToPod[nodeName]
+		ntp := nodeToPod[nodeName]
+		assignedPods := ntp.pods
 		allocatableRAMWithSafetyBuffer := node.Node.Status.Allocatable.Memory().DeepCopy()
 		allocatableRAMWithSafetyBuffer.Sub(*ramSafetyBuffer)
 		node.RAM = newResourceUsage(&allocatableRAMWithSafetyBuffer)
@@ -181,6 +207,11 @@ func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding,
 		}
 		node.RAM.updateAvailable()
 		node.EphemeralStorage.updateAvailable()
+
+		node.Ghosts = make([]*corev1.Pod, 0, len(ntp.ghosts))
+		for gn := range ntp.ghosts {
+			node.Ghosts = append(node.Ghosts, pds[gn])
+		}
 	}
 
 	return &State{
@@ -249,6 +280,30 @@ func (s *State) SortNodesByAvailableRAM(order SortOrder) []*Node {
 		return nodes[i].RAM.Available.AsDec().Cmp(nodes[j].RAM.Available.AsDec()) > 0
 	})
 	return nodes
+}
+
+// FindOldestGhostOnNode returns the name of the oldest ghost on the node with the given node, or "" if there is no
+// node or ghost
+func (s *State) FindOldestGhostOnNode(nodeName string) string {
+	node, ok := s.Nodes[nodeName]
+	if !ok {
+		return ""
+	}
+
+	if len(node.Ghosts) == 0 {
+		return ""
+	} else if len(node.Ghosts) == 1 {
+		return node.Ghosts[0].Name
+	}
+
+	ghosts := make([]*corev1.Pod, 0, len(node.Ghosts))
+	for _, g := range node.Ghosts {
+		ghosts = append(ghosts, g)
+	}
+	sort.Slice(ghosts, func(i, j int) bool {
+		return ghosts[i].ObjectMeta.CreationTimestamp.Time.Before(ghosts[j].ObjectMeta.CreationTimestamp.Time)
+	})
+	return ghosts[0].Name
 }
 
 // podRAMRequest calculates the amount of RAM requested by all containers of the given pod

@@ -9,9 +9,10 @@ import (
 	"sort"
 	"time"
 
-	"golang.org/x/xerrors"
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/xerrors"
 
 	corev1 "k8s.io/api/core/v1"
 )
@@ -325,4 +326,22 @@ func isHeadlessWorkspace(pod *corev1.Pod) bool {
 
 	val, ok := pod.ObjectMeta.Labels["headless"]
 	return ok && val == "true"
+}
+
+func isGhostWorkspace(pod *corev1.Pod) bool {
+	if !isWorkspace(pod) {
+		return false
+	}
+
+	val, ok := pod.ObjectMeta.Labels[wsk8s.TypeLabel]
+	return ok && val == "ghost"
+}
+
+func isRegularWorkspace(pod *corev1.Pod) bool {
+	if !isWorkspace(pod) {
+		return false
+	}
+
+	val, ok := pod.ObjectMeta.Labels[wsk8s.TypeLabel]
+	return ok && val == "regular"
 }

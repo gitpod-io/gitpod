@@ -147,7 +147,7 @@ func TestState(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
 			ramSafetyBuffer := res.MustParse(test.RAMSafetyBuffer)
-			state := sched.ComputeState(test.Nodes, test.Pods, test.Bindings, &ramSafetyBuffer)
+			state := sched.ComputeState(test.Nodes, test.Pods, test.Bindings, &ramSafetyBuffer, false)
 
 			nodes := state.SortNodesByAvailableRAM(sched.SortAsc)
 			// in some tests the RAM sort order is not stable as nodes have the same amount of RAM.
