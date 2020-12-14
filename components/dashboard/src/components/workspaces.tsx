@@ -274,7 +274,6 @@ class Workspaces extends React.Component<WorkspacesProps, WorkspacesState> {
 		return (
 			<Fade in={true}>
 				<Grid container spacing={8} className="workspace-list">
-                    {gcMessage}
                     <Grid item xs={12} className="search" style={showSearchBar ? {} : {display: "none"}}>
                         <Input placeholder="Search" aria-label="Search" className="input" defaultValue={this.state.searchString} onChange={this.onSearchChange}/>
 						<div className="limit">
@@ -287,6 +286,7 @@ class Workspaces extends React.Component<WorkspacesProps, WorkspacesState> {
 							{limitOptions}
 						</div>
 					</Grid>
+                    {gcMessage}
 					{workspacesRows}
 					{featuredRepositories}
 				</Grid>
