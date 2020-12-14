@@ -3,6 +3,7 @@ packages:
     type: docker
     srcs:
       - node-daemon.sh
+      - post-delete-cleanup.sh
     argdeps:
       - imageRepoBase
     config:
