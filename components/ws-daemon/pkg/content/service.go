@@ -7,6 +7,7 @@ package content
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"math"
@@ -195,6 +196,10 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		}
 
 		remoteContent, err := collectRemoteContent(ctx, rs, ps, workspace.Owner, req.Initializer)
+		if err != nil && errors.Is(err, errCannotFindSnapshot) {
+			log.WithError(err).Error("cannot find snapshot")
+			return nil, status.Error(codes.NotFound, "cannot find snapshot")
+		}
 		if err != nil {
 			log.WithError(err).Error("cannot collect remote content")
 			return nil, status.Error(codes.Internal, "remote content error")
