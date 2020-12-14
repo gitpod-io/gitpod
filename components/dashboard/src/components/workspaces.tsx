@@ -19,7 +19,6 @@ import Fade from '@material-ui/core/Fade';
 import { getBlockedUrl } from '../routing';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { getGitpodConfiguration } from '../configuration';
-import Button from '@material-ui/core/Button';
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 
 interface WorkspacesProps {
@@ -272,17 +271,6 @@ class Workspaces extends React.Component<WorkspacesProps, WorkspacesState> {
                         <Typography component="p" >
                             Unused workspaces are automatically deleted after {this.state.configuration.daysBeforeGarbageCollection} days of inactivity. <a href="https://www.gitpod.io/docs/life-of-workspace/#garbage-collection">Learn more.</a>
                         </Typography>
-                        <Button key='dismiss-gc-message' className='button' variant='outlined' color='secondary'
-                            onClick={() => {
-                                this.setState({ hideGcMessage: true });
-                                try {
-                                    localStorage.setItem("hideGcMessage", "true");
-                                } catch {
-                                    // local storage not supported: ignore
-                                }
-                            }}>
-                            Dismiss
-                        </Button>
                     </Paper>
                 </Grid>
             );
