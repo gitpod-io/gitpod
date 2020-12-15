@@ -85,9 +85,9 @@ func collectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps stora
 			// no prebuild found - that's fine
 		} else if err != nil {
 			return nil, xerrors.Errorf("cannot find prebuild: %w", err)
+		} else {
+			rc[si.Prebuild.Snapshot] = *info
 		}
-
-		rc[si.Prebuild.Snapshot] = *info
 	}
 
 	return rc, nil
