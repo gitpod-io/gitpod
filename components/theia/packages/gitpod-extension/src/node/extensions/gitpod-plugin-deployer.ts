@@ -310,7 +310,10 @@ export class GitpodPluginDeployer implements GitpodPluginService {
                     // Content-Type has to match exactly
                     'Content-Type': '*/*',
                 },
+                // if we cannot establish connection in 5s then try again in 2s 5 times
+                // if we cannot read then timeout in 5s
                 maxAttempts: 5,
+                timeout: 5000,
                 retryDelay: 2000,
                 retryStrategy: requestretry.RetryStrategies.HTTPOrNetworkError
             }, (err, response) => {
