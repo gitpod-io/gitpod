@@ -3,14 +3,8 @@
  * Licensed under the MIT License. See License-MIT.txt in the project root for license information.
  */
 
-
 variable "project" {
   type = string
-}
-
-variable "location" {
-  type    = string
-  default = "EU"
 }
 
 variable "region" {
@@ -18,19 +12,29 @@ variable "region" {
 }
 
 variable "name" {
-  type = string
+  type    = string
+  default = "gitpod-database"
+}
+
+variable "username" {
+  type    = string
+  default = "gitpod"
+}
+
+variable "network" {
+  type = object({
+    id   = string
+    name = string
+  })
 }
 
 variable "gitpod" {
   type = object({
-    namespace = string
+    serviceaccount = string
+    namespace      = string
   })
   default = {
-    namespace = "default"
+    serviceaccount = "gitpod-database"
+    namespace      = "default"
   }
-}
-
-variable "minio_access_key" {
-  type    = string
-  default = "minio"
 }

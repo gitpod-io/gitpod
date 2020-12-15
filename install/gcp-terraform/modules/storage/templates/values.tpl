@@ -1,17 +1,41 @@
+# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
 components:
-  wsManager:
-    volumes:
-    - name: gcloud-creds
-      secret:
-        secretName: ${secret_name}
-    volumeMounts:
-    - mountPath: /credentials
-      name: gcloud-creds
   wsDaemon:
+    name: "ws-daemon"
+    hostWorkspaceArea: /var/gitpod/workspaces
+    servicePort: 8080
+    workspaceSizeLimit: ""
+    containerRuntime:
+      runtime: containerd
+      containerd:
+        socket: /run/containerd/containerd.sock
+      nodeRoots: 
+        - /var/lib
+    userNamespaces:
+      shiftfsModuleLoader:
+        enabled: false
+        imageName: "shiftfs-module-loader"
+    registryProxyPort: 8081
+    remoteStorage:
+      kind: gcloud
+      backupTrail:
+        enabled: true
+        maxLength: 3
+      gcloud:
+        parallelUpload: 6
+        maximumBackupSize: 32212254720 # 30 GiB
+        projectId: ${project}
+        region: ${region}
+        credentialsFile: /credentials/key.json
+        tmpdir: /mnt/sync-tmp
+        parallelUpload: 6
+
     volumes:
     - name: gcloud-creds
       secret:
-        secretName: ${secret_name}
+        secretName: ${secretName}
     - name: gcloud-tmp
       hostPath:
         path: /mnt/disks/ssd0/sync-tmp
@@ -21,21 +45,19 @@ components:
       name: gcloud-creds
     - mountPath: /mnt/sync-tmp
       name: gcloud-tmp
-    remoteStorage:
-      kind: gcloud
-      gcloud:
-        # You need to set your GCP project ID here.
-        # Beware: the name of your project is not the same as its ID. You can find the project ID under the "Home" page of your GCP project.
-        projectId: ${project}
-        # The GCP region you want the workspace content to be stored in. This should ideally be in the same region as your cluster.
-        region: ${region}
-        # You shouldn't have to change the values below if you're using the templates that ship with this chart.
-        credentialsFile: /credentials/key.json
-        tmpdir: /mnt/sync-tmp
-        parallelUpload: 6
+
+  wsManager:
+    volumes:
+    - name: gcloud-creds
+      secret:
+        secretName: ${secretName}
+    volumeMounts:
+    - mountPath: /credentials
+      name: gcloud-creds
+
   server:
     storage:
-      secretName: ${secret_name}
+      secretName: ${secretName}
       keyFilePath: key.json
 minio:
   enabled: false

@@ -3,18 +3,25 @@
  * Licensed under the MIT License. See License-MIT.txt in the project root for license information.
  */
 
-
 variable "project" {
   type = string
 }
 
-variable "location" {
-  type    = string
-  default = "EU"
+variable "region" {
+  type = string
+}
+
+variable "zone_name" {
+  type = string
 }
 
 variable "name" {
   type = string
+}
+
+variable "subdomain" {
+  type    = string
+  default = "gitpod"
 }
 
 variable "gitpod" {

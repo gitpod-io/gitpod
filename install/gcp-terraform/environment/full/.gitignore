@@ -1,0 +1,3 @@
+*.auto.tfvars
+certificates/**
+secrets/**

@@ -17,7 +17,8 @@ packages:
     deps:
       - :app
       - chart:helm
-      - install/gcp-terraform:lib
+      - install/gcp-terraform/modules:installer
+      - install/gcp-terraform/environment/installer:lib
       - install/aws-terraform:lib
     argdeps:
       - version

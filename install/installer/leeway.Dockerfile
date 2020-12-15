@@ -16,7 +16,8 @@ RUN wget https://github.com/mikefarah/yq/releases/download/3.3.2/yq_linux_amd64 
     echo ${VERSION} > version && \
     rm yq
 
-COPY install-gcp-terraform--lib terraform/gcp
+COPY install-gcp-terraform-environment-installer--lib terraform/gcp
+COPY install-gcp-terraform-modules--installer terraform/gcp/modules
 COPY install-aws-terraform--lib terraform/aws
 RUN echo "chart_location = \"../helm/gitpod\"" >> installer.auto.tfvars && \
     echo "image_prefix   = \"$IMAGE_PREFIX/\""  >> installer.auto.tfvars && \

@@ -1,1 +1,0 @@
-# Gitpod: Google Container Registry

@@ -3,6 +3,7 @@
  * Licensed under the MIT License. See License-MIT.txt in the project root for license information.
  */
 
-output "values" {
-  value = data.template_file.values.rendered
+
+output "path" {
+  value = local_file.kubeconfig.filename
 }

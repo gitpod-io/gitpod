@@ -5,67 +5,28 @@
 
 
 variable "project" {
-  type        = string
-  description = "GCP project"
+  type = string
 }
 
-variable "location" {
-  type        = string
-  description = "Region/Zone"
+variable "region" {
+  type = string
 }
 
 variable "name" {
-  type        = string
-  description = "GKE Cluster Name"
-  default     = "gitpod-cluster"
-}
-
-variable "username" {
-  type    = string
-  default = "admin"
+  type = string
 }
 
 variable "network" {
-  type        = string
-  description = "name of the GCP network this cluster runs in"
+  type = string
 }
 
-variable "gitpod" {
+variable "subnet" {
   type = object({
-    namespace = string
+    name = string
+    cidr = string
   })
   default = {
-    namespace = "gitpod"
+    name = "gitpod-subnet"
+    cidr = "10.23.0.0/16"
   }
-}
-
-variable "kubernetes" {
-  type = object({
-    initial_node_count = number
-    node_pool = object({
-      preemptible     = bool
-      machine_type    = string
-      disk_size_gb    = number
-      disk_type       = string
-      local_ssd_count = number
-      image_type      = string
-    })
-  })
-  default = {
-    initial_node_count = 1
-    node_pool = {
-      preemptible     = false
-      machine_type    = "n1-standard-8"
-      disk_size_gb    = 100
-      disk_type       = "pd-standard"
-      local_ssd_count = 1
-      image_type      = "COS_CONTAINERD"
-    }
-  }
-}
-
-variable "requirements" {
-  type = object({
-    network = string
-  })
 }
