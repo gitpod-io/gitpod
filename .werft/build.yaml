@@ -2,7 +2,7 @@
 pod:
   serviceAccount: werft
   nodeSelector:
-    cloud.google.com/gke-nodepool: workload
+    cloud.google.com/gke-nodepool: builds
   volumes:
   - name: gcp-sa
     secret:
