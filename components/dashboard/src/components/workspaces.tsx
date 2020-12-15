@@ -286,7 +286,7 @@ class Workspaces extends React.Component<WorkspacesProps, WorkspacesState> {
 							{limitOptions}
 						</div>
 					</Grid>
-                    {gcMessage}
+					{gcMessage}
 					{workspacesRows}
 					{featuredRepositories}
 				</Grid>
