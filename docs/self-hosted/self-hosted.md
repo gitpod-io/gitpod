@@ -10,9 +10,11 @@ Gitpod, just as you know it from [gitpod.io](https://gitpod.io), can be deployed
 
 ## Installation
 
-You can find all configuration templates and installation scripts in the Gitpod repository:
+You can find all the installation methods and relevant scripts under the [`install`](https://github.com/gitpod-io/gitpod/tree/master/install) directory.
 
-  > https://github.com/gitpod-io/gitpod
+**Recommended installation**: We strongly recommend choosing GCP or AWS to deploy and run a Gitpod instance. You can use our Terraform scripts to configure, deploy, and upgrade an instance.
+
+The state of deploying Gitpod on vanilla Kubernetes is not mature yet but you can try it by using the helm charts from the [`chart`](https://github.com/gitpod-io/gitpod/tree/master/chart) directory.
 
 ### Install on Google Cloud Platform
 
