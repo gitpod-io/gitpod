@@ -24,6 +24,9 @@ RUN apk add --no-cache bash gcc g++ make pkgconfig python libc6-compat libexecin
 COPY --from=node_installer /theia/node/ /theia/node/
 ENV PATH=$PATH:/theia/node/bin/
 
+# install keytar in order to fix several vscode extensions: https://github.com/gitpod-io/gitpod/issues/2169
+RUN npm install -g keytar
+
 # install yarn by download+unpack to ensure it does NOT put anything into /theia/node/
 RUN wget https://github.com/yarnpkg/yarn/releases/download/v1.15.2/yarn-v1.15.2.tar.gz
 RUN tar zvxf yarn-v1.15.2.tar.gz
