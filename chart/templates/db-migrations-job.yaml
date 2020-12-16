@@ -33,9 +33,11 @@ spec:
     spec:
       restartPolicy: Never
       serviceAccountName: db-migrations
+{{- if .Values.defaults.imagePullSecrets }}
       imagePullSecrets:
 {{- range $key, $value := .Values.defaults.imagePullSecrets }}
       - name: {{ $value.name }}
+{{- end }}
 {{- end }}
       containers:
       - name: db-migrations

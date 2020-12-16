@@ -33,9 +33,11 @@ spec:
 {{ include "gitpod.workspaceAffinity" $this | indent 6 }}
       serviceAccountName: node-daemon
       enableServiceLinks: false
+{{- if .Values.defaults.imagePullSecrets }}
       imagePullSecrets:
 {{- range $key, $value := .Values.defaults.imagePullSecrets }}
       - name: {{ $value.name }}
+{{- end }}
 {{- end }}
       volumes:
       - name: theia-storage
