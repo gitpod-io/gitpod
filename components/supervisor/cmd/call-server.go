@@ -31,13 +31,13 @@ var callServerCmd = &cobra.Command{
 			Token: token,
 		})
 		if err != nil {
-			log.Fatal("ConnectToServer", err)
+			log.WithError(err).Fatal("ConnectToServer")
 		}
 		defer api.Close()
 
 		usr, err := api.GetLoggedInUser(ctx)
 		if err != nil {
-			log.Fatal("GetLoggedInUser", err)
+			log.WithError(err).Fatal("GetLoggedInUser")
 		}
 		json.NewEncoder(os.Stdout).Encode(usr)
 
@@ -46,7 +46,10 @@ var callServerCmd = &cobra.Command{
 		enc.SetIndent("", "  ")
 
 		instanceID, _ := cmd.Flags().GetString("instance-id")
-		updates := api.InstanceUpdates(ctx, instanceID)
+		updates, err := api.InstanceUpdates(ctx, instanceID)
+		if err != nil {
+			log.WithError(err).Fatal("InstanceUpdates")
+		}
 		for u := range updates {
 			enc.Encode(u)
 		}

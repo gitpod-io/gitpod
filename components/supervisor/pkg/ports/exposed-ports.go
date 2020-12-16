@@ -63,7 +63,11 @@ func (g *GitpodExposedPorts) Observe(ctx context.Context) (<-chan []ExposedPort,
 		defer close(reschan)
 		defer close(errchan)
 
-		updates := g.C.InstanceUpdates(ctx, g.InstanceID)
+		updates, err := g.C.InstanceUpdates(ctx, g.InstanceID)
+		if err != nil {
+			errchan <- err
+			return
+		}
 		for {
 			select {
 			case u := <-updates:
