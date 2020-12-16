@@ -71,7 +71,7 @@ type Manager struct {
 
 	configs *Configs
 	exposed []ExposedPort
-	served  map[uint32]ServedPort
+	served  []ServedPort
 
 	state map[uint32]*managedPort
 	mu    sync.RWMutex
@@ -193,12 +193,20 @@ func (pm *Manager) updateState(exposed []ExposedPort, served []ServedPort, confi
 	}
 
 	if served != nil {
-		newServed := make(map[uint32]ServedPort)
+		var servedKeys []uint32 // to preserve insertion order
+		servedMap := make(map[uint32]ServedPort)
 		for _, port := range served {
-			current, exists := newServed[port.Port]
-			if !exists || (!port.BoundToLocalhost && current.BoundToLocalhost) {
-				newServed[port.Port] = port
+			current, exists := servedMap[port.Port]
+			if !exists {
+				servedKeys = append(servedKeys, port.Port)
 			}
+			if !exists || (!port.BoundToLocalhost && current.BoundToLocalhost) {
+				servedMap[port.Port] = port
+			}
+		}
+		var newServed []ServedPort
+		for _, key := range servedKeys {
+			newServed = append(newServed, servedMap[key])
 		}
 		if !reflect.DeepEqual(pm.served, newServed) {
 			pm.served = newServed
