@@ -37,8 +37,9 @@ echo "DOMAIN:               $DOMAIN"
 echo "BASEDOMAIN:           $BASEDOMAIN"
 
 
-# Fix docker-registry volume ownership
+# Fix volume ownerships
 [ -d "/var/gitpod/docker-registry" ] && chown 1000 /var/gitpod/docker-registry
+[ -d "/var/gitpod/minio" ] && chown 1000 /var/gitpod/minio
 
 
 # Add IP tables rules to access Docker's internal DNS 127.0.0.11 from outside
