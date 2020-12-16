@@ -20,6 +20,14 @@ RUN mkdir -p /tmp/helm/ \
     && cp /tmp/helm/helm /usr/local/bin/helm3 \
     && rm -rf /tmp/helm/
 
+### kubernetes ###
+RUN mkdir -p /usr/local/kubernetes/ && \
+    curl -fsSL https://github.com/kubernetes/kubernetes/releases/download/v1.19.5/kubernetes.tar.gz \ 
+    | tar -xzvC /usr/local/kubernetes/ --strip-components=1 && \
+    KUBERNETES_SKIP_CONFIRM=true /usr/local/kubernetes/cluster/get-kube-binaries.sh && \
+    chown gitpod:gitpod -R /usr/local/kubernetes
+ENV PATH=$PATH:/usr/local/kubernetes/cluster/:/usr/local/kubernetes/client/bin/
+
 ### kubectl ###
 RUN curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
     # really 'xenial'
