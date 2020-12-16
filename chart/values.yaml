@@ -462,6 +462,10 @@ components:
       memory: 64Mi
     replicas: 1
     useHTTPS: false
+    ingress:
+      portRange:
+        start: 10000
+        end: 11000
     ports:
       httpProxy:
         expose: true
