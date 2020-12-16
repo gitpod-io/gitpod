@@ -143,12 +143,6 @@ COPY --chown=gitpod kubeconfig.yaml $KUBE_CONFIG_PATH
 # Set Application Default Credentials (ADC) based on user-provided env var
 RUN echo ". /workspace/gitpod/scripts/setup-google-adc.sh" >> ~/.bashrc
 
-## install Terraform kubectl provider
-# https://gavinbunney.github.io/terraform-provider-kubectl/docs/provider.html
-RUN mkdir -p ~/.terraform.d/plugins && \
-    curl -Lo ~/.terraform.d/plugins/terraform-provider-kubectl https://github.com/gavinbunney/terraform-provider-kubectl/releases/download/v1.5.1/terraform-provider-kubectl-linux-amd64 && \
-    chmod +x ~/.terraform.d/plugins/terraform-provider-kubectl
-
 ENV DB_HOST=localhost
 
 ENV LEEWAY_WORKSPACE_ROOT=/workspace/gitpod
@@ -165,7 +159,7 @@ RUN sudo curl -o aws-iam-authenticator "https://amazon-eks.s3-us-west-2.amazonaw
     && sudo chown -R gitpod:gitpod $HOME/.aws-iam
 
 # Install Terraform
-ARG RELEASE_URL="https://releases.hashicorp.com/terraform/0.13.5/terraform_0.13.5_linux_amd64.zip"
+ARG RELEASE_URL="https://releases.hashicorp.com/terraform/0.14.2/terraform_0.14.2_linux_amd64.zip"
 RUN mkdir -p ~/.terraform \
     && cd ~/.terraform \
     && wget ${RELEASE_URL} \

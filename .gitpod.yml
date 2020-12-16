@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:clu-update-dev-env-image.0
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:wth-update-terraform.0
 workspaceLocation: gitpod/gitpod-ws.theia-workspace
 checkoutLocation: gitpod
 ports:
