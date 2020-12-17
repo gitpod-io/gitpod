@@ -11,9 +11,28 @@ There are several modes of ingress into your Gitpod installation. They mostly hi
 Compare [values.yaml](https://github.com/gitpod-io/gitpod/blob/master/chart/values.yaml) for details.
 
 
-## Example
+## IngressMode: `noDomain`
+
+ > Custom Docker registry
+   For this mode to work you need to [configure a custom Docker registry](../docker-registry/) with valid HTTPS certificates.
+
+ 1. Create a file `values.ingress.yaml` with the following content:
+    ```
+    hostname: "123-123-123-123.ip.mygitpod.com"
+    ```
+    Replace 123-123-123-123 with the external IP of your cluster.
+
+    Afterwards, do an `helm upgrade --install -f values.ingress.yaml gitpod .` to apply the changes.
+
+    > If you don't know the external IP of your cluster try running `kubectl describe svc proxy | grep -i ingress`.
+
+ 2. Now your installation is available at `https://123-123-123-123.ip.mygitpod.com`
 
 #####TODO
+## IngressMode: `pathAndHost`
+
+## IngressMode: `hosts`
+
 
 ### Domain
 Gitpod requires a domain resolvable by some nameserver (typically a public domain name, e.g. `your-domain.com`).
