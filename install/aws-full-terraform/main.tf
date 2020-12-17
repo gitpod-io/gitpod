@@ -33,8 +33,8 @@ module "vpc" {
 }
 
 module "kubernetes" {
-  source             = "terraform-aws-modules/eks/aws"
-  version            = "13.2.1"
+  source  = "terraform-aws-modules/eks/aws"
+  version = "13.2.1"
 
   cluster_name       = var.kubernetes.cluster_name
   cluster_version    = var.kubernetes.version
