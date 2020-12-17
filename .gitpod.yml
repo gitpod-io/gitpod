@@ -42,4 +42,4 @@ vscode:
     - bajdzis.vscode-database@2.2.1:uXdjV53wtoTevFK6HOh3pQ==
     - hashicorp.terraform@2.1.1:QEP7gdWtMuY+j8RZ5OLDkA==
     - stkb.rewrap@1.13.0:yEx8nRSXlfXAHqsbkTJpdA==
-    - vscode.go@1.44.2:cdX/iz4Up633rbR9eGzr4Q==
+    - golang.go@0.14.4:Z3iqHRuIxskc0nruY4MpEQ==
