@@ -32,7 +32,7 @@ ENV PATH=$PATH:/usr/local/kubernetes/cluster/:/usr/local/kubernetes/client/bin/
 RUN curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
     # really 'xenial'
     && add-apt-repository -yu "deb https://apt.kubernetes.io/ kubernetes-xenial main" \
-    && apt-get install -yq kubectl=1.13.0-00 \
+    && apt-get install -yq kubectl=1.20.0-00 \
     && kubectl completion bash > /usr/share/bash-completion/completions/kubectl \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
