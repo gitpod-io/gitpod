@@ -64,7 +64,7 @@ packages:
     ephemeral: true
     config:
       commands:
-        - ["sh", "-c", "find chart-config-db-init--init-scripts -name \"*.sql\" | xargs cat |mysql -h \"$DB_HOST\" -P \"$DB_PORT\" -p$DB_PASSWORD -u $DB_USER"]
+        - ["sh", "-c", "find chart-config-db-init--init-scripts -name \"*.sql\" | sort | xargs cat | mysql -h \"$DB_HOST\" -P \"$DB_PORT\" -p$DB_PASSWORD -u $DB_USER"]
         - ["sh", "-c", "mkdir -p mig; cd mig; ../components-gitpod-db--migrations/install.sh"]
         - ["yarn", "--cwd", "mig/node_modules/@gitpod/gitpod-db", "typeorm", "migrations:run"]
   - name: docker
