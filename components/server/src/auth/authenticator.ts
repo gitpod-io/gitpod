@@ -124,15 +124,9 @@ export class Authenticator {
         }
 
         // prepare session
-        // hint: `returnToAfterTos` cannot be the referer, as we might be in a retry call.
-        const returnToAfterTos = this.env.hostUrl.withApi({
-            pathname: '/login/',
-            search: `returnTo=${encodeURIComponent(returnTo)}&host=${host}`
-        }).toString();
         await AuthFlow.attach(req.session, {
             host,
-            returnTo,
-            returnToAfterTos
+            returnTo
         });
         // authenticate user
         authProvider.authorize(req, res, next);

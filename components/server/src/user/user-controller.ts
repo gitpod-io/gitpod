@@ -395,7 +395,7 @@ export class UserController {
 
     protected async handleTosProceedForNewUser(req: express.Request, res: express.Response, authFlow: AuthFlow, tosFlowInfo: TosFlow.WithIdentity, tosProceedParams?: any) {
         const { candidate, token } = tosFlowInfo;
-        const { returnToAfterTos, host } = authFlow;
+        const { returnTo, host } = authFlow;
         const user = await this.userService.createUser({
             identity: candidate,
             token,
@@ -411,7 +411,7 @@ export class UserController {
 
         await this.userService.updateUserEnvVarsOnLogin(user, envVars);
         await this.userService.acceptCurrentTerms(user);
-        await this.loginCompletionHandler.complete(req, res, { user, returnToUrl: returnToAfterTos, authHost: host });
+        await this.loginCompletionHandler.complete(req, res, { user, returnToUrl: returnTo, authHost: host });
     }
 
     protected updateNewUserAfterTos(newUser: User, tosFlowInfo: TosFlow.WithIdentity, tosProceedParams?: any) {
