@@ -19,8 +19,8 @@ data:
     {
         "ingress": {
             {{- if eq .Values.ingressMode "noDomain" }}
-            "kind": "pathAndPorts",
-            "pathAndPorts": {
+            "kind": "pathAndPort",
+            "pathAndPort": {
                 "address": ":8080",
                 "https": {{ $comp.useHTTPS }},
                 "trimPrefix": "/workspace/",
