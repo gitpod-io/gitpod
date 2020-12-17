@@ -146,6 +146,18 @@ components:
     name: "node-daemon"
     theiaHostBasePath: /var/gitpod
 
+  blobserve:
+    name: "blobserve"
+    disabled: false
+    resources:
+      cpu: 100m
+      memory: 32Mi
+    ports:
+      service:
+        expose: true
+        containerPort: 32224
+        servicePort: 4000
+
   dbMigrations:
     enabled: true
     name: db-migrations
@@ -221,17 +233,6 @@ components:
         servicePort: 3000
     svcLabels:
       feature: registry
-    blobserve:
-      name: "registry-facade"
-      svcName: "blobserve"
-      svcLabels:
-        feature: blobserve
-      disabled: false
-      ports:
-        service:
-          expose: true
-          containerPort: 32224
-          servicePort: 4000
     serviceType: "ClusterIP"
 
   server:

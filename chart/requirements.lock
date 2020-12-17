@@ -1,0 +1,12 @@
+dependencies:
+- name: docker-registry
+  repository: https://charts.helm.sh/stable
+  version: 1.8.x
+- name: minio
+  repository: https://helm.min.io/
+  version: 8.0.7
+- name: mysql
+  repository: https://charts.helm.sh/stable
+  version: 1.6.3
+digest: sha256:95eac3e1edea8b61f5b78504a3f952bfe4bcefd22465da27c49b9acb03a78217
+generated: "2020-12-17T14:59:41.563866485Z"

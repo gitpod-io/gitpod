@@ -10,23 +10,23 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/gitpod-io/gitpod/blobserve/pkg/blobserve"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/registry-facade/pkg/registry"
 	"github.com/spf13/cobra"
 )
 
 var (
 	// ServiceName is the name we use for tracing/logging
-	ServiceName = "registry-facade"
+	ServiceName = "blobserve"
 	// Version of this service - set during build
 	Version = ""
 )
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "registry-facade",
-	Short: "This service acts as image registry augmenting images with workspace content and Theia",
+	Use:   "blobserve",
+	Short: "This service provides static assets from OCI images",
 	Args:  cobra.MinimumNArgs(1),
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, jsonLog, jsonLog)
@@ -36,7 +36,7 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	closer := tracing.Init("registry-facade")
+	closer := tracing.Init("blobserve")
 	if closer != nil {
 		defer closer.Close()
 	}
@@ -52,10 +52,10 @@ func init() {
 
 // Config configures this servuce
 type Config struct {
-	Registry       registry.Config `json:"registry"`
-	AuthCfg        string          `json:"dockerAuth"`
-	PProfAddr      string          `json:"pprofAddr"`
-	PrometheusAddr string          `json:"prometheusAddr"`
+	BlobServe      blobserve.Config `json:"blobserve"`
+	AuthCfg        string           `json:"dockerAuth"`
+	PProfAddr      string           `json:"pprofAddr"`
+	PrometheusAddr string           `json:"prometheusAddr"`
 }
 
 // getConfig loads and validates the configuration

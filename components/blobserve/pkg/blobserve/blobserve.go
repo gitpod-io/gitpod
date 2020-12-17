@@ -13,16 +13,19 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/remotes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
-	"github.com/gitpod-io/gitpod/registry-facade/pkg/registry"
 	"github.com/gorilla/mux"
 )
+
+// ResolverProvider provides new resolver
+type ResolverProvider func() remotes.Resolver
 
 // Server offers image blobs for download
 type Server struct {
 	Config   Config
-	Resolver registry.ResolverProvider
+	Resolver ResolverProvider
 
 	refstore *refstore
 }
@@ -45,7 +48,7 @@ type Config struct {
 }
 
 // NewServer creates a new blob server
-func NewServer(cfg Config, resolver registry.ResolverProvider) (*Server, error) {
+func NewServer(cfg Config, resolver ResolverProvider) (*Server, error) {
 	refstore, err := newRefStore(cfg, resolver)
 	if err != nil {
 		return nil, err

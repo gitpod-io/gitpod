@@ -1,6 +1,7 @@
 {
    "folders": [
       { "path": "." },
+      { "path": "components/blobserve" },
       { "path": "components/common-go" },
       { "path": "components/content-service" },
       { "path": "components/ee/cerc" },
