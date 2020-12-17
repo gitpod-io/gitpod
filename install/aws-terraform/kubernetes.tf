@@ -5,7 +5,7 @@
 
 # Derived from https://learn.hashicorp.com/terraform/kubernetes/provision-eks-cluster
 module "vpc" {
-  source = "terraform-aws-modules/vpc/aws"
+  source  = "terraform-aws-modules/vpc/aws"
   version = "2.64.0"
 
   name                 = "gitpod"
@@ -33,8 +33,8 @@ module "vpc" {
 }
 
 module "kubernetes" {
-  source             = "terraform-aws-modules/eks/aws"
-  version            = "13.2.1"
+  source  = "terraform-aws-modules/eks/aws"
+  version = "13.2.1"
 
   cluster_name       = local.kubernetes.cluster_name
   cluster_version    = local.kubernetes.version
