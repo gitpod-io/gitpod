@@ -128,10 +128,10 @@ export class TheiaPluginService {
         const idx = fullPluginName.lastIndexOf('@');
         if (idx === -1) {
             return {
-                name: fullPluginName
+                name: fullPluginName.toLowerCase()
             };
         }
-        const name = fullPluginName.substring(0, idx);
+        const name = fullPluginName.substring(0, idx).toLowerCase();
         const version = fullPluginName.substr(idx + 1);
         return { name, version };
     }
