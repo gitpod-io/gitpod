@@ -6,7 +6,7 @@
 # Derived from https://learn.hashicorp.com/terraform/kubernetes/provision-eks-cluster
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "2.44.0"
+  version = "2.64.0"
 
   name                 = var.vpc.name
   cidr                 = "10.0.0.0/16"
@@ -34,6 +34,8 @@ module "vpc" {
 
 module "kubernetes" {
   source             = "terraform-aws-modules/eks/aws"
+  version            = "13.2.1"
+
   cluster_name       = var.kubernetes.cluster_name
   cluster_version    = var.kubernetes.version
   subnets            = module.vpc.public_subnets
