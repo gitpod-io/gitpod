@@ -270,9 +270,9 @@
     "url": "https://open-vsx.org/api/ms-python/python/2020.7.96456/file/ms-python.python-2020.7.96456.vsix"
   },
   {
-    "loc": "ms-vscode.Go-0.14.3.vsix",
-    "name": "ms-vscode.Go@0.14.3",
-    "url": "https://open-vsx.org/api/ms-vscode/Go/0.14.3/file/ms-vscode.Go-0.14.3.vsix"
+    "loc": "golang.Go-0.14.4.vsix",
+    "name": "golang.Go@0.14.4",
+    "url": "https://open-vsx.org/api/golang/Go/0.14.4/file/golang.Go-0.14.4.vsix"
   },
   {
     "loc": "redhat.vscode-xml-0.11.0.vsix",
