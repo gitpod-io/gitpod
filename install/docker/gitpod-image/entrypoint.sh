@@ -135,8 +135,6 @@ case "$DOMAIN" in
 forceHTTPS: true
 ingressMode: pathAndHost
 components:
-  wsProxy:
-    disabled: false
   imageBuilder:
     registry:
       bypassProxy: true
