@@ -49,29 +49,5 @@ data:
         },
         "pprofAddr": ":6060",
         "prometheusAddr": ":9500"
-        {{- if not $comp.blobserve.disabled }}
-        , "blobserve": {
-            "port": {{ $comp.blobserve.ports.service.containerPort }},
-            "timeout": {{ ($comp.blobserve.timeout | default "5s") | quote }},
-            "repos": {
-                "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) }}": {
-                    "prePull": ["{{- template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) -}}"],
-                    "workdir": "/theia/node_modules/@gitpod/gitpod-ide/lib"
-                },
-                "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) }}": {
-                    "prePull": ["{{- template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) -}}"],
-                    "workdir": "/ide"
-                },
-                "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) }}": {
-                    "prePull": ["{{- template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) -}}"],
-                    "workdir": "/.supervisor/frontend"
-                }
-            },
-            "blobSpace": {
-                "location": "/mnt/cache/blobserve",
-                "maxSizeBytes": {{ $comp.blobserve.maxCacheSize | default 1073741824 }}
-            }
-        }
-        {{ end }}
     }
 {{- end -}}

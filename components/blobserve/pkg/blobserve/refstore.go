@@ -25,7 +25,7 @@ const (
 )
 
 type refstore struct {
-	Resolver registry.ResolverProvider
+	Resolver ResolverProvider
 
 	mu        sync.RWMutex
 	refcache  map[string]*refstate
@@ -36,7 +36,7 @@ type refstore struct {
 	once  *sync.Once
 }
 
-func newRefStore(cfg Config, resolver registry.ResolverProvider) (*refstore, error) {
+func newRefStore(cfg Config, resolver ResolverProvider) (*refstore, error) {
 	bs, err := newBlobSpace(cfg.BlobSpace.Location, cfg.BlobSpace.MaxSize, 10*time.Minute)
 	if err != nil {
 		return nil, err

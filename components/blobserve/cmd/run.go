@@ -14,9 +14,9 @@ import (
 	"github.com/containerd/containerd/remotes"
 	"github.com/containerd/containerd/remotes/docker"
 	"github.com/docker/cli/cli/config/configfile"
+	"github.com/gitpod-io/gitpod/blobserve/pkg/blobserve"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
-	"github.com/gitpod-io/gitpod/registry-facade/pkg/registry"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
@@ -27,7 +27,7 @@ var jsonLog bool
 // runCmd represents the run command
 var runCmd = &cobra.Command{
 	Use:   "run <config.json>",
-	Short: "Starts the registry facade",
+	Short: "Starts the blobserve",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg, err := getConfig(args[0])
@@ -55,43 +55,36 @@ var runCmd = &cobra.Command{
 			log.WithField("fn", authCfg).Info("using authentication for backing registries")
 		}
 
-		promreg := prometheus.NewRegistry()
-		gpreg := prometheus.WrapRegistererWithPrefix("gitpod_registry_facade_", promreg)
-		rtt, err := registry.NewMeasuringRegistryRoundTripper(http.DefaultTransport, prometheus.WrapRegistererWithPrefix("downstream_", gpreg))
-		if err != nil {
-			log.WithError(err).Fatal("cannot registry metrics")
-		}
+		reg := prometheus.NewRegistry()
 
 		resolverProvider := func() remotes.Resolver {
 			var resolverOpts docker.ResolverOptions
 			if dockerCfg != nil {
 				resolverOpts.Hosts = docker.ConfigureDefaultRegistries(
 					docker.WithAuthorizer(authorizerFromDockerConfig(dockerCfg)),
-					docker.WithClient(&http.Client{
-						Transport: rtt,
-					}),
 				)
 			}
 
 			return docker.NewResolver(resolverOpts)
 		}
 
-		reg, err := registry.NewRegistry(cfg.Registry, resolverProvider, prometheus.WrapRegistererWithPrefix("registry_", gpreg))
+		srv, err := blobserve.NewServer(cfg.BlobServe, resolverProvider)
 		if err != nil {
-			log.WithError(err).Fatal("cannot create registry")
+			log.WithError(err).Fatal("cannot create blob server")
 		}
-		go reg.MustServe()
+		go srv.MustServe()
+
 		if cfg.PProfAddr != "" {
 			go pprof.Serve(cfg.PProfAddr)
 		}
 		if cfg.PrometheusAddr != "" {
-			promreg.MustRegister(
+			reg.MustRegister(
 				prometheus.NewGoCollector(),
 				prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
 			)
 
 			handler := http.NewServeMux()
-			handler.Handle("/metrics", promhttp.HandlerFor(promreg, promhttp.HandlerOpts{}))
+			handler.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 
 			go func() {
 				err := http.ListenAndServe(cfg.PrometheusAddr, handler)
@@ -102,7 +95,7 @@ var runCmd = &cobra.Command{
 			log.WithField("addr", cfg.PrometheusAddr).Info("started Prometheus metrics server")
 		}
 
-		log.Info("🏪 registry facade is up and running")
+		log.Info("🏪 blobserve is up and running")
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 		<-sigChan
