@@ -181,6 +181,7 @@ type podLifecycleIndependentState struct {
 // non-zero values of the patch. Calling this function triggers a status update. This function is
 // neither atomic, nor synchronized.
 func (m *Manager) patchPodLifecycleIndependentState(ctx context.Context, workspaceID string, patch func(*podLifecycleIndependentState) (needsUpdate bool), annotations ...*annotation) (err error) {
+	//nolint:ineffassign
 	span, ctx := tracing.FromContext(ctx, "patchPodLifecycleIndependentState")
 	defer tracing.FinishSpan(span, &err)
 

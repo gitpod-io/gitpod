@@ -101,12 +101,18 @@ func createFixtureFromImage(ctx context.Context, resolver remotes.Resolver, ref 
 		return nil, err
 	}
 	content[desc.Digest.Encoded()], err = json.Marshal(mf)
+	if err != nil {
+		return nil, err
+	}
 
 	cfg, err := DownloadConfig(ctx, fetcher, mf.Config)
 	if err != nil {
 		return nil, err
 	}
 	content[mf.Config.Digest.Encoded()], err = json.Marshal(cfg)
+	if err != nil {
+		return nil, err
+	}
 
 	return &testStaticLayerSourceFixture{
 		SourceRef: ref,

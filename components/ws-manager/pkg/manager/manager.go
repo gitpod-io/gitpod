@@ -494,6 +494,7 @@ func getTheiaServiceName(servicePrefix string) string {
 
 // MarkActive records a workspace as being active which prevents it from timing out
 func (m *Manager) MarkActive(ctx context.Context, req *api.MarkActiveRequest) (res *api.MarkActiveResponse, err error) {
+	//nolint:ineffassign
 	span, ctx := tracing.FromContext(ctx, "MarkActive")
 	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
 	defer tracing.FinishSpan(span, &err)
@@ -749,6 +750,9 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 		}
 
 		_, err = client.Services(m.Config.Namespace).Update(service)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot update service: %w", err)
+		}
 		tracing.LogEvent(span, "port service updated")
 	}
 	if err != nil {
@@ -788,6 +792,7 @@ func portNameToVisibility(s string) api.PortVisibility {
 
 // DescribeWorkspace investigates a workspace and returns its status, and configuration
 func (m *Manager) DescribeWorkspace(ctx context.Context, req *api.DescribeWorkspaceRequest) (res *api.DescribeWorkspaceResponse, err error) {
+	//nolint:ineffassign
 	span, ctx := tracing.FromContext(ctx, "DescribeWorkspace")
 	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
 	defer tracing.FinishSpan(span, &err)
@@ -1009,6 +1014,7 @@ func (m *Manager) GetWorkspaces(ctx context.Context, req *api.GetWorkspacesReque
 // If a workspace has a pod that pod is part of the returned WSO.
 // If a workspace has a PLIS that PLIS is part of the returned WSO.
 func (m *Manager) getAllWorkspaceObjects(ctx context.Context) (result []workspaceObjects, err error) {
+	//nolint:ineffassign
 	span, ctx := tracing.FromContext(ctx, "getAllWorkspaceObjects")
 	defer tracing.FinishSpan(span, &err)
 
@@ -1119,6 +1125,7 @@ func isKubernetesObjNotFoundError(err error) bool {
 
 // connectToWorkspaceDaemon establishes a connection to the ws-daemon daemon running on the node of the pod/workspace.
 func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObjects) (wsdaemon.WorkspaceContentServiceClient, error) {
+	//nolint:ineffassign
 	span, ctx := tracing.FromContext(ctx, "connectToWorkspaceDaemon")
 	tracing.ApplyOWI(span, wso.GetOWI())
 	defer tracing.FinishSpan(span, nil)
@@ -1227,6 +1234,7 @@ func newWssyncConnectionFactory(managerConfig Configuration) (grpcpool.Factory, 
 }
 
 func (m *Manager) deleteGhostWorkspace(ctx context.Context) (err error) {
+	//nolint:ineffassign
 	span, ctx := tracing.FromContext(ctx, "deleteGhostWorkspace")
 	defer tracing.FinishSpan(span, &err)
 

@@ -271,6 +271,7 @@ type presignedMinIOStorage struct {
 }
 
 func (s *presignedMinIOStorage) SignDownload(ctx context.Context, bucket, object string) (info *DownloadInfo, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.SignDownload")
 	defer func() {
 		if err == ErrNotFound {

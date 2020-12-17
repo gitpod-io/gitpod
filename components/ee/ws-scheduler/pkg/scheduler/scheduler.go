@@ -453,6 +453,7 @@ func (s *Scheduler) gatherPotentialNodesFor(ctx context.Context, pod *corev1.Pod
 }
 
 func (s *Scheduler) bindPodToNode(ctx context.Context, pod *corev1.Pod, nodeName string) (err error) {
+	//nolint:ineffassign
 	span, ctx := tracing.FromContext(ctx, "bindPodToNode")
 	defer tracing.FinishSpan(span, nil) // let caller decide whether this is an actual error or not
 	span.LogKV("nodeName", nodeName, "podName", pod.Name)
@@ -531,6 +532,7 @@ func (s *Scheduler) waitForCacheSync(ctx context.Context) bool {
 }
 
 func (s *Scheduler) recordSchedulingFailure(ctx context.Context, pod *corev1.Pod, failureErr error, reason string, message string) (err error) {
+	//nolint:ineffassign
 	span, ctx := tracing.FromContext(ctx, "recordSchedulingFailure")
 	defer tracing.FinishSpan(span, &err)
 

@@ -112,7 +112,7 @@ func (store *refstore) BlobFor(ctx context.Context, ref string, readOnly bool) (
 			return nil, "", err
 		}
 		store.mu.RLock()
-		rs, exists = store.refcache[ref]
+		rs = store.refcache[ref]
 		store.mu.RUnlock()
 
 		// Even though we triggered a download, that doesn't mean
