@@ -83,7 +83,6 @@ export interface AuthProvider {
 export interface AuthFlow {
     readonly host: string;
     readonly returnTo: string;
-    readonly returnToAfterTos?: string;
 }
 export namespace AuthFlow {
     const storageKey = "authFlow";
