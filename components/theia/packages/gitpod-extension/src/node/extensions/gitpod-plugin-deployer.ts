@@ -109,7 +109,7 @@ export class GitpodPluginDeployer implements GitpodPluginService {
 
             for (const p of pluginIndex) {
                 const loc = path.join(builtinPluginBase, p.loc);
-                this.builtinIndex.set(p.name, FileUri.create(loc).toString());
+                this.builtinIndex.set(p.name.toLowerCase(), FileUri.create(loc).toString());
                 console.log("Registered built-in plugin", { name: p.name, loc });
             }
         } catch (err) {
