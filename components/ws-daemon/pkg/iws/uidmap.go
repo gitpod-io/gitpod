@@ -166,6 +166,10 @@ func (m *Uidmapper) findHostPID(containerPID, inContainerPID uint64) (uint64, er
 		p = filepath.Join(m.Config.ProcLocation, p)
 
 		pid, nspid, err := readStatusFile(filepath.Join(p, "status"))
+		if err != nil {
+			log.WithField("file", filepath.Join(p, "status")).WithError(err).Error("findHostPID: cannot read PID file")
+			continue
+		}
 		for _, nsp := range nspid {
 			if nsp == inContainerPID {
 				return pid, nil

@@ -332,6 +332,7 @@ func (s *Workspace) persist() error {
 }
 
 func loadWorkspace(ctx context.Context, path string) (sess *Workspace, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "loadWorkspace")
 	defer tracing.FinishSpan(span, &err)
 

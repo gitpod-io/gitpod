@@ -95,6 +95,7 @@ func collectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps stora
 
 // RunInitializer runs a content initializer in a user, PID and mount namespace to isolate it from ws-daemon
 func RunInitializer(ctx context.Context, destination string, initializer *csapi.WorkspaceInitializer, remoteContent map[string]storage.DownloadInfo, opts RunInitializerOpts) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "RunInitializer")
 	defer tracing.FinishSpan(span, &err)
 

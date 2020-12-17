@@ -49,6 +49,9 @@ func (r *Receiver) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 
 func defaultResponder(url, tkn string) error {
 	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		return err
+	}
 	req.SetBasicAuth("Bearer", tkn)
 
 	client := http.Client{Timeout: 5 * time.Second}

@@ -77,6 +77,7 @@ func ServeWorkspace(uidmapper *Uidmapper) func(ctx context.Context, ws *session.
 			return nil
 		}
 
+		//nolint:ineffassign
 		span, ctx := opentracing.StartSpanFromContext(ctx, "iws.ServeWorkspace")
 		defer tracing.FinishSpan(span, &err)
 
@@ -206,7 +207,7 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 	// That's why we resort to exec'ing "nsenter ... mount ...".
 	mntout, err := exec.Command("nsenter", "-t", fmt.Sprint(containerPID), "-m", "--", "mount", "--make-shared", "/").CombinedOutput()
 	if err != nil {
-		log.WithField("containerPID", containerPID).WithError(err).Error("cannot make container's rootfs shared")
+		log.WithField("containerPID", containerPID).WithField("mntout", string(mntout)).WithError(err).Error("cannot make container's rootfs shared")
 		return nil, status.Errorf(codes.Internal, "cannot make container's rootfs shared")
 	}
 
