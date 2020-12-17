@@ -26,55 +26,53 @@ export class LoginCompletionHandler {
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
 
-    complete(request: express.Request, response: express.Response, { user, returnToUrl, authHost, elevateScopes }: LoginCompletionHandler.CompleteParams) {
-        let resolveFn = () => {};
-        let rejectFn = (err: any) => {};
-        const resultPromise = new Promise((resolve, reject) => {
-            resolveFn = resolve;
-            rejectFn = reject;
-        });
+    async complete(request: express.Request, response: express.Response, { user, returnToUrl, authHost, elevateScopes }: LoginCompletionHandler.CompleteParams) {
+        const logContext = LogContext.from({ user, request });
 
-        request.login(user, async err => {
-            const logContext = LogContext.from({ user, request });
-
-            if (err) {
-                // Clean up the session & avoid loops
-                await TosFlow.clear(request.session);
-                await AuthFlow.clear(request.session);
-
-                log.error(logContext, `Redirect to /sorry on login`, err, { err });
-                response.redirect(this.env.hostUrl.asSorry("Oops! Something went wrong during login.").toString());
-                rejectFn(err);
-                return;
-            }
-            // Update session info
-            let returnTo = returnToUrl || this.env.hostUrl.asDashboard().toString();
-            if (elevateScopes) {
-                const elevateScopesUrl = this.env.hostUrl.withApi({
-                    pathname: '/authorize',
-                    search: `returnTo=${encodeURIComponent(returnTo)}&host=${authHost}&scopes=${elevateScopes.join(',')}`
-                }).toString();
-                returnTo = elevateScopesUrl;
-            }
-            log.info(logContext, `User is logged in successfully. Redirect to: ${returnTo}`, { });
-
+        try {
+            await new Promise<void>((resolve, reject) => {
+                request.login(user, err => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve();
+                    }
+                });
+            });
+        } catch(err) {
             // Clean up the session & avoid loops
             await TosFlow.clear(request.session);
             await AuthFlow.clear(request.session);
-
-            // Create Gitpod 🍪 before the redirect
-            this.gitpodCookie.setCookie(response);
-            response.redirect(returnTo);
-            resolveFn();
-        });
-
-        const markAsVerified = async () => {
-            if (authHost) {
-                await this.updateAuthProviderAsVerified(authHost, user);
-            }
+    
+            log.error(logContext, `Redirect to /sorry on login`, err, { err });
+            response.redirect(this.env.hostUrl.asSorry("Oops! Something went wrong during login.").toString());
+            return;
         }
 
-        return resultPromise.then(() => markAsVerified());
+        // Update session info
+        let returnTo = returnToUrl || this.env.hostUrl.asDashboard().toString();
+        if (elevateScopes) {
+            const elevateScopesUrl = this.env.hostUrl.withApi({
+                pathname: '/authorize',
+                search: `returnTo=${encodeURIComponent(returnTo)}&host=${authHost}&scopes=${elevateScopes.join(',')}`
+            }).toString();
+            returnTo = elevateScopesUrl;
+        }
+        log.info(logContext, `User is logged in successfully. Redirect to: ${returnTo}`, { });
+
+        // Don't forget to mark a dynamic provider as verified
+        if (authHost) {
+            await this.updateAuthProviderAsVerified(authHost, user);
+        }
+
+        // Clean up the session & avoid loops
+        await TosFlow.clear(request.session);
+        await AuthFlow.clear(request.session);
+
+        // Create Gitpod 🍪 before the redirect
+        this.gitpodCookie.setCookie(response);
+
+        response.redirect(returnTo);
     }
 
     protected async updateAuthProviderAsVerified(hostname: string, user: User) {
@@ -82,7 +80,7 @@ export class LoginCompletionHandler {
         if (hostCtx) {
             const { config } = hostCtx.authProvider;
             const { id, verified, ownerId, builtin } = config;
-            if (!builtin && !verified && user.id === ownerId) {
+            if (!builtin && !verified) { 
                 try {
                     await this.authProviderService.markAsVerified({ id, ownerId });
                 } catch (error) {

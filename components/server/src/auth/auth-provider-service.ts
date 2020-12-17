@@ -116,18 +116,25 @@ export class AuthProviderService {
         };
     }
 
-    async markAsVerified(params: { newOwnerId?: string; ownerId: string; id: string }) {
-        const { newOwnerId, ownerId, id } = params;
+    async markAsVerified(params: { ownerId: string; id: string }) {
+        const { ownerId, id } = params;
         let ap: AuthProviderEntry | undefined;
         try {
-            ap = (await this.authProviderDB.findByUserId(ownerId)).find(p => p.id === id);
+            let authProviders = await this.authProviderDB.findByUserId(ownerId);
+            if (authProviders.length === 0) {
+                // "no-user" is the magic user id assigned during the initial setup
+                authProviders = await this.authProviderDB.findByUserId("no-user");
+            }
+            ap = authProviders.find(p => p.id === id);
             if (ap) {
                 ap = {
                     ...ap,
-                    ownerId: newOwnerId || ownerId,
+                    ownerId: ownerId,
                     status: "verified"
                 };
                 await this.authProviderDB.storeAuthProvider(ap);
+            } else {
+                log.warn("Failed to find the AuthProviderEntry to be activated.", { params, id, ap });
             }
         } catch (error) {
             log.error("Failed to activate AuthProviderEntry.", { params, id, ap })
