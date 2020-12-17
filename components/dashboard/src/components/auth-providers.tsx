@@ -148,10 +148,10 @@ export class AuthProviders extends React.Component<AuthProvidersProps, AuthProvi
         if (!host) {
             return;
         }
-        this.tryToConnectInNewTab(host);
+        this.tryToConnect(host);
         this.pollState(host);
     };
-    protected tryToConnectInNewTab(host: string) {
+    protected tryToConnect(host: string) {
         const hostUrl = new GitpodHostUrl(window.location.toString());
         const accessControlUrl = hostUrl.asAccessControl();
         const returnToAccessControlUrl = accessControlUrl.with({ search: `updated=${host}` }).toString();
@@ -160,7 +160,14 @@ export class AuthProviders extends React.Component<AuthProvidersProps, AuthProvi
             pathname: this.noUserMode ? '/login' : '/authorize',
             search
         }).toString();
-        window.open(url, "_blank");
+        if (this.noUserMode) {
+            // in the initial setup we redirect to the login and terms pages, and then forward to the dashboard
+            window.location.href = url;
+        } else {
+            // in context of the settings, we open a second tab which will be closed automatically,
+            // if everything works fine
+            window.open(url, "_blank");
+        }
     }
 
     protected async pollState(host: string, round: number = 0) {
@@ -356,7 +363,12 @@ export class AuthProviders extends React.Component<AuthProvidersProps, AuthProvi
                                     To activate this Git Provider please connect to it yourself.
                             </p>
                                 <p style={{ width: "98%" }}>
-                                    Select <strong>Connect</strong> to initiate a test in a new tab.
+                                    {
+                                        this.noUserMode 
+                                        ? (<React.Fragment>Select <strong>Connect</strong> to proceed.</React.Fragment>)
+                                        : (<React.Fragment>Select <strong>Connect</strong> to initiate a test in a new tab.</React.Fragment>)
+                                    }
+                                    
                             </p>
                             </div>
                         </DialogContent>
