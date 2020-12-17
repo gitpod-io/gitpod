@@ -3,7 +3,7 @@
 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/from-referrer/)
 [![Werft.dev - Gitpod CI](https://img.shields.io/badge/Werft.dev-CI--builds-green)](https://werft.gitpod-dev.com/)
 
-Gitpod is an open-source Kubernetes application providing fully-baked, collaborative development environments in your browser - powered by VS Code. 
+Gitpod is an open-source Kubernetes application for automated and ready-to-code development environments that blends in your existing workflow. It enables you to describe your dev environment as code and start instant and fresh development environments for each new task directly from your browser.
 
 Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and continuously prebuilds dev environments for all your branches. As a result, team members can instantly start coding with fresh, ephemeral and fully-compiled dev environments - no matter if you are building a new feature, want to fix a bug or do a code review.
 
@@ -11,8 +11,8 @@ Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and 
 
 ## Features
 
- - Dev environments as code
- - Prebuilt dev environments - automatically prepare environments on every Git push
+ - [Dev environments as code](https://www.gitpod.io/docs/#-dev-environments-as-code)
+ - [Prebuilt dev environments](https://www.gitpod.io/docs/#-dev-environments-as-code) - automatically prepare environments on every Git push
  - Professional developer experience in a browser tab (VS Code Extensions, full Linux terminals)
  - Integrated Docker build
  - GitLab, GitHub, and Bitbucket integration
