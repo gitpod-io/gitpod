@@ -9,6 +9,7 @@ import { Storage, GetSignedUrlConfig } from "@google-cloud/storage";
 import { Response } from 'request';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { StorageClient, CreateSignedUrlOptions } from "./storage-client";
+import { getBucketNamePrefix } from "./commons";
 
 export namespace GCloudStorageClient {
     export interface Params {
@@ -25,13 +26,15 @@ export class GCloudStorageClient implements StorageClient {
     static URL_EXPIRES_IN_SECONDS = 600;
 
     protected authenticatedStorage: Storage;
+    protected stage: string;
 
     constructor(protected params: GCloudStorageClient.Params) {
-        const { keyFilename, projectId } = params;
+        const { keyFilename, projectId, stage } = params;
         this.authenticatedStorage = new Storage({
             keyFilename,
             projectId
         });
+        this.stage = stage;
     }
 
     get storage(): Storage {
@@ -113,5 +116,10 @@ export class GCloudStorageClient implements StorageClient {
         if (response.statusCode !== 200) {
             throw new Error(`Unable to ${description}, status code: ${response.statusCode}.`);
         }
+    }
+
+    bucketName(userId: string): string {
+        const bucketPrefix = getBucketNamePrefix(this.stage);
+        return `gitpod-${bucketPrefix}-user-${userId}`;
     }
 }

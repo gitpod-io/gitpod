@@ -4,23 +4,11 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { KubeStage } from "@gitpod/gitpod-protocol/lib/env";
-
-/**
- * This is the analogon to the code in ws-daemon/pkg/storage/storage_gcloud.go:bucketName
- * @param userId
- * @param stage
- */
-export function getBucketName(userId: string, stage: KubeStage): string {
-    const bucketPrefix = getBucketNamePrefix(stage);
-    return `gitpod-${bucketPrefix}-user-${userId}`;
-}
-
 /**
  * This is the analogon to the code in ws-daemon/pkg/syncd/config.go:NewStorage
  * @param stage 
  */
-export function getBucketNamePrefix(stage: KubeStage): string {
+export function getBucketNamePrefix(stage: string): string {
     switch (stage) {
         case "production":
             return "prod";

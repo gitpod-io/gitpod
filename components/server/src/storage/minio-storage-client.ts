@@ -57,4 +57,7 @@ export class MinIOStorageClient implements StorageClient {
         await this.client.makeBucket(bucketName, this.region);
     }
 
+    bucketName(userId: string): string {
+        return `gitpod-user-${userId}`;
+    }
 }

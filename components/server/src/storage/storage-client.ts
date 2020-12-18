@@ -4,7 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-
 export const StorageClient = Symbol("StorageClient")
 
 export interface StorageClient {
@@ -22,6 +21,9 @@ export interface StorageClient {
 
     // ensureBucketExists makes sure the bucket exists and creates it if needed
     ensureBucketExists(bucketName: string): Promise<void>;
+
+    // bucketName returns the bucket name for a given user
+    bucketName(userId: string): string;
 }
 
 export interface CreateSignedUrlOptions {
