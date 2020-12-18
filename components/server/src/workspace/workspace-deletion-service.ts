@@ -11,7 +11,6 @@ import { StorageClient } from "../storage/storage-client";
 import { Env } from "../env";
 import { TracedWorkspaceDB, DBWithTracing } from "@gitpod/gitpod-db/lib/traced-db";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { getBucketName } from "../storage/commons";
 
 @injectable()
 export class WorkspaceDeletionService {
@@ -91,7 +90,7 @@ export class WorkspaceDeletionService {
         let prefix = `workspaces/${ws.id}`;
 
         try {
-            const bucketName = getBucketName(ws.ownerId, this.env.kubeStage);
+            const bucketName = this.storageClient.bucketName(ws.ownerId);
             if (includeSnapshots) {
                 await this.storageClient.deleteObjects(bucketName, prefix);
             } else {
