@@ -4,9 +4,5 @@
  */
 
 output "values" {
-  value = data.template_file.gitpod_storage_values.rendered
-}
-
-output "done" {
-  value = null_resource.done.id
+  value = data.template_file.values.rendered
 }

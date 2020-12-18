@@ -311,11 +311,11 @@ components:
       http:
         expose: true
         containerPort: 80
-        nodePort: 31080
+        # nodePort: 31080
       https:
         expose: true
         containerPort: 443
-        nodePort: 31443
+        # nodePort: 31443
     loadBalancerIP: null
     serviceType: "LoadBalancer"
     serviceSessionAffinity: "None"
