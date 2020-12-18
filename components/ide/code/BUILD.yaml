@@ -4,6 +4,7 @@ packages:
     srcs:
       - "startup.sh"
       - "supervisor-ide-config.json"
+      - "bin/*"
     argdeps:
       - imageRepoBase
     config:
