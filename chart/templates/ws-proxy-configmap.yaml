@@ -77,7 +77,13 @@ data:
             "gitpodInstallation": {
                 "scheme": "{{- template "gitpod.scheme" $this -}}",
                 "hostName": "{{- $gp.hostname -}}",
-                "workspaceHostSuffix": ".{{- if $gp.installation.shortname -}}ws-{{ $gp.installation.shortname }}{{- else -}}ws{{- end -}}.{{- $gp.hostname -}}"
+                {{- if eq .Values.ingressMode "hosts" }}
+                "workspaceHostSuffix":     ".ws{{- if $gp.installation.shortname -}}-{{ $.Values.installation.shortname }}{{- end -}}.{{ $.Values.hostname }}"
+                {{- else if eq .Values.ingressMode "pathAndHost" }}
+                "workspaceHostSuffix":     ""
+                {{- else }}
+                "workspaceHostSuffix":     ""
+                {{- end }}
             },
             "workspacePodConfig": {
                 "serviceTemplate": "http://ws-{{"{{ .workspaceID }}"}}-theia.{{- .Release.Namespace -}}.svc.cluster.local:{{"{{ .port }}"}}",
