@@ -46,6 +46,10 @@ RUN find /theia/node_modules/ -iname *.node -exec package-libs.sh {} \;
 
 RUN cp /theia/node/bin/node /theia/node/bin/gitpod-node && rm /theia/node/bin/node
 
+# cli config
+COPY bin /ide/bin
+RUN chmod -R ugo+x /ide/bin
+
 FROM scratch
 COPY --from=builder_alpine /theia/ /theia/
 
@@ -61,3 +65,12 @@ COPY components-theia-app--builtin-plugins/plugins/ ${GITPOD_BUILT_IN_PLUGINS}
 COPY components-supervisor--app/supervisor /theia/supervisor
 COPY components-docker-up--app/* /theia/
 COPY supervisor-config.json supervisor-ide-config.json /theia/
+
+# cli config
+COPY --from=builder_alpine /ide/bin /ide/bin
+ENV GITPOD_APPEND_ENV_PATH /ide/bin:
+
+# editor config
+ENV GITPOD_ENV_SET_EDITOR "gp open -w"
+ENV GITPOD_ENV_SET_VISUAL "$GITPOD_ENV_SET_EDITOR"
+ENV GITPOD_ENV_SET_GIT_EDITOR "$GITPOD_ENV_SET_EDITOR"

@@ -25,6 +25,7 @@ import (
 type testStaticLayerSourceFixture struct {
 	SourceRef string            `json:"sourceRef"`
 	Content   map[string][]byte `json:"content"`
+	Envs      []string          `json:"envs"`
 }
 
 var fetchFixture = flag.String("fetch-fixture", "", "create a new fixture from an image ref")
@@ -56,6 +57,7 @@ func TestStaticLayerSource(t *testing.T) {
 	type gold struct {
 		Error string       `json:"error"`
 		Layer []AddonLayer `json:"layer"`
+		Envs  []string     `json:"envs"`
 	}
 	test := ctesting.FixtureTest{
 		T:    t,
@@ -68,11 +70,15 @@ func TestStaticLayerSource(t *testing.T) {
 				return &gold{Error: err.Error()}
 			}
 
-			res := make([]AddonLayer, len(src))
-			for i := range src {
-				res[i] = src[i].AddonLayer
+			res := make([]AddonLayer, len(src.layers))
+			for i := range src.layers {
+				res[i] = src.layers[i].AddonLayer
 			}
-			return &gold{Layer: res}
+			envs := parseEnvs(fixture.Envs)
+			for _, e := range src.envs {
+				e(envs)
+			}
+			return &gold{Layer: res, Envs: envs.serialize()}
 		},
 		Fixture: func() interface{} { return &testStaticLayerSourceFixture{} },
 		Gold:    func() interface{} { return &gold{} },

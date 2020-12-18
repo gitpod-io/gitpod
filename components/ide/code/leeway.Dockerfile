@@ -28,7 +28,7 @@ RUN sudo apt-get update \
     && sudo apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-ENV GP_CODE_COMMIT 20ded0d97c41cb686098d14b9e1f0533177300d1
+ENV GP_CODE_COMMIT 785b788482b7faa13bd44baed60dbef4093f7e7d
 RUN mkdir gp-code \
     && cd gp-code \
     && git init \
@@ -42,9 +42,22 @@ RUN yarn gulp gitpod
 # grant write permissions for built-in extensions
 RUN chmod -R ugo+w /gitpod-pkg-server/extensions
 
+# cli config
+COPY bin /ide/bin
+RUN chmod -R ugo+x /ide/bin
+
 FROM scratch
 # copy static web resources in first layer to serve from blobserve
 COPY --from=code_installer /gitpod-pkg-web/ /ide/
 COPY --from=code_installer /gitpod-pkg-server/ /ide/
 COPY --from=node_installer /ide/node /ide/node
 COPY startup.sh supervisor-ide-config.json /ide/
+
+# cli config
+COPY --from=code_installer /ide/bin /ide/bin
+ENV GITPOD_APPEND_ENV_PATH /ide/bin:
+
+# editor config
+ENV GITPOD_ENV_SET_EDITOR code
+ENV GITPOD_ENV_SET_VISUAL "$GITPOD_ENV_SET_EDITOR"
+ENV GITPOD_ENV_SET_GIT_EDITOR "$GITPOD_ENV_SET_EDITOR --wait"

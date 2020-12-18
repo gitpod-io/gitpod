@@ -34,6 +34,7 @@ packages:
       - "package-libs.sh"
       - "supervisor-config.json"
       - "supervisor-ide-config.json"
+      - "bin/*"
     deps:
       - :installer
       - :builtin-plugins
