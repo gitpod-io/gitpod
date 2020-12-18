@@ -12,6 +12,7 @@ certificatesSecret:
   chainName: tls.crt
   keyName: tls.key
 version: not-set
+forceHTTPS: false
 affinity:
   nodeAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
