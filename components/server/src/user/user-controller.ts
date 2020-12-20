@@ -26,6 +26,7 @@ import { AuthFlow } from "../auth/auth-provider";
 import { LoginCompletionHandler } from "../auth/login-completion-handler";
 import { TosCookie } from "./tos-cookie";
 import { TosFlow } from "../terms/tos-flow";
+import { increaseLoginCounter } from '../../src/prometheusMetrics';
 
 @injectable()
 export class UserController {
@@ -76,6 +77,7 @@ export class UserController {
             try {
                 await saveSession(req);
             } catch (error) {
+                increaseLoginCounter("failed", "unkown")
                 log.error(`Login failed due to session save error; redirecting to /sorry`, { req, error, clientInfo });
                 res.redirect(this.getSorryUrl("Login failed 🦄 Please try again"));
             }

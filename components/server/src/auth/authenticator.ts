@@ -15,6 +15,7 @@ import { HostContextProvider } from './host-context-provider';
 import { AuthProvider, AuthFlow } from './auth-provider';
 import { TokenProvider } from '../user/token-provider';
 import { AuthProviderService } from './auth-provider-service';
+import { increaseLoginCounter } from '../../src/prometheusMetrics';
 
 @injectable()
 export class Authenticator {
@@ -108,12 +109,14 @@ export class Authenticator {
             return;
         }
         if (!req.session) {
+            increaseLoginCounter("failed", authProvider.info.host)
             log.info({ }, `No session.`, { req, 'login-flow': true });
             res.redirect(this.getSorryUrl(`No session found. Please refresh the browser.`));
             return;
         }
 
         if (!authProvider.info.verified && !(await this.isInSetupMode())) {
+            increaseLoginCounter("failed", authProvider.info.host)
             log.info({ sessionId: req.sessionID }, `Login with "${host}" is not permitted.`, { req, 'login-flow': true, ap: authProvider.info });
             res.redirect(this.getSorryUrl(`Login with "${host}" is not permitted.`));
             return;
