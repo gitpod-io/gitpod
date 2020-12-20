@@ -26,6 +26,7 @@ import { UserService } from "../user/user-service";
 import { AuthProviderService } from './auth-provider-service';
 import { LoginCompletionHandler } from './login-completion-handler';
 import { TosFlow } from '../terms/tos-flow';
+import { increaseLoginCounter } from '../../src/prometheusMetrics';
 
 /**
  * This is a generic implementation of OAuth2-based AuthProvider.
@@ -276,6 +277,8 @@ export class GenericAuthProvider implements AuthProvider {
 
         // assert additional infomation is attached to current session
         if (!authFlow) {
+            increaseLoginCounter("failed", this.host);
+
             log.error(cxt, `(${strategyName}) No session found during auth callback.`, { request, clientInfo });
             response.redirect(this.getSorryUrl(`Please allow Cookies in your browser and try to log in again.`));
             return;
@@ -290,6 +293,8 @@ export class GenericAuthProvider implements AuthProvider {
             await AuthFlow.clear(request.session);
             await TosFlow.clear(request.session);
 
+            increaseLoginCounter("failed", this.host);
+
             log.info(cxt, `(${strategyName}) Received OAuth2 error, thus redirecting to /sorry (${error})`, { ...defaultLogPayload, requestUrl: request.originalUrl });
             response.redirect(this.getSorryUrl(`OAuth2 error. (${error})`));
             return;
@@ -302,6 +307,8 @@ export class GenericAuthProvider implements AuthProvider {
                 authenticate(request, response, next);
             })
         } catch (error) {
+            increaseLoginCounter("failed", this.host);
+
             response.redirect(this.getSorryUrl(`OAuth2 error. (${error})`));
             return;
         }
@@ -336,6 +343,9 @@ export class GenericAuthProvider implements AuthProvider {
             if (this.isOAuthError(err)) {
                 message = 'OAuth Error. Please try again.'; // this is a 5xx response from authorization service
             }
+
+            increaseLoginCounter("failed", this.host);
+
             log.error(context, `(${strategyName}) Redirect to /sorry from verify callback`, err, { ...defaultLogPayload, err });
             response.redirect(this.getSorryUrl(message));
             return;

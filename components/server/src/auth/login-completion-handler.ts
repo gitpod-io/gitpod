@@ -14,6 +14,7 @@ import { AuthFlow } from './auth-provider';
 import { HostContextProvider } from './host-context-provider';
 import { AuthProviderService } from './auth-provider-service';
 import { TosFlow } from '../terms/tos-flow';
+import { increaseLoginCounter } from '../../src/prometheusMetrics';
 
 /**
  * The login completion handler pulls the strings between the OAuth2 flow, the ToS flow, and the session management.
@@ -44,6 +45,9 @@ export class LoginCompletionHandler {
             await TosFlow.clear(request.session);
             await AuthFlow.clear(request.session);
     
+            if (authHost) {
+                increaseLoginCounter("failed", authHost)
+            } 
             log.error(logContext, `Redirect to /sorry on login`, err, { err, session: request.session });
             response.redirect(this.env.hostUrl.asSorry("Oops! Something went wrong during login.").toString());
             return;
@@ -72,6 +76,9 @@ export class LoginCompletionHandler {
         // Create Gitpod 🍪 before the redirect
         this.gitpodCookie.setCookie(response);
 
+        if (authHost) {
+                increaseLoginCounter("succeeded", authHost)
+        } 
         response.redirect(returnTo);
     }
 

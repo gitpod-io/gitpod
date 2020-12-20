@@ -5,13 +5,13 @@
  */
 
 import * as express from 'express';
-import * as prometheusClient from 'prom-client';
 import { WorkspaceHealthMonitoring } from './workspace/workspace-health-monitoring';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import * as request from 'request';
 import { Span } from 'opentracing';
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { injectable, inject } from 'inversify';
+import { register } from '../../src/prometheusMetrics';
 
 @injectable()
 export class MonitoringEndpointsAppEE extends WorkspaceHealthMonitoring {
@@ -19,12 +19,10 @@ export class MonitoringEndpointsAppEE extends WorkspaceHealthMonitoring {
 
     public create(): express.Application {
         const monApp = express();
-        prometheusClient.collectDefaultMetrics({ timeout: 5000 });
-
         monApp.get('/metrics', async (req, res) => {
 	        try {
-		        res.set('Content-Type', prometheusClient.register.contentType);
-		        res.end(await prometheusClient.register.metrics());
+		        res.set('Content-Type', register.contentType);
+		        res.end(register.metrics());
 	        } catch (ex) {
     		    res.status(500).end(ex);
 	        }
