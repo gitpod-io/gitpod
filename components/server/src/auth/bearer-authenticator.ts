@@ -45,6 +45,10 @@ export class BearerAuth {
                 throw new Error("invalid Bearer token");
             }
 
+            // hack: load the user again to get ahold of all identities
+            // TODO(cw): instead of re-loading the user, we should properly join the identities in findUserByGitpodToken
+            const user = (await this.userDB.findUserById(userAndToken.user.id))!;
+
             const resourceGuard = new TokenResourceGuard(userAndToken.user.id, userAndToken.token.scopes);
             (req as WithResourceAccessGuard).resourceGuard = resourceGuard;
 
@@ -54,7 +58,7 @@ export class BearerAuth {
             // We always install a function access guard. If the token has no scopes, it's not allowed to do anything.
             (req as WithFunctionAccessGuard).functionGuard = new ExplicitFunctionAccessGuard(functionScopes);
 
-            req.user = userAndToken.user;
+            req.user = user;
 
             return next();
         }
