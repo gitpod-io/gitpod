@@ -8,8 +8,8 @@ import (
 	"context"
 	"time"
 
+	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
-	"github.com/gitpod-io/gitpod/supervisor/pkg/gitpod"
 )
 
 // GitTokenProvider provides tokens for Git hosting services by asking

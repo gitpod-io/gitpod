@@ -1,46 +1,18 @@
-module github.com/gitpod-io/gitpod/supervisor
+module github.com/gitpod-io/gitpod/gitpod-protocol
 
-go 1.14
+go 1.15
 
 require (
-	github.com/Netflix/go-env v0.0.0-20200908232752-3e802f601e28
-	github.com/creack/pty v1.1.11
+	github.com/fsnotify/fsnotify v1.4.9
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/ws-daemon/api v0.0.0-00010101000000-000000000000
 	github.com/golang/mock v1.4.4
-	github.com/golang/protobuf v1.4.3
-	github.com/google/go-cmp v0.5.2
-	github.com/google/uuid v1.1.2
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.0.1
-	github.com/prometheus/procfs v0.0.8 // indirect
-	github.com/rootless-containers/rootlesskit v0.10.1
-	github.com/sirupsen/logrus v1.6.0
-	github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337 // indirect
-	github.com/soheilhy/cmux v0.1.4
-	github.com/spf13/cobra v1.0.0
-	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
-	golang.org/x/sys v0.0.0-20200909081042-eff7692f9009
+	github.com/gorilla/websocket v1.4.2
+	github.com/sourcegraph/jsonrpc2 v0.0.0-20200429184054-15c2290dcb37
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
-	google.golang.org/grpc v1.34.0
-	google.golang.org/grpc/examples v0.0.0-20200902210233-8630cac324bf // indirect
+	gopkg.in/yaml.v2 v2.4.0
 )
 
-replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
-
-replace github.com/gitpod-io/gitpod/content-service => ../content-service // leeway
-
-replace github.com/gitpod-io/gitpod/content-service/api => ../content-service-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/gitpod-protocol => ../gitpod-protocol/go // leeway
-
-replace github.com/gitpod-io/gitpod/supervisor/api => ../supervisor-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/ws-daemon/api => ../ws-daemon-api/go // leeway
+replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway
 
 replace k8s.io/api => k8s.io/api v0.0.0-20190620084959-7cf5895f2711 // leeway indirect from components/common-go:lib
 
