@@ -13,7 +13,7 @@ import { GitpodTokenType } from '@gitpod/gitpod-protocol';
 import { injectable, inject } from 'inversify';
 import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
 import { WithResourceAccessGuard, TokenResourceGuard } from './resource-access';
-import { WithFunctionAccessGuard, ExplicitFunctionAccessGuard } from './function-access';
+import { WithFunctionAccessGuard, ExplicitFunctionAccessGuard, AllAccessFunctionGuard } from './function-access';
 
 export function getBearerToken(headers: Headers): string | undefined {
     const authorizationHeader = headers["authorization"];
@@ -55,8 +55,12 @@ export class BearerAuth {
             const functionScopes = userAndToken.token.scopes
                 .filter(s => s.startsWith("function:"))
                 .map(s => s.substring("function:".length));
-            // We always install a function access guard. If the token has no scopes, it's not allowed to do anything.
-            (req as WithFunctionAccessGuard).functionGuard = new ExplicitFunctionAccessGuard(functionScopes);
+            if (functionScopes.length === 1 && functionScopes[0] === "*") {
+                (req as WithFunctionAccessGuard).functionGuard = new AllAccessFunctionGuard();
+            } else {
+                // We always install a function access guard. If the token has no scopes, it's not allowed to do anything.
+                (req as WithFunctionAccessGuard).functionGuard = new ExplicitFunctionAccessGuard(functionScopes);
+            }
 
             req.user = user;
 
