@@ -6,7 +6,7 @@
 // Source: gitpod-service.go
 
 // Package gitpod is a generated GoMock package.
-package gitpod
+package protocol
 
 import (
 	context "context"

@@ -7,7 +7,7 @@ package ports
 import (
 	"context"
 
-	"github.com/gitpod-io/gitpod/supervisor/pkg/gitpod"
+	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 )
 
 // ExposedPort represents an exposed pprt

@@ -12,7 +12,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/gitpod-io/gitpod/supervisor/pkg/gitpod"
+	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 )
 
 // RangeConfig is a port range config

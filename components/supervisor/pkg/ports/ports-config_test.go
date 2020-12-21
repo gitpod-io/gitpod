@@ -8,7 +8,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/gitpod-io/gitpod/supervisor/pkg/gitpod"
+	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 )
