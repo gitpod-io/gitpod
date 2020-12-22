@@ -293,64 +293,71 @@ export class GenericAuthProvider implements AuthProvider {
             return;
         }
 
-        const passportAuthHandler = passport.authenticate(this.strategy as any, async (...[err, user, flowContext]: Parameters<VerifyCallback>) => {
-            /*
-             * (3) this callback function is called after the "verify" function as the final step in the authentication process in passport.
-             *
-             * - the `err` parameter may include any error raised from the "verify" function call.
-             * - the `user` parameter may include the accepted user instance.
-             * - the `info` parameter may include additional info to the process.
-             *
-             * given that everything relevant to the state is already processed, this callback is supposed to finally handle the
-             * incoming `/callback` request:
-             *
-             * - redirect to handle/display errors
-             * - redirect to terms acceptance request page
-             * - call `request.login` on new sessions
-             * - redirect to `returnTo` (from request parameter)
-             */
+        let result: Parameters<VerifyCallback>;
+        try {
+            result = await new Promise((resolve) => {
+                passport.authenticate(this.strategy as any, (...params: Parameters<VerifyCallback>) => resolve(params))(request, response, next);
+            })
+        } catch (error) {
+            response.redirect(this.getSorryUrl(`OAuth2 error. (${error})`));
+            return;
+        }
+        const [err, user, flowContext] = result;
+        /*
+         * (3) this callback function is called after the "verify" function as the final step in the authentication process in passport.
+         *
+         * - the `err` parameter may include any error raised from the "verify" function call.
+         * - the `user` parameter may include the accepted user instance.
+         * - the `info` parameter may include additional info to the process.
+         *
+         * given that everything relevant to the state is already processed, this callback is supposed to finally handle the
+         * incoming `/callback` request:
+         *
+         * - redirect to handle/display errors
+         * - redirect to terms acceptance request page
+         * - call `request.login` on new sessions
+         * - redirect to `returnTo` (from request parameter)
+         */
 
-            const context = LogContext.from( { user: User.is(user) ? { userId: user.id } : undefined, request} );
+        const context = LogContext.from( { user: User.is(user) ? { userId: user.id } : undefined, request} );
 
-            if (err) {
-                await AuthFlow.clear(request.session);
-                await TosFlow.clear(request.session);
+        if (err) {
+            await AuthFlow.clear(request.session);
+            await TosFlow.clear(request.session);
 
-                let message = 'Authorization failed. Please try again.';
-                if (AuthException.is(err)) {
-                    message = `Login was interrupted: ${err.message}`;
-                }
-                if (this.isOAuthError(err)) {
-                    message = 'OAuth Error. Please try again.'; // this is a 5xx response from authorization service
-                }
-                log.error(context, `(${strategyName}) Redirect to /sorry from verify callback`, err, { ...defaultLogPayload, err });
-                response.redirect(this.getSorryUrl(message));
+            let message = 'Authorization failed. Please try again.';
+            if (AuthException.is(err)) {
+                message = `Login was interrupted: ${err.message}`;
+            }
+            if (this.isOAuthError(err)) {
+                message = 'OAuth Error. Please try again.'; // this is a 5xx response from authorization service
+            }
+            log.error(context, `(${strategyName}) Redirect to /sorry from verify callback`, err, { ...defaultLogPayload, err });
+            response.redirect(this.getSorryUrl(message));
+            return;
+        }
+
+        if (flowContext) {
+
+            if (TosFlow.WithIdentity.is(flowContext) || (TosFlow.WithUser.is(flowContext) && flowContext.termsAcceptanceRequired)) {
+                // This is the regular path on sign up. We just went through the OAuth2 flow but didn't create a Gitpod
+                // account yet, as we require to accept the terms first.
+                log.info(context, `(${strategyName}) Redirect to /api/tos`, { info: flowContext });
+
+                // attach the sign up info to the session, in order to proceed after acceptance of terms
+                await TosFlow.attach(request.session!, flowContext);
+
+                response.redirect(this.env.hostUrl.withApi({ pathname: '/tos', search: "mode=login" }).toString());
                 return;
+            } else  {
+                const { user, elevateScopes } = flowContext as TosFlow.WithUser;
+                log.info(context, `(${strategyName}) Directly log in and proceed.`, { info: flowContext });
+
+                // Complete login
+                const { host, returnTo } = authFlow;
+                await this.loginCompletionHandler.complete(request, response, { user, returnToUrl: returnTo, authHost: host, elevateScopes });
             }
-
-            if (flowContext) {
-
-                if (TosFlow.WithIdentity.is(flowContext) || (TosFlow.WithUser.is(flowContext) && flowContext.termsAcceptanceRequired)) {
-                    // This is the regular path on sign up. We just went through the OAuth2 flow but didn't create a Gitpod
-                    // account yet, as we require to accept the terms first.
-                    log.info(context, `(${strategyName}) Redirect to /api/tos`, { info: flowContext });
-
-                    // attach the sign up info to the session, in order to proceed after acceptance of terms
-                    await TosFlow.attach(request.session!, flowContext);
-
-                    response.redirect(this.env.hostUrl.withApi({ pathname: '/tos', search: "mode=login" }).toString());
-                    return;
-                } else  {
-                    const { user, elevateScopes } = flowContext as TosFlow.WithUser;
-                    log.info(context, `(${strategyName}) Directly log in and proceed.`, { info: flowContext });
-
-                    // Complete login
-                    const { host, returnTo } = authFlow;
-                    await this.loginCompletionHandler.complete(request, response, { user, returnToUrl: returnTo, authHost: host, elevateScopes });
-                }
-            }
-        });
-        passportAuthHandler(request, response, next);
+        }
     }
 
     /**
