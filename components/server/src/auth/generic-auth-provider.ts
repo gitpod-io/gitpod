@@ -260,7 +260,7 @@ export class GenericAuthProvider implements AuthProvider {
             log.warn(cxt, `(${strategyName}) Callback called repeatedly.`, { request, clientInfo });
             return;
         }
-        log.info(cxt, `(${strategyName}) OAuth2 callback call. `, { clientInfo, authProviderId, requestUrl: request.originalUrl });
+        log.info(cxt, `(${strategyName}) OAuth2 callback call. `, { clientInfo, authProviderId, requestUrl: request.originalUrl, session: request.session });
 
         const isAlreadyLoggedIn = request.isAuthenticated() && User.is(request.user);
         const authFlow = AuthFlow.get(request.session);
@@ -339,10 +339,17 @@ export class GenericAuthProvider implements AuthProvider {
 
         if (flowContext) {
 
+            if (TosFlow.WithIdentity.is(flowContext)) {
+                if (User.is(request.user)) {
+                    log.error(context, `(${strategyName}) Invariant violated. Unexpected user.`, { ...defaultLogPayload, session: request.session });
+                }
+            }
+
             if (TosFlow.WithIdentity.is(flowContext) || (TosFlow.WithUser.is(flowContext) && flowContext.termsAcceptanceRequired)) {
+
                 // This is the regular path on sign up. We just went through the OAuth2 flow but didn't create a Gitpod
                 // account yet, as we require to accept the terms first.
-                log.info(context, `(${strategyName}) Redirect to /api/tos`, { info: flowContext });
+                log.info(context, `(${strategyName}) Redirect to /api/tos`, { info: flowContext, session: request.session });
 
                 // attach the sign up info to the session, in order to proceed after acceptance of terms
                 await TosFlow.attach(request.session!, flowContext);
@@ -351,7 +358,7 @@ export class GenericAuthProvider implements AuthProvider {
                 return;
             } else  {
                 const { user, elevateScopes } = flowContext as TosFlow.WithUser;
-                log.info(context, `(${strategyName}) Directly log in and proceed.`, { info: flowContext });
+                log.info(context, `(${strategyName}) Directly log in and proceed.`, { info: flowContext, session: request.session });
 
                 // Complete login
                 const { host, returnTo } = authFlow;
