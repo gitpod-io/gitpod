@@ -70,7 +70,8 @@ export class GenericAuthProvider implements AuthProvider {
 
     @postConstruct()
     init() {
-        this.strategy = new GenericOAuth2Strategy(this.strategyName, { ...this.defaultStrategyOptions }, this.verify.bind(this));
+        this.strategy = new GenericOAuth2Strategy(this.strategyName, { ...this.defaultStrategyOptions },
+            async (req, accessToken, refreshToken, tokenResponse, _profile, done) => await this.verify(req, accessToken, refreshToken, tokenResponse, _profile, done));
         this.initAuthUserSetup();
         log.info(`(${this.strategyName}) Initialized.`, { defaultStrategyOptions: this.defaultStrategyOptions });
     }
@@ -251,16 +252,16 @@ export class GenericAuthProvider implements AuthProvider {
      * - (3) the result of the "verify" function is first handled by passport internally and then passed to the
      *   callback from the `passport.authenticate` call (1)
      */
-    readonly callback: express.RequestHandler = async (request, response, next) => {
+    async callback(request: express.Request, response: express.Response, next: express.NextFunction): Promise<void> {
         const authProviderId = this.authProviderId;
         const strategyName = this.strategyName;
         const clientInfo = getRequestingClientInfo(request);
-        const cxt = LogContext.from({ user: request.user, request});
+        const cxt = LogContext.from({ user: request.user });
         if (response.headersSent) {
             log.warn(cxt, `(${strategyName}) Callback called repeatedly.`, { request, clientInfo });
             return;
         }
-        log.info(cxt, `(${strategyName}) OAuth2 callback call. `, { clientInfo, authProviderId, requestUrl: request.originalUrl, session: request.session });
+        log.info(cxt, `(${strategyName}) OAuth2 callback call. `, { clientInfo, authProviderId, requestUrl: request.originalUrl, request });
 
         const isAlreadyLoggedIn = request.isAuthenticated() && User.is(request.user);
         const authFlow = AuthFlow.get(request.session);
@@ -279,7 +280,7 @@ export class GenericAuthProvider implements AuthProvider {
             return;
         }
 
-        const defaultLogPayload = { authFlow, clientInfo, authProviderId };
+        const defaultLogPayload = { authFlow, clientInfo, authProviderId, request };
 
         // check OAuth2 errors
         const error = new URL(formatURL({ protocol: request.protocol, host: request.get('host'), pathname: request.originalUrl })).searchParams.get("error");
@@ -296,13 +297,15 @@ export class GenericAuthProvider implements AuthProvider {
         let result: Parameters<VerifyCallback>;
         try {
             result = await new Promise((resolve) => {
-                passport.authenticate(this.strategy as any, (...params: Parameters<VerifyCallback>) => resolve(params))(request, response, next);
+                const authenticate = passport.authenticate(this.strategy as any, (...params: Parameters<VerifyCallback>) => resolve(params));
+                authenticate(request, response, next);
             })
         } catch (error) {
             response.redirect(this.getSorryUrl(`OAuth2 error. (${error})`));
             return;
         }
         const [err, user, flowContext] = result;
+
         /*
          * (3) this callback function is called after the "verify" function as the final step in the authentication process in passport.
          *
@@ -341,7 +344,7 @@ export class GenericAuthProvider implements AuthProvider {
 
             if (TosFlow.WithIdentity.is(flowContext)) {
                 if (User.is(request.user)) {
-                    log.error(context, `(${strategyName}) Invariant violated. Unexpected user.`, { ...defaultLogPayload, session: request.session });
+                    log.error(context, `(${strategyName}) Invariant violated. Unexpected user.`, { ...defaultLogPayload, ...defaultLogPayload });
                 }
             }
 
@@ -349,7 +352,7 @@ export class GenericAuthProvider implements AuthProvider {
 
                 // This is the regular path on sign up. We just went through the OAuth2 flow but didn't create a Gitpod
                 // account yet, as we require to accept the terms first.
-                log.info(context, `(${strategyName}) Redirect to /api/tos`, { info: flowContext, session: request.session });
+                log.info(context, `(${strategyName}) Redirect to /api/tos`, { info: flowContext, ...defaultLogPayload });
 
                 // attach the sign up info to the session, in order to proceed after acceptance of terms
                 await TosFlow.attach(request.session!, flowContext);
@@ -358,7 +361,7 @@ export class GenericAuthProvider implements AuthProvider {
                 return;
             } else  {
                 const { user, elevateScopes } = flowContext as TosFlow.WithUser;
-                log.info(context, `(${strategyName}) Directly log in and proceed.`, { info: flowContext, session: request.session });
+                log.info(context, `(${strategyName}) Directly log in and proceed.`, { info: flowContext, ...defaultLogPayload });
 
                 // Complete login
                 const { host, returnTo } = authFlow;
@@ -385,9 +388,6 @@ export class GenericAuthProvider implements AuthProvider {
         const defaultLogPayload = { authFlow, clientInfo, authProviderId };
         let currentGitpodUser: User | undefined = User.is(req.user) ? req.user : undefined;
         let candidate: Identity;
-
-        const fail = (err: any) => done(err, currentGitpodUser || candidate, flowContext);
-        const complete = () => done(undefined, currentGitpodUser || candidate, flowContext);
 
         const isIdentityLinked = (user: User, candidate: Identity) => user.identities.some(i => Identity.equals(i, candidate));
 
@@ -445,10 +445,10 @@ export class GenericAuthProvider implements AuthProvider {
                     isBlocked
                 }
             }
-            complete()
+            done(undefined, currentGitpodUser || candidate, flowContext);
         } catch (err) {
             log.error(`(${strategyName}) Exception in verify function`, err, { ...defaultLogPayload, err, authFlow });
-            fail(err);
+            done(err, undefined);
         }
     }
 

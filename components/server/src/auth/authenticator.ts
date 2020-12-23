@@ -63,19 +63,18 @@ export class Authenticator {
 
     async init(app: express.Application) {
         this.initHandlers.forEach(handler => app.use(handler));
-        app.use(this.authCallback);
+        app.use(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+            await this.authCallbackHandler(req, res, next);
+        });
     }
-    protected get authCallback(): express.RequestHandler {
-        return this.authCallbackHandler.bind(this);
-    }
-    protected authCallbackHandler(req: express.Request, res: express.Response, next: express.NextFunction) {
+    protected async authCallbackHandler(req: express.Request, res: express.Response, next: express.NextFunction) {
         if (req.url.startsWith("/auth/")) {
             const hostContexts = this.hostContextProvider.getAll();
             for (const { authProvider } of hostContexts) {
                 const authCallbackPath = authProvider.authCallbackPath;
                 if (req.url.startsWith(authCallbackPath)) {
-                    log.info(`Auth Provider Callback. Path: ${authCallbackPath}`)
-                    authProvider.callback(req, res, next);
+                    log.info(`Auth Provider Callback. Path: ${authCallbackPath}`, { req });
+                    await authProvider.callback(req, res, next);
                     return;
                 }
             }
@@ -88,10 +87,7 @@ export class Authenticator {
         return hostContext && hostContext.authProvider;
     }
 
-    get authenticate(): express.RequestHandler {
-        return this.doAuthenticate.bind(this);
-    }
-    protected async doAuthenticate(req: express.Request, res: express.Response, next: express.NextFunction) {
+    async authenticate(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> {
         if (req.isAuthenticated()) {
             log.info({ sessionId: req.sessionID }, `User is already authenticated. Continue.`, { 'login-flow': true });
             return next();
