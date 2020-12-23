@@ -81,7 +81,7 @@ export class UserController {
             }
 
             // Proceed with login
-            this.authenticator.authenticate(req, res, next);
+            await this.authenticator.authenticate(req, res, next);
         });
         router.get("/authorize", (req: express.Request, res: express.Response, next: express.NextFunction) => {
             if (!User.is(req.user)) {

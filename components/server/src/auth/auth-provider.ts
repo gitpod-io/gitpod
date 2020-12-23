@@ -75,7 +75,7 @@ export interface AuthProvider {
     readonly config: AuthProviderParams;
     readonly info: AuthProviderInfo;
     readonly authCallbackPath: string;
-    readonly callback: express.RequestHandler;
+    callback(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void>;
     authorize(req: express.Request, res: express.Response, next: express.NextFunction, scopes?: string[]): void;
     refreshToken?(user: User): Promise<void>;
 }
