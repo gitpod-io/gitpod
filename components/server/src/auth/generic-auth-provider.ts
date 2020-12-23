@@ -66,12 +66,8 @@ export class GenericAuthProvider implements AuthProvider {
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
     @inject(LoginCompletionHandler) protected readonly loginCompletionHandler: LoginCompletionHandler;
 
-    protected strategy: GenericOAuth2Strategy;
-
     @postConstruct()
     init() {
-        this.strategy = new GenericOAuth2Strategy(this.strategyName, { ...this.defaultStrategyOptions },
-            async (req, accessToken, refreshToken, tokenResponse, _profile, done) => await this.verify(req, accessToken, refreshToken, tokenResponse, _profile, done));
         this.initAuthUserSetup();
         log.info(`(${this.strategyName}) Initialized.`, { defaultStrategyOptions: this.defaultStrategyOptions });
     }
@@ -131,8 +127,13 @@ export class GenericAuthProvider implements AuthProvider {
     protected readAuthUserSetup?: (accessToken: string, tokenResponse: object) => Promise<AuthUserSetup>;
 
     authorize(req: express.Request, res: express.Response, next: express.NextFunction, scope?: string[]): void {
-        const handler = passport.authenticate(this.strategy as any, { ...this.defaultStrategyOptions, ...{ scope } });
+        const handler = passport.authenticate(this.getStrategy() as any, { ...this.defaultStrategyOptions, ...{ scope } });
         handler(req, res, next);
+    }
+
+    protected getStrategy() {
+        return new GenericOAuth2Strategy(this.strategyName, { ...this.defaultStrategyOptions },
+            async (req, accessToken, refreshToken, tokenResponse, _profile, done) => await this.verify(req, accessToken, refreshToken, tokenResponse, _profile, done));
     }
 
     async refreshToken(user: User) {
@@ -152,7 +153,7 @@ export class GenericAuthProvider implements AuthProvider {
         }
         try {
             const refreshResult = await new Promise<{ access_token: string, refresh_token: string, result: any }>((resolve, reject) => {
-                this.strategy.requestNewAccessToken(refreshToken, {}, (error, access_token, refresh_token, result) => {
+                this.getStrategy().requestNewAccessToken(refreshToken, {}, (error, access_token, refresh_token, result) => {
                     if (error) {
                         reject(error);
                         return;
@@ -297,7 +298,7 @@ export class GenericAuthProvider implements AuthProvider {
         let result: Parameters<VerifyCallback>;
         try {
             result = await new Promise((resolve) => {
-                const authenticate = passport.authenticate(this.strategy as any, (...params: Parameters<VerifyCallback>) => resolve(params));
+                const authenticate = passport.authenticate(this.getStrategy() as any, (...params: Parameters<VerifyCallback>) => resolve(params));
                 authenticate(request, response, next);
             })
         } catch (error) {
