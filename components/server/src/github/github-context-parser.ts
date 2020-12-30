@@ -118,7 +118,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
             }
 
             for (let i = 1; i <= segments.length; i++) {
-                const branchNameOrCommitHash = segments.slice(0, i).join('/');
+                const branchNameOrCommitHash = decodeURIComponent(segments.slice(0, i).join('/'));
                 const couldBeHash = i === 1;
                 const path = decodeURIComponent(segments.slice(i).join('/'));
                 // Sanitize path expression to prevent GraphQL injections (e.g. escape any `"` or `\n`).
