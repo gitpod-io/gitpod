@@ -25,8 +25,6 @@ const (
 	cmdUnmountProc = "unmount-proc"
 )
 
-var log *logrus.Entry
-
 func main() {
 	log := logrus.New()
 	log.SetLevel(logrus.DebugLevel)
