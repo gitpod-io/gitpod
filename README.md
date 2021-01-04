@@ -51,7 +51,11 @@ You can upvote [popular feature requests](https://github.com/gitpod-io/gitpod/is
 ## Related Projects
 
 During the development of Gitpod we also developed some our own infrastructure tooling to make development easier and more efficient.
-To this extend we've developed a number of open source projects including [Werft](https://github.com/csweichel/werft), [Leeway](https://github.com/TypeFox/leeway), and [Dazzle](https://github.com/csweichel/dazzle/).
+To this end we've developed a number of open source projects including:
+
+1. [**Werft**](https://github.com/csweichel/werft) - A Kubernetes native CI system
+1. [**Leeway**](https://github.com/gitpod-io/leeway) - A heavily caching build system
+1. [**Dazzle**](https://github.com/gitpod-io/dazzle/) - An experimental Docker image builder
 
 ## Code of Conduct
 
