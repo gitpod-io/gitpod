@@ -1,0 +1,1 @@
+Keep this empty values folder to prevent that Docker creates this folder with root as owner.

@@ -33,3 +33,9 @@ If you already have a Kubernetes cluster, or don't want/cannot use AWS or GCP, p
 * [Install Gitpod on Kubernetes](../install/install-on-kubernetes/)
 
 Note: Dedicated installation steps for Azure and OpenShift are on our roadmap.
+
+### Run Gitpod as a Docker container
+
+For smaller setups or to test Gitpod Self-Hosted on your local machine you can run a complete Gitpod installation as a Docker container:
+
+* [Run Gitpod as a Docker container](../install/run-as-docker)
