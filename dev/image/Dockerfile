@@ -49,7 +49,7 @@ RUN cd /usr/local && curl -sfL https://install.goreleaser.com/github.com/golangc
 
 # leeway
 ENV LEEWAY_NESTED_WORKSPACE=true
-RUN cd /usr/bin && curl -L https://github.com/TypeFox/leeway/releases/download/v0.1.0/leeway_0.1.0_Linux_x86_64.tar.gz | tar xz
+RUN cd /usr/bin && curl -L https://github.com/TypeFox/leeway/releases/download/v0.2.0/leeway_0.2.0_Linux_x86_64.tar.gz | tar xz
 
 # dazzle
 RUN cd /usr/bin && curl -L https://github.com/32leaves/dazzle/releases/download/v0.0.3/dazzle_0.0.3_Linux_x86_64.tar.gz | tar xz

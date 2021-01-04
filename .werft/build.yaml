@@ -30,7 +30,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:wth-update-terraform-0.13.5.8
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:as-add-golangci-lint.6
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:

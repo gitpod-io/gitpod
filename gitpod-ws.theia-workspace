@@ -53,6 +53,7 @@
       "launch": {},
       "files.exclude": {
          "**/.git": true
-      }
+    },
+    "go.lintTool": "golangci-lint"
    }
 }
