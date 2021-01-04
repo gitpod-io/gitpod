@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -516,7 +516,7 @@ func TestRoutes(t *testing.T) {
 			Targets: &Targets{},
 			Expectation: Expectation{
 				Status: http.StatusNotFound,
-				Body: "<!doctype html>\n<!--\n Copyright (c) 2020 TypeFox GmbH. All rights reserved.\n " +
+				Body: "<!doctype html>\n<!--\n Copyright (c) 2020 Gitpod GmbH. All rights reserved.\n " +
 					"Licensed under the GNU Affero General Public License (AGPL).\n See License-AGPL." +
 					"txt in the project root for license information.\n-->\n\n<html lang=\"en\">\n  <" +
 					"head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"user-" +
