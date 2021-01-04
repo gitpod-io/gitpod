@@ -50,7 +50,7 @@ You can upvote [popular feature requests](https://github.com/gitpod-io/gitpod/is
 
 ## Related Projects
 
-During the development of Gitpod we had to also develop our own tooling infrastructure to make development easier and more efficient.
+During the development of Gitpod we also developed some our own infrastructure tooling to make development easier and more efficient.
 To this extend we've developed a number of open source projects including [Werft](https://github.com/csweichel/werft), [Leeway](https://github.com/TypeFox/leeway), and [Dazzle](https://github.com/csweichel/dazzle/).
 
 ## Code of Conduct
