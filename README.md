@@ -12,7 +12,7 @@ Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and 
 ## Features
 
  - [Dev environments as code](https://www.gitpod.io/docs/#-dev-environments-as-code)
- - [Prebuilt dev environments](https://www.gitpod.io/docs/#-dev-environments-as-code) - automatically prepare environments on every Git push
+ - [Prebuilt dev environments](https://www.gitpod.io/docs/#prebuilds) - automatically prepare environments on every Git push
  - Professional developer experience in a browser tab (VS Code Extensions, full Linux terminals)
  - Integrated Docker build
  - GitLab, GitHub, and Bitbucket integration
@@ -26,9 +26,11 @@ Gitpod is provided as a [managed Saas version](https://gitpod.io) with a free su
 
 ## Getting Started
 
-Open any GitLab, GitHub, or Bitbucket project, by prefixing the project's URL with `gitpod.io/#`. 
-
-E.g. https://gitpod.io/#https://github.com/gitpod-io/gitpod
+You can start using Gitpod with one or more of the following ways:
+1. [Use a Prefixed URL](https://www.gitpod.io/docs/context-urls/)
+1. [Install Browser Extension](https://www.gitpod.io/docs/browser-extension/)
+1. [Enable GitLab Integration](https://www.gitpod.io/docs/gitlab-integration/)
+1. Quick start using an [Example Project](https://www.gitpod.io/docs/getting-started/#example-project) or [OSS Project](https://www.gitpod.io/docs/getting-started/#gitpodified-open-source-project)
 
 ## Documentation
 
@@ -44,7 +46,7 @@ You can also follow [`@gitpod`](https://twitter.com/gitpod) for announcements an
 
 ## Issues
 
-The issue tracker is used for tracking **bug reports** and **feature requests** for the Gitpod open source project as well as planning current and future delopment efforts. 🗺️
+The issue tracker is used for tracking **bug reports** and **feature requests** for the Gitpod open source project as well as planning current and future development efforts. 🗺️
 
 You can upvote [popular feature requests](https://github.com/gitpod-io/gitpod/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) or [create a new one](https://github.com/gitpod-io/gitpod/issues/new?template=feature_request.md).
 
