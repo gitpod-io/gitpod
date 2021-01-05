@@ -32,12 +32,12 @@ helm install gitpod .
  
  1. Configure [ingress into the cluster](../configure-ingress/)
 
- 2. Go to https://123-123-123-123.ip.mygitpod.com/workspace and follow the steps to setup OAuth
+ 2. Go to [https://\<your-domain.com\>](https://\<your-domain.com\>) and follow the steps to complete the installation.
 
 ## Recommended Configuration
 
 Without further configuration the Helm chart installs a working Gitpod installation in a lot of scenarios.
-Yet, there are certain things you want to review when installing Gitpod for long term use or a bigger audience:
+Yet, there are certain things you might want to review when installing Gitpod for long term use and/or a bigger audience:
 * [**Database**](../database/): Configure where Gitpod stores all internal runtime data.
 * [**Storage**](../storage/): Configure where Gitpod persists workspace content.
 * [**Docker Registry**](../docker-registry/): Configure where Gitpod stores workspace images that are build at runtime.

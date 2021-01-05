@@ -14,6 +14,9 @@ This [Helm](https://helm.sh) chart allows you to deploy and operate an instance 
 ## Get Repo Info
 
 ```console
+git clone https://github.com/gitpod-io/gitpod
+cd gitpod/chart
+
 helm repo add charts.gitpod.io https://charts.gitpod.io
 helm repo add stable https://charts.helm.sh/stable
 helm repo add stable https://helm.min.io/
@@ -27,7 +30,6 @@ _See [helm repo](https://helm.sh/docs/helm/helm_repo/) for command documentation
 ## Install Chart
 
 ```console
-# Helm
 $ helm install gitpod .
 ```
 
@@ -52,7 +54,6 @@ _See [helm dependency](https://helm.sh/docs/helm/helm_dependency/) for command d
 ## Uninstall Chart
 
 ```console
-# Helm
 $ helm uninstall gitpod
 ```
 
@@ -64,7 +65,6 @@ _See [helm uninstall](https://helm.sh/docs/helm/helm_uninstall/) for command doc
 ## Upgrading Chart
 
 ```console
-# Helm
 $ helm upgrade --install gitpod .
 ```
 
@@ -96,9 +96,6 @@ For more details and a complete example using `hosts` see [here](https://www.git
 
 ### OAuth
 
-#####TODO
- - dynamic vs static
-
 See [here](https://www.gitpod.io/docs/self-hosted/latest/install/oauth/) on how to pre-configure OAuth providers.
 
 
@@ -106,30 +103,28 @@ See [here](https://www.gitpod.io/docs/self-hosted/latest/install/oauth/) on how 
 
 The default installation comes with a MySQL that runs inside the same cluster.
 
-#####TODO
 See [here](https://www.gitpod.io/docs/self-hosted/latest/install/database/) on how to configure a custom database.
 
 
 ### Storage
 
-#####TODO
 See [here](https://www.gitpod.io/docs/self-hosted/latest/install/storage/) on how to configure a custom storage provider.
 
 
 ### Docker Registry
 
-#####TODO
 See [here](https://www.gitpod.io/docs/self-hosted/latest/install/docker-registry/) on how to configure a custom docker registry.
 
 
-## Configuration Reference
+## Advanced Configuration Reference
 
  > Note: This is not complete yet and very much work-in-progress. Please [open an issue](https://github.com/gitpod-io/gitpod/issues/new?template=question.md) if you have a particular question!
 
 
-### Kubernetes Nodes Configure file system layout and the workspace's node associativity.
+### Node Filesystem Layout
+
+See [here](https://www.gitpod.io/docs/self-hosted/latest/install/nodes/) on how to configure custom node paths.
 
 ### Workspace sizing
 
-#####TODO
 See [here](https://www.gitpod.io/docs/self-hosted/latest/install/workspaces/) on how to configure different workspace sizings.

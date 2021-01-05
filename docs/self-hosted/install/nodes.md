@@ -1,10 +1,10 @@
 ---
 url: /docs/self-hosted/latest/install/nodes/
 ---
-#####TODO Move to repo as part of reference?
+
 # Kubernetes Nodes
 
-Configure the nodes (computers or virtual machines) that Kuberntes runs Gitpod's workspace pods on.
+Configure the nodes (computers or virtual machines) that Kubernetes runs Gitpod's workspace pods on.
 
 ## Assign workload to Nodes
 Gitpod schedules two kinds of workloads: the Gitpod installation itself (which we refer to as _meta_) and the workspaces. Ideally both types of workloads run on seperate nodes to make makes scaling easier.
@@ -23,5 +23,22 @@ Gitpod relies on the node's filesystem for making workspace content available, a
 We recommend you change those two paths so that they're located on an SSD or some other form of fast local storage.
 
 To do this:
-   - `echo values/node-layout.yaml >> configuration.txt`
-   - in `values/node-layout.yaml` change the values to match your installation
+ 1. Create a file `values.nodes.yaml` with the following content:
+    ```yaml
+    components:
+      nodeDaemon:
+        # Gitpod copies Theia to each node. This setting configures where Theia is copied to.
+        # We'll copy Theia to $theiaHostBasePath/theia/theia-$version
+        # The faster this location is (in terms of IO) the faster nodes will become available and the faster workspaces will start.
+        theiaHostBasePath: /mnt/disks/ssd0
+      imageBuilder:
+        # The image builder deploys a Docker-in-Docker-daemon. By default that Docker daemon works in an empty-dir on the node.
+        # Depending on the types of node you operate that may cause image builds to fail or not perform well. We recommend you give the Docker daemon
+        # fast storage on the node, e.g. an SSD.
+        hostDindData: /mnt/disks/ssd0/docker
+      wsSync:
+        # Workspace data is stored on the nodes. This setting configures where on the ndoe the workspace data lives.
+        # The faster this location is (in terms of IO) the faster workspaces will initialize.
+        hostWorkspaceArea: /mnt/disks/ssd0/workspaces
+    ```
+ 2. Do a `helm upgrade --install -f values.nodes.yaml gitpod .` to apply the changes.
