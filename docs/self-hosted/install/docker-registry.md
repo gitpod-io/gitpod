@@ -25,7 +25,7 @@ To connect to an existing Docker registry, perform the following steps:
         registryCerts: []
         registry:
           # name must not end with a "/"
-          name: eu.gcr.io/gpl-sh-kubeup-2
+          name: your.registry.com/gitpod
           secretName: image-builder-registry-secret
           path: secrets/registry-auth.json
 
@@ -70,3 +70,16 @@ How to use Google Cloud Registry as Docker registry for Gitpod:
 
     echo "{\"auths\":{\"gcr.io\": {\"auth\": \"$(echo -n "$(echo -n "_json_key:"; cat gitpod-registry-full-key.json)" | base64 -w 0)\"}}}" > secrets/registry-auth.json
     ```
+
+    This should result in a `secrets/registry-auth.json` like this:
+    ```json
+    {
+        "auths": {
+            "gcr.io": {
+                "auth": "<long-base64-string>"
+            }
+        }
+    }
+    ```
+
+    > If you want to use the localized versions of gcr.io (eu.gcr.io, for instance) make sure to update the json file accordingly.

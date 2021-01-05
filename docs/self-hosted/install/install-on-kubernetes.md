@@ -28,7 +28,7 @@ helm dep up
 helm install gitpod .
 ```
 
- > Review the deployment worked properly by running `kubectl get pods`. Eventually all pods should be up-and-running. In case they are not have a look the the [Troubleshooting Guide](./troubleshooting.md)
+ > Review the deployment worked properly by running `kubectl get pods`. Eventually all pods should be up-and-running. In case they are not have a look the the [Troubleshooting Guide](../troubleshooting/)
  
  1. Configure [ingress into the cluster](../configure-ingress/)
 
