@@ -37,7 +37,7 @@ func NewPoolKeeper(clientset *kubernetes.Clientset, config *Config) *PoolKeeper 
 // Start starts the PoolKeeper and is meant to be run in a goroutine
 func (pk *PoolKeeper) Start() {
 	defer func() {
-		pk.done <- struct{}{}
+		close(pk.done)
 	}()
 
 	ctx, cancel := context.WithCancel(context.Background())
