@@ -3,7 +3,7 @@
 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/from-referrer/)
 [![Werft.dev - Gitpod CI](https://img.shields.io/badge/Werft.dev-CI--builds-green)](https://werft.gitpod-dev.com/)
 
-Gitpod is an open-source Kubernetes application providing fully-baked, collaborative development environments in your browser - powered by VS Code. 
+Gitpod is an open-source Kubernetes application for automated and ready-to-code development environments that blends in your existing workflow. It enables you to describe your dev environment as code and start instant and fresh development environments for each new task directly from your browser.
 
 Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and continuously prebuilds dev environments for all your branches. As a result, team members can instantly start coding with fresh, ephemeral and fully-compiled dev environments - no matter if you are building a new feature, want to fix a bug or do a code review.
 
@@ -11,8 +11,8 @@ Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and 
 
 ## Features
 
- - Dev environment as code
- - Prebuilt dev environments - automatically prepare environments on every Git push
+ - [Dev environments as code](https://www.gitpod.io/docs/#-dev-environments-as-code)
+ - [Prebuilt dev environments](https://www.gitpod.io/docs/#prebuilds) - automatically prepare environments on every Git push
  - Professional developer experience in a browser tab (VS Code Extensions, full Linux terminals)
  - Integrated Docker build
  - GitLab, GitHub, and Bitbucket integration
@@ -26,6 +26,40 @@ Gitpod is provided as a [managed Saas version](https://gitpod.io) with a free su
 
 ## Getting Started
 
-Open any GitLab, GitHub, or Bitbucket project, by prefixing the project's URL with `gitpod.io/#`. 
+You can start using Gitpod with one or more of the following ways:
+1. [Use a Prefixed URL](https://www.gitpod.io/docs/context-urls/)
+1. [Install Browser Extension](https://www.gitpod.io/docs/browser-extension/)
+1. [Enable GitLab Integration](https://www.gitpod.io/docs/gitlab-integration/)
+1. Quick start using an [Example Project](https://www.gitpod.io/docs/getting-started/#example-project) or [OSS Project](https://www.gitpod.io/docs/getting-started/#gitpodified-open-source-project)
 
-E.g. https://gitpod.io/#https://github.com/gitpod-io/gitpod
+## Documentation
+
+All documentation can be found on https://docs.gitpod.io.
+For example, see [Introduction](https://www.gitpod.io/docs/) and [Getting Started](https://www.gitpod.io/docs/getting-started/) sections. 📚
+
+## Questions
+
+For questions and support please use the [community forum](http://community.gitpod.io/).
+Join the conversation, and connect with other community members. 💬
+
+You can also follow [`@gitpod`](https://twitter.com/gitpod) for announcements and updates from our team.
+
+## Issues
+
+The issue tracker is used for tracking **bug reports** and **feature requests** for the Gitpod open source project as well as planning current and future development efforts. 🗺️
+
+You can upvote [popular feature requests](https://github.com/gitpod-io/gitpod/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) or [create a new one](https://github.com/gitpod-io/gitpod/issues/new?template=feature_request.md).
+
+## Related Projects
+
+During the development of Gitpod we also developed some our own infrastructure tooling to make development easier and more efficient.
+To this end we've developed a number of open source projects including:
+
+1. [**Werft**](https://github.com/csweichel/werft) - A Kubernetes native CI system
+1. [**Leeway**](https://github.com/gitpod-io/leeway) - A heavily caching build system
+1. [**Dazzle**](https://github.com/gitpod-io/dazzle/) - An experimental Docker image builder
+
+## Code of Conduct
+
+We want to create a welcoming environment for everyone who is interested in contributing to Gitpod or participating in discussions with the Gitpod community.
+This project has adopted the [Contributor Covenant Code of Conduct](https://github.com/gitpod-io/gitpod/blob/master/CODE_OF_CONDUCT.md), [version 2.0](https://www.contributor-covenant.org/version/2/0/code_of_conduct/).
