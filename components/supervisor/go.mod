@@ -31,6 +31,7 @@ require (
 	google.golang.org/grpc v1.34.0
 	google.golang.org/grpc/examples v0.0.0-20200902210233-8630cac324bf // indirect
 	gopkg.in/yaml.v2 v2.2.8
+	kernel.org/pub/linux/libs/security/libcap/cap v0.2.46
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway

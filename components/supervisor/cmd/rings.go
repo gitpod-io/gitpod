@@ -24,6 +24,7 @@ import (
 	sigproxysignal "github.com/rootless-containers/rootlesskit/pkg/sigproxy/signal"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
+	"kernel.org/pub/linux/libs/security/libcap/cap"
 )
 
 const (
@@ -364,29 +365,21 @@ var ring2Cmd = &cobra.Command{
 			return
 		}
 
-		cmd := exec.Command("/proc/self/exe", "run", "--inns")
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Pdeathsig: syscall.SIGKILL,
-			Credential: &syscall.Credential{
-				Uid: 33333,
-				Gid: 33333,
-			},
-		}
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		cmd.Env = os.Environ()
-		if err := cmd.Start(); err != nil {
-			log.WithError(err).Error("failed to start the child process")
+		err = cap.SetGroups(33333)
+		if err != nil {
+			log.WithError(err).Error("cannot setuid")
 			failed = true
 			return
 		}
-		sigc := sigproxy.ForwardAllSignals(context.Background(), cmd.Process.Pid)
-		defer sigproxysignal.StopCatch(sigc)
-
-		err = cmd.Wait()
+		err = cap.SetUID(33333)
 		if err != nil {
-			log.WithError(err).Error("unexpected exit")
+			log.WithError(err).Error("cannot setgid")
+			failed = true
+			return
+		}
+		err = unix.Exec("/proc/self/exe", []string{"supervisor", "run", "--inns"}, os.Environ())
+		if err != nil {
+			log.WithError(err).Error("cannot exec")
 			failed = true
 			return
 		}
