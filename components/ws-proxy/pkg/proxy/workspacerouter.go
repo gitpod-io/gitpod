@@ -5,7 +5,6 @@
 package proxy
 
 import (
-	"fmt"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -230,11 +229,9 @@ func pathBasedTheiaRouter(r *mux.Router, wsInfoProvider WorkspaceInfoProvider, t
 	if trimPrefix == "" {
 		trimPrefix = "/"
 	}
-	if trimPrefix[len(trimPrefix)-1] != '/' {
-		trimPrefix = fmt.Sprintf("%s%s", trimPrefix, "/")
-	}
+	trimPrefix = strings.TrimSuffix(trimPrefix, "/") + "/"
 
-	regex := regexp.MustCompile("^(" + trimPrefix + ")" + workspaceIDRegex)
+	prefixedWorkspaceIDRegex := regexp.MustCompile("^(" + trimPrefix + ")" + workspaceIDRegex)
 	return r.MatcherFunc(func(req *http.Request, match *mux.RouteMatch) (res bool) {
 
 		var wsID string
@@ -256,7 +253,7 @@ func pathBasedTheiaRouter(r *mux.Router, wsInfoProvider WorkspaceInfoProvider, t
 			return true
 		}
 
-		matches := regex.FindStringSubmatch(req.URL.Path)
+		matches := prefixedWorkspaceIDRegex.FindStringSubmatch(req.URL.Path)
 		if len(matches) < 3 {
 			return false
 		}

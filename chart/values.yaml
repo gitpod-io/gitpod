@@ -83,6 +83,7 @@ serviceWaiter:
   imageName: "service-waiter"
 tracing: {}
 authProviders: []
+# Example authProvider configurations below:
 # - id: "Public-GitHub"
 #   host: "github.com"
 #   type: "GitHub"
@@ -393,6 +394,7 @@ components:
       nodeRoots: 
       - /var/lib
       - /run/containerd/io.containerd.runtime.v1.linux/k8s.io
+      # On some hosts systems containerd uses different paths to store it's containers in
       # - /run/containerd/io.containerd.runtime.v2.task/k8s.io
     userNamespaces:
       shiftfsModuleLoader:
