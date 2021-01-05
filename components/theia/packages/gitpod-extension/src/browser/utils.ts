@@ -13,7 +13,7 @@ export function getGitpodService(): GitpodService {
     return window.gitpod.service;
 }
 
-const workspaceID = new GitpodHostUrl(window.location.href).workspaceId || "unknown-workspace-id";
+const workspaceID = GitpodHostUrl.fromWorkspaceUrl(window.location.href).workspaceId || "unknown-workspace-id";
 export function getWorkspaceID() {
     return workspaceID;
 }
