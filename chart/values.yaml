@@ -22,8 +22,6 @@ ingressMode: noDomain
 certificatesSecret: {}
 
 imagePrefix: gcr.io/gitpod-io/
-# TODO(gpl): in which scenarios is this helpful? Can we remove?
-forceHTTPS: true
 installation:
   stage: production
   tenant: gitpod
@@ -85,6 +83,26 @@ serviceWaiter:
   imageName: "service-waiter"
 tracing: {}
 authProviders: []
+# - id: "Public-GitHub"
+#   host: "github.com"
+#   type: "GitHub"
+#   oauth:
+#     clientId: "CLIENT_ID"
+#     clientSecret: "SECRET"
+#     callBackUrl: "https://gitpod.io/auth/github/callback"
+#     settingsUrl: "https://github.com/settings/connections/applications/CLIENT_ID"
+#   description: ""
+#   icon: ""
+# - id: "Public-GitLab"
+#   host: "gitlab.com"
+#   type: "GitLab"
+#   oauth:
+#     clientId: "CLIENT_ID"
+#     clientSecret: "SECRET"
+#     callBackUrl: "https://gitpod.io/auth/gitlab/callback"
+#     settingsUrl: "https://gitlab.com/profile/applications"
+#   description: ""
+#   icon: ""
 branding:
   logo: /images/gitpod-ddd.svg
   homepage: https://www.gitpod.io/
@@ -375,7 +393,7 @@ components:
       nodeRoots: 
       - /var/lib
       - /run/containerd/io.containerd.runtime.v1.linux/k8s.io
-      #- /run/containerd/io.containerd.runtime.v2.task/k8s.io
+      # - /run/containerd/io.containerd.runtime.v2.task/k8s.io
     userNamespaces:
       shiftfsModuleLoader:
         enabled: false
