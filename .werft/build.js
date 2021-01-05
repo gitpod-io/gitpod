@@ -31,6 +31,13 @@ async function build(context, version) {
      * Prepare
      */
     werft.phase("prepare");
+
+    const werftImg = shell.exec("cat .werft/build.yaml | grep dev-environment").trim().split(": ")[1];
+    const devImg = shell.exec("yq r .gitpod.yml image").trim();
+    if (werftImg !== devImg) {
+        werft.fail('prep', `Werft job image (${werftImg}) and Gitpod dev image (${devImg}) do not match`);
+    }
+
     let buildConfig = context.Annotations || {};
     try {
         exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
@@ -146,7 +153,7 @@ async function deployToDev(version, previewWithHttps, workspaceFeatureFlags, dyn
 
     werft.log("secret", "copy secret into namespace")
     try {
-        const auth = exec(`echo -n "_json_key:$(kubectl get secret gcp-sa-registry-auth --namespace=keys --export -o yaml \
+        const auth = exec(`echo -n "_json_key:$(kubectl get secret gcp-sa-registry-auth --namespace=keys -o yaml \
                         | yq r - data['.dockerconfigjson'] \
                         | base64 -d)" | base64 -w 0`, {silent: true}).stdout.trim();
         fs.writeFileSync("chart/gcp-sa-registry-auth",
@@ -164,7 +171,7 @@ async function deployToDev(version, previewWithHttps, workspaceFeatureFlags, dyn
 
     werft.log("authProviders", "copy authProviders")
     try {
-        exec(`kubectl get secret preview-envs-authproviders --namespace=keys --export -o yaml \
+        exec(`kubectl get secret preview-envs-authproviders --namespace=keys -o yaml \
                 | yq r - data.authProviders \
                 | base64 -d -w 0 \
                 > authProviders`, {silent: true}).stdout.trim();
@@ -304,7 +311,11 @@ async function issueAndInstallCertficate(namespace, domain) {
 
     werft.log('certificate', `copying certificate from "certs/${namespace}" to "${namespace}/proxy-config-certificates"`);
     // certmanager is configured to create a secret in the namespace "certs" with the name "${namespace}".
-    exec(`kubectl get secret ${namespace} --namespace=certs --export -o yaml \
+    exec(`kubectl get secret ${namespace} --namespace=certs -o yaml \
+        | yq d - 'metadata.namespace' \
+        | yq d - 'metadata.uid' \
+        | yq d - 'metadata.resourceVersion' \
+        | yq d - 'metadata.creationTimestamp' \
         | sed 's/${namespace}/proxy-config-certificates/g' \
         | kubectl apply --namespace=${namespace} -f -`);
 }
