@@ -2,39 +2,7 @@
 url: /docs/self-hosted/latest/install/configure-ingress/
 ---
 
-# Ingress, Domain and HTTPS
-
-There are several modes of ingress into your Gitpod installation. They mostly hinge on the fact which kind of certificate are available:
- - `noDomain` requires no domain nor certificate but offers HTTP only
- - `hosts` enables all features and full HTTPS support but requires wilcard HTTPS certificates
- - `pathAndHost` is a tradeoff that works with non-wildcard HTTPS certificates
-Compare [values.yaml](https://github.com/gitpod-io/gitpod/blob/master/chart/values.yaml) for details.
-
-
-## IngressMode: `noDomain` (HTTP only)
-
- > Custom Docker registry
-   For this mode to work you need to [configure a custom Docker registry](../docker-registry/) with valid HTTPS certificates.
-
- 1. Create a file `values.ingress.yaml` with the following content:
-    ```
-    hostname: "<cluster-IP>"
-    ```
-    Replace \<cluster-IP\> with the external IP of your cluster.
-
-    Afterwards, do an `helm upgrade --install -f values.ingress.yaml gitpod .` to apply the changes.
-
-    > If you don't know the external IP of your cluster try running `kubectl describe svc proxy | grep -i ingress`.
-
- 2. Now your installation is available at `http://<cluster-IP>`
-
-#####TODO
-## IngressMode: `pathAndHost`
-
-## IngressMode: `hosts`
-
-
-### Domain
+# Domain
 Gitpod requires a domain resolvable by some nameserver (typically a public domain name, e.g. `your-domain.com`).
 As Gitpod launches services and workspaces on additional subdomains it also needs two wildcard domains.
 For example:
@@ -49,16 +17,13 @@ Installing Gitpod on a subdomain works as well. For example:
     *.gitpod.your-domain.com
     *.ws.gitpod.your-domain.com
 
-### HTTPS
-While we highly recommend operating Gitpod using HTTPS, Gitpod is able to run on insecure HTTP.
-If you use Gitpod's internal Docker registry, the downside of not using HTTPS is that Kubernetes won't be able to pull images from the registry because it considers the registry insecure.
-You can either resort to using an [external registry](#docker-registry-optional) or use HTTPS. For running Gitpod on insecure HTTP, no HTTPS certificates are needed and you can skip this section.
+# HTTPS
+Gitpod requires HTTPS certificates to function properly. We recommend using [Let's Encrypt](https://letsencrypt.org/) for retrieving certificates as we do for [gitpod.io](https://gitpod.io).
 
 > Important: The HTTPS certificates for your domain must include `your-domain.com`, `*.your-domain.com` and `*.ws.your-domain.com`. Beware that wildcard certificates are valid for one level only (i.e. `*.a.com` is not valid for `c.b.a.com`).
 
-To use the HTTPS certificates for your domain
- - `echo values/https.yaml >> configuration.txt`
- - place your certificates in `secrets/https-certificates/` like so:
+To configure the HTTPS certificates for your domain
+ 1. [Generate certificates](#using-let-s-encrypt) and put your certificate files under `secrets/https-certificates/`:
 ```
  secrets/https-certificates:
   |- cert.pem
@@ -66,13 +31,20 @@ To use the HTTPS certificates for your domain
   |- fullchain.pem
   |- privkey.pem
 ```
-
-Generate the [dhparams.pem](https://security.stackexchange.com/questions/94390/whats-the-purpose-of-dh-parameters) file using
-```
+ 2. Generate the [dhparams.pem](https://security.stackexchange.com/questions/94390/whats-the-purpose-of-dh-parameters) file using:
+```bash
 openssl dhparam -out secrets/https-certificates/dhparams.pem 2048
 ```
+ 3. Create a file `values.ingress.yaml` with the following content:
+```yaml
+certificatesSecret:
+  secretName: proxy-config-certificates
+  path: secrets/https-certificates/*
+```
+ 4. Afterwards, do an `helm upgrade --install -f values.ingress.yaml gitpod .` to apply the changes.
+ 
 
-#### Using Let's Encrypt
+## Using Let's Encrypt
 
 The most accessible means of obtaining HTTPS certificates is using [Let's Encrypt](https://letsencrypt.org/) which provides free certificats to anybody who can prove ownership of a domain.
 Gitpod requires [wildcard certificates](https://en.wikipedia.org/wiki/Wildcard_certificate) (e.g. `*.ws.your-domain.com`) which [can be obtained via Let's Encrypt](https://community.letsencrypt.org/t/acme-v2-production-environment-wildcards/55578) but require [proof of ownership via DNS](https://letsencrypt.org/docs/challenge-types/#dns-01-challenge).
@@ -99,12 +71,6 @@ certbot certonly \
     -d $DOMAIN
 
 # move them into place
-mkdir secrets/https-certificates
+mkdir -p secrets/https-certificates
 find $WORKDIR/config/live -name "*.pem" -exec cp {} secrets/https-certificates \;
-
-# Generate dhparams
-openssl dhparam -out secrets/https-certificates/dhparams.pem 2048
-
-# Enable HTTPS
-echo values/https.yaml >> configuration.txt
 ```

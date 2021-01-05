@@ -2,20 +2,43 @@
 url: /docs/self-hosted/latest/install/storage/
 ---
 
-
-#####TODO
 # Workspace Storage
 
-Gitpod uses bucket storage to persist the contents of workspaces. Each workspace is tarballed into a single archive file which is then uploaded to the bucket.
+Gitpod uses bucket storage to persist the contents of workspaces. Each workspace is tarballed into a single archive file which is then uploaded to a separate bucket.
 
-By default Gitpod ships with [MinIO](https://min.io/) as built-in bucket storage. If you operate your own MinIO instance, or have access to Google Cloud Bucket storage you can use that one. You have the following options:
+By default Gitpod installs [MinIO](https://min.io/) as built-in bucket storage which uses a [persistent volume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) to store workspace content.
 
-* Integrated MinIO: If not disabled, Gitpod installs MinIO in Kubernetes as a dependency of Gitpod’s helm charts.
-  MinIO itself can serve as a [gateway](https://github.com/minio/minio/tree/master/docs/gateway) to other storage providers.
-  When storing the data itself, MinIO relies on a [persistent volume](https://kubernetes.io/docs/concepts/storage/persistent-volumes/) which in turn supports a [wide range of storage backends](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#types-of-persistent-volumes).
-* Bring your own storage bucket: Gitpod can be configured to connect to your own installation of MinIO or Google Cloud Storage compatible storage solution.
+For more complex use case we recommend configuring more permanent means of persistence by either:
+ * Configure the contained MinIO-instance to serve as a [gateway](https://github.com/minio/minio/tree/master/docs/gateway) OR configure one of a [wide range of storage backends](https://kubernetes.io/docs/concepts/storage/persistent-volumes/#types-of-persistent-volumes).
+ * Bring your own storage bucket: Configure Gitpod to either connect to:
+   * your own installation of MinIO
+   * a Google Cloud Storage compatible storage solution
 
-This helm chart ships with a [MinIO](https://min.io/) installation for this purpose. 
-Alternatively, you can connect to your own [MinIO](https://min.io/) installation using
- - `echo values/minio.yaml >> configuration.txt`
- - in `values.minio.yaml` change the values to match your installation
+
+## a) Configure custom MinIO instance
+
+ 1. Create a file `values.storage.yaml` with this content:
+```yaml
+wsSync:
+  remoteStorage:
+    kind: minio
+    minio:
+      endpoint: minio:9000
+      accessKey: EXAMPLEvalue
+      secretKey: Someone.Should/ReallyChangeThisKey!!
+      tmpdir: /tmp
+
+# Disable built-in minio instance
+minio:
+  enabled: false
+```
+ 2. Redeploy Gitpod using `helm upgrade --install -f values.storage.yaml gitpod .` to apply the changes
+
+## b) Configure the built-in MinIO instance
+ 1. Consult the chart's documentation at https://helm.min.io/
+ 2. Create a file `values.storage.yaml` with this content:
+```yaml
+minio:
+  # insert custom config here
+```
+ 3. Redeploy Gitpod using `helm upgrade --install -f values.storage.yaml gitpod .` to apply the changes
