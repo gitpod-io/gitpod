@@ -82,7 +82,7 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 				return xerrors.Errorf("response's request without URL")
 			}
 
-			if log.Log.Level <= logrus.DebugLevel && resp.StatusCode != http.StatusOK {
+			if log.Log.Level <= logrus.DebugLevel && resp.StatusCode >= http.StatusBadRequest {
 				dmp, _ := httputil.DumpRequest(resp.Request, false)
 				log.WithField("url", url.String()).WithField("req", dmp).WithField("status", resp.Status).Debug("proxied request failed")
 			}

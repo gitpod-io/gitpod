@@ -5,7 +5,7 @@
  */
 
 import { WorkspaceInfo, Event, Emitter } from "@gitpod/gitpod-protocol";
-import { workspaceUrl, serverUrl } from "../shared/urls";
+import { workspaceUrl } from "../shared/urls";
 
 export interface GitpodServiceClient {
     readonly auth: Promise<void>;
@@ -14,12 +14,13 @@ export interface GitpodServiceClient {
 }
 
 export async function create(): Promise<GitpodServiceClient> {
-    if (!workspaceUrl.workspaceId) {
-        throw new Error(`Failed to extract a workspace id from '${window.location.href}'.`);
+    const wsUrl = workspaceUrl;
+    if (!wsUrl.workspaceId) {
+        throw new Error(`Failed to extract a workspace id from '${wsUrl.toString()}'.`);
     }
 
     //#region info
-    const listener = await window.gitpod.service.listenToInstance(workspaceUrl.workspaceId);
+    const listener = await window.gitpod.service.listenToInstance(wsUrl.workspaceId);
     //#endregion
 
     //#region auth
@@ -35,7 +36,7 @@ export async function create(): Promise<GitpodServiceClient> {
             return;
         }
         try {
-            const response = await fetch(serverUrl.asWorkspaceAuth(workspaceInstanceId).toString(), {
+            const response = await fetch(wsUrl.asStart().asWorkspaceAuth(workspaceInstanceId).toString(), {
                 credentials: 'include'
             });
             if (response.ok) {

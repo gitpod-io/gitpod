@@ -30,6 +30,10 @@ export class GitpodHostUrl {
         }
     }
 
+    static fromWorkspaceUrl(url: string) {
+        return new GitpodHostUrl(new URL(url));
+    }
+
     withWorkspacePrefix(workspaceId: string, region: string) {
         return this.withDomainPrefix(`${workspaceId}.ws-${region}.`);
     }

@@ -21,7 +21,7 @@ fs.writeFileSync(filePath, `<!DOCTYPE html>
 </head>
 
 <body>
-	<script type="text/javascript" src="/_supervisor/frontend/main.js" charset="utf-8"></script>
+	<script type="text/javascript" src="./_supervisor/frontend/main.js" charset="utf-8"></script>
 	<div class="theia-preload"></div>
 	<script type="text/javascript" src="./bundle.js" charset="utf-8"></script>
 </body>
