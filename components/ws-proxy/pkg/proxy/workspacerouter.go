@@ -5,6 +5,7 @@
 package proxy
 
 import (
+	"fmt"
 	"net/http"
 	"regexp"
 	"strconv"
@@ -226,10 +227,15 @@ func getWorkspaceCoords(req *http.Request) WorkspaceCoords {
 // PathBasedTheiaRouter routes workspaces using a /workspaceID prefix.
 // Doesn't do port routing.
 func pathBasedTheiaRouter(r *mux.Router, wsInfoProvider WorkspaceInfoProvider, trimPrefix string) *mux.Router {
+	if trimPrefix == "" {
+		trimPrefix = "/"
+	}
+	if trimPrefix[len(trimPrefix)-1] != '/' {
+		trimPrefix = fmt.Sprintf("%s%s", trimPrefix, "/")
+	}
+
+	regex := regexp.MustCompile("^(" + trimPrefix + ")" + workspaceIDRegex)
 	return r.MatcherFunc(func(req *http.Request, match *mux.RouteMatch) (res bool) {
-		if trimPrefix == "" {
-			trimPrefix = "/"
-		}
 
 		var wsID string
 		defer func() {
@@ -250,8 +256,16 @@ func pathBasedTheiaRouter(r *mux.Router, wsInfoProvider WorkspaceInfoProvider, t
 			return true
 		}
 
-		path := strings.TrimPrefix(req.URL.Path, trimPrefix)
-		wsID = strings.Split(path, "/")[0]
+		matches := regex.FindStringSubmatch(req.URL.Path)
+		if len(matches) < 3 {
+			return false
+		}
+
+		wsID = matches[2]
+		if wsID == "" {
+			return false
+		}
+
 		if wsInfoProvider.WorkspaceInfo(req.Context(), wsID) == nil {
 			log.WithFields(log.OWI("", wsID, "")).Debug("PathBasedTheiaRouter: no workspace info found")
 			return false
