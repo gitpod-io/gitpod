@@ -87,6 +87,7 @@ func runWithinNetns() (err error) {
 	args := []string{
 		"--experimental",
 		"--rootless",
+		"--data-root=/workspace/.docker-root",
 		"--userland-proxy", "--userland-proxy-path=" + filepath.Join(opts.BinDir, "slirp-docker-proxy"),
 	}
 	if opts.RuncFacade {
