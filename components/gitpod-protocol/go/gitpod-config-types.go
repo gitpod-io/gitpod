@@ -113,28 +113,28 @@ type Prebuilds_object struct {
 type TasksItems struct {
 
 	// A shell command to run before `init` and the main `command`. This command is executed on every start and is expected to terminate. If it fails, the following commands will not be executed.
-	Before string `yaml:"before,omitempty"`
+	Before string `yaml:"before,omitempty" json:"before,omitempty"`
 
 	// The main shell command to run after `before` and `init`. This command is executed last on every start and doesn't have to terminate.
-	Command string `yaml:"command,omitempty"`
+	Command string `yaml:"command,omitempty" json:"command,omitempty"`
 
 	// Environment variables to set.
-	Env *Env `yaml:"env,omitempty"`
+	Env *Env `yaml:"env,omitempty" json:"env,omitempty"`
 
 	// A shell command to run between `before` and the main `command`. This command is executed only on after initializing a workspace with a fresh clone, but not on restarts and snapshots. This command is expected to terminate. If it fails, the `command` property will not be executed.
-	Init string `yaml:"init,omitempty"`
+	Init string `yaml:"init,omitempty" json:"init,omitempty"`
 
 	// Name of the task. Shown on the tab of the opened terminal.
-	Name string `yaml:"name,omitempty"`
+	Name string `yaml:"name,omitempty" json:"name,omitempty"`
 
 	// The panel/area where to open the terminal. Default is 'bottom' panel.
-	OpenIn string `yaml:"openIn,omitempty"`
+	OpenIn string `yaml:"openIn,omitempty" json:"openIn,omitempty"`
 
 	// The opening mode. Default is 'tab-after'.
-	OpenMode string `yaml:"openMode,omitempty"`
+	OpenMode string `yaml:"openMode,omitempty" json:"openMode,omitempty"`
 
 	// A shell command to run after `before`. This command is executed only on during workspace prebuilds. This command is expected to terminate. If it fails, the workspace build fails.
-	Prebuild string `yaml:"prebuild,omitempty"`
+	Prebuild string `yaml:"prebuild,omitempty" json:"prebuild,omitempty"`
 }
 
 // Vscode Configure VS Code integration
