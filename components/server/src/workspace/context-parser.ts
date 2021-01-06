@@ -24,10 +24,10 @@ export abstract class AbstractContextParser implements IContextParser {
 
     public normalize(contextUrl: string): string | undefined {
         let url = contextUrl.trim();
-        if (url.startsWith(this.config.host)) {
+        if (url.startsWith(`${this.config.host}/`)) {
             url = `https://${url}`;
         }
-        if (url.startsWith(`https://${this.config.host}`)) {
+        if (url.startsWith(`https://${this.config.host}/`)) {
             return url;
         }
         return undefined;
