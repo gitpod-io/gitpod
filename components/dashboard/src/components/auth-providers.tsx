@@ -148,8 +148,12 @@ export class AuthProviders extends React.Component<AuthProvidersProps, AuthProvi
         if (!host) {
             return;
         }
+        
         this.tryToConnect(host);
-        this.pollState(host);
+
+        if (!this.noUserMode) {
+            this.pollState(host);
+        }
     };
     protected tryToConnect(host: string) {
         const hostUrl = new GitpodHostUrl(window.location.toString());
@@ -184,10 +188,11 @@ export class AuthProviders extends React.Component<AuthProvidersProps, AuthProvi
                 const uri = new GitpodHostUrl(window.location.toString())
                     .withApi(url => ({ pathname: '/refresh-login' }))
                     .toString();
-                await fetch(uri, { credentials: 'include' });
-
-                // if refresh-login succeeded, redirect asap
-                window.location.href = new GitpodHostUrl(window.location.toString()).asDashboard().toString();
+                const response = await fetch(uri, { credentials: 'include' });
+                if (response.ok) {
+                    // if refresh-login succeeded, redirect asap
+                    window.location.href = new GitpodHostUrl(window.location.toString()).asDashboard().toString();
+                }
             } catch {
                 console.log(`User is still not logged in.`);
             }
