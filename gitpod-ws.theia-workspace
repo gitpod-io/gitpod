@@ -17,6 +17,7 @@
       { "path": "components/ws-manager" },
       { "path": "components/ws-proxy" },
       { "path": "install/installer" },
+      { "path": "test" },
       { "path": "dev/blowtorch" },
       { "path": "dev/loadgen" }
    ],
