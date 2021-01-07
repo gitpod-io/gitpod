@@ -19,7 +19,8 @@ hostname: localhost
 #                  This mode primarily makes sense if you don't have a domain available, but need to run on an IP address only.
 #                  In this mode there is no HTTPS and CORS support, some secrets get transmitted unencrypted (no one-time-secret support) and all exposed ports are public.
 ingressMode: hosts
-certificatesSecret: {}
+certificatesSecret:
+  secretName: https-certificates
 
 imagePrefix: gcr.io/gitpod-io/
 installation:
