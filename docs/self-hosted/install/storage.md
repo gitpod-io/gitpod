@@ -24,9 +24,9 @@ For more complex use case we recommend configuring more permanent means of persi
         remoteStorage:
           kind: minio
           minio:
-            endpoint: minio:9000
-            accessKey: EXAMPLEvalue
-            secretKey: Someone.Should/ReallyChangeThisKey!!
+            endpoint: your-minio-installation.somewhere-else.com:8080
+            accessKey: enterKeyHere
+            secretKey: superSecretKeyGoesHere
             tmpdir: /tmp
 
     # Disable built-in minio instance
