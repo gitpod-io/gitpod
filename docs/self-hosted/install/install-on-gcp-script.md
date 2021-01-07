@@ -16,6 +16,7 @@ Once you have the project, keep its project ID handy.
 ## 2. Run the installer image
 
 ```bash
+mkdir -p $PWD/gpinstall
 docker run --rm -it \
     -v $PWD/gcloud:/root/.config/gcloud \
     -v $PWD/gpinstall:/workspace \
