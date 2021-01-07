@@ -11,7 +11,7 @@ The database uses a Kubernetes PersistentVolume. We do not recommend using this 
 * Own MySQL database: Gitpod requires MySQL in version 5.7 or newer.
 
 This chart installs a MySQL database which gets Gitpod up and running but is not suitable for production (the data is lost on each restart of the DB pod). To connect to a proper MySQL installation:
- 1. Retrieve the DB init scripts into your local folder:
+ 1. Copy the DB init scripts into your local folder:
     ```
     mkdir -p gpinstall
     echo exit | docker run -v $PWD/gpinstall:/workspace -u $(id -u) -i eu.gcr.io/gitpod-io/self-hosted/installer:latest bash

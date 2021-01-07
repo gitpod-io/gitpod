@@ -2,6 +2,8 @@
 url: /docs/self-hosted/latest/install/install-on-aws-script/
 ---
 
+> For this release (0.6.0, December 2019) the installers are broken. We're working in bringing those with the next release (January 2020).
+
 # Getting started with Gitpod on AWS
 
 This guide explains how to install an instance of Gitpod with 3 simple steps:
