@@ -42,10 +42,22 @@ export class GCloudStorageClient implements StorageClient {
     }
 
     async deleteBucket(bucketName: string): Promise<any> {
-        const { response, err } = await this.try(() => this.storage.bucket(bucketName).delete().then(responses => responses[0]));
+        log.info(`Deleting a bucket: ${bucketName}`);
+        const bucket = this.storage.bucket(bucketName);
+        try {
+            // try deleting all files first, otherwise bucket deletion will fail
+            await bucket.deleteFiles({ force: true });
+            // try again, just because the backend is lazy
+            await bucket.deleteFiles({ force: true });
+        } catch(err) {
+            log.error(`Failed to empty a bucket: ${bucketName}`, err);
+        }
+
+        const { response, err } = await this.try(() => bucket.delete().then(responses => responses[0]));
         if (response) {
             this.checkStatus(response, 'delete bucket', [204, 404])
         } else if (err) {
+            log.error(`Failed to delete a bucket: ${bucketName}`, err);
             throw err;
         }
     }
