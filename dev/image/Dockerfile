@@ -22,7 +22,7 @@ RUN mkdir -p /tmp/helm/ \
 
 ### kubernetes ###
 RUN mkdir -p /usr/local/kubernetes/ && \
-    curl -fsSL https://github.com/kubernetes/kubernetes/releases/download/v1.19.5/kubernetes.tar.gz \ 
+    curl -fsSL https://github.com/kubernetes/kubernetes/releases/download/v1.17.16/kubernetes.tar.gz \ 
     | tar -xzvC /usr/local/kubernetes/ --strip-components=1 && \
     KUBERNETES_SKIP_CONFIRM=true /usr/local/kubernetes/cluster/get-kube-binaries.sh && \
     chown gitpod:gitpod -R /usr/local/kubernetes
