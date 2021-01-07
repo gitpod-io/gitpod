@@ -6,11 +6,9 @@
 
 import * as React from 'react';
 import { WhitelistedRepository, GitpodService, DisposableCollection, GitpodServer } from '@gitpod/gitpod-protocol';
-import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
-import { ResponseError } from 'vscode-jsonrpc';
 import RepositoryEntry from './repository-entry';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
@@ -43,9 +41,6 @@ export class FeaturedRepositories extends React.Component<FeaturedRepositoryProp
 			this.setState({ repositories });
 		} catch (err) {
 			log.error(err);
-			if (err instanceof ResponseError && err.code === ErrorCodes.NOT_AUTHENTICATED) {
-				return;
-			}
 		}
 	}
 
