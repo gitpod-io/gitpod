@@ -19,7 +19,7 @@ source config/db/init/01-create-user.sql;
 source config/db/init/02-create-and-init-sessions-db.sql;
 source config/db/init/03-recreate-gitpod-db.sql;
 ```
- 2. Create a file `values.db.yaml` with the following content:
+ 2. Merge the following into your `values.custom.yaml`:
 ```yaml
 db:
   host: db
@@ -30,4 +30,4 @@ db:
 mysql:
   enabled: false
 ```
- 3. Do a `helm upgrade --install -f values.db.yaml gitpod .` to apply the changes.
+ 3. Do a `helm upgrade --install -f values.custom.yaml gitpod gitpod.io/gitpod` to apply the changes.

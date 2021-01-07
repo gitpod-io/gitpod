@@ -17,28 +17,31 @@ For more complex use case we recommend configuring more permanent means of persi
 
 ## a) Configure custom MinIO instance
 
- 1. Create a file `values.storage.yaml` with this content:
-```yaml
-wsSync:
-  remoteStorage:
-    kind: minio
-    minio:
-      endpoint: minio:9000
-      accessKey: EXAMPLEvalue
-      secretKey: Someone.Should/ReallyChangeThisKey!!
-      tmpdir: /tmp
+ 1. Create a file `values.custom.yaml` with this content:
+    ```yaml
+    components:
+      wsDaemon:
+        remoteStorage:
+          kind: minio
+          minio:
+            endpoint: minio:9000
+            accessKey: EXAMPLEvalue
+            secretKey: Someone.Should/ReallyChangeThisKey!!
+            tmpdir: /tmp
 
-# Disable built-in minio instance
-minio:
-  enabled: false
-```
- 2. Redeploy Gitpod using `helm upgrade --install -f values.storage.yaml gitpod .` to apply the changes
+    # Disable built-in minio instance
+    minio:
+      enabled: false
+    ```
+ 2. Redeploy Gitpod using `helm upgrade --install -f values.custom.yaml gitpod gitpod.io/gitpod` to apply the changes
+
+    > Note that Helm does _not_ merge hierarchies in a single file. Please make sure there is only ever _one_ `components` hierarchy or the last one overwrites all previous values.
 
 ## b) Configure the built-in MinIO instance
  1. Consult the chart's documentation at https://helm.min.io/
- 2. Create a file `values.storage.yaml` with this content:
-```yaml
-minio:
-  # insert custom config here
-```
- 3. Redeploy Gitpod using `helm upgrade --install -f values.storage.yaml gitpod .` to apply the changes
+ 2. Create a file `values.custom.yaml` with this content:
+    ```yaml
+    minio:
+      # insert custom config here
+    ```
+ 3. Redeploy Gitpod using `helm upgrade --install -f values.custom.yaml gitpod gitpod.io/gitpod` to apply the changes

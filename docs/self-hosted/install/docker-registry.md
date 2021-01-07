@@ -18,7 +18,7 @@ This helm chart can either deploy its own registry (default but requires [HTTPS 
 ## Configuration
 To connect to an existing Docker registry, perform the following steps:
 
- 1. Create a file `values.docker-registry.yaml` containing:
+ 1. Merge the following into your `values.custom.yaml`:
     ```
     components:
       imageBuilder:
@@ -38,6 +38,8 @@ To connect to an existing Docker registry, perform the following steps:
     ```
     Replace `your.registry.com/gitpod` with the domain your registry is available at.
 
+    > Note that Helm does _not_ merge hierarchies in a single file. Please make sure there is only ever _one_ `components` hierarchy or the last one overwrites all previous values.
+
  2. Login to the registry and safe the authentication
     ```
     mkdir -p secrets
@@ -46,7 +48,7 @@ To connect to an existing Docker registry, perform the following steps:
     
     > This does not work for Google Cloud Registries because their login tokens are short-lived. See the [example](#example-google-cloud-registry-credentials) below on how to configure it.
 
- 3. Do a `helm upgrade --install -f values.docker-registry.yaml gitpod .` to apply the changes.
+ 3. Do a `helm upgrade --install -f values.custom.yaml gitpod gitpod.io/gitpod` to apply the changes.
 
 Make sure the resulting JSON file contains the credentials (there should be an `auths` section containing them as base64 encoded string).
 

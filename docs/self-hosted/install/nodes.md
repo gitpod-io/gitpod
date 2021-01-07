@@ -23,7 +23,7 @@ Gitpod relies on the node's filesystem for making workspace content available, a
 We recommend you change those two paths so that they're located on an SSD or some other form of fast local storage.
 
 To do this:
- 1. Create a file `values.nodes.yaml` with the following content:
+ 1. Merge the following into your `values.custom.yaml`:
     ```yaml
     components:
       nodeDaemon:
@@ -36,9 +36,11 @@ To do this:
         # Depending on the types of node you operate that may cause image builds to fail or not perform well. We recommend you give the Docker daemon
         # fast storage on the node, e.g. an SSD.
         hostDindData: /mnt/disks/ssd0/docker
-      wsSync:
+      wsDaemon:
         # Workspace data is stored on the nodes. This setting configures where on the ndoe the workspace data lives.
         # The faster this location is (in terms of IO) the faster workspaces will initialize.
         hostWorkspaceArea: /mnt/disks/ssd0/workspaces
     ```
- 2. Do a `helm upgrade --install -f values.nodes.yaml gitpod .` to apply the changes.
+ 2. Do a `helm upgrade --install -f values.custom.yaml gitpod gitpod.io/gitpod` to apply the changes.
+
+    > Note that Helm does _not_ merge hierarchies in a single file. Please make sure there is only ever _one_ `components` hierarchy or the last one overwrites all previous values.
