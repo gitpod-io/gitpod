@@ -21,6 +21,7 @@ export AWS_SECRET_ACCESS_KEY=...
 
 ## 2. Run the installer image
 ```bash
+mkdir -p $PWD/awsinstall
 docker run --rm -it \
     -e AWS_ACCESS_KEY_ID \
     -e AWS_SECRET_ACCESS_KEY \

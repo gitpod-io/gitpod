@@ -11,23 +11,31 @@ The database uses a Kubernetes PersistentVolume. We do not recommend using this 
 * Own MySQL database: Gitpod requires MySQL in version 5.7 or newer.
 
 This chart installs a MySQL database which gets Gitpod up and running but is not suitable for production (the data is lost on each restart of the DB pod). To connect to a proper MySQL installation:
+ 1. Retrieve the DB init scripts into your local folder:
+    ```
+    mkdir -p gpinstall
+    echo exit | docker run -v $PWD/gpinstall:/workspace -u $(id -u) -i eu.gcr.io/gitpod-io/self-hosted/installer:latest bash
+    mkdir -p ./db-init
+    cp gpinstall/gitpod/helm/gitpod/config/db/init/*.sql ./db-init/
+    rm -Rf gpinstall
+    ```
  1. Initialize your MySQL database using the SQL files in `config/db/init/`. E.g. in a mysql session connected to your database server run:
-```
-SET @gitpodDbPassword = IFNULL(@gitpodDbPassword, 'your-password-goes-here');
-source config/db/init/00-testdb-user.sql;
-source config/db/init/01-create-user.sql;
-source config/db/init/02-create-and-init-sessions-db.sql;
-source config/db/init/03-recreate-gitpod-db.sql;
-```
+    ```
+    SET @gitpodDbPassword = IFNULL(@gitpodDbPassword, 'your-password-goes-here');
+    source db-init/00-testdb-user.sql;
+    source db-init/01-create-user.sql;
+    source db-init/02-create-and-init-sessions-db.sql;
+    source db-init/03-recreate-gitpod-db.sql;
+    ```
  2. Merge the following into your `values.custom.yaml`:
-```yaml
-db:
-  host: db
-  port: 3306
-  password: your-password-goes-here
+    ```yaml
+    db:
+      host: db
+      port: 3306
+      password: your-password-goes-here
 
-# Disable built-in MySQL instance
-mysql:
-  enabled: false
-```
+    # Disable built-in MySQL instance
+    mysql:
+      enabled: false
+    ```
  3. Do a `helm upgrade --install -f values.custom.yaml gitpod gitpod.io/gitpod` to apply the changes.
