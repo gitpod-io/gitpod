@@ -154,4 +154,8 @@ export class GitpodHostUrl {
         return this.with({ pathname: '/sorry', hash: message });
     }
 
+    asApiLogout(): GitpodHostUrl {
+        return this.withApi(url => ({ pathname: '/logout/' }));
+    }
+
 }

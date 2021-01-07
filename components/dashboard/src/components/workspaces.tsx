@@ -94,6 +94,9 @@ class Workspaces extends React.Component<WorkspacesProps, WorkspacesState> {
                     case ErrorCodes.USER_BLOCKED:
                         window.location.href = getBlockedUrl();
                         return;
+                    case ErrorCodes.USER_DELETED:
+                        window.location.href = new GitpodHostUrl(window.location.toString()).asApiLogout().toString();
+                        return;
 					default:
 						return;
                 }

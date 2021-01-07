@@ -191,6 +191,9 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                         this.redirectTo(url);
                     }
                     return;
+                case ErrorCodes.USER_DELETED:
+                    window.location.href = new GitpodHostUrl(window.location.toString()).asApiLogout().toString();
+                    return;
                 default:
             }
         }
