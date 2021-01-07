@@ -9,6 +9,8 @@ Gitpod also provides more optimized installations offering better performance fo
 * *Google Cloud Platform*: Install Gitpod in a blank GCP project [using a script that automates the procedure](../install-on-gcp-script/).
 * *AWS*: Install Gitpod on AWS [using a script that automates the procedure](../install-on-aws-script/).
 
+ > Kubernetes >= 1.15 and <= 1.17 is supported
+
 Gitpod is installed using [Helm](https://helm.sh).
 The source of the chart can be found [here](https://github.com/gitpod-io/gitpod/blob/master/chart/).
 Releases are published at https://charts.gitpod.io.

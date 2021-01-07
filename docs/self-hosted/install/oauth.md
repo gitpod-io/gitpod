@@ -20,9 +20,9 @@ On first access, a fresh Gitpod installation guides the first users to configure
 Alternatively, you can configure it per Helm values file:
  1. Configure an OAuth app per instructions linked below (cmp. [GitHub](#GitHub) or [GitLab](#GitLab)) and copy the `clientId` and `clientSecret`.
 
- 2. Create a file `values.oauth.yaml` with the following content:
+ 2. Merge the following into your `values.custom.yaml`:
     ```yaml
-    authProviders: []
+    authProviders:
     - id: "Public-GitHub"
       host: "github.com"
       type: "GitHub"
@@ -46,7 +46,7 @@ Alternatively, you can configure it per Helm values file:
     ```
     Replace `CLIENT_ID` and `SECRET` with their respective values.
 
- 3. Do a `helm upgrade --install -f values.oauth.yaml gitpod .` to apply the changes.
+ 3. Do a `helm upgrade --install -f values.custom.yaml gitpod gitpod.io/gitpod` to apply the changes.
 
 ## GitHub
 To authenticate your users with GitHub you need to create a [GitHub OAuth App](https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/).
