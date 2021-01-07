@@ -151,6 +151,9 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
                     const thisUrl = window.location.toString();
                     window.location.href = new GitpodHostUrl(thisUrl).withApi({ pathname: "/tos", search: `mode=update&returnTo=${encodeURIComponent(thisUrl)}` }).toString();
                     return;
+                case ErrorCodes.USER_DELETED:
+                    window.location.href = new GitpodHostUrl(window.location.toString()).asApiLogout().toString();
+                    return;
                 case ErrorCodes.NOT_AUTHENTICATED:
                     if (data) {
                         this.setState({

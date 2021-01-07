@@ -7,7 +7,7 @@
 import * as React from 'react';
 import "reflect-metadata";
 import debounce = require('lodash.debounce');
-import { CancellationTokenSource, CancellationToken } from 'vscode-jsonrpc/lib/cancellation'
+import { CancellationTokenSource, CancellationToken } from 'vscode-jsonrpc/lib/cancellation';
 import { UserEnvVars } from '../user-env-vars';
 import { ApplicationFrame } from '../page-frame';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
@@ -29,7 +29,7 @@ interface SettingsProps {
 
 interface SettingsState {
     user?: User;
-    hasIDESettingsPermission?: boolean
+    hasIDESettingsPermission?: boolean;
 }
 
 export class Settings extends React.Component<SettingsProps, SettingsState> {
@@ -57,6 +57,9 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
                                 search: 'returnTo=' + encodeURIComponent(window.location.toString())
                             }).toString();
                             break;
+                        case ErrorCodes.USER_DELETED:
+                            window.location.href = new GitpodHostUrl(window.location.toString()).asApiLogout().toString();
+                            break;
                         default:
                     }
                 }
@@ -82,7 +85,7 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
                     <h3 style={{ marginTop: 50 }}>Feature Preview</h3>
                     {this.state.user && <FeatureSettings service={this.props.service} user={this.state.user} onChange={this.onChange} />}
 
-                    <DeleteAccountView service={this.props.service} />
+                    {this.state.user && <DeleteAccountView service={this.props.service} user={this.state.user} />}
                 </Paper>
             </ApplicationFrame>
         );
@@ -103,6 +106,9 @@ export class Settings extends React.Component<SettingsProps, SettingsState> {
     private commitTokenSource: CancellationTokenSource | undefined;
     private commit = debounce(async (update: Partial<User>, token: CancellationToken) => {
         try {
+            if (token.isCancellationRequested) {
+                return;
+            }
             const user = await this.props.service.server.updateLoggedInUser(update);
             if (token.isCancellationRequested) {
                 return;

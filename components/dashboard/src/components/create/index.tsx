@@ -67,6 +67,9 @@ export async function start(Component: React.ComponentType<CreateWorkspaceProps>
                     case ErrorCodes.SETUP_REQUIRED:
                         window.location.href = new GitpodHostUrl(window.location.toString()).with({ pathname: "first-steps" }).toString();
                         break;
+                    case ErrorCodes.USER_DELETED:
+                        window.location.href = new GitpodHostUrl(window.location.toString()).asApiLogout().toString();
+                        break;
                     case ErrorCodes.NOT_AUTHENTICATED:
                         // redirect to website
                         return redirectNotAuthenticated(service);

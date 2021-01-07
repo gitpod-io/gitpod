@@ -490,6 +490,9 @@ export class UserController {
             if (returnToURL.toLowerCase().startsWith(`${hostUrl.protocol}//${hostUrl.host}`.toLowerCase())) {
                 return returnToURL;
             }
+            if (returnToURL.toLowerCase().startsWith(this.env.brandingConfig.homepage.toLowerCase())) {
+                return returnToURL;
+            }
         }
     }
 }
