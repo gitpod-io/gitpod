@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:as-add-golangci-lint.6
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:gpl-update-docs.6
 workspaceLocation: gitpod/gitpod-ws.theia-workspace
 checkoutLocation: gitpod
 ports:
