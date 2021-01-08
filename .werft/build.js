@@ -71,7 +71,7 @@ async function build(context, version) {
         "HTTP_PROXY": "http://dev-http-cache:3129",
         "HTTPS_PROXY": "http://dev-http-cache:3129",
     };
-    const imageRepo = publishRelease ? "eu.gcr.io/gitpod-io/self-hosted" : "eu.gcr.io/gitpod-core-dev/build";
+    const imageRepo = publishRelease ? "gcr.io/gitpod-io/self-hosted" : "eu.gcr.io/gitpod-core-dev/build";
 
     exec(`leeway vet --ignore-warnings`);
     exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`, buildEnv);
@@ -83,7 +83,8 @@ async function build(context, version) {
     }
     exec(`leeway build --werft=true -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo}`, buildEnv);
     if (publishRelease) {
-        publishHelmChart("eu.gcr.io/gitpod-io/self-hosted");
+        publishHelmChart("gcr.io/gitpod-io/self-hosted");
+        exec(`leeway run --werft=true install/installer:publish-as-latest -Dversion=${version} -DimageRepoBase=${imageRepo}`)
         exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
     }
     // gitTag(`build/${version}`);

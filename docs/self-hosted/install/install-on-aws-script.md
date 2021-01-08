@@ -28,7 +28,7 @@ docker run --rm -it \
     -e AWS_ACCESS_KEY_ID \
     -e AWS_SECRET_ACCESS_KEY \
     -v "$PWD/awsinstall":"/workspace" \
-    eu.gcr.io/gitpod-io/self-hosted/installer:latest aws
+    gcr.io/gitpod-io/self-hosted/installer:latest aws
 ```
 
 This will kickstart the installation process, authenticate with AWS and automatically set up your Gitpod deployment using Docker and Terraform.
