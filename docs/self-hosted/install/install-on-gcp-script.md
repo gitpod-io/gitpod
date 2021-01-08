@@ -22,7 +22,7 @@ mkdir -p $PWD/gpinstall
 docker run --rm -it \
     -v $PWD/gcloud:/root/.config/gcloud \
     -v $PWD/gpinstall:/workspace \
-    eu.gcr.io/gitpod-io/self-hosted/installer:latest \
+    gcr.io/gitpod-io/self-hosted/installer:latest \
     gcp
 ```
 
