@@ -120,7 +120,6 @@ module "gitpod" {
   gitpod = {
     chart        = "../../../../chart"
     image_prefix = "gcr.io/gitpod-io/self-hosted/"
-    version      = "0.6.0-beta1"
   }
 
   providers = {
