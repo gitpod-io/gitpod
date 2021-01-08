@@ -50,6 +50,14 @@ The issue tracker is used for tracking **bug reports** and **feature requests** 
 
 You can upvote [popular feature requests](https://github.com/gitpod-io/gitpod/issues?q=is%3Aissue+is%3Aopen+sort%3Areactions-%2B1-desc) or [create a new one](https://github.com/gitpod-io/gitpod/issues/new?template=feature_request.md).
 
+## Development Process
+
+We work with quarterly roadmaps in monthly iterations.
+
+ - [Development Process](https://www.notion.so/gitpod/Development-Process-2b105f72847440ec8f4a1d87ac25801b)
+ - [Product Roadmap](https://www.notion.so/gitpod/Product-Roadmap-b9b5eac0a15147ac8d2dd25cf0519203)
+ - [Architectural Roadmap](https://www.notion.so/gitpod/Architecture-Roadmap-4669b58fc9cc45488a0a094d2a596886)
+
 ## Related Projects
 
 During the development of Gitpod we also developed some our own infrastructure tooling to make development easier and more efficient.
