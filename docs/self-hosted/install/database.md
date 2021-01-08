@@ -14,7 +14,7 @@ This chart installs a MySQL database which gets Gitpod up and running but is not
  1. Copy the DB init scripts into your local folder:
     ```
     mkdir -p gpinstall
-    echo exit | docker run -v $PWD/gpinstall:/workspace -u $(id -u) -i eu.gcr.io/gitpod-io/self-hosted/installer:latest bash
+    echo exit | docker run -v $PWD/gpinstall:/workspace -u $(id -u) -i gcr.io/gitpod-io/self-hosted/installer:latest bash
     mkdir -p ./db-init
     cp gpinstall/gitpod/helm/gitpod/config/db/init/*.sql ./db-init/
     rm -Rf gpinstall

@@ -22,7 +22,7 @@ ingressMode: hosts
 certificatesSecret:
   secretName: https-certificates
 
-imagePrefix: gcr.io/gitpod-io/
+imagePrefix: gcr.io/gitpod-io/self-hosted/
 installation:
   stage: production
   tenant: gitpod
