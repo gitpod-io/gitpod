@@ -40,6 +40,6 @@ func (*WorkspaceAgent) WriteFile(req *api.WriteFileRequest, resp *api.WriteFileR
 		return
 	}
 
-	resp = &api.WriteFileResponse{}
+	*resp = api.WriteFileResponse{}
 	return
 }
