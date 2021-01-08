@@ -28,6 +28,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	google.golang.org/grpc v1.34.0
 	google.golang.org/grpc/examples v0.0.0-20200902210233-8630cac324bf // indirect
+	kernel.org/pub/linux/libs/security/libcap/cap v0.2.46
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
