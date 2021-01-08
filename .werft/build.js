@@ -84,6 +84,7 @@ async function build(context, version) {
     exec(`leeway build --werft=true -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo}`, buildEnv);
     if (publishRelease) {
         publishHelmChart("gcr.io/gitpod-io/self-hosted");
+        exec(`leeway run --werft=true install/installer:publish-as-latest -Dversion=${version} -DimageRepoBase=${imageRepo}`)
         exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
     }
     // gitTag(`build/${version}`);
