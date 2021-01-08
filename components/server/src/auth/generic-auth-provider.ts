@@ -416,7 +416,7 @@ export class GenericAuthProvider implements AuthProvider {
 
             if (currentGitpodUser) {
                 const termsAcceptanceRequired = await this.userService.checkTermsAcceptanceRequired({ config, identity: candidate, user: currentGitpodUser });
-                const elevateScopes = await this.getMissingScopeForElevation(currentGitpodUser, currentScopes);
+                const elevateScopes = authFlow.overrideScopes ? undefined : await this.getMissingScopeForElevation(currentGitpodUser, currentScopes);
                 const isBlocked = await this.userService.isBlocked({ user: currentGitpodUser });
 
                 await this.userService.updateUserOnLogin(currentGitpodUser, authUser, candidate, token)
