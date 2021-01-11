@@ -15,4 +15,5 @@ require (
 	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9 // indirect
 	golang.org/x/sys v0.0.0-20201026133411-418715ba6fdd // indirect
 	google.golang.org/grpc v1.33.1 // indirect
+	gotest.tools/v3 v3.0.3 // indirect
 )
