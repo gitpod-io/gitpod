@@ -5,6 +5,7 @@
 package diskguard
 
 import (
+	"context"
 	"fmt"
 	"syscall"
 	"time"
@@ -88,7 +89,10 @@ func (g *Guard) Start() {
 // setLabel adds or removes the label from the node
 func (g *Guard) setLabel(label string, add bool) error {
 	return retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		node, err := g.Clientset.CoreV1().Nodes().Get(g.Nodename, metav1.GetOptions{})
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		node, err := g.Clientset.CoreV1().Nodes().Get(ctx, g.Nodename, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
@@ -104,7 +108,7 @@ func (g *Guard) setLabel(label string, add bool) error {
 			delete(node.Labels, label)
 			log.WithField("node", g.Nodename).WithField("label", label).Info("removing label from node")
 		}
-		_, err = g.Clientset.CoreV1().Nodes().Update(node)
+		_, err = g.Clientset.CoreV1().Nodes().Update(ctx, node, metav1.UpdateOptions{})
 		if err != nil {
 			return err
 		}
