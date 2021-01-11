@@ -5,6 +5,7 @@
 package poolkeeper
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -28,7 +29,7 @@ type PatchDeploymentAffinity struct {
 }
 
 func (pa *PatchDeploymentAffinity) run(clientset *kubernetes.Clientset) {
-	deploymentsList, err := clientset.AppsV1().Deployments(pa.Namespace).List(metav1.ListOptions{})
+	deploymentsList, err := clientset.AppsV1().Deployments(pa.Namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.WithError(err).Error("unable to list deployments")
 		return
@@ -53,7 +54,7 @@ func (pa *PatchDeploymentAffinity) run(clientset *kubernetes.Clientset) {
 
 	appsv1 := clientset.AppsV1()
 	for _, deployment := range deploymentsToPatch {
-		_, err := appsv1.Deployments(pa.Namespace).Patch(deployment.Name, types.MergePatchType, []byte(patch))
+		_, err := appsv1.Deployments(pa.Namespace).Patch(context.Background(), deployment.Name, types.MergePatchType, []byte(patch), metav1.PatchOptions{})
 		if err != nil {
 			log.WithField("namespace", pa.Namespace).WithField("deployment", deployment.Name).WithError(err).Error("error patching deployment")
 			continue
