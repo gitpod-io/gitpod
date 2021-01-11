@@ -103,6 +103,9 @@ const (
 	// wsdaemonDialTimeout is the time we allow for trying to connect to ws-daemon.
 	// Note: this is NOT the time we allow for RPC calls to wsdaemon, but just for establishing the connection.
 	wsdaemonDialTimeout = 10 * time.Second
+
+	// kubernetesOperationTimeout is the time we give Kubernetes operations in general.
+	kubernetesOperationTimeout = 5 * time.Second
 )
 
 // New creates a new workspace manager
@@ -150,7 +153,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	defer tracing.FinishSpan(span, &err)
 
 	// Make sure the objects we're about to create do not exist already
-	exists, err := m.workspaceExists(req.Id)
+	exists, err := m.workspaceExists(ctx, req.Id)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot start workspace: %w", err)
 	}
@@ -188,7 +191,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
 	}
 	tracing.LogEvent(span, "pod description created")
-	_, err = client.Pods(m.Config.Namespace).Create(pod)
+	_, err = client.Pods(m.Config.Namespace).Create(ctx, pod, metav1.CreateOptions{})
 	if err != nil {
 		m, _ := json.Marshal(pod)
 		safePod, _ := log.RedactJSON(m)
@@ -211,7 +214,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 			},
 		},
 	}
-	_, err = client.ConfigMaps(m.Config.Namespace).Create(plisConfigMap)
+	_, err = client.ConfigMaps(m.Config.Namespace).Create(ctx, plisConfigMap, metav1.CreateOptions{})
 	if err != nil {
 		clog.WithError(err).WithField("req", req).Error("was unable to start workspace")
 		return nil, xerrors.Errorf("cannot create workspace's lifecycle independent state: %w", err)
@@ -259,7 +262,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		},
 	}
 
-	_, err = client.Services(m.Config.Namespace).Create(&theiaService)
+	_, err = client.Services(m.Config.Namespace).Create(ctx, &theiaService, metav1.CreateOptions{})
 	if err != nil {
 		clog.WithError(err).WithField("req", req).Error("was unable to start workspace")
 		// could not create Theia service
@@ -273,7 +276,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		if err != nil {
 			return nil, xerrors.Errorf("cannot create workspace's public service: %w", err)
 		}
-		_, err = client.Services(m.Config.Namespace).Create(portService)
+		_, err = client.Services(m.Config.Namespace).Create(ctx, portService, metav1.CreateOptions{})
 		if err != nil {
 			clog.WithError(err).WithField("req", req).Error("was unable to start workspace")
 			// could not create ports service
@@ -380,7 +383,7 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 
 	client := m.Clientset.CoreV1()
 
-	pod, err := m.findWorkspacePod(workspaceID)
+	pod, err := m.findWorkspacePod(ctx, workspaceID)
 	if isKubernetesObjNotFoundError(err) {
 		return err
 	}
@@ -425,21 +428,21 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 
 	gracePeriodSeconds := int64(gracePeriod.Seconds())
 	propagationPolicy := metav1.DeletePropagationForeground
-	theiaServiceErr := client.Services(m.Config.Namespace).Delete(getTheiaServiceName(servicePrefix),
-		&metav1.DeleteOptions{
+	theiaServiceErr := client.Services(m.Config.Namespace).Delete(ctx, getTheiaServiceName(servicePrefix),
+		metav1.DeleteOptions{
 			GracePeriodSeconds: &gracePeriodSeconds,
 			PropagationPolicy:  &propagationPolicy,
 		},
 	)
 	tracing.LogEvent(span, "theia service deleted")
-	portsServiceErr := client.Services(m.Config.Namespace).Delete(getPortsServiceName(servicePrefix),
-		&metav1.DeleteOptions{
+	portsServiceErr := client.Services(m.Config.Namespace).Delete(ctx, getPortsServiceName(servicePrefix),
+		metav1.DeleteOptions{
 			GracePeriodSeconds: &gracePeriodSeconds,
 			PropagationPolicy:  &propagationPolicy,
 		},
 	)
 	tracing.LogEvent(span, "ports service deleted")
-	podErr := client.Pods(m.Config.Namespace).Delete(pod.Name, &metav1.DeleteOptions{
+	podErr := client.Pods(m.Config.Namespace).Delete(ctx, pod.Name, metav1.DeleteOptions{
 		GracePeriodSeconds: &gracePeriodSeconds,
 		PropagationPolicy:  &propagationPolicy,
 	})
@@ -458,9 +461,9 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 }
 
 // findWorkspacePod finds the pod for a workspace
-func (m *Manager) findWorkspacePod(workspaceID string) (*corev1.Pod, error) {
+func (m *Manager) findWorkspacePod(ctx context.Context, workspaceID string) (*corev1.Pod, error) {
 	client := m.Clientset.CoreV1()
-	pods, err := client.Pods(m.Config.Namespace).List(metav1.ListOptions{
+	pods, err := client.Pods(m.Config.Namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("workspaceID=%s", workspaceID),
 	})
 	if err != nil {
@@ -501,7 +504,7 @@ func (m *Manager) MarkActive(ctx context.Context, req *api.MarkActiveRequest) (r
 
 	workspaceID := req.Id
 
-	pod, err := m.findWorkspacePod(workspaceID)
+	pod, err := m.findWorkspacePod(ctx, workspaceID)
 	if isKubernetesObjNotFoundError(err) {
 		return nil, xerrors.Errorf("workspace %s does not exist", workspaceID)
 	}
@@ -520,9 +523,9 @@ func (m *Manager) MarkActive(ctx context.Context, req *api.MarkActiveRequest) (r
 	// very often and provides a better UX if it persists across ws-manager restarts.
 	_, isMarkedClosed := pod.Annotations[workspaceClosedAnnotation]
 	if req.Closed && !isMarkedClosed {
-		err = m.markWorkspace(workspaceID, addMark(workspaceClosedAnnotation, "true"))
+		err = m.markWorkspace(ctx, workspaceID, addMark(workspaceClosedAnnotation, "true"))
 	} else if !req.Closed && isMarkedClosed {
-		err = m.markWorkspace(workspaceID, deleteMark(workspaceClosedAnnotation))
+		err = m.markWorkspace(ctx, workspaceID, deleteMark(workspaceClosedAnnotation))
 	}
 	if err != nil {
 		log.WithError(err).WithFields(log.OWI("", "", workspaceID)).Warn("was unable to mark workspace properly")
@@ -530,7 +533,7 @@ func (m *Manager) MarkActive(ctx context.Context, req *api.MarkActiveRequest) (r
 
 	// If it's the first call: Mark the pod with firstUserActivityAnnotation
 	if _, hasFirstUserAcitviyAnnotation := pod.Annotations[firstUserActivityAnnotation]; !hasFirstUserAcitviyAnnotation {
-		err = m.markWorkspace(workspaceID, addMark(firstUserActivityAnnotation, now.Format(time.RFC3339Nano)))
+		err = m.markWorkspace(ctx, workspaceID, addMark(firstUserActivityAnnotation, now.Format(time.RFC3339Nano)))
 		if err != nil {
 			log.WithError(err).WithFields(log.OWI("", "", workspaceID)).Warn("was unable to mark workspace with firstUserAcitviy")
 		}
@@ -552,7 +555,10 @@ func (m *Manager) getWorkspaceActivity(workspaceID string) *time.Time {
 
 // markAllWorkspacesActive marks all existing workspaces as active (as if MarkActive had been called for each of them)
 func (m *Manager) markAllWorkspacesActive() error {
-	pods, err := m.Clientset.CoreV1().Pods(m.Config.Namespace).List(workspaceObjectListOptions())
+	ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
+	defer cancel()
+
+	pods, err := m.Clientset.CoreV1().Pods(m.Config.Namespace).List(ctx, workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("markAllWorkspacesActive: %w", err)
 	}
@@ -577,7 +583,7 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
 	defer tracing.FinishSpan(span, &err)
 
-	pod, err := m.findWorkspacePod(req.Id)
+	pod, err := m.findWorkspacePod(ctx, req.Id)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot find workspace: %w", err)
 	}
@@ -598,7 +604,7 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 		// outselves. Doing it ourselves lets us synchronize the status update with probing for actual availability, not just
 		// the service modification in Kubernetes.
 		wso := workspaceObjects{Pod: pod, PortsService: service}
-		err := m.completeWorkspaceObjects(&wso)
+		err := m.completeWorkspaceObjects(ctx, &wso)
 		if err != nil {
 			return xerrors.Errorf("cannot update status: %w", err)
 		}
@@ -616,7 +622,7 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 	port := int32(req.Spec.Port)
 	// get ports service if it exists
 	client := m.Clientset.CoreV1()
-	service, err = client.Services(m.Config.Namespace).Get(getPortsServiceName(servicePrefix), metav1.GetOptions{})
+	service, err = client.Services(m.Config.Namespace).Get(ctx, getPortsServiceName(servicePrefix), metav1.GetOptions{})
 	if isKubernetesObjNotFoundError(err) {
 		if !req.Expose {
 			// we're not asked to expose the port so there's nothing left to do here
@@ -628,7 +634,7 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 		if err != nil {
 			return nil, xerrors.Errorf("cannot create workspace's public service: %w", err)
 		}
-		_, err = client.Services(m.Config.Namespace).Create(service)
+		_, err = client.Services(m.Config.Namespace).Create(ctx, service, metav1.CreateOptions{})
 		if err != nil {
 			return nil, xerrors.Errorf("cannot control port: %w", err)
 		}
@@ -704,7 +710,7 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 	if len(spec.Ports) == 0 {
 		// we don't have any ports exposed anymore: remove the service
 		propagationPolicy := metav1.DeletePropagationForeground
-		err = client.Services(m.Config.Namespace).Delete(service.Name, &metav1.DeleteOptions{
+		err = client.Services(m.Config.Namespace).Delete(ctx, service.Name, metav1.DeleteOptions{
 			PropagationPolicy: &propagationPolicy,
 		})
 
@@ -749,7 +755,7 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 			service.Annotations[fmt.Sprintf("gitpod/port-url-%d", p.Port)] = url
 		}
 
-		_, err = client.Services(m.Config.Namespace).Update(service)
+		_, err = client.Services(m.Config.Namespace).Update(ctx, service, metav1.UpdateOptions{})
 		if err != nil {
 			return nil, xerrors.Errorf("cannot update service: %w", err)
 		}
@@ -800,7 +806,7 @@ func (m *Manager) DescribeWorkspace(ctx context.Context, req *api.DescribeWorksp
 	// Note: if we ever face performance issues with our constant querying of Kubernetes, we could use the reflector
 	//       which mirrors the server-side content (see https://github.com/kubernetes/client-go/blob/master/tools/cache/reflector.go).
 
-	pod, err := m.findWorkspacePod(req.Id)
+	pod, err := m.findWorkspacePod(ctx, req.Id)
 	if isKubernetesObjNotFoundError(err) {
 		// TODO: make 404 status error
 		return nil, status.Errorf(codes.NotFound, "workspace %s does not exist", req.Id)
@@ -811,7 +817,7 @@ func (m *Manager) DescribeWorkspace(ctx context.Context, req *api.DescribeWorksp
 	tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
 	tracing.LogEvent(span, "get pod")
 
-	wso, err := m.getWorkspaceObjects(pod)
+	wso, err := m.getWorkspaceObjects(ctx, pod)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get workspace status: %q", err)
 	}
@@ -1020,15 +1026,15 @@ func (m *Manager) getAllWorkspaceObjects(ctx context.Context) (result []workspac
 
 	// Note: if we ever face performance issues with our constant querying of Kubernetes, we could use the reflector
 	//       which mirrors the server-side content (see https://github.com/kubernetes/client-go/blob/master/tools/cache/reflector.go).
-	pods, err := m.Clientset.CoreV1().Pods(m.Config.Namespace).List(workspaceObjectListOptions())
+	pods, err := m.Clientset.CoreV1().Pods(m.Config.Namespace).List(ctx, workspaceObjectListOptions())
 	if err != nil {
 		return nil, xerrors.Errorf("cannot list workspaces: %w", err)
 	}
-	plis, err := m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).List(workspaceObjectListOptions())
+	plis, err := m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).List(ctx, workspaceObjectListOptions())
 	if err != nil {
 		return nil, xerrors.Errorf("cannot list workspaces: %w", err)
 	}
-	services, err := m.Clientset.CoreV1().Services(m.Config.Namespace).List(workspaceObjectListOptions())
+	services, err := m.Clientset.CoreV1().Services(m.Config.Namespace).List(ctx, workspaceObjectListOptions())
 	if err != nil {
 		return nil, xerrors.Errorf("cannot list services: %w", err)
 	}
@@ -1101,8 +1107,8 @@ func (m *Manager) getAllWorkspaceObjects(ctx context.Context) (result []workspac
 }
 
 // workspaceExists checks if a workspace exists with the given ID
-func (m *Manager) workspaceExists(id string) (bool, error) {
-	pod, err := m.findWorkspacePod(id)
+func (m *Manager) workspaceExists(ctx context.Context, id string) (bool, error) {
+	pod, err := m.findWorkspacePod(ctx, id)
 	if isKubernetesObjNotFoundError(err) {
 		return false, nil
 	}
@@ -1238,14 +1244,14 @@ func (m *Manager) deleteGhostWorkspace(ctx context.Context) (err error) {
 	span, ctx := tracing.FromContext(ctx, "deleteGhostWorkspace")
 	defer tracing.FinishSpan(span, &err)
 
-	gps, err := m.Clientset.CoreV1().Pods(m.Config.Namespace).List(metav1.ListOptions{
+	gps, err := m.Clientset.CoreV1().Pods(m.Config.Namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", wsk8s.TypeLabel, "ghost"),
 	})
 	if err != nil {
 		return xerrors.Errorf("cannot list ghost pods: %w", err)
 	}
 	for _, p := range gps.Items {
-		err := m.Clientset.CoreV1().Pods(m.Config.Namespace).Delete(p.Name, metav1.NewDeleteOptions(2))
+		err := m.Clientset.CoreV1().Pods(m.Config.Namespace).Delete(ctx, p.Name, *metav1.NewDeleteOptions(2))
 		if isKubernetesObjNotFoundError(err) {
 			continue
 		}

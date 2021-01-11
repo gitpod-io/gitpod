@@ -5,9 +5,11 @@
 package manager
 
 import (
+	"context"
+	"testing"
+
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	fakek8s "k8s.io/client-go/kubernetes/fake"
-	"testing"
 )
 
 func TestMarkWorkspace(t *testing.T) {
@@ -47,13 +49,13 @@ func TestMarkWorkspace(t *testing.T) {
 			}
 			manager.Clientset = fakek8s.NewSimpleClientset(pod)
 
-			err = manager.markWorkspace(startCtx.Request.Id, test.Operations...)
+			err = manager.markWorkspace(context.Background(), startCtx.Request.Id, test.Operations...)
 			if err != nil && err.Error() != test.ExpectedErr {
 				t.Errorf("markWorkspace failed: %v", err)
 				return
 			}
 
-			pod, _ = manager.findWorkspacePod(startCtx.Request.Id)
+			pod, _ = manager.findWorkspacePod(context.Background(), startCtx.Request.Id)
 			modificationPosterior := make(map[string]string)
 			for k, v := range pod.Annotations {
 				if _, wasThereAlready := modificationPrior[k]; !wasThereAlready {

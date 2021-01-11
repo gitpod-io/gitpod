@@ -7,6 +7,8 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/test"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -28,7 +30,7 @@ var integrationTestPatchNodesCmd = &cobra.Command{
 
 		labelselector, _ := cmd.Flags().GetString("label-selector")
 		dryRun, _ := cmd.Flags().GetBool("dry-run")
-		nodes, err := client.CoreV1().Nodes().List(metav1.ListOptions{LabelSelector: labelselector})
+		nodes, err := client.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{LabelSelector: labelselector})
 		if err != nil {
 			log.WithError(err).Fatal("cannot list nodes")
 		}
@@ -40,7 +42,7 @@ var integrationTestPatchNodesCmd = &cobra.Command{
 				continue
 			}
 
-			_, err := client.CoreV1().Nodes().Update(&n)
+			_, err := client.CoreV1().Nodes().Update(context.Background(), &n, metav1.UpdateOptions{})
 			if err != nil {
 				log.WithError(err).WithField("node", n.Name).Warn("cannot patch node")
 				continue
