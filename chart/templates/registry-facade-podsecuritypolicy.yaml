@@ -8,7 +8,7 @@
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
-  name: {{ .Release.Namespace }}-ns-restricted-root-user
+  name: {{ .Release.Namespace }}-ns-registry-facade
   labels:
     app: {{ template "gitpod.fullname" . }}
     component: cluster
@@ -35,10 +35,8 @@ spec:
   # Allow core volume types.
   volumes:
     - 'configMap'
-    - 'projected'
     - 'secret'
     - 'emptyDir'
-    - 'persistentVolumeClaim'
     - 'hostPath'
   hostNetwork: true
   hostIPC: false
@@ -47,9 +45,7 @@ spec:
   - min: 30000
     max: 33000
   runAsUser:
-    ### TODO root proxy
     rule: 'RunAsAny'
-    ### TODO root proxy
   seLinux:
     # This policy assumes the nodes are using AppArmor rather than SELinux.
     rule: 'RunAsAny'
