@@ -132,7 +132,7 @@ func LaunchWorkspaceDirectly(it *Test, opts ...LaunchWorkspaceDirectlyOpt) (res 
 
 	ideImage := options.IdeImage
 	if ideImage == "" {
-		pods, err := it.clientset.CoreV1().Pods(it.namespace).List(metav1.ListOptions{
+		pods, err := it.clientset.CoreV1().Pods(it.namespace).List(context.Background(), metav1.ListOptions{
 			LabelSelector: "component=server",
 		})
 		if err != nil {
