@@ -192,4 +192,4 @@ installation_completed_hook &
 
 
 # start k3s
-/bin/k3s server --disable traefik
+/bin/k3s server --disable traefik --node-label "gitpod.io/main-node=true"

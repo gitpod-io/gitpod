@@ -28,6 +28,8 @@ spec:
         hostPath:
           path: /chart
     restartPolicy: OnFailure
+    nodeSelector:
+      gitpod.io/main-node: "true"
 
 ---
 
