@@ -498,8 +498,8 @@ minio:
     name: minio
   resources:
     requests:
-      # defaults to 4GB, set to 1GB to be able to start on 2vCPU/4GB RAM nodes
-      memory: 1GB
+      # defaults to 4GB, set to 2GB to be able to start on smaller instances
+      memory: 2G
 
 mysql:
   enabled: true
