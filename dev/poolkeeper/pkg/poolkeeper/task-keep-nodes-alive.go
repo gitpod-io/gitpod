@@ -5,12 +5,14 @@
 package poolkeeper
 
 import (
+	"context"
 	"fmt"
 	"time"
 
 	// appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	// "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
 
@@ -37,7 +39,7 @@ type KeepNodeAlive struct {
 }
 
 func (k *KeepNodeAlive) run(clientset *kubernetes.Clientset, t time.Time) {
-	podList, err := clientset.CoreV1().Pods("").List(metav1.ListOptions{
+	podList, err := clientset.CoreV1().Pods("").List(context.Background(), metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=true", keepNodeAliveMarkerLabel),
 	})
 	if err != nil {
@@ -67,7 +69,7 @@ func (k *KeepNodeAlive) run(clientset *kubernetes.Clientset, t time.Time) {
 
 		uid1000 := int64(1000)
 		v1 := clientset.CoreV1()
-		pod, err := v1.Pods(namespace).Create(&corev1.Pod{
+		pod, err := v1.Pods(namespace).Create(context.Background(), &corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: "poolkeeper-keep-alive",
 				Labels: map[string]string{
@@ -87,7 +89,7 @@ func (k *KeepNodeAlive) run(clientset *kubernetes.Clientset, t time.Time) {
 				},
 				NodeSelector: k.NodeSelector,
 			},
-		})
+		}, metav1.CreateOptions{})
 		if err != nil {
 			log.WithError(err).Errorf("error creating keep-alive pod")
 			return
@@ -98,7 +100,7 @@ func (k *KeepNodeAlive) run(clientset *kubernetes.Clientset, t time.Time) {
 			v1 := clientset.CoreV1()
 			background := metav1.DeletePropagationBackground
 			for _, pod := range currentKeepAlivePods {
-				err := v1.Pods(namespace).Delete(pod.Name, &metav1.DeleteOptions{PropagationPolicy: &background})
+				err := v1.Pods(namespace).Delete(context.Background(), pod.Name, metav1.DeleteOptions{PropagationPolicy: &background})
 				if err != nil {
 					log.WithError(err).Errorf("error deleting keep-alive pod")
 					continue
