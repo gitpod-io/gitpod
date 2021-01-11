@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -168,7 +169,7 @@ func waitUntilAllTestPodsAreScheduled(clientSet *kubernetes.Clientset, stopChan 
 	for {
 		select {
 		case <-time.After(2 * time.Second):
-			pods, err := clientSet.CoreV1().Pods("").List(metav1.ListOptions{
+			pods, err := clientSet.CoreV1().Pods("").List(context.Background(), metav1.ListOptions{
 				LabelSelector: labels.SelectorFromSet(testPodIdentifier).String(),
 			})
 			if err != nil {
@@ -203,7 +204,7 @@ func waitUntilAllTestPodsAreScheduled(clientSet *kubernetes.Clientset, stopChan 
 }
 
 func buildCurrentState(clientSet *kubernetes.Clientset) (*scheduler.State, error) {
-	allWorkspaceNodes, err := clientSet.CoreV1().Nodes().List(metav1.ListOptions{
+	allWorkspaceNodes, err := clientSet.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{
 		LabelSelector: labels.SelectorFromSet(workspaceNodeIdentifier).String(),
 	})
 	if err != nil {
@@ -218,7 +219,7 @@ func buildCurrentState(clientSet *kubernetes.Clientset) (*scheduler.State, error
 		potentialNodes = append(potentialNodes, &allWorkspaceNodes.Items[i])
 	}
 
-	allPods, err := clientSet.CoreV1().Pods("").List(metav1.ListOptions{})
+	allPods, err := clientSet.CoreV1().Pods("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.WithError(err).Fatal("cannot list pods")
 		return nil, err
@@ -292,7 +293,7 @@ func startTestPod(clientSet *kubernetes.Clientset, nr int, suffix string) error 
 			},
 		},
 	}
-	_, err := clientSet.CoreV1().Pods(testNamespace).Create(&pod)
+	_, err := clientSet.CoreV1().Pods(testNamespace).Create(context.Background(), &pod, metav1.CreateOptions{})
 	return err
 }
 
@@ -310,7 +311,7 @@ func calcEmptySlots(nodes []*scheduler.Node) int {
 
 func cleanup(clientSet *kubernetes.Clientset) {
 	foreground := metav1.DeletePropagationForeground
-	err := clientSet.CoreV1().Pods(testNamespace).DeleteCollection(&metav1.DeleteOptions{
+	err := clientSet.CoreV1().Pods(testNamespace).DeleteCollection(context.Background(), metav1.DeleteOptions{
 		PropagationPolicy: &foreground,
 	}, metav1.ListOptions{
 		LabelSelector: labels.SelectorFromSet(testPodIdentifier).String(),
