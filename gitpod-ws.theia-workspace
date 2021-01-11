@@ -19,9 +19,10 @@
       { "path": "install/installer" },
       { "path": "test" },
       { "path": "dev/blowtorch" },
+      { "path": "dev/gpctl" },
       { "path": "dev/loadgen" },
-      { "path": "dev/sweeper" },
-      { "path": "dev/poolkeeper" }
+      { "path": "dev/poolkeeper" },
+      { "path": "dev/sweeper" }
    ],
    "settings": {
       "typescript.tsdk": "gitpod/node_modules/typescript/lib",
