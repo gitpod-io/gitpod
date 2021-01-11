@@ -31,6 +31,7 @@ spec:
         kind: job
         stage: {{ .Values.installation.stage }}
     spec:
+{{ include "gitpod.pod.affinity" $this | indent 6 }}
       restartPolicy: Never
       serviceAccountName: db-migrations
       imagePullSecrets:
