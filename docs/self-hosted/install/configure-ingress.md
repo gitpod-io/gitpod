@@ -4,7 +4,9 @@ url: /docs/self-hosted/latest/install/configure-ingress/
 
 # Configure Ingress to your Gitpod installation
 
-Configuring ingress into your Gitpod installation requires two things: DNS entries and HTTPS certificates.
+Configuring ingress into your Gitpod installation requires two things:
+ - three DNS entries pointing at the IP of Gitpod's proxy service, and
+ - HTTPS certificates.
 
 ## 1. DNS Entries
 Gitpod requires a domain resolvable by some nameserver (typically a public domain name, e.g. `your-domain.com`).
@@ -21,7 +23,10 @@ Installing Gitpod on a subdomain works as well. For example:
     *.gitpod.your-domain.com
     *.ws.gitpod.your-domain.com
 
- 1. Setup `A` records for all three (sub)domains.
+ 1. Setup `A` records for all three (sub)domains. To learn your installation's IP run:
+    ```
+    kubectl describe svc proxy | grep -i ingress
+    ```
 
  2. Create a file `values.custom.yaml` with the following content:
     ```yaml
@@ -55,16 +60,14 @@ To configure the HTTPS certificates for your domain
 
 ### Using Let's Encrypt to generate HTTPS certificates
 
-The most accessible means of obtaining HTTPS certificates is using [Let's Encrypt](https://letsencrypt.org/) which provides free certificats to anybody who can prove ownership of a domain.
-Gitpod requires [wildcard certificates](https://en.wikipedia.org/wiki/Wildcard_certificate) (e.g. `*.ws.your-domain.com`) which [can be obtained via Let's Encrypt](https://community.letsencrypt.org/t/acme-v2-production-environment-wildcards/55578) but require [proof of ownership via DNS](https://letsencrypt.org/docs/challenge-types/#dns-01-challenge).
-There is a [plethora of tutorials](https://www.google.com/search?q=letsencrypt+wildcard) how to [generate wildcard certificates](https://medium.com/@saurabh6790/generate-wildcard-ssl-certificate-using-lets-encrypt-certbot-273e432794d7) using Let's Encrypt.
-Things get considerably easier when your domain is registered with a service for which a [Certbot DNS plugin exists](https://certbot.eff.org/docs/using.html#dns-plugins).
+The most accessible means of obtaining HTTPS certificates is using [Let's Encrypt](https://letsencrypt.org/). It provides free certificats to anybody who can prove ownership of a domain.
+Let's Encrypt offers a program called [certbot](https://certbot.eff.org/) to make acquiring certificates as striaght forward as possible.
 
 Assuming you have [certbot](https://certbot.eff.org/) installed, the following script will generate and configure the required certificates (notice the placeholders):
 ```bash
 export DOMAIN=your-domain.com
 export EMAIL=your@email.here
-export WORKDIR=/workspace/letsencrypt
+export WORKDIR=$PWD/letsencrypt
 
 certbot certonly \
     --config-dir $WORKDIR/config \
@@ -83,3 +86,5 @@ certbot certonly \
 mkdir -p secrets/https-certificates
 find $WORKDIR/config/live -name "*.pem" -exec cp {} secrets/https-certificates \;
 ```
+
+ > Note: Do not refrain if `certbot` fails on first execution: Depending on the challenge used you might have to restart it _once_.
