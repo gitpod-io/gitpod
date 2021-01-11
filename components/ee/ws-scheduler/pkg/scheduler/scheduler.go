@@ -470,7 +470,7 @@ func (s *Scheduler) bindPodToNode(ctx context.Context, pod *corev1.Pod, nodeName
 		},
 	}
 
-	err = s.Clientset.CoreV1().Pods(pod.Namespace).Bind(binding)
+	err = s.Clientset.CoreV1().Pods(pod.Namespace).Bind(ctx, binding, metav1.CreateOptions{})
 	if err != nil {
 		return xerrors.Errorf("cannot bind pod %s to %s: %w", pod.Name, nodeName, err)
 	}
@@ -480,7 +480,7 @@ func (s *Scheduler) bindPodToNode(ctx context.Context, pod *corev1.Pod, nodeName
 	// This is not really neccesary for the scheduling itself, but helps to debug things.
 	message := fmt.Sprintf("Placed pod [%s/%s] on %s\n", pod.Namespace, pod.Name, nodeName)
 	timestamp := time.Now().UTC()
-	_, err = s.Clientset.CoreV1().Events(pod.Namespace).Create(&corev1.Event{
+	_, err = s.Clientset.CoreV1().Events(pod.Namespace).Create(ctx, &corev1.Event{
 		Count:          1,
 		Message:        message,
 		Reason:         "Scheduled",
@@ -499,7 +499,7 @@ func (s *Scheduler) bindPodToNode(ctx context.Context, pod *corev1.Pod, nodeName
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: fmt.Sprintf("%s - scheduled", pod.Name),
 		},
-	})
+	}, metav1.CreateOptions{})
 	if err != nil {
 		return xerrors.Errorf("cannot emit event for pod %s: %w", pod.Name, err)
 	}
@@ -552,7 +552,7 @@ func (s *Scheduler) recordSchedulingFailure(ctx context.Context, pod *corev1.Pod
 	}).WithError(failureErr).Warnf("scheduling a pod failed: %s", reason)
 
 	timestamp := time.Now().UTC()
-	_, err = s.Clientset.CoreV1().Events(pod.Namespace).Create(&corev1.Event{
+	_, err = s.Clientset.CoreV1().Events(pod.Namespace).Create(ctx, &corev1.Event{
 		Count:          1,
 		Message:        message,
 		Reason:         "FailedScheduling",
@@ -571,7 +571,7 @@ func (s *Scheduler) recordSchedulingFailure(ctx context.Context, pod *corev1.Pod
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: pod.Name + "-",
 		},
-	})
+	}, metav1.CreateOptions{})
 	if err != nil {
 		log.WithField("pod", pod.Name).WithError(err).Warn("cannot record scheduling failure event")
 	}
@@ -581,7 +581,7 @@ func (s *Scheduler) recordSchedulingFailure(ctx context.Context, pod *corev1.Pod
 	//  - this is on the hot path of the single-thread scheduler
 	//  - retry would block other pods from being scheduled
 	//  - the pod is picked up after rescheduleInterval (currently 2s) again anyway
-	updatedPod, err := s.Clientset.CoreV1().Pods(pod.Namespace).Get(pod.Name, metav1.GetOptions{})
+	updatedPod, err := s.Clientset.CoreV1().Pods(pod.Namespace).Get(ctx, pod.Name, metav1.GetOptions{})
 	if err != nil {
 		log.WithField("pod", pod.Name).WithError(err).Warn("cannot get updated pod - subsequent pod modifications may break")
 	} else {
@@ -595,7 +595,7 @@ func (s *Scheduler) recordSchedulingFailure(ctx context.Context, pod *corev1.Pod
 		Message: failureErr.Error(),
 	}
 	pod.Status.Conditions = append(pod.Status.Conditions, failedCondition)
-	_, err = s.Clientset.CoreV1().Pods(pod.Namespace).UpdateStatus(pod)
+	_, err = s.Clientset.CoreV1().Pods(pod.Namespace).UpdateStatus(ctx, pod, metav1.UpdateOptions{})
 	if err != nil {
 		log.WithError(err).Warn("cannot mark pod as unscheduled - will try again")
 		return xerrors.Errorf("cannot mark pod as unscheduled: %w", err)

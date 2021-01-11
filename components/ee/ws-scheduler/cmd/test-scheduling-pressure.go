@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -146,12 +147,12 @@ func createPod(clientSet *kubernetes.Clientset, scheduler string, namespace stri
 			},
 		},
 	}
-	_, err := clientSet.CoreV1().Pods(namespace).Create(&pod)
+	_, err := clientSet.CoreV1().Pods(namespace).Create(context.Background(), &pod, metav1.CreateOptions{})
 	return err
 }
 func cleanupPressureTest(clientSet *kubernetes.Clientset, namespace string, selectorLabels labels.Set) {
 	foreground := metav1.DeletePropagationForeground
-	err := clientSet.CoreV1().Pods(namespace).DeleteCollection(&metav1.DeleteOptions{
+	err := clientSet.CoreV1().Pods(namespace).DeleteCollection(context.Background(), metav1.DeleteOptions{
 		PropagationPolicy: &foreground,
 	}, metav1.ListOptions{
 		LabelSelector: labels.SelectorFromSet(selectorLabels).String(),
