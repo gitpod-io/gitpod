@@ -9,7 +9,9 @@ Gitpod also provides more optimized installations offering better performance fo
 * *Google Cloud Platform*: Install Gitpod in a blank GCP project [using a script that automates the procedure](../install-on-gcp-script/).
 * *AWS*: Install Gitpod on AWS [using a script that automates the procedure](../install-on-aws-script/).
 
- > Kubernetes >= 1.15 and <= 1.17 is supported
+ > Kubernetes version 1.15 <= x <= 1.17 is supported
+
+ > Gitpod should work on smaller nodes out of the box (2vCPUs, 8GB RAM). For a solid experience we recommend _at least_ 4vCPUs and 16GB RAM for workspaces nodes.
 
 Gitpod is installed using [Helm](https://helm.sh).
 The source of the chart can be found [here](https://github.com/gitpod-io/gitpod/blob/master/chart/).
@@ -27,7 +29,11 @@ helm install gitpod gitpod.io/gitpod
 
  > Review the deployment worked properly by running `kubectl get pods`. Eventually all pods should be up-and-running. In case they are not have a look the the [Troubleshooting Guide](../troubleshooting/)
  
- 1. Configure [ingress into the cluster](../configure-ingress/)
+ 1. Configure [ingress into the cluster](../configure-ingress/).
+    It makes sense to create a new folder for all Gitpod specific custom configuration and files:
+    ```
+    mkdir gitpod && cd gitpod
+    ```
 
  2. Go to [https://\<your-domain.com\>](https://\<your-domain.com\>) and follow the steps to complete the installation.
 
