@@ -499,6 +499,10 @@ minio:
   serviceAccount:
     create: true
     name: minio
+  resources:
+    requests:
+      # defaults to 4GB, set to 2GB to be able to start on smaller instances
+      memory: 2G
 
 mysql:
   enabled: true
