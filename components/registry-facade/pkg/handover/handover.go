@@ -84,6 +84,7 @@ func sendListener(conn *net.UnixConn, l *net.TCPListener) error {
 	}
 	lfd := int(lf.Fd())
 
+	// UnixRights encodes a set of open file descriptors into a socket control message for sending to another process.
 	rights := unix.UnixRights(lfd)
 	return unix.Sendmsg(sktfd, nil, rights, nil, 0)
 }

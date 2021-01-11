@@ -15,5 +15,5 @@ subjects:
   name: registry-facade
 roleRef:
   kind: ClusterRole
-  name: {{ .Release.Namespace }}-ns-psp:restricted-root-user
+  name: {{ .Release.Namespace }}-ns-registry-facade
   apiGroup: rbac.authorization.k8s.io

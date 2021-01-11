@@ -196,7 +196,7 @@ async function deployToDev(version, previewWithHttps, workspaceFeatureFlags, dyn
         exec(`/usr/local/bin/helm3 delete jaeger-${destname} || echo jaeger-${destname} was not installed yet`, {slice: 'predeploy cleanup'});
 
         let objs = [];
-        ["ws-scheduler", "node-daemon", "cluster", "workspace", "jaeger", "jaeger-agent", "ws-sync", "ws-manager-node", "ws-daemon"].forEach(comp => 
+        ["ws-scheduler", "node-daemon", "cluster", "workspace", "jaeger", "jaeger-agent", "ws-sync", "ws-manager-node", "ws-daemon", "registry-facade"].forEach(comp => 
             ["ClusterRole", "ClusterRoleBinding", "PodSecurityPolicy"].forEach(kind =>
                 shell
                     .exec(`kubectl get ${kind} -l component=${comp} --no-headers -o=custom-columns=:metadata.name | grep ${namespace}-ns`)
