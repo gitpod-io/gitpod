@@ -112,7 +112,9 @@ func (c *Containerd4214Workaround) ensurePodGetsDeleted(rt container.Runtime, cl
 			continue
 		}
 
-		err = clientSet.CoreV1().Pods(namespace).Delete(podName, v1.NewDeleteOptions(0))
+		ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		err = clientSet.CoreV1().Pods(namespace).Delete(ctx, podName, *v1.NewDeleteOptions(0))
 		if err, ok := err.(*k8serr.StatusError); ok && err.ErrStatus.Code == http.StatusNotFound {
 			return nil
 		}
