@@ -39,7 +39,7 @@ Gitpod requires HTTPS certificates to function properly. We recommend using [Let
 > Important: The HTTPS certificates for your domain must include `your-domain.com`, `*.your-domain.com` and `*.ws.your-domain.com`. Beware that wildcard certificates are valid for one level only (i.e. `*.a.com` is not valid for `c.b.a.com`).
 
 To configure the HTTPS certificates for your domain
- 1. [Generate certificates](#using-let-s-encrypt) and put your certificate files under `secrets/https-certificates/`:
+ 1. [Generate certificates](#using-lets-encrypt-to-generate-https-certificates) and put your certificate files under `secrets/https-certificates/`:
     ```
     secrets/https-certificates:
       |- cert.pem
