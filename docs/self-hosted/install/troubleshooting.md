@@ -6,7 +6,7 @@ url: /docs/self-hosted/latest/install/troubleshooting/
 
 This section should solve all errors that might come up during installation of Gitpod.
 
-## `ws-daemon` is stuck in `Init: 0/1`,
+## `ws-daemon` is stuck in `Init: 0/1`
 
 ### Diagnose   
 `kubectl describe pod ws-daemon-...` gives:
