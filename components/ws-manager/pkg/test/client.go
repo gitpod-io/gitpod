@@ -5,6 +5,7 @@
 package test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -50,7 +51,9 @@ func GetIntegrationTestClient(kubecfgfn string) (client kubernetes.Interface, na
 	}
 
 	client = kubernetes.NewForConfigOrDie(res)
-	ps, err := client.CoreV1().Pods(namespace).List(metav1.ListOptions{LabelSelector: "component=ws-manager"})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ps, err := client.CoreV1().Pods(namespace).List(ctx, metav1.ListOptions{LabelSelector: "component=ws-manager"})
 	if err != nil {
 		log.WithError(err).Warn("cannot ensure there's no ws-manager running - test may fail inexplicably")
 	}
@@ -59,8 +62,8 @@ func GetIntegrationTestClient(kubecfgfn string) (client kubernetes.Interface, na
 		return
 	}
 
-	client.CoreV1().Pods(namespace).DeleteCollection(metav1.NewDeleteOptions(30), metav1.ListOptions{LabelSelector: "component=workspace"})
-	client.CoreV1().ConfigMaps(namespace).DeleteCollection(metav1.NewDeleteOptions(30), metav1.ListOptions{LabelSelector: "component=workspace"})
+	client.CoreV1().Pods(namespace).DeleteCollection(ctx, *metav1.NewDeleteOptions(30), metav1.ListOptions{LabelSelector: "component=workspace"})
+	client.CoreV1().ConfigMaps(namespace).DeleteCollection(ctx, *metav1.NewDeleteOptions(30), metav1.ListOptions{LabelSelector: "component=workspace"})
 
 	return
 }

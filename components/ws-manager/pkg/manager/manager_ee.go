@@ -29,7 +29,7 @@ func (m *Manager) TakeSnapshot(ctx context.Context, req *api.TakeSnapshotRequest
 	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
 	defer tracing.FinishSpan(span, &err)
 
-	pod, err := m.findWorkspacePod(req.Id)
+	pod, err := m.findWorkspacePod(ctx, req.Id)
 	if isKubernetesObjNotFoundError(err) {
 		return nil, status.Errorf(codes.NotFound, "workspace %s does not exist", req.Id)
 	}
@@ -39,7 +39,7 @@ func (m *Manager) TakeSnapshot(ctx context.Context, req *api.TakeSnapshotRequest
 	tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
 	tracing.LogEvent(span, "get pod")
 
-	wso, err := m.getWorkspaceObjects(pod)
+	wso, err := m.getWorkspaceObjects(ctx, pod)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get workspace status: %q", err)
 	}
@@ -75,7 +75,7 @@ func (m *Manager) ControlAdmission(ctx context.Context, req *api.ControlAdmissio
 	tracing.LogRequestSafe(span, req)
 	defer tracing.FinishSpan(span, &err)
 
-	pod, err := m.findWorkspacePod(req.Id)
+	pod, err := m.findWorkspacePod(ctx, req.Id)
 	if isKubernetesObjNotFoundError(err) {
 		return nil, status.Errorf(codes.NotFound, "workspace %s does not exist", req.Id)
 	}
@@ -85,7 +85,7 @@ func (m *Manager) ControlAdmission(ctx context.Context, req *api.ControlAdmissio
 	tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
 	tracing.LogEvent(span, "get pod")
 
-	wso, err := m.getWorkspaceObjects(pod)
+	wso, err := m.getWorkspaceObjects(ctx, pod)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get workspace status: %q", err)
 	}
@@ -106,7 +106,7 @@ func (m *Manager) ControlAdmission(ctx context.Context, req *api.ControlAdmissio
 	// lowercase is just for vanity's sake
 	val = strings.ToLower(val)
 
-	err = m.markWorkspace(req.Id, addMark(workspaceAdmissionAnnotation, val))
+	err = m.markWorkspace(ctx, req.Id, addMark(workspaceAdmissionAnnotation, val))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot change workspace admission level: %q", err)
 	}
@@ -126,7 +126,7 @@ func (m *Manager) SetTimeout(ctx context.Context, req *api.SetTimeoutRequest) (r
 		return nil, xerrors.Errorf("invalid duration \"%s\": %w", req.Duration, err)
 	}
 
-	err = m.markWorkspace(req.Id, addMark(customTimeoutAnnotation, req.Duration))
+	err = m.markWorkspace(ctx, req.Id, addMark(customTimeoutAnnotation, req.Duration))
 	if err != nil {
 		return nil, xerrors.Errorf("cannot set workspace timeout: %w", err)
 	}

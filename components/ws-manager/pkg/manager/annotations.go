@@ -85,12 +85,12 @@ const (
 )
 
 // markWorkspaceAsReady adds annotations to a workspace pod
-func (m *Manager) markWorkspace(workspaceID string, annotations ...*annotation) error {
+func (m *Manager) markWorkspace(ctx context.Context, workspaceID string, annotations ...*annotation) error {
 	client := m.Clientset.CoreV1().Pods(m.Config.Namespace)
 
 	// Retry on failure. Sometimes this doesn't work because of concurrent modification. The Kuberentes way is to just try again after waiting a bit.
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		pod, err := m.findWorkspacePod(workspaceID)
+		pod, err := m.findWorkspacePod(ctx, workspaceID)
 		if err != nil {
 			return xerrors.Errorf("cannot find workspace %s: %w", workspaceID, err)
 		}
@@ -109,7 +109,7 @@ func (m *Manager) markWorkspace(workspaceID string, annotations ...*annotation) 
 			}
 		}
 
-		_, err = client.Update(pod)
+		_, err = client.Update(ctx, pod, metav1.UpdateOptions{})
 
 		return err
 	})
@@ -186,7 +186,10 @@ func (m *Manager) patchPodLifecycleIndependentState(ctx context.Context, workspa
 	defer tracing.FinishSpan(span, &err)
 
 	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		plisCfg, err := m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Get(getPodLifecycleIndependentCfgMapName(workspaceID), metav1.GetOptions{})
+		ctx, cancel := context.WithTimeout(ctx, kubernetesOperationTimeout)
+		defer cancel()
+
+		plisCfg, err := m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Get(ctx, getPodLifecycleIndependentCfgMapName(workspaceID), metav1.GetOptions{})
 		if isKubernetesObjNotFoundError(err) {
 			return xerrors.Errorf("workspace %s has no pod lifecycle independent state", workspaceID)
 		}
@@ -229,7 +232,7 @@ func (m *Manager) patchPodLifecycleIndependentState(ctx context.Context, workspa
 		tracing.LogKV(span, "postPatchPLIS", plisCfg.Annotations[plisDataAnnotation])
 		tracing.LogKV(span, "needsUpdate", "true")
 
-		_, err = m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Update(plisCfg)
+		_, err = m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Update(ctx, plisCfg, metav1.UpdateOptions{})
 		return err
 	})
 

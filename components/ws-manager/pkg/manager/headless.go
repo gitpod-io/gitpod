@@ -62,7 +62,7 @@ func (hl *HeadlessListener) kubernetesLogStreamProvider(pod *corev1.Pod, contain
 		Follow:     true,
 		SinceTime:  &metav1.Time{Time: from},
 	})
-	logs, err := req.Stream()
+	logs, err := req.Stream(context.Background())
 	if err != nil {
 		return nil, err
 	}

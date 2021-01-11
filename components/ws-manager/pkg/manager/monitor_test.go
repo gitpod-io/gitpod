@@ -79,12 +79,12 @@ func TestDeleteDanglingPodLifecycleIndependentState(t *testing.T) {
 				}
 			}
 
-			err = monitor.deleteDanglingPodLifecycleIndependentState()
+			err = monitor.deleteDanglingPodLifecycleIndependentState(context.Background())
 			if err != nil {
 				return &gold{Error: err.Error()}
 			}
 
-			cms, err := manager.Clientset.CoreV1().ConfigMaps(manager.Config.Namespace).List(metav1.ListOptions{})
+			cms, err := manager.Clientset.CoreV1().ConfigMaps(manager.Config.Namespace).List(context.Background(), metav1.ListOptions{})
 			if err != nil {
 				panic(err)
 			}

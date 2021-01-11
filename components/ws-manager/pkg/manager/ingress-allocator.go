@@ -5,6 +5,7 @@
 package manager
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -128,11 +129,14 @@ func NewIngressPortAllocator(config *IngressPortAllocatorConfig, clientset kuber
 // run regularly syncs back the state persisted in the kubernetes service annotations into the local cache.
 // Meant to be run as goroutine
 func (pa *kubernetesBackedPortAllocator) regularlyReconciliateState() {
+	tick := time.NewTicker(time.Duration(pa.Config.StateResyncInterval))
+	defer tick.Stop()
+
 	for {
 		select {
 		case <-pa.stopChan:
 			return
-		case <-time.After(time.Duration(pa.Config.StateResyncInterval)):
+		case <-tick.C:
 		}
 
 		err := pa.reconciliateState()
@@ -148,8 +152,11 @@ func (pa *kubernetesBackedPortAllocator) Stop() {
 
 // reconciliateState loads the current port mappings from kubernetes service objects
 func (pa *kubernetesBackedPortAllocator) reconciliateState() error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(pa.Config.StateResyncInterval))
+	defer cancel()
+
 	// read services and map to allocated ports
-	services, err := pa.clientset.CoreV1().Services(pa.namespace).List(metav1.ListOptions{
+	services, err := pa.clientset.CoreV1().Services(pa.namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=true", markerLabel),
 	})
 	if err != nil {

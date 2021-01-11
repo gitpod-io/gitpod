@@ -184,7 +184,10 @@ func (m *phaseTotalVec) Collect(ch chan<- prometheus.Metric) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	pods, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).List(workspaceObjectListOptions())
+	ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
+	defer cancel()
+
+	pods, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).List(ctx, workspaceObjectListOptions())
 	if err != nil {
 		log.WithError(err).Debugf("cannot list workspaces for %s gauge", m.name)
 		return

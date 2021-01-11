@@ -129,7 +129,7 @@ func (m *Manager) CreateMonitor() (*Monitor, error) {
 }
 
 func (m *Monitor) connectToPodWatch() error {
-	podwatch, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).Watch(workspaceObjectListOptions())
+	podwatch, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).Watch(context.Background(), workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("cannot watch pods: %w", err)
 	}
@@ -139,7 +139,7 @@ func (m *Monitor) connectToPodWatch() error {
 }
 
 func (m *Monitor) connectToConfigMapWatch() error {
-	cfgwatch, err := m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).Watch(workspaceObjectListOptions())
+	cfgwatch, err := m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).Watch(context.Background(), workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("cannot watch config maps: %w", err)
 	}
@@ -301,7 +301,12 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 		return fmt.Errorf("received non-pod event")
 	}
 
-	wso, err := m.manager.getWorkspaceObjects(pod)
+	// We start with the default kubernetes operation timeout to not block everything in case completing
+	// the object hangs for some reason. Further down when notifying clients, we move to a context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
+	defer cancel()
+
+	wso, err := m.manager.getWorkspaceObjects(ctx, pod)
 	if err != nil {
 		return xerrors.Errorf("cannot handle workspace event: %w", err)
 	}
@@ -342,7 +347,7 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 	// thus we start OnChange as a goroutine.
 	// BEWARE beyond this point one must not modify status anymore - we've already sent it out BEWARE
 	span := m.traceWorkspace("handle-"+status.Phase.String(), wso)
-	ctx := opentracing.ContextWithSpan(context.Background(), span)
+	ctx = opentracing.ContextWithSpan(context.Background(), span)
 	onChangeDone := make(chan bool)
 	go func() {
 		// We call OnChange in a Go routine to make sure it doesn't block our internal handling of events.
@@ -418,7 +423,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 		if status.Conditions.Failed != "" && !hasFailureAnnotation {
 			// If this marking operation failes that's ok - we'll still continue to shut down the workspace.
 			// The failure message won't persist while stopping the workspace though.
-			err := m.manager.markWorkspace(workspaceID, addMark(workspaceFailedBeforeStoppingAnnotation, "true"))
+			err := m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceFailedBeforeStoppingAnnotation, "true"))
 			if err != nil {
 				log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).WithError(err).Debug("cannot mark workspace as workspaceFailedBeforeStoppingAnnotation")
 			}
@@ -447,7 +452,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 
 			if err != nil {
 				// workspace initialization failed, which means the workspace as a whole failed
-				err = m.manager.markWorkspace(workspaceID, addMark(workspaceExplicitFailAnnotation, err.Error()))
+				err = m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, err.Error()))
 				if err != nil {
 					log.WithError(err).Warn("was unable to mark workspace as failed")
 				}
@@ -468,7 +473,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 
 			if err != nil {
 				// workspace initialization failed, which means the workspace as a whole failed
-				err = m.manager.markWorkspace(workspaceID, addMark(workspaceExplicitFailAnnotation, err.Error()))
+				err = m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, err.Error()))
 				if err != nil {
 					log.WithError(err).Warn("was unable to mark workspace as failed")
 				}
@@ -490,7 +495,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 			tracing.LogEvent(span, "removeTraceAnnotation")
 			// once a regular workspace is up and running, we'll remove the traceID information so that the parent span
 			// ends once the workspace has started
-			err := m.manager.markWorkspace(workspaceID, deleteMark(wsk8s.TraceIDAnnotation))
+			err := m.manager.markWorkspace(ctx, workspaceID, deleteMark(wsk8s.TraceIDAnnotation))
 			if err != nil {
 				log.WithError(err).Warn("was unable to remove traceID annotation from workspace")
 			}
@@ -563,7 +568,7 @@ func (m *Monitor) actOnHeadlessDone(pod *corev1.Pod, failed bool) (err error) {
 	// That means that the moment anything goes wrong with headless workspaces we need to fail the workspace to issue a status update.
 	handleFailure := func(msg string) error {
 		// marking the workspace as tasked failed will cause the workspace to fail as a whole which in turn will make the monitor actually stop it
-		err := m.manager.markWorkspace(id, addMark(workspaceExplicitFailAnnotation, msg))
+		err := m.manager.markWorkspace(context.Background(), id, addMark(workspaceExplicitFailAnnotation, msg))
 		if err == nil || isKubernetesObjNotFoundError(err) {
 			// workspace is gone - we're good
 			return nil
@@ -603,7 +608,7 @@ func (m *Monitor) actOnHeadlessDone(pod *corev1.Pod, failed bool) (err error) {
 			return handleFailure(fmt.Sprintf("cannot take snapshot: %v", err))
 		}
 
-		err = m.manager.markWorkspace(id, addMark(workspaceSnapshotAnnotation, res.Url))
+		err = m.manager.markWorkspace(context.Background(), id, addMark(workspaceSnapshotAnnotation, res.Url))
 		if err != nil {
 			tracing.LogError(span, err)
 			log.WithError(err).Warn("cannot mark headless workspace with snapshot - that's one prebuild lost")
@@ -660,8 +665,11 @@ func (m *Monitor) onConfigMapEvent(evt watch.Event) error {
 	//
 	// In this sequence we would intermittently commpute our state from a new version of the pod. This would break
 	// (and has broken) a stable order of status.
+	ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
+	defer cancel()
+
 	wso := &workspaceObjects{PLIS: cfgmap}
-	err := m.manager.completeWorkspaceObjects(wso)
+	err := m.manager.completeWorkspaceObjects(ctx, wso)
 	if err != nil {
 		return xerrors.Errorf("cannot handle workspace event: %w", err)
 	}
@@ -680,7 +688,7 @@ func (m *Monitor) onConfigMapEvent(evt watch.Event) error {
 	// thus we start OnChange as a goroutine.
 	// BEWARE beyond this point one must not modify status anymore - we've already sent it out BEWARE
 	span := m.traceWorkspace(status.Phase.String(), wso)
-	ctx := opentracing.ContextWithSpan(context.Background(), span)
+	ctx = opentracing.ContextWithSpan(context.Background(), span)
 	onChangeDone := make(chan bool)
 	go func() {
 		// We call OnChange in a Go routine to make sure it doesn't block our internal handling of events.
@@ -716,7 +724,7 @@ func (m *Monitor) actOnConfigMapEvent(ctx context.Context, status *api.Workspace
 
 		// the workspace has stopped, we don't need the workspace state configmap anymore
 		propagationPolicy := metav1.DeletePropagationForeground
-		err = m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).Delete(cfgmap.Name, &metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
+		err = m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).Delete(ctx, cfgmap.Name, metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
 		if err != nil && !isKubernetesObjNotFoundError(err) {
 			return xerrors.Errorf("cannot delete PLIS config map: %w", err)
 		}
@@ -766,12 +774,12 @@ func (m *Monitor) doHousekeeping(ctx context.Context) {
 		m.OnError(err)
 	}
 
-	err = m.deleteDanglingServices()
+	err = m.deleteDanglingServices(ctx)
 	if err != nil {
 		m.OnError(err)
 	}
 
-	err = m.deleteDanglingPodLifecycleIndependentState()
+	err = m.deleteDanglingPodLifecycleIndependentState(ctx)
 	if err != nil {
 		m.OnError(err)
 	}
@@ -936,7 +944,7 @@ func (m *Monitor) waitForWorkspaceReady(ctx context.Context, pod *corev1.Pod) (e
 	tracing.LogEvent(span, "contentInitDone")
 
 	// workspace is ready - mark it as such
-	err = m.manager.markWorkspace(workspaceID, deleteMark(workspaceNeverReadyAnnotation))
+	err = m.manager.markWorkspace(ctx, workspaceID, deleteMark(workspaceNeverReadyAnnotation))
 	if err != nil {
 		return xerrors.Errorf("cannot workspace: %w", err)
 	}
@@ -1302,8 +1310,8 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 }
 
 // deleteDanglingServices removes services for which there is no corresponding workspace pod anymore
-func (m *Monitor) deleteDanglingServices() error {
-	endpoints, err := m.manager.Clientset.CoreV1().Endpoints(m.manager.Config.Namespace).List(workspaceObjectListOptions())
+func (m *Monitor) deleteDanglingServices(ctx context.Context) error {
+	endpoints, err := m.manager.Clientset.CoreV1().Endpoints(m.manager.Config.Namespace).List(ctx, workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("deleteDanglingServices: %w", err)
 	}
@@ -1325,7 +1333,7 @@ func (m *Monitor) deleteDanglingServices() error {
 			m.OnError(fmt.Errorf("service endpoint %s does not have %s label", e.Name, wsk8s.WorkspaceIDLabel))
 			continue
 		}
-		_, err := m.manager.findWorkspacePod(workspaceID)
+		_, err := m.manager.findWorkspacePod(ctx, workspaceID)
 		if !isKubernetesObjNotFoundError(err) {
 			continue
 		}
@@ -1336,7 +1344,7 @@ func (m *Monitor) deleteDanglingServices() error {
 		}
 
 		// this relies on the Kubernetes convention that endpoints have the same name as their services
-		err = servicesClient.Delete(e.Name, &metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
+		err = servicesClient.Delete(ctx, e.Name, metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
 		if err != nil && !isKubernetesObjNotFoundError(err) {
 			m.OnError(xerrors.Errorf("deleteDanglingServices: %w", err))
 			continue
@@ -1348,8 +1356,8 @@ func (m *Monitor) deleteDanglingServices() error {
 }
 
 // deleteDanglingPodLifecycleIndependentState removes PLIS config maps for which no pod exists and which have exceded lonelyPLISSurvivalTime
-func (m *Monitor) deleteDanglingPodLifecycleIndependentState() error {
-	pods, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).List(workspaceObjectListOptions())
+func (m *Monitor) deleteDanglingPodLifecycleIndependentState(ctx context.Context) error {
+	pods, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).List(ctx, workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("deleteDanglingPodLifecycleIndependentState: %w", err)
 	}
@@ -1365,7 +1373,7 @@ func (m *Monitor) deleteDanglingPodLifecycleIndependentState() error {
 	}
 
 	cfgmapsClient := m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace)
-	plisConfigmaps, err := cfgmapsClient.List(workspaceObjectListOptions())
+	plisConfigmaps, err := cfgmapsClient.List(ctx, workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("deleteDanglingPodLifecycleIndependentState: %w", err)
 	}
@@ -1401,7 +1409,7 @@ func (m *Monitor) deleteDanglingPodLifecycleIndependentState() error {
 		//       Prior to deletion we should send a final stopped update.
 
 		propagationPolicy := metav1.DeletePropagationForeground
-		err = cfgmapsClient.Delete(cfgmap.Name, &metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
+		err = cfgmapsClient.Delete(ctx, cfgmap.Name, metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
 		if err != nil {
 			m.OnError(xerrors.Errorf("cannot delete too old PLIS config map: %w", err))
 			continue
@@ -1417,7 +1425,7 @@ func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 	span, ctx := tracing.FromContext(ctx, "markTimedoutWorkspaces")
 	defer tracing.FinishSpan(span, nil)
 
-	pods, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).List(workspaceObjectListOptions())
+	pods, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).List(ctx, workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("stopTimedoutWorkspaces: %w", err)
 	}
@@ -1446,7 +1454,7 @@ func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 		if timedout == "" {
 			continue
 		}
-		err = m.manager.markWorkspace(workspaceID, addMark(workspaceTimedOutAnnotation, timedout))
+		err = m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceTimedOutAnnotation, timedout))
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("workspaceId=%s: %q", workspaceID, err))
 			// don't skip the next step - even if we did not mark the workspace as timed out, we still want to stop it
@@ -1454,7 +1462,7 @@ func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 	}
 
 	// timeout PLIS only workspaces
-	allPlis, err := m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).List(workspaceObjectListOptions())
+	allPlis, err := m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).List(ctx, workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("stopTimedoutWorkspaces: %w", err)
 	}

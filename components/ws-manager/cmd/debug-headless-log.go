@@ -33,7 +33,7 @@ var debugHeadlessLogCmd = &cobra.Command{
 		}
 		log.Info("connected to Kubernetes")
 
-		pod, err := clientset.CoreV1().Pods(debugHeadlessLogNS).Get(args[0], metav1.GetOptions{})
+		pod, err := clientset.CoreV1().Pods(debugHeadlessLogNS).Get(context.Background(), args[0], metav1.GetOptions{})
 		if err != nil {
 			log.WithError(err).Fatal("cannot start listener")
 			return
