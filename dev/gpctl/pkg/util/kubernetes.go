@@ -46,7 +46,7 @@ func GetKubeconfig(kubeconfig string) (res *rest.Config, namespace string, err e
 
 // FindAnyPodForComponent returns the first pod we found for a particular component
 func FindAnyPodForComponent(clientSet kubernetes.Interface, namespace, label string) (podName string, err error) {
-	pods, err := clientSet.CoreV1().Pods(namespace).List(metav1.ListOptions{
+	pods, err := clientSet.CoreV1().Pods(namespace).List(context.Background(), metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("component=%s", label),
 	})
 	if err != nil {
