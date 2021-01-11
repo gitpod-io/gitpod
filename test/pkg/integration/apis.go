@@ -144,7 +144,7 @@ func (c *ComponentAPI) GitpodServer(opts ...GitpodServerOpt) (res gitpod.APIInte
 			c.serverStatus.Token[options.User] = tkn
 		}
 
-		pods, err := c.t.clientset.CoreV1().Pods(c.t.namespace).List(metav1.ListOptions{
+		pods, err := c.t.clientset.CoreV1().Pods(c.t.namespace).List(context.Background(), metav1.ListOptions{
 			LabelSelector: "component=server",
 		})
 		if err != nil {
@@ -315,12 +315,12 @@ func (c *ComponentAPI) DB() *sql.DB {
 	}()
 
 	if c.dbStatus.Port == 0 {
-		svc, err := c.t.clientset.CoreV1().Services(c.t.namespace).Get("db", metav1.GetOptions{})
+		svc, err := c.t.clientset.CoreV1().Services(c.t.namespace).Get(context.Background(), "db", metav1.GetOptions{})
 		if err != nil {
 			rerr = err
 			return nil
 		}
-		pods, err := c.t.clientset.CoreV1().Pods(c.t.namespace).List(metav1.ListOptions{
+		pods, err := c.t.clientset.CoreV1().Pods(c.t.namespace).List(context.Background(), metav1.ListOptions{
 			LabelSelector: labels.SelectorFromSet(svc.Spec.Selector).String(),
 		})
 		if err != nil {
@@ -375,7 +375,7 @@ func (c *ComponentAPI) DB() *sql.DB {
 		c.dbStatus.Port = localPort
 	}
 	if c.dbStatus.Password == "" {
-		sct, err := c.t.clientset.CoreV1().Secrets(c.t.namespace).Get("db-password", metav1.GetOptions{})
+		sct, err := c.t.clientset.CoreV1().Secrets(c.t.namespace).Get(context.Background(), "db-password", metav1.GetOptions{})
 		if err != nil {
 			rerr = err
 			return nil

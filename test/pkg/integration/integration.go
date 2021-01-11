@@ -478,7 +478,7 @@ func (t *Test) selectPod(component ComponentType, options selectPodOptions) (pod
 	}
 	if component == ComponentWorkspaceDaemon && options.InstanceID != "" {
 		var pods *corev1.PodList
-		pods, err = t.clientset.CoreV1().Pods(t.namespace).List(metav1.ListOptions{
+		pods, err = t.clientset.CoreV1().Pods(t.namespace).List(context.Background(), metav1.ListOptions{
 			LabelSelector: "component=workspace,workspaceID=" + options.InstanceID,
 		})
 		if err != nil {
@@ -492,7 +492,7 @@ func (t *Test) selectPod(component ComponentType, options selectPodOptions) (pod
 		listOptions.FieldSelector = "spec.nodeName=" + pods.Items[0].Spec.NodeName
 	}
 
-	pods, err := t.clientset.CoreV1().Pods(t.namespace).List(listOptions)
+	pods, err := t.clientset.CoreV1().Pods(t.namespace).List(context.Background(), listOptions)
 	if err != nil {
 		err = xerrors.Errorf("cannot list pods: %w", err)
 		return
