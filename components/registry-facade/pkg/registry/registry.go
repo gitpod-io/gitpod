@@ -61,6 +61,7 @@ type Config struct {
 		PrivateKey  string `json:"key"`
 	} `json:"tls"`
 	Handover struct {
+		Enabled bool   `json:"enabled"`
 		Sockets string `json:"sockets"`
 	} `json:"handover"`
 }
@@ -227,7 +228,7 @@ func (reg *Registry) Serve() error {
 		l   net.Listener
 		err error
 	)
-	if fn := reg.Config.Handover.Sockets; fn != "" {
+	if fn := reg.Config.Handover.Sockets; reg.Config.Handover.Enabled && fn != "" {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		l, err = ReceiveHandover(ctx, reg.Config.Handover.Sockets)
 		cancel()
@@ -248,11 +249,14 @@ func (reg *Registry) Serve() error {
 		Handler: mux,
 	}
 
-	hoctx, cancelHO := context.WithCancel(context.Background())
-	defer cancelHO()
-	hoc, err := OfferHandover(hoctx, reg.Config.Handover.Sockets, l, reg.srv)
-	if err != nil {
-		return err
+	var hoc <-chan bool
+	if reg.Config.Handover.Enabled {
+		hoctx, cancelHO := context.WithCancel(context.Background())
+		defer cancelHO()
+		hoc, err = OfferHandover(hoctx, reg.Config.Handover.Sockets, l, reg.srv)
+		if err != nil {
+			return err
+		}
 	}
 
 	if reg.Config.TLS != nil {
