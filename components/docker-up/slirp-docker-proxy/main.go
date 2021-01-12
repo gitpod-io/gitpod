@@ -64,6 +64,16 @@ func xmain(f *os.File) error {
 		return errors.New("$DOCKERUP_SLIRP4NETNS_SOCKET needs to be set")
 	}
 
+	// We don't have CAP_NET_BIND_SERVICE outside the network namespace, hence cannot bind
+	// to ports < 1024. If we didn't fail here explicitly, slirp4netns would fail strangely.
+	if *hostPort < 1024 {
+		examplePort, _ := freePort()
+		if examplePort == 0 {
+			examplePort = 8080
+		}
+		return fmt.Errorf("Workspace (host) port needs to be > 1024, e.g. %d:%d instead of %d:%d", examplePort, *containerPort, *hostPort, *containerPort)
+	}
+
 	id, err := exposePort(socketPath)
 	if err != nil {
 		return xerrors.Errorf("cannot expose slirp4net port: %w", err)
@@ -94,6 +104,20 @@ func xmain(f *os.File) error {
 		return xerrors.Errorf("error while killing %s: %w", realProxy, err)
 	}
 	return nil
+}
+
+func freePort() (int, error) {
+	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
+	if err != nil {
+		return 0, err
+	}
+
+	l, err := net.ListenTCP("tcp", addr)
+	if err != nil {
+		return 0, err
+	}
+	defer l.Close()
+	return l.Addr().(*net.TCPAddr).Port, nil
 }
 
 func exposePort(socketPath string) (id int, err error) {
