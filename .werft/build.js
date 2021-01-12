@@ -51,7 +51,6 @@ async function build(context, version) {
     const dontTest = "no-test" in buildConfig;
     const cacheLevel = "no-cache" in buildConfig ? "remote-push" : "remote";
     const publishRelease = "publish-release" in buildConfig;
-    const previewWithHttps = "https" in buildConfig;
     const workspaceFeatureFlags = (buildConfig["ws-feature-flags"] || "").split(",").map(e => e.trim())
     const dynamicCPULimits = "dynamic-cpu-limits" in buildConfig;
     const withInstaller = "with-installer" in buildConfig || masterBuild;
@@ -64,7 +63,6 @@ async function build(context, version) {
         dontTest,
         cacheLevel,
         publishRelease,
-        previewWithHttps,
         workspaceFeatureFlags,
         dynamicCPULimits,
         noPreview,
@@ -113,7 +111,7 @@ async function build(context, version) {
         werft.phase("deploy", "not deploying");
         console.log("no-preview or publish-release is set");
     } else {
-        await deployToDev(version, previewWithHttps, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover);
+        await deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover);
     }
 }
 
@@ -121,12 +119,12 @@ async function build(context, version) {
 /**
  * Deploy dev
  */
-async function deployToDev(version, previewWithHttps, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover) {
+async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover) {
     werft.phase("deploy", "deploying to dev");
     const destname = version.split(".")[0];
     const namespace = `staging-${destname}`;
     const domain = `${destname}.staging.gitpod-dev.com`;
-    const url = `${!!previewWithHttps ? "https" : "http"}://${domain}`;
+    const url = `https://${domain}`;
     const wsdaemonPort = `1${Math.floor(Math.random()*1000)}`;
     const registryProxyPort = `2${Math.floor(Math.random()*1000)}`;
     const registryNodePort = `${30000 + Math.floor(Math.random()*1000)}`;
@@ -184,11 +182,10 @@ async function deployToDev(version, previewWithHttps, workspaceFeatureFlags, dyn
     }
 
     let certificatePromise = undefined;
-    if (previewWithHttps) {
-        // TODO [geropl] Now that the certs reside in a separate namespaces, start the actual certificate issuing _before_ the namespace cleanup
-        werft.log('certificate', "organizing a certificate for the preview environment...");
-        certificatePromise = issueAndInstallCertficate(namespace, domain);
-    }
+    
+    // TODO(geropl): Now that the certs reside in a separate namespaces, start the actual certificate issuing _before_ the namespace cleanup
+    werft.log('certificate', "organizing a certificate for the preview environment...");
+    certificatePromise = issueAndInstallCertficate(namespace, domain);
 
     werft.log("predeploy cleanup", "removing old unnamespaced objects - this might take a while");
     try {
