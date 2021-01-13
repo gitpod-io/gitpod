@@ -22,6 +22,7 @@
       { "path": "dev/gpctl" },
       { "path": "dev/loadgen" },
       { "path": "dev/poolkeeper" },
+      { "path": "dev/seccomp" },
       { "path": "dev/sweeper" }
    ],
    "settings": {

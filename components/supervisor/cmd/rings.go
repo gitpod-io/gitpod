@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -269,12 +270,15 @@ var ring1Cmd = &cobra.Command{
 		}
 		defer pipeW.Close()
 
+		daemonSock, err := os.Open("/.workspace/daemon.sock")
+		defer daemonSock.Close()
+
 		cmd := exec.Command("/proc/self/exe", "ring2")
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Pdeathsig:  syscall.SIGKILL,
 			Cloneflags: syscall.CLONE_NEWNS | syscall.CLONE_NEWPID,
 		}
-		cmd.ExtraFiles = []*os.File{pipeR}
+		cmd.ExtraFiles = []*os.File{pipeR, daemonSock}
 		cmd.Dir = tmpdir
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
