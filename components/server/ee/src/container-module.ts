@@ -36,6 +36,7 @@ import { WorkspaceFactoryEE } from "./workspace/workspace-factory";
 import { MonitoringEndpointsAppEE } from "./monitoring-endpoint-ee";
 import { MonitoringEndpointsApp } from "../../src/monitoring-endpoints";
 import { WorkspaceHealthMonitoring } from "./workspace/workspace-health-monitoring";
+import { Env } from "../../src/env";
 
 export const productionEEContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     rebind(Server).to(ServerEE).inSingletonScope();
@@ -52,7 +53,11 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(PrebuildRateLimiter).toSelf().inSingletonScope();
     bind(PrebuildQueueMaintainer).toSelf().inSingletonScope();
     bind(IPrefixContextParser).to(StartPrebuildContextParser).inSingletonScope();
-    bind(GithubApp).toSelf().inSingletonScope();
+    bind(GithubApp).toDynamicValue(ctx => {
+        const env = ctx.container.get<Env>(Env);
+        const prebuildStatusMaintainer = ctx.container.get<PrebuildStatusMaintainer>(PrebuildStatusMaintainer);
+        return new GithubApp(env, prebuildStatusMaintainer);
+    }).inSingletonScope();
     bind(GithubAppRules).toSelf().inSingletonScope();
     bind(PrebuildStatusMaintainer).toSelf().inSingletonScope();
     bind(GitLabApp).toSelf().inSingletonScope();
