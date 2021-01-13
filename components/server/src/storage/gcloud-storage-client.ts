@@ -6,7 +6,7 @@
 
 import { injectable } from "inversify";
 import { Storage, GetSignedUrlConfig } from "@google-cloud/storage";
-import { Response } from 'request';
+import { Response } from 'teeny-request';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { StorageClient, CreateSignedUrlOptions } from "./storage-client";
 import { getBucketNamePrefix } from "./commons";
