@@ -309,6 +309,7 @@ func (s *Scheduler) schedulePod(ctx context.Context, pod *corev1.Pod) (err error
 	s.localBindingCache.markAsScheduled(pod, nodeName)
 
 	// we found a node for this pod: (asynchronously) bind it to the node! schedulingPodMap makes sure we do not try to
+	// select the same slot multiple times.
 	go func() {
 		var err error
 		defer s.schedulingPodMap.remove(pod.Name)
@@ -659,7 +660,12 @@ func (s *Scheduler) deleteGhostWorkspace(ctx context.Context, podName string, gh
 	span, ctx := tracing.FromContext(ctx, "deleteGhostWorkspace")
 	defer tracing.FinishSpan(span, &err)
 
-	err = s.Clientset.CoreV1().Pods(s.Config.Namespace).Delete(ghostName, metav1.NewDeleteOptions(1))
+	// we choose a rather high number here to make sure we do not trigger OutOfMemory errors: If we'd skip waiting for
+	// deletion too fast, the kubelet on the node might not be ready yet and our memory calculation does not match the
+	// one from the kubelet.
+	// Also, experience tells that this is usually is done in <1s (96/100 during load test).
+	gracePeriodSeconds := int64(30)
+	err = s.Clientset.CoreV1().Pods(s.Config.Namespace).Delete(ctx, ghostName, *metav1.NewDeleteOptions(gracePeriodSeconds))
 	if err != nil {
 		if isKubernetesObjNotFoundError(err) {
 			log.WithField("podName", podName).WithField("ghost", ghostName).Debug("ghost workspace already gone")
