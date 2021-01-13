@@ -13,6 +13,7 @@ export interface AdminServer {
     adminGetUsers(req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>>;
     adminGetUser(id: string): Promise<User>;
     adminBlockUser(req: AdminBlockUserRequest): Promise<User>;
+    adminDeleteUser(id: string): Promise<void>;
     adminModifyRoleOrPermission(req: AdminModifyRoleOrPermissionRequest): Promise<User>;
     adminModifyPermanentWorkspaceFeatureFlag(req: AdminModifyPermanentWorkspaceFeatureFlagRequest): Promise<User>;
 

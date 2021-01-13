@@ -378,6 +378,25 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
         }
     }
 
+    async adminDeleteUser(id: string): Promise<void> {
+        this.requireEELicense(Feature.FeatureAdminDashboard);
+
+        const user = this.checkAndBlockUser("adminDeleteUser");
+        if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
+            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
+        }
+
+        const span = opentracing.globalTracer().startSpan("adminDeleteUser");
+        try {
+            await this.userDeletionService.deleteUser(id);
+        } catch (e) {
+            TraceContext.logError({ span }, e);
+            throw new ResponseError(500, e.toString());
+        } finally {
+            span.finish();
+        }
+    }
+
     async adminModifyRoleOrPermission(req: AdminModifyRoleOrPermissionRequest): Promise<User> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
