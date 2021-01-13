@@ -81,6 +81,7 @@ export class UserController {
             }
 
             // Proceed with login
+            this.ensureSafeReturnToParam(req);
             await this.authenticator.authenticate(req, res, next);
         });
         router.get("/authorize", (req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -88,6 +89,7 @@ export class UserController {
                 res.sendStatus(401);
                 return;
             }
+            this.ensureSafeReturnToParam(req);
             this.authenticator.authorize(req, res, next);
         });
         const branding = this.env.brandingConfig;
@@ -481,6 +483,10 @@ export class UserController {
                 return;
             }
         }
+    }
+
+    protected ensureSafeReturnToParam(req: express.Request) {
+        req.query.returnTo = this.getSafeReturnToParam(req);
     }
 
     protected getSafeReturnToParam(req: express.Request) {
