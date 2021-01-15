@@ -65,16 +65,21 @@ func (srv *MuxTerminalService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint 
 func (srv *MuxTerminalService) Open(ctx context.Context, req *api.OpenTerminalRequest) (*api.OpenTerminalResponse, error) {
 	return srv.OpenWithOptions(ctx, req, TermOptions{
 		ReadTimeout: 5 * time.Second,
+		Annotations: req.Annotations,
 	})
 }
 
-// OpenWithOptions opens a new terminal running the shell with given options
+// OpenWithOptions opens a new terminal running the shell with given options.
+// req.Annotations override options.Annotations.
 func (srv *MuxTerminalService) OpenWithOptions(ctx context.Context, req *api.OpenTerminalRequest, options TermOptions) (*api.OpenTerminalResponse, error) {
 	cmd := exec.Command(srv.DefaultShell)
 	cmd.Dir = srv.DefaultWorkdir
 	cmd.Env = append(srv.Env, "TERM=xterm-color")
 	for key, value := range req.Env {
 		cmd.Env = append(cmd.Env, key+"="+value)
+	}
+	for k, v := range req.Annotations {
+		options.Annotations[k] = v
 	}
 	alias, err := srv.Mux.Start(cmd, options)
 	if err != nil {
@@ -116,9 +121,10 @@ func (srv *MuxTerminalService) List(ctx context.Context, req *api.ListTerminalsR
 		}
 
 		res = append(res, &api.ListTerminalsResponse_Terminal{
-			Alias:   alias,
-			Command: term.Command.Args,
-			Pid:     pid,
+			Alias:       alias,
+			Command:     term.Command.Args,
+			Pid:         pid,
+			Annotations: term.Annotations,
 		})
 	}
 

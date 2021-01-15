@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -34,9 +35,14 @@ var terminalListCmd = &cobra.Command{
 		tw := tabwriter.NewWriter(os.Stdout, 2, 4, 1, ' ', 0)
 		defer tw.Flush()
 
-		fmt.Fprintf(tw, "ALIAS\tPID\tCOMMAND\n")
+		fmt.Fprintf(tw, "ALIAS\tPID\tCOMMAND\tANNOTATIONS\n")
 		for _, term := range resp.Terminals {
-			fmt.Fprintf(tw, "%s\t%d\t%s\n", term.Alias, term.Pid, strings.Join(term.Command, " "))
+			annotations := make([]string, 0, len(term.Annotations))
+			for k, v := range term.Annotations {
+				annotations = append(annotations, fmt.Sprintf("%s=%s", k, v))
+			}
+			sort.Slice(annotations, func(i, j int) bool { return annotations[i] < annotations[j] })
+			fmt.Fprintf(tw, "%s\t%d\t%s\t%s\n", term.Alias, term.Pid, strings.Join(term.Command, " "), strings.Join(annotations, ","))
 		}
 	},
 }

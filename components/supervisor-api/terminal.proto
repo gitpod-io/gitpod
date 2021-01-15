@@ -48,7 +48,9 @@ service TerminalService {
 }
 
 message OpenTerminalRequest {
+    reserved 1;
     map<string, string> env = 2;
+    map<string, string> annotations = 3;
 }
 message OpenTerminalResponse {
     string alias = 1;
@@ -70,6 +72,7 @@ message ListTerminalsResponse {
         repeated string command = 2;
         string title = 3;
         int64 pid = 4;
+        map<string, string> annotations = 5;
     }
 
     repeated Terminal terminals = 1;
