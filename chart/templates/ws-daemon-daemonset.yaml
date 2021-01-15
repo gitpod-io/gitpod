@@ -57,6 +57,9 @@ spec:
         operator: "Exists"
         effect: "NoExecute"
       serviceAccountName: ws-daemon
+      {{- if eq .Values.defaults.dnsPolicy "ClusterFirstWithHostNet" }}
+      hostNetwork: true
+      {{- end }}
       hostPID: true
       volumes:
       - hostPath:
