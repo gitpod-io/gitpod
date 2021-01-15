@@ -286,7 +286,8 @@ func (s *Scheduler) schedulePod(ctx context.Context, pod *corev1.Pod) (err error
 		return nil
 	}
 
-	nodeName, state, err := s.selectNodeForPod(ctx, pod)
+	isRegularWorkspace := isRegularWorkspace(pod)
+	nodeName, state, err := s.selectNodeForPod(ctx, pod, isRegularWorkspace)
 	if nodeName == "" {
 		// we did not find any suitable node for the pod, mark the pod as unschedulable
 		var errMsg string
@@ -323,7 +324,7 @@ func (s *Scheduler) schedulePod(ctx context.Context, pod *corev1.Pod) (err error
 		}()
 
 		// if this is a regular workspace: try to find a ghost and delete it
-		if isRegularWorkspace(pod) {
+		if isRegularWorkspace {
 			ghostToDelete := state.FindOldestGhostOnNode(nodeName)
 			if ghostToDelete != "" {
 				err = s.deleteGhostWorkspace(ctx, pod.Name, ghostToDelete)
@@ -374,13 +375,13 @@ func (s *Scheduler) checkForAndEnqueuePendingPods(ctx context.Context, scheduler
 	return nil
 }
 
-func (s *Scheduler) selectNodeForPod(ctx context.Context, pod *corev1.Pod) (node string, state *State, err error) {
+func (s *Scheduler) selectNodeForPod(ctx context.Context, pod *corev1.Pod, isRegularWorkspace bool) (node string, state *State, err error) {
 	span, ctx := tracing.FromContext(ctx, "selectNodeForPod")
 	// We deliberately DO NOT add the err to tracing here. If things actually fail the caller will trace the error.
 	// If we did trace the error here we'd just spam our traces with false positives.
 	defer tracing.FinishSpan(span, nil)
 
-	state, err = s.buildState(ctx, pod)
+	state, err = s.buildState(ctx, pod, isRegularWorkspace)
 	if err != nil {
 		return "", nil, xerrors.Errorf("unable to build state: %w", err)
 	}
@@ -398,7 +399,7 @@ func (s *Scheduler) selectNodeForPod(ctx context.Context, pod *corev1.Pod) (node
 }
 
 // Builds a state for all nodes we can schedule the given pod on
-func (s *Scheduler) buildState(ctx context.Context, pod *corev1.Pod) (state *State, err error) {
+func (s *Scheduler) buildState(ctx context.Context, pod *corev1.Pod, isRegularWorkspace bool) (state *State, err error) {
 	span, ctx := tracing.FromContext(ctx, "buildState")
 	defer tracing.FinishSpan(span, &err)
 
@@ -415,7 +416,7 @@ func (s *Scheduler) buildState(ctx context.Context, pod *corev1.Pod) (state *Sta
 		return nil, xerrors.Errorf("cannot list all pods: %w", podsErr)
 	}
 
-	makeGhostsInvisible := isRegularWorkspace(pod)
+	makeGhostsInvisible := isRegularWorkspace
 	state = ComputeState(potentialNodes, allPods, s.localBindingCache.getListOfBindings(), &s.RAMSafetyBuffer, makeGhostsInvisible)
 
 	// The required node services is basically PodAffinity light. They limit the nodes we can schedule
