@@ -167,7 +167,8 @@ type GetTokenResponse struct {
 	unknownFields protoimpl.UnknownFields
 
 	Token string `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
-	User  string `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
+	//* The username of the account associated with the token.
+	User string `protobuf:"bytes,2,opt,name=user,proto3" json:"user,omitempty"`
 }
 
 func (x *GetTokenResponse) Reset() {

@@ -69,6 +69,7 @@ message ListTerminalsResponse {
         string alias = 1;
         repeated string command = 2;
         string title = 3;
+        int64 pid = 4;
     }
 
     repeated Terminal terminals = 1;

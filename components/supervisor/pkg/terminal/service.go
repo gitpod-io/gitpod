@@ -110,9 +110,15 @@ func (srv *MuxTerminalService) List(ctx context.Context, req *api.ListTerminalsR
 
 	res := make([]*api.ListTerminalsResponse_Terminal, 0, len(srv.Mux.terms))
 	for alias, term := range srv.Mux.terms {
+		var pid int64
+		if term.Command.Process != nil {
+			pid = int64(term.Command.Process.Pid)
+		}
+
 		res = append(res, &api.ListTerminalsResponse_Terminal{
 			Alias:   alias,
 			Command: term.Command.Args,
+			Pid:     pid,
 		})
 	}
 
