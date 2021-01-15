@@ -18,6 +18,86 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+func TestAnnotations(t *testing.T) {
+	tests := []struct {
+		Desc        string
+		Req         *api.OpenTerminalRequest
+		Opts        *TermOptions
+		Expectation map[string]string
+	}{
+		{
+			Desc: "no annotations",
+			Req: &api.OpenTerminalRequest{
+				Annotations: map[string]string{},
+			},
+			Expectation: map[string]string{},
+		},
+		{
+			Desc: "request annotation",
+			Req: &api.OpenTerminalRequest{
+				Annotations: map[string]string{
+					"hello": "world",
+				},
+			},
+			Expectation: map[string]string{
+				"hello": "world",
+			},
+		},
+		{
+			Desc: "option annotation",
+			Req: &api.OpenTerminalRequest{
+				Annotations: map[string]string{
+					"hello": "world",
+				},
+			},
+			Opts: &TermOptions{
+				Annotations: map[string]string{
+					"hello": "foo",
+					"bar":   "baz",
+				},
+			},
+			Expectation: map[string]string{
+				"hello": "world",
+				"bar":   "baz",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Desc, func(t *testing.T) {
+			mux := NewMux()
+			defer mux.Close()
+
+			terminalService := NewMuxTerminalService(mux)
+			var err error
+			if test.Opts == nil {
+				_, err = terminalService.Open(context.Background(), test.Req)
+			} else {
+				_, err = terminalService.OpenWithOptions(context.Background(), test.Req, *test.Opts)
+			}
+			if err != nil {
+				t.Fatal(err)
+				return
+			}
+
+			lr, err := terminalService.List(context.Background(), &api.ListTerminalsRequest{})
+			if err != nil {
+				t.Fatal(err)
+				return
+			}
+			if len(lr.Terminals) != 1 {
+				t.Fatalf("expected exactly one terminal, got %d", len(lr.Terminals))
+				return
+			}
+
+			if diff := cmp.Diff(test.Expectation, lr.Terminals[0].Annotations); diff != "" {
+				t.Errorf("unexpected output (-want +got):\n%s", diff)
+			}
+		})
+
+	}
+}
+
 func TestTerminals(t *testing.T) {
 	tests := []struct {
 		Desc        string

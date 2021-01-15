@@ -192,6 +192,7 @@ func newTerm(pty *os.File, cmd *exec.Cmd, options TermOptions) (*Term, error) {
 			listener: make(map[*multiWriterListener]struct{}),
 			recorder: recorder,
 		},
+		Annotations: options.Annotations,
 
 		StarterToken: token.String(),
 
@@ -205,6 +206,9 @@ func newTerm(pty *os.File, cmd *exec.Cmd, options TermOptions) (*Term, error) {
 type TermOptions struct {
 	// timeout after which a listener is dropped. Use 0 for no timeout.
 	ReadTimeout time.Duration
+
+	// Annotations are user-defined metadata that's attached to a terminal
+	Annotations map[string]string
 }
 
 // Term is a pseudo-terminal
@@ -213,6 +217,7 @@ type Term struct {
 	Command      *exec.Cmd
 	Title        string
 	StarterToken string
+	Annotations  map[string]string
 
 	Stdout *multiWriter
 
