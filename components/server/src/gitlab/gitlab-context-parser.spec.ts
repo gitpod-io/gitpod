@@ -21,8 +21,6 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { skipIfEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 
 
-import "../patch-agent-base";
-
 @suite(timeout(10000), retries(2), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_GITLAB"))
 class TestGitlabContextParser {
 
