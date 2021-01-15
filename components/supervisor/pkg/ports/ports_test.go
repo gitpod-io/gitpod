@@ -471,12 +471,11 @@ func TestPortsUpdateState(t *testing.T) {
 				return ioutil.NopCloser(nil), nil
 			}
 
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
 			var wg sync.WaitGroup
 			wg.Add(3)
-			go func() {
-				defer wg.Done()
-				pm.Run()
-			}()
+			go pm.Run(ctx, &wg)
 			sub, err := pm.Subscribe()
 			if err != nil {
 				t.Fatal(err)
@@ -607,12 +606,11 @@ func TestPortsConcurrentSubscribe(t *testing.T) {
 		return ioutil.NopCloser(nil), nil
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	var wg sync.WaitGroup
 	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		pm.Run()
-	}()
+	go pm.Run(ctx, &wg)
 	go func() {
 		defer wg.Done()
 		defer close(config.Error)

@@ -103,8 +103,11 @@ func (s *Subscription) Updates() <-chan []*api.PortsStatus {
 }
 
 // Run starts the port manager which keeps running until one of its observers stops.
-func (pm *Manager) Run() {
-	ctx, cancel := context.WithCancel(context.Background())
+func (pm *Manager) Run(ctx context.Context, wg *sync.WaitGroup) {
+	defer wg.Done()
+	defer log.Debug("portManager shutdown")
+
+	ctx, cancel := context.WithCancel(ctx)
 	defer func() {
 		// We copy the subscriptions to a list prior to closing them, to prevent a data race
 		// between the map iteration and entry removal when closing the subscription.
