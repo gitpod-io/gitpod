@@ -85,8 +85,8 @@ func (m *Mux) Close() error {
 	var err error
 	for k := range m.terms {
 		cerr := m.doClose(k, closeTerminaldefaultGracePeriod)
-		if cerr == nil {
-			log.WithError(err).WithField("alias", k).Warn("cannot properly close terminal")
+		if cerr != nil {
+			log.WithError(cerr).WithField("alias", k).Warn("cannot properly close terminal")
 			if err != nil {
 				err = cerr
 			}
@@ -142,7 +142,7 @@ func gracefullyShutdownProcess(p *os.Process, gracePeriod time.Duration) error {
 		return p.Kill()
 	}
 
-	err := p.Signal(unix.SIGINT)
+	err := p.Signal(unix.SIGTERM)
 	if err != nil {
 		return err
 	}

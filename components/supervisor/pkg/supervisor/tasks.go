@@ -200,6 +200,8 @@ func (tm *tasksManager) init(ctx context.Context) {
 
 func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup) {
 	defer wg.Done()
+	defer log.Debug("tasksManager shutdown")
+
 	tm.init(ctx)
 
 	for _, t := range tm.tasks {

@@ -5,6 +5,7 @@
 package supervisor
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -14,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -169,20 +171,30 @@ func Run(options ...RunOption) {
 	}
 	apiServices = append(apiServices, additionalServices...)
 
+	// The reaper can be turned into a terminating reaper by writing true to this channel.
+	// When in terminating mode, the reaper will send SIGTERM to each child that gets reparented
+	// to us and is still running. We use this mechanism to send SIGTERM to a shell child processes
+	// that get reparented once their parent shell terminates during shutdown.
+	terminatingReaper := make(chan bool)
+	// We keep the reaper until the bitter end because:
+	//   - it doesn't need graceful shutdown
+	//   - we want to do as much work as possible (SIGTERM'ing reparented processes during shutdown).
+	go reaper(terminatingReaper)
+
+	var ideWG sync.WaitGroup
+	ideWG.Add(1)
+	go startAndWatchIDE(ctx, cfg, &ideWG, ideReady)
+
 	var wg sync.WaitGroup
-	wg.Add(6)
-	go reaper(ctx, &wg)
-	go startAndWatchIDE(ctx, cfg, &wg, ideReady)
+	wg.Add(4)
 	go startContentInit(ctx, cfg, &wg, cstate)
 	go startAPIEndpoint(ctx, cfg, &wg, apiServices, apiEndpointOpts...)
 	go taskManager.Run(ctx, &wg)
-	go func() {
-		defer wg.Done()
-		if cfg.isHeadless() {
-			return
-		}
-		portMgmt.Run()
-	}()
+
+	if !cfg.isHeadless() {
+		wg.Add(1)
+		go portMgmt.Run(ctx, &wg)
+	}
 
 	if cfg.PreventMetadataAccess {
 		go func() {
@@ -203,15 +215,21 @@ func Run(options ...RunOption) {
 	}
 
 	log.Info("received SIGTERM - tearing down")
+	terminatingReaper <- true
+	cancel()
 	err = termMux.Close()
 	if err != nil {
 		log.WithError(err).Error("terminal closure failed")
 	}
+
+	// terminate all child processes once the IDE is gone
+	ideWG.Wait()
+	terminateChildProcesses()
+
 	if !opts.InNamespace {
 		callDaemonTeardown()
 	}
 
-	cancel()
 	wg.Wait()
 }
 
@@ -305,16 +323,17 @@ func hasMetadataAccess() bool {
 	return false
 }
 
-func reaper(ctx context.Context, wg *sync.WaitGroup) {
-	defer wg.Done()
+func reaper(terminatingReaper <-chan bool) {
+	defer log.Debug("reaper shutdown")
 
+	var terminating bool
 	sigs := make(chan os.Signal, 128)
 	signal.Notify(sigs, syscall.SIGCHLD)
 	for {
 		select {
-		case <-ctx.Done():
-			return
 		case <-sigs:
+		case terminating = <-terminatingReaper:
+			continue
 		}
 
 		pid, err := unix.Wait4(-1, nil, 0, nil)
@@ -325,12 +344,33 @@ func reaper(ctx context.Context, wg *sync.WaitGroup) {
 		}
 		if err != nil {
 			log.WithField("pid", pid).WithError(err).Debug("cannot call waitpid() for re-parented child")
+			continue
 		}
+
+		if !terminating {
+			continue
+		}
+		proc, err := os.FindProcess(pid)
+		if err != nil {
+			log.WithField("pid", pid).WithError(err).Debug("cannot find re-parented process")
+			continue
+		}
+		err = proc.Signal(syscall.SIGTERM)
+		if err != nil {
+			if !strings.Contains(err.Error(), "os: process already finished") {
+				log.WithField("pid", pid).WithError(err).Debug("cannot send SIGTERM to re-parented process")
+			}
+
+			continue
+		}
+		log.WithField("pid", pid).Debug("SIGTERM'ed reparented child process")
 	}
 }
 
 func startAndWatchIDE(ctx context.Context, cfg *Config, wg *sync.WaitGroup, ideReady *ideReadyState) {
 	defer wg.Done()
+	defer log.Debug("startAndWatchIDE shutdown")
+
 	if cfg.isHeadless() {
 		ideReady.Set(true)
 		return
@@ -383,7 +423,7 @@ supervisorLoop:
 			}()
 
 			err = cmd.Wait()
-			if err != nil && !strings.Contains(err.Error(), "signal: interrupt") {
+			if err != nil && !(strings.Contains(err.Error(), "signal: interrupt") || strings.Contains(err.Error(), "wait: no child processes")) {
 				log.WithError(err).Warn("IDE was stopped")
 			}
 
@@ -411,7 +451,7 @@ supervisorLoop:
 	case <-ideStopped:
 		return
 	case <-time.After(timeBudgetIDEShutdown):
-		log.Error("IDE did not stop in time - sending SIGKILL")
+		log.WithField("timeBudgetIDEShutdown", timeBudgetIDEShutdown.String()).Error("IDE did not stop in time - sending SIGKILL")
 		cmd.Process.Signal(syscall.SIGKILL)
 	}
 }
@@ -530,6 +570,7 @@ func isBlacklistedEnvvar(name string) bool {
 
 func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, services []RegisterableService, opts ...grpc.ServerOption) {
 	defer wg.Done()
+	defer log.Debug("startAPIEndpoint shutdown")
 
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.APIEndpointPort))
 	if err != nil {
@@ -640,6 +681,52 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 
 	log.WithField("source", src).Info("supervisor: workspace content init finished")
 	cst.MarkContentReady(src)
+}
+
+func terminateChildProcesses() {
+	ppid := strconv.Itoa(os.Getpid())
+	dirs, err := ioutil.ReadDir("/proc")
+	if err != nil {
+		log.WithError(err).Warn("cannot terminate child processes")
+		return
+	}
+	for _, d := range dirs {
+		pid, err := strconv.Atoi(d.Name())
+		if err != nil {
+			// not a PID
+			continue
+		}
+		proc, err := os.FindProcess(pid)
+		if err != nil {
+			continue
+		}
+
+		var isChild bool
+		f, err := os.Open(filepath.Join("/proc", d.Name(), "status"))
+		if err != nil {
+			continue
+		}
+		scan := bufio.NewScanner(f)
+		for scan.Scan() {
+			l := strings.TrimSpace(scan.Text())
+			if !strings.HasPrefix(l, "PPid:") {
+				continue
+			}
+
+			isChild = strings.HasSuffix(l, ppid)
+			break
+		}
+		if !isChild {
+			continue
+		}
+
+		err = proc.Signal(unix.SIGTERM)
+		if err != nil {
+			log.WithError(err).WithField("pid", pid).Warn("cannot terminate child processe")
+			continue
+		}
+		log.WithField("pid", pid).Debug("SIGTERM'ed child process")
+	}
 }
 
 func callDaemonTeardown() {
