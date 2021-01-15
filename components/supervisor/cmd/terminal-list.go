@@ -34,9 +34,9 @@ var terminalListCmd = &cobra.Command{
 		tw := tabwriter.NewWriter(os.Stdout, 2, 4, 1, ' ', 0)
 		defer tw.Flush()
 
-		fmt.Fprintf(tw, "ALIAS\tCOMMAND\n")
+		fmt.Fprintf(tw, "ALIAS\tPID\tCOMMAND\n")
 		for _, term := range resp.Terminals {
-			fmt.Fprintf(tw, "%s\t%s\n", term.Alias, strings.Join(term.Command, " "))
+			fmt.Fprintf(tw, "%s\t%d\t%s\n", term.Alias, term.Pid, strings.Join(term.Command, " "))
 		}
 	},
 }
