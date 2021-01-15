@@ -48,7 +48,7 @@ service TerminalService {
 }
 
 message OpenTerminalRequest {
-    reserved 1;
+    string workdir = 1;
     map<string, string> env = 2;
     map<string, string> annotations = 3;
 }
@@ -72,7 +72,9 @@ message ListTerminalsResponse {
         repeated string command = 2;
         string title = 3;
         int64 pid = 4;
-        map<string, string> annotations = 5;
+        string initial_workdir = 5;
+        string current_workdir = 6;
+        map<string, string> annotations = 7;
     }
 
     repeated Terminal terminals = 1;

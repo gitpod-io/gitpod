@@ -6,9 +6,11 @@ package terminal
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"time"
 
 	"github.com/creack/pty"
@@ -73,7 +75,11 @@ func (srv *MuxTerminalService) Open(ctx context.Context, req *api.OpenTerminalRe
 // req.Annotations override options.Annotations.
 func (srv *MuxTerminalService) OpenWithOptions(ctx context.Context, req *api.OpenTerminalRequest, options TermOptions) (*api.OpenTerminalResponse, error) {
 	cmd := exec.Command(srv.DefaultShell)
-	cmd.Dir = srv.DefaultWorkdir
+	if req.Workdir == "" {
+		cmd.Dir = srv.DefaultWorkdir
+	} else {
+		cmd.Dir = req.Workdir
+	}
 	cmd.Env = append(srv.Env, "TERM=xterm-color")
 	for key, value := range req.Env {
 		cmd.Env = append(cmd.Env, key+"="+value)
@@ -115,16 +121,27 @@ func (srv *MuxTerminalService) List(ctx context.Context, req *api.ListTerminalsR
 
 	res := make([]*api.ListTerminalsResponse_Terminal, 0, len(srv.Mux.terms))
 	for alias, term := range srv.Mux.terms {
-		var pid int64
-		if term.Command.Process != nil {
-			pid = int64(term.Command.Process.Pid)
+		var (
+			pid int64
+			cwd string
+			err error
+		)
+		if proc := term.Command.Process; proc != nil {
+			pid = int64(proc.Pid)
+			cwd, err = filepath.EvalSymlinks(fmt.Sprintf("/proc/%d/cwd", pid))
+			if err != nil {
+				log.WithError(err).WithField("pid", pid).Warn("unable to resolve terminal's current working dir")
+				cwd = term.Command.Dir
+			}
 		}
 
 		res = append(res, &api.ListTerminalsResponse_Terminal{
-			Alias:       alias,
-			Command:     term.Command.Args,
-			Pid:         pid,
-			Annotations: term.Annotations,
+			Alias:          alias,
+			Command:        term.Command.Args,
+			Pid:            pid,
+			InitialWorkdir: term.Command.Dir,
+			CurrentWorkdir: cwd,
+			Annotations:    term.Annotations,
 		})
 	}
 
