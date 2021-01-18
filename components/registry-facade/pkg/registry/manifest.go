@@ -109,7 +109,10 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 					continue
 				}
 
-				if mediaType == ociv1.MediaTypeImageManifest || mediaType == "*" {
+				if mediaType == ociv1.MediaTypeImageManifest ||
+					mediaType == images.MediaTypeDockerSchema2Manifest ||
+					mediaType == "*" {
+
 					acceptType = ociv1.MediaTypeImageManifest
 					break
 				}
