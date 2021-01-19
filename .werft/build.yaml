@@ -30,7 +30,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-supervisor-execve-ring3.25
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:cw-workspacekit.3
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
