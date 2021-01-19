@@ -275,8 +275,15 @@ func mapWorkspaceStatusToInfo(status *wsapi.WorkspaceStatus) *WorkspaceInfo {
 	}
 }
 
-// WorkspaceInfo return the WorkspaceInfo avaiable for the given workspaceID
+// WorkspaceInfo return the WorkspaceInfo avaiable for the given workspaceID.
+// Callers should make sure their context gets canceled properly. For good measure
+// this function will timeout by itself as well.
 func (p *RemoteWorkspaceInfoProvider) WorkspaceInfo(ctx context.Context, workspaceID string) *WorkspaceInfo {
+	// In case the parent context does not cancel for some reason, we want to make sure
+	// we clean up after ourselves to not leak Go routines.
+	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
 	info, present := p.cache.WaitFor(ctx, workspaceID)
 	if !present {
 		return nil
