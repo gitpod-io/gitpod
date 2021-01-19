@@ -69,7 +69,7 @@
                     "name": "workspace",
                     "image": "eu.gcr.io/gitpod-dev/workspace-base-images/github.com/typefox/gitpod:80a7d427a1fcd346d420603d80a31d57cf75a7af",
                     "command": [
-                        "/theia/supervisor",
+                        "/.supervisor/workspacekit",
                         "ring0"
                     ],
                     "ports": [
