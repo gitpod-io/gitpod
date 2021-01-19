@@ -1,51 +1,23 @@
-module github.com/gitpod-io/gitpod/supervisor
+module github.com/gitpod-io/gitpod/workspacekit
 
-go 1.14
+go 1.15
 
-// containerd, see https://github.com/containerd/containerd/issues/3031
-replace github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible // leeway ignore
-
-replace github.com/docker/docker v1.13.1 => github.com/docker/engine v0.0.0-20190822205725-ed20165a37b4 // leeway ignore
-
-replace github.com/Sirupsen/logrus v1.6.0 => github.com/sirupsen/logrus v1.6.0 // leeway ignore
+replace github.com/seccomp/libseccomp-golang => github.com/kinvolk/libseccomp-golang v0.9.2-0.20201113182948-883917843313
 
 require (
-	github.com/Netflix/go-env v0.0.0-20200908232752-3e802f601e28
-	github.com/creack/pty v1.1.11
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-daemon/api v0.0.0-00010101000000-000000000000
-	github.com/golang/mock v1.4.4
-	github.com/golang/protobuf v1.4.3
-	github.com/google/go-cmp v0.5.2
-	github.com/google/uuid v1.1.4
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.0.1
-	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
-	github.com/prometheus/procfs v0.0.8 // indirect
-	github.com/sirupsen/logrus v1.7.0
-	github.com/soheilhy/cmux v0.1.4
+	github.com/rootless-containers/rootlesskit v0.11.1
+	github.com/seccomp/libseccomp-golang v0.9.1
 	github.com/spf13/cobra v1.1.1
-	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
-	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
-	golang.org/x/sys v0.0.0-20210110051926-789bb1bd4061
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
+	golang.org/x/sys v0.0.0-20210113181707-4bcb84eeeb78
 	google.golang.org/grpc v1.34.0
-	google.golang.org/grpc/examples v0.0.0-20200902210233-8630cac324bf // indirect
-	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
+	kernel.org/pub/linux/libs/security/libcap/cap v0.2.46
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
 
-replace github.com/gitpod-io/gitpod/content-service => ../content-service // leeway
-
 replace github.com/gitpod-io/gitpod/content-service/api => ../content-service-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/gitpod-protocol => ../gitpod-protocol/go // leeway
-
-replace github.com/gitpod-io/gitpod/supervisor/api => ../supervisor-api/go // leeway
 
 replace github.com/gitpod-io/gitpod/ws-daemon/api => ../ws-daemon-api/go // leeway
 

@@ -18,10 +18,6 @@ packages:
     config:
       buildFlags:
         - "-ldflags=-w"
-      # build with >= go1.16beta1 to make libcap work without CGO. See
-      # - https://pkg.go.dev/kernel.org/pub/linux/libs/security/libcap/cap, search for allthreadssyscall
-      # - https://github.com/golang/go/issues/1435
-      goVersion: go1.16beta1
   - name: docker
     type: docker
     srcs:
@@ -29,6 +25,7 @@ packages:
     deps:
       - :app
       - components/supervisor/frontend:app
+      - components/workspacekit/go:app
     argdeps:
       - imageRepoBase
     config:

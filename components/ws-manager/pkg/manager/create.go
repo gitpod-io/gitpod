@@ -432,7 +432,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 						MountPropagation: &mountPropagation,
 					},
 				)
-				pod.Spec.Containers[i].Command = []string{pod.Spec.Containers[i].Command[0], "ring0"}
+				pod.Spec.Containers[i].Command = []string{"/.supervisor/workspacekit", "ring0"}
 				break
 			}
 		case api.WorkspaceFeatureFlag_FULL_WORKSPACE_BACKUP:
