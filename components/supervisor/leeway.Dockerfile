@@ -12,5 +12,6 @@ COPY components-supervisor-frontend--app/node_modules/@gitpod/supervisor-fronten
 WORKDIR "/.supervisor"
 COPY components-supervisor--app/supervisor /.supervisor/supervisor
 COPY supervisor-config.json /.supervisor/supervisor-config.json
+COPY components-workspacekit--app/workspacekit /.supervisor/workspacekit
 
 ENTRYPOINT ["/.supervisor/supervisor"]

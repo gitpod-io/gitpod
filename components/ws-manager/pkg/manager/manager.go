@@ -298,6 +298,7 @@ func validateStartWorkspaceRequest(req *api.StartWorkspaceRequest) error {
 		validation.Field(&req.Spec.WorkspaceLocation, validation.Required),
 		validation.Field(&req.Spec.Ports, validation.By(areValidPorts)),
 		validation.Field(&req.Spec.Initializer, validation.Required),
+		validation.Field(&req.Spec.FeatureFlags, validation.By(areValidFeatureFlags)),
 	)
 	if err != nil {
 		return xerrors.Errorf("invalid request: %w", err)
@@ -335,7 +336,7 @@ func isValidWorkspaceType(value interface{}) error {
 func areValidPorts(value interface{}) error {
 	s, ok := value.([]*api.PortSpec)
 	if !ok {
-		return xerrors.Errorf("value is port spec list")
+		return xerrors.Errorf("value is not a port spec list")
 	}
 
 	idx := make(map[uint32]struct{})
@@ -350,6 +351,25 @@ func areValidPorts(value interface{}) error {
 		//            tight validation though.
 	}
 
+	return nil
+}
+
+func areValidFeatureFlags(value interface{}) error {
+	s, ok := value.([]api.WorkspaceFeatureFlag)
+	if !ok {
+		return xerrors.Errorf("value not a feature flag list")
+	}
+
+	idx := make(map[api.WorkspaceFeatureFlag]struct{}, len(s))
+	for _, k := range s {
+		idx[k] = struct{}{}
+	}
+
+	_, hasUserNS := idx[api.WorkspaceFeatureFlag_USER_NAMESPACE]
+	_, hasRegistryFacade := idx[api.WorkspaceFeatureFlag_REGISTRY_FACADE]
+	if hasUserNS && !hasRegistryFacade {
+		return xerrors.Errorf("user namespaces require registry facade")
+	}
 	return nil
 }
 

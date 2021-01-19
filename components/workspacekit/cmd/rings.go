@@ -17,13 +17,14 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/supervisor/pkg/supervisor"
 	daemonapi "github.com/gitpod-io/gitpod/ws-daemon/api"
+
 	"github.com/rootless-containers/rootlesskit/pkg/msgutil"
 	"github.com/rootless-containers/rootlesskit/pkg/sigproxy"
 	sigproxysignal "github.com/rootless-containers/rootlesskit/pkg/sigproxy/signal"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
+	"google.golang.org/grpc"
 	"kernel.org/pub/linux/libs/security/libcap/cap"
 )
 
@@ -38,9 +39,8 @@ const (
 )
 
 var ring0Cmd = &cobra.Command{
-	Use:    "ring0",
-	Short:  "starts the supervisor ring0",
-	Hidden: true,
+	Use:   "ring0",
+	Short: "starts ring0 - enter here",
 	Run: func(_ *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, true, true)
 		log := log.WithField("ring", 0)
@@ -56,7 +56,7 @@ var ring0Cmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		client, conn, err := supervisor.ConnectToInWorkspaceDaemonService(ctx)
+		client, conn, err := connectToInWorkspaceDaemonService(ctx)
 		if err != nil {
 			log.WithError(err).Error("cannot connect to daemon")
 			return
@@ -150,9 +150,8 @@ var ring1Opts struct {
 	MappingEstablished bool
 }
 var ring1Cmd = &cobra.Command{
-	Use:    "ring1",
-	Short:  "starts the supervisor ring1",
-	Hidden: true,
+	Use:   "ring1",
+	Short: "starts ring1",
 	Run: func(_cmd *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, true, true)
 		log := log.WithField("ring", 1)
@@ -169,7 +168,7 @@ var ring1Cmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		client, conn, err := supervisor.ConnectToInWorkspaceDaemonService(ctx)
+		client, conn, err := connectToInWorkspaceDaemonService(ctx)
 		if err != nil {
 			log.WithError(err).Error("cannot connect to daemon")
 			failed = true
@@ -325,10 +324,12 @@ var ring1Cmd = &cobra.Command{
 	},
 }
 
+var ring2Opts struct {
+	SupervisorPath string
+}
 var ring2Cmd = &cobra.Command{
-	Use:    "ring2",
-	Short:  "starts the supervisor ring2",
-	Hidden: true,
+	Use:   "ring2",
+	Short: "starts ring2",
 	Run: func(_cmd *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, true, true)
 		log := log.WithField("ring", 2)
@@ -377,7 +378,7 @@ var ring2Cmd = &cobra.Command{
 			failed = true
 			return
 		}
-		err = unix.Exec("/proc/self/exe", []string{"supervisor", "run", "--inns"}, os.Environ())
+		err = unix.Exec(ring2Opts.SupervisorPath, []string{"supervisor", "run", "--inns"}, os.Environ())
 		if err != nil {
 			log.WithError(err).Error("cannot exec")
 			failed = true
@@ -463,10 +464,47 @@ type ringSyncMsg struct {
 	Rootfs string `json:"rootfs"`
 }
 
+// ConnectToInWorkspaceDaemonService attempts to connect to the InWorkspaceService offered by the ws-daemon.
+func connectToInWorkspaceDaemonService(ctx context.Context) (daemonapi.InWorkspaceServiceClient, *grpc.ClientConn, error) {
+	const socketFN = "/.workspace/daemon.sock"
+
+	t := time.NewTicker(500 * time.Millisecond)
+	defer t.Stop()
+	for {
+		if _, err := os.Stat(socketFN); err == nil {
+			break
+		}
+
+		select {
+		case <-t.C:
+			continue
+		case <-ctx.Done():
+			return nil, nil, fmt.Errorf("socket did not appear before context was canceled")
+		}
+	}
+
+	conn, err := grpc.DialContext(ctx, "unix://"+socketFN, grpc.WithInsecure())
+	if err != nil {
+		return nil, nil, err
+	}
+	return daemonapi.NewInWorkspaceServiceClient(conn), conn, nil
+}
+
 func init() {
 	rootCmd.AddCommand(ring0Cmd)
 	rootCmd.AddCommand(ring1Cmd)
 	rootCmd.AddCommand(ring2Cmd)
 
+	supervisorPath := os.Getenv("GITPOD_WORKSPACEKIT_SUPERVISOR_PATH")
+	if supervisorPath == "" {
+		wd, err := os.Getwd()
+		if err == nil {
+			supervisorPath = "supervisor"
+		} else {
+			supervisorPath = filepath.Join(wd, "supervisor")
+		}
+	}
+
 	ring1Cmd.Flags().BoolVar(&ring1Opts.MappingEstablished, "mapping-established", false, "true if the UID/GID mapping has already been established")
+	ring2Cmd.Flags().StringVar(&ring2Opts.SupervisorPath, "supervisor-path", supervisorPath, "path to the supervisor binary (taken from $GITPOD_WORKSPACEKIT_SUPERVISOR_PATH, defaults to '$PWD/supervisor')")
 }
