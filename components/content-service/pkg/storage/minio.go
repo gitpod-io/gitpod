@@ -18,7 +18,8 @@ import (
 	"golang.org/x/xerrors"
 
 	validation "github.com/go-ozzo/ozzo-validation"
-	minio "github.com/minio/minio-go/v6"
+	minio "github.com/minio/minio-go/v7"
+	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 var _ DirectAccess = &DirectMinIOStorage{}
@@ -57,7 +58,10 @@ func (c *MinIOConfig) MinIOClient() (*minio.Client, error) {
 		return nil, err
 	}
 
-	minioClient, err := minio.New(c.Endpoint, c.AccessKeyID, c.SecretAccessKey, c.Secure)
+	minioClient, err := minio.New(c.Endpoint, &minio.Options{
+		Creds:  credentials.NewStaticV4(c.AccessKeyID, c.SecretAccessKey, ""),
+		Secure: c.Secure,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -125,7 +129,7 @@ func (rs *DirectMinIOStorage) defaultObjectAccess(ctx context.Context, bkt, obj 
 		return nil, xerrors.Errorf("no MinIO client avialable - did you call Init()?")
 	}
 
-	object, err := rs.client.GetObjectWithContext(ctx, bkt, obj, minio.GetObjectOptions{})
+	object, err := rs.client.GetObject(ctx, bkt, obj, minio.GetObjectOptions{})
 	if err != nil {
 		return nil, translateMinioError(err)
 	}
@@ -147,7 +151,7 @@ func (rs *DirectMinIOStorage) EnsureExists(ctx context.Context) (err error) {
 		return xerrors.Errorf("no MinIO client avialable - did you call Init()?")
 	}
 
-	exists, err := rs.client.BucketExists(rs.bucketName())
+	exists, err := rs.client.BucketExists(ctx, rs.bucketName())
 	if err != nil {
 		return err
 	}
@@ -157,7 +161,7 @@ func (rs *DirectMinIOStorage) EnsureExists(ctx context.Context) (err error) {
 	}
 
 	log.WithField("bucketName", rs.bucketName()).Debug("Creating bucket")
-	err = rs.client.MakeBucket(rs.bucketName(), rs.MinIOConfig.Region)
+	err = rs.client.MakeBucket(ctx, rs.bucketName(), minio.MakeBucketOptions{Region: rs.MinIOConfig.Region})
 	if err != nil {
 		return xerrors.Errorf("cannot create bucket: %w", err)
 	}
@@ -224,7 +228,7 @@ func (rs *DirectMinIOStorage) Upload(ctx context.Context, source string, name st
 	// upload the thing
 	bucket = rs.bucketName()
 	obj = rs.objectName(name)
-	_, err = rs.client.FPutObjectWithContext(ctx, bucket, obj, source, minio.PutObjectOptions{
+	_, err = rs.client.FPutObject(ctx, bucket, obj, source, minio.PutObjectOptions{
 		NumThreads:   rs.MinIOConfig.ParallelUpload,
 		UserMetadata: options.Annotations,
 		ContentType:  options.ContentType,
@@ -283,7 +287,7 @@ func (s *presignedMinIOStorage) SignDownload(ctx context.Context, bucket, object
 		tracing.FinishSpan(span, &err)
 	}()
 
-	obj, err := s.client.GetObject(bucket, object, minio.GetObjectOptions{})
+	obj, err := s.client.GetObject(ctx, bucket, object, minio.GetObjectOptions{})
 	if err != nil {
 		return nil, translateMinioError(err)
 	}
@@ -291,7 +295,7 @@ func (s *presignedMinIOStorage) SignDownload(ctx context.Context, bucket, object
 	if err != nil {
 		return nil, translateMinioError(err)
 	}
-	url, err := s.client.PresignedGetObject(bucket, object, 30*time.Minute, nil)
+	url, err := s.client.PresignedGetObject(ctx, bucket, object, 30*time.Minute, nil)
 	if err != nil {
 		return nil, translateMinioError(err)
 	}
