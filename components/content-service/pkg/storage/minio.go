@@ -185,13 +185,13 @@ func (rs *DirectMinIOStorage) download(ctx context.Context, destination string, 
 	return true, nil
 }
 
-// Download takes the latest state from the remote storage and downloads it to a local path
-func (rs *DirectMinIOStorage) Download(ctx context.Context, destination string, name string) (bool, error) {
-	return rs.download(ctx, destination, rs.bucketName(), rs.objectName(name))
+// DownloadLatestWsSnapshot takes the latest state from the remote storage and downloads it to a local path
+func (rs *DirectMinIOStorage) DownloadLatestWsSnapshot(ctx context.Context, destination string, name string) (bool, error) {
+	return rs.download(ctx, destination, rs.bucketName(), rs.workspaceObjectName(name))
 }
 
-// DownloadSnapshot downloads a snapshot. The snapshot name is expected to be one produced by Qualify
-func (rs *DirectMinIOStorage) DownloadSnapshot(ctx context.Context, destination string, name string) (bool, error) {
+// DownloadWsSnapshot downloads a snapshot. The snapshot name is expected to be one produced by QualifyWsSnapshot
+func (rs *DirectMinIOStorage) DownloadWsSnapshot(ctx context.Context, destination string, name string) (bool, error) {
 	bkt, obj, err := ParseSnapshotName(name)
 	if err != nil {
 		return false, err
@@ -200,13 +200,13 @@ func (rs *DirectMinIOStorage) DownloadSnapshot(ctx context.Context, destination 
 	return rs.download(ctx, destination, bkt, obj)
 }
 
-// Qualify fully qualifies a snapshot name so that it can be downloaded using DownloadSnapshot
-func (rs *DirectMinIOStorage) Qualify(name string) string {
-	return fmt.Sprintf("%s@%s", rs.objectName(name), rs.bucketName())
+// QualifyWsSnapshot fully qualifies a snapshot name so that it can be downloaded using DownloadWsSnapshot
+func (rs *DirectMinIOStorage) QualifyWsSnapshot(name string) string {
+	return fmt.Sprintf("%s@%s", rs.workspaceObjectName(name), rs.bucketName())
 }
 
-// Upload takes all files from a local location and uploads it to the remote storage
-func (rs *DirectMinIOStorage) Upload(ctx context.Context, source string, name string, opts ...UploadOption) (bucket, obj string, err error) {
+// UploadWsSnapshot takes all files from a local location and uploads it to the remote storage
+func (rs *DirectMinIOStorage) UploadWsSnapshot(ctx context.Context, source string, name string, opts ...UploadOption) (bucket, obj string, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "DirectUpload")
 	defer tracing.FinishSpan(span, &err)
 
@@ -223,7 +223,7 @@ func (rs *DirectMinIOStorage) Upload(ctx context.Context, source string, name st
 
 	// upload the thing
 	bucket = rs.bucketName()
-	obj = rs.objectName(name)
+	obj = rs.workspaceObjectName(name)
 	_, err = rs.client.FPutObjectWithContext(ctx, bucket, obj, source, minio.PutObjectOptions{
 		NumThreads:   rs.MinIOConfig.ParallelUpload,
 		UserMetadata: options.Annotations,
@@ -247,14 +247,14 @@ func (rs *DirectMinIOStorage) Bucket(ownerID string) string {
 
 // BackupObject returns a backup's object name that a direct downloader would download
 func (rs *DirectMinIOStorage) BackupObject(name string) string {
-	return rs.objectName(name)
+	return rs.workspaceObjectName(name)
 }
 
 func (rs *DirectMinIOStorage) bucketName() string {
 	return minioBucketName(rs.Username)
 }
 
-func (rs *DirectMinIOStorage) objectName(name string) string {
+func (rs *DirectMinIOStorage) workspaceObjectName(name string) string {
 	return fmt.Sprintf("workspaces/%s/%s", rs.WorkspaceName, name)
 }
 

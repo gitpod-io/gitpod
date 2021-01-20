@@ -812,33 +812,33 @@ func (rs *mockGCloudStorage) EnsureExists(ctx context.Context) error {
 	return nil
 }
 
-// Download always returns false and does nothing
-func (rs *mockGCloudStorage) Download(ctx context.Context, destination string, name string) (bool, error) {
+// DownloadLatestWsSnapshot always returns false and does nothing
+func (rs *mockGCloudStorage) DownloadLatestWsSnapshot(ctx context.Context, destination string, name string) (bool, error) {
 	rs.Delegate.ObjectAccess = func(ctx context.Context, bkt, obj string) (io.ReadCloser, bool, error) {
 		log.WithField("fixture", rs.Fixture).Debug("intercepting object access")
 		f, err := os.OpenFile(rs.Fixture, os.O_RDONLY, 0644)
 		return f, false, err
 	}
 
-	return rs.Delegate.Download(ctx, destination, name)
+	return rs.Delegate.DownloadLatestWsSnapshot(ctx, destination, name)
 }
 
-// Download always returns false and does nothing
-func (rs *mockGCloudStorage) DownloadSnapshot(ctx context.Context, destination string, name string) (bool, error) {
+// DownloadLatestWsSnapshot always returns false and does nothing
+func (rs *mockGCloudStorage) DownloadWsSnapshot(ctx context.Context, destination string, name string) (bool, error) {
 	rs.Delegate.ObjectAccess = func(ctx context.Context, bkt, obj string) (io.ReadCloser, bool, error) {
 		f, err := os.OpenFile(rs.Fixture, os.O_RDONLY, 0644)
 		return f, false, err
 	}
 
-	return rs.Delegate.DownloadSnapshot(ctx, destination, name)
+	return rs.Delegate.DownloadWsSnapshot(ctx, destination, name)
 }
 
-func (rs *mockGCloudStorage) Qualify(name string) string {
-	return rs.Delegate.Qualify(name)
+func (rs *mockGCloudStorage) QualifyWsSnapshot(name string) string {
+	return rs.Delegate.QualifyWsSnapshot(name)
 }
 
-// Upload does nothing
-func (rs *mockGCloudStorage) Upload(ctx context.Context, source string, name string, opts ...storage.UploadOption) (string, string, error) {
+// UploadWsSnapshot does nothing
+func (rs *mockGCloudStorage) UploadWsSnapshot(ctx context.Context, source string, name string, opts ...storage.UploadOption) (string, string, error) {
 	return "", "", xerrors.Errorf("not supported")
 }
 

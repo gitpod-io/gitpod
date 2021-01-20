@@ -16,11 +16,11 @@ import (
 )
 
 const (
-	// DefaultBackup is the name of the regular backup we upload to remote storage
-	DefaultBackup = "full.tar"
+	// DefaultWorkspaceBackup is the name of the regular backup we upload to remote storage
+	DefaultWorkspaceBackup = "full.tar"
 
-	// DefaultBackupManifest is the name of the manifest of the regular default backup we upload
-	DefaultBackupManifest = "wsfull.json"
+	// DefaultWorkspaceBackupManifest is the name of the manifest of the regular default backup we upload
+	DefaultWorkspaceBackupManifest = "wsfull.json"
 
 	// FmtFullWorkspaceBackup is the format for names of full workspace backups
 	FmtFullWorkspaceBackup = "wsfull-%d.tar"
@@ -66,13 +66,13 @@ type DownloadInfo struct {
 	Size int64
 }
 
-// DirectDownloader downloads a snapshot
+// DirectDownloader downloads an object from storage
 type DirectDownloader interface {
-	// Download takes the latest state from the remote storage and downloads it to a local path
-	Download(ctx context.Context, destination string, name string) (found bool, err error)
+	// DownloadLatestWsSnapshot takes the latest state from the remote storage and downloads it to a local path
+	DownloadLatestWsSnapshot(ctx context.Context, destination string, name string) (found bool, err error)
 
-	// Downloads a snapshot. The snapshot name is expected to be one produced by Qualify
-	DownloadSnapshot(ctx context.Context, destination string, name string) (found bool, err error)
+	// DownloadWsSnapshot downloads a snapshot. The snapshot name is expected to be one produced by QualifyWsSnapshot
+	DownloadWsSnapshot(ctx context.Context, destination string, name string) (found bool, err error)
 }
 
 // DirectAccess represents a remote location where we can store data
@@ -87,11 +87,11 @@ type DirectAccess interface {
 	// EnsureExists makes sure that the remote storage location exists and can be up- or downloaded from
 	EnsureExists(ctx context.Context) error
 
-	// Fully qualifies a snapshot name so that it can be downloaded using DownloadSnapshot
-	Qualify(name string) string
+	// Fully qualifies a snapshot name so that it can be downloaded using DownloadWsSnapshot
+	QualifyWsSnapshot(name string) string
 
-	// Upload takes all files from a local location and uploads it to the remote storage
-	Upload(ctx context.Context, source string, name string, options ...UploadOption) (bucket, obj string, err error)
+	// UploadWsSnapshot takes all files from a local location and uploads it to the remote storage
+	UploadWsSnapshot(ctx context.Context, source string, name string, options ...UploadOption) (bucket, obj string, err error)
 }
 
 // UploadOptions configure remote storage upload

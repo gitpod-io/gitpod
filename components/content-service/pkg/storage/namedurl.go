@@ -16,8 +16,8 @@ type NamedURLDownloader struct {
 	URLs map[string]string
 }
 
-// Download takes the latest state from the remote storage and downloads it to a local path
-func (d *NamedURLDownloader) Download(ctx context.Context, destination string, name string) (found bool, err error) {
+// DownloadLatestWsSnapshot takes the latest state from the remote storage and downloads it to a local path
+func (d *NamedURLDownloader) DownloadLatestWsSnapshot(ctx context.Context, destination string, name string) (found bool, err error) {
 	url, found := d.URLs[name]
 	if !found {
 		return false, nil
@@ -48,7 +48,7 @@ func (d *NamedURLDownloader) Download(ctx context.Context, destination string, n
 	return true, nil
 }
 
-// DownloadSnapshot downloads a snapshot.
-func (d *NamedURLDownloader) DownloadSnapshot(ctx context.Context, destination string, name string) (found bool, err error) {
-	return d.Download(ctx, destination, name)
+// DownloadWsSnapshot downloads a snapshot.
+func (d *NamedURLDownloader) DownloadWsSnapshot(ctx context.Context, destination string, name string) (found bool, err error) {
+	return d.DownloadLatestWsSnapshot(ctx, destination, name)
 }

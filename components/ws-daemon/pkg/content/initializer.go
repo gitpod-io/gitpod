@@ -51,13 +51,13 @@ var (
 func collectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps storage.PresignedAccess, workspaceOwner string, initializer *csapi.WorkspaceInitializer) (rc map[string]storage.DownloadInfo, err error) {
 	rc = make(map[string]storage.DownloadInfo)
 
-	backup, err := ps.SignDownload(ctx, rs.Bucket(workspaceOwner), rs.BackupObject(storage.DefaultBackup))
+	backup, err := ps.SignDownload(ctx, rs.Bucket(workspaceOwner), rs.BackupObject(storage.DefaultWorkspaceBackup))
 	if err == storage.ErrNotFound {
 		// no backup found - that's fine
 	} else if err != nil {
 		return nil, err
 	} else {
-		rc[storage.DefaultBackup] = *backup
+		rc[storage.DefaultWorkspaceBackup] = *backup
 	}
 
 	if si := initializer.GetSnapshot(); si != nil {
@@ -303,8 +303,8 @@ func (rs *remoteContentStorage) EnsureExists(ctx context.Context) error {
 	return nil
 }
 
-// Download always returns false and does nothing
-func (rs *remoteContentStorage) Download(ctx context.Context, destination string, name string) (exists bool, err error) {
+// DownloadLatestWsSnapshot always returns false and does nothing
+func (rs *remoteContentStorage) DownloadLatestWsSnapshot(ctx context.Context, destination string, name string) (exists bool, err error) {
 	info, exists := rs.RemoteContent[name]
 	if !exists {
 		return false, nil
@@ -328,18 +328,18 @@ func (rs *remoteContentStorage) Download(ctx context.Context, destination string
 	return true, nil
 }
 
-// DownloadSnapshot always returns false and does nothing
-func (rs *remoteContentStorage) DownloadSnapshot(ctx context.Context, destination string, name string) (bool, error) {
-	return rs.Download(ctx, destination, name)
+// DownloadWsSnapshot always returns false and does nothing
+func (rs *remoteContentStorage) DownloadWsSnapshot(ctx context.Context, destination string, name string) (bool, error) {
+	return rs.DownloadLatestWsSnapshot(ctx, destination, name)
 }
 
-// Qualify just returns the name
-func (rs *remoteContentStorage) Qualify(name string) string {
+// QualifyWsSnapshot just returns the name
+func (rs *remoteContentStorage) QualifyWsSnapshot(name string) string {
 	return name
 }
 
-// Upload does nothing
-func (rs *remoteContentStorage) Upload(ctx context.Context, source string, name string, opts ...storage.UploadOption) (string, string, error) {
+// UploadWsSnapshot does nothing
+func (rs *remoteContentStorage) UploadWsSnapshot(ctx context.Context, source string, name string, opts ...storage.UploadOption) (string, string, error) {
 	return "", "", fmt.Errorf("not implemented")
 }
 

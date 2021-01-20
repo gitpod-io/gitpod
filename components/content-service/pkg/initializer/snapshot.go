@@ -29,7 +29,7 @@ func (s *SnapshotInitializer) Run(ctx context.Context) (src csapi.WorkspaceInitS
 
 	src = csapi.WorkspaceInitFromOther
 
-	ok, err := s.Storage.DownloadSnapshot(ctx, s.Location, s.Snapshot)
+	ok, err := s.Storage.DownloadWsSnapshot(ctx, s.Location, s.Snapshot)
 	if err != nil {
 		return src, xerrors.Errorf("snapshot initializer: %w", err)
 	}

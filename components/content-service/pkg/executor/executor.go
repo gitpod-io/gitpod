@@ -70,7 +70,7 @@ func Execute(ctx context.Context, destination string, cfgin io.Reader, opts ...i
 	} else {
 		rs = &storage.NamedURLDownloader{
 			URLs: map[string]string{
-				storage.DefaultBackup: cfg.FromBackup,
+				storage.DefaultWorkspaceBackup: cfg.FromBackup,
 			},
 		}
 		ilr = &initializer.EmptyInitializer{}

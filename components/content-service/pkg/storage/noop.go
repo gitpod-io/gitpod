@@ -23,23 +23,23 @@ func (rs *DirectNoopStorage) EnsureExists(ctx context.Context) error {
 	return nil
 }
 
-// Download always returns false and does nothing
-func (rs *DirectNoopStorage) Download(ctx context.Context, destination string, name string) (bool, error) {
+// DownloadLatestWsSnapshot always returns false and does nothing
+func (rs *DirectNoopStorage) DownloadLatestWsSnapshot(ctx context.Context, destination string, name string) (bool, error) {
 	return false, nil
 }
 
-// DownloadSnapshot always returns false and does nothing
-func (rs *DirectNoopStorage) DownloadSnapshot(ctx context.Context, destination string, name string) (bool, error) {
+// DownloadWsSnapshot always returns false and does nothing
+func (rs *DirectNoopStorage) DownloadWsSnapshot(ctx context.Context, destination string, name string) (bool, error) {
 	return false, nil
 }
 
-// Qualify just returns the name
-func (rs *DirectNoopStorage) Qualify(name string) string {
+// QualifyWsSnapshot just returns the name
+func (rs *DirectNoopStorage) QualifyWsSnapshot(name string) string {
 	return name
 }
 
-// Upload does nothing
-func (rs *DirectNoopStorage) Upload(ctx context.Context, source string, name string, opts ...UploadOption) (string, string, error) {
+// UploadWsSnapshot does nothing
+func (rs *DirectNoopStorage) UploadWsSnapshot(ctx context.Context, source string, name string, opts ...UploadOption) (string, string, error) {
 	return "", "", nil
 }
 

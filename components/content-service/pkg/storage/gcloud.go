@@ -252,13 +252,13 @@ func (rs *DirectGCPStorage) fixLegacyFilenames(ctx context.Context, destination 
 	return nil
 }
 
-// Download takes the latest state from the remote storage and downloads it to a local path
-func (rs *DirectGCPStorage) Download(ctx context.Context, destination string, name string) (bool, error) {
+// DownloadLatestWsSnapshot takes the latest state from the remote storage and downloads it to a local path
+func (rs *DirectGCPStorage) DownloadLatestWsSnapshot(ctx context.Context, destination string, name string) (bool, error) {
 	return rs.download(ctx, destination, rs.bucketName(), rs.objectName(name))
 }
 
-// DownloadSnapshot downloads a snapshot. The snapshot name is expected to be one produced by Qualify
-func (rs *DirectGCPStorage) DownloadSnapshot(ctx context.Context, destination string, name string) (bool, error) {
+// DownloadWsSnapshot downloads a snapshot. The snapshot name is expected to be one produced by QualifyWsSnapshot
+func (rs *DirectGCPStorage) DownloadWsSnapshot(ctx context.Context, destination string, name string) (bool, error) {
 	bkt, obj, err := ParseSnapshotName(name)
 	if err != nil {
 		return false, err
@@ -280,14 +280,14 @@ func ParseSnapshotName(name string) (bkt, obj string, err error) {
 	return
 }
 
-// Qualify fully qualifies a snapshot name so that it can be downloaded using DownloadSnapshot
-func (rs *DirectGCPStorage) Qualify(name string) string {
+// QualifyWsSnapshot fully qualifies a snapshot name so that it can be downloaded using DownloadWsSnapshot
+func (rs *DirectGCPStorage) QualifyWsSnapshot(name string) string {
 	return fmt.Sprintf("%s@%s", rs.objectName(name), rs.bucketName())
 }
 
-// Upload takes all files from a local location and uploads it to the remote storage
-func (rs *DirectGCPStorage) Upload(ctx context.Context, source string, name string, opts ...UploadOption) (bucket, object string, err error) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "GCloudBucketRemotegcpStorage.Upload")
+// UploadWsSnapshot takes all files from a local location and uploads it to the remote storage
+func (rs *DirectGCPStorage) UploadWsSnapshot(ctx context.Context, source string, name string, opts ...UploadOption) (bucket, object string, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "GCloudBucketRemotegcpStorage.UploadWsSnapshot")
 	defer tracing.FinishSpan(span, &err)
 	log := log.WithFields(log.OWI(rs.Username, rs.WorkspaceName, ""))
 
@@ -303,7 +303,7 @@ func (rs *DirectGCPStorage) Upload(ctx context.Context, source string, name stri
 	}
 
 	// check if we have not yet exceeded the max number of backups
-	if name != DefaultBackup {
+	if name != DefaultWorkspaceBackup {
 		if err = rs.ensureBackupSlotAvailable(); err != nil {
 			return
 		}
@@ -560,7 +560,7 @@ func (rs *DirectGCPStorage) uploadChunk(ctx context.Context, name string, r io.R
 		return
 	}
 
-	log.WithField("name", name).WithField("duration", time.Since(start)).Debug("Upload complete")
+	log.WithField("name", name).WithField("duration", time.Since(start)).Debug("UploadWsSnapshot complete")
 }
 
 func (rs *DirectGCPStorage) deleteChunks(ctx context.Context, chunks []string) (err error) {

@@ -366,8 +366,8 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 	// Ok, we have to do all the work
 	if req.Backup {
 		var (
-			backupName = storage.DefaultBackup
-			mfName     = storage.DefaultBackupManifest
+			backupName = storage.DefaultWorkspaceBackup
+			mfName     = storage.DefaultWorkspaceBackupManifest
 		)
 		if sess.FullWorkspaceBackup {
 			backupName = fmt.Sprintf(storage.FmtFullWorkspaceBackup, time.Now().UnixNano())
@@ -531,7 +531,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 			}
 		}
 
-		layerBucket, layerObject, err = rs.Upload(ctx, tmpf.Name(), backupName, layerUploadOpts...)
+		layerBucket, layerObject, err = rs.UploadWsSnapshot(ctx, tmpf.Name(), backupName, layerUploadOpts...)
 		if err != nil {
 			return
 		}
@@ -582,10 +582,10 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 			return err
 		}
 
-		// Upload new manifest without opts as don't want to overwrite the layer trail with the manifest.
+		// UploadWsSnapshot new manifest without opts as don't want to overwrite the layer trail with the manifest.
 		// We have to make sure we use the right content type s.t. we can identify this as manifest later on,
 		// e.g. when distinguishing between legacy snapshots and new manifests.
-		_, _, err = rs.Upload(ctx, tmpmf.Name(), mfName, storage.WithContentType(csapi.ContentTypeManifest))
+		_, _, err = rs.UploadWsSnapshot(ctx, tmpmf.Name(), mfName, storage.WithContentType(csapi.ContentTypeManifest))
 		if err != nil {
 			return err
 		}
@@ -700,11 +700,11 @@ func (s *WorkspaceService) TakeSnapshot(ctx context.Context, req *api.TakeSnapsh
 		snapshotName string
 	)
 	if sess.FullWorkspaceBackup {
-		snapshotName = rs.Qualify(mfName)
+		snapshotName = rs.QualifyWsSnapshot(mfName)
 
 		// TODO: pause theia
 	} else {
-		snapshotName = rs.Qualify(backupName)
+		snapshotName = rs.QualifyWsSnapshot(backupName)
 	}
 
 	err = s.uploadWorkspaceContent(ctx, sess, backupName, mfName)

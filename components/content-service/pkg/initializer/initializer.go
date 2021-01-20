@@ -331,7 +331,7 @@ func InitializeWorkspace(ctx context.Context, location string, remoteStorage sto
 	}
 
 	// Run the initializer
-	hasBackup, err := remoteStorage.Download(ctx, location, storage.DefaultBackup)
+	hasBackup, err := remoteStorage.DownloadLatestWsSnapshot(ctx, location, storage.DefaultWorkspaceBackup)
 	if err != nil {
 		return src, xerrors.Errorf("cannot restore backup: %w", err)
 	}

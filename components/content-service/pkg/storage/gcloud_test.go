@@ -19,7 +19,7 @@ func TestObjectAccessToNonExistentObj(t *testing.T) {
 			Stage:         StageDevStaging,
 		},
 	}
-	found, err := storage.Download(context.Background(), "/tmp", "foo")
+	found, err := storage.DownloadLatestWsSnapshot(context.Background(), "/tmp", "foo")
 	if err != nil {
 		t.Errorf("%+v", err)
 	}
@@ -42,29 +42,29 @@ func (rs *objDoesNotExistGCloudStorage) EnsureExists(ctx context.Context) error 
 	return nil
 }
 
-// Download always returns false and does nothing
-func (rs *objDoesNotExistGCloudStorage) Download(ctx context.Context, destination string, name string) (bool, error) {
+// DownloadLatestWsSnapshot always returns false and does nothing
+func (rs *objDoesNotExistGCloudStorage) DownloadLatestWsSnapshot(ctx context.Context, destination string, name string) (bool, error) {
 	rs.Delegate.ObjectAccess = func(ctx context.Context, bkt, obj string) (io.ReadCloser, bool, error) {
 		return nil, false, nil
 	}
 
-	return rs.Delegate.Download(ctx, destination, name)
+	return rs.Delegate.DownloadLatestWsSnapshot(ctx, destination, name)
 }
 
-// Download always returns false and does nothing
-func (rs *objDoesNotExistGCloudStorage) DownloadSnapshot(ctx context.Context, destination string, name string) (bool, error) {
+// DownloadLatestWsSnapshot always returns false and does nothing
+func (rs *objDoesNotExistGCloudStorage) DownloadWsSnapshot(ctx context.Context, destination string, name string) (bool, error) {
 	rs.Delegate.ObjectAccess = func(ctx context.Context, bkt, obj string) (io.ReadCloser, bool, error) {
 		return nil, false, nil
 	}
 
-	return rs.Delegate.DownloadSnapshot(ctx, destination, name)
+	return rs.Delegate.DownloadWsSnapshot(ctx, destination, name)
 }
 
-func (rs *objDoesNotExistGCloudStorage) Qualify(name string) string {
-	return rs.Delegate.Qualify(name)
+func (rs *objDoesNotExistGCloudStorage) QualifyWsSnapshot(name string) string {
+	return rs.Delegate.QualifyWsSnapshot(name)
 }
 
-// Upload does nothing
-func (rs *objDoesNotExistGCloudStorage) Upload(ctx context.Context, source string, name string, opts ...UploadOption) error {
+// UploadWsSnapshot does nothing
+func (rs *objDoesNotExistGCloudStorage) UploadWsSnapshot(ctx context.Context, source string, name string, opts ...UploadOption) error {
 	return xerrors.Errorf("not supported")
 }
