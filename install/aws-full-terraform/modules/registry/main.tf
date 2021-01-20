@@ -106,3 +106,56 @@ data "template_file" "gitpod_registry_values" {
     secret_name = local.secret_name
   }
 }
+
+resource "aws_iam_user" "gitpod_registry" {
+  name = "${var.project.name}-registry"
+
+  tags = {
+    project = var.project.name
+  }
+}
+
+resource "aws_iam_access_key" "gitpod_registry" {
+  user = aws_iam_user.gitpod_registry.name
+}
+
+data "template_file" "ecr_regeneration_script" {
+    template = file("${path.module}/template/regenerate-ecr.tpl")
+    vars = {
+        host = "${aws_ecr_repository.gitpod_registry.registry_id}.dkr.ecr.${var.region}.amazonaws.com"
+        secret_name = local.secret_name
+        region = var.region
+        access_key = aws_iam_access_key.gitpod_registry.id
+        secret_key = aws_iam_access_key.gitpod_registry.secret
+    }
+}
+
+resource "kubernetes_cron_job" "ecr_regeneration_cron" {
+  metadata {
+    name = "ecr_regeneration_cron"
+  }
+  spec {
+    concurrency_policy            = "Allow"
+    failed_jobs_history_limit     = 1
+    schedule                      = "0 */6 * * *"
+    starting_deadline_seconds     = 10
+    successful_jobs_history_limit = 3
+    job_template {
+      metadata {}
+      spec {
+        backoff_limit              = 2
+        ttl_seconds_after_finished = 10
+        template {
+          metadata {}
+          spec {
+            container {
+              name    = "ecr-cred-helper"
+              image   = "odaniait/aws-kubectl:latest"
+              command = ["/bin/sh", "-c", data.template_file.ecr_regeneration_script.rendered]
+            }
+          }
+        }
+      }
+    }
+  }
+}
