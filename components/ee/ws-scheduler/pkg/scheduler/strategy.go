@@ -337,7 +337,7 @@ func isGhostWorkspace(pod *corev1.Pod) bool {
 	return ok && val == "ghost"
 }
 
-func isRegularWorkspace(pod *corev1.Pod) bool {
+func IsRegularWorkspace(pod *corev1.Pod) bool {
 	if !isWorkspace(pod) {
 		return false
 	}

@@ -291,7 +291,7 @@ func TestRequiredServices(t *testing.T) {
 
 			ctx, cancel := context.WithCancel(context.Background())
 			scheduler.startInformer(ctx)
-			state, err := scheduler.buildState(ctx, test.TargetPod, isRegularWorkspace(test.TargetPod))
+			state, err := scheduler.buildState(ctx, test.TargetPod, IsRegularWorkspace(test.TargetPod))
 			cancel()
 			if err != nil {
 				t.Fatal(err)

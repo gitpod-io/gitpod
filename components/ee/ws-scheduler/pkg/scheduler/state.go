@@ -15,7 +15,7 @@ import (
 	res "k8s.io/apimachinery/pkg/api/resource"
 )
 
-// State holds alle node
+// State holds all nodes
 type State struct {
 	Nodes    map[string]*Node
 	Pods     map[string]*corev1.Pod

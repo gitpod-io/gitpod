@@ -12,6 +12,7 @@ import (
 	res "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	sched "github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler"
 )
 
@@ -224,6 +225,36 @@ Nodes:
 			ScheduledPod: createWorkspacePod("new pod", "4000Mi", "5000Mi", "node1", 10),
 			ExpectedNode: "node3",
 		},
+		{
+			// Schedules on 1 because node2 is more dense but full already
+			Desc:            "schedule ghost by density",
+			RAMSafetyBuffer: "512Mi",
+			Nodes: []*corev1.Node{
+				createNode("node1", "10000Mi", "10000Mi", false, 100),
+				createNode("node2", "10000Mi", "10000Mi", false, 100),
+			},
+			Pods: []*corev1.Pod{
+				createWorkspacePod("existingPod1", "4000Mi", "5000Mi", "node2", 10),
+				createGhostPod("ghost1", "4000Mi", "5000Mi", "node2", 10),
+			},
+			ScheduledPod: createGhostPod("new ghost", "4000Mi", "5000Mi", "", 10),
+			ExpectedNode: "node1",
+		},
+		{
+			// Should schedule to 2 because of density and it does ignore the ghost that blocks its slot
+			Desc:            "schedule workspace by density, ignoring ghost",
+			RAMSafetyBuffer: "512Mi",
+			Nodes: []*corev1.Node{
+				createNode("node1", "10000Mi", "10000Mi", false, 100),
+				createNode("node2", "10000Mi", "10000Mi", false, 100),
+			},
+			Pods: []*corev1.Pod{
+				createWorkspacePod("existingPod1", "4000Mi", "5000Mi", "node2", 10),
+				createGhostPod("ghost1", "4000Mi", "5000Mi", "node2", 10),
+			},
+			ScheduledPod: createWorkspacePod("new workspace", "4000Mi", "5000Mi", "", 10),
+			ExpectedNode: "node2",
+		},
 	}
 
 	for _, test := range tests {
@@ -233,7 +264,8 @@ Nodes:
 			}
 
 			ramSafetyBuffer := res.MustParse(test.RAMSafetyBuffer)
-			state := sched.ComputeState(test.Nodes, test.Pods, nil, &ramSafetyBuffer, false)
+			ghostsAreInvisible := sched.IsRegularWorkspace(test.ScheduledPod)
+			state := sched.ComputeState(test.Nodes, test.Pods, nil, &ramSafetyBuffer, ghostsAreInvisible)
 
 			densityAndExperienceConfig := sched.DefaultDensityAndExperienceConfig()
 			strategy, err := sched.CreateStrategy(sched.StrategyDensityAndExperience, sched.Configuration{
@@ -298,7 +330,15 @@ func createHeadlessWorkspacePod(name string, ram string, ephemeralStorage string
 
 func createWorkspacePod(name string, ram string, ephemeralStorage string, nodeName string, age time.Duration) *corev1.Pod {
 	return createPod(name, ram, ephemeralStorage, nodeName, age, map[string]string{
-		"component": "workspace",
+		"component":     "workspace",
+		wsk8s.TypeLabel: "regular",
+	})
+}
+
+func createGhostPod(name string, ram string, ephemeralStorage string, nodeName string, age time.Duration) *corev1.Pod {
+	return createPod(name, ram, ephemeralStorage, nodeName, age, map[string]string{
+		"component":     "workspace",
+		wsk8s.TypeLabel: "ghost",
 	})
 }
 

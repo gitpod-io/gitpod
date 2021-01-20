@@ -286,7 +286,7 @@ func (s *Scheduler) schedulePod(ctx context.Context, pod *corev1.Pod) (err error
 		return nil
 	}
 
-	isRegularWorkspace := isRegularWorkspace(pod)
+	isRegularWorkspace := IsRegularWorkspace(pod)
 	nodeName, state, err := s.selectNodeForPod(ctx, pod, isRegularWorkspace)
 	if nodeName == "" {
 		// we did not find any suitable node for the pod, mark the pod as unschedulable
