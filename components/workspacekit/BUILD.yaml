@@ -5,10 +5,19 @@ packages:
         - go.mod
         - go.sum
         - "**/*.go"
+        - "**/*.c"
       deps:
         - components/common-go:lib
         - components/ws-daemon-api/go:lib
         - components/content-service-api/go:lib
+      prep:
+        - ["sh", "-c", "pkg-config --atleast-version=2.5.0 libseccomp || (echo \"requires libseccomp > 2.5.0\"; exit 1)"]
       config:
         packaging: app
         buildCommand: ["go", "build", "-ldflags", "-w -extldflags \"-static\""]
+    - name: libseccomp
+      type: generic
+      config:
+        commands:
+          - ["sh", "-c", "curl -L https://github.com/seccomp/libseccomp/releases/download/v2.5.1/libseccomp-2.5.1.tar.gz | tar xz"]
+          - ["sh", "-c", "cd libseccomp-2.5.1 && ./configure --prefix=$PWD/../lib && make && make install"]

@@ -4,7 +4,10 @@
 
 package main
 
-import "github.com/gitpod-io/gitpod/workspacekit/cmd"
+import (
+	"github.com/gitpod-io/gitpod/workspacekit/cmd"
+	_ "github.com/gitpod-io/gitpod/workspacekit/pkg/nsenter"
+)
 
 func main() {
 	cmd.Execute()

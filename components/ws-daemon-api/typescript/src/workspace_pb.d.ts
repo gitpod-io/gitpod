@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -124,9 +124,6 @@ export namespace WriteIDMappingRequest {
 }
 
 export class MountProcRequest extends jspb.Message {
-  getTarget(): string;
-  setTarget(value: string): void;
-
   getPid(): number;
   setPid(value: number): void;
 
@@ -142,12 +139,14 @@ export class MountProcRequest extends jspb.Message {
 
 export namespace MountProcRequest {
   export type AsObject = {
-    target: string,
     pid: number,
   }
 }
 
 export class MountProcResponse extends jspb.Message {
+  getLocation(): string;
+  setLocation(value: string): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): MountProcResponse.AsObject;
   static toObject(includeInstance: boolean, msg: MountProcResponse): MountProcResponse.AsObject;
@@ -160,6 +159,7 @@ export class MountProcResponse extends jspb.Message {
 
 export namespace MountProcResponse {
   export type AsObject = {
+    location: string,
   }
 }
 
