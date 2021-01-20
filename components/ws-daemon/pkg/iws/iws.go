@@ -228,21 +228,20 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 		return nil, status.Error(codes.FailedPrecondition, "not supported for this workspace")
 	}
 
+	var (
+		reqPID  = req.Pid
+		procPID uint64
+	)
 	defer func() {
 		if err == nil {
 			return
 		}
 
-		log.WithError(err).Error("MountProc failed")
+		log.WithError(err).WithField("procPID", procPID).WithField("reqPID", reqPID).Error("MountProc failed")
 		if _, ok := status.FromError(err); !ok {
 			err = status.Error(codes.Internal, "cannot mount proc")
 		}
 	}()
-
-	pth := filepath.Clean(req.Target)
-	if !filepath.IsAbs(pth) {
-		return nil, status.Errorf(codes.InvalidArgument, "path must be absolute")
-	}
 
 	rt := wbs.Uidmapper.Runtime
 	if rt == nil {
@@ -258,7 +257,7 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 		return nil, xerrors.Errorf("cannot find container PID for containerID %v: %w", wscontainerID)
 	}
 
-	procpid, err := wbs.Uidmapper.findHostPID(containerPID, uint64(req.Pid))
+	procPID, err = wbs.Uidmapper.findHostPID(containerPID, uint64(req.Pid))
 	if err != nil {
 		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID)
 	}
@@ -267,7 +266,7 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 	if err != nil {
 		return nil, xerrors.Errorf("cannot prepare proc staging: %w")
 	}
-	mntout, err := exec.Command("nsenter", "-t", fmt.Sprint(procpid), "-p", "--", "mount", "-t", "proc", "proc", nodeStaging).CombinedOutput()
+	mntout, err := exec.Command("nsenter", "-t", fmt.Sprint(procPID), "-p", "--", "mount", "-t", "proc", "proc", nodeStaging).CombinedOutput()
 	if err != nil {
 		return nil, xerrors.Errorf("mount new proc at %s: %w: %s", nodeStaging, err, string(mntout))
 	}
@@ -296,12 +295,10 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 	}
 
 	workspaceStaging := filepath.Join("/.workspace", strings.TrimPrefix(containerStaging, wbs.Session.ServiceLocDaemon))
-	mntout, err = exec.Command("nsenter", "-t", fmt.Sprint(procpid), "-m", "--", "mount", "--move", workspaceStaging, pth).CombinedOutput()
-	if err != nil {
-		return nil, xerrors.Errorf("cannot move proc in workspace from %s to %s: %w: %s", workspaceStaging, pth, err, string(mntout))
-	}
 
-	return &api.MountProcResponse{}, nil
+	return &api.MountProcResponse{
+		Location: workspaceStaging,
+	}, nil
 }
 
 // maskPath masks the top of the specified path inside a container to avoid

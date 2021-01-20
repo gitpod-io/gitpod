@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -984,7 +984,6 @@ proto.iws.MountProcRequest.prototype.toObject = function(opt_includeInstance) {
  */
 proto.iws.MountProcRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
-    target: jspb.Message.getFieldWithDefault(msg, 1, ""),
     pid: jspb.Message.getFieldWithDefault(msg, 2, 0)
   };
 
@@ -1022,10 +1021,6 @@ proto.iws.MountProcRequest.deserializeBinaryFromReader = function(msg, reader) {
     }
     var field = reader.getFieldNumber();
     switch (field) {
-    case 1:
-      var value = /** @type {string} */ (reader.readString());
-      msg.setTarget(value);
-      break;
     case 2:
       var value = /** @type {number} */ (reader.readInt64());
       msg.setPid(value);
@@ -1059,13 +1054,6 @@ proto.iws.MountProcRequest.prototype.serializeBinary = function() {
  */
 proto.iws.MountProcRequest.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
-  f = message.getTarget();
-  if (f.length > 0) {
-    writer.writeString(
-      1,
-      f
-    );
-  }
   f = message.getPid();
   if (f !== 0) {
     writer.writeInt64(
@@ -1073,21 +1061,6 @@ proto.iws.MountProcRequest.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
-};
-
-
-/**
- * optional string target = 1;
- * @return {string}
- */
-proto.iws.MountProcRequest.prototype.getTarget = function() {
-  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
-};
-
-
-/** @param {string} value */
-proto.iws.MountProcRequest.prototype.setTarget = function(value) {
-  jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -1136,7 +1109,7 @@ proto.iws.MountProcResponse.prototype.toObject = function(opt_includeInstance) {
  */
 proto.iws.MountProcResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-
+    location: jspb.Message.getFieldWithDefault(msg, 1, "")
   };
 
   if (includeInstance) {
@@ -1173,6 +1146,10 @@ proto.iws.MountProcResponse.deserializeBinaryFromReader = function(msg, reader) 
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setLocation(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1202,6 +1179,28 @@ proto.iws.MountProcResponse.prototype.serializeBinary = function() {
  */
 proto.iws.MountProcResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getLocation();
+  if (f.length > 0) {
+    writer.writeString(
+      1,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional string location = 1;
+ * @return {string}
+ */
+proto.iws.MountProcResponse.prototype.getLocation = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 1, ""));
+};
+
+
+/** @param {string} value */
+proto.iws.MountProcResponse.prototype.setLocation = function(value) {
+  jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
