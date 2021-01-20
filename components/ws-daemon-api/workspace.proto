@@ -46,10 +46,12 @@ message WriteIDMappingRequest {
 }
 
 message MountProcRequest {
-    string target = 1;
+    reserved 1;
     int64 pid = 2;
 }
-message MountProcResponse {}
+message MountProcResponse {
+    string location = 1;
+}
 
 message TeardownRequest {
 }

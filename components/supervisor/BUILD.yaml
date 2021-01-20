@@ -25,7 +25,7 @@ packages:
     deps:
       - :app
       - components/supervisor/frontend:app
-      - components/workspacekit/go:app
+      - components/workspacekit:app
     argdeps:
       - imageRepoBase
     config:

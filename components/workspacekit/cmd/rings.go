@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -17,11 +18,13 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/workspacekit/pkg/seccomp"
 	daemonapi "github.com/gitpod-io/gitpod/ws-daemon/api"
 
 	"github.com/rootless-containers/rootlesskit/pkg/msgutil"
 	"github.com/rootless-containers/rootlesskit/pkg/sigproxy"
 	sigproxysignal "github.com/rootless-containers/rootlesskit/pkg/sigproxy/signal"
+	libseccomp "github.com/seccomp/libseccomp-golang"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
@@ -36,6 +39,10 @@ const (
 	// This time must give ring1 enough time to shut down (see time budgets in supervisor.go),
 	// and to talk to ws-daemon within the terminationGracePeriod of the workspace pod.
 	ring1ShutdownTimeout = 20 * time.Second
+
+	// ring2StartupTimeout is the maximum time we wait between starting ring2 and its
+	// attempt to connect to the parent socket.
+	ring2StartupTimeout = 5 * time.Second
 )
 
 var ring0Cmd = &cobra.Command{
@@ -260,20 +267,20 @@ var ring1Cmd = &cobra.Command{
 			}
 		}
 
-		pipeR, pipeW, err := os.Pipe()
+		socketFN := filepath.Join(os.TempDir(), fmt.Sprintf("workspacekit-ring1-%d.unix", time.Now().UnixNano()))
+		skt, err := net.Listen("unix", socketFN)
 		if err != nil {
-			log.WithError(err).Error("cannot mount create pipe")
+			log.WithError(err).Error("cannot create socket for ring2")
 			failed = true
 			return
 		}
-		defer pipeW.Close()
+		defer skt.Close()
 
-		cmd := exec.Command("/proc/self/exe", "ring2")
+		cmd := exec.Command("/proc/self/exe", "ring2", socketFN)
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Pdeathsig:  syscall.SIGKILL,
 			Cloneflags: syscall.CLONE_NEWNS | syscall.CLONE_NEWPID,
 		}
-		cmd.ExtraFiles = []*os.File{pipeR}
 		cmd.Dir = tmpdir
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
@@ -294,9 +301,8 @@ var ring1Cmd = &cobra.Command{
 			failed = true
 			return
 		}
-		_, err = client.MountProc(ctx, &daemonapi.MountProcRequest{
-			Target: procLoc,
-			Pid:    int64(cmd.Process.Pid),
+		resp, err := client.MountProc(ctx, &daemonapi.MountProcRequest{
+			Pid: int64(cmd.Process.Pid),
 		})
 		if err != nil {
 			log.WithError(err).Error("cannot mount proc")
@@ -304,15 +310,96 @@ var ring1Cmd = &cobra.Command{
 			return
 		}
 
+		// TODO(cw): this mount doesn't work because we need to be in the ring2 mount namespace.
+		// Use nsenter/mount handler to do this.
+		err = unix.Mount(resp.Location, procLoc, "", unix.MS_MOVE, "")
+		if err != nil {
+			log.WithError(err).WithFields(map[string]interface{}{"loc": resp.Location, "dest": procLoc}).Error("cannot move proc mount")
+			failed = true
+			return
+		}
+
+		incoming := make(chan net.Conn, 1)
+		errc := make(chan error, 1)
+		go func() {
+			defer close(incoming)
+			defer close(errc)
+
+			// Accept stops the latest when we close the socket.
+			c, err := skt.Accept()
+			if err != nil {
+				errc <- err
+				return
+			}
+			incoming <- c
+		}()
+		var ring2Conn *net.UnixConn
+		for {
+			var brek bool
+			select {
+			case err = <-errc:
+				if err != nil {
+					brek = true
+				}
+			case c := <-incoming:
+				if c == nil {
+					continue
+				}
+				ring2Conn = c.(*net.UnixConn)
+				brek = true
+			case <-time.After(ring2StartupTimeout):
+				err = fmt.Errorf("ring2 did not connect in time")
+				brek = true
+			}
+			if brek {
+				break
+			}
+		}
+		if err != nil {
+			log.WithError(err).Error("ring2 did not connect successfully")
+			failed = true
+			return
+		}
+
 		log.Info("signaling to child process")
-		_, err = msgutil.MarshalToWriter(pipeW, ringSyncMsg{
+		_, err = msgutil.MarshalToWriter(ring2Conn, ringSyncMsg{
 			Stage:  1,
 			Rootfs: tmpdir,
 		})
 		if err != nil {
-			log.WithError(err).Error("cannot send signal to child process")
+			log.WithError(err).Error("cannot send ring sync msg to ring2")
 			failed = true
 			return
+		}
+
+		log.Info("awaiting seccomp fd")
+		scmpfd, err := receiveSeccmpFd(ring2Conn)
+		if err != nil {
+			log.WithError(err).Error("did not receive seccomp fd from ring2")
+			failed = true
+			return
+		}
+
+		if scmpfd == 0 {
+			log.Warn("received 0 as ring2 seccomp fd - syscall handling is broken")
+		} else {
+			stp, errchan := seccomp.Handle(scmpfd, cmd.Process.Pid, client)
+			defer close(stp)
+			go func() {
+				t := time.NewTicker(10 * time.Millisecond)
+				defer t.Stop()
+				for {
+					// We use the ticker to rate-limit the errors from the syscall handler.
+					// We're only handling low-frequency syscalls (e.g. mount), and don't want
+					// the handler to hog the CPU because it fails on its fd.
+					<-t.C
+					err := <-errchan
+					if err == nil {
+						return
+					}
+					log.WithError(err).Warn("syscall handler error")
+				}
+			}()
 		}
 
 		err = cmd.Wait()
@@ -324,12 +411,52 @@ var ring1Cmd = &cobra.Command{
 	},
 }
 
+func receiveSeccmpFd(conn *net.UnixConn) (libseccomp.ScmpFd, error) {
+	buf := make([]byte, unix.CmsgSpace(4))
+
+	err := conn.SetDeadline(time.Now().Add(5 * time.Second))
+	if err != nil {
+		return 0, err
+	}
+
+	f, err := conn.File()
+	if err != nil {
+		return 0, err
+	}
+	defer f.Close()
+	connfd := int(f.Fd())
+
+	_, _, _, _, err = unix.Recvmsg(connfd, nil, buf, 0)
+	if err != nil {
+		return 0, err
+	}
+
+	msgs, err := unix.ParseSocketControlMessage(buf)
+	if err != nil {
+		return 0, err
+	}
+	if len(msgs) != 1 {
+		return 0, fmt.Errorf("expected a single socket control message")
+	}
+
+	fds, err := unix.ParseUnixRights(&msgs[0])
+	if err != nil {
+		return 0, err
+	}
+	if len(fds) == 0 {
+		return 0, fmt.Errorf("expected a single socket FD")
+	}
+
+	return libseccomp.ScmpFd(fds[0]), nil
+}
+
 var ring2Opts struct {
 	SupervisorPath string
 }
 var ring2Cmd = &cobra.Command{
-	Use:   "ring2",
+	Use:   "ring2 <ring1Socket>",
 	Short: "starts ring2",
+	Args:  cobra.ExactArgs(1),
 	Run: func(_cmd *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, true, true)
 		log := log.WithField("ring", 2)
@@ -343,13 +470,21 @@ var ring2Cmd = &cobra.Command{
 			sleepForDebugging()
 		}()
 
-		// wait for /proc by listening on the parent's pipe.
-		// fd=3 is the pipe's FD passed in from the parent via extraFiles.
-		pipeR := os.NewFile(uintptr(3), "")
-		var msg ringSyncMsg
-		_, err := msgutil.UnmarshalFromReader(pipeR, &msg)
+		// we talk to ring1 using a Unix socket, so that we can send the seccomp fd across.
+		rconn, err := net.Dial("unix", args[0])
 		if err != nil {
-			log.WithError(err).Error("cannot read from parent pipe")
+			log.WithError(err).Error("cannot connect to parent")
+			failed = true
+			return
+		}
+		conn := rconn.(*net.UnixConn)
+		log.Info("connected to parent socket")
+
+		// Before we do anything, we wait for the parent to make /proc available to us.
+		var msg ringSyncMsg
+		_, err = msgutil.UnmarshalFromReader(conn, &msg)
+		if err != nil {
+			log.WithError(err).Error("cannot read parent message")
 			failed = true
 			return
 		}
@@ -362,6 +497,27 @@ var ring2Cmd = &cobra.Command{
 		err = pivotRoot(msg.Rootfs)
 		if err != nil {
 			log.WithError(err).Error("cannot pivot root")
+			failed = true
+			return
+		}
+
+		// Now that we're in our new root filesystem, including proc and all, we can load
+		// our seccomp filter, and tell our parent about it.
+		scmpFd, err := seccomp.LoadFilter()
+		if err != nil {
+			log.WithError(err).Warn("cannot load seccomp filter - syscall handling will be broken")
+		}
+		connf, err := conn.File()
+		if err != nil {
+			log.WithError(err).Error("cannot get parent socket fd")
+			failed = true
+			return
+		}
+		sktfd := int(connf.Fd())
+		err = unix.Sendmsg(sktfd, nil, unix.UnixRights(int(scmpFd)), nil, 0)
+		connf.Close()
+		if err != nil {
+			log.WithError(err).Error("cannot send seccomp fd")
 			failed = true
 			return
 		}
@@ -380,7 +536,7 @@ var ring2Cmd = &cobra.Command{
 		}
 		err = unix.Exec(ring2Opts.SupervisorPath, []string{"supervisor", "run", "--inns"}, os.Environ())
 		if err != nil {
-			log.WithError(err).Error("cannot exec")
+			log.WithError(err).WithField("cmd", ring2Opts.SupervisorPath).Error("cannot exec")
 			failed = true
 			return
 		}
@@ -497,11 +653,12 @@ func init() {
 
 	supervisorPath := os.Getenv("GITPOD_WORKSPACEKIT_SUPERVISOR_PATH")
 	if supervisorPath == "" {
-		wd, err := os.Getwd()
+		wd, err := os.Executable()
 		if err == nil {
-			supervisorPath = "supervisor"
-		} else {
+			wd = filepath.Dir(wd)
 			supervisorPath = filepath.Join(wd, "supervisor")
+		} else {
+			supervisorPath = "/.supervisor/supervisor"
 		}
 	}
 
