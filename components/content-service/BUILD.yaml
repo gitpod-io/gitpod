@@ -12,9 +12,4 @@ packages:
       - "**"
     config:
       packaging: library
-  - name: test
-    type: docker
-    deps:
-    # - :app
-    config:
-      dockerfile: Dockerfile.unittest
+      dontTest: false
