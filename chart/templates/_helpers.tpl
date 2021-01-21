@@ -319,6 +319,7 @@ data:
 {{- end -}}
 {{- end -}}
 
+<<<<<<< HEAD
 {{- define "gitpod.remoteStorage.config" -}}
 {{- $ := .root -}}
 {{- $remoteStorageMinio := .remoteStorage.minio | default dict -}}
@@ -339,4 +340,17 @@ storage:
 {{- else }}
 {{ toYaml .remoteStorage | indent 2 }}
 {{- end -}}
+=======
+{{/* custom ca bundle volume and volumeMount */}}
+{{- define "gitpod.caBundleVolume" -}}
+- name: ca-bundle-certs
+  secret:
+    secretName: {{ .Values.caBundleSecretName }}
+{{- end -}}
+
+{{- define "gitpod.caBundleVolumeMount" -}}
+- name: ca-bundle-certs
+  mountPath: /etc/ssl/certs/ca-certificates.crt
+  subPath: ca-certificates.crt
+>>>>>>> 3cae036 (Support custom CA certificates in Helm)
 {{- end -}}

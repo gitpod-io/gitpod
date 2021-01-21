@@ -64,6 +64,9 @@ spec:
         secret:
           secretName: {{ $sec.secret }}
 {{- end }}
+      {{- if .Values.caBundleSecretName }}
+{{ include "gitpod.caBundleVolume" . | indent 6 }}
+      {{- end }}
       containers:
       - name: dind
         image: {{ $comp.dindImage | default "docker:19.03-dind" }}
@@ -78,6 +81,9 @@ spec:
 {{- range $idx, $sec := $comp.registryCerts }}
         - mountPath: /etc/docker/certs.d/{{- if eq $sec.name "builtin" -}}{{ template "gitpod.builtinRegistry.name" $this.root }}{{ else }}{{ $sec.name }}{{ end }}
           name: docker-tls-certs-{{ $idx }}
+        {{- if .Values.caBundleSecretName }}
+{{ include "gitpod.caBundleVolumeMount" . | indent 8 }}
+        {{- end }}
 {{- end }}
 {{- if $comp.dindResources }}
         resources:

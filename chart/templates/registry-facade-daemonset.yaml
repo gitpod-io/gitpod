@@ -97,6 +97,9 @@ spec:
         - name: https-certificates
           mountPath: "/mnt/certificates"
         {{- end }}
+        {{- if .Values.caBundleSecretName }}
+{{ include "gitpod.caBundleVolumeMount" . | indent 8 }}
+        {{- end }}
       volumes:
       - name: cache
         emptyDir: {}
@@ -131,6 +134,9 @@ spec:
           - key: {{ $.Values.certificatesSecret.keyName }}
             path: privkey.pem
           {{- end }}
+      {{- end }}
+      {{- if .Values.caBundleSecretName }}
+{{ include "gitpod.caBundleVolume" . | indent 6 }}
       {{- end }}
 {{ toYaml .Values.defaults | indent 6 }}
 {{ end }}
