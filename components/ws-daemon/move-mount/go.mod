@@ -1,26 +1,12 @@
-module github.com/gitpod-io/gitpod/workspacekit
+module github.com/gitpod-io/gitpod/ws-daemon/move-mount
 
 go 1.15
 
-replace github.com/seccomp/libseccomp-golang => github.com/kinvolk/libseccomp-golang v0.9.2-0.20201113182948-883917843313
+replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway
 
-require (
-	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/ws-daemon/api v0.0.0-00010101000000-000000000000
-	github.com/moby/sys/mountinfo v0.4.0
-	github.com/rootless-containers/rootlesskit v0.11.1
-	github.com/seccomp/libseccomp-golang v0.9.1
-	github.com/spf13/cobra v1.1.1
-	golang.org/x/sys v0.0.0-20210113181707-4bcb84eeeb78
-	google.golang.org/grpc v1.34.0
-	kernel.org/pub/linux/libs/security/libcap/cap v0.2.46
-)
+replace github.com/gitpod-io/gitpod/content-service/api => ../../content-service-api/go // leeway
 
-replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
-
-replace github.com/gitpod-io/gitpod/content-service/api => ../content-service-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/ws-daemon/api => ../ws-daemon-api/go // leeway
+replace github.com/gitpod-io/gitpod/ws-daemon/api => ../../ws-daemon-api/go // leeway
 
 replace k8s.io/api => k8s.io/api v0.20.1 // leeway indirect from components/common-go:lib
 
@@ -69,3 +55,13 @@ replace k8s.io/controller-manager => k8s.io/controller-manager v0.20.1 // leeway
 replace k8s.io/kubectl => k8s.io/kubectl v0.20.1 // leeway indirect from components/common-go:lib
 
 replace k8s.io/mount-utils => k8s.io/mount-utils v0.20.1 // leeway indirect from components/common-go:lib
+
+replace github.com/seccomp/libseccomp-golang => github.com/kinvolk/libseccomp-golang v0.9.2-0.20201113182948-883917843313 // leeway indirect from components/workspacekit:lib
+
+require (
+	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
+	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
+	github.com/sirupsen/logrus v1.7.0 // indirect
+	golang.org/x/sys v0.0.0-20210113181707-4bcb84eeeb78
+	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
+)

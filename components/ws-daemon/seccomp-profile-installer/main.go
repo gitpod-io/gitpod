@@ -41,6 +41,7 @@ func main() {
 			},
 			Action: specs.ActAllow,
 		},
+
 		// docker-up requires unshare(CLONE_NEWNET) to create the network namespace
 		// for Docker.
 		specs.LinuxSyscall{

@@ -13,7 +13,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
@@ -284,21 +283,58 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 		}
 	}
 
-	containerStaging, err := ioutil.TempDir(wbs.Session.ServiceLocDaemon, "proc-staging")
+	err = moveMount(int(procPID), nodeStaging, req.Target)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot prepare proc-staging for container: %w", err)
+		return nil, err
 	}
 
-	mntout, err = exec.Command("mount", "--move", nodeStaging, containerStaging).CombinedOutput()
+	return &api.MountProcResponse{}, nil
+}
+
+func moveMount(targetPid int, source, target string) error {
+	base, err := os.Executable()
 	if err != nil {
-		return nil, xerrors.Errorf("cannot move proc mount at %s: %w: %s", containerStaging, err, string(mntout))
+		return err
 	}
 
-	workspaceStaging := filepath.Join("/.workspace", strings.TrimPrefix(containerStaging, wbs.Session.ServiceLocDaemon))
+	mntfd, err := syscallOpenTree(unix.AT_FDCWD, source, flagOpenTreeClone|flagAtRecursive)
+	if err != nil {
+		return xerrors.Errorf("cannot open tree: %w", err)
+	}
+	mntf := os.NewFile(mntfd, "")
+	defer mntf.Close()
 
-	return &api.MountProcResponse{
-		Location: workspaceStaging,
-	}, nil
+	nss := []struct {
+		Env    string
+		Source string
+		Flags  int
+	}{
+		{"_LIBNSENTER_ROOTFD", fmt.Sprintf("/proc/%d/root", targetPid), unix.O_PATH},
+		{"_LIBNSENTER_CWDFD", fmt.Sprintf("/proc/%d/cwd", targetPid), unix.O_PATH},
+		{"_LIBNSENTER_MNTNSFD", fmt.Sprintf("/proc/%d/ns/mnt", targetPid), os.O_RDONLY},
+	}
+
+	stdioFdCount := 3
+	cmd := exec.Command(filepath.Join(filepath.Dir(base), "move-mount"), target)
+	cmd.ExtraFiles = append(cmd.ExtraFiles, mntf)
+	cmd.Env = append(cmd.Env, "_LIBNSENTER_INIT=1")
+	for _, ns := range nss {
+		f, err := os.OpenFile(ns.Source, ns.Flags, 0)
+		if err != nil {
+			return fmt.Errorf("cannot open %s: %w", ns.Source, err)
+		}
+		defer f.Close()
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%d", ns.Env, stdioFdCount+len(cmd.ExtraFiles)))
+		cmd.ExtraFiles = append(cmd.ExtraFiles, f)
+	}
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Run()
+	if err != nil {
+		return fmt.Errorf("cannot run move-mount: %w", err)
+	}
+	return nil
 }
 
 // maskPath masks the top of the specified path inside a container to avoid
