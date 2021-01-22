@@ -56,3 +56,15 @@ func ReadString(memFile *os.File, offset int64) (string, error) {
 	s := buffer[:bytes.IndexByte(buffer, 0)]
 	return string(s), nil
 }
+
+func ReadBytes(memFile *os.File, offset int64, len int) ([]byte, error) {
+	var buffer = make([]byte, len)
+
+	// pread() will always return the size of the buffer
+	_, err := unix.Pread(int(memFile.Fd()), buffer, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	return buffer, nil
+}
