@@ -1,18 +1,12 @@
-module github.com/gitpod-io/gitpod/ws-daemon/api
+module github.com/gitpod-io/gitpod/ws-daemon/move-mount
 
-go 1.14
-
-require (
-	github.com/fatih/gomodifytags v1.13.0 // indirect
-	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
-	github.com/golang/mock v1.4.3
-	github.com/golang/protobuf v1.3.5
-	google.golang.org/grpc v1.29.1
-)
+go 1.15
 
 replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway
 
 replace github.com/gitpod-io/gitpod/content-service/api => ../../content-service-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/ws-daemon/api => ../../ws-daemon-api/go // leeway
 
 replace k8s.io/api => k8s.io/api v0.20.1 // leeway indirect from components/common-go:lib
 
@@ -61,3 +55,13 @@ replace k8s.io/controller-manager => k8s.io/controller-manager v0.20.1 // leeway
 replace k8s.io/kubectl => k8s.io/kubectl v0.20.1 // leeway indirect from components/common-go:lib
 
 replace k8s.io/mount-utils => k8s.io/mount-utils v0.20.1 // leeway indirect from components/common-go:lib
+
+replace github.com/seccomp/libseccomp-golang => github.com/kinvolk/libseccomp-golang v0.9.2-0.20201113182948-883917843313 // leeway indirect from components/workspacekit:lib
+
+require (
+	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
+	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
+	github.com/sirupsen/logrus v1.7.0 // indirect
+	golang.org/x/sys v0.0.0-20210113181707-4bcb84eeeb78
+	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
+)

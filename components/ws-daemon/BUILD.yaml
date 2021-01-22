@@ -2,7 +2,9 @@ packages:
   - name: app
     type: go
     srcs:
-      - "**/*.go"
+      - "cmd/**/*.go"
+      - "pkg/**/*.go"
+      - "main.go"
       - "go.mod"
       - "go.sum"
     deps:
@@ -18,7 +20,8 @@ packages:
   - name: content-initializer
     type: go
     srcs:
-      - "**/*.go"
+      - "pkg/**/*.go"
+      - "cmd/content-initializer/**/*.go"
       - "go.mod"
       - "go.sum"
     deps:
@@ -39,6 +42,7 @@ packages:
     deps:
       - :app
       - :content-initializer
+      - components/ws-daemon/move-mount:app
     argdeps:
       - imageRepoBase
     config:
@@ -57,3 +61,19 @@ scripts:
 
       echo "update d_b_user set featureFlags='{\"permanentWSFeatureFlags\":[\"user_namespace\"]}';" | mysql -u root -ptest -h 127.0.0.1 gitpod
       kill $PID
+  - name: kube-exec
+    description: Executes into the ws-daemon for a workspace pod in $WS
+    script: |
+      if [ -z "$WS" ]; then
+        echo "usage: WS=<workspacePodName> leeway run components/ws-daemon:kube-exec"
+        exit 1
+      fi
+      node=$(kubectl get pod -o jsonpath='{.spec.nodeName}' $WS)
+      if [ -z "$node" ]; then
+        echo "did not find a node"
+        exit 1
+      fi
+      daemon=$(kubectl describe node $node | grep ws-daemon | grep $(kubens -c) | cut -d ' ' -f 4-30)
+      echo node: $node
+      echo daemon: $daemon
+      kubectl exec -it $daemon -- sh

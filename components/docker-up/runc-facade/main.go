@@ -35,62 +35,25 @@ func main() {
 		log.WithError(err).Fatal("runc not found")
 	}
 
-	var runcDirect bool
+	var useFacade bool
 	for _, arg := range os.Args {
-		if arg == "-v" || arg == "--version" {
-			runcDirect = true
+		if arg == "create" {
+			useFacade = true
 			break
 		}
 	}
-	if runcDirect {
-		err = syscall.Exec(runcPath, os.Args, os.Environ())
-		if err != nil {
-			panic(err)
-		}
-	}
 
-	switch os.Args[0] {
-	case cmdMountProc:
-		err = mountProc()
-	case cmdUnmountProc:
-		err = unmountProc()
-	default:
-		err = runc(runcPath)
+	if useFacade {
+		err = createAndRunc(runcPath)
+	} else {
+		err = syscall.Exec(runcPath, os.Args, os.Environ())
 	}
 	if err != nil {
 		log.WithError(err).Fatal("failed")
 	}
 }
 
-func mountProc() error {
-	wd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile("/tmp/runc-facade-mount", []byte(wd+"\n"+fmt.Sprint(os.Args)), 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func unmountProc() error {
-	wd, err := os.Getwd()
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile("/tmp/runc-facade-unmount", []byte(wd), 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func runc(runcPath string) error {
+func createAndRunc(runcPath string) error {
 	fc, err := ioutil.ReadFile("config.json")
 	if err != nil {
 		return fmt.Errorf("cannot read config.json: %w", err)
