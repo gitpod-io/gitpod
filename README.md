@@ -1,4 +1,10 @@
-<img alt="Gitpod Logo" src="https://raw.githubusercontent.com/gitpod-io/gitpod/master/components/dashboard/public/images/gitpod-ddd_light.svg" width="300">
+<p align="center">
+  <a href="https://www.gitpod.io">
+    <img src="https://raw.githubusercontent.com/gitpod-io/gitpod/master/components/dashboard/public/images/gitpod.svg" height="60">
+    <h3 align="center">Gitpod</h3>
+  </a>
+  <p align="center">Always ready-to-code.</p>
+</p>
 
 [![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/from-referrer/)
 [![Werft.dev - Gitpod CI](https://img.shields.io/badge/Werft.dev-CI--builds-green)](https://werft.gitpod-dev.com/)
@@ -11,16 +17,21 @@ Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and 
 
 ## Features
 
- - [Dev environments as code](https://www.gitpod.io/docs/#-dev-environments-as-code)
- - [Prebuilt dev environments](https://www.gitpod.io/docs/#prebuilds) - automatically prepare environments on every Git push
- - Professional developer experience in a browser tab (VS Code Extensions, full Linux terminals)
- - Integrated Docker build
- - GitLab, GitHub, and Bitbucket integration
- - Integrated code reviews
- - Snapshots - Snapshot any state of your dev environment and let others create clones
- - Collaboration - Invite team members to your environments
- - Gitpod CLI to automate your experience
- - [learn more](https://www.gitpod.io/features/)
+🏗 [Dev environments as code](https://www.gitpod.io/docs/#-dev-environments-as-code) - Gitpod applies lessons learned from infrastructure-as-code. Spinning up dev environments is easily repeatable and reproducible empowering you to automate, version-control and share dev environments across your team.
+
+⚡️ [Prebuilt dev environments](https://www.gitpod.io/docs/#prebuilds) - Gitpod continuously prebuilds all your git branches similar to a CI server. Control how Gitpod pre-configures and initializes environments before you even start a workspace through `init` commands in your `.gitpod.yml`.
+
+🐳 [Integrated Docker build](https://www.gitpod.io/docs/config-docker/) - Gitpod instantly starts a container in the cloud based on your Docker image. Tools that are required for your project are easy to install and configure.
+
+👐 [GitLab, GitHub, and Bitbucket integration](https://www.gitpod.io/docs/integrations/) - Gitpod seamlessly integrates in your workflow and works with all major git hosting platforms including GitHub, GitLab and Bitbucket.
+ 
+👀 [Integrated code reviews](https://www.gitpod.io/docs/code-reviews/#code-reviews) - with Gitpod you can do native code reviews on any PR/MR. No need to switch context anymore and clutter your local machine with your colleagues PR/MR.
+
+👯‍♀️ [Collaboration](https://www.gitpod.io/docs/sharing-and-collaboration/) - invite team members to your dev environment or snapshot any state of your dev environment to share it with your team asynchronously.
+
+🛠 Professional & customizable developer experience - a Gitpod workspace gives you the same capabilities (yes, even [root & docker](https://www.gitpod.io/docs/feature-preview/#root-access)) as your Linux machine - pre-configured and optimized for your individual development workflow. Install any [VS Code extension](https://www.gitpod.io/docs/vscode-extensions/) with one click on a user and/or team level. 
+
+[Learn more 👉](https://www.gitpod.io/features/) 
 
 Gitpod is provided as a [managed Saas version](https://gitpod.io) with a free subscription for open-source or a [free self-hosted version](https://www.gitpod.io/self-hosted/). An enterprise license is available [here](https://www.gitpod.io/self-hosted/).
 
