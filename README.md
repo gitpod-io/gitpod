@@ -19,15 +19,15 @@ Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and 
 
 🏗 [Dev environments as code](https://www.gitpod.io/docs/#-dev-environments-as-code) - Gitpod applies lessons learned from infrastructure-as-code. Spinning up dev environments is easily repeatable and reproducible empowering you to automate, version-control and share dev environments across your team.
 
-⚡️ [Prebuilt dev environments](https://www.gitpod.io/docs/#prebuilds) - Gitpod continuously builds all your git branches like a CI server. Whenever new commits are pushed to your repository, Gitpod can prebuild dev environments, i.e. run the init commands in your `.gitpod.yml` before you even start a workspace.
+⚡️ [Prebuilt dev environments](https://www.gitpod.io/docs/#prebuilds) - Gitpod continuously prebuilds all your git branches similar to a CI server. Control how Gitpod prepares environments thorugh `init` commands in your `.gitpod.yml` - everything before you even start a workspace.
 
 🐳 [Integrated Docker build](https://www.gitpod.io/docs/config-docker/) - Gitpod instantly starts a container in the cloud based on your Docker image. Tools that are required for your project are easy to install and configure.
 
 👐 [GitLab, GitHub, and Bitbucket integration](https://www.gitpod.io/docs/integrations/) - Gitpod seamlessly integrates in your workflow and works with all major git hosting platforms including GitHub, GitLab and Bitbucket.
  
-👀 [Integrated code reviews](https://www.gitpod.io/docs/code-reviews/#code-reviews) - with Gitpoid you can do native code reviews on any PR/MR. No need to switch context anymore and declutter your local machine with your colleagues PR/MR.
+👀 [Integrated code reviews](https://www.gitpod.io/docs/code-reviews/#code-reviews) - with Gitpod you can do native code reviews on any PR/MR. No need to switch context anymore and clutter your local machine with your colleagues PR/MR.
 
-👯‍♀️ [Collaboration](https://www.gitpod.io/docs/sharing-and-collaboration/) - invite team members to your dev environment or snapshot any state of your dev environment to share it with your team.
+👯‍♀️ [Collaboration](https://www.gitpod.io/docs/sharing-and-collaboration/) - invite team members to your dev environment or snapshot any state of your dev environment to share it with your team asynchronously.
 
 🛠 Professional & customizable developer experience - a Gitpod workspace gives you the same capabilities (yes, even [root & docker](https://www.gitpod.io/docs/feature-preview/#root-access)) as your Linux machine - pre-configured and optimized for your individual development workflow. Install any [VS Code extension](https://www.gitpod.io/docs/vscode-extensions/) with one click on a user and/or team level. 
 
