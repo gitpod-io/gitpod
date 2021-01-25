@@ -2,7 +2,8 @@ const shell = require('shelljs');
 const fs = require('fs');
 const { werft, exec, gitTag } = require('./util/shell.js');
 const { sleep } = require('./util/util.js');
-const { recreateNamespace } = require('./util/kubectl.js');
+const { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects } = require('./util/kubectl.js');
+const { issueAndInstallCertficate } = require('./util/certs.js');
 
 const GCLOUD_SERVICE_ACCOUNT_PATH = "/mnt/secrets/gcp-sa/service-account.json";
 
@@ -15,7 +16,7 @@ build(context, version)
 function parseVersion(context) {
     let buildConfig = context.Annotations || {};
     const explicitVersion = buildConfig.version;
-    if(explicitVersion) {
+    if (explicitVersion) {
         return explicitVersion;
     }
     let version = context.Name;
@@ -80,7 +81,8 @@ async function build(context, version) {
     };
     const imageRepo = publishRelease ? "gcr.io/gitpod-io/self-hosted" : "eu.gcr.io/gitpod-core-dev/build";
 
-    exec(`leeway vet --ignore-warnings`);
+    // TODO https://github.com/gitpod-io/leeway/issues/47
+    // exec(`leeway vet --ignore-warnings`);
     exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`, buildEnv);
     if (publishRelease) {
         exec(`gcloud auth activate-service-account --key-file "/mnt/secrets/gcp-sa-release/service-account.json"`);
@@ -129,28 +131,25 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
     const registryProxyPort = `2${Math.floor(Math.random()*1000)}`;
     const registryNodePort = `${30000 + Math.floor(Math.random()*1000)}`;
 
+    // trigger certificate issuing
+    werft.log('certificate', "organizing a certificate for the preview environment...");
+    let namespaceRecreatedResolve = undefined;
+    let namespaceRecreatedPromise = new Promise((resolve) => {
+        namespaceRecreatedResolve = resolve;
+    });
+    const certificatePromise = issueAndInstallCertficate(werft, ".werft/certs", GCLOUD_SERVICE_ACCOUNT_PATH, namespace, "gitpod-dev.com", domain, "34.76.116.244", namespaceRecreatedPromise, "proxy-config-certificates");
+
+    // re-create namespace
     try {
-        const objs = shell
-            .exec(`kubectl get pod -l component=workspace --namespace ${namespace} --no-headers -o=custom-columns=:metadata.name`)
-            .split("\n")
-            .map(o => o.trim())
-            .filter(o => o.length > 0);
-
-        objs.forEach(o => {
-            werft.log("prep", `deleting workspace ${o}`);
-            exec(`kubectl delete pod --namespace ${namespace} ${o}`, {slice: 'prep'});
-        });
-
-        recreateNamespace(namespace, {slice: 'prep'});
-        [
-            "kubectl config current-context",
-            `kubectl config set-context --current --namespace=${namespace}`
-        ].forEach(cmd => exec(cmd, {slice: 'prep'}));
+        wipeAndRecreateNamespace(namespace, {slice: 'prep'});
+        setKubectlContextNamespace(namespace, {slice: 'prep'});
+        namespaceRecreatedResolve();    // <-- signal for certificate
         werft.done('prep');
     } catch (err) {
         werft.fail('prep', err);
     }
 
+    // core-dev specific section start
     werft.log("secret", "copy secret into namespace")
     try {
         const auth = exec(`echo -n "_json_key:$(kubectl get secret gcp-sa-registry-auth --namespace=keys -o yaml \
@@ -180,39 +179,18 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
     } catch (err) {
         werft.fail('authProviders', err);
     }
+    // core-dev specific section end
 
-    let certificatePromise = undefined;
-    
-    // TODO(geropl): Now that the certs reside in a separate namespaces, start the actual certificate issuing _before_ the namespace cleanup
-    werft.log('certificate', "organizing a certificate for the preview environment...");
-    certificatePromise = issueAndInstallCertficate(namespace, domain);
-
+    // cleanup non-namespace objects
     werft.log("predeploy cleanup", "removing old unnamespaced objects - this might take a while");
     try {
-        exec(`/usr/local/bin/helm3 delete gitpod-${destname} || echo gitpod-${destname} was not installed yet`, {slice: 'predeploy cleanup'});
-        exec(`/usr/local/bin/helm3 delete jaeger-${destname} || echo jaeger-${destname} was not installed yet`, {slice: 'predeploy cleanup'});
-
-        let objs = [];
-        ["ws-scheduler", "node-daemon", "cluster", "workspace", "jaeger", "jaeger-agent", "ws-sync", "ws-manager-node", "ws-daemon", "registry-facade"].forEach(comp => 
-            ["ClusterRole", "ClusterRoleBinding", "PodSecurityPolicy"].forEach(kind =>
-                shell
-                    .exec(`kubectl get ${kind} -l component=${comp} --no-headers -o=custom-columns=:metadata.name | grep ${namespace}-ns`)
-                    .split("\n")
-                    .map(o => o.trim())
-                    .filter(o => o.length > 0)
-                    .forEach(obj => objs.push({ 'kind': kind, 'obj': obj }))
-            )
-        )
-
-        objs.forEach(o => {
-            werft.log("predeploy cleanup", `deleting old ${o.kind} ${o.obj}`);
-            exec(`kubectl delete ${o.kind} ${o.obj}`, {slice: 'predeploy cleanup'});
-        });
+        deleteNonNamespaceObjects(namespace, destname, {slice: 'predeploy cleanup'})
         werft.done('predeploy cleanup');
     } catch (err) {
         werft.fail('predeploy cleanup', err);
     }
 
+    // versions
     werft.log("deploy", "extracting versions");
     try {
         // TODO [geropl] versions is not a core component yet
@@ -222,6 +200,7 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
         werft.fail('deploy', err);
     }
 
+    // deployment config
     let flags = "";
     flags+=` --namespace ${namespace}`;
     flags+=` --set components.imageBuilder.hostDindData=/mnt/disks/ssd0/docker-${namespace}`;
@@ -287,42 +266,6 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
     }
 }
 
-async function issueAndInstallCertficate(namespace, domain) {
-    // Always use 'terraform apply' to make sure the certificate is present and up-to-date
-    await exec(`set -x \
-        && cd .werft/certs \
-        && terraform init \
-        && export GOOGLE_APPLICATION_CREDENTIALS="${GCLOUD_SERVICE_ACCOUNT_PATH}" \
-        && terraform apply -auto-approve \
-            -var 'namespace=${namespace}' \
-            -var 'dns_zone_domain=gitpod-dev.com' \
-            -var 'domain=${domain}' \
-            -var 'public_ip=34.76.116.244' \
-            -var 'subdomains=["", "*.", "*.ws-dev."]'`, {slice: 'certificate', async: true});
-
-    werft.log('certificate', `waiting until certificate certs/${namespace} is ready...`)
-    let notReadyYet = true;
-    while (notReadyYet) {
-        werft.log('certificate', `polling state of certs/${namespace}...`)
-        const result = exec(`kubectl -n certs get certificate ${namespace} -o jsonpath="{.status.conditions[?(@.type == 'Ready')].status}"`, { silent: true, dontCheckRc: true });
-        if (result.code === 0 && result.stdout === "True") {
-            notReadyYet = false;
-            break;
-        }
-
-        sleep(5000);
-    }
-
-    werft.log('certificate', `copying certificate from "certs/${namespace}" to "${namespace}/proxy-config-certificates"`);
-    // certmanager is configured to create a secret in the namespace "certs" with the name "${namespace}".
-    exec(`kubectl get secret ${namespace} --namespace=certs -o yaml \
-        | yq d - 'metadata.namespace' \
-        | yq d - 'metadata.uid' \
-        | yq d - 'metadata.resourceVersion' \
-        | yq d - 'metadata.creationTimestamp' \
-        | sed 's/${namespace}/proxy-config-certificates/g' \
-        | kubectl apply --namespace=${namespace} -f -`);
-}
 
 /**
  * Publish Charts
@@ -347,6 +290,5 @@ async function publishHelmChart(imageRepoBase) {
 module.exports = {
     parseVersion,
     build,
-    issueAndInstallCertficate,
     deployToDev
 }
