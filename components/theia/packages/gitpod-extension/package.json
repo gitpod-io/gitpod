@@ -49,7 +49,7 @@
     "react": "^16.4.1",
     "react-dom": "^16.4.1",
     "requestretry": "^4.0.0",
-    "yaml": "^1.5.1"
+    "yaml": "1.5.1"
   },
   "devDependencies": {
     "@types/chai": "^4.1.2",
@@ -61,7 +61,7 @@
     "@types/ps-tree": "^1.1.0",
     "@types/requestretry": "^1.12.4",
     "@types/tmp": "^0.2.0",
-    "@types/yaml": "^1.0.2",
+    "@types/yaml": "1.0.2",
     "chai": "^4.1.2",
     "mocha": "^5.0.0",
     "mocha-typescript": "^1.1.17",

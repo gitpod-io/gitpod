@@ -4215,7 +4215,7 @@
     "@types/events" "*"
     "@types/node" "*"
 
-"@types/yaml@^1.0.2":
+"@types/yaml@1.0.2":
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/@types/yaml/-/yaml-1.0.2.tgz#bba080d64714c6ef3eaa023e235dacd2cfa3c938"
   integrity sha512-rS1VJFjyGKNHk8H97COnPIK+oeLnc0J9G0ES63o/Ky+WlJCeaFGiGCTGhV/GEVKua7ZWIV1JIDopYUwrfvTo7A==
@@ -20347,17 +20347,17 @@ yaml-ast-parser@^0.0.43:
   resolved "https://registry.yarnpkg.com/yaml-ast-parser/-/yaml-ast-parser-0.0.43.tgz#e8a23e6fb4c38076ab92995c5dca33f3d3d7c9bb"
   integrity sha512-2PTINUwsRqSd+s8XxKaJWQlUuEMHJQyEuh2edBbW8KNJz0SJPwUSD2zRWqezFEdN7IzAgeuYHFUCF7o8zRdZ0A==
 
-yaml@^1.10.0:
-  version "1.10.0"
-  resolved "https://registry.yarnpkg.com/yaml/-/yaml-1.10.0.tgz#3b593add944876077d4d683fee01081bd9fff31e"
-  integrity sha512-yr2icI4glYaNG+KWONODapy2/jDdMSDnrONSjblABjD9B4Z5LgiircSt8m8sRZFNi08kG9Sm0uSHtEmP3zaEGg==
-
-yaml@^1.5.1:
+yaml@1.5.1:
   version "1.5.1"
   resolved "https://registry.yarnpkg.com/yaml/-/yaml-1.5.1.tgz#e8201678064fbcfef6afe4122ef802573b6cade8"
   integrity sha512-btfJvMOgVthGZSgHBMrDkLuQu4YxOycw6kwuC67cUEOKJmmNozjIa02eKvuSq7usqqqpwwCvflGTF6JcDvSudw==
   dependencies:
     "@babel/runtime" "^7.4.4"
+
+yaml@^1.10.0:
+  version "1.10.0"
+  resolved "https://registry.yarnpkg.com/yaml/-/yaml-1.10.0.tgz#3b593add944876077d4d683fee01081bd9fff31e"
+  integrity sha512-yr2icI4glYaNG+KWONODapy2/jDdMSDnrONSjblABjD9B4Z5LgiircSt8m8sRZFNi08kG9Sm0uSHtEmP3zaEGg==
 
 yaml@^1.7.2:
   version "1.8.3"
