@@ -65,6 +65,7 @@ type task struct {
 	config      TaskConfig
 	command     string
 	successChan chan bool
+	title       string
 }
 
 type headlessTaskProgressReporter interface {
@@ -153,8 +154,11 @@ func (tm *tasksManager) init(ctx context.Context) {
 		log.WithError(err).Error()
 		return
 	}
-	if tasks == nil {
+	if tasks == nil && tm.config.isHeadless() {
 		return
+	}
+	if tasks == nil {
+		tasks = &[]TaskConfig{{}}
 	}
 
 	select {
@@ -169,8 +173,10 @@ func (tm *tasksManager) init(ctx context.Context) {
 	for i, config := range *tasks {
 		id := strconv.Itoa(i)
 		presentation := &api.TaskPresentation{}
+		title := ""
 		if config.Name != nil {
 			presentation.Name = *config.Name
+			title = *config.Name
 		} else {
 			presentation.Name = tm.terminalService.DefaultWorkdir
 		}
@@ -188,6 +194,7 @@ func (tm *tasksManager) init(ctx context.Context) {
 			},
 			config:      config,
 			successChan: make(chan bool, 1),
+			title:       title,
 		}
 		task.command = tm.getCommand(task)
 		if tm.config.isHeadless() && task.command == "exit" {
@@ -220,6 +227,7 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup) {
 		}
 		resp, err := tm.terminalService.OpenWithOptions(ctx, openRequest, terminal.TermOptions{
 			ReadTimeout: readTimeout,
+			Title:       t.title,
 		})
 		if err != nil {
 			taskLog.WithError(err).Error("cannot open new task terminal")
@@ -228,8 +236,8 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup) {
 			continue
 		}
 
-		taskLog = taskLog.WithField("terminal", resp.Alias)
-		term, ok := tm.terminalService.Mux.Get(resp.Alias)
+		taskLog = taskLog.WithField("terminal", resp.Terminal.Alias)
+		term, ok := tm.terminalService.Mux.Get(resp.Terminal.Alias)
 		if !ok {
 			taskLog.Error("cannot find a task terminal")
 			t.successChan <- false
@@ -240,7 +248,7 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup) {
 		taskLog = taskLog.WithField("pid", term.Command.Process.Pid)
 		taskLog.Info("task terminal has been started")
 		tm.updateState(func() bool {
-			t.Terminal = resp.Alias
+			t.Terminal = resp.Terminal.Alias
 			t.State = api.TaskState_running
 			return true
 		})

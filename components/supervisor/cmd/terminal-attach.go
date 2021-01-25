@@ -83,6 +83,7 @@ func attachToTerminal(ctx context.Context, client api.TerminalServiceClient, ali
 	if err != nil {
 		log.WithError(err).Fatal("cannot attach to terminal")
 	}
+	var exitCode int
 	errchan := make(chan error, 5)
 	go func() {
 		for {
@@ -90,8 +91,11 @@ func attachToTerminal(ctx context.Context, client api.TerminalServiceClient, ali
 			if err != nil {
 				errchan <- err
 			}
-			os.Stderr.Write(resp.GetStderr())
-			os.Stdout.Write(resp.GetStdout())
+			os.Stdout.Write(resp.GetData())
+			terminalExitCode := resp.GetExitCode()
+			if terminalExitCode > 0 {
+				exitCode = int(terminalExitCode)
+			}
 		}
 	}()
 
@@ -115,11 +119,13 @@ func attachToTerminal(ctx context.Context, client api.TerminalServiceClient, ali
 				}
 
 				req := &api.SetTerminalSizeRequest{
-					Alias:    alias,
-					Cols:     uint32(size.Cols),
-					Rows:     uint32(size.Rows),
-					WidthPx:  uint32(size.X),
-					HeightPx: uint32(size.Y),
+					Alias: alias,
+					Size: &api.TerminalSize{
+						Cols:     uint32(size.Cols),
+						Rows:     uint32(size.Rows),
+						WidthPx:  uint32(size.X),
+						HeightPx: uint32(size.Y),
+					},
 				}
 
 				var expectResize bool
@@ -167,6 +173,8 @@ func attachToTerminal(ctx context.Context, client api.TerminalServiceClient, ali
 	case err := <-errchan:
 		if err != io.EOF {
 			log.WithError(err).Error("error")
+		} else {
+			os.Exit(exitCode)
 		}
 	case <-stopch:
 	}

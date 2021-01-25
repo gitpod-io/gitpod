@@ -14,11 +14,18 @@ service TerminalService {
     // Open opens a new terminal running the login shell
     rpc Open(OpenTerminalRequest) returns (OpenTerminalResponse) {}
 
-    // Close closes a terminal for the given alias, SIGKILL'ing all child processes
+    // Shutdown closes a terminal for the given alias, SIGKILL'ing all child processes
     // before closing the pseudo-terminal.
-    rpc Close(CloseTerminalRequest) returns (CloseTerminalResponse) {
+    rpc Shutdown(ShutdownTerminalRequest) returns (ShutdownTerminalResponse) {
         option (google.api.http) = {
-            get: "/v1/terminal/close/{alias}"
+            get: "/v1/terminal/shutdown/{alias}"
+        };
+    }
+    
+    // Get returns an opened terminal info
+    rpc Get(GetTerminalRequest) returns (Terminal) {
+        option (google.api.http) = {
+            get: "/v1/terminal/get/{alias}"
         };
     }
     
@@ -47,36 +54,52 @@ service TerminalService {
     rpc SetSize(SetTerminalSizeRequest) returns (SetTerminalSizeResponse) {}
 }
 
+message TerminalSize {
+    uint32 rows = 1;
+    uint32 cols = 2;
+    uint32 widthPx = 3;
+    uint32 heightPx = 4;
+}
+
 message OpenTerminalRequest {
     string workdir = 1;
     map<string, string> env = 2;
     map<string, string> annotations = 3;
+
+    string shell = 4;
+    repeated string shell_args = 5;
+
+    TerminalSize size = 6;
 }
 message OpenTerminalResponse {
-    string alias = 1;
+    Terminal terminal = 1;
 
     // starter_token can be used to change the terminal size if there are
     // multiple listerns, without having to force your way in.
     string starter_token = 2;
 }
 
-message CloseTerminalRequest {
+message ShutdownTerminalRequest {
     string alias = 1;
 }
-message CloseTerminalResponse {}
+message ShutdownTerminalResponse {}
+
+message Terminal {
+    string alias = 1;
+    repeated string command = 2;
+    string title = 3;
+    int64 pid = 4;
+    string initial_workdir = 5;
+    string current_workdir = 6;
+    map<string, string> annotations = 7;
+}
+
+message GetTerminalRequest {
+    string alias = 1;
+}
 
 message ListTerminalsRequest {}
 message ListTerminalsResponse {
-    message Terminal {
-        string alias = 1;
-        repeated string command = 2;
-        string title = 3;
-        int64 pid = 4;
-        string initial_workdir = 5;
-        string current_workdir = 6;
-        map<string, string> annotations = 7;
-    }
-
     repeated Terminal terminals = 1;
 }
 
@@ -85,8 +108,9 @@ message ListenTerminalRequest {
 }
 message ListenTerminalResponse {
     oneof output {
-        bytes stdout = 1;
-        bytes stderr = 2;
+        bytes data = 1;
+        int32 exit_code = 2;
+        string title = 3;
     };
 }
 
@@ -110,9 +134,6 @@ message SetTerminalSizeRequest {
         bool force = 3;
     };
 
-    uint32 rows = 4;
-    uint32 cols = 5;
-    uint32 widthPx = 6;
-    uint32 heightPx = 7;
+    TerminalSize size = 4;
 }
 message SetTerminalSizeResponse {}

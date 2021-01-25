@@ -32,11 +32,11 @@ var terminalNewCmd = &cobra.Command{
 		}
 
 		if terminalNewOpts.Detach {
-			fmt.Println(resp.Alias)
+			fmt.Println(resp.Terminal.Alias)
 			return
 		}
 
-		attachToTerminal(context.Background(), client, resp.Alias, attachToTerminalOpts{
+		attachToTerminal(context.Background(), client, resp.Terminal.Alias, attachToTerminalOpts{
 			Interactive: true,
 			Token:       resp.StarterToken,
 		})

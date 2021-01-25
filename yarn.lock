@@ -10698,10 +10698,10 @@ google-p12-pem@^3.0.0, google-p12-pem@^3.0.3:
   dependencies:
     node-forge "^0.10.0"
 
-google-protobuf@^3.5.0:
-  version "3.7.1"
-  resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.7.1.tgz#9ef0fa3bc9ee416ba3fbe32b21ec6b7626f898e2"
-  integrity sha512-6fvlUey6cNKtWSEn1bt4CT4wc2EID1fVluHS1dOnqIlxyIu3cBid2BvWE8Rwl6wN+hRTgiAKhfyydAGV/weZYQ==
+google-protobuf@3.12.4:
+  version "3.12.4"
+  resolved "https://registry.yarnpkg.com/google-protobuf/-/google-protobuf-3.12.4.tgz#fd89b7e5052cdb35a80f9b455612851d542a5c9f"
+  integrity sha512-ItTn8YepDQMHEMHloUPH+FDaTPiHTnbsMvP50aXfbI65IK3AA5+wXlHSygJH8xz+h1g4gu7V+CK5X1/SaGITsA==
 
 google-protobuf@^3.6.1:
   version "3.13.0"
@@ -10892,14 +10892,21 @@ growl@1.10.5:
   version "1.10.5"
   resolved "https://registry.yarnpkg.com/growl/-/growl-1.10.5.tgz#f2735dc2283674fa67478b10181059355c369e5e"
 
-grpc-tools@^1.7.2, grpc-tools@^1.7.3:
+grpc-tools@^1.10.0:
+  version "1.10.0"
+  resolved "https://registry.yarnpkg.com/grpc-tools/-/grpc-tools-1.10.0.tgz#687c0599715fc8c02e93496f8f37f89bc9840ef7"
+  integrity sha512-tEbO16TuXV+aJPTMK4FCd4Jw6uzR/wm4h3u27MmZQlWLETp3bL/6KQdVM6xujNx8N1Mbj0/Be2f/0SedzGm0dQ==
+  dependencies:
+    node-pre-gyp "^0.15.0"
+
+grpc-tools@^1.7.3:
   version "1.9.1"
   resolved "https://registry.yarnpkg.com/grpc-tools/-/grpc-tools-1.9.1.tgz#e43be478860a21781ce9a535647985cd365b1e06"
   integrity sha512-t2JFMPLjxcgwVSJwFEauFaoEiO56kijxSwehQDgZNR/hrStJCH0pHGsjqJNuCOvmI9Z31pYOfgj4zeInTQWh5A==
   dependencies:
     node-pre-gyp "^0.15.0"
 
-grpc@^1.16.0, grpc@^1.21.1:
+grpc@^1.21.1:
   version "1.24.3"
   resolved "https://registry.yarnpkg.com/grpc/-/grpc-1.24.3.tgz#92efe28dfc1250dca179b8133e40b4f2341473d9"
   integrity sha512-EDemzuZTfhM0hgrXqC4PtR76O3t+hTIYJYR5vgiW0yt2WJqo4mhxUqZUirzUQz34Psz7dbLp38C6Cl7Ij2vXRQ==
@@ -10911,15 +10918,14 @@ grpc@^1.16.0, grpc@^1.21.1:
     node-pre-gyp "^0.15.0"
     protobufjs "^5.0.3"
 
-grpc_tools_node_protoc_ts@^2.5.0:
-  version "2.5.0"
-  resolved "https://registry.yarnpkg.com/grpc_tools_node_protoc_ts/-/grpc_tools_node_protoc_ts-2.5.0.tgz#85b68af83bffa8cf94d877f0affd229d15d88e31"
-  integrity sha512-MMHRJo+TzY4FCBBb4WIgH9p5OCRPcpjPRBkrT9ocN9Z+89F581IdDO+cT9v2roBWNr5GNduyKgK+ytYSLsgqaw==
+grpc_tools_node_protoc_ts@^5.1.0:
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/grpc_tools_node_protoc_ts/-/grpc_tools_node_protoc_ts-5.1.0.tgz#7ff0706bedc8902187fc1163bcd307156206c91d"
+  integrity sha512-jXn5JKmjdzPqjsrh7IPKnjlTFoNOHlP7xSKq8L9nDGbDrMj4qwEGHrQfX2YhqCmBc9pAQ9Y4+sPnlOTaOp61PA==
   dependencies:
-    google-protobuf "^3.5.0"
-    grpc "^1.16.0"
-    handlebars "^4.0.11"
-    handlebars-helpers "^0.10.0"
+    google-protobuf "3.12.4"
+    handlebars "4.7.6"
+    handlebars-helpers "0.10.0"
 
 gtoken@^5.0.0:
   version "5.0.3"
@@ -10953,7 +10959,7 @@ handlebars-helper-create-frame@^0.1.0:
     create-frame "^1.0.0"
     isobject "^3.0.0"
 
-handlebars-helpers@^0.10.0:
+handlebars-helpers@0.10.0:
   version "0.10.0"
   resolved "https://registry.yarnpkg.com/handlebars-helpers/-/handlebars-helpers-0.10.0.tgz#663d49e718928eafbead1473419ed7bc24bcd45a"
   integrity sha512-QiyhQz58u/DbuV41VnfpE0nhy6YCH4vB514ajysV8SoKmP+DxU+pR+fahVyNECHj+jiwEN2VrvxD/34/yHaLUg==
