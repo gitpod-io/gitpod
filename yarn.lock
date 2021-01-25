@@ -2826,7 +2826,7 @@
     temp "^0.9.1"
     yargs "^11.1.0"
 
-"@theia/compression-webpack-plugin@^3.0.0":
+"@theia/compression-webpack-plugin@3.0.0", "@theia/compression-webpack-plugin@^3.0.0":
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/@theia/compression-webpack-plugin/-/compression-webpack-plugin-3.0.0.tgz#3d1b932327caf33b218fd5d3d1a64a5dbee4324a"
   integrity sha512-s9s8cZGisG5p+RsznZkhu4WKsgawpcxPX2GacQPok+SAuQHpORGBpAHxHOIOIsXMpJkheVmeBEpB0LfSzoV5bQ==
@@ -6972,7 +6972,7 @@ cipher-base@^1.0.0, cipher-base@^1.0.1, cipher-base@^1.0.3:
     inherits "^2.0.1"
     safe-buffer "^5.0.1"
 
-circular-dependency-plugin@^5.0.0:
+circular-dependency-plugin@5.0.2, circular-dependency-plugin@^5.0.0:
   version "5.0.2"
   resolved "https://registry.yarnpkg.com/circular-dependency-plugin/-/circular-dependency-plugin-5.0.2.tgz#da168c0b37e7b43563fb9f912c1c007c213389ef"
 
@@ -7681,7 +7681,7 @@ copy-descriptor@^0.1.0:
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/copy-descriptor/-/copy-descriptor-0.1.1.tgz#676f6eb3c39997c2ee1ac3a924fd6124748f578d"
 
-copy-webpack-plugin@^4.5.0:
+copy-webpack-plugin@4.5.4, copy-webpack-plugin@^4.5.0:
   version "4.5.4"
   resolved "https://registry.yarnpkg.com/copy-webpack-plugin/-/copy-webpack-plugin-4.5.4.tgz#f2b2782b3cd5225535c3dc166a80067e7d940f27"
   dependencies:
@@ -20095,7 +20095,7 @@ worker-farm@^1.7.0:
   dependencies:
     errno "~0.1.7"
 
-worker-loader@^1.1.1:
+worker-loader@1.1.1, worker-loader@^1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/worker-loader/-/worker-loader-1.1.1.tgz#920d74ddac6816fc635392653ed8b4af1929fd92"
   dependencies:

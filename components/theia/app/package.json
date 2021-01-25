@@ -38,7 +38,12 @@
     "patch-package": "^6.2.2"
   },
   "devDependencies": {
-    "@theia/cli": "next"
+    "@theia/cli": "next",
+    "yaml": "1.5.1",
+    "worker-loader": "1.1.1",
+    "copy-webpack-plugin": "4.5.4",
+    "circular-dependency-plugin": "5.0.2",
+    "@theia/compression-webpack-plugin": "3.0.0"
   },
   "files": [
     "/lib",
