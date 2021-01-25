@@ -14,6 +14,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -291,18 +292,185 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 	return &api.MountProcResponse{}, nil
 }
 
-func moveMount(targetPid int, source, target string) error {
-	base, err := os.Executable()
-	if err != nil {
-		return err
+// MountProc mounts a proc filesystem
+func (wbs *InWorkspaceServiceServer) UmountProc(ctx context.Context, req *api.UmountProcRequest) (resp *api.UmountProcResponse, err error) {
+	if !wbs.Session.UserNamespaced {
+		return nil, status.Error(codes.FailedPrecondition, "not supported for this workspace")
 	}
 
+	var (
+		reqPID  = req.Pid
+		procPID uint64
+	)
+	defer func() {
+		if err == nil {
+			return
+		}
+
+		log.WithError(err).WithField("procPID", procPID).WithField("reqPID", reqPID).Error("UmountProc failed")
+		if _, ok := status.FromError(err); !ok {
+			err = status.Error(codes.Internal, "cannot umount proc")
+		}
+	}()
+
+	rt := wbs.Uidmapper.Runtime
+	if rt == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "not connected to container runtime")
+	}
+	wscontainerID, err := rt.WaitForContainer(ctx, wbs.Session.InstanceID)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot find workspace container")
+	}
+
+	containerPID, err := rt.ContainerPID(ctx, wscontainerID)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot find container PID for containerID %v: %w", wscontainerID)
+	}
+
+	procPID, err = wbs.Uidmapper.findHostPID(containerPID, uint64(req.Pid))
+	if err != nil {
+		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID)
+	}
+
+	nodeStaging, err := ioutil.TempDir("", "proc-umount")
+	if err != nil {
+		return nil, xerrors.Errorf("cannot prepare proc staging: %w")
+	}
+	scktPath := filepath.Join(nodeStaging, "sckt")
+	l, err := net.Listen("unix", scktPath)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot listen for mountfd: %w")
+	}
+	defer l.Close()
+
+	type fdresp struct {
+		FD  int
+		Err error
+	}
+	fdrecv := make(chan fdresp)
+	go func() {
+		defer close(fdrecv)
+
+		rconn, err := l.Accept()
+		if err != nil {
+			fdrecv <- fdresp{Err: err}
+			return
+		}
+		defer rconn.Close()
+
+		conn := rconn.(*net.UnixConn)
+		err = conn.SetDeadline(time.Now().Add(5 * time.Second))
+		if err != nil {
+			fdrecv <- fdresp{Err: err}
+			return
+		}
+
+		f, err := conn.File()
+		if err != nil {
+			fdrecv <- fdresp{Err: err}
+			return
+		}
+		defer f.Close()
+		connfd := int(f.Fd())
+
+		buf := make([]byte, unix.CmsgSpace(4))
+		_, _, _, _, err = unix.Recvmsg(connfd, nil, buf, 0)
+		if err != nil {
+			fdrecv <- fdresp{Err: err}
+			return
+		}
+
+		msgs, err := unix.ParseSocketControlMessage(buf)
+		if err != nil {
+			fdrecv <- fdresp{Err: err}
+			return
+		}
+		if len(msgs) != 1 {
+			fdrecv <- fdresp{Err: fmt.Errorf("expected a single socket control message")}
+			return
+		}
+
+		fds, err := unix.ParseUnixRights(&msgs[0])
+		if err != nil {
+			fdrecv <- fdresp{Err: err}
+			return
+		}
+		if len(fds) == 0 {
+			fdrecv <- fdresp{Err: fmt.Errorf("expected a single socket FD")}
+			return
+		}
+
+		fdrecv <- fdresp{FD: fds[0]}
+	}()
+
+	rconn, err := net.Dial("unix", scktPath)
+	if err != nil {
+		return nil, err
+	}
+	defer rconn.Close()
+	conn := rconn.(*net.UnixConn)
+	connFD, err := conn.File()
+	if err != nil {
+		return nil, err
+	}
+
+	err = nsinsider(int(procPID), func(c *exec.Cmd) {
+		c.Args = append(c.Args, "open-tree", "--target", req.Target)
+		c.ExtraFiles = append(c.ExtraFiles, connFD)
+	})
+	if err != nil {
+		return nil, xerrors.Errorf("cannot open-tree at %s (container PID: %d): %w", req.Target, containerPID, err)
+	}
+
+	fdr := <-fdrecv
+	if fdr.Err != nil {
+		return nil, fdr.Err
+	}
+	if fdr.FD == 0 {
+		return nil, xerrors.Errorf("received nil as mountfd (container PID: %d): %w", containerPID, err)
+	}
+
+	base, err := os.Executable()
+	if err != nil {
+		return nil, err
+	}
+
+	cmd := exec.Command(filepath.Join(filepath.Dir(base), "nsinsider"), "move-mount", "--target", nodeStaging)
+	cmd.ExtraFiles = append(cmd.ExtraFiles, os.NewFile(uintptr(fdr.FD), ""))
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Unshareflags: syscall.CLONE_NEWNS,
+	}
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, xerrors.Errorf("cannot move-mount: %w: %s", err, string(out))
+	}
+
+	return &api.UmountProcResponse{}, nil
+}
+
+func moveMount(targetPid int, source, target string) error {
 	mntfd, err := syscallOpenTree(unix.AT_FDCWD, source, flagOpenTreeClone|flagAtRecursive)
 	if err != nil {
 		return xerrors.Errorf("cannot open tree: %w", err)
 	}
 	mntf := os.NewFile(mntfd, "")
 	defer mntf.Close()
+
+	err = nsinsider(targetPid, func(c *exec.Cmd) {
+		c.Args = append(c.Args, "move-mount", "--target", target)
+		c.ExtraFiles = append(c.ExtraFiles, mntf)
+	})
+	if err != nil {
+		return xerrors.Errorf("cannot move mount: %w", err)
+	}
+	return nil
+}
+
+func nsinsider(targetPid int, mod func(*exec.Cmd)) error {
+	base, err := os.Executable()
+	if err != nil {
+		return err
+	}
 
 	nss := []struct {
 		Env    string
@@ -315,8 +483,8 @@ func moveMount(targetPid int, source, target string) error {
 	}
 
 	stdioFdCount := 3
-	cmd := exec.Command(filepath.Join(filepath.Dir(base), "move-mount"), target)
-	cmd.ExtraFiles = append(cmd.ExtraFiles, mntf)
+	cmd := exec.Command(filepath.Join(filepath.Dir(base), "nsinsider"))
+	mod(cmd)
 	cmd.Env = append(cmd.Env, "_LIBNSENTER_INIT=1")
 	for _, ns := range nss {
 		f, err := os.OpenFile(ns.Source, ns.Flags, 0)
@@ -332,7 +500,7 @@ func moveMount(targetPid int, source, target string) error {
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
 	if err != nil {
-		return fmt.Errorf("cannot run move-mount: %w", err)
+		return fmt.Errorf("cannot run nsinsider: %w", err)
 	}
 	return nil
 }

@@ -1,4 +1,4 @@
-module github.com/gitpod-io/gitpod/ws-daemon/move-mount
+module github.com/gitpod-io/gitpod/ws-daemon/nsinsider
 
 go 1.15
 
@@ -62,6 +62,7 @@ require (
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/sirupsen/logrus v1.7.0 // indirect
+	github.com/urfave/cli/v2 v2.3.0
 	golang.org/x/sys v0.0.0-20210113181707-4bcb84eeeb78
 	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 )

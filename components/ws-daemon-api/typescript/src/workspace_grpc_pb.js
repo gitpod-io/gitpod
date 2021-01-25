@@ -76,6 +76,28 @@ function deserialize_iws_TeardownResponse(buffer_arg) {
   return workspace_pb.TeardownResponse.deserializeBinary(new Uint8Array(buffer_arg));
 }
 
+function serialize_iws_UmountProcRequest(arg) {
+  if (!(arg instanceof workspace_pb.UmountProcRequest)) {
+    throw new Error('Expected argument of type iws.UmountProcRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_UmountProcRequest(buffer_arg) {
+  return workspace_pb.UmountProcRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_iws_UmountProcResponse(arg) {
+  if (!(arg instanceof workspace_pb.UmountProcResponse)) {
+    throw new Error('Expected argument of type iws.UmountProcResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_iws_UmountProcResponse(buffer_arg) {
+  return workspace_pb.UmountProcResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_iws_WriteIDMappingRequest(arg) {
   if (!(arg instanceof workspace_pb.WriteIDMappingRequest)) {
     throw new Error('Expected argument of type iws.WriteIDMappingRequest');
@@ -131,7 +153,8 @@ writeIDMapping: {
     responseDeserialize: deserialize_iws_WriteIDMappingResponse,
   },
   // MountProc mounts a masked proc in the container's rootfs.
-// For now this can be used only once per workspace.
+// The PID must be in the PID namespace of the workspace container.
+// The path is relative to the mount namespace of the PID.
 mountProc: {
     path: '/iws.InWorkspaceService/MountProc',
     requestStream: false,
@@ -142,6 +165,20 @@ mountProc: {
     requestDeserialize: deserialize_iws_MountProcRequest,
     responseSerialize: serialize_iws_MountProcResponse,
     responseDeserialize: deserialize_iws_MountProcResponse,
+  },
+  // UmountProc unmounts a masked proc from the container's rootfs.
+// The PID must be in the PID namespace of the workspace container.
+// The path is relative to the mount namespace of the PID.
+umountProc: {
+    path: '/iws.InWorkspaceService/UmountProc',
+    requestStream: false,
+    responseStream: false,
+    requestType: workspace_pb.UmountProcRequest,
+    responseType: workspace_pb.UmountProcResponse,
+    requestSerialize: serialize_iws_UmountProcRequest,
+    requestDeserialize: deserialize_iws_UmountProcRequest,
+    responseSerialize: serialize_iws_UmountProcResponse,
+    responseDeserialize: deserialize_iws_UmountProcResponse,
   },
   // Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
 // when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.

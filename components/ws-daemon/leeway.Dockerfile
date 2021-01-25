@@ -14,7 +14,7 @@ RUN addgroup -g 33333 gitpod \
 
 COPY components-ws-daemon--app/ws-daemon /app/ws-daemond
 COPY components-ws-daemon--content-initializer/ws-daemon /app/content-initializer
-COPY components-ws-daemon-move-mount--app/move-mount /app/move-mount
+COPY components-ws-daemon-nsinsider--app/nsinsider /app/nsinsider
 
 USER root
 ENTRYPOINT [ "/app/ws-daemond" ]
