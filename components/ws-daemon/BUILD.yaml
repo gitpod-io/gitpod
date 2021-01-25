@@ -42,7 +42,7 @@ packages:
     deps:
       - :app
       - :content-initializer
-      - components/ws-daemon/move-mount:app
+      - components/ws-daemon/nsinsider:app
     argdeps:
       - imageRepoBase
     config:
