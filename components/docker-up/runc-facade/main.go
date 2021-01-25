@@ -20,11 +20,6 @@ var (
 	defaultOOMScoreAdj = 1000
 )
 
-const (
-	cmdMountProc   = "mount-proc"
-	cmdUnmountProc = "unmount-proc"
-)
-
 func main() {
 	log := logrus.New()
 	log.SetLevel(logrus.DebugLevel)
@@ -66,12 +61,7 @@ func createAndRunc(runcPath string) error {
 	}
 
 	cfg.Process.OOMScoreAdj = &defaultOOMScoreAdj
-	replaceProcMount(&cfg)
 	replaceSysMount(&cfg)
-	err = addHooks(&cfg)
-	if err != nil {
-		return fmt.Errorf("canot add hooks: %w", err)
-	}
 
 	fc, err = json.Marshal(cfg)
 	if err != nil {
@@ -89,30 +79,6 @@ func createAndRunc(runcPath string) error {
 		return fmt.Errorf("exec %s: %w", runcPath, err)
 	}
 	return nil
-}
-
-func replaceProcMount(cfg *specs.Spec) {
-	var n int
-	for _, m := range cfg.Mounts {
-		if m.Destination == "/proc" {
-			continue
-		}
-
-		cfg.Mounts[n] = m
-		n++
-	}
-
-	cfg.Mounts = cfg.Mounts[:n]
-	// TODO(cw): add daemon-mounted proc
-	cfg.Mounts = append(cfg.Mounts, specs.Mount{
-		Destination: "/proc",
-		Options: []string{
-			"rbind",
-			"rprivate",
-		},
-		Source: "/proc",
-		Type:   "bind",
-	})
 }
 
 func replaceSysMount(cfg *specs.Spec) {
@@ -136,21 +102,4 @@ func replaceSysMount(cfg *specs.Spec) {
 		Source: "/sys",
 		Type:   "bind",
 	})
-}
-
-func addHooks(cfg *specs.Spec) error {
-	self, err := os.Executable()
-	if err != nil {
-		return err
-	}
-
-	cfg.Hooks.Prestart = append(cfg.Hooks.Prestart, specs.Hook{
-		Path: self,
-		Args: []string{cmdMountProc},
-	})
-	cfg.Hooks.Poststop = append(cfg.Hooks.Poststop, specs.Hook{
-		Path: self,
-		Args: []string{cmdUnmountProc},
-	})
-	return nil
 }
