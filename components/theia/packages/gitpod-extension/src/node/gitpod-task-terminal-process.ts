@@ -4,15 +4,17 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import { ServiceError, status } from '@grpc/grpc-js';
 import { ITerminalServiceClient } from '@gitpod/supervisor-api-grpc/lib/terminal_grpc_pb';
-import { CloseTerminalRequest, ListenTerminalRequest, ListenTerminalResponse, SetTerminalSizeRequest, WriteTerminalRequest } from '@gitpod/supervisor-api-grpc/lib/terminal_pb';
+import { ShutdownTerminalRequest, ListenTerminalRequest, ListenTerminalResponse, SetTerminalSizeRequest, TerminalSize, WriteTerminalRequest } from '@gitpod/supervisor-api-grpc/lib/terminal_pb';
+import { BinaryBuffer } from '@theia/core/lib/common/buffer';
 import { ILogger } from '@theia/core/lib/common/logger';
-import { MultiRingBuffer, ProcessErrorEvent, ProcessManager } from '@theia/process/lib/node';
+import { timeout } from '@theia/core/lib/common/promise-util';
+import { MultiRingBuffer, ProcessManager } from '@theia/process/lib/node';
 import { TerminalProcess } from '@theia/process/lib/node/terminal-process';
 import { inject, injectable, named } from 'inversify';
 import { SupervisorClientProvider } from './supervisor-client-provider';
-import { BinaryBuffer } from '@theia/core/lib/common/buffer';
-import { timeout } from '@theia/core/lib/common/promise-util';
+import { ProcessErrorEvent } from '@theia/process/src/node/process'
 
 @injectable()
 export class GitpodTaskTerminalProcessOptions {
@@ -52,42 +54,50 @@ export class GitpodTaskTerminalProcess extends TerminalProcess {
         this.alias = alias;
         this.emitOnStarted();
         while (this.alias) {
-            await new Promise(resolve => {
-                try {
+            try {
+                await new Promise((resolve, reject) => {
                     const request = new ListenTerminalRequest();
                     request.setAlias(alias);
                     const stream = this.client.listen(request);
                     stream.on('close', resolve);
-                    stream.on('end', () => {
-                        this.alias = undefined;
-                        this.emitOnExit();
-                        process.nextTick(() => {
-                            this.emitOnClose();
-                        });
-                        resolve();
-                    });
-                    stream.on('error', (e: ProcessErrorEvent) => {
-                        this.alias = undefined;
-                        this.emitOnError(e);
-                        resolve();
+                    stream.on('end', resolve);
+                    stream.on('error', (e: ServiceError) => {
+                        if (e.code === status.NOT_FOUND) {
+                            this.alias = undefined;
+                            resolve();
+                            this.emitOnError(e as any as ProcessErrorEvent);
+                            stream.cancel();
+                        } else {
+                            reject(e);
+                        }
                     });
                     stream.on('data', (response: ListenTerminalResponse) => {
-                        let str = '';
-                        for (const buffer of [response.getStdout(), response.getStderr()]) {
+                        if (response.hasData()) {
+                            let str = '';
+                            const buffer = response.getData();
                             if (typeof buffer === 'string') {
                                 str += buffer;
                             } else {
                                 str += BinaryBuffer.wrap(buffer).toString()
                             }
-                        }
-                        if (str !== '') {
-                            this.ringBuffer.enq(str);
+                            if (str !== '') {
+                                this.ringBuffer.enq(str);
+                            }
+                        } else if (response.hasExitCode()) {
+                            this.alias = undefined;
+                            resolve();
+                            const exitCode = response.getExitCode();
+                            this.emitOnExit(exitCode);
+                            process.nextTick(() => {
+                                this.emitOnClose(exitCode);
+                            });
+                            stream.cancel();
                         }
                     });
-                } catch (e) {
-                    resolve();
-                }
-            });
+                });
+            } catch (e) {
+                console.error(`[${this.alias}] listening to the gitpod task terminal failed:`, e);
+            }
             await timeout(2000);
         }
     }
@@ -96,10 +106,10 @@ export class GitpodTaskTerminalProcess extends TerminalProcess {
         if (!this.alias) {
             return;
         }
-        const request = new CloseTerminalRequest();
+        const request = new ShutdownTerminalRequest();
         request.setAlias(this.alias);
-        this.client.close(request, e => {
-            if (e) {
+        this.client.shutdown(request, e => {
+            if (e && (e as any as ServiceError).code !== status.NOT_FOUND) {
                 console.error(`[${this.alias}] failed to kill the gitpod task terminal:`, e);
             }
         });
@@ -109,13 +119,16 @@ export class GitpodTaskTerminalProcess extends TerminalProcess {
         if (!this.alias) {
             return;
         }
+        const size = new TerminalSize();
+        size.setCols(cols);
+        size.setRows(rows);
+
         const request = new SetTerminalSizeRequest();
         request.setAlias(this.alias);
-        request.setCols(cols);
-        request.setRows(rows);
+        request.setSize(size);
         request.setForce(true);
         this.client.setSize(request, e => {
-            if (e) {
+            if (e && (e as any as ServiceError).code !== status.NOT_FOUND) {
                 console.error(`[${this.alias}] failed to resize the gitpod task terminal:`, e);
             }
         });
@@ -129,7 +142,7 @@ export class GitpodTaskTerminalProcess extends TerminalProcess {
         request.setAlias(this.alias);
         request.setStdin(BinaryBuffer.fromString(data).buffer);
         this.client.write(request, e => {
-            if (e) {
+            if (e && (e as any as ServiceError).code !== status.NOT_FOUND) {
                 console.error(`[${this.alias}] failed to write to the gitpod task terminal:`, e);
             }
         });

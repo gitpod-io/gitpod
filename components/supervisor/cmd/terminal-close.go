@@ -23,7 +23,7 @@ var terminalCloseCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 		defer cancel()
 
-		_, err := client.Close(ctx, &api.CloseTerminalRequest{
+		_, err := client.Shutdown(ctx, &api.ShutdownTerminalRequest{
 			Alias: args[0],
 		})
 		if err != nil {
