@@ -2,13 +2,65 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package iws
+package main
 
 import (
+	"os"
 	"unsafe"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
+	_ "github.com/gitpod-io/gitpod/ws-daemon/nsinsider/pkg/nsenter"
+
+	cli "github.com/urfave/cli/v2"
 	"golang.org/x/sys/unix"
 )
+
+func main() {
+	app := &cli.App{
+		Commands: []*cli.Command{
+			{
+				Name:  "move-mount",
+				Usage: "calls move_mount with fd 3 to target",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "target",
+						Required: true,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					return syscallMoveMount(3, "", unix.AT_FDCWD, c.String("target"), flagMoveMountFEmptyPath)
+				},
+			},
+			{
+				Name:  "open-tree",
+				Usage: "opens a and writes the resulting mountfd to the Unix pipe on fd 3",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "target",
+						Required: true,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					fd, err := syscallOpenTree(unix.AT_FDCWD, c.String("target"), flagOpenTreeClone|flagAtRecursive)
+					if err != nil {
+						return err
+					}
+
+					err = unix.Sendmsg(3, nil, unix.UnixRights(int(fd)), nil, 0)
+					if err != nil {
+						return err
+					}
+
+					return nil
+				},
+			},
+		},
+	}
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 
 func syscallMoveMount(fromDirFD int, fromPath string, toDirFD int, toPath string, flags uintptr) error {
 	fromPathP, err := unix.BytePtrFromString(fromPath)

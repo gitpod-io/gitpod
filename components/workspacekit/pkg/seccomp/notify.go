@@ -300,20 +300,26 @@ func (h *InWorkspaceHandler) Umount(req *libseccomp.ScmpNotifReq) (val uint64, e
 	}
 
 	if _, ok := procMounts[target]; ok {
-		fd, err := syscallOpenTree(unix.AT_FDCWD, target, flagAtRecursive|flagOpenTreeClone)
-		if err != nil {
-			log.WithError(err).Error("cannot open_tree proc mount")
-			return Errno(unix.EFAULT)
-		}
+		// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		// defer cancel()
+		// _, err = h.Daemon.UmountProc(ctx, &daemonapi.UmountProcRequest{
+		// 	Target: target,
+		// 	Pid:    int64(req.Pid),
+		// })
+		// if err != nil {
+		// 	log.WithError(err).Error("cannot umount proc mount")
+		// 	return Errno(unix.EFAULT)
+		// }
 
-		err = unix.Close(int(fd))
-		if err != nil {
-			log.WithError(err).Error("cannot close proc mount fd")
-			return Errno(unix.EFAULT)
-		}
+		// log.WithField("target", target).Info("umounted proc mount")
+		// return 0, 0, 0
 
-		log.WithField("target", target).Info("umounted proc mount")
-		return 0, 0, 0
+		// proc umounting doesn't work yet from ws-daemon. Instead EPERM here.
+		// In most cases that's not a problem because in-workspace proc mounts
+		// usually happen within a mount namespace anyways, for which the kernel
+		// lazy umounts everything that's just attached within that namespace.
+		// TODO(cw): make proc umounting work in ws-dameon.
+		return Errno(unix.EPERM)
 	}
 
 	var isProcMountChild bool

@@ -163,6 +163,46 @@ export namespace MountProcResponse {
   }
 }
 
+export class UmountProcRequest extends jspb.Message {
+  getTarget(): string;
+  setTarget(value: string): void;
+
+  getPid(): number;
+  setPid(value: number): void;
+
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UmountProcRequest.AsObject;
+  static toObject(includeInstance: boolean, msg: UmountProcRequest): UmountProcRequest.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: UmountProcRequest, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UmountProcRequest;
+  static deserializeBinaryFromReader(message: UmountProcRequest, reader: jspb.BinaryReader): UmountProcRequest;
+}
+
+export namespace UmountProcRequest {
+  export type AsObject = {
+    target: string,
+    pid: number,
+  }
+}
+
+export class UmountProcResponse extends jspb.Message {
+  serializeBinary(): Uint8Array;
+  toObject(includeInstance?: boolean): UmountProcResponse.AsObject;
+  static toObject(includeInstance: boolean, msg: UmountProcResponse): UmountProcResponse.AsObject;
+  static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+  static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+  static serializeBinaryToWriter(message: UmountProcResponse, writer: jspb.BinaryWriter): void;
+  static deserializeBinary(bytes: Uint8Array): UmountProcResponse;
+  static deserializeBinaryFromReader(message: UmountProcResponse, reader: jspb.BinaryReader): UmountProcResponse;
+}
+
+export namespace UmountProcResponse {
+  export type AsObject = {
+  }
+}
+
 export class TeardownRequest extends jspb.Message {
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): TeardownRequest.AsObject;
