@@ -21,20 +21,3 @@ resource "helm_release" "gitpod" {
   ])
 
 }
-
-#
-# Kubernetes Resources
-#
-
-# To get the external load balancer IP
-# https://www.terraform.io/docs/providers/kubernetes/d/service.html
-data "kubernetes_service" "proxy" {
-  metadata {
-    name      = "proxy"
-    namespace = helm_release.gitpod.namespace
-  }
-
-  depends_on = [
-    helm_release.gitpod
-  ]
-}
