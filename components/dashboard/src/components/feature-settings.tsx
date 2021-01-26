@@ -49,6 +49,13 @@ export class FeatureSettings extends React.Component<FeatureSettingsProps> {
     private updateFeatureFlags = () => {
         const additionalData = (this.props.user.additionalData || {});
         additionalData.featurePreview = !this.featurePreview;
+        if (additionalData.featurePreview) {
+            const settings = additionalData.ideSettings || {};
+            if (!('defaultIde' in settings)) {
+                settings.defaultIde = 'code';
+            }
+            additionalData.ideSettings = settings;
+        }
         this.props.onChange({ additionalData });
     };
 
