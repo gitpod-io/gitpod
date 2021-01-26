@@ -667,16 +667,22 @@ func (s *Scheduler) deleteGhostWorkspace(ctx context.Context, podName string, gh
 	span, ctx := tracing.FromContext(ctx, "deleteGhostWorkspace")
 	defer tracing.FinishSpan(span, &err)
 
-	// We need to make sure not to trigger OutOfMemory errors: If we do not wait for gracePeriod on delete and go ahead
-	// early the kubelet on the node might not be done yet and our memory calculation does not match the one from
-	// the kubelet, resulting in OOM errors.
-	// To guarantee that this is not the case, and also make sure we do not block scheduling forever because a single
-	// delete takes aweful long, we make sure the Delete is cancelled _before_ it's gracePeriod is over. Subsequently,
-	// this scheduling request dies - but due to `rescheduleInterval` we're sure that it's re-tried shortly after.
-	gracePeriodSeconds := int64(10)
-	deleteCtx, cancelDeleteCtx := context.WithTimeout(ctx, 5*time.Second)
+	// gracePeriod is the time until kubernetes sends SIG_KILL to the root process
+	// ctxDeleteTimeout is the time until we stop waiting for the deletion request to return
+	// Ensure that:
+	//  - ctxDeleteTimeout > gracePeriod: So the container has actually time to quit properly
+	//  - ctxDeleteTimeout to be not too long: To ensure scheduling is not to slow
+	gracePeriod := 10 * time.Second
+	ctxDeleteTimeout := (10 + 5) * time.Second
+	deleteCtx, cancelDeleteCtx := context.WithTimeout(ctx, ctxDeleteTimeout)
 	defer cancelDeleteCtx()
-	err = s.Clientset.CoreV1().Pods(s.Config.Namespace).Delete(deleteCtx, ghostName, *metav1.NewDeleteOptions(gracePeriodSeconds))
+
+	gracePeriodSeconds := int64(gracePeriod.Seconds())
+	foreground := metav1.DeletePropagationForeground
+	err = s.Clientset.CoreV1().Pods(s.Config.Namespace).Delete(deleteCtx, ghostName, metav1.DeleteOptions{
+		GracePeriodSeconds: &gracePeriodSeconds,
+		PropagationPolicy:  &foreground,
+	})
 	if err != nil {
 		if isKubernetesObjNotFoundError(err) {
 			log.WithField("podName", podName).WithField("ghost", ghostName).Debug("ghost workspace already gone")
