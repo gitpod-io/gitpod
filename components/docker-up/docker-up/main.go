@@ -29,6 +29,7 @@ var opts struct {
 	BinDir               string
 	AutoInstall          bool
 	UserAccessibleSocket bool
+	Verbose              bool
 }
 
 func main() {
@@ -37,7 +38,7 @@ func main() {
 		log.WithError(err).Fatal()
 	}
 
-	verbose := pflag.BoolP("verbose", "v", false, "enables verbose logging")
+	pflag.BoolVarP(&opts.Verbose, "verbose", "v", false, "enables verbose logging")
 	pflag.BoolVar(&opts.RuncFacade, "runc-facade", true, "enables the runc-facade to handle rootless idiosyncrasies")
 	pflag.StringVar(&opts.BinDir, "bin-dir", filepath.Dir(self), "directory where runc-facade and slirp-docker-proxy are found")
 	pflag.BoolVar(&opts.AutoInstall, "auto-install", true, "auto-install prerequisites (docker, slirp4netns)")
@@ -45,7 +46,7 @@ func main() {
 	pflag.Parse()
 
 	logger := logrus.New()
-	if *verbose {
+	if opts.Verbose {
 		logger.SetLevel(logrus.DebugLevel)
 	}
 
@@ -89,6 +90,11 @@ func runWithinNetns() (err error) {
 		"--rootless",
 		"--data-root=/workspace/.docker-root",
 		"--userland-proxy", "--userland-proxy-path=" + filepath.Join(opts.BinDir, "slirp-docker-proxy"),
+	}
+	if opts.Verbose {
+		args = append(args,
+			"--log-level", "debug",
+		)
 	}
 	if opts.RuncFacade {
 		args = append(args,
