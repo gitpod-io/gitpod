@@ -50,7 +50,7 @@ const tips = [
     <span>See more tips &amp; tricks <a href="https://www.gitpod.io/docs/tips-and-tricks/" target="_blank" rel="noopener">here</a>.</span>,
     <span>Please submit bugs and feature requests <a href="https://github.com/gitpod-io/gitpod/issues" target="_blank" rel="noopener noreferrer">on GitHub</a>.</span>,
     <span>Install any VS Code extension with a simple drag-and-drop. <a href="https://www.gitpod.io/docs/vscode-extensions/" target="_blank" rel="noopener">See how</a>.</span>,
-    <span>Wanna help make Gitpod better? Check out the <a href="https://www.gitpod.io/careers/" target="_blank" rel="noopener">open positions</a> and apply right now!</span>,
+    <span>Wanna help make Gitpod better? <a href="https://www.gitpod.io/careers/" target="_blank" rel="noopener">Join our team </a>!</span>,
 ];
 
 export class ProductivityTips extends React.Component<{userHasCreatedWorkspaces?: boolean}, { platform?: UserPlatform }> {
