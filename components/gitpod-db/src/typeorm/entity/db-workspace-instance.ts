@@ -18,7 +18,7 @@ export class DBWorkspaceInstance implements WorkspaceInstance {
     @PrimaryColumn(TypeORM.UUID_COLUMN_TYPE)
     id: string;
 
-    @Column(TypeORM.UUID_COLUMN_TYPE)
+    @Column(TypeORM.WORKSPACE_ID_COLUMN_TYPE)
     @Index()
     workspaceId: string;
 

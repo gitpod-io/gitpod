@@ -13,12 +13,12 @@ const HOSTURL_HOSTNAME = "gpl-2732-ws-csrf.staging.gitpod.io";
 describe('express-util', function() {
   describe('isAllowedWebsocketDomain', function() {
     it('should return false for workspace-port locations', function() {
-      const result = isAllowedWebsocketDomain("http://3000-aee7da59-2b15-42a6-9773-2546ed487149.ws-eu.gpl-2732-ws-csrf.staging.gitpod.io", HOSTURL_HOSTNAME);
+      const result = isAllowedWebsocketDomain("http://3000-moccasin-ferret-155799b3.ws-eu.gpl-2732-ws-csrf.staging.gitpod.io", HOSTURL_HOSTNAME);
       expect(result).to.be.false;
     });
 
     it('should return true for workspace locations', function() {
-      const result = isAllowedWebsocketDomain("http://aee7da59-2b15-42a6-9773-2546ed487149.ws-eu.gpl-2732-ws-csrf.staging.gitpod.io", HOSTURL_HOSTNAME);
+      const result = isAllowedWebsocketDomain("http://moccasin-ferret-155799b3.ws-eu.gpl-2732-ws-csrf.staging.gitpod.io", HOSTURL_HOSTNAME);
       expect(result).to.be.true;
     });
 

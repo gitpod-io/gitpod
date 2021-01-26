@@ -40,10 +40,10 @@ var (
 			IDEPublicPort: "23000",
 			InstanceID:    "1943c611-a014-4f4d-bf5d-14ccf0123c60",
 			Ports: []PortInfo{
-				{PortSpec: api.PortSpec{Port: 28080, Target: 38080, Url: "https://28080-c95fd41c-13d9-4d51-b282-e2be09de207f.test-domain.com/", Visibility: api.PortVisibility_PORT_VISIBILITY_PUBLIC}},
+				{PortSpec: api.PortSpec{Port: 28080, Target: 38080, Url: "https://28080-amaranth-smelt-9ba20cc1.test-domain.com/", Visibility: api.PortVisibility_PORT_VISIBILITY_PUBLIC}},
 			},
-			URL:         "https://c95fd41c-13d9-4d51-b282-e2be09de207f.test-domain.com/",
-			WorkspaceID: "c95fd41c-13d9-4d51-b282-e2be09de207f",
+			URL:         "https://amaranth-smelt-9ba20cc1.test-domain.com/",
+			WorkspaceID: "amaranth-smelt-9ba20cc1",
 		},
 	}
 
@@ -413,7 +413,7 @@ func TestRoutes(t *testing.T) {
 		},
 		{
 			Desc: "non-existent authorized GET /",
-			Request: modifyRequest(httptest.NewRequest("GET", strings.ReplaceAll(workspaces[0].URL, "c95fd41c", "00000000"), nil),
+			Request: modifyRequest(httptest.NewRequest("GET", strings.ReplaceAll(workspaces[0].URL, "amaranth", "blabla"), nil),
 				addHostHeader,
 				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
 			),
@@ -421,23 +421,23 @@ func TestRoutes(t *testing.T) {
 				Status: http.StatusFound,
 				Header: http.Header{
 					"Content-Type": {"text/html; charset=utf-8"},
-					"Location":     {"https://test-domain.com/start/#00000000-13d9-4d51-b282-e2be09de207f"},
+					"Location":     {"https://test-domain.com/start/#blabla-smelt-9ba20cc1"},
 				},
-				Body: ("<a href=\"https://test-domain.com/start/#00000000-13d9-4d51-b282-e2be09de207f\">Found</a>.\n\n"),
+				Body: ("<a href=\"https://test-domain.com/start/#blabla-smelt-9ba20cc1\">Found</a>.\n\n"),
 			},
 		},
 		{
 			Desc: "non-existent unauthorized GET /",
-			Request: modifyRequest(httptest.NewRequest("GET", strings.ReplaceAll(workspaces[0].URL, "c95fd41c", "00000000"), nil),
+			Request: modifyRequest(httptest.NewRequest("GET", strings.ReplaceAll(workspaces[0].URL, "amaranth", "blabla"), nil),
 				addHostHeader,
 			),
 			Expectation: Expectation{
 				Status: http.StatusFound,
 				Header: http.Header{
 					"Content-Type": {"text/html; charset=utf-8"},
-					"Location":     {"https://test-domain.com/start/#00000000-13d9-4d51-b282-e2be09de207f"},
+					"Location":     {"https://test-domain.com/start/#blabla-smelt-9ba20cc1"},
 				},
-				Body: ("<a href=\"https://test-domain.com/start/#00000000-13d9-4d51-b282-e2be09de207f\">Found</a>.\n\n"),
+				Body: ("<a href=\"https://test-domain.com/start/#blabla-smelt-9ba20cc1\">Found</a>.\n\n"),
 			},
 		},
 		{

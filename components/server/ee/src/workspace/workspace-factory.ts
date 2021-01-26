@@ -15,6 +15,7 @@ import { Feature } from '@gitpod/licensor/lib/api';
 import { ResponseError } from 'vscode-jsonrpc';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
+import { generateWorkspaceID } from '@gitpod/gitpod-protocol/lib/util/generate-workspace-id';
 
 @injectable()
 export class WorkspaceFactoryEE extends WorkspaceFactory {
@@ -101,7 +102,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 extensions: config && config.vscode && config.vscode.extensions || []
             }
 
-            const id = this.generateWorkspaceId();
+            const id = await generateWorkspaceID();
             const newWs: Workspace = {
                 id,
                 type: "regular",

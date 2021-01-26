@@ -4,7 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import * as uuidv4 from 'uuid/v4';
 import { injectable, inject } from 'inversify';
 
 import { User, PullRequestContext, IssueContext, WorkspaceContext, Repository, CommitContext, WorkspaceProbeContext, WorkspaceConfig } from '@gitpod/gitpod-protocol';
@@ -21,6 +20,7 @@ import { ImageBuilderClientProvider } from '@gitpod/image-builder/lib';
 import { TracedWorkspaceDB, DBWithTracing } from '@gitpod/gitpod-db/lib/traced-db';
 import { ImageSourceProvider } from './image-source-provider';
 import { TheiaPluginService } from '../theia-plugin/theia-plugin-service';
+import { generateWorkspaceID } from '@gitpod/gitpod-protocol/lib/util/generate-workspace-id';
 
 @injectable()
 export class WorkspaceFactory {
@@ -62,7 +62,7 @@ export class WorkspaceFactory {
             // Basically we're using the raw alpine image bait-and-switch style without adding the GP layer.
             const imageSource = await this.imageSourceProvider.getImageSource(ctx, user, null as any, config);
 
-            const id = this.generateWorkspaceId();
+            const id = await generateWorkspaceID();
             const date = new Date().toISOString();
             const newWs: Workspace = {
                 id,
@@ -101,7 +101,7 @@ export class WorkspaceFactory {
                 throw new Error(`The original workspace has been deleted - cannot open this snapshot.`);
             }
 
-            const id = this.generateWorkspaceId();
+            const id = await generateWorkspaceID();
             const date = new Date().toISOString();
             const newWs = <Workspace>{
                 id,
@@ -147,7 +147,7 @@ export class WorkspaceFactory {
             const config = await this.configProvider.fetchConfig({span}, user, context);
             const imageSource = await this.imageSourceProvider.getImageSource(ctx, user, context, config);
 
-            const id = this.generateWorkspaceId();
+            const id = await generateWorkspaceID();
             const newWs: Workspace = {
                 id,
                 type: "regular",
@@ -185,15 +185,6 @@ export class WorkspaceFactory {
             return `#${context.nr}: ${context.title}`;
         }
         return context.title;
-    }
-
-    protected generateWorkspaceId(): string {
-        var uuid
-        do {
-            uuid = uuidv4()
-        }
-        while (uuid.charAt(0).match("[0-9]") != null)   // No numbers as first char, as we use this id as DNS name
-        return uuid
     }
 
 }

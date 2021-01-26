@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/namegen"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
@@ -241,11 +242,10 @@ func (wspd *WorkspaceManagerPrescaleDriver) startGhostWorkspaces(ctx context.Con
 		}
 		instanceID := instanceUUID.String()
 		ids[i] = instanceID
-		metaUUID, err := uuid.NewRandom()
+		metaID, err := namegen.GenerateWorkspaceID()
 		if err != nil {
 			return nil, err
 		}
-		metaID := metaUUID.String()
 
 		_, err = wspd.Client.StartWorkspace(ctx, &api.StartWorkspaceRequest{
 			Type: api.WorkspaceType_GHOST,
