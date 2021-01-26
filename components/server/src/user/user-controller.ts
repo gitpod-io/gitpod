@@ -27,6 +27,7 @@ import { LoginCompletionHandler } from "../auth/login-completion-handler";
 import { TosCookie } from "./tos-cookie";
 import { TosFlow } from "../terms/tos-flow";
 import { increaseLoginCounter } from '../../src/prometheusMetrics';
+import * as uuidv4 from 'uuid/v4';
 
 @injectable()
 export class UserController {
@@ -302,12 +303,17 @@ export class UserController {
                     user: User.censor(user),
                     returnToUrl: req.query.returnTo
                 };
-                await TosFlow.attach(req.session!, tosFlowInfo);
             }
+
+            // attaching a random identifier for this web flow to test if it's present in `/tos/proceed` handler
+            const flowId = uuidv4();
+            tosFlowInfo.flowId = flowId;
+            await TosFlow.attach(req.session!, tosFlowInfo);
 
             const isUpdate = !TosFlow.WithIdentity.is(tosFlowInfo);
             const userInfo = tosFlowUserInfo(tosFlowInfo);
             const tosHints = {
+                flowId,
                 isUpdate,   // indicate whether to show the "we've updated ..." message
                 userInfo    // let us render the avatar on the dashboard page
             };
@@ -356,6 +362,21 @@ export class UserController {
                 return;
             }
 
+            // detaching the (random) identifier of this webflow
+            const flowId = tosFlowInfo.flowId;
+            delete tosFlowInfo.flowId;
+            await TosFlow.attach(req.session!, tosFlowInfo);
+
+            // let's assume if the form is re-submitted a second time, we need to abort the process, because
+            // otherwise we potentially create accounts for the same provider identity twice.
+            //
+            // todo@alex: check if it's viable to test the flow ids for a single submission, instead of detaching
+            // from the session.
+            if (typeof flowId !== "string") {
+                await redirectOnInvalidSession();
+                return;
+            }
+
             const agreeTOS = req.body.agreeTOS;
             if (!agreeTOS) {
                 // The user did not accept the terms.
@@ -364,7 +385,7 @@ export class UserController {
                 log.info(logContext, '(TOS) User did NOT agree. Redirecting to /logout.', logPayload);
 
                 res.redirect(this.env.hostUrl.withApi({ pathname: "/logout" }).toString());
-                // todo@alex: consider redirecting to a description pages afterwards (returnTo param)
+                // todo@alex: consider redirecting to a info page (returnTo param)
 
                 return;
             }
@@ -377,8 +398,21 @@ export class UserController {
                     await redirectOnInvalidSession();
                     return;
                 }
-                await this.handleTosProceedForNewUser(req, res, authFlow, tosFlowInfo, req.body);
-            } else if (TosFlow.WithUser.is(tosFlowInfo)) {
+
+                // there is a possibility, that a competing browser session already created a new user account
+                // for this provider identity, thus we need to check again, in order to avoid created unreachable accounts
+                const user = await this.userService.findUserForLogin({ candidate: tosFlowInfo.candidate });
+                if (user) {
+                    log.info(`(TOS) User was created in a parallel browser session, let's login...`, { logPayload });
+                    await this.loginCompletionHandler.complete(req, res, { user, authHost: tosFlowInfo.authHost, returnToUrl: authFlow.returnTo });
+                } else {
+                    await this.handleTosProceedForNewUser(req, res, authFlow, tosFlowInfo, req.body);
+                }
+
+                return;
+            }
+
+            if (TosFlow.WithUser.is(tosFlowInfo)) {
                 const { user, returnToUrl } = tosFlowInfo;
 
                 await this.userService.acceptCurrentTerms(user);
