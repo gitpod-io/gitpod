@@ -33,7 +33,7 @@ export class Footer extends React.Component<FooterProps, {}> {
                     </div>)
                 }
                 <div className="row" style={{ height: 30, fontSize: 10, marginBottom: 15 }}>
-                    <p>Copyright © 2020&nbsp;<a href="https://www.gitpod.io/" target="_blank" rel="noopener">Gitpod</a>&nbsp;|&nbsp;All Rights Reserved
+            <p>Copyright © {new Date().getFullYear().toString()}&nbsp;<a href="https://www.gitpod.io/" target="_blank" rel="noopener">Gitpod</a>&nbsp;|&nbsp;All Rights Reserved
                     {(branding ? branding.links.legal : []).map(({ name, url }: Branding.Link) => {
                     return (<span key={name}>&nbsp;|&nbsp;{this.createAnchor(name, url)}</span>);
                     })}
