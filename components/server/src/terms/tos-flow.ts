@@ -10,8 +10,10 @@ import { saveSession } from "../express-util";
 
 
 export interface TosFlow {
+    flowId?: string;
     termsAcceptanceRequired?: boolean;
     isBlocked?: boolean;
+    authHost?: string;
 }
 export namespace TosFlow {
     export function is(data?: any): data is TosFlow {
@@ -33,7 +35,6 @@ export namespace TosFlow {
     export interface WithUser extends TosFlow {
         user: User;
         elevateScopes?: string[] | undefined;
-        authHost?: string;
         returnToUrl?: string;
     }
     export namespace WithUser {
