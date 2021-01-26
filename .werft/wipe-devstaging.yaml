@@ -5,7 +5,7 @@ args:
 pod:
   serviceAccount: werft
   nodeSelector:
-    cloud.google.com/gke-nodepool: workload
+    dev/workload: workload
   imagePullSecrets:
   - name: eu-gcr-io-pull-secret
   volumes:
