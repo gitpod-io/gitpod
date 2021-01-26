@@ -9,6 +9,7 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { URL } from 'url';
 import * as express from 'express';
 import * as crypto from 'crypto';
+import { GitpodHostUrl, workspaceIDRegex } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 
 export const pingPong: WsRequestHandler = (ws, req, next) => {
     let pingSentTimer: any;
@@ -69,33 +70,28 @@ export const isAllowedWebsocketDomain = (originHeader: any, gitpodHostName: stri
     try {
         const originUrl = new URL(originHeader);
         originHostname = originUrl.hostname;
+        if (originHostname === gitpodHostName) {
+            return true;
+        }
+        if (looksLikeWorkspaceHostname(originUrl, gitpodHostName)) {
+            return true
+        } else {
+            return false;
+        }
     } catch (err) {
         return false;
     }
 
-    if (originHostname === gitpodHostName) {
-        return true;
-    }
-    if (looksLikeWorkspaceHostname(originHeader, gitpodHostName)) {
-        return true
-    } else {
-        return false;
-    }
 }
 
-const looksLikeWorkspaceHostname = (originHostname: string, gitpodHostName: string): boolean => {
+const looksLikeWorkspaceHostname = (originHostname: URL, gitpodHostName: string): boolean => {
     // Is prefix a valid (looking) workspace ID?
-    const found = originHostname.lastIndexOf(gitpodHostName);
+    const found = originHostname.toString().lastIndexOf(gitpodHostName);
     if (found === -1) {
         return false;
     }
-    const prefix = originHostname.substr(0, found);
-    const parts = prefix.split(".");
-    if (parts.length !== 3) {
-        return false;
-    }
-
-    return parts[0].split("-").length === 5;
+    const url = new GitpodHostUrl(originHostname);
+    return workspaceIDRegex.test(url.workspaceId || '')
 };
 
 export function saveSession(reqOrSession: express.Request | Express.Session): Promise<void> {

@@ -12,7 +12,8 @@ export interface UrlChange {
 }
 export type UrlUpdate = UrlChange | Partial<URL>;
 
-export const workspaceIDRegex = /([a-z0-9]{4,8}-)+([a-z0-9]{12})/;
+// this pattern matches v4 UUIDs as well as the new generated workspace ids (e.g. pink-panda-ns35kd21)
+export const workspaceIDRegex = /(([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})|([0-9a-z]{2,16}-[0-9a-z]{2,16}-[0-9a-z]{8}))/;
 
 export class GitpodHostUrl {
     readonly url: URL;

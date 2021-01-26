@@ -34,31 +34,31 @@ func TestWorkspaceRouter(t *testing.T) {
 	}{
 		{
 			Name: "host-based workspace access",
-			URL:  "http://c65376da-3406-4cf3-a80b-99ce5f750235.ws.gitpod.dev/",
+			URL:  "http://amaranth-smelt-9ba20cc1.ws.gitpod.dev/",
 			Headers: map[string]string{
-				forwardedHostnameHeader: "c65376da-3406-4cf3-a80b-99ce5f750235.ws.gitpod.dev",
+				forwardedHostnameHeader: "amaranth-smelt-9ba20cc1.ws.gitpod.dev",
 			},
 			Router:       HostBasedRouter(forwardedHostnameHeader, wsHostSuffix),
 			WSHostSuffix: wsHostSuffix,
 			Expected: Expectation{
-				WorkspaceID: "c65376da-3406-4cf3-a80b-99ce5f750235",
+				WorkspaceID: "amaranth-smelt-9ba20cc1",
 				Status:      http.StatusOK,
-				URL:         "http://c65376da-3406-4cf3-a80b-99ce5f750235.ws.gitpod.dev/",
+				URL:         "http://amaranth-smelt-9ba20cc1.ws.gitpod.dev/",
 			},
 		},
 		{
 			Name: "host-based port access",
-			URL:  "http://1234-c65376da-3406-4cf3-a80b-99ce5f750235.ws.gitpod.dev/",
+			URL:  "http://1234-amaranth-smelt-9ba20cc1.ws.gitpod.dev/",
 			Headers: map[string]string{
-				forwardedHostnameHeader: "1234-c65376da-3406-4cf3-a80b-99ce5f750235.ws.gitpod.dev",
+				forwardedHostnameHeader: "1234-amaranth-smelt-9ba20cc1.ws.gitpod.dev",
 			},
 			Router:       HostBasedRouter(forwardedHostnameHeader, wsHostSuffix),
 			WSHostSuffix: wsHostSuffix,
 			Expected: Expectation{
-				WorkspaceID:   "c65376da-3406-4cf3-a80b-99ce5f750235",
+				WorkspaceID:   "amaranth-smelt-9ba20cc1",
 				WorkspacePort: "1234",
 				Status:        http.StatusOK,
-				URL:           "http://1234-c65376da-3406-4cf3-a80b-99ce5f750235.ws.gitpod.dev/",
+				URL:           "http://1234-amaranth-smelt-9ba20cc1.ws.gitpod.dev/",
 			},
 		},
 		{
@@ -82,7 +82,7 @@ func TestWorkspaceRouter(t *testing.T) {
 			},
 			Infos: []WorkspaceInfo{
 				{
-					WorkspaceID:   "c65376da-3406-4cf3-a80b-99ce5f750235",
+					WorkspaceID:   "amaranth-smelt-9ba20cc1",
 					URL:           "http://gitpod-dev.com:10001/",
 					IDEPublicPort: "10001",
 					Ports: []PortInfo{
@@ -96,7 +96,7 @@ func TestWorkspaceRouter(t *testing.T) {
 				},
 			},
 			Expected: Expectation{
-				WorkspaceID:   "c65376da-3406-4cf3-a80b-99ce5f750235",
+				WorkspaceID:   "amaranth-smelt-9ba20cc1",
 				WorkspacePort: "8080",
 				Status:        http.StatusOK,
 				URL:           "http://localhost:10343/",
@@ -104,70 +104,70 @@ func TestWorkspaceRouter(t *testing.T) {
 		},
 		{
 			Name: "path-based workspace access",
-			URL:  "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235",
+			URL:  "http://localhost/amaranth-smelt-9ba20cc1",
 			Router: func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (theiaRouter *mux.Router, portRouter *mux.Router, blobserveRouter *mux.Router) {
 				return pathBasedTheiaRouter(r, wsInfoProvider, ""), nil, nil
 			},
 			Infos: []WorkspaceInfo{
 				{
-					WorkspaceID: "c65376da-3406-4cf3-a80b-99ce5f750235",
-					URL:         "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235",
+					WorkspaceID: "amaranth-smelt-9ba20cc1",
+					URL:         "http://localhost/amaranth-smelt-9ba20cc1",
 				},
 			},
 			Expected: Expectation{
-				WorkspaceID: "c65376da-3406-4cf3-a80b-99ce5f750235",
+				WorkspaceID: "amaranth-smelt-9ba20cc1",
 				Status:      http.StatusOK,
 				URL:         "http://localhost/",
 			},
 		},
 		{
 			Name: "path-based workspace path access",
-			URL:  "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235/services",
+			URL:  "http://localhost/amaranth-smelt-9ba20cc1/services",
 			Router: func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (theiaRouter *mux.Router, portRouter *mux.Router, blobserveRouter *mux.Router) {
 				return pathBasedTheiaRouter(r, wsInfoProvider, ""), nil, nil
 			},
 			Infos: []WorkspaceInfo{
 				{
-					WorkspaceID: "c65376da-3406-4cf3-a80b-99ce5f750235",
-					URL:         "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235",
+					WorkspaceID: "amaranth-smelt-9ba20cc1",
+					URL:         "http://localhost/amaranth-smelt-9ba20cc1",
 				},
 			},
 			Expected: Expectation{
-				WorkspaceID: "c65376da-3406-4cf3-a80b-99ce5f750235",
+				WorkspaceID: "amaranth-smelt-9ba20cc1",
 				Status:      http.StatusOK,
 				URL:         "http://localhost/services",
 			},
 		},
 		{
 			Name: "path-based workspace access with prefix",
-			URL:  "http://localhost/workspace/c65376da-3406-4cf3-a80b-99ce5f750235/services",
+			URL:  "http://localhost/workspace/amaranth-smelt-9ba20cc1/services",
 			Router: func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (theiaRouter *mux.Router, portRouter *mux.Router, blobserveRouter *mux.Router) {
 				return pathBasedTheiaRouter(r, wsInfoProvider, "/workspace/"), nil, nil
 			},
 			Infos: []WorkspaceInfo{
 				{
-					WorkspaceID: "c65376da-3406-4cf3-a80b-99ce5f750235",
-					URL:         "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235",
+					WorkspaceID: "amaranth-smelt-9ba20cc1",
+					URL:         "http://localhost/amaranth-smelt-9ba20cc1",
 				},
 			},
 			Expected: Expectation{
-				WorkspaceID: "c65376da-3406-4cf3-a80b-99ce5f750235",
+				WorkspaceID: "amaranth-smelt-9ba20cc1",
 				Status:      http.StatusOK,
 				URL:         "http://localhost/services",
 			},
 		},
 		{
 			Name:   "path-and-port router: workspace access",
-			URL:    "http://localhost/workspace/c65376da-3406-4cf3-a80b-99ce5f750235/services",
+			URL:    "http://localhost/workspace/amaranth-smelt-9ba20cc1/services",
 			Router: PathAndPortRouter("/workspace/"),
 			Infos: []WorkspaceInfo{
 				{
-					WorkspaceID: "c65376da-3406-4cf3-a80b-99ce5f750235",
-					URL:         "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235",
+					WorkspaceID: "amaranth-smelt-9ba20cc1",
+					URL:         "http://localhost/amaranth-smelt-9ba20cc1",
 				},
 			},
 			Expected: Expectation{
-				WorkspaceID: "c65376da-3406-4cf3-a80b-99ce5f750235",
+				WorkspaceID: "amaranth-smelt-9ba20cc1",
 				Status:      http.StatusOK,
 				URL:         "http://localhost/services",
 			},
@@ -178,8 +178,8 @@ func TestWorkspaceRouter(t *testing.T) {
 			Router: PathAndPortRouter("/workspace/"),
 			Infos: []WorkspaceInfo{
 				{
-					WorkspaceID: "c65376da-3406-4cf3-a80b-99ce5f750235",
-					URL:         "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235",
+					WorkspaceID: "amaranth-smelt-9ba20cc1",
+					URL:         "http://localhost/amaranth-smelt-9ba20cc1",
 					Ports: []PortInfo{
 						{
 							PublicPort: "10343",
@@ -191,7 +191,7 @@ func TestWorkspaceRouter(t *testing.T) {
 				},
 			},
 			Expected: Expectation{
-				WorkspaceID:   "c65376da-3406-4cf3-a80b-99ce5f750235",
+				WorkspaceID:   "amaranth-smelt-9ba20cc1",
 				WorkspacePort: "8080",
 				Status:        http.StatusOK,
 				URL:           "http://localhost:10343/",
@@ -208,34 +208,34 @@ func TestWorkspaceRouter(t *testing.T) {
 		},
 		{
 			Name:   "path-and-host router: workspace access",
-			URL:    "http://localhost/workspace/c65376da-3406-4cf3-a80b-99ce5f750235/services",
+			URL:    "http://localhost/workspace/amaranth-smelt-9ba20cc1/services",
 			Router: PathAndHostRouter("/workspace/", forwardedHostnameHeader, wsHostSuffix),
 			Headers: map[string]string{
 				forwardedHostnameHeader: "localhost",
 			},
 			Infos: []WorkspaceInfo{
 				{
-					WorkspaceID: "c65376da-3406-4cf3-a80b-99ce5f750235",
-					URL:         "http://localhost/c65376da-3406-4cf3-a80b-99ce5f750235",
+					WorkspaceID: "amaranth-smelt-9ba20cc1",
+					URL:         "http://localhost/amaranth-smelt-9ba20cc1",
 				},
 			},
 			Expected: Expectation{
-				WorkspaceID: "c65376da-3406-4cf3-a80b-99ce5f750235",
+				WorkspaceID: "amaranth-smelt-9ba20cc1",
 				Status:      http.StatusOK,
 				URL:         "http://localhost/services",
 			},
 		},
 		{
 			Name: "path-and-host router: port access",
-			URL:  "http://8080-de5ce5ec-a9ac-49e4-aadc-4827d2dcb189.ws.gitpod.dev/",
+			URL:  "http://8080-amaranth-smelt-9ba20cc1.ws.gitpod.dev/",
 			Headers: map[string]string{
-				forwardedHostnameHeader: "8080-de5ce5ec-a9ac-49e4-aadc-4827d2dcb189.ws.gitpod.dev",
+				forwardedHostnameHeader: "8080-amaranth-smelt-9ba20cc1.ws.gitpod.dev",
 			},
 			Router: PathAndHostRouter("/workspace/", forwardedHostnameHeader, wsHostSuffix),
 			Infos: []WorkspaceInfo{
 				{
-					WorkspaceID: "de5ce5ec-a9ac-49e4-aadc-4827d2dcb189",
-					URL:         "http://localhost/de5ce5ec-a9ac-49e4-aadc-4827d2dcb189",
+					WorkspaceID: "amaranth-smelt-9ba20cc1",
+					URL:         "http://localhost/amaranth-smelt-9ba20cc1",
 					Ports: []PortInfo{
 						{
 							PublicPort: "10343",
@@ -247,10 +247,10 @@ func TestWorkspaceRouter(t *testing.T) {
 				},
 			},
 			Expected: Expectation{
-				WorkspaceID:   "de5ce5ec-a9ac-49e4-aadc-4827d2dcb189",
+				WorkspaceID:   "amaranth-smelt-9ba20cc1",
 				WorkspacePort: "8080",
 				Status:        http.StatusOK,
-				URL:           "http://8080-de5ce5ec-a9ac-49e4-aadc-4827d2dcb189.ws.gitpod.dev/",
+				URL:           "http://8080-amaranth-smelt-9ba20cc1.ws.gitpod.dev/",
 			},
 		},
 		{
@@ -347,69 +347,69 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 		},
 		{
 			Name:       "workspace match",
-			HostHeader: "efb3a500-1491-48a1-9ab4-86569a2008de" + wsHostSuffix,
+			HostHeader: "amaranth-smelt-9ba20cc1" + wsHostSuffix,
 			Expected: matchResult{
 				MatchesWorkspace: true,
 				WorkspaceVars: map[string]string{
 					foreignOriginPrefix:   "",
-					workspaceIDIdentifier: "efb3a500-1491-48a1-9ab4-86569a2008de",
+					workspaceIDIdentifier: "amaranth-smelt-9ba20cc1",
 				},
 			},
 		},
 		{
 			Name:       "webview workspace match",
-			HostHeader: "webview-efb3a500-1491-48a1-9ab4-86569a2008de" + wsHostSuffix,
+			HostHeader: "webview-amaranth-smelt-9ba20cc1" + wsHostSuffix,
 			Expected: matchResult{
 				MatchesWorkspace: true,
 				WorkspaceVars: map[string]string{
 					foreignOriginPrefix:   "webview-",
-					workspaceIDIdentifier: "efb3a500-1491-48a1-9ab4-86569a2008de",
+					workspaceIDIdentifier: "amaranth-smelt-9ba20cc1",
 				},
 			},
 		},
 		{
 			Name:       "mini browser workspace match",
-			HostHeader: "browser-efb3a500-1491-48a1-9ab4-86569a2008de" + wsHostSuffix,
+			HostHeader: "browser-amaranth-smelt-9ba20cc1" + wsHostSuffix,
 			Expected: matchResult{
 				MatchesWorkspace: true,
 				WorkspaceVars: map[string]string{
 					foreignOriginPrefix:   "browser-",
-					workspaceIDIdentifier: "efb3a500-1491-48a1-9ab4-86569a2008de",
+					workspaceIDIdentifier: "amaranth-smelt-9ba20cc1",
 				},
 			},
 		},
 		{
 			Name:       "port match",
-			HostHeader: "8080-efb3a500-1491-48a1-9ab4-86569a2008de" + wsHostSuffix,
+			HostHeader: "8080-amaranth-smelt-9ba20cc1" + wsHostSuffix,
 			Expected: matchResult{
 				MatchesPort: true,
 				PortVars: map[string]string{
 					foreignOriginPrefix:     "",
-					workspaceIDIdentifier:   "efb3a500-1491-48a1-9ab4-86569a2008de",
+					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
 					workspacePortIdentifier: "8080",
 				},
 			},
 		},
 		{
 			Name:       "webview port match",
-			HostHeader: "webview-8080-efb3a500-1491-48a1-9ab4-86569a2008de" + wsHostSuffix,
+			HostHeader: "webview-8080-amaranth-smelt-9ba20cc1" + wsHostSuffix,
 			Expected: matchResult{
 				MatchesPort: true,
 				PortVars: map[string]string{
 					foreignOriginPrefix:     "webview-",
-					workspaceIDIdentifier:   "efb3a500-1491-48a1-9ab4-86569a2008de",
+					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
 					workspacePortIdentifier: "8080",
 				},
 			},
 		},
 		{
 			Name:       "mini browser port match",
-			HostHeader: "browser-8080-efb3a500-1491-48a1-9ab4-86569a2008de" + wsHostSuffix,
+			HostHeader: "browser-8080-amaranth-smelt-9ba20cc1" + wsHostSuffix,
 			Expected: matchResult{
 				MatchesPort: true,
 				PortVars: map[string]string{
 					foreignOriginPrefix:     "browser-",
-					workspaceIDIdentifier:   "efb3a500-1491-48a1-9ab4-86569a2008de",
+					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
 					workspacePortIdentifier: "8080",
 				},
 			},

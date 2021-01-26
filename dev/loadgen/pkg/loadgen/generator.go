@@ -9,6 +9,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/namegen"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
@@ -90,15 +91,15 @@ func (f *FixedWorkspaceGenerator) Generate() (*StartWorkspaceSpec, error) {
 	if err != nil {
 		return nil, err
 	}
-	workspaceID, err := uuid.NewRandom()
+	workspaceID, err := namegen.GenerateWorkspaceID()
 	if err != nil {
 		return nil, err
 	}
 
 	out := proto.Clone(f.Template).(*api.StartWorkspaceRequest)
 	out.Id = instanceID.String()
-	out.Metadata.MetaId = workspaceID.String()
-	out.ServicePrefix = workspaceID.String()
+	out.Metadata.MetaId = workspaceID
+	out.ServicePrefix = workspaceID
 	r := StartWorkspaceSpec(*out)
 	return &r, nil
 }

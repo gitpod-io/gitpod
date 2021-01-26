@@ -18,6 +18,10 @@ export class TypeORM {
         type: 'char',
         length: 36
     };
+    static readonly WORKSPACE_ID_COLUMN_TYPE: ColumnOptions = {
+        type: 'char',
+        length: 36
+    };
 
     static defaultOptions(dir: string): ConnectionOptions {
         console.log(`Loading TypeORM entities and migrations from ${dir}`);

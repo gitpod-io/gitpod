@@ -13,8 +13,8 @@ import (
 
 	"github.com/alecthomas/repr"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/namegen"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
-	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 )
 
@@ -85,15 +85,16 @@ var workspacesStartCmd = &cobra.Command{
 }
 
 func init() {
-	wsid, err := uuid.NewRandom()
+	wsid, err := namegen.GenerateWorkspaceID()
 	if err != nil {
-		panic(err)
+		log.WithError(err).Fatal("cannot generate workspace id")
+		return
 	}
 
 	workspacesCmd.AddCommand(workspacesStartCmd)
 	workspacesStartCmd.Flags().StringVarP(&startWorkspaceReq.ServicePrefix, "service-prefix", "p", "", "use a service prefix different from the workspace ID")
 	workspacesStartCmd.Flags().StringVar(&startWorkspaceReq.Metadata.Owner, "owner", "gpctl", "set the workspace owner")
-	workspacesStartCmd.Flags().StringVar(&startWorkspaceReq.Metadata.MetaId, "workspace-id", wsid.String(), "set the workspace ID")
+	workspacesStartCmd.Flags().StringVar(&startWorkspaceReq.Metadata.MetaId, "workspace-id", wsid, "set the workspace ID")
 	workspacesStartCmd.Flags().IntP("count", "n", 1, "start multiple workspaces with the same spec - useful for load tests")
 
 	var types []string
