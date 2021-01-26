@@ -282,24 +282,28 @@ func (s *State) SortNodesByAvailableRAM(order SortOrder) []*Node {
 	return nodes
 }
 
-// FindOldestGhostOnNode returns the name of the oldest ghost on the node with the given node, or "" if there is no
+// FindOldestGhostOnNodeExcluding returns the name of the oldest ghost on the node with the given node, or "" if there is no
 // node or ghost
-func (s *State) FindOldestGhostOnNode(nodeName string) string {
+func (s *State) FindOldestGhostOnNodeExcluding(nodeName string, reservedGhosts map[string]bool) string {
 	node, ok := s.Nodes[nodeName]
 	if !ok {
 		return ""
 	}
-
 	if len(node.Ghosts) == 0 {
 		return ""
-	} else if len(node.Ghosts) == 1 {
-		return node.Ghosts[0].Name
 	}
 
 	ghosts := make([]*corev1.Pod, 0, len(node.Ghosts))
 	for _, g := range node.Ghosts {
+		if isReserved, _ := reservedGhosts[g.Name]; isReserved {
+			continue
+		}
 		ghosts = append(ghosts, g)
 	}
+	if len(ghosts) == 0 {
+		return ""
+	}
+
 	sort.Slice(ghosts, func(i, j int) bool {
 		return ghosts[i].ObjectMeta.CreationTimestamp.Time.Before(ghosts[j].ObjectMeta.CreationTimestamp.Time)
 	})

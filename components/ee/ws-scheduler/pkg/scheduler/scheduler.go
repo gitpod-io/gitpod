@@ -69,8 +69,8 @@ type Scheduler struct {
 	nodes    infov1.NodeInformer
 	strategy Strategy
 
-	schedulingPodMap  *schedulingPodMap
-	localBindingCache *localBindingCache
+	schedulingPodMap *schedulingPodMap
+	localSlotCache   *localSlotCache
 
 	didShutdown chan bool
 }
@@ -106,7 +106,7 @@ func (s *Scheduler) Start(ctx context.Context) error {
 	log.Info("informers are warmed up and workers are running - let them come")
 	// Now that the informers are up and running, we can start our workers who rely on the node/pod informers being warmed up
 
-	// Start the actual scheduling loop
+	// Start the actual scheduling loop. This is the only caller of schedulePod to ensure it's atomicity
 	go func() {
 		for pod := range schedulerQueue {
 			if pod == nil {
@@ -179,7 +179,7 @@ func (s *Scheduler) startInformer(ctx context.Context) (schedulerQueue chan *cor
 	newNodeQueue = make(chan *corev1.Node, schedulerQueueSize)
 
 	s.schedulingPodMap = newSchedulingPodMap()
-	s.localBindingCache = newLocalBindingCache()
+	s.localSlotCache = newLocalSlotCache()
 
 	// Informers replicate state to a Kubernetes client. We'll use them so we don't have to query the K8S master
 	// every time we want to schedule a pod, and so that we don't have to maintain our own watcher.
@@ -224,13 +224,13 @@ func (s *Scheduler) startInformer(ctx context.Context) (schedulerQueue chan *cor
 			}
 
 			// If we see a pod that has been scheduled successfully: Delete from local scheduled_store to avoid leaking memory
-			// Note: We _might_ delete entries from localBindingCache too early here, leading to 'OutOfMemory'.
+			// Note: We _might_ delete entries from localSlotCache too early here, leading to 'OutOfMemory'.
 			//       This might happen if a pod has been scheduled (phase=="pending" && nodeName!=""), we removed it, and the
 			//		scheduler cannot take that info into account because we just removed.
-			//      But we cannot implement an exception for that case, because it leads to leaking localBindingCache entries,
+			//      But we cannot implement an exception for that case, because it leads to leaking localSlotCache entries,
 			//      because some pods are removed in the "pending" phase directly.
 			if pod.Spec.NodeName != "" {
-				s.localBindingCache.delete(pod.Name)
+				s.localSlotCache.delete(pod.Name)
 			}
 
 			if pod.Status.Phase == corev1.PodFailed && pod.Status.Reason == "OutOfMemory" {
@@ -256,6 +256,8 @@ func (s *Scheduler) WaitForShutdown() {
 	<-s.didShutdown
 }
 
+// schedulePod is the central method here, it orchestrates the actual scheduling of a pod onto a node.
+// It's expected to be atomic as there's a single goroutine working through the schedulingQueue calling this.
 func (s *Scheduler) schedulePod(ctx context.Context, pod *corev1.Pod) (err error) {
 	traceID := pod.Annotations[wsk8s.TraceIDAnnotation]
 	spanCtx := tracing.FromTraceID(traceID)
@@ -280,7 +282,7 @@ func (s *Scheduler) schedulePod(ctx context.Context, pod *corev1.Pod) (err error
 	}
 
 	// if the pod is known to have already been scheduled (locally): drop.
-	if s.localBindingCache.hasAlreadyBeenScheduled(pod.Name) {
+	if s.localSlotCache.hasAlreadyBeenScheduled(pod.Name) {
 		span.LogFields(tracelog.String("schedulingResult", "alreadyScheduled"))
 		log.WithFields(owi).WithField("name", pod.Name).Debugf("pod has already been scheduled, dropping.")
 		return nil
@@ -305,13 +307,20 @@ func (s *Scheduler) schedulePod(ctx context.Context, pod *corev1.Pod) (err error
 		return nil
 	}
 
+	// if this is a regular workspace: try to find a ghost that is not being targeted, yet
+	var ghostToDelete string
+	if isRegularWorkspace {
+		reservedGhosts := s.localSlotCache.getReservedGhostsOnNode(nodeName)
+		ghostToDelete = state.FindOldestGhostOnNodeExcluding(nodeName, reservedGhosts)
+	}
+
 	// mark as already scheduled, even before the actually scheduling has happened.
 	// this enables asynchronous scheduling - we just need to make sure we release the binding in case the scheduling fails!
-	s.localBindingCache.markAsScheduled(pod, nodeName)
+	s.localSlotCache.markAsScheduled(pod, nodeName, ghostToDelete)
 
 	// we found a node for this pod: (asynchronously) bind it to the node! schedulingPodMap makes sure we do not try to
 	// select the same slot multiple times.
-	go func() {
+	go func(pod *corev1.Pod, ghostToDelete string) {
 		var err error
 		defer s.schedulingPodMap.remove(pod.Name)
 		defer func() {
@@ -319,19 +328,16 @@ func (s *Scheduler) schedulePod(ctx context.Context, pod *corev1.Pod) (err error
 				// make sure we already release the binding - but only:
 				//  - in the error case
 				//  - when we _know_ the pod is already assigned (k8s error "already assigned to node")
-				s.localBindingCache.delete(pod.Name)
+				s.localSlotCache.delete(pod.Name)
 			}
 		}()
 
 		// if this is a regular workspace: try to find a ghost and delete it
-		if isRegularWorkspace {
-			ghostToDelete := state.FindOldestGhostOnNode(nodeName)
-			if ghostToDelete != "" {
-				err = s.deleteGhostWorkspace(ctx, pod.Name, ghostToDelete)
-				if err != nil {
-					log.WithFields(owi).WithField("name", pod.Name).WithField("ghost", ghostToDelete).WithError(err).Error("error deleting ghost")
-					return
-				}
+		if ghostToDelete != "" {
+			err = s.deleteGhostWorkspace(ctx, pod.Name, ghostToDelete)
+			if err != nil {
+				log.WithFields(owi).WithField("name", pod.Name).WithField("ghost", ghostToDelete).WithError(err).Error("error deleting ghost")
+				return
 			}
 		}
 
@@ -349,7 +355,7 @@ func (s *Scheduler) schedulePod(ctx context.Context, pod *corev1.Pod) (err error
 			return
 		}
 		log.WithFields(owi).WithField("name", pod.Name).Debugf("bound to node: %s", nodeName)
-	}()
+	}(pod, ghostToDelete)
 
 	return nil
 }
@@ -417,7 +423,7 @@ func (s *Scheduler) buildState(ctx context.Context, pod *corev1.Pod, isRegularWo
 	}
 
 	makeGhostsInvisible := isRegularWorkspace
-	state = ComputeState(potentialNodes, allPods, s.localBindingCache.getListOfBindings(), &s.RAMSafetyBuffer, makeGhostsInvisible)
+	state = ComputeState(potentialNodes, allPods, s.localSlotCache.getListOfBindings(), &s.RAMSafetyBuffer, makeGhostsInvisible)
 
 	// The required node services is basically PodAffinity light. They limit the nodes we can schedule
 	// workspace pods to based on other pods running on that node. We do this because we require that
@@ -703,7 +709,7 @@ func isKubernetesObjNotFoundError(err error) bool {
 	return false
 }
 
-// localBindingCache stores whether we already scheduled a Pod and is necessary to bridge the gap between:
+// localSlotCache stores whether we already scheduled a Pod and is necessary to bridge the gap between:
 //  1. We successfully create a binding with the Kubernets API
 //  2. The change is reflected in the results we get from s.pods.Lister().List()
 // Without it, we sometimes end up with pods being assigned the same last slot on a node, leading
@@ -711,50 +717,74 @@ func isKubernetesObjNotFoundError(err error) bool {
 //
 // (We're not sure why there is gap in the first place: Kubernetes should be consistent, as etcd is
 // consistent (per Object type, here Pod). Maybe because of the GCloud multi-master setup..?)
-type localBindingCache struct {
-	bindings map[string]*Binding
-	mu       sync.RWMutex
+type localSlotCache struct {
+	slots map[string]slot
+	mu    sync.RWMutex
 }
 
-func (c *localBindingCache) markAsScheduled(pod *corev1.Pod, nodeName string) {
+// slot is used to describe a "place" on a single node that we already scheduled/are trying schedule a workspace on.
+type slot struct {
+	binding       *Binding
+	reservedGhost string
+}
+
+// markAsScheduled marks a certain slot as already scheduled
+func (c *localSlotCache) markAsScheduled(pod *corev1.Pod, nodeName string, ghostToReplace string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.bindings[pod.Name] = &Binding{
-		Pod:      pod,
-		NodeName: nodeName,
+	c.slots[pod.Name] = slot{
+		binding: &Binding{
+			Pod:      pod,
+			NodeName: nodeName,
+		},
+		reservedGhost: ghostToReplace,
 	}
 }
 
-func (c *localBindingCache) hasAlreadyBeenScheduled(podName string) bool {
+func (c *localSlotCache) hasAlreadyBeenScheduled(podName string) bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	_, present := c.bindings[podName]
+	_, present := c.slots[podName]
 	return present
 }
 
-func (c *localBindingCache) delete(podName string) {
+func (c *localSlotCache) delete(podName string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	delete(c.bindings, podName)
+	delete(c.slots, podName)
 }
 
-func (c *localBindingCache) getListOfBindings() []*Binding {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+func (c *localSlotCache) getListOfBindings() []*Binding {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 
-	bs := make([]*Binding, 0, len(c.bindings))
-	for _, b := range c.bindings {
-		bs = append(bs, b)
+	bs := make([]*Binding, 0, len(c.slots))
+	for _, s := range c.slots {
+		bs = append(bs, s.binding)
 	}
 	return bs
 }
 
-func newLocalBindingCache() *localBindingCache {
-	return &localBindingCache{
-		bindings: make(map[string]*Binding),
+func (c *localSlotCache) getReservedGhostsOnNode(nodeName string) map[string]bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	reservedGhosts := make(map[string]bool, len(c.slots))
+	for _, s := range c.slots {
+		if s.binding.NodeName != nodeName {
+			continue
+		}
+		reservedGhosts[s.reservedGhost] = true
+	}
+	return reservedGhosts
+}
+
+func newLocalSlotCache() *localSlotCache {
+	return &localSlotCache{
+		slots: make(map[string]slot),
 	}
 }
 
