@@ -25,11 +25,9 @@ export interface TermsOfServiceProps {
 }
 interface TermsOfServiceState {
     isUpdate: boolean;
-    flowId: string;
     userInfo?: any;
     terms?: Terms;
     acceptsTos: boolean;
-    submitted: boolean;
 }
 export class TermsOfService extends React.Component<TermsOfServiceProps, TermsOfServiceState> {
     protected gitpodHost = new GitpodHostUrl(window.location.href);
@@ -40,9 +38,7 @@ export class TermsOfService extends React.Component<TermsOfServiceProps, TermsOf
         super(props);
         this.state = {
             isUpdate: false,
-            acceptsTos: false,
-            submitted: false,
-            flowId: "ignore",
+            acceptsTos: false
         };
         this.formRef = React.createRef();
         this.onDecline = this.onDecline.bind(this);
@@ -57,7 +53,6 @@ export class TermsOfService extends React.Component<TermsOfServiceProps, TermsOf
         const tosHints = Cookies.getJSON('tosHints');
         this.setState({
             isUpdate: tosHints?.isUpdate === true,
-            flowId: typeof tosHints?.flowId === "string" ? tosHints?.flowId : this.state.flowId,
             userInfo: typeof tosHints?.userInfo === "object" ? tosHints?.userInfo : undefined
         });
         this.props.terms.then(terms => this.setState({ terms }));
@@ -68,10 +63,10 @@ export class TermsOfService extends React.Component<TermsOfServiceProps, TermsOf
     }
 
     onAccept() {
-        this.setState({ acceptsTos: true, submitted: true }, () => this.doSubmit());
+        this.setState({ acceptsTos: true }, () => this.doSubmit());
     }
     onDecline() {
-        this.setState({ acceptsTos: false, submitted: true }, () => this.doSubmit());
+        this.setState({ acceptsTos: false }, () => this.doSubmit());
     }
     protected doSubmit() {
         this.formRef.current!.submit();
@@ -131,7 +126,6 @@ export class TermsOfService extends React.Component<TermsOfServiceProps, TermsOf
                 </AppBar>
                 <div className='content content-area'>
                     <form ref={this.formRef} action={this.actionUrl} method="post" id="accept-tos-form">
-                        <input type="hidden" id="flowId" name="flowId" value={this.state.flowId} />
                         <div className="tos-checks">
                             <Typography className="tos-content" dangerouslySetInnerHTML={{ __html: update ? updateMessage : content }} />
                             <p>
@@ -154,7 +148,6 @@ export class TermsOfService extends React.Component<TermsOfServiceProps, TermsOf
                                     variant='text'
                                     color={'secondary'}
                                     onClick={this.onDecline}
-                                    disabled={this.state.submitted}
                                     data-testid="decline">
                                     {'Decline and log out'}
                                 </ButtonWithProgress>
@@ -162,7 +155,6 @@ export class TermsOfService extends React.Component<TermsOfServiceProps, TermsOf
                             <ButtonWithProgress
                                 className='button'
                                 onClick={this.onAccept}
-                                disabled={this.state.submitted}
                                 variant='outlined'
                                 color={'primary'}
                                 data-testid="submit">
