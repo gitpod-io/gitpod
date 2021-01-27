@@ -7,7 +7,7 @@
 import { ReactWidget, Message, ApplicationShell } from "@theia/core/lib/browser";
 import * as React from 'react';
 import { injectable, inject, postConstruct } from "inversify";
-import { SetupManager } from "./setup-manager";
+import { SetupManager, gitpodSetupBranchName } from "./setup-manager";
 import { CommandRegistry } from "@theia/core";
 import { GitHubCommand } from "../github";
 import { GitHubExtension } from "../github/github-extension";
@@ -156,7 +156,7 @@ export class SetupView extends ReactWidget {
             title: 'Test Drive Configuration',
             description: <React.Fragment>
                 <p>
-                    Push your changes on a remote branch and start a fresh workspace.
+                    Push your changes to the remote branch “{gitpodSetupBranchName}” and start a fresh workspace.
                 </p>
             </React.Fragment>
             ,
