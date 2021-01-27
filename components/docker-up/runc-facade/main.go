@@ -41,7 +41,7 @@ func main() {
 	if useFacade {
 		err = createAndRunc(runcPath)
 	} else {
-		err = syscall.Exec(runcPath, os.Args, os.Environ())
+		err = syscall.Exec("/usr/bin/strace", append([]string{runcPath}, os.Args...), os.Environ())
 	}
 	if err != nil {
 		log.WithError(err).Fatal("failed")
