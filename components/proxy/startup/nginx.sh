@@ -17,7 +17,7 @@ cd /etc/nginx/
 
 replaceEnvVars() {
     echo "Updating $i"
-    envsubst '$KUBE_NAMESPACE,$PROXY_DOMAIN_REGEX,$PROXY_DOMAIN_COOKIE,$NAMESERVER,$SERVER_PROXY_APIKEY' < $1 > /tmp/foo;
+    envsubst '$KUBE_NAMESPACE,$PROXY_DOMAIN,$PROXY_DOMAIN_REGEX,$PROXY_DOMAIN_COOKIE,$NAMESERVER,$SERVER_PROXY_APIKEY' < $1 > /tmp/foo;
     cp -f /tmp/foo $i
 }
 
