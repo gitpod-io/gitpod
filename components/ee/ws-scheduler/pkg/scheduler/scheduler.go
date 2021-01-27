@@ -288,7 +288,7 @@ func (s *Scheduler) schedulePod(ctx context.Context, pod *corev1.Pod) (err error
 		return nil
 	}
 
-	isGhostReplacing := IsNonGhostWorkspace(pod)
+	isGhostReplacing := wsk8s.IsNonGhostWorkspace(pod)
 	nodeName, state, err := s.selectNodeForPod(ctx, pod, isGhostReplacing)
 	if nodeName == "" {
 		// we did not find any suitable node for the pod, mark the pod as unschedulable
@@ -307,30 +307,30 @@ func (s *Scheduler) schedulePod(ctx context.Context, pod *corev1.Pod) (err error
 		return nil
 	}
 
-	// if this is a regular workspace: try to find a ghost that is not being targeted, yet
+	// if this is a workspace that replaces a ghost: try to find a ghost that is not being targeted, yet
 	var ghostToDelete string
 	if isGhostReplacing {
 		reservedGhosts := s.localSlotCache.getReservedGhostsOnNode(nodeName)
 		ghostToDelete = state.FindOldestGhostOnNodeExcluding(nodeName, reservedGhosts)
 	}
 
-	// mark as already scheduled, even before the actually scheduling has happened.
-	// this enables asynchronous scheduling - we just need to make sure we release the binding in case the scheduling fails!
+	// mark as already scheduled, even before the actual scheduling has happened.
+	// this enables asynchronous scheduling - we just need to make sure we release the slot in case the scheduling fails!
 	s.localSlotCache.markAsScheduled(pod, nodeName, ghostToDelete)
 
 	// we found a node for this pod: (asynchronously) bind it to the node! schedulingPodMap makes sure we do not try to
 	// select the same slot multiple times.
 	go func(pod *corev1.Pod, ghostToDelete string) {
 		var err error
-		defer s.schedulingPodMap.remove(pod.Name)
 		defer func() {
+			s.schedulingPodMap.remove(pod.Name)
 			if err != nil {
 				// make sure we already release the slot - but only in the error case
 				s.localSlotCache.delete(pod.Name)
 			}
 		}()
 
-		// if this is a regular workspace: try to find a ghost and delete it
+		// if this is a workspace that replaces a ghost: delete that ghost beforehand
 		if ghostToDelete != "" {
 			err = s.deleteGhostWorkspace(ctx, pod.Name, ghostToDelete)
 			if err != nil {
@@ -339,18 +339,18 @@ func (s *Scheduler) schedulePod(ctx context.Context, pod *corev1.Pod) (err error
 			}
 		}
 
-		// actually bind the pod to the node
+		// bind the pod to the node
 		err = s.bindPodToNode(ctx, pod, nodeName)
 		if err != nil {
 			errStr := err.Error()
 			if strings.Contains(errStr, "is already assigned to node") {
-				// some other worker was faster: This can happen and is good: do nothing
-				log.WithFields(owi).WithField("name", pod.Name).Debugf("pod already bound - someone was faster than me!")
+				// pod has already been scheduled: This can happen and is good: do nothing
+				log.WithFields(owi).WithField("name", pod.Name).Debugf("pod already bound - fine with me")
 				return
 			} else if strings.Contains(errStr, "is being deleted") {
 				// pod has been deleted before we could schedule it - fine with us
-				isGhost := isGhostWorkspace(pod)
-				log.WithFields(owi).WithField("name", pod.Name).Debugf("pod already terminated - fine with me (isGhost: %t)", isGhost)
+				isGhost := wsk8s.IsGhostWorkspace(pod)
+				log.WithFields(owi).WithField("name", pod.Name).WithField("isGhost", isGhost).Debugf("pod already terminated - fine with me")
 				return
 			}
 
@@ -680,7 +680,7 @@ func (s *Scheduler) deleteGhostWorkspace(ctx context.Context, podName string, gh
 	//  - ctxDeleteTimeout > gracePeriod: So the container has actually time to quit properly
 	//  - ctxDeleteTimeout to be not too long: To ensure scheduling is not to slow
 	gracePeriod := 10 * time.Second
-	ctxDeleteTimeout := (10 + 5) * time.Second
+	ctxDeleteTimeout := gracePeriod + (5 * time.Second)
 	deleteCtx, cancelDeleteCtx := context.WithTimeout(ctx, ctxDeleteTimeout)
 	defer cancelDeleteCtx()
 
@@ -735,7 +735,7 @@ type localSlotCache struct {
 	mu    sync.RWMutex
 }
 
-// slot is used to describe a "place" on a single node that we already scheduled/are trying schedule a workspace on.
+// slot is used to describe a "place" on a single node that we already scheduled/are trying to schedule a workspace on.
 type slot struct {
 	binding       *Binding
 	reservedGhost string

@@ -149,7 +149,7 @@ func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding,
 		if !ok {
 			continue
 		}
-		if isGhostWorkspace(podAndNode.pod) {
+		if wsk8s.IsGhostWorkspace(podAndNode.pod) {
 			ntp.ghosts[podName] = struct{}{}
 			if !ghostsAreInvisible {
 				ntp.pods[podName] = struct{}{}
@@ -192,10 +192,10 @@ func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding,
 			}
 
 			var ram, eph *res.Quantity
-			if isHeadlessWorkspace(pod) {
+			if wsk8s.IsHeadlessWorkspace(pod) {
 				ram = node.RAM.UsedHeadless
 				eph = node.EphemeralStorage.UsedHeadless
-			} else if isWorkspace(pod) {
+			} else if wsk8s.IsWorkspace(pod) {
 				ram = node.RAM.UsedRegular
 				eph = node.EphemeralStorage.UsedRegular
 			} else {
