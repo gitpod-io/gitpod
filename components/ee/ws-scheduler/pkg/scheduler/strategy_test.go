@@ -264,7 +264,7 @@ Nodes:
 			}
 
 			ramSafetyBuffer := res.MustParse(test.RAMSafetyBuffer)
-			ghostsAreInvisible := sched.IsRegularWorkspace(test.ScheduledPod)
+			ghostsAreInvisible := sched.IsNonGhostWorkspace(test.ScheduledPod)
 			state := sched.ComputeState(test.Nodes, test.Pods, nil, &ramSafetyBuffer, ghostsAreInvisible)
 
 			densityAndExperienceConfig := sched.DefaultDensityAndExperienceConfig()

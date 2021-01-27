@@ -9,8 +9,6 @@ import (
 	"sort"
 	"time"
 
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
-
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 
@@ -312,36 +310,4 @@ func regularWorkspaceCount(state *State, node *Node) int {
 		count = count + 1
 	}
 	return count
-}
-
-func isWorkspace(pod *corev1.Pod) bool {
-	val, ok := pod.ObjectMeta.Labels["component"]
-	return ok && val == "workspace"
-}
-
-func isHeadlessWorkspace(pod *corev1.Pod) bool {
-	if !isWorkspace(pod) {
-		return false
-	}
-
-	val, ok := pod.ObjectMeta.Labels["headless"]
-	return ok && val == "true"
-}
-
-func IsGhostWorkspace(pod *corev1.Pod) bool {
-	if !isWorkspace(pod) {
-		return false
-	}
-
-	val, ok := pod.ObjectMeta.Labels[wsk8s.TypeLabel]
-	return ok && val == "ghost"
-}
-
-func IsRegularWorkspace(pod *corev1.Pod) bool {
-	if !isWorkspace(pod) {
-		return false
-	}
-
-	val, ok := pod.ObjectMeta.Labels[wsk8s.TypeLabel]
-	return ok && val == "regular"
 }
