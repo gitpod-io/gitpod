@@ -37,6 +37,8 @@ export interface SetupManager {
     testSetup(): Promise<void>;
 }
 
+export const gitpodSetupBranchName = "gitpod-setup"
+
 @injectable()
 export class SetupManagerImpl implements SetupManager, FS, CommandContribution {
 
@@ -159,7 +161,7 @@ export class SetupManagerImpl implements SetupManager, FS, CommandContribution {
                     return;
                 }
                 const myLogin = await this.gitHubModel.getMyLogin();
-                const testbranch = myLogin + '/gitpod-setup';
+                const testbranch = myLogin + '/' + gitpodSetupBranchName;
                 const total = 6;
                 let done = 1;
                 const repo = this.repoProvider.selectedRepository;
@@ -185,8 +187,8 @@ export class SetupManagerImpl implements SetupManager, FS, CommandContribution {
                 if (await this.exists(this.dockerFileName)) {
                     filesToAdd.push(dockerUri.toString());
                 }
-                const readme = await this.getReadMe();
-                if (await this.exists(readme)) {
+                const readme = await this.getReadMe().catch(() => "");
+                if (readme != "" && await this.exists(readme)) {
                     filesToAdd.push((await this.toURI(readme)).toString());
                 }
                 try {
@@ -482,7 +484,7 @@ issue or pull request almost instantly with a single click.
                                 total: 50
                             }
                         });
-                        this.write(this.dockerFileName,
+                        await this.write(this.dockerFileName,
                             `FROM ${baseImage}
 
 # Install custom tools, runtimes, etc.
@@ -525,7 +527,10 @@ issue or pull request almost instantly with a single click.
     }
 
     async hasReadmeConfig(): Promise<boolean> {
-        const file = await this.getReadMe();
+        const file = await this.getReadMe().catch(() => "");
+        if (file == "") {
+            return false;
+        }
         const contents = await this.read(file);
         const info = await this.infoService.getInfo();
         if (!contents) {
@@ -536,17 +541,17 @@ issue or pull request almost instantly with a single click.
     }
 
     async updateReadme(): Promise<EditorWidget> {
-        const fileName = await this.getReadMe();
+        const fileName = await this.getReadMe().catch(() => "README.md");
         const repo = this.repoProvider.selectedRepository;
         if (!repo) {
             throw new Error('no repository selected');
         }
         const remotes = await this.git.remote(repo);
         const remote = remotes.indexOf('upstream') === -1 ? 'origin' : 'upstream';
-        const content = await this.read(fileName);
+        const content = await this.read(fileName) || "";
         const contextUrl = await this.getContextUrl(remote);
 
-        this.write(fileName,
+        await this.write(fileName,
             `[![Gitpod ready-to-code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](${contextUrl})
 
 ${content}`);
