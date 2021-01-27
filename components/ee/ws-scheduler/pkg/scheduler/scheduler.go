@@ -325,9 +325,7 @@ func (s *Scheduler) schedulePod(ctx context.Context, pod *corev1.Pod) (err error
 		defer s.schedulingPodMap.remove(pod.Name)
 		defer func() {
 			if err != nil {
-				// make sure we already release the binding - but only:
-				//  - in the error case
-				//  - when we _know_ the pod is already assigned (k8s error "already assigned to node")
+				// make sure we already release the slot - but only in the error case
 				s.localSlotCache.delete(pod.Name)
 			}
 		}()
@@ -348,6 +346,11 @@ func (s *Scheduler) schedulePod(ctx context.Context, pod *corev1.Pod) (err error
 			if strings.Contains(errStr, "is already assigned to node") {
 				// some other worker was faster: This can happen and is good: do nothing
 				log.WithFields(owi).WithField("name", pod.Name).Debugf("pod already bound - someone was faster than me!")
+				return
+			} else if strings.Contains(errStr, "is being deleted") {
+				// pod has been deleted before we could schedule it - fine with us
+				isGhost := IsGhostWorkspace(pod)
+				log.WithFields(owi).WithField("name", pod.Name).Debugf("pod already terminated - fine with me (isGhost: %t)", isGhost)
 				return
 			}
 
@@ -656,9 +659,14 @@ func (s *Scheduler) recordSchedulingFailure(ctx context.Context, pod *corev1.Pod
 }
 
 func (s *Scheduler) isPendingPodWeHaveToSchedule(pod *corev1.Pod) bool {
-	return pod.Spec.NodeName == "" &&
+	// do not schedule "Terminated" pods (corev1.PodPending is _not_ suitable!)
+	return pod.Status.Phase != corev1.PodSucceeded &&
+		pod.Status.Phase != corev1.PodFailed &&
+		// Only schedule un-scheduled pods (corev1.PodPending is _not_ suitable!)
+		pod.Spec.NodeName == "" &&
+		// Only schedule pods we ought to schedule
 		pod.Spec.SchedulerName == s.Config.SchedulerName &&
-		// Namespace serves as mere marker here
+		// Namespace is used as selector to restrict reach
 		pod.ObjectMeta.Namespace == s.Config.Namespace
 }
 

@@ -328,7 +328,7 @@ func isHeadlessWorkspace(pod *corev1.Pod) bool {
 	return ok && val == "true"
 }
 
-func isGhostWorkspace(pod *corev1.Pod) bool {
+func IsGhostWorkspace(pod *corev1.Pod) bool {
 	if !isWorkspace(pod) {
 		return false
 	}

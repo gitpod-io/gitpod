@@ -149,7 +149,7 @@ func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding,
 		if !ok {
 			continue
 		}
-		if isGhostWorkspace(podAndNode.pod) {
+		if IsGhostWorkspace(podAndNode.pod) {
 			ntp.ghosts[podName] = struct{}{}
 			if !ghostsAreInvisible {
 				ntp.pods[podName] = struct{}{}
