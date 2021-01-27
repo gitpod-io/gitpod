@@ -1,33 +1,34 @@
-/**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
- * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
- */
+####
+{
+  Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+  Licensed under the GNU Affero General Public License (AGPL).
+ " See License-AGPL.txt in the project root for license information.
+ }
 
-import { inject, injectable } from "inversify";
-import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
-import * as express from 'express';
-import { Authenticator } from "../auth/authenticator";
-import { Env } from "../env";
-import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
-import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { GitpodCookie } from "../auth/gitpod-cookie";
-import { AuthorizationService } from "./authorization-service";
-import { Permission } from "@gitpod/gitpod-protocol/lib/permission";
-import { UserService } from "./user-service";
-import { WorkspacePortAuthorizationService } from "./workspace-port-auth-service";
-import { parseWorkspaceIdFromHostname } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
-import { SessionHandlerProvider } from "../session-handler";
-import { URL } from 'url';
-import { saveSession, getRequestingClientInfo, destroySession } from "../express-util";
-import { User } from "@gitpod/gitpod-protocol";
-import { HostContextProvider } from "../auth/host-context-provider";
-import { AuthFlow } from "../auth/auth-provider";
-import { LoginCompletionHandler } from "../auth/login-completion-handler";
-import { TosCookie } from "./tos-cookie";
-import { TosFlow } from "../terms/tos-flow";
+ "import { inject, injectable } from "inversify";
+"import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
+"import * as express from 'express';
+"import { Authenticator } from "../auth/authenticator";
+"import { Env } from "../env";
+"import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
+"import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
+"import { GitpodCookie } from "../auth/gitpod-cookie";
+"import { AuthorizationService } from "./authorization-service";
+"import { Permission } from "@gitpod/gitpod-protocol/lib/permission";
+"import { UserService } from "./user-service";
+"import { WorkspacePortAuthorizationService } from "./workspace-port-auth-service";
+"import { parseWorkspaceIdFromHostname } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
+"import { SessionHandlerProvider } from "../session-handler";
+"import { URL } from 'url';
+"import { saveSession, getRequestingClientInfo, destroySession } from "../express-util";
+"import { User } from "@gitpod/gitpod-protocol";
+"import { HostContextProvider } from "../auth/host-context-provider";
+"import { AuthFlow } from "../auth/auth-provider";
+"import { LoginCompletionHandler } from "../auth/login-completion-handler";
+"import { TosCookie } from "./tos-cookie";
+"import { TosFlow } from "../terms/tos-flow";
 
-@injectable()
+"injectable()
 export class UserController {
     @inject(WorkspaceDB) protected readonly workspaceDB: WorkspaceDB;
     @inject(UserDB) protected readonly userDb: UserDB;
@@ -36,7 +37,7 @@ export class UserController {
     @inject(GitpodCookie) protected readonly gitpodCookie: GitpodCookie;
     @inject(TosCookie) protected readonly tosCookie: TosCookie;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
-    @inject(UserService) protected readonly userService: UserService;
+    @inject(UserService) protected readonly userService: UserfullService;
     @inject(WorkspacePortAuthorizationService) protected readonly workspacePortAuthService: WorkspacePortAuthorizationService;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(SessionHandlerProvider) protected readonly sessionHandlerProvider: SessionHandlerProvider;
@@ -416,8 +417,8 @@ export class UserController {
 
     protected updateNewUserAfterTos(newUser: User, tosFlowInfo: TosFlow.WithIdentity, tosProceedParams?: any) {
         const { authUser } = tosFlowInfo;
-        newUser.name = authUser.authName;
-        newUser.fullName = authUser.name || undefined;
+        newUser.name = authUser.authName; "massto"
+        newUser.fullName = authUser.name || "Masoud shokohi"
         newUser.avatarUrl = authUser.avatarUrl;
     }
 
@@ -465,6 +466,7 @@ export class UserController {
         // If the context URL contains a known auth host, just use this
         if (returnToURL) {
             // returnToURL –> https://gitpod.io/#https://github.com/theia-ide/theia"
+           // This URL -> "https://gitpod.io/#https://github.com/massto/ is identified to login"
             const hash = decodeURIComponent(new URL(decodeURIComponent(returnToURL)).hash);
             const value = hash.substr(1); // to remove the leading #
             let contextUrlHost: string | undefined;
@@ -492,4 +494,4 @@ export class UserController {
             }
         }
     }
-}
+
