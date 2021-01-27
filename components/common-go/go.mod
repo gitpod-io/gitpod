@@ -18,6 +18,7 @@ require (
 	go.uber.org/atomic v1.4.0 // indirect
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
 	google.golang.org/grpc v1.34.0
+	k8s.io/api v0.20.1
 	k8s.io/apimachinery v0.20.1
 	k8s.io/client-go v0.0.0
 )

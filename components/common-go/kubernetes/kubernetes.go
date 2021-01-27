@@ -19,6 +19,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sirupsen/logrus"
 
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/flowcontrol"
 )
@@ -98,4 +99,32 @@ func (u *UnlimitedRateLimiter) QPS() float32 {
 // Wait returns nil if a token is taken before the Context is done.
 func (u *UnlimitedRateLimiter) Wait(ctx context.Context) error {
 	return nil
+}
+
+func IsWorkspace(pod *corev1.Pod) bool {
+	val, ok := pod.ObjectMeta.Labels["component"]
+	return ok && val == "workspace"
+}
+
+func IsHeadlessWorkspace(pod *corev1.Pod) bool {
+	if !IsWorkspace(pod) {
+		return false
+	}
+
+	val, ok := pod.ObjectMeta.Labels["headless"]
+	return ok && val == "true"
+}
+
+func IsGhostWorkspace(pod *corev1.Pod) bool {
+	if !IsWorkspace(pod) {
+		return false
+	}
+
+	val, ok := pod.ObjectMeta.Labels[TypeLabel]
+	return ok && val == "ghost"
+}
+
+func IsNonGhostWorkspace(pod *corev1.Pod) bool {
+	return IsWorkspace(pod) &&
+		!IsGhostWorkspace(pod)
 }

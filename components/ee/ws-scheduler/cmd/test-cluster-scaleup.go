@@ -231,7 +231,7 @@ func buildCurrentState(clientSet *kubernetes.Clientset) (*scheduler.State, error
 	}
 
 	ramSafetyBuffer := res.MustParse("0Mi")
-	state := scheduler.ComputeState(potentialNodes, pods, nil, &ramSafetyBuffer)
+	state := scheduler.ComputeState(potentialNodes, pods, nil, &ramSafetyBuffer, false)
 	return state, nil
 }
 

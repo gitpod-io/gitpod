@@ -9,9 +9,10 @@ import (
 	"sort"
 	"time"
 
-	"golang.org/x/xerrors"
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/xerrors"
 
 	corev1 "k8s.io/api/core/v1"
 )
@@ -174,7 +175,7 @@ func (s *DensityAndExperience) Select(state *State, pod *corev1.Pod) (string, er
 	// Now we're only concerned with the user experience - but only for non-headless workspaces!
 	// Headless workspaces just mustn't break the user experience of non-headless ones. Hence we
 	// want to schedule headless workspaces as far away from regular ones as we can.
-	if isHeadlessWorkspace(pod) {
+	if wsk8s.IsHeadlessWorkspace(pod) {
 		// We try and find the least utilised node that still has regular workspaces on it.
 		// This way we place the headless workspace "on the other end" of the cluster, but
 		// don't prevent scale-down.
@@ -247,7 +248,7 @@ func fitsOnNode(pod *corev1.Pod, node *Node) bool {
 func freshWorkspaceCount(state *State, node *Node, freshSeconds int) int {
 	var count int
 	for _, p := range node.Pods {
-		if !isWorkspace(p) {
+		if !wsk8s.IsWorkspace(p) {
 			continue
 		}
 		if time.Since(p.ObjectMeta.CreationTimestamp.Time).Seconds() < float64(freshSeconds) {
@@ -301,28 +302,14 @@ func classifyNode(state *State, node *Node) int {
 func regularWorkspaceCount(state *State, node *Node) int {
 	var count int
 	for _, p := range node.Pods {
-		if !isWorkspace(p) {
+		if !wsk8s.IsWorkspace(p) {
 			continue
 		}
-		if isHeadlessWorkspace(p) {
+		if wsk8s.IsHeadlessWorkspace(p) {
 			continue
 		}
 
 		count = count + 1
 	}
 	return count
-}
-
-func isWorkspace(pod *corev1.Pod) bool {
-	val, ok := pod.ObjectMeta.Labels["component"]
-	return ok && val == "workspace"
-}
-
-func isHeadlessWorkspace(pod *corev1.Pod) bool {
-	if !isWorkspace(pod) {
-		return false
-	}
-
-	val, ok := pod.ObjectMeta.Labels["headless"]
-	return ok && val == "true"
 }

@@ -12,6 +12,7 @@ package scheduler
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -27,6 +28,7 @@ import (
 	"golang.org/x/xerrors"
 
 	corev1 "k8s.io/api/core/v1"
+	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	res "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -63,10 +65,12 @@ type Scheduler struct {
 	Clientset       kubernetes.Interface
 	RAMSafetyBuffer res.Quantity
 
-	pods              infov1.PodInformer
-	nodes             infov1.NodeInformer
-	strategy          Strategy
-	localBindingCache *localBindingCache
+	pods     infov1.PodInformer
+	nodes    infov1.NodeInformer
+	strategy Strategy
+
+	schedulingPodMap *schedulingPodMap
+	localSlotCache   *localSlotCache
 
 	didShutdown chan bool
 }
@@ -102,7 +106,7 @@ func (s *Scheduler) Start(ctx context.Context) error {
 	log.Info("informers are warmed up and workers are running - let them come")
 	// Now that the informers are up and running, we can start our workers who rely on the node/pod informers being warmed up
 
-	// Start the actual scheduling loop
+	// Start the actual scheduling loop. This is the only caller of schedulePod to ensure it's atomicity
 	go func() {
 		for pod := range schedulerQueue {
 			if pod == nil {
@@ -115,7 +119,7 @@ func (s *Scheduler) Start(ctx context.Context) error {
 
 			err := s.schedulePod(ctx, pod)
 			if err != nil {
-				log.WithError(err).WithField("pod", pod.Name).Error("unable to schedule pod: %w", err)
+				log.WithError(err).WithField("pod", pod.Name).Error("unable to schedule pod")
 			}
 		}
 	}()
@@ -137,13 +141,13 @@ func (s *Scheduler) Start(ctx context.Context) error {
 				// a new node was added: do we have pending pods to re-schedule?
 				err := s.checkForAndEnqueuePendingPods(ctx, schedulerQueue)
 				if err != nil {
-					log.WithError(err).Debug("error during pending pod check: %w", err)
+					log.WithError(err).Debug("error during pending pod check")
 				}
 			case <-rescheduleTicker.C:
 				// rescheduleInterval is over: do regular scan
 				err := s.checkForAndEnqueuePendingPods(ctx, schedulerQueue)
 				if err != nil {
-					log.WithError(err).Debug("error during pending pod check", err)
+					log.WithError(err).Debug("error during pending pod check")
 				}
 			}
 		}
@@ -174,7 +178,8 @@ func (s *Scheduler) startInformer(ctx context.Context) (schedulerQueue chan *cor
 	// Whenever we find a new node we'll enqueue it to a range of workers that will check if we have pending
 	newNodeQueue = make(chan *corev1.Node, schedulerQueueSize)
 
-	s.localBindingCache = newLocalBindingCache()
+	s.schedulingPodMap = newSchedulingPodMap()
+	s.localSlotCache = newLocalSlotCache()
 
 	// Informers replicate state to a Kubernetes client. We'll use them so we don't have to query the K8S master
 	// every time we want to schedule a pod, and so that we don't have to maintain our own watcher.
@@ -219,13 +224,13 @@ func (s *Scheduler) startInformer(ctx context.Context) (schedulerQueue chan *cor
 			}
 
 			// If we see a pod that has been scheduled successfully: Delete from local scheduled_store to avoid leaking memory
-			// Note: We _might_ delete entries from localBindingCache too early here, leading to 'OutOfMemory'.
+			// Note: We _might_ delete entries from localSlotCache too early here, leading to 'OutOfMemory'.
 			//       This might happen if a pod has been scheduled (phase=="pending" && nodeName!=""), we removed it, and the
 			//		scheduler cannot take that info into account because we just removed.
-			//      But we cannot implement an exception for that case, because it leads to leaking localBindingCache entries,
+			//      But we cannot implement an exception for that case, because it leads to leaking localSlotCache entries,
 			//      because some pods are removed in the "pending" phase directly.
 			if pod.Spec.NodeName != "" {
-				s.localBindingCache.delete(pod.Name)
+				s.localSlotCache.delete(pod.Name)
 			}
 
 			if pod.Status.Phase == corev1.PodFailed && pod.Status.Reason == "OutOfMemory" {
@@ -251,6 +256,8 @@ func (s *Scheduler) WaitForShutdown() {
 	<-s.didShutdown
 }
 
+// schedulePod is the central method here, it orchestrates the actual scheduling of a pod onto a node.
+// It's expected to be atomic as there's a single goroutine working through the schedulingQueue calling this.
 func (s *Scheduler) schedulePod(ctx context.Context, pod *corev1.Pod) (err error) {
 	traceID := pod.Annotations[wsk8s.TraceIDAnnotation]
 	spanCtx := tracing.FromTraceID(traceID)
@@ -265,14 +272,24 @@ func (s *Scheduler) schedulePod(ctx context.Context, pod *corev1.Pod) (err error
 	tracing.ApplyOWI(span, owi)
 	defer tracing.FinishSpan(span, &err)
 
+	// if the pod is in the process of being scheduled, return here.
+	if isSchedulingPod := s.schedulingPodMap.tryAdd(pod.Name); isSchedulingPod {
+		// Here we drop the request for scheduling and rely on our polling mechanism to re-queue the pod for
+		// scheduling if necessary (e.g., 1. scheduling attempt failed)
+		span.LogFields(tracelog.String("schedulingResult", "alreadyBeingScheduled"))
+		log.WithFields(owi).WithField("name", pod.Name).Debugf("pod is already being scheduled, dropping.")
+		return nil
+	}
+
 	// if the pod is known to have already been scheduled (locally): drop.
-	if s.localBindingCache.hasAlreadyBeenScheduled(pod.Name) {
+	if s.localSlotCache.hasAlreadyBeenScheduled(pod.Name) {
 		span.LogFields(tracelog.String("schedulingResult", "alreadyScheduled"))
 		log.WithFields(owi).WithField("name", pod.Name).Debugf("pod has already been scheduled, dropping.")
 		return nil
 	}
 
-	nodeName, err := s.selectNodeForPod(ctx, pod)
+	isGhostReplacing := wsk8s.IsNonGhostWorkspace(pod)
+	nodeName, state, err := s.selectNodeForPod(ctx, pod, isGhostReplacing)
 	if nodeName == "" {
 		// we did not find any suitable node for the pod, mark the pod as unschedulable
 		var errMsg string
@@ -290,22 +307,58 @@ func (s *Scheduler) schedulePod(ctx context.Context, pod *corev1.Pod) (err error
 		return nil
 	}
 
-	// we found a node for this pod - bind it to the node
-	err = s.bindPodToNode(ctx, pod, nodeName)
-	if err != nil {
-		errStr := err.Error()
-		if strings.Contains(errStr, "is already assigned to node") {
-			// some other worker was faster: This can happen and is good: do nothing
-			log.WithFields(owi).WithField("name", pod.Name).Debugf("pod already bound - someone was faster than me!")
-			return nil
+	// if this is a workspace that replaces a ghost: try to find a ghost that is not being targeted, yet
+	var ghostToDelete string
+	if isGhostReplacing {
+		reservedGhosts := s.localSlotCache.getReservedGhostsOnNode(nodeName)
+		ghostToDelete = state.FindOldestGhostOnNodeExcluding(nodeName, reservedGhosts)
+	}
+
+	// mark as already scheduled, even before the actual scheduling has happened.
+	// this enables asynchronous scheduling - we just need to make sure we release the slot in case the scheduling fails!
+	s.localSlotCache.markAsScheduled(pod, nodeName, ghostToDelete)
+
+	// we found a node for this pod: (asynchronously) bind it to the node! schedulingPodMap makes sure we do not try to
+	// select the same slot multiple times.
+	go func(pod *corev1.Pod, ghostToDelete string) {
+		var err error
+		defer func() {
+			s.schedulingPodMap.remove(pod.Name)
+			if err != nil {
+				// make sure we already release the slot - but only in the error case
+				s.localSlotCache.delete(pod.Name)
+			}
+		}()
+
+		// if this is a workspace that replaces a ghost: delete that ghost beforehand
+		if ghostToDelete != "" {
+			err = s.deleteGhostWorkspace(ctx, pod.Name, ghostToDelete)
+			if err != nil {
+				log.WithFields(owi).WithField("name", pod.Name).WithField("ghost", ghostToDelete).WithError(err).Error("error deleting ghost")
+				return
+			}
 		}
 
-		return xerrors.Errorf("cannot bind pod: %w", err)
-	}
-	log.WithFields(owi).WithField("name", pod.Name).Debugf("bound to node: %s", nodeName)
+		// bind the pod to the node
+		err = s.bindPodToNode(ctx, pod, nodeName)
+		if err != nil {
+			errStr := err.Error()
+			if strings.Contains(errStr, "is already assigned to node") {
+				// pod has already been scheduled: This can happen and is good: do nothing
+				log.WithFields(owi).WithField("name", pod.Name).Debugf("pod already bound - fine with me")
+				return
+			} else if strings.Contains(errStr, "is being deleted") {
+				// pod has been deleted before we could schedule it - fine with us
+				isGhost := wsk8s.IsGhostWorkspace(pod)
+				log.WithFields(owi).WithField("name", pod.Name).WithField("isGhost", isGhost).Debugf("pod already terminated - fine with me")
+				return
+			}
 
-	// mark as already scheduled (locally)
-	s.localBindingCache.markAsScheduled(pod, nodeName)
+			log.WithFields(owi).WithField("name", pod.Name).WithError(err).Error("cannot bind pod")
+			return
+		}
+		log.WithFields(owi).WithField("name", pod.Name).Debugf("bound to node: %s", nodeName)
+	}(pod, ghostToDelete)
 
 	return nil
 }
@@ -331,23 +384,23 @@ func (s *Scheduler) checkForAndEnqueuePendingPods(ctx context.Context, scheduler
 	return nil
 }
 
-func (s *Scheduler) selectNodeForPod(ctx context.Context, pod *corev1.Pod) (node string, err error) {
+func (s *Scheduler) selectNodeForPod(ctx context.Context, pod *corev1.Pod, makeGhostsInvisible bool) (node string, state *State, err error) {
 	span, ctx := tracing.FromContext(ctx, "selectNodeForPod")
 	// We deliberately DO NOT add the err to tracing here. If things actually fail the caller will trace the error.
 	// If we did trace the error here we'd just spam our traces with false positives.
 	defer tracing.FinishSpan(span, nil)
 
-	state, err := s.buildState(ctx, pod)
+	state, err = s.buildState(ctx, pod, makeGhostsInvisible)
 	if err != nil {
-		return "", xerrors.Errorf("unable to build state: %w", err)
+		return "", nil, xerrors.Errorf("unable to build state: %w", err)
 	}
 	if len(state.Nodes) == 0 {
-		return "", xerrors.Errorf("zero nodes available")
+		return "", nil, xerrors.Errorf("zero nodes available")
 	}
 	node, err = s.strategy.Select(state, pod)
 	if err != nil {
 		span.LogKV("no-node", err.Error())
-		return "", err
+		return "", nil, err
 	}
 
 	span.LogKV("node", DebugStringNodes(state.Nodes[node]))
@@ -355,7 +408,7 @@ func (s *Scheduler) selectNodeForPod(ctx context.Context, pod *corev1.Pod) (node
 }
 
 // Builds a state for all nodes we can schedule the given pod on
-func (s *Scheduler) buildState(ctx context.Context, pod *corev1.Pod) (state *State, err error) {
+func (s *Scheduler) buildState(ctx context.Context, pod *corev1.Pod, makeGhostsInvisible bool) (state *State, err error) {
 	span, ctx := tracing.FromContext(ctx, "buildState")
 	defer tracing.FinishSpan(span, &err)
 
@@ -372,7 +425,7 @@ func (s *Scheduler) buildState(ctx context.Context, pod *corev1.Pod) (state *Sta
 		return nil, xerrors.Errorf("cannot list all pods: %w", podsErr)
 	}
 
-	state = ComputeState(potentialNodes, allPods, s.localBindingCache.getListOfBindings(), &s.RAMSafetyBuffer)
+	state = ComputeState(potentialNodes, allPods, s.localSlotCache.getListOfBindings(), &s.RAMSafetyBuffer, makeGhostsInvisible)
 
 	// The required node services is basically PodAffinity light. They limit the nodes we can schedule
 	// workspace pods to based on other pods running on that node. We do this because we require that
@@ -605,10 +658,49 @@ func (s *Scheduler) recordSchedulingFailure(ctx context.Context, pod *corev1.Pod
 }
 
 func (s *Scheduler) isPendingPodWeHaveToSchedule(pod *corev1.Pod) bool {
-	return pod.Spec.NodeName == "" &&
+	// do not schedule "Terminated" pods (corev1.PodPending is _not_ suitable!)
+	return pod.Status.Phase != corev1.PodSucceeded &&
+		pod.Status.Phase != corev1.PodFailed &&
+		// Only schedule un-scheduled pods (corev1.PodPending is _not_ suitable!)
+		pod.Spec.NodeName == "" &&
+		// Only schedule pods we ought to schedule
 		pod.Spec.SchedulerName == s.Config.SchedulerName &&
-		// Namespace serves as mere marker here
+		// Namespace is used as selector to restrict reach
 		pod.ObjectMeta.Namespace == s.Config.Namespace
+}
+
+// deleteGhostWorkspace tries to delete a ghost workspace to make room for the given pod
+func (s *Scheduler) deleteGhostWorkspace(ctx context.Context, podName string, ghostName string) (err error) {
+	span, ctx := tracing.FromContext(ctx, "deleteGhostWorkspace")
+	defer tracing.FinishSpan(span, &err)
+
+	// gracePeriod is the time until kubernetes sends SIG_KILL to the root process
+	// ctxDeleteTimeout is the time until we stop waiting for the deletion request to return
+	// Ensure that:
+	//  - ctxDeleteTimeout > gracePeriod: So the container has actually time to quit properly
+	//  - ctxDeleteTimeout to be not too long: To ensure scheduling is not to slow
+	gracePeriod := 10 * time.Second
+	ctxDeleteTimeout := gracePeriod + (5 * time.Second)
+	deleteCtx, cancelDeleteCtx := context.WithTimeout(ctx, ctxDeleteTimeout)
+	defer cancelDeleteCtx()
+
+	gracePeriodSeconds := int64(gracePeriod.Seconds())
+	foreground := metav1.DeletePropagationForeground
+	err = s.Clientset.CoreV1().Pods(s.Config.Namespace).Delete(deleteCtx, ghostName, metav1.DeleteOptions{
+		GracePeriodSeconds: &gracePeriodSeconds,
+		PropagationPolicy:  &foreground,
+	})
+	if err != nil {
+		if isKubernetesObjNotFoundError(err) {
+			log.WithField("podName", podName).WithField("ghost", ghostName).Debug("ghost workspace already gone")
+			return nil
+		}
+
+		return err
+	}
+
+	log.WithField("podName", podName).WithField("ghost", ghostName).Debug("deleted ghost workspace")
+	return nil
 }
 
 // queuePodForScheduling queues the given pod for scheduling. If immediate scheduling fails the first time it emits an
@@ -623,7 +715,14 @@ func queuePodForScheduling(schedulerQueue chan<- *corev1.Pod, pod *corev1.Pod) {
 	}
 }
 
-// localBindingCache stores whether we already scheduled a Pod and is necessary to bridge the gap between:
+func isKubernetesObjNotFoundError(err error) bool {
+	if err, ok := err.(*k8serr.StatusError); ok {
+		return err.ErrStatus.Code == http.StatusNotFound
+	}
+	return false
+}
+
+// localSlotCache stores whether we already scheduled a Pod and is necessary to bridge the gap between:
 //  1. We successfully create a binding with the Kubernets API
 //  2. The change is reflected in the results we get from s.pods.Lister().List()
 // Without it, we sometimes end up with pods being assigned the same last slot on a node, leading
@@ -631,49 +730,105 @@ func queuePodForScheduling(schedulerQueue chan<- *corev1.Pod, pod *corev1.Pod) {
 //
 // (We're not sure why there is gap in the first place: Kubernetes should be consistent, as etcd is
 // consistent (per Object type, here Pod). Maybe because of the GCloud multi-master setup..?)
-type localBindingCache struct {
-	bindings map[string]*Binding
-	mu       sync.RWMutex
+type localSlotCache struct {
+	slots map[string]slot
+	mu    sync.RWMutex
 }
 
-func (c *localBindingCache) markAsScheduled(pod *corev1.Pod, nodeName string) {
+// slot is used to describe a "place" on a single node that we already scheduled/are trying to schedule a workspace on.
+type slot struct {
+	binding       *Binding
+	reservedGhost string
+}
+
+// markAsScheduled marks a certain slot as already scheduled
+func (c *localSlotCache) markAsScheduled(pod *corev1.Pod, nodeName string, ghostToReplace string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	c.bindings[pod.Name] = &Binding{
-		Pod:      pod,
-		NodeName: nodeName,
+	c.slots[pod.Name] = slot{
+		binding: &Binding{
+			Pod:      pod,
+			NodeName: nodeName,
+		},
+		reservedGhost: ghostToReplace,
 	}
 }
 
-func (c *localBindingCache) hasAlreadyBeenScheduled(podName string) bool {
+func (c *localSlotCache) hasAlreadyBeenScheduled(podName string) bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	_, present := c.bindings[podName]
+	_, present := c.slots[podName]
 	return present
 }
 
-func (c *localBindingCache) delete(podName string) {
+func (c *localSlotCache) delete(podName string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	delete(c.bindings, podName)
+	delete(c.slots, podName)
 }
 
-func (c *localBindingCache) getListOfBindings() []*Binding {
-	c.mu.Lock()
-	defer c.mu.Unlock()
+func (c *localSlotCache) getListOfBindings() []*Binding {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 
-	bs := make([]*Binding, 0, len(c.bindings))
-	for _, b := range c.bindings {
-		bs = append(bs, b)
+	bs := make([]*Binding, 0, len(c.slots))
+	for _, s := range c.slots {
+		bs = append(bs, s.binding)
 	}
 	return bs
 }
 
-func newLocalBindingCache() *localBindingCache {
-	return &localBindingCache{
-		bindings: make(map[string]*Binding),
+func (c *localSlotCache) getReservedGhostsOnNode(nodeName string) map[string]bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	reservedGhosts := make(map[string]bool, len(c.slots))
+	for _, s := range c.slots {
+		if s.binding.NodeName != nodeName {
+			continue
+		}
+		reservedGhosts[s.reservedGhost] = true
 	}
+	return reservedGhosts
+}
+
+func newLocalSlotCache() *localSlotCache {
+	return &localSlotCache{
+		slots: make(map[string]slot),
+	}
+}
+
+// schedulingPodMap is a map of pods that are actively being scheduled at this very moment.
+type schedulingPodMap struct {
+	pods map[string]bool
+	mu   sync.RWMutex
+}
+
+func newSchedulingPodMap() *schedulingPodMap {
+	return &schedulingPodMap{
+		pods: make(map[string]bool),
+	}
+}
+
+// tryAdd tries to add the given pod into the map. If the pod is already being scheduled and thus could not be added, false is returned.
+func (m *schedulingPodMap) tryAdd(name string) bool {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	if _, alreadyPresent := m.pods[name]; alreadyPresent {
+		return false
+	}
+
+	m.pods[name] = true
+	return true
+}
+
+func (m *schedulingPodMap) remove(name string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	delete(m.pods, name)
 }
