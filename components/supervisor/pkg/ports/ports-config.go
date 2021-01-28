@@ -181,6 +181,10 @@ func parseWorkspaceConfigs(ports []*gitpod.PortConfig) (portConfigs map[uint32]*
 
 func parseInstanceConfigs(ports []*gitpod.PortsItems) (portConfigs map[uint32]*gitpod.PortConfig, rangeConfigs []*RangeConfig) {
 	for _, config := range ports {
+		if config == nil {
+			continue
+		}
+
 		rawPort := fmt.Sprintf("%v", config.Port)
 		Port, err := strconv.Atoi(rawPort)
 		if err == nil {
