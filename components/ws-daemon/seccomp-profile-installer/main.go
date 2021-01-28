@@ -57,6 +57,19 @@ func main() {
 				},
 			},
 		},
+		// docker-exec requires unshare(0).
+		specs.LinuxSyscall{
+			Names:  []string{"unshare"},
+			Action: specs.ActAllow,
+			Args: []specs.LinuxSeccompArg{
+				{
+					Index: 0,
+					Op:    specs.OpEqualTo,
+					Value: 0,
+				},
+			},
+		},
+
 		// slirp4netns requires setns, as do we for debugging
 		// TODO(cw): find means to make this more precise, maybe an eBPF program that checks if
 		//           arg zero is a child of this netns. The kernel already does that (from the setns(2) man page):
