@@ -112,9 +112,7 @@ data:
             {{- end }}
             {{ if $comp.additionalConfig }}, {{ $comp.additionalConfig | toJson | trim | trimPrefix "{" | trimSuffix "}" }}{{- end }}
         },
-        "content": {
-            "storage": {{ toJson .Values.components.wsDaemon.remoteStorage }}
-        },
+        "content": {{ include "gitpod.remoteStorage.config" (dict "root" . "remoteStorage" .Values.components.contentService.remoteStorage) | fromYaml | toJson }},
         "rpcServer": {
             {{- if $comp.rpc }}
             {{- if $comp.rpc.ratelimit }}

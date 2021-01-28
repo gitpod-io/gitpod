@@ -318,3 +318,25 @@ data:
   .dockerconfigjson: "{{ $.Files.Get $path | b64enc }}"
 {{- end -}}
 {{- end -}}
+
+{{- define "gitpod.remoteStorage.config" -}}
+{{- $ := .root -}}
+{{- $remoteStorageMinio := .remoteStorage.minio | default dict -}}
+{{- $minio := $.Values.minio | default dict -}}
+storage:
+{{- if eq .remoteStorage.kind "minio" }}
+  kind: minio
+  blobQuota: {{ .remoteStorage.blobQuota | default 0 }}
+  minio:
+    endpoint: {{ $remoteStorageMinio.endpoint | default (printf "minio.%s" $.Values.hostname) }}
+    accessKey: {{ required "minio access key is required, please add a value to your values.yaml" ($remoteStorageMinio.accessKey | default $minio.accessKey) }}
+    secretKey: {{ required "minio secret key is required, please add a value to your values.yaml" ($remoteStorageMinio.secretKey | default $minio.secretKey) }}
+    secure: {{ $remoteStorageMinio.secure | default ($minio.enabled | default false) }}
+    region: {{ $remoteStorageMinio.region | default "local" }}
+    parallelUpload: {{ $remoteStorageMinio.parallelUpload | default "" }}
+    maxBackupSize: {{ $remoteStorageMinio.maxBackupSize | default "" }}
+    tmpdir: {{ $remoteStorageMinio.tmpdir | default "/tmp" }}
+{{- else }}
+{{ toYaml .remoteStorage | indent 2 }}
+{{- end -}}
+{{- end -}}

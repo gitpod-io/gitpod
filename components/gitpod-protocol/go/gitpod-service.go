@@ -65,6 +65,8 @@ type APIInterface interface {
 	GetEnvVars(ctx context.Context) (res []*UserEnvVarValue, err error)
 	SetEnvVar(ctx context.Context, variable *UserEnvVarValue) (err error)
 	DeleteEnvVar(ctx context.Context, variable *UserEnvVarValue) (err error)
+	GetContentBlobUploadURL(ctx context.Context, name string) (url string, err error)
+	GetContentBlobDownloadURL(ctx context.Context, name string) (url string, err error)
 	GetGitpodTokens(ctx context.Context) (res []*APIToken, err error)
 	GenerateNewGitpodToken(ctx context.Context, options *GenerateNewGitpodTokenOptions) (res string, err error)
 	DeleteGitpodToken(ctx context.Context, tokenHash string) (err error)
@@ -170,6 +172,10 @@ const (
 	FunctionSetEnvVar FunctionName = "setEnvVar"
 	// FunctionDeleteEnvVar is the name of the deleteEnvVar function
 	FunctionDeleteEnvVar FunctionName = "deleteEnvVar"
+	// FunctionGetContentBlobUploadURL is the name fo the getContentBlobUploadUrl function
+	FunctionGetContentBlobUploadURL FunctionName = "getContentBlobUploadUrl"
+	// FunctionGetContentBlobDownloadURL is the name fo the getContentBlobDownloadUrl function
+	FunctionGetContentBlobDownloadURL FunctionName = "getContentBlobDownloadUrl"
 	// FunctionGetGitpodTokens is the name of the getGitpodTokens function
 	FunctionGetGitpodTokens FunctionName = "getGitpodTokens"
 	// FunctionGenerateNewGitpodToken is the name of the generateNewGitpodToken function
@@ -1114,6 +1120,46 @@ func (gp *APIoverJSONRPC) DeleteEnvVar(ctx context.Context, variable *UserEnvVar
 	if err != nil {
 		return
 	}
+
+	return
+}
+
+// GetContentBlobUploadURL calls getContentBlobUploadUrl on the server
+func (gp *APIoverJSONRPC) GetContentBlobUploadURL(ctx context.Context, name string) (url string, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	var _params []interface{}
+
+	_params = append(_params, name)
+
+	var result string
+	err = gp.C.Call(ctx, string(FunctionGetContentBlobUploadURL), _params, &result)
+	if err != nil {
+		return
+	}
+	url = result
+
+	return
+}
+
+// GetContentBlobDownloadURL calls getContentBlobDownloadUrl on the server
+func (gp *APIoverJSONRPC) GetContentBlobDownloadURL(ctx context.Context, name string) (url string, err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	var _params []interface{}
+
+	_params = append(_params, name)
+
+	var result string
+	err = gp.C.Call(ctx, string(FunctionGetContentBlobDownloadURL), _params, &result)
+	if err != nil {
+		return
+	}
+	url = result
 
 	return
 }

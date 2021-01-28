@@ -147,7 +147,7 @@ spec:
     {{- end }}
         - name: SESSION_SECRET
           value: {{ $comp.sessionSecret | quote }}
-    {{- if eq .Values.components.wsDaemon.remoteStorage.kind "minio" }}
+    {{- if eq .Values.components.contentService.remoteStorage.kind "minio" }}
         - name: GITPOD_STORAGE_CLIENT
           value: minio
         - name: MINIO_END_POINT
@@ -197,14 +197,14 @@ spec:
             secretKeyRef:
               name: server-proxy-apikey
               key: apikey
-{{- if (or .Values.components.wsDaemon.remoteStorage.gcloud $comp.storage) }}
+{{- if (or .Values.components.contentService.remoteStorage.gcloud $comp.storage) }}
         - name: GCLOUD_PROJECT_ID
-          value: {{ .Values.components.wsDaemon.remoteStorage.gcloud.projectId }}
+          value: {{ .Values.components.contentService.remoteStorage.gcloud.projectId }}
         - name: GCLOUD_REGION
-          value: {{ .Values.components.wsDaemon.remoteStorage.gcloud.region }}
+          value: {{ .Values.components.contentService.remoteStorage.gcloud.region }}
         - name: GCLOUD_CREDENTIALS_FILE
-{{- if .Values.components.wsDaemon.remoteStorage.gcloud.credentialsFile }}
-          value: {{ base .Values.components.wsDaemon.remoteStorage.gcloud.credentialsFile }}
+{{- if .Values.components.contentService.remoteStorage.gcloud.credentialsFile }}
+          value: {{ base .Values.components.contentService.remoteStorage.gcloud.credentialsFile }}
 {{- else }}
           value: key.json
 {{- end }}

@@ -26,8 +26,7 @@ daemon:
     {{- if (and $comp.workspaceSizeLimit (not (eq $comp.workspaceSizeLimit ""))) }}
     workspaceSizeLimit: {{ ($comp.workspaceSizeLimit | default "0g") | quote }}
     {{- end }}
-    storage:
-{{ toYaml $comp.remoteStorage | indent 6 }}
+{{ include "gitpod.remoteStorage.config" (dict "root" . "remoteStorage" .Values.components.contentService.remoteStorage) | indent 4 }}
     backup:
       timeout: "5m"
       attempts: 3

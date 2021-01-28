@@ -23,6 +23,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/opentracing/opentracing-go"
 
+	"cloud.google.com/go/storage"
 	gcpstorage "cloud.google.com/go/storage"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"golang.org/x/oauth2/google"
@@ -142,14 +143,18 @@ func (rs *DirectGCPStorage) Init(ctx context.Context, owner, workspace string) (
 
 // EnsureExists makes sure that the remote storage location exists and can be up- or downloaded from
 func (rs *DirectGCPStorage) EnsureExists(ctx context.Context) (err error) {
+	return gcpEnsureExists(ctx, rs.client, rs.bucketName(), rs.GCPConfig)
+}
+
+func gcpEnsureExists(ctx context.Context, client *gcpstorage.Client, bucketName string, gcpConfig GCPConfig) (err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GCloudBucketRemotegcpStorage.EnsureExists")
 	defer tracing.FinishSpan(span, &err)
 
-	if rs.client == nil {
+	if client == nil {
 		return xerrors.Errorf("no gcloud client avialable - did you call Init()?")
 	}
 
-	hdl := rs.client.Bucket(rs.bucketName())
+	hdl := client.Bucket(bucketName)
 	_, err = hdl.Attrs(ctx)
 	if err == nil {
 		// bucket exists and everything is fine - we're done here
@@ -159,9 +164,9 @@ func (rs *DirectGCPStorage) EnsureExists(ctx context.Context) (err error) {
 		return xerrors.Errorf("cannot ensure storage exists: %w", err)
 	}
 
-	log.WithField("bucketName", rs.bucketName()).Debug("Creating bucket")
-	err = hdl.Create(ctx, rs.GCPConfig.Project, &gcpstorage.BucketAttrs{
-		Location: rs.GCPConfig.Region,
+	log.WithField("bucketName", bucketName).Debug("Creating bucket")
+	err = hdl.Create(ctx, gcpConfig.Project, &gcpstorage.BucketAttrs{
+		Location: gcpConfig.Region,
 	})
 	if e, ok := err.(*googleapi.Error); ok && e.Code == http.StatusConflict && strings.Contains(strings.ToLower(e.Message), "you already own this bucket") {
 		// Looks like we had a bucket creation race and lost.
@@ -736,6 +741,51 @@ func (p *PresignedGCPStorage) Bucket(owner string) string {
 	return gcpBucketName(p.stage, owner)
 }
 
+// BlobObject returns a blob's object name
+func (s *PresignedGCPStorage) BlobObject(name string) (string, error) {
+	return blobObjectName(name)
+}
+
+// EnsureExists makes sure that the remote storage location exists and can be up- or downloaded from
+func (s *PresignedGCPStorage) EnsureExists(ctx context.Context, ownerId string) (err error) {
+	client, err := newGCPClient(ctx, s.config)
+	if err != nil {
+		return err
+	}
+	defer client.Close()
+
+	return gcpEnsureExists(ctx, client, s.Bucket(ownerId), s.config)
+}
+
+func (s *PresignedGCPStorage) DiskUsage(ctx context.Context, bucket string, prefix string) (size int64, err error) {
+	client, err := newGCPClient(ctx, s.config)
+	if err != nil {
+		return
+	}
+	defer client.Close()
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	var total int64
+	it := client.Bucket(bucket).Objects(ctx, &storage.Query{
+		Prefix:    prefix,
+		Delimiter: "/",
+	})
+	for {
+		attrs, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return 0, err
+		}
+		total += attrs.Size
+	}
+
+	return total, nil
+}
+
 // SignDownload provides presigned URLs to access remote storage objects
 func (p *PresignedGCPStorage) SignDownload(ctx context.Context, bucket, object string) (*DownloadInfo, error) {
 	client, err := newGCPClient(ctx, p.config)
@@ -790,5 +840,37 @@ func (p *PresignedGCPStorage) downloadInfo(ctx context.Context, client *gcpstora
 		Meta: *meta,
 		URL:  url,
 		Size: obj.Size,
+	}, nil
+}
+
+// SignUpload describes an object for upload
+func (p *PresignedGCPStorage) SignUpload(ctx context.Context, bucket, object string) (info *UploadInfo, err error) {
+	client, err := newGCPClient(ctx, p.config)
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
+
+	bkt := client.Bucket(bucket)
+	_, err = bkt.Attrs(ctx)
+	if err == gcpstorage.ErrBucketNotExist {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	url, err := gcpstorage.SignedURL(bucket, object, &gcpstorage.SignedURLOptions{
+		Method:         "PUT",
+		GoogleAccessID: p.accessID,
+		PrivateKey:     p.privateKey,
+		Expires:        time.Now().Add(30 * time.Minute),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &UploadInfo{
+		URL: url,
 	}, nil
 }

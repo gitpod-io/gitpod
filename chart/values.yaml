@@ -160,6 +160,23 @@ components:
         containerPort: 32224
         servicePort: 4000
 
+  contentService:
+    name: "content-service"
+    disabled: false
+    resources:
+      cpu: 100m
+      memory: 32Mi
+    ports:
+      rpc:
+        expose: true
+        containerPort: 8080
+      metrics:
+        expose: false
+        containerPort: 9500
+    remoteStorage:
+      kind: minio
+      blobQuota: 0
+
   dbMigrations:
     enabled: true
     name: db-migrations
@@ -410,14 +427,6 @@ components:
         enabled: true
         imageName: "seccomp-profile-installer"
     registryProxyPort: 8081
-    remoteStorage:
-      kind: minio
-      minio:
-        endpoint: minio:9000
-        accessKey: EXAMPLEvalue
-        secretKey: Someone.Should/ReallyChangeThisKey!!
-        tmpdir: /tmp
-        region: local
 
   wsScheduler:
     name: "ws-scheduler"
@@ -494,8 +503,8 @@ docker-registry:
 minio:
   enabled: true
   fullnameOverride: minio
-  accessKey: EXAMPLEvalue
-  secretKey: Someone.Should/ReallyChangeThisKey!!
+  accessKey: # create random accesskey and secretkey
+  secretKey: # create random accesskey and secretkey
   serviceAccount:
     create: true
     name: minio

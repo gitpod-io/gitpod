@@ -4,6 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import { BlobServiceClient } from "@gitpod/content-service/lib/blobs_grpc_pb";
+import { DownloadUrlRequest, DownloadUrlResponse, UploadUrlRequest, UploadUrlResponse } from '@gitpod/content-service/lib/blobs_pb';
 import { AppInstallationDB } from '@gitpod/gitpod-db/lib/app-installation-db';
 import { DBWithTracing, TracedWorkspaceDB } from '@gitpod/gitpod-db/lib/traced-db';
 import { DBGitpodToken } from '@gitpod/gitpod-db/lib/typeorm/entity/db-gitpod-token';
@@ -12,23 +14,7 @@ import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
 import { UserMessageViewsDB } from '@gitpod/gitpod-db/lib/user-message-views-db';
 import { UserStorageResourcesDB } from '@gitpod/gitpod-db/lib/user-storage-resources-db';
 import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
-import {
-    AuthProviderEntry, AuthProviderInfo, Branding, CommitContext,
-    Configuration, CreateWorkspaceMode, DisposableCollection,
-    GetWorkspaceTimeoutResult, GitpodClient, GitpodServer,
-    GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext,
-    PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams,
-    SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult,
-    Terms, Token,
-    UninstallPluginParams, User,
-    UserEnvVar, UserEnvVarValue, UserInfo,
-    UserMessage,
-    WhitelistedRepository, Workspace,
-    WorkspaceContext, WorkspaceCreationResult,
-    WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance,
-    WorkspaceInstancePort, WorkspaceInstanceUser,
-    WorkspaceTimeoutDuration
-} from '@gitpod/gitpod-protocol';
+import { AuthProviderEntry, AuthProviderInfo, Branding, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, UserMessage, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration } from '@gitpod/gitpod-protocol';
 import { AdminBlockUserRequest, AdminGetListRequest, AdminGetListResult, AdminGetWorkspacesRequest, AdminModifyPermanentWorkspaceFeatureFlagRequest, AdminModifyRoleOrPermissionRequest, WorkspaceAndInstance } from '@gitpod/gitpod-protocol/lib/admin-protocol';
 import { GetLicenseInfoResult, LicenseFeature, LicenseValidationResult } from '@gitpod/gitpod-protocol/lib/license-protocol';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
@@ -96,6 +82,8 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
 
     @inject(TermsProvider) protected readonly termsProvider: TermsProvider;
+
+    @inject(BlobServiceClient) protected readonly blobServiceClient: BlobServiceClient;
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
@@ -1319,6 +1307,58 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             userId: user.id,
         };
         await this.userDB.deleteEnvVar(envvar);
+    }
+
+    public async getContentBlobUploadUrl(name: string): Promise<string> {
+        const user = this.checkAndBlockUser("getContentBlobUploadUrl");
+        await this.guardAccess({ kind: "contentBlob", name: name, userID: user.id }, "create");
+
+        const uploadUrlRequest = new UploadUrlRequest();
+        uploadUrlRequest.setName(name);
+        uploadUrlRequest.setOwnerId(user.id);
+
+        const uploadUrlPromise = new Promise<UploadUrlResponse>((resolve, reject) => {
+            this.blobServiceClient.uploadUrl(uploadUrlRequest, (err: any, resp: UploadUrlResponse) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(resp);
+                }
+            });
+        });
+        try {
+            const resp = (await uploadUrlPromise).toObject();
+            return resp.url;
+        } catch (err) {
+            log.error("Error getting content blob upload url: ", err);
+            throw err;
+        }
+    }
+
+    public async getContentBlobDownloadUrl(name: string): Promise<string> {
+        const user = this.checkAndBlockUser("getContentBlobDownloadUrl");
+        await this.guardAccess({ kind: "contentBlob", name: name, userID: user.id }, "get");
+
+        const downloadUrlRequest = new DownloadUrlRequest();
+        downloadUrlRequest.setName(name);
+        downloadUrlRequest.setOwnerId(user.id);
+
+        const downloadUrlPromise = new Promise<DownloadUrlResponse>((resolve, reject) => {
+            this.blobServiceClient.downloadUrl(downloadUrlRequest, (err: any, resp: DownloadUrlResponse) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(resp);
+                }
+            });
+        });
+        try {
+            const resp = (await downloadUrlPromise).toObject();
+            return resp.url;
+        } catch (err) {
+            log.error("Error getting content blob download url: ", err);
+            throw err;
+        }
     }
 
     public async getGitpodTokens(): Promise<GitpodToken[]> {

@@ -534,6 +534,8 @@ const (
 	ComponentWorkspaceDaemon ComponentType = "ws-daemon"
 	// ComponentWorkspaceManager points to the workspace manager
 	ComponentWorkspaceManager ComponentType = "ws-manager"
+	// ComponentContentService points to the content service
+	ComponentContentService ComponentType = "content-service"
 	// ComponentWorkspace points to a workspace
 	ComponentWorkspace ComponentType = "workspace"
 	// ComponentImageBuilder points to the image-builder

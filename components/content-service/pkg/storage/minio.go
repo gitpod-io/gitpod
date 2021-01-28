@@ -143,15 +143,19 @@ func (rs *DirectMinIOStorage) defaultObjectAccess(ctx context.Context, bkt, obj 
 
 // EnsureExists makes sure that the remote storage location exists and can be up- or downloaded from
 func (rs *DirectMinIOStorage) EnsureExists(ctx context.Context) (err error) {
+	return minioEnsureExists(ctx, rs.client, rs.bucketName(), rs.MinIOConfig)
+}
+
+func minioEnsureExists(ctx context.Context, client *minio.Client, bucketName string, miniIOConfig MinIOConfig) (err error) {
 	//nolint:staticcheck,ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "DirectEnsureExists")
 	defer tracing.FinishSpan(span, &err)
 
-	if rs.client == nil {
+	if client == nil {
 		return xerrors.Errorf("no MinIO client avialable - did you call Init()?")
 	}
 
-	exists, err := rs.client.BucketExists(ctx, rs.bucketName())
+	exists, err := client.BucketExists(ctx, bucketName)
 	if err != nil {
 		return err
 	}
@@ -160,8 +164,8 @@ func (rs *DirectMinIOStorage) EnsureExists(ctx context.Context) (err error) {
 		return nil
 	}
 
-	log.WithField("bucketName", rs.bucketName()).Debug("Creating bucket")
-	err = rs.client.MakeBucket(ctx, rs.bucketName(), minio.MakeBucketOptions{Region: rs.MinIOConfig.Region})
+	log.WithField("bucketName", bucketName).Debug("Creating bucket")
+	err = client.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{Region: miniIOConfig.Region})
 	if err != nil {
 		return xerrors.Errorf("cannot create bucket: %w", err)
 	}
@@ -267,11 +271,38 @@ func newPresignedMinIOAccess(cfg MinIOConfig) (*presignedMinIOStorage, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &presignedMinIOStorage{client: cl}, nil
+	return &presignedMinIOStorage{client: cl, MinIOConfig: cfg}, nil
 }
 
 type presignedMinIOStorage struct {
-	client *minio.Client
+	client      *minio.Client
+	MinIOConfig MinIOConfig
+}
+
+// EnsureExists makes sure that the remote storage location exists and can be up- or downloaded from
+func (s *presignedMinIOStorage) EnsureExists(ctx context.Context, ownerId string) (err error) {
+	return minioEnsureExists(ctx, s.client, s.Bucket(ownerId), s.MinIOConfig)
+}
+
+func (s *presignedMinIOStorage) DiskUsage(ctx context.Context, bucket string, prefix string) (size int64, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.DiskUsage")
+	defer tracing.FinishSpan(span, &err)
+
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	objectCh := s.client.ListObjects(ctx, bucket, minio.ListObjectsOptions{
+		Prefix:    prefix,
+		Recursive: true,
+	})
+	var total int64
+	for object := range objectCh {
+		if object.Err != nil {
+			return 0, object.Err
+		}
+		total += object.Size
+	}
+	return total, nil
 }
 
 func (s *presignedMinIOStorage) SignDownload(ctx context.Context, bucket, object string) (info *DownloadInfo, err error) {
@@ -312,6 +343,26 @@ func (s *presignedMinIOStorage) SignDownload(ctx context.Context, bucket, object
 	}, nil
 }
 
+// SignUpload describes an object for upload
+func (s *presignedMinIOStorage) SignUpload(ctx context.Context, bucket, obj string) (info *UploadInfo, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.SignUpload")
+	defer func() {
+		if err == ErrNotFound {
+			span.LogKV("found", false)
+			tracing.FinishSpan(span, nil)
+			return
+		}
+
+		tracing.FinishSpan(span, &err)
+	}()
+
+	url, err := s.client.PresignedPutObject(ctx, bucket, obj, 30*time.Minute)
+	if err != nil {
+		return nil, translateMinioError(err)
+	}
+	return &UploadInfo{URL: url.String()}, nil
+}
+
 func annotationToAmzMetaHeader(annotation string) string {
 	return http.CanonicalHeaderKey(fmt.Sprintf("X-Amz-Meta-%s", annotation))
 }
@@ -319,6 +370,11 @@ func annotationToAmzMetaHeader(annotation string) string {
 // Bucket provides the bucket name for a particular user
 func (s *presignedMinIOStorage) Bucket(ownerID string) string {
 	return minioBucketName(ownerID)
+}
+
+// BlobObject returns a blob's object name
+func (s *presignedMinIOStorage) BlobObject(name string) (string, error) {
+	return blobObjectName(name)
 }
 
 func translateMinioError(err error) error {

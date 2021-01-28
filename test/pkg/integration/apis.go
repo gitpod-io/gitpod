@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	imgbldr "github.com/gitpod-io/gitpod/image-builder/api"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
@@ -57,6 +58,10 @@ type ComponentAPI struct {
 	wsmanStatus struct {
 		Port   int
 		Client wsmanapi.WorkspaceManagerClient
+	}
+	contentServiceStatus struct {
+		Port              int
+		BlobServiceClient csapi.BlobServiceClient
 	}
 	dbStatus struct {
 		Port     int
@@ -296,6 +301,56 @@ func (c *ComponentAPI) WorkspaceManager() wsmanapi.WorkspaceManagerClient {
 
 	c.wsmanStatus.Client = wsmanapi.NewWorkspaceManagerClient(conn)
 	return c.wsmanStatus.Client
+}
+
+// BlobService provides access to the blob service of the content service
+func (c *ComponentAPI) BlobService() csapi.BlobServiceClient {
+	var rerr error
+	defer func() {
+		if rerr == nil {
+			return
+		}
+
+		c.t.t.Fatalf("cannot access blob service: %q", rerr)
+	}()
+
+	if c.contentServiceStatus.BlobServiceClient != nil {
+		return c.contentServiceStatus.BlobServiceClient
+	}
+	if c.contentServiceStatus.Port == 0 {
+		pod, _, err := c.t.selectPod(ComponentContentService, selectPodOptions{})
+		if err != nil {
+			rerr = err
+			return nil
+		}
+
+		localPort, err := getFreePort()
+		if err != nil {
+			rerr = err
+			return nil
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		ready, errc := forwardPort(ctx, c.t.restConfig, c.t.namespace, pod, fmt.Sprintf("%d:8080", localPort))
+		select {
+		case rerr = <-errc:
+			cancel()
+			return nil
+		case <-ready:
+		}
+		c.t.closer = append(c.t.closer, func() error { cancel(); return nil })
+		c.contentServiceStatus.Port = localPort
+	}
+
+	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", c.contentServiceStatus.Port), grpc.WithInsecure())
+	if err != nil {
+		rerr = err
+		return nil
+	}
+	c.t.closer = append(c.t.closer, conn.Close)
+
+	c.contentServiceStatus.BlobServiceClient = csapi.NewBlobServiceClient(conn)
+	return c.contentServiceStatus.BlobServiceClient
 }
 
 // DB provides access to the Gitpod database.

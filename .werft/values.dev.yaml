@@ -41,6 +41,10 @@ components:
 
   registryFacade:
     daemonSet: true
+  
+  contentService:
+    remoteStorage:
+      blobQuota: 1073741824 # 1 GiB
 
   workspace:
     # configure GCP registry
@@ -155,6 +159,8 @@ docker-registry:
   enabled: false
 
 minio:
+  accessKey: EXAMPLEvalue
+  secretKey: Someone.Should/ReallyChangeThisKey!!
   serviceAccount:
     name: ws-daemon
     create: false

@@ -10,6 +10,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"regexp"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"golang.org/x/xerrors"
@@ -37,18 +38,33 @@ type BucketNamer interface {
 	Bucket(userID string) string
 }
 
-// ObjectNamer provides names for storage objects
-type ObjectNamer interface {
+// BackupObjectNamer provides names for storage objects
+type BackupObjectNamer interface {
 	// BackupObject returns a backup's object name that a direct downloader would download
 	BackupObject(name string) string
+}
+
+type BlobObjectNamer interface {
+	// BlobObject returns a blob's object name
+	BlobObject(name string) (string, error)
 }
 
 // PresignedAccess provides presigned URLs to access remote storage objects
 type PresignedAccess interface {
 	BucketNamer
+	BlobObjectNamer
+
+	// EnsureExists makes sure that the remote storage location exists and can be up- or downloaded from
+	EnsureExists(ctx context.Context, ownerId string) error
+
+	// DiskUsage gives the total objects size of objects that have the given prefix
+	DiskUsage(ctx context.Context, bucket string, prefix string) (size int64, err error)
 
 	// SignDownload describes an object for download - if the object is not found, ErrNotFound is returned
 	SignDownload(ctx context.Context, bucket, obj string) (info *DownloadInfo, err error)
+
+	// SignUpload describes an object for upload
+	SignUpload(ctx context.Context, bucket, obj string) (info *UploadInfo, err error)
 }
 
 // ObjectMeta describtes the metadata of a remote object
@@ -66,6 +82,11 @@ type DownloadInfo struct {
 	Size int64
 }
 
+// UploadInfo describes an object for upload
+type UploadInfo struct {
+	URL string
+}
+
 // DirectDownloader downloads a snapshot
 type DirectDownloader interface {
 	// Download takes the latest state from the remote storage and downloads it to a local path
@@ -78,7 +99,7 @@ type DirectDownloader interface {
 // DirectAccess represents a remote location where we can store data
 type DirectAccess interface {
 	BucketNamer
-	ObjectNamer
+	BackupObjectNamer
 	DirectDownloader
 
 	// Init initializes the remote storage - call this before calling anything else on the interface
@@ -187,6 +208,8 @@ type Config struct {
 		Enabled   bool `json:"enabled"`
 		MaxLength int  `json:"maxLength"`
 	} `json:"backupTrail"`
+
+	BlobQuota int64 `json:"blobQuota"`
 }
 
 // Stage represents the deployment environment in which we're operating
@@ -272,7 +295,7 @@ func NewPresignedAccess(c *Config) (PresignedAccess, error) {
 	case MinIOStorage:
 		return newPresignedMinIOAccess(c.MinIOConfig)
 	default:
-		log.Warn("falling back to noop presigned storage access. Is this intentional?")
+		log.Warnf("falling back to noop presigned storage access. Is this intentional? (storage kind: %s)", c.Kind)
 		return &PresignedNoopStorage{}, nil
 	}
 }
@@ -288,4 +311,16 @@ func extractTarbal(dest string, src io.Reader) error {
 	}
 
 	return nil
+}
+
+func blobObjectName(name string) (string, error) {
+	blobRegex := `^[a-zA-Z0-9._\-\/]+$`
+	b, err := regexp.MatchString(blobRegex, name)
+	if err != nil {
+		return "", err
+	}
+	if !b {
+		return "", xerrors.Errorf("blob name '%s' needs to match regex '%s'", name, blobRegex)
+	}
+	return fmt.Sprintf("blobs/%s", name), nil
 }
