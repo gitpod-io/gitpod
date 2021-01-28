@@ -5,6 +5,7 @@ packages:
       - version
     deps:
       - components/blobserve:docker
+      - components/content-service:docker
       - components/dashboard:docker
       - components/docker-up:docker
       - components/ee/cerc:docker
@@ -37,6 +38,7 @@ packages:
     type: generic
     deps:
       - components/blobserve:docker
+      - components/content-service:docker
       - components/dashboard:app
       - components/docker-up:app
       - components/ee/cerc:app

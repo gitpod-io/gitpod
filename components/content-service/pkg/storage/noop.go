@@ -61,12 +61,30 @@ func (rs *DirectNoopStorage) SnapshotObject(name string) string {
 // PresignedNoopStorage does nothing
 type PresignedNoopStorage struct{}
 
+func (*PresignedNoopStorage) EnsureExists(ctx context.Context, ownerId string) (err error) {
+	return nil
+}
+
+func (*PresignedNoopStorage) DiskUsage(ctx context.Context, bucket string, prefix string) (size int64, err error) {
+	return 0, nil
+}
+
 // SignDownload returns ErrNotFound
 func (*PresignedNoopStorage) SignDownload(ctx context.Context, bucket, obj string) (info *DownloadInfo, err error) {
+	return nil, ErrNotFound
+}
+
+// SignUpload describes an object for upload
+func (s *PresignedNoopStorage) SignUpload(ctx context.Context, bucket, obj string) (info *UploadInfo, err error) {
 	return nil, ErrNotFound
 }
 
 // Bucket returns an empty string
 func (*PresignedNoopStorage) Bucket(string) string {
 	return ""
+}
+
+// BlobObject returns a blob's object name
+func (*PresignedNoopStorage) BlobObject(name string) (string, error) {
+	return "", nil
 }

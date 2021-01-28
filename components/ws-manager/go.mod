@@ -5,7 +5,10 @@ go 1.14
 require (
 	github.com/alecthomas/jsonschema v0.0.0-20190504002508-159cbd5dba26
 	github.com/alecthomas/repr v0.0.0-20200325044227-4184120f674c
+	github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20200428143746-21a406dcc535 // indirect
+	github.com/coreos/go-etcd v2.0.0+incompatible // indirect
+	github.com/cpuguy83/go-md2man v1.0.10 // indirect
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
@@ -16,14 +19,16 @@ require (
 	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.4.3
 	github.com/google/uuid v1.1.4
-	github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4
+	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/imdario/mergo v0.3.8
 	github.com/minio/minio-go/v6 v6.0.56 // indirect
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/prometheus/client_golang v1.1.0
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/afero v1.2.2
-	github.com/spf13/cobra v0.0.5
+	github.com/spf13/cobra v1.1.1
+	github.com/ugorji/go/codec v0.0.0-20181204163529-d75b2dcb6bc8 // indirect
+	github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77 // indirect
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	google.golang.org/grpc v1.34.0

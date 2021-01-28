@@ -16,7 +16,8 @@ export type GuardedResource =
     GuardedSnapshot |
     GuardedGitpodToken |
     GuardedToken |
-    GuardedUserStorage
+    GuardedUserStorage |
+    GuardedContentBlob
 ;
 
 export interface GuardedWorkspace {
@@ -46,6 +47,12 @@ export interface GuardedUserStorage {
     kind: "userStorage";
     userID: string;
     uri: string;
+}
+
+export interface GuardedContentBlob {
+    kind: "contentBlob";
+    userID: string;
+    name: string;
 }
 
 export interface GuardedGitpodToken {
@@ -101,6 +108,8 @@ export class OwnerResourceGuard implements ResourceAccessGuard {
 
     async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
         switch (resource.kind) {
+            case "contentBlob":
+                return resource.userID === this.userId;
             case "gitpodToken":
                 return resource.subject.user.id === this.userId;
             case "snapshot":
@@ -215,6 +224,8 @@ export namespace ScopedResourceGuard {
 
     export function subjectID(resource: GuardedResource): string | undefined {
         switch (resource.kind) {
+            case "contentBlob":
+                return `${resource.userID}:${resource.name}`;
             case "gitpodToken":
                 return resource.subject.tokenHash;
             case "snapshot":

@@ -211,12 +211,32 @@ func (*testStorage) Bucket(userID string) string {
 	return "bucket-" + userID
 }
 
+func (*testStorage) BlobObject(name string) (string, error) {
+	return "blobs/" + name, nil
+}
+
+func (s *testStorage) EnsureExists(ctx context.Context, ownerId string) (err error) {
+	return nil
+}
+
+func (s *testStorage) DiskUsage(ctx context.Context, bucket string, prefix string) (size int64, err error) {
+	return 0, nil
+}
+
 func (s *testStorage) SignDownload(ctx context.Context, bucket, obj string) (info *storage.DownloadInfo, err error) {
 	info, ok := s.Objs[obj]
 	if !ok || info == nil {
 		return nil, storage.ErrNotFound
 	}
 	return info, nil
+}
+
+func (s *testStorage) SignUpload(ctx context.Context, bucket, obj string) (info *storage.UploadInfo, err error) {
+	return nil, nil
+}
+
+func (s *testStorage) DeleteObject(ctx context.Context, bucket, obj string) (err error) {
+	return nil
 }
 
 type roundTripFunc func(req *http.Request) *http.Response

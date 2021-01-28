@@ -1,0 +1,70 @@
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.contentService -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if not $comp.disabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: content-service
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: content-service
+    kind: deployment
+    stage: {{ .Values.installation.stage }}
+    gitpod.io/nodeService: content-service
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: content-service
+      kind: pod
+      stage: {{ .Values.installation.stage }}
+      gitpod.io/nodeService: content-service
+  replicas: {{ $comp.replicas | default 1 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      name: content-service
+      labels:
+        app: {{ template "gitpod.fullname" . }}
+        component: content-service
+        kind: pod
+        stage: {{ .Values.installation.stage }}
+        gitpod.io/nodeService: content-service
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: '9500'
+    spec:
+{{ include "gitpod.pod.affinity" $this | indent 6 }}
+      serviceAccountName: content-service
+      containers:
+      - name: content-service
+        image: {{ template "gitpod.comp.imageFull" $this }}
+        args: ["run", "-v", "--config", "/config/config.json"]
+{{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
+{{ include "gitpod.container.resources" $this | indent 8 }}
+        ports:
+        - name: metrics
+          containerPort: 9500
+        securityContext:
+          privileged: false
+          runAsUser: 1000
+{{ include "gitpod.container.defaultEnv" $this | indent 8 }}
+{{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+        volumeMounts:
+        - name: config
+          mountPath: "/config"
+          readOnly: true
+      volumes:
+      - name: config
+        configMap:
+          name: {{ template "gitpod.comp.configMap" $this }}
+{{ toYaml .Values.defaults | indent 6 }}
+{{ end }}

@@ -638,6 +638,8 @@ export class WorkspaceStarter {
             "function:storeLayout",
             "function:stopWorkspace",
             "function:getToken",
+            "function:getContentBlobUploadUrl",
+            "function:getContentBlobDownloadUrl",
 
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspace", subjectID: workspace.id, operations: ["get", "update"]}),
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspaceInstance", subjectID: instance.id, operations: ["get", "update", "delete"]}),
@@ -645,6 +647,7 @@ export class WorkspaceStarter {
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "gitpodToken", subjectID: "*", operations: ["create"]}),
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "userStorage", subjectID: "*", operations: ["create", "get", "update"]}),
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "token", subjectID: "*", operations: ["get"]}),
+            "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "contentBlob", subjectID: "*", operations: ["create", "get"]}),
         ]
     }
 

@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/Netflix/go-env v0.0.0-20200908232752-3e802f601e28
+	github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6 // indirect
 	github.com/creack/pty v1.1.11
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000
@@ -19,9 +20,10 @@ require (
 	github.com/prometheus/procfs v0.0.8 // indirect
 	github.com/rootless-containers/rootlesskit v0.10.1
 	github.com/sirupsen/logrus v1.7.0
-	github.com/smartystreets/goconvey v0.0.0-20190731233626-505e41936337 // indirect
 	github.com/soheilhy/cmux v0.1.4
-	github.com/spf13/cobra v1.0.0
+	github.com/spf13/cobra v1.1.1
+	github.com/ugorji/go v1.1.4 // indirect
+	github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77 // indirect
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	golang.org/x/sys v0.0.0-20210110051926-789bb1bd4061
