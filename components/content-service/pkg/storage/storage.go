@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"regexp"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	"golang.org/x/xerrors"
 )
 
@@ -90,10 +90,10 @@ type UploadInfo struct {
 // DirectDownloader downloads a snapshot
 type DirectDownloader interface {
 	// Download takes the latest state from the remote storage and downloads it to a local path
-	Download(ctx context.Context, destination string, name string) (found bool, err error)
+	Download(ctx context.Context, destination string, name string, mappings []archive.IDMapping) (found bool, err error)
 
 	// Downloads a snapshot. The snapshot name is expected to be one produced by Qualify
-	DownloadSnapshot(ctx context.Context, destination string, name string) (found bool, err error)
+	DownloadSnapshot(ctx context.Context, destination string, name string, mappings []archive.IDMapping) (found bool, err error)
 }
 
 // DirectAccess represents a remote location where we can store data
@@ -300,14 +300,10 @@ func NewPresignedAccess(c *Config) (PresignedAccess, error) {
 	}
 }
 
-func extractTarbal(dest string, src io.Reader) error {
-	tarcmd := exec.Command("tar", "x")
-	tarcmd.Dir = dest
-	tarcmd.Stdin = src
-
-	msg, err := tarcmd.CombinedOutput()
+func extractTarbal(ctx context.Context, dest string, src io.Reader, mappings []archive.IDMapping) error {
+	err := archive.ExtractTarbal(ctx, src, dest, archive.WithUIDMapping(mappings), archive.WithGIDMapping(mappings))
 	if err != nil {
-		return xerrors.Errorf("tar %s: %s", dest, err.Error()+";"+string(msg))
+		return xerrors.Errorf("tar %s: %s", dest, err.Error())
 	}
 
 	return nil

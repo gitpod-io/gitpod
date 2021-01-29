@@ -2,6 +2,13 @@ module github.com/gitpod-io/gitpod/test
 
 go 1.15
 
+// containerd, see https://github.com/containerd/containerd/issues/3031
+replace github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible // leeway ignore
+
+replace github.com/docker/docker v1.13.1 => github.com/docker/engine v0.0.0-20190822205725-ed20165a37b4 // leeway ignore
+
+replace github.com/Sirupsen/logrus v1.6.0 => github.com/sirupsen/logrus v1.6.0 // leeway ignore
+
 require (
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000

@@ -8,6 +8,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	"golang.org/x/xerrors"
 )
 
@@ -17,7 +18,7 @@ type NamedURLDownloader struct {
 }
 
 // Download takes the latest state from the remote storage and downloads it to a local path
-func (d *NamedURLDownloader) Download(ctx context.Context, destination string, name string) (found bool, err error) {
+func (d *NamedURLDownloader) Download(ctx context.Context, destination string, name string, mappings []archive.IDMapping) (found bool, err error) {
 	url, found := d.URLs[name]
 	if !found {
 		return false, nil
@@ -40,7 +41,7 @@ func (d *NamedURLDownloader) Download(ctx context.Context, destination string, n
 	}
 	defer resp.Body.Close()
 
-	err = extractTarbal(destination, resp.Body)
+	err = extractTarbal(ctx, destination, resp.Body, mappings)
 	if err != nil {
 		return true, err
 	}
@@ -49,6 +50,6 @@ func (d *NamedURLDownloader) Download(ctx context.Context, destination string, n
 }
 
 // DownloadSnapshot downloads a snapshot.
-func (d *NamedURLDownloader) DownloadSnapshot(ctx context.Context, destination string, name string) (found bool, err error) {
-	return d.Download(ctx, destination, name)
+func (d *NamedURLDownloader) DownloadSnapshot(ctx context.Context, destination string, name string, mappings []archive.IDMapping) (found bool, err error) {
+	return d.Download(ctx, destination, name, mappings)
 }

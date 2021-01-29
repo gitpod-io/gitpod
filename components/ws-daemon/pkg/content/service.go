@@ -18,10 +18,10 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	wsinit "github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/archive"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
@@ -218,6 +218,10 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 			GID:     wsinit.GitpodGID,
 		}
 		if req.UserNamespaced {
+			opts.IdMappings = []archive.IDMapping{
+				{ContainerID: 0, HostID: wsinit.GitpodUID, Size: 1},
+				{ContainerID: 1, HostID: 100000, Size: 65534},
+			}
 			// This is a bit of a hack as it makes hard assumptions about the nature of the UID mapping.
 			// Also, we cannot do this in wsinit because we're dropping all the privileges that would be
 			// required for this operation.
@@ -471,7 +475,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 			}
 		}()
 
-		var opts []archive.BuildTarbalOption
+		var opts []archive.TarOption
 		if sess.UserNamespaced && !sess.FullWorkspaceBackup {
 			mappings := []archive.IDMapping{
 				{ContainerID: 0, HostID: wsinit.GitpodUID, Size: 1},

@@ -17,6 +17,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	"github.com/gitpod-io/gitpod/content-service/pkg/git"
 
 	"github.com/opentracing/opentracing-go"
@@ -31,7 +32,7 @@ type PrebuildInitializer struct {
 }
 
 // Run runs the prebuild initializer
-func (p *PrebuildInitializer) Run(ctx context.Context) (src csapi.WorkspaceInitSource, err error) {
+func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "PrebuildInitializer")
 	defer tracing.FinishSpan(span, &err)
 
@@ -62,7 +63,7 @@ func (p *PrebuildInitializer) Run(ctx context.Context) (src csapi.WorkspaceInitS
 			location = p.Prebuild.Location
 			log      = log.WithField("location", p.Prebuild.Location)
 		)
-		_, err = p.Prebuild.Run(ctx)
+		_, err = p.Prebuild.Run(ctx, mappings)
 		if err != nil {
 			log.WithError(err).Warnf("prebuilt init was unable to restore snapshot %s. Resorting the regular Git init", snapshot)
 
@@ -70,7 +71,7 @@ func (p *PrebuildInitializer) Run(ctx context.Context) (src csapi.WorkspaceInitS
 				return csapi.WorkspaceInitFromOther, xerrors.Errorf("prebuild initializer: %w", err)
 			}
 
-			return p.Git.Run(ctx)
+			return p.Git.Run(ctx, mappings)
 		}
 	}
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
@@ -22,14 +23,14 @@ type SnapshotInitializer struct {
 }
 
 // Run downloads a snapshot from a remote storage
-func (s *SnapshotInitializer) Run(ctx context.Context) (src csapi.WorkspaceInitSource, err error) {
+func (s *SnapshotInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "SnapshotInitializer")
 	span.SetTag("snapshot", s.Snapshot)
 	defer tracing.FinishSpan(span, &err)
 
 	src = csapi.WorkspaceInitFromOther
 
-	ok, err := s.Storage.DownloadSnapshot(ctx, s.Location, s.Snapshot)
+	ok, err := s.Storage.DownloadSnapshot(ctx, s.Location, s.Snapshot, mappings)
 	if err != nil {
 		return src, xerrors.Errorf("snapshot initializer: %w", err)
 	}

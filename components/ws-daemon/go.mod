@@ -10,14 +10,12 @@ replace github.com/docker/docker v1.13.1 => github.com/docker/engine v17.12.0-ce
 replace github.com/Sirupsen/logrus v1.6.0 => github.com/sirupsen/logrus v1.6.0 // leeway ignore
 
 require (
-	github.com/Microsoft/hcsshim v0.8.10 // indirect
 	github.com/Microsoft/hcsshim/test v0.0.0-20201001234239-936eeeb286fd // indirect
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/alecthomas/jsonschema v0.0.0-20190504002508-159cbd5dba26
 	github.com/alecthomas/repr v0.0.0-20200325044227-4184120f674c
 	github.com/containerd/cgroups v0.0.0-20200824123100-0b889c03f102 // indirect
 	github.com/containerd/containerd v1.4.1
-	github.com/containerd/continuity v0.0.0-20200928162600-f2cc35102c2a // indirect
 	github.com/containerd/fifo v0.0.0-20200410184934-f15a3290365b // indirect
 	github.com/containerd/go-runc v0.0.0-20200930051345-7c5957f67ef4 // indirect
 	github.com/containerd/ttrpc v1.0.2 // indirect
