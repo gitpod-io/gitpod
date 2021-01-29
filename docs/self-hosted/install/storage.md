@@ -20,7 +20,7 @@ For more complex use case we recommend configuring more permanent means of persi
  1. Create a file `values.custom.yaml` with this content:
     ```yaml
     components:
-      wsDaemon:
+      contentService:
         remoteStorage:
           kind: minio
           minio:

@@ -2,6 +2,22 @@
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 components:
+
+  contentService:
+    remoteStorage:
+      kind: gcloud
+      backupTrail:
+        enabled: true
+        maxLength: 3
+      gcloud:
+        parallelUpload: 6
+        maximumBackupSize: 32212254720 # 30 GiB
+        projectId: ${project}
+        region: ${region}
+        credentialsFile: /credentials/key.json
+        tmpdir: /mnt/sync-tmp
+        parallelUpload: 6
+
   wsDaemon:
     name: "ws-daemon"
     hostWorkspaceArea: /var/gitpod/workspaces
@@ -18,20 +34,6 @@ components:
         enabled: false
         imageName: "shiftfs-module-loader"
     registryProxyPort: 8081
-    remoteStorage:
-      kind: gcloud
-      backupTrail:
-        enabled: true
-        maxLength: 3
-      gcloud:
-        parallelUpload: 6
-        maximumBackupSize: 32212254720 # 30 GiB
-        projectId: ${project}
-        region: ${region}
-        credentialsFile: /credentials/key.json
-        tmpdir: /mnt/sync-tmp
-        parallelUpload: 6
-
     volumes:
     - name: gcloud-creds
       secret:
