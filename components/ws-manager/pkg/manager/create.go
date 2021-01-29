@@ -18,6 +18,7 @@ import (
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 
@@ -25,6 +26,7 @@ import (
 	"github.com/imdario/mergo"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
+	"google.golang.org/grpc"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -626,6 +628,11 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	result = append(result, corev1.EnvVar{Name: "THEIA_WEBVIEW_EXTERNAL_ENDPOINT", Value: "webview-{{hostname}}"})
 	result = append(result, corev1.EnvVar{Name: "THEIA_MINI_BROWSER_HOST_PATTERN", Value: "browser-{{hostname}}"})
 
+	userConfigDownloadURL, err := getUserConfigDownloadUrl(context.Background(), startContext.Request.Metadata.Owner)
+	if err == nil {
+		result = append(result, corev1.EnvVar{Name: "GITPOD_USER_CONFIG_DOWNLOAD_URL", Value: userConfigDownloadURL})
+	}
+
 	// We don't require that Git be configured for workspaces
 	if spec.Git != nil {
 		result = append(result, corev1.EnvVar{Name: "GITPOD_GIT_USER_NAME", Value: spec.Git.Username})
@@ -672,6 +679,22 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	}
 
 	return cleanResult, nil
+}
+
+func getUserConfigDownloadUrl(ctx context.Context, owner string) (url string, err error) {
+	conn, err := grpc.Dial("content-store:8080", grpc.WithInsecure())
+	if err != nil {
+		return
+	}
+	defer conn.Close()
+
+	c := csapi.NewBlobServiceClient(conn)
+	response, err := c.DownloadUrl(ctx, &csapi.DownloadUrlRequest{OwnerId: owner, Name: "user-config.tar"})
+	if err != nil {
+		return
+	}
+	url = response.Url
+	return
 }
 
 func (m *Manager) createWorkspaceVolumes(startContext *startWorkspaceContext) (theia corev1.Volume, workspace corev1.Volume, err error) {

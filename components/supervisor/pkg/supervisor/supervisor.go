@@ -154,6 +154,11 @@ func Run(options ...RunOption) {
 	)
 	tokenService.provider[KindGit] = []tokenProvider{NewGitTokenProvider(gitpodService)}
 
+	if !cfg.isHeadless() {
+		go downloadUserConfig(ctx, gitpodService)
+		go runAcquiringUserConfigUploadURL(ctx, gitpodService)
+	}
+
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
 	termMuxSrv.Env = buildIDEEnv(cfg)
 
@@ -225,6 +230,11 @@ func Run(options ...RunOption) {
 	// terminate all child processes once the IDE is gone
 	ideWG.Wait()
 	terminateChildProcesses()
+
+	if !cfg.isHeadless() {
+		wg.Add(1)
+		go uploadUserConfig(context.Background(), gitpodService, &wg)
+	}
 
 	if !opts.InNamespace {
 		callDaemonTeardown()

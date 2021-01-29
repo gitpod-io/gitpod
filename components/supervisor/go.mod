@@ -12,6 +12,7 @@ replace github.com/Sirupsen/logrus v1.6.0 => github.com/sirupsen/logrus v1.6.0 /
 require (
 	github.com/Netflix/go-env v0.0.0-20200908232752-3e802f601e28
 	github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6 // indirect
+	github.com/bmatcuk/doublestar/v2 v2.0.4
 	github.com/creack/pty v1.1.11
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000
