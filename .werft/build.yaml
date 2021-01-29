@@ -68,6 +68,11 @@ pod:
         secretKeyRef:
           name: npm-auth-token
           key: npm-auth-token.json
+    - name: SLACK_NOTIFICATION_PATH
+      valueFrom:
+        secretKeyRef:
+          name: slack-path
+          key: slackPath
     # - name: GITPOD_TEST_TOKEN_GITHUB
     #   valueFrom:
     #     secretKeyRef:
