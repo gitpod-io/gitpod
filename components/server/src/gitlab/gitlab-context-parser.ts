@@ -245,6 +245,9 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
         };
     }
     protected async fetchRepo(user: User, projectId: number | string): Promise<Repository> {
+        // host might be a relative URL
+        const host = this.host; // as per contract, cf. `canHandle(user, contextURL)`
+
         const result = await this.gitlabApi.run<GitLab.Project>(user, async g => {
             return g.Projects.show(projectId);
         });
@@ -253,7 +256,7 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
         }
         const { path, http_url_to_repo, namespace, forked_from_project, default_branch, visibility } = result;
         const repo = <Repository>{
-            host: new URL(http_url_to_repo).hostname,
+            host,
             name: path, // path is the last part of the URI (slug), e.g. "diaspora-project-site"
             owner: namespace.full_path,
             cloneUrl: http_url_to_repo,
@@ -261,10 +264,16 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
             private: visibility === 'private'
         }
         if (forked_from_project) {
+
+            // host might be a relative URL, let's compute the prefix
+            const url = new URL(forked_from_project.http_url_to_repo.split(forked_from_project.namespace.full_path)[0]);
+            const relativePath = url.pathname.slice(1); // hint: pathname always starts with `/`
+            const host = relativePath ? `${url.hostname}/${relativePath}` : url.hostname;
+
             repo.fork = {
                 parent: {
                     name: forked_from_project.path,
-                    host: new URL(forked_from_project.http_url_to_repo).hostname,
+                    host,
                     owner: forked_from_project.namespace.full_path,
                     cloneUrl: forked_from_project.http_url_to_repo,
                     defaultBranch: forked_from_project.default_branch

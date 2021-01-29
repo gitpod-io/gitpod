@@ -32,15 +32,32 @@ export class GitHostWatcher implements FrontendApplicationContribution {
         this.gitRepository.onDidChangeRepository(() => this.update());
     }
 
-    protected gitHost: string | undefined;
+    protected remoteUrl: string | undefined;
     protected async update() {
         const selectedRepo = this.gitRepository.selectedRepository;
-        const gitHost = selectedRepo && await this.getGitHost(selectedRepo);
-        if (this.gitHost === gitHost) {
-            return;
+        let remoteUrl = selectedRepo && await this.getRemoteUrl(selectedRepo);
+
+        // updates should be performed on changes only
+        {
+            if (this.remoteUrl === remoteUrl?.toString()) {
+                return;
+            }
+            this.remoteUrl = remoteUrl?.toString();
         }
-        this.gitHost = gitHost;
-        const authProvider = gitHost && await this.getAuthProviderByHost(gitHost);
+
+        let gitHost = remoteUrl && remoteUrl.hostname;
+        let authProvider = gitHost && await this.getAuthProviderByHost(gitHost);
+        if (!authProvider && gitHost && remoteUrl) {
+            // in case we cannot find the provider by hostname, let's try with simple path
+
+            const pathSegments = remoteUrl.pathname.split("/");
+            const gitHostWithPath = `${remoteUrl.pathname}/${pathSegments[0] || pathSegments[1]}`;
+            authProvider = await this.getAuthProviderByHost(gitHostWithPath);
+            if (authProvider) {
+                gitHost = gitHostWithPath;
+            }
+        }
+
         const type = authProvider && authProvider.authProviderType;
         this.updateExtensions(type, gitHost);
     }
@@ -64,19 +81,11 @@ export class GitHostWatcher implements FrontendApplicationContribution {
         return this.authProviders;
     }
 
-    protected async getGitHost(repository: Repository): Promise<string | undefined> {
-        const remoteUrl = await this.getRemoteUrl(repository);
-        if (!remoteUrl) {
-            return undefined;
-        }
-        const gitHost = new URL(remoteUrl).hostname;
-        return gitHost;
-    }
-
-    async getRemoteUrl(repository: Repository): Promise<string | undefined> {
+    async getRemoteUrl(repository: Repository): Promise<URL | undefined> {
         try {
             const remoteUrlResult = await this.git.exec(repository, ["remote", "get-url", "origin"]);
-            return remoteUrlResult.stdout.trim();
+            const result = remoteUrlResult.stdout.trim();
+            return new URL(result);
         } catch (e) {
             return undefined;
         }
