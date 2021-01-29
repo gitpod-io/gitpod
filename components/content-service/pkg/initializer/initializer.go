@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -19,6 +18,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	"github.com/gitpod-io/gitpod/content-service/pkg/git"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/opentracing/opentracing-go"
@@ -43,28 +43,15 @@ const (
 
 // Initializer can initialize a workspace with content
 type Initializer interface {
-	Run(ctx context.Context) (csapi.WorkspaceInitSource, error)
+	Run(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, error)
 }
 
 // EmptyInitializer does nothing
 type EmptyInitializer struct{}
 
 // Run does nothing
-func (e *EmptyInitializer) Run(ctx context.Context) (csapi.WorkspaceInitSource, error) {
+func (e *EmptyInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, error) {
 	return csapi.WorkspaceInitFromOther, nil
-}
-
-// recursiveChown chown's the location and all its childen to
-func recursiveChown(ctx context.Context, location string, uid, gid int) (err error) {
-	span, _ := opentracing.StartSpanFromContext(ctx, "recursiveChown")
-	defer tracing.FinishSpan(span, &err)
-
-	out, err := exec.Command("chown", "-R", fmt.Sprintf("%d:%d", uid, gid), location).CombinedOutput()
-	if err != nil {
-		return xerrors.Errorf("chown -R %s: %s", location, out)
-	}
-
-	return nil
 }
 
 // NewFromRequest picks the initializer from the request but does not execute it.
@@ -254,6 +241,14 @@ type initializeOpts struct {
 	InWorkspace bool
 	UID         int
 	GID         int
+	mappings    []archive.IDMapping
+}
+
+// WithMappings configures the UID mappings that're used during content initialization
+func WithMappings(mappings []archive.IDMapping) InitializeOpt {
+	return func(o *initializeOpts) {
+		o.mappings = mappings
+	}
 }
 
 // WithInitializer configures the initializer that's used during content initialization
@@ -331,7 +326,7 @@ func InitializeWorkspace(ctx context.Context, location string, remoteStorage sto
 	}
 
 	// Run the initializer
-	hasBackup, err := remoteStorage.Download(ctx, location, storage.DefaultBackup)
+	hasBackup, err := remoteStorage.Download(ctx, location, storage.DefaultBackup, cfg.mappings)
 	if err != nil {
 		return src, xerrors.Errorf("cannot restore backup: %w", err)
 	}
@@ -340,16 +335,9 @@ func InitializeWorkspace(ctx context.Context, location string, remoteStorage sto
 	if hasBackup {
 		src = csapi.WorkspaceInitFromBackup
 	} else {
-		src, err = cfg.Initializer.Run(ctx)
+		src, err = cfg.Initializer.Run(ctx, cfg.mappings)
 		if err != nil {
 			return src, xerrors.Errorf("cannot initialize workspace: %w", err)
-		}
-	}
-
-	if !cfg.InWorkspace {
-		err = recursiveChown(ctx, location, cfg.UID, cfg.GID)
-		if err != nil {
-			return src, xerrors.Errorf("cannot set workspace permissions: %w", err)
 		}
 	}
 

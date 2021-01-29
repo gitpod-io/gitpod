@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"syscall"
 	"testing"
 )
 
@@ -92,5 +93,83 @@ func TestBuildTarbalMaxSize(t *testing.T) {
 
 	for _, c := range cleanup {
 		os.RemoveAll(c)
+	}
+}
+
+func TestExtractTarbal(t *testing.T) {
+	type file = struct {
+		Name        string
+		ContentSize int64
+		Uid         int
+	}
+	tests := []struct {
+		Name  string
+		Files []file
+	}{
+		{
+			Name: "simple-test",
+			Files: []file{
+				{"file.txt", 1024, 33333},
+				{"file2.txt", 1024, 33333},
+			},
+		},
+		{
+			Name:  "empty-tar",
+			Files: []file{},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			wd, err := ioutil.TempDir("", "")
+			defer os.RemoveAll(wd)
+			if err != nil {
+				t.Errorf("cannot prepare test: %v", err)
+				t.FailNow()
+			}
+			sourceFolder := filepath.Join(wd, "source")
+			os.MkdirAll(sourceFolder, 0777)
+
+			for _, file := range test.Files {
+				fileName := filepath.Join(sourceFolder, file.Name)
+				err = ioutil.WriteFile(fileName, make([]byte, file.ContentSize), 0644)
+				if err != nil {
+					t.Errorf("cannot prepare test: %v", err)
+					continue
+				}
+				err = os.Chown(fileName, file.Uid, file.Uid)
+				if err != nil {
+					t.Errorf("Cannot chown %s to %d: %s", file.Name, file.Uid, err)
+				}
+			}
+			tarFile := filepath.Join(wd, "my.tar")
+			BuildTarbal(context.Background(), sourceFolder, tarFile)
+
+			reader, err := os.Open(tarFile)
+			if err != nil {
+				t.Errorf("Cannot open %s", tarFile)
+			}
+			targetFolder := filepath.Join(wd, "target")
+			os.MkdirAll(targetFolder, 0777)
+			ExtractTarbal(context.Background(), reader, targetFolder)
+
+			for _, file := range test.Files {
+				stat, err := os.Stat(filepath.Join(targetFolder, file.Name))
+				if err != nil {
+					t.Errorf("expected %s", file.Name)
+					continue
+				}
+				uid := stat.Sys().(*syscall.Stat_t).Uid
+				if uid != uint32(file.Uid) {
+					t.Errorf("expected uid %d", file.Uid)
+					continue
+				}
+				gid := stat.Sys().(*syscall.Stat_t).Gid
+				if gid != uint32(file.Uid) {
+					t.Errorf("expected gid %d", file.Uid)
+					continue
+				}
+			}
+		})
 	}
 }

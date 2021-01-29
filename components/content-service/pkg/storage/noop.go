@@ -6,6 +6,8 @@ package storage
 
 import (
 	"context"
+
+	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 )
 
 var _ DirectAccess = &DirectNoopStorage{}
@@ -24,12 +26,12 @@ func (rs *DirectNoopStorage) EnsureExists(ctx context.Context) error {
 }
 
 // Download always returns false and does nothing
-func (rs *DirectNoopStorage) Download(ctx context.Context, destination string, name string) (bool, error) {
+func (rs *DirectNoopStorage) Download(ctx context.Context, destination string, name string, mappings []archive.IDMapping) (bool, error) {
 	return false, nil
 }
 
 // DownloadSnapshot always returns false and does nothing
-func (rs *DirectNoopStorage) DownloadSnapshot(ctx context.Context, destination string, name string) (bool, error) {
+func (rs *DirectNoopStorage) DownloadSnapshot(ctx context.Context, destination string, name string, mappings []archive.IDMapping) (bool, error) {
 	return false, nil
 }
 

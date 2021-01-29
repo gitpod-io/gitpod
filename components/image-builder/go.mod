@@ -9,7 +9,6 @@ replace github.com/docker/docker v1.13.1 => github.com/docker/engine v0.0.0-2019
 
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
-	github.com/Microsoft/go-winio v0.4.14 // indirect
 	github.com/alecthomas/jsonschema v0.0.0-20190504002508-159cbd5dba26
 	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2
 	github.com/cyphar/filepath-securejoin v0.2.2

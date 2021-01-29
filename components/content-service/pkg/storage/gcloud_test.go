@@ -9,6 +9,7 @@ import (
 	"io"
 	"testing"
 
+	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	"golang.org/x/xerrors"
 )
 
@@ -19,7 +20,8 @@ func TestObjectAccessToNonExistentObj(t *testing.T) {
 			Stage:         StageDevStaging,
 		},
 	}
-	found, err := storage.Download(context.Background(), "/tmp", "foo")
+	var mappings []archive.IDMapping
+	found, err := storage.Download(context.Background(), "/tmp", "foo", mappings)
 	if err != nil {
 		t.Errorf("%+v", err)
 	}
@@ -43,21 +45,21 @@ func (rs *objDoesNotExistGCloudStorage) EnsureExists(ctx context.Context) error 
 }
 
 // Download always returns false and does nothing
-func (rs *objDoesNotExistGCloudStorage) Download(ctx context.Context, destination string, name string) (bool, error) {
+func (rs *objDoesNotExistGCloudStorage) Download(ctx context.Context, destination string, name string, mappings []archive.IDMapping) (bool, error) {
 	rs.Delegate.ObjectAccess = func(ctx context.Context, bkt, obj string) (io.ReadCloser, bool, error) {
 		return nil, false, nil
 	}
 
-	return rs.Delegate.Download(ctx, destination, name)
+	return rs.Delegate.Download(ctx, destination, name, mappings)
 }
 
 // Download always returns false and does nothing
-func (rs *objDoesNotExistGCloudStorage) DownloadSnapshot(ctx context.Context, destination string, name string) (bool, error) {
+func (rs *objDoesNotExistGCloudStorage) DownloadSnapshot(ctx context.Context, destination string, name string, mappings []archive.IDMapping) (bool, error) {
 	rs.Delegate.ObjectAccess = func(ctx context.Context, bkt, obj string) (io.ReadCloser, bool, error) {
 		return nil, false, nil
 	}
 
-	return rs.Delegate.DownloadSnapshot(ctx, destination, name)
+	return rs.Delegate.DownloadSnapshot(ctx, destination, name, mappings)
 }
 
 func (rs *objDoesNotExistGCloudStorage) Qualify(name string) string {

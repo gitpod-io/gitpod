@@ -19,6 +19,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	wsinit "github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 
@@ -35,6 +36,8 @@ type RunInitializerOpts struct {
 	Command string
 	// Args is a set of additional arguments to pass to the initializer executable
 	Args []string
+	// Options to use on untar
+	IdMappings []archive.IDMapping
 
 	UID uint32
 	GID uint32
@@ -136,6 +139,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 		Initializer:   init,
 		RemoteContent: remoteContent,
 		TraceInfo:     tracing.GetTraceID(span),
+		IDMappings:    opts.IdMappings,
 		GID:           int(opts.GID),
 		UID:           int(opts.UID),
 		OWI:           opts.OWI,
@@ -196,11 +200,11 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	}
 
 	// TODO(cw): make the initializer work without chown
-	spec.Process.Capabilities.Ambient = append(spec.Process.Capabilities.Ambient, "CAP_CHOWN")
-	spec.Process.Capabilities.Bounding = append(spec.Process.Capabilities.Bounding, "CAP_CHOWN")
-	spec.Process.Capabilities.Effective = append(spec.Process.Capabilities.Effective, "CAP_CHOWN")
-	spec.Process.Capabilities.Inheritable = append(spec.Process.Capabilities.Inheritable, "CAP_CHOWN")
-	spec.Process.Capabilities.Permitted = append(spec.Process.Capabilities.Permitted, "CAP_CHOWN")
+	spec.Process.Capabilities.Ambient = append(spec.Process.Capabilities.Ambient, "CAP_CHOWN", "CAP_FOWNER")
+	spec.Process.Capabilities.Bounding = append(spec.Process.Capabilities.Bounding, "CAP_CHOWN", "CAP_FOWNER")
+	spec.Process.Capabilities.Effective = append(spec.Process.Capabilities.Effective, "CAP_CHOWN", "CAP_FOWNER")
+	spec.Process.Capabilities.Inheritable = append(spec.Process.Capabilities.Inheritable, "CAP_CHOWN", "CAP_FOWNER")
+	spec.Process.Capabilities.Permitted = append(spec.Process.Capabilities.Permitted, "CAP_CHOWN", "CAP_FOWNER")
 	// TODO(cw): setup proper networking in a netns, rather than relying on ws-daemons network
 	n := 0
 	for _, x := range spec.Linux.Namespaces {
@@ -235,7 +239,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	return nil
 }
 
-// RunInitializerChild is the function that's exepcted to run when we call `/proc/self/exe content-initializer`
+// RunInitializerChild is the function that's expected to run when we call `/proc/self/exe content-initializer`
 func RunInitializerChild() (err error) {
 	fc, err := ioutil.ReadFile("/content.json")
 	if err != nil {
@@ -274,6 +278,7 @@ func RunInitializerChild() (err error) {
 	initSource, err := wsinit.InitializeWorkspace(ctx, "/dst", rs,
 		wsinit.WithInitializer(initializer),
 		wsinit.WithCleanSlate,
+		wsinit.WithMappings(initmsg.IDMappings),
 		wsinit.WithChown(initmsg.UID, initmsg.GID),
 	)
 	if err != nil {
@@ -304,7 +309,7 @@ func (rs *remoteContentStorage) EnsureExists(ctx context.Context) error {
 }
 
 // Download always returns false and does nothing
-func (rs *remoteContentStorage) Download(ctx context.Context, destination string, name string) (exists bool, err error) {
+func (rs *remoteContentStorage) Download(ctx context.Context, destination string, name string, mappings []archive.IDMapping) (exists bool, err error) {
 	info, exists := rs.RemoteContent[name]
 	if !exists {
 		return false, nil
@@ -316,21 +321,17 @@ func (rs *remoteContentStorage) Download(ctx context.Context, destination string
 	}
 	defer resp.Body.Close()
 
-	tarcmd := exec.Command("tar", "x")
-	tarcmd.Dir = destination
-	tarcmd.Stdin = resp.Body
-
-	msg, err := tarcmd.CombinedOutput()
+	err = archive.ExtractTarbal(ctx, resp.Body, destination, archive.WithUIDMapping(mappings), archive.WithGIDMapping(mappings))
 	if err != nil {
-		return true, xerrors.Errorf("tar %s: %s", destination, err.Error()+";"+string(msg))
+		return true, xerrors.Errorf("tar %s: %s", destination, err.Error())
 	}
 
 	return true, nil
 }
 
 // DownloadSnapshot always returns false and does nothing
-func (rs *remoteContentStorage) DownloadSnapshot(ctx context.Context, destination string, name string) (bool, error) {
-	return rs.Download(ctx, destination, name)
+func (rs *remoteContentStorage) DownloadSnapshot(ctx context.Context, destination string, name string, mappings []archive.IDMapping) (bool, error) {
+	return rs.Download(ctx, destination, name, mappings)
 }
 
 // Qualify just returns the name
@@ -363,6 +364,7 @@ type msgInitContent struct {
 	RemoteContent map[string]storage.DownloadInfo
 	Initializer   []byte
 	UID, GID      int
+	IDMappings    []archive.IDMapping
 
 	TraceInfo string
 	OWI       map[string]interface{}

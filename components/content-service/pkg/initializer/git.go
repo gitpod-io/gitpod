@@ -13,6 +13,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	"github.com/gitpod-io/gitpod/content-service/pkg/git"
 	"github.com/opentracing/opentracing-go"
 )
@@ -46,7 +47,7 @@ type GitInitializer struct {
 }
 
 // Run initializes the workspace using Git
-func (ws *GitInitializer) Run(ctx context.Context) (src csapi.WorkspaceInitSource, err error) {
+func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, err error) {
 	isGitWS := git.IsWorkingCopy(ws.Location)
 
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GitInitializer.Run")
