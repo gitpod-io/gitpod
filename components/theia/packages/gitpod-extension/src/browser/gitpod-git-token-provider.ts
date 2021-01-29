@@ -61,7 +61,13 @@ export class GitpodGitTokenProvider {
     async getGitToken(params: GetGitTokenParams): Promise<GetGitTokenResult> {
         const validationParams: TokenValidationParams = { ...params };
 
-        const token = await this.getTokenFromServer(params.host);
+        let token = await this.getTokenFromServer(params.host);
+        if (!token && params.repoURL) {
+            const url = new URL(params.repoURL);
+            const pathSegments = url.pathname.split("/");
+            const hostAndPath = `${url.host}/${pathSegments[0] || pathSegments[1]}`;
+            token = await this.getTokenFromServer(hostAndPath);
+        }
         if (token) {
             const tokenUser = token.username || "oauth2";
             // if required scopes are missing, we can validate async

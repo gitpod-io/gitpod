@@ -144,7 +144,7 @@ export class AuthProviderService {
     protected callbackUrl = (host: string) => {
         const pathname = `/auth/${host}/callback`;
         if (this.env.devBranch) {
-            // for example: https://staging.gitpod-dev.com/auth/gitlab.com/callback
+            // for example: https://staging.gitpod-dev.com/auth/mydomain.com/gitlab/callback
             return this.env.hostUrl.withoutDomainPrefix(1).with({ pathname }).toString();
         }
         return this.env.hostUrl.with({ pathname }).toString();
