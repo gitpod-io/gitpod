@@ -4,8 +4,8 @@
 # requirements.yaml
 dependencies:
 - name: docker-registry
-  version: 1.8.x
-  repository: https://charts.helm.sh/stable
+  version: 1.10.0
+  repository: https://helm.twun.io
   condition: docker-registry.enabled
 - name: minio
   version: 8.0.7
