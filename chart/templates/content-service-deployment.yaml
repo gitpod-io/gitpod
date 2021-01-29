@@ -62,9 +62,15 @@ spec:
         - name: config
           mountPath: "/config"
           readOnly: true
+{{- if $comp.volumeMounts }}
+{{ toYaml $comp.volumeMounts | indent 8 }}
+{{- end }}
       volumes:
       - name: config
         configMap:
           name: {{ template "gitpod.comp.configMap" $this }}
+{{- if $comp.volumes }}
+{{ toYaml $comp.volumes | indent 6 }}
+{{- end }}
 {{ toYaml .Values.defaults | indent 6 }}
 {{ end }}

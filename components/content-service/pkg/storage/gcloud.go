@@ -767,10 +767,13 @@ func (s *PresignedGCPStorage) DiskUsage(ctx context.Context, bucket string, pref
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
 
+	if !strings.HasSuffix(prefix, "/") {
+		prefix = prefix + "/"
+	}
+
 	var total int64
 	it := client.Bucket(bucket).Objects(ctx, &storage.Query{
-		Prefix:    prefix,
-		Delimiter: "/",
+		Prefix: prefix,
 	})
 	for {
 		attrs, err := it.Next()
