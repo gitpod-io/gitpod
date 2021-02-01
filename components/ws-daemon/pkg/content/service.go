@@ -487,7 +487,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 			)
 		}
 
-		err = archive.BuildTarbal(ctx, loc, tmpf.Name(), opts...)
+		err = BuildTarbal(ctx, loc, tmpf.Name(), opts...)
 		if err != nil {
 			return
 		}
