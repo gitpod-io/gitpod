@@ -35,7 +35,7 @@ const (
 )
 
 var (
-	userConfigGlobs     = []string{"/home/gitpod/.theia/**/*", "/home/gitpod/.bash_history"} // TODO
+	userConfigGlobs     = []string{"/home/gitpod/.theia/**/*", "!/home/gitpod/.theia/layout/**/*"} // TODO
 	userConfigUplaodURL string
 )
 
@@ -113,16 +113,32 @@ func createTarball(writer io.Writer, globs []string) error {
 	}
 	defer tarWriter.Close()
 
+	exclusions := exclusions(globs)
+
 	for _, glob := range globs {
+		if strings.HasPrefix(glob, "!") {
+			continue
+		}
 		log.Debugf("processing glob pattern '%s' for backuping user config ...", glob)
 		filePaths, err := doublestar.Glob(glob)
 		if err != nil {
 			return err
 		}
+	FILEPATH:
 		for _, filePath := range filePaths {
 			filePath, err := filepath.Abs(filePath)
 			if err != nil {
 				return err
+			}
+			for _, exclusion := range exclusions {
+				b, err := doublestar.Match(exclusion, filePath)
+				if err != nil {
+					return err
+				}
+				if b {
+					log.WithField("file", filePath).Debugf("ignoring file due to exclusion glob '%s'", exclusion)
+					continue FILEPATH
+				}
 			}
 			stat, err := os.Stat(filePath)
 			if err != nil {
@@ -137,6 +153,17 @@ func createTarball(writer io.Writer, globs []string) error {
 		}
 	}
 	return nil
+}
+
+func exclusions(globs []string) []string {
+	var exclusions []string
+	for _, glob := range globs {
+		if !strings.HasPrefix(glob, "!") {
+			continue
+		}
+		exclusions = append(exclusions, strings.TrimPrefix(glob, "!"))
+	}
+	return exclusions
 }
 
 func addFileToTarball(tarWriter *tar.Writer, filePath string) error {
