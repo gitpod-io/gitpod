@@ -95,6 +95,14 @@ export class UserController {
             this.ensureSafeReturnToParam(req);
             this.authenticator.authorize(req, res, next);
         });
+        router.get("/deauthorize", (req: express.Request, res: express.Response, next: express.NextFunction) => {
+            if (!User.is(req.user)) {
+                res.sendStatus(401);
+                return;
+            }
+            this.ensureSafeReturnToParam(req);
+            this.authenticator.deauthorize(req, res, next);
+        });
         const branding = this.env.brandingConfig;
         router.get("/logout", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             const logContext = LogContext.from({ user: req.user, request: req });
@@ -324,9 +332,12 @@ export class UserController {
         });
         const tosFlowUserInfo = (tosFlowInfo: TosFlow) => {
             if (TosFlow.WithIdentity.is(tosFlowInfo)) {
+                tosFlowInfo.authUser.authName
                 return {
                     name: tosFlowInfo.authUser.name || tosFlowInfo.authUser.authName,
-                    avatarUrl: tosFlowInfo.authUser.avatarUrl
+                    avatarUrl: tosFlowInfo.authUser.avatarUrl,
+                    authHost: tosFlowInfo.authHost,
+                    authName: tosFlowInfo.authUser.authName,
                 }
             }
             if (TosFlow.WithUser.is(tosFlowInfo)) {

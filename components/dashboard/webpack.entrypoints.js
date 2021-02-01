@@ -12,6 +12,7 @@ module.exports = function entrypoints(srcPath, eeSrcPath, isOSSBuild) {
         'create-workspace-from-ref': `${srcPath}/create-workspace-from-ref.tsx`,
         '404': `${srcPath}/404.tsx`,
         'sorry': `${srcPath}/sorry.tsx`,
+        'select-account': `${srcPath}/select-account.tsx`,
         'blocked': `${srcPath}/blocked.tsx`,
         'bootanimation': `${srcPath}/bootanimation.ts`,
         'access-control': `${srcPath}/access-control.tsx`,

@@ -15,6 +15,9 @@ import { AuthProviderParams, AuthUser } from "../auth/auth-provider";
 import { BlockedUserFilter } from "../auth/blocked-user-filter";
 import * as uuidv4 from 'uuid/v4';
 import { TermsProvider } from "../terms/terms-provider";
+import { TokenService } from "./token-service";
+import { SelectAccountException } from "../auth/errors";
+import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 
 export interface FindUserByIdentityStrResult {
     user: User;
@@ -154,7 +157,7 @@ export class UserService {
     }
 
     /**
-     * This might throw `AuthError`s.
+     * This might throw `AuthException`s.
      *
      * @param params
      */
@@ -268,4 +271,61 @@ export class UserService {
             }
         }
     }
+
+    async deauthorize(user: User, authProviderId: string) {
+        const externalIdentities = user.identities.filter(i => i.authProviderId !== TokenService.GITPOD_AUTH_PROVIDER_ID);
+        if (!externalIdentities.some(i => i.authProviderId === authProviderId)) {
+            log.debug('Cannot deauthorize. Authorization not found.', { userId: user.id, authProviderId });
+            return;
+        }
+
+        if (externalIdentities.length === 1) {
+            throw new Error("Cannot remove last provider authorization. Please delete account instead.");
+        }
+
+        // effectively remove the provider authorization
+        user.identities = user.identities.filter(i => i.authProviderId !== authProviderId);
+        await this.userDb.storeUser(user);
+    }
+
+    async asserNoTwinAccount(currentUser: User, authHost: string, authProviderId: string, candidate: Identity) {
+        if (currentUser.identities.some(i => Identity.equals(i, candidate))) {
+            return; // same user => OK
+        }
+        const otherUser = await this.findUserForLogin({ candidate });
+        if (!otherUser) {
+            return; // no twin => OK
+        }
+
+        /*
+         * /!\ another user account is connected with this provider identity.
+         */
+
+        const externalIdentities = currentUser.identities.filter(i => i.authProviderId !== TokenService.GITPOD_AUTH_PROVIDER_ID);
+        const loginIdentityOfCurrentUser = externalIdentities[externalIdentities.length - 1];
+        const authProviderConfigOfCurrentUser = this.hostContextProvider.getAll().find(c => c.authProvider.authProviderId === loginIdentityOfCurrentUser.authProviderId)?.authProvider?.config;
+        const loginHostOfCurrentUser = authProviderConfigOfCurrentUser?.host;
+        const authProviderTypeOfCurrentUser = authProviderConfigOfCurrentUser?.type;
+
+        const authProviderTypeOfOtherUser = this.hostContextProvider.getAll().find(c => c.authProvider.authProviderId === candidate.authProviderId)?.authProvider?.config?.type;
+
+        const payload: SelectAccountPayload = {
+            currentUser: {
+                name: currentUser.name!,
+                avatarUrl: currentUser.avatarUrl!,
+                authHost: loginHostOfCurrentUser!,
+                authName: loginIdentityOfCurrentUser.authName,
+                authProviderType: authProviderTypeOfCurrentUser!,
+            },
+            otherUser: {
+                name: otherUser.name!,
+                avatarUrl: otherUser.avatarUrl!,
+                authHost,
+                authName: candidate.authName,
+                authProviderType: authProviderTypeOfOtherUser!,
+            }
+        }
+        throw SelectAccountException.create(`User is trying to connect a provider identity twice.`, payload);
+    }
+
 }

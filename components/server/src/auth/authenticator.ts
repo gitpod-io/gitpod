@@ -15,6 +15,7 @@ import { HostContextProvider } from './host-context-provider';
 import { AuthProvider, AuthFlow } from './auth-provider';
 import { TokenProvider } from '../user/token-provider';
 import { AuthProviderService } from './auth-provider-service';
+import { UserService } from '../user/user-service';
 import { increaseLoginCounter } from '../../src/prometheusMetrics';
 
 @injectable()
@@ -28,6 +29,7 @@ export class Authenticator {
     @inject(HostContextProvider) protected hostContextProvider: HostContextProvider;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
+    @inject(UserService) protected readonly userService: UserService;
 
     @postConstruct()
     protected setup() {
@@ -139,10 +141,34 @@ export class Authenticator {
         return noUser;
     }
 
-    get authorize(): express.RequestHandler {
-        return this.doAuthorize.bind(this);
+    async deauthorize(req: express.Request, res: express.Response, next: express.NextFunction) {
+        const user = req.user;
+        if (!req.isAuthenticated() || !User.is(user)) {
+            log.info({ sessionId: req.sessionID }, `User is not authenticated.`, { req });
+            res.redirect(this.getSorryUrl(`Not authenticated. Please login.`));
+            return;
+        }
+        const returnTo: string = req.query.returnTo || this.env.hostUrl.asDashboard().toString();
+        const host: string | undefined = req.query.host;
+
+        const authProvider = host && await this.getAuthProviderForHost(host);
+
+        if (!host || !authProvider) {
+            log.warn({ sessionId: req.sessionID }, `Bad request: missing parameters.`, { req });
+            res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
+            return;
+        }
+
+        try {
+            await this.userService.deauthorize(user, authProvider.authProviderId);
+            res.redirect(returnTo);
+        } catch (error) {
+            log.error({ sessionId: req.sessionID }, `Failed to disconnect a provider.`, error, { req, host, userId: user.id });
+            res.redirect(this.getSorryUrl(`Failed to disconnect a provider: ${ error && error.message ? error.message : "unknown reason"}`));
+        }
     }
-    protected async doAuthorize(req: express.Request, res: express.Response, next: express.NextFunction) {
+
+    async authorize(req: express.Request, res: express.Response, next: express.NextFunction) {
         if (!req.session) {
             log.info({ }, `No session.`, { req, 'authorize-flow': true });
             res.redirect(this.getSorryUrl(`No session found. Please refresh the browser.`));

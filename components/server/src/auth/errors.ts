@@ -5,6 +5,7 @@
  */
 
 import { Identity } from "@gitpod/gitpod-protocol";
+import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 
 export interface TosNotAcceptedYetException extends Error {
     readonly identity: Identity;
@@ -50,6 +51,19 @@ export namespace UnconfirmedUserException {
         return AuthException.create(type, message, payload);
     }
     export function is(error: any): error is UnconfirmedUserException {
+        return AuthException.is(error) && error.authException === type;
+    }
+}
+
+export interface SelectAccountException extends AuthException {
+    payload: SelectAccountPayload;
+}
+export namespace SelectAccountException {
+    const type = "SelectAccountException";
+    export function create(message: string, payload: SelectAccountPayload) {
+        return AuthException.create(type, message, payload);
+    }
+    export function is(error: any): error is SelectAccountException {
         return AuthException.is(error) && error.authException === type;
     }
 }
