@@ -39,8 +39,8 @@ case:
   group: Dashboard
   description: Verify that Access Control page works properly
   steps: |
-    - Change permissions
-    - Review permissions on GitHub
+    1. Check push to remote is not possible, if no write permissions were granted
+    1. Check push to remote is possible, if write permissions were granted
   mustpass: true
   mintestercount: 1
   annotations: {}
@@ -294,13 +294,86 @@ case:
   mintestercount: 1
   annotations: {}
 - id: logout-and-login
-  name: Log out and log in again
   group: Dashboard
-  description: ""
-  steps: ""
   mustpass: true
   mintestercount: 1
   annotations: {}
+  description: ""
+  name: Log out and log in again
+  steps: |
+    1. On logout, you should be redirected to the empty dashboard (or whatever is configured at that time)
+    2. Next, on login noo ToS page should be shown (unless there was a update in the meantime)
+- id: login-with-second-provider
+  group: Dashboard
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+  description: ""
+  name: Login with second privider
+  steps: |
+    1. First of, log out.
+    2. Try to log in with a different provider;
+      - If the provider was already connected, you get logged in into the account.
+        BEFORE proceeding with the following steps, go to Access Control and disconnect that provider.
+      - (ALTERNATIVE 1) If the primary email address is matching your existing account (and first provider,) you should be able to log in into the first account.
+        Verify in Access Control, that you have both providers connected.
+      - (ALTERNATIVE 2) If the primary email address is NOT matching, you are about to create a new account.
+        Verify in Access Control, that you have connected just a single provider.
+- id: connect-with-second-provider
+  group: Dashboard
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+  description: ""
+  name: Connect with second provider
+  steps: |
+    1. First of, ensure you are logged in, and in Access Control only one provider is connected.
+    2. Connect to a second provider.
+- id: connect-with-provider-already-connected
+  group: Dashboard
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+  description: ""
+  name: Connect with a provider which is already connected
+  steps: |
+    1. First of, ensure you have two accounts with distict provider connections, e.g. one with GitHub and one with GitLab.
+    2. Log in with user A.
+    3. Go to Access Controll, try to connect with second provider (which is connected to user B)
+    4. See the Select Account page explaining the current situation. Verify the shown information.
+    5. Select the `Switch Account` action, and notice that you're logged into the other account.
+    6. Go to Access Controll, try to connect with second provider (which is connected to user A)
+    7. Disconnect a provider in one account (or delete one account) to proceed with connecting in the other account.
+- id: disconnect-providers
+  group: Dashboard
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+  description: ""
+  name: Disconnect second provider
+  steps: |
+    1. First of, ensure you are logged in, and in Access Control two providers are connected.
+    2. Disconnect one provider. Verify, a single provider is left connected.
+    3. Try to disconnect the single provider, notice the message tells you to delete account in Settings.
+- id: tos-update
+  group: Dashboard
+  mustpass: true
+  mintestercount: 1
+  annotations: {}
+  description: ""
+  name: ToS Update
+  steps: |
+    1. First of, ensure you are logged in, and terms were already accepted.
+    2. Start a workspace. Keep running in background. (cf. 4.)
+    3. Connect to DB, and run `update d_b_user_acceptance_entry set termsRevision='' where userId='YOUR_ID'`
+    4. Verify the running workspace was not impacted.
+    5. Verify, you can load the workspaces list. (/workspaces)
+    6. Verify, you can load Settings page.
+    7. Verify, you see /tos page with the update message when trying to create/start a workspace. Once accepted, workspace start should be resumed.
+    8. (repeat 3.)
+    9. Log out.
+    10. Verify, you see the /tos page with the update on login.
+    11. Verify, you get logged out if you decline.
 - id: open-branch
   name: Open a GitHub branch
   group: IDE
