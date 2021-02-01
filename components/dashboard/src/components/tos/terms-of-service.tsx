@@ -79,10 +79,14 @@ export class TermsOfService extends React.Component<TermsOfServiceProps, TermsOf
 
     protected actionUrl = this.gitpodHost.withApi({ pathname: '/tos/proceed' }).toString();
     render() {
-        const content = this.renderMd(this.state.terms?.content);
         const acceptsTos = this.state.acceptsTos;
-        const updateMessage = this.renderMd(this.state.terms?.updateMessage);
         const update = this.state.isUpdate;
+
+        let tosContentRendered = this.renderMd(update ? this.state.terms?.updateMessage : this.state.terms?.content);
+
+        if (!update && this.state.userInfo?.authHost) {
+            tosContentRendered = tosContentRendered.replace("{{AUTH_HOST}}", this.state.userInfo?.authHost);
+        }
 
         let userSection: JSX.Element = <div></div>;
         if (this.state.userInfo) {
@@ -133,7 +137,7 @@ export class TermsOfService extends React.Component<TermsOfServiceProps, TermsOf
                     <form ref={this.formRef} action={this.actionUrl} method="post" id="accept-tos-form">
                         <input type="hidden" id="flowId" name="flowId" value={this.state.flowId} />
                         <div className="tos-checks">
-                            <Typography className="tos-content" dangerouslySetInnerHTML={{ __html: update ? updateMessage : content }} />
+                            <Typography className="tos-content" dangerouslySetInnerHTML={{ __html: tosContentRendered }} />
                             <p>
                                 <label style={{ display: 'none', alignItems: 'center' }}>
                                     <Checkbox

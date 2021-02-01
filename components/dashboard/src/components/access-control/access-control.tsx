@@ -20,6 +20,7 @@ import CardContent from '@material-ui/core/CardActions';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogContent from '@material-ui/core/DialogContent';
 import Dialog from '@material-ui/core/Dialog';
+import HighlightOffOutlined from '@material-ui/icons/HighlightOffOutlined';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogActions from '@material-ui/core/DialogActions';
 import { themeMode } from '../../withRoot';
@@ -37,6 +38,9 @@ interface AccessControlState {
     newScopes?: Map<string, Set<string>>;
     notification?: { hostToBeReviewed: string } | { updatedHost: string; updatedScopes: string[] };
     user?: User;
+    disconnectDialog?: {
+        authHost: string;
+    };
 }
 interface AccessControlProps {
     service: GitpodService;
@@ -185,7 +189,7 @@ export class AccessControl extends React.Component<AccessControlProps, AccessCon
             <div>
                 <Toolbar style={{ padding: 0 }}>
                     <div style={{ width: '100%', justifyContent: 'space-between', marginTop: 30 }}>
-                        <Typography variant="h4" style={{ textAlign: 'center' }}>Access Control</Typography>
+                        <Typography variant="h4">Access Control</Typography>
                     </div>
                 </Toolbar>
                 <Toolbar style={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
@@ -195,6 +199,7 @@ export class AccessControl extends React.Component<AccessControlProps, AccessCon
                 </Toolbar>
                 {this.renderTokenContainer()}
                 {this.renderInfoDialog()}
+                {this.renderDisconnectDialog()}
             </div>
         );
     }
@@ -323,7 +328,7 @@ export class AccessControl extends React.Component<AccessControlProps, AccessCon
         const icon = this.getIcon(provider);
         const dirty = !this.equals(oldScopes, newScopes);
         const identity = this.state.user && this.state.user.identities.find(i => i.authProviderId === provider.authProviderId);
-        return (<Card key={this.renderKey++}
+        return (<Card key={`provider-token-${this.renderKey++}`}
             style={{ 
                 verticalAlign: "top", 
                 textAlign: 'center', 
@@ -369,6 +374,15 @@ export class AccessControl extends React.Component<AccessControlProps, AccessCon
                     })}
                 </CardContent>
             </Grid>
+
+            {identity && (<Grid item direction="column">
+                <span style={{ fontSize: "80%" }}>
+                    Connected as <strong>{identity.authName}</strong>
+                    <IconButton style={{ padding: '4px', marginLeft: '2px' }} onClick={() => this.setState({ disconnectDialog: { authHost: provider.host } })} title="Disconnect">
+                        <HighlightOffOutlined fontSize="small" style={{ verticalAlign: 'middle', color: 'var(--font-color2)' }} />
+                    </IconButton>
+                </span>
+            </Grid>)}
 
             <Grid item direction="column">
                 <CardActions style={{ display: 'block', textAlign: 'center', paddingTop: 15, paddingRight: 10, paddingBottom: 12 }} disableActionSpacing={true}>
@@ -446,5 +460,64 @@ export class AccessControl extends React.Component<AccessControlProps, AccessCon
             pathname: '/authorize',
             search: `returnTo=${returnTo}&host=${provider}&override=true&scopes=${scopes.join(',')}`
         }).toString();
+    }
+
+    protected renderDisconnectDialog() {
+        const { disconnectDialog, user, authProviders } = this.state;
+        const authHost = disconnectDialog?.authHost;
+        const authProvider = authProviders.find(a => a.host === authHost);
+        if (!disconnectDialog || !user || !authProvider) {
+            return;
+        }
+
+        let message: JSX.Element;
+        const handleCancel = () => {
+            this.setState({
+                disconnectDialog: undefined
+            });
+        };
+        let buttonLabel: string;
+        let handleButton: () => void;
+
+        const thisUrl = new GitpodHostUrl(new URL(window.location.toString()));
+        const otherIdentitiesOfUser = user.identities.filter(i => i.authProviderId !== authProvider.authProviderId);
+        if (otherIdentitiesOfUser.length === 0) {
+            message = (<DialogContentText>
+                Disconnecting the single remaining provider would make your account unreachable. Please go the settings, if you want to delete the account.
+            </DialogContentText>);
+
+            const settingsUrl = thisUrl.asSettings().toString();
+
+            buttonLabel = "Settings";
+            handleButton = () => window.location.href = settingsUrl;
+        } else {
+            message = (<DialogContentText>
+                You are about to disconnect {authHost}.
+            </DialogContentText>);
+
+            const returnTo = encodeURIComponent(thisUrl.with({ search: `updated=${authHost}` }).toString());
+            const deauthorizeUrl = thisUrl.withApi({
+                pathname: '/deauthorize',
+                search: `returnTo=${returnTo}&host=${authHost}`
+            }).toString();
+
+            buttonLabel = "Proceed";
+            handleButton = () => window.location.href = deauthorizeUrl;
+        }
+
+        return (
+            <Dialog
+                key="diconnect-dialog"
+                open={!!disconnectDialog}
+                onClose={handleCancel}
+            >
+                <DialogTitle>Disconnect {authHost}</DialogTitle>
+                <DialogContent>{message}</DialogContent>
+                <DialogActions>
+                    <Button onClick={handleButton} variant="outlined" color="secondary" autoFocus>{buttonLabel}</Button>
+                    <Button onClick={handleCancel} variant="outlined" color="primary" autoFocus>Cancel</Button>
+                </DialogActions>
+            </Dialog>
+        );
     }
 }

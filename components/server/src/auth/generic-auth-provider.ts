@@ -17,8 +17,9 @@ import { format as formatURL, URL } from 'url';
 import { runInNewContext } from "vm";
 import { AuthFlow, AuthProvider } from "../auth/auth-provider";
 import { AuthProviderParams, AuthUserSetup } from "../auth/auth-provider";
-import { AuthException } from "../auth/errors";
-import { GitpodCookie } from "../auth/gitpod-cookie";
+import { AuthException, SelectAccountException } from "../auth/errors";
+import { GitpodCookie } from "./gitpod-cookie";
+import { SelectAccountCookie } from "../user/select-account-cookie";
 import { Env } from "../env";
 import { getRequestingClientInfo } from "../express-util";
 import { TokenProvider } from '../user/token-provider';
@@ -63,6 +64,7 @@ export class GenericAuthProvider implements AuthProvider {
     @inject(UserDB) protected userDb: UserDB;
     @inject(Env) protected env: Env;
     @inject(GitpodCookie) protected gitpodCookie: GitpodCookie;
+    @inject(SelectAccountCookie) protected selectAccountCookie: SelectAccountCookie;
     @inject(UserService) protected readonly userService: UserService;
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
     @inject(LoginCompletionHandler) protected readonly loginCompletionHandler: LoginCompletionHandler;
@@ -336,6 +338,13 @@ export class GenericAuthProvider implements AuthProvider {
             await AuthFlow.clear(request.session);
             await TosFlow.clear(request.session);
 
+            if (SelectAccountException.is(err)) {
+                this.selectAccountCookie.set(response, err.payload);
+                const url = this.env.hostUrl.with({ pathname: '/select-account' }).toString();
+                response.redirect(url);
+                return;
+            }
+
             let message = 'Authorization failed. Please try again.';
             if (AuthException.is(err)) {
                 message = `Login was interrupted: ${err.message}`;
@@ -352,12 +361,6 @@ export class GenericAuthProvider implements AuthProvider {
         }
 
         if (flowContext) {
-
-            if (TosFlow.WithIdentity.is(flowContext)) {
-                if (User.is(request.user)) {
-                    log.error(context, `(${strategyName}) Invariant violated. Unexpected user.`, { ...defaultLogPayload, ...defaultLogPayload });
-                }
-            }
 
             if (TosFlow.WithIdentity.is(flowContext) || (TosFlow.WithUser.is(flowContext) && flowContext.termsAcceptanceRequired)) {
 
@@ -400,8 +403,6 @@ export class GenericAuthProvider implements AuthProvider {
         let currentGitpodUser: User | undefined = User.is(req.user) ? req.user : undefined;
         let candidate: Identity;
 
-        const isIdentityLinked = (user: User, candidate: Identity) => user.identities.some(i => Identity.equals(i, candidate));
-
         try {
             const tokenResponseObject = this.ensureIsObject(tokenResponse);
             const { authUser, currentScopes, envVars } = await this.fetchAuthUserSetup(accessToken, tokenResponseObject);
@@ -410,15 +411,19 @@ export class GenericAuthProvider implements AuthProvider {
 
             log.info(`(${strategyName}) Verify function called for ${authName}`, { ...defaultLogPayload, authUser });
 
-            if (currentGitpodUser) { // user is already logged in
-                if (!isIdentityLinked(currentGitpodUser, candidate)) {
-                    const userWithSameIdentity = await this.userService.findUserForLogin({ candidate });
-                    if (userWithSameIdentity) {
-                        // another Gitpod user is linked with this identity, this will change on completion, we're logging this action.
-                        log.info(`(${strategyName}) Moving identity to the current Gitpod user.`, { ...defaultLogPayload, authUser, candidate, currentGitpodUser, userWithSameIdentity, clientInfo });
-                    }
+            if (currentGitpodUser) {
+                // user is already logged in
+
+                // we need to check current provider authorizations first...
+                try {
+                    await this.userService.asserNoTwinAccount(currentGitpodUser, this.host, this.authProviderId, candidate);
+                } catch (error) {
+                    log.warn(`User is trying to connect a provider identity twice.`, { ...defaultLogPayload, authUser, candidate, currentGitpodUser: User.censor(currentGitpodUser), clientInfo });
+                    done(error, undefined);
+                    return;
                 }
-            } else { // no user session, login
+            } else {
+                // no user session present, let's initiate a login
                 currentGitpodUser = await this.userService.findUserForLogin({ candidate, primaryEmail });
             }
 

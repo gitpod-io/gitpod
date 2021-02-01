@@ -21,11 +21,11 @@ const currentTerms: Terms = {
     updateMessage: `
 # Terms and Conditions Update
 
-Read the updated [terms](https://www.gitpod.io/self-hosted-terms/) online.
+Read the updated [terms](https://www.gitpod.io/self-hosted-terms/).
 `,
     content: `
-# Before we proceed
+# Create a new Gitpod account with {{AUTH_HOST}}
 
-Read the [terms](https://www.gitpod.io/self-hosted-terms/) online.
+Before we proceed, please read and accept the [terms](https://www.gitpod.io/self-hosted-terms/).
 `
 }
