@@ -2,20 +2,8 @@ module github.com/gitpod-io/gitpod/content-service
 
 go 1.14
 
-// containerd, see https://github.com/containerd/containerd/issues/3031
-replace github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible // leeway ignore
-
-replace github.com/docker/docker v1.13.1 => github.com/docker/engine v0.0.0-20190822205725-ed20165a37b4 // leeway ignore
-
-replace github.com/Sirupsen/logrus v1.6.0 => github.com/sirupsen/logrus v1.6.0 // leeway ignore
-
 require (
 	cloud.google.com/go/storage v1.10.0
-	github.com/Microsoft/go-winio v0.4.16 // indirect
-	github.com/Microsoft/hcsshim v0.8.14 // indirect
-	github.com/containerd/continuity v0.0.0-20201208142359-180525291bb7 // indirect
-	github.com/docker/docker v1.13.1
-	github.com/docker/go-units v0.4.0 // indirect
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	github.com/go-ozzo/ozzo-validation v3.5.0+incompatible
@@ -27,7 +15,6 @@ require (
 	github.com/minio/minio-go/v7 v7.0.7
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.0.1
-	github.com/opencontainers/runc v0.1.1 // indirect
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/prometheus/client_golang v1.1.0
 	github.com/spf13/cobra v1.1.1
@@ -38,9 +25,7 @@ require (
 	golang.org/x/text v0.3.5 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	google.golang.org/api v0.32.0
-	google.golang.org/appengine v1.6.6
 	google.golang.org/grpc v1.34.0
-	google.golang.org/protobuf v1.25.0
 	gopkg.in/ini.v1 v1.62.0 // indirect
 )
 
