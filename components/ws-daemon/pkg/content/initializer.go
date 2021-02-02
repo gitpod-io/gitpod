@@ -15,6 +15,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -22,6 +23,7 @@ import (
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	wsinit "github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
+	"github.com/sirupsen/logrus"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/opencontainers/runtime-spec/specs-go"
@@ -233,6 +235,13 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	cmd.Stdin = os.Stdin
 	err = cmd.Run()
 	if err != nil {
+		if exiterr, ok := err.(*exec.ExitError); ok {
+			// The program has exited with an exit code != 0. If it's 42, it was deliberate.
+			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok && status.ExitStatus() == 42 {
+				return fmt.Errorf("content initializer failed")
+			}
+		}
+
 		return err
 	}
 
@@ -251,6 +260,7 @@ func RunInitializerChild() (err error) {
 	if err != nil {
 		return err
 	}
+	log.Log = logrus.WithFields(initmsg.OWI)
 
 	defer func() {
 		if err != nil {
