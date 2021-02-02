@@ -218,8 +218,8 @@ func (s ImageLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst
 
 const (
 	envPrefixSet     = "GITPOD_ENV_SET_"
-	envPrefixAppend  = "GITPOD_APPEND_ENV_"
-	envPrefixPrepend = "GITPOD_PREPEND_ENV_"
+	envPrefixAppend  = "GITPOD_ENV_APPEND_"
+	envPrefixPrepend = "GITPOD_ENV_PREPEND_"
 )
 
 // NewStaticSourceFromImage downloads image layers into the store and uses them as static layer

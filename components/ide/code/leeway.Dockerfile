@@ -55,7 +55,7 @@ COPY startup.sh supervisor-ide-config.json /ide/
 
 # cli config
 COPY --from=code_installer /ide/bin /ide/bin
-ENV GITPOD_APPEND_ENV_PATH /ide/bin:
+ENV GITPOD_ENV_APPEND_PATH /ide/bin:
 
 # editor config
 ENV GITPOD_ENV_SET_EDITOR code
