@@ -68,7 +68,7 @@ COPY supervisor-config.json supervisor-ide-config.json /theia/
 
 # cli config
 COPY --from=builder_alpine /ide/bin /ide/bin
-ENV GITPOD_APPEND_ENV_PATH /ide/bin:
+ENV GITPOD_ENV_APPEND_PATH /ide/bin:
 
 # editor config
 ENV GITPOD_ENV_SET_EDITOR "gp open -w"
