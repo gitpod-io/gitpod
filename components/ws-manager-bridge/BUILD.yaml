@@ -8,8 +8,8 @@ packages:
       - components/gitpod-db:lib
       - components/gitpod-messagebus:lib
       - components/gitpod-protocol:lib
-      - components/ws-manager-api/typescript:lib
       - components/ws-daemon-api/typescript:lib
+      - components/ws-manager-api/typescript:lib
     config:
       packaging: offline-mirror
       yarnLock: ${coreYarnLockBase}/yarn.lock

@@ -3,5 +3,5 @@ packages:
     type: generic
     deps:
       - dev/image:docker
-      - dev/sweeper:docker
       - dev/poolkeeper:docker
+      - dev/sweeper:docker
