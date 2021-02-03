@@ -26,7 +26,7 @@ import { AuthFlow } from "../auth/auth-provider";
 import { LoginCompletionHandler } from "../auth/login-completion-handler";
 import { TosCookie } from "./tos-cookie";
 import { TosFlow } from "../terms/tos-flow";
-import { increaseLoginCounter } from '../../src/prometheusMetrics';
+import { increaseLoginCounter } from '../../src/prometheus-metrics';
 import * as uuidv4 from 'uuid/v4';
 
 @injectable()
