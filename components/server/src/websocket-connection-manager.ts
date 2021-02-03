@@ -15,7 +15,7 @@ import { ErrorCodes as RPCErrorCodes, MessageConnection, ResponseError } from "v
 import { AllAccessFunctionGuard, FunctionAccessGuard, WithFunctionAccessGuard } from "./auth/function-access";
 import { RateLimiter, UserRateLimiter } from "./auth/rate-limiter";
 import { CompositeResourceAccessGuard, OwnerResourceGuard, ResourceAccessGuard, SharedWorkspaceAccessGuard, WithResourceAccessGuard } from "./auth/resource-access";
-import { increaseApiCallCounter, increaseApiConnectionClosedCounter, increaseApiConnectionCounter, increaseApiCallUserCounter } from "./prometheusMetrics";
+import { increaseApiCallCounter, increaseApiConnectionClosedCounter, increaseApiConnectionCounter, increaseApiCallUserCounter } from "./prometheus-metrics";
 import { GitpodServerImpl } from "./workspace/gitpod-server-impl";
 
 export type GitpodServiceFactory<C extends GitpodClient, S extends GitpodServer> = () => GitpodServerImpl<C, S>;

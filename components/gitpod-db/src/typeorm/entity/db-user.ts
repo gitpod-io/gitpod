@@ -61,11 +61,6 @@ export class DBUser implements User {
     blocked?: boolean;
 
     @Column({
-        default: false
-    })
-    privileged?: boolean;
-
-    @Column({
         type: 'simple-json',
         nullable: true
     })

@@ -246,11 +246,7 @@ export class WorkspaceStarter {
         if (user.featureFlags && user.featureFlags.permanentWSFeatureFlags) {
             featureFlags = featureFlags.concat(featureFlags, user.featureFlags.permanentWSFeatureFlags);
         }
-        // privileged are special cases which require the privileged-ws permission
-        if (!this.authService.hasPermission(user, "privileged-ws")) {
-            featureFlags = featureFlags.filter(f => f != "privileged");
-        }
-
+        
         // if the user has feature preview enabled, we need to add the respective feature flags.
         // Beware: all feature flags we add here are not workspace-persistent feature flags, e.g. no full-workspace backup.
         if (!!user.additionalData?.featurePreview) {

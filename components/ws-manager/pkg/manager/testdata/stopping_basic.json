@@ -121,7 +121,7 @@
                                     "SETGID"
                                 ]
                             },
-                            "privileged": true,
+                            "privileged": false,
                             "runAsUser": 33333,
                             "runAsGroup": 33333,
                             "runAsNonRoot": true,
@@ -133,8 +133,8 @@
                 "restartPolicy": "Always",
                 "terminationGracePeriodSeconds": 30,
                 "dnsPolicy": "None",
-                "serviceAccountName": "workspace-privileged",
-                "serviceAccount": "workspace-privileged",
+                "serviceAccountName": "workspace",
+                "serviceAccount": "workspace",
                 "automountServiceAccountToken": false,
                 "nodeName": "gke-staging--gitpod--workspace-pool-2-331a2b32-mgbq",
                 "securityContext": {},

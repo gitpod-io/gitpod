@@ -421,8 +421,9 @@ enum WorkspaceFeatureFlag {
     // NOOP feature flag is just here because I don't want privileged to be 0
     NOOP = 0;
 
-    // Privileged workspaces allow users to become root
-    PRIVILEGED = 1;
+    // Privileged workspaces allowed users to become root by making them root on the machine.
+    // They've been the precursor to user-namespaced workspaces.
+    reserved 1;
 
     // Was used for appplitools-specific workspace config (e.g., proxy + network restriction)
     // APPLITOOLS = 2;

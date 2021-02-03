@@ -45,9 +45,6 @@ type GitpodConfig struct {
 	// List of exposed ports.
 	Ports []*PortsItems `yaml:"ports,omitempty"`
 
-	// Whether the workspace is started in privileged mode.
-	Privileged bool `yaml:"privileged,omitempty"`
-
 	// List of tasks to run on start. Each task will open a terminal in the IDE.
 	Tasks []*TasksItems `yaml:"tasks,omitempty"`
 
@@ -254,17 +251,6 @@ func (strct *GitpodConfig) MarshalJSON() ([]byte, error) {
 		buf.Write(tmp)
 	}
 	comma = true
-	// Marshal the "privileged" field
-	if comma {
-		buf.WriteString(",")
-	}
-	buf.WriteString("\"privileged\": ")
-	if tmp, err := json.Marshal(strct.Privileged); err != nil {
-		return nil, err
-	} else {
-		buf.Write(tmp)
-	}
-	comma = true
 	// Marshal the "tasks" field
 	if comma {
 		buf.WriteString(",")
@@ -334,10 +320,6 @@ func (strct *GitpodConfig) UnmarshalJSON(b []byte) error {
 			}
 		case "ports":
 			if err := json.Unmarshal([]byte(v), &strct.Ports); err != nil {
-				return err
-			}
-		case "privileged":
-			if err := json.Unmarshal([]byte(v), &strct.Privileged); err != nil {
 				return err
 			}
 		case "tasks":

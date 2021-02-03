@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -6443,7 +6443,6 @@ proto.wsman.WorkspacePhase = {
  */
 proto.wsman.WorkspaceFeatureFlag = {
   NOOP: 0,
-  PRIVILEGED: 1,
   REGISTRY_FACADE: 3,
   FULL_WORKSPACE_BACKUP: 4,
   FIXED_RESOURCES: 5,
