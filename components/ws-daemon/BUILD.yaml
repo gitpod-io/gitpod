@@ -54,7 +54,7 @@ scripts:
     description: Updates the permissions and feature flags of all users in the database, s.t. they start user namespaced workspaces
     script: |
       set -eox pipefail
-      
+
       kubectl port-forward deployment/mysql 3306 &
       PID=$!
       sleep 2
@@ -63,7 +63,7 @@ scripts:
       kill $PID
   - name: kube-exec
     description: Executes into the ws-daemon for a workspace pod in $WS
-    script: |
+    script: |-
       if [ -z "$WS" ]; then
         echo "usage: WS=<workspacePodName> leeway run components/ws-daemon:kube-exec"
         exit 1

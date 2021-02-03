@@ -4,6 +4,6 @@ packages:
     argdeps:
       - version
     deps:
-      - install/installer:docker
-      - install/docker/gitpod-image:docker
       - install/docker/examples/gitpod-gitlab/gitlab:docker
+      - install/docker/gitpod-image:docker
+      - install/installer:docker

@@ -30,9 +30,9 @@ packages:
         VERSION: ${version}
         IMAGE_PREFIX: ${imageRepoBase}
 scripts:
-- name: publish-as-latest
-  deps:
-  - :docker
-  script: |
-    docker tag ${imageRepoBase}/installer:${version} ${imageRepoBase}/installer:latest
-    docker push ${imageRepoBase}/installer:latest
+  - name: publish-as-latest
+    deps:
+      - :docker
+    script: |
+      docker tag ${imageRepoBase}/installer:${version} ${imageRepoBase}/installer:latest
+      docker push ${imageRepoBase}/installer:latest
