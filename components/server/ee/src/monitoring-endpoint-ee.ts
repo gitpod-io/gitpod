@@ -11,7 +11,7 @@ import * as request from 'request';
 import { Span } from 'opentracing';
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { injectable, inject } from 'inversify';
-import { register } from '../../src/prometheusMetrics';
+import { register } from '../../src/prometheus-metrics';
 
 @injectable()
 export class MonitoringEndpointsAppEE extends WorkspaceHealthMonitoring {

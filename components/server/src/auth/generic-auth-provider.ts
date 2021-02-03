@@ -27,7 +27,7 @@ import { UserService } from "../user/user-service";
 import { AuthProviderService } from './auth-provider-service';
 import { LoginCompletionHandler } from './login-completion-handler';
 import { TosFlow } from '../terms/tos-flow';
-import { increaseLoginCounter } from '../../src/prometheusMetrics';
+import { increaseLoginCounter } from '../../src/prometheus-metrics';
 
 /**
  * This is a generic implementation of OAuth2-based AuthProvider.
