@@ -23,7 +23,6 @@ export class PermissionSpec {
 
         expect(cut.hasPermission(userViewer, Permission.MONITOR)).to.be.true;
         expect(cut.hasPermission(userViewer, Permission.REGISTRY_ACCESS)).to.be.true;
-        expect(cut.hasPermission(userViewer, Permission.PRIVILEGED_WORKSPACE)).to.be.true;
         expect(cut.hasPermission(userViewer, Permission.ENFORCEMENT)).to.be.false;
     }
 
@@ -36,7 +35,6 @@ export class PermissionSpec {
 
         expect(cut.hasPermission(userDev, Permission.MONITOR)).to.be.true;
         expect(cut.hasPermission(userDev, Permission.REGISTRY_ACCESS)).to.be.true;
-        expect(cut.hasPermission(userDev, Permission.PRIVILEGED_WORKSPACE)).to.be.true;
         expect(cut.hasPermission(userDev, Permission.ENFORCEMENT)).to.be.true;
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -8,6 +8,7 @@
 // file: core.proto
 
 /* tslint:disable */
+/* eslint-disable */
 
 import * as grpc from "grpc";
 import * as core_pb from "./core_pb";
@@ -28,90 +29,90 @@ interface IWorkspaceManagerService extends grpc.ServiceDefinition<grpc.UntypedSe
 }
 
 interface IWorkspaceManagerService_IGetWorkspaces extends grpc.MethodDefinition<core_pb.GetWorkspacesRequest, core_pb.GetWorkspacesResponse> {
-    path: string; // "/wsman.WorkspaceManager/GetWorkspaces"
-    requestStream: boolean; // false
-    responseStream: boolean; // false
+    path: "/wsman.WorkspaceManager/GetWorkspaces";
+    requestStream: false;
+    responseStream: false;
     requestSerialize: grpc.serialize<core_pb.GetWorkspacesRequest>;
     requestDeserialize: grpc.deserialize<core_pb.GetWorkspacesRequest>;
     responseSerialize: grpc.serialize<core_pb.GetWorkspacesResponse>;
     responseDeserialize: grpc.deserialize<core_pb.GetWorkspacesResponse>;
 }
 interface IWorkspaceManagerService_IStartWorkspace extends grpc.MethodDefinition<core_pb.StartWorkspaceRequest, core_pb.StartWorkspaceResponse> {
-    path: string; // "/wsman.WorkspaceManager/StartWorkspace"
-    requestStream: boolean; // false
-    responseStream: boolean; // false
+    path: "/wsman.WorkspaceManager/StartWorkspace";
+    requestStream: false;
+    responseStream: false;
     requestSerialize: grpc.serialize<core_pb.StartWorkspaceRequest>;
     requestDeserialize: grpc.deserialize<core_pb.StartWorkspaceRequest>;
     responseSerialize: grpc.serialize<core_pb.StartWorkspaceResponse>;
     responseDeserialize: grpc.deserialize<core_pb.StartWorkspaceResponse>;
 }
 interface IWorkspaceManagerService_IStopWorkspace extends grpc.MethodDefinition<core_pb.StopWorkspaceRequest, core_pb.StopWorkspaceResponse> {
-    path: string; // "/wsman.WorkspaceManager/StopWorkspace"
-    requestStream: boolean; // false
-    responseStream: boolean; // false
+    path: "/wsman.WorkspaceManager/StopWorkspace";
+    requestStream: false;
+    responseStream: false;
     requestSerialize: grpc.serialize<core_pb.StopWorkspaceRequest>;
     requestDeserialize: grpc.deserialize<core_pb.StopWorkspaceRequest>;
     responseSerialize: grpc.serialize<core_pb.StopWorkspaceResponse>;
     responseDeserialize: grpc.deserialize<core_pb.StopWorkspaceResponse>;
 }
 interface IWorkspaceManagerService_IDescribeWorkspace extends grpc.MethodDefinition<core_pb.DescribeWorkspaceRequest, core_pb.DescribeWorkspaceResponse> {
-    path: string; // "/wsman.WorkspaceManager/DescribeWorkspace"
-    requestStream: boolean; // false
-    responseStream: boolean; // false
+    path: "/wsman.WorkspaceManager/DescribeWorkspace";
+    requestStream: false;
+    responseStream: false;
     requestSerialize: grpc.serialize<core_pb.DescribeWorkspaceRequest>;
     requestDeserialize: grpc.deserialize<core_pb.DescribeWorkspaceRequest>;
     responseSerialize: grpc.serialize<core_pb.DescribeWorkspaceResponse>;
     responseDeserialize: grpc.deserialize<core_pb.DescribeWorkspaceResponse>;
 }
 interface IWorkspaceManagerService_ISubscribe extends grpc.MethodDefinition<core_pb.SubscribeRequest, core_pb.SubscribeResponse> {
-    path: string; // "/wsman.WorkspaceManager/Subscribe"
-    requestStream: boolean; // false
-    responseStream: boolean; // true
+    path: "/wsman.WorkspaceManager/Subscribe";
+    requestStream: false;
+    responseStream: true;
     requestSerialize: grpc.serialize<core_pb.SubscribeRequest>;
     requestDeserialize: grpc.deserialize<core_pb.SubscribeRequest>;
     responseSerialize: grpc.serialize<core_pb.SubscribeResponse>;
     responseDeserialize: grpc.deserialize<core_pb.SubscribeResponse>;
 }
 interface IWorkspaceManagerService_IMarkActive extends grpc.MethodDefinition<core_pb.MarkActiveRequest, core_pb.MarkActiveResponse> {
-    path: string; // "/wsman.WorkspaceManager/MarkActive"
-    requestStream: boolean; // false
-    responseStream: boolean; // false
+    path: "/wsman.WorkspaceManager/MarkActive";
+    requestStream: false;
+    responseStream: false;
     requestSerialize: grpc.serialize<core_pb.MarkActiveRequest>;
     requestDeserialize: grpc.deserialize<core_pb.MarkActiveRequest>;
     responseSerialize: grpc.serialize<core_pb.MarkActiveResponse>;
     responseDeserialize: grpc.deserialize<core_pb.MarkActiveResponse>;
 }
 interface IWorkspaceManagerService_ISetTimeout extends grpc.MethodDefinition<core_pb.SetTimeoutRequest, core_pb.SetTimeoutResponse> {
-    path: string; // "/wsman.WorkspaceManager/SetTimeout"
-    requestStream: boolean; // false
-    responseStream: boolean; // false
+    path: "/wsman.WorkspaceManager/SetTimeout";
+    requestStream: false;
+    responseStream: false;
     requestSerialize: grpc.serialize<core_pb.SetTimeoutRequest>;
     requestDeserialize: grpc.deserialize<core_pb.SetTimeoutRequest>;
     responseSerialize: grpc.serialize<core_pb.SetTimeoutResponse>;
     responseDeserialize: grpc.deserialize<core_pb.SetTimeoutResponse>;
 }
 interface IWorkspaceManagerService_IControlPort extends grpc.MethodDefinition<core_pb.ControlPortRequest, core_pb.ControlPortResponse> {
-    path: string; // "/wsman.WorkspaceManager/ControlPort"
-    requestStream: boolean; // false
-    responseStream: boolean; // false
+    path: "/wsman.WorkspaceManager/ControlPort";
+    requestStream: false;
+    responseStream: false;
     requestSerialize: grpc.serialize<core_pb.ControlPortRequest>;
     requestDeserialize: grpc.deserialize<core_pb.ControlPortRequest>;
     responseSerialize: grpc.serialize<core_pb.ControlPortResponse>;
     responseDeserialize: grpc.deserialize<core_pb.ControlPortResponse>;
 }
 interface IWorkspaceManagerService_ITakeSnapshot extends grpc.MethodDefinition<core_pb.TakeSnapshotRequest, core_pb.TakeSnapshotResponse> {
-    path: string; // "/wsman.WorkspaceManager/TakeSnapshot"
-    requestStream: boolean; // false
-    responseStream: boolean; // false
+    path: "/wsman.WorkspaceManager/TakeSnapshot";
+    requestStream: false;
+    responseStream: false;
     requestSerialize: grpc.serialize<core_pb.TakeSnapshotRequest>;
     requestDeserialize: grpc.deserialize<core_pb.TakeSnapshotRequest>;
     responseSerialize: grpc.serialize<core_pb.TakeSnapshotResponse>;
     responseDeserialize: grpc.deserialize<core_pb.TakeSnapshotResponse>;
 }
 interface IWorkspaceManagerService_IControlAdmission extends grpc.MethodDefinition<core_pb.ControlAdmissionRequest, core_pb.ControlAdmissionResponse> {
-    path: string; // "/wsman.WorkspaceManager/ControlAdmission"
-    requestStream: boolean; // false
-    responseStream: boolean; // false
+    path: "/wsman.WorkspaceManager/ControlAdmission";
+    requestStream: false;
+    responseStream: false;
     requestSerialize: grpc.serialize<core_pb.ControlAdmissionRequest>;
     requestDeserialize: grpc.deserialize<core_pb.ControlAdmissionRequest>;
     responseSerialize: grpc.serialize<core_pb.ControlAdmissionResponse>;

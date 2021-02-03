@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -8,6 +8,7 @@
 // file: core.proto
 
 /* tslint:disable */
+/* eslint-disable */
 
 import * as jspb from "google-protobuf";
 import * as content_service_api_initializer_pb from "@gitpod/content-service/lib";
@@ -33,7 +34,7 @@ export namespace GetWorkspacesRequest {
 export class GetWorkspacesResponse extends jspb.Message { 
     clearStatusList(): void;
     getStatusList(): Array<WorkspaceStatus>;
-    setStatusList(value: Array<WorkspaceStatus>): void;
+    setStatusList(value: Array<WorkspaceStatus>): GetWorkspacesResponse;
     addStatus(value?: WorkspaceStatus, index?: number): WorkspaceStatus;
 
 
@@ -55,25 +56,25 @@ export namespace GetWorkspacesResponse {
 
 export class StartWorkspaceRequest extends jspb.Message { 
     getId(): string;
-    setId(value: string): void;
+    setId(value: string): StartWorkspaceRequest;
 
     getServicePrefix(): string;
-    setServicePrefix(value: string): void;
+    setServicePrefix(value: string): StartWorkspaceRequest;
 
 
     hasMetadata(): boolean;
     clearMetadata(): void;
     getMetadata(): WorkspaceMetadata | undefined;
-    setMetadata(value?: WorkspaceMetadata): void;
+    setMetadata(value?: WorkspaceMetadata): StartWorkspaceRequest;
 
 
     hasSpec(): boolean;
     clearSpec(): void;
     getSpec(): StartWorkspaceSpec | undefined;
-    setSpec(value?: StartWorkspaceSpec): void;
+    setSpec(value?: StartWorkspaceSpec): StartWorkspaceRequest;
 
     getType(): WorkspaceType;
-    setType(value: WorkspaceType): void;
+    setType(value: WorkspaceType): StartWorkspaceRequest;
 
 
     serializeBinary(): Uint8Array;
@@ -98,7 +99,7 @@ export namespace StartWorkspaceRequest {
 
 export class StartWorkspaceResponse extends jspb.Message { 
     getUrl(): string;
-    setUrl(value: string): void;
+    setUrl(value: string): StartWorkspaceResponse;
 
 
     serializeBinary(): Uint8Array;
@@ -119,10 +120,10 @@ export namespace StartWorkspaceResponse {
 
 export class StopWorkspaceRequest extends jspb.Message { 
     getId(): string;
-    setId(value: string): void;
+    setId(value: string): StopWorkspaceRequest;
 
     getPolicy(): StopWorkspacePolicy;
-    setPolicy(value: StopWorkspacePolicy): void;
+    setPolicy(value: StopWorkspacePolicy): StopWorkspaceRequest;
 
 
     serializeBinary(): Uint8Array;
@@ -161,7 +162,7 @@ export namespace StopWorkspaceResponse {
 
 export class DescribeWorkspaceRequest extends jspb.Message { 
     getId(): string;
-    setId(value: string): void;
+    setId(value: string): DescribeWorkspaceRequest;
 
 
     serializeBinary(): Uint8Array;
@@ -185,10 +186,10 @@ export class DescribeWorkspaceResponse extends jspb.Message {
     hasStatus(): boolean;
     clearStatus(): void;
     getStatus(): WorkspaceStatus | undefined;
-    setStatus(value?: WorkspaceStatus): void;
+    setStatus(value?: WorkspaceStatus): DescribeWorkspaceResponse;
 
     getLastactivity(): string;
-    setLastactivity(value: string): void;
+    setLastactivity(value: string): DescribeWorkspaceResponse;
 
 
     serializeBinary(): Uint8Array;
@@ -230,13 +231,13 @@ export class SubscribeResponse extends jspb.Message {
     hasStatus(): boolean;
     clearStatus(): void;
     getStatus(): WorkspaceStatus | undefined;
-    setStatus(value?: WorkspaceStatus): void;
+    setStatus(value?: WorkspaceStatus): SubscribeResponse;
 
 
     hasLog(): boolean;
     clearLog(): void;
     getLog(): WorkspaceLogMessage | undefined;
-    setLog(value?: WorkspaceLogMessage): void;
+    setLog(value?: WorkspaceLogMessage): SubscribeResponse;
 
 
     getHeaderMap(): jspb.Map<string, string>;
@@ -276,10 +277,10 @@ export namespace SubscribeResponse {
 
 export class MarkActiveRequest extends jspb.Message { 
     getId(): string;
-    setId(value: string): void;
+    setId(value: string): MarkActiveRequest;
 
     getClosed(): boolean;
-    setClosed(value: boolean): void;
+    setClosed(value: boolean): MarkActiveRequest;
 
 
     serializeBinary(): Uint8Array;
@@ -318,10 +319,10 @@ export namespace MarkActiveResponse {
 
 export class SetTimeoutRequest extends jspb.Message { 
     getId(): string;
-    setId(value: string): void;
+    setId(value: string): SetTimeoutRequest;
 
     getDuration(): string;
-    setDuration(value: string): void;
+    setDuration(value: string): SetTimeoutRequest;
 
 
     serializeBinary(): Uint8Array;
@@ -360,16 +361,16 @@ export namespace SetTimeoutResponse {
 
 export class ControlPortRequest extends jspb.Message { 
     getId(): string;
-    setId(value: string): void;
+    setId(value: string): ControlPortRequest;
 
     getExpose(): boolean;
-    setExpose(value: boolean): void;
+    setExpose(value: boolean): ControlPortRequest;
 
 
     hasSpec(): boolean;
     clearSpec(): void;
     getSpec(): PortSpec | undefined;
-    setSpec(value?: PortSpec): void;
+    setSpec(value?: PortSpec): ControlPortRequest;
 
 
     serializeBinary(): Uint8Array;
@@ -409,7 +410,7 @@ export namespace ControlPortResponse {
 
 export class TakeSnapshotRequest extends jspb.Message { 
     getId(): string;
-    setId(value: string): void;
+    setId(value: string): TakeSnapshotRequest;
 
 
     serializeBinary(): Uint8Array;
@@ -430,7 +431,7 @@ export namespace TakeSnapshotRequest {
 
 export class TakeSnapshotResponse extends jspb.Message { 
     getUrl(): string;
-    setUrl(value: string): void;
+    setUrl(value: string): TakeSnapshotResponse;
 
 
     serializeBinary(): Uint8Array;
@@ -451,10 +452,10 @@ export namespace TakeSnapshotResponse {
 
 export class ControlAdmissionRequest extends jspb.Message { 
     getId(): string;
-    setId(value: string): void;
+    setId(value: string): ControlAdmissionRequest;
 
     getLevel(): AdmissionLevel;
-    setLevel(value: AdmissionLevel): void;
+    setLevel(value: AdmissionLevel): ControlAdmissionRequest;
 
 
     serializeBinary(): Uint8Array;
@@ -493,49 +494,49 @@ export namespace ControlAdmissionResponse {
 
 export class WorkspaceStatus extends jspb.Message { 
     getId(): string;
-    setId(value: string): void;
+    setId(value: string): WorkspaceStatus;
 
 
     hasMetadata(): boolean;
     clearMetadata(): void;
     getMetadata(): WorkspaceMetadata | undefined;
-    setMetadata(value?: WorkspaceMetadata): void;
+    setMetadata(value?: WorkspaceMetadata): WorkspaceStatus;
 
 
     hasSpec(): boolean;
     clearSpec(): void;
     getSpec(): WorkspaceSpec | undefined;
-    setSpec(value?: WorkspaceSpec): void;
+    setSpec(value?: WorkspaceSpec): WorkspaceStatus;
 
     getPhase(): WorkspacePhase;
-    setPhase(value: WorkspacePhase): void;
+    setPhase(value: WorkspacePhase): WorkspaceStatus;
 
 
     hasConditions(): boolean;
     clearConditions(): void;
     getConditions(): WorkspaceConditions | undefined;
-    setConditions(value?: WorkspaceConditions): void;
+    setConditions(value?: WorkspaceConditions): WorkspaceStatus;
 
     getMessage(): string;
-    setMessage(value: string): void;
+    setMessage(value: string): WorkspaceStatus;
 
 
     hasRepo(): boolean;
     clearRepo(): void;
     getRepo(): content_service_api_initializer_pb.GitStatus | undefined;
-    setRepo(value?: content_service_api_initializer_pb.GitStatus): void;
+    setRepo(value?: content_service_api_initializer_pb.GitStatus): WorkspaceStatus;
 
 
     hasRuntime(): boolean;
     clearRuntime(): void;
     getRuntime(): WorkspaceRuntimeInfo | undefined;
-    setRuntime(value?: WorkspaceRuntimeInfo): void;
+    setRuntime(value?: WorkspaceRuntimeInfo): WorkspaceStatus;
 
 
     hasAuth(): boolean;
     clearAuth(): void;
     getAuth(): WorkspaceAuthentication | undefined;
-    setAuth(value?: WorkspaceAuthentication): void;
+    setAuth(value?: WorkspaceAuthentication): WorkspaceStatus;
 
 
     serializeBinary(): Uint8Array;
@@ -564,27 +565,27 @@ export namespace WorkspaceStatus {
 
 export class WorkspaceSpec extends jspb.Message { 
     getWorkspaceImage(): string;
-    setWorkspaceImage(value: string): void;
+    setWorkspaceImage(value: string): WorkspaceSpec;
 
     getIdeImage(): string;
-    setIdeImage(value: string): void;
+    setIdeImage(value: string): WorkspaceSpec;
 
     getHeadless(): boolean;
-    setHeadless(value: boolean): void;
+    setHeadless(value: boolean): WorkspaceSpec;
 
     getUrl(): string;
-    setUrl(value: string): void;
+    setUrl(value: string): WorkspaceSpec;
 
     clearExposedPortsList(): void;
     getExposedPortsList(): Array<PortSpec>;
-    setExposedPortsList(value: Array<PortSpec>): void;
+    setExposedPortsList(value: Array<PortSpec>): WorkspaceSpec;
     addExposedPorts(value?: PortSpec, index?: number): PortSpec;
 
     getType(): WorkspaceType;
-    setType(value: WorkspaceType): void;
+    setType(value: WorkspaceType): WorkspaceSpec;
 
     getTimeout(): string;
-    setTimeout(value: string): void;
+    setTimeout(value: string): WorkspaceSpec;
 
 
     serializeBinary(): Uint8Array;
@@ -611,16 +612,16 @@ export namespace WorkspaceSpec {
 
 export class PortSpec extends jspb.Message { 
     getPort(): number;
-    setPort(value: number): void;
+    setPort(value: number): PortSpec;
 
     getTarget(): number;
-    setTarget(value: number): void;
+    setTarget(value: number): PortSpec;
 
     getVisibility(): PortVisibility;
-    setVisibility(value: PortVisibility): void;
+    setVisibility(value: PortVisibility): PortSpec;
 
     getUrl(): string;
-    setUrl(value: string): void;
+    setUrl(value: string): PortSpec;
 
 
     serializeBinary(): Uint8Array;
@@ -644,34 +645,34 @@ export namespace PortSpec {
 
 export class WorkspaceConditions extends jspb.Message { 
     getFailed(): string;
-    setFailed(value: string): void;
+    setFailed(value: string): WorkspaceConditions;
 
     getTimeout(): string;
-    setTimeout(value: string): void;
+    setTimeout(value: string): WorkspaceConditions;
 
     getPullingImages(): WorkspaceConditionBool;
-    setPullingImages(value: WorkspaceConditionBool): void;
+    setPullingImages(value: WorkspaceConditionBool): WorkspaceConditions;
 
     getServiceExists(): WorkspaceConditionBool;
-    setServiceExists(value: WorkspaceConditionBool): void;
+    setServiceExists(value: WorkspaceConditionBool): WorkspaceConditions;
 
     getSnapshot(): string;
-    setSnapshot(value: string): void;
+    setSnapshot(value: string): WorkspaceConditions;
 
     getFinalBackupComplete(): WorkspaceConditionBool;
-    setFinalBackupComplete(value: WorkspaceConditionBool): void;
+    setFinalBackupComplete(value: WorkspaceConditionBool): WorkspaceConditions;
 
     getDeployed(): WorkspaceConditionBool;
-    setDeployed(value: WorkspaceConditionBool): void;
+    setDeployed(value: WorkspaceConditionBool): WorkspaceConditions;
 
     getNetworkNotReady(): WorkspaceConditionBool;
-    setNetworkNotReady(value: WorkspaceConditionBool): void;
+    setNetworkNotReady(value: WorkspaceConditionBool): WorkspaceConditions;
 
 
     hasFirstUserActivity(): boolean;
     clearFirstUserActivity(): void;
     getFirstUserActivity(): google_protobuf_timestamp_pb.Timestamp | undefined;
-    setFirstUserActivity(value?: google_protobuf_timestamp_pb.Timestamp): void;
+    setFirstUserActivity(value?: google_protobuf_timestamp_pb.Timestamp): WorkspaceConditions;
 
 
     serializeBinary(): Uint8Array;
@@ -700,16 +701,16 @@ export namespace WorkspaceConditions {
 
 export class WorkspaceMetadata extends jspb.Message { 
     getOwner(): string;
-    setOwner(value: string): void;
+    setOwner(value: string): WorkspaceMetadata;
 
     getMetaId(): string;
-    setMetaId(value: string): void;
+    setMetaId(value: string): WorkspaceMetadata;
 
 
     hasStartedAt(): boolean;
     clearStartedAt(): void;
     getStartedAt(): google_protobuf_timestamp_pb.Timestamp | undefined;
-    setStartedAt(value?: google_protobuf_timestamp_pb.Timestamp): void;
+    setStartedAt(value?: google_protobuf_timestamp_pb.Timestamp): WorkspaceMetadata;
 
 
     serializeBinary(): Uint8Array;
@@ -732,7 +733,7 @@ export namespace WorkspaceMetadata {
 
 export class WorkspaceRuntimeInfo extends jspb.Message { 
     getNodeName(): string;
-    setNodeName(value: string): void;
+    setNodeName(value: string): WorkspaceRuntimeInfo;
 
 
     serializeBinary(): Uint8Array;
@@ -753,10 +754,10 @@ export namespace WorkspaceRuntimeInfo {
 
 export class WorkspaceAuthentication extends jspb.Message { 
     getAdmission(): AdmissionLevel;
-    setAdmission(value: AdmissionLevel): void;
+    setAdmission(value: AdmissionLevel): WorkspaceAuthentication;
 
     getOwnerToken(): string;
-    setOwnerToken(value: string): void;
+    setOwnerToken(value: string): WorkspaceAuthentication;
 
 
     serializeBinary(): Uint8Array;
@@ -778,49 +779,49 @@ export namespace WorkspaceAuthentication {
 
 export class StartWorkspaceSpec extends jspb.Message { 
     getWorkspaceImage(): string;
-    setWorkspaceImage(value: string): void;
+    setWorkspaceImage(value: string): StartWorkspaceSpec;
 
     getIdeImage(): string;
-    setIdeImage(value: string): void;
+    setIdeImage(value: string): StartWorkspaceSpec;
 
     clearFeatureFlagsList(): void;
     getFeatureFlagsList(): Array<WorkspaceFeatureFlag>;
-    setFeatureFlagsList(value: Array<WorkspaceFeatureFlag>): void;
+    setFeatureFlagsList(value: Array<WorkspaceFeatureFlag>): StartWorkspaceSpec;
     addFeatureFlags(value: WorkspaceFeatureFlag, index?: number): WorkspaceFeatureFlag;
 
 
     hasInitializer(): boolean;
     clearInitializer(): void;
     getInitializer(): content_service_api_initializer_pb.WorkspaceInitializer | undefined;
-    setInitializer(value?: content_service_api_initializer_pb.WorkspaceInitializer): void;
+    setInitializer(value?: content_service_api_initializer_pb.WorkspaceInitializer): StartWorkspaceSpec;
 
     clearPortsList(): void;
     getPortsList(): Array<PortSpec>;
-    setPortsList(value: Array<PortSpec>): void;
+    setPortsList(value: Array<PortSpec>): StartWorkspaceSpec;
     addPorts(value?: PortSpec, index?: number): PortSpec;
 
     clearEnvvarsList(): void;
     getEnvvarsList(): Array<EnvironmentVariable>;
-    setEnvvarsList(value: Array<EnvironmentVariable>): void;
+    setEnvvarsList(value: Array<EnvironmentVariable>): StartWorkspaceSpec;
     addEnvvars(value?: EnvironmentVariable, index?: number): EnvironmentVariable;
 
     getCheckoutLocation(): string;
-    setCheckoutLocation(value: string): void;
+    setCheckoutLocation(value: string): StartWorkspaceSpec;
 
     getWorkspaceLocation(): string;
-    setWorkspaceLocation(value: string): void;
+    setWorkspaceLocation(value: string): StartWorkspaceSpec;
 
 
     hasGit(): boolean;
     clearGit(): void;
     getGit(): GitSpec | undefined;
-    setGit(value?: GitSpec): void;
+    setGit(value?: GitSpec): StartWorkspaceSpec;
 
     getTimeout(): string;
-    setTimeout(value: string): void;
+    setTimeout(value: string): StartWorkspaceSpec;
 
     getAdmission(): AdmissionLevel;
-    setAdmission(value: AdmissionLevel): void;
+    setAdmission(value: AdmissionLevel): StartWorkspaceSpec;
 
 
     serializeBinary(): Uint8Array;
@@ -851,10 +852,10 @@ export namespace StartWorkspaceSpec {
 
 export class GitSpec extends jspb.Message { 
     getUsername(): string;
-    setUsername(value: string): void;
+    setUsername(value: string): GitSpec;
 
     getEmail(): string;
-    setEmail(value: string): void;
+    setEmail(value: string): GitSpec;
 
 
     serializeBinary(): Uint8Array;
@@ -876,10 +877,10 @@ export namespace GitSpec {
 
 export class EnvironmentVariable extends jspb.Message { 
     getName(): string;
-    setName(value: string): void;
+    setName(value: string): EnvironmentVariable;
 
     getValue(): string;
-    setValue(value: string): void;
+    setValue(value: string): EnvironmentVariable;
 
 
     serializeBinary(): Uint8Array;
@@ -901,16 +902,16 @@ export namespace EnvironmentVariable {
 
 export class WorkspaceLogMessage extends jspb.Message { 
     getId(): string;
-    setId(value: string): void;
+    setId(value: string): WorkspaceLogMessage;
 
 
     hasMetadata(): boolean;
     clearMetadata(): void;
     getMetadata(): WorkspaceMetadata | undefined;
-    setMetadata(value?: WorkspaceMetadata): void;
+    setMetadata(value?: WorkspaceMetadata): WorkspaceLogMessage;
 
     getMessage(): string;
-    setMessage(value: string): void;
+    setMessage(value: string): WorkspaceLogMessage;
 
 
     serializeBinary(): Uint8Array;
@@ -965,7 +966,6 @@ export enum WorkspacePhase {
 
 export enum WorkspaceFeatureFlag {
     NOOP = 0,
-    PRIVILEGED = 1,
     REGISTRY_FACADE = 3,
     FULL_WORKSPACE_BACKUP = 4,
     FIXED_RESOURCES = 5,

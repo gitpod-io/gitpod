@@ -40,9 +40,6 @@ export namespace Permission {
     /** The permission for actions like block user, stop workspace, etc. */
     export const ENFORCEMENT: PermissionName = "enforcement";
 
-    /** The permission to start privileged workspaces */
-    export const PRIVILEGED_WORKSPACE: PermissionName = "privileged-ws";
-
     /** The permission for registry access (start workspaces referencing gitpod-internal Docker images) */
     export const REGISTRY_ACCESS: PermissionName = "registry-access";
 
@@ -77,7 +74,6 @@ export namespace Role {
         permissions: [
             Permission.MONITOR,
             Permission.ENFORCEMENT,
-            Permission.PRIVILEGED_WORKSPACE,
             Permission.REGISTRY_ACCESS,
             Permission.IDE_SETTINGS
         ]
@@ -89,7 +85,6 @@ export namespace Role {
         permissions: [
             Permission.MONITOR,
             Permission.REGISTRY_ACCESS,
-            Permission.PRIVILEGED_WORKSPACE,
         ]
     };
 

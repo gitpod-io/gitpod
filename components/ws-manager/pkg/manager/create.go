@@ -372,11 +372,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		ffidx[feature] = struct{}{}
 
 		switch feature {
-		case api.WorkspaceFeatureFlag_PRIVILEGED:
-			// privileged workspaces get a different security contex and a service account that allows that context to take effect.
-			workspaceContainer.SecurityContext.AllowPrivilegeEscalation = &boolTrue
-			workspaceContainer.SecurityContext.Privileged = &boolTrue
-			pod.Spec.ServiceAccountName = "workspace-privileged"
 		case api.WorkspaceFeatureFlag_USER_NAMESPACE:
 			// Beware: this allows setuid binaries in the workspace - supervisor needs to set no_new_privs now.
 			// However: the whole user workload now runs in a user namespace, which makes this acceptable.
