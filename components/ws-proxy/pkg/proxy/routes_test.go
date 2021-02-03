@@ -558,8 +558,9 @@ func TestRoutes(t *testing.T) {
 					"      </button>\n        </div>\n      </div>\n    </div>\n    <script>\n      l" +
 					"et port = parseInt(window.location.hostname.split('-')[0], 10);\n      if (port)" +
 					" {\n        document.getElementById('port').textContent = port;\n      }\n      " +
-					"document.getElementById('refresh').addEventListener('click', function () {\n    " +
-					"    window.location.reload(true);\n      });\n    </script>\n  </body>\n</html>\n",
+					"function reload() {\n        window.location.reload(true);\n      }\n      docum" +
+					"ent.getElementById('refresh').addEventListener('click', reload);\n      setTimeo" +
+					"ut(reload, 3000);\n    </script>\n  </body>\n</html>\n",
 			},
 		},
 		{

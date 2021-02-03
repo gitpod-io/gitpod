@@ -77,9 +77,11 @@
       if (port) {
         document.getElementById('port').textContent = port;
       }
-      document.getElementById('refresh').addEventListener('click', function () {
+      function reload() {
         window.location.reload(true);
-      });
+      }
+      document.getElementById('refresh').addEventListener('click', reload);
+      setTimeout(reload, 3000);
     </script>
   </body>
 </html>
