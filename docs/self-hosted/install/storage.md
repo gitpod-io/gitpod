@@ -42,6 +42,8 @@ For more complex use case we recommend configuring more permanent means of persi
  2. Create a file `values.custom.yaml` with this content:
     ```yaml
     minio:
+      accessKey: add-a-radom-access-key-here
+      secretKey: add-a-radom-secret-key-here
       # insert custom config here
     ```
  3. Redeploy Gitpod using `helm upgrade --install -f values.custom.yaml gitpod gitpod.io/gitpod` to apply the changes
