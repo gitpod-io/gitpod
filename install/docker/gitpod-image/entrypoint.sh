@@ -5,13 +5,12 @@
 
 set -eu
 
-mount --make-shared /var/gitpod/workspaces
-mount --make-shared /sys/fs/cgroup
-mount --make-shared /proc
+mount --make-rshared /
 
 
 BASEDOMAIN=${BASEDOMAIN:-}
 DOMAIN=${DOMAIN:-}
+REMOVE_NETWORKPOLICIES=${REMOVE_NETWORKPOLICIES:-}
 
 
 mkdir -p /values
@@ -33,8 +32,9 @@ if [ -z "$DOMAIN" ]; then
 fi
 
 
-echo "DOMAIN:               $DOMAIN"
-echo "BASEDOMAIN:           $BASEDOMAIN"
+echo "DOMAIN:                  $DOMAIN"
+echo "BASEDOMAIN:              $BASEDOMAIN"
+echo "REMOVE_NETWORKPOLICIES:  $REMOVE_NETWORKPOLICIES"
 
 
 # Fix volume ownerships
@@ -189,6 +189,11 @@ installation_completed_hook() {
 }
 installation_completed_hook &
 
+
+if [ "$REMOVE_NETWORKPOLICIES" = "true" ]; then
+    # Remove network policy, temporary fix for: https://github.com/gitpod-com/gitpod/issues/4483
+    rm /chart/templates/*networkpolicy*.yaml
+fi
 
 
 # start k3s
