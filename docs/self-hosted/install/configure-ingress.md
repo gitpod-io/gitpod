@@ -55,12 +55,12 @@ To configure the HTTPS certificates for your domain
     ```bash
     kubectl create secret generic https-certificates --from-file=secrets/https-certificates
     ```
- 4. Afterwards, do an `helm upgrade --install -f values.custom.yaml gitpod gitpod.io/gitpod` to apply the changes.
+ 4. Afterwards, do an `helm upgrade --install -f values.custom.yaml gitpod gitpod.io/gitpod --version=0.7.0` to apply the changes.
  
 
 ### Using Let's Encrypt to generate HTTPS certificates
 
-The most accessible means of obtaining HTTPS certificates is using [Let's Encrypt](https://letsencrypt.org/). It provides free certificats to anybody who can prove ownership of a domain.
+The most accessible means of obtaining HTTPS certificates is using [Let's Encrypt](https://letsencrypt.org/). It provides free certificates to anybody who can prove ownership of a domain.
 Let's Encrypt offers a program called [certbot](https://certbot.eff.org/) to make acquiring certificates as striaght forward as possible.
 
 Assuming you have [certbot](https://certbot.eff.org/) installed, the following script will generate and configure the required certificates (notice the placeholders):

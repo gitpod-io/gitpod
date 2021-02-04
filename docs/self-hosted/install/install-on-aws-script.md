@@ -2,7 +2,7 @@
 url: /docs/self-hosted/latest/install/install-on-aws-script/
 ---
 
-> For this release (0.6.0, December 2019) the installers are broken. We're working in bringing those with the next release (January 2020).
+> Since the `0.6.0` release (December 2019) the installers are broken. We're working on bringing those back with one of the next releases.
 
 # Getting started with Gitpod on AWS
 
@@ -28,7 +28,7 @@ docker run --rm -it \
     -e AWS_ACCESS_KEY_ID \
     -e AWS_SECRET_ACCESS_KEY \
     -v "$PWD/awsinstall":"/workspace" \
-    gcr.io/gitpod-io/self-hosted/installer:latest aws
+    gcr.io/gitpod-io/self-hosted/installer:0.7.0 aws
 ```
 
 This will kickstart the installation process, authenticate with AWS and automatically set up your Gitpod deployment using Docker and Terraform.
