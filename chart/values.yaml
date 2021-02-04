@@ -1,7 +1,7 @@
 # Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
-version: 0.6.0-beta5
+version: 0.6.0
 
 hostname: localhost
 # ingressModes determines how Gitpod makes workspaces and their ports available. Possible values are:
@@ -503,8 +503,8 @@ docker-registry:
 minio:
   enabled: true
   fullnameOverride: minio
-  accessKey: # create random accesskey and secretkey
-  secretKey: # create random accesskey and secretkey
+  accessKey: sadsadasdsd # create random accesskey and secretkey
+  secretKey: sduasgagiffg # create random accesskey and secretkey
   serviceAccount:
     create: true
     name: minio
@@ -515,16 +515,3 @@ minio:
 
 mysql:
   enabled: true
-  fullnameOverride: mysql
-  testFramework:
-    enabled: false
-  existingSecret: db-password
-  serviceAccount:
-    name: db
-  extraVolumes: |
-    - name: init-scripts
-      configMap:
-        name: db-init-scripts
-  extraVolumeMounts: |
-    - mountPath: /docker-entrypoint-initdb.d
-      name: init-scripts

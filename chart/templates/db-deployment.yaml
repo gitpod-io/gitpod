@@ -62,4 +62,64 @@ spec:
         secret:
           secretName: gcloud-sql-token
 {{ toYaml .Values.defaults | indent 6 }}
-{{- end -}}
+{{- end }}
+
+{{- if $.Values.mysql.enabled }}
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: db
+  labels:
+    app: {{ template "gitpod.fullname" $ }}
+    component: {{ $comp.name }}
+    kind: deployment
+    stage: {{ .Values.installation.stage }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" $ }}
+      component: db
+      kind: pod
+      stage: {{ .Values.installation.stage }}
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: {{ template "gitpod.fullname" $ }}
+        component: db
+        kind: pod
+        stage: {{ .Values.installation.stage }}
+    spec:
+      containers:
+      - image: mysql:5.7
+        name: db
+        args: ["--ignore-db-dir=lost+found"]
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-password
+              key: mysql-root-password
+        - name: MYSQL_USER
+          value: gitpod
+        - name: MYSQL_PASSWORD
+          value: {{ .Values.db.password }}
+        - name: MYSQL_DATABASE
+          value: gitpod
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql
+        - name: init
+          mountPath: /docker-entrypoint-initdb.d
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: db-pvc
+      - name: init
+        configMap:
+          name: db-init-scripts
+{{- end }}
