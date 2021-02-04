@@ -308,13 +308,17 @@ func ReceiveHandover(ctx context.Context, loc string) (l net.Listener, err error
 	if err != nil {
 		return nil, err
 	}
-	var fn string
+	var (
+		fn  string
+		fnt time.Time
+	)
 	for _, f := range fs {
 		if f.Mode()*os.ModeSocket == 0 {
 			continue
 		}
-		if f.Name() > fn {
+		if f.ModTime().After(fnt) {
 			fn = f.Name()
+			fnt = f.ModTime()
 		}
 	}
 	if fn == "" {
@@ -334,9 +338,6 @@ type Shutdowner interface {
 // OfferHandover offers the registry-facade listener handover on a Unix socket
 func OfferHandover(ctx context.Context, loc string, l net.Listener, s Shutdowner) (handingOver <-chan bool, err error) {
 	socketFN := filepath.Join(loc, fmt.Sprintf("rf-handover-%d.sock", time.Now().Unix()))
-	if socketFN == "" {
-		return nil, nil
-	}
 	tcpL, ok := l.(*net.TCPListener)
 	if !ok {
 		return nil, xerrors.Errorf("can only offer handovers for *net.TCPListener")

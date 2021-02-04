@@ -40,7 +40,8 @@ components:
       address: "ws-manager-dev:8080"
 
   registryFacade:
-    daemonSet: true
+    handover:
+      enabled: true
   
   contentService:
     remoteStorage:

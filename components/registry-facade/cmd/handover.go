@@ -16,22 +16,56 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// debugHandover represents the run command
-var debugHandover = &cobra.Command{
-	Use:   "handover <socket-dir>",
+var handoverOpts struct {
+	SocketDir string
+	Config    string
+	Debug     bool
+}
+
+// handoverCmd represents the run command
+var handoverCmd = &cobra.Command{
+	Use:   "handover --sockets <socket-dir> | --config <config.json>",
 	Short: "Attempts to get the listener socket from a registry-facade - and offers it back up for someone else",
-	Args:  cobra.ExactArgs(1),
-	RunE: func(cmd *cobra.Command, args []string) error {
+	Args:  cobra.ExactArgs(0),
+	Run: func(cmd *cobra.Command, args []string) {
+		log.Init("registry-facade-handover", "", true, true)
+
+		if handoverOpts.Debug {
+			defer func() {
+				log.Warn("sleeping for 5min for debugging")
+				time.Sleep(5 * time.Minute)
+			}()
+		}
+
+		socketDir := handoverOpts.SocketDir
+		if handoverOpts.Config != "" {
+			cfg, err := getConfig(handoverOpts.Config)
+			if err != nil {
+				log.WithError(err).Error("cannot load config")
+				return
+			}
+			if !cfg.Registry.Handover.Enabled {
+				log.Error("handover not enabled")
+				return
+			}
+			socketDir = cfg.Registry.Handover.Sockets
+		}
+		if socketDir == "" {
+			log.Error("missing socket directory - provide either --sockets or --config")
+			return
+		}
+
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		l, err := registry.ReceiveHandover(ctx, args[0])
+		l, err := registry.ReceiveHandover(ctx, socketDir)
 		if err != nil {
-			return err
+			log.WithError(err).Error("cannot receive handover")
+			return
 		}
 		if l == nil {
-			log.Warn("received no listener")
-			return nil
+			log.Error("received no listener")
+			return
 		}
 
 		log.Info("handover successfull - holding listener for someone else")
@@ -39,9 +73,10 @@ var debugHandover = &cobra.Command{
 		hoctx, cancelHO := context.WithCancel(context.Background())
 		defer cancelHO()
 
-		ho, err := registry.OfferHandover(hoctx, args[0], l, nil)
+		ho, err := registry.OfferHandover(hoctx, socketDir, l, nil)
 		if err != nil {
-			return err
+			log.WithError(err).Error("cannot offer handover")
+			return
 		}
 
 		log.Info("waiting for someone else to handover to - stop with Ctrl+C")
@@ -53,13 +88,20 @@ var debugHandover = &cobra.Command{
 			if didHO {
 				<-ho
 			}
+
+			log.Info("handover happened - waiting for someone to shut us down (SIGTERM, SIGINT or SIGKILL)")
+			<-sigChan
 		case <-sigChan:
+			return
 		}
 
-		return nil
+		return
 	},
 }
 
 func init() {
-	rootCmd.AddCommand(debugHandover)
+	rootCmd.AddCommand(handoverCmd)
+	handoverCmd.Flags().StringVar(&handoverOpts.SocketDir, "sockets", "", "connect to the latest socket from this directory")
+	handoverCmd.Flags().StringVar(&handoverOpts.Config, "config", "", "read the socket directory from this config file")
+	handoverCmd.Flags().BoolVar(&handoverOpts.Debug, "debug", false, "sleep when things go wrong")
 }

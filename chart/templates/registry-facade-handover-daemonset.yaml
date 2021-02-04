@@ -1,0 +1,73 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.registryFacade -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if (and (not $comp.disabled) $comp.handover.enabled) -}}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: registry-facade-handover
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: registry-facade-handover
+    kind: daemonSet
+    stage: {{ .Values.installation.stage }}
+    gitpod.io/nodeService: registry-facade
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: registry-facade-handover
+      kind: pod
+      stage: {{ .Values.installation.stage }}
+      gitpod.io/nodeService: registry-facade
+  template:
+    metadata:
+      name: registry-facade-handover
+      labels:
+        app: {{ template "gitpod.fullname" . }}
+        component: registry-facade-handover
+        kind: pod
+        stage: {{ .Values.installation.stage }}
+        gitpod.io/nodeService: registry-facade
+    spec:
+{{ include "gitpod.workspaceAffinity" $this | indent 6 }}
+      serviceAccountName: registry-facade
+      hostNetwork: true
+      # in Kubernetes there is no way to "scale down" a daemonSet.
+      # Instead we use a nodeSelector a non-existent node. If you want to "scale up"
+      # this daemonSet, remove that node selector, e.g. with:
+      #   kubectl patch daemonset registry-facade-handover --type json -p='[{"op": "remove", "path": "/spec/template/spec/nodeSelector/do-not-schedule"}]'
+      #
+      # To disable the handover pods, you can use:
+      #   kubectl  patch daemonset registry-facade-handover -p '{"spec": {"template": {"spec": {"nodeSelector": {"do-not-schedule": "true"}}}}}'
+      nodeSelector:
+        do-not-schedule: "true"
+      containers:
+      - name: handover
+        image: {{ template "gitpod.comp.imageFull" $this }}
+        args: ["handover", "--config", "/mnt/config/config.json"]
+{{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
+{{ include "gitpod.container.resources" $this | indent 8 }}
+        securityContext:
+          privileged: false
+          runAsUser: 1000
+{{ include "gitpod.container.defaultEnv" $this | indent 8 }}
+{{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+        volumeMounts:
+        - name: config
+          mountPath: "/mnt/config"
+          readOnly: true
+        - name: handover
+          mountPath: "/mnt/handover"
+      volumes:
+      - name: config
+        configMap:
+          name: {{ template "gitpod.comp.configMap" $this }}
+      - name: handover
+        hostPath:
+          path: {{ $comp.handover.socket | quote }}
+          type: DirectoryOrCreate
+{{ toYaml .Values.defaults | indent 6 }}
+{{ end }}
