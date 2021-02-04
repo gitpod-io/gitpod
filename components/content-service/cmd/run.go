@@ -19,6 +19,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -36,14 +37,20 @@ var runCmd = &cobra.Command{
 		cfg := getConfig()
 		reg := prometheus.NewRegistry()
 
+		grpcMetrics := grpc_prometheus.NewServerMetrics()
+		grpcMetrics.EnableHandlingTimeHistogram()
+		reg.MustRegister(grpcMetrics)
+
 		grpcOpts := []grpc.ServerOption{
 			// We don't know how good our cients are at closing connections. If they don't close them properly
 			// we'll be leaking goroutines left and right. Closing Idle connections should prevent that.
 			grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionIdle: 30 * time.Minute}),
 			grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
+				grpcMetrics.StreamServerInterceptor(),
 				grpc_opentracing.StreamServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
 			)),
 			grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+				grpcMetrics.UnaryServerInterceptor(),
 				grpc_opentracing.UnaryServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
 			)),
 		}

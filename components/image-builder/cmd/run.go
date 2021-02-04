@@ -22,6 +22,7 @@ import (
 	docker "github.com/docker/docker/client"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
@@ -90,9 +91,11 @@ var runCmd = &cobra.Command{
 			// we'll be leaking goroutines left and right. Closing Idle connections should prevent that.
 			grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionIdle: 30 * time.Minute}),
 			grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
+				grpc_prometheus.StreamServerInterceptor,
 				grpc_opentracing.StreamServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
 			)),
 			grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+				grpc_prometheus.UnaryServerInterceptor,
 				grpc_opentracing.UnaryServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
 			)),
 		}
@@ -122,6 +125,9 @@ var runCmd = &cobra.Command{
 		log.WithField("addr", cfg.Service.Addr).Info("started workspace content server")
 
 		if cfg.Prometheus.Addr != "" {
+			grpc_prometheus.EnableHandlingTimeHistogram()
+			grpc_prometheus.Register(server)
+
 			handler := http.NewServeMux()
 			handler.Handle("/metrics", promhttp.Handler())
 
