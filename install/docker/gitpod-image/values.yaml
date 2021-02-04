@@ -2,9 +2,6 @@
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 hostname: $DOMAIN
-ingressMode: hosts
-
-authProviders: null
 
 components:
   wsDaemon:
@@ -14,6 +11,7 @@ components:
       nodeRoots: 
       - /var/lib
       - /run/k3s/containerd/io.containerd.runtime.v1.linux
+      - /run/k3s/containerd/io.containerd.runtime.v2.task/k8s.io
   workspace:
     template:
       spec:

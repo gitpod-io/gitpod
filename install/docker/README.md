@@ -6,12 +6,21 @@ For smaller setups or to test Gitpod Self-Hosted on your local machine you can r
 
 The easiest way to get Gitpod up with `docker run` is as follows:
 
+1. Create a file with some random keys for MinIO called `minio-secrets.yaml`:
+```
+minio:
+  accessKey: add-here-a-random-string
+  secretKey: add-here-another-random-string
+```
+
+2. Then run docker like this:
 ```
 $ docker run \
     --privileged \
     --name gitpod \
     --publish 443:443 --publish 80:80 \
     --env DOMAIN=10-0-0-5.ip.mygitpod.com \
+    --volume $(pwd)/minio-secrets.yaml:/values/minio-secrets.yaml
     eu.gcr.io/gitpod-core-dev/build/gitpod-k3s
 ```
 
