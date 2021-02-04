@@ -2,7 +2,7 @@
 url: /docs/self-hosted/latest/install/install-on-gcp-script/
 ---
 
-> For this release (0.6.0, December 2019) the installers are broken. We're working in bringing those with the next release (January 2020).
+> Since the `0.6.0` release (December 2019) the installers are broken. We're working on bringing those back with one of the next releases.
 
 # Getting started with Gitpod on GCP
 
@@ -20,7 +20,7 @@ mkdir -p $PWD/gpinstall
 docker run --rm -it \
     -v $PWD/gcloud:/root/.config/gcloud \
     -v $PWD/gpinstall:/workspace \
-    gcr.io/gitpod-io/self-hosted/installer:latest \
+    gcr.io/gitpod-io/self-hosted/installer:0.7.0 \
     gcp
 ```
 

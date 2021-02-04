@@ -36,12 +36,12 @@ To install Gitpod in your Kubernetes cluster, follow these steps:
     ```console
     helm repo add gitpod.io https://charts.gitpod.io
 
-    helm install -f values.custom.yaml gitpod gitpod.io/gitpod
+    helm install -f values.custom.yaml gitpod gitpod.io/gitpod --version=0.7.0
     ```
 
-1. Run `kubectl get pods` and verify that all pods are in state `RUNNING`. If some are not, please see the [Troubleshooting Guide](../troubleshooting/).
-
 1. Configure [domain and https](../configure-ingress/).
+
+1. Run `kubectl get pods` and verify that all pods are in state `RUNNING`. If some are not, please see the [Troubleshooting Guide](../troubleshooting/).
 
 1. Go to [https://\<your-domain.com\>](https://\<your-domain.com\>) and follow the steps to complete the installation.
 
