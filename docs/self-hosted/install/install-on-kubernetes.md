@@ -24,18 +24,26 @@ For some cloud providers, we offer [Terraform](https://www.terraform.io/) script
 
 To install Gitpod in your Kubernetes cluster, follow these steps:
 
+1. Create a file `values.custom.yaml` with the following content:
+   ```
+   minio:
+     accessKey: your-random-access-key
+     secretKey: your-random-secret-key
+   ```
+   You should replace the keys with 2 different random strings unique for your installation.
+
 1. Run the following commands in your local terminal:
     ```console
     helm repo add gitpod.io https://charts.gitpod.io
 
-    helm install gitpod gitpod.io/gitpod
+    helm install -f values.custom.yaml gitpod gitpod.io/gitpod
     ```
 
-2. Run `kubectl get pods` and verify that all pods are in state `RUNNING`. If some are not, please see the [Troubleshooting Guide](../troubleshooting/).
+1. Run `kubectl get pods` and verify that all pods are in state `RUNNING`. If some are not, please see the [Troubleshooting Guide](../troubleshooting/).
 
-3. Configure [domain and https](../configure-ingress/).
+1. Configure [domain and https](../configure-ingress/).
 
-4. Go to [https://\<your-domain.com\>](https://\<your-domain.com\>) and follow the steps to complete the installation.
+1. Go to [https://\<your-domain.com\>](https://\<your-domain.com\>) and follow the steps to complete the installation.
 
 
 ## Recommended Configuration
