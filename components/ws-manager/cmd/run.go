@@ -20,6 +20,7 @@ import (
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -66,21 +67,21 @@ var runCmd = &cobra.Command{
 		ratelimits := grpc_gitpod.NewRatelimitingInterceptor(cfg.RPCServer.RateLimits)
 
 		reg := prometheus.NewRegistry()
-		callMetrics, err := grpc_gitpod.NewUnaryCallMetricsInterceptor(prometheus.WrapRegistererWithPrefix("gitpod_ws_manager_", reg))
-		if err != nil {
-			log.WithError(err).Fatal("cannot register gRPC call metrics")
-		}
+		grpcMetrics := grpc_prometheus.NewServerMetrics()
+		grpcMetrics.EnableHandlingTimeHistogram()
+		reg.MustRegister(grpcMetrics)
 
 		grpcOpts := []grpc.ServerOption{
 			// We don't know how good our cients are at closing connections. If they don't close them properly
 			// we'll be leaking goroutines left and right. Closing Idle connections should prevent that.
 			grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionIdle: 30 * time.Minute}),
 			grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
+				grpcMetrics.StreamServerInterceptor(),
 				grpc_opentracing.StreamServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
 			)),
 			grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 				// add call metrics first to capture ratelimit errors
-				callMetrics,
+				grpcMetrics.UnaryServerInterceptor(),
 				ratelimits.UnaryInterceptor(),
 				grpc_opentracing.UnaryServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
 			)),
@@ -98,6 +99,7 @@ var runCmd = &cobra.Command{
 
 		grpcServer := grpc.NewServer(grpcOpts...)
 		defer grpcServer.Stop()
+		grpc_prometheus.Register(grpcServer)
 
 		manager.Register(grpcServer, mgmt)
 		lis, err := net.Listen("tcp", cfg.RPCServer.Addr)
