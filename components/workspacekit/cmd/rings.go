@@ -231,6 +231,7 @@ var ring1Cmd = &cobra.Command{
 		}{
 			// TODO(cw): pull mark mount location from config
 			{Target: "/", Source: "/.workspace/mark", FSType: "shiftfs"},
+			{Target: "/", Flags: unix.MS_REC | unix.MS_SHARED},
 			{Target: "/sys", Flags: unix.MS_BIND | unix.MS_REC},
 			{Target: "/dev", Flags: unix.MS_BIND | unix.MS_REC},
 			// TODO(cw): only mount /theia if it's in the mount table, i.e. this isn't a registry-facade workspace
