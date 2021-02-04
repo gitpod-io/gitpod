@@ -37,6 +37,7 @@ import { OneTimeSecretServer } from './one-time-secret-server';
 import { GitpodClient, GitpodServer } from '@gitpod/gitpod-protocol';
 import { BearerAuth } from './auth/bearer-authenticator';
 import { HostContextProvider } from './auth/host-context-provider';
+import { CodeSyncService } from './code-sync/code-sync-service';
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -52,6 +53,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(MessageBusIntegration) protected readonly messagebus: MessageBusIntegration;
     @inject(WorkspaceDownloadService) protected readonly workspaceDownloadService: WorkspaceDownloadService;
     @inject(MonitoringEndpointsApp) protected readonly monitoringEndpointsApp: MonitoringEndpointsApp;
+    @inject(CodeSyncService) protected readonly codeSyncService: CodeSyncService;
 
     @inject(RabbitMQConsensusLeaderMessenger) protected readonly consensusMessenger: RabbitMQConsensusLeaderMessenger;
     @inject(ConsensusLeaderQorum) protected readonly qorum: ConsensusLeaderQorum;
@@ -232,6 +234,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         app.use('/enforcement', this.enforcementController.apiRouter);
         app.use('/plugins', this.pluginController.apiRouter);
         app.use('/workspace-download', this.workspaceDownloadService.apiRouter);
+        app.use('/code-sync', this.codeSyncService.apiRouter);
         app.use("/version", (req: express.Request, res: express.Response, next: express.NextFunction) => {
             res.send(this.env.version);
         });
