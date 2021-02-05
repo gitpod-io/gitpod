@@ -1021,7 +1021,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
                 await client.controlPort({ span }, req);
             } catch (e) {
                 if (e.code === status.RESOURCE_EXHAUSTED) {
-                    await new Promise((resolve) => setTimeout(resolve, (10*Math.random() + 30)*1000));
+                    await new Promise((resolve) => setTimeout(resolve, (10*Math.random() + 60)*1000));
                 }
 
                 throw e;
@@ -1081,7 +1081,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
                 await client.controlPort({ span }, req);
             } catch (e) {
                 if (e.code === status.RESOURCE_EXHAUSTED) {
-                    await new Promise((resolve) => setTimeout(resolve, (10*Math.random() + 30)*1000));
+                    await new Promise((resolve) => setTimeout(resolve, (10*Math.random() + 60)*1000));
                 }
 
                 throw e;
