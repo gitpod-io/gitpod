@@ -25,6 +25,7 @@ import { ImageBuilderClientProvider, LogsRequest } from '@gitpod/image-builder/l
 import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
 import { ControlPortRequest, DescribeWorkspaceRequest, MarkActiveRequest, PortSpec, PortVisibility as ProtoPortVisibility, StopWorkspacePolicy, StopWorkspaceRequest } from '@gitpod/ws-manager/lib/core_pb';
 import * as crypto from 'crypto';
+import { status } from "grpc";
 import { inject, injectable } from 'inversify';
 import * as opentracing from 'opentracing';
 import { URL } from 'url';
@@ -1016,7 +1017,15 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             req.setExpose(true);
 
             const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
-            await client.controlPort({ span }, req);
+            try {
+                await client.controlPort({ span }, req);
+            } catch (e) {
+                if (e.code === status.RESOURCE_EXHAUSTED) {
+                    await new Promise((resolve) => setTimeout(resolve, (10*Math.random() + 30)*1000));
+                }
+
+                throw e;
+            }
         } catch (e) {
             TraceContext.logError({ span }, e);
             throw e;
@@ -1068,7 +1077,15 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             req.setExpose(false);
 
             const client = await this.workspaceManagerClientProvider.get(instance.region);
-            await client.controlPort({ span }, req);
+            try {
+                await client.controlPort({ span }, req);
+            } catch (e) {
+                if (e.code === status.RESOURCE_EXHAUSTED) {
+                    await new Promise((resolve) => setTimeout(resolve, (10*Math.random() + 30)*1000));
+                }
+
+                throw e;
+            }
         } catch (e) {
             TraceContext.logError({ span }, e);
             throw e;
