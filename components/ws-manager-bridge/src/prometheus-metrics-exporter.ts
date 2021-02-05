@@ -18,13 +18,13 @@ export class PrometheusMetricsExporter {
             name: 'workspace_startup_time',
             help: 'The time until a workspace instance is marked running',
             labelNames: ['neededImageBuild', 'region'],
-            buckets: [6, 8, 10, 12, 14, 16, 18, 20, 25, 30, 45, 60, 90]
+            buckets: prom.exponentialBuckets(2, 2, 10),
         });
         this.timeToFirstUserActivityHistogram = new prom.Histogram({
             name: 'first_user_activity_time',
             help: 'The time between a workspace is running and first user activity',
             labelNames: ['region'],
-            buckets: [1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 25, 30]
+            buckets: prom.exponentialBuckets(2, 2, 10),
         });
     }
 

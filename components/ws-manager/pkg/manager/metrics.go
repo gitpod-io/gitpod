@@ -52,7 +52,7 @@ func newMetrics(m *Manager) *metrics {
 			Name:      "startup_seconds",
 			Help:      "time it took for workspace pods to reach the running phase",
 			// same as components/ws-manager-bridge/src/prometheus-metrics-exporter.ts#L15
-			Buckets: []float64{6, 8, 10, 12, 14, 16, 18, 20, 25, 30, 45, 60, 90},
+			Buckets: prometheus.ExponentialBuckets(2, 2, 10),
 		}, []string{"type"}),
 		totalStartsCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
@@ -64,7 +64,7 @@ func newMetrics(m *Manager) *metrics {
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
 			Name:      "stops_total",
-			Help:      "total number of workspaces started",
+			Help:      "total number of workspaces stopped",
 		}, []string{"reason"}),
 	}
 }
