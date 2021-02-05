@@ -78,6 +78,9 @@ export class WorkspaceView extends React.Component<WorkspaceViewProps, Workspace
             instanceCreationTime: {
                 name: "Last Started"
             },
+            instanceId: {
+                name: "Latest Instance ID"
+            },
             shareable: {
                 name: "Shareable",
                 render: u => !!u.shareable ? "shareable" : "not shareable"
