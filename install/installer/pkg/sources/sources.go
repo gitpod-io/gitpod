@@ -6,11 +6,14 @@ package sources
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -154,7 +157,8 @@ func CloneAndOwn(l Layout, opts CloneAndOwnOpts) (err error) {
 		return fmt.Errorf("cannot copy %s to %s: %s", l.Helm, l.HelmDestination(), string(out))
 	}
 	for plt, src := range l.Terraform {
-		out, err := exec.Command("cp", "-rf", src, l.TerraformDestination(plt)).CombinedOutput()
+		// -L allows symlink resolution on modules folder, introduced by #2556
+		out, err := exec.Command("cp", "-rfL", src, l.TerraformDestination(plt)).CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("cannot copy %s to %s: %s", src, l.TerraformDestination(plt), string(out))
 		}
@@ -205,4 +209,36 @@ func (l Layout) BackupDestination() string {
 // VersionDestination is the location where the dest version file resides
 func (l Layout) VersionDestination() string {
 	return filepath.Join(l.Destination, "version")
+}
+
+var releaseVersionRegexp = regexp.MustCompile(`[0-9]+\.[0-9]+\.[0-9]+`)
+var (
+	ErrReleaseVersion = errors.New("cannot parse branch from a release version")
+)
+
+// ParseVersionBranch attempts to extract the branch and version number
+// from the given version. It expect the version to be in a some-branch-name.123 format
+// where some-branch-name can be any valid git branch name, followed by a version number.
+// When the version is a release version (such as 0.6.0) ErrReleaseVersion is returned.
+func ParseVersionBranch(version string) (string, int64, error) {
+	if releaseVersionRegexp.MatchString(version) {
+		return "", 0, ErrReleaseVersion
+	}
+
+	idx := strings.LastIndex(version, ".")
+	if idx < 0 {
+		return "", 0, fmt.Errorf("invalid version %q: missing '.' separator between branch and number", version)
+	}
+
+	if idx+1 >= len(version) {
+		return "", 0, fmt.Errorf("invalid version %q: no version number", version)
+	}
+
+	branch := version[:idx]
+	number, err := strconv.ParseInt(version[idx+1:], 10, 64)
+	if err != nil {
+		return "", 0, fmt.Errorf("invalid version %q: failed to parse version number: %v", version, err)
+	}
+
+	return branch, number, nil
 }

@@ -31,8 +31,9 @@ type PersistVariableOpts struct {
 
 // VariableSpec describes a variable
 type VariableSpec struct {
-	Description string
-	Validate    func(val string) error
+	Description    string
+	Validate       func(val string) error
+	BeforeSaveHook func(val string) string
 }
 
 // VariableValueSource can possibly produce a value for the variable
@@ -70,6 +71,9 @@ func PersistVariable(file string, opts ...PersistVariableOpts) error {
 			if err != nil {
 				return fmt.Errorf("invalid value for %q: %w", opt.Name, err)
 			}
+		}
+		if opt.Spec.BeforeSaveHook != nil {
+			val = opt.Spec.BeforeSaveHook(val)
 		}
 		tf.Body().SetAttributeValue(opt.Name, cty.StringVal(val))
 	}

@@ -98,7 +98,10 @@ func Run(args []string, opt ...RunOpt) error {
 				continue
 			}
 
-			out.Write(line)
+			if _, err := out.Write(line); err != nil {
+				ui.Warnf("write failure:\n\t%q", err)
+				break
+			}
 
 			if bytes.Contains(line, []byte("Only 'yes' will be accepted to approve.")) {
 				fmt.Println("Enter a value: ")

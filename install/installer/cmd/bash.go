@@ -28,7 +28,9 @@ var bashCmd = &cobra.Command{
 		}
 
 		log.Info("Starting bash")
-		os.Chdir(layout.DestinationFolder())
+		if err := os.Chdir(layout.DestinationFolder()); err != nil {
+			log.WithError(err).Fatal("failed to change directory")
+		}
 		log.Fatal(syscall.Exec("/bin/bash", nil, os.Environ()))
 	},
 }

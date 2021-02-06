@@ -99,7 +99,9 @@ var awsCmd = &cobra.Command{
 			}
 		}
 
-		terraform.Run([]string{"init"}, terraform.WithBasedir(basedir), terraform.WithFatalErrors)
+		if err := terraform.Run([]string{"init"}, terraform.WithBasedir(basedir), terraform.WithFatalErrors); err != nil {
+			ui.Fatalf("terraform failed to init:\n\t%q", err)
+		}
 		err = terraform.Run([]string{"apply"}, terraform.WithBasedir(basedir), terraform.WithRetry(aws.TerraformErrorRetry(
 			func(name string) {
 				err := terraform.UnsetVariable(tfvarsfn, name)
@@ -143,7 +145,9 @@ var awsCmd = &cobra.Command{
 				ui.Fatalf("cannot update the \"domain\" terraform variables - please re-run this installer.\n\t%q", err)
 			}
 			ui.Infof("re-running terraform to use the new domain %s", domain)
-			terraform.Run([]string{"apply", "-auto-approve"}, terraform.WithBasedir(basedir), terraform.WithFatalErrors)
+			if err := terraform.Run([]string{"apply", "-auto-approve"}, terraform.WithBasedir(basedir), terraform.WithFatalErrors); err != nil {
+				ui.Fatalf("terraform failed to re-run:\n\t%q", err)
+			}
 		} else {
 			ui.Infof("Please update your DNS records so that %s points to %s.", domain, ingressHostname)
 		}

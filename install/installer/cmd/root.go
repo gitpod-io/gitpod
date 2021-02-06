@@ -8,6 +8,9 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/gitpod-io/installer/pkg/sources"
@@ -76,9 +79,35 @@ func getLayout() sources.Layout {
 func getCloneAndOwnOpts() sources.CloneAndOwnOpts {
 	var res sources.CloneAndOwnOpts
 	if rootOpts.debug {
-		res.SourceVersion = fmt.Sprint(time.Now().Unix())
+		branch := getGitBranch()
+		if branch != "" {
+			// when debugging branch preview, we need a more realistic version
+			res.SourceVersion = fmt.Sprintf("%s.%d", branch, time.Now().Unix())
+		} else {
+			// keep backward compatibility when running with debug outside of a git tree
+			res.SourceVersion = fmt.Sprint(time.Now().Unix())
+		}
 	}
 	return res
+}
+
+var branchInvalidCharset = regexp.MustCompile("[^-a-z0-9]")
+
+// getGitBranch attempts to retrieve the current branch @HEAD
+// or returns an empty string on error, like when git is not installed
+// or no git tree is available
+func getGitBranch() string {
+	out, err := exec.Command("git", "symbolic-ref", "HEAD").CombinedOutput()
+	if err != nil {
+		return ""
+	}
+
+	branch := strings.TrimSpace(string(out))
+	branch = strings.TrimPrefix(branch, "refs/heads/")
+	branch = strings.ToLower(branch)
+	branch = branchInvalidCharset.ReplaceAllString(branch, "-")
+
+	return branch
 }
 
 func init() {

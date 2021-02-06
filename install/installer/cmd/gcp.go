@@ -5,7 +5,10 @@
 package cmd
 
 import (
+	"context"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"path/filepath"
 	"strings"
 	"time"
@@ -42,6 +45,54 @@ var gcpCmd = &cobra.Command{
 		ui.Infof("Gathering information")
 		basedir := layout.TerraformDestination("gcp")
 		tfvarsfn := filepath.Join(basedir, "main.auto.tfvars")
+		version, err := ioutil.ReadFile(layout.VersionDestination())
+		if err != nil {
+			ui.Fatalf("failed to read version file %q:\n\t%q", layout.VersionDestination(), err)
+		}
+
+		if branchPreview, _ := cmd.Flags().GetBool("branch-preview"); branchPreview {
+			ui.Infof("Branch preview is enabled")
+			folderID, _ := cmd.Flags().GetString("branch-preview-project-folder-id")
+			billingAccountID, _ := cmd.Flags().GetString("branch-preview-billing-account-id")
+
+			setupBranchPreviewProject(branchPreviewProjectSettings{
+				Version:                  string(version),
+				FolderID:                 folderID,
+				BillingAccountID:         billingAccountID,
+				TerraformVarsFilepath:    tfvarsfn,
+				TerraformBackendFilepath: filepath.Join(layout.TerraformDestination("gcp"), "backend.tf"),
+			})
+		}
+
+		if rootOpts.debug {
+			// when in debug mode terraform chart_location needs to be updated to point to the charts
+			// in the temporary install folder
+			if err := terraform.PersistVariable(tfvarsfn, terraform.PersistVariableOpts{
+				Name: "chart_location",
+				Sources: []terraform.VariableValueSource{
+					func(name string, spec terraform.VariableSpec) (value string, ok bool) {
+						dest := layout.HelmDestination()
+						// the chart_location expect a relative path from the tf root
+						dest = strings.ReplaceAll(dest, layout.DestinationFolder(), "../")
+						return dest, true
+					},
+				},
+			}); err != nil {
+				ui.Fatalf("failed to update chart_location terraform variable:\n\t%q", err)
+			}
+			// image_version can also be provided to avoid terraform prompting for it.
+			if err := terraform.PersistVariable(tfvarsfn, terraform.PersistVariableOpts{
+				Name: "image_version",
+				Sources: []terraform.VariableValueSource{
+					func(name string, spec terraform.VariableSpec) (value string, ok bool) {
+						return string(version), true
+					},
+				},
+			}); err != nil {
+				ui.Fatalf("failed to update chart_location terraform variable:\n\t%q", err)
+			}
+		}
+
 		err = terraform.PersistVariable(tfvarsfn, gcp.RequiredTerraformVariables...)
 		if err != nil {
 			ui.Fatalf("cannot update the required terraform variables:\n\t%q", err)
@@ -65,7 +116,7 @@ var gcpCmd = &cobra.Command{
 				},
 			})
 			if err != nil {
-				ui.Fatalf("cannot update the \"domain\" terraform variables:\n\t%q", err)
+				ui.Fatalf("cannot update the \"domain\" terraform variable:\n\t%q", err)
 			}
 		} else if !strings.Contains(domain, "ip.mygitpod.com") {
 			err = terraform.PersistVariable(tfvarsfn,
@@ -95,7 +146,11 @@ var gcpCmd = &cobra.Command{
 			}
 		}
 
-		terraform.Run([]string{"init"}, terraform.WithBasedir(basedir), terraform.WithFatalErrors)
+		err = terraform.Run([]string{"init"}, terraform.WithBasedir(basedir), terraform.WithFatalErrors)
+		if err != nil {
+			ui.Fatalf("terraform failed to init:\n\t%q", err)
+		}
+
 		err = terraform.Run([]string{"apply"},
 			terraform.WithBasedir(basedir),
 			terraform.WithRetry(gcp.BackendErrorRetry(projectID), 30*time.Second),
@@ -130,7 +185,9 @@ var gcpCmd = &cobra.Command{
 				ui.Fatalf("cannot update the \"domain\" terraform variables - please re-run this installer:\n\t%q", err)
 			}
 			ui.Infof("re-running terraform to use the new domain %s", domain)
-			terraform.Run([]string{"apply", "-auto-approve"}, terraform.WithBasedir(basedir), terraform.WithFatalErrors)
+			if err := terraform.Run([]string{"apply", "-auto-approve"}, terraform.WithBasedir(basedir), terraform.WithFatalErrors); err != nil {
+				ui.Fatalf("terraform failed to re-apply:\n\t%q", err)
+			}
 		} else if !strings.Contains(domain, "ip.mygitpod.com") {
 			ui.Infof("Please update your DNS records so that %s points to %s.", domain, publicIP)
 		}
@@ -143,8 +200,122 @@ var gcpCmd = &cobra.Command{
 	},
 }
 
+type branchPreviewProjectSettings struct {
+	Version                  string
+	FolderID                 string
+	BillingAccountID         string
+	TerraformVarsFilepath    string
+	TerraformBackendFilepath string
+}
+
+func setupBranchPreviewProject(settings branchPreviewProjectSettings) {
+	branch, _, err := sources.ParseVersionBranch(settings.Version)
+	if err != nil {
+		ui.Fatalf("failed to extract branch from version %q:\n\t%q", settings.Version, err)
+	}
+	ui.Infof("\tversion: %s", settings.Version)
+	ui.Infof("\tbranch: %s", branch)
+
+	projectID, projectName := gcp.GenerateProjectNameAndID("gitpod-", branch)
+	// Gitpod installation for this branch requires a dedicated project,
+	// where its ID have been derived from the branch name.
+	// If the project doesn't exists, it will be created
+	ctx := context.Background()
+	ok, err := gcp.ProjectExists(ctx, projectID)
+	if err != nil {
+		ui.Fatalf("failed to check project existance:\n\t%q", err)
+	}
+	if !ok {
+		ui.Infof("Creating new GCP project (id: %q, name: %q), this may take a while...", projectID, projectName)
+		err := gcp.CreateProject(ctx, projectID, projectName, settings.FolderID)
+		if err != nil {
+			ui.Fatalf("failed to auto create GCP project:\n\t%q", err)
+		}
+
+		ui.Infof("Success creating project %q", projectID)
+	} else {
+		ui.Infof("GCP project %q already exists", projectID)
+	}
+
+	if settings.BillingAccountID != "" {
+		ui.Infof("Configuring billing account %q", settings.BillingAccountID)
+		if err := gcp.ConfigureProjectBilling(ctx, projectID, settings.BillingAccountID); err != nil {
+			ui.Fatalf("failed to configure billing account %q:\n\t%q", settings.BillingAccountID, err)
+		}
+	}
+
+	ui.Infof("Enabling services...")
+	if err := gcp.EnableProjectServices(ctx, projectID, nil); err != nil {
+		ui.Fatalf("failed to enable project services:\n\t%q", err)
+	}
+
+	tfStateBucketName := fmt.Sprintf("%s-tfstate", projectID)
+	ui.Infof("Creating terraform state storage bucket %q", tfStateBucketName)
+	if err := gcp.CreateStorageBucket(ctx, projectID, tfStateBucketName); err != nil {
+		ui.Fatalf("failed to create storage bucket:\n\t%q", err)
+	}
+
+	// Update terraform project variable with the generated projectID
+	if err = terraform.PersistVariable(settings.TerraformVarsFilepath, terraform.PersistVariableOpts{
+		Name:           "project",
+		ForceOverwrite: true,
+		Sources: []terraform.VariableValueSource{
+			func(name string, spec terraform.VariableSpec) (value string, ok bool) { return projectID, true },
+		},
+	}); err != nil {
+		ui.Fatalf("failed to overwrite terraform project:\n\t%q", err)
+	}
+
+	// Update terraform domain variable with a branch.domain subdomain
+	// when a baseDomain exists. Otherwise, retrieve a baseDomain from other sources first.
+	baseDomain, _ := terraform.GetVariableValue(settings.TerraformVarsFilepath, "domain")
+	var persistDomainOpts terraform.PersistVariableOpts
+	if baseDomain == "" || baseDomain == "ipDomain" {
+		ui.Infof("\nBranch preview requires a base domain used to create subdomains for each installed branch.\n")
+		persistDomainOpts = terraform.PersistVariableOpts{
+			Name:           "domain",
+			ForceOverwrite: true,
+			Spec: terraform.VariableSpec{
+				Validate: func(val string) error {
+					if val == "" || val == "ipDomain" {
+						return errors.New("invalid domain, must not be empty or \"ipDomain\"")
+					}
+					return nil
+				},
+				BeforeSaveHook: func(val string) string {
+					return fmt.Sprintf("%s.%s", branch, val)
+				},
+			},
+		}
+	} else {
+		persistDomainOpts = terraform.PersistVariableOpts{
+			Name:           "domain",
+			ForceOverwrite: true,
+			Sources: []terraform.VariableValueSource{func(name string, spec terraform.VariableSpec) (value string, ok bool) {
+				return fmt.Sprintf("%s.%s", branch, baseDomain), true
+			}},
+		}
+	}
+	if err := terraform.PersistVariable(settings.TerraformVarsFilepath, persistDomainOpts); err != nil {
+		ui.Fatalf("cannot update the \"domain\" terraform variable:\n\t%q", err)
+	}
+
+	// Configure terraform backend to use a bucket in the newly created project to store its state
+	// this allows to rerun the installer from a different build on the same project.
+	if err = terraform.ConfigureGCPBackend(
+		settings.TerraformBackendFilepath,
+		tfStateBucketName,
+		"tf-state",
+	); err != nil {
+		ui.Fatalf("failed to create terraform state backend: %v", err)
+	}
+}
+
 func init() {
 	rootCmd.AddCommand(gcpCmd)
 
 	gcpCmd.Flags().Bool("assume-gcp-access", false, "don't check if we can GCP access or attempt to login to GCP")
+	gcpCmd.Flags().Bool("branch-preview", false, "indicate that this installation is a branch preview")
+	gcpCmd.Flags().String("branch-preview-project-folder-id", "", "(require branch-preview) ID of a GCP folder where the branch-preview project will be created")
+	gcpCmd.Flags().String("branch-preview-billing-account-id", "", "(require branch-preview) ID of the billing account to link on newly created projects (ie: 012345-567890-ABCDEF)")
 }
