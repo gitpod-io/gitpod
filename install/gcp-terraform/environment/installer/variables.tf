@@ -17,6 +17,12 @@ variable "domain" {
   description = "domain at which the installation will be available"
 }
 
+variable "zone_name" {
+  type        = string
+  default     = "gitpod-dns"
+  description = "DNS zone name"
+}
+
 variable "kubernetes" {
   type = object({
     namespace = string

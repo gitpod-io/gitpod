@@ -50,10 +50,13 @@ var gcpCmd = &cobra.Command{
 			ui.Fatalf("failed to read version file %q:\n\t%q", layout.VersionDestination(), err)
 		}
 
-		if branchPreview, _ := cmd.Flags().GetBool("branch-preview"); branchPreview {
+		branchPreview, _ := cmd.Flags().GetBool("branch-preview")
+		folderID, _ := cmd.Flags().GetString("branch-preview-project-folder-id")
+		billingAccountID, _ := cmd.Flags().GetString("branch-preview-billing-account-id")
+		rootDNSZoneID, _ := cmd.Flags().GetString("root-clouddns-zone")
+
+		if branchPreview {
 			ui.Infof("Branch preview is enabled")
-			folderID, _ := cmd.Flags().GetString("branch-preview-project-folder-id")
-			billingAccountID, _ := cmd.Flags().GetString("branch-preview-billing-account-id")
 
 			setupBranchPreviewProject(branchPreviewProjectSettings{
 				Version:                  string(version),
@@ -61,6 +64,8 @@ var gcpCmd = &cobra.Command{
 				BillingAccountID:         billingAccountID,
 				TerraformVarsFilepath:    tfvarsfn,
 				TerraformBackendFilepath: filepath.Join(layout.TerraformDestination("gcp"), "backend.tf"),
+				RootDNSZoneID:            rootDNSZoneID,
+				DNSZoneName:              "gitpod-dns",
 			})
 		}
 
@@ -75,17 +80,6 @@ var gcpCmd = &cobra.Command{
 						// the chart_location expect a relative path from the tf root
 						dest = strings.ReplaceAll(dest, layout.DestinationFolder(), "../")
 						return dest, true
-					},
-				},
-			}); err != nil {
-				ui.Fatalf("failed to update chart_location terraform variable:\n\t%q", err)
-			}
-			// image_version can also be provided to avoid terraform prompting for it.
-			if err := terraform.PersistVariable(tfvarsfn, terraform.PersistVariableOpts{
-				Name: "image_version",
-				Sources: []terraform.VariableValueSource{
-					func(name string, spec terraform.VariableSpec) (value string, ok bool) {
-						return string(version), true
 					},
 				},
 			}); err != nil {
@@ -189,7 +183,9 @@ var gcpCmd = &cobra.Command{
 				ui.Fatalf("terraform failed to re-apply:\n\t%q", err)
 			}
 		} else if !strings.Contains(domain, "ip.mygitpod.com") {
-			ui.Infof("Please update your DNS records so that %s points to %s.", domain, publicIP)
+			if rootDNSZoneID == "" {
+				ui.Infof("Please update your DNS records so that %s points to %s.", domain, publicIP)
+			}
 		}
 
 		// TODO(cw): wait for the installation to actually become available
@@ -206,6 +202,8 @@ type branchPreviewProjectSettings struct {
 	BillingAccountID         string
 	TerraformVarsFilepath    string
 	TerraformBackendFilepath string
+	RootDNSZoneID            string
+	DNSZoneName              string
 }
 
 func setupBranchPreviewProject(settings branchPreviewProjectSettings) {
@@ -269,6 +267,15 @@ func setupBranchPreviewProject(settings branchPreviewProjectSettings) {
 	// Update terraform domain variable with a branch.domain subdomain
 	// when a baseDomain exists. Otherwise, retrieve a baseDomain from other sources first.
 	baseDomain, _ := terraform.GetVariableValue(settings.TerraformVarsFilepath, "domain")
+	if settings.RootDNSZoneID != "" {
+		baseDomain, err = gcp.GetRootDNSName(context.Background(), settings.RootDNSZoneID)
+		if err != nil {
+			ui.Fatalf("failed to retrieve root dns name from zone: %v", err)
+		}
+
+		ui.Infof("Using %q as a base domain from DNS zone", baseDomain)
+	}
+	var branchDomain string
 	var persistDomainOpts terraform.PersistVariableOpts
 	if baseDomain == "" || baseDomain == "ipDomain" {
 		ui.Infof("\nBranch preview requires a base domain used to create subdomains for each installed branch.\n")
@@ -283,21 +290,48 @@ func setupBranchPreviewProject(settings branchPreviewProjectSettings) {
 					return nil
 				},
 				BeforeSaveHook: func(val string) string {
-					return fmt.Sprintf("%s.%s", branch, val)
+					branchDomain = fmt.Sprintf("%s.%s", branch, val)
+					return branchDomain
 				},
 			},
 		}
 	} else {
+		branchDomain = fmt.Sprintf("%s.%s", branch, baseDomain)
 		persistDomainOpts = terraform.PersistVariableOpts{
 			Name:           "domain",
 			ForceOverwrite: true,
 			Sources: []terraform.VariableValueSource{func(name string, spec terraform.VariableSpec) (value string, ok bool) {
-				return fmt.Sprintf("%s.%s", branch, baseDomain), true
+				return branchDomain, true
 			}},
 		}
 	}
 	if err := terraform.PersistVariable(settings.TerraformVarsFilepath, persistDomainOpts); err != nil {
 		ui.Fatalf("cannot update the \"domain\" terraform variable:\n\t%q", err)
+	}
+
+	// Creates a DNS zone for the branchDomain
+	if err := terraform.PersistVariable(settings.TerraformVarsFilepath, terraform.PersistVariableOpts{
+		Name:           "zone_name",
+		ForceOverwrite: true,
+		Sources: []terraform.VariableValueSource{func(name string, spec terraform.VariableSpec) (value string, ok bool) {
+			return settings.DNSZoneName, true
+		}},
+	}); err != nil {
+		ui.Fatalf("cannot update the \"zone_name\" terraform variable:\n\t%q", err)
+	}
+
+	ui.Infof("Creating DNS zone %s", settings.DNSZoneName)
+	nameservers, err := gcp.CreateDNSZone(ctx, projectID, settings.DNSZoneName, branchDomain)
+	if err != nil {
+		ui.Fatalf("failed to create dns zone:\n\t%q", err)
+	}
+	ui.Infof("DNS nameservers for zone: %v", nameservers)
+
+	if settings.RootDNSZoneID != "" {
+		if err := gcp.UpdateDNSNameservers(ctx, settings.RootDNSZoneID, branchDomain, nameservers); err != nil {
+			ui.Fatalf("failed to set NS record in parent DNS zone:\n\t%q", err)
+		}
+		ui.Infof("Root zone %q have been updated with subdomain zone nameservers", settings.RootDNSZoneID)
 	}
 
 	// Configure terraform backend to use a bucket in the newly created project to store its state
@@ -315,7 +349,8 @@ func init() {
 	rootCmd.AddCommand(gcpCmd)
 
 	gcpCmd.Flags().Bool("assume-gcp-access", false, "don't check if we can GCP access or attempt to login to GCP")
+	gcpCmd.Flags().String("root-clouddns-zone", "", "optionnal GCP CloudDNS zone name managing the root domain. When specified, the installer will insert NS records pointing to the Gitpod installation (format <projectID>/managedZones/<zoneName>)")
 	gcpCmd.Flags().Bool("branch-preview", false, "indicate that this installation is a branch preview")
-	gcpCmd.Flags().String("branch-preview-project-folder-id", "", "(require branch-preview) ID of a GCP folder where the branch-preview project will be created")
-	gcpCmd.Flags().String("branch-preview-billing-account-id", "", "(require branch-preview) ID of the billing account to link on newly created projects (ie: 012345-567890-ABCDEF)")
+	gcpCmd.Flags().String("branch-preview-project-folder-id", "", "(requires branch-preview) ID of a GCP folder where the branch-preview project will be created")
+	gcpCmd.Flags().String("branch-preview-billing-account-id", "", "(requires branch-preview) ID of the billing account to link on newly created projects (format: 012345-567890-ABCDEF)")
 }

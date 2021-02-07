@@ -5,7 +5,7 @@
 
 
 output "public_ip" {
-  value = google_compute_address.gitpod.address
+  value = module.dns.address
 }
 
 output "hostname" {

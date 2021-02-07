@@ -42,16 +42,25 @@ module "storage" {
   location = "EU"
 }
 
-resource "google_compute_address" "gitpod" {
-  name = "gitpod-static-ip"
 
-  project = var.project
-  region  = var.region
+module "dns" {
+  source = "./modules/dns"
+
+  project   = var.project
+  region    = var.region
+  zone_name = var.zone_name
+  name      = "gitpod-static-ip"
+  subdomain = ""
+
+  providers = {
+    google     = google
+    kubernetes = kubernetes
+  }
 }
 
 locals {
   hostname = "${var.domain == "" ? local.mygitpod_domain : var.domain}"
-  mygitpod_prefix = replace(google_compute_address.gitpod.address,".","-")
+  mygitpod_prefix = replace(module.dns.address,".","-")
   mygitpod_domain = "${local.mygitpod_prefix}.ip.mygitpod.com"
 }
 
@@ -59,7 +68,7 @@ data "template_file" "values" {
   template = file("${path.cwd}/templates/values.tpl")
   vars = {
     hostname        = local.hostname
-    loadbalancer_ip = google_compute_address.gitpod.address
+    loadbalancer_ip = module.dns.address
     certbot_enabled = var.certbot_enabled
     certbot_email   = var.certificate_email
     force_https     = var.force_https

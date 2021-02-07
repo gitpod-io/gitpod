@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 
@@ -24,6 +25,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/api/cloudbilling/v1"
 	"google.golang.org/api/cloudresourcemanager/v1"
+	"google.golang.org/api/dns/v1"
+	"google.golang.org/api/googleapi"
 	"google.golang.org/api/serviceusage/v1"
 )
 
@@ -340,6 +343,7 @@ func ConfigureProjectBilling(ctx context.Context, projectID, billingAccountID st
 
 var DefaultProjectServices = []string{
 	"compute.googleapis.com",
+	"dns.googleapis.com",
 }
 
 // EnableProjectServices enable some APIs on project, at least thoses from DefaultProjectServices, more can be provided via services
@@ -404,4 +408,111 @@ func CreateStorageBucket(ctx context.Context, projectID, bucketName string) erro
 		}
 	}
 	return nil
+}
+
+func CreateDNSZone(ctx context.Context, projectID, zoneName, domain string) ([]string, error) {
+	dnsService, err := dns.NewService(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create DNS service: %v", err)
+	}
+
+	zone, err := dnsService.ManagedZones.Get(projectID, zoneName).Do()
+	if err != nil {
+		if gapiErr, ok := err.(*googleapi.Error); ok && gapiErr.Code == 404 {
+			zone, err = dnsService.ManagedZones.Create(projectID, &dns.ManagedZone{
+				Name:        zoneName,
+				DnsName:     fmt.Sprintf("%s.", domain),
+				Description: "gitpod DNS zone",
+			}).Do()
+			if err != nil {
+				return nil, fmt.Errorf("failed to create DNS zone: %v", err)
+			}
+		} else {
+			return nil, err
+		}
+	}
+
+	return zone.NameServers, nil
+}
+
+func GetRootDNSName(ctx context.Context, zoneID string) (string, error) {
+	dnsService, err := dns.NewService(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to create DNS service: %v", err)
+	}
+
+	projectID, zoneName, err := parseZoneID(zoneID)
+	if err != nil {
+		return "", err
+	}
+
+	zone, err := dnsService.ManagedZones.Get(projectID, zoneName).Do()
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve dns zone: %v", err)
+	}
+
+	return zone.DnsName[:len(zone.DnsName)-1], nil
+}
+
+func UpdateDNSNameservers(ctx context.Context, zoneID, domain string, nameservers []string) error {
+	dnsService, err := dns.NewService(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create DNS service: %v", err)
+	}
+
+	projectID, zoneName, err := parseZoneID(zoneID)
+	if err != nil {
+		return err
+	}
+
+	zone, err := dnsService.ManagedZones.Get(projectID, zoneName).Do()
+	if err != nil {
+		return fmt.Errorf("failed to retrieve dns zone: %v", err)
+	}
+
+	baseDNSDomain := fmt.Sprintf("%s.", domain)
+	if !strings.HasSuffix(baseDNSDomain, zone.DnsName) {
+		return fmt.Errorf("provided zone is not parent of domain %q", domain)
+	}
+
+	existingRecords, err := dnsService.ResourceRecordSets.List(projectID, zoneName).Do()
+	if err != nil {
+		return fmt.Errorf("failed to retrieve existing DNS records: %v", err)
+	}
+
+	var toDelete []*dns.ResourceRecordSet
+	// delete existing records with the same name to allow recreating it
+	for _, existingRec := range existingRecords.Rrsets {
+		if baseDNSDomain == existingRec.Name && existingRec.Type == "NS" {
+			toDelete = append(toDelete, existingRec)
+			break
+		}
+	}
+
+	_, err = dnsService.Changes.Create(projectID, zoneName, &dns.Change{
+		Additions: []*dns.ResourceRecordSet{{
+			Name:    baseDNSDomain,
+			Rrdatas: nameservers,
+			Type:    "NS",
+			Ttl:     600,
+		}},
+		Deletions: toDelete,
+	}).Do()
+	if err != nil {
+		return fmt.Errorf("failed to insert new DNS records: %v", err)
+	}
+
+	return nil
+}
+
+var dnsZoneIDRegexp = regexp.MustCompile(`^([a-zA-Z0-9'"! -]+)/managedZones/([a-z0-9-]+)$`)
+
+func parseZoneID(zoneID string) (string, string, error) {
+	matches := dnsZoneIDRegexp.FindStringSubmatch(zoneID)
+	if len(matches) != 3 {
+		return "", "", fmt.Errorf("invalid zoneID %q, expected format: <projectID>/managedZones/<zoneName>", zoneID)
+	}
+	projectID := matches[1]
+	zoneName := matches[2]
+	return projectID, zoneName, nil
 }

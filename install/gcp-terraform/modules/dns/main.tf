@@ -10,6 +10,7 @@ locals {
     "dns.googleapis.com",
     "compute.googleapis.com"
   ]
+  subdomain = var.subdomain != "" ? "${var.subdomain}." : ""
 }
 
 # https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/dns_managed_zone
@@ -35,7 +36,7 @@ resource "google_compute_address" "gitpod" {
 
 resource "google_dns_record_set" "gitpod" {
   count        = length(local.dns_prefixes)
-  name         = "${local.dns_prefixes[count.index]}${var.subdomain}.${data.google_dns_managed_zone.gitpod.dns_name}"
+  name         = "${local.dns_prefixes[count.index]}${local.subdomain}${data.google_dns_managed_zone.gitpod.dns_name}"
   type         = "A"
   ttl          = 300
   managed_zone = data.google_dns_managed_zone.gitpod.name
