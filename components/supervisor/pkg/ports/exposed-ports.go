@@ -6,7 +6,9 @@ package ports
 
 import (
 	"context"
+	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 )
 
@@ -27,8 +29,11 @@ type ExposedPortsInterface interface {
 	// error occured), the observer will close both channels.
 	Observe(ctx context.Context) (<-chan []ExposedPort, <-chan error)
 
+	// Run starts listening to expose port requests.
+	Run(ctx context.Context)
+
 	// Expose exposes a port to the internet. Upon successful execution any Observer will be updated.
-	Expose(ctx context.Context, local, global uint32, public bool) error
+	Expose(ctx context.Context, local, global uint32, public bool) <-chan error
 }
 
 // NoopExposedPorts implements ExposedPortsInterface but does nothing
@@ -39,9 +44,14 @@ func (*NoopExposedPorts) Observe(ctx context.Context) (<-chan []ExposedPort, <-c
 	return make(<-chan []ExposedPort), make(<-chan error)
 }
 
+// Run starts listening to expose port requests.
+func (*NoopExposedPorts) Run(ctx context.Context) {}
+
 // Expose exposes a port to the internet. Upon successful execution any Observer will be updated.
-func (*NoopExposedPorts) Expose(ctx context.Context, local, global uint32, public bool) error {
-	return nil
+func (*NoopExposedPorts) Expose(ctx context.Context, local, global uint32, public bool) <-chan error {
+	done := make(chan error)
+	close(done)
+	return done
 }
 
 // GitpodExposedPorts uses a connection to the Gitpod server to implement
@@ -50,6 +60,34 @@ type GitpodExposedPorts struct {
 	WorkspaceID string
 	InstanceID  string
 	C           gitpod.APIInterface
+
+	minExposeDelay        time.Duration
+	maxExposeAttempts     uint32
+	exposeDelayGrowFactor float64
+
+	requests chan *exposePortRequest
+}
+
+type exposePortRequest struct {
+	port *gitpod.WorkspaceInstancePort
+	ctx  context.Context
+	done chan error
+}
+
+// NewGitpodExposedPorts creates a new instance of GitpodExposedPorts
+func NewGitpodExposedPorts(workspaceID string, instanceID string, gitpodService gitpod.APIInterface) *GitpodExposedPorts {
+	return &GitpodExposedPorts{
+		WorkspaceID: workspaceID,
+		InstanceID:  instanceID,
+		C:           gitpodService,
+
+		minExposeDelay:        2 * time.Second,
+		maxExposeAttempts:     5,
+		exposeDelayGrowFactor: 1.5,
+
+		// allow clients to submit 30 expose requests without blocking
+		requests: make(chan *exposePortRequest, 30),
+	}
 }
 
 // Observe starts observing the exposed ports until the context is canceled.
@@ -102,22 +140,64 @@ func (g *GitpodExposedPorts) Observe(ctx context.Context) (<-chan []ExposedPort,
 	return reschan, errchan
 }
 
+// Listen starts listening to expose port requests
+func (g *GitpodExposedPorts) Run(ctx context.Context) {
+	// process multiple parallel requests but process one by one to avoid server/ws-manager rate limitting
+	// if it does not help then we try to expose the same port again with the exponential backoff.
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case req := <-g.requests:
+			g.doExpose(req)
+		}
+	}
+}
+
+func (g *GitpodExposedPorts) doExpose(req *exposePortRequest) {
+	var err error
+	defer func() {
+		if err != nil {
+			req.done <- err
+		}
+		close(req.done)
+	}()
+	delay := g.minExposeDelay
+	attempt := 0
+	for {
+		_, err = g.C.OpenPort(req.ctx, g.WorkspaceID, req.port)
+		if err == nil || req.ctx.Err() != nil || attempt == 5 {
+			return
+		}
+		log.WithError(err).WithField("port", req.port).Warnf("cannot expose port, trying again in %d seconds...", uint32(delay.Seconds()))
+		select {
+		case <-req.ctx.Done():
+			err = req.ctx.Err()
+			return
+		case <-time.After(delay):
+			delay = time.Duration(float64(delay) * g.exposeDelayGrowFactor)
+			attempt++
+		}
+	}
+}
+
 // Expose exposes a port to the internet. Upon successful execution any Observer will be updated.
-func (g *GitpodExposedPorts) Expose(ctx context.Context, local, global uint32, public bool) error {
+func (g *GitpodExposedPorts) Expose(ctx context.Context, local, global uint32, public bool) <-chan error {
 	var v string
 	if public {
 		v = "public"
 	} else {
 		v = "private"
 	}
-	_, err := g.C.OpenPort(ctx, g.WorkspaceID, &gitpod.WorkspaceInstancePort{
-		Port:       float64(local),
-		TargetPort: float64(global),
-		Visibility: v,
-	})
-	if err != nil {
-		return err
+	req := &exposePortRequest{
+		port: &gitpod.WorkspaceInstancePort{
+			Port:       float64(local),
+			TargetPort: float64(global),
+			Visibility: v,
+		},
+		ctx:  ctx,
+		done: make(chan error),
 	}
-
-	return nil
+	g.requests <- req
+	return req.done
 }
