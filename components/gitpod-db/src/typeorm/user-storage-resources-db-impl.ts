@@ -9,7 +9,6 @@ import { injectable, inject } from "inversify";
 import { TypeORM } from "./typeorm";
 import { UserStorageResourcesDB } from "../user-storage-resources-db";
 import { DBUserStorageResource } from "./entity/db-user-storage-resource";
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
 @injectable()
 export class TypeORMUserStorageResourcesDBImpl implements UserStorageResourcesDB {
@@ -31,19 +30,16 @@ export class TypeORMUserStorageResourcesDBImpl implements UserStorageResourcesDB
     }
 
     async update(userId: string, uri: string, content: string): Promise<void> {
+        // docs: https://dev.mysql.com/doc/refman/5.7/en/insert-on-duplicate.html
         const repo = await this.getUserStorageResourceRepo();
-        let resource = await this.getResource(userId, uri);
-        if (resource) {
-            log.info({ userId }, 'updating resource', { uri });
-            await repo.update(resource, { content });
-        } else {
-            log.info({ userId }, 'saving resource', { uri });
-            resource = new DBUserStorageResource();
-            resource.userId = userId;
-            resource.uri = uri;
-            resource.content = content;
-            await repo.save(resource);
-        }
+        await repo.query(`
+            INSERT INTO d_b_user_storage_resource
+                (userId, uri, content)
+              VALUES
+                (?, ?, ?)
+              ON DUPLICATE KEY UPDATE
+                content = VALUES(content);
+          `, [ userId, uri, content ]);
     }
 
     async deleteAllForUser(userId: string): Promise<void> {
