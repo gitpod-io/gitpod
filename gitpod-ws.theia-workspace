@@ -1,6 +1,7 @@
 {
    "folders": [
       { "path": "." },
+      { "path": "components/gitpod-protocol" },
       { "path": "components/blobserve" },
       { "path": "components/common-go" },
       { "path": "components/content-service" },

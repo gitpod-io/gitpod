@@ -263,17 +263,12 @@ func createGitpodService(cfg *Config, tknsrv api.TokenServiceServer) *gitpod.API
 	return gitpodService
 }
 
-func createExposedPortsImpl(cfg *Config, gitpodService *gitpod.APIoverJSONRPC) (res ports.ExposedPortsInterface) {
+func createExposedPortsImpl(cfg *Config, gitpodService *gitpod.APIoverJSONRPC) ports.ExposedPortsInterface {
 	if gitpodService == nil {
 		log.Error("auto-port exposure won't work")
 		return &ports.NoopExposedPorts{}
 	}
-
-	return &ports.GitpodExposedPorts{
-		WorkspaceID: cfg.WorkspaceID,
-		InstanceID:  cfg.WorkspaceInstanceID,
-		C:           gitpodService,
-	}
+	return ports.NewGitpodExposedPorts(cfg.WorkspaceID, cfg.WorkspaceInstanceID, gitpodService)
 }
 
 func configureGit(cfg *Config) {

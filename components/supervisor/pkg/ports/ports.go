@@ -49,7 +49,8 @@ func NewManager(exposed ExposedPortsInterface, served ServedPortsObserver, confi
 
 		state:         state,
 		subscriptions: make(map[*Subscription]struct{}),
-		proxyStarter:  startLocalhostProxy}
+		proxyStarter:  startLocalhostProxy,
+	}
 }
 
 type localhostProxy struct {
@@ -125,6 +126,7 @@ func (pm *Manager) Run(ctx context.Context, wg *sync.WaitGroup) {
 	}()
 	defer cancel()
 
+	go pm.E.Run(ctx)
 	exposedUpdates, exposedErrors := pm.E.Observe(ctx)
 	servedUpdates, servedErrors := pm.S.Observe(ctx)
 	configUpdates, configErrors := pm.C.Observe(ctx)
@@ -175,7 +177,7 @@ func (pm *Manager) Run(ctx context.Context, wg *sync.WaitGroup) {
 			// we received just an error, but no update
 			continue
 		}
-		pm.updateState(exposed, served, configured)
+		pm.updateState(ctx, exposed, served, configured)
 	}
 }
 
@@ -187,7 +189,7 @@ func (pm *Manager) Status() []*api.PortsStatus {
 	return pm.getStatus()
 }
 
-func (pm *Manager) updateState(exposed []ExposedPort, served []ServedPort, configured *Configs) {
+func (pm *Manager) updateState(ctx context.Context, exposed []ExposedPort, served []ServedPort, configured *Configs) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
 
@@ -221,7 +223,7 @@ func (pm *Manager) updateState(exposed []ExposedPort, served []ServedPort, confi
 		pm.configs = configured
 	}
 
-	newState := pm.nextState()
+	newState := pm.nextState(ctx)
 	stateChanged := !reflect.DeepEqual(newState, pm.state)
 	pm.state = newState
 
@@ -241,10 +243,7 @@ func (pm *Manager) updateState(exposed []ExposedPort, served []ServedPort, confi
 	}
 }
 
-func (pm *Manager) nextState() map[uint32]*managedPort {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
+func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 	state := make(map[uint32]*managedPort)
 
 	// 1. first capture exposed since they don't depend on configured or served ports
@@ -355,14 +354,21 @@ func (pm *Manager) nextState() map[uint32]*managedPort {
 	return state
 }
 
+// clients should guard a call with check whether such port is already exposed or auto exposed
 func (pm *Manager) autoExpose(ctx context.Context, mp *managedPort, public bool) {
-	err := pm.E.Expose(ctx, mp.LocalhostPort, mp.GlobalPort, public)
-	if err != nil {
-		log.WithError(err).WithField("port", *mp).Warn("cannot auto-expose port")
-		return
-	}
+	exposing := pm.E.Expose(ctx, mp.LocalhostPort, mp.GlobalPort, public)
+	go func() {
+		err := <-exposing
+		if err != nil {
+			if err != context.Canceled {
+				log.WithError(err).WithField("port", *mp).Warn("cannot auto-expose port")
+			}
+			return
+		}
+		log.WithField("port", *mp).Info("auto-exposed port")
+	}()
 	pm.autoExposed[mp.LocalhostPort] = mp.GlobalPort
-	log.WithField("port", *mp).Info("auto-expose port")
+	log.WithField("port", *mp).Info("auto-exposing port")
 }
 
 func (pm *Manager) updateProxies() {
@@ -489,19 +495,16 @@ func (pm *Manager) Expose(ctx context.Context, port uint32, targetPort uint32) e
 	pm.mu.RUnlock()
 	unlock = false
 
-	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
 	global := targetPort
 	if global == 0 {
 		global = port
 	}
 	public := exists && config.Visibility != "private"
-	err := pm.E.Expose(ctx, port, global, public)
-	if err != nil {
+	err := <-pm.E.Expose(ctx, port, global, public)
+	if err != nil && err != context.Canceled {
 		log.WithError(err).WithField("port", port).WithField("targetPort", targetPort).Error("cannot expose port")
-		return err
 	}
-	return nil
+	return err
 }
 
 var (
