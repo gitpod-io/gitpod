@@ -56,6 +56,9 @@ const (
 	// Test have shown that we tend to do that, allthough we currently are not able to understand why that is the case.
 	// It seems that "available RAM" calculation is slightly off between kubernetes master and scheduler
 	defaultRAMSafetyBuffer = "512Mi"
+
+	// The value of pod.Status.Reason in case of an Out-Of-Memory error (in lower case)
+	reasonOutOfMemory = "outofmemory"
 )
 
 // Scheduler tries to pack workspaces as closely as possible while trying to keep
@@ -233,7 +236,8 @@ func (s *Scheduler) startInformer(ctx context.Context) (schedulerQueue chan *cor
 				s.localSlotCache.delete(pod.Name)
 			}
 
-			if pod.Status.Phase == corev1.PodFailed && pod.Status.Reason == "OutOfMemory" {
+			if pod.Status.Phase == corev1.PodFailed &&
+				strings.ToLower(pod.Status.Reason) == reasonOutOfMemory {
 				// This is a ws-scheduler error and fails the pod: Be as loud about it as possible!
 				err := xerrors.Errorf("OutOfMemory: too many pods on the same node")
 				msg := "OutOfMemory: due to a scheduling error too many pods are assigned to the same node"
