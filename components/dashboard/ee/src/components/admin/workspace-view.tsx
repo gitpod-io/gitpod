@@ -98,7 +98,7 @@ export class WorkspaceView extends React.Component<WorkspaceViewProps, Workspace
             <Grid container>
                 <Grid item xs={8}><Typography variant="h2">Workspace: {this.props.workspaceID}</Typography></Grid>
                 <Grid item xs={4} style={{textAlign: "right"}}>
-                    <Button href={`/api/enforcement/kill-workspace/${this.props.workspaceID}`} variant="contained">Kill</Button>
+                    <Button href={`/api/enforcement/kill-workspace/${this.props.workspaceID}`} variant="contained">Stop Immediately</Button>
                     <Button disabled={!this.state || !this.state.workspace || this.state.workspace.phase != "stopped"} href={`/workspace-download/get/${this.props.workspaceID}`} variant="contained">Download</Button>
                 </Grid>
             </Grid>
