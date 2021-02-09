@@ -128,38 +128,68 @@ func (m *Manager) CreateMonitor() (*Monitor, error) {
 	return &res, nil
 }
 
-func (m *Monitor) connectToPodWatch() error {
-	podwatch, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).Watch(context.Background(), workspaceObjectListOptions())
-	if err != nil {
-		return xerrors.Errorf("cannot watch pods: %w", err)
+func (m *Monitor) connect(failImmediately bool) error {
+	reconnectionInterval := time.Duration(m.manager.Config.ReconnectionInterval)
+	if reconnectionInterval == 0 {
+		reconnectionInterval = 1 * time.Second
+	}
+	// we got disconnected but don't want to shutdown - reconnect until we succeed
+	for reconnected := false; !reconnected && !m.shouldShutdown(); {
+		log := log.WithField("watch", "pods")
+
+		podwatch, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).Watch(context.Background(), workspaceObjectListOptions())
+		if err != nil {
+			err = xerrors.Errorf("cannot watch pods: %w", err)
+			if failImmediately {
+				return err
+			}
+
+			log.WithError(err).Warn("monitor cannot reconnect to Kubernetes - will try again")
+			time.Sleep(reconnectionInterval)
+			continue
+		}
+
+		log.Info("connection to Kubernetes master is reestablished (pod watch)")
+		m.podwatch = podwatch
+		reconnected = true
+	}
+	for reconnected := false; !reconnected && !m.shouldShutdown(); {
+		log := log.WithField("watch", "configmaps")
+
+		cfgwatch, err := m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).Watch(context.Background(), workspaceObjectListOptions())
+		if err != nil {
+			err = xerrors.Errorf("cannot watch config maps: %w", err)
+			if failImmediately {
+				return err
+			}
+
+			log.WithError(err).Warn("monitor cannot reconnect to Kubernetes - will try again")
+			time.Sleep(reconnectionInterval)
+			continue
+		}
+
+		log.Info("connection to Kubernetes master is reestablished (configmap watch)")
+		m.cfgwatch = cfgwatch
+		reconnected = true
 	}
 
-	m.podwatch = podwatch
-	return nil
-}
-
-func (m *Monitor) connectToConfigMapWatch() error {
-	cfgwatch, err := m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).Watch(context.Background(), workspaceObjectListOptions())
-	if err != nil {
-		return xerrors.Errorf("cannot watch config maps: %w", err)
-	}
-
-	m.cfgwatch = cfgwatch
 	return nil
 }
 
 // Start starts up the monitor which will check the overall workspace state (on event or periodically).
 // Use Stop() to stop the monitor gracefully.
 func (m *Monitor) Start() error {
+	// make sure our caches are warm
+	ok := m.manager.cache.WaitForCacheSync()
+	if !ok {
+		return xerrors.Errorf("cannot wait for cache sync")
+	}
+
 	// mark startup so that we can do proper workspace timeouting
 	m.startup = time.Now().UTC()
 
 	m.eventpool.Start(eventpoolWorkers)
-	err := m.connectToPodWatch()
-	if err != nil {
-		return xerrors.Errorf("cannot start workspace monitor: %w", err)
-	}
-	err = m.connectToConfigMapWatch()
+	err := m.connect(true)
 	if err != nil {
 		return xerrors.Errorf("cannot start workspace monitor: %w", err)
 	}
@@ -180,37 +210,8 @@ func (m *Monitor) Start() error {
 			// we've come out of the run loop - must mean we got disconnected
 			log.Info("connection to Kubernetes master lost")
 
-			reconnectionInterval := time.Duration(m.manager.Config.ReconnectionInterval)
-			if reconnectionInterval == 0 {
-				reconnectionInterval = 1 * time.Second
-			}
-			// we got disconnected but don't want to shutdown - reconnect until we succeed
-			for reconnected := false; !reconnected && !m.shouldShutdown(); {
-				log := log.WithField("watch", "pods")
-
-				err := m.connectToPodWatch()
-				if err != nil {
-					log.WithError(err).Warn("monitor cannot reconnect to Kubernetes - will try again")
-					time.Sleep(reconnectionInterval)
-					continue
-				}
-
-				log.Info("connection to Kubernetes master is reestablished")
-				reconnected = true
-			}
-			for reconnected := false; !reconnected && !m.shouldShutdown(); {
-				log := log.WithField("watch", "configmaps")
-
-				err := m.connectToConfigMapWatch()
-				if err != nil {
-					log.WithError(err).Warn("monitor cannot reconnect to Kubernetes - will try again")
-					time.Sleep(reconnectionInterval)
-					continue
-				}
-
-				log.Info("connection to Kubernetes master is reestablished")
-				reconnected = true
-			}
+			// connect does not fail but keeps trying if `failImmediately` is false
+			_ = m.connect(false)
 
 			if m.shouldShutdown() {
 				// we're asked to shut down - let's do this gracefully
@@ -306,7 +307,7 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 	ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
 	defer cancel()
 
-	wso, err := m.manager.getWorkspaceObjects(ctx, pod)
+	wso, err := m.manager.cache.GetWorkspaceObjects(ctx, pod)
 	if err != nil {
 		return xerrors.Errorf("cannot handle workspace event: %w", err)
 	}
@@ -669,7 +670,7 @@ func (m *Monitor) onConfigMapEvent(evt watch.Event) error {
 	defer cancel()
 
 	wso := &workspaceObjects{PLIS: cfgmap}
-	err := m.manager.completeWorkspaceObjects(ctx, wso)
+	err := m.manager.cache.CompleteWorkspaceObjects(ctx, wso)
 	if err != nil {
 		return xerrors.Errorf("cannot handle workspace event: %w", err)
 	}
@@ -1333,8 +1334,11 @@ func (m *Monitor) deleteDanglingServices(ctx context.Context) error {
 			m.OnError(fmt.Errorf("service endpoint %s does not have %s label", e.Name, wsk8s.WorkspaceIDLabel))
 			continue
 		}
-		_, err := m.manager.findWorkspacePod(ctx, workspaceID)
+		pod, err := m.manager.cache.FindWorkspacePod(workspaceID)
 		if !isKubernetesObjNotFoundError(err) {
+			continue
+		}
+		if pod == nil {
 			continue
 		}
 

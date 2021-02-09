@@ -52,6 +52,8 @@ type Manager struct {
 	Content   *layer.Provider
 	OnChange  func(context.Context, *api.WorkspaceStatus)
 
+	cache *workspaceObjectCache
+
 	activity     map[string]time.Time
 	activityLock sync.Mutex
 
@@ -120,6 +122,7 @@ func New(config Configuration, clientset kubernetes.Interface, cp *layer.Provide
 		Config:               config,
 		Clientset:            clientset,
 		Content:              cp,
+		cache:                newWorkspaceObjectCache(clientset, config.Namespace),
 		activity:             make(map[string]time.Time),
 		subscribers:          make(map[string]chan *api.SubscribeResponse),
 		wsdaemonPool:         grpcpool.New(wsdaemonConnfactory),
@@ -394,7 +397,7 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 
 	client := m.Clientset.CoreV1()
 
-	pod, err := m.findWorkspacePod(ctx, workspaceID)
+	pod, err := m.cache.FindWorkspacePod(workspaceID)
 	if isKubernetesObjNotFoundError(err) {
 		return err
 	}
@@ -471,27 +474,6 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 	return nil
 }
 
-// findWorkspacePod finds the pod for a workspace
-func (m *Manager) findWorkspacePod(ctx context.Context, workspaceID string) (*corev1.Pod, error) {
-	client := m.Clientset.CoreV1()
-	pods, err := client.Pods(m.Config.Namespace).List(ctx, metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("workspaceID=%s", workspaceID),
-	})
-	if err != nil {
-		return nil, err
-	}
-	if len(pods.Items) == 0 {
-		return nil, &k8serr.StatusError{ErrStatus: metav1.Status{
-			Code:    http.StatusNotFound,
-			Message: fmt.Sprintf("pod for workspace %s not found", workspaceID),
-		}}
-	}
-	if len(pods.Items) > 1 {
-		return nil, xerrors.Errorf("found %d candidates for workspace %s", len(pods.Items), workspaceID)
-	}
-	return &pods.Items[0], nil
-}
-
 // getPodID computes the pod ID from a workpace ID
 //nolint:unused,deadcode
 func getPodID(workspaceType, workspaceID string) string {
@@ -515,7 +497,7 @@ func (m *Manager) MarkActive(ctx context.Context, req *api.MarkActiveRequest) (r
 
 	workspaceID := req.Id
 
-	pod, err := m.findWorkspacePod(ctx, workspaceID)
+	pod, err := m.cache.FindWorkspacePod(workspaceID)
 	if isKubernetesObjNotFoundError(err) {
 		return nil, xerrors.Errorf("workspace %s does not exist", workspaceID)
 	}
@@ -594,7 +576,7 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
 	defer tracing.FinishSpan(span, &err)
 
-	pod, err := m.findWorkspacePod(ctx, req.Id)
+	pod, err := m.cache.FindWorkspacePod(req.Id)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot find workspace: %w", err)
 	}
@@ -615,7 +597,7 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 		// outselves. Doing it ourselves lets us synchronize the status update with probing for actual availability, not just
 		// the service modification in Kubernetes.
 		wso := workspaceObjects{Pod: pod, PortsService: service}
-		err := m.completeWorkspaceObjects(ctx, &wso)
+		err := m.cache.CompleteWorkspaceObjects(ctx, &wso)
 		if err != nil {
 			return xerrors.Errorf("cannot update status: %w", err)
 		}
@@ -817,7 +799,7 @@ func (m *Manager) DescribeWorkspace(ctx context.Context, req *api.DescribeWorksp
 	// Note: if we ever face performance issues with our constant querying of Kubernetes, we could use the reflector
 	//       which mirrors the server-side content (see https://github.com/kubernetes/client-go/blob/master/tools/cache/reflector.go).
 
-	pod, err := m.findWorkspacePod(ctx, req.Id)
+	pod, err := m.cache.FindWorkspacePod(req.Id)
 	if isKubernetesObjNotFoundError(err) {
 		// TODO: make 404 status error
 		return nil, status.Errorf(codes.NotFound, "workspace %s does not exist", req.Id)
@@ -828,7 +810,7 @@ func (m *Manager) DescribeWorkspace(ctx context.Context, req *api.DescribeWorksp
 	tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
 	tracing.LogEvent(span, "get pod")
 
-	wso, err := m.getWorkspaceObjects(ctx, pod)
+	wso, err := m.cache.GetWorkspaceObjects(ctx, pod)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get workspace status: %q", err)
 	}
@@ -1008,7 +990,7 @@ func (m *Manager) GetWorkspaces(ctx context.Context, req *api.GetWorkspacesReque
 	span, ctx := tracing.FromContext(ctx, "GetWorkspaces")
 	defer tracing.FinishSpan(span, &err)
 
-	wsos, err := m.getAllWorkspaceObjects(ctx)
+	wsos, err := m.cache.GetAllWorkspaceObjects(ctx)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot get all workspaces: %w", err)
 	}
@@ -1027,102 +1009,9 @@ func (m *Manager) GetWorkspaces(ctx context.Context, req *api.GetWorkspacesReque
 	return &api.GetWorkspacesResponse{Status: result}, nil
 }
 
-// getAllWorkspaceObjects retturns all (possibly incomplete) workspaceObjects of all workspaces this manager is currently aware of.
-// If a workspace has a pod that pod is part of the returned WSO.
-// If a workspace has a PLIS that PLIS is part of the returned WSO.
-func (m *Manager) getAllWorkspaceObjects(ctx context.Context) (result []workspaceObjects, err error) {
-	//nolint:ineffassign
-	span, ctx := tracing.FromContext(ctx, "getAllWorkspaceObjects")
-	defer tracing.FinishSpan(span, &err)
-
-	// Note: if we ever face performance issues with our constant querying of Kubernetes, we could use the reflector
-	//       which mirrors the server-side content (see https://github.com/kubernetes/client-go/blob/master/tools/cache/reflector.go).
-	pods, err := m.Clientset.CoreV1().Pods(m.Config.Namespace).List(ctx, workspaceObjectListOptions())
-	if err != nil {
-		return nil, xerrors.Errorf("cannot list workspaces: %w", err)
-	}
-	plis, err := m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).List(ctx, workspaceObjectListOptions())
-	if err != nil {
-		return nil, xerrors.Errorf("cannot list workspaces: %w", err)
-	}
-	services, err := m.Clientset.CoreV1().Services(m.Config.Namespace).List(ctx, workspaceObjectListOptions())
-	if err != nil {
-		return nil, xerrors.Errorf("cannot list services: %w", err)
-	}
-
-	var (
-		wsoIndex          = make(map[string]*workspaceObjects)
-		theiaServiceIndex = make(map[string]*workspaceObjects)
-		portServiceIndex  = make(map[string]*workspaceObjects)
-	)
-	for _, pod := range pods.Items {
-		id, ok := pod.Annotations[workspaceIDAnnotation]
-		if !ok {
-			log.WithField("pod", pod.Name).Warn("pod has no workspace ID")
-			span.LogKV("warning", "pod has no workspace ID", "podName", pod.Name)
-			span.SetTag("error", true)
-			continue
-		}
-
-		// don't references to loop variables - they magically change their value
-		podcopy := pod
-		wso := &workspaceObjects{Pod: &podcopy}
-
-		wsoIndex[id] = wso
-		if sp, ok := pod.Annotations[servicePrefixAnnotation]; ok {
-			theiaServiceIndex[getTheiaServiceName(sp)] = wso
-			portServiceIndex[getPortsServiceName(sp)] = wso
-		}
-	}
-	for _, plis := range plis.Items {
-		id, ok := plis.Annotations[workspaceIDAnnotation]
-		if !ok {
-			log.WithField("configmap", plis.Name).Warn("PLIS has no workspace ID")
-			span.LogKV("warning", "PLIS has no workspace ID", "podName", plis.Name)
-			span.SetTag("error", true)
-			continue
-		}
-
-		// don't references to loop variables - they magically change their value
-		pliscopy := plis
-
-		wso, ok := wsoIndex[id]
-		if !ok {
-			wso = &workspaceObjects{}
-			wsoIndex[id] = wso
-		}
-		wso.PLIS = &pliscopy
-	}
-
-	for _, service := range services.Items {
-		// don't references to loop variables - they magically change their value
-		serviceCopy := service
-
-		if wso, ok := theiaServiceIndex[service.Name]; ok {
-			wso.TheiaService = &serviceCopy
-			continue
-		}
-		if wso, ok := portServiceIndex[service.Name]; ok {
-			wso.PortsService = &serviceCopy
-			continue
-		}
-	}
-
-	var i int
-	result = make([]workspaceObjects, len(wsoIndex))
-	for _, wso := range wsoIndex {
-		result[i] = *wso
-		i++
-	}
-	return result, nil
-}
-
 // workspaceExists checks if a workspace exists with the given ID
 func (m *Manager) workspaceExists(ctx context.Context, id string) (bool, error) {
-	pod, err := m.findWorkspacePod(ctx, id)
-	if isKubernetesObjNotFoundError(err) {
-		return false, nil
-	}
+	pod, err := m.cache.FindWorkspacePod(id)
 	if err != nil {
 		return false, xerrors.Errorf("workspaceExists: %w", err)
 	}

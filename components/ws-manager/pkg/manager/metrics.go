@@ -273,7 +273,7 @@ func (vec *workspaceActivityVec) Collect(ch chan<- prometheus.Metric) {
 }
 
 func (vec *workspaceActivityVec) getWorkspaceActivityCounts() (active, notActive int, err error) {
-	wso, err := vec.manager.getAllWorkspaceObjects(context.Background())
+	wso, err := vec.manager.cache.GetAllWorkspaceObjects(context.Background())
 	if err != nil {
 		return
 	}
@@ -331,7 +331,7 @@ func (vec *timeoutSettingsVec) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements Collector.
 func (vec *timeoutSettingsVec) Collect(ch chan<- prometheus.Metric) {
-	wso, err := vec.manager.getAllWorkspaceObjects(context.Background())
+	wso, err := vec.manager.cache.GetAllWorkspaceObjects(context.Background())
 	if err != nil {
 		log.WithError(err).Errorf("cannot collect workspace objects - %s will be inaccurate", vec.name)
 		return

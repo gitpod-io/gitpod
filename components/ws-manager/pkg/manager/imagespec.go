@@ -22,8 +22,8 @@ import (
 
 // GetImageSpec provides the image spec for a particular workspace (instance) ID.
 func (m *Manager) GetImageSpec(ctx context.Context, req *regapi.GetImageSpecRequest) (resp *regapi.GetImageSpecResponse, err error) {
-	pod, err := m.findWorkspacePod(ctx, req.Id)
-	if isKubernetesObjNotFoundError(err) {
+	pod, err := m.cache.FindWorkspacePod(req.Id)
+	if isKubernetesObjNotFoundError(err) || pod == nil {
 		return nil, status.Error(codes.NotFound, "not found")
 	}
 

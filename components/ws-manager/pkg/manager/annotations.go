@@ -7,13 +7,18 @@ package manager
 import (
 	"context"
 	"encoding/json"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
+	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/ws-manager/api"
+
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
+	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
 )
@@ -90,13 +95,22 @@ func (m *Manager) markWorkspace(ctx context.Context, workspaceID string, annotat
 
 	// Retry on failure. Sometimes this doesn't work because of concurrent modification. The Kuberentes way is to just try again after waiting a bit.
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		pod, err := m.findWorkspacePod(ctx, workspaceID)
+		pods, err := client.List(ctx, metav1.ListOptions{
+			LabelSelector: fmt.Sprintf("%s=%s", wsk8s.WorkspaceIDLabel, workspaceID),
+		})
 		if err != nil {
-			return xerrors.Errorf("cannot find workspace %s: %w", workspaceID, err)
+			return err
 		}
-		if pod == nil {
-			return xerrors.Errorf("workspace %s does not exist", workspaceID)
+		if len(pods.Items) == 0 {
+			return &k8serr.StatusError{ErrStatus: metav1.Status{
+				Code:    http.StatusNotFound,
+				Message: fmt.Sprintf("pod for workspace %s not found", workspaceID),
+			}}
 		}
+		if len(pods.Items) > 1 {
+			return xerrors.Errorf("found %d candidates for workspace %s", len(pods.Items), workspaceID)
+		}
+		pod := &pods.Items[0]
 
 		for _, a := range annotations {
 			a.Apply(pod.Annotations)

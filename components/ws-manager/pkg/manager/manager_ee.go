@@ -29,8 +29,8 @@ func (m *Manager) TakeSnapshot(ctx context.Context, req *api.TakeSnapshotRequest
 	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
 	defer tracing.FinishSpan(span, &err)
 
-	pod, err := m.findWorkspacePod(ctx, req.Id)
-	if isKubernetesObjNotFoundError(err) {
+	pod, err := m.cache.FindWorkspacePod(req.Id)
+	if isKubernetesObjNotFoundError(err) || pod == nil {
 		return nil, status.Errorf(codes.NotFound, "workspace %s does not exist", req.Id)
 	}
 	if err != nil {
@@ -39,7 +39,7 @@ func (m *Manager) TakeSnapshot(ctx context.Context, req *api.TakeSnapshotRequest
 	tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
 	tracing.LogEvent(span, "get pod")
 
-	wso, err := m.getWorkspaceObjects(ctx, pod)
+	wso, err := m.cache.GetWorkspaceObjects(ctx, pod)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get workspace status: %q", err)
 	}
@@ -75,8 +75,8 @@ func (m *Manager) ControlAdmission(ctx context.Context, req *api.ControlAdmissio
 	tracing.LogRequestSafe(span, req)
 	defer tracing.FinishSpan(span, &err)
 
-	pod, err := m.findWorkspacePod(ctx, req.Id)
-	if isKubernetesObjNotFoundError(err) {
+	pod, err := m.cache.FindWorkspacePod(req.Id)
+	if isKubernetesObjNotFoundError(err) || pod == nil {
 		return nil, status.Errorf(codes.NotFound, "workspace %s does not exist", req.Id)
 	}
 	if err != nil {
@@ -85,7 +85,7 @@ func (m *Manager) ControlAdmission(ctx context.Context, req *api.ControlAdmissio
 	tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
 	tracing.LogEvent(span, "get pod")
 
-	wso, err := m.getWorkspaceObjects(ctx, pod)
+	wso, err := m.cache.GetWorkspaceObjects(ctx, pod)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get workspace status: %q", err)
 	}

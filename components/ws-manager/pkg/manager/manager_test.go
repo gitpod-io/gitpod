@@ -218,7 +218,7 @@ func TestFindWorkspacePod(t *testing.T) {
 			}
 			manager.Clientset = fakek8s.NewSimpleClientset(objs...)
 
-			p, err := manager.findWorkspacePod(context.Background(), test.WorkspaceID)
+			p, err := manager.cache.FindWorkspacePod(test.WorkspaceID)
 
 			var errmsg string
 			if err != nil {

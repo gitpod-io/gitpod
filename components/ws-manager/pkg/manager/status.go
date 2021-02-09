@@ -6,7 +6,6 @@ package manager
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -175,103 +174,6 @@ func (wso *workspaceObjects) HostIP() string {
 		}
 	}
 	return ""
-}
-
-func (m *Manager) getWorkspaceObjects(ctx context.Context, pod *corev1.Pod) (*workspaceObjects, error) {
-	wso := &workspaceObjects{Pod: pod}
-	err := m.completeWorkspaceObjects(ctx, wso)
-	if err != nil {
-		return nil, xerrors.Errorf("getWorkspaceObjects: %w", err)
-	}
-	return wso, nil
-}
-
-// completeWorkspaceObjects finds the remaining Kubernetes objects based on the pod description
-// or pod lifecycle indepedent state.
-func (m *Manager) completeWorkspaceObjects(ctx context.Context, wso *workspaceObjects) error {
-	if wso.Pod == nil && wso.PLIS == nil {
-		return xerrors.Errorf("completeWorkspaceObjects: need either pod or lifecycle independent state")
-	}
-
-	// find pod if we're working on PLIS alone so far
-	if wso.Pod == nil {
-		workspaceID, ok := wso.PLIS.ObjectMeta.Annotations[workspaceIDAnnotation]
-		if !ok {
-			return xerrors.Errorf("cannot find %s annotation on %s", workspaceIDAnnotation, wso.PLIS.Name)
-		}
-
-		pod, err := m.findWorkspacePod(ctx, workspaceID)
-		if err == nil {
-			wso.Pod = pod
-		}
-
-		if !isKubernetesObjNotFoundError(err) && err != nil {
-			return xerrors.Errorf("completeWorkspaceObjects: %w", err)
-		}
-	}
-
-	// find our service prefix to see if the services still exist
-	servicePrefix := ""
-	if wso.Pod != nil {
-		servicePrefix = wso.Pod.Annotations[servicePrefixAnnotation]
-	}
-	if servicePrefix == "" && wso.PLIS != nil {
-		servicePrefix = wso.PLIS.Annotations[servicePrefixAnnotation]
-	}
-	if servicePrefix == "" {
-		return xerrors.Errorf("completeWorkspaceObjects: no service prefix found")
-	}
-	serviceClient := m.Clientset.CoreV1().Services(m.Config.Namespace)
-	if wso.TheiaService == nil {
-		service, err := serviceClient.Get(ctx, getTheiaServiceName(servicePrefix), metav1.GetOptions{})
-		if err == nil {
-			wso.TheiaService = service
-		}
-
-		if !isKubernetesObjNotFoundError(err) && err != nil {
-			return xerrors.Errorf("completeWorkspaceObjects: %w", err)
-		}
-	}
-	if wso.PortsService == nil {
-		service, err := serviceClient.Get(ctx, getPortsServiceName(servicePrefix), metav1.GetOptions{})
-		if err == nil {
-			wso.PortsService = service
-		}
-
-		if !isKubernetesObjNotFoundError(err) && err != nil {
-			return xerrors.Errorf("completeWorkspaceObjects: %w", err)
-		}
-	}
-
-	// find pod events - this only makes sense if we still have a pod
-	if wso.Pod != nil {
-		if wso.Events == nil && wso.Pod != nil {
-			events, err := m.Clientset.CoreV1().Events(m.Config.Namespace).Search(scheme, wso.Pod)
-			if err != nil {
-				return xerrors.Errorf("completeWorkspaceObjects: %w", err)
-			}
-
-			wso.Events = make([]corev1.Event, len(events.Items))
-			copy(wso.Events, events.Items)
-		}
-	}
-
-	// if we don't have PLIS but a pod, try and find the PLIS
-	if wso.PLIS == nil {
-		workspaceID, ok := wso.Pod.Annotations[workspaceIDAnnotation]
-		if !ok {
-			return fmt.Errorf("cannot act on pod %s: has no %s annotation", wso.Pod.Name, workspaceIDAnnotation)
-		}
-
-		plis, err := m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Get(ctx, getPodLifecycleIndependentCfgMapName(workspaceID), metav1.GetOptions{})
-		if !isKubernetesObjNotFoundError(err) && err != nil {
-			return xerrors.Errorf("completeWorkspaceObjects: %w", err)
-		}
-
-		wso.PLIS = plis
-	}
-
-	return nil
 }
 
 func getPodLifecycleIndependentCfgMapName(workspaceID string) string {
