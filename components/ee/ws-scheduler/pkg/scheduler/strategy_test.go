@@ -16,6 +16,10 @@ import (
 	sched "github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler"
 )
 
+const (
+	defaultTestNamespace = "default"
+)
+
 var (
 	testBaseTime       = time.Unix(0, 0)
 	testWorkspaceImage = "gitpod/workspace-full"
@@ -23,14 +27,15 @@ var (
 
 func TestDensityAndExperience(t *testing.T) {
 	tests := []struct {
-		Desc            string
-		Broken          string
-		RAMSafetyBuffer string
-		Nodes           []*corev1.Node
-		Pods            []*corev1.Pod
-		ScheduledPod    *corev1.Pod
-		ExpectedNode    string
-		ExpectedError   string
+		Desc                  string
+		Broken                string
+		RAMSafetyBuffer       string
+		Nodes                 []*corev1.Node
+		Pods                  []*corev1.Pod
+		ScheduledPod          *corev1.Pod
+		ExpectedNode          string
+		ExpectedError         string
+		ExpectedGhostReplaced string
 	}{
 		{
 			Desc:            "no node",
@@ -53,8 +58,8 @@ RAM requested: 6000Mi
 Eph. Storage requested: 0
 Nodes:
 - node1:
-  RAM: used 0+0+8389 of 9949, avail 1561 Mi
-  Eph. Storage: used 0+0+0 of 0, avail 0 Mi`,
+  RAM: used 0(r)+0(g)+0(h)+8389(o) of 9949, avail 1561 Mi
+  Eph. Storage: used 0(r)+0(g)+0(h)+0(o) of 0, avail 0 Mi`,
 		},
 		{
 			Desc:            "single empty node",
@@ -202,11 +207,11 @@ RAM requested: 4000Mi
 Eph. Storage requested: 5000Mi
 Nodes:
 - node2:
-  RAM: used 4195+0+0 of 9949, avail 5755 Mi
-  Eph. Storage: used 5243+0+0 of 7341, avail 2098 Mi
+  RAM: used 4195(r)+0(g)+0(h)+0(o) of 9949, avail 5755 Mi
+  Eph. Storage: used 5243(r)+0(g)+0(h)+0(o) of 7341, avail 2098 Mi
 - node1:
-  RAM: used 0+0+0 of 9949, avail 9949 Mi
-  Eph. Storage: used 0+0+0 of 3146, avail 3146 Mi`,
+  RAM: used 0(r)+0(g)+0(h)+0(o) of 9949, avail 9949 Mi
+  Eph. Storage: used 0(r)+0(g)+0(h)+0(o) of 3146, avail 3146 Mi`,
 		},
 		{
 			// Should prefer 1 and 2 over 3, but 1 has not enough pod slots and 2 not enough ephemeral storage
@@ -255,6 +260,24 @@ Nodes:
 			ScheduledPod: createWorkspacePod("new workspace", "4000Mi", "5000Mi", "", 10),
 			ExpectedNode: "node2",
 		},
+		{
+			// Should schedule to 2 because of density and it ignores ghosts.
+			// Should delete ghost2 because probes replace ghosts, and ghost2 is the oldest one
+			Desc:            "schedule probe and replace pod",
+			RAMSafetyBuffer: "512Mi",
+			Nodes: []*corev1.Node{
+				createNode("node1", "10000Mi", "10000Mi", false, 100),
+				createNode("node2", "10000Mi", "10000Mi", false, 100),
+			},
+			Pods: []*corev1.Pod{
+				createWorkspacePod("workspace1", "3000Mi", "3000Mi", "node2", 10),
+				createGhostPod("ghost1", "3000Mi", "3000Mi", "node2", 10),
+				createGhostPod("ghost2", "3000Mi", "3000Mi", "node2", 8),
+			},
+			ScheduledPod:          createProbePod("workspace2", "3000Mi", "3000Mi", "", 10),
+			ExpectedNode:          "node2",
+			ExpectedGhostReplaced: "ghost2",
+		},
 	}
 
 	for _, test := range tests {
@@ -264,8 +287,8 @@ Nodes:
 			}
 
 			ramSafetyBuffer := res.MustParse(test.RAMSafetyBuffer)
-			ghostsAreInvisible := wsk8s.IsNonGhostWorkspace(test.ScheduledPod)
-			state := sched.ComputeState(test.Nodes, test.Pods, nil, &ramSafetyBuffer, ghostsAreInvisible)
+			ghostsVisible := !wsk8s.IsNonGhostWorkspace(test.ScheduledPod)
+			state := sched.ComputeState(test.Nodes, test.Pods, nil, &ramSafetyBuffer, ghostsVisible, defaultTestNamespace)
 
 			densityAndExperienceConfig := sched.DefaultDensityAndExperienceConfig()
 			strategy, err := sched.CreateStrategy(sched.StrategyDensityAndExperience, sched.Configuration{
@@ -288,6 +311,14 @@ Nodes:
 			if node != test.ExpectedNode {
 				t.Errorf("expected node \"%s\", got \"%s\"", test.ExpectedNode, node)
 				return
+			}
+
+			if test.ExpectedGhostReplaced != "" {
+				ghostToDelete, _ := state.FindSpareGhostToDelete(node, test.ScheduledPod, make(map[string]bool))
+				if ghostToDelete != test.ExpectedGhostReplaced {
+					t.Errorf("expected ghost to be replaced \"%s\", got \"%s\"", test.ExpectedGhostReplaced, ghostToDelete)
+					return
+				}
 			}
 		})
 	}
@@ -338,7 +369,16 @@ func createWorkspacePod(name string, ram string, ephemeralStorage string, nodeNa
 func createGhostPod(name string, ram string, ephemeralStorage string, nodeName string, age time.Duration) *corev1.Pod {
 	return createPod(name, ram, ephemeralStorage, nodeName, age, map[string]string{
 		"component":     "workspace",
+		"headless":      "true",
 		wsk8s.TypeLabel: "ghost",
+	})
+}
+
+func createProbePod(name string, ram string, ephemeralStorage string, nodeName string, age time.Duration) *corev1.Pod {
+	return createPod(name, ram, ephemeralStorage, nodeName, age, map[string]string{
+		"component":     "workspace",
+		"headless":      "true",
+		wsk8s.TypeLabel: "probe",
 	})
 }
 
@@ -347,6 +387,7 @@ func createPod(name string, ram string, ephemeralStorage string, nodeName string
 	return &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              name,
+			Namespace:         defaultTestNamespace,
 			CreationTimestamp: metav1.NewTime(creationTimestamp),
 			Labels:            labels,
 		},

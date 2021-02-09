@@ -37,14 +37,14 @@ func TestState(t *testing.T) {
 			RAMSafetyBuffer: "512Mi",
 			Nodes:           defaultNodeSet(),
 			Expectation: `- node1:
-  RAM: used 0+0+0 of 9949, avail 9949 Mi
-  Eph. Storage: used 0+0+0 of 0, avail 0 Mi
+  RAM: used 0(r)+0(g)+0(h)+0(o) of 9949, avail 9949 Mi
+  Eph. Storage: used 0(r)+0(g)+0(h)+0(o) of 0, avail 0 Mi
 - node2:
-  RAM: used 0+0+0 of 9949, avail 9949 Mi
-  Eph. Storage: used 0+0+0 of 0, avail 0 Mi
+  RAM: used 0(r)+0(g)+0(h)+0(o) of 9949, avail 9949 Mi
+  Eph. Storage: used 0(r)+0(g)+0(h)+0(o) of 0, avail 0 Mi
 - node3:
-  RAM: used 0+0+0 of 9949, avail 9949 Mi
-  Eph. Storage: used 0+0+0 of 0, avail 0 Mi`,
+  RAM: used 0(r)+0(g)+0(h)+0(o) of 9949, avail 9949 Mi
+  Eph. Storage: used 0(r)+0(g)+0(h)+0(o) of 0, avail 0 Mi`,
 		},
 		{
 			Desc:            "other pods only",
@@ -55,14 +55,14 @@ func TestState(t *testing.T) {
 				createNonWorkspacePod("existingPod2", "1000Mi", "0Mi", "node2", 10),
 			},
 			Expectation: `- node1:
-  RAM: used 0+0+1573 of 9949, avail 8377 Mi
-  Eph. Storage: used 0+0+0 of 0, avail 0 Mi
+  RAM: used 0(r)+0(g)+0(h)+1573(o) of 9949, avail 8377 Mi
+  Eph. Storage: used 0(r)+0(g)+0(h)+0(o) of 0, avail 0 Mi
 - node2:
-  RAM: used 0+0+1049 of 9949, avail 8901 Mi
-  Eph. Storage: used 0+0+0 of 0, avail 0 Mi
+  RAM: used 0(r)+0(g)+0(h)+1049(o) of 9949, avail 8901 Mi
+  Eph. Storage: used 0(r)+0(g)+0(h)+0(o) of 0, avail 0 Mi
 - node3:
-  RAM: used 0+0+0 of 9949, avail 9949 Mi
-  Eph. Storage: used 0+0+0 of 0, avail 0 Mi`,
+  RAM: used 0(r)+0(g)+0(h)+0(o) of 9949, avail 9949 Mi
+  Eph. Storage: used 0(r)+0(g)+0(h)+0(o) of 0, avail 0 Mi`,
 		},
 		{
 			Desc:            "some headless pods",
@@ -75,14 +75,14 @@ func TestState(t *testing.T) {
 				createHeadlessWorkspacePod("hp2", "2220Mi", "0Mi", "node2", 10),
 			},
 			Expectation: `- node1:
-  RAM: used 0+0+1573 of 9949, avail 8377 Mi
-  Eph. Storage: used 0+0+0 of 0, avail 0 Mi
+  RAM: used 0(r)+0(g)+0(h)+1573(o) of 9949, avail 8377 Mi
+  Eph. Storage: used 0(r)+0(g)+0(h)+0(o) of 0, avail 0 Mi
 - node2:
-  RAM: used 0+3377+1049 of 9949, avail 5524 Mi
-  Eph. Storage: used 0+0+0 of 0, avail 0 Mi
+  RAM: used 0(r)+0(g)+3377(h)+1049(o) of 9949, avail 5524 Mi
+  Eph. Storage: used 0(r)+0(g)+0(h)+0(o) of 0, avail 0 Mi
 - node3:
-  RAM: used 0+0+0 of 9949, avail 9949 Mi
-  Eph. Storage: used 0+0+0 of 0, avail 0 Mi`,
+  RAM: used 0(r)+0(g)+0(h)+0(o) of 9949, avail 9949 Mi
+  Eph. Storage: used 0(r)+0(g)+0(h)+0(o) of 0, avail 0 Mi`,
 		},
 		{
 			Desc:            "some regular pods",
@@ -95,14 +95,14 @@ func TestState(t *testing.T) {
 				createWorkspacePod("hp2", "3440Mi", "0Mi", "node1", 10),
 			},
 			Expectation: `- node1:
-  RAM: used 4656+0+1573 of 9949, avail 3721 Mi
-  Eph. Storage: used 0+0+0 of 0, avail 0 Mi
+  RAM: used 4656(r)+0(g)+0(h)+1573(o) of 9949, avail 3721 Mi
+  Eph. Storage: used 0(r)+0(g)+0(h)+0(o) of 0, avail 0 Mi
 - node2:
-  RAM: used 0+0+1049 of 9949, avail 8901 Mi
-  Eph. Storage: used 0+0+0 of 0, avail 0 Mi
+  RAM: used 0(r)+0(g)+0(h)+1049(o) of 9949, avail 8901 Mi
+  Eph. Storage: used 0(r)+0(g)+0(h)+0(o) of 0, avail 0 Mi
 - node3:
-  RAM: used 0+0+0 of 9949, avail 9949 Mi
-  Eph. Storage: used 0+0+0 of 0, avail 0 Mi`,
+  RAM: used 0(r)+0(g)+0(h)+0(o) of 9949, avail 9949 Mi
+  Eph. Storage: used 0(r)+0(g)+0(h)+0(o) of 0, avail 0 Mi`,
 		},
 		{
 			Desc:            "some regular pods with ",
@@ -119,14 +119,14 @@ func TestState(t *testing.T) {
 				createWorkspacePod("hp2", "3440Mi", "5000Mi", "node1", 10),
 			},
 			Expectation: `- node1:
-  RAM: used 4656+0+1573 of 9949, avail 3721 Mi
-  Eph. Storage: used 10486+0+5243 of 20972, avail 5243 Mi
+  RAM: used 4656(r)+0(g)+0(h)+1573(o) of 9949, avail 3721 Mi
+  Eph. Storage: used 10486(r)+0(g)+0(h)+5243(o) of 20972, avail 5243 Mi
 - node2:
-  RAM: used 0+0+1049 of 9949, avail 8901 Mi
-  Eph. Storage: used 0+0+2098 of 10486, avail 8389 Mi
+  RAM: used 0(r)+0(g)+0(h)+1049(o) of 9949, avail 8901 Mi
+  Eph. Storage: used 0(r)+0(g)+0(h)+2098(o) of 10486, avail 8389 Mi
 - node3:
-  RAM: used 0+0+0 of 9949, avail 9949 Mi
-  Eph. Storage: used 0+0+0 of 10486, avail 10486 Mi`,
+  RAM: used 0(r)+0(g)+0(h)+0(o) of 9949, avail 9949 Mi
+  Eph. Storage: used 0(r)+0(g)+0(h)+0(o) of 10486, avail 10486 Mi`,
 		},
 		{
 			Desc:            "bound but not listed",
@@ -141,8 +141,8 @@ func TestState(t *testing.T) {
 				},
 			},
 			Expectation: `- node1:
-  RAM: used 1049+0+0 of 9949, avail 8901 Mi
-  Eph. Storage: used 5243+0+0 of 20972, avail 15729 Mi`,
+  RAM: used 1049(r)+0(g)+0(h)+0(o) of 9949, avail 8901 Mi
+  Eph. Storage: used 5243(r)+0(g)+0(h)+0(o) of 20972, avail 15729 Mi`,
 		},
 		{
 			Desc:            "some pods and ghosts on nodes (ghosts VISIBLE)",
@@ -162,14 +162,14 @@ func TestState(t *testing.T) {
 			},
 			GhostsInvisible: false,
 			Expectation: `- node1:
-  RAM: used 6229+0+1573 of 9949, avail 2148 Mi
-  Eph. Storage: used 315+0+525 of 20972, avail 20133 Mi
+  RAM: used 4656(r)+1573(g)+0(h)+1573(o) of 9949, avail 2148 Mi
+  Eph. Storage: used 210(r)+105(g)+0(h)+525(o) of 20972, avail 20133 Mi
 - node2:
-  RAM: used 1573+0+1049 of 9949, avail 7328 Mi
-  Eph. Storage: used 105+0+210 of 10486, avail 10172 Mi
+  RAM: used 0(r)+1573(g)+0(h)+1049(o) of 9949, avail 7328 Mi
+  Eph. Storage: used 0(r)+105(g)+0(h)+210(o) of 10486, avail 10172 Mi
 - node3:
-  RAM: used 0+0+0 of 9949, avail 9949 Mi
-  Eph. Storage: used 0+0+0 of 10486, avail 10486 Mi`,
+  RAM: used 0(r)+0(g)+0(h)+0(o) of 9949, avail 9949 Mi
+  Eph. Storage: used 0(r)+0(g)+0(h)+0(o) of 10486, avail 10486 Mi`,
 		},
 		{
 			Desc:            "some pods and ghosts on nodes (ghosts INVISIBLE)",
@@ -189,21 +189,21 @@ func TestState(t *testing.T) {
 			},
 			GhostsInvisible: true,
 			Expectation: `- node1:
-  RAM: used 4656+0+1573 of 9949, avail 3721 Mi
-  Eph. Storage: used 210+0+525 of 20972, avail 20238 Mi
+  RAM: used 4656(r)+1573(g)+0(h)+1573(o) of 9949, avail 3721 Mi
+  Eph. Storage: used 210(r)+105(g)+0(h)+525(o) of 20972, avail 20238 Mi
 - node2:
-  RAM: used 0+0+1049 of 9949, avail 8901 Mi
-  Eph. Storage: used 0+0+210 of 10486, avail 10277 Mi
+  RAM: used 0(r)+1573(g)+0(h)+1049(o) of 9949, avail 8901 Mi
+  Eph. Storage: used 0(r)+105(g)+0(h)+210(o) of 10486, avail 10277 Mi
 - node3:
-  RAM: used 0+0+0 of 9949, avail 9949 Mi
-  Eph. Storage: used 0+0+0 of 10486, avail 10486 Mi`,
+  RAM: used 0(r)+0(g)+0(h)+0(o) of 9949, avail 9949 Mi
+  Eph. Storage: used 0(r)+0(g)+0(h)+0(o) of 10486, avail 10486 Mi`,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
 			ramSafetyBuffer := res.MustParse(test.RAMSafetyBuffer)
-			state := sched.ComputeState(test.Nodes, test.Pods, test.Bindings, &ramSafetyBuffer, test.GhostsInvisible)
+			state := sched.ComputeState(test.Nodes, test.Pods, test.Bindings, &ramSafetyBuffer, !test.GhostsInvisible, defaultTestNamespace)
 
 			nodes := state.SortNodesByAvailableRAM(sched.SortAsc)
 			// in some tests the RAM sort order is not stable as nodes have the same amount of RAM.
