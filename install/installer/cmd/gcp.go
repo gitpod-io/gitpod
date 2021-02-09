@@ -207,14 +207,29 @@ type branchPreviewProjectSettings struct {
 }
 
 func setupBranchPreviewProject(settings branchPreviewProjectSettings) {
-	branch, _, err := sources.ParseVersionBranch(settings.Version)
+	fullBranch, _, err := sources.ParseVersionBranch(settings.Version)
 	if err != nil {
 		ui.Fatalf("failed to extract branch from version %q:\n\t%q", settings.Version, err)
 	}
 	ui.Infof("\tversion: %s", settings.Version)
-	ui.Infof("\tbranch: %s", branch)
+	ui.Infof("\tbranch: %s", fullBranch)
 
-	projectID, projectName := gcp.GenerateProjectNameAndID("gitpod-", branch)
+	branchDomain := buildBranchPreviewDomain(fullBranch, settings)
+	ui.Infof("\tdomain: %s", branchDomain)
+
+	domainParts := strings.Split(branchDomain, ".")
+	if len(domainParts) == 0 {
+		ui.Fatalf("invalid domain:\n\t%q", branchDomain)
+	}
+	// this is the truncated branch used in the domain
+	// that we can use as project identifier
+	branch := domainParts[0]
+
+	projectID, projectName := gcp.GenerateProjectNameAndID("gp-", branch)
+	ui.Infof("Generated:")
+	ui.Infof("\tprojectID: %q", projectID)
+	ui.Infof("\tprojectName: %q", projectName)
+
 	// Gitpod installation for this branch requires a dedicated project,
 	// where its ID have been derived from the branch name.
 	// If the project doesn't exists, it will be created
@@ -264,51 +279,6 @@ func setupBranchPreviewProject(settings branchPreviewProjectSettings) {
 		ui.Fatalf("failed to overwrite terraform project:\n\t%q", err)
 	}
 
-	// Update terraform domain variable with a branch.domain subdomain
-	// when a baseDomain exists. Otherwise, retrieve a baseDomain from other sources first.
-	baseDomain, _ := terraform.GetVariableValue(settings.TerraformVarsFilepath, "domain")
-	if settings.RootDNSZoneID != "" {
-		baseDomain, err = gcp.GetRootDNSName(context.Background(), settings.RootDNSZoneID)
-		if err != nil {
-			ui.Fatalf("failed to retrieve root dns name from zone: %v", err)
-		}
-
-		ui.Infof("Using %q as a base domain from DNS zone", baseDomain)
-	}
-	var branchDomain string
-	var persistDomainOpts terraform.PersistVariableOpts
-	if baseDomain == "" || baseDomain == "ipDomain" {
-		ui.Infof("\nBranch preview requires a base domain used to create subdomains for each installed branch.\n")
-		persistDomainOpts = terraform.PersistVariableOpts{
-			Name:           "domain",
-			ForceOverwrite: true,
-			Spec: terraform.VariableSpec{
-				Validate: func(val string) error {
-					if val == "" || val == "ipDomain" {
-						return errors.New("invalid domain, must not be empty or \"ipDomain\"")
-					}
-					return nil
-				},
-				BeforeSaveHook: func(val string) string {
-					branchDomain = fmt.Sprintf("%s.%s", branch, val)
-					return branchDomain
-				},
-			},
-		}
-	} else {
-		branchDomain = fmt.Sprintf("%s.%s", branch, baseDomain)
-		persistDomainOpts = terraform.PersistVariableOpts{
-			Name:           "domain",
-			ForceOverwrite: true,
-			Sources: []terraform.VariableValueSource{func(name string, spec terraform.VariableSpec) (value string, ok bool) {
-				return branchDomain, true
-			}},
-		}
-	}
-	if err := terraform.PersistVariable(settings.TerraformVarsFilepath, persistDomainOpts); err != nil {
-		ui.Fatalf("cannot update the \"domain\" terraform variable:\n\t%q", err)
-	}
-
 	// Creates a DNS zone for the branchDomain
 	if err := terraform.PersistVariable(settings.TerraformVarsFilepath, terraform.PersistVariableOpts{
 		Name:           "zone_name",
@@ -343,6 +313,73 @@ func setupBranchPreviewProject(settings branchPreviewProjectSettings) {
 	); err != nil {
 		ui.Fatalf("failed to create terraform state backend: %v", err)
 	}
+}
+
+// buildBranchPreviewDomain will retrieve a base domain, either from the given root DNS zone,
+// terraform variables, or other configured sources (see terraform.PersistVariable for sources used).
+// Then, it will generate the final subdomain by concatenating the branch and the domain, ensuring the
+// final subdomain length doesn't exceed 64 characters to fit in a certificate CN field. When too long,
+// the branch get truncated until it fit.
+// The final subdomain is then saved in the terraform variables, and returned.
+func buildBranchPreviewDomain(branch string, settings branchPreviewProjectSettings) (branchDomain string) {
+	// Update terraform domain variable with a branch.domain subdomain
+	// when a baseDomain exists. Otherwise, retrieve a baseDomain from other sources first.
+	var err error
+	baseDomain, _ := terraform.GetVariableValue(settings.TerraformVarsFilepath, "domain")
+	if settings.RootDNSZoneID != "" {
+		baseDomain, err = gcp.GetRootDNSName(context.Background(), settings.RootDNSZoneID)
+		if err != nil {
+			ui.Fatalf("failed to retrieve root dns name from zone: %v", err)
+		}
+		ui.Infof("Using %q as a base domain from DNS zone", baseDomain)
+	}
+
+	// truncateBranchForValidDomain returns the branch truncated to the right size so that
+	// branch + "." + domain is a valid subdomain and doesn't exceed 64 characters. This is the maximum size a domain
+	// can have to be allowed in a certificate CN field.
+	truncateBranchForValidDomain := func(branch, domain string) string {
+		extra := (len(branch) + 1 + len(domain)) - 64
+		if extra <= 0 {
+			return strings.Trim(branch, "-")
+		}
+
+		return strings.Trim(branch[:len(branch)-extra], "-")
+	}
+
+	var persistDomainOpts terraform.PersistVariableOpts
+	if baseDomain == "" || baseDomain == "ipDomain" {
+		ui.Infof("\nBranch preview requires a base domain used to create subdomains for each installed branch.\n")
+		persistDomainOpts = terraform.PersistVariableOpts{
+			Name:           "domain",
+			ForceOverwrite: true,
+			Spec: terraform.VariableSpec{
+				Validate: func(val string) error {
+					if val == "" || val == "ipDomain" {
+						return errors.New("invalid domain, must not be empty or \"ipDomain\"")
+					}
+					return nil
+				},
+				BeforeSaveHook: func(val string) string {
+					branchDomain = fmt.Sprintf("%s.%s", truncateBranchForValidDomain(branch, val), baseDomain)
+					return branchDomain
+				},
+			},
+		}
+	} else {
+		branchDomain = fmt.Sprintf("%s.%s", truncateBranchForValidDomain(branch, baseDomain), baseDomain)
+		persistDomainOpts = terraform.PersistVariableOpts{
+			Name:           "domain",
+			ForceOverwrite: true,
+			Sources: []terraform.VariableValueSource{func(name string, spec terraform.VariableSpec) (value string, ok bool) {
+				return branchDomain, true
+			}},
+		}
+	}
+	if err := terraform.PersistVariable(settings.TerraformVarsFilepath, persistDomainOpts); err != nil {
+		ui.Fatalf("cannot update the \"domain\" terraform variable:\n\t%q", err)
+	}
+
+	return branchDomain
 }
 
 func init() {

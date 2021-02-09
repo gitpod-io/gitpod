@@ -58,6 +58,36 @@ module "dns" {
   }
 }
 
+module "kubeconfig" {
+  source = "./modules/kubeconfig"
+
+  cluster = {
+    name = "gitpod"
+  }
+
+  depends_on = [
+    module.kubernetes
+  ]
+}
+
+module "certmanager" {
+  source = "./modules/certmanager"
+
+  project = var.project
+  email   = var.certificate_email
+  domain  = local.hostname
+  certificate = {
+    name = "https-certificates"
+    namespace = "default"
+  }
+  providers = {
+    google     = google
+    kubernetes = kubernetes
+    helm       = helm
+    kubectl    = kubectl
+  }
+}
+
 locals {
   hostname = "${var.domain == "" ? local.mygitpod_domain : var.domain}"
   mygitpod_prefix = replace(module.dns.address,".","-")
@@ -88,6 +118,7 @@ module "gitpod" {
   values          = data.template_file.values.rendered
   registry_values = module.registry.values
   storage_values  = module.storage.values
+  certificate_values = module.certmanager.values
 
   providers = {
     google     = google

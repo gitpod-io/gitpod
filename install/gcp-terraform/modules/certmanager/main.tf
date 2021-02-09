@@ -85,10 +85,20 @@ data "template_file" "cluster_issuer" {
   }
 }
 
+# it seems we need a small delay between the helm release and the certificate request
+# for the service to come online. Otherwise, cert request fail with:
+#    'no endpoints available for service "certmanger-cert-manager-webhook"'
+resource "time_sleep" "wait_30_seconds" {
+  depends_on = [helm_release.certmanager]
+
+  destroy_duration = "30s"
+}
+
 # https://registry.terraform.io/providers/hashicorp/local/latest/docs/resources/file
 resource "kubectl_manifest" "clusterissuer" {
   provider  = kubectl
   yaml_body = data.template_file.cluster_issuer.rendered
+  depends_on = [time_sleep.wait_30_seconds]
 }
 
 
@@ -107,6 +117,7 @@ data "template_file" "certificate" {
 resource "kubectl_manifest" "certificate" {
   provider  = kubectl
   yaml_body = data.template_file.certificate.rendered
+  depends_on = [time_sleep.wait_30_seconds]
 }
 
 
