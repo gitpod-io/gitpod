@@ -18,7 +18,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/gitpod-io/gitpod/ws-scheduler/pkg/scaler"
-	"github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler"
+	sched "github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler"
 )
 
 var runCmd = &cobra.Command{
@@ -39,7 +39,7 @@ var runCmd = &cobra.Command{
 		}
 		log.Info("connected to Kubernetes")
 
-		scheduler, err := scheduler.NewScheduler(config.Scheduler, clientSet)
+		scheduler, err := sched.NewScheduler(config.Scheduler, clientSet)
 		if err != nil {
 			log.WithError(err).Fatal("cannot create scheduler")
 		}
@@ -80,13 +80,14 @@ var runCmd = &cobra.Command{
 		}
 
 		if config.Prometheus.Addr != "" {
-			reg.MustRegister(
-				prometheus.NewGoCollector(),
-				prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
+			k8sGatherer := scheduler.MustRegister()
+			composite := sched.NewCompositeGatherer(
+				k8sGatherer,
+				reg,
 			)
 
 			handler := http.NewServeMux()
-			handler.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+			handler.Handle("/metrics", promhttp.HandlerFor(composite, promhttp.HandlerOpts{}))
 
 			go func() {
 				err := http.ListenAndServe(config.Prometheus.Addr, handler)

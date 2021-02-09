@@ -124,7 +124,24 @@ func IsGhostWorkspace(pod *corev1.Pod) bool {
 	return ok && val == "ghost"
 }
 
+func IsRegularWorkspace(pod *corev1.Pod) bool {
+	if !IsWorkspace(pod) {
+		return false
+	}
+
+	val, ok := pod.ObjectMeta.Labels[TypeLabel]
+	return ok && val == "regular"
+}
+
 func IsNonGhostWorkspace(pod *corev1.Pod) bool {
 	return IsWorkspace(pod) &&
 		!IsGhostWorkspace(pod)
+}
+
+func GetWorkspaceType(pod *corev1.Pod) string {
+	val, ok := pod.ObjectMeta.Labels[TypeLabel]
+	if !ok {
+		return ""
+	}
+	return val
 }
