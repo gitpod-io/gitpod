@@ -72,6 +72,7 @@
     "probot": "^10.17.2",
     "prom-client": "^10.2.0",
     "rasha": "^1.2.5",
+    "rate-limiter-flexible": "^2.2.1",
     "reflect-metadata": "^0.1.10",
     "request": "^2.87.0",
     "request-promise": "^4.2.2",

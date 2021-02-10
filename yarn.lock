@@ -16318,6 +16318,11 @@ rasha@^1.2.5:
   resolved "https://registry.yarnpkg.com/rasha/-/rasha-1.2.5.tgz#72668da31dcc68ac277c5b73d610e087cd33b031"
   integrity sha512-KxtX+/fBk+wM7O3CNgwjSh5elwFilLvqWajhr6wFr2Hd63JnKTTi43Tw+Jb1hxJQWOwoya+NZWR2xztn3hCrTw==
 
+rate-limiter-flexible@^2.2.1:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/rate-limiter-flexible/-/rate-limiter-flexible-2.2.1.tgz#acb81a3d92a0f26bf7e9767e0f96de3a89ecb3a6"
+  integrity sha512-rxCP6kDDdn0cZmVqVlF06yLU+mG3TuwaHV/fUIw3OQyYhza7pzVBtdMhUmfXbBzMS+O464XP+x33pfTDGRGYVA==
+
 raven@^2.4.2:
   version "2.6.4"
   resolved "https://registry.yarnpkg.com/raven/-/raven-2.6.4.tgz#458d4a380c8fbb59e0150c655625aaf60c167ea3"

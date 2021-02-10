@@ -14,6 +14,22 @@ manager:
 {{- end -}}
 {{- end -}}
 
+{{ define "rate-limiter-config" -}}
+groups:
+  inWorkspaceUserAction:
+    points: 10
+    durationsSec: 2
+functions:
+  openPort:
+    group: inWorkspaceUserAction
+  closePort:
+    group: inWorkspaceUserAction
+  controlAdmission:
+    group: inWorkspaceUserAction
+  shareSnapshot:
+    group: inWorkspaceUserAction
+{{- end -}}
+
 {{ $comp := .Values.components.server -}}
 {{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
 {{- $thisWorkspace := dict "root" . "comp" .Values.components.workspace -}}
@@ -85,6 +101,8 @@ spec:
 {{ include "gitpod.container.dbEnv" $this | indent 8 }}
 {{ include "gitpod.container.tracingEnv" $this | indent 8 }}
 {{ include "gitpod.container.messagebusEnv" $this | indent 8 }}
+        - name: RATE_LIMITER_CONFIG
+          value: {{ (include "rate-limiter-config" $this) | fromYaml | toJson | quote }}
 {{- if eq .Values.ingressMode "noDomain" }}
         - name: SERVE_INSECURE_NO_DOMAIN
           value: "true"

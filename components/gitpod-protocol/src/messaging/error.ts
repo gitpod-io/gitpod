@@ -25,6 +25,9 @@ export namespace ErrorCodes {
     // 410 No User
     export const SETUP_REQUIRED = 410;
 
+    // 429 Too Many Requests
+    export const TOO_MANY_REQUESTS = 429;
+
     // 430 Repository not whitelisted (custom status code)
     export const REPOSITORY_NOT_WHITELISTED = 430;
 
