@@ -35,6 +35,7 @@ spec:
         kind: pod
         stage: {{ .Values.installation.stage }}
       annotations:
+        prometheus.io/scrape: 'true'
 {{ include "gitpod.pod.dependsOn" $this | indent 8 }}
     spec:
 {{ include "gitpod.pod.affinity" $this | indent 6 }}

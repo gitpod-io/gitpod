@@ -339,6 +339,9 @@ components:
       dist:
         expose: true
         containerPort: 25672
+      metrics:
+        expose: true
+        containerPort: 15692
 
   proxy:
     name: "proxy"
