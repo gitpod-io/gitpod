@@ -8,9 +8,9 @@ set -eu
 mount --make-rshared /
 
 
-BASEDOMAIN=${BASEDOMAIN:-}
-DOMAIN=${DOMAIN:-}
-REMOVE_NETWORKPOLICIES=${REMOVE_NETWORKPOLICIES:-}
+BASEDOMAIN=${BASEDOMAIN:-}                          # Used as Gitpod domain, `gitpod.` prefix will be added.
+DOMAIN=${DOMAIN:-}                                  # Used as Gitpod ddomain as is.
+REMOVE_NETWORKPOLICIES=${REMOVE_NETWORKPOLICIES:-}  # Remove Gitpod network policies when set to 'true'.
 
 
 mkdir -p /values
@@ -42,35 +42,41 @@ echo "REMOVE_NETWORKPOLICIES:  $REMOVE_NETWORKPOLICIES"
 [ -d "/var/gitpod/minio" ] && chown 1000 /var/gitpod/minio
 
 
-# Add IP tables rules to access Docker's internal DNS 127.0.0.11 from outside
-# based on https://serverfault.com/a/826424
-
-TCP_DNS_ADDR=$(iptables-save | grep DOCKER_OUTPUT | grep tcp | grep -o '127\.0\.0\.11:.*$')
-UDP_DNS_ADDR=$(iptables-save | grep DOCKER_OUTPUT | grep udp | grep -o '127\.0\.0\.11:.*$')
-
-iptables -t nat -A PREROUTING -p tcp --dport 53 -j DNAT --to "$TCP_DNS_ADDR"
-iptables -t nat -A PREROUTING -p udp --dport 53 -j DNAT --to "$UDP_DNS_ADDR"
-
-
-# Add this IP to resolv.conf since CoreDNS of k3s uses this file
-create_resolv_conf() {
+# Helper function to add a nameserver at top of resolv.conf
+add_nameserver() {
     TMP_FILE=$(mktemp)
-    echo "nameserver 127.0.0.11" > "$TMP_FILE"
-    echo "nameserver $(hostname -i | cut -f1 -d' ')" >> "$TMP_FILE"
-    additional_nameserver=${1:-}
-    if [ -n "$additional_nameserver" ]; then
-        echo "nameserver $additional_nameserver" >> "$TMP_FILE"
-    fi
-    echo "options ndots:0" >>  "$TMP_FILE"
+    echo "nameserver $1" > "$TMP_FILE"
+    cat /etc/resolv.conf >> "$TMP_FILE"
+    [ ! -f /etc/resolv.conf_backup ] && cp /etc/resolv.conf /etc/resolv.conf_backup
     cp "$TMP_FILE" /etc/resolv.conf
     rm "$TMP_FILE"
 }
-create_resolv_conf
 
 
+# If we run gitpod-k3s in a docker-compose setting, we probably want to access
+# other containers (e.g. the a local registry or GitLab instance) from within 
+# the k3s cluster (e.g. from the workspaces). For this, we need access to 
+# Docker's internal DNS from within the k3s cluster.
+# For this, we
+# a) add an IP table rule that redirects DNS traffic to localhost (in the k3s container)
+#    to the Docker DNS service and
+# b) add the container's IP address to the resolv.conf file.
+
+# Add IP tables rules to access Docker's internal DNS 127.0.0.11 from outside
+# based on https://serverfault.com/a/826424
+
+TCP_DNS_ADDR=$(iptables-save | grep DOCKER_OUTPUT | grep tcp | grep -o '127\.0\.0\.11:.*$' || printf '')
+UDP_DNS_ADDR=$(iptables-save | grep DOCKER_OUTPUT | grep udp | grep -o '127\.0\.0\.11:.*$' || printf '')
+
+if [ ! -z "$TCP_DNS_ADDR" ] && [ ! -z "$UDP_DNS_ADDR" ]; then
+    iptables -t nat -A PREROUTING -p tcp --dport 53 -j DNAT --to "$TCP_DNS_ADDR"
+    iptables -t nat -A PREROUTING -p udp --dport 53 -j DNAT --to "$UDP_DNS_ADDR"
+
+    add_nameserver "$(hostname -i | cut -f1 -d' ')"
+fi
 
 
-# add HTTPS certs secret if certs a given
+# add HTTPS certs secret if certs are given in the folder /certs
 if [ -f /certs/chain.pem ] && [ -f /certs/dhparams.pem ] && [ -f /certs/fullchain.pem ] && [ -f /certs/privkey.pem ]; then
     CHAIN=$(base64 --wrap=0 < /certs/chain.pem)
     DHPARAMS=$(base64 --wrap=0 < /certs/dhparams.pem)
@@ -97,6 +103,7 @@ EOF
 fi
 
 
+# configure Gitpod for mygitpod.com domain
 case "$DOMAIN" in 
   *ip.mygitpod.com)
     cat << EOF > /default_values/03_ip_mygitpod_com.yaml
@@ -134,6 +141,7 @@ sed -i "s/\$BASEDOMAIN/$BASEDOMAIN/g" "$GITPOD_HELM_INSTALLER_FILE"
 
 
 
+# In case we want to bypass the proxy when accessing the registry we need to tell k3s how to access the registry as well
 prepare_builtin_registry_for_k3s() {
     echo "Preparing builtin registry for k3s ..."
 
@@ -163,17 +171,15 @@ EOF
 
     # modify resolv.conf so that registry.default.svc.cluster.local can be resolved from the node
     KUBE_DNS_IP=$(kubectl -n kube-system get service kube-dns -o jsonpath='{.spec.clusterIP}')
-    create_resolv_conf "$KUBE_DNS_IP"
+    add_nameserver "$KUBE_DNS_IP"
 }
-
-# In case we want to bypass the proxy when accessing the registry we need to tell k3s how to access the registry as well
 if [ "$(yq r /values.yaml components.imageBuilder.registry.bypassProxy)" = "true" ]; then
     prepare_builtin_registry_for_k3s &
 fi
 
 
 
-# gitpod-helm-installer.yaml needs access to kubernetes by the public host IP.
+# gitpod-helm-installer.yaml needs access to Kubernetes by the public host IP.
 kubeconfig_replaceip() {
     while [ ! -f /etc/rancher/k3s/k3s.yaml ]; do sleep 1; done
     HOSTIP=$(hostname -i)
