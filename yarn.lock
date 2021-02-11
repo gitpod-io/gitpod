@@ -2731,6 +2731,18 @@
   dependencies:
     defer-to-connect "^2.0.0"
 
+"@testdeck/core@^0.1.2":
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/@testdeck/core/-/core-0.1.2.tgz#9083b6c0d6ca198ba2fe03c72cf06a52c2f9fba9"
+  integrity sha512-rggcFQqSejqtkqK1JcwZE/utD4oNsM1JMHwrYxH1PKYx0uL2cMs0Q4zMVLKw0oacIASCfkIUSdXx7rDNdCDlvA==
+
+"@testdeck/mocha@0.1.2":
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/@testdeck/mocha/-/mocha-0.1.2.tgz#5fde9a675d4e1b61bcbd3440bb8d9cb984a1f80d"
+  integrity sha512-yn3OkFUlO9EkdBkDV08bPV0r26U2FC/8KvU9FdiS0ligOsjB5Ry4sp3eUQJAFxjrGJBpih0t7rZ/GzdsgCv/EQ==
+  dependencies:
+    "@testdeck/core" "^0.1.2"
+
 "@theia/application-manager@1.5.0-next.9d2dcd0a":
   version "1.5.0-next.9d2dcd0a"
   resolved "https://registry.yarnpkg.com/@theia/application-manager/-/application-manager-1.5.0-next.9d2dcd0a.tgz#1f2799959c8d214185adafbc75b496fd8c4a68e0"
