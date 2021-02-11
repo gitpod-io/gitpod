@@ -7,7 +7,7 @@
 import { injectable, inject } from "inversify";
 import { GitpodServerImpl } from "../../../src/workspace/gitpod-server-impl";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { GitpodServer, GitpodClient, AdminGetListRequest, User, AdminGetListResult, Permission, AdminBlockUserRequest, AdminModifyRoleOrPermissionRequest, RoleOrPermission, AdminModifyPermanentWorkspaceFeatureFlagRequest, UserFeatureSettings, AdminGetWorkspacesRequest, WorkspaceAndInstance, GetWorkspaceTimeoutResult, WorkspaceTimeoutDuration, WorkspaceTimeoutValues, SetWorkspaceTimeoutResult, WorkspaceContext, CreateWorkspaceMode, WorkspaceCreationResult, PrebuiltWorkspaceContext, CommitContext, PrebuiltWorkspace } from "@gitpod/gitpod-protocol";
+import { GitpodServer, GitpodClient, AdminGetListRequest, User, AdminGetListResult, Permission, AdminBlockUserRequest, AdminModifyRoleOrPermissionRequest, RoleOrPermission, AdminModifyPermanentWorkspaceFeatureFlagRequest, UserFeatureSettings, AdminGetWorkspacesRequest, WorkspaceAndInstance, GetWorkspaceTimeoutResult, WorkspaceTimeoutDuration, WorkspaceTimeoutValues, SetWorkspaceTimeoutResult, WorkspaceContext, CreateWorkspaceMode, WorkspaceCreationResult, PrebuiltWorkspaceContext, CommitContext, PrebuiltWorkspace, PermissionName } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import { TakeSnapshotRequest, AdmissionLevel, ControlAdmissionRequest, StopWorkspacePolicy, DescribeWorkspaceRequest, SetTimeoutRequest } from "@gitpod/ws-manager/lib";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -299,11 +299,8 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
     async adminGetUsers(req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
-        const user = this.checkAndBlockUser("adminGetUsers");
-        if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
-        }
-
+        this.guardAdminAccess("adminGetUsers", {req}, Permission.ADMIN_USERS);
+        
         const span = opentracing.globalTracer().startSpan("adminGetUsers");
         try {
             const res = await this.userDB.findAllUsers(req.offset, req.limit, req.orderBy, req.orderDir === "asc" ? "ASC" : "DESC", req.searchTerm);
@@ -320,10 +317,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
     async adminGetUser(id: string): Promise<User> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
-        const user = this.checkAndBlockUser("adminGetUser");
-        if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
-        }
+        this.guardAdminAccess("adminGetUser", {id}, Permission.ADMIN_USERS);
 
         let result: User | undefined;
         const span = opentracing.globalTracer().startSpan("adminGetUser");
@@ -345,10 +339,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
     async adminBlockUser(req: AdminBlockUserRequest): Promise<User> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
-        const user = this.checkAndBlockUser("adminBlockUser");
-        if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
-        }
+        this.guardAdminAccess("adminBlockUser", {req}, Permission.ADMIN_USERS);
 
         const span = opentracing.globalTracer().startSpan("adminBlockUser");
         try {
@@ -381,10 +372,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
     async adminDeleteUser(id: string): Promise<void> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
-        const user = this.checkAndBlockUser("adminDeleteUser");
-        if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
-        }
+        this.guardAdminAccess("adminDeleteUser", {id}, Permission.ADMIN_USERS);
 
         const span = opentracing.globalTracer().startSpan("adminDeleteUser");
         try {
@@ -400,10 +388,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
     async adminModifyRoleOrPermission(req: AdminModifyRoleOrPermissionRequest): Promise<User> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
-        const user = this.checkAndBlockUser("adminModifyRoleOrPermission");
-        if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
-        }
+        this.guardAdminAccess("adminModifyRoleOrPermission", {req}, Permission.ADMIN_USERS);
 
         const span = opentracing.globalTracer().startSpan("adminModifyRoleOrPermission");
         span.log(req);
@@ -439,10 +424,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
     async adminModifyPermanentWorkspaceFeatureFlag(req: AdminModifyPermanentWorkspaceFeatureFlagRequest): Promise<User> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
-        const user = this.checkAndBlockUser("adminModifyPermanentWorkspaceFeatureFlag");
-        if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
-        }
+        this.guardAdminAccess("adminModifyPermanentWorkspaceFeatureFlag", {req}, Permission.ADMIN_USERS);
 
         const span = opentracing.globalTracer().startSpan("adminModifyPermanentWorkspaceFeatureFlag");
         span.log(req);
@@ -480,10 +462,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
     async adminGetWorkspaces(req: AdminGetWorkspacesRequest): Promise<AdminGetListResult<WorkspaceAndInstance>> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
-        const user = this.checkAndBlockUser("adminGetWorkspaces");
-        if (!this.authorizationService.hasPermission(user, Permission.ADMIN_WORKSPACES)) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
-        }
+        this.guardAdminAccess("adminGetWorkspaces", {req}, Permission.ADMIN_WORKSPACES);
 
         const span = opentracing.globalTracer().startSpan("adminGetWorkspaces");
         try {
@@ -499,10 +478,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
     async adminGetWorkspace(id: string): Promise<WorkspaceAndInstance> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
-        const user = this.checkAndBlockUser("adminGetWorkspace");
-        if (!this.authorizationService.hasPermission(user, Permission.ADMIN_WORKSPACES)) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
-        }
+        this.guardAdminAccess("adminGetWorkspace", {id}, Permission.ADMIN_WORKSPACES);
 
         let result: WorkspaceAndInstance | undefined;
         const span = opentracing.globalTracer().startSpan("adminGetWorkspace");
@@ -524,12 +500,19 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
     async adminForceStopWorkspace(id: string): Promise<void> {
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
-        const user = this.checkAndBlockUser("adminForceStopWorkspace");
-        if (!this.authorizationService.hasPermission(user, Permission.ADMIN_WORKSPACES)) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
-        }
+        this.guardAdminAccess("adminForceStopWorkspace", {id}, Permission.ADMIN_WORKSPACES);
+
         const span = opentracing.globalTracer().startSpan("adminForceStopWorkspace");
         await this.internalStopWorkspace({ span }, id, undefined,  StopWorkspacePolicy.IMMEDIATELY);
+    }
+
+    protected async guardAdminAccess(method: string, params: any, requiredPermission: PermissionName) {
+        const user = this.checkAndBlockUser(method);
+        if (!this.authorizationService.hasPermission(user, requiredPermission)) {
+            log.warn({userId: this.user?.id}, "unauthorised admin access", { authorised: false, method, params });
+            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
+        }
+        log.info({userId: this.user?.id}, "admin access", { authorised: true, method, params });
     }
 
     protected async findPrebuiltWorkspace(ctx: TraceContext, user: User, context: WorkspaceContext, mode: CreateWorkspaceMode): Promise<WorkspaceCreationResult | PrebuiltWorkspaceContext | undefined> {
@@ -635,11 +618,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
     }
 
     async adminSetLicense(key: string): Promise<void> {
-        const user = this.checkAndBlockUser("adminSetLicense");
-
-        if (!this.authorizationService.hasPermission(user, Permission.ADMIN_API)) {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
-        }
+        this.guardAdminAccess("adminGetWorkspaces", {key}, Permission.ADMIN_API);
 
         await this.licenseDB.store(uuidv4(), key);
         await this.licenseEvaluator.reloadLicense();
