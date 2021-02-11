@@ -59,7 +59,10 @@
       "launch": {},
       "files.exclude": {
          "**/.git": true
-    },
-    "go.lintTool": "golangci-lint"
+      },
+      "go.lintTool": "golangci-lint",
+      "gopls": {
+         "allowModfileModifications": true
+      }
    }
 }
