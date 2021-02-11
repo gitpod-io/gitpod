@@ -21,12 +21,7 @@ export class GitHubAuthProvider extends GenericAuthProvider {
     get info(): AuthProviderInfo {
         return {
             ...this.defaultInfo(),
-            scopes: GitHubScope.All,
-            requirements: {
-                default: GitHubScope.Requirements.DEFAULT,
-                publicRepo: GitHubScope.Requirements.PUBLIC_REPO,
-                privateRepo: GitHubScope.Requirements.PRIVATE_REPO,
-            },
+            scopes: GitHubScope.definitions,
         }
     }
 
@@ -41,13 +36,13 @@ export class GitHubAuthProvider extends GenericAuthProvider {
             ...oauth!,
             authorizationUrl: oauth.authorizationUrl || defaultUrls.authorizationUrl,
             tokenUrl: oauth.tokenUrl || defaultUrls.tokenUrl,
-            scope: GitHubScope.All.join(scopeSeparator),
+            scope: GitHubScope.definitions.default.join(scopeSeparator),
             scopeSeparator
         };
     }
 
     authorize(req: express.Request, res: express.Response, next: express.NextFunction, scope?: string[]): void {
-        super.authorize(req, res, next, scope ? scope : GitHubScope.Requirements.DEFAULT);
+        super.authorize(req, res, next, scope ? scope : GitHubScope.definitions.default);
     }
 
     /**

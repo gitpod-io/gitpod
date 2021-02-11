@@ -13,6 +13,7 @@ import { Bitbucket } from "bitbucket";
 export interface CheckWriteAccessResult {
     found: boolean;
     isPrivateRepo?: boolean;
+    requiredScopesForGitCommand?: string[];
     writeAccessToRepo?: boolean;
     mayWritePrivate?: boolean;
     mayWritePublic?: boolean;
@@ -22,24 +23,24 @@ export interface CheckWriteAccessResult {
 @injectable()
 export class GitpodGitTokenValidator {
 
-    async checkWriteAccess(authProvider: AuthProviderInfo, repoFullName: string, tokenResult: GetGitTokenResult): Promise<CheckWriteAccessResult | undefined> {
+    async checkWriteAccess(authProvider: AuthProviderInfo, repoFullName: string, tokenResult: GetGitTokenResult, gitCommand?: string): Promise<CheckWriteAccessResult | undefined> {
         const { host, authProviderType } = authProvider;
         const { token } = tokenResult;
 
         if (authProviderType === "GitHub") {
-            return this.checkWriteAccessForGitHubRepo(token, host, repoFullName);
+            return this.checkWriteAccessForGitHubRepo(token, host, repoFullName, gitCommand);
         }
         if (authProviderType === "GitLab") {
-            return this.checkWriteAccessForGitLabRepo(token, host, repoFullName);
+            return this.checkWriteAccessForGitLabRepo(token, host, repoFullName, gitCommand);
         }
         if (authProviderType === "Bitbucket") {
-            return this.checkWriteAccessForBitbucketRepo(token, host, repoFullName);
+            return this.checkWriteAccessForBitbucketRepo(token, host, repoFullName, gitCommand);
         }
 
         return undefined;
     }
 
-    async checkWriteAccessForGitHubRepo(token: string, host: string, repoFullName: string): Promise<CheckWriteAccessResult> {
+    async checkWriteAccessForGitHubRepo(token: string, host: string, repoFullName: string, gitCommand?: string): Promise<CheckWriteAccessResult> {
         const parsedRepoName = this.parseGitHubRepoName(repoFullName);
         if (!parsedRepoName) {
             throw new Error(`Could not parse repo name: ${repoFullName}`);
@@ -96,9 +97,11 @@ export class GitpodGitTokenValidator {
                 }
             }
         }
+        const requiredScopesForGitCommand = isPrivateRepo ? ["repo"] : ["public_repo"];
         return {
             found: true,
             isPrivateRepo,
+            requiredScopesForGitCommand,
             writeAccessToRepo,
             mayWritePrivate,
             mayWritePublic
@@ -114,7 +117,7 @@ export class GitpodGitTokenValidator {
         }
     }
 
-    async checkWriteAccessForGitLabRepo(token: string, host: string, repoFullName: string): Promise<CheckWriteAccessResult> {
+    async checkWriteAccessForGitLabRepo(token: string, host: string, repoFullName: string, gitCommand?: string): Promise<CheckWriteAccessResult> {
         let found = false;
         let isPrivateRepo: boolean | undefined;
         let writeAccessToRepo: boolean | undefined;
@@ -147,21 +150,22 @@ export class GitpodGitTokenValidator {
             console.error(e);
             throw e;
         }
-
         return {
             found,
             isPrivateRepo,
+            requiredScopesForGitCommand: ["write_repository"],
             writeAccessToRepo,
             mayWritePrivate: true,
             mayWritePublic: true
         }
     }
 
-    async checkWriteAccessForBitbucketRepo(token: string, host: string, repoFullName: string): Promise<CheckWriteAccessResult> {
+    async checkWriteAccessForBitbucketRepo(token: string, host: string, repoFullName: string, gitCommand?: string): Promise<CheckWriteAccessResult> {
         try {
             const result: CheckWriteAccessResult = {
                 found: false,
                 isPrivateRepo: undefined,
+                requiredScopesForGitCommand: ["repository:write"],
                 writeAccessToRepo: undefined,
                 mayWritePrivate: true,
                 mayWritePublic: true

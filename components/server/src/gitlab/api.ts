@@ -27,7 +27,7 @@ export class GitLabApi {
         if (typeof userOrToken === 'string') {
             oauthToken = userOrToken;
         } else {
-            const gitlabToken = await this.tokenHelper.getTokenWithScopes(userOrToken, GitLabScope.Requirements.DEFAULT);
+            const gitlabToken = await this.tokenHelper.getTokenWithScopes(userOrToken, GitLabScope.definitions.default);
             oauthToken = gitlabToken.value;
         }
         return GitLab.create({

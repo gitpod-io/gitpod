@@ -35,7 +35,7 @@ export class GitHubTokenHelper {
             // no token
         }
         if (requiredScopes.length === 0) {
-            requiredScopes = GitHubScope.Requirements.DEFAULT
+            requiredScopes = GitHubScope.definitions.default
         }
         throw UnauthorizedError.create(host, requiredScopes, "missing-identity");
     }

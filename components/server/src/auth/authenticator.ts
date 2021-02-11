@@ -201,8 +201,8 @@ export class Authenticator {
         await AuthFlow.attach(req.session, { host, returnTo, overrideScopes: override });
         let wantedScopes = scopes.split(',');
         if (wantedScopes.length === 0) {
-            if (authProvider.info.requirements) {
-                wantedScopes = authProvider.info.requirements.default;
+            if (authProvider.info.scopes) {
+                wantedScopes = authProvider.info.scopes.default;
             }
         }
         // compute merged scopes
@@ -211,8 +211,8 @@ export class Authenticator {
             wantedScopes = this.mergeScopes(currentScopes, wantedScopes);
             // in case user signed in with another identity, we need to ensure the merged scopes contain
             // all default needed to for proper authentication
-            if (currentScopes.length === 0 && authProvider.info.requirements) {
-                wantedScopes = this.mergeScopes(authProvider.info.requirements.default, wantedScopes);
+            if (currentScopes.length === 0 && authProvider.info.scopes) {
+                wantedScopes = this.mergeScopes(authProvider.info.scopes.default, wantedScopes);
             }
         }
         // authorize Gitpod

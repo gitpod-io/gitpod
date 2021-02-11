@@ -35,6 +35,7 @@ class DummyAuthProvider implements AuthProvider {
             host: "github.com",
             icon: this.config.icon,
             description: this.config.description,
+            scopes: ({} as any)
         }
     }
     readonly host = "github.com";

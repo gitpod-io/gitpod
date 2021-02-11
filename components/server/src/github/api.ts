@@ -124,7 +124,7 @@ export class GitHubRestApi {
         if (typeof userOrToken === 'string') {
             token = userOrToken;
         } else {
-            const githubToken = await this.tokenHelper.getTokenWithScopes(userOrToken, GitHubScope.Requirements.DEFAULT);
+            const githubToken = await this.tokenHelper.getTokenWithScopes(userOrToken, GitHubScope.definitions.default);
             token = githubToken.value;
         }
         const api = new GitHub(this.getGitHubOptions(token));

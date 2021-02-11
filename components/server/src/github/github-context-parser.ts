@@ -57,9 +57,8 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                     // most likely the token needs to be updated after revoking by user.
                     throw UnauthorizedError.create(this.config.host, scopes, "http-unauthorized");
                 }
-                // todo@alex: this is very unlikely. is coercing it into a valid case helpful?
-                // here, GH API responded with a 401 code, and we are missing a token. OTOH, a missing token would not lead to a request.
-                throw UnauthorizedError.create(this.config.host, GitHubScope.Requirements.PUBLIC_REPO, "missing-identity");
+                // this isn't expected to be reached, as a missing token is supposed to be handled already.
+                throw UnauthorizedError.create(this.config.host, GitHubScope.definitions.default, "missing-identity");
             }
             throw error;
         } finally {

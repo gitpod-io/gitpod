@@ -98,7 +98,7 @@ export class GitpodGitTokenProvider {
             return;
         }
 
-        const defaults = authProvider.requirements && authProvider.requirements.default;
+        const defaults = authProvider.scopes.default;
         const missingScopes = defaults ? defaults.join(',') : undefined;
         const notificationMessage = message ? message : `Please try again after granting permissions to access "${host}".`;
         await this.showMessage(notificationMessage, host, missingScopes);
@@ -141,15 +141,14 @@ export class GitpodGitTokenProvider {
         // 2. in case of git operation which require write access to a remote
         if (gitCommand === "push") {
 
-            const validationResult = await this.tokenValidator.checkWriteAccess(authProvider, repoFullName, tokenResult);
+            const validationResult = await this.tokenValidator.checkWriteAccess(authProvider, repoFullName, tokenResult, gitCommand);
             const hasWriteAccess = validationResult && validationResult.writeAccessToRepo === true;
 
             if (hasWriteAccess) {
 
-                // first of all check if the current token includes write permission
-                const isPublic = validationResult && !validationResult.isPrivateRepo;
-                const requiredScopesForGitCommand = isPublic ? authProvider.requirements!.publicRepo : authProvider.requirements!.privateRepo;
-                const missingScopes = this.getMissingScopes(requiredScopesForGitCommand, tokenResult.scopes);
+                // it looks like we have write access in general, but we need to check ganted permissions as well.
+                const requiredScopesForGitCommand = validationResult && validationResult.requiredScopesForGitCommand;
+                const missingScopes = this.getMissingScopes(requiredScopesForGitCommand || [], tokenResult.scopes);
                 if (missingScopes.length > 0) {
                     const messagePart = `The command "git ${gitCommand}" requires additional permissions: ${missingScopes.join(", ")}`;
                     const notificationMessage = message ? message : `${messagePart} Please try again after updating the permissions.`;

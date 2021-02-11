@@ -80,7 +80,7 @@ export class GenericAuthProvider implements AuthProvider {
     }
 
     protected defaultInfo(): AuthProviderInfo {
-        const scopes = this.oauthScopes;
+        const { oauthScopes } = this;
         const { id, type, icon, host, ownerId, verified, hiddenOnDashboard, disallowLogin, description, loginContextMatcher } = this.config;
         return {
             authProviderId: id,
@@ -93,13 +93,12 @@ export class GenericAuthProvider implements AuthProvider {
             loginContextMatcher,
             disallowLogin,
             description,
-            scopes,
+            scopes: {
+                all: oauthScopes,
+                default: oauthScopes,
+                descriptions: {}
+            },
             settingsUrl: this.oauthConfig.settingsUrl,
-            requirements: {
-                default: scopes,
-                publicRepo: scopes,
-                privateRepo: scopes
-            }
         }
     }
 
@@ -119,7 +118,7 @@ export class GenericAuthProvider implements AuthProvider {
     protected get oauthConfig() {
         return this.config.oauth!;
     }
-    protected get oauthScopes() {
+    protected get oauthScopes(): string[] {
         if (!this.oauthConfig.scope) {
             return [];
         }

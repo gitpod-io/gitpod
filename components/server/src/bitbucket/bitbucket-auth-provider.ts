@@ -19,12 +19,7 @@ export class BitbucketAuthProvider extends GenericAuthProvider {
     get info(): AuthProviderInfo {
         return {
             ...this.defaultInfo(),
-            scopes: BitbucketOAuthScopes.ALL,
-            requirements: {
-                default: BitbucketOAuthScopes.Requirements.DEFAULT,
-                publicRepo: BitbucketOAuthScopes.Requirements.DEFAULT,
-                privateRepo: BitbucketOAuthScopes.Requirements.DEFAULT,
-            },
+            scopes: BitbucketOAuthScopes.definitions,
         }
     }
 
@@ -39,7 +34,7 @@ export class BitbucketAuthProvider extends GenericAuthProvider {
             authorizationUrl: oauth.authorizationUrl || `https://${this.config.host}/site/oauth2/authorize`,
             tokenUrl: oauth.tokenUrl || `https://${this.config.host}/site/oauth2/access_token`,
             settingsUrl: oauth.settingsUrl || `https://${this.config.host}/account/settings/app-authorizations/`,
-            scope: BitbucketOAuthScopes.ALL.join(scopeSeparator),
+            scope: BitbucketOAuthScopes.definitions.default.join(scopeSeparator),
             scopeSeparator
         };
     }
@@ -49,7 +44,7 @@ export class BitbucketAuthProvider extends GenericAuthProvider {
     }
 
     authorize(req: express.Request, res: express.Response, next: express.NextFunction, scope?: string[]): void {
-        super.authorize(req, res, next, scope ? scope : BitbucketOAuthScopes.Requirements.DEFAULT);
+        super.authorize(req, res, next, scope ? scope : BitbucketOAuthScopes.definitions.default);
     }
 
     protected get baseURL() {
@@ -105,7 +100,7 @@ export class BitbucketAuthProvider extends GenericAuthProvider {
             set.add('pullrequest');
         }
         for (const item of set.values()) {
-            if (!(BitbucketOAuthScopes.Requirements.DEFAULT.includes(item))) {
+            if (!(BitbucketOAuthScopes.definitions.default.includes(item))) {
                 set.delete(item);
             }
         }

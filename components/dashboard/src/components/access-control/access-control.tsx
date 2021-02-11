@@ -87,7 +87,7 @@ export class AccessControl extends React.Component<AccessControlProps, AccessCon
             }
         }
     }
-    
+
     protected async redirectToLogin() {
         window.location.href = new GitpodHostUrl(window.location.toString()).with({
             pathname: '/login/',
@@ -127,7 +127,7 @@ export class AccessControl extends React.Component<AccessControlProps, AccessCon
                     return undefined;
                 }
                 const scopes = authProvider.scopes || [];
-                const updatedScopes = updatedScopesString.split(',').filter(s => !!s && scopes.some(scope => scope === s));
+                const updatedScopes = updatedScopesString.split(',').filter(s => !!s && scopes.all.some(scope => scope === s));
                 if (updatedScopes.length > 0 && hosts.some(h => h === updatedHost)) {
                     return { updatedHost, updatedScopes };
                 }
@@ -154,7 +154,7 @@ export class AccessControl extends React.Component<AccessControlProps, AccessCon
                 const authProvider = authProviders.find(p => p.host === host)!;
                 let newScopes = new Set<string>(value.split(','));
                 let oldScopes = new Set<string>(scopes.get(host) || []);
-                const merged = new Set<string>((authProvider.scopes || []).filter(scope => oldScopes.has(scope) || newScopes.has(scope)));
+                const merged = new Set<string>((authProvider.scopes.all || []).filter(scope => oldScopes.has(scope) || newScopes.has(scope)));
                 scopes.set(host, merged);
             }
         });
@@ -289,12 +289,11 @@ export class AccessControl extends React.Component<AccessControlProps, AccessCon
         this.setState({ newScopes });
     }
 
-    protected renderScopeTooltip(scope: string) {
-        const text = this.getTooltipForScope(scope);
-        if (!text) {
+    protected renderScopeTooltip(description: string | undefined) {
+        if (!description) {
             return undefined;
         }
-        return (<Tooltip title={text} placement="right" interactive style={{ maxWidth: 200, padding: '12px' }}>
+        return (<Tooltip title={description} placement="right" interactive style={{ maxWidth: 200, padding: '12px' }}>
             <span>
                 <InfoIcon fontSize="small" color="disabled" style={{ verticalAlign: 'middle' }} />
             </span>
@@ -355,9 +354,9 @@ export class AccessControl extends React.Component<AccessControlProps, AccessCon
 
             <Grid item style={{ flexGrow: 2 }}>
                 <CardContent style={{ display: 'block', float: 'left', textAlign: 'left', paddingBottom: '8px' }}>
-                    {(provider.scopes || []).map((scope, index) => {
-                        const disabled = provider.requirements && provider.requirements.default.includes(scope);
-                        const defaultChecked = newScopes.has(scope) || (provider.requirements && provider.requirements.default.includes(scope));
+                    {(provider.scopes.all || []).map((scope, index) => {
+                        const disabled = provider.scopes.default.includes(scope);
+                        const defaultChecked = newScopes.has(scope) || (provider.scopes.default.includes(scope));
                         const color = newScopes.has(scope) && !oldScopes.has(scope) ? 'secondary' : 'primary';
                         return (<p key={host + "-scope-" + index} style={{ display: 'table', marginTop: 0 }}>
                             <label style={{ display: 'flex', alignItems: 'center' }}>
@@ -368,7 +367,7 @@ export class AccessControl extends React.Component<AccessControlProps, AccessCon
                                     defaultChecked={defaultChecked}
                                 />
                                 {this.getLabelForScope(scope)}
-                                {this.renderScopeTooltip(scope)}
+                                {this.renderScopeTooltip(provider.scopes.descriptions[scope])}
                             </label>
                         </p>);
                     })}
@@ -391,7 +390,7 @@ export class AccessControl extends React.Component<AccessControlProps, AccessCon
                             this.renderUpdateButton(dirty, () => this.updateToken(provider.host, Array.from(newScopes)), 'Update') :
                             this.renderUpdateButton(true, () => this.updateToken(provider.host,
                                 // for authorization we set the required (if any) plus the new scopes
-                                [...(provider.requirements && provider.requirements.default || []), ...Array.from(newScopes)]), 'Connect'))
+                                [...(provider.scopes.default || []), ...Array.from(newScopes)]), 'Connect'))
                     }
                 </CardActions>
             </Grid>
@@ -414,39 +413,19 @@ export class AccessControl extends React.Component<AccessControlProps, AccessCon
             case "read:org": return "read organizations";
             case "workflow": return "update workflows";
             // GitLab
-            case "read_user": return "read user";
-            case "api": return "allow api calls";
-            case "read_repository": return "repository access";
+            case "read_user": return "read user info";
+            case "api": return "full API access";
+            case "read_api": return "read API access";
+            case "read_repository": return "read repositories";
+            case "write_repository": return "write repository";
             // Bitbucket
-            case "account": return "read account";
+            case "account": return "read account info";
             case "repository": return "read repositories";
             case "repository:write": return "write repositories";
             case "pullrequest": return "read pull requests";
             case "pullrequest:write": return "write pull requests";
             case "webhook": return "install webhooks";
             default: return scope;
-        }
-    }
-
-    protected getTooltipForScope(scope: string): string | undefined {
-        switch (scope) {
-            case "user:email": return "Read-only access to your email addresses";
-            case "public_repo": return "Write access to code in public repositories and organizations";
-            case "repo": return "Read/write access to code in private repositories and organizations";
-            case "read:org": return "Read-only access to organizations (used to suggest organizations when forking a repository)";
-            case "workflow": return "Allow updating GitHub Actions workflow files";
-            // GitLab
-            case "read_user": return "Read-only access to your email addresses";
-            case "api": return "Allow making API calls (used to set up a webhook when enabling prebuilds for a repository)";
-            case "read_repository": return "Read/write access to your repositories";
-            // Bitbucket
-            case "account": return "Read-only access to your account information";
-            case "repository": return "Read-only access to your repositories (note: Bitbucket doesn't support revoking scopes)";
-            case "repository:write": return "Read/write access to your repositories (note: Bitbucket doesn't support revoking scopes)";
-            case "pullrequest": return "Read access to pull requests and ability to collaborate via comments, tasks, and approvals (note: Bitbucket doesn't support revoking scopes)";
-            case "pullrequest:write": return "Allow creating, merging and declining pull requests (note: Bitbucket doesn't support revoking scopes)";
-            case "webhook": return "Allow installing webhooks (used when enabling prebuilds for a repository, note: Bitbucket doesn't support revoking scopes)";
-            default: return undefined;
         }
     }
 

@@ -35,7 +35,7 @@ export class GitLabTokenHelper {
             // no token
         }
         if (requiredScopes.length === 0) {
-            requiredScopes = GitLabScope.Requirements.DEFAULT
+            requiredScopes = GitLabScope.definitions.default
         }
         throw UnauthorizedError.create(host, requiredScopes, "missing-identity");
     }

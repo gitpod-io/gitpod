@@ -1025,12 +1025,13 @@ export interface AuthProviderInfo {
     readonly description?: string;
 
     readonly settingsUrl?: string;
-    readonly scopes?: string[];
-    readonly requirements?: {
-        readonly default: string[];
-        readonly publicRepo: string[];
-        readonly privateRepo: string[];
-    }
+    readonly scopes: AuthProviderScopes;
+}
+
+export interface AuthProviderScopes {
+    readonly default: string[];
+    readonly all: string[];
+    readonly descriptions: { [key: string]: string };
 }
 
 export interface AuthProviderEntry {

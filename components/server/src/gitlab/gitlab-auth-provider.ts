@@ -22,12 +22,7 @@ export class GitLabAuthProvider extends GenericAuthProvider {
     get info(): AuthProviderInfo {
         return {
             ...this.defaultInfo(),
-            scopes: GitLabScope.All,
-            requirements: {
-                default: GitLabScope.Requirements.DEFAULT,
-                publicRepo: GitLabScope.Requirements.REPO,
-                privateRepo: GitLabScope.Requirements.REPO,
-            },
+            scopes: GitLabScope.definitions,
         }
     }
 
@@ -43,13 +38,13 @@ export class GitLabAuthProvider extends GenericAuthProvider {
             authorizationUrl: oauth.authorizationUrl || defaultUrls.authorizationUrl,
             tokenUrl: oauth.tokenUrl || defaultUrls.tokenUrl,
             settingsUrl: oauth.settingsUrl || defaultUrls.settingsUrl,
-            scope: GitLabScope.All.join(scopeSeparator),
+            scope: GitLabScope.definitions.default.join(scopeSeparator),
             scopeSeparator
         };
     }
 
     authorize(req: express.Request, res: express.Response, next: express.NextFunction, scope?: string[]): void {
-        super.authorize(req, res, next, scope ? scope : GitLabScope.Requirements.DEFAULT);
+        super.authorize(req, res, next, scope ? scope : GitLabScope.definitions.default);
     }
 
     protected get baseURL() {

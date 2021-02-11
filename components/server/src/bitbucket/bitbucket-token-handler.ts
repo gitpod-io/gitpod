@@ -36,7 +36,7 @@ export class BitbucketTokenHelper {
             // no token
         }
         if (requiredScopes.length === 0) {
-            requiredScopes = BitbucketOAuthScopes.Requirements.DEFAULT
+            requiredScopes = BitbucketOAuthScopes.definitions.default
         }
         throw UnauthorizedError.create(host, requiredScopes, "missing-identity");
     }

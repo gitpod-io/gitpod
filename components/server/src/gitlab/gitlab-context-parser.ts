@@ -61,7 +61,8 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
                     // most likely the token needs to be updated after revoking by user.
                     throw UnauthorizedError.create(this.config.host, scopes, "http-unauthorized");
                 }
-                throw UnauthorizedError.create(this.config.host, GitLabScope.Requirements.REPO);
+                // this isn't expected to be reached, as a missing token is supposed to be handled already.
+                throw UnauthorizedError.create(this.config.host, GitLabScope.definitions.default);
             }
             throw error;
         } finally {
