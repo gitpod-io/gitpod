@@ -8,42 +8,52 @@ import { IPrefixContextParser } from "./context-parser";
 import { User, WorkspaceContext, UserEnvVarValue, WithEnvvarsContext } from "@gitpod/gitpod-protocol";
 import { injectable } from "inversify";
 
-const envvarRegexp = /([\w-_]+)=([^,/=]+)(,([\w-_]+)=([^,/=]+))*\//;
-
 @injectable()
 export class EnvvarPrefixParser implements IPrefixContextParser {
 
     public findPrefix(user: User, context: string): string | undefined {
-        const matches = envvarRegexp.exec(context);
-        if (!matches) {
-            return;
-        }
-
-        return matches[0];
+        const result = this.parse(context);
+        return result && result.prefix;
     }
 
     public async handle(user: User, prefix: string, context: WorkspaceContext): Promise<WorkspaceContext> {
-        const matches = envvarRegexp.exec(prefix);
-        if (!matches) {
+        const result = this.parse(prefix);
+        if (!result) {
             return context;
         }
 
         const envvars: UserEnvVarValue[] = [];
-        for (let i = 0; i < matches.length; ) {
-            // skip first element of this group-of-three: it's outer group as a whole
-            i++;
-            // second group is the name
-            const name = matches[i++];
-            // third group is the value
-            const value = decodeURIComponent(matches[i++]);
-
-            envvars.push({ name, value, repositoryPattern: "#/#" });
+        for (const [k, v] of result.envVarMap.entries()) {
+            envvars.push({ name: k, value: decodeURIComponent(v), repositoryPattern: "#/#" });
         }
-
         return <WithEnvvarsContext>{
             ...context,
             envvars
         };
+    }
+
+    protected parse(ctx: string) {
+        const splitBySlash = ctx.split("/");
+        if (splitBySlash.length < 2) {
+            return; // "/" not found
+        }
+        const envVarMap = new Map<string, string>();
+        const prefix = splitBySlash[0];
+        const kvCandidates = prefix.split(",");
+        for (let kvCandidate of kvCandidates) {
+            const kv = kvCandidate.split("=");
+            if (kv.length !== 2 || !kv[0] || !kv[1] || !kv[0].match(/^[\w-_]+$/)) {
+                continue;
+            }
+            envVarMap.set(kv[0], kv[1]);
+        }
+        if (envVarMap.size === 0) {
+            return undefined;
+        }
+        return {
+            prefix: prefix + "/",
+            envVarMap
+        }
     }
 
 }

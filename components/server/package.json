@@ -86,6 +86,7 @@
     "@graphql-codegen/introspection": "^1.18.1",
     "@graphql-codegen/typescript": "^1.19.0",
     "@graphql-codegen/typescript-resolvers": "^1.18.0",
+    "@testdeck/mocha": "0.1.2",
     "@types/amqplib": "^0.5.7",
     "@types/assert": "^0.0.31",
     "@types/base-64": "^0.1.2",
