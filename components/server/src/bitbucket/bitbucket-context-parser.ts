@@ -134,7 +134,7 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
             span.log({ "request.finished": "" });
 
             if (!repo) {
-                throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, this.config.host, owner, repoName);
+                throw await this.createNotFoundError(user, host, owner, repoName);
             }
 
             if (!more.revision)
@@ -166,6 +166,12 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
         } finally {
             span.finish();
         }
+    }
+
+    protected async createNotFoundError(user: User, host: string, owner: string, repoName: string) {
+        const authProviderId = this.authProviderId;
+        const token = await this.tokenHelper.getCurrentToken(user);
+        return NotFoundError.create(token, user, host, owner, repoName, authProviderId, []);
     }
 
     protected async handlePullRequestContext(ctx: TraceContext, user: User, host: string, owner: string, repoName: string, more: Partial<PullRequestContext> & { nr: number }): Promise<PullRequestContext> {

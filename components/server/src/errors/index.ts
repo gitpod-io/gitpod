@@ -15,14 +15,21 @@ export namespace NotFoundError {
         readonly owner: string;
         readonly repoName: string;
         readonly userScopes?: string[];
+        readonly missingScopes?: string[];
         readonly lastUpdate?: string;
+        readonly userIsOwner?: boolean;
     }
-    export async function create(token: Token | undefined, user: User, host: string, owner: string, repoName: string) {
+    export function create(token: Token | undefined, user: User, host: string, owner: string, repoName: string, authProviderId: string, requiredScopes: string[]) {
         const lastUpdate = token && token.updateDate;
         const userScopes = token ? [...token.scopes] : [];
 
-        const userIsOwner = owner == user.name; // TODO: shouldn't this be a comparison with `identity.authName`?
-        const data = <NotFoundError.Data>{ host, owner, repoName, userIsOwner, userScopes, lastUpdate }
+        const identity = user.identities.find(i => i.authProviderId === authProviderId);
+        const userIsOwner = identity && owner == identity.authName;
+
+        const missingScopes = new Set(requiredScopes);
+        userScopes.forEach(s => missingScopes.delete(s));
+
+        const data: NotFoundError.Data = { host, owner, repoName, userIsOwner, userScopes, lastUpdate, missingScopes: Array.from(missingScopes) };
         const error = Object.assign(new Error("NotFoundError"), { data });
         return error;
     }

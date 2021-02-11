@@ -26,6 +26,10 @@ export abstract class AbstractContextParser implements IContextParser {
         return this.config.host;
     }
 
+    protected get authProviderId(): string {
+        return this.config.id;
+    }
+
     public normalize(contextUrl: string): string | undefined {
         let url = contextUrl.trim();
         if (url.startsWith(`${this.host}/`)) {

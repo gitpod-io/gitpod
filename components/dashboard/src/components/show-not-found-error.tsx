@@ -11,7 +11,15 @@ import { GitpodService, AuthProviderInfo } from '@gitpod/gitpod-protocol';
 
 export namespace ShowNotFoundError {
     export interface Props {
-        data: any;
+        data: {
+            readonly host: string;
+            readonly owner: string;
+            readonly repoName: string;
+            readonly userScopes?: string[];
+            readonly missingScopes?: string[];
+            readonly lastUpdate?: string;
+            readonly userIsOwner?: boolean;
+        };
         service: GitpodService;
     }
     export interface State {
@@ -51,7 +59,7 @@ export default class ShowNotFoundError extends React.Component<ShowNotFoundError
     }
 
     protected renderMessage() {
-        const { host, owner, userIsOwner, userScopes, lastUpdate } = this.props.data;
+        const { host, owner, userIsOwner, missingScopes, lastUpdate } = this.props.data;
 
         const authProviders = this.state.authProviders;
         let message: JSX.Element | undefined;
@@ -60,10 +68,10 @@ export default class ShowNotFoundError extends React.Component<ShowNotFoundError
             if (!provider) {
                 return undefined;
             }
-            const missingScope = this.guessMissingScope(provider, userScopes);
+            const scopes = (missingScopes || []).join(",")
             const link = new GitpodHostUrl(window.location.toString()).withApi({
                 pathname: '/authorize',
-                search: `returnTo=${encodeURIComponent(window.location.toString())}&host=${host}&scopes=${missingScope}`
+                search: `returnTo=${encodeURIComponent(window.location.toString())}&host=${host}&scopes=${scopes}`
             }).toString();
 
             let updatedRecently = false;
@@ -75,10 +83,9 @@ export default class ShowNotFoundError extends React.Component<ShowNotFoundError
                     // ignore
                 }
             }
-            const privatePermission = this.privatePermissionGranted(userScopes, missingScope);
-            if (!privatePermission) {
+            if (missingScopes) {
                 message = (
-                    <div className="text">The repository might be private. <a href={link}>Grant access to private repositories</a>.</div>
+                    <div className="text">The repository might be private. <a href={link}>Grant access to repositories</a>.</div>
                 );
             } else if (userIsOwner) {
                 message = (
@@ -87,7 +94,7 @@ export default class ShowNotFoundError extends React.Component<ShowNotFoundError
             } else {
                 if (!updatedRecently) {
                     message = (
-                        <div className="text">Permission to access private repositories has been granted. If you are a member of '{owner}', try to <a href={link}>request access</a> for Gitpod.</div>
+                        <div className="text">Permission to access repositories has been granted. If you are a member of '{owner}', try to <a href={link}>request access</a> for Gitpod.</div>
                     );
                 } else {
                     message = (
@@ -99,10 +106,6 @@ export default class ShowNotFoundError extends React.Component<ShowNotFoundError
         return message;
     }
 
-    protected guessMissingScope(authProvider: AuthProviderInfo, userScopes: string[]) {
-        // TODO: this should be aware of already granted permissions
-        return authProvider.host === "github.com" ? "repo" : "read_repository";
-    }
     protected privatePermissionGranted(userScopes: string[], missingScope: string): boolean {
         return userScopes.indexOf(missingScope) > -1;
     }

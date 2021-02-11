@@ -86,7 +86,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
             span.log({"request.finished": ""});
 
             if (result.data.repository === null) {
-                throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, this.config.host, owner, repoName);
+                throw await this.createNotFoundError(user, host, owner, repoName);
             }
             const defaultBranch = result.data.repository.defaultBranchRef;
             const ref = defaultBranch && defaultBranch.name || undefined;
@@ -106,6 +106,12 @@ export class GithubContextParser extends AbstractContextParser implements IConte
         } finally {
             span.finish();
         }
+    }
+
+    protected async createNotFoundError(user: User, host: string, owner: string, repoName: string) {
+        const authProviderId = this.authProviderId;
+        const token = await this.tokenHelper.getCurrentToken(user);
+        return NotFoundError.create(token, user, host, owner, repoName, authProviderId, ["repo"]);
     }
 
     protected async handleTreeContext(ctx: TraceContext, user: User, host: string, owner: string, repoName: string, segments: string[]): Promise<NavigatorContext> {
@@ -148,7 +154,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
 
                 const repo = result.data.repository;
                 if (repo === null) {
-                    throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, this.config.host, owner, repoName);
+                    throw await this.createNotFoundError(user, host, owner, repoName);
                 }
 
                 const isFile = !!(repo.path && repo.path.oid);
@@ -230,7 +236,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
             span.log({"request.finished": ""});
 
             if (result.data.repository === null) {
-                throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, this.config.host, owner, repoName);
+                throw await this.createNotFoundError(user, host, owner, repoName);
             }
 
             const commit = result.data.repository.object;
@@ -290,7 +296,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
             span.log({"request.finished": ""});
 
             if (result.data.repository === null) {
-                throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, this.config.host, owner, repoName);
+                throw await this.createNotFoundError(user, host, owner, repoName);
             }
             const pr = result.data.repository.pullRequest;
             if (pr === null) {
@@ -345,7 +351,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
             span.log({"request.finished": ""});
 
             if (result.data.repository === null) {
-                throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, this.config.host, owner, repoName);
+                throw await this.createNotFoundError(user, host, owner, repoName);
             }
             const issue = result.data.repository.issue;
             if (issue === null) {
@@ -360,7 +366,6 @@ export class GithubContextParser extends AbstractContextParser implements IConte
             const ref = branchRef && branchRef.name || undefined;
             const refType = ref ? "branch" : undefined;
 
-            
             return <IssueContext>{
                 title: result.data.repository.issue.title,
                 owner,

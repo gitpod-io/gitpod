@@ -128,9 +128,15 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
             if (UnauthorizedError.is(error)) {
                 throw error;
             }
-            // log.error({ userId: user.id }, error);
-            throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, host, owner, repoName);
+
+            throw await this.createNotFoundError(user, host, owner, repoName);
         }
+    }
+
+    protected async createNotFoundError(user: User, host: string, owner: string, repoName: string) {
+        const authProviderId = this.authProviderId;
+        const token = await this.tokenHelper.getCurrentToken(user);
+        return NotFoundError.create(token, user, host, owner, repoName, authProviderId, ["read_api", "read_repository"]);
     }
 
     // https://gitlab.com/AlexTugarev/gp-test/tree/wip
@@ -225,7 +231,7 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
             return g.MergeRequests.show(`${owner}/${repoName}`, nr);
         });
         if (GitLab.ApiError.is(result)) {
-            throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, host, owner, repoName);
+            throw await this.createNotFoundError(user, host, owner, repoName);
         }
         const sourceProjectId = result.source_project_id;
         const targetProjectId = result.target_project_id;
@@ -307,7 +313,7 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
             return g.Issues.show(`${owner}/${repoName}`, nr);
         });
         if (GitLab.ApiError.is(result)) {
-            throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, host, owner, repoName);
+            throw await this.createNotFoundError(user, host, owner, repoName);
         }
         const context = await ctxPromise;
         return <IssueContext>{
@@ -323,7 +329,7 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
     protected async handleCommitContext(user: User, host: string, owner: string, repoName: string, sha: string): Promise<NavigatorContext> {
         const repository = await this.fetchRepo(user, `${owner}/${repoName}`);
         if (GitLab.ApiError.is(repository)) {
-            throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, host, owner, repoName);
+            throw await this.createNotFoundError(user, host, owner, repoName);
         }
         const commit = await this.fetchCommit(user, `${owner}/${repoName}`, sha);
         if (GitLab.ApiError.is(commit)) {
