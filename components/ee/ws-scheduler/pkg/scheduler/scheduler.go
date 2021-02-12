@@ -19,7 +19,7 @@ import (
 	"time"
 
 	k8sinternal "github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler/internal"
-	"github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler/internal/queue"
+	metrics "github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler/metrics"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -39,16 +39,14 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	v1helper "k8s.io/kubernetes/pkg/apis/core/v1/helper"
-	k8sschedfw "k8s.io/kubernetes/pkg/scheduler/framework"
-	"k8s.io/kubernetes/pkg/scheduler/metrics"
 )
 
 const (
-	// the time a failed scheduling attempt has to wait
-	queueBackoff = 1 * time.Second
+	// the time a failed scheduling attempt has to wait before it is re-tried initially
+	queueInitialBackoff = 1 * time.Second
 
-	// queueRescheduleInterval is the interval in which we revisit yet-unschedulable pods and try to schedule them again
-	queueRescheduleInterval = 2 * time.Second
+	// the time a failed scheduling attempt has to wait before it is re-tried at most
+	queueMaximumBackoff = 4 * time.Second
 
 	// priorityOffsetRegularWorkspace ensures workspaces
 	priorityOffsetRegularWorkspace = 100000
@@ -81,7 +79,7 @@ type Scheduler struct {
 	nodes    infov1.NodeInformer
 	strategy Strategy
 
-	queue          *queue.PriorityQueue
+	queue          *PriorityQueue
 	localSlotCache *localSlotCache
 
 	didShutdown chan bool
@@ -114,10 +112,7 @@ func (s *Scheduler) Start(ctx context.Context) error {
 		return xerrors.Errorf("cannot create strategy: %w", createErr)
 	}
 
-	s.queue = queue.NewPriorityQueue(SortByPriority,
-		queue.WithPodInitialBackoffDuration(queueBackoff),
-		queue.WithPodMaxBackoffDuration(queueBackoff), // using the same time here effectively disables the backoffQueue, which is what we want
-	)
+	s.queue = NewPriorityQueue(SortByPriority, queueInitialBackoff, queueMaximumBackoff)
 	s.queue.Run() // starts the goroutines maintaining the queue
 
 	stopInformer := s.startInformer(ctx)
@@ -125,39 +120,21 @@ func (s *Scheduler) Start(ctx context.Context) error {
 	// Now that the informers are up and running, we can start our workers who rely on the node/pod informers being warmed up
 
 	// Start the actual scheduling loop. This is the only caller of schedulePod to ensure it's atomicity
-	go func(q *queue.PriorityQueue) {
+	go func(q *PriorityQueue) {
 		for {
-			pi, err := q.Pop()
-			if err != nil {
-				if strings.HasSuffix("closed", err.Error()) {
-					log.Debug("scheduler queue closed - exiting")
-					return
-				}
-				continue
+			pi, wasClosed := q.Pop()
+			if wasClosed {
+				log.Debug("scheduler queue closed - exiting")
+				return
 			}
 			pod := pi.Pod
 
 			owi := wsk8s.GetOWIFromObject(&pod.ObjectMeta)
 			log.WithField("pod", pod.Name).WithFields(owi).Debug("scheduling pod")
 
-			err = s.schedulePod(ctx, pi)
+			err := s.schedulePod(ctx, pi)
 			if err != nil {
 				log.WithError(err).WithField("pod", pod.Name).Error("unable to schedule pod")
-			}
-		}
-	}(s.queue)
-
-	// Start the loop that makes sure we're revisiting old scheduling decisions we've
-	go func(q *queue.PriorityQueue) {
-		rescheduleTicker := time.NewTicker(queueRescheduleInterval)
-
-		for {
-			select {
-			case <-rescheduleTicker.C:
-				// trigger a fresh re-try of all unschedulable pods
-				q.MoveAllToActiveOrBackoffQueue("rescheduleInterval")
-			case <-ctx.Done():
-				return
 			}
 		}
 	}(s.queue)
@@ -200,7 +177,7 @@ func (s *Scheduler) startInformer(ctx context.Context) (stopInformerQueue chan s
 			log.WithField("node", node.Name).Info("new node added to the pool")
 
 			// trigger a fresh re-try for all waiting pods
-			q.MoveAllToActiveOrBackoffQueue("newNodeAdded")
+			q.MoveAllToActive("newNodeAdded")
 		},
 	})
 
@@ -218,21 +195,11 @@ func (s *Scheduler) startInformer(ctx context.Context) (stopInformerQueue chan s
 			}
 
 			// add to queue
-			if pod.Spec.NodeName != "" {
-				q.AssignedPodAdded(pod)
-			} else {
-				err := q.Add(pod)
-				if err != nil {
-					log.WithError(err).Error("error adding pod to queue")
-				}
+			if pod.Spec.NodeName == "" {
+				q.Add(pod)
 			}
 		},
 		UpdateFunc: func(oldObj interface{}, newObj interface{}) {
-			oldPod, ok := oldObj.(*corev1.Pod)
-			if !ok {
-				log.Error("pod informer received non-pod event - this should never happen")
-				return
-			}
 			pod, ok := newObj.(*corev1.Pod)
 			if !ok {
 				log.Error("pod informer received non-pod event - this should never happen")
@@ -247,11 +214,6 @@ func (s *Scheduler) startInformer(ctx context.Context) (stopInformerQueue chan s
 			//      because some pods are removed in the "pending" phase directly.
 			if pod.Spec.NodeName != "" {
 				s.deleteFromQueue(pod)
-			} else {
-				err := q.Update(oldPod, pod)
-				if err != nil {
-					log.WithError(err).Error("error updating pod in queue")
-				}
 			}
 
 			if pod.Status.Phase == corev1.PodFailed &&
@@ -272,8 +234,8 @@ func (s *Scheduler) startInformer(ctx context.Context) (stopInformerQueue chan s
 			// make double-sure that we release all resources from local caches
 			s.deleteFromQueue(pod)
 
-			// re-trigger scheduling for all pods
-			s.queue.MoveAllToActiveOrBackoffQueue("podDeleted")
+			// re-trigger scheduling for all pods as there might now be enough space
+			s.queue.MoveAllToActive("podDeleted")
 		},
 	})
 
@@ -287,14 +249,9 @@ func (s *Scheduler) startInformer(ctx context.Context) (stopInformerQueue chan s
 }
 
 // deleteFromQueue removes the referenced pod from all temporary storage so we do not leak memory
-func (s *Scheduler) deleteFromQueue(pod *corev1.Pod) {
+func (s *Scheduler) deleteFromQueue(pod *corev1.Pod) bool {
 	s.localSlotCache.freeSlot(pod.Name)
-
-	// update the queue
-	err := s.queue.Delete(pod)
-	if err != nil {
-		log.WithError(err).Error("error deleting pod from queue")
-	}
+	return s.queue.Delete(pod)
 }
 
 // WaitForShutdown waits for the scheduler to shut down
@@ -304,7 +261,7 @@ func (s *Scheduler) WaitForShutdown() {
 
 // schedulePod is the central method here, it orchestrates the actual scheduling of a pod onto a node.
 // It's expected to be atomic as there's a single goroutine working through the schedulingQueue calling this.
-func (s *Scheduler) schedulePod(ctx context.Context, pi *k8sschedfw.QueuedPodInfo) (err error) {
+func (s *Scheduler) schedulePod(ctx context.Context, pi *QueuedPodInfo) (err error) {
 	start := time.Now()
 
 	pod := pi.Pod
@@ -336,7 +293,7 @@ func (s *Scheduler) schedulePod(ctx context.Context, pi *k8sschedfw.QueuedPodInf
 	nodeName, state, err := s.selectNodeForPod(ctx, pod, !isGhostReplacing)
 	if nodeName == "" {
 		// make sure we actually revisit this request later
-		s.queue.AddUnschedulableIfNotPresent(pi, s.queue.SchedulingCycle())
+		s.queue.AddUnschedulable(pi)
 
 		// we did not find any suitable node for the pod, mark the pod as unschedulable
 		isError := false
@@ -380,7 +337,7 @@ func (s *Scheduler) schedulePod(ctx context.Context, pi *k8sschedfw.QueuedPodInf
 			log.WithFields(flds).Warn("pod unschedulable despite being scheduled to this node")
 
 			// drop scheduling request for now - but make sure we revisit it later
-			s.queue.AddUnschedulableIfNotPresent(pi, s.queue.SchedulingCycle())
+			s.queue.AddUnschedulable(pi)
 			metrics.PodUnschedulable(workspaceType, metrics.SinceInSeconds(start))
 			return nil
 		}
@@ -407,7 +364,7 @@ func (s *Scheduler) schedulePod(ctx context.Context, pi *k8sschedfw.QueuedPodInf
 		}
 
 		// only delete the ghost and drop scheduling request for now - but make sure we revisit it later
-		s.queue.AddUnschedulableIfNotPresent(pi, s.queue.SchedulingCycle())
+		s.queue.AddUnschedulable(pi)
 		metrics.PodUnschedulable(workspaceType, metrics.SinceInSeconds(start))
 		return
 	}
@@ -438,8 +395,8 @@ func (s *Scheduler) schedulePod(ctx context.Context, pi *k8sschedfw.QueuedPodInf
 
 	// metrics
 	metrics.PodScheduled(workspaceType, metrics.SinceInSeconds(start))
-	metrics.PodSchedulingAttempts.Observe(float64(pi.Attempts))
-	metrics.PodSchedulingDuration.WithLabelValues(getAttemptsLabel(pi)).Observe(metrics.SinceInSeconds(pi.InitialAttemptTimestamp))
+	metrics.PodSchedulingAttempts.WithLabelValues(getAttemptsLabel(pi), workspaceType).Observe(float64(pi.Attempts))
+	metrics.PodSchedulingDuration.WithLabelValues(getAttemptsLabel(pi), workspaceType).Observe(metrics.SinceInSeconds(pi.InitialAttemptTimestamp))
 
 	return nil
 }
@@ -486,7 +443,7 @@ func (s *Scheduler) buildState(ctx context.Context, pod *corev1.Pod, ghostsVisib
 		return nil, xerrors.Errorf("cannot list all pods: %w", podsErr)
 	}
 
-	state = ComputeState(potentialNodes, allPods, s.localSlotCache.getListOfBindings(), &s.RAMSafetyBuffer, ghostsVisible, s.Config.Namespace)
+	state = ComputeState(potentialNodes, allPods, s.localSlotCache.getListOfBindings(pod.Name), &s.RAMSafetyBuffer, ghostsVisible, s.Config.Namespace)
 
 	// The required node services is basically PodAffinity light. They limit the nodes we can schedule
 	// workspace pods to based on other pods running on that node. We do this because we require that
@@ -584,6 +541,7 @@ func (s *Scheduler) bindPodToNode(ctx context.Context, pod *corev1.Pod, nodeName
 		},
 	}
 
+	start := time.Now()
 	err = s.Clientset.CoreV1().Pods(pod.Namespace).Bind(ctx, binding, metav1.CreateOptions{})
 	if err != nil {
 		return xerrors.Errorf("cannot bind pod %s to %s: %w", pod.Name, nodeName, err)
@@ -619,6 +577,7 @@ func (s *Scheduler) bindPodToNode(ctx context.Context, pod *corev1.Pod, nodeName
 	}
 	span.LogKV("event", "event created")
 
+	metrics.BindingLatency.Observe(metrics.SinceInSeconds(start))
 	return nil
 }
 
@@ -766,7 +725,7 @@ func (s *Scheduler) deleteGhostWorkspace(ctx context.Context, podName string, gh
 
 // true means: pi1 is inserted _before_ pi2
 // podPriority means: the higher the better
-func SortByPriority(pi1, pi2 *k8sschedfw.QueuedPodInfo) bool {
+func SortByPriority(pi1, pi2 *QueuedPodInfo) bool {
 	now := time.Now()
 	p1 := podPriority(pi1.Pod, now)
 	p2 := podPriority(pi2.Pod, now)
@@ -798,7 +757,7 @@ func isKubernetesObjNotFoundError(err error) bool {
 	return false
 }
 
-func getAttemptsLabel(pi *k8sschedfw.QueuedPodInfo) string {
+func getAttemptsLabel(pi *QueuedPodInfo) string {
 	// capping here to reduce cardinality
 	if pi.Attempts >= 15 {
 		return "15+"
@@ -877,12 +836,16 @@ func (c *localSlotCache) freeSlot(podName string) {
 	delete(c.slots, podName)
 }
 
-func (c *localSlotCache) getListOfBindings() []*Binding {
+func (c *localSlotCache) getListOfBindings(podName string) []*Binding {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
 	bs := make([]*Binding, 0, len(c.slots))
 	for _, s := range c.slots {
+		if !s.scheduled && s.binding.Pod.Name == podName {
+			// do _not_ include previously reserved slots for ourselves that we now want to update!
+			continue
+		}
 		bs = append(bs, s.binding)
 	}
 	return bs

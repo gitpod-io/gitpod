@@ -19,6 +19,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/gitpod-io/gitpod/ws-scheduler/pkg/scaler"
 	sched "github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler"
+	schedMetrics "github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler/metrics"
 )
 
 var runCmd = &cobra.Command{
@@ -80,14 +81,10 @@ var runCmd = &cobra.Command{
 		}
 
 		if config.Prometheus.Addr != "" {
-			k8sGatherer := scheduler.MustRegister()
-			composite := sched.NewCompositeGatherer(
-				k8sGatherer,
-				reg,
-			)
+			prometheus.WrapRegistererWithPrefix("gitpod_ws_scheduler_", reg).MustRegister(schedMetrics.AllMetrics...)
 
 			handler := http.NewServeMux()
-			handler.Handle("/metrics", promhttp.HandlerFor(composite, promhttp.HandlerOpts{}))
+			handler.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 
 			go func() {
 				err := http.ListenAndServe(config.Prometheus.Addr, handler)
