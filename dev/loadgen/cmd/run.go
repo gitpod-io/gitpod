@@ -51,7 +51,6 @@ var runCmd = &cobra.Command{
 					Username: "foobar",
 				},
 				FeatureFlags: []api.WorkspaceFeatureFlag{
-					api.WorkspaceFeatureFlag_REGISTRY_FACADE,
 					// api.WorkspaceFeatureFlag_USER_NAMESPACE,
 				},
 				Initializer: &csapi.WorkspaceInitializer{

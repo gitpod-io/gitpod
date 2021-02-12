@@ -233,8 +233,6 @@ var ring1Cmd = &cobra.Command{
 			{Target: "/", Source: "/.workspace/mark", FSType: "shiftfs"},
 			{Target: "/sys", Flags: unix.MS_BIND | unix.MS_REC},
 			{Target: "/dev", Flags: unix.MS_BIND | unix.MS_REC},
-			// TODO(cw): only mount /theia if it's in the mount table, i.e. this isn't a registry-facade workspace
-			{Target: "/theia", Flags: unix.MS_BIND | unix.MS_REC},
 			// TODO(cw): only mount /workspace if it's in the mount table, i.e. this isn't an FWB workspace
 			{Target: "/workspace", Flags: unix.MS_BIND | unix.MS_REC},
 			{Target: "/etc/hosts", Flags: unix.MS_BIND | unix.MS_REC},
