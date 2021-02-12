@@ -420,6 +420,12 @@ supervisorLoop:
 			err = cmd.Wait()
 			if err != nil && !(strings.Contains(err.Error(), "signal: interrupt") || strings.Contains(err.Error(), "wait: no child processes")) {
 				log.WithError(err).Warn("IDE was stopped")
+
+				ideWasReady := ideReady.Get()
+				if !ideWasReady {
+					log.WithError(err).Fatal("IDE failed to start")
+					return
+				}
 			}
 
 			ideReady.Set(false)
