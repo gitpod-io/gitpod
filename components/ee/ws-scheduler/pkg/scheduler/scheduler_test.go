@@ -12,7 +12,6 @@ import (
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler/internal/queue"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/sirupsen/logrus"
@@ -101,10 +100,7 @@ func TestGatherPotentialNodesFor(t *testing.T) {
 			}
 
 			ctx, cancel := context.WithCancel(context.Background())
-			scheduler.queue = queue.NewPriorityQueue(SortByPriority,
-				queue.WithPodInitialBackoffDuration(queueBackoff),
-				queue.WithPodMaxBackoffDuration(queueBackoff),
-			)
+			scheduler.queue = NewPriorityQueue(SortByPriority, queueInitialBackoff, queueMaximumBackoff)
 			scheduler.startInformer(ctx)
 
 			candidates, err := scheduler.gatherPotentialNodesFor(context.Background(), test.Pod)
@@ -296,10 +292,7 @@ func TestRequiredServices(t *testing.T) {
 			}
 
 			ctx, cancel := context.WithCancel(context.Background())
-			scheduler.queue = queue.NewPriorityQueue(SortByPriority,
-				queue.WithPodInitialBackoffDuration(queueBackoff),
-				queue.WithPodMaxBackoffDuration(queueBackoff),
-			)
+			scheduler.queue = NewPriorityQueue(SortByPriority, queueInitialBackoff, queueMaximumBackoff)
 			scheduler.startInformer(ctx)
 
 			state, err := scheduler.buildState(ctx, test.TargetPod, wsk8s.IsNonGhostWorkspace(test.TargetPod))
