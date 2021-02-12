@@ -22,7 +22,6 @@ packages:
       - components/supervisor-api/typescript-grpc:publish
       - components/supervisor:docker
       - components/theia/app:docker
-      - components/theia/static-server:docker
       - components/ws-daemon/seccomp-profile-installer:docker
       - components/ws-daemon/shiftfs-module-loader:docker
       - components/ws-daemon:docker
@@ -48,7 +47,6 @@ packages:
       - components/service-waiter:app
       - components/supervisor:app
       - components/supervisor/frontend:app
-      - components/theia/static-server:app
       - components/ws-daemon:app
       - components/ws-manager-bridge:app
       - components/ws-manager:app

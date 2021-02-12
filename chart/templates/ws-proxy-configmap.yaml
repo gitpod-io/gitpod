@@ -62,18 +62,10 @@ data:
                 "websocketIdleConnTimeout": "180s",
                 "maxIdleConns": 100
             },
-            {{- if .Values.components.blobserve.disabled }}
-            "theiaServer": {
-                "scheme": "http",
-                "host": "theia-server.{{- .Release.Namespace -}}.svc.cluster.local:80",
-                "staticVersionPathPrefix": ""
-            },
-            {{- else }}
             "blobServer": {
                 "scheme": "http",
                 "host": "blobserve.{{- .Release.Namespace -}}.svc.cluster.local:{{ .Values.components.blobserve.ports.service.servicePort }}"
             },
-            {{- end }}
             "gitpodInstallation": {
                 "scheme": "{{- template "gitpod.scheme" $this -}}",
                 "hostName": "{{- $gp.hostname -}}",
