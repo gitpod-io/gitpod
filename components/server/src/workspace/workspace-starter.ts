@@ -585,12 +585,7 @@ export class WorkspaceStarter {
         const featureFlags = instance.configuration!.featureFlags || [];
 
         let ideImage: string;
-        if (!featureFlags.includes('registry_facade')) {
-            // We don't have registry facade enabled. Theia is the only IDE we support in this mode.
-            // We assemble the image name here instead of resorting to env.ideDefaultImage, because
-            // the latter might not be Theia after all.
-            ideImage = `${this.env.theiaImageRepo}:${instance.configuration!.theiaVersion}`
-        } else if (!!instance.configuration?.ideImage) {
+        if (!!instance.configuration?.ideImage) {
             ideImage = instance.configuration?.ideImage;
         } else {
             ideImage = this.env.ideDefaultImage;

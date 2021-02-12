@@ -229,17 +229,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		labels[k] = v
 	}
 
-	// TODO(cw): once migrated to registry-facade, remove this bit
-	// We're moving away from a fixed Theia image/version coupling and towards specifying a proper IDE image.
-	// Once we're exclusively using registry-facade, we won't need this label anymore.
-	var theiaVersion string
-	if s := strings.Split(req.Spec.IdeImage, ":"); len(s) == 2 {
-		theiaVersion = s[1]
-	} else {
-		return nil, xerrors.Errorf("IDE image ref does not have a label")
-	}
-	theiaVersionLabel := fmt.Sprintf(theiaVersionLabelFmt, theiaVersion)
-
 	spec := regapi.ImageSpec{
 		BaseRef: startContext.Request.Spec.WorkspaceImage,
 		IdeRef:  startContext.Request.Spec.IdeImage,
@@ -286,7 +275,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		workspaceImageSpecAnnotation:         imageSpec,
 		ownerTokenAnnotation:                 startContext.OwnerToken,
 		wsk8s.TraceIDAnnotation:              startContext.TraceID,
-		wsk8s.RequiredNodeServicesAnnotation: "ws-daemon",
+		wsk8s.RequiredNodeServicesAnnotation: "ws-daemon,registry-facade",
 		// TODO(cw): once userns workspaces become standard, set this to m.Config.SeccompProfile.
 		//           Until then, the custom seccomp profile isn't suitable for workspaces.
 		"seccomp.security.alpha.kubernetes.io/pod": "runtime/default",
@@ -313,22 +302,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			Annotations: annotations,
 		},
 		Spec: corev1.PodSpec{
-			Affinity: &corev1.Affinity{
-				NodeAffinity: &corev1.NodeAffinity{
-					RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
-						NodeSelectorTerms: []corev1.NodeSelectorTerm{
-							{
-								MatchExpressions: []corev1.NodeSelectorRequirement{
-									{
-										Key:      theiaVersionLabel,
-										Operator: corev1.NodeSelectorOpExists,
-									},
-								},
-							},
-						},
-					},
-				},
-			},
 			AutomountServiceAccountToken: &boolFalse,
 			ServiceAccountName:           "workspace",
 			SchedulerName:                m.Config.SchedulerName,
@@ -434,52 +407,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			removeVolume(&pod, workspaceVolumeName)
 			pod.Labels[fullWorkspaceBackupAnnotation] = "true"
 			pod.Annotations[fullWorkspaceBackupAnnotation] = "true"
-			fallthrough
-		case api.WorkspaceFeatureFlag_REGISTRY_FACADE:
-			removeVolume(&pod, theiaVolumeName)
-
-			image := fmt.Sprintf("%s/%s/%s", m.Config.RegistryFacadeHost, regapi.ProviderPrefixRemote, startContext.Request.Id)
-			for i, c := range pod.Spec.Containers {
-				if c.Name == "workspace" {
-					pod.Spec.Containers[i].Image = image
-					pod.Spec.Containers[i].Command = []string{"/.supervisor/supervisor", pod.Spec.Containers[i].Command[1]}
-				}
-			}
-
-			onst := pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms
-			nst := make([]corev1.NodeSelectorTerm, 0, len(onst))
-			for _, term := range onst {
-				var notEmpty bool
-				nt := term.MatchExpressions[:0]
-				for _, expr := range term.MatchExpressions {
-					if strings.HasPrefix(expr.Key, "gitpod.io/theia.") {
-						continue
-					}
-					nt = append(nt, expr)
-					notEmpty = true
-				}
-				if !notEmpty {
-					continue
-				}
-				term.MatchExpressions = nt
-				nst = append(nst, term)
-			}
-
-			if len(nst) == 0 {
-				// if there wasn't a template that added additional terms here we'd be left with an empty term
-				// which would prevent this pod from ever being scheduled.
-				pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution = nil
-			} else {
-				pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms = nst
-			}
-			if pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution == nil && len(pod.Spec.Affinity.NodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution) == 0 {
-				pod.Spec.Affinity.NodeAffinity = nil
-			}
-			if pod.Spec.Affinity.NodeAffinity == nil && pod.Spec.Affinity.PodAffinity == nil && pod.Spec.Affinity.PodAntiAffinity == nil {
-				pod.Spec.Affinity = nil
-			}
-
-			pod.Annotations[wsk8s.RequiredNodeServicesAnnotation] += ",registry-facade"
 
 		case api.WorkspaceFeatureFlag_FIXED_RESOURCES:
 			var cpuLimit string
@@ -543,7 +470,7 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 	mountPropagation := corev1.MountPropagationHostToContainer
 
 	var (
-		command        = []string{"/theia/supervisor", "run"}
+		command        = []string{"/.supervisor/supervisor", "run"}
 		readinessProbe = &corev1.Probe{
 			Handler: corev1.Handler{
 				HTTPGet: &corev1.HTTPGetAction{
@@ -567,9 +494,11 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 		readinessProbe = nil
 	}
 
+	image := fmt.Sprintf("%s/%s/%s", m.Config.RegistryFacadeHost, regapi.ProviderPrefixRemote, startContext.Request.Id)
+
 	return &corev1.Container{
 		Name:            "workspace",
-		Image:           startContext.Request.Spec.WorkspaceImage,
+		Image:           image,
 		SecurityContext: sec,
 		ImagePullPolicy: corev1.PullAlways,
 		Ports: []corev1.ContainerPort{
@@ -585,11 +514,6 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 				MountPath:        workspaceDir,
 				ReadOnly:         false,
 				MountPropagation: &mountPropagation,
-			},
-			{
-				Name:      theiaVolumeName,
-				MountPath: theiaDir,
-				ReadOnly:  true,
 			},
 		},
 		ReadinessProbe:           readinessProbe,

@@ -356,11 +356,6 @@ func areValidFeatureFlags(value interface{}) error {
 		idx[k] = struct{}{}
 	}
 
-	_, hasUserNS := idx[api.WorkspaceFeatureFlag_USER_NAMESPACE]
-	_, hasRegistryFacade := idx[api.WorkspaceFeatureFlag_REGISTRY_FACADE]
-	if hasUserNS && !hasRegistryFacade {
-		return xerrors.Errorf("user namespaces require registry facade")
-	}
 	return nil
 }
 
