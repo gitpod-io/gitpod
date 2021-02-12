@@ -24,7 +24,6 @@ type Config struct {
 
 	TransportConfig    *TransportConfig    `json:"transportConfig"`
 	BlobServer         *BlobServerConfig   `json:"blobServer"`
-	TheiaServer        *TheiaServer        `json:"theiaServer"`
 	GitpodInstallation *GitpodInstallation `json:"gitpodInstallation"`
 	WorkspacePodConfig *WorkspacePodConfig `json:"workspacePodConfig"`
 
@@ -38,7 +37,6 @@ func (c *Config) Validate() error {
 	}
 	for _, v := range []validatable{
 		c.TransportConfig,
-		c.TheiaServer,
 		c.BlobServer,
 		c.GitpodInstallation,
 		c.WorkspacePodConfig,
@@ -105,7 +103,7 @@ type BlobServerConfig struct {
 // Validate validates the configuration to catch issues during startup and not at runtime
 func (c *BlobServerConfig) Validate() error {
 	if c == nil {
-		return nil
+		return xerrors.Errorf("BlobServer not configured")
 	}
 
 	err := validation.ValidateStruct(c,
@@ -116,26 +114,6 @@ func (c *BlobServerConfig) Validate() error {
 		return fmt.Errorf("invalid blobserver config: %w", err)
 	}
 	return nil
-}
-
-// TheiaServer configures where to serve theia from
-type TheiaServer struct {
-	Scheme                  string `json:"scheme"`
-	Host                    string `json:"host"`
-	StaticVersionPathPrefix string `json:"staticVersionPathPrefix"`
-}
-
-// Validate validates the configuration to catch issues during startup and not at runtime
-func (c *TheiaServer) Validate() error {
-	if c == nil {
-		return nil
-	}
-
-	return validation.ValidateStruct(c,
-		validation.Field(&c.Scheme, validation.Required),
-		validation.Field(&c.Host, validation.Required),
-		// StaticVersionPathPrefix might very well be ""
-	)
 }
 
 // TransportConfig configures the way how ws-proxy connects to it's backend services

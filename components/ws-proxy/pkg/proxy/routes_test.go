@@ -61,15 +61,14 @@ var (
 			WebsocketIdleConnTimeout: util.Duration(5 * time.Minute),
 			MaxIdleConns:             100,
 		},
-		TheiaServer: &TheiaServer{
-			Host:                    ideServerHost,
-			Scheme:                  "http",
-			StaticVersionPathPrefix: "/test-version.1234",
-		},
 		GitpodInstallation: &GitpodInstallation{
 			HostName:            "test-domain.com",
 			Scheme:              "https",
 			WorkspaceHostSuffix: "",
+		},
+		BlobServer: &BlobServerConfig{
+			Host:   blobServeHost,
+			Scheme: "http",
 		},
 		WorkspacePodConfig: &WorkspacePodConfig{
 			ServiceTemplate:     "http://localhost:{{ .port }}",
@@ -83,15 +82,6 @@ var (
 		},
 	}
 )
-
-func configWithBlobserve() *Config {
-	cfg := config
-	cfg.BlobServer = &BlobServerConfig{
-		Host:   blobServeHost,
-		Scheme: "http",
-	}
-	return &cfg
-}
 
 type Target struct {
 	Status  int
@@ -210,25 +200,19 @@ func TestRoutes(t *testing.T) {
 				addHostHeader,
 			),
 			Expectation: Expectation{
-				Status: http.StatusOK,
-				Header: http.Header{"Content-Length": {"50"}, "Content-Type": {"text/plain; charset=utf-8"}},
-				Body:   "supervisor hit: /_supervisor/frontend/favicon.ico\n",
-			},
-		},
-		{
-			Desc: "IDE unauthorized GET /",
-			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL, nil),
-				addHostHeader,
-			),
-			Expectation: Expectation{
-				Status: http.StatusOK,
-				Header: http.Header{"Content-Length": {"29"}, "Content-Type": {"text/plain; charset=utf-8"}},
-				Body:   "IDE hit: /test-version.1234/\n",
+				Status: http.StatusSeeOther,
+				Header: http.Header{
+					"Content-Type": {"text/html; charset=utf-8"},
+					"Location": {
+						"https://test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__/favicon.ico",
+					},
+				},
+				Body: "<a href=\"https://test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__/favicon.ico\">See Other</a>.\n\n",
 			},
 		},
 		{
 			Desc:   "blobserve IDE unauthorized GET /",
-			Config: configWithBlobserve(),
+			Config: &config,
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL, nil),
 				addHostHeader,
 			),
@@ -243,7 +227,7 @@ func TestRoutes(t *testing.T) {
 		},
 		{
 			Desc:   "blobserve IDE unauthorized navigate /",
-			Config: configWithBlobserve(),
+			Config: &config,
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL, nil),
 				addHostHeader,
 				addHeader("Sec-Fetch-Mode", "navigate"),
@@ -259,7 +243,7 @@ func TestRoutes(t *testing.T) {
 		},
 		{
 			Desc:   "blobserve IDE unauthorized same-origin /",
-			Config: configWithBlobserve(),
+			Config: &config,
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL, nil),
 				addHostHeader,
 				addHeader("Sec-Fetch-Mode", "same-origin"),
@@ -275,7 +259,7 @@ func TestRoutes(t *testing.T) {
 		},
 		{
 			Desc:   "blobserve IDE authorized GET /?foobar",
-			Config: configWithBlobserve(),
+			Config: &config,
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"?foobar", nil),
 				addHostHeader,
 				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
@@ -292,7 +276,7 @@ func TestRoutes(t *testing.T) {
 		},
 		{
 			Desc:   "blobserve IDE authorized GET /not-from-blobserve",
-			Config: configWithBlobserve(),
+			Config: &config,
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"not-from-blobserve", nil),
 				addHostHeader,
 				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
@@ -309,7 +293,7 @@ func TestRoutes(t *testing.T) {
 		},
 		{
 			Desc:   "blobserve IDE authorized GET /not-from-failed-blobserve",
-			Config: configWithBlobserve(),
+			Config: &config,
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"not-from-failed-blobserve", nil),
 				addHostHeader,
 				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
@@ -325,38 +309,25 @@ func TestRoutes(t *testing.T) {
 			},
 		},
 		{
-			Desc: "IDE authorized GET /",
-			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL, nil),
-				addHostHeader,
-				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
-			),
-			Expectation: Expectation{
-				Status: http.StatusOK,
-				Header: http.Header{
-					"Content-Length": {"29"},
-					"Content-Type":   {"text/plain; charset=utf-8"},
-				},
-				Body: "IDE hit: /test-version.1234/\n",
-			},
-		},
-		{
-			Desc: "CORS preflight",
-			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL, nil),
+			Desc:   "CORS preflight",
+			Config: &config,
+			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"somewhere/in/the/ide", nil),
 				addHostHeader,
 				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
 				addHeader("Origin", config.GitpodInstallation.HostName),
 				addHeader("Access-Control-Request-Method", "OPTIONS"),
 			),
+			Targets: &Targets{Workspace: &Target{Status: http.StatusOK}, Blobserve: &Target{Status: http.StatusNotFound}},
 			Expectation: Expectation{
 				Status: http.StatusOK,
 				Header: http.Header{
 					"Access-Control-Allow-Credentials": {"true"},
 					"Access-Control-Allow-Origin":      {"test-domain.com"},
 					"Access-Control-Expose-Headers":    {"Authorization"},
-					"Content-Length":                   {"29"},
+					"Content-Length":                   {"37"},
 					"Content-Type":                     {"text/plain; charset=utf-8"},
 				},
-				Body: "IDE hit: /test-version.1234/\n",
+				Body: "workspace hit: /somewhere/in/the/ide\n",
 			},
 		},
 		{
@@ -442,7 +413,7 @@ func TestRoutes(t *testing.T) {
 		},
 		{
 			Desc:   "blobserve supervisor frontend /worker-proxy.js",
-			Config: configWithBlobserve(),
+			Config: &config,
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"_supervisor/frontend/worker-proxy.js", nil),
 				addHostHeader,
 			),
@@ -457,7 +428,7 @@ func TestRoutes(t *testing.T) {
 		},
 		{
 			Desc:   "blobserve supervisor frontend /main.js",
-			Config: configWithBlobserve(),
+			Config: &config,
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"_supervisor/frontend/main.js", nil),
 				addHostHeader,
 			),
@@ -472,7 +443,7 @@ func TestRoutes(t *testing.T) {
 		},
 		{
 			Desc:   "blobserve supervisor frontend /main.js retry on timeout",
-			Config: configWithBlobserve(),
+			Config: &config,
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"_supervisor/frontend/main.js", nil),
 				addHostHeader,
 			),
@@ -600,6 +571,21 @@ func TestRoutes(t *testing.T) {
 			Expectation: Expectation{
 				Header: http.Header{"Content-Length": {"0"}},
 				Status: http.StatusOK,
+			},
+		},
+		{
+			Desc: "blobserve route GET",
+			Request: modifyRequest(httptest.NewRequest("GET", "https://blobserve.test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__/main.js", nil),
+				addHostHeader,
+			),
+			Expectation: Expectation{
+				Header: http.Header{
+					"Cache-Control":  {"public, max-age=31536000"},
+					"Content-Length": {"62"},
+					"Content-Type":   {"text/plain; charset=utf-8"},
+				},
+				Status: http.StatusOK,
+				Body:   "blobserve hit: /blobserve/gitpod-io/supervisor:latest/main.js\n",
 			},
 		},
 	}

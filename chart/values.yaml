@@ -365,19 +365,6 @@ components:
       enabled: false
       email: "certificate@your-domain.com"
 
-  theiaServer:
-    name: "theia-server"
-    replicas: 1
-    resources:
-      cpu: 100m
-      memory: 16Mi
-    ports:
-      http:
-        expose: true
-        servicePort: 80
-        containerPort: 3000
-    serviceType: "ClusterIP"
-
   wsManager:
     name: "ws-manager"
     resources:

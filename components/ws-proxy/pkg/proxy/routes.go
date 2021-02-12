@@ -188,11 +188,6 @@ func (ir *ideRoutes) HandleSupervisorFrontendRoute(route *mux.Route) {
 }
 
 func (ir *ideRoutes) HandleRoot(route *mux.Route) {
-	if ir.Config.Config.BlobServer == nil {
-		ir.handleRootWithoutBlobserve(route)
-		return
-	}
-
 	r := route.Subrouter()
 	r.Use(logRouteHandlerHandler("handleRoot"))
 	r.Use(ir.Config.CorsHandler)
@@ -216,21 +211,6 @@ func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 			},
 		}
 	}, withHTTPErrorHandler(workspaceIDEPass)))
-}
-
-func (ir *ideRoutes) handleRootWithoutBlobserve(route *mux.Route) {
-	r := route.Subrouter()
-	r.Use(logRouteHandlerHandler("handleRootWithoutBlobserve"))
-	r.Use(ir.Config.CorsHandler)
-	r.Use(ir.workspaceMustExistHandler)
-
-	// We first try and service the request using the static IDE server or blobserve.
-	// If that fails, we proxy-pass to the workspace.
-	workspaceIDEPass := ir.Config.WorkspaceAuthHandler(
-		proxyPass(ir.Config, workspacePodResolver),
-	)
-	ideAssetPass := proxyPass(ir.Config, staticIDEResolver, withHTTPErrorHandler(workspaceIDEPass))
-	r.NewRoute().HandlerFunc(ideAssetPass)
 }
 
 const imagePathSeparator = "/__files__"
@@ -303,15 +283,6 @@ func workspacePodPortResolver(config *Config, req *http.Request) (url *url.URL, 
 func workspacePodSupervisorResolver(config *Config, req *http.Request) (url *url.URL, err error) {
 	coords := getWorkspaceCoords(req)
 	return buildWorkspacePodURL(config.WorkspacePodConfig.ServiceTemplate, coords.ID, fmt.Sprint(config.WorkspacePodConfig.SupervisorPort))
-}
-
-// staticIDEResolver resolves to static IDE server with the statically configured version
-func staticIDEResolver(config *Config, req *http.Request) (url *url.URL, err error) {
-	targetURL := *req.URL
-	targetURL.Scheme = config.TheiaServer.Scheme
-	targetURL.Host = config.TheiaServer.Host
-	targetURL.Path = config.TheiaServer.StaticVersionPathPrefix
-	return &targetURL, nil
 }
 
 func dynamicIDEResolver(config *Config, req *http.Request) (res *url.URL, err error) {

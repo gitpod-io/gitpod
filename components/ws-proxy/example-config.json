@@ -15,11 +15,6 @@
       "websocketIdleConnTimeout": "180s",
       "maxIdleConns": 100
     },
-    "theiaServer": {
-      "scheme": "http",
-      "host": "theia-server.staging-gpl-portal.svc.cluster.local:80",
-      "staticVersionPathPrefix": "/gpl-portal.3"
-    },
     "gitpodInstallation": {
       "scheme": "http",
       "hostName": "gpl-portal.staging.gitpod-dev.com",
