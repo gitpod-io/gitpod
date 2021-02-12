@@ -25,8 +25,7 @@ const supervisorConfigFile = "supervisor-config.json"
 // Supervisor's configuration is dictated by three different lifecycles/sources:
 //   1. supervisor (static):
 //                  there's some configuration that lives with supervisor and its "installation",
-//                  For example the IDE config location depends on if supervisor comes from the
-//                  node-daemon or is served via registry-facade.
+//                  For example the IDE config location depends on if supervisor is served via registry-facade.
 //   2. IDE: Gitpod supports different IDEs, all of which have different configuration needs.
 //   3. Workspace: which depends on the individual workspace, its content and configuration.
 

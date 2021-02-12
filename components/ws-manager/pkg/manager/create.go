@@ -218,7 +218,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create workspace container: %w", err)
 	}
-	theiaVolume, workspaceVolume, err := m.createWorkspaceVolumes(startContext)
+	workspaceVolume, err := m.createWorkspaceVolumes(startContext)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create workspace volumes: %w", err)
 	}
@@ -311,7 +311,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			},
 			RestartPolicy: corev1.RestartPolicyNever,
 			Volumes: []corev1.Volume{
-				theiaVolume,
 				workspaceVolume,
 			},
 			Tolerations: []corev1.Toleration{
@@ -593,21 +592,11 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	return cleanResult, nil
 }
 
-func (m *Manager) createWorkspaceVolumes(startContext *startWorkspaceContext) (theia corev1.Volume, workspace corev1.Volume, err error) {
+func (m *Manager) createWorkspaceVolumes(startContext *startWorkspaceContext) (workspace corev1.Volume, err error) {
 	// silly protobuf structure design - this needs to be a reference to a string,
 	// so we have to assign it to a variable first to take the address
 	hostPathOrCreate := corev1.HostPathDirectoryOrCreate
-	hostPath := corev1.HostPathDirectory
 
-	theia = corev1.Volume{
-		Name: theiaVolumeName,
-		VolumeSource: corev1.VolumeSource{
-			HostPath: &corev1.HostPathVolumeSource{
-				Path: m.Config.TheiaHostPath,
-				Type: &hostPath,
-			},
-		},
-	}
 	workspace = corev1.Volume{
 		Name: workspaceVolumeName,
 		VolumeSource: corev1.VolumeSource{

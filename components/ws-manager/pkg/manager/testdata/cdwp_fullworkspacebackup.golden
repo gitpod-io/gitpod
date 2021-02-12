@@ -34,15 +34,6 @@
             }
         },
         "spec": {
-            "volumes": [
-                {
-                    "name": "vol-this-theia",
-                    "hostPath": {
-                        "path": "/tmp/theia/theia-xyz",
-                        "type": "Directory"
-                    }
-                }
-            ],
             "containers": [
                 {
                     "name": "workspace",

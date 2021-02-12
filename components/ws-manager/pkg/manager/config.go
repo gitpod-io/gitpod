@@ -59,8 +59,6 @@ type Configuration struct {
 	WorkspacePortURLTemplate string `json:"portUrlTemplate"`
 	// HostPath is the path on the node where workspace data resides (ideally this is an SSD)
 	WorkspaceHostPath string `json:"workspaceHostPath"`
-	// HostPath is the path on the node where the current Theia version is copied to
-	TheiaHostPath string `json:"theiaHostPath"`
 	// HeartbeatInterval is the time in seconds in which Theia sends a heartbeat if the user is active
 	HeartbeatInterval util.Duration `json:"heartbeatInterval"`
 	// Is the URL under which Gitpod is installed (e.g. https://gitpod.io)
@@ -183,7 +181,6 @@ func (c *Configuration) Validate() error {
 	err = validation.ValidateStruct(c,
 		validation.Field(&c.WorkspaceURLTemplate, validation.Required, validWorkspaceURLTemplate),
 		validation.Field(&c.WorkspaceHostPath, validation.Required),
-		validation.Field(&c.TheiaHostPath, validation.Required),
 		validation.Field(&c.HeartbeatInterval, validation.Required),
 		validation.Field(&c.GitpodHostURL, validation.Required, is.URL),
 		validation.Field(&c.ReconnectionInterval, validation.Required),
