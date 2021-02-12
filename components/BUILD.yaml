@@ -15,7 +15,6 @@ packages:
       - components/gitpod-protocol:publish
       - components/ide/code:docker
       - components/image-builder:docker
-      - components/node-daemon:docker
       - components/proxy:docker
       - components/registry-facade:docker
       - components/server:docker

@@ -128,6 +128,22 @@ spec:
           privileged: true
         command: ["/bin/sh", "-c", "cp -f /installer/workspace_default.json /mnt/dst/workspace_default_{{ $gp.version }}.json"]
 {{- end }}
+      - name: sysctl
+        image: {{ template "gitpod.comp.imageFull" $this }}
+        securityContext:
+          privileged: true
+        command:
+          - sh
+          - -c
+          - >
+            (
+              echo "running sysctls" &&
+              sysctl -w net.core.somaxconn=4096 &&
+              sysctl -w "net.ipv4.ip_local_port_range=5000 65000" &&
+              sysctl -w "net.ipv4.tcp_tw_reuse=1" &&
+              sysctl -w fs.inotify.max_user_watches=1000000 &&
+              sysctl -w "kernel.dmesg_restrict=1"
+            ) && echo "done!" || echo "failed!"
       containers:
       - name: ws-daemon
         volumeMounts:

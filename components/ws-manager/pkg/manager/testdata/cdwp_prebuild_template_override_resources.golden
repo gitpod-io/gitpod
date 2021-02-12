@@ -34,13 +34,6 @@
         "spec": {
             "volumes": [
                 {
-                    "name": "vol-this-theia",
-                    "hostPath": {
-                        "path": "/tmp/theia/theia-xyz",
-                        "type": "Directory"
-                    }
-                },
-                {
                     "name": "vol-this-workspace",
                     "hostPath": {
                         "path": "/tmp/workspaces/foobar",

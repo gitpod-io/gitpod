@@ -60,7 +60,6 @@ func forIntegrationTestGetManager(t *testing.T) *Manager {
 	config := Configuration{
 		Namespace:                ns,
 		HeartbeatInterval:        util.Duration(30 * time.Second),
-		TheiaHostPath:            "/tmp",
 		WorkspaceHostPath:        "/tmp",
 		GitpodHostURL:            "gitpod.io",
 		WorkspaceURLTemplate:     "{{ .ID }}-{{ .Prefix }}-{{ .Host }}",

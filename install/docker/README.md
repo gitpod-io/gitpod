@@ -104,7 +104,6 @@ proxy-7fcf5cf84f-8xgmf              1/1     Running     0          3m24s
 messagebus-7c59bc5c48-p5r4l         1/1     Running     0          3m24s
 theia-server-6fd46f8cb7-dz4kh       1/1     Running     0          3m24s
 mysql-65c5b9f8f9-x92b5              1/1     Running     0          3m24s
-node-daemon-gdpwk                   1/1     Running     0          3m23s
 gitpod-helm-installer               0/1     Completed   0          4m12s
 ws-manager-bridge-b64c9f95f-5f8tf   1/1     Running     0          3m24s
 server-7f8454c5c5-pndst             1/1     Running     0          3m24s

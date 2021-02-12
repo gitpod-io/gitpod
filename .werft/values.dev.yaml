@@ -111,10 +111,6 @@ components:
     additionalConfig:
       theiaSupervisorToken: "354c0b368f2b4a93b7b812564e663d23"
 
-  # Use Hosts SSD for perf and to not spam the boot disk
-  nodeDaemon:
-    theiaHostBasePath: /mnt/disks/ssd0
-
   imageBuilder:
     hostDindData: "/mnt/disks/ssd0/builder"
     # configure GCP registry
