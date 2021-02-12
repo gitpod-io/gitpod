@@ -817,7 +817,7 @@ func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceEx
 	}
 
 	return map[session.WorkspaceState][]session.WorkspaceLivecycleHook{
-		session.WorkspaceInitializing: {setupWorkspace, iws.ServeWorkspace(uidmapper)},
+		session.WorkspaceInitializing: {setupWorkspace, iws.ServeWorkspace(uidmapper, api.FSShiftMethod(cfg.UserNamespaces.FSShift))},
 		session.WorkspaceReady:        {setupWorkspace, startLiveBackup},
 		session.WorkspaceDisposing:    {iws.StopServingWorkspace},
 	}

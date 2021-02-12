@@ -26,6 +26,9 @@ export namespace PrepareForUserNSRequest {
 }
 
 export class PrepareForUserNSResponse extends jspb.Message {
+  getFsShift(): FSShiftMethodMap[keyof FSShiftMethodMap];
+  setFsShift(value: FSShiftMethodMap[keyof FSShiftMethodMap]): void;
+
   serializeBinary(): Uint8Array;
   toObject(includeInstance?: boolean): PrepareForUserNSResponse.AsObject;
   static toObject(includeInstance: boolean, msg: PrepareForUserNSResponse): PrepareForUserNSResponse.AsObject;
@@ -38,6 +41,7 @@ export class PrepareForUserNSResponse extends jspb.Message {
 
 export namespace PrepareForUserNSResponse {
   export type AsObject = {
+    fsShift: FSShiftMethodMap[keyof FSShiftMethodMap],
   }
 }
 
@@ -238,4 +242,11 @@ export namespace TeardownResponse {
     success: boolean,
   }
 }
+
+export interface FSShiftMethodMap {
+  SHIFTFS: 0;
+  FUSE: 1;
+}
+
+export const FSShiftMethod: FSShiftMethodMap;
 

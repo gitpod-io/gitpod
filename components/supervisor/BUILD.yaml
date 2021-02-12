@@ -26,6 +26,7 @@ packages:
       - :app
       - components/supervisor/frontend:app
       - components/workspacekit:app
+      - components/workspacekit:fuse-overlayfs
     argdeps:
       - imageRepoBase
     config:

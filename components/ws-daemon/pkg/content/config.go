@@ -5,8 +5,12 @@
 package content
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
+	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
 )
 
@@ -44,6 +48,11 @@ type Config struct {
 		Period util.Duration `json:"period"`
 	} `json:"backup,omitempty"`
 
+	// UserNamespaces configures the behaviour of the user-namespace support
+	UserNamespaces struct {
+		FSShift FSShiftMethod `json:"fsShift"`
+	} `json:"userNamespaces,omitempty"`
+
 	// FullWorkspaceBackup configures the FWB behaviour
 	FullWorkspaceBackup struct {
 		Enabled bool `json:"enabled"`
@@ -60,4 +69,18 @@ type Config struct {
 		// Args are additional arguments to pass to the CI runtime
 		Args []string `json:"args"`
 	} `json:"initializer"`
+}
+
+type FSShiftMethod api.FSShiftMethod
+
+// UnmarshalJSON unmarshals the lowercase shift method string as defined in
+// api.FSShiftMethod_value to api.FSShiftMethod
+func (m *FSShiftMethod) UnmarshalJSON(data []byte) error {
+	input := strings.ToUpper(strings.Trim(string(data), "\""))
+	v, ok := api.FSShiftMethod_value[input]
+	if !ok {
+		return fmt.Errorf("invalid shift method: %v", input)
+	}
+	*m = FSShiftMethod(v)
+	return nil
 }

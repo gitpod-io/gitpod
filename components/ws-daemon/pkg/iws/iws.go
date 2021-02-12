@@ -71,7 +71,7 @@ var (
 )
 
 // ServeWorkspace establishes the IWS server for a workspace
-func ServeWorkspace(uidmapper *Uidmapper) func(ctx context.Context, ws *session.Workspace) error {
+func ServeWorkspace(uidmapper *Uidmapper, fsshift api.FSShiftMethod) func(ctx context.Context, ws *session.Workspace) error {
 	return func(ctx context.Context, ws *session.Workspace) (err error) {
 		if !ws.FullWorkspaceBackup && !ws.UserNamespaced {
 			return nil
@@ -84,6 +84,7 @@ func ServeWorkspace(uidmapper *Uidmapper) func(ctx context.Context, ws *session.
 		helper := &InWorkspaceServiceServer{
 			Uidmapper: uidmapper,
 			Session:   ws,
+			FSShift:   fsshift,
 		}
 		err = helper.Start()
 		if err != nil {
@@ -118,6 +119,7 @@ func StopServingWorkspace(ctx context.Context, ws *session.Workspace) error {
 type InWorkspaceServiceServer struct {
 	Uidmapper *Uidmapper
 	Session   *session.Workspace
+	FSShift   api.FSShiftMethod
 
 	srv  *grpc.Server
 	sckt io.Closer
@@ -203,6 +205,26 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		return nil, status.Errorf(codes.Internal, "cannot find workspace rootfs")
 	}
 
+	// user namespace support for FUSE landed in Linux 4.18:
+	//   - http://lkml.iu.edu/hypermail/linux/kernel/1806.0/04385.html
+	// Development leading up to this point:
+	//   - https://lists.linuxcontainers.org/pipermail/lxc-devel/2014-July/009797.html
+	//   - https://lists.linuxcontainers.org/pipermail/lxc-users/2014-October/007948.html
+	err = nsinsider(int(containerPID), func(c *exec.Cmd) {
+		c.Args = []string{"mknod-fuse"}
+	})
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("PrepareForUserNS: cannot mknod fuse")
+		return nil, status.Errorf(codes.Internal, "cannot prepare FUSE")
+	}
+
+	if wbs.FSShift == api.FSShiftMethod_FUSE {
+		// fuse-overlayfs requires no special treatment from ws-daemon
+		return &api.PrepareForUserNSResponse{
+			FsShift: api.FSShiftMethod_FUSE,
+		}, nil
+	}
+
 	// We cannot use the nsenter syscall here because mount namespaces affect the whole process, not just the current thread.
 	// That's why we resort to exec'ing "nsenter ... mount ...".
 	mntout, err := exec.Command("nsenter", "-t", fmt.Sprint(containerPID), "-m", "--", "mount", "--make-shared", "/").CombinedOutput()
@@ -219,7 +241,9 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		return nil, status.Errorf(codes.Internal, "cannot mount shiftfs mark")
 	}
 
-	return &api.PrepareForUserNSResponse{}, nil
+	return &api.PrepareForUserNSResponse{
+		FsShift: api.FSShiftMethod_SHIFTFS,
+	}, nil
 }
 
 // MountProc mounts a proc filesystem
