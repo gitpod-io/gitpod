@@ -12,6 +12,7 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { ShowWorkspaceBuildLogs, WorkspaceBuildLog } from './show-workspace-build-logs';
 import { WorkspaceLogView } from './workspace-log-view';
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
+import { contextUrlToUrl } from '@gitpod/gitpod-protocol/lib/util/context-url';
 import { CubeFrame } from './cube-frame';
 import { HeadlessLogEvent } from '@gitpod/gitpod-protocol/lib/headless-workspace-log';
 import { ProductivityTips } from './productivity-tips';
@@ -273,7 +274,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         }
         if (workspaceInstance.status.phase === 'stopped') {
             if (this.isHeadless && this.workspace) {
-                const contextUrl = this.workspace.contextURL.replace('prebuild/', '');
+                const contextUrl = this.workspace.contextURL.replace('prebuild/', '')!;
                 this.redirectTo(new GitpodHostUrl(window.location.toString()).withContext(contextUrl).toString());
             }
         }
@@ -443,8 +444,8 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
 
                 const urls = new GitpodHostUrl(window.location.toString());
                 const startUrl = urls.asStart(this.props.workspaceId).toString();
-                const ctxURL = new URL(this.state.workspace?.contextURL || urls.asDashboard().toString())
-                const host = "Back to " + ctxURL.host;
+                const ctxUrl = this.state.workspace?.contextURL ? contextUrlToUrl(this.state.workspace!.contextURL)! : new URL(urls.asDashboard().toString());
+                const host = "Back to " + ctxUrl.host;
                 message = <React.Fragment>
                     <div className='message'>
                         <div style={{ display: '' }}>
