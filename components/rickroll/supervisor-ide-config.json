@@ -1,0 +1,9 @@
+{
+  "entrypoint": "/ide/startup.sh",
+  "readinessProbe": {
+    "type": "http",
+    "http": {
+      "path": "/"
+    }
+  }
+}
