@@ -24,6 +24,7 @@ export function load({ gitpodService }: {
     gitpodService: ReturnType<typeof createGitpodService>
 }): Promise<{
     frame: HTMLIFrameElement
+    setState: (state: object) => void
 }> {
     return new Promise(resolve => {
         const frame = document.createElement('iframe');
@@ -36,10 +37,14 @@ export function load({ gitpodService }: {
         gitpodService.registerClient(factory.createProxy());
         const reader = new WindowMessageReader('gitpodServer', serverOrigin);
         frame.onload = () => {
-            const writer = new WindowMessageWriter('gitpodServer', frame.contentWindow!, serverOrigin);
+            const frameWindow = frame.contentWindow!;
+            const writer = new WindowMessageWriter('gitpodServer', frameWindow, serverOrigin);
             const connection = createMessageConnection(reader, writer, new ConsoleLogger())
             factory.listen(connection);
-            resolve({ frame });
+            const setState = (state: object) => {
+                frameWindow.postMessage({ type: 'setState', state }, serverOrigin);
+            }
+            resolve({ frame, setState });
         };
     });
 }

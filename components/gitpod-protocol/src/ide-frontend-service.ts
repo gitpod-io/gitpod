@@ -11,6 +11,10 @@ export type IDEFrontendState = 'init' | 'ready' | 'terminated';
 
 export interface IDEFrontendService {
     readonly state: IDEFrontendState;
+    /**
+     * A cause of the ide frontend application failure when state is terminated.
+     */
+    readonly failureCause?: Error;
     readonly onDidChange: Event<void>;
     /**
      * Starts the ide frontend application.

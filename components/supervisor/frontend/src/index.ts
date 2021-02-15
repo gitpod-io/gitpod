@@ -110,9 +110,19 @@ const loadingIDE = new Promise(resolve => window.addEventListener('DOMContentLoa
         current = newCurrent;
     }
 
+    const updateLoadingState = () => {
+        loading.setState({
+            ideFrontendFailureCause: ideService.failureCause?.message
+        });
+    }
+
     updateCurrentFrame();
+    updateLoadingState();
     gitpodServiceClient.onDidChangeInfo(() => updateCurrentFrame());
-    ideService.onDidChange(() => updateCurrentFrame());
+    ideService.onDidChange(() => {
+        updateLoadingState();
+        updateCurrentFrame();
+    });
     //#endregion
 
     //#region heart-beat
