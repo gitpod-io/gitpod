@@ -275,7 +275,7 @@ registry.{{ .Values.hostname }}
 {{- $ := .root -}}
 {{- $gp := .gp -}}
 {{- $comp := .comp -}}
-{{- $comp.version | default $gp.version -}}
+{{- required "please specify the Gitpod version to use in your values.yaml or with the helm flag --set version=x.x.x" ($comp.version | default $gp.version) -}}
 {{- end -}}
 
 {{- define "gitpod.comp.imageRepo" -}}
@@ -329,8 +329,8 @@ storage:
   blobQuota: {{ .remoteStorage.blobQuota | default 0 }}
   minio:
     endpoint: {{ $remoteStorageMinio.endpoint | default (printf "minio.%s" $.Values.hostname) }}
-    accessKey: {{ required "minio access key is required, please add a value to your values.yaml" ($remoteStorageMinio.accessKey | default $minio.accessKey) }}
-    secretKey: {{ required "minio secret key is required, please add a value to your values.yaml" ($remoteStorageMinio.secretKey | default $minio.secretKey) }}
+    accessKey: {{ required "minio access key is required, please add a value to your values.yaml or with the helm flag --set minio.accessKey=xxxxx" ($remoteStorageMinio.accessKey | default $minio.accessKey) }}
+    secretKey: {{ required "minio secret key is required, please add a value to your values.yaml or with the helm flag --set minio.secretKey=xxxxx" ($remoteStorageMinio.secretKey | default $minio.secretKey) }}
     secure: {{ $remoteStorageMinio.secure | default ($minio.enabled | default false) }}
     region: {{ $remoteStorageMinio.region | default "local" }}
     parallelUpload: {{ $remoteStorageMinio.parallelUpload | default "" }}
