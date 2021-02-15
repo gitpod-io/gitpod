@@ -7,9 +7,6 @@ package cmd
 import (
 	"net"
 	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	grpc_gitpod "github.com/gitpod-io/gitpod/common-go/grpc"
@@ -28,6 +25,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
+	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
 )
 
 // serveCmd represents the serve command
@@ -36,6 +34,8 @@ var runCmd = &cobra.Command{
 	Short: "Starts the workspace monitor",
 
 	Run: func(cmd *cobra.Command, args []string) {
+		ctx := signals.SetupSignalHandler()
+
 		cfg := getConfig()
 
 		err := cfg.Manager.Validate()
@@ -149,10 +149,8 @@ var runCmd = &cobra.Command{
 		}
 
 		// run until we're told to stop
-		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 		log.Info("🦸  wsman is up and running. Stop with SIGINT or CTRL+C")
-		<-sigChan
+		<-ctx.Done()
 		log.Info("Received SIGINT - shutting down")
 	},
 }
