@@ -17,11 +17,12 @@ import { HashRouter } from "react-router-dom";
 import { Link, Typography } from "@material-ui/core";
 import { UserView, AdditionalUserPropertiesRenderer } from "./components/admin/user-view";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
-import { WorkspaceView } from "./components/admin/workspace-view";
+import { WorkspaceView, AdditionalWorkspacePropertiesRenderer } from "./components/admin/workspace-view";
 import { renderEntrypoint } from "../../src/entrypoint";
 
 export interface AdminIndexProps {
     renderAdditionalUserProperties?: AdditionalUserPropertiesRenderer;
+    renderAdditionalWorkspaceProperties?: AdditionalWorkspacePropertiesRenderer;
 }
 
 export const AdminIndex: React.SFC<AdminIndexProps | undefined> = (_props: AdminIndexProps) => {
@@ -48,7 +49,7 @@ export const AdminIndex: React.SFC<AdminIndexProps | undefined> = (_props: Admin
                 <Route path="/users"><UsersAdmin service={service} /></Route>
                 <Route path="/user/:id" render={rp => <UserView userID={rp.match.params.id} service={service} renderAdditionalUserProperties={props.renderAdditionalUserProperties}/>} />
                 <Route path="/workspaces"><WorkspacesAdmin service={service} /></Route>
-                <Route path="/workspace/:id" render={rp => <WorkspaceView workspaceID={rp.match.params.id} service={service} />} />
+                <Route path="/workspace/:id" render={rp => <WorkspaceView workspaceID={rp.match.params.id} service={service} renderAdditionalWorkspaceProperties={props.renderAdditionalWorkspaceProperties} />} />
                 <Route path="/"><UsersAdmin service={service} /></Route>
             </Switch>
         </HashRouter>

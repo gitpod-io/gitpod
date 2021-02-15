@@ -20,7 +20,10 @@ import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 export interface WorkspaceViewProps {
     service: GitpodService;
     workspaceID: string;
+
+    renderAdditionalWorkspaceProperties?: AdditionalWorkspacePropertiesRenderer;
 }
+export type AdditionalWorkspacePropertiesRenderer = (service: GitpodService, workspace: WorkspaceAndInstance | undefined) => JSX.Element;
 
 interface WorkspaceViewState {
     workspace?: WorkspaceAndInstance;
@@ -110,6 +113,9 @@ export class WorkspaceView extends React.Component<WorkspaceViewProps, Workspace
                         <TableCell>{!!fields[f].render ? fields[f].render(workspace) : workspace[f]}</TableCell>
                         <TableCell style={{textAlign: "right"}}>{fields[f].actions && fields[f].actions(workspace)}</TableCell>
                     </TableRow>) }
+                    {
+                      this.props.renderAdditionalWorkspaceProperties && this.props.renderAdditionalWorkspaceProperties(this.props.service, workspace)
+                    }
                 </Table>
             }
         </React.Fragment>
