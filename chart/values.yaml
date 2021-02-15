@@ -1,7 +1,7 @@
 # Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
-version: "0.7.0"
+version: # version of Gitpod will be set by the CI job on publishing to https://charts.gitpod.io/
 
 hostname: localhost
 # ingressModes determines how Gitpod makes workspaces and their ports available. Possible values are:
