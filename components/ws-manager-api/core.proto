@@ -368,6 +368,8 @@ message WorkspaceMetadata {
 message WorkspaceRuntimeInfo {
     // node_name is the name of the node the workspace runs on
     string node_name = 1;
+    // pod_name is the name of the pod the workspace runs in
+    string pod_name = 2;
 }
 
 // WorkspaceAuthentication contains authentication information used by ws-proxy to allow/deny access to

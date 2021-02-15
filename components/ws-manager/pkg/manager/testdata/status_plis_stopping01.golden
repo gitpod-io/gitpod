@@ -18,7 +18,8 @@
             "deployed": 1
         },
         "runtime": {
-            "node_name": "minikube"
+            "node_name": "minikube",
+            "pod_name": "ws-foobaz"
         },
         "auth": {}
     }

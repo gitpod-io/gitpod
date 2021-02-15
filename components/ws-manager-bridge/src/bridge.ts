@@ -121,7 +121,8 @@ export class WorkspaceManagerBridge implements Disposable {
             instance.status.conditions.timeout = status.conditions.timeout;
             instance.status.conditions.firstUserActivity = mapFirstUserActivity(rawStatus.getConditions()!.getFirstUserActivity());
             instance.status.message = status.message;
-            instance.status.nodeName = instance.status.nodeName || (status.runtime || {}).nodeName;
+            instance.status.nodeName = instance.status.nodeName || status.runtime?.nodeName;
+            instance.status.podName = instance.status.podName || status.runtime?.podName;
             instance.status.ownerToken = status.auth!.ownerToken;
 
             if (status.repo) {

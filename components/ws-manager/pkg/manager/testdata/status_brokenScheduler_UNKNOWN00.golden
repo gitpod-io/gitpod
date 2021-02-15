@@ -18,7 +18,8 @@
             "deployed": 1
         },
         "runtime": {
-            "node_name": "gke-gitpod-dev-default-pool-b25aa276-3tl2"
+            "node_name": "gke-gitpod-dev-default-pool-b25aa276-3tl2",
+            "pod_name": "ws-fb291b69-7bbc-4865-a432-33f558f20091"
         },
         "auth": {}
     }

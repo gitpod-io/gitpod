@@ -25,7 +25,8 @@
         },
         "message": "workspace initializer is running",
         "runtime": {
-            "node_name": "minikube"
+            "node_name": "minikube",
+            "pod_name": "ws-foobas"
         },
         "auth": {}
     }

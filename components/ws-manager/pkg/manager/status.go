@@ -360,6 +360,7 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 			},
 			Runtime: &api.WorkspaceRuntimeInfo{
 				NodeName: wso.Pod.Spec.NodeName,
+				PodName:  wso.Pod.Name,
 			},
 			Auth: &api.WorkspaceAuthentication{
 				Admission:  admission,

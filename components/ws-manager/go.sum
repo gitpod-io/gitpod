@@ -120,6 +120,10 @@ github.com/evanphx/json-patch v4.9.0+incompatible/go.mod h1:50XU6AFN0ol/bzJsmQLi
 github.com/fatih/camelcase v1.0.0/go.mod h1:yN2Sb0lFhZJUdVvtELVWefmrXpuZESvPmqwoZc+/fpc=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fatih/color v1.9.0/go.mod h1:eQcE1qtQxscV5RaZvpXrrb8Drkc3/DdQ+uUYCNjL+zU=
+<<<<<<< HEAD
+=======
+github.com/fatih/gomodifytags v1.12.0/go.mod h1:TbUyEjH1Zo0GkJd2Q52oVYqYcJ0eGNqG8bsiOb75P9c=
+>>>>>>> 546870a ([protocol] add instance.status.podName)
 github.com/fatih/gomodifytags v1.13.0/go.mod h1:TbUyEjH1Zo0GkJd2Q52oVYqYcJ0eGNqG8bsiOb75P9c=
 github.com/fatih/structtag v1.2.0/go.mod h1:mBJUNpUnHmRKrKlQQlmCrh5PuhftFbNv8Ys4/aAZl94=
 github.com/form3tech-oss/jwt-go v3.2.2+incompatible/go.mod h1:pbq4aXjuKjdthFRnoDwaVPLA+WlJuPGy+QneDUgJi2k=
