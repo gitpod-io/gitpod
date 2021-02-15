@@ -32,6 +32,7 @@ import { GitpodTableDescriptionProvider, TableDescriptionProvider } from './tabl
 import { PeriodicDbDeleter } from './periodic-deleter';
 import { TermsAcceptanceDB } from './terms-acceptance-db';
 import { TermsAcceptanceDBImpl } from './typeorm/terms-acceptance-db-impl';
+import { CodeSyncResourceDB } from './typeorm/code-sync-resource-db';
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
@@ -82,4 +83,6 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
     bind(GitpodTableDescriptionProvider).toSelf().inSingletonScope();
     bind(TableDescriptionProvider).toService(GitpodTableDescriptionProvider);
     bind(PeriodicDbDeleter).toSelf().inSingletonScope();
+
+    bind(CodeSyncResourceDB).toSelf().inSingletonScope();
 });

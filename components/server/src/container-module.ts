@@ -71,6 +71,7 @@ import { TosCookie } from './user/tos-cookie';
 import { SelectAccountCookie } from './user/select-account-cookie';
 import { BlobServiceClient } from '@gitpod/content-service/lib/blobs_grpc_pb';
 import * as grpc from "grpc";
+import { CodeSyncService } from './code-sync/code-sync-service';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Env).toSelf().inSingletonScope();
@@ -204,4 +205,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     const blobServiceClient = new BlobServiceClient("content-service:8080", grpc.credentials.createInsecure())
     bind(BlobServiceClient).toConstantValue(blobServiceClient);
+
+    bind(CodeSyncService).toSelf().inSingletonScope();
 });
