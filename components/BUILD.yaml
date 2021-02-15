@@ -18,6 +18,7 @@ packages:
       - components/node-daemon:docker
       - components/proxy:docker
       - components/registry-facade:docker
+      - components/rickroll:docker
       - components/server:docker
       - components/service-waiter:docker
       - components/supervisor-api/typescript-grpc:publish
