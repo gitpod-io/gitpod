@@ -878,3 +878,39 @@ func (p *PresignedGCPStorage) SignUpload(ctx context.Context, bucket, object str
 		URL: url,
 	}, nil
 }
+
+func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, query *DeleteObjectQuery) (err error) {
+	client, err := newGCPClient(ctx, p.config)
+	defer client.Close()
+
+	if query.Name != "" {
+		err = client.Bucket(bucket).Object(query.Name).Delete(ctx)
+		if err != nil {
+			log.WithField("bucket", bucket).WithField("object", query.Name).Error(err)
+			return err
+		}
+		return nil
+	}
+	if query.Prefix != "" {
+		prefix := query.Prefix
+		if !strings.HasSuffix(prefix, "/") {
+			prefix = prefix + "/"
+		}
+
+		b := client.Bucket(bucket)
+		it := b.Objects(ctx, &storage.Query{
+			Prefix: prefix,
+		})
+		for {
+			attrs, err := it.Next()
+			if err == iterator.Done {
+				break
+			}
+			err = b.Object(attrs.Name).Delete(ctx)
+			if err != nil {
+				log.WithField("bucket", bucket).WithField("object", attrs.Name).Error(err)
+			}
+		}
+	}
+	return err
+}

@@ -12,8 +12,11 @@ service BlobService {
   // UploadUrl provides a URL to which clients can upload the content via HTTP PUT.
   rpc UploadUrl(UploadUrlRequest) returns (UploadUrlResponse) {}
 
-  // DownloadUrl provides a URL from which clients cat download the content via HTTP GET.
+  // DownloadUrl provides a URL from which clients can download the content via HTTP GET.
   rpc DownloadUrl(DownloadUrlRequest) returns (DownloadUrlResponse) {}
+
+  // Delete deletes the uploaded content.
+  rpc Delete(DeleteRequest) returns (DeleteResponse) {}
 }
 
 message UploadUrlRequest {
@@ -33,4 +36,15 @@ message DownloadUrlRequest {
 
 message DownloadUrlResponse {
   string url = 1;
+}
+
+message DeleteRequest {
+  string owner_id = 1;
+  oneof name {
+    string exact = 2;
+    string prefix = 3;
+  }
+}
+
+message DeleteResponse {
 }

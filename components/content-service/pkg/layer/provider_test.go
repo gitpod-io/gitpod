@@ -235,7 +235,7 @@ func (s *testStorage) SignUpload(ctx context.Context, bucket, obj string) (info 
 	return nil, nil
 }
 
-func (s *testStorage) DeleteObject(ctx context.Context, bucket, obj string) (err error) {
+func (s *testStorage) DeleteObject(ctx context.Context, bucket string, query *storage.DeleteObjectQuery) error {
 	return nil
 }
 

@@ -81,6 +81,11 @@ func (s *PresignedNoopStorage) SignUpload(ctx context.Context, bucket, obj strin
 	return nil, ErrNotFound
 }
 
+// DeleteObject deletes objects in the given bucket specified by the given query
+func (s *PresignedNoopStorage) DeleteObject(ctx context.Context, bucket string, query *DeleteObjectQuery) error {
+	return nil
+}
+
 // Bucket returns an empty string
 func (*PresignedNoopStorage) Bucket(string) string {
 	return ""

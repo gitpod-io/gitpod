@@ -106,3 +106,39 @@ func (cs *ContentService) DownloadUrl(ctx context.Context, req *api.DownloadUrlR
 		Url: info.URL,
 	}, nil
 }
+
+// Delete deletes the uploaded content
+func (cs *ContentService) Delete(ctx context.Context, req *api.DeleteRequest) (resp *api.DeleteResponse, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "Delete")
+	span.SetTag("user", req.OwnerId)
+	span.SetTag("name", req.Name)
+	defer tracing.FinishSpan(span, &err)
+
+	var query *storage.DeleteObjectQuery
+	exact := req.GetExact()
+	prefix := req.GetPrefix()
+	if exact != "" {
+		exact, err = cs.s.BlobObject(exact)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		query = &storage.DeleteObjectQuery{Name: exact}
+	} else if prefix != "" {
+		prefix, err = cs.s.BlobObject(prefix)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		query = &storage.DeleteObjectQuery{Prefix: prefix}
+	} else {
+		return nil, status.Error(codes.InvalidArgument, "Name arg is missing")
+	}
+
+	bucket := cs.s.Bucket(req.OwnerId)
+
+	err = cs.s.DeleteObject(ctx, bucket, query)
+	if err != nil {
+		return nil, err
+	}
+	resp = &api.DeleteResponse{}
+	return resp, nil
+}
