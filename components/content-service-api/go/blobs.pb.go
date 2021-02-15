@@ -200,11 +200,132 @@ func (m *DownloadUrlResponse) GetUrl() string {
 	return ""
 }
 
+type DeleteRequest struct {
+	OwnerId string `protobuf:"bytes,1,opt,name=owner_id,json=ownerId,proto3" json:"owner_id,omitempty"`
+	// Types that are valid to be assigned to Name:
+	//	*DeleteRequest_Exact
+	//	*DeleteRequest_Prefix
+	Name                 isDeleteRequest_Name `protobuf_oneof:"name"`
+	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+	XXX_unrecognized     []byte               `json:"-"`
+	XXX_sizecache        int32                `json:"-"`
+}
+
+func (m *DeleteRequest) Reset()         { *m = DeleteRequest{} }
+func (m *DeleteRequest) String() string { return proto.CompactTextString(m) }
+func (*DeleteRequest) ProtoMessage()    {}
+func (*DeleteRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_674b571f3bc1c185, []int{4}
+}
+
+func (m *DeleteRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DeleteRequest.Unmarshal(m, b)
+}
+func (m *DeleteRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DeleteRequest.Marshal(b, m, deterministic)
+}
+func (m *DeleteRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DeleteRequest.Merge(m, src)
+}
+func (m *DeleteRequest) XXX_Size() int {
+	return xxx_messageInfo_DeleteRequest.Size(m)
+}
+func (m *DeleteRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_DeleteRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DeleteRequest proto.InternalMessageInfo
+
+func (m *DeleteRequest) GetOwnerId() string {
+	if m != nil {
+		return m.OwnerId
+	}
+	return ""
+}
+
+type isDeleteRequest_Name interface {
+	isDeleteRequest_Name()
+}
+
+type DeleteRequest_Exact struct {
+	Exact string `protobuf:"bytes,2,opt,name=exact,proto3,oneof"`
+}
+
+type DeleteRequest_Prefix struct {
+	Prefix string `protobuf:"bytes,3,opt,name=prefix,proto3,oneof"`
+}
+
+func (*DeleteRequest_Exact) isDeleteRequest_Name() {}
+
+func (*DeleteRequest_Prefix) isDeleteRequest_Name() {}
+
+func (m *DeleteRequest) GetName() isDeleteRequest_Name {
+	if m != nil {
+		return m.Name
+	}
+	return nil
+}
+
+func (m *DeleteRequest) GetExact() string {
+	if x, ok := m.GetName().(*DeleteRequest_Exact); ok {
+		return x.Exact
+	}
+	return ""
+}
+
+func (m *DeleteRequest) GetPrefix() string {
+	if x, ok := m.GetName().(*DeleteRequest_Prefix); ok {
+		return x.Prefix
+	}
+	return ""
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*DeleteRequest) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*DeleteRequest_Exact)(nil),
+		(*DeleteRequest_Prefix)(nil),
+	}
+}
+
+type DeleteResponse struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *DeleteResponse) Reset()         { *m = DeleteResponse{} }
+func (m *DeleteResponse) String() string { return proto.CompactTextString(m) }
+func (*DeleteResponse) ProtoMessage()    {}
+func (*DeleteResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_674b571f3bc1c185, []int{5}
+}
+
+func (m *DeleteResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_DeleteResponse.Unmarshal(m, b)
+}
+func (m *DeleteResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_DeleteResponse.Marshal(b, m, deterministic)
+}
+func (m *DeleteResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DeleteResponse.Merge(m, src)
+}
+func (m *DeleteResponse) XXX_Size() int {
+	return xxx_messageInfo_DeleteResponse.Size(m)
+}
+func (m *DeleteResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_DeleteResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DeleteResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*UploadUrlRequest)(nil), "contentservice.UploadUrlRequest")
 	proto.RegisterType((*UploadUrlResponse)(nil), "contentservice.UploadUrlResponse")
 	proto.RegisterType((*DownloadUrlRequest)(nil), "contentservice.DownloadUrlRequest")
 	proto.RegisterType((*DownloadUrlResponse)(nil), "contentservice.DownloadUrlResponse")
+	proto.RegisterType((*DeleteRequest)(nil), "contentservice.DeleteRequest")
+	proto.RegisterType((*DeleteResponse)(nil), "contentservice.DeleteResponse")
 }
 
 func init() {
@@ -212,23 +333,27 @@ func init() {
 }
 
 var fileDescriptor_674b571f3bc1c185 = []byte{
-	// 246 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4e, 0xca, 0xc9, 0x4f,
-	0x2a, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x4b, 0xce, 0xcf, 0x2b, 0x49, 0xcd, 0x2b,
-	0x29, 0x4e, 0x2d, 0x2a, 0xcb, 0x4c, 0x4e, 0x55, 0x72, 0xe4, 0x12, 0x08, 0x2d, 0xc8, 0xc9, 0x4f,
-	0x4c, 0x09, 0x2d, 0xca, 0x09, 0x4a, 0x2d, 0x2c, 0x4d, 0x2d, 0x2e, 0x11, 0x92, 0xe4, 0xe2, 0xc8,
-	0x2f, 0xcf, 0x4b, 0x2d, 0x8a, 0xcf, 0x4c, 0x91, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x0c, 0x62, 0x07,
-	0xf3, 0x3d, 0x53, 0x84, 0x84, 0xb8, 0x58, 0xf2, 0x12, 0x73, 0x53, 0x25, 0x98, 0xc0, 0xc2, 0x60,
-	0xb6, 0x92, 0x2a, 0x97, 0x20, 0x92, 0x11, 0xc5, 0x05, 0xf9, 0x79, 0xc5, 0xa9, 0x42, 0x02, 0x5c,
-	0xcc, 0xa5, 0x45, 0x39, 0x50, 0xed, 0x20, 0xa6, 0x92, 0x33, 0x97, 0x90, 0x4b, 0x7e, 0x79, 0x1e,
-	0x65, 0x76, 0xa9, 0x73, 0x09, 0xa3, 0x18, 0x82, 0xcb, 0x36, 0xa3, 0xdd, 0x8c, 0x5c, 0xdc, 0x4e,
-	0x39, 0xf9, 0x49, 0xc1, 0x10, 0x7f, 0x0a, 0x05, 0x71, 0x71, 0xc2, 0x1d, 0x29, 0xa4, 0xa0, 0x87,
-	0x1a, 0x0a, 0x7a, 0xe8, 0x41, 0x20, 0xa5, 0x88, 0x47, 0x05, 0xc4, 0x4e, 0x25, 0x06, 0xa1, 0x08,
-	0x2e, 0x6e, 0x24, 0xc7, 0x08, 0x29, 0xa1, 0xeb, 0xc1, 0xf4, 0xae, 0x94, 0x32, 0x5e, 0x35, 0x30,
-	0x93, 0x9d, 0x0c, 0xa3, 0xf4, 0xd3, 0x33, 0x4b, 0x32, 0x4a, 0x93, 0xf4, 0x92, 0xf3, 0x73, 0x41,
-	0xcc, 0x82, 0xfc, 0x14, 0xdd, 0xcc, 0x7c, 0x28, 0x4b, 0x1f, 0x6a, 0x86, 0x2e, 0xd4, 0x10, 0xfd,
-	0xc4, 0x82, 0xcc, 0x24, 0x36, 0x70, 0xfc, 0x1a, 0x03, 0x02, 0x00, 0x00, 0xff, 0xff, 0xd7, 0x00,
-	0x80, 0x82, 0xee, 0x01, 0x00, 0x00,
+	// 313 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x92, 0xdd, 0x4a, 0xfb, 0x40,
+	0x10, 0xc5, 0xfb, 0xf1, 0xff, 0x47, 0x3b, 0xc5, 0x52, 0x47, 0x90, 0x58, 0x50, 0x6a, 0x44, 0xf4,
+	0xa6, 0x29, 0xea, 0x13, 0x58, 0x7b, 0x61, 0x6f, 0x23, 0x05, 0xf1, 0x46, 0xf2, 0x31, 0x6a, 0x20,
+	0xdd, 0x59, 0x37, 0x5b, 0xdb, 0x27, 0xf0, 0xb9, 0xa5, 0xd9, 0x6d, 0xe9, 0x07, 0x2d, 0x82, 0x77,
+	0x67, 0xb2, 0x7b, 0xce, 0x99, 0xfc, 0x58, 0xa8, 0x47, 0x19, 0x47, 0xb9, 0x2f, 0x15, 0x6b, 0xc6,
+	0x46, 0xcc, 0x42, 0x93, 0xd0, 0x39, 0xa9, 0xaf, 0x34, 0x26, 0xef, 0x1e, 0x9a, 0x43, 0x99, 0x71,
+	0x98, 0x0c, 0x55, 0x16, 0xd0, 0xe7, 0x98, 0x72, 0x8d, 0x27, 0xb0, 0xcf, 0x13, 0x41, 0xea, 0x35,
+	0x4d, 0xdc, 0x72, 0xbb, 0x7c, 0x5d, 0x0b, 0xf6, 0x8a, 0x79, 0x90, 0x20, 0xc2, 0x3f, 0x11, 0x8e,
+	0xc8, 0xad, 0x14, 0x9f, 0x0b, 0xed, 0x5d, 0xc2, 0xe1, 0x52, 0x44, 0x2e, 0x59, 0xe4, 0x84, 0x4d,
+	0xa8, 0x8e, 0x55, 0x66, 0xed, 0x33, 0xe9, 0x3d, 0x00, 0xf6, 0x79, 0x22, 0xfe, 0xd6, 0x75, 0x05,
+	0x47, 0x2b, 0x21, 0x5b, 0xdb, 0x12, 0x38, 0xe8, 0x53, 0x46, 0x9a, 0x7e, 0x51, 0x74, 0x0c, 0xff,
+	0x69, 0x1a, 0xc6, 0xda, 0x34, 0x3d, 0x96, 0x02, 0x33, 0xa2, 0x0b, 0x8e, 0x54, 0xf4, 0x96, 0x4e,
+	0xdd, 0xaa, 0x3d, 0xb0, 0x73, 0xcf, 0x31, 0xab, 0x79, 0x4d, 0x68, 0xcc, 0x5b, 0xcc, 0x26, 0xb7,
+	0xdf, 0x15, 0xa8, 0xf7, 0x32, 0x8e, 0x9e, 0x0c, 0x5f, 0x0c, 0xa0, 0xb6, 0x80, 0x83, 0x6d, 0x7f,
+	0x95, 0xbe, 0xbf, 0x8e, 0xbe, 0x75, 0xbe, 0xe3, 0x86, 0x69, 0xf0, 0x4a, 0xf8, 0x0c, 0xf5, 0x25,
+	0x08, 0xe8, 0xad, 0x7b, 0x36, 0x31, 0xb7, 0x2e, 0x76, 0xde, 0x59, 0x24, 0x0f, 0xc0, 0x31, 0xff,
+	0x83, 0xa7, 0x1b, 0x86, 0x65, 0x9a, 0xad, 0xb3, 0x6d, 0xc7, 0xf3, 0xa8, 0xde, 0xcd, 0x4b, 0xf7,
+	0x3d, 0xd5, 0x1f, 0xe3, 0xc8, 0x8f, 0x79, 0x34, 0x93, 0x92, 0x93, 0x4e, 0xca, 0x56, 0x75, 0xad,
+	0xbd, 0x63, 0xfd, 0xdd, 0x50, 0xa6, 0x91, 0x53, 0x3c, 0xd1, 0xbb, 0x9f, 0x00, 0x00, 0x00, 0xff,
+	0xff, 0x92, 0x4c, 0xae, 0x2d, 0xb1, 0x02, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -245,8 +370,10 @@ const _ = grpc.SupportPackageIsVersion6
 type BlobServiceClient interface {
 	// UploadUrl provides a URL to which clients can upload the content via HTTP PUT.
 	UploadUrl(ctx context.Context, in *UploadUrlRequest, opts ...grpc.CallOption) (*UploadUrlResponse, error)
-	// DownloadUrl provides a URL from which clients cat download the content via HTTP GET.
+	// DownloadUrl provides a URL from which clients can download the content via HTTP GET.
 	DownloadUrl(ctx context.Context, in *DownloadUrlRequest, opts ...grpc.CallOption) (*DownloadUrlResponse, error)
+	// Delete deletes the uploaded content.
+	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
 }
 
 type blobServiceClient struct {
@@ -275,12 +402,23 @@ func (c *blobServiceClient) DownloadUrl(ctx context.Context, in *DownloadUrlRequ
 	return out, nil
 }
 
+func (c *blobServiceClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
+	out := new(DeleteResponse)
+	err := c.cc.Invoke(ctx, "/contentservice.BlobService/Delete", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BlobServiceServer is the server API for BlobService service.
 type BlobServiceServer interface {
 	// UploadUrl provides a URL to which clients can upload the content via HTTP PUT.
 	UploadUrl(context.Context, *UploadUrlRequest) (*UploadUrlResponse, error)
-	// DownloadUrl provides a URL from which clients cat download the content via HTTP GET.
+	// DownloadUrl provides a URL from which clients can download the content via HTTP GET.
 	DownloadUrl(context.Context, *DownloadUrlRequest) (*DownloadUrlResponse, error)
+	// Delete deletes the uploaded content.
+	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
 }
 
 // UnimplementedBlobServiceServer can be embedded to have forward compatible implementations.
@@ -292,6 +430,9 @@ func (*UnimplementedBlobServiceServer) UploadUrl(ctx context.Context, req *Uploa
 }
 func (*UnimplementedBlobServiceServer) DownloadUrl(ctx context.Context, req *DownloadUrlRequest) (*DownloadUrlResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DownloadUrl not implemented")
+}
+func (*UnimplementedBlobServiceServer) Delete(ctx context.Context, req *DeleteRequest) (*DeleteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 
 func RegisterBlobServiceServer(s *grpc.Server, srv BlobServiceServer) {
@@ -334,6 +475,24 @@ func _BlobService_DownloadUrl_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BlobService_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BlobServiceServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/contentservice.BlobService/Delete",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BlobServiceServer).Delete(ctx, req.(*DeleteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _BlobService_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "contentservice.BlobService",
 	HandlerType: (*BlobServiceServer)(nil),
@@ -345,6 +504,10 @@ var _BlobService_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DownloadUrl",
 			Handler:    _BlobService_DownloadUrl_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _BlobService_Delete_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

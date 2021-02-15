@@ -364,6 +364,37 @@ func (s *presignedMinIOStorage) SignUpload(ctx context.Context, bucket, obj stri
 	return &UploadInfo{URL: url.String()}, nil
 }
 
+func (s *presignedMinIOStorage) DeleteObject(ctx context.Context, bucket string, query *DeleteObjectQuery) (err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.DeleteObject")
+	defer tracing.FinishSpan(span, &err)
+
+	if query.Name != "" {
+		err = s.client.RemoveObject(ctx, bucket, query.Name, minio.RemoveObjectOptions{})
+		if err != nil {
+			log.WithField("bucket", bucket).WithField("object", query.Name).Error(err)
+			return err
+		}
+		return nil
+	}
+	if query.Prefix != "" {
+		objectsCh := make(chan minio.ObjectInfo)
+		go func() {
+			defer close(objectsCh)
+			for object := range s.client.ListObjects(ctx, bucket, minio.ListObjectsOptions{
+				Prefix:    query.Prefix,
+				Recursive: true,
+			}) {
+				objectsCh <- object
+			}
+		}()
+		for removeErr := range s.client.RemoveObjects(ctx, bucket, objectsCh, minio.RemoveObjectsOptions{}) {
+			err = removeErr.Err
+			log.WithField("bucket", bucket).WithField("object", removeErr.ObjectName).Error(err)
+		}
+	}
+	return err
+}
+
 func annotationToAmzMetaHeader(annotation string) string {
 	return http.CanonicalHeaderKey(fmt.Sprintf("X-Amz-Meta-%s", annotation))
 }

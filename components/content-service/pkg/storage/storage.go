@@ -65,6 +65,9 @@ type PresignedAccess interface {
 
 	// SignUpload describes an object for upload
 	SignUpload(ctx context.Context, bucket, obj string) (info *UploadInfo, err error)
+
+	// DeleteObject deletes objects in the given bucket specified by the given query
+	DeleteObject(ctx context.Context, bucket string, query *DeleteObjectQuery) error
 }
 
 // ObjectMeta describtes the metadata of a remote object
@@ -85,6 +88,12 @@ type DownloadInfo struct {
 // UploadInfo describes an object for upload
 type UploadInfo struct {
 	URL string
+}
+
+// DeleteObjectQuery specifies objects to delete, either by an exact name or prefix
+type DeleteObjectQuery struct {
+	Prefix string
+	Name   string
 }
 
 // DirectDownloader downloads a snapshot

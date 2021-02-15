@@ -8,15 +8,16 @@
 // file: blobs.proto
 
 /* tslint:disable */
+/* eslint-disable */
 
 import * as jspb from "google-protobuf";
 
 export class UploadUrlRequest extends jspb.Message { 
     getOwnerId(): string;
-    setOwnerId(value: string): void;
+    setOwnerId(value: string): UploadUrlRequest;
 
     getName(): string;
-    setName(value: string): void;
+    setName(value: string): UploadUrlRequest;
 
 
     serializeBinary(): Uint8Array;
@@ -38,7 +39,7 @@ export namespace UploadUrlRequest {
 
 export class UploadUrlResponse extends jspb.Message { 
     getUrl(): string;
-    setUrl(value: string): void;
+    setUrl(value: string): UploadUrlResponse;
 
 
     serializeBinary(): Uint8Array;
@@ -59,10 +60,10 @@ export namespace UploadUrlResponse {
 
 export class DownloadUrlRequest extends jspb.Message { 
     getOwnerId(): string;
-    setOwnerId(value: string): void;
+    setOwnerId(value: string): DownloadUrlRequest;
 
     getName(): string;
-    setName(value: string): void;
+    setName(value: string): DownloadUrlRequest;
 
 
     serializeBinary(): Uint8Array;
@@ -84,7 +85,7 @@ export namespace DownloadUrlRequest {
 
 export class DownloadUrlResponse extends jspb.Message { 
     getUrl(): string;
-    setUrl(value: string): void;
+    setUrl(value: string): DownloadUrlResponse;
 
 
     serializeBinary(): Uint8Array;
@@ -100,5 +101,69 @@ export class DownloadUrlResponse extends jspb.Message {
 export namespace DownloadUrlResponse {
     export type AsObject = {
         url: string,
+    }
+}
+
+export class DeleteRequest extends jspb.Message { 
+    getOwnerId(): string;
+    setOwnerId(value: string): DeleteRequest;
+
+
+    hasExact(): boolean;
+    clearExact(): void;
+    getExact(): string;
+    setExact(value: string): DeleteRequest;
+
+
+    hasPrefix(): boolean;
+    clearPrefix(): void;
+    getPrefix(): string;
+    setPrefix(value: string): DeleteRequest;
+
+
+    getNameCase(): DeleteRequest.NameCase;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): DeleteRequest.AsObject;
+    static toObject(includeInstance: boolean, msg: DeleteRequest): DeleteRequest.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: DeleteRequest, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): DeleteRequest;
+    static deserializeBinaryFromReader(message: DeleteRequest, reader: jspb.BinaryReader): DeleteRequest;
+}
+
+export namespace DeleteRequest {
+    export type AsObject = {
+        ownerId: string,
+        exact: string,
+        prefix: string,
+    }
+
+    export enum NameCase {
+        NAME_NOT_SET = 0,
+    
+    EXACT = 2,
+
+    PREFIX = 3,
+
+    }
+
+}
+
+export class DeleteResponse extends jspb.Message { 
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): DeleteResponse.AsObject;
+    static toObject(includeInstance: boolean, msg: DeleteResponse): DeleteResponse.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: DeleteResponse, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): DeleteResponse;
+    static deserializeBinaryFromReader(message: DeleteResponse, reader: jspb.BinaryReader): DeleteResponse;
+}
+
+export namespace DeleteResponse {
+    export type AsObject = {
     }
 }
