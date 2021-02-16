@@ -21,7 +21,7 @@ const (
 )
 
 var (
-	testBaseTime       = time.Unix(0, 0)
+	testBaseTime       = time.Date(2020, 01, 01, 01, 01, 0, 0, time.UTC)
 	testWorkspaceImage = "gitpod/workspace-full"
 )
 
@@ -51,8 +51,8 @@ Nodes:
 			Desc:            "no node with enough RAM",
 			RAMSafetyBuffer: "512Mi",
 			Nodes:           []*corev1.Node{createNode("node1", "10000Mi", "0Mi", false, 100)},
-			Pods:            []*corev1.Pod{createNonWorkspacePod("existingPod1", "8000Mi", "0Mi", "node1", 10)},
-			ScheduledPod:    createWorkspacePod("pod", "6000Mi", "0Mi", "", 1000),
+			Pods:            []*corev1.Pod{createNonWorkspacePod("existingPod1", "8000Mi", "0Mi", "node1", "10s")},
+			ScheduledPod:    createWorkspacePod("pod", "6000Mi", "0Mi", "", "1000s"),
 			ExpectedError: `No node with enough resources available!
 RAM requested: 6000Mi
 Eph. Storage requested: 0
@@ -65,7 +65,7 @@ Nodes:
 			Desc:            "single empty node",
 			RAMSafetyBuffer: "512Mi",
 			Nodes:           []*corev1.Node{createNode("node1", "10000Mi", "0Mi", false, 100)},
-			ScheduledPod:    createWorkspacePod("pod", "6000Mi", "0Mi", "", 1000),
+			ScheduledPod:    createWorkspacePod("pod", "6000Mi", "0Mi", "", "1000s"),
 			ExpectedNode:    "node1",
 		},
 		{
@@ -75,8 +75,8 @@ Nodes:
 				createNode("node1", "10000Mi", "0Mi", false, 100),
 				createNode("node2", "10000Mi", "0Mi", false, 100),
 			},
-			Pods:         []*corev1.Pod{createNonWorkspacePod("existingPod1", "8000Mi", "0Mi", "node1", 10)},
-			ScheduledPod: createWorkspacePod("pod", "6000Mi", "0Mi", "", 1000),
+			Pods:         []*corev1.Pod{createNonWorkspacePod("existingPod1", "8000Mi", "0Mi", "node1", "10s")},
+			ScheduledPod: createWorkspacePod("pod", "6000Mi", "0Mi", "", "1000s"),
 			ExpectedNode: "node2",
 		},
 		{
@@ -86,8 +86,8 @@ Nodes:
 				createNode("node1", "10000Mi", "0Mi", false, 100),
 				createNode("node2", "10000Mi", "0Mi", false, 100),
 			},
-			Pods:         []*corev1.Pod{createWorkspacePod("existingPod1", "1000Mi", "0Mi", "node1", 10)},
-			ScheduledPod: createWorkspacePod("pod", "6000Mi", "0Mi", "", 1000),
+			Pods:         []*corev1.Pod{createWorkspacePod("existingPod1", "1000Mi", "0Mi", "node1", "10s")},
+			ScheduledPod: createWorkspacePod("pod", "6000Mi", "0Mi", "", "1000s"),
 			ExpectedNode: "node1",
 		},
 		{
@@ -99,10 +99,10 @@ Nodes:
 				createNode("node3", "10000Mi", "0Mi", false, 100),
 			},
 			Pods: []*corev1.Pod{
-				createWorkspacePod("existingPod1", "1500Mi", "0Mi", "node1", 10),
-				createWorkspacePod("existingPod2", "1000Mi", "0Mi", "node2", 10),
+				createWorkspacePod("existingPod1", "1500Mi", "0Mi", "node1", "10s"),
+				createWorkspacePod("existingPod2", "1000Mi", "0Mi", "node2", "10s"),
 			},
-			ScheduledPod: createWorkspacePod("pod", "6000Mi", "0Mi", "", 1000),
+			ScheduledPod: createWorkspacePod("pod", "6000Mi", "0Mi", "", "1000s"),
 			ExpectedNode: "node2",
 		},
 		{
@@ -114,10 +114,10 @@ Nodes:
 				createNode("node3", "10000Mi", "0Mi", true, 100),
 			},
 			Pods: []*corev1.Pod{
-				createWorkspacePod("existingPod1", "1500Mi", "0Mi", "node1", 10),
-				createWorkspacePod("existingPod2", "1000Mi", "0Mi", "node2", 10),
+				createWorkspacePod("existingPod1", "1500Mi", "0Mi", "node1", "10s"),
+				createWorkspacePod("existingPod2", "1000Mi", "0Mi", "node2", "10s"),
 			},
-			ScheduledPod: createWorkspacePod("pod", "6000Mi", "0Mi", "", 1000),
+			ScheduledPod: createWorkspacePod("pod", "6000Mi", "0Mi", "", "1000s"),
 			ExpectedNode: "node1",
 		},
 		{
@@ -130,11 +130,11 @@ Nodes:
 				createNode("node3", "10000Mi", "0Mi", true, 100),
 			},
 			Pods: []*corev1.Pod{
-				createWorkspacePod("existingPod1", "1500Mi", "0Mi", "node1", 10),
-				createWorkspacePod("existingPod2", "1000Mi", "0Mi", "node2", 10),
-				createHeadlessWorkspacePod("hpod", "500Mi", "0Mi", "node3", 1000),
+				createWorkspacePod("existingPod1", "1500Mi", "0Mi", "node1", "10s"),
+				createWorkspacePod("existingPod2", "1000Mi", "0Mi", "node2", "10s"),
+				createHeadlessWorkspacePod("hpod", "500Mi", "0Mi", "node3", "1000s"),
 			},
-			ScheduledPod: createHeadlessWorkspacePod("pod", "6000Mi", "0Mi", "", 1000),
+			ScheduledPod: createHeadlessWorkspacePod("pod", "6000Mi", "0Mi", "", "1000s"),
 			ExpectedNode: "node2",
 		},
 		{
@@ -145,7 +145,7 @@ Nodes:
 				createNode("node2", "10000Mi", "0Mi", true, 100),
 				createNode("node3", "10000Mi", "0Mi", true, 100),
 			},
-			ScheduledPod: createHeadlessWorkspacePod("pod", "6000Mi", "0Mi", "", 1000),
+			ScheduledPod: createHeadlessWorkspacePod("pod", "6000Mi", "0Mi", "", "1000s"),
 			ExpectedNode: "node1",
 		},
 		{
@@ -156,10 +156,10 @@ Nodes:
 				createNode("node2", "10000Mi", "0Mi", false, 100),
 			},
 			Pods: []*corev1.Pod{
-				createHeadlessWorkspacePod("existingPod1", "4000Mi", "0Mi", "node1", 10),
-				createWorkspacePod("existingPod2", "4000Mi", "0Mi", "node1", 10),
+				createHeadlessWorkspacePod("existingPod1", "4000Mi", "0Mi", "node1", "10s"),
+				createWorkspacePod("existingPod2", "4000Mi", "0Mi", "node1", "10s"),
 			},
-			ScheduledPod: createWorkspacePod("pod", "4000Mi", "0Mi", "", 10),
+			ScheduledPod: createWorkspacePod("pod", "4000Mi", "0Mi", "", "10s"),
 			ExpectedNode: "node2",
 		},
 		{
@@ -171,9 +171,9 @@ Nodes:
 				createNode("node2", "10000Mi", "0Mi", false, 100),
 			},
 			Pods: []*corev1.Pod{
-				createWorkspacePod("existingPod1", "4000Mi", "0Mi", "node2", 10),
+				createWorkspacePod("existingPod1", "4000Mi", "0Mi", "node2", "10s"),
 			},
-			ScheduledPod: createWorkspacePod("new pod", "4000Mi", "0Mi", "node1", 10),
+			ScheduledPod: createWorkspacePod("new pod", "4000Mi", "0Mi", "node1", "10s"),
 			ExpectedNode: "node2",
 		},
 		{
@@ -185,9 +185,9 @@ Nodes:
 				createNode("node2", "10000Mi", "15000Mi", false, 100),
 			},
 			Pods: []*corev1.Pod{
-				createWorkspacePod("existingPod1", "4000Mi", "5000Mi", "node2", 10),
+				createWorkspacePod("existingPod1", "4000Mi", "5000Mi", "node2", "10s"),
 			},
-			ScheduledPod: createWorkspacePod("new pod", "4000Mi", "5000Mi", "node1", 10),
+			ScheduledPod: createWorkspacePod("new pod", "4000Mi", "5000Mi", "node1", "10s"),
 			ExpectedNode: "node2",
 		},
 		{
@@ -199,9 +199,9 @@ Nodes:
 				createNode("node2", "10000Mi", "7000Mi", false, 100),
 			},
 			Pods: []*corev1.Pod{
-				createWorkspacePod("existingPod1", "4000Mi", "5000Mi", "node2", 10),
+				createWorkspacePod("existingPod1", "4000Mi", "5000Mi", "node2", "10s"),
 			},
-			ScheduledPod: createWorkspacePod("new pod", "4000Mi", "5000Mi", "node1", 10),
+			ScheduledPod: createWorkspacePod("new pod", "4000Mi", "5000Mi", "node1", "10s"),
 			ExpectedError: `No node with enough resources available!
 RAM requested: 4000Mi
 Eph. Storage requested: 5000Mi
@@ -223,11 +223,11 @@ Nodes:
 				createNode("node3", "20000Mi", "10000Mi", false, 100),
 			},
 			Pods: []*corev1.Pod{
-				createWorkspacePod("existingPod1", "4000Mi", "5000Mi", "node2", 10),
-				createWorkspacePod("existingPod2", "4000Mi", "5000Mi", "node2", 10),
-				createWorkspacePod("existingPod3", "4000Mi", "5000Mi", "node3", 10),
+				createWorkspacePod("existingPod1", "4000Mi", "5000Mi", "node2", "10s"),
+				createWorkspacePod("existingPod2", "4000Mi", "5000Mi", "node2", "10s"),
+				createWorkspacePod("existingPod3", "4000Mi", "5000Mi", "node3", "10s"),
 			},
-			ScheduledPod: createWorkspacePod("new pod", "4000Mi", "5000Mi", "node1", 10),
+			ScheduledPod: createWorkspacePod("new pod", "4000Mi", "5000Mi", "node1", "10s"),
 			ExpectedNode: "node3",
 		},
 		{
@@ -239,10 +239,10 @@ Nodes:
 				createNode("node2", "10000Mi", "10000Mi", false, 100),
 			},
 			Pods: []*corev1.Pod{
-				createWorkspacePod("existingPod1", "4000Mi", "5000Mi", "node2", 10),
-				createGhostPod("ghost1", "4000Mi", "5000Mi", "node2", 10),
+				createWorkspacePod("existingPod1", "4000Mi", "5000Mi", "node2", "10s"),
+				createGhostPod("ghost1", "4000Mi", "5000Mi", "node2", "10s"),
 			},
-			ScheduledPod: createGhostPod("new ghost", "4000Mi", "5000Mi", "", 10),
+			ScheduledPod: createGhostPod("new ghost", "4000Mi", "5000Mi", "", "10s"),
 			ExpectedNode: "node1",
 		},
 		{
@@ -254,10 +254,10 @@ Nodes:
 				createNode("node2", "10000Mi", "10000Mi", false, 100),
 			},
 			Pods: []*corev1.Pod{
-				createWorkspacePod("existingPod1", "4000Mi", "5000Mi", "node2", 10),
-				createGhostPod("ghost1", "4000Mi", "5000Mi", "node2", 10),
+				createWorkspacePod("existingPod1", "4000Mi", "5000Mi", "node2", "10s"),
+				createGhostPod("ghost1", "4000Mi", "5000Mi", "node2", "10s"),
 			},
-			ScheduledPod: createWorkspacePod("new workspace", "4000Mi", "5000Mi", "", 10),
+			ScheduledPod: createWorkspacePod("new workspace", "4000Mi", "5000Mi", "", "10s"),
 			ExpectedNode: "node2",
 		},
 		{
@@ -270,11 +270,11 @@ Nodes:
 				createNode("node2", "10000Mi", "10000Mi", false, 100),
 			},
 			Pods: []*corev1.Pod{
-				createWorkspacePod("workspace1", "3000Mi", "3000Mi", "node2", 10),
-				createGhostPod("ghost1", "3000Mi", "3000Mi", "node2", 10),
-				createGhostPod("ghost2", "3000Mi", "3000Mi", "node2", 8),
+				createWorkspacePod("workspace1", "3000Mi", "3000Mi", "node2", "10s"),
+				createGhostPod("ghost1", "3000Mi", "3000Mi", "node2", "8s"),
+				createGhostPod("ghost2", "3000Mi", "3000Mi", "node2", "10s"),
 			},
-			ScheduledPod:          createProbePod("workspace2", "3000Mi", "3000Mi", "", 10),
+			ScheduledPod:          createProbePod("workspace2", "3000Mi", "3000Mi", "", "10s"),
 			ExpectedNode:          "node2",
 			ExpectedGhostReplaced: "ghost2",
 		},
@@ -314,7 +314,7 @@ Nodes:
 			}
 
 			if test.ExpectedGhostReplaced != "" {
-				ghostToDelete, _ := state.FindSpareGhostToDelete(node, test.ScheduledPod, make(map[string]bool))
+				ghostToDelete, _ := state.FindSpareGhostToDelete(node, test.ScheduledPod, defaultTestNamespace, &ramSafetyBuffer, make(map[string]*sched.Slot))
 				if ghostToDelete != test.ExpectedGhostReplaced {
 					t.Errorf("expected ghost to be replaced \"%s\", got \"%s\"", test.ExpectedGhostReplaced, ghostToDelete)
 					return
@@ -348,25 +348,25 @@ func createNode(name string, ram string, ephemeralStorage string, withImage bool
 	}
 }
 
-func createNonWorkspacePod(name string, ram string, ephemeralStorage string, nodeName string, age time.Duration) *corev1.Pod {
+func createNonWorkspacePod(name string, ram string, ephemeralStorage string, nodeName string, age string) *corev1.Pod {
 	return createPod(name, ram, ephemeralStorage, nodeName, age, map[string]string{})
 }
 
-func createHeadlessWorkspacePod(name string, ram string, ephemeralStorage string, nodeName string, age time.Duration) *corev1.Pod {
+func createHeadlessWorkspacePod(name string, ram string, ephemeralStorage string, nodeName string, age string) *corev1.Pod {
 	return createPod(name, ram, ephemeralStorage, nodeName, age, map[string]string{
 		"component": "workspace",
 		"headless":  "true",
 	})
 }
 
-func createWorkspacePod(name string, ram string, ephemeralStorage string, nodeName string, age time.Duration) *corev1.Pod {
+func createWorkspacePod(name string, ram string, ephemeralStorage string, nodeName string, age string) *corev1.Pod {
 	return createPod(name, ram, ephemeralStorage, nodeName, age, map[string]string{
 		"component":     "workspace",
 		wsk8s.TypeLabel: "regular",
 	})
 }
 
-func createGhostPod(name string, ram string, ephemeralStorage string, nodeName string, age time.Duration) *corev1.Pod {
+func createGhostPod(name string, ram string, ephemeralStorage string, nodeName string, age string) *corev1.Pod {
 	return createPod(name, ram, ephemeralStorage, nodeName, age, map[string]string{
 		"component":     "workspace",
 		"headless":      "true",
@@ -374,7 +374,7 @@ func createGhostPod(name string, ram string, ephemeralStorage string, nodeName s
 	})
 }
 
-func createProbePod(name string, ram string, ephemeralStorage string, nodeName string, age time.Duration) *corev1.Pod {
+func createProbePod(name string, ram string, ephemeralStorage string, nodeName string, age string) *corev1.Pod {
 	return createPod(name, ram, ephemeralStorage, nodeName, age, map[string]string{
 		"component":     "workspace",
 		"headless":      "true",
@@ -382,8 +382,8 @@ func createProbePod(name string, ram string, ephemeralStorage string, nodeName s
 	})
 }
 
-func createPod(name string, ram string, ephemeralStorage string, nodeName string, age time.Duration, labels map[string]string) *corev1.Pod {
-	creationTimestamp := testBaseTime.Add(age * time.Second)
+func createPod(name string, ram string, ephemeralStorage string, nodeName string, ageStr string, labels map[string]string) *corev1.Pod {
+	creationTimestamp := testBaseTime.Add(-MustParseDuration(ageStr))
 	return &corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              name,
@@ -407,4 +407,12 @@ func createPod(name string, ram string, ephemeralStorage string, nodeName string
 			},
 		},
 	}
+}
+
+func MustParseDuration(str string) time.Duration {
+	dur, err := time.ParseDuration(str)
+	if err != nil {
+		panic("duration does not parse")
+	}
+	return dur
 }

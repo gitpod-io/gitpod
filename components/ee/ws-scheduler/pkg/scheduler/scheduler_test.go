@@ -93,14 +93,21 @@ func TestGatherPotentialNodesFor(t *testing.T) {
 			objs = append(objs, test.Pod)
 
 			client := fakek8s.NewSimpleClientset(objs...)
-			scheduler, err := NewScheduler(Configuration{}, client)
+			scheduler, err := NewScheduler(Configuration{
+				Namespace:     testNamespace,
+				SchedulerName: "test-ws-scheduler",
+				StrategyName:  "DensityAndExperience",
+				DensityAndExperienceConfig: &DensityAndExperienceConfig{
+					WorkspaceFreshPeriodSeconds: 120,
+					NodeFreshWorkspaceLimit:     2,
+				},
+			}, client)
 			if err != nil {
 				t.Errorf("unexpected error: %+q", err)
 				return
 			}
 
 			ctx, cancel := context.WithCancel(context.Background())
-			scheduler.queue = NewPriorityQueue(SortByPriority, queueInitialBackoff, queueMaximumBackoff)
 			scheduler.startInformer(ctx)
 
 			candidates, err := scheduler.gatherPotentialNodesFor(context.Background(), test.Pod)
@@ -315,14 +322,21 @@ func TestRequiredServices(t *testing.T) {
 			}
 
 			client := fakek8s.NewSimpleClientset(objs...)
-			scheduler, err := NewScheduler(Configuration{}, client)
+			scheduler, err := NewScheduler(Configuration{
+				Namespace:     testNamespace,
+				SchedulerName: "test-ws-scheduler",
+				StrategyName:  "DensityAndExperience",
+				DensityAndExperienceConfig: &DensityAndExperienceConfig{
+					WorkspaceFreshPeriodSeconds: 120,
+					NodeFreshWorkspaceLimit:     2,
+				},
+			}, client)
 			if err != nil {
 				t.Errorf("unexpected error: %+q", err)
 				return
 			}
 
 			ctx, cancel := context.WithCancel(context.Background())
-			scheduler.queue = NewPriorityQueue(SortByPriority, queueInitialBackoff, queueMaximumBackoff)
 			scheduler.startInformer(ctx)
 
 			state, err := scheduler.buildState(ctx, test.TargetPod, wsk8s.IsNonGhostWorkspace(test.TargetPod))

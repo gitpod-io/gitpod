@@ -306,7 +306,7 @@ func (s sortItems) Len() int {
 	return len(s.queue)
 }
 func (s sortItems) Less(i, j int) bool {
-	return !s.lessFunc(s.queue[i].pi, s.queue[j].pi)
+	return s.lessFunc(s.queue[i].pi, s.queue[j].pi)
 }
 func (s sortItems) Swap(i, j int) {
 	s.queue[i], s.queue[j] = s.queue[j], s.queue[i]

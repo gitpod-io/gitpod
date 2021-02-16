@@ -46,7 +46,7 @@ var runCmd = &cobra.Command{
 		}
 		schedulerCtx, cancelScheduler := context.WithCancel(context.Background())
 		go func() {
-			err = scheduler.Start(schedulerCtx)
+			err = scheduler.Run(schedulerCtx)
 			if err != nil {
 				cancelScheduler()
 				log.WithError(err).Fatal("cannot start scheduler")

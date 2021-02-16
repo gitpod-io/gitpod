@@ -51,8 +51,8 @@ func TestState(t *testing.T) {
 			RAMSafetyBuffer: "512Mi",
 			Nodes:           defaultNodeSet(),
 			Pods: []*corev1.Pod{
-				createNonWorkspacePod("existingPod1", "1500Mi", "0Mi", "node1", 10),
-				createNonWorkspacePod("existingPod2", "1000Mi", "0Mi", "node2", 10),
+				createNonWorkspacePod("existingPod1", "1500Mi", "0Mi", "node1", "10s"),
+				createNonWorkspacePod("existingPod2", "1000Mi", "0Mi", "node2", "10s"),
 			},
 			Expectation: `- node1:
   RAM: used 0(r)+0(g)+0(h)+1573(o) of 9949, avail 8377 Mi
@@ -69,10 +69,10 @@ func TestState(t *testing.T) {
 			RAMSafetyBuffer: "512Mi",
 			Nodes:           defaultNodeSet(),
 			Pods: []*corev1.Pod{
-				createNonWorkspacePod("existingPod1", "1500Mi", "0Mi", "node1", 10),
-				createNonWorkspacePod("existingPod2", "1000Mi", "0Mi", "node2", 10),
-				createHeadlessWorkspacePod("hp1", "1000Mi", "0Mi", "node2", 10),
-				createHeadlessWorkspacePod("hp2", "2220Mi", "0Mi", "node2", 10),
+				createNonWorkspacePod("existingPod1", "1500Mi", "0Mi", "node1", "10s"),
+				createNonWorkspacePod("existingPod2", "1000Mi", "0Mi", "node2", "10s"),
+				createHeadlessWorkspacePod("hp1", "1000Mi", "0Mi", "node2", "10s"),
+				createHeadlessWorkspacePod("hp2", "2220Mi", "0Mi", "node2", "10s"),
 			},
 			Expectation: `- node1:
   RAM: used 0(r)+0(g)+0(h)+1573(o) of 9949, avail 8377 Mi
@@ -89,10 +89,10 @@ func TestState(t *testing.T) {
 			RAMSafetyBuffer: "512Mi",
 			Nodes:           defaultNodeSet(),
 			Pods: []*corev1.Pod{
-				createNonWorkspacePod("existingPod1", "1500Mi", "0Mi", "node1", 10),
-				createNonWorkspacePod("existingPod2", "1000Mi", "0Mi", "node2", 10),
-				createWorkspacePod("hp1", "1000Mi", "0Mi", "node1", 10),
-				createWorkspacePod("hp2", "3440Mi", "0Mi", "node1", 10),
+				createNonWorkspacePod("existingPod1", "1500Mi", "0Mi", "node1", "10s"),
+				createNonWorkspacePod("existingPod2", "1000Mi", "0Mi", "node2", "10s"),
+				createWorkspacePod("hp1", "1000Mi", "0Mi", "node1", "10s"),
+				createWorkspacePod("hp2", "3440Mi", "0Mi", "node1", "10s"),
 			},
 			Expectation: `- node1:
   RAM: used 4656(r)+0(g)+0(h)+1573(o) of 9949, avail 3721 Mi
@@ -113,10 +113,10 @@ func TestState(t *testing.T) {
 				createNode("node3", "10000Mi", "10000Mi", true, 100),
 			},
 			Pods: []*corev1.Pod{
-				createNonWorkspacePod("existingPod1", "1500Mi", "5000Mi", "node1", 10),
-				createNonWorkspacePod("existingPod2", "1000Mi", "2000Mi", "node2", 10),
-				createWorkspacePod("hp1", "1000Mi", "5000Mi", "node1", 10),
-				createWorkspacePod("hp2", "3440Mi", "5000Mi", "node1", 10),
+				createNonWorkspacePod("existingPod1", "1500Mi", "5000Mi", "node1", "10s"),
+				createNonWorkspacePod("existingPod2", "1000Mi", "2000Mi", "node2", "10s"),
+				createWorkspacePod("hp1", "1000Mi", "5000Mi", "node1", "10s"),
+				createWorkspacePod("hp2", "3440Mi", "5000Mi", "node1", "10s"),
 			},
 			Expectation: `- node1:
   RAM: used 4656(r)+0(g)+0(h)+1573(o) of 9949, avail 3721 Mi
@@ -136,7 +136,7 @@ func TestState(t *testing.T) {
 			},
 			Bindings: []*sched.Binding{
 				{
-					Pod:      createWorkspacePod("hp1", "1000Mi", "5000Mi", "node1", 10),
+					Pod:      createWorkspacePod("hp1", "1000Mi", "5000Mi", "node1", "10s"),
 					NodeName: "node1",
 				},
 			},
@@ -153,12 +153,12 @@ func TestState(t *testing.T) {
 				createNode("node3", "10000Mi", "10000Mi", true, 100),
 			},
 			Pods: []*corev1.Pod{
-				createNonWorkspacePod("existingPod1", "1500Mi", "500Mi", "node1", 10),
-				createNonWorkspacePod("existingPod2", "1000Mi", "200Mi", "node2", 10),
-				createWorkspacePod("hp1", "1000Mi", "100Mi", "node1", 10),
-				createWorkspacePod("hp2", "3440Mi", "100Mi", "node1", 10),
-				createGhostPod("ghost1", "1500Mi", "100Mi", "node1", 10),
-				createGhostPod("ghost2", "1500Mi", "100Mi", "node2", 10),
+				createNonWorkspacePod("existingPod1", "1500Mi", "500Mi", "node1", "10s"),
+				createNonWorkspacePod("existingPod2", "1000Mi", "200Mi", "node2", "10s"),
+				createWorkspacePod("hp1", "1000Mi", "100Mi", "node1", "10s"),
+				createWorkspacePod("hp2", "3440Mi", "100Mi", "node1", "10s"),
+				createGhostPod("ghost1", "1500Mi", "100Mi", "node1", "10s"),
+				createGhostPod("ghost2", "1500Mi", "100Mi", "node2", "10s"),
 			},
 			GhostsInvisible: false,
 			Expectation: `- node1:
@@ -180,12 +180,12 @@ func TestState(t *testing.T) {
 				createNode("node3", "10000Mi", "10000Mi", true, 100),
 			},
 			Pods: []*corev1.Pod{
-				createNonWorkspacePod("existingPod1", "1500Mi", "500Mi", "node1", 10),
-				createNonWorkspacePod("existingPod2", "1000Mi", "200Mi", "node2", 10),
-				createWorkspacePod("hp1", "1000Mi", "100Mi", "node1", 10),
-				createWorkspacePod("hp2", "3440Mi", "100Mi", "node1", 10),
-				createGhostPod("ghost1", "1500Mi", "100Mi", "node1", 10),
-				createGhostPod("ghost2", "1500Mi", "100Mi", "node2", 10),
+				createNonWorkspacePod("existingPod1", "1500Mi", "500Mi", "node1", "10s"),
+				createNonWorkspacePod("existingPod2", "1000Mi", "200Mi", "node2", "10s"),
+				createWorkspacePod("hp1", "1000Mi", "100Mi", "node1", "10s"),
+				createWorkspacePod("hp2", "3440Mi", "100Mi", "node1", "10s"),
+				createGhostPod("ghost1", "1500Mi", "100Mi", "node1", "10s"),
+				createGhostPod("ghost2", "1500Mi", "100Mi", "node2", "10s"),
 			},
 			GhostsInvisible: true,
 			Expectation: `- node1:
