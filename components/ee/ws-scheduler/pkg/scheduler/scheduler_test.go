@@ -272,6 +272,36 @@ func TestRequiredServices(t *testing.T) {
 			}),
 			Expectation: []string{"node2"},
 		},
+		{
+			Desc: "require two services - negative, because on is not RUNNING yet",
+			Nodes: []*corev1.Node{
+				createNode("node1", nil),
+				createNode("node2", nil),
+			},
+			Pods: []*corev1.Pod{
+				createPod("some-pod", nil),
+				createPod("some-other-pod", nil),
+				modifyPod(createPod("service", nil), func(p *corev1.Pod) {
+					p.Labels = map[string]string{
+						wsk8s.GitpodNodeServiceLabel: "service",
+					}
+					p.Spec.NodeName = "node2"
+				}),
+				modifyPod(createPod("another", nil), func(p *corev1.Pod) {
+					p.Labels = map[string]string{
+						wsk8s.GitpodNodeServiceLabel: "another",
+					}
+					p.Spec.NodeName = "node2"
+					p.Status.Phase = corev1.PodPending
+				}),
+			},
+			TargetPod: modifyPod(createPod("target-pod", nil), func(p *corev1.Pod) {
+				p.Annotations = map[string]string{
+					wsk8s.RequiredNodeServicesAnnotation: "service,another",
+				}
+			}),
+			Expectation: nil,
+		},
 	}
 
 	for _, test := range tests {
@@ -345,7 +375,12 @@ func createPod(name string, tolerations []corev1.Toleration) *corev1.Pod {
 					Type:   corev1.ContainersReady,
 					Status: corev1.ConditionTrue,
 				},
+				{
+					Type:   corev1.PodReady,
+					Status: corev1.ConditionTrue,
+				},
 			},
+			Phase: corev1.PodRunning,
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
