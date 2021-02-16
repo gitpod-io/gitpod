@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:csweichel-leeway-vet-ignore-warnings-2986.0
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:gpl-bump-helm.12
 workspaceLocation: gitpod/gitpod-ws.theia-workspace
 checkoutLocation: gitpod
 ports:

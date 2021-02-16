@@ -30,7 +30,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:csweichel-leeway-vet-ignore-warnings-2986.0
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:gpl-bump-helm.12
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
