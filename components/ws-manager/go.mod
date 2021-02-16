@@ -100,3 +100,5 @@ replace k8s.io/controller-manager => k8s.io/controller-manager v0.20.1 // leeway
 replace k8s.io/kubectl => k8s.io/kubectl v0.20.1 // leeway indirect from components/common-go:lib
 
 replace k8s.io/mount-utils => k8s.io/mount-utils v0.20.1 // leeway indirect from components/common-go:lib
+
+replace github.com/imdario/mergo => github.com/imdario/mergo v0.3.8 // track breaking change agains v0.3.10
