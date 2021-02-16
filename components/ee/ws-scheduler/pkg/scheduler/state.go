@@ -220,15 +220,23 @@ func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding,
 
 			service, ok := pod.ObjectMeta.Labels[wsk8s.GitpodNodeServiceLabel]
 			if ok {
-				var ready bool
+				var (
+					containersReady bool
+					podReady        bool
+					podRunning      bool
+				)
 				for _, c := range pod.Status.Conditions {
-					if c.Type != corev1.ContainersReady {
-						continue
+					if c.Type == corev1.ContainersReady {
+						containersReady = c.Status == corev1.ConditionTrue
 					}
-					ready = c.Status == corev1.ConditionTrue
-					break
+					if c.Type == corev1.PodReady {
+						podReady = c.Status == corev1.ConditionTrue
+					}
 				}
-				if !ready {
+				podRunning = pod.Status.Phase == corev1.PodRunning
+
+				// we're checking podReady AND containersReady to be sure we're not missing sth
+				if !(podReady && containersReady && podRunning) {
 					continue
 				}
 				node.Services[service] = struct{}{}
