@@ -44,8 +44,8 @@ var (
 		prometheus.HistogramOpts{
 			Name: "pod_scheduling_duration_seconds",
 			Help: "E2e latency for a pod being scheduled which may include multiple scheduling attempts.",
-			// Start with 10ms with the last bucket being [~88m, Inf).
-			Buckets: prometheus.ExponentialBuckets(0.01, 2, 20),
+			// last bucket: [~16m, Inf).
+			Buckets: prometheus.ExponentialBuckets(0.5, 2, 11),
 		},
 		[]string{"attempts", "workspaceType"})
 
@@ -55,7 +55,7 @@ var (
 			Help:    "Number of attempts to successfully schedule a pod.",
 			Buckets: prometheus.ExponentialBuckets(1, 2, 5),
 		},
-		[]string{"attempts", "workspaceType"})
+		[]string{"workspaceType"})
 
 	AllMetrics = []prometheus.Collector{
 		ScheduleAttempts,

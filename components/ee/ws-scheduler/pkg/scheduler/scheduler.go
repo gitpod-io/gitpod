@@ -395,7 +395,7 @@ func (s *Scheduler) schedulePod(ctx context.Context, pi *QueuedPodInfo) (err err
 
 	// metrics
 	metrics.PodScheduled(workspaceType, metrics.SinceInSeconds(start))
-	metrics.PodSchedulingAttempts.WithLabelValues(getAttemptsLabel(pi), workspaceType).Observe(float64(pi.Attempts))
+	metrics.PodSchedulingAttempts.WithLabelValues(workspaceType).Observe(float64(pi.Attempts))
 	metrics.PodSchedulingDuration.WithLabelValues(getAttemptsLabel(pi), workspaceType).Observe(metrics.SinceInSeconds(pi.InitialAttemptTimestamp))
 
 	return nil
