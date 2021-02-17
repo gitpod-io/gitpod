@@ -38,6 +38,7 @@ import { GitpodClient, GitpodServer } from '@gitpod/gitpod-protocol';
 import { BearerAuth } from './auth/bearer-authenticator';
 import { HostContextProvider } from './auth/host-context-provider';
 import { CodeSyncService } from './code-sync/code-sync-service';
+import { increaseHttpRequestCounter, observeHttpRequestDuration } from './prometheus-metrics';
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -75,6 +76,21 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
 
     public async init(app: express.Application) {
         log.info('Initializing');
+
+        // metrics
+        app.use(async (req, res, next) => {
+            const startTime = Date.now()
+            const originalSend = res.send.bind(res);
+            res.send = (body) => {
+                const result = originalSend(body);
+                const method = req.method;
+                const route = req.route.path;
+                observeHttpRequestDuration(method, route, res.statusCode, (Date.now() - startTime) / 1000)
+                increaseHttpRequestCounter(method, route, res.statusCode);
+                return result;
+            }
+            next();
+        });
 
         // Express configuration
         // Read bodies as JSON
@@ -164,10 +180,10 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                 || req.originalUrl === '/gitpod'
                 || req.originalUrl === '/favicon.ico'
                 || req.originalUrl === '/robots.txt') {
-                    // Redirect to gitpod.io/<pathname>
-                    res.redirect(this.env.hostUrl.with({ pathname: req.originalUrl }).toString());
-                    return;
-                }
+                // Redirect to gitpod.io/<pathname>
+                res.redirect(this.env.hostUrl.with({ pathname: req.originalUrl }).toString());
+                return;
+            }
             return next(new Error("Unhandled request: " + req.method + " " + req.originalUrl));
         });
 
@@ -208,7 +224,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
 
         // Start deleted entry GC
         this.deletedEntryGC.start();
-        
+
         // Start one-time secret GC
         this.oneTimeSecretServer.startPruningExpiredSecrets();
 
