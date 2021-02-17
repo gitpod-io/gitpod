@@ -448,6 +448,10 @@ components:
         kind: "constant"
         constant:
           setpoint: 5
+    ports:
+      metrics:
+        expose: true
+        containerPort: 9500
 
   cerc:
     name: cerc
