@@ -8,7 +8,9 @@ import { GitpodServer } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 
-type GitpodServerMethodType = keyof Omit<GitpodServer, "dispose" | "setClient">;
+
+export const accessCodeSyncStorage = 'accessCodeSyncStorage';
+type GitpodServerMethodType = keyof Omit<GitpodServer, "dispose" | "setClient"> | typeof accessCodeSyncStorage;
 type GroupsConfig = {
     [key: string]: {
         points: number,
@@ -107,6 +109,8 @@ function readConfig(): RateLimiterConfig {
         "validateLicense": { group: "default", points: 1 },
         "getLicenseInfo": { group: "default", points: 1 },
         "licenseIncludesFeature": { group: "default", points: 1 },
+
+        "accessCodeSyncStorage":  { group: "default", points: 1 },
     };
 
     const fromEnv = JSON.parse(process.env.RATE_LIMITER_CONFIG || "{}")

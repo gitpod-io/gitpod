@@ -19,6 +19,8 @@ import { BlobServiceClient } from '@gitpod/content-service/lib/blobs_grpc_pb';
 import { DeleteRequest, DownloadUrlRequest, DownloadUrlResponse, UploadUrlRequest, UploadUrlResponse } from '@gitpod/content-service/lib/blobs_pb';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import uuid = require('uuid');
+import { accessCodeSyncStorage, UserRateLimiter } from '../auth/rate-limiter';
+import { increaseApiCallUserCounter } from '../prometheus-metrics';
 
 // By default: 6 kind of resources * 20 revs * 1Mb = 120Mb max in the content service for user data.
 const defautltRevLimit = 20;
@@ -59,8 +61,26 @@ export class CodeSyncService {
             return next();
         });
         router.use(this.auth.restHandler);
-        router.use((req, res, next) => {
-            if (!isWithFunctionAccessGuard(req) || !req.functionGuard?.canAccess('accessCodeSyncStorage')) {
+        router.use(async (req, res, next) => {
+            if (!User.is(req.user)) {
+                res.sendStatus(204);
+                return;
+            }
+            
+            const id = req.user.id;
+            increaseApiCallUserCounter(accessCodeSyncStorage, id);
+            try {
+                await UserRateLimiter.instance().consume(id, accessCodeSyncStorage);
+            } catch (e) {
+                if (e instanceof Error) {
+                    throw e;
+                }
+                res.setHeader('Retry-After', String(Math.round(e.msBeforeNext / 1000)) || 1);
+                res.status(429).send('Too Many Requests');
+                return;
+            }
+
+            if (!isWithFunctionAccessGuard(req) || !req.functionGuard?.canAccess(accessCodeSyncStorage)) {
                 res.sendStatus(403);
                 return;
             }
