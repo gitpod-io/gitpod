@@ -93,7 +93,7 @@ spec:
           type: File
       {{- if $comp.userNamespaces.shiftfsModuleLoader.enabled }}
       - name: node-linux-src
-        hostPath: 
+        hostPath:
           path: /usr/src
           type: Directory
       {{- end }}
@@ -183,6 +183,6 @@ spec:
           periodSeconds: 10
         securityContext:
           privileged: true
-          procMount: unmasked
+          procMount: Unmasked
 {{ toYaml .Values.defaults | indent 6 }}
 {{ end }}
