@@ -210,6 +210,13 @@ export class ConfigProvider {
         const span = TraceContext.startSpan("fetchExternalGitpodFileContent", ctx);
         span.setTag("repo", `${repository.owner}/${repository.name}`);
 
+        if (this.env.definitelyGpDisabled) {
+            return {
+                content: undefined,
+                basePath: `${repository.name}`
+            };
+        }
+
         try {
             const ownerConfigBasePath = `${repository.name}/${repository.owner}`;
             const baseConfigBasePath = `${repository.name}`;

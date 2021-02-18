@@ -127,6 +127,8 @@ spec:
         - name: GITPOD_GITHUB_APP_MKT_NAME
           value: "{{ $comp.github.app.marketPlaceName }}"
 {{- end }}
+        - name: GITPOD_DEFINITELY_GP_DISABLED
+          value: "{{ $comp.definitelyGpDisabled | default "false" }}"
         - name: LOG_LEVEL
           value: "trace"
         - name: NODE_ENV

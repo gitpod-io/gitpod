@@ -291,6 +291,7 @@ components:
     volumes: null
     garbageCollection:
       disabled: "false"
+    definitelyGpDisabled: "false"
 
   workspace:
     ports:

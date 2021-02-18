@@ -72,6 +72,8 @@ export class Env extends AbstractComponentEnv {
     readonly githubAppCertPath: string = process.env.GITPOD_GITHUB_APP_CERT_PATH || "unknown";
     readonly githubAppMarketplaceName: string = process.env.GITPOD_GITHUB_APP_MKT_NAME || "unknown";
 
+    readonly definitelyGpDisabled: boolean = process.env.GITPOD_DEFINITELY_GP_DISABLED == "true";
+
     readonly daysBeforeGarbageCollection: number = parseInt(process.env.GITPOD_DAYS_BEFORE_GARBAGE_COLLECTION || '14', 10);
     readonly daysBeforeGarbageCollectingPrebuilds: number = parseInt(process.env.GITPOD_DAYS_BEFORE_GARBAGE_COLLECTING_PREBUILDS || '7', 10);
     readonly garbageCollectionStartDate: number = process.env.GITPOD_GARBAGE_COLLECTION_START_DATE ? 
