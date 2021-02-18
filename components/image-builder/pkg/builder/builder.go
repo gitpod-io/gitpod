@@ -97,7 +97,7 @@ func (b *DockerBuilder) Start(ctx context.Context) (err error) {
 	log.WithField("gitpodLayer", b.Config.GitpodLayerLoc).WithField("hash", b.gplayerHash).Info("computed Gitpod layer hash")
 
 	log.WithField("gitpodLayer", b.Config.GitpodLayerLoc).Info("running self-build")
-	ref, err := SelfBuild(ctx, "gitpod.io/image-builder/selfbuild", b.Config.GitpodLayerLoc, b.Docker)
+	ref, err := SelfBuild(ctx, "gitpod.io/image-builder/selfbuild", b.Config.GitpodLayerLoc, b.Config.SelfBuildBaseImage, b.Config.AlpineImage, b.Docker)
 	if err != nil {
 		log.WithError(err).Error("self-build failed")
 		return err
