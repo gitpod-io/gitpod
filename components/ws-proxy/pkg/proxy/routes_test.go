@@ -523,7 +523,7 @@ func TestRoutes(t *testing.T) {
 					"scalable=0, initial-scale=1, minimum-scale=1, width=device-width, height=device-" +
 					"height\">\n    <!-- PWA primary color -->\n    <meta name=\"theme-color\" conten" +
 					"t=\"#000000\">\n    <link rel=\"manifest\" href=\"https://test-domain.com/manife" +
-					"st.json\">\n    <link rel=\"apple-touch-icon\" type=\"image/png\" href=\"https:/" +
+					"st.webmanifest\">\n    <link rel=\"apple-touch-icon\" type=\"image/png\" href=\"https:/" +
 					"/test-domain.com/images/apple-touch-icon.png\" sizes=\"180x180\"/>\n    <link re" +
 					"l=\"icon\" type=\"image/png\" href=\"https://test-domain.com/images/gitpod-196x1" +
 					"96.png\" sizes=\"196x196\"/>\n    <link rel=\"icon\" type=\"image/svg+xml\" href" +
