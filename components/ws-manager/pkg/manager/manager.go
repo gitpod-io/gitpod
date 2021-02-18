@@ -494,11 +494,11 @@ func getPodID(workspaceType, workspaceID string) string {
 }
 
 func getPortsServiceName(servicePrefix string) string {
-	return fmt.Sprintf("ws-%s-ports", strings.TrimSpace(servicePrefix))
+	return fmt.Sprintf("ws-%s-ports", strings.TrimSpace(strings.ToLower(servicePrefix)))
 }
 
 func getTheiaServiceName(servicePrefix string) string {
-	return fmt.Sprintf("ws-%s-theia", strings.TrimSpace(servicePrefix))
+	return fmt.Sprintf("ws-%s-theia", strings.TrimSpace(strings.ToLower(servicePrefix)))
 }
 
 // MarkActive records a workspace as being active which prevents it from timing out
