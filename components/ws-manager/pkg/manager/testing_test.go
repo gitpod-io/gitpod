@@ -52,8 +52,8 @@ func forTestingOnlyGetManager(t *testing.T, objects ...runtime.Object) *Manager 
 					Memory: "1000M",
 				},
 				Requests: ResourceConfiguration{
-					CPU:     "1200m",
-					Memory:  "1300M",
+					CPU:     "899m",
+					Memory:  "999M",
 					Storage: "5Gi",
 				},
 			},
