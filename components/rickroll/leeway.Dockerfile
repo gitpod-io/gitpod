@@ -7,6 +7,7 @@ FROM scratch
 COPY bin /ide/bin
 COPY startup.sh /ide/
 COPY supervisor-ide-config.json  /ide/
+COPY index.html  /ide/
 
 RUN chmod -R ugo+x /ide/bin
 RUN chmod -R ugo+x /ide/startup.sh
