@@ -5133,7 +5133,8 @@ proto.wsman.WorkspaceRuntimeInfo.prototype.toObject = function(opt_includeInstan
 proto.wsman.WorkspaceRuntimeInfo.toObject = function(includeInstance, msg) {
   var f, obj = {
     nodeName: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    podName: jspb.Message.getFieldWithDefault(msg, 2, "")
+    podName: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    nodeIp: jspb.Message.getFieldWithDefault(msg, 3, "")
   };
 
   if (includeInstance) {
@@ -5178,6 +5179,10 @@ proto.wsman.WorkspaceRuntimeInfo.deserializeBinaryFromReader = function(msg, rea
       var value = /** @type {string} */ (reader.readString());
       msg.setPodName(value);
       break;
+    case 3:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setNodeIp(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -5221,6 +5226,13 @@ proto.wsman.WorkspaceRuntimeInfo.serializeBinaryToWriter = function(message, wri
       f
     );
   }
+  f = message.getNodeIp();
+  if (f.length > 0) {
+    writer.writeString(
+      3,
+      f
+    );
+  }
 };
 
 
@@ -5251,6 +5263,21 @@ proto.wsman.WorkspaceRuntimeInfo.prototype.getPodName = function() {
 /** @param {string} value */
 proto.wsman.WorkspaceRuntimeInfo.prototype.setPodName = function(value) {
   jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional string node_ip = 3;
+ * @return {string}
+ */
+proto.wsman.WorkspaceRuntimeInfo.prototype.getNodeIp = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+};
+
+
+/** @param {string} value */
+proto.wsman.WorkspaceRuntimeInfo.prototype.setNodeIp = function(value) {
+  jspb.Message.setProto3StringField(this, 3, value);
 };
 
 

@@ -732,6 +732,9 @@ export class WorkspaceRuntimeInfo extends jspb.Message {
     getPodName(): string;
     setPodName(value: string): WorkspaceRuntimeInfo;
 
+    getNodeIp(): string;
+    setNodeIp(value: string): WorkspaceRuntimeInfo;
+
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceRuntimeInfo.AsObject;
@@ -747,6 +750,7 @@ export namespace WorkspaceRuntimeInfo {
     export type AsObject = {
         nodeName: string,
         podName: string,
+        nodeIp: string,
     }
 }
 
