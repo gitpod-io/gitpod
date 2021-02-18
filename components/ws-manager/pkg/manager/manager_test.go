@@ -73,13 +73,14 @@ func TestControlPort(t *testing.T) {
 				manager.Config.WorkspacePortURLTemplate = "{{ .Host }}:{{ .IngressPort }}"
 			}
 
-			manager.Config.Namespace = ""
+			manager.Config.Namespace = "default"
 			startCtx, err := forTestingOnlyCreateStartWorkspaceContext(manager, fixture.Request.Id, api.WorkspaceType_REGULAR)
 			if err != nil {
 				t.Errorf("cannot create test pod start context; this is a bug in the unit test itself: %v", err)
 				return nil
 			}
 			pod, err := manager.createDefiniteWorkspacePod(startCtx)
+			pod.Namespace = manager.Config.Namespace
 			if err != nil {
 				t.Errorf("cannot create test pod; this is a bug in the unit test itself: %v", err)
 				return nil
