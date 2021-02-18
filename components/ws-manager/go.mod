@@ -28,6 +28,7 @@ require (
 	github.com/imdario/mergo v0.3.10
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/prometheus/client_golang v1.7.1
+	github.com/prometheus/client_model v0.2.0
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/afero v1.2.2
 	github.com/spf13/cobra v1.1.1

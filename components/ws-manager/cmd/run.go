@@ -14,6 +14,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager"
+	wsmanager_metrics "github.com/gitpod-io/gitpod/ws-manager/pkg/metrics"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
@@ -26,6 +27,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/keepalive"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
+	ctrl_metrics "sigs.k8s.io/controller-runtime/pkg/metrics"
 )
 
 // serveCmd represents the serve command
@@ -136,8 +138,14 @@ var runCmd = &cobra.Command{
 				log.WithError(err).Error("Prometheus metrics incomplete")
 			}
 
+			mg := wsmanager_metrics.NewMultiGatherer(reg)
+
+			if reg, ok := ctrl_metrics.Registry.(*prometheus.Registry); ok {
+				mg.AddGatherer(reg)
+			}
+
 			handler := http.NewServeMux()
-			handler.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+			handler.Handle("/metrics", promhttp.HandlerFor(mg, promhttp.HandlerOpts{}))
 
 			go func() {
 				err := http.ListenAndServe(cfg.Prometheus.Addr, handler)
