@@ -11,6 +11,7 @@ mount --make-rshared /
 BASEDOMAIN=${BASEDOMAIN:-}                          # Used as Gitpod domain, `gitpod.` prefix will be added.
 DOMAIN=${DOMAIN:-}                                  # Used as Gitpod ddomain as is.
 REMOVE_NETWORKPOLICIES=${REMOVE_NETWORKPOLICIES:-}  # Remove Gitpod network policies when set to 'true'.
+HELMIMAGE=${HELMIMAGE:-alpine/helm:3.2.4}           # Image that is used for the helm install.
 
 
 mkdir -p /values
@@ -138,6 +139,7 @@ sed 's/^/    /' /values.yaml >> "$GITPOD_HELM_INSTALLER_FILE"
 
 sed -i "s/\$DOMAIN/$DOMAIN/g" "$GITPOD_HELM_INSTALLER_FILE"
 sed -i "s/\$BASEDOMAIN/$BASEDOMAIN/g" "$GITPOD_HELM_INSTALLER_FILE"
+sed -i "s+\$HELMIMAGE+$HELMIMAGE+g" "$GITPOD_HELM_INSTALLER_FILE"
 
 
 
@@ -191,9 +193,9 @@ installation_completed_hook() {
     while [ -z "$(kubectl get pods | grep gitpod-helm-installer | grep Completed)" ]; do sleep 10; done
 
     echo "Removing installer manifest ..."
-    rm -f /var/lib/rancher/k3s/server/manifests/gitpod-helm-installer.yaml
+    rm -f "$1"
 }
-installation_completed_hook &
+installation_completed_hook "$GITPOD_HELM_INSTALLER_FILE" &
 
 
 if [ "$REMOVE_NETWORKPOLICIES" = "true" ]; then
