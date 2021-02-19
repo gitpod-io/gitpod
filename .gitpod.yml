@@ -31,6 +31,7 @@ ports:
 tasks:
   - before: scripts/branch-namespace.sh
     init: yarn --network-timeout 100000 && yarn build
+    command: env
   - name: Go
     init: leeway exec --filter-type go -v -- go get -v ./...
     openMode: split-right
