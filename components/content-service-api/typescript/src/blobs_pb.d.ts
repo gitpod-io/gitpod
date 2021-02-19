@@ -19,6 +19,9 @@ export class UploadUrlRequest extends jspb.Message {
     getName(): string;
     setName(value: string): UploadUrlRequest;
 
+    getContentType(): string;
+    setContentType(value: string): UploadUrlRequest;
+
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): UploadUrlRequest.AsObject;
@@ -34,6 +37,7 @@ export namespace UploadUrlRequest {
     export type AsObject = {
         ownerId: string,
         name: string,
+        contentType: string,
     }
 }
 
@@ -65,6 +69,9 @@ export class DownloadUrlRequest extends jspb.Message {
     getName(): string;
     setName(value: string): DownloadUrlRequest;
 
+    getContentType(): string;
+    setContentType(value: string): DownloadUrlRequest;
+
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DownloadUrlRequest.AsObject;
@@ -80,6 +87,7 @@ export namespace DownloadUrlRequest {
     export type AsObject = {
         ownerId: string,
         name: string,
+        contentType: string,
     }
 }
 

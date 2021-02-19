@@ -791,7 +791,7 @@ func (s *PresignedGCPStorage) DiskUsage(ctx context.Context, bucket string, pref
 }
 
 // SignDownload provides presigned URLs to access remote storage objects
-func (p *PresignedGCPStorage) SignDownload(ctx context.Context, bucket, object string) (*DownloadInfo, error) {
+func (p *PresignedGCPStorage) SignDownload(ctx context.Context, bucket, object string, options *SignedURLOptions) (*DownloadInfo, error) {
 	client, err := newGCPClient(ctx, p.config)
 	if err != nil {
 		return nil, err
@@ -815,7 +815,7 @@ func (p *PresignedGCPStorage) SignDownload(ctx context.Context, bucket, object s
 	if err != nil {
 		return nil, err
 	}
-	res, err := p.downloadInfo(ctx, client, attrs)
+	res, err := p.downloadInfo(ctx, client, attrs, options)
 	if err != nil {
 		return nil, err
 	}
@@ -823,7 +823,7 @@ func (p *PresignedGCPStorage) SignDownload(ctx context.Context, bucket, object s
 	return res, nil
 }
 
-func (p *PresignedGCPStorage) downloadInfo(ctx context.Context, client *gcpstorage.Client, obj *gcpstorage.ObjectAttrs) (*DownloadInfo, error) {
+func (p *PresignedGCPStorage) downloadInfo(ctx context.Context, client *gcpstorage.Client, obj *gcpstorage.ObjectAttrs, options *SignedURLOptions) (*DownloadInfo, error) {
 	meta := &ObjectMeta{
 		ContentType:        obj.ContentType,
 		OCIMediaType:       obj.Metadata[ObjectAnnotationOCIContentType],
@@ -835,6 +835,7 @@ func (p *PresignedGCPStorage) downloadInfo(ctx context.Context, client *gcpstora
 		GoogleAccessID: p.accessID,
 		PrivateKey:     p.privateKey,
 		Expires:        time.Now().Add(30 * time.Minute),
+		ContentType:    options.ContentType,
 	})
 	if err != nil {
 		return nil, err
@@ -848,7 +849,7 @@ func (p *PresignedGCPStorage) downloadInfo(ctx context.Context, client *gcpstora
 }
 
 // SignUpload describes an object for upload
-func (p *PresignedGCPStorage) SignUpload(ctx context.Context, bucket, object string) (info *UploadInfo, err error) {
+func (p *PresignedGCPStorage) SignUpload(ctx context.Context, bucket, object string, options *SignedURLOptions) (info *UploadInfo, err error) {
 	client, err := newGCPClient(ctx, p.config)
 	if err != nil {
 		return nil, err
@@ -869,6 +870,7 @@ func (p *PresignedGCPStorage) SignUpload(ctx context.Context, bucket, object str
 		GoogleAccessID: p.accessID,
 		PrivateKey:     p.privateKey,
 		Expires:        time.Now().Add(30 * time.Minute),
+		ContentType:    options.ContentType,
 	})
 	if err != nil {
 		return nil, err

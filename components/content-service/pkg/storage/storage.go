@@ -61,10 +61,10 @@ type PresignedAccess interface {
 	DiskUsage(ctx context.Context, bucket string, prefix string) (size int64, err error)
 
 	// SignDownload describes an object for download - if the object is not found, ErrNotFound is returned
-	SignDownload(ctx context.Context, bucket, obj string) (info *DownloadInfo, err error)
+	SignDownload(ctx context.Context, bucket, obj string, options *SignedURLOptions) (info *DownloadInfo, err error)
 
 	// SignUpload describes an object for upload
-	SignUpload(ctx context.Context, bucket, obj string) (info *UploadInfo, err error)
+	SignUpload(ctx context.Context, bucket, obj string, options *SignedURLOptions) (info *UploadInfo, err error)
 
 	// DeleteObject deletes objects in the given bucket specified by the given query
 	DeleteObject(ctx context.Context, bucket string, query *DeleteObjectQuery) error
@@ -94,6 +94,14 @@ type UploadInfo struct {
 type DeleteObjectQuery struct {
 	Prefix string
 	Name   string
+}
+
+// SignedURLOptions allows you to restrict the access to the signed URL.
+type SignedURLOptions struct {
+	// ContentType is the content type header the client must provide
+	// to use the generated signed URL.
+	// Optional.
+	ContentType string
 }
 
 // DirectDownloader downloads a snapshot

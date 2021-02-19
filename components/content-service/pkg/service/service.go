@@ -67,7 +67,9 @@ func (cs *ContentService) UploadUrl(ctx context.Context, req *api.UploadUrlReque
 		log.Debug("blob quota disabled")
 	}
 
-	info, err := cs.s.SignUpload(ctx, bucket, blobName)
+	info, err := cs.s.SignUpload(ctx, bucket, blobName, &storage.SignedURLOptions{
+		ContentType: req.ContentType,
+	})
 	if err != nil {
 		log.Error("error getting SignUpload URL: ", err)
 		if err == storage.ErrNotFound {
@@ -93,7 +95,9 @@ func (cs *ContentService) DownloadUrl(ctx context.Context, req *api.DownloadUrlR
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	info, err := cs.s.SignDownload(ctx, cs.s.Bucket(req.OwnerId), blobName)
+	info, err := cs.s.SignDownload(ctx, cs.s.Bucket(req.OwnerId), blobName, &storage.SignedURLOptions{
+		ContentType: req.ContentType,
+	})
 	if err != nil {
 		log.Error("error getting SignDownload URL: ", err)
 		if err == storage.ErrNotFound {
