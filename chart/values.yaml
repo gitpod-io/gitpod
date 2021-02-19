@@ -31,7 +31,7 @@ installation:
   shortname: ""
 license: ""
 installPodSecurityPolicies: true
-imagePullPolicy: Always
+imagePullPolicy: IfNotPresent
 resources:
   default:
     cpu: 100m
@@ -61,7 +61,7 @@ workspaceSizing:
     #     limit: 200
     #
     # if there are no buckets configured, the dynamic CPU limiting is disabled.
-    cpu: 
+    cpu:
       buckets: []
       samplingPeriod: "10s"
       controlPeriod: "15m"
@@ -298,11 +298,11 @@ components:
       http:
         containerPort: 23000
         supervisorPort: 22999
-    defaultImage: 
+    defaultImage:
       imagePrefix: "gitpod/"
       imageName: "workspace-full"
       version: "latest"
-    theiaImage: 
+    theiaImage:
       imageName: "theia-ide"
     codeImage:
       imageName: "ide/code"
@@ -402,7 +402,7 @@ components:
       runtime: containerd
       containerd:
         socket: /run/containerd/containerd.sock
-      nodeRoots: 
+      nodeRoots:
       - /var/lib
       - /run/containerd/io.containerd.runtime.v1.linux/k8s.io
       # On some hosts systems containerd uses different paths to store it's containers in, for example:

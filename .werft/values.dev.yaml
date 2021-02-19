@@ -13,6 +13,7 @@ certificatesSecret:
   keyName: tls.key
 version: not-set
 forceHTTPS: false
+imagePullPolicy: Always
 affinity:
   nodeAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
@@ -41,7 +42,7 @@ components:
 
   registryFacade:
     daemonSet: true
-  
+
   contentService:
     remoteStorage:
       blobQuota: 1073741824 # 1 GiB
@@ -83,7 +84,7 @@ components:
                 cpu: 1m
                 ephemeral-storage: 5Gi
                 memory: 4608Mi  # = 2 * 2304Mi
-  
+
   # Allow per-branch ingress from another, in-cluster proxy
   proxy:
     replicas: 1
