@@ -72,6 +72,12 @@ if [ -d /mnt/nginx/registry-auth ]; then
     cat /mnt/nginx/registry-auth/password | htpasswd -i -c /etc/nginx/registry-auth.htpasswd `cat /mnt/nginx/registry-auth/user`
 fi
 
+if [ -d /mnt/nginx/ssl-dhparam/ ]; then
+    mkdir -p /etc/nginx/ssl-dhparam;
+    cp -RL /mnt/nginx/ssl-dhparam/*.key /etc/nginx/ssl-dhparam/
+    chmod -R +r /etc/nginx/ssl-dh-param
+fi
+
 echo "Using nginx config:"
 find . -name "*.conf"
 

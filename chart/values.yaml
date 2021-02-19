@@ -61,7 +61,7 @@ workspaceSizing:
     #     limit: 200
     #
     # if there are no buckets configured, the dynamic CPU limiting is disabled.
-    cpu: 
+    cpu:
       buckets: []
       samplingPeriod: "10s"
       controlPeriod: "15m"
@@ -298,11 +298,11 @@ components:
       http:
         containerPort: 23000
         supervisorPort: 22999
-    defaultImage: 
+    defaultImage:
       imagePrefix: "gitpod/"
       imageName: "workspace-full"
       version: "latest"
-    theiaImage: 
+    theiaImage:
       imageName: "theia-ide"
     codeImage:
       imageName: "ide/code"
@@ -350,6 +350,7 @@ components:
     dependsOn:
     - "proxy-configmap-nginx.yaml"
     - "server-proxy-apikey-secret.yaml"
+    - "server-proxy-ssl-dhparam.yaml"
     ports:
       http:
         expose: true
@@ -367,6 +368,10 @@ components:
     certbot:
       enabled: false
       email: "certificate@your-domain.com"
+    # A base64ed Diffie-Hellman parameter
+    # This can be generated with: openssl dhparam 4096 2> /dev/null | base64 -w 0
+    # http://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_dhparam
+    sslDHParam:
 
   wsManager:
     name: "ws-manager"
@@ -402,7 +407,7 @@ components:
       runtime: containerd
       containerd:
         socket: /run/containerd/containerd.sock
-      nodeRoots: 
+      nodeRoots:
       - /var/lib
       - /run/containerd/io.containerd.runtime.v1.linux/k8s.io
       # On some hosts systems containerd uses different paths to store it's containers in, for example:
