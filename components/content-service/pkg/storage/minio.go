@@ -306,7 +306,7 @@ func (s *presignedMinIOStorage) DiskUsage(ctx context.Context, bucket string, pr
 	return total, nil
 }
 
-func (s *presignedMinIOStorage) SignDownload(ctx context.Context, bucket, object string) (info *DownloadInfo, err error) {
+func (s *presignedMinIOStorage) SignDownload(ctx context.Context, bucket, object string, options *SignedURLOptions) (info *DownloadInfo, err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.SignDownload")
 	defer func() {
@@ -345,7 +345,7 @@ func (s *presignedMinIOStorage) SignDownload(ctx context.Context, bucket, object
 }
 
 // SignUpload describes an object for upload
-func (s *presignedMinIOStorage) SignUpload(ctx context.Context, bucket, obj string) (info *UploadInfo, err error) {
+func (s *presignedMinIOStorage) SignUpload(ctx context.Context, bucket, obj string, options *SignedURLOptions) (info *UploadInfo, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.SignUpload")
 	defer func() {
 		if err == ErrNotFound {

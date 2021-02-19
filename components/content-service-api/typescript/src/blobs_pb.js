@@ -1,11 +1,11 @@
 /**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
- * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
- */
+* Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+* Licensed under the GNU Affero General Public License (AGPL).
+* See License-AGPL.txt in the project root for license information.
+*/
 
 /**
- * @fileoverview
+* @fileoverview
  * @enhanceable
  * @suppress {messageConventions} JS Compiler reports an error if a variable or
  *     field starts with 'MSG_' and isn't a translatable message.
@@ -180,7 +180,8 @@ proto.contentservice.UploadUrlRequest.prototype.toObject = function(opt_includeI
 proto.contentservice.UploadUrlRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     ownerId: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    name: jspb.Message.getFieldWithDefault(msg, 2, "")
+    name: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    contentType: jspb.Message.getFieldWithDefault(msg, 3, "")
   };
 
   if (includeInstance) {
@@ -225,6 +226,10 @@ proto.contentservice.UploadUrlRequest.deserializeBinaryFromReader = function(msg
       var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
+    case 3:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setContentType(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -268,6 +273,13 @@ proto.contentservice.UploadUrlRequest.serializeBinaryToWriter = function(message
       f
     );
   }
+  f = message.getContentType();
+  if (f.length > 0) {
+    writer.writeString(
+      3,
+      f
+    );
+  }
 };
 
 
@@ -298,6 +310,21 @@ proto.contentservice.UploadUrlRequest.prototype.getName = function() {
 /** @param {string} value */
 proto.contentservice.UploadUrlRequest.prototype.setName = function(value) {
   jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional string content_type = 3;
+ * @return {string}
+ */
+proto.contentservice.UploadUrlRequest.prototype.getContentType = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+};
+
+
+/** @param {string} value */
+proto.contentservice.UploadUrlRequest.prototype.setContentType = function(value) {
+  jspb.Message.setProto3StringField(this, 3, value);
 };
 
 
@@ -457,7 +484,8 @@ proto.contentservice.DownloadUrlRequest.prototype.toObject = function(opt_includ
 proto.contentservice.DownloadUrlRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     ownerId: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    name: jspb.Message.getFieldWithDefault(msg, 2, "")
+    name: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    contentType: jspb.Message.getFieldWithDefault(msg, 3, "")
   };
 
   if (includeInstance) {
@@ -502,6 +530,10 @@ proto.contentservice.DownloadUrlRequest.deserializeBinaryFromReader = function(m
       var value = /** @type {string} */ (reader.readString());
       msg.setName(value);
       break;
+    case 3:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setContentType(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -545,6 +577,13 @@ proto.contentservice.DownloadUrlRequest.serializeBinaryToWriter = function(messa
       f
     );
   }
+  f = message.getContentType();
+  if (f.length > 0) {
+    writer.writeString(
+      3,
+      f
+    );
+  }
 };
 
 
@@ -575,6 +614,21 @@ proto.contentservice.DownloadUrlRequest.prototype.getName = function() {
 /** @param {string} value */
 proto.contentservice.DownloadUrlRequest.prototype.setName = function(value) {
   jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional string content_type = 3;
+ * @return {string}
+ */
+proto.contentservice.DownloadUrlRequest.prototype.getContentType = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+};
+
+
+/** @param {string} value */
+proto.contentservice.DownloadUrlRequest.prototype.setContentType = function(value) {
+  jspb.Message.setProto3StringField(this, 3, value);
 };
 
 

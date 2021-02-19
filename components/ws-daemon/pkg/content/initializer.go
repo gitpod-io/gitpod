@@ -56,7 +56,7 @@ var (
 func collectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps storage.PresignedAccess, workspaceOwner string, initializer *csapi.WorkspaceInitializer) (rc map[string]storage.DownloadInfo, err error) {
 	rc = make(map[string]storage.DownloadInfo)
 
-	backup, err := ps.SignDownload(ctx, rs.Bucket(workspaceOwner), rs.BackupObject(storage.DefaultBackup))
+	backup, err := ps.SignDownload(ctx, rs.Bucket(workspaceOwner), rs.BackupObject(storage.DefaultBackup), &storage.SignedURLOptions{})
 	if err == storage.ErrNotFound {
 		// no backup found - that's fine
 	} else if err != nil {
@@ -70,7 +70,7 @@ func collectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps stora
 		if err != nil {
 			return nil, err
 		}
-		info, err := ps.SignDownload(ctx, bkt, obj)
+		info, err := ps.SignDownload(ctx, bkt, obj, &storage.SignedURLOptions{})
 		if err == storage.ErrNotFound {
 			return nil, errCannotFindSnapshot
 		}
@@ -85,7 +85,7 @@ func collectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps stora
 		if err != nil {
 			return nil, err
 		}
-		info, err := ps.SignDownload(ctx, bkt, obj)
+		info, err := ps.SignDownload(ctx, bkt, obj, &storage.SignedURLOptions{})
 		if err == storage.ErrNotFound {
 			// no prebuild found - that's fine
 		} else if err != nil {

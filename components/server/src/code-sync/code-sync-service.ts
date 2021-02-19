@@ -66,7 +66,7 @@ export class CodeSyncService {
                 res.sendStatus(204);
                 return;
             }
-            
+
             const id = req.user.id;
             increaseApiCallUserCounter(accessCodeSyncStorage, id);
             try {
@@ -135,12 +135,18 @@ export class CodeSyncService {
                 return;
             }
 
+            const contentType = req.headers['content-type'] || '*/*';
             const request = new DownloadUrlRequest();
             request.setOwnerId(req.user.id);
             request.setName(toObjectName(resourceKey, resource.rev));
+            request.setContentType(contentType);
             try {
                 const urlResponse = await util.promisify<DownloadUrlRequest, DownloadUrlResponse>(this.blobs.downloadUrl.bind(this.blobs))(request);
-                const response = await fetch(urlResponse.getUrl());
+                const response = await fetch(urlResponse.getUrl(), {
+                    headers: {
+                        'content-type': contentType
+                    }
+                });
                 if (response.status !== 200) {
                     throw new Error(`code sync: blob service: download failed with ${response.status} ${response.statusText}`);
                 }
@@ -172,10 +178,12 @@ export class CodeSyncService {
             const revLimit = codeSyncConfig.resources?.[resourceKey]?.revLimit || codeSyncConfig?.revLimit || defautltRevLimit;
             const userId = req.user.id;
             let oldObject: string | undefined;
+            const contentType = req.headers['content-type'] || '*/*';
             const rev = await this.db.insert(userId, resourceKey, async (rev, oldRev) => {
                 const request = new UploadUrlRequest();
                 request.setOwnerId(userId);
                 request.setName(toObjectName(resourceKey, rev));
+                request.setContentType(contentType);
                 const urlResponse = await util.promisify<UploadUrlRequest, UploadUrlResponse>(this.blobs.uploadUrl.bind(this.blobs))(request);
                 const url = urlResponse.getUrl();
                 const content = req.body as string;
@@ -184,7 +192,7 @@ export class CodeSyncService {
                     body: content,
                     headers: {
                         'content-length': req.headers['content-length'] || String(content.length),
-                        'content-type': req.headers['content-type'] || 'text/plain'
+                        'content-type': contentType
                     }
                 });
                 if (response.status !== 200) {

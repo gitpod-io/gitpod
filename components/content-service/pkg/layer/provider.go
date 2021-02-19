@@ -69,7 +69,7 @@ func (s *Provider) downloadContentManifest(ctx context.Context, bkt, obj string)
 		}
 	}()
 
-	info, err = s.Storage.SignDownload(ctx, bkt, obj)
+	info, err = s.Storage.SignDownload(ctx, bkt, obj, &storage.SignedURLOptions{})
 	if err != nil {
 		return
 	}
@@ -151,7 +151,7 @@ func (s *Provider) GetContentLayer(ctx context.Context, owner, workspaceID strin
 
 	// check if legacy workspace backup is present
 	var layer *Layer
-	info, err := s.Storage.SignDownload(ctx, bucket, fmt.Sprintf(fmtLegacyBackupName, workspaceID))
+	info, err := s.Storage.SignDownload(ctx, bucket, fmt.Sprintf(fmtLegacyBackupName, workspaceID), &storage.SignedURLOptions{})
 	if err != nil && !xerrors.Is(err, storage.ErrNotFound) {
 		return nil, nil, err
 	}
@@ -315,7 +315,7 @@ func (s *Provider) layerFromContentManifest(ctx context.Context, mf *csapi.Works
 	// we have a valid full workspace backup
 	l = make([]Layer, len(mf.Layers))
 	for i, mfl := range mf.Layers {
-		info, err := s.Storage.SignDownload(ctx, mfl.Bucket, mfl.Object)
+		info, err := s.Storage.SignDownload(ctx, mfl.Bucket, mfl.Object, &storage.SignedURLOptions{})
 		if err != nil {
 			return nil, err
 		}

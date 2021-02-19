@@ -22,6 +22,7 @@ service BlobService {
 message UploadUrlRequest {
   string owner_id = 1;
   string name = 2;
+  string content_type = 3;
 }
 
 message UploadUrlResponse {
@@ -32,6 +33,7 @@ message UploadUrlResponse {
 message DownloadUrlRequest {
   string owner_id = 1;
   string name = 2;
+  string content_type = 3;
 }
 
 message DownloadUrlResponse {

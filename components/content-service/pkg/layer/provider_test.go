@@ -223,7 +223,7 @@ func (s *testStorage) DiskUsage(ctx context.Context, bucket string, prefix strin
 	return 0, nil
 }
 
-func (s *testStorage) SignDownload(ctx context.Context, bucket, obj string) (info *storage.DownloadInfo, err error) {
+func (s *testStorage) SignDownload(ctx context.Context, bucket, obj string, options *storage.SignedURLOptions) (info *storage.DownloadInfo, err error) {
 	info, ok := s.Objs[obj]
 	if !ok || info == nil {
 		return nil, storage.ErrNotFound
@@ -231,7 +231,7 @@ func (s *testStorage) SignDownload(ctx context.Context, bucket, obj string) (inf
 	return info, nil
 }
 
-func (s *testStorage) SignUpload(ctx context.Context, bucket, obj string) (info *storage.UploadInfo, err error) {
+func (s *testStorage) SignUpload(ctx context.Context, bucket, obj string, options *storage.SignedURLOptions) (info *storage.UploadInfo, err error) {
 	return nil, nil
 }
 
