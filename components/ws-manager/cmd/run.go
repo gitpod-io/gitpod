@@ -14,6 +14,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager"
+	kubestate "github.com/gitpod-io/gitpod/ws-manager/pkg/manager/state"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
@@ -55,7 +56,11 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal("invalid content provider configuration")
 		}
 
-		mgmt, err := manager.New(cfg.Manager, clientset, cp)
+		// TODO: check if resync is required. Usually, is not a good idea to force a full resync
+		kubernetesState := kubestate.NewStateHolder(cfg.Manager.Namespace, 0, clientset)
+		kubernetesState.Run(ctx.Done())
+
+		mgmt, err := manager.New(cfg.Manager, clientset, cp, kubernetesState)
 		if err != nil {
 			log.WithError(err).Fatal("cannot create manager")
 		}

@@ -27,6 +27,7 @@ import (
 	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/grpcpool"
+	kubestate "github.com/gitpod-io/gitpod/ws-manager/pkg/manager/state"
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/opentracing/opentracing-go"
@@ -47,10 +48,11 @@ import (
 
 // Manager is a kubernetes backed implementation of a workspace manager
 type Manager struct {
-	Config    Configuration
-	Clientset kubernetes.Interface
-	Content   *layer.Provider
-	OnChange  func(context.Context, *api.WorkspaceStatus)
+	Config      Configuration
+	Clientset   kubernetes.Interface
+	StateHolder kubestate.Storer
+	Content     *layer.Provider
+	OnChange    func(context.Context, *api.WorkspaceStatus)
 
 	activity     map[string]time.Time
 	activityLock sync.Mutex
@@ -109,7 +111,7 @@ const (
 )
 
 // New creates a new workspace manager
-func New(config Configuration, clientset kubernetes.Interface, cp *layer.Provider) (*Manager, error) {
+func New(config Configuration, clientset kubernetes.Interface, cp *layer.Provider, sh kubestate.Storer) (*Manager, error) {
 	ingressPortAllocator, err := NewIngressPortAllocator(config.IngressPortAllocator, clientset, config.Namespace, config.WorkspacePortURLTemplate, config.GitpodHostURL)
 	if err != nil {
 		return nil, xerrors.Errorf("error initializing IngressPortAllocator: %w", err)
@@ -124,6 +126,7 @@ func New(config Configuration, clientset kubernetes.Interface, cp *layer.Provide
 		subscribers:          make(map[string]chan *api.SubscribeResponse),
 		wsdaemonPool:         grpcpool.New(wsdaemonConnfactory),
 		ingressPortAllocator: ingressPortAllocator,
+		StateHolder:          sh,
 	}
 	m.metrics = newMetrics(m)
 	m.OnChange = m.onChange
@@ -468,23 +471,24 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 
 // findWorkspacePod finds the pod for a workspace
 func (m *Manager) findWorkspacePod(ctx context.Context, workspaceID string) (*corev1.Pod, error) {
-	client := m.Clientset.CoreV1()
-	pods, err := client.Pods(m.Config.Namespace).List(ctx, metav1.ListOptions{
+	pods, err := m.StateHolder.PodsWithListOptions(metav1.ListOptions{
 		LabelSelector: fmt.Sprintf("workspaceID=%s", workspaceID),
 	})
 	if err != nil {
 		return nil, err
 	}
-	if len(pods.Items) == 0 {
+
+	if len(pods) == 0 {
 		return nil, &k8serr.StatusError{ErrStatus: metav1.Status{
 			Code:    http.StatusNotFound,
 			Message: fmt.Sprintf("pod for workspace %s not found", workspaceID),
 		}}
 	}
-	if len(pods.Items) > 1 {
-		return nil, xerrors.Errorf("found %d candidates for workspace %s", len(pods.Items), workspaceID)
+	if len(pods) > 1 {
+		return nil, xerrors.Errorf("found %d candidates for workspace %s", len(pods), workspaceID)
 	}
-	return &pods.Items[0], nil
+
+	return pods[0], nil
 }
 
 // getPodID computes the pod ID from a workpace ID
@@ -561,16 +565,13 @@ func (m *Manager) getWorkspaceActivity(workspaceID string) *time.Time {
 
 // markAllWorkspacesActive marks all existing workspaces as active (as if MarkActive had been called for each of them)
 func (m *Manager) markAllWorkspacesActive() error {
-	ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
-	defer cancel()
-
-	pods, err := m.Clientset.CoreV1().Pods(m.Config.Namespace).List(ctx, workspaceObjectListOptions())
+	pods, err := m.StateHolder.PodsWithListOptions(workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("markAllWorkspacesActive: %w", err)
 	}
 
 	m.activityLock.Lock()
-	for _, pod := range pods.Items {
+	for _, pod := range pods {
 		wsid, ok := pod.Annotations[workspaceIDAnnotation]
 		if !ok {
 			log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Warnf("pod %s has no %s annotation - cannot mark it active", pod.Name, workspaceIDAnnotation)
@@ -628,7 +629,7 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 	port := int32(req.Spec.Port)
 	// get ports service if it exists
 	client := m.Clientset.CoreV1()
-	service, err = client.Services(m.Config.Namespace).Get(ctx, getPortsServiceName(servicePrefix), metav1.GetOptions{})
+	service, err = m.StateHolder.GetService(getPortsServiceName(servicePrefix))
 	if isKubernetesObjNotFoundError(err) {
 		if !req.Expose {
 			// we're not asked to expose the port so there's nothing left to do here
@@ -1030,17 +1031,15 @@ func (m *Manager) getAllWorkspaceObjects(ctx context.Context) (result []workspac
 	span, ctx := tracing.FromContext(ctx, "getAllWorkspaceObjects")
 	defer tracing.FinishSpan(span, &err)
 
-	// Note: if we ever face performance issues with our constant querying of Kubernetes, we could use the reflector
-	//       which mirrors the server-side content (see https://github.com/kubernetes/client-go/blob/master/tools/cache/reflector.go).
-	pods, err := m.Clientset.CoreV1().Pods(m.Config.Namespace).List(ctx, workspaceObjectListOptions())
+	pods, err := m.StateHolder.PodsWithListOptions(workspaceObjectListOptions())
 	if err != nil {
 		return nil, xerrors.Errorf("cannot list workspaces: %w", err)
 	}
-	plis, err := m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).List(ctx, workspaceObjectListOptions())
+	plis, err := m.StateHolder.ConfigMapsWithListOptions(workspaceObjectListOptions())
 	if err != nil {
 		return nil, xerrors.Errorf("cannot list workspaces: %w", err)
 	}
-	services, err := m.Clientset.CoreV1().Services(m.Config.Namespace).List(ctx, workspaceObjectListOptions())
+	services, err := m.StateHolder.ServicesWithListOptions(workspaceObjectListOptions())
 	if err != nil {
 		return nil, xerrors.Errorf("cannot list services: %w", err)
 	}
@@ -1050,7 +1049,7 @@ func (m *Manager) getAllWorkspaceObjects(ctx context.Context) (result []workspac
 		theiaServiceIndex = make(map[string]*workspaceObjects)
 		portServiceIndex  = make(map[string]*workspaceObjects)
 	)
-	for _, pod := range pods.Items {
+	for _, pod := range pods {
 		id, ok := pod.Annotations[workspaceIDAnnotation]
 		if !ok {
 			log.WithField("pod", pod.Name).Warn("pod has no workspace ID")
@@ -1061,7 +1060,7 @@ func (m *Manager) getAllWorkspaceObjects(ctx context.Context) (result []workspac
 
 		// don't references to loop variables - they magically change their value
 		podcopy := pod
-		wso := &workspaceObjects{Pod: &podcopy}
+		wso := &workspaceObjects{Pod: podcopy}
 
 		wsoIndex[id] = wso
 		if sp, ok := pod.Annotations[servicePrefixAnnotation]; ok {
@@ -1069,7 +1068,7 @@ func (m *Manager) getAllWorkspaceObjects(ctx context.Context) (result []workspac
 			portServiceIndex[getPortsServiceName(sp)] = wso
 		}
 	}
-	for _, plis := range plis.Items {
+	for _, plis := range plis {
 		id, ok := plis.Annotations[workspaceIDAnnotation]
 		if !ok {
 			log.WithField("configmap", plis.Name).Warn("PLIS has no workspace ID")
@@ -1086,19 +1085,19 @@ func (m *Manager) getAllWorkspaceObjects(ctx context.Context) (result []workspac
 			wso = &workspaceObjects{}
 			wsoIndex[id] = wso
 		}
-		wso.PLIS = &pliscopy
+		wso.PLIS = pliscopy
 	}
 
-	for _, service := range services.Items {
+	for _, service := range services {
 		// don't references to loop variables - they magically change their value
 		serviceCopy := service
 
 		if wso, ok := theiaServiceIndex[service.Name]; ok {
-			wso.TheiaService = &serviceCopy
+			wso.TheiaService = serviceCopy
 			continue
 		}
 		if wso, ok := portServiceIndex[service.Name]; ok {
-			wso.PortsService = &serviceCopy
+			wso.PortsService = serviceCopy
 			continue
 		}
 	}

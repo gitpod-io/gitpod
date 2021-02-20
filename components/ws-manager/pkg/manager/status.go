@@ -221,9 +221,8 @@ func (m *Manager) completeWorkspaceObjects(ctx context.Context, wso *workspaceOb
 	if servicePrefix == "" {
 		return xerrors.Errorf("completeWorkspaceObjects: no service prefix found")
 	}
-	serviceClient := m.Clientset.CoreV1().Services(m.Config.Namespace)
 	if wso.TheiaService == nil {
-		service, err := serviceClient.Get(ctx, getTheiaServiceName(servicePrefix), metav1.GetOptions{})
+		service, err := m.StateHolder.GetService(getTheiaServiceName(servicePrefix))
 		if err == nil {
 			wso.TheiaService = service
 		}
@@ -233,7 +232,7 @@ func (m *Manager) completeWorkspaceObjects(ctx context.Context, wso *workspaceOb
 		}
 	}
 	if wso.PortsService == nil {
-		service, err := serviceClient.Get(ctx, getPortsServiceName(servicePrefix), metav1.GetOptions{})
+		service, err := m.StateHolder.GetService(getPortsServiceName(servicePrefix))
 		if err == nil {
 			wso.PortsService = service
 		}
@@ -263,7 +262,7 @@ func (m *Manager) completeWorkspaceObjects(ctx context.Context, wso *workspaceOb
 			return fmt.Errorf("cannot act on pod %s: has no %s annotation", wso.Pod.Name, workspaceIDAnnotation)
 		}
 
-		plis, err := m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Get(ctx, getPodLifecycleIndependentCfgMapName(workspaceID), metav1.GetOptions{})
+		plis, err := m.StateHolder.GetConfigMap(getPodLifecycleIndependentCfgMapName(workspaceID))
 		if !isKubernetesObjNotFoundError(err) && err != nil {
 			return xerrors.Errorf("completeWorkspaceObjects: %w", err)
 		}

@@ -7,10 +7,11 @@ package manager
 import (
 	"context"
 	"encoding/json"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"strings"
 	"time"
+
+	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/ws-manager/api"
 
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
@@ -189,7 +190,7 @@ func (m *Manager) patchPodLifecycleIndependentState(ctx context.Context, workspa
 		ctx, cancel := context.WithTimeout(ctx, kubernetesOperationTimeout)
 		defer cancel()
 
-		plisCfg, err := m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Get(ctx, getPodLifecycleIndependentCfgMapName(workspaceID), metav1.GetOptions{})
+		plisCfg, err := m.StateHolder.GetConfigMap(getPodLifecycleIndependentCfgMapName(workspaceID))
 		if isKubernetesObjNotFoundError(err) {
 			return xerrors.Errorf("workspace %s has no pod lifecycle independent state", workspaceID)
 		}
