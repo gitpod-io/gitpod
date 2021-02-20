@@ -7,9 +7,12 @@ package manager
 import (
 	"context"
 	"testing"
+	"time"
 
 	ctesting "github.com/gitpod-io/gitpod/common-go/testing"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
+	kubestate "github.com/gitpod-io/gitpod/ws-manager/pkg/manager/state"
+
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -73,38 +76,61 @@ func TestControlPort(t *testing.T) {
 				manager.Config.WorkspacePortURLTemplate = "{{ .Host }}:{{ .IngressPort }}"
 			}
 
-			manager.Config.Namespace = ""
+			clientset := fakek8s.NewSimpleClientset()
+			manager.Clientset = clientset
+			manager.Config.Namespace = "default"
+
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			stateHolder := kubestate.NewStateHolder(manager.Config.Namespace, 0, manager.Clientset)
+			stateHolder.Run(ctx.Done())
+
+			manager.StateHolder = stateHolder
+
 			startCtx, err := forTestingOnlyCreateStartWorkspaceContext(manager, fixture.Request.Id, api.WorkspaceType_REGULAR)
 			if err != nil {
 				t.Errorf("cannot create test pod start context; this is a bug in the unit test itself: %v", err)
 				return nil
 			}
+
 			pod, err := manager.createDefiniteWorkspacePod(startCtx)
 			if err != nil {
 				t.Errorf("cannot create test pod; this is a bug in the unit test itself: %v", err)
 				return nil
 			}
-			state := []runtime.Object{pod}
-			if fixture.PortsService != nil {
-				state = append(state, fixture.PortsService)
+
+			_, err = clientset.CoreV1().Pods(manager.Config.Namespace).Create(context.Background(), pod, metav1.CreateOptions{})
+			if err != nil {
+				t.Errorf("cannot create pod: %v", err)
+				return nil
 			}
 
+			if fixture.PortsService != nil {
+				_, err = clientset.CoreV1().Services(manager.Config.Namespace).Create(context.Background(), fixture.PortsService, metav1.CreateOptions{})
+				if err != nil {
+					t.Errorf("cannot create service: %v", err)
+					return nil
+				}
+			}
+
+			time.Sleep(100 * time.Millisecond)
+
 			var result gold
-			manager.Clientset = fakek8s.NewSimpleClientset(state...)
 			manager.OnChange = func(ctx context.Context, status *api.WorkspaceStatus) {
 				result.PostChangeStatus = status.Spec.ExposedPorts
 			}
+
 			resp, err := manager.ControlPort(context.Background(), &fixture.Request)
 			if err != nil {
 				result.Error = err.Error()
 				return &result
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
-			defer cancel()
+			time.Sleep(100 * time.Millisecond)
 
 			result.Response = resp
-			result.PortsService, _ = manager.Clientset.CoreV1().Services(manager.Config.Namespace).Get(ctx, getPortsServiceName(startCtx.Request.ServicePrefix), metav1.GetOptions{})
+			result.PortsService, _ = manager.StateHolder.GetService(getPortsServiceName(startCtx.Request.ServicePrefix))
 
 			return &result
 		},
@@ -139,6 +165,15 @@ func TestGetWorkspaces(t *testing.T) {
 			}
 
 			manager := forTestingOnlyGetManager(t, obj...)
+
+			ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
+			defer cancel()
+
+			stateHolder := kubestate.NewStateHolder(manager.Config.Namespace, 0, manager.Clientset)
+			stateHolder.Run(ctx.Done())
+
+			manager.StateHolder = stateHolder
+
 			resp, err := manager.GetWorkspaces(context.Background(), &api.GetWorkspacesRequest{})
 
 			var result gold
@@ -217,6 +252,14 @@ func TestFindWorkspacePod(t *testing.T) {
 				objs = append(objs, pod)
 			}
 			manager.Clientset = fakek8s.NewSimpleClientset(objs...)
+
+			ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
+			defer cancel()
+
+			stateHolder := kubestate.NewStateHolder(manager.Config.Namespace, 0, manager.Clientset)
+			stateHolder.Run(ctx.Done())
+
+			manager.StateHolder = stateHolder
 
 			p, err := manager.findWorkspacePod(context.Background(), test.WorkspaceID)
 

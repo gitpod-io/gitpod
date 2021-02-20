@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/gitpod-io/gitpod/ws-manager/api"
+	kubestate "github.com/gitpod-io/gitpod/ws-manager/pkg/manager/state"
 	fakek8s "k8s.io/client-go/kubernetes/fake"
 )
 
@@ -48,6 +49,14 @@ func TestMarkWorkspace(t *testing.T) {
 				pod.Annotations[k] = v
 			}
 			manager.Clientset = fakek8s.NewSimpleClientset(pod)
+
+			ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
+			defer cancel()
+
+			stateHolder := kubestate.NewStateHolder(manager.Config.Namespace, 0, manager.Clientset)
+			stateHolder.Run(ctx.Done())
+
+			manager.StateHolder = stateHolder
 
 			err = manager.markWorkspace(context.Background(), startCtx.Request.Id, test.Operations...)
 			if err != nil && err.Error() != test.ExpectedErr {

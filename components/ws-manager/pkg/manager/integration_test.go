@@ -25,6 +25,7 @@ import (
 	wsdaemon_mock "github.com/gitpod-io/gitpod/ws-daemon/api/mock"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/grpcpool"
+	kubestate "github.com/gitpod-io/gitpod/ws-manager/pkg/manager/state"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/test"
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/ptypes"
@@ -97,7 +98,11 @@ func forIntegrationTestGetManager(t *testing.T) *Manager {
 		EventTraceLog: fmt.Sprintf("/tmp/evts-%x.json", sha256.Sum256([]byte(t.Name()))),
 	}
 
-	m, err := New(config, client, &layer.Provider{Storage: &storage.PresignedNoopStorage{}})
+	ctx := context.Background()
+	kubernetesState := kubestate.NewStateHolder(config.Namespace, 0, client)
+	kubernetesState.Run(ctx.Done())
+
+	m, err := New(config, client, &layer.Provider{Storage: &storage.PresignedNoopStorage{}}, kubernetesState)
 	if err != nil {
 		t.Fatalf("cannot create manager: %s", err.Error())
 	}
