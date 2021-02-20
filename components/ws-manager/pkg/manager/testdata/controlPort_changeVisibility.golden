@@ -2,6 +2,7 @@
     "portsService": {
         "metadata": {
             "name": "ws-serviceprefix-ports",
+            "namespace": "default",
             "creationTimestamp": null,
             "labels": {
                 "gpwsman": "true",
