@@ -11,6 +11,7 @@ import (
 
 	ctesting "github.com/gitpod-io/gitpod/common-go/testing"
 	"github.com/gitpod-io/gitpod/common-go/util"
+	kubestate "github.com/gitpod-io/gitpod/ws-manager/pkg/manager/state"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -64,6 +65,14 @@ func TestDeleteDanglingPodLifecycleIndependentState(t *testing.T) {
 			}
 			manager := forTestingOnlyGetManager(t, objs...)
 
+			ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
+			defer cancel()
+
+			stateHolder := kubestate.NewStateHolder(manager.Config.Namespace, 0, manager.Clientset)
+			stateHolder.Run(ctx.Done())
+
+			manager.StateHolder = stateHolder
+
 			monitor, err := manager.CreateMonitor()
 			if err != nil {
 				return &gold{Error: err.Error()}
@@ -84,13 +93,9 @@ func TestDeleteDanglingPodLifecycleIndependentState(t *testing.T) {
 				return &gold{Error: err.Error()}
 			}
 
-			cms, err := manager.Clientset.CoreV1().ConfigMaps(manager.Config.Namespace).List(context.Background(), metav1.ListOptions{})
-			if err != nil {
-				panic(err)
-			}
-
-			r := make([]string, len(cms.Items))
-			for i, c := range cms.Items {
+			cms := manager.StateHolder.ConfigMaps()
+			r := make([]string, len(cms))
+			for i, c := range cms {
 				r[i] = c.Name
 			}
 

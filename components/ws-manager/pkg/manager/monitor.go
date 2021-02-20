@@ -25,11 +25,13 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
-	"github.com/gitpod-io/gitpod/ws-manager/pkg/internal/util"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/tools/cache"
 
 	"github.com/alecthomas/repr"
 	"github.com/golang/protobuf/proto"
@@ -69,13 +71,10 @@ type Monitor struct {
 	startup time.Time
 
 	manager   *Manager
-	podwatch  watch.Interface
-	cfgwatch  watch.Interface
 	eventpool *workpool.EventWorkerPool
 	ticker    *time.Ticker
 
-	doShutdown  util.AtomicBool
-	didShutdown chan bool
+	doShutdown chan bool
 
 	inPhaseSpans     map[string]opentracing.Span
 	inPhaseSpansLock sync.Mutex
@@ -109,7 +108,7 @@ func (m *Manager) CreateMonitor() (*Monitor, error) {
 		probeMap:         make(map[string]context.CancelFunc),
 		initializerMap:   make(map[string]struct{}),
 		finalizerMap:     make(map[string]context.CancelFunc),
-		didShutdown:      make(chan bool, 1),
+		doShutdown:       make(chan bool, 1),
 		headlessListener: NewHeadlessListener(m.Clientset, m.Config.Namespace),
 
 		OnError: func(err error) {
@@ -125,27 +124,89 @@ func (m *Manager) CreateMonitor() (*Monitor, error) {
 	}
 	res.eventpool = workpool.NewEventWorkerPool(res.handleEvent)
 
+	m.StateHolder.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			if !shouldNotifyEvent(obj) {
+				return
+			}
+
+			res.enqueueEvent(watch.Event{
+				Type:   watch.Added,
+				Object: obj.(runtime.Object),
+			})
+		},
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			if reflect.DeepEqual(oldObj, newObj) {
+				return
+			}
+
+			if !shouldNotifyEvent(newObj) {
+				return
+			}
+
+			res.enqueueEvent(watch.Event{
+				Type:   watch.Modified,
+				Object: newObj.(runtime.Object),
+			})
+		},
+		DeleteFunc: func(obj interface{}) {
+			ro, ok := obj.(runtime.Object)
+
+			if !ok {
+				tombstone, ok := obj.(cache.DeletedFinalStateUnknown)
+				if !ok {
+					utilruntime.HandleError(fmt.Errorf("couldn't get object from tombstone %+v", obj))
+					return
+				}
+
+				_, ok = tombstone.Obj.(runtime.Object)
+				if !ok {
+					utilruntime.HandleError(fmt.Errorf("tombstone contained object that is not a vc %+v", obj))
+					return
+				}
+
+				return
+			}
+
+			if !shouldNotifyEvent(obj) {
+				return
+			}
+
+			_, err := cache.DeletionHandlingMetaNamespaceKeyFunc(obj)
+			if err != nil {
+				utilruntime.HandleError(err)
+				return
+			}
+
+			res.enqueueEvent(watch.Event{
+				Type:   watch.Deleted,
+				Object: ro,
+			})
+		},
+	})
+
 	return &res, nil
 }
 
-func (m *Monitor) connectToPodWatch() error {
-	podwatch, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).Watch(context.Background(), workspaceObjectListOptions())
-	if err != nil {
-		return xerrors.Errorf("cannot watch pods: %w", err)
+func shouldNotifyEvent(obj interface{}) bool {
+	switch obj.(type) {
+	case *corev1.Pod:
+		return containsWorkspaceAnnotaion(obj)
+	case *corev1.ConfigMap:
+		return containsWorkspaceAnnotaion(obj)
+	default:
+		return false
 	}
-
-	m.podwatch = podwatch
-	return nil
 }
 
-func (m *Monitor) connectToConfigMapWatch() error {
-	cfgwatch, err := m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).Watch(context.Background(), workspaceObjectListOptions())
-	if err != nil {
-		return xerrors.Errorf("cannot watch config maps: %w", err)
+func containsWorkspaceAnnotaion(obj interface{}) bool {
+	ro, ok := obj.(metav1.ObjectMetaAccessor)
+	if !ok {
+		return false
 	}
 
-	m.cfgwatch = cfgwatch
-	return nil
+	_, hasAnnotation := ro.GetObjectMeta().GetAnnotations()[workspaceIDAnnotation]
+	return hasAnnotation
 }
 
 // Start starts up the monitor which will check the overall workspace state (on event or periodically).
@@ -155,121 +216,53 @@ func (m *Monitor) Start() error {
 	m.startup = time.Now().UTC()
 
 	m.eventpool.Start(eventpoolWorkers)
-	err := m.connectToPodWatch()
-	if err != nil {
-		return xerrors.Errorf("cannot start workspace monitor: %w", err)
-	}
-	err = m.connectToConfigMapWatch()
-	if err != nil {
-		return xerrors.Errorf("cannot start workspace monitor: %w", err)
-	}
 
 	// our activity state is ephemeral and as such we need to mark existing workspaces active after we have
 	// restarted (i.e. cleared our state). If we didn't do this, we'd time out all workspaces at ws-manager
 	// startup, see: https://github.com/gitpod-io/gitpod/issues/2537 and https://github.com/gitpod-io/gitpod/issues/2619
-	err = m.manager.markAllWorkspacesActive()
+	err := m.manager.markAllWorkspacesActive()
 	if err != nil {
 		log.WithError(err).Warn("cannot mark all existing workspaces active - this will wrongly time out user's workspaces")
 	}
 
 	go func() {
 		// we'll keep running until we're shut down
-		for !m.shouldShutdown() {
-			// make the monitor run
-			m.run()
-			// we've come out of the run loop - must mean we got disconnected
-			log.Info("connection to Kubernetes master lost")
-
-			reconnectionInterval := time.Duration(m.manager.Config.ReconnectionInterval)
-			if reconnectionInterval == 0 {
-				reconnectionInterval = 1 * time.Second
-			}
-			// we got disconnected but don't want to shutdown - reconnect until we succeed
-			for reconnected := false; !reconnected && !m.shouldShutdown(); {
-				log := log.WithField("watch", "pods")
-
-				err := m.connectToPodWatch()
-				if err != nil {
-					log.WithError(err).Warn("monitor cannot reconnect to Kubernetes - will try again")
-					time.Sleep(reconnectionInterval)
-					continue
-				}
-
-				log.Info("connection to Kubernetes master is reestablished")
-				reconnected = true
-			}
-			for reconnected := false; !reconnected && !m.shouldShutdown(); {
-				log := log.WithField("watch", "configmaps")
-
-				err := m.connectToConfigMapWatch()
-				if err != nil {
-					log.WithError(err).Warn("monitor cannot reconnect to Kubernetes - will try again")
-					time.Sleep(reconnectionInterval)
-					continue
-				}
-
-				log.Info("connection to Kubernetes master is reestablished")
-				reconnected = true
-			}
-
-			if m.shouldShutdown() {
+		for {
+			select {
+			case <-m.doShutdown:
 				// we're asked to shut down - let's do this gracefully
 				log.Debug("monitor was asked to shut down - ended main loop")
 				m.eventpool.Stop()
-				m.didShutdown <- true
 				return
+			case <-m.ticker.C:
+				go m.doHousekeeping(context.Background())
 			}
 		}
 	}()
+
 	return nil
 }
 
-// run checks the overall workspace state (on event or periodically). Run is best called as a goroutine.
-// Note: this function serializes the handling of pod/config map events per workspace, but not globally.
-func (m *Monitor) run() {
-	continueListening := true
-	for continueListening {
-		if m.podwatch == nil || m.cfgwatch == nil || m.ticker == nil || m.shouldShutdown() {
-			// we got shut down
-			return
-		}
-
-		select {
-		case evt := <-m.podwatch.ResultChan():
-			continueListening = m.enqueueEvent(evt)
-		case evt := <-m.cfgwatch.ResultChan():
-			continueListening = m.enqueueEvent(evt)
-		case <-m.ticker.C:
-			go m.doHousekeeping(context.Background())
-		}
-	}
-}
-
 // enqueueEvent adds the event to the appropriate queue in the event pool
-func (m *Monitor) enqueueEvent(evt watch.Event) (continueListening bool) {
-	if evt.Type == watch.Error || evt.Object == nil {
-		// we got disconnected from Kubernetes
-		return false
-	}
-
-	continueListening = true
-
+func (m *Monitor) enqueueEvent(evt watch.Event) {
 	var queue string
+
 	pod, ok := evt.Object.(*corev1.Pod)
 	if ok {
 		queue = pod.Annotations[workspaceIDAnnotation]
 	}
+
 	cfgmap, ok := evt.Object.(*corev1.ConfigMap)
 	if ok {
 		queue = cfgmap.Annotations[workspaceIDAnnotation]
 	}
+
 	if queue == "" {
 		m.OnError(xerrors.Errorf("event object has no name: %v", evt))
 		return
 	}
 
 	m.eventpool.Add(queue, evt)
-	return
 }
 
 // handleEvent dispatches an event to the corresponding event handler based on the event object kind.
@@ -1357,28 +1350,27 @@ func (m *Monitor) deleteDanglingServices(ctx context.Context) error {
 
 // deleteDanglingPodLifecycleIndependentState removes PLIS config maps for which no pod exists and which have exceded lonelyPLISSurvivalTime
 func (m *Monitor) deleteDanglingPodLifecycleIndependentState(ctx context.Context) error {
-	pods, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).List(ctx, workspaceObjectListOptions())
+	pods, err := m.manager.StateHolder.PodsWithListOptions(workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("deleteDanglingPodLifecycleIndependentState: %w", err)
 	}
 	podIdx := make(map[string]*corev1.Pod)
-	for _, p := range pods.Items {
+	for _, p := range pods {
 		workspaceID, ok := p.Labels[wsk8s.WorkspaceIDLabel]
 		if !ok {
 			log.WithFields(wsk8s.GetOWIFromObject(&p.ObjectMeta)).WithField("pod", p).Warn("found workspace object pod without workspaceID label")
 			continue
 		}
 
-		podIdx[workspaceID] = &p
+		podIdx[workspaceID] = p
 	}
 
-	cfgmapsClient := m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace)
-	plisConfigmaps, err := cfgmapsClient.List(ctx, workspaceObjectListOptions())
+	plisConfigmaps, err := m.manager.StateHolder.ConfigMapsWithListOptions(workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("deleteDanglingPodLifecycleIndependentState: %w", err)
 	}
 
-	for _, cfgmap := range plisConfigmaps.Items {
+	for _, cfgmap := range plisConfigmaps {
 		workspaceID, ok := cfgmap.Labels[wsk8s.WorkspaceIDLabel]
 		if !ok {
 			m.OnError(xerrors.Errorf("PLIS config map %s does not have %s label", cfgmap.Name, wsk8s.WorkspaceIDLabel))
@@ -1391,7 +1383,7 @@ func (m *Monitor) deleteDanglingPodLifecycleIndependentState(ctx context.Context
 		}
 
 		referenceTime := cfgmap.CreationTimestamp.Time
-		plis, err := unmarshalPodLifecycleIndependentState(&cfgmap)
+		plis, err := unmarshalPodLifecycleIndependentState(cfgmap)
 		if err != nil {
 			m.OnError(xerrors.Errorf("cannot get PLIS configmap age: %w", err))
 			continue
@@ -1409,6 +1401,7 @@ func (m *Monitor) deleteDanglingPodLifecycleIndependentState(ctx context.Context
 		//       Prior to deletion we should send a final stopped update.
 
 		propagationPolicy := metav1.DeletePropagationForeground
+		cfgmapsClient := m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace)
 		err = cfgmapsClient.Delete(ctx, cfgmap.Name, metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
 		if err != nil {
 			m.OnError(xerrors.Errorf("cannot delete too old PLIS config map: %w", err))
@@ -1425,14 +1418,14 @@ func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 	span, ctx := tracing.FromContext(ctx, "markTimedoutWorkspaces")
 	defer tracing.FinishSpan(span, nil)
 
-	pods, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).List(ctx, workspaceObjectListOptions())
+	pods, err := m.manager.StateHolder.PodsWithListOptions(workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("stopTimedoutWorkspaces: %w", err)
 	}
 
 	errs := make([]string, 0)
 	idx := make(map[string]struct{})
-	for _, pod := range pods.Items {
+	for _, pod := range pods {
 		workspaceID, ok := pod.Annotations[workspaceIDAnnotation]
 		if !ok {
 			log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).WithError(err).Errorf("while checking if timed out: found workspace without %s annotation", workspaceIDAnnotation)
@@ -1446,7 +1439,7 @@ func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 			continue
 		}
 
-		timedout, err := m.manager.isWorkspaceTimedOut(workspaceObjects{Pod: &pod})
+		timedout, err := m.manager.isWorkspaceTimedOut(workspaceObjects{Pod: pod})
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("workspaceId=%s: %q", workspaceID, err))
 			continue
@@ -1462,11 +1455,11 @@ func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 	}
 
 	// timeout PLIS only workspaces
-	allPlis, err := m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).List(ctx, workspaceObjectListOptions())
+	allPlis, err := m.manager.StateHolder.ConfigMapsWithListOptions(workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("stopTimedoutWorkspaces: %w", err)
 	}
-	for _, plis := range allPlis.Items {
+	for _, plis := range allPlis {
 		workspaceID, ok := plis.Annotations[workspaceIDAnnotation]
 		if !ok {
 			log.WithFields(wsk8s.GetOWIFromObject(&plis.ObjectMeta)).WithError(err).Errorf("while checking if timed out: found workspace PLIS without %s annotation", workspaceIDAnnotation)
@@ -1479,7 +1472,7 @@ func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 			continue
 		}
 
-		timedout, err := m.manager.isWorkspaceTimedOut(workspaceObjects{PLIS: &plis})
+		timedout, err := m.manager.isWorkspaceTimedOut(workspaceObjects{PLIS: plis})
 		if xerrors.Is(err, errNoPLIS) {
 			// The pod is gone and the PLIS hasn't been patched yet - there's not much we can do here, except
 			// to ignore the workspace.
@@ -1513,22 +1506,12 @@ func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 
 // Stop ends the monitor's involvement. A stopped monitor cannot be started again.
 func (m *Monitor) Stop() {
-	m.doShutdown.Set(true)
-
-	if m.podwatch != nil {
-		m.podwatch.Stop()
-	}
 	if m.ticker != nil {
 		m.ticker.Stop()
 	}
 
-	<-m.didShutdown
-	m.podwatch = nil
+	m.doShutdown <- true
 	m.ticker = nil
-}
-
-func (m *Monitor) shouldShutdown() bool {
-	return m.doShutdown.Get()
 }
 
 func workspaceObjectListOptions() metav1.ListOptions {
