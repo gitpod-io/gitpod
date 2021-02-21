@@ -201,6 +201,9 @@ func (m *Manager) patchPodLifecycleIndependentState(ctx context.Context, workspa
 
 		needsUpdate := false
 		if patch != nil {
+			// the configmap will be updated. Mutating state from an informer object is not allowed.
+			plisCfg = plisCfg.DeepCopy()
+
 			plis, err := unmarshalPodLifecycleIndependentState(plisCfg)
 			if err != nil {
 				return xerrors.Errorf("patch pod lifecycle independent state: %w", err)

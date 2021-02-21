@@ -683,6 +683,8 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 	}
 
 	// the service exists - let's modify it
+	service = service.DeepCopy()
+
 	spec := service.Spec
 	existingPortSpecIdx := -1
 	for i, p := range service.Spec.Ports {
