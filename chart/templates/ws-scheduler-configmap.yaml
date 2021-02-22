@@ -30,6 +30,11 @@ data:
                 "workspaceFreshPeriodSeconds": 120,
                 "nodeFreshWorkspaceLimit": 2
             }
+            {{- if $comp.ratelimit }}
+            , "rateLimit": {
+                "maxRPS": {{ $comp.ratelimit.maxRPS }}
+            }
+            {{- end }}
         }
         {{ if $comp.scaler.enabled }}
         ,

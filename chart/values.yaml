@@ -430,6 +430,8 @@ components:
       cpu: 100m
       memory: 32Mi
     schedulerName: "workspace-scheduler"
+    ratelimit:
+      maxRPS: 10
     scaler:
       enabled: false
       maxGhostWorkspaces: 10
