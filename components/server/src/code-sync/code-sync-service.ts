@@ -183,8 +183,7 @@ export class CodeSyncService {
                     method: 'PUT',
                     body: content,
                     headers: {
-                        'content-length': req.headers['content-length'] || String(content.length),
-                        'content-type': req.headers['content-type'] || 'text/plain'
+                        'content-length': req.headers['content-length'] || String(content.length)
                     }
                 });
                 if (response.status !== 200) {
