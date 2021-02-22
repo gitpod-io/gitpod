@@ -15,7 +15,8 @@ packages:
     config:
       commands:
         # set values
-        - ["yq", "w", "-i", "Chart.yaml", "version", "${version}"]
+        # Chart.version has to be semver compliant
+        - ["sh", "-c", "yq w -i Chart.yaml version 0.1.0-${version}"]
         - ["yq", "w", "-i", "values.yaml", "version", "${version}"]
         - ["yq", "w", "-i", "values.yaml", "imagePrefix", "${imageRepoBase}/"]
         # prepare chart
