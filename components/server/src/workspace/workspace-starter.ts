@@ -504,12 +504,17 @@ export class WorkspaceStarter {
             envvars.push(ev);
         }
         const addExtensionsToEnvvarPromise = this.theiaService.resolvePlugins(user.id, { config: workspace.config }).then(
-            resolvedExtensions => {
-                if (resolvedExtensions) {
-                    const ev = new EnvironmentVariable();
-                    ev.setName("GITPOD_RESOLVED_EXTENSIONS");
-                    ev.setValue(JSON.stringify(resolvedExtensions));
-                    envvars.push(ev);
+            result => {
+                if (result) {
+                    const resolvedExtensions = new EnvironmentVariable();
+                    resolvedExtensions.setName("GITPOD_RESOLVED_EXTENSIONS");
+                    resolvedExtensions.setValue(JSON.stringify(result.resolved));
+                    envvars.push(resolvedExtensions);
+
+                    const externalExtensions = new EnvironmentVariable();
+                    externalExtensions.setName("GITPOD_EXTERNAL_EXTENSIONS");
+                    externalExtensions.setValue(JSON.stringify(result.external));
+                    envvars.push(externalExtensions);
                 }
             }
         )
