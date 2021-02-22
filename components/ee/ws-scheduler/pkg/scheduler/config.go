@@ -24,12 +24,18 @@ type Configuration struct {
 	DensityAndExperienceConfig *DensityAndExperienceConfig `json:"densityAndExperienceConfig,omitempty"`
 	// RAMSafetyBuffer reduces the amount of available RAM per node and is meant to make sure we do not overbook nodes
 	RAMSafetyBuffer string `json:"ramSafetyBuffer,omitempty"`
+	// RateLimit configures the scheduling rate limit. Optional to ease deployment problems.
+	RateLimit *RateLimitConfig `json:"rateLimit,omitempty"`
 }
 
 // DensityAndExperienceConfig is the config for the DensityAndExperience strategy
 type DensityAndExperienceConfig struct {
 	WorkspaceFreshPeriodSeconds int `json:"workspaceFreshPeriodSeconds"`
 	NodeFreshWorkspaceLimit     int `json:"nodeFreshWorkspaceLimit"`
+}
+
+type RateLimitConfig struct {
+	MaxRPS uint `json:"maxRPS"`
 }
 
 // DefaultDensityAndExperienceConfig creates the config with default values

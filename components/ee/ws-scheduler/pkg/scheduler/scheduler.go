@@ -18,15 +18,16 @@ import (
 	"sync"
 	"time"
 
-	k8sinternal "github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler/internal"
-	metrics "github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler/metrics"
-
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	k8sinternal "github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler/internal"
+	metrics "github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler/metrics"
+
 	"github.com/opentracing/opentracing-go"
 	tracelog "github.com/opentracing/opentracing-go/log"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/time/rate"
 	"golang.org/x/xerrors"
 
 	corev1 "k8s.io/api/core/v1"
@@ -93,6 +94,7 @@ type Scheduler struct {
 	strategy       Strategy
 	queue          *PriorityQueue
 	localSlotCache *localSlotCache
+	rateLimiter    *rate.Limiter
 
 	pods  infov1.PodInformer
 	nodes infov1.NodeInformer
@@ -116,6 +118,11 @@ func NewScheduler(config Configuration, clientset kubernetes.Interface) (*Schedu
 	}
 	queue := NewPriorityQueue(SortByPriority, queueInitialBackoff, queueMaximumBackoff)
 	localSlotCache := newLocalSlotCache()
+	var rateLimiter *rate.Limiter
+	if config.RateLimit != nil {
+		burst := int(1) // we only ever draw 1 token at a time so we just make sure it's > 0
+		rateLimiter = rate.NewLimiter(rate.Limit(config.RateLimit.MaxRPS), burst)
+	}
 
 	return &Scheduler{
 		Config:          config,
@@ -125,6 +132,7 @@ func NewScheduler(config Configuration, clientset kubernetes.Interface) (*Schedu
 		strategy:       strategy,
 		queue:          queue,
 		localSlotCache: localSlotCache,
+		rateLimiter:    rateLimiter,
 
 		didShutdown: make(chan bool, 1),
 	}, nil
@@ -149,6 +157,14 @@ func (s *Scheduler) Run(ctx context.Context) error {
 		}
 
 		for {
+			if s.rateLimiter != nil {
+				err := s.rateLimiter.Wait(ctx)
+				if err != nil {
+					log.WithError(err).Error("error while rate limiting")
+					return
+				}
+			}
+
 			pi, wasClosed := q.Pop()
 			if wasClosed {
 				log.Debug("scheduler queue closed - exiting")
