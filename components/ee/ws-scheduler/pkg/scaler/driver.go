@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/docker/distribution/reference"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/namegen"
 	"github.com/gitpod-io/gitpod/common-go/util"
@@ -58,6 +59,11 @@ func NewWorkspaceManagerPrescaleDriver(config WorkspaceManagerPrescaleDriverConf
 	if config.SchedulerInterval <= 0 {
 		return nil, xerrors.Errorf("schedulerInterval must be greater than zero")
 	}
+	imgRef, err := reference.ParseNormalizedNamed(config.WorkspaceImage)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot parse workspaceImage")
+	}
+	config.WorkspaceImage = imgRef.String()
 
 	conn, err := grpc.Dial(config.WorkspaceManagerAddr, grpc.WithInsecure())
 	if err != nil {
