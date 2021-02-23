@@ -487,7 +487,7 @@ func TestSchedulePod(t *testing.T) {
 				}
 
 				// make sure this round is "done" and we get a defined state for the next cycle
-				scheduler.queue.MoveAllToActive("endCycle")
+				scheduler.queue.MoveAllToActive()
 				cancelCycleCtx()
 			}
 

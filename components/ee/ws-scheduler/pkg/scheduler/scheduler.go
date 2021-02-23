@@ -13,7 +13,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -47,11 +46,13 @@ const (
 	queueInitialBackoff = 1 * time.Second
 
 	// the time a failed scheduling attempt has to wait before it is re-tried (at most).
-	// Note that external event thats "make space available" - like "pod got deleted", or "new node appeared" - will
-	// trigger re-evaluation no matter if the request is currently in backoff or not.
-	queueMaximumBackoff = 4 * time.Second
+	// Note:
+	//  - external event like "a pod got deleted" or "a new node appeared" cancel any backoff
+	//  - this is our safety-net that ensures we're not missing anything
+	queueMaximumBackoff = 10 * time.Second
 
-	// priorityOffsetRegularWorkspace ensures workspaces
+	// priorityOffsetRegularWorkspace ensures that regular workspaces are preferred over all other workspace types and
+	// non-workspace pods.
 	priorityOffsetRegularWorkspace = 100000
 
 	// priorityOffsetNonRegularWorkspace ensures non-regular workspaces are preferred over non-workspaces pods, but do
@@ -78,11 +79,11 @@ const (
 	resultAlreadyBound             SchedulingResult = "alreadyBound"
 	resultDeletedGhost             SchedulingResult = "deletedGhost"
 	resultUnschedulableNoResources SchedulingResult = "unschedulableNoResources"
-	resultUnschedulableGhost       SchedulingResult = "resultUnschedulableGhost"
+	resultUnschedulableGhost       SchedulingResult = "unschedulableGhost"
 )
 
-type BindPodToNodeFunc = func(ctx context.Context, pod *corev1.Pod, nodeName string, createEventFn CreateEventFunc) error
-type CreateEventFunc = func(ctx context.Context, namespace string, event *corev1.Event, opts metav1.CreateOptions) error
+type BindPodToNodeFunc func(ctx context.Context, pod *corev1.Pod, nodeName string, createEventFn CreateEventFunc) error
+type CreateEventFunc func(ctx context.Context, namespace string, event *corev1.Event, opts metav1.CreateOptions) error
 
 // Scheduler tries to pack workspaces as closely as possible while trying to keep
 // an even load across nodes.
@@ -147,10 +148,8 @@ func (s *Scheduler) Run(ctx context.Context) error {
 	// Now that the informers are up and running, we can start our workers who rely on the node/pod informers being warmed up
 
 	// Start the actual scheduling loop. This is the only caller of schedulePod to ensure it's atomicity
-	go func(q *PriorityQueue) {
-		bindPodToNode := func(ctx context.Context, pod *corev1.Pod, nodeName string, createEventFn CreateEventFunc) error {
-			return s.bindPodToNode(ctx, pod, nodeName, createEventFn)
-		}
+	go func() {
+		bindPodToNode := s.bindPodToNode
 		createEvent := func(ctx context.Context, namespace string, event *corev1.Event, opts metav1.CreateOptions) error {
 			_, err := s.Clientset.CoreV1().Events(namespace).Create(ctx, event, opts)
 			return err
@@ -165,7 +164,7 @@ func (s *Scheduler) Run(ctx context.Context) error {
 				}
 			}
 
-			pi, wasClosed := q.Pop()
+			pi, wasClosed := s.queue.Pop()
 			if wasClosed {
 				log.Debug("scheduler queue closed - exiting")
 				return
@@ -176,7 +175,7 @@ func (s *Scheduler) Run(ctx context.Context) error {
 				log.WithError(err).WithField("pod", pod.Name).Error("unable to schedule pod")
 			}
 		}
-	}(s.queue)
+	}()
 
 	// Things are all up and running - let's wait for someone to shut us down.
 	<-ctx.Done()
@@ -212,7 +211,7 @@ func (s *Scheduler) startInformer(ctx context.Context) (stopInformerQueue chan s
 			log.WithField("node", node.Name).Info("new node added to the pool")
 
 			// trigger a fresh re-try for all waiting pods
-			s.queue.MoveAllToActive("newNodeAdded")
+			s.queue.MoveAllToActive()
 		},
 	})
 
@@ -230,9 +229,7 @@ func (s *Scheduler) startInformer(ctx context.Context) (stopInformerQueue chan s
 			}
 
 			// add to queue
-			if pod.Spec.NodeName == "" {
-				s.queue.Add(pod)
-			}
+			s.queue.Add(pod)
 		},
 		UpdateFunc: func(oldObj interface{}, newObj interface{}) {
 			pod, ok := newObj.(*corev1.Pod)
@@ -270,7 +267,7 @@ func (s *Scheduler) startInformer(ctx context.Context) (stopInformerQueue chan s
 			s.deleteFromQueue(pod)
 
 			// re-trigger scheduling for all pods as there might now be enough space
-			s.queue.MoveAllToActive("podDeleted")
+			s.queue.MoveAllToActive()
 		},
 	})
 
@@ -284,9 +281,9 @@ func (s *Scheduler) startInformer(ctx context.Context) (stopInformerQueue chan s
 }
 
 // deleteFromQueue removes the referenced pod from all temporary storage so we do not leak memory
-func (s *Scheduler) deleteFromQueue(pod *corev1.Pod) bool {
+func (s *Scheduler) deleteFromQueue(pod *corev1.Pod) {
 	s.localSlotCache.freeSlot(pod.Name)
-	return s.queue.Delete(pod)
+	s.queue.Delete(pod)
 }
 
 // WaitForShutdown waits for the scheduler to shut down
@@ -328,7 +325,10 @@ func (s *Scheduler) schedulePod(ctx context.Context, pi *QueuedPodInfo, bindPodT
 		return resultAlreadyBound, nil
 	}
 
-	// do a clean-slate scheduling here, even for a repeated attempt, to guarantee elasticity.
+	// do a clean-slate scheduling here, even for a repeated attempt, to guarantee elasticity:
+	// with a new decision very run:
+	//  1. the code stays simpler
+	//  2. we can not run into situations where we stick to now suboptimal decisions made on outdated state
 	isGhostReplacing := wsk8s.IsNonGhostWorkspace(pod)
 	nodeName, state, err := s.selectNodeForPod(ctx, pod, !isGhostReplacing)
 	if nodeName == "" {
@@ -450,7 +450,7 @@ func (s *Scheduler) schedulePod(ctx context.Context, pi *QueuedPodInfo, bindPodT
 	// metrics
 	metrics.PodScheduled(workspaceType, metrics.SinceInSeconds(start))
 	metrics.PodSchedulingAttempts.WithLabelValues(workspaceType).Observe(float64(pi.Attempts))
-	metrics.PodSchedulingDuration.WithLabelValues(getAttemptsLabel(pi), workspaceType).Observe(metrics.SinceInSeconds(pi.InitialAttemptTimestamp))
+	metrics.PodSchedulingDuration.WithLabelValues(workspaceType).Observe(metrics.SinceInSeconds(pi.InitialAttemptTimestamp))
 
 	return resultBound, nil
 }
@@ -811,14 +811,6 @@ func isKubernetesObjNotFoundError(err error) bool {
 	return false
 }
 
-func getAttemptsLabel(pi *QueuedPodInfo) string {
-	// capping here to reduce cardinality
-	if pi.Attempts >= 15 {
-		return "15+"
-	}
-	return strconv.Itoa(pi.Attempts)
-}
-
 // localSlotCache stores whether we already are scheduling a Pod and is necessary to bridge the gap between:
 //  1. We reserved a slot on a node
 //  2. We successfully create a binding with the Kubernets API
@@ -839,8 +831,8 @@ type Slot struct {
 	ReservedGhost string
 
 	// whether:
-	//  - the pod has already been bound and we're just waiting for the update from k8s master, or
-	//  - the slot has been reserved, and we're still waiting for the binding to happen
+	//  - true: the pod has already been bound and we're just waiting for the update from k8s master, or
+	//  - false: the slot has been reserved, and we're still waiting for the binding to happen
 	Bound bool
 }
 

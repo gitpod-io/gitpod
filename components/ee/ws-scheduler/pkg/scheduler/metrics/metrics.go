@@ -39,7 +39,7 @@ var (
 		prometheus.GaugeOpts{
 			Name: "pending_pods",
 			Help: "Number of pending pods, by the queue type. 'active' means number of pods in activeQ; 'backoff' means number of pods in backoffQ.",
-		}, []string{"queue", "workspaceType"})
+		}, []string{"queue"})
 	PodSchedulingDuration = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
 			Name: "pod_scheduling_duration_seconds",
@@ -47,7 +47,7 @@ var (
 			// last bucket: [~16m, Inf).
 			Buckets: prometheus.ExponentialBuckets(0.5, 2, 11),
 		},
-		[]string{"attempts", "workspaceType"})
+		[]string{"workspaceType"})
 
 	PodSchedulingAttempts = prometheus.NewHistogramVec(
 		prometheus.HistogramOpts{
