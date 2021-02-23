@@ -3,6 +3,7 @@ module github.com/gitpod-io/gitpod/ws-scheduler
 go 1.12
 
 require (
+	github.com/docker/distribution v0.0.0-20170726174610-edc3ab29cdff
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
