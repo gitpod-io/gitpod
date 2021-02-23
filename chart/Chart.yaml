@@ -1,7 +1,7 @@
 # Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
-apiVersion: v1
+apiVersion: v2
 appVersion: "0.1.5"
 description: The core chart for Gitpod
 name: gitpod
