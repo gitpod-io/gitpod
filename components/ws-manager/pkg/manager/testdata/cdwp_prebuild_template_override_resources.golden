@@ -117,7 +117,7 @@
                         },
                         {
                             "name": "GITPOD_MEMORY",
-                            "value": "1300"
+                            "value": "999"
                         },
                         {
                             "name": "GITPOD_HEADLESS",

@@ -117,7 +117,7 @@
                         },
                         {
                             "name": "GITPOD_MEMORY",
-                            "value": "1300"
+                            "value": "999"
                         },
                         {
                             "name": "GITPOD_HEADLESS",
@@ -134,9 +134,9 @@
                             "memory": "1G"
                         },
                         "requests": {
-                            "cpu": "1200m",
+                            "cpu": "899m",
                             "ephemeral-storage": "5Gi",
-                            "memory": "1300M"
+                            "memory": "999M"
                         }
                     },
                     "volumeMounts": [
