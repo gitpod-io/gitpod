@@ -23,7 +23,7 @@ RUN mkdir -p /tmp/helm/ \
 
 ### kubernetes ###
 RUN mkdir -p /usr/local/kubernetes/ && \
-    curl -fsSL https://github.com/kubernetes/kubernetes/releases/download/v1.17.16/kubernetes.tar.gz \ 
+    curl -fsSL https://github.com/kubernetes/kubernetes/releases/download/v1.17.16/kubernetes.tar.gz \
     | tar -xzvC /usr/local/kubernetes/ --strip-components=1 && \
     KUBERNETES_SKIP_CONFIRM=true /usr/local/kubernetes/cluster/get-kube-binaries.sh && \
     chown gitpod:gitpod -R /usr/local/kubernetes
@@ -39,6 +39,11 @@ RUN curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key a
 
 RUN curl -o /usr/bin/kubectx https://raw.githubusercontent.com/ahmetb/kubectx/master/kubectx && chmod +x /usr/bin/kubectx \
  && curl -o /usr/bin/kubens  https://raw.githubusercontent.com/ahmetb/kubectx/master/kubens  && chmod +x /usr/bin/kubens
+
+RUN curl -sfL https://go.kubebuilder.io/dl/2.3.2/linux/amd64 | tar -xz -C /tmp/ \
+    && sudo mkdir -p /usr/local/kubebuilder \
+    && sudo mv /tmp/kubebuilder_2.3.2_linux_amd64/* /usr/local/kubebuilder \
+    && rm -rf /tmp/*
 
 ### MySQL client ###
 RUN apt-get update && apt-get install -yq \
