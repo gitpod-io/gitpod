@@ -14,6 +14,14 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
+// The following code is heavily inspired by the k8s implementation at https://github.com/kubernetes/kubernetes/blob/8f15f7cf5ef288f997f6be037bf489c1f5479e28/pkg/scheduler/internal/queue/scheduling_queue.go.
+// We do not go with that one because:
+//  - allthough well encapsulated there are some private things we'd like to fine-tune (timings, add a
+//    MakeAllActive method, ...) which would require us to 1. copy it into this repo and 2. modify it.
+//  - the k8s impl is bigger and more complex than we need it to be
+//  - we now more about our workload so which allow us to speed things up (e.g., MakeAllActive)
+// Instead we roll our own version here.
+
 type QueuedPodInfo struct {
 	Pod *corev1.Pod
 	// The time pod added to the scheduling queue.
@@ -73,6 +81,8 @@ func NewPriorityQueue(lessFunc LessFunc, initialBackoff time.Duration, maximumBa
 }
 
 func (q *PriorityQueue) Run() {
+	// with AddUnschedulable pods get into the backoffPool. This makes sure they get back into the activeQueue after
+	// their backoff is done.
 	go func(q *PriorityQueue) {
 		ticker := time.NewTicker(1 * time.Second)
 		for {
@@ -121,13 +131,13 @@ func (q *PriorityQueue) AddUnschedulable(pi *QueuedPodInfo) {
 	q.backoffMetrics.Inc()
 }
 
-func (q *PriorityQueue) Delete(pod *corev1.Pod) bool {
+func (q *PriorityQueue) Delete(pod *corev1.Pod) {
 	q.lock.Lock()
 	defer q.lock.Unlock()
 
 	key := key(pod)
 	q.activeQueue.delete(key)
-	return false
+	delete(q.backoffPool, key)
 }
 
 // Pop returns the QueuedPodInfo with the highest prio (blocking if none available)
@@ -147,7 +157,7 @@ func (q *PriorityQueue) Pop() (pi *QueuedPodInfo, wasClosed bool) {
 	return pi, false
 }
 
-func (q *PriorityQueue) MoveAllToActive(event string) {
+func (q *PriorityQueue) MoveAllToActive() {
 	q.lock.Lock()
 	defer q.lock.Unlock()
 
@@ -214,7 +224,7 @@ func (p *PriorityQueue) calculateBackoffDuration(podInfo *QueuedPodInfo) time.Du
 // It is _not_ synchronized and relies on users to do this.
 // This is _not_ optimized, and currently is:
 //  - insert: O(n*log(n))
-//  - delete: O(n*log(n))
+//  - delete: O(n)
 //  - pop: O(1)
 type podInfoQueue struct {
 	lessFunc LessFunc

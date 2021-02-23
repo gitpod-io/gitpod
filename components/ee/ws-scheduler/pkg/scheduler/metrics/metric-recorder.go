@@ -20,13 +20,13 @@ type PendingPodsRecorder struct {
 
 func NewActivePodsRecorder() *PendingPodsRecorder {
 	return &PendingPodsRecorder{
-		recorder: PendingPods.WithLabelValues("queue", "active"),
+		recorder: PendingPods.WithLabelValues("active"),
 	}
 }
 
 func NewBackoffPodsRecorder() *PendingPodsRecorder {
 	return &PendingPodsRecorder{
-		recorder: PendingPods.WithLabelValues("queue", "backoff"),
+		recorder: PendingPods.WithLabelValues("backoff"),
 	}
 }
 

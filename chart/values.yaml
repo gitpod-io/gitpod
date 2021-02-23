@@ -431,6 +431,7 @@ components:
       memory: 32Mi
     schedulerName: "workspace-scheduler"
     ratelimit:
+      # Limits the # of scheduling attempts (per second) to limit traffic to the k8s master.
       maxRPS: 10
     scaler:
       enabled: false
