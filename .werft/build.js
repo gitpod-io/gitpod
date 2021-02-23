@@ -107,6 +107,7 @@ async function build(context, version) {
     const noPreview = "no-preview" in buildConfig || publishRelease;
     const registryFacadeHandover = "registry-facade-handover" in buildConfig;
     const storage = buildConfig["storage"] || "";
+    const withIntegrationTests = buildConfig["with-integration-tests"] == "true";
     werft.log("job config", JSON.stringify({
         buildConfig,
         version,
@@ -119,6 +120,7 @@ async function build(context, version) {
         noPreview,
         registryFacadeHandover,
         storage: storage,
+        withIntegrationTests,
     }));
 
     /**
@@ -162,21 +164,35 @@ async function build(context, version) {
     if (noPreview) {
         werft.phase("deploy", "not deploying");
         console.log("no-preview or publish-release is set");
-    } else {
-        await deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover, storage);
+
+        return
     }
-}
-
-
-/**
- * Deploy dev
- */
-async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover, storage) {
-    werft.phase("deploy", "deploying to dev");
+    
     const destname = version.split(".")[0];
     const namespace = `staging-${destname}`;
     const domain = `${destname}.staging.gitpod-dev.com`;
     const url = `https://${domain}`;
+    const deploymentConfig = {
+      version,
+      destname,
+      namespace,
+      domain,
+      url,
+    };
+    await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover, storage);
+
+    if (withIntegrationTests) {
+        exec(`git config --global user.name "${context.Owner}"`);
+        exec(`werft run --follow-with-prefix="int-tests: " --remote-job-path .werft/run-integration-tests.yaml -a version=${deploymentConfig.version} -a namespace=${deploymentConfig.namespace} github`);
+    }
+}
+
+/**
+ * Deploy dev
+ */
+async function deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover, storage) {
+    werft.phase("deploy", "deploying to dev");
+    const { version, destname, namespace, domain, url } = deploymentConfig;
     const wsdaemonPort = `1${Math.floor(Math.random()*1000)}`;
     const registryProxyPort = `2${Math.floor(Math.random()*1000)}`;
     const registryNodePort = `${30000 + Math.floor(Math.random()*1000)}`;
