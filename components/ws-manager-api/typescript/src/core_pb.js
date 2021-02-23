@@ -1,10 +1,4 @@
 /**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
- * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
- */
-
-/**
  * @fileoverview
  * @enhanceable
  * @suppress {messageConventions} JS Compiler reports an error if a variable or
@@ -5138,7 +5132,9 @@ proto.wsman.WorkspaceRuntimeInfo.prototype.toObject = function(opt_includeInstan
  */
 proto.wsman.WorkspaceRuntimeInfo.toObject = function(includeInstance, msg) {
   var f, obj = {
-    nodeName: jspb.Message.getFieldWithDefault(msg, 1, "")
+    nodeName: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    podName: jspb.Message.getFieldWithDefault(msg, 2, ""),
+    nodeIp: jspb.Message.getFieldWithDefault(msg, 3, "")
   };
 
   if (includeInstance) {
@@ -5179,6 +5175,14 @@ proto.wsman.WorkspaceRuntimeInfo.deserializeBinaryFromReader = function(msg, rea
       var value = /** @type {string} */ (reader.readString());
       msg.setNodeName(value);
       break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setPodName(value);
+      break;
+    case 3:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setNodeIp(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -5215,6 +5219,20 @@ proto.wsman.WorkspaceRuntimeInfo.serializeBinaryToWriter = function(message, wri
       f
     );
   }
+  f = message.getPodName();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
+  f = message.getNodeIp();
+  if (f.length > 0) {
+    writer.writeString(
+      3,
+      f
+    );
+  }
 };
 
 
@@ -5230,6 +5248,36 @@ proto.wsman.WorkspaceRuntimeInfo.prototype.getNodeName = function() {
 /** @param {string} value */
 proto.wsman.WorkspaceRuntimeInfo.prototype.setNodeName = function(value) {
   jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional string pod_name = 2;
+ * @return {string}
+ */
+proto.wsman.WorkspaceRuntimeInfo.prototype.getPodName = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/** @param {string} value */
+proto.wsman.WorkspaceRuntimeInfo.prototype.setPodName = function(value) {
+  jspb.Message.setProto3StringField(this, 2, value);
+};
+
+
+/**
+ * optional string node_ip = 3;
+ * @return {string}
+ */
+proto.wsman.WorkspaceRuntimeInfo.prototype.getNodeIp = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 3, ""));
+};
+
+
+/** @param {string} value */
+proto.wsman.WorkspaceRuntimeInfo.prototype.setNodeIp = function(value) {
+  jspb.Message.setProto3StringField(this, 3, value);
 };
 
 

@@ -80,7 +80,9 @@
             }
         },
         "runtime": {
-            "node_name": "gke-staging--gitpod--workspace-pool-2-331a2b32-mgbq"
+            "node_name": "gke-staging--gitpod--workspace-pool-2-331a2b32-mgbq",
+            "pod_name": "ws-df376c57-7a0e-4233-976a-7a021e6f088c",
+            "node_ip": "10.132.15.227"
         },
         "auth": {
             "admission": 1,

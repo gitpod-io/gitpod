@@ -27,7 +27,9 @@
             "deployed": 1
         },
         "runtime": {
-            "node_name": "gke-dev-workload-7fd27879-kn1v"
+            "node_name": "gke-dev-workload-7fd27879-kn1v",
+            "pod_name": "ws-f07f0f2e-08fb-433a-8282-fef07b596909",
+            "node_ip": "10.132.0.35"
         },
         "auth": {
             "owner_token": "l\u003cM3U,%$Fe3/Y/515B;/*D:1HhQAaq0c"

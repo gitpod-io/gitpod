@@ -21,7 +21,9 @@
                 "deployed": 1
             },
             "runtime": {
-                "node_name": "gke-staging--gitpod--workspace-pool-1-f122a8ea-bb2l"
+                "node_name": "gke-staging--gitpod--workspace-pool-1-f122a8ea-bb2l",
+                "pod_name": "ws-d6835d33-116f-4d3f-aeb6-ad628f4004b6",
+                "node_ip": "10.132.15.200"
             },
             "auth": {
                 "admission": 1,

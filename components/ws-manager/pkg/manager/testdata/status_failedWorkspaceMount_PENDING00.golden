@@ -19,7 +19,8 @@
         },
         "message": "pod is pending",
         "runtime": {
-            "node_name": "gke-gitpod-dev-worker-pool-2-184c607e-1wgf"
+            "node_name": "gke-gitpod-dev-worker-pool-2-184c607e-1wgf",
+            "pod_name": "ws-b3242d9b-6920-41b5-8e72-c3d5637ca148"
         },
         "auth": {}
     }

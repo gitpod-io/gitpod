@@ -1,9 +1,3 @@
-/**
- * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
- * Licensed under the GNU Affero General Public License (AGPL).
- * See License-AGPL.txt in the project root for license information.
- */
-
 // package: wsman
 // file: core.proto
 
@@ -735,6 +729,12 @@ export class WorkspaceRuntimeInfo extends jspb.Message {
     getNodeName(): string;
     setNodeName(value: string): WorkspaceRuntimeInfo;
 
+    getPodName(): string;
+    setPodName(value: string): WorkspaceRuntimeInfo;
+
+    getNodeIp(): string;
+    setNodeIp(value: string): WorkspaceRuntimeInfo;
+
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceRuntimeInfo.AsObject;
@@ -749,6 +749,8 @@ export class WorkspaceRuntimeInfo extends jspb.Message {
 export namespace WorkspaceRuntimeInfo {
     export type AsObject = {
         nodeName: string,
+        podName: string,
+        nodeIp: string,
     }
 }
 

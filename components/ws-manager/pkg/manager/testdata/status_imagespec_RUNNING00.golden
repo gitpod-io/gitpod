@@ -31,7 +31,9 @@
             }
         },
         "runtime": {
-            "node_name": "gke-gitpod-dev-worker-pool-1-3df476cf-qxwr"
+            "node_name": "gke-gitpod-dev-worker-pool-1-3df476cf-qxwr",
+            "pod_name": "ws-27e46234-5004-44c1-a2e8-56d68ac3c70b",
+            "node_ip": "10.132.0.12"
         },
         "auth": {}
     }
