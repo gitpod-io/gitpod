@@ -40,18 +40,23 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
-const cfgflagDefault = "$HOME/.kube/config"
+const cfgFlagDefault = "$HOME/.kube/config"
 
 var (
-	cfgflag = flag.String("kubeconfig", cfgflagDefault, "path to the kubeconfig file, use \"in-cluster\" to make use of in cluster Kubernetes config")
+	cfgFlag       = flag.String("kubeconfig", cfgFlagDefault, "path to the kubeconfig file, use \"in-cluster\" to make use of in cluster Kubernetes config")
+	namespaceFlag = flag.String("namespace", "", "namespace to execute the test against. Defaults to the one configured in \"kubeconfig\".")
 )
 
 // NewTest produces a new integration test instance
 func NewTest(t *testing.T) *Test {
 	flag.Parse()
 
-	kubeconfig := *cfgflag
-	if kubeconfig == cfgflagDefault {
+	kubeconfig := *cfgFlag
+	namespaceOverride := *namespaceFlag
+	t.Logf("kubeconfig: %s", kubeconfig)
+	t.Logf("namespaceOverride: %s", namespaceOverride)
+
+	if kubeconfig == cfgFlagDefault {
 		home, err := os.UserHomeDir()
 		if err != nil {
 			t.Fatal("cannot determine user home dir", err)
@@ -68,6 +73,10 @@ func NewTest(t *testing.T) *Test {
 	client, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
 		t.Fatal("cannot connecto Kubernetes", err)
+	}
+
+	if namespaceOverride != "" {
+		ns = namespaceOverride
 	}
 
 	return &Test{
