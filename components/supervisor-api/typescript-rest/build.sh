@@ -3,7 +3,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-go get -v github.com/grpc-ecosystem/grpc-gateway/protoc-gen-openapiv2
+go get -v github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2
 THIRD_PARTY_INCLUDES=${PROTOLOC:-..}
 if [ ! -d $THIRD_PARTY_INCLUDES/third_party/google/api ]; then
     echo "missing $THIRD_PARTY_INCLUDES/third_party/google/api"
