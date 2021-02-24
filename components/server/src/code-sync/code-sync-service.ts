@@ -14,13 +14,15 @@ import { inject, injectable } from 'inversify';
 import { BearerAuth } from '../auth/bearer-authenticator';
 import { isWithFunctionAccessGuard } from '../auth/function-access';
 import { CodeSyncResourceDB } from '@gitpod/gitpod-db/lib/typeorm/code-sync-resource-db';
-import { ALL_SERVER_RESOURCES, ServerResource } from '@gitpod/gitpod-db/lib/typeorm/entity/db-code-sync-resource';
+import { ALL_SERVER_RESOURCES, ServerResource, SyncResource } from '@gitpod/gitpod-db/lib/typeorm/entity/db-code-sync-resource';
 import { BlobServiceClient } from '@gitpod/content-service/lib/blobs_grpc_pb';
 import { DeleteRequest, DownloadUrlRequest, DownloadUrlResponse, UploadUrlRequest, UploadUrlResponse } from '@gitpod/content-service/lib/blobs_pb';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import uuid = require('uuid');
 import { accessCodeSyncStorage, UserRateLimiter } from '../auth/rate-limiter';
 import { increaseApiCallUserCounter } from '../prometheus-metrics';
+import { TheiaPluginService } from '../theia-plugin/theia-plugin-service';
+import { UserStorageResourcesDB } from '@gitpod/gitpod-db/lib/user-storage-resources-db';
 
 // By default: 6 kind of resources * 20 revs * 1Mb = 120Mb max in the content service for user data.
 const defautltRevLimit = 20;
@@ -41,6 +43,17 @@ function toObjectName(resource: ServerResource, rev: string): string {
     return objectPrefix + resource + '/' + rev;
 }
 
+const fromTheiaRev = 'from-theia';
+interface ISyncData {
+    version: number;
+    machineId?: string;
+    content: string;
+}
+interface ISettingsSyncContent {
+    settings: string;
+}
+const userSettingsUri = 'user_storage:settings.json';
+
 @injectable()
 export class CodeSyncService {
 
@@ -52,6 +65,12 @@ export class CodeSyncService {
 
     @inject(CodeSyncResourceDB)
     private readonly db: CodeSyncResourceDB;
+
+    @inject(TheiaPluginService)
+    private readonly theiaPluginService: TheiaPluginService;
+
+    @inject(UserStorageResourcesDB)
+    private readonly userStorageResourcesDB: UserStorageResourcesDB;
 
     get apiRouter(): express.Router {
         const router = express.Router();
@@ -93,6 +112,12 @@ export class CodeSyncService {
                 return;
             }
             const manifest = await this.db.getManifest(req.user.id);
+            if (!manifest.latest.extensions) {
+                manifest.latest.extensions = fromTheiaRev;
+            }
+            if (!manifest.latest.settings) {
+                manifest.latest.settings = fromTheiaRev;
+            }
             res.json(manifest);
             return;
         });
@@ -124,43 +149,64 @@ export class CodeSyncService {
                 res.sendStatus(204);
                 return;
             }
-            const resource = await this.db.getResource(req.user.id, resourceKey, req.params.ref);
-            if (!resource) {
+            let resourceRev = req.params.ref;
+            if (resourceRev !== fromTheiaRev) {
+                resourceRev = (await this.db.getResource(req.user.id, resourceKey, resourceRev))?.rev;
+            }
+            if (!resourceRev && (resourceKey === SyncResource.Extensions || resourceKey === SyncResource.Settings)) {
+                resourceRev = fromTheiaRev;
+            }
+            if (!resourceRev) {
                 res.setHeader('etag', '0');
                 res.sendStatus(204);
                 return;
             }
-            if (req.headers['If-None-Match'] === resource.rev) {
+            if (req.headers['If-None-Match'] === resourceRev) {
                 res.sendStatus(304);
                 return;
             }
 
-            const contentType = req.headers['content-type'] || '*/*';
-            const request = new DownloadUrlRequest();
-            request.setOwnerId(req.user.id);
-            request.setName(toObjectName(resourceKey, resource.rev));
-            request.setContentType(contentType);
-            try {
-                const urlResponse = await util.promisify<DownloadUrlRequest, DownloadUrlResponse>(this.blobs.downloadUrl.bind(this.blobs))(request);
-                const response = await fetch(urlResponse.getUrl(), {
-                    headers: {
-                        'content-type': contentType
+            let content: string;
+            if (resourceRev === fromTheiaRev) {
+                let version = 1;
+                let value = '';
+                if (resourceKey === SyncResource.Extensions) {
+                    value = await this.theiaPluginService.getCodeSyncResource(req.user.id);
+                    version = 5;
+                } else if (resourceKey === SyncResource.Settings) {
+                    const settings = await this.userStorageResourcesDB.get(req.user.id, userSettingsUri);
+                    value = JSON.stringify(<ISettingsSyncContent>{ settings });
+                    version = 2;
+                }
+                content = JSON.stringify(<ISyncData>{ version, content: value });
+            } else {
+                const contentType = req.headers['content-type'] || '*/*';
+                const request = new DownloadUrlRequest();
+                request.setOwnerId(req.user.id);
+                request.setName(toObjectName(resourceKey, resourceRev));
+                request.setContentType(contentType);
+                try {
+                    const urlResponse = await util.promisify<DownloadUrlRequest, DownloadUrlResponse>(this.blobs.downloadUrl.bind(this.blobs))(request);
+                    const response = await fetch(urlResponse.getUrl(), {
+                        headers: {
+                            'content-type': contentType
+                        }
+                    });
+                    if (response.status !== 200) {
+                        throw new Error(`code sync: blob service: download failed with ${response.status} ${response.statusText}`);
                     }
-                });
-                if (response.status !== 200) {
-                    throw new Error(`code sync: blob service: download failed with ${response.status} ${response.statusText}`);
+                    content = await response.text();
+                } catch (e) {
+                    if (e.code === status.NOT_FOUND) {
+                        res.sendStatus(204);
+                        return;
+                    }
+                    throw e;
                 }
-                const content = await response.text();
-                res.setHeader('etag', resource.rev);
-                res.type('text/plain');
-                res.send(content);
-            } catch (e) {
-                if (e.code === status.NOT_FOUND) {
-                    res.sendStatus(204);
-                    return;
-                }
-                throw e;
             }
+            res.setHeader('etag', resourceRev);
+            res.type('text/plain');
+            res.send(content);
         });
         router.post('/v1/resource/:resource', bodyParser.text({
             limit: codeSyncConfig?.contentLimit || defaultContentLimit
@@ -174,7 +220,10 @@ export class CodeSyncService {
                 res.sendStatus(204);
                 return;
             }
-            const latestRev = typeof req.headers['If-Match'] === 'string' ? req.headers['If-Match'] : undefined;
+            let latestRev = typeof req.headers['If-Match'] === 'string' ? req.headers['If-Match'] : undefined;
+            if (latestRev === fromTheiaRev) {
+                latestRev = undefined;
+            }
             const revLimit = codeSyncConfig.resources?.[resourceKey]?.revLimit || codeSyncConfig?.revLimit || defautltRevLimit;
             const userId = req.user.id;
             let oldObject: string | undefined;
