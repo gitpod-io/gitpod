@@ -20,7 +20,10 @@ func TestBackup(t *testing.T) {
 	it := integration.NewTest(t)
 	defer it.Done()
 
-	ws := integration.LaunchWorkspaceDirectly(it)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+
+	ws := integration.LaunchWorkspaceDirectly(it, ctx)
 	rsa, err := it.Instrument(integration.ComponentWorkspace, "workspace", integration.WithInstanceID(ws.Req.Id))
 	if err != nil {
 		t.Fatal(err)
@@ -39,9 +42,9 @@ func TestBackup(t *testing.T) {
 	}
 	rsa.Close()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	_, err = it.API().WorkspaceManager().StopWorkspace(ctx, &wsapi.StopWorkspaceRequest{
+	sctx, scancel := context.WithTimeout(ctx, 5*time.Second)
+	defer scancel()
+	_, err = it.API().WorkspaceManager().StopWorkspace(sctx, &wsapi.StopWorkspaceRequest{
 		Id: ws.Req.Id,
 	})
 	if err != nil {
@@ -49,11 +52,11 @@ func TestBackup(t *testing.T) {
 		return
 	}
 
-	ctx, cancel = context.WithTimeout(context.Background(), 60*time.Second)
-	defer cancel()
-	it.WaitForWorkspaceStop(ctx, ws.Req.Id)
+	wctx, wcancel := context.WithTimeout(ctx, 60*time.Second)
+	defer wcancel()
+	it.WaitForWorkspaceStop(wctx, ws.Req.Id)
 
-	ws = integration.LaunchWorkspaceDirectly(it, integration.WithRequestModifier(func(w *wsapi.StartWorkspaceRequest) error {
+	ws = integration.LaunchWorkspaceDirectly(it, ctx, integration.WithRequestModifier(func(w *wsapi.StartWorkspaceRequest) error {
 		w.ServicePrefix = ws.Req.ServicePrefix
 		w.Metadata.MetaId = ws.Req.Metadata.MetaId
 		w.Metadata.Owner = ws.Req.Metadata.Owner

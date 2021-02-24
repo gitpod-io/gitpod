@@ -50,11 +50,8 @@ var (
 // NewTest produces a new integration test instance
 func NewTest(t *testing.T) *Test {
 	flag.Parse()
-
 	kubeconfig := *cfgFlag
 	namespaceOverride := *namespaceFlag
-	t.Logf("kubeconfig: %s", kubeconfig)
-	t.Logf("namespaceOverride: %s", namespaceOverride)
 
 	if kubeconfig == cfgFlagDefault {
 		home, err := os.UserHomeDir()

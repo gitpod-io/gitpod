@@ -65,7 +65,7 @@ func TestUploadUrl(t *testing.T) {
 			defer it.Done()
 
 			bs := it.API().BlobService()
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 			defer cancel()
 			resp, err := bs.UploadUrl(ctx, &api.UploadUrlRequest{OwnerId: test.InputOwnerID, Name: test.InputName})
 			if err != nil && test.ExpectedErrorCode == codes.OK {

@@ -47,6 +47,9 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 			it := integration.NewTest(t)
 			defer it.Done()
 
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+			defer cancel()
+
 			addInitTask := func(swr *wsmanapi.StartWorkspaceRequest) error {
 				tasks, err := json.Marshal([]gitpod.TasksItems{test.Task})
 				if err != nil {
@@ -59,17 +62,17 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 				return nil
 			}
 
-			nfo := integration.LaunchWorkspaceDirectly(it,
+			nfo := integration.LaunchWorkspaceDirectly(it, ctx,
 				integration.WithRequestModifier(addInitTask),
 			)
-			defer integration.DeleteWorkspace(it, nfo.Req.Id)
+			defer integration.DeleteWorkspace(it, ctx, nfo.Req.Id)
 
 			conn := it.API().Supervisor(nfo.Req.Id)
 			statusService := supervisor.NewStatusServiceClient(conn)
 
-			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-			defer cancel()
-			resp, err := statusService.TasksStatus(ctx, &supervisor.TasksStatusRequest{Observe: false})
+			tsctx, tscancel := context.WithTimeout(ctx, 60*time.Second)
+			defer tscancel()
+			resp, err := statusService.TasksStatus(tsctx, &supervisor.TasksStatusRequest{Observe: false})
 			if err != nil {
 				t.Fatal(err)
 			}
