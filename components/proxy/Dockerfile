@@ -2,53 +2,49 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-# https://docs.docker.com/samples/library/nginx/
-FROM nginx:1.14.1
-
-# Purge default configuration
-RUN rm -Rf /etc/nginx/conf.d/
-# nginx config templates...
-#COPY conf/  /etc/nginx/
-# .. and startup script
-COPY startup/nginx.sh nginx.sh
-
-
-# Metrics export dependencies
-# Set fix version for install
-RUN echo "deb http://ftp.debian.org/debian stretch-backports main" >> /etc/apt/sources.list.d/stretch-backports.list && \
-    apt-get update && apt-get -t stretch-backports install --no-install-recommends -yq \
-      #libnginx-mod-http-lua \  # For newer distros
-      # pin the latest version available for stretch-backports: https://packages.debian.org/stretch-backports/httpd/#nginx
-      nginx-extras=1.14.1-1~bpo9+1 \
-      lua-cjson \
-      lua-nginx-cookie \
-    # Remove default sites installed by nginx-extras
-    && rm -Rf /etc/nginx/sites-*/* \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
-
-COPY conf/lua-prometheus /etc/nginx/lua-prometheus
+FROM openresty/openresty:1.19.3.1-3-alpine
 
 # Debug convenience
 ENV TERM=xterm
 ENV SHELL=/bin/bash
-RUN apt-get update && apt-get install -yq \
-        vim \
-        less \
-        dnsutils \
-        curl \
-        apache2-utils \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
+
+RUN apk add --no-cache \
+      vim \
+      less \
+      bind-tools \
+      curl \
+      apache2-utils \
+      gettext \
+      bash
 
 # Include certbot into the proxy for HTTPS termination
-RUN curl -o /usr/bin/lama -L https://github.com/csweichel/lama/releases/download/v0.3.0/lama_0.3.0_Linux_x86_64 && \
-    chmod +x /usr/bin/lama && \
-    mkdir -p /var/www/lama/nginx && \
-    touch /var/www/lama/nginx/status && \
-    apt-get update && \
-    apt-get install -yq \
-        procps \
-        certbot \
-        python-certbot-nginx
+RUN curl -o /usr/bin/lama -sSL https://github.com/csweichel/lama/releases/download/v0.3.0/lama_0.3.0_Linux_x86_64 \
+    && chmod +x /usr/bin/lama \
+    && mkdir -p /var/www/lama/nginx \
+    && touch /var/www/lama/nginx/status
+
+RUN apk add --no-cache \
+      procps \
+      certbot \
+      certbot-nginx
+
+RUN set -e \
+    && apk add --no-cache git \
+    && cd /tmp \
+    && git clone https://github.com/cloudflare/lua-resty-cookie/ \
+    && cp lua-resty-cookie/lib/resty/*.lua /usr/local/openresty/site/lualib/ \
+    && apk del git \
+    && rm -rf /tmp/*
+
+# Update alpine packages
+RUN apk upgrade --no-cache
+
+# nginx config templates...
+#COPY conf/  /etc/nginx/
+# .. and startup script
+COPY startup/nginx.sh /nginx.sh
+
+COPY conf/lua-prometheus /etc/nginx/lua-prometheus
 
 # ip.mygitpod.com HTTPS support
 COPY nodomain-certs/* /nodomain-certs/
