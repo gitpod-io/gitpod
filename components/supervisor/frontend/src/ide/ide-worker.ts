@@ -22,8 +22,8 @@ export function install(): void {
     }
 }
 
-function proxyUrl(scriptUrl: string | URL): string {
-    scriptUrl = typeof scriptUrl === 'string' ? new URL(scriptUrl, document.baseURI) : scriptUrl;
+function proxyUrl(scriptUrl: string | URL | TrustedScriptURL): string {
+    scriptUrl = scriptUrl instanceof URL ? scriptUrl : new URL(typeof scriptUrl === 'string' ? scriptUrl : scriptUrl.toString(), document.baseURI);
     if (scriptUrl.origin !== location.origin || (scriptUrl.protocol !== 'http:' && scriptUrl.protocol !== 'https:')) {
         return scriptUrl.toString();
     }
