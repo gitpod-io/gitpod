@@ -1,0 +1,14 @@
+{{- if .Values.components.proxy.sslDHParam -}}
+apiVersion: v1
+kind: Secret
+metadata:
+  name: server-proxy-ssl-dhparam
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+type: Opaque
+data:
+  dh.key: {{ .Values.components.proxy.sslDHParam }}
+{{- end }}

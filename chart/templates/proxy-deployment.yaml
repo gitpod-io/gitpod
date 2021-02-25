@@ -97,10 +97,14 @@ spec:
 {{- if index .Values "docker-registry" "enabled" }}
         - name: builtin-registry-auth
           mountPath: "/mnt/nginx/registry-auth"
-{{- end }}     
+{{- end }}
 {{- if $.Values.certificatesSecret.secretName }}
         - name: config-certificates
           mountPath: "/mnt/nginx/certificates"
+{{- end }}
+{{- if $comp.sslDHParam }}
+        - name: config-ssl-dhparam
+          mountPath: "/mnt/nginx/ssl-dhparam"
 {{- end }}
 {{ include "gitpod.container.configmap.volumeMounts" $this | indent 8 }}
 {{ include "gitpod.container.defaultEnv" (dict "root" . "gp" $.Values "comp" $comp "noVersion" true) | indent 8 }}
@@ -151,6 +155,11 @@ spec:
       - name: ws-proxy-config
         configMap:
           name: ws-proxy-config
+{{- end }}
+{{- if $comp.sslDHParam }}
+      - name: config-ssl-dhparam
+        secret:
+          secretName: server-proxy-ssl-dhparam
 {{- end }}
 {{- if $.Values.certificatesSecret.secretName }}
       - name: config-certificates

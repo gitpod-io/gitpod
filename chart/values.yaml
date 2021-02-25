@@ -350,6 +350,7 @@ components:
     dependsOn:
     - "proxy-configmap-nginx.yaml"
     - "server-proxy-apikey-secret.yaml"
+    - "server-proxy-ssl-dhparam.yaml"
     ports:
       http:
         expose: true
@@ -367,6 +368,10 @@ components:
     certbot:
       enabled: false
       email: "certificate@your-domain.com"
+    # A base64ed Diffie-Hellman parameter
+    # This can be generated with: openssl dhparam 4096 2> /dev/null | base64 -w 0
+    # http://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_dhparam
+    sslDHParam:
 
   wsManager:
     name: "ws-manager"
