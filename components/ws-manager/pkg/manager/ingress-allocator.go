@@ -7,7 +7,6 @@ package manager
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"math/rand"
 	"sort"
 	"sync"
@@ -15,10 +14,11 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"golang.org/x/xerrors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/labels"
 )
 
 // IngressPortAllocatorConfig holds the IngressPortAllocator config
@@ -68,7 +68,7 @@ type kubernetesBackedPortAllocator struct {
 	WorkspacePortURLTemplate string
 	GitpodHostURL            string
 
-	clientset kubernetes.Interface
+	clientset client.Client
 	namespace string
 
 	mu sync.RWMutex
@@ -96,7 +96,7 @@ type allocatedPort struct {
 //  a) an instance of ingressPortAllocatorImpl, or
 //  b) an instance of dummyIngressPortAllocator,
 // depending on whether or not the passed config is actuall present
-func NewIngressPortAllocator(config *IngressPortAllocatorConfig, clientset kubernetes.Interface, namespace string, wsPortURLTmpl string, gitpodHostURL string) (IngressPortAllocator, error) {
+func NewIngressPortAllocator(config *IngressPortAllocatorConfig, client client.Client, namespace string, wsPortURLTmpl string, gitpodHostURL string) (IngressPortAllocator, error) {
 	if config == nil {
 		return &noopIngressPortAllocator{}, nil
 	}
@@ -106,7 +106,7 @@ func NewIngressPortAllocator(config *IngressPortAllocatorConfig, clientset kuber
 		WorkspacePortURLTemplate: wsPortURLTmpl,
 		GitpodHostURL:            gitpodHostURL,
 
-		clientset: clientset,
+		clientset: client,
 		namespace: namespace,
 
 		services:       make(map[string]allocatedPorts),
@@ -156,9 +156,16 @@ func (pa *kubernetesBackedPortAllocator) reconciliateState() error {
 	defer cancel()
 
 	// read services and map to allocated ports
-	services, err := pa.clientset.CoreV1().Services(pa.namespace).List(ctx, metav1.ListOptions{
-		LabelSelector: fmt.Sprintf("%s=true", markerLabel),
-	})
+	var services corev1.ServiceList
+	err := pa.clientset.List(ctx,
+		&services,
+		&client.ListOptions{
+			Namespace: pa.namespace,
+			LabelSelector: labels.SelectorFromSet(labels.Set{
+				markerLabel: "true",
+			}),
+		},
+	)
 	if err != nil {
 		return err
 	}

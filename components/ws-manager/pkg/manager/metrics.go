@@ -14,6 +14,7 @@ import (
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/prometheus/client_golang/prometheus"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // RegisterMetrics registers the Prometheus metrics of this manager
@@ -188,7 +189,8 @@ func (m *phaseTotalVec) Collect(ch chan<- prometheus.Metric) {
 	ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
 	defer cancel()
 
-	pods, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).List(ctx, workspaceObjectListOptions())
+	var pods corev1.PodList
+	err := m.manager.Clientset.List(ctx, &pods, workspaceObjectListOptions(m.manager.Config.Namespace))
 	if err != nil {
 		log.WithError(err).Debugf("cannot list workspaces for %s gauge", m.name)
 		return

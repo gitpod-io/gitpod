@@ -298,6 +298,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        fmt.Sprintf("%s-%s", prefix, req.Id),
+			Namespace:   m.Config.Namespace,
 			Labels:      labels,
 			Annotations: annotations,
 		},
@@ -693,7 +694,8 @@ func (m *Manager) createPortsService(workspaceID string, metaID string, serviceP
 
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: serviceName,
+			Name:      serviceName,
+			Namespace: m.Config.Namespace,
 			Labels: map[string]string{
 				"workspaceID":     workspaceID,
 				wsk8s.MetaIDLabel: metaID,

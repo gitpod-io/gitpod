@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/gitpod-io/gitpod/ws-manager/api"
-	fakek8s "k8s.io/client-go/kubernetes/fake"
 )
 
 func TestMarkWorkspace(t *testing.T) {
@@ -28,7 +27,6 @@ func TestMarkWorkspace(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Description, func(t *testing.T) {
 			manager := forTestingOnlyGetManager(t)
-			manager.Config.Namespace = ""
 			startCtx, err := forTestingOnlyCreateStartWorkspaceContext(manager, "foo", api.WorkspaceType_REGULAR)
 			if err != nil {
 				t.Errorf("cannot create test pod start context; this is a bug in the unit test itself: %v", err)
@@ -47,7 +45,12 @@ func TestMarkWorkspace(t *testing.T) {
 			for k, v := range test.InitialState {
 				pod.Annotations[k] = v
 			}
-			manager.Clientset = fakek8s.NewSimpleClientset(pod)
+
+			err = manager.Clientset.Create(context.Background(), pod)
+			if err != nil {
+				t.Errorf("cannot create test pod; this is a bug in the unit test itself: %v", err)
+				return
+			}
 
 			err = manager.markWorkspace(context.Background(), startCtx.Request.Id, test.Operations...)
 			if err != nil && err.Error() != test.ExpectedErr {
