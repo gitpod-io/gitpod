@@ -8,11 +8,12 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"golang.org/x/xerrors"
 	"io"
 	"strings"
 	"sync"
 	"time"
+
+	"golang.org/x/xerrors"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"

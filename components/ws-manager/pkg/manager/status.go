@@ -24,6 +24,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 const (
@@ -221,11 +222,11 @@ func (m *Manager) completeWorkspaceObjects(ctx context.Context, wso *workspaceOb
 	if servicePrefix == "" {
 		return xerrors.Errorf("completeWorkspaceObjects: no service prefix found")
 	}
-	serviceClient := m.Clientset.CoreV1().Services(m.Config.Namespace)
 	if wso.TheiaService == nil {
-		service, err := serviceClient.Get(ctx, getTheiaServiceName(servicePrefix), metav1.GetOptions{})
+		var service corev1.Service
+		err := m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: getTheiaServiceName(servicePrefix)}, &service)
 		if err == nil {
-			wso.TheiaService = service
+			wso.TheiaService = &service
 		}
 
 		if !isKubernetesObjNotFoundError(err) && err != nil {
@@ -233,9 +234,10 @@ func (m *Manager) completeWorkspaceObjects(ctx context.Context, wso *workspaceOb
 		}
 	}
 	if wso.PortsService == nil {
-		service, err := serviceClient.Get(ctx, getPortsServiceName(servicePrefix), metav1.GetOptions{})
+		var service corev1.Service
+		err := m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: getPortsServiceName(servicePrefix)}, &service)
 		if err == nil {
-			wso.PortsService = service
+			wso.PortsService = &service
 		}
 
 		if !isKubernetesObjNotFoundError(err) && err != nil {
@@ -246,7 +248,7 @@ func (m *Manager) completeWorkspaceObjects(ctx context.Context, wso *workspaceOb
 	// find pod events - this only makes sense if we still have a pod
 	if wso.Pod != nil {
 		if wso.Events == nil && wso.Pod != nil {
-			events, err := m.Clientset.CoreV1().Events(m.Config.Namespace).Search(scheme, wso.Pod)
+			events, err := m.RawClient.CoreV1().Events(m.Config.Namespace).Search(scheme, wso.Pod)
 			if err != nil {
 				return xerrors.Errorf("completeWorkspaceObjects: %w", err)
 			}
@@ -263,12 +265,13 @@ func (m *Manager) completeWorkspaceObjects(ctx context.Context, wso *workspaceOb
 			return fmt.Errorf("cannot act on pod %s: has no %s annotation", wso.Pod.Name, workspaceIDAnnotation)
 		}
 
-		plis, err := m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Get(ctx, getPodLifecycleIndependentCfgMapName(workspaceID), metav1.GetOptions{})
+		var plis corev1.ConfigMap
+		err := m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: getPodLifecycleIndependentCfgMapName(workspaceID)}, &plis)
 		if !isKubernetesObjNotFoundError(err) && err != nil {
 			return xerrors.Errorf("completeWorkspaceObjects: %w", err)
 		}
 
-		wso.PLIS = plis
+		wso.PLIS = &plis
 	}
 
 	return nil
