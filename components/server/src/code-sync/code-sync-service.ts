@@ -24,7 +24,7 @@ import { increaseApiCallUserCounter } from '../prometheus-metrics';
 import { TheiaPluginService } from '../theia-plugin/theia-plugin-service';
 import { UserStorageResourcesDB } from '@gitpod/gitpod-db/lib/user-storage-resources-db';
 
-// By default: 6 kind of resources * 20 revs * 1Mb = 120Mb max in the content service for user data.
+// By default: 5 kind of resources * 20 revs * 1Mb = 100Mb max in the content service for user data.
 const defautltRevLimit = 20;
 // It should keep it aligned with client_max_body_size for /code-sync location.
 const defaultContentLimit = '1Mb';
@@ -224,7 +224,7 @@ export class CodeSyncService {
             if (latestRev === fromTheiaRev) {
                 latestRev = undefined;
             }
-            const revLimit = codeSyncConfig.resources?.[resourceKey]?.revLimit || codeSyncConfig?.revLimit || defautltRevLimit;
+            const revLimit = resourceKey === 'machines' ? 1 : codeSyncConfig.resources?.[resourceKey]?.revLimit || codeSyncConfig?.revLimit || defautltRevLimit;
             const userId = req.user.id;
             let oldObject: string | undefined;
             const contentType = req.headers['content-type'] || '*/*';
