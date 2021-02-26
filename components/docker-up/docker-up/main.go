@@ -129,8 +129,9 @@ func runWithinNetns() (err error) {
 				}
 				if err != nil {
 					log.WithError(err).Warn("cannot chmod docker socket")
-					return
 				}
+
+				return
 			}
 		}()
 	}
