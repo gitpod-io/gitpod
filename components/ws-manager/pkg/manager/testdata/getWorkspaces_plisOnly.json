@@ -23,7 +23,6 @@
                 },
                 "name": "plis-d6835d33-116f-4d3f-aeb6-ad628f4004b6",
                 "namespace": "default",
-                "resourceVersion": "9363249",
                 "selfLink": "/api/v1/namespaces/default/configmaps/plis-d6835d33-116f-4d3f-aeb6-ad628f4004b6",
                 "uid": "56e386ae-09de-11ea-aac8-42010a840115"
             }

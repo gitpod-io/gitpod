@@ -21,7 +21,7 @@
                     "name": "p3000-public",
                     "protocol": "TCP",
                     "port": 3000,
-                    "targetPort": 0
+                    "targetPort": 3000
                 },
                 {
                     "name": "p8080-public",
