@@ -1,6 +1,4 @@
 ingressMode: noDomain
 certificatesSecret: {}
-authProviders: []
 
-mysql:
-  enabled: true
+authProviders: []

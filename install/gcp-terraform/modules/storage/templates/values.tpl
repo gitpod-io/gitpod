@@ -17,6 +17,13 @@ components:
         credentialsFile: /credentials/key.json
         tmpdir: /mnt/sync-tmp
         parallelUpload: 6
+    volumes:
+      - name: gcloud-creds
+        secret:
+          secretName: ${secretName}
+    volumeMounts:
+      - mountPath: /credentials
+        name: gcloud-creds
 
   wsDaemon:
     name: "ws-daemon"

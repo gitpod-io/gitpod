@@ -33,7 +33,11 @@ variable "email" {
 
 variable "domain" {
   type = string
+}
 
+variable "shortname" {
+  type    = string
+  default = ""
 }
 
 variable "certificate" {

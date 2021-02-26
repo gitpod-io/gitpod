@@ -11,10 +11,13 @@ locals {
   ]
 }
 
+data "google_project" "project" {
+}
+
 # https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/google_project_service
 resource "google_project_service" "storage" {
   count   = length(local.google_services)
-  project = var.project
+  project = data.google_project.project.project_id
   service = local.google_services[count.index]
 
   disable_dependent_services = false
@@ -22,20 +25,24 @@ resource "google_project_service" "storage" {
 }
 
 
-
 #
 # Service Account
 #
 
+resource "random_id" "gitpod_storage" {
+  byte_length = 4
+}
+
+
 resource "google_service_account" "gitpod_storage" {
-  account_id   = "gitpod-storage-${var.name}"
-  display_name = "gitpod-storage-${var.name}"
-  description  = "gitpod-workspace-syncer ${var.name}"
-  project      = var.project
+  account_id   = "${var.name}-${random_id.gitpod_storage.hex}"
+  display_name = "${var.name}-${random_id.gitpod_storage.hex}"
+  description  = "gitpod-workspace-syncer ${var.name}-${random_id.gitpod_storage.hex}"
+  project      = data.google_project.project.project_id
 }
 
 resource "google_project_iam_member" "gitpod_storage" {
-  project = var.project
+  project = data.google_project.project.project_id
   role    = "roles/storage.admin"
   member  = "serviceAccount:${google_service_account.gitpod_storage.email}"
 }
@@ -60,6 +67,6 @@ data "template_file" "values" {
   vars = {
     secretName = kubernetes_secret.storage.metadata[0].name
     region     = var.region
-    project    = var.project
+    project    = data.google_project.project.project_id
   }
 }

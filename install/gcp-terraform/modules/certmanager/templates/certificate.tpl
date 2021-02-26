@@ -12,7 +12,7 @@ spec:
   dnsNames:
     - "${domain}"
     - "*.${domain}"
-    - "*.ws.${domain}"
+    - "*.${shortname}.${domain}"
   issuerRef:
     name: letsencrypt-issuer
     kind: ClusterIssuer

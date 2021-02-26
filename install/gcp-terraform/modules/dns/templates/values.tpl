@@ -3,8 +3,11 @@
 
 ingressMode: hosts
 hostname: ${hostname}
+installation:
+  shortname: ${shortname}
 components:
   proxy:
+    serviceType: LoadBalancer
     loadBalancerIP: ${loadBalancerIP}
 
 branding:

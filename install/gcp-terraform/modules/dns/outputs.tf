@@ -18,3 +18,7 @@ output "hostname" {
 output "address" {
   value = google_compute_address.gitpod.address
 }
+
+output "shortname" {
+  value = var.gitpod.shortname
+}

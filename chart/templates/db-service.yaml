@@ -20,13 +20,13 @@ spec:
     nodePort: 3306
     {{- end }}
   selector:
-    {{- if $comp.gcloudSqlProxy.enabled }}
+    {{- if or $comp.gcloudSqlProxy.enabled $.Values.mysql.enabled }}
     app: {{ template "gitpod.fullname" $ }}
     stage: {{ .Values.installation.stage }}
     component: {{ $comp.name }}
     kind: pod
     {{- else }}
-    app: mysql
+    app: gitpod-mysql
     {{- end }}
   type: {{ $comp.serviceType }}
   sessionAffinity: None

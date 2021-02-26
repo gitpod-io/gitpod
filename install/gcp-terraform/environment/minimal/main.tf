@@ -4,15 +4,33 @@
  */
 
 locals {
+  google_services = [
+    "compute.googleapis.com",
+  ]
   region      = trimsuffix(var.location, local.zone_suffix)
   zone_suffix = regex("-[a-z]$", var.location)
 }
+
+# https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/google_project_service
+resource "google_project_service" "main" {
+  count   = length(local.google_services)
+  project = var.project
+  service = local.google_services[count.index]
+
+  disable_dependent_services = false
+  disable_on_destroy         = false
+}
+
 
 resource "google_compute_network" "gitpod" {
   name                    = "gitpod"
   description             = "Gitpod Cluster Network"
   auto_create_subnetworks = false
   project                 = var.project
+
+  depends_on = [
+    google_project_service.main,
+  ]
 }
 
 module "kubernetes" {
@@ -24,7 +42,6 @@ module "kubernetes" {
   location = var.location
 }
 
-
 module "dns" {
   source = "../../modules/dns"
 
@@ -33,6 +50,10 @@ module "dns" {
   zone_name = var.zone_name
   name      = "gitpod-dns"
   subdomain = var.subdomain
+
+  depends_on = [
+    module.kubernetes,
+  ]
 
   providers = {
     google     = google
@@ -54,39 +75,11 @@ module "certmanager" {
     helm       = helm
     kubectl    = kubectl
   }
-}
 
-module "registry" {
-  source = "../../modules/registry"
-
-  name     = var.subdomain
-  location = var.container_registry.location
-
-  providers = {
-    google     = google
-    kubernetes = kubernetes
-  }
-}
-
-
-module "storage" {
-  source = "../../modules/storage"
-
-  name     = var.subdomain
-  project  = var.project
-  region   = local.region
-  location = "EU"
-}
-
-module "database" {
-  source = "../../modules/database"
-
-  name   = var.database.name
-  region = local.region
-  network = {
-    id   = google_compute_network.gitpod.id
-    name = google_compute_network.gitpod.name
-  }
+  depends_on = [
+    module.kubernetes,
+    module.dns,
+  ]
 }
 
 #
@@ -101,11 +94,7 @@ module "gitpod" {
   values             = file("values.yaml")
   dns_values         = module.dns.values
   certificate_values = module.certmanager.values
-  # database_values    = module.database.values
-  registry_values = module.registry.values
-  storage_values  = module.storage.values
-  license         = var.license
-
+  license            = var.license
   gitpod = {
     repository   = var.gitpod_repository
     chart        = var.gitpod_chart
@@ -118,4 +107,10 @@ module "gitpod" {
     kubernetes = kubernetes
     helm       = helm
   }
+
+  depends_on = [
+    module.kubernetes,
+    module.dns,
+    module.certmanager,
+  ]
 }

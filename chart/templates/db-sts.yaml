@@ -1,0 +1,70 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.db }}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if $.Values.mysql.enabled }}
+kind: StatefulSet
+apiVersion: apps/v1
+metadata:
+  name: db
+  labels:
+    app: {{ template "gitpod.fullname" $ }}
+    component: {{ $comp.name }}
+    kind: deployment
+    stage: {{ .Values.installation.stage }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" $ }}
+      component: db
+      kind: pod
+      stage: {{ .Values.installation.stage }}
+  replicas: 1
+  serviceName: db
+  template:
+    metadata:
+      labels:
+        app: {{ template "gitpod.fullname" $ }}
+        component: db
+        kind: pod
+        stage: {{ .Values.installation.stage }}
+    spec:
+      containers:
+      - image: mysql:5.7
+        name: db
+        args: ["--ignore-db-dir=lost+found"]
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-password
+              key: mysql-root-password
+        - name: MYSQL_USER
+          value: gitpod
+        - name: MYSQL_PASSWORD
+          value: {{ .Values.db.password }}
+        - name: MYSQL_DATABASE
+          value: gitpod
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/mysql
+        - name: init
+          mountPath: /docker-entrypoint-initdb.d
+      volumes:
+      - name: init
+        configMap:
+          name: db-init-scripts
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: standard
+      resources:
+        requests:
+          storage: 10Gi
+{{- end }}

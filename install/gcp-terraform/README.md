@@ -64,13 +64,3 @@ certificate_email = "certificates@your-domain.com"
 ```
 
 Several OAuth provider could be added ([docs.gitpod.io](https://www.gitpod.io/docs/self-hosted/latest/install/oauth/)).
-
-
-
-## Installation
-
-After the variables are set up, the installation could be started.
-
-```
-$ make install
-```

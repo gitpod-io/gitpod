@@ -3,7 +3,6 @@
  * Licensed under the MIT License. See License-MIT.txt in the project root for license information.
  */
 
-
 terraform {
   required_providers {
     google = {

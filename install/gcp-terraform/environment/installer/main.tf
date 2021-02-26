@@ -50,8 +50,8 @@ resource "google_compute_address" "gitpod" {
 }
 
 locals {
-  hostname = "${var.domain == "" ? local.mygitpod_domain : var.domain}"
-  mygitpod_prefix = replace(google_compute_address.gitpod.address,".","-")
+  hostname        = var.domain == "" ? local.mygitpod_domain : var.domain
+  mygitpod_prefix = replace(google_compute_address.gitpod.address, ".", "-")
   mygitpod_domain = "${local.mygitpod_prefix}.ip.mygitpod.com"
 }
 
@@ -68,8 +68,8 @@ data "template_file" "values" {
 module "gitpod" {
   source = "./modules/gitpod"
 
-  project = var.project
-  region  = var.region
+  project   = var.project
+  region    = var.region
   namespace = var.kubernetes.namespace
   gitpod = {
     chart        = var.chart_location

@@ -7,7 +7,7 @@ variable "project" {
   type = string
 }
 
-variable "region" {
+variable "location" {
   type = string
 }
 
@@ -24,11 +24,18 @@ variable "subdomain" {
   default = "gitpod"
 }
 
+variable "dns_prefixes" {
+  type    = list(string)
+  default = ["", "*"]
+}
+
 variable "gitpod" {
   type = object({
     namespace = string
+    shortname = string
   })
   default = {
     namespace = "default"
+    shortname = ""
   }
 }
