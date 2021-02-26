@@ -13,7 +13,6 @@
         "workspaceType": "regular"
       },
       "name": "ws-660fe87c-0b7a-4bc2-86f4-276b8b038614",
-      "resourceVersion": "85070193",
       "selfLink": "/api/v1/namespaces/default/pods/ws-660fe87c-0b7a-4bc2-86f4-276b8b038614",
       "uid": "9b60cc46-7330-11ea-b56c-42010a8401b8",
       "namespace": "default",
@@ -266,7 +265,6 @@
   "plis": {
     "metadata": {
       "name": "plis-660fe87c-0b7a-4bc2-86f4-276b8b038614",
-      "resourceVersion": "85070073",
       "selfLink": "/api/v1/namespaces/default/configmaps/plis-660fe87c-0b7a-4bc2-86f4-276b8b038614",
       "uid": "9b64ede3-7330-11ea-b56c-42010a8401b8",
       "namespace": "default",
@@ -274,7 +272,6 @@
         "gitpod/id": "660fe87c-0b7a-4bc2-86f4-276b8b038614",
         "gitpod/servicePrefix": "fe9c4b69-4072-42ea-a446-98c2a7dee1f0"
       },
-      "creationTimestamp": "2020-03-31T09:18:39Z",
       "labels": {
         "metaID": "fe9c4b69-4072-42ea-a446-98c2a7dee1f0",
         "headless": "false",

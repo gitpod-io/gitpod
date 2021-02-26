@@ -19,7 +19,7 @@
                     "name": "p3000-private",
                     "protocol": "TCP",
                     "port": 3000,
-                    "targetPort": 0
+                    "targetPort": 3000
                 }
             ],
             "selector": {
