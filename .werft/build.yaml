@@ -30,7 +30,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:gpl-bump-helm.12
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-dev-image.0
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
@@ -89,7 +89,7 @@ pod:
     #       name: gitpod-test-tokens
     #       key: bitbucket-test-token.json
     command:
-      - bash 
+      - bash
       - -c
       - |
         sleep 1
