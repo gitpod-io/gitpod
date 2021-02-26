@@ -36,10 +36,10 @@ tasks:
     openMode: split-right
 vscode:
   extensions:
-    - hangxingliu.vscode-nginx-conf-hint@0.1.0:UATTe2sTFfCYWQ3jw4IRsw==
-    - zxh404.vscode-proto3@0.4.2:ZnPmyF/Pb8AIWeCqc83gPw==
-    - ms-kubernetes-tools.vscode-kubernetes-tools@1.2.1:j58HdmA0K7d9a9sEkogZNw==
-    - bajdzis.vscode-database@2.2.1:uXdjV53wtoTevFK6HOh3pQ==
-    - hashicorp.terraform@2.1.1:QEP7gdWtMuY+j8RZ5OLDkA==
-    - stkb.rewrap@1.13.0:yEx8nRSXlfXAHqsbkTJpdA==
-    - golang.go@0.14.4:Z3iqHRuIxskc0nruY4MpEQ==
+    - hangxingliu.vscode-nginx-conf-hint
+    - zxh404.vscode-proto3
+    - ms-kubernetes-tools.vscode-kubernetes-tools
+    - bajdzis.vscode-database
+    - hashicorp.terraform
+    - stkb.rewrap
+    - golang.go@
