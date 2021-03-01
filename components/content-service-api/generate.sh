@@ -1,6 +1,6 @@
 #!/bin/sh
 
-GO111MODULE=on go get github.com/golang/protobuf/protoc-gen-go@v1.3.5
+go get github.com/golang/protobuf/protoc-gen-go@v1.3.5
 protoc -I. --go_out=plugins=grpc:. *.proto
 mv github.com/gitpod-io/gitpod/content-service/api/* go && rm -rf github.com
 
