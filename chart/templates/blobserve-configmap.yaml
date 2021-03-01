@@ -24,7 +24,7 @@ data:
             "repos": {
                 "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) }}": {
                     "prePull": ["{{- template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) -}}"],
-                    "workdir": "/theia/node_modules/@gitpod/gitpod-ide/lib"
+                    "workdir": "/theia/theia-app/app/lib"
                 },
                 "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) }}": {
                     "prePull": ["{{- template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) -}}"],
