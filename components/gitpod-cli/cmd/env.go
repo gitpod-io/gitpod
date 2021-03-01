@@ -9,8 +9,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
 )
 
 var exportEnvs = false

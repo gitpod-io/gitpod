@@ -9,15 +9,16 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/gitpod-io/gitpod/common-go/namegen"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 	imgbldr "github.com/gitpod-io/gitpod/image-builder/api"
 	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
-	"github.com/google/uuid"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (

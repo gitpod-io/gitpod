@@ -12,11 +12,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
 )
 
 var (

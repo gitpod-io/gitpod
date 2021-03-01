@@ -12,9 +12,10 @@ import (
 	"syscall"
 	"text/template"
 
+	"github.com/spf13/cobra"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
-	"github.com/spf13/cobra"
 )
 
 var defaultTemplate = `{{.Id}} {{.Phase}}: {{.Message}}{{"\n"}}`

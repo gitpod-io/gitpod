@@ -12,10 +12,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/streadway/amqp"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // messagebusCmd represents the messagebus command

@@ -5,9 +5,10 @@
 package workspace_test
 
 import (
+	"testing"
+
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
 	agent "github.com/gitpod-io/gitpod/test/tests/workspace/workspace_agent/api"
-	"testing"
 )
 
 func TestWorkspaceInstrumentation(t *testing.T) {

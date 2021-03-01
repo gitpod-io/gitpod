@@ -8,8 +8,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/gitpod-io/gitpod/supervisor/pkg/dropwriter"
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/supervisor/pkg/dropwriter"
 )
 
 var dropCmd = &cobra.Command{

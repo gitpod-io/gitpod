@@ -11,9 +11,10 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/spf13/cobra"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/registry-facade/pkg/registry"
-	"github.com/spf13/cobra"
 )
 
 // debugHandover represents the run command

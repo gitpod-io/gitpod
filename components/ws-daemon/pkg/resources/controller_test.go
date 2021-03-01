@@ -18,8 +18,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sirupsen/logrus"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 var plot = flag.Bool("plot", false, "produces plots of the test cases - useful for debugging. Requires python")

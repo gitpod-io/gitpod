@@ -12,15 +12,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
-	"github.com/opentracing/opentracing-go"
-	"golang.org/x/xerrors"
-
 	validation "github.com/go-ozzo/ozzo-validation"
 	minio "github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/opentracing/opentracing-go"
+	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 )
 
 var _ DirectAccess = &DirectMinIOStorage{}

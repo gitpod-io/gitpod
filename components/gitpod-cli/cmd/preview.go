@@ -10,9 +10,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
-
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
 )
 
 var regexLocalhost = regexp.MustCompile("((^(localhost|127\\.0\\.0\\.1))|(https?://(localhost|127\\.0\\.0\\.1)))(:[0-9]+)?")

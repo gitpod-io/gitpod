@@ -11,15 +11,15 @@ import (
 	"os"
 	"path/filepath"
 
-	"golang.org/x/xerrors"
-
-	"github.com/gitpod-io/gitpod/common-go/util"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/spf13/afero"
+	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/yaml"
+
+	"github.com/gitpod-io/gitpod/common-go/util"
 )
 
 // fs is used to load files refered to by this configuration.

@@ -10,10 +10,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // GetIntegrationTestClient provides a kubernetes client for integration tests

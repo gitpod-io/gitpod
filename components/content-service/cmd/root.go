@@ -12,13 +12,14 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 )
 
 var (

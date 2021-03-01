@@ -19,15 +19,6 @@ import (
 	"sync"
 	"time"
 
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
-	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
-	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
-	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/grpcpool"
-
 	validation "github.com/go-ozzo/ozzo-validation"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	"github.com/opentracing/opentracing-go"
@@ -45,6 +36,15 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
+	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
+	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
+	"github.com/gitpod-io/gitpod/ws-manager/api"
+	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/grpcpool"
 )
 
 // Manager is a kubernetes backed implementation of a workspace manager

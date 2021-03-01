@@ -12,8 +12,9 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"gopkg.in/yaml.v2"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // ConfigInterface provides access to the gitpod config file.

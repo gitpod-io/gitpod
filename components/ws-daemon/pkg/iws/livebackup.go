@@ -15,9 +15,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 const (

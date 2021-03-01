@@ -11,9 +11,10 @@ import (
 	"os"
 	"regexp"
 
+	"golang.org/x/xerrors"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
-	"golang.org/x/xerrors"
 )
 
 const (

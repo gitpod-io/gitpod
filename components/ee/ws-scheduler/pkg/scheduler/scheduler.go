@@ -17,18 +17,11 @@ import (
 	"sync"
 	"time"
 
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-	k8sinternal "github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler/internal"
-	metrics "github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler/metrics"
-
 	"github.com/opentracing/opentracing-go"
 	tracelog "github.com/opentracing/opentracing-go/log"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/time/rate"
 	"golang.org/x/xerrors"
-
 	corev1 "k8s.io/api/core/v1"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	res "k8s.io/apimachinery/pkg/api/resource"
@@ -39,6 +32,12 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/cache"
 	v1helper "k8s.io/kubernetes/pkg/apis/core/v1/helper"
+
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
+	k8sinternal "github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler/internal"
+	metrics "github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler/metrics"
 )
 
 const (

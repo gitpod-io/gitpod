@@ -12,10 +12,11 @@ import (
 	"testing"
 	"time"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	ctesting "github.com/gitpod-io/gitpod/common-go/testing"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestIsWorkspaceTimedout(t *testing.T) {

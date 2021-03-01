@@ -10,10 +10,11 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/gitpod-io/gitpod/blobserve/pkg/blobserve"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/spf13/cobra"
 )
 
 var (

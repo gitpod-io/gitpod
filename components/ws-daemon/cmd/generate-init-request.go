@@ -11,8 +11,9 @@ import (
 	"fmt"
 
 	"github.com/alecthomas/jsonschema"
-	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/ws-daemon/api"
 )
 
 // generateInitReqSchemaCmd represents the generateConfig command

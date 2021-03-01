@@ -12,10 +12,11 @@ import (
 
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/remotes"
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/registry-facade/pkg/registry"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/registry-facade/pkg/registry"
 )
 
 const (

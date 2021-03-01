@@ -10,8 +10,9 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/gitpod-io/gitpod/licensor/ee/pkg/licensor"
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/licensor/ee/pkg/licensor"
 )
 
 // validateCmd represents the validate command

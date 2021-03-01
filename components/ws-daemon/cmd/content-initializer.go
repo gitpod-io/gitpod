@@ -5,8 +5,9 @@
 package cmd
 
 import (
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/content"
 )
 
 // contentInitializerCmd creates a workspace snapshot

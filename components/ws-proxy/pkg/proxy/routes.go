@@ -19,11 +19,12 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // RouteHandlerConfig configures a RouteHandler

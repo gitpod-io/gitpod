@@ -13,10 +13,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gitpod-io/gitpod/content-service/api"
-	"github.com/gitpod-io/gitpod/test/pkg/integration"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/test/pkg/integration"
 )
 
 var (

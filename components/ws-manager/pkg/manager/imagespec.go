@@ -9,15 +9,16 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-	csapi "github.com/gitpod-io/gitpod/content-service/api"
-	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/golang/protobuf/proto"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 )
 
 // GetImageSpec provides the image spec for a particular workspace (instance) ID.

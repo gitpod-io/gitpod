@@ -17,7 +17,17 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/workpool"
+	"github.com/alecthomas/repr"
+	"github.com/golang/protobuf/proto"
+	"github.com/opentracing/opentracing-go"
+	tracelog "github.com/opentracing/opentracing-go/log"
+	"golang.org/x/xerrors"
+	"google.golang.org/grpc/codes"
+	grpc_status "google.golang.org/grpc/status"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
@@ -27,19 +37,7 @@ import (
 	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/internal/util"
-
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/watch"
-
-	"github.com/alecthomas/repr"
-	"github.com/golang/protobuf/proto"
-	"github.com/opentracing/opentracing-go"
-	tracelog "github.com/opentracing/opentracing-go/log"
-	"golang.org/x/xerrors"
-	"google.golang.org/grpc/codes"
-	grpc_status "google.golang.org/grpc/status"
+	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/workpool"
 )
 
 const (

@@ -14,9 +14,10 @@ import (
 
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/remotes"
+	"github.com/gorilla/mux"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
-	"github.com/gorilla/mux"
 )
 
 // ResolverProvider provides new resolver

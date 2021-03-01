@@ -13,11 +13,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
 )
 
 // SandboxProvider can create/mount and dispose sandboxes

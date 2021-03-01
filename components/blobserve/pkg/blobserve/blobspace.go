@@ -19,8 +19,9 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/errdefs"
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 type blobspace interface {

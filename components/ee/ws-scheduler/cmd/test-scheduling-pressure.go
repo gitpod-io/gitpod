@@ -12,14 +12,14 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	res "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // Easiest way to execute this:

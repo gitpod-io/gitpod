@@ -10,9 +10,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gorilla/mux"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 const (

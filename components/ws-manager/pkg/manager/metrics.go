@@ -10,11 +10,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/prometheus/client_golang/prometheus"
 	corev1 "k8s.io/api/core/v1"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 // RegisterMetrics registers the Prometheus metrics of this manager

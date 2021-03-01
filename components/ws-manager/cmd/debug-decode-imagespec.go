@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"os"
 
-	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/golang/protobuf/jsonpb"
-
 	"github.com/spf13/cobra"
+
+	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 )
 
 // debugDecodeInitializer represents the debugHeadlessLog command

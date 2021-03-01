@@ -5,9 +5,9 @@
 package main
 
 import (
-	"github.com/gitpod-io/gitpod/poolkeeper/cmd"
-
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+
+	"github.com/gitpod-io/gitpod/poolkeeper/cmd"
 )
 
 func main() {

@@ -8,6 +8,7 @@ import (
 	"context"
 	"os"
 
+	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -15,7 +16,6 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	"github.com/gitpod-io/gitpod/content-service/pkg/git"
-	"github.com/opentracing/opentracing-go"
 )
 
 // CloneTargetMode is the target state in which we want to leave a GitInitializer

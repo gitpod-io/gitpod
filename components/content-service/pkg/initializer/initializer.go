@@ -15,16 +15,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/opentracing/opentracing-go"
+	"golang.org/x/xerrors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	"github.com/gitpod-io/gitpod/content-service/pkg/git"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
-	"github.com/opentracing/opentracing-go"
-	"golang.org/x/xerrors"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 const (

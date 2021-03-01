@@ -9,14 +9,10 @@ import (
 	"fmt"
 	"time"
 
-	// appsv1 "k8s.io/api/apps/v1"
+	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	// "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
-
-	log "github.com/sirupsen/logrus"
 )
 
 const (

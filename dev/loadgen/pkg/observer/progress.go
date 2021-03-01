@@ -6,6 +6,7 @@ package observer
 
 import (
 	"github.com/cheggaaa/pb/v3"
+
 	"github.com/gitpod-io/gitpod/loadgen/pkg/loadgen"
 )
 

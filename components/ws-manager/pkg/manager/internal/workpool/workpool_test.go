@@ -6,8 +6,6 @@ package workpool_test
 
 import (
 	"fmt"
-	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/workpool"
-	"k8s.io/apimachinery/pkg/watch"
 	"math/rand"
 	"sort"
 	"strconv"
@@ -15,6 +13,10 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"k8s.io/apimachinery/pkg/watch"
+
+	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/workpool"
 )
 
 // This thing is notoriously hard to test due to the inherent concurrency, and this test is just a best effort attempt.

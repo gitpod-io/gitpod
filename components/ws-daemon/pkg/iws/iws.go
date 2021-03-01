@@ -17,11 +17,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/ws-daemon/api"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/sys/unix"
 	"golang.org/x/time/rate"
@@ -29,6 +24,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/ws-daemon/api"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
 )
 
 //

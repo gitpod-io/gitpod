@@ -15,10 +15,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/sirupsen/logrus"
+
+	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 )
 
 func init() {

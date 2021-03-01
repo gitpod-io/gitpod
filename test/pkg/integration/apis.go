@@ -14,10 +14,6 @@ import (
 	"strings"
 	"time"
 
-	csapi "github.com/gitpod-io/gitpod/content-service/api"
-	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
-	imgbldr "github.com/gitpod-io/gitpod/image-builder/api"
-	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/google/uuid"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -29,6 +25,11 @@ import (
 	// Gitpod uses mysql, so it makes sense to make this DB driver available
 	// by default.
 	_ "github.com/go-sql-driver/mysql"
+
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
+	imgbldr "github.com/gitpod-io/gitpod/image-builder/api"
+	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 var (

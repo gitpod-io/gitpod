@@ -7,14 +7,14 @@ package cmd
 import (
 	"context"
 
-	"github.com/gitpod-io/gitpod/gpctl/pkg/util"
-	"github.com/gitpod-io/gitpod/image-builder/api"
-
 	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/gitpod-io/gitpod/gpctl/pkg/util"
+	"github.com/gitpod-io/gitpod/image-builder/api"
 )
 
 // imagebuildsCmd represents the client command

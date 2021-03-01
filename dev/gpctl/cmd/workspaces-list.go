@@ -7,9 +7,10 @@ package cmd
 import (
 	"context"
 
+	"github.com/spf13/cobra"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
-	"github.com/spf13/cobra"
 )
 
 // workspacesListCmd represents the describe command

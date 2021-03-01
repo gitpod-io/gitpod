@@ -12,19 +12,19 @@ import (
 	"strings"
 	"time"
 
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/util"
-	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/golang/protobuf/ptypes"
-
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/util"
+	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
+	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 const (

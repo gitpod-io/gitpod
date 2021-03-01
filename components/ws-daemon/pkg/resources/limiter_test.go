@@ -9,8 +9,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/resources"
 	"github.com/google/go-cmp/cmp"
+
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/resources"
 )
 
 func TestBucketLimiter(t *testing.T) {

@@ -17,11 +17,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/shirou/gopsutil/process"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 const (

@@ -5,9 +5,10 @@
 package resources
 
 import (
-	"golang.org/x/xerrors"
 	"sync"
 	"time"
+
+	"golang.org/x/xerrors"
 )
 
 type expiringEntry struct {

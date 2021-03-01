@@ -12,8 +12,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
 )
 
 // initCmd represents the init command

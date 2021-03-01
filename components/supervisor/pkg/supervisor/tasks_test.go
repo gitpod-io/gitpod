@@ -13,12 +13,12 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/sirupsen/logrus"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
-
-	"github.com/google/go-cmp/cmp"
-	"github.com/sirupsen/logrus"
 )
 
 var skipCommand = "echo \"skip\""

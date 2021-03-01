@@ -10,13 +10,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
-
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
 )
 
 const (

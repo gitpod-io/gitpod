@@ -9,9 +9,10 @@ package manager
 import (
 	"context"
 
-	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 var errEnterpriseFeature = status.Errorf(codes.Unimplemented, "feature is available in the enterprise edition")

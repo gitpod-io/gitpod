@@ -14,8 +14,9 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // Host maps an IP address to a hostname

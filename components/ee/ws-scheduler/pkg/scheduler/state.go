@@ -9,10 +9,10 @@ import (
 	"sort"
 	"strings"
 
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
-
 	corev1 "k8s.io/api/core/v1"
 	res "k8s.io/apimachinery/pkg/api/resource"
+
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 )
 
 // State holds all nodes

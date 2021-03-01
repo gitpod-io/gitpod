@@ -9,12 +9,6 @@ import (
 	"net"
 	"time"
 
-	grpc_gitpod "github.com/gitpod-io/gitpod/common-go/grpc"
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/pprof"
-	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
-	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager"
-
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -36,6 +30,12 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/metrics"
+
+	grpc_gitpod "github.com/gitpod-io/gitpod/common-go/grpc"
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/pprof"
+	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
+	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager"
 )
 
 // serveCmd represents the serve command

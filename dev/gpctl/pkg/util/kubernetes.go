@@ -14,7 +14,6 @@ import (
 	"strings"
 	"sync"
 
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"golang.org/x/xerrors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -22,6 +21,8 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
+
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 )
 
 // GetKubeconfig loads kubernetes connection config from a kubeconfig file

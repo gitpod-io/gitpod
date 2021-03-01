@@ -12,13 +12,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
-	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
 func TestPortsUpdateState(t *testing.T) {

@@ -10,11 +10,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	csapi "github.com/gitpod-io/gitpod/content-service/api"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
-
 	"github.com/alecthomas/jsonschema"
 	"github.com/spf13/cobra"
+
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 var generateWsspecCmd = &cobra.Command{

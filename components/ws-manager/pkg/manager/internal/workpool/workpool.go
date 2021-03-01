@@ -5,8 +5,9 @@
 package workpool
 
 import (
-	"k8s.io/apimachinery/pkg/watch"
 	"sync"
+
+	"k8s.io/apimachinery/pkg/watch"
 )
 
 // EventWorkerPool lets us work on events concurrently with the following guarantees:

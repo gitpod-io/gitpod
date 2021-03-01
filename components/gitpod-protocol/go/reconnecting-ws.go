@@ -9,8 +9,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gorilla/websocket"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // The ReconnectingWebsocket represents a Reconnecting WebSocket connection.

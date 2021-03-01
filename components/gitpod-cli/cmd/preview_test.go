@@ -8,8 +8,9 @@ import (
 	"os"
 	"testing"
 
-	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
 	"github.com/golang/mock/gomock"
+
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
 )
 
 func TestReplaceLocalhostInURL(t *testing.T) {

@@ -13,10 +13,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/google/go-cmp/cmp"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
+
+	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
 func TestTitle(t *testing.T) {

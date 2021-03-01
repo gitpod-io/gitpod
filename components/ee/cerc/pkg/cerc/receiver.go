@@ -5,9 +5,10 @@
 package cerc
 
 import (
-	"golang.org/x/xerrors"
 	"net/http"
 	"time"
+
+	"golang.org/x/xerrors"
 )
 
 // Receiver implements http.Handler and serves as Cerc endpoint. Prior to responding to an incoming

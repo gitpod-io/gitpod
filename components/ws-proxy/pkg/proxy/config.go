@@ -9,9 +9,10 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/gitpod-io/gitpod/common-go/util"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/util"
 )
 
 // Config is the configuration for a WorkspaceProxy

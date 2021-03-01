@@ -10,13 +10,13 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
+	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
 )
 
 var (

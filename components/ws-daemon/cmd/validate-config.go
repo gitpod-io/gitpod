@@ -10,8 +10,9 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // can be used with the helm-template like so:
