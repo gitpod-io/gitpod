@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    h1 {
+        @apply text-gray-800 font-semibold leading-relaxed text-4xl;
+    }
+    h2 {
+        @apply text-base text-gray-400;
+    }
+    h3 {
+        @apply pb-6 text-base text-gray-600 font-semibold;
+    }
+    h4 {
+        @apply pb-2 text-sm font-medium text-gray-500;
+    }
+    p {
+        @apply text-sm text-gray-400;
+    }
+}
+
+@layer components {
+    button {
+        @apply cursor-pointer px-3 py-2 text-white text-xs rounded-md border-2 border-gray-900 bg-gray-500 hover:bg-gray-100;
+    }
+
+    input[type=text] {
+        @apply text-xs block w-56 font-medium text-gray-500 rounded-md bg-gray-100 border-gray-300 border-2 focus:border-gray-300 focus:bg-white focus:ring-0;
+    }
+}
