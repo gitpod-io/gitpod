@@ -5,7 +5,6 @@
 package examples
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -14,12 +13,10 @@ import (
 )
 
 func TestGetWorkspaces(t *testing.T) {
-	it := integration.NewTest(t)
+	it, ctx := integration.NewTest(t, 5*time.Second)
 	defer it.Done()
 
 	wsman := it.API().WorkspaceManager()
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 	_, err := wsman.GetWorkspaces(ctx, &api.GetWorkspacesRequest{})
 	if err != nil {
 		t.Fatal(err)

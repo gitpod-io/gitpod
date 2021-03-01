@@ -6,12 +6,13 @@ package examples
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
 )
 
 func TestBuiltinUserExists(t *testing.T) {
-	it := integration.NewTest(t)
+	it, _ := integration.NewTest(t, 30*time.Second)
 	defer it.Done()
 
 	db := it.API().DB()

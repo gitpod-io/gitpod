@@ -17,13 +17,10 @@ import (
 
 // TestBackup tests a basic start/modify/restart cycle
 func TestBackup(t *testing.T) {
-	it := integration.NewTest(t)
+	it, ctx := integration.NewTest(t, 5*time.Minute)
 	defer it.Done()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
-
-	ws := integration.LaunchWorkspaceDirectly(it, ctx)
+	ws := integration.LaunchWorkspaceDirectly(it)
 	rsa, err := it.Instrument(integration.ComponentWorkspace, "workspace", integration.WithInstanceID(ws.Req.Id))
 	if err != nil {
 		t.Fatal(err)
@@ -52,11 +49,9 @@ func TestBackup(t *testing.T) {
 		return
 	}
 
-	wctx, wcancel := context.WithTimeout(ctx, 60*time.Second)
-	defer wcancel()
-	it.WaitForWorkspaceStop(wctx, ws.Req.Id)
+	it.WaitForWorkspaceStop(ws.Req.Id)
 
-	ws = integration.LaunchWorkspaceDirectly(it, ctx, integration.WithRequestModifier(func(w *wsapi.StartWorkspaceRequest) error {
+	ws = integration.LaunchWorkspaceDirectly(it, integration.WithRequestModifier(func(w *wsapi.StartWorkspaceRequest) error {
 		w.ServicePrefix = ws.Req.ServicePrefix
 		w.Metadata.MetaId = ws.Req.Metadata.MetaId
 		w.Metadata.Owner = ws.Req.Metadata.Owner

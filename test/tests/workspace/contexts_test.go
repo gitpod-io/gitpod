@@ -6,6 +6,7 @@ package workspace_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -14,11 +15,12 @@ import (
 )
 
 type ContextTest struct {
-	Skip           bool
-	Name           string
-	ContextURL     string
-	WorkspaceRoot  string
-	ExpectedBranch string
+	Skip               bool
+	Name               string
+	ContextURL         string
+	WorkspaceRoot      string
+	ExpectedBranch     string
+	ExpectedBranchFunc func(username string) string
 }
 
 func TestGitHubContexts(t *testing.T) {
@@ -36,11 +38,12 @@ func TestGitHubContexts(t *testing.T) {
 			ExpectedBranch: "integration-test-1",
 		},
 		{
-			Skip:           true, // user-dependant result not supported atm
-			Name:           "open issue",
-			ContextURL:     "github.com/gitpod-io/gitpod-test-repo/issues/88",
-			WorkspaceRoot:  "/workspace/gitpod-test-repo",
-			ExpectedBranch: "geropl/integration-tests-test-context-88",
+			Name:          "open issue",
+			ContextURL:    "github.com/gitpod-io/gitpod-test-repo/issues/88",
+			WorkspaceRoot: "/workspace/gitpod-test-repo",
+			ExpectedBranchFunc: func(username string) string {
+				return fmt.Sprintf("%s/integration-tests-test-context-88", username)
+			},
 		},
 		{
 			Name:           "open tag",
@@ -67,11 +70,12 @@ func TestGitLabContexts(t *testing.T) {
 			ExpectedBranch: "wip",
 		},
 		{
-			Skip:           true, // user-dependant result not supported atm
-			Name:           "open issue",
-			ContextURL:     "gitlab.com/AlexTugarev/gp-test/issues/1",
-			WorkspaceRoot:  "/workspace/gp-test",
-			ExpectedBranch: "geropl/write-a-readme-1",
+			Name:          "open issue",
+			ContextURL:    "gitlab.com/AlexTugarev/gp-test/issues/1",
+			WorkspaceRoot: "/workspace/gp-test",
+			ExpectedBranchFunc: func(username string) string {
+				return fmt.Sprintf("%s/write-a-readme-1", username)
+			},
 		},
 		{
 			Name:           "open tag",
@@ -92,13 +96,15 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 			// TODO(geropl) Why does this not work? Logs hint to a race around bucket creation...?
 			// t.Parallel()
 
-			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-			defer cancel()
-
-			it := integration.NewTest(t)
+			it, ctx := integration.NewTest(t, 5*time.Minute)
 			defer it.Done()
 
-			nfo, stopWS := integration.LaunchWorkspaceFromContextURL(it, ctx, test.ContextURL)
+			if it.Username() == "" && test.ExpectedBranchFunc != nil {
+				t.Logf("skipping '%s' because there is not username configured", test.Name)
+				t.SkipNow()
+			}
+
+			nfo, stopWS := integration.LaunchWorkspaceFromContextURL(it, test.ContextURL)
 			defer stopWS(false) // we do not wait for stopped here as it does not matter for this test case and speeds things up
 
 			wctx, wcancel := context.WithTimeout(ctx, 1*time.Minute)
@@ -119,7 +125,11 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 			}
 			rsa.Close()
 
-			if actBranch != test.ExpectedBranch {
+			expectedBranch := test.ExpectedBranch
+			if test.ExpectedBranchFunc != nil {
+				expectedBranch = test.ExpectedBranchFunc(it.Username())
+			}
+			if actBranch != expectedBranch {
 				t.Fatalf("expected branch '%s', got '%s'!", test.ExpectedBranch, actBranch)
 			}
 		})
