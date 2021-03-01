@@ -5,68 +5,63 @@
   "private": true,
   "dependencies": {
     "@gitpod/gitpod-protocol": "0.1.5",
-    "@material-ui/core": "latest",
-    "@material-ui/icons": "latest",
-    "countries-list": "2.4.2",
-    "js-cookie": "^2.2.1",
-    "lodash.debounce": "^4.0.8",
-    "markdown-it": "^8.4.0",
-    "moment": "2.22.2",
-    "octicons": "^7.2.0",
-    "react": "16.7.0",
-    "react-dom": "16.7.0",
-    "react-event-listener": "^0.5.10",
-    "react-router-dom": "^4.3.1",
-    "ua-parser-js": "^0.7.21",
-    "uuid": "^3.1.0",
-    "xterm": "~3.9.0"
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "react-router-dom": "^5.2.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.10.0",
-    "@babel/plugin-transform-classes": "^7.10.0",
-    "@babel/plugin-transform-runtime": "^7.10.0",
-    "@babel/preset-env": "^7.10.0",
-    "@types/js-cookie": "^2.2.4",
-    "@types/lodash.debounce": "4.0.3",
-    "@types/markdown-it": "^0.0.4",
-    "@types/node": "^10.14.8",
-    "@types/react": "16.7.0",
-    "@types/react-dom": "16.0.9",
-    "@types/react-router-dom": "4.3.1",
-    "@types/ua-parser-js": "^0.7.33",
-    "@types/uuid": "^3.1.0",
-    "babel-loader": "^8.0.6",
-    "css-loader": "^0.28.11",
-    "file-loader": "^1.1.11",
-    "html-webpack-plugin": "^4.4.1",
-    "request": "^2.88.2",
-    "source-map-loader": "^0.2.3",
-    "style-loader": "^0.23.1",
-    "svg-inline-loader": "^0.8.0",
-    "ts-loader": "^8.0.4",
-    "tslint": "^5.7.0",
-    "tslint-react": "^3.2.0",
-    "typescript": "^3.9.3",
-    "url-loader": "^1.0.1",
-    "webpack": "^4.40.0",
-    "webpack-cli": "^3.1.1",
-    "webpack-dev-server": "^3.1.1"
+    "@tailwindcss/forms": "^0.2.1",
+    "@tailwindcss/postcss7-compat": "^2.0.2",
+    "@testing-library/jest-dom": "^5.11.4",
+    "@testing-library/react": "^11.1.0",
+    "@testing-library/user-event": "^12.1.10",
+    "@types/classnames": "^2.2.11",
+    "@types/jest": "^26.0.15",
+    "@types/node": "^12.0.0",
+    "@types/react": "^17.0.0",
+    "@types/react-dom": "^17.0.0",
+    "@types/react-router-dom": "^5.1.7",
+    "@typescript-eslint/eslint-plugin": "^4.15.2",
+    "@typescript-eslint/parser": "^4.15.2",
+    "autoprefixer": "^9.8.6",
+    "classnames": "^2.2.6",
+    "eslint": "^7.21.0",
+    "postcss": "^7.0.35",
+    "react-scripts": "4.0.2",
+    "tailwindcss": "npm:@tailwindcss/postcss7-compat@^2.0.2",
+    "typescript": "^4.1.2",
+    "web-vitals": "^1.0.1"
   },
   "scripts": {
-    "postinstall": "node ./postinstall.js",
-    "build": "yarn build-app && yarn build-lib",
-    "build-app": "export NODE_OPTIONS='--max-old-space-size=3192'; yarn run webpack --mode=production && yarn copy-schema && yarn remove-sources",
-    "build-lib": "yarn copy-schema && tsc -b tsconfig.lib.json && cp -r webpack.entrypoints.js webpack.config.js public ee/public lib/",
-    "watch-lib": "tsc -b tsconfig.lib.json -w",
-    "start": "export NODE_OPTIONS='--max-old-space-size=3192'; webpack-dev-server --mode=development && yarn copy-schema",
-    "copy-schema": "mkdir -p public/schemas && (cp ../gitpod-protocol/data/gitpod-schema.json ./public/schemas || cp node_modules/@gitpod/gitpod-protocol/data/gitpod-schema.json ./public/schemas)",
-    "telepresence": "leeway run .:telepresence",
-    "remove-sources": "rms() { if [ \"A$REMOVE_SOURCES\" = \"Atrue\" ]; then sh remove-sources.sh; fi }; rms"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "build:tailwind": "tailwindcss build src/index.css -o src/tailwind.output.css",
+    "prestart": "npm run build:tailwind",
+    "prebuild": "npm run build:tailwind"
   },
   "files": [
     "lib",
     "dist",
-    "public",
-    "postinstall.js"
-  ]
+    "public"
+  ],
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
 }
