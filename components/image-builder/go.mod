@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/image-builder
 
-go 1.14
+go 1.16
 
 // containerd, see https://github.com/containerd/containerd/issues/3031
 replace github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible

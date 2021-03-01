@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/gpctl
 
-go 1.14
+go 1.16
 
 require (
 	github.com/Masterminds/goutils v1.1.0 // indirect
@@ -9,7 +9,6 @@ require (
 	github.com/alecthomas/repr v0.0.0-20200325044227-4184120f674c
 	github.com/docker/spdystream v0.0.0-20181023171402-6480d4af844c // indirect
 	github.com/elazarl/goproxy v0.0.0-20191011121108-aa519ddbe484 // indirect
-	github.com/elazarl/goproxy/ext v0.0.0-20191011121108-aa519ddbe484 // indirect
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/image-builder/api v0.0.0-00010101000000-000000000000

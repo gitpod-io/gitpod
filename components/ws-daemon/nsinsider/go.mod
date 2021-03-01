@@ -1,16 +1,13 @@
 module github.com/gitpod-io/gitpod/ws-daemon/nsinsider
 
-go 1.15
+go 1.16
 
 replace github.com/seccomp/libseccomp-golang => github.com/kinvolk/libseccomp-golang v0.9.2-0.20201113182948-883917843313 // leeway indirect from components/workspacekit:lib
 
 require (
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
-	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
-	github.com/sirupsen/logrus v1.7.0 // indirect
 	github.com/urfave/cli/v2 v2.3.0
 	golang.org/x/sys v0.0.0-20210113181707-4bcb84eeeb78
-	gopkg.in/check.v1 v1.0.0-20200227125254-8fa46927fb4f // indirect
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway
