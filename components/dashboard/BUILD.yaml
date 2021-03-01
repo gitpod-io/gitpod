@@ -2,7 +2,7 @@ packages:
   - name: app
     type: yarn
     srcs:
-      - "public/images/**"
+      - "public/**"
       - "src/**/*.ts"
       - "src/**/*.tsx"
       - "src/**/*.css"
@@ -11,9 +11,7 @@ packages:
       - "ee/src/**/*.css"
       - "typings/**"
       - package.json
-      - postinstall.js
-      - webpack.config.js
-      - webpack.entrypoints.js
+      - tailwind.config.js
       - tsconfig.json
     deps:
       - components/gitpod-protocol:lib
