@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/workspacekit
 
-go 1.15
+go 1.16
 
 replace github.com/seccomp/libseccomp-golang => github.com/kinvolk/libseccomp-golang v0.9.2-0.20201113182948-883917843313
 

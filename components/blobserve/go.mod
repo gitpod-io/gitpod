@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/blobserve
 
-go 1.14
+go 1.16
 
 require (
 	github.com/containerd/containerd v1.4.1

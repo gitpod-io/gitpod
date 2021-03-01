@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/ws-manager/api
 
-go 1.14
+go 1.16
 
 require (
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000

@@ -1,12 +1,12 @@
 module github.com/gitpod-io/gitpod/poolkeeper
 
-go 1.15
+go 1.16
 
 require (
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
-	github.com/imdario/mergo v0.3.11 // indirect
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.1.1
+	gopkg.in/yaml.v2 v2.3.0 // indirect
 	k8s.io/api v0.20.4
 	k8s.io/apimachinery v0.20.4
 	k8s.io/client-go v11.0.0+incompatible
