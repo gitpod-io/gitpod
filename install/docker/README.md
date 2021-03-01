@@ -20,7 +20,7 @@ $ docker run \
     --name gitpod \
     --publish 443:443 --publish 80:80 \
     --env DOMAIN=10-0-0-5.ip.mygitpod.com \
-    --volume $(pwd)/minio-secrets.yaml:/values/minio-secrets.yaml
+    --volume $(pwd)/minio-secrets.yaml:/values/minio-secrets.yaml \
     eu.gcr.io/gitpod-core-dev/build/gitpod-k3s
 ```
 
