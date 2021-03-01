@@ -14,7 +14,7 @@ import (
 )
 
 func TestCreateBucket(t *testing.T) {
-	it := integration.NewTest(t)
+	it, _ := integration.NewTest(t, 30*time.Second)
 	defer it.Done()
 
 	rsa, err := it.Instrument(integration.ComponentWorkspaceDaemon, "daemon")
