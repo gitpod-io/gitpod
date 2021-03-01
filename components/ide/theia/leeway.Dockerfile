@@ -77,7 +77,7 @@ COPY supervisor-ide-config.json /ide/
 # ENV GITPOD_BUILT_IN_PLUGINS /theia/node_modules/@gitpod/gitpod-ide/plugins/
 # COPY components-theia-app--builtin-plugins/plugins/ ${GITPOD_BUILT_IN_PLUGINS}
 
-COPY supervisor-ide-config.json /theia/
+COPY startup.sh supervisor-ide-config.json /theia/
 
 # cli config
 COPY --from=builder_alpine /ide/bin /ide/bin
