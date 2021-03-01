@@ -12,10 +12,11 @@ import (
 	"testing"
 	"time"
 
-	wsapi "github.com/gitpod-io/gitpod/ws-manager/api"
-	wsmock "github.com/gitpod-io/gitpod/ws-manager/api/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
+
+	wsapi "github.com/gitpod-io/gitpod/ws-manager/api"
+	wsmock "github.com/gitpod-io/gitpod/ws-manager/api/mock"
 )
 
 func TestRemoteInfoProvider(t *testing.T) {

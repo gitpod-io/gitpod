@@ -9,9 +9,10 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/spf13/cobra"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	builder "github.com/gitpod-io/gitpod/image-builder/api"
-	"github.com/spf13/cobra"
 )
 
 var imagebuildsLogsCmd = &cobra.Command{

@@ -23,6 +23,11 @@ import (
 	"syscall"
 	"time"
 
+	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/soheilhy/cmux"
+	"golang.org/x/sys/unix"
+	"google.golang.org/grpc"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/executor"
@@ -33,11 +38,6 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
 	daemon "github.com/gitpod-io/gitpod/ws-daemon/api"
-	"golang.org/x/sys/unix"
-
-	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/soheilhy/cmux"
-	"google.golang.org/grpc"
 )
 
 var (

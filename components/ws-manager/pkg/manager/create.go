@@ -16,19 +16,18 @@ import (
 	"strings"
 	"time"
 
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
-
 	"github.com/golang/protobuf/proto"
 	"github.com/imdario/mergo"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
+
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
+	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
+	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 // Protobuf structures often require pointer to boolean values (as that's Go's best means of expression optionallity).

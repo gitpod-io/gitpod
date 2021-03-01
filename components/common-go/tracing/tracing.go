@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/golang/protobuf/jsonpb"
 	proto "github.com/golang/protobuf/proto"
 	"github.com/opentracing/opentracing-go"
@@ -19,6 +18,8 @@ import (
 	"github.com/sirupsen/logrus"
 	jaeger "github.com/uber/jaeger-client-go"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 type tracingOptions struct {

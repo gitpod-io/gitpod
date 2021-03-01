@@ -11,11 +11,12 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 func TestWorkspaceAuthHandler(t *testing.T) {

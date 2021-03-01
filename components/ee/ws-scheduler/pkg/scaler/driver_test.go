@@ -9,14 +9,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/util"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
-	wsmock "github.com/gitpod-io/gitpod/ws-manager/api/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/google/go-cmp/cmp"
 	"github.com/sirupsen/logrus"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/util"
+	"github.com/gitpod-io/gitpod/ws-manager/api"
+	wsmock "github.com/gitpod-io/gitpod/ws-manager/api/mock"
 )
 
 func TestWorkspaceManagerPrescaleDriverRenewal(t *testing.T) {

@@ -12,15 +12,15 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	securejoin "github.com/cyphar/filepath-securejoin"
+	proto "github.com/golang/protobuf/proto"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/gitpod-io/gitpod/image-builder/api"
-
-	"github.com/cyphar/filepath-securejoin"
-	proto "github.com/golang/protobuf/proto"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 )
 
 // bobInitBase represents the init command

@@ -5,9 +5,10 @@
 package cmd
 
 import (
-	"github.com/gitpod-io/gitpod/blowtorch/pkg/dart"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/blowtorch/pkg/dart"
 )
 
 // removeCmd represents the inject command

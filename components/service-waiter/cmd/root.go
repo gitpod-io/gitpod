@@ -10,10 +10,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 var (

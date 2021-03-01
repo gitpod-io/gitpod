@@ -9,12 +9,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
 func TestInMemoryTokenServiceGetToken(t *testing.T) {

@@ -7,8 +7,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager"
 	"os"
 	"os/signal"
 	"syscall"
@@ -17,6 +15,9 @@ import (
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager"
 )
 
 var debugHeadlessLogNS string

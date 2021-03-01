@@ -12,13 +12,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/util"
-	wsapi "github.com/gitpod-io/gitpod/ws-manager/api"
-
 	validation "github.com/go-ozzo/ozzo-validation"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/util"
+	wsapi "github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 // WorkspaceCoords represents the coordinates of a workspace (port)

@@ -5,7 +5,7 @@
 package theialib
 
 //go:generate go run ../../generate-theia-protocol.go ../../../theia/packages/gitpod-extension/src/common/cli-service.ts
-//go:generate sh -c "GO111MODULE=on go get github.com/golang/mock/mockgen@latest"
+//go:generate sh -c "go get github.com/golang/mock/mockgen@latest"
 //go:generate sh -c "mockgen -package theialib -source=protocol.go > mock.go_; mv mock.go_ mock.go; go mod tidy"
 
 // Use go generate to regenerate the Typescript protocol file

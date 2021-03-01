@@ -10,9 +10,10 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/spf13/cobra"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
-	"github.com/spf13/cobra"
 )
 
 var callServerCmd = &cobra.Command{

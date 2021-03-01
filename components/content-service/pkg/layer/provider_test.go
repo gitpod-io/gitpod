@@ -16,11 +16,12 @@ import (
 	"strings"
 	"testing"
 
-	csapi "github.com/gitpod-io/gitpod/content-service/api"
-	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/google/go-cmp/cmp"
 	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
+
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 )
 
 const (

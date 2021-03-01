@@ -16,8 +16,9 @@ import (
 	"time"
 
 	env "github.com/Netflix/go-env"
-	"github.com/gitpod-io/gitpod/supervisor/api"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
 const supervisorConfigFile = "supervisor-config.json"

@@ -9,8 +9,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 var ghostCmd = &cobra.Command{

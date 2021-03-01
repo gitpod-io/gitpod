@@ -12,15 +12,15 @@ import (
 	"syscall"
 	"time"
 
-	csapi "github.com/gitpod-io/gitpod/content-service/api"
-	"github.com/gitpod-io/gitpod/loadgen/pkg/loadgen"
-	"github.com/gitpod-io/gitpod/loadgen/pkg/observer"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
-
 	"github.com/golang/protobuf/ptypes"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
+
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/loadgen/pkg/loadgen"
+	"github.com/gitpod-io/gitpod/loadgen/pkg/observer"
+	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 // runCmd represents the run command

@@ -8,10 +8,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/docker/docker/api/types/filters"
-	"github.com/gitpod-io/gitpod/common-go/log"
-
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // GarbageCollector regularly prunes containers/images/workspaces.

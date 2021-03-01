@@ -17,11 +17,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/sirupsen/logrus"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
-	"github.com/google/go-cmp/cmp"
-	"github.com/sirupsen/logrus"
 )
 
 const (

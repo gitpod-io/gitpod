@@ -8,10 +8,11 @@ import (
 	"context"
 
 	"github.com/alecthomas/repr"
-	csapi "github.com/gitpod-io/gitpod/content-service/api"
-	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/ws-daemon/api"
 )
 
 // clientInitCmd starts a new workspace

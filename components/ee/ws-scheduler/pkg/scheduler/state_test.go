@@ -8,10 +8,10 @@ import (
 	"sort"
 	"testing"
 
-	sched "github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler"
-
 	corev1 "k8s.io/api/core/v1"
 	res "k8s.io/apimachinery/pkg/api/resource"
+
+	sched "github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler"
 )
 
 func TestState(t *testing.T) {

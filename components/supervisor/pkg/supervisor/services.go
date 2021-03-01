@@ -10,17 +10,16 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	csapi "github.com/gitpod-io/gitpod/content-service/api"
-	"github.com/gitpod-io/gitpod/supervisor/api"
-
-	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
 	"github.com/golang/protobuf/ptypes"
-
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/supervisor/api"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
 )
 
 // RegisterableService can register a service

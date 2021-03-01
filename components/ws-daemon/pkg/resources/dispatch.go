@@ -8,14 +8,14 @@ import (
 	"context"
 	"sync"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/xerrors"
+	"k8s.io/apimachinery/pkg/api/resource"
+
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
-
-	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/xerrors"
-	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 // Config configures the containerd resource governer dispatch

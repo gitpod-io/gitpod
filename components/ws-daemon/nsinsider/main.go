@@ -8,11 +8,11 @@ import (
 	"os"
 	"unsafe"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	_ "github.com/gitpod-io/gitpod/ws-daemon/nsinsider/pkg/nsenter"
-
 	cli "github.com/urfave/cli/v2"
 	"golang.org/x/sys/unix"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	_ "github.com/gitpod-io/gitpod/ws-daemon/nsinsider/pkg/nsenter"
 )
 
 func main() {

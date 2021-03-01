@@ -8,8 +8,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 )
 
 // NamedURLDownloader offers downloads from fixed URLs

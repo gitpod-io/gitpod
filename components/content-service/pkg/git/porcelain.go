@@ -6,9 +6,10 @@ package git
 
 import (
 	"bufio"
-	"golang.org/x/xerrors"
 	"io"
 	"strings"
+
+	"golang.org/x/xerrors"
 )
 
 const (

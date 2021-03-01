@@ -11,9 +11,9 @@ import (
 	"io/ioutil"
 	"time"
 
-	"github.com/gitpod-io/gitpod/licensor/ee/pkg/licensor"
-
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/licensor/ee/pkg/licensor"
 )
 
 // signCmd represents the sign command

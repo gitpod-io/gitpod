@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"os"
 
-	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
-
 	"github.com/spf13/cobra"
+
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
 )
 
 // debugDecodeImageSpec represents the debugHeadlessLog command

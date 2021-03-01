@@ -9,10 +9,11 @@ import (
 	"encoding/json"
 	"io"
 
+	"github.com/golang/protobuf/jsonpb"
+
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
-	"github.com/golang/protobuf/jsonpb"
 )
 
 type config struct {

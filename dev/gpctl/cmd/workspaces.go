@@ -8,13 +8,14 @@ import (
 	"context"
 	"strings"
 
-	"github.com/gitpod-io/gitpod/gpctl/pkg/util"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/gitpod-io/gitpod/gpctl/pkg/util"
+	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 // workspacesCmd represents the client command

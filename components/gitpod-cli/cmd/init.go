@@ -13,11 +13,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpodlib"
-	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
+
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpodlib"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
 )
 
 var (

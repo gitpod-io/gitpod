@@ -16,12 +16,12 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sirupsen/logrus"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/flowcontrol"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 const (

@@ -10,12 +10,13 @@ import (
 	"encoding/json"
 	"testing"
 
-	ctesting "github.com/gitpod-io/gitpod/common-go/testing"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/spf13/afero"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
+
+	ctesting "github.com/gitpod-io/gitpod/common-go/testing"
+	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 func TestCreateDefiniteWorkspacePod(t *testing.T) {

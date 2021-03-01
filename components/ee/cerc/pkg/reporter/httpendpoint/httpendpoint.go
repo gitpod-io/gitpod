@@ -9,9 +9,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/gitpod-io/gitpod/cerc/pkg/cerc"
 	"github.com/jeremywohl/flatten"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/gitpod-io/gitpod/cerc/pkg/cerc"
 )
 
 const failStatusCode = http.StatusNotAcceptable

@@ -11,8 +11,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gorilla/mux"
+
+	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 // WorkspaceAuthHandler rejects requests which are not authenticated or authorized to access a workspace

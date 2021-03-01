@@ -12,11 +12,12 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/golang/protobuf/jsonpb"
+	"github.com/spf13/cobra"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	builder "github.com/gitpod-io/gitpod/image-builder/api"
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/spf13/cobra"
 )
 
 // imagebuildsBuildCmd represents the build command

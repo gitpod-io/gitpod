@@ -7,9 +7,10 @@ package prometheus
 import (
 	"strings"
 
-	"github.com/gitpod-io/gitpod/cerc/pkg/cerc"
 	"github.com/prometheus/client_golang/prometheus"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/gitpod-io/gitpod/cerc/pkg/cerc"
 )
 
 // StartReporter starts a prometheus reporter

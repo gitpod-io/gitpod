@@ -17,10 +17,11 @@ import (
 	"time"
 
 	"github.com/creack/pty"
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/google/uuid"
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // NewMux creates a new terminal mux

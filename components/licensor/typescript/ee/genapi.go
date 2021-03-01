@@ -11,6 +11,7 @@ import (
 	"sort"
 
 	"github.com/32leaves/bel"
+
 	"github.com/gitpod-io/gitpod/licensor/ee/pkg/licensor"
 )
 

@@ -16,21 +16,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/util"
-	csapi "github.com/gitpod-io/gitpod/content-service/api"
-	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
-	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
-	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
-	wsdaemon_mock "github.com/gitpod-io/gitpod/ws-daemon/api/mock"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
-	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/grpcpool"
-	"github.com/gitpod-io/gitpod/ws-manager/pkg/test"
-	"golang.org/x/xerrors"
-
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/spf13/afero"
+	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
 	corev1 "k8s.io/api/core/v1"
@@ -43,6 +32,17 @@ import (
 	ctrler_client "sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/yaml"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/util"
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
+	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
+	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
+	wsdaemon_mock "github.com/gitpod-io/gitpod/ws-daemon/api/mock"
+	"github.com/gitpod-io/gitpod/ws-manager/api"
+	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/grpcpool"
+	"github.com/gitpod-io/gitpod/ws-manager/pkg/test"
 )
 
 var integrationFlag = flag.String("integration-test", "disabled", "configures integration tests. Valid values are disabled, local or a path to a kubeconfig file")

@@ -12,14 +12,13 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/gitpod-io/gitpod/cerc/pkg/cerc"
 	"github.com/gitpod-io/gitpod/cerc/pkg/reporter/httpendpoint"
 	"github.com/gitpod-io/gitpod/cerc/pkg/reporter/prometheus"
-
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // Config configrues the cerc service

@@ -19,11 +19,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
-	"github.com/opentracing/opentracing-go"
-
 	"cloud.google.com/go/storage"
 	gcpstorage "cloud.google.com/go/storage"
 	validation "github.com/go-ozzo/ozzo-validation"
@@ -32,6 +27,11 @@ import (
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
+	"github.com/opentracing/opentracing-go"
 )
 
 var _ DirectAccess = &DirectGCPStorage{}

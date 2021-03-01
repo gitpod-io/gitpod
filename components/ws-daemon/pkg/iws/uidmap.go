@@ -14,15 +14,15 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/ws-daemon/api"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/sirupsen/logrus"
-
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/ws-daemon/api"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 )
 
 // Uidmapper provides UID mapping services for creating Linux user namespaces

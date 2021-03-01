@@ -14,13 +14,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/opentracing/opentracing-go"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/xerrors"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/git"
-	"github.com/opentracing/opentracing-go"
-	"github.com/sirupsen/logrus"
-	"golang.org/x/xerrors"
 )
 
 const (

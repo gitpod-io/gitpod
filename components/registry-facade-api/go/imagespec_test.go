@@ -7,8 +7,9 @@ package api_test
 import (
 	"testing"
 
-	"github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/golang/protobuf/proto"
+
+	"github.com/gitpod-io/gitpod/registry-facade/api"
 )
 
 func TestBase64BackAndForth(t *testing.T) {

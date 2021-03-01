@@ -8,10 +8,11 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
-	"github.com/spf13/cobra"
 	"io/ioutil"
 	"log"
 	"os"
+
+	"github.com/spf13/cobra"
 )
 
 // doneCmd represents the done command

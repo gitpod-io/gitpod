@@ -14,10 +14,11 @@ import (
 	"time"
 
 	"github.com/creack/pty"
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
 var terminalAttachOpts struct {

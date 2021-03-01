@@ -9,9 +9,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/google/go-cmp/cmp"
 	"github.com/gorilla/mux"
+
+	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 func TestWorkspaceRouter(t *testing.T) {

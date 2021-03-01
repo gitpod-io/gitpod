@@ -13,8 +13,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gitpod-io/gitpod/registry-facade/pkg/handover"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/gitpod-io/gitpod/registry-facade/pkg/handover"
 )
 
 func TestHandover(t *testing.T) {

@@ -5,8 +5,9 @@
 package observer
 
 import (
-	"github.com/gitpod-io/gitpod/loadgen/pkg/loadgen"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/gitpod-io/gitpod/loadgen/pkg/loadgen"
 )
 
 // NewLogObserver produces a new observer that logs using logrus

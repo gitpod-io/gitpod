@@ -15,11 +15,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/image-builder/api"
-	"github.com/gitpod-io/gitpod/image-builder/pkg/resolve"
-
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -29,6 +24,11 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/image-builder/api"
+	"github.com/gitpod-io/gitpod/image-builder/pkg/resolve"
 )
 
 // pullImage pulls a docker image from a registry and forwards the log output to out

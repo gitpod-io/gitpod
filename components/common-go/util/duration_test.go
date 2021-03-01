@@ -10,8 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/google/go-cmp/cmp"
+
+	"github.com/gitpod-io/gitpod/common-go/util"
 )
 
 func TestUnmarshalJSON(t *testing.T) {

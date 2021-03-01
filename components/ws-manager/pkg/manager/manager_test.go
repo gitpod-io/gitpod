@@ -9,12 +9,13 @@ import (
 	"testing"
 	"time"
 
-	ctesting "github.com/gitpod-io/gitpod/common-go/testing"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	ctesting "github.com/gitpod-io/gitpod/common-go/testing"
+	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 func TestValidateStartWorkspaceRequest(t *testing.T) {

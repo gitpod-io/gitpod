@@ -17,19 +17,18 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/golang/protobuf/proto"
+	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/opentracing/opentracing-go"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/xerrors"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	wsinit "github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
-	"github.com/sirupsen/logrus"
-
-	"github.com/golang/protobuf/proto"
-	"github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/opentracing/opentracing-go"
-
-	"golang.org/x/xerrors"
 )
 
 // RunInitializerOpts configure RunInitializer

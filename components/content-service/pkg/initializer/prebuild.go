@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/opentracing/opentracing-go"
+	tracelog "github.com/opentracing/opentracing-go/log"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -19,9 +21,6 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	"github.com/gitpod-io/gitpod/content-service/pkg/git"
-
-	"github.com/opentracing/opentracing-go"
-	tracelog "github.com/opentracing/opentracing-go/log"
 )
 
 // PrebuildInitializer first tries to restore the snapshot/prebuild and if that succeeds performs Git operations.

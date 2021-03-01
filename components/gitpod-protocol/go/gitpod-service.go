@@ -16,9 +16,10 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sourcegraph/jsonrpc2"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // APIInterface wraps the

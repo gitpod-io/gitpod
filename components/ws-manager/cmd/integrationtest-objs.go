@@ -12,13 +12,12 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/ws-manager/pkg/test"
-
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
-
 	"k8s.io/apimachinery/pkg/util/yaml"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/ws-manager/pkg/test"
 )
 
 // integrationTestSetupCmd represents the integrationTestSetup command

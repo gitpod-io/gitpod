@@ -11,10 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/go-sql-driver/mysql"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // databaseCmd represents the database command

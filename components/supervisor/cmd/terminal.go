@@ -9,10 +9,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/supervisor/pkg/supervisor"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/supervisor"
 )
 
 var terminalCmd = &cobra.Command{

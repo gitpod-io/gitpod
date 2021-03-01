@@ -13,10 +13,11 @@ import (
 
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/idtools"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-	carchive "github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/tracing"
+	carchive "github.com/gitpod-io/gitpod/content-service/pkg/archive"
 )
 
 // BuildTarbal creates an OCI compatible tar file dst from the folder src, expecting the overlay whiteout format

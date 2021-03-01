@@ -17,10 +17,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/workspacekit/pkg/seccomp"
-	daemonapi "github.com/gitpod-io/gitpod/ws-daemon/api"
-
 	"github.com/rootless-containers/rootlesskit/pkg/msgutil"
 	"github.com/rootless-containers/rootlesskit/pkg/sigproxy"
 	sigproxysignal "github.com/rootless-containers/rootlesskit/pkg/sigproxy/signal"
@@ -29,6 +25,10 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 	"kernel.org/pub/linux/libs/security/libcap/cap"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/workspacekit/pkg/seccomp"
+	daemonapi "github.com/gitpod-io/gitpod/ws-daemon/api"
 )
 
 const (

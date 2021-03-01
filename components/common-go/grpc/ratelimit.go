@@ -8,11 +8,12 @@ import (
 	"context"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/util"
 	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/gitpod-io/gitpod/common-go/util"
 )
 
 // RateLimit configures the reate limit for a function
