@@ -23,9 +23,7 @@ replaceEnvVars() {
 
 ### nginx config
 # Clear existing config
-rm -Rf /etc/nginx/conf.d
-rm -Rf /etc/nginx/lib
-rm /etc/nginx/nginx.conf
+cp /usr/local/openresty/nginx/conf/* /etc/nginx
 
 # Copy the gitpod-core config
 # (-L does "unlink" and copies the target, not the symlink)
@@ -85,4 +83,4 @@ find . -name "*.conf"
 cd $ORG_PATH
 
 echo "Starting nginx"
-exec nginx -g "daemon off;"
+exec nginx -c /etc/nginx/nginx.conf -g "daemon off;"
