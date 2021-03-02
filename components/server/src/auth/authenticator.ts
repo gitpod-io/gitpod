@@ -110,6 +110,11 @@ export class Authenticator {
             res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
             return;
         }
+        if (this.env.disableDynamicAuthProviderLogin && !authProvider.config.builtin) {
+            log.info({ sessionId: req.sessionID }, `Auth Provider is not allowed.`, { req, ap: authProvider.info });
+            res.redirect(this.getSorryUrl(`Login with ${authProvider.config.host} is not allowed.`));
+            return;
+        }
         if (!req.session) {
             increaseLoginCounter("failed", authProvider.info.host)
             log.info({ }, `No session.`, { req, 'login-flow': true });
