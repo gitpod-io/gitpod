@@ -140,6 +140,7 @@ export class Env extends AbstractComponentEnv {
     
     readonly blockNewUsers: boolean = this.parseBool("BLOCK_NEW_USERS");
     readonly makeNewUsersAdmin: boolean = this.parseBool("MAKE_NEW_USERS_ADMIN");
+    readonly disableDynamicAuthProviderLogin: boolean = this.parseBool("DISABLE_DYNAMIC_AUTH_PROVIDER_LOGIN");
 
     /** This value - if present - overrides the default naming scheme for the GCloud bucket that Theia Plugins are stored in */
     readonly theiaPluginsBucketNameOverride: string | undefined = process.env['THEIA_PLUGINS_BUCKET_NAME_OVERRIDE'];
