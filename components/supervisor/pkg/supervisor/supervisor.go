@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -619,7 +618,7 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 			return
 		}
 
-		ferr := ioutil.WriteFile("/dev/termination-log", []byte(err.Error()), 0644)
+		ferr := os.WriteFile("/dev/termination-log", []byte(err.Error()), 0644)
 		if ferr != nil {
 			log.WithError(err).Error("cannot write termination log")
 		}
@@ -637,7 +636,7 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		// TODO: rewrite using fsnotify
 		t := time.NewTicker(100 * time.Millisecond)
 		for range t.C {
-			b, err := ioutil.ReadFile("/workspace/.gitpod/ready")
+			b, err := os.ReadFile("/workspace/.gitpod/ready")
 			if err != nil {
 				if !os.IsNotExist(err) {
 					log.WithError(err).Error("cannot read content ready file")
@@ -686,7 +685,7 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 
 func terminateChildProcesses() {
 	ppid := strconv.Itoa(os.Getpid())
-	dirs, err := ioutil.ReadDir("/proc")
+	dirs, err := os.ReadDir("/proc")
 	if err != nil {
 		log.WithError(err).Warn("cannot terminate child processes")
 		return

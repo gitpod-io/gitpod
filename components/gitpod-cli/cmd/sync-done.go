@@ -8,7 +8,6 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -31,7 +30,7 @@ var syncDoneCmd = &cobra.Command{
 			return
 		}
 
-		err := ioutil.WriteFile(lockFile, []byte("done"), 0600)
+		err := os.WriteFile(lockFile, []byte("done"), 0600)
 		if err != nil {
 			log.Fatalf("cannot write lock file: %v", err)
 		}

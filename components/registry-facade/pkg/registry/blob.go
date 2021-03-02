@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"mime"
 	"net/http"
 	"strings"
@@ -296,7 +295,7 @@ func (pbs *configBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, d
 		return
 	}
 	mediaType = pbs.Manifest.Config.MediaType
-	data = ioutil.NopCloser(bytes.NewReader(cfg))
+	data = io.NopCloser(bytes.NewReader(cfg))
 	return
 }
 

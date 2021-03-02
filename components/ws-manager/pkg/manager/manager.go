@@ -10,7 +10,6 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -1230,7 +1229,7 @@ func newWssyncConnectionFactory(managerConfig Configuration) (grpcpool.Factory, 
 			key = filepath.Join(root, key)
 		}
 
-		rootCA, err := ioutil.ReadFile(ca)
+		rootCA, err := os.ReadFile(ca)
 		if err != nil {
 			return nil, xerrors.Errorf("could not read ca certificate: %s", err)
 		}

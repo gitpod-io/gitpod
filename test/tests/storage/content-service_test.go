@@ -7,7 +7,7 @@ package storage
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -205,7 +205,7 @@ func uploadBlob(t *testing.T, url string, content string) {
 	if err != nil {
 		t.Fatalf("HTTP PUT request failed: %q", err)
 	}
-	body, err := ioutil.ReadAll(httpresp.Body)
+	body, err := io.ReadAll(httpresp.Body)
 	if err != nil {
 		t.Fatalf("cannot read response body of HTTP PUT: %q", err)
 	}
@@ -219,7 +219,7 @@ func downloadBlob(t *testing.T, url string) string {
 	if err != nil {
 		t.Fatalf("HTTP GET requst failed: %q", err)
 	}
-	body, err := ioutil.ReadAll(httpresp.Body)
+	body, err := io.ReadAll(httpresp.Body)
 	if err != nil {
 		t.Fatalf("cannot read response body of HTTP PUT: %q", err)
 	}

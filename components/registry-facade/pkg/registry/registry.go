@@ -9,7 +9,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -157,7 +156,7 @@ func NewRegistry(cfg Config, newResolver ResolverProvider, reg prometheus.Regist
 				key = filepath.Join(root, key)
 			}
 
-			rootCA, err := ioutil.ReadFile(ca)
+			rootCA, err := os.ReadFile(ca)
 			if err != nil {
 				return nil, xerrors.Errorf("could not read ca certificate: %s", err)
 			}
@@ -304,13 +303,13 @@ func ReceiveHandover(ctx context.Context, loc string) (l net.Listener, err error
 	if loc == "" {
 		return nil, nil
 	}
-	fs, err := ioutil.ReadDir(loc)
+	fs, err := os.ReadDir(loc)
 	if err != nil {
 		return nil, err
 	}
 	var fn string
 	for _, f := range fs {
-		if f.Mode()*os.ModeSocket == 0 {
+		if f.Type()*os.ModeSocket == 0 {
 			continue
 		}
 		if f.Name() > fn {

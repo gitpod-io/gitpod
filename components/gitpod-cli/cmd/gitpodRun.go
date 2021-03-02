@@ -7,7 +7,6 @@ package cmd
 import (
 	"encoding/base64"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"syscall"
@@ -33,7 +32,7 @@ var gitpodRunCmd = &cobra.Command{
 		if len(args) == 1 {
 			tmpfile, err = os.OpenFile(args[0], os.O_WRONLY|os.O_CREATE, 0700)
 		} else {
-			tmpfile, err = ioutil.TempFile("", "gp")
+			tmpfile, err = os.CreateTemp("", "gp")
 		}
 		if err != nil {
 			_ = os.Remove(tmpfile.Name())

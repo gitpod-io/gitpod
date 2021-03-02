@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -222,7 +222,7 @@ func (c *Client) Status(ctx context.Context) (res *Status, err error) {
 		return nil, err
 	}
 	if gitout != nil {
-		out, err := ioutil.ReadAll(bytes.NewReader(gitout))
+		out, err := io.ReadAll(bytes.NewReader(gitout))
 		if err != nil {
 			return nil, xerrors.Errorf("cannot determine unpushed commits: %w", err)
 		}

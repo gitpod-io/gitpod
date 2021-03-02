@@ -11,7 +11,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
@@ -45,7 +45,7 @@ func TestStaticLayerSource(t *testing.T) {
 			t.Fatalf("cannot marshal fixture: %+q", err)
 		}
 
-		err = ioutil.WriteFile("fixtures/layersrc_new.json", out, 0644)
+		err = os.WriteFile("fixtures/layersrc_new.json", out, 0644)
 		if err != nil {
 			t.Fatalf("cannot write fixture: %+q", err)
 		}
@@ -159,5 +159,5 @@ func (f *fakeFetcher) Fetch(ctx context.Context, desc ocispec.Descriptor) (io.Re
 	if !ok {
 		return nil, fmt.Errorf("not found")
 	}
-	return ioutil.NopCloser(bytes.NewReader(c)), nil
+	return io.NopCloser(bytes.NewReader(c)), nil
 }

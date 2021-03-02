@@ -7,7 +7,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"syscall"
@@ -49,7 +48,7 @@ func main() {
 }
 
 func createAndRunc(runcPath string) error {
-	fc, err := ioutil.ReadFile("config.json")
+	fc, err := os.ReadFile("config.json")
 	if err != nil {
 		return fmt.Errorf("cannot read config.json: %w", err)
 	}
@@ -68,7 +67,7 @@ func createAndRunc(runcPath string) error {
 		return fmt.Errorf("cannot encode config.json: %w", err)
 	}
 	for _, fn := range []string{"config.json", "/tmp/debug.json"} {
-		err = ioutil.WriteFile(fn, fc, 0644)
+		err = os.WriteFile(fn, fc, 0644)
 		if err != nil {
 			return fmt.Errorf("cannot encode config.json: %w", err)
 		}

@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -267,7 +266,7 @@ func (term *Term) resolveForegroundCommand() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	content, err := ioutil.ReadFile(fmt.Sprintf("/proc/%d/cmdline", pgrp))
+	content, err := os.ReadFile(fmt.Sprintf("/proc/%d/cmdline", pgrp))
 	if err != nil {
 		return "", err
 	}
@@ -347,7 +346,7 @@ func (closedTerminalListener) Read(p []byte) (n int, err error) {
 	return 0, io.EOF
 }
 
-var closedListener = ioutil.NopCloser(closedTerminalListener{})
+var closedListener = io.NopCloser(closedTerminalListener{})
 
 // Listen listens in on the multi-writer stream
 func (mw *multiWriter) Listen() io.ReadCloser {

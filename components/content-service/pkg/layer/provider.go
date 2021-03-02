@@ -10,7 +10,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -96,7 +96,7 @@ func (s *Provider) downloadContentManifest(ctx context.Context, bkt, obj string)
 	}
 	defer mfresp.Body.Close()
 
-	mfr, err := ioutil.ReadAll(mfresp.Body)
+	mfr, err := io.ReadAll(mfresp.Body)
 	if err != nil {
 		return
 	}

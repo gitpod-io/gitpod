@@ -8,7 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -199,7 +199,7 @@ func downloadOTS(ctx context.Context, url string) (user, pwd string, err error) 
 			return "", "", xerrors.Errorf("non-OK OTS response: %s", resp.Status)
 		}
 
-		secret, err := ioutil.ReadAll(resp.Body)
+		secret, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return "", "", err
 		}
@@ -308,7 +308,7 @@ func InitializeWorkspace(ctx context.Context, location string, remoteStorage sto
 				return src, xerrors.Errorf("cannot create workspace: %w", err)
 			}
 		}
-		fs, err := ioutil.ReadDir(location)
+		fs, err := os.ReadDir(location)
 		if err != nil {
 			return src, xerrors.Errorf("cannot clean workspace folder: %w", err)
 		}
@@ -372,7 +372,7 @@ func PlaceWorkspaceReadyFile(ctx context.Context, wspath string, initsrc csapi.W
 
 	tempWorkspaceReadyFile := WorkspaceReadyFile + ".tmp"
 	fn := filepath.Join(wspath, tempWorkspaceReadyFile)
-	err = ioutil.WriteFile(fn, []byte(fc), 0644)
+	err = os.WriteFile(fn, []byte(fc), 0644)
 	if err != nil {
 		return xerrors.Errorf("cannot write workspace ready file: %w", err)
 	}

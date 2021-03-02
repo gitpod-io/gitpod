@@ -8,7 +8,6 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -64,7 +63,7 @@ func TestExtractTarbal(t *testing.T) {
 			tw.Flush()
 			tw.Close()
 
-			wd, err := ioutil.TempDir("", "")
+			wd, err := os.MkdirTemp("", "")
 			defer os.RemoveAll(wd)
 			if err != nil {
 				t.Fatalf("cannot prepare test: %v", err)

@@ -244,7 +244,7 @@ func (s *Store) doHousekeeping(ctx context.Context) (errs []error) {
 	// For the time being we won't do that because we're not sure we're the only ones working in this directory!
 	// Legacy ws-daemon will work here too.
 	//
-	// files, err := ioutil.ReadDir(s.Location)
+	// files, err := os.ReadDir(s.Location)
 	// if err != nil {
 	// 	return []error{xerrors.Errorf("cannot list existing workspaces content directory: %w", err)}
 	// }

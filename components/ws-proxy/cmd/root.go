@@ -7,7 +7,6 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	validation "github.com/go-ozzo/ozzo-validation"
@@ -187,7 +186,7 @@ func (c *PathAndPortBasedIngressConfig) Validate() error {
 
 // getConfig loads and validates the configuration
 func getConfig(fn string) (*Config, error) {
-	fc, err := ioutil.ReadFile(fn)
+	fc, err := os.ReadFile(fn)
 	if err != nil {
 		return nil, err
 	}

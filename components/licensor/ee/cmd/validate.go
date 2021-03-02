@@ -7,7 +7,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -23,7 +23,7 @@ var validateCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
 		var lic []byte
 		if len(args) == 0 {
-			lic, err = ioutil.ReadAll(os.Stdin)
+			lic, err = io.ReadAll(os.Stdin)
 			if err != nil {
 				return err
 			}

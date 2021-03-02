@@ -5,7 +5,7 @@
 package main
 
 import (
-	"io/ioutil"
+	"os"
 
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
 	"github.com/gitpod-io/gitpod/test/tests/workspace/workspace_agent/api"
@@ -21,7 +21,7 @@ type WorkspaceAgent struct {
 
 // ListDir lists a directory's content
 func (*WorkspaceAgent) ListDir(req *api.ListDirRequest, resp *api.ListDirResponse) error {
-	dc, err := ioutil.ReadDir(req.Dir)
+	dc, err := os.ReadDir(req.Dir)
 	if err != nil {
 		return err
 	}
@@ -35,7 +35,7 @@ func (*WorkspaceAgent) ListDir(req *api.ListDirRequest, resp *api.ListDirRespons
 
 // WriteFile writes a file in the workspace
 func (*WorkspaceAgent) WriteFile(req *api.WriteFileRequest, resp *api.WriteFileResponse) (err error) {
-	err = ioutil.WriteFile(req.Path, req.Content, req.Mode)
+	err = os.WriteFile(req.Path, req.Content, req.Mode)
 	if err != nil {
 		return
 	}

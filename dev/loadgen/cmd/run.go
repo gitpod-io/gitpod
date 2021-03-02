@@ -6,7 +6,6 @@ package cmd
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"syscall"
@@ -100,7 +99,7 @@ var runCmd = &cobra.Command{
 					if err != nil {
 						return
 					}
-					ioutil.WriteFile("stats.json", fc, 0644)
+					os.WriteFile("stats.json", fc, 0644)
 				}),
 			},
 			PostLoadWait: func() {

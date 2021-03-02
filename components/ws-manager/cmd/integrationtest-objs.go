@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 
@@ -80,7 +79,7 @@ func getIntegrationTestPrerequisiteObjects(out io.Writer, namespace, gpHelmChart
 		return nil
 	})
 	eg.Go(func() error {
-		dr := yaml.NewDocumentDecoder(ioutil.NopCloser(ri))
+		dr := yaml.NewDocumentDecoder(io.NopCloser(ri))
 		buf := make([]byte, 100*4096)
 		for {
 			n, err := dr.Read(buf)

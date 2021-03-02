@@ -10,7 +10,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"sort"
 	"strings"
 	"time"
@@ -46,7 +45,7 @@ func (b *DockerBuilder) pullImage(ctx context.Context, out io.Writer, ref, auth 
 
 	if out == nil {
 		// we don't care for the output
-		_, err = io.Copy(ioutil.Discard, resp)
+		_, err = io.Copy(io.Discard, resp)
 		if err != nil {
 			return err
 		}

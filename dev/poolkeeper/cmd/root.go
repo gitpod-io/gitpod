@@ -7,7 +7,6 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
@@ -65,7 +64,7 @@ func init() {
 }
 
 func getConfig() *config {
-	ctnt, err := ioutil.ReadFile(cfgFile)
+	ctnt, err := os.ReadFile(cfgFile)
 	if err != nil {
 		log.WithError(err).Error("cannot read configuration. Maybe missing --config?")
 		os.Exit(1)

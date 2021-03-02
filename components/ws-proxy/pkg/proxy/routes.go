@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -522,7 +522,7 @@ func (t *blobserveTransport) RoundTrip(req *http.Request) (resp *http.Response, 
 		}
 
 		if resp.StatusCode >= http.StatusBadRequest {
-			respBody, err := ioutil.ReadAll(resp.Body)
+			respBody, err := io.ReadAll(resp.Body)
 			if err != nil {
 				return nil, err
 			}
@@ -615,7 +615,7 @@ func (t *blobserveTransport) redirect(image string, req *http.Request) (*http.Re
 	return &http.Response{
 		Request:       req,
 		Header:        header,
-		Body:          ioutil.NopCloser(bytes.NewReader(content)),
+		Body:          io.NopCloser(bytes.NewReader(content)),
 		ContentLength: int64(len(content)),
 		StatusCode:    code,
 		Status:        status,
@@ -633,7 +633,7 @@ func servePortNotFoundPage(config *Config) (http.Handler, error) {
 	if tp := os.Getenv("TELEPRESENCE_ROOT"); tp != "" {
 		fn = filepath.Join(tp, fn)
 	}
-	page, err := ioutil.ReadFile(fn)
+	page, err := os.ReadFile(fn)
 	if err != nil {
 		return nil, err
 	}

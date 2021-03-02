@@ -8,7 +8,6 @@ import (
 	"container/ring"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -289,7 +288,7 @@ func (gov *Controller) controlProcessPriorities() {
 	}
 
 	fn := filepath.Join(gov.CGroupBasePath, "pids", gov.CGroupPath, "tasks")
-	fc, err := ioutil.ReadFile(fn)
+	fc, err := os.ReadFile(fn)
 	if err != nil {
 		gov.log.WithError(err).Warn("cannot read tasks file")
 		return
@@ -398,7 +397,7 @@ type cgroupCFSController string
 // GetUsage returns the cpuacct.usage value of the cgroup
 func (basePath cgroupCFSController) GetUsage() (totalJiffies int64, err error) {
 	fn := filepath.Join(string(basePath), "cpuacct.usage")
-	fc, err := ioutil.ReadFile(fn)
+	fc, err := os.ReadFile(fn)
 	if err != nil {
 		return 0, xerrors.Errorf("cannot sample cpuacct.usage: %w", err)
 	}
@@ -416,7 +415,7 @@ func (basePath cgroupCFSController) GetQuota() (quota, period int64, err error) 
 	quotafn := filepath.Join(string(basePath), "cpu.cfs_quota_us")
 	periodfn := filepath.Join(string(basePath), "cpu.cfs_period_us")
 
-	quotafc, err := ioutil.ReadFile(quotafn)
+	quotafc, err := os.ReadFile(quotafn)
 	if err != nil {
 		err = xerrors.Errorf("cannot read CFS quota: %w", err)
 		return
@@ -426,7 +425,7 @@ func (basePath cgroupCFSController) GetQuota() (quota, period int64, err error) 
 		err = xerrors.Errorf("cannot parse CFS quota: %w", err)
 		return
 	}
-	periodfc, err := ioutil.ReadFile(periodfn)
+	periodfc, err := os.ReadFile(periodfn)
 	if err != nil {
 		err = xerrors.Errorf("cannot read CFS period: %w", err)
 		return
@@ -442,7 +441,7 @@ func (basePath cgroupCFSController) GetQuota() (quota, period int64, err error) 
 // SetQuota sets a new CFS quota on the cgroup
 func (basePath cgroupCFSController) SetQuota(quota int64) (err error) {
 	quotafn := filepath.Join(string(basePath), "cpu.cfs_quota_us")
-	err = ioutil.WriteFile(quotafn, []byte(strconv.FormatInt(quota, 10)), 0644)
+	err = os.WriteFile(quotafn, []byte(strconv.FormatInt(quota, 10)), 0644)
 	if err != nil {
 		return xerrors.Errorf("cannot set CFS quota: %w", err)
 	}

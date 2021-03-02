@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"os"
@@ -545,7 +545,7 @@ func (c *Cerc) callback(resp http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	body, _ := ioutil.ReadAll(req.Body)
+	body, _ := io.ReadAll(req.Body)
 	resultParam := strings.TrimSpace(req.URL.Query().Get("result"))
 	var result ProbeResult
 	if len(resultParam) == 0 || resultParam == string(ProbeSuccess) {

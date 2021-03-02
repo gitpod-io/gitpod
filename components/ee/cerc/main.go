@@ -6,7 +6,6 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
@@ -38,7 +37,7 @@ func main() {
 		log.Fatalf("usage: %s <config.json>", os.Args[0])
 	}
 
-	fc, err := ioutil.ReadFile(os.Args[1])
+	fc, err := os.ReadFile(os.Args[1])
 	if err != nil {
 		log.WithError(err).Fatal("cannot read configuration")
 	}

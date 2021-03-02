@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime"
 	"net/http"
 	"strings"
@@ -287,7 +286,7 @@ func DownloadManifest(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.D
 		}
 	}
 
-	inpt, err := ioutil.ReadAll(rc)
+	inpt, err := io.ReadAll(rc)
 	rc.Close()
 	if err != nil {
 		err = fmt.Errorf("cannot download manifest: %w", err)
@@ -319,7 +318,7 @@ func DownloadManifest(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.D
 			return
 		}
 		rdesc = &md
-		inpt, err = ioutil.ReadAll(rc)
+		inpt, err = io.ReadAll(rc)
 		rc.Close()
 		if err != nil {
 			err = fmt.Errorf("cannot download manifest: %w", err)

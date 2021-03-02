@@ -7,7 +7,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
@@ -100,7 +99,7 @@ tasks:
 			}
 		}
 
-		if err := ioutil.WriteFile(".gitpod.yml", d, 0644); err != nil {
+		if err := os.WriteFile(".gitpod.yml", d, 0644); err != nil {
 			log.Fatal(err)
 		}
 
@@ -116,7 +115,7 @@ tasks:
 		}
 		if v, ok := cfg.Image.(gitpodlib.GitpodImage); ok {
 			if _, err := os.Stat(v.File); os.IsNotExist(err) {
-				if err := ioutil.WriteFile(v.File, []byte(`FROM gitpod/workspace-full
+				if err := os.WriteFile(v.File, []byte(`FROM gitpod/workspace-full
 
 USER gitpod
 

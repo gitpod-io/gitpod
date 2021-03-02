@@ -6,7 +6,7 @@ package content
 
 import (
 	"context"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
@@ -33,7 +33,7 @@ func TestSizeLimitingWriter(t *testing.T) {
 			n       int
 			err     error
 		)
-		w := newLimitWriter(ioutil.Discard, test.MaxSize)
+		w := newLimitWriter(io.Discard, test.MaxSize)
 
 		for i := 0; i < test.BlockCount; i++ {
 			n, err = w.Write(make([]byte, test.BlockSize))
@@ -65,20 +65,20 @@ func TestBuildTarbalMaxSize(t *testing.T) {
 
 	var cleanup []string
 	for _, test := range tests {
-		wd, err := ioutil.TempDir("", "")
+		wd, err := os.MkdirTemp("", "")
 		if err != nil {
 			t.Errorf("cannot prepare test: %v", err)
 			continue
 		}
 		cleanup = append(cleanup, wd)
 
-		err = ioutil.WriteFile(filepath.Join(wd, "content.txt"), make([]byte, test.ContentSize), 0644)
+		err = os.WriteFile(filepath.Join(wd, "content.txt"), make([]byte, test.ContentSize), 0644)
 		if err != nil {
 			t.Errorf("cannot prepare test: %v", err)
 			continue
 		}
 
-		tgt, err := ioutil.TempFile("", "")
+		tgt, err := os.CreateTemp("", "")
 		if err != nil {
 			t.Errorf("cannot prepare test: %v", err)
 			continue

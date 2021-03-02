@@ -7,7 +7,7 @@ package supervisor
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math"
 	"net/http"
 	"net/url"
@@ -260,7 +260,7 @@ func (c WorkspaceConfig) GetTokens(downloadOTS bool) ([]WorkspaceGitpodToken, er
 			if err != nil {
 				return nil, fmt.Errorf("cannot download token OTS: %w", err)
 			}
-			tkn, err := ioutil.ReadAll(resp.Body)
+			tkn, err := io.ReadAll(resp.Body)
 			resp.Body.Close()
 			if err != nil {
 				return nil, fmt.Errorf("cannot download token OTS: %w", err)
@@ -339,7 +339,7 @@ func loadStaticConfigFromFile() (*StaticConfig, error) {
 	}
 
 	loc = filepath.Join(filepath.Dir(loc), supervisorConfigFile)
-	fc, err := ioutil.ReadFile(loc)
+	fc, err := os.ReadFile(loc)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot read supervisor config file %s: %w", loc, err)
 	}

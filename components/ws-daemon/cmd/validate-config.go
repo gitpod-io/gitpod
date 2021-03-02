@@ -7,7 +7,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -22,7 +22,7 @@ var validateConfigCmd = &cobra.Command{
 	Use:   "validate-config",
 	Short: "reads a ws-daemon configuration from STDIN and validates it",
 	Run: func(cmd *cobra.Command, args []string) {
-		ctnt, err := ioutil.ReadAll(os.Stdin)
+		ctnt, err := io.ReadAll(os.Stdin)
 		if err != nil {
 			log.WithError(err).Fatal("cannot read configuration")
 		}

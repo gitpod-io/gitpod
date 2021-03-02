@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -657,7 +656,7 @@ func TestRoutes(t *testing.T) {
 			handler.ServeHTTP(rec, test.Request)
 			resp := rec.Result()
 
-			body, _ := ioutil.ReadAll(resp.Body)
+			body, _ := io.ReadAll(resp.Body)
 			resp.Body.Close()
 			act := Expectation{
 				Status: resp.StatusCode,

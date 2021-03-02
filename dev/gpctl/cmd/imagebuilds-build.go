@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 
 	"github.com/golang/protobuf/jsonpb"
@@ -26,7 +25,7 @@ var imagebuildsBuildCmd = &cobra.Command{
 	Short: "Runs a full workspace build",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		fc, err := ioutil.ReadFile(args[0])
+		fc, err := os.ReadFile(args[0])
 		if err != nil {
 			log.Fatal(err)
 		}

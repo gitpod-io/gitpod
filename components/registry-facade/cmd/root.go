@@ -7,7 +7,6 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -61,7 +60,7 @@ type Config struct {
 
 // getConfig loads and validates the configuration
 func getConfig(fn string) (*Config, error) {
-	fc, err := ioutil.ReadFile(fn)
+	fc, err := os.ReadFile(fn)
 	if err != nil {
 		return nil, err
 	}

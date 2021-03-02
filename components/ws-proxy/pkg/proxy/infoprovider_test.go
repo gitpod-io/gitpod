@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"testing"
 	"time"
 
@@ -136,7 +135,7 @@ func TestRemoteInfoProvider(t *testing.T) {
 
 			prov := NewRemoteWorkspaceInfoProvider(WorkspaceInfoProviderConfig{WsManagerAddr: "target"})
 			prov.Dialer = func(target string) (io.Closer, wsapi.WorkspaceManagerClient, error) {
-				return ioutil.NopCloser(nil), cl, nil
+				return io.NopCloser(nil), cl, nil
 			}
 			err := prov.Run()
 			if err != nil {
