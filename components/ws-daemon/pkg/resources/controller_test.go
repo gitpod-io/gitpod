@@ -9,7 +9,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -248,7 +247,7 @@ plt.title(fn)
 fig.savefig(fname="diff%s.png"%fn)
 `
 	script = strings.ReplaceAll(script, "FILENAME", base)
-	err := ioutil.WriteFile(".plot.py", []byte(script), 0644)
+	err := os.WriteFile(".plot.py", []byte(script), 0644)
 	if err != nil {
 		return err
 	}

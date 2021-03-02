@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"os"
 	"path/filepath"
@@ -464,7 +463,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		tmpfDigest digest.Digest
 	)
 	err = retryIfErr(ctx, s.config.Backup.Attempts, log.WithFields(sess.OWI()).WithField("op", "create archive"), func(ctx context.Context) (err error) {
-		tmpf, err = ioutil.TempFile(s.config.TmpDir, fmt.Sprintf("wsbkp-%s-*.tar", sess.InstanceID))
+		tmpf, err = os.CreateTemp(s.config.TmpDir, fmt.Sprintf("wsbkp-%s-*.tar", sess.InstanceID))
 		if err != nil {
 			return
 		}
@@ -575,7 +574,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		log.WithFields(sess.OWI()).WithField("manifest", mf).Debug("uploading content manifest")
 		span.LogKV("manifest", mf)
 
-		tmpmf, err := ioutil.TempFile(s.config.TmpDir, fmt.Sprintf("mf-%s-*.json", sess.InstanceID))
+		tmpmf, err := os.CreateTemp(s.config.TmpDir, fmt.Sprintf("mf-%s-*.json", sess.InstanceID))
 		if err != nil {
 			return err
 		}

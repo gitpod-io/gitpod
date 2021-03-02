@@ -6,7 +6,7 @@ package manager
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -147,7 +147,7 @@ func BenchmarkGetStatus(b *testing.B) {
 		b.Run(f, func(b *testing.B) {
 			b.ReportAllocs()
 
-			buf, err := ioutil.ReadFile(f)
+			buf, err := os.ReadFile(f)
 			if err != nil {
 				b.Fatal(err)
 			}

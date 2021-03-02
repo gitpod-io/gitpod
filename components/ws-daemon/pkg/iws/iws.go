@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -265,7 +264,7 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID)
 	}
 
-	nodeStaging, err := ioutil.TempDir("", "proc-staging")
+	nodeStaging, err := os.MkdirTemp("", "proc-staging")
 	if err != nil {
 		return nil, xerrors.Errorf("cannot prepare proc staging: %w")
 	}
@@ -337,7 +336,7 @@ func (wbs *InWorkspaceServiceServer) UmountProc(ctx context.Context, req *api.Um
 		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID)
 	}
 
-	nodeStaging, err := ioutil.TempDir("", "proc-umount")
+	nodeStaging, err := os.MkdirTemp("", "proc-umount")
 	if err != nil {
 		return nil, xerrors.Errorf("cannot prepare proc staging: %w")
 	}

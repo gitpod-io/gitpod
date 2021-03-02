@@ -7,7 +7,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -155,7 +154,7 @@ func runOutsideNetns() error {
 	}
 	defer pipeW.Close()
 
-	slirpAPI, err := ioutil.TempFile("", "slirp4netns-api")
+	slirpAPI, err := os.CreateTemp("", "slirp4netns-api")
 	if err != nil {
 		return err
 	}

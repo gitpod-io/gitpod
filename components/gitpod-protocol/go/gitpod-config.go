@@ -6,7 +6,6 @@ package protocol
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"sync"
 	"time"
@@ -217,7 +216,7 @@ func (service *ConfigService) updateConfig() error {
 }
 
 func (service *ConfigService) parse() (*GitpodConfig, error) {
-	data, err := ioutil.ReadFile(service.location)
+	data, err := os.ReadFile(service.location)
 	if err != nil {
 		return nil, err
 	}

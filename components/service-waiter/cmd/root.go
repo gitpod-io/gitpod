@@ -6,7 +6,6 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -106,7 +105,7 @@ func fail(message string) {
 	log.WithField("message", message).Warn("failed to wait for a service")
 
 	if _, err := os.Stat(terminationLog); !os.IsNotExist(err) {
-		err := ioutil.WriteFile(terminationLog, []byte(message), 0600)
+		err := os.WriteFile(terminationLog, []byte(message), 0600)
 		if err != nil {
 			log.WithError(err).Error("cannot write termination log")
 		}

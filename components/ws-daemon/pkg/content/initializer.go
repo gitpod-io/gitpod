@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -124,7 +123,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 		opts.UID = wsinit.GitpodUID
 	}
 
-	tmpdir, err := ioutil.TempDir("", "content-init")
+	tmpdir, err := os.MkdirTemp("", "content-init")
 	if err != nil {
 		return err
 	}
@@ -149,7 +148,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(filepath.Join(tmpdir, "rootfs", "content.json"), fc, 0644)
+	err = os.WriteFile(filepath.Join(tmpdir, "rootfs", "content.json"), fc, 0644)
 	if err != nil {
 		return err
 	}
@@ -163,7 +162,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 
 	cfgFN := filepath.Join(tmpdir, "config.json")
 	var spec specs.Spec
-	fc, err = ioutil.ReadFile(cfgFN)
+	fc, err = os.ReadFile(cfgFN)
 	if err != nil {
 		return err
 	}
@@ -222,7 +221,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(cfgFN, fc, 0644)
+	err = os.WriteFile(cfgFN, fc, 0644)
 	if err != nil {
 		return err
 	}
@@ -249,7 +248,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 
 // RunInitializerChild is the function that's expected to run when we call `/proc/self/exe content-initializer`
 func RunInitializerChild() (err error) {
-	fc, err := ioutil.ReadFile("/content.json")
+	fc, err := os.ReadFile("/content.json")
 	if err != nil {
 		return err
 	}

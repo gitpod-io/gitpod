@@ -7,7 +7,6 @@ package supervisor
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"sync"
@@ -102,7 +101,7 @@ func TestTaskManager(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
-			storeLocation, err := ioutil.TempDir("", "tasktest")
+			storeLocation, err := os.MkdirTemp("", "tasktest")
 			if err != nil {
 				t.Fatal(err)
 			}

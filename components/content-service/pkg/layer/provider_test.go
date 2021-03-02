@@ -10,7 +10,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -132,7 +132,7 @@ func TestGetContentLayer(t *testing.T) {
 							return &http.Response{
 								StatusCode: http.StatusOK,
 								Header:     make(http.Header),
-								Body:       ioutil.NopCloser(bytes.NewReader(mf)),
+								Body:       io.NopCloser(bytes.NewReader(mf)),
 							}
 						default:
 							return &http.Response{
@@ -174,13 +174,13 @@ func TestGetContentLayer(t *testing.T) {
 					t.Fatalf("fixture %s exists already - not overwriting", fixfn)
 				}
 
-				err = ioutil.WriteFile(fixfn, fixc, 0644)
+				err = os.WriteFile(fixfn, fixc, 0644)
 				if err != nil {
 					t.Fatalf("cannot write fixture: %q", err)
 					return
 				}
 			} else {
-				fixc, err := ioutil.ReadFile(fixfn)
+				fixc, err := os.ReadFile(fixfn)
 				if os.IsNotExist(err) && !*update {
 					t.Fatalf("no fixture %s. Run test with -update", fixfn)
 					return

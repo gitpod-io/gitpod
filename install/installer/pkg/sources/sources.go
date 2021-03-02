@@ -7,7 +7,6 @@ package sources
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -52,7 +51,7 @@ func DefaultAskIfVersionDiffers(existingVersion, newVersion string) DifferentVer
 	fmt.Printf(`The version of the installer scripts has changed.
 	old version: %s
 	new version: %s
-	
+
 `, existingVersion, newVersion)
 
 	choices := []struct {
@@ -97,7 +96,7 @@ func CloneAndOwn(l Layout, opts CloneAndOwnOpts) (err error) {
 
 	srcver := []byte(opts.SourceVersion)
 	if len(srcver) == 0 {
-		srcver, err = ioutil.ReadFile(l.VersionFile)
+		srcver, err = os.ReadFile(l.VersionFile)
 		if err != nil {
 			return fmt.Errorf("cannot read source version file %s: %w", l.VersionFile, err)
 		}
@@ -118,7 +117,7 @@ func CloneAndOwn(l Layout, opts CloneAndOwnOpts) (err error) {
 	}
 
 	if dstVersionExists {
-		dstver, err := ioutil.ReadFile(dstVersionFn)
+		dstver, err := os.ReadFile(dstVersionFn)
 		if err != nil {
 			return fmt.Errorf("cannot read destination version file %s: %w", dstVersionFn, err)
 		}
@@ -174,7 +173,7 @@ func CloneAndOwn(l Layout, opts CloneAndOwnOpts) (err error) {
 		}
 	}
 
-	err = ioutil.WriteFile(dstVersionFn, []byte(srcver), 0644)
+	err = os.WriteFile(dstVersionFn, []byte(srcver), 0644)
 	if err != nil {
 		return fmt.Errorf("cannot write destination version file %s: %w", dstVersionFn, err)
 	}

@@ -6,8 +6,8 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"regexp"
 	"strconv"
 	"time"
@@ -36,12 +36,12 @@ var awaitPortCmd = &cobra.Command{
 
 		fmt.Printf("Awaiting port %d... ", port)
 		for {
-			tcp, err := ioutil.ReadFile("/proc/net/tcp")
+			tcp, err := os.ReadFile("/proc/net/tcp")
 			if err != nil {
 				log.Fatalf("cannot read /proc/net/tcp: %s", err)
 			}
 
-			tcp6, err := ioutil.ReadFile("/proc/net/tcp6")
+			tcp6, err := os.ReadFile("/proc/net/tcp6")
 			if err != nil {
 				log.Fatalf("cannot read /proc/net/tcp6: %s", err)
 			}

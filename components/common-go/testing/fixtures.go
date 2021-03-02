@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -48,7 +47,7 @@ func (ft *FixtureTest) Run() {
 
 	for _, fn := range fixtures {
 		t.Run(fn, func(t *testing.T) {
-			fd, err := ioutil.ReadFile(fn)
+			fd, err := os.ReadFile(fn)
 			if err != nil {
 				t.Errorf("cannot read %s: %v", fn, err)
 				return
@@ -89,7 +88,7 @@ func (ft *FixtureTest) Run() {
 			goldenFilePath := fmt.Sprintf("%s.golden", strings.TrimSuffix(fn, filepath.Ext(fn)))
 			if *update {
 				if _, err := os.Stat(goldenFilePath); *force || os.IsNotExist(err) {
-					err = ioutil.WriteFile(goldenFilePath, actual, 0644)
+					err = os.WriteFile(goldenFilePath, actual, 0644)
 					if err != nil {
 						t.Errorf("cannot write gold standard %s: %v", goldenFilePath, err)
 						return
@@ -101,7 +100,7 @@ func (ft *FixtureTest) Run() {
 				}
 			}
 
-			expected, err := ioutil.ReadFile(goldenFilePath)
+			expected, err := os.ReadFile(goldenFilePath)
 			if err != nil {
 				t.Errorf("cannot read golden file %s: %v", goldenFilePath, err)
 				return

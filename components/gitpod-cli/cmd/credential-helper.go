@@ -7,7 +7,7 @@ package cmd
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"os/exec"
 	"regexp"
@@ -44,7 +44,7 @@ var credentialHelper = &cobra.Command{
 			fmt.Printf("username=%s\npassword=%s\n", user, token)
 		}()
 
-		log.SetOutput(ioutil.Discard)
+		log.SetOutput(io.Discard)
 		f, err := os.OpenFile(os.TempDir()+"/gitpod-git-credential-helper.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 		if err == nil {
 			defer f.Close()

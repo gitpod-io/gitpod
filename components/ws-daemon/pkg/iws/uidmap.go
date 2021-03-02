@@ -8,7 +8,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -137,7 +136,7 @@ func WriteMapping(hostPID uint64, gid bool, mapping []*api.WriteIDMappingRequest
 	pth := fmt.Sprintf("/proc/%d/%s", hostPID, fn)
 	log.WithField("path", pth).WithField("fc", fc).Debug("attempting to write UID mapping")
 
-	err = ioutil.WriteFile(pth, []byte(fc), 0644)
+	err = os.WriteFile(pth, []byte(fc), 0644)
 	if err != nil {
 		return xerrors.Errorf("cannot write UID/GID mapping: %w", err)
 	}
@@ -177,12 +176,12 @@ func (m *Uidmapper) findHostPID(containerPID, inContainerPID uint64) (uint64, er
 		}
 
 		taskfn := filepath.Join(p, "task")
-		tasks, err := ioutil.ReadDir(taskfn)
+		tasks, err := os.ReadDir(taskfn)
 		if err != nil {
 			continue
 		}
 		for _, task := range tasks {
-			cldrn, err := ioutil.ReadFile(filepath.Join(taskfn, task.Name(), "children"))
+			cldrn, err := os.ReadFile(filepath.Join(taskfn, task.Name(), "children"))
 			if err != nil {
 				continue
 			}

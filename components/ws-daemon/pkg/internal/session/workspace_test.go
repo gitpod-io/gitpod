@@ -6,8 +6,8 @@ package session
 
 import (
 	"context"
-	"io/ioutil"
 	"math/rand"
+	"os"
 	"path/filepath"
 	"runtime"
 	"sync"
@@ -33,7 +33,7 @@ func (*emptySP) NewStorage() (storage.DirectAccess, error) {
 }
 
 func getTestStore() (*Store, error) {
-	loc, err := ioutil.TempDir("", "wsdaemon-test")
+	loc, err := os.MkdirTemp("", "wsdaemon-test")
 	if err != nil {
 		return nil, err
 	}

@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -57,7 +56,7 @@ func main() {
 
 		idx := len(glob)
 		fn := fmt.Sprintf("status_%s_%s%02d.json", *prefix, phase, idx)
-		err = ioutil.WriteFile(fn, data.Objects, 0644)
+		err = os.WriteFile(fn, data.Objects, 0644)
 		if err != nil {
 			panic(err)
 		}

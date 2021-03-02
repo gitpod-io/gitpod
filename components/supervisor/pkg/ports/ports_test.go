@@ -7,7 +7,6 @@ package ports
 import (
 	"context"
 	"io"
-	"io/ioutil"
 	"sync"
 	"testing"
 	"time"
@@ -469,7 +468,7 @@ func TestPortsUpdateState(t *testing.T) {
 				updts [][]*api.PortsStatus
 			)
 			pm.proxyStarter = func(localPort uint32, globalPort uint32) (io.Closer, error) {
-				return ioutil.NopCloser(nil), nil
+				return io.NopCloser(nil), nil
 			}
 
 			ctx, cancel := context.WithCancel(context.Background())
@@ -607,7 +606,7 @@ func TestPortsConcurrentSubscribe(t *testing.T) {
 		pm = NewManager(exposed, served, config)
 	)
 	pm.proxyStarter = func(localPort uint32, globalPort uint32) (io.Closer, error) {
-		return ioutil.NopCloser(nil), nil
+		return io.NopCloser(nil), nil
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())

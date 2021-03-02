@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
@@ -237,7 +236,7 @@ func (rs *DirectGCPStorage) fixLegacyFilenames(ctx context.Context, destination 
 		 * Using mv here is difficult as the wildcard expansion is done by the shell and not mv,
 		 * thus we'd need to wrap the mv call in a sh call -> too many dependencies to the outside world.
 		 */
-		fis, err := ioutil.ReadDir(legacyPath)
+		fis, err := os.ReadDir(legacyPath)
 		if err != nil {
 			return err
 		}
@@ -698,7 +697,7 @@ func newPresignedGCPAccess(config GCPConfig, stage Stage) (*PresignedGCPStorage,
 		credfile = filepath.Join(tproot, credfile)
 	}
 
-	jsonKey, err := ioutil.ReadFile(credfile)
+	jsonKey, err := os.ReadFile(credfile)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot read private key: %w", err)
 	}

@@ -8,7 +8,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/alecthomas/repr"
@@ -32,7 +32,7 @@ var workspacesStartCmd = &cobra.Command{
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		fc, err := ioutil.ReadFile(args[1])
+		fc, err := os.ReadFile(args[1])
 		if err != nil {
 			log.WithError(err).Fatal("cannot read workspace spec")
 		}

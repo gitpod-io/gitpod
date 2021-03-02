@@ -21,7 +21,7 @@ var clientInitCmd = &cobra.Command{
 	Short: "initialize a workspace",
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		// fc, err := ioutil.ReadFile(args[0])
+		// fc, err := os.ReadFile(args[0])
 		// if err != nil {
 		// 	log.WithError(err).Fatal("cannot read init request")
 		// }

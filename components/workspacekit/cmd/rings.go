@@ -7,7 +7,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -218,7 +217,7 @@ var ring1Cmd = &cobra.Command{
 		unix.Prctl(unix.PR_SET_PDEATHSIG, uintptr(unix.SIGKILL), 0, 0, 0)
 		runtime.UnlockOSThread()
 
-		ring2Root, err := ioutil.TempDir("", "supervisor")
+		ring2Root, err := os.MkdirTemp("", "supervisor")
 		if err != nil {
 			log.WithError(err).Fatal("cannot create tempdir")
 		}

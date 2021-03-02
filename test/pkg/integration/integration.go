@@ -11,7 +11,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/rpc"
@@ -88,7 +87,7 @@ func getKubeconfig(kubeconfig string) (res *rest.Config, namespace string, err e
 		}
 
 		var data []byte
-		data, err = ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+		data, err = os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
 		if err != nil {
 			return
 		}
@@ -451,7 +450,7 @@ func (t *Test) buildAgent(name string) (loc string, err error) {
 		return "", err
 	}
 
-	f, err := ioutil.TempFile("", "gitpod-integration-test-*")
+	f, err := os.CreateTemp("", "gitpod-integration-test-*")
 	if err != nil {
 		return "", err
 	}

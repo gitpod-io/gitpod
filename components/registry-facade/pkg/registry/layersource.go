@@ -9,7 +9,6 @@ import (
 	"compress/gzip"
 	"context"
 	"io"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -540,13 +539,13 @@ func (src *ContentLayerSource) HasBlob(ctx context.Context, spec *api.ImageSpec,
 // call close on it eventually.
 func (src *ContentLayerSource) GetBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) (mediaType string, url string, data io.ReadCloser, err error) {
 	if blob, ok := src.blobCache.Get(dgst); ok {
-		return ociv1.MediaTypeImageLayer, "", ioutil.NopCloser(bytes.NewReader(blob.([]byte))), nil
+		return ociv1.MediaTypeImageLayer, "", io.NopCloser(bytes.NewReader(blob.([]byte))), nil
 	}
 
 	for _, layer := range spec.ContentLayer {
 		if dl := layer.GetDirect(); dl != nil {
 			if digest.FromBytes(dl.Content) == dgst {
-				return ociv1.MediaTypeImageLayer, "", ioutil.NopCloser(bytes.NewReader(dl.Content)), nil
+				return ociv1.MediaTypeImageLayer, "", io.NopCloser(bytes.NewReader(dl.Content)), nil
 			}
 		}
 

@@ -9,7 +9,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -181,7 +181,7 @@ func sendRequest(socketPath string, req request) (resp map[string]interface{}, e
 	if err := conn.CloseWrite(); err != nil {
 		return nil, err
 	}
-	b, err := ioutil.ReadAll(conn)
+	b, err := io.ReadAll(conn)
 	if err != nil {
 		return nil, err
 	}
