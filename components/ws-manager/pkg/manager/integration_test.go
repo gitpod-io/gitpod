@@ -14,11 +14,11 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"testing/fstest"
 	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/spf13/afero"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
@@ -309,7 +309,9 @@ func (test *SingleWorkspaceIntegrationTest) Run(t *testing.T) {
 	manager := forIntegrationTestGetManager(t)
 	defer manager.Close()
 
-	fs := afero.NewMemMapFs()
+	// create in-memory file system
+	fs := fstest.MapFS{}
+
 	files := []struct {
 		tplfn  string
 		ctnt   interface{}
@@ -329,10 +331,9 @@ func (test *SingleWorkspaceIntegrationTest) Run(t *testing.T) {
 		if err != nil {
 			t.Fatalf("cannot re-marshal %s template: %q", f.tplfn, err)
 		}
-		err = afero.WriteFile(fs, f.tplfn, b, 0755)
-		if err != nil {
-			t.Fatalf("cannot write %s template: %q", f.tplfn, err)
-		}
+
+		fs[f.tplfn] = &fstest.MapFile{Data: b}
+
 		f.setter(f.tplfn)
 	}
 

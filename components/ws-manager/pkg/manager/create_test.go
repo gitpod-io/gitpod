@@ -9,9 +9,9 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"testing/fstest"
 
 	"github.com/golang/protobuf/jsonpb"
-	"github.com/spf13/afero"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
 
@@ -53,7 +53,11 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 				manager.Config = cfg
 			}
 
-			fs = afero.NewMemMapFs()
+			// create in-memory file system
+			mapFS := fstest.MapFS{}
+
+			fs = mapFS
+
 			files := []struct {
 				tplfn  string
 				ctnt   interface{}
@@ -74,11 +78,9 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 					t.Errorf("cannot re-marshal %s template: %w", f.tplfn, err)
 					return nil
 				}
-				err = afero.WriteFile(fs, f.tplfn, b, 0755)
-				if err != nil {
-					t.Errorf("cannot write %s template: %w", f.tplfn, err)
-					return nil
-				}
+
+				mapFS[f.tplfn] = &fstest.MapFile{Data: b}
+
 				f.setter(f.tplfn)
 			}
 
