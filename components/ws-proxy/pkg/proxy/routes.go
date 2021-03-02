@@ -76,16 +76,19 @@ func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip Worksp
 	//       Routes registered first have priority over those that come afterwards.
 	routes := newIDERoutes(config, ip)
 
-	// The favicon warants special handling, because we pull that from the supervisor frontend
+	// The supervisor frontend resources warant special handling, because we pull them from the supervisor frontend
 	// rather than the IDE.
-	faviconRouter := r.Path("/favicon.ico").Subrouter()
-	faviconRouter.Use(func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-			req.URL.Path = "/_supervisor/frontend/favicon.ico"
-			h.ServeHTTP(resp, req)
+	for _, externalPath := range []string{"/favicon.ico", "/manifest.json", "/service-worker.js", "/gp-192.png", "/gp-512.png"} {
+		internalPath := "/_supervisor/frontend" + externalPath
+		supervisorPublicResourceRouter := r.Path(externalPath).Subrouter()
+		supervisorPublicResourceRouter.Use(func(h http.Handler) http.Handler {
+			return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+				req.URL.Path = internalPath
+				h.ServeHTTP(resp, req)
+			})
 		})
-	})
-	routes.HandleSupervisorFrontendRoute(faviconRouter.NewRoute())
+		routes.HandleSupervisorFrontendRoute(supervisorPublicResourceRouter.NewRoute())
+	}
 
 	// Theia has a bunch of special routes it probably requires.
 	// TODO(cw): figure out if these routes are still required, and how we deal with specialties of other IDEs.
@@ -178,6 +181,10 @@ func (ir *ideRoutes) HandleSupervisorFrontendRoute(route *mux.Route) {
 					image = ir.Config.Config.WorkspacePodConfig.SupervisorImage
 					path  = strings.TrimPrefix(req.URL.Path, "/"+image)
 				)
+				if path == "/manifest.json" {
+					// PWA manifest must be served from the same origin to respect start_url
+					return ""
+				}
 				if path == "/worker-proxy.js" {
 					// worker must be served from the same origin
 					return ""

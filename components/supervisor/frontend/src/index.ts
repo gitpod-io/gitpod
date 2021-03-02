@@ -9,6 +9,12 @@
  * all other IDE scripts should go afterwards, head element should not have scripts
  */
 
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () =>
+        navigator.serviceWorker.register('/service-worker.js')
+    );
+}
+
 require('../src/shared/index.css');
 
 import { createGitpodService } from "@gitpod/gitpod-protocol";

@@ -1,0 +1,25 @@
+{
+  "short_name": "Gitpod",
+  "name": "Gitpod",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "gp-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "gp-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/",
+  "display": "fullscreen",
+  "theme_color": "#2C2C2D",
+  "background_color": "#1B1B1B"
+}
