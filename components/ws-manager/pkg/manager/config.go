@@ -7,13 +7,13 @@ package manager
 import (
 	"bytes"
 	"html/template"
+	iofs "io/fs"
 	"net/url"
 	"os"
 	"path/filepath"
 
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
-	"github.com/spf13/afero"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -22,9 +22,15 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/util"
 )
 
+type osFS struct{}
+
+func (*osFS) Open(name string) (iofs.File, error) {
+	return os.Open(name)
+}
+
 // fs is used to load files refered to by this configuration.
 // We use a library here to be able to test things properly.
-var fs = afero.NewOsFs()
+var fs iofs.FS = &osFS{}
 
 // Configuration is the configuration of the ws-manager
 type Configuration struct {
@@ -296,7 +302,7 @@ func getWorkspacePodTemplate(filename string) (*corev1.Pod, error) {
 		filename = filepath.Join(tpr, filename)
 	}
 
-	tpl, err := fs.OpenFile(filename, os.O_RDONLY, 0644)
+	tpl, err := fs.Open(filename)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot read pod template: %w", err)
 	}
