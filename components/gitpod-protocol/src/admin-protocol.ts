@@ -8,6 +8,7 @@ import { User, Workspace, NamedWorkspaceFeatureFlag } from "./protocol";
 import { Without } from "./util/without";
 import { WorkspaceInstance, WorkspaceInstancePhase } from "./workspace-instance";
 import { RoleOrPermission } from "./permission";
+import { AccountStatement } from "./accounting-protocol";
 
 export interface AdminServer {
     adminGetUsers(req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>>;
@@ -22,6 +23,11 @@ export interface AdminServer {
     adminForceStopWorkspace(id: string): Promise<void>;
 
     adminSetLicense(key: string): Promise<void>;
+
+    adminGetAccountStatement(userId: string): Promise<AccountStatement>;
+    adminSetProfessionalOpenSource(userId: string, shouldGetProfOSS: boolean): Promise<void>;
+    adminIsStudent(userId: string): Promise<boolean>;
+    adminAddStudentEmailDomain(userId: string, domain: string): Promise<void>;
 }
 
 export interface AdminGetListRequest<T> {

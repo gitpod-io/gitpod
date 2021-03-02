@@ -64,6 +64,9 @@ export namespace ErrorCodes {
     // 555 EE License Required
     export const EE_LICENSE_REQUIRED = 555;
 
+    // 601 SaaS Feature
+    export const SAAS_FEATURE = 601;
+
     // 610 Invalid Team Subscription Quantity
     export const TEAM_SUBSCRIPTION_INVALID_QUANTITY = 610;
 
