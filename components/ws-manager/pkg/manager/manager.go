@@ -449,8 +449,8 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 			PropagationPolicy:  &propagationPolicy,
 		},
 	)
-
 	tracing.LogEvent(span, "theia service deleted")
+
 	portsServiceErr := m.Clientset.Delete(ctx, &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      getPortsServiceName(servicePrefix),
@@ -481,7 +481,7 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 	if podErr != nil {
 		return xerrors.Errorf("stopWorkspace: %w", podErr)
 	}
-	if theiaServiceErr != nil && !isKubernetesObjNotFoundError(portsServiceErr) {
+	if theiaServiceErr != nil && !isKubernetesObjNotFoundError(theiaServiceErr) {
 		return xerrors.Errorf("stopWorkspace: %w", theiaServiceErr)
 	}
 	if portsServiceErr != nil && !isKubernetesObjNotFoundError(portsServiceErr) {
