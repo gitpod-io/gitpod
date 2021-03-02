@@ -465,7 +465,7 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 	tracing.LogEvent(span, "ports service deleted")
 
 	podErr := m.Clientset.Delete(ctx,
-		&corev1.Service{
+		&corev1.Pod{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      pod.Name,
 				Namespace: m.Config.Namespace,
