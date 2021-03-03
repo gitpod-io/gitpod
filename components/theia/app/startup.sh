@@ -31,4 +31,4 @@ export USER=gitpod
 [ -s ~/.nvm/nvm-lazy.sh ] && source ~/.nvm/nvm-lazy.sh
 
 cd /theia/node_modules/@gitpod/gitpod-ide
-exec /theia/node/bin/gitpod-node ./src-gen/backend/main.js $*
+exec /theia/node/bin/gitpod-node ./src-gen/backend/main.js --vscode-api-version=1.53.2 $*
