@@ -142,15 +142,13 @@ func (m *Monitor) Start() error {
 		log.WithError(err).Warn("cannot mark all existing workspaces active - this will wrongly time out user's workspaces")
 	}
 
-	return nil
-}
+	go func() {
+		for range m.ticker.C {
+			m.doHousekeeping(context.Background())
+		}
+	}()
 
-// run checks the overall workspace state (on event or periodically). Run is best called as a goroutine.
-// Note: this function serializes the handling of pod/config map events per workspace, but not globally.
-func (m *Monitor) run() {
-	for range m.ticker.C {
-		go m.doHousekeeping(context.Background())
-	}
+	return nil
 }
 
 // handleEvent dispatches an event to the corresponding event handler based on the event object kind.
