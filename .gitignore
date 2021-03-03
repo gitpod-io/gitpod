@@ -17,6 +17,7 @@ lerna-debug.log
 
 # build artifacts
 .terraform/
+.terraform*
 *.tfstate
 *.tfstate.backup
 /versions.yaml
