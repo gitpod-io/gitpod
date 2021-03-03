@@ -214,7 +214,7 @@ func (c *ComponentAPI) createGitpodToken(user string) (tkn string, err error) {
 		row *sql.Row
 	)
 	if user == "" {
-		row = db.QueryRow(`SELECT id FROM d_b_user WHERE NOT id = "` + gitpodBuiltinUserID + `"`)
+		row = db.QueryRow(`SELECT id FROM d_b_user WHERE NOT id = "` + gitpodBuiltinUserID + `" AND blocked = FALSE AND markedDeleted = FALSE`)
 	} else {
 		row = db.QueryRow("SELECT id FROM d_b_user WHERE name = ?", user)
 	}
