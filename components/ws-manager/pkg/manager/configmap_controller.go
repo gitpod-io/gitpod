@@ -30,12 +30,9 @@ type ConfigmapReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.0/pkg/reconcile
 func (r *ConfigmapReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := r.Log.WithValues("configmap", req.NamespacedName)
-
 	var configmap corev1.ConfigMap
 	err := r.Client.Get(context.Background(), req.NamespacedName, &configmap)
 	if errors.IsNotFound(err) {
-		log.Error(err, "configmap not exist", "key", req)
 		return reconcile.Result{}, nil
 	}
 
