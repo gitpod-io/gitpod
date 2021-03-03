@@ -6,15 +6,18 @@ package manager
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/go-logr/logr"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 // PodReconciler reconciles a Pod object
@@ -30,31 +33,59 @@ type PodReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.7.0/pkg/reconcile
 func (r *PodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	log := r.Log.WithValues("pod", req.NamespacedName)
-
-	var pod corev1.Pod
-	err := r.Client.Get(context.Background(), req.NamespacedName, &pod)
-	if errors.IsNotFound(err) {
-		log.Error(err, "pod not exist", "key", req)
-		return reconcile.Result{}, nil
-	}
-
-	queue := pod.Annotations[workspaceIDAnnotation]
-	if queue == "" {
-		return ctrl.Result{}, nil
-	}
-
-	r.Monitor.eventpool.Add(queue, watch.Event{
-		Type:   watch.Modified,
-		Object: &pod,
-	})
-
 	return ctrl.Result{}, nil
+}
+
+type PodPoolFeeder struct {
+	Eventpool interface {
+		Add(queue string, evt watch.Event)
+	}
+}
+
+func (e *PodPoolFeeder) add(tpe watch.EventType, obj runtime.Object) {
+	if obj == nil {
+		return
+	}
+
+	var queue string
+	pod, ok := obj.(*corev1.Pod)
+	if ok {
+		queue = pod.Annotations[workspaceIDAnnotation]
+	}
+	if queue == "" {
+		log.WithError(fmt.Errorf("event object has no name: %v", obj)).Error("cannot enqueue pod event")
+		return
+	}
+
+	e.Eventpool.Add(queue, watch.Event{Type: tpe, Object: obj})
+}
+
+// Create implements EventHandler
+func (e *PodPoolFeeder) Create(evt event.CreateEvent, q workqueue.RateLimitingInterface) {
+	e.add(watch.Added, evt.Object)
+}
+
+// Update implements EventHandler
+func (e *PodPoolFeeder) Update(evt event.UpdateEvent, q workqueue.RateLimitingInterface) {
+	e.add(watch.Modified, evt.ObjectNew)
+}
+
+// Delete implements EventHandler
+func (e *PodPoolFeeder) Delete(evt event.DeleteEvent, q workqueue.RateLimitingInterface) {
+	e.add(watch.Deleted, evt.Object)
+}
+
+// Generic implements EventHandler
+func (e *PodPoolFeeder) Generic(evt event.GenericEvent, q workqueue.RateLimitingInterface) {
+	// TODO(cw): figure out what to do here
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *PodReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.Pod{}).
+		Watches(&source.Kind{Type: &corev1.Pod{}}, &PodPoolFeeder{
+			Eventpool: r.Monitor.eventpool,
+		}).
 		Complete(r)
 }
