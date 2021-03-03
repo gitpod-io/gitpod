@@ -189,7 +189,6 @@ var runCmd = &cobra.Command{
 		err = (&manager.PodReconciler{
 			Monitor: monitor,
 			Client:  mgr.GetClient(),
-			Log:     ctrl.Log.WithName("controllers").WithName("Pod"),
 			Scheme:  mgr.GetScheme(),
 		}).SetupWithManager(mgr)
 		if err != nil {
