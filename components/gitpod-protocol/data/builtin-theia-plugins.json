@@ -245,9 +245,9 @@
     "url": "https://open-vsx.org/api/redhat/java/0.75.0/file/redhat.java-0.75.0.vsix"
   },
   {
-    "loc": "vscjava.vscode-java-debug-0.31.0.vsix",
-    "name": "vscjava.vscode-java-debug@0.31.0",
-    "url": "https://open-vsx.org/api/vscjava/vscode-java-debug/0.31.0/file/vscjava.vscode-java-debug-0.31.0.vsix"
+    "loc": "vscjava.vscode-java-debug-0.27.1.vsix",
+    "name": "vscjava.vscode-java-debug@0.27.1",
+    "url": "https://open-vsx.org/api/vscjava/vscode-java-debug/0.27.1/file/vscjava.vscode-java-debug-0.27.1.vsix"
   },
   {
     "loc": "vscjava.vscode-java-dependency-0.18.0.vsix",
