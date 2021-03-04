@@ -98,7 +98,7 @@ func (service *HTTPTheiaService) sendRequest(req request) ([]byte, error) {
 		if supervisorAddr == "" {
 			supervisorAddr = "localhost:22999"
 		}
-		resp, err = http.Get(fmt.Sprintf("http://%s/_supervisor/v1/token/git/%s/*", supervisorAddr, req.Params.(GetGitTokenRequest).Host))
+		resp, err = http.Get(fmt.Sprintf("http://%s/_supervisor/v1/token/git/%s/", supervisorAddr, req.Params.(GetGitTokenRequest).Host))
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "error while issuing request")
