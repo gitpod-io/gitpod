@@ -1,0 +1,9 @@
+{
+  "entrypoint": "/theia/startup.sh",
+  "readinessProbe": {
+    "type": "http",
+    "http": {
+      "path": "/"
+    }
+  }
+}

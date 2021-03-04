@@ -14,6 +14,7 @@ packages:
       - components/gitpod-messagebus:docker
       - components/gitpod-protocol:publish
       - components/ide/code:docker
+      - components/ide/theia:docker
       - components/image-builder:docker
       - components/proxy:docker
       - components/registry-facade:docker
@@ -21,7 +22,6 @@ packages:
       - components/service-waiter:docker
       - components/supervisor-api/typescript-grpc:publish
       - components/supervisor:docker
-      - components/theia/app:docker
       - components/ws-daemon/seccomp-profile-installer:docker
       - components/ws-daemon/shiftfs-module-loader:docker
       - components/ws-daemon:docker
