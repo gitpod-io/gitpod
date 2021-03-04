@@ -303,7 +303,7 @@ components:
       imageName: "workspace-full"
       version: "latest"
     theiaImage:
-      imageName: "theia-ide"
+      imageName: "ide/theia"
     codeImage:
       imageName: "ide/code"
     supervisor:
