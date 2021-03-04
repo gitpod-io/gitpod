@@ -133,6 +133,7 @@ func (a allowedAuthFor) getAuthFor(auth RegistryAuthenticator, refstr string) (r
 
 	ref, err := reference.ParseNormalizedNamed(refstr)
 	if err != nil {
+		log.WithError(err).WithField("ref", refstr).Warn("cannot parse image ref")
 		return "", xerrors.Errorf("cannot parse image ref: %v", err)
 	}
 
@@ -180,6 +181,7 @@ func (a allowedAuthFor) getImageBuildAuthFor(auth RegistryAuthenticator, refstr 
 	for _, r := range refstr {
 		ref, err := reference.ParseNormalizedNamed(r)
 		if err != nil {
+			log.WithError(err).WithField("ref", refstr).Warn("cannot parse image ref")
 			return nil, xerrors.Errorf("cannot parse image ref: %v", err)
 		}
 
