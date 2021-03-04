@@ -18,7 +18,6 @@ import (
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/opentracing/opentracing-go"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -115,10 +114,9 @@ var runCmd = &cobra.Command{
 		}
 		ratelimits := grpc_gitpod.NewRatelimitingInterceptor(cfg.RPCServer.RateLimits)
 
-		reg := prometheus.NewRegistry()
 		grpcMetrics := grpc_prometheus.NewServerMetrics()
 		grpcMetrics.EnableHandlingTimeHistogram()
-		reg.MustRegister(grpcMetrics)
+		metrics.Registry.MustRegister(grpcMetrics)
 
 		grpcOpts := []grpc.ServerOption{
 			// We don't know how good our cients are at closing connections. If they don't close them properly
