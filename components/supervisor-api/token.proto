@@ -47,6 +47,7 @@ message GetTokenResponse {
     string token = 1;
     /** The username of the account associated with the token. */
     string user = 2;
+    repeated string scope = 3;
 }
 
 message SetTokenRequest {

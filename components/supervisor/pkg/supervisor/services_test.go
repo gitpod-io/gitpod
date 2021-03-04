@@ -88,7 +88,7 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 				defaultKind: {newToken("a1", "a2")},
 			},
 			Expectation: Expectation{
-				Resp: &api.GetTokenResponse{Token: defaultToken},
+				Resp: &api.GetTokenResponse{Token: defaultToken, Scope: []string{"a1", "a2"}},
 			},
 		},
 		{
@@ -128,7 +128,7 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 				},
 			},
 			Expectation: Expectation{
-				Resp: &api.GetTokenResponse{Token: defaultToken},
+				Resp: &api.GetTokenResponse{Token: defaultToken, Scope: []string{"a1", "a2"}},
 			},
 		},
 		{
@@ -156,7 +156,7 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 				defaultKind: {newToken("a1", "a2", "a3")},
 			},
 			Expectation: Expectation{
-				Resp: &api.GetTokenResponse{Token: defaultToken},
+				Resp: &api.GetTokenResponse{Token: defaultToken, Scope: []string{"a1", "a2", "a3"}},
 			},
 		},
 		{
@@ -212,7 +212,7 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 				})},
 			},
 			Expectation: Expectation{
-				Resp: &api.GetTokenResponse{Token: defaultToken},
+				Resp: &api.GetTokenResponse{Token: defaultToken, Scope: []string{"a1", "a2"}},
 			},
 		},
 		{
@@ -233,7 +233,7 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 				})},
 			},
 			Expectation: Expectation{
-				Resp: &api.GetTokenResponse{Token: defaultToken + "2"},
+				Resp: &api.GetTokenResponse{Token: defaultToken + "2", Scope: []string{"a1", "a2"}},
 			},
 		},
 	}
@@ -255,7 +255,8 @@ func TestInMemoryTokenServiceGetToken(t *testing.T) {
 				res.Err = err.Error()
 			}
 
-			if diff := cmp.Diff(test.Expectation, res, cmpopts.IgnoreUnexported(api.GetTokenResponse{})); diff != "" {
+			sortScopes := cmpopts.SortSlices(func(x, y string) bool { return x < y })
+			if diff := cmp.Diff(test.Expectation, res, cmpopts.IgnoreUnexported(api.GetTokenResponse{}), sortScopes); diff != "" {
 				t.Errorf("unexpected status (-want +got):\n%s", diff)
 			}
 		})

@@ -494,6 +494,11 @@ export class WorkspaceStarter {
             return ev;
         });
 
+        const contextUrlEnv = new EnvironmentVariable();
+        contextUrlEnv.setName('GITPOD_WORKSPACE_CONTEXT_URL');
+        contextUrlEnv.setValue(workspace.contextURL);
+        envvars.push(contextUrlEnv);
+
         log.debug("Workspace config", workspace.config)
         if (!!workspace.config.tasks) {
             // The task config is interpreted by Theia only, there's little point in transforming it into something
