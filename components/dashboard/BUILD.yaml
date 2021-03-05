@@ -3,6 +3,7 @@ packages:
     type: yarn
     srcs:
       - "public/**"
+      - "build/**"
       - "src/**/*.ts*"
       - "src/**/*.css"
       - "src/**/*.svg"
@@ -12,20 +13,16 @@ packages:
       - tsconfig.*
     deps:
       - components/gitpod-protocol:lib
-    argdeps:
-      - removeSources
-    env:
-      - REMOVE_SOURCES=${removeSources}
     config:
       commands:
         build: ["yarn", "build"]
       yarnLock: ${coreYarnLockBase}/yarn.lock
       dontTest: true
+      packaging: archive
   - name: static
     type: generic
     srcs:
       - "conf/**"
-      - "build/**"
       - "public/**"
       - "ee/public/**"
     config:
