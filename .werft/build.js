@@ -13,7 +13,7 @@ const context = JSON.parse(fs.readFileSync('context.json'));
 const version = parseVersion(context);
 build(context, version)
     .catch((err) => {
-        if (context.Repository.ref === "refs/heads/master") {
+        if (context.Repository.ref === "refs/heads/main") {
             const repo = context.Repository.host + "/" + context.Repository.owner + "/" + context.Repository.repo;
             const data = JSON.stringify({
                 "blocks": [
