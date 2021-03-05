@@ -37,7 +37,7 @@ export abstract class RpcServer<Req, Resp> {
         }
     }
 
-    protected abstract async handleRequest(req: Req, msg: Message): Promise<Resp>
+    protected abstract handleRequest(req: Req, msg: Message): Promise<Resp>;
 
 }
 
