@@ -70,6 +70,7 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
 
         const dbResult = await this.db.findUserById(user.id)
         // We use 'user' as reference, so clean it
+        // @ts-ignore
         user.identities.forEach(i => delete (i as DBIdentity).user);
         expect(dbResult).to.deep.include(user);
     }
@@ -90,6 +91,7 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
 
         const dbResult = await this.db.findUserByIdentity(this.IDENTITY1);
         // We use 'user' as reference, so clean it
+        // @ts-ignore
         user.identities.forEach(i => delete (i as DBIdentity).user);
         expect(dbResult).to.deep.include(user);
     }

@@ -214,7 +214,7 @@ export class JsonRpcProxyFactory<T extends object> implements ProxyHandler<T> {
                     try {
                         if (isNotify) {
                             connection.sendNotification(p.toString(), ...args);
-                            resolve();
+                            resolve(undefined);
                         } else {
                             const resultPromise = connection.sendRequest(p.toString(), ...args) as Promise<any>;
                             resultPromise
