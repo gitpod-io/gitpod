@@ -474,6 +474,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl extends AbstractWorkspaceDB
         const rawResult: InstanceJoinResult[] = (await qb.getMany()) as InstanceJoinResult[];
         return rawResult.map((raw: InstanceJoinResult): T => {
             const ws = raw.workspace;
+            // @ts-ignore
             delete raw.workspace;
             const wsi = raw;
             return map(wsi, ws);
@@ -746,8 +747,11 @@ export abstract class AbstractTypeORMWorkspaceDBImpl extends AbstractWorkspaceDB
                 instanceCreationTime: r.instance.creationTime,
                 phase: r.instance.status.phase,
             };
+            // @ts-ignore
             delete res["id"];
+            // @ts-ignore
             delete res["creationTime"];
+            // @ts-ignore
             delete res["instance"];
 
             return <WorkspaceAndInstance>(res);
@@ -777,7 +781,9 @@ export abstract class AbstractTypeORMWorkspaceDBImpl extends AbstractWorkspaceDB
             instanceCreationTime: instance.creationTime,
             phase: instance.status.phase,
         };
+        // @ts-ignore
         delete res["id"];
+        // @ts-ignore
         delete res["creationTime"];
 
         return <WorkspaceAndInstance>(res);

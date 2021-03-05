@@ -55,15 +55,15 @@ export class WsmanSubscriber implements Disposable {
                         }
                     });
                     this.sub.on('end', function() {
-                        resolve();
+                        resolve(false);
                     });
                     this.sub.on('error', function(e) {
                         log.error("wsman subscription error", e);
-                        resolve();
+                        resolve(false);
                     });
                 } catch (err) {
                     log.error("cannot maintain subscription to wsman", err);
-                    resolve();
+                    resolve(false);
                 }
             });
 

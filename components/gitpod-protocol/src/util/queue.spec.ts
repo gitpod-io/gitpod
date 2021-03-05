@@ -32,7 +32,7 @@ const expect = chai.expect
                     return new Promise((resolve) => {
                         setTimeout(() => {
                             this.seq.push(seqNr);
-                            resolve();
+                            resolve(undefined);
                         }, sleep);
                     });
                 else

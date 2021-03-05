@@ -10,6 +10,6 @@
   ],
   "dependencies": {},
   "devDependencies": {
-    "dtsgenerator": "^3.3.0"
+    "dtsgenerator": "~3.3.0"
   }
 }
