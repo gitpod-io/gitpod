@@ -139,8 +139,6 @@ func (wspd *WorkspaceManagerPrescaleDriver) Run() {
 
 		log.WithField("percentage", wspd.Config.Renewal.Percentage).WithField("interval", wspd.Config.Renewal.Interval.String()).Info("enabled ghost workspace renewal")
 	}
-	houseKeeping, stopHouseKeeping := wspd.time.NewTicker(1 * time.Minute)
-	defer stopHouseKeeping()
 	scheduleGhosts, stopSchedulingGhosts := wspd.time.NewTicker(time.Duration(wspd.Config.SchedulerInterval))
 	defer stopSchedulingGhosts()
 
@@ -151,12 +149,28 @@ func (wspd *WorkspaceManagerPrescaleDriver) Run() {
 		setpoint       int
 	)
 
+	canStartGhost := func() bool {
+		if status.Count.Ghost >= wspd.Config.MaxGhostWorkspaces {
+			log.WithField("limit", wspd.Config.MaxGhostWorkspaces).Warn("max number of ghost workspace reached")
+			return false
+		}
+		return true
+	}
+	registerStartingGhost := func(id string) {
+		startingGhosts[id] = wspd.time.Now()
+		status.Count.Ghost++
+	}
+
 	cchan := wspd.Controller.Control(ctx, counts)
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case status = <-statusChan:
+			// we've just made contact with the real world and received that actual
+			// status from Kubernetes. We use this real-world-view to update our own
+			// state, e.g. updating deletion candidates or incorporating starting ghosts
+			// which aren't seen by Kubernetes yet.
 			for _, id := range status.DeletionCandidates {
 				delete(startingGhosts, id)
 			}
@@ -164,16 +178,6 @@ func (wspd *WorkspaceManagerPrescaleDriver) Run() {
 			counts <- status.Count
 			wspd.metrics.OnGhostCountChange(status.Count.Ghost)
 			log.WithField("counts", status.Count).Debug("status update")
-		case <-houseKeeping:
-			for id, t1 := range startingGhosts {
-				if time.Since(t1) < maxGhostStartTime {
-					continue
-				}
-				delete(startingGhosts, id)
-				status.Count.Ghost--
-
-				log.WithFields(log.OWI("", "", id)).Warn("ghost took too long to start - or we missed an update")
-			}
 		case <-renewal:
 			if len(status.DeletionCandidates) == 0 {
 				// no deletion candidates means there's nothing to renew
@@ -203,10 +207,7 @@ func (wspd *WorkspaceManagerPrescaleDriver) Run() {
 		case <-scheduleGhosts:
 			d := setpoint - status.Count.Ghost
 
-			var (
-				err error
-				ids []string
-			)
+			var err error
 			if d < 0 {
 				d *= -1
 				if d > len(status.DeletionCandidates) {
@@ -214,7 +215,7 @@ func (wspd *WorkspaceManagerPrescaleDriver) Run() {
 				}
 				err = wspd.stopGhostWorkspaces(ctx, status.DeletionCandidates[:d])
 			} else if d > 0 {
-				ids, err = wspd.startGhostWorkspaces(ctx, d, status)
+				err = wspd.startGhostWorkspaces(ctx, d, canStartGhost, registerStartingGhost)
 			} else {
 				continue
 			}
@@ -222,36 +223,28 @@ func (wspd *WorkspaceManagerPrescaleDriver) Run() {
 				log.WithError(err).Error("failed to realise ghost workspace delta")
 				continue
 			}
-
-			for _, id := range ids {
-				startingGhosts[id] = wspd.time.Now()
-				status.Count.Ghost++
-			}
 			log.WithField("setpoint", setpoint).WithField("delta", d).Info("(de)scheduled ghost workspaces")
 		}
 	}
 }
 
-func (wspd *WorkspaceManagerPrescaleDriver) startGhostWorkspaces(ctx context.Context, count int, status workspaceStatus) (ids []string, err error) {
+func (wspd *WorkspaceManagerPrescaleDriver) startGhostWorkspaces(ctx context.Context, count int, canStartGhost func() bool, registerStartingGhost func(id string)) (err error) {
 	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 
-	ids = make([]string, count)
 	for i := 0; i < count; i++ {
-		if status.Count.Ghost+i >= wspd.Config.MaxGhostWorkspaces {
-			log.WithField("limit", wspd.Config.MaxGhostWorkspaces).Warn("max number of ghost workspace reached")
-			return ids, nil
+		if !canStartGhost() {
+			return nil
 		}
 
 		instanceUUID, err := uuid.NewRandom()
 		if err != nil {
-			return nil, err
+			return err
 		}
 		instanceID := instanceUUID.String()
-		ids[i] = instanceID
 		metaID, err := namegen.GenerateWorkspaceID()
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		_, err = wspd.Client.StartWorkspace(ctx, &api.StartWorkspaceRequest{
@@ -282,11 +275,12 @@ func (wspd *WorkspaceManagerPrescaleDriver) startGhostWorkspaces(ctx context.Con
 			},
 		})
 		if err != nil {
-			return nil, err
+			return err
 		}
+		registerStartingGhost(instanceID)
 	}
 
-	return ids, nil
+	return nil
 }
 
 func (wspd *WorkspaceManagerPrescaleDriver) stopGhostWorkspaces(ctx context.Context, ids []string) (err error) {
