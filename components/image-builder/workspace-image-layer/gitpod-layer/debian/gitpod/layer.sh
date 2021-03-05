@@ -15,12 +15,10 @@ if [ $INSTALLED_PACKAGES != 3 ]; then
     # (like changed labels) which result in errors and broken builds/workspaces!
     apt-get clean && rm -rf /var/lib/apt/lists/*;
 
-    # vim: used as Git-editor (see .bashrc-append)
     apt-get update --allow-insecure-repositories;
     apt-get install -yq \
         bash-completion \
-        git \
-        vim
+        git
 
     # Cleanup to keep the image as small as possible
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*;
