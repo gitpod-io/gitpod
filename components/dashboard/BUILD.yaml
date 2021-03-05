@@ -3,16 +3,13 @@ packages:
     type: yarn
     srcs:
       - "public/**"
-      - "src/**/*.ts"
-      - "src/**/*.tsx"
+      - "src/**/*.ts*"
       - "src/**/*.css"
-      - "ee/src/**/*.ts"
-      - "ee/src/**/*.tsx"
-      - "ee/src/**/*.css"
+      - "src/**/*.svg"
       - "typings/**"
       - package.json
       - tailwind.config.js
-      - tsconfig.json
+      - tsconfig.*
     deps:
       - components/gitpod-protocol:lib
     argdeps:
@@ -21,40 +18,14 @@ packages:
       - REMOVE_SOURCES=${removeSources}
     config:
       commands:
-        build: ["yarn", "build-app"]
+        build: ["yarn", "build"]
       yarnLock: ${coreYarnLockBase}/yarn.lock
-      dontTest: true
-  - name: lib
-    type: yarn
-    srcs:
-      - "public/**"
-      - "ee/public/**"
-      - "src/**/*.ts"
-      - "src/**/*.tsx"
-      - "src/**/*.css"
-      - "ee/src/**/*.ts"
-      - "ee/src/**/*.tsx"
-      - "ee/src/**/*.css"
-      - "typings/**"
-      - package.json
-      - postinstall.js
-      - webpack.config.js
-      - webpack.entrypoints.js
-      - tsconfig.json
-      - tsconfig.lib.json
-    deps:
-      - components/gitpod-protocol:lib
-    config:
-      packaging: library
-      commands:
-        build: ["yarn", "build-lib"]
-      yarnLock: ${coreYarnLockBase}/yarn.lock
-      tsconfig: tsconfig.lib.json
       dontTest: true
   - name: static
     type: generic
     srcs:
       - "conf/**"
+      - "build/**"
       - "public/**"
       - "ee/public/**"
     config:
