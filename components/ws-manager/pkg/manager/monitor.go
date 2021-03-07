@@ -36,7 +36,6 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
-	"github.com/gitpod-io/gitpod/ws-manager/pkg/internal/util"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/workpool"
 )
 
@@ -72,9 +71,6 @@ type Monitor struct {
 	eventpool *workpool.EventWorkerPool
 	ticker    *time.Ticker
 
-	doShutdown  util.AtomicBool
-	didShutdown chan bool
-
 	inPhaseSpans     map[string]opentracing.Span
 	inPhaseSpansLock sync.Mutex
 
@@ -107,7 +103,6 @@ func (m *Manager) CreateMonitor() (*Monitor, error) {
 		probeMap:         make(map[string]context.CancelFunc),
 		initializerMap:   make(map[string]struct{}),
 		finalizerMap:     make(map[string]context.CancelFunc),
-		didShutdown:      make(chan bool, 1),
 		headlessListener: NewHeadlessListener(m.RawClient, m.Config.Namespace),
 
 		OnError: func(err error) {
@@ -1395,18 +1390,9 @@ func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 
 // Stop ends the monitor's involvement. A stopped monitor cannot be started again.
 func (m *Monitor) Stop() {
-	m.doShutdown.Set(true)
-
 	if m.ticker != nil {
 		m.ticker.Stop()
 	}
-
-	<-m.didShutdown
-	m.ticker = nil
-}
-
-func (m *Monitor) shouldShutdown() bool {
-	return m.doShutdown.Get()
 }
 
 func workspaceObjectListOptions(namespace string) *client.ListOptions {
