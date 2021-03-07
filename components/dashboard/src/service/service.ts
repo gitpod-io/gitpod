@@ -1,110 +1,55 @@
+/**
+ * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
+import { GitpodClient, GitpodServer, GitpodServerPath, GitpodService, GitpodServiceImpl, User, WorkspaceInfo } from '@gitpod/gitpod-protocol';
+import { WebSocketConnectionProvider } from '@gitpod/gitpod-protocol/lib/messaging/browser/connection';
+import { createWindowMessageConnection } from '@gitpod/gitpod-protocol/lib/messaging/browser/window-connection';
+import { JsonRpcProxy, JsonRpcProxyFactory } from '@gitpod/gitpod-protocol/lib/messaging/proxy-factory';
+import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import React from 'react';
 
 export interface Service {
-    getUser(): User;
-    getWorkspaces(active: boolean): WorkspaceDescription[]; 
-  }
-
-export interface User {
-    userName: string;
-    name: string;
-    email: string;
-    avatarUrl: string;
-}
-
-export interface WorkspaceDescription {
-    id: string,
-    project: string,
-    contextTitle: string,
-    contextName: string,
-    currentBranch: string,
-    currentChanges?: string,
-    state: 'Running' | 'Stopped' | 'Error' | 'Stopping' | 'Starting',
-    since: string,
-    shared: boolean,
-    pinned: boolean
+    user?: User;
+    workspaces: WorkspaceInfo[];
+    service: GitpodService;
 }
 
 export class SimpleServiceImpl implements Service {
-    getUser(): User {
-        return {
-            name: 'Andy Leverenz',
-            email: 'andy@leverenz.com',
-            userName: 'aleverenz',
-            avatarUrl: 'https://avatars.githubusercontent.com/u/5750?s=400&u=95c71e43d35f4b2f7ea95474f5058bb51986f556&v=4'
-        };
-    }
-    getWorkspaces(active: boolean): WorkspaceDescription[] {
-        if (active) {
-            return activeWorkspaces;
-        } else {
-            return recentWorkspaces;
-        }
-    }
+    user?: User;
+    service = createGitpodService();
+    workspaces: WorkspaceInfo[] = [];
 }
 
-const activeWorkspaces: WorkspaceDescription[] = [
-    {
-        id: 'red-puma-324234',
-        project: 'github.com/gitpod-io/gitpod',
-        contextTitle: 'Long title for the pull request for something that is just way too long',
-        contextName: 'Pull Request 2323',
-        currentBranch: 'master',
-        currentChanges: '3 Commits, 2 Files',
-        state: 'Running',
-        since: '1 hour ago',
-        shared: true,
-        pinned: false
-    },
-    {
-        id: 'pink-lion-324234',
-        project: 'github.com/gitpod-com/gitpod',
-        contextTitle: 'Some short title',
-        contextName: 'Isse 47411',
-        currentBranch: 'se-foo-bar-4711',
-        state: 'Stopped',
-        since: '2 days ago',
-        shared: false,
-        pinned: true
+function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
+    let proxy: JsonRpcProxy<S>;
+    if (window.top !== window.self) {
+        const connection = createWindowMessageConnection('gitpodServer', window.parent, '*');
+        const factory = new JsonRpcProxyFactory<S>();
+        proxy = factory.createProxy();
+        factory.listen(connection);
+    } else {
+        let host = new GitpodHostUrl("https://gitpod.io")
+            .asWebsocket()
+            .with({ pathname: GitpodServerPath })
+            .withApi();
+
+        const connectionProvider = new WebSocketConnectionProvider();
+        let numberOfErrors = 0;
+        proxy = connectionProvider.createProxy<S>(host.toString(), undefined, {
+            onerror: (event: any) => {
+                log.error(event);
+                if (numberOfErrors++ === 5) {
+                    alert('We are having trouble connecting to the server.\nEither you are offline or websocket connections are blocked.');
+                }
+            }
+        });
     }
-];
+    const service = new GitpodServiceImpl<C, S>(proxy);
+    return service;
+}
 
-const recentWorkspaces: WorkspaceDescription[] = [
-    {
-        id: 'yellow-puma-324234',
-        project: 'github.com/gitpod-com/gitpod',
-        contextTitle: 'Foo Bar',
-        contextName: 'Pull Request 2323',
-        currentBranch: 'master',
-        currentChanges: '3 Commits, 2 Files',
-        state: 'Stopped',
-        since: '1 hour ago',
-        shared: true,
-        pinned: false
-    },
-    {
-        id: 'brown-lion-324234',
-        project: 'github.com/gitpod-io/gitpod',
-        contextTitle: 'Long title for the pull request for something that is just way too long',
-        contextName: 'Isse 47411',
-        currentBranch: 'se-foo-bar-4711',
-        state: 'Stopped',
-        since: '2 days ago',
-        shared: false,
-        pinned: false
-    },
-    {
-        id: 'red-puma-324234',
-        project: 'github.com/gitpod-io/gitpod',
-        contextTitle: 'main',
-        contextName: 'Branch main',
-        currentBranch: 'master',
-        currentChanges: '3 Commits, 2 Files',
-        state: 'Error',
-        since: '3 weeks ago',
-        shared: true,
-        pinned: false
-    },
-];
-
-export const ServiceContext = React.createContext<Service>(new SimpleServiceImpl());
+export const ServiceContext = React.createContext<Service>(undefined! as Service /* we need to pass in the value on the root when using <ServiceContext.Provider />. See index.tsx */);

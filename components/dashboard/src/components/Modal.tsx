@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 export default function Modal(props: { 
-    children: React.ReactChild[], 
+    children: React.ReactChild[] | React.ReactChild, 
     visible: boolean,
     onClose?: ()=>void
 }) {
