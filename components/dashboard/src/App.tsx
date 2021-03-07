@@ -1,8 +1,9 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useContext } from 'react';
 import Menu from './components/Menu';
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import { Workspaces } from './workspaces/Workspaces';
-import { ServiceContext, SimpleServiceImpl } from './service/service';
+import { ServiceContext } from './service/service';
+import { Login } from './Login';
 
 const Notifications = React.lazy(() => import('./account/Notifications'));
 const Profile = React.lazy(() => import('./account/Profile'));
@@ -12,12 +13,15 @@ const EnvVars = React.lazy(() => import('./settings/EnvVars'));
 const FeaturePreview = React.lazy(() => import('./settings/FeaturePreview'));
 const GitIntegration = React.lazy(() => import('./settings/GitIntegration'));
 
-
 function App() {
+  const ctx = useContext(ServiceContext);
+  if (!ctx.user) {
+    return (
+      <Login/>
+    );
+  }
   return (
     <BrowserRouter>
-      <ServiceContext.Provider value={new SimpleServiceImpl()}>
-
         <div className="container">
           <Menu left={[
             {
@@ -41,7 +45,8 @@ function App() {
           ]} />
           <Suspense fallback={<div></div>}>
             <Switch>
-              <Route path="/" exact component={Workspaces} />
+              <Route path="/" exact render={
+                () => <Workspaces gitpodService={ctx.service}/>} />
               <Route path="/profile" exact component={Profile} />
               <Route path="/notifications" exact component={Notifications} />
               <Route path="/subscriptions" exact component={Subscriptions} />
@@ -52,7 +57,6 @@ function App() {
             </Switch>
           </Suspense>
         </div>
-      </ServiceContext.Provider>
     </BrowserRouter>
   );
 }
