@@ -4,7 +4,9 @@
 
 @layer base {
     h1 {
-        @apply text-gray-800 font-semibold leading-relaxed text-4xl;
+        @apply text-gray-900 font-bold;
+        line-height: 64px;
+        font-size: 48px;
     }
     h2 {
         @apply text-base text-gray-400;

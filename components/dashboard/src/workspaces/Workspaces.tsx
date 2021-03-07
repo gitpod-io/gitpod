@@ -1,15 +1,37 @@
-import { useContext, useState } from "react";
+import React from "react";
+import { GitpodService, WorkspaceInfo } from "@gitpod/gitpod-protocol";
 import Header from "../components/Header";
 import Toggle from "../components/Toggle"
-import { ServiceContext } from "../service/service";
-import { WorkspaceEntry } from "./WorkspaceEntry"
+import { WorkspaceModel } from "./workspace-model";
+import { WorkspaceEntry } from "./WorkspaceEntry";
 
+export interface WorkspacesProps {
+    gitpodService: GitpodService;
+}
 
+export interface WorkspacesState {
+    workspaces: WorkspaceInfo[];
+}
 
-export function Workspaces() {
-    const ctx = useContext(ServiceContext);
-    const [workspaces, setWorkspaces] = useState(ctx.getWorkspaces(true));
-    return <>
+export class Workspaces extends React.Component<WorkspacesProps, WorkspacesState> {
+
+    protected workspaceModel: WorkspaceModel;
+
+    constructor(props: WorkspacesProps) {
+        super(props);
+        this.workspaceModel = new  WorkspaceModel(props.gitpodService, this.setWorkspaces);
+    }
+
+    protected setWorkspaces = (workspaces: WorkspaceInfo[]) => {
+        this.setState({
+            workspaces
+        });
+    }
+
+    render() {
+        const onActive = () => this.workspaceModel.active = true;
+        const onRecent = () => this.workspaceModel.active = false;
+        return <>
         <Header title="Workspaces" subtitle="Open and Share Workspaces"/>
         
         <div className="lg:px-28 px-10 pt-4 flex">
@@ -17,21 +39,18 @@ export function Workspaces() {
 
             <Toggle entries={[{
                 title: 'Active',
-                onActivate: () => {
-                    setWorkspaces(ctx.getWorkspaces(true));
-                }
+                onActivate: onActive
             }, {
                 title: 'Recent',
-                onActivate: () => { 
-                    setWorkspaces(ctx.getWorkspaces(false));
-                }
+                onActivate: onRecent
             }]} />
         </div>
         <div className="lg:px-28 px-10 pt-4 flex flex-col">
             {
-                workspaces.map(e => {
-                    return <WorkspaceEntry key={e.id} {...e} />
+                this.state?.workspaces.map(e => {
+                    return <WorkspaceEntry key={e.workspace.id} {...e} />
                 })
             }
-        </div></>
+        </div></>;
+    }
 }
