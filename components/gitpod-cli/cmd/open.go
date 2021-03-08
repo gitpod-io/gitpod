@@ -35,13 +35,18 @@ var openCmd = &cobra.Command{
 		for _, fn := range args {
 			_, err := service.OpenFile(theialib.OpenFileRequest{Path: fn})
 			if err == theialib.ErrNotFound {
-				// Code cannot provide cli service and return 404 use vi instead for now
-				// later Code CLI should be used
-				argv0, err := exec.LookPath("vi")
+				// Code cannot provide cli service and returns 404. See if GP_OPEN_EDITOR is set (e.g. to 'code' CLI):
+				gpOpenEditor := os.Getenv("GP_OPEN_EDITOR")
+				if gpOpenEditor == "" {
+					// Use 'vi' instead
+					gpOpenEditor = "vi"
+				}
+
+				argv0, err := exec.LookPath(gpOpenEditor)
 				if err != nil {
 					log.Fatal(err)
 				}
-				err = syscall.Exec(argv0, append([]string{"vi"}, args...), os.Environ())
+				err = syscall.Exec(argv0, append([]string{gpOpenEditor}, args...), os.Environ())
 				if err != nil {
 					log.Fatal(err)
 				}
