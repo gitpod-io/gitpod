@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Workspace, WorkspaceInstance, User, Snapshot, GitpodToken, Token } from "@gitpod/gitpod-protocol";
+import { Workspace, WorkspaceInstance, User, Snapshot, GitpodToken, Token, UserEnvVar } from "@gitpod/gitpod-protocol";
 
 declare var resourceInstance: GuardedResource;
 export type GuardedResourceKind = typeof resourceInstance.kind;
@@ -17,7 +17,8 @@ export type GuardedResource =
     GuardedGitpodToken |
     GuardedToken |
     GuardedUserStorage |
-    GuardedContentBlob
+    GuardedContentBlob |
+    GuardedEnvironmentVariable
 ;
 
 export interface GuardedWorkspace {
@@ -66,6 +67,13 @@ export interface GuardedToken {
     tokenOwnerID: string;
 }
 
+export interface GuardedEnvironmentVariable {
+    kind: "environmentVariable";
+    subject: UserEnvVar;
+    userID: string;
+    repositoryPattern: string;
+}
+
 export type ResourceAccessOp =
     "create" |
     "update" |
@@ -109,6 +117,8 @@ export class OwnerResourceGuard implements ResourceAccessGuard {
     async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
         switch (resource.kind) {
             case "contentBlob":
+                return resource.userID === this.userId;
+            case "environmentVariable":
                 return resource.userID === this.userId;
             case "gitpodToken":
                 return resource.subject.user.id === this.userId;
@@ -226,6 +236,8 @@ export namespace ScopedResourceGuard {
         switch (resource.kind) {
             case "contentBlob":
                 return `${resource.userID}:${resource.name}`;
+            case "environmentVariable":
+                return `${resource.userID}:${resource.repositoryPattern}`;;
             case "gitpodToken":
                 return resource.subject.tokenHash;
             case "snapshot":
