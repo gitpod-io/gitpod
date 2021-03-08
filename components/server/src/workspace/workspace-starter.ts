@@ -645,6 +645,8 @@ export class WorkspaceStarter {
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "userStorage", subjectID: "*", operations: ["create", "get", "update"]}),
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "token", subjectID: "*", operations: ["get"]}),
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "contentBlob", subjectID: "*", operations: ["create", "get"]}),
+            // TODO: subjectID based on owner/repo from workspace.contextURL?
+            "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "environmentVariable", subjectID: "*", operations: ["create", "get", "update", "delete"]}),
         ]
     }
 
