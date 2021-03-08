@@ -71,6 +71,7 @@ export class Env extends AbstractComponentEnv {
     readonly githubAppAuthProviderId: string = process.env.GITPOD_GITHUB_APP_AUTH_PROVIDER_ID || "Public-GitHub";
     readonly githubAppCertPath: string = process.env.GITPOD_GITHUB_APP_CERT_PATH || "unknown";
     readonly githubAppMarketplaceName: string = process.env.GITPOD_GITHUB_APP_MKT_NAME || "unknown";
+    readonly githubAppLogLevel?: string = process.env.LOG_LEVEL;
 
     readonly definitelyGpDisabled: boolean = process.env.GITPOD_DEFINITELY_GP_DISABLED == "true";
 
