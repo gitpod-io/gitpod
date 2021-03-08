@@ -488,6 +488,11 @@ minio:
     requests:
       # defaults to 4GB, set to 2GB to be able to start on smaller instances
       memory: 2G
+  defaultBucket:
+    enabled: true
+  # create default bucket for logs
+  buckets:
+    - logs
 
 mysql:
   enabled: true
@@ -702,61 +707,14 @@ promtail:
 loki:
   enabled: true
   fullnameOverride: loki
-  config:
-    # https://grafana.com/docs/loki/latest/configuration/
-    # enable multi-tenancy
-    auth_enabled: true
-
-    server:
-      http_listen_port: 3100
-
-    ingester:
-      lifecycler:
-        ring:
-          kvstore:
-            store: memberlist
-          replication_factor: 1
-        final_sleep: 0s
-      chunk_idle_period: 10m
-      chunk_retain_period: 5m
-      chunk_encoding: snappy
-      max_chunk_age: 10m
-      chunk_target_size: 1572864
-
-    schema_config:
-      configs:
-        - from: 2020-01-01
-          store: boltdb-shipper
-          object_store: s3
-          schema: v11
-          index:
-            prefix: loki_index_
-            period: 24h
-
-    storage_config:
-      aws:
-        bucketnames: logs
-        endpoint: minio:9000
-        # default region
-        region: us-east-1
-        # TODO: refactor. It should be set from main minio values
-        access_key_id: EXAMPLEvalue
-        secret_access_key: Someone.Should/ReallyChangeThisKey!!
-        insecure: true
-        s3forcepathstyle: true
-
-      boltdb_shipper:
-        shared_store: s3
-        active_index_directory: /data/loki/index
-        cache_location: /data/loki/boltdb-cache
-
-    limits_config:
-      enforce_metric_name: false
-      reject_old_samples: true
-      reject_old_samples_max_age: 168h
+  # default configuration does not allow use of templates.
+  # Use defaults and create a new secret template templates/loki-secret.yaml
+  # https://github.com/grafana/helm-charts/pull/159
+  config: {}
+  bucketName: logs
 
   persistence:
-    enabled: false # for testing
+    enabled: true
     accessModes:
     - ReadWriteOnce
     size: 5Gi
