@@ -1,0 +1,18 @@
+dependencies:
+- name: docker-registry
+  repository: https://helm.twun.io
+  version: 1.10.0
+- name: minio
+  repository: https://helm.min.io/
+  version: 8.0.7
+- name: mysql
+  repository: https://charts.helm.sh/stable
+  version: 1.6.9
+- name: promtail
+  repository: https://grafana.github.io/helm-charts
+  version: 3.1.0
+- name: loki
+  repository: https://grafana.github.io/helm-charts
+  version: 2.3.0
+digest: sha256:0b8c70ec2c7be5e9b9beed42cc8e9dfc4c41e199c2e2216277931325eda0246b
+generated: "2021-03-03T15:27:55.145317939-03:00"
