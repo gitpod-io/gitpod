@@ -638,3 +638,125 @@ rabbitmq:
         dest-uri: {{ $shovel.destUri | default "amqp://" | quote }}
         reconnect-delay: {{ $shovel.reconnectDelay | default 5 }}
     {{- end }}
+
+promtail:
+  enabled: true
+  fullnameOverride: promtail
+
+  initContainer:
+    enabled: true
+    image:
+      registry: docker.io
+      repository: busybox
+      tag: 1.33
+      pullPolicy: IfNotPresent
+    fsInotifyMaxUserInstances: 128
+
+  rbac:
+    pspEnabled: true
+
+  config:
+    serverPort: 3101
+    lokiAddress: http://loki:3100/loki/api/v1/push
+    snippets:
+      scrapeConfigs: |
+        - job_name: workspaces
+          pipeline_stages:
+            - cri: {}
+            - tenant:
+                source: owner
+          kubernetes_sd_configs:
+            - role: pod
+              namespaces:
+                names:
+                  - {{ .Release.Namespace }}
+              selectors:
+                - role: pod
+                  label: "component=workspace"
+          relabel_configs:
+            - source_labels:
+              - __meta_kubernetes_pod_name
+              target_label: workspace
+              action: replace
+            - source_labels:
+              - __meta_kubernetes_pod_label_workspaceID
+              target_label: workspaceID
+              action: replace
+            - source_labels:
+              - __meta_kubernetes_pod_label_owner
+              target_label: owner
+              action: replace
+            {{- toYaml .Values.config.snippets.common | nindent 4 }}
+    file: |
+      server:
+        log_level: info
+        http_listen_port: {{ .Values.config.serverPort }}
+      client:
+        url: {{ .Values.config.lokiAddress }}
+        {{- tpl .Values.config.snippets.extraClientConfigs . | nindent 2 }}
+      positions:
+        filename: /run/promtail/positions.yaml
+      scrape_configs:
+        {{- tpl .Values.config.snippets.scrapeConfigs . | nindent 2 }}
+
+loki:
+  enabled: true
+  fullnameOverride: loki
+  config:
+    # https://grafana.com/docs/loki/latest/configuration/
+    # enable multi-tenancy
+    auth_enabled: true
+
+    server:
+      http_listen_port: 3100
+
+    ingester:
+      lifecycler:
+        ring:
+          kvstore:
+            store: memberlist
+          replication_factor: 1
+        final_sleep: 0s
+      chunk_idle_period: 10m
+      chunk_retain_period: 5m
+      chunk_encoding: snappy
+      max_chunk_age: 10m
+      chunk_target_size: 1572864
+
+    schema_config:
+      configs:
+        - from: 2020-01-01
+          store: boltdb-shipper
+          object_store: s3
+          schema: v11
+          index:
+            prefix: loki_index_
+            period: 24h
+
+    storage_config:
+      aws:
+        bucketnames: logs
+        endpoint: minio:9000
+        # default region
+        region: us-east-1
+        # TODO: refactor. It should be set from main minio values
+        access_key_id: EXAMPLEvalue
+        secret_access_key: Someone.Should/ReallyChangeThisKey!!
+        insecure: true
+        s3forcepathstyle: true
+
+      boltdb_shipper:
+        shared_store: s3
+        active_index_directory: /data/loki/index
+        cache_location: /data/loki/boltdb-cache
+
+    limits_config:
+      enforce_metric_name: false
+      reject_old_samples: true
+      reject_old_samples_max_age: 168h
+
+  persistence:
+    enabled: false # for testing
+    accessModes:
+    - ReadWriteOnce
+    size: 5Gi

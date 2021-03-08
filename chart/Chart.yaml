@@ -24,3 +24,11 @@ dependencies:
 - name: rabbitmq
   version: 8.11.4
   repository: https://charts.bitnami.com/bitnami
+- name: promtail
+  version: 3.1.0
+  repository: https://grafana.github.io/helm-charts
+  condition: promtail.enabled
+- name: loki
+  version: 2.3.0
+  repository: https://grafana.github.io/helm-charts
+  condition: loki.enabled
