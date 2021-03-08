@@ -83,8 +83,6 @@ type Monitor struct {
 	finalizerMap     map[string]context.CancelFunc
 	finalizerMapLock sync.Mutex
 
-	headlessListener *HeadlessListener
-
 	OnError func(error)
 }
 
@@ -97,24 +95,16 @@ func (m *Manager) CreateMonitor() (*Monitor, error) {
 
 	log.WithField("interval", monitorInterval).Info("starting workspace monitor")
 	res := Monitor{
-		manager:          m,
-		ticker:           time.NewTicker(monitorInterval),
-		inPhaseSpans:     make(map[string]opentracing.Span),
-		probeMap:         make(map[string]context.CancelFunc),
-		initializerMap:   make(map[string]struct{}),
-		finalizerMap:     make(map[string]context.CancelFunc),
-		headlessListener: NewHeadlessListener(m.RawClient, m.Config.Namespace),
+		manager:        m,
+		ticker:         time.NewTicker(monitorInterval),
+		inPhaseSpans:   make(map[string]opentracing.Span),
+		probeMap:       make(map[string]context.CancelFunc),
+		initializerMap: make(map[string]struct{}),
+		finalizerMap:   make(map[string]context.CancelFunc),
 
 		OnError: func(err error) {
 			log.WithError(err).Error("workspace monitor error")
 		},
-	}
-	res.headlessListener.OnHeadlessLog = res.handleHeadlessLog
-	res.headlessListener.OnHeadlessDone = func(pod *corev1.Pod, failed bool) {
-		err := res.actOnHeadlessDone(pod, failed)
-		if err != nil {
-			log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).WithError(err).Error("cannot handle headless workspace event")
-		}
 	}
 	res.eventpool = workpool.NewEventWorkerPool(res.handleEvent)
 
@@ -356,15 +346,6 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 	}
 
 	if status.Phase == api.WorkspacePhase_RUNNING {
-		if wso.IsWorkspaceHeadless() {
-			// this is a headless workspace, which means that instead of probing for it becoming available, we'll listen to its log
-			// output, parse it and forward it. Listen() is idempotent.
-			err := m.headlessListener.Listen(context.Background(), pod)
-			if err != nil {
-				return xerrors.Errorf("cannot establish listener: %w", err)
-			}
-		}
-
 		if !wso.IsWorkspaceHeadless() {
 			tracing.LogEvent(span, "removeTraceAnnotation")
 			// once a regular workspace is up and running, we'll remove the traceID information so that the parent span
@@ -497,21 +478,6 @@ func (m *Monitor) actOnHeadlessDone(pod *corev1.Pod, failed bool) (err error) {
 	}
 
 	return nil
-}
-
-func (m *Monitor) handleHeadlessLog(pod *corev1.Pod, msg string) {
-	id, ok := pod.Annotations[workspaceIDAnnotation]
-	if !ok {
-		log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Errorf("cannot get %s annotation from %s", workspaceIDAnnotation, pod.Name)
-		return
-	}
-
-	evt := &api.WorkspaceLogMessage{
-		Id:       id,
-		Metadata: getWorkspaceMetadata(pod),
-		Message:  msg,
-	}
-	m.manager.OnWorkspaceLog(context.Background(), evt)
 }
 
 // onConfigMapEvent interpretes Kubernetes events regarding pod lifecycle independent state,
