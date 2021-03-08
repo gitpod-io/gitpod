@@ -295,6 +295,19 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
 
         werft.log('helm', 'done');
         werft.done('helm');
+
+        // Deploy Observability stack
+        shell.cd("pluggable-o11y-stack");
+        werft.log('jsonnet', 'Installing observability stack');
+
+        werft.log('jsonnet', 'Building YAML manifests');
+        exec(`IS_PREVIEW_ENV=true NAMESPACE=${namespace} make build`);
+
+        exec.log('jsonnet', 'Deploying observability stack');
+        exec(`IS_PREVIEW_ENV=true NAMESPACE=${namespace} make deploy`);
+
+        werft.log('jsonnet', 'done');
+        werft.done('jsonnet');
     } catch (err) {
         werft.fail('deploy', err);
     } finally {
