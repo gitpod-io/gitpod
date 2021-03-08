@@ -1,0 +1,24 @@
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: loki
+    kind: role
+    stage: {{ .Values.installation.stage }}
+  name: loki-job
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - patch
+  - list
+  resourceNames:
+    - loki
+    - loki-gitpod

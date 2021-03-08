@@ -488,11 +488,10 @@ minio:
     requests:
       # defaults to 4GB, set to 2GB to be able to start on smaller instances
       memory: 2G
-  defaultBucket:
-    enabled: true
   # create default bucket for logs
   buckets:
-    - logs
+    - name: logs
+      policy: none
 
 mysql:
   enabled: true
@@ -684,11 +683,11 @@ promtail:
               target_label: workspace
               action: replace
             - source_labels:
-              - __meta_kubernetes_pod_label_workspaceID
+                - __meta_kubernetes_pod_label_workspaceID
               target_label: workspaceID
               action: replace
             - source_labels:
-              - __meta_kubernetes_pod_label_owner
+                - __meta_kubernetes_pod_label_owner
               target_label: owner
               action: replace
             {{- toYaml .Values.config.snippets.common | nindent 4 }}
