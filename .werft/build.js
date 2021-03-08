@@ -297,7 +297,7 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
         werft.done('helm');
 
         // Deploy Observability stack
-        shell.cd("pluggable-o11y-stack");
+        shell.cd("../pluggable-o11y-stack");
         werft.log('jsonnet', 'Installing observability stack');
 
         werft.log('jsonnet', 'Building YAML manifests');
