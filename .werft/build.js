@@ -301,7 +301,7 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
         werft.log('jsonnet', 'Installing observability stack');
 
         werft.log('jsonnet', 'Clonning Observability Stack repository');
-        exec('git clone https://github.com/gitpod-io/pluggable-o11y-stack.git && cd pluggable-011y-stack');
+        exec('git clone https://github.com/gitpod-io/pluggable-o11y-stack.git && cd pluggable-o11y-stack');
 
         werft.log('jsonnet', 'Building YAML manifests');
         exec(`IS_PREVIEW_ENV=true NAMESPACE=${namespace} make build`);
