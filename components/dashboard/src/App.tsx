@@ -30,7 +30,7 @@ function App() {
             },
             {
               title: 'Settings',
-              link: '/account'
+              link: '/profile'
             },
           ]}
             right={[

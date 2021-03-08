@@ -6,6 +6,24 @@ interface Entry {
     title: string, link: string
 }
 
+function MenuItem(entry: Entry) {
+    let classes = "flex block text-sm font-medium lg:px-3 px-0 py-2 rounded-md";
+    if (window.location.pathname.toLowerCase() === entry.link.toLowerCase()) {
+        classes += " bg-gray-200";
+    } else {
+        classes += " text-gray-500 hover:bg-gray-300 ";
+    }
+    return <li key={entry.title}>
+        {entry.link.startsWith('https://')
+            ? <a className={classes} href={entry.link}>
+                <div>{entry.title}</div>
+            </a>
+            : <Link className={classes} to={entry.link}>
+                <div>{entry.title}</div>
+            </Link>}
+    </li>;
+}
+
 function Menu(props: { left: Entry[], right: Entry[] }) {
     const ctx = useContext(ServiceContext);
     return (
@@ -33,34 +51,9 @@ function Menu(props: { left: Entry[], right: Entry[] }) {
             <div className="hidden lg:flex lg:flex-1 lg:items-center lg:w-auto w-full" id="menu">
                 <nav className="lg:flex-1">
                     <ul className="lg:flex lg:flex-1 items-center justify-between text-base text-gray-700 space-x-2">
-                        {props.left.map(e => {
-                            let classes = "flex block text-sm font-medium lg:px-3 px-0 py-2 rounded-md";
-                            if (window.location.pathname.toLowerCase() === e.link.toLowerCase()) {
-                                classes += " bg-gray-200";
-                            } else {
-                                classes += " text-gray-500 hover:bg-gray-300 ";
-                            }
-                            return <li key={e.title}>
-                                <Link className={classes} to={e.link}>
-                                    <div>{e.title}</div>
-                                </Link>
-                            </li>;
-                        })}
+                        {props.left.map(MenuItem)}
                         <li className="flex-1"></li>
-                        {props.right.map(e => {
-                            let classes = "flex block text-sm font-medium lg:px-3 px-0 py-2 rounded-md";
-                            if (window.location.pathname.toLowerCase() === e.link.toLowerCase()) {
-                                classes += " bg-gray-200";
-                            } else {
-                                classes += " text-gray-500 hover:bg-gray-300 ";
-                            }
-                            return <li key={e.title}>
-                                <Link className={classes} to={e.link}>
-                                    <div>{e.title}</div>
-                                </Link>
-                            </li>;
-                        }
-                        )}
+                        {props.right.map(MenuItem)}
                     </ul>
                 </nav>
                 <Link className="lg:ml-4 flex items-center justify-start lg:mb-0 mb-4 pointer-cursor m-l-auto rounded-full border-2 hover:border-gray-400 p-0.5" to="/profile">
