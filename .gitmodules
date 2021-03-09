@@ -1,3 +1,0 @@
-[submodule "pluggable-o11y-stack"]
-	path = pluggable-o11y-stack
-	url = https://github.com/gitpod-io/pluggable-o11y-stack

@@ -297,22 +297,22 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
         werft.done('helm');
 
         // Deploy Observability stack
-        werft.log('jsonnet', 'Installing observability stack');
+        werft.log('Observability Stack', 'Installing observability stack');
 
-        werft.log('jsonnet', 'Clonning Observability Stack repository');
-        exec('git clone https://github.com/gitpod-io/pluggable-o11y-stack.git && cd pluggable-o11y-stack');
+        werft.log('Observability Stack', 'Clonning Observability Stack repository');
+        exec('git clone https://github.com/gitpod-io/pluggable-o11y-stack.git');
 
-        werft.log('jsonnet', 'Installing dependencies');
+        werft.log('Observability Stack', 'Installing dependencies');
         exec('cd pluggable-o11y-stack && make setup-workspace');
 
-        werft.log('jsonnet', 'Building YAML manifests');
-        exec(`cd pluggable-o11y-stack && pwd && ls -lha && IS_PREVIEW_ENV=true NAMESPACE=${namespace} make build`);
+        werft.log('Observability Stack', 'Building YAML manifests');
+        exec(`cd pluggable-o11y-stack && IS_PREVIEW_ENV=true NAMESPACE=${namespace} CLUSTER_NAME=gitpod-core-dev make build`);
 
-        exec.log('jsonnet', 'Deploying observability stack');
-        exec(`IS_PREVIEW_ENV=true NAMESPACE=${namespace} make deploy`);
+        werft.log('Observability Stack', 'Deploying observability stack');
+        exec(`cd pluggable-o11y-stack && IS_PREVIEW_ENV=true NAMESPACE=${namespace} make deploy`);
 
-        werft.log('jsonnet', 'done');
-        werft.done('jsonnet');
+        werft.log('Observability Stack', 'done');
+        werft.done('Observability Stack');
     } catch (err) {
         werft.fail('deploy', err);
     } finally {
