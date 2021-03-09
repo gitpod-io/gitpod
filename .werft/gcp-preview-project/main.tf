@@ -1,3 +1,11 @@
+terraform {
+  backend "gcs" {
+    bucket  = "gitpod-core-preview-terraform-state"
+    #prefix  = "terraform/state"
+    prefix  = "" # override me
+  }
+}
+
 locals {
   gcp = {
     services = [

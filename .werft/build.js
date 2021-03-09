@@ -77,6 +77,9 @@ function parseVersion(context) {
 }
 
 async function build(context, version) {
+    werft.phase("try")
+    findOrCreateGCPProject("myproject")
+
     /**
      * Prepare
      */
@@ -312,6 +315,24 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
             werft.fail('certificate', err);
         }
     }
+}
+
+async function findOrCreateGCPProject(name) {
+    let pathToTerraform = ".werft/gcp-project";
+    let pathToGcpSA = "/mnt/secrets/gcp-sa-preview-manager/service-account.json"
+    fs.writeFileSync(`${pathToTerraform}/override.tf`,
+`terraform {
+  backend "gcs" {
+    bucket  = "gitpod-core-preview-terraform-state"
+    prefix  = "${name}"
+  }
+}`      );    
+    exec(`set -x \
+        && cd ${pathToTerraform} \
+        && terraform init \
+        && export GOOGLE_APPLICATION_CREDENTIALS="${pathToGcpSA}" \
+        && terraform apply -auto-approve \
+            -var 'foo=bar'`, {slice: 'create-gcp-project', async: false});
 }
 
 
