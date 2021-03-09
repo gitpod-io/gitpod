@@ -77,8 +77,13 @@ function parseVersion(context) {
 }
 
 async function build(context, version) {
-    werft.phase("try")
-    findOrCreateGCPProject("myproject")
+    
+    try {
+        werft.phase("try")
+        findOrCreateGCPProject("myproject")
+    } catch (err) {
+        werft.fail('prep', err);
+    }
 
     /**
      * Prepare
@@ -317,9 +322,10 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
     }
 }
 
-async function findOrCreateGCPProject(name) {
-    let pathToTerraform = ".werft/gcp-project";
-    let pathToGcpSA = "/mnt/secrets/gcp-sa-preview-manager/service-account.json"
+function findOrCreateGCPProject(name) {
+    let pathToTerraform = ".werft/gcp-preview-project/";
+    let pathToGcpSA = "/mnt/secrets/gcp-sa-preview-manager/service-account.json";
+    werft.log("create-gcp-project", "Create TF Override");
     fs.writeFileSync(`${pathToTerraform}/override.tf`,
 `terraform {
   backend "gcs" {
@@ -327,10 +333,11 @@ async function findOrCreateGCPProject(name) {
     prefix  = "${name}"
   }
 }`      );    
+    werft.log("create-gcp-project", "run 'terraform apply'");
+    exec(`gcloud auth activate-service-account --key-file "${pathToGcpSA}"`);
     exec(`set -x \
         && cd ${pathToTerraform} \
         && terraform init \
-        && export GOOGLE_APPLICATION_CREDENTIALS="${pathToGcpSA}" \
         && terraform apply -auto-approve \
             -var 'foo=bar'`, {slice: 'create-gcp-project', async: false});
 }
