@@ -5,6 +5,7 @@ const { sleep } = require('./util/util.js');
 const { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects } = require('./util/kubectl.js');
 const { issueAndInstallCertficate } = require('./util/certs.js');
 const { sendToSlack } = require('./util/slack.js');
+const semver = require('semver');
 
 const GCLOUD_SERVICE_ACCOUNT_PATH = "/mnt/secrets/gcp-sa/service-account.json";
 
@@ -99,15 +100,21 @@ async function build(context, version) {
     exec(`leeway build --werft=true -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo}`, buildEnv);
     if (publishRelease) {
         try {
+            werft.phase("publish", "checking version semver compliance...");
+            if (!semver.valid(version)) {
+                // make this an explicit error as early as possible. Is required by helm Charts.yaml/version
+                throw new Error(`'${version}' is not semver compliant and thus cannot used for Self-Hosted releases!`)
+            }
+
             werft.phase("publish", "publishing docker images...");
             exec(`leeway run --werft=true install/installer:publish-as-latest -Dversion=${version} -DimageRepoBase=${imageRepo}`);
 
             werft.phase("publish", "publishing Helm chart...");
-            publishHelmChart("gcr.io/gitpod-io/self-hosted");
+            publishHelmChart("gcr.io/gitpod-io/self-hosted", version);
 
             werft.phase("publish", `creating GitHub release ${version}...`);
             const releaseBranch = exec("git rev-parse --abbrev-ref HEAD", {silent: true}).stdout.trim();
-            const releaseFilesTmpDir = exec(`./scripts/create-release.sh ${version}`, {silent: true}).stdout.trim();
+            const releaseFilesTmpDir = exec(`scripts/create-release-tars.sh ${version}`, {silent: true}).stdout.trim();
             const tag = `v${version}`;
             const description = `
             Gitpod Self-Hosted ${version}
@@ -297,7 +304,7 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
 /**
  * Publish Charts
  */
-async function publishHelmChart(imageRepoBase) {
+async function publishHelmChart(imageRepoBase, version) {
     werft.phase("publish-charts", "Publish charts");
     [
         "gcloud config set project gitpod-io",

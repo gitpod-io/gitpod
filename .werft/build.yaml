@@ -103,7 +103,7 @@ pod:
         export DOCKER_HOST=tcp://$NODENAME:2375
         sudo chown -R gitpod:gitpod /workspace
 
-        npm install shelljs
+        npm install shelljs semver
         printf '{{ toJson . }}' > context.json
 
         {{- if .Annotations.debug }}
