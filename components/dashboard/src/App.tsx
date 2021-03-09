@@ -3,8 +3,8 @@ import Menu from './components/Menu';
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import { Workspaces } from './workspaces/Workspaces';
 import { Login } from './Login';
-import { UserContext } from './contexts';
-import { gitpodService, service } from './service/service';
+import { UserContext } from './user-context';
+import { gitpodService } from './service/service';
 
 const Notifications = React.lazy(() => import('./account/Notifications'));
 const Profile = React.lazy(() => import('./account/Profile'));
@@ -23,7 +23,7 @@ function App() {
     useEffect(() => {
         (async () => {
             try {
-                const user = await service.getOrLoadUser();
+                const user = await gitpodService.server.getLoggedInUser();
                 setUser(user);
             } catch (error) {
                 console.log(error);

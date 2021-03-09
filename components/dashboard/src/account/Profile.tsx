@@ -2,7 +2,7 @@ import { User } from "@gitpod/gitpod-protocol";
 import { useContext, useState } from "react";
 import Modal from "../components/Modal";
 import { SettingsPage } from "../components/SettingsPage";
-import { UserContext } from "../contexts";
+import { UserContext } from "../user-context";
 import accountMenu from "./account-menu";
 
 export default function Profile() {

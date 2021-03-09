@@ -1,8 +1,8 @@
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import Modal from "./components/Modal";
-import { UserContext } from "./contexts";
-import { gitpodHostUrl, reconnect, service } from "./service/service";
+import { UserContext } from "./user-context";
+import { gitpodHostUrl, reconnect, gitpodService } from "./service/service";
 
 export function Login() {
     const { setUser } = useContext(UserContext);
@@ -11,7 +11,7 @@ export function Login() {
 
     useEffect(() => {
         (async () => {
-            setAuthProviders(await service.getAuthProviders());
+            setAuthProviders(await gitpodService.server.getAuthProviders());
         })();
 
         window.addEventListener("message", (event) => {
@@ -26,7 +26,7 @@ export function Login() {
                 }
                 (async () => {
                     reconnect();
-                    const user = await service.reloadUser();
+                    const user = await gitpodService.server.getLoggedInUser();
                     setUser(user);
                 })();
             }
@@ -46,7 +46,7 @@ export function Login() {
             <div>
                 <ol>
                     {authProviders.map(ap => {
-                        return (<li>
+                        return (<li key={ap.host}>
                             <h2><a href="#" onClick={() => openLogin(ap.host)}>Continue with {ap.host}</a></h2>
                         </li>);
                     })}
