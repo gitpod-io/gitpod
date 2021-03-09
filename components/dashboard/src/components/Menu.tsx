@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { Link } from "react-router-dom";
-import { UserContext } from "../contexts";
+import { UserContext } from "../user-context";
 
 interface Entry {
     title: string, link: string

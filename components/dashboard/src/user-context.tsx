@@ -9,7 +9,7 @@ const UserContext = createContext<{
 });
 
 
-const AppProvider: React.FC = ({ children }) => {
+const UserContextProvider: React.FC = ({ children }) => {
     const [user, setUser] = useState<User | undefined>(undefined);
 
     return (
@@ -19,4 +19,4 @@ const AppProvider: React.FC = ({ children }) => {
     )
 }
 
-export { UserContext, AppProvider };
+export { UserContext, UserContextProvider };

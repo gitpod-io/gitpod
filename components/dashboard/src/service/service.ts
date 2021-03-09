@@ -4,14 +4,15 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { GitpodClient, GitpodServer, GitpodServerPath, GitpodService, GitpodServiceImpl, User } from '@gitpod/gitpod-protocol';
+import { GitpodClient, GitpodServer, GitpodServerPath, GitpodService, GitpodServiceImpl } from '@gitpod/gitpod-protocol';
 import { WebSocketConnectionProvider } from '@gitpod/gitpod-protocol/lib/messaging/browser/connection';
 import { createWindowMessageConnection } from '@gitpod/gitpod-protocol/lib/messaging/browser/window-connection';
 import { JsonRpcProxy, JsonRpcProxyFactory } from '@gitpod/gitpod-protocol/lib/messaging/proxy-factory';
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
-export const gitpodHostUrl = new GitpodHostUrl((window as any).PREVIEW_URL || window.location.toString());
+// export const gitpodHostUrl = new GitpodHostUrl("https://at-react.staging.gitpod-dev.com/");
+export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
 function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
     let proxy: JsonRpcProxy<S>;
@@ -43,37 +44,12 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
 }
 
 
-
-export class AppService {
-    constructor(protected gitpodService: GitpodService) {
-    }
-
-    protected userPromise: Promise<User> | undefined;
-    async getOrLoadUser() {
-        if (!this.userPromise) {
-            this.userPromise = this.gitpodService.server.getLoggedInUser();
-        }
-        return this.userPromise;
-    }
-    async reloadUser() {
-        this.userPromise = undefined;
-        return this.getOrLoadUser();
-    }
-
-    async getAuthProviders() {
-        return this.gitpodService.server.getAuthProviders();
-    }
-
-}
-
 let gitpodService: GitpodService;
-let service: AppService;
 
 const reconnect = () => {
     gitpodService = createGitpodService();
-    service = new AppService(gitpodService);
 }
 
 reconnect();
 
-export { service, gitpodService, reconnect };
+export { gitpodService, reconnect };
