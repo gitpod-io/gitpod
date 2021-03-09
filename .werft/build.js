@@ -106,6 +106,7 @@ async function build(context, version) {
     const withInstaller = "with-installer" in buildConfig || masterBuild;
     const noPreview = "no-preview" in buildConfig || publishRelease;
     const registryFacadeHandover = "registry-facade-handover" in buildConfig;
+    const disableObservabilityStack = 'disable-observability-stack' in buildConfig;
     werft.log("job config", JSON.stringify({
         buildConfig,
         version,
@@ -117,6 +118,7 @@ async function build(context, version) {
         dynamicCPULimits,
         noPreview,
         registryFacadeHandover,
+        disableObservabilityStack,
     }));
 
     /**
@@ -161,7 +163,7 @@ async function build(context, version) {
         werft.phase("deploy", "not deploying");
         console.log("no-preview or publish-release is set");
     } else {
-        await deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover);
+        await deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover, disableObservabilityStack);
     }
 }
 
@@ -169,7 +171,7 @@ async function build(context, version) {
 /**
  * Deploy dev
  */
-async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover) {
+async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover, disableObservabilityStack) {
     werft.phase("deploy", "deploying to dev");
     const destname = version.split(".")[0];
     const namespace = `staging-${destname}`;
@@ -296,23 +298,25 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
         werft.log('helm', 'done');
         werft.done('helm');
 
-        // Deploy Observability stack
-        werft.log('Observability Stack', 'Installing observability stack');
-
-        werft.log('Observability Stack', 'Clonning Observability Stack repository');
-        exec('git clone https://github.com/gitpod-io/pluggable-o11y-stack.git');
-
-        werft.log('Observability Stack', 'Installing dependencies');
-        exec('cd pluggable-o11y-stack && make setup-workspace');
-
-        werft.log('Observability Stack', 'Building YAML manifests');
-        exec(`cd pluggable-o11y-stack && IS_PREVIEW_ENV=true NAMESPACE=${namespace} CLUSTER_NAME=gitpod-core-dev make build`);
-
-        werft.log('Observability Stack', 'Deploying observability stack');
-        exec(`cd pluggable-o11y-stack && IS_PREVIEW_ENV=true NAMESPACE=${namespace} make deploy`);
-
-        werft.log('Observability Stack', 'done');
-        werft.done('Observability Stack');
+        if (!disableObservabilityStack) {
+            // Deploy Observability stack
+            werft.log('Observability Stack', 'Installing observability stack');
+    
+            werft.log('Observability Stack', 'Clonning Observability Stack repository');
+            exec('git clone https://github.com/gitpod-io/pluggable-o11y-stack.git');
+    
+            werft.log('Observability Stack', 'Installing dependencies');
+            exec('cd pluggable-o11y-stack && make setup-workspace');
+    
+            werft.log('Observability Stack', 'Building YAML manifests');
+            exec(`cd pluggable-o11y-stack && IS_PREVIEW_ENV=true NAMESPACE=${namespace} CLUSTER_NAME=gitpod-core-dev make build`);
+    
+            werft.log('Observability Stack', 'Deploying observability stack');
+            exec(`cd pluggable-o11y-stack && IS_PREVIEW_ENV=true NAMESPACE=${namespace} make deploy`);
+    
+            werft.log('Observability Stack', 'done');
+            werft.done('Observability Stack');
+        }
     } catch (err) {
         werft.fail('deploy', err);
     } finally {
