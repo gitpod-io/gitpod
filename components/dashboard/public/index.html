@@ -25,7 +25,10 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <script>
-      window.PREVIEW_URL = "%REACT_APP_PREVIEW_URL%";
+      let previewEnvUrl = "%REACT_APP_PREVIEW_URL%";
+      if (!previewEnvUrl.includes("REACT_APP_")) {
+        window.PREVIEW_URL = previewEnvUrl;
+      }
     </script>
     <title>React App</title>
   </head>
