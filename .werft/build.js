@@ -98,9 +98,30 @@ async function build(context, version) {
     }
     exec(`leeway build --werft=true -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo}`, buildEnv);
     if (publishRelease) {
-        publishHelmChart("gcr.io/gitpod-io/self-hosted");
-        exec(`leeway run --werft=true install/installer:publish-as-latest -Dversion=${version} -DimageRepoBase=${imageRepo}`)
-        exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
+        try {
+            werft.phase("publish", "publishing docker images...");
+            exec(`leeway run --werft=true install/installer:publish-as-latest -Dversion=${version} -DimageRepoBase=${imageRepo}`);
+
+            werft.phase("publish", "publishing Helm chart...");
+            publishHelmChart("gcr.io/gitpod-io/self-hosted");
+
+            werft.phase("publish", `creating GitHub release ${version}...`);
+            const releaseBranch = exec("git rev-parse --abbrev-ref HEAD", {silent: true}).stdout.trim();
+            const releaseFilesTmpDir = exec(`./scripts/create-release.sh ${version}`, {silent: true}).stdout.trim();
+            const tag = `v${version}`;
+            const description = `
+            Gitpod Self-Hosted ${version}
+
+            Docs: https://www.gitpod.io/docs/self-hosted/latest/self-hosted/
+            `;
+            exec(`github-release gitpod-io/gitpod ${tag} ${releaseBranch} ${description} "${releaseFilesTmpDir}/*"`)
+
+            werft.done('publish');
+        } catch (err) {
+            werft.fail('publish', err);
+        } finally {
+            exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
+        }
     }
     // gitTag(`build/${version}`);
 
