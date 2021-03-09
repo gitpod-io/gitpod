@@ -172,6 +172,10 @@ export class UserService {
         //     return false;
         // }
 
+        if (1 === 1) {
+            return false;
+        }
+
         const { user } = params;
         if (!user) {
             const userCount = await this.userDb.getUserCount();
