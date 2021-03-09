@@ -29,8 +29,13 @@ pod:
     # Using the same port as in our Gitpod workspaces here
     - name: MYSQL_TCP_PORT
       value: 23306
+    - name: GITHUB_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: github-sh-release-token
+          key: token
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-dev-image.1
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:gpl-sh-gh-release.3
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
