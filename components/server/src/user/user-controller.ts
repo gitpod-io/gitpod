@@ -539,14 +539,15 @@ export class UserController {
 
     protected getSafeReturnToParam(req: express.Request) {
         const returnToURL: string | undefined = req.query.redirect || req.query.returnTo;
-        if (returnToURL) {
-            const hostUrl = this.env.hostUrl.url as URL;
-            if (returnToURL.toLowerCase().startsWith(`${hostUrl.protocol}//${hostUrl.host}`.toLowerCase())) {
-                return returnToURL;
-            }
-            if (returnToURL.toLowerCase().startsWith(this.env.brandingConfig.homepage.toLowerCase())) {
-                return returnToURL;
-            }
-        }
+        // if (returnToURL) {
+        //     const hostUrl = this.env.hostUrl.url as URL;
+        //     if (returnToURL.toLowerCase().startsWith(`${hostUrl.protocol}//${hostUrl.host}`.toLowerCase())) {
+        //         return returnToURL;
+        //     }
+        //     if (returnToURL.toLowerCase().startsWith(this.env.brandingConfig.homepage.toLowerCase())) {
+        //         return returnToURL;
+        //     }
+        // }
+        return returnToURL;
     }
 }
