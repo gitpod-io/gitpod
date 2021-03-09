@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"log"
 	"os"
-	"syscall"
 
 	"github.com/containerd/containerd/contrib/seccomp"
 	"github.com/opencontainers/runtime-spec/specs-go"
@@ -38,36 +37,9 @@ func main() {
 				"pivot_root",
 				"setdomainname",
 				"sethostname",
+				"unshare",
 			},
 			Action: specs.ActAllow,
-		},
-
-		// docker-up requires unshare(CLONE_NEWNET) to create the network namespace
-		// for Docker.
-		specs.LinuxSyscall{
-			Names:  []string{"unshare"},
-			Action: specs.ActAllow,
-			Args: []specs.LinuxSeccompArg{
-				// SCMP_CMP_MASKED_EQ - masked equal: true if (value & arg == valueTwo)
-				{
-					Index:    0,
-					Op:       specs.OpMaskedEqual,
-					Value:    syscall.CLONE_NEWNET,
-					ValueTwo: syscall.CLONE_NEWNET,
-				},
-			},
-		},
-		// docker-exec requires unshare(0).
-		specs.LinuxSyscall{
-			Names:  []string{"unshare"},
-			Action: specs.ActAllow,
-			Args: []specs.LinuxSeccompArg{
-				{
-					Index: 0,
-					Op:    specs.OpEqualTo,
-					Value: 0,
-				},
-			},
 		},
 
 		// slirp4netns requires setns, as do we for debugging
