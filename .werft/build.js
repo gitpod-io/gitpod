@@ -258,7 +258,6 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
     flags+=` --set components.wsDaemon.servicePort=${wsdaemonPort}`;
     flags+=` --set components.wsDaemon.registryProxyPort=${registryProxyPort}`;
     flags+=` --set components.registryFacade.ports.registry.servicePort=${registryNodePort}`;
-    flags+=` --set ingressMode=${context.Annotations.ingressMode || "hosts"}`;
     workspaceFeatureFlags.forEach((f, i) => {
         flags+=` --set components.server.defaultFeatureFlags[${i}]='${f}'`
     })

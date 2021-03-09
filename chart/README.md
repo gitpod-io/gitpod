@@ -81,7 +81,6 @@ introduces the most important options you likely want to review and tune for you
 
 | Parameter            | Description                                    | Default                                                 |
 |----------------------|------------------------------------------------|---------------------------------------------------------|
-| `ingressMode`        | One of `hosts`, `pathAndHost` and `noDomain`. Governs how workspaces are accessible. See [values.yaml](https://github.com/gitpod-io/gitpod/blob/master/chart/values.yaml) for details. | `noDomain`         |
 | `hostname`           | The Hostname your installation is available at | `localhost`                                             |
 | `certificatesSecret` | Configures certificates for your domain        | `{}`                                                    |
 
