@@ -306,7 +306,7 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
         exec('cd pluggable-o11y-stack && make setup-workspace');
 
         werft.log('jsonnet', 'Building YAML manifests');
-        exec(`cd pluggable-o11y-stack && IS_PREVIEW_ENV=true NAMESPACE=${namespace} make build`);
+        exec(`cd pluggable-o11y-stack && pwd && ls -lha && IS_PREVIEW_ENV=true NAMESPACE=${namespace} make build`);
 
         exec.log('jsonnet', 'Deploying observability stack');
         exec(`IS_PREVIEW_ENV=true NAMESPACE=${namespace} make deploy`);
