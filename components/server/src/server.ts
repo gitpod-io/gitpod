@@ -132,7 +132,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
 
                 if (!allowedRequest) {
                     log.warn("Websocket connection attempt with non-matching Origin header: " + info.origin)
-                    return callback(false, 403);
+                    // return callback(false, 403);
                 }
                 return callback(true);
             };
