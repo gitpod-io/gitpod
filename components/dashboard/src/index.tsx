@@ -1,18 +1,18 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import "./tailwind.output.css"
 import App from './App';
-import { ServiceContext, SimpleServiceImpl } from './service/service';
+import { AppProvider } from './contexts';
+import { service } from './service/service';
 
-const service = new SimpleServiceImpl();
-service.service.server.getLoggedInUser().then(user => {
-  service.user = user;
-  ReactDOM.render(
+import "./tailwind.output.css"
+
+service.getOrLoadUser().then(user => console.log(user.name));
+
+ReactDOM.render(
     <React.StrictMode>
-      <ServiceContext.Provider value={service}>
-        <App />
-      </ServiceContext.Provider>
+        <AppProvider>
+            <App />
+        </AppProvider>
     </React.StrictMode>,
     document.getElementById('root')
-  );
-});
+);

@@ -1,30 +1,65 @@
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
-import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
-import { useContext, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import Modal from "./components/Modal";
-import { ServiceContext } from "./service/service";
+import { UserContext } from "./contexts";
+import { gitpodHostUrl, reconnect, service } from "./service/service";
 
 export function Login() {
-    const ctx = useContext(ServiceContext);
-    const [authProvider, setAuthProvider]= useState([] as AuthProviderInfo[]);
-    ctx.service.server.getAuthProviders().then(
-        aps => setAuthProvider(aps)
-    );
+    const { setUser } = useContext(UserContext);
+
+    const [authProviders, setAuthProviders] = useState<AuthProviderInfo[]>([]);
+
+    useEffect(() => {
+        (async () => {
+            setAuthProviders(await service.getAuthProviders());
+        })();
+
+        window.addEventListener("message", (event) => {
+            // todo: check event.origin
+
+            if (event.data === "auth-success") {
+                if (event.source && "close" in event.source && event.source.close) {
+                    console.log(`try to close window`);
+                    event.source.close();
+                } else {
+                    // todo: not here, but add a button to the /login-success page to close, if this should not work as expected
+                }
+                (async () => {
+                    reconnect();
+                    const user = await service.reloadUser();
+                    setUser(user);
+                })();
+            }
+        })
+    })
+
+    const openLogin = (host: string) => {
+        const url = getLoginUrl(host);
+        const newWindow = window.open(url, "gitpod-login");
+        if (!newWindow) {
+            console.log(`Failed to open login window for ${host}`);
+        }
+    }
+
     return (<div>
         <Modal visible={true}>
-            {authProvider.map(ap => {
-                return (<a href={getLoginUrl(ap.host)} target="_parent">Login With GitHub</a>);
-            })}
+            <div>
+                <ol>
+                    {authProviders.map(ap => {
+                        return (<li>
+                            <h2><a href="#" onClick={() => openLogin(ap.host)}>Continue with {ap.host}</a></h2>
+                        </li>);
+                    })}
+                </ol>
+            </div>
         </Modal>
     </div>);
 }
 
 function getLoginUrl(host: string) {
-    const returnTo = "https://google.com";
-    const returnToPart = returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : '';
-    const search = `host=${host}${returnToPart}`;
-    return new GitpodHostUrl(window.location.toString()).withApi({
-        pathname: '/login/',
-        search
+    const returnTo = gitpodHostUrl.with({ pathname: 'login-success'}).toString();
+    return gitpodHostUrl.withApi({
+        pathname: '/login',
+        search: `host=${host}&returnTo=${encodeURIComponent(returnTo)}`
     }).toString();
 }

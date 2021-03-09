@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>Login successful</title>
+    <script>
+        window.opener.postMessage("auth-success", `https://${window.location.hostname}`);
+    </script>
+</head>
+<body>
+    This browser tab is supposed to close automatically.
+</body>
+</html>

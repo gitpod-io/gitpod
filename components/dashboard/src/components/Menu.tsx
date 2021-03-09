@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { Link } from "react-router-dom";
-import { ServiceContext } from "../service/service";
+import { UserContext } from "../contexts";
 
 interface Entry {
     title: string, link: string
@@ -25,7 +25,8 @@ function MenuItem(entry: Entry) {
 }
 
 function Menu(props: { left: Entry[], right: Entry[] }) {
-    const ctx = useContext(ServiceContext);
+    const { user } = useContext(UserContext);
+
     return (
         <header className="lg:px-28 px-10 bg-white flex flex-wrap items-center py-4">
             <style dangerouslySetInnerHTML={{
@@ -58,7 +59,7 @@ function Menu(props: { left: Entry[], right: Entry[] }) {
                 </nav>
                 <Link className="lg:ml-4 flex items-center justify-start lg:mb-0 mb-4 pointer-cursor m-l-auto rounded-full border-2 hover:border-gray-400 p-0.5" to="/profile">
                     <img className="rounded-full w-6 h-6"
-                        src={ctx.user?.avatarUrl || ''} alt={ctx.user?.name || 'Anonymous'} />
+                        src={user?.avatarUrl || ''} alt={user?.name || 'Anonymous'} />
                 </Link>
             </div>
         </header>
