@@ -170,7 +170,7 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 	tracing.FinishSpan(span, &err)
 }
 
-func (bh *blobHandler) downloadManifest(ctx context.Context, ref string) (res *ociv1.Manifest, fetcher remotes.Fetcher, err error) {
+func (bh *blobHandler) downloadManifest(ctx context.Context, ref string) (res *Manifest, fetcher remotes.Fetcher, err error) {
 	_, desc, err := bh.Resolver.Resolve(ctx, ref)
 	if err != nil {
 		// ErrInvalidAuthorization
@@ -267,7 +267,7 @@ func (pbs proxyingBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, 
 type configBlobSource struct {
 	Fetcher        remotes.Fetcher
 	Spec           *api.ImageSpec
-	Manifest       *ociv1.Manifest
+	Manifest       *Manifest
 	ConfigModifier ConfigModifier
 
 	cfg []byte

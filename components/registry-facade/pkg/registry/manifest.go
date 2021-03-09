@@ -30,6 +30,15 @@ import (
 	"github.com/pkg/errors"
 )
 
+// this is a shot in the dark, but it seems that because we are using the ociv1.Manifest
+// in DownloadManifest, we are dropping the top-level MediaType field, since there is no
+// MediaType on ociv1.Manifest. here we extend that type and manually add Mediatype to the
+// root of the struct.
+type Manifest struct {
+	ociv1.Manifest
+	MediaType string `json:"mediaType"`
+}
+
 func (reg *Registry) handleManifest(ctx context.Context, r *http.Request) http.Handler {
 	spname, name := getSpecProviderName(ctx)
 	sp, ok := reg.SpecProvider[spname]
@@ -257,7 +266,7 @@ func WithStore(store content.Store) ManifestDownloadOption {
 
 // DownloadManifest downloads and unmarshals the manifest of the given desc. If the desc points to manifest list
 // we choose the first manifest in that list.
-func DownloadManifest(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.Descriptor, options ...ManifestDownloadOption) (cfg *ociv1.Manifest, rdesc *ociv1.Descriptor, err error) {
+func DownloadManifest(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.Descriptor, options ...ManifestDownloadOption) (cfg *Manifest, rdesc *ociv1.Descriptor, err error) {
 	var opts manifestDownloadOptions
 	for _, o := range options {
 		o(&opts)
@@ -333,7 +342,7 @@ func DownloadManifest(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.D
 		return
 	}
 
-	var res ociv1.Manifest
+	var res Manifest
 	err = json.Unmarshal(inpt, &res)
 	if err != nil {
 		err = fmt.Errorf("cannot decode config: %w", err)
@@ -362,6 +371,13 @@ func DownloadManifest(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.D
 	}
 
 	cfg = &res
+
+	// it's possible that just added the MediaType field to our manifest with proper json bindings fixed our issue, but just in case
+	// we manually update the MediaType on our struct so that the value will be properly marshalled.
+	preUpdateManifest := cfg.MediaType
+	cfg.MediaType = rdesc.MediaType
+	log.Debug("Before returning downloaded manifest, updated MediaType from '%s' to '%s'", preUpdateManifest, cfg.MediaType)
+
 	return
 }
 
