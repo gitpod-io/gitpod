@@ -177,8 +177,12 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
     const namespace = `staging-${destname}`;
     const domain = `${destname}.staging.gitpod-dev.com`;
     const url = `https://${domain}`;
+    const grafanaUrl = `${url}/grafana`;
+    const prometheusUrl = `${url}/prometheus`;
     const wsdaemonPort = `1${Math.floor(Math.random()*1000)}`;
     const registryProxyPort = `2${Math.floor(Math.random()*1000)}`;
+    const grafanaProxyPort = `3${Math.floor(Math.random()*1000)}`;
+    const prometheusProxyPort = `4${Math.floor(Math.random()*1000)}`;
     const registryNodePort = `${30000 + Math.floor(Math.random()*1000)}`;
 
     // trigger certificate issuing
@@ -316,6 +320,9 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
     
             werft.log('Observability Stack', 'done');
             werft.done('Observability Stack');
+
+            exec(`werft log result -d "prometheus installation" -c github url ${prometheusUrl}`);
+            exec(`werft log result -d "grafana installation" -c github url ${grafanaUrl}`);
         }
     } catch (err) {
         werft.fail('deploy', err);
