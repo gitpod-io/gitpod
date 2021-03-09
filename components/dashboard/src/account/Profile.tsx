@@ -22,15 +22,21 @@ export default function Profile() {
             <h3>Personal Information</h3>
             <div className="flex flex-col lg:flex-row">
                 <div className="pb-6">
-                    <h4>Name</h4>
-                    <input type="text" value={ctx.user!.name} onChange={(v) => { console.log(v) }} />
-                    <h4 className="pt-6">Email</h4>
-                    <input type="text" value={User.getPrimaryEmail(ctx.user!)} onChange={(v) => { console.log(v) }} />
+                    <div className="pt-6">
+                        <h4>Name</h4>
+                        <input type="text" value={ctx.user!.name} onChange={(v) => { console.log(v) }} />
+                    </div>
+                    <div className="pt-6">
+                        <h4>Email</h4>
+                        <input type="text" value={User.getPrimaryEmail(ctx.user!)} onChange={(v) => { console.log(v) }} />
+                    </div>
                 </div>
                 <div className="lg:pl-14">
-                    <h4>Avatar</h4>
-                    <img className="rounded-full w-24 h-24 border-2 border-transparent hover:border-indigo-400"
-                        src={ctx.user!.avatarUrl} alt={ctx.user!.name} />
+                    <div className="pt-6">
+                        <h4>Avatar</h4>
+                        <img className="rounded-full w-24 h-24 border-2 border-transparent hover:border-indigo-400"
+                            src={ctx.user!.avatarUrl} alt={ctx.user!.name} />
+                    </div>
                 </div>
             </div>
             <h3 className="pt-14">Delete Account</h3>
