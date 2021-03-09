@@ -4,21 +4,6 @@
 version: # version of Gitpod will be set by the CI job on publishing to https://charts.gitpod.io/
 
 hostname: localhost
-# ingressModes determines how Gitpod makes workspaces and their ports available. Possible values are:
-#           hosts: where workspaces and their ports are made available on subdomains of the hostname, e.g.
-#                  a workspace is made available at <wsid>.<installation.shortname>.<hostname>. This mode provides
-#                  the most flexibility w.r.t. to distributing workspaces on clusters. Also, only this mode properly supports CORS.
-#                  This mode requires wildcard HTTPS certificates.
-#     pathAndHost: makes workspaces available on a path rather than a subdomain, e.g. <hostname>/workspace/<wsid>.
-#                  Workspace ports are still made available on subdomains, albeit without HTTPS or port visibility (all exposed ports are public).
-#                  This mode makes for an easy install as only regular HTTPS certificates are required, and
-#                  workspace port access is simple. Whenever you have a domain available, but don't require the
-#                  features or flexibility of the "hosts" mode.
-#        noDomain: makes workspaces available on a path rather than a subdomain, e.g. <hostname>/workspace/<wsid>.
-#                  Workspace ports are made available on individual ports exposed through the LoadBalancer.
-#                  This mode primarily makes sense if you don't have a domain available, but need to run on an IP address only.
-#                  In this mode there is no HTTPS and CORS support, some secrets get transmitted unencrypted (no one-time-secret support) and all exposed ports are public.
-ingressMode: hosts
 certificatesSecret:
   secretName: https-certificates
 

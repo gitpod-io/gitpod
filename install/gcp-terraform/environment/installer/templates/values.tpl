@@ -13,6 +13,5 @@ components:
                 end: 11000
 
 installPodSecurityPolicies: true
-ingressMode: pathAndHost
 forceHTTPS: ${force_https}
 authProviders: []

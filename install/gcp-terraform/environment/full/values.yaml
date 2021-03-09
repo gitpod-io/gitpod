@@ -1,4 +1,3 @@
-ingressMode: noDomain
 certificatesSecret: {}
 
 components:

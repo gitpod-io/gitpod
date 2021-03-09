@@ -54,7 +54,7 @@ func init() {
 
 // Config configures this servuce
 type Config struct {
-	Ingress                     IngressConfig                     `json:"ingress"`
+	Ingress                     HostBasedIngressConfig            `json:"ingress"`
 	Proxy                       proxy.Config                      `json:"proxy"`
 	WorkspaceInfoProviderConfig proxy.WorkspaceInfoProviderConfig `json:"workspaceInfoProviderConfig"`
 	PProfAddr                   string                            `json:"pprofAddr"`
@@ -77,47 +77,8 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-// IngressKind names a kind of ingress
-type IngressKind string
-
-const (
-	// HostBasedIngress uses a Host header to determine where a request should go
-	HostBasedIngress IngressKind = "host"
-	// PathAndHostIngress uses the path for Theia routing and the Host header for port routing.
-	PathAndHostIngress IngressKind = "pathAndHost"
-	// PathAndPortIngress uses the path for Theia routing and ports for port routing.
-	PathAndPortIngress IngressKind = "pathAndPort"
-)
-
-// IngressConfig configures the proxies ingress
-type IngressConfig struct {
-	Kind               IngressKind                    `json:"kind"`
-	HostBasedIngress   *HostBasedInressConfig         `json:"host"`
-	PathAndHostIngress *PathAndHostIngressConfig      `json:"pathAndHost"`
-	PathAndPortIngress *PathAndPortBasedIngressConfig `json:"pathAndPort"`
-}
-
-// Validate validates this config
-func (c *IngressConfig) Validate() (err error) {
-	switch c.Kind {
-	case HostBasedIngress:
-		err = c.HostBasedIngress.Validate()
-	case PathAndHostIngress:
-		err = c.PathAndHostIngress.Validate()
-	case PathAndPortIngress:
-		err = c.PathAndPortIngress.Validate()
-	default:
-		return xerrors.Errorf("unknown ingress kind: %s", c.Kind)
-	}
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// HostBasedInressConfig configures the host-based ingress
-type HostBasedInressConfig struct {
+// HostBasedIngressConfig configures the host-based ingress
+type HostBasedIngressConfig struct {
 	Address string `json:"address"`
 	Header  string `json:"header"`
 }

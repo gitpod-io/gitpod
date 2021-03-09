@@ -103,10 +103,6 @@ spec:
 {{ include "gitpod.container.messagebusEnv" $this | indent 8 }}
         - name: RATE_LIMITER_CONFIG
           value: {{ (include "rate-limiter-config" $this) | fromYaml | toJson | quote }}
-{{- if eq .Values.ingressMode "noDomain" }}
-        - name: SERVE_INSECURE_NO_DOMAIN
-          value: "true"
-{{- end  }}
         - name: GITPOD_LICENSE
           value: "{{ .Values.license }}"
 {{- if $comp.github.app }}
