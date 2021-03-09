@@ -3,6 +3,8 @@ import Menu from './components/Menu';
 import { BrowserRouter } from "react-router-dom";
 import { Route, Switch } from "react-router";
 import { Workspaces } from './workspaces/Workspaces';
+import { CreateWorkspace } from './start/CreateWorkspace';
+import StartWorkspace from './start/StartWorkspace';
 import { Login } from './Login';
 import { UserContext } from './user-context';
 import { gitpodService } from './service/service';
@@ -39,6 +41,20 @@ function App() {
     if (!loading && !user) {
         return (<Login gitpodService={gitpodService} />)
     };
+
+    const hash = window.location.hash.replace(/^[#/]+/, '');
+    if (window.location.pathname === '/' && hash !== '') {
+      return <CreateWorkspace contextUrl={hash} gitpodService={gitpodService}/>;
+    }
+    if (/\/start\/?/.test(window.location.pathname)) {
+      return <StartWorkspace workspaceId={hash} gitpodService={gitpodService}/>;
+    }
+    window.addEventListener("hashchange", () => {
+      // Refresh on hash change if the path is '/' (new context URL)
+      if (window.location.pathname === '/') {
+        window.location.reload(true);
+      }
+    }, false);
 
     return (
         <BrowserRouter>
