@@ -355,9 +355,6 @@
         "owner": "2acc5341-73be-4bf7-ba69-7b93b633bde1",
         "workspaceID": "f07f0f2e-08fb-433a-8282-fef07b596909",
         "workspaceType": "regular"
-      },
-      "annotations": {
-        "gitpod/ingressPorts": ""
       }
     },
     "spec": {
@@ -407,7 +404,6 @@
         "workspaceID": "f07f0f2e-08fb-433a-8282-fef07b596909"
       },
       "annotations": {
-        "gitpod/ingressPorts": "",
         "gitpod/port-url-8080": "https://8080-ba826db9-9d93-4f3b-a10e-8bc08bbb99f1.ws-dev.cw-debug-registry-facade.staging.gitpod-dev.com"
       }
     },

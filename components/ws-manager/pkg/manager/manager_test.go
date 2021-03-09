@@ -53,7 +53,6 @@ func TestControlPort(t *testing.T) {
 	type fixture struct {
 		PortsService *corev1.Service        `json:"portsService,omitempty"`
 		Request      api.ControlPortRequest `json:"request"`
-		NoAllocator  bool                   `json:"noAllocator"`
 	}
 	type gold struct {
 		Error            string                   `json:"error,omitempty"`
@@ -69,11 +68,6 @@ func TestControlPort(t *testing.T) {
 			fixture := input.(*fixture)
 
 			manager := forTestingOnlyGetManager(t)
-			if fixture.NoAllocator {
-				manager.ingressPortAllocator = &noopIngressPortAllocator{}
-			} else {
-				manager.Config.WorkspacePortURLTemplate = "{{ .Host }}:{{ .IngressPort }}"
-			}
 
 			startCtx, err := forTestingOnlyCreateStartWorkspaceContext(manager, fixture.Request.Id, api.WorkspaceType_REGULAR)
 			if err != nil {

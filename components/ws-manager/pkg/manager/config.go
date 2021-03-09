@@ -81,8 +81,6 @@ type Configuration struct {
 	TheiaSupervisorToken string `json:"theiaSupervisorToken"`
 	// RegistryFacadeHost is the host (possibly including port) on which the registry facade resolves
 	RegistryFacadeHost string `json:"registryFacadeHost"`
-	// IngressPortAllocator contains all config for the IngressPortAllocator
-	IngressPortAllocator *IngressPortAllocatorConfig `json:"ingressPortAllocator"`
 }
 
 // AllContainerConfiguration contains the configuration for all container in a workspace pod

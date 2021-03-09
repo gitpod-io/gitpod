@@ -38,13 +38,6 @@ func forTestingOnlyGetManager(t *testing.T, objects ...client.Object) *Manager {
 		WorkspaceURLTemplate:     "{{ .ID }}-{{ .Prefix }}-{{ .Host }}",
 		WorkspacePortURLTemplate: "{{ .WorkspacePort }}-{{ .ID }}-{{ .Prefix }}-{{ .Host }}",
 		RegistryFacadeHost:       "registry-facade:8080",
-		IngressPortAllocator: &IngressPortAllocatorConfig{
-			IngressRange: IngressPortRange{
-				Start: 10000,
-				End:   11000,
-			},
-			StateResyncInterval: util.Duration(30 * time.Minute),
-		},
 		Container: AllContainerConfiguration{
 			Workspace: ContainerConfiguration{
 				Image: "workspace-image",
