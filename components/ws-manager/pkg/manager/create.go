@@ -649,22 +649,6 @@ func (m *Manager) createDefaultSecurityContext() (*corev1.SecurityContext, error
 func (m *Manager) createPortsService(workspaceID string, metaID string, servicePrefix string, ports []*api.PortSpec) (*corev1.Service, error) {
 	annotations := make(map[string]string)
 
-	// allocate ports
-	serviceName := getPortsServiceName(servicePrefix)
-	var portsToAllocate []int
-	for _, p := range ports {
-		portsToAllocate = append(portsToAllocate, int(p.Port))
-	}
-	alloc, err := m.ingressPortAllocator.UpdateAllocatedPorts(metaID, serviceName, portsToAllocate)
-	if err != nil {
-		return nil, err
-	}
-	serializedPorts, err := alloc.Marshal()
-	if err != nil {
-		return nil, err
-	}
-	annotations[ingressPortsAnnotation] = string(serializedPorts)
-
 	// create service ports
 	servicePorts := make([]corev1.ServicePort, len(ports))
 	for i, p := range ports {
@@ -677,11 +661,10 @@ func (m *Manager) createPortsService(workspaceID string, metaID string, serviceP
 			servicePorts[i].TargetPort = intstr.FromInt(int(p.Target))
 		}
 
-		ingressPort, _ := alloc.AllocatedPort(int(p.Port))
 		url, err := renderWorkspacePortURL(m.Config.WorkspacePortURLTemplate, portURLContext{
 			Host:          m.Config.GitpodHostURL,
 			ID:            metaID,
-			IngressPort:   fmt.Sprint(ingressPort),
+			IngressPort:   fmt.Sprint(p.Port),
 			Prefix:        servicePrefix,
 			WorkspacePort: fmt.Sprint(p.Port),
 		})
@@ -691,6 +674,7 @@ func (m *Manager) createPortsService(workspaceID string, metaID string, serviceP
 		annotations[fmt.Sprintf("gitpod/port-url-%d", p.Port)] = url
 	}
 
+	serviceName := getPortsServiceName(servicePrefix)
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      serviceName,

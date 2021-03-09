@@ -603,14 +603,6 @@ func (m *Monitor) actOnConfigMapEvent(ctx context.Context, status *api.Workspace
 			return xerrors.Errorf("cannot delete PLIS config map: %w", err)
 		}
 
-		// free all allocated ingress ports
-		if wso.TheiaService != nil {
-			m.manager.ingressPortAllocator.FreeAllocatedPorts(wso.TheiaService.Name)
-		}
-		if wso.PortsService != nil {
-			m.manager.ingressPortAllocator.FreeAllocatedPorts(wso.PortsService.Name)
-		}
-
 		return nil
 	}
 

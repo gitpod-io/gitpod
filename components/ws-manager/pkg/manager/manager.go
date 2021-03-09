@@ -57,8 +57,6 @@ type Manager struct {
 	activity     map[string]time.Time
 	activityLock sync.Mutex
 
-	ingressPortAllocator IngressPortAllocator
-
 	wsdaemonPool *grpcpool.Pool
 
 	subscribers    map[string]chan *api.SubscribeResponse
@@ -112,21 +110,15 @@ const (
 
 // New creates a new workspace manager
 func New(config Configuration, client client.Client, rawClient kubernetes.Interface, cp *layer.Provider) (*Manager, error) {
-	ingressPortAllocator, err := NewIngressPortAllocator(config.IngressPortAllocator, client, config.Namespace, config.WorkspacePortURLTemplate, config.GitpodHostURL)
-	if err != nil {
-		return nil, xerrors.Errorf("error initializing IngressPortAllocator: %w", err)
-	}
-
 	wsdaemonConnfactory, _ := newWssyncConnectionFactory(config)
 	m := &Manager{
-		Config:               config,
-		Clientset:            client,
-		RawClient:            rawClient,
-		Content:              cp,
-		activity:             make(map[string]time.Time),
-		subscribers:          make(map[string]chan *api.SubscribeResponse),
-		wsdaemonPool:         grpcpool.New(wsdaemonConnfactory),
-		ingressPortAllocator: ingressPortAllocator,
+		Config:       config,
+		Clientset:    client,
+		RawClient:    rawClient,
+		Content:      cp,
+		activity:     make(map[string]time.Time),
+		subscribers:  make(map[string]chan *api.SubscribeResponse),
+		wsdaemonPool: grpcpool.New(wsdaemonConnfactory),
 	}
 	m.metrics = newMetrics(m)
 	m.OnChange = m.onChange
@@ -143,7 +135,6 @@ func Register(grpcServer *grpc.Server, manager *Manager) {
 // to function properly anymore.
 func (m *Manager) Close() {
 	m.wsdaemonPool.Close()
-	m.ingressPortAllocator.Stop()
 }
 
 // StartWorkspace creates a new running workspace within the manager's cluster
@@ -223,22 +214,11 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	// mandatory Theia service
 	servicePrefix := getServicePrefix(req)
 	theiaServiceName := getTheiaServiceName(servicePrefix)
-	alloc, err := m.ingressPortAllocator.UpdateAllocatedPorts(req.Metadata.MetaId, theiaServiceName, []int{int(startContext.IDEPort)})
-	if err != nil {
-		return nil, err
-	}
-	serializedPorts, err := alloc.Marshal()
-	if err != nil {
-		return nil, err
-	}
 	theiaService := corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      theiaServiceName,
 			Namespace: m.Config.Namespace,
 			Labels:    startContext.Labels,
-			Annotations: map[string]string{
-				ingressPortsAnnotation: string(serializedPorts),
-			},
 		},
 		Spec: corev1.ServiceSpec{
 			Type: corev1.ServiceTypeClusterIP,
@@ -751,42 +731,24 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 			PropagationPolicy: &propagationPolicy,
 		})
 
-		m.ingressPortAllocator.FreeAllocatedPorts(service.Name)
-
 		tracing.LogEvent(span, "port service deleted")
 	} else {
 		// we've made it here which means we need to actually patch the service
 		service.Spec = *spec
 
-		// serialize allocated ports mapping
-		var portsToAllocate []int
 		for _, p := range service.Spec.Ports {
-			portsToAllocate = append(portsToAllocate, int(p.Port))
-		}
-		alloc, err := m.ingressPortAllocator.UpdateAllocatedPorts(metaID, service.Name, portsToAllocate)
-		if err != nil {
-			return nil, xerrors.Errorf("cannot allocate port: %w", err)
-		}
-		serializedPorts, err := alloc.Marshal()
-		if err != nil {
-			return nil, xerrors.Errorf("cannot allocate port: %w", err)
-		}
-		if service.Annotations == nil {
-			service.Annotations = make(map[string]string)
-		}
-		service.Annotations[ingressPortsAnnotation] = string(serializedPorts)
-
-		for _, p := range service.Spec.Ports {
-			ingressPort, _ := alloc.AllocatedPort(int(p.Port))
 			url, err := renderWorkspacePortURL(m.Config.WorkspacePortURLTemplate, portURLContext{
 				Host:          m.Config.GitpodHostURL,
 				ID:            req.Id,
-				IngressPort:   fmt.Sprint(ingressPort),
+				IngressPort:   fmt.Sprint(p.Port),
 				Prefix:        servicePrefix,
 				WorkspacePort: fmt.Sprint(p.Port),
 			})
 			if err != nil {
 				return nil, xerrors.Errorf("cannot render public URL for %d: %w", p.Port, err)
+			}
+			if service.Annotations == nil {
+				service.Annotations = map[string]string{}
 			}
 			service.Annotations[fmt.Sprintf("gitpod/port-url-%d", p.Port)] = url
 		}
