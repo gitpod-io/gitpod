@@ -12,11 +12,12 @@ You can define VS Code as your default editor in the _Feature Preview_ section i
 
 **Contributors**: [@akosyakov](https://github.com/akosyakov), [@svenefftinge](https://github.com/svenefftinge)
 
+## Miscellaneous
 
-## Deploy Gitpod in an air-gapped network
-
-You can now [self-host Gitpod](https://www.gitpod.io/self-hosted/) in a network that is isolated from the internet. Additional details on this feature are available in [PR #3228](https://github.com/gitpod-io/gitpod/pull/3228).
-
-_What is an air-gapped network?_: [This Wikipedia article](https://en.wikipedia.org/wiki/Air_gap_(networking)) answer that question in detail.
-
-**Contributors**: [@corneliusludmann](https://github.com/corneliusludmann), [@geropl](https://github.com/geropl)
+* [#3087](https://github.com/gitpod-com/gitpod/pull/3087) - Remove the privileged feature flag. Thanks to [@csweichel](https://github.com/csweichel), [@akosyakov](https://github.com/akosyakov)
+* [#3175](https://github.com/gitpod-com/gitpod/pull/3175) - Fix Env Var context parsing. Thanks to [@AlexTugarev](https://github.com/AlexTugarev), [@csweichel](https://github.com/csweichel)
+* [#3177](https://github.com/gitpod-com/gitpod/pull/3177) - [supervisor] Let supervisor fail when first IDE start fails. Thanks to [@corneliusludmann](https://github.com/corneliusludmann), [@csweichel](https://github.com/csweichel)
+* [#3182](https://github.com/gitpod-com/gitpod/pull/3182) - [registry-facade] Remove feature flag. Thanks to [@csweichel](https://github.com/csweichel), [@corneliusludmann](https://github.com/corneliusludmann)
+* [#3228](https://github.com/gitpod-io/gitpod/pull/3228) - Allow air-gap Gitpod installations. Thanks to [@corneliusludmann](https://github.com/corneliusludmann), [@geropl](https://github.com/geropl)
+* Improved workspace startup time in high-load situations
+* Started to [adopt the controller framework](https://kubernetes.io/docs/concepts/architecture/controller/) which will lead to Gitpod producing less load on the Kubernetes API
