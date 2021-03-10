@@ -86,6 +86,17 @@ module "certmanager" {
 # Gitpod
 #
 
+resource "random_password" "minio_access_key" {
+    length = 10
+    special = false
+}
+
+resource "random_password" "minio_secret_key" {
+    length = 20
+    special = false
+}
+
+
 module "gitpod" {
   source = "../../modules/gitpod"
 
@@ -94,6 +105,10 @@ module "gitpod" {
   values             = file("values.yaml")
   dns_values         = module.dns.values
   certificate_values = module.certmanager.values
+  storage_values     = templatefile("./templates/storage_values.tpl", {
+      access_key = random_password.minio_access_key.result
+      secret_key = random_password.minio_secret_key.result
+  })
   license            = var.license
   gitpod = {
     repository   = var.gitpod_repository

@@ -54,13 +54,11 @@ https://www.terraform.io/docs/backends/types/gcs.html
 A file has to be created to set every variable needed by the Terraform script, i.e. `project.auto.tfvars`. Using the ending `.auto.tfvars` the file is automatically recognized by Terraform.
 
 ```
-project   = "PROJECT_ID"
-region    = "europe-west3"
-dns_name = "your-domain.com"
-container_registry = {
-  location = "EU"
-}
-certificate_email = "certificates@your-domain.com"
+certificate_email = <EMAIL>
+gitpod_chart = <CHART_NAME or PATH_TO_CHART> # e.g. "/workspace/gitpod/chart"
+gitpod_repository = <"null" for a local chart and "https://charts.gitpod.io" for the online repo>
+gitpod_version = <GITPOD_VERSION>
+location = <GCP location where the Kubernetes cluster shall be created>
+project = <GCP_PROJECT_ID>
+zone_name = <GCP_DNS_ZONE>
 ```
-
-Several OAuth provider could be added ([docs.gitpod.io](https://www.gitpod.io/docs/self-hosted/latest/install/oauth/)).
