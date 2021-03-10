@@ -64,7 +64,7 @@ var (
 		GitpodInstallation: &GitpodInstallation{
 			HostName:            "test-domain.com",
 			Scheme:              "https",
-			WorkspaceHostSuffix: "",
+			WorkspaceHostSuffix: ".ws.test-domain.com",
 		},
 		BlobServer: &BlobServerConfig{
 			Host:   blobServeHost,
@@ -204,10 +204,10 @@ func TestRoutes(t *testing.T) {
 				Header: http.Header{
 					"Content-Type": {"text/html; charset=utf-8"},
 					"Location": {
-						"https://test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__/favicon.ico",
+						"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__/favicon.ico",
 					},
 				},
-				Body: "<a href=\"https://test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__/favicon.ico\">See Other</a>.\n\n",
+				Body: "<a href=\"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__/favicon.ico\">See Other</a>.\n\n",
 			},
 		},
 		{
@@ -220,9 +220,9 @@ func TestRoutes(t *testing.T) {
 				Status: http.StatusSeeOther,
 				Header: http.Header{
 					"Content-Type": {"text/html; charset=utf-8"},
-					"Location":     {"https://test-domain.com/blobserve/gitpod-io/ide:latest/__files__/"},
+					"Location":     {"https://blobserve.ws.test-domain.com/gitpod-io/ide:latest/__files__/"},
 				},
-				Body: "<a href=\"https://test-domain.com/blobserve/gitpod-io/ide:latest/__files__/\">See Other</a>.\n\n",
+				Body: "<a href=\"https://blobserve.ws.test-domain.com/gitpod-io/ide:latest/__files__/\">See Other</a>.\n\n",
 			},
 		},
 		{
@@ -436,9 +436,9 @@ func TestRoutes(t *testing.T) {
 				Status: http.StatusSeeOther,
 				Header: http.Header{
 					"Content-Type": {"text/html; charset=utf-8"},
-					"Location":     {"https://test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__/main.js"},
+					"Location":     {"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__/main.js"},
 				},
-				Body: "<a href=\"https://test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__/main.js\">See Other</a>.\n\n",
+				Body: "<a href=\"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__/main.js\">See Other</a>.\n\n",
 			},
 		},
 		{
@@ -461,9 +461,9 @@ func TestRoutes(t *testing.T) {
 				Status: http.StatusSeeOther,
 				Header: http.Header{
 					"Content-Type": {"text/html; charset=utf-8"},
-					"Location":     {"https://test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__/main.js"},
+					"Location":     {"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__/main.js"},
 				},
-				Body: "<a href=\"https://test-domain.com/blobserve/gitpod-io/supervisor:latest/__files__/main.js\">See Other</a>.\n\n",
+				Body: "<a href=\"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__/main.js\">See Other</a>.\n\n",
 			},
 		},
 		{
