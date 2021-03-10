@@ -4,7 +4,7 @@
 
 FROM gitpod/workspace-full-vnc:latest
 
-ENV TRIGGER_REBUILD 5
+ENV TRIGGER_REBUILD 6
 
 USER root
 
@@ -84,7 +84,8 @@ RUN curl -fsSL https://packagecloud.io/datawireio/telepresence/gpgkey | apt-key 
         iproute2 \
         iptables \
         net-tools \
-        telepresence=0.94
+        socat \
+        telepresence=0.109
 
 ### Toxiproxy CLI
 RUN curl -fsSL -o /usr/bin/toxiproxy https://github.com/Shopify/toxiproxy/releases/download/v2.1.4/toxiproxy-cli-linux-amd64 \
