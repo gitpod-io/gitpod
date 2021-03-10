@@ -580,27 +580,14 @@ func (t *blobserveTransport) RoundTrip(req *http.Request) (resp *http.Response, 
 
 func (t *blobserveTransport) redirect(image string, req *http.Request) (*http.Response, error) {
 	path := strings.TrimPrefix(req.URL.Path, "/"+image)
-
-	var location string
-	if t.Config.GitpodInstallation.WorkspaceHostSuffix != "" {
-		location = fmt.Sprintf("%s://%s%s/%s%s%s",
-			t.Config.GitpodInstallation.Scheme,
-			"blobserve",
-			t.Config.GitpodInstallation.WorkspaceHostSuffix,
-			image,
-			imagePathSeparator,
-			path,
-		)
-	} else {
-		location = fmt.Sprintf("%s://%s/%s/%s%s%s",
-			t.Config.GitpodInstallation.Scheme,
-			t.Config.GitpodInstallation.HostName,
-			"blobserve",
-			image,
-			imagePathSeparator,
-			path,
-		)
-	}
+	location := fmt.Sprintf("%s://%s%s/%s%s%s",
+		t.Config.GitpodInstallation.Scheme,
+		"blobserve",
+		t.Config.GitpodInstallation.WorkspaceHostSuffix,
+		image,
+		imagePathSeparator,
+		path,
+	)
 
 	header := make(http.Header, 2)
 	header.Set("Location", location)

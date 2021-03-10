@@ -67,10 +67,6 @@ module "gitpod" {
         remoteStorage:
           minio:
             region: ${var.region}
-      
-      # make pathAndHost work
-      wsProxy:
-        disabled: false
 
       proxy:
         certbot:

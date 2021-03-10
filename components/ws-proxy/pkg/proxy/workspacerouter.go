@@ -7,7 +7,6 @@ package proxy
 import (
 	"net/http"
 	"regexp"
-	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -144,64 +143,6 @@ func matchBlobserveHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 	}
 }
 
-// PortBasedRouter is a WorkspaceRouter which handles port-based ingress to workspaces
-func portBasedRouter(r *mux.Router, wsInfoProvider WorkspaceInfoProvider, routePorts bool) *mux.Router {
-	// sadly using middleware does not work here because it is executed _after_ matchers, so we resort to applying workspace coords in the matcher
-	matchWorkspaceCoords := func(req *http.Request, m *mux.RouteMatch) bool {
-		if m.Vars == nil {
-			m.Vars = make(map[string]string)
-		}
-		publicPort, err := getPublicPortFromPortReq(req)
-		if err != nil {
-			log.Error(err)
-			m.Vars[routerErrorCode] = "502"
-			return false
-		}
-
-		coords := wsInfoProvider.WorkspaceCoords(publicPort)
-		if coords == nil {
-			log.Debugf("no match for port request to: '%s' (host), '%s' (url)", req.Host, req.URL.String())
-			m.Vars[routerErrorCode] = "404"
-			return false
-		}
-		m.Vars[workspaceIDIdentifier] = coords.ID
-		if coords.Port != "" {
-			m.Vars[workspacePortIdentifier] = coords.Port
-		}
-
-		if coords.ID == "" {
-			return false
-		}
-
-		if routePorts {
-			return coords.Port != ""
-		}
-
-		return true
-	}
-
-	// as we can not respond from within the matcher itself we handle resolve errors like this:
-	//  1. write error codes to vars(req)
-	//	2. rely on matcher mismatching
-	//	3. respond with router error from NotFoundHandler
-	r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		vars := mux.Vars(req)
-		codeStr := vars[routerErrorCode]
-		if codeStr == "" {
-			log.Debugf("unable to resolve port request to: %s", req.URL.String())
-			return
-		}
-		code, err := strconv.Atoi(codeStr)
-		if err != nil {
-			w.WriteHeader(502)
-			return
-		}
-		w.WriteHeader(code)
-	})
-
-	return r.MatcherFunc(matchWorkspaceCoords).Subrouter()
-}
-
 // getPublicPortFromPortReq extracts the public port from requests to "exposed ports"
 func getPublicPortFromPortReq(req *http.Request) (string, error) {
 	parts := strings.SplitN(req.Host, ":", 2)
@@ -222,101 +163,5 @@ func getWorkspaceCoords(req *http.Request) WorkspaceCoords {
 	return WorkspaceCoords{
 		ID:   vars[workspaceIDIdentifier],
 		Port: vars[workspacePortIdentifier],
-	}
-}
-
-// PathBasedTheiaRouter routes workspaces using a /workspaceID prefix.
-// Doesn't do port routing.
-func pathBasedTheiaRouter(r *mux.Router, wsInfoProvider WorkspaceInfoProvider, trimPrefix string) *mux.Router {
-	if trimPrefix == "" {
-		trimPrefix = "/"
-	}
-	trimPrefix = strings.TrimSuffix(trimPrefix, "/") + "/"
-
-	prefixedWorkspaceIDRegex := regexp.MustCompile("^(" + trimPrefix + ")" + workspaceIDRegex)
-	return r.MatcherFunc(func(req *http.Request, match *mux.RouteMatch) (res bool) {
-
-		var wsID string
-		defer func() {
-			log.WithField("workspaceId", wsID).WithField("matches", res).WithField("URL", req.URL.String()).Debug("PathBasedTheiaRouter")
-
-			if !res || wsID == "" {
-				return
-			}
-
-			req.URL.Path = strings.TrimPrefix(req.URL.Path, trimPrefix+wsID)
-			if req.URL.Path == "" {
-				req.URL.Path = "/"
-			}
-		}()
-
-		var ok bool
-		if wsID, ok = match.Vars[workspaceIDIdentifier]; ok {
-			return true
-		}
-
-		matches := prefixedWorkspaceIDRegex.FindStringSubmatch(req.URL.Path)
-		if len(matches) < 3 {
-			return false
-		}
-
-		wsID = matches[2]
-		if wsID == "" {
-			return false
-		}
-
-		if wsInfoProvider.WorkspaceInfo(req.Context(), wsID) == nil {
-			log.WithFields(log.OWI("", wsID, "")).Debug("PathBasedTheiaRouter: no workspace info found")
-			return false
-		}
-
-		match.Vars = map[string]string{
-			workspaceIDIdentifier: wsID,
-		}
-		return true
-	}).Subrouter()
-}
-
-func pathBasedBlobserveRouter(r *mux.Router) *mux.Router {
-	return r.MatcherFunc(func(req *http.Request, match *mux.RouteMatch) (res bool) {
-		if _, ok := match.Vars["blobserve"]; ok {
-			return true
-		}
-
-		if !strings.HasPrefix(req.URL.Path, "/blobserve") {
-			return false
-		}
-
-		req.URL.Path = strings.TrimPrefix(req.URL.Path, "/blobserve")
-		if req.URL.Path == "" {
-			req.URL.Path = "/"
-		}
-
-		if match.Vars == nil {
-			match.Vars = make(map[string]string)
-		}
-		match.Vars["blobserve"] = "true"
-
-		return true
-	}).Subrouter()
-}
-
-// PathAndPortRouter routes workspace access using the URL's path (/wsid prefix) and port access using the request's port
-func PathAndPortRouter(trimPrefix string) WorkspaceRouter {
-	return func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (theiaRouter *mux.Router, portRouter *mux.Router, blobserveRouter *mux.Router) {
-		theiaRouter = pathBasedTheiaRouter(r, wsInfoProvider, trimPrefix)
-		blobserveRouter = pathBasedBlobserveRouter(r)
-		portRouter = portBasedRouter(r, wsInfoProvider, true)
-		return
-	}
-}
-
-// PathAndHostRouter routes workspace access using the URL's path (/wsid prefix) and port access using the Host header
-func PathAndHostRouter(trimPrefix, header, wsHostSuffix string) WorkspaceRouter {
-	return func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (theiaRouter *mux.Router, portRouter *mux.Router, blobserveRouter *mux.Router) {
-		theiaRouter = pathBasedTheiaRouter(r, wsInfoProvider, trimPrefix)
-		blobserveRouter = pathBasedBlobserveRouter(r)
-		_, portRouter, _ = HostBasedRouter(header, wsHostSuffix)(r, wsInfoProvider)
-		return
 	}
 }

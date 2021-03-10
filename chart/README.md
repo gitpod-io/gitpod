@@ -84,10 +84,6 @@ introduces the most important options you likely want to review and tune for you
 | `hostname`           | The Hostname your installation is available at | `localhost`                                             |
 | `certificatesSecret` | Configures certificates for your domain        | `{}`                                                    |
 
-There are several options how to enable ingress into your Gitpod installation. They mostly hinge on the fact which kind of certificate are available:
- - `noDomain` requires no domain nor certificate but offers HTTP only
- - `hosts` enables all features and full HTTPS support but requires wilcard HTTPS certificates
- - `pathAndHost` is a tradeoff that works with non-wildcard HTTPS certificates
 Compare [values.yaml](./values.yaml) for details.
 
 For more details and a complete example using `hosts` see [here](https://www.gitpod.io/docs/self-hosted/latest/install/configure-ingress/).

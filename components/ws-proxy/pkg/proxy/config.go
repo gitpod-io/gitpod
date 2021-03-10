@@ -92,6 +92,7 @@ func (c *GitpodInstallation) Validate() error {
 	return validation.ValidateStruct(c,
 		validation.Field(&c.Scheme, validation.Required),
 		validation.Field(&c.HostName, validation.Required), // TODO IP ONLY: Check if there is any dependency. If yes, remove it.
+		validation.Field(&c.WorkspaceHostSuffix, validation.Required),
 	)
 }
 
