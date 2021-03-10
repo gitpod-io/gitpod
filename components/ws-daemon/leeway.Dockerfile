@@ -2,7 +2,10 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM alpine:latest
+FROM alpine:3.13
+
+RUN apk upgrade \
+  && rm -rf /var/cache/apk/*
 
 ## Installing coreutils is super important here as otherwise the loopback device creation fails!
 RUN apk add --no-cache git bash openssh-client lz4 e2fsprogs coreutils tar runc strace
