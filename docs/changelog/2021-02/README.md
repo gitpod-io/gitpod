@@ -19,5 +19,5 @@ You can define VS Code as your default editor in the _Feature Preview_ section i
 * [#3177](https://github.com/gitpod-com/gitpod/pull/3177) - [supervisor] Let supervisor fail when first IDE start fails. Thanks to [@corneliusludmann](https://github.com/corneliusludmann), [@csweichel](https://github.com/csweichel)
 * [#3182](https://github.com/gitpod-com/gitpod/pull/3182) - [registry-facade] Remove feature flag. Thanks to [@csweichel](https://github.com/csweichel), [@corneliusludmann](https://github.com/corneliusludmann)
 * [#3228](https://github.com/gitpod-io/gitpod/pull/3228) - Allow air-gap Gitpod installations. Thanks to [@corneliusludmann](https://github.com/corneliusludmann), [@geropl](https://github.com/geropl)
-* Improved workspace startup time in high-load situations
-* Started to [adopt the controller framework](https://kubernetes.io/docs/concepts/architecture/controller/) which will lead to Gitpod producing less load on the Kubernetes API
+* Improved workspace startup time in high-load situations. Thanks to [@geropl](https://github.com/geropl)
+* Started to [adopt the controller framework](https://kubernetes.io/docs/concepts/architecture/controller/) which will lead to Gitpod producing less load on the Kubernetes API. Thanks to [@aledbf](https://github.com/aledbf)
