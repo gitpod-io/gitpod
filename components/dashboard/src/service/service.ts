@@ -6,8 +6,8 @@
 
 import { GitpodClient, GitpodServer, GitpodServerPath, GitpodServiceImpl } from '@gitpod/gitpod-protocol';
 import { WebSocketConnectionProvider } from '@gitpod/gitpod-protocol/lib/messaging/browser/connection';
-import { createWindowMessageConnection } from '@gitpod/gitpod-protocol/lib/messaging/browser/window-connection';
-import { JsonRpcProxy, JsonRpcProxyFactory } from '@gitpod/gitpod-protocol/lib/messaging/proxy-factory';
+// import { createWindowMessageConnection } from '@gitpod/gitpod-protocol/lib/messaging/browser/window-connection';
+import { JsonRpcProxy /* , JsonRpcProxyFactory */ } from '@gitpod/gitpod-protocol/lib/messaging/proxy-factory';
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 // import { gitpodServiceMock } from './service-mock';
@@ -19,12 +19,13 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
     let reconnect = () => {
         console.log("WebSocket reconnect not possible.");
     }
-    if (window.top !== window.self) {
-        const connection = createWindowMessageConnection('gitpodServer', window.parent, '*');
-        const factory = new JsonRpcProxyFactory<S>();
-        proxy = factory.createProxy();
-        factory.listen(connection);
-    } else {
+    // FIXME: https://gitpod.slack.com/archives/C01KGM9BUNS/p1615456669011600
+    // if (window.top !== window.self) {
+    //     const connection = createWindowMessageConnection('gitpodServer', window.parent, '*');
+    //     const factory = new JsonRpcProxyFactory<S>();
+    //     proxy = factory.createProxy();
+    //     factory.listen(connection);
+    // } else {
         let host = gitpodHostUrl
             .asWebsocket()
             .with({ pathname: GitpodServerPath })
@@ -51,7 +52,7 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
         if (_websocket && "reconnect" in _websocket) {
             reconnect = () => { (_websocket as any).reconnect() };
         }
-    }
+    // }
     const service = new GitpodServiceImpl<C, S>(proxy);
     (service as any).reconnect = reconnect;
     return service;
