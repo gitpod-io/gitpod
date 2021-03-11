@@ -24,6 +24,7 @@ import (
 
 // APIInterface wraps the
 type APIInterface interface {
+	AdminBlockUser(ctx context.Context, req *AdminBlockUserRequest) (err error)
 	GetLoggedInUser(ctx context.Context) (res *User, err error)
 	UpdateLoggedInUser(ctx context.Context, user *User) (res *User, err error)
 	GetAuthProviders(ctx context.Context) (res []*AuthProviderInfo, err error)
@@ -89,6 +90,8 @@ type APIInterface interface {
 type FunctionName string
 
 const (
+	// FunctionAdminBlockUser is the name of the adminBlockUser function
+	FunctionAdminBlockUser FunctionName = "adminBlockUser"
 	// FunctionGetLoggedInUser is the name of the getLoggedInUser function
 	FunctionGetLoggedInUser FunctionName = "getLoggedInUser"
 	// FunctionUpdateLoggedInUser is the name of the updateLoggedInUser function
@@ -325,6 +328,23 @@ func (gp *APIoverJSONRPC) handler(ctx context.Context, conn *jsonrpc2.Conn, req 
 		}
 	}
 
+	return
+}
+
+// AdminBlockUser calls adminBlockUser on the server
+func (gp *APIoverJSONRPC) AdminBlockUser(ctx context.Context, message *AdminBlockUserRequest) (err error) {
+	if gp == nil {
+		err = errNotConnected
+		return
+	}
+	var _params []interface{}
+	_params = append(_params, message)
+
+	var _result interface{}
+	err = gp.C.Call(ctx, "adminBlockUser", _params, &_result)
+	if err != nil {
+		return err
+	}
 	return
 }
 
@@ -1918,6 +1938,12 @@ type TakeSnapshotOptions struct {
 // PreparePluginUploadParams is the PreparePluginUploadParams message type
 type PreparePluginUploadParams struct {
 	FullPluginName string `json:"fullPluginName,omitempty"`
+}
+
+// AdminBlockUserRequest is the AdminBlockUserRequest message type
+type AdminBlockUserRequest struct {
+	UserID    string `json:"id,omitempty"`
+	IsBlocked bool   `json:"blocked,omitempty"`
 }
 
 // PickAuthProviderEntryHostOwnerIDType is the PickAuthProviderEntryHostOwnerIDType message type
