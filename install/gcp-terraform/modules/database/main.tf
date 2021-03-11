@@ -14,12 +14,15 @@ locals {
 # https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/google_project_service
 resource "google_project_service" "database" {
   count   = length(local.google_services)
-  project = var.project
+  project = data.google_project.gitpod_database.project_id
   service = local.google_services[count.index]
 
   disable_dependent_services = false
   disable_on_destroy         = false
 }
+
+
+data "google_project" "gitpod_database" {}
 
 #
 # Network Configuration
@@ -31,7 +34,7 @@ resource "google_compute_global_address" "gitpod" {
   purpose       = "VPC_PEERING"
   prefix_length = 16
   network       = var.network.id
-  project       = var.project
+  project       = data.google_project.gitpod_database.project_id
 }
 
 resource "google_service_networking_connection" "gitpod" {
@@ -47,14 +50,14 @@ resource "google_service_networking_connection" "gitpod" {
 #
 
 resource "google_service_account" "gitpod_database" {
-  account_id   = var.name
-  display_name = var.name
-  description  = "Gitpod Database Account ${var.name}"
-  project      = var.project
+  account_id   = "${var.name}-${random_id.database.hex}"
+  display_name = "${var.name}-${random_id.database.hex}"
+  description  = "Gitpod Database Account for database ${var.name}-${random_id.database.hex}"
+  project      = data.google_project.gitpod_database.project_id
 }
 
 resource "google_project_iam_binding" "gitpod_database" {
-  project = var.project
+  project = data.google_project.gitpod_database.project_id
   role    = "roles/cloudsql.client"
   members = [
     "serviceAccount:${google_service_account.gitpod_database.email}"
@@ -110,7 +113,7 @@ resource "google_sql_user" "gitpod" {
   instance = google_sql_database_instance.gitpod.name
   host     = "10.%"
   password = random_password.gitpod_db_user.result
-  project  = var.project
+  project  = data.google_project.gitpod_database.project_id
 }
 
 

@@ -11,6 +11,7 @@ provider "google" {
 data "google_client_config" "provider" {}
 
 provider "kubernetes" {
+  config_path            = ".kubeconfig"
   host                   = module.kubernetes.cluster.endpoint
   token                  = data.google_client_config.provider.access_token
   cluster_ca_certificate = base64decode(module.kubernetes.cluster.master_auth[0].cluster_ca_certificate)

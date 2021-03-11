@@ -62,4 +62,4 @@ spec:
         secret:
           secretName: gcloud-sql-token
 {{ toYaml .Values.defaults | indent 6 }}
-{{- end -}}
+{{- end }}

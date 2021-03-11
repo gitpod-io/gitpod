@@ -12,15 +12,6 @@ variable "location" {
   type = string
 }
 
-variable "container_registry" {
-  type = object({
-    location = string
-  })
-  default = {
-    location = "EU"
-  }
-}
-
 variable "zone_name" {
   type = string
 }

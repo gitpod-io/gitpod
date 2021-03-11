@@ -3,5 +3,5 @@
 
 installPodSecurityPolicies: true
 imagePrefix: ${image_prefix}
-version: ${version}
 license: ${license}
+version: ${version}

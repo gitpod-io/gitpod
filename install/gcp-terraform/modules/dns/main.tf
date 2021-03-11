@@ -5,11 +5,13 @@
 
 
 locals {
-  dns_prefixes = ["", "*.", "*.ws."]
   google_services = [
     "dns.googleapis.com",
     "compute.googleapis.com"
   ]
+  region      = trimsuffix(var.location, local.zone_suffix)
+  zone_suffix = regex("-[a-z]$", var.location)
+  shortname   = trimsuffix("ws-${var.gitpod.shortname}", "-")
 }
 
 # https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/dns_managed_zone
@@ -30,18 +32,28 @@ data "google_dns_managed_zone" "gitpod" {
 resource "google_compute_address" "gitpod" {
   name    = var.name
   project = var.project
-  region  = var.region
+  region  = local.region
 }
 
 resource "google_dns_record_set" "gitpod" {
-  count        = length(local.dns_prefixes)
-  name         = "${local.dns_prefixes[count.index]}${var.subdomain}.${data.google_dns_managed_zone.gitpod.dns_name}"
+  count        = length(var.dns_prefixes)
+  name         = trimprefix("${trimsuffix(var.dns_prefixes[count.index], ".")}.${var.subdomain}.${data.google_dns_managed_zone.gitpod.dns_name}", ".")
   type         = "A"
   ttl          = 300
   managed_zone = data.google_dns_managed_zone.gitpod.name
   rrdatas      = [google_compute_address.gitpod.address]
   project      = var.project
 }
+
+resource "google_dns_record_set" "gitpod_ws" {
+  name         = "*.${local.shortname}.${var.subdomain}.${data.google_dns_managed_zone.gitpod.dns_name}"
+  type         = "A"
+  ttl          = 300
+  managed_zone = data.google_dns_managed_zone.gitpod.name
+  rrdatas      = [google_compute_address.gitpod.address]
+  project      = var.project
+}
+
 
 #
 # Google Service Account
@@ -84,5 +96,6 @@ data "template_file" "values" {
   vars = {
     hostname       = local.hostname
     loadBalancerIP = google_compute_address.gitpod.address
+    shortname      = var.gitpod.shortname
   }
 }

@@ -3,10 +3,6 @@
  * Licensed under the MIT License. See License-MIT.txt in the project root for license information.
  */
 
-
-
-
-
 #
 # Gitpod
 #
@@ -19,14 +15,17 @@ data "template_file" "values" {
   template = file("${path.module}/templates/values.tpl")
   vars = {
     image_prefix = var.gitpod.image_prefix
-    version      = var.gitpod.version
     license      = var.license
+    version      = var.gitpod.version
   }
 }
 
 resource "helm_release" "gitpod" {
-  name  = "gitpod"
-  chart = "${path.root}/${var.gitpod.chart}"
+  name = "gitpod"
+
+  repository = var.gitpod.repository
+  chart      = var.gitpod.chart
+  version    = var.gitpod.version
 
   namespace         = var.namespace
   create_namespace  = false

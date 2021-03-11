@@ -22,6 +22,8 @@ locals {
     "container.googleapis.com",
     "logging.googleapis.com",
   ]
+  region      = trimsuffix(var.location, local.zone_suffix)
+  zone_suffix = regex("-[a-z]$", var.location)
 }
 
 # https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/google_project_service
@@ -37,9 +39,13 @@ resource "google_project_service" "kubernetes" {
 resource "google_compute_subnetwork" "gitpod" {
   name                     = var.subnet.name
   ip_cidr_range            = var.subnet.cidr
-  region                   = var.region
+  region                   = local.region
   network                  = var.network
   private_ip_google_access = true
+
+  depends_on = [
+    local.google_services
+  ]
 }
 
 resource "google_service_account" "gitpod" {
@@ -47,6 +53,10 @@ resource "google_service_account" "gitpod" {
   display_name = "${var.name}-nodes"
   description  = "Gitpod Nodes ${var.name}"
   project      = var.project
+
+  depends_on = [
+    local.google_services
+  ]
 }
 
 resource "google_project_iam_member" "gitpod" {
@@ -54,12 +64,16 @@ resource "google_project_iam_member" "gitpod" {
   project = var.project
   role    = local.roles[count.index]
   member  = "serviceAccount:${google_service_account.gitpod.email}"
+
+  depends_on = [
+    local.google_services
+  ]
 }
 
 resource "google_container_cluster" "gitpod" {
   name     = var.name
   project  = var.project
-  location = var.region
+  location = var.location
 
   remove_default_node_pool = true
   initial_node_count       = 1
@@ -93,12 +107,16 @@ resource "google_container_cluster" "gitpod" {
   ip_allocation_policy {}
 
   min_master_version = "1.16"
+
+  depends_on = [
+    local.google_services
+  ]
 }
 
 resource "google_container_node_pool" "gitpod" {
 
   name     = "nodepool-0"
-  location = var.region
+  location = var.location
   cluster  = google_container_cluster.gitpod.name
 
   initial_node_count = 1
