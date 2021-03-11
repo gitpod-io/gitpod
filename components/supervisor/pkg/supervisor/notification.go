@@ -80,22 +80,21 @@ func (srv *NotificationService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint
 
 // Notify sends a notification to the user
 func (srv *NotificationService) Notify(ctx context.Context, req *api.NotifyRequest) (*api.NotifyResponse, error) {
-	log.Log.WithField("NotifyRequest", req).Info("Notify entered")
-	defer log.Log.WithField("NotifyRequest", req).Info("Notify exited")
 	if len(srv.pendingNotifications) >= NotifierMaxPendingNotifications {
 		return nil, status.Error(codes.ResourceExhausted, "Max number of pending notifications exceeded")
 	}
-	var pending = srv.notifySubscribers(req)
+
+	pending := srv.notifySubscribers(req)
 	select {
 	case resp, ok := <-pending.responseChannel:
 		if !ok {
-			log.Log.Error("notify response channel has been closed")
+			log.Error("notify response channel has been closed")
 			return nil, status.Error(codes.Aborted, "response channel closed")
 		}
-		log.Log.WithField("NotifyResponse", resp).Info("sending notify response")
+		log.WithField("NotifyResponse", resp).Info("sending notify response")
 		return resp, nil
 	case <-ctx.Done():
-		log.Log.Info("notify cancelled")
+		log.Info("notify cancelled")
 		srv.mutex.Lock()
 		defer srv.mutex.Unlock()
 		// make sure the notification has not been responded in between these selectors
@@ -125,7 +124,7 @@ func (srv *NotificationService) notifySubscribers(req *api.NotifyRequest) *pendi
 			// all good
 		default:
 			// subscriber doesn't consume messages fast enough
-			log.Log.WithField("subscription", req).Info("Cancelling unresponsive subscriber")
+			log.WithField("subscription", req).Info("Cancelling unresponsive subscriber")
 			delete(srv.subscriptions, subscription.id)
 			subscription.close()
 		}
@@ -146,8 +145,8 @@ func (srv *NotificationService) notifySubscribers(req *api.NotifyRequest) *pendi
 
 // Subscribe subscribes to notifications that are sent to the supervisor
 func (srv *NotificationService) Subscribe(req *api.SubscribeRequest, resp api.NotificationService_SubscribeServer) error {
-	log.Log.WithField("SubscribeRequest", req).Info("Subscribe entered")
-	defer log.Log.WithField("SubscribeRequest", req).Info("Subscribe exited")
+	log.WithField("SubscribeRequest", req).Info("Subscribe entered")
+	defer log.WithField("SubscribeRequest", req).Info("Subscribe exited")
 	subscription := srv.subscribeLocked(req, resp)
 	defer srv.unsubscribeLocked(subscription.id)
 	for {
@@ -161,7 +160,7 @@ func (srv *NotificationService) Subscribe(req *api.SubscribeRequest, resp api.No
 				return status.Errorf(codes.Internal, "Sending notification failed. %s", err)
 			}
 		case <-resp.Context().Done():
-			log.Log.WithField("SubscribeRequest", req).Info("Subscriber cancelled")
+			log.WithField("SubscribeRequest", req).Info("Subscriber cancelled")
 			return nil
 		}
 	}
@@ -176,7 +175,7 @@ func (srv *NotificationService) subscribeLocked(req *api.SubscribeRequest, resp 
 		capacity = SubscriberMaxPendingNotifications
 	}
 	channel := make(chan *api.SubscribeResponse, capacity)
-	log.Log.WithField("pending", len(srv.pendingNotifications)).Info("sending pending notifications")
+	log.WithField("pending", len(srv.pendingNotifications)).Info("sending pending notifications")
 	for id, pending := range srv.pendingNotifications {
 		channel <- pending.message
 		if len(pending.message.Request.Actions) == 0 {
@@ -200,7 +199,7 @@ func (srv *NotificationService) unsubscribeLocked(subscriptionID uint64) {
 	defer srv.mutex.Unlock()
 	subscription, ok := srv.subscriptions[subscriptionID]
 	if !ok {
-		log.Log.Errorf("Could not unsubscribe subscriber")
+		log.Errorf("Could not unsubscribe subscriber")
 		return
 	}
 	delete(srv.subscriptions, subscription.id)
@@ -213,14 +212,14 @@ func (srv *NotificationService) Respond(ctx context.Context, req *api.RespondReq
 	defer srv.mutex.Unlock()
 	pending, ok := srv.pendingNotifications[req.RequestId]
 	if !ok {
-		log.Log.WithFields(map[string]interface{}{
+		log.WithFields(map[string]interface{}{
 			"RequestId": req.RequestId,
 			"Action":    req.Response.Action,
 		}).Info("Invalid or late response to notification")
 		return nil, status.Errorf(codes.DeadlineExceeded, "Invalid or late response to notification")
 	}
 	if !isActionAllowed(req.Response.Action, pending.message.Request) {
-		log.Log.WithFields(map[string]interface{}{
+		log.WithFields(map[string]interface{}{
 			"Notification": pending.message,
 			"Action":       req.Response.Action,
 		}).Error("Invalid user action on notification")
