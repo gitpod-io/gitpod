@@ -22,8 +22,6 @@ packages:
     deps:
       - :lib
       - components/gitpod-protocol:scripts
-    argdeps:
-      - version
     config:
       commands:
         - ["node", "components-gitpod-protocol--scripts/publish.js", "${version}", "components-supervisor-api-typescript-grpc--lib/package"]
