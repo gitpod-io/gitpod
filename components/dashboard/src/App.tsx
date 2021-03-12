@@ -42,6 +42,12 @@ function App() {
         return (<Login gitpodService={gitpodService} />)
     };
 
+    window.addEventListener("hashchange", () => {
+      // Refresh on hash change if the path is '/' (new context URL)
+      if (window.location.pathname === '/') {
+        window.location.reload(true);
+      }
+    }, false);
     const hash = window.location.hash.replace(/^[#/]+/, '');
     if (window.location.pathname === '/' && hash !== '') {
       return <CreateWorkspace contextUrl={hash} gitpodService={gitpodService}/>;
@@ -49,12 +55,6 @@ function App() {
     if (/\/start\/?/.test(window.location.pathname)) {
       return <StartWorkspace workspaceId={hash} gitpodService={gitpodService}/>;
     }
-    window.addEventListener("hashchange", () => {
-      // Refresh on hash change if the path is '/' (new context URL)
-      if (window.location.pathname === '/') {
-        window.location.reload(true);
-      }
-    }, false);
 
     return (
         <BrowserRouter>
