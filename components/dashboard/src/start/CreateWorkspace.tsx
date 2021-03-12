@@ -51,7 +51,7 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
   render() {
     const { contextUrl } = this.props;
     let phase = StartPhase.Checking;
-    let statusMessage = <p className="text-sm text-gray-400">Creating workspace …</p>;
+    let statusMessage = <p className="text-base text-gray-400">Creating workspace …</p>;
     let logsView = undefined;
 
     const error = this.state?.error;
@@ -59,17 +59,17 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
       switch (error.code) {
         case ErrorCodes.CONTEXT_PARSE_ERROR:
           statusMessage = <div className="text-center">
-            <p className="text-sm text-red">Unrecognized context: '{contextUrl}'</p>
-            <p>Learn more about <a className="text-blue" href="https://www.gitpod.io/docs/context-urls/">supported context URLs</a></p>
+            <p className="text-base text-red">Unrecognized context: '{contextUrl}'</p>
+            <p className="text-base mt-2">Learn more about <a className="text-blue" href="https://www.gitpod.io/docs/context-urls/">supported context URLs</a></p>
           </div>;
           break;
         case ErrorCodes.NOT_FOUND:
           statusMessage = <div className="text-center">
-            <p className="text-sm text-red">Not found: {contextUrl}</p>
+            <p className="text-base text-red">Not found: {contextUrl}</p>
           </div>;
           break;
         default:
-          statusMessage = <p className="text-sm text-red">Unknown Error: {JSON.stringify(this.state?.error, null, 2)}</p>;
+          statusMessage = <p className="text-base text-red">Unknown Error: {JSON.stringify(this.state?.error, null, 2)}</p>;
           break;
       }
     }
@@ -81,12 +81,12 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
 
     else if (result?.existingWorkspaces) {
       // FIXME Force create
-      statusMessage = <div className="text-sm text-gray-400">Existing workspaces:<ul>{result.existingWorkspaces.map(w => <li>→ <a className="text-blue" href={w.latestInstance?.ideUrl}>{w.workspace.id}</a></li>)}</ul></div>;
+      statusMessage = <div className="text-base text-gray-400">Existing workspaces:<ul>{result.existingWorkspaces.map(w => <li>→ <a className="text-blue" href={w.latestInstance?.ideUrl}>{w.workspace.id}</a></li>)}</ul></div>;
     }
 
     else if (result?.runningWorkspacePrebuild) {
       phase = StartPhase.Building;
-      statusMessage = <p className="text-sm text-gray-400">⚡Prebuild in progress</p>;
+      statusMessage = <p className="text-base text-gray-400">⚡Prebuild in progress</p>;
       logsView = <Suspense fallback={<div className="m-6 p-4 h-60 w-11/12 lg:w-3/5 flex-shrink-0 rounded-lg" style={{ color: '#8E8787', background: '#ECE7E5' }}>Loading...</div>}>
         <WorkspaceLogs />
       </Suspense>;
@@ -95,6 +95,14 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
     return <StartPage phase={phase} error={!!error}>
       {statusMessage}
       {logsView}
+      <button className="mt-8">Go back to dashboard</button>
+      <p className="mt-10 text-base text-gray-400 flex space-x-2">
+        <a href="https://www.gitpod.io/docs/">Docs</a>
+        <span>—</span>
+        <a href="https://status.gitpod.io/">Status</a>
+        <span>—</span>
+        <a href="https://www.gitpod.io/blog/">Blog</a>
+      </p>
     </StartPage>;
   }
 

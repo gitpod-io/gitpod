@@ -7,9 +7,9 @@ export enum StartPhase {
 };
 
 function ProgressBar(props: { phase: number, error: boolean }) {
-  return <div className="flex mt-8 mb-6">
+  return <div className="flex mt-4 mb-6">
     {[1, 2, 3].map(i => {
-      let classes = 'h-2 w-10 m-2 rounded-full';
+      let classes = 'h-2 w-10 mx-1 my-2 rounded-full';
       if (i < props.phase) {
         // Already passed this phase successfully
         classes += ' bg-green-light';
@@ -52,11 +52,14 @@ export function StartPage(props: StartPageProps) {
     case StartPhase.Starting:
       title = "Starting";
       break;
+    case StartPhase.Running:
+      title = "Starting";
+      break;
   }
   return <div className="h-screen flex bg-white">
     <div className="w-full mt-40 md:mt-60 flex flex-col items-center">
       <img src="/gitpod.svg" className="h-16 flex-shrink-0" />
-      <h3 className="mt-8">{title}</h3>
+      <h3 className="mt-8 text-xl">{title}</h3>
       <ProgressBar phase={props.phase} error={!!props.error}/>
       {props.children}
     </div>
