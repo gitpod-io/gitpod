@@ -26,6 +26,7 @@ import (
 	"kernel.org/pub/linux/libs/security/libcap/cap"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/workspacekit/pkg/lift"
 	"github.com/gitpod-io/gitpod/workspacekit/pkg/seccomp"
 	daemonapi "github.com/gitpod-io/gitpod/ws-daemon/api"
 )
@@ -403,6 +404,13 @@ var ring1Cmd = &cobra.Command{
 				}
 			}()
 		}
+
+		go func() {
+			err := lift.ServeLift(lift.DefaultSocketPath)
+			if err != nil {
+				log.WithError(err).Error("failed to serve ring1 command lift")
+			}
+		}()
 
 		err = cmd.Wait()
 		if err != nil {
