@@ -9,7 +9,7 @@ package supervisor;
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = ".;api";
+option go_package = "github.com/gitpod-io/gitpod/supervisor/api";
 
 service TokenService {
     rpc GetToken(GetTokenRequest) returns (GetTokenResponse) {
@@ -64,7 +64,7 @@ enum TokenReuse {
     // REUSE_NEVER means the token can never be re-used.
     // This mode only makes sense when providing a token in response to a request.
     REUSE_NEVER = 0;
-    
+
     // REUSE_EXACTLY means the token can only be reused when the requested scopes
     // exactly match those of the token.
     REUSE_EXACTLY = 1;
@@ -88,7 +88,7 @@ message ProvideTokenRequest {
     message RegisterProvider {
         string kind = 1;
     }
-    
+
     oneof message {
         RegisterProvider registration = 1;
         SetTokenRequest answer = 2;

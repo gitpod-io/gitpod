@@ -8,13 +8,13 @@ package supervisor;
 
 import "google/api/annotations.proto";
 
-option go_package = ".;api";
+option go_package = "github.com/gitpod-io/gitpod/supervisor/api";
 
 // Notification serivce allows external processes to notify the user and ask for decisions.
 service NotificationService {
 
     // Prompts the user and asks for a decision. Typically called by some external process.
-    // If the list of actions is empty this service returns immediately, 
+    // If the list of actions is empty this service returns immediately,
     // otherwise it blocks until the user has made their choice.
     rpc Notify(NotifyRequest) returns (NotifyResponse) {
         option (google.api.http) = {
