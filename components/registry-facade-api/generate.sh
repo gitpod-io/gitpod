@@ -1,7 +1,18 @@
 #!/bin/bash
 
-set -e
+if [ -n "$DEBUG" ]; then
+  set -x
+fi
 
-go get github.com/golang/protobuf/protoc-gen-go@v1.3.5
-protoc -I. -I../../ --go_out=plugins=grpc:go imagespec.proto
-protoc -I. -I../../ --go_out=plugins=grpc:go provider.proto
+set -o errexit
+set -o nounset
+set -o pipefail
+
+ROOT_DIR=$(cd $(dirname "${BASH_SOURCE}") && pwd -P)/../../
+COMPONENTS_DIR=$ROOT_DIR/components
+
+# include protoc bash functions
+source $ROOT_DIR/scripts/protoc-generator.sh
+
+install_dependencies
+go_protoc $COMPONENTS_DIR
