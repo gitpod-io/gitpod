@@ -293,8 +293,7 @@ export class UserController {
                 }
 
                 // in a special case of the signup process, we're redirecting to /tos even if not required.
-                // if (TosFlow.WithIdentity.is(tosFlowInfo) && tosFlowInfo.termsAcceptanceRequired === false) {
-                if (TosFlow.WithIdentity.is(tosFlowInfo)) {
+                if (TosFlow.WithIdentity.is(tosFlowInfo) && tosFlowInfo.termsAcceptanceRequired === false) {
                     log.info(logContext, '(TOS) Not required.', logPayload);
                     await this.handleTosProceedForNewUser(req, res, authFlow, tosFlowInfo);
                     return;
