@@ -37,7 +37,6 @@ export class GetWorkspacesResponse extends jspb.Message {
     setStatusList(value: Array<WorkspaceStatus>): GetWorkspacesResponse;
     addStatus(value?: WorkspaceStatus, index?: number): WorkspaceStatus;
 
-
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): GetWorkspacesResponse.AsObject;
     static toObject(includeInstance: boolean, msg: GetWorkspacesResponse): GetWorkspacesResponse.AsObject;
@@ -57,25 +56,20 @@ export namespace GetWorkspacesResponse {
 export class StartWorkspaceRequest extends jspb.Message { 
     getId(): string;
     setId(value: string): StartWorkspaceRequest;
-
     getServicePrefix(): string;
     setServicePrefix(value: string): StartWorkspaceRequest;
-
 
     hasMetadata(): boolean;
     clearMetadata(): void;
     getMetadata(): WorkspaceMetadata | undefined;
     setMetadata(value?: WorkspaceMetadata): StartWorkspaceRequest;
 
-
     hasSpec(): boolean;
     clearSpec(): void;
     getSpec(): StartWorkspaceSpec | undefined;
     setSpec(value?: StartWorkspaceSpec): StartWorkspaceRequest;
-
     getType(): WorkspaceType;
     setType(value: WorkspaceType): StartWorkspaceRequest;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StartWorkspaceRequest.AsObject;
@@ -101,7 +95,6 @@ export class StartWorkspaceResponse extends jspb.Message {
     getUrl(): string;
     setUrl(value: string): StartWorkspaceResponse;
 
-
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StartWorkspaceResponse.AsObject;
     static toObject(includeInstance: boolean, msg: StartWorkspaceResponse): StartWorkspaceResponse.AsObject;
@@ -121,10 +114,8 @@ export namespace StartWorkspaceResponse {
 export class StopWorkspaceRequest extends jspb.Message { 
     getId(): string;
     setId(value: string): StopWorkspaceRequest;
-
     getPolicy(): StopWorkspacePolicy;
     setPolicy(value: StopWorkspacePolicy): StopWorkspaceRequest;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StopWorkspaceRequest.AsObject;
@@ -164,7 +155,6 @@ export class DescribeWorkspaceRequest extends jspb.Message {
     getId(): string;
     setId(value: string): DescribeWorkspaceRequest;
 
-
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DescribeWorkspaceRequest.AsObject;
     static toObject(includeInstance: boolean, msg: DescribeWorkspaceRequest): DescribeWorkspaceRequest.AsObject;
@@ -187,10 +177,8 @@ export class DescribeWorkspaceResponse extends jspb.Message {
     clearStatus(): void;
     getStatus(): WorkspaceStatus | undefined;
     setStatus(value?: WorkspaceStatus): DescribeWorkspaceResponse;
-
     getLastactivity(): string;
     setLastactivity(value: string): DescribeWorkspaceResponse;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DescribeWorkspaceResponse.AsObject;
@@ -233,16 +221,13 @@ export class SubscribeResponse extends jspb.Message {
     getStatus(): WorkspaceStatus | undefined;
     setStatus(value?: WorkspaceStatus): SubscribeResponse;
 
-
     hasLog(): boolean;
     clearLog(): void;
     getLog(): WorkspaceLogMessage | undefined;
     setLog(value?: WorkspaceLogMessage): SubscribeResponse;
 
-
     getHeaderMap(): jspb.Map<string, string>;
     clearHeaderMap(): void;
-
 
     getPayloadCase(): SubscribeResponse.PayloadCase;
 
@@ -266,11 +251,8 @@ export namespace SubscribeResponse {
 
     export enum PayloadCase {
         PAYLOAD_NOT_SET = 0,
-    
-    STATUS = 1,
-
-    LOG = 2,
-
+        STATUS = 1,
+        LOG = 2,
     }
 
 }
@@ -278,10 +260,8 @@ export namespace SubscribeResponse {
 export class MarkActiveRequest extends jspb.Message { 
     getId(): string;
     setId(value: string): MarkActiveRequest;
-
     getClosed(): boolean;
     setClosed(value: boolean): MarkActiveRequest;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): MarkActiveRequest.AsObject;
@@ -320,10 +300,8 @@ export namespace MarkActiveResponse {
 export class SetTimeoutRequest extends jspb.Message { 
     getId(): string;
     setId(value: string): SetTimeoutRequest;
-
     getDuration(): string;
     setDuration(value: string): SetTimeoutRequest;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): SetTimeoutRequest.AsObject;
@@ -362,16 +340,13 @@ export namespace SetTimeoutResponse {
 export class ControlPortRequest extends jspb.Message { 
     getId(): string;
     setId(value: string): ControlPortRequest;
-
     getExpose(): boolean;
     setExpose(value: boolean): ControlPortRequest;
-
 
     hasSpec(): boolean;
     clearSpec(): void;
     getSpec(): PortSpec | undefined;
     setSpec(value?: PortSpec): ControlPortRequest;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ControlPortRequest.AsObject;
@@ -412,7 +387,6 @@ export class TakeSnapshotRequest extends jspb.Message {
     getId(): string;
     setId(value: string): TakeSnapshotRequest;
 
-
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): TakeSnapshotRequest.AsObject;
     static toObject(includeInstance: boolean, msg: TakeSnapshotRequest): TakeSnapshotRequest.AsObject;
@@ -433,7 +407,6 @@ export class TakeSnapshotResponse extends jspb.Message {
     getUrl(): string;
     setUrl(value: string): TakeSnapshotResponse;
 
-
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): TakeSnapshotResponse.AsObject;
     static toObject(includeInstance: boolean, msg: TakeSnapshotResponse): TakeSnapshotResponse.AsObject;
@@ -453,10 +426,8 @@ export namespace TakeSnapshotResponse {
 export class ControlAdmissionRequest extends jspb.Message { 
     getId(): string;
     setId(value: string): ControlAdmissionRequest;
-
     getLevel(): AdmissionLevel;
     setLevel(value: AdmissionLevel): ControlAdmissionRequest;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ControlAdmissionRequest.AsObject;
@@ -496,48 +467,39 @@ export class WorkspaceStatus extends jspb.Message {
     getId(): string;
     setId(value: string): WorkspaceStatus;
 
-
     hasMetadata(): boolean;
     clearMetadata(): void;
     getMetadata(): WorkspaceMetadata | undefined;
     setMetadata(value?: WorkspaceMetadata): WorkspaceStatus;
 
-
     hasSpec(): boolean;
     clearSpec(): void;
     getSpec(): WorkspaceSpec | undefined;
     setSpec(value?: WorkspaceSpec): WorkspaceStatus;
-
     getPhase(): WorkspacePhase;
     setPhase(value: WorkspacePhase): WorkspaceStatus;
-
 
     hasConditions(): boolean;
     clearConditions(): void;
     getConditions(): WorkspaceConditions | undefined;
     setConditions(value?: WorkspaceConditions): WorkspaceStatus;
-
     getMessage(): string;
     setMessage(value: string): WorkspaceStatus;
-
 
     hasRepo(): boolean;
     clearRepo(): void;
     getRepo(): content_service_api_initializer_pb.GitStatus | undefined;
     setRepo(value?: content_service_api_initializer_pb.GitStatus): WorkspaceStatus;
 
-
     hasRuntime(): boolean;
     clearRuntime(): void;
     getRuntime(): WorkspaceRuntimeInfo | undefined;
     setRuntime(value?: WorkspaceRuntimeInfo): WorkspaceStatus;
 
-
     hasAuth(): boolean;
     clearAuth(): void;
     getAuth(): WorkspaceAuthentication | undefined;
     setAuth(value?: WorkspaceAuthentication): WorkspaceStatus;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceStatus.AsObject;
@@ -566,27 +528,20 @@ export namespace WorkspaceStatus {
 export class WorkspaceSpec extends jspb.Message { 
     getWorkspaceImage(): string;
     setWorkspaceImage(value: string): WorkspaceSpec;
-
     getIdeImage(): string;
     setIdeImage(value: string): WorkspaceSpec;
-
     getHeadless(): boolean;
     setHeadless(value: boolean): WorkspaceSpec;
-
     getUrl(): string;
     setUrl(value: string): WorkspaceSpec;
-
     clearExposedPortsList(): void;
     getExposedPortsList(): Array<PortSpec>;
     setExposedPortsList(value: Array<PortSpec>): WorkspaceSpec;
     addExposedPorts(value?: PortSpec, index?: number): PortSpec;
-
     getType(): WorkspaceType;
     setType(value: WorkspaceType): WorkspaceSpec;
-
     getTimeout(): string;
     setTimeout(value: string): WorkspaceSpec;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceSpec.AsObject;
@@ -613,16 +568,12 @@ export namespace WorkspaceSpec {
 export class PortSpec extends jspb.Message { 
     getPort(): number;
     setPort(value: number): PortSpec;
-
     getTarget(): number;
     setTarget(value: number): PortSpec;
-
     getVisibility(): PortVisibility;
     setVisibility(value: PortVisibility): PortSpec;
-
     getUrl(): string;
     setUrl(value: string): PortSpec;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): PortSpec.AsObject;
@@ -646,34 +597,25 @@ export namespace PortSpec {
 export class WorkspaceConditions extends jspb.Message { 
     getFailed(): string;
     setFailed(value: string): WorkspaceConditions;
-
     getTimeout(): string;
     setTimeout(value: string): WorkspaceConditions;
-
     getPullingImages(): WorkspaceConditionBool;
     setPullingImages(value: WorkspaceConditionBool): WorkspaceConditions;
-
     getServiceExists(): WorkspaceConditionBool;
     setServiceExists(value: WorkspaceConditionBool): WorkspaceConditions;
-
     getSnapshot(): string;
     setSnapshot(value: string): WorkspaceConditions;
-
     getFinalBackupComplete(): WorkspaceConditionBool;
     setFinalBackupComplete(value: WorkspaceConditionBool): WorkspaceConditions;
-
     getDeployed(): WorkspaceConditionBool;
     setDeployed(value: WorkspaceConditionBool): WorkspaceConditions;
-
     getNetworkNotReady(): WorkspaceConditionBool;
     setNetworkNotReady(value: WorkspaceConditionBool): WorkspaceConditions;
-
 
     hasFirstUserActivity(): boolean;
     clearFirstUserActivity(): void;
     getFirstUserActivity(): google_protobuf_timestamp_pb.Timestamp | undefined;
     setFirstUserActivity(value?: google_protobuf_timestamp_pb.Timestamp): WorkspaceConditions;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceConditions.AsObject;
@@ -702,16 +644,13 @@ export namespace WorkspaceConditions {
 export class WorkspaceMetadata extends jspb.Message { 
     getOwner(): string;
     setOwner(value: string): WorkspaceMetadata;
-
     getMetaId(): string;
     setMetaId(value: string): WorkspaceMetadata;
-
 
     hasStartedAt(): boolean;
     clearStartedAt(): void;
     getStartedAt(): google_protobuf_timestamp_pb.Timestamp | undefined;
     setStartedAt(value?: google_protobuf_timestamp_pb.Timestamp): WorkspaceMetadata;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceMetadata.AsObject;
@@ -734,13 +673,10 @@ export namespace WorkspaceMetadata {
 export class WorkspaceRuntimeInfo extends jspb.Message { 
     getNodeName(): string;
     setNodeName(value: string): WorkspaceRuntimeInfo;
-
     getPodName(): string;
     setPodName(value: string): WorkspaceRuntimeInfo;
-
     getNodeIp(): string;
     setNodeIp(value: string): WorkspaceRuntimeInfo;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceRuntimeInfo.AsObject;
@@ -763,10 +699,8 @@ export namespace WorkspaceRuntimeInfo {
 export class WorkspaceAuthentication extends jspb.Message { 
     getAdmission(): AdmissionLevel;
     setAdmission(value: AdmissionLevel): WorkspaceAuthentication;
-
     getOwnerToken(): string;
     setOwnerToken(value: string): WorkspaceAuthentication;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceAuthentication.AsObject;
@@ -788,49 +722,38 @@ export namespace WorkspaceAuthentication {
 export class StartWorkspaceSpec extends jspb.Message { 
     getWorkspaceImage(): string;
     setWorkspaceImage(value: string): StartWorkspaceSpec;
-
     getIdeImage(): string;
     setIdeImage(value: string): StartWorkspaceSpec;
-
     clearFeatureFlagsList(): void;
     getFeatureFlagsList(): Array<WorkspaceFeatureFlag>;
     setFeatureFlagsList(value: Array<WorkspaceFeatureFlag>): StartWorkspaceSpec;
     addFeatureFlags(value: WorkspaceFeatureFlag, index?: number): WorkspaceFeatureFlag;
 
-
     hasInitializer(): boolean;
     clearInitializer(): void;
     getInitializer(): content_service_api_initializer_pb.WorkspaceInitializer | undefined;
     setInitializer(value?: content_service_api_initializer_pb.WorkspaceInitializer): StartWorkspaceSpec;
-
     clearPortsList(): void;
     getPortsList(): Array<PortSpec>;
     setPortsList(value: Array<PortSpec>): StartWorkspaceSpec;
     addPorts(value?: PortSpec, index?: number): PortSpec;
-
     clearEnvvarsList(): void;
     getEnvvarsList(): Array<EnvironmentVariable>;
     setEnvvarsList(value: Array<EnvironmentVariable>): StartWorkspaceSpec;
     addEnvvars(value?: EnvironmentVariable, index?: number): EnvironmentVariable;
-
     getCheckoutLocation(): string;
     setCheckoutLocation(value: string): StartWorkspaceSpec;
-
     getWorkspaceLocation(): string;
     setWorkspaceLocation(value: string): StartWorkspaceSpec;
-
 
     hasGit(): boolean;
     clearGit(): void;
     getGit(): GitSpec | undefined;
     setGit(value?: GitSpec): StartWorkspaceSpec;
-
     getTimeout(): string;
     setTimeout(value: string): StartWorkspaceSpec;
-
     getAdmission(): AdmissionLevel;
     setAdmission(value: AdmissionLevel): StartWorkspaceSpec;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StartWorkspaceSpec.AsObject;
@@ -861,10 +784,8 @@ export namespace StartWorkspaceSpec {
 export class GitSpec extends jspb.Message { 
     getUsername(): string;
     setUsername(value: string): GitSpec;
-
     getEmail(): string;
     setEmail(value: string): GitSpec;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): GitSpec.AsObject;
@@ -886,10 +807,8 @@ export namespace GitSpec {
 export class EnvironmentVariable extends jspb.Message { 
     getName(): string;
     setName(value: string): EnvironmentVariable;
-
     getValue(): string;
     setValue(value: string): EnvironmentVariable;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): EnvironmentVariable.AsObject;
@@ -912,15 +831,12 @@ export class WorkspaceLogMessage extends jspb.Message {
     getId(): string;
     setId(value: string): WorkspaceLogMessage;
 
-
     hasMetadata(): boolean;
     clearMetadata(): void;
     getMetadata(): WorkspaceMetadata | undefined;
     setMetadata(value?: WorkspaceMetadata): WorkspaceLogMessage;
-
     getMessage(): string;
     setMessage(value: string): WorkspaceLogMessage;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceLogMessage.AsObject;
