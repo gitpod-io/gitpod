@@ -26,7 +26,6 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
 
   constructor(props: CreateWorkspaceProps) {
     super(props);
-    window.addEventListener("hashchange", () => { window.location.reload(true); }, false);
   }
 
   componentDidMount() {
