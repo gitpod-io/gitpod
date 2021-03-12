@@ -118,12 +118,11 @@ async function build(context, version) {
             const releaseFilesTmpDir = exec("mktemp -d", { silent: true }).stdout.trim();
             const releaseTarName = "release.tar.gz";
             exec(`leeway build --werft=true chart:release-tars -Dversion=${version} -DimageRepoBase=${imageRepo} --save ${releaseFilesTmpDir}/${releaseTarName}`);
-            exec(`cd ${releaseFilesTmpDir} && tar xzf ${releaseTarName} && rm -f ${releaseTarName}`)
 
             werft.phase("publish", `publishing GitHub release ${version}...`);
             const prereleaseFlag = semver.prerelease(version) !== null ? "-prerelease" : "";
             const tag = `v${version}`;
-            const releaseBranch = exec("git rev-parse --abbrev-ref HEAD", {silent: true}).stdout.trim();
+            const releaseBranch = context.Repository.ref;
             const description = `Gitpod Self-Hosted ${version}<br/><br/>Docs: https://www.gitpod.io/docs/self-hosted/latest/self-hosted/`;
             exec(`github-release ${prereleaseFlag} gitpod-io/gitpod ${tag} ${releaseBranch} '${description}' "${releaseFilesTmpDir}/*"`);
 
