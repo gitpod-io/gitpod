@@ -6,9 +6,12 @@ package cmd
 
 import (
 	"log"
+	"os"
+	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/spf13/cobra"
 
@@ -32,6 +35,21 @@ var previewCmd = &cobra.Command{
 		url = replaceLocalhostInURL(service, url)
 
 		_, err = service.OpenPreview(theialib.OpenPreviewRequest{URL: url})
+		if err == theialib.ErrNotFound {
+			gpPreviewBrowser := os.Getenv("GP_PREVIEW_BROWSER")
+			if gpPreviewBrowser != "" {
+				gpPreviewArgs := strings.Fields(gpPreviewBrowser)
+				argv0, err := exec.LookPath(gpPreviewArgs[0])
+				if err != nil {
+					log.Fatal(err)
+				}
+				err = syscall.Exec(argv0, append(gpPreviewArgs, url), os.Environ())
+				if err != nil {
+					log.Fatal(err)
+				}
+				return
+			}
+		}
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -49,12 +67,7 @@ func replaceLocalhostInURL(service theialib.TheiaCLIService, url string) string 
 			port, _ = strconv.Atoi(strings.TrimPrefix(segs[1], ":"))
 		}
 
-		resp, err := service.GetPortURL(theialib.GetPortURLRequest{Port: uint16(port)})
-		if err != nil {
-			return input
-		}
-
-		result := resp.URL
+		result := GetWorkspaceURL(port)
 		if !hasScheme {
 			result = strings.TrimPrefix(strings.TrimPrefix(result, "http://"), "https://")
 		}
