@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -8,6 +8,7 @@
 // file: imgbuilder.proto
 
 /* tslint:disable */
+/* eslint-disable */
 
 import * as grpc from "grpc";
 import * as imgbuilder_pb from "./imgbuilder_pb";
@@ -22,45 +23,45 @@ interface IImageBuilderService extends grpc.ServiceDefinition<grpc.UntypedServic
 }
 
 interface IImageBuilderService_IResolveBaseImage extends grpc.MethodDefinition<imgbuilder_pb.ResolveBaseImageRequest, imgbuilder_pb.ResolveBaseImageResponse> {
-    path: string; // "/builder.ImageBuilder/ResolveBaseImage"
-    requestStream: boolean; // false
-    responseStream: boolean; // false
+    path: "/builder.ImageBuilder/ResolveBaseImage";
+    requestStream: false;
+    responseStream: false;
     requestSerialize: grpc.serialize<imgbuilder_pb.ResolveBaseImageRequest>;
     requestDeserialize: grpc.deserialize<imgbuilder_pb.ResolveBaseImageRequest>;
     responseSerialize: grpc.serialize<imgbuilder_pb.ResolveBaseImageResponse>;
     responseDeserialize: grpc.deserialize<imgbuilder_pb.ResolveBaseImageResponse>;
 }
 interface IImageBuilderService_IResolveWorkspaceImage extends grpc.MethodDefinition<imgbuilder_pb.ResolveWorkspaceImageRequest, imgbuilder_pb.ResolveWorkspaceImageResponse> {
-    path: string; // "/builder.ImageBuilder/ResolveWorkspaceImage"
-    requestStream: boolean; // false
-    responseStream: boolean; // false
+    path: "/builder.ImageBuilder/ResolveWorkspaceImage";
+    requestStream: false;
+    responseStream: false;
     requestSerialize: grpc.serialize<imgbuilder_pb.ResolveWorkspaceImageRequest>;
     requestDeserialize: grpc.deserialize<imgbuilder_pb.ResolveWorkspaceImageRequest>;
     responseSerialize: grpc.serialize<imgbuilder_pb.ResolveWorkspaceImageResponse>;
     responseDeserialize: grpc.deserialize<imgbuilder_pb.ResolveWorkspaceImageResponse>;
 }
 interface IImageBuilderService_IBuild extends grpc.MethodDefinition<imgbuilder_pb.BuildRequest, imgbuilder_pb.BuildResponse> {
-    path: string; // "/builder.ImageBuilder/Build"
-    requestStream: boolean; // false
-    responseStream: boolean; // true
+    path: "/builder.ImageBuilder/Build";
+    requestStream: false;
+    responseStream: true;
     requestSerialize: grpc.serialize<imgbuilder_pb.BuildRequest>;
     requestDeserialize: grpc.deserialize<imgbuilder_pb.BuildRequest>;
     responseSerialize: grpc.serialize<imgbuilder_pb.BuildResponse>;
     responseDeserialize: grpc.deserialize<imgbuilder_pb.BuildResponse>;
 }
 interface IImageBuilderService_ILogs extends grpc.MethodDefinition<imgbuilder_pb.LogsRequest, imgbuilder_pb.LogsResponse> {
-    path: string; // "/builder.ImageBuilder/Logs"
-    requestStream: boolean; // false
-    responseStream: boolean; // true
+    path: "/builder.ImageBuilder/Logs";
+    requestStream: false;
+    responseStream: true;
     requestSerialize: grpc.serialize<imgbuilder_pb.LogsRequest>;
     requestDeserialize: grpc.deserialize<imgbuilder_pb.LogsRequest>;
     responseSerialize: grpc.serialize<imgbuilder_pb.LogsResponse>;
     responseDeserialize: grpc.deserialize<imgbuilder_pb.LogsResponse>;
 }
 interface IImageBuilderService_IListBuilds extends grpc.MethodDefinition<imgbuilder_pb.ListBuildsRequest, imgbuilder_pb.ListBuildsResponse> {
-    path: string; // "/builder.ImageBuilder/ListBuilds"
-    requestStream: boolean; // false
-    responseStream: boolean; // false
+    path: "/builder.ImageBuilder/ListBuilds";
+    requestStream: false;
+    responseStream: false;
     requestSerialize: grpc.serialize<imgbuilder_pb.ListBuildsRequest>;
     requestDeserialize: grpc.deserialize<imgbuilder_pb.ListBuildsRequest>;
     responseSerialize: grpc.serialize<imgbuilder_pb.ListBuildsResponse>;
