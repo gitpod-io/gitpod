@@ -86,6 +86,9 @@ export class GCloudStorageClient implements StorageClient {
         }
 
         const bucket = this.storage.bucket(bucketName);
+        if (objectPath.startsWith('/')) {
+            objectPath = objectPath.substring(1)
+        }
         const object = bucket.file(objectPath);
         const [url] = await object.getSignedUrl(config);
         return url;
