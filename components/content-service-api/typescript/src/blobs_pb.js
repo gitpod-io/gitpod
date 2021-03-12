@@ -1,23 +1,28 @@
 /**
-* Copyright (c) 2021 Gitpod GmbH. All rights reserved.
-* Licensed under the GNU Affero General Public License (AGPL).
-* See License-AGPL.txt in the project root for license information.
-*/
+ * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
 
+// source: blobs.proto
 /**
-* @fileoverview
+ * @fileoverview
  * @enhanceable
+ * @suppress {missingRequire} reports error on implicit type usages.
  * @suppress {messageConventions} JS Compiler reports an error if a variable or
  *     field starts with 'MSG_' and isn't a translatable message.
  * @public
  */
 // GENERATED CODE -- DO NOT EDIT!
+/* eslint-disable */
+// @ts-nocheck
 
 var jspb = require('google-protobuf');
 var goog = jspb;
 var global = Function('return this')();
 
 goog.exportSymbol('proto.contentservice.DeleteRequest', null, global);
+goog.exportSymbol('proto.contentservice.DeleteRequest.NameCase', null, global);
 goog.exportSymbol('proto.contentservice.DeleteResponse', null, global);
 goog.exportSymbol('proto.contentservice.DownloadUrlRequest', null, global);
 goog.exportSymbol('proto.contentservice.DownloadUrlResponse', null, global);
@@ -154,13 +159,15 @@ if (goog.DEBUG && !COMPILED) {
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
 /**
- * Creates an object representation of this proto suitable for use in Soy templates.
+ * Creates an object representation of this proto.
  * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
  * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
  * For the list of reserved names please see:
- *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
- * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
- *     for transitional soy proto support: http://goto/soy-param-migration
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
  * @return {!Object}
  */
 proto.contentservice.UploadUrlRequest.prototype.toObject = function(opt_includeInstance) {
@@ -170,8 +177,8 @@ proto.contentservice.UploadUrlRequest.prototype.toObject = function(opt_includeI
 
 /**
  * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Whether to include the JSPB
- *     instance for transitional soy proto support:
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
  *     http://goto/soy-param-migration
  * @param {!proto.contentservice.UploadUrlRequest} msg The msg instance to transform.
  * @return {!Object}
@@ -292,9 +299,12 @@ proto.contentservice.UploadUrlRequest.prototype.getOwnerId = function() {
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.contentservice.UploadUrlRequest} returns this
+ */
 proto.contentservice.UploadUrlRequest.prototype.setOwnerId = function(value) {
-  jspb.Message.setProto3StringField(this, 1, value);
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -307,9 +317,12 @@ proto.contentservice.UploadUrlRequest.prototype.getName = function() {
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.contentservice.UploadUrlRequest} returns this
+ */
 proto.contentservice.UploadUrlRequest.prototype.setName = function(value) {
-  jspb.Message.setProto3StringField(this, 2, value);
+  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 
@@ -322,9 +335,12 @@ proto.contentservice.UploadUrlRequest.prototype.getContentType = function() {
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.contentservice.UploadUrlRequest} returns this
+ */
 proto.contentservice.UploadUrlRequest.prototype.setContentType = function(value) {
-  jspb.Message.setProto3StringField(this, 3, value);
+  return jspb.Message.setProto3StringField(this, 3, value);
 };
 
 
@@ -333,13 +349,15 @@ proto.contentservice.UploadUrlRequest.prototype.setContentType = function(value)
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
 /**
- * Creates an object representation of this proto suitable for use in Soy templates.
+ * Creates an object representation of this proto.
  * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
  * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
  * For the list of reserved names please see:
- *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
- * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
- *     for transitional soy proto support: http://goto/soy-param-migration
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
  * @return {!Object}
  */
 proto.contentservice.UploadUrlResponse.prototype.toObject = function(opt_includeInstance) {
@@ -349,8 +367,8 @@ proto.contentservice.UploadUrlResponse.prototype.toObject = function(opt_include
 
 /**
  * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Whether to include the JSPB
- *     instance for transitional soy proto support:
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
  *     http://goto/soy-param-migration
  * @param {!proto.contentservice.UploadUrlResponse} msg The msg instance to transform.
  * @return {!Object}
@@ -447,9 +465,12 @@ proto.contentservice.UploadUrlResponse.prototype.getUrl = function() {
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.contentservice.UploadUrlResponse} returns this
+ */
 proto.contentservice.UploadUrlResponse.prototype.setUrl = function(value) {
-  jspb.Message.setProto3StringField(this, 1, value);
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -458,13 +479,15 @@ proto.contentservice.UploadUrlResponse.prototype.setUrl = function(value) {
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
 /**
- * Creates an object representation of this proto suitable for use in Soy templates.
+ * Creates an object representation of this proto.
  * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
  * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
  * For the list of reserved names please see:
- *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
- * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
- *     for transitional soy proto support: http://goto/soy-param-migration
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
  * @return {!Object}
  */
 proto.contentservice.DownloadUrlRequest.prototype.toObject = function(opt_includeInstance) {
@@ -474,8 +497,8 @@ proto.contentservice.DownloadUrlRequest.prototype.toObject = function(opt_includ
 
 /**
  * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Whether to include the JSPB
- *     instance for transitional soy proto support:
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
  *     http://goto/soy-param-migration
  * @param {!proto.contentservice.DownloadUrlRequest} msg The msg instance to transform.
  * @return {!Object}
@@ -596,9 +619,12 @@ proto.contentservice.DownloadUrlRequest.prototype.getOwnerId = function() {
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.contentservice.DownloadUrlRequest} returns this
+ */
 proto.contentservice.DownloadUrlRequest.prototype.setOwnerId = function(value) {
-  jspb.Message.setProto3StringField(this, 1, value);
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -611,9 +637,12 @@ proto.contentservice.DownloadUrlRequest.prototype.getName = function() {
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.contentservice.DownloadUrlRequest} returns this
+ */
 proto.contentservice.DownloadUrlRequest.prototype.setName = function(value) {
-  jspb.Message.setProto3StringField(this, 2, value);
+  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 
@@ -626,9 +655,12 @@ proto.contentservice.DownloadUrlRequest.prototype.getContentType = function() {
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.contentservice.DownloadUrlRequest} returns this
+ */
 proto.contentservice.DownloadUrlRequest.prototype.setContentType = function(value) {
-  jspb.Message.setProto3StringField(this, 3, value);
+  return jspb.Message.setProto3StringField(this, 3, value);
 };
 
 
@@ -637,13 +669,15 @@ proto.contentservice.DownloadUrlRequest.prototype.setContentType = function(valu
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
 /**
- * Creates an object representation of this proto suitable for use in Soy templates.
+ * Creates an object representation of this proto.
  * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
  * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
  * For the list of reserved names please see:
- *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
- * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
- *     for transitional soy proto support: http://goto/soy-param-migration
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
  * @return {!Object}
  */
 proto.contentservice.DownloadUrlResponse.prototype.toObject = function(opt_includeInstance) {
@@ -653,8 +687,8 @@ proto.contentservice.DownloadUrlResponse.prototype.toObject = function(opt_inclu
 
 /**
  * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Whether to include the JSPB
- *     instance for transitional soy proto support:
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
  *     http://goto/soy-param-migration
  * @param {!proto.contentservice.DownloadUrlResponse} msg The msg instance to transform.
  * @return {!Object}
@@ -751,9 +785,12 @@ proto.contentservice.DownloadUrlResponse.prototype.getUrl = function() {
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.contentservice.DownloadUrlResponse} returns this
+ */
 proto.contentservice.DownloadUrlResponse.prototype.setUrl = function(value) {
-  jspb.Message.setProto3StringField(this, 1, value);
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -788,13 +825,15 @@ proto.contentservice.DeleteRequest.prototype.getNameCase = function() {
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
 /**
- * Creates an object representation of this proto suitable for use in Soy templates.
+ * Creates an object representation of this proto.
  * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
  * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
  * For the list of reserved names please see:
- *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
- * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
- *     for transitional soy proto support: http://goto/soy-param-migration
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
  * @return {!Object}
  */
 proto.contentservice.DeleteRequest.prototype.toObject = function(opt_includeInstance) {
@@ -804,8 +843,8 @@ proto.contentservice.DeleteRequest.prototype.toObject = function(opt_includeInst
 
 /**
  * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Whether to include the JSPB
- *     instance for transitional soy proto support:
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
  *     http://goto/soy-param-migration
  * @param {!proto.contentservice.DeleteRequest} msg The msg instance to transform.
  * @return {!Object}
@@ -926,9 +965,12 @@ proto.contentservice.DeleteRequest.prototype.getOwnerId = function() {
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.contentservice.DeleteRequest} returns this
+ */
 proto.contentservice.DeleteRequest.prototype.setOwnerId = function(value) {
-  jspb.Message.setProto3StringField(this, 1, value);
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -941,17 +983,21 @@ proto.contentservice.DeleteRequest.prototype.getExact = function() {
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.contentservice.DeleteRequest} returns this
+ */
 proto.contentservice.DeleteRequest.prototype.setExact = function(value) {
-  jspb.Message.setOneofField(this, 2, proto.contentservice.DeleteRequest.oneofGroups_[0], value);
+  return jspb.Message.setOneofField(this, 2, proto.contentservice.DeleteRequest.oneofGroups_[0], value);
 };
 
 
 /**
  * Clears the field making it undefined.
+ * @return {!proto.contentservice.DeleteRequest} returns this
  */
 proto.contentservice.DeleteRequest.prototype.clearExact = function() {
-  jspb.Message.setOneofField(this, 2, proto.contentservice.DeleteRequest.oneofGroups_[0], undefined);
+  return jspb.Message.setOneofField(this, 2, proto.contentservice.DeleteRequest.oneofGroups_[0], undefined);
 };
 
 
@@ -973,17 +1019,21 @@ proto.contentservice.DeleteRequest.prototype.getPrefix = function() {
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.contentservice.DeleteRequest} returns this
+ */
 proto.contentservice.DeleteRequest.prototype.setPrefix = function(value) {
-  jspb.Message.setOneofField(this, 3, proto.contentservice.DeleteRequest.oneofGroups_[0], value);
+  return jspb.Message.setOneofField(this, 3, proto.contentservice.DeleteRequest.oneofGroups_[0], value);
 };
 
 
 /**
  * Clears the field making it undefined.
+ * @return {!proto.contentservice.DeleteRequest} returns this
  */
 proto.contentservice.DeleteRequest.prototype.clearPrefix = function() {
-  jspb.Message.setOneofField(this, 3, proto.contentservice.DeleteRequest.oneofGroups_[0], undefined);
+  return jspb.Message.setOneofField(this, 3, proto.contentservice.DeleteRequest.oneofGroups_[0], undefined);
 };
 
 
@@ -1001,13 +1051,15 @@ proto.contentservice.DeleteRequest.prototype.hasPrefix = function() {
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
 /**
- * Creates an object representation of this proto suitable for use in Soy templates.
+ * Creates an object representation of this proto.
  * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
  * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
  * For the list of reserved names please see:
- *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
- * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
- *     for transitional soy proto support: http://goto/soy-param-migration
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
  * @return {!Object}
  */
 proto.contentservice.DeleteResponse.prototype.toObject = function(opt_includeInstance) {
@@ -1017,8 +1069,8 @@ proto.contentservice.DeleteResponse.prototype.toObject = function(opt_includeIns
 
 /**
  * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Whether to include the JSPB
- *     instance for transitional soy proto support:
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
  *     http://goto/soy-param-migration
  * @param {!proto.contentservice.DeleteResponse} msg The msg instance to transform.
  * @return {!Object}
