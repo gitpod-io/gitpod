@@ -66,6 +66,9 @@ RUN cd /usr/bin && curl -fsSL https://github.com/csweichel/werft/releases/downlo
 # yq - jq for YAML files
 RUN cd /usr/bin && curl -fsSL https://github.com/mikefarah/yq/releases/download/2.4.0/yq_linux_amd64 > yq && chmod +x yq
 
+# release helper
+RUN cd /usr/bin && curl -fsSL https://github.com/c4milo/github-release/releases/download/v1.1.0/github-release_v1.1.0_linux_amd64.tar.gz | tar xz
+
 ### Protobuf
 RUN set -ex \
     && tmpdir=$(mktemp -d) \
