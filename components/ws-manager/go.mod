@@ -19,7 +19,7 @@ require (
 	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
 	github.com/go-logr/logr v0.3.0
 	github.com/go-ozzo/ozzo-validation v3.5.0+incompatible
-	github.com/golang/mock v1.4.4
+	github.com/golang/mock v1.5.0
 	github.com/golang/protobuf v1.4.3
 	github.com/google/uuid v1.1.4
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
@@ -31,7 +31,7 @@ require (
 	github.com/spf13/cobra v1.1.1
 	golang.org/x/sync v0.0.0-20200625203802-6e8e738ad208
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
-	google.golang.org/grpc v1.34.0
+	google.golang.org/grpc v1.36.0
 	k8s.io/api v0.20.4
 	k8s.io/apimachinery v0.20.4
 	k8s.io/client-go v0.20.4
