@@ -1,6 +1,7 @@
 import React, { Suspense, useContext, useEffect, useState } from 'react';
 import Menu from './components/Menu';
-import { BrowserRouter, Route, Switch } from "react-router-dom";
+import { BrowserRouter } from "react-router-dom";
+import { Route, Switch } from "react-router";
 import { Workspaces } from './workspaces/Workspaces';
 import { Login } from './Login';
 import { UserContext } from './user-context';
@@ -14,11 +15,14 @@ const EnvVars = React.lazy(() => import('./settings/EnvVars'));
 const FeaturePreview = React.lazy(() => import('./settings/FeaturePreview'));
 const GitIntegration = React.lazy(() => import('./settings/GitIntegration'));
 
+function Loading() {
+    return (<h3>Loading...</h3>);
+}
+
 function App() {
     const { user, setUser } = useContext(UserContext);
 
     const [loading, setLoading] = useState<boolean>(true);
-    const [userLoadError, setUserLoadError] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         (async () => {
@@ -27,26 +31,27 @@ function App() {
                 setUser(user);
             } catch (error) {
                 console.log(error);
-                setUserLoadError(error && error.message);
             }
             setLoading(false);
         })();
     }, []);
 
+    if (!loading && !user) {
+        return (<Login gitpodService={gitpodService} />)
+    };
 
     return (
         <BrowserRouter>
             <div className="container">
                 {user && renderMenu()}
 
-                {loading && (<h3>Loading...</h3>)}
-                {userLoadError && (<div><h2>Error</h2><h2>{userLoadError}</h2></div>)}
+                {loading && (<Loading />)}
 
-                <Suspense fallback={<h3>Loading...</h3>}>
+                <Suspense fallback={<Loading />}>
                     <Switch>
                         {user && (
                             <React.Fragment>
-                                <Route path="/" exact render={
+                                <Route path={["/", "/workspaces"]} exact render={
                                     () => <Workspaces gitpodService={gitpodService} />} />
                                 <Route path="/profile" exact component={Profile} />
                                 <Route path="/notifications" exact component={Notifications} />
@@ -55,11 +60,6 @@ function App() {
                                 <Route path="/git-integration" exact component={GitIntegration} />
                                 <Route path="/feature-preview" exact component={FeaturePreview} />
                                 <Route path="/default-ide" exact component={DefaultIDE} />
-                            </React.Fragment>
-                        )}
-                        {!user && (
-                            <React.Fragment>
-                                <Route path="/" exact render={() => <Login />} />
                             </React.Fragment>
                         )}
                     </Switch>
