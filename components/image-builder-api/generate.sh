@@ -1,20 +1,37 @@
 #!/bin/bash
 
-go get github.com/golang/protobuf/protoc-gen-go@v1.3.5
-protoc -I. -I.. --go_out=plugins=grpc:. imgbuilder.proto
-mv github.com/gitpod-io/gitpod/image-builder/api/* go
-rm -rf github.com
+if [ -n "$DEBUG" ]; then
+  set -x
+fi
 
-go get github.com/golang/mock/mockgen@latest
-cd go
-# source mode does not always work for gRPC: see https://github.com/golang/mock/pull/163
-mockgen -package mock github.com/gitpod-io/gitpod/image-builder/api ImageBuilderClient,ImageBuilder_BuildClient,ImageBuilder_LogsClient > mock/mock.go
-cd ..
+set -o errexit
+set -o nounset
+set -o pipefail
 
-cd typescript
-export PATH=../../../node_modules/.bin:$PATH
-protoc --plugin=protoc-gen-grpc=`which grpc_tools_node_protoc_plugin` --js_out=import_style=commonjs,binary:src --grpc_out=src -I.. -I../../ ../*.proto
-protoc --plugin=protoc-gen-ts=`which protoc-gen-ts` --ts_out=src -I /usr/lib/protoc/include -I .. -I../../ ../*.proto
-cd src
-node ../../../content-service-api/typescript/patch-grpc-js.ts
-cd ../..
+ROOT_DIR=$(cd $(dirname "${BASH_SOURCE}") && pwd -P)/../../
+COMPONENTS_DIR=$ROOT_DIR/components
+
+# include protoc bash functions
+source $ROOT_DIR/scripts/protoc-generator.sh
+
+install_dependencies
+go_protoc $COMPONENTS_DIR
+typescript_protoc $COMPONENTS_DIR
+
+go generate typescript/util/generate-ws-ready.go
+
+# cd go
+pushd go
+
+mockgen \
+    -package mock \
+    github.com/gitpod-io/gitpod/image-builder/api ImageBuilderClient,ImageBuilder_BuildClient,ImageBuilder_LogsClient,ImageBuilderServer,ImageBuilder_BuildServer,ImageBuilder_LogsServer > mock/mock.go
+
+# return to previous directory
+popd
+
+pushd typescript/src
+node $COMPONENTS_DIR/content-service-api/typescript/patch-grpc-js.ts
+popd
+
+update_license
