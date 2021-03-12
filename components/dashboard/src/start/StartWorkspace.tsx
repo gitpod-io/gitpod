@@ -9,9 +9,9 @@ export interface StartWorkspaceProps {
 }
 
 export interface StartWorkspaceState {
-  phase: StartPhase;
   contextUrl?: string;
   startedInstanceId?: string;
+  workspaceInstance?: WorkspaceInstance;
   error?: StartWorkspaceError;
   ideFrontendFailureCause?: string;
 }
@@ -26,9 +26,6 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
   constructor(props: StartWorkspaceProps) {
     super(props);
-    this.state = {
-      phase: StartPhase.Building,
-    };
   }
 
   private readonly toDispose = new DisposableCollection();
@@ -111,60 +108,11 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       return;
     }
 
-    switch (workspaceInstance.status.phase) {
-      // unknown indicates an issue within the system in that it cannot determine the actual phase of
-      // a workspace. This phase is usually accompanied by an error.
-      case "unknown":
-        break;
-
-      // Preparing means that we haven't actually started the workspace instance just yet, but rather
-      // are still preparing for launch. This means we're building the Docker image for the workspace.
-      case "preparing":
-        this.props.gitpodService.server.watchWorkspaceImageBuildLogs(workspaceInstance.workspaceId);
-        this.setState({ phase: StartPhase.Building });
-        break;
-
-      // Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
-      // some space within the cluster. If for example the cluster needs to scale up to accomodate the
-      // workspace, the workspace will be in Pending state until that happened.
-      case "pending":
-        this.setState({ phase: StartPhase.Preparing });
-        break;
-
-      // Creating means the workspace is currently being created. That includes downloading the images required
-      // to run the workspace over the network. The time spent in this phase varies widely and depends on the current
-      // network speed, image size and cache states.
-      case "creating":
-        this.setState({ phase: StartPhase.Preparing });
-        break;
-
-      // Initializing is the phase in which the workspace is executing the appropriate workspace initializer (e.g. Git
-      // clone or backup download). After this phase one can expect the workspace to either be Running or Failed.
-      case "initializing":
-        this.setState({ phase: StartPhase.Starting });
-        break;
-
-      // Running means the workspace is able to actively perform work, either by serving a user through Theia,
-      // or as a headless workspace.
-      case "running":
-        this.setState({ phase: StartPhase.Running });
-        break;
-
-      // Interrupted is an exceptional state where the container should be running but is temporarily unavailable.
-      // When in this state, we expect it to become running or stopping anytime soon.
-      case "interrupted":
-        this.setState({ phase: StartPhase.Running });
-        break;
-
-      // Stopping means that the workspace is currently shutting down. It could go to stopped every moment.
-      case "stopping":
-        break;
-
-      // Stopped means the workspace ended regularly because it was shut down.
-      case "stopped":
-        break;
+    if (workspaceInstance.status.phase === 'preparing') {
+      this.props.gitpodService.server.watchWorkspaceImageBuildLogs(workspaceInstance.workspaceId);
     }
 
+    this.setState({ workspaceInstance });
   }
 
   async ensureWorkspaceAuth(instanceID: string) {
@@ -196,8 +144,72 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
   }
 
   render() {
-    return <StartPage phase={this.state.phase}>
-      <div className="text-sm text-gray-400">Workspace ID: {this.props.workspaceId}</div>
+    let phase = StartPhase.Checking;
+    let statusMessage = undefined;
+
+    switch (this.state?.workspaceInstance?.status.phase) {
+      // unknown indicates an issue within the system in that it cannot determine the actual phase of
+      // a workspace. This phase is usually accompanied by an error.
+      case "unknown":
+        break;
+
+      // Preparing means that we haven't actually started the workspace instance just yet, but rather
+      // are still preparing for launch. This means we're building the Docker image for the workspace.
+      case "preparing":
+        phase = StartPhase.Building;
+        statusMessage = <p className="text-base text-gray-400">Building Image …</p>;
+        break;
+
+      // Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
+      // some space within the cluster. If for example the cluster needs to scale up to accomodate the
+      // workspace, the workspace will be in Pending state until that happened.
+      case "pending":
+        phase = StartPhase.Preparing;
+        statusMessage = <p className="text-base text-gray-400">Allocating Resources …</p>;
+        break;
+
+      // Creating means the workspace is currently being created. That includes downloading the images required
+      // to run the workspace over the network. The time spent in this phase varies widely and depends on the current
+      // network speed, image size and cache states.
+      case "creating":
+        phase = StartPhase.Preparing;
+        statusMessage = <p className="text-base text-gray-400">Pulling Container Image …</p>;
+        break;
+
+      // Initializing is the phase in which the workspace is executing the appropriate workspace initializer (e.g. Git
+      // clone or backup download). After this phase one can expect the workspace to either be Running or Failed.
+      case "initializing":
+        phase = StartPhase.Starting;
+        statusMessage = <p className="text-base text-gray-400">Cloning Repository …</p>; // TODO Loading Prebuild ...
+        break;
+
+      // Running means the workspace is able to actively perform work, either by serving a user through Theia,
+      // or as a headless workspace.
+      case "running":
+        phase = StartPhase.Running;
+        statusMessage = <p className="text-base text-gray-400">Opening IDE …</p>;
+        break;
+
+      // Interrupted is an exceptional state where the container should be running but is temporarily unavailable.
+      // When in this state, we expect it to become running or stopping anytime soon.
+      case "interrupted":
+        phase = StartPhase.Running;
+        statusMessage = <p className="text-base text-gray-400">Checking On Workspace …</p>;
+        break;
+
+      // Stopping means that the workspace is currently shutting down. It could go to stopped every moment.
+      case "stopping":
+        statusMessage = <p className="text-base text-gray-400">Stopping …</p>;
+        break;
+
+      // Stopped means the workspace ended regularly because it was shut down.
+      case "stopped":
+        statusMessage = <p className="text-base text-gray-400">Stopped</p>;
+        break;
+    }
+
+    return <StartPage phase={phase}>
+      {statusMessage}
     </StartPage>;
   }
 }

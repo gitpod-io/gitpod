@@ -51,7 +51,7 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
   render() {
     const { contextUrl } = this.props;
     let phase = StartPhase.Checking;
-    let statusMessage = <p className="text-base text-gray-400">Creating workspace …</p>;
+    let statusMessage = <p className="text-base text-gray-400">Checking Context …</p>;
     let logsView = undefined;
 
     const error = this.state?.error;
