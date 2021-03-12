@@ -1,82 +1,115 @@
 /**
- * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
 
-// package: wsbs
+// package: iws
 // file: workspace.proto
 
 /* tslint:disable */
+/* eslint-disable */
 
 import * as grpc from "grpc";
 import * as workspace_pb from "./workspace_pb";
-import * as content_service_api_initializer_pb from "@gitpod/content-service/lib";
 
-interface IInWorkspaceHelperService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
-    backupCanary: IInWorkspaceHelperService_IBackupCanary;
-    pauseTheia: IInWorkspaceHelperService_IPauseTheia;
-    gitStatus: IInWorkspaceHelperService_IGitStatus;
+interface IInWorkspaceServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
+    prepareForUserNS: IInWorkspaceServiceService_IPrepareForUserNS;
+    writeIDMapping: IInWorkspaceServiceService_IWriteIDMapping;
+    mountProc: IInWorkspaceServiceService_IMountProc;
+    umountProc: IInWorkspaceServiceService_IUmountProc;
+    teardown: IInWorkspaceServiceService_ITeardown;
 }
 
-interface IInWorkspaceHelperService_IBackupCanary extends grpc.MethodDefinition<workspace_pb.BackupCanaryResponse, workspace_pb.BackupCanaryRequest> {
-    path: string; // "/wsbs.InWorkspaceHelper/BackupCanary"
-    requestStream: boolean; // true
-    responseStream: boolean; // true
-    requestSerialize: grpc.serialize<workspace_pb.BackupCanaryResponse>;
-    requestDeserialize: grpc.deserialize<workspace_pb.BackupCanaryResponse>;
-    responseSerialize: grpc.serialize<workspace_pb.BackupCanaryRequest>;
-    responseDeserialize: grpc.deserialize<workspace_pb.BackupCanaryRequest>;
+interface IInWorkspaceServiceService_IPrepareForUserNS extends grpc.MethodDefinition<workspace_pb.PrepareForUserNSRequest, workspace_pb.PrepareForUserNSResponse> {
+    path: "/iws.InWorkspaceService/PrepareForUserNS";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<workspace_pb.PrepareForUserNSRequest>;
+    requestDeserialize: grpc.deserialize<workspace_pb.PrepareForUserNSRequest>;
+    responseSerialize: grpc.serialize<workspace_pb.PrepareForUserNSResponse>;
+    responseDeserialize: grpc.deserialize<workspace_pb.PrepareForUserNSResponse>;
 }
-interface IInWorkspaceHelperService_IPauseTheia extends grpc.MethodDefinition<workspace_pb.PauseTheiaRequest, workspace_pb.PauseTheiaResponse> {
-    path: string; // "/wsbs.InWorkspaceHelper/PauseTheia"
-    requestStream: boolean; // true
-    responseStream: boolean; // false
-    requestSerialize: grpc.serialize<workspace_pb.PauseTheiaRequest>;
-    requestDeserialize: grpc.deserialize<workspace_pb.PauseTheiaRequest>;
-    responseSerialize: grpc.serialize<workspace_pb.PauseTheiaResponse>;
-    responseDeserialize: grpc.deserialize<workspace_pb.PauseTheiaResponse>;
+interface IInWorkspaceServiceService_IWriteIDMapping extends grpc.MethodDefinition<workspace_pb.WriteIDMappingRequest, workspace_pb.WriteIDMappingResponse> {
+    path: "/iws.InWorkspaceService/WriteIDMapping";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<workspace_pb.WriteIDMappingRequest>;
+    requestDeserialize: grpc.deserialize<workspace_pb.WriteIDMappingRequest>;
+    responseSerialize: grpc.serialize<workspace_pb.WriteIDMappingResponse>;
+    responseDeserialize: grpc.deserialize<workspace_pb.WriteIDMappingResponse>;
 }
-interface IInWorkspaceHelperService_IGitStatus extends grpc.MethodDefinition<workspace_pb.GitStatusRequest, workspace_pb.GitStatusResponse> {
-    path: string; // "/wsbs.InWorkspaceHelper/GitStatus"
-    requestStream: boolean; // false
-    responseStream: boolean; // false
-    requestSerialize: grpc.serialize<workspace_pb.GitStatusRequest>;
-    requestDeserialize: grpc.deserialize<workspace_pb.GitStatusRequest>;
-    responseSerialize: grpc.serialize<workspace_pb.GitStatusResponse>;
-    responseDeserialize: grpc.deserialize<workspace_pb.GitStatusResponse>;
+interface IInWorkspaceServiceService_IMountProc extends grpc.MethodDefinition<workspace_pb.MountProcRequest, workspace_pb.MountProcResponse> {
+    path: "/iws.InWorkspaceService/MountProc";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<workspace_pb.MountProcRequest>;
+    requestDeserialize: grpc.deserialize<workspace_pb.MountProcRequest>;
+    responseSerialize: grpc.serialize<workspace_pb.MountProcResponse>;
+    responseDeserialize: grpc.deserialize<workspace_pb.MountProcResponse>;
 }
-
-export const InWorkspaceHelperService: IInWorkspaceHelperService;
-
-export interface IInWorkspaceHelperServer {
-    backupCanary: grpc.handleBidiStreamingCall<workspace_pb.BackupCanaryResponse, workspace_pb.BackupCanaryRequest>;
-    pauseTheia: grpc.handleClientStreamingCall<workspace_pb.PauseTheiaRequest, workspace_pb.PauseTheiaResponse>;
-    gitStatus: grpc.handleUnaryCall<workspace_pb.GitStatusRequest, workspace_pb.GitStatusResponse>;
+interface IInWorkspaceServiceService_IUmountProc extends grpc.MethodDefinition<workspace_pb.UmountProcRequest, workspace_pb.UmountProcResponse> {
+    path: "/iws.InWorkspaceService/UmountProc";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<workspace_pb.UmountProcRequest>;
+    requestDeserialize: grpc.deserialize<workspace_pb.UmountProcRequest>;
+    responseSerialize: grpc.serialize<workspace_pb.UmountProcResponse>;
+    responseDeserialize: grpc.deserialize<workspace_pb.UmountProcResponse>;
 }
-
-export interface IInWorkspaceHelperClient {
-    backupCanary(): grpc.ClientDuplexStream<workspace_pb.BackupCanaryResponse, workspace_pb.BackupCanaryRequest>;
-    backupCanary(options: Partial<grpc.CallOptions>): grpc.ClientDuplexStream<workspace_pb.BackupCanaryResponse, workspace_pb.BackupCanaryRequest>;
-    backupCanary(metadata: grpc.Metadata, options?: Partial<grpc.CallOptions>): grpc.ClientDuplexStream<workspace_pb.BackupCanaryResponse, workspace_pb.BackupCanaryRequest>;
-    pauseTheia(callback: (error: grpc.ServiceError | null, response: workspace_pb.PauseTheiaResponse) => void): grpc.ClientWritableStream<workspace_pb.PauseTheiaRequest>;
-    pauseTheia(metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.PauseTheiaResponse) => void): grpc.ClientWritableStream<workspace_pb.PauseTheiaRequest>;
-    pauseTheia(options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.PauseTheiaResponse) => void): grpc.ClientWritableStream<workspace_pb.PauseTheiaRequest>;
-    pauseTheia(metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.PauseTheiaResponse) => void): grpc.ClientWritableStream<workspace_pb.PauseTheiaRequest>;
-    gitStatus(request: workspace_pb.GitStatusRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.GitStatusResponse) => void): grpc.ClientUnaryCall;
-    gitStatus(request: workspace_pb.GitStatusRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.GitStatusResponse) => void): grpc.ClientUnaryCall;
-    gitStatus(request: workspace_pb.GitStatusRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.GitStatusResponse) => void): grpc.ClientUnaryCall;
+interface IInWorkspaceServiceService_ITeardown extends grpc.MethodDefinition<workspace_pb.TeardownRequest, workspace_pb.TeardownResponse> {
+    path: "/iws.InWorkspaceService/Teardown";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<workspace_pb.TeardownRequest>;
+    requestDeserialize: grpc.deserialize<workspace_pb.TeardownRequest>;
+    responseSerialize: grpc.serialize<workspace_pb.TeardownResponse>;
+    responseDeserialize: grpc.deserialize<workspace_pb.TeardownResponse>;
 }
 
-export class InWorkspaceHelperClient extends grpc.Client implements IInWorkspaceHelperClient {
+export const InWorkspaceServiceService: IInWorkspaceServiceService;
+
+export interface IInWorkspaceServiceServer {
+    prepareForUserNS: grpc.handleUnaryCall<workspace_pb.PrepareForUserNSRequest, workspace_pb.PrepareForUserNSResponse>;
+    writeIDMapping: grpc.handleUnaryCall<workspace_pb.WriteIDMappingRequest, workspace_pb.WriteIDMappingResponse>;
+    mountProc: grpc.handleUnaryCall<workspace_pb.MountProcRequest, workspace_pb.MountProcResponse>;
+    umountProc: grpc.handleUnaryCall<workspace_pb.UmountProcRequest, workspace_pb.UmountProcResponse>;
+    teardown: grpc.handleUnaryCall<workspace_pb.TeardownRequest, workspace_pb.TeardownResponse>;
+}
+
+export interface IInWorkspaceServiceClient {
+    prepareForUserNS(request: workspace_pb.PrepareForUserNSRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.PrepareForUserNSResponse) => void): grpc.ClientUnaryCall;
+    prepareForUserNS(request: workspace_pb.PrepareForUserNSRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.PrepareForUserNSResponse) => void): grpc.ClientUnaryCall;
+    prepareForUserNS(request: workspace_pb.PrepareForUserNSRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.PrepareForUserNSResponse) => void): grpc.ClientUnaryCall;
+    writeIDMapping(request: workspace_pb.WriteIDMappingRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.WriteIDMappingResponse) => void): grpc.ClientUnaryCall;
+    writeIDMapping(request: workspace_pb.WriteIDMappingRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.WriteIDMappingResponse) => void): grpc.ClientUnaryCall;
+    writeIDMapping(request: workspace_pb.WriteIDMappingRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.WriteIDMappingResponse) => void): grpc.ClientUnaryCall;
+    mountProc(request: workspace_pb.MountProcRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.MountProcResponse) => void): grpc.ClientUnaryCall;
+    mountProc(request: workspace_pb.MountProcRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.MountProcResponse) => void): grpc.ClientUnaryCall;
+    mountProc(request: workspace_pb.MountProcRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.MountProcResponse) => void): grpc.ClientUnaryCall;
+    umountProc(request: workspace_pb.UmountProcRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.UmountProcResponse) => void): grpc.ClientUnaryCall;
+    umountProc(request: workspace_pb.UmountProcRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.UmountProcResponse) => void): grpc.ClientUnaryCall;
+    umountProc(request: workspace_pb.UmountProcRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.UmountProcResponse) => void): grpc.ClientUnaryCall;
+    teardown(request: workspace_pb.TeardownRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.TeardownResponse) => void): grpc.ClientUnaryCall;
+    teardown(request: workspace_pb.TeardownRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.TeardownResponse) => void): grpc.ClientUnaryCall;
+    teardown(request: workspace_pb.TeardownRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.TeardownResponse) => void): grpc.ClientUnaryCall;
+}
+
+export class InWorkspaceServiceClient extends grpc.Client implements IInWorkspaceServiceClient {
     constructor(address: string, credentials: grpc.ChannelCredentials, options?: object);
-    public backupCanary(options?: Partial<grpc.CallOptions>): grpc.ClientDuplexStream<workspace_pb.BackupCanaryResponse, workspace_pb.BackupCanaryRequest>;
-    public backupCanary(metadata?: grpc.Metadata, options?: Partial<grpc.CallOptions>): grpc.ClientDuplexStream<workspace_pb.BackupCanaryResponse, workspace_pb.BackupCanaryRequest>;
-    public pauseTheia(callback: (error: grpc.ServiceError | null, response: workspace_pb.PauseTheiaResponse) => void): grpc.ClientWritableStream<workspace_pb.PauseTheiaRequest>;
-    public pauseTheia(metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.PauseTheiaResponse) => void): grpc.ClientWritableStream<workspace_pb.PauseTheiaRequest>;
-    public pauseTheia(options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.PauseTheiaResponse) => void): grpc.ClientWritableStream<workspace_pb.PauseTheiaRequest>;
-    public pauseTheia(metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.PauseTheiaResponse) => void): grpc.ClientWritableStream<workspace_pb.PauseTheiaRequest>;
-    public gitStatus(request: workspace_pb.GitStatusRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.GitStatusResponse) => void): grpc.ClientUnaryCall;
-    public gitStatus(request: workspace_pb.GitStatusRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.GitStatusResponse) => void): grpc.ClientUnaryCall;
-    public gitStatus(request: workspace_pb.GitStatusRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.GitStatusResponse) => void): grpc.ClientUnaryCall;
+    public prepareForUserNS(request: workspace_pb.PrepareForUserNSRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.PrepareForUserNSResponse) => void): grpc.ClientUnaryCall;
+    public prepareForUserNS(request: workspace_pb.PrepareForUserNSRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.PrepareForUserNSResponse) => void): grpc.ClientUnaryCall;
+    public prepareForUserNS(request: workspace_pb.PrepareForUserNSRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.PrepareForUserNSResponse) => void): grpc.ClientUnaryCall;
+    public writeIDMapping(request: workspace_pb.WriteIDMappingRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.WriteIDMappingResponse) => void): grpc.ClientUnaryCall;
+    public writeIDMapping(request: workspace_pb.WriteIDMappingRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.WriteIDMappingResponse) => void): grpc.ClientUnaryCall;
+    public writeIDMapping(request: workspace_pb.WriteIDMappingRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.WriteIDMappingResponse) => void): grpc.ClientUnaryCall;
+    public mountProc(request: workspace_pb.MountProcRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.MountProcResponse) => void): grpc.ClientUnaryCall;
+    public mountProc(request: workspace_pb.MountProcRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.MountProcResponse) => void): grpc.ClientUnaryCall;
+    public mountProc(request: workspace_pb.MountProcRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.MountProcResponse) => void): grpc.ClientUnaryCall;
+    public umountProc(request: workspace_pb.UmountProcRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.UmountProcResponse) => void): grpc.ClientUnaryCall;
+    public umountProc(request: workspace_pb.UmountProcRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.UmountProcResponse) => void): grpc.ClientUnaryCall;
+    public umountProc(request: workspace_pb.UmountProcRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.UmountProcResponse) => void): grpc.ClientUnaryCall;
+    public teardown(request: workspace_pb.TeardownRequest, callback: (error: grpc.ServiceError | null, response: workspace_pb.TeardownResponse) => void): grpc.ClientUnaryCall;
+    public teardown(request: workspace_pb.TeardownRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_pb.TeardownResponse) => void): grpc.ClientUnaryCall;
+    public teardown(request: workspace_pb.TeardownRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_pb.TeardownResponse) => void): grpc.ClientUnaryCall;
 }
