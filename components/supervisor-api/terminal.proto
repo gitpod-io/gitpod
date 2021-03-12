@@ -8,7 +8,7 @@ package supervisor;
 
 import "google/api/annotations.proto";
 
-option go_package = ".;api";
+option go_package = "github.com/gitpod-io/gitpod/supervisor/api";
 
 service TerminalService {
     // Open opens a new terminal running the login shell
@@ -21,21 +21,21 @@ service TerminalService {
             get: "/v1/terminal/shutdown/{alias}"
         };
     }
-    
+
     // Get returns an opened terminal info
     rpc Get(GetTerminalRequest) returns (Terminal) {
         option (google.api.http) = {
             get: "/v1/terminal/get/{alias}"
         };
     }
-    
+
     // List lists all open terminals
     rpc List(ListTerminalsRequest) returns (ListTerminalsResponse) {
         option (google.api.http) = {
             get: "/v1/terminal/list"
         };
     }
-    
+
     // Listen listens to a terminal
     rpc Listen(ListenTerminalRequest) returns (stream ListenTerminalResponse) {
         option (google.api.http) = {
@@ -49,7 +49,7 @@ service TerminalService {
             post: "/v1/terminal/write/{alias}"
         };
     }
-    
+
     // SetSize sets the terminal's size
     rpc SetSize(SetTerminalSizeRequest) returns (SetTerminalSizeResponse) {}
 }
@@ -124,7 +124,7 @@ message WriteTerminalResponse {
 
 message SetTerminalSizeRequest {
     string alias = 1;
-    
+
     // token is the starter_token that Open() returned.
     // Without token it's possible that the request is ignored.
     // If you want to force your size, indendently of all other listener,
