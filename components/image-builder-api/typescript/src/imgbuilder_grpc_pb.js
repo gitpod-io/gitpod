@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -124,7 +124,7 @@ function deserialize_builder_ResolveWorkspaceImageResponse(buffer_arg) {
 
 var ImageBuilderService = exports.ImageBuilderService = {
   // ResolveBaseImage returns the "digest" form of a Docker image tag thereby making it absolute.
-  resolveBaseImage: {
+resolveBaseImage: {
     path: '/builder.ImageBuilder/ResolveBaseImage',
     requestStream: false,
     responseStream: false,
@@ -136,7 +136,7 @@ var ImageBuilderService = exports.ImageBuilderService = {
     responseDeserialize: deserialize_builder_ResolveBaseImageResponse,
   },
   // ResolveWorkspaceImage returns information about a build configuration without actually attempting to build anything.
-  resolveWorkspaceImage: {
+resolveWorkspaceImage: {
     path: '/builder.ImageBuilder/ResolveWorkspaceImage',
     requestStream: false,
     responseStream: false,
@@ -148,8 +148,8 @@ var ImageBuilderService = exports.ImageBuilderService = {
     responseDeserialize: deserialize_builder_ResolveWorkspaceImageResponse,
   },
   // Build initiates the build of a Docker image using a build configuration. If a build of this
-  // configuration is already ongoing no new build will be started.
-  build: {
+// configuration is already ongoing no new build will be started.
+build: {
     path: '/builder.ImageBuilder/Build',
     requestStream: false,
     responseStream: true,
@@ -161,7 +161,7 @@ var ImageBuilderService = exports.ImageBuilderService = {
     responseDeserialize: deserialize_builder_BuildResponse,
   },
   // Logs listens to the build output of an ongoing Docker build identified build the build ID
-  logs: {
+logs: {
     path: '/builder.ImageBuilder/Logs',
     requestStream: false,
     responseStream: true,
@@ -173,7 +173,7 @@ var ImageBuilderService = exports.ImageBuilderService = {
     responseDeserialize: deserialize_builder_LogsResponse,
   },
   // ListBuilds returns a list of currently running builds
-  listBuilds: {
+listBuilds: {
     path: '/builder.ImageBuilder/ListBuilds',
     requestStream: false,
     responseStream: false,
