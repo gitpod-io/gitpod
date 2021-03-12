@@ -19,7 +19,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/cobra v0.0.5
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
-	google.golang.org/grpc v1.34.0
+	google.golang.org/grpc v1.36.0
 	k8s.io/apimachinery v0.20.4
 	k8s.io/client-go v0.0.0
 )

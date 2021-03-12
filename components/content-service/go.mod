@@ -26,7 +26,7 @@ require (
 	golang.org/x/text v0.3.5 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	google.golang.org/api v0.32.0
-	google.golang.org/grpc v1.34.0
+	google.golang.org/grpc v1.36.0
 	gopkg.in/ini.v1 v1.62.0 // indirect
 )
 

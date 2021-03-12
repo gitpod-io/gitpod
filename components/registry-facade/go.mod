@@ -24,7 +24,7 @@ require (
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
 	golang.org/x/sys v0.0.0-20201112073958-5cba982894dd
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
-	google.golang.org/grpc v1.34.0
+	google.golang.org/grpc v1.36.0
 	gotest.tools/v3 v3.0.3 // indirect
 )
 

@@ -11,7 +11,7 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.1.1
-	google.golang.org/grpc v1.34.0
+	google.golang.org/grpc v1.36.0
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../../components/common-go // leeway
