@@ -73,6 +73,12 @@ pod:
         secretKeyRef:
           name: slack-path
           key: slackPath
+    # used for GitHub releases (NOTE: for some reasons the token contains a trailing \n, is trimmed below)
+    - name: GITHUB_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: github-sh-release-token
+          key: token
     # - name: GITPOD_TEST_TOKEN_GITHUB
     #   valueFrom:
     #     secretKeyRef:
@@ -95,10 +101,12 @@ pod:
         sleep 1
         set -Eeuo pipefail
 
+        export GITHUB_TOKEN=$(echo $GITHUB_TOKEN | xargs)
+
         export DOCKER_HOST=tcp://$NODENAME:2375
         sudo chown -R gitpod:gitpod /workspace
 
-        npm install shelljs
+        npm install shelljs semver
         printf '{{ toJson . }}' > context.json
 
         {{- if .Annotations.debug }}
