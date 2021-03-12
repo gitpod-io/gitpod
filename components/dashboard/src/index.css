@@ -24,7 +24,7 @@
 
 @layer components {
     button {
-        @apply cursor-pointer px-3 py-2 text-white text-xs rounded-md border-2 border-gray-900 bg-gray-500 hover:bg-gray-100;
+        @apply cursor-pointer px-3 py-2 text-white text-sm rounded-md border-2 border-gray-900 bg-gray-500 hover:bg-gray-100;
     }
 
     input[type=text] {

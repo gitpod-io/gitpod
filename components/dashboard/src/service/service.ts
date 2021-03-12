@@ -10,8 +10,8 @@ import { createWindowMessageConnection } from '@gitpod/gitpod-protocol/lib/messa
 import { JsonRpcProxy, JsonRpcProxyFactory } from '@gitpod/gitpod-protocol/lib/messaging/proxy-factory';
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+// import { gitpodServiceMock } from './service-mock';
 
-// export const gitpodHostUrl = new GitpodHostUrl("https://at-react.staging.gitpod-dev.com/");
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
 function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
@@ -58,17 +58,12 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
 }
 
 declare global {
-    interface Window { gitpodService?: ReturnType<typeof createGitpodService> & { reconnect?: () => void }; }
+    type GitpodService = ReturnType<typeof createGitpodService> & { reconnect: () => void }
+    interface Window { gitpodService?: GitpodService; }
 }
 
 // reuse existing service object if present
-let gitpodService = window.gitpodService || (window.gitpodService = createGitpodService());
+let gitpodService: GitpodService = window.gitpodService || (window.gitpodService = createGitpodService() as GitpodService);
+// let gitpodService: GitpodService = gitpodServiceMock;
 
-// allow to reconnect
-const reconnect = () => {
-    if (window.gitpodService?.reconnect) {
-        window.gitpodService?.reconnect();
-    }
-}
-
-export { gitpodService, reconnect };
+export { gitpodService };

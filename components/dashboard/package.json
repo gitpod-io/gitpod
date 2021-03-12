@@ -21,6 +21,7 @@
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
     "@types/react-router-dom": "^5.1.7",
+    "@types/react-router": "^5.1.12",
     "@typescript-eslint/eslint-plugin": "^4.15.2",
     "@typescript-eslint/parser": "^4.15.2",
     "autoprefixer": "^9.8.6",
@@ -39,7 +40,8 @@
     "eject": "react-scripts eject",
     "build:tailwind": "tailwindcss build src/index.css -o src/tailwind.output.css",
     "prestart": "npm run build:tailwind",
-    "prebuild": "npm run build:tailwind"
+    "prebuild": "npm run build:tailwind",
+    "telepresence": "TELEPRESENCE_USE_DEPLOYMENT=1 leeway run .:telepresence"
   },
   "files": [
     "conf",
