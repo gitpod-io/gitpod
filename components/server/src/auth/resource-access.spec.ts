@@ -7,7 +7,7 @@
 import { suite, test } from "mocha-typescript";
 import * as chai from 'chai';
 const expect = chai.expect;
-import { TokenResourceGuard, ScopedResourceGuard, GuardedResource } from "./resource-access";
+import { TokenResourceGuard, ScopedResourceGuard, GuardedResource, ResourceAccessOp } from "./resource-access";
 
 @suite class TestResourceAccess {
 
@@ -62,6 +62,8 @@ import { TokenResourceGuard, ScopedResourceGuard, GuardedResource } from "./reso
         const tests: {
             name: string
             guard: TokenResourceGuard
+            resource?: GuardedResource,
+            operation?: ResourceAccessOp,
             expectation: boolean
         }[] = [
             {
@@ -100,11 +102,38 @@ import { TokenResourceGuard, ScopedResourceGuard, GuardedResource } from "./reso
                     "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspace", subjectID: "*", operations: ["get"]}),
                 ]), 
                 expectation: true,
-            }
+            },
+            {
+                name: "snaphshot create",
+                guard: new TokenResourceGuard(workspaceResource.subject.ownerId, [
+                    "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "snapshot", subjectID: ScopedResourceGuard.SNAPSHOT_WORKSPACE_SUBJECT_ID_PREFIX + workspaceResource.subject.id, operations: ["create"]}),
+                ]), 
+                resource: { kind: "snapshot", subject: undefined, workspaceID:  workspaceResource.subject.id, workspaceOwnerID: workspaceResource.subject.ownerId},
+                operation: "create",
+                expectation: true,
+            },
+            {
+                name: "snaphshot create missing prefix fails",
+                guard: new TokenResourceGuard(workspaceResource.subject.ownerId, [
+                    "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "snapshot", subjectID:  workspaceResource.subject.id, operations: ["create"]}),
+                ]), 
+                resource: { kind: "snapshot", subject: undefined, workspaceID:  workspaceResource.subject.id, workspaceOwnerID: workspaceResource.subject.ownerId},
+                operation: "create",
+                expectation: false,
+            },
+            {
+                name: "snaphshot create other user fails",
+                guard: new TokenResourceGuard(workspaceResource.subject.ownerId, [
+                    "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "snapshot", subjectID: workspaceResource.subject.id, operations: ["create"]}),
+                ]), 
+                resource: { kind: "snapshot", subject: undefined, workspaceID: workspaceResource.subject.id, workspaceOwnerID: "other_owner"},
+                operation: "create",
+                expectation: false,
+            },
         ]
 
         await Promise.all(tests.map(async t => {
-            const res = await t.guard.canAccess(workspaceResource, "get")
+            const res = await t.guard.canAccess(t.resource || workspaceResource, t.operation || "get")
             expect(res).to.be.eq(t.expectation, `"${t.name}" expected canAccess(...) === ${t.expectation}, but was ${res}`);
         }))
     }

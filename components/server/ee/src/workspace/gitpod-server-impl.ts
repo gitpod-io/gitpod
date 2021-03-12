@@ -242,7 +242,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
             }
 
             await this.guardAccess({kind: "workspaceInstance", subject: instance, workspaceOwnerID: workspace.ownerId, workspaceIsShared: workspace.shareable || false}, "get");
-            await this.guardAccess({kind: "snapshot", subject: undefined, workspaceOwnerID: workspace.ownerId}, "create");
+            await this.guardAccess({kind: "snapshot", subject: undefined, workspaceOwnerID: workspace.ownerId, workspaceID: workspace.id }, "create");
 
             const client = await this.workspaceManagerClientProvider.get(instance.region);
             const request = new TakeSnapshotRequest();
