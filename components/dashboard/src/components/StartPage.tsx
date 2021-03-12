@@ -1,8 +1,9 @@
 export enum StartPhase {
   Checking = 0,
   Building = 1,
-  Deploying = 2,
+  Preparing = 2,
   Starting = 3,
+  Running = 4,
 };
 
 function ProgressBar(props: { phase: number, error: boolean }) {
@@ -45,8 +46,8 @@ export function StartPage(props: StartPageProps) {
     case StartPhase.Building:
       title = "Building";
       break;
-    case StartPhase.Deploying:
-      title = "Deploying";
+    case StartPhase.Preparing:
+      title = "Preparing";
       break;
     case StartPhase.Starting:
       title = "Starting";
