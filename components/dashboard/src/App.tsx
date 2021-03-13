@@ -48,11 +48,12 @@ function App() {
         window.location.reload(true);
       }
     }, false);
-    const hash = window.location.hash.replace(/^[#/]+/, '');
+
+    const hash = getURLHash();
     if (window.location.pathname === '/' && hash !== '') {
       return <CreateWorkspace contextUrl={hash} gitpodService={gitpodService}/>;
     }
-    if (/\/start\/?/.test(window.location.pathname)) {
+    if (/\/start\/?/.test(window.location.pathname) && hash !== '') {
       return <StartWorkspace workspaceId={hash} gitpodService={gitpodService}/>;
     }
 
@@ -83,6 +84,10 @@ function App() {
             </div>
         </BrowserRouter>
     );
+}
+
+function getURLHash () {
+  return window.location.hash.replace(/^[#/]+/, '');
 }
 
 const renderMenu = () => (
