@@ -4,8 +4,13 @@
 
 package main
 
-import "github.com/gitpod-io/installer/cmd"
+import (
+	"github.com/gitpod-io/installer/cmd"
+	"math/rand"
+	"time"
+)
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
 	cmd.Execute()
 }
