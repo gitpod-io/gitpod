@@ -49,7 +49,7 @@ type GitInitializer struct {
 // Run initializes the workspace using Git
 func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, err error) {
 	isGitWS := git.IsWorkingCopy(ws.Location)
-
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GitInitializer.Run")
 	span.SetTag("isGitWS", isGitWS)
 	defer tracing.FinishSpan(span, &err)
@@ -84,6 +84,7 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 
 // realizeCloneTarget ensures the clone target is checked out
 func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "realizeCloneTarget")
 	span.SetTag("remoteURI", ws.RemoteURI)
 	span.SetTag("cloneTarget", ws.CloneTarget)

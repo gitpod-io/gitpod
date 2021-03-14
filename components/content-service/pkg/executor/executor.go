@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"io"
 
-	"github.com/golang/protobuf/jsonpb"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
@@ -31,15 +31,14 @@ func PrepareFromBackup(url string) ([]byte, error) {
 
 // Prepare writes the config required by Execute to a stream
 func Prepare(req *csapi.WorkspaceInitializer, urls map[string]string) ([]byte, error) {
-	m := jsonpb.Marshaler{}
-	ilr, err := m.MarshalToString(req)
+	ilr, err := protojson.Marshal(req)
 	if err != nil {
 		return nil, err
 	}
 
 	return json.Marshal(config{
 		URLs: urls,
-		Req:  json.RawMessage(ilr),
+		Req:  json.RawMessage(string(ilr)),
 	})
 }
 
@@ -58,7 +57,7 @@ func Execute(ctx context.Context, destination string, cfgin io.Reader, opts ...i
 	)
 	if cfg.FromBackup == "" {
 		var req csapi.WorkspaceInitializer
-		err = jsonpb.UnmarshalString(string(cfg.Req), &req)
+		err = protojson.Unmarshal(cfg.Req, &req)
 		if err != nil {
 			return "", err
 		}

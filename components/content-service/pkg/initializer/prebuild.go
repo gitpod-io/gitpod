@@ -32,6 +32,7 @@ type PrebuildInitializer struct {
 
 // Run runs the prebuild initializer
 func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "PrebuildInitializer")
 	defer tracing.FinishSpan(span, &err)
 
@@ -109,7 +110,7 @@ func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 		// If any of these cleanup operations fail that's no reason to fail ws initialization.
 		// It just results in a slightly degraded state.
 		if didStash {
-			p.Git.Git(ctx, "stash", "pop")
+			_ = p.Git.Git(ctx, "stash", "pop")
 		}
 
 		log.Debug("prebuild initializer Git operations complete")
