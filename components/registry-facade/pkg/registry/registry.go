@@ -416,7 +416,7 @@ type dispatchFunc func(ctx context.Context, r *http.Request) http.Handler
 func dispatcher(d dispatchFunc) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fc, _ := httputil.DumpRequest(r, false)
-		fmt.Fprintf(os.Stderr, string(fc))
+		fmt.Fprint(os.Stderr, string(fc))
 
 		// Get context from request, add vars and other info and sync back
 		ctx := r.Context()
@@ -505,16 +505,6 @@ func getSpecProviderName(ctx context.Context) (specProviderName string, remainde
 // getReference extracts the referece var from the context which was passed in through the mux route
 func getReference(ctx context.Context) string {
 	val := ctx.Value("vars.reference")
-	sval, ok := val.(string)
-	if !ok {
-		return ""
-	}
-	return sval
-}
-
-// getUploadUUID extracts the upload uuid var from the context which was passed in through the mux route
-func getUploadUUID(ctx context.Context) string {
-	val := ctx.Value("vars.uuid")
 	sval, ok := val.(string)
 	if !ok {
 		return ""
