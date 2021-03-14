@@ -23,12 +23,12 @@ import (
 	"github.com/docker/docker/api/types/volume"
 	docker "github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/jsonmessage"
-	proto "github.com/golang/protobuf/proto"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -447,7 +447,7 @@ func (b *DockerBuilder) createBuildVolume(ctx context.Context, buildID string) (
 	logs := bytes.NewBuffer(nil)
 	err = b.runContainer(ctx, logs, initcontainer.ID)
 	if err != nil {
-		return "", xerrors.Errorf("cannot create build volume: %w", string(logs.Bytes()))
+		return "", xerrors.Errorf("cannot create build volume: %w", logs.String())
 	}
 
 	return buildVolName, nil
@@ -1012,7 +1012,8 @@ func (s *build) Write(p []byte) (n int, err error) {
 			return 0, err
 		}
 	}
-	n, err = s.logs.Write(p)
+
+	_, err = s.logs.Write(p)
 	if err != nil {
 		return 0, err
 	}

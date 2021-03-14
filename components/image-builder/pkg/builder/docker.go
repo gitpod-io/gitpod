@@ -269,7 +269,7 @@ func (b *DockerBuilder) getBaseImageRef(ctx context.Context, bs *api.BuildSource
 
 func (b *DockerBuilder) getWorkspaceImageRef(ctx context.Context, baseref string, gitpodLayerHash string, allowedAuth allowedAuthFor) (ref string, err error) {
 	//nolint:ineffassign
-	span, ctx := opentracing.StartSpanFromContext(ctx, "getWorkspaceImageRef")
+	span, _ := opentracing.StartSpanFromContext(ctx, "getWorkspaceImageRef")
 	defer tracing.FinishSpan(span, &err)
 
 	cnt := []byte(fmt.Sprintf("%s\n%s\n%s", baseref, gitpodLayerHash, b.Config.ImageBuildSalt))
