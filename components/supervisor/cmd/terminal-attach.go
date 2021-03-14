@@ -15,7 +15,7 @@ import (
 
 	"github.com/creack/pty"
 	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/supervisor/api"
@@ -101,11 +101,11 @@ func attachToTerminal(ctx context.Context, client api.TerminalServiceClient, ali
 	}()
 
 	// Set stdin in raw mode.
-	oldState, err := terminal.MakeRaw(int(os.Stdin.Fd()))
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
 		panic(err)
 	}
-	defer func() { _ = terminal.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
+	defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
 
 	if opts.Interactive {
 		// Handle pty size.
