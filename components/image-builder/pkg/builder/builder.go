@@ -23,12 +23,12 @@ import (
 	"github.com/docker/docker/api/types/volume"
 	docker "github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/jsonmessage"
-	proto "github.com/golang/protobuf/proto"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -85,6 +85,7 @@ type DockerBuilder struct {
 // Start iniitializes the docker builder and starts its maintainance functions. This function must be called prior to calling
 // any other function.
 func (b *DockerBuilder) Start(ctx context.Context) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Start")
 	defer tracing.FinishSpan(span, &err)
 
@@ -125,6 +126,7 @@ func (b *DockerBuilder) Start(ctx context.Context) (err error) {
 
 // ResolveBaseImage returns information about a build configuration without actually attempting to build anything.
 func (b *DockerBuilder) ResolveBaseImage(ctx context.Context, req *api.ResolveBaseImageRequest) (resp *api.ResolveBaseImageResponse, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "ResolveBaseImage")
 	defer tracing.FinishSpan(span, &err)
 
@@ -144,6 +146,7 @@ func (b *DockerBuilder) ResolveBaseImage(ctx context.Context, req *api.ResolveBa
 
 // ResolveWorkspaceImage returns information about a build configuration without actually attempting to build anything.
 func (b *DockerBuilder) ResolveWorkspaceImage(ctx context.Context, req *api.ResolveWorkspaceImageRequest) (resp *api.ResolveWorkspaceImageResponse, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "ResolveWorkspaceImage")
 	defer tracing.FinishSpan(span, &err)
 	tracing.LogRequestSafe(span, req)
@@ -185,6 +188,7 @@ func (b *DockerBuilder) ResolveWorkspaceImage(ctx context.Context, req *api.Reso
 
 // Build initiates the build of a Docker image using a build configuration
 func (b *DockerBuilder) Build(req *api.BuildRequest, resp api.ImageBuilder_BuildServer) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(resp.Context(), "Build")
 	defer tracing.FinishSpan(span, &err)
 	tracing.LogRequestSafe(span, req)
@@ -447,13 +451,14 @@ func (b *DockerBuilder) createBuildVolume(ctx context.Context, buildID string) (
 	logs := bytes.NewBuffer(nil)
 	err = b.runContainer(ctx, logs, initcontainer.ID)
 	if err != nil {
-		return "", xerrors.Errorf("cannot create build volume: %w", string(logs.Bytes()))
+		return "", xerrors.Errorf("cannot create build volume: %w", logs.String())
 	}
 
 	return buildVolName, nil
 }
 
 func (b *DockerBuilder) buildBaseImage(ctx context.Context, bld *build, src *api.BuildSourceDockerfile, ref string, allowedAuth allowedAuthFor) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "buildBaseImage")
 	defer tracing.FinishSpan(span, &err)
 
@@ -575,6 +580,7 @@ var (
 )
 
 func (b *DockerBuilder) buildWorkspaceImage(ctx context.Context, bld *build, baseref string, targetref []string, allowedAuth allowedAuthFor) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "buildWorkspaceImage")
 	defer tracing.FinishSpan(span, &err)
 
@@ -826,7 +832,8 @@ func defaultLogCensor(bld *build, forbiddenStrings [][]byte, in io.Reader) io.Re
 
 // ListBuilds returns a list of currently running builds
 func (b *DockerBuilder) ListBuilds(ctx context.Context, req *api.ListBuildsRequest) (resp *api.ListBuildsResponse, err error) {
-	span, _ := opentracing.StartSpanFromContext(ctx, "ListBuilds")
+	//nolint:ineffassign
+	span, ctx := opentracing.StartSpanFromContext(ctx, "ListBuilds")
 	defer tracing.FinishSpan(span, &err)
 
 	b.mu.RLock()
@@ -1012,7 +1019,8 @@ func (s *build) Write(p []byte) (n int, err error) {
 			return 0, err
 		}
 	}
-	n, err = s.logs.Write(p)
+
+	_, err = s.logs.Write(p)
 	if err != nil {
 		return 0, err
 	}
