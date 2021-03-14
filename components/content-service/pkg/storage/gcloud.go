@@ -110,12 +110,9 @@ func (rs *DirectGCPStorage) Validate() error {
 	)
 }
 
-const (
-	contentTypeTar = "application/x-tar"
-)
-
 // Init initializes the remote storage - call this before calling anything else on the interface
 func (rs *DirectGCPStorage) Init(ctx context.Context, owner, workspace string) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GCloudBucketRemotegcpStorage.Init")
 	defer tracing.FinishSpan(span, &err)
 
@@ -147,6 +144,7 @@ func (rs *DirectGCPStorage) EnsureExists(ctx context.Context) (err error) {
 }
 
 func gcpEnsureExists(ctx context.Context, client *gcpstorage.Client, bucketName string, gcpConfig GCPConfig) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GCloudBucketRemotegcpStorage.EnsureExists")
 	defer tracing.FinishSpan(span, &err)
 
@@ -193,6 +191,7 @@ func (rs *DirectGCPStorage) defaultObjectAccess(ctx context.Context, bkt, obj st
 }
 
 func (rs *DirectGCPStorage) download(ctx context.Context, destination string, bkt string, obj string, mappings []archive.IDMapping) (found bool, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "download")
 	span.SetTag("gcsBkt", bkt)
 	span.SetTag("gcsObj", obj)
@@ -292,6 +291,7 @@ func (rs *DirectGCPStorage) Qualify(name string) string {
 
 // Upload takes all files from a local location and uploads it to the remote storage
 func (rs *DirectGCPStorage) Upload(ctx context.Context, source string, name string, opts ...UploadOption) (bucket, object string, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GCloudBucketRemotegcpStorage.Upload")
 	defer tracing.FinishSpan(span, &err)
 	log := log.WithFields(log.OWI(rs.Username, rs.WorkspaceName, ""))
@@ -461,6 +461,7 @@ func (rs *DirectGCPStorage) ensureBackupSlotAvailable() error {
 }
 
 func (rs *DirectGCPStorage) uploadChunks(ctx context.Context, f io.ReaderAt, totalSize int64, desiredChunkCount int) (chnks []string, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "uploadChunks")
 	defer tracing.FinishSpan(span, &err)
 
@@ -540,6 +541,7 @@ func (rs *DirectGCPStorage) uploadChunks(ctx context.Context, f io.ReaderAt, tot
 }
 
 func (rs *DirectGCPStorage) uploadChunk(ctx context.Context, name string, r io.Reader, size int64, wg *sync.WaitGroup, errchan chan error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "uploadChunk")
 	span.SetTag("size", size)
 	defer span.Finish()
@@ -569,6 +571,7 @@ func (rs *DirectGCPStorage) uploadChunk(ctx context.Context, name string, r io.R
 }
 
 func (rs *DirectGCPStorage) deleteChunks(ctx context.Context, chunks []string) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "deleteChunks")
 	defer tracing.FinishSpan(span, &err)
 
@@ -585,6 +588,7 @@ func (rs *DirectGCPStorage) deleteChunks(ctx context.Context, chunks []string) (
 }
 
 func (rs *DirectGCPStorage) trailBackup(ctx context.Context, bkt *gcpstorage.BucketHandle, obj *gcpstorage.ObjectHandle, backupID string, trailLength int) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "uploadChunk")
 	defer tracing.FinishSpan(span, &err)
 

@@ -63,7 +63,7 @@ func WithGIDMapping(mappings []IDMapping) TarOption {
 // ExtractTarbal extracts an OCI compatible tar file src to the folder dst, expecting the overlay whiteout format
 func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOption) (err error) {
 	//nolint:staticcheck,ineffassign
-	span, _ := opentracing.StartSpanFromContext(ctx, "extractTarbal")
+	span, ctx := opentracing.StartSpanFromContext(ctx, "extractTarbal")
 	span.LogKV("src", src, "dst", dst)
 	defer tracing.FinishSpan(span, &err)
 

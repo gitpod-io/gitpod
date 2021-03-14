@@ -148,7 +148,8 @@ func (e GitOpFailedError) Error() string {
 // GitWithOutput starts git and returns the stdout of the process. This function returns once git is started,
 // not after it finishd. Once the returned reader returned io.EOF, the command is finished.
 func (c *Client) GitWithOutput(ctx context.Context, subcommand string, args ...string) (out []byte, err error) {
-	span, _ := opentracing.StartSpanFromContext(ctx, fmt.Sprintf("git.%s", subcommand))
+	//nolint:staticcheck,ineffassign
+	span, ctx := opentracing.StartSpanFromContext(ctx, fmt.Sprintf("git.%s", subcommand))
 	defer tracing.FinishSpan(span, &err)
 
 	fullArgs := make([]string, 0)
@@ -280,6 +281,7 @@ func (c *Client) Fetch(ctx context.Context) (err error) {
 
 // UpdateRemote performs a git fetch on the upstream remote URI
 func (c *Client) UpdateRemote(ctx context.Context) (err error) {
+	//nolint:staticcheck,ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "updateRemote")
 	span.SetTag("upstreamRemoteURI", c.UpstreamRemoteURI)
 	defer tracing.FinishSpan(span, &err)
@@ -300,6 +302,7 @@ func (c *Client) UpdateRemote(ctx context.Context) (err error) {
 
 // UpdateSubmodules updates a repositories submodules
 func (c *Client) UpdateSubmodules(ctx context.Context) (err error) {
+	//nolint:staticcheck,ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "updateSubmodules")
 	defer tracing.FinishSpan(span, &err)
 

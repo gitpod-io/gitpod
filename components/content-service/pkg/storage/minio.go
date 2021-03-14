@@ -175,6 +175,7 @@ func minioEnsureExists(ctx context.Context, client *minio.Client, bucketName str
 }
 
 func (rs *DirectMinIOStorage) download(ctx context.Context, destination string, bkt string, obj string, mappings []archive.IDMapping) (found bool, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "download")
 	span.SetTag("bucket", bkt)
 	span.SetTag("object", obj)
@@ -216,6 +217,7 @@ func (rs *DirectMinIOStorage) Qualify(name string) string {
 
 // Upload takes all files from a local location and uploads it to the remote storage
 func (rs *DirectMinIOStorage) Upload(ctx context.Context, source string, name string, opts ...UploadOption) (bucket, obj string, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "DirectUpload")
 	defer tracing.FinishSpan(span, &err)
 
@@ -286,6 +288,7 @@ func (s *presignedMinIOStorage) EnsureExists(ctx context.Context, ownerId string
 }
 
 func (s *presignedMinIOStorage) DiskUsage(ctx context.Context, bucket string, prefix string) (size int64, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.DiskUsage")
 	defer tracing.FinishSpan(span, &err)
 
@@ -346,6 +349,7 @@ func (s *presignedMinIOStorage) SignDownload(ctx context.Context, bucket, object
 
 // SignUpload describes an object for upload
 func (s *presignedMinIOStorage) SignUpload(ctx context.Context, bucket, obj string, options *SignedURLOptions) (info *UploadInfo, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.SignUpload")
 	defer func() {
 		if err == ErrNotFound {
@@ -365,6 +369,7 @@ func (s *presignedMinIOStorage) SignUpload(ctx context.Context, bucket, obj stri
 }
 
 func (s *presignedMinIOStorage) DeleteObject(ctx context.Context, bucket string, query *DeleteObjectQuery) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.DeleteObject")
 	defer tracing.FinishSpan(span, &err)
 

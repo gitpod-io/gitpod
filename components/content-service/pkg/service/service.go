@@ -35,6 +35,7 @@ func NewContentService(cfg storage.Config) (res *ContentService, err error) {
 
 // UploadUrl provides a upload URL
 func (cs *ContentService) UploadUrl(ctx context.Context, req *api.UploadUrlRequest) (resp *api.UploadUrlResponse, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "UploadUrl")
 	span.SetTag("user", req.OwnerId)
 	span.SetTag("name", req.Name)
@@ -86,6 +87,7 @@ func (cs *ContentService) UploadUrl(ctx context.Context, req *api.UploadUrlReque
 
 // DownloadUrl provides a download URL
 func (cs *ContentService) DownloadUrl(ctx context.Context, req *api.DownloadUrlRequest) (resp *api.DownloadUrlResponse, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "DownloadUrl")
 	span.SetTag("user", req.OwnerId)
 	span.SetTag("name", req.Name)
@@ -114,6 +116,7 @@ func (cs *ContentService) DownloadUrl(ctx context.Context, req *api.DownloadUrlR
 
 // Delete deletes the uploaded content
 func (cs *ContentService) Delete(ctx context.Context, req *api.DeleteRequest) (resp *api.DeleteResponse, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Delete")
 	span.SetTag("user", req.OwnerId)
 	span.SetTag("name", req.Name)
