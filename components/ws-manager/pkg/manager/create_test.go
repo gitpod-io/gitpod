@@ -5,13 +5,12 @@
 package manager
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"testing"
 	"testing/fstest"
 
-	"github.com/golang/protobuf/jsonpb"
+	"google.golang.org/protobuf/encoding/protojson"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/yaml"
 
@@ -93,7 +92,7 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 					}
 
 					var spec api.StartWorkspaceSpec
-					err := jsonpb.Unmarshal(bytes.NewReader([]byte(*fixture.Spec)), &spec)
+					err := protojson.Unmarshal([]byte(*fixture.Spec), &spec)
 					if err != nil {
 						t.Errorf("cannot unmarshal StartWorkspaceSpec: %v", err)
 						return nil
@@ -110,7 +109,7 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 						Spec:          &spec,
 					}
 				} else {
-					err := jsonpb.Unmarshal(bytes.NewReader([]byte(*fixture.Request)), &req)
+					err := protojson.Unmarshal([]byte(*fixture.Request), &req)
 					if err != nil {
 						t.Errorf("cannot unmarshal StartWorkspaceReq: %v", err)
 						return nil

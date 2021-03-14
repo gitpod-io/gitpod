@@ -63,8 +63,8 @@ func GetIntegrationTestClient(kubecfgfn string) (client kubernetes.Interface, na
 		return
 	}
 
-	client.CoreV1().Pods(namespace).DeleteCollection(ctx, *metav1.NewDeleteOptions(30), metav1.ListOptions{LabelSelector: "component=workspace"})
-	client.CoreV1().ConfigMaps(namespace).DeleteCollection(ctx, *metav1.NewDeleteOptions(30), metav1.ListOptions{LabelSelector: "component=workspace"})
+	_ = client.CoreV1().Pods(namespace).DeleteCollection(ctx, *metav1.NewDeleteOptions(30), metav1.ListOptions{LabelSelector: "component=workspace"})
+	_ = client.CoreV1().ConfigMaps(namespace).DeleteCollection(ctx, *metav1.NewDeleteOptions(30), metav1.ListOptions{LabelSelector: "component=workspace"})
 
 	return
 }

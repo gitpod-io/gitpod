@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/golang/protobuf/jsonpb"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 )
@@ -25,11 +25,18 @@ var debugDecodeInitializer = &cobra.Command{
 			return fmt.Errorf("cannot unmarshal init config: %w", err)
 		}
 
-		m := &jsonpb.Marshaler{
-			EnumsAsInts: false,
-			Indent:      "  ",
+		marshaler := protojson.MarshalOptions{
+			Indent:         "  ",
+			UseEnumNumbers: false,
 		}
-		return m.Marshal(os.Stdout, spec)
+
+		b, err := marshaler.Marshal(spec)
+		if err != nil {
+			return err
+		}
+
+		_, err = fmt.Fprint(os.Stdout, string(b))
+		return err
 	},
 }
 

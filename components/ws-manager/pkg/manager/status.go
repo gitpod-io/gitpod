@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -441,7 +441,7 @@ func getContainer(pod *corev1.Pod, name string) *corev1.Container {
 
 // getWorkspaceMetadata extracts a workspace's metadata from pod labels
 func getWorkspaceMetadata(pod *corev1.Pod) *api.WorkspaceMetadata {
-	started, _ := ptypes.TimestampProto(pod.CreationTimestamp.Time)
+	started := timestamppb.New(pod.CreationTimestamp.Time)
 	return &api.WorkspaceMetadata{
 		Owner:     pod.ObjectMeta.Labels[wsk8s.OwnerLabel],
 		MetaId:    pod.ObjectMeta.Labels[wsk8s.MetaIDLabel],
@@ -512,10 +512,7 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 			if err != nil {
 				return xerrors.Errorf("cannot parse firstUserActivity: %w", err)
 			}
-			pt, err := ptypes.TimestampProto(t)
-			if err != nil {
-				return xerrors.Errorf("cannot convert firstUserActivity: %w", err)
-			}
+			pt := timestamppb.New(t)
 			result.Conditions.FirstUserActivity = pt
 		}
 
