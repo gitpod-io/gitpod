@@ -110,10 +110,6 @@ func (rs *DirectGCPStorage) Validate() error {
 	)
 }
 
-const (
-	contentTypeTar = "application/x-tar"
-)
-
 // Init initializes the remote storage - call this before calling anything else on the interface
 func (rs *DirectGCPStorage) Init(ctx context.Context, owner, workspace string) (err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GCloudBucketRemotegcpStorage.Init")

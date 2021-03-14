@@ -38,7 +38,7 @@ func (d *NamedURLDownloader) Download(ctx context.Context, destination string, n
 		return false, nil
 	}
 	if resp.StatusCode != http.StatusOK {
-		return false, xerrors.Errorf("non-OK status code: %s", resp.StatusCode)
+		return false, xerrors.Errorf("non-OK status code: %v", resp.StatusCode)
 	}
 	defer resp.Body.Close()
 

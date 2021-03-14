@@ -109,7 +109,7 @@ func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 		// If any of these cleanup operations fail that's no reason to fail ws initialization.
 		// It just results in a slightly degraded state.
 		if didStash {
-			p.Git.Git(ctx, "stash", "pop")
+			_ = p.Git.Git(ctx, "stash", "pop")
 		}
 
 		log.Debug("prebuild initializer Git operations complete")
