@@ -28,16 +28,10 @@ import (
 )
 
 const (
-	// labelCacheSize configures how big our label cache is, i.e. how many workspace pods
-	// we can handle in this ws-daemon instance at the same time. 1024 is way more than we
-	// will ever have on a single machine. A single label is about 200 byte.
-	labelCacheSize = 1024
-
 	kubernetesNamespace            = "k8s.io"
 	containerLabelCRIKind          = "io.cri-containerd.kind"
 	containerLabelK8sContainerName = "io.kubernetes.container.name"
 	containerLabelK8sPodName       = "io.kubernetes.pod.name"
-	containerLabelK8sNamespace     = "io.kubernetes.pod.namespace"
 )
 
 // NewContainerd creates a new containerd adapter

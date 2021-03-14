@@ -256,17 +256,17 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 
 	containerPID, err := rt.ContainerPID(ctx, wscontainerID)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot find container PID for containerID %v: %w", wscontainerID)
+		return nil, xerrors.Errorf("cannot find container PID for containerID %v: %w", wscontainerID, err)
 	}
 
 	procPID, err = wbs.Uidmapper.findHostPID(containerPID, uint64(req.Pid))
 	if err != nil {
-		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID)
+		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID, err)
 	}
 
 	nodeStaging, err := os.MkdirTemp("", "proc-staging")
 	if err != nil {
-		return nil, xerrors.Errorf("cannot prepare proc staging: %w")
+		return nil, xerrors.Errorf("cannot prepare proc staging: %w", err)
 	}
 	err = nsinsider(wbs.Session.InstanceID, int(procPID), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "mount-proc", "--target", nodeStaging)
@@ -328,22 +328,22 @@ func (wbs *InWorkspaceServiceServer) UmountProc(ctx context.Context, req *api.Um
 
 	containerPID, err := rt.ContainerPID(ctx, wscontainerID)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot find container PID for containerID %v: %w", wscontainerID)
+		return nil, xerrors.Errorf("cannot find container PID for containerID %v: %w", wscontainerID, err)
 	}
 
 	procPID, err = wbs.Uidmapper.findHostPID(containerPID, uint64(req.Pid))
 	if err != nil {
-		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID)
+		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID, err)
 	}
 
 	nodeStaging, err := os.MkdirTemp("", "proc-umount")
 	if err != nil {
-		return nil, xerrors.Errorf("cannot prepare proc staging: %w")
+		return nil, xerrors.Errorf("cannot prepare proc staging: %w", err)
 	}
 	scktPath := filepath.Join(nodeStaging, "sckt")
 	l, err := net.Listen("unix", scktPath)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot listen for mountfd: %w")
+		return nil, xerrors.Errorf("cannot listen for mountfd: %w", err)
 	}
 	defer l.Close()
 

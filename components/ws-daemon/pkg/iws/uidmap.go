@@ -13,11 +13,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/golang/protobuf/jsonpb"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
@@ -60,7 +60,12 @@ func (r UIDRange) Contains(start, size uint32) bool {
 
 // HandleUIDMappingRequest performs a UID mapping request
 func (m *Uidmapper) HandleUIDMappingRequest(ctx context.Context, req *api.WriteIDMappingRequest, containerID container.ID, instanceID string) (err error) {
-	reqjson, _ := (&jsonpb.Marshaler{}).MarshalToString(req)
+	var reqjson []byte
+	reqjson, err = protojson.Marshal(req)
+	if err != nil {
+		return err
+	}
+
 	fields := logrus.Fields{"req": reqjson, "containerID": containerID, "instanceId": instanceID}
 	log.WithFields(fields).Info("received UID mapping request")
 
