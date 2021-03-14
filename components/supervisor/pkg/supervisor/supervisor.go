@@ -55,10 +55,6 @@ func AddAPIEndpointOpts(opts ...grpc.ServerOption) {
 	apiEndpointOpts = append(apiEndpointOpts, opts...)
 }
 
-const (
-	maxIDEPause = 20 * time.Second
-)
-
 type runOptions struct {
 	Args        []string
 	InNamespace bool
@@ -83,9 +79,8 @@ func InNamespace() RunOption {
 
 // The sum of those timeBudget* times has to fit within the terminationGracePeriod of the workspace pod.
 const (
-	timeBudgetIDEShutdown      = 5 * time.Second
-	timeBudgetTeardownCommands = 15 * time.Second
-	timeBudgetDaemonTeardown   = 10 * time.Second
+	timeBudgetIDEShutdown    = 5 * time.Second
+	timeBudgetDaemonTeardown = 10 * time.Second
 )
 
 const (
