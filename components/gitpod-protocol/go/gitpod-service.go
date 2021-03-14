@@ -1871,7 +1871,7 @@ func (strct *ResolvedPlugins) UnmarshalJSON(b []byte) error {
 				return err // invalid additionalProperty
 			}
 			if strct.AdditionalProperties == nil {
-				strct.AdditionalProperties = make(map[string]*ResolvedPlugin, 0)
+				strct.AdditionalProperties = make(map[string]*ResolvedPlugin)
 			}
 			strct.AdditionalProperties[k] = additionalValue
 		}
