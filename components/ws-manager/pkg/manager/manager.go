@@ -84,15 +84,10 @@ const (
 	workspaceVolumeName = "vol-this-workspace"
 	// workspaceDir is the path within all containers where workspaceVolume is mounted to
 	workspaceDir = "/workspace"
-	// theiaDir is the path within all containers where theiaVolume is mounted to
-	theiaDir = "/theia"
 	// MarkerLabel is the label by which we identify pods which belong to ws-manager
 	markerLabel = "gpwsman"
 	// headlessLabel marks a workspace as headless
 	headlessLabel = "headless"
-
-	// theiaVersionLabelFmt is the format to produce the label a node has if Theia is available on it in a particular version
-	theiaVersionLabelFmt = "gitpod.io/theia.%s"
 )
 
 const (

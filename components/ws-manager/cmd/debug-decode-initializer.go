@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 )
@@ -33,11 +33,18 @@ var debugDecodeImageSpec = &cobra.Command{
 			return fmt.Errorf("cannot unmarshal init config: %w", err)
 		}
 
-		m := &jsonpb.Marshaler{
-			EnumsAsInts: false,
-			Indent:      "  ",
+		marshaler := protojson.MarshalOptions{
+			Indent:         "  ",
+			UseEnumNumbers: false,
 		}
-		return m.Marshal(os.Stdout, &initializer)
+
+		b, err := marshaler.Marshal(&initializer)
+		if err != nil {
+			return err
+		}
+
+		_, err = fmt.Fprint(os.Stdout, string(b))
+		return err
 	},
 }
 
