@@ -5,14 +5,13 @@
 package cmd
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"os"
 
-	"github.com/golang/protobuf/jsonpb"
 	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
@@ -50,13 +49,18 @@ var imagebuildsBuildCmd = &cobra.Command{
 				},
 			},
 		}
-		m := &jsonpb.Marshaler{}
+
+		marshaler := protojson.MarshalOptions{
+			Indent: "  ",
+		}
+
+		b, _ := marshaler.Marshal(&example)
 		fmt.Println("example config:")
-		m.Marshal(os.Stdout, &example)
+		fmt.Fprint(os.Stdout, string(b))
 		fmt.Println()
 
 		var source builder.BuildSource
-		err = jsonpb.Unmarshal(bytes.NewReader(fc), &source)
+		err = protojson.Unmarshal(fc, &source)
 		if err != nil {
 			log.Fatal(err)
 		}
