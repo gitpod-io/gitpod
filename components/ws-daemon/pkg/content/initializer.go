@@ -16,11 +16,11 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -254,7 +254,7 @@ func RunInitializerChild() (err error) {
 	}
 
 	var initmsg msgInitContent
-	json.Unmarshal(fc, &initmsg)
+	err = json.Unmarshal(fc, &initmsg)
 	if err != nil {
 		return err
 	}

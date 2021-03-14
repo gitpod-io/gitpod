@@ -18,18 +18,10 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/sirupsen/logrus"
-
-	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 )
 
 func init() {
 	logrus.SetLevel(logrus.WarnLevel)
-}
-
-type emptySP struct{}
-
-func (*emptySP) NewStorage() (storage.DirectAccess, error) {
-	return &storage.DirectNoopStorage{}, nil
 }
 
 func getTestStore() (*Store, error) {
