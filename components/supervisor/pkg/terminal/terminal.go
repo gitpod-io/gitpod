@@ -75,7 +75,7 @@ func (m *Mux) Start(cmd *exec.Cmd, options TermOptions) (alias string, err error
 	go func() {
 		term.waitErr = cmd.Wait()
 		close(term.waitDone)
-		m.CloseTerminal(alias, 0*time.Second)
+		_ = m.CloseTerminal(alias, 0*time.Second)
 	}()
 
 	return alias, nil
@@ -368,7 +368,7 @@ func (mw *multiWriter) Listen() io.ReadCloser {
 
 	recording := mw.recorder.Bytes()
 	go func() {
-		w.Write(recording)
+		_, _ = w.Write(recording)
 
 		// copy bytes from channel to writer.
 		// Note: we close the writer independently of the write operation s.t. we don't
@@ -380,7 +380,7 @@ func (mw *multiWriter) Listen() io.ReadCloser {
 				err = io.ErrShortWrite
 			}
 			if err != nil {
-				res.CloseWithError(err)
+				_ = res.CloseWithError(err)
 			}
 		}
 	}()
@@ -453,10 +453,3 @@ func (mw *multiWriter) ListenerCount() int {
 
 	return len(mw.listener)
 }
-
-type opCloser struct {
-	io.Reader
-	Op func() error
-}
-
-func (c *opCloser) Close() error { return c.Op() }

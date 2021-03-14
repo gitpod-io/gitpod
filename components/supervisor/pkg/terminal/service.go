@@ -50,8 +50,6 @@ type MuxTerminalService struct {
 	DefaultWorkdir string
 	DefaultShell   string
 	Env            []string
-
-	tokens map[*Term]string
 }
 
 // RegisterGRPC registers a gRPC service

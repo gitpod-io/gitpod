@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"os"
 	"os/exec"
 	"strings"
 	"testing"
@@ -47,13 +48,21 @@ func TestTitle(t *testing.T) {
 			mux := NewMux()
 			defer mux.Close()
 
+			tmpWorkdir, err := os.MkdirTemp("", "workdirectory")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer os.RemoveAll(tmpWorkdir)
+
 			terminalService := NewMuxTerminalService(mux)
+			terminalService.DefaultWorkdir = tmpWorkdir
 			term, err := terminalService.OpenWithOptions(context.Background(), &api.OpenTerminalRequest{}, TermOptions{
 				Title: test.Title,
 			})
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			if diff := cmp.Diff(test.Default, term.Terminal.Title); diff != "" {
 				t.Errorf("unexpected output (-want +got):\n%s", diff)
 			}
@@ -241,7 +250,7 @@ func TestTerminals(t *testing.T) {
 			io.Copy(stdoutOutput, terminal.Stdout.Listen())
 
 			expectation := strings.Split(test.Expectation(terminal), "\r\n")
-			actual := strings.Split(string(stdoutOutput.Bytes()), "\r\n")
+			actual := strings.Split(stdoutOutput.String(), "\r\n")
 			if diff := cmp.Diff(expectation, actual); diff != "" {
 				t.Errorf("unexpected output (-want +got):\n%s", diff)
 			}
