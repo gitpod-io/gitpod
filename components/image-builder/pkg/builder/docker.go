@@ -32,6 +32,7 @@ import (
 
 // pullImage pulls a docker image from a registry and forwards the log output to out
 func (b *DockerBuilder) pullImage(ctx context.Context, out io.Writer, ref, auth string) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "pullImage")
 	defer tracing.FinishSpan(span, &err)
 
@@ -105,6 +106,7 @@ func (b *DockerBuilder) runContainer(ctx context.Context, logs io.Writer, contai
 
 // checkImageExists checks if an image already exists in the registry. Returns gRPC errors if there are any.
 func (b *DockerBuilder) checkImageExists(ctx context.Context, refstr, auth string) (exists bool, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "checkImageExists")
 	defer tracing.FinishSpan(span, &err)
 	span.SetTag("ref", refstr)
@@ -141,6 +143,7 @@ func (b *DockerBuilder) checkImageExists(ctx context.Context, refstr, auth strin
 // serveContext serves /workspace/context within a volume as gzipped-tar stream on the out writer.
 // This is useful for sending context which was prepared in a volume to a Docker build.
 func (b *DockerBuilder) serveContext(ctx context.Context, bld *build, volume, path string, out io.WriteCloser) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "serveContext")
 	defer tracing.FinishSpan(span, &err)
 
@@ -212,6 +215,7 @@ func (b *DockerBuilder) getAbsoluteImageRef(ctx context.Context, ref string, all
 }
 
 func (b *DockerBuilder) getBaseImageRef(ctx context.Context, bs *api.BuildSource, allowedAuth allowedAuthFor) (res string, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "getBaseImageRef")
 	defer tracing.FinishSpan(span, &err)
 

@@ -54,6 +54,7 @@ type DockerRegistryResolver struct {
 
 // Resolve resolves a mutable Docker tag to its absolute digest form by asking the corresponding Docker registry
 func (dr *DockerRegistryResolver) Resolve(ctx context.Context, ref string, opts ...DockerRefResolverOption) (res string, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "DockerRegistryResolver.Resolve")
 	defer tracing.FinishSpan(span, &err)
 
@@ -109,6 +110,7 @@ var _ DockerRefResolver = &PrecachingRefResolver{}
 // StartCaching starts the precaching of resolved references at the given interval. This function blocks until the context is canceled
 // and is intended to run as a Go routine.
 func (pr *PrecachingRefResolver) StartCaching(ctx context.Context, interval time.Duration) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "PrecachingRefResolver.StartCaching")
 	defer tracing.FinishSpan(span, nil)
 
@@ -143,6 +145,7 @@ func (pr *PrecachingRefResolver) StartCaching(ctx context.Context, interval time
 
 // Resolve aims to resolve a ref using its own cache first and asks the underlying resolver otherwise
 func (pr *PrecachingRefResolver) Resolve(ctx context.Context, ref string, opts ...DockerRefResolverOption) (res string, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "PrecachingRefResolver.Resolve")
 	defer tracing.FinishSpan(span, &err)
 
