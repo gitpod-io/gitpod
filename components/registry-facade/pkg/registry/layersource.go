@@ -12,7 +12,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/remotes"
@@ -385,7 +384,6 @@ type SpecMappedImagedSource struct {
 
 	// TODO: add ttl
 	cache *lru.Cache
-	mu    sync.RWMutex
 }
 
 // Envs returns the list of env modifiers

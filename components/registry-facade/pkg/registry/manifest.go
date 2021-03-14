@@ -221,7 +221,7 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Length", fmt.Sprint(len(p)))
 		w.Header().Set("Etag", fmt.Sprintf(`"%s"`, dgst))
 		w.Header().Set("Docker-Content-Digest", dgst)
-		w.Write(p)
+		_, _ = w.Write(p)
 
 		log.WithField("name", mh.Name).WithField("tag", mh.Tag).Debug("get manifest")
 		return nil
