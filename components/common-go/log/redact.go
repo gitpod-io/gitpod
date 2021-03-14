@@ -19,8 +19,6 @@ var (
 	}
 )
 
-type any map[interface{}]interface{}
-
 // RedactJSON removes sensitive data from JSON structures
 func RedactJSON(data []byte) (res []byte, err error) {
 	var jsonBlob interface{}
