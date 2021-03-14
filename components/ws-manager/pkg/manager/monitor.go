@@ -18,12 +18,12 @@ import (
 	"time"
 
 	"github.com/alecthomas/repr"
-	"github.com/golang/protobuf/proto"
 	"github.com/opentracing/opentracing-go"
 	tracelog "github.com/opentracing/opentracing-go/log"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
 	grpc_status "google.golang.org/grpc/status"
+	"google.golang.org/protobuf/encoding/protojson"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -925,7 +925,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 		if err != nil {
 			return xerrors.Errorf("cannot decode init config: %w", err)
 		}
-		err = proto.Unmarshal(initializerPB, &initializer)
+		err = protojson.Unmarshal(initializerPB, &initializer)
 		if err != nil {
 			return xerrors.Errorf("cannot unmarshal init config: %w", err)
 		}

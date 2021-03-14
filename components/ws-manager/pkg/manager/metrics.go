@@ -10,7 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/prometheus/client_golang/prometheus"
 	corev1 "k8s.io/api/core/v1"
 
@@ -37,11 +36,6 @@ type metrics struct {
 
 	mu         sync.Mutex
 	phaseState map[string]api.WorkspacePhase
-}
-
-type wsstate struct {
-	Phase api.WorkspacePhase
-	Type  api.WorkspaceType
 }
 
 func newMetrics(m *Manager) *metrics {
@@ -125,10 +119,7 @@ func (m *metrics) OnChange(status *api.WorkspaceStatus) {
 			return
 		}
 
-		t, err := ptypes.Timestamp(status.Metadata.StartedAt)
-		if err != nil {
-			return
-		}
+		t := status.Metadata.StartedAt.AsTime()
 		tpe := api.WorkspaceType_name[int32(status.Spec.Type)]
 		hist, err := m.startupTimeHistVec.GetMetricWithLabelValues(tpe)
 		if err != nil {
@@ -233,8 +224,6 @@ type workspaceActivityVec struct {
 	*prometheus.GaugeVec
 	name    string
 	manager *Manager
-
-	mu sync.Mutex
 }
 
 func newWorkspaceActivityVec(m *Manager) *workspaceActivityVec {
@@ -272,7 +261,6 @@ func (vec *workspaceActivityVec) Collect(ch chan<- prometheus.Metric) {
 	activeGauge.Set(float64(active))
 	notActiveGauge.Set(float64(notActive))
 	vec.GaugeVec.Collect(ch)
-	return
 }
 
 func (vec *workspaceActivityVec) getWorkspaceActivityCounts() (active, notActive int, err error) {
@@ -308,8 +296,6 @@ type timeoutSettingsVec struct {
 	name    string
 	manager *Manager
 	desc    *prometheus.Desc
-
-	mu sync.Mutex
 }
 
 func newTimeoutSettingsVec(m *Manager) *timeoutSettingsVec {
@@ -365,13 +351,6 @@ func (vec *timeoutSettingsVec) Collect(ch chan<- prometheus.Metric) {
 	}
 }
 
-// subscriberQueueLevelVec provides a gauge of the current subscriber queue fill levels.
-type subscriberQueueLevelVec struct {
-	name    string
-	manager *Manager
-	desc    *prometheus.Desc
-}
-
 func newSubscriberQueueLevelVec(m *Manager) *timeoutSettingsVec {
 	name := prometheus.BuildFQName(metricsNamespace, metricsWorkspaceSubsystem, "subscriber_queue_level")
 	desc := prometheus.NewDesc(
@@ -384,27 +363,5 @@ func newSubscriberQueueLevelVec(m *Manager) *timeoutSettingsVec {
 		name:    name,
 		manager: m,
 		desc:    desc,
-	}
-}
-
-// Describe implements Collector. It will send exactly one Desc to the provided channel.
-func (vec *subscriberQueueLevelVec) Describe(ch chan<- *prometheus.Desc) {
-	ch <- vec.desc
-}
-
-// Collect implements Collector.
-func (vec *subscriberQueueLevelVec) Collect(ch chan<- prometheus.Metric) {
-	vec.manager.subscriberLock.RLock()
-	defer vec.manager.subscriberLock.RUnlock()
-
-	for key, queue := range vec.manager.subscribers {
-		// metrics cannot be re-used, we have to create them every single time
-		metric, err := prometheus.NewConstMetric(vec.desc, prometheus.GaugeValue, float64(len(queue)), key)
-		if err != nil {
-			log.WithError(err).Warnf("cannot create workspace metric - %s will be inaccurate", vec.name)
-			continue
-		}
-
-		ch <- metric
 	}
 }

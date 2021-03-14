@@ -264,7 +264,7 @@ func unmarshalPodLifecycleIndependentState(cfg *corev1.ConfigMap) (*podLifecycle
 func marshalPodLifecycleIndependentState(dst *corev1.ConfigMap, plis *podLifecycleIndependentState) error {
 	rawPLIS, err := json.Marshal(plis)
 	if err != nil {
-		return xerrors.Errorf("cannot marshal pod lifecycle independent state: %w")
+		return xerrors.Errorf("cannot marshal pod lifecycle independent state: %w", err)
 	}
 
 	// We're not putting the PLIS JSON in the config map data as that takes about 10x as long as storing it in an annotation.

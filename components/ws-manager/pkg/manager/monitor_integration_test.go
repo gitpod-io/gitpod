@@ -93,10 +93,7 @@ func TestIntegrationWorkspaceDisposal(t *testing.T) {
 					s.EXPECT().WaitForInit(gomock.Any(), gomock.Any()).Return(&wsdaemon.WaitForInitResponse{}, nil).AnyTimes()
 					s.EXPECT().DisposeWorkspace(gomock.Any(), matches(func(a interface{}) bool {
 						_, ok := a.(*wsdaemon.DisposeWorkspaceRequest)
-						if !ok {
-							return false
-						}
-						return true //req.Backup == false
+						return ok //req.Backup == false
 					})).Return(&wsdaemon.DisposeWorkspaceResponse{}, nil).MinTimes(1)
 				},
 				PostStart: func(t *testing.T, monitor *Monitor, id string, updates *StatusRecoder) {

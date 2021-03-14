@@ -23,6 +23,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/peer"
@@ -84,15 +85,10 @@ const (
 	workspaceVolumeName = "vol-this-workspace"
 	// workspaceDir is the path within all containers where workspaceVolume is mounted to
 	workspaceDir = "/workspace"
-	// theiaDir is the path within all containers where theiaVolume is mounted to
-	theiaDir = "/theia"
 	// MarkerLabel is the label by which we identify pods which belong to ws-manager
 	markerLabel = "gpwsman"
 	// headlessLabel marks a workspace as headless
 	headlessLabel = "headless"
-
-	// theiaVersionLabelFmt is the format to produce the label a node has if Theia is available on it in a particular version
-	theiaVersionLabelFmt = "gitpod.io/theia.%s"
 )
 
 const (
@@ -1176,7 +1172,9 @@ func newWssyncConnectionFactory(managerConfig Configuration) (grpcpool.Factory, 
 		grpc.WithUnaryInterceptor(grpc_opentracing.UnaryClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer()))),
 		grpc.WithStreamInterceptor(grpc_opentracing.StreamClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer()))),
 		grpc.WithBlock(),
-		grpc.WithBackoffMaxDelay(5 * time.Second),
+		grpc.WithConnectParams(grpc.ConnectParams{
+			Backoff: backoff.Config{MaxDelay: 5 * time.Second},
+		}),
 		grpc.WithDefaultServiceConfig(retryPolicy),
 	}
 	if cfg.TLS.Authority != "" || cfg.TLS.Certificate != "" && cfg.TLS.PrivateKey != "" {
