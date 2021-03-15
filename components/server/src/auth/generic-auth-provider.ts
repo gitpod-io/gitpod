@@ -446,6 +446,8 @@ export class GenericAuthProvider implements AuthProvider {
                     elevateScopes
                 }
             } else {
+                const termsAcceptanceRequired = await this.userService.checkTermsAcceptanceRequired({ config, identity: candidate });
+
                 // `checkSignUp` might throgh `AuthError`s with the intention to block the signup process.
                 await this.userService.checkSignUp({ config, identity: candidate });
 
@@ -459,7 +461,8 @@ export class GenericAuthProvider implements AuthProvider {
                     additionalIdentity: githubIdentity,
                     additionalToken: githubToken,
                     authHost: this.host,
-                    isBlocked
+                    isBlocked,
+                    termsAcceptanceRequired
                 }
             }
             done(undefined, currentGitpodUser || candidate, flowContext);
