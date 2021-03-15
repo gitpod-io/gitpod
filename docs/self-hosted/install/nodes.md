@@ -36,6 +36,6 @@ To do this:
         # The faster this location is (in terms of IO) the faster workspaces will initialize.
         hostWorkspaceArea: /mnt/disks/ssd0/workspaces
     ```
- 2. Do a `helm upgrade --install -f values.custom.yaml gitpod gitpod.io/gitpod --version=0.7.0` to apply the changes.
+ 2. Do a `helm upgrade --install -f values.custom.yaml gitpod gitpod.io/gitpod --version=0.8.0` to apply the changes.
 
     > Note that Helm does _not_ merge hierarchies in a single file. Please make sure there is only ever _one_ `components` hierarchy or the last one overwrites all previous values.
