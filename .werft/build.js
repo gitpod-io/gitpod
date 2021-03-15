@@ -177,8 +177,6 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
     const namespace = `staging-${destname}`;
     const domain = `${destname}.staging.gitpod-dev.com`;
     const url = `https://${domain}`;
-    const grafanaUrl = `${url}/grafana`;
-    const prometheusUrl = `${url}/prometheus`;
     const wsdaemonPort = `1${Math.floor(Math.random()*1000)}`;
     const registryProxyPort = `2${Math.floor(Math.random()*1000)}`;
     const grafanaProxyPort = `3${Math.floor(Math.random()*1000)}`;
@@ -307,13 +305,13 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
             werft.log('Observability Stack', 'Installing observability stack');
     
             werft.log('Observability Stack', 'Clonning Observability Stack repository');
-            exec('git clone https://github.com/gitpod-io/pluggable-o11y-stack.git && git checkout as/setup-custom-route');
+            exec('git clone https://github.com/gitpod-io/pluggable-o11y-stack.git && cd pluggable-o11y-stack && git checkout as/setup-custom-route');
     
             werft.log('Observability Stack', 'Installing dependencies');
             exec('cd pluggable-o11y-stack && make setup-workspace');
     
             werft.log('Observability Stack', 'Building YAML manifests');
-            exec(`cd pluggable-o11y-stack && IS_PREVIEW_ENV=true NAMESPACE=${namespace} CLUSTER_NAME=gitpod-core-dev ROOT_URL=${url} make build`);
+            exec(`cd pluggable-o11y-stack && IS_PREVIEW_ENV=true NAMESPACE=${namespace} CLUSTER_NAME=gitpod-core-dev ROOT_URL=${domain} make build`);
     
             werft.log('Observability Stack', 'Deploying observability stack');
             exec(`cd pluggable-o11y-stack && IS_PREVIEW_ENV=true NAMESPACE=${namespace} make deploy`);
@@ -321,8 +319,8 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
             werft.log('Observability Stack', 'done');
             werft.done('Observability Stack');
 
-            exec(`werft log result -d "prometheus installation" -c github url ${prometheusUrl}`);
-            exec(`werft log result -d "grafana installation" -c github url ${grafanaUrl}`);
+            exec(`werft log result -d "prometheus installation" -c github url ${url}/prometheus/graph`);
+            exec(`werft log result -d "grafana installation" -c github url ${url}/grafana/`);
         }
     } catch (err) {
         werft.fail('deploy', err);
