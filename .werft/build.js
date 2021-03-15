@@ -307,13 +307,13 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
             werft.log('Observability Stack', 'Installing observability stack');
     
             werft.log('Observability Stack', 'Clonning Observability Stack repository');
-            exec('git clone https://github.com/gitpod-io/pluggable-o11y-stack.git');
+            exec('git clone https://github.com/gitpod-io/pluggable-o11y-stack.git && git checkout as/setup-custom-route');
     
             werft.log('Observability Stack', 'Installing dependencies');
             exec('cd pluggable-o11y-stack && make setup-workspace');
     
             werft.log('Observability Stack', 'Building YAML manifests');
-            exec(`cd pluggable-o11y-stack && IS_PREVIEW_ENV=true NAMESPACE=${namespace} CLUSTER_NAME=gitpod-core-dev make build`);
+            exec(`cd pluggable-o11y-stack && IS_PREVIEW_ENV=true NAMESPACE=${namespace} CLUSTER_NAME=gitpod-core-dev ROOT_URL=${url} make build`);
     
             werft.log('Observability Stack', 'Deploying observability stack');
             exec(`cd pluggable-o11y-stack && IS_PREVIEW_ENV=true NAMESPACE=${namespace} make deploy`);
