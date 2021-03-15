@@ -6,7 +6,7 @@ url: /docs/self-hosted/latest/install/install-on-kubernetes/
 
 This section describes how to install Gitpod on any Kubernetes cluster using [Helm](https://helm.sh). This is the most flexible and generic way of installing Gitpod. The chart for stable releases resides in Helm repository [charts.gitpod.io](https://charts.gitpod.io), charts for branch-builds can be found [here](#install-branch-build), and the source of the charts is in our [public git repository](https://github.com/gitpod-io/gitpod/blob/master/chart/).
 
-For some cloud providers, we offer [Terraform](https://www.terraform.io/) scripts packaged into an installer. The installer aims to use the managed services from your cloud provider (Kubernetes Cluster, database, storage, image registry) rather than installing them along with the chart. Also, the script configures the cluster for best performance and cost-efficiency. We recommend using the installer if your cloud provider is supported. Once the installer has created the cluster, it will pre-configure and install this Gitpod helm chart into it.
+For some cloud providers, we offer basic [Terraform](https://www.terraform.io/) scripts. Please note that those are more meant as a starting point, and we currently do not have the capacity to support and update them as much as we would love to. Please join our [community](https://community.gitpod.io/) if you have any questions regarding the installation.
 * [Installer for Google Cloud Platform (GCP)](../install-on-gcp-script/).
 * [Installer for Amazon Web Services (AWS)](../install-on-aws-script/).
 

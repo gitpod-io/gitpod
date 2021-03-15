@@ -2,7 +2,7 @@
 url: /docs/self-hosted/latest/install/install-on-aws-script/
 ---
 
-> Since the `0.6.0` release (December 2019) the installers are broken. We're working on bringing those back with one of the next releases.
+> Since the `0.6.0` release (December 2019) the installers are deprecated. They are no longer working to their full extend and will be removed in a future release.
 
 # Getting started with Gitpod on AWS
 
