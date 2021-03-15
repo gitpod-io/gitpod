@@ -179,8 +179,8 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
     const url = `https://${domain}`;
     const wsdaemonPort = `1${Math.floor(Math.random()*1000)}`;
     const registryProxyPort = `2${Math.floor(Math.random()*1000)}`;
-    const grafanaProxyPort = `3${Math.floor(Math.random()*1000)}`;
-    const prometheusProxyPort = `4${Math.floor(Math.random()*1000)}`;
+    const grafanaNodePort = `${30500 + Math.floor(Math.random()*500)}`;
+    const prometheusNodePort = `${31000 + Math.floor(Math.random()*500)}`;
     const registryNodePort = `${30000 + Math.floor(Math.random()*1000)}`;
 
     // trigger certificate issuing
