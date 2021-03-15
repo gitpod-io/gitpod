@@ -35,9 +35,28 @@ module.exports = {
         fontFamily: {
             'sans': ['Inter', 'Helvetica', 'Arial', 'sans-serif'],
         },
+        screens: {
+            'lg': {'max': '1023px'},
+            'lg2': {'max': '1279px'},
+        },
+        underlineThickness: {
+            'thin': '2px',
+            'thick': '5px'
+        },
+        underlineOffset: {
+            'small': '2px',
+            'medium': '5px',
+        },
+        filter: { // defaults to {}
+            // https://github.com/benface/tailwindcss-filters#usage
+            'none': 'none',
+            'grayscale': 'grayscale(1)',
+        },
     },
     plugins: [
         require('@tailwindcss/forms'),
+        require('tailwind-underline-utils'),
+        require('tailwindcss-filters'),
         // ...
     ],
 };
