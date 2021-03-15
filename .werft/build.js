@@ -311,7 +311,14 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
             exec('cd pluggable-o11y-stack && make setup-workspace');
     
             werft.log('Observability Stack', 'Building YAML manifests');
-            exec(`cd pluggable-o11y-stack && IS_PREVIEW_ENV=true NAMESPACE=${namespace} CLUSTER_NAME=gitpod-core-dev ROOT_URL=${domain} make build`);
+            exec(`cd pluggable-o11y-stack && IS_PREVIEW_ENV=true \
+             CLUSTER_NAME=gitpod-core-dev \
+             NAMESPACE=${namespace} \
+             ROOT_URL=${domain} \
+             PROMETHEUS_INGRESS_NODE_PORT=${prometheusProxyPort} \
+             GRAFANA_INGRESS_NODE_PORT=${grafanaProxyPort} \
+             make build`
+            );
     
             werft.log('Observability Stack', 'Deploying observability stack');
             exec(`cd pluggable-o11y-stack && IS_PREVIEW_ENV=true NAMESPACE=${namespace} make deploy`);
