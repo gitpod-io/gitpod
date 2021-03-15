@@ -1,15 +1,23 @@
 export default [
     {
-        title: 'Environment Variables',
-        link: '/env-vars'
+        title: 'Account',
+        link: '/account'
     },
     {
-        title: 'Git Integration',
-        link: '/git-integration'
+        title: 'Notifications',
+        link: '/notifications'
     },
     {
-        title: 'Feature Preview',
-        link: '/feature-preview'
+        title: 'Plans',
+        link: '/plans'
+    },
+    {
+        title: 'Variables',
+        link: '/variables'
+    },
+    {
+        title: 'Integrations',
+        link: '/integrations'
     },
     {
         title: 'Default IDE',
