@@ -85,7 +85,7 @@ func (srv *MuxTerminalService) OpenWithOptions(ctx context.Context, req *api.Ope
 	}
 	cmd.Env = append(srv.Env, "TERM=xterm-color")
 	for key, value := range req.Env {
-		cmd.Env = append(cmd.Env, key+"="+value)
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%v=%v", key, value))
 	}
 	for k, v := range req.Annotations {
 		options.Annotations[k] = v
