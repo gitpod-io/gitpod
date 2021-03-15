@@ -41,52 +41,54 @@ export function Login({ gitpodService }: { gitpodService: GitpodService }) {
     }
 
     return (<div id="login-container" className="z-50 flex w-screen h-screen">
-        <div id="feature-section" className="flex-grow bg-gray-100 w-1/2">
-            <div className="flex flex-col space-y-8 h-full justify-center p-20">
-                <div className="flex space-x-2 text-center">
-                    <img src="/gitpod.svg" className="h-6 my-1" />
-                    <h3>Gitpod</h3>
-                </div>
-                <div>
-                    <h1>Save time<br/> with Prebuilds</h1>
-                </div>
-                <div className="text-gray-400">
-                    Gitpod continuously builds your git branches like a CI server. This means no more waiting for dependencies to be downloaded and builds to finish. Learn more about Prebuilds
-                </div>
-                <div>
-                    {/* pic */}
+        <div id="feature-section" className="flex-grow bg-gray-100 w-1/2 lg:hidden">
+            <div id="feature-section-column" className="flex max-w-2xl h-full ml-auto pt-6">
+                <div className="flex flex-col space-y-12 pl-6 pr-24 m-auto">
+                    <div>
+                        <img src="/images/gitpod.svg" className="h-8" />
+                    </div>
+                    <div>
+                        <h1 className="text-7xl lg2:text-5xl">Save Time<br /> with Prebuilds</h1>
+                    </div>
+                    <div className="text-gray-400 text-lg">
+                        Gitpod continuously builds your git branches like a CI server. This means no more waiting for dependencies to be downloaded and builds to finish. <a className="underline underline-thickness-thin underline-offset-small hover:text-gray-600" href="https://www.gitpod.io/docs/prebuilds/" target="gitpod-docs">Learn more about Prebuilds</a>
+                    </div>
+                    <div>
+                        <img src="/images/terminal.svg" className="h-64 -ml-8" />
+                    </div>
                 </div>
             </div>
         </div>
-        <div id="login-section" className="flex-grow flex flex-col w-1/2">
-
-            <div className="flex-grow h-100 flex flex-row items-center justify-center" >
-                
-                <div className="rounded-xl px-10 py-10 mx-auto">
-                    <div className="mx-auto pb-8">
-                        <img src="/gitpod.svg" className="h-16 mx-auto" />
-                    </div>
-                    <div className="mx-auto text-center pb-8 space-y-2">
-                        <h1 className="text-3xl">Log in to Gitpod</h1>
-                        <h2 className="uppercase">ALWAYS READY-TO-CODE</h2>
-                    </div>
-                    <div className="flex flex-col space-y-3">
-                        {authProviders.map(ap => {
-                            return (
-                                <button key={"button" + ap.host} className="flex-none w-full rounded-none border-none p-0 inline-flex" onClick={() => openLogin(ap.host)}>
-                                    <img className="fill-current w-5 h-5 ml-4 mr-4 my-auto" src={iconForAuthProvider(ap.authProviderType)}/>
-                                    <span className="pt-2 pb-2 mr-4 text-base break-words">Continue with {ap.host}</span>
-                                </button>
-                            );
-                        })}
+        <div id="login-section" className="flex-grow flex w-1/2 lg:w-full">
+            <div id="login-section-column" className="flex-grow max-w-2xl flex flex-col h-100 lg:mx-auto">
+                <div className="flex-grow h-100 flex flex-row items-center justify-center" >
+                    <div className="rounded-xl px-10 py-10 mx-auto">
+                        <div className="mx-auto pb-8">
+                            <img src="/gitpod.svg" className="h-16 mx-auto" />
+                        </div>
+                        <div className="mx-auto text-center pb-8 space-y-2">
+                            <h1 className="text-3xl">Log in to Gitpod</h1>
+                            <h2 className="uppercase text-sm">ALWAYS READY-TO-CODE</h2>
+                        </div>
+                        <div className="flex flex-col space-y-3">
+                            {authProviders.map(ap => {
+                                return (
+                                    <button key={"button" + ap.host} className="btn-login flex-none w-56 h-10 p-0 inline-flex" onClick={() => openLogin(ap.host)}>
+                                        <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={iconForAuthProvider(ap.authProviderType)} />
+                                        <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">Continue with {simplifyProviderName(ap.host)}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
+                <div className="flex-none mx-auto h-20 text-center">
+                    <span className="text-gray-400">
+                        By signing in, you agree to our <a className="underline underline-thickness-thin underline-offset-small hover:text-gray-600" target="gitpod-terms" href="https://www.gitpod.io/terms/">terms of service</a>.
+                    </span>
+                </div>
             </div>
-            <div className="flex-none mx-auto h-20 text-center">
-                <span className="text-gray-400">
-                    By signing in, you agree to our <a className="underline" target="gitpod-terms" href="https://www.gitpod.io/terms/">terms of service</a>.
-                </span>
-            </div>
+
         </div>
     </div>);
 }
@@ -104,8 +106,21 @@ function iconForAuthProvider(type: string) {
     }
 }
 
+function simplifyProviderName(host: string) {
+    switch (host) {
+        case "github.com":
+            return "GitHub"
+        case "gitlab.com":
+            return "GitLab"
+        case "bitbucket.org":
+            return "BitBucket"
+        default:
+            return host;
+    }
+}
+
 function getLoginUrl(host: string) {
-    const returnTo = gitpodHostUrl.with({ pathname: 'login-success'}).toString();
+    const returnTo = gitpodHostUrl.with({ pathname: 'login-success' }).toString();
     return gitpodHostUrl.withApi({
         pathname: '/login',
         search: `host=${host}&returnTo=${encodeURIComponent(returnTo)}`
