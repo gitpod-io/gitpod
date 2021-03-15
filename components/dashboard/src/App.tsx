@@ -9,13 +9,12 @@ import { Login } from './Login';
 import { UserContext } from './user-context';
 import { gitpodService } from './service/service';
 
-const Notifications = React.lazy(() => import('./account/Notifications'));
-const Profile = React.lazy(() => import('./account/Profile'));
-const Subscriptions = React.lazy(() => import('./account/Subscriptions'));
+const Account = React.lazy(() => import('./settings/Account'));
+const Notifications = React.lazy(() => import('./settings/Notifications'));
+const Plans = React.lazy(() => import('./settings/Plans'));
+const EnvironmentVariables = React.lazy(() => import('./settings/EnvironmentVariables'));
+const GitIntegrations = React.lazy(() => import('./settings/GitIntegrations'));
 const DefaultIDE = React.lazy(() => import('./settings/DefaultIDE'));
-const EnvVars = React.lazy(() => import('./settings/EnvVars'));
-const FeaturePreview = React.lazy(() => import('./settings/FeaturePreview'));
-const GitIntegration = React.lazy(() => import('./settings/GitIntegration'));
 
 function Loading() {
     return (<h3>Loading...</h3>);
@@ -70,12 +69,11 @@ function App() {
                             <React.Fragment>
                                 <Route path={["/", "/workspaces"]} exact render={
                                     () => <Workspaces gitpodService={gitpodService} />} />
-                                <Route path="/profile" exact component={Profile} />
+                                <Route path="/account" exact component={Account} />
                                 <Route path="/notifications" exact component={Notifications} />
-                                <Route path="/subscriptions" exact component={Subscriptions} />
-                                <Route path="/env-vars" exact component={EnvVars} />
-                                <Route path="/git-integration" exact component={GitIntegration} />
-                                <Route path="/feature-preview" exact component={FeaturePreview} />
+                                <Route path="/plans" exact component={Plans} />
+                                <Route path="/variables" exact component={EnvironmentVariables} />
+                                <Route path="/integrations" exact component={GitIntegrations} />
                                 <Route path="/default-ide" exact component={DefaultIDE} />
                             </React.Fragment>
                         )}
@@ -94,11 +92,11 @@ const renderMenu = () => (
     <Menu left={[
         {
             title: 'Workspaces',
-            link: '/'
+            link: '/workspaces'
         },
         {
             title: 'Settings',
-            link: '/profile'
+            link: '/account'
         },
     ]}
         right={[

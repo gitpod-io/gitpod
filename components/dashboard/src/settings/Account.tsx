@@ -3,9 +3,9 @@ import { useContext, useState } from "react";
 import Modal from "../components/Modal";
 import { SettingsPage } from "../components/SettingsPage";
 import { UserContext } from "../user-context";
-import accountMenu from "./account-menu";
+import settingsMenu from "./settings-menu";
 
-export default function Profile() {
+export default function Account() {
     const { user } = useContext(UserContext);
 
     const [modal, setModal] = useState(false);
@@ -20,7 +20,7 @@ export default function Profile() {
             </div>
         </Modal>
 
-        <SettingsPage title='Account' subtitle='Profile details' menuEntries={accountMenu}>
+        <SettingsPage title='Account' subtitle='Profile details' menuEntries={settingsMenu}>
             <h3>Personal Information</h3>
             <div className="flex flex-col lg:flex-row">
                 <div className="pb-6">

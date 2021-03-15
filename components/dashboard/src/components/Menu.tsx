@@ -57,7 +57,7 @@ function Menu(props: { left: Entry[], right: Entry[] }) {
                         {props.right.map(MenuItem)}
                     </ul>
                 </nav>
-                <Link className="lg:ml-4 flex items-center justify-start lg:mb-0 mb-4 pointer-cursor m-l-auto rounded-full border-2 hover:border-gray-400 p-0.5" to="/profile">
+                <Link className="lg:ml-4 flex items-center justify-start lg:mb-0 mb-4 pointer-cursor m-l-auto rounded-full border-2 hover:border-gray-400 p-0.5" to="/account">
                     <img className="rounded-full w-6 h-6"
                         src={user?.avatarUrl || ''} alt={user?.name || 'Anonymous'} />
                 </Link>

@@ -1,11 +1,11 @@
 import { SettingsPage } from "../components/SettingsPage";
 import settingsMenu from './settings-menu';
 
-export default function FeaturePreview() {
+export default function GitIntegrations() {
     return <div>
-        <SettingsPage title='Settings' subtitle='Try the latest features today' menuEntries={settingsMenu}>
+        <SettingsPage title='Git Integrations' subtitle='Manage integration with your Git hosters' menuEntries={settingsMenu}>
             <div className="lg:px-28 px-10 flex pt-10">
-                Feature Preview
+                Git Hoster Access Control
             </div>
         </SettingsPage>
     </div>;
