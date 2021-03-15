@@ -4,13 +4,13 @@ url: /docs/self-hosted/latest/install/upgrade/
 
 # Gitpod Self-Hosted Upgrade Notes
 
-## Upgrading Gitpod from v0.6.0 to v0.7.0
+## Upgrading Gitpod from v0.6.0 to v0.8.0
 
-With version 0.7.0 there are two major changes that require a user action. Both relate to the remote storage.
+With version 0.8.0 there are two major changes that require a user action. Both relate to the remote storage.
 
 ### Built-in MinIO is now accessable at minio.your-gitpod-domain.com
 
-When you install Gitpod on your own Kubernetes installation, it brings a built-in MinIO object storage (unless disabled). As of v0.7.0, the built-in MinIO instance is accessable at https://minio.your-gitpod-domain.com. That's the reason that (for security reasons) we do not set a default access and secret key for the built-in MinIO installation anymore. That means, you need to add your own random keys in your values files like this:
+When you install Gitpod on your own Kubernetes installation, it brings a built-in MinIO object storage (unless disabled). As of v0.8.0, the built-in MinIO instance is accessable at https://minio.your-gitpod-domain.com. That's the reason that (for security reasons) we do not set a default access and secret key for the built-in MinIO installation anymore. That means, you need to add your own random keys in your values files like this:
 ```
 minio:
   accessKey: add-a-radom-access-key-here

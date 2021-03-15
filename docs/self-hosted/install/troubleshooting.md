@@ -27,7 +27,7 @@ This section should solve all errors that might come up during installation of G
           - <your path here>
     ```
 
- 3. Do an `helm upgrade --install -f values.custom.yaml gitpod gitpod.io/gitpod --version=0.7.0` to apply the changes.
+ 3. Do an `helm upgrade --install -f values.custom.yaml gitpod gitpod.io/gitpod --version=0.8.0` to apply the changes.
 
 
 ## 2. `helm install` fails with: "minio access key is required, please add a value to your values.yaml"
