@@ -218,6 +218,16 @@ func newTerm(pty *os.File, cmd *exec.Cmd, options TermOptions) (*Term, error) {
 
 		waitDone: make(chan struct{}),
 	}
+
+	rawConn, err := pty.SyscallConn()
+	if err != nil {
+		return nil, err
+	}
+
+	rawConn.Control(func(fileFd uintptr) {
+		res.fd = int(fileFd)
+	})
+
 	go io.Copy(res.Stdout, pty)
 	return res, nil
 }
@@ -249,20 +259,24 @@ type Term struct {
 
 	waitErr  error
 	waitDone chan struct{}
+
+	fd int
 }
 
 func (term *Term) GetTitle() (string, error) {
+	var b bytes.Buffer
 	title := term.title
+	b.WriteString(title)
 	command, err := term.resolveForegroundCommand()
 	if title != "" && command != "" {
-		title += ": "
+		b.WriteString(": ")
 	}
-	title += command
-	return title, err
+	b.WriteString(command)
+	return b.String(), err
 }
 
 func (term *Term) resolveForegroundCommand() (string, error) {
-	pgrp, err := unix.IoctlGetInt(int(term.PTY.Fd()), unix.TIOCGPGRP)
+	pgrp, err := unix.IoctlGetInt(term.fd, unix.TIOCGPGRP)
 	if err != nil {
 		return "", err
 	}

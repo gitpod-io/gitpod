@@ -56,6 +56,7 @@ func TestTitle(t *testing.T) {
 
 			terminalService := NewMuxTerminalService(mux)
 			terminalService.DefaultWorkdir = tmpWorkdir
+
 			term, err := terminalService.OpenWithOptions(context.Background(), &api.OpenTerminalRequest{}, TermOptions{
 				Title: test.Title,
 			})
@@ -75,12 +76,20 @@ func TestTitle(t *testing.T) {
 				terminalService.Listen(&api.ListenTerminalRequest{Alias: term.Terminal.Alias}, listener)
 			}()
 
+			// initial event could contain not contain updates
+			time.Sleep(100 * time.Millisecond)
+
 			title := <-titles
 			if diff := cmp.Diff(test.Default, title); diff != "" {
 				t.Errorf("unexpected output (-want +got):\n%s", diff)
 			}
 
 			_, err = terminalService.Write(context.Background(), &api.WriteTerminalRequest{Alias: term.Terminal.Alias, Stdin: []byte(test.Command + "\r\n")})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			_, err = terminalService.Shutdown(context.Background(), &api.ShutdownTerminalRequest{Alias: term.Terminal.Alias})
 			if err != nil {
 				t.Fatal(err)
 			}
