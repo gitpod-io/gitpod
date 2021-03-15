@@ -11,9 +11,10 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"syscall"
 
+	"github.com/google/shlex"
 	"github.com/spf13/cobra"
+	"golang.org/x/sys/unix"
 
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
 )
@@ -26,37 +27,42 @@ var previewCmd = &cobra.Command{
 	Short: "Opens a URL in Theia's preview view",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		service, err := theialib.NewServiceFromEnv()
+		url := replaceLocalhostInURL(args[0])
+
+		if service, err := theialib.NewServiceFromEnv(); err == nil {
+			_, err = service.OpenPreview(theialib.OpenPreviewRequest{URL: url})
+			if err == nil {
+				// we've opened the preview. All is well.
+				return
+			}
+		}
+
+		pcmd := os.Getenv("GP_PREVIEW_BROWSER")
+		if pcmd == "" {
+			log.Fatal("GP_PREVIEW_BROWSER is not set")
+			return
+		}
+		pargs, err := shlex.Split(pcmd)
+		if err != nil {
+			log.Fatalf("cannot parse GP_PREVIEW_BROWSER: %v", err)
+			return
+		}
+		if len(pargs) > 1 {
+			pcmd = pargs[0]
+		}
+		pcmd, err = exec.LookPath(pcmd)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		url := args[0]
-		url = replaceLocalhostInURL(service, url)
-
-		_, err = service.OpenPreview(theialib.OpenPreviewRequest{URL: url})
-		if err == theialib.ErrNotFound {
-			gpPreviewBrowser := os.Getenv("GP_PREVIEW_BROWSER")
-			if gpPreviewBrowser != "" {
-				gpPreviewArgs := strings.Fields(gpPreviewBrowser)
-				argv0, err := exec.LookPath(gpPreviewArgs[0])
-				if err != nil {
-					log.Fatal(err)
-				}
-				err = syscall.Exec(argv0, append(gpPreviewArgs, url), os.Environ())
-				if err != nil {
-					log.Fatal(err)
-				}
-				return
-			}
-		}
+		err = unix.Exec(pcmd, append(pargs, url), os.Environ())
 		if err != nil {
 			log.Fatal(err)
 		}
 	},
 }
 
-func replaceLocalhostInURL(service theialib.TheiaCLIService, url string) string {
+func replaceLocalhostInURL(url string) string {
 	return regexLocalhost.ReplaceAllStringFunc(url, func(input string) string {
 		hasScheme := strings.HasPrefix(input, "http://") || strings.HasPrefix(input, "https://")
 		input = strings.TrimPrefix(strings.TrimPrefix(input, "http://"), "https://")
