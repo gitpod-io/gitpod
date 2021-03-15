@@ -330,7 +330,8 @@ func reaper(terminatingReaper <-chan bool) {
 			continue
 		}
 
-		pid, err := unix.Wait4(-1, nil, 0, nil)
+		// "pid: 0, options: 0" to follow https://github.com/ramr/go-reaper/issues/11 to make agent-smith work again
+		pid, err := unix.Wait4(0, nil, 0, nil)
 
 		if err == unix.ECHILD {
 			// The calling process does not have any unwaited-for children.
