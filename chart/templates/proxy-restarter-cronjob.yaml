@@ -1,0 +1,37 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{- if .Values.components.proxy.restarter.enabled }}
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: proxy-restarter
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: proxy-restarter
+    kind: cronjob
+    stage: {{ .Values.installation.stage }}
+spec:
+  # every sunday morning
+  schedule: {{ .Values.components.proxy.restarter.schedule | quote }}
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: kubectl
+            image: {{ .Values.components.proxy.restarter.image }}
+            command:
+            - kubectl
+            - rollout
+            - restart
+            - deployment
+            - proxy
+            - '-n'
+            - {{ .Release.Namespace }}
+          serviceAccountName: proxy-restarter
+          restartPolicy: OnFailure
+{{- end }}
