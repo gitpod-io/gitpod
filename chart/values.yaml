@@ -357,6 +357,11 @@ components:
     # This can be generated with: openssl dhparam 4096 2> /dev/null | base64 -w 0
     # http://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_dhparam
     sslDHParam:
+    # enabled cronjob to restart the proxy deployment
+    restarter:
+      enabled: false
+      schedule: '0 0 * * 0'
+      image: bitnami/kubectl:latest
 
   wsManager:
     name: "ws-manager"
