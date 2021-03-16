@@ -1,4 +1,0 @@
-Contact: security@gitpod.io
-Preferred-Languages: en, de
-Canonical: https://gitpod.io/.well-known/security.txt
-Hiring: https://typefox.io/career
