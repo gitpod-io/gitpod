@@ -312,7 +312,7 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
     
             werft.log('Observability Stack', 'Building YAML manifests');
             exec(`cd pluggable-o11y-stack && IS_PREVIEW_ENV=true \
-             CLUSTER_NAME=gitpod-core-dev \
+             CLUSTER_NAME=$(kubectl config get-clusters | tail -n 1) \
              NAMESPACE=${namespace} \
              ROOT_URL=${domain} \
              PROMETHEUS_INGRESS_NODE_PORT=${prometheusProxyPort} \
