@@ -7,11 +7,7 @@ module.exports = {
         extend: {
             colors: {
                 gray: colors.warmGray,
-                green: {
-                  light: '#9DD714',
-                  DEFAULT: '#58B19F',
-                  dark: '#467A45',
-                },
+                green: colors.lime,
                 red: {
                   light: '#EF9C9A',
                   DEFAULT: '#CE4A3E',
@@ -22,7 +18,6 @@ module.exports = {
                   DEFAULT: '#5C8DD6',
                   dark: '#265583',
                 },
-                'gitpod-green': '#7BA80F',
                 'gitpod-black': '#161616',
                 'gitpod-gray': '#8E8787',
                 'gitpod-kumquat-light': '#FFCE4F',
