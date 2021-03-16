@@ -344,9 +344,9 @@ function findOrCreateGCPProject(name) {
         && terraform apply -auto-approve \
             -var 'name=${name}'`, {slice: 'create-gcp-project', async: false});
 
-    let tfout = {};
-    shell.exec("terraform output --json", tfout);
-    werft.log("output", JSON.stringify(tfout));
+    //let tfout = {}; exec('node --version', {silent:true}).stdout
+    let out = shell.exec(`GOOGLE_APPLICATION_CREDENTIALS="${pathToGcpSA}" terraform -chdir=${pathToTerraform} output --json`).stdout;
+    werft.log("output", JSON.stringify( out));
 }
 
 
