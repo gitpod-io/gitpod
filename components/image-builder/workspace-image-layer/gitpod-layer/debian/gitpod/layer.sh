@@ -10,7 +10,7 @@ set -e;
 
 # Install necessary tools only if they are not yet installed
 INSTALLED_PACKAGES=$(dpkg-query -f '${Package} ${Status}\n' -W bash-completion git | wc -l)
-if [ $INSTALLED_PACKAGES != 3 ]; then
+if [ $INSTALLED_PACKAGES != 2 ]; then
     # The first 'clean' is needed to avoid apt-get detecting package meta data changes
     # (like changed labels) which result in errors and broken builds/workspaces!
     apt-get clean && rm -rf /var/lib/apt/lists/*;
