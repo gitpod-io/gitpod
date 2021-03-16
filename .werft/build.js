@@ -334,12 +334,19 @@ function findOrCreateGCPProject(name) {
   }
 }`      );    
     werft.log("create-gcp-project", "run 'terraform apply'");
+    exec("gcloud auth list");
     exec(`gcloud auth activate-service-account --key-file "${pathToGcpSA}"`);
+    exec("gcloud auth list");
     exec(`set -x \
+        && export GOOGLE_APPLICATION_CREDENTIALS="${pathToGcpSA}" \
         && cd ${pathToTerraform} \
         && terraform init \
         && terraform apply -auto-approve \
-            -var 'foo=bar'`, {slice: 'create-gcp-project', async: false});
+            -var 'name=${name}'`, {slice: 'create-gcp-project', async: false});
+
+    let tfout = {};
+    shell.exec("terraform output --json", tfout);
+    werft.log("output", JSON.stringify(tfout));
 }
 
 
