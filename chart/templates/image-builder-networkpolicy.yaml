@@ -1,6 +1,7 @@
 # Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
+{{ if .Values.installNetworkPolicies -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -33,3 +34,4 @@ spec:
         except:
         # Google Compute engine special, reserved VM metadata IP
         - 169.254.169.254/32
+{{- end -}}

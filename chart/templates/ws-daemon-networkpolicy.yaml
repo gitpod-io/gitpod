@@ -2,6 +2,7 @@
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 {{ $comp := .Values.components.wsDaemon -}}
+{{ if .Values.installNetworkPolicies -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -38,3 +39,4 @@ spec:
         matchLabels:
           app: prometheus
           component: server
+{{- end -}}

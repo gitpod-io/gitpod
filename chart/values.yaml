@@ -15,6 +15,7 @@ installation:
   cluster: "00"
   shortname: ""
 license: ""
+installNetworkPolicies: true
 installPodSecurityPolicies: true
 imagePullPolicy: IfNotPresent
 resources:
