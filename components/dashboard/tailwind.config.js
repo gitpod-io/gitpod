@@ -30,7 +30,7 @@ module.exports = {
             },
             outline: {
                 blue: '1px solid #000033',
-            }
+            },
         },
         fontFamily: {
             'sans': ['Inter', 'Helvetica', 'Arial', 'sans-serif'],
