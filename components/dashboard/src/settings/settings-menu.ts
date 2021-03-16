@@ -20,7 +20,7 @@ export default [
         link: '/integrations'
     },
     {
-        title: 'Default IDE',
-        link: '/default-ide'
+        title: 'Preferences',
+        link: '/preferences'
     },
 ];

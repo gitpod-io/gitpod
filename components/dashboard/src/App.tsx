@@ -14,7 +14,7 @@ const Notifications = React.lazy(() => import('./settings/Notifications'));
 const Plans = React.lazy(() => import('./settings/Plans'));
 const EnvironmentVariables = React.lazy(() => import('./settings/EnvironmentVariables'));
 const GitIntegrations = React.lazy(() => import('./settings/GitIntegrations'));
-const DefaultIDE = React.lazy(() => import('./settings/DefaultIDE'));
+const Preferences = React.lazy(() => import('./settings/Preferences'));
 
 function Loading() {
     return (<h3>Loading...</h3>);
@@ -73,7 +73,7 @@ function App() {
                                 <Route path="/plans" exact component={Plans} />
                                 <Route path="/variables" exact component={EnvironmentVariables} />
                                 <Route path="/integrations" exact component={GitIntegrations} />
-                                <Route path="/default-ide" exact component={DefaultIDE} />
+                                <Route path="/preferences" exact component={Preferences} />
                             </React.Fragment>
                         )}
                     </Switch>
