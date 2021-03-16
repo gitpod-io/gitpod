@@ -87,13 +87,13 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
           <p className="mt-1 mb-2 text-base">You already have running workspaces with the same context. You can open an existing one or open a new workspace.</p>
           <>
             {result?.existingWorkspaces?.map(w =>
-              <a href={w.latestInstance?.ideUrl} className="rounded-xl hover:bg-gray-100 flex p-3 my-1">
+              <a href={w.latestInstance?.ideUrl} className="rounded-xl group hover:bg-gray-100 flex p-3 my-1">
                 <div className="w-full">
                   <p className="text-base text-black font-bold">{w.workspace.id}</p>
                   <p>{w.workspace.contextURL}</p>
                 </div>
                 <div className="flex">
-                  <button className="px-3 py-1 my-auto bg-green-600 hover:bg-green-700 border-green-800">Open</button>
+                  <button className="px-3 py-1 my-auto opacity-0 group-hover:opacity-100 bg-green-600 hover:bg-green-700 border-green-800">Open</button>
                 </div>
               </a>
             )}
