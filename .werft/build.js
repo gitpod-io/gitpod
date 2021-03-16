@@ -347,6 +347,8 @@ function findOrCreateGCPProject(name) {
     //let tfout = {}; exec('node --version', {silent:true}).stdout
     let out = shell.exec(`GOOGLE_APPLICATION_CREDENTIALS="${pathToGcpSA}" terraform output --json`).stdout;
     werft.log("output", JSON.stringify( out));
+
+    // TODO: change back to old dir
 }
 
 
