@@ -22,6 +22,7 @@ module.exports = {
                   DEFAULT: '#5C8DD6',
                   dark: '#265583',
                 },
+                'gitpod-green': '#7BA80F',
                 'gitpod-black': '#161616',
                 'gitpod-gray': '#8E8787',
                 'gitpod-kumquat-light': '#FFCE4F',

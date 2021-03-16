@@ -23,7 +23,7 @@ function ProgressBar(props: { phase: number, error: boolean }) {
         // This phase is currently running
         classes += ' bg-green-light animate-pulse';
       }
-      return <div className={classes}/>;
+      return <div key={'phase-'+i} className={classes}/>;
     })}
   </div>;
 }
