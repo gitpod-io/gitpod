@@ -337,15 +337,15 @@ function findOrCreateGCPProject(name) {
     exec("gcloud auth list");
     exec(`gcloud auth activate-service-account --key-file "${pathToGcpSA}"`);
     exec("gcloud auth list");
+    shell.cd(pathToTerraform);
     exec(`set -x \
         && export GOOGLE_APPLICATION_CREDENTIALS="${pathToGcpSA}" \
-        && cd ${pathToTerraform} \
         && terraform init \
         && terraform apply -auto-approve \
             -var 'name=${name}'`, {slice: 'create-gcp-project', async: false});
 
     //let tfout = {}; exec('node --version', {silent:true}).stdout
-    let out = shell.exec(`GOOGLE_APPLICATION_CREDENTIALS="${pathToGcpSA}" terraform -chdir=${pathToTerraform} output --json`).stdout;
+    let out = shell.exec(`GOOGLE_APPLICATION_CREDENTIALS="${pathToGcpSA}" terraform output --json`).stdout;
     werft.log("output", JSON.stringify( out));
 }
 
