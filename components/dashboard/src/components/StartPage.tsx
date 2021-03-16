@@ -12,7 +12,7 @@ function ProgressBar(props: { phase: number, error: boolean }) {
       let classes = 'h-2 w-10 mx-1 my-2 rounded-full';
       if (i < props.phase) {
         // Already passed this phase successfully
-        classes += ' bg-green-light';
+        classes += ' bg-green-400';
       } else if (i > props.phase) {
         // Haven't reached this phase yet
         classes += ' bg-gray-200';
@@ -21,7 +21,7 @@ function ProgressBar(props: { phase: number, error: boolean }) {
         classes += ' bg-red';
       } else {
         // This phase is currently running
-        classes += ' bg-green-light animate-pulse';
+        classes += ' bg-green-400 animate-pulse';
       }
       return <div key={'phase-'+i} className={classes}/>;
     })}

@@ -93,14 +93,14 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
                   <p>{w.workspace.contextURL}</p>
                 </div>
                 <div className="flex">
-                  <button className="border-green-dark bg-gitpod-green px-3 py-1 my-auto">Open</button>
+                  <button className="px-3 py-1 my-auto bg-green-600 hover:bg-green-700 border-green-800">Open</button>
                 </div>
               </a>
             )}
           </>
         </div>
         <div className="flex justify-end mt-4">
-          <button className="border-green-dark bg-gitpod-green" onClick={() => this.createWorkspace(CreateWorkspaceMode.Default)}>New Workspace</button>
+          <button className="bg-green-600 hover:bg-green-700 border-green-800" onClick={() => this.createWorkspace(CreateWorkspaceMode.Default)}>New Workspace</button>
         </div>
       </Modal>;
     }
