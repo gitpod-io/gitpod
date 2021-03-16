@@ -1,8 +1,9 @@
+import React, { Suspense } from "react";
 import { CreateWorkspaceMode, GitpodService, WorkspaceCreationResult } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
+import Modal from "../components/Modal";
 import { StartPage, StartPhase } from "../components/StartPage";
 import StartWorkspace from "./StartWorkspace";
-import React, { Suspense } from "react";
 
 const WorkspaceLogs = React.lazy(() => import('./WorkspaceLogs'));
 
@@ -32,11 +33,11 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
     this.createWorkspace();
   }
 
-  async createWorkspace() {
+  async createWorkspace(mode = CreateWorkspaceMode.SelectIfRunning) {
     try {
       const result = await this.props.gitpodService.server.createWorkspace({
         contextUrl: this.props.contextUrl,
-        mode: CreateWorkspaceMode.SelectIfRunning
+        mode
       });
       if (result.workspaceURL) {
         window.location.href = result.workspaceURL;
@@ -80,8 +81,28 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
     }
 
     else if (result?.existingWorkspaces) {
-      // FIXME Force create
-      statusMessage = <div className="text-base text-gray-400">Existing workspaces:<ul>{result.existingWorkspaces.map(w => <li>→ <a className="text-blue" href={w.latestInstance?.ideUrl}>{w.workspace.id}</a></li>)}</ul></div>;
+      statusMessage = <Modal visible={true} closeable={false}>
+        <h3>Running Workspaces</h3>
+        <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-2">
+          <p className="mt-1 mb-2 text-base">You already have running workspaces with the same context. You can open an existing one or open a new workspace.</p>
+          <>
+            {result?.existingWorkspaces?.map(w =>
+              <a href={w.latestInstance?.ideUrl} className="rounded-xl hover:bg-gray-100 flex p-3 my-1">
+                <div className="w-full">
+                  <p className="text-base text-black font-bold">{w.workspace.id}</p>
+                  <p>{w.workspace.contextURL}</p>
+                </div>
+                <div className="flex">
+                  <button className="border-green-dark bg-gitpod-green px-3 py-1 my-auto">Open</button>
+                </div>
+              </a>
+            )}
+          </>
+        </div>
+        <div className="flex justify-end mt-4">
+          <button className="border-green-dark bg-gitpod-green" onClick={() => this.createWorkspace(CreateWorkspaceMode.Default)}>New Workspace</button>
+        </div>
+      </Modal>;
     }
 
     else if (result?.runningWorkspacePrebuild) {
@@ -95,14 +116,16 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
     return <StartPage phase={phase} error={!!error}>
       {statusMessage}
       {logsView}
-      <button className="mt-8">Go back to dashboard</button>
-      <p className="mt-10 text-base text-gray-400 flex space-x-2">
-        <a href="https://www.gitpod.io/docs/">Docs</a>
-        <span>—</span>
-        <a href="https://status.gitpod.io/">Status</a>
-        <span>—</span>
-        <a href="https://www.gitpod.io/blog/">Blog</a>
-      </p>
+      {error && <>
+        <button className="mt-8">Go back to dashboard</button>
+        <p className="mt-10 text-base text-gray-400 flex space-x-2">
+          <a href="https://www.gitpod.io/docs/">Docs</a>
+          <span>—</span>
+          <a href="https://status.gitpod.io/">Status</a>
+          <span>—</span>
+          <a href="https://www.gitpod.io/blog/">Blog</a>
+        </p>
+      </>}
     </StartPage>;
   }
 
