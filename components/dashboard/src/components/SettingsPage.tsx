@@ -13,7 +13,7 @@ export function SettingsPage(p: Props) {
         <Header title={p.title} subtitle={p.subtitle}/>
         <div className='lg:px-28 px-10 flex pt-9'>
             <SubMenu entries={p.menuEntries} />
-            <div className='ml-5 pl-12 w-full pt-1'>
+            <div className='ml-32 w-full pt-1'>
                 {p.children}
             </div>
         </div>
