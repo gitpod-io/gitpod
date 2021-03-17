@@ -7,7 +7,7 @@ import { CreateWorkspace } from './start/CreateWorkspace';
 import StartWorkspace from './start/StartWorkspace';
 import { Login } from './Login';
 import { UserContext } from './user-context';
-import { gitpodService } from './service/service';
+import { getGitpodService } from './service/service';
 
 const Account = React.lazy(() => import('./settings/Account'));
 const Notifications = React.lazy(() => import('./settings/Notifications'));
@@ -28,8 +28,7 @@ function App() {
     useEffect(() => {
         (async () => {
             try {
-                const user = await gitpodService.server.getLoggedInUser();
-                setUser(user);
+                setUser(await getGitpodService().server.getLoggedInUser());
             } catch (error) {
                 console.log(error);
             }
@@ -38,7 +37,7 @@ function App() {
     }, []);
 
     if (!loading && !user) {
-        return (<Login gitpodService={gitpodService} />)
+        return (<Login />)
     };
 
     window.addEventListener("hashchange", () => {
@@ -50,10 +49,10 @@ function App() {
 
     const hash = getURLHash();
     if (window.location.pathname === '/' && hash !== '') {
-      return <CreateWorkspace contextUrl={hash} gitpodService={gitpodService}/>;
+      return <CreateWorkspace contextUrl={hash} />;
     }
     if (/\/start\/?/.test(window.location.pathname) && hash !== '') {
-      return <StartWorkspace workspaceId={hash} gitpodService={gitpodService}/>;
+      return <StartWorkspace workspaceId={hash} />;
     }
 
     return (
@@ -68,7 +67,7 @@ function App() {
                         {user && (
                             <React.Fragment>
                                 <Route path={["/", "/workspaces"]} exact render={
-                                    () => <Workspaces gitpodService={gitpodService} />} />
+                                    () => <Workspaces />} />
                                 <Route path="/account" exact component={Account} />
                                 <Route path="/notifications" exact component={Notifications} />
                                 <Route path="/plans" exact component={Plans} />

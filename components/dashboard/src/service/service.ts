@@ -4,21 +4,17 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { GitpodClient, GitpodServer, GitpodServerPath, GitpodServiceImpl } from '@gitpod/gitpod-protocol';
+import { GitpodClient, GitpodServer, GitpodServerPath, GitpodService, GitpodServiceImpl } from '@gitpod/gitpod-protocol';
 import { WebSocketConnectionProvider } from '@gitpod/gitpod-protocol/lib/messaging/browser/connection';
 // import { createWindowMessageConnection } from '@gitpod/gitpod-protocol/lib/messaging/browser/window-connection';
-import { JsonRpcProxy /* , JsonRpcProxyFactory */ } from '@gitpod/gitpod-protocol/lib/messaging/proxy-factory';
+// import { JsonRpcProxy /* , JsonRpcProxyFactory */ } from '@gitpod/gitpod-protocol/lib/messaging/proxy-factory';
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-// import { gitpodServiceMock } from './service-mock';
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
 function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
-    let proxy: JsonRpcProxy<S>;
-    let reconnect = () => {
-        console.log("WebSocket reconnect not possible.");
-    }
+    // let proxy: JsonRpcProxy<S>;
     // FIXME: https://gitpod.slack.com/archives/C01KGM9BUNS/p1615456669011600
     // if (window.top !== window.self) {
     //     const connection = createWindowMessageConnection('gitpodServer', window.parent, '*');
@@ -32,15 +28,8 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
             .withApi();
 
         const connectionProvider = new WebSocketConnectionProvider();
-        let _websocket: any;
-        const _createWebSocket = connectionProvider.createWebSocket;
-        connectionProvider.createWebSocket = (url) => {
-            return (_websocket = _createWebSocket(url));
-        }
-
-
         let numberOfErrors = 0;
-        proxy = connectionProvider.createProxy<S>(host.toString(), undefined, {
+        const { proxy, webSocket } = connectionProvider.createProxy2<S>(host.toString(), undefined, {
             onerror: (event: any) => {
                 log.error(event);
                 if (numberOfErrors++ === 5) {
@@ -49,22 +38,33 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
             }
         });
 
-        if (_websocket && "reconnect" in _websocket) {
-            reconnect = () => { (_websocket as any).reconnect() };
-        }
     // }
     const service = new GitpodServiceImpl<C, S>(proxy);
-    (service as any).reconnect = reconnect;
+    (service as any).reconnect = () => {
+        const ws = (webSocket as any);
+        if (typeof ws.reconnect === "function") {
+            ws.reconnect();
+        } else {
+            console.log("WebSocket reconnect not possible.");
+        }
+    };
     return service;
 }
 
-declare global {
-    type GitpodService = ReturnType<typeof createGitpodService> & { reconnect: () => void }
-    interface Window { gitpodService?: GitpodService; }
+function getGitpodService(): GitpodService {
+    const w = window as any;
+    const _gp = w._gp || (w._gp = {});
+    const service = _gp.gitpodService || (_gp.gitpodService = createGitpodService());
+    return service;
 }
 
-// reuse existing service object if present
-let gitpodService: GitpodService = window.gitpodService || (window.gitpodService = createGitpodService() as GitpodService);
-// let gitpodService: GitpodService = gitpodServiceMock;
+function reconnectGitpodService() {
+    const service = getGitpodService() as any;
+    if (service.reconnect) {
+        service.reconnect();
+    } else {
+        console.log("WebSocket reconnect not possible.")
+    }
+}
 
-export { gitpodService };
+export { getGitpodService, reconnectGitpodService }

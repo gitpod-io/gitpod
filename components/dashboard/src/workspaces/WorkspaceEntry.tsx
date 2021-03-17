@@ -3,7 +3,7 @@ import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url'
 import ContextMenu, { ContextMenuEntry } from '../components/ContextMenu';
 import ThreeDots from '../icons/ThreeDots.svg';
 import moment from 'moment';
-import { gitpodService } from '../service/service';
+import { getGitpodService } from '../service/service';
 import Modal from '../components/Modal';
 import { MouseEvent, useState } from 'react';
 
@@ -60,7 +60,7 @@ export function WorkspaceEntry(desc: WorkspaceInfo) {
             title: 'Share',
             active: !!ws.shareable,
             onClick: () => {
-                gitpodService.server.controlAdmission(ws.id, ws.shareable ? "owner" : "everyone");
+                getGitpodService().server.controlAdmission(ws.id, ws.shareable ? "owner" : "everyone");
             }
         },
         {
@@ -68,7 +68,7 @@ export function WorkspaceEntry(desc: WorkspaceInfo) {
             active: !!ws.pinned,
             separator: true,
             onClick: () => {
-                gitpodService.server.updateWorkspaceUserPin(ws.id, 'toggle')
+                getGitpodService().server.updateWorkspaceUserPin(ws.id, 'toggle')
             }
         },
         {
@@ -133,7 +133,7 @@ export function WorkspaceEntry(desc: WorkspaceInfo) {
                 <div className="flex">
                     <div className="flex-1"></div>
                     <button className="cursor-pointer px-3 py-2 text-white text-sm rounded-md border-2 border-red-800 bg-red-600 hover:bg-red-800"
-                        onClick={()=>gitpodService.server.deleteWorkspace(ws.id)}>
+                        onClick={()=>getGitpodService().server.deleteWorkspace(ws.id)}>
                         Delete
                     </button>
                 </div>

@@ -31,11 +31,20 @@ export class WebSocketConnectionProvider {
         }, options);
         return factory.createProxy();
     }
+    createProxy2<T extends object>(path: string, target?: object, options?: WebSocketOptions): { proxy: JsonRpcProxy<T>, webSocket: WebSocket } {
+        const factory = new JsonRpcProxyFactory<T>(target);
+        const webSocket = this.listen({
+            path,
+            onConnection: c => factory.listen(c)
+        }, options);
+        const proxy = factory.createProxy();
+        return { proxy, webSocket };
+    }
 
     /**
      * Install a connection handler for the given path.
      */
-    listen(handler: ConnectionHandler, options?: WebSocketOptions): void {
+    listen(handler: ConnectionHandler, options?: WebSocketOptions): WebSocket {
         const url = handler.path;
         const webSocket = this.createWebSocket(url);
 
@@ -55,6 +64,7 @@ export class WebSocketConnectionProvider {
             onConnection: connection => handler.onConnection(connection),
             logger
         });
+        return webSocket;
     }
 
     protected createLogger(): Logger {

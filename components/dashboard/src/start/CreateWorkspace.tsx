@@ -1,15 +1,15 @@
 import React, { Suspense } from "react";
-import { CreateWorkspaceMode, GitpodService, WorkspaceCreationResult } from "@gitpod/gitpod-protocol";
+import { CreateWorkspaceMode, WorkspaceCreationResult } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import Modal from "../components/Modal";
 import { StartPage, StartPhase } from "../components/StartPage";
 import StartWorkspace from "./StartWorkspace";
+import { getGitpodService } from "../service/service";
 
 const WorkspaceLogs = React.lazy(() => import('./WorkspaceLogs'));
 
 export interface CreateWorkspaceProps {
   contextUrl: string;
-  gitpodService: GitpodService;
 }
 
 export interface CreateWorkspaceState {
@@ -35,7 +35,7 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
 
   async createWorkspace(mode = CreateWorkspaceMode.SelectIfRunning) {
     try {
-      const result = await this.props.gitpodService.server.createWorkspace({
+      const result = await getGitpodService().server.createWorkspace({
         contextUrl: this.props.contextUrl,
         mode
       });
@@ -77,7 +77,7 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
 
     const result = this.state?.result;
     if (result?.createdWorkspaceId) {
-      return <StartWorkspace workspaceId={result.createdWorkspaceId} gitpodService={this.props.gitpodService} />;
+      return <StartWorkspace workspaceId={result.createdWorkspaceId} />;
     }
 
     else if (result?.existingWorkspaces) {
