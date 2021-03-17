@@ -1,16 +1,16 @@
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "./user-context";
-import { gitpodHostUrl } from "./service/service";
+import { getGitpodService, gitpodHostUrl, reconnectGitpodService } from "./service/service";
 
-export function Login({ gitpodService }: { gitpodService: GitpodService }) {
+export function Login() {
     const { setUser } = useContext(UserContext);
 
     const [authProviders, setAuthProviders] = useState<AuthProviderInfo[]>([]);
 
     useEffect(() => {
         (async () => {
-            setAuthProviders(await gitpodService.server.getAuthProviders());
+            setAuthProviders(await getGitpodService().server.getAuthProviders());
         })();
 
         window.addEventListener("message", (event) => {
@@ -24,9 +24,8 @@ export function Login({ gitpodService }: { gitpodService: GitpodService }) {
                     // todo: not here, but add a button to the /login-success page to close, if this should not work as expected
                 }
                 (async () => {
-                    gitpodService.reconnect();
-                    const user = await gitpodService.server.getLoggedInUser();
-                    setUser(user);
+                    reconnectGitpodService();
+                    setUser(await getGitpodService().server.getLoggedInUser());
                 })();
             }
         })

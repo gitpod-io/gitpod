@@ -1,12 +1,11 @@
 import React from "react";
-import { GitpodService, WorkspaceInfo } from "@gitpod/gitpod-protocol";
+import { WorkspaceInfo } from "@gitpod/gitpod-protocol";
 import Header from "../components/Header";
 import DropDown from "../components/DropDown"
 import { WorkspaceModel } from "./workspace-model";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 
 export interface WorkspacesProps {
-    gitpodService: GitpodService;
 }
 
 export interface WorkspacesState {
@@ -19,7 +18,7 @@ export class Workspaces extends React.Component<WorkspacesProps, WorkspacesState
 
     constructor(props: WorkspacesProps) {
         super(props);
-        this.workspaceModel = new WorkspaceModel(props.gitpodService, this.setWorkspaces);
+        this.workspaceModel = new WorkspaceModel(this.setWorkspaces);
     }
 
     protected setWorkspaces = (workspaces: WorkspaceInfo[]) => {
