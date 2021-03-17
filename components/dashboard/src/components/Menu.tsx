@@ -7,11 +7,11 @@ interface Entry {
 }
 
 function MenuItem(entry: Entry) {
-    let classes = "flex block text-sm font-medium lg:px-3 px-0 py-2 rounded-md";
+    let classes = "flex block text-sm font-medium lg:px-3 px-0 py-1.5 rounded-md";
     if (window.location.pathname.toLowerCase() === entry.link.toLowerCase()) {
         classes += " bg-gray-200";
     } else {
-        classes += " text-gray-500 hover:bg-gray-300 ";
+        classes += " text-gray-600 hover:bg-gray-100 ";
     }
     return <li key={entry.title}>
         {entry.link.startsWith('https://')
@@ -57,7 +57,7 @@ function Menu(props: { left: Entry[], right: Entry[] }) {
                         {props.right.map(MenuItem)}
                     </ul>
                 </nav>
-                <Link className="lg:ml-4 flex items-center justify-start lg:mb-0 mb-4 pointer-cursor m-l-auto rounded-full border-2 hover:border-gray-400 p-0.5" to="/account">
+                <Link className="lg:ml-3 flex items-center justify-start lg:mb-0 mb-4 pointer-cursor m-l-auto rounded-full border-2 border-white hover:border-gray-200 p-0.5" to="/account">
                     <img className="rounded-full w-6 h-6"
                         src={user?.avatarUrl || ''} alt={user?.name || 'Anonymous'} />
                 </Link>
