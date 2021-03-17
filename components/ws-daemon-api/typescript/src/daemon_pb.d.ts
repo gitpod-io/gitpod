@@ -17,23 +17,26 @@ export class InitWorkspaceRequest extends jspb.Message {
     getId(): string;
     setId(value: string): InitWorkspaceRequest;
 
+
     hasMetadata(): boolean;
     clearMetadata(): void;
     getMetadata(): WorkspaceMetadata | undefined;
     setMetadata(value?: WorkspaceMetadata): InitWorkspaceRequest;
 
+
     hasInitializer(): boolean;
     clearInitializer(): void;
     getInitializer(): content_service_api_initializer_pb.WorkspaceInitializer | undefined;
     setInitializer(value?: content_service_api_initializer_pb.WorkspaceInitializer): InitWorkspaceRequest;
+
     getFullWorkspaceBackup(): boolean;
     setFullWorkspaceBackup(value: boolean): InitWorkspaceRequest;
+
     getContentManifest(): Uint8Array | string;
     getContentManifest_asU8(): Uint8Array;
     getContentManifest_asB64(): string;
     setContentManifest(value: Uint8Array | string): InitWorkspaceRequest;
-    getUserNamespaced(): boolean;
-    setUserNamespaced(value: boolean): InitWorkspaceRequest;
+
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): InitWorkspaceRequest.AsObject;
@@ -52,15 +55,16 @@ export namespace InitWorkspaceRequest {
         initializer?: content_service_api_initializer_pb.WorkspaceInitializer.AsObject,
         fullWorkspaceBackup: boolean,
         contentManifest: Uint8Array | string,
-        userNamespaced: boolean,
     }
 }
 
 export class WorkspaceMetadata extends jspb.Message { 
     getOwner(): string;
     setOwner(value: string): WorkspaceMetadata;
+
     getMetaId(): string;
     setMetaId(value: string): WorkspaceMetadata;
+
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceMetadata.AsObject;
@@ -100,6 +104,7 @@ export class WaitForInitRequest extends jspb.Message {
     getId(): string;
     setId(value: string): WaitForInitRequest;
 
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WaitForInitRequest.AsObject;
     static toObject(includeInstance: boolean, msg: WaitForInitRequest): WaitForInitRequest.AsObject;
@@ -137,6 +142,7 @@ export class TakeSnapshotRequest extends jspb.Message {
     getId(): string;
     setId(value: string): TakeSnapshotRequest;
 
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): TakeSnapshotRequest.AsObject;
     static toObject(includeInstance: boolean, msg: TakeSnapshotRequest): TakeSnapshotRequest.AsObject;
@@ -157,6 +163,7 @@ export class TakeSnapshotResponse extends jspb.Message {
     getUrl(): string;
     setUrl(value: string): TakeSnapshotResponse;
 
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): TakeSnapshotResponse.AsObject;
     static toObject(includeInstance: boolean, msg: TakeSnapshotResponse): TakeSnapshotResponse.AsObject;
@@ -176,8 +183,10 @@ export namespace TakeSnapshotResponse {
 export class DisposeWorkspaceRequest extends jspb.Message { 
     getId(): string;
     setId(value: string): DisposeWorkspaceRequest;
+
     getBackup(): boolean;
     setBackup(value: boolean): DisposeWorkspaceRequest;
+
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DisposeWorkspaceRequest.AsObject;
@@ -202,6 +211,7 @@ export class DisposeWorkspaceResponse extends jspb.Message {
     clearGitStatus(): void;
     getGitStatus(): content_service_api_initializer_pb.GitStatus | undefined;
     setGitStatus(value?: content_service_api_initializer_pb.GitStatus): DisposeWorkspaceResponse;
+
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DisposeWorkspaceResponse.AsObject;

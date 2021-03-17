@@ -73,10 +73,6 @@ var (
 // ServeWorkspace establishes the IWS server for a workspace
 func ServeWorkspace(uidmapper *Uidmapper) func(ctx context.Context, ws *session.Workspace) error {
 	return func(ctx context.Context, ws *session.Workspace) (err error) {
-		if !ws.FullWorkspaceBackup && !ws.UserNamespaced {
-			return nil
-		}
-
 		//nolint:ineffassign
 		span, ctx := opentracing.StartSpanFromContext(ctx, "iws.ServeWorkspace")
 		defer tracing.FinishSpan(span, &err)
@@ -177,10 +173,6 @@ func (wbs *InWorkspaceServiceServer) Stop() {
 
 // PrepareForUserNS mounts the workspace's shiftfs mark
 func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *api.PrepareForUserNSRequest) (*api.PrepareForUserNSResponse, error) {
-	if !wbs.Session.UserNamespaced {
-		return nil, status.Error(codes.FailedPrecondition, "not supported for this workspace")
-	}
-
 	rt := wbs.Uidmapper.Runtime
 	if rt == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "not connected to container runtime")
@@ -226,10 +218,6 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 
 // MountProc mounts a proc filesystem
 func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.MountProcRequest) (resp *api.MountProcResponse, err error) {
-	if !wbs.Session.UserNamespaced {
-		return nil, status.Error(codes.FailedPrecondition, "not supported for this workspace")
-	}
-
 	var (
 		reqPID  = req.Pid
 		procPID uint64
@@ -298,10 +286,6 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 
 // MountProc mounts a proc filesystem
 func (wbs *InWorkspaceServiceServer) UmountProc(ctx context.Context, req *api.UmountProcRequest) (resp *api.UmountProcResponse, err error) {
-	if !wbs.Session.UserNamespaced {
-		return nil, status.Error(codes.FailedPrecondition, "not supported for this workspace")
-	}
-
 	var (
 		reqPID  = req.Pid
 		procPID uint64
@@ -574,10 +558,6 @@ func readonlyPath(path string) error {
 
 // WriteIDMapping writes /proc/.../uid_map and /proc/.../gid_map for a workapce container
 func (wbs *InWorkspaceServiceServer) WriteIDMapping(ctx context.Context, req *api.WriteIDMappingRequest) (*api.WriteIDMappingResponse, error) {
-	if !wbs.Session.UserNamespaced {
-		return nil, status.Error(codes.FailedPrecondition, "not supported for this workspace")
-	}
-
 	cid, err := wbs.Uidmapper.Runtime.WaitForContainer(ctx, wbs.Session.InstanceID)
 	if err != nil {
 		log.WithFields(wbs.Session.OWI()).WithError(err).Error("cannot write ID mapping, because we cannot find the container")
@@ -634,10 +614,6 @@ func (wbs *InWorkspaceServiceServer) performLiveBackup() error {
 }
 
 func (wbs *InWorkspaceServiceServer) unPrepareForUserNS() error {
-	if !wbs.Session.UserNamespaced {
-		return nil
-	}
-
 	mountpoint := filepath.Join(wbs.Session.ServiceLocNode, "mark")
 	err := nsinsider(wbs.Session.InstanceID, 1, func(c *exec.Cmd) {
 		c.Args = append(c.Args, "unmount", "--target", mountpoint)
