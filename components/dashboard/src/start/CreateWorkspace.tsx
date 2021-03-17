@@ -81,7 +81,7 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
     }
 
     else if (result?.existingWorkspaces) {
-      statusMessage = <Modal visible={true} closeable={false}>
+      statusMessage = <Modal visible={true} closeable={false} onClose={()=>{}}>
         <h3>Running Workspaces</h3>
         <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-2">
           <p className="mt-1 mb-2 text-base">You already have running workspaces with the same context. You can open an existing one or open a new workspace.</p>

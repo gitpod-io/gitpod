@@ -1,64 +1,152 @@
 import { CommitContext, Workspace, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePhase } from '@gitpod/gitpod-protocol';
+import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
+import ContextMenu, { ContextMenuEntry } from '../components/ContextMenu';
 import ThreeDots from '../icons/ThreeDots.svg';
+import moment from 'moment';
+import { gitpodService } from '../service/service';
+import Modal from '../components/Modal';
+import { MouseEvent, useState } from 'react';
 
 export function WorkspaceEntry(desc: WorkspaceInfo) {
+    const [isModalVisible, setModalVisible] = useState(false);
+    const [isChangesModalVisible, setChangesModalVisible] = useState(false);
     const state: WorkspaceInstancePhase = desc.latestInstance?.status?.phase || 'stopped';
-    let stateClassName = 'rounded-full px-3 text-sm leading-relaxed align-middle';
+    let stateClassName = 'rounded-full w-3 h-3 text-sm align-middle';
     switch (state) {
         case 'running': {
-            stateClassName += ' bg-green-200 text-green-700'
+            stateClassName += ' bg-green-500'
             break;
         }
         case 'stopped': {
-            stateClassName += ' bg-gray-200 text-gray-600'
+            stateClassName += ' bg-gray-400'
             break;
         }
         case 'interrupted': {
-            stateClassName += ' bg-red-200 text-red-600'
+            stateClassName += ' bg-red-400'
+            break;
+        }
+        default: {
+            stateClassName += ' bg-gitpod-kumquat'
             break;
         }
     }
-    let changesClassName = '';
     const pendingChanges = getPendingChanges(desc.latestInstance);
-    if (pendingChanges.length > 0) {
-        changesClassName += ' text-yellow-700';
+    const numberOfChanges = pendingChanges.reduceRight((i, c) => i + c.items.length, 0)
+    let changesLabel = 'No Changes';
+    if (numberOfChanges === 1) {
+        changesLabel = '1 Change';
+    } else if (numberOfChanges > 1) {
+        changesLabel = numberOfChanges + ' Changes';
     }
     const currentBranch = desc.latestInstance?.status.repo?.branch || Workspace.getBranchName(desc.workspace) || '<unknown>';
     const ws = desc.workspace;
-    return <div className="whitespace-nowrap flex space-x-2 py-8 border-b-2 border-gray-100 text-gray-800 w-full justify-between hover:bg-gray-100">
-        <div className={stateClassName}>
-            &nbsp;
+    const startUrl = new GitpodHostUrl(window.location.href).with({
+        pathname: '/start/',
+        hash: '#' + ws.id
+    });
+    const downloadURL = new GitpodHostUrl(window.location.href).with({ 
+        pathname: `/workspace-download/get/${ws.id}` 
+    }).toString();
+    const menuEntries: ContextMenuEntry[] = [
+        {
+            title: 'Open',
+            href: startUrl.toString()
+        },
+        {
+            title: 'Download',
+            href: downloadURL
+        },
+        {
+            title: 'Share',
+            active: !!ws.shareable,
+            onClick: () => {
+                gitpodService.server.controlAdmission(ws.id, ws.shareable ? "owner" : "everyone");
+            }
+        },
+        {
+            title: 'Pin',
+            active: !!ws.pinned,
+            separator: true,
+            onClick: () => {
+                gitpodService.server.updateWorkspaceUserPin(ws.id, 'toggle')
+            }
+        },
+        {
+            title: 'Delete',
+            customFontStyle: 'text-red-600',
+            onClick: () => {
+                setModalVisible(true);
+            }
+        }
+    ];
+    const project = getProject(ws);
+    const startWsOnClick = (event: MouseEvent) => {
+        window.location.href = startUrl.toString();
+    }
+    const showChanges = (event: MouseEvent) => {
+        setChangesModalVisible(true);
+    }
+    return <div className="whitespace-nowrap flex space-x-2 py-6 px-6 w-full justify-between hover:bg-gray-100 cursor-pointer rounded-xl">
+        <div className="pr-3 self-center" onClick={startWsOnClick}>
+            <div className={stateClassName}>
+                &nbsp;
+            </div>
         </div>
-        <div className="flex flex-col w-3/12">
-            <div className="text-gray-900">{ws.id}</div>
-            <div className="text-sm overflow-ellipsis truncate text-gray-400">{getProject(ws)}</div>
+        <div className="flex flex-col w-3/12" onClick={startWsOnClick}>
+            <div className="font-medium text-gray-800 truncate hover:underline">{ws.id}</div>
+            <a href={project ? 'https://'+ project : undefined}><div className="text-sm overflow-ellipsis truncate text-gray-400 truncate">{project || 'Unknown'}</div></a>
         </div>
-        <div className="flex w-5/12 truncate overflow-ellipsis">
-            <div className="pr-1 text-purple-800 font-medium">#</div>
+        <div className="flex w-4/12 truncate overflow-ellipsis" onClick={startWsOnClick}>
             <div className="flex flex-col">
-                <div className="font-medium text-purple-800">{ws.description}</div>
-                <div className="text-sm text-gray-400">{ws.contextURL}</div>
+                <div className="font-medium text-gray-500 truncate">{ws.description}</div>
+                <div className="text-sm text-gray-400 truncate">{ws.contextURL}</div>
             </div>
         </div>
-        <div className="flex w-2/12">
-            <div className={"pr-1 py-2" + changesClassName}>
-                <svg width="12" height="12" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" stroke="currentColor"><path strokeWidth="1" d="M21.007 8.222A3.738 3.738 0 0 0 15.045 5.2a3.737 3.737 0 0 0 1.156 6.583 2.988 2.988 0 0 1-2.668 1.67h-2.99a4.456 4.456 0 0 0-2.989 1.165V7.4a3.737 3.737 0 1 0-1.494 0v9.117a3.776 3.776 0 1 0 1.816.099 2.99 2.99 0 0 1 2.668-1.667h2.99a4.484 4.484 0 0 0 4.223-3.039 3.736 3.736 0 0 0 3.25-3.687zM4.565 3.738a2.242 2.242 0 1 1 4.484 0 2.242 2.242 0 0 1-4.484 0zm4.484 16.441a2.242 2.242 0 1 1-4.484 0 2.242 2.242 0 0 1 4.484 0zm8.221-9.715a2.242 2.242 0 1 1 0-4.485 2.242 2.242 0 0 1 0 4.485z" /></svg>
-            </div>
+        <div className="flex w-2/12" onClick={numberOfChanges > 0 ? showChanges: startWsOnClick}>
             <div className="flex flex-col">
-                <div className={changesClassName}>{currentBranch}</div>
-                <div className="text-sm text-gray-400">{pendingChanges.toString() || 'No Changes'}</div>
+                <div className="font-medium text-gray-500 truncate">{currentBranch}</div>
+                {
+                    numberOfChanges > 0 ?
+                    <div className={"text-sm text-gitpod-kumquat truncate cursor-pointer hover:underline"} onClick={showChanges}>{changesLabel}</div>
+                    :
+                    <div className="text-sm text-gray-400 truncate">No Changes</div>    
+                }
+                <Modal visible={isChangesModalVisible} onClose={() => setChangesModalVisible(false)}>
+                    {getChangesPopup(pendingChanges)}
+                </Modal>
             </div>
         </div>
-        <div className="flex w-1/12 self-center space-x-2">
-            <div className="w-1/3 hover:bg-gray-200">
-                <img className="w-6 h-6" src={ThreeDots} alt="Actions" />
-            </div>
+        <div className="flex w-2/12 self-center space-x-2" onClick={startWsOnClick}>
+            <div className="text-sm text-gray-400 truncate">{moment(desc.latestInstance?.startedTime).fromNow()}</div>
         </div>
+        <div className="flex w-8 self-center hover:bg-gray-300 rounded-md cursor-pointer">
+            <ContextMenu menuEntries={menuEntries}>
+                <img className="w-8 h-8 p-1" src={ThreeDots} alt="Actions" />
+            </ContextMenu>
+        </div>
+        <Modal visible={isModalVisible} onClose={() => setModalVisible(false)}>
+            <div>
+                <h3>Delete {ws.id}</h3>
+                <div className="py-4">
+                    <p>Do you really want to delete this workspace?</p>
+                </div>
+                <div className="flex">
+                    <div className="flex-1"></div>
+                    <button className="cursor-pointer px-3 py-2 text-white text-sm rounded-md border-2 border-red-800 bg-red-600 hover:bg-red-800"
+                        onClick={()=>gitpodService.server.deleteWorkspace(ws.id)}>
+                        Delete
+                    </button>
+                </div>
+            </div>
+        </Modal>
     </div>;
 }
 
+interface PendingChanges {
+    message: string, items: string[]
+}
 
-function getPendingChanges(wsi?: WorkspaceInstance): { message: string, items: string[] }[] {
+function getPendingChanges(wsi?: WorkspaceInstance): PendingChanges[] {
     const pendingChanges: { message: string, items: string[] }[] = [];
     const repo = wsi?.status.repo;
     if (repo) {
@@ -88,6 +176,17 @@ function getProject(ws: Workspace) {
     if (CommitContext.is(ws.context)) {
         return `${ws.context.repository.host}/${ws.context.repository.owner}/${ws.context.repository.name}`;
     } else {
-        return 'Unknown';
+        return undefined;
     }
+}
+
+function getChangesPopup(changes: PendingChanges[]) {
+    return <div className="flex flex-col space-y-4 w-96">
+        {changes.map(c => {
+            return <div className="">
+                <div className="text-gray-500">{c.message}</div>
+                {c.items.map(i => <div className="text-gray-400 text-xs">{i}</div>)}
+            </div>;
+        })}
+    </div>
 }
