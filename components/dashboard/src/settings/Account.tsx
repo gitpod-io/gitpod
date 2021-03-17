@@ -21,29 +21,29 @@ export default function Account() {
         </Modal>
 
         <SettingsPage title='Account' subtitle='Profile details' menuEntries={settingsMenu}>
-            <h3>Personal Information</h3>
+            <h3>Profile</h3>
             <div className="flex flex-col lg:flex-row">
-                <div className="pb-6">
-                    <div className="pt-6">
+                <div>
+                    <div className="mt-4">
                         <h4>Name</h4>
-                        <input type="text" value={user!.name} onChange={(v) => { console.log(v) }} />
+                        <input type="text" disabled={true} value={user!.name} onChange={(v) => { console.log(v) }} />
                     </div>
-                    <div className="pt-6">
+                    <div className="mt-4">
                         <h4>Email</h4>
-                        <input type="text" value={User.getPrimaryEmail(user!)} onChange={(v) => { console.log(v) }} />
+                        <input type="text" disabled={true} value={User.getPrimaryEmail(user!)} onChange={(v) => { console.log(v) }} />
                     </div>
                 </div>
                 <div className="lg:pl-14">
-                    <div className="pt-6">
+                    <div className="mt-4">
                         <h4>Avatar</h4>
                         <img className="rounded-full w-24 h-24 border-2 border-transparent hover:border-indigo-400"
                             src={user!.avatarUrl} alt={user!.name} />
                     </div>
                 </div>
             </div>
-            <h3 className="pt-14">Delete Account</h3>
+            <h3 className="mt-12">Delete Account</h3>
             <p className="text-sm text-gray-400 pb-4">This action will remove all the data associated with your account in Gitpod.</p>
-            <button className="border-red-900 bg-red-500 hover:bg-red-700" onClick={() => setModal(true)}>Delete Account</button>
+            <button className="border-red-600 text-red-600 bg-white hover:border-red-800 hover:text-red-800" onClick={() => setModal(true)}>Delete Account</button>
         </SettingsPage>
     </div>;
 }

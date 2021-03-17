@@ -4,9 +4,7 @@ import settingsMenu from './settings-menu';
 export default function GitIntegrations() {
     return <div>
         <SettingsPage title='Git Integrations' subtitle='Manage integration with your Git hosters' menuEntries={settingsMenu}>
-            <div className="lg:px-28 px-10 flex pt-10">
-                Git Hoster Access Control
-            </div>
+            <h3>Git Hoster Access Control</h3>
         </SettingsPage>
     </div>;
 }

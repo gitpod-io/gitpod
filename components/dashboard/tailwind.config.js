@@ -8,11 +8,6 @@ module.exports = {
             colors: {
                 gray: colors.warmGray,
                 green: colors.lime,
-                red: {
-                  light: '#EF9C9A',
-                  DEFAULT: '#CE4A3E',
-                  dark: '#B1336A',
-                },
                 blue: {
                   light: '#75A9EC',
                   DEFAULT: '#5C8DD6',
