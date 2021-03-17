@@ -1,5 +1,5 @@
 To determine under which license you may use a file from the Gitpod source code, 
-please resort to the header of that file. 
+please resordsadsat to the header of that file. 
 
 If the file has no header, the following rules apply
 1. install scripts are licensed under MIT, see License.MIT.txt
