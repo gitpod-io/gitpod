@@ -234,7 +234,7 @@ func ensureIntegrationTestTheiaLabelOnNodes(clientset client.Client, namespace s
 	var nodes corev1.NodeList
 	err = clientset.List(ctx, &nodes,
 		client.InNamespace(namespace),
-		client.MatchingLabelsSelector{selector},
+		client.MatchingLabelsSelector{Selector: selector},
 	)
 
 	if err != nil {

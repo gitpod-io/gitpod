@@ -892,7 +892,6 @@ export enum WorkspaceFeatureFlag {
     NOOP = 0,
     FULL_WORKSPACE_BACKUP = 4,
     FIXED_RESOURCES = 5,
-    USER_NAMESPACE = 6,
 }
 
 export enum WorkspaceType {

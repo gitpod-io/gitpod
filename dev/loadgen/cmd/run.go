@@ -49,9 +49,7 @@ var runCmd = &cobra.Command{
 					Email:    "test@gitpod.io",
 					Username: "foobar",
 				},
-				FeatureFlags: []api.WorkspaceFeatureFlag{
-					// api.WorkspaceFeatureFlag_USER_NAMESPACE,
-				},
+				FeatureFlags: []api.WorkspaceFeatureFlag{},
 				Initializer: &csapi.WorkspaceInitializer{
 					Spec: &csapi.WorkspaceInitializer_Git{
 						Git: &csapi.GitInitializer{

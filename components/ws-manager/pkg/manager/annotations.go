@@ -76,10 +76,6 @@ const (
 
 	// workspaceAdmissionAnnotation determines the user admission to a workspace, i.e. if it can be accessed by everyone without token
 	workspaceAdmissionAnnotation = "gitpod/admission"
-
-	// withUsernamespaceAnnotation is set on workspaces which are wrapped in a user namespace (or have some form of user namespace support)
-	// Beware: this annotation is duplicated/copied in ws-daemon
-	withUsernamespaceAnnotation = "gitpod/withUsernamespace"
 )
 
 // markWorkspaceAsReady adds annotations to a workspace pod

@@ -146,7 +146,7 @@ export interface UserFeatureSettings {
  * The values of this type MUST MATCH enum values in WorkspaceFeatureFlag from ws-manager/client/core_pb.d.ts
  * If they don't we'll break things during workspace startup.
  */
-export const WorkspaceFeatureFlags = { "full_workspace_backup": undefined, "fixed_resources": undefined, "user_namespace": undefined };
+export const WorkspaceFeatureFlags = { "full_workspace_backup": undefined, "fixed_resources": undefined };
 export type NamedWorkspaceFeatureFlag = keyof (typeof WorkspaceFeatureFlags);
 
 export interface UserEnvVarValue {
@@ -527,10 +527,10 @@ export interface WorkspaceConfig {
     gitConfig?: { [config: string]: string };
     github?: GithubAppConfig;
     vscode?: VSCodeConfig;
-    
+
     /**
      * Where the config object originates from.
-     * 
+     *
      * repo - from the repository
      * definitly-gp - from github.com/gitpod-io/definitely-gp
      * derived - computed based on analyzing the repository

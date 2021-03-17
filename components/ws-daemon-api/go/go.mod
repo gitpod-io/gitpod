@@ -3,6 +3,7 @@ module github.com/gitpod-io/gitpod/ws-daemon/api
 go 1.16
 
 require (
+	github.com/fatih/gomodifytags v1.13.0 // indirect
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	github.com/golang/mock v1.5.0
 	github.com/golang/protobuf v1.4.3
