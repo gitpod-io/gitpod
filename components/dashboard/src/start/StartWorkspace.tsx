@@ -1,11 +1,11 @@
 import React from "react";
-import { GitpodService, DisposableCollection, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { DisposableCollection, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
 import { StartPage, StartPhase } from "../components/StartPage";
+import { getGitpodService } from "../service/service";
 
 export interface StartWorkspaceProps {
   workspaceId: string;
-  gitpodService: GitpodService;
 }
 
 export interface StartWorkspaceState {
@@ -44,7 +44,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     }
 
     try {
-      this.toDispose.push(this.props.gitpodService.registerClient(this));
+      this.toDispose.push(getGitpodService().registerClient(this));
     } catch (error) {
       this.setState({ error });
     }
@@ -67,7 +67,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
     const { workspaceId } = this.props;
     try {
-      const result = await this.props.gitpodService.server.startWorkspace(workspaceId, { forceDefaultImage });
+      const result = await getGitpodService().server.startWorkspace(workspaceId, { forceDefaultImage });
       if (!result) {
         throw new Error("No result!");
       }
@@ -80,7 +80,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       this.setState({ startedInstanceId: result.instanceID });
       // Explicitly query state to guarantee we get at least one update
       // (needed for already started workspaces, and not hanging in 'Starting ...' for too long)
-      this.props.gitpodService.server.getWorkspace(workspaceId).then(ws => {
+      getGitpodService().server.getWorkspace(workspaceId).then(ws => {
         if (ws.latestInstance) {
           this.setState({
             contextUrl: ws.workspace.contextURL
@@ -109,7 +109,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     }
 
     if (workspaceInstance.status.phase === 'preparing') {
-      this.props.gitpodService.server.watchWorkspaceImageBuildLogs(workspaceInstance.workspaceId);
+      getGitpodService().server.watchWorkspaceImageBuildLogs(workspaceInstance.workspaceId);
     }
 
     this.setState({ workspaceInstance });

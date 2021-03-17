@@ -1,4 +1,5 @@
-import { Disposable, DisposableCollection, GitpodClient, GitpodService, WorkspaceInfo, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { Disposable, DisposableCollection, GitpodClient, WorkspaceInfo, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { getGitpodService } from "../service/service";
 
 export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
 
@@ -6,14 +7,14 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
     protected currentlyFetching = new Set<string>();
     protected disposables = new DisposableCollection();
     
-    constructor(protected service: GitpodService, protected setWorkspaces: (ws: WorkspaceInfo[]) => void) {
-        service.server.getWorkspaces({
+    constructor(protected setWorkspaces: (ws: WorkspaceInfo[]) => void) {
+        getGitpodService().server.getWorkspaces({
             limit: 50
         }).then( infos => {
             this.updateMap(infos);
             this.notifyWorkpaces();
         });
-        this.disposables.push(service.registerClient(this));
+        this.disposables.push(getGitpodService().registerClient(this));
     }
 
     protected updateMap(workspaces: WorkspaceInfo[]) {
@@ -37,7 +38,7 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
             } else if (!this.currentlyFetching.has(instance.workspaceId)) {
                 try {
                     this.currentlyFetching.add(instance.workspaceId);
-                    const info = await this.service.server.getWorkspace(instance.workspaceId);
+                    const info = await getGitpodService().server.getWorkspace(instance.workspaceId);
                     this.workspaces.set(instance.workspaceId, info);
                     this.notifyWorkpaces();
                 } finally {

@@ -44,7 +44,7 @@ const gitpodServiceMock = createServiceMock({
     onDidOpenConnection: Event.None,
     onDidCloseConnection: Event.None,
     
-}) as GitpodService;
+});
 
 export { gitpodServiceMock };
 
