@@ -1,7 +1,8 @@
 syntax = "proto3";
 
 package registryfacade;
-option go_package = "api";
+
+option go_package = "github.com/gitpod-io/gitpod/registry-facade/api";
 
 // ImageSpec configures the image one wishes to pull from a registry facade
 message ImageSpec {

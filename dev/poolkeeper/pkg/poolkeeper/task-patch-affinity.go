@@ -10,13 +10,12 @@ import (
 	"fmt"
 	"reflect"
 
+	log "github.com/sirupsen/logrus"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
-
-	log "github.com/sirupsen/logrus"
 )
 
 // PatchDeploymentAffinity applies a NodeAffinity to all deployments of a namespace

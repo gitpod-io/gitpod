@@ -26,7 +26,11 @@ RUN echo "chart_location = \"../helm/gitpod\"" >> installer.auto.tfvars && \
     cp installer.auto.tfvars terraform/aws && \
     rm installer.auto.tfvars
 
-FROM alpine
+FROM alpine:3.13
+
+# Ensure latest packages are present, like security updates.
+RUN  apk upgrade --no-cache
+
 RUN addgroup -g 1000 installer && \
     adduser -D -G installer -u 1000 installer && \
     mkdir /dist /workspace && \
@@ -34,7 +38,8 @@ RUN addgroup -g 1000 installer && \
 
 ENV GITPOD_INSTALLER_IN_DOCKER="true"
 ENV KUBECONFIG="/workspace/kubectl"
-RUN apk add --no-cache aws-cli python3 curl git bash ncurses
+RUN apk add --no-cache aws-cli python3 curl git bash ncurses \
+  && rm -rf /var/cache/apk/*
 
 RUN curl -o terraform.zip -L https://releases.hashicorp.com/terraform/0.14.2/terraform_0.14.2_linux_amd64.zip && \
     unzip terraform.zip && \

@@ -7,18 +7,16 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
-
 	"github.com/gitpod-io/gitpod/ws-scheduler/pkg/scaler"
 	"github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler"
 )
@@ -65,7 +63,7 @@ func init() {
 }
 
 func getConfig() *config {
-	ctnt, err := ioutil.ReadFile(cfgFile)
+	ctnt, err := os.ReadFile(cfgFile)
 	if err != nil {
 		log.WithError(err).Error("cannot read configuration. Maybe missing --config?")
 		os.Exit(1)

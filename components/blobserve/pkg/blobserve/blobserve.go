@@ -14,9 +14,10 @@ import (
 
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/remotes"
+	"github.com/gorilla/mux"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
-	"github.com/gorilla/mux"
 )
 
 // ResolverProvider provides new resolver
@@ -75,7 +76,7 @@ func NewServer(cfg Config, resolver ResolverProvider) (*Server, error) {
 // Serve serves the registry on the given port
 func (reg *Server) Serve() error {
 	r := mux.NewRouter()
-	r.PathPrefix(`/{repo:[a-zA-Z0-9\/\-\.]+}:{tag:[a-z0-9][a-z0-9-\.]+}`).MatcherFunc(isNoWebsocketRequest).HandlerFunc(reg.serve)
+	r.PathPrefix(`/{repo:[a-zA-Z0-9\/\-\.\:]+}:{tag:[a-z0-9][a-z0-9-\.]+}`).MatcherFunc(isNoWebsocketRequest).HandlerFunc(reg.serve)
 	r.NewRoute().HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		log.WithField("path", req.URL.Path).Warn("unmapped request")
 		http.Error(resp, http.StatusText(http.StatusNotFound), http.StatusNotFound)

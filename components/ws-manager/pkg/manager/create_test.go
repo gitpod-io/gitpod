@@ -5,17 +5,17 @@
 package manager
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"testing"
+	"testing/fstest"
+
+	"google.golang.org/protobuf/encoding/protojson"
+	corev1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/yaml"
 
 	ctesting "github.com/gitpod-io/gitpod/common-go/testing"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/spf13/afero"
-	corev1 "k8s.io/api/core/v1"
-	"sigs.k8s.io/yaml"
 )
 
 func TestCreateDefiniteWorkspacePod(t *testing.T) {
@@ -52,7 +52,11 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 				manager.Config = cfg
 			}
 
-			fs = afero.NewMemMapFs()
+			// create in-memory file system
+			mapFS := fstest.MapFS{}
+
+			fs = mapFS
+
 			files := []struct {
 				tplfn  string
 				ctnt   interface{}
@@ -73,11 +77,9 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 					t.Errorf("cannot re-marshal %s template: %w", f.tplfn, err)
 					return nil
 				}
-				err = afero.WriteFile(fs, f.tplfn, b, 0755)
-				if err != nil {
-					t.Errorf("cannot write %s template: %w", f.tplfn, err)
-					return nil
-				}
+
+				mapFS[f.tplfn] = &fstest.MapFile{Data: b}
+
 				f.setter(f.tplfn)
 			}
 
@@ -90,7 +92,7 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 					}
 
 					var spec api.StartWorkspaceSpec
-					err := jsonpb.Unmarshal(bytes.NewReader([]byte(*fixture.Spec)), &spec)
+					err := protojson.Unmarshal([]byte(*fixture.Spec), &spec)
 					if err != nil {
 						t.Errorf("cannot unmarshal StartWorkspaceSpec: %v", err)
 						return nil
@@ -107,7 +109,7 @@ func TestCreateDefiniteWorkspacePod(t *testing.T) {
 						Spec:          &spec,
 					}
 				} else {
-					err := jsonpb.Unmarshal(bytes.NewReader([]byte(*fixture.Request)), &req)
+					err := protojson.Unmarshal([]byte(*fixture.Request), &req)
 					if err != nil {
 						t.Errorf("cannot unmarshal StartWorkspaceReq: %v", err)
 						return nil

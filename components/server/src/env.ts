@@ -71,6 +71,9 @@ export class Env extends AbstractComponentEnv {
     readonly githubAppAuthProviderId: string = process.env.GITPOD_GITHUB_APP_AUTH_PROVIDER_ID || "Public-GitHub";
     readonly githubAppCertPath: string = process.env.GITPOD_GITHUB_APP_CERT_PATH || "unknown";
     readonly githubAppMarketplaceName: string = process.env.GITPOD_GITHUB_APP_MKT_NAME || "unknown";
+    readonly githubAppLogLevel?: string = process.env.LOG_LEVEL;
+
+    readonly definitelyGpDisabled: boolean = process.env.GITPOD_DEFINITELY_GP_DISABLED == "true";
 
     readonly daysBeforeGarbageCollection: number = parseInt(process.env.GITPOD_DAYS_BEFORE_GARBAGE_COLLECTION || '14', 10);
     readonly daysBeforeGarbageCollectingPrebuilds: number = parseInt(process.env.GITPOD_DAYS_BEFORE_GARBAGE_COLLECTING_PREBUILDS || '7', 10);
@@ -138,6 +141,7 @@ export class Env extends AbstractComponentEnv {
     
     readonly blockNewUsers: boolean = this.parseBool("BLOCK_NEW_USERS");
     readonly makeNewUsersAdmin: boolean = this.parseBool("MAKE_NEW_USERS_ADMIN");
+    readonly disableDynamicAuthProviderLogin: boolean = this.parseBool("DISABLE_DYNAMIC_AUTH_PROVIDER_LOGIN");
 
     /** This value - if present - overrides the default naming scheme for the GCloud bucket that Theia Plugins are stored in */
     readonly theiaPluginsBucketNameOverride: string | undefined = process.env['THEIA_PLUGINS_BUCKET_NAME_OVERRIDE'];

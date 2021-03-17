@@ -6,20 +6,18 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	"github.com/gitpod-io/gitpod/cerc/pkg/cerc"
 	"github.com/gitpod-io/gitpod/cerc/pkg/reporter/httpendpoint"
 	"github.com/gitpod-io/gitpod/cerc/pkg/reporter/prometheus"
-
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // Config configrues the cerc service
@@ -39,7 +37,7 @@ func main() {
 		log.Fatalf("usage: %s <config.json>", os.Args[0])
 	}
 
-	fc, err := ioutil.ReadFile(os.Args[1])
+	fc, err := os.ReadFile(os.Args[1])
 	if err != nil {
 		log.WithError(err).Fatal("cannot read configuration")
 	}

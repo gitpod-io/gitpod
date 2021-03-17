@@ -6,7 +6,6 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -62,7 +61,7 @@ func getLayout() sources.Layout {
 		l.Destination = rootOpts.destination
 	}
 	if rootOpts.debug && l.Destination == "" {
-		loc, err := ioutil.TempDir("", "gitpod-installer-*")
+		loc, err := os.MkdirTemp("", "gitpod-installer-*")
 		if err != nil {
 			ui.Fatalf("cannot create tempdir:\n\t%q", err)
 		}

@@ -8,7 +8,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"syscall"
@@ -19,7 +19,8 @@ func TestExtractTarbal(t *testing.T) {
 	type file struct {
 		Name        string
 		ContentSize int64
-		Uid         int
+		UID         int
+		Mode        int
 	}
 	tests := []struct {
 		Name  string
@@ -28,8 +29,8 @@ func TestExtractTarbal(t *testing.T) {
 		{
 			Name: "simple-test",
 			Files: []file{
-				{"file.txt", 1024, 33333},
-				{"file2.txt", 1024, 33333},
+				{"file.txt", 1024, 33333, 0644},
+				{"file2.txt", 1024, 33333, 4555},
 			},
 		},
 		{
@@ -44,13 +45,14 @@ func TestExtractTarbal(t *testing.T) {
 				buf = bytes.NewBuffer(nil)
 				tw  = tar.NewWriter(buf)
 			)
+
 			for _, file := range test.Files {
 				err := tw.WriteHeader(&tar.Header{
 					Name:     file.Name,
 					Size:     file.ContentSize,
-					Uid:      file.Uid,
-					Gid:      file.Uid,
-					Mode:     0644,
+					Uid:      file.UID,
+					Gid:      file.UID,
+					Mode:     int64(file.Mode),
 					Typeflag: tar.TypeReg,
 				})
 				if err != nil {
@@ -64,14 +66,21 @@ func TestExtractTarbal(t *testing.T) {
 			tw.Flush()
 			tw.Close()
 
-			wd, err := ioutil.TempDir("", "")
+			wd, err := os.MkdirTemp("", "")
 			defer os.RemoveAll(wd)
 			if err != nil {
 				t.Fatalf("cannot prepare test: %v", err)
 			}
 			targetFolder := filepath.Join(wd, "target")
-			os.MkdirAll(targetFolder, 0777)
-			ExtractTarbal(context.Background(), buf, targetFolder)
+			err = os.MkdirAll(targetFolder, 0777)
+			if err != nil {
+				t.Fatalf("cannot extract tar content: %v", err)
+			}
+
+			err = ExtractTarbal(context.Background(), buf, targetFolder)
+			if err != nil {
+				t.Fatalf("cannot extract tar content: %v", err)
+			}
 
 			for _, file := range test.Files {
 				stat, err := os.Stat(filepath.Join(targetFolder, file.Name))
@@ -80,15 +89,23 @@ func TestExtractTarbal(t *testing.T) {
 					continue
 				}
 				uid := stat.Sys().(*syscall.Stat_t).Uid
-				if uid != uint32(file.Uid) {
-					t.Errorf("expected uid %d", file.Uid)
+				if uid != uint32(file.UID) {
+					t.Errorf("expected uid %d", file.UID)
 					continue
 				}
 				gid := stat.Sys().(*syscall.Stat_t).Gid
-				if gid != uint32(file.Uid) {
-					t.Errorf("expected gid %d", file.Uid)
+				if gid != uint32(file.UID) {
+					t.Errorf("expected gid %d", file.UID)
 					continue
 				}
+
+				expectedMode := stat.Mode()
+				testMode := fs.FileMode(file.Mode)
+				if expectedMode.String() != testMode.String() {
+					t.Errorf("expected fileMode %d but returned %v", testMode, expectedMode)
+					continue
+				}
+
 			}
 		})
 	}

@@ -12,15 +12,15 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	securejoin "github.com/cyphar/filepath-securejoin"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/gitpod-io/gitpod/image-builder/api"
-
-	"github.com/cyphar/filepath-securejoin"
-	proto "github.com/golang/protobuf/proto"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/cobra"
 )
 
 // bobInitBase represents the init command
@@ -101,7 +101,7 @@ var bobInitBase = &cobra.Command{
 			c.Dir = ctxwd
 			c.Stdout = log.Log.WriterLevel(logrus.InfoLevel)
 			c.Stderr = log.Log.WriterLevel(logrus.ErrorLevel)
-			c.Run()
+			_ = c.Run()
 		}
 	},
 }

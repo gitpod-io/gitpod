@@ -5,9 +5,10 @@
 package cmd
 
 import (
+	"github.com/spf13/cobra"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/supervisor"
-	"github.com/spf13/cobra"
 )
 
 var runCmdOpts struct {

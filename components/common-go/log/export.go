@@ -6,8 +6,9 @@ package log
 
 import (
 	"context"
-	"github.com/sirupsen/logrus"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 // WithError creates an entry from the standard logger and adds an error to it, using the value defined in ErrorKey as key.

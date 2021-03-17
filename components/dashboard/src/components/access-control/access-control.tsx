@@ -431,6 +431,7 @@ export class AccessControl extends React.Component<AccessControlProps, AccessCon
     protected getTooltipForScope(scope: string): string | undefined {
         switch (scope) {
             case "user:email": return "Read-only access to your email addresses";
+            case "read:user": return "Read-only access to your profile information";
             case "public_repo": return "Write access to code in public repositories and organizations";
             case "repo": return "Read/write access to code in private repositories and organizations";
             case "read:org": return "Read-only access to organizations (used to suggest organizations when forking a repository)";

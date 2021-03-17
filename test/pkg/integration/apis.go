@@ -11,13 +11,10 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
-	csapi "github.com/gitpod-io/gitpod/content-service/api"
-	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
-	imgbldr "github.com/gitpod-io/gitpod/image-builder/api"
-	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/google/uuid"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -29,6 +26,11 @@ import (
 	// Gitpod uses mysql, so it makes sense to make this DB driver available
 	// by default.
 	_ "github.com/go-sql-driver/mysql"
+
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
+	imgbldr "github.com/gitpod-io/gitpod/image-builder/api"
+	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 var (
@@ -64,14 +66,25 @@ type ComponentAPI struct {
 		BlobServiceClient csapi.BlobServiceClient
 	}
 	dbStatus struct {
-		Port     int
-		Password string
-		DB       *sql.DB
+		Config *DBConfig
+		DB     *sql.DB
 	}
 	imgbldStatus struct {
 		Port   int
 		Client imgbldr.ImageBuilderClient
 	}
+}
+
+type DBConfig struct {
+	Host        string
+	Port        int32
+	ForwardPort *ForwardPort
+	Password    string
+}
+
+type ForwardPort struct {
+	PodName    string
+	RemotePort int32
 }
 
 // Supervisor provides a gRPC connection to a workspace's supervisor
@@ -201,7 +214,7 @@ func (c *ComponentAPI) createGitpodToken(user string) (tkn string, err error) {
 		row *sql.Row
 	)
 	if user == "" {
-		row = db.QueryRow(`SELECT id FROM d_b_user WHERE NOT id = "` + gitpodBuiltinUserID + `"`)
+		row = db.QueryRow(`SELECT id FROM d_b_user WHERE NOT id = "` + gitpodBuiltinUserID + `" AND blocked = FALSE AND markedDeleted = FALSE`)
 	} else {
 		row = db.QueryRow("SELECT id FROM d_b_user WHERE name = ?", user)
 	}
@@ -369,81 +382,31 @@ func (c *ComponentAPI) DB() *sql.DB {
 		c.t.t.Fatalf("cannot access database: %q", rerr)
 	}()
 
-	if c.dbStatus.Port == 0 {
-		svc, err := c.t.clientset.CoreV1().Services(c.t.namespace).Get(context.Background(), "db", metav1.GetOptions{})
+	if c.dbStatus.Config == nil {
+		config, err := c.findDBConfig()
 		if err != nil {
 			rerr = err
 			return nil
 		}
-		pods, err := c.t.clientset.CoreV1().Pods(c.t.namespace).List(context.Background(), metav1.ListOptions{
-			LabelSelector: labels.SelectorFromSet(svc.Spec.Selector).String(),
-		})
-		if err != nil {
-			rerr = err
-			return nil
-		}
-		if len(pods.Items) == 0 {
-			rerr = xerrors.Errorf("no pods for service %s found", svc.Name)
-			return nil
-		}
-		var pod *corev1.Pod
-		for _, p := range pods.Items {
-			if p.Spec.NodeName == "" {
-				// no node means the pod can't be ready
-				continue
-			}
-			var isReady bool
-			for _, cond := range p.Status.Conditions {
-				if cond.Type == corev1.PodReady {
-					isReady = cond.Status == corev1.ConditionTrue
-					break
-				}
-			}
-			if !isReady {
-				continue
-			}
+		c.dbStatus.Config = config
+	}
+	config := c.dbStatus.Config
 
-			pod = &p
-			break
-		}
-		if pod == nil {
-			rerr = xerrors.Errorf("no active pod for service %s found", svc.Name)
-			return nil
-		}
-
-		localPort, err := getFreePort()
-		if err != nil {
-			rerr = err
-			return nil
-		}
+	// if configured: setup local port-forward to DB pod
+	if config.ForwardPort != nil {
 		ctx, cancel := context.WithCancel(context.Background())
-		ready, errc := forwardPort(ctx, c.t.restConfig, c.t.namespace, pod.Name, fmt.Sprintf("%d:3306", localPort))
+		ready, errc := forwardPort(ctx, c.t.restConfig, c.t.namespace, config.ForwardPort.PodName, fmt.Sprintf("%d:%d", config.Port, config.ForwardPort.RemotePort))
 		select {
-		case err = <-errc:
+		case err := <-errc:
 			cancel()
 			rerr = err
 			return nil
 		case <-ready:
 		}
 		c.t.closer = append(c.t.closer, func() error { cancel(); return nil })
-
-		c.dbStatus.Port = localPort
-	}
-	if c.dbStatus.Password == "" {
-		sct, err := c.t.clientset.CoreV1().Secrets(c.t.namespace).Get(context.Background(), "db-password", metav1.GetOptions{})
-		if err != nil {
-			rerr = err
-			return nil
-		}
-		pwd, ok := sct.Data["mysql-root-password"]
-		if !ok {
-			rerr = xerrors.Errorf("no mysql-root-password data present in secret %s", sct.Name)
-			return nil
-		}
-		c.dbStatus.Password = string(pwd)
 	}
 
-	db, err := sql.Open("mysql", fmt.Sprintf("gitpod:%s@tcp(127.0.0.1:%d)/gitpod", c.dbStatus.Password, c.dbStatus.Port))
+	db, err := sql.Open("mysql", fmt.Sprintf("gitpod:%s@tcp(%s:%d)/gitpod", config.Password, config.Host, config.Port))
 	if err != nil {
 		rerr = err
 		return nil
@@ -452,6 +415,127 @@ func (c *ComponentAPI) DB() *sql.DB {
 	c.dbStatus.DB = db
 	c.t.closer = append(c.t.closer, db.Close)
 	return db
+}
+
+func (c *ComponentAPI) findDBConfig() (*DBConfig, error) {
+	config, err := c.findDBConfigFromPodEnv("server")
+	if err != nil {
+		return nil, err
+	}
+
+	// here we _assume_ that "config" points to a service: find us a concrete DB pod to forward to
+	svc, err := c.t.clientset.CoreV1().Services(c.t.namespace).Get(context.Background(), config.Host, metav1.GetOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	// find remotePort
+	var remotePort int32
+	for _, p := range svc.Spec.Ports {
+		if p.Port == config.Port {
+			remotePort = p.TargetPort.IntVal
+			if remotePort == 0 {
+				remotePort = p.Port
+			}
+			break
+		}
+	}
+	if remotePort == 0 {
+		return nil, fmt.Errorf("no ports found on service: %s", svc.Name)
+	}
+
+	// find pod to forward to
+	pods, err := c.t.clientset.CoreV1().Pods(c.t.namespace).List(context.Background(), metav1.ListOptions{
+		LabelSelector: labels.SelectorFromSet(svc.Spec.Selector).String(),
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(pods.Items) == 0 {
+		return nil, fmt.Errorf("no pods for service %s found", svc.Name)
+	}
+	var pod *corev1.Pod
+	for _, p := range pods.Items {
+		if p.Spec.NodeName == "" {
+			// no node means the pod can't be ready
+			continue
+		}
+		var isReady bool
+		for _, cond := range p.Status.Conditions {
+			if cond.Type == corev1.PodReady {
+				isReady = cond.Status == corev1.ConditionTrue
+				break
+			}
+		}
+		if !isReady {
+			continue
+		}
+
+		pod = &p
+		break
+	}
+	if pod == nil {
+		return nil, fmt.Errorf("no active pod for service %s found", svc.Name)
+	}
+
+	localPort, err := getFreePort()
+	if err != nil {
+		return nil, err
+	}
+	config.Port = int32(localPort)
+	config.ForwardPort = &ForwardPort{
+		RemotePort: remotePort,
+		PodName:    pod.Name,
+	}
+	config.Host = "127.0.0.1"
+
+	return config, nil
+}
+
+func (c *ComponentAPI) findDBConfigFromPodEnv(componentName string) (*DBConfig, error) {
+	lblSelector := fmt.Sprintf("component=%s", componentName)
+	list, err := c.t.clientset.CoreV1().Pods(c.t.namespace).List(context.Background(), metav1.ListOptions{
+		LabelSelector: lblSelector,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(list.Items) == 0 {
+		return nil, fmt.Errorf("no pods found for: %s", lblSelector)
+	}
+	pod := list.Items[0]
+
+	var password string
+	var port int32
+	var host string
+OuterLoop:
+	for _, c := range pod.Spec.Containers {
+		for _, v := range c.Env {
+			if v.Name == "DB_PASSWORD" {
+				password = v.Value
+			} else if v.Name == "DB_PORT" {
+				pPort, err := strconv.Atoi(v.Value)
+				if err != nil {
+					return nil, fmt.Errorf("error parsing DB_PORT '%s' on pod %s!", v.Value, pod.Name)
+				}
+				port = int32(pPort)
+			} else if v.Name == "DB_HOST" {
+				host = v.Value
+			}
+			if password != "" && port != 0 && host != "" {
+				break OuterLoop
+			}
+		}
+	}
+	if password == "" || port == 0 || host == "" {
+		return nil, fmt.Errorf("could not find complete DBConfig on pod %s!", pod.Name)
+	}
+	config := DBConfig{
+		Host:     host,
+		Port:     port,
+		Password: password,
+	}
+	return &config, nil
 }
 
 // ImageBuilder provides access to the image builder service.

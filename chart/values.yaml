@@ -4,21 +4,6 @@
 version: # version of Gitpod will be set by the CI job on publishing to https://charts.gitpod.io/
 
 hostname: localhost
-# ingressModes determines how Gitpod makes workspaces and their ports available. Possible values are:
-#           hosts: where workspaces and their ports are made available on subdomains of the hostname, e.g.
-#                  a workspace is made available at <wsid>.<installation.shortname>.<hostname>. This mode provides
-#                  the most flexibility w.r.t. to distributing workspaces on clusters. Also, only this mode properly supports CORS.
-#                  This mode requires wildcard HTTPS certificates.
-#     pathAndHost: makes workspaces available on a path rather than a subdomain, e.g. <hostname>/workspace/<wsid>.
-#                  Workspace ports are still made available on subdomains, albeit without HTTPS or port visibility (all exposed ports are public).
-#                  This mode makes for an easy install as only regular HTTPS certificates are required, and
-#                  workspace port access is simple. Whenever you have a domain available, but don't require the
-#                  features or flexibility of the "hosts" mode.
-#        noDomain: makes workspaces available on a path rather than a subdomain, e.g. <hostname>/workspace/<wsid>.
-#                  Workspace ports are made available on individual ports exposed through the LoadBalancer.
-#                  This mode primarily makes sense if you don't have a domain available, but need to run on an IP address only.
-#                  In this mode there is no HTTPS and CORS support, some secrets get transmitted unencrypted (no one-time-secret support) and all exposed ports are public.
-ingressMode: hosts
 certificatesSecret:
   secretName: https-certificates
 
@@ -31,7 +16,7 @@ installation:
   shortname: ""
 license: ""
 installPodSecurityPolicies: true
-imagePullPolicy: Always
+imagePullPolicy: IfNotPresent
 resources:
   default:
     cpu: 100m
@@ -61,7 +46,7 @@ workspaceSizing:
     #     limit: 200
     #
     # if there are no buckets configured, the dynamic CPU limiting is disabled.
-    cpu: 
+    cpu:
       buckets: []
       samplingPeriod: "10s"
       controlPeriod: "15m"
@@ -141,12 +126,9 @@ branding:
         url: https://www.gitpod.io/terms/
 workspaceScheduler: workspace-scheduler
 serverProxyApiKey: "fF7+aCPvF9Pa0AEjmoZ+yWVh6PqBjM5VEA0wyQs3FH4="
-previewFeatureFlags: ["registry_facade", "user_namespace"]
+previewFeatureFlags: ["user_namespace"]
 
 components:
-  nodeDaemon:
-    name: "node-daemon"
-    theiaHostBasePath: /var/gitpod
 
   blobserve:
     name: "blobserve"
@@ -228,6 +210,8 @@ components:
       requests:
         cpu: 100m
         memory: 128Mi
+    alpineImage: alpine:3.9
+    selfBuildBaseImage: ""
     ports:
       rpc:
         expose: true
@@ -292,18 +276,19 @@ components:
     volumes: null
     garbageCollection:
       disabled: "false"
+    definitelyGpDisabled: "false"
 
   workspace:
     ports:
       http:
         containerPort: 23000
         supervisorPort: 22999
-    defaultImage: 
+    defaultImage:
       imagePrefix: "gitpod/"
       imageName: "workspace-full"
       version: "latest"
-    theiaImage: 
-      imageName: "theia-ide"
+    theiaImage:
+      imageName: "ide/theia"
     codeImage:
       imageName: "ide/code"
     supervisor:
@@ -350,6 +335,7 @@ components:
     dependsOn:
     - "proxy-configmap-nginx.yaml"
     - "server-proxy-apikey-secret.yaml"
+    - "server-proxy-ssl-dhparam.yaml"
     ports:
       http:
         expose: true
@@ -367,19 +353,15 @@ components:
     certbot:
       enabled: false
       email: "certificate@your-domain.com"
-
-  theiaServer:
-    name: "theia-server"
-    replicas: 1
-    resources:
-      cpu: 100m
-      memory: 16Mi
-    ports:
-      http:
-        expose: true
-        servicePort: 80
-        containerPort: 3000
-    serviceType: "ClusterIP"
+    # A base64ed Diffie-Hellman parameter
+    # This can be generated with: openssl dhparam 4096 2> /dev/null | base64 -w 0
+    # http://nginx.org/en/docs/http/ngx_http_ssl_module.html#ssl_dhparam
+    sslDHParam:
+    # enabled cronjob to restart the proxy deployment
+    restarter:
+      enabled: false
+      schedule: '0 0 * * 0'
+      image: bitnami/kubectl:latest
 
   wsManager:
     name: "ws-manager"
@@ -415,7 +397,7 @@ components:
       runtime: containerd
       containerd:
         socket: /run/containerd/containerd.sock
-      nodeRoots: 
+      nodeRoots:
       - /var/lib
       - /run/containerd/io.containerd.runtime.v1.linux/k8s.io
       # On some hosts systems containerd uses different paths to store it's containers in, for example:
@@ -438,6 +420,9 @@ components:
       cpu: 100m
       memory: 32Mi
     schedulerName: "workspace-scheduler"
+    ratelimit:
+      # Limits the # of scheduling attempts (per second) to limit traffic to the k8s master.
+      maxRPS: 10
     scaler:
       enabled: false
       maxGhostWorkspaces: 10
@@ -448,6 +433,10 @@ components:
         kind: "constant"
         constant:
           setpoint: 5
+    ports:
+      metrics:
+        expose: true
+        containerPort: 9500
 
   cerc:
     name: cerc

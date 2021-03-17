@@ -273,7 +273,7 @@ class Workspaces extends React.Component<WorkspacesProps, WorkspacesState> {
                 <Grid item xs={12}>
                     <Paper className="gc-message">
                         <Typography component="p" >
-                            Unused workspaces are automatically deleted after {this.state.configuration.daysBeforeGarbageCollection} days of inactivity. <a href="https://www.gitpod.io/docs/life-of-workspace/#garbage-collection">Learn more.</a>
+                            Unpinned workspaces that have been stopped for more than {this.state.configuration.daysBeforeGarbageCollection} days will be automatically deleted. <a href="https://www.gitpod.io/docs/life-of-workspace/#garbage-collection">Learn more</a>
                         </Typography>
                         <Button key='dismiss-gc-message' className='button' variant='outlined' color='secondary'
                             onClick={() => {

@@ -20,7 +20,9 @@
             "deployed": 1
         },
         "runtime": {
-            "node_name": "gke-gitpod-dev-worker-pool-1-f039fa9e-2jrb"
+            "node_name": "gke-gitpod-dev-worker-pool-1-f039fa9e-2jrb",
+            "pod_name": "ws-79be1e8b-a6de-4572-8627-99ef12303a88",
+            "node_ip": "10.132.0.25"
         },
         "auth": {}
     }

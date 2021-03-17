@@ -3,6 +3,7 @@ packages:
     type: yarn
     srcs:
       - package.json
+      - build.sh
     deps:
       - components/supervisor-api:proto
     env:
@@ -21,8 +22,6 @@ packages:
     deps:
       - :lib
       - components/gitpod-protocol:scripts
-    argdeps:
-      - version
     config:
       commands:
         - ["node", "components-gitpod-protocol--scripts/publish.js", "${version}", "components-supervisor-api-typescript-rest--lib/package"]

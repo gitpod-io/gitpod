@@ -7,15 +7,16 @@ package manager
 import (
 	"context"
 	"encoding/json"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"strings"
 	"time"
 
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/retry"
+
+	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 const (
@@ -76,9 +77,6 @@ const (
 	// workspaceAdmissionAnnotation determines the user admission to a workspace, i.e. if it can be accessed by everyone without token
 	workspaceAdmissionAnnotation = "gitpod/admission"
 
-	// ingressPortsAnnotation holds the mapping workspace port -> allocated ingress port on kubernetes services
-	ingressPortsAnnotation = "gitpod/ingressPorts"
-
 	// withUsernamespaceAnnotation is set on workspaces which are wrapped in a user namespace (or have some form of user namespace support)
 	// Beware: this annotation is duplicated/copied in ws-daemon
 	withUsernamespaceAnnotation = "gitpod/withUsernamespace"
@@ -86,8 +84,6 @@ const (
 
 // markWorkspaceAsReady adds annotations to a workspace pod
 func (m *Manager) markWorkspace(ctx context.Context, workspaceID string, annotations ...*annotation) error {
-	client := m.Clientset.CoreV1().Pods(m.Config.Namespace)
-
 	// Retry on failure. Sometimes this doesn't work because of concurrent modification. The Kuberentes way is to just try again after waiting a bit.
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		pod, err := m.findWorkspacePod(ctx, workspaceID)
@@ -109,9 +105,7 @@ func (m *Manager) markWorkspace(ctx context.Context, workspaceID string, annotat
 			}
 		}
 
-		_, err = client.Update(ctx, pod, metav1.UpdateOptions{})
-
-		return err
+		return m.Clientset.Update(ctx, pod)
 	})
 	if err != nil {
 		an := make([]string, len(annotations))
@@ -189,7 +183,8 @@ func (m *Manager) patchPodLifecycleIndependentState(ctx context.Context, workspa
 		ctx, cancel := context.WithTimeout(ctx, kubernetesOperationTimeout)
 		defer cancel()
 
-		plisCfg, err := m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Get(ctx, getPodLifecycleIndependentCfgMapName(workspaceID), metav1.GetOptions{})
+		var plisCfg corev1.ConfigMap
+		err := m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: getPodLifecycleIndependentCfgMapName(workspaceID)}, &plisCfg)
 		if isKubernetesObjNotFoundError(err) {
 			return xerrors.Errorf("workspace %s has no pod lifecycle independent state", workspaceID)
 		}
@@ -200,7 +195,7 @@ func (m *Manager) patchPodLifecycleIndependentState(ctx context.Context, workspa
 
 		needsUpdate := false
 		if patch != nil {
-			plis, err := unmarshalPodLifecycleIndependentState(plisCfg)
+			plis, err := unmarshalPodLifecycleIndependentState(&plisCfg)
 			if err != nil {
 				return xerrors.Errorf("patch pod lifecycle independent state: %w", err)
 			}
@@ -213,7 +208,7 @@ func (m *Manager) patchPodLifecycleIndependentState(ctx context.Context, workspa
 			needsUpdate = patch(plis)
 			tracing.LogEvent(span, "patch done")
 
-			err = marshalPodLifecycleIndependentState(plisCfg, plis)
+			err = marshalPodLifecycleIndependentState(&plisCfg, plis)
 			if err != nil {
 				return xerrors.Errorf("patch lifecycle independent state: %w", err)
 			}
@@ -232,8 +227,7 @@ func (m *Manager) patchPodLifecycleIndependentState(ctx context.Context, workspa
 		tracing.LogKV(span, "postPatchPLIS", plisCfg.Annotations[plisDataAnnotation])
 		tracing.LogKV(span, "needsUpdate", "true")
 
-		_, err = m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Update(ctx, plisCfg, metav1.UpdateOptions{})
-		return err
+		return m.Clientset.Update(ctx, &plisCfg)
 	})
 
 	if err != nil {
@@ -270,7 +264,7 @@ func unmarshalPodLifecycleIndependentState(cfg *corev1.ConfigMap) (*podLifecycle
 func marshalPodLifecycleIndependentState(dst *corev1.ConfigMap, plis *podLifecycleIndependentState) error {
 	rawPLIS, err := json.Marshal(plis)
 	if err != nil {
-		return xerrors.Errorf("cannot marshal pod lifecycle independent state: %w")
+		return xerrors.Errorf("cannot marshal pod lifecycle independent state: %w", err)
 	}
 
 	// We're not putting the PLIS JSON in the config map data as that takes about 10x as long as storing it in an annotation.

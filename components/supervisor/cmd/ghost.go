@@ -9,8 +9,9 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 var ghostCmd = &cobra.Command{
@@ -19,13 +20,14 @@ var ghostCmd = &cobra.Command{
 
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, true, true)
-		log.Info("running as ghost - waiting for SIGINT")
+		log.Info("running as ghost - waiting for SIGTERM")
 
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 		select {
 		case <-sigChan:
 		}
+		log.Info("SIGTERM received, quitting.")
 	},
 }
 

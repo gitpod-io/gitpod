@@ -8,8 +8,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // rootCmd represents the base command when called without any subcommands

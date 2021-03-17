@@ -3,3 +3,6 @@ contact_links:
   - name: Community
     url: https://community.gitpod.io
     about: Please ask and answer usage questions here.
+  - name: Security
+    url: https://www.gitpod.io/security
+    about: Please report security vulnerabilities here.

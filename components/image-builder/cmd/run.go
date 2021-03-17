@@ -13,12 +13,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/pprof"
-	"github.com/gitpod-io/gitpod/image-builder/api"
-	"github.com/gitpod-io/gitpod/image-builder/pkg/builder"
-	"github.com/gitpod-io/gitpod/image-builder/pkg/resolve"
-
 	docker "github.com/docker/docker/client"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
@@ -28,6 +22,12 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/pprof"
+	"github.com/gitpod-io/gitpod/image-builder/api"
+	"github.com/gitpod-io/gitpod/image-builder/pkg/builder"
+	"github.com/gitpod-io/gitpod/image-builder/pkg/resolve"
 )
 
 // runCmd represents the run command
@@ -41,7 +41,7 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal("builder configuration is invalid")
 		}
 
-		client, err := docker.NewEnvClient()
+		client, err := docker.NewClientWithOpts(docker.FromEnv)
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -1,7 +1,8 @@
 {
     "portsService": {
         "metadata": {
-            "name": "ws-servicePrefix-ports",
+            "name": "ws-serviceprefix-ports",
+            "namespace": "default",
             "creationTimestamp": null,
             "labels": {
                 "gpwsman": "true",
@@ -9,9 +10,8 @@
                 "workspaceType": "regular"
             },
             "annotations": {
-                "gitpod/ingressPorts": "{\"3000\":{\"workspacePort\":3000,\"ingressPort\":10847},\"8080\":{\"workspacePort\":8080,\"ingressPort\":10059}}",
-                "gitpod/port-url-3000": "gitpod.io:10847",
-                "gitpod/port-url-8080": "gitpod.io:10059"
+                "gitpod/port-url-3000": "3000-foobar-servicePrefix-gitpod.io",
+                "gitpod/port-url-8080": "8080-foobar-servicePrefix-gitpod.io"
             }
         },
         "spec": {
@@ -20,7 +20,7 @@
                     "name": "p3000-public",
                     "protocol": "TCP",
                     "port": 3000,
-                    "targetPort": 0
+                    "targetPort": 3000
                 },
                 {
                     "name": "p8080-public",
@@ -44,13 +44,13 @@
         {
             "port": 3000,
             "visibility": 1,
-            "url": "gitpod.io:10847"
+            "url": "3000-foobar-servicePrefix-gitpod.io"
         },
         {
             "port": 8080,
             "target": 38080,
             "visibility": 1,
-            "url": "gitpod.io:10059"
+            "url": "8080-foobar-servicePrefix-gitpod.io"
         }
     ]
 }

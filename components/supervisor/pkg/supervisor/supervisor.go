@@ -9,7 +9,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
@@ -23,6 +22,11 @@ import (
 	"syscall"
 	"time"
 
+	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/soheilhy/cmux"
+	"golang.org/x/sys/unix"
+	"google.golang.org/grpc"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/executor"
@@ -33,11 +37,6 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
 	daemon "github.com/gitpod-io/gitpod/ws-daemon/api"
-	"golang.org/x/sys/unix"
-
-	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
-	"github.com/soheilhy/cmux"
-	"google.golang.org/grpc"
 )
 
 var (
@@ -55,10 +54,6 @@ func RegisterAdditionalService(services ...RegisterableService) {
 func AddAPIEndpointOpts(opts ...grpc.ServerOption) {
 	apiEndpointOpts = append(apiEndpointOpts, opts...)
 }
-
-const (
-	maxIDEPause = 20 * time.Second
-)
 
 type runOptions struct {
 	Args        []string
@@ -84,9 +79,8 @@ func InNamespace() RunOption {
 
 // The sum of those timeBudget* times has to fit within the terminationGracePeriod of the workspace pod.
 const (
-	timeBudgetIDEShutdown      = 5 * time.Second
-	timeBudgetTeardownCommands = 15 * time.Second
-	timeBudgetDaemonTeardown   = 10 * time.Second
+	timeBudgetIDEShutdown    = 5 * time.Second
+	timeBudgetDaemonTeardown = 10 * time.Second
 )
 
 const (
@@ -166,6 +160,7 @@ func Run(options ...RunOption) {
 		},
 		termMuxSrv,
 		RegistrableTokenService{tokenService},
+		NewNotificationService(),
 		&InfoService{cfg: cfg},
 		&ControlService{portsManager: portMgmt},
 	}
@@ -331,7 +326,8 @@ func reaper(terminatingReaper <-chan bool) {
 			continue
 		}
 
-		pid, err := unix.Wait4(-1, nil, 0, nil)
+		// "pid: 0, options: 0" to follow https://github.com/ramr/go-reaper/issues/11 to make agent-smith work again
+		pid, err := unix.Wait4(0, nil, 0, nil)
 
 		if err == unix.ECHILD {
 			// The calling process does not have any unwaited-for children.
@@ -619,7 +615,7 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 			return
 		}
 
-		ferr := ioutil.WriteFile("/dev/termination-log", []byte(err.Error()), 0644)
+		ferr := os.WriteFile("/dev/termination-log", []byte(err.Error()), 0644)
 		if ferr != nil {
 			log.WithError(err).Error("cannot write termination log")
 		}
@@ -637,7 +633,7 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		// TODO: rewrite using fsnotify
 		t := time.NewTicker(100 * time.Millisecond)
 		for range t.C {
-			b, err := ioutil.ReadFile("/workspace/.gitpod/ready")
+			b, err := os.ReadFile("/workspace/.gitpod/ready")
 			if err != nil {
 				if !os.IsNotExist(err) {
 					log.WithError(err).Error("cannot read content ready file")
@@ -686,7 +682,7 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 
 func terminateChildProcesses() {
 	ppid := strconv.Itoa(os.Getpid())
-	dirs, err := ioutil.ReadDir("/proc")
+	dirs, err := os.ReadDir("/proc")
 	if err != nil {
 		log.WithError(err).Warn("cannot terminate child processes")
 		return

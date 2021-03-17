@@ -24,11 +24,25 @@ window.addEventListener('beforeunload', e => {
 }, { capture: true });
 
 export function create(): IDEFrontendService {
+    let failureCause: Error | undefined;
     let capabilities: IDEFrontendCapabilities = { service: false };
     const onDidChangeEmitter = new Emitter<void>();
     let _delegate: IDEFrontendService | undefined;
     const toStop = new DisposableCollection();
     toStop.push(onDidChangeEmitter);
+    const doStart = () => {
+        if (!_delegate || state !== 'ready') {
+            return;
+        }
+        try {
+            toStop.push(_delegate.start());
+        } catch (e) {
+            console.error('supervisor frontend: IDE frontend start failed:', e)
+            failureCause = e;
+            state = 'terminated';
+            onDidChangeEmitter.fire();
+        }
+    }
     const service: IDEFrontendService = {
         get state() {
             if (state === 'terminated') {
@@ -39,19 +53,20 @@ export function create(): IDEFrontendService {
             }
             return state;
         },
+        get failureCause() {
+            return _delegate?.failureCause || failureCause;
+        },
         onDidChange: onDidChangeEmitter.event,
         start: () => {
             if (state === 'terminated') {
-                throw new Error('IDE has been stopped');
+                throw new Error('IDE frontend has been stopped');
             }
             state = 'ready';
             toStop.push(Disposable.create(() => {
                 state = 'terminated';
                 onDidChangeEmitter.fire();
             }))
-            if (_delegate) {
-                toStop.push(_delegate.start());
-            }
+            doStart();
             return toStop;
         }
     }
@@ -67,9 +82,7 @@ export function create(): IDEFrontendService {
                 return;
             }
             _delegate = delegate;
-            if (state === 'ready') {
-                toStop.push(delegate.start());
-            }
+            doStart();
             onDidChangeEmitter.fire();
             delegate.onDidChange(() => onDidChangeEmitter.fire());
         }

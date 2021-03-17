@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+ * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -8,6 +8,7 @@
 // file: initializer.proto
 
 /* tslint:disable */
+/* eslint-disable */
 
 import * as jspb from "google-protobuf";
 
@@ -16,26 +17,22 @@ export class WorkspaceInitializer extends jspb.Message {
     hasEmpty(): boolean;
     clearEmpty(): void;
     getEmpty(): EmptyInitializer | undefined;
-    setEmpty(value?: EmptyInitializer): void;
-
+    setEmpty(value?: EmptyInitializer): WorkspaceInitializer;
 
     hasGit(): boolean;
     clearGit(): void;
     getGit(): GitInitializer | undefined;
-    setGit(value?: GitInitializer): void;
-
+    setGit(value?: GitInitializer): WorkspaceInitializer;
 
     hasSnapshot(): boolean;
     clearSnapshot(): void;
     getSnapshot(): SnapshotInitializer | undefined;
-    setSnapshot(value?: SnapshotInitializer): void;
-
+    setSnapshot(value?: SnapshotInitializer): WorkspaceInitializer;
 
     hasPrebuild(): boolean;
     clearPrebuild(): void;
     getPrebuild(): PrebuildInitializer | undefined;
-    setPrebuild(value?: PrebuildInitializer): void;
-
+    setPrebuild(value?: PrebuildInitializer): WorkspaceInitializer;
 
     getSpecCase(): WorkspaceInitializer.SpecCase;
 
@@ -59,15 +56,10 @@ export namespace WorkspaceInitializer {
 
     export enum SpecCase {
         SPEC_NOT_SET = 0,
-    
-    EMPTY = 1,
-
-    GIT = 2,
-
-    SNAPSHOT = 3,
-
-    PREBUILD = 4,
-
+        EMPTY = 1,
+        GIT = 2,
+        SNAPSHOT = 3,
+        PREBUILD = 4,
     }
 
 }
@@ -91,26 +83,20 @@ export namespace EmptyInitializer {
 
 export class GitInitializer extends jspb.Message { 
     getRemoteUri(): string;
-    setRemoteUri(value: string): void;
-
+    setRemoteUri(value: string): GitInitializer;
     getUpstreamRemoteUri(): string;
-    setUpstreamRemoteUri(value: string): void;
-
+    setUpstreamRemoteUri(value: string): GitInitializer;
     getTargetMode(): CloneTargetMode;
-    setTargetMode(value: CloneTargetMode): void;
-
+    setTargetMode(value: CloneTargetMode): GitInitializer;
     getCloneTaget(): string;
-    setCloneTaget(value: string): void;
-
+    setCloneTaget(value: string): GitInitializer;
     getCheckoutLocation(): string;
-    setCheckoutLocation(value: string): void;
-
+    setCheckoutLocation(value: string): GitInitializer;
 
     hasConfig(): boolean;
     clearConfig(): void;
     getConfig(): GitConfig | undefined;
-    setConfig(value?: GitConfig): void;
-
+    setConfig(value?: GitConfig): GitInitializer;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): GitInitializer.AsObject;
@@ -137,19 +123,14 @@ export class GitConfig extends jspb.Message {
 
     getCustomConfigMap(): jspb.Map<string, string>;
     clearCustomConfigMap(): void;
-
     getAuthentication(): GitAuthMethod;
-    setAuthentication(value: GitAuthMethod): void;
-
+    setAuthentication(value: GitAuthMethod): GitConfig;
     getAuthUser(): string;
-    setAuthUser(value: string): void;
-
+    setAuthUser(value: string): GitConfig;
     getAuthPassword(): string;
-    setAuthPassword(value: string): void;
-
+    setAuthPassword(value: string): GitConfig;
     getAuthOts(): string;
-    setAuthOts(value: string): void;
-
+    setAuthOts(value: string): GitConfig;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): GitConfig.AsObject;
@@ -174,8 +155,7 @@ export namespace GitConfig {
 
 export class SnapshotInitializer extends jspb.Message { 
     getSnapshot(): string;
-    setSnapshot(value: string): void;
-
+    setSnapshot(value: string): SnapshotInitializer;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): SnapshotInitializer.AsObject;
@@ -198,14 +178,12 @@ export class PrebuildInitializer extends jspb.Message {
     hasPrebuild(): boolean;
     clearPrebuild(): void;
     getPrebuild(): SnapshotInitializer | undefined;
-    setPrebuild(value?: SnapshotInitializer): void;
-
+    setPrebuild(value?: SnapshotInitializer): PrebuildInitializer;
 
     hasGit(): boolean;
     clearGit(): void;
     getGit(): GitInitializer | undefined;
-    setGit(value?: GitInitializer): void;
-
+    setGit(value?: GitInitializer): PrebuildInitializer;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): PrebuildInitializer.AsObject;
@@ -226,35 +204,27 @@ export namespace PrebuildInitializer {
 
 export class GitStatus extends jspb.Message { 
     getBranch(): string;
-    setBranch(value: string): void;
-
+    setBranch(value: string): GitStatus;
     getLatestCommit(): string;
-    setLatestCommit(value: string): void;
-
+    setLatestCommit(value: string): GitStatus;
     clearUncommitedFilesList(): void;
     getUncommitedFilesList(): Array<string>;
-    setUncommitedFilesList(value: Array<string>): void;
+    setUncommitedFilesList(value: Array<string>): GitStatus;
     addUncommitedFiles(value: string, index?: number): string;
-
     getTotalUncommitedFiles(): number;
-    setTotalUncommitedFiles(value: number): void;
-
+    setTotalUncommitedFiles(value: number): GitStatus;
     clearUntrackedFilesList(): void;
     getUntrackedFilesList(): Array<string>;
-    setUntrackedFilesList(value: Array<string>): void;
+    setUntrackedFilesList(value: Array<string>): GitStatus;
     addUntrackedFiles(value: string, index?: number): string;
-
     getTotalUntrackedFiles(): number;
-    setTotalUntrackedFiles(value: number): void;
-
+    setTotalUntrackedFiles(value: number): GitStatus;
     clearUnpushedCommitsList(): void;
     getUnpushedCommitsList(): Array<string>;
-    setUnpushedCommitsList(value: Array<string>): void;
+    setUnpushedCommitsList(value: Array<string>): GitStatus;
     addUnpushedCommits(value: string, index?: number): string;
-
     getTotalUnpushedCommits(): number;
-    setTotalUnpushedCommits(value: number): void;
-
+    setTotalUnpushedCommits(value: number): GitStatus;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): GitStatus.AsObject;

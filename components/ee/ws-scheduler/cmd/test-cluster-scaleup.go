@@ -12,17 +12,16 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler"
-
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"golang.org/x/xerrors"
-
 	"github.com/spf13/cobra"
+	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	res "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler"
 )
 
 var testPodIdentifier map[string]string = map[string]string{
@@ -231,7 +230,7 @@ func buildCurrentState(clientSet *kubernetes.Clientset) (*scheduler.State, error
 	}
 
 	ramSafetyBuffer := res.MustParse("0Mi")
-	state := scheduler.ComputeState(potentialNodes, pods, nil, &ramSafetyBuffer, false)
+	state := scheduler.ComputeState(potentialNodes, pods, nil, &ramSafetyBuffer, true, testNamespace)
 	return state, nil
 }
 

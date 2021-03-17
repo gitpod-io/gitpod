@@ -8,7 +8,9 @@ import { GitpodServer } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 
-type GitpodServerMethodType = keyof Omit<GitpodServer, "dispose" | "setClient">;
+
+export const accessCodeSyncStorage = 'accessCodeSyncStorage';
+type GitpodServerMethodType = keyof Omit<GitpodServer, "dispose" | "setClient"> | typeof accessCodeSyncStorage;
 type GroupsConfig = {
     [key: string]: {
         points: number,
@@ -107,6 +109,41 @@ function readConfig(): RateLimiterConfig {
         "validateLicense": { group: "default", points: 1 },
         "getLicenseInfo": { group: "default", points: 1 },
         "licenseIncludesFeature": { group: "default", points: 1 },
+
+        "accessCodeSyncStorage":  { group: "default", points: 1 },
+
+        /**
+         * gitpod.io concerns
+         */
+        "adminAddStudentEmailDomain":  { group: "default", points: 1 },
+        "adminGetAccountStatement":  { group: "default", points: 1 },
+        "adminIsStudent":  { group: "default", points: 1 },
+        "adminSetProfessionalOpenSource":  { group: "default", points: 1 },
+        "checkout":  { group: "default", points: 1 },
+        "createPortalSession":  { group: "default", points: 1 },
+        "getAccountStatement":  { group: "default", points: 1 },
+        "getAppliedCoupons":  { group: "default", points: 1 },
+        "getAvailableCoupons":  { group: "default", points: 1 },
+        "getChargebeeSiteId":  { group: "default", points: 1 },
+        "getGithubUpgradeUrls":  { group: "default", points: 1 },
+        "getPrivateRepoTrialEndDate":  { group: "default", points: 1 },
+        "getRemainingUsageHours":  { group: "default", points: 1 },
+        "getShowPaymentUI":  { group: "default", points: 1 },
+        "isChargebeeCustomer":  { group: "default", points: 1 },
+        "isStudent":  { group: "default", points: 1 },
+        "mayAccessPrivateRepo":  { group: "default", points: 1 },
+        "subscriptionCancel":  { group: "default", points: 1 },
+        "subscriptionCancelDowngrade":  { group: "default", points: 1 },
+        "subscriptionDowngradeTo":  { group: "default", points: 1 },
+        "subscriptionUpgradeTo":  { group: "default", points: 1 },
+        "tsAddSlots":  { group: "default", points: 1 },
+        "tsAssignSlot":  { group: "default", points: 1 },
+        "tsDeactivateSlot":  { group: "default", points: 1 },
+        "tsGet":  { group: "default", points: 1 },
+        "tsGetSlots":  { group: "default", points: 1 },
+        "tsGetUnassignedSlot":  { group: "default", points: 1 },
+        "tsReactivateSlot":  { group: "default", points: 1 },
+        "tsReassignSlot":  { group: "default", points: 1 },
     };
 
     const fromEnv = JSON.parse(process.env.RATE_LIMITER_CONFIG || "{}")

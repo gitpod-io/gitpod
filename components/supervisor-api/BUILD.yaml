@@ -3,8 +3,7 @@ packages:
     type: generic
     srcs:
       - "*.proto"
+      - "third_party/**/*.proto"
     config:
       commands:
-        - ["git", "clone", "https://github.com/grpc-ecosystem/grpc-gateway"]
-        - ["mv", "grpc-gateway/third_party", "third_party"]
-        - ["rm", "-r", "grpc-gateway"]
+        - ["echo"]

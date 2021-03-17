@@ -18,31 +18,9 @@ data:
   config.json: |-
     {
         "ingress": {
-            {{- if eq .Values.ingressMode "noDomain" }}
-            "kind": "pathAndPort",
-            "pathAndPort": {
-                "address": ":8080",
-                "https": {{ $comp.useHTTPS }},
-                "trimPrefix": "/workspace/",
-                "start": 10000,
-                "end": 11000
-            }
-            {{- else if eq .Values.ingressMode "pathAndHost" }}
-            "kind": "pathAndHost",
-            "pathAndHost": {
-                "address": ":8080",
-                "https": {{ $comp.useHTTPS }},
-                "header": "x-wsproxy-host",
-                "trimPrefix": "/workspace/"
-            }
-            {{- else }}
-            "kind": "host",
-            "host": {
-                "address": ":8080",
-                "https": {{ $comp.useHTTPS }},
-                "header": "x-wsproxy-host"
-            }
-            {{- end }}
+            "address": ":8080",
+            "https": {{ $comp.useHTTPS }},
+            "header": "x-wsproxy-host"
         },
         "workspaceInfoProviderConfig": {
             "wsManagerAddr": "ws-manager:8080",
@@ -62,28 +40,14 @@ data:
                 "websocketIdleConnTimeout": "180s",
                 "maxIdleConns": 100
             },
-            {{- if .Values.components.blobserve.disabled }}
-            "theiaServer": {
-                "scheme": "http",
-                "host": "theia-server.{{- .Release.Namespace -}}.svc.cluster.local:80",
-                "staticVersionPathPrefix": ""
-            },
-            {{- else }}
             "blobServer": {
                 "scheme": "http",
                 "host": "blobserve.{{- .Release.Namespace -}}.svc.cluster.local:{{ .Values.components.blobserve.ports.service.servicePort }}"
             },
-            {{- end }}
             "gitpodInstallation": {
                 "scheme": "{{- template "gitpod.scheme" $this -}}",
                 "hostName": "{{- $gp.hostname -}}",
-                {{- if eq .Values.ingressMode "hosts" }}
-                "workspaceHostSuffix":     ".ws{{- if $gp.installation.shortname -}}-{{ $.Values.installation.shortname }}{{- end -}}.{{ $.Values.hostname }}"
-                {{- else if eq .Values.ingressMode "pathAndHost" }}
-                "workspaceHostSuffix":     ""
-                {{- else }}
-                "workspaceHostSuffix":     ""
-                {{- end }}
+                "workspaceHostSuffix": ".ws{{- if $gp.installation.shortname -}}-{{ $.Values.installation.shortname }}{{- end -}}.{{ $.Values.hostname }}"
             },
             "workspacePodConfig": {
                 "serviceTemplate": "http://ws-{{"{{ .workspaceID }}"}}-theia.{{- .Release.Namespace -}}.svc.cluster.local:{{"{{ .port }}"}}",

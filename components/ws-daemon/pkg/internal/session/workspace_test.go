@@ -6,8 +6,8 @@ package session
 
 import (
 	"context"
-	"io/ioutil"
 	"math/rand"
+	"os"
 	"path/filepath"
 	"runtime"
 	"sync"
@@ -15,7 +15,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/sirupsen/logrus"
@@ -25,14 +24,8 @@ func init() {
 	logrus.SetLevel(logrus.WarnLevel)
 }
 
-type emptySP struct{}
-
-func (*emptySP) NewStorage() (storage.DirectAccess, error) {
-	return &storage.DirectNoopStorage{}, nil
-}
-
 func getTestStore() (*Store, error) {
-	loc, err := ioutil.TempDir("", "wsdaemon-test")
+	loc, err := os.MkdirTemp("", "wsdaemon-test")
 	if err != nil {
 		return nil, err
 	}

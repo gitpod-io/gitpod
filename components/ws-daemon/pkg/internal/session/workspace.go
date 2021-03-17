@@ -8,19 +8,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
 
+	"github.com/opentracing/opentracing-go"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/xerrors"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/git"
-	"github.com/opentracing/opentracing-go"
-	"github.com/sirupsen/logrus"
-	"golang.org/x/xerrors"
 )
 
 const (
@@ -323,7 +323,7 @@ func (s *Workspace) persist() error {
 		return xerrors.Errorf("cannot persist workspace: %w", err)
 	}
 
-	err = ioutil.WriteFile(s.persistentStateLocation(), fc, 0644)
+	err = os.WriteFile(s.persistentStateLocation(), fc, 0644)
 	if err != nil {
 		return xerrors.Errorf("cannot persist workspace: %w", err)
 	}
@@ -336,7 +336,7 @@ func loadWorkspace(ctx context.Context, path string) (sess *Workspace, err error
 	span, ctx := opentracing.StartSpanFromContext(ctx, "loadWorkspace")
 	defer tracing.FinishSpan(span, &err)
 
-	fc, err := ioutil.ReadFile(path)
+	fc, err := os.ReadFile(path)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot load session file: %w", err)
 	}

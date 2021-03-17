@@ -5,8 +5,9 @@
 package main
 
 import (
-	"github.com/gitpod-io/gitpod/service-waiter/cmd"
 	_ "github.com/go-sql-driver/mysql"
+
+	"github.com/gitpod-io/gitpod/service-waiter/cmd"
 )
 
 func main() {

@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM node:12.14.1 AS node_installer
+FROM node:12.18.3 AS node_installer
 RUN mkdir -p /ide/node/bin \
     /ide/node/include/node/ \
     /ide/node/lib/node_modules/npm/ \
@@ -28,7 +28,7 @@ RUN sudo apt-get update \
     && sudo apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-ENV GP_CODE_COMMIT 791d97eab4a4d591cc12a4784bf263088968c6d3
+ENV GP_CODE_COMMIT 07fe931b77d75daa0ba73f05e5e282c0f1dc1482
 RUN mkdir gp-code \
     && cd gp-code \
     && git init \
@@ -60,4 +60,6 @@ ENV GITPOD_ENV_APPEND_PATH /ide/bin:
 # editor config
 ENV GITPOD_ENV_SET_EDITOR code
 ENV GITPOD_ENV_SET_VISUAL "$GITPOD_ENV_SET_EDITOR"
+ENV GITPOD_ENV_SET_GP_OPEN_EDITOR "$GITPOD_ENV_SET_EDITOR"
 ENV GITPOD_ENV_SET_GIT_EDITOR "$GITPOD_ENV_SET_EDITOR --wait"
+ENV GITPOD_ENV_SET_GP_PREVIEW_BROWSER "code --command gitpod.api.preview"

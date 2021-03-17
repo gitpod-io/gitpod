@@ -9,9 +9,10 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // bobCmd represents the bob command

@@ -9,11 +9,12 @@ import (
 	"testing"
 	"time"
 
-	ctesting "github.com/gitpod-io/gitpod/common-go/testing"
-	"github.com/gitpod-io/gitpod/common-go/util"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	ctesting "github.com/gitpod-io/gitpod/common-go/testing"
+	"github.com/gitpod-io/gitpod/common-go/util"
 )
 
 func TestDeleteDanglingPodLifecycleIndependentState(t *testing.T) {
@@ -38,9 +39,22 @@ func TestDeleteDanglingPodLifecycleIndependentState(t *testing.T) {
 		Test: func(t *testing.T, input interface{}) interface{} {
 			fixture := input.(*fixture)
 
-			var objs []runtime.Object
+			var objs []client.Object
 			if fixture.Pod != nil {
-				objs = append(objs, fixture.Pod)
+				objs = append(objs, fixture.Pod, &corev1.Service{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      fixture.Pod.Name,
+						Namespace: fixture.Pod.Namespace,
+					},
+					Spec: corev1.ServiceSpec{
+						Ports: []corev1.ServicePort{
+							{
+								Name: "dummy",
+								Port: 1,
+							},
+						},
+					},
+				})
 			}
 			if fixture.PLIS != nil {
 				age := time.Duration(fixture.PLISAge)
@@ -84,7 +98,13 @@ func TestDeleteDanglingPodLifecycleIndependentState(t *testing.T) {
 				return &gold{Error: err.Error()}
 			}
 
-			cms, err := manager.Clientset.CoreV1().ConfigMaps(manager.Config.Namespace).List(context.Background(), metav1.ListOptions{})
+			var cms corev1.ConfigMapList
+			err = manager.Clientset.List(context.Background(),
+				&cms,
+				&client.ListOptions{
+					Namespace: manager.Config.Namespace,
+				},
+			)
 			if err != nil {
 				panic(err)
 			}

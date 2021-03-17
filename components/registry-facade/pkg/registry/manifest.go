@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime"
 	"net/http"
 	"strings"
@@ -196,7 +195,23 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 			manifest.Config.URLs = nil
 			manifest.Config.Size = int64(len(rawCfg))
 
-			p, _ = json.Marshal(manifest)
+			// When serving images.MediaTypeDockerSchema2Manifest we have to set the mediaType in the manifest itself.
+			// Although somewhat compatible with the OCI manifest spec (see https://github.com/opencontainers/image-spec/blob/master/manifest.md),
+			// this field is not part of the OCI Go structs. In this particular case, we'll go ahead and add it ourselves.
+			//
+			// fixes https://github.com/gitpod-io/gitpod/pull/3397
+			if desc.MediaType == images.MediaTypeDockerSchema2Manifest {
+				type ManifestWithMediaType struct {
+					ociv1.Manifest
+					MediaType string `json:"mediaType"`
+				}
+				p, _ = json.Marshal(ManifestWithMediaType{
+					Manifest:  *manifest,
+					MediaType: images.MediaTypeDockerSchema2Manifest,
+				})
+			} else {
+				p, _ = json.Marshal(manifest)
+			}
 		}
 
 		dgst := digest.FromBytes(p).String()
@@ -206,7 +221,7 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Length", fmt.Sprint(len(p)))
 		w.Header().Set("Etag", fmt.Sprintf(`"%s"`, dgst))
 		w.Header().Set("Docker-Content-Digest", dgst)
-		w.Write(p)
+		_, _ = w.Write(p)
 
 		log.WithField("name", mh.Name).WithField("tag", mh.Tag).Debug("get manifest")
 		return nil
@@ -287,7 +302,7 @@ func DownloadManifest(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.D
 		}
 	}
 
-	inpt, err := ioutil.ReadAll(rc)
+	inpt, err := io.ReadAll(rc)
 	rc.Close()
 	if err != nil {
 		err = fmt.Errorf("cannot download manifest: %w", err)
@@ -319,7 +334,7 @@ func DownloadManifest(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.D
 			return
 		}
 		rdesc = &md
-		inpt, err = ioutil.ReadAll(rc)
+		inpt, err = io.ReadAll(rc)
 		rc.Close()
 		if err != nil {
 			err = fmt.Errorf("cannot download manifest: %w", err)

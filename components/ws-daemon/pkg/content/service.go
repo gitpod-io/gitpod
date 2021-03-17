@@ -9,13 +9,22 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math"
 	"os"
 	"path/filepath"
 	"syscall"
 	"time"
 
+	"github.com/opencontainers/go-digest"
+	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/opentracing/opentracing-go"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/xerrors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
@@ -26,16 +35,6 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
-
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/opencontainers/go-digest"
-	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
-	"github.com/opentracing/opentracing-go"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sirupsen/logrus"
-	"golang.org/x/xerrors"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // WorkspaceService implements the InitService and WorkspaceService
@@ -54,6 +53,7 @@ type WorkspaceExistenceCheck func(instanceID string) bool
 
 // NewWorkspaceService creates a new workspce initialization service, starts housekeeping and the Prometheus integration
 func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace string, runtime container.Runtime, wec WorkspaceExistenceCheck, uidmapper *iws.Uidmapper, reg prometheus.Registerer) (res *WorkspaceService, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "NewWorkspaceService")
 	defer tracing.FinishSpan(span, &err)
 
@@ -112,6 +112,7 @@ func (s *WorkspaceService) Start() {
 
 // InitWorkspace intialises a new workspace folder in the working area
 func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorkspaceRequest) (resp *api.InitWorkspaceResponse, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "InitWorkspace")
 	tracing.LogRequestSafe(span, req)
 	defer func() {
@@ -277,6 +278,7 @@ func (s *WorkspaceService) createSandbox(ctx context.Context, req *api.InitWorks
 		return
 	}
 
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "createSandbox")
 	defer tracing.FinishSpan(span, &err)
 
@@ -332,6 +334,7 @@ func getCheckoutLocation(req *api.InitWorkspaceRequest) string {
 
 // DisposeWorkspace cleans up a workspace, possibly after taking a final backup
 func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.DisposeWorkspaceRequest) (resp *api.DisposeWorkspaceResponse, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "DisposeWorkspace")
 	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
 	tracing.LogRequestSafe(span, req)
@@ -417,6 +420,7 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 }
 
 func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *session.Workspace, backupName, mfName string) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "uploadWorkspaceContent")
 	defer tracing.FinishSpan(span, &err)
 
@@ -464,7 +468,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		tmpfDigest digest.Digest
 	)
 	err = retryIfErr(ctx, s.config.Backup.Attempts, log.WithFields(sess.OWI()).WithField("op", "create archive"), func(ctx context.Context) (err error) {
-		tmpf, err = ioutil.TempFile(s.config.TmpDir, fmt.Sprintf("wsbkp-%s-*.tar", sess.InstanceID))
+		tmpf, err = os.CreateTemp(s.config.TmpDir, fmt.Sprintf("wsbkp-%s-*.tar", sess.InstanceID))
 		if err != nil {
 			return
 		}
@@ -491,8 +495,14 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		if err != nil {
 			return
 		}
-		tmpf.Sync()
-		tmpf.Seek(0, 0)
+		err = tmpf.Sync()
+		if err != nil {
+			return
+		}
+		_, err = tmpf.Seek(0, 0)
+		if err != nil {
+			return
+		}
 		tmpfDigest, err = digest.FromReader(tmpf)
 		if err != nil {
 			return
@@ -575,7 +585,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		log.WithFields(sess.OWI()).WithField("manifest", mf).Debug("uploading content manifest")
 		span.LogKV("manifest", mf)
 
-		tmpmf, err := ioutil.TempFile(s.config.TmpDir, fmt.Sprintf("mf-%s-*.json", sess.InstanceID))
+		tmpmf, err := os.CreateTemp(s.config.TmpDir, fmt.Sprintf("mf-%s-*.json", sess.InstanceID))
 		if err != nil {
 			return err
 		}
@@ -603,6 +613,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 }
 
 func retryIfErr(ctx context.Context, attempts int, log *logrus.Entry, op func(ctx context.Context) error) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "retryIfErr")
 	defer tracing.FinishSpan(span, &err)
 	for k, v := range log.Data {
@@ -644,6 +655,7 @@ func retryIfErr(ctx context.Context, attempts int, log *logrus.Entry, op func(ct
 
 // WaitForInit waits until a workspace is fully initialized.
 func (s *WorkspaceService) WaitForInit(ctx context.Context, req *api.WaitForInitRequest) (resp *api.WaitForInitResponse, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "WaitForInit")
 	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
 	defer tracing.FinishSpan(span, &err)
@@ -668,6 +680,7 @@ func (s *WorkspaceService) WaitForInit(ctx context.Context, req *api.WaitForInit
 
 // TakeSnapshot creates a backup/snapshot of a workspace
 func (s *WorkspaceService) TakeSnapshot(ctx context.Context, req *api.TakeSnapshotRequest) (res *api.TakeSnapshotResponse, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "TakeSnapshot")
 	span.SetTag("workspace", req.Id)
 	defer tracing.FinishSpan(span, &err)

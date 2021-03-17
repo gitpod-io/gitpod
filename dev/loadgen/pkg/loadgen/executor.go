@@ -11,8 +11,9 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/gitpod-io/gitpod/ws-manager/api"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 // Executor starts and watches workspaces

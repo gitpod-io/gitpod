@@ -8,9 +8,10 @@ import (
 	"context"
 	"strings"
 
+	"github.com/spf13/cobra"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
-	"github.com/spf13/cobra"
 )
 
 // workspacesSnapshotCmd listens for workspace updates

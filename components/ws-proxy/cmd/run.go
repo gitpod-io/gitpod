@@ -5,19 +5,19 @@
 package cmd
 
 import (
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/pprof"
-	"github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/pprof"
+	"github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
 )
 
 var jsonLog bool
@@ -52,32 +52,9 @@ var runCmd = &cobra.Command{
 		}
 		log.Infof("workspace info provider started")
 
-		switch cfg.Ingress.Kind {
-		case HostBasedIngress:
-			addr := cfg.Ingress.HostBasedIngress.Address
-			go proxy.NewWorkspaceProxy(addr, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.HostBasedIngress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix), workspaceInfoProvider).MustServe()
-			log.WithField("ingress", cfg.Ingress.Kind).Infof("started proxying on %s", addr)
-		case PathAndHostIngress:
-			addr := cfg.Ingress.PathAndHostIngress.Address
-			go proxy.NewWorkspaceProxy(addr, cfg.Proxy, proxy.PathAndHostRouter(cfg.Ingress.PathAndHostIngress.TrimPrefix, cfg.Ingress.PathAndHostIngress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix), workspaceInfoProvider).MustServe()
-			log.WithField("ingress", cfg.Ingress.Kind).Infof("started proxying on %s", addr)
-		case PathAndPortIngress:
-			var (
-				addr   = cfg.Ingress.PathAndPortIngress.Address
-				router = proxy.PathAndPortRouter(cfg.Ingress.PathAndPortIngress.TrimPrefix)
-			)
-			go proxy.NewWorkspaceProxy(addr, cfg.Proxy, router, workspaceInfoProvider).MustServe()
-			log.WithField("ingress", cfg.Ingress.Kind).Infof("started proxying on %s", addr)
-
-			for port := cfg.Ingress.PathAndPortIngress.Start; port <= cfg.Ingress.PathAndPortIngress.End; port++ {
-				go proxy.
-					NewWorkspaceProxy(fmt.Sprintf(":%d", port), cfg.Proxy, router, workspaceInfoProvider).
-					MustServe()
-			}
-			log.WithField("ingress", cfg.Ingress.Kind).Infof("started proxying on port range :%d-:%d", cfg.Ingress.PathAndPortIngress.Start, cfg.Ingress.PathAndPortIngress.End)
-		default:
-			log.Fatalf("unknown ingress kind %s", cfg.Ingress.Kind)
-		}
+		addr := cfg.Ingress.Address
+		go proxy.NewWorkspaceProxy(addr, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix), workspaceInfoProvider).MustServe()
+		log.Infof("started proxying on %s", addr)
 
 		if cfg.PProfAddr != "" {
 			go pprof.Serve(cfg.PProfAddr)

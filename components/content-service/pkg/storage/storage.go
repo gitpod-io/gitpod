@@ -11,9 +11,10 @@ import (
 	"os"
 	"regexp"
 
+	"golang.org/x/xerrors"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
-	"golang.org/x/xerrors"
 )
 
 const (
@@ -61,10 +62,13 @@ type PresignedAccess interface {
 	DiskUsage(ctx context.Context, bucket string, prefix string) (size int64, err error)
 
 	// SignDownload describes an object for download - if the object is not found, ErrNotFound is returned
-	SignDownload(ctx context.Context, bucket, obj string) (info *DownloadInfo, err error)
+	SignDownload(ctx context.Context, bucket, obj string, options *SignedURLOptions) (info *DownloadInfo, err error)
 
 	// SignUpload describes an object for upload
-	SignUpload(ctx context.Context, bucket, obj string) (info *UploadInfo, err error)
+	SignUpload(ctx context.Context, bucket, obj string, options *SignedURLOptions) (info *UploadInfo, err error)
+
+	// DeleteObject deletes objects in the given bucket specified by the given query
+	DeleteObject(ctx context.Context, bucket string, query *DeleteObjectQuery) error
 }
 
 // ObjectMeta describtes the metadata of a remote object
@@ -85,6 +89,20 @@ type DownloadInfo struct {
 // UploadInfo describes an object for upload
 type UploadInfo struct {
 	URL string
+}
+
+// DeleteObjectQuery specifies objects to delete, either by an exact name or prefix
+type DeleteObjectQuery struct {
+	Prefix string
+	Name   string
+}
+
+// SignedURLOptions allows you to restrict the access to the signed URL.
+type SignedURLOptions struct {
+	// ContentType is the content type header the client must provide
+	// to use the generated signed URL.
+	// Optional.
+	ContentType string
 }
 
 // DirectDownloader downloads a snapshot

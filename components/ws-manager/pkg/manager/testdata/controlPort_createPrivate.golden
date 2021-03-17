@@ -1,7 +1,8 @@
 {
     "portsService": {
         "metadata": {
-            "name": "ws-servicePrefix-ports",
+            "name": "ws-serviceprefix-ports",
+            "namespace": "default",
             "creationTimestamp": null,
             "labels": {
                 "gpwsman": "true",
@@ -9,7 +10,6 @@
                 "workspaceID": "foobar"
             },
             "annotations": {
-                "gitpod/ingressPorts": "",
                 "gitpod/port-url-3000": "3000--servicePrefix-gitpod.io"
             }
         },
@@ -19,7 +19,7 @@
                     "name": "p3000-private",
                     "protocol": "TCP",
                     "port": 3000,
-                    "targetPort": 0
+                    "targetPort": 3000
                 }
             ],
             "selector": {

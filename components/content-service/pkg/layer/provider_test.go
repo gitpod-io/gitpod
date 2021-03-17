@@ -10,17 +10,18 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strings"
 	"testing"
 
-	csapi "github.com/gitpod-io/gitpod/content-service/api"
-	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/google/go-cmp/cmp"
 	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
+
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 )
 
 const (
@@ -131,7 +132,7 @@ func TestGetContentLayer(t *testing.T) {
 							return &http.Response{
 								StatusCode: http.StatusOK,
 								Header:     make(http.Header),
-								Body:       ioutil.NopCloser(bytes.NewReader(mf)),
+								Body:       io.NopCloser(bytes.NewReader(mf)),
 							}
 						default:
 							return &http.Response{
@@ -173,13 +174,13 @@ func TestGetContentLayer(t *testing.T) {
 					t.Fatalf("fixture %s exists already - not overwriting", fixfn)
 				}
 
-				err = ioutil.WriteFile(fixfn, fixc, 0644)
+				err = os.WriteFile(fixfn, fixc, 0644)
 				if err != nil {
 					t.Fatalf("cannot write fixture: %q", err)
 					return
 				}
 			} else {
-				fixc, err := ioutil.ReadFile(fixfn)
+				fixc, err := os.ReadFile(fixfn)
 				if os.IsNotExist(err) && !*update {
 					t.Fatalf("no fixture %s. Run test with -update", fixfn)
 					return
@@ -223,7 +224,7 @@ func (s *testStorage) DiskUsage(ctx context.Context, bucket string, prefix strin
 	return 0, nil
 }
 
-func (s *testStorage) SignDownload(ctx context.Context, bucket, obj string) (info *storage.DownloadInfo, err error) {
+func (s *testStorage) SignDownload(ctx context.Context, bucket, obj string, options *storage.SignedURLOptions) (info *storage.DownloadInfo, err error) {
 	info, ok := s.Objs[obj]
 	if !ok || info == nil {
 		return nil, storage.ErrNotFound
@@ -231,11 +232,11 @@ func (s *testStorage) SignDownload(ctx context.Context, bucket, obj string) (inf
 	return info, nil
 }
 
-func (s *testStorage) SignUpload(ctx context.Context, bucket, obj string) (info *storage.UploadInfo, err error) {
+func (s *testStorage) SignUpload(ctx context.Context, bucket, obj string, options *storage.SignedURLOptions) (info *storage.UploadInfo, err error) {
 	return nil, nil
 }
 
-func (s *testStorage) DeleteObject(ctx context.Context, bucket, obj string) (err error) {
+func (s *testStorage) DeleteObject(ctx context.Context, bucket string, query *storage.DeleteObjectQuery) error {
 	return nil
 }
 

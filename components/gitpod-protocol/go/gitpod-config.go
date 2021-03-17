@@ -6,14 +6,14 @@ package protocol
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"sync"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"gopkg.in/yaml.v2"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // ConfigInterface provides access to the gitpod config file.
@@ -77,9 +77,7 @@ func (service *ConfigService) Observe(ctx context.Context) (<-chan *GitpodConfig
 		service.listeners[listener] = struct{}{}
 		service.mu.Unlock()
 
-		select {
-		case <-ctx.Done():
-		}
+		<-ctx.Done()
 
 		service.mu.Lock()
 		delete(service.listeners, listener)
@@ -197,7 +195,7 @@ func (service *ConfigService) poll(ctx context.Context) {
 		}
 
 		if _, err := os.Stat(service.location); !os.IsNotExist(err) {
-			service.watch(ctx)
+			_ = service.watch(ctx)
 			return
 		}
 	}
@@ -216,7 +214,7 @@ func (service *ConfigService) updateConfig() error {
 }
 
 func (service *ConfigService) parse() (*GitpodConfig, error) {
-	data, err := ioutil.ReadFile(service.location)
+	data, err := os.ReadFile(service.location)
 	if err != nil {
 		return nil, err
 	}

@@ -8,18 +8,18 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"golang.org/x/xerrors"
 	"io"
 	"strings"
 	"sync"
 	"time"
 
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
-	"github.com/gitpod-io/gitpod/common-go/log"
-
+	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // HeadlessListener can listen to workspace pods, parse the Theia produced output and notify a consumer

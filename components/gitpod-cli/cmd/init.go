@@ -7,17 +7,17 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpodlib"
-	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 	yaml "gopkg.in/yaml.v2"
+
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpodlib"
+	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
 )
 
 var (
@@ -99,7 +99,7 @@ tasks:
 			}
 		}
 
-		if err := ioutil.WriteFile(".gitpod.yml", d, 0644); err != nil {
+		if err := os.WriteFile(".gitpod.yml", d, 0644); err != nil {
 			log.Fatal(err)
 		}
 
@@ -115,7 +115,7 @@ tasks:
 		}
 		if v, ok := cfg.Image.(gitpodlib.GitpodImage); ok {
 			if _, err := os.Stat(v.File); os.IsNotExist(err) {
-				if err := ioutil.WriteFile(v.File, []byte(`FROM gitpod/workspace-full
+				if err := os.WriteFile(v.File, []byte(`FROM gitpod/workspace-full
 
 USER gitpod
 

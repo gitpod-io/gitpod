@@ -5,29 +5,36 @@
 package cmd
 
 import (
+	"context"
 	"net"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 	"time"
+
+	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
+	// to ensure that exec-entrypoint and run can make use of them.
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+
+	"github.com/bombsimon/logrusr"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
+	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/opentracing/opentracing-go"
+	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/keepalive"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/kubernetes"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/metrics"
 
 	grpc_gitpod "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager"
-
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
-	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	"github.com/opentracing/opentracing-go"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/keepalive"
 )
 
 // serveCmd represents the serve command
@@ -44,32 +51,72 @@ var runCmd = &cobra.Command{
 		}
 		log.Info("wsman configuration is valid")
 
-		clientset, err := newClientSet()
-		if err != nil {
-			log.WithError(err).Fatal("cannot connect to Kubernetes")
+		ctrl.SetLogger(logrusr.NewLogger(log.Log))
+
+		opts := ctrl.Options{
+			Scheme:    scheme,
+			Namespace: cfg.Manager.Namespace,
+			//Port:                   9443,
+			HealthProbeBindAddress: ":0",
+			LeaderElection:         false,
+			LeaderElectionID:       "ws-manager-leader.gitpod.io",
 		}
-		log.Info("connected to Kubernetes")
+
+		if cfg.Prometheus.Addr != "" {
+			opts.MetricsBindAddress = cfg.Prometheus.Addr
+		}
+
+		mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), opts)
+		if err != nil {
+			log.WithError(err).Fatal(err, "unable to start manager")
+		}
+
+		kubeConfig, err := ctrl.GetConfig()
+		if err != nil {
+			log.WithError(err).Fatal(err, "unable to create a Kubernetes API Client configuration")
+		}
+		if err != nil {
+			log.WithError(err).Fatal(err, "unable to getting Kubernetes client config")
+		}
+
+		clientset, err := kubernetes.NewForConfig(kubeConfig)
+		if err != nil {
+			log.WithError(err).Fatal(err, "constructing Kubernetes client")
+		}
+
+		if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+			log.WithError(err).Fatal("unable to set up health check")
+		}
+		if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+			log.WithError(err).Fatal(err, "unable to set up ready check")
+		}
 
 		cp, err := layer.NewProvider(&cfg.Content.Storage)
 		if err != nil {
 			log.WithError(err).Fatal("invalid content provider configuration")
 		}
 
-		mgmt, err := manager.New(cfg.Manager, clientset, cp)
+		mgmt, err := manager.New(cfg.Manager, mgr.GetClient(), clientset, cp)
 		if err != nil {
 			log.WithError(err).Fatal("cannot create manager")
 		}
 		defer mgmt.Close()
+
+		if cfg.Prometheus.Addr != "" {
+			err := mgmt.RegisterMetrics(metrics.Registry)
+			if err != nil {
+				log.WithError(err).Error("Prometheus metrics incomplete")
+			}
+		}
 
 		if len(cfg.RPCServer.RateLimits) > 0 {
 			log.WithField("ratelimits", cfg.RPCServer.RateLimits).Info("imposing rate limits on the gRPC interface")
 		}
 		ratelimits := grpc_gitpod.NewRatelimitingInterceptor(cfg.RPCServer.RateLimits)
 
-		reg := prometheus.NewRegistry()
 		grpcMetrics := grpc_prometheus.NewServerMetrics()
 		grpcMetrics.EnableHandlingTimeHistogram()
-		reg.MustRegister(grpcMetrics)
+		metrics.Registry.MustRegister(grpcMetrics)
 
 		grpcOpts := []grpc.ServerOption{
 			// We don't know how good our cients are at closing connections. If they don't close them properly
@@ -114,49 +161,58 @@ var runCmd = &cobra.Command{
 		if err != nil {
 			log.WithError(err).Fatal("cannot start workspace monitor")
 		}
-		err = monitor.Start()
-		if err != nil {
-			log.WithError(err).Fatal("cannot start workspace monitor")
-		}
+
+		go func() {
+			mgr.GetCache().WaitForCacheSync(context.Background())
+
+			err = monitor.Start()
+			if err != nil {
+				log.WithError(err).Fatal("cannot start workspace monitor")
+			}
+		}()
+
 		defer monitor.Stop()
 		log.Info("workspace monitor is up and running")
+
+		err = (&manager.ConfigmapReconciler{
+			Monitor: monitor,
+			Client:  mgr.GetClient(),
+			Log:     ctrl.Log.WithName("controllers").WithName("Configmap"),
+			Scheme:  mgr.GetScheme(),
+		}).SetupWithManager(mgr)
+		if err != nil {
+			log.WithError(err).Fatal(err, "unable to create controller", "controller", "Configmap")
+		}
+
+		err = (&manager.PodReconciler{
+			Monitor: monitor,
+			Client:  mgr.GetClient(),
+			Log:     ctrl.Log.WithName("controllers").WithName("Pod"),
+			Scheme:  mgr.GetScheme(),
+		}).SetupWithManager(mgr)
+		if err != nil {
+			log.WithError(err).Fatal(err, "unable to create controller", "controller", "Pod")
+		}
 
 		if cfg.PProf.Addr != "" {
 			go pprof.Serve(cfg.PProf.Addr)
 		}
 
-		if cfg.Prometheus.Addr != "" {
-			reg.MustRegister(
-				prometheus.NewGoCollector(),
-				prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
-			)
-
-			err := mgmt.RegisterMetrics(reg)
-			if err != nil {
-				log.WithError(err).Error("Prometheus metrics incomplete")
-			}
-
-			handler := http.NewServeMux()
-			handler.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
-
-			go func() {
-				err := http.ListenAndServe(cfg.Prometheus.Addr, handler)
-				if err != nil {
-					log.WithError(err).Error("Prometheus metrics server failed")
-				}
-			}()
-			log.WithField("addr", cfg.Prometheus.Addr).Info("started Prometheus metrics server")
+		// run until we're told to stop
+		log.Info("🦸  wsman is up and running. Stop with SIGINT or CTRL+C")
+		if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
+			log.WithError(err).Fatal(err, "problem starting wsman")
 		}
 
-		// run until we're told to stop
-		sigChan := make(chan os.Signal, 1)
-		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-		log.Info("🦸  wsman is up and running. Stop with SIGINT or CTRL+C")
-		<-sigChan
 		log.Info("Received SIGINT - shutting down")
 	},
 }
 
 func init() {
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 	rootCmd.AddCommand(runCmd)
 }
+
+var (
+	scheme = runtime.NewScheme()
+)

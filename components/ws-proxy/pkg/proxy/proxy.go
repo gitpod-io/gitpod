@@ -9,8 +9,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gorilla/mux"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // WorkspaceProxy is the entity which forwards all inbound requests to the relevant workspace pods

@@ -9,7 +9,6 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -157,7 +156,7 @@ func NewRegistry(cfg Config, newResolver ResolverProvider, reg prometheus.Regist
 				key = filepath.Join(root, key)
 			}
 
-			rootCA, err := ioutil.ReadFile(ca)
+			rootCA, err := os.ReadFile(ca)
 			if err != nil {
 				return nil, xerrors.Errorf("could not read ca certificate: %s", err)
 			}
@@ -304,13 +303,13 @@ func ReceiveHandover(ctx context.Context, loc string) (l net.Listener, err error
 	if loc == "" {
 		return nil, nil
 	}
-	fs, err := ioutil.ReadDir(loc)
+	fs, err := os.ReadDir(loc)
 	if err != nil {
 		return nil, err
 	}
 	var fn string
 	for _, f := range fs {
-		if f.Mode()*os.ModeSocket == 0 {
+		if f.Type()*os.ModeSocket == 0 {
 			continue
 		}
 		if f.Name() > fn {
@@ -417,7 +416,7 @@ type dispatchFunc func(ctx context.Context, r *http.Request) http.Handler
 func dispatcher(d dispatchFunc) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fc, _ := httputil.DumpRequest(r, false)
-		fmt.Fprintf(os.Stderr, string(fc))
+		fmt.Fprint(os.Stderr, string(fc))
 
 		// Get context from request, add vars and other info and sync back
 		ctx := r.Context()
@@ -506,16 +505,6 @@ func getSpecProviderName(ctx context.Context) (specProviderName string, remainde
 // getReference extracts the referece var from the context which was passed in through the mux route
 func getReference(ctx context.Context) string {
 	val := ctx.Value("vars.reference")
-	sval, ok := val.(string)
-	if !ok {
-		return ""
-	}
-	return sval
-}
-
-// getUploadUUID extracts the upload uuid var from the context which was passed in through the mux route
-func getUploadUUID(ctx context.Context) string {
-	val := ctx.Value("vars.uuid")
 	sval, ok := val.(string)
 	if !ok {
 		return ""

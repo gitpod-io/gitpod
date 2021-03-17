@@ -20,11 +20,16 @@ import { WebSocketConnectionProvider } from './messaging/browser/connection';
 import { PermissionName } from './permission';
 import { LicenseService } from './license-protocol';
 import { Emitter } from './util/event';
+import { AccountStatement, CreditAlert } from './accounting-protocol';
+import { GithubUpgradeURL, PlanCoupon } from './payment-protocol';
+import { TeamSubscription, TeamSubscriptionSlot, TeamSubscriptionSlotResolved } from './team-subscription-protocol';
 
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
     onWorkspaceImageBuildLogs: WorkspaceImageBuild.LogCallback;
     onHeadlessWorkspaceLogs(evt: HeadlessLogEvent): void;
+
+    onCreditAlert(creditAlert: CreditAlert): void;
 
     //#region propagating reconnection to iframe
     notifyDidOpenConnection(): void;
@@ -146,6 +151,48 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     resolvePlugins(workspaceId: string, params: ResolvePluginsParams): Promise<ResolvedPlugins>;
     installUserPlugins(params: InstallPluginsParams): Promise<boolean>;
     uninstallUserPlugin(params: UninstallPluginParams): Promise<boolean>;
+
+    /**
+     * gitpod.io concerns
+     */
+    isStudent(): Promise<boolean>;
+    getPrivateRepoTrialEndDate(): Promise<string | undefined>;
+
+    /**
+     * 
+     */
+    getAccountStatement(options: GitpodServer.GetAccountStatementOptions): Promise<AccountStatement | undefined>;
+    getRemainingUsageHours(): Promise<number>;
+
+    /**
+     * 
+     */
+    getChargebeeSiteId(): Promise<string>;
+    createPortalSession(): Promise<{}>;
+    checkout(planId: string, planQuantity?: number): Promise<{}>;
+    getAvailableCoupons(): Promise<PlanCoupon[]>;
+    getAppliedCoupons(): Promise<PlanCoupon[]>;
+
+    getShowPaymentUI(): Promise<boolean>;
+    isChargebeeCustomer(): Promise<boolean>;
+    mayAccessPrivateRepo(): Promise<boolean>;
+
+    subscriptionUpgradeTo(subscriptionId: string, chargebeePlanId: string): Promise<void>;
+    subscriptionDowngradeTo(subscriptionId: string, chargebeePlanId: string): Promise<void>;
+    subscriptionCancel(subscriptionId: string): Promise<void>;
+    subscriptionCancelDowngrade(subscriptionId: string): Promise<void>;
+
+    tsGet(): Promise<TeamSubscription[]>;
+    tsGetSlots(): Promise<TeamSubscriptionSlotResolved[]>;
+    tsGetUnassignedSlot(teamSubscriptionId: string): Promise<TeamSubscriptionSlot | undefined>
+    tsAddSlots(teamSubscriptionId: string, quantity: number): Promise<void>;
+    tsAssignSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string, identityStr: string|undefined): Promise<void>
+    tsReassignSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string, newIdentityStr: string): Promise<void>;
+    tsDeactivateSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void>;
+    tsReactivateSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void>;
+
+    getGithubUpgradeUrls(): Promise<GithubUpgradeURL[]>;
+
 }
 
 export const WorkspaceTimeoutValues = ["30m", "60m", "180m"] as const;
@@ -313,6 +360,18 @@ export class GitpodCompositeClient<Client extends GitpodClient> implements Gitpo
             if (client.notifyDidCloseConnection) {
                 try {
                     client.notifyDidCloseConnection();
+                } catch (error) {
+                    console.error(error)
+                }
+            }
+        }
+    }
+
+    onCreditAlert(creditAlert: CreditAlert): void {
+        for (const client of this.clients) {
+            if (client.onCreditAlert) {
+                try {
+                    client.onCreditAlert(creditAlert);
                 } catch (error) {
                     console.error(error)
                 }

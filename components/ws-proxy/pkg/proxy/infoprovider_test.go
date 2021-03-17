@@ -8,14 +8,15 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"testing"
 	"time"
 
-	wsapi "github.com/gitpod-io/gitpod/ws-manager/api"
-	wsmock "github.com/gitpod-io/gitpod/ws-manager/api/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+
+	wsapi "github.com/gitpod-io/gitpod/ws-manager/api"
+	wsmock "github.com/gitpod-io/gitpod/ws-manager/api/mock"
 )
 
 func TestRemoteInfoProvider(t *testing.T) {
@@ -135,7 +136,7 @@ func TestRemoteInfoProvider(t *testing.T) {
 
 			prov := NewRemoteWorkspaceInfoProvider(WorkspaceInfoProviderConfig{WsManagerAddr: "target"})
 			prov.Dialer = func(target string) (io.Closer, wsapi.WorkspaceManagerClient, error) {
-				return ioutil.NopCloser(nil), cl, nil
+				return io.NopCloser(nil), cl, nil
 			}
 			err := prov.Run()
 			if err != nil {
@@ -164,7 +165,7 @@ func TestRemoteInfoProvider(t *testing.T) {
 
 					if step.Action != nil {
 						act := step.Action(t, prov)
-						if diff := cmp.Diff(step.Expectation, act); diff != "" {
+						if diff := cmp.Diff(step.Expectation, act, cmpopts.IgnoreUnexported(wsapi.PortSpec{}, wsapi.WorkspaceAuthentication{})); diff != "" {
 							t.Errorf("Expectation mismatch (-want +got):\n%s", diff)
 						}
 					}

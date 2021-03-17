@@ -8,12 +8,12 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"time"
 
-	"github.com/gitpod-io/gitpod/licensor/ee/pkg/licensor"
-
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/licensor/ee/pkg/licensor"
 )
 
 // signCmd represents the sign command
@@ -23,7 +23,7 @@ var signCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		keyfn, _ := cmd.Flags().GetString("key")
 
-		fc, err := ioutil.ReadFile(keyfn)
+		fc, err := os.ReadFile(keyfn)
 		if err != nil {
 			return err
 		}

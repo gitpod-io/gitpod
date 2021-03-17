@@ -26,7 +26,9 @@
             "deployed": 1
         },
         "runtime": {
-            "node_name": "gke-production--gitp-workspace-pool-1-ee6c94af-h6lj"
+            "node_name": "gke-production--gitp-workspace-pool-1-ee6c94af-h6lj",
+            "pod_name": "ws-da9ffbf1-a12d-4a58-8593-475394eedb00",
+            "node_ip": "10.132.0.56"
         },
         "auth": {}
     }

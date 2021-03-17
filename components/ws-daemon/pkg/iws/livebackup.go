@@ -6,7 +6,6 @@ package iws
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,9 +14,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 const (
@@ -38,9 +38,8 @@ type LiveWorkspaceBackup struct {
 	Location    string
 	Destination string
 
-	stop         chan struct{}
-	closeOnce    sync.Once
-	lastFSBackup *time.Time
+	stop      chan struct{}
+	closeOnce sync.Once
 }
 
 // Start starts listening for FS changes and triggers backups accordingly
@@ -98,7 +97,7 @@ func (l *LiveWorkspaceBackup) Backup() (dest string, err error) {
 
 	// there are a couple of directories we do not want as part of the backup - remove them
 	gpdir := filepath.Join(dest, "workspace", ".gitpod")
-	if fs, err := ioutil.ReadDir(gpdir); err == nil {
+	if fs, err := os.ReadDir(gpdir); err == nil {
 		for _, f := range fs {
 			fn := f.Name()
 			if strings.HasPrefix(fn, "prebuild-log-") {
@@ -119,7 +118,7 @@ func (l *LiveWorkspaceBackup) garbageCollect() (err error) {
 		return nil
 	}
 
-	srcs, err := ioutil.ReadDir(l.Destination)
+	srcs, err := os.ReadDir(l.Destination)
 	if os.IsNotExist(err) {
 		// we don't have any backups hence have nothing to do
 		return nil
@@ -129,7 +128,12 @@ func (l *LiveWorkspaceBackup) garbageCollect() (err error) {
 	}
 
 	// sort by modtime asc (oldest first)
-	sort.Slice(srcs, func(i, j int) bool { return srcs[i].ModTime().Before(srcs[j].ModTime()) })
+	sort.Slice(srcs, func(i, j int) bool {
+		jInfo, _ := srcs[j].Info()
+		iInfo, _ := srcs[i].Info()
+
+		return jInfo.ModTime().Before(iInfo.ModTime())
+	})
 	for i := 0; i < len(srcs)-maxBackupCount; i++ {
 		loc := filepath.Join(l.Destination, srcs[i].Name())
 		err := os.RemoveAll(loc)
@@ -165,12 +169,17 @@ func (l *LiveWorkspaceBackup) Latest() (path string, err error) {
 		return "", os.ErrNotExist
 	}
 
-	srcs, err := ioutil.ReadDir(l.Destination)
+	srcs, err := os.ReadDir(l.Destination)
 	if err != nil {
 		return
 	}
 	// sort by modtime desc (newest first)
-	sort.Slice(srcs, func(i, j int) bool { return srcs[j].ModTime().Before(srcs[i].ModTime()) })
+	sort.Slice(srcs, func(i, j int) bool {
+		jInfo, _ := srcs[j].Info()
+		iInfo, _ := srcs[i].Info()
+
+		return jInfo.ModTime().Before(iInfo.ModTime())
+	})
 
 	var bkp string
 	for _, s := range srcs {

@@ -8,10 +8,10 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
-	"github.com/spf13/cobra"
-	"io/ioutil"
 	"log"
 	"os"
+
+	"github.com/spf13/cobra"
 )
 
 // doneCmd represents the done command
@@ -30,7 +30,7 @@ var syncDoneCmd = &cobra.Command{
 			return
 		}
 
-		err := ioutil.WriteFile(lockFile, []byte("done"), 0600)
+		err := os.WriteFile(lockFile, []byte("done"), 0600)
 		if err != nil {
 			log.Fatalf("cannot write lock file: %v", err)
 		}

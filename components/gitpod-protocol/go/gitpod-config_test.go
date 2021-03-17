@@ -6,7 +6,6 @@ package protocol
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -75,7 +74,7 @@ vscode:
 	}
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
-			tempDir, err := ioutil.TempDir("", "test-gitpor-config-*")
+			tempDir, err := os.MkdirTemp("", "test-gitpor-config-*")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -98,7 +97,7 @@ vscode:
 					t.Fatal(err)
 				}
 
-				err = ioutil.WriteFile(configService.location, []byte(test.Content), 0644)
+				err = os.WriteFile(configService.location, []byte(test.Content), 0644)
 				if err != nil {
 					t.Fatal(err)
 				}

@@ -9,7 +9,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -18,8 +17,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sirupsen/logrus"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 var plot = flag.Bool("plot", false, "produces plots of the test cases - useful for debugging. Requires python")
@@ -247,7 +247,7 @@ plt.title(fn)
 fig.savefig(fname="diff%s.png"%fn)
 `
 	script = strings.ReplaceAll(script, "FILENAME", base)
-	err := ioutil.WriteFile(".plot.py", []byte(script), 0644)
+	err := os.WriteFile(".plot.py", []byte(script), 0644)
 	if err != nil {
 		return err
 	}
@@ -319,8 +319,6 @@ func periodicConsumer(delegate consumer, period time.Duration) consumer {
 		return delegate(t % period)
 	}
 }
-
-func noopValidator(t *testing.T, samples []*sample) {}
 
 // aucValidator limits the area under curve of GrantedReq, i.e. the actual CPU consumed
 func aucValidator(limit int64) validator {

@@ -24,7 +24,7 @@ import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { TracedWorkspaceDB, DBWithTracing } from '@gitpod/gitpod-db/lib/traced-db';
 import { PrebuildManager } from './prebuild-manager';
 import { PrebuildStatusMaintainer } from './prebuilt-status-maintainer';
-import { ApplicationFunctionOptions } from 'probot/lib/types';
+import { Options, ApplicationFunctionOptions } from 'probot/lib/types';
 
 /**
  * GitHub app urls:
@@ -55,7 +55,8 @@ export class GithubApp extends Probot {
         super({
             id: env.githubAppAppID,
             privateKey: GithubApp.loadPrivateKey(env.githubAppCertPath),
-            secret: env.githubAppWebhookSecret
+            secret: env.githubAppWebhookSecret,
+            logLevel: env.githubAppLogLevel as Options["logLevel"]
         });
         log.debug("Starting GitHub app integration", {
             id: env.githubAppAppID,

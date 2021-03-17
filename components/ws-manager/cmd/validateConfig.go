@@ -6,8 +6,9 @@ package cmd
 
 import (
 	"github.com/alecthomas/repr"
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // validateConfigCmd represents the validateConfig command

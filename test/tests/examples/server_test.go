@@ -14,11 +14,8 @@ import (
 )
 
 func TestServerAccess(t *testing.T) {
-	it := integration.NewTest(t)
+	it, ctx := integration.NewTest(t, 5*time.Second)
 	defer it.Done()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 
 	server := it.API().GitpodServer()
 	res, err := server.GetLoggedInUser(ctx)
@@ -29,11 +26,8 @@ func TestServerAccess(t *testing.T) {
 }
 
 func TestStartWorkspace(t *testing.T) {
-	it := integration.NewTest(t)
+	it, ctx := integration.NewTest(t, 5*time.Minute)
 	defer it.Done()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
 
 	server := it.API().GitpodServer()
 	resp, err := server.CreateWorkspace(ctx, &protocol.CreateWorkspaceOptions{
@@ -61,8 +55,6 @@ func TestStartWorkspace(t *testing.T) {
 		t.Fatal("CreateWorkspace did not start the workspace")
 	}
 
-	ctx, cancel = context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
 	it.WaitForWorkspace(ctx, nfo.LatestInstance.ID)
 
 	t.Logf("workspace is running: instanceID=%s", nfo.LatestInstance.ID)

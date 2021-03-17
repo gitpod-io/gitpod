@@ -9,10 +9,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/gitpod-io/gitpod/poolkeeper/pkg/poolkeeper"
-
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/poolkeeper/pkg/poolkeeper"
 )
 
 var runCmd = &cobra.Command{

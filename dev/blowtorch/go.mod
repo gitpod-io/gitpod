@@ -1,11 +1,11 @@
 module github.com/gitpod-io/gitpod/blowtorch
 
-go 1.14
+go 1.16
 
 require (
 	github.com/Pallinder/go-randomdata v1.2.0
 	github.com/Shopify/toxiproxy v2.1.4+incompatible
-	github.com/sirupsen/logrus v1.5.0
+	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v0.0.7
 	golang.org/x/sys v0.0.0-20200223170610-d5e6a3e2c0ae // indirect
 	k8s.io/api v0.0.0-20190620084959-7cf5895f2711

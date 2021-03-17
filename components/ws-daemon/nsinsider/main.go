@@ -8,11 +8,11 @@ import (
 	"os"
 	"unsafe"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	_ "github.com/gitpod-io/gitpod/ws-daemon/nsinsider/pkg/nsenter"
-
 	cli "github.com/urfave/cli/v2"
 	"golang.org/x/sys/unix"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	_ "github.com/gitpod-io/gitpod/ws-daemon/nsinsider/pkg/nsenter"
 )
 
 func main() {
@@ -26,9 +26,13 @@ func main() {
 						Name:     "target",
 						Required: true,
 					},
+					&cli.IntFlag{
+						Name:     "pipe-fd",
+						Required: true,
+					},
 				},
 				Action: func(c *cli.Context) error {
-					return syscallMoveMount(3, "", unix.AT_FDCWD, c.String("target"), flagMoveMountFEmptyPath)
+					return syscallMoveMount(c.Int("pipe-fd"), "", unix.AT_FDCWD, c.String("target"), flagMoveMountFEmptyPath)
 				},
 			},
 			{
@@ -39,6 +43,10 @@ func main() {
 						Name:     "target",
 						Required: true,
 					},
+					&cli.IntFlag{
+						Name:     "pipe-fd",
+						Required: true,
+					},
 				},
 				Action: func(c *cli.Context) error {
 					fd, err := syscallOpenTree(unix.AT_FDCWD, c.String("target"), flagOpenTreeClone|flagAtRecursive)
@@ -46,7 +54,7 @@ func main() {
 						return err
 					}
 
-					err = unix.Sendmsg(3, nil, unix.UnixRights(int(fd)), nil, 0)
+					err = unix.Sendmsg(c.Int("pipe-fd"), nil, unix.UnixRights(int(fd)), nil, 0)
 					if err != nil {
 						return err
 					}
@@ -54,11 +62,69 @@ func main() {
 					return nil
 				},
 			},
+			{
+				Name:  "make-shared",
+				Usage: "makes a mount point shared",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "target",
+						Required: true,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					return unix.Mount("none", c.String("target"), "", unix.MS_SHARED, "")
+				},
+			},
+			{
+				Name:  "mount-shiftfs-mark",
+				Usage: "mounts a shiftfs mark",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "source",
+						Required: true,
+					},
+					&cli.StringFlag{
+						Name:     "target",
+						Required: true,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					return unix.Mount(c.String("source"), c.String("target"), "shiftfs", 0, "mark")
+				},
+			},
+			{
+				Name:  "mount-proc",
+				Usage: "mounts proc",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "target",
+						Required: true,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					return unix.Mount("proc", c.String("target"), "proc", 0, "")
+				},
+			},
+			{
+				Name:  "unmount",
+				Usage: "unmounts a mountpoint",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "target",
+						Required: true,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					return unix.Unmount(c.String("target"), 0)
+				},
+			},
 		},
 	}
+
+	log.Init("nsinsider", "", true, true)
 	err := app.Run(os.Args)
 	if err != nil {
-		log.Fatal(err)
+		log.WithField("instanceId", os.Getenv("GITPOD_INSTANCE_ID")).Fatal(err)
 	}
 }
 

@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -17,11 +16,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/ws-daemon/api"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/sys/unix"
 	"golang.org/x/time/rate"
@@ -29,6 +23,12 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/ws-daemon/api"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
+	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
 )
 
 //
@@ -203,19 +203,21 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		return nil, status.Errorf(codes.Internal, "cannot find workspace rootfs")
 	}
 
-	// We cannot use the nsenter syscall here because mount namespaces affect the whole process, not just the current thread.
-	// That's why we resort to exec'ing "nsenter ... mount ...".
-	mntout, err := exec.Command("nsenter", "-t", fmt.Sprint(containerPID), "-m", "--", "mount", "--make-shared", "/").CombinedOutput()
+	err = nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
+		c.Args = append(c.Args, "make-shared", "--target", "/")
+	})
 	if err != nil {
-		log.WithField("containerPID", containerPID).WithField("mntout", string(mntout)).WithError(err).Error("cannot make container's rootfs shared")
+		log.WithField("containerPID", containerPID).WithError(err).Error("cannot make container's rootfs shared")
 		return nil, status.Errorf(codes.Internal, "cannot make container's rootfs shared")
 	}
 
 	_ = os.MkdirAll(filepath.Join(wbs.Session.ServiceLocDaemon, "mark"), 0755)
 	mountpoint := filepath.Join(wbs.Session.ServiceLocNode, "mark")
-	mntout, err = exec.Command("nsenter", "-t", "1", "-m", "--", "mount", "-t", "shiftfs", "-o", "mark", rootfs, mountpoint).CombinedOutput()
+	err = nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
+		c.Args = append(c.Args, "mount-shiftfs-mark", "--source", rootfs, "--target", mountpoint)
+	})
 	if err != nil {
-		log.WithField("rootfs", rootfs).WithField("mountpoint", mountpoint).WithField("mntout", string(mntout)).WithError(err).Error("cannot mount shiftfs mark")
+		log.WithField("rootfs", rootfs).WithField("mountpoint", mountpoint).WithError(err).Error("cannot mount shiftfs mark")
 		return nil, status.Errorf(codes.Internal, "cannot mount shiftfs mark")
 	}
 
@@ -237,7 +239,7 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 			return
 		}
 
-		log.WithError(err).WithField("procPID", procPID).WithField("reqPID", reqPID).Error("MountProc failed")
+		log.WithError(err).WithField("procPID", procPID).WithField("reqPID", reqPID).Error("cannot mount proc")
 		if _, ok := status.FromError(err); !ok {
 			err = status.Error(codes.Internal, "cannot mount proc")
 		}
@@ -254,21 +256,23 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 
 	containerPID, err := rt.ContainerPID(ctx, wscontainerID)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot find container PID for containerID %v: %w", wscontainerID)
+		return nil, xerrors.Errorf("cannot find container PID for containerID %v: %w", wscontainerID, err)
 	}
 
 	procPID, err = wbs.Uidmapper.findHostPID(containerPID, uint64(req.Pid))
 	if err != nil {
-		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID)
+		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID, err)
 	}
 
-	nodeStaging, err := ioutil.TempDir("", "proc-staging")
+	nodeStaging, err := os.MkdirTemp("", "proc-staging")
 	if err != nil {
-		return nil, xerrors.Errorf("cannot prepare proc staging: %w")
+		return nil, xerrors.Errorf("cannot prepare proc staging: %w", err)
 	}
-	mntout, err := exec.Command("nsenter", "-t", fmt.Sprint(procPID), "-p", "--", "mount", "-t", "proc", "proc", nodeStaging).CombinedOutput()
+	err = nsinsider(wbs.Session.InstanceID, int(procPID), func(c *exec.Cmd) {
+		c.Args = append(c.Args, "mount-proc", "--target", nodeStaging)
+	}, enterMountNS(false), enterPidNS(true))
 	if err != nil {
-		return nil, xerrors.Errorf("mount new proc at %s: %w: %s", nodeStaging, err, string(mntout))
+		return nil, xerrors.Errorf("mount new proc at %s: %w", nodeStaging, err)
 	}
 
 	for _, mask := range defaultMaskedPaths {
@@ -324,22 +328,22 @@ func (wbs *InWorkspaceServiceServer) UmountProc(ctx context.Context, req *api.Um
 
 	containerPID, err := rt.ContainerPID(ctx, wscontainerID)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot find container PID for containerID %v: %w", wscontainerID)
+		return nil, xerrors.Errorf("cannot find container PID for containerID %v: %w", wscontainerID, err)
 	}
 
 	procPID, err = wbs.Uidmapper.findHostPID(containerPID, uint64(req.Pid))
 	if err != nil {
-		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID)
+		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID, err)
 	}
 
-	nodeStaging, err := ioutil.TempDir("", "proc-umount")
+	nodeStaging, err := os.MkdirTemp("", "proc-umount")
 	if err != nil {
-		return nil, xerrors.Errorf("cannot prepare proc staging: %w")
+		return nil, xerrors.Errorf("cannot prepare proc staging: %w", err)
 	}
 	scktPath := filepath.Join(nodeStaging, "sckt")
 	l, err := net.Listen("unix", scktPath)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot listen for mountfd: %w")
+		return nil, xerrors.Errorf("cannot listen for mountfd: %w", err)
 	}
 	defer l.Close()
 
@@ -414,8 +418,8 @@ func (wbs *InWorkspaceServiceServer) UmountProc(ctx context.Context, req *api.Um
 		return nil, err
 	}
 
-	err = nsinsider(int(procPID), func(c *exec.Cmd) {
-		c.Args = append(c.Args, "open-tree", "--target", req.Target)
+	err = nsinsider(wbs.Session.InstanceID, int(procPID), func(c *exec.Cmd) {
+		c.Args = append(c.Args, "open-tree", "--target", req.Target, "--pipe-fd", "3")
 		c.ExtraFiles = append(c.ExtraFiles, connFD)
 	})
 	if err != nil {
@@ -435,7 +439,7 @@ func (wbs *InWorkspaceServiceServer) UmountProc(ctx context.Context, req *api.Um
 		return nil, err
 	}
 
-	cmd := exec.Command(filepath.Join(filepath.Dir(base), "nsinsider"), "move-mount", "--target", nodeStaging)
+	cmd := exec.Command(filepath.Join(filepath.Dir(base), "nsinsider"), "move-mount", "--target", nodeStaging, "--pipe-fd", "3")
 	cmd.ExtraFiles = append(cmd.ExtraFiles, os.NewFile(uintptr(fdr.FD), ""))
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Unshareflags: syscall.CLONE_NEWNS,
@@ -456,8 +460,8 @@ func moveMount(targetPid int, source, target string) error {
 	mntf := os.NewFile(mntfd, "")
 	defer mntf.Close()
 
-	err = nsinsider(targetPid, func(c *exec.Cmd) {
-		c.Args = append(c.Args, "move-mount", "--target", target)
+	err = nsinsider("", targetPid, func(c *exec.Cmd) {
+		c.Args = append(c.Args, "move-mount", "--target", target, "--pipe-fd", "3")
 		c.ExtraFiles = append(c.ExtraFiles, mntf)
 	})
 	if err != nil {
@@ -466,26 +470,59 @@ func moveMount(targetPid int, source, target string) error {
 	return nil
 }
 
-func nsinsider(targetPid int, mod func(*exec.Cmd)) error {
+type nsinsiderOpts struct {
+	MountNS bool
+	PidNS   bool
+}
+
+func enterMountNS(enter bool) nsinsiderOpt {
+	return func(o *nsinsiderOpts) {
+		o.MountNS = enter
+	}
+}
+
+func enterPidNS(enter bool) nsinsiderOpt {
+	return func(o *nsinsiderOpts) {
+		o.PidNS = enter
+	}
+}
+
+type nsinsiderOpt func(*nsinsiderOpts)
+
+func nsinsider(instanceID string, targetPid int, mod func(*exec.Cmd), opts ...nsinsiderOpt) error {
+	cfg := nsinsiderOpts{
+		MountNS: true,
+	}
+	for _, o := range opts {
+		o(&cfg)
+	}
+
 	base, err := os.Executable()
 	if err != nil {
 		return err
 	}
 
-	nss := []struct {
+	type mnt struct {
 		Env    string
 		Source string
 		Flags  int
-	}{
-		{"_LIBNSENTER_ROOTFD", fmt.Sprintf("/proc/%d/root", targetPid), unix.O_PATH},
-		{"_LIBNSENTER_CWDFD", fmt.Sprintf("/proc/%d/cwd", targetPid), unix.O_PATH},
-		{"_LIBNSENTER_MNTNSFD", fmt.Sprintf("/proc/%d/ns/mnt", targetPid), os.O_RDONLY},
+	}
+	var nss []mnt
+	if cfg.MountNS {
+		nss = append(nss,
+			mnt{"_LIBNSENTER_ROOTFD", fmt.Sprintf("/proc/%d/root", targetPid), unix.O_PATH},
+			mnt{"_LIBNSENTER_CWDFD", fmt.Sprintf("/proc/%d/cwd", targetPid), unix.O_PATH},
+			mnt{"_LIBNSENTER_MNTNSFD", fmt.Sprintf("/proc/%d/ns/mnt", targetPid), os.O_RDONLY},
+		)
+	}
+	if cfg.PidNS {
+		nss = append(nss, mnt{"_LIBNSENTER_PIDNSFD", fmt.Sprintf("/proc/%d/ns/pid", targetPid), os.O_RDONLY})
 	}
 
 	stdioFdCount := 3
 	cmd := exec.Command(filepath.Join(filepath.Dir(base), "nsinsider"))
 	mod(cmd)
-	cmd.Env = append(cmd.Env, "_LIBNSENTER_INIT=1")
+	cmd.Env = append(cmd.Env, "_LIBNSENTER_INIT=1", "GITPOD_INSTANCE_ID="+instanceID)
 	for _, ns := range nss {
 		f, err := os.OpenFile(ns.Source, ns.Flags, 0)
 		if err != nil {
@@ -601,12 +638,12 @@ func (wbs *InWorkspaceServiceServer) unPrepareForUserNS() error {
 		return nil
 	}
 
-	// We cannot use the nsenter syscall here because mount namespaces affect the whole process, not just the current thread.
-	// That's why we resort to exec'ing "nsenter ... unmount ...".
 	mountpoint := filepath.Join(wbs.Session.ServiceLocNode, "mark")
-	mntout, err := exec.Command("nsenter", "-t", "1", "-m", "--", "umount", mountpoint).CombinedOutput()
+	err := nsinsider(wbs.Session.InstanceID, 1, func(c *exec.Cmd) {
+		c.Args = append(c.Args, "unmount", "--target", mountpoint)
+	})
 	if err != nil {
-		return xerrors.Errorf("cannot unmount shiftfs mark at %s: %w: %s", mountpoint, err, mntout)
+		return xerrors.Errorf("cannot unmount shiftfs mark at %s: %w", mountpoint, err)
 	}
 
 	return nil

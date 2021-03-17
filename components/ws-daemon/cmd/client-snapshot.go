@@ -8,9 +8,10 @@ import (
 	"context"
 
 	"github.com/alecthomas/repr"
+	"github.com/spf13/cobra"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
-	"github.com/spf13/cobra"
 )
 
 // clientSnapshotCmd creates a workspace snapshot

@@ -12,18 +12,19 @@ import (
 	"strings"
 	"time"
 
+	"github.com/sirupsen/logrus"
+	"golang.org/x/xerrors"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
+
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
-	"github.com/golang/protobuf/ptypes"
-
-	"github.com/sirupsen/logrus"
-	"golang.org/x/xerrors"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 const (
@@ -221,11 +222,11 @@ func (m *Manager) completeWorkspaceObjects(ctx context.Context, wso *workspaceOb
 	if servicePrefix == "" {
 		return xerrors.Errorf("completeWorkspaceObjects: no service prefix found")
 	}
-	serviceClient := m.Clientset.CoreV1().Services(m.Config.Namespace)
 	if wso.TheiaService == nil {
-		service, err := serviceClient.Get(ctx, getTheiaServiceName(servicePrefix), metav1.GetOptions{})
+		var service corev1.Service
+		err := m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: getTheiaServiceName(servicePrefix)}, &service)
 		if err == nil {
-			wso.TheiaService = service
+			wso.TheiaService = &service
 		}
 
 		if !isKubernetesObjNotFoundError(err) && err != nil {
@@ -233,9 +234,10 @@ func (m *Manager) completeWorkspaceObjects(ctx context.Context, wso *workspaceOb
 		}
 	}
 	if wso.PortsService == nil {
-		service, err := serviceClient.Get(ctx, getPortsServiceName(servicePrefix), metav1.GetOptions{})
+		var service corev1.Service
+		err := m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: getPortsServiceName(servicePrefix)}, &service)
 		if err == nil {
-			wso.PortsService = service
+			wso.PortsService = &service
 		}
 
 		if !isKubernetesObjNotFoundError(err) && err != nil {
@@ -246,7 +248,7 @@ func (m *Manager) completeWorkspaceObjects(ctx context.Context, wso *workspaceOb
 	// find pod events - this only makes sense if we still have a pod
 	if wso.Pod != nil {
 		if wso.Events == nil && wso.Pod != nil {
-			events, err := m.Clientset.CoreV1().Events(m.Config.Namespace).Search(scheme, wso.Pod)
+			events, err := m.RawClient.CoreV1().Events(m.Config.Namespace).Search(scheme, wso.Pod)
 			if err != nil {
 				return xerrors.Errorf("completeWorkspaceObjects: %w", err)
 			}
@@ -263,12 +265,13 @@ func (m *Manager) completeWorkspaceObjects(ctx context.Context, wso *workspaceOb
 			return fmt.Errorf("cannot act on pod %s: has no %s annotation", wso.Pod.Name, workspaceIDAnnotation)
 		}
 
-		plis, err := m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Get(ctx, getPodLifecycleIndependentCfgMapName(workspaceID), metav1.GetOptions{})
+		var plis corev1.ConfigMap
+		err := m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: getPodLifecycleIndependentCfgMapName(workspaceID)}, &plis)
 		if !isKubernetesObjNotFoundError(err) && err != nil {
 			return xerrors.Errorf("completeWorkspaceObjects: %w", err)
 		}
 
-		wso.PLIS = plis
+		wso.PLIS = &plis
 	}
 
 	return nil
@@ -360,6 +363,8 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 			},
 			Runtime: &api.WorkspaceRuntimeInfo{
 				NodeName: wso.Pod.Spec.NodeName,
+				PodName:  wso.Pod.Name,
+				NodeIp:   wso.Pod.Status.HostIP,
 			},
 			Auth: &api.WorkspaceAuthentication{
 				Admission:  admission,
@@ -436,7 +441,7 @@ func getContainer(pod *corev1.Pod, name string) *corev1.Container {
 
 // getWorkspaceMetadata extracts a workspace's metadata from pod labels
 func getWorkspaceMetadata(pod *corev1.Pod) *api.WorkspaceMetadata {
-	started, _ := ptypes.TimestampProto(pod.CreationTimestamp.Time)
+	started := timestamppb.New(pod.CreationTimestamp.Time)
 	return &api.WorkspaceMetadata{
 		Owner:     pod.ObjectMeta.Labels[wsk8s.OwnerLabel],
 		MetaId:    pod.ObjectMeta.Labels[wsk8s.MetaIDLabel],
@@ -507,10 +512,7 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 			if err != nil {
 				return xerrors.Errorf("cannot parse firstUserActivity: %w", err)
 			}
-			pt, err := ptypes.TimestampProto(t)
-			if err != nil {
-				return xerrors.Errorf("cannot convert firstUserActivity: %w", err)
-			}
+			pt := timestamppb.New(t)
 			result.Conditions.FirstUserActivity = pt
 		}
 

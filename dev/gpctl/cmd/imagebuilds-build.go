@@ -5,18 +5,17 @@
 package cmd
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
+
+	"github.com/spf13/cobra"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	builder "github.com/gitpod-io/gitpod/image-builder/api"
-	"github.com/golang/protobuf/jsonpb"
-	"github.com/spf13/cobra"
 )
 
 // imagebuildsBuildCmd represents the build command
@@ -25,7 +24,7 @@ var imagebuildsBuildCmd = &cobra.Command{
 	Short: "Runs a full workspace build",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		fc, err := ioutil.ReadFile(args[0])
+		fc, err := os.ReadFile(args[0])
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -50,13 +49,18 @@ var imagebuildsBuildCmd = &cobra.Command{
 				},
 			},
 		}
-		m := &jsonpb.Marshaler{}
+
+		marshaler := protojson.MarshalOptions{
+			Indent: "  ",
+		}
+
+		b, _ := marshaler.Marshal(&example)
 		fmt.Println("example config:")
-		m.Marshal(os.Stdout, &example)
+		fmt.Fprint(os.Stdout, string(b))
 		fmt.Println()
 
 		var source builder.BuildSource
-		err = jsonpb.Unmarshal(bytes.NewReader(fc), &source)
+		err = protojson.Unmarshal(fc, &source)
 		if err != nil {
 			log.Fatal(err)
 		}

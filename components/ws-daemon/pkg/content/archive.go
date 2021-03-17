@@ -13,10 +13,11 @@ import (
 
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/idtools"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-	carchive "github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/tracing"
+	carchive "github.com/gitpod-io/gitpod/content-service/pkg/archive"
 )
 
 // BuildTarbal creates an OCI compatible tar file dst from the folder src, expecting the overlay whiteout format
@@ -81,7 +82,7 @@ func BuildTarbal(ctx context.Context, src string, dst string, opts ...carchive.T
 
 	_, err = io.Copy(targetOut, tarout)
 	if err != nil {
-		return xerrors.Errorf("cannot write tar file: %w")
+		return xerrors.Errorf("cannot write tar file: %w", err)
 	}
 	if err = fbout.Flush(); err != nil {
 		return xerrors.Errorf("cannot flush tar out stream: %w", err)

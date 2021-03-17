@@ -7,18 +7,18 @@ package ports
 import (
 	"context"
 	"io"
-	"io/ioutil"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
-	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
 func TestPortsUpdateState(t *testing.T) {
@@ -468,7 +468,7 @@ func TestPortsUpdateState(t *testing.T) {
 				updts [][]*api.PortsStatus
 			)
 			pm.proxyStarter = func(localPort uint32, globalPort uint32) (io.Closer, error) {
-				return ioutil.NopCloser(nil), nil
+				return io.NopCloser(nil), nil
 			}
 
 			ctx, cancel := context.WithCancel(context.Background())
@@ -606,7 +606,7 @@ func TestPortsConcurrentSubscribe(t *testing.T) {
 		pm = NewManager(exposed, served, config)
 	)
 	pm.proxyStarter = func(localPort uint32, globalPort uint32) (io.Closer, error) {
-		return ioutil.NopCloser(nil), nil
+		return io.NopCloser(nil), nil
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())

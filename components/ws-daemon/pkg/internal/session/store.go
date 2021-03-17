@@ -12,11 +12,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
 )
 
 var (
@@ -44,6 +44,7 @@ type Store struct {
 // NewStore creates a new session store.
 // If a store previously existed at that location, all previous workspaces are restored.
 func NewStore(ctx context.Context, location string, hooks map[WorkspaceState][]WorkspaceLivecycleHook) (res *Store, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "NewStore")
 	defer tracing.FinishSpan(span, &err)
 
@@ -126,6 +127,7 @@ func (s *Store) NewWorkspace(ctx context.Context, instanceID, location string, c
 
 // Delete removes a session from this session store
 func (s *Store) Delete(ctx context.Context, name string) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Store.Delete")
 	defer tracing.FinishSpan(span, &err)
 
@@ -157,6 +159,7 @@ func (s *Store) Get(instanceID string) *Workspace {
 // StartHousekeeping starts garbage collection and regular cleanup.
 // This function returns when the context is canceled.
 func (s *Store) StartHousekeeping(ctx context.Context, interval time.Duration) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Store.StartHousekeeping")
 	defer tracing.FinishSpan(span, nil)
 	log.WithField("interval", interval.String()).Debug("started workspace housekeeping")
@@ -244,7 +247,7 @@ func (s *Store) doHousekeeping(ctx context.Context) (errs []error) {
 	// For the time being we won't do that because we're not sure we're the only ones working in this directory!
 	// Legacy ws-daemon will work here too.
 	//
-	// files, err := ioutil.ReadDir(s.Location)
+	// files, err := os.ReadDir(s.Location)
 	// if err != nil {
 	// 	return []error{xerrors.Errorf("cannot list existing workspaces content directory: %w", err)}
 	// }

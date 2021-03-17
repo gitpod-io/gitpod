@@ -23,6 +23,11 @@ const builtinExtensions: PluginIndexEntry[] = require('@gitpod/gitpod-protocol/d
 
 const userPluginsUri = 'user-plugins://';
 
+export interface ResolvedPluginsResult {
+    resolved: ResolvedPlugins
+    external: string[]
+}
+
 @injectable()
 export class TheiaPluginService {
 
@@ -152,8 +157,9 @@ export class TheiaPluginService {
             }).toString();
     }
 
-    async resolvePlugins(userId: string, { config, builtins, vsxRegistryUrl }: ResolvePluginsParams): Promise<ResolvedPlugins> {
+    async resolvePlugins(userId: string, { config, builtins, vsxRegistryUrl }: ResolvePluginsParams): Promise<ResolvedPluginsResult> {
         const resolved: ResolvedPlugins = {};
+        const external = new Set<string>();
         const addedPlugins = new Set<string>();
         const resolving: Promise<void>[] = [];
         const resolvePlugin = (extension: string, kind: ResolvedPluginKind) => {
@@ -178,7 +184,12 @@ export class TheiaPluginService {
         }
         const workspaceExtensions = config && config.vscode && config.vscode.extensions || [];
         for (const extension of workspaceExtensions) {
-            resolvePlugin(extension, 'workspace');
+            try {
+                const externalURL = new url.URL(extension);
+                external.add(externalURL.toString());
+            } catch {
+                resolvePlugin(extension, 'workspace');
+            }
         }
         const userExtensions = await this.getUserPlugins(userId);
         for (const extension of userExtensions) {
@@ -196,7 +207,7 @@ export class TheiaPluginService {
             }
         }
         await Promise.all(resolving);
-        return resolved;
+        return { resolved, external: [...external.values()] };
     }
 
     private async resolveFromUploaded(pluginId: string): Promise<{
@@ -302,6 +313,28 @@ export class TheiaPluginService {
         const content = await this.userStorageResourcesDB.get(userId, userPluginsUri);
         const json = content && JSON.parse(content);
         return new Set<string>(json);
+    }
+
+    async getCodeSyncResource(userId: string): Promise<string> {
+        interface ISyncExtension {
+            identifier: {
+                id: string
+            };
+            version?: string;
+            installed?: boolean;
+        }
+        const extensions: ISyncExtension[] = []
+        const userPlugins = await this.getUserPlugins(userId);
+        for (const userPlugin of userPlugins) {
+            const fullPluginName = this.toFullPluginName(userPlugin); // drop hash
+            const { name, version } = this.parseFullPluginName(fullPluginName);
+            extensions.push({
+                identifier: { id: name },
+                version,
+                installed: true
+            });
+        }
+        return JSON.stringify(extensions);
     }
 
 }

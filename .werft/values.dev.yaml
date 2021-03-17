@@ -13,6 +13,7 @@ certificatesSecret:
   keyName: tls.key
 version: not-set
 forceHTTPS: false
+imagePullPolicy: Always
 affinity:
   nodeAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
@@ -41,7 +42,7 @@ components:
 
   registryFacade:
     daemonSet: true
-  
+
   contentService:
     remoteStorage:
       blobQuota: 1073741824 # 1 GiB
@@ -83,7 +84,7 @@ components:
                 cpu: 1m
                 ephemeral-storage: 5Gi
                 memory: 4608Mi  # = 2 * 2304Mi
-  
+
   # Allow per-branch ingress from another, in-cluster proxy
   proxy:
     replicas: 1
@@ -103,6 +104,7 @@ components:
     serviceType: "ClusterIP"
     deployIngressService: false
     loadBalancerIP: null
+    sslDHParam: LS0tLS1CRUdJTiBESCBQQVJBTUVURVJTLS0tLS0KTUlJQkNBS0NBUUVBdkhsWGFIOHlyNWFJYWhmc3N5RDltTDJXL2NQZUdhWmtwdUF6dm1KamFXeEZqUFJrM2IvRworbDNJY3pTRndVVy9YN2NjU2NlZ1JzZjl1dFJKR1hWZWMyL0c1VFlETkJsNDdMQ1I1VXMvUmpsV0tHcWJTVnVhCnYxY3BsUUgvVDl4UGJ4bjE2QjhrOFZmdEVUNEgxTmhRM2lxSWtGbUk2QTZrTDJzbi9VQjdhMXYydDRjL3VpdVcKcGtNNlVaRlVoUGhhVkt6VWJsR0pTWEdnbjdiVUtGWDNQSVdLY1VHM015NmhYVWg0TzRLTXhaYWRWS051T011SApyK0JLZDdsWkx5SmlBQWRtWUtTaEpNVGUwSS9uRTlFR3Q0VHVGZVZNaXpkbHR5SWkyWEFLRUlwYjZuTFlHWjY1CkNPRkx2WFpXOTJOK0U0ZFdES1ozaHBTbk1qclptVEIvYXdJQkFnPT0KLS0tLS1FTkQgREggUEFSQU1FVEVSUy0tLS0tCg==
 
   # Enable events trace
   wsManager:
@@ -110,10 +112,6 @@ components:
      # TODO: [geropl] Why is this not part of values.yaml?
     additionalConfig:
       theiaSupervisorToken: "354c0b368f2b4a93b7b812564e663d23"
-
-  # Use Hosts SSD for perf and to not spam the boot disk
-  nodeDaemon:
-    theiaHostBasePath: /mnt/disks/ssd0
 
   imageBuilder:
     hostDindData: "/mnt/disks/ssd0/builder"

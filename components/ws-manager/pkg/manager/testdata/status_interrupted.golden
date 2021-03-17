@@ -31,7 +31,9 @@
         },
         "message": "container workspace was terminated unexpectedly - workspace should recover",
         "runtime": {
-            "node_name": "gke-gitpod-staging-e-workspace-pool-2-2eb903d0-g86k"
+            "node_name": "gke-gitpod-staging-e-workspace-pool-2-2eb903d0-g86k",
+            "pod_name": "ws-283522ed-51f1-4838-951b-0f115c0a7aae",
+            "node_ip": "10.132.0.35"
         },
         "auth": {}
     }

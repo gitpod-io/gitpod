@@ -8,9 +8,10 @@ import (
 	"context"
 	"testing"
 
-	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
+
+	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 )
 
 func TestPortsConfig(t *testing.T) {

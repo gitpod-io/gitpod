@@ -6,14 +6,14 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 var (
@@ -105,7 +105,7 @@ func fail(message string) {
 	log.WithField("message", message).Warn("failed to wait for a service")
 
 	if _, err := os.Stat(terminationLog); !os.IsNotExist(err) {
-		err := ioutil.WriteFile(terminationLog, []byte(message), 0600)
+		err := os.WriteFile(terminationLog, []byte(message), 0600)
 		if err != nil {
 			log.WithError(err).Error("cannot write termination log")
 		}

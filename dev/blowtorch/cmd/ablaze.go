@@ -11,12 +11,13 @@ import (
 	"syscall"
 
 	"github.com/Pallinder/go-randomdata"
-	"github.com/Shopify/toxiproxy/client"
-	"github.com/gitpod-io/gitpod/blowtorch/pkg/dart"
+	toxiproxy "github.com/Shopify/toxiproxy/client"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/gitpod-io/gitpod/blowtorch/pkg/dart"
 )
 
 var ablazeCmd = &cobra.Command{

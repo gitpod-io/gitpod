@@ -90,9 +90,9 @@
     "url": "https://open-vsx.org/api/vscode/ini/1.44.2/file/vscode.ini-1.44.2.vsix"
   },
   {
-    "loc": "vscode.java-1.48.0.vsix",
-    "name": "vscode.java@1.48.0",
-    "url": "https://open-vsx.org/api/vscode/java/1.48.0/file/vscode.java-1.48.0.vsix"
+    "loc": "vscode.java-1.53.2.vsix",
+    "name": "vscode.java@1.53.2",
+    "url": "https://open-vsx.org/api/vscode/java/1.53.2/file/vscode.java-1.53.2.vsix"
   },
   {
     "loc": "vscode.javascript-1.44.2.vsix",
@@ -240,9 +240,9 @@
     "url": "https://open-vsx.org/api/vscode/yaml/1.44.2/file/vscode.yaml-1.44.2.vsix"
   },
   {
-    "loc": "redhat.java-0.65.0.vsix",
-    "name": "redhat.java@0.65.0",
-    "url": "https://open-vsx.org/api/redhat/java/0.65.0/file/redhat.java-0.65.0.vsix"
+    "loc": "redhat.java-0.75.0.vsix",
+    "name": "redhat.java@0.75.0",
+    "url": "https://open-vsx.org/api/redhat/java/0.75.0/file/redhat.java-0.75.0.vsix"
   },
   {
     "loc": "vscjava.vscode-java-debug-0.27.1.vsix",
@@ -250,9 +250,9 @@
     "url": "https://open-vsx.org/api/vscjava/vscode-java-debug/0.27.1/file/vscjava.vscode-java-debug-0.27.1.vsix"
   },
   {
-    "loc": "vscjava.vscode-java-dependency-0.9.0.vsix",
-    "name": "vscjava.vscode-java-dependency@0.9.0",
-    "url": "https://open-vsx.org/api/vscjava/vscode-java-dependency/0.9.0/file/vscjava.vscode-java-dependency-0.9.0.vsix"
+    "loc": "vscjava.vscode-java-dependency-0.18.0.vsix",
+    "name": "vscjava.vscode-java-dependency@0.18.0",
+    "url": "https://open-vsx.org/api/vscjava/vscode-java-dependency/0.18.0/file/vscjava.vscode-java-dependency-0.18.0.vsix"
   },
   {
     "loc": "ms-vscode.node-debug-1.38.4.vsix",

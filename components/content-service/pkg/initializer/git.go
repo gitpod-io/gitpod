@@ -8,6 +8,7 @@ import (
 	"context"
 	"os"
 
+	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -15,7 +16,6 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	"github.com/gitpod-io/gitpod/content-service/pkg/git"
-	"github.com/opentracing/opentracing-go"
 )
 
 // CloneTargetMode is the target state in which we want to leave a GitInitializer
@@ -49,7 +49,7 @@ type GitInitializer struct {
 // Run initializes the workspace using Git
 func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, err error) {
 	isGitWS := git.IsWorkingCopy(ws.Location)
-
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GitInitializer.Run")
 	span.SetTag("isGitWS", isGitWS)
 	defer tracing.FinishSpan(span, &err)
@@ -84,6 +84,7 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 
 // realizeCloneTarget ensures the clone target is checked out
 func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "realizeCloneTarget")
 	span.SetTag("remoteURI", ws.RemoteURI)
 	span.SetTag("cloneTarget", ws.CloneTarget)

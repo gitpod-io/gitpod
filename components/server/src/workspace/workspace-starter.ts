@@ -494,6 +494,11 @@ export class WorkspaceStarter {
             return ev;
         });
 
+        const contextUrlEnv = new EnvironmentVariable();
+        contextUrlEnv.setName('GITPOD_WORKSPACE_CONTEXT_URL');
+        contextUrlEnv.setValue(workspace.contextURL);
+        envvars.push(contextUrlEnv);
+
         log.debug("Workspace config", workspace.config)
         if (!!workspace.config.tasks) {
             // The task config is interpreted by Theia only, there's little point in transforming it into something
@@ -504,12 +509,17 @@ export class WorkspaceStarter {
             envvars.push(ev);
         }
         const addExtensionsToEnvvarPromise = this.theiaService.resolvePlugins(user.id, { config: workspace.config }).then(
-            resolvedExtensions => {
-                if (resolvedExtensions) {
-                    const ev = new EnvironmentVariable();
-                    ev.setName("GITPOD_RESOLVED_EXTENSIONS");
-                    ev.setValue(JSON.stringify(resolvedExtensions));
-                    envvars.push(ev);
+            result => {
+                if (result) {
+                    const resolvedExtensions = new EnvironmentVariable();
+                    resolvedExtensions.setName("GITPOD_RESOLVED_EXTENSIONS");
+                    resolvedExtensions.setValue(JSON.stringify(result.resolved));
+                    envvars.push(resolvedExtensions);
+
+                    const externalExtensions = new EnvironmentVariable();
+                    externalExtensions.setName("GITPOD_EXTERNAL_EXTENSIONS");
+                    externalExtensions.setValue(JSON.stringify(result.external));
+                    envvars.push(externalExtensions);
                 }
             }
         )
@@ -585,12 +595,7 @@ export class WorkspaceStarter {
         const featureFlags = instance.configuration!.featureFlags || [];
 
         let ideImage: string;
-        if (!featureFlags.includes('registry_facade')) {
-            // We don't have registry facade enabled. Theia is the only IDE we support in this mode.
-            // We assemble the image name here instead of resorting to env.ideDefaultImage, because
-            // the latter might not be Theia after all.
-            ideImage = `${this.env.theiaImageRepo}:${instance.configuration!.theiaVersion}`
-        } else if (!!instance.configuration?.ideImage) {
+        if (!!instance.configuration?.ideImage) {
             ideImage = instance.configuration?.ideImage;
         } else {
             ideImage = this.env.ideDefaultImage;
@@ -636,6 +641,7 @@ export class WorkspaceStarter {
             "function:getToken",
             "function:getContentBlobUploadUrl",
             "function:getContentBlobDownloadUrl",
+            "function:accessCodeSyncStorage",
 
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspace", subjectID: workspace.id, operations: ["get", "update"]}),
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspaceInstance", subjectID: instance.id, operations: ["get", "update", "delete"]}),

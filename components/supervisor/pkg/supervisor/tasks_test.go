@@ -7,18 +7,17 @@ package supervisor
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"sync"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/sirupsen/logrus"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
-
-	"github.com/google/go-cmp/cmp"
-	"github.com/sirupsen/logrus"
 )
 
 var skipCommand = "echo \"skip\""
@@ -102,7 +101,7 @@ func TestTaskManager(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.Desc, func(t *testing.T) {
-			storeLocation, err := ioutil.TempDir("", "tasktest")
+			storeLocation, err := os.MkdirTemp("", "tasktest")
 			if err != nil {
 				t.Fatal(err)
 			}

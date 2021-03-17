@@ -7,7 +7,7 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"time"
 
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
@@ -35,7 +35,7 @@ type DaemonAgent struct {
 func (*DaemonAgent) CreateBucket(args *api.CreateBucketRequest, resp *api.CreateBucketResponse) error {
 	*resp = api.CreateBucketResponse{}
 
-	fc, err := ioutil.ReadFile("/config/config.json")
+	fc, err := os.ReadFile("/config/config.json")
 	if err != nil {
 		return err
 	}

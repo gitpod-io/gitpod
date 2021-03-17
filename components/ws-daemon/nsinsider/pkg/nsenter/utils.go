@@ -12,8 +12,9 @@ import (
 	"os/exec"
 	"strconv"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"golang.org/x/sys/unix"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 type Namespace int

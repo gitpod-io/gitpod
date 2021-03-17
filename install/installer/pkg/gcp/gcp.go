@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -158,11 +157,11 @@ func tryAndSetADCFromActiveAccount(appDefAccFN, home string) error {
 	if _, err := os.Stat(filepath.Dir(appDefAccFN)); err != nil {
 		return fmt.Errorf("cannot determine home for the gcloud application default credentials: %w", err)
 	}
-	fc, err := ioutil.ReadFile(filepath.Join(home, ".config", "gcloud", "legacy_credentials", acc, "adc.json"))
+	fc, err := os.ReadFile(filepath.Join(home, ".config", "gcloud", "legacy_credentials", acc, "adc.json"))
 	if err != nil {
 		return fmt.Errorf("cannot read active account credentials: %w", err)
 	}
-	err = ioutil.WriteFile(appDefAccFN, fc, 0644)
+	err = os.WriteFile(appDefAccFN, fc, 0644)
 	if err != nil {
 		return fmt.Errorf("cannot write application default credentials: %w", err)
 	}

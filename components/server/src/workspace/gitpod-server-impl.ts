@@ -15,9 +15,12 @@ import { UserMessageViewsDB } from '@gitpod/gitpod-db/lib/user-message-views-db'
 import { UserStorageResourcesDB } from '@gitpod/gitpod-db/lib/user-storage-resources-db';
 import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
 import { AuthProviderEntry, AuthProviderInfo, Branding, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, UserMessage, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration } from '@gitpod/gitpod-protocol';
+import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { AdminBlockUserRequest, AdminGetListRequest, AdminGetListResult, AdminGetWorkspacesRequest, AdminModifyPermanentWorkspaceFeatureFlagRequest, AdminModifyRoleOrPermissionRequest, WorkspaceAndInstance } from '@gitpod/gitpod-protocol/lib/admin-protocol';
 import { GetLicenseInfoResult, LicenseFeature, LicenseValidationResult } from '@gitpod/gitpod-protocol/lib/license-protocol';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
+import { GithubUpgradeURL, PlanCoupon } from "@gitpod/gitpod-protocol/lib/payment-protocol";
+import { TeamSubscription, TeamSubscriptionSlot, TeamSubscriptionSlotResolved } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
 import { Cancelable } from '@gitpod/gitpod-protocol/lib/util/cancelable';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
@@ -1412,7 +1415,8 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         this.checkUser("resolvePlugins")
 
         const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace({}));
-        return await this.pluginService.resolvePlugins(workspace.ownerId, params);
+        const result = await this.pluginService.resolvePlugins(workspace.ownerId, params);
+        return result.resolved;
     };
 
     installUserPlugins(params: InstallPluginsParams): Promise<boolean> {
@@ -1604,4 +1608,93 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         return this.termsProvider.getCurrent();
     }
 
+
+    //#region gitpod.io concerns
+    //
+    async adminGetAccountStatement(userId: string): Promise<AccountStatement> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async adminSetProfessionalOpenSource(userId: string, shouldGetProfOSS: boolean): Promise<void> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async adminIsStudent(userId: string): Promise<boolean> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async adminAddStudentEmailDomain(userId: string, domain: string): Promise<void> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async isStudent(): Promise<boolean> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async getPrivateRepoTrialEndDate(): Promise<string | undefined> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async getAccountStatement(options: GitpodServer.GetAccountStatementOptions): Promise<AccountStatement | undefined> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async getRemainingUsageHours(): Promise<number> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async getChargebeeSiteId(): Promise<string> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async createPortalSession(): Promise<{}> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async checkout(planId: string, planQuantity?: number): Promise<{}> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async getAvailableCoupons(): Promise<PlanCoupon[]> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async getAppliedCoupons(): Promise<PlanCoupon[]> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async getShowPaymentUI(): Promise<boolean> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async isChargebeeCustomer(): Promise<boolean> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async subscriptionUpgradeTo(subscriptionId: string, chargebeePlanId: string): Promise<void> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async subscriptionDowngradeTo(subscriptionId: string, chargebeePlanId: string): Promise<void> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async subscriptionCancel(subscriptionId: string): Promise<void> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async subscriptionCancelDowngrade(subscriptionId: string): Promise<void> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async tsGet(): Promise<TeamSubscription[]> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async tsGetSlots(): Promise<TeamSubscriptionSlotResolved[]> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async tsGetUnassignedSlot(teamSubscriptionId: string): Promise<TeamSubscriptionSlot | undefined> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async tsAddSlots(teamSubscriptionId: string, quantity: number): Promise<void> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async tsAssignSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string, identityStr: string|undefined): Promise<void> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async tsReassignSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string, newIdentityStr: string): Promise<void> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async tsDeactivateSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async tsReactivateSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    async getGithubUpgradeUrls(): Promise<GithubUpgradeURL[]> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
+    //
+    //#endregion
 }

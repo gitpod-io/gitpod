@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -98,7 +98,7 @@ func (service *HTTPTheiaService) sendRequest(req request) ([]byte, error) {
 		if supervisorAddr == "" {
 			supervisorAddr = "localhost:22999"
 		}
-		resp, err = http.Get(fmt.Sprintf("http://%s/_supervisor/v1/token/git/%s/*", supervisorAddr, req.Params.(GetGitTokenRequest).Host))
+		resp, err = http.Get(fmt.Sprintf("http://%s/_supervisor/v1/token/git/%s/", supervisorAddr, req.Params.(GetGitTokenRequest).Host))
 	}
 	if err != nil {
 		return nil, errors.Wrap(err, "error while issuing request")
@@ -112,7 +112,7 @@ func (service *HTTPTheiaService) sendRequest(req request) ([]byte, error) {
 		return nil, fmt.Errorf("invalid request: %v", resp.StatusCode)
 	}
 
-	res, err := ioutil.ReadAll(resp.Body)
+	res, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func (service *HTTPTheiaService) OpenFile(params OpenFileRequest) (*OpenFileResp
 	}
 
 	if stat, err := os.Stat(absPath); os.IsNotExist(err) {
-		if err := ioutil.WriteFile(absPath, []byte{}, 0644); err != nil {
+		if err := os.WriteFile(absPath, []byte{}, 0644); err != nil {
 			return nil, err
 		}
 	} else if err != nil {

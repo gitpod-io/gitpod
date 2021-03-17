@@ -13,11 +13,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
 )
 
 // SandboxProvider can create/mount and dispose sandboxes
@@ -27,7 +28,8 @@ type SandboxProvider struct {
 
 // Create creates a new filesystem
 func (sp *SandboxProvider) Create(ctx context.Context, path string, size Size) (err error) {
-	span, _ := opentracing.StartSpanFromContext(ctx, "SandboxProvider.Create")
+	//nolint:ineffassign
+	span, ctx := opentracing.StartSpanFromContext(ctx, "SandboxProvider.Create")
 	defer tracing.FinishSpan(span, &err)
 
 	if _, err := os.Stat(path); err == nil {
@@ -58,7 +60,8 @@ func (sp *SandboxProvider) Create(ctx context.Context, path string, size Size) (
 
 // Mount mounts a preapred filesystem in dst
 func (sp *SandboxProvider) Mount(ctx context.Context, path, dst string) (err error) {
-	span, _ := opentracing.StartSpanFromContext(ctx, "SandboxProvider.Mount")
+	//nolint:ineffassign
+	span, ctx := opentracing.StartSpanFromContext(ctx, "SandboxProvider.Mount")
 	defer tracing.FinishSpan(span, &err)
 
 	// acquire the lock to synchronize loopback device creation and use
@@ -102,7 +105,8 @@ func (sp *SandboxProvider) Mount(ctx context.Context, path, dst string) (err err
 // Dispose will unmount the sandbox (if it's mounted)
 // and remove the backing file.
 func (sp *SandboxProvider) Dispose(ctx context.Context, mountPath string) (err error) {
-	span, _ := opentracing.StartSpanFromContext(ctx, "SandboxProvider.Dispose")
+	//nolint:ineffassign
+	span, ctx := opentracing.StartSpanFromContext(ctx, "SandboxProvider.Dispose")
 	defer tracing.FinishSpan(span, &err)
 
 	mp, err := findMountPointFromProc(mountPath)

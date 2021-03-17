@@ -8,7 +8,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
@@ -110,7 +109,7 @@ func UnsetVariable(file string, name string) error {
 }
 
 func loadOrCreateFile(fn string) (*hclwrite.File, error) {
-	fc, err := ioutil.ReadFile(fn)
+	fc, err := os.ReadFile(fn)
 	if os.IsNotExist(err) {
 		ui.Infof("variables file does exist - creating new one: %s", fn)
 		return hclwrite.NewEmptyFile(), nil

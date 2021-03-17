@@ -8,12 +8,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/opentracing/opentracing-go"
+	"golang.org/x/xerrors"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -21,10 +26,6 @@ import (
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	"github.com/gitpod-io/gitpod/content-service/pkg/git"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
-	"github.com/opentracing/opentracing-go"
-	"golang.org/x/xerrors"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 const (
@@ -144,7 +145,7 @@ func newGitInitializer(ctx context.Context, loc string, req *csapi.GitInitialize
 			user, pwd, err = downloadOTS(ctx, req.Config.AuthOts)
 			if err != nil {
 				log.WithField("location", loc).WithError(err).Error("cannot download Git auth OTS")
-				return "", "", status.Error(codes.InvalidArgument, fmt.Sprintf("cannot get OTS"))
+				return "", "", status.Error(codes.InvalidArgument, "cannot get OTS")
 			}
 		case csapi.GitAuthMethod_NO_AUTH:
 		default:
@@ -178,6 +179,7 @@ func newSnapshotInitializer(loc string, rs storage.DirectDownloader, req *csapi.
 }
 
 func downloadOTS(ctx context.Context, url string) (user, pwd string, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "downloadOTS")
 	defer tracing.FinishSpan(span, &err)
 	span.LogKV("url", url)
@@ -198,7 +200,7 @@ func downloadOTS(ctx context.Context, url string) (user, pwd string, err error) 
 			return "", "", xerrors.Errorf("non-OK OTS response: %s", resp.Status)
 		}
 
-		secret, err := ioutil.ReadAll(resp.Body)
+		secret, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return "", "", err
 		}
@@ -278,6 +280,7 @@ func WithChown(uid, gid int) InitializeOpt {
 
 // InitializeWorkspace initializes a workspace from backup or an initializer
 func InitializeWorkspace(ctx context.Context, location string, remoteStorage storage.DirectDownloader, opts ...InitializeOpt) (src csapi.WorkspaceInitSource, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "InitializeWorkspace")
 	span.SetTag("location", location)
 	defer tracing.FinishSpan(span, &err)
@@ -307,7 +310,7 @@ func InitializeWorkspace(ctx context.Context, location string, remoteStorage sto
 				return src, xerrors.Errorf("cannot create workspace: %w", err)
 			}
 		}
-		fs, err := ioutil.ReadDir(location)
+		fs, err := os.ReadDir(location)
 		if err != nil {
 			return src, xerrors.Errorf("cannot clean workspace folder: %w", err)
 		}
@@ -371,7 +374,7 @@ func PlaceWorkspaceReadyFile(ctx context.Context, wspath string, initsrc csapi.W
 
 	tempWorkspaceReadyFile := WorkspaceReadyFile + ".tmp"
 	fn := filepath.Join(wspath, tempWorkspaceReadyFile)
-	err = ioutil.WriteFile(fn, []byte(fc), 0644)
+	err = os.WriteFile(fn, []byte(fc), 0644)
 	if err != nil {
 		return xerrors.Errorf("cannot write workspace ready file: %w", err)
 	}

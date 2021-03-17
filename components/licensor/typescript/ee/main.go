@@ -9,8 +9,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/gitpod-io/gitpod/licensor/ee/pkg/licensor"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/gitpod-io/gitpod/licensor/ee/pkg/licensor"
 )
 
 var (

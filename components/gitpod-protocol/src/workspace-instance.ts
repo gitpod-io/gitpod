@@ -70,6 +70,12 @@ export interface WorkspaceInstanceStatus {
     // nodeName is the name of the node the instance was scheduled onto
     nodeName?: string;
 
+    // podName is the name of the pod of this instance
+    podName?: string;
+
+    // nodeIp is the IP of the node the workspace is running on
+    nodeIp?: string;
+
     // ownerToken is the token one needs to access the workspace. Its presence is checked by ws-proxy.
     ownerToken?: string;
 }

@@ -8,7 +8,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
 	"github.com/golang/mock/gomock"
 )
 
@@ -54,10 +53,7 @@ func TestReplaceLocalhostInURL(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
 
-			srv := theialib.NewMockTheiaCLIService(ctrl)
-			srv.EXPECT().GetPortURL(gomock.Eq(theialib.GetPortURLRequest{Port: test.ExpectedPort})).Return(&theialib.GetPortURLResponse{URL: test.PortURL}, nil).AnyTimes()
-
-			act := replaceLocalhostInURL(srv, test.Input)
+			act := replaceLocalhostInURL(test.Input)
 			if act != test.Expectation {
 				t.Errorf("unexpected result: %s, expected %s", act, test.Expectation)
 			}

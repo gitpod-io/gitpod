@@ -26,7 +26,9 @@
         },
         "message": "containers are starting",
         "runtime": {
-            "node_name": "gke-gitpod-dev-worker-pool-2-184c607e-g6l3"
+            "node_name": "gke-gitpod-dev-worker-pool-2-184c607e-g6l3",
+            "pod_name": "ws-foobar",
+            "node_ip": "10.132.15.216"
         },
         "auth": {}
     }

@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"hash/crc32"
 	"io"
-	"io/ioutil"
 	"math/rand"
 	"net/http"
 	"os"
@@ -19,11 +18,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
-	"github.com/opentracing/opentracing-go"
-
 	"cloud.google.com/go/storage"
 	gcpstorage "cloud.google.com/go/storage"
 	validation "github.com/go-ozzo/ozzo-validation"
@@ -32,6 +26,11 @@ import (
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
+	"github.com/opentracing/opentracing-go"
 )
 
 var _ DirectAccess = &DirectGCPStorage{}
@@ -111,12 +110,9 @@ func (rs *DirectGCPStorage) Validate() error {
 	)
 }
 
-const (
-	contentTypeTar = "application/x-tar"
-)
-
 // Init initializes the remote storage - call this before calling anything else on the interface
 func (rs *DirectGCPStorage) Init(ctx context.Context, owner, workspace string) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GCloudBucketRemotegcpStorage.Init")
 	defer tracing.FinishSpan(span, &err)
 
@@ -148,6 +144,7 @@ func (rs *DirectGCPStorage) EnsureExists(ctx context.Context) (err error) {
 }
 
 func gcpEnsureExists(ctx context.Context, client *gcpstorage.Client, bucketName string, gcpConfig GCPConfig) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GCloudBucketRemotegcpStorage.EnsureExists")
 	defer tracing.FinishSpan(span, &err)
 
@@ -194,6 +191,7 @@ func (rs *DirectGCPStorage) defaultObjectAccess(ctx context.Context, bkt, obj st
 }
 
 func (rs *DirectGCPStorage) download(ctx context.Context, destination string, bkt string, obj string, mappings []archive.IDMapping) (found bool, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "download")
 	span.SetTag("gcsBkt", bkt)
 	span.SetTag("gcsObj", obj)
@@ -237,7 +235,7 @@ func (rs *DirectGCPStorage) fixLegacyFilenames(ctx context.Context, destination 
 		 * Using mv here is difficult as the wildcard expansion is done by the shell and not mv,
 		 * thus we'd need to wrap the mv call in a sh call -> too many dependencies to the outside world.
 		 */
-		fis, err := ioutil.ReadDir(legacyPath)
+		fis, err := os.ReadDir(legacyPath)
 		if err != nil {
 			return err
 		}
@@ -293,6 +291,7 @@ func (rs *DirectGCPStorage) Qualify(name string) string {
 
 // Upload takes all files from a local location and uploads it to the remote storage
 func (rs *DirectGCPStorage) Upload(ctx context.Context, source string, name string, opts ...UploadOption) (bucket, object string, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GCloudBucketRemotegcpStorage.Upload")
 	defer tracing.FinishSpan(span, &err)
 	log := log.WithFields(log.OWI(rs.Username, rs.WorkspaceName, ""))
@@ -462,6 +461,7 @@ func (rs *DirectGCPStorage) ensureBackupSlotAvailable() error {
 }
 
 func (rs *DirectGCPStorage) uploadChunks(ctx context.Context, f io.ReaderAt, totalSize int64, desiredChunkCount int) (chnks []string, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "uploadChunks")
 	defer tracing.FinishSpan(span, &err)
 
@@ -541,6 +541,7 @@ func (rs *DirectGCPStorage) uploadChunks(ctx context.Context, f io.ReaderAt, tot
 }
 
 func (rs *DirectGCPStorage) uploadChunk(ctx context.Context, name string, r io.Reader, size int64, wg *sync.WaitGroup, errchan chan error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "uploadChunk")
 	span.SetTag("size", size)
 	defer span.Finish()
@@ -570,6 +571,7 @@ func (rs *DirectGCPStorage) uploadChunk(ctx context.Context, name string, r io.R
 }
 
 func (rs *DirectGCPStorage) deleteChunks(ctx context.Context, chunks []string) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "deleteChunks")
 	defer tracing.FinishSpan(span, &err)
 
@@ -586,6 +588,7 @@ func (rs *DirectGCPStorage) deleteChunks(ctx context.Context, chunks []string) (
 }
 
 func (rs *DirectGCPStorage) trailBackup(ctx context.Context, bkt *gcpstorage.BucketHandle, obj *gcpstorage.ObjectHandle, backupID string, trailLength int) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "uploadChunk")
 	defer tracing.FinishSpan(span, &err)
 
@@ -698,7 +701,7 @@ func newPresignedGCPAccess(config GCPConfig, stage Stage) (*PresignedGCPStorage,
 		credfile = filepath.Join(tproot, credfile)
 	}
 
-	jsonKey, err := ioutil.ReadFile(credfile)
+	jsonKey, err := os.ReadFile(credfile)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot read private key: %w", err)
 	}
@@ -791,7 +794,7 @@ func (s *PresignedGCPStorage) DiskUsage(ctx context.Context, bucket string, pref
 }
 
 // SignDownload provides presigned URLs to access remote storage objects
-func (p *PresignedGCPStorage) SignDownload(ctx context.Context, bucket, object string) (*DownloadInfo, error) {
+func (p *PresignedGCPStorage) SignDownload(ctx context.Context, bucket, object string, options *SignedURLOptions) (*DownloadInfo, error) {
 	client, err := newGCPClient(ctx, p.config)
 	if err != nil {
 		return nil, err
@@ -815,7 +818,7 @@ func (p *PresignedGCPStorage) SignDownload(ctx context.Context, bucket, object s
 	if err != nil {
 		return nil, err
 	}
-	res, err := p.downloadInfo(ctx, client, attrs)
+	res, err := p.downloadInfo(ctx, client, attrs, options)
 	if err != nil {
 		return nil, err
 	}
@@ -823,7 +826,7 @@ func (p *PresignedGCPStorage) SignDownload(ctx context.Context, bucket, object s
 	return res, nil
 }
 
-func (p *PresignedGCPStorage) downloadInfo(ctx context.Context, client *gcpstorage.Client, obj *gcpstorage.ObjectAttrs) (*DownloadInfo, error) {
+func (p *PresignedGCPStorage) downloadInfo(ctx context.Context, client *gcpstorage.Client, obj *gcpstorage.ObjectAttrs, options *SignedURLOptions) (*DownloadInfo, error) {
 	meta := &ObjectMeta{
 		ContentType:        obj.ContentType,
 		OCIMediaType:       obj.Metadata[ObjectAnnotationOCIContentType],
@@ -835,6 +838,7 @@ func (p *PresignedGCPStorage) downloadInfo(ctx context.Context, client *gcpstora
 		GoogleAccessID: p.accessID,
 		PrivateKey:     p.privateKey,
 		Expires:        time.Now().Add(30 * time.Minute),
+		ContentType:    options.ContentType,
 	})
 	if err != nil {
 		return nil, err
@@ -848,7 +852,7 @@ func (p *PresignedGCPStorage) downloadInfo(ctx context.Context, client *gcpstora
 }
 
 // SignUpload describes an object for upload
-func (p *PresignedGCPStorage) SignUpload(ctx context.Context, bucket, object string) (info *UploadInfo, err error) {
+func (p *PresignedGCPStorage) SignUpload(ctx context.Context, bucket, object string, options *SignedURLOptions) (info *UploadInfo, err error) {
 	client, err := newGCPClient(ctx, p.config)
 	if err != nil {
 		return nil, err
@@ -869,6 +873,7 @@ func (p *PresignedGCPStorage) SignUpload(ctx context.Context, bucket, object str
 		GoogleAccessID: p.accessID,
 		PrivateKey:     p.privateKey,
 		Expires:        time.Now().Add(30 * time.Minute),
+		ContentType:    options.ContentType,
 	})
 	if err != nil {
 		return nil, err
@@ -877,4 +882,40 @@ func (p *PresignedGCPStorage) SignUpload(ctx context.Context, bucket, object str
 	return &UploadInfo{
 		URL: url,
 	}, nil
+}
+
+func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, query *DeleteObjectQuery) (err error) {
+	client, err := newGCPClient(ctx, p.config)
+	defer client.Close()
+
+	if query.Name != "" {
+		err = client.Bucket(bucket).Object(query.Name).Delete(ctx)
+		if err != nil {
+			log.WithField("bucket", bucket).WithField("object", query.Name).Error(err)
+			return err
+		}
+		return nil
+	}
+	if query.Prefix != "" {
+		prefix := query.Prefix
+		if !strings.HasSuffix(prefix, "/") {
+			prefix = prefix + "/"
+		}
+
+		b := client.Bucket(bucket)
+		it := b.Objects(ctx, &storage.Query{
+			Prefix: prefix,
+		})
+		for {
+			attrs, err := it.Next()
+			if err == iterator.Done {
+				break
+			}
+			err = b.Object(attrs.Name).Delete(ctx)
+			if err != nil {
+				log.WithField("bucket", bucket).WithField("object", attrs.Name).Error(err)
+			}
+		}
+	}
+	return err
 }

@@ -30,7 +30,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:csweichel-leeway-vet-ignore-warnings-2986.0
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:at-dev-env.5
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
@@ -73,6 +73,12 @@ pod:
         secretKeyRef:
           name: slack-path
           key: slackPath
+    # used for GitHub releases (NOTE: for some reasons the token contains a trailing \n, is trimmed below)
+    - name: GITHUB_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: github-sh-release-token
+          key: token
     # - name: GITPOD_TEST_TOKEN_GITHUB
     #   valueFrom:
     #     secretKeyRef:
@@ -89,16 +95,18 @@ pod:
     #       name: gitpod-test-tokens
     #       key: bitbucket-test-token.json
     command:
-      - bash 
+      - bash
       - -c
       - |
         sleep 1
         set -Eeuo pipefail
 
+        export GITHUB_TOKEN=$(echo $GITHUB_TOKEN | xargs)
+
         export DOCKER_HOST=tcp://$NODENAME:2375
         sudo chown -R gitpod:gitpod /workspace
 
-        npm install shelljs
+        npm install shelljs semver
         printf '{{ toJson . }}' > context.json
 
         {{- if .Annotations.debug }}

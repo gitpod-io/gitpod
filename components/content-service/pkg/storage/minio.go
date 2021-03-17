@@ -12,15 +12,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
-	"github.com/opentracing/opentracing-go"
-	"golang.org/x/xerrors"
-
 	validation "github.com/go-ozzo/ozzo-validation"
 	minio "github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+	"github.com/opentracing/opentracing-go"
+	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 )
 
 var _ DirectAccess = &DirectMinIOStorage{}
@@ -175,6 +175,7 @@ func minioEnsureExists(ctx context.Context, client *minio.Client, bucketName str
 }
 
 func (rs *DirectMinIOStorage) download(ctx context.Context, destination string, bkt string, obj string, mappings []archive.IDMapping) (found bool, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "download")
 	span.SetTag("bucket", bkt)
 	span.SetTag("object", obj)
@@ -216,6 +217,7 @@ func (rs *DirectMinIOStorage) Qualify(name string) string {
 
 // Upload takes all files from a local location and uploads it to the remote storage
 func (rs *DirectMinIOStorage) Upload(ctx context.Context, source string, name string, opts ...UploadOption) (bucket, obj string, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "DirectUpload")
 	defer tracing.FinishSpan(span, &err)
 
@@ -286,6 +288,7 @@ func (s *presignedMinIOStorage) EnsureExists(ctx context.Context, ownerId string
 }
 
 func (s *presignedMinIOStorage) DiskUsage(ctx context.Context, bucket string, prefix string) (size int64, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.DiskUsage")
 	defer tracing.FinishSpan(span, &err)
 
@@ -306,7 +309,7 @@ func (s *presignedMinIOStorage) DiskUsage(ctx context.Context, bucket string, pr
 	return total, nil
 }
 
-func (s *presignedMinIOStorage) SignDownload(ctx context.Context, bucket, object string) (info *DownloadInfo, err error) {
+func (s *presignedMinIOStorage) SignDownload(ctx context.Context, bucket, object string, options *SignedURLOptions) (info *DownloadInfo, err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.SignDownload")
 	defer func() {
@@ -345,7 +348,8 @@ func (s *presignedMinIOStorage) SignDownload(ctx context.Context, bucket, object
 }
 
 // SignUpload describes an object for upload
-func (s *presignedMinIOStorage) SignUpload(ctx context.Context, bucket, obj string) (info *UploadInfo, err error) {
+func (s *presignedMinIOStorage) SignUpload(ctx context.Context, bucket, obj string, options *SignedURLOptions) (info *UploadInfo, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.SignUpload")
 	defer func() {
 		if err == ErrNotFound {
@@ -362,6 +366,38 @@ func (s *presignedMinIOStorage) SignUpload(ctx context.Context, bucket, obj stri
 		return nil, translateMinioError(err)
 	}
 	return &UploadInfo{URL: url.String()}, nil
+}
+
+func (s *presignedMinIOStorage) DeleteObject(ctx context.Context, bucket string, query *DeleteObjectQuery) (err error) {
+	//nolint:ineffassign
+	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.DeleteObject")
+	defer tracing.FinishSpan(span, &err)
+
+	if query.Name != "" {
+		err = s.client.RemoveObject(ctx, bucket, query.Name, minio.RemoveObjectOptions{})
+		if err != nil {
+			log.WithField("bucket", bucket).WithField("object", query.Name).Error(err)
+			return err
+		}
+		return nil
+	}
+	if query.Prefix != "" {
+		objectsCh := make(chan minio.ObjectInfo)
+		go func() {
+			defer close(objectsCh)
+			for object := range s.client.ListObjects(ctx, bucket, minio.ListObjectsOptions{
+				Prefix:    query.Prefix,
+				Recursive: true,
+			}) {
+				objectsCh <- object
+			}
+		}()
+		for removeErr := range s.client.RemoveObjects(ctx, bucket, objectsCh, minio.RemoveObjectsOptions{}) {
+			err = removeErr.Err
+			log.WithField("bucket", bucket).WithField("object", removeErr.ObjectName).Error(err)
+		}
+	}
+	return err
 }
 
 func annotationToAmzMetaHeader(annotation string) string {

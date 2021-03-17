@@ -32,7 +32,9 @@ data:
             "gitpodLayerLoc": "/app/workspace-image-layer.tar.gz",
             "baseImageRepository": "{{ or $comp.registry.baseImageName (print (include "registry-name" $this) "/base-images") }}",
             "workspaceImageRepository": "{{ or $comp.registry.workspaceImageName (print (include "registry-name" $this) "/workspace-images") }}",
-            "imageBuildSalt": "{{ $comp.imageBuildSalt | default "" }}"
+            "imageBuildSalt": "{{ $comp.imageBuildSalt | default "" }}",
+            "alpineImage": "{{ $comp.alpineImage | default "" }}",
+            "selfBuildBaseImage": "{{ $comp.selfBuildBaseImage | default "" }}"
         },
         "refCache": {
             "interval": "6h",

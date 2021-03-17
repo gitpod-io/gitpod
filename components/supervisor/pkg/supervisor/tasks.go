@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -328,7 +327,7 @@ func (tm *tasksManager) getHistfileCommand(task *task, commands []*string) strin
 	}
 
 	histfile := tm.storeLocation + "/cmd-" + task.Id
-	err := ioutil.WriteFile(histfile, []byte(histfileContent), 0644)
+	err := os.WriteFile(histfile, []byte(histfileContent), 0644)
 	if err != nil {
 		log.WithField("histfile", histfile).WithError(err).Error("cannot write histfile")
 		return ""
@@ -382,7 +381,7 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 		var fileWriter *bufio.Writer
 		if err != nil {
 			terminalLog.WithError(err).Error("cannot create a prebuild log file")
-			fileWriter = bufio.NewWriter(ioutil.Discard)
+			fileWriter = bufio.NewWriter(io.Discard)
 		} else {
 			defer file.Close()
 			terminalLog.Info("Writing build output to " + fileName)

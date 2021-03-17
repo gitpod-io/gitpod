@@ -12,6 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/opentracing/opentracing-go"
+	tracelog "github.com/opentracing/opentracing-go/log"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -19,9 +21,6 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	"github.com/gitpod-io/gitpod/content-service/pkg/git"
-
-	"github.com/opentracing/opentracing-go"
-	tracelog "github.com/opentracing/opentracing-go/log"
 )
 
 // PrebuildInitializer first tries to restore the snapshot/prebuild and if that succeeds performs Git operations.
@@ -33,6 +32,7 @@ type PrebuildInitializer struct {
 
 // Run runs the prebuild initializer
 func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "PrebuildInitializer")
 	defer tracing.FinishSpan(span, &err)
 
@@ -110,7 +110,7 @@ func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 		// If any of these cleanup operations fail that's no reason to fail ws initialization.
 		// It just results in a slightly degraded state.
 		if didStash {
-			p.Git.Git(ctx, "stash", "pop")
+			_ = p.Git.Git(ctx, "stash", "pop")
 		}
 
 		log.Debug("prebuild initializer Git operations complete")

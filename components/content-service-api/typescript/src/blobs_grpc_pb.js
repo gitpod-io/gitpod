@@ -9,6 +9,28 @@
 var grpc = require('grpc');
 var blobs_pb = require('./blobs_pb.js');
 
+function serialize_contentservice_DeleteRequest(arg) {
+  if (!(arg instanceof blobs_pb.DeleteRequest)) {
+    throw new Error('Expected argument of type contentservice.DeleteRequest');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_contentservice_DeleteRequest(buffer_arg) {
+  return blobs_pb.DeleteRequest.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
+function serialize_contentservice_DeleteResponse(arg) {
+  if (!(arg instanceof blobs_pb.DeleteResponse)) {
+    throw new Error('Expected argument of type contentservice.DeleteResponse');
+  }
+  return Buffer.from(arg.serializeBinary());
+}
+
+function deserialize_contentservice_DeleteResponse(buffer_arg) {
+  return blobs_pb.DeleteResponse.deserializeBinary(new Uint8Array(buffer_arg));
+}
+
 function serialize_contentservice_DownloadUrlRequest(arg) {
   if (!(arg instanceof blobs_pb.DownloadUrlRequest)) {
     throw new Error('Expected argument of type contentservice.DownloadUrlRequest');
@@ -67,7 +89,7 @@ uploadUrl: {
     responseSerialize: serialize_contentservice_UploadUrlResponse,
     responseDeserialize: deserialize_contentservice_UploadUrlResponse,
   },
-  // DownloadUrl provides a URL from which clients cat download the content via HTTP GET.
+  // DownloadUrl provides a URL from which clients can download the content via HTTP GET.
 downloadUrl: {
     path: '/contentservice.BlobService/DownloadUrl',
     requestStream: false,
@@ -78,6 +100,18 @@ downloadUrl: {
     requestDeserialize: deserialize_contentservice_DownloadUrlRequest,
     responseSerialize: serialize_contentservice_DownloadUrlResponse,
     responseDeserialize: deserialize_contentservice_DownloadUrlResponse,
+  },
+  // Delete deletes the uploaded content.
+delete: {
+    path: '/contentservice.BlobService/Delete',
+    requestStream: false,
+    responseStream: false,
+    requestType: blobs_pb.DeleteRequest,
+    responseType: blobs_pb.DeleteResponse,
+    requestSerialize: serialize_contentservice_DeleteRequest,
+    requestDeserialize: deserialize_contentservice_DeleteRequest,
+    responseSerialize: serialize_contentservice_DeleteResponse,
+    responseDeserialize: deserialize_contentservice_DeleteResponse,
   },
 };
 

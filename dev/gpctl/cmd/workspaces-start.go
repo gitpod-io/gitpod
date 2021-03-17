@@ -8,14 +8,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/alecthomas/repr"
+	"github.com/spf13/cobra"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/namegen"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
-	"github.com/spf13/cobra"
 )
 
 var startWorkspaceReq = api.StartWorkspaceRequest{
@@ -31,7 +32,7 @@ var workspacesStartCmd = &cobra.Command{
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		fc, err := ioutil.ReadFile(args[1])
+		fc, err := os.ReadFile(args[1])
 		if err != nil {
 			log.WithError(err).Fatal("cannot read workspace spec")
 		}

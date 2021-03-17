@@ -7,13 +7,13 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
+
+	"github.com/spf13/cobra"
 
 	"github.com/gitpod-io/gitpod/blobserve/pkg/blobserve"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -60,7 +60,7 @@ type Config struct {
 
 // getConfig loads and validates the configuration
 func getConfig(fn string) (*Config, error) {
-	fc, err := ioutil.ReadFile(fn)
+	fc, err := os.ReadFile(fn)
 	if err != nil {
 		return nil, err
 	}

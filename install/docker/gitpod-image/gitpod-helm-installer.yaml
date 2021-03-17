@@ -8,7 +8,7 @@ metadata:
 spec:
     containers:
       - name: gitpod-helm-installer
-        image: alpine/helm:3.2.4
+        image: $HELMIMAGE
         volumeMounts:
           - name: kubeconfig
             mountPath: /root/.kube/config

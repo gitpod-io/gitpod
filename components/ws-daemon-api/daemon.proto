@@ -2,9 +2,9 @@ syntax = "proto3";
 
 package wsdaemon;
 
-import "content-service-api/initializer.proto";
-
 option go_package = "github.com/gitpod-io/gitpod/ws-daemon/api";
+
+import "content-service-api/initializer.proto";
 
 service WorkspaceContentService {
     // initWorkspace intialises a new workspace folder in the working area

@@ -10,10 +10,11 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // GetIntegrationTestClient provides a kubernetes client for integration tests
@@ -62,8 +63,8 @@ func GetIntegrationTestClient(kubecfgfn string) (client kubernetes.Interface, na
 		return
 	}
 
-	client.CoreV1().Pods(namespace).DeleteCollection(ctx, *metav1.NewDeleteOptions(30), metav1.ListOptions{LabelSelector: "component=workspace"})
-	client.CoreV1().ConfigMaps(namespace).DeleteCollection(ctx, *metav1.NewDeleteOptions(30), metav1.ListOptions{LabelSelector: "component=workspace"})
+	_ = client.CoreV1().Pods(namespace).DeleteCollection(ctx, *metav1.NewDeleteOptions(30), metav1.ListOptions{LabelSelector: "component=workspace"})
+	_ = client.CoreV1().ConfigMaps(namespace).DeleteCollection(ctx, *metav1.NewDeleteOptions(30), metav1.ListOptions{LabelSelector: "component=workspace"})
 
 	return
 }

@@ -10,9 +10,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
+
+	"github.com/opencontainers/go-digest"
+	"github.com/opentracing/opentracing-go"
+	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -20,10 +24,6 @@ import (
 	"github.com/gitpod-io/gitpod/content-service/pkg/executor"
 	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
-
-	"github.com/opencontainers/go-digest"
-	"github.com/opentracing/opentracing-go"
-	"golang.org/x/xerrors"
 )
 
 const (
@@ -54,6 +54,7 @@ type Provider struct {
 var errUnsupportedContentType = xerrors.Errorf("unsupported workspace content type")
 
 func (s *Provider) downloadContentManifest(ctx context.Context, bkt, obj string) (manifest *csapi.WorkspaceContentManifest, info *storage.DownloadInfo, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "downloadContentManifest")
 	defer func() {
 		if manifest != nil {
@@ -69,7 +70,7 @@ func (s *Provider) downloadContentManifest(ctx context.Context, bkt, obj string)
 		}
 	}()
 
-	info, err = s.Storage.SignDownload(ctx, bkt, obj)
+	info, err = s.Storage.SignDownload(ctx, bkt, obj, &storage.SignedURLOptions{})
 	if err != nil {
 		return
 	}
@@ -96,7 +97,7 @@ func (s *Provider) downloadContentManifest(ctx context.Context, bkt, obj string)
 	}
 	defer mfresp.Body.Close()
 
-	mfr, err := ioutil.ReadAll(mfresp.Body)
+	mfr, err := io.ReadAll(mfresp.Body)
 	if err != nil {
 		return
 	}
@@ -151,7 +152,7 @@ func (s *Provider) GetContentLayer(ctx context.Context, owner, workspaceID strin
 
 	// check if legacy workspace backup is present
 	var layer *Layer
-	info, err := s.Storage.SignDownload(ctx, bucket, fmt.Sprintf(fmtLegacyBackupName, workspaceID))
+	info, err := s.Storage.SignDownload(ctx, bucket, fmt.Sprintf(fmtLegacyBackupName, workspaceID), &storage.SignedURLOptions{})
 	if err != nil && !xerrors.Is(err, storage.ErrNotFound) {
 		return nil, nil, err
 	}
@@ -315,7 +316,7 @@ func (s *Provider) layerFromContentManifest(ctx context.Context, mf *csapi.Works
 	// we have a valid full workspace backup
 	l = make([]Layer, len(mf.Layers))
 	for i, mfl := range mf.Layers {
-		info, err := s.Storage.SignDownload(ctx, mfl.Bucket, mfl.Object)
+		info, err := s.Storage.SignDownload(ctx, mfl.Bucket, mfl.Object, &storage.SignedURLOptions{})
 		if err != nil {
 			return nil, err
 		}

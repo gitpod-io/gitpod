@@ -14,7 +14,6 @@ package main
 import (
 	"crypto/sha1"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -89,10 +88,10 @@ func getCoverage(name string) ([]string, error) {
 		return nil, err
 	}
 
-	fc, err := ioutil.ReadFile(coverFN)
+	fc, err := os.ReadFile(coverFN)
 	lines := strings.Split(string(fc), "\n")
 	sort.Strings(lines)
-	ioutil.WriteFile(coverFN, []byte(strings.Join(lines, "\n")), 0644)
+	os.WriteFile(coverFN, []byte(strings.Join(lines, "\n")), 0644)
 
 	return lines, nil
 }

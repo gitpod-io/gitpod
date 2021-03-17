@@ -5,7 +5,11 @@
 package main
 
 import (
-	"io/ioutil"
+	"bytes"
+	"fmt"
+	"os"
+	"os/exec"
+	"strings"
 
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
 	"github.com/gitpod-io/gitpod/test/tests/workspace/workspace_agent/api"
@@ -21,7 +25,7 @@ type WorkspaceAgent struct {
 
 // ListDir lists a directory's content
 func (*WorkspaceAgent) ListDir(req *api.ListDirRequest, resp *api.ListDirResponse) error {
-	dc, err := ioutil.ReadDir(req.Dir)
+	dc, err := os.ReadDir(req.Dir)
 	if err != nil {
 		return err
 	}
@@ -35,11 +39,43 @@ func (*WorkspaceAgent) ListDir(req *api.ListDirRequest, resp *api.ListDirRespons
 
 // WriteFile writes a file in the workspace
 func (*WorkspaceAgent) WriteFile(req *api.WriteFileRequest, resp *api.WriteFileResponse) (err error) {
-	err = ioutil.WriteFile(req.Path, req.Content, req.Mode)
+	err = os.WriteFile(req.Path, req.Content, req.Mode)
 	if err != nil {
 		return
 	}
 
 	*resp = api.WriteFileResponse{}
+	return
+}
+
+// Exec executes a command in the workspace
+func (*WorkspaceAgent) Exec(req *api.ExecRequest, resp *api.ExecResponse) (err error) {
+	cmd := exec.Command(req.Command, req.Args...)
+	var (
+		stdout bytes.Buffer
+		stderr bytes.Buffer
+	)
+	if req.Dir != "" {
+		cmd.Dir = req.Dir
+	}
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err = cmd.Run()
+
+	var rc int
+	if err != nil {
+		exitError, ok := err.(*exec.ExitError)
+		if !ok {
+			fullCommand := strings.Join(append([]string{req.Command}, req.Args...), " ")
+			return fmt.Errorf("%s: %w", fullCommand, err)
+		}
+		rc = exitError.ExitCode()
+	}
+
+	*resp = api.ExecResponse{
+		ExitCode: rc,
+		Stdout:   stdout.String(),
+		Stderr:   stderr.String(),
+	}
 	return
 }

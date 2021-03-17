@@ -9,10 +9,11 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/namegen"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/golang/protobuf/proto"
 	"github.com/google/uuid"
+
+	"github.com/gitpod-io/gitpod/common-go/namegen"
+	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 // WorkspaceGenerator generates new workspace start specs

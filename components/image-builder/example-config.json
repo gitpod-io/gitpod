@@ -5,7 +5,9 @@
         "gitpodLayerLoc": "/tmp/build/components-image-builder-workspace-image-layer--pack.588fcb85389f5c10ae444b52674654698f446a10/pack.tar",
         "baseImageRepository": "eu.gcr.io/gitpod-dev/base-images",
         "workspaceImageRepository": "eu.gcr.io/gitpod-dev/workspace-images",
-        "imageBuildSalt": "001"
+        "imageBuildSalt": "001",
+        "alpineImage": "alpine:3.9",
+        "selfBuildBaseImage": ""
     },
     "pprof": {
         "address": ":9999"

@@ -6,21 +6,20 @@ package cmd
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	csapi "github.com/gitpod-io/gitpod/content-service/api"
-	"github.com/gitpod-io/gitpod/loadgen/pkg/loadgen"
-	"github.com/gitpod-io/gitpod/loadgen/pkg/observer"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
-
 	"github.com/golang/protobuf/ptypes"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
+
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/loadgen/pkg/loadgen"
+	"github.com/gitpod-io/gitpod/loadgen/pkg/observer"
+	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 // runCmd represents the run command
@@ -51,7 +50,6 @@ var runCmd = &cobra.Command{
 					Username: "foobar",
 				},
 				FeatureFlags: []api.WorkspaceFeatureFlag{
-					api.WorkspaceFeatureFlag_REGISTRY_FACADE,
 					// api.WorkspaceFeatureFlag_USER_NAMESPACE,
 				},
 				Initializer: &csapi.WorkspaceInitializer{
@@ -101,7 +99,7 @@ var runCmd = &cobra.Command{
 					if err != nil {
 						return
 					}
-					ioutil.WriteFile("stats.json", fc, 0644)
+					os.WriteFile("stats.json", fc, 0644)
 				}),
 			},
 			PostLoadWait: func() {

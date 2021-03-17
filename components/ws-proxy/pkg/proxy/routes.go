@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -19,11 +19,12 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // RouteHandlerConfig configures a RouteHandler
@@ -188,11 +189,6 @@ func (ir *ideRoutes) HandleSupervisorFrontendRoute(route *mux.Route) {
 }
 
 func (ir *ideRoutes) HandleRoot(route *mux.Route) {
-	if ir.Config.Config.BlobServer == nil {
-		ir.handleRootWithoutBlobserve(route)
-		return
-	}
-
 	r := route.Subrouter()
 	r.Use(logRouteHandlerHandler("handleRoot"))
 	r.Use(ir.Config.CorsHandler)
@@ -216,21 +212,6 @@ func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 			},
 		}
 	}, withHTTPErrorHandler(workspaceIDEPass)))
-}
-
-func (ir *ideRoutes) handleRootWithoutBlobserve(route *mux.Route) {
-	r := route.Subrouter()
-	r.Use(logRouteHandlerHandler("handleRootWithoutBlobserve"))
-	r.Use(ir.Config.CorsHandler)
-	r.Use(ir.workspaceMustExistHandler)
-
-	// We first try and service the request using the static IDE server or blobserve.
-	// If that fails, we proxy-pass to the workspace.
-	workspaceIDEPass := ir.Config.WorkspaceAuthHandler(
-		proxyPass(ir.Config, workspacePodResolver),
-	)
-	ideAssetPass := proxyPass(ir.Config, staticIDEResolver, withHTTPErrorHandler(workspaceIDEPass))
-	r.NewRoute().HandlerFunc(ideAssetPass)
 }
 
 const imagePathSeparator = "/__files__"
@@ -303,15 +284,6 @@ func workspacePodPortResolver(config *Config, req *http.Request) (url *url.URL, 
 func workspacePodSupervisorResolver(config *Config, req *http.Request) (url *url.URL, err error) {
 	coords := getWorkspaceCoords(req)
 	return buildWorkspacePodURL(config.WorkspacePodConfig.ServiceTemplate, coords.ID, fmt.Sprint(config.WorkspacePodConfig.SupervisorPort))
-}
-
-// staticIDEResolver resolves to static IDE server with the statically configured version
-func staticIDEResolver(config *Config, req *http.Request) (url *url.URL, err error) {
-	targetURL := *req.URL
-	targetURL.Scheme = config.TheiaServer.Scheme
-	targetURL.Host = config.TheiaServer.Host
-	targetURL.Path = config.TheiaServer.StaticVersionPathPrefix
-	return &targetURL, nil
 }
 
 func dynamicIDEResolver(config *Config, req *http.Request) (res *url.URL, err error) {
@@ -550,7 +522,7 @@ func (t *blobserveTransport) RoundTrip(req *http.Request) (resp *http.Response, 
 		}
 
 		if resp.StatusCode >= http.StatusBadRequest {
-			respBody, err := ioutil.ReadAll(resp.Body)
+			respBody, err := io.ReadAll(resp.Body)
 			if err != nil {
 				return nil, err
 			}
@@ -608,27 +580,14 @@ func (t *blobserveTransport) RoundTrip(req *http.Request) (resp *http.Response, 
 
 func (t *blobserveTransport) redirect(image string, req *http.Request) (*http.Response, error) {
 	path := strings.TrimPrefix(req.URL.Path, "/"+image)
-
-	var location string
-	if t.Config.GitpodInstallation.WorkspaceHostSuffix != "" {
-		location = fmt.Sprintf("%s://%s%s/%s%s%s",
-			t.Config.GitpodInstallation.Scheme,
-			"blobserve",
-			t.Config.GitpodInstallation.WorkspaceHostSuffix,
-			image,
-			imagePathSeparator,
-			path,
-		)
-	} else {
-		location = fmt.Sprintf("%s://%s/%s/%s%s%s",
-			t.Config.GitpodInstallation.Scheme,
-			t.Config.GitpodInstallation.HostName,
-			"blobserve",
-			image,
-			imagePathSeparator,
-			path,
-		)
-	}
+	location := fmt.Sprintf("%s://%s%s/%s%s%s",
+		t.Config.GitpodInstallation.Scheme,
+		"blobserve",
+		t.Config.GitpodInstallation.WorkspaceHostSuffix,
+		image,
+		imagePathSeparator,
+		path,
+	)
 
 	header := make(http.Header, 2)
 	header.Set("Location", location)
@@ -643,7 +602,7 @@ func (t *blobserveTransport) redirect(image string, req *http.Request) (*http.Re
 	return &http.Response{
 		Request:       req,
 		Header:        header,
-		Body:          ioutil.NopCloser(bytes.NewReader(content)),
+		Body:          io.NopCloser(bytes.NewReader(content)),
 		ContentLength: int64(len(content)),
 		StatusCode:    code,
 		Status:        status,
@@ -661,7 +620,7 @@ func servePortNotFoundPage(config *Config) (http.Handler, error) {
 	if tp := os.Getenv("TELEPRESENCE_ROOT"); tp != "" {
 		fn = filepath.Join(tp, fn)
 	}
-	page, err := ioutil.ReadFile(fn)
+	page, err := os.ReadFile(fn)
 	if err != nil {
 		return nil, err
 	}

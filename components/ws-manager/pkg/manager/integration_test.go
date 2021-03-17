@@ -14,7 +14,24 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"testing/fstest"
 	"time"
+
+	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
+	"golang.org/x/xerrors"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/test/bufconn"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/kubernetes"
+	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
+	utilpointer "k8s.io/utils/pointer"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	ctrler_client "sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/envtest"
+	"sigs.k8s.io/yaml"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
@@ -26,19 +43,6 @@ import (
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/grpcpool"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/test"
-	"github.com/golang/mock/gomock"
-	"github.com/golang/protobuf/ptypes"
-	"github.com/google/uuid"
-	"github.com/spf13/afero"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/test/bufconn"
-	"sigs.k8s.io/yaml"
-
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
-
-	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
 var integrationFlag = flag.String("integration-test", "disabled", "configures integration tests. Valid values are disabled, local or a path to a kubeconfig file")
@@ -60,19 +64,11 @@ func forIntegrationTestGetManager(t *testing.T) *Manager {
 	config := Configuration{
 		Namespace:                ns,
 		HeartbeatInterval:        util.Duration(30 * time.Second),
-		TheiaHostPath:            "/tmp",
 		WorkspaceHostPath:        "/tmp",
 		GitpodHostURL:            "gitpod.io",
 		WorkspaceURLTemplate:     "{{ .ID }}-{{ .Prefix }}-{{ .Host }}",
 		WorkspacePortURLTemplate: "{{ .Host }}:{{ .IngressPort }}",
 		RegistryFacadeHost:       "registry-facade:8080",
-		IngressPortAllocator: &IngressPortAllocatorConfig{
-			IngressRange: IngressPortRange{
-				Start: 10000,
-				End:   11000,
-			},
-			StateResyncInterval: util.Duration(30 * time.Minute),
-		},
 		Container: AllContainerConfiguration{
 			Workspace: ContainerConfiguration{
 				Limits: ResourceConfiguration{
@@ -98,12 +94,40 @@ func forIntegrationTestGetManager(t *testing.T) *Manager {
 		EventTraceLog: fmt.Sprintf("/tmp/evts-%x.json", sha256.Sum256([]byte(t.Name()))),
 	}
 
-	m, err := New(config, client, &layer.Provider{Storage: &storage.PresignedNoopStorage{}})
+	testEnv := &envtest.Environment{}
+	cfg, err := testEnv.Start()
+	if err != nil {
+		t.Errorf("cannot create test environment: %v", err)
+		return nil
+	}
+
+	t.Cleanup(func() {
+		_ = testEnv.Stop()
+	})
+
+	clientset, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		t.Errorf("cannot create test environment: %v", err)
+		return nil
+	}
+
+	ctrlClient, err := ctrler_client.New(cfg, ctrler_client.Options{Scheme: scheme})
+	if err != nil {
+		t.Errorf("cannot create test environment: %v", err)
+		return nil
+	}
+
+	m, err := New(config, ctrlClient, clientset, &layer.Provider{Storage: &storage.PresignedNoopStorage{}})
 	if err != nil {
 		t.Fatalf("cannot create manager: %s", err.Error())
 	}
 	// we don't have propr DNS resolution and network access - and we cannot mock it
 	m.Config.InitProbe.Disabled = true
+
+	t.Cleanup(func() {
+		_ = testEnv.Stop()
+	})
+
 	return m
 }
 
@@ -196,13 +220,23 @@ func (r *StatusRecoder) Log() []api.WorkspaceStatus {
 	return r.log
 }
 
-func ensureIntegrationTestTheiaLabelOnNodes(client kubernetes.Interface, namespace string) (version string, err error) {
+func ensureIntegrationTestTheiaLabelOnNodes(clientset client.Client, namespace string) (version string, err error) {
 	version = "wsman-test"
 
 	ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
 	defer cancel()
 
-	nodes, err := client.CoreV1().Nodes().List(ctx, metav1.ListOptions{LabelSelector: fmt.Sprintf("gitpod.io/theia.%s", version)})
+	selector, err := labels.Parse(fmt.Sprintf("gitpod.io/theia.%s", version))
+	if err != nil {
+		return "", xerrors.Errorf("cannot build label selector for theia: %w", err)
+	}
+
+	var nodes corev1.NodeList
+	err = clientset.List(ctx, &nodes,
+		client.InNamespace(namespace),
+		client.MatchingLabelsSelector{selector},
+	)
+
 	if err != nil {
 		log.WithError(err).Warnf("cannot list nodes to check if one has the gitpod.io/theia.%s label", version)
 		return "wsman-test", nil
@@ -268,7 +302,9 @@ func (test *SingleWorkspaceIntegrationTest) Run(t *testing.T) {
 	manager := forIntegrationTestGetManager(t)
 	defer manager.Close()
 
-	fs = afero.NewMemMapFs()
+	// create in-memory file system
+	fs := fstest.MapFS{}
+
 	files := []struct {
 		tplfn  string
 		ctnt   interface{}
@@ -288,10 +324,9 @@ func (test *SingleWorkspaceIntegrationTest) Run(t *testing.T) {
 		if err != nil {
 			t.Fatalf("cannot re-marshal %s template: %q", f.tplfn, err)
 		}
-		err = afero.WriteFile(fs, f.tplfn, b, 0755)
-		if err != nil {
-			t.Fatalf("cannot write %s template: %q", f.tplfn, err)
-		}
+
+		fs[f.tplfn] = &fstest.MapFile{Data: b}
+
 		f.setter(f.tplfn)
 	}
 
@@ -343,9 +378,8 @@ func (test *SingleWorkspaceIntegrationTest) Run(t *testing.T) {
 	startreq := &api.StartWorkspaceRequest{
 		Id: instanceID,
 		Metadata: &api.WorkspaceMetadata{
-			MetaId:    workspaceID,
-			Owner:     "integration-test",
-			StartedAt: ptypes.TimestampNow(),
+			MetaId: workspaceID,
+			Owner:  "integration-test",
 		},
 		ServicePrefix: servicePrefix,
 		Type:          api.WorkspaceType_REGULAR,
@@ -368,7 +402,14 @@ func (test *SingleWorkspaceIntegrationTest) Run(t *testing.T) {
 	if err != nil {
 		t.Errorf("cannot start test workspace: %q", err)
 	}
-	defer manager.Clientset.CoreV1().Pods(manager.Config.Namespace).Delete(ctx, fmt.Sprintf("ws-%s", instanceID), *metav1.NewDeleteOptions(30))
+	defer manager.Clientset.Delete(ctx,
+		&corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      fmt.Sprintf("ws-%s", instanceID),
+				Namespace: manager.Config.Namespace,
+			},
+		},
+		&client.DeleteOptions{GracePeriodSeconds: utilpointer.Int64Ptr(30)})
 
 	test.PostStart(t, monitor, instanceID, updates)
 }

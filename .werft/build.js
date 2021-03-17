@@ -4,7 +4,8 @@ const { werft, exec, gitTag } = require('./util/shell.js');
 const { sleep } = require('./util/util.js');
 const { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects } = require('./util/kubectl.js');
 const { issueAndInstallCertficate } = require('./util/certs.js');
-const https = require('https');
+const { reportBuildFailureInSlack } = require('./util/slack.js');
+const semver = require('semver');
 
 const GCLOUD_SERVICE_ACCOUNT_PATH = "/mnt/secrets/gcp-sa/service-account.json";
 
@@ -13,50 +14,8 @@ const context = JSON.parse(fs.readFileSync('context.json'));
 const version = parseVersion(context);
 build(context, version)
     .catch((err) => {
-        if (context.Repository.ref === "refs/heads/master") {
-            const repo = context.Repository.host + "/" + context.Repository.owner + "/" + context.Repository.repo;
-            const data = JSON.stringify({
-                "blocks": [
-                    {
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": ":X: *build failure*\n_Repo:_ `" + repo + "`\n_Build:_ `" + context.Name + "`"
-                        },
-                        "accessory": {
-                            "type": "button",
-                            "text": {
-                                "type": "plain_text",
-                                "text": "Go to Werft",
-                                "emoji": true
-                            },
-                            "value": "click_me_123",
-                            "url": "https://werft.gitpod-dev.com/job/" + context.Name,
-                            "action_id": "button-action"
-                        }
-                    },
-                    {
-                        "type": "section",
-                        "text": {
-                            "type": "mrkdwn",
-                            "text": "```\n" + err + "\n```"
-                        }
-                    }
-                ]
-            });
-            const req = https.request({
-                hostname: "hooks.slack.com",
-                port: 443,
-                path: process.env.SLACK_NOTIFICATION_PATH.trim(),
-                method: "POST",
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Content-Length': data.length,
-                }
-            }, () => process.exit(1));
-            req.on('error', () => process.exit(1));
-            req.write(data);
-            req.end();
+        if (context.Repository.ref === "refs/heads/main") {
+            reportBuildFailureInSlack(context, () => process.exit(1))
         } else {
             process.exit(1);
         }
@@ -106,6 +65,8 @@ async function build(context, version) {
     const withInstaller = "with-installer" in buildConfig || masterBuild;
     const noPreview = "no-preview" in buildConfig || publishRelease;
     const registryFacadeHandover = "registry-facade-handover" in buildConfig;
+    const storage = buildConfig["storage"] || "";
+    const withIntegrationTests = buildConfig["with-integration-tests"] == "true";
     werft.log("job config", JSON.stringify({
         buildConfig,
         version,
@@ -117,6 +78,8 @@ async function build(context, version) {
         dynamicCPULimits,
         noPreview,
         registryFacadeHandover,
+        storage: storage,
+        withIntegrationTests,
     }));
 
     /**
@@ -140,9 +103,38 @@ async function build(context, version) {
     }
     exec(`leeway build --werft=true -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo}`, buildEnv);
     if (publishRelease) {
-        publishHelmChart("gcr.io/gitpod-io/self-hosted");
-        exec(`leeway run --werft=true install/installer:publish-as-latest -Dversion=${version} -DimageRepoBase=${imageRepo}`)
-        exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
+        try {
+            werft.phase("publish", "checking version semver compliance...");
+            if (!semver.valid(version)) {
+                // make this an explicit error as early as possible. Is required by helm Charts.yaml/version
+                throw new Error(`'${version}' is not semver compliant and thus cannot used for Self-Hosted releases!`)
+            }
+
+            werft.phase("publish", "publishing docker images...");
+            exec(`leeway run --werft=true install/installer:publish-as-latest -Dversion=${version} -DimageRepoBase=${imageRepo}`);
+
+            werft.phase("publish", "publishing Helm chart...");
+            publishHelmChart("gcr.io/gitpod-io/self-hosted", version);
+
+            werft.phase("publish", `preparing GitHub release files...`);
+            const releaseFilesTmpDir = exec("mktemp -d", { silent: true }).stdout.trim();
+            const releaseTarName = "release.tar.gz";
+            exec(`leeway build --werft=true chart:release-tars -Dversion=${version} -DimageRepoBase=${imageRepo} --save ${releaseFilesTmpDir}/${releaseTarName}`);
+            exec(`cd ${releaseFilesTmpDir} && tar xzf ${releaseTarName} && rm -f ${releaseTarName}`);
+
+            werft.phase("publish", `publishing GitHub release ${version}...`);
+            const prereleaseFlag = semver.prerelease(version) !== null ? "-prerelease" : "";
+            const tag = `v${version}`;
+            const releaseBranch = context.Repository.ref;
+            const description = `Gitpod Self-Hosted ${version}<br/><br/>Docs: https://www.gitpod.io/docs/self-hosted/latest/self-hosted/`;
+            exec(`github-release ${prereleaseFlag} gitpod-io/gitpod ${tag} ${releaseBranch} '${description}' "${releaseFilesTmpDir}/*"`);
+
+            werft.done('publish');
+        } catch (err) {
+            werft.fail('publish', err);
+        } finally {
+            exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
+        }
     }
     // gitTag(`build/${version}`);
 
@@ -160,21 +152,35 @@ async function build(context, version) {
     if (noPreview) {
         werft.phase("deploy", "not deploying");
         console.log("no-preview or publish-release is set");
-    } else {
-        await deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover);
+
+        return
     }
-}
-
-
-/**
- * Deploy dev
- */
-async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover) {
-    werft.phase("deploy", "deploying to dev");
+    
     const destname = version.split(".")[0];
     const namespace = `staging-${destname}`;
     const domain = `${destname}.staging.gitpod-dev.com`;
     const url = `https://${domain}`;
+    const deploymentConfig = {
+      version,
+      destname,
+      namespace,
+      domain,
+      url,
+    };
+    await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover, storage);
+
+    if (withIntegrationTests) {
+        exec(`git config --global user.name "${context.Owner}"`);
+        exec(`werft run --follow-with-prefix="int-tests: " --remote-job-path .werft/run-integration-tests.yaml -a version=${deploymentConfig.version} -a namespace=${deploymentConfig.namespace} github`);
+    }
+}
+
+/**
+ * Deploy dev
+ */
+async function deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover, storage) {
+    werft.phase("deploy", "deploying to dev");
+    const { version, destname, namespace, domain, url } = deploymentConfig;
     const wsdaemonPort = `1${Math.floor(Math.random()*1000)}`;
     const registryProxyPort = `2${Math.floor(Math.random()*1000)}`;
     const registryNodePort = `${30000 + Math.floor(Math.random()*1000)}`;
@@ -258,7 +264,6 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
     flags+=` --set components.wsDaemon.servicePort=${wsdaemonPort}`;
     flags+=` --set components.wsDaemon.registryProxyPort=${registryProxyPort}`;
     flags+=` --set components.registryFacade.ports.registry.servicePort=${registryNodePort}`;
-    flags+=` --set ingressMode=${context.Annotations.ingressMode || "hosts"}`;
     workspaceFeatureFlags.forEach((f, i) => {
         flags+=` --set components.server.defaultFeatureFlags[${i}]='${f}'`
     })
@@ -284,6 +289,11 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
     try {
         shell.cd("chart");
         werft.log('helm', 'installing Gitpod');
+
+        if (storage === "gcp") {
+            exec("kubectl get secret gcp-sa-cloud-storage-dev-sync-key -n werft -o yaml | yq d - metadata | yq w - metadata.name remote-storage-gcloud | kubectl apply -f -")
+            flags+=` -f ../.werft/values.dev.gcp-storage.yaml`;
+        }
         
         exec(`helm dependencies up`);
         exec(`/usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/values.dev.yaml ${flags} gitpod .`);
@@ -291,7 +301,7 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
         werft.log('helm', 'installing Jaeger');
         exec(`/usr/local/bin/helm3 upgrade --install -f ../dev/charts/jaeger/values.yaml ${flags} jaeger ../dev/charts/jaeger`);
         werft.log('helm', 'installing Sweeper');
-        exec(`/usr/local/bin/helm3 upgrade --install --set image.version=${version} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:master" sweeper ../dev/charts/sweeper`);
+        exec(`/usr/local/bin/helm3 upgrade --install --set image.version=${version} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" sweeper ../dev/charts/sweeper`);
 
         werft.log('helm', 'done');
         werft.done('helm');
@@ -318,7 +328,7 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
 /**
  * Publish Charts
  */
-async function publishHelmChart(imageRepoBase) {
+async function publishHelmChart(imageRepoBase, version) {
     werft.phase("publish-charts", "Publish charts");
     [
         "gcloud config set project gitpod-io",

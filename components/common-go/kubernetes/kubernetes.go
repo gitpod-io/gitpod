@@ -16,12 +16,11 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sirupsen/logrus"
-
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/util/flowcontrol"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 const (
@@ -73,8 +72,6 @@ func GetOWIFromObject(pod *metav1.ObjectMeta) logrus.Fields {
 type UnlimitedRateLimiter struct {
 }
 
-var typecheck flowcontrol.RateLimiter = &UnlimitedRateLimiter{}
-
 // TryAccept returns true if a token is taken immediately. Otherwise,
 // it returns false.
 func (u *UnlimitedRateLimiter) TryAccept() bool {
@@ -83,12 +80,10 @@ func (u *UnlimitedRateLimiter) TryAccept() bool {
 
 // Accept returns once a token becomes available.
 func (u *UnlimitedRateLimiter) Accept() {
-	return
 }
 
 // Stop stops the rate limiter, subsequent calls to CanAccept will return false
 func (u *UnlimitedRateLimiter) Stop() {
-	return
 }
 
 // QPS returns QPS of this rate limiter
@@ -124,7 +119,24 @@ func IsGhostWorkspace(pod *corev1.Pod) bool {
 	return ok && val == "ghost"
 }
 
+func IsRegularWorkspace(pod *corev1.Pod) bool {
+	if !IsWorkspace(pod) {
+		return false
+	}
+
+	val, ok := pod.ObjectMeta.Labels[TypeLabel]
+	return ok && val == "regular"
+}
+
 func IsNonGhostWorkspace(pod *corev1.Pod) bool {
 	return IsWorkspace(pod) &&
 		!IsGhostWorkspace(pod)
+}
+
+func GetWorkspaceType(pod *corev1.Pod) string {
+	val, ok := pod.ObjectMeta.Labels[TypeLabel]
+	if !ok {
+		return ""
+	}
+	return val
 }

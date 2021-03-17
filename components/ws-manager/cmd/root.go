@@ -7,7 +7,6 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -76,7 +75,7 @@ func init() {
 }
 
 func getConfig() *config {
-	ctnt, err := ioutil.ReadFile(cfgFile)
+	ctnt, err := os.ReadFile(cfgFile)
 	if err != nil {
 		log.WithError(err).Error("cannot read configuration. Maybe missing --config?")
 		os.Exit(1)

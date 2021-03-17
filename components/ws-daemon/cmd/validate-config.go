@@ -7,11 +7,12 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // can be used with the helm-template like so:
@@ -21,7 +22,7 @@ var validateConfigCmd = &cobra.Command{
 	Use:   "validate-config",
 	Short: "reads a ws-daemon configuration from STDIN and validates it",
 	Run: func(cmd *cobra.Command, args []string) {
-		ctnt, err := ioutil.ReadAll(os.Stdin)
+		ctnt, err := io.ReadAll(os.Stdin)
 		if err != nil {
 			log.WithError(err).Fatal("cannot read configuration")
 		}
@@ -35,7 +36,7 @@ var validateConfigCmd = &cobra.Command{
 
 		enc := json.NewEncoder(os.Stdout)
 		enc.SetIndent("", "  ")
-		enc.Encode(cfg)
+		_ = enc.Encode(cfg)
 	},
 }
 

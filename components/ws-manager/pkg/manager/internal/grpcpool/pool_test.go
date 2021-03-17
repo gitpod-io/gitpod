@@ -6,14 +6,14 @@ package grpcpool_test
 
 import (
 	"fmt"
-	"google.golang.org/grpc/connectivity"
 	"net"
 	"testing"
 	"time"
 
-	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/grpcpool"
-
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/connectivity"
+
+	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/grpcpool"
 )
 
 // go tests does execute tests concurrently (each test a goroutine)

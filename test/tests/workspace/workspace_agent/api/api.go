@@ -26,3 +26,15 @@ type WriteFileRequest struct {
 // WriteFileResponse is the response for WriteFile
 type WriteFileResponse struct {
 }
+
+type ExecRequest struct {
+	Dir     string
+	Command string
+	Args    []string
+}
+
+type ExecResponse struct {
+	ExitCode int
+	Stdout   string
+	Stderr   string
+}

@@ -2,9 +2,12 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM alpine:latest
+FROM alpine:3.13
 
-RUN apk add --no-cache git bash ca-certificates
+# Ensure latest packages are present, like security updates.
+RUN  apk upgrade --no-cache \
+  && apk add --no-cache git bash ca-certificates
+
 COPY components-image-builder--app/image-builder /app/
 RUN chmod +x /app/image-builder
 

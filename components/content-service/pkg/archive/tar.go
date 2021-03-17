@@ -12,12 +12,14 @@ import (
 	"os/exec"
 	"path"
 	"sort"
+	"syscall"
 	"time"
+
+	"github.com/opentracing/opentracing-go"
+	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/opentracing/opentracing-go"
-	"golang.org/x/xerrors"
 )
 
 // TarConfig configures tarbal creation/extraction
@@ -60,25 +62,29 @@ func WithGIDMapping(mappings []IDMapping) TarOption {
 
 // ExtractTarbal extracts an OCI compatible tar file src to the folder dst, expecting the overlay whiteout format
 func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOption) (err error) {
+	//nolint:staticcheck,ineffassign
+	span, ctx := opentracing.StartSpanFromContext(ctx, "extractTarbal")
+	span.LogKV("src", src, "dst", dst)
+	defer tracing.FinishSpan(span, &err)
+
 	var cfg TarConfig
 	start := time.Now()
 	for _, opt := range opts {
 		opt(&cfg)
 	}
 
-	//nolint:staticcheck,ineffassign
-	span, ctx := opentracing.StartSpanFromContext(ctx, "extractTarbal")
-	span.LogKV("src", src, "dst", dst)
-	defer tracing.FinishSpan(span, &err)
-
 	pr, pw := io.Pipe()
 	src = io.TeeReader(src, pw)
 	tarReader := tar.NewReader(pr)
+
 	type Info struct {
-		UID, GID int
+		UID, GID  int
+		IsSymlink bool
 	}
+
 	finished := make(chan bool)
 	m := make(map[string]Info)
+
 	go func() {
 		defer close(finished)
 		for {
@@ -87,23 +93,27 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 				finished <- true
 				return
 			}
+
 			if err != nil {
 				log.WithError(err).Error("error reading tar")
 				return
-			} else {
-				m[hdr.Name] = Info{
-					UID: hdr.Uid,
-					GID: hdr.Gid,
-				}
+			}
+
+			m[hdr.Name] = Info{
+				UID:       hdr.Uid,
+				GID:       hdr.Gid,
+				IsSymlink: (hdr.Linkname != ""),
 			}
 		}
 	}()
 
-	tarcmd := exec.Command("tar", "x")
+	// Be explicit about the tar flags. We want to restore the exact content without changes
+	tarcmd := exec.Command("tar", "--extract", "--preserve-permissions")
 	tarcmd.Dir = dst
 	tarcmd.Stdin = src
 
-	msg, err := tarcmd.CombinedOutput()
+	var msg []byte
+	msg, err = tarcmd.CombinedOutput()
 	if err != nil {
 		return xerrors.Errorf("tar %s: %s", dst, err.Error()+";"+string(msg))
 	}
@@ -115,15 +125,23 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 		paths = append(paths, path)
 	}
 	sort.Sort(sort.Reverse(sort.StringSlice(paths)))
+
+	// We need to remap the UID and GID between the host and the container to avoid permission issues.
 	for _, p := range paths {
 		v := m[p]
 		uid := toHostID(v.UID, cfg.UIDMaps)
 		gid := toHostID(v.GID, cfg.GIDMaps)
-		err = os.Lchown(path.Join(dst, p), uid, gid)
+
+		if v.IsSymlink {
+			continue
+		}
+
+		err = remapFile(path.Join(dst, p), uid, gid)
 		if err != nil {
 			log.WithError(err).WithField("uid", uid).WithField("gid", gid).WithField("path", p).Warn("cannot chown")
 		}
 	}
+
 	log.WithField("duration", time.Since(start).Milliseconds()).Debug("untar complete")
 	return nil
 }
@@ -136,4 +154,38 @@ func toHostID(containerID int, idMap []IDMapping) int {
 		}
 	}
 	return containerID
+}
+
+// remapFile changes the UID and GID of a file preserving existing file mode bits.
+func remapFile(name string, uid, gid int) error {
+	// current info of the file before any change
+	fileInfo, err := os.Stat(name)
+	if err != nil {
+		return err
+	}
+
+	// nothing to do for symlinks
+	if fileInfo.Mode()&os.ModeSymlink == os.ModeSymlink {
+		return nil
+	}
+
+	// changing UID or GID can break files with suid/sgid
+	err = os.Lchown(name, uid, gid)
+	if err != nil {
+		return err
+	}
+
+	// restore original permissions
+	err = os.Chmod(name, fileInfo.Mode())
+	if err != nil {
+		return err
+	}
+
+	// restore file times
+	fileTime := fileInfo.Sys().(*syscall.Stat_t)
+	return os.Chtimes(name, timespecToTime(fileTime.Atim), timespecToTime(fileTime.Mtim))
+}
+
+func timespecToTime(ts syscall.Timespec) time.Time {
+	return time.Unix(int64(ts.Sec), int64(ts.Nsec))
 }

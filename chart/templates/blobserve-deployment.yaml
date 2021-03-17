@@ -38,6 +38,7 @@ spec:
         stage: {{ .Values.installation.stage }}
         gitpod.io/nodeService: blobserve
       annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
         prometheus.io/scrape: 'true'
         prometheus.io/path: "/metrics"
         prometheus.io/port: '9500'

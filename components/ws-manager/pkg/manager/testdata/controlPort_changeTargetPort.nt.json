@@ -3,6 +3,7 @@
     "portsService": {
         "metadata": {
             "name": "ws-prefixthis-ports",
+            "namespace": "default",
             "creationTimestamp": null,
             "labels": {
                 "gpwsman": "true",
@@ -16,7 +17,7 @@
                     "name": "p3000",
                     "protocol": "TCP",
                     "port": 3000,
-                    "targetPort": 0
+                    "targetPort": 3000
                 }
             ],
             "selector": {

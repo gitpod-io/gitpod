@@ -9,8 +9,9 @@ import (
 	"io"
 	"testing"
 
-	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 )
 
 func TestObjectAccessToNonExistentObj(t *testing.T) {

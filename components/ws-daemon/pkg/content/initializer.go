@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -17,19 +16,18 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/opencontainers/runtime-spec/specs-go"
+	"github.com/opentracing/opentracing-go"
+	"github.com/sirupsen/logrus"
+	"golang.org/x/xerrors"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	wsinit "github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
-	"github.com/sirupsen/logrus"
-
-	"github.com/golang/protobuf/proto"
-	"github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/opentracing/opentracing-go"
-
-	"golang.org/x/xerrors"
 )
 
 // RunInitializerOpts configure RunInitializer
@@ -56,7 +54,7 @@ var (
 func collectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps storage.PresignedAccess, workspaceOwner string, initializer *csapi.WorkspaceInitializer) (rc map[string]storage.DownloadInfo, err error) {
 	rc = make(map[string]storage.DownloadInfo)
 
-	backup, err := ps.SignDownload(ctx, rs.Bucket(workspaceOwner), rs.BackupObject(storage.DefaultBackup))
+	backup, err := ps.SignDownload(ctx, rs.Bucket(workspaceOwner), rs.BackupObject(storage.DefaultBackup), &storage.SignedURLOptions{})
 	if err == storage.ErrNotFound {
 		// no backup found - that's fine
 	} else if err != nil {
@@ -70,7 +68,7 @@ func collectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps stora
 		if err != nil {
 			return nil, err
 		}
-		info, err := ps.SignDownload(ctx, bkt, obj)
+		info, err := ps.SignDownload(ctx, bkt, obj, &storage.SignedURLOptions{})
 		if err == storage.ErrNotFound {
 			return nil, errCannotFindSnapshot
 		}
@@ -85,7 +83,7 @@ func collectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps stora
 		if err != nil {
 			return nil, err
 		}
-		info, err := ps.SignDownload(ctx, bkt, obj)
+		info, err := ps.SignDownload(ctx, bkt, obj, &storage.SignedURLOptions{})
 		if err == storage.ErrNotFound {
 			// no prebuild found - that's fine
 		} else if err != nil {
@@ -125,7 +123,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 		opts.UID = wsinit.GitpodUID
 	}
 
-	tmpdir, err := ioutil.TempDir("", "content-init")
+	tmpdir, err := os.MkdirTemp("", "content-init")
 	if err != nil {
 		return err
 	}
@@ -150,7 +148,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(filepath.Join(tmpdir, "rootfs", "content.json"), fc, 0644)
+	err = os.WriteFile(filepath.Join(tmpdir, "rootfs", "content.json"), fc, 0644)
 	if err != nil {
 		return err
 	}
@@ -164,7 +162,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 
 	cfgFN := filepath.Join(tmpdir, "config.json")
 	var spec specs.Spec
-	fc, err = ioutil.ReadFile(cfgFN)
+	fc, err = os.ReadFile(cfgFN)
 	if err != nil {
 		return err
 	}
@@ -223,7 +221,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(cfgFN, fc, 0644)
+	err = os.WriteFile(cfgFN, fc, 0644)
 	if err != nil {
 		return err
 	}
@@ -250,13 +248,13 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 
 // RunInitializerChild is the function that's expected to run when we call `/proc/self/exe content-initializer`
 func RunInitializerChild() (err error) {
-	fc, err := ioutil.ReadFile("/content.json")
+	fc, err := os.ReadFile("/content.json")
 	if err != nil {
 		return err
 	}
 
 	var initmsg msgInitContent
-	json.Unmarshal(fc, &initmsg)
+	err = json.Unmarshal(fc, &initmsg)
 	if err != nil {
 		return err
 	}

@@ -7,7 +7,7 @@ package supervisor
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math"
 	"net/http"
 	"net/url"
@@ -16,8 +16,9 @@ import (
 	"time"
 
 	env "github.com/Netflix/go-env"
-	"github.com/gitpod-io/gitpod/supervisor/api"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
 const supervisorConfigFile = "supervisor-config.json"
@@ -25,8 +26,7 @@ const supervisorConfigFile = "supervisor-config.json"
 // Supervisor's configuration is dictated by three different lifecycles/sources:
 //   1. supervisor (static):
 //                  there's some configuration that lives with supervisor and its "installation",
-//                  For example the IDE config location depends on if supervisor comes from the
-//                  node-daemon or is served via registry-facade.
+//                  For example the IDE config location depends on if supervisor is served via registry-facade.
 //   2. IDE: Gitpod supports different IDEs, all of which have different configuration needs.
 //   3. Workspace: which depends on the individual workspace, its content and configuration.
 
@@ -147,6 +147,9 @@ func (c IDEConfig) Validate() error {
 // WorkspaceConfig is the workspace specific configuration. This config is drawn exclusively
 // from environment variables.
 type WorkspaceConfig struct {
+	// WorkspaceContextURL is an URL for which workspace was created.
+	WorkspaceContextURL string `env:"GITPOD_WORKSPACE_CONTEXT_URL"`
+
 	// IDEPort is the port at which the IDE will need to run on. This is not an IDE config
 	// because Gitpod determines this port, not the IDE.
 	IDEPort int `env:"GITPOD_THEIA_PORT"`
@@ -260,7 +263,7 @@ func (c WorkspaceConfig) GetTokens(downloadOTS bool) ([]WorkspaceGitpodToken, er
 			if err != nil {
 				return nil, fmt.Errorf("cannot download token OTS: %w", err)
 			}
-			tkn, err := ioutil.ReadAll(resp.Body)
+			tkn, err := io.ReadAll(resp.Body)
 			resp.Body.Close()
 			if err != nil {
 				return nil, fmt.Errorf("cannot download token OTS: %w", err)
@@ -339,7 +342,7 @@ func loadStaticConfigFromFile() (*StaticConfig, error) {
 	}
 
 	loc = filepath.Join(filepath.Dir(loc), supervisorConfigFile)
-	fc, err := ioutil.ReadFile(loc)
+	fc, err := os.ReadFile(loc)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot read supervisor config file %s: %w", loc, err)
 	}

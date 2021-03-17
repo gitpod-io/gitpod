@@ -9,13 +9,13 @@ package hosts
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 	"syscall"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // Host maps an IP address to a hostname
@@ -155,7 +155,7 @@ func (g *DirectController) updateHostsFile(inc <-chan hostUpdate) {
 			if err != nil {
 				return xerrors.Errorf("cannot jump to start of hosts file: %w", err)
 			}
-			fc, err := ioutil.ReadAll(g.hostsFD)
+			fc, err := io.ReadAll(g.hostsFD)
 			if err != nil {
 				return xerrors.Errorf("cannot read hosts file: %w", err)
 			}

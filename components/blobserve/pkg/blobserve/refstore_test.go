@@ -12,7 +12,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"sync"
 	"testing"
@@ -492,5 +491,5 @@ func (f *fakeFetcher) Fetch(ctx context.Context, desc ociv1.Descriptor) (io.Read
 		return nil, err
 	}
 
-	return ioutil.NopCloser(bytes.NewReader(c)), nil
+	return io.NopCloser(bytes.NewReader(c)), nil
 }

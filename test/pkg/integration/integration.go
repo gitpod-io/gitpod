@@ -11,7 +11,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/rpc"
@@ -41,18 +40,22 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 )
 
-const cfgflagDefault = "$HOME/.kube/config"
+const cfgFlagDefault = "$HOME/.kube/config"
 
 var (
-	cfgflag = flag.String("kubeconfig", cfgflagDefault, "path to the kubeconfig file, use \"in-cluster\" to make use of in cluster Kubernetes config")
+	cfgFlag       = flag.String("kubeconfig", cfgFlagDefault, "path to the kubeconfig file, use \"in-cluster\" to make use of in cluster Kubernetes config")
+	namespaceFlag = flag.String("namespace", "", "namespace to execute the test against. Defaults to the one configured in \"kubeconfig\".")
+	usernameFlag  = flag.String("username", "", "username to execute the tests with. Chooses one automatically if left blank.")
 )
 
 // NewTest produces a new integration test instance
-func NewTest(t *testing.T) *Test {
+func NewTest(t *testing.T, timeout time.Duration) (*Test, context.Context) {
 	flag.Parse()
+	kubeconfig := *cfgFlag
+	namespaceOverride := *namespaceFlag
+	username := *usernameFlag
 
-	kubeconfig := *cfgflag
-	if kubeconfig == cfgflagDefault {
+	if kubeconfig == cfgFlagDefault {
 		home, err := os.UserHomeDir()
 		if err != nil {
 			t.Fatal("cannot determine user home dir", err)
@@ -71,12 +74,20 @@ func NewTest(t *testing.T) *Test {
 		t.Fatal("cannot connecto Kubernetes", err)
 	}
 
+	if namespaceOverride != "" {
+		ns = namespaceOverride
+	}
+
+	ctx, ctxCancel := context.WithTimeout(context.Background(), timeout)
 	return &Test{
 		t:          t,
 		clientset:  client,
 		restConfig: restConfig,
 		namespace:  ns,
-	}
+		ctx:        ctx,
+		ctxCancel:  ctxCancel,
+		username:   username,
+	}, ctx
 }
 
 // GetKubeconfig loads kubernetes connection config from a kubeconfig file
@@ -88,7 +99,7 @@ func getKubeconfig(kubeconfig string) (res *rest.Config, namespace string, err e
 		}
 
 		var data []byte
-		data, err = ioutil.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
+		data, err = os.ReadFile("/var/run/secrets/kubernetes.io/serviceaccount/namespace")
 		if err != nil {
 			return
 		}
@@ -119,23 +130,35 @@ type Test struct {
 	clientset  kubernetes.Interface
 	restConfig *rest.Config
 	namespace  string
+	ctx        context.Context
 
-	closer []func() error
-	api    *ComponentAPI
+	closer    []func() error
+	ctxCancel func()
+	api       *ComponentAPI
+
+	// username contains the string passed to the test per flag. Might be empty.
+	username string
 }
 
 // Done must be called after the test has run. It cleans up instrumentation
 // and modifications made by the test.
-func (t *Test) Done() {
+func (it *Test) Done() {
+	it.ctxCancel()
+
 	// Much "defer", we run the closer in reversed order. This way, we can
 	// append to this list quite naturally, and still break things down in
 	// the correct order.
-	for i := len(t.closer) - 1; i >= 0; i-- {
-		err := t.closer[i]()
+	for i := len(it.closer) - 1; i >= 0; i-- {
+		err := it.closer[i]()
 		if err != nil {
-			t.t.Logf("cleanup failed: %q", err)
+			it.t.Logf("cleanup failed: %q", err)
 		}
 	}
+}
+
+// Username returns the username passed to the test per flag. Might be empty.
+func (it *Test) Username() string {
+	return it.username
 }
 
 // InstrumentOption configures an Instrument call
@@ -166,7 +189,7 @@ func WithInstanceID(instanceID string) InstrumentOption {
 // The binary is copied to the destination pod, started and port-forwarded. Then we
 // create an RPC client.
 // Test.Done() will stop the agent and port-forwarding.
-func (t *Test) Instrument(component ComponentType, agentName string, opts ...InstrumentOption) (agent *rpc.Client, err error) {
+func (it *Test) Instrument(component ComponentType, agentName string, opts ...InstrumentOption) (agent *rpc.Client, err error) {
 	var options instrumentOptions
 	for _, o := range opts {
 		err := o(&options)
@@ -178,21 +201,21 @@ func (t *Test) Instrument(component ComponentType, agentName string, opts ...Ins
 	expectedBinaryName := fmt.Sprintf("gitpod-integration-test-%s-agent", agentName)
 	agentLoc, _ := exec.LookPath(expectedBinaryName)
 	if agentLoc == "" {
-		agentLoc, err = t.buildAgent(agentName)
+		agentLoc, err = it.buildAgent(agentName)
 		if err != nil {
 			return nil, err
 		}
 		defer os.Remove(agentLoc)
 
-		t.t.Log("agent compiled at", agentLoc)
+		it.t.Log("agent compiled at", agentLoc)
 	}
 
-	podName, containerName, err := t.selectPod(component, options.SPO)
+	podName, containerName, err := it.selectPod(component, options.SPO)
 	if err != nil {
 		return nil, err
 	}
 	tgtFN := filepath.Base(agentLoc)
-	err = t.uploadAgent(agentLoc, tgtFN, podName, containerName)
+	err = it.uploadAgent(agentLoc, tgtFN, podName, containerName)
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +228,7 @@ func (t *Test) Instrument(component ComponentType, agentName string, opts ...Ins
 	execErrs := make(chan error, 1)
 	go func() {
 		defer close(execErrs)
-		execErr := t.executeAgent(filepath.Join("/tmp", tgtFN), podName, containerName, localAgentPort)
+		execErr := it.executeAgent(filepath.Join("/tmp", tgtFN), podName, containerName, localAgentPort)
 		if err != nil {
 			execErrs <- execErr
 		}
@@ -222,7 +245,7 @@ func (t *Test) Instrument(component ComponentType, agentName string, opts ...Ins
 	ctx, cancel := context.WithCancel(context.Background())
 	defer func() {
 		if err == nil {
-			t.closer = append(t.closer, func() error {
+			it.closer = append(it.closer, func() error {
 				cancel()
 				return nil
 			})
@@ -230,7 +253,7 @@ func (t *Test) Instrument(component ComponentType, agentName string, opts ...Ins
 			cancel()
 		}
 	}()
-	fwdReady, fwdErr := forwardPort(ctx, t.restConfig, t.namespace, podName, strconv.Itoa(localAgentPort))
+	fwdReady, fwdErr := forwardPort(ctx, it.restConfig, it.namespace, podName, strconv.Itoa(localAgentPort))
 	select {
 	case <-fwdReady:
 	case err = <-execErrs:
@@ -257,7 +280,7 @@ func (t *Test) Instrument(component ComponentType, agentName string, opts ...Ins
 		return nil, err
 	}
 
-	t.closer = append(t.closer, func() error {
+	it.closer = append(it.closer, func() error {
 		err := res.Call(MethodTestAgentShutdown, new(TestAgentShutdownRequest), new(TestAgentShutdownResponse))
 		if err != nil && strings.Contains(err.Error(), "connection is shut down") {
 			return nil
@@ -342,12 +365,12 @@ func forwardPort(ctx context.Context, config *rest.Config, namespace, pod, port 
 	return
 }
 
-func (t *Test) executeAgent(tgtPath string, pod, container string, port int) (err error) {
-	restClient := t.clientset.CoreV1().RESTClient()
+func (it *Test) executeAgent(tgtPath string, pod, container string, port int) (err error) {
+	restClient := it.clientset.CoreV1().RESTClient()
 	req := restClient.Post().
 		Resource("pods").
 		Name(pod).
-		Namespace(t.namespace).
+		Namespace(it.namespace).
 		SubResource("exec").
 		Param("container", container)
 	req.VersionedParams(&corev1.PodExecOptions{
@@ -359,7 +382,7 @@ func (t *Test) executeAgent(tgtPath string, pod, container string, port int) (er
 		TTY:       true,
 	}, scheme.ParameterCodec)
 
-	exec, err := remotecommand.NewSPDYExecutor(t.restConfig, "POST", req.URL())
+	exec, err := remotecommand.NewSPDYExecutor(it.restConfig, "POST", req.URL())
 	if err != nil {
 		return err
 	}
@@ -371,7 +394,7 @@ func (t *Test) executeAgent(tgtPath string, pod, container string, port int) (er
 	})
 }
 
-func (t *Test) uploadAgent(srcFN, tgtFN string, pod, container string) (err error) {
+func (it *Test) uploadAgent(srcFN, tgtFN string, pod, container string) (err error) {
 	stat, err := os.Stat(srcFN)
 	if err != nil {
 		return xerrors.Errorf("cannot upload agent: %w", err)
@@ -384,11 +407,11 @@ func (t *Test) uploadAgent(srcFN, tgtFN string, pod, container string) (err erro
 
 	tarIn, tarOut := io.Pipe()
 
-	restClient := t.clientset.CoreV1().RESTClient()
+	restClient := it.clientset.CoreV1().RESTClient()
 	req := restClient.Post().
 		Resource("pods").
 		Name(pod).
-		Namespace(t.namespace).
+		Namespace(it.namespace).
 		SubResource("exec").
 		Param("container", container)
 	req.VersionedParams(&corev1.PodExecOptions{
@@ -400,7 +423,7 @@ func (t *Test) uploadAgent(srcFN, tgtFN string, pod, container string) (err erro
 		TTY:       false,
 	}, scheme.ParameterCodec)
 
-	exec, err := remotecommand.NewSPDYExecutor(t.restConfig, "POST", req.URL())
+	exec, err := remotecommand.NewSPDYExecutor(it.restConfig, "POST", req.URL())
 	if err != nil {
 		return xerrors.Errorf("cannot upload agent: %w", err)
 	}
@@ -451,7 +474,7 @@ func (t *Test) buildAgent(name string) (loc string, err error) {
 		return "", err
 	}
 
-	f, err := ioutil.TempFile("", "gitpod-integration-test-*")
+	f, err := os.CreateTemp("", "gitpod-integration-test-*")
 	if err != nil {
 		return "", err
 	}

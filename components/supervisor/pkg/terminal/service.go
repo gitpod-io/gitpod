@@ -14,12 +14,13 @@ import (
 	"time"
 
 	"github.com/creack/pty"
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
 const (
@@ -49,8 +50,6 @@ type MuxTerminalService struct {
 	DefaultWorkdir string
 	DefaultShell   string
 	Env            []string
-
-	tokens map[*Term]string
 }
 
 // RegisterGRPC registers a gRPC service
@@ -86,7 +85,7 @@ func (srv *MuxTerminalService) OpenWithOptions(ctx context.Context, req *api.Ope
 	}
 	cmd.Env = append(srv.Env, "TERM=xterm-color")
 	for key, value := range req.Env {
-		cmd.Env = append(cmd.Env, key+"="+value)
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%v=%v", key, value))
 	}
 	for k, v := range req.Annotations {
 		options.Annotations[k] = v

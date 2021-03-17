@@ -10,9 +10,6 @@ import (
 	"testing"
 	"time"
 
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
-	"github.com/gitpod-io/gitpod/common-go/log"
-
 	"github.com/google/go-cmp/cmp"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -20,6 +17,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	fakek8s "k8s.io/client-go/kubernetes/fake"
+
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 var (
@@ -93,7 +93,15 @@ func TestGatherPotentialNodesFor(t *testing.T) {
 			objs = append(objs, test.Pod)
 
 			client := fakek8s.NewSimpleClientset(objs...)
-			scheduler, err := NewScheduler(Configuration{}, client)
+			scheduler, err := NewScheduler(Configuration{
+				Namespace:     testNamespace,
+				SchedulerName: "test-ws-scheduler",
+				StrategyName:  "DensityAndExperience",
+				DensityAndExperienceConfig: &DensityAndExperienceConfig{
+					WorkspaceFreshPeriodSeconds: 120,
+					NodeFreshWorkspaceLimit:     2,
+				},
+			}, client)
 			if err != nil {
 				t.Errorf("unexpected error: %+q", err)
 				return
@@ -101,6 +109,7 @@ func TestGatherPotentialNodesFor(t *testing.T) {
 
 			ctx, cancel := context.WithCancel(context.Background())
 			scheduler.startInformer(ctx)
+
 			candidates, err := scheduler.gatherPotentialNodesFor(context.Background(), test.Pod)
 			cancel()
 
@@ -270,6 +279,36 @@ func TestRequiredServices(t *testing.T) {
 			}),
 			Expectation: []string{"node2"},
 		},
+		{
+			Desc: "require two services - negative, because on is not RUNNING yet",
+			Nodes: []*corev1.Node{
+				createNode("node1", nil),
+				createNode("node2", nil),
+			},
+			Pods: []*corev1.Pod{
+				createPod("some-pod", nil),
+				createPod("some-other-pod", nil),
+				modifyPod(createPod("service", nil), func(p *corev1.Pod) {
+					p.Labels = map[string]string{
+						wsk8s.GitpodNodeServiceLabel: "service",
+					}
+					p.Spec.NodeName = "node2"
+				}),
+				modifyPod(createPod("another", nil), func(p *corev1.Pod) {
+					p.Labels = map[string]string{
+						wsk8s.GitpodNodeServiceLabel: "another",
+					}
+					p.Spec.NodeName = "node2"
+					p.Status.Phase = corev1.PodPending
+				}),
+			},
+			TargetPod: modifyPod(createPod("target-pod", nil), func(p *corev1.Pod) {
+				p.Annotations = map[string]string{
+					wsk8s.RequiredNodeServicesAnnotation: "service,another",
+				}
+			}),
+			Expectation: nil,
+		},
 	}
 
 	for _, test := range tests {
@@ -283,7 +322,15 @@ func TestRequiredServices(t *testing.T) {
 			}
 
 			client := fakek8s.NewSimpleClientset(objs...)
-			scheduler, err := NewScheduler(Configuration{}, client)
+			scheduler, err := NewScheduler(Configuration{
+				Namespace:     testNamespace,
+				SchedulerName: "test-ws-scheduler",
+				StrategyName:  "DensityAndExperience",
+				DensityAndExperienceConfig: &DensityAndExperienceConfig{
+					WorkspaceFreshPeriodSeconds: 120,
+					NodeFreshWorkspaceLimit:     2,
+				},
+			}, client)
 			if err != nil {
 				t.Errorf("unexpected error: %+q", err)
 				return
@@ -291,6 +338,7 @@ func TestRequiredServices(t *testing.T) {
 
 			ctx, cancel := context.WithCancel(context.Background())
 			scheduler.startInformer(ctx)
+
 			state, err := scheduler.buildState(ctx, test.TargetPod, wsk8s.IsNonGhostWorkspace(test.TargetPod))
 			cancel()
 			if err != nil {
@@ -341,7 +389,12 @@ func createPod(name string, tolerations []corev1.Toleration) *corev1.Pod {
 					Type:   corev1.ContainersReady,
 					Status: corev1.ConditionTrue,
 				},
+				{
+					Type:   corev1.PodReady,
+					Status: corev1.ConditionTrue,
+				},
 			},
+			Phase: corev1.PodRunning,
 		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{

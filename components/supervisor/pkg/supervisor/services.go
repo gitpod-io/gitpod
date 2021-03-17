@@ -7,20 +7,20 @@ package supervisor
 import (
 	"context"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	csapi "github.com/gitpod-io/gitpod/content-service/api"
-	"github.com/gitpod-io/gitpod/supervisor/api"
-
-	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
 	"github.com/golang/protobuf/ptypes"
-
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/supervisor/api"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
 )
 
 // RegisterableService can register a service
@@ -250,6 +250,44 @@ type Token struct {
 	Reuse      api.TokenReuse
 }
 
+// Match checks whether token can be reused to access for the given args
+func (tkn *Token) Match(host string, scopes []string) bool {
+	if tkn.Host != host {
+		return false
+	}
+
+	if tkn.ExpiryDate != nil && time.Now().After(*tkn.ExpiryDate) {
+		return false
+	}
+
+	if tkn.Reuse == api.TokenReuse_REUSE_NEVER {
+		return false
+	}
+	if tkn.Reuse == api.TokenReuse_REUSE_EXACTLY && len(tkn.Scope) != len(scopes) {
+		return false
+	}
+
+	if !tkn.HasScopes(scopes) {
+		return false
+	}
+
+	return true
+}
+
+// HasScopes checks whether token can be used to access for the given scopes
+func (tkn *Token) HasScopes(scopes []string) bool {
+	if len(scopes) == 0 {
+		return true
+	}
+	for _, scp := range scopes {
+		if _, ok := tkn.Scope[scp]; !ok {
+			return false
+		}
+	}
+
+	return true
+}
+
 type tokenProvider interface {
 	GetToken(ctx context.Context, req *api.GetTokenRequest) (tkn *Token, err error)
 }
@@ -263,9 +301,19 @@ type InMemoryTokenService struct {
 
 // GetToken returns a token for a host
 func (s *InMemoryTokenService) GetToken(ctx context.Context, req *api.GetTokenRequest) (*api.GetTokenResponse, error) {
-	tkn, ok := s.getCachedTokenFor(req.Kind, req.Host, req.Scope)
-	if ok {
-		return &api.GetTokenResponse{Token: tkn}, nil
+	// filter empty scopes, when no scopes are requested, i.e. empty list [] we return an arbitrary/max scoped token, see Token.HasScopes
+	var scopes []string
+	for _, scope := range req.Scope {
+		scope = strings.TrimSpace(scope)
+		if len(scope) != 0 {
+			scopes = append(scopes, scope)
+		}
+	}
+	req.Scope = scopes
+
+	tkn := s.getCachedTokenFor(req.Kind, req.Host, req.Scope)
+	if tkn != nil {
+		return asGetTokenResponse(tkn), nil
 	}
 
 	s.mu.RLock()
@@ -283,53 +331,30 @@ func (s *InMemoryTokenService) GetToken(ctx context.Context, req *api.GetTokenRe
 		}
 
 		s.cacheToken(req.Kind, tkn)
-		return &api.GetTokenResponse{Token: tkn.Token, User: tkn.User}, nil
+		return asGetTokenResponse(tkn), nil
 	}
 
 	return nil, status.Error(codes.NotFound, "no token available")
 }
 
-func (s *InMemoryTokenService) getCachedTokenFor(kind string, host string, scopes []string) (tkn string, ok bool) {
+func asGetTokenResponse(tkn *Token) *api.GetTokenResponse {
+	resp := &api.GetTokenResponse{Token: tkn.Token, User: tkn.User}
+	for scope := range tkn.Scope {
+		resp.Scope = append(resp.Scope, scope)
+	}
+	return resp
+}
+
+func (s *InMemoryTokenService) getCachedTokenFor(kind string, host string, scopes []string) *Token {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	var res *Token
-	token := s.token[kind]
-	for _, tkn := range token {
-		if tkn.Host != host {
-			continue
+	for _, tkn := range s.token[kind] {
+		if tkn.Match(host, scopes) {
+			return tkn
 		}
-
-		if tkn.ExpiryDate != nil && time.Now().After(*tkn.ExpiryDate) {
-			continue
-		}
-
-		if tkn.Reuse == api.TokenReuse_REUSE_NEVER {
-			continue
-		}
-		if tkn.Reuse == api.TokenReuse_REUSE_EXACTLY && len(tkn.Scope) != len(scopes) {
-			continue
-		}
-
-		hasScopes := true
-		for _, scp := range scopes {
-			if _, ok := tkn.Scope[scp]; !ok {
-				hasScopes = false
-				break
-			}
-		}
-		if !hasScopes {
-			continue
-		}
-
-		res = tkn
-		break
 	}
-
-	if res == nil {
-		return "", false
-	}
-	return res.Token, true
+	return nil
 }
 
 func (s *InMemoryTokenService) cacheToken(kind string, tkn *Token) {
@@ -549,10 +574,11 @@ func (is *InfoService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) 
 // WorkspaceInfo provides information about the workspace
 func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest) (*api.WorkspaceInfoResponse, error) {
 	resp := &api.WorkspaceInfoResponse{
-		CheckoutLocation: is.cfg.RepoRoot,
-		InstanceId:       is.cfg.WorkspaceInstanceID,
-		WorkspaceId:      is.cfg.WorkspaceID,
-		GitpodHost:       is.cfg.GitpodHost,
+		CheckoutLocation:    is.cfg.RepoRoot,
+		InstanceId:          is.cfg.WorkspaceInstanceID,
+		WorkspaceId:         is.cfg.WorkspaceID,
+		GitpodHost:          is.cfg.GitpodHost,
+		WorkspaceContextUrl: is.cfg.WorkspaceContextURL,
 	}
 
 	stat, err := os.Stat(is.cfg.WorkspaceRoot)

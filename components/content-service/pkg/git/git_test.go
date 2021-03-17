@@ -6,7 +6,6 @@ package git
 
 import (
 	"context"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -62,7 +61,7 @@ func TestGitStatus(t *testing.T) {
 				if err := initFromRemote(ctx, c); err != nil {
 					return err
 				}
-				if err := ioutil.WriteFile(filepath.Join(c.Location, "another-file"), []byte{}, 0755); err != nil {
+				if err := os.WriteFile(filepath.Join(c.Location, "another-file"), []byte{}, 0755); err != nil {
 					return err
 				}
 				return nil
@@ -83,7 +82,7 @@ func TestGitStatus(t *testing.T) {
 				if err := initFromRemote(ctx, c); err != nil {
 					return err
 				}
-				if err := ioutil.WriteFile(filepath.Join(c.Location, "first-file"), []byte("foobar"), 0755); err != nil {
+				if err := os.WriteFile(filepath.Join(c.Location, "first-file"), []byte("foobar"), 0755); err != nil {
 					return err
 				}
 				return nil
@@ -104,7 +103,7 @@ func TestGitStatus(t *testing.T) {
 				if err := initFromRemote(ctx, c); err != nil {
 					return err
 				}
-				if err := ioutil.WriteFile(filepath.Join(c.Location, "first-file"), []byte("foobar"), 0755); err != nil {
+				if err := os.WriteFile(filepath.Join(c.Location, "first-file"), []byte("foobar"), 0755); err != nil {
 					return err
 				}
 				if err := c.Git(ctx, "commit", "-a", "-m", "foo"); err != nil {
@@ -131,7 +130,7 @@ func TestGitStatus(t *testing.T) {
 				if err := c.Git(ctx, "checkout", "-b", "otherbranch"); err != nil {
 					return err
 				}
-				if err := ioutil.WriteFile(filepath.Join(c.Location, "first-file"), []byte("foobar"), 0755); err != nil {
+				if err := os.WriteFile(filepath.Join(c.Location, "first-file"), []byte("foobar"), 0755); err != nil {
 					return err
 				}
 				if err := c.Git(ctx, "commit", "-a", "-m", "foo"); err != nil {
@@ -159,7 +158,7 @@ func TestGitStatus(t *testing.T) {
 				if err := os.MkdirAll(filepath.Join(c.Location, "this/is/a/nested/test"), 0755); err != nil {
 					return err
 				}
-				if err := ioutil.WriteFile(filepath.Join(c.Location, "this/is/a/nested/test/first-file"), []byte("foobar"), 0755); err != nil {
+				if err := os.WriteFile(filepath.Join(c.Location, "this/is/a/nested/test/first-file"), []byte("foobar"), 0755); err != nil {
 					return err
 				}
 				return nil
@@ -226,7 +225,7 @@ func TestGitStatus(t *testing.T) {
 }
 
 func newGitClient(ctx context.Context) (*Client, error) {
-	loc, err := ioutil.TempDir("", "gittest")
+	loc, err := os.MkdirTemp("", "gittest")
 	if err != nil {
 		return nil, err
 	}
@@ -254,7 +253,7 @@ func initFromRemote(ctx context.Context, c *Client) error {
 	if err := remote.Git(ctx, "config", "--local", "user.name", "foo bar"); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(filepath.Join(remote.Location, "first-file"), []byte{}, 0755); err != nil {
+	if err := os.WriteFile(filepath.Join(remote.Location, "first-file"), []byte{}, 0755); err != nil {
 		return err
 	}
 	if err := remote.Git(ctx, "add", "first-file"); err != nil {

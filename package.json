@@ -4,7 +4,6 @@
     "version": "0.0.0",
     "license": "UNLICENSED",
     "devDependencies": {
-        "@theia/cli": "next",
         "@types/node": "^10.14.8",
         "concurrently": "^5.3.0",
         "envfile": "^2.1.1",
@@ -16,7 +15,6 @@
     },
     "scripts": {
         "build": "leeway exec --filter-type yarn --components -- yarn build",
-        "theia:dev": "npx run prepare @gitpod/gitpod-ide --include-filtered-dependencies",
         "watch": "leeway exec --package components:all --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput",
         "clean": "leeway exec --filter-type yarn --components -- yarn clean && rm -rf node_modules",
         "upgrade-gitpod-yml-inferrer": "git clone https://github.com/gitpod-io/gitpod-yml-inferrer /tmp/repo && cp /tmp/repo/src/config-* components/theia/packages/gitpod-extension/src/browser/setup/ && rm -rf /tmp/repo"
@@ -27,8 +25,6 @@
             "components/*/typescript",
             "components/*/typescript-*",
             "components/supervisor/frontend",
-            "components/theia/packages/*",
-            "components/theia/*",
             "charts/"
         ]
     },

@@ -23,9 +23,7 @@ replaceEnvVars() {
 
 ### nginx config
 # Clear existing config
-rm -Rf /etc/nginx/conf.d
-rm -Rf /etc/nginx/lib
-rm /etc/nginx/nginx.conf
+cp /usr/local/openresty/nginx/conf/* /etc/nginx
 
 # Copy the gitpod-core config
 # (-L does "unlink" and copies the target, not the symlink)
@@ -72,6 +70,12 @@ if [ -d /mnt/nginx/registry-auth ]; then
     cat /mnt/nginx/registry-auth/password | htpasswd -i -c /etc/nginx/registry-auth.htpasswd `cat /mnt/nginx/registry-auth/user`
 fi
 
+if [ -d /mnt/nginx/ssl-dhparam/ ]; then
+    mkdir -p /etc/nginx/ssl-dhparam;
+    cp -RL /mnt/nginx/ssl-dhparam/*.key /etc/nginx/ssl-dhparam/
+    chmod -R +r /etc/nginx/ssl-dh-param
+fi
+
 echo "Using nginx config:"
 find . -name "*.conf"
 
@@ -79,4 +83,4 @@ find . -name "*.conf"
 cd $ORG_PATH
 
 echo "Starting nginx"
-exec nginx -g "daemon off;"
+exec nginx -c /etc/nginx/nginx.conf -g "daemon off;"

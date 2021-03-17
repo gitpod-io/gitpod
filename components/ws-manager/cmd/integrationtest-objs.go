@@ -8,17 +8,15 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/ws-manager/pkg/test"
-
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
-
 	"k8s.io/apimachinery/pkg/util/yaml"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/ws-manager/pkg/test"
 )
 
 // integrationTestSetupCmd represents the integrationTestSetup command
@@ -81,7 +79,7 @@ func getIntegrationTestPrerequisiteObjects(out io.Writer, namespace, gpHelmChart
 		return nil
 	})
 	eg.Go(func() error {
-		dr := yaml.NewDocumentDecoder(ioutil.NopCloser(ri))
+		dr := yaml.NewDocumentDecoder(io.NopCloser(ri))
 		buf := make([]byte, 100*4096)
 		for {
 			n, err := dr.Read(buf)

@@ -18,7 +18,9 @@
             "deployed": 1
         },
         "runtime": {
-            "node_name": "minikube"
+            "node_name": "minikube",
+            "pod_name": "ws-foobaz",
+            "node_ip": "10.0.2.15"
         },
         "auth": {}
     }

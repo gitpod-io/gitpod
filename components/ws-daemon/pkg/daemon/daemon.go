@@ -9,6 +9,13 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/xerrors"
+	"google.golang.org/grpc"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
@@ -18,19 +25,13 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/hosts"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/resources"
-	"github.com/prometheus/client_golang/prometheus"
-	"golang.org/x/xerrors"
-	"google.golang.org/grpc"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 // NewDaemon produces a new daemon
 func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	clientset, err := newClientSet(config.Runtime.Kubeconfig)
 	if err != nil {
-
+		return nil, err
 	}
 	containerRuntime, err := container.FromConfig(config.Runtime.Container)
 	if err != nil {

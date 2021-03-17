@@ -14,11 +14,11 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/workspacekit/pkg/readarg"
 	"github.com/moby/sys/mountinfo"
 	"golang.org/x/sys/unix"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/workspacekit/pkg/readarg"
 	daemonapi "github.com/gitpod-io/gitpod/ws-daemon/api"
 	libseccomp "github.com/seccomp/libseccomp-golang"
 )

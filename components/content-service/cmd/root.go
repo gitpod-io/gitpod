@@ -9,16 +9,16 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 )
 
 var (
@@ -52,7 +52,7 @@ func Execute() {
 }
 
 func getConfig() *config {
-	ctnt, err := ioutil.ReadFile(configFile)
+	ctnt, err := os.ReadFile(configFile)
 	if err != nil {
 		log.WithError(xerrors.Errorf("cannot read config: %w", err)).Error("cannot read configuration. Maybe missing --config?")
 		os.Exit(1)
@@ -108,7 +108,7 @@ func (c *tlsConfig) ServerOption() (grpc.ServerOption, error) {
 
 	// Create a certificate pool from the certificate authority
 	certPool := x509.NewCertPool()
-	ca, err := ioutil.ReadFile(c.Authority)
+	ca, err := os.ReadFile(c.Authority)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot not read ca certificate: %w", err)
 	}

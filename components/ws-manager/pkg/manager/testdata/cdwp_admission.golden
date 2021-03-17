@@ -2,6 +2,7 @@
     "reason": {
         "metadata": {
             "name": "ws-test",
+            "namespace": "default",
             "creationTimestamp": null,
             "labels": {
                 "app": "gitpod",
@@ -15,7 +16,7 @@
                 "workspaceType": "regular"
             },
             "annotations": {
-                "gitpod.io/requiredNodeServices": "ws-daemon",
+                "gitpod.io/requiredNodeServices": "ws-daemon,registry-facade",
                 "gitpod/admission": "admit_everyone",
                 "gitpod/contentInitializer": "GmcKZXdvcmtzcGFjZXMvY3J5cHRpYy1pZC1nb2VzLWhlcmcvZmQ2MjgwNGItNGNhYi0xMWU5LTg0M2EtNGU2NDUzNzMwNDhlLnRhckBnaXRwb2QtZGV2LXVzZXItY2hyaXN0ZXN0aW5n",
                 "gitpod/id": "test",
@@ -34,13 +35,6 @@
         "spec": {
             "volumes": [
                 {
-                    "name": "vol-this-theia",
-                    "hostPath": {
-                        "path": "/tmp/theia/theia-xyz",
-                        "type": "Directory"
-                    }
-                },
-                {
                     "name": "vol-this-workspace",
                     "hostPath": {
                         "path": "/tmp/workspaces/test",
@@ -51,9 +45,9 @@
             "containers": [
                 {
                     "name": "workspace",
-                    "image": "eu.gcr.io/gitpod-dev/workspace-images/ac1c0755007966e4d6e090ea821729ac747d22ac/eu.gcr.io/gitpod-dev/workspace-base-images/github.com/typefox/gitpod:80a7d427a1fcd346d420603d80a31d57cf75a7af",
+                    "image": "registry-facade:8080/remote/test",
                     "command": [
-                        "/theia/supervisor",
+                        "/.supervisor/supervisor",
                         "run"
                     ],
                     "ports": [
@@ -128,7 +122,7 @@
                         },
                         {
                             "name": "GITPOD_MEMORY",
-                            "value": "1300"
+                            "value": "999"
                         }
                     ],
                     "resources": {
@@ -137,9 +131,9 @@
                             "memory": "1G"
                         },
                         "requests": {
-                            "cpu": "1200m",
+                            "cpu": "899m",
                             "ephemeral-storage": "5Gi",
-                            "memory": "1300M"
+                            "memory": "999M"
                         }
                     },
                     "volumeMounts": [
@@ -147,11 +141,6 @@
                             "name": "vol-this-workspace",
                             "mountPath": "/workspace",
                             "mountPropagation": "HostToContainer"
-                        },
-                        {
-                            "name": "vol-this-theia",
-                            "readOnly": true,
-                            "mountPath": "/theia"
                         }
                     ],
                     "readinessProbe": {
@@ -200,22 +189,6 @@
             "restartPolicy": "Never",
             "serviceAccountName": "workspace",
             "automountServiceAccountToken": false,
-            "affinity": {
-                "nodeAffinity": {
-                    "requiredDuringSchedulingIgnoredDuringExecution": {
-                        "nodeSelectorTerms": [
-                            {
-                                "matchExpressions": [
-                                    {
-                                        "key": "gitpod.io/theia.someversion",
-                                        "operator": "Exists"
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                }
-            },
             "schedulerName": "workspace-scheduler",
             "tolerations": [
                 {

@@ -49,7 +49,7 @@ func TestHeadlessLogFirstAttempt(t *testing.T) {
 
 	for _, c := range cases {
 		mgr := forTestingOnlyGetManager(t)
-		listener := NewHeadlessListener(mgr.Clientset, "")
+		listener := NewHeadlessListener(mgr.RawClient, "")
 		listener.listenerTimeout = 100 * time.Millisecond
 		listener.logStreamProvider = func(pod *corev1.Pod, container string, from time.Time) (io.ReadCloser, error) {
 			if c.StreamProviderErr != nil {
@@ -160,7 +160,7 @@ func TestHeadlessLogTimeout(t *testing.T) {
 	t.Skipf("skipping flaky log timeout test")
 
 	mgr := forTestingOnlyGetManager(t)
-	listener := NewHeadlessListener(mgr.Clientset, "")
+	listener := NewHeadlessListener(mgr.RawClient, "")
 	listener.listenerTimeout = 100 * time.Millisecond
 
 	t0, err := time.Parse(time.RFC3339Nano, "2009-11-10T23:00:00Z")
@@ -312,7 +312,7 @@ func (r *blockingReader) Close() error {
 
 func TestHeadlessLogTotalTimeout(t *testing.T) {
 	mgr := forTestingOnlyGetManager(t)
-	listener := NewHeadlessListener(mgr.Clientset, "")
+	listener := NewHeadlessListener(mgr.RawClient, "")
 	listener.listenerTimeout = 1 * time.Millisecond
 
 	var (

@@ -9,11 +9,11 @@ package cmd
 import (
 	"context"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/ws-manager/pkg/test"
+	"github.com/spf13/cobra"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/spf13/cobra"
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/ws-manager/pkg/test"
 )
 
 // integrationTestSetupCmd represents the integrationTestSetup command

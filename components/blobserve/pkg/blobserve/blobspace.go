@@ -9,7 +9,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -19,8 +18,9 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/errdefs"
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 type blobspace interface {
@@ -76,7 +76,7 @@ func (b *diskBlobspace) collectGarbage(interval time.Duration) {
 			totalSize int64
 		)
 
-		files, err := ioutil.ReadDir(b.Location)
+		files, err := os.ReadDir(b.Location)
 		if err != nil {
 			log.WithError(err).WithField("location", b.Location).Error("blobspace cannot list files in working area")
 		}
@@ -140,18 +140,20 @@ type gcBlob struct {
 	Size     int64
 }
 
-func getGCBlob(wd string, f os.FileInfo) (blob gcBlob) {
+func getGCBlob(wd string, f os.DirEntry) (blob gcBlob) {
+	finfo, _ := f.Info()
+
 	fn := filepath.Join(wd, f.Name())
 	blob = gcBlob{
 		F:        fn,
-		LastUsed: f.ModTime(),
+		LastUsed: finfo.ModTime(),
 		Size:     0,
 	}
 	if _, err := os.Stat(fmt.Sprintf("%s.ready", fn)); os.IsNotExist(err) {
 		return
 	}
 
-	if rawSize, err := ioutil.ReadFile(fmt.Sprintf("%s.size", fn)); err == nil {
+	if rawSize, err := os.ReadFile(fmt.Sprintf("%s.size", fn)); err == nil {
 		if size, err := strconv.ParseInt(string(rawSize), 10, 64); err == nil {
 			blob.Size = size
 		}
@@ -173,7 +175,7 @@ func (b *diskBlobspace) Get(name string) (fs http.FileSystem, state blobstate) {
 		return nil, blobUnready
 	}
 
-	ioutil.WriteFile(fmt.Sprintf("%s.used", fn), nil, 0644)
+	os.WriteFile(fmt.Sprintf("%s.used", fn), nil, 0644)
 	return http.Dir(fn), blobReady
 }
 
@@ -206,9 +208,9 @@ func (b *diskBlobspace) AddFromTar(ctx context.Context, name string, in io.Reade
 		return xerrors.Errorf("cannot untar: %w: %s", err, string(out))
 	}
 
-	ioutil.WriteFile(fmt.Sprintf("%s.size", fn), []byte(fmt.Sprintf("%d", cw.C)), 0644)
-	ioutil.WriteFile(fmt.Sprintf("%s.used", fn), nil, 0644)
-	ioutil.WriteFile(fmt.Sprintf("%s.ready", fn), nil, 0644)
+	os.WriteFile(fmt.Sprintf("%s.size", fn), []byte(fmt.Sprintf("%d", cw.C)), 0644)
+	os.WriteFile(fmt.Sprintf("%s.used", fn), nil, 0644)
+	os.WriteFile(fmt.Sprintf("%s.ready", fn), nil, 0644)
 
 	return nil
 }

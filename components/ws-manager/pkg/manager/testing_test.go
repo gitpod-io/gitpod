@@ -9,14 +9,15 @@ import (
 	"testing"
 	"time"
 
+	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/envtest"
+
 	"github.com/gitpod-io/gitpod/common-go/util"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
-
-	"k8s.io/apimachinery/pkg/runtime"
-	fakek8s "k8s.io/client-go/kubernetes/fake"
 )
 
 // This file contains test infrastructure for this package. No function in here is meant for consumption outside of tests.
@@ -26,25 +27,17 @@ import (
 //
 
 // forTestingOnlyGetManager creates a workspace manager instace for testing purposes
-func forTestingOnlyGetManager(t *testing.T, objects ...runtime.Object) *Manager {
+func forTestingOnlyGetManager(t *testing.T, objects ...client.Object) *Manager {
 	config := Configuration{
 		Namespace:                "default",
 		SchedulerName:            "workspace-scheduler",
 		SeccompProfile:           "localhost/workspace-default",
 		HeartbeatInterval:        util.Duration(30 * time.Second),
-		TheiaHostPath:            "/tmp/theia/theia-xyz",
 		WorkspaceHostPath:        "/tmp/workspaces",
 		GitpodHostURL:            "gitpod.io",
 		WorkspaceURLTemplate:     "{{ .ID }}-{{ .Prefix }}-{{ .Host }}",
 		WorkspacePortURLTemplate: "{{ .WorkspacePort }}-{{ .ID }}-{{ .Prefix }}-{{ .Host }}",
 		RegistryFacadeHost:       "registry-facade:8080",
-		IngressPortAllocator: &IngressPortAllocatorConfig{
-			IngressRange: IngressPortRange{
-				Start: 10000,
-				End:   11000,
-			},
-			StateResyncInterval: util.Duration(30 * time.Minute),
-		},
 		Container: AllContainerConfiguration{
 			Workspace: ContainerConfiguration{
 				Image: "workspace-image",
@@ -53,8 +46,8 @@ func forTestingOnlyGetManager(t *testing.T, objects ...runtime.Object) *Manager 
 					Memory: "1000M",
 				},
 				Requests: ResourceConfiguration{
-					CPU:     "1200m",
-					Memory:  "1300M",
+					CPU:     "899m",
+					Memory:  "999M",
 					Storage: "5Gi",
 				},
 			},
@@ -71,12 +64,47 @@ func forTestingOnlyGetManager(t *testing.T, objects ...runtime.Object) *Manager 
 		},
 	}
 
-	m, err := New(config, fakek8s.NewSimpleClientset(objects...), &layer.Provider{Storage: &storage.PresignedNoopStorage{}})
+	testEnv := &envtest.Environment{}
+	cfg, err := testEnv.Start()
+	if err != nil {
+		t.Errorf("cannot create test environment: %v", err)
+		return nil
+	}
+
+	t.Cleanup(func() {
+		err = testEnv.Stop()
+		if err != nil {
+			t.Logf("unexpected error stopping test cluster: %v", err)
+		}
+	})
+
+	clientset, err := kubernetes.NewForConfig(cfg)
+	if err != nil {
+		t.Errorf("cannot create test environment: %v", err)
+		return nil
+	}
+
+	ctrlClient, err := client.New(cfg, client.Options{Scheme: scheme})
+	if err != nil {
+		t.Errorf("cannot create test environment: %v", err)
+		return nil
+	}
+
+	for _, obj := range objects {
+		err := ctrlClient.Create(context.Background(), obj)
+		if err != nil {
+			t.Errorf("cannot create test environment objects: %v", err)
+			return nil
+		}
+	}
+
+	m, err := New(config, ctrlClient, clientset, &layer.Provider{Storage: &storage.PresignedNoopStorage{}})
 	if err != nil {
 		t.Fatalf("cannot create manager: %s", err.Error())
 	}
 	// we don't have propr DNS resolution and network access - and we cannot mock it
 	m.Config.InitProbe.Disabled = true
+
 	return m
 }
 

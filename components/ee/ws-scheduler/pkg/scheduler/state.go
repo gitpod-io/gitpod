@@ -9,10 +9,10 @@ import (
 	"sort"
 	"strings"
 
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
-
 	corev1 "k8s.io/api/core/v1"
 	res "k8s.io/apimachinery/pkg/api/resource"
+
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 )
 
 // State holds all nodes
@@ -24,8 +24,10 @@ type State struct {
 
 // Node models a k8s node
 type Node struct {
-	Node   *corev1.Node
-	Pods   []*corev1.Pod
+	Node *corev1.Node
+	// contains all pods that are not in Ghosts
+	Pods []*corev1.Pod
+	// contains all ghost workspaces from our namespace
 	Ghosts []*corev1.Pod
 
 	RAM              ResourceUsage
@@ -34,13 +36,15 @@ type Node struct {
 	Services map[string]struct{}
 
 	// The number of pods on a node is limited by the resources available and by the kubelet.
-	PodSlots struct {
-		// Total number of pod slots on this node.
-		Total int64
+	PodSlots PodSlots
+}
 
-		// Available pod slots
-		Available int64
-	}
+type PodSlots struct {
+	// Total number of pod slots on this node.
+	Total int64
+
+	// Available pod slots
+	Available int64
 }
 
 // Binding models a k8s binding pod -> node
@@ -58,6 +62,9 @@ type ResourceUsage struct {
 	// This figure is: total - (headlessWorkspaces + regularWorkspaces + allOtherPods)
 	Available *res.Quantity
 
+	// Resource used by ghost workspaces
+	UsedGhost *res.Quantity
+
 	// Resource used by all headless workspaces
 	UsedHeadless *res.Quantity
 
@@ -73,22 +80,56 @@ func newResourceUsage(total *res.Quantity) ResourceUsage {
 	return ResourceUsage{
 		Total:        &tc,
 		Available:    res.NewQuantity(0, res.BinarySI),
+		UsedGhost:    res.NewQuantity(0, res.BinarySI),
 		UsedHeadless: res.NewQuantity(0, res.BinarySI),
 		UsedOther:    res.NewQuantity(0, res.BinarySI),
 		UsedRegular:  res.NewQuantity(0, res.BinarySI),
 	}
 }
 
-func (r *ResourceUsage) updateAvailable() {
+func (r *ResourceUsage) updateAvailable(ghostsAreVisible bool) {
 	tc := r.Total.DeepCopy()
 	r.Available = &tc
+	if ghostsAreVisible {
+		r.Available.Sub(*r.UsedGhost)
+	}
 	r.Available.Sub(*r.UsedHeadless)
 	r.Available.Sub(*r.UsedOther)
 	r.Available.Sub(*r.UsedRegular)
 }
 
+func (r *ResourceUsage) DeepCopy() *ResourceUsage {
+	copy := func(qty *res.Quantity) *res.Quantity {
+		cpy := qty.DeepCopy()
+		return &cpy
+	}
+	return &ResourceUsage{
+		Total:        copy(r.Total),
+		Available:    copy(r.Available),
+		UsedGhost:    copy(r.UsedGhost),
+		UsedHeadless: copy(r.UsedHeadless),
+		UsedOther:    copy(r.UsedOther),
+		UsedRegular:  copy(r.UsedRegular),
+	}
+}
+
+func (n *Node) copy() *Node {
+	return &Node{
+		Node:             n.Node,
+		Pods:             n.Pods,
+		Ghosts:           n.Ghosts,
+		Services:         n.Services,
+		RAM:              *n.RAM.DeepCopy(),
+		EphemeralStorage: *n.EphemeralStorage.DeepCopy(),
+		PodSlots: PodSlots{
+			Total:     n.PodSlots.Total,
+			Available: n.PodSlots.Available,
+		},
+	}
+}
+
 // ComputeState builds a new state based on the current world view
-func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding, ramSafetyBuffer *res.Quantity, ghostsAreInvisible bool) *State {
+func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding, ramSafetyBuffer *res.Quantity, ghostsAreVisible bool, namespace string) *State {
 	type podAndNode struct {
 		pod      *corev1.Pod
 		nodeName string
@@ -130,18 +171,15 @@ func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding,
 	// which node has which pods. If we did this right away, we might assign the same pod
 	// to multiple nodes.
 	type ntp struct {
-		pods   map[string]struct{}
-		ghosts map[string]struct{}
+		pods map[string]struct{}
 	}
 	nodeToPod := make(map[string]*ntp, len(nodes))
 	for _, n := range nodes {
 		nds[n.Name] = &Node{
-			Node:     n,
-			Services: make(map[string]struct{}),
+			Node: n,
 		}
 		nodeToPod[n.Name] = &ntp{
-			pods:   make(map[string]struct{}),
-			ghosts: make(map[string]struct{}),
+			pods: make(map[string]struct{}),
 		}
 	}
 	for podName, podAndNode := range podToNode {
@@ -149,69 +187,23 @@ func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding,
 		if !ok {
 			continue
 		}
-		if wsk8s.IsGhostWorkspace(podAndNode.pod) {
-			ntp.ghosts[podName] = struct{}{}
-			if !ghostsAreInvisible {
-				ntp.pods[podName] = struct{}{}
-			}
-		} else {
-			ntp.pods[podName] = struct{}{}
-		}
+		ntp.pods[podName] = struct{}{}
 	}
 
 	for nodeName, node := range nds {
-		node.PodSlots.Total = node.Node.Status.Capacity.Pods().Value()
-		node.PodSlots.Available = node.PodSlots.Total
-
 		ntp := nodeToPod[nodeName]
 		assignedPods := ntp.pods
-		allocatableRAMWithSafetyBuffer := node.Node.Status.Allocatable.Memory().DeepCopy()
-		allocatableRAMWithSafetyBuffer.Sub(*ramSafetyBuffer)
-		node.RAM = newResourceUsage(&allocatableRAMWithSafetyBuffer)
-		node.EphemeralStorage = newResourceUsage(node.Node.Status.Allocatable.StorageEphemeral())
 		node.Pods = make([]*corev1.Pod, 0, len(assignedPods))
+		node.Ghosts = make([]*corev1.Pod, 0, len(assignedPods))
 		for pn := range assignedPods {
 			pod := pds[pn]
-			node.Pods = append(node.Pods, pds[pn])
-			node.PodSlots.Available--
-
-			service, ok := pod.ObjectMeta.Labels[wsk8s.GitpodNodeServiceLabel]
-			if ok {
-				var ready bool
-				for _, c := range pod.Status.Conditions {
-					if c.Type != corev1.ContainersReady {
-						continue
-					}
-					ready = c.Status == corev1.ConditionTrue
-					break
-				}
-				if !ready {
-					continue
-				}
-				node.Services[service] = struct{}{}
-			}
-
-			var ram, eph *res.Quantity
-			if wsk8s.IsHeadlessWorkspace(pod) {
-				ram = node.RAM.UsedHeadless
-				eph = node.EphemeralStorage.UsedHeadless
-			} else if wsk8s.IsWorkspace(pod) {
-				ram = node.RAM.UsedRegular
-				eph = node.EphemeralStorage.UsedRegular
+			if isGhostWorkspace(pod, namespace) {
+				node.Ghosts = append(node.Ghosts, pod)
 			} else {
-				ram = node.RAM.UsedOther
-				eph = node.EphemeralStorage.UsedOther
+				node.Pods = append(node.Pods, pod)
 			}
-			ram.Add(podRAMRequest(pod))
-			eph.Add(podEphemeralStorageRequest(pod))
 		}
-		node.RAM.updateAvailable()
-		node.EphemeralStorage.updateAvailable()
-
-		node.Ghosts = make([]*corev1.Pod, 0, len(ntp.ghosts))
-		for gn := range ntp.ghosts {
-			node.Ghosts = append(node.Ghosts, pds[gn])
-		}
+		node.update(namespace, ramSafetyBuffer, ghostsAreVisible)
 	}
 
 	return &State{
@@ -219,6 +211,72 @@ func ComputeState(nodes []*corev1.Node, pods []*corev1.Pod, bindings []*Binding,
 		Pods:     pds,
 		Bindings: bindings,
 	}
+}
+
+func (n *Node) update(namespace string, ramSafetyBuffer *res.Quantity, ghostsAreVisible bool) {
+	n.PodSlots.Total = n.Node.Status.Capacity.Pods().Value()
+	n.PodSlots.Available = n.PodSlots.Total
+	allocatableRAMWithSafetyBuffer := n.Node.Status.Allocatable.Memory().DeepCopy()
+	allocatableRAMWithSafetyBuffer.Sub(*ramSafetyBuffer)
+	n.RAM = newResourceUsage(&allocatableRAMWithSafetyBuffer)
+	n.EphemeralStorage = newResourceUsage(n.Node.Status.Allocatable.StorageEphemeral())
+	n.Services = make(map[string]struct{})
+
+	var assignedPods []*corev1.Pod
+	assignedPods = append(assignedPods, n.Pods...)
+	assignedPods = append(assignedPods, n.Ghosts...)
+	for _, pod := range assignedPods {
+		n.PodSlots.Available--
+
+		service, ok := pod.ObjectMeta.Labels[wsk8s.GitpodNodeServiceLabel]
+		if ok {
+			var (
+				containersReady bool
+				podReady        bool
+				podRunning      bool
+			)
+			for _, c := range pod.Status.Conditions {
+				if c.Type == corev1.ContainersReady {
+					containersReady = c.Status == corev1.ConditionTrue
+				}
+				if c.Type == corev1.PodReady {
+					podReady = c.Status == corev1.ConditionTrue
+				}
+			}
+			podRunning = pod.Status.Phase == corev1.PodRunning
+
+			// we're checking podReady AND containersReady to be sure we're not missing sth
+			if !(podReady && containersReady && podRunning) {
+				continue
+			}
+			n.Services[service] = struct{}{}
+		}
+
+		var ram, eph *res.Quantity
+		if isGhostWorkspace(pod, namespace) {
+			ram = n.RAM.UsedGhost
+			eph = n.EphemeralStorage.UsedGhost
+		} else if wsk8s.IsHeadlessWorkspace(pod) {
+			ram = n.RAM.UsedHeadless
+			eph = n.EphemeralStorage.UsedHeadless
+		} else if wsk8s.IsRegularWorkspace(pod) {
+			ram = n.RAM.UsedRegular
+			eph = n.EphemeralStorage.UsedRegular
+		} else {
+			ram = n.RAM.UsedOther
+			eph = n.EphemeralStorage.UsedOther
+		}
+		ram.Add(podRAMRequest(pod))
+		eph.Add(podEphemeralStorageRequest(pod))
+	}
+	n.RAM.updateAvailable(ghostsAreVisible)
+	n.EphemeralStorage.updateAvailable(ghostsAreVisible)
+}
+
+// we only handle ghost workspaces as "ghost" if they are from our namespace!
+func isGhostWorkspace(p *corev1.Pod, namespace string) bool {
+	return p.Namespace == namespace &&
+		wsk8s.IsGhostWorkspace(p)
 }
 
 // FilterNodes removes all nodes for which the predicate does not return true
@@ -282,32 +340,64 @@ func (s *State) SortNodesByAvailableRAM(order SortOrder) []*Node {
 	return nodes
 }
 
-// FindOldestGhostOnNodeExcluding returns the name of the oldest ghost on the node with the given node, or "" if there is no
-// node or ghost
-func (s *State) FindOldestGhostOnNodeExcluding(nodeName string, reservedGhosts map[string]bool) string {
+// FindSpareGhostToDelete returns a ghost to delete if that is necessary to fit the pod onto the node
+func (s *State) FindSpareGhostToDelete(nodeName string, pod *corev1.Pod, namespace string, ramSafetyBuffer *res.Quantity, reservedSlots map[string]*Slot) (ghostToDelete string, unscheduleable bool) {
 	node, ok := s.Nodes[nodeName]
 	if !ok {
-		return ""
+		return "", false
 	}
 	if len(node.Ghosts) == 0 {
-		return ""
+		return "", false
 	}
 
-	ghosts := make([]*corev1.Pod, 0, len(node.Ghosts))
-	for _, g := range node.Ghosts {
-		if isReserved, _ := reservedGhosts[g.Name]; isReserved {
+	// check if there already is enough space even with ghosts
+	ghostsVisible := true
+	nodeWithGhostsVisible := node.copy()
+	// make sure we do not see double (ghost + workspace that is meant to replace it), so remove all reserved
+	// (not-yet-bound) workspaces
+	for _, g := range nodeWithGhostsVisible.Ghosts {
+		slot, exists := reservedSlots[g.Name]
+		if !exists || slot.Bound {
 			continue
 		}
-		ghosts = append(ghosts, g)
+		// remove the pod that's only here because of a "reserved slot"
+		for i, p := range nodeWithGhostsVisible.Pods {
+			if p.Name == slot.Binding.Pod.Name {
+				// wipe node.Pods[i] in O(1)
+				lastIndex := len(nodeWithGhostsVisible.Pods) - 1
+				nodeWithGhostsVisible.Pods[i] = nodeWithGhostsVisible.Pods[lastIndex]
+				nodeWithGhostsVisible.Pods = nodeWithGhostsVisible.Pods[:lastIndex]
+				break
+			}
+		}
 	}
-	if len(ghosts) == 0 {
-		return ""
+	nodeWithGhostsVisible.update(namespace, ramSafetyBuffer, ghostsVisible)
+	if fitsOnNode(pod, nodeWithGhostsVisible) {
+		// the pod fits onto the node (even with ghosts) we do not need to delete a ghost at all
+		return "", false
 	}
 
-	sort.Slice(ghosts, func(i, j int) bool {
-		return ghosts[i].ObjectMeta.CreationTimestamp.Time.Before(ghosts[j].ObjectMeta.CreationTimestamp.Time)
+	// make sure every pod-to-schedule deletes a new ghost
+	candidates := make([]*corev1.Pod, 0, len(node.Ghosts))
+	for _, g := range node.Ghosts {
+		if slot, reserved := reservedSlots[g.Name]; reserved {
+			// make sure we do not exclude our reserved ghost as target slot
+			if slot.Binding.Pod.Name != pod.Name {
+				continue
+			}
+		}
+		candidates = append(candidates, g)
+	}
+	if len(candidates) == 0 {
+		// all candidates are already reserved: unscheduleable
+		return "", true
+	}
+
+	// return the oldest ghost (for good measure)
+	sort.Slice(candidates, func(i, j int) bool {
+		return candidates[i].ObjectMeta.CreationTimestamp.Time.Before(candidates[j].ObjectMeta.CreationTimestamp.Time)
 	})
-	return ghosts[0].Name
+	return candidates[0].Name, false
 }
 
 // podRAMRequest calculates the amount of RAM requested by all containers of the given pod
@@ -340,12 +430,13 @@ func NodeMapToList(m map[string]*Node) []*Node {
 // DebugStringResourceUsage returns a debug string describing the used resources
 func (r *ResourceUsage) DebugStringResourceUsage() string {
 	usedRegularGibs := toMiString(r.UsedRegular)
+	usedGhostGibs := toMiString(r.UsedGhost)
 	usedHeadlessGibs := toMiString(r.UsedHeadless)
 	usedOtherGibs := toMiString(r.UsedOther)
 	totalGibs := toMiString(r.Total)
 	availableGibs := toMiString(r.Available)
 
-	return fmt.Sprintf("used %s+%s+%s of %s, avail %s Mi", usedRegularGibs, usedHeadlessGibs, usedOtherGibs, totalGibs, availableGibs)
+	return fmt.Sprintf("used %s(r)+%s(g)+%s(h)+%s(o) of %s, avail %s Mi", usedRegularGibs, usedGhostGibs, usedHeadlessGibs, usedOtherGibs, totalGibs, availableGibs)
 }
 
 func toMiString(q *res.Quantity) string {
@@ -362,6 +453,26 @@ func DebugStringNodes(nodes ...*Node) string {
 		lines = append(lines, fmt.Sprintf("- %s:", node.Node.Name))
 		lines = append(lines, fmt.Sprintf("  RAM: %s", node.RAM.DebugStringResourceUsage()))
 		lines = append(lines, fmt.Sprintf("  Eph. Storage: %s", node.EphemeralStorage.DebugStringResourceUsage()))
+	}
+	return strings.Join(lines, "\n")
+}
+
+// DebugStringNodes prints available RAM per node as string for debug purposes
+func DebugStringPodsOnNodes(nodes ...*Node) string {
+	lines := make([]string, 0, len(nodes)*3)
+	for _, node := range nodes {
+		lines = append(lines, fmt.Sprintf("- %s:", node.Node.Name))
+		pds := make([]string, 0, len(node.Pods))
+		for _, p := range node.Pods {
+			pds = append(pds, p.Name)
+		}
+		lines = append(lines, fmt.Sprintf("  pods: %s", strings.Join(pds, ", ")))
+
+		gs := make([]string, 0, len(node.Ghosts))
+		for _, g := range node.Ghosts {
+			gs = append(gs, g.Name)
+		}
+		lines = append(lines, fmt.Sprintf("  ghosts: %s", strings.Join(gs, ", ")))
 	}
 	return strings.Join(lines, "\n")
 }

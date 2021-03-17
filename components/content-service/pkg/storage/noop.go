@@ -72,13 +72,18 @@ func (*PresignedNoopStorage) DiskUsage(ctx context.Context, bucket string, prefi
 }
 
 // SignDownload returns ErrNotFound
-func (*PresignedNoopStorage) SignDownload(ctx context.Context, bucket, obj string) (info *DownloadInfo, err error) {
+func (*PresignedNoopStorage) SignDownload(ctx context.Context, bucket, obj string, options *SignedURLOptions) (info *DownloadInfo, err error) {
 	return nil, ErrNotFound
 }
 
 // SignUpload describes an object for upload
-func (s *PresignedNoopStorage) SignUpload(ctx context.Context, bucket, obj string) (info *UploadInfo, err error) {
+func (s *PresignedNoopStorage) SignUpload(ctx context.Context, bucket, obj string, options *SignedURLOptions) (info *UploadInfo, err error) {
 	return nil, ErrNotFound
+}
+
+// DeleteObject deletes objects in the given bucket specified by the given query
+func (s *PresignedNoopStorage) DeleteObject(ctx context.Context, bucket string, query *DeleteObjectQuery) error {
+	return nil
 }
 
 // Bucket returns an empty string

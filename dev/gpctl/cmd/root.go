@@ -9,13 +9,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/gpctl/pkg/prettyprint"
-	"github.com/gitpod-io/gitpod/gpctl/pkg/util"
-
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"k8s.io/client-go/rest"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/gpctl/pkg/prettyprint"
+	"github.com/gitpod-io/gitpod/gpctl/pkg/util"
 )
 
 // rootCmd represents the base command when called without any subcommands

@@ -9,8 +9,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gorilla/websocket"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // The ReconnectingWebsocket represents a Reconnecting WebSocket connection.
@@ -123,6 +124,8 @@ func (rc *ReconnectingWebsocket) Dial() {
 		case err := <-rc.errCh:
 			log.WithError(err).WithField("url", rc.url).Warn("connection has been closed, reconnecting...")
 			conn.Close()
+
+			time.Sleep(1 * time.Second)
 			conn = rc.connect()
 		}
 	}

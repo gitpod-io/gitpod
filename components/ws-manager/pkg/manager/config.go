@@ -7,24 +7,30 @@ package manager
 import (
 	"bytes"
 	"html/template"
+	iofs "io/fs"
 	"net/url"
 	"os"
 	"path/filepath"
 
-	"golang.org/x/xerrors"
-
-	"github.com/gitpod-io/gitpod/common-go/util"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
-	"github.com/spf13/afero"
+	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/util/yaml"
+
+	"github.com/gitpod-io/gitpod/common-go/util"
 )
+
+type osFS struct{}
+
+func (*osFS) Open(name string) (iofs.File, error) {
+	return os.Open(name)
+}
 
 // fs is used to load files refered to by this configuration.
 // We use a library here to be able to test things properly.
-var fs = afero.NewOsFs()
+var fs iofs.FS = &osFS{}
 
 // Configuration is the configuration of the ws-manager
 type Configuration struct {
@@ -59,8 +65,6 @@ type Configuration struct {
 	WorkspacePortURLTemplate string `json:"portUrlTemplate"`
 	// HostPath is the path on the node where workspace data resides (ideally this is an SSD)
 	WorkspaceHostPath string `json:"workspaceHostPath"`
-	// HostPath is the path on the node where the current Theia version is copied to
-	TheiaHostPath string `json:"theiaHostPath"`
 	// HeartbeatInterval is the time in seconds in which Theia sends a heartbeat if the user is active
 	HeartbeatInterval util.Duration `json:"heartbeatInterval"`
 	// Is the URL under which Gitpod is installed (e.g. https://gitpod.io)
@@ -77,8 +81,6 @@ type Configuration struct {
 	TheiaSupervisorToken string `json:"theiaSupervisorToken"`
 	// RegistryFacadeHost is the host (possibly including port) on which the registry facade resolves
 	RegistryFacadeHost string `json:"registryFacadeHost"`
-	// IngressPortAllocator contains all config for the IngressPortAllocator
-	IngressPortAllocator *IngressPortAllocatorConfig `json:"ingressPortAllocator"`
 }
 
 // AllContainerConfiguration contains the configuration for all container in a workspace pod
@@ -183,7 +185,6 @@ func (c *Configuration) Validate() error {
 	err = validation.ValidateStruct(c,
 		validation.Field(&c.WorkspaceURLTemplate, validation.Required, validWorkspaceURLTemplate),
 		validation.Field(&c.WorkspaceHostPath, validation.Required),
-		validation.Field(&c.TheiaHostPath, validation.Required),
 		validation.Field(&c.HeartbeatInterval, validation.Required),
 		validation.Field(&c.GitpodHostURL, validation.Required, is.URL),
 		validation.Field(&c.ReconnectionInterval, validation.Required),
@@ -299,7 +300,7 @@ func getWorkspacePodTemplate(filename string) (*corev1.Pod, error) {
 		filename = filepath.Join(tpr, filename)
 	}
 
-	tpl, err := fs.OpenFile(filename, os.O_RDONLY, 0644)
+	tpl, err := fs.Open(filename)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot read pod template: %w", err)
 	}

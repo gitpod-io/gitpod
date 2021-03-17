@@ -6,7 +6,6 @@ package supervisor
 
 import (
 	"context"
-	"time"
 
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
@@ -43,20 +42,15 @@ func (p *GitTokenProvider) GetToken(ctx context.Context, req *api.GetTokenReques
 	for _, scp := range token.Scopes {
 		scopes[scp] = struct{}{}
 	}
-	var expiryDate *time.Time
-	if token.ExpiryDate != "" {
-		t, err := time.Parse(time.RFC3339Nano, token.ExpiryDate)
-		if err != nil {
-			return nil, err
-		}
-		expiryDate = &t
+	tkn = &Token{
+		User:  token.Username,
+		Token: token.Value,
+		Host:  req.Host,
+		Scope: scopes,
+		Reuse: api.TokenReuse_REUSE_NEVER,
 	}
-	return &Token{
-		User:       token.Username,
-		Token:      token.Value,
-		Host:       req.Host,
-		Scope:      scopes,
-		ExpiryDate: expiryDate,
-		Reuse:      api.TokenReuse_REUSE_WHEN_POSSIBLE,
-	}, nil
+	if !tkn.HasScopes(req.Scope) {
+		return nil, nil
+	}
+	return tkn, nil
 }
