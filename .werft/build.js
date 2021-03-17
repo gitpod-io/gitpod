@@ -323,32 +323,36 @@ async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, reg
 }
 
 function findOrCreateGCPProject(name) {
+    werft.phase("setup", "create GCP project");
     let pathToTerraform = ".werft/gcp-preview-project/";
     let pathToGcpSA = "/mnt/secrets/gcp-sa-preview-manager/service-account.json";
-    werft.log("create-gcp-project", "Create TF Override");
-    fs.writeFileSync(`${pathToTerraform}/override.tf`,
-`terraform {
+    let override = `terraform {
   backend "gcs" {
     bucket  = "gitpod-core-preview-terraform-state"
     prefix  = "${name}"
   }
-}`      );    
-    werft.log("create-gcp-project", "run 'terraform apply'");
-    exec("gcloud auth list");
-    exec(`gcloud auth activate-service-account --key-file "${pathToGcpSA}"`);
-    exec("gcloud auth list");
+}`;
+
+    // setup path and service account
+    let oldCwd = shell.pwd();
     shell.cd(pathToTerraform);
-    exec(`set -x \
-        && export GOOGLE_APPLICATION_CREDENTIALS="${pathToGcpSA}" \
-        && terraform init \
-        && terraform apply -auto-approve \
-            -var 'name=${name}'`, {slice: 'create-gcp-project', async: false});
+    shell.env["GOOGLE_APPLICATION_CREDENTIALS"] = pathToGcpSA;
+    exec(`gcloud auth activate-service-account --key-file "${pathToGcpSA}"`, {slice: 'setup'});
 
-    //let tfout = {}; exec('node --version', {silent:true}).stdout
-    let out = shell.exec(`GOOGLE_APPLICATION_CREDENTIALS="${pathToGcpSA}" terraform output --json`).stdout;
-    werft.log("output", JSON.stringify( out));
+    // tell Terraform what state file to use
+    werft.logOutput("override.tf", override);
+    fs.writeFileSync("override.tf", override);    
 
-    // TODO: change back to old dir
+    exec("terraform init", {slice: 'setup'});    
+    exec(`terraform apply -auto-approve -var 'name=${name}'`, {slice: 'terraform appy'});
+
+    let out = shell.exec(`terraform output --json`, { silent: true }).stdout;
+    werft.logOutput("terraform appy", "\nterraform output --json:");
+    werft.logOutput("terraform appy", out);
+    
+    shell.cd(oldCwd);
+
+    return JSON.parse(out);
 }
 
 
