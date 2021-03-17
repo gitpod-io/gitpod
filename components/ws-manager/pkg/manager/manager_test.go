@@ -6,16 +6,19 @@ package manager
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	ctesting "github.com/gitpod-io/gitpod/common-go/testing"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
+	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/grpcpool"
+	"google.golang.org/grpc"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 func TestValidateStartWorkspaceRequest(t *testing.T) {
@@ -285,6 +288,157 @@ func TestFindWorkspacePod(t *testing.T) {
 			}
 			if test.ExpectedPodName != podname {
 				t.Errorf("unepxected findWorkspacePod result: \"%s\", expected: \"%s\"", podname, test.ExpectedPodName)
+			}
+		})
+	}
+}
+
+func TestManager_connectToWorkspaceDaemon(t *testing.T) {
+	badNodeName := "not-matching-node"
+	goodNodeName := "a-matching-node"
+
+	type args struct {
+		ctx  context.Context
+		wso  workspaceObjects
+		objs []client.Object
+	}
+	tests := []struct {
+		name        string
+		args        args
+		wantErr     bool
+		expectedErr string
+	}{
+		{
+			name: "handles empty wso",
+			args: args{
+				ctx: context.Background(),
+				wso: workspaceObjects{},
+			},
+			expectedErr: "no workspace pod",
+		},
+		{
+			name: "handles no endpoints",
+			args: args{
+				ctx: context.Background(),
+				wso: workspaceObjects{
+					Pod: &corev1.Pod{
+						Spec: corev1.PodSpec{
+							NodeName: "a_node_name",
+						},
+					},
+				},
+			},
+			expectedErr: "no matching endpoint",
+		},
+		{
+			name: "handles no endpoint on current node",
+			args: args{
+				ctx: context.Background(),
+				wso: workspaceObjects{
+					Pod: &corev1.Pod{
+						Spec: corev1.PodSpec{
+							NodeName: "a_node_name",
+						},
+					},
+				},
+				objs: []client.Object{
+					&corev1.Endpoints{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "Endpoints",
+							APIVersion: "v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "ws-daemon-endpoints",
+							Namespace: "default",
+							Labels: labels.Set{
+								"component": "ws-daemon",
+								"kind":      "service",
+							},
+						},
+						Subsets: []corev1.EndpointSubset{
+							{
+								Addresses: []corev1.EndpointAddress{
+									{
+										IP:       "10.1.2.3",
+										NodeName: &badNodeName,
+									},
+								},
+								Ports: []corev1.EndpointPort{
+									{
+										Name:     "port1",
+										Port:     7766,
+										Protocol: "TCP",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expectedErr: "no matching endpoint",
+		},
+		{
+			name: "finds endpoint on current node",
+			args: args{
+				ctx: context.Background(),
+				wso: workspaceObjects{
+					Pod: &corev1.Pod{
+						Spec: corev1.PodSpec{
+							NodeName: goodNodeName,
+						},
+					},
+				},
+				objs: []client.Object{
+					&corev1.Endpoints{
+						TypeMeta: metav1.TypeMeta{
+							Kind:       "Endpoints",
+							APIVersion: "v1",
+						},
+						ObjectMeta: metav1.ObjectMeta{
+							Name:      "ws-daemon-endpoints",
+							Namespace: "default",
+							Labels: labels.Set{
+								"component": "ws-daemon",
+								"kind":      "service",
+							},
+						},
+						Subsets: []corev1.EndpointSubset{
+							{
+								Addresses: []corev1.EndpointAddress{
+									{
+										IP:       "10.1.2.3",
+										NodeName: &goodNodeName,
+									},
+								},
+								Ports: []corev1.EndpointPort{
+									{
+										Name:     "port1",
+										Port:     7766,
+										Protocol: "TCP",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		manager := forTestingOnlyGetManager(t, tt.args.objs...)
+		// Add dummy daemon pool - slightly hacky but we aren't testing the actual connectivity here
+		manager.wsdaemonPool = grpcpool.New(func(host string) (*grpc.ClientConn, error) {
+			return nil, nil
+		})
+
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := manager.connectToWorkspaceDaemon(tt.args.ctx, tt.args.wso)
+			if (err != nil) && !strings.Contains(err.Error(), tt.expectedErr) {
+				t.Errorf("Manager.connectToWorkspaceDaemon() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if err != nil && got != nil {
+				t.Errorf("Manager.connectToWorkspaceDaemon() = %v, wanted nil", got)
 			}
 		})
 	}
