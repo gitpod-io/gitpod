@@ -6,10 +6,21 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
     protected workspaces = new Map<string,WorkspaceInfo>();
     protected currentlyFetching = new Set<string>();
     protected disposables = new DisposableCollection();
+    protected internalLimit = 50;
+    set limit(limit: number) {
+        this.internalLimit = limit;
+        this.internalRefetch();
+    }
     
     constructor(protected setWorkspaces: (ws: WorkspaceInfo[]) => void) {
+        this.internalRefetch();
+    }
+
+    protected internalRefetch() {
+        this.disposables.dispose();
+        this.disposables = new DisposableCollection();
         getGitpodService().server.getWorkspaces({
-            limit: 50
+            limit: this.internalLimit
         }).then( infos => {
             this.updateMap(infos);
             this.notifyWorkpaces();
@@ -58,15 +69,47 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
             this.notifyWorkpaces();
         }
     }
+    protected searchTerm: string | undefined;
+    setSearch(searchTerm: string) {
+        if (searchTerm !== this.searchTerm) {
+            this.searchTerm = searchTerm;
+            this.notifyWorkpaces();
+        }
+    }
+
+    togglePinned(workspaceId: string) {
+        const ws = this.workspaces.get(workspaceId)?.workspace;
+        if (ws) {
+            ws.pinned = !ws.pinned;
+            getGitpodService().server.updateWorkspaceUserPin(ws.id, 'toggle');
+            this.notifyWorkpaces();
+        }
+    }
+
+    toggleShared(workspaceId: string) {
+        const ws = this.workspaces.get(workspaceId)?.workspace;
+        if (ws) {
+            ws.shareable = !ws.shareable;
+            getGitpodService().server.controlAdmission(ws.id, ws.shareable ? "owner" : "everyone");
+            this.notifyWorkpaces();
+        }
+    }
 
     protected notifyWorkpaces(): void {
         let infos = Array.from(this.workspaces.values());
-        infos = infos.sort((a,b) => a.latestInstance?.creationTime.localeCompare(b.latestInstance?.creationTime || '') || 1);
-        this.setWorkspaces(infos.filter(ws => this.isActive(ws) === this.active) || []);
+        infos = infos.filter(ws => this.isActive(ws) === this.active);
+        if (this.searchTerm) {
+            infos = infos.filter(ws => (ws.workspace.description+ws.workspace.id+ws.workspace.contextURL+ws.workspace.context).toLowerCase().indexOf(this.searchTerm!.toLowerCase()) !== -1);
+        }
+        infos = infos.sort((a,b) => {  
+           return WorkspaceInfo.lastActiveISODate(b).localeCompare(WorkspaceInfo.lastActiveISODate(a));
+        });
+        this.setWorkspaces(infos);
     }
     
     protected isActive(info: WorkspaceInfo): boolean {
         return info.workspace.pinned || 
             info.latestInstance?.status?.phase !== 'stopped';
     }
+
 }
