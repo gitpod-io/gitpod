@@ -40,14 +40,14 @@ export function Login() {
     }
 
     return (<div id="login-container" className="z-50 flex w-screen h-screen">
-        <div id="feature-section" className="flex-grow bg-gray-100 w-1/2 lg:hidden">
+        <div id="feature-section" className="flex-grow bg-gray-100 w-1/2 hidden lg:block">
             <div id="feature-section-column" className="flex max-w-2xl h-full ml-auto pt-6">
                 <div className="flex flex-col space-y-12 pl-6 pr-24 m-auto">
                     <div>
                         <img src="/images/gitpod.svg" className="h-8" />
                     </div>
                     <div>
-                        <h1 className="text-7xl lg2:text-5xl">Save Time<br /> with Prebuilds</h1>
+                        <h1 className="xl:text-7xl text-5xl">Save Time<br /> with Prebuilds</h1>
                     </div>
                     <div className="text-gray-400 text-lg">
                         Gitpod continuously builds your git branches like a CI server. This means no more waiting for dependencies to be downloaded and builds to finish. <a className="underline underline-thickness-thin underline-offset-small hover:text-gray-600" href="https://www.gitpod.io/docs/prebuilds/" target="gitpod-docs">Learn more about Prebuilds</a>
@@ -58,8 +58,8 @@ export function Login() {
                 </div>
             </div>
         </div>
-        <div id="login-section" className="flex-grow flex w-1/2 lg:w-full">
-            <div id="login-section-column" className="flex-grow max-w-2xl flex flex-col h-100 lg:mx-auto">
+        <div id="login-section" className="flex-grow flex lg:w-1/2 w-full">
+            <div id="login-section-column" className="flex-grow max-w-2xl flex flex-col h-100 mx-auto lg:mx-0">
                 <div className="flex-grow h-100 flex flex-row items-center justify-center" >
                     <div className="rounded-xl px-10 py-10 mx-auto">
                         <div className="mx-auto pb-8">

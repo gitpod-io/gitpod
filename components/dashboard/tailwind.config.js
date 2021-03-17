@@ -35,10 +35,6 @@ module.exports = {
         fontFamily: {
             'sans': ['Inter', 'Helvetica', 'Arial', 'sans-serif'],
         },
-        screens: {
-            'lg': {'max': '1023px'},
-            'lg2': {'max': '1279px'},
-        },
         underlineThickness: {
             'thin': '2px',
             'thick': '5px'
