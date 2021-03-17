@@ -130,7 +130,7 @@ func local_request_NotificationService_Respond_0(ctx context.Context, marshaler 
 // Note that using this registration option will cause many gRPC library features to stop working. Consider using RegisterNotificationServiceHandlerFromEndpoint instead.
 func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux, server NotificationServiceServer) error {
 
-	mux.Handle("PUT", pattern_NotificationService_Notify_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_NotificationService_Notify_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -160,7 +160,7 @@ func RegisterNotificationServiceHandlerServer(ctx context.Context, mux *runtime.
 		return
 	})
 
-	mux.Handle("PUT", pattern_NotificationService_Respond_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_NotificationService_Respond_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -224,7 +224,7 @@ func RegisterNotificationServiceHandler(ctx context.Context, mux *runtime.ServeM
 // "NotificationServiceClient" to call the correct interceptors.
 func RegisterNotificationServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, client NotificationServiceClient) error {
 
-	mux.Handle("PUT", pattern_NotificationService_Notify_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_NotificationService_Notify_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -264,7 +264,7 @@ func RegisterNotificationServiceHandlerClient(ctx context.Context, mux *runtime.
 
 	})
 
-	mux.Handle("PUT", pattern_NotificationService_Respond_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_NotificationService_Respond_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)

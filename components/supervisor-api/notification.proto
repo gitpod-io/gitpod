@@ -18,7 +18,7 @@ service NotificationService {
     // otherwise it blocks until the user has made their choice.
     rpc Notify(NotifyRequest) returns (NotifyResponse) {
         option (google.api.http) = {
-            put: "/v1/notification/notify"
+            post: "/v1/notification/notify"
         };
     }
 
@@ -32,7 +32,7 @@ service NotificationService {
     // Report a user's choice as a response to a notification. Typically called by the IDE.
     rpc Respond(RespondRequest) returns (RespondResponse) {
         option (google.api.http) = {
-            put: "/v1/notification/respond"
+            post: "/v1/notification/respond"
         };
     }
 }
