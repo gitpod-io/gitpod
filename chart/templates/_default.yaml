@@ -45,9 +45,12 @@ spec:
   selector:
     app: {{ template "gitpod.fullname" $ }}
     component: {{ $comp.name }}
-    kind: pod
+    kind: {{ $comp.selectorKind | default "pod" }}
     stage: {{ $gp.installation.stage }}
   type: {{ $comp.serviceType | default "ClusterIP" }}
+  {{- if $comp.clusterIP }}
+  clusterIP: {{ $comp.clusterIP }}
+  {{- end }}
   sessionAffinity: {{ $comp.serviceSessionAffinity | default "None" }}
   {{ if $comp.serviceExternalTrafficPolicy -}}
   externalTrafficPolicy: {{ $comp.serviceExternalTrafficPolicy }}
