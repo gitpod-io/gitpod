@@ -15,7 +15,7 @@
         @apply text-2xl text-gray-900 leading-9 font-semibold;
     }
     h4 {
-        @apply pb-2 text-sm font-medium text-gray-500;
+        @apply pb-2 text-sm font-medium text-gray-600;
     }
     p {
         @apply text-sm text-gray-400;
@@ -37,7 +37,11 @@
     }
 
     input[type=text]::placeholder {
-        @apply text-gray-400
+        @apply text-gray-400;
+    }
+
+    input[disabled] {
+        @apply bg-gray-100 border-2 border-gray-300 text-gray-400;
     }
 
 }
