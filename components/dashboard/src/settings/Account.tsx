@@ -12,7 +12,7 @@ export default function Account() {
 
     const close = () => setModal(false);
     return <div>
-        <Modal visible={modal}>
+        <Modal visible={modal} onClose={close}>
             <h3>Do you really want to delete your account?</h3>
             <p>This action will remove all the data associated with your account in Gitpod and cannot be reversed.</p>
             <div className="flex justify-end pt-6">
