@@ -166,7 +166,7 @@ export class WorkspaceStarter {
             }
 
             // start that thing
-            const manager = await this.clientProvider.getDefault();
+            const manager = await this.clientProvider.getStartManager();
             const resp = (await manager.startWorkspace({ span }, startRequest)).toObject();
             span.log({ "resp": resp });
 

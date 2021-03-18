@@ -5,10 +5,12 @@
 {{- $ := .root -}}
 {{- $comp := .comp -}}
 manager:
-  - name: "local"
-    address: "ws-manager:8080"
   - name: "{{ template "gitpod.installation.shortname" . }}"
-    address: "ws-manager:8080"
+    url: "ws-manager:8080"
+    state: "available"
+    maxScore: 100
+    score: 50
+    controller: "{{ template "gitpod.installation.shortname" . }}"
 {{ if $comp.wsman -}}
 {{ $comp.wsman | toYaml | indent 2 }}
 {{- end -}}
@@ -189,8 +191,6 @@ spec:
         - name: DEV_BRANCH
           value: "{{ .Values.devBranch }}"
     {{- end }}
-        - name: WSMAN_CFG_DEFAULT
-          value: "local"
         - name: WSMAN_CFG_MANAGERS
           value: {{ index (include "ws-manager-list" $this | fromYaml) "manager" | default dict | toJson | b64enc | quote }}
         - name: GITPOD_BASEIMG_REGISTRY_WHITELIST
