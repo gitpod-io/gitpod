@@ -89,7 +89,7 @@ export class Workspaces extends React.Component<WorkspacesProps, WorkspacesState
                             <div className="w-3/12">Name</div>
                             <div className="w-4/12">Context</div>
                             <div className="w-2/12">Pending Changes</div>
-                            <div className="w-2/12">Last Active</div>
+                            <div className="w-2/12">Last Start</div>
                             <div className="w-8"></div>
                         </div>
                         {
