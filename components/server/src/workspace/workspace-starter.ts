@@ -241,6 +241,18 @@ export class WorkspaceStarter {
             ideImage,
         };
 
+        const ideChoice = user.additionalData?.ideSettings?.defaultIde;
+        if (!!ideChoice) {
+            const mappedImage = this.env.ideImageAliases[ideChoice];
+            if (!!mappedImage) {
+                configuration.ideImage = mappedImage;
+            } else if (this.authService.hasPermission(user, "ide-settings")) {
+                // if the IDE choice isn't one of the preconfiured choices, we assume its the image name.
+                // For now, this feature requires special permissions.
+                configuration.ideImage = ideChoice;
+            }
+        }
+
         let featureFlags: NamedWorkspaceFeatureFlag[] = workspace.config._featureFlags || [];
         featureFlags = featureFlags.concat(this.env.defaultFeatureFlags);
         if (user.featureFlags && user.featureFlags.permanentWSFeatureFlags) {
@@ -251,18 +263,6 @@ export class WorkspaceStarter {
         // Beware: all feature flags we add here are not workspace-persistent feature flags, e.g. no full-workspace backup.
         if (!!user.additionalData?.featurePreview) {
             featureFlags = featureFlags.concat(this.env.previewFeatureFlags.filter(f => !featureFlags.includes(f)));
-
-            const ideChoice = user.additionalData?.ideSettings?.defaultIde;
-            if (!!ideChoice) {
-                const mappedImage = this.env.ideImageAliases[ideChoice];
-                if (!!mappedImage) {
-                    configuration.ideImage = mappedImage;
-                } else if (this.authService.hasPermission(user, "ide-settings")) {
-                    // if the IDE choice isn't one of the preconfiured choices, we assume its the image name.
-                    // For now, this feature requires special permissions.
-                    configuration.ideImage = ideChoice;
-                }
-            }
         }
 
         if (!!featureFlags) {
