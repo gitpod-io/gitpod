@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { MouseEvent, useState } from 'react';
 
 export interface ContextMenuProps {
     children: React.ReactChild[] | React.ReactChild;
@@ -14,7 +14,7 @@ export interface ContextMenuEntry {
      */
     separator?: boolean;
     customFontStyle?: string;
-    onClick?: ()=>void;
+    onClick?: (event: MouseEvent)=>void;
     href?: string;
 }
 
@@ -34,9 +34,10 @@ function ContextMenu(props: ContextMenuProps) {
     const enhancedEntries = props.menuEntries.map(e => {
         return {
             ... e,
-            onClick: () => {
-                e.onClick && e.onClick();
+            onClick: (event: MouseEvent) => {
+                e.onClick && e.onClick(event);
                 toggleExpanded();
+                event.preventDefault();
             }
         }
     })
