@@ -1,9 +1,8 @@
 import { User } from "@gitpod/gitpod-protocol";
 import { useContext, useState } from "react";
 import Modal from "../components/Modal";
-import { SettingsPage } from "../components/SettingsPage";
 import { UserContext } from "../user-context";
-import settingsMenu from "./settings-menu";
+import { SettingsPage } from "./SettingsPage";
 
 export default function Account() {
     const { user } = useContext(UserContext);
@@ -20,7 +19,7 @@ export default function Account() {
             </div>
         </Modal>
 
-        <SettingsPage title='Account' subtitle='Profile details' menuEntries={settingsMenu}>
+        <SettingsPage title='Account' subtitle='Profile details'>
             <h3>Profile</h3>
             <div className="flex flex-col lg:flex-row">
                 <div>
