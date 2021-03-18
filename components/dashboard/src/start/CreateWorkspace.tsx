@@ -2,9 +2,9 @@ import React, { Suspense } from "react";
 import { CreateWorkspaceMode, WorkspaceCreationResult } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import Modal from "../components/Modal";
-import { StartPage, StartPhase } from "../components/StartPage";
-import StartWorkspace from "./StartWorkspace";
 import { getGitpodService } from "../service/service";
+import { StartPage, StartPhase } from "./StartPage";
+import StartWorkspace from "./StartWorkspace";
 
 const WorkspaceLogs = React.lazy(() => import('./WorkspaceLogs'));
 
