@@ -2,6 +2,8 @@ import { useState } from 'react';
 import ContextMenu from './ContextMenu';
 
 export interface DropDownProps {
+    prefix?: string;
+    contextMenuWidth?: string;
     entries: { 
         title: string,
         onClick: ()=>void
@@ -26,8 +28,8 @@ function DropDown(props: DropDownProps) {
     })
     const font = "text-gray-400 text-sm leading-1"
     return (
-        <ContextMenu menuEntries={enhancedEntries}>
-            <span className={`py-2 cursor-pointer ${font}`}>{current}<Arrow up={false}/></span>
+        <ContextMenu menuEntries={enhancedEntries} width={props.contextMenuWidth}>
+            <span className={`py-2 cursor-pointer ${font}`}>{props.prefix}{current}<Arrow up={false}/></span>
         </ContextMenu>
     );
 }
