@@ -53,11 +53,14 @@ export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: Wo
         {
             title: 'Open',
             href: startUrl.toString()
-        },
-        {
+        }];
+    if (state === 'running') {
+        menuEntries.push({
             title: 'Stop',
             onClick: () => getGitpodService().server.stopWorkspace(ws.id)
-        },
+        });
+    }
+    menuEntries.push(
         {
             title: 'Download',
             href: downloadURL
@@ -84,7 +87,7 @@ export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: Wo
                 setModalVisible(true);
             }
         }
-    ];
+    );
     const project = getProject(ws);
     const showChanges = (event: MouseEvent) => {
         event.preventDefault();
@@ -139,7 +142,7 @@ export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: Wo
                 <div className="flex">
                     <div className="flex-1"></div>
                     <button className="cursor-pointer px-3 py-2 text-white text-sm rounded-md border-2 border-red-800 bg-red-600 hover:bg-red-800"
-                        onClick={() => getGitpodService().server.deleteWorkspace(ws.id)}>
+                        onClick={() => model.deleteWorkspace(ws.id)}>
                         Delete
                     </button>
                 </div>

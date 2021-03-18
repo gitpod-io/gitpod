@@ -2,7 +2,7 @@ import { Disposable, DisposableCollection, GitpodClient, WorkspaceInfo, Workspac
 import { getGitpodService } from "../service/service";
 
 export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
-
+    
     protected workspaces = new Map<string,WorkspaceInfo>();
     protected currentlyFetching = new Set<string>();
     protected disposables = new DisposableCollection();
@@ -15,7 +15,7 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
     constructor(protected setWorkspaces: (ws: WorkspaceInfo[]) => void) {
         this.internalRefetch();
     }
-
+    
     protected internalRefetch() {
         this.disposables.dispose();
         this.disposables = new DisposableCollection();
@@ -27,17 +27,17 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
         });
         this.disposables.push(getGitpodService().registerClient(this));
     }
-
+    
     protected updateMap(workspaces: WorkspaceInfo[]) {
         for (const ws of workspaces) {
             this.workspaces.set(ws.workspace.id, ws);
         }
     }
-
+    
     dispose(): void {
         this.disposables.dispose();
     }
-
+    
     async onInstanceUpdate(instance: WorkspaceInstance) {
         if (this.workspaces) {
             if (this.workspaces.has(instance.workspaceId)) {
@@ -58,7 +58,13 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
             }
         }
     }
-
+    
+    async deleteWorkspace(id: string): Promise<void> {
+        await getGitpodService().server.deleteWorkspace(id);
+        this.workspaces.delete(id);
+        this.notifyWorkpaces();
+    }
+    
     protected internalActive = true;
     get active() {
         return this.internalActive;
