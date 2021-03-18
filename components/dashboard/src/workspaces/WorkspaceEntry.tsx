@@ -9,7 +9,7 @@ import { MouseEvent, useState } from 'react';
 import { WorkspaceModel } from './workspace-model';
 
 
-export function WorkspaceEntry({desc, model}: {desc: WorkspaceInfo, model: WorkspaceModel}) {
+export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: WorkspaceModel }) {
     const [isModalVisible, setModalVisible] = useState(false);
     const [isChangesModalVisible, setChangesModalVisible] = useState(false);
     const state: WorkspaceInstancePhase = desc.latestInstance?.status?.phase || 'stopped';
@@ -46,13 +46,17 @@ export function WorkspaceEntry({desc, model}: {desc: WorkspaceInfo, model: Works
         pathname: '/start/',
         hash: '#' + ws.id
     });
-    const downloadURL = new GitpodHostUrl(window.location.href).with({ 
-        pathname: `/workspace-download/get/${ws.id}` 
+    const downloadURL = new GitpodHostUrl(window.location.href).with({
+        pathname: `/workspace-download/get/${ws.id}`
     }).toString();
     const menuEntries: ContextMenuEntry[] = [
         {
             title: 'Open',
             href: startUrl.toString()
+        },
+        {
+            title: 'Stop',
+            onClick: () => getGitpodService().server.stopWorkspace(ws.id)
         },
         {
             title: 'Download',
@@ -82,50 +86,50 @@ export function WorkspaceEntry({desc, model}: {desc: WorkspaceInfo, model: Works
         }
     ];
     const project = getProject(ws);
-    const startWsOnClick = (event: MouseEvent) => {
-        window.location.href = startUrl.toString();
-    }
     const showChanges = (event: MouseEvent) => {
+        event.preventDefault();
         setChangesModalVisible(true);
     }
-    return <div className="whitespace-nowrap flex space-x-2 py-6 px-6 w-full justify-between hover:bg-gray-100 cursor-pointer rounded-xl">
-        <div className="pr-3 self-center" onClick={startWsOnClick}>
-            <div className={stateClassName}>
-                &nbsp;
+    return <div>
+        <a className="rounded-xl whitespace-nowrap flex space-x-2 py-6 px-6 w-full justify-between hover:bg-gray-100 cursor-pointer" href={startUrl.toString()}>
+            <div className="pr-3 self-center">
+                <div className={stateClassName}>
+                    &nbsp;
             </div>
-        </div>
-        <div className="flex flex-col w-3/12" onClick={startWsOnClick}>
-            <div className="font-medium text-gray-800 truncate hover:underline">{ws.id}</div>
-            <a href={project ? 'https://'+ project : undefined}><div className="text-sm overflow-ellipsis truncate text-gray-400 truncate">{project || 'Unknown'}</div></a>
-        </div>
-        <div className="flex w-4/12 truncate overflow-ellipsis" onClick={startWsOnClick}>
-            <div className="flex flex-col">
-                <div className="font-medium text-gray-500 truncate">{ws.description}</div>
-                <div className="text-sm text-gray-400 truncate">{ws.contextURL}</div>
             </div>
-        </div>
-        <div className="flex w-2/12" onClick={numberOfChanges > 0 ? showChanges: startWsOnClick}>
-            <div className="flex flex-col">
-                <div className="font-medium text-gray-500 truncate">{currentBranch}</div>
-                {
-                    numberOfChanges > 0 ?
-                    <div className={"text-sm text-red truncate cursor-pointer hover:underline"} onClick={showChanges}>{changesLabel}</div>
-                    :
-                    <div className="text-sm text-gray-400 truncate">No Changes</div>    
-                }
-                <Modal visible={isChangesModalVisible} onClose={() => setChangesModalVisible(false)}>
-                    {getChangesPopup(pendingChanges)}
-                </Modal>
+            <div className="flex flex-col w-3/12">
+                <div className="font-medium text-gray-800 truncate hover:underline">{ws.id}</div>
+                <a href={project ? 'https://' + project : undefined}><div className="text-sm overflow-ellipsis truncate text-gray-400 truncate">{project || 'Unknown'}</div></a>
             </div>
-        </div>
-        <div className="flex w-2/12 self-center space-x-2" onClick={startWsOnClick}>
-            <div className="text-sm text-gray-400 truncate">{moment(WorkspaceInfo.lastActiveISODate(desc)).fromNow()}</div>
-        </div>
-        <div className="flex w-8 self-center hover:bg-gray-300 rounded-md cursor-pointer">
-            <ContextMenu menuEntries={menuEntries}>
-                <img className="w-8 h-8 p-1" src={ThreeDots} alt="Actions" />
-            </ContextMenu>
-        </div>
+            <div className="flex w-4/12 truncate overflow-ellipsis">
+                <div className="flex flex-col">
+                    <div className="font-medium text-gray-500 truncate">{ws.description}</div>
+                    <div className="text-sm text-gray-400 truncate">{ws.contextURL}</div>
+                </div>
+            </div>
+            <div className="flex w-2/12" onClick={numberOfChanges > 0 ? showChanges : undefined}>
+                <div className="flex flex-col">
+                    <div className="font-medium text-gray-500 truncate">{currentBranch}</div>
+                    {
+                        numberOfChanges > 0 ?
+                            <div className={"text-sm text-red truncate cursor-pointer hover:underline"} onClick={showChanges}>{changesLabel}</div>
+                            :
+                            <div className="text-sm text-gray-400 truncate">No Changes</div>
+                    }
+                </div>
+            </div>
+            <div className="flex w-2/12 self-center space-x-2">
+                <div className="text-sm text-gray-400 truncate">{moment(WorkspaceInfo.lastActiveISODate(desc)).fromNow()}</div>
+            </div>
+            <div className="flex w-8 self-center hover:bg-gray-300 rounded-md cursor-pointer">
+                <ContextMenu menuEntries={menuEntries}>
+                    <img className="w-8 h-8 p-1" src={ThreeDots} alt="Actions" />
+                </ContextMenu>
+            </div>
+        </a>
+        <Modal visible={isChangesModalVisible} onClose={() => setChangesModalVisible(false)}>
+            {getChangesPopup(pendingChanges)}
+        </Modal>
         <Modal visible={isModalVisible} onClose={() => setModalVisible(false)}>
             <div>
                 <h3>Delete {ws.id}</h3>
@@ -135,7 +139,7 @@ export function WorkspaceEntry({desc, model}: {desc: WorkspaceInfo, model: Works
                 <div className="flex">
                     <div className="flex-1"></div>
                     <button className="cursor-pointer px-3 py-2 text-white text-sm rounded-md border-2 border-red-800 bg-red-600 hover:bg-red-800"
-                        onClick={()=>getGitpodService().server.deleteWorkspace(ws.id)}>
+                        onClick={() => getGitpodService().server.deleteWorkspace(ws.id)}>
                         Delete
                     </button>
                 </div>
