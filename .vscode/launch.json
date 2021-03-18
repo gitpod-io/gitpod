@@ -5,7 +5,13 @@
             "type": "node",
             "request": "attach",
             "smartStep": true,
-            "port": 9229
+            "port": 9229,
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "webpack:///./~/*": "${workspaceFolder}/node_modules/*",
+                "webpack://?:*/*": "${workspaceFolder}/*",
+                "file:///app/node_modules/*": "${workspaceFolder}/node_modules/*"
+            }
         },
         {
             "name": "Attach to Delve",
