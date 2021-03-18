@@ -149,7 +149,8 @@ func Run(options ...RunOption) {
 		termMuxSrv  = terminal.NewMuxTerminalService(termMux)
 		taskManager = newTasksManager(cfg, termMuxSrv, cstate, &loggingHeadlessTaskProgressReporter{})
 	)
-	tokenService.provider[KindGit] = []tokenProvider{NewGitTokenProvider(gitpodService)}
+	notificationService := NewNotificationService()
+	tokenService.provider[KindGit] = []tokenProvider{NewGitTokenProvider(gitpodService, cfg.WorkspaceConfig, notificationService)}
 
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
 	termMuxSrv.Env = buildIDEEnv(cfg)
@@ -163,7 +164,7 @@ func Run(options ...RunOption) {
 		},
 		termMuxSrv,
 		RegistrableTokenService{tokenService},
-		NewNotificationService(),
+		notificationService,
 		&InfoService{cfg: cfg},
 		&ControlService{portsManager: portMgmt},
 	}
@@ -244,6 +245,7 @@ func createGitpodService(cfg *Config, tknsrv api.TokenServiceServer) *gitpod.API
 			"function:getToken",
 			"function:openPort",
 			"function:getOpenPorts",
+			"function:guessGitTokenScopes",
 		},
 	})
 	if err != nil {

@@ -94,6 +94,7 @@ function readConfig(): RateLimiterConfig {
         "resolvePlugins": { group: "default", points: 1 },
         "installUserPlugins": { group: "default", points: 1 },
         "uninstallUserPlugin": { group: "default", points: 1 },
+        "guessGitTokenScopes": { group: "default", points: 1 },
 
         "adminGetUsers": { group: "default", points: 1 },
         "adminGetUser": { group: "default", points: 1 },

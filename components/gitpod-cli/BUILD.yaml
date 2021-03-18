@@ -8,5 +8,9 @@ packages:
     env:
       - CGO_ENABLED=0
       - GOOS=linux
+    deps:
+      - components/common-go:lib
+      - components/supervisor-api/go:lib
+      - components/gitpod-protocol/go:lib
     config:
       packaging: app

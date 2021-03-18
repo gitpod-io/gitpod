@@ -642,6 +642,7 @@ export class WorkspaceStarter {
             "function:getContentBlobUploadUrl",
             "function:getContentBlobDownloadUrl",
             "function:accessCodeSyncStorage",
+            "function:guessGitTokenScopes",
 
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspace", subjectID: workspace.id, operations: ["get", "update"]}),
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspaceInstance", subjectID: instance.id, operations: ["get", "update", "delete"]}),

@@ -43,11 +43,11 @@ export class GitHubGraphQlEndpoint {
             `https://raw.githubusercontent.com/${org}/${name}/${commitish}/${path}` :
             `https://${host}/${org}/${name}/raw/${commitish}/${path}`;
         const response = await fetch(urlString, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
         });
         if (!response.ok) {
             return undefined;
@@ -71,31 +71,36 @@ export class GitHubGraphQlEndpoint {
         const githubToken = await this.tokenHelper.getTokenWithScopes(user, [/* TODO: check if private_repo has to be required */]);
         const token = githubToken.value;
         const request = {
-          query: query.trim(),
-          variables
+            query: query.trim(),
+            variables
         };
+        return this.runQueryWithToken(token, request);
+    }
+
+    async runQueryWithToken<T>(token: string, request: object): Promise<QueryResult<T>> {
         const response = await fetch(this.baseURLv4, {
-          method: 'POST',
-          body: JSON.stringify(request),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
+            method: 'POST',
+            body: JSON.stringify(request),
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
         });
         if (!response.ok) {
             throw Error(response.statusText);
         }
         const result: QueryResult<T> = await response.json();
         if (!result.data && result.errors) {
-          const error = new Error(JSON.stringify({
-            request,
-            result
-          }));
-          (error as any).query = result;
-          throw error;
+            const error = new Error(JSON.stringify({
+                request,
+                result
+            }));
+            (error as any).result = result;
+            throw error;
         }
         return result;
-      }
+
+    }
 }
 
 export interface QueryResult<D> {
@@ -158,17 +163,17 @@ export class GitHubRestApi {
         };
     }
 
-    public async run<R>(userOrToken: User | string, operation: (api: GitHub) => Promise<any>): Promise<R> {
+    public async run<R>(userOrToken: User | string, operation: (api: GitHub) => Promise<GitHub.Response<R>>): Promise<GitHub.Response<R>> {
         const before = new Date().getTime();
         const userApi = await this.create(userOrToken);
 
         try {
-            const response = (await operation(userApi) as GitHub.Response<R>);
+            const response = (await operation(userApi));
             const statusCode = response.status;
             if (statusCode !== 200) {
                 throw new GitHubApiError(response);
             }
-            return response.data as R;
+            return response;
         } catch (error) {
             if (error.status) {
                 throw new GitHubApiError(error);
@@ -239,6 +244,22 @@ export class GitHubRestApi {
         return response.data;
     }
 
+}
+
+export interface GitHubResult<T> extends GitHub.Response<T> { }
+export namespace GitHubResult {
+    export function actualScopes(result: GitHub.Response<any>): string[] {
+        return ((result.headers as any)["x-oauth-scopes"] || "").split(",").map((s: any) => s.trim());
+    }
+    export function mayReadOrgs(result: GitHub.Response<any>): boolean {
+        return actualScopes(result).some(scope => scope === "read:org" || scope === "user");
+    }
+    export function mayWritePrivate(result: GitHub.Response<any>): boolean {
+        return actualScopes(result).some(scope => scope === "repo");
+    }
+    export function mayWritePublic(result: GitHub.Response<any>): boolean {
+        return actualScopes(result).some(scope => scope === "repo" || scope === "public_repo");
+    }
 }
 
 // Git
