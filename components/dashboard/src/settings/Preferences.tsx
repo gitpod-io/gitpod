@@ -1,15 +1,14 @@
 import { useContext, useState } from "react";
 import OptionCard from "../components/OptionCard";
-import { SettingsPage } from "../components/SettingsPage";
 import { UserContext } from "../user-context";
-import settingsMenu from "./settings-menu";
+import { SettingsPage } from "./SettingsPage";
 
 export default function Preferences() {
     const { user } = useContext(UserContext);
     const [ defaultIde, setDefaultIde ] = useState<string>(user?.additionalData?.ideSettings?.defaultIde || 'code');
 
     return <div>
-        <SettingsPage title='Preferences' subtitle='Configure your Default IDE for all workspaces.' menuEntries={settingsMenu}>
+        <SettingsPage title='Preferences' subtitle='Configure your Default IDE for all workspaces.'>
             <h3>Default IDE</h3>
             <p className="text-base">Gitpod is using Code as the default IDE.</p>
             <div className="mt-4 space-x-4 flex">
