@@ -957,6 +957,12 @@ export interface WorkspaceInfo {
     latestInstance?: WorkspaceInstance
 }
 
+export namespace WorkspaceInfo {
+    export function lastActiveISODate(info: WorkspaceInfo): string {
+        return info.latestInstance?.creationTime || info.workspace.creationTime;
+    }
+}
+
 export type RunningWorkspaceInfo = WorkspaceInfo & { latestInstance: WorkspaceInstance };
 
 export interface WorkspaceCreationResult {

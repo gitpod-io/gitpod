@@ -9,7 +9,7 @@
         font-size: 48px;
     }
     h2 {
-        @apply text-base text-gray-400;
+        @apply text-base text-gray-500;
     }
     h3 {
         @apply text-2xl text-gray-900 leading-9 font-semibold;
@@ -29,7 +29,7 @@
 
 @layer components {
     button {
-        @apply cursor-pointer px-3 py-2 text-white text-sm rounded-md border-2 border-gray-900 bg-gray-500 hover:bg-gray-100;
+        @apply cursor-pointer px-3 py-1 my-auto bg-green-600 hover:bg-green-700 border-2 border-green-800 text-gray-100 text-sm rounded-md;
     }
 
     input[type=text] {
