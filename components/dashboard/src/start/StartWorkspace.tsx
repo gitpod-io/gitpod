@@ -1,8 +1,8 @@
 import React from "react";
 import { DisposableCollection, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { GitpodHostUrl } from "@gitpod/gitpod-protocol/lib/util/gitpod-host-url";
-import { StartPage, StartPhase } from "../components/StartPage";
 import { getGitpodService } from "../service/service";
+import { StartPage, StartPhase } from "./StartPage";
 
 export interface StartWorkspaceProps {
   workspaceId: string;

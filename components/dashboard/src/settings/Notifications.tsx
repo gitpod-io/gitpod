@@ -1,9 +1,8 @@
-import { SettingsPage } from "../components/SettingsPage";
-import settingsMenu from "./settings-menu";
+import { SettingsPage } from "./SettingsPage";
 
 export default function Notifications() {
     return <div>
-        <SettingsPage title='Notifications' subtitle='Email notification preferences' menuEntries={settingsMenu}>
+        <SettingsPage title='Notifications' subtitle='Email notification preferences'>
             <h3>Notifications</h3>
         </SettingsPage>
     </div>;
