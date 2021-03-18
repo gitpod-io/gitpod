@@ -8,6 +8,7 @@ import { inject, injectable, optional} from "inversify";
 import { AuthProvider } from "./auth-provider";
 import { RepositoryHost } from "../repohost/repository-host";
 import { IContextParser } from "../workspace/context-parser";
+import { IGitTokenValidator } from "../workspace/git-token-validator";
 
 @injectable()
 export class HostContext {
@@ -20,4 +21,7 @@ export class HostContext {
 
     @inject(IContextParser) @optional()
     readonly contextParser: IContextParser | undefined;
+
+    @inject(IGitTokenValidator) @optional()
+    readonly gitTokenValidator: IGitTokenValidator | undefined;
 }

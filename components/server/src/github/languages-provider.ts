@@ -18,6 +18,6 @@ export class GithubLanguagesProvider implements LanguagesProvider {
     async getLanguages(repository: Repository, user: User): Promise<object> {
         const languages = await this.github.run<object>(user, (gh) => gh.repos.listLanguages({ owner: repository.owner, repo: repository.name }));
 
-        return languages;
+        return languages.data;
     }
 }

@@ -1,6 +1,6 @@
 /**
- * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
- * Licensed under the GNU Affero General Public License (AGPL).
+* Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+* Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
 
@@ -14,7 +14,7 @@ import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
 import { UserMessageViewsDB } from '@gitpod/gitpod-db/lib/user-message-views-db';
 import { UserStorageResourcesDB } from '@gitpod/gitpod-db/lib/user-storage-resources-db';
 import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
-import { AuthProviderEntry, AuthProviderInfo, Branding, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, UserMessage, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration } from '@gitpod/gitpod-protocol';
+import { AuthProviderEntry, AuthProviderInfo, Branding, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, UserMessage, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes } from '@gitpod/gitpod-protocol';
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { AdminBlockUserRequest, AdminGetListRequest, AdminGetListResult, AdminGetWorkspacesRequest, AdminModifyPermanentWorkspaceFeatureFlagRequest, AdminModifyRoleOrPermissionRequest, WorkspaceAndInstance } from '@gitpod/gitpod-protocol/lib/admin-protocol';
 import { GetLicenseInfoResult, LicenseFeature, LicenseValidationResult } from '@gitpod/gitpod-protocol/lib/license-protocol';
@@ -47,6 +47,7 @@ import { UserDeletionService } from '../user/user-deletion-service';
 import { UserService } from '../user/user-service';
 import { IClientDataPrometheusAdapter } from './client-data-prometheus-adapter';
 import { ContextParser } from './context-parser-service';
+import { GitTokenScopeGuesser } from "./git-token-scope-guesser";
 import { MessageBusIntegration } from './messagebus-integration';
 import { WorkspaceDeletionService } from './workspace-deletion-service';
 import { WorkspaceFactory } from './workspace-factory';
@@ -87,6 +88,8 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     @inject(TermsProvider) protected readonly termsProvider: TermsProvider;
 
     @inject(BlobServiceClient) protected readonly blobServiceClient: BlobServiceClient;
+
+    @inject(GitTokenScopeGuesser) protected readonly gitTokenScopeGuesser: GitTokenScopeGuesser;
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
@@ -1428,6 +1431,11 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     uninstallUserPlugin(params: UninstallPluginParams): Promise<boolean> {
         const userId = this.checkUser("uninstallUserPlugin").id;
         return this.pluginService.uninstallUserPlugin(userId, params);
+    }
+
+    async guessGitTokenScopes(params: GuessGitTokenScopesParams): Promise<GuessedGitTokenScopes> {
+        const authProviders = await this.getAuthProviders()
+        return this.gitTokenScopeGuesser.guessGitTokenScopes(authProviders.find(p => p.host == params.host), params);
     }
 
     async adminGetUsers(req: AdminGetListRequest<User>): Promise<AdminGetListResult<User>> {

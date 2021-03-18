@@ -71,6 +71,8 @@ import * as grpc from "grpc";
 import { CodeSyncService } from './code-sync/code-sync-service';
 import { ContentServiceStorageClient } from './storage/content-service-client';
 import { IDEPluginServiceClient } from '@gitpod/content-service/lib/ideplugin_grpc_pb';
+import { GitTokenScopeGuesser } from './workspace/git-token-scope-guesser';
+import { GitTokenValidator } from './workspace/git-token-validator';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Env).toSelf().inSingletonScope();
@@ -131,6 +133,9 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(SnapshotContextParser).toSelf().inSingletonScope();
     bind(IContextParser).to(SnapshotContextParser).inSingletonScope();
     bind(IPrefixContextParser).to(EnvvarPrefixParser).inSingletonScope();
+
+    bind(GitTokenScopeGuesser).toSelf().inSingletonScope();
+    bind(GitTokenValidator).toSelf().inSingletonScope();
 
     bind(BlockedUserFilter).to(NoOneBlockedUserFilter).inSingletonScope();
 

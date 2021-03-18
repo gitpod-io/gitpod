@@ -15,6 +15,8 @@ import { GithubContextParser } from "./github-context-parser";
 import { GithubRepositoryProvider } from "./github-repository-provider";
 import { GitHubTokenHelper } from "./github-token-helper";
 import { GithubLanguagesProvider } from "./languages-provider";
+import { IGitTokenValidator } from "../workspace/git-token-validator";
+import { GitHubTokenValidator } from "./github-token-validator";
 
 export const githubContainerModule = new ContainerModule((bind, _unbind, _isBound, _rebind) => {
     bind(RepositoryHost).toSelf().inSingletonScope();
@@ -31,4 +33,6 @@ export const githubContainerModule = new ContainerModule((bind, _unbind, _isBoun
     bind(GithubContextParser).toSelf().inSingletonScope();
     bind(IContextParser).toService(GithubContextParser);
     bind(GitHubTokenHelper).toSelf().inSingletonScope();
+    bind(GitHubTokenValidator).toSelf().inSingletonScope();
+    bind(IGitTokenValidator).toService(GitHubTokenValidator);
 });

@@ -502,6 +502,24 @@ export interface UninstallPluginParams {
     pluginId: string;
 }
 
+export interface GuessGitTokenScopesParams {
+    host: string
+    repoUrl: string
+	gitCommand: string
+    currentToken: GitToken
+}
+
+export interface GitToken {
+    token: string
+    user: string
+    scopes: string[]
+}
+
+export interface GuessedGitTokenScopes {
+    message?: string
+    scopes?: string[]
+}
+
 export type ResolvedPluginKind = 'user' | 'workspace' | 'builtin';
 
 export interface ResolvedPlugins {

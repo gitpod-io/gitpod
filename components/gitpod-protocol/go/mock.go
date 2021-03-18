@@ -887,6 +887,21 @@ func (mr *MockAPIInterfaceMockRecorder) UninstallUserPlugin(ctx, params interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UninstallUserPlugin", reflect.TypeOf((*MockAPIInterface)(nil).UninstallUserPlugin), ctx, params)
 }
 
+// GuessGitTokenScopes mocks base method
+func (m *MockAPIInterface) GuessGitTokenScopes(ctx context.Context, params *GuessGitTokenScopesParams) (*GuessedGitTokenScopes, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGitTokenScopes", ctx, params)
+	ret0, _ := ret[0].(*GuessedGitTokenScopes)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GuessGitTokenScopes indicates an expected call of GuessGitTokenScopes
+func (mr *MockAPIInterfaceMockRecorder) GuessGitTokenScopes(ctx, params interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GuessGitTokenScopes", reflect.TypeOf((*MockAPIInterface)(nil).GuessGitTokenScopes), ctx, params)
+}
+
 // InstanceUpdates mocks base method
 func (m *MockAPIInterface) InstanceUpdates(ctx context.Context, instanceID string) (<-chan *WorkspaceInstance, error) {
 	m.ctrl.T.Helper()
