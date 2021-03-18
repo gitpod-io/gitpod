@@ -122,13 +122,18 @@ spec:
       - name: https-certificates
         secret:
           secretName: {{ .Values.certificatesSecret.secretName }}
-          {{- if (and $.Values.certificatesSecret.fullChainName $.Values.certificatesSecret.chainName $.Values.certificatesSecret.keyName) }}
           items:
+          {{- if (and $.Values.certificatesSecret.fullChainName $.Values.certificatesSecret.chainName $.Values.certificatesSecret.keyName) }}
           - key: {{ $.Values.certificatesSecret.fullChainName }}
             path: fullchain.pem
           - key: {{ $.Values.certificatesSecret.chainName }}
             path: chain.pem
           - key: {{ $.Values.certificatesSecret.keyName }}
+            path: privkey.pem
+          {{- else }}
+          - key: tls.crt
+            path: fullchain.pem
+          - key: tls.key
             path: privkey.pem
           {{- end }}
       {{- end }}
