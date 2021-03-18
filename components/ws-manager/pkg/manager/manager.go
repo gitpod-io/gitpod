@@ -389,20 +389,6 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 	// add a new one.
 	workspaceSpan := opentracing.StartSpan("workspace-stop", opentracing.FollowsFrom(opentracing.SpanFromContext(ctx).Context()))
 	tracing.ApplyOWI(workspaceSpan, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
-	traceID := tracing.GetTraceID(workspaceSpan)
-	err = m.patchPodLifecycleIndependentState(ctx, workspaceID, func(plis *podLifecycleIndependentState) bool {
-		t := time.Now().UTC()
-		status.Phase = api.WorkspacePhase_STOPPING
-		plis.StoppingSince = &t
-		plis.LastPodStatus = status
-		if pod.Status.HostIP != "" {
-			plis.HostIP = pod.Status.HostIP
-		}
-		return true
-	}, addMark(wsk8s.TraceIDAnnotation, traceID))
-	if err != nil {
-		log.WithError(err).Warn("was unable to add new traceID annotation to workspace")
-	}
 
 	servicePrefix, ok := pod.Annotations[servicePrefixAnnotation]
 	if !ok {
@@ -1022,11 +1008,6 @@ func (m *Manager) getAllWorkspaceObjects(ctx context.Context) ([]workspaceObject
 	if err != nil {
 		return nil, xerrors.Errorf("cannot list workspaces: %w", err)
 	}
-	var plis corev1.ConfigMapList
-	err = m.Clientset.List(ctx, &plis, workspaceObjectListOptions(m.Config.Namespace))
-	if err != nil {
-		return nil, xerrors.Errorf("cannot list workspaces: %w", err)
-	}
 	var services corev1.ServiceList
 	err = m.Clientset.List(ctx, &services, workspaceObjectListOptions(m.Config.Namespace))
 	if err != nil {
@@ -1056,25 +1037,6 @@ func (m *Manager) getAllWorkspaceObjects(ctx context.Context) ([]workspaceObject
 			theiaServiceIndex[getTheiaServiceName(sp)] = wso
 			portServiceIndex[getPortsServiceName(sp)] = wso
 		}
-	}
-	for _, plis := range plis.Items {
-		id, ok := plis.Annotations[workspaceIDAnnotation]
-		if !ok {
-			log.WithField("configmap", plis.Name).Warn("PLIS has no workspace ID")
-			span.LogKV("warning", "PLIS has no workspace ID", "podName", plis.Name)
-			span.SetTag("error", true)
-			continue
-		}
-
-		// don't references to loop variables - they magically change their value
-		pliscopy := plis
-
-		wso, ok := wsoIndex[id]
-		if !ok {
-			wso = &workspaceObjects{}
-			wsoIndex[id] = wso
-		}
-		wso.PLIS = &pliscopy
 	}
 
 	for _, service := range services.Items {

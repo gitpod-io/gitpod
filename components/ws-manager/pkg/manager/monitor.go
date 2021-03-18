@@ -11,13 +11,11 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"reflect"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
 
-	"github.com/alecthomas/repr"
 	"github.com/opentracing/opentracing-go"
 	tracelog "github.com/opentracing/opentracing-go/log"
 	"golang.org/x/xerrors"
@@ -153,8 +151,6 @@ func (m *Monitor) handleEvent(evt watch.Event) {
 	switch evt.Object.(type) {
 	case *corev1.Pod:
 		err = m.onPodEvent(evt)
-	case *corev1.ConfigMap:
-		err = m.onConfigMapEvent(evt)
 	}
 
 	if err != nil {
@@ -171,7 +167,6 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 
 	pod, ok := evt.Object.(*corev1.Pod)
 	if !ok {
-		repr.Println(evt)
 		return fmt.Errorf("received non-pod event")
 	}
 
@@ -356,6 +351,13 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 	}
 
 	if status.Phase == api.WorkspacePhase_RUNNING {
+		// We need to register the finalizer before the pod is deleted (see https://book.kubebuilder.io/reference/using-finalizers.html).
+		// TODO (cw): Figure out if we can replace the "neverReady" flag.
+		err = m.manager.modifyFinalizer(ctx, workspaceID, gitpodFinalizerName, true)
+		if err != nil {
+			return xerrors.Errorf("cannot add gitpod finalizer: %w", err)
+		}
+
 		if wso.IsWorkspaceHeadless() {
 			// this is a headless workspace, which means that instead of probing for it becoming available, we'll listen to its log
 			// output, parse it and forward it. Listen() is idempotent.
@@ -377,42 +379,22 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 	}
 
 	if status.Phase == api.WorkspacePhase_STOPPING {
-		// This may be the last pod-based status we'll ever see for this workspace, so we must store it in the
-		// plis config map which in turn will trigger the status update mechanism. Because we serialize events
-		// for each workspace, the cfgmap event won't be handled before this function finishes.
-		annotations := make([]*annotation, 0)
-		if v, neverReady := pod.Annotations[workspaceNeverReadyAnnotation]; neverReady {
-			// workspace has never been ready, mark it as such.
-			// Note: this is the reason we're using a never-ready flag instead of a "positive ready" flag.
-			//       If we don't copy this flag for some reason (e.g. because we missed the stopping event),
-			//       we'll still think the workspace ready, i.e. it's ready by default.
-			annotations = append(annotations, addMark(workspaceNeverReadyAnnotation, v))
+		if status.Conditions.FinalBackupComplete == api.WorkspaceConditionBool_TRUE {
+			// we've disposed already - try to remove the finalizer and call it a day
+			return m.manager.modifyFinalizer(ctx, workspaceID, gitpodFinalizerName, false)
 		}
 
-		err := m.manager.patchPodLifecycleIndependentState(ctx, status.Id, func(plis *podLifecycleIndependentState) (needsUpdate bool) {
-			needsUpdate = false
-
-			if !reflect.DeepEqual(plis.LastPodStatus, status) {
-				plis.LastPodStatus = status
-				needsUpdate = true
+		var terminated bool
+		for _, c := range wso.Pod.Status.ContainerStatuses {
+			if c.Name == "workspace" {
+				// Note: sometimes container don't enter `terminated`, but `waiting`. The processes are stopped nonetheless,
+				//       and we should be running the backup. The only thing that keeps the pod alive, is our finalizer.
+				terminated = c.State.Running == nil
+				break
 			}
-
-			hostIP := pod.Status.HostIP
-			if hostIP != "" && plis.HostIP != hostIP {
-				plis.HostIP = hostIP
-				needsUpdate = true
-			}
-
-			if plis.StoppingSince == nil {
-				t := time.Now().UTC()
-				plis.StoppingSince = &t
-				needsUpdate = true
-			}
-
-			return
-		}, annotations...)
-		if err != nil {
-			return xerrors.Errorf("cannot update pod lifecycle independent state: %w", err)
+		}
+		if terminated {
+			go m.finalizeWorkspaceContent(ctx, wso)
 		}
 	}
 
@@ -514,122 +496,6 @@ func (m *Monitor) handleHeadlessLog(pod *corev1.Pod, msg string) {
 	m.manager.OnWorkspaceLog(context.Background(), evt)
 }
 
-// onConfigMapEvent interpretes Kubernetes events regarding pod lifecycle independent state,
-// translates and broadcasts them, and acts based on them. This is the pod independented counterpart to
-// onPodEvent, and only does something if there is no pod in place.
-func (m *Monitor) onConfigMapEvent(evt watch.Event) error {
-	cfgmap, ok := evt.Object.(*corev1.ConfigMap)
-	if !ok {
-		return fmt.Errorf("received non-configmap event")
-	}
-	// Kubernetes sets a deletionGracePeriod on configmaps prior to deleting them. That's a modification
-	// we don't care about as it does not add to the state of a workspace.
-	if cfgmap.DeletionGracePeriodSeconds != nil {
-		return nil
-	}
-
-	// configmap events only play a role when no pod exists anymore. Otherwise we could not
-	// guarantee a stable order of states, as we complete the workspace objects when we handle the events.
-	//
-	// Consider the following sequence:
-	// 	pod event     fromEvt(pod)=rev1 fromK8S(cfgmap)=none
-	// 	cfg map event fromK8S(pod)=rev3 fromEvt(cfgmap)=rev1
-	// 	pod event     fromEvt(pod)=rev2 fromK8S(cfgmap)=rev1
-	//	pod event     fromEvt(pod)=rev3 fromK8S(cfgmap)=rev1
-	//
-	// In this sequence we would intermittently commpute our state from a new version of the pod. This would break
-	// (and has broken) a stable order of status.
-	ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
-	defer cancel()
-
-	wso := &workspaceObjects{PLIS: cfgmap}
-	err := m.manager.completeWorkspaceObjects(ctx, wso)
-	if err != nil {
-		return xerrors.Errorf("cannot handle workspace event: %w", err)
-	}
-	if wso.Pod != nil {
-		return nil
-	}
-
-	status, err := m.manager.getWorkspaceStatus(*wso)
-	if err != nil {
-		log.WithError(err).WithFields(wso.GetOWI()).Error("onConfigMapEvent cannot get status")
-		return xerrors.Errorf("cannot handle workspace event: %w", err)
-	}
-
-	// make sure we tell our clients that things changed - no matter if there's an error in our
-	// subsequent handling of the matter or not. However, we want to respond quickly to events,
-	// thus we start OnChange as a goroutine.
-	// BEWARE beyond this point one must not modify status anymore - we've already sent it out BEWARE
-	span := m.traceWorkspace(status.Phase.String(), wso)
-	ctx = opentracing.ContextWithSpan(context.Background(), span)
-	onChangeDone := make(chan bool)
-	go func() {
-		// We call OnChange in a Go routine to make sure it doesn't block our internal handling of events.
-		m.manager.OnChange(ctx, status)
-		onChangeDone <- true
-	}()
-
-	m.writeEventTraceLog(status, wso)
-	err = m.actOnConfigMapEvent(ctx, status, wso)
-
-	// To make the tracing work though we have to re-sync with OnChange. But we don't want OnChange to block our event
-	// handling, thus we wait for it to finish in a Go routine.
-	go func() {
-		<-onChangeDone
-		span.Finish()
-	}()
-
-	return err
-}
-
-// actOnConfigMapEvent performs actions when a status change was triggered by a config map (PLIS) update, e.g. clean up the
-// PLIS config map if the workspace is stopped.
-// BEWARE: this function only gets called when there's no workspace pod!
-func (m *Monitor) actOnConfigMapEvent(ctx context.Context, status *api.WorkspaceStatus, wso *workspaceObjects) (err error) {
-	cfgmap := wso.PLIS
-
-	//nolint:ineffassign,staticcheck
-	span, ctx := tracing.FromContext(ctx, "actOnConfigMapEvent")
-	defer tracing.FinishSpan(span, &err)
-
-	doDelete := func() error {
-		span.SetTag("deletingObject", true)
-
-		// the workspace has stopped, we don't need the workspace state configmap anymore
-		propagationPolicy := metav1.DeletePropagationForeground
-		err = m.manager.Clientset.Delete(ctx, cfgmap, &client.DeleteOptions{PropagationPolicy: &propagationPolicy})
-		if err != nil && !isKubernetesObjNotFoundError(err) {
-			return xerrors.Errorf("cannot delete PLIS config map: %w", err)
-		}
-
-		return nil
-	}
-
-	// Beware: for this finalization mechanism to work, the pod going out has to trigger a config map event. Because we have a
-	//         workspace condition "deployed" which changes state when the pod goes away, and during startup of wsman we'll enter here,
-	//         that will be the case. It does feel rather frickle though.
-	if status.Phase == api.WorkspacePhase_STOPPING {
-		// Handling timeouts in config map events is tricky as we must not rely on the workspace status timeout condition. That condition
-		// could come from a regular timeout and does not indicate a timeout incurred while stopping. Timeouts which happen while we're stopping
-		// become annotations on the PLIS configmap and not part of the serialized PLIS content.
-		if _, ok := cfgmap.Annotations[workspaceTimedOutAnnotation]; ok {
-			// this workspace has timed out while stopping, thus we no longer try and remove the PLIS config map
-			return doDelete()
-		}
-
-		// after the workspace pod is gone, we have to initiate the last workspace backup and the disposal of
-		// of the workspce content
-		go m.finalizeWorkspaceContent(ctx, wso)
-	}
-
-	if status.Phase == api.WorkspacePhase_STOPPED {
-		return doDelete()
-	}
-
-	return nil
-}
-
 // doHouskeeping is called regularly by the monitor and removes timed out or dangling workspaces/services
 func (m *Monitor) doHousekeeping(ctx context.Context) {
 	span, ctx := tracing.FromContext(ctx, "doHousekeeping")
@@ -641,11 +507,6 @@ func (m *Monitor) doHousekeeping(ctx context.Context) {
 	}
 
 	err = m.deleteDanglingServices(ctx)
-	if err != nil {
-		m.OnError(err)
-	}
-
-	err = m.deleteDanglingPodLifecycleIndependentState(ctx)
 	if err != nil {
 		m.OnError(err)
 	}
@@ -1023,26 +884,26 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		log.WithFields(wso.GetOWI()).Errorf("cannot find %s annotation", workspaceIDAnnotation)
 	}
 
-	var fullWorkspaceBackup bool
-	if wso.Pod != nil {
-		if _, ok := wso.Pod.Labels[fullWorkspaceBackupAnnotation]; ok {
-			fullWorkspaceBackup = true
-		}
-	}
-	if wso.PLIS != nil {
-		if _, ok := wso.PLIS.Labels[fullWorkspaceBackupAnnotation]; ok {
-			fullWorkspaceBackup = true
-		}
-	}
-	if fullWorkspaceBackup {
-		err := m.manager.patchPodLifecycleIndependentState(ctx, workspaceID, func(plis *podLifecycleIndependentState) (needsUpdate bool) {
-			plis.FinalBackupComplete = true
-			needsUpdate = true
+	var disposalStatus *workspaceDisposalStatus
+	defer func() {
+		if disposalStatus == nil {
 			return
-		})
-		if err != nil {
-			log.WithError(err).Error("was unable to set pod lifecycle independent state - this will break someone's experience")
 		}
+
+		b, err := json.Marshal(disposalStatus)
+		if err != nil {
+			log.WithError(err).WithFields(wso.GetOWI()).Error("unable to marshal disposalStatus - this will break someone's experience")
+			return
+		}
+
+		err = m.manager.markWorkspace(ctx, workspaceID, addMark(disposalStatusAnnotation, string(b)))
+		if err != nil {
+			log.WithError(err).WithFields(wso.GetOWI()).Error("was unable to update pod's disposal state - this will break someone's experience")
+		}
+	}()
+
+	if _, fwb := wso.Pod.Labels[fullWorkspaceBackupAnnotation]; fwb {
+		disposalStatus = &workspaceDisposalStatus{BackupComplete: true}
 		return
 	}
 
@@ -1144,31 +1005,19 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		break
 	}
 
-	err := m.manager.patchPodLifecycleIndependentState(ctx, workspaceID, func(plis *podLifecycleIndependentState) (needsUpdate bool) {
-		plis.FinalBackupComplete = true
-		needsUpdate = true
-
-		if plis.LastPodStatus != nil {
-			plis.LastPodStatus.Repo = gitStatus
-			needsUpdate = true
+	disposalStatus = &workspaceDisposalStatus{
+		BackupComplete: true,
+		GitStatus:      gitStatus,
+	}
+	if backupError != nil {
+		if dataloss {
+			disposalStatus.BackupFailure = backupError.Error()
+		} else {
+			// internal errors make no difference to the user experience. The backup still worked, we just messed up some
+			// state management or cleanup. No need to worry the user.
+			log.WithError(backupError).WithFields(wso.GetOWI()).Warn("internal error while disposing workspace content")
+			tracing.LogError(span, backupError)
 		}
-
-		if backupError != nil {
-			if dataloss {
-				plis.FinalBackupFailure = backupError.Error()
-				needsUpdate = true
-			} else {
-				// internal errors make no difference to the user experience. The backup still worked, we just messed up some
-				// state management or cleanup. No need to worry the user.
-				log.WithError(backupError).WithFields(wso.GetOWI()).Warn("internal error while disposing workspace content")
-				tracing.LogError(span, backupError)
-			}
-		}
-
-		return
-	})
-	if err != nil {
-		log.WithError(err).WithFields(wso.GetOWI()).Error("was unable to set pod lifecycle independent state - this will break someone's experience")
 	}
 }
 
@@ -1218,72 +1067,6 @@ func (m *Monitor) deleteDanglingServices(ctx context.Context) error {
 	return nil
 }
 
-// deleteDanglingPodLifecycleIndependentState removes PLIS config maps for which no pod exists and which have exceded lonelyPLISSurvivalTime
-func (m *Monitor) deleteDanglingPodLifecycleIndependentState(ctx context.Context) error {
-	var pods corev1.PodList
-	err := m.manager.Clientset.List(ctx, &pods, workspaceObjectListOptions(m.manager.Config.Namespace))
-	if err != nil {
-		return xerrors.Errorf("deleteDanglingPodLifecycleIndependentState: %w", err)
-	}
-	podIdx := make(map[string]*corev1.Pod)
-	for _, p := range pods.Items {
-		workspaceID, ok := p.Labels[wsk8s.WorkspaceIDLabel]
-		if !ok {
-			log.WithFields(wsk8s.GetOWIFromObject(&p.ObjectMeta)).WithField("pod", p).Warn("found workspace object pod without workspaceID label")
-			continue
-		}
-
-		podIdx[workspaceID] = &p
-	}
-
-	var plisConfigmaps corev1.ConfigMapList
-	err = m.manager.Clientset.List(ctx, &plisConfigmaps, workspaceObjectListOptions(m.manager.Config.Namespace))
-	if err != nil {
-		return xerrors.Errorf("deleteDanglingPodLifecycleIndependentState: %w", err)
-	}
-
-	for _, cfgmap := range plisConfigmaps.Items {
-		workspaceID, ok := cfgmap.Labels[wsk8s.WorkspaceIDLabel]
-		if !ok {
-			m.OnError(xerrors.Errorf("PLIS config map %s does not have %s label", cfgmap.Name, wsk8s.WorkspaceIDLabel))
-			continue
-		}
-
-		_, hasPod := podIdx[workspaceID]
-		if hasPod {
-			continue
-		}
-
-		referenceTime := cfgmap.CreationTimestamp.Time
-		plis, err := unmarshalPodLifecycleIndependentState(&cfgmap)
-		if err != nil {
-			m.OnError(xerrors.Errorf("cannot get PLIS configmap age: %w", err))
-			continue
-		}
-		if plis != nil && plis.StoppingSince != nil {
-			referenceTime = *plis.StoppingSince
-		}
-		age := time.Since(referenceTime)
-
-		if age < lonelyPLISSurvivalTime {
-			continue
-		}
-
-		// Note: some workspace probably failed to stop if we have a dangling PLIS.
-		//       Prior to deletion we should send a final stopped update.
-
-		propagationPolicy := metav1.DeletePropagationForeground
-		err = m.manager.Clientset.Delete(ctx, &cfgmap, &client.DeleteOptions{PropagationPolicy: &propagationPolicy})
-		if err != nil {
-			m.OnError(xerrors.Errorf("cannot delete too old PLIS config map: %w", err))
-			continue
-		}
-		log.WithFields(log.OWI("", "", workspaceID)).WithField("age", age).WithField("name", cfgmap.Name).Info("deleted dangling PLIS config map")
-	}
-
-	return nil
-}
-
 // markTimedoutWorkspaces finds workspaces which haven't been active recently and marks them as timed out
 func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 	span, ctx := tracing.FromContext(ctx, "markTimedoutWorkspaces")
@@ -1323,50 +1106,6 @@ func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("workspaceId=%s: %q", workspaceID, err))
 			// don't skip the next step - even if we did not mark the workspace as timed out, we still want to stop it
-		}
-	}
-
-	// timeout PLIS only workspaces
-	var allPlis corev1.ConfigMapList
-	err = m.manager.Clientset.List(ctx, &allPlis, workspaceObjectListOptions(m.manager.Config.Namespace))
-	if err != nil {
-		return xerrors.Errorf("stopTimedoutWorkspaces: %w", err)
-	}
-	for _, plis := range allPlis.Items {
-		workspaceID, ok := plis.Annotations[workspaceIDAnnotation]
-		if !ok {
-			log.WithFields(wsk8s.GetOWIFromObject(&plis.ObjectMeta)).WithError(err).Errorf("while checking if timed out: found workspace PLIS without %s annotation", workspaceIDAnnotation)
-			errs = append(errs, fmt.Sprintf("cannot check if PLIS %s is timed out: has no %s annotation", plis.Name, workspaceIDAnnotation))
-			continue
-		}
-
-		if _, ok := idx[workspaceID]; ok {
-			// PLIS still has a corresponding pod, thus we resort to the regular "mark as timed out" mechanism
-			continue
-		}
-
-		timedout, err := m.manager.isWorkspaceTimedOut(workspaceObjects{PLIS: &plis})
-		if xerrors.Is(err, errNoPLIS) {
-			// The pod is gone and the PLIS hasn't been patched yet - there's not much we can do here, except
-			// to ignore the workspace.
-			//
-			// Note: although tempting it would be dangerous to try and patch the PLIS now, because we'd race
-			//       the stopping/stopped PLIS patching, possibly destroying state along the way. Patching the PLIS
-			//       is not an atomic operation.
-			continue
-		}
-		if err != nil {
-			errs = append(errs, fmt.Sprintf("workspaceId=%s: %q", workspaceID, err))
-			continue
-		}
-		if timedout == "" {
-			continue
-		}
-
-		// we have PLIS-only workspace which is timed out. Patching the PLIS config map will trigger actOnConfigMapEvent which in turn will remove the PLIS.
-		err = m.manager.patchPodLifecycleIndependentState(ctx, workspaceID, nil, addMark(workspaceTimedOutAnnotation, timedout))
-		if err != nil {
-			errs = append(errs, fmt.Sprintf("workspaceId=%s: %q", workspaceID, err))
 		}
 	}
 
