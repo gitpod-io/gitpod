@@ -56,26 +56,6 @@ func TestDeleteDanglingPodLifecycleIndependentState(t *testing.T) {
 					},
 				})
 			}
-			if fixture.PLIS != nil {
-				age := time.Duration(fixture.PLISAge)
-				if age != 0 {
-					fixture.PLIS.ObjectMeta.CreationTimestamp = metav1.NewTime(time.Now().Add(-age))
-				}
-				if fixture.StoppingDuration != 0 {
-					plis, err := unmarshalPodLifecycleIndependentState(fixture.PLIS)
-					if err != nil {
-						panic(err)
-					}
-					t := time.Now().Add(-time.Duration(fixture.StoppingDuration))
-					plis.StoppingSince = &t
-					err = marshalPodLifecycleIndependentState(fixture.PLIS, plis)
-					if err != nil {
-						panic(err)
-					}
-				}
-
-				objs = append(objs, fixture.PLIS)
-			}
 			manager := forTestingOnlyGetManager(t, objs...)
 
 			monitor, err := manager.CreateMonitor()
@@ -91,11 +71,6 @@ func TestDeleteDanglingPodLifecycleIndependentState(t *testing.T) {
 				if err != nil {
 					return &gold{Error: err.Error()}
 				}
-			}
-
-			err = monitor.deleteDanglingPodLifecycleIndependentState(context.Background())
-			if err != nil {
-				return &gold{Error: err.Error()}
 			}
 
 			var cms corev1.ConfigMapList
