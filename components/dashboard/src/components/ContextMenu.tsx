@@ -3,6 +3,7 @@ import { useState } from 'react';
 export interface ContextMenuProps {
     children: React.ReactChild[] | React.ReactChild;
     menuEntries: ContextMenuEntry[];
+    width?: string;
 }
 
 export interface ContextMenuEntry {
@@ -49,7 +50,7 @@ function ContextMenu(props: ContextMenuProps) {
                 {props.children}
             </div>
             {expanded?
-                <div className={`z-50 w-40 bg-white absolute py-2 right-0 flex flex-col border border-gray-200 rounded-lg space-y-2`}>
+                <div className={`z-50 ${props.width || 'w-40'} bg-white absolute py-2 right-0 flex flex-col border border-gray-200 rounded-lg space-y-2`}>
                     {enhancedEntries.map(e => {
                         const entry = <div key={e.title} className={`px-4 flex py-2 text-gray-600 hover:bg-gray-200 text-sm leading-1 ${e.customFontStyle || font} ${e.separator? ' border-b border-gray-200':''}`} >
                             <div>{e.title}</div><div className="flex-1"></div>{e.active ? <div className="pl-1 font-semibold">&#x2713;</div>: null}

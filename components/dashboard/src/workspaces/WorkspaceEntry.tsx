@@ -6,8 +6,10 @@ import moment from 'moment';
 import { getGitpodService } from '../service/service';
 import Modal from '../components/Modal';
 import { MouseEvent, useState } from 'react';
+import { WorkspaceModel } from './workspace-model';
 
-export function WorkspaceEntry(desc: WorkspaceInfo) {
+
+export function WorkspaceEntry({desc, model}: {desc: WorkspaceInfo, model: WorkspaceModel}) {
     const [isModalVisible, setModalVisible] = useState(false);
     const [isChangesModalVisible, setChangesModalVisible] = useState(false);
     const state: WorkspaceInstancePhase = desc.latestInstance?.status?.phase || 'stopped';
@@ -60,7 +62,7 @@ export function WorkspaceEntry(desc: WorkspaceInfo) {
             title: 'Share',
             active: !!ws.shareable,
             onClick: () => {
-                getGitpodService().server.controlAdmission(ws.id, ws.shareable ? "owner" : "everyone");
+                model.toggleShared(ws.id);
             }
         },
         {
@@ -68,7 +70,7 @@ export function WorkspaceEntry(desc: WorkspaceInfo) {
             active: !!ws.pinned,
             separator: true,
             onClick: () => {
-                getGitpodService().server.updateWorkspaceUserPin(ws.id, 'toggle')
+                model.togglePinned(ws.id);
             }
         },
         {
@@ -107,7 +109,7 @@ export function WorkspaceEntry(desc: WorkspaceInfo) {
                 <div className="font-medium text-gray-500 truncate">{currentBranch}</div>
                 {
                     numberOfChanges > 0 ?
-                    <div className={"text-sm text-gitpod-kumquat truncate cursor-pointer hover:underline"} onClick={showChanges}>{changesLabel}</div>
+                    <div className={"text-sm text-red truncate cursor-pointer hover:underline"} onClick={showChanges}>{changesLabel}</div>
                     :
                     <div className="text-sm text-gray-400 truncate">No Changes</div>    
                 }
@@ -117,7 +119,7 @@ export function WorkspaceEntry(desc: WorkspaceInfo) {
             </div>
         </div>
         <div className="flex w-2/12 self-center space-x-2" onClick={startWsOnClick}>
-            <div className="text-sm text-gray-400 truncate">{moment(desc.latestInstance?.startedTime).fromNow()}</div>
+            <div className="text-sm text-gray-400 truncate">{moment(WorkspaceInfo.lastActiveISODate(desc)).fromNow()}</div>
         </div>
         <div className="flex w-8 self-center hover:bg-gray-300 rounded-md cursor-pointer">
             <ContextMenu menuEntries={menuEntries}>
