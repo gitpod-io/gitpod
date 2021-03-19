@@ -110,7 +110,7 @@ export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: Wo
                     <div className="text-sm text-gray-400 truncate">{ws.contextURL}</div>
                 </div>
             </div>
-            <div className="flex w-2/12" onClick={numberOfChanges > 0 ? showChanges : undefined}>
+            <div className="flex w-2/12 truncate" onClick={numberOfChanges > 0 ? showChanges : undefined}>
                 <div className="flex flex-col">
                     <div className="font-medium text-gray-500 truncate">{currentBranch}</div>
                     {
@@ -121,7 +121,7 @@ export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: Wo
                     }
                 </div>
             </div>
-            <div className="flex w-2/12 self-center space-x-2">
+            <div className="flex w-2/12 self-center space-x-2 truncate">
                 <div className="text-sm text-gray-400 truncate">{moment(WorkspaceInfo.lastActiveISODate(desc)).fromNow()}</div>
             </div>
             <div className="flex w-8 self-center hover:bg-gray-300 rounded-md cursor-pointer">

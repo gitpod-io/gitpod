@@ -23,15 +23,15 @@ function ProgressBar(props: { phase: number, error: boolean }) {
         // This phase is currently running
         classes += ' bg-green-400 animate-pulse';
       }
-      return <div key={'phase-'+i} className={classes}/>;
+      return <div key={'phase-' + i} className={classes} />;
     })}
   </div>;
 }
 
 export interface StartPageProps {
-    phase: number;
-    error?: boolean;
-    children?: React.ReactNode;
+  phase: number;
+  error?: boolean;
+  children?: React.ReactNode;
 }
 
 export function StartPage(props: StartPageProps) {
@@ -56,11 +56,12 @@ export function StartPage(props: StartPageProps) {
       title = "Starting";
       break;
   }
-  return <div className="h-screen flex bg-white">
-    <div className="w-full mt-40 md:mt-60 flex flex-col items-center">
+  return <div className="w-screen h-screen bg-white align-middle">
+    <div className="flex flex-col mx-auto items-center h-screen">
+      <div className="h-1/3"></div>
       <img src="/gitpod.svg" className="h-16 flex-shrink-0" />
       <h3 className="mt-8 text-xl">{title}</h3>
-      <ProgressBar phase={props.phase} error={!!props.error}/>
+      <ProgressBar phase={props.phase} error={!!props.error} />
       {props.children}
     </div>
   </div>;

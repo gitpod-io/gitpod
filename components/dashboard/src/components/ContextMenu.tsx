@@ -41,7 +41,8 @@ function ContextMenu(props: ContextMenuProps) {
             }
         }
     })
-    const font = "text-gray-400 hover:text-gray-800"
+
+    const font = "text-gray-600 hover:text-gray-800"
     return (
         <div className="relative cursor-pointer">
             <div onClick={(e) => {
@@ -51,12 +52,16 @@ function ContextMenu(props: ContextMenuProps) {
                 {props.children}
             </div>
             {expanded?
-                <div className={`z-50 ${props.width || 'w-40'} bg-white absolute py-2 right-0 flex flex-col border border-gray-200 rounded-lg space-y-2`}>
+                <div className={`mt-2 z-50 ${props.width || 'w-48'} bg-white absolute right-0 flex flex-col border border-gray-200 rounded-lg truncated`}>
                     {enhancedEntries.map(e => {
-                        const entry = <div key={e.title} className={`px-4 flex py-2 text-gray-600 hover:bg-gray-200 text-sm leading-1 ${e.customFontStyle || font} ${e.separator? ' border-b border-gray-200':''}`} >
+                        const clickable = e.href || e.onClick;
+                        const entry = <div key={e.title} className={`px-4 flex py-3 ${clickable?'hover:bg-gray-200':''} text-sm leading-1 ${e.customFontStyle || font} ${e.separator? ' border-b border-gray-200':''}`} >
                             <div>{e.title}</div><div className="flex-1"></div>{e.active ? <div className="pl-1 font-semibold">&#x2713;</div>: null}
                         </div>
-                        return <a href={e.href} onClick={e.onClick}>
+                        if (!clickable) {
+                            return entry;
+                        }
+                        return <a key={e.title} href={e.href} onClick={e.onClick}>
                             {entry}
                         </a>
                     })}
