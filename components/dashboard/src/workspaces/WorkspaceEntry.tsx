@@ -133,17 +133,20 @@ export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: Wo
         <Modal visible={isChangesModalVisible} onClose={() => setChangesModalVisible(false)}>
             {getChangesPopup(pendingChanges)}
         </Modal>
-        <Modal visible={isModalVisible} onClose={() => setModalVisible(false)}>
+        <Modal visible={isModalVisible} onClose={() => setModalVisible(false)} onEnter={() => {model.deleteWorkspace(ws.id); return true;}}>
             <div>
-                <h3>Delete {ws.id}</h3>
-                <div className="py-4">
-                    <p>Do you really want to delete this workspace?</p>
+                <h3>Delete Workspace</h3>
+                <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-2">
+                    <p className="mt-1 mb-2 text-base">Are you sure you want to delete this workspace?</p>
+                    <div className="w-full p-4 mb-2 bg-gray-100 rounded-xl group bg-gray-100">
+                        <p className="text-base text-gray-800 font-semibold">{ws.id}</p>
+                        <p>{ws.description}</p>
+                    </div>
                 </div>
-                <div className="flex">
-                    <div className="flex-1"></div>
+                <div className="flex justify-end mt-5">
                     <button className="cursor-pointer px-3 py-2 text-white text-sm rounded-md border-2 border-red-800 bg-red-600 hover:bg-red-800"
                         onClick={() => model.deleteWorkspace(ws.id)}>
-                        Delete
+                        Delete Workspace
                     </button>
                 </div>
             </div>
