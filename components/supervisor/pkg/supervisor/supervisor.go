@@ -38,6 +38,8 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
 	daemon "github.com/gitpod-io/gitpod/ws-daemon/api"
+
+	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 )
 
 var (
@@ -573,6 +575,13 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	l, err := net.Listen("tcp", fmt.Sprintf(":%d", cfg.APIEndpointPort))
 	if err != nil {
 		log.WithError(err).Fatal("cannot start health endpoint")
+	}
+
+	if cfg.DebugEnable {
+		opts = append(opts,
+			grpc.UnaryInterceptor(grpc_logrus.UnaryServerInterceptor(log.Log)),
+			grpc.StreamInterceptor(grpc_logrus.StreamServerInterceptor(log.Log)),
+		)
 	}
 
 	m := cmux.New(l)
