@@ -2,7 +2,7 @@ import React, { Suspense } from "react";
 import { CreateWorkspaceMode, WorkspaceCreationResult } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import Modal from "../components/Modal";
-import { getGitpodService } from "../service/service";
+import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { StartPage, StartPhase } from "./StartPage";
 import StartWorkspace from "./StartWorkspace";
 
@@ -15,6 +15,7 @@ export interface CreateWorkspaceProps {
 export interface CreateWorkspaceState {
   result?: WorkspaceCreationResult;
   error?: CreateWorkspaceError;
+  stillParsing: boolean;
 }
 
 export interface CreateWorkspaceError {
@@ -27,6 +28,7 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
 
   constructor(props: CreateWorkspaceProps) {
     super(props);
+    this.state = { stillParsing: true };
   }
 
   componentDidMount() {
@@ -34,6 +36,15 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
   }
 
   async createWorkspace(mode = CreateWorkspaceMode.SelectIfRunning) {
+    // Invalidate any previous result.
+    this.setState({
+      result: undefined,
+      stillParsing: true,
+    });
+
+    // We assume anything longer than 3 seconds is no longer just parsing the context URL (i.e. it's now creating a workspace).
+    let timeout = setTimeout(() => this.setState({ stillParsing: false }), 3000);
+
     try {
       const result = await getGitpodService().server.createWorkspace({
         contextUrl: this.props.contextUrl,
@@ -43,16 +54,24 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
         window.location.href = result.workspaceURL;
         return;
       }
-      this.setState({ result });
+      clearTimeout(timeout);
+      this.setState({
+        result,
+        stillParsing: false,
+      });
     } catch (error) {
-      this.setState({ error });
+      clearTimeout(timeout);
+      this.setState({
+        error,
+        stillParsing: false,
+      });
     }
   }
 
   render() {
     const { contextUrl } = this.props;
     let phase = StartPhase.Checking;
-    let statusMessage = <p className="text-base text-gray-400">Checking Context …</p>;
+    let statusMessage = <p className="text-base text-gray-400">{this.state.stillParsing ? 'Parsing context …' : 'Preparing workspace …'}</p>;
     let logsView = undefined;
 
     const error = this.state?.error;
@@ -106,7 +125,6 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
     }
 
     else if (result?.runningWorkspacePrebuild) {
-      phase = StartPhase.Building;
       statusMessage = <p className="text-base text-gray-400">⚡Prebuild in progress</p>;
       logsView = <Suspense fallback={<div className="m-6 p-4 h-60 w-11/12 lg:w-3/5 flex-shrink-0 rounded-lg" style={{ color: '#8E8787', background: '#ECE7E5' }}>Loading...</div>}>
         <WorkspaceLogs />
@@ -116,16 +134,16 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
     return <StartPage phase={phase} error={!!error}>
       {statusMessage}
       {logsView}
-      {error && <>
-        <button className="mt-8">Go back to dashboard</button>
-        <p className="mt-10 text-base text-gray-400 flex space-x-2">
+      {error && <div>
+        <a href={gitpodHostUrl.asDashboard().toString()}><button className="mt-8 px-4 py-2 text-gray-500 bg-white font-semibold border-gray-500">Go back to dashboard</button></a>
+        <p className="mt-14 text-base text-gray-400 flex space-x-2">
           <a href="https://www.gitpod.io/docs/">Docs</a>
           <span>—</span>
           <a href="https://status.gitpod.io/">Status</a>
           <span>—</span>
           <a href="https://www.gitpod.io/blog/">Blog</a>
         </p>
-      </>}
+      </div>}
     </StartPage>;
   }
 
