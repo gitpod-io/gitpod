@@ -28,6 +28,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/pprof"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/executor"
 	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
@@ -596,6 +597,9 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	routes := http.NewServeMux()
 	routes.Handle("/_supervisor/v1/", http.StripPrefix("/_supervisor", restMux))
 	routes.Handle("/_supervisor/frontend", http.FileServer(http.Dir(cfg.FrontendLocation)))
+	if cfg.DebugEnable {
+		routes.Handle("/_supervisor"+pprof.Path, http.StripPrefix("/_supervisor", pprof.Handler()))
+	}
 	go http.Serve(httpMux, routes)
 
 	go m.Serve()
