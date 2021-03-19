@@ -72,7 +72,8 @@ export class TypeORMUserDBImpl implements UserDB {
             id: uuidv4(),
             creationDate: new Date().toISOString(),
             identities: [],
-            allowsMarketingCommunication: false
+            allowsMarketingCommunication: false,
+            additionalData: { ideSettings: { defaultIde: 'code' } },
         };
         await this.storeUser(user);
         return user;
