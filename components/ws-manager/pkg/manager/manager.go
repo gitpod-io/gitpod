@@ -179,28 +179,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	}
 	tracing.LogEvent(span, "pod created")
 
-	// the pod lifecycle independent state is a config map which stores information about a workspace
-	// prior to/beyond a workspace pod's lifetime. These config maps can exist without a pod only for
-	// a limited amount of time to avoid littering our system with obsolete config maps.
-	plisConfigMap := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      getPodLifecycleIndependentCfgMapName(req.Id),
-			Namespace: m.Config.Namespace,
-			Labels:    startContext.Labels,
-			Annotations: map[string]string{
-				workspaceIDAnnotation:   req.Id,
-				servicePrefixAnnotation: getServicePrefix(req),
-			},
-		},
-	}
-	err = m.Clientset.Create(ctx, plisConfigMap)
-	if err != nil {
-		clog.WithError(err).WithField("req", req).Error("was unable to start workspace")
-		return nil, xerrors.Errorf("cannot create workspace's lifecycle independent state: %w", err)
-	}
-	tracing.LogEvent(span, "PLIS config map created")
-
-	// only regular workspaces get a service, the others are fine with just pod and plis
+	// only regular workspaces get a service, the others are fine with just pod
 	okResponse := &api.StartWorkspaceResponse{Url: startContext.WorkspaceURL}
 	if req.Type != api.WorkspaceType_REGULAR {
 		return okResponse, nil
@@ -997,7 +976,6 @@ func (m *Manager) GetWorkspaces(ctx context.Context, req *api.GetWorkspacesReque
 
 // getAllWorkspaceObjects retturns all (possibly incomplete) workspaceObjects of all workspaces this manager is currently aware of.
 // If a workspace has a pod that pod is part of the returned WSO.
-// If a workspace has a PLIS that PLIS is part of the returned WSO.
 func (m *Manager) getAllWorkspaceObjects(ctx context.Context) ([]workspaceObjects, error) {
 	//nolint:ineffassign
 	span, ctx := tracing.FromContext(ctx, "getAllWorkspaceObjects")

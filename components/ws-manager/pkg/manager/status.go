@@ -56,19 +56,12 @@ type workspaceObjects struct {
 	TheiaService *corev1.Service `json:"theiaService,omitempty"`
 	PortsService *corev1.Service `json:"portsService,omitempty"`
 	Events       []corev1.Event  `json:"events,omitempty"`
-
-	// PLIS is Pod Lifecycle Independent State which we use to store state if there's no more appropriate place.
-	// This is really a last resort and should only be used if there really is no other means of storing the state.
-	PLIS *corev1.ConfigMap `json:"plis,omitempty"`
 }
 
 // GetOWI produces the owner, workspace, instance tripple that we use for tracing and logging
 func (wso *workspaceObjects) GetOWI() logrus.Fields {
 	if wso.Pod != nil {
 		return wsk8s.GetOWIFromObject(&wso.Pod.ObjectMeta)
-	}
-	if wso.PLIS != nil {
-		return wsk8s.GetOWIFromObject(&wso.PLIS.ObjectMeta)
 	}
 	return logrus.Fields{}
 }
@@ -79,10 +72,6 @@ func (wso *workspaceObjects) IsWorkspaceHeadless() bool {
 		val, ok := wso.Pod.ObjectMeta.Labels[headlessLabel]
 		return ok && val == "true"
 	}
-	if wso.PLIS != nil {
-		val, ok := wso.PLIS.ObjectMeta.Labels[headlessLabel]
-		return ok && val == "true"
-	}
 	return false
 }
 
@@ -90,8 +79,6 @@ func (wso *workspaceObjects) WorkspaceType() (api.WorkspaceType, error) {
 	var meta *metav1.ObjectMeta
 	if wso.Pod != nil {
 		meta = &wso.Pod.ObjectMeta
-	} else if wso.PLIS != nil {
-		meta = &wso.PLIS.ObjectMeta
 	} else {
 		// we don't know anything about this pod - assume it's a regular pod
 		return api.WorkspaceType_REGULAR, xerrors.Errorf("cannot determine pod type")
@@ -128,12 +115,6 @@ func (wso *workspaceObjects) WorkspaceID() (id string, ok bool) {
 			return r, true
 		}
 	}
-	if wso.PLIS != nil {
-		r, ok := wso.PLIS.Annotations[workspaceIDAnnotation]
-		if ok {
-			return r, true
-		}
-	}
 
 	return "", false
 }
@@ -154,9 +135,6 @@ func (wso *workspaceObjects) WasEverReady() (res bool) {
 
 	if wso.Pod != nil {
 		return check(wso.Pod.Annotations)
-	}
-	if wso.PLIS != nil {
-		return check(wso.PLIS.Annotations)
 	}
 
 	// We assume the pod was ready by default, even if we have nothing to show for it.
@@ -192,9 +170,6 @@ func (m *Manager) completeWorkspaceObjects(ctx context.Context, wso *workspaceOb
 	servicePrefix := ""
 	if wso.Pod != nil {
 		servicePrefix = wso.Pod.Annotations[servicePrefixAnnotation]
-	}
-	if servicePrefix == "" && wso.PLIS != nil {
-		servicePrefix = wso.PLIS.Annotations[servicePrefixAnnotation]
 	}
 	if servicePrefix == "" {
 		return xerrors.Errorf("completeWorkspaceObjects: no service prefix found")
@@ -238,10 +213,6 @@ func (m *Manager) completeWorkspaceObjects(ctx context.Context, wso *workspaceOb
 	return nil
 }
 
-func getPodLifecycleIndependentCfgMapName(workspaceID string) string {
-	return fmt.Sprintf("plis-%s", workspaceID)
-}
-
 func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus, error) {
 	id, ok := wso.WorkspaceID()
 	if !ok {
@@ -253,7 +224,7 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 		return nil, xerrors.Errorf("need pod to compute status")
 	}
 
-	// we have a workspace pod - use that to compute the status from scratch (as compared to pulling it out of the PLIS alone)
+	// we have a workspace pod - use that to compute the status from scratch
 	workspaceContainer := getContainer(wso.Pod, "workspace")
 	if workspaceContainer == nil {
 		return nil, xerrors.Errorf("workspace pod for %s is degenerate - does not have workspace container", id)
@@ -324,7 +295,6 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 		},
 	}
 
-	// pod first, plis later
 	err = m.extractStatusFromPod(status, wso)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot get workspace status: %w", err)
@@ -787,7 +757,7 @@ func (m *Manager) isWorkspaceTimedOut(wso workspaceObjects) (reason string, err 
 		return decide(wso.Pod.DeletionTimestamp.Time, m.Config.Timeouts.Stopping, activity)
 
 	default:
-		// the only other phases we can be in is stopping and stopped: we leave the stopping timeout to the PLIS branch and don't want to timeout when stopped
+		// the only other phases we can be in is stopped which is pointless to time out
 		return "", nil
 	}
 }

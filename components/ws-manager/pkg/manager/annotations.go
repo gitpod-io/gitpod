@@ -77,7 +77,7 @@ const (
 	// gitpodFinalizerName is the name of the Gitpod finalizer we use to clean up a workspace
 	gitpodFinalizerName = "gitpod.io/finalizer"
 
-	// disposalStatusAnnotation cibtaubs 
+	// disposalStatusAnnotation contains the status of the workspace disposal process
 	disposalStatusAnnotation = "gitpod.io/disposalStatus"
 )
 
