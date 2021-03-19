@@ -192,6 +192,9 @@ type WorkspaceConfig struct {
 
 	// GitpodHeadless controls whether the workspace is running headless
 	GitpodHeadless string `env:"GITPOD_HEADLESS"`
+
+	// DebugEnabled controls whether the supervisor debugging facilities (pprof, grpc tracing) shoudl be enabled
+	DebugEnable bool `env:"SUPERVISOR_DEBUG_ENABLE"`
 }
 
 // WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service

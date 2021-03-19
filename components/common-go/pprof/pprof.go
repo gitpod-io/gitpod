@@ -15,20 +15,29 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
+const DefaultPath = "/debug/pprof"
+
 // Serve starts a new HTTP server serving pprof endpoints on the given addr
 func Serve(addr string) {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/debug/pprof/", index)
-	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
-	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	mux.Handle(DefaultPath, Handler())
 
 	log.WithField("addr", addr).Info("serving pprof service")
 	err := http.ListenAndServe(addr, mux)
 	if err != nil {
 		log.WithField("addr", addr).WithError(err).Warn("cannot serve pprof service")
 	}
+}
+
+// Handler produces the pprof endpoint handler
+func Handler() http.Handler {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", index)
+	mux.HandleFunc("/cmdline", pprof.Cmdline)
+	mux.HandleFunc("/profile", pprof.Profile)
+	mux.HandleFunc("/symbol", pprof.Symbol)
+	mux.HandleFunc("/trace", pprof.Trace)
+	return mux
 }
 
 func index(w http.ResponseWriter, r *http.Request) {
