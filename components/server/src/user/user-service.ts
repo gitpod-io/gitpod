@@ -112,7 +112,7 @@ export class UserService {
     }
 
     private cachedIsFirstUser: boolean | undefined = undefined;
-    public async createUser({identity, token, userUpdate }: CreateUserParams): Promise<User> {
+    public async createUser({ identity, token, userUpdate }: CreateUserParams): Promise<User> {
         log.debug('Creating new user.', { identity, 'login-flow': true });
 
         const prevIsFirstUser = this.cachedIsFirstUser;
