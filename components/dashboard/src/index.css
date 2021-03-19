@@ -29,7 +29,7 @@
 
 @layer components {
     button {
-        @apply cursor-pointer px-3 py-1 my-auto bg-green-600 hover:bg-green-700 border-2 border-green-800 text-gray-100 text-sm rounded-md;
+        @apply cursor-pointer px-4 py-2 my-auto bg-green-600 hover:bg-green-700 border-2 border-green-800 text-gray-100 text-sm rounded-md;
     }
 
     input[type=text] {
