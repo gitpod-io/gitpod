@@ -5,11 +5,6 @@ import { UserContext } from "../user-context";
 import { SettingsPage } from "./SettingsPage";
 
 export default function Preferences() {
-    const [ hasIDESettingsPermissions, setHasIDESettingsPermissions ] = useState<boolean | undefined>(undefined);
-    if (hasIDESettingsPermissions === undefined) {
-        getGitpodService().server.hasPermission('ide-settings').then(hasPermission => setHasIDESettingsPermissions(hasPermission));
-    }
-
     const { user } = useContext(UserContext);
     const [ defaultIde, setDefaultIde ] = useState<string>(user?.additionalData?.ideSettings?.defaultIde || 'theia');
     const actuallySetDefaultIde = async (value: string) => {
@@ -40,13 +35,6 @@ export default function Preferences() {
                         <img className="w-16" src="/images/theia-gray.svg"/>
                     </div>
                 </SelectableCard>
-                <SelectableCard className={`w-36 h-40 ${hasIDESettingsPermissions ? '' : 'invisible'}`} title="Custom" selected={!['code', 'theia'].includes(defaultIde)} onClick={() => setDefaultIde('')}></SelectableCard>
-            </div>
-            <div className={`mt-4`}>
-                <label className={hasIDESettingsPermissions && !['code', 'theia'].includes(defaultIde) ? 'opacity-100' : 'opacity-0'}>
-                    <p className="text-base text-gray-600 font-bold leading-5">Custom IDE image name</p>
-                    <input className="w-80 mt-1" type="text" value={defaultIde} onChange={(e) => setDefaultIde(e.target.value)} onBlur={(e) => actuallySetDefaultIde(e.target.value)} />
-                </label>
             </div>
         </SettingsPage>
     </div>;
