@@ -143,8 +143,7 @@ func TestGetWorkspaces(t *testing.T) {
 	t.Skipf("skipping flaky getWorkspaces_podOnly test")
 
 	type fixture struct {
-		Pods []*corev1.Pod       `json:"pods"`
-		PLIS []*corev1.ConfigMap `json:"plis"`
+		Pods []*corev1.Pod `json:"pods"`
 	}
 	type gold struct {
 		Status []*api.WorkspaceStatus `json:"result"`
@@ -165,15 +164,6 @@ func TestGetWorkspaces(t *testing.T) {
 					t.Errorf("cannot create test pod start context; this is a bug in the unit test itself: %v", err)
 					return nil
 				}
-			}
-
-			for _, o := range fixture.PLIS {
-				err := manager.Clientset.Create(context.Background(), o)
-				if err != nil {
-					t.Errorf("cannot create test configmap start context; this is a bug in the unit test itself: %v", err)
-					return nil
-				}
-
 			}
 
 			time.Sleep(1 * time.Second)

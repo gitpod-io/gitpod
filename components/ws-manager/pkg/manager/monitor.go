@@ -38,10 +38,6 @@ import (
 )
 
 const (
-	// lonelyPLISSurvivalTime is the time a "pod lifecycle independent state" config map can exist without
-	// a pod. This time refers either the creationTimestamp or (if set) the stoppingSince field of the PLIS.
-	lonelyPLISSurvivalTime = 60 * time.Minute
-
 	// eventpoolWorkers is the number of workers in the event workpool. This number limits how many workspace events can be handled
 	// in parallel; that is NOT the same as "how many workspaces can start in parallel". The event handling per workspace is written
 	// so that it's quick in the "hot path" (i.e. less than 500ms). Thus this number should be around 0.5*expected(events per second).
@@ -203,8 +199,6 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 		// We're handling a pod event, thus Kubernetes gives us the pod we're handling. However, this is also a deleted
 		// event which means the pod doesn't actually exist anymore. We need to reflect that in our status compution, hence
 		// we change the deployed condition.
-		// In case we missed this event, we'll wake up to a situation where the PLIS exists, but the pod doesn't.
-		// actOnConfigMapEvent will handle such situations properly.
 		status.Conditions.Deployed = api.WorkspaceConditionBool_FALSE
 	}
 
@@ -304,8 +298,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 		//
 		// The alternative is to stop the pod only when the workspaceFailedBeforeStoppingAnnotation is present.
 		// However, that's much more brittle than stopping the workspace twice (something that Kubernetes can handle).
-		// It is important that we do not fail here if the pod is already gone, i.e. when we lost the race. The
-		// stopping PLIS update MUST still happen in this case.
+		// It is important that we do not fail here if the pod is already gone, i.e. when we lost the race.
 		err := m.manager.stopWorkspace(ctx, workspaceID, stopWorkspaceNormallyGracePeriod)
 		if err != nil && !isKubernetesObjNotFoundError(err) {
 			return xerrors.Errorf("cannot stop workspace: %w", err)
@@ -579,9 +572,6 @@ func (m *Monitor) writeEventTraceLog(status *api.WorkspaceStatus, wso *workspace
 // update throughout the rest of the system.
 func (m *Monitor) traceWorkspace(occasion string, wso *workspaceObjects) opentracing.Span {
 	var traceID string
-	if traceID == "" && wso.PLIS != nil {
-		traceID = wso.PLIS.Annotations[wsk8s.TraceIDAnnotation]
-	}
 	if traceID == "" && wso.Pod != nil {
 		traceID = wso.Pod.Annotations[wsk8s.TraceIDAnnotation]
 	}
