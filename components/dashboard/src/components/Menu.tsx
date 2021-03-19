@@ -1,6 +1,9 @@
+import { User } from "@gitpod/gitpod-protocol";
 import { useContext } from "react";
 import { Link } from "react-router-dom";
+import { gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
+import ContextMenu from "./ContextMenu";
 
 interface Entry {
     title: string, link: string
@@ -57,10 +60,27 @@ function Menu(props: { left: Entry[], right: Entry[] }) {
                         {props.right.map(MenuItem)}
                     </ul>
                 </nav>
-                <Link className="lg:ml-3 flex items-center justify-start lg:mb-0 mb-4 pointer-cursor m-l-auto rounded-full border-2 border-white hover:border-gray-200 p-0.5" to="/account">
-                    <img className="rounded-full w-6 h-6"
-                        src={user?.avatarUrl || ''} alt={user?.name || 'Anonymous'} />
-                </Link>
+                <div className="lg:ml-3 flex items-center justify-start lg:mb-0 mb-4 pointer-cursor m-l-auto rounded-full border-2 border-white hover:border-gray-200 p-0.5">
+                    <ContextMenu menuEntries={[
+                    {
+                        title: (user && User.getPrimaryEmail(user)) || '',
+                        customFontStyle: 'text-gray-400',
+                        separator: true
+                    },
+                    {
+                        title: 'Settings',
+                        href: '/settings',
+                        separator: true
+                    },
+                    {
+                        title: 'Logout',
+                        href: gitpodHostUrl.asApiLogout().toString()
+                    },
+                    ]}>
+                        <img className="rounded-full w-6 h-6"
+                            src={user?.avatarUrl || ''} alt={user?.name || 'Anonymous'} />
+                    </ContextMenu>
+                </div>
             </div>
         </header>
     );
