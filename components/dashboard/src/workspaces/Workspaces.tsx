@@ -133,11 +133,10 @@ export class Workspaces extends React.Component<WorkspacesProps, WorkspacesState
                     </div>
             )}
             <Modal onClose={toggleTemplateModal} visible={!!this.state?.isTemplateModelOpen}>
-                <h3 className="">Template            </h3>
+                <h3>Select Template</h3>
                 {/* separator */}
-                <div className="absolute border-b pb-3 left-0 top-16 w-full"></div>
-                <div className="pt-8">
-                    <p>Select a template to open a workspace</p>
+                <div className="border-t mt-2 -mx-6 px-6 py-2">
+                    <p className="mt-1 mb-2 text-base">Select a template to open a workspace.</p>
                     <div className="space-y-2 pt-4 overflow-y-scroll h-80">
                         {this.state?.repos && this.state.repos.map(r => {
                             const url = gitpodHostUrl.withContext(r.url).toString();
@@ -145,9 +144,6 @@ export class Workspaces extends React.Component<WorkspacesProps, WorkspacesState
                                 <div className="w-full">
                                     <p className="text-base text-gray-800 font-semibold">{r.name}</p>
                                     <p>{r.url}</p>
-                                </div>
-                                <div className="flex">
-                                    <button>Open</button>
                                 </div>
                             </a>;
                         })}
