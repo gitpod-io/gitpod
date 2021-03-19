@@ -5,6 +5,5 @@ certificatesSecret:
   fullChainName: ${full_chain_name}
 
 components:
-  proxy:
-    restarter:
-      enabled: true
+  restarter:
+    enabled: true
