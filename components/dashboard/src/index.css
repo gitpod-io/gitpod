@@ -12,7 +12,7 @@
         @apply text-base text-gray-500;
     }
     h3 {
-        @apply text-2xl text-gray-900 leading-9 font-semibold;
+        @apply text-2xl text-gray-800 leading-9 font-semibold;
     }
     h4 {
         @apply pb-2 text-sm font-medium text-gray-600;
