@@ -37,13 +37,13 @@ export default function Account() {
                 <div className="lg:pl-14">
                     <div className="mt-4">
                         <h4>Avatar</h4>
-                        <img className="rounded-full w-24 h-24 border-2 border-transparent hover:border-indigo-400"
+                        <img className="rounded-full w-24 h-24"
                             src={user!.avatarUrl} alt={user!.name} />
                     </div>
                 </div>
             </div>
             <h3 className="mt-12">Delete Account</h3>
-            <p className="text-sm text-gray-400 pb-4">This action will remove all the data associated with your account in Gitpod.</p>
+            <p className="text-base text-gray-500 pb-4">This action will remove all the data associated with your account in Gitpod.</p>
             <button className="border-red-600 text-red-600 bg-white hover:border-red-800 hover:text-red-800" onClick={() => setModal(true)}>Delete Account</button>
         </SettingsPage>
     </div>;
