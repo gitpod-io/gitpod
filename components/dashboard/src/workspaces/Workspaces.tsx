@@ -46,7 +46,7 @@ export class Workspaces extends React.Component<WorkspacesProps, WorkspacesState
         const onActive = () => wsModel!.active = true;
         const onAll = () => wsModel!.active = false;
         return <>
-            <Header title="Workspaces" subtitle="Manage all workspaces and see pending changes." />
+            <Header title="Workspaces" subtitle="Manage recent and stopped workspaces." />
 
             <div className="lg:px-28 px-10 pt-8 flex">
                 <div className="flex">
