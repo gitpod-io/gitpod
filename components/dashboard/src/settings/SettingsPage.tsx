@@ -9,7 +9,7 @@ export interface Props {
 }
 
 export function SettingsPage(p: Props) {
-    return <div>
+    return <div className="max-w-6xl">
         <Header title={p.title} subtitle={p.subtitle}/>
         <div className='lg:px-28 px-10 flex pt-9'>
             <div>

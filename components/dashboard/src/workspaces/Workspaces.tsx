@@ -126,7 +126,7 @@ export class Workspaces extends React.Component<WorkspacesProps, WorkspacesState
                             <div className="flex flex-col items-center w-96 m-auto">
                                 <h3 className="text-center pb-3">No Active Workspaces</h3>
                                 <div className="text-center pb-6 text-gray-500">Prefix a git repository URL with gitpod.io/# or open a workspace template. <a className="text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600" href="https://www.gitpod.io/docs/getting-started/">Learn how to get started</a></div>
-                                <button onClick={toggleTemplateModal}>Select Template</button>
+                                <button onClick={toggleTemplateModal} className="font-medium">Select Template</button>
                             </div>
                         </div>
                     </div>
