@@ -28,7 +28,7 @@ export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: Wo
             break;
         }
         default: {
-            stateClassName += ' bg-gitpod-kumquat'
+            stateClassName += ' bg-gitpod-kumquat animate-pulse'
             break;
         }
     }
