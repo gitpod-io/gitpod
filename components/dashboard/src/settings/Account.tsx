@@ -21,7 +21,7 @@ export default function Account() {
             </div>
         </Modal>
 
-        <SettingsPage title='Account' subtitle='Profile details'>
+        <SettingsPage title='Account' subtitle='The following information will be used to set up git config.'>
             <h3>Profile</h3>
             <div className="flex flex-col lg:flex-row">
                 <div>
