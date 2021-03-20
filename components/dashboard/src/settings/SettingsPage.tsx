@@ -13,9 +13,9 @@ export function SettingsPage(p: Props) {
         <Header title={p.title} subtitle={p.subtitle}/>
         <div className='lg:px-28 px-10 flex pt-9'>
             <div>
-                <ul className="flex flex-col text-sm text-gray-500 pt-4 lg:pt-0 w-48 space-y-2">
+                <ul className="flex flex-col text tracking-wide text-gray-500 pt-4 lg:pt-0 w-48 space-y-2">
                     {settingsMenu.map(e => {
-                        let classes = "flex block py-2 font-sm px-4 rounded-md";
+                        let classes = "flex block py-2 px-4 rounded-md";
                         if (e.link.toLowerCase() === window.location.pathname) {
                             classes += " bg-gray-800 text-gray-50";
                         } else {

@@ -53,9 +53,9 @@ export default function Notifications() {
 
 function CheckBox(props: {title: string, desc: string, checked: boolean, onChange: () => void}) {
     return <div className="flex mt-4">
-        <input className={"h-5 w-5 focus:ring-0 mt-1 rounded cursor-pointer border-2 "+(props.checked?'bg-gray-800':'')} type="checkbox" checked={props.checked} onChange={props.onChange}/>
+        <input className={"h-4 w-4 focus:ring-0 mt-1 rounded cursor-pointer border-2 "+(props.checked?'bg-gray-800':'')} type="checkbox" checked={props.checked} onChange={props.onChange}/>
         <div className="flex flex-col ml-2">
-            <div className="text-gray-700 text-md font-semibold">{props.title}</div>
+            <div className="text-gray-800 text-md font-semibold tracking-wide">{props.title}</div>
             <div className="text-gray-400 text-md">{props.desc}</div>
         </div>
     </div>
