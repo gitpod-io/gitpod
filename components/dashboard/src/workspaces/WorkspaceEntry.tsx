@@ -94,14 +94,14 @@ export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: Wo
         setChangesModalVisible(true);
     }
     return <div>
-        <a className="rounded-xl whitespace-nowrap flex space-x-2 py-6 px-6 w-full justify-between hover:bg-gray-100 focus:bg-gitpod-kumquat-light cursor-pointer" href={startUrl.toString()}>
+        <a className="rounded-xl whitespace-nowrap flex space-x-2 py-6 px-6 w-full justify-between hover:bg-gray-100 focus:bg-gitpod-kumquat-light cursor-pointer group" href={startUrl.toString()}>
             <div className="pr-3 self-center">
                 <div className={stateClassName}>
                     &nbsp;
             </div>
             </div>
             <div className="flex flex-col w-3/12">
-                <div className="font-medium text-gray-800 truncate hover:underline">{ws.id}</div>
+                <div className="font-medium text-gray-800 truncate">{ws.id}</div>
                 <a href={project ? 'https://' + project : undefined}><div className="text-sm overflow-ellipsis truncate text-gray-400">{project || 'Unknown'}</div></a>
             </div>
             <div className="flex w-4/12 truncate overflow-ellipsis">
@@ -115,9 +115,9 @@ export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: Wo
                     <div className="font-medium text-gray-500 truncate">{currentBranch}</div>
                     {
                         numberOfChanges > 0 ?
-                            <div className={"text-sm text-red truncate cursor-pointer hover:underline"} onClick={showChanges}>{changesLabel}</div>
+                            <div className={"text-sm text-red-600 truncate cursor-pointer bg-red-50 group-hover:bg-red-100 hover:text-red-800 px-1.5 py-0.5 relative rounded-md -top-0.5"} onClick={showChanges}>{changesLabel}</div>
                             :
-                            <div className="text-sm text-gray-400 truncate">No Changes</div>
+                            <div className="text-sm text-gray-500 truncate ">No Changes</div>
                     }
                 </div>
             </div>
