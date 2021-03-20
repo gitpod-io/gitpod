@@ -51,9 +51,8 @@ export class Workspaces extends React.Component<WorkspacesProps, WorkspacesState
             <div className="lg:px-28 px-10 pt-8 flex">
                 <div className="flex">
                     <div className="py-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 490 490">
-                            <path fill="none" stroke="#999" strokeWidth="36" strokeLinecap="round"
-                                d="m280,278a153,153 0 1,0-2,2l170,170m-91-117 110,110-26,26-110-110" />
+                        <svg width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z" fill="#A8A29E"/>
                         </svg>
                     </div>
                     <input className="border-0" type="text" placeholder="Search Workspaces" onChange={(v) => { if (wsModel) wsModel.setSearch(v.target.value) }} />
