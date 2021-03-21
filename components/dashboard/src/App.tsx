@@ -8,16 +8,19 @@ import StartWorkspace from './start/StartWorkspace';
 import { Login } from './Login';
 import { UserContext } from './user-context';
 import { getGitpodService } from './service/service';
+import Header from './components/Header';
 
-const Account = React.lazy(() => import('./settings/Account'));
-const Notifications = React.lazy(() => import('./settings/Notifications'));
-const Plans = React.lazy(() => import('./settings/Plans'));
-const EnvironmentVariables = React.lazy(() => import('./settings/EnvironmentVariables'));
-const GitIntegrations = React.lazy(() => import('./settings/GitIntegrations'));
-const Preferences = React.lazy(() => import('./settings/Preferences'));
+const Account = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Account'));
+const Notifications = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Notifications'));
+const Plans = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Plans'));
+const EnvironmentVariables = React.lazy(() => import(/* webpackPrefetch: true */ './settings/EnvironmentVariables'));
+const GitIntegrations = React.lazy(() => import(/* webpackPrefetch: true */ './settings/GitIntegrations'));
+const Preferences = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Preferences'));
 
 function Loading() {
-    return (<h3>Loading...</h3>);
+    return <>
+        <Header title="" subtitle="" />
+    </>;
 }
 
 function App() {
@@ -59,8 +62,6 @@ function App() {
         <BrowserRouter>
             <div className="container">
                 {user && renderMenu()}
-
-                {loading && (<Loading />)}
 
                 <Suspense fallback={<Loading />}>
                     <Switch>
