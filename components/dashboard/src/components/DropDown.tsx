@@ -11,7 +11,7 @@ export interface DropDownProps {
 }
 
 function Arrow(props: {up: boolean}) {
-    return <span className="mx-2 border-gray-400" style={{ margin: 2, padding: 3, border: 'solid black', borderWidth: '0 2px 2px 0', display: 'inline-block', transform: `rotate(${props.up ? '-135deg' : '45deg'})`}}></span>
+    return <span className="mx-2 border-gray-400 group-hover:border-gray-600" style={{ margin: 2, padding: 3, border: 'solid black', borderWidth: '0 2px 2px 0', display: 'inline-block', transform: `rotate(${props.up ? '-135deg' : '45deg'})`}}></span>
 }
 
 function DropDown(props: DropDownProps) {
@@ -26,7 +26,7 @@ function DropDown(props: DropDownProps) {
             }
         }
     })
-    const font = "text-gray-400 text-sm leading-1"
+    const font = "text-gray-400 text-sm leading-1 group hover:text-gray-600"
     return (
         <ContextMenu menuEntries={enhancedEntries} width={props.contextMenuWidth}>
             <span className={`py-2 cursor-pointer ${font}`}>{props.prefix}{current}<Arrow up={false}/></span>
