@@ -111,14 +111,11 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
                   <p className="text-base text-black font-bold">{w.workspace.id}</p>
                   <p>{w.workspace.contextURL}</p>
                 </div>
-                <div className="flex">
-                  <button>Open</button>
-                </div>
               </a>
             )}
           </>
         </div>
-        <div className="flex justify-end mt-4">
+        <div className="flex justify-end mt-6">
           <button onClick={() => this.createWorkspace(CreateWorkspaceMode.Default)}>New Workspace</button>
         </div>
       </Modal>;

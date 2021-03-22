@@ -21,7 +21,7 @@ export default function Preferences() {
     }
 
     return <div>
-        <SettingsPage title='Preferences' subtitle='Configure your Default IDE for all workspaces.'>
+        <SettingsPage title='Preferences' subtitle='Configure user preferences.'>
             <h3>Default IDE</h3>
             <p className="text-base">Choose which IDE you want to use.</p>
             <div className="mt-4 space-x-4 flex">

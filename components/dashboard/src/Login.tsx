@@ -67,7 +67,7 @@ export function Login() {
                         </div>
                         <div className="mx-auto text-center pb-8 space-y-2">
                             <h1 className="text-3xl">Log in to Gitpod</h1>
-                            <h2 className="uppercase text-sm">ALWAYS READY-TO-CODE</h2>
+                            <h2 className="uppercase text-sm text-gray-400">ALWAYS READY-TO-CODE</h2>
                         </div>
                         <div className="flex flex-col space-y-3">
                             {authProviders.map(ap => {

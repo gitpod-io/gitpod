@@ -46,17 +46,16 @@ export class Workspaces extends React.Component<WorkspacesProps, WorkspacesState
         const onActive = () => wsModel!.active = true;
         const onAll = () => wsModel!.active = false;
         return <>
-            <Header title="Workspaces" subtitle="Manage all workspaces and see pending changes." />
+            <Header title="Workspaces" subtitle="Manage recent and stopped workspaces." />
 
             <div className="lg:px-28 px-10 pt-8 flex">
                 <div className="flex">
                     <div className="py-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 490 490">
-                            <path fill="none" stroke="#999" strokeWidth="36" strokeLinecap="round"
-                                d="m280,278a153,153 0 1,0-2,2l170,170m-91-117 110,110-26,26-110-110" />
+                        <svg width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z" fill="#A8A29E"/>
                         </svg>
                     </div>
-                    <input className="border-0" type="text" placeholder="Search Workspace" onChange={(v) => { if (wsModel) wsModel.setSearch(v.target.value) }} />
+                    <input className="border-0" type="text" placeholder="Search Workspaces" onChange={(v) => { if (wsModel) wsModel.setSearch(v.target.value) }} />
                 </div>
                 <div className="flex-1" />
                 <div className="py-3">
@@ -127,27 +126,23 @@ export class Workspaces extends React.Component<WorkspacesProps, WorkspacesState
                             <div className="flex flex-col items-center w-96 m-auto">
                                 <h3 className="text-center pb-3">No Active Workspaces</h3>
                                 <div className="text-center pb-6 text-gray-500">Prefix a git repository URL with gitpod.io/# or open a workspace template. <a className="text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600" href="https://www.gitpod.io/docs/getting-started/">Learn how to get started</a></div>
-                                <button onClick={toggleTemplateModal}>Select Template</button>
+                                <button onClick={toggleTemplateModal} className="font-medium">Select Template</button>
                             </div>
                         </div>
                     </div>
             )}
             <Modal onClose={toggleTemplateModal} visible={!!this.state?.isTemplateModelOpen}>
-                <h3 className="">Template            </h3>
+                <h3 className="pb-2">Select Template</h3>
                 {/* separator */}
-                <div className="absolute border-b pb-3 left-0 top-16 w-full"></div>
-                <div className="pt-8">
-                    <p>Select a template to open a workspace</p>
-                    <div className="space-y-2 pt-4 overflow-y-scroll h-80">
+                <div className="border-t mt-2 -mx-6 px-6 py-2">
+                    <p className="mt-1 mb-2 text-base">Select a template to open a workspace.</p>
+                    <div className="space-y-2 mt-4 overflow-y-scroll h-80 pr-2">
                         {this.state?.repos && this.state.repos.map(r => {
                             const url = gitpodHostUrl.withContext(r.url).toString();
                             return <a key={r.name} href={url} className="rounded-xl group hover:bg-gray-100 flex p-4 my-1">
                                 <div className="w-full">
                                     <p className="text-base text-gray-800 font-semibold">{r.name}</p>
                                     <p>{r.url}</p>
-                                </div>
-                                <div className="flex">
-                                    <button>Open</button>
                                 </div>
                             </a>;
                         })}
