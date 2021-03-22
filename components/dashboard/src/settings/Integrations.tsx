@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import React, { useContext, useEffect, useState } from "react";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
