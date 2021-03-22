@@ -2,7 +2,9 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM node:12.18.3 AS node_installer
+# we use latest major version of Node.js distributed VS Code. (see about dialog in your local VS Code)
+# ideallay we should use exact version, but it has criticla bugs in regards to grpc over http2 streams
+FROM node:12.21.0 AS node_installer
 RUN mkdir -p /ide/node/bin \
     /ide/node/include/node/ \
     /ide/node/lib/node_modules/npm/ \
