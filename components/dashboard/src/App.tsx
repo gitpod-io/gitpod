@@ -14,7 +14,7 @@ const Account = React.lazy(() => import(/* webpackPrefetch: true */ './settings/
 const Notifications = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Notifications'));
 const Plans = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Plans'));
 const EnvironmentVariables = React.lazy(() => import(/* webpackPrefetch: true */ './settings/EnvironmentVariables'));
-const GitIntegrations = React.lazy(() => import(/* webpackPrefetch: true */ './settings/GitIntegrations'));
+const Integrations = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Integrations'));
 const Preferences = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Preferences'));
 
 function Loading() {
@@ -70,10 +70,10 @@ function App() {
                                 <Route path={["/", "/workspaces"]} exact render={
                                     () => <Workspaces />} />
                                 <Route path="/account" exact component={Account} />
+                                <Route path={["/integrations", "/access-control"]} exact component={Integrations} />
                                 <Route path="/notifications" exact component={Notifications} />
                                 <Route path="/plans" exact component={Plans} />
                                 <Route path="/variables" exact component={EnvironmentVariables} />
-                                <Route path="/integrations" exact component={GitIntegrations} />
                                 <Route path="/preferences" exact component={Preferences} />
                             </React.Fragment>
                         )}
