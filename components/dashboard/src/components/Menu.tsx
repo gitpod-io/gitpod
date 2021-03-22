@@ -60,7 +60,7 @@ function Menu(props: { left: Entry[], right: Entry[] }) {
                         {props.right.map(MenuItem)}
                     </ul>
                 </nav>
-                <div className="lg:ml-3 flex items-center justify-start lg:mb-0 mb-4 pointer-cursor m-l-auto rounded-full border-2 border-white hover:border-gray-200 p-0.5">
+                <div className="lg:ml-3 flex items-center justify-start lg:mb-0 mb-4 pointer-cursor m-l-auto rounded-full border-2 border-white hover:border-gray-200 p-0.5 font-medium">
                     <ContextMenu menuEntries={[
                     {
                         title: (user && User.getPrimaryEmail(user)) || '',
