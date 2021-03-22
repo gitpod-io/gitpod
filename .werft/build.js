@@ -15,7 +15,8 @@ const version = parseVersion(context);
 build(context, version)
     .catch((err) => {
         if (context.Repository.ref === "refs/heads/main") {
-            reportBuildFailureInSlack(context, () => process.exit(1))
+            reportBuildFailureInSlack(context, err, () => process.exit(1));
+            process.exit(1);
         } else {
             process.exit(1);
         }
