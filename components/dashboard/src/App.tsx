@@ -13,7 +13,7 @@ const Account = React.lazy(() => import('./settings/Account'));
 const Notifications = React.lazy(() => import('./settings/Notifications'));
 const Plans = React.lazy(() => import('./settings/Plans'));
 const EnvironmentVariables = React.lazy(() => import('./settings/EnvironmentVariables'));
-const GitIntegrations = React.lazy(() => import('./settings/GitIntegrations'));
+const Integrations = React.lazy(() => import('./settings/Integrations'));
 const Preferences = React.lazy(() => import('./settings/Preferences'));
 
 function Loading() {
@@ -69,10 +69,10 @@ function App() {
                                 <Route path={["/", "/workspaces"]} exact render={
                                     () => <Workspaces />} />
                                 <Route path="/account" exact component={Account} />
+                                <Route path={["/integrations", "/access-control"]} exact component={Integrations} />
                                 <Route path="/notifications" exact component={Notifications} />
                                 <Route path="/plans" exact component={Plans} />
                                 <Route path="/variables" exact component={EnvironmentVariables} />
-                                <Route path="/integrations" exact component={GitIntegrations} />
                                 <Route path="/preferences" exact component={Preferences} />
                             </React.Fragment>
                         )}

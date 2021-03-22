@@ -2,6 +2,7 @@ import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "./user-context";
 import { getGitpodService, gitpodHostUrl, reconnectGitpodService } from "./service/service";
+import { iconForAuthProvider, simplifyProviderName } from "./provider-utils";
 
 export function Login() {
     const { setUser } = useContext(UserContext);
@@ -90,32 +91,6 @@ export function Login() {
 
         </div>
     </div>);
-}
-
-function iconForAuthProvider(type: string) {
-    switch (type) {
-        case "GitHub":
-            return "/images/github.svg"
-        case "GitLab":
-            return "/images/gitlab.svg"
-        case "BitBucket":
-            return "/images/bitbucket.svg"
-        default:
-            break;
-    }
-}
-
-function simplifyProviderName(host: string) {
-    switch (host) {
-        case "github.com":
-            return "GitHub"
-        case "gitlab.com":
-            return "GitLab"
-        case "bitbucket.org":
-            return "BitBucket"
-        default:
-            return host;
-    }
 }
 
 function getLoginUrl(host: string) {

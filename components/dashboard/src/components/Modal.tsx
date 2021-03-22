@@ -2,7 +2,7 @@ import { Disposable, DisposableCollection } from "@gitpod/gitpod-protocol";
 import { useEffect } from "react";
 
 export default function Modal(props: {
-    children: React.ReactChild[] | React.ReactChild,
+    children: React.ReactChild[] | React.ReactChild | undefined,
     visible: boolean,
     closeable?: boolean,
     className?: string,
