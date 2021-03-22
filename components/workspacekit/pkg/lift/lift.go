@@ -1,3 +1,7 @@
+// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
 package lift
 
 // Lift can execute commands in a namespace context and return the stdin/out/err FDs
