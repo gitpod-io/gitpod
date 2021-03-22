@@ -4,7 +4,7 @@
 
 FROM gitpod/workspace-full-vnc:latest
 
-ENV TRIGGER_REBUILD 7
+ENV TRIGGER_REBUILD 8
 
 USER root
 
