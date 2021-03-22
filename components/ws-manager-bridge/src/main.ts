@@ -15,6 +15,7 @@ import * as grpc from "grpc";
 import { MessageBusIntegration } from './messagebus-integration';
 import { TypeORM } from '@gitpod/gitpod-db/lib/typeorm/typeorm';
 import { TracingManager } from '@gitpod/gitpod-protocol/lib/util/tracing';
+import { serveClusterService } from './cluster-service/cluster-service-server';
 
 log.enableJSONLogging('ws-manager-bridge', process.env.VERSION);
 
@@ -61,6 +62,8 @@ export const start = async (container: Container) => {
             return bridge;
         }));
 
+        const clusterServiceServer = serveClusterService();
+
         process.on('SIGTERM', async () => {
             log.info("SIGTERM received, stopping");
             bridges.forEach(b => b.dispose());
@@ -72,6 +75,7 @@ export const start = async (container: Container) => {
                     }
                 });
             }
+            clusterServiceServer.tryShutdown(() => log.info("gRPC shutdown completed"));
         });
         log.info("ws-manager-bridge is up and running");
         await new Promise((rs, rj) => {});

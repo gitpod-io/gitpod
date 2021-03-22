@@ -23,6 +23,8 @@ go_protoc() {
         -I /usr/lib/protoc/include -I$ROOT_DIR -I. \
         --go_out=go \
         --go_opt=paths=source_relative \
+        --go-grpc_out=go \
+        --go-grpc_opt=paths=source_relative \
         *.proto
 }
 
