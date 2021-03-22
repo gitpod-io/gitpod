@@ -41,6 +41,24 @@ const gitpodServiceMock = createServiceMock({
             "isReadonly": false
         }]
     },
+    getOwnAuthProviders: async () => {
+        return [{
+            "id": "foobar123",
+            "ownerId": "1234",
+            "status": "verified",
+            "host": "testing.doptig.com/gitlab",
+            "type": "GitLab",
+            "oauth": {
+              "authorizationUrl": "https://testing.doptig.com/gitlab/oauth/authorize",
+              "tokenUrl": "https://testing.doptig.com/gitlab/oauth/token",
+              "settingsUrl": "https://testing.doptig.com/gitlab/profile/applications",
+              "callBackUrl": "https://gitpod-staging.com/auth/testing.doptig.com/gitlab/callback",
+              "clientId": "clientid-123",
+              "clientSecret": "redacted"
+            },
+            "deleted": false
+          }]
+    },
     onDidOpenConnection: Event.None,
     onDidCloseConnection: Event.None,
     
