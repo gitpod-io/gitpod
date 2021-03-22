@@ -1,0 +1,72 @@
+// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package workspacemanagerbridge;
+
+option go_package = "github.com/gitpod-io/gitpod/workspace-manager-bridge/api";
+
+service ClusterService {
+  rpc Register(RegisterRequest) returns (RegisterResponse) {}
+  rpc Update(UpdateRequest) returns (UpdateResponse) {}
+  rpc Deregister(DeregisterRequest) returns (DeregisterResponse) {}
+  rpc List(ListRequest) returns (ListResponse) {}
+}
+
+message RegisterRequest {
+  string name = 1;
+  string url = 2;
+  bytes cert = 3;
+  RegistrationHints hints = 4;
+}
+
+message RegisterResponse {}
+
+message RegistrationHints {
+  Preferability perfereability = 1;
+  bool cordoned = 2;
+  bool govern = 3;
+}
+
+enum Preferability {
+  None = 0;
+  Prefer = 1;
+  DontSchedule = 2;
+}
+
+message ClusterStatus {
+  string name = 1;
+  string url = 2;
+  ClusterState state = 3;
+  int32 score = 4;
+  int32 max_score = 5;
+  bool governed = 6;
+}
+
+enum ClusterState {
+  UNKNOWN = 0;
+  AVAILABLE = 1;
+  CORDONED = 2;
+  DRAINING = 3;
+}
+
+message UpdateRequest {
+  string name = 1;
+  oneof property {
+    int32 score = 2;
+    int32 max_score = 3;
+    bool cordoned = 4;
+  }
+}
+
+message UpdateResponse {}
+
+message DeregisterRequest { string name = 1; }
+
+message DeregisterResponse {}
+
+message ListRequest {}
+
+message ListResponse { repeated ClusterStatus status = 1; }
