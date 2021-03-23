@@ -4,8 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import React, { Suspense } from "react";
-import { CreateWorkspaceMode, WorkspaceCreationResult } from "@gitpod/gitpod-protocol";
+import EventEmitter from "events";
+import React, { useEffect, Suspense } from "react";
+import { CreateWorkspaceMode, WorkspaceCreationResult, RunningWorkspacePrebuildStarting } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import Modal from "../components/Modal";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
@@ -79,7 +80,6 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
     const { contextUrl } = this.props;
     let phase = StartPhase.Checking;
     let statusMessage = <p className="text-base text-gray-400">{this.state.stillParsing ? 'Parsing context …' : 'Preparing workspace …'}</p>;
-    let logsView = undefined;
 
     const error = this.state?.error;
     if (error) {
@@ -129,17 +129,17 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
     }
 
     else if (result?.runningWorkspacePrebuild) {
-      statusMessage = <p className="text-base text-gray-400">⚡Prebuild in progress</p>;
-      logsView = <Suspense fallback={<div className="m-6 p-4 h-60 w-11/12 lg:w-3/5 flex-shrink-0 rounded-lg" style={{ color: '#8E8787', background: '#ECE7E5' }}>Loading...</div>}>
-        <WorkspaceLogs />
-      </Suspense>;
+      return <RunningPrebuildView
+        runningPrebuild={result.runningWorkspacePrebuild}
+        onIgnorePrebuild={() => this.createWorkspace(CreateWorkspaceMode.ForceNew)}
+        onPrebuildSucceeded={() => this.createWorkspace(CreateWorkspaceMode.UsePrebuild)}
+      />;
     }
 
     return <StartPage phase={phase} error={!!error}>
       {statusMessage}
-      {logsView}
       {error && <div>
-        <a href={gitpodHostUrl.asDashboard().toString()}><button className="mt-8 px-4 py-2 text-gray-500 bg-white font-semibold border-gray-500">Go back to dashboard</button></a>
+        <a href={gitpodHostUrl.asDashboard().toString()}><button className="mt-8 px-4 py-2 text-gray-500 bg-white font-semibold border-gray-500 hover:text-gray-700 hover:bg-gray-100 hover:border-gray-700">Go back to dashboard</button></a>
         <p className="mt-14 text-base text-gray-400 flex space-x-2">
           <a href="https://www.gitpod.io/docs/">Docs</a>
           <span>—</span>
@@ -150,5 +150,60 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
       </div>}
     </StartPage>;
   }
+}
 
+interface RunningPrebuildViewProps {
+  runningPrebuild: {
+    prebuildID: string
+    workspaceID: string
+    starting: RunningWorkspacePrebuildStarting
+    sameCluster: boolean
+  };
+  onIgnorePrebuild: () => void;
+  onPrebuildSucceeded: () => void;
+}
+
+function RunningPrebuildView(props: RunningPrebuildViewProps) {
+  const logsEmitter = new EventEmitter();
+  const service = getGitpodService();
+  let pollTimeout: NodeJS.Timeout | undefined;
+
+  useEffect(() => {
+    const pollIsPrebuildDone = async () => {
+      clearTimeout(pollTimeout!);
+      const available = await service.server.isPrebuildDone(props.runningPrebuild.prebuildID);
+      if (available) {
+        props.onPrebuildSucceeded();
+        return;
+      }
+      pollTimeout = setTimeout(pollIsPrebuildDone, 10000);
+    };
+    const watchPrebuild = () => {
+      service.server.watchHeadlessWorkspaceLogs(props.runningPrebuild.workspaceID);
+      pollIsPrebuildDone();
+    };
+    watchPrebuild();
+
+    const toDispose = service.registerClient({
+      notifyDidOpenConnection: () => watchPrebuild(),
+      onHeadlessWorkspaceLogs: event => {
+        if (event.workspaceID !== props.runningPrebuild.workspaceID) {
+          return;
+        }
+        logsEmitter.emit('logs', event.text);
+      },
+    });
+
+    return function cleanup() {
+      clearTimeout(pollTimeout!);
+      toDispose.dispose();
+    };
+  }, []);
+
+  return <StartPage title="Prebuild in Progress">
+    <Suspense fallback={<div />}>
+      <WorkspaceLogs logsEmitter={logsEmitter} />
+    </Suspense>
+    <button className="mt-6 text-gray-500 border-gray-500 bg-white hover:text-gray-700 hover:bg-gray-100 hover:border-gray-700" onClick={() => { clearTimeout(pollTimeout!); props.onIgnorePrebuild(); }}>Don't Wait for Prebuild</button>
+  </StartPage>;
 }

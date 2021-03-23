@@ -4,19 +4,23 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import React from "react";
-import { DisposableCollection, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import EventEmitter from "events";
+import React, { useEffect, Suspense } from "react";
+import { DisposableCollection, WorkspaceInstance, WorkspaceImageBuild, Workspace, WithPrebuild } from "@gitpod/gitpod-protocol";
+import { HeadlessLogEvent } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { StartPage, StartPhase } from "./StartPage";
+
+const WorkspaceLogs = React.lazy(() => import('./WorkspaceLogs'));
 
 export interface StartWorkspaceProps {
   workspaceId: string;
 }
 
 export interface StartWorkspaceState {
-  contextUrl?: string;
   startedInstanceId?: string;
   workspaceInstance?: WorkspaceInstance;
+  workspace?: Workspace;
   error?: StartWorkspaceError;
   ideFrontendFailureCause?: string;
 }
@@ -31,6 +35,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
   constructor(props: StartWorkspaceProps) {
     super(props);
+    this.state = {};
   }
 
   private readonly toDispose = new DisposableCollection();
@@ -51,6 +56,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     try {
       this.toDispose.push(getGitpodService().registerClient(this));
     } catch (error) {
+      console.error(error);
       this.setState({ error });
     }
 
@@ -88,12 +94,16 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       getGitpodService().server.getWorkspace(workspaceId).then(ws => {
         if (ws.latestInstance) {
           this.setState({
-            contextUrl: ws.workspace.contextURL
+            workspace: ws.workspace
           });
           this.onInstanceUpdate(ws.latestInstance);
         }
       });
     } catch (error) {
+      console.error(error);
+      if (typeof error === 'string') {
+        error = { message: error };
+      }
       this.setState({ error });
     }
   }
@@ -106,18 +116,25 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
     await this.ensureWorkspaceAuth(workspaceInstance.id);
 
-    // redirect to workspaceURL if we are not yet running in an iframe
-    // it happens this late if we were waiting for a docker build.
+    // Redirect to workspaceURL if we are not yet running in an iframe.
+    // It happens this late if we were waiting for a docker build.
     if (!this.runsInIFrame() && workspaceInstance.ideUrl) {
       this.redirectTo(workspaceInstance.ideUrl);
       return;
     }
 
-    if (workspaceInstance.status.phase === 'preparing') {
-      getGitpodService().server.watchWorkspaceImageBuildLogs(workspaceInstance.workspaceId);
+    // Stopped and headless: the prebuild is done, let's try to use it!
+    if (workspaceInstance.status.phase === 'stopped' && this.state.workspace?.type !== 'regular') {
+      const contextUrl = this.state.workspace?.contextURL.replace('prebuild/', '')!;
+      this.redirectTo(gitpodHostUrl.withContext(contextUrl).toString());
     }
 
-    this.setState({ workspaceInstance });
+    let error;
+    if (workspaceInstance.status.conditions.failed) {
+      error = { message: workspaceInstance.status.conditions.failed };
+    }
+
+    this.setState({ workspaceInstance, error });
   }
 
   async ensureWorkspaceAuth(instanceID: string) {
@@ -149,7 +166,11 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
   }
 
   render() {
+    const { error } = this.state;
+    const isHeadless = this.state.workspace?.type !== 'regular';
+    const isPrebuilt = WithPrebuild.is(this.state.workspace?.context);
     let phase = StartPhase.Preparing;
+    let title = undefined;
     let statusMessage = <p className="text-base text-gray-400">Preparing workspace …</p>;
 
     switch (this.state?.workspaceInstance?.status.phase) {
@@ -161,9 +182,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       // Preparing means that we haven't actually started the workspace instance just yet, but rather
       // are still preparing for launch. This means we're building the Docker image for the workspace.
       case "preparing":
-        phase = StartPhase.Preparing;
-        statusMessage = <p className="text-base text-gray-400">Building image …</p>;
-        break;
+        return <ImageBuildView workspaceId={this.state.workspaceInstance.workspaceId} />;
 
       // Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
       // some space within the cluster. If for example the cluster needs to scale up to accomodate the
@@ -185,12 +204,15 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       // clone or backup download). After this phase one can expect the workspace to either be Running or Failed.
       case "initializing":
         phase = StartPhase.Starting;
-        statusMessage = <p className="text-base text-gray-400">Cloning repository …</p>; // TODO Loading prebuild ...
+        statusMessage = <p className="text-base text-gray-400">{isPrebuilt ? 'Loading prebuild …' : 'Cloning repository …'}</p>;
         break;
 
       // Running means the workspace is able to actively perform work, either by serving a user through Theia,
       // or as a headless workspace.
       case "running":
+        if (isHeadless) {
+          return <HeadlessWorkspaceView workspaceId={this.state.workspaceInstance.workspaceId} />;
+        }
         phase = StartPhase.Running;
         statusMessage = <p className="text-base text-gray-400">Opening IDE …</p>;
         break;
@@ -204,13 +226,16 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
       // Stopping means that the workspace is currently shutting down. It could go to stopped every moment.
       case "stopping":
+        if (isHeadless) {
+          return <HeadlessWorkspaceView workspaceId={this.state.workspaceInstance.workspaceId} />;
+        }
         phase = StartPhase.Stopping;
         statusMessage = <div>
           <div className="flex space-x-3 items-center rounded-xl m-auto px-4 h-16 w-72 mt-4 bg-gray-100">
             <div className="rounded-full w-3 h-3 text-sm bg-gitpod-kumquat">&nbsp;</div>
             <div>
               <p className="text-gray-700 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
-              <p className="w-56 truncate">{this.state.contextUrl}</p>
+              <p className="w-56 truncate">{this.state.workspace?.contextURL}</p>
             </div>
           </div>
         </div>;
@@ -219,12 +244,19 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       // Stopped means the workspace ended regularly because it was shut down.
       case "stopped":
         phase = StartPhase.Stopped;
+        if (!isHeadless && this.state.workspaceInstance.status.conditions.timeout) {
+          title = 'Timed Out';
+        }
+        const pendingChanges = getPendingChanges(this.state.workspaceInstance);
         statusMessage = <div>
-            <div className="flex space-x-3 items-center rounded-xl m-auto px-4 h-16 w-72 mt-4 bg-gray-100">
+          <div className="flex space-x-3 items-center rounded-xl m-auto px-4 h-16 w-72 mt-4 bg-gray-100">
             <div className="rounded-full w-3 h-3 text-sm bg-gray-300">&nbsp;</div>
             <div>
               <p className="text-gray-700 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
-              <p className="w-56 truncate">{this.state.contextUrl}</p>
+              {pendingChanges.length > 0 &&
+                <p className="text-red">{pendingChanges.length} Change{pendingChanges.length === 1 ? '' : 's'}</p>
+              }
+              <p className="w-56 truncate">{this.state.workspace?.contextURL}</p>
             </div>
           </div>
           <div className="mt-10 flex space-x-2">
@@ -235,8 +267,91 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         break;
     }
 
-    return <StartPage phase={phase}>
+    return <StartPage phase={phase} error={!!error} title={title}>
       {statusMessage}
     </StartPage>;
   }
+}
+
+function getPendingChanges(workspaceInstance?: WorkspaceInstance) {
+  const pendingChanges: { message: string, items: string[] }[] = [];
+  const repo = workspaceInstance && workspaceInstance.status && workspaceInstance.status.repo;
+  if (repo) {
+    if (repo.totalUncommitedFiles || 0 > 0) {
+      pendingChanges.push({
+        message: repo.totalUncommitedFiles === 1 ? 'an uncommited file' : `${repo.totalUncommitedFiles} uncommited files`,
+        items: repo.uncommitedFiles || []
+      });
+    }
+    if (repo.totalUntrackedFiles || 0 > 0) {
+      pendingChanges.push({
+        message: repo.totalUntrackedFiles === 1 ? 'an untracked file' : `${repo.totalUntrackedFiles} untracked files`,
+        items: repo.untrackedFiles || []
+      });
+    }
+    if (repo.totalUnpushedCommits || 0 > 0) {
+      pendingChanges.push({
+        message: repo.totalUnpushedCommits === 1 ? 'an unpushed commit' : `${repo.totalUnpushedCommits} unpushed commits`,
+        items: repo.unpushedCommits || []
+      });
+    }
+  }
+  return pendingChanges;
+}
+
+function ImageBuildView(props: { workspaceId: string }) {
+  const logsEmitter = new EventEmitter();
+
+  useEffect(() => {
+    const service = getGitpodService();
+    const watchBuild = () => service.server.watchWorkspaceImageBuildLogs(props.workspaceId);
+    watchBuild();
+
+    const toDispose = service.registerClient({
+      notifyDidOpenConnection: () => watchBuild(),
+      onWorkspaceImageBuildLogs: (info: WorkspaceImageBuild.StateInfo, content?: WorkspaceImageBuild.LogContent) => {
+        if (!content) {
+          return;
+        }
+        logsEmitter.emit('logs', content.text);
+      },
+    });
+
+    return function cleanup() {
+      toDispose.dispose();
+    };
+  }, []);
+
+  return <StartPage title="Building Image">
+    <Suspense fallback={<div />}>
+      <WorkspaceLogs logsEmitter={logsEmitter}/>
+    </Suspense>
+  </StartPage>;
+}
+
+function HeadlessWorkspaceView(props: { workspaceId: string }) {
+  const logsEmitter = new EventEmitter();
+
+  useEffect(() => {
+    const service = getGitpodService();
+    const watchHeadlessWorkspace = () => service.server.watchHeadlessWorkspaceLogs(props.workspaceId);;
+    watchHeadlessWorkspace();
+
+    const toDispose = service.registerClient({
+      notifyDidOpenConnection: () => watchHeadlessWorkspace(),
+      onHeadlessWorkspaceLogs(event: HeadlessLogEvent): void {
+        logsEmitter.emit('logs', event.text);
+      },
+    });
+
+    return function cleanup() {
+      toDispose.dispose();
+    };
+  }, []);
+
+  return <StartPage title="Prebuild in Progress">
+    <Suspense fallback={<div />}>
+      <WorkspaceLogs logsEmitter={logsEmitter}/>
+    </Suspense>
+  </StartPage>;
 }
