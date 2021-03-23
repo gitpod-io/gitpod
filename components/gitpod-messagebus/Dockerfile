@@ -9,5 +9,7 @@ RUN rabbitmq-plugins enable --offline rabbitmq_shovel && \
 
 COPY rabbitmq.config /etc/rabbitmq/
 COPY definitions.json /etc/rabbitmq/
+COPY configure.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/configure.sh
 
 USER rabbitmq

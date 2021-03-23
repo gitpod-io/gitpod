@@ -14,6 +14,7 @@ packages:
   - name: docker
     type: docker
     srcs:
+      - configure.sh
       - definitions.json
       - rabbitmq.config
     argdeps:
