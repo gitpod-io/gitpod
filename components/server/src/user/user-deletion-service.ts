@@ -116,14 +116,10 @@ export class UserDeletionService {
     }
 
     protected async deleteUserBucket(userId: string) {
-        const client = this.storageClient;
-        if (client) {
-            const bucketName = this.storageClient.bucketName(userId);
-            try {
-                await client.deleteBucket(bucketName);
-            } catch(error) {
-                log.error({ userId }, "Failed to delete user bucket.", error);
-            }
+        try {
+            await this.storageClient.deleteUserContent(userId);
+        } catch (error) {
+            log.error({ userId }, "Failed to delete user bucket.", error);
         }
     }
 

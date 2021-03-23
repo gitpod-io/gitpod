@@ -6,6 +6,7 @@ package storage
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"hash/crc32"
 	"io"
@@ -661,12 +662,16 @@ func gcpBucketName(stage Stage, ownerID string) string {
 	return fmt.Sprintf("gitpod-%s-user-%s", stage, ownerID)
 }
 
+func gcpWorkspaceBackupObjectName(workspaceID string, name string) string {
+	return fmt.Sprintf("%s/%s", workspaceID, name)
+}
+
 func (rs *DirectGCPStorage) workspacePrefix() string {
 	return fmt.Sprintf("workspaces/%s", rs.WorkspaceName)
 }
 
 func (rs *DirectGCPStorage) objectName(name string) string {
-	return fmt.Sprintf("%s/%s", rs.workspacePrefix(), name)
+	return gcpWorkspaceBackupObjectName(rs.workspacePrefix(), name)
 }
 
 func (rs *DirectGCPStorage) trailPrefix() string {
@@ -746,23 +751,24 @@ func (p *PresignedGCPStorage) Bucket(owner string) string {
 }
 
 // BlobObject returns a blob's object name
-func (s *PresignedGCPStorage) BlobObject(name string) (string, error) {
+func (p *PresignedGCPStorage) BlobObject(name string) (string, error) {
 	return blobObjectName(name)
 }
 
 // EnsureExists makes sure that the remote storage location exists and can be up- or downloaded from
-func (s *PresignedGCPStorage) EnsureExists(ctx context.Context, ownerId string) (err error) {
-	client, err := newGCPClient(ctx, s.config)
+func (p *PresignedGCPStorage) EnsureExists(ctx context.Context, bucket string) (err error) {
+	client, err := newGCPClient(ctx, p.config)
 	if err != nil {
 		return err
 	}
 	defer client.Close()
 
-	return gcpEnsureExists(ctx, client, s.Bucket(ownerId), s.config)
+	return gcpEnsureExists(ctx, client, bucket, p.config)
 }
 
-func (s *PresignedGCPStorage) DiskUsage(ctx context.Context, bucket string, prefix string) (size int64, err error) {
-	client, err := newGCPClient(ctx, s.config)
+// DiskUsage gives the total objects size of objects that have the given prefix
+func (p *PresignedGCPStorage) DiskUsage(ctx context.Context, bucket string, prefix string) (size int64, err error) {
+	client, err := newGCPClient(ctx, p.config)
 	if err != nil {
 		return
 	}
@@ -884,6 +890,7 @@ func (p *PresignedGCPStorage) SignUpload(ctx context.Context, bucket, object str
 	}, nil
 }
 
+// DeleteObject deletes objects in the given bucket specified by the given query
 func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, query *DeleteObjectQuery) (err error) {
 	client, err := newGCPClient(ctx, p.config)
 	defer client.Close()
@@ -892,30 +899,80 @@ func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, q
 		err = client.Bucket(bucket).Object(query.Name).Delete(ctx)
 		if err != nil {
 			log.WithField("bucket", bucket).WithField("object", query.Name).Error(err)
+			if err == gcpstorage.ErrBucketNotExist {
+				return ErrNotFound
+			}
 			return err
 		}
 		return nil
 	}
-	if query.Prefix != "" {
-		prefix := query.Prefix
-		if !strings.HasSuffix(prefix, "/") {
-			prefix = prefix + "/"
-		}
 
-		b := client.Bucket(bucket)
-		it := b.Objects(ctx, &storage.Query{
+	prefix := query.Prefix
+	b := client.Bucket(bucket)
+	var it *gcpstorage.ObjectIterator
+	if prefix != "" && prefix != "/" {
+		it = b.Objects(ctx, &storage.Query{
 			Prefix: prefix,
 		})
-		for {
-			attrs, err := it.Next()
-			if err == iterator.Done {
-				break
-			}
-			err = b.Object(attrs.Name).Delete(ctx)
-			if err != nil {
-				log.WithField("bucket", bucket).WithField("object", attrs.Name).Error(err)
-			}
+	} else {
+		it = b.Objects(ctx, nil)
+	}
+	for {
+		attrs, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		err = b.Object(attrs.Name).Delete(ctx)
+		if err != nil {
+			log.WithField("bucket", bucket).WithField("object", attrs.Name).Error(err)
 		}
 	}
+
+	if err == gcpstorage.ErrBucketNotExist {
+		return ErrNotFound
+	}
 	return err
+}
+
+// DeleteBucket deletes a bucket
+func (p *PresignedGCPStorage) DeleteBucket(ctx context.Context, bucket string) (err error) {
+	client, err := newGCPClient(ctx, p.config)
+	defer client.Close()
+
+	err = p.DeleteObject(ctx, bucket, &DeleteObjectQuery{})
+	if err != nil {
+		if err == gcpstorage.ErrBucketNotExist {
+			return ErrNotFound
+		}
+		return err
+	}
+
+	err = client.Bucket(bucket).Delete(ctx)
+	if err != nil {
+		if err == gcpstorage.ErrBucketNotExist {
+			return ErrNotFound
+		}
+		return err
+	}
+	return nil
+}
+
+// ObjectHash gets a hash value of an object
+func (p *PresignedGCPStorage) ObjectHash(ctx context.Context, bucket string, obj string) (hash string, err error) {
+	client, err := newGCPClient(ctx, p.config)
+	defer client.Close()
+
+	attr, err := client.Bucket(bucket).Object(obj).Attrs(ctx)
+	if err != nil {
+		if err == gcpstorage.ErrBucketNotExist {
+			return "", ErrNotFound
+		}
+		return "", err
+	}
+	return hex.EncodeToString(attr.MD5), nil
+}
+
+// BackupObject returns a backup's object name that a direct downloader would download
+func (p *PresignedGCPStorage) BackupObject(workspaceID string, name string) string {
+	return fmt.Sprintf("workspaces/%s", gcpWorkspaceBackupObjectName(workspaceID, name))
 }

@@ -66,11 +66,31 @@ var runCmd = &cobra.Command{
 		}
 
 		server := grpc.NewServer(grpcOpts...)
-		service, err := service.NewContentService(cfg.Storage)
+
+		contentService, err := service.NewContentService(cfg.Storage)
 		if err != nil {
 			log.WithError(err).Fatalf("cannot create content service")
 		}
-		api.RegisterBlobServiceServer(server, service)
+		api.RegisterContentServiceServer(server, contentService)
+
+		blobService, err := service.NewBlobService(cfg.Storage)
+		if err != nil {
+			log.WithError(err).Fatalf("cannot create blobs service")
+		}
+		api.RegisterBlobServiceServer(server, blobService)
+
+		workspaceService, err := service.NewWorkspaceService(cfg.Storage)
+		if err != nil {
+			log.WithError(err).Fatalf("cannot create workspace service")
+		}
+		api.RegisterWorkspaceServiceServer(server, workspaceService)
+
+		idePluginService, err := service.NewIDEPluginService(cfg.Storage)
+		if err != nil {
+			log.WithError(err).Fatalf("cannot create IDE Plugin service")
+		}
+		api.RegisterIDEPluginServiceServer(server, idePluginService)
+
 		lis, err := net.Listen("tcp", cfg.Service.Addr)
 		if err != nil {
 			log.WithError(err).Fatalf("cannot listen on %s", cfg.Service.Addr)

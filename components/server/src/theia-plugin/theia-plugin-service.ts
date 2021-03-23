@@ -67,11 +67,14 @@ export class TheiaPluginService {
         if (state == TheiaPlugin.State.Uploaded && type == "upload") {
             throw new ResponseError(ErrorCodes.CONFLICT, "Plugin already exists.");
         }
-        const action = state == TheiaPlugin.State.Uploading ? "write" : "read";
-        const createBucket = pluginEntry.state == TheiaPlugin.State.Uploading;
         try {
-            const signedUrl = await this.storageClient.createSignedUrl(bucketName, path, action, { createBucket });
-            return signedUrl;
+            if (state == TheiaPlugin.State.Uploading) {
+                const signedUrl = await this.storageClient.createPluginUploadUrl(bucketName, path);
+                return signedUrl;
+            } else {
+                const signedUrl = await this.storageClient.createPluginDownloadUrl(bucketName, path);
+                return signedUrl;
+            }
         } catch (error) {
             log.warn(`Failed to create a signed URL for plugin with DB id ${pluginEntryId}!`, error, { bucketName, path, state })
             throw error;
@@ -97,7 +100,7 @@ export class TheiaPluginService {
         }
         let error;
         try {
-            const hash = await this.storageClient.getHash(bucketName, path);
+            const hash = await this.storageClient.getPluginHash(bucketName, path);
             pluginEntry.pluginId = this.toPluginId(pluginEntry.pluginName, hash);
             pluginEntry.hash = hash;
             pluginEntry.state = TheiaPlugin.State.Uploaded;

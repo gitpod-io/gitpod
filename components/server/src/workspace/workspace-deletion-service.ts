@@ -80,30 +80,13 @@ export class WorkspaceDeletionService {
 
     /**
      * Performs the actual deletion of a workspace's backups (and optionally, snapshots). It:
-     *  - returns false if there was not object to delete at all (in case there have been no backups yet, for example)
      *  - throws an error if something went wrong during deletion
      *  - returns true in case of successful deletion
      * @param ws 
      * @param includeSnapshots 
      */
     protected async deleteWorkspaceStorage(ws: WorkspaceAndOwner, includeSnapshots: boolean): Promise<boolean> {
-        let prefix = `workspaces/${ws.id}`;
-
-        try {
-            const bucketName = this.storageClient.bucketName(ws.ownerId);
-            if (includeSnapshots) {
-                await this.storageClient.deleteObjects(bucketName, prefix);
-            } else {
-                await this.storageClient.deleteObjects(bucketName, `${prefix}/full.tar`);
-                await this.storageClient.deleteObjects(bucketName, `${prefix}/trail-`);
-            }
-            return true;
-        } catch (err) {
-            if ('code' in err && err.code == 404) {
-                return false;
-            } else {
-                throw err;
-            }
-        }
+        await this.storageClient.deleteWorkspaceBackups(ws.ownerId, ws.id, includeSnapshots);
+        return true;
     }
 }

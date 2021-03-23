@@ -86,6 +86,11 @@ func (s *PresignedNoopStorage) DeleteObject(ctx context.Context, bucket string, 
 	return nil
 }
 
+// DeleteBucket deletes a bucket
+func (s *PresignedNoopStorage) DeleteBucket(ctx context.Context, bucket string) error {
+	return nil
+}
+
 // Bucket returns an empty string
 func (*PresignedNoopStorage) Bucket(string) string {
 	return ""
@@ -94,4 +99,14 @@ func (*PresignedNoopStorage) Bucket(string) string {
 // BlobObject returns a blob's object name
 func (*PresignedNoopStorage) BlobObject(name string) (string, error) {
 	return "", nil
+}
+
+// ObjectHash gets a hash value
+func (*PresignedNoopStorage) ObjectHash(ctx context.Context, bucket string, obj string) (string, error) {
+	return "", nil
+}
+
+// BackupObject returns a backup's object name that a direct downloader would download
+func (*PresignedNoopStorage) BackupObject(workspaceID string, name string) string {
+	return ""
 }

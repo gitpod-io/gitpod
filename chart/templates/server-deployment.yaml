@@ -84,11 +84,6 @@ spec:
           privileged: false
           runAsUser: 31001
         volumeMounts:
-{{- if $comp.storage }}
-        - name: storage-key
-          mountPath: "/storageKeySecret"
-          readOnly: true
-{{- end }}
 {{- if $comp.github.app }}
         - name: github-app-cert-secret
           mountPath: "/github-app-cert"
@@ -163,20 +158,6 @@ spec:
     {{- end }}
         - name: SESSION_SECRET
           value: {{ $comp.sessionSecret | quote }}
-    {{- if eq .Values.components.contentService.remoteStorage.kind "minio" }}
-        - name: GITPOD_STORAGE_CLIENT
-          value: minio
-        - name: MINIO_END_POINT
-          value: minio.{{ .Release.Namespace }}.svc.cluster.local
-        - name: MINIO_PORT
-          value: "9000"
-        - name: MINIO_ACCESS_KEY
-          value: {{ .Values.minio.accessKey }}
-        - name: MINIO_SECRET_KEY
-          value: {{ .Values.minio.secretKey }}
-        - name: MINIO_REGION
-          value: {{ .Values.minio.region }}
-    {{- end }}
     {{- if .Values.components.workspace.localTheia }}
         - name: LOCAL_THEIA
           value: "true"
@@ -213,29 +194,12 @@ spec:
             secretKeyRef:
               name: server-proxy-apikey
               key: apikey
-{{- if (or .Values.components.contentService.remoteStorage.gcloud $comp.storage) }}
-        - name: GCLOUD_PROJECT_ID
-          value: {{ .Values.components.contentService.remoteStorage.gcloud.projectId }}
-        - name: GCLOUD_REGION
-          value: {{ .Values.components.contentService.remoteStorage.gcloud.region }}
-        - name: GCLOUD_CREDENTIALS_FILE
-{{- if .Values.components.contentService.remoteStorage.gcloud.credentialsFile }}
-          value: {{ base .Values.components.contentService.remoteStorage.gcloud.credentialsFile }}
-{{- else }}
-          value: key.json
-{{- end }}
-{{- end }}
         - name: GITPOD_GARBAGE_COLLECTION_DISABLED
           value: {{ $comp.garbageCollection.disabled | default "false" | quote }}
 {{- if $comp.serverContainer.env }}
 {{ toYaml $comp.serverContainer.env | indent 8 }}
 {{- end }}
       volumes:
-{{- if $comp.storage.secretName }}
-      - name: storage-key
-        secret:
-          secretName: {{ $comp.storage.secretName }}
-{{- end }}
 {{- if $comp.github.app }}
       - name: github-app-cert-secret
         secret:
