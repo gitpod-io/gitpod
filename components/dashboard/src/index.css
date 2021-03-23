@@ -65,4 +65,17 @@
     input[type=radio] {
         @apply rounded-md border border-gray-300 focus:border-gray-400 focus:bg-white focus:ring-0;
     }
+
+    progress {
+        @apply h-2 rounded;
+    }
+    progress::-webkit-progress-bar {
+        @apply rounded-md bg-gray-200;
+    }
+    progress::-webkit-progress-value {
+        @apply rounded-md bg-green-500;
+    }
+    progress::-moz-progress-bar {
+        @apply rounded-md bg-green-500;
+    }
 }

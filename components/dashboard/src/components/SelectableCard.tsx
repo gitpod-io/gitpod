@@ -13,9 +13,9 @@ export interface SelectableCardProps {
 }
 
 function SelectableCard(props: SelectableCardProps) {
-    return <div className={`rounded-xl px-4 py-3 flex flex-col cursor-pointer group border-2 transition ease-in-out ${props.selected ? 'border-green-500' : 'border-gray-300 hover:border-gray-400'} ${props.className || ''}`} onClick={props.onClick}>
+    return <div className={`rounded-xl px-3 py-3 flex flex-col cursor-pointer group border-2 transition ease-in-out ${props.selected ? 'border-green-500' : 'border-gray-300 hover:border-gray-400'} ${props.className || ''}`} onClick={props.onClick}>
         <div className="flex items-center">
-            <p className={`w-full text-base font-semibold ${props.selected ? 'text-green-500' : 'text-gray-300 group-hover:text-gray-400'}`}>{props.title}</p>
+            <p className={`w-full pl-1 text-base font-semibold ${props.selected ? 'text-green-500' : 'text-gray-400'}`}>{props.title}</p>
             <input className={'text-green-500 ' + (props.selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100')} type="radio" checked={props.selected} />
         </div>
         {props.children}
