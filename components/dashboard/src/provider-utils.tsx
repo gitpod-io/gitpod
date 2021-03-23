@@ -4,15 +4,16 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import * as images from './images';
 
 function iconForAuthProvider(type: string) {
     switch (type) {
         case "GitHub":
-            return "/images/github.svg"
+            return images.github
         case "GitLab":
-            return "/images/gitlab.svg"
+            return images.gitlab
         case "BitBucket":
-            return "/images/bitbucket.svg"
+            return images.bitbucket
         default:
             break;
     }
