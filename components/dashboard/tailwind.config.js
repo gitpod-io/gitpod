@@ -15,9 +15,9 @@ module.exports = {
                 gray: colors.warmGray,
                 green: colors.lime,
                 blue: {
-                  light: '#75A9EC',
-                  DEFAULT: '#5C8DD6',
-                  dark: '#265583',
+                    light: '#75A9EC',
+                    DEFAULT: '#5C8DD6',
+                    dark: '#265583',
                 },
                 'gitpod-black': '#161616',
                 'gitpod-gray': '#8E8787',
@@ -34,22 +34,22 @@ module.exports = {
             },
         },
         fontFamily: {
-          sans: [
-            'Inter',
-            'system-ui',
-            '-apple-system',
-            'BlinkMacSystemFont',
-            'Segoe UI',
-            'Roboto',
-            'Helvetica Neue',
-            'Arial',
-            'Noto Sans',
-            'sans-serif',
-            'Apple Color Emoji',
-            'Segoe UI Emoji',
-            'Segoe UI Symbol',
-            'Noto Color Emoji',
-          ],
+            sans: [
+                'Inter',
+                'system-ui',
+                '-apple-system',
+                'BlinkMacSystemFont',
+                'Segoe UI',
+                'Roboto',
+                'Helvetica Neue',
+                'Arial',
+                'Noto Sans',
+                'sans-serif',
+                'Apple Color Emoji',
+                'Segoe UI Emoji',
+                'Segoe UI Symbol',
+                'Noto Color Emoji',
+            ],
         },
         underlineThickness: {
             'thin': '2px',
@@ -64,6 +64,11 @@ module.exports = {
             'none': 'none',
             'grayscale': 'grayscale(1)',
         },
+    },
+    variants: {
+        extend: {
+            opacity: ['disabled'],
+        }
     },
     plugins: [
         require('@tailwindcss/forms'),
