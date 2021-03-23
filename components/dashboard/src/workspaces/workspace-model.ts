@@ -124,4 +124,8 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
             info.latestInstance?.status?.phase !== 'stopped';
     }
 
+    public getAllFetchedWorkspaces(): Map<string, WorkspaceInfo> {
+        return this.workspaces;
+    }
+
 }

@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d // indirect
 	github.com/golang/mock v1.4.4
+	github.com/google/shlex v0.0.0-20181106134648-c34317bd91bf
 	github.com/google/tcpproxy v0.0.0-20180808230851-dfa16c61dad2
 	github.com/gorilla/handlers v1.4.2
 	github.com/manifoldco/promptui v0.3.2
@@ -12,6 +13,7 @@ require (
 	github.com/pkg/errors v0.8.1
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v0.0.5
+	golang.org/x/sys v0.0.0-20191026070338-33540a1f6037
 	gopkg.in/alecthomas/kingpin.v3-unstable v3.0.0-20191105091915-95d230a53780 // indirect
 	gopkg.in/yaml.v2 v2.2.2
 )
