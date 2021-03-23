@@ -96,8 +96,8 @@ affinity:
 {{- if $gp.components.workspace.affinity.probe -}}{{- $_ := set $expr $gp.components.workspace.affinity.probe "" -}}{{- end -}}
 {{- if $gp.components.workspace.affinity.regular -}}{{- $_ := set $expr $gp.components.workspace.affinity.regular "" -}}{{- end -}}
 {{- end -}}
-{{- /* 
-  In a previous iteration of the templates the node affinity was part of the workspace pod template. 
+{{- /*
+  In a previous iteration of the templates the node affinity was part of the workspace pod template.
   In that case we need to extract the affinity from the template and add it to the workspace affinity set.
 */ -}}
 {{- if $gp.components.workspace.template -}}
@@ -221,24 +221,24 @@ env:
 {{- $ := .root -}}
 {{- $gp := .gp -}}
 - name: MESSAGEBUS_USERNAME
-  value: "{{ $gp.messagebus.username }}"
+  value: "{{ $gp.rabbitmq.auth.username }}"
 - name: MESSAGEBUS_PASSWORD
-  value: "{{ $gp.messagebus.password }}"
+  value: "{{ $gp.rabbitmq.auth.password }}"
 - name: MESSAGEBUS_CA
   valueFrom:
     secretKeyRef:
-        name: {{ $gp.messagebus.secretName }}
-        key: ca
+        name: messagebus-certificates-secret-core
+        key: ca.crt
 - name: MESSAGEBUS_CERT
   valueFrom:
     secretKeyRef:
-        name: {{ $gp.messagebus.secretName }}
-        key: cert
+        name: messagebus-certificates-secret-core
+        key: tls.crt
 - name: MESSAGEBUS_KEY
   valueFrom:
     secretKeyRef:
-        name: {{ $gp.messagebus.secretName }}
-        key: key
+        name: messagebus-certificates-secret-core
+        key: tls.key
 {{- end -}}
 
 {{- define "gitpod.container.tracingEnv" -}}
@@ -247,7 +247,7 @@ env:
 {{- $comp := .comp -}}
 {{- $tracing := $comp.tracing | default $gp.tracing -}}
 {{- if $tracing }}
-{{- if $tracing.endoint }}          
+{{- if $tracing.endoint }}
 - name: JAEGER_ENDPOINT
   value: {{ $tracing.endoint }}
 {{- else }}
