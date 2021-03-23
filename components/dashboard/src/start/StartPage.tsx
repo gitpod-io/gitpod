@@ -16,6 +16,27 @@ export enum StartPhase {
   Stopped = 6,
 };
 
+function getPhaseTitle(phase?: StartPhase, error?: boolean) {
+  switch (phase) {
+    case StartPhase.Checking:
+      return !error ? "Checking" : "Oh, no! Something went wrong!1";
+    case StartPhase.Preparing:
+      return "Preparing";
+    case StartPhase.Creating:
+      return "Creating";
+    case StartPhase.Starting:
+      return "Starting";
+    case StartPhase.Running:
+      return "Starting";
+    case StartPhase.Stopping:
+      return "Stopping";
+    case StartPhase.Stopped:
+      return "Stopped";
+    default:
+      return "";
+  }
+}
+
 function ProgressBar(props: { phase: number, error: boolean }) {
   const { phase, error } = props;
   return <div className="flex mt-4 mb-6">
@@ -40,47 +61,21 @@ function ProgressBar(props: { phase: number, error: boolean }) {
 }
 
 export interface StartPageProps {
-  phase: number;
+  phase?: number;
   error?: boolean;
+  title?: string;
   children?: React.ReactNode;
 }
 
 export function StartPage(props: StartPageProps) {
-  let title = "";
   const { phase, error } = props;
-  switch (phase) {
-    case StartPhase.Checking:
-      title = "Checking";
-      if (error) {
-        // Pre-check error
-        title = "Oh, no! Something went wrong!1";
-      }
-      break;
-    case StartPhase.Preparing:
-      title = "Preparing";
-      break;
-    case StartPhase.Creating:
-      title = "Creating";
-      break;
-    case StartPhase.Starting:
-      title = "Starting";
-      break;
-    case StartPhase.Running:
-      title = "Starting";
-      break;
-    case StartPhase.Stopping:
-      title = "Stopping";
-      break;
-    case StartPhase.Stopped:
-      title = "Stopped";
-      break;
-  }
+  let title = props.title || getPhaseTitle(phase, error);
   return <div className="w-screen h-screen bg-white align-middle">
     <div className="flex flex-col mx-auto items-center h-screen">
       <div className="h-1/3"></div>
       <img src={images.gitpodIcon} className={`h-16 flex-shrink-0 ${(error || phase === StartPhase.Stopped) ? '' : 'animate-bounce'}`} />
       <h3 className="mt-8 text-xl">{title}</h3>
-      {(phase < StartPhase.Stopping) && <ProgressBar phase={phase} error={!!error} />}
+      {typeof(phase) === 'number' && phase < StartPhase.Stopping && <ProgressBar phase={phase} error={!!error} />}
       {props.children}
     </div>
   </div>;
