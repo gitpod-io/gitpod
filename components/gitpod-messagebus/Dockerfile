@@ -7,6 +7,7 @@ FROM rabbitmq:3-management-alpine
 RUN rabbitmq-plugins enable --offline rabbitmq_shovel && \
     rabbitmq-plugins enable --offline rabbitmq_shovel_management
 
-COPY configure.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/configure.sh
+COPY rabbitmq.config /etc/rabbitmq/
+COPY definitions.json /etc/rabbitmq/
+
 USER rabbitmq

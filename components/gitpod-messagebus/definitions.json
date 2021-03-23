@@ -1,0 +1,28 @@
+{
+  "exchanges": [
+    {
+      "name": "gitpod.ws",
+      "type": "topic",
+      "durable": true
+    }, {
+      "name": "gitpod.ws.local",
+      "type": "topic",
+      "durable":true
+    }, {
+      "name": "wsman",
+      "type": "topic",
+      "durable": false
+    }, {
+      "name": "consensus-leader",
+      "type": "fanout",
+      "durable": false
+    }
+  ],
+  "bindings": [
+    {
+      "source": "gitpod.ws.local",
+      "destination": "gitpod.ws",
+      "routing_key": "#"
+    }
+  ]
+}
