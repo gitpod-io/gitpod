@@ -5,13 +5,13 @@
  */
 
 import React from "react";
-import { WhitelistedRepository, WorkspaceInfo } from "@gitpod/gitpod-protocol";
+import { WhitelistedRepository, Workspace, WorkspaceInfo } from "@gitpod/gitpod-protocol";
 import Header from "../components/Header";
 import DropDown from "../components/DropDown"
 import { WorkspaceModel } from "./workspace-model";
 import { WorkspaceEntry } from "./WorkspaceEntry";
-import Modal from "../components/Modal";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
+import {StartWorkspaceModal, WsStartEntry} from "./StartWorkspaceModal";
 
 export interface WorkspacesProps {
 }
@@ -46,7 +46,7 @@ export class Workspaces extends React.Component<WorkspacesProps, WorkspacesState
 
     render() {
         const wsModel = this.workspaceModel;
-        const toggleTemplateModal = () => this.setState({
+        const toggleStartWSModal = () => this.setState({
             isTemplateModelOpen: !this.state?.isTemplateModelOpen
         });
         const onActive = () => wsModel!.active = true;
@@ -58,7 +58,7 @@ export class Workspaces extends React.Component<WorkspacesProps, WorkspacesState
                 <div className="flex">
                     <div className="py-4">
                         <svg width="16" height="16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd" clip-rule="evenodd" d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z" fill="#A8A29E"/>
+                            <path fillRule="evenodd" clipRule="evenodd" d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z" fill="#A8A29E"/>
                         </svg>
                     </div>
                     <input className="border-0" type="text" placeholder="Search Workspaces" onChange={(v) => { if (wsModel) wsModel.setSearch(v.target.value) }} />
@@ -85,6 +85,10 @@ export class Workspaces extends React.Component<WorkspacesProps, WorkspacesState
                         onClick: () => { if (wsModel) wsModel.limit = 200; }
                     }]} />
                 </div>
+                {wsModel && this.state?.workspaces.length > 0 ? 
+                 <button onClick={toggleStartWSModal} className="ml-2 font-medium">New Workspace</button>
+                 : null
+                }
             </div>
             {wsModel && (
                 this.state?.workspaces.length > 0 || wsModel.searchTerm ?
@@ -131,30 +135,56 @@ export class Workspaces extends React.Component<WorkspacesProps, WorkspacesState
                         <div className="px-6 py-3 flex justify-between space-x-2 text-sm text-gray-400 border-t border-gray-200 h-96">
                             <div className="flex flex-col items-center w-96 m-auto">
                                 <h3 className="text-center pb-3">No Active Workspaces</h3>
-                                <div className="text-center pb-6 text-gray-500">Prefix a git repository URL with gitpod.io/# or open a workspace template. <a className="text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600" href="https://www.gitpod.io/docs/getting-started/">Learn how to get started</a></div>
-                                <button onClick={toggleTemplateModal} className="font-medium">Select Template</button>
+                                <div className="text-center pb-6 text-gray-500">Prefix any git repository URL with gitpod.io/# or start a new workspace for a recently used project. <a className="text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600" href="https://www.gitpod.io/docs/getting-started/">Learn more</a></div>
+                                <button onClick={toggleStartWSModal} className="font-medium">New Workspace</button>
                             </div>
                         </div>
                     </div>
             )}
-            <Modal onClose={toggleTemplateModal} visible={!!this.state?.isTemplateModelOpen}>
-                <h3 className="pb-2">Select Template</h3>
-                {/* separator */}
-                <div className="border-t mt-2 -mx-6 px-6 py-2">
-                    <p className="mt-1 mb-2 text-base">Select a template to open a workspace.</p>
-                    <div className="space-y-2 mt-4 overflow-y-scroll h-80 pr-2">
-                        {this.state?.repos && this.state.repos.map(r => {
-                            const url = gitpodHostUrl.withContext(r.url).toString();
-                            return <a key={r.name} href={url} className="rounded-xl group hover:bg-gray-100 flex p-4 my-1">
-                                <div className="w-full">
-                                    <p className="text-base text-gray-800 font-semibold">{r.name}</p>
-                                    <p>{r.url}</p>
-                                </div>
-                            </a>;
-                        })}
-                    </div>
-                </div>
-            </Modal>
+            <StartWorkspaceModal
+                onClose={toggleStartWSModal}
+                visible={!!this.state?.isTemplateModelOpen}
+                examples={this.state?.repos && this.state.repos.map(r => ({
+                    title: r.name,
+                    description: r.description || r.url,
+                    startUrl:  gitpodHostUrl.withContext(r.url).toString()
+                }))}
+                recent={wsModel && this.state?.workspaces ? 
+                    this.getRecentSuggestions()
+                : []} />
         </>;
+    }
+
+    protected getRecentSuggestions(): WsStartEntry[] {
+        if (this.workspaceModel) {
+            const all = this.workspaceModel.getAllFetchedWorkspaces();
+            if (all && all.size > 0) {
+                const index = new Map<string, WsStartEntry & {lastUse: string}>();
+                for (const ws of Array.from(all.values())) {
+                    const repoUrl = Workspace.getFullRepositoryUrl(ws.workspace);
+                    if (repoUrl) {
+                        const lastUse = WorkspaceInfo.lastActiveISODate(ws);
+                        let entry = index.get(repoUrl);
+                        if (!entry) {
+                            entry = {
+                                title: Workspace.getFullRepositoryName(ws.workspace) || repoUrl,
+                                description: repoUrl,
+                                startUrl: gitpodHostUrl.withContext(repoUrl).toString(),
+                                lastUse,
+                            };
+                            index.set(repoUrl, entry);
+                        } else {
+                            if (entry.lastUse.localeCompare(lastUse) < 0) {
+                                entry.lastUse = lastUse;
+                            }
+                        }
+                    }
+                }
+                const list = Array.from(index.values());
+                list.sort((a,b) => b.lastUse.localeCompare(a.lastUse));
+                return list;
+            }
+        }
+        return [];
     }
 }
