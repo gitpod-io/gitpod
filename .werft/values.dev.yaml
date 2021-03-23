@@ -164,3 +164,8 @@ minio:
   serviceAccount:
     name: ws-daemon
     create: false
+
+rabbitmq:
+  auth:
+    username: override-me
+    password: override-me
