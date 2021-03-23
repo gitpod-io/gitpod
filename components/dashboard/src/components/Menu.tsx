@@ -10,7 +10,7 @@ import { Link } from "react-router-dom";
 import { gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import ContextMenu from "./ContextMenu";
-
+import * as images from '../images';
 interface Entry {
     title: string, link: string
 }
@@ -46,7 +46,7 @@ function Menu(props: { left: Entry[], right: Entry[] }) {
                 `}} />
             <div className="flex justify-between items-center pr-3">
                 <Link to="/">
-                    <img src="/gitpod.svg" className="h-6" />
+                    <img src={images.gitpodIcon} className="h-6" />
                 </Link>
             </div>
             <div className="lg:hidden flex-grow" />
