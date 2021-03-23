@@ -7,6 +7,7 @@
 import { User } from "@gitpod/gitpod-protocol";
 import { useContext, useState } from "react";
 import Modal from "../components/Modal";
+import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import { SettingsPage } from "./SettingsPage";
 
@@ -14,16 +15,31 @@ export default function Account() {
     const { user } = useContext(UserContext);
 
     const [modal, setModal] = useState(false);
+    const [typedEmail, setTypedEmail] = useState('');
+
+    const primaryEmail = User.getPrimaryEmail(user!);
+
+    const deleteAccount = async () => {
+        await getGitpodService().server.deleteAccount();
+        document.location.href = gitpodHostUrl.asApiLogout().toString();
+    };
 
     const close = () => setModal(false);
     return <div>
         <Modal visible={modal} onClose={close}>
             <h3 className="pb-2">Delete Account</h3>
-            <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-2">
-              <p className="mt-1 mb-2 text-base">Are you sure you want to delete your account? This action will remove all the data associated with your account in Gitpod and cannot be reversed.</p>
+            <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-4">
+                <p className="pb-4 text-gray-900 text-base">You are about to permanently delete your account.</p>
+                <ol className="text-gray-500 text-sm list-outside list-decimal">
+                    <li className="ml-5">All your workspaces and related data will be deleted and cannot be restored afterwards.</li>
+                    <li className="ml-5">Your subscription will be cancelled. If you obtained a Gitpod subscription through the GitHub marketplace, you need to cancel your plan there.</li>
+                </ol>
+                <p className="pt-4 pb-2 text-gray-600 text-base font-bold">Type your email to confirm</p>
+              <input className="border-2 border-gray-400 w-full" type="text" onChange={e => setTypedEmail(e.target.value)}></input>
             </div>
             <div className="flex justify-end mt-6">
-                <button className="border-red-900 bg-red-500 hover:bg-red-700" onClick={close}>Delete Account</button>
+                <button className="text-gray-900 border-white bg-white hover:border-gray-200" onClick={close}>Cancel</button>
+                <button className={"ml-2 border-red-900 bg-red-500 disabled:opacity-50" + (typedEmail !== primaryEmail ? '' : ' hover:bg-red-700')} onClick={deleteAccount} disabled={typedEmail !== primaryEmail}>Delete Account</button>
             </div>
         </Modal>
 
@@ -51,7 +67,7 @@ export default function Account() {
             </div>
             <h3 className="mt-12">Delete Account</h3>
             <p className="text-base text-gray-500 pb-4">This action will remove all the data associated with your account in Gitpod.</p>
-            <button className="border-red-600 text-red-600 bg-white hover:border-red-800 hover:text-red-800 font-medium" onClick={() => setModal(true)}>Delete Account</button>
+            <button className="border-red-600 text-red-600 bg-white hover:border-red-800 hover:text-red-800" onClick={() => setModal(true)}>Delete Account</button>
         </SettingsPage>
     </div>;
 }
