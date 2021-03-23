@@ -18,30 +18,32 @@ import (
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 )
 
-// ContentService implements ContentServiceServer
-type ContentService struct {
+// BlobService implements BlobServiceServer
+type BlobService struct {
 	cfg storage.Config
 	s   storage.PresignedAccess
 }
 
-// NewContentService create a new content service
-func NewContentService(cfg storage.Config) (res *ContentService, err error) {
+// NewBlobService create a new content service
+func NewBlobService(cfg storage.Config) (res *BlobService, err error) {
 	s, err := storage.NewPresignedAccess(&cfg)
 	if err != nil {
 		return nil, err
 	}
-	return &ContentService{cfg, s}, nil
+	return &BlobService{cfg, s}, nil
 }
 
 // UploadUrl provides a upload URL
-func (cs *ContentService) UploadUrl(ctx context.Context, req *api.UploadUrlRequest) (resp *api.UploadUrlResponse, err error) {
+func (cs *BlobService) UploadUrl(ctx context.Context, req *api.UploadUrlRequest) (resp *api.UploadUrlResponse, err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "UploadUrl")
 	span.SetTag("user", req.OwnerId)
 	span.SetTag("name", req.Name)
 	defer tracing.FinishSpan(span, &err)
 
-	err = cs.s.EnsureExists(ctx, req.OwnerId)
+	bucket := cs.s.Bucket(req.OwnerId)
+
+	err = cs.s.EnsureExists(ctx, bucket)
 	if err != nil {
 		return nil, status.Error(codes.NotFound, err.Error())
 	}
@@ -50,8 +52,6 @@ func (cs *ContentService) UploadUrl(ctx context.Context, req *api.UploadUrlReque
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	bucket := cs.s.Bucket(req.OwnerId)
 
 	if cs.cfg.BlobQuota > 0 {
 		prefix := strings.Split(blobName, "/")[0]
@@ -86,7 +86,7 @@ func (cs *ContentService) UploadUrl(ctx context.Context, req *api.UploadUrlReque
 }
 
 // DownloadUrl provides a download URL
-func (cs *ContentService) DownloadUrl(ctx context.Context, req *api.DownloadUrlRequest) (resp *api.DownloadUrlResponse, err error) {
+func (cs *BlobService) DownloadUrl(ctx context.Context, req *api.DownloadUrlRequest) (resp *api.DownloadUrlResponse, err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "DownloadUrl")
 	span.SetTag("user", req.OwnerId)
@@ -115,7 +115,7 @@ func (cs *ContentService) DownloadUrl(ctx context.Context, req *api.DownloadUrlR
 }
 
 // Delete deletes the uploaded content
-func (cs *ContentService) Delete(ctx context.Context, req *api.DeleteRequest) (resp *api.DeleteResponse, err error) {
+func (cs *BlobService) Delete(ctx context.Context, req *api.DeleteRequest) (resp *api.DeleteResponse, err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "Delete")
 	span.SetTag("user", req.OwnerId)
@@ -144,8 +144,11 @@ func (cs *ContentService) Delete(ctx context.Context, req *api.DeleteRequest) (r
 	bucket := cs.s.Bucket(req.OwnerId)
 
 	err = cs.s.DeleteObject(ctx, bucket, query)
+	if err == storage.ErrNotFound {
+		return nil, status.Error(codes.NotFound, err.Error())
+	}
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Unknown, err.Error())
 	}
 	resp = &api.DeleteResponse{}
 	return resp, nil

@@ -54,17 +54,6 @@ export class Env extends AbstractComponentEnv {
 
     readonly sessionMaxAgeMs: number = Number.parseInt(process.env.SESSION_MAX_AGE_MS || '259200000' /* 3 days */, 10);
 
-    readonly storageClient: string = process.env.GITPOD_STORAGE_CLIENT || 'gcloud';
-    readonly gcloudCredentialsFile = process.env.GCLOUD_CREDENTIALS_FILE || 'not-available';
-    readonly gcloudProjectID = process.env.GCLOUD_PROJECT_ID || 'not-available';
-    readonly gcloudRegion = process.env.GCLOUD_REGION || 'not-available';
-    readonly minioEndPoint?: string = process.env.MINIO_END_POINT;
-    readonly minioPort?: string = process.env.MINIO_PORT;
-    readonly minioAccessKey?: string = process.env.MINIO_ACCESS_KEY;
-    readonly minioSecretKey?: string = process.env.MINIO_SECRET_KEY;
-    readonly minioRegion?: string = process.env.MINIO_REGION || process.env.GITPOD_REGION;
-    readonly minioUseSSL: boolean = process.env.MINIO_USE_SSL == "true";
-
     readonly githubAppEnabled: boolean = process.env.GITPOD_GITHUB_APP_ENABLED == "true";
     readonly githubAppAppID: number = process.env.GITPOD_GITHUB_APP_ID ? parseInt(process.env.GITPOD_GITHUB_APP_ID, 10) : 0;
     readonly githubAppWebhookSecret: string = process.env.GITPOD_GITHUB_APP_WEBHOOK_SECRET || "unknown";

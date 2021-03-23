@@ -31,7 +31,6 @@ import { TokenProvider } from './user/token-provider';
 import { UserService } from './user/user-service';
 import { UserDeletionService } from './user/user-deletion-service';
 import { WorkspaceDeletionService } from './workspace/workspace-deletion-service';
-import { GCloudStorageClient } from './storage/gcloud-storage-client';
 import { EnvvarPrefixParser } from './workspace/envvar-prefix-context-parser';
 import { WorkspaceManagerClientProvider, WorkspaceManagerClientProviderConfig, WorkspaceManagerClientProviderEnvConfig } from '@gitpod/ws-manager/lib/client-provider';
 import { WorkspaceStarter } from './workspace/workspace-starter';
@@ -43,14 +42,10 @@ import { ConsensusLeaderMessenger } from './consensus/consensus-leader-messenger
 import { RabbitMQConsensusLeaderMessenger } from './consensus/rabbitmq-consensus-leader-messenger';
 import { ConsensusLeaderQorum } from './consensus/consensus-leader-quorum';
 import { StorageClient } from './storage/storage-client';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { MinIOStorageClient } from './storage/minio-storage-client';
-import { Client } from 'minio';
 import { ImageBuilderClientConfig, ImageBuilderClientProvider, CachingImageBuilderClientProvider } from '@gitpod/image-builder/lib';
 import { ImageSourceProvider } from './workspace/image-source-provider';
 import { WorkspaceGarbageCollector } from './workspace/garbage-collector';
 import { TokenGarbageCollector } from './user/token-garbage-collector';
-import { filePathTelepresenceAware } from '@gitpod/gitpod-protocol/lib/env';
 import { WorkspaceDownloadService } from './workspace/workspace-download-service';
 import { WorkspacePortAuthorizationService } from './user/workspace-port-auth-service';
 import { WebsocketConnectionManager } from './websocket-connection-manager';
@@ -69,9 +64,13 @@ import { BearerAuth } from './auth/bearer-authenticator';
 import { TermsProvider } from './terms/terms-provider';
 import { TosCookie } from './user/tos-cookie';
 import { SelectAccountCookie } from './user/select-account-cookie';
+import { ContentServiceClient } from '@gitpod/content-service/lib/content_grpc_pb';
 import { BlobServiceClient } from '@gitpod/content-service/lib/blobs_grpc_pb';
+import { WorkspaceServiceClient } from '@gitpod/content-service/lib/workspace_grpc_pb';
 import * as grpc from "grpc";
 import { CodeSyncService } from './code-sync/code-sync-service';
+import { ContentServiceStorageClient } from './storage/content-service-client';
+import { IDEPluginServiceClient } from '@gitpod/content-service/lib/ideplugin_grpc_pb';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Env).toSelf().inSingletonScope();
@@ -143,42 +142,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     })).inSingletonScope();
     bind(HostContextProvider).to(HostContextProviderImpl).inSingletonScope();
 
-    bind(GCloudStorageClient).toDynamicValue(ctx => {
-        const env = ctx.container.get(Env);
-        if (!env.gcloudCredentialsFile || !env.gcloudProjectID) {
-            throw "no GCloud config found";
-        }
-
-        return new GCloudStorageClient({
-            keyFilename: filePathTelepresenceAware("/storageKeySecret/" + env.gcloudCredentialsFile),
-            projectId: env.gcloudProjectID,
-            stage: env.kubeStage,
-            region: env.gcloudRegion,
-        });
-    }).inSingletonScope();
-    bind(MinIOStorageClient).toDynamicValue(ctx => {
-        const env = ctx.container.get(Env);
-        return new MinIOStorageClient(new Client({
-            endPoint: env.minioEndPoint!,
-            port: parseInt(env.minioPort!),
-            accessKey: env.minioAccessKey!,
-            secretKey: env.minioSecretKey!,
-            region: env.minioRegion!,
-            useSSL: env.minioUseSSL,
-        }), env.minioRegion!);
-    });
-    bind(StorageClient).toDynamicValue(ctx => {
-        const env = ctx.container.get(Env);
-
-        if (env.storageClient === 'minio') {
-            log.info("Using MinIO storage client");
-            return ctx.container.get(MinIOStorageClient);
-        } else {
-            log.info("Using GCloud storage client")
-            return ctx.container.get(GCloudStorageClient);
-        }
-    }).inSingletonScope();
-
     bind(TracingManager).toSelf().inSingletonScope();
 
     bind(WorkspaceManagerClientProvider).toSelf().inSingletonScope();
@@ -203,8 +166,17 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(TermsProvider).toSelf().inSingletonScope();
 
-    const blobServiceClient = new BlobServiceClient("content-service:8080", grpc.credentials.createInsecure())
+    const contentServiceAddress = process.env.CONTENT_SERVICE_ADDRESS || "content-service:8080";
+    const contentServiceClient = new ContentServiceClient(contentServiceAddress, grpc.credentials.createInsecure())
+    bind(ContentServiceClient).toConstantValue(contentServiceClient);
+    const blobServiceClient = new BlobServiceClient(contentServiceAddress, grpc.credentials.createInsecure())
     bind(BlobServiceClient).toConstantValue(blobServiceClient);
+    const workspaceServiceClient = new WorkspaceServiceClient(contentServiceAddress, grpc.credentials.createInsecure())
+    bind(WorkspaceServiceClient).toConstantValue(workspaceServiceClient);
+    const idePluginServiceClient = new IDEPluginServiceClient(contentServiceAddress, grpc.credentials.createInsecure())
+    bind(IDEPluginServiceClient).toConstantValue(idePluginServiceClient);
+
+    bind(StorageClient).to(ContentServiceStorageClient).inSingletonScope();
 
     bind(CodeSyncService).toSelf().inSingletonScope();
 });

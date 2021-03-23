@@ -39,12 +39,13 @@ type BucketNamer interface {
 	Bucket(userID string) string
 }
 
-// BackupObjectNamer provides names for storage objects
+// BackupObjectNamer provides names for workspace backup objects
 type BackupObjectNamer interface {
 	// BackupObject returns a backup's object name that a direct downloader would download
 	BackupObject(name string) string
 }
 
+// BlobObjectNamer provides names for blob objects
 type BlobObjectNamer interface {
 	// BlobObject returns a blob's object name
 	BlobObject(name string) (string, error)
@@ -56,7 +57,7 @@ type PresignedAccess interface {
 	BlobObjectNamer
 
 	// EnsureExists makes sure that the remote storage location exists and can be up- or downloaded from
-	EnsureExists(ctx context.Context, ownerId string) error
+	EnsureExists(ctx context.Context, bucket string) error
 
 	// DiskUsage gives the total objects size of objects that have the given prefix
 	DiskUsage(ctx context.Context, bucket string, prefix string) (size int64, err error)
@@ -69,6 +70,15 @@ type PresignedAccess interface {
 
 	// DeleteObject deletes objects in the given bucket specified by the given query
 	DeleteObject(ctx context.Context, bucket string, query *DeleteObjectQuery) error
+
+	// DeleteBucket deletes a bucket
+	DeleteBucket(ctx context.Context, bucket string) error
+
+	// ObjectHash gets a hash value of an object
+	ObjectHash(ctx context.Context, bucket string, obj string) (string, error)
+
+	// BackupObject returns a backup's object name that a direct downloader would download
+	BackupObject(workspaceID string, name string) string
 }
 
 // ObjectMeta describtes the metadata of a remote object
