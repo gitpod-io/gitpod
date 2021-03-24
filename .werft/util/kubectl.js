@@ -9,9 +9,21 @@ function setKubectlContextNamespace(namespace, shellOpts) {
 }
 
 function wipeAndRecreateNamespace(namespace, shellOpts) {
+    removePodFinalizers(namespace, shellOpts);
     deleteAllWorkspaces(namespace, shellOpts);
 
     recreateNamespace(namespace, shellOpts);
+}
+
+function removePodFinalizers(namespace, shellOpts) {
+    const objs = exec(`kubectl get pod -l component=workspace --namespace ${namespace} --no-headers -o=custom-columns=:metadata.name`)
+        .split("\n")
+        .map(o => o.trim())
+        .filter(o => o.length > 0);
+
+    objs.forEach(o => {
+        exec(`kubectl patch pod --namespace ${namespace} ${o} -p '{"metadata":{"finalizers":null}}'`, shellOpts);
+    });
 }
 
 function deleteAllWorkspaces(namespace, shellOpts) {
@@ -54,7 +66,7 @@ function deleteNonNamespaceObjects(namespace, destname, shellOpts) {
     exec(`/usr/local/bin/helm3 delete jaeger-${destname} || echo jaeger-${destname} was not installed yet`, {slice: 'predeploy cleanup'});
 
     let objs = [];
-    ["ws-scheduler", "node-daemon", "cluster", "workspace", "jaeger", "jaeger-agent", "ws-sync", "ws-manager-node", "ws-daemon", "registry-facade"].forEach(comp => 
+    ["ws-scheduler", "node-daemon", "cluster", "workspace", "jaeger", "jaeger-agent", "ws-sync", "ws-manager-node", "ws-daemon", "registry-facade"].forEach(comp =>
         ["ClusterRole", "ClusterRoleBinding", "PodSecurityPolicy"].forEach(kind =>
             exec(`kubectl get ${kind} -l component=${comp} --no-headers -o=custom-columns=:metadata.name | grep ${namespace}-ns`, { dontCheckRc: true })
                 .split("\n")
