@@ -167,6 +167,28 @@ export namespace UserEnvVar {
         return pattern.toLocaleLowerCase();
     }
 
+    export function score(value: UserEnvVarValue): number {
+        // We use a score to enforce precedence:
+        //      value/value = 0
+        //      value/*     = 1
+        //      */value     = 2
+        //      */*         = 3
+        //      #/#         = 4 (used for env vars passed through the URL)
+        // the lower the score, the higher the precedence.
+        const [ownerPattern, repoPattern] = splitRepositoryPattern(value.repositoryPattern);
+        let score = 0;
+        if (repoPattern == "*") {
+            score += 1;
+        }
+        if (ownerPattern == '*') {
+            score += 2;
+        }
+        if (ownerPattern == "#" || repoPattern == "#") {
+            score = 4;
+        }
+        return score;
+    }
+
     export function filter<T extends UserEnvVarValue>(vars: T[], owner: string, repo: string): T[] {
         let result = vars.filter(e => {
             const [ownerPattern, repoPattern] = splitRepositoryPattern(e.repositoryPattern);
@@ -202,25 +224,7 @@ export namespace UserEnvVar {
             let minscore = 10;
             let bestCandidate: T | undefined;
             for (const e of candidates) {
-                // We use a score to enforce precedence:
-                //      value/value = 0
-                //      value/*     = 1
-                //      */value     = 2
-                //      */*         = 3
-                //      #/#         = 4 (used for env vars passed through the URL)
-                // the lower the score, the higher the precedence.
-                const [ownerPattern, repoPattern] = splitRepositoryPattern(e.repositoryPattern);
-                let score = 0;
-                if (repoPattern == "*") {
-                    score += 1;
-                }
-                if (ownerPattern == '*') {
-                    score += 2;
-                }
-                if (ownerPattern == "#" || repoPattern == "#") {
-                    score = 4;
-                }
-
+                const score = UserEnvVar.score(e);
                 if (!bestCandidate || score < minscore) {
                     minscore = score;
                     bestCandidate = e;
@@ -232,7 +236,7 @@ export namespace UserEnvVar {
         return result;
     }
 
-    function splitRepositoryPattern(repositoryPattern: string): string[] {
+    export function splitRepositoryPattern(repositoryPattern: string): string[] {
         const patterns = repositoryPattern.split('/');
         const repoPattern = patterns.pop() || "";
         const ownerPattern = patterns.join('/');
@@ -632,7 +636,7 @@ export interface PrebuiltWorkspace {
 
 export namespace PrebuiltWorkspace {
     export function isDone(pws: PrebuiltWorkspace) {
-        return pws.state === "available" || pws.state === "timeout" || pws.state === 'aborted';
+        return pws.state === "available" || pws.state === "timeout" || pws.state === 'aborted';
     }
 
     export function isAvailable(pws: PrebuiltWorkspace) {

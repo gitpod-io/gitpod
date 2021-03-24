@@ -499,6 +499,11 @@ export class WorkspaceStarter {
         contextUrlEnv.setValue(workspace.contextURL);
         envvars.push(contextUrlEnv);
 
+        const contextEnv = new EnvironmentVariable();
+        contextEnv.setName('GITPOD_WORKSPACE_CONTEXT');
+        contextEnv.setValue(JSON.stringify(workspace.context));
+        envvars.push(contextEnv);
+
         log.debug("Workspace config", workspace.config)
         if (!!workspace.config.tasks) {
             // The task config is interpreted by Theia only, there's little point in transforming it into something
@@ -619,7 +624,7 @@ export class WorkspaceStarter {
     }
 
     protected createDefaultGitpodAPITokenScopes(workspace: Workspace, instance: WorkspaceInstance): string[] {
-        return [
+        const scopes = [
             "function:getWorkspace",
             "function:getLoggedInUser",
             "function:getPortAuthenticationToken",
@@ -643,6 +648,9 @@ export class WorkspaceStarter {
             "function:getContentBlobDownloadUrl",
             "function:accessCodeSyncStorage",
             "function:guessGitTokenScopes",
+            "function:getEnvVars",
+            "function:setEnvVar",
+            "function:deleteEnvVar",
 
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspace", subjectID: workspace.id, operations: ["get", "update"]}),
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspaceInstance", subjectID: instance.id, operations: ["get", "update", "delete"]}),
@@ -651,7 +659,14 @@ export class WorkspaceStarter {
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "userStorage", subjectID: "*", operations: ["create", "get", "update"]}),
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "token", subjectID: "*", operations: ["get"]}),
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "contentBlob", subjectID: "*", operations: ["create", "get"]}),
-        ]
+        ];
+        if (CommitContext.is(workspace.context)) {
+            const subjectID = workspace.context.repository.owner + '/' + workspace.context.repository.name;
+            scopes.push(
+                "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "envVar", subjectID, operations: ["create", "get", "update", "delete"]}),
+            );
+        }
+        return scopes;
     }
 
     protected createGitSpec(workspace: Workspace, user: User): GitSpec {

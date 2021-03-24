@@ -2,10 +2,6 @@ module github.com/gitpod-io/gitpod/image-builder/api
 
 go 1.16
 
-replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway
-
-replace github.com/gitpod-io/gitpod/content-service/api => ../../content-service-api/go // leeway
-
 require (
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	github.com/golang/mock v1.5.0
@@ -13,6 +9,10 @@ require (
 	google.golang.org/grpc v1.36.0
 	google.golang.org/protobuf v1.25.0
 )
+
+replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway
+
+replace github.com/gitpod-io/gitpod/content-service/api => ../../content-service-api/go // leeway
 
 replace k8s.io/api => k8s.io/api v0.20.4 // leeway indirect from components/common-go:lib
 
