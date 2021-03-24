@@ -15,12 +15,11 @@ packages:
     config:
       packaging: app
       buildCommand: ["go", "build", "-ldflags", "-w -extldflags \"-static\""]
-  - name: libseccomp
+  - name: fuse-overlayfs
     type: generic
     config:
       commands:
-        - ["sh", "-c", "curl -L https://github.com/seccomp/libseccomp/releases/download/v2.5.1/libseccomp-2.5.1.tar.gz | tar xz"]
-        - ["sh", "-c", "cd libseccomp-2.5.1 && ./configure --prefix=$PWD/../lib && make && make install"]
+        - ["sh", "-c", "curl -o fuse-overlayfs -L https://github.com/containers/fuse-overlayfs/releases/download/v1.4.0/fuse-overlayfs-x86_64 && chmod +x fuse-overlayfs"]
   - name: lib
     type: go
     srcs:

@@ -30,6 +30,8 @@ daemon:
     backup:
       timeout: "5m"
       attempts: 3
+    userNamespaces:
+      fsShift: {{ $comp.userNamespaces.fsShift | default "fuse" }}
     fullWorkspaceBackup:
       workdir: "/mnt/node0/gitpod-{{ .Release.Namespace }}"
     initializer:

@@ -13,9 +13,11 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
+	"github.com/containerd/containerd/sys"
 	"github.com/rootless-containers/rootlesskit/pkg/msgutil"
 	"github.com/rootless-containers/rootlesskit/pkg/sigproxy"
 	sigproxysignal "github.com/rootless-containers/rootlesskit/pkg/sigproxy/signal"
@@ -28,6 +30,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/workspacekit/pkg/lift"
 	"github.com/gitpod-io/gitpod/workspacekit/pkg/seccomp"
+	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	daemonapi "github.com/gitpod-io/gitpod/ws-daemon/api"
 )
 
@@ -70,7 +73,7 @@ var ring0Cmd = &cobra.Command{
 		}
 		defer conn.Close()
 
-		_, err = client.PrepareForUserNS(ctx, &daemonapi.PrepareForUserNSRequest{})
+		prep, err := client.PrepareForUserNS(ctx, &daemonapi.PrepareForUserNSRequest{})
 		if err != nil {
 			log.WithError(err).Fatal("cannot prepare for user namespaces")
 			return
@@ -95,7 +98,7 @@ var ring0Cmd = &cobra.Command{
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		cmd.Env = os.Environ()
+		cmd.Env = append(os.Environ(), "WORKSPACEKIT_FSSHIFT="+prep.FsShift.String())
 
 		if err := cmd.Start(); err != nil {
 			log.WithError(err).Error("failed to start ring0")
@@ -183,11 +186,11 @@ var ring1Cmd = &cobra.Command{
 		}
 		defer conn.Close()
 
+		mapping := []*daemonapi.WriteIDMappingRequest_Mapping{
+			{ContainerId: 0, HostId: 33333, Size: 1},
+			{ContainerId: 1, HostId: 100000, Size: 65534},
+		}
 		if !ring1Opts.MappingEstablished {
-			mapping := []*daemonapi.WriteIDMappingRequest_Mapping{
-				{ContainerId: 0, HostId: 33333, Size: 1},
-				{ContainerId: 1, HostId: 100000, Size: 65534},
-			}
 			_, err = client.WriteIDMapping(ctx, &daemonapi.WriteIDMappingRequest{Pid: int64(os.Getpid()), Gid: false, Mapping: mapping})
 			if err != nil {
 				log.WithError(err).Error("cannot establish UID mapping")
@@ -223,23 +226,46 @@ var ring1Cmd = &cobra.Command{
 			log.WithError(err).Fatal("cannot create tempdir")
 		}
 
-		mnts := []struct {
+		var fsshift api.FSShiftMethod
+		if v, ok := api.FSShiftMethod_value[os.Getenv("WORKSPACEKIT_FSSHIFT")]; !ok {
+			log.WithField("fsshift", os.Getenv("WORKSPACEKIT_FSSHIFT")).Fatal("unknown FS shift method")
+		} else {
+			fsshift = api.FSShiftMethod(v)
+		}
+
+		type mnte struct {
 			Target string
 			Source string
 			FSType string
 			Flags  uintptr
-		}{
-			// TODO(cw): pull mark mount location from config
-			{Target: "/", Source: "/.workspace/mark", FSType: "shiftfs"},
-			{Target: "/sys", Flags: unix.MS_BIND | unix.MS_REC},
-			{Target: "/dev", Flags: unix.MS_BIND | unix.MS_REC},
-			// TODO(cw): only mount /workspace if it's in the mount table, i.e. this isn't an FWB workspace
-			{Target: "/workspace", Flags: unix.MS_BIND | unix.MS_REC},
-			{Target: "/etc/hosts", Flags: unix.MS_BIND | unix.MS_REC},
-			{Target: "/etc/hostname", Flags: unix.MS_BIND | unix.MS_REC},
-			{Target: "/etc/resolv.conf", Flags: unix.MS_BIND | unix.MS_REC},
-			{Target: "/tmp", Source: "tmpfs", FSType: "tmpfs"},
 		}
+
+		var mnts []mnte
+
+		switch fsshift {
+		case api.FSShiftMethod_FUSE:
+			mnts = append(mnts,
+				mnte{Target: "/", Source: "/.workspace/mark", Flags: unix.MS_BIND | unix.MS_REC},
+			)
+		case api.FSShiftMethod_SHIFTFS:
+			mnts = append(mnts,
+				mnte{Target: "/", Source: "/.workspace/mark", FSType: "shiftfs"},
+			)
+		default:
+			log.WithField("fsshift", fsshift).Fatal("unknown FS shift method")
+		}
+
+		mnts = append(mnts,
+			mnte{Target: "/sys", Flags: unix.MS_BIND | unix.MS_REC},
+			mnte{Target: "/dev", Flags: unix.MS_BIND | unix.MS_REC},
+			// TODO(cw): only mount /workspace if it's in the mount table, i.e. this isn't an FWB workspace
+			mnte{Target: "/workspace", Flags: unix.MS_BIND | unix.MS_REC},
+			mnte{Target: "/etc/hosts", Flags: unix.MS_BIND | unix.MS_REC},
+			mnte{Target: "/etc/hostname", Flags: unix.MS_BIND | unix.MS_REC},
+			mnte{Target: "/etc/resolv.conf", Flags: unix.MS_BIND | unix.MS_REC},
+			mnte{Target: "/tmp", Source: "tmpfs", FSType: "tmpfs"},
+		)
+
 		for _, m := range mnts {
 			dst := filepath.Join(ring2Root, m.Target)
 			_ = os.MkdirAll(dst, 0644)
@@ -265,6 +291,14 @@ var ring1Cmd = &cobra.Command{
 			}
 		}
 
+		env := make([]string, 0, len(os.Environ()))
+		for _, e := range os.Environ() {
+			if strings.HasPrefix(e, "WORKSPACEKIT_") {
+				continue
+			}
+			env = append(env, e)
+		}
+
 		socketFN := filepath.Join(os.TempDir(), fmt.Sprintf("workspacekit-ring1-%d.unix", time.Now().UnixNano()))
 		skt, err := net.Listen("unix", socketFN)
 		if err != nil {
@@ -283,7 +317,7 @@ var ring1Cmd = &cobra.Command{
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		cmd.Env = os.Environ()
+		cmd.Env = env
 		if err := cmd.Start(); err != nil {
 			log.WithError(err).Error("failed to start the child process")
 			failed = true
@@ -569,6 +603,20 @@ func pivotRoot(rootfs string) error {
 	// with pivot_root this allows us to pivot without creating directories in
 	// the rootfs. Shout-outs to the LXC developers for giving us this idea.
 
+	if sys.RunningInUserNS() {
+		err := unix.Chroot(rootfs)
+		if err != nil {
+			return fmt.Errorf("cannot chroot: %v", err)
+		}
+
+		err = unix.Chdir("/")
+		if err != nil {
+			return fmt.Errorf("cannot chdir to new root :%v", err)
+		}
+
+		return nil
+	}
+
 	oldroot, err := unix.Open("/", unix.O_DIRECTORY|unix.O_RDONLY, 0)
 	if err != nil {
 		return err
@@ -616,6 +664,7 @@ func pivotRoot(rootfs string) error {
 	if err := unix.Chdir("/"); err != nil {
 		return fmt.Errorf("chdir / %s", err)
 	}
+
 	return nil
 }
 

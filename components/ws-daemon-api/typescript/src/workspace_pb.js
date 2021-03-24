@@ -21,6 +21,7 @@ var jspb = require('google-protobuf');
 var goog = jspb;
 var global = Function('return this')();
 
+goog.exportSymbol('proto.iws.FSShiftMethod', null, global);
 goog.exportSymbol('proto.iws.MountProcRequest', null, global);
 goog.exportSymbol('proto.iws.MountProcResponse', null, global);
 goog.exportSymbol('proto.iws.PrepareForUserNSRequest', null, global);
@@ -396,7 +397,7 @@ proto.iws.PrepareForUserNSResponse.prototype.toObject = function(opt_includeInst
  */
 proto.iws.PrepareForUserNSResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-
+    fsShift: jspb.Message.getFieldWithDefault(msg, 1, 0)
   };
 
   if (includeInstance) {
@@ -433,6 +434,10 @@ proto.iws.PrepareForUserNSResponse.deserializeBinaryFromReader = function(msg, r
     }
     var field = reader.getFieldNumber();
     switch (field) {
+    case 1:
+      var value = /** @type {!proto.iws.FSShiftMethod} */ (reader.readEnum());
+      msg.setFsShift(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -462,6 +467,31 @@ proto.iws.PrepareForUserNSResponse.prototype.serializeBinary = function() {
  */
 proto.iws.PrepareForUserNSResponse.serializeBinaryToWriter = function(message, writer) {
   var f = undefined;
+  f = message.getFsShift();
+  if (f !== 0.0) {
+    writer.writeEnum(
+      1,
+      f
+    );
+  }
+};
+
+
+/**
+ * optional FSShiftMethod fs_shift = 1;
+ * @return {!proto.iws.FSShiftMethod}
+ */
+proto.iws.PrepareForUserNSResponse.prototype.getFsShift = function() {
+  return /** @type {!proto.iws.FSShiftMethod} */ (jspb.Message.getFieldWithDefault(this, 1, 0));
+};
+
+
+/**
+ * @param {!proto.iws.FSShiftMethod} value
+ * @return {!proto.iws.PrepareForUserNSResponse} returns this
+ */
+proto.iws.PrepareForUserNSResponse.prototype.setFsShift = function(value) {
+  return jspb.Message.setProto3EnumField(this, 1, value);
 };
 
 
@@ -1787,5 +1817,13 @@ proto.iws.TeardownResponse.prototype.setSuccess = function(value) {
   return jspb.Message.setProto3BooleanField(this, 2, value);
 };
 
+
+/**
+ * @enum {number}
+ */
+proto.iws.FSShiftMethod = {
+  SHIFTFS: 0,
+  FUSE: 1
+};
 
 goog.object.extend(exports, proto.iws);

@@ -33,7 +33,16 @@ service InWorkspaceService {
 }
 
 message PrepareForUserNSRequest {}
-message PrepareForUserNSResponse {}
+message PrepareForUserNSResponse {
+    FSShiftMethod fs_shift = 1;
+}
+
+// FSShiftMethod describes the means by which we establish the ID shift for
+// user namespaced workspaces.
+enum FSShiftMethod {
+    SHIFTFS = 0;
+    FUSE = 1;
+}
 
 message WriteIDMappingResponse {
     string message = 1;

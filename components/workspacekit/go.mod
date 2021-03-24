@@ -5,6 +5,7 @@ go 1.16
 replace github.com/seccomp/libseccomp-golang => github.com/kinvolk/libseccomp-golang v0.9.2-0.20201113182948-883917843313
 
 require (
+	github.com/containerd/containerd v1.4.1
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-daemon/api v0.0.0-00010101000000-000000000000
 	github.com/moby/sys/mountinfo v0.4.0
