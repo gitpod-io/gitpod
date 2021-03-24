@@ -19,6 +19,8 @@ packages:
       yarnLock: ${coreYarnLockBase}/yarn.lock
       dontTest: true
       packaging: archive
+    env:
+      - NODE_ENV=production
   - name: static
     type: generic
     srcs:

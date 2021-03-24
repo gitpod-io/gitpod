@@ -76,4 +76,7 @@ module.exports = {
         require('tailwindcss-filters'),
         // ...
     ],
+    purge: [
+        './src/**/*.tsx'
+    ]
 };
