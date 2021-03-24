@@ -7,7 +7,7 @@
 import { WorkspaceStatus, WorkspaceLogMessage, SubscribeRequest, SubscribeResponse, GetWorkspacesRequest, PromisifiedWorkspaceManagerClient } from "@gitpod/ws-manager/lib";
 import { Disposable } from "@gitpod/gitpod-protocol";
 import { ClientReadableStream } from "grpc";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { log, LogPayload } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
 
@@ -23,12 +23,14 @@ export class WsmanSubscriber implements Disposable {
         onStatusUpdate: (ctx: TraceContext, s: WorkspaceStatus) => void,
         onHeadlessLog: (ctx: TraceContext, s: WorkspaceLogMessage) => void,
         onReconnect: (ctx: TraceContext, s: WorkspaceStatus[]) => void,
-    }) {
+    }, logPayload?: LogPayload) {
+        const payload = logPayload || {} as LogPayload;
         while (this.run) {
             await new Promise<void>(async (resolve, reject) => {
-                log.info("attempting to establish wsman subscription");
+                log.info("attempting to establish wsman subscription", payload);
+                let client: PromisifiedWorkspaceManagerClient | undefined = undefined;
                 try {
-                    const client = await this.clientProvider();
+                    client = await this.clientProvider();
 
                     // take stock of the existing workspaces
                     const workspaces = await client.getWorkspaces({}, new GetWorkspacesRequest());
@@ -58,17 +60,21 @@ export class WsmanSubscriber implements Disposable {
                         resolve();
                     });
                     this.sub.on('error', function(e) {
-                        log.error("wsman subscription error", e);
+                        log.error("wsman subscription error", e, payload);
                         resolve();
                     });
                 } catch (err) {
-                    log.error("cannot maintain subscription to wsman", err);
+                    log.error("cannot maintain subscription to wsman", err, payload);
                     resolve();
+                } finally {
+                    if (client) {
+                        client.dispose();
+                    }
                 }
             });
 
             if (!this.run) {
-                log.info("shutting down wsman subscriber");
+                log.info("shutting down wsman subscriber", payload);
                 return;
             } else {
                 // we have been disconnected forcefully - wait for some time and try again

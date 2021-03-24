@@ -19,7 +19,8 @@ message RegisterRequest {
   string name = 1;
   string url = 2;
   bytes cert = 3;
-  RegistrationHints hints = 4;
+  string token = 4;
+  RegistrationHints hints = 5;
 }
 
 message RegisterResponse {}

@@ -19,6 +19,7 @@ import { BridgeController, WorkspaceManagerClientProviderConfigSource } from './
 import { filePathTelepresenceAware } from '@gitpod/gitpod-protocol/lib/env';
 import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
 import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientProviderDBSource, WorkspaceManagerClientProviderSource } from '@gitpod/ws-manager/lib/client-provider-source';
+import { ClusterService, ClusterServiceServer } from './cluster-service/cluster-service-server';
 
 export const containerModule = new ContainerModule(bind => {
 
@@ -35,6 +36,9 @@ export const containerModule = new ContainerModule(bind => {
 
     bind(WorkspaceManagerBridge).toSelf().inRequestScope();
     bind(WorkspaceManagerBridgeFactory).toAutoFactory(WorkspaceManagerBridge);
+
+    bind(ClusterServiceServer).toSelf().inSingletonScope();
+    bind(ClusterService).toSelf().inRequestScope();
 
     bind(TracingManager).toSelf().inSingletonScope();
 

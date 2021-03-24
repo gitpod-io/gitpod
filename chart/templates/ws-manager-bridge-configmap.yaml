@@ -21,6 +21,10 @@ data:
         "wsClusterDBReconcileIntervalSeconds": 60,
         "controllerIntervalSeconds": 60,
         "controllerMaxDisconnectSeconds": 150,
+        "clusterService": {
+          "host": "localhost",
+          "port": "8080"
+        },
         "staticBridges": [
             {
                 "name": "{{ template "gitpod.installation.shortname" $this }}",

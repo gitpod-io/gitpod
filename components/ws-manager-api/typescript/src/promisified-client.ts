@@ -10,6 +10,7 @@ import { ControlPortRequest, ControlPortResponse, DescribeWorkspaceRequest, Desc
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import * as opentracing from 'opentracing';
 import * as grpc from "grpc";
+import { Disposable } from "@gitpod/gitpod-protocol";
 
 export function withTracing(ctx: TraceContext) {
     const metadata = new grpc.Metadata();
@@ -23,11 +24,11 @@ export function withTracing(ctx: TraceContext) {
 
 type RetryStrategy = <Res>(run: (attempt: number) => Promise<Res>) => Promise<Res>
 export const noRetry: RetryStrategy = <Res>(run: (attempt: number) => Promise<Res>) => run(0);
-export function linearBackoffStrategy(attempts: number, millisecondsBetweenAttempts: number): RetryStrategy {
-    return <Res>(run: (attempt: number) => Promise<Res>) => linearBackoffRetry(run, attempts, millisecondsBetweenAttempts);
+export function linearBackoffStrategy(attempts: number, millisecondsBetweenAttempts: number, stopSignal?: { stop: boolean }): RetryStrategy {
+    return <Res>(run: (attempt: number) => Promise<Res>) => linearBackoffRetry(run, attempts, millisecondsBetweenAttempts, stopSignal);
 }
 
-async function linearBackoffRetry<Res>(run: (attempt: number) => Promise<Res>, attempts: number, delayMS: number): Promise<Res> {
+async function linearBackoffRetry<Res>(run: (attempt: number) => Promise<Res>, attempts: number, delayMS: number, stopSignal?: { stop: boolean }): Promise<Res> {
     let error: Error | undefined;
     for (let i = 0; i < attempts; i++) {
         try {
@@ -48,15 +49,22 @@ async function linearBackoffRetry<Res>(run: (attempt: number) => Promise<Res>, a
             console.debug(`ws-manager unavailable - retrying in ${delayMS}ms`);
             await new Promise((retry, _) => setTimeout(retry, delayMS));
         }
+
+        if (stopSignal && stopSignal.stop) {
+            throw new Error("ws-manager client stopped");
+        }
     }
 
     console.debug(`ws-manager unavailable - no more attempts left`);
     throw error;
 }
 
-export class PromisifiedWorkspaceManagerClient {
+export class PromisifiedWorkspaceManagerClient implements Disposable {
 
-    constructor(public readonly client: WorkspaceManagerClient, protected readonly retryIfUnavailable: RetryStrategy = noRetry) { }
+    constructor(
+        public readonly client: WorkspaceManagerClient,
+        protected readonly retryIfUnavailable: RetryStrategy = noRetry,
+        protected readonly stopSignal?: { stop: boolean }) { }
 
     public startWorkspace(ctx: TraceContext, request: StartWorkspaceRequest): Promise<StartWorkspaceResponse> {
         return this.retryIfUnavailable((attempt: number) => new Promise<StartWorkspaceResponse>((resolve, reject) => {
@@ -219,4 +227,9 @@ export class PromisifiedWorkspaceManagerClient {
         }
     }
 
+    public dispose() {
+        if (this.stopSignal) {
+            this.stopSignal.stop = true;
+        }
+    }
 }

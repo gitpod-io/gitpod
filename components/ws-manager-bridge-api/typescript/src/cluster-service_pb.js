@@ -279,6 +279,7 @@ proto.workspacemanagerbridge.RegisterRequest.toObject = function(includeInstance
     name: jspb.Message.getFieldWithDefault(msg, 1, ""),
     url: jspb.Message.getFieldWithDefault(msg, 2, ""),
     cert: msg.getCert_asB64(),
+    token: jspb.Message.getFieldWithDefault(msg, 4, ""),
     hints: (f = msg.getHints()) && proto.workspacemanagerbridge.RegistrationHints.toObject(includeInstance, f)
   };
 
@@ -329,6 +330,10 @@ proto.workspacemanagerbridge.RegisterRequest.deserializeBinaryFromReader = funct
       msg.setCert(value);
       break;
     case 4:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setToken(value);
+      break;
+    case 5:
       var value = new proto.workspacemanagerbridge.RegistrationHints;
       reader.readMessage(value,proto.workspacemanagerbridge.RegistrationHints.deserializeBinaryFromReader);
       msg.setHints(value);
@@ -383,10 +388,17 @@ proto.workspacemanagerbridge.RegisterRequest.serializeBinaryToWriter = function(
       f
     );
   }
+  f = message.getToken();
+  if (f.length > 0) {
+    writer.writeString(
+      4,
+      f
+    );
+  }
   f = message.getHints();
   if (f != null) {
     writer.writeMessage(
-      4,
+      5,
       f,
       proto.workspacemanagerbridge.RegistrationHints.serializeBinaryToWriter
     );
@@ -473,12 +485,30 @@ proto.workspacemanagerbridge.RegisterRequest.prototype.setCert = function(value)
 
 
 /**
- * optional RegistrationHints hints = 4;
+ * optional string token = 4;
+ * @return {string}
+ */
+proto.workspacemanagerbridge.RegisterRequest.prototype.getToken = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.workspacemanagerbridge.RegisterRequest} returns this
+ */
+proto.workspacemanagerbridge.RegisterRequest.prototype.setToken = function(value) {
+  return jspb.Message.setProto3StringField(this, 4, value);
+};
+
+
+/**
+ * optional RegistrationHints hints = 5;
  * @return {?proto.workspacemanagerbridge.RegistrationHints}
  */
 proto.workspacemanagerbridge.RegisterRequest.prototype.getHints = function() {
   return /** @type{?proto.workspacemanagerbridge.RegistrationHints} */ (
-    jspb.Message.getWrapperField(this, proto.workspacemanagerbridge.RegistrationHints, 4));
+    jspb.Message.getWrapperField(this, proto.workspacemanagerbridge.RegistrationHints, 5));
 };
 
 
@@ -487,7 +517,7 @@ proto.workspacemanagerbridge.RegisterRequest.prototype.getHints = function() {
  * @return {!proto.workspacemanagerbridge.RegisterRequest} returns this
 */
 proto.workspacemanagerbridge.RegisterRequest.prototype.setHints = function(value) {
-  return jspb.Message.setWrapperField(this, 4, value);
+  return jspb.Message.setWrapperField(this, 5, value);
 };
 
 
@@ -505,7 +535,7 @@ proto.workspacemanagerbridge.RegisterRequest.prototype.clearHints = function() {
  * @return {boolean}
  */
 proto.workspacemanagerbridge.RegisterRequest.prototype.hasHints = function() {
-  return jspb.Message.getField(this, 4) != null;
+  return jspb.Message.getField(this, 5) != null;
 };
 
 
