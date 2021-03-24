@@ -7,7 +7,7 @@
 import { inject, injectable } from "inversify";
 import { MessageBusIntegration } from "./messagebus-integration";
 import { Disposable, WorkspaceInstance, Queue, WorkspaceInstancePort, PortVisibility, RunningWorkspaceInfo } from "@gitpod/gitpod-protocol";
-import { WorkspaceManagerClient, WorkspaceStatus, WorkspacePhase, GetWorkspacesRequest, GetWorkspacesResponse, WorkspaceConditionBool, WorkspaceLogMessage, PortVisibility as WsManPortVisibility, WorkspaceType } from "@gitpod/ws-manager/lib";
+import { WorkspaceStatus, WorkspacePhase, GetWorkspacesRequest, WorkspaceConditionBool, WorkspaceLogMessage, PortVisibility as WsManPortVisibility, WorkspaceType, PromisifiedWorkspaceManagerClient } from "@gitpod/ws-manager/lib";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
@@ -17,6 +17,8 @@ import { TracedWorkspaceDB, TracedUserDB, DBWithTracing } from '@gitpod/gitpod-d
 import { PrometheusMetricsExporter } from "./prometheus-metrics-exporter";
 import { ClientProvider, WsmanSubscriber } from "./wsman-subscriber";
 import { Timestamp } from "google-protobuf/google/protobuf/timestamp_pb";
+import { Configuration } from "./config";
+import { WorkspaceCluster } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 
 export const WorkspaceManagerBridgeFactory = Symbol("WorkspaceManagerBridgeFactory");
 
@@ -30,15 +32,48 @@ function toBool(b: WorkspaceConditionBool | undefined): boolean | undefined {
 
 @injectable()
 export class WorkspaceManagerBridge implements Disposable {
-    @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
-    @inject(TracedUserDB) protected readonly userDB: DBWithTracing<UserDB>;
-    @inject(MessageBusIntegration) protected readonly messagebus: MessageBusIntegration;
-    @inject(PrometheusMetricsExporter) protected readonly prometheusExporter: PrometheusMetricsExporter;
+    @inject(TracedWorkspaceDB)
+    protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
+
+    @inject(TracedUserDB)
+    protected readonly userDB: DBWithTracing<UserDB>;
+
+    @inject(MessageBusIntegration)
+    protected readonly messagebus: MessageBusIntegration;
+
+    @inject(PrometheusMetricsExporter)
+    protected readonly prometheusExporter: PrometheusMetricsExporter;
+
+    @inject(Configuration)
+    protected readonly config: Configuration;
+
     protected readonly disposables: Disposable[] = [];
     protected readonly queues = new Map<string, Queue>();
 
-    public async startDatabaseUpdater(clientProvider: ClientProvider): Promise<void> {
-        const subscriber = await new WsmanSubscriber(clientProvider);
+    public start(cluster: WorkspaceCluster, clientProvider: ClientProvider) {
+        const logPayload = { name: cluster.name, url: cluster.url };
+        log.debug(`starting bridge to cluster...`, logPayload);
+
+        if (cluster.controller === this.config.installation) {
+            log.debug(`starting DB updater: ${cluster.name}`, logPayload);
+            /* no await */ this.startDatabaseUpdater(clientProvider, logPayload)
+                .catch(err => log.error("cannot run database updater", err));
+
+            const controllerInterval = this.config.controllerIntervalSeconds;
+            if (controllerInterval <= 0) {
+                throw new Error("controllerInterval <= 0!");
+            }
+            log.debug(`starting controller: ${cluster.name}`, logPayload);
+            this.startController(clientProvider, this.config.installation, controllerInterval, this.config.controllerMaxDisconnectSeconds);
+        }
+    }
+
+    public async stop() {
+        this.dispose();
+    }
+
+    protected async startDatabaseUpdater(clientProvider: ClientProvider): Promise<void> {
+        const subscriber = new WsmanSubscriber(clientProvider);
         this.disposables.push(subscriber);
 
         const onHeadlessLog = (ctx: TraceContext, s: WorkspaceLogMessage) => {
@@ -210,7 +245,7 @@ export class WorkspaceManagerBridge implements Disposable {
         });
     }
 
-    public async startController(clientProvider: () => Promise<WorkspaceManagerClient>, installation: string, controllerIntervalSeconds: number, controllerMaxDisconnectSeconds: number, maxTimeToRunningPhaseSeconds = 60 * 60): Promise<void> {
+    protected async startController(clientProvider: ClientProvider, installation: string, controllerIntervalSeconds: number, controllerMaxDisconnectSeconds: number, maxTimeToRunningPhaseSeconds = 60 * 60): Promise<void> {
         let disconnectStarted = Number.MAX_SAFE_INTEGER;
         const timer = setInterval(async () => {
             try {
@@ -229,14 +264,15 @@ export class WorkspaceManagerBridge implements Disposable {
         this.disposables.push({ dispose: () => clearTimeout(timer) });
     }
 
-    protected async controlInstallationInstances(manager: WorkspaceManagerClient, installation: string, maxTimeToRunningPhaseSeconds: number) {
+    protected async controlInstallationInstances(client: PromisifiedWorkspaceManagerClient, installation: string, maxTimeToRunningPhaseSeconds: number) {
         log.debug("controlling instances", { installation });
+        let ctx: TraceContext = {};
 
-        const runningInstances = await this.workspaceDB.trace({}).findRunningInstancesWithWorkspaces(installation);
+        const runningInstances = await this.workspaceDB.trace(ctx).findRunningInstancesWithWorkspaces(installation);
         const runningInstacesIdx = new Map<string, RunningWorkspaceInfo>();
         runningInstances.forEach(i => runningInstacesIdx.set(i.latestInstance.id, i));
 
-        const actuallyRunningInstances = await new Promise<GetWorkspacesResponse>((resolve, reject) => manager.getWorkspaces(new GetWorkspacesRequest(), (err, res) => { if (err) reject(err); else resolve(res); }));
+        const actuallyRunningInstances = await client.getWorkspaces(ctx, new GetWorkspacesRequest());
         actuallyRunningInstances.getStatusList().forEach(s => runningInstacesIdx.delete(s.getId()));
 
         const promises: Promise<any>[] = [];
