@@ -218,6 +218,7 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 
 	if wbs.FSShift == api.FSShiftMethod_FUSE {
 		err = nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
+			// In case of any change in the user mapping, the next line must be updated.
 			mappings := fmt.Sprintf("0:%v:1:1:100000:65534", wsinit.GitpodUID)
 			c.Args = append(c.Args, "mount-fusefs-mark",
 				"--source", rootfs,

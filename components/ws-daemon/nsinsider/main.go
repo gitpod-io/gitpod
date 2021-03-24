@@ -111,7 +111,7 @@ func main() {
 						return err
 					}
 
-					for _, base := range []string{"u", "w", "m"} {
+					for _, base := range []string{"u", "w"} {
 						dir := filepath.Join(tmp, base)
 						if err := os.MkdirAll(dir, 0755); err != nil {
 							return err
@@ -136,7 +136,7 @@ func main() {
 						"-o",
 						strings.Join(args, ","),
 						"none",
-						"m",
+						target,
 					)
 					cmd.Dir = tmp
 
@@ -149,7 +149,7 @@ func main() {
 						)
 					}
 
-					return unix.Mount(filepath.Join(tmp, "m"), target, "", uintptr(unix.MS_BIND), "")
+					return nil
 				},
 			},
 			{

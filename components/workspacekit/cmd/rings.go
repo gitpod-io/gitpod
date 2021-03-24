@@ -17,7 +17,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/containerd/containerd/sys"
 	"github.com/rootless-containers/rootlesskit/pkg/msgutil"
 	"github.com/rootless-containers/rootlesskit/pkg/sigproxy"
 	sigproxysignal "github.com/rootless-containers/rootlesskit/pkg/sigproxy/signal"
@@ -392,8 +391,9 @@ var ring1Cmd = &cobra.Command{
 
 		log.Info("signaling to child process")
 		_, err = msgutil.MarshalToWriter(ring2Conn, ringSyncMsg{
-			Stage:  1,
-			Rootfs: ring2Root,
+			Stage:   1,
+			Rootfs:  ring2Root,
+			FSShift: fsshift,
 		})
 		if err != nil {
 			log.WithError(err).Error("cannot send ring sync msg to ring2")
@@ -538,7 +538,7 @@ var ring2Cmd = &cobra.Command{
 			return
 		}
 
-		err = pivotRoot(msg.Rootfs)
+		err = pivotRoot(msg.Rootfs, msg.FSShift)
 		if err != nil {
 			log.WithError(err).Error("cannot pivot root")
 			failed = true
@@ -596,14 +596,14 @@ var ring2Cmd = &cobra.Command{
 // filesystem, and everything else is cleaned up.
 //
 // copied from runc: https://github.com/opencontainers/runc/blob/cf6c074115d00c932ef01dedb3e13ba8b8f964c3/libcontainer/rootfs_linux.go#L760
-func pivotRoot(rootfs string) error {
+func pivotRoot(rootfs string, fsshift api.FSShiftMethod) error {
 	// While the documentation may claim otherwise, pivot_root(".", ".") is
 	// actually valid. What this results in is / being the new root but
 	// /proc/self/cwd being the old root. Since we can play around with the cwd
 	// with pivot_root this allows us to pivot without creating directories in
 	// the rootfs. Shout-outs to the LXC developers for giving us this idea.
 
-	if sys.RunningInUserNS() {
+	if fsshift == api.FSShiftMethod_FUSE {
 		err := unix.Chroot(rootfs)
 		if err != nil {
 			return fmt.Errorf("cannot chroot: %v", err)
@@ -680,8 +680,9 @@ func sleepForDebugging() {
 }
 
 type ringSyncMsg struct {
-	Stage  int    `json:"stage"`
-	Rootfs string `json:"rootfs"`
+	Stage   int               `json:"stage"`
+	Rootfs  string            `json:"rootfs"`
+	FSShift api.FSShiftMethod `json:"fsshift"`
 }
 
 // ConnectToInWorkspaceDaemonService attempts to connect to the InWorkspaceService offered by the ws-daemon.
