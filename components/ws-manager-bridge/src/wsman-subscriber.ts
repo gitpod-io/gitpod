@@ -4,14 +4,14 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceStatus, WorkspaceLogMessage, SubscribeRequest, SubscribeResponse, GetWorkspacesRequest, WorkspaceManagerClient, PromisifiedWorkspaceManagerClient } from "@gitpod/ws-manager/lib";
+import { WorkspaceStatus, WorkspaceLogMessage, SubscribeRequest, SubscribeResponse, GetWorkspacesRequest, PromisifiedWorkspaceManagerClient } from "@gitpod/ws-manager/lib";
 import { Disposable } from "@gitpod/gitpod-protocol";
 import { ClientReadableStream } from "grpc";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
 
-export type ClientProvider = () => Promise<WorkspaceManagerClient>
+export type ClientProvider = () => Promise<PromisifiedWorkspaceManagerClient>;
 
 export class WsmanSubscriber implements Disposable {
     protected run = true;
@@ -25,14 +25,14 @@ export class WsmanSubscriber implements Disposable {
         onReconnect: (ctx: TraceContext, s: WorkspaceStatus[]) => void,
     }) {
         while (this.run) {
-            await new Promise<boolean>(async (resolve, reject) => {
+            await new Promise<void>(async (resolve, reject) => {
                 log.info("attempting to establish wsman subscription");
                 try {
-                    const client = new PromisifiedWorkspaceManagerClient(await this.clientProvider());
+                    const client = await this.clientProvider();
 
                     // take stock of the existing workspaces
                     const workspaces = await client.getWorkspaces({}, new GetWorkspacesRequest());
-                    await callbacks.onReconnect({}, workspaces.getStatusList());
+                    callbacks.onReconnect({}, workspaces.getStatusList());
 
                     // start subscription
                     const req = new SubscribeRequest();
@@ -55,15 +55,15 @@ export class WsmanSubscriber implements Disposable {
                         }
                     });
                     this.sub.on('end', function() {
-                        resolve(false);
+                        resolve();
                     });
                     this.sub.on('error', function(e) {
                         log.error("wsman subscription error", e);
-                        resolve(false);
+                        resolve();
                     });
                 } catch (err) {
                     log.error("cannot maintain subscription to wsman", err);
-                    resolve(false);
+                    resolve();
                 }
             });
 

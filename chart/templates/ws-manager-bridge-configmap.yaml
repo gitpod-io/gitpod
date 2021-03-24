@@ -17,12 +17,18 @@ metadata:
 data:
   ws-manager-bridge.json: |-
     {
+        "installation": "{{ template "gitpod.installation.shortname" $this }}",
+        "wsClusterDBReconcileIntervalSeconds": 60,
         "controllerIntervalSeconds": 60,
         "controllerMaxDisconnectSeconds": 150,
         "staticBridges": [
             {
-                "installation": "{{ template "gitpod.installation.shortname" $this }}",
-                "managerAddress": "ws-manager:8080"
+                "name": "{{ template "gitpod.installation.shortname" $this }}",
+                "url": "ws-manager:8080",
+                "state": "available",
+                "maxScore": 100,
+                "score": 50,
+                "controller": "{{ template "gitpod.installation.shortname" $this }}"
             }
         ]
     }
