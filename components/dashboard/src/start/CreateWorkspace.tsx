@@ -67,6 +67,7 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
       });
     } catch (error) {
       clearTimeout(timeout);
+      console.error(error);
       this.setState({
         error,
         stillParsing: false,
