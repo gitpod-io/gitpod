@@ -9,20 +9,29 @@ require('reflect-metadata');
 import { ContainerModule } from 'inversify';
 import { MessageBusHelper, MessageBusHelperImpl } from '@gitpod/gitpod-messagebus/lib';
 import { MessagebusConfiguration } from '@gitpod/gitpod-messagebus/lib/config';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { MessageBusIntegration } from './messagebus-integration';
 import { Configuration } from './config';
 import * as fs from 'fs';
-import * as path from 'path';
 import { WorkspaceManagerBridgeFactory, WorkspaceManagerBridge } from './bridge';
 import { TracingManager } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { PrometheusMetricsExporter } from './prometheus-metrics-exporter';
+import { BridgeController, WorkspaceManagerClientProviderConfigSource } from './bridge-controller';
+import { filePathTelepresenceAware } from '@gitpod/gitpod-protocol/lib/env';
+import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
+import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientProviderDBSource, WorkspaceManagerClientProviderSource } from '@gitpod/ws-manager/lib/client-provider-source';
 
 export const containerModule = new ContainerModule(bind => {
 
     bind(MessagebusConfiguration).toSelf().inSingletonScope();
     bind(MessageBusHelper).to(MessageBusHelperImpl).inSingletonScope();
     bind(MessageBusIntegration).toSelf().inSingletonScope();
+
+    bind(BridgeController).toSelf().inSingletonScope();
+
+    bind(WorkspaceManagerClientProvider).toSelf().inSingletonScope();
+    bind(WorkspaceManagerClientProviderCompositeSource).toSelf().inSingletonScope();
+    bind(WorkspaceManagerClientProviderSource).to(WorkspaceManagerClientProviderConfigSource).inSingletonScope();
+    bind(WorkspaceManagerClientProviderSource).to(WorkspaceManagerClientProviderDBSource).inSingletonScope();
 
     bind(WorkspaceManagerBridge).toSelf().inRequestScope();
     bind(WorkspaceManagerBridgeFactory).toAutoFactory(WorkspaceManagerBridge);
@@ -32,26 +41,14 @@ export const containerModule = new ContainerModule(bind => {
     bind(PrometheusMetricsExporter).toSelf().inSingletonScope();
 
     bind(Configuration).toDynamicValue(ctx => {
-        let result: Configuration = {
-            controllerIntervalSeconds: 60,
-            controllerMaxDisconnectSeconds: 150,
-            maxTimeToRunningPhaseSeconds: 1 * 60 * 60,
-            staticBridges: []
-        };
-
         let cfgPath = process.env.WSMAN_BRIDGE_CONFIGPATH;
-        if (cfgPath) {
-            const telepresence = process.env.TELEPRESENCE_ROOT;
-            if (!!telepresence) {
-                cfgPath = path.join(telepresence, cfgPath);
-            }
-
-            const cfg = fs.readFileSync(cfgPath);
-            result = JSON.parse(cfg.toString());
-        } else {
-            log.warn("No WSMAN_BRIDGE_CONFIGPATH env var set - running without any static bridge. Is that what you want?")
+        if (!cfgPath) {
+            throw new Error("No WSMAN_BRIDGE_CONFIGPATH env var set - cannot start without config!");
         }
+        cfgPath = filePathTelepresenceAware(cfgPath);
 
+        const cfg = fs.readFileSync(cfgPath);
+        const result = JSON.parse(cfg.toString());
         return result;
     }).inSingletonScope();
 });
