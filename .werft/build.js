@@ -93,7 +93,7 @@ async function build(context, version) {
     };
     const imageRepo = publishRelease ? "gcr.io/gitpod-io/self-hosted" : "eu.gcr.io/gitpod-core-dev/build";
 
-    exec(`LICENCE_HEADER_CHECK_ONLY=true leeway run components:update-license-header || { echo "There are some license headers missing. Please run 'leeway run components:update-license-header'."; exit 1; }`)
+    exec(`LICENCE_HEADER_CHECK_ONLY=true leeway run components:update-license-header || { echo "[build|FAIL] There are some license headers missing. Please run 'leeway run components:update-license-header'."; exit 1; }`)
     exec(`leeway vet --ignore-warnings`);
     exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`, buildEnv);
     if (publishRelease) {
