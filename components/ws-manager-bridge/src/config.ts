@@ -5,6 +5,7 @@
  */
 
 import { WorkspaceCluster } from "@gitpod/gitpod-protocol/src/workspace-cluster";
+import { ClusterServiceServerOptions } from "./cluster-service/cluster-service-server";
 
 export const Configuration = Symbol("Configuration");
 export interface Configuration {
@@ -12,6 +13,9 @@ export interface Configuration {
     installation: string;
 
     staticBridges: WorkspaceCluster[];
+
+    // configures how the ClusterServiceServer is run
+    clusterService: ClusterServiceServerOptions;
 
     // The interval in which fresh WorkspaceCluster-state is polled from the DB
     wsClusterDBReconcileIntervalSeconds: number;

@@ -24,6 +24,9 @@ export class RegisterRequest extends jspb.Message {
     getCert_asB64(): string;
     setCert(value: Uint8Array | string): RegisterRequest;
 
+    getToken(): string;
+    setToken(value: string): RegisterRequest;
+
 
     hasHints(): boolean;
     clearHints(): void;
@@ -46,6 +49,7 @@ export namespace RegisterRequest {
         name: string,
         url: string,
         cert: Uint8Array | string,
+        token: string,
         hints?: RegistrationHints.AsObject,
     }
 }

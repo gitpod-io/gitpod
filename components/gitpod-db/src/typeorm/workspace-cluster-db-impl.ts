@@ -9,7 +9,7 @@
  import { TypeORM } from "./typeorm";
 import { WorkspaceClusterDB } from "../workspace-cluster-db";
 import { DBWorkspaceCluster } from "./entity/db-workspace-cluster";
-import { WorkspaceCluster, WorkspaceClusterState } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import { WorkspaceCluster, WorkspaceClusterFilter } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
  
  @injectable()
  export class WorkspaceClusterDBImpl implements WorkspaceClusterDB {
@@ -39,7 +39,7 @@ import { WorkspaceCluster, WorkspaceClusterState } from "@gitpod/gitpod-protocol
          return repo.findOneById(name);
      }
 
-     async findFiltered(predicate: DeepPartial<{ state:WorkspaceClusterState, minScore: number, controller: string}>): Promise<WorkspaceCluster[]> {
+     async findFiltered(predicate: DeepPartial<WorkspaceClusterFilter>): Promise<WorkspaceCluster[]> {
         const repo = await this.getRepo();
         let qb = repo.createQueryBuilder("wsc")
             .where("TRUE = TRUE");  // make sure andWhere works
@@ -50,7 +50,10 @@ import { WorkspaceCluster, WorkspaceClusterState } from "@gitpod/gitpod-protocol
             qb.andWhere("wsc.score >= :minScore", predicate);
         }
         if (predicate.controller !== undefined) {
-            qb.andWhere("wsc.controller >= :controller", predicate);
+            qb.andWhere("wsc.controller = :controller", predicate);
+        }
+        if (predicate.url !== undefined) {
+            qb.andWhere("wsc.url = :url", predicate);
         }
         return qb.getMany();
      }

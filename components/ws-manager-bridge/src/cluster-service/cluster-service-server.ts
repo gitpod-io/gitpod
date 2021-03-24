@@ -4,7 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import { Queue } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterState } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
 import {
     ClusterServiceService,
     ClusterState,
@@ -14,68 +16,265 @@ import {
     IClusterServiceServer,
     ListRequest,
     ListResponse,
+    Preferability,
     RegisterRequest,
     RegisterResponse,
     UpdateRequest,
     UpdateResponse
 } from '@gitpod/ws-manager-bridge-api/lib';
 import * as grpc from "grpc";
+import { inject, injectable } from 'inversify';
+import { BridgeController } from '../bridge-controller';
+import { Configuration } from '../config';
 
-export class ClusterServiceServer implements IClusterServiceServer {
+export interface ClusterServiceServerOptions {
+    port: number;
+    host: string;
+}
+
+@injectable()
+export class ClusterService implements IClusterServiceServer {
+    @inject(Configuration)
+    protected readonly config: Configuration;
+
+    @inject(WorkspaceClusterDB)
+    protected readonly db: WorkspaceClusterDB;
+
+    @inject(BridgeController)
+    protected readonly bridgeController: BridgeController;
+
+    // using a queue to make sure we do concurrency right
+    protected readonly queue: Queue = new Queue();
+
     public register(call: grpc.ServerUnaryCall<RegisterRequest>, callback: grpc.sendUnaryData<RegisterResponse>) {
-        log.warn("This is REGISTER. OK, I admit. I'm pretty lazy. Because I don't do anything here. Someone should replace me with something useful. No hard feelings.")
-        const callData = call.request.toObject();
-        log.warn(`The call was: ${JSON.stringify(callData)}`);
-        const response = new RegisterResponse();
-        callback(null, response);
+        this.queue.enqueue(async () => {
+            try {
+                // check if the name or URL are already registered/in use
+                const req = call.request.toObject();
+                await Promise.all([
+                    async () => {
+                        const oldCluster = await this.db.findByName(req.name);
+                        if (!oldCluster) {
+                            throw new GRPCError(grpc.status.ALREADY_EXISTS, `a WorkspaceCluster with name ${req.name} already exists in the DB!`);
+                        }
+                    },
+                    async () => {
+                        const oldCluster = await this.db.findFiltered({ url: req.url });
+                        if (!oldCluster) {
+                            throw new GRPCError(grpc.status.ALREADY_EXISTS, `a WorkspaceCluster with url ${req.url} already exists in the DB!`);
+                        }
+                    }
+                ]);
+
+                // store the ws-manager into the database
+                let perfereability = Preferability.NONE;
+                let controller = "";
+                let state: WorkspaceClusterState = "available";
+                if (req.hints) {
+                    perfereability = req.hints.perfereability;
+                    if (req.hints.govern) {
+                        controller = this.config.installation;
+                    }
+                    state = mapCordoned(req.hints.cordoned);
+                }
+                let score = mapPreferabilityToScore(perfereability);
+                if (!score) {
+                    throw new GRPCError(grpc.status.INVALID_ARGUMENT, `unknown Preferability ${perfereability}!`);
+                }
+
+                let certificate: string | undefined = undefined;
+                if (typeof req.cert === "string" && req.cert !== "") {
+                    certificate = req.cert;
+                }
+                let token: string | undefined = undefined;
+                if (req.token) {
+                    token = req.token;
+                }
+
+                const newCluster: WorkspaceCluster = {
+                    name: req.name,
+                    url: req.url,
+                    certificate,
+                    token,
+                    state,
+                    score,
+                    maxScore: 100,
+                    controller,
+                };
+                await this.db.save(newCluster);
+
+                this.triggerReconcile("register", req.name);
+
+                callback(null, new RegisterResponse());
+            } catch (err) {
+                callback(mapToGRPCError(err), null);
+            }
+        });
     }
 
     public update(call: grpc.ServerUnaryCall<UpdateRequest>, callback: grpc.sendUnaryData<UpdateResponse>) {
-        log.warn("This is UPDATE. OK, I admit. I'm pretty lazy. Because I don't do anything here. Someone should replace me with something useful. No hard feelings.")
-        const callData = call.request.toObject();
-        log.warn(`The call was: ${JSON.stringify(callData)}`);
-        const response = new UpdateResponse();
-        callback(null, response);
+        this.queue.enqueue(async () => {
+            try {
+                const req = call.request.toObject();
+                const cluster = await this.db.findByName(req.name);
+                if (!cluster) {
+                    throw new GRPCError(grpc.status.ALREADY_EXISTS, `a WorkspaceCluster with name ${req.name} already exists in the DB!`);
+                }
+
+                if (req.maxScore !== undefined) {
+                    cluster.maxScore = req.maxScore;
+                }
+                if (req.score !== undefined) {
+                    cluster.score = req.score;
+                }
+                if (req.cordoned !== undefined) {
+                    cluster.state = mapCordoned(req.cordoned);
+                }
+                await this.db.save(cluster);
+
+                this.triggerReconcile("update", req.name);
+
+                callback(null, new UpdateResponse());
+            } catch (err) {
+                callback(mapToGRPCError(err), null);
+            }
+        });
     }
 
     public deregister(call: grpc.ServerUnaryCall<DeregisterRequest>, callback: grpc.sendUnaryData<DeregisterResponse>) {
-        log.warn("This is DEREGISTER. OK, I admit. I'm pretty lazy. Because I don't do anything here. Someone should replace me with something useful. No hard feelings.")
-        const callData = call.request.toObject();
-        log.warn(`The call was: ${JSON.stringify(callData)}`);
-        const response = new DeregisterResponse();
-        callback(null, response);
+        this.queue.enqueue(async () => {
+            try {
+                const req = call.request.toObject();
+                await this.db.deleteByName(req.name);
+
+                this.triggerReconcile("deregister", req.name);
+
+                callback(null, new DeregisterResponse());
+            } catch (err) {
+                callback(mapToGRPCError(err), null);
+            }
+        });
     }
 
     public list(call: grpc.ServerUnaryCall<ListRequest>, callback: grpc.sendUnaryData<ListResponse>) {
-        log.warn("This is LIST. OK, I admit. I'm pretty lazy. Because I don't do anything here. Someone should replace me with something useful. No hard feelings.")
-        const callData = call.request.toObject();
-        log.warn(`The call was: ${JSON.stringify(callData)}`);
-        const response = new ListResponse();
-        for (let clusterId = 0; clusterId <= 5; clusterId++) {
-            const clusterStatus = new ClusterStatus();
-            clusterStatus.setName(`Cluster ${clusterId}`);
-            clusterStatus.setUrl(`https://example.com/${clusterId}`);
-            clusterStatus.setState(ClusterState.AVAILABLE);
-            clusterStatus.setScore(clusterId);
-            clusterStatus.setMaxScore(5);
-            clusterStatus.setGoverned(true);
-            response.addStatus(clusterStatus);
-        }
-        callback(null, response);
+        this.queue.enqueue(async () => {
+            try {
+                const allClusters = await this.db.findFiltered({})
+
+                const response = new ListResponse();
+                for (const cluster of allClusters) {
+                    const clusterStatus = new ClusterStatus();
+                    clusterStatus.setName(cluster.name);
+                    clusterStatus.setUrl(cluster.url);
+                    clusterStatus.setState(mapClusterState(cluster.state));
+                    clusterStatus.setScore(cluster.score);
+                    clusterStatus.setMaxScore(cluster.maxScore);
+                    clusterStatus.setGoverned(true);
+                    response.addStatus(clusterStatus);
+                }
+
+                callback(null, response);
+            } catch (err) {
+                callback(mapToGRPCError(err), null);
+            }
+        });
+    }
+
+    protected triggerReconcile(action: string, name: string) {
+        const payload = { action, name };
+        log.info("reconcile: on request", payload);
+        this.bridgeController.runReconcileNow()
+            .catch(err => log.error("error during forced reconcile", err, payload));
     }
 }
 
-export function serveClusterService(): grpc.Server {
-    const server = new grpc.Server();
-    server.addService(ClusterServiceService, new ClusterServiceServer());
-    const bindToHost = process.env.RPC_HOST || "localhost";
-    const bindToPort = process.env.RPC_PORT || "8080";
-    const bindTo = `${bindToHost}:${bindToPort}`;
-    const port = server.bind(bindTo, grpc.ServerCredentials.createInsecure());
-    if (port === 0) {
-        throw new Error(`binding gRPC server to '${bindTo}' failed`)
+function mapPreferabilityToScore(p: Preferability): number | undefined {
+    const mapping = new Map<number, number>();
+    mapping.set(Preferability.NONE, 50);
+    mapping.set(Preferability.PREFER, 100);
+    mapping.set(Preferability.DONTSCHEDULE, 0);
+    return mapping.get(p);
+}
+
+function mapCordoned(cordoned: boolean): WorkspaceClusterState {
+    return cordoned ? "cordoned" : "available";
+}
+
+function mapClusterState(state: WorkspaceClusterState): ClusterState {
+    switch (state) {
+        case 'available': return ClusterState.AVAILABLE;
+        case 'cordoned': return ClusterState.CORDONED;
+        case 'draining': return ClusterState.DRAINING;
     }
-    log.info(`gRPC listening on port ${port}`);
-    server.start();
-    return server;
+}
+
+function mapToGRPCError(err: any): any {
+    if (!GRPCError.isGRPCError(err)) {
+        return new GRPCError(grpc.status.INTERNAL, err);
+    }
+    return err;
+}
+
+// "grpc" does not allow additional methods on it's "ServiceServer"s so we have an additional wrapper here
+@injectable()
+export class ClusterServiceServer {
+    @inject(Configuration)
+    protected readonly config: Configuration;
+
+    @inject(ClusterService)
+    protected readonly service: ClusterService;
+
+    protected server: grpc.Server | undefined = undefined;
+
+    public async start() {
+        const server = new grpc.Server();
+        server.addService(ClusterServiceService, this.service);
+        this.server = server;
+
+        const bindTo = `${this.config.clusterService.host}:${this.config.clusterService.port}`;
+        const port = server.bind(bindTo, grpc.ServerCredentials.createInsecure());
+        if (port === 0) {
+            throw new Error(`binding gRPC server to '${bindTo}' failed`);
+        }
+        
+        server.start();
+        log.info(`gRPC server listening on: ${bindTo}`);
+    }
+
+    public async stop() {
+        const server = this.server;
+        if (server !== undefined) {
+            await new Promise((resolve) => {
+                server.tryShutdown(() => resolve({}));
+            });
+            this.server = undefined;
+        }
+    }
+
+}
+
+class GRPCError extends Error implements grpc.ServiceError {
+    details: string;
+
+    constructor(
+        public readonly status: grpc.status,
+        err: any) {
+        super(GRPCError.errToMessage(err));
+
+        this.details = this.message;
+    }
+
+    static errToMessage(err: any): string | undefined {
+        if (typeof err === "string") {
+            return err;
+        } else if (typeof err === "object") {
+            return err.message;
+        }
+    }
+
+    static isGRPCError(obj: any): obj is GRPCError {
+        return obj !== undefined
+            && typeof obj === "object"
+            && "status" in obj;
+    }
 }

@@ -93,7 +93,9 @@ export class WorkspaceManagerClientProvider implements Disposable {
             client = createClient();
             this.connectionCache.set(name, client);
         }
-        return new PromisifiedWorkspaceManagerClient(client, linearBackoffStrategy(30, 1000));
+
+        const stopSignal = { stop: false };
+        return new PromisifiedWorkspaceManagerClient(client, linearBackoffStrategy(30, 1000, stopSignal), stopSignal);
     }
 
     public dispose() {
