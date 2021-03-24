@@ -1,8 +1,8 @@
 # Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
-{{ $comp := .Values.components.wsScheduler -}}
-{{- if not $comp.disabled -}}
+{{ $comp := .Values.components.wsScheduler }}
+{{- if not $comp.disabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -55,4 +55,4 @@ data:
         }
         {{ end }}
     }
-{{- end -}}
+{{- end }}

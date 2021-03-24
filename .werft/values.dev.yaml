@@ -142,7 +142,7 @@ components:
 
   wsScheduler:
     scaler:
-      enabled: true
+      enabled: false
       controller:
         kind: "constant"
         constant:
