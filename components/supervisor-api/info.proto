@@ -56,4 +56,13 @@ message WorkspaceInfoResponse {
 
     // workspace_context_url is an URL for which the workspace was created.
     string workspace_context_url = 9;
+
+    message Repository {
+        // owner is the repository owner
+        string owner = 1;
+        // name is the repository name
+        string name = 2;
+    }
+    // repository is a repository from which this workspace was created
+    Repository repository = 10;
 }

@@ -18,6 +18,7 @@ import (
 	env "github.com/Netflix/go-env"
 	"golang.org/x/xerrors"
 
+	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
@@ -195,6 +196,9 @@ type WorkspaceConfig struct {
 
 	// DebugEnabled controls whether the supervisor debugging facilities (pprof, grpc tracing) shoudl be enabled
 	DebugEnable bool `env:"SUPERVISOR_DEBUG_ENABLE"`
+
+	// WorkspaceContext is a context for this workspace
+	WorkspaceContext string `env:"GITPOD_WORKSPACE_CONTEXT"`
 }
 
 // WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service
@@ -307,6 +311,18 @@ func (c WorkspaceConfig) getGitpodTasks() (tasks *[]TaskConfig, err error) {
 	err = json.Unmarshal([]byte(c.GitpodTasks), &tasks)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse tasks: %w", err)
+	}
+	return
+}
+
+// getCommit returns a commit from which this workspace was created
+func (c WorkspaceConfig) getCommit() (commit *gitpod.Commit, err error) {
+	if c.WorkspaceContext == "" {
+		return
+	}
+	err = json.Unmarshal([]byte(c.WorkspaceContext), &commit)
+	if err != nil {
+		return nil, fmt.Errorf("cannot parse workspace context as a commit: %w", err)
 	}
 	return
 }

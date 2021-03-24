@@ -581,6 +581,16 @@ func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest)
 		WorkspaceContextUrl: is.cfg.WorkspaceContextURL,
 	}
 
+	commit, err := is.cfg.getCommit()
+	if err != nil {
+		log.WithError(err).Error()
+	} else if commit != nil && commit.Repository != nil {
+		resp.Repository = &api.WorkspaceInfoResponse_Repository{
+			Owner: commit.Repository.Owner,
+			Name:  commit.Repository.Name,
+		}
+	}
+
 	stat, err := os.Stat(is.cfg.WorkspaceRoot)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
