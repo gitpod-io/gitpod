@@ -46,8 +46,15 @@ export class Env extends AbstractComponentEnv {
     })()
 
     readonly previewFeatureFlags: NamedWorkspaceFeatureFlag[] = (() => {
-        const v = process.env.EXPERIMENTAL_FEATURE_FLAGS;
-        return !!v ? JSON.parse(v) : [];
+        const value = process.env.EXPERIMENTAL_FEATURE_FLAGS;
+        if (!value) {
+          return [];
+        }
+        const flags = JSON.parse(value);
+        if (!Array.isArray(flags)) {
+          throw new Error(`EXPERIMENTAL_FEATURE_FLAGS should be an Array: ${value}`);
+        }
+        return flags;
     })();
 
     readonly gitpodRegion: string = process.env.GITPOD_REGION || 'unknown';
