@@ -54,10 +54,12 @@ export class WorkspaceManagerClientProvider implements Disposable {
 
     protected async getFromInfo(name: string, info: WorkspaceManagerConnectionInfo, grpcOptions?: object): Promise<PromisifiedWorkspaceManagerClient> {
         const createClient = (): WorkspaceManagerClient => {
-            let credentials: grpc.ChannelCredentials = grpc.credentials.createInsecure();
+            let credentials: grpc.ChannelCredentials;
             if (info.certificate) {
-                const privateKey = Buffer.from(info.certificate, "base64");
-                credentials = grpc.credentials.createSsl(undefined, privateKey);
+                const rootCertificate = Buffer.from(info.certificate, "base64");
+                credentials = grpc.credentials.createSsl(rootCertificate);
+            } else {
+                credentials = grpc.credentials.createInsecure();
             }
             const options = {
                 ...grpcOptions

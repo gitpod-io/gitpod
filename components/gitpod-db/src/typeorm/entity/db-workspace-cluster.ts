@@ -21,6 +21,7 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
 
     @Column({
         type: "blob",
+        default: '',
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
     })
     certificate?: string;

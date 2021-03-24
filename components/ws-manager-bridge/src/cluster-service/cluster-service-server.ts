@@ -215,18 +215,10 @@ export class ClusterServiceServer {
         const bindTo = `${this.config.clusterService.host}:${this.config.clusterService.port}`;
         const port = server.bind(bindTo, grpc.ServerCredentials.createInsecure());
         if (port === 0) {
-            throw new Error(`binding gRPC server to '${bindTo}' failed`)
+            throw new Error(`binding gRPC server to '${bindTo}' failed`);
         }
-
-        new Promise((resolve) => {
-            try {
-                server.start(); // does not return until server stops
-            } catch (err) {
-                // drop errors (if there are any, at all)
-            } finally {
-                resolve({});
-            }
-        });
+        
+        server.start();
         log.info(`gRPC server listening on: ${bindTo}`);
     }
 

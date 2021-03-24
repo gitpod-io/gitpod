@@ -68,15 +68,26 @@ var clustersRegisterCmd = &cobra.Command{
 			request.Name = name
 		}
 
-		cert, err := cmd.Flags().GetString("cert")
+		url, err := cmd.Flags().GetString("url")
 		if err != nil {
 			log.Fatal(err)
 		}
-		if len(cert) < 1 && len(request.Cert) < 1 {
-			log.Fatal("please set the file path to the cluster cert with flag --cert")
+		if len(url) < 1 && len(request.Url) < 1 {
+			log.Fatal("please set the cluster url with flag --url")
 		}
-		if len(cert) > 0 {
-			content, err := ioutil.ReadFile(cert)
+		if len(url) > 0 {
+			request.Url = url
+		}
+
+		certPath, err := cmd.Flags().GetString("cert")
+		if err != nil {
+			log.Fatal(err)
+		}
+		// if len(cert) < 1 && len(request.Cert) < 1 {
+		// 	log.Fatal("please set the file path to the cluster cert with flag --cert")
+		// }
+		if len(certPath) > 0 {
+			content, err := ioutil.ReadFile(certPath)
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -132,6 +143,7 @@ var clustersRegisterCmd = &cobra.Command{
 
 func init() {
 	clustersRegisterCmd.Flags().String("name", "", "cluster name")
+	clustersRegisterCmd.Flags().String("url", "", "cluster url")
 	clustersRegisterCmd.Flags().String("cert", "", "filename fo the cluster cert")
 	clustersRegisterCmd.Flags().Bool("hint-cordoned", false, "sets hint cordoned")
 	clustersRegisterCmd.Flags().Bool("hint-govern", false, "sets hint govern")
