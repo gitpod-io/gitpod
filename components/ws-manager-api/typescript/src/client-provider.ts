@@ -56,7 +56,7 @@ export class WorkspaceManagerClientProvider implements Disposable {
         const createClient = (): WorkspaceManagerClient => {
             let credentials: grpc.ChannelCredentials = grpc.credentials.createInsecure();
             if (info.certificate) {
-                const privateKey = info.certificate;
+                const privateKey = Buffer.from(info.certificate, "base64");
                 credentials = grpc.credentials.createSsl(undefined, privateKey);
             }
             const options = {

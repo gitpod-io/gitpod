@@ -50,10 +50,10 @@ export class WorkspaceManagerBridge implements Disposable {
     protected readonly disposables: Disposable[] = [];
     protected readonly queues = new Map<string, Queue>();
 
-    public async start(cluster: WorkspaceCluster, clientProvider: ClientProvider) {
-        log.debug(`starting bridge: ${cluster.name} (${cluster.url})`);
-        await this.startDatabaseUpdater(clientProvider)
-            .catch(e => log.error("cannot run database updater", e));
+    public start(cluster: WorkspaceCluster, clientProvider: ClientProvider) {
+        log.debug(`starting bridge to cluster...`, { name: cluster.name, url: cluster.url });
+        /* no await */ this.startDatabaseUpdater(clientProvider)
+            .catch(err => log.error("cannot run database updater", err));
 
         if (cluster.controller === this.config.installation) {
             const controllerInterval = this.config.controllerIntervalSeconds;
@@ -61,11 +61,12 @@ export class WorkspaceManagerBridge implements Disposable {
                 throw new Error("controllerInterval <= 0!");
             }
             log.debug(`starting controller: ${cluster.name} (${cluster.controller})`);
-            await this.startController(clientProvider, this.config.installation, controllerInterval, this.config.controllerMaxDisconnectSeconds);
+            this.startController(clientProvider, this.config.installation, controllerInterval, this.config.controllerMaxDisconnectSeconds);
         }
+        log.debug(`started bridge to cluster.`, { name: cluster.name, url: cluster.url });
     }
 
-    public async stop() {
+    public stop() {
         this.dispose();
     }
 
@@ -242,7 +243,7 @@ export class WorkspaceManagerBridge implements Disposable {
         });
     }
 
-    protected async startController(clientProvider: ClientProvider, installation: string, controllerIntervalSeconds: number, controllerMaxDisconnectSeconds: number, maxTimeToRunningPhaseSeconds = 60 * 60): Promise<void> {
+    protected startController(clientProvider: ClientProvider, installation: string, controllerIntervalSeconds: number, controllerMaxDisconnectSeconds: number, maxTimeToRunningPhaseSeconds = 60 * 60) {
         let disconnectStarted = Number.MAX_SAFE_INTEGER;
         const timer = setInterval(async () => {
             try {

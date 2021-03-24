@@ -60,11 +60,11 @@ export class BridgeController {
                 for (const [name, bridge] of this.bridges) {
                     let cluster = availableClusters.get(name);
                     if (!cluster) {
-                        // cluster not present anymore
-                        await bridge.stop();
+                        log.info("reconcile: cluster not present anymore, stopping", { name });
+                        bridge.stop();
                         toDelete.push(name);
                     } else {
-                        // cluster alredy present
+                        log.info("reconcile: cluster already present, doing nothing", { name });
                         availableClusters.delete(name);
                     }
                 }
@@ -75,7 +75,7 @@ export class BridgeController {
             }
 
             for (const [_, newCluster] of availableClusters) {
-                // new cluster
+                log.info("reconcile: create bridge for new cluster", { name: newCluster.name });
                 const bridge = await this.createAndStartBridge(newCluster);
                 this.bridges.set(newCluster.name, bridge);
             }
@@ -92,7 +92,7 @@ export class BridgeController {
             };
             return this.clientProvider.get(cluster.name, grpcOptions);
         }
-        await bridge.start(cluster, clientProvider);
+        bridge.start(cluster, clientProvider);
         return bridge;
     }
 

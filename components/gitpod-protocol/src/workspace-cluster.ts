@@ -15,8 +15,8 @@ export interface WorkspaceCluster {
     // URL of the cluster's ws-manager API
     url: string;
 
-    // Certificate of the cluster's ws-manager API.
-    certificate?: Buffer;
+    // Certificate of the cluster's ws-manager API, base64 encoded
+    certificate?: string;
 
     // Current state of the cluster
     state: WorkspaceClusterState;
@@ -56,5 +56,8 @@ export interface WorkspaceClusterDB {
      * Lists all WorkspaceCluster for which the given predicate is true
      * @param predicate 
      */
-    findFiltered(predicate: DeepPartial<{ state:WorkspaceClusterState, minScore: number, controller: string}>): Promise<WorkspaceCluster[]>;
+    findFiltered(predicate: DeepPartial<WorkspaceClusterFilter>): Promise<WorkspaceCluster[]>;
+}
+export interface WorkspaceClusterFilter extends Pick<WorkspaceCluster, "state" | "controller" | "url"> {
+    minScore: number;
 }
