@@ -28,6 +28,11 @@ export class Workspaces extends React.Component<WorkspacesProps, WorkspacesState
 
     constructor(props: WorkspacesProps) {
         super(props);
+        this.state = {
+            workspaces: [],
+            isTemplateModelOpen: false,
+            repos: [],
+        };
     }
 
     async componentDidMount() {
