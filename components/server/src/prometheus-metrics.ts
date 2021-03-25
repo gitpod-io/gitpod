@@ -99,6 +99,5 @@ const messagebusTopicReads = new prometheusClient.Counter({
 export function increaseMessagebusTopicReads(topic: string) {
     messagebusTopicReads.inc({
         topic,
-        status,
     })
 }
