@@ -30,6 +30,8 @@ export namespace PrepareForUserNSRequest {
 }
 
 export class PrepareForUserNSResponse extends jspb.Message { 
+    getFsShift(): FSShiftMethod;
+    setFsShift(value: FSShiftMethod): PrepareForUserNSResponse;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): PrepareForUserNSResponse.AsObject;
@@ -43,6 +45,7 @@ export class PrepareForUserNSResponse extends jspb.Message {
 
 export namespace PrepareForUserNSResponse {
     export type AsObject = {
+        fsShift: FSShiftMethod,
     }
 }
 
@@ -253,4 +256,9 @@ export namespace TeardownResponse {
     export type AsObject = {
         success: boolean,
     }
+}
+
+export enum FSShiftMethod {
+    SHIFTFS = 0,
+    FUSE = 1,
 }

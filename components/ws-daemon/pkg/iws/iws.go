@@ -26,6 +26,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	wsinit "github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
@@ -71,7 +72,7 @@ var (
 )
 
 // ServeWorkspace establishes the IWS server for a workspace
-func ServeWorkspace(uidmapper *Uidmapper) func(ctx context.Context, ws *session.Workspace) error {
+func ServeWorkspace(uidmapper *Uidmapper, fsshift api.FSShiftMethod) func(ctx context.Context, ws *session.Workspace) error {
 	return func(ctx context.Context, ws *session.Workspace) (err error) {
 		//nolint:ineffassign
 		span, ctx := opentracing.StartSpanFromContext(ctx, "iws.ServeWorkspace")
@@ -80,6 +81,7 @@ func ServeWorkspace(uidmapper *Uidmapper) func(ctx context.Context, ws *session.
 		helper := &InWorkspaceServiceServer{
 			Uidmapper: uidmapper,
 			Session:   ws,
+			FSShift:   fsshift,
 		}
 		err = helper.Start()
 		if err != nil {
@@ -114,6 +116,7 @@ func StopServingWorkspace(ctx context.Context, ws *session.Workspace) error {
 type InWorkspaceServiceServer struct {
 	Uidmapper *Uidmapper
 	Session   *session.Workspace
+	FSShift   api.FSShiftMethod
 
 	srv  *grpc.Server
 	sckt io.Closer
@@ -195,16 +198,55 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		return nil, status.Errorf(codes.Internal, "cannot find workspace rootfs")
 	}
 
+	log.WithField("type", wbs.FSShift).Debug("FSShift")
+
+	// user namespace support for FUSE landed in Linux 4.18:
+	//   - http://lkml.iu.edu/hypermail/linux/kernel/1806.0/04385.html
+	// Development leading up to this point:
+	//   - https://lists.linuxcontainers.org/pipermail/lxc-devel/2014-July/009797.html
+	//   - https://lists.linuxcontainers.org/pipermail/lxc-users/2014-October/007948.html
 	err = nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
+		c.Args = append(c.Args, "mknod-fuse")
+	})
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("PrepareForUserNS: cannot mknod fuse")
+		return nil, status.Errorf(codes.Internal, "cannot prepare FUSE")
+	}
+
+	_ = os.MkdirAll(filepath.Join(wbs.Session.ServiceLocDaemon, "mark"), 0755)
+	mountpoint := filepath.Join(wbs.Session.ServiceLocNode, "mark")
+
+	if wbs.FSShift == api.FSShiftMethod_FUSE {
+		err = nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
+			// In case of any change in the user mapping, the next line must be updated.
+			mappings := fmt.Sprintf("0:%v:1:1:100000:65534", wsinit.GitpodUID)
+			c.Args = append(c.Args, "mount-fusefs-mark",
+				"--source", rootfs,
+				"--target", mountpoint,
+				"--uidmapping", mappings,
+				"--gidmapping", mappings)
+		})
+		if err != nil {
+			log.WithField("rootfs", rootfs).WithField("mountpoint", mountpoint).WithError(err).Error("cannot mount fusefs mark")
+			return nil, status.Errorf(codes.Internal, "cannot mount fusefs mark")
+		}
+
+		return &api.PrepareForUserNSResponse{
+			FsShift: api.FSShiftMethod_FUSE,
+		}, nil
+	}
+
+	// We cannot use the nsenter syscall here because mount namespaces affect the whole process, not just the current thread.
+	// That's why we resort to exec'ing "nsenter ... mount ...".
+	err = nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "make-shared", "--target", "/")
 	})
 	if err != nil {
 		log.WithField("containerPID", containerPID).WithError(err).Error("cannot make container's rootfs shared")
 		return nil, status.Errorf(codes.Internal, "cannot make container's rootfs shared")
 	}
+	log.WithField("containerPID", containerPID).Info("mount shared")
 
-	_ = os.MkdirAll(filepath.Join(wbs.Session.ServiceLocDaemon, "mark"), 0755)
-	mountpoint := filepath.Join(wbs.Session.ServiceLocNode, "mark")
 	err = nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "mount-shiftfs-mark", "--source", rootfs, "--target", mountpoint)
 	})
@@ -213,7 +255,9 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		return nil, status.Errorf(codes.Internal, "cannot mount shiftfs mark")
 	}
 
-	return &api.PrepareForUserNSResponse{}, nil
+	return &api.PrepareForUserNSResponse{
+		FsShift: api.FSShiftMethod_SHIFTFS,
+	}, nil
 }
 
 // MountProc mounts a proc filesystem

@@ -414,6 +414,11 @@ components:
       # - /run/containerd/io.containerd.runtime.v1.linux/moby
       # - /run/containerd/io.containerd.runtime.v2.task/k8s.io
     userNamespaces:
+      # Valid values for fsShift are:
+      #    fuse: uses fuse-overlayfs
+      #    shiftfs: uses shiftfs. Depending on the underlying OS/distribution you
+      #             might want to enable the shiftfsModuleLoader.
+      fsShift: fuse
       shiftfsModuleLoader:
         enabled: false
         imageName: "shiftfs-module-loader"
