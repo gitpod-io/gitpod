@@ -98,7 +98,7 @@ export class RabbitMQConsensusLeaderMessenger extends AbstractMessageBusIntegrat
 
 class EventListener extends AbstractTopicListener<RaftMessage> {
 
-    async topic(): Promise<string> {
+    topic(): string {
         return '';
     }
 

@@ -88,3 +88,16 @@ const httpRequestDuration = new prometheusClient.Histogram({
 export function observeHttpRequestDuration(method: string, route: string, statusCode: number, durationInSeconds: number) {
     httpRequestDuration.observe({ method, route, statusCode }, durationInSeconds);
 }
+
+const messagebusTopicReads = new prometheusClient.Counter({
+   name: 'gitpod_server_topic_reads_total',
+   help: 'The amount of reads from messagebus topics.',
+   labelNames: ['topic'],
+   registers: [prometheusClient.register]
+});
+
+export function increaseMessagebusTopicReads(topic: string) {
+    messagebusTopicReads.inc({
+        topic,
+    })
+}

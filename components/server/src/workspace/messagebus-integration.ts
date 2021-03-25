@@ -13,6 +13,7 @@ import { Channel, Message } from "amqplib";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
 import { CancellationTokenSource } from "vscode-ws-jsonrpc";
+import { increaseMessagebusTopicReads } from '../prometheus-metrics';
 
 export class WorkspaceInstanceUpdateListener extends AbstractTopicListener<WorkspaceInstance> {
 
@@ -20,7 +21,7 @@ export class WorkspaceInstanceUpdateListener extends AbstractTopicListener<Works
         super(messageBusHelper.workspaceExchange, listener);
     }
 
-    async topic() {
+    topic() {
         return this.messageBusHelper.getWsTopicForListening(this.userId, undefined, "updates");
     }
 }
@@ -31,7 +32,7 @@ export class HeadlessWorkspaceLogListener extends AbstractTopicListener<Headless
         super(messageBusHelper.workspaceExchange, listener);
     }
 
-    async topic() {
+    topic() {
         return this.messageBusHelper.getWsTopicForListening(undefined, this.workspaceID, "headless-log");
     }
 
@@ -117,6 +118,7 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
         const listener = new HeadlessWorkspaceLogListener(this.messageBusHelper, callback, workspaceID);
         const cancellationTokenSource = new CancellationTokenSource()
         this.listen(listener, cancellationTokenSource.token);
+        increaseMessagebusTopicReads(listener.topic())
         return Disposable.create(() => cancellationTokenSource.cancel())
     }
 
@@ -131,6 +133,7 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
         const listener = new WorkspaceInstanceUpdateListener(this.messageBusHelper, callback, userId);
         const cancellationTokenSource = new CancellationTokenSource()
         this.listen(listener, cancellationTokenSource.token);
+        increaseMessagebusTopicReads(listener.topic())
         return Disposable.create(() => cancellationTokenSource.cancel())
     }
 
