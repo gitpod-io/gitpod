@@ -29,10 +29,14 @@ export class WorkspaceManagerClientProvider implements Disposable {
      * 
      * @returns The WorkspaceManagerClient that was chosen to start the next workspace with.
      */
-    public async getStartManager(): Promise<PromisifiedWorkspaceManagerClient> {
+    public async getStartManager(): Promise<{ manager: PromisifiedWorkspaceManagerClient, installation: string}> {
         const availableClusters = await this.source.getAvailableWorkspaceClusters();
         const chosenCluster = chooseCluster(availableClusters);
-        return this.getFromInfo(chosenCluster.name, chosenCluster);
+        const client = await this.getFromInfo(chosenCluster.name, chosenCluster);
+        return {
+            manager: client,
+            installation: chosenCluster.name,
+        };
     }
 
     /**

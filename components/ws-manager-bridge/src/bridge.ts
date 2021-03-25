@@ -51,8 +51,9 @@ export class WorkspaceManagerBridge implements Disposable {
     protected readonly queues = new Map<string, Queue>();
 
     public start(cluster: WorkspaceCluster, clientProvider: ClientProvider) {
-        log.debug(`starting bridge to cluster...`, { name: cluster.name, url: cluster.url });
-        /* no await */ this.startDatabaseUpdater(clientProvider)
+        const logPayload = { name: cluster.name, url: cluster.url };
+        log.debug(`starting bridge to cluster...`, logPayload);
+        /* no await */ this.startDatabaseUpdater(clientProvider, logPayload)
             .catch(err => log.error("cannot run database updater", err));
 
         if (cluster.controller === this.config.installation) {
@@ -63,14 +64,14 @@ export class WorkspaceManagerBridge implements Disposable {
             log.debug(`starting controller: ${cluster.name} (${cluster.controller})`);
             this.startController(clientProvider, this.config.installation, controllerInterval, this.config.controllerMaxDisconnectSeconds);
         }
-        log.debug(`started bridge to cluster.`, { name: cluster.name, url: cluster.url });
+        log.debug(`started bridge to cluster.`, logPayload);
     }
 
     public stop() {
         this.dispose();
     }
 
-    protected async startDatabaseUpdater(clientProvider: ClientProvider): Promise<void> {
+    protected async startDatabaseUpdater(clientProvider: ClientProvider, logPayload: {}): Promise<void> {
         const subscriber = new WsmanSubscriber(clientProvider);
         this.disposables.push(subscriber);
 
@@ -83,7 +84,7 @@ export class WorkspaceManagerBridge implements Disposable {
         const onStatusUpdate = (ctx: TraceContext, s: WorkspaceStatus) => {
             this.serializeMessagesByInstanceId<WorkspaceStatus>(ctx, s, msg => msg.getId(), (ctx, s) => this.handleStatusUpdate(ctx, s))
         };
-        await subscriber.subscribe({ onHeadlessLog, onReconnect, onStatusUpdate });
+        await subscriber.subscribe({ onHeadlessLog, onReconnect, onStatusUpdate }, logPayload);
     }
 
     protected serializeMessagesByInstanceId<M>(ctx: TraceContext, msg: M, getInstanceId: (msg: M) => string, handler: (ctx: TraceContext, msg: M) => Promise<void>) {
@@ -253,7 +254,7 @@ export class WorkspaceManagerBridge implements Disposable {
                 disconnectStarted = Number.MAX_SAFE_INTEGER;    // Reset disconnect period
             } catch (e) {
                 if (durationLongerThanSeconds(disconnectStarted, controllerMaxDisconnectSeconds)) {
-                    log.warn("error while controlling installation's workspaces", e);
+                    log.warn("error while controlling installation's workspaces", e, { installation });
                 } else if (disconnectStarted > Date.now()) {
                     disconnectStarted = Date.now();
                 }

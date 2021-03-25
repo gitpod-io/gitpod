@@ -8,8 +8,8 @@ import { DeepPartial } from "./util/deep-partial";
 
 export interface WorkspaceCluster {
     // Name of the workspace cluster.
-    // Used to identify the cluster for running workspaces.
-    // Must fit in the region field in WorkspaceInstace.
+    // This is the string set in each 
+    // Must be identical to the installationShortname of the cluster it represents!
     name: string;
 
     // URL of the cluster's ws-manager API
@@ -20,8 +20,10 @@ export interface WorkspaceCluster {
 
     // Current state of the cluster
     state: WorkspaceClusterState;
+
     // Maximum value score can reach for this cluster
     maxScore: number;
+
     // Score used for cluster selection when starting workspace instances
     score: number;
 
