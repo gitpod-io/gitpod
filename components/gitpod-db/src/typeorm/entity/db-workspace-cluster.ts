@@ -22,12 +22,14 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
         type: "blob",
         transformer: {
             to(value: any): any {
+                console.log("TO DB: " + JSON.stringify(value));
                 if (value === undefined) {
                     return null;
                 }
                 return value;
             },
             from(value: any): any {
+                console.log("FROM DB: " + JSON.stringify(value));
                 if (!value) {
                     // map ["", null, undefined] -> undefined
                     return undefined;
