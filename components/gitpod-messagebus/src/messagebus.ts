@@ -442,11 +442,11 @@ export abstract class AbstractTopicListener<T> implements MessagebusListener {
     constructor(protected readonly exchangeName: string, protected readonly listener: TopicListener<T>) { }
 
     async establish(channel: Channel): Promise<void> {
-        const topic = await this.topic();
+        const topic = this.topic();
         return this.doEstablish(channel, topic);
     }
 
-    abstract topic(): Promise<string>;
+    abstract topic(): string;
 
     protected async doEstablish(channel: Channel, topic: string): Promise<void> {
         if (channel === undefined) {

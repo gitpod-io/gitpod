@@ -104,7 +104,7 @@ class WorkspaceStatusUpdateListener extends AbstractTopicListener<WorkspaceStatu
         super(MessageBusIntegration.WORKSPACE_EXCHANGE, listener);
     }
 
-    async topic() {
+    topic() {
         return this._topic;
     }
 }
@@ -115,7 +115,7 @@ class WorkspaceLogListener extends AbstractTopicListener<WorkspaceLogMessage.AsO
         super(MessageBusIntegration.WORKSPACE_EXCHANGE, listener);
     }
 
-    async topic() {
+    topic() {
         return this._topic;
     }
 }
