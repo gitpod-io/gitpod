@@ -14,6 +14,7 @@ import (
 
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/remotes"
+	"github.com/docker/distribution/reference"
 	"github.com/gorilla/mux"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -76,7 +77,10 @@ func NewServer(cfg Config, resolver ResolverProvider) (*Server, error) {
 // Serve serves the registry on the given port
 func (reg *Server) Serve() error {
 	r := mux.NewRouter()
-	r.PathPrefix(`/{repo:[a-zA-Z0-9\/\-\.\:]+}:{tag:[a-z0-9][a-z0-9-\.]+}`).MatcherFunc(isNoWebsocketRequest).HandlerFunc(reg.serve)
+	// path must be at least `/image-name:tag` (tag required)
+	// could also be like `/my-reg.com:8080/my/special_alpine:1.2.3/`
+	// or `/my-reg.com:8080/alpine:1.2.3/additional/path/will/be/ignored.json`
+	r.PathPrefix(`/{image:[a-zA-Z0-9_\/\-\.\:]+:[\w\.\-]+}`).MatcherFunc(isNoWebsocketRequest).HandlerFunc(reg.serve)
 	r.NewRoute().HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 		log.WithField("path", req.URL.Path).Warn("unmapped request")
 		http.Error(resp, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -102,7 +106,20 @@ func (reg *Server) MustServe() {
 // serve serves a single file from an image
 func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	repo, tag := vars["repo"], vars["tag"]
+	image := vars["image"]
+	pref, err := reference.ParseNamed(image)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("cannot parse image '%s': %q", image, err), http.StatusNotFound)
+		return
+	}
+	repo := pref.Name()
+	var tag string
+	if refTagged, ok := pref.(reference.Tagged); ok {
+		tag = refTagged.Tag()
+	} else {
+		http.Error(w, fmt.Sprintf("cannot parse image '%s': tag is missing", image), http.StatusNotFound)
+		return
+	}
 
 	var workdir string
 	if cfg, ok := reg.Config.Repos[repo]; ok {
