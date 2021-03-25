@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 export interface ContextMenuProps {
     children: React.ReactChild[] | React.ReactChild;
@@ -20,8 +21,9 @@ export interface ContextMenuEntry {
      */
     separator?: boolean;
     customFontStyle?: string;
-    onClick?: (event: React.MouseEvent)=>void;
+    onClick?: (event: React.MouseEvent) => void;
     href?: string;
+    link?: string;
 }
 
 function ContextMenu(props: ContextMenuProps) {
@@ -39,7 +41,7 @@ function ContextMenu(props: ContextMenuProps) {
     const clickHandler = (evt: MouseEvent) => {
         setExpanded(false);
     }
-    
+
     useEffect(() => {
         window.addEventListener('keydown', handler);
         window.addEventListener('click', clickHandler);
@@ -63,22 +65,31 @@ function ContextMenu(props: ContextMenuProps) {
             }}>
                 {props.children}
             </div>
-            {expanded?
+            {expanded ?
                 <div className={`mt-2 z-50 ${props.width || 'w-48'} bg-white absolute right-0 flex flex-col border border-gray-200 rounded-lg truncated`}>
                     {props.menuEntries.map((e, index) => {
-                        const clickable = e.href || e.onClick;
-                        const entry = <div key={e.title} className={`px-4 flex py-3 ${clickable?'hover:bg-gray-200':''} text-sm leading-1 ${e.customFontStyle || font} ${e.separator? ' border-b border-gray-200':''}`} >
-                            <div>{e.title}</div><div className="flex-1"></div>{e.active ? <div className="pl-1 font-semibold">&#x2713;</div>: null}
+                        const clickable = e.href || e.onClick || e.link;
+                        const entry = <div className={`px-4 flex py-3 ${clickable ? 'hover:bg-gray-200' : ''} text-sm leading-1 ${e.customFontStyle || font} ${e.separator ? ' border-b border-gray-200' : ''}`} >
+                            <div>{e.title}</div><div className="flex-1"></div>{e.active ? <div className="pl-1 font-semibold">&#x2713;</div> : null}
                         </div>
-                        if (!clickable) {
-                            return entry;
+                        const key = `entry-${menuId}-${index}-${e.title}`;
+                        if (e.link) {
+                            return <Link key={key} to={e.link} onClick={e.onClick}>
+                                {entry}
+                            </Link>;
+                        } else if (e.href) {
+                            return <a key={key} href={e.href} onClick={e.onClick}>
+                                {entry}
+                            </a>;
+                        } else {
+                            return <div key={key} onClick={e.onClick}>
+                                {entry}
+                            </div>
                         }
-                        return <a key={`entry-${menuId}-${index}-${e.title}`} href={e.href} onClick={e.onClick}>
-                            {entry}
-                        </a>
+
                     })}
                 </div>
-            :
+                :
                 null
             }
         </div>
