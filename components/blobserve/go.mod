@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/containerd/containerd v1.4.1
 	github.com/docker/cli v0.0.0-20200113155311-34d848623701
+	github.com/docker/distribution v2.7.1+incompatible
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/registry-facade v0.0.0-00010101000000-000000000000
 	github.com/google/go-cmp v0.5.2
