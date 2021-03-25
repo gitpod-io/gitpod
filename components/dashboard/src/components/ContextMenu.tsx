@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { MouseEvent, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export interface ContextMenuProps {
     children: React.ReactChild[] | React.ReactChild;
@@ -20,7 +20,7 @@ export interface ContextMenuEntry {
      */
     separator?: boolean;
     customFontStyle?: string;
-    onClick?: (event: MouseEvent)=>void;
+    onClick?: (event: React.MouseEvent)=>void;
     href?: string;
 }
 
@@ -30,23 +30,26 @@ function ContextMenu(props: ContextMenuProps) {
         setExpanded(!expanded);
     }
 
-    if (expanded) {
-        // HACK! I want to skip the bubbling phase of the current click
-        setTimeout(() => {
-            window.addEventListener('click', () => setExpanded(false), { once: true });
-        }, 0);
-    }
-  
-    const enhancedEntries = props.menuEntries.map(e => {
-        return {
-            ... e,
-            onClick: (event: MouseEvent) => {
-                e.onClick && e.onClick(event);
-                toggleExpanded();
-                event.preventDefault();
-            }
+    const handler = (evt: KeyboardEvent) => {
+        if (evt.key === 'Escape') {
+            setExpanded(false);
         }
-    })
+    }
+
+    const clickHandler = (evt: MouseEvent) => {
+        setExpanded(false);
+    }
+    
+    useEffect(() => {
+        window.addEventListener('keydown', handler);
+        window.addEventListener('click', clickHandler);
+        // Remove event listeners on cleanup
+        return () => {
+            window.removeEventListener('keydown', handler);
+            window.removeEventListener('click', clickHandler);
+        };
+    }, []); // Empty array ensures that effect is only run on mount and unmount
+
 
     const font = "text-gray-600 hover:text-gray-800"
 
@@ -56,13 +59,13 @@ function ContextMenu(props: ContextMenuProps) {
         <div className="relative cursor-pointer">
             <div onClick={(e) => {
                 toggleExpanded();
-                e.preventDefault();
+                e.stopPropagation();
             }}>
                 {props.children}
             </div>
             {expanded?
                 <div className={`mt-2 z-50 ${props.width || 'w-48'} bg-white absolute right-0 flex flex-col border border-gray-200 rounded-lg truncated`}>
-                    {enhancedEntries.map((e, index) => {
+                    {props.menuEntries.map((e, index) => {
                         const clickable = e.href || e.onClick;
                         const entry = <div key={e.title} className={`px-4 flex py-3 ${clickable?'hover:bg-gray-200':''} text-sm leading-1 ${e.customFontStyle || font} ${e.separator? ' border-b border-gray-200':''}`} >
                             <div>{e.title}</div><div className="flex-1"></div>{e.active ? <div className="pl-1 font-semibold">&#x2713;</div>: null}
