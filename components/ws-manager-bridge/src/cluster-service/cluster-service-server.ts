@@ -86,7 +86,7 @@ export class ClusterService implements IClusterServiceServer {
                 }
 
                 let certificate: string | undefined = undefined;
-                if (typeof req.cert === "string") {
+                if (typeof req.cert === "string" && req.cert !== "") {
                     certificate = req.cert;
                 }
 
@@ -147,7 +147,7 @@ export class ClusterService implements IClusterServiceServer {
 
                 this.triggerReconcile("deregister", req.name);
 
-                callback(null, new DeregisterRequest());
+                callback(null, new DeregisterResponse());
             } catch (err) {
                 callback(mapToGRPCError(err), null);
             }

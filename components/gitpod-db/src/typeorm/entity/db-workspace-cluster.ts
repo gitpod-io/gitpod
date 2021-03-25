@@ -20,10 +20,12 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
 
     @Column({
         type: "blob",
+        nullable: true,
         transformer: {
             to(value: any): any {
                 console.log("TO DB: " + JSON.stringify(value));
-                if (value === undefined) {
+                if (!value) {
+                    // map ["", null, undefined] -> null
                     return null;
                 }
                 return value;
@@ -32,6 +34,10 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
                 console.log("FROM DB: " + JSON.stringify(value));
                 if (!value) {
                     // map ["", null, undefined] -> undefined
+                    return undefined;
+                }
+                if (Buffer.isBuffer(value) && (value as Buffer).length === 0) {
+                    // TypeORM seems to map MySQL 'NULL' to an empty buffer. We translate to 'undefined' here.
                     return undefined;
                 }
                 return value;
