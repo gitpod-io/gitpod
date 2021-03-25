@@ -118,7 +118,7 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
         const listener = new HeadlessWorkspaceLogListener(this.messageBusHelper, callback, workspaceID);
         const cancellationTokenSource = new CancellationTokenSource()
         this.listen(listener, cancellationTokenSource.token);
-        increaseMessagebusTopicReads(listener.topic.name)
+        increaseMessagebusTopicReads('headless_workspace_log')
         return Disposable.create(() => cancellationTokenSource.cancel())
     }
 
@@ -126,7 +126,7 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
         const listener = new PrebuildUpdatableQueueListener(callback);
         const cancellationTokenSource = new CancellationTokenSource()
         this.listen(listener, cancellationTokenSource.token);
-        increaseMessagebusTopicReads('listener.topic.name');
+        increaseMessagebusTopicReads('prebuild_updatable_queue');
         return Disposable.create(() => cancellationTokenSource.cancel())
     }
 
@@ -134,7 +134,7 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
         const listener = new WorkspaceInstanceUpdateListener(this.messageBusHelper, callback, userId);
         const cancellationTokenSource = new CancellationTokenSource()
         this.listen(listener, cancellationTokenSource.token);
-        increaseMessagebusTopicReads(listener.topic.name);
+        increaseMessagebusTopicReads('workspace_instance_update');
         return Disposable.create(() => cancellationTokenSource.cancel())
     }
 
