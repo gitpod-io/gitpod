@@ -1,4 +1,4 @@
-# Dashboard Redesign POC
+# Dashboard
 
 The dashboard is written in TypeScript and React. For styling it uses TailwindCSS which is a bit nicer than inlining CSS as it supports pseudo classes and a is a little more abstract/reusable.
 
