@@ -19,7 +19,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 	"golang.org/x/xerrors"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/sirupsen/logrus"
 )
 
 // APIInterface wraps the
@@ -220,6 +220,7 @@ var errNotConnected = errors.New("not connected to Gitpod server")
 type ConnectToServerOpts struct {
 	Context context.Context
 	Token   string
+	Log     *logrus.Entry
 }
 
 // ConnectToServer establishes a new websocket connection to the server
@@ -246,17 +247,19 @@ func ConnectToServer(endpoint string, opts ConnectToServerOpts) (*APIoverJSONRPC
 	if opts.Token != "" {
 		reqHeader.Set("Authorization", "Bearer "+opts.Token)
 	}
-	ws := NewReconnectingWebsocket(endpoint, reqHeader)
+	ws := NewReconnectingWebsocket(endpoint, reqHeader, opts.Log)
 	go ws.Dial()
 
 	var res APIoverJSONRPC
+	res.log = opts.Log
 	res.C = jsonrpc2.NewConn(opts.Context, ws, jsonrpc2.HandlerWithError(res.handler))
 	return &res, nil
 }
 
 // APIoverJSONRPC makes JSON RPC calls to the Gitpod server is the APIoverJSONRPC message type
 type APIoverJSONRPC struct {
-	C jsonrpc2.JSONRPC2
+	C   jsonrpc2.JSONRPC2
+	log *logrus.Entry
 
 	mu   sync.RWMutex
 	subs map[string]map[chan *WorkspaceInstance]struct{}
@@ -318,7 +321,7 @@ func (gp *APIoverJSONRPC) handler(ctx context.Context, conn *jsonrpc2.Conn, req 
 	var instance WorkspaceInstance
 	err = json.Unmarshal(*req.Params, &instance)
 	if err != nil {
-		log.WithError(err).WithField("raw", string(*req.Params)).Error("cannot unmarshal instance update")
+		gp.log.WithError(err).WithField("raw", string(*req.Params)).Error("cannot unmarshal instance update")
 		return
 	}
 

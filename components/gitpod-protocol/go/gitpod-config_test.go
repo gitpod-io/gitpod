@@ -10,7 +10,10 @@ import (
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/sirupsen/logrus"
 )
+
+var log = logrus.NewEntry(logrus.StandardLogger())
 
 func TestGitpodConfig(t *testing.T) {
 	tests := []struct {
@@ -81,7 +84,7 @@ vscode:
 			defer os.RemoveAll(tempDir)
 
 			locationReady := make(chan struct{})
-			configService := NewConfigService(tempDir+"/.gitpod.yml", locationReady)
+			configService := NewConfigService(tempDir+"/.gitpod.yml", locationReady, log)
 			context, cancel := context.WithCancel(context.Background())
 			defer cancel()
 			close(locationReady)

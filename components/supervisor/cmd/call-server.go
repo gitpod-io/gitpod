@@ -30,6 +30,7 @@ var callServerCmd = &cobra.Command{
 
 		api, err := gitpod.ConnectToServer(fmt.Sprintf("ws://%s/api/v1", host), gitpod.ConnectToServerOpts{
 			Token: token,
+			Log:   log.Log,
 		})
 		if err != nil {
 			log.WithError(err).Fatal("ConnectToServer")

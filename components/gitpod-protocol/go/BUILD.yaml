@@ -5,8 +5,6 @@ packages:
       - "**/*.go"
       - "go.mod"
       - "go.sum"
-    deps:
-      - components/common-go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux

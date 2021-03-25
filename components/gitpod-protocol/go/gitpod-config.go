@@ -11,9 +11,8 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
-
-	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // ConfigInterface provides access to the gitpod config file.
@@ -32,6 +31,8 @@ type ConfigService struct {
 	stop      context.CancelFunc
 	mu        sync.Mutex
 	pollTimer *time.Timer
+
+	log *logrus.Entry
 }
 
 type configListener struct {
@@ -40,11 +41,12 @@ type configListener struct {
 }
 
 // NewConfigService creates a new instance of ConfigService
-func NewConfigService(configLocation string, locationReady <-chan struct{}) *ConfigService {
+func NewConfigService(configLocation string, locationReady <-chan struct{}, log *logrus.Entry) *ConfigService {
 	return &ConfigService{
 		location:      configLocation,
 		locationReady: locationReady,
 		listeners:     make(map[configListener]struct{}),
+		log:           log,
 	}
 }
 
@@ -98,7 +100,7 @@ func (service *ConfigService) start() error {
 		return nil
 	}
 
-	log.WithField("location", service.location).Info("Starting watching...")
+	service.log.WithField("location", service.location).Info("Starting watching...")
 	context, stop := context.WithCancel(context.Background())
 	service.stop = stop
 	service.mu.Unlock()
@@ -119,11 +121,11 @@ func (service *ConfigService) watch(ctx context.Context) (err error) {
 	watcher, err := fsnotify.NewWatcher()
 	defer func() {
 		if err != nil {
-			log.WithField("location", service.location).WithError(err).Error("Failed to start watching...")
+			service.log.WithField("location", service.location).WithError(err).Error("Failed to start watching...")
 			return
 		}
 
-		log.WithField("location", service.location).Info("Started watching")
+		service.log.WithField("location", service.location).Info("Started watching")
 	}()
 	if err != nil {
 		return err
@@ -136,7 +138,7 @@ func (service *ConfigService) watch(ctx context.Context) (err error) {
 	}
 
 	go func() {
-		defer log.WithField("location", service.location).Info("Stopped watching")
+		defer service.log.WithField("location", service.location).Info("Stopped watching")
 		defer watcher.Close()
 
 		polling := make(chan struct{}, 1)

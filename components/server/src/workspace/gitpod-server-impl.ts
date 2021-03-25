@@ -1318,7 +1318,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         }
 
         if (!variable.id) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Missing ID field")
+            throw new ResponseError(ErrorCodes.NOT_FOUND, `cannot delete '${variable.name}' in scope '${variable.repositoryPattern}'`)
         }
 
         const envvar: UserEnvVar = {

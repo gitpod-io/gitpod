@@ -7,11 +7,13 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"sync"
 	"time"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -49,6 +51,13 @@ delete environment variables with a repository pattern of */foo, foo/* or */*.
 `,
 	Args: cobra.ArbitraryArgs,
 	Run: func(cmd *cobra.Command, args []string) {
+		log.SetOutput(io.Discard)
+		f, err := os.OpenFile(os.TempDir()+"/gp-env.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		if err == nil {
+			defer f.Close()
+			log.SetOutput(f)
+		}
+
 		if len(args) > 0 {
 			if unsetEnvs {
 				deleteEnvs(args)
@@ -103,7 +112,11 @@ func connectToServer(ctx context.Context) (*connectToServerResult, error) {
 	if err != nil {
 		return nil, xerrors.Errorf("failed getting token from supervisor: %w", err)
 	}
-	client, err := serverapi.ConnectToServer(wsinfo.GitpodApi.Endpoint, serverapi.ConnectToServerOpts{Token: clientToken.Token, Context: ctx})
+	client, err := serverapi.ConnectToServer(wsinfo.GitpodApi.Endpoint, serverapi.ConnectToServerOpts{
+		Token:   clientToken.Token,
+		Context: ctx,
+		Log:     log.NewEntry(log.StandardLogger()),
+	})
 	if err != nil {
 		return nil, xerrors.Errorf("failed connecting to server: %w", err)
 	}

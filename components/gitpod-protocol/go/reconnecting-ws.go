@@ -10,8 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-
-	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/sirupsen/logrus"
 )
 
 // The ReconnectingWebsocket represents a Reconnecting WebSocket connection.
@@ -27,10 +26,12 @@ type ReconnectingWebsocket struct {
 	closedCh chan struct{}
 	connCh   chan chan *websocket.Conn
 	errCh    chan error
+
+	log *logrus.Entry
 }
 
 // NewReconnectingWebsocket creates a new instance of ReconnectingWebsocket
-func NewReconnectingWebsocket(url string, reqHeader http.Header) *ReconnectingWebsocket {
+func NewReconnectingWebsocket(url string, reqHeader http.Header, log *logrus.Entry) *ReconnectingWebsocket {
 	return &ReconnectingWebsocket{
 		url:                         url,
 		reqHeader:                   reqHeader,
@@ -41,6 +42,7 @@ func NewReconnectingWebsocket(url string, reqHeader http.Header) *ReconnectingWe
 		connCh:                      make(chan chan *websocket.Conn),
 		closedCh:                    make(chan struct{}),
 		errCh:                       make(chan error),
+		log:                         log,
 	}
 }
 
@@ -109,7 +111,7 @@ func (rc *ReconnectingWebsocket) Dial() {
 		if conn == nil {
 			return
 		}
-		log.WithField("url", rc.url).Warn("connection is permanently closed")
+		rc.log.WithField("url", rc.url).Warn("connection is permanently closed")
 		conn.Close()
 	}()
 
@@ -122,7 +124,7 @@ func (rc *ReconnectingWebsocket) Dial() {
 		case connCh := <-rc.connCh:
 			connCh <- conn
 		case err := <-rc.errCh:
-			log.WithError(err).WithField("url", rc.url).Warn("connection has been closed, reconnecting...")
+			rc.log.WithError(err).WithField("url", rc.url).Warn("connection has been closed, reconnecting...")
 			conn.Close()
 
 			time.Sleep(1 * time.Second)
@@ -137,12 +139,12 @@ func (rc *ReconnectingWebsocket) connect() *websocket.Conn {
 		dialer := websocket.Dialer{HandshakeTimeout: rc.handshakeTimeout}
 		conn, _, err := dialer.Dial(rc.url, rc.reqHeader)
 		if err == nil {
-			log.WithField("url", rc.url).Info("connection was successfully established")
+			rc.log.WithField("url", rc.url).Info("connection was successfully established")
 
 			return conn
 		}
 
-		log.WithError(err).WithField("url", rc.url).Errorf("failed to connect, trying again in %d seconds...", uint32(delay.Seconds()))
+		rc.log.WithError(err).WithField("url", rc.url).Errorf("failed to connect, trying again in %d seconds...", uint32(delay.Seconds()))
 		select {
 		case <-rc.closedCh:
 			return nil

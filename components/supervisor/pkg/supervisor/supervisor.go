@@ -135,7 +135,7 @@ func Run(options ...RunOption) {
 		ideReady            = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
 		cstate              = NewInMemoryContentState(cfg.RepoRoot)
 		gitpodService       = createGitpodService(cfg, tokenService)
-		gitpodConfigService = gitpod.NewConfigService(cfg.RepoRoot+"/.gitpod.yml", cstate.ContentReady())
+		gitpodConfigService = gitpod.NewConfigService(cfg.RepoRoot+"/.gitpod.yml", cstate.ContentReady(), log.Log)
 		portMgmt            = ports.NewManager(
 			createExposedPortsImpl(cfg, gitpodService),
 			&ports.PollingServedPortsObserver{
@@ -255,6 +255,7 @@ func createGitpodService(cfg *Config, tknsrv api.TokenServiceServer) *gitpod.API
 
 	gitpodService, err := gitpod.ConnectToServer(endpoint, gitpod.ConnectToServerOpts{
 		Token: tknres.Token,
+		Log:   log.Log,
 	})
 	if err != nil {
 		log.WithError(err).Error("cannot connect to Gitpod API")
