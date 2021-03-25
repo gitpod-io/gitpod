@@ -6,7 +6,6 @@
 
 import { PrimaryColumn, Column, Entity, Index } from "typeorm";
 import { WorkspaceCluster, WorkspaceClusterState } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
-import { Transformer } from "../transformer";
 
 @Entity()
 export class DBWorkspaceCluster implements WorkspaceCluster {
@@ -21,8 +20,21 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
 
     @Column({
         type: "blob",
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+        transformer: {
+            to(value: any): any {
+                if (value === undefined) {
+                    return null;
+                }
+                return value;
+            },
+            from(value: any): any {
+                if (!value) {
+                    // map ["", null, undefined] -> undefined
+                    return undefined;
+                }
+                return value;
+            }
+        }
     })
     certificate?: string;
 
