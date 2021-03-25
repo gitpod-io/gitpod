@@ -13,7 +13,7 @@ export class WorkspaceCluster1616053452453 implements MigrationInterface {
             CREATE TABLE IF NOT EXISTS d_b_workspace_cluster (
                     name char(64) NOT NULL,
                     url varchar(255) NOT NULL,
-                    certificate blob NOT NULL,
+                    certificate blob NOT NULL DEFAULT '',
                     state char(20) NOT NULL,
                     score int,
                     maxScore int,

@@ -24,6 +24,7 @@ import {
 } from '@gitpod/ws-manager-bridge-api/lib';
 import * as grpc from "grpc";
 import { inject, injectable } from 'inversify';
+import { BridgeController } from '../bridge-controller';
 import { Configuration } from '../config';
 
 export interface ClusterServiceServerOptions {
@@ -38,6 +39,9 @@ export class ClusterService implements IClusterServiceServer {
 
     @inject(WorkspaceClusterDB)
     protected readonly db: WorkspaceClusterDB;
+
+    @inject(BridgeController)
+    protected readonly bridgeController: BridgeController;
 
     // using a queue to make sure we're not
     protected readonly queue: Queue = new Queue();
@@ -97,6 +101,8 @@ export class ClusterService implements IClusterServiceServer {
                 };
                 await this.db.save(newCluster);
 
+                this.triggerReconcile("register", req.name);
+
                 callback(null, new RegisterResponse());
             } catch (err) {
                 callback(mapToGRPCError(err), null);
@@ -124,6 +130,8 @@ export class ClusterService implements IClusterServiceServer {
                 }
                 await this.db.save(cluster);
 
+                this.triggerReconcile("update", req.name);
+
                 callback(null, new UpdateResponse());
             } catch (err) {
                 callback(mapToGRPCError(err), null);
@@ -136,6 +144,8 @@ export class ClusterService implements IClusterServiceServer {
             try {
                 const req = call.request.toObject();
                 await this.db.deleteByName(req.name);
+
+                this.triggerReconcile("deregister", req.name);
 
                 callback(null, new DeregisterRequest());
             } catch (err) {
@@ -166,6 +176,13 @@ export class ClusterService implements IClusterServiceServer {
                 callback(mapToGRPCError(err), null);
             }
         });
+    }
+
+    protected triggerReconcile(action: string, name: string) {
+        const payload = { action, name };
+        log.info("reconcile: on request", payload);
+        this.bridgeController.runReconcileNow()
+            .catch(err => log.error("error during forced reconcile", err, payload));
     }
 }
 

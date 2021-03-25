@@ -46,7 +46,7 @@ export class BridgeController {
     }
 
     /**
-     * 
+     * Triggers a reconcile run
      */
     public async runReconcileNow() {
         await this.reconcile();
@@ -74,8 +74,8 @@ export class BridgeController {
                 }
             }
 
-            for (const [_, newCluster] of availableClusters) {
-                log.info("reconcile: create bridge for new cluster", { name: newCluster.name });
+            for (const [name, newCluster] of availableClusters) {
+                log.info("reconcile: create bridge for new cluster", { name });
                 const bridge = await this.createAndStartBridge(newCluster);
                 this.bridges.set(newCluster.name, bridge);
             }
@@ -115,7 +115,7 @@ export class BridgeController {
         });
         
         for (const [_, bridge] of this.bridges) {
-            await bridge.stop();
+            bridge.stop();
         }
     }
 }

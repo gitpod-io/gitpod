@@ -11,6 +11,8 @@ import { PromisifiedWorkspaceManagerClient, linearBackoffStrategy } from "./prom
 import { Disposable } from "@gitpod/gitpod-protocol";
 import { WorkspaceCluster } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
 import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientProviderSource, WorkspaceManagerConnectionInfo } from "./client-provider-source";
+import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class WorkspaceManagerClientProvider implements Disposable {
@@ -56,6 +58,7 @@ export class WorkspaceManagerClientProvider implements Disposable {
         const createClient = (): WorkspaceManagerClient => {
             let credentials: grpc.ChannelCredentials;
             if (info.certificate) {
+                log.info(`CERTIFICATE. ${info.certificate}\n${JSON.stringify(info)}`);
                 const rootCertificate = Buffer.from(info.certificate, "base64");
                 credentials = grpc.credentials.createSsl(rootCertificate);
             } else {
@@ -78,7 +81,9 @@ export class WorkspaceManagerClientProvider implements Disposable {
             client = createClient();
             this.connectionCache.set(name, client);
         }
-        return new PromisifiedWorkspaceManagerClient(client, linearBackoffStrategy(30, 1000));
+
+        const stopSignal = new Deferred<boolean>();
+        return new PromisifiedWorkspaceManagerClient(client, linearBackoffStrategy(30, 1000, stopSignal), stopSignal);
     }
 
     public dispose() {
@@ -89,7 +94,7 @@ export class WorkspaceManagerClientProvider implements Disposable {
 /**
  * 
  * @param clusters 
- * @returns The chosen cluster - or `undefined` if 
+ * @returns The chosen cluster. Throws an error if there are 0 WorkspaceClusters to choose from.
  */
 function chooseCluster(clusters: WorkspaceCluster[]): WorkspaceCluster {
     const availableCluster = clusters.filter((c) => c.score >= 0);

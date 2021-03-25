@@ -27,8 +27,9 @@ export class WsmanSubscriber implements Disposable {
         while (this.run) {
             await new Promise<void>(async (resolve, reject) => {
                 log.info("attempting to establish wsman subscription");
+                let client: PromisifiedWorkspaceManagerClient | undefined = undefined;
                 try {
-                    const client = await this.clientProvider();
+                    client = await this.clientProvider();
 
                     // take stock of the existing workspaces
                     const workspaces = await client.getWorkspaces({}, new GetWorkspacesRequest());
@@ -64,6 +65,10 @@ export class WsmanSubscriber implements Disposable {
                 } catch (err) {
                     log.error("cannot maintain subscription to wsman", err);
                     resolve();
+                } finally {
+                    if (client) {
+                        client.dispose();
+                    }
                 }
             });
 
