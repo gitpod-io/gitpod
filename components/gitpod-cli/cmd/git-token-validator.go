@@ -7,6 +7,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
@@ -35,6 +36,13 @@ var gitTokenValidator = &cobra.Command{
 	Args:   cobra.ExactArgs(0),
 	Hidden: true,
 	Run: func(cmd *cobra.Command, args []string) {
+		log.SetOutput(io.Discard)
+		f, err := os.OpenFile(os.TempDir()+"/gitpod-git-credential-helper.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		if err == nil {
+			defer f.Close()
+			log.SetOutput(f)
+		}
+
 		log.Infof("gp git-token-validator")
 
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
@@ -61,7 +69,11 @@ var gitTokenValidator = &cobra.Command{
 		if err != nil {
 			log.WithError(err).Fatal("error getting token from supervisor")
 		}
-		client, err := serverapi.ConnectToServer(wsinfo.GitpodApi.Endpoint, serverapi.ConnectToServerOpts{Token: clientToken.Token, Context: ctx})
+		client, err := serverapi.ConnectToServer(wsinfo.GitpodApi.Endpoint, serverapi.ConnectToServerOpts{
+			Token:   clientToken.Token,
+			Context: ctx,
+			Log:     log.NewEntry(log.StandardLogger()),
+		})
 		if err != nil {
 			log.WithError(err).Fatal("error connecting to server")
 		}

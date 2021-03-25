@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/google/uuid"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
@@ -185,6 +186,7 @@ func (c *ComponentAPI) GitpodServer(opts ...GitpodServerOpt) (res gitpod.APIInte
 
 		cl, err := gitpod.ConnectToServer(endpoint.String(), gitpod.ConnectToServerOpts{
 			Token: tkn,
+			Log:   log.Log,
 		})
 		if err != nil {
 			return err
