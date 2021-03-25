@@ -11,13 +11,16 @@ import { gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import ContextMenu from "./ContextMenu";
 import * as images from '../images';
+import { useLocation } from "react-router";
 interface Entry {
-    title: string, link: string
+    title: string, link: string, matches?: RegExp
 }
 
 function MenuItem(entry: Entry) {
+    const location = useLocation();
     let classes = "flex block text-sm font-medium lg:px-3 px-0 py-1.5 rounded-md";
-    if (window.location.pathname.toLowerCase() === entry.link.toLowerCase()) {
+    if (location.pathname.toLowerCase() === entry.link.toLowerCase() ||
+        entry.matches && entry.matches.test(location.pathname.toLowerCase())) {
         classes += " bg-gray-200";
     } else {
         classes += " text-gray-600 hover:bg-gray-100 ";

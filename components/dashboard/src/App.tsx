@@ -75,7 +75,7 @@ function App() {
                             <React.Fragment>
                                 <Route path={["/", "/workspaces"]} exact render={
                                     () => <Workspaces />} />
-                                <Route path="/account" exact component={Account} />
+                                <Route path={["/account", "/settings"]} exact component={Account} />
                                 <Route path={["/integrations", "/access-control"]} exact component={Integrations} />
                                 <Route path="/notifications" exact component={Notifications} />
                                 <Route path="/plans" exact component={Plans} />
@@ -102,7 +102,8 @@ const renderMenu = () => (
         },
         {
             title: 'Settings',
-            link: '/account'
+            link: '/settings',
+            matches: /^(?!.*workspace).*$/
         },
     ]}
         right={[

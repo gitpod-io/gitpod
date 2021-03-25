@@ -7,26 +7,26 @@
 export default [
     {
         title: 'Account',
-        link: '/account'
+        link: ['/account','/settings']
     },
     {
         title: 'Notifications',
-        link: '/notifications'
+        link: ['/notifications']
     },
     {
         title: 'Plans',
-        link: '/plans'
+        link: ['/plans']
     },
     {
         title: 'Variables',
-        link: '/variables'
+        link: ['/variables']
     },
     {
         title: 'Integrations',
-        link: '/integrations'
+        link: ["/integrations", "/access-control"]
     },
     {
         title: 'Preferences',
-        link: '/preferences'
+        link: ['/preferences']
     },
 ];
