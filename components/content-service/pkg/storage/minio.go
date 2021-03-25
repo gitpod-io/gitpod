@@ -175,6 +175,7 @@ func minioEnsureExists(ctx context.Context, client *minio.Client, bucketName str
 }
 
 func (rs *DirectMinIOStorage) download(ctx context.Context, destination string, bkt string, obj string, mappings []archive.IDMapping) (found bool, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "download")
 	span.SetTag("bucket", bkt)
 	span.SetTag("object", obj)
@@ -216,6 +217,7 @@ func (rs *DirectMinIOStorage) Qualify(name string) string {
 
 // Upload takes all files from a local location and uploads it to the remote storage
 func (rs *DirectMinIOStorage) Upload(ctx context.Context, source string, name string, opts ...UploadOption) (bucket, obj string, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "DirectUpload")
 	defer tracing.FinishSpan(span, &err)
 
@@ -249,6 +251,10 @@ func minioBucketName(ownerID string) string {
 	return fmt.Sprintf("gitpod-user-%s", ownerID)
 }
 
+func minioWorkspaceBackupObjectName(workspaceID string, name string) string {
+	return fmt.Sprintf("workspaces/%s/%s", workspaceID, name)
+}
+
 // Bucket provides the bucket name for a particular user
 func (rs *DirectMinIOStorage) Bucket(ownerID string) string {
 	return minioBucketName(ownerID)
@@ -264,7 +270,7 @@ func (rs *DirectMinIOStorage) bucketName() string {
 }
 
 func (rs *DirectMinIOStorage) objectName(name string) string {
-	return fmt.Sprintf("workspaces/%s/%s", rs.WorkspaceName, name)
+	return minioWorkspaceBackupObjectName(rs.WorkspaceName, name)
 }
 
 func newPresignedMinIOAccess(cfg MinIOConfig) (*presignedMinIOStorage, error) {
@@ -281,11 +287,12 @@ type presignedMinIOStorage struct {
 }
 
 // EnsureExists makes sure that the remote storage location exists and can be up- or downloaded from
-func (s *presignedMinIOStorage) EnsureExists(ctx context.Context, ownerId string) (err error) {
-	return minioEnsureExists(ctx, s.client, s.Bucket(ownerId), s.MinIOConfig)
+func (s *presignedMinIOStorage) EnsureExists(ctx context.Context, bucket string) (err error) {
+	return minioEnsureExists(ctx, s.client, bucket, s.MinIOConfig)
 }
 
 func (s *presignedMinIOStorage) DiskUsage(ctx context.Context, bucket string, prefix string) (size int64, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.DiskUsage")
 	defer tracing.FinishSpan(span, &err)
 
@@ -346,6 +353,7 @@ func (s *presignedMinIOStorage) SignDownload(ctx context.Context, bucket, object
 
 // SignUpload describes an object for upload
 func (s *presignedMinIOStorage) SignUpload(ctx context.Context, bucket, obj string, options *SignedURLOptions) (info *UploadInfo, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.SignUpload")
 	defer func() {
 		if err == ErrNotFound {
@@ -365,6 +373,7 @@ func (s *presignedMinIOStorage) SignUpload(ctx context.Context, bucket, obj stri
 }
 
 func (s *presignedMinIOStorage) DeleteObject(ctx context.Context, bucket string, query *DeleteObjectQuery) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.DeleteObject")
 	defer tracing.FinishSpan(span, &err)
 
@@ -372,7 +381,7 @@ func (s *presignedMinIOStorage) DeleteObject(ctx context.Context, bucket string,
 		err = s.client.RemoveObject(ctx, bucket, query.Name, minio.RemoveObjectOptions{})
 		if err != nil {
 			log.WithField("bucket", bucket).WithField("object", query.Name).Error(err)
-			return err
+			return translateMinioError(err)
 		}
 		return nil
 	}
@@ -392,7 +401,36 @@ func (s *presignedMinIOStorage) DeleteObject(ctx context.Context, bucket string,
 			log.WithField("bucket", bucket).WithField("object", removeErr.ObjectName).Error(err)
 		}
 	}
-	return err
+	return translateMinioError(err)
+}
+
+// DeleteBucket deletes a bucket
+func (s *presignedMinIOStorage) DeleteBucket(ctx context.Context, bucket string) (err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.DeleteBucket")
+	defer tracing.FinishSpan(span, &err)
+
+	err = s.DeleteObject(ctx, bucket, &DeleteObjectQuery{Prefix: "/"})
+	if err != nil {
+		return translateMinioError(err)
+	}
+
+	err = s.client.RemoveBucket(ctx, bucket)
+	if err != nil {
+		return translateMinioError(err)
+	}
+	return nil
+}
+
+// ObjectHash gets a hash value of an object
+func (s *presignedMinIOStorage) ObjectHash(ctx context.Context, bucket string, obj string) (hash string, err error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "minio.ObjectHash")
+	defer tracing.FinishSpan(span, &err)
+
+	info, err := s.client.StatObject(ctx, bucket, obj, minio.StatObjectOptions{})
+	if err != nil {
+		return "", translateMinioError(err)
+	}
+	return info.ETag, nil
 }
 
 func annotationToAmzMetaHeader(annotation string) string {
@@ -407,6 +445,11 @@ func (s *presignedMinIOStorage) Bucket(ownerID string) string {
 // BlobObject returns a blob's object name
 func (s *presignedMinIOStorage) BlobObject(name string) (string, error) {
 	return blobObjectName(name)
+}
+
+// BackupObject returns a backup's object name that a direct downloader would download
+func (s *presignedMinIOStorage) BackupObject(workspaceID string, name string) string {
+	return minioWorkspaceBackupObjectName(workspaceID, name)
 }
 
 func translateMinioError(err error) error {

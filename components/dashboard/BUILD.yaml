@@ -2,57 +2,23 @@ packages:
   - name: app
     type: yarn
     srcs:
-      - "public/images/**"
-      - "src/**/*.ts"
-      - "src/**/*.tsx"
-      - "src/**/*.css"
-      - "ee/src/**/*.ts"
-      - "ee/src/**/*.tsx"
-      - "ee/src/**/*.css"
-      - "typings/**"
-      - package.json
-      - postinstall.js
-      - webpack.config.js
-      - webpack.entrypoints.js
-      - tsconfig.json
-    deps:
-      - components/gitpod-protocol:lib
-    argdeps:
-      - removeSources
-    env:
-      - REMOVE_SOURCES=${removeSources}
-    config:
-      commands:
-        build: ["yarn", "build-app"]
-      yarnLock: ${coreYarnLockBase}/yarn.lock
-      dontTest: true
-  - name: lib
-    type: yarn
-    srcs:
       - "public/**"
-      - "ee/public/**"
-      - "src/**/*.ts"
-      - "src/**/*.tsx"
+      - "build/**"
+      - "src/**/*.ts*"
       - "src/**/*.css"
-      - "ee/src/**/*.ts"
-      - "ee/src/**/*.tsx"
-      - "ee/src/**/*.css"
+      - "src/**/*.svg"
       - "typings/**"
       - package.json
-      - postinstall.js
-      - webpack.config.js
-      - webpack.entrypoints.js
-      - tsconfig.json
-      - tsconfig.lib.json
+      - tailwind.config.js
+      - tsconfig.*
     deps:
       - components/gitpod-protocol:lib
     config:
-      packaging: library
       commands:
-        build: ["yarn", "build-lib"]
+        build: ["yarn", "build"]
       yarnLock: ${coreYarnLockBase}/yarn.lock
-      tsconfig: tsconfig.lib.json
       dontTest: true
+      packaging: archive
   - name: static
     type: generic
     srcs:
@@ -78,9 +44,9 @@ scripts:
     script: |-
       trap "kill 0" EXIT
       export NODE_OPTIONS='--max-old-space-size=3192'
-      yarn run webpack-dev-server --mode=development &
+      yarn start &
 
       telepresence --swap-deployment dashboard \
                    --method inject-tcp \
-                   --expose 13001:80 \
-                   --run socat TCP-LISTEN:13001,reuseaddr,fork TCP:localhost:3001
+                   --expose 13000:80 \
+                   --run socat TCP-LISTEN:13000,reuseaddr,fork TCP:localhost:3000

@@ -174,16 +174,6 @@ var runCmd = &cobra.Command{
 		defer monitor.Stop()
 		log.Info("workspace monitor is up and running")
 
-		err = (&manager.ConfigmapReconciler{
-			Monitor: monitor,
-			Client:  mgr.GetClient(),
-			Log:     ctrl.Log.WithName("controllers").WithName("Configmap"),
-			Scheme:  mgr.GetScheme(),
-		}).SetupWithManager(mgr)
-		if err != nil {
-			log.WithError(err).Fatal(err, "unable to create controller", "controller", "Configmap")
-		}
-
 		err = (&manager.PodReconciler{
 			Monitor: monitor,
 			Client:  mgr.GetClient(),
@@ -214,6 +204,5 @@ func init() {
 }
 
 var (
-	scheme   = runtime.NewScheme()
-	setupLog = ctrl.Log.WithName("setup")
+	scheme = runtime.NewScheme()
 )

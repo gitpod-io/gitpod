@@ -28,6 +28,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/pprof"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/executor"
 	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
@@ -37,6 +38,8 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
 	daemon "github.com/gitpod-io/gitpod/ws-daemon/api"
+
+	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 )
 
 var (
@@ -54,10 +57,6 @@ func RegisterAdditionalService(services ...RegisterableService) {
 func AddAPIEndpointOpts(opts ...grpc.ServerOption) {
 	apiEndpointOpts = append(apiEndpointOpts, opts...)
 }
-
-const (
-	maxIDEPause = 20 * time.Second
-)
 
 type runOptions struct {
 	Args        []string
@@ -83,9 +82,8 @@ func InNamespace() RunOption {
 
 // The sum of those timeBudget* times has to fit within the terminationGracePeriod of the workspace pod.
 const (
-	timeBudgetIDEShutdown      = 5 * time.Second
-	timeBudgetTeardownCommands = 15 * time.Second
-	timeBudgetDaemonTeardown   = 10 * time.Second
+	timeBudgetIDEShutdown    = 5 * time.Second
+	timeBudgetDaemonTeardown = 10 * time.Second
 )
 
 const (
@@ -165,6 +163,7 @@ func Run(options ...RunOption) {
 		},
 		termMuxSrv,
 		RegistrableTokenService{tokenService},
+		NewNotificationService(),
 		&InfoService{cfg: cfg},
 		&ControlService{portsManager: portMgmt},
 	}
@@ -330,7 +329,8 @@ func reaper(terminatingReaper <-chan bool) {
 			continue
 		}
 
-		pid, err := unix.Wait4(-1, nil, 0, nil)
+		// "pid: 0, options: 0" to follow https://github.com/ramr/go-reaper/issues/11 to make agent-smith work again
+		pid, err := unix.Wait4(0, nil, 0, nil)
 
 		if err == unix.ECHILD {
 			// The calling process does not have any unwaited-for children.
@@ -577,6 +577,13 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 		log.WithError(err).Fatal("cannot start health endpoint")
 	}
 
+	if cfg.DebugEnable {
+		opts = append(opts,
+			grpc.UnaryInterceptor(grpc_logrus.UnaryServerInterceptor(log.Log)),
+			grpc.StreamInterceptor(grpc_logrus.StreamServerInterceptor(log.Log)),
+		)
+	}
+
 	m := cmux.New(l)
 	restMux := grpcruntime.NewServeMux()
 	grpcMux := m.MatchWithWriters(cmux.HTTP2MatchHeaderFieldSendSettings("content-type", "application/grpc"))
@@ -599,6 +606,9 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	routes := http.NewServeMux()
 	routes.Handle("/_supervisor/v1/", http.StripPrefix("/_supervisor", restMux))
 	routes.Handle("/_supervisor/frontend", http.FileServer(http.Dir(cfg.FrontendLocation)))
+	if cfg.DebugEnable {
+		routes.Handle("/_supervisor"+pprof.Path, http.StripPrefix("/_supervisor", pprof.Handler()))
+	}
 	go http.Serve(httpMux, routes)
 
 	go m.Serve()

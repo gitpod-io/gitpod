@@ -57,8 +57,6 @@ type Manager struct {
 	activity     map[string]time.Time
 	activityLock sync.Mutex
 
-	ingressPortAllocator IngressPortAllocator
-
 	wsdaemonPool *grpcpool.Pool
 
 	subscribers    map[string]chan *api.SubscribeResponse
@@ -86,15 +84,10 @@ const (
 	workspaceVolumeName = "vol-this-workspace"
 	// workspaceDir is the path within all containers where workspaceVolume is mounted to
 	workspaceDir = "/workspace"
-	// theiaDir is the path within all containers where theiaVolume is mounted to
-	theiaDir = "/theia"
 	// MarkerLabel is the label by which we identify pods which belong to ws-manager
 	markerLabel = "gpwsman"
 	// headlessLabel marks a workspace as headless
 	headlessLabel = "headless"
-
-	// theiaVersionLabelFmt is the format to produce the label a node has if Theia is available on it in a particular version
-	theiaVersionLabelFmt = "gitpod.io/theia.%s"
 )
 
 const (
@@ -112,21 +105,15 @@ const (
 
 // New creates a new workspace manager
 func New(config Configuration, client client.Client, rawClient kubernetes.Interface, cp *layer.Provider) (*Manager, error) {
-	ingressPortAllocator, err := NewIngressPortAllocator(config.IngressPortAllocator, client, config.Namespace, config.WorkspacePortURLTemplate, config.GitpodHostURL)
-	if err != nil {
-		return nil, xerrors.Errorf("error initializing IngressPortAllocator: %w", err)
-	}
-
 	wsdaemonConnfactory, _ := newWssyncConnectionFactory(config)
 	m := &Manager{
-		Config:               config,
-		Clientset:            client,
-		RawClient:            rawClient,
-		Content:              cp,
-		activity:             make(map[string]time.Time),
-		subscribers:          make(map[string]chan *api.SubscribeResponse),
-		wsdaemonPool:         grpcpool.New(wsdaemonConnfactory),
-		ingressPortAllocator: ingressPortAllocator,
+		Config:       config,
+		Clientset:    client,
+		RawClient:    rawClient,
+		Content:      cp,
+		activity:     make(map[string]time.Time),
+		subscribers:  make(map[string]chan *api.SubscribeResponse),
+		wsdaemonPool: grpcpool.New(wsdaemonConnfactory),
 	}
 	m.metrics = newMetrics(m)
 	m.OnChange = m.onChange
@@ -143,7 +130,6 @@ func Register(grpcServer *grpc.Server, manager *Manager) {
 // to function properly anymore.
 func (m *Manager) Close() {
 	m.wsdaemonPool.Close()
-	m.ingressPortAllocator.Stop()
 }
 
 // StartWorkspace creates a new running workspace within the manager's cluster
@@ -193,28 +179,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	}
 	tracing.LogEvent(span, "pod created")
 
-	// the pod lifecycle independent state is a config map which stores information about a workspace
-	// prior to/beyond a workspace pod's lifetime. These config maps can exist without a pod only for
-	// a limited amount of time to avoid littering our system with obsolete config maps.
-	plisConfigMap := &corev1.ConfigMap{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      getPodLifecycleIndependentCfgMapName(req.Id),
-			Namespace: m.Config.Namespace,
-			Labels:    startContext.Labels,
-			Annotations: map[string]string{
-				workspaceIDAnnotation:   req.Id,
-				servicePrefixAnnotation: getServicePrefix(req),
-			},
-		},
-	}
-	err = m.Clientset.Create(ctx, plisConfigMap)
-	if err != nil {
-		clog.WithError(err).WithField("req", req).Error("was unable to start workspace")
-		return nil, xerrors.Errorf("cannot create workspace's lifecycle independent state: %w", err)
-	}
-	tracing.LogEvent(span, "PLIS config map created")
-
-	// only regular workspaces get a service, the others are fine with just pod and plis
+	// only regular workspaces get a service, the others are fine with just pod
 	okResponse := &api.StartWorkspaceResponse{Url: startContext.WorkspaceURL}
 	if req.Type != api.WorkspaceType_REGULAR {
 		return okResponse, nil
@@ -223,22 +188,11 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	// mandatory Theia service
 	servicePrefix := getServicePrefix(req)
 	theiaServiceName := getTheiaServiceName(servicePrefix)
-	alloc, err := m.ingressPortAllocator.UpdateAllocatedPorts(req.Metadata.MetaId, theiaServiceName, []int{int(startContext.IDEPort)})
-	if err != nil {
-		return nil, err
-	}
-	serializedPorts, err := alloc.Marshal()
-	if err != nil {
-		return nil, err
-	}
 	theiaService := corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      theiaServiceName,
 			Namespace: m.Config.Namespace,
 			Labels:    startContext.Labels,
-			Annotations: map[string]string{
-				ingressPortsAnnotation: string(serializedPorts),
-			},
 		},
 		Spec: corev1.ServiceSpec{
 			Type: corev1.ServiceTypeClusterIP,
@@ -414,20 +368,6 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 	// add a new one.
 	workspaceSpan := opentracing.StartSpan("workspace-stop", opentracing.FollowsFrom(opentracing.SpanFromContext(ctx).Context()))
 	tracing.ApplyOWI(workspaceSpan, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
-	traceID := tracing.GetTraceID(workspaceSpan)
-	err = m.patchPodLifecycleIndependentState(ctx, workspaceID, func(plis *podLifecycleIndependentState) bool {
-		t := time.Now().UTC()
-		status.Phase = api.WorkspacePhase_STOPPING
-		plis.StoppingSince = &t
-		plis.LastPodStatus = status
-		if pod.Status.HostIP != "" {
-			plis.HostIP = pod.Status.HostIP
-		}
-		return true
-	}, addMark(wsk8s.TraceIDAnnotation, traceID))
-	if err != nil {
-		log.WithError(err).Warn("was unable to add new traceID annotation to workspace")
-	}
 
 	servicePrefix, ok := pod.Annotations[servicePrefixAnnotation]
 	if !ok {
@@ -751,42 +691,24 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 			PropagationPolicy: &propagationPolicy,
 		})
 
-		m.ingressPortAllocator.FreeAllocatedPorts(service.Name)
-
 		tracing.LogEvent(span, "port service deleted")
 	} else {
 		// we've made it here which means we need to actually patch the service
 		service.Spec = *spec
 
-		// serialize allocated ports mapping
-		var portsToAllocate []int
 		for _, p := range service.Spec.Ports {
-			portsToAllocate = append(portsToAllocate, int(p.Port))
-		}
-		alloc, err := m.ingressPortAllocator.UpdateAllocatedPorts(metaID, service.Name, portsToAllocate)
-		if err != nil {
-			return nil, xerrors.Errorf("cannot allocate port: %w", err)
-		}
-		serializedPorts, err := alloc.Marshal()
-		if err != nil {
-			return nil, xerrors.Errorf("cannot allocate port: %w", err)
-		}
-		if service.Annotations == nil {
-			service.Annotations = make(map[string]string)
-		}
-		service.Annotations[ingressPortsAnnotation] = string(serializedPorts)
-
-		for _, p := range service.Spec.Ports {
-			ingressPort, _ := alloc.AllocatedPort(int(p.Port))
 			url, err := renderWorkspacePortURL(m.Config.WorkspacePortURLTemplate, portURLContext{
 				Host:          m.Config.GitpodHostURL,
 				ID:            req.Id,
-				IngressPort:   fmt.Sprint(ingressPort),
+				IngressPort:   fmt.Sprint(p.Port),
 				Prefix:        servicePrefix,
 				WorkspacePort: fmt.Sprint(p.Port),
 			})
 			if err != nil {
 				return nil, xerrors.Errorf("cannot render public URL for %d: %w", p.Port, err)
+			}
+			if service.Annotations == nil {
+				service.Annotations = map[string]string{}
 			}
 			service.Annotations[fmt.Sprintf("gitpod/port-url-%d", p.Port)] = url
 		}
@@ -1054,7 +976,6 @@ func (m *Manager) GetWorkspaces(ctx context.Context, req *api.GetWorkspacesReque
 
 // getAllWorkspaceObjects retturns all (possibly incomplete) workspaceObjects of all workspaces this manager is currently aware of.
 // If a workspace has a pod that pod is part of the returned WSO.
-// If a workspace has a PLIS that PLIS is part of the returned WSO.
 func (m *Manager) getAllWorkspaceObjects(ctx context.Context) ([]workspaceObjects, error) {
 	//nolint:ineffassign
 	span, ctx := tracing.FromContext(ctx, "getAllWorkspaceObjects")
@@ -1062,11 +983,6 @@ func (m *Manager) getAllWorkspaceObjects(ctx context.Context) ([]workspaceObject
 
 	var pods corev1.PodList
 	err := m.Clientset.List(ctx, &pods, workspaceObjectListOptions(m.Config.Namespace))
-	if err != nil {
-		return nil, xerrors.Errorf("cannot list workspaces: %w", err)
-	}
-	var plis corev1.ConfigMapList
-	err = m.Clientset.List(ctx, &plis, workspaceObjectListOptions(m.Config.Namespace))
 	if err != nil {
 		return nil, xerrors.Errorf("cannot list workspaces: %w", err)
 	}
@@ -1099,25 +1015,6 @@ func (m *Manager) getAllWorkspaceObjects(ctx context.Context) ([]workspaceObject
 			theiaServiceIndex[getTheiaServiceName(sp)] = wso
 			portServiceIndex[getPortsServiceName(sp)] = wso
 		}
-	}
-	for _, plis := range plis.Items {
-		id, ok := plis.Annotations[workspaceIDAnnotation]
-		if !ok {
-			log.WithField("configmap", plis.Name).Warn("PLIS has no workspace ID")
-			span.LogKV("warning", "PLIS has no workspace ID", "podName", plis.Name)
-			span.SetTag("error", true)
-			continue
-		}
-
-		// don't references to loop variables - they magically change their value
-		pliscopy := plis
-
-		wso, ok := wsoIndex[id]
-		if !ok {
-			wso = &workspaceObjects{}
-			wsoIndex[id] = wso
-		}
-		wso.PLIS = &pliscopy
 	}
 
 	for _, service := range services.Items {

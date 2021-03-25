@@ -9,9 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"mime"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/containerd/containerd/content"
@@ -93,26 +91,12 @@ type blobHandler struct {
 
 func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 	// v2.ErrorCodeBlobUnknown.WithDetail(bh.Digest)
-	span, _ := opentracing.StartSpanFromContext(r.Context(), "getBlob")
-
-	var (
-		acceptTypes []string
-		err         error
-	)
-	for _, acceptHeader := range r.Header["Accept"] {
-		for _, mediaType := range strings.Split(acceptHeader, ",") {
-			if mediaType, _, err = mime.ParseMediaType(mediaType); err != nil {
-				continue
-			}
-
-			acceptTypes = append(acceptTypes, mediaType)
-		}
-	}
+	span, ctx := opentracing.StartSpanFromContext(r.Context(), "getBlob")
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err = func() error {
+	err := func() error {
 		// TODO: rather than download the same manifest over and over again,
 		//       we should add it to the store and try and fetch it from there.
 		//		 Only if the store fetch fails should we attetmpt to download it.
@@ -269,8 +253,6 @@ type configBlobSource struct {
 	Spec           *api.ImageSpec
 	Manifest       *ociv1.Manifest
 	ConfigModifier ConfigModifier
-
-	cfg []byte
 }
 
 func (pbs *configBlobSource) HasBlob(ctx context.Context, spec *api.ImageSpec, dgst digest.Digest) bool {

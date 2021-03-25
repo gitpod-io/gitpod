@@ -524,32 +524,6 @@
       "reportingInstance": ""
     }
   ],
-  "plis": {
-    "metadata": {
-      "name": "plis-79be1e8b-a6de-4572-8627-99ef12303a88",
-      "namespace": "staging-cw-registry",
-      "selfLink": "/api/v1/namespaces/staging-cw-registry/configmaps/plis-79be1e8b-a6de-4572-8627-99ef12303a88",
-      "uid": "282e31e2-d9d0-4e1a-9d8b-2c7789680cf9",
-      "resourceVersion": "23326030",
-      "creationTimestamp": "2020-03-10T14:36:26Z",
-      "labels": {
-        "app": "gitpod",
-        "component": "workspace",
-        "gpwsman": "true",
-        "headless": "false",
-        "metaID": "f29012c4-c6b9-4bd1-9c48-151bdeec6940",
-        "owner": "fed869a7-6e36-49c5-9949-101a4ae80018",
-        "workspaceID": "79be1e8b-a6de-4572-8627-99ef12303a88",
-        "workspaceType": "regular"
-      },
-      "annotations": {
-        "gitpod/id": "79be1e8b-a6de-4572-8627-99ef12303a88",
-        "gitpod/plis": "{\"stoppingSince\":\"2020-03-10T14:36:37.415831245Z\",\"lastPodStatus\":{\"id\":\"79be1e8b-a6de-4572-8627-99ef12303a88\",\"metadata\":{\"owner\":\"fed869a7-6e36-49c5-9949-101a4ae80018\",\"meta_id\":\"f29012c4-c6b9-4bd1-9c48-151bdeec6940\",\"started_at\":{\"seconds\":1583850986}},\"spec\":{\"workspace_image\":\"eu.gcr.io/gitpod-dev/workspace-images:1a978bbc061629eaf0298a6ffde8e9405f3d50349eea21e1160fd17e1afef9c5\",\"url\":\"http://f29012c4-c6b9-4bd1-9c48-151bdeec6940.ws-dev.cw-registry.staging.gitpod-dev.com\",\"timeout\":\"30m\"},\"phase\":5,\"conditions\":{\"service_exists\":1,\"deployed\":1}},\"hostIP\":\"10.132.0.25\"}",
-        "gitpod/servicePrefix": "f29012c4-c6b9-4bd1-9c48-151bdeec6940",
-        "gitpod/traceid": "AAAAAAAAAAB0V4wSNnJHOgENE0li1uAsICK00mGkxEwBAAAAAA=="
-      }
-    }
-  },
   "wso": {
     "pod": {
       "metadata": {

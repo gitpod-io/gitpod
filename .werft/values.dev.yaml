@@ -71,6 +71,8 @@ components:
             env:
             - name: THEIA_RATELIMIT_LOG
               value: "50"
+            - name: SUPERVISOR_DEBUG_ENABLE
+              value: "true"
       prebuild:
         spec:
           containers:
@@ -140,7 +142,7 @@ components:
 
   wsScheduler:
     scaler:
-      enabled: true
+      enabled: false
       controller:
         kind: "constant"
         constant:

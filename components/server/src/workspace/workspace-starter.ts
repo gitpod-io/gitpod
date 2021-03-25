@@ -241,6 +241,18 @@ export class WorkspaceStarter {
             ideImage,
         };
 
+        const ideChoice = user.additionalData?.ideSettings?.defaultIde;
+        if (!!ideChoice) {
+            const mappedImage = this.env.ideImageAliases[ideChoice];
+            if (!!mappedImage) {
+                configuration.ideImage = mappedImage;
+            } else if (this.authService.hasPermission(user, "ide-settings")) {
+                // if the IDE choice isn't one of the preconfiured choices, we assume its the image name.
+                // For now, this feature requires special permissions.
+                configuration.ideImage = ideChoice;
+            }
+        }
+
         let featureFlags: NamedWorkspaceFeatureFlag[] = workspace.config._featureFlags || [];
         featureFlags = featureFlags.concat(this.env.defaultFeatureFlags);
         if (user.featureFlags && user.featureFlags.permanentWSFeatureFlags) {
@@ -251,18 +263,6 @@ export class WorkspaceStarter {
         // Beware: all feature flags we add here are not workspace-persistent feature flags, e.g. no full-workspace backup.
         if (!!user.additionalData?.featurePreview) {
             featureFlags = featureFlags.concat(this.env.previewFeatureFlags.filter(f => !featureFlags.includes(f)));
-
-            const ideChoice = user.additionalData?.ideSettings?.defaultIde;
-            if (!!ideChoice) {
-                const mappedImage = this.env.ideImageAliases[ideChoice];
-                if (!!mappedImage) {
-                    configuration.ideImage = mappedImage;
-                } else if (this.authService.hasPermission(user, "ide-settings")) {
-                    // if the IDE choice isn't one of the preconfiured choices, we assume its the image name.
-                    // For now, this feature requires special permissions.
-                    configuration.ideImage = ideChoice;
-                }
-            }
         }
 
         if (!!featureFlags) {
@@ -494,6 +494,11 @@ export class WorkspaceStarter {
             return ev;
         });
 
+        const contextUrlEnv = new EnvironmentVariable();
+        contextUrlEnv.setName('GITPOD_WORKSPACE_CONTEXT_URL');
+        contextUrlEnv.setValue(workspace.contextURL);
+        envvars.push(contextUrlEnv);
+
         log.debug("Workspace config", workspace.config)
         if (!!workspace.config.tasks) {
             // The task config is interpreted by Theia only, there's little point in transforming it into something
@@ -640,7 +645,7 @@ export class WorkspaceStarter {
 
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspace", subjectID: workspace.id, operations: ["get", "update"]}),
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspaceInstance", subjectID: instance.id, operations: ["get", "update", "delete"]}),
-            "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "snapshot", subjectID: "*", operations: ["create", "get"]}),
+            "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "snapshot", subjectID: ScopedResourceGuard.SNAPSHOT_WORKSPACE_SUBJECT_ID_PREFIX + workspace.id, operations: ["create"]}),
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "gitpodToken", subjectID: "*", operations: ["create"]}),
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "userStorage", subjectID: "*", operations: ["create", "get", "update"]}),
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "token", subjectID: "*", operations: ["get"]}),

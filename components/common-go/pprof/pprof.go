@@ -11,19 +11,17 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
+// http handler path which MUST be used as a prefix to route pprof endpoint
+// since it is hardcoded inside pprof
+const Path = "/debug/pprof/"
+
 // Serve starts a new HTTP server serving pprof endpoints on the given addr
 func Serve(addr string) {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/debug/pprof/", index)
-	mux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-	mux.HandleFunc("/debug/pprof/profile", pprof.Profile)
-	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	mux := Handler()
 
 	log.WithField("addr", addr).Info("serving pprof service")
 	err := http.ListenAndServe(addr, mux)
@@ -32,8 +30,19 @@ func Serve(addr string) {
 	}
 }
 
+// Handler produces the pprof endpoint handler
+func Handler() *http.ServeMux {
+	mux := http.NewServeMux()
+	mux.HandleFunc(Path, index)
+	mux.HandleFunc(Path+"cmdline", pprof.Cmdline)
+	mux.HandleFunc(Path+"profile", pprof.Profile)
+	mux.HandleFunc(Path+"symbol", pprof.Symbol)
+	mux.HandleFunc(Path+"trace", pprof.Trace)
+	return mux
+}
+
 func index(w http.ResponseWriter, r *http.Request) {
-	if strings.HasPrefix(r.URL.Path, "/debug/pprof/") {
+	if strings.HasPrefix(r.URL.Path, Path) {
 		// according to Ian Lance Taylor it's ok to turn on mutex and block profiling
 		// when asking for the actual profile [1]. This handler implements this idea, as
 		// discussed in [2]
@@ -42,7 +51,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 		// [2] https://github.com/golang/go/issues/23401
 
 		var (
-			name          = strings.TrimPrefix(r.URL.Path, "/debug/pprof/")
+			name          = strings.TrimPrefix(r.URL.Path, Path)
 			seconds, serr = strconv.ParseInt(r.URL.Query().Get("seconds"), 10, 64)
 		)
 		if name == "mutex" {
@@ -73,15 +82,4 @@ func index(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pprof.Index(w, r)
-}
-
-func sleep(w http.ResponseWriter, d time.Duration) {
-	var clientGone <-chan bool
-	if cn, ok := w.(http.CloseNotifier); ok {
-		clientGone = cn.CloseNotify()
-	}
-	select {
-	case <-time.After(d):
-	case <-clientGone:
-	}
 }

@@ -2,7 +2,7 @@
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 {{ $comp := .Values.components.wsProxy -}}
-{{- if not $comp.disabled -}}
+{{- if and (not $comp.disabled) (.Values.installNetworkPolicies) -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:

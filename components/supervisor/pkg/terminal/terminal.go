@@ -75,7 +75,7 @@ func (m *Mux) Start(cmd *exec.Cmd, options TermOptions) (alias string, err error
 	go func() {
 		term.waitErr = cmd.Wait()
 		close(term.waitDone)
-		m.CloseTerminal(alias, 0*time.Second)
+		_ = m.CloseTerminal(alias, 0*time.Second)
 	}()
 
 	return alias, nil
@@ -218,6 +218,16 @@ func newTerm(pty *os.File, cmd *exec.Cmd, options TermOptions) (*Term, error) {
 
 		waitDone: make(chan struct{}),
 	}
+
+	rawConn, err := pty.SyscallConn()
+	if err != nil {
+		return nil, err
+	}
+
+	rawConn.Control(func(fileFd uintptr) {
+		res.fd = int(fileFd)
+	})
+
 	go io.Copy(res.Stdout, pty)
 	return res, nil
 }
@@ -249,20 +259,24 @@ type Term struct {
 
 	waitErr  error
 	waitDone chan struct{}
+
+	fd int
 }
 
 func (term *Term) GetTitle() (string, error) {
+	var b bytes.Buffer
 	title := term.title
+	b.WriteString(title)
 	command, err := term.resolveForegroundCommand()
 	if title != "" && command != "" {
-		title += ": "
+		b.WriteString(": ")
 	}
-	title += command
-	return title, err
+	b.WriteString(command)
+	return b.String(), err
 }
 
 func (term *Term) resolveForegroundCommand() (string, error) {
-	pgrp, err := unix.IoctlGetInt(int(term.PTY.Fd()), unix.TIOCGPGRP)
+	pgrp, err := unix.IoctlGetInt(term.fd, unix.TIOCGPGRP)
 	if err != nil {
 		return "", err
 	}
@@ -368,7 +382,7 @@ func (mw *multiWriter) Listen() io.ReadCloser {
 
 	recording := mw.recorder.Bytes()
 	go func() {
-		w.Write(recording)
+		_, _ = w.Write(recording)
 
 		// copy bytes from channel to writer.
 		// Note: we close the writer independently of the write operation s.t. we don't
@@ -380,7 +394,7 @@ func (mw *multiWriter) Listen() io.ReadCloser {
 				err = io.ErrShortWrite
 			}
 			if err != nil {
-				res.CloseWithError(err)
+				_ = res.CloseWithError(err)
 			}
 		}
 	}()
@@ -453,10 +467,3 @@ func (mw *multiWriter) ListenerCount() int {
 
 	return len(mw.listener)
 }
-
-type opCloser struct {
-	io.Reader
-	Op func() error
-}
-
-func (c *opCloser) Close() error { return c.Op() }

@@ -176,6 +176,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         // we might want to share that in the future, but for the time being there's no need
         delete (res.configuration);
         // internal operation detail
+        // @ts-ignore
         delete (res.workspaceImage);
 
         return res;

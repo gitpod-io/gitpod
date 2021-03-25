@@ -4,7 +4,7 @@
 
 FROM gitpod/workspace-full-vnc:latest
 
-ENV TRIGGER_REBUILD 5
+ENV TRIGGER_REBUILD 8
 
 USER root
 
@@ -66,12 +66,16 @@ RUN cd /usr/bin && curl -fsSL https://github.com/csweichel/werft/releases/downlo
 # yq - jq for YAML files
 RUN cd /usr/bin && curl -fsSL https://github.com/mikefarah/yq/releases/download/2.4.0/yq_linux_amd64 > yq && chmod +x yq
 
+# release helper
+RUN cd /usr/bin && curl -fsSL https://github.com/c4milo/github-release/releases/download/v1.1.0/github-release_v1.1.0_linux_amd64.tar.gz | tar xz
+
 ### Protobuf
 RUN set -ex \
     && tmpdir=$(mktemp -d) \
-    && curl -fsSL -o $tmpdir/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v3.7.1/protoc-3.7.1-linux-x86_64.zip \
+    && curl -fsSL -o $tmpdir/protoc.zip https://github.com/protocolbuffers/protobuf/releases/download/v3.15.5/protoc-3.15.5-linux-x86_64.zip \
     && mkdir -p /usr/lib/protoc && cd /usr/lib/protoc && unzip $tmpdir/protoc.zip \
-    && chmod -R 755 /usr/lib/protoc/include/google \
+    && chmod -R o+r+x /usr/lib/protoc/include \
+    && chmod -R +x /usr/lib/protoc/bin \
     && ln -s /usr/lib/protoc/bin/* /usr/bin \
     && rm -rf $tmpdir
 
@@ -84,7 +88,8 @@ RUN curl -fsSL https://packagecloud.io/datawireio/telepresence/gpgkey | apt-key 
         iproute2 \
         iptables \
         net-tools \
-        telepresence=0.94
+        socat \
+        telepresence=0.109
 
 ### Toxiproxy CLI
 RUN curl -fsSL -o /usr/bin/toxiproxy https://github.com/Shopify/toxiproxy/releases/download/v2.1.4/toxiproxy-cli-linux-amd64 \
@@ -101,9 +106,7 @@ USER gitpod
 # Fix node version we develop against
 ARG GITPOD_NODE_VERSION=12.18.3
 RUN bash -c ". .nvm/nvm.sh \
-        && OLD_NODE=\$(node --version) \
         && nvm install $GITPOD_NODE_VERSION \
-        && nvm uninstall \$OLD_NODE || : \
         && npm install -g typescript yarn"
 ENV PATH=/home/gitpod/.nvm/versions/node/v${GITPOD_NODE_VERSION}/bin:$PATH
 

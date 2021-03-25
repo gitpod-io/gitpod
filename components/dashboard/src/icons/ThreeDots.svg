@@ -1,0 +1,7 @@
+<svg width="24px" height="24px" viewBox="0 0 24 24" id="three-dots" xmlns="http://www.w3.org/2000/svg">
+  <g transform="translate(24) rotate(90)" fill="#555">
+    <circle cx="1" cy="1" r="2" transform="translate(5 11)" stroke-width="0.5"/>
+    <circle cx="1" cy="1" r="2" transform="translate(11 11)" stroke-width="0.5"/>
+    <circle cx="1" cy="1" r="2" transform="translate(17 11)" stroke-width="0.5"/>
+  </g>
+</svg>

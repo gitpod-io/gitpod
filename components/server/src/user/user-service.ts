@@ -112,7 +112,7 @@ export class UserService {
     }
 
     private cachedIsFirstUser: boolean | undefined = undefined;
-    public async createUser({identity, token, userUpdate }: CreateUserParams): Promise<User> {
+    public async createUser({ identity, token, userUpdate }: CreateUserParams): Promise<User> {
         log.debug('Creating new user.', { identity, 'login-flow': true });
 
         const prevIsFirstUser = this.cachedIsFirstUser;
@@ -166,27 +166,27 @@ export class UserService {
     }
 
     async checkTermsAcceptanceRequired(params: CheckTermsParams): Promise<boolean> {
-        // todo@alex: clarify if this would be a loophole for Gitpod SH.
-        // if (params.config.requireTOS === false) {
-        //     // AuthProvider config might disable terms acceptance
-        //     return false;
+        // // todo@alex: clarify if this would be a loophole for Gitpod SH.
+        // // if (params.config.requireTOS === false) {
+        // //     // AuthProvider config might disable terms acceptance
+        // //     return false;
+        // // }
+
+        // const { user } = params;
+        // if (!user) {
+        //     const userCount = await this.userDb.getUserCount();
+        //     if (userCount === 0) {
+        //         // the very first user, which will become admin, needs to accept the terms. always.
+        //         return true;
+        //     }
         // }
 
-        const { user } = params;
-        if (!user) {
-            const userCount = await this.userDb.getUserCount();
-            if (userCount === 0) {
-                // the very first user, which will become admin, needs to accept the terms. always.
-                return true;
-            }
-        }
+        // // admin users need to accept the terms.
+        // if (user && user.rolesOrPermissions && user.rolesOrPermissions.some(r => r === "admin")) {
+        //     return (await this.checkTermsAccepted(user)) === false;
+        // }
 
-        // admin users need to accept the terms.
-        if (user && user.rolesOrPermissions && user.rolesOrPermissions.some(r => r === "admin")) {
-            return (await this.checkTermsAccepted(user)) === false;
-        }
-
-        // non-admin users won't need to accept the terms.
+        // // non-admin users won't need to accept the terms.
         return false;
     }
 

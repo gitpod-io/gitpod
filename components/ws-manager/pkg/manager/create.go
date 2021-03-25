@@ -16,10 +16,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	"github.com/imdario/mergo"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
+	"google.golang.org/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -217,6 +217,11 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create workspace container: %w", err)
 	}
+
+	// Beware: this allows setuid binaries in the workspace - supervisor needs to set no_new_privs now.
+	// However: the whole user workload now runs in a user namespace, which makes this acceptable.
+	workspaceContainer.SecurityContext.AllowPrivilegeEscalation = &boolTrue
+
 	workspaceVolume, err := m.createWorkspaceVolumes(startContext)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create workspace volumes: %w", err)
@@ -275,9 +280,11 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		ownerTokenAnnotation:                 startContext.OwnerToken,
 		wsk8s.TraceIDAnnotation:              startContext.TraceID,
 		wsk8s.RequiredNodeServicesAnnotation: "ws-daemon,registry-facade",
-		// TODO(cw): once userns workspaces become standard, set this to m.Config.SeccompProfile.
-		//           Until then, the custom seccomp profile isn't suitable for workspaces.
-		"seccomp.security.alpha.kubernetes.io/pod": "runtime/default",
+		// TODO(cw): post Kubernetes 1.19 use GA form for settings those profiles
+		"container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
+		// We're using a custom seccomp profile for user namespaces to allow clone, mount and chroot.
+		// Those syscalls don't make much sense in a non-userns setting, where we default to runtime/default using the PodSecurityPolicy.
+		"seccomp.security.alpha.kubernetes.io/pod": m.Config.SeccompProfile,
 	}
 	if req.Spec.Timeout != "" {
 		_, err := time.ParseDuration(req.Spec.Timeout)
@@ -293,6 +300,15 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	// Memory and Disk pressure are no reason to stop a workspace - instead of stopping a workspace
 	// we'd rather wait things out or gracefully fail the workspace ourselves.
 	var perssureToleranceSeconds int64 = 30
+
+	// Mounting /dev/net/tun should be fine security-wise, because:
+	//   - the TAP driver documentation says so (see https://www.kernel.org/doc/Documentation/networking/tuntap.txt)
+	//   - systemd's nspawn does the same thing (if it's good enough for them, it's good enough for us)
+	var (
+		devType          = corev1.HostPathFile
+		hostPathOrCreate = corev1.HostPathDirectoryOrCreate
+		daemonVolumeName = "daemon-mount"
+	)
 
 	pod := corev1.Pod{
 		ObjectMeta: metav1.ObjectMeta{
@@ -312,6 +328,24 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			RestartPolicy: corev1.RestartPolicyNever,
 			Volumes: []corev1.Volume{
 				workspaceVolume,
+				{
+					Name: "dev-net-tun",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/dev/net/tun",
+							Type: &devType,
+						},
+					},
+				},
+				{
+					Name: daemonVolumeName,
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: filepath.Join(m.Config.WorkspaceHostPath, startContext.Request.Id+"-daemon"),
+							Type: &hostPathOrCreate,
+						},
+					},
+				},
 			},
 			Tolerations: []corev1.Toleration{
 				{
@@ -344,64 +378,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		ffidx[feature] = struct{}{}
 
 		switch feature {
-		case api.WorkspaceFeatureFlag_USER_NAMESPACE:
-			// Beware: this allows setuid binaries in the workspace - supervisor needs to set no_new_privs now.
-			// However: the whole user workload now runs in a user namespace, which makes this acceptable.
-			workspaceContainer.SecurityContext.AllowPrivilegeEscalation = &boolTrue
-			pod.Annotations[withUsernamespaceAnnotation] = "true"
-			// TODO(cw): post Kubernetes 1.19 use GA form for settings those profiles
-			pod.Annotations["container.apparmor.security.beta.kubernetes.io/workspace"] = "unconfined"
-			// We're using a custom seccomp profile for user namespaces to allow clone, mount and chroot.
-			// Those syscalls don't make much sense in a non-userns setting, where we default to runtime/default using the PodSecurityPolicy.
-			pod.Annotations["seccomp.security.alpha.kubernetes.io/pod"] = m.Config.SeccompProfile
-			// Mounting /dev/net/tun should be fine security-wise, because:
-			//   - the TAP driver documentation says so (see https://www.kernel.org/doc/Documentation/networking/tuntap.txt)
-			//   - systemd's nspawn does the same thing (if it's good enough for them, it's good enough for us)
-			var (
-				devType          = corev1.HostPathFile
-				hostPathOrCreate = corev1.HostPathDirectoryOrCreate
-				daemonVolumeName = "daemon-mount"
-				mountPropagation = corev1.MountPropagationHostToContainer
-			)
-			pod.Spec.Volumes = append(pod.Spec.Volumes,
-				corev1.Volume{
-					Name: "dev-net-tun",
-					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: "/dev/net/tun",
-							Type: &devType,
-						},
-					},
-				},
-				corev1.Volume{
-					Name: daemonVolumeName,
-					VolumeSource: corev1.VolumeSource{
-						HostPath: &corev1.HostPathVolumeSource{
-							Path: filepath.Join(m.Config.WorkspaceHostPath, startContext.Request.Id+"-daemon"),
-							Type: &hostPathOrCreate,
-						},
-					},
-				},
-			)
-			for i, c := range pod.Spec.Containers {
-				if c.Name != "workspace" {
-					continue
-				}
-
-				pod.Spec.Containers[i].VolumeMounts = append(c.VolumeMounts,
-					corev1.VolumeMount{
-						MountPath: "/dev/net/tun",
-						Name:      "dev-net-tun",
-					},
-					corev1.VolumeMount{
-						MountPath:        "/.workspace",
-						Name:             daemonVolumeName,
-						MountPropagation: &mountPropagation,
-					},
-				)
-				pod.Spec.Containers[i].Command = []string{"/.supervisor/workspacekit", "ring0"}
-				break
-			}
 		case api.WorkspaceFeatureFlag_FULL_WORKSPACE_BACKUP:
 			removeVolume(&pod, workspaceVolumeName)
 			pod.Labels[fullWorkspaceBackupAnnotation] = "true"
@@ -469,7 +445,7 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 	mountPropagation := corev1.MountPropagationHostToContainer
 
 	var (
-		command        = []string{"/.supervisor/supervisor", "run"}
+		command        = []string{"/.supervisor/workspacekit", "ring0"}
 		readinessProbe = &corev1.Probe{
 			Handler: corev1.Handler{
 				HTTPGet: &corev1.HTTPGetAction{
@@ -514,6 +490,15 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 				ReadOnly:         false,
 				MountPropagation: &mountPropagation,
 			},
+			{
+				MountPath: "/dev/net/tun",
+				Name:      "dev-net-tun",
+			},
+			{
+				MountPath:        "/.workspace",
+				Name:             "daemon-mount",
+				MountPropagation: &mountPropagation,
+			},
 		},
 		ReadinessProbe:           readinessProbe,
 		Env:                      env,
@@ -521,7 +506,6 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 	}, nil
 }
-
 func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext) ([]corev1.EnvVar, error) {
 	spec := startContext.Request.Spec
 
@@ -553,7 +537,7 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	// User-defined env vars (i.e. those coming from the request)
 	if spec.Envvars != nil {
 		for _, e := range spec.Envvars {
-			if e.Name == "GITPOD_TASKS" || e.Name == "GITPOD_RESOLVED_EXTENSIONS" || e.Name == "GITPOD_EXTERNAL_EXTENSIONS" {
+			if e.Name == "GITPOD_WORKSPACE_CONTEXT_URL" || e.Name == "GITPOD_TASKS" || e.Name == "GITPOD_RESOLVED_EXTENSIONS" || e.Name == "GITPOD_EXTERNAL_EXTENSIONS" {
 				result = append(result, corev1.EnvVar{Name: e.Name, Value: e.Value})
 				continue
 			} else if strings.HasPrefix(e.Name, "GITPOD_") {
@@ -649,22 +633,6 @@ func (m *Manager) createDefaultSecurityContext() (*corev1.SecurityContext, error
 func (m *Manager) createPortsService(workspaceID string, metaID string, servicePrefix string, ports []*api.PortSpec) (*corev1.Service, error) {
 	annotations := make(map[string]string)
 
-	// allocate ports
-	serviceName := getPortsServiceName(servicePrefix)
-	var portsToAllocate []int
-	for _, p := range ports {
-		portsToAllocate = append(portsToAllocate, int(p.Port))
-	}
-	alloc, err := m.ingressPortAllocator.UpdateAllocatedPorts(metaID, serviceName, portsToAllocate)
-	if err != nil {
-		return nil, err
-	}
-	serializedPorts, err := alloc.Marshal()
-	if err != nil {
-		return nil, err
-	}
-	annotations[ingressPortsAnnotation] = string(serializedPorts)
-
 	// create service ports
 	servicePorts := make([]corev1.ServicePort, len(ports))
 	for i, p := range ports {
@@ -677,11 +645,10 @@ func (m *Manager) createPortsService(workspaceID string, metaID string, serviceP
 			servicePorts[i].TargetPort = intstr.FromInt(int(p.Target))
 		}
 
-		ingressPort, _ := alloc.AllocatedPort(int(p.Port))
 		url, err := renderWorkspacePortURL(m.Config.WorkspacePortURLTemplate, portURLContext{
 			Host:          m.Config.GitpodHostURL,
 			ID:            metaID,
-			IngressPort:   fmt.Sprint(ingressPort),
+			IngressPort:   fmt.Sprint(p.Port),
 			Prefix:        servicePrefix,
 			WorkspacePort: fmt.Sprint(p.Port),
 		})
@@ -691,6 +658,7 @@ func (m *Manager) createPortsService(workspaceID string, metaID string, serviceP
 		annotations[fmt.Sprintf("gitpod/port-url-%d", p.Port)] = url
 	}
 
+	serviceName := getPortsServiceName(servicePrefix)
 	return &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      serviceName,

@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://www.gitpod.io">
-    <img src="https://raw.githubusercontent.com/gitpod-io/gitpod/master/components/dashboard/public/images/gitpod.svg" height="60">
+    <img src="https://raw.githubusercontent.com/gitpod-io/gitpod/master/components/dashboard/src/icons/gitpod.svg" height="60">
     <h3 align="center">Gitpod</h3>
   </a>
   <p align="center">Always ready-to-code.</p>

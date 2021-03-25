@@ -5,7 +5,6 @@ go 1.16
 require (
 	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
 	github.com/go-test/deep v1.0.5
-	github.com/golang/protobuf v1.4.3
 	github.com/google/go-cmp v0.5.2
 	github.com/opentracing/opentracing-go v1.1.0
 	github.com/prometheus/client_golang v1.1.0
@@ -15,10 +14,10 @@ require (
 	github.com/uber/jaeger-client-go v2.16.1-0.20190821210114-30e625686abe+incompatible
 	github.com/uber/jaeger-lib v2.0.0+incompatible // indirect
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
-	google.golang.org/grpc v1.34.0
+	google.golang.org/grpc v1.36.0
+	google.golang.org/protobuf v1.25.0
 	k8s.io/api v0.20.4
 	k8s.io/apimachinery v0.20.4
-	k8s.io/client-go v0.0.0
 )
 
 replace k8s.io/api => k8s.io/api v0.20.4

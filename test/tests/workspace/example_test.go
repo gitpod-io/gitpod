@@ -6,17 +6,18 @@ package workspace_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
 	agent "github.com/gitpod-io/gitpod/test/tests/workspace/workspace_agent/api"
 )
 
 func TestWorkspaceInstrumentation(t *testing.T) {
-	it := integration.NewTest(t)
+	it, _ := integration.NewTest(t, 5*time.Minute)
 	defer it.Done()
 
-	nfo := integration.LaunchWorkspaceFromContextURL(it, "github.com/gitpod-io/gitpod")
-	defer integration.DeleteWorkspace(it, nfo.LatestInstance.ID)
+	nfo, stopWs := integration.LaunchWorkspaceFromContextURL(it, "github.com/gitpod-io/gitpod")
+	defer stopWs(true)
 
 	rsa, err := it.Instrument(integration.ComponentWorkspace, "workspace", integration.WithInstanceID(nfo.LatestInstance.ID))
 	if err != nil {
@@ -37,7 +38,7 @@ func TestWorkspaceInstrumentation(t *testing.T) {
 }
 
 func TestLaunchWorkspaceDirectly(t *testing.T) {
-	it := integration.NewTest(t)
+	it, _ := integration.NewTest(t, 5*time.Minute)
 	defer it.Done()
 
 	nfo := integration.LaunchWorkspaceDirectly(it)

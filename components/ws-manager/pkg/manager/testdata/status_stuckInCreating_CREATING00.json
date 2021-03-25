@@ -577,30 +577,6 @@
       "reportingInstance": ""
     }
   ],
-  "plis": {
-    "metadata": {
-      "name": "plis-2513d0b4-3c18-4735-b32e-1bbdead24b78",
-      "namespace": "default",
-      "selfLink": "/api/v1/namespaces/default/configmaps/plis-2513d0b4-3c18-4735-b32e-1bbdead24b78",
-      "uid": "5bfcc355-5893-11ea-a85d-42010a8401f6",
-      "resourceVersion": "65397345",
-      "creationTimestamp": "2020-02-26T12:27:31Z",
-      "labels": {
-        "app": "gitpod",
-        "component": "workspace",
-        "gpwsman": "true",
-        "headless": "false",
-        "metaID": "afccd13d-fc9c-4fd2-a27e-3bd8f4e138f6",
-        "owner": "e9df772d-3e9e-4990-bfce-92d8816fe364",
-        "workspaceID": "2513d0b4-3c18-4735-b32e-1bbdead24b78",
-        "workspaceType": "regular"
-      },
-      "annotations": {
-        "gitpod/id": "2513d0b4-3c18-4735-b32e-1bbdead24b78",
-        "gitpod/servicePrefix": "afccd13d-fc9c-4fd2-a27e-3bd8f4e138f6"
-      }
-    }
-  },
   "wso": {
     "pod": {
       "metadata": {

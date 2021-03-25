@@ -2,7 +2,9 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM node:12.18.3 AS node_installer
+# we use latest major version of Node.js distributed VS Code. (see about dialog in your local VS Code)
+# ideallay we should use exact version, but it has criticla bugs in regards to grpc over http2 streams
+FROM node:12.21.0 AS node_installer
 RUN mkdir -p /ide/node/bin \
     /ide/node/include/node/ \
     /ide/node/lib/node_modules/npm/ \
@@ -28,7 +30,7 @@ RUN sudo apt-get update \
     && sudo apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-ENV GP_CODE_COMMIT e4218ec694e5205d3760afcdc0bd2b08d72c6102
+ENV GP_CODE_COMMIT d1e895baec868644416b80c9ec83556a6a9a3311
 RUN mkdir gp-code \
     && cd gp-code \
     && git init \
@@ -62,3 +64,4 @@ ENV GITPOD_ENV_SET_EDITOR code
 ENV GITPOD_ENV_SET_VISUAL "$GITPOD_ENV_SET_EDITOR"
 ENV GITPOD_ENV_SET_GP_OPEN_EDITOR "$GITPOD_ENV_SET_EDITOR"
 ENV GITPOD_ENV_SET_GIT_EDITOR "$GITPOD_ENV_SET_EDITOR --wait"
+ENV GITPOD_ENV_SET_GP_PREVIEW_BROWSER "code --command gitpod.api.preview"

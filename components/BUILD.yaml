@@ -1,3 +1,7 @@
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
 packages:
   - name: all
     type: generic
@@ -67,9 +71,12 @@ scripts:
       grep -E "^install\/installer" $tmpdir/oss >> $tmpdir/agpl
       grep -v -f $tmpdir/agpl $tmpdir/oss > $tmpdir/mit
 
-      cat $tmpdir/ee   | while read f; do echo "$PWD/../$f"; done | addlicense -s -l gpshf .
-      cat $tmpdir/agpl | while read f; do echo "$PWD/../$f"; done | addlicense -s -l agpl  .
-      cat $tmpdir/mit  | while read f; do echo "$PWD/../$f"; done | addlicense -s -l mit   .
+      # set `export LICENCE_HEADER_CHECK_ONLY=true` to just check if all headers are there (and exit with status code 1 if not)
+      check=$([ "$LICENCE_HEADER_CHECK_ONLY" = true ] && printf "%s" '-check')
+
+      cat $tmpdir/ee   | while read f; do echo "$PWD/../$f"; done | addlicense $check -s -l gpshf . || exit 1
+      cat $tmpdir/agpl | while read f; do echo "$PWD/../$f"; done | addlicense $check -s -l agpl  . || exit 1
+      cat $tmpdir/mit  | while read f; do echo "$PWD/../$f"; done | addlicense $check -s -l mit   . || exit 1
   - name: dejson-log-output
     script: |-
       jq -Rr '. as $line |

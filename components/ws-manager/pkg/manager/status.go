@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -56,19 +56,12 @@ type workspaceObjects struct {
 	TheiaService *corev1.Service `json:"theiaService,omitempty"`
 	PortsService *corev1.Service `json:"portsService,omitempty"`
 	Events       []corev1.Event  `json:"events,omitempty"`
-
-	// PLIS is Pod Lifecycle Independent State which we use to store state if there's no more appropriate place.
-	// This is really a last resort and should only be used if there really is no other means of storing the state.
-	PLIS *corev1.ConfigMap `json:"plis,omitempty"`
 }
 
 // GetOWI produces the owner, workspace, instance tripple that we use for tracing and logging
 func (wso *workspaceObjects) GetOWI() logrus.Fields {
 	if wso.Pod != nil {
 		return wsk8s.GetOWIFromObject(&wso.Pod.ObjectMeta)
-	}
-	if wso.PLIS != nil {
-		return wsk8s.GetOWIFromObject(&wso.PLIS.ObjectMeta)
 	}
 	return logrus.Fields{}
 }
@@ -79,10 +72,6 @@ func (wso *workspaceObjects) IsWorkspaceHeadless() bool {
 		val, ok := wso.Pod.ObjectMeta.Labels[headlessLabel]
 		return ok && val == "true"
 	}
-	if wso.PLIS != nil {
-		val, ok := wso.PLIS.ObjectMeta.Labels[headlessLabel]
-		return ok && val == "true"
-	}
 	return false
 }
 
@@ -90,8 +79,6 @@ func (wso *workspaceObjects) WorkspaceType() (api.WorkspaceType, error) {
 	var meta *metav1.ObjectMeta
 	if wso.Pod != nil {
 		meta = &wso.Pod.ObjectMeta
-	} else if wso.PLIS != nil {
-		meta = &wso.PLIS.ObjectMeta
 	} else {
 		// we don't know anything about this pod - assume it's a regular pod
 		return api.WorkspaceType_REGULAR, xerrors.Errorf("cannot determine pod type")
@@ -128,12 +115,6 @@ func (wso *workspaceObjects) WorkspaceID() (id string, ok bool) {
 			return r, true
 		}
 	}
-	if wso.PLIS != nil {
-		r, ok := wso.PLIS.Annotations[workspaceIDAnnotation]
-		if ok {
-			return r, true
-		}
-	}
 
 	return "", false
 }
@@ -155,9 +136,6 @@ func (wso *workspaceObjects) WasEverReady() (res bool) {
 	if wso.Pod != nil {
 		return check(wso.Pod.Annotations)
 	}
-	if wso.PLIS != nil {
-		return check(wso.PLIS.Annotations)
-	}
 
 	// We assume the pod was ready by default, even if we have nothing to show for it.
 	// The real world has shown that this produces the more favorable failure modes.
@@ -168,12 +146,6 @@ func (wso *workspaceObjects) WasEverReady() (res bool) {
 func (wso *workspaceObjects) HostIP() string {
 	if wso.Pod != nil {
 		return wso.Pod.Status.HostIP
-	}
-	if wso.PLIS != nil {
-		plis, _ := unmarshalPodLifecycleIndependentState(wso.PLIS)
-		if plis != nil {
-			return plis.HostIP
-		}
 	}
 	return ""
 }
@@ -190,34 +162,14 @@ func (m *Manager) getWorkspaceObjects(ctx context.Context, pod *corev1.Pod) (*wo
 // completeWorkspaceObjects finds the remaining Kubernetes objects based on the pod description
 // or pod lifecycle indepedent state.
 func (m *Manager) completeWorkspaceObjects(ctx context.Context, wso *workspaceObjects) error {
-	if wso.Pod == nil && wso.PLIS == nil {
-		return xerrors.Errorf("completeWorkspaceObjects: need either pod or lifecycle independent state")
-	}
-
-	// find pod if we're working on PLIS alone so far
 	if wso.Pod == nil {
-		workspaceID, ok := wso.PLIS.ObjectMeta.Annotations[workspaceIDAnnotation]
-		if !ok {
-			return xerrors.Errorf("cannot find %s annotation on %s", workspaceIDAnnotation, wso.PLIS.Name)
-		}
-
-		pod, err := m.findWorkspacePod(ctx, workspaceID)
-		if err == nil {
-			wso.Pod = pod
-		}
-
-		if !isKubernetesObjNotFoundError(err) && err != nil {
-			return xerrors.Errorf("completeWorkspaceObjects: %w", err)
-		}
+		return xerrors.Errorf("completeWorkspaceObjects: need either pod or lifecycle independent state")
 	}
 
 	// find our service prefix to see if the services still exist
 	servicePrefix := ""
 	if wso.Pod != nil {
 		servicePrefix = wso.Pod.Annotations[servicePrefixAnnotation]
-	}
-	if servicePrefix == "" && wso.PLIS != nil {
-		servicePrefix = wso.PLIS.Annotations[servicePrefixAnnotation]
 	}
 	if servicePrefix == "" {
 		return xerrors.Errorf("completeWorkspaceObjects: no service prefix found")
@@ -258,27 +210,7 @@ func (m *Manager) completeWorkspaceObjects(ctx context.Context, wso *workspaceOb
 		}
 	}
 
-	// if we don't have PLIS but a pod, try and find the PLIS
-	if wso.PLIS == nil {
-		workspaceID, ok := wso.Pod.Annotations[workspaceIDAnnotation]
-		if !ok {
-			return fmt.Errorf("cannot act on pod %s: has no %s annotation", wso.Pod.Name, workspaceIDAnnotation)
-		}
-
-		var plis corev1.ConfigMap
-		err := m.Clientset.Get(ctx, types.NamespacedName{Namespace: m.Config.Namespace, Name: getPodLifecycleIndependentCfgMapName(workspaceID)}, &plis)
-		if !isKubernetesObjNotFoundError(err) && err != nil {
-			return xerrors.Errorf("completeWorkspaceObjects: %w", err)
-		}
-
-		wso.PLIS = &plis
-	}
-
 	return nil
-}
-
-func getPodLifecycleIndependentCfgMapName(workspaceID string) string {
-	return fmt.Sprintf("plis-%s", workspaceID)
 }
 
 func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus, error) {
@@ -289,106 +221,83 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 
 	var status *api.WorkspaceStatus
 	if wso.Pod == nil {
-		// Status computation depends heavily on the workspace pod, as that pod contains the better part of our
-		// configuration and status. It is possible that we do not have a pod yet/anymore and have to rely on the
-		// pod lifecycle independent state to come up with our status.
-		//
-		// In that case we fall back to some reduced status computation which uses the PLIS only.
+		return nil, xerrors.Errorf("need pod to compute status")
+	}
 
-		var err error
-		status, err = m.getWorkspaceStatusFromPLIS(wso)
+	// we have a workspace pod - use that to compute the status from scratch
+	workspaceContainer := getContainer(wso.Pod, "workspace")
+	if workspaceContainer == nil {
+		return nil, xerrors.Errorf("workspace pod for %s is degenerate - does not have workspace container", id)
+	}
+
+	wsurl, ok := wso.Pod.Annotations[workspaceURLAnnotation]
+	if !ok {
+		return nil, xerrors.Errorf("pod %s has no %s annotation", wso.Pod.Name, workspaceURLAnnotation)
+	}
+
+	tpe, err := wso.WorkspaceType()
+	if err != nil {
+		return nil, err
+	}
+
+	var timeout string
+	if t := m.Config.Timeouts.RegularWorkspace; t > 0 {
+		timeout = t.String()
+	}
+	if v, ok := wso.Pod.Annotations[customTimeoutAnnotation]; ok {
+		timeout = v
+	}
+
+	var (
+		wsImage  = workspaceContainer.Image
+		ideImage string
+	)
+	if ispec, ok := wso.Pod.Annotations[workspaceImageSpecAnnotation]; ok {
+		spec, err := regapi.ImageSpecFromBase64(ispec)
 		if err != nil {
-			return nil, err
+			return nil, xerrors.Errorf("invalid iamge spec: %w", err)
 		}
-	} else {
-		// we have a workspace pod - use that to compute the status from scratch (as compared to pulling it out of the PLIS alone)
-		workspaceContainer := getContainer(wso.Pod, "workspace")
-		if workspaceContainer == nil {
-			return nil, xerrors.Errorf("workspace pod for %s is degenerate - does not have workspace container", id)
-		}
+		wsImage = spec.BaseRef
+		ideImage = spec.IdeRef
+	}
 
-		wsurl, ok := wso.Pod.Annotations[workspaceURLAnnotation]
-		if !ok {
-			return nil, xerrors.Errorf("pod %s has no %s annotation", wso.Pod.Name, workspaceURLAnnotation)
-		}
+	ownerToken, ok := wso.Pod.Annotations[ownerTokenAnnotation]
+	if !ok {
+		log.WithFields(wso.GetOWI()).Warn("pod has no owner token. is this a legacy pod?")
+	}
+	admission := api.AdmissionLevel_ADMIT_OWNER_ONLY
+	if av, ok := api.AdmissionLevel_value[strings.ToUpper(wso.Pod.Annotations[workspaceAdmissionAnnotation])]; ok {
+		admission = api.AdmissionLevel(av)
+	}
 
-		tpe, err := wso.WorkspaceType()
-		if err != nil {
-			return nil, err
-		}
+	status = &api.WorkspaceStatus{
+		Id:       id,
+		Metadata: getWorkspaceMetadata(wso.Pod),
+		Spec: &api.WorkspaceSpec{
+			Headless:       wso.IsWorkspaceHeadless(),
+			WorkspaceImage: wsImage,
+			IdeImage:       ideImage,
+			Url:            wsurl,
+			Type:           tpe,
+			Timeout:        timeout,
+		},
+		Conditions: &api.WorkspaceConditions{
+			Snapshot: wso.Pod.Annotations[workspaceSnapshotAnnotation],
+		},
+		Runtime: &api.WorkspaceRuntimeInfo{
+			NodeName: wso.Pod.Spec.NodeName,
+			PodName:  wso.Pod.Name,
+			NodeIp:   wso.Pod.Status.HostIP,
+		},
+		Auth: &api.WorkspaceAuthentication{
+			Admission:  admission,
+			OwnerToken: ownerToken,
+		},
+	}
 
-		var timeout string
-		if t := m.Config.Timeouts.RegularWorkspace; t > 0 {
-			timeout = t.String()
-		}
-		if v, ok := wso.Pod.Annotations[customTimeoutAnnotation]; ok {
-			timeout = v
-		}
-
-		var (
-			wsImage  = workspaceContainer.Image
-			ideImage string
-		)
-		if ispec, ok := wso.Pod.Annotations[workspaceImageSpecAnnotation]; ok {
-			spec, err := regapi.ImageSpecFromBase64(ispec)
-			if err != nil {
-				return nil, xerrors.Errorf("invalid iamge spec: %w", err)
-			}
-			wsImage = spec.BaseRef
-			ideImage = spec.IdeRef
-		}
-
-		ownerToken, ok := wso.Pod.Annotations[ownerTokenAnnotation]
-		if !ok {
-			log.WithFields(wso.GetOWI()).Warn("pod has no owner token. is this a legacy pod?")
-		}
-		admission := api.AdmissionLevel_ADMIT_OWNER_ONLY
-		if av, ok := api.AdmissionLevel_value[strings.ToUpper(wso.Pod.Annotations[workspaceAdmissionAnnotation])]; ok {
-			admission = api.AdmissionLevel(av)
-		}
-
-		status = &api.WorkspaceStatus{
-			Id:       id,
-			Metadata: getWorkspaceMetadata(wso.Pod),
-			Spec: &api.WorkspaceSpec{
-				Headless:       wso.IsWorkspaceHeadless(),
-				WorkspaceImage: wsImage,
-				IdeImage:       ideImage,
-				Url:            wsurl,
-				Type:           tpe,
-				Timeout:        timeout,
-			},
-			Conditions: &api.WorkspaceConditions{
-				Snapshot: wso.Pod.Annotations[workspaceSnapshotAnnotation],
-			},
-			Runtime: &api.WorkspaceRuntimeInfo{
-				NodeName: wso.Pod.Spec.NodeName,
-				PodName:  wso.Pod.Name,
-				NodeIp:   wso.Pod.Status.HostIP,
-			},
-			Auth: &api.WorkspaceAuthentication{
-				Admission:  admission,
-				OwnerToken: ownerToken,
-			},
-		}
-
-		// pod first, plis later
-		err = m.extractStatusFromPod(status, wso)
-		if err != nil {
-			return nil, xerrors.Errorf("cannot get workspace status: %w", err)
-		}
-
-		if wso.PLIS != nil {
-			plis, err := unmarshalPodLifecycleIndependentState(wso.PLIS)
-			if err != nil {
-				return nil, xerrors.Errorf("cannot get workspace status: %w", err)
-			}
-
-			err = extractStatusFromPLIS(status, &wso, plis)
-			if err != nil {
-				return nil, xerrors.Errorf("cannot get workspace status: %w", err)
-			}
-		}
+	err = m.extractStatusFromPod(status, wso)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot get workspace status: %w", err)
 	}
 
 	exposedPorts := []*api.PortSpec{}
@@ -441,7 +350,7 @@ func getContainer(pod *corev1.Pod, name string) *corev1.Container {
 
 // getWorkspaceMetadata extracts a workspace's metadata from pod labels
 func getWorkspaceMetadata(pod *corev1.Pod) *api.WorkspaceMetadata {
-	started, _ := ptypes.TimestampProto(pod.CreationTimestamp.Time)
+	started := timestamppb.New(pod.CreationTimestamp.Time)
 	return &api.WorkspaceMetadata{
 		Owner:     pod.ObjectMeta.Labels[wsk8s.OwnerLabel],
 		MetaId:    pod.ObjectMeta.Labels[wsk8s.MetaIDLabel],
@@ -474,6 +383,38 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 			// While the pod is being deleted we do not care or want to know about any failure state.
 			// If the pod got stopped because it failed we will have sent out a Stopping status with a "failure"
 			result.Conditions.Failed = ""
+		}
+
+		if rawDisposalStatus, ok := pod.Annotations[disposalStatusAnnotation]; ok {
+			var ds workspaceDisposalStatus
+			err := json.Unmarshal([]byte(rawDisposalStatus), &ds)
+			if err != nil {
+				return err
+			}
+
+			if ds.BackupComplete {
+				result.Conditions.FinalBackupComplete = api.WorkspaceConditionBool_TRUE
+			}
+			result.Repo = ds.GitStatus
+
+			// if the final backup has failed we need to tell the world (if we haven't done so already)
+			if ds.BackupFailure != "" && !strings.Contains(result.Conditions.Failed, "last backup failed") {
+				if result.Conditions.Failed != "" {
+					result.Conditions.Failed += "; "
+				}
+				result.Conditions.Failed += fmt.Sprintf("last backup failed: %s. Please contact support if you need the workspace data.", ds.BackupFailure)
+			}
+
+			var hasFinalizer bool
+			for _, f := range wso.Pod.Finalizers {
+				if f == gitpodFinalizerName {
+					hasFinalizer = true
+					break
+				}
+			}
+			if !hasFinalizer {
+				result.Phase = api.WorkspacePhase_STOPPED
+			}
 		}
 
 		return nil
@@ -512,10 +453,7 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 			if err != nil {
 				return xerrors.Errorf("cannot parse firstUserActivity: %w", err)
 			}
-			pt, err := ptypes.TimestampProto(t)
-			if err != nil {
-				return xerrors.Errorf("cannot convert firstUserActivity: %w", err)
-			}
+			pt := timestamppb.New(t)
 			result.Conditions.FirstUserActivity = pt
 		}
 
@@ -766,87 +704,62 @@ func (m *Manager) isWorkspaceTimedOut(wso workspaceObjects) (reason string, err 
 		return fmt.Sprintf("workspace timed out after %s took longer than %s", activity, formatDuration(inactivity)), nil
 	}
 
-	if wso.Pod != nil {
-		start := wso.Pod.ObjectMeta.CreationTimestamp.Time
-		lastActivity := m.getWorkspaceActivity(workspaceID)
-		_, isClosed := wso.Pod.Annotations[workspaceClosedAnnotation]
+	start := wso.Pod.ObjectMeta.CreationTimestamp.Time
+	lastActivity := m.getWorkspaceActivity(workspaceID)
+	_, isClosed := wso.Pod.Annotations[workspaceClosedAnnotation]
 
-		switch phase {
-		case api.WorkspacePhase_PENDING:
-			return decide(start, m.Config.Timeouts.Initialization, activityInit)
+	switch phase {
+	case api.WorkspacePhase_PENDING:
+		return decide(start, m.Config.Timeouts.Initialization, activityInit)
 
-		case api.WorkspacePhase_INITIALIZING:
-			return decide(start, m.Config.Timeouts.TotalStartup, activityStartup)
+	case api.WorkspacePhase_INITIALIZING:
+		return decide(start, m.Config.Timeouts.TotalStartup, activityStartup)
 
-		case api.WorkspacePhase_CREATING:
-			activity := activityCreatingContainers
-			if status.Conditions.PullingImages == api.WorkspaceConditionBool_TRUE {
-				activity = activityPullingImages
-			}
-			return decide(start, m.Config.Timeouts.TotalStartup, activity)
-
-		case api.WorkspacePhase_RUNNING:
-			if wso.IsWorkspaceHeadless() {
-				return decide(start, m.Config.Timeouts.HeadlessWorkspace, activityRunningHeadless)
-			} else if lastActivity == nil {
-				// the workspace is up and running, but the user has never produced any activity
-				return decide(start, m.Config.Timeouts.TotalStartup, activityNone)
-			} else if isClosed {
-				return decide(*lastActivity, m.Config.Timeouts.AfterClose, activityClosed)
-			}
-			timeout := m.Config.Timeouts.RegularWorkspace
-			if ctv, ok := wso.Pod.Annotations[customTimeoutAnnotation]; ok {
-				if ct, err := time.ParseDuration(ctv); err != nil {
-					log.WithError(err).WithField("customTimeout", ctv).WithFields(wsk8s.GetOWIFromObject(&wso.Pod.ObjectMeta)).Warn("pod had custom timeout annotation set, but could not parse its value. Defaulting to ws-manager config.")
-					timeout = m.Config.Timeouts.RegularWorkspace
-				} else {
-					timeout = util.Duration(ct)
-				}
-			}
-			return decide(*lastActivity, timeout, activityNone)
-
-		case api.WorkspacePhase_INTERRUPTED:
-			if lastActivity == nil {
-				// the workspace is up and running, but the user has never produced any activity
-				return decide(start, m.Config.Timeouts.Interrupted, activityInterrupted)
-			}
-			return decide(*lastActivity, m.Config.Timeouts.Interrupted, activityInterrupted)
-
-		default:
-			// the only other phases we can be in is stopping and stopped: we leave the stopping timeout to the PLIS branch and don't want to timeout when stopped
-			return "", nil
+	case api.WorkspacePhase_CREATING:
+		activity := activityCreatingContainers
+		if status.Conditions.PullingImages == api.WorkspaceConditionBool_TRUE {
+			activity = activityPullingImages
 		}
-	} else if wso.PLIS != nil {
-		plis, err := unmarshalPodLifecycleIndependentState(wso.PLIS)
-		if err != nil {
-			return "", xerrors.Errorf("cannot determine workspace timeout: %w", err)
-		}
-		if plis == nil {
-			return "", xerrors.Errorf("cannot determine workspace timeout: we have neither pod nor pod lifecycle independent state")
-		}
+		return decide(start, m.Config.Timeouts.TotalStartup, activity)
 
-		switch phase {
-		case api.WorkspacePhase_STOPPING:
-			if plis.StoppingSince == nil {
-				return "", xerrors.Errorf("cannot determine workspace timeout: we don't know when we started stopping")
+	case api.WorkspacePhase_RUNNING:
+		if wso.IsWorkspaceHeadless() {
+			return decide(start, m.Config.Timeouts.HeadlessWorkspace, activityRunningHeadless)
+		} else if lastActivity == nil {
+			// the workspace is up and running, but the user has never produced any activity
+			return decide(start, m.Config.Timeouts.TotalStartup, activityNone)
+		} else if isClosed {
+			return decide(*lastActivity, m.Config.Timeouts.AfterClose, activityClosed)
+		}
+		timeout := m.Config.Timeouts.RegularWorkspace
+		if ctv, ok := wso.Pod.Annotations[customTimeoutAnnotation]; ok {
+			if ct, err := time.ParseDuration(ctv); err != nil {
+				log.WithError(err).WithField("customTimeout", ctv).WithFields(wsk8s.GetOWIFromObject(&wso.Pod.ObjectMeta)).Warn("pod had custom timeout annotation set, but could not parse its value. Defaulting to ws-manager config.")
+				timeout = m.Config.Timeouts.RegularWorkspace
+			} else {
+				timeout = util.Duration(ct)
 			}
-			activity := activityStopping
-			if status.Conditions.FinalBackupComplete != api.WorkspaceConditionBool_TRUE {
-				activity = activityBackup
-			}
-			return decide(*plis.StoppingSince, m.Config.Timeouts.Stopping, activity)
-
-		case api.WorkspacePhase_STOPPED:
-			return "", nil
-
-		default:
-			// if we end up here then somehow we've reached a state where we're neither stopping nor stopped, but also don't
-			// have a pod. Dunno how this could ever happen.
-			log.WithField("wso", wso).Error("cannot determine workspace timeout: we should never get here (TM)")
 		}
+		return decide(*lastActivity, timeout, activityNone)
+
+	case api.WorkspacePhase_INTERRUPTED:
+		if lastActivity == nil {
+			// the workspace is up and running, but the user has never produced any activity
+			return decide(start, m.Config.Timeouts.Interrupted, activityInterrupted)
+		}
+		return decide(*lastActivity, m.Config.Timeouts.Interrupted, activityInterrupted)
+
+	case api.WorkspacePhase_STOPPING:
+		activity := activityStopping
+		if status.Conditions.FinalBackupComplete != api.WorkspaceConditionBool_TRUE {
+			activity = activityBackup
+		}
+		return decide(wso.Pod.DeletionTimestamp.Time, m.Config.Timeouts.Stopping, activity)
+
+	default:
+		// the only other phases we can be in is stopped which is pointless to time out
+		return "", nil
 	}
-
-	return "", xerrors.Errorf("cannot determine workspace timeout: we have neither pod nor pod lifecycle independent state")
 }
 
 // hasNetworkNotReadyEvent determines if a workspace experienced a network outage - now, or any time in the past - based on
@@ -866,68 +779,4 @@ func formatDuration(d time.Duration) string {
 	d -= h * time.Hour
 	m := d / time.Minute
 	return fmt.Sprintf("%02dh%02dm", h, m)
-}
-
-// errNoPLIS is returned by getWorkspaceStatusFromPLIS if the PLIS configMap is present, but
-// does not contain a PLIS annotation.
-var errNoPLIS = xerrors.Errorf("workspace has no pod lifecycle independent state")
-
-// getWorkspaceStatusFromPLIS tries to compute the workspace status from the pod lifecycle independent state alone.
-// For this to work the PLIS must be set and contain the last pod-based status.
-func (m *Manager) getWorkspaceStatusFromPLIS(wso workspaceObjects) (*api.WorkspaceStatus, error) {
-	if wso.PLIS == nil {
-		return nil, xerrors.Errorf("workspace has no pod lifecycle independent state obj")
-	}
-
-	plis, err := unmarshalPodLifecycleIndependentState(wso.PLIS)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot get status from pod lifecycle independent state: %w", err)
-	}
-	if plis == nil {
-		return nil, errNoPLIS
-	}
-
-	if plis.LastPodStatus == nil {
-		return nil, xerrors.Errorf("pod lifecycle independent state does not contain last pod-based status")
-	}
-
-	status := plis.LastPodStatus
-	err = extractStatusFromPLIS(status, &wso, plis)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot get status from pod lifecycle independent state: %w", err)
-	}
-
-	return status, nil
-}
-
-// extractStatusFromPLIS takes the information in the pod independent lifecycle and adds it to the status
-func extractStatusFromPLIS(result *api.WorkspaceStatus, wso *workspaceObjects, plis *podLifecycleIndependentState) error {
-	if plis == nil || wso.PLIS == nil {
-		// no plis => nothing to extract
-		return nil
-	}
-
-	if plis.FinalBackupComplete {
-		result.Conditions.FinalBackupComplete = api.WorkspaceConditionBool_TRUE
-
-		if wso.Pod == nil {
-			// at this point the pod is gone and the final backup is complete, which means the workspace is finally stopped
-			result.Phase = api.WorkspacePhase_STOPPED
-		}
-	}
-
-	// if the final backup has failed we need to tell the world (if we haven't done so already)
-	if plis.FinalBackupFailure != "" && !strings.Contains(result.Conditions.Failed, "last backup failed") {
-		if result.Conditions.Failed != "" {
-			result.Conditions.Failed += "; "
-		}
-		result.Conditions.Failed += fmt.Sprintf("last backup failed: %s. Please contact support if you need the workspace data.", plis.FinalBackupFailure)
-	}
-
-	// if the PLIS has a timeout annotation we must forward that to the conditions
-	if timeout, ok := wso.PLIS.Annotations[workspaceTimedOutAnnotation]; result.Conditions.Timeout == "" && ok {
-		result.Conditions.Timeout = timeout
-	}
-
-	return nil
 }

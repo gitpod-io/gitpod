@@ -7,7 +7,7 @@ package api_test
 import (
 	"testing"
 
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/gitpod-io/gitpod/registry-facade/api"
 )

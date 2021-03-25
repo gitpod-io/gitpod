@@ -27,7 +27,6 @@
                 "gitpod/servicePrefix": "foobarservice",
                 "gitpod/traceid": "",
                 "gitpod/url": "test-foobarservice-gitpod.io",
-                "gitpod/withUsernamespace": "true",
                 "prometheus.io/path": "/metrics",
                 "prometheus.io/port": "23000",
                 "prometheus.io/scrape": "true",

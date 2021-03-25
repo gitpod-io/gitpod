@@ -124,6 +124,8 @@ func (rc *ReconnectingWebsocket) Dial() {
 		case err := <-rc.errCh:
 			log.WithError(err).WithField("url", rc.url).Warn("connection has been closed, reconnecting...")
 			conn.Close()
+
+			time.Sleep(1 * time.Second)
 			conn = rc.connect()
 		}
 	}

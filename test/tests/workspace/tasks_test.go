@@ -44,7 +44,7 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			t.Parallel()
 
-			it := integration.NewTest(t)
+			it, ctx := integration.NewTest(t, 5*time.Minute)
 			defer it.Done()
 
 			addInitTask := func(swr *wsmanapi.StartWorkspaceRequest) error {
@@ -67,9 +67,9 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 			conn := it.API().Supervisor(nfo.Req.Id)
 			statusService := supervisor.NewStatusServiceClient(conn)
 
-			ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
-			defer cancel()
-			resp, err := statusService.TasksStatus(ctx, &supervisor.TasksStatusRequest{Observe: false})
+			tsctx, tscancel := context.WithTimeout(ctx, 60*time.Second)
+			defer tscancel()
+			resp, err := statusService.TasksStatus(tsctx, &supervisor.TasksStatusRequest{Observe: false})
 			if err != nil {
 				t.Fatal(err)
 			}

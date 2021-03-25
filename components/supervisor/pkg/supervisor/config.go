@@ -147,6 +147,9 @@ func (c IDEConfig) Validate() error {
 // WorkspaceConfig is the workspace specific configuration. This config is drawn exclusively
 // from environment variables.
 type WorkspaceConfig struct {
+	// WorkspaceContextURL is an URL for which workspace was created.
+	WorkspaceContextURL string `env:"GITPOD_WORKSPACE_CONTEXT_URL"`
+
 	// IDEPort is the port at which the IDE will need to run on. This is not an IDE config
 	// because Gitpod determines this port, not the IDE.
 	IDEPort int `env:"GITPOD_THEIA_PORT"`
@@ -189,6 +192,9 @@ type WorkspaceConfig struct {
 
 	// GitpodHeadless controls whether the workspace is running headless
 	GitpodHeadless string `env:"GITPOD_HEADLESS"`
+
+	// DebugEnabled controls whether the supervisor debugging facilities (pprof, grpc tracing) shoudl be enabled
+	DebugEnable bool `env:"SUPERVISOR_DEBUG_ENABLE"`
 }
 
 // WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service

@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"os"
 	"os/exec"
 	"strings"
 	"testing"
@@ -47,13 +48,22 @@ func TestTitle(t *testing.T) {
 			mux := NewMux()
 			defer mux.Close()
 
+			tmpWorkdir, err := os.MkdirTemp("", "workdirectory")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer os.RemoveAll(tmpWorkdir)
+
 			terminalService := NewMuxTerminalService(mux)
+			terminalService.DefaultWorkdir = tmpWorkdir
+
 			term, err := terminalService.OpenWithOptions(context.Background(), &api.OpenTerminalRequest{}, TermOptions{
 				Title: test.Title,
 			})
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			if diff := cmp.Diff(test.Default, term.Terminal.Title); diff != "" {
 				t.Errorf("unexpected output (-want +got):\n%s", diff)
 			}
@@ -66,12 +76,20 @@ func TestTitle(t *testing.T) {
 				terminalService.Listen(&api.ListenTerminalRequest{Alias: term.Terminal.Alias}, listener)
 			}()
 
+			// initial event could contain not contain updates
+			time.Sleep(100 * time.Millisecond)
+
 			title := <-titles
 			if diff := cmp.Diff(test.Default, title); diff != "" {
 				t.Errorf("unexpected output (-want +got):\n%s", diff)
 			}
 
 			_, err = terminalService.Write(context.Background(), &api.WriteTerminalRequest{Alias: term.Terminal.Alias, Stdin: []byte(test.Command + "\r\n")})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			_, err = terminalService.Shutdown(context.Background(), &api.ShutdownTerminalRequest{Alias: term.Terminal.Alias})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -241,7 +259,7 @@ func TestTerminals(t *testing.T) {
 			io.Copy(stdoutOutput, terminal.Stdout.Listen())
 
 			expectation := strings.Split(test.Expectation(terminal), "\r\n")
-			actual := strings.Split(string(stdoutOutput.Bytes()), "\r\n")
+			actual := strings.Split(stdoutOutput.String(), "\r\n")
 			if diff := cmp.Diff(expectation, actual); diff != "" {
 				t.Errorf("unexpected output (-want +got):\n%s", diff)
 			}

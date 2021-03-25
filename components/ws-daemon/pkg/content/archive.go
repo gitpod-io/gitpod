@@ -82,7 +82,7 @@ func BuildTarbal(ctx context.Context, src string, dst string, opts ...carchive.T
 
 	_, err = io.Copy(targetOut, tarout)
 	if err != nil {
-		return xerrors.Errorf("cannot write tar file: %w")
+		return xerrors.Errorf("cannot write tar file: %w", err)
 	}
 	if err = fbout.Flush(); err != nil {
 		return xerrors.Errorf("cannot flush tar out stream: %w", err)

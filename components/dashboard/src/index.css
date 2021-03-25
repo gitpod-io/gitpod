@@ -1,0 +1,57 @@
+/**
+ * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    h1 {
+        @apply text-gray-900 font-bold;
+        line-height: 64px;
+        font-size: 48px;
+    }
+    h2 {
+        @apply text-base text-gray-500;
+    }
+    h3 {
+        @apply text-2xl text-gray-800 leading-9 font-semibold;
+    }
+    h4 {
+        @apply pb-2 text-sm font-medium text-gray-600;
+    }
+    p {
+        @apply text-sm text-gray-400;
+    }
+
+    .btn-login {
+        @apply rounded-md border-none bg-gray-100 hover:bg-gray-200 text-gray-500;
+    }
+
+}
+
+@layer components {
+    button {
+        @apply cursor-pointer px-4 py-2 my-auto bg-green-600 hover:bg-green-700 border-2 border-green-800 text-gray-100 text-sm font-medium rounded-md focus:outline-none focus:ring focus:border-blue-300;
+    }
+
+    button:disabled {
+        @apply cursor-default;
+    }
+
+    input[type=text] {
+        @apply text-xs block w-56 text-sm text-gray-600 rounded-md focus:border-gray-300 focus:bg-white focus:ring-0;
+    }
+
+    input[type=text]::placeholder {
+        @apply text-gray-400;
+    }
+
+    input[disabled] {
+        @apply bg-gray-100 border-2 border-gray-300 text-gray-400;
+    }
+
+}

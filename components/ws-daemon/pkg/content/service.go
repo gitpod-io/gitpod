@@ -53,6 +53,7 @@ type WorkspaceExistenceCheck func(instanceID string) bool
 
 // NewWorkspaceService creates a new workspce initialization service, starts housekeeping and the Prometheus integration
 func NewWorkspaceService(ctx context.Context, cfg Config, kubernetesNamespace string, runtime container.Runtime, wec WorkspaceExistenceCheck, uidmapper *iws.Uidmapper, reg prometheus.Registerer) (res *WorkspaceService, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "NewWorkspaceService")
 	defer tracing.FinishSpan(span, &err)
 
@@ -111,6 +112,7 @@ func (s *WorkspaceService) Start() {
 
 // InitWorkspace intialises a new workspace folder in the working area
 func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorkspaceRequest) (resp *api.InitWorkspaceResponse, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "InitWorkspace")
 	tracing.LogRequestSafe(span, req)
 	defer func() {
@@ -213,22 +215,19 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		opts := RunInitializerOpts{
 			Command: s.config.Initializer.Command,
 			Args:    s.config.Initializer.Args,
-			UID:     wsinit.GitpodUID,
-			GID:     wsinit.GitpodGID,
-		}
-		if req.UserNamespaced {
-			opts.IdMappings = []archive.IDMapping{
-				{ContainerID: 0, HostID: wsinit.GitpodUID, Size: 1},
-				{ContainerID: 1, HostID: 100000, Size: 65534},
-			}
 			// This is a bit of a hack as it makes hard assumptions about the nature of the UID mapping.
 			// Also, we cannot do this in wsinit because we're dropping all the privileges that would be
 			// required for this operation.
 			//
 			// With FWB this bit becomes unneccesary.
-			opts.UID = wsinit.GitpodUID + 100000 - 1
-			opts.GID = wsinit.GitpodGID + 100000 - 1
+			UID: (wsinit.GitpodUID + 100000 - 1),
+			GID: (wsinit.GitpodGID + 100000 - 1),
+			IdMappings: []archive.IDMapping{
+				{ContainerID: 0, HostID: wsinit.GitpodUID, Size: 1},
+				{ContainerID: 1, HostID: 100000, Size: 65534},
+			},
 		}
+
 		err = RunInitializer(ctx, workspace.Location, req.Initializer, remoteContent, opts)
 		if err != nil {
 			log.WithError(err).WithField("workspaceId", req.Id).Error("cannot initialize workspace")
@@ -264,7 +263,6 @@ func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest, upperdir strin
 			FullWorkspaceBackup: req.FullWorkspaceBackup,
 			ContentManifest:     req.ContentManifest,
 
-			UserNamespaced:   req.UserNamespaced,
 			ServiceLocDaemon: filepath.Join(s.config.WorkingArea, req.Id+"-daemon"),
 			ServiceLocNode:   filepath.Join(s.config.WorkingAreaNode, req.Id+"-daemon"),
 		}, nil
@@ -276,6 +274,7 @@ func (s *WorkspaceService) createSandbox(ctx context.Context, req *api.InitWorks
 		return
 	}
 
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "createSandbox")
 	defer tracing.FinishSpan(span, &err)
 
@@ -331,6 +330,7 @@ func getCheckoutLocation(req *api.InitWorkspaceRequest) string {
 
 // DisposeWorkspace cleans up a workspace, possibly after taking a final backup
 func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.DisposeWorkspaceRequest) (resp *api.DisposeWorkspaceResponse, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "DisposeWorkspace")
 	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
 	tracing.LogRequestSafe(span, req)
@@ -416,6 +416,7 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 }
 
 func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *session.Workspace, backupName, mfName string) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "uploadWorkspaceContent")
 	defer tracing.FinishSpan(span, &err)
 
@@ -475,7 +476,8 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		}()
 
 		var opts []archive.TarOption
-		if sess.UserNamespaced && !sess.FullWorkspaceBackup {
+		// TODO (aledbf): remove after April release (user namespace is not a feature preview)
+		if !sess.FullWorkspaceBackup && sess.UserNamespaced {
 			mappings := []archive.IDMapping{
 				{ContainerID: 0, HostID: wsinit.GitpodUID, Size: 1},
 				{ContainerID: 1, HostID: 100000, Size: 65534},
@@ -490,8 +492,14 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		if err != nil {
 			return
 		}
-		tmpf.Sync()
-		tmpf.Seek(0, 0)
+		err = tmpf.Sync()
+		if err != nil {
+			return
+		}
+		_, err = tmpf.Seek(0, 0)
+		if err != nil {
+			return
+		}
 		tmpfDigest, err = digest.FromReader(tmpf)
 		if err != nil {
 			return
@@ -602,6 +610,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 }
 
 func retryIfErr(ctx context.Context, attempts int, log *logrus.Entry, op func(ctx context.Context) error) (err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "retryIfErr")
 	defer tracing.FinishSpan(span, &err)
 	for k, v := range log.Data {
@@ -643,6 +652,7 @@ func retryIfErr(ctx context.Context, attempts int, log *logrus.Entry, op func(ct
 
 // WaitForInit waits until a workspace is fully initialized.
 func (s *WorkspaceService) WaitForInit(ctx context.Context, req *api.WaitForInitRequest) (resp *api.WaitForInitResponse, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "WaitForInit")
 	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
 	defer tracing.FinishSpan(span, &err)
@@ -667,6 +677,7 @@ func (s *WorkspaceService) WaitForInit(ctx context.Context, req *api.WaitForInit
 
 // TakeSnapshot creates a backup/snapshot of a workspace
 func (s *WorkspaceService) TakeSnapshot(ctx context.Context, req *api.TakeSnapshotRequest) (res *api.TakeSnapshotResponse, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "TakeSnapshot")
 	span.SetTag("workspace", req.Id)
 	defer tracing.FinishSpan(span, &err)
@@ -816,7 +827,7 @@ func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceEx
 	}
 
 	return map[session.WorkspaceState][]session.WorkspaceLivecycleHook{
-		session.WorkspaceInitializing: {setupWorkspace, iws.ServeWorkspace(uidmapper)},
+		session.WorkspaceInitializing: {setupWorkspace, iws.ServeWorkspace(uidmapper, api.FSShiftMethod(cfg.UserNamespaces.FSShift))},
 		session.WorkspaceReady:        {setupWorkspace, startLiveBackup},
 		session.WorkspaceDisposing:    {iws.StopServingWorkspace},
 	}

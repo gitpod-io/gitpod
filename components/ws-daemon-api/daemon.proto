@@ -2,9 +2,9 @@ syntax = "proto3";
 
 package wsdaemon;
 
-import "content-service-api/initializer.proto";
-
 option go_package = "github.com/gitpod-io/gitpod/ws-daemon/api";
+
+import "content-service-api/initializer.proto";
 
 service WorkspaceContentService {
     // initWorkspace intialises a new workspace folder in the working area
@@ -42,8 +42,8 @@ message InitWorkspaceRequest {
     // This field is ignored if full_workspace_backup is false.
     bytes content_manifest = 5;
 
-    // user_namespaced makes ws-daemon create a mark mount of the container's rootfs in the container's mark mount location.
-    bool user_namespaced = 6;
+    // Was used for user_namespaced
+    reserved 6;
 }
 
 // WorkspaceMetadata is data associated with a workspace that's required for other parts of the system to function

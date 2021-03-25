@@ -8,7 +8,7 @@ import (
 	"encoding/base64"
 	"fmt"
 
-	proto "github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 )
 
 // ToBase64 marshals the image spec using protobuf and encodes it in base64

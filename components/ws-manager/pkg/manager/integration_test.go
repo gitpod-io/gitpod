@@ -69,13 +69,6 @@ func forIntegrationTestGetManager(t *testing.T) *Manager {
 		WorkspaceURLTemplate:     "{{ .ID }}-{{ .Prefix }}-{{ .Host }}",
 		WorkspacePortURLTemplate: "{{ .Host }}:{{ .IngressPort }}",
 		RegistryFacadeHost:       "registry-facade:8080",
-		IngressPortAllocator: &IngressPortAllocatorConfig{
-			IngressRange: IngressPortRange{
-				Start: 10000,
-				End:   11000,
-			},
-			StateResyncInterval: util.Duration(30 * time.Minute),
-		},
 		Container: AllContainerConfiguration{
 			Workspace: ContainerConfiguration{
 				Limits: ResourceConfiguration{
@@ -241,7 +234,7 @@ func ensureIntegrationTestTheiaLabelOnNodes(clientset client.Client, namespace s
 	var nodes corev1.NodeList
 	err = clientset.List(ctx, &nodes,
 		client.InNamespace(namespace),
-		client.MatchingLabelsSelector{selector},
+		client.MatchingLabelsSelector{Selector: selector},
 	)
 
 	if err != nil {

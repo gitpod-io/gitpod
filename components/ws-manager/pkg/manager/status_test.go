@@ -76,24 +76,6 @@ func TestIsWorkspaceTimedout(t *testing.T) {
 
 				fixture.WSO.Pod.ObjectMeta.CreationTimestamp = metav1.Time{Time: time.Now().Add(-dt)}
 			}
-			if fixture.StoppingSinceDelta != "" && fixture.WSO.PLIS != nil {
-				dt, err := time.ParseDuration(fixture.StoppingSinceDelta)
-				if err != nil {
-					t.Errorf("cannot parse fixture's StoppingSinceDelta: %v", err)
-					return nil
-				}
-
-				plis, _ := unmarshalPodLifecycleIndependentState(fixture.WSO.PLIS)
-				if plis != nil {
-					stoppingSince := time.Now().Add(-dt)
-					plis.StoppingSince = &stoppingSince
-					err := marshalPodLifecycleIndependentState(fixture.WSO.PLIS, plis)
-					if err != nil {
-						t.Errorf("cannot re-marshal fixture's pod lifecycle pod lifecycle independent state: %v", err)
-						return nil
-					}
-				}
-			}
 
 			reason, serr := manager.isWorkspaceTimedOut(fixture.WSO)
 			result := gold{Reason: reason}

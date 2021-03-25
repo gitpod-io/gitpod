@@ -603,29 +603,6 @@
       "reportingInstance": ""
     }
   ],
-  "plis": {
-    "metadata": {
-      "name": "plis-4bf2e82d-cdc7-4764-b8ad-6973e3c4a629",
-      "namespace": "staging-cw-gh-2720",
-      "selfLink": "/api/v1/namespaces/staging-cw-gh-2720/configmaps/plis-4bf2e82d-cdc7-4764-b8ad-6973e3c4a629",
-      "uid": "3743f9b7-a6f1-11e9-9f0a-42010a840008",
-      "resourceVersion": "118293108",
-      "creationTimestamp": "2019-07-15T11:10:55Z",
-      "labels": {
-        "app": "gitpod",
-        "component": "workspace",
-        "gpwsman": "true",
-        "headless": "false",
-        "metaID": "f75a430d-331d-4977-a4dc-16939c0752e1",
-        "owner": "5d738d55-c66c-421d-a859-44d8c8ce059a",
-        "workspaceID": "4bf2e82d-cdc7-4764-b8ad-6973e3c4a629"
-      },
-      "annotations": {
-        "gitpod/id": "4bf2e82d-cdc7-4764-b8ad-6973e3c4a629",
-        "gitpod/servicePrefix": "f75a430d-331d-4977-a4dc-16939c0752e1"
-      }
-    }
-  },
   "wso": {
     "pod": {
       "metadata": {

@@ -54,6 +54,7 @@ type Provider struct {
 var errUnsupportedContentType = xerrors.Errorf("unsupported workspace content type")
 
 func (s *Provider) downloadContentManifest(ctx context.Context, bkt, obj string) (manifest *csapi.WorkspaceContentManifest, info *storage.DownloadInfo, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "downloadContentManifest")
 	defer func() {
 		if manifest != nil {

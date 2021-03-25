@@ -40,7 +40,7 @@ will print the URL of a service/server exposed on port 8080.`,
 			return
 		}
 
-		fmt.Println(getWorkspaceURL(port))
+		fmt.Println(GetWorkspaceURL(port))
 	},
 }
 
@@ -48,7 +48,7 @@ func init() {
 	rootCmd.AddCommand(urlCmd)
 }
 
-func getWorkspaceURL(port int) (url string) {
+func GetWorkspaceURL(port int) (url string) {
 	wsurl := os.Getenv("GITPOD_WORKSPACE_URL")
 	if port == 0 {
 		return wsurl

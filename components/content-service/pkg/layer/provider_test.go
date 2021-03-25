@@ -216,7 +216,7 @@ func (*testStorage) BlobObject(name string) (string, error) {
 	return "blobs/" + name, nil
 }
 
-func (s *testStorage) EnsureExists(ctx context.Context, ownerId string) (err error) {
+func (s *testStorage) EnsureExists(ctx context.Context, bucket string) (err error) {
 	return nil
 }
 
@@ -238,6 +238,18 @@ func (s *testStorage) SignUpload(ctx context.Context, bucket, obj string, option
 
 func (s *testStorage) DeleteObject(ctx context.Context, bucket string, query *storage.DeleteObjectQuery) error {
 	return nil
+}
+
+func (s *testStorage) DeleteBucket(ctx context.Context, bucket string) error {
+	return nil
+}
+
+func (*testStorage) BackupObject(workspaceID string, name string) string {
+	return ""
+}
+
+func (*testStorage) ObjectHash(ctx context.Context, bucket string, obj string) (string, error) {
+	return "", nil
 }
 
 type roundTripFunc func(req *http.Request) *http.Response

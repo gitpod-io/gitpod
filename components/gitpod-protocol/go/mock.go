@@ -37,6 +37,20 @@ func (m *MockAPIInterface) EXPECT() *MockAPIInterfaceMockRecorder {
 	return m.recorder
 }
 
+// AdminBlockUser mocks base method
+func (m *MockAPIInterface) AdminBlockUser(ctx context.Context, req *AdminBlockUserRequest) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AdminBlockUser", ctx, req)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AdminBlockUser indicates an expected call of AdminBlockUser
+func (mr *MockAPIInterfaceMockRecorder) AdminBlockUser(ctx, req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AdminBlockUser", reflect.TypeOf((*MockAPIInterface)(nil).AdminBlockUser), ctx, req)
+}
+
 // GetLoggedInUser mocks base method
 func (m *MockAPIInterface) GetLoggedInUser(ctx context.Context) (*User, error) {
 	m.ctrl.T.Helper()

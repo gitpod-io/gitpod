@@ -1,4 +1,7 @@
-{{- if .Values.components.proxy.sslDHParam -}}
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ if .Values.components.proxy.sslDHParam -}}
 apiVersion: v1
 kind: Secret
 metadata:

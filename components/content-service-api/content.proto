@@ -1,0 +1,19 @@
+// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package contentservice;
+
+option go_package = "github.com/gitpod-io/gitpod/content-service/api";
+
+service ContentService {
+    // DeleteUserContent deletes all content associated with a user.
+    rpc DeleteUserContent(DeleteUserContentRequest) returns (DeleteUserContentResponse) {};
+}
+
+message DeleteUserContentRequest {
+    string owner_id = 1;
+}
+message DeleteUserContentResponse {}

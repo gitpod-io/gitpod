@@ -25,6 +25,7 @@ type SnapshotInitializer struct {
 
 // Run downloads a snapshot from a remote storage
 func (s *SnapshotInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "SnapshotInitializer")
 	span.SetTag("snapshot", s.Snapshot)
 	defer tracing.FinishSpan(span, &err)

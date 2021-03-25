@@ -7,18 +7,19 @@
 
 export namespace GitHubScope {
     export const EMAIL = "user:email";
+    export const READ_USER = "read:user";
     export const PUBLIC = "public_repo";
     export const PRIVATE = "repo";
     export const ORGS = "read:org";
     export const WORKFLOW = "workflow";
 
-    export const All = [EMAIL, PUBLIC, PRIVATE, ORGS, WORKFLOW];
+    export const All = [EMAIL, READ_USER, PUBLIC, PRIVATE, ORGS, WORKFLOW];
     export const Requirements = {
         /**
          * Minimal required permission.
          * GitHub's API is not restricted any further.
          */
-        DEFAULT: [EMAIL],
+        DEFAULT: [EMAIL, READ_USER],
 
         PUBLIC_REPO: [PUBLIC],
         PRIVATE_REPO: [PRIVATE],

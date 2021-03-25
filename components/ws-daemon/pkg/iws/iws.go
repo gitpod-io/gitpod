@@ -26,6 +26,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	wsinit "github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
@@ -71,12 +72,8 @@ var (
 )
 
 // ServeWorkspace establishes the IWS server for a workspace
-func ServeWorkspace(uidmapper *Uidmapper) func(ctx context.Context, ws *session.Workspace) error {
+func ServeWorkspace(uidmapper *Uidmapper, fsshift api.FSShiftMethod) func(ctx context.Context, ws *session.Workspace) error {
 	return func(ctx context.Context, ws *session.Workspace) (err error) {
-		if !ws.FullWorkspaceBackup && !ws.UserNamespaced {
-			return nil
-		}
-
 		//nolint:ineffassign
 		span, ctx := opentracing.StartSpanFromContext(ctx, "iws.ServeWorkspace")
 		defer tracing.FinishSpan(span, &err)
@@ -84,6 +81,7 @@ func ServeWorkspace(uidmapper *Uidmapper) func(ctx context.Context, ws *session.
 		helper := &InWorkspaceServiceServer{
 			Uidmapper: uidmapper,
 			Session:   ws,
+			FSShift:   fsshift,
 		}
 		err = helper.Start()
 		if err != nil {
@@ -118,6 +116,7 @@ func StopServingWorkspace(ctx context.Context, ws *session.Workspace) error {
 type InWorkspaceServiceServer struct {
 	Uidmapper *Uidmapper
 	Session   *session.Workspace
+	FSShift   api.FSShiftMethod
 
 	srv  *grpc.Server
 	sckt io.Closer
@@ -177,10 +176,6 @@ func (wbs *InWorkspaceServiceServer) Stop() {
 
 // PrepareForUserNS mounts the workspace's shiftfs mark
 func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *api.PrepareForUserNSRequest) (*api.PrepareForUserNSResponse, error) {
-	if !wbs.Session.UserNamespaced {
-		return nil, status.Error(codes.FailedPrecondition, "not supported for this workspace")
-	}
-
 	rt := wbs.Uidmapper.Runtime
 	if rt == nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "not connected to container runtime")
@@ -203,16 +198,55 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		return nil, status.Errorf(codes.Internal, "cannot find workspace rootfs")
 	}
 
+	log.WithField("type", wbs.FSShift).Debug("FSShift")
+
+	// user namespace support for FUSE landed in Linux 4.18:
+	//   - http://lkml.iu.edu/hypermail/linux/kernel/1806.0/04385.html
+	// Development leading up to this point:
+	//   - https://lists.linuxcontainers.org/pipermail/lxc-devel/2014-July/009797.html
+	//   - https://lists.linuxcontainers.org/pipermail/lxc-users/2014-October/007948.html
 	err = nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
+		c.Args = append(c.Args, "mknod-fuse")
+	})
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("PrepareForUserNS: cannot mknod fuse")
+		return nil, status.Errorf(codes.Internal, "cannot prepare FUSE")
+	}
+
+	_ = os.MkdirAll(filepath.Join(wbs.Session.ServiceLocDaemon, "mark"), 0755)
+	mountpoint := filepath.Join(wbs.Session.ServiceLocNode, "mark")
+
+	if wbs.FSShift == api.FSShiftMethod_FUSE {
+		err = nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
+			// In case of any change in the user mapping, the next line must be updated.
+			mappings := fmt.Sprintf("0:%v:1:1:100000:65534", wsinit.GitpodUID)
+			c.Args = append(c.Args, "mount-fusefs-mark",
+				"--source", rootfs,
+				"--target", mountpoint,
+				"--uidmapping", mappings,
+				"--gidmapping", mappings)
+		})
+		if err != nil {
+			log.WithField("rootfs", rootfs).WithField("mountpoint", mountpoint).WithError(err).Error("cannot mount fusefs mark")
+			return nil, status.Errorf(codes.Internal, "cannot mount fusefs mark")
+		}
+
+		return &api.PrepareForUserNSResponse{
+			FsShift: api.FSShiftMethod_FUSE,
+		}, nil
+	}
+
+	// We cannot use the nsenter syscall here because mount namespaces affect the whole process, not just the current thread.
+	// That's why we resort to exec'ing "nsenter ... mount ...".
+	err = nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "make-shared", "--target", "/")
 	})
 	if err != nil {
 		log.WithField("containerPID", containerPID).WithError(err).Error("cannot make container's rootfs shared")
 		return nil, status.Errorf(codes.Internal, "cannot make container's rootfs shared")
 	}
+	log.WithField("containerPID", containerPID).Info("mount shared")
 
-	_ = os.MkdirAll(filepath.Join(wbs.Session.ServiceLocDaemon, "mark"), 0755)
-	mountpoint := filepath.Join(wbs.Session.ServiceLocNode, "mark")
 	err = nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "mount-shiftfs-mark", "--source", rootfs, "--target", mountpoint)
 	})
@@ -221,15 +255,13 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		return nil, status.Errorf(codes.Internal, "cannot mount shiftfs mark")
 	}
 
-	return &api.PrepareForUserNSResponse{}, nil
+	return &api.PrepareForUserNSResponse{
+		FsShift: api.FSShiftMethod_SHIFTFS,
+	}, nil
 }
 
 // MountProc mounts a proc filesystem
 func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.MountProcRequest) (resp *api.MountProcResponse, err error) {
-	if !wbs.Session.UserNamespaced {
-		return nil, status.Error(codes.FailedPrecondition, "not supported for this workspace")
-	}
-
 	var (
 		reqPID  = req.Pid
 		procPID uint64
@@ -256,17 +288,17 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 
 	containerPID, err := rt.ContainerPID(ctx, wscontainerID)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot find container PID for containerID %v: %w", wscontainerID)
+		return nil, xerrors.Errorf("cannot find container PID for containerID %v: %w", wscontainerID, err)
 	}
 
 	procPID, err = wbs.Uidmapper.findHostPID(containerPID, uint64(req.Pid))
 	if err != nil {
-		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID)
+		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID, err)
 	}
 
 	nodeStaging, err := os.MkdirTemp("", "proc-staging")
 	if err != nil {
-		return nil, xerrors.Errorf("cannot prepare proc staging: %w")
+		return nil, xerrors.Errorf("cannot prepare proc staging: %w", err)
 	}
 	err = nsinsider(wbs.Session.InstanceID, int(procPID), func(c *exec.Cmd) {
 		c.Args = append(c.Args, "mount-proc", "--target", nodeStaging)
@@ -298,10 +330,6 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 
 // MountProc mounts a proc filesystem
 func (wbs *InWorkspaceServiceServer) UmountProc(ctx context.Context, req *api.UmountProcRequest) (resp *api.UmountProcResponse, err error) {
-	if !wbs.Session.UserNamespaced {
-		return nil, status.Error(codes.FailedPrecondition, "not supported for this workspace")
-	}
-
 	var (
 		reqPID  = req.Pid
 		procPID uint64
@@ -328,22 +356,22 @@ func (wbs *InWorkspaceServiceServer) UmountProc(ctx context.Context, req *api.Um
 
 	containerPID, err := rt.ContainerPID(ctx, wscontainerID)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot find container PID for containerID %v: %w", wscontainerID)
+		return nil, xerrors.Errorf("cannot find container PID for containerID %v: %w", wscontainerID, err)
 	}
 
 	procPID, err = wbs.Uidmapper.findHostPID(containerPID, uint64(req.Pid))
 	if err != nil {
-		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID)
+		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID, err)
 	}
 
 	nodeStaging, err := os.MkdirTemp("", "proc-umount")
 	if err != nil {
-		return nil, xerrors.Errorf("cannot prepare proc staging: %w")
+		return nil, xerrors.Errorf("cannot prepare proc staging: %w", err)
 	}
 	scktPath := filepath.Join(nodeStaging, "sckt")
 	l, err := net.Listen("unix", scktPath)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot listen for mountfd: %w")
+		return nil, xerrors.Errorf("cannot listen for mountfd: %w", err)
 	}
 	defer l.Close()
 
@@ -574,10 +602,6 @@ func readonlyPath(path string) error {
 
 // WriteIDMapping writes /proc/.../uid_map and /proc/.../gid_map for a workapce container
 func (wbs *InWorkspaceServiceServer) WriteIDMapping(ctx context.Context, req *api.WriteIDMappingRequest) (*api.WriteIDMappingResponse, error) {
-	if !wbs.Session.UserNamespaced {
-		return nil, status.Error(codes.FailedPrecondition, "not supported for this workspace")
-	}
-
 	cid, err := wbs.Uidmapper.Runtime.WaitForContainer(ctx, wbs.Session.InstanceID)
 	if err != nil {
 		log.WithFields(wbs.Session.OWI()).WithError(err).Error("cannot write ID mapping, because we cannot find the container")
@@ -634,10 +658,6 @@ func (wbs *InWorkspaceServiceServer) performLiveBackup() error {
 }
 
 func (wbs *InWorkspaceServiceServer) unPrepareForUserNS() error {
-	if !wbs.Session.UserNamespaced {
-		return nil
-	}
-
 	mountpoint := filepath.Join(wbs.Session.ServiceLocNode, "mark")
 	err := nsinsider(wbs.Session.InstanceID, 1, func(c *exec.Cmd) {
 		c.Args = append(c.Args, "unmount", "--target", mountpoint)

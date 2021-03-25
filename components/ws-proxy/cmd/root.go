@@ -54,7 +54,7 @@ func init() {
 
 // Config configures this servuce
 type Config struct {
-	Ingress                     IngressConfig                     `json:"ingress"`
+	Ingress                     HostBasedIngressConfig            `json:"ingress"`
 	Proxy                       proxy.Config                      `json:"proxy"`
 	WorkspaceInfoProviderConfig proxy.WorkspaceInfoProviderConfig `json:"workspaceInfoProviderConfig"`
 	PProfAddr                   string                            `json:"pprofAddr"`
@@ -77,53 +77,14 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-// IngressKind names a kind of ingress
-type IngressKind string
-
-const (
-	// HostBasedIngress uses a Host header to determine where a request should go
-	HostBasedIngress IngressKind = "host"
-	// PathAndHostIngress uses the path for Theia routing and the Host header for port routing.
-	PathAndHostIngress IngressKind = "pathAndHost"
-	// PathAndPortIngress uses the path for Theia routing and ports for port routing.
-	PathAndPortIngress IngressKind = "pathAndPort"
-)
-
-// IngressConfig configures the proxies ingress
-type IngressConfig struct {
-	Kind               IngressKind                    `json:"kind"`
-	HostBasedIngress   *HostBasedInressConfig         `json:"host"`
-	PathAndHostIngress *PathAndHostIngressConfig      `json:"pathAndHost"`
-	PathAndPortIngress *PathAndPortBasedIngressConfig `json:"pathAndPort"`
-}
-
-// Validate validates this config
-func (c *IngressConfig) Validate() (err error) {
-	switch c.Kind {
-	case HostBasedIngress:
-		err = c.HostBasedIngress.Validate()
-	case PathAndHostIngress:
-		err = c.PathAndHostIngress.Validate()
-	case PathAndPortIngress:
-		err = c.PathAndPortIngress.Validate()
-	default:
-		return xerrors.Errorf("unknown ingress kind: %s", c.Kind)
-	}
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// HostBasedInressConfig configures the host-based ingress
-type HostBasedInressConfig struct {
+// HostBasedIngressConfig configures the host-based ingress
+type HostBasedIngressConfig struct {
 	Address string `json:"address"`
 	Header  string `json:"header"`
 }
 
 // Validate validates this config
-func (c *HostBasedInressConfig) Validate() error {
+func (c *HostBasedIngressConfig) Validate() error {
 	if c == nil {
 		return xerrors.Errorf("host based ingress config is mandatory")
 	}
@@ -131,57 +92,6 @@ func (c *HostBasedInressConfig) Validate() error {
 		validation.Field(&c.Address, validation.Required),
 		validation.Field(&c.Header, validation.Required),
 	)
-}
-
-// PathAndHostIngressConfig configures path and host based ingress
-type PathAndHostIngressConfig struct {
-	Address    string `json:"address"`
-	Header     string `json:"header"`
-	TrimPrefix string `json:"trimPrefix"`
-}
-
-// Validate validates the configuration to catch issues during startup and not at runtime
-func (c *PathAndHostIngressConfig) Validate() error {
-	if c == nil {
-		return xerrors.Errorf("pathAndHost based ingress config is mandatory")
-	}
-	err := validation.ValidateStruct(c,
-		validation.Field(&c.Address, validation.Required),
-		validation.Field(&c.Header, validation.Required),
-	)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// PathAndPortBasedIngressConfig configures pathAndPort ingress
-type PathAndPortBasedIngressConfig struct {
-	Address    string `json:"address"`
-	TrimPrefix string `json:"trimPrefix"`
-	Start      uint16 `json:"start"`
-	End        uint16 `json:"end"`
-}
-
-// Validate validates the configuration to catch issues during startup and not at runtime
-func (c *PathAndPortBasedIngressConfig) Validate() error {
-	if c == nil {
-		return xerrors.Errorf("pathAndPort based ingress config is mandatory")
-	}
-	err := validation.ValidateStruct(c,
-		validation.Field(&c.Address, validation.Required),
-		validation.Field(&c.Start, validation.Required),
-		validation.Field(&c.End, validation.Required),
-	)
-	if err != nil {
-		return err
-	}
-
-	start, end := c.Start, c.End
-	if start > end {
-		return xerrors.Errorf("invalid port based ingress range: start (%d) must be <= end (%d)", start, end)
-	}
-	return err
 }
 
 // getConfig loads and validates the configuration

@@ -5,7 +5,11 @@
 package main
 
 import (
+	"fmt"
 	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
 	"unsafe"
 
 	cli "github.com/urfave/cli/v2"
@@ -76,6 +80,79 @@ func main() {
 				},
 			},
 			{
+				Name:  "mount-fusefs-mark",
+				Usage: "mounts a fusefs mark",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "source",
+						Required: true,
+					},
+					&cli.StringFlag{
+						Name:     "target",
+						Required: true,
+					},
+					&cli.StringFlag{
+						Name:     "uidmapping",
+						Required: false,
+					},
+					&cli.StringFlag{
+						Name:     "gidmapping",
+						Required: false,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					target := filepath.Clean(c.String("target"))
+					if target == "/tmp" || target == "/" || strings.Contains(target, ",") {
+						return fmt.Errorf("%s cannot be copied up", target)
+					}
+
+					tmp, err := os.MkdirTemp("", "fuse")
+					if err != nil {
+						return err
+					}
+
+					for _, base := range []string{"u", "w"} {
+						dir := filepath.Join(tmp, base)
+						if err := os.MkdirAll(dir, 0755); err != nil {
+							return err
+						}
+					}
+
+					source := filepath.Clean(c.String("source"))
+					args := []string{
+						fmt.Sprintf("lowerdir=%s,upperdir=u,workdir=w", source),
+					}
+
+					if len(c.String("uidmapping")) > 0 {
+						args = append(args, fmt.Sprintf("uidmapping=%v", c.String("uidmapping")))
+					}
+
+					if len(c.String("gidmapping")) > 0 {
+						args = append(args, fmt.Sprintf("gidmapping=%v", c.String("gidmapping")))
+					}
+
+					cmd := exec.Command(
+						fmt.Sprintf("%v/.supervisor/fuse-overlayfs", c.String("source")),
+						"-o",
+						strings.Join(args, ","),
+						"none",
+						target,
+					)
+					cmd.Dir = tmp
+
+					out, err := cmd.CombinedOutput()
+					if err != nil {
+						return fmt.Errorf("fuse-overlayfs (%v) failed: %q\n%v",
+							cmd.Args,
+							string(out),
+							err,
+						)
+					}
+
+					return nil
+				},
+			},
+			{
 				Name:  "mount-shiftfs-mark",
 				Usage: "mounts a shiftfs mark",
 				Flags: []cli.Flag{
@@ -116,6 +193,18 @@ func main() {
 				},
 				Action: func(c *cli.Context) error {
 					return unix.Unmount(c.String("target"), 0)
+				},
+			},
+			{
+				Name:  "mknod-fuse",
+				Usage: "creates /dev/fuse",
+				Action: func(c *cli.Context) error {
+					err := unix.Mknod("/dev/fuse", 0666, int(unix.Mkdev(10, 229)))
+					if err != nil {
+						return err
+					}
+
+					return os.Chmod("/dev/fuse", os.FileMode(0666))
 				},
 			},
 		},
