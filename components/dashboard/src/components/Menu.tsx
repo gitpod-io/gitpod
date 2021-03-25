@@ -78,7 +78,7 @@ function Menu(props: { left: Entry[], right: Entry[] }) {
                     },
                     {
                         title: 'Settings',
-                        href: '/settings',
+                        link: '/settings',
                         separator: true
                     },
                     {
