@@ -4,6 +4,8 @@
 
 FROM openresty/openresty:1.19.3.1-3-alpine
 
+ENV TRIGGER_REBUILD 1
+
 # Debug convenience
 ENV TERM=xterm
 ENV SHELL=/bin/bash
