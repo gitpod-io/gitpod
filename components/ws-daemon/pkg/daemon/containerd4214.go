@@ -11,9 +11,11 @@ import (
 	"time"
 
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/util/retry"
 
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/dispatch"
@@ -112,14 +114,32 @@ func (c *Containerd4214Workaround) ensurePodGetsDeleted(rt container.Runtime, cl
 			continue
 		}
 
+		err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+			ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			pod, err := clientSet.CoreV1().Pods(namespace).Get(ctx, podName, metav1.GetOptions{})
+			if err != nil {
+				return err
+			}
+
+			pod.Annotations[wsk8s.ContainerIsGoneAnnotation] = "true"
+			_, err = clientSet.CoreV1().Pods(namespace).Update(ctx, pod, metav1.UpdateOptions{})
+			return err
+		})
+		if err != nil {
+			log.WithField("attempt", attempt).WithError(err).WithField("containerID", containerID).Warn("cannot mark workspace container as gone")
+			continue
+		}
+
 		ctx, cancel = context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
-		err = clientSet.CoreV1().Pods(namespace).Delete(ctx, podName, *v1.NewDeleteOptions(0))
+		err = clientSet.CoreV1().Pods(namespace).Delete(ctx, podName, *metav1.NewDeleteOptions(0))
 		if err, ok := err.(*k8serr.StatusError); ok && err.ErrStatus.Code == http.StatusNotFound {
 			return nil
 		}
 		if err != nil {
-			log.WithField("attempt", attempt).WithError(err).WithField("contaienrID", containerID).Warn("cannot force-delete orphaned workspace pod")
+			log.WithField("attempt", attempt).WithError(err).WithField("containerID", containerID).Warn("cannot force-delete orphaned workspace pod")
 			continue
 		}
 
