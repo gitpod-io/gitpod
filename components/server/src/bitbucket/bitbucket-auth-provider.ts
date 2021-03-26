@@ -29,7 +29,7 @@ export class BitbucketAuthProvider extends GenericAuthProvider {
     }
 
     /**
-     * Augmented OAuthConfig for BitBucket
+     * Augmented OAuthConfig for Bitbucket
      */
     protected get oauthConfig() {
         const oauth = this.config.oauth!;
