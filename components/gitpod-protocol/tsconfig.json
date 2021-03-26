@@ -13,6 +13,7 @@
         "jsx": "react",
         "lib": [
             "es6",
+            "es2016",
             "dom",
             "esnext.asynciterable"
         ],
@@ -20,7 +21,6 @@
         "declaration": true,
         "declarationMap": true,
         "skipLibCheck": true,
-
         "rootDir": "src",
         "outDir": "lib"
     },
