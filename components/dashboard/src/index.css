@@ -43,7 +43,7 @@
     }
 
     input[type=text] {
-        @apply text-xs block w-56 text-sm text-gray-600 rounded-md focus:border-gray-300 focus:bg-white focus:ring-0;
+        @apply text-xs block w-56 text-sm text-gray-600 rounded-md border-2 border-gray-400 focus:border-gray-500 focus:bg-white focus:ring-0;
     }
 
     input[type=text]::placeholder {
