@@ -108,10 +108,12 @@ export const ABSOLUTE_MAX_USAGE = MAX_PARALLEL_WORKSPACES * 24 * 31;
  *    - Unlimited (35/39)
  *  - v4:
  *    - Professional Open Source (free)
+ *  - v5:
+ *    - Unleashed: rebranded Unlimited
  */
 export namespace Plans {
     /**
-     * THE default plan (v1): 100h hours for public repos
+     * The old default plan (v1): 100h hours for public repos
      */
     export const FREE: Plan = {
         chargebeeId: 'free',
@@ -158,36 +160,36 @@ export namespace Plans {
     };
 
     /**
-     * The 'Student Unlimited' plans were introduced to give students access to the highly-priced unlimited plans.
+     * The 'Student Unleashed' plans were introduced to give students access to the highly-priced unlimited plans.
      */
     export const PROFESSIONAL_STUDENT_EUR: Plan = {
         chargebeeId: 'professional-student-eur',
         type: 'student',
-        name: 'Student Unlimited',
+        name: 'Student Unleashed',
         currency: 'EUR',
         pricePerMonth: 8,
         hoursPerMonth: 'unlimited'
     };
 
     /**
-     * The 'Student Unlimited' plans were introduced to give students access to the highly-priced unlimited plans.
+     * The 'Student Unleashed' plans were introduced to give students access to the highly-priced unlimited plans.
      */
     export const PROFESSIONAL_STUDENT_USD: Plan = {
         chargebeeId: 'professional-student-usd',
         type: 'student',
-        name: 'Student Unlimited',
+        name: 'Student Unleashed',
         currency: 'USD',
         pricePerMonth: 9,
         hoursPerMonth: 'unlimited'
     };
 
     /**
-     * The 'Student Unlimited' plans were introduced to give students access to the highly-priced unlimited plans.
+     * The 'Student Unleashed' plans were introduced to give students access to the highly-priced unlimited plans.
      */
     export const TEAM_PROFESSIONAL_STUDENT_EUR: Plan = {
         chargebeeId: 'team-professional-student-eur',
         type: 'student',
-        name: 'Team Student Unlimited',
+        name: 'Team Student Unleashed',
         team: true,
         currency: 'EUR',
         pricePerMonth: 8,
@@ -195,12 +197,12 @@ export namespace Plans {
     };
 
     /**
-     * The 'Student Unlimited' plans were introduced to give students access to the highly-priced unlimited plans.
+     * The 'Student Unleashed' plans were introduced to give students access to the highly-priced unlimited plans.
      */
     export const TEAM_PROFESSIONAL_STUDENT_USD: Plan = {
         chargebeeId: 'team-professional-student-usd',
         type: 'student',
-        name: 'Team Student Unlimited',
+        name: 'Team Student Unleashed',
         team: true,
         currency: 'USD',
         pricePerMonth: 9,
@@ -263,7 +265,7 @@ export namespace Plans {
 
     /**
      * This is the 'new' Professional plan (v3), which is meant to fit well between Personal (9$/8€) on the left and
-     * Unlimited (39$/35€) on the right.
+     * Unleashed (39$/35€) on the right.
      */
     export const PROFESSIONAL_NEW_EUR: Plan = {
         chargebeeId: 'professional-new-eur',
@@ -276,7 +278,7 @@ export namespace Plans {
 
     /**
      * This is the 'new' Professional plan (v3), which is meant to fit well between Personal (9$/8€) on the left and
-     * Unlimited (39$/35€) on the right.
+     * Unleashed (39$/35€) on the right.
      */
     export const PROFESSIONAL_NEW_USD: Plan = {
         chargebeeId: 'professional-new-usd',
@@ -289,7 +291,7 @@ export namespace Plans {
 
     /**
      * This is the 'new' Team Professional plan (v3), which is meant to fit well between Personal (9$/8€) on the left and
-     * Unlimited (39$/35€) on the right.
+     * Unleashed (39$/35€) on the right.
      */
     export const TEAM_PROFESSIONAL_NEW_EUR: Plan = {
         chargebeeId: 'team-professional-new-eur',
@@ -303,7 +305,7 @@ export namespace Plans {
 
     /**
      * This is the 'new' Team Professional plan (v3), which is meant to fit well between Personal (9$/8€) on the left and
-     * Unlimited (39$/35€) on the right.
+     * Unleashed (39$/35€) on the right.
      */
     export const TEAM_PROFESSIONAL_NEW_USD: Plan = {
         chargebeeId: 'team-professional-new-usd',
@@ -316,20 +318,20 @@ export namespace Plans {
     };
 
     /**
-     * This is the 'Unlimited' plan (v1, rebranded v2)
+     * This is the 'Unleashed' plan (v1, rebranded v2, v5)
      * It was originally introduced as 'Professional', and we cannot update the ids, so it stays that way in the code.
      */
     export const PROFESSIONAL_EUR: Plan = {
         chargebeeId: 'professional-eur',
         type: 'professional',
-        name: 'Unlimited',
+        name: 'Unleashed',
         currency: 'EUR',
         pricePerMonth: 35,
         hoursPerMonth: 'unlimited'
     };
     
     /**
-     * This is the 'Unlimited' plan (v1, rebranded v2)
+     * This is the 'Unleashed' plan (v1, rebranded v2, v5)
      * It was originally introduced as 'Professional', and we cannot update the ids, so it stays that way in the code.
      */
     export const PROFESSIONAL_USD: Plan = {
@@ -338,20 +340,20 @@ export namespace Plans {
         githubPlanNumber: 3,
 
         type: 'professional',
-        name: 'Unlimited',
+        name: 'Unleashed',
         currency: 'USD',
         pricePerMonth: 39,
         hoursPerMonth: 'unlimited'
     };
     
     /**
-     * This is the Team-'Unlimited' plan (v1, rebranded v2)
+     * This is the Team-'Unleashed' plan (v1, rebranded v2, v5)
      * It was originally introduced as 'Professional', and we cannot update the ids, so it stays that way in the code.
      */
     export const TEAM_PROFESSIONAL_USD: Plan = {
         chargebeeId: 'team-professional-usd',
         type: 'professional',
-        name: 'Team Unlimited',
+        name: 'Team Unleashed',
         currency: 'USD',
         team: true,
         pricePerMonth: 39,
@@ -359,13 +361,13 @@ export namespace Plans {
     };
     
     /**
-     * This is the Team-'Unlimited' plan (v1, rebranded v2)
+     * This is the Team-'Unleashed' plan (v1, rebranded v2, v5)
      * It was originally introduced as 'Professional', and we cannot update the ids, so it stays that way in the code.
      */
     export const TEAM_PROFESSIONAL_EUR: Plan = {
         chargebeeId: 'team-professional-eur',
         type: 'professional',
-        name: 'Team Unlimited',
+        name: 'Team Unleashed',
         currency: 'EUR',
         team: true,
         pricePerMonth: 35,
@@ -615,7 +617,7 @@ export namespace Plans {
                         { title: '30min Timeout', tooltip: 'Workspaces without user activity are stopped after 30 minutes' }
                     ];
 
-                // Unlimited
+                // Unleashed
                 case "professional":
                     return [
                         { title: 'Private & Public repos' },
