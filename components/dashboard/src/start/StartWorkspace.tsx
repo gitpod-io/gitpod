@@ -170,8 +170,10 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     const isHeadless = this.state.workspace?.type !== 'regular';
     const isPrebuilt = WithPrebuild.is(this.state.workspace?.context);
     let phase = StartPhase.Preparing;
-    let title = undefined;
-    let statusMessage = <p className="text-base text-gray-400">Preparing workspace …</p>;
+    let title = !error ? undefined : 'Oh, no! Something went wrong!1';
+    let statusMessage = !error
+      ? <p className="text-base text-gray-400">Preparing workspace …</p>
+      : <p className="text-base text-red-500 w-96">{error.message}</p>;
 
     switch (this.state?.workspaceInstance?.status.phase) {
       // unknown indicates an issue within the system in that it cannot determine the actual phase of
@@ -254,7 +256,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             <div>
               <p className="text-gray-700 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
               {pendingChanges.length > 0 &&
-                <p className="text-red">{pendingChanges.length} Change{pendingChanges.length === 1 ? '' : 's'}</p>
+                <p className="text-red-500">{pendingChanges.length} Change{pendingChanges.length === 1 ? '' : 's'}</p>
               }
               <p className="w-56 truncate">{this.state.workspace?.contextURL}</p>
             </div>
@@ -269,6 +271,16 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
     return <StartPage phase={phase} error={!!error} title={title}>
       {statusMessage}
+      {error && <div>
+        <button className="mt-8 px-4 py-2 text-gray-500 bg-white font-semibold border-gray-500 hover:text-gray-700 hover:bg-gray-100 hover:border-gray-700" onClick={() => this.redirectTo(gitpodHostUrl.asDashboard().toString())}>Go back to dashboard</button>
+        <p className="mt-14 text-base text-gray-400 flex space-x-2">
+          <a href="https://www.gitpod.io/docs/">Docs</a>
+          <span>—</span>
+          <a href="https://status.gitpod.io/">Status</a>
+          <span>—</span>
+          <a href="https://www.gitpod.io/blog/">Blog</a>
+        </p>
+      </div>}
     </StartPage>;
   }
 }

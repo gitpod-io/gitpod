@@ -86,17 +86,17 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
       switch (error.code) {
         case ErrorCodes.CONTEXT_PARSE_ERROR:
           statusMessage = <div className="text-center">
-            <p className="text-base text-red">Unrecognized context: '{contextUrl}'</p>
+            <p className="text-base text-red-500">Unrecognized context: '{contextUrl}'</p>
             <p className="text-base mt-2">Learn more about <a className="text-blue" href="https://www.gitpod.io/docs/context-urls/">supported context URLs</a></p>
           </div>;
           break;
         case ErrorCodes.NOT_FOUND:
           statusMessage = <div className="text-center">
-            <p className="text-base text-red">Not found: {contextUrl}</p>
+            <p className="text-base text-red-500">Not found: {contextUrl}</p>
           </div>;
           break;
         default:
-          statusMessage = <p className="text-base text-red">Unknown Error: {JSON.stringify(this.state?.error, null, 2)}</p>;
+          statusMessage = <p className="text-base text-red-500 w-96">Unknown Error: {JSON.stringify(this.state?.error, null, 2)}</p>;
           break;
       }
     }
