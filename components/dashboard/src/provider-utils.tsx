@@ -12,7 +12,7 @@ function iconForAuthProvider(type: string) {
             return images.github
         case "GitLab":
             return images.gitlab
-        case "BitBucket":
+        case "Bitbucket":
             return images.bitbucket
         default:
             break;
@@ -26,7 +26,7 @@ function simplifyProviderName(host: string) {
         case "gitlab.com":
             return "GitLab"
         case "bitbucket.org":
-            return "BitBucket"
+            return "Bitbucket"
         default:
             return host;
     }
