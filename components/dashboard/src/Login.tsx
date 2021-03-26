@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import * as images from './images';
+import { gitpod, gitpodIcon, terminal } from './images';
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "./user-context";
@@ -52,7 +52,7 @@ export function Login() {
             <div id="feature-section-column" className="flex max-w-2xl h-full ml-auto pt-6">
                 <div className="flex flex-col space-y-12 pl-6 pr-24 m-auto">
                     <div>
-                        <img src={images.gitpod} className="h-8" />
+                        <img src={gitpod} className="h-8" />
                     </div>
                     <div>
                         <h1 className="xl:text-7xl text-5xl">Save Time<br /> with Prebuilds</h1>
@@ -61,7 +61,7 @@ export function Login() {
                         Gitpod continuously builds your git branches like a CI server. This means no more waiting for dependencies to be downloaded and builds to finish. <a className="underline underline-thickness-thin underline-offset-small hover:text-gray-600" href="https://www.gitpod.io/docs/prebuilds/" target="gitpod-docs">Learn more about Prebuilds</a>
                     </div>
                     <div>
-                        <img src={images.terminal} className="h-64 -ml-8" />
+                        <img src={terminal} className="h-64 -ml-8" />
                     </div>
                 </div>
             </div>
@@ -71,7 +71,7 @@ export function Login() {
                 <div className="flex-grow h-100 flex flex-row items-center justify-center" >
                     <div className="rounded-xl px-10 py-10 mx-auto">
                         <div className="mx-auto pb-8">
-                            <img src={images.gitpodIcon} className="h-16 mx-auto" />
+                            <img src={gitpodIcon} className="h-16 mx-auto" />
                         </div>
                         <div className="mx-auto text-center pb-8 space-y-2">
                             <h1 className="text-3xl">Log in to Gitpod</h1>

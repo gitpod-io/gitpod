@@ -12,6 +12,8 @@ import gitpod from './images/gitpod.svg';
 import gitpodIcon from './icons/gitpod.svg';
 import theia from './images/theia-gray.svg';
 import vscode from './images/vscode.svg';
+import copy from './images/copy.svg';
+import exclamation from './images/exclamation.svg';
 
 export {
     github,
@@ -21,5 +23,7 @@ export {
     gitpod,
     gitpodIcon,
     theia,
-    vscode
+    vscode,
+    copy,
+    exclamation,
 }

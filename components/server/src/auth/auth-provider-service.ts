@@ -64,7 +64,7 @@ export class AuthProviderService {
         await this.authProviderDB.delete(authProvider);
     }
 
-    async updateAuthProvider(entry: AuthProviderEntry.UpdateEntry | AuthProviderEntry.NewEntry): Promise<void> {
+    async updateAuthProvider(entry: AuthProviderEntry.UpdateEntry | AuthProviderEntry.NewEntry): Promise<AuthProviderEntry> {
         let authProvider: AuthProviderEntry;
         if ("id" in entry) {
             const { id, ownerId } = entry;
@@ -76,7 +76,7 @@ export class AuthProviderService {
                 || (entry.clientSecret && entry.clientSecret !== existing.oauth.clientSecret);
 
             if (!changed) {
-                return;
+                return existing;
             }
 
             // update config on demand
@@ -92,14 +92,14 @@ export class AuthProviderService {
         } else {
             const existing = await this.authProviderDB.findByHost(entry.host);
             if (existing) {
-                throw new Error("Provider for host has already been registered.");
+                throw new Error("Provider for this host already exists.");
             }
             authProvider = this.initializeNewProvider(entry);
         }
-        await this.authProviderDB.storeAuthProvider(authProvider as AuthProviderEntry);
+        return await this.authProviderDB.storeAuthProvider(authProvider as AuthProviderEntry);
     }
     protected initializeNewProvider(newEntry: AuthProviderEntry.NewEntry): AuthProviderEntry {
-        const { host, type } = newEntry;
+        const { host, type, clientId, clientSecret } = newEntry;
         const urls = type === "GitHub" ? githubUrls(host) : (type === "GitLab" ? gitlabUrls(host) : undefined);
         if (!urls) {
             throw new Error("Unexpected service type.");
@@ -111,6 +111,8 @@ export class AuthProviderService {
             oauth: {
                 ...urls,
                 callBackUrl: this.callbackUrl(host),
+                clientId,
+                clientSecret,
             },
             status: "pending",
         };

@@ -63,6 +63,7 @@ module.exports = {
             // https://github.com/benface/tailwindcss-filters#usage
             'none': 'none',
             'grayscale': 'grayscale(1)',
+            'brightness-10': 'brightness(10)',
         },
     },
     variants: {
