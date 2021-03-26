@@ -17,7 +17,7 @@ export interface Props {
 
 export function SettingsPage(p: Props) {
     const location = useLocation();
-    return <div className="max-w-6xl">
+    return <div className="w-full">
         <Header title={p.title} subtitle={p.subtitle}/>
         <div className='lg:px-28 px-10 flex pt-9'>
             <div>
