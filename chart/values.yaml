@@ -418,7 +418,7 @@ components:
       #    fuse: uses fuse-overlayfs
       #    shiftfs: uses shiftfs. Depending on the underlying OS/distribution you
       #             might want to enable the shiftfsModuleLoader.
-      fsShift: fuse
+      fsShift: shiftfs
       shiftfsModuleLoader:
         enabled: false
         imageName: "shiftfs-module-loader"
