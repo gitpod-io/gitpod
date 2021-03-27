@@ -213,6 +213,7 @@ func (srv *MuxTerminalService) Listen(req *api.ListenTerminalRequest, resp api.T
 	defer log.WithField("alias", req.Alias).Info("terminal client left")
 
 	errchan := make(chan error, 1)
+	messages := make(chan *api.ListenTerminalResponse, 1)
 	go func() {
 		buf := make([]byte, 4096)
 		for {
@@ -224,12 +225,7 @@ func (srv *MuxTerminalService) Listen(req *api.ListenTerminalRequest, resp api.T
 				errchan <- err
 				return
 			}
-
-			err = resp.Send(&api.ListenTerminalResponse{Output: &api.ListenTerminalResponse_Data{Data: buf[:n]}})
-			if err != nil {
-				errchan <- err
-				return
-			}
+			messages <- &api.ListenTerminalResponse{Output: &api.ListenTerminalResponse_Data{Data: buf[:n]}}
 		}
 
 		state, err := term.Wait()
@@ -238,20 +234,13 @@ func (srv *MuxTerminalService) Listen(req *api.ListenTerminalRequest, resp api.T
 			return
 		}
 
-		err = resp.Send(&api.ListenTerminalResponse{Output: &api.ListenTerminalResponse_ExitCode{ExitCode: int32(state.ExitCode())}})
-		if err != nil {
-			errchan <- err
-			return
-		}
+		messages <- &api.ListenTerminalResponse{Output: &api.ListenTerminalResponse_ExitCode{ExitCode: int32(state.ExitCode())}}
 		errchan <- io.EOF
 	}()
 	go func() {
 		title, _ := term.GetTitle()
-		err := resp.Send(&api.ListenTerminalResponse{Output: &api.ListenTerminalResponse_Title{Title: title}})
-		if err != nil {
-			errchan <- err
-			return
-		}
+		messages <- &api.ListenTerminalResponse{Output: &api.ListenTerminalResponse_Title{Title: title}}
+
 		t := time.NewTicker(200 * time.Millisecond)
 		defer t.Stop()
 		for {
@@ -264,23 +253,26 @@ func (srv *MuxTerminalService) Listen(req *api.ListenTerminalRequest, resp api.T
 					continue
 				}
 				title = newTitle
-				err := resp.Send(&api.ListenTerminalResponse{Output: &api.ListenTerminalResponse_Title{Title: title}})
-				if err != nil {
-					errchan <- err
-					return
-				}
+				messages <- &api.ListenTerminalResponse{Output: &api.ListenTerminalResponse_Title{Title: title}}
 			}
 		}
 	}()
-	select {
-	case err := <-errchan:
+	for {
+		var err error
+		select {
+		case message := <-messages:
+			err = resp.Send(message)
+		case err = <-errchan:
+		case <-resp.Context().Done():
+			return status.Error(codes.DeadlineExceeded, resp.Context().Err().Error())
+		}
 		if err == io.EOF {
 			// EOF isn't really an error here
 			return nil
 		}
-		return status.Error(codes.Internal, err.Error())
-	case <-resp.Context().Done():
-		return status.Error(codes.DeadlineExceeded, resp.Context().Err().Error())
+		if err != nil {
+			return status.Error(codes.Internal, err.Error())
+		}
 	}
 }
 
