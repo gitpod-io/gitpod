@@ -5,12 +5,18 @@
 package main
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -215,12 +221,14 @@ func runOutsideNetns() error {
 }
 
 func ensurePrerequisites() error {
-	commands := map[string]string{
-		"dockerd":     "docker.io",
-		"slirp4netns": "slirp4netns",
+	commands := map[string]func() error{
+		"dockerd":        installDocker,
+		"docker-compose": installDockerCompose,
+		"iptables":       installIptables,
+		"slirp4netns":    installSlirp4netns,
 	}
 
-	var pkgs []string
+	var pkgs []func() error
 	for cmd, pkg := range commands {
 		if pth, _ := exec.LookPath(cmd); pth == "" {
 			log.WithField("command", cmd).Warn("missing prerequisite")
@@ -235,22 +243,143 @@ func ensurePrerequisites() error {
 	if !opts.AutoInstall {
 		return errMissingPrerequisites
 	}
-	if pth, _ := exec.LookPath("apt-get"); pth == "" {
-		return errMissingPrerequisites
+
+	for _, pkg := range pkgs {
+		err := pkg()
+		if err != nil {
+			return err
+		}
 	}
 
-	args := []string{"install", "-y"}
-	args = append(args, pkgs...)
-	cmd := exec.Command("apt-get", args...)
-	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Pdeathsig: syscall.SIGKILL,
-	}
-	return cmd.Run()
+	return nil
 }
 
 type message struct {
 	Stage int `json:"stage"`
+}
+
+const (
+	slirp4netnsCmd   = "/usr/bin/slirp4netns"
+	dockerComposeCmd = "/usr/local/bin/docker-compose"
+)
+
+func installDocker() error {
+	content, err := download("https://download.docker.com/linux/static/stable/x86_64/docker-19.03.15.tgz")
+	if err != nil {
+		return err
+	}
+	defer content.Close()
+
+	gzipReader, err := gzip.NewReader(content)
+	if err != nil {
+		return err
+	}
+
+	tarReader := tar.NewReader(gzipReader)
+	for {
+		hdr, err := tarReader.Next()
+		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
+
+			return fmt.Errorf("Unable to extract container: %v\n", err)
+		}
+
+		hdrInfo := hdr.FileInfo()
+		dstpath := path.Join("/usr/bin", strings.TrimPrefix(hdr.Name, "docker/"))
+		mode := hdrInfo.Mode()
+
+		switch hdr.Typeflag {
+		case tar.TypeReg, tar.TypeRegA:
+			file, err := os.OpenFile(dstpath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, mode)
+			if err != nil {
+				return fmt.Errorf("unable to create file: %v", err)
+			}
+
+			if _, err := io.Copy(file, tarReader); err != nil {
+				file.Close()
+				return fmt.Errorf("unable to write file: %v", err)
+			}
+
+			file.Close()
+		}
+
+		os.Chtimes(dstpath, hdr.AccessTime, hdr.ModTime)
+	}
+
+	return nil
+}
+
+func installDockerCompose() error {
+	content, err := download("https://github.com/docker/compose/releases/download/1.28.5/docker-compose-Linux-x86_64")
+	if err != nil {
+		return err
+	}
+
+	file, err := os.Create(dockerComposeCmd)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = io.Copy(file, content)
+	if err != nil {
+		return err
+	}
+
+	return os.Chmod(dockerComposeCmd, 0755)
+}
+
+func installIptables() error {
+	pth, _ := exec.LookPath("apt-get")
+	if pth != "" {
+		cmd := exec.Command("/bin/sh", "-c", "apt-get update && apt-get install -y iptables xz-utils")
+		cmd.Stdin = os.Stdin
+		cmd.Stderr = os.Stderr
+		cmd.Stdout = os.Stdout
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			Pdeathsig: syscall.SIGKILL,
+		}
+
+		return cmd.Run()
+	}
+
+	// the container is not debian/ubuntu
+	log.WithField("command", "dockerd").Warn("Please install dockerd dependencies: iptables")
+	return nil
+}
+
+func installSlirp4netns() error {
+	content, err := download("https://github.com/rootless-containers/slirp4netns/releases/download/v1.1.9/slirp4netns-x86_64")
+	if err != nil {
+		return err
+	}
+
+	file, err := os.Create(slirp4netnsCmd)
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	_, err = io.Copy(file, content)
+	if err != nil {
+		return err
+	}
+
+	return os.Chmod(slirp4netnsCmd, 0755)
+}
+
+func download(url string) (io.ReadCloser, error) {
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf(fmt.Sprintf("unexpected status code downloading file %s: %d - %s", url, resp.StatusCode, resp.Status))
+	}
+
+	return resp.Body, nil
 }
