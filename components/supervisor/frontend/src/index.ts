@@ -40,6 +40,14 @@ const loadingIDE = new Promise(resolve => window.addEventListener('DOMContentLoa
     }
 
     //#region ide lifecycle
+    await new Promise<void>(resolve => {
+        const listener = gitpodServiceClient.onDidChangeInfo(() => {
+            if (gitpodServiceClient.info.latestInstance?.status.phase === 'running') {
+                listener.dispose();
+                resolve();
+            }
+        });
+    });
     const supervisorServiceClinet = new SupervisorServiceClient(gitpodServiceClient);
     await Promise.all([supervisorServiceClinet.ideReady, supervisorServiceClinet.contentReady, loadingIDE]);
     const toStop = new DisposableCollection();
