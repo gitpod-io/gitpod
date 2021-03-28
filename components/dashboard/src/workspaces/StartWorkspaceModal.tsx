@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Modal from "../components/Modal";
 
 export interface WsStartEntry {
@@ -30,7 +30,9 @@ function Tab(p: { name: Mode, selection: Mode, setSelection: (selection: Mode) =
 }
 
 export function StartWorkspaceModal(p: StartWorkspaceModalProps) {
-    const [selection, setSelection] = useState(p.selected || 'Recent');
+    const computeSelection = () => p.selected || (p.recent.length > 0 ? 'Recent' : 'Examples');
+    const [selection, setSelection] = useState(computeSelection());
+    useEffect(() => setSelection(computeSelection()), [p.recent, p.selected]);
 
     const list = (selection === 'Recent' ? p.recent : p.examples).map(e =>
         <a key={e.title} href={e.startUrl} className="rounded-xl group hover:bg-gray-100 flex p-4 my-1">
