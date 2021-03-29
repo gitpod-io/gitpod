@@ -7,6 +7,7 @@ package supervisor
 import (
 	"context"
 	"fmt"
+	"os/exec"
 	"strings"
 
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
@@ -50,13 +51,29 @@ func (p *GitTokenProvider) GetToken(ctx context.Context, req *api.GetTokenReques
 	}
 	missing := getMissingScopes(req.Scope, scopes)
 	if len(missing) > 0 {
-		message := fmt.Sprintf("An operation requires additional permissions: %s. Please grant these on the [access control page](%s).", strings.Join(missing, ", "), p.workspaceConfig.GitpodHost+"/access-control")
-		_, err = p.notificationService.Notify(ctx, &api.NotifyRequest{
+		message := fmt.Sprintf("An operation requires additional permissions: %s. Please grant permissions and try again.", strings.Join(missing, ", "))
+		result, err := p.notificationService.Notify(ctx, &api.NotifyRequest{
 			Level:   api.NotifyRequest_INFO,
 			Message: message,
+			Actions: []string{"Open Access Control"},
 		})
 		if err != nil {
 			return nil, err
+		}
+		if result.Action == "Open Access Control" {
+			gpPath, err := exec.LookPath("gp")
+			if err != nil {
+				return nil, err
+			}
+			gpCmd := exec.Command(gpPath, "preview", "--external", p.workspaceConfig.GitpodHost+"/access-control")
+			err = gpCmd.Start()
+			if err != nil {
+				return nil, err
+			}
+			err = gpCmd.Process.Release()
+			if err != nil {
+				return nil, err
+			}
 		}
 		return nil, nil
 	}
