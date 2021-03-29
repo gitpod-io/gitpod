@@ -43,3 +43,5 @@ rules:
   - pods
   verbs:
   - delete
+  - update
+  - patch
