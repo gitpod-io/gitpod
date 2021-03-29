@@ -11,7 +11,6 @@ import (
 	"io"
 	"os"
 
-	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/idtools"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
@@ -54,12 +53,9 @@ func BuildTarbal(ctx context.Context, src string, dst string, opts ...carchive.T
 		}
 	}
 
-	tarout, err := archive.TarWithOptions(src, &archive.TarOptions{
-		Compression:    archive.Uncompressed,
-		WhiteoutFormat: archive.OverlayWhiteoutFormat,
-		InUserNS:       true,
-		UIDMaps:        uidMaps,
-		GIDMaps:        gidMaps,
+	tarout, err := TarWithOptions(src, &TarOptions{
+		UIDMaps: uidMaps,
+		GIDMaps: gidMaps,
 	})
 	if err != nil {
 		return xerrors.Errorf("cannot create tar: %w", err)
