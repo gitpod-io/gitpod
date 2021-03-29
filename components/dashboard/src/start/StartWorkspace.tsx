@@ -241,7 +241,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             </div>
           </div>
           <div className="mt-10 flex">
-            <button className="secondary" onClick={() => this.redirectTo(gitpodHostUrl.asDashboard().toString())}>Go to Dashboard</button>
+            <button className="secondary mx-auto" onClick={() => this.redirectTo(gitpodHostUrl.asDashboard().toString())}>Go to Dashboard</button>
           </div>
         </div>;
         break;
