@@ -372,11 +372,6 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 	}
 
 	if status.Phase == api.WorkspacePhase_STOPPING {
-		if status.Conditions.FinalBackupComplete == api.WorkspaceConditionBool_TRUE {
-			// we've disposed already - try to remove the finalizer and call it a day
-			return m.manager.modifyFinalizer(ctx, workspaceID, gitpodFinalizerName, false)
-		}
-
 		var terminated bool
 		for _, c := range wso.Pod.Status.ContainerStatuses {
 			if c.Name == "workspace" {
@@ -394,6 +389,11 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 		if terminated {
 			go m.finalizeWorkspaceContent(ctx, wso)
 		}
+	}
+
+	if status.Phase == api.WorkspacePhase_STOPPED {
+		// we've disposed already - try to remove the finalizer and call it a day
+		return m.manager.modifyFinalizer(ctx, workspaceID, gitpodFinalizerName, false)
 	}
 
 	return nil

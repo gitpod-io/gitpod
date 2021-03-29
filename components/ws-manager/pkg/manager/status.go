@@ -394,6 +394,14 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 
 			if ds.BackupComplete {
 				result.Conditions.FinalBackupComplete = api.WorkspaceConditionBool_TRUE
+
+				// Finalizer or not - once the backup is complete we consider the pod stopped.
+				// Once the finalizer is removed, there's no guarantee we see the pod again, because it might be
+				// deleted too quickly for us to handle. Hence, we consider the workspace stoppped once the backup
+				// is done, even though the finalizer might still be present.
+				//
+				// This runs the risk that a pod might still be present, but is considered stopped.
+				result.Phase = api.WorkspacePhase_STOPPED
 			}
 			result.Repo = ds.GitStatus
 
