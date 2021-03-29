@@ -25,9 +25,16 @@
       "portServiceTemplate": "http://ws-{{ .workspaceID }}-ports.staging-gpl-portal.svc.cluster.local:{{ .port }}",
       "theiaPort": 23000,
       "supervisorPort": 22999
+    },
+    "builtinPages": {
+      "location": "public/"
     }
   },
-  "builtinPages": {
-    "location": "public/"
+  "wsManagerProxy": {
+    "listenAddress": ":8081",
+    "rateLimiter": {
+        "refillInterval": "10m",
+        "bucketSize": "10"
+    }
   }
 }
