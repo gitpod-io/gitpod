@@ -9,12 +9,11 @@ import Menu from './components/Menu';
 import { BrowserRouter } from "react-router-dom";
 import { Route, Switch } from "react-router";
 import { Workspaces } from './workspaces/Workspaces';
-import { CreateWorkspace } from './start/CreateWorkspace';
-import StartWorkspace from './start/StartWorkspace';
+
 import { Login } from './Login';
 import { UserContext } from './user-context';
 import { getGitpodService } from './service/service';
-import Header from './components/Header';
+import { shouldSeeWhatsNew, WhatsNew } from './WhatsNew';
 
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Account'));
 const Notifications = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Notifications'));
@@ -22,10 +21,11 @@ const Plans = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Pl
 const EnvironmentVariables = React.lazy(() => import(/* webpackPrefetch: true */ './settings/EnvironmentVariables'));
 const Integrations = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Integrations'));
 const Preferences = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Preferences'));
+const StartWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ './start/StartWorkspace'));
+const CreateWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ './start/CreateWorkspace'));
 
 function Loading() {
     return <>
-        <Header title="" subtitle="" />
     </>;
 }
 
@@ -33,65 +33,76 @@ function App() {
     const { user, setUser } = useContext(UserContext);
 
     const [loading, setLoading] = useState<boolean>(true);
+    const [isWhatsNewShown, setWhatsNewShown] = useState(false);
 
     useEffect(() => {
         (async () => {
             try {
-                setUser(await getGitpodService().server.getLoggedInUser());
+                const usr = await getGitpodService().server.getLoggedInUser()
+                setUser(usr);
             } catch (error) {
                 console.log(error);
             }
             setLoading(false);
         })();
     }, []);
-
-    if (!loading && !user) {
+    
+    if (loading) {
+        return <Loading />
+    }
+    if (!user) {
         return (<Login />)
     };
-
+    const shouldWhatsNewShown = shouldSeeWhatsNew(user)
+    if (shouldWhatsNewShown !== isWhatsNewShown) {
+        setWhatsNewShown(shouldWhatsNewShown);
+    }
+    
     window.addEventListener("hashchange", () => {
-      // Refresh on hash change if the path is '/' (new context URL)
-      if (window.location.pathname === '/') {
-        window.location.reload(true);
-      }
+        // Refresh on hash change if the path is '/' (new context URL)
+        if (window.location.pathname === '/') {
+            window.location.reload(true);
+        }
     }, false);
 
+    let toRender: React.ReactElement = <Route>
+        <div className="container">
+            {renderMenu()}
+            <Switch>
+                <Route path={["/", "/workspaces"]} exact render={
+                    () => <Workspaces />} />
+                <Route path={["/account", "/settings"]} exact component={Account} />
+                <Route path={["/integrations", "/access-control"]} exact component={Integrations} />
+                <Route path="/notifications" exact component={Notifications} />
+                <Route path="/plans" exact component={Plans} />
+                <Route path="/variables" exact component={EnvironmentVariables} />
+                <Route path="/preferences" exact component={Preferences} />
+            </Switch>
+        </div>
+    </Route>;
+
     const hash = getURLHash();
-    if (window.location.pathname === '/' && hash !== '') {
-      return <CreateWorkspace contextUrl={hash} />;
-    }
-    if (/\/start\/?/.test(window.location.pathname) && hash !== '') {
-      return <StartWorkspace workspaceId={hash} />;
+    const isCreation = window.location.pathname === '/' && hash !== '';
+    const isWsStart = /\/start\/?/.test(window.location.pathname) && hash !== '';
+    if (isWhatsNewShown) {
+        toRender = <WhatsNew visible={true} onClose={() => setWhatsNewShown(false)} />;
+    } else if (isCreation) {
+        toRender = <CreateWorkspace contextUrl={hash} />;
+    } else if (isWsStart) {
+        <StartWorkspace workspaceId={hash} />;
     }
 
     return (
         <BrowserRouter>
-            <div className="container">
-                {user && renderMenu()}
-
-                <Suspense fallback={<Loading />}>
-                    <Switch>
-                        {user && (
-                            <React.Fragment>
-                                <Route path={["/", "/workspaces"]} exact render={
-                                    () => <Workspaces />} />
-                                <Route path={["/account", "/settings"]} exact component={Account} />
-                                <Route path={["/integrations", "/access-control"]} exact component={Integrations} />
-                                <Route path="/notifications" exact component={Notifications} />
-                                <Route path="/plans" exact component={Plans} />
-                                <Route path="/variables" exact component={EnvironmentVariables} />
-                                <Route path="/preferences" exact component={Preferences} />
-                            </React.Fragment>
-                        )}
-                    </Switch>
-                </Suspense>
-            </div>
+            <Suspense fallback={<Loading />}>
+                {toRender}
+            </Suspense>
         </BrowserRouter>
     );
 }
 
-function getURLHash () {
-  return window.location.hash.replace(/^[#/]+/, '');
+function getURLHash() {
+    return window.location.hash.replace(/^[#/]+/, '');
 }
 
 const renderMenu = () => (

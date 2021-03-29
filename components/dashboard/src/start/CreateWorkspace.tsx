@@ -31,7 +31,7 @@ export interface CreateWorkspaceError {
   data?: any;
 }
 
-export class CreateWorkspace extends React.Component<CreateWorkspaceProps, CreateWorkspaceState> {
+export default class CreateWorkspace extends React.Component<CreateWorkspaceProps, CreateWorkspaceState> {
 
   constructor(props: CreateWorkspaceProps) {
     super(props);
