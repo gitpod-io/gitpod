@@ -13,7 +13,11 @@ import { getGitpodService } from '../service/service';
 import Modal from '../components/Modal';
 import { MouseEvent, useState } from 'react';
 import { WorkspaceModel } from './workspace-model';
+import Tooltip from '../components/Tooltip';
 
+function getLabel(state: WorkspaceInstancePhase) {
+    return state.substr(0,1).toLocaleUpperCase() + state.substr(1);
+}
 
 export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: WorkspaceModel }) {
     const [isModalVisible, setModalVisible] = useState(false);
@@ -100,20 +104,23 @@ export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: Wo
         setChangesModalVisible(true);
     }
     return <div>
-        <a className="rounded-xl whitespace-nowrap flex space-x-2 py-6 px-6 w-full justify-between hover:bg-gray-100 focus:bg-gitpod-kumquat-light cursor-pointer group" href={startUrl.toString()}>
+        <div className="rounded-xl whitespace-nowrap flex space-x-2 py-6 px-6 w-full justify-between hover:bg-gray-100 focus:bg-gitpod-kumquat-light group">
             <div className="pr-3 self-center">
-                <div className={stateClassName}>
-                    &nbsp;
-            </div>
+                <Tooltip content={getLabel(state)}>
+                    <div className={stateClassName}>
+                    </div>
+                </Tooltip>
             </div>
             <div className="flex flex-col w-3/12">
-                <div className="font-medium text-gray-800 truncate">{ws.id}</div>
-                <a href={project ? 'https://' + project : undefined}><div className="text-sm overflow-ellipsis truncate text-gray-400">{project || 'Unknown'}</div></a>
+                <a href={startUrl.toString()}><div className="font-medium text-gray-800 truncate hover:text-blue-600">{ws.id}</div></a>
+                <a href={project ? 'https://' + project : undefined}><div className="text-sm overflow-ellipsis truncate text-gray-400 hover:text-blue-600">{project || 'Unknown'}</div></a>
             </div>
             <div className="flex w-4/12 truncate overflow-ellipsis">
                 <div className="flex flex-col">
                     <div className="font-medium text-gray-500 overflow-ellipsis truncate">{ws.description}</div>
-                    <div className="text-sm text-gray-400 overflow-ellipsis truncate">{ws.contextURL}</div>
+                    <a href={ws.contextURL}>
+                        <div className="text-sm text-gray-400 overflow-ellipsis truncate hover:text-blue-600">{ws.contextURL}</div>
+                    </a>
                 </div>
             </div>
             <div className="flex w-2/12 truncate" onClick={numberOfChanges > 0 ? showChanges : undefined}>
@@ -127,19 +134,21 @@ export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: Wo
                     }
                 </div>
             </div>
-            <div className="flex w-2/12 self-center space-x-2 truncate">
-                <div className="text-sm text-gray-400 truncate">{moment(WorkspaceInfo.lastActiveISODate(desc)).fromNow()}</div>
+            <div className="flex w-2/12 self-center">
+                <Tooltip content={`Created ${moment(desc.workspace.creationTime).fromNow()}`}>
+                    <div className="text-sm w-full text-gray-400 truncate">{moment(WorkspaceInfo.lastActiveISODate(desc)).fromNow()}</div>
+                </Tooltip>
             </div>
             <div className="flex w-8 self-center hover:bg-gray-200 rounded-md cursor-pointer">
                 <ContextMenu menuEntries={menuEntries}>
                     <img className="w-8 h-8 p-1" src={ThreeDots} alt="Actions" />
                 </ContextMenu>
             </div>
-        </a>
+        </div>
         <Modal visible={isChangesModalVisible} onClose={() => setChangesModalVisible(false)}>
             {getChangesPopup(pendingChanges)}
         </Modal>
-        <Modal visible={isModalVisible} onClose={() => setModalVisible(false)} onEnter={() => {model.deleteWorkspace(ws.id); return true;}}>
+        <Modal visible={isModalVisible} onClose={() => setModalVisible(false)} onEnter={() => { model.deleteWorkspace(ws.id); return true; }}>
             <div>
                 <h3 className="pb-2">Delete Workspace</h3>
                 <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-2">
