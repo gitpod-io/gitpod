@@ -192,6 +192,7 @@ func TestRoutes(t *testing.T) {
 		Workspaces  []WorkspaceInfo
 		Router      RouterFactory
 		Targets     *Targets
+		IgnoreBody  bool
 		Expectation Expectation
 	}{
 		{
@@ -478,62 +479,19 @@ func TestRoutes(t *testing.T) {
 				Status: http.StatusNotFound,
 			},
 		},
-		// TODO write a more robust test case
-		// {
-		// 	Desc: "port GET unexposed",
-		// 	Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].Ports[0].Url+"this-does-not-exist", nil),
-		// 		addHostHeader,
-		// 		addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
-		// 	),
-		// 	Targets: &Targets{},
-		// 	Expectation: Expectation{
-		// 		Status: http.StatusNotFound,
-		// 		Body: "<!doctype html>\n<!--\n Copyright (c) 2020 Gitpod GmbH. All rights reserved.\n " +
-		// 			"Licensed under the GNU Affero General Public License (AGPL).\n See License-AGPL." +
-		// 			"txt in the project root for license information.\n-->\n\n<html lang=\"en\">\n  <" +
-		// 			"head>\n    <meta charset=\"utf-8\">\n    <meta name=\"viewport\" content=\"user-" +
-		// 			"scalable=0, initial-scale=1, minimum-scale=1, width=device-width, height=device-" +
-		// 			"height\">\n    <!-- PWA primary color -->\n    <meta name=\"theme-color\" conten" +
-		// 			"t=\"#000000\">\n    <link rel=\"manifest\" href=\"https://test-domain.com/manife" +
-		// 			"st.webmanifest\">\n    <link rel=\"apple-touch-icon\" type=\"image/png\" href=\"https:/" +
-		// 			"/test-domain.com/images/apple-touch-icon.png\" sizes=\"180x180\"/>\n    <link re" +
-		// 			"l=\"icon\" type=\"image/png\" href=\"https://test-domain.com/images/gitpod-196x1" +
-		// 			"96.png\" sizes=\"196x196\"/>\n    <link rel=\"icon\" type=\"image/svg+xml\" href" +
-		// 			"=\"https://test-domain.com/images/gitpod.svg\" sizes=\"any\"/>\n    <link rel=\"" +
-		// 			"stylesheet\" href=\"https://test-domain.com/styles.css\"/>\n    <link rel=\"styl" +
-		// 			"esheet\" href=\"//fonts.googleapis.com/css?family=Montserrat\" />\n    <title>Wo" +
-		// 			"rkspace Port Not Found - Gitpod</title>\n    <meta name=\"description\" content=" +
-		// 			"\"Describe your dev environment as code and get fully prebuilt, ready-to-code de" +
-		// 			"velopment environments for any GitLab, GitHub, and Bitbucket project.\">\n    <m" +
-		// 			"eta name=\"keywords\" content=\"dev environment, development environment, devops" +
-		// 			", cloud ide, github ide, gitlab ide, javascript, online ide, web ide, code revie" +
-		// 			"w\">\n  </head>\n  <body>\n    <noscript>\n      You need to enable JavaScript t" +
-		// 			"o run this app.\n    </noscript>\n    <style>\n      html {\n        box-sizing:" +
-		// 			" border-box;\n        -webkit-font-smoothing: antialiased;\n        -moz-osx-fon" +
-		// 			"t-smoothing: grayscale;\n      }\n      *, *::before, *::after {\n        box-si" +
-		// 			"zing: inherit;\n      }\n      button {\n        border: 1px solid rgba(26, 166," +
-		// 			" 228, 0.5);\n        box-shadow: 0px 0px 1px #1aa6e4;\n        border-color: #1a" +
-		// 			"a6e4;\n        padding: 5px 16px;\n        font-size: 16px;\n        min-width: " +
-		// 			"64px;\n        box-sizing: border-box;\n        border-radius: 2px;\n        mar" +
-		// 			"gin: 0;\n        cursor: pointer;\n        background-color: transparent;\n     " +
-		// 			"   -webkit-appearance: none;\n      }\n      button:hover {\n        box-shadow:" +
-		// 			" inset 0px 0px 3px #1aa6e4, 0px 0px 3px #1aa6e4;\n        background-color: rgba" +
-		// 			"(26, 166, 228, 0.1);\n      }\n      button span {\n        color: #1aa6e4;\n   " +
-		// 			"     font-size: 16px;\n        line-height: 1.45;\n        font-weight: 400;\n  " +
-		// 			"      font-family: \"Roboto\", \"Helvetica\", \"Arial\", sans-serif;\n      }\n " +
-		// 			"   </style>\n    <div id=\"root\">\n      <div style=\"max-width: 64em; margin: " +
-		// 			"auto; padding: 6em 2em;\">\n        <div class=\"sorry\">\n            <h3>Nothi" +
-		// 			"ng to see here... 🦗</h3>\n            <h2>Port <span id=\"port\"></span> didn" +
-		// 			"'t respond</h2>\n            <p style=\"margin-top: 60px;\">Please make sure thi" +
-		// 			"s port is exposed and your app is running.</p>\n            <button id=\"refresh" +
-		// 			"\" tabindex=\"0\" type=\"button\">\n              <span>Try again</span>\n      " +
-		// 			"      </button>\n        </div>\n      </div>\n    </div>\n    <script>\n      l" +
-		// 			"et port = parseInt(window.location.hostname.split('-')[0], 10);\n      if (port)" +
-		// 			" {\n        document.getElementById('port').textContent = port;\n      }\n      " +
-		// 			"document.getElementById('refresh').addEventListener('click', function () {\n    " +
-		// 			"    window.location.reload(true);\n      });\n    </script>\n  </body>\n</html>\n",
-		// 	},
-		// },
+		{
+			Desc: "port GET unexposed",
+			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].Ports[0].Url+"this-does-not-exist", nil),
+				addHostHeader,
+				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+			),
+			Targets:    &Targets{},
+			IgnoreBody: true,
+			Expectation: Expectation{
+				Status: http.StatusNotFound,
+				Body:   "",
+			},
+		},
 		{
 			Desc: "port cookies",
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].Ports[0].Url+"this-does-not-exist", nil),
@@ -670,7 +628,9 @@ func TestRoutes(t *testing.T) {
 			if len(act.Header) == 0 {
 				act.Header = nil
 			}
-
+			if test.IgnoreBody == true {
+				test.Expectation.Body = act.Body
+			}
 			if diff := cmp.Diff(test.Expectation, act); diff != "" {
 				t.Errorf("Expectation mismatch (-want +got):\n%s", diff)
 			}
