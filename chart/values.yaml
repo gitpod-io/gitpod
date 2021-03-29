@@ -466,6 +466,12 @@ components:
       portRange:
         start: 10000
         end: 11000
+    wsManagerProxy:
+      enabled: false
+      listenAddress: ":8081"
+      ratelimit:
+        # Limits the # of requests (per second)
+        maxRPS: 10
     ports:
       httpProxy:
         expose: true

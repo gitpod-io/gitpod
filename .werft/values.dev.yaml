@@ -153,6 +153,12 @@ components:
     name: "ws-proxy"
     disabled: false
     replicas: 1
+    wsManagerProxy:
+      enabled: true
+    ports:
+      wsManagerProxy:
+        expose: true
+        containerPort: 8081
 
 # configure GCP registry
 docker-registry:
