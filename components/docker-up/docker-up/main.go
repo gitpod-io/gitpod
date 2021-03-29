@@ -2,15 +2,18 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
+// Download files to be embed in the binary
+//go:generate ./dependencies.sh
+
 package main
 
 import (
 	"archive/tar"
 	"compress/gzip"
 	"context"
+	"embed"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"path"
@@ -36,6 +39,11 @@ var opts struct {
 	UserAccessibleSocket bool
 	Verbose              bool
 }
+
+//go:embed docker.tgz
+//go:embed docker-compose
+//go:embed slirp4netns
+var binaries embed.FS
 
 func main() {
 	self, err := os.Executable()
@@ -258,19 +266,14 @@ type message struct {
 	Stage int `json:"stage"`
 }
 
-const (
-	slirp4netnsCmd   = "/usr/bin/slirp4netns"
-	dockerComposeCmd = "/usr/local/bin/docker-compose"
-)
-
 func installDocker() error {
-	content, err := download("https://download.docker.com/linux/static/stable/x86_64/docker-19.03.15.tgz")
+	binary, err := binaries.Open("docker.tgz")
 	if err != nil {
 		return err
 	}
-	defer content.Close()
+	defer binary.Close()
 
-	gzipReader, err := gzip.NewReader(content)
+	gzipReader, err := gzip.NewReader(binary)
 	if err != nil {
 		return err
 	}
@@ -312,23 +315,7 @@ func installDocker() error {
 }
 
 func installDockerCompose() error {
-	content, err := download("https://github.com/docker/compose/releases/download/1.28.5/docker-compose-Linux-x86_64")
-	if err != nil {
-		return err
-	}
-
-	file, err := os.Create(dockerComposeCmd)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	_, err = io.Copy(file, content)
-	if err != nil {
-		return err
-	}
-
-	return os.Chmod(dockerComposeCmd, 0755)
+	return installBinary("docker-compose", "/usr/local/bin/docker-compose")
 }
 
 func installIptables() error {
@@ -345,41 +332,45 @@ func installIptables() error {
 		return cmd.Run()
 	}
 
-	// the container is not debian/ubuntu
+	pth, _ = exec.LookPath("apk")
+	if pth != "" {
+		cmd := exec.Command("/bin/sh", "-c", "apk add --no-cache iptables xz")
+		cmd.Stdin = os.Stdin
+		cmd.Stderr = os.Stderr
+		cmd.Stdout = os.Stdout
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			Pdeathsig: syscall.SIGKILL,
+		}
+
+		return cmd.Run()
+	}
+
+	// the container is not debian/ubuntu/alpine
 	log.WithField("command", "dockerd").Warn("Please install dockerd dependencies: iptables")
 	return nil
 }
 
 func installSlirp4netns() error {
-	content, err := download("https://github.com/rootless-containers/slirp4netns/releases/download/v1.1.9/slirp4netns-x86_64")
-	if err != nil {
-		return err
-	}
-
-	file, err := os.Create(slirp4netnsCmd)
-	if err != nil {
-		return err
-	}
-
-	defer file.Close()
-
-	_, err = io.Copy(file, content)
-	if err != nil {
-		return err
-	}
-
-	return os.Chmod(slirp4netnsCmd, 0755)
+	return installBinary("slirp4netns", "/usr/bin/slirp4netns")
 }
 
-func download(url string) (io.ReadCloser, error) {
-	resp, err := http.Get(url)
+func installBinary(name, dst string) error {
+	binary, err := binaries.Open(name)
 	if err != nil {
-		return nil, err
+		return err
+	}
+	defer binary.Close()
+
+	file, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = io.Copy(file, binary)
+	if err != nil {
+		return err
 	}
 
-	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf(fmt.Sprintf("unexpected status code downloading file %s: %d - %s", url, resp.StatusCode, resp.Status))
-	}
-
-	return resp.Body, nil
+	return os.Chmod(dst, 0755)
 }
