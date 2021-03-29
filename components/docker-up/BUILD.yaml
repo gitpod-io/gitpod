@@ -5,12 +5,14 @@ packages:
       - go.mod
       - go.sum
       - "docker-up/**"
+      - dependencies.sh
     env:
       - CGO_ENABLED=0
       - GOOS=linux
     prep:
       - ["mv", "docker-up/main.go", "."]
       - ["rmdir", "docker-up"]
+      - ["go", "generate"]
     config:
       dontTest: true
   - name: bin-runc-facade
