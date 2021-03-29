@@ -21,7 +21,7 @@
         @apply text-2xl text-gray-800 leading-9 font-semibold;
     }
     h4 {
-        @apply pb-2 text-sm font-medium text-gray-600;
+        @apply pb-2 text-sm font-semibold text-gray-600;
     }
     p {
         @apply text-sm text-gray-400;
@@ -35,7 +35,7 @@
 
 @layer components {
     button {
-        @apply cursor-pointer px-4 py-2 my-auto bg-green-600 hover:bg-green-700 text-gray-100 text-sm font-medium rounded-md focus:outline-none focus:ring;
+        @apply cursor-pointer px-4 py-2 my-auto bg-green-600 hover:bg-green-700 text-gray-100 text-sm font-medium rounded-md focus:outline-none focus:ring transition ease-in-out;
     }
     button.secondary {
         @apply bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-600;
@@ -51,7 +51,7 @@
     }
 
     input[type=text], input[type=password], select {
-        @apply text-xs block w-56 text-sm text-gray-600 rounded-md border border-gray-300 focus:border-gray-400 focus:bg-white focus:ring-0;
+        @apply block w-56 text-gray-600 rounded-md border border-gray-300 focus:border-gray-400 focus:bg-white focus:ring-0;
     }
 
     input[type=text]::placeholder, input[type=password]::placeholder {

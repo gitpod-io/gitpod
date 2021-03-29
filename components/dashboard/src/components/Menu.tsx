@@ -18,12 +18,12 @@ interface Entry {
 
 function MenuItem(entry: Entry) {
     const location = useLocation();
-    let classes = "flex block text-sm font-medium px-3 px-0 py-1.5 rounded-md";
+    let classes = "flex block text-sm font-medium px-3 px-0 py-1.5 rounded-md transition ease-in-out";
     if (location.pathname.toLowerCase() === entry.link.toLowerCase() ||
         entry.matches && entry.matches.test(location.pathname.toLowerCase())) {
         classes += " bg-gray-200";
     } else {
-        classes += " text-gray-600 hover:bg-gray-100 ";
+        classes += " text-gray-600 hover:bg-gray-100 transition ease-in-out";
     }
     return <li key={entry.title}>
         {entry.link.startsWith('https://')

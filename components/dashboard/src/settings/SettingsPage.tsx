@@ -37,7 +37,7 @@ export function SettingsPage(p: Props) {
                     })}
                 </ul>
             </div>
-            <div className='ml-32 w-full pt-1'>
+            <div className='ml-32 w-full pt-1 mb-40'>
                 {p.children}
             </div>
         </div>
