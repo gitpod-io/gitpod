@@ -363,7 +363,7 @@ function GitIntegrations() {
             {providers.length !== 0
             ?
             <div className="mt-3 flex mt-0">
-                <button onClick={() => setModal({ mode: "new" })} className="ml-2 font-medium">New Integration</button>
+                <button onClick={() => setModal({ mode: "new" })} className="ml-2">New Integration</button>
             </div>
             : null}
         </div>
