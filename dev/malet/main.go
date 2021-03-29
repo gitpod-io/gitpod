@@ -1,3 +1,7 @@
+// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
 package main
 
 import (
@@ -106,8 +110,11 @@ func controlRemotes(addr string, remotes <-chan []string) error {
 }
 
 func readRemotes(addr string, r chan<- []string) {
+	client := http.Client{
+		Timeout: 20 * time.Second,
+	}
 	for {
-		resp, err := http.Get(fmt.Sprintf("%s/_supervisor/v1/status/ports/observe/true", addr))
+		resp, err := client.Get(fmt.Sprintf("%s/_supervisor/v1/status/ports/observe/true", addr))
 		if err != nil {
 			fmt.Printf("cannot read remotes: %v\n", err)
 			time.Sleep(2 * time.Second)
