@@ -98,6 +98,8 @@ export interface AdditionalUserData {
     emailNotificationSettings?: EmailNotificationSettings;
     featurePreview?: boolean;
     ideSettings?: IDESettings;
+    // key is the name of the news, string the iso date when it was seen
+    whatsNewSeen?: { [key: string]: string }
 }
 
 export interface EmailNotificationSettings {
