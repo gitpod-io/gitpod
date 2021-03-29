@@ -4,12 +4,13 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ContextMenu from './ContextMenu';
 
 export interface DropDownProps {
     prefix?: string;
     contextMenuWidth?: string;
+    activeEntry?: string,
     entries: { 
         title: string,
         onClick: ()=>void
@@ -21,7 +22,10 @@ function Arrow(props: {up: boolean}) {
 }
 
 function DropDown(props: DropDownProps) {
-    const [current, setCurrent] = useState(props.entries[0].title);
+    const [current, setCurrent] = useState(props.activeEntry || props.entries[0].title);
+    useEffect(() => {
+        setCurrent(props.activeEntry || props.entries[0].title);
+    }, [props.activeEntry, props.entries]);
     const enhancedEntries = props.entries.map(e => {
         return {
             ...e,
@@ -32,7 +36,7 @@ function DropDown(props: DropDownProps) {
             }
         }
     })
-    const font = "text-gray-400 text-sm leading-1 group hover:text-gray-600"
+    const font = "text-gray-400 text-sm leading-1 group hover:text-gray-600 transition ease-in-out"
     return (
         <ContextMenu menuEntries={enhancedEntries} width={props.contextMenuWidth}>
             <span className={`py-2 cursor-pointer ${font}`}>{props.prefix}{current}<Arrow up={false}/></span>

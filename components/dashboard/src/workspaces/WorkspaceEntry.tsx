@@ -117,7 +117,7 @@ export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: Wo
             </div>
             <div className="flex w-4/12 truncate overflow-ellipsis">
                 <div className="flex flex-col">
-                    <div className="font-medium text-gray-500 overflow-ellipsis truncate">{ws.description}</div>
+                    <div className="text-gray-500 overflow-ellipsis truncate">{ws.description}</div>
                     <a href={ws.contextURL}>
                         <div className="text-sm text-gray-400 overflow-ellipsis truncate hover:text-blue-600">{ws.contextURL}</div>
                     </a>
@@ -125,7 +125,7 @@ export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: Wo
             </div>
             <div className="flex w-2/12 truncate" onClick={numberOfChanges > 0 ? showChanges : undefined}>
                 <div className="flex flex-col">
-                    <div className="font-medium text-gray-500 truncate">{currentBranch}</div>
+                    <div className="text-gray-500 truncate">{currentBranch}</div>
                     {
                         numberOfChanges > 0 ?
                             <div className={"text-sm text-red-600 truncate cursor-pointer bg-red-50 group-hover:bg-red-100 hover:text-red-800 px-1.5 py-0.5 relative rounded-md -top-0.5"} onClick={showChanges}>{changesLabel}</div>
@@ -139,7 +139,7 @@ export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: Wo
                     <div className="text-sm w-full text-gray-400 truncate">{moment(WorkspaceInfo.lastActiveISODate(desc)).fromNow()}</div>
                 </Tooltip>
             </div>
-            <div className="flex w-8 self-center hover:bg-gray-200 rounded-md cursor-pointer">
+            <div className="flex w-8 self-center hover:bg-gray-200 rounded-md cursor-pointer opacity-0 group-hover:opacity-100">
                 <ContextMenu menuEntries={menuEntries}>
                     <img className="w-8 h-8 p-1" src={ThreeDots} alt="Actions" />
                 </ContextMenu>

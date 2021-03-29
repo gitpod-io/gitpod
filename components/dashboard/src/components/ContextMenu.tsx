@@ -70,7 +70,7 @@ function ContextMenu(props: ContextMenuProps) {
                     {props.menuEntries.map((e, index) => {
                         const clickable = e.href || e.onClick || e.link;
                         const entry = <div className={`px-4 flex py-3 ${clickable ? 'hover:bg-gray-200' : ''} text-sm leading-1 ${e.customFontStyle || font} ${e.separator ? ' border-b border-gray-200' : ''}`} >
-                            <div>{e.title}</div><div className="flex-1"></div>{e.active ? <div className="pl-1 font-semibold">&#x2713;</div> : null}
+                            <div className="truncate w-52">{e.title}</div><div className="flex-1"></div>{e.active ? <div className="pl-1 font-semibold">&#x2713;</div> : null}
                         </div>
                         const key = `entry-${menuId}-${index}-${e.title}`;
                         if (e.link) {

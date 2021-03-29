@@ -254,11 +254,11 @@ function GitProviders() {
             </Modal>
         )}
 
-        <h3>Git Providers</h3>
-        <h2>Manage permissions for git providers.</h2>
+    <h3>Git Providers</h3>
+    <h2>Manage permissions for git providers.</h2>
         <div className="flex flex-col pt-6 space-y-2">
             {authProviders && authProviders.map(ap => (
-                <div key={"ap-" + ap.authProviderId} className="flex-grow flex flex-row hover:bg-gray-100 rounded-xl h-16 w-full">
+                <div key={"ap-" + ap.authProviderId} className="flex-grow flex flex-row hover:bg-gray-100 rounded-xl h-16 w-full transition ease-in-out group">
                     <div className="px-4 self-center w-1/12">
                         <div className={"rounded-full w-3 h-3 text-sm align-middle " + (isConnected(ap.authProviderId) ? "bg-green-500" : "bg-gray-400")}>
                             &nbsp;
@@ -276,7 +276,7 @@ function GitProviders() {
                         <span className="my-auto truncate text-gray-500 overflow-ellipsis">{getPermissions(ap.authProviderId)?.join(", ") || "–"}</span>
                         <span className="text-sm my-auto text-gray-400">Permissions</span>
                     </div>
-                    <div className="my-auto flex w-1/12 pl-8">
+                    <div className="my-auto flex w-1/12 pl-8 mr-4 opacity-0 group-hover:opacity-100">
                         <div className="self-center hover:bg-gray-200 rounded-md cursor-pointer w-8">
                             <ContextMenu menuEntries={gitProviderMenu(ap)}>
                                 <img className="w-8 h-8 p-1" src={ThreeDots} alt="Actions" />
@@ -355,21 +355,31 @@ function GitIntegrations() {
             </Modal>
         )}
 
-        <h3 className="flex-grow self-center">Git Integrations</h3>
-        <h2>Manage git integrations for GitLab or GitHub self-hosted instances.</h2>
+        <div className="flex items-start sm:justify-between mb-2">
+            <div>
+                <h3>Git Integrations</h3>
+                <h2 className="text-gray-500">Manage git integrations for GitLab or GitHub self-hosted instances.</h2>
+            </div>
+            {providers.length !== 0
+            ?
+            <div className="mt-3 flex mt-0">
+                <button onClick={() => setModal({ mode: "new" })} className="ml-2 font-medium">New Integration</button>
+            </div>
+            : null}
+        </div>
 
         {providers && providers.length === 0 && (
             <div className="w-full flex h-80 mt-2 rounded-xl bg-gray-100">
                 <div className="m-auto text-center">
                     <h3 className="self-center text-gray-500 mb-4">No Git Integrations</h3>
                     <div className="text-gray-500 mb-6">In addition to the default Git Providers you can authorize<br /> with a self hosted instace of a provider.</div>
-                    <button className="self-center" onClick={() => setModal({ mode: "new" })}>New Git Integration</button>
+                    <button className="self-center" onClick={() => setModal({ mode: "new" })}>New Integration</button>
                 </div>
             </div>
         )}
         <div className="flex flex-col pt-6 space-y-2">
             {providers && providers.map(ap => (
-                <div key={"ap-" + ap.id} className="flex-grow flex flex-row hover:bg-gray-100 rounded-xl h-16 w-full">
+                <div key={"ap-" + ap.id} className="flex-grow flex flex-row hover:bg-gray-100 rounded-xl h-16 w-full transition ease-in-out group">
 
                     <div className="px-4 self-center w-1/12">
                         <div className={"rounded-full w-3 h-3 text-sm align-middle " + (ap.status === "verified" ? "bg-green-500" : "bg-gray-400")}>
@@ -382,7 +392,7 @@ function GitIntegrations() {
                     <div className="p-0 my-auto flex flex-col w-7/12">
                         <span className="my-auto truncate text-gray-500 overflow-ellipsis">{ap.host}</span>
                     </div>
-                    <div className="my-auto flex w-1/12 pl-8">
+                    <div className="my-auto flex w-1/12 pl-8 opacity-0 group-hover:opacity-100">
                         <div className="self-center hover:bg-gray-200 rounded-md cursor-pointer w-8">
                             <ContextMenu menuEntries={gitProviderMenu(ap)}>
                                 <img className="w-8 h-8 p-1" src={ThreeDots} alt="Actions" />
@@ -392,11 +402,6 @@ function GitIntegrations() {
                 </div>
             ))}
         </div>
-        {providers && providers.length > 0 && (
-            <div className="flex justify-start mt-6">
-                <button className="h-full" onClick={() => setModal({ mode: "new" })}>New Git Integration</button>
-            </div>
-        )}
     </div>);
 }
 
@@ -584,7 +589,7 @@ function GitIntegrationModal(props: ({
                 <div className="w-full relative">
                     <input name="redirectURL" disabled={true} readOnly={true} type="text" value={redirectURL} className="w-full truncate" />
                     <div className="cursor-pointer" onClick={() => copyRedirectUrl()}>
-                        <img src={copy} title="Copy the Redirect URL to clippboard." className="absolute top-1/3 right-3" />
+                        <img src={copy} title="Copy the Redirect URL to clippboard" className="absolute top-1/3 right-3" />
                     </div>
                 </div>
                 <span className="text-gray-500 text-sm">{getRedirectUrlDescription(type, host)}</span>

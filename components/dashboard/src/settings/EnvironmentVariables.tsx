@@ -50,12 +50,12 @@ function AddEnvVarModal(p: EnvVarModalProps) {
     };
 
     return <Modal visible={true} onClose={p.onClose} onEnter={save}>
-        <h3 className="pb-2">{isNew ? 'New' : 'Edit'} Variable</h3>
-        <div className="border-t -mx-6 px-6 py-2 flex flex-col">
-            {error ? <div className="bg-gitpod-kumquat-light rounded-md p-3 text-red-500 text-sm">
+        <h3 className="mb-4">{isNew ? 'New' : 'Edit'} Variable</h3>
+        <div className="border-t border-b -mx-6 px-6 py-4 flex flex-col">
+            {error ? <div className="bg-gitpod-kumquat-light rounded-md p-3 text-red-500 text-sm mb-2">
                 {error}
             </div> : null}
-            <div className="mt-4">
+            <div>
                 <h4>Name</h4>
                 <input className="w-full" type="text" value={ev.name} onChange={(v) => { update({name: v.target.value}) }} />
             </div>
@@ -68,8 +68,8 @@ function AddEnvVarModal(p: EnvVarModalProps) {
                 <input className="w-full" type="text" value={ev.repositoryPattern} placeholder="e.g. org/project" 
                     onChange={(v) => { update({repositoryPattern: v.target.value}) }} />
             </div>
-            <div className="mt-3">
-                <p>You can pass a variable for a specific project or use wildcard characters (<span className="text-gitpod-kumquat-dark bg-gitpod-kumquat-light px-1 py-0.5 rounded-md text-sm font-mono">*/*</span>) to make it available in more projects.</p>
+            <div className="mt-1">
+                <p className="text-gray-500">You can pass a variable for a specific project or use wildcard character (<span className="text-gray--300 bg-gray-100 px-1.5 py-1 rounded-md text-sm font-mono font-medium">*/*</span>) to make it available in more projects.</p>
             </div>
         </div>
         <div className="flex justify-end mt-6">
@@ -147,18 +147,27 @@ export default function EnvVars() {
             envVar={currentEnvVar}
             validate={validate}
             onClose={() => setAddEnvVarModalVisible(false)} /> : null}
+        <div className="flex items-start sm:justify-between mb-2">
+            <div>
+                <h3>Environment Variables</h3>
+                <h2 className="text-gray-500">Variables are used to store information like passwords.</h2>
+            </div>
+            {envVars.length !== 0
+            ?
+            <div className="mt-3 flex mt-0">
+                <button onClick={add} className="ml-2">New Variable</button>
+            </div>
+            : null}
+        </div>
         {envVars.length === 0
             ? <div className="bg-gray-100 rounded-xl w-full h-96">
                 <div className="pt-28 flex flex-col items-center w-96 m-auto">
                     <h3 className="text-center pb-3 text-gray-500">No Environment Variables</h3>
                     <div className="text-center pb-6 text-gray-500">In addition to user-specific environment variables you can also pass variables through a workspace creation URL. <a className="text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600" href="https://www.gitpod.io/docs/environment-variables/#using-the-account-settings">Learn more</a></div>
-                    <button onClick={add}>New Environment Variable</button>
+                    <button onClick={add}>New Variable</button>
                 </div>
             </div>
             : <div className="space-y-2">
-                <div className="flex justify-end mb-2">
-                    <button onClick={add} className="ml-2">New Environment Variable</button>
-                </div>
                 <div className="flex flex-col space-y-2">
                     <div className="px-3 py-3 flex justify-between space-x-2 text-sm text-gray-400 border-t border-b border-gray-200">
                         <div className="w-5/12">Name</div>
@@ -168,11 +177,11 @@ export default function EnvVars() {
                 </div>
                 <div className="flex flex-col">
                     {envVars.map(ev => {
-                        return <div className="rounded-xl whitespace-nowrap flex space-x-2 py-3 px-3 w-full justify-between hover:bg-gray-100 focus:bg-gitpod-kumquat-light group">
+                        return <div className="rounded-xl whitespace-nowrap flex space-x-2 py-3 px-3 w-full justify-between hover:bg-gray-100 focus:bg-gitpod-kumquat-light transition ease-in-out group">
                             <div className="w-5/12 m-auto">{ev.name}</div>
                             <div className="w-5/12 m-auto text-sm text-gray-400">{ev.repositoryPattern}</div>
                             <div className="w-2/12 flex justify-end">
-                                <div className="flex w-8 self-center hover:bg-gray-200 rounded-md cursor-pointer">
+                                <div className="flex w-8 self-center hover:bg-gray-200 rounded-md cursor-pointer opacity-0 group-hover:opacity-100">
                                     <ContextMenu menuEntries={[
                                         {
                                             title: 'Edit',
