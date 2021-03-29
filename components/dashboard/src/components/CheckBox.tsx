@@ -25,7 +25,7 @@ function CheckBox(props: {
     const checkboxId = `checkbox-${props.title}-${String(Math.random())}`;
 
     return <div className="flex mt-4">
-        <input className={"h-4 w-4 focus:ring-0 mt-1 rounded cursor-pointer border-2 " + (props.checked ? 'bg-gray-800' : '')} type="checkbox"
+        <input className={"h-4 w-4 focus:ring-0 mt-1 rounded cursor-pointer border border-gray-300 focus:border-gray-400 " + (props.checked ? 'bg-gray-800' : '')} type="checkbox"
             id={checkboxId}
             {...inputProps}
         />

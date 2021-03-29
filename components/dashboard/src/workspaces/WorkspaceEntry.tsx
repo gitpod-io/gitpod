@@ -150,7 +150,7 @@ export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: Wo
                     </div>
                 </div>
                 <div className="flex justify-end mt-5">
-                    <button className="cursor-pointer px-3 py-2 text-white text-sm rounded-md border-2 border-red-800 bg-red-600 hover:bg-red-800"
+                    <button className="danger"
                         onClick={() => model.deleteWorkspace(ws.id)}>
                         Delete Workspace
                     </button>

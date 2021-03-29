@@ -139,7 +139,7 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
     return <StartPage phase={phase} error={!!error}>
       {statusMessage}
       {error && <div>
-        <a href={gitpodHostUrl.asDashboard().toString()}><button className="mt-8 px-4 py-2 text-gray-500 bg-white font-semibold border-gray-500 hover:text-gray-700 hover:bg-gray-100 hover:border-gray-700">Go back to dashboard</button></a>
+        <a href={gitpodHostUrl.asDashboard().toString()}><button className="mt-8 secondary">Go back to dashboard</button></a>
         <p className="mt-14 text-base text-gray-400 flex space-x-2">
           <a href="https://www.gitpod.io/docs/">Docs</a>
           <span>—</span>
@@ -204,6 +204,6 @@ function RunningPrebuildView(props: RunningPrebuildViewProps) {
     <Suspense fallback={<div />}>
       <WorkspaceLogs logsEmitter={logsEmitter} />
     </Suspense>
-    <button className="mt-6 text-gray-500 border-gray-500 bg-white hover:text-gray-700 hover:bg-gray-100 hover:border-gray-700" onClick={() => { clearTimeout(pollTimeout!); props.onIgnorePrebuild(); }}>Don't Wait for Prebuild</button>
+    <button className="mt-6 secondary" onClick={() => { clearTimeout(pollTimeout!); props.onIgnorePrebuild(); }}>Don't Wait for Prebuild</button>
   </StartPage>;
 }

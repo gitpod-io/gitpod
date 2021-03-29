@@ -218,7 +218,7 @@ function GitProviders() {
                     </div>
                 </div>
                 <div className="flex justify-end mt-6">
-                    <button className={"ml-2 border-red-900 bg-red-500  hover:bg-red-700"} onClick={() => disconnect(diconnectModal.provider)}>Disconnect Provider</button>
+                    <button className={"ml-2 danger secondary"} onClick={() => disconnect(diconnectModal.provider)}>Disconnect Provider</button>
                 </div>
             </Modal>
         )}
@@ -350,7 +350,7 @@ function GitIntegrations() {
                     </div>
                 </div>
                 <div className="flex justify-end mt-6">
-                    <button className={"ml-2 border-red-900 bg-red-500 hover:bg-red-700"} onClick={() => deleteProvider(modal.provider)}>Remove Integration</button>
+                    <button className={"ml-2 danger secondary"} onClick={() => deleteProvider(modal.provider)}>Remove Integration</button>
                 </div>
             </Modal>
         )}
@@ -567,7 +567,7 @@ function GitIntegrationModal(props: ({
             {props.mode === "new" && (
                 <div className="flex flex-col space-y-2">
                     <label htmlFor="type" className="font-medium">Provider Type</label>
-                    <select name="type" value={type} disabled={props.mode !== "new"} className="rounded-md w-full border-2 border-gray-400"
+                    <select name="type" value={type} disabled={props.mode !== "new"} className="w-full"
                         onChange={(e) => setType(e.target.value)}>
                         <option value="GitHub">GitHub</option>
                         <option value="GitLab">GitLab</option>
@@ -576,13 +576,13 @@ function GitIntegrationModal(props: ({
             )}
             <div className="flex flex-col space-y-2">
                 <label htmlFor="hostName" className="font-medium">Provider Host Name</label>
-                <input name="hostName" disabled={props.mode === "edit"} type="text" value={host} className="rounded-md w-full border-2 border-gray-400"
+                <input name="hostName" disabled={props.mode === "edit"} type="text" value={host} className="w-full"
                     onChange={(e) => updateHostValue(e.target.value)} />
             </div>
             <div className="flex flex-col space-y-2">
                 <label htmlFor="redirectURL" className="font-medium">Redirect URL</label>
                 <div className="w-full relative">
-                    <input name="redirectURL" disabled={true} readOnly={true} type="text" value={redirectURL} className="rounded-md w-full truncate pr-8" />
+                    <input name="redirectURL" disabled={true} readOnly={true} type="text" value={redirectURL} className="w-full truncate" />
                     <div className="cursor-pointer" onClick={() => copyRedirectUrl()}>
                         <img src={copy} title="Copy the Redirect URL to clippboard." className="absolute top-1/3 right-3" />
                     </div>
@@ -591,12 +591,12 @@ function GitIntegrationModal(props: ({
             </div>
             <div className="flex flex-col space-y-2">
                 <label htmlFor="clientId" className="font-medium">Client ID</label>
-                <input name="clientId" type="text" value={clientId} className="rounded-md w-full border-2 border-gray-400"
+                <input name="clientId" type="text" value={clientId} className="w-full"
                     onChange={(e) => updateClientId(e.target.value)} />
             </div>
             <div className="flex flex-col space-y-2">
                 <label htmlFor="clientSecret" className="font-medium">Client Secret</label>
-                <input name="clientSecret" type="password" value={clientSecret} className="rounded-md w-full border-2 border-gray-400"
+                <input name="clientSecret" type="password" value={clientSecret} className="w-full"
                     onChange={(e) => updateClientSecret(e.target.value)} />
             </div>
             {errorMessage && (
@@ -613,7 +613,7 @@ function GitIntegrationModal(props: ({
             )}
         </div>
         <div className="flex justify-end mt-6">
-            <button className="disabled:opacity-50" onClick={() => validate() && activate()} disabled={!!validationError || busy}>Activate Integration</button>
+            <button onClick={() => validate() && activate()} disabled={!!validationError || busy}>Activate Integration</button>
         </div>
     </Modal>);
 }

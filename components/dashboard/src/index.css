@@ -35,23 +35,34 @@
 
 @layer components {
     button {
-        @apply cursor-pointer px-4 py-2 my-auto bg-green-600 hover:bg-green-700 border-2 border-green-800 text-gray-100 text-sm font-medium rounded-md focus:outline-none focus:ring focus:border-blue-300;
+        @apply cursor-pointer px-4 py-2 my-auto bg-green-600 hover:bg-green-700 text-gray-100 text-sm font-medium rounded-md focus:outline-none focus:ring;
     }
-
+    button.secondary {
+        @apply bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-600;
+    }
+    button.danger {
+        @apply bg-red-600 hover:bg-red-700 text-gray-100;
+    }
+    button.danger.secondary {
+        @apply bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700;
+    }
     button:disabled {
-        @apply cursor-default;
+        @apply cursor-default opacity-50 pointer-events-none;
     }
 
-    input[type=text] {
-        @apply text-xs block w-56 text-sm text-gray-600 rounded-md border-2 border-gray-400 focus:border-gray-500 focus:bg-white focus:ring-0;
+    input[type=text], input[type=password], select {
+        @apply text-xs block w-56 text-sm text-gray-600 rounded-md border border-gray-300 focus:border-gray-400 focus:bg-white focus:ring-0;
     }
 
-    input[type=text]::placeholder {
+    input[type=text]::placeholder, input[type=password]::placeholder {
         @apply text-gray-400;
     }
 
     input[disabled] {
-        @apply bg-gray-100 border-2 border-gray-300 text-gray-400;
+        @apply bg-gray-100 border border-gray-200 text-gray-400;
     }
 
+    input[type=radio] {
+        @apply rounded-md border border-gray-300 focus:border-gray-400 focus:bg-white focus:ring-0;
+    }
 }

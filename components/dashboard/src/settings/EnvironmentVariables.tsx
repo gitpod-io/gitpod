@@ -73,8 +73,8 @@ function AddEnvVarModal(p: EnvVarModalProps) {
             </div>
         </div>
         <div className="flex justify-end mt-6">
-            <button className="text-gray-900 border-white bg-white hover:bg-gray-100 hover:border-gray-100" onClick={p.onClose}>Cancel</button>
-            <button className={"ml-2 disabled:opacity-50"} onClick={save} >{isNew ? 'Add' : 'Update'} Variable</button>
+            <button className="secondary" onClick={p.onClose}>Cancel</button>
+            <button className="ml-2" onClick={save} >{isNew ? 'Add' : 'Update'} Variable</button>
         </div>
     </Modal>
 }
@@ -152,12 +152,12 @@ export default function EnvVars() {
                 <div className="pt-28 flex flex-col items-center w-96 m-auto">
                     <h3 className="text-center pb-3 text-gray-500">No Environment Variables</h3>
                     <div className="text-center pb-6 text-gray-500">In addition to user-specific environment variables you can also pass variables through a workspace creation URL. <a className="text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600" href="https://www.gitpod.io/docs/environment-variables/#using-the-account-settings">Learn more</a></div>
-                    <button onClick={add} className="font-medium">New Environment Variable</button>
+                    <button onClick={add}>New Environment Variable</button>
                 </div>
             </div>
             : <div className="space-y-2">
                 <div className="flex justify-end mb-2">
-                    <button onClick={add} className="ml-2 font-medium">New Environment Variable</button>
+                    <button onClick={add} className="ml-2">New Environment Variable</button>
                 </div>
                 <div className="flex flex-col space-y-2">
                     <div className="px-3 py-3 flex justify-between space-x-2 text-sm text-gray-400 border-t border-b border-gray-200">
