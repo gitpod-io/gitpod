@@ -13,14 +13,15 @@ import ContextMenu from "./ContextMenu";
 import * as images from '../images';
 import { useLocation } from "react-router";
 interface Entry {
-    title: string, link: string, matches?: RegExp
+    title: string, link: string, alternatives?: string[]
 }
 
 function MenuItem(entry: Entry) {
     const location = useLocation();
     let classes = "flex block text-sm font-medium px-3 px-0 py-1.5 rounded-md transition ease-in-out";
-    if (location.pathname.toLowerCase() === entry.link.toLowerCase() ||
-        entry.matches && entry.matches.test(location.pathname.toLowerCase())) {
+    const all = [entry.link, ...(entry.alternatives||[])];
+    const path = location.pathname.toLowerCase();
+    if (all.find( n => n === path || n+'/' === path)) {
         classes += " bg-gray-200";
     } else {
         classes += " text-gray-600 hover:bg-gray-100 transition ease-in-out";

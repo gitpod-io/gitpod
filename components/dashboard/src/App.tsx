@@ -14,6 +14,7 @@ import { Login } from './Login';
 import { UserContext } from './user-context';
 import { getGitpodService } from './service/service';
 import { shouldSeeWhatsNew, WhatsNew } from './WhatsNew';
+import settingsMenu from './settings/settings-menu';
 
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Account'));
 const Notifications = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Notifications'));
@@ -109,12 +110,13 @@ const renderMenu = () => (
     <Menu left={[
         {
             title: 'Workspaces',
-            link: '/workspaces'
+            link: '/workspaces',
+            alternatives: ['/']
         },
         {
             title: 'Settings',
             link: '/settings',
-            matches: /^(?!.*workspace).*$/
+            alternatives: settingsMenu.flatMap(e => e.link)
         },
     ]}
         right={[
