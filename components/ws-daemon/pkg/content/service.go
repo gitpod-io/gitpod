@@ -262,6 +262,7 @@ func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest, upperdir strin
 			InstanceID:          req.Id,
 			FullWorkspaceBackup: req.FullWorkspaceBackup,
 			ContentManifest:     req.ContentManifest,
+			UserNamespaced:      true,
 
 			ServiceLocDaemon: filepath.Join(s.config.WorkingArea, req.Id+"-daemon"),
 			ServiceLocNode:   filepath.Join(s.config.WorkingAreaNode, req.Id+"-daemon"),
