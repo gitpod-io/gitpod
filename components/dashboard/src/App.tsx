@@ -89,7 +89,7 @@ function App() {
     } else if (isCreation) {
         toRender = <CreateWorkspace contextUrl={hash} />;
     } else if (isWsStart) {
-        <StartWorkspace workspaceId={hash} />;
+        toRender = <StartWorkspace workspaceId={hash} />;
     }
 
     return (
