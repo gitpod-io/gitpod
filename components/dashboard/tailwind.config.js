@@ -14,6 +14,7 @@ module.exports = {
             colors: {
                 gray: colors.warmGray,
                 green: colors.lime,
+                orange: colors.amber,
                 blue: {
                     light: '#75A9EC',
                     DEFAULT: '#5C8DD6',
@@ -24,6 +25,7 @@ module.exports = {
                 'gitpod-kumquat-light': '#FFE4BC',
                 'gitpod-kumquat': '#FFB45B',
                 'gitpod-kumquat-dark': '#FF8A00',
+                'gitpod-kumquat-darker': '#f28300',
                 'gitpod-kumquat-gradient': 'linear-gradient(137.41deg, #FFAD33 14.37%, #FF8A00 91.32%)',
             },
             container: {

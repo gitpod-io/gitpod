@@ -262,8 +262,8 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             </div>
           </div>
           <div className="mt-10 flex space-x-2">
-            <button className="px-4 py-2 text-gray-500 bg-white font-semibold border-gray-500 hover:text-gray-700 hover:border-gray-700 hover:bg-gray-100" onClick={() => this.redirectTo(gitpodHostUrl.asDashboard().toString())}>Go to Dashboard</button>
-            <button className="px-4 py-2 text-gray-50 bg-green-600 font-semibold border-green-800 hover:bg-green-700" onClick={() => this.redirectTo(gitpodHostUrl.asStart(this.state.workspaceInstance?.workspaceId).toString())}>Open Workspace</button>
+            <button className="secondary" onClick={() => this.redirectTo(gitpodHostUrl.asDashboard().toString())}>Go to Dashboard</button>
+            <button onClick={() => this.redirectTo(gitpodHostUrl.asStart(this.state.workspaceInstance?.workspaceId).toString())}>Open Workspace</button>
           </div>
         </div>;
         break;
@@ -272,7 +272,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     return <StartPage phase={phase} error={!!error} title={title}>
       {statusMessage}
       {error && <div>
-        <button className="mt-8 px-4 py-2 text-gray-500 bg-white font-semibold border-gray-500 hover:text-gray-700 hover:bg-gray-100 hover:border-gray-700" onClick={() => this.redirectTo(gitpodHostUrl.asDashboard().toString())}>Go back to dashboard</button>
+        <button className="mt-8 secondary" onClick={() => this.redirectTo(gitpodHostUrl.asDashboard().toString())}>Go back to dashboard</button>
         <p className="mt-14 text-base text-gray-400 flex space-x-2">
           <a href="https://www.gitpod.io/docs/">Docs</a>
           <span>—</span>
