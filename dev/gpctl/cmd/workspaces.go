@@ -6,6 +6,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -27,6 +28,8 @@ var workspacesCmd = &cobra.Command{
 
 func init() {
 	workspacesCmd.PersistentFlags().StringP("tls", "t", "", "TLS certificate when connecting to a secured gRPC endpoint")
+	workspacesCmd.PersistentFlags().StringP("pod", "s", "ws-manager", "Pod label for the port forwarding")
+	workspacesCmd.PersistentFlags().StringP("port", "p", "8080", "remote port")
 
 	rootCmd.AddCommand(workspacesCmd)
 }
@@ -41,8 +44,18 @@ func getWorkspacesClient(ctx context.Context) (*grpc.ClientConn, api.WorkspaceMa
 		return nil, nil, err
 	}
 
-	port := "20202:8080"
-	podName, err := util.FindAnyPodForComponent(clientSet, namespace, "ws-manager")
+	podLabel, err := workspacesCmd.Flags().GetString("pod")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	remotePort, err := workspacesCmd.Flags().GetString("port")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	port := fmt.Sprintf("20202:%s", remotePort)
+	podName, err := util.FindAnyPodForComponent(clientSet, namespace, podLabel)
 	if err != nil {
 		return nil, nil, err
 	}
