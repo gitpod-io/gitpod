@@ -18,9 +18,9 @@ data:
   config.json: |-
     {
         "ingress": {
-            "address": ":8080",
-            "https": {{ $comp.useHTTPS }},
-            "header": "x-wsproxy-host"
+            "address": ":{{- $comp.ports.httpProxy.containerPort -}}",
+            "https": {{ $comp.useHTTPS -}},
+            "header": "{{- $comp.hostHeader -}}"
         },
         "workspaceInfoProviderConfig": {
             "wsManagerAddr": "ws-manager:8080",
@@ -30,8 +30,8 @@ data:
             {{- if and $comp.useHTTPS $.Values.certificatesSecret.secretName }}
             "https": {
                 "enabled": true,
-                "crt": "/mnt/certificates/fullchain.pem",
-                "key": "/mnt/certificates/privkey.pem"
+                "crt": "/mnt/certificates/tls.crt",
+                "key": "/mnt/certificates/tls.key"
             },
             {{- end }}
             "transportConfig": {
