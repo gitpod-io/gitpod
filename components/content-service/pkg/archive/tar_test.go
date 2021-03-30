@@ -10,7 +10,9 @@ import (
 	"context"
 	"io/fs"
 	"os"
+	"os/user"
 	"path/filepath"
+	"strconv"
 	"syscall"
 	"testing"
 )
@@ -22,6 +24,25 @@ func TestExtractTarbal(t *testing.T) {
 		UID         int
 		Mode        int
 	}
+
+	user, err := user.Current()
+	if err != nil {
+		t.Fatalf("uname to get current user: %q", err)
+	}
+
+	uid, err := strconv.Atoi(user.Uid)
+	if err != nil {
+		t.Fatalf("uname to parse parser UID: %q", err)
+	}
+
+	mappings := []IDMapping{
+		{
+			ContainerID: 33333,
+			HostID:      uid,
+			Size:        1,
+		},
+	}
+
 	tests := []struct {
 		Name  string
 		Files []file
@@ -77,7 +98,7 @@ func TestExtractTarbal(t *testing.T) {
 				t.Fatalf("cannot extract tar content: %v", err)
 			}
 
-			err = ExtractTarbal(context.Background(), buf, targetFolder)
+			err = ExtractTarbal(context.Background(), buf, targetFolder, WithUIDMapping(mappings), WithGIDMapping(mappings))
 			if err != nil {
 				t.Fatalf("cannot extract tar content: %v", err)
 			}
@@ -88,14 +109,10 @@ func TestExtractTarbal(t *testing.T) {
 					t.Errorf("expected %s", file.Name)
 					continue
 				}
-				uid := stat.Sys().(*syscall.Stat_t).Uid
-				if uid != uint32(file.UID) {
+
+				fUid := stat.Sys().(*syscall.Stat_t).Uid
+				if uid != int(fUid) {
 					t.Errorf("expected uid %d", file.UID)
-					continue
-				}
-				gid := stat.Sys().(*syscall.Stat_t).Gid
-				if gid != uint32(file.UID) {
-					t.Errorf("expected gid %d", file.UID)
 					continue
 				}
 
