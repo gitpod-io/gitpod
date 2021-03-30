@@ -74,6 +74,15 @@ spec:
       serviceAccount: proxy
       securityContext:
         runAsNonRoot: false
+      initContainers:
+        - name: "sysctl"
+          image: "alpine:3.13"
+          securityContext:
+            privileged: true
+          command:
+            - sh
+            - -c
+            - "sysctl -w net.core.somaxconn=32768; sysctl -w net.ipv4.ip_local_port_range='1024 65000'"
       containers:
       - name: proxy
         image: {{ template "gitpod.comp.imageFull" $this }}
