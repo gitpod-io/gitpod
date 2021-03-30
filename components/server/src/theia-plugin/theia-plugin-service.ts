@@ -28,6 +28,37 @@ export interface ResolvedPluginsResult {
     external: string[]
 }
 
+class Cache<T,V> {
+    protected internalCache = new Map<T,[V, number]>();
+
+    constructor(protected validMilliseconds: number) {}
+    
+    public async get(key: T, provider: () => Promise<V>): Promise<V> {
+        const [result, outdated] = this.internalCache.get(key) || [];
+        if (outdated) {
+            if (outdated < Date.now()) {
+                log.info('Extension Cache Outdated', {
+                    extension: key
+                });
+                this.internalCache.delete(key);
+            } else {
+                log.info('Extension Cache Hit', {
+                    extension: key
+                });
+                return result!;
+            }
+        }
+        log.info('Extension Cache Miss', {
+            extension: key
+        });
+        const newResult = await provider();
+        this.internalCache.set(key, [newResult!, Date.now() + this.validMilliseconds]);
+        return newResult!;
+    }
+}
+
+const cache = new Cache<string, {url: string, fullPluginName: string} | undefined>(1000 * 60 * 60); //1h
+
 @injectable()
 export class TheiaPluginService {
 
@@ -175,8 +206,8 @@ export class TheiaPluginService {
                 } else {
                     resolving.push((async () => {
                         try {
-                            const resolvedPlugin = await this.resolveFromUploaded(pluginId)
-                                || await this.resovleFromOpenVSX(parsed, vsxRegistryUrl);
+                            const resolvedPlugin = await cache.get(extension, 
+                                async () => (await this.resolveFromUploaded(pluginId) || await this.resolveFromOpenVSX(parsed, vsxRegistryUrl)));
                             resolved[pluginId] = resolvedPlugin && Object.assign(resolvedPlugin, { kind }) || undefined;
                         } catch (e) {
                             console.error(`Failed to resolve '${pluginId}' plugin:`, e);
@@ -233,7 +264,7 @@ export class TheiaPluginService {
         };
     }
 
-    private async resovleFromOpenVSX({ name, version }: { name: string, version?: string }, vsxRegistryUrl = 'https://open-vsx.org'): Promise<{
+    private async resolveFromOpenVSX({ name, version }: { name: string, version?: string }, vsxRegistryUrl = 'https://open-vsx.org'): Promise<{
         url: string
         fullPluginName: string
     } | undefined> {
