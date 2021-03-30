@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:clu-dev-env.1
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:gpl-3323-dyn-wsman.51
 workspaceLocation: gitpod/gitpod-ws.theia-workspace
 checkoutLocation: gitpod
 ports:

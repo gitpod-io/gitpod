@@ -64,7 +64,8 @@ ENV WERFT_DIAL_MODE=kubernetes
 RUN cd /usr/bin && curl -fsSL https://github.com/csweichel/werft/releases/download/v0.0.5rc/werft-client-linux-amd64.tar.gz | tar xz && mv werft-client-linux-amd64 werft
 
 # yq - jq for YAML files
-RUN cd /usr/bin && curl -fsSL https://github.com/mikefarah/yq/releases/download/2.4.0/yq_linux_amd64 > yq && chmod +x yq
+# Note: we rely on version 3.x.x in various places, 4.x breaks this!
+RUN cd /usr/bin && curl -fsSL https://github.com/mikefarah/yq/releases/download/3.4.1/yq_linux_amd64 > yq && chmod +x yq
 
 # release helper
 RUN cd /usr/bin && curl -fsSL https://github.com/c4milo/github-release/releases/download/v1.1.0/github-release_v1.1.0_linux_amd64.tar.gz | tar xz
