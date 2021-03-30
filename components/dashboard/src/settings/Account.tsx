@@ -35,7 +35,7 @@ export default function Account() {
                     <li className="ml-5">Your subscription will be cancelled. If you obtained a Gitpod subscription through the GitHub marketplace, you need to cancel your plan there.</li>
                 </ol>
                 <p className="pt-4 pb-2 text-gray-600 text-base font-bold">Type your email to confirm</p>
-              <input className="w-full" type="text" onChange={e => setTypedEmail(e.target.value)}></input>
+                <input className="w-full" type="text" onChange={e => setTypedEmail(e.target.value)}></input>
             </div>
             <div className="flex justify-end mt-6">
                 <button className="secondary" onClick={close}>Cancel</button>
@@ -50,11 +50,11 @@ export default function Account() {
                 <div>
                     <div className="mt-4">
                         <h4>Name</h4>
-                        <input type="text" disabled={true} value={user!.name} onChange={(v) => { console.log(v) }} />
+                        <input type="text" disabled={true} value={user?.fullName || user?.name} />
                     </div>
                     <div className="mt-4">
                         <h4>Email</h4>
-                        <input type="text" disabled={true} value={User.getPrimaryEmail(user!)} onChange={(v) => { console.log(v) }} />
+                        <input type="text" disabled={true} value={User.getPrimaryEmail(user!)} />
                     </div>
                 </div>
                 <div className="lg:pl-14">
