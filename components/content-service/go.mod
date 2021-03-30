@@ -2,8 +2,12 @@ module github.com/gitpod-io/gitpod/content-service
 
 go 1.16
 
+replace github.com/docker/docker v1.13.1 => github.com/docker/engine v0.0.0-20190822205725-ed20165a37b4
+
 require (
 	cloud.google.com/go/storage v1.10.0
+	github.com/Microsoft/hcsshim v0.8.15 // indirect
+	github.com/docker/docker v1.13.1
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	github.com/go-ozzo/ozzo-validation v3.5.0+incompatible
@@ -16,12 +20,12 @@ require (
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/opentracing/opentracing-go v1.1.0
-	github.com/prometheus/client_golang v1.1.0
+	github.com/prometheus/client_golang v1.7.1
+	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/spf13/cobra v1.1.1
+	github.com/stretchr/testify v1.7.0 // indirect
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad // indirect
-	golang.org/x/net v0.0.0-20201224014010-6772e930b67b // indirect
 	golang.org/x/oauth2 v0.0.0-20200902213428-5d25da1a8d43
-	golang.org/x/sys v0.0.0-20210110051926-789bb1bd4061 // indirect
 	golang.org/x/text v0.3.5 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	google.golang.org/api v0.32.0
