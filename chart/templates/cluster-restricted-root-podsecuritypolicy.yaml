@@ -24,7 +24,7 @@ spec:
   # The nginx master process (currently?) runs as root, thus we have to turn some safe things off
   #####
   ### TODO root proxy
-  # privileged: false
+  privileged: true
   # # Required to prevent escalations to root.
   # allowPrivilegeEscalation: false
   # # This is redundant with non-root + disallow privilege escalation,
@@ -43,7 +43,7 @@ spec:
   hostNetwork: true
   hostIPC: false
   hostPID: false
-  hostPorts: 
+  hostPorts:
   - min: 30000
     max: 33000
   runAsUser:
