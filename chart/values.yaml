@@ -528,7 +528,7 @@ rabbitmq:
     enabled: true
     allowExternal: true
   plugins: "rabbitmq_management rabbitmq_peer_discovery_k8s"
-  extraPlugins: ""
+  extraPlugins: "rabbitmq_shovel rabbitmq_shovel_management"
   extraSecrets:
     load-definition:
       load_definition.json: |
