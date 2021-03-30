@@ -32,7 +32,12 @@ data:
                 "state": "available",
                 "maxScore": 100,
                 "score": 50,
-                "controller": "{{ template "gitpod.installation.shortname" $this }}"
+                "controller": "{{ template "gitpod.installation.shortname" $this }}",
+                "tls": {
+                    "ca": "/ws-manager-client-tls-certs/ca.crt",
+                    "crt": "/ws-manager-client-tls-certs/tls.crt",
+                    "key": "/ws-manager-client-tls-certs/tls.key"
+                }
             }
         ]
     }

@@ -6,7 +6,7 @@
 
 import { Queue } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterState } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
+import { WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterState, TLSConfig } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
 import {
     ClusterServiceService,
     ClusterState,
@@ -82,24 +82,24 @@ export class ClusterService implements IClusterServiceServer {
                     throw new GRPCError(grpc.status.INVALID_ARGUMENT, `unknown Preferability ${perfereability}!`);
                 }
 
-                let certificate: string | undefined = undefined;
-                if (typeof req.cert === "string" && req.cert !== "") {
-                    certificate = req.cert;
-                }
-                let token: string | undefined = undefined;
-                if (req.token) {
-                    token = req.token;
+                let tls: TLSConfig | undefined = undefined;
+                if (req.tls) {
+                    // we assume that client's have already base64-encoded their input!
+                    tls = {
+                        ca: req.tls.ca,
+                        crt: req.tls.crt,
+                        key: req.tls.key
+                    };
                 }
 
                 const newCluster: WorkspaceCluster = {
                     name: req.name,
                     url: req.url,
-                    certificate,
-                    token,
                     state,
                     score,
                     maxScore: 100,
                     controller,
+                    tls,
                 };
                 await this.db.save(newCluster);
 

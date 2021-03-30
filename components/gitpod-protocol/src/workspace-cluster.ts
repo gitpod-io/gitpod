@@ -4,6 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import * as fs from 'fs';
+import { filePathTelepresenceAware } from './env';
 import { DeepPartial } from "./util/deep-partial";
 
 export interface WorkspaceCluster {
@@ -15,11 +17,8 @@ export interface WorkspaceCluster {
     // URL of the cluster's ws-manager API
     url: string;
 
-    // Certificate of the cluster's ws-manager API, base64 encoded
-    certificate?: string;
-
-    // Token to authenticate access to the workspace cluster
-    token?: string;
+    // TLS contains the keys and certificates necessary to use mTLS between server and clients
+    tls?: TLSConfig;
 
     // Current state of the cluster
     state: WorkspaceClusterState;
@@ -34,6 +33,17 @@ export interface WorkspaceCluster {
     controller: string;
 }
 export type WorkspaceClusterState = "available" | "cordoned" | "draining";
+export interface TLSConfig {
+    // the CA shared between client and server (base64 encoded)
+    ca: string;
+    // the private key (base64 encoded)
+    key: string;
+    // the certificate signed with the shared CA (base64 encoded)
+    crt: string;
+}
+export namespace TLSConfig {
+    export const loadFromBase64File = (path: string): string => fs.readFileSync(filePathTelepresenceAware(path)).toString("base64");
+}
 
 
 export const WorkspaceClusterDB = Symbol("WorkspaceClusterDB");

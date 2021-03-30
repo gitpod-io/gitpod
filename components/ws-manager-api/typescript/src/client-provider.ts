@@ -11,6 +11,7 @@ import { PromisifiedWorkspaceManagerClient, linearBackoffStrategy } from "./prom
 import { Disposable } from "@gitpod/gitpod-protocol";
 import { WorkspaceCluster } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
 import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientProviderSource, WorkspaceManagerConnectionInfo } from "./client-provider-source";
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
 @injectable()
 export class WorkspaceManagerClientProvider implements Disposable {
@@ -59,21 +60,14 @@ export class WorkspaceManagerClientProvider implements Disposable {
     protected async getFromInfo(name: string, info: WorkspaceManagerConnectionInfo, grpcOptions?: object): Promise<PromisifiedWorkspaceManagerClient> {
         const createClient = (): WorkspaceManagerClient => {
             let credentials: grpc.ChannelCredentials;
-            if (info.certificate) {
-                const rootCertificate = Buffer.from(info.certificate, "base64");
-                credentials = grpc.credentials.createSsl(rootCertificate);
+            if (info.tls) {
+                const rootCerts = Buffer.from(info.tls.ca, "base64");
+                const privateKey = Buffer.from(info.tls.key, "base64");
+                const certChain = Buffer.from(info.tls.crt, "base64");
+                credentials = grpc.credentials.createSsl(rootCerts, privateKey, certChain);
+                log.debug("using TLS config to connect ws-manager");
             } else {
                 credentials = grpc.credentials.createInsecure();
-            }
-            if (info.token) {
-                const token = info.token;
-                const metaCallback = (_params: { service_url: string }, callback: (error: Error | null, metadata?: grpc.Metadata) => void) => {
-                    const meta = new grpc.Metadata();
-                    meta.add('ws-cluster-token', token);
-                    callback(null, meta);
-                }
-                const callCreds = grpc.credentials.createFromMetadataGenerator(metaCallback);
-                credentials = grpc.credentials.combineChannelCredentials(credentials, callCreds);
             }
             
             const options = {

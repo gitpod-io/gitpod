@@ -24,7 +24,12 @@ data:
         },
         "workspaceInfoProviderConfig": {
             "wsManagerAddr": "ws-manager:8080",
-            "reconnectInterval": "3s"
+            "reconnectInterval": "3s",
+            "tls": {
+                "ca": "/ws-manager-client-tls-certs/ca.crt",
+                "crt": "/ws-manager-client-tls-certs/tls.crt",
+                "key": "/ws-manager-client-tls-certs/tls.key"
+            }
         },
         "proxy": {
             {{- if and $comp.useHTTPS $.Values.certificatesSecret.secretName }}

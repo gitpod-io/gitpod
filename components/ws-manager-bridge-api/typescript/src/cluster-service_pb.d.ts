@@ -19,13 +19,11 @@ export class RegisterRequest extends jspb.Message {
     getUrl(): string;
     setUrl(value: string): RegisterRequest;
 
-    getCert(): Uint8Array | string;
-    getCert_asU8(): Uint8Array;
-    getCert_asB64(): string;
-    setCert(value: Uint8Array | string): RegisterRequest;
 
-    getToken(): string;
-    setToken(value: string): RegisterRequest;
+    hasTls(): boolean;
+    clearTls(): void;
+    getTls(): TlsConfig | undefined;
+    setTls(value?: TlsConfig): RegisterRequest;
 
 
     hasHints(): boolean;
@@ -48,8 +46,7 @@ export namespace RegisterRequest {
     export type AsObject = {
         name: string,
         url: string,
-        cert: Uint8Array | string,
-        token: string,
+        tls?: TlsConfig.AsObject,
         hints?: RegistrationHints.AsObject,
     }
 }
@@ -68,6 +65,35 @@ export class RegisterResponse extends jspb.Message {
 
 export namespace RegisterResponse {
     export type AsObject = {
+    }
+}
+
+export class TlsConfig extends jspb.Message { 
+    getCa(): string;
+    setCa(value: string): TlsConfig;
+
+    getCrt(): string;
+    setCrt(value: string): TlsConfig;
+
+    getKey(): string;
+    setKey(value: string): TlsConfig;
+
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): TlsConfig.AsObject;
+    static toObject(includeInstance: boolean, msg: TlsConfig): TlsConfig.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: TlsConfig, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): TlsConfig;
+    static deserializeBinaryFromReader(message: TlsConfig, reader: jspb.BinaryReader): TlsConfig;
+}
+
+export namespace TlsConfig {
+    export type AsObject = {
+        ca: string,
+        crt: string,
+        key: string,
     }
 }
 

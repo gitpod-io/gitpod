@@ -6,11 +6,13 @@ package cmd
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
 
 	"github.com/spf13/cobra"
 
@@ -79,24 +81,24 @@ var clustersRegisterCmd = &cobra.Command{
 			request.Url = url
 		}
 
-		certPath, err := cmd.Flags().GetString("cert")
+		tlsPath, err := cmd.Flags().GetString("tls-path")
 		if err != nil {
 			log.Fatal(err)
 		}
-		if len(certPath) > 0 {
-			content, err := ioutil.ReadFile(certPath)
-			if err != nil {
-				log.Fatal(err)
+		if tlsPath != "" {
+			readFileToBase64Str := func(filename string) string {
+				filepath := path.Join(tlsPath, filename)
+				content, err := ioutil.ReadFile(filepath)
+				if err != nil {
+					log.WithError(err).Fatal("unable to read from: '%s'", filepath)
+				}
+				return base64.StdEncoding.EncodeToString(content)
 			}
-			request.Cert = content
-		}
-
-		token, err := cmd.Flags().GetString("token")
-		if err != nil {
-			log.Fatal(err)
-		}
-		if len(token) > 0 {
-			request.Token = token
+			request.Tls = &api.TlsConfig{
+				Ca:  readFileToBase64Str("ca.crt"),
+				Crt: readFileToBase64Str("tls.crt"),
+				Key: readFileToBase64Str("tls.key"),
+			}
 		}
 
 		if request.Hints == nil {
@@ -149,8 +151,7 @@ var clustersRegisterCmd = &cobra.Command{
 func init() {
 	clustersRegisterCmd.Flags().String("name", "", "cluster name")
 	clustersRegisterCmd.Flags().String("url", "", "cluster url")
-	clustersRegisterCmd.Flags().String("cert", "", "filename fo the cluster cert")
-	clustersRegisterCmd.Flags().String("token", "", "cluster token")
+	clustersRegisterCmd.Flags().String("tls-path", "", "folder containing the ws cluster's ca.crt, tls.crt and tls.key")
 	clustersRegisterCmd.Flags().Bool("hint-cordoned", false, "sets hint cordoned")
 	clustersRegisterCmd.Flags().Bool("hint-govern", false, "sets hint govern")
 	clustersRegisterCmd.Flags().String("hint-preferability", "none", "sets hint preferability, one of: 'none', 'prefer', 'dontschedule'")

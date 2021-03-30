@@ -11,6 +11,10 @@ manager:
     maxScore: 100
     score: 50
     controller: "{{ template "gitpod.installation.shortname" . }}"
+    tls:
+      ca: /ws-manager-client-tls-certs/ca.crt
+      crt: /ws-manager-client-tls-certs/tls.crt
+      key: /ws-manager-client-tls-certs/tls.key
 {{ if $comp.wsman -}}
 {{ $comp.wsman | toYaml | indent 2 }}
 {{- end -}}
@@ -86,6 +90,9 @@ spec:
           privileged: false
           runAsUser: 31001
         volumeMounts:
+        - mountPath: /ws-manager-client-tls-certs
+          name: ws-manager-client-tls-certs
+          readOnly: true
 {{- if $comp.storage }}
         - name: storage-key
           mountPath: "/storageKeySecret"
@@ -231,6 +238,9 @@ spec:
 {{ toYaml $comp.serverContainer.env | indent 8 }}
 {{- end }}
       volumes:
+      - name: ws-manager-client-tls-certs
+        secret:
+          secretName: ws-manager-client-tls
 {{- if $comp.storage.secretName }}
       - name: storage-key
         secret:

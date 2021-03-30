@@ -5,8 +5,8 @@
  */
 
 import { PrimaryColumn, Column, Entity, Index } from "typeorm";
-import { WorkspaceCluster, WorkspaceClusterState } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
-import { Transformer } from "../transformer";
+import { TLSConfig, WorkspaceCluster, WorkspaceClusterState } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import { ValueTransformer } from "typeorm/decorator/options/ValueTransformer";
 
 @Entity()
 export class DBWorkspaceCluster implements WorkspaceCluster {
@@ -20,36 +20,29 @@ export class DBWorkspaceCluster implements WorkspaceCluster {
     url: string;
 
     @Column({
-        type: "blob",
-        nullable: true,
-        transformer: {
-            to(value: any): any {
-                if (!value) {
-                    // map ["", null, undefined] -> null
-                    return null;
+        type: "simple-json",
+        transformer: (() => {
+            const defaultValue = {};
+            const jsonifiedDefault = JSON.stringify(defaultValue);
+            return <ValueTransformer> {
+                // tls | undefined => <tls> | "{}"
+                to(value: any): any {
+                    if (!value) {
+                        return jsonifiedDefault;
+                    }
+                    return JSON.stringify(value);
+                },
+                // <tls> | "{}" => tls | undefined
+                from(value: any): any {
+                    if (value === jsonifiedDefault) {
+                        return undefined;
+                    }
+                    return JSON.parse(value);
                 }
-                return value;
-            },
-            from(value: any): any {
-                if (!value) {
-                    // map ["", null, undefined] -> undefined
-                    return undefined;
-                }
-                if (Buffer.isBuffer(value) && (value as Buffer).length === 0) {
-                    // TypeORM seems to map MySQL 'NULL' to an empty buffer. We translate to 'undefined' here.
-                    return undefined;
-                }
-                return value;
-            }
-        }
+            };
+        })()
     })
-    certificate?: string;
-
-    @Column({
-        default: '',
-        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
-    })
-    token?: string;
+    tls?: TLSConfig;
 
     @Index("ind_state")
     @Column({

@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 import { injectable, inject, multiInject } from 'inversify';
-import { WorkspaceCluster, WorkspaceClusterDB } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
+import { TLSConfig, WorkspaceCluster, WorkspaceClusterDB } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
 export const WorkspaceManagerClientProviderSource = Symbol("WorkspaceManagerClientProviderSource");
@@ -14,7 +14,7 @@ export interface WorkspaceManagerClientProviderSource {
     getAvailableWorkspaceClusters(): Promise<WorkspaceCluster[]>;
 }
 
-export type WorkspaceManagerConnectionInfo = Pick<WorkspaceCluster, "url" | "certificate" | "token">;
+export type WorkspaceManagerConnectionInfo = Pick<WorkspaceCluster, "url" | "tls">;
 
 
 @injectable()
@@ -41,8 +41,23 @@ export class WorkspaceManagerClientProviderEnvSource implements WorkspaceManager
         if (!configEncoded) {
             throw new Error("WSMAN_CFG_MANAGERS not set!");
         }
+
         const decoded = Buffer.from(configEncoded, 'base64').toString();
-        return JSON.parse(decoded) as WorkspaceCluster[];
+        const clusters = JSON.parse(decoded) as WorkspaceCluster[];
+        return clusters.map(c => {
+            if (!c.tls) {
+                return c;
+            }
+
+            return {
+                ...c,
+                tls: {
+                    ca: TLSConfig.loadFromBase64File(c.tls.ca),
+                    crt: TLSConfig.loadFromBase64File(c.tls.crt),
+                    key: TLSConfig.loadFromBase64File(c.tls.key),
+                }
+            }
+        });
     }
 }
 

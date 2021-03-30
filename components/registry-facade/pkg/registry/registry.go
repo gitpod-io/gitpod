@@ -172,11 +172,15 @@ func NewRegistry(cfg Config, newResolver ResolverProvider, reg prometheus.Regist
 			}
 
 			creds := credentials.NewTLS(&tls.Config{
-				ServerName:   "spec-provider",
 				Certificates: []tls.Certificate{certificate},
 				RootCAs:      certPool,
 			})
 			opts = append(opts, grpc.WithTransportCredentials(creds))
+			log.
+				WithField("ca", ca).
+				WithField("cert", crt).
+				WithField("key", key).
+				Debug("using TLS config to connect ws-manager")
 		} else {
 			opts = append(opts, grpc.WithInsecure())
 		}

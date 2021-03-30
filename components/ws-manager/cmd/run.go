@@ -6,6 +6,9 @@ package cmd
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"io/ioutil"
 	"net"
 	"time"
 
@@ -133,13 +136,32 @@ var runCmd = &cobra.Command{
 				grpc_opentracing.UnaryServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
 			)),
 		}
-		if cfg.RPCServer.TLS.Certificate != "" && cfg.RPCServer.TLS.PrivateKey != "" {
-			creds, err := credentials.NewServerTLSFromFile(cfg.RPCServer.TLS.Certificate, cfg.RPCServer.TLS.PrivateKey)
+		if cfg.RPCServer.TLS.CA != "" && cfg.RPCServer.TLS.Certificate != "" && cfg.RPCServer.TLS.PrivateKey != "" {
+			cert, err := tls.LoadX509KeyPair(cfg.RPCServer.TLS.Certificate, cfg.RPCServer.TLS.PrivateKey)
 			if err != nil {
 				log.WithError(err).WithField("crt", cfg.RPCServer.TLS.Certificate).WithField("key", cfg.RPCServer.TLS.PrivateKey).Fatal("could not load TLS keys")
 			}
+			certPool := x509.NewCertPool()
+			b, err := ioutil.ReadFile(cfg.RPCServer.TLS.CA)
+			if err != nil {
+				log.WithError(err).WithField("ca", cfg.RPCServer.TLS.CA).Fatal("could not load CA")
+			}
+			if !certPool.AppendCertsFromPEM(b) {
+				log.WithError(err).WithField("ca", cfg.RPCServer.TLS.CA).Fatal("failed to append CA")
+			}
+
+			creds := credentials.NewTLS(&tls.Config{
+				ClientAuth:   tls.RequireAndVerifyClientCert,
+				Certificates: []tls.Certificate{cert},
+				ClientCAs:    certPool,
+			})
+
 			grpcOpts = append(grpcOpts, grpc.Creds(creds))
-			log.WithField("crt", cfg.RPCServer.TLS.Certificate).WithField("key", cfg.RPCServer.TLS.PrivateKey).Debug("securing gRPC server with TLS")
+			log.
+				WithField("ca", cfg.RPCServer.TLS.CA).
+				WithField("crt", cfg.RPCServer.TLS.Certificate).
+				WithField("key", cfg.RPCServer.TLS.PrivateKey).
+				Debug("securing gRPC server with TLS")
 		} else {
 			log.Warn("no TLS configured - gRPC server will be unsecured")
 		}

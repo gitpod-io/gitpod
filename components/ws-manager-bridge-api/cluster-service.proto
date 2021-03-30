@@ -18,12 +18,17 @@ service ClusterService {
 message RegisterRequest {
   string name = 1;
   string url = 2;
-  bytes cert = 3;
-  string token = 4;
-  RegistrationHints hints = 5;
+  TlsConfig tls = 3;
+  RegistrationHints hints = 4;
 }
 
 message RegisterResponse {}
+
+message TlsConfig {
+  string ca = 1;
+  string crt = 2;
+  string key = 3;
+}
 
 message RegistrationHints {
   Preferability perfereability = 1;

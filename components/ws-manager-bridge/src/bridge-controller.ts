@@ -10,7 +10,7 @@ import { Configuration } from "./config";
 import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
 import { WorkspaceManagerClientProviderSource, WorkspaceManagerConnectionInfo } from '@gitpod/ws-manager/lib/client-provider-source';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { WorkspaceClusterDB } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import { TLSConfig, WorkspaceClusterDB } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { WorkspaceCluster } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { Queue } from "@gitpod/gitpod-protocol";
 
@@ -134,6 +134,19 @@ export class WorkspaceManagerClientProviderConfigSource implements WorkspaceMana
     }
 
     protected get clusters(): WorkspaceCluster[] {
-        return this.config.staticBridges;
+        return this.config.staticBridges.map(c => {
+            if (!c.tls) {
+                return c;
+            }
+
+            return {
+                ...c,
+                tls: {
+                    ca: TLSConfig.loadFromBase64File(c.tls.ca),
+                    crt: TLSConfig.loadFromBase64File(c.tls.crt),
+                    key: TLSConfig.loadFromBase64File(c.tls.key),
+                }
+            }
+        });
     }
 }
