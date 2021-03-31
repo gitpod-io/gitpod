@@ -16,6 +16,9 @@ export default function Modal(props: {
 }) {
 
     const handler = (evt: KeyboardEvent) => {
+        if (evt.defaultPrevented) {
+            return;
+        }
         if (evt.key === 'Escape') {
             props.onClose();
         }
