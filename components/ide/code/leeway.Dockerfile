@@ -37,6 +37,8 @@ RUN mkdir gp-code \
     && git remote add origin https://github.com/gitpod-io/vscode \
     && git fetch origin $GP_CODE_COMMIT \
     && git reset --hard FETCH_HEAD
+ARG OPENVSX_URL=https://open-vsx.org
+RUN sed -i "s+https://open-vsx.org+${OPENVSX_URL}+g" gp-code/product.json
 WORKDIR /gp-code
 RUN yarn
 RUN yarn gulp gitpod

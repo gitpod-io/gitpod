@@ -82,6 +82,11 @@ async function build(context, version) {
         withIntegrationTests,
     }));
 
+    const destname = version.split(".")[0];
+    const namespace = `staging-${destname}`;
+    const domain = `${destname}.staging.gitpod-dev.com`;
+    const url = `https://${domain}`;
+
     /**
      * Build
      */
@@ -102,7 +107,7 @@ async function build(context, version) {
     if (withInstaller || publishRelease) {
         exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=${imageRepo} install:all`, buildEnv);
     }
-    exec(`leeway build --werft=true -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo}`, buildEnv);
+    exec(`leeway build --werft=true -Dversion=${version} -DgitpodDomain=${domain} -DremoveSources=false -DimageRepoBase=${imageRepo}`, buildEnv);
     if (publishRelease) {
         try {
             werft.phase("publish", "checking version semver compliance...");
@@ -156,11 +161,7 @@ async function build(context, version) {
 
         return
     }
-    
-    const destname = version.split(".")[0];
-    const namespace = `staging-${destname}`;
-    const domain = `${destname}.staging.gitpod-dev.com`;
-    const url = `https://${domain}`;
+
     const deploymentConfig = {
       version,
       destname,

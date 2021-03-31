@@ -22,6 +22,7 @@ import * as request from 'request';
 const builtinExtensions: PluginIndexEntry[] = require('@gitpod/gitpod-protocol/data/builtin-theia-plugins.json');
 
 const userPluginsUri = 'user-plugins://';
+const localOpenVSXDomainPrefix = 'open-vsx.';
 
 export interface ResolvedPluginsResult {
     resolved: ResolvedPlugins
@@ -35,6 +36,11 @@ export class TheiaPluginService {
     @inject(StorageClient) protected readonly storageClient: StorageClient;
     @inject(TheiaPluginDB) protected readonly pluginDB: TheiaPluginDB;
     @inject(UserStorageResourcesDB) protected readonly userStorageResourcesDB: UserStorageResourcesDB;
+    protected readonly openVSXCachingProxyURL: string;
+
+    public constructor() {
+        this.openVSXCachingProxyURL = new GitpodHostUrl(process.env.HOST_URL).withDomainPrefix(localOpenVSXDomainPrefix).toString();
+    }
 
     /**
      * @returns a sanitized path to the plugin archive which can be used in signed URLs
@@ -233,7 +239,7 @@ export class TheiaPluginService {
         };
     }
 
-    private async resovleFromOpenVSX({ name, version }: { name: string, version?: string }, vsxRegistryUrl = 'https://open-vsx.org'): Promise<{
+    private async resovleFromOpenVSX({ name, version }: { name: string, version?: string }, vsxRegistryUrl = this.openVSXCachingProxyURL): Promise<{
         url: string
         fullPluginName: string
     } | undefined> {

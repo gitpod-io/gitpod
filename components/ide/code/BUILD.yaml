@@ -7,7 +7,10 @@ packages:
       - "bin/*"
     argdeps:
       - imageRepoBase
+      - gitpodDomain
     config:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/ide/code:${version}
+      buildArgs:
+        OPENVSX_URL: https://open-vsx.${gitpodDomain}
