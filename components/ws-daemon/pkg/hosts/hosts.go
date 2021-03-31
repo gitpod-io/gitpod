@@ -149,7 +149,12 @@ func (g *DirectController) updateHostsFile(inc <-chan hostUpdate) {
 			if !ok {
 				return xerrors.Errorf("cannot acquire lock")
 			}
-			defer g.unlockHostsFile()
+
+			defer func() {
+				if err := g.unlockHostsFile(); err != nil {
+					log.Error("Error in unlocking hosts file: %v", err)
+				}
+			}()
 
 			_, err = g.hostsFD.Seek(0, 0)
 			if err != nil {
