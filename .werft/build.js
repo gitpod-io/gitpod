@@ -3,7 +3,7 @@ const fs = require('fs');
 const { werft, exec, gitTag } = require('./util/shell.js');
 const { sleep } = require('./util/util.js');
 const { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects } = require('./util/kubectl.js');
-const { issueAndInstallCertficate } = require('./util/certs.js');
+const { issueCertficate, installCertficate } = require('./util/certs.js');
 const { reportBuildFailureInSlack } = require('./util/slack.js');
 const semver = require('semver');
 
@@ -67,6 +67,12 @@ async function build(context, version) {
     const registryFacadeHandover = "registry-facade-handover" in buildConfig;
     const storage = buildConfig["storage"] || "";
     const withIntegrationTests = buildConfig["with-integration-tests"] == "true";
+
+    const withWsClusterRaw = buildConfig["with-ws-cluster"];   // e.g., "dev2|gpl-ws-cluster-branch": prepares this branch to host (an additional) workspace cluster
+    let withWsCluster = parseWsCluster(withWsClusterRaw);
+    const wsClusterRaw = buildConfig["as-ws-cluster"];      // e.g., "dev2|gpl-fat-cluster-branch": deploys this build as so that it is available under that subdomain as that cluster
+    let wsCluster = parseWsCluster(wsClusterRaw);
+
     werft.log("job config", JSON.stringify({
         buildConfig,
         version,
@@ -80,6 +86,8 @@ async function build(context, version) {
         registryFacadeHandover,
         storage: storage,
         withIntegrationTests,
+        withWsCluster,
+        wsCluster,
     }));
 
     /**
@@ -156,6 +164,20 @@ async function build(context, version) {
 
         return
     }
+
+    if (wsCluster) {
+        wsCluster = {
+            ...wsCluster,
+            srcNamespace: `staging-${wsCluster.subdomain}`,
+            domain: `${wsCluster.subdomain}.staging.gitpod-dev.com`,
+        }
+    }
+    if (withWsCluster) {
+        withWsCluster = {
+            ...withWsCluster,
+            dstNamespace: `staging-${withWsCluster.subdomain}`,
+        }
+    }
     
     const destname = version.split(".")[0];
     const namespace = `staging-${destname}`;
@@ -167,6 +189,8 @@ async function build(context, version) {
       namespace,
       domain,
       url,
+      wsCluster,
+      withWsCluster,
     };
     await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover, storage);
 
@@ -181,7 +205,7 @@ async function build(context, version) {
  */
 async function deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover, storage) {
     werft.phase("deploy", "deploying to dev");
-    const { version, destname, namespace, domain, url } = deploymentConfig;
+    const { version, destname, namespace, domain, url, wsCluster, withWsCluster } = deploymentConfig;
     const wsdaemonPort = `1${Math.floor(Math.random()*1000)}`;
     const registryProxyPort = `2${Math.floor(Math.random()*1000)}`;
     const registryNodePort = `${30000 + Math.floor(Math.random()*1000)}`;
@@ -192,7 +216,19 @@ async function deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULi
     let namespaceRecreatedPromise = new Promise((resolve) => {
         namespaceRecreatedResolve = resolve;
     });
-    const certificatePromise = issueAndInstallCertficate(werft, ".werft/certs", GCLOUD_SERVICE_ACCOUNT_PATH, namespace, "gitpod-dev.com", domain, "34.76.116.244", namespaceRecreatedPromise, "proxy-config-certificates");
+    const certificatePromise = (async function() {
+        if (!wsCluster) {
+            const additionalWsSubdomains = withWsCluster ? [withWsCluster.shortname] : [];
+            await issueCertficate(werft, ".werft/certs", GCLOUD_SERVICE_ACCOUNT_PATH, namespace, "gitpod-dev.com", domain, "34.76.116.244", additionalWsSubdomains);
+        }
+        
+        werft.log('certificate', 'waiting for preview env namespace being re-created...');
+        await namespaceRecreatedPromise;
+
+        const fromNamespace = wsCluster ? wsCluster.srcNamespace : namespace;
+        await installCertficate(werft, fromNamespace, namespace, "proxy-config-certificates");
+    })();
+
 
     // re-create namespace
     try {
@@ -228,8 +264,8 @@ async function deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULi
         exec(`kubectl get secret preview-envs-authproviders --namespace=keys -o yaml \
                 | yq r - data.authProviders \
                 | base64 -d -w 0 \
-                > authProviders`, {silent: true}).stdout.trim();
-        exec(`yq merge --inplace .werft/values.dev.yaml ./authProviders`)
+                > authProviders`, { slice: "authProviders" });
+        exec(`yq merge --inplace .werft/values.dev.yaml ./authProviders`, { slice: "authProviders" })
         werft.done('authProviders');
     } catch (err) {
         werft.fail('authProviders', err);
@@ -275,6 +311,17 @@ async function deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULi
         flags+=` --set components.registryFacade.handover.enabled=true`;
         flags+=` --set components.registryFacade.handover.socket=/var/lib/gitpod/registry-facade-${namespace}`;
     }
+    if (withWsCluster) {
+        // Create redirect ${withWsCluster.shortname} -> ws-proxy.${wsCluster.dstNamespace}
+        flags+=` --set components.proxy.withWsCluster.shortname=${withWsCluster.shortname}`;
+        flags+=` --set components.proxy.withWsCluster.namespace=${withWsCluster.dstNamespace}`;
+    }
+    if (wsCluster) {
+        flags+=` --set hostname=${wsCluster.domain}`;
+        flags+=` --set installation.shortname=${wsCluster.shortname}`;
+
+        flags+=` -f ../.werft/values.wsCluster.yaml`;
+    }
 
     // const pathToVersions = `${shell.pwd().toString()}/versions.yaml`;
     // if (fs.existsSync(pathToVersions)) {
@@ -301,8 +348,11 @@ async function deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULi
 
         werft.log('helm', 'installing Jaeger');
         exec(`/usr/local/bin/helm3 upgrade --install -f ../dev/charts/jaeger/values.yaml ${flags} jaeger ../dev/charts/jaeger`);
-        werft.log('helm', 'installing Sweeper');
-        exec(`/usr/local/bin/helm3 upgrade --install --set image.version=${version} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" sweeper ../dev/charts/sweeper`);
+
+        if (!wsCluster) {
+            werft.log('helm', 'installing Sweeper');
+            exec(`/usr/local/bin/helm3 upgrade --install --set image.version=${version} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" sweeper ../dev/charts/sweeper`);
+        }
 
         werft.log('helm', 'done');
         werft.done('helm');
@@ -323,6 +373,20 @@ async function deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULi
             werft.fail('certificate', err);
         }
     }
+}
+
+function parseWsCluster(rawString) {
+    if (rawString) {
+        let parts = rawString.split("|");
+        if (parts.length !== 2) {
+            throw new Error("'as-|with-ws-cluster' must be of the form 'dev2|gpl-my-branch'!");
+        }
+        return {
+            shortname: parts[0],
+            subdomain: parts[1]
+        };
+    }
+    return undefined;
 }
 
 
