@@ -761,7 +761,11 @@ func (p *PresignedGCPStorage) EnsureExists(ctx context.Context, bucket string) (
 	if err != nil {
 		return err
 	}
-	defer client.Close()
+	defer func() {
+		if err := client.Close(); err != nil {
+			log.Error("Error in closing client: %v", err)
+		}
+	}()
 
 	return gcpEnsureExists(ctx, client, bucket, p.config)
 }
@@ -772,7 +776,11 @@ func (p *PresignedGCPStorage) DiskUsage(ctx context.Context, bucket string, pref
 	if err != nil {
 		return
 	}
-	defer client.Close()
+	defer func() {
+		if err := client.Close(); err != nil {
+			log.Error("Error in closing client: %v", err)
+		}
+	}()
 
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
@@ -805,7 +813,11 @@ func (p *PresignedGCPStorage) SignDownload(ctx context.Context, bucket, object s
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
+	defer func() {
+		if err := client.Close(); err != nil {
+			log.Error("Error in closing client: %v", err)
+		}
+	}()
 
 	bkt := client.Bucket(bucket)
 	_, err = bkt.Attrs(ctx)
@@ -863,7 +875,11 @@ func (p *PresignedGCPStorage) SignUpload(ctx context.Context, bucket, object str
 	if err != nil {
 		return nil, err
 	}
-	defer client.Close()
+	defer func() {
+		if err := client.Close(); err != nil {
+			log.Error("Error in closing client: %v", err)
+		}
+	}()
 
 	bkt := client.Bucket(bucket)
 	_, err = bkt.Attrs(ctx)
@@ -893,7 +909,11 @@ func (p *PresignedGCPStorage) SignUpload(ctx context.Context, bucket, object str
 // DeleteObject deletes objects in the given bucket specified by the given query
 func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, query *DeleteObjectQuery) (err error) {
 	client, err := newGCPClient(ctx, p.config)
-	defer client.Close()
+	defer func() {
+		if err := client.Close(); err != nil {
+			log.Error("Error in closing client: %v", err)
+		}
+	}()
 
 	if query.Name != "" {
 		err = client.Bucket(bucket).Object(query.Name).Delete(ctx)
@@ -937,7 +957,11 @@ func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, q
 // DeleteBucket deletes a bucket
 func (p *PresignedGCPStorage) DeleteBucket(ctx context.Context, bucket string) (err error) {
 	client, err := newGCPClient(ctx, p.config)
-	defer client.Close()
+	defer func() {
+		if err := client.Close(); err != nil {
+			log.Error("Error in closing client: %v", err)
+		}
+	}()
 
 	err = p.DeleteObject(ctx, bucket, &DeleteObjectQuery{})
 	if err != nil {
@@ -960,7 +984,11 @@ func (p *PresignedGCPStorage) DeleteBucket(ctx context.Context, bucket string) (
 // ObjectHash gets a hash value of an object
 func (p *PresignedGCPStorage) ObjectHash(ctx context.Context, bucket string, obj string) (hash string, err error) {
 	client, err := newGCPClient(ctx, p.config)
-	defer client.Close()
+	defer func() {
+		if err := client.Close(); err != nil {
+			log.Error("Error in closing client: %v", err)
+		}
+	}()
 
 	attr, err := client.Bucket(bucket).Object(obj).Attrs(ctx)
 	if err != nil {
