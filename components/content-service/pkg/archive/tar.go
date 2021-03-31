@@ -86,8 +86,9 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 	}
 
 	_, err = archive.UnpackLayer(dst, src, &archive.TarOptions{
-		UIDMaps: uidMaps,
-		GIDMaps: gidMaps,
+		UIDMaps:  uidMaps,
+		GIDMaps:  gidMaps,
+		InUserNS: true,
 	})
 	if err != nil {
 		return err
