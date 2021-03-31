@@ -45,7 +45,14 @@ type WorkspaceRouter func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (
 func HostBasedRouter(header, wsHostSuffix string) WorkspaceRouter {
 	return func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (*mux.Router, *mux.Router, *mux.Router) {
 		var (
-			getHostHeader   = func(req *http.Request) string { return req.Header.Get(header) }
+			getHostHeader = func(req *http.Request) string {
+				if header == "Host" {
+					parts := strings.Split(req.Host, ":")
+					return parts[0]
+				}
+
+				return req.Header.Get(header)
+			}
 			blobserveRouter = r.MatcherFunc(matchBlobserveHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
 			portRouter      = r.MatcherFunc(matchWorkspacePortHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
 			theiaRouter     = r.MatcherFunc(matchWorkspaceHostHeader(wsHostSuffix, getHostHeader)).Subrouter()

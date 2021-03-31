@@ -6,11 +6,13 @@ package cmd
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
+	"path"
 
 	"github.com/spf13/cobra"
 
@@ -68,19 +70,35 @@ var clustersRegisterCmd = &cobra.Command{
 			request.Name = name
 		}
 
-		cert, err := cmd.Flags().GetString("cert")
+		url, err := cmd.Flags().GetString("url")
 		if err != nil {
 			log.Fatal(err)
 		}
-		if len(cert) < 1 && len(request.Cert) < 1 {
-			log.Fatal("please set the file path to the cluster cert with flag --cert")
+		if len(url) < 1 && len(request.Url) < 1 {
+			log.Fatal("please set the cluster url with flag --url")
 		}
-		if len(cert) > 0 {
-			content, err := ioutil.ReadFile(cert)
-			if err != nil {
-				log.Fatal(err)
+		if len(url) > 0 {
+			request.Url = url
+		}
+
+		tlsPath, err := cmd.Flags().GetString("tls-path")
+		if err != nil {
+			log.Fatal(err)
+		}
+		if tlsPath != "" {
+			readFileToBase64Str := func(filename string) string {
+				filepath := path.Join(tlsPath, filename)
+				content, err := ioutil.ReadFile(filepath)
+				if err != nil {
+					log.WithError(err).Fatal("unable to read from: '%s'", filepath)
+				}
+				return base64.StdEncoding.EncodeToString(content)
 			}
-			request.Cert = content
+			request.Tls = &api.TlsConfig{
+				Ca:  readFileToBase64Str("ca.crt"),
+				Crt: readFileToBase64Str("tls.crt"),
+				Key: readFileToBase64Str("tls.key"),
+			}
 		}
 
 		if request.Hints == nil {
@@ -132,7 +150,8 @@ var clustersRegisterCmd = &cobra.Command{
 
 func init() {
 	clustersRegisterCmd.Flags().String("name", "", "cluster name")
-	clustersRegisterCmd.Flags().String("cert", "", "filename fo the cluster cert")
+	clustersRegisterCmd.Flags().String("url", "", "cluster url")
+	clustersRegisterCmd.Flags().String("tls-path", "", "folder containing the ws cluster's ca.crt, tls.crt and tls.key")
 	clustersRegisterCmd.Flags().Bool("hint-cordoned", false, "sets hint cordoned")
 	clustersRegisterCmd.Flags().Bool("hint-govern", false, "sets hint govern")
 	clustersRegisterCmd.Flags().String("hint-preferability", "none", "sets hint preferability, one of: 'none', 'prefer', 'dontschedule'")

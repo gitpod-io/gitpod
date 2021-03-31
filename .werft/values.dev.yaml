@@ -34,11 +34,6 @@ components:
     replicas: 1
     makeNewUsersAdmin: true # for development
     theiaPluginsBucketName: gitpod-core-dev-plugins
-    wsman:
-    - name: "local"
-      address: "ws-manager:8080"
-    - name: "dev"
-      address: "ws-manager-dev:8080"
 
   registryFacade:
     daemonSet: true

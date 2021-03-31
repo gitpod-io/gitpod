@@ -154,7 +154,9 @@ export class WorkspaceStarter {
             startRequest.setServicePrefix(workspace.id);
 
             // tell the world we're starting this instance
+            const { manager, installation } = await this.clientProvider.getStartManager();
             instance.status.phase = "pending";
+            instance.region = installation;
             await this.workspaceDb.trace({ span }).storeInstance(instance);
             try {
                 await this.messageBus.notifyOnInstanceUpdate(workspace.ownerId, instance);
@@ -166,7 +168,6 @@ export class WorkspaceStarter {
             }
 
             // start that thing
-            const manager = await this.clientProvider.getDefault();
             const resp = (await manager.startWorkspace({ span }, startRequest)).toObject();
             span.log({ "resp": resp });
 
@@ -277,7 +278,7 @@ export class WorkspaceStarter {
             workspaceId: workspace.id,
             creationTime: now,
             ideUrl: '', // Initially empty, filled during starting process
-            region: this.env.installationShortname,
+            region: '', // Initially empty, filled during starting process
             workspaceImage: '', // Initially empty, filled during starting process
             status: {
                 conditions: {},

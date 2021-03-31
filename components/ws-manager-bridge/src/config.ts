@@ -4,10 +4,21 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import { WorkspaceCluster } from "@gitpod/gitpod-protocol/src/workspace-cluster";
+import { ClusterServiceServerOptions } from "./cluster-service/cluster-service-server";
 
 export const Configuration = Symbol("Configuration");
 export interface Configuration {
-    staticBridges: BridgeConfig[];
+    // the installation this ws-manager-bridge instance is a) running in and b) controls
+    installation: string;
+
+    staticBridges: WorkspaceCluster[];
+
+    // configures how the ClusterServiceServer is run
+    clusterService: ClusterServiceServerOptions;
+
+    // The interval in which fresh WorkspaceCluster-state is polled from the DB
+    wsClusterDBReconcileIntervalSeconds: number;
 
     // controllerIntervalSeconds configures how often we check for invalid workspace states
     controllerIntervalSeconds: number;
@@ -17,9 +28,4 @@ export interface Configuration {
 
     // maxTimeToRunningPhaseSeconds is the time that we are willing to give a workspce instance in which it has to reach a running state
     maxTimeToRunningPhaseSeconds: number;
-}
-
-export interface BridgeConfig {
-    installation: string;
-    managerAddress: string;
 }

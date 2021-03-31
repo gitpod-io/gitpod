@@ -7,6 +7,8 @@ package util
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -116,4 +118,32 @@ func ForwardPort(ctx context.Context, config *rest.Config, namespace, pod, port 
 	}()
 
 	return
+}
+
+// CertPoolFromSecret creates a x509 cert pool from a Kubernetes secret
+func CertPoolFromSecret(clientSet kubernetes.Interface, namespace, secretName string, files []string) (cert *x509.CertPool, err error) {
+	secret, err := clientSet.CoreV1().Secrets(namespace).Get(context.Background(), secretName, metav1.GetOptions{})
+	if err != nil {
+		return
+	}
+	cert = x509.NewCertPool()
+	for _, file := range files {
+		certFile := secret.Data[file]
+
+		if !cert.AppendCertsFromPEM(certFile) {
+			return nil, fmt.Errorf("credentials: failed to append certificates")
+		}
+	}
+	return
+}
+
+// CertFromSecret creates a cert from a Kubernetes secret
+func CertFromSecret(clientSet kubernetes.Interface, namespace, secretName, certFile, keyFile string) (cert tls.Certificate, err error) {
+	secret, err := clientSet.CoreV1().Secrets(namespace).Get(context.Background(), secretName, metav1.GetOptions{})
+	if err != nil {
+		return
+	}
+	certFileB := secret.Data[certFile]
+	keyFileB := secret.Data[keyFile]
+	return tls.X509KeyPair(certFileB, keyFileB)
 }

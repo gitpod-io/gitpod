@@ -4,14 +4,14 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceStatus, WorkspaceLogMessage, SubscribeRequest, SubscribeResponse, GetWorkspacesRequest, WorkspaceManagerClient, PromisifiedWorkspaceManagerClient } from "@gitpod/ws-manager/lib";
+import { WorkspaceStatus, WorkspaceLogMessage, SubscribeRequest, SubscribeResponse, GetWorkspacesRequest, PromisifiedWorkspaceManagerClient } from "@gitpod/ws-manager/lib";
 import { Disposable } from "@gitpod/gitpod-protocol";
 import { ClientReadableStream } from "grpc";
-import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { log, LogPayload } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
 
-export type ClientProvider = () => Promise<WorkspaceManagerClient>
+export type ClientProvider = () => Promise<PromisifiedWorkspaceManagerClient>;
 
 export class WsmanSubscriber implements Disposable {
     protected run = true;
@@ -23,16 +23,18 @@ export class WsmanSubscriber implements Disposable {
         onStatusUpdate: (ctx: TraceContext, s: WorkspaceStatus) => void,
         onHeadlessLog: (ctx: TraceContext, s: WorkspaceLogMessage) => void,
         onReconnect: (ctx: TraceContext, s: WorkspaceStatus[]) => void,
-    }) {
+    }, logPayload?: LogPayload) {
+        const payload = logPayload || {} as LogPayload;
         while (this.run) {
-            await new Promise<boolean>(async (resolve, reject) => {
-                log.info("attempting to establish wsman subscription");
+            await new Promise<void>(async (resolve, reject) => {
+                log.info("attempting to establish wsman subscription", payload);
+                let client: PromisifiedWorkspaceManagerClient | undefined = undefined;
                 try {
-                    const client = new PromisifiedWorkspaceManagerClient(await this.clientProvider());
+                    client = await this.clientProvider();
 
                     // take stock of the existing workspaces
                     const workspaces = await client.getWorkspaces({}, new GetWorkspacesRequest());
-                    await callbacks.onReconnect({}, workspaces.getStatusList());
+                    callbacks.onReconnect({}, workspaces.getStatusList());
 
                     // start subscription
                     const req = new SubscribeRequest();
@@ -55,20 +57,24 @@ export class WsmanSubscriber implements Disposable {
                         }
                     });
                     this.sub.on('end', function() {
-                        resolve(false);
+                        resolve();
                     });
                     this.sub.on('error', function(e) {
-                        log.error("wsman subscription error", e);
-                        resolve(false);
+                        log.error("wsman subscription error", e, payload);
+                        resolve();
                     });
                 } catch (err) {
-                    log.error("cannot maintain subscription to wsman", err);
-                    resolve(false);
+                    log.error("cannot maintain subscription to wsman", err, payload);
+                    resolve();
+                } finally {
+                    if (client) {
+                        client.dispose();
+                    }
                 }
             });
 
             if (!this.run) {
-                log.info("shutting down wsman subscriber");
+                log.info("shutting down wsman subscriber", payload);
                 return;
             } else {
                 // we have been disconnected forcefully - wait for some time and try again

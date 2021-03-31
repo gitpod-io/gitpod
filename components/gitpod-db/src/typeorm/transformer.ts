@@ -38,7 +38,7 @@ export namespace Transformer {
     export const SIMPLE_JSON = (defaultValue: any) => {
         return <ValueTransformer> {
             to(value: any): any {
-                return JSON.stringify(value || []);
+                return JSON.stringify(value || defaultValue);
             },
             from(value: any): any {
                 return JSON.parse(value);

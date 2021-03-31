@@ -23,12 +23,22 @@ export class WebSocketConnectionProvider {
      * An optional target can be provided to handle
      * notifications and requests from a remote side.
      */
-    createProxy<T extends object>(path: string, target?: object, options?: WebSocketOptions): JsonRpcProxy<T> {
+    createProxy<T extends object>(path: string | Promise<string>, target?: object, options?: WebSocketOptions): JsonRpcProxy<T> {
         const factory = new JsonRpcProxyFactory<T>(target);
-        this.listen({
-            path,
-            onConnection: c => factory.listen(c)
-        }, options);
+        const startListening = (path: string) => {
+            this.listen({
+                    path,
+                    onConnection: c => factory.listen(c)
+                },
+                options
+            );
+        };
+        
+        if (typeof path === "string") {
+            startListening(path);
+        } else {
+            path.then(path => startListening(path));
+        }
         return factory.createProxy();
     }
     createProxy2<T extends object>(path: string, target?: object, options?: WebSocketOptions): { proxy: JsonRpcProxy<T>, webSocket: WebSocket } {
