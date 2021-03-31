@@ -193,6 +193,17 @@ env:
   value: {{ template "gitpod.installation.shortname" . }}
 {{- end -}}
 
+{{- define "gitpod.container.analyticsEnv" -}}
+{{- $ := .root -}}
+{{- $gp := .gp -}}
+{{- if $gp.analytics -}}
+- name: GITPOD_ANALYTICS_WRITER
+  value: {{ $gp.analytics.writer | quote }}
+- name: GITPOD_ANALYTICS_SEGMENT_KEY
+  value: {{ $gp.analytics.segmentKey | quote }}
+{{- end }}
+{{- end -}}
+
 {{- define "gitpod.container.dbEnv" -}}
 {{- $ := .root -}}
 {{- $gp := .gp -}}

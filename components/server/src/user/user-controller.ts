@@ -25,6 +25,7 @@ import { GitpodToken, GitpodTokenType, User } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { AuthFlow } from "../auth/auth-provider";
 import { LoginCompletionHandler } from "../auth/login-completion-handler";
+import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/util/analytics";
 import { TosCookie } from "./tos-cookie";
 import { TosFlow } from "../terms/tos-flow";
 import { increaseLoginCounter } from '../../src/prometheus-metrics';
@@ -45,6 +46,7 @@ export class UserController {
     @inject(UserService) protected readonly userService: UserService;
     @inject(WorkspacePortAuthorizationService) protected readonly workspacePortAuthService: WorkspacePortAuthorizationService;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
+    @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(SessionHandlerProvider) protected readonly sessionHandlerProvider: SessionHandlerProvider;
     @inject(LoginCompletionHandler) protected readonly loginCompletionHandler: LoginCompletionHandler;
     @inject(OneTimeSecretServer) protected readonly otsServer: OneTimeSecretServer;
@@ -509,6 +511,7 @@ export class UserController {
 
         await this.userService.updateUserEnvVarsOnLogin(user, envVars);
         await this.userService.acceptCurrentTerms(user);
+        this.analytics.identify({ anonymousId: req.sessionID || "unknown", userId: user.id, });
         await this.loginCompletionHandler.complete(req, res, { user, returnToUrl: returnTo, authHost: host });
     }
 

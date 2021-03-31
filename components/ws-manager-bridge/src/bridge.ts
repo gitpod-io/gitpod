@@ -13,6 +13,7 @@ import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { HeadlessLogEvent } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/util/analytics";
 import { TracedWorkspaceDB, TracedUserDB, DBWithTracing } from '@gitpod/gitpod-db/lib/traced-db';
 import { PrometheusMetricsExporter } from "./prometheus-metrics-exporter";
 import { ClientProvider, WsmanSubscriber } from "./wsman-subscriber";
@@ -48,6 +49,9 @@ export class WorkspaceManagerBridge implements Disposable {
 
     @inject(Configuration)
     protected readonly config: Configuration;
+
+    @inject(IAnalyticsWriter) 
+    protected readonly analytics: IAnalyticsWriter;
 
     protected readonly disposables: Disposable[] = [];
     protected readonly queues = new Map<string, Queue>();
@@ -200,6 +204,12 @@ export class WorkspaceManagerBridge implements Disposable {
                     if (!instance.startedTime) {
                         instance.startedTime = new Date().toISOString();
                         this.prometheusExporter.observeWorkspaceStartupTime(instance);
+                        this.analytics.track({
+                            event: "workspace-running",
+                            messageId: `bridge-wsrun-${instance.id}`,
+                            properties: { instanceId: instance.id, workspaceId: workspaceId },
+                            anonymousId: ""
+                        });
                     }
 
                     instance.status.phase = "running";
@@ -314,6 +324,12 @@ export class WorkspaceManagerBridge implements Disposable {
 
         try {
             await this.userDB.trace({span}).deleteGitpodTokensNamedLike(ownerUserID, `${instance.id}-%`);
+            await this.analytics.track({ 
+                userId: ownerUserID, 
+                event: "workspace-stopped", 
+                messageId: `bridge-wsstopped-${instance.id}`,
+                properties: { "instanceId": instance.id, "workspaceId": instance.workspaceId } 
+            });
         } catch (err) {
             TraceContext.logError({span}, err);
             throw err;

@@ -63,6 +63,7 @@ spec:
 {{ include "gitpod.container.defaultEnv" $this | indent 8 }}
 {{ include "gitpod.container.dbEnv" $this | indent 8 }}
 {{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+{{ include "gitpod.container.analyticsEnv" $this | indent 8 }}
 {{ include "gitpod.container.messagebusEnv" $this | indent 8 }}
         - name: LOG_LEVEL
           value: "trace"
