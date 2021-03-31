@@ -32,7 +32,7 @@ tasks:
   - before: scripts/branch-namespace.sh
     init: yarn --network-timeout 100000 && yarn build
   - name: Go
-    init: leeway exec --filter-type go -v -- go get -v ./...
+    init: leeway exec --filter-type go -v -- go mod download
     openMode: split-right
 vscode:
   extensions:
