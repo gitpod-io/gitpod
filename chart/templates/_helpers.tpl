@@ -227,17 +227,17 @@ env:
 - name: MESSAGEBUS_CA
   valueFrom:
     secretKeyRef:
-        name: messagebus-certificates-secret-core
+        name: {{ $gp.rabbitmq.auth.tls.existingSecret | quote }}
         key: ca.crt
 - name: MESSAGEBUS_CERT
   valueFrom:
     secretKeyRef:
-        name: messagebus-certificates-secret-core
+        name: {{ $gp.rabbitmq.auth.tls.existingSecret | quote }}
         key: tls.crt
 - name: MESSAGEBUS_KEY
   valueFrom:
     secretKeyRef:
-        name: messagebus-certificates-secret-core
+        name: {{ $gp.rabbitmq.auth.tls.existingSecret | quote }}
         key: tls.key
 {{- end -}}
 
