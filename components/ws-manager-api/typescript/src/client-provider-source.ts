@@ -6,6 +6,7 @@
 import { injectable, inject, multiInject } from 'inversify';
 import { TLSConfig, WorkspaceCluster, WorkspaceClusterDB } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { Queue } from '@gitpod/gitpod-protocol';
 
 export const WorkspaceManagerClientProviderSource = Symbol("WorkspaceManagerClientProviderSource");
 
@@ -106,5 +107,50 @@ export class WorkspaceManagerClientProviderCompositeSource implements WorkspaceM
             result.push(cluster);
         }
         return result;
+    }
+}
+
+export class WorkspaceManagerClientProviderCachingSource implements WorkspaceManagerClientProviderSource {
+
+    protected cache: Map<string, WorkspaceCluster> = new Map();
+    protected readonly queue: Queue = new Queue();
+    protected reconcileTimer: NodeJS.Timeout | undefined = undefined;
+
+    constructor(protected readonly source: WorkspaceManagerClientProviderSource) {
+        const scheduleReconcile = async () => {
+            try {
+                await this.reconcile();
+            } catch (err) {
+                log.error("error reconciling WorkspaceManagerClientProviderCachingSource", err);
+            } finally {
+                this.reconcileTimer = setTimeout(scheduleReconcile, 30 * 1000);
+            }
+        };
+        scheduleReconcile();
+    }
+
+    protected async reconcile() {
+        return this.queue.enqueue(async () => {
+            this.cache.clear();
+
+            const allClusters = await this.getAvailableWorkspaceClusters();
+            for (const cluster of allClusters) {
+                this.cache.set(cluster.name, cluster);
+            }
+        });
+    }
+
+    async getConnectionInfo(name: string): Promise<WorkspaceManagerConnectionInfo | undefined> {
+        return this.queue.enqueue(async () => this.cache.get(name));
+    }
+
+    async getAvailableWorkspaceClusters(): Promise<WorkspaceCluster[]> {
+        return this.queue.enqueue(async () => {
+            const result: WorkspaceCluster[] = [];
+            for (const [_, cluster] of this.cache) {
+                result.push(cluster);
+            }
+            return result;
+        });
     }
 }

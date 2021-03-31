@@ -10,12 +10,17 @@ import { WorkspaceManagerClient } from './core_grpc_pb';
 import { PromisifiedWorkspaceManagerClient, linearBackoffStrategy } from "./promisified-client";
 import { Disposable } from "@gitpod/gitpod-protocol";
 import { WorkspaceCluster } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
-import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientProviderSource, WorkspaceManagerConnectionInfo } from "./client-provider-source";
+import { WorkspaceManagerClientProviderSource, WorkspaceManagerConnectionInfo } from "./client-provider-source";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+
+// We expect this to be bound to a source that:
+// - aggregates all available WorkspaceManagerClientProviderSource s
+// - caches those (for short period of time) 
+export const WorkspaceManagerClientProviderCompositeCachingSource = Symbol('WorkspaceManagerClientProviderCompositeCachingSource');
 
 @injectable()
 export class WorkspaceManagerClientProvider implements Disposable {
-    @inject(WorkspaceManagerClientProviderCompositeSource)
+    @inject(WorkspaceManagerClientProviderCompositeCachingSource)
     protected readonly source: WorkspaceManagerClientProviderSource;
 
     // gRPC connections maintain their connectivity themselves, i.e. they reconnect when neccesary.

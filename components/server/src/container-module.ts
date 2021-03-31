@@ -33,8 +33,8 @@ import { UserDeletionService } from './user/user-deletion-service';
 import { WorkspaceDeletionService } from './workspace/workspace-deletion-service';
 import { GCloudStorageClient } from './storage/gcloud-storage-client';
 import { EnvvarPrefixParser } from './workspace/envvar-prefix-context-parser';
-import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
-import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientProviderDBSource, WorkspaceManagerClientProviderEnvSource, WorkspaceManagerClientProviderSource } from '@gitpod/ws-manager/lib/client-provider-source';
+import { WorkspaceManagerClientProvider, WorkspaceManagerClientProviderCompositeCachingSource } from '@gitpod/ws-manager/lib/client-provider';
+import { WorkspaceManagerClientProviderCachingSource, WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientProviderDBSource, WorkspaceManagerClientProviderEnvSource, WorkspaceManagerClientProviderSource } from '@gitpod/ws-manager/lib/client-provider-source';
 import { WorkspaceStarter } from './workspace/workspace-starter';
 import { TracingManager } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { AuthorizationService, AuthorizationServiceImpl } from './user/authorization-service';
@@ -183,7 +183,11 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(TracingManager).toSelf().inSingletonScope();
 
     bind(WorkspaceManagerClientProvider).toSelf().inSingletonScope();
-    bind(WorkspaceManagerClientProviderCompositeSource).toSelf().inSingletonScope();
+    bind(WorkspaceManagerClientProviderCompositeSource).toSelf().inRequestScope();
+    bind(WorkspaceManagerClientProviderCompositeCachingSource).toDynamicValue(ctx => {
+        const composite = ctx.container.get<WorkspaceManagerClientProviderCompositeSource>(WorkspaceManagerClientProviderCompositeSource);
+        return new WorkspaceManagerClientProviderCachingSource(composite);
+    }).inSingletonScope();
     bind(WorkspaceManagerClientProviderSource).to(WorkspaceManagerClientProviderEnvSource).inSingletonScope();
     bind(WorkspaceManagerClientProviderSource).to(WorkspaceManagerClientProviderDBSource).inSingletonScope();
 
