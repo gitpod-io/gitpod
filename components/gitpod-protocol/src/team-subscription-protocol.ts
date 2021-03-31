@@ -63,7 +63,7 @@ export namespace TeamSubscriptionSlot {
         slot.subscriptionId = undefined;
         slot.cancellationDate = cancellationDate;
     }
-    export const reactivate = (slot: TeamSubscriptionSlot, subscriptionId: string) => {
+    export const reactivate = (slot: TeamSubscriptionSlot, subscriptionId?: string) => {
         slot.subscriptionId = subscriptionId;
         slot.cancellationDate = undefined;
     }
