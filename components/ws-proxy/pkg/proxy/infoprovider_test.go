@@ -14,6 +14,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"google.golang.org/grpc"
 
 	wsapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	wsmock "github.com/gitpod-io/gitpod/ws-manager/api/mock"
@@ -135,7 +136,7 @@ func TestRemoteInfoProvider(t *testing.T) {
 			cl.EXPECT().GetWorkspaces(gomock.Any(), gomock.Any()).Return(&wsapi.GetWorkspacesResponse{}, nil).AnyTimes()
 
 			prov := NewRemoteWorkspaceInfoProvider(WorkspaceInfoProviderConfig{WsManagerAddr: "target"})
-			prov.Dialer = func(target string) (io.Closer, wsapi.WorkspaceManagerClient, error) {
+			prov.Dialer = func(target string, dialOptions grpc.DialOption) (io.Closer, wsapi.WorkspaceManagerClient, error) {
 				return io.NopCloser(nil), cl, nil
 			}
 			err := prov.Run()

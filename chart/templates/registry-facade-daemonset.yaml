@@ -84,6 +84,9 @@ spec:
         - name: config
           mountPath: "/mnt/config"
           readOnly: true
+        - mountPath: /ws-manager-client-tls-certs
+          name: ws-manager-client-tls-certs
+          readOnly: true
         {{- if $comp.handover.enabled }}
         - name: handover
           mountPath: "/mnt/handover"
@@ -103,6 +106,9 @@ spec:
       - name: config
         configMap:
           name: {{ template "gitpod.comp.configMap" $this }}
+      - name: ws-manager-client-tls-certs
+        secret:
+          secretName: ws-manager-client-tls
       {{- if $comp.handover.enabled }}
       - name: handover
         hostPath:

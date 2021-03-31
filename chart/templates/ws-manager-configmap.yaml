@@ -32,9 +32,9 @@ data:
             "wsdaemon": {
                 "port": {{ .Values.components.wsDaemon.servicePort }},
                 "tls": {
-                    "ca": "/certs/ca.crt",
-                    "crt": "/certs/tls.crt",
-                    "key": "/certs/tls.key"
+                    "ca": "/ws-daemon-tls-certs/ca.crt",
+                    "crt": "/ws-daemon-tls-certs/tls.crt",
+                    "key": "/ws-daemon-tls-certs/tls.key"
                 }
             },
             "container": {
@@ -107,7 +107,12 @@ data:
             },
             {{- end }}
             {{- end }}
-            "addr": ":{{ $comp.ports.rpc.containerPort }}"
+            "addr": ":{{ $comp.ports.rpc.containerPort }}",
+            "tls": {
+                "ca": "/certs/ca.crt",
+                "crt": "/certs/tls.crt",
+                "key": "/certs/tls.key"
+            }
         },
         "pprof": {
             "addr": "localhost:6060"

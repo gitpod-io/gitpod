@@ -6,6 +6,10 @@ package scaler
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"os"
+	"path/filepath"
 	"sort"
 	"sync"
 	"time"
@@ -17,6 +21,7 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -34,11 +39,11 @@ const (
 
 // WorkspaceManagerPrescaleDriverConfig configures a ws-manager based prescale driver
 type WorkspaceManagerPrescaleDriverConfig struct {
-	WorkspaceManagerAddr string                     `json:"wsmanAddr"`
-	GhostOwner           string                     `json:"ghostOwner"`
-	WorkspaceImage       string                     `json:"workspaceImage"`
-	IDEImage             string                     `json:"ideImage"`
-	FeatureFlags         []api.WorkspaceFeatureFlag `json:"featureFlags"`
+	WsManager      WorkspaceManagerConfig     `json:"wsman"`
+	GhostOwner     string                     `json:"ghostOwner"`
+	WorkspaceImage string                     `json:"workspaceImage"`
+	IDEImage       string                     `json:"ideImage"`
+	FeatureFlags   []api.WorkspaceFeatureFlag `json:"featureFlags"`
 
 	MaxGhostWorkspaces int           `json:"maxGhostWorkspaces"`
 	SchedulerInterval  util.Duration `json:"schedulerInterval"`
@@ -47,6 +52,15 @@ type WorkspaceManagerPrescaleDriverConfig struct {
 		Interval   util.Duration `json:"interval"`
 		Percentage int           `json:"percentage"`
 	} `json:"renewal"`
+}
+
+type WorkspaceManagerConfig struct {
+	Addr string `json:"addr"`
+	TLS  *struct {
+		CA          string `json:"ca"`
+		Certificate string `json:"crt"`
+		PrivateKey  string `json:"key"`
+	} `json:"tls"`
 }
 
 // NewWorkspaceManagerPrescaleDriver creates a new WorkspaceManagerPrescale
@@ -66,7 +80,49 @@ func NewWorkspaceManagerPrescaleDriver(config WorkspaceManagerPrescaleDriverConf
 	}
 	config.WorkspaceImage = imgRef.String()
 
-	conn, err := grpc.Dial(config.WorkspaceManagerAddr, grpc.WithInsecure())
+	var grpcOpts []grpc.DialOption
+	if config.WsManager.TLS != nil {
+		ca := config.WsManager.TLS.CA
+		crt := config.WsManager.TLS.Certificate
+		key := config.WsManager.TLS.PrivateKey
+
+		// Telepresence (used for debugging only) requires special paths to load files from
+		if root := os.Getenv("TELEPRESENCE_ROOT"); root != "" {
+			ca = filepath.Join(root, ca)
+			crt = filepath.Join(root, crt)
+			key = filepath.Join(root, key)
+		}
+
+		rootCA, err := os.ReadFile(ca)
+		if err != nil {
+			return nil, xerrors.Errorf("could not read ca certificate: %s", err)
+		}
+		certPool := x509.NewCertPool()
+		if ok := certPool.AppendCertsFromPEM(rootCA); !ok {
+			return nil, xerrors.Errorf("failed to append ca certs")
+		}
+
+		certificate, err := tls.LoadX509KeyPair(crt, key)
+		if err != nil {
+			log.WithField("config", config.WsManager.TLS).Error("Cannot load ws-manager certs - this is a configuration issue.")
+			return nil, xerrors.Errorf("cannot load ws-manager certs: %w", err)
+		}
+
+		creds := credentials.NewTLS(&tls.Config{
+			Certificates: []tls.Certificate{certificate},
+			RootCAs:      certPool,
+		})
+		grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(creds))
+		log.
+			WithField("ca", ca).
+			WithField("cert", crt).
+			WithField("key", key).
+			Debug("using TLS config to connect ws-manager")
+	} else {
+		grpcOpts = append(grpcOpts, grpc.WithInsecure())
+	}
+
+	conn, err := grpc.Dial(config.WsManager.Addr, grpcOpts...)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot connect to ws-manager: %w", err)
 	}

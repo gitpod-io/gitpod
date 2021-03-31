@@ -17,8 +17,14 @@ metadata:
 data:
   ws-manager-bridge.json: |-
     {
+        "installation": "{{ template "gitpod.installation.shortname" $this }}",
+        "wsClusterDBReconcileIntervalSeconds": 60,
         "controllerIntervalSeconds": 60,
         "controllerMaxDisconnectSeconds": 150,
+        "clusterService": {
+          "host": "localhost",
+          "port": "8080"
+        },
         "staticBridges": [
             {
                 "name": "{{ template "gitpod.installation.shortname" $this }}",

@@ -41,7 +41,14 @@ data:
         "scaler": {
             "enabled": true,
             "driver": {
-                "wsmanAddr": "ws-manager:8080",
+                "wsman": {
+                    "addr": "ws-manager:8080",
+                    "tls": {
+                        "ca": "/ws-manager-client-tls-certs/ca.crt",
+                        "crt": "/ws-manager-client-tls-certs/tls.crt",
+                        "key": "/ws-manager-client-tls-certs/tls.key"
+                    }
+                },
                 "workspaceImage": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.defaultImage) }}",
                 "ideImage": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) }}",
                 "maxGhostWorkspaces": {{ $comp.scaler.maxGhostWorkspaces | default 0 }},

@@ -56,6 +56,9 @@ spec:
         - name: config
           mountPath: "/config"
           readOnly: true
+        - mountPath: /ws-manager-client-tls-certs
+          name: ws-manager-client-tls-certs
+          readOnly: true
 {{ include "gitpod.container.defaultEnv" $this | indent 8 }}
 {{ include "gitpod.container.dbEnv" $this | indent 8 }}
 {{ include "gitpod.container.tracingEnv" $this | indent 8 }}
@@ -68,5 +71,8 @@ spec:
       - name: config
         configMap:
           name: {{ template "gitpod.comp.configMap" $this }}
+      - name: ws-manager-client-tls-certs
+        secret:
+          secretName: ws-manager-client-tls
 {{ toYaml .Values.defaults | indent 6 }}
 {{ end }}

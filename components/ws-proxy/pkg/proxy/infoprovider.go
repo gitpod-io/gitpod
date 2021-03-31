@@ -6,7 +6,11 @@ package proxy
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"net/url"
 	"strconv"
 	"sync"
@@ -15,6 +19,7 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
@@ -43,6 +48,11 @@ type WorkspaceInfoProvider interface {
 type WorkspaceInfoProviderConfig struct {
 	WsManagerAddr     string        `json:"wsManagerAddr"`
 	ReconnectInterval util.Duration `json:"reconnectInterval"`
+	TLS               struct {
+		CA   string `json:"ca"`
+		Cert string `json:"crt"`
+		Key  string `json:"key"`
+	} `json:"tls"`
 }
 
 // Validate validates the configuration to catch issues during startup and not at runtime
@@ -92,7 +102,7 @@ type RemoteWorkspaceInfoProvider struct {
 }
 
 // WSManagerDialer dials out to a ws-manager instance
-type WSManagerDialer func(target string) (io.Closer, wsapi.WorkspaceManagerClient, error)
+type WSManagerDialer func(target string, dialOption grpc.DialOption) (io.Closer, wsapi.WorkspaceManagerClient, error)
 
 // NewRemoteWorkspaceInfoProvider creates a fresh WorkspaceInfoProvider
 func NewRemoteWorkspaceInfoProvider(config WorkspaceInfoProviderConfig) *RemoteWorkspaceInfoProvider {
@@ -109,11 +119,11 @@ func (p *RemoteWorkspaceInfoProvider) Close() {
 	close(p.stop)
 }
 
-func defaultWsmanagerDialer(target string) (io.Closer, wsapi.WorkspaceManagerClient, error) {
+func defaultWsmanagerDialer(target string, dialOption grpc.DialOption) (io.Closer, wsapi.WorkspaceManagerClient, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, target, grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.DialContext(ctx, target, dialOption, grpc.WithBlock())
 	if err != nil {
 		return nil, nil, err
 	}
@@ -127,7 +137,32 @@ func defaultWsmanagerDialer(target string) (io.Closer, wsapi.WorkspaceManagerCli
 func (p *RemoteWorkspaceInfoProvider) Run() (err error) {
 	// create initial connection
 	target := p.Config.WsManagerAddr
-	conn, client, err := p.Dialer(target)
+	dialOption := grpc.WithInsecure()
+	if p.Config.TLS.CA != "" && p.Config.TLS.Cert != "" && p.Config.TLS.Key != "" {
+		log.
+			WithField("ca", p.Config.TLS.CA).
+			WithField("cert", p.Config.TLS.Cert).
+			WithField("key", p.Config.TLS.Key).
+			Debug("using TLS config to connect ws-manager")
+		certPool := x509.NewCertPool()
+		ca, err := ioutil.ReadFile(p.Config.TLS.CA)
+		if err != nil {
+			return err
+		}
+		if !certPool.AppendCertsFromPEM(ca) {
+			return fmt.Errorf("failed appending CA cert")
+		}
+		cert, err := tls.LoadX509KeyPair(p.Config.TLS.Cert, p.Config.TLS.Key)
+		if err != nil {
+			return err
+		}
+		creds := credentials.NewTLS(&tls.Config{
+			Certificates: []tls.Certificate{cert},
+			RootCAs:      certPool,
+		})
+		dialOption = grpc.WithTransportCredentials(creds)
+	}
+	conn, client, err := p.Dialer(target, dialOption)
 	if err != nil {
 		return xerrors.Errorf("error while connecting to ws-manager: %w", err)
 	}
@@ -173,7 +208,7 @@ func (p *RemoteWorkspaceInfoProvider) Run() (err error) {
 			for {
 				time.Sleep(time.Duration(p.Config.ReconnectInterval))
 
-				conn, client, err = p.Dialer(target)
+				conn, client, err = p.Dialer(target, dialOption)
 				if err != nil {
 					log.WithError(err).Warnf("error while connecting to ws-manager, reconnecting after timeout...")
 					continue

@@ -99,6 +99,7 @@ type config struct {
 	RPCServer struct {
 		Addr string `json:"addr"`
 		TLS  struct {
+			CA          string `json:"ca"`
 			Certificate string `json:"crt"`
 			PrivateKey  string `json:"key"`
 		} `json:"tls"`
