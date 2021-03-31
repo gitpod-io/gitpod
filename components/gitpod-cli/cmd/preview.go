@@ -21,45 +21,60 @@ import (
 
 var regexLocalhost = regexp.MustCompile("((^(localhost|127\\.0\\.0\\.1))|(https?://(localhost|127\\.0\\.0\\.1)))(:[0-9]+)?")
 
+var previewCmdOpts struct {
+	External bool
+}
+
 // previewCmd represents the preview command
 var previewCmd = &cobra.Command{
 	Use:   "preview <url>",
-	Short: "Opens a URL in Theia's preview view",
+	Short: "Opens a URL in the IDE's preview",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		url := replaceLocalhostInURL(args[0])
-
-		if service, err := theialib.NewServiceFromEnv(); err == nil {
-			_, err = service.OpenPreview(theialib.OpenPreviewRequest{URL: url})
-			if err == nil {
-				// we've opened the preview. All is well.
-				return
+		if previewCmdOpts.External {
+			if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+				url = "https://" + url
+			}
+			openPreview("GP_EXTERNAL_BROWSER", url)
+			return
+		}
+		if isTheiaIDE() {
+			if service, err := theialib.NewServiceFromEnv(); err == nil {
+				_, err = service.OpenPreview(theialib.OpenPreviewRequest{URL: url})
+				if err == nil {
+					// we've opened the preview. All is well.
+					return
+				}
 			}
 		}
-
-		pcmd := os.Getenv("GP_PREVIEW_BROWSER")
-		if pcmd == "" {
-			log.Fatal("GP_PREVIEW_BROWSER is not set")
-			return
-		}
-		pargs, err := shlex.Split(pcmd)
-		if err != nil {
-			log.Fatalf("cannot parse GP_PREVIEW_BROWSER: %v", err)
-			return
-		}
-		if len(pargs) > 1 {
-			pcmd = pargs[0]
-		}
-		pcmd, err = exec.LookPath(pcmd)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		err = unix.Exec(pcmd, append(pargs, url), os.Environ())
-		if err != nil {
-			log.Fatal(err)
-		}
+		openPreview("GP_PREVIEW_BROWSER", url)
 	},
+}
+
+func openPreview(gpBrowserEnvVar string, url string) {
+	pcmd := os.Getenv(gpBrowserEnvVar)
+	if pcmd == "" {
+		log.Fatalf("%s is not set", gpBrowserEnvVar)
+		return
+	}
+	pargs, err := shlex.Split(pcmd)
+	if err != nil {
+		log.Fatalf("cannot parse %s: %v", gpBrowserEnvVar, err)
+		return
+	}
+	if len(pargs) > 1 {
+		pcmd = pargs[0]
+	}
+	pcmd, err = exec.LookPath(pcmd)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = unix.Exec(pcmd, append(pargs, url), os.Environ())
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func replaceLocalhostInURL(url string) string {
@@ -83,4 +98,5 @@ func replaceLocalhostInURL(url string) string {
 
 func init() {
 	rootCmd.AddCommand(previewCmd)
+	previewCmd.Flags().BoolVar(&previewCmdOpts.External, "external", false, "open the URL in a new browser tab")
 }

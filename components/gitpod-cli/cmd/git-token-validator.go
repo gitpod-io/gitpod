@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -92,13 +93,24 @@ var gitTokenValidator = &cobra.Command{
 			log.WithError(err).Fatal("error guessing token scopes on server")
 		}
 		if guessedTokenScopes.Message != "" {
-			message := fmt.Sprintf("%s Please check the permissions on the [access control page](%s/access-control).", guessedTokenScopes.Message, wsinfo.GetGitpodHost())
-			_, err := supervisor.NewNotificationServiceClient(supervisorConn).Notify(ctx,
+			message := fmt.Sprintf("%s Please grant the necessary permissions.", guessedTokenScopes.Message)
+			result, err := supervisor.NewNotificationServiceClient(supervisorConn).Notify(ctx,
 				&supervisor.NotifyRequest{
 					Level:   supervisor.NotifyRequest_INFO,
 					Message: message,
+					Actions: []string{"Open Access Control"},
 				})
-			log.WithError(err).Fatalf("error notifying client: '%s'", message)
+			if err != nil {
+				log.WithError(err).Fatalf("error notifying client: '%s'", message)
+			}
+			if result.Action == "Open Access Control" {
+				cmd := exec.Command("/proc/self/exe", "preview", "--external", wsinfo.GetGitpodHost()+"/access-control")
+				err := cmd.Run()
+				if err != nil {
+					log.WithError(err).Fatalf("error opening access-control: '%s'", message)
+				}
+			}
+			return
 		}
 		if len(guessedTokenScopes.Scopes) > 0 {
 			_, err = supervisor.NewTokenServiceClient(supervisorConn).GetToken(ctx,
