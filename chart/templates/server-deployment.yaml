@@ -110,6 +110,7 @@ spec:
 {{ include "gitpod.container.defaultEnv" $this | indent 8 }}
 {{ include "gitpod.container.dbEnv" $this | indent 8 }}
 {{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+{{ include "gitpod.container.analyticsEnv" $this | indent 8 }}
 {{ include "gitpod.container.messagebusEnv" $this | indent 8 }}
         - name: RATE_LIMITER_CONFIG
           value: {{ (include "rate-limiter-config" $this) | fromYaml | toJson | quote }}

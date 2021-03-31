@@ -33,6 +33,7 @@ import * as opentracing from 'opentracing';
 import { URL } from 'url';
 import * as uuidv4 from 'uuid/v4';
 import { Disposable, ResponseError } from 'vscode-jsonrpc';
+import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/util/analytics";
 import { AuthProviderService } from '../auth/auth-provider-service';
 import { HostContextProvider } from '../auth/host-context-provider';
 import { GuardedResource, ResourceAccessGuard, ResourceAccessOp } from '../auth/resource-access';
@@ -75,6 +76,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     @inject(UserMessageViewsDB) protected readonly userMessageViewsDB: UserMessageViewsDB;
     @inject(UserStorageResourcesDB) protected readonly userStorageResourcesDB: UserStorageResourcesDB;
     @inject(UserDeletionService) protected readonly userDeletionService: UserDeletionService;
+    @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(AuthorizationService) protected readonly authorizationService: AuthorizationService;
 
     @inject(AppInstallationDB) protected readonly appInstallationDB: AppInstallationDB;
@@ -1336,6 +1338,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             userId: user.id,
         };
         await this.guardAccess({ kind: 'envVar', subject: envvar }, typeof variable.id === 'string' ? 'update' : 'create');
+        this.analytics.track({ event: "envvar-set", userId: this.user?.id || "" });
 
         await this.userDB.setEnvVar(envvar);
     }
@@ -1361,6 +1364,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             userId: user.id,
         };
         await this.guardAccess({ kind: 'envVar', subject: envvar }, 'delete');
+        this.analytics.track({ event: "envvar-deleted", userId: this.user?.id || "" });
 
         await this.userDB.deleteEnvVar(envvar);
     }

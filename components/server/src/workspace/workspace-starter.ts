@@ -32,6 +32,7 @@ import { OneTimeSecretServer } from "../one-time-secret-server";
 import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
 import { DBUser } from '@gitpod/gitpod-db/lib/typeorm/entity/db-user';
 import { ScopedResourceGuard } from '../auth/resource-access';
+import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/util/analytics';
 
 @injectable()
 export class WorkspaceStarter {
@@ -46,6 +47,7 @@ export class WorkspaceStarter {
     @inject(ImageBuilderClientProvider) protected readonly imagebuilderClientProvider: ImageBuilderClientProvider;
     @inject(ImageSourceProvider) protected readonly imageSourceProvider: ImageSourceProvider;
     @inject(UserService) protected readonly userService: UserService;
+    @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(TheiaPluginService) protected readonly theiaService: TheiaPluginService;
     @inject(OneTimeSecretServer) protected readonly otsServer: OneTimeSecretServer;
 
@@ -170,6 +172,17 @@ export class WorkspaceStarter {
             // start that thing
             const resp = (await manager.startWorkspace({ span }, startRequest)).toObject();
             span.log({ "resp": resp });
+
+            this.analytics.track({ 
+                userId: user.id, 
+                event: "workspace-started", 
+                properties: {
+                    workspaceId: workspace.id,
+                    instanceId: instance.id,
+                    contextURL: workspace.contextURL,
+                    usesPrebuild: spec.getInitializer()?.hasPrebuild(),
+                }
+            });
 
             return { instanceID: instance.id, workspaceURL: resp.url };
         } catch (err) {
@@ -467,6 +480,7 @@ export class WorkspaceStarter {
 
             TraceContext.logError({ span }, err);
             log.error({instanceId: instance.id, userId: user.id, workspaceId: workspace.id}, `workspace image build failed: ${message}`);
+            this.analytics.track({ userId: user.id, event: "imagebuild-failed", properties: { workspaceId: workspace.id, instanceId: instance.id, contextURL: workspace.contextURL, }});
 
             throw err;
         } finally {

@@ -73,6 +73,7 @@ import { ContentServiceStorageClient } from './storage/content-service-client';
 import { IDEPluginServiceClient } from '@gitpod/content-service/lib/ideplugin_grpc_pb';
 import { GitTokenScopeGuesser } from './workspace/git-token-scope-guesser';
 import { GitTokenValidator } from './workspace/git-token-validator';
+import { newAnalyticsWriterFromEnv, IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/util/analytics';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Env).toSelf().inSingletonScope();
@@ -185,4 +186,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(StorageClient).to(ContentServiceStorageClient).inSingletonScope();
 
     bind(CodeSyncService).toSelf().inSingletonScope();
+
+    bind(IAnalyticsWriter).toDynamicValue(newAnalyticsWriterFromEnv).inSingletonScope();
 });

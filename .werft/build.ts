@@ -67,6 +67,7 @@ export async function build(context, version) {
     const storage = buildConfig["storage"] || "";
     const withIntegrationTests = buildConfig["with-integration-tests"] == "true";
     const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
+    const analytics = buildConfig["analytics"];
 
     const withWsCluster = parseWsCluster(buildConfig["with-ws-cluster"]);   // e.g., "dev2|gpl-ws-cluster-branch": prepares this branch to host (an additional) workspace cluster
     const wsCluster = parseWsCluster(buildConfig["as-ws-cluster"]);         // e.g., "dev2|gpl-fat-cluster-branch": deploys this build as so that it is available under that subdomain as that cluster
@@ -85,7 +86,8 @@ export async function build(context, version) {
         withIntegrationTests,
         withWsCluster,
         wsCluster,
-        publishToNpm
+        publishToNpm,
+        analytics
     }));
 
     /**
@@ -170,6 +172,7 @@ export async function build(context, version) {
         url,
         wsCluster,
         withWsCluster,
+        analytics
     };
     await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
 
@@ -187,6 +190,7 @@ interface DeploymentConfig {
     url: string;
     wsCluster?: PreviewWorkspaceClusterRef | undefined;
     withWsCluster?: PreviewWorkspaceClusterRef | undefined;
+    analytics?: string;
 }
 
 /**
@@ -309,6 +313,12 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         flags += ` --set installation.shortname=${wsCluster.shortname}`;
 
         flags += ` -f ../.werft/values.wsCluster.yaml`;
+    }
+    if ((deploymentConfig.analytics || "").startsWith("segment|")) {
+        flags += ` --set analytics.writer=segment`;
+        flags += ` --set analytics.segmentKey=${deploymentConfig.analytics!.substring("segment|".length)}`
+    } else if (!!deploymentConfig.analytics) {
+        flags += ` --set analytics.writer=${deploymentConfig.analytics!}`;
     }
 
     // const pathToVersions = `${shell.pwd().toString()}/versions.yaml`;

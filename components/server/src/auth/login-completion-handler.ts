@@ -15,6 +15,7 @@ import { HostContextProvider } from './host-context-provider';
 import { AuthProviderService } from './auth-provider-service';
 import { TosFlow } from '../terms/tos-flow';
 import { increaseLoginCounter } from '../../src/prometheus-metrics';
+import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/util/analytics';
 
 /**
  * The login completion handler pulls the strings between the OAuth2 flow, the ToS flow, and the session management.
@@ -25,6 +26,7 @@ export class LoginCompletionHandler {
     @inject(GitpodCookie) protected gitpodCookie: GitpodCookie;
     @inject(Env) protected env: Env;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
+    @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
 
     async complete(request: express.Request, response: express.Response, { user, returnToUrl, authHost, elevateScopes }: LoginCompletionHandler.CompleteParams) {
@@ -77,8 +79,16 @@ export class LoginCompletionHandler {
         this.gitpodCookie.setCookie(response);
 
         if (authHost) {
-                increaseLoginCounter("succeeded", authHost)
-        }
+            increaseLoginCounter("succeeded", authHost);
+            this.analytics.identify({ anonymousId: request.sessionID, userId: user.id });
+            this.analytics.track({ 
+                userId: user.id, 
+                event: "login",
+                properties: {
+                    "loginContext": authHost,
+                }
+            });
+        } 
         response.redirect(returnTo);
     }
 

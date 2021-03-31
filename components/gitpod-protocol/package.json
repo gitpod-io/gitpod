@@ -15,6 +15,7 @@
         "@types/random-number-csprng": "^1.0.0",
         "@types/uuid": "^3.4.5",
         "@types/ws": "^5.1.2",
+        "@types/analytics-node": "^3.1.4",
         "chai": "^4.1.2",
         "chai-subset": "^1.6.0",
         "mocha": "^5.0.0",
@@ -34,6 +35,7 @@
     },
     "dependencies": {
         "ajv": "^6.5.4",
+        "analytics-node": "^4.0.1",
         "inversify": "^5.0.1",
         "jaeger-client": "3.17.2",
         "js-yaml": "^3.10.0",
