@@ -133,7 +133,7 @@ func startWSManagerTCPProxy(ctx context.Context, listenAddr string, wsManagerAdd
 	p.AddRoute(listenAddr, tcpproxy.To(wsManagerAddr))
 	if refillInterval != 0 && bucketSize != 0 {
 		p.ListenFunc = func(network, address string) (net.Listener, error) {
-			return ratelimit.NewRateLimitedListener(
+			return ratelimit.NewListener(
 				ctx,
 				network,
 				address,

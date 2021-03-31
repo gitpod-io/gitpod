@@ -48,9 +48,12 @@ spec:
       - name: config
         configMap:
           name: {{ template "gitpod.comp.configMap" $this }}
-      - name: tls-certs
+      - name: ws-daemon-tls-certs
         secret:
           secretName: ws-daemon-tls
+      - name: tls-certs
+        secret:
+          secretName: ws-manager-tls
       - name: workspace-template
         configMap:
           name: workspace-template
@@ -70,6 +73,9 @@ spec:
           readOnly: true
         - name: workspace-template
           mountPath: "/workspace-template"
+          readOnly: true
+        - mountPath: /ws-daemon-tls-certs
+          name: ws-daemon-tls-certs
           readOnly: true
         - mountPath: /certs
           name: tls-certs
