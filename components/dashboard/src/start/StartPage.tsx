@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import * as images from '../images';
+import gitpodIcon from '../icons/gitpod.svg';
 
 export enum StartPhase {
   Checking = 0,
@@ -73,7 +73,7 @@ export function StartPage(props: StartPageProps) {
   return <div className="w-screen h-screen bg-white align-middle">
     <div className="flex flex-col mx-auto items-center h-screen">
       <div className="h-1/3"></div>
-      <img src={images.gitpodIcon} className={`h-16 flex-shrink-0 ${(error || phase === StartPhase.Stopped) ? '' : 'animate-bounce'}`} />
+      <img src={gitpodIcon} className={`h-16 flex-shrink-0 ${(error || phase === StartPhase.Stopped) ? '' : 'animate-bounce'}`} />
       <h3 className="mt-8 text-xl">{title}</h3>
       {typeof(phase) === 'number' && phase < StartPhase.Stopping && <ProgressBar phase={phase} error={!!error} />}
       {props.children}

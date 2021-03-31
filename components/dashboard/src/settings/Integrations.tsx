@@ -4,13 +4,14 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { copy, exclamation } from '../images';
 import { AuthProviderEntry, AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import React, { useContext, useEffect, useState } from "react";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
 import { SettingsPage } from "./SettingsPage";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
+import copy from '../images/copy.svg';
+import exclamation from '../images/exclamation.svg';
 import ThreeDots from '../icons/ThreeDots.svg';
 import Modal from "../components/Modal";
 import { openAuthorizeWindow } from "../provider-utils";
