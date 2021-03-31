@@ -4,7 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import {github, gitlab, bitbucket} from './images';
+import bitbucket from './images/bitbucket.svg';
+import github from './images/github.svg';
+import gitlab from './images/gitlab.svg';
 import { gitpodHostUrl } from "./service/service";
 
 

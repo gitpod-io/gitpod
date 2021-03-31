@@ -4,12 +4,13 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { gitpod, gitpodIcon } from './images';
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "./user-context";
 import { getGitpodService, gitpodHostUrl, reconnectGitpodService } from "./service/service";
 import { iconForAuthProvider, simplifyProviderName } from "./provider-utils";
+import gitpod from './images/gitpod.svg';
+import gitpodIcon from './icons/gitpod.svg';
 import automate from "./images/welcome/automate.svg";
 import code from "./images/welcome/code.svg";
 import collaborate from "./images/welcome/collaborate.svg";

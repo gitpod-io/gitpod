@@ -7,10 +7,10 @@
 import { User } from "@gitpod/gitpod-protocol";
 import { useContext } from "react";
 import { Link } from "react-router-dom";
+import gitpodIcon from '../icons/gitpod.svg';
 import { gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import ContextMenu from "./ContextMenu";
-import * as images from '../images';
 import { useLocation } from "react-router";
 interface Entry {
     title: string, link: string, alternatives?: string[]
@@ -44,7 +44,7 @@ function Menu(props: { left: Entry[], right: Entry[] }) {
         <header className="lg:px-28 px-10 bg-white flex flex-wrap items-center py-4">
             <div className="flex justify-between items-center pr-3">
                 <Link to="/">
-                    <img src={images.gitpodIcon} className="h-6" />
+                    <img src={gitpodIcon} className="h-6" />
                 </Link>
             </div>
             <div className="flex flex-1 items-center w-auto w-full" id="menu">

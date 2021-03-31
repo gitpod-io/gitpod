@@ -9,7 +9,8 @@ import { getGitpodService } from "../service/service";
 import SelectableCard from "../components/SelectableCard";
 import { UserContext } from "../user-context";
 import { SettingsPage } from "./SettingsPage";
-import * as images from '../images';
+import theia from '../images/theia-gray.svg';
+import vscode from '../images/vscode.svg';
 
 export default function Preferences() {
     const { user } = useContext(UserContext);
@@ -34,12 +35,12 @@ export default function Preferences() {
             <div className="mt-4 space-x-4 flex">
                 <SelectableCard className="w-36 h-40" title="VS Code" selected={defaultIde === 'code'} onClick={() => actuallySetDefaultIde('code')}>
                     <div className="flex-grow flex justify-center align-center">
-                        <img className="w-16 filter-grayscale" src={images.vscode}/>
+                        <img className="w-16 filter-grayscale" src={vscode}/>
                     </div>
                 </SelectableCard>
                 <SelectableCard className="w-36 h-40" title="Theia" selected={defaultIde === 'theia'} onClick={() => actuallySetDefaultIde('theia')}>
                     <div className="flex-grow flex justify-center align-center">
-                        <img className="w-16" src={images.theia}/>
+                        <img className="w-16" src={theia}/>
                     </div>
                 </SelectableCard>
             </div>
