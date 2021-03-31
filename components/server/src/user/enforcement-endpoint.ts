@@ -12,7 +12,6 @@ import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
 import { Env } from '../env';
 import { UserDeletionService } from '../user/user-deletion-service';
-import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
 import { AuthorizationService } from './authorization-service';
 import { Permission } from '@gitpod/gitpod-protocol/lib/permission';
 import { ResponseError } from 'vscode-jsonrpc';
@@ -28,7 +27,6 @@ export class EnforcementController {
     @inject(Env) protected readonly env: Env;
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(WorkspaceDB) protected readonly workspaceDb: WorkspaceDB;
-    @inject(WorkspaceManagerClientProvider) protected readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider;
     @inject(UserDeletionService) protected readonly userDeletionService: UserDeletionService;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
     @inject(EnforcementControllerServerFactory) private readonly serverFactory: EnforcementControllerServerFactory;

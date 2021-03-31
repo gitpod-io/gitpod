@@ -520,11 +520,21 @@ export class GitpodServiceImpl<Client extends GitpodClient, Server extends Gitpo
     }
 }
 
-export function createGitpodService<C extends GitpodClient, S extends GitpodServer>(serverUrl: string) {
-    const url = new GitpodHostUrl(serverUrl)
-        .asWebsocket()
-        .withApi({ pathname: GitpodServerPath });
+export function createGitpodService<C extends GitpodClient, S extends GitpodServer>(serverUrl: string | Promise<string>) {
+    const toWsUrl = (serverUrl: string) => {
+        return new GitpodHostUrl(serverUrl)
+            .asWebsocket()
+            .withApi({ pathname: GitpodServerPath })
+            .toString();
+    };
+    let url: string | Promise<string>;
+    if (typeof serverUrl === "string") {
+        url = toWsUrl(serverUrl);
+    } else {
+        url = serverUrl.then(url => toWsUrl(url));
+    }
+
     const connectionProvider = new WebSocketConnectionProvider();
-    const gitpodServer = connectionProvider.createProxy<S>(url.toString());
+    const gitpodServer = connectionProvider.createProxy<S>(url);
     return new GitpodServiceImpl<C, S>(gitpodServer);
 }

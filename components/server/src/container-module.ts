@@ -32,7 +32,8 @@ import { UserService } from './user/user-service';
 import { UserDeletionService } from './user/user-deletion-service';
 import { WorkspaceDeletionService } from './workspace/workspace-deletion-service';
 import { EnvvarPrefixParser } from './workspace/envvar-prefix-context-parser';
-import { WorkspaceManagerClientProvider, WorkspaceManagerClientProviderConfig, WorkspaceManagerClientProviderEnvConfig } from '@gitpod/ws-manager/lib/client-provider';
+import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
+import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientProviderDBSource, WorkspaceManagerClientProviderEnvSource, WorkspaceManagerClientProviderSource } from '@gitpod/ws-manager/lib/client-provider-source';
 import { WorkspaceStarter } from './workspace/workspace-starter';
 import { TracingManager } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { AuthorizationService, AuthorizationServiceImpl } from './user/authorization-service';
@@ -150,7 +151,9 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(TracingManager).toSelf().inSingletonScope();
 
     bind(WorkspaceManagerClientProvider).toSelf().inSingletonScope();
-    bind(WorkspaceManagerClientProviderConfig).to(WorkspaceManagerClientProviderEnvConfig).inSingletonScope();
+    bind(WorkspaceManagerClientProviderCompositeSource).toSelf().inSingletonScope();
+    bind(WorkspaceManagerClientProviderSource).to(WorkspaceManagerClientProviderEnvSource).inSingletonScope();
+    bind(WorkspaceManagerClientProviderSource).to(WorkspaceManagerClientProviderDBSource).inSingletonScope();
 
     bind(TheiaPluginService).toSelf().inSingletonScope();
 
