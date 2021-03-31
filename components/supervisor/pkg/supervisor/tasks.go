@@ -281,6 +281,7 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup) {
 			}
 		}
 	}
+
 	if tm.config.isHeadless() {
 		tm.reporter.done(success)
 	}

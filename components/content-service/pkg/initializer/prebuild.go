@@ -126,6 +126,7 @@ func clearWorkspace(location string) error {
 		return err
 	}
 	for _, file := range files {
+		log.WithField("dir", file).Info("Removing directory")
 		err = os.RemoveAll(file)
 		if err != nil {
 			return xerrors.Errorf("prebuild initializer: %w", err)

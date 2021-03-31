@@ -124,10 +124,12 @@ func runWithinNetns() (err error) {
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
+
 	err = cmd.Start()
 	if err != nil {
 		return err
 	}
+
 	sigc := sigproxy.ForwardAllSignals(context.Background(), cmd.Process.Pid)
 	defer sigproxysignal.StopCatch(sigc)
 
