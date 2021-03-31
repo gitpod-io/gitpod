@@ -22,7 +22,7 @@ export interface WorkspacesState {
     repos: WhitelistedRepository[];
 }
 
-export class Workspaces extends React.Component<WorkspacesProps, WorkspacesState> {
+export default class Workspaces extends React.Component<WorkspacesProps, WorkspacesState> {
 
     protected workspaceModel: WorkspaceModel | undefined;
 

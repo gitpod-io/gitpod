@@ -7,8 +7,7 @@
 import React, { Suspense, useContext, useEffect, useState } from 'react';
 import Menu from './components/Menu';
 import { BrowserRouter } from "react-router-dom";
-import { Route, Switch } from "react-router";
-import { Workspaces } from './workspaces/Workspaces';
+import { Redirect, Route, Switch } from "react-router";
 
 import { Login } from './Login';
 import { UserContext } from './user-context';
@@ -16,6 +15,7 @@ import { getGitpodService } from './service/service';
 import { shouldSeeWhatsNew, WhatsNew } from './WhatsNew';
 import settingsMenu from './settings/settings-menu';
 
+const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ './workspaces/Workspaces'));
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Account'));
 const Notifications = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Notifications'));
 const Plans = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Plans'));
@@ -46,7 +46,7 @@ function App() {
             }
             setLoading(false);
         })();
-    }, []);
+    }, [ setUser ]);
     
     if (loading) {
         return <Loading />
@@ -70,14 +70,26 @@ function App() {
         <div className="container">
             {renderMenu()}
             <Switch>
-                <Route path={["/", "/workspaces"]} exact render={
-                    () => <Workspaces />} />
-                <Route path={["/account", "/settings"]} exact component={Account} />
-                <Route path={["/integrations", "/access-control"]} exact component={Integrations} />
+                <Route path="/workspaces" exact component={Workspaces} />
+                <Route path="/account" exact component={Account} />
+                <Route path="/integrations" exact component={Integrations} />
                 <Route path="/notifications" exact component={Notifications} />
                 <Route path="/plans" exact component={Plans} />
                 <Route path="/variables" exact component={EnvironmentVariables} />
                 <Route path="/preferences" exact component={Preferences} />
+                
+                <Route path={["/", "/login"]} exact>
+                    <Redirect to="/workspaces"/>
+                </Route>
+                <Route path={["/settings"]} exact>
+                    <Redirect to="/account"/>
+                </Route>
+                <Route path={["/access-control"]} exact>
+                    <Redirect to="/integrations"/>
+                </Route>
+                <Route path={["/subscription", "/usage"]} exact>
+                    <Redirect to="/plans"/>
+                </Route>
             </Switch>
         </div>
     </Route>;
