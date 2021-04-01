@@ -347,7 +347,7 @@ export default function () {
             </div>
             {!!confirmUpgradeToPlan && <Modal visible={true} onClose={() => setConfirmUpgradeToPlan(undefined)}>
                 <h3>Upgrade to {confirmUpgradeToPlan.name}</h3>
-                <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-2">
+                <div className="border-t border-b border-gray-200 mt-4 -mx-6 px-6 py-2">
                     <p className="mt-1 mb-4 text-base">You are about to upgrade to {confirmUpgradeToPlan.name}.</p>
                     {!Plans.isFreePlan(currentPlan.chargebeeId) && <div className="flex rounded-md bg-gray-200 p-4 mb-4">
                         <img className="w-4 h-4 m-1 ml-2 mr-4" src={info} />
@@ -364,7 +364,7 @@ export default function () {
             </Modal>}
             {!!confirmDowngradeToPlan && <Modal visible={true} onClose={() => setConfirmDowngradeToPlan(undefined)}>
                 <h3>Downgrade to {confirmDowngradeToPlan.name}</h3>
-                <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-2">
+                <div className="border-t border-b border-gray-200 mt-4 -mx-6 px-6 py-2">
                     <p className="mt-1 mb-4 text-base">You are about to downgrade to {confirmDowngradeToPlan.name}.</p>
                     <div className="flex rounded-md bg-gray-200 p-4 mb-4">
                         <img className="w-4 h-4 m-1 ml-2 mr-4" src={info} />
