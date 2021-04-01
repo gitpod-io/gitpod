@@ -63,7 +63,7 @@
                     "image": "registry-facade:8080/remote/foobar",
                     "command": [
                         "/.supervisor/workspacekit",
-                        "ghost"
+                        "ring0"
                     ],
                     "ports": [
                         {
@@ -114,6 +114,10 @@
                         {
                             "name": "THEIA_MINI_BROWSER_HOST_PATTERN",
                             "value": "browser-{{hostname}}"
+                        },
+                        {
+                            "name": "GITPOD_SUPERVISOR_GHOST",
+                            "value": "true"
                         },
                         {
                             "name": "GITPOD_GIT_USER_NAME",

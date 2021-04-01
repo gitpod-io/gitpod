@@ -199,6 +199,9 @@ type WorkspaceConfig struct {
 
 	// WorkspaceContext is a context for this workspace
 	WorkspaceContext string `env:"GITPOD_WORKSPACE_CONTEXT"`
+
+	// RunAsGhost disables regular supervisor behaviour and basically just waits for SIGTERM
+	RunAsGhost bool `env:"GITPOD_SUPERVISOR_GHOST"`
 }
 
 // WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service

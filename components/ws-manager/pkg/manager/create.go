@@ -464,8 +464,8 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 		}
 	)
 
+	// ghost workspaces never become, nor need to be ready
 	if startContext.Request.Type == api.WorkspaceType_GHOST {
-		command[1] = "ghost"
 		readinessProbe = nil
 	}
 
@@ -506,6 +506,7 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 	}, nil
 }
+
 func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext) ([]corev1.EnvVar, error) {
 	spec := startContext.Request.Spec
 
@@ -527,6 +528,9 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	result = append(result, corev1.EnvVar{Name: "THEIA_SUPERVISOR_ENDPOINT", Value: fmt.Sprintf(":%d", startContext.SupervisorPort)})
 	result = append(result, corev1.EnvVar{Name: "THEIA_WEBVIEW_EXTERNAL_ENDPOINT", Value: "webview-{{hostname}}"})
 	result = append(result, corev1.EnvVar{Name: "THEIA_MINI_BROWSER_HOST_PATTERN", Value: "browser-{{hostname}}"})
+	if startContext.Request.Type == api.WorkspaceType_GHOST {
+		result = append(result, corev1.EnvVar{Name: "GITPOD_SUPERVISOR_GHOST", Value: "true"})
+	}
 
 	// We don't require that Git be configured for workspaces
 	if spec.Git != nil {

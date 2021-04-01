@@ -114,6 +114,16 @@ func Run(options ...RunOption) {
 		return
 	}
 
+	if cfg.RunAsGhost {
+		log.Info("running as ghost - waiting for SIGTERM")
+
+		sigChan := make(chan os.Signal, 1)
+		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+		select {
+		case <-sigChan:
+		}
+	}
+
 	buildIDEEnv(&Config{})
 	configureGit(cfg)
 
