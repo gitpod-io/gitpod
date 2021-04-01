@@ -8,6 +8,8 @@ import EventEmitter from "events";
 import React, { useEffect, Suspense } from "react";
 import { DisposableCollection, WorkspaceInstance, WorkspaceImageBuild, Workspace, WithPrebuild } from "@gitpod/gitpod-protocol";
 import { HeadlessLogEvent } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
+import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
+import CaretDown from "../icons/CaretDown.svg";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 
@@ -255,7 +257,6 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         if (!isHeadless && this.state.workspaceInstance.status.conditions.timeout) {
           title = 'Timed Out';
         }
-        const pendingChanges = getPendingChanges(this.state.workspaceInstance);
         statusMessage = <div>
           <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 bg-gray-100">
             <div className="rounded-full w-3 h-3 text-sm bg-gray-300">&nbsp;</div>
@@ -264,10 +265,8 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
               <a target="_parent" href={this.state.workspace?.contextURL}><p className="w-56 truncate hover:underline" >{this.state.workspace?.contextURL}</p></a>
             </div>
           </div>
-          {pendingChanges.length > 0
-            ? <p className="mt-2 text-red-500">{pendingChanges.length} Change{pendingChanges.length === 1 ? '' : 's'}</p>
-            : <p className="mt-2">No Changes</p>}
-          <div className="mt-10 flex justify-center space-x-2">
+          <PendingChangesDropdown workspaceInstance={this.state.workspaceInstance} />
+          <div className="mt-10 justify-center flex space-x-2">
             <a target="_parent" href={gitpodHostUrl.asDashboard().toString()}><button className="secondary">Go to Dashboard</button></a>
             <a target="_parent" href={gitpodHostUrl.asStart(this.state.workspaceInstance?.workspaceId).toString()}><button>Open Workspace</button></a>
           </div>
@@ -281,30 +280,38 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
   }
 }
 
-function getPendingChanges(workspaceInstance?: WorkspaceInstance) {
-  const pendingChanges: { message: string, items: string[] }[] = [];
-  const repo = workspaceInstance && workspaceInstance.status && workspaceInstance.status.repo;
+function PendingChangesDropdown(props: { workspaceInstance?: WorkspaceInstance }) {
+  const repo = props.workspaceInstance?.status?.repo;
+  const headingStyle = 'text-gray-500 text-left';
+  const itemStyle = 'text-gray-400 text-left -mt-5';
+  const menuEntries: ContextMenuEntry[] = [];
+  let totalChanges = 0;
   if (repo) {
-    if (repo.totalUncommitedFiles || 0 > 0) {
-      pendingChanges.push({
-        message: repo.totalUncommitedFiles === 1 ? 'an uncommited file' : `${repo.totalUncommitedFiles} uncommited files`,
-        items: repo.uncommitedFiles || []
-      });
+    if ((repo.totalUntrackedFiles || 0) > 0) {
+      totalChanges += repo.totalUntrackedFiles || 0;
+      menuEntries.push({ title: 'Untracked Files', customFontStyle: headingStyle });
+      (repo.untrackedFiles || []).forEach(item => menuEntries.push({ title: item, customFontStyle: itemStyle }));
     }
-    if (repo.totalUntrackedFiles || 0 > 0) {
-      pendingChanges.push({
-        message: repo.totalUntrackedFiles === 1 ? 'an untracked file' : `${repo.totalUntrackedFiles} untracked files`,
-        items: repo.untrackedFiles || []
-      });
+    if ((repo.totalUncommitedFiles || 0) > 0) {
+      totalChanges += repo.totalUncommitedFiles || 0;
+      menuEntries.push({ title: 'Uncommitted Files', customFontStyle: headingStyle });
+      (repo.uncommitedFiles || []).forEach(item => menuEntries.push({ title: item, customFontStyle: itemStyle }));
     }
-    if (repo.totalUnpushedCommits || 0 > 0) {
-      pendingChanges.push({
-        message: repo.totalUnpushedCommits === 1 ? 'an unpushed commit' : `${repo.totalUnpushedCommits} unpushed commits`,
-        items: repo.unpushedCommits || []
-      });
+    if ((repo.totalUnpushedCommits || 0) > 0) {
+      totalChanges += repo.totalUnpushedCommits || 0;
+      menuEntries.push({ title: 'Unpushed Commits', customFontStyle: headingStyle });
+      (repo.unpushedCommits || []).forEach(item => menuEntries.push({ title: item, customFontStyle: itemStyle }));
     }
   }
-  return pendingChanges;
+  if (totalChanges <= 0) {
+    return <p className="mt-2">No Changes</p>;
+  }
+  return <ContextMenu menuEntries={menuEntries} width="w-64 max-h-48 overflow-scroll mx-auto left-0 right-0">
+    <p className="mt-2 flex justify-center text-gitpod-red">
+      <span>{totalChanges} Change{totalChanges === 1 ? '' : 's'}</span>
+      <img className="m-2" src={CaretDown}/>
+    </p>
+  </ContextMenu>;
 }
 
 function ImageBuildView(props: { workspaceId: string, phase?: StartPhase }) {
