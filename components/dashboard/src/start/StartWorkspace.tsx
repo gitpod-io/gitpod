@@ -234,7 +234,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         }
         phase = StartPhase.Stopping;
         statusMessage = <div>
-          <div className="flex space-x-3 items-center rounded-xl m-auto px-4 h-16 w-72 mt-4 bg-gray-100">
+          <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 bg-gray-100">
             <div className="rounded-full w-3 h-3 text-sm bg-gitpod-kumquat">&nbsp;</div>
             <div>
               <p className="text-gray-700 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
@@ -255,7 +255,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         }
         const pendingChanges = getPendingChanges(this.state.workspaceInstance);
         statusMessage = <div>
-          <div className="flex space-x-3 items-center rounded-xl m-auto px-4 h-16 w-72 mt-4 bg-gray-100">
+          <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 bg-gray-100">
             <div className="rounded-full w-3 h-3 text-sm bg-gray-300">&nbsp;</div>
             <div>
               <p className="text-gray-700 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
