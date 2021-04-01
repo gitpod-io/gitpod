@@ -165,7 +165,7 @@ func Run(options ...RunOption) {
 		termMuxSrv,
 		RegistrableTokenService{tokenService},
 		notificationService,
-		&InfoService{cfg: cfg},
+		&InfoService{cfg: cfg, ContentState: cstate},
 		&ControlService{portsManager: portMgmt},
 	}
 	apiServices = append(apiServices, additionalServices...)

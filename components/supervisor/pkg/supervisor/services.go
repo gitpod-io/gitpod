@@ -558,7 +558,8 @@ func (rt *remoteTokenProvider) GetToken(ctx context.Context, req *api.GetTokenRe
 
 // InfoService implements the api.InfoService
 type InfoService struct {
-	cfg *Config
+	cfg          *Config
+	ContentState ContentState
 }
 
 // RegisterGRPC registers the gRPC info service
@@ -591,14 +592,17 @@ func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest)
 		}
 	}
 
-	stat, err := os.Stat(is.cfg.WorkspaceRoot)
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	if stat.IsDir() {
-		resp.WorkspaceLocation = &api.WorkspaceInfoResponse_WorkspaceLocationFolder{WorkspaceLocationFolder: is.cfg.WorkspaceRoot}
-	} else {
-		resp.WorkspaceLocation = &api.WorkspaceInfoResponse_WorkspaceLocationFile{WorkspaceLocationFile: is.cfg.WorkspaceRoot}
+	_, contentReady := is.ContentState.ContentSource()
+	if contentReady {
+		stat, err := os.Stat(is.cfg.WorkspaceRoot)
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+		if stat.IsDir() {
+			resp.WorkspaceLocation = &api.WorkspaceInfoResponse_WorkspaceLocationFolder{WorkspaceLocationFolder: is.cfg.WorkspaceRoot}
+		} else {
+			resp.WorkspaceLocation = &api.WorkspaceInfoResponse_WorkspaceLocationFile{WorkspaceLocationFile: is.cfg.WorkspaceRoot}
+		}
 	}
 
 	resp.UserHome, err = os.UserHomeDir()
