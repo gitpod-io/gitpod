@@ -237,11 +237,11 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             <div className="rounded-full w-3 h-3 text-sm bg-gitpod-kumquat">&nbsp;</div>
             <div>
               <p className="text-gray-700 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
-              <a href={this.state.workspace?.contextURL}><p className="w-56 truncate hover:underline" >{this.state.workspace?.contextURL}</p></a>
+              <a target="_parent" href={this.state.workspace?.contextURL}><p className="w-56 truncate hover:underline" >{this.state.workspace?.contextURL}</p></a>
             </div>
           </div>
-          <div className="mt-10 flex">
-            <button className="secondary mx-auto" onClick={() => this.redirectTo(gitpodHostUrl.asDashboard().toString())}>Go to Dashboard</button>
+          <div className="mt-10 flex justify-center">
+            <a target="_parent" href={gitpodHostUrl.asDashboard().toString()}><button className="secondary">Go to Dashboard</button></a>
           </div>
         </div>;
         break;
@@ -261,15 +261,15 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             <div className="rounded-full w-3 h-3 text-sm bg-gray-300">&nbsp;</div>
             <div>
               <p className="text-gray-700 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
-              <a href={this.state.workspace?.contextURL}><p className="w-56 truncate hover:underline" >{this.state.workspace?.contextURL}</p></a>
+              <a target="_parent" href={this.state.workspace?.contextURL}><p className="w-56 truncate hover:underline" >{this.state.workspace?.contextURL}</p></a>
             </div>
           </div>
           {pendingChanges.length > 0
             ? <p className="mt-2 text-red-500">{pendingChanges.length} Change{pendingChanges.length === 1 ? '' : 's'}</p>
             : <p className="mt-2">No Changes</p>}
-          <div className="mt-10 flex space-x-2">
-            <button className="secondary" onClick={() => this.redirectTo(gitpodHostUrl.asDashboard().toString())}>Go to Dashboard</button>
-            <button onClick={() => this.redirectTo(gitpodHostUrl.asStart(this.state.workspaceInstance?.workspaceId).toString())}>Open Workspace</button>
+          <div className="mt-10 flex justify-center space-x-2">
+            <a target="_parent" href={gitpodHostUrl.asDashboard().toString()}><button className="secondary">Go to Dashboard</button></a>
+            <a target="_parent" href={gitpodHostUrl.asStart(this.state.workspaceInstance?.workspaceId).toString()}><button>Open Workspace</button></a>
           </div>
         </div>;
         break;
