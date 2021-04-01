@@ -152,9 +152,7 @@ func (ta *tarAppender) addTarFile(path, name string) error {
 		return err
 	}
 
-	if err := archive.ReadSecurityXattrToTarHeader(path, hdr); err != nil {
-		return err
-	}
+	_ = archive.ReadSecurityXattrToTarHeader(path, hdr)
 
 	// if it's not a directory and has more than 1 link,
 	// it's hard linked, so set the type flag accordingly

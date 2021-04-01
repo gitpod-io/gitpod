@@ -108,7 +108,12 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 	}()
 
 	// Be explicit about the tar flags. We want to restore the exact content without changes
-	tarcmd := exec.Command("tar", "--extract", "--preserve-permissions")
+	tarcmd := exec.Command(
+		"tar",
+		"--extract",
+		"--preserve-permissions",
+		"--xattrs", "--xattrs-include=security.capability",
+	)
 	tarcmd.Dir = dst
 	tarcmd.Stdin = src
 

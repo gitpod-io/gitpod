@@ -200,11 +200,11 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 	}
 
 	// TODO(cw): make the initializer work without chown
-	spec.Process.Capabilities.Ambient = append(spec.Process.Capabilities.Ambient, "CAP_CHOWN", "CAP_FOWNER", "CAP_MKNOD")
-	spec.Process.Capabilities.Bounding = append(spec.Process.Capabilities.Bounding, "CAP_CHOWN", "CAP_FOWNER", "CAP_MKNOD")
-	spec.Process.Capabilities.Effective = append(spec.Process.Capabilities.Effective, "CAP_CHOWN", "CAP_FOWNER", "CAP_MKNOD")
-	spec.Process.Capabilities.Inheritable = append(spec.Process.Capabilities.Inheritable, "CAP_CHOWN", "CAP_FOWNER", "CAP_MKNOD")
-	spec.Process.Capabilities.Permitted = append(spec.Process.Capabilities.Permitted, "CAP_CHOWN", "CAP_FOWNER", "CAP_MKNOD")
+	spec.Process.Capabilities.Ambient = append(spec.Process.Capabilities.Ambient, "CAP_CHOWN", "CAP_FOWNER", "CAP_MKNOD", "CAP_SETFCAP")
+	spec.Process.Capabilities.Bounding = append(spec.Process.Capabilities.Bounding, "CAP_CHOWN", "CAP_FOWNER", "CAP_MKNOD", "CAP_SETFCAP")
+	spec.Process.Capabilities.Effective = append(spec.Process.Capabilities.Effective, "CAP_CHOWN", "CAP_FOWNER", "CAP_MKNOD", "CAP_SETFCAP")
+	spec.Process.Capabilities.Inheritable = append(spec.Process.Capabilities.Inheritable, "CAP_CHOWN", "CAP_FOWNER", "CAP_MKNOD", "CAP_SETFCAP")
+	spec.Process.Capabilities.Permitted = append(spec.Process.Capabilities.Permitted, "CAP_CHOWN", "CAP_FOWNER", "CAP_MKNOD", "CAP_SETFCAP")
 	// TODO(cw): setup proper networking in a netns, rather than relying on ws-daemons network
 	n := 0
 	for _, x := range spec.Linux.Namespaces {
