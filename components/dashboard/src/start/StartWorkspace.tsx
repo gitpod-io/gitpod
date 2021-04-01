@@ -22,7 +22,6 @@ export interface StartWorkspaceState {
   workspaceInstance?: WorkspaceInstance;
   workspace?: Workspace;
   error?: StartWorkspaceError;
-  ideFrontendFailureCause?: string;
 }
 
 export interface StartWorkspaceError {
@@ -43,8 +42,10 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     if (this.runsInIFrame()) {
       const setStateEventListener = (event: MessageEvent) => {
         if (event.data.type === 'setState' && 'state' in event.data && typeof event.data['state'] === 'object') {
-          // This seems to only set ideFrontendFailureCause
-          this.setState(event.data.state);
+          if (event.data.state.ideFrontendFailureCause) {
+            const error = { message: event.data.state.ideFrontendFailureCause };
+            this.setState({ error });
+          }
         }
       }
       window.addEventListener('message', setStateEventListener, false);
