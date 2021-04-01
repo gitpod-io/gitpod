@@ -356,6 +356,11 @@ components:
     resources:
       cpu: 100m
       memory: 32Mi
+    tls:
+      server:
+        secretName: ws-manager-tls
+      client:
+        secretName: ws-manager-client-tls
     ports:
       rpc:
         expose: true

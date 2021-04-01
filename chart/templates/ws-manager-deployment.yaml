@@ -53,7 +53,7 @@ spec:
           secretName: ws-daemon-tls
       - name: tls-certs
         secret:
-          secretName: ws-manager-tls
+          secretName: {{ $comp.tls.server.secretName }}
       - name: workspace-template
         configMap:
           name: workspace-template

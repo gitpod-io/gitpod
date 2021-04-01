@@ -108,7 +108,7 @@ spec:
           name: {{ template "gitpod.comp.configMap" $this }}
       - name: ws-manager-client-tls-certs
         secret:
-          secretName: ws-manager-client-tls
+          secretName: {{ .Values.components.wsManager.tls.client.secretName }}
       {{- if $comp.handover.enabled }}
       - name: handover
         hostPath:
