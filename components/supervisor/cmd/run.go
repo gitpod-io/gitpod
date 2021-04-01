@@ -11,30 +11,16 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/pkg/supervisor"
 )
 
-var runCmdOpts struct {
-	InNamespace bool
-}
-
 var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "starts the supervisor",
 
 	Run: func(cmd *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, true, true)
-
-		var opts []supervisor.RunOption
-		if runCmdOpts.InNamespace {
-			opts = append(opts,
-				supervisor.InNamespace(),
-			)
-		}
-
-		supervisor.Run(opts...)
+		supervisor.Run()
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(runCmd)
-
-	runCmd.Flags().BoolVar(&runCmdOpts.InNamespace, "inns", false, "disables teardown canary.")
 }

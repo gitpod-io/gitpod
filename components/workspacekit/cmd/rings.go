@@ -569,7 +569,7 @@ var ring2Cmd = &cobra.Command{
 			return
 		}
 
-		err = unix.Exec(ring2Opts.SupervisorPath, []string{"supervisor", "run", "--inns"}, os.Environ())
+		err = unix.Exec(ring2Opts.SupervisorPath, []string{"supervisor", "run"}, os.Environ())
 		if err != nil {
 			log.WithError(err).WithField("cmd", ring2Opts.SupervisorPath).Error("cannot exec")
 			failed = true
