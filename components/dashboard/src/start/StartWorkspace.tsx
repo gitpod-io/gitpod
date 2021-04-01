@@ -259,12 +259,12 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             <div className="rounded-full w-3 h-3 text-sm bg-gray-300">&nbsp;</div>
             <div>
               <p className="text-gray-700 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
-              {pendingChanges.length > 0 &&
-                <p className="text-red-500">{pendingChanges.length} Change{pendingChanges.length === 1 ? '' : 's'}</p>
-              }
               <a href={this.state.workspace?.contextURL}><p className="w-56 truncate hover:underline" >{this.state.workspace?.contextURL}</p></a>
             </div>
           </div>
+          {pendingChanges.length > 0
+            ? <p className="mt-2 text-red-500">{pendingChanges.length} Change{pendingChanges.length === 1 ? '' : 's'}</p>
+            : <p className="mt-2">No Changes</p>}
           <div className="mt-10 flex space-x-2">
             <button className="secondary" onClick={() => this.redirectTo(gitpodHostUrl.asDashboard().toString())}>Go to Dashboard</button>
             <button onClick={() => this.redirectTo(gitpodHostUrl.asStart(this.state.workspaceInstance?.workspaceId).toString())}>Open Workspace</button>
