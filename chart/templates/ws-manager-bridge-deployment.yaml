@@ -73,6 +73,6 @@ spec:
           name: {{ template "gitpod.comp.configMap" $this }}
       - name: ws-manager-client-tls-certs
         secret:
-          secretName: ws-manager-client-tls
+          secretName: {{ .Values.components.wsManager.tls.client.secretName }}
 {{ toYaml .Values.defaults | indent 6 }}
 {{ end }}

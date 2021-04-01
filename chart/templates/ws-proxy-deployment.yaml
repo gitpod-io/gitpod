@@ -49,7 +49,7 @@ spec:
           name: {{ template "gitpod.comp.configMap" $this }}
       - name: ws-manager-client-tls-certs
         secret:
-          secretName: ws-manager-client-tls
+          secretName: {{ .Values.components.wsManager.tls.client.secretName }}
 {{- if $.Values.certificatesSecret.secretName }}
       - name: config-certificates
         secret:
