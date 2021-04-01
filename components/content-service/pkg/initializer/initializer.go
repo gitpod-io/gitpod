@@ -316,7 +316,6 @@ func InitializeWorkspace(ctx context.Context, location string, remoteStorage sto
 		}
 		for _, f := range fs {
 			path := filepath.Join(location, f.Name())
-			log.WithField("dir", path).Info("Removing directory")
 			err := os.RemoveAll(path)
 			if err != nil {
 				return src, xerrors.Errorf("cannot clean workspace folder: %w", err)
