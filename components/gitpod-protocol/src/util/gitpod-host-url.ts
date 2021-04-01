@@ -88,7 +88,7 @@ export class GitpodHostUrl {
     }
 
     asUpgradeSubscription(): GitpodHostUrl {
-        return this.with(url => ({ pathname: '/upgrade-subscription/' }));
+        return this.with(url => ({ pathname: '/plans/' }));
     }
 
     asAccessControl(): GitpodHostUrl {
