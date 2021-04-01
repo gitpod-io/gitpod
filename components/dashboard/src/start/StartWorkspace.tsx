@@ -21,6 +21,7 @@ export interface StartWorkspaceState {
   startedInstanceId?: string;
   workspaceInstance?: WorkspaceInstance;
   workspace?: Workspace;
+  hasImageBuildLogs?: boolean;
   error?: StartWorkspaceError;
 }
 
@@ -118,15 +119,19 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       return;
     }
 
-    // Stopped and headless: the prebuild is done, let's try to use it!
-    if (workspaceInstance.status.phase === 'stopped' && this.state.workspace?.type !== 'regular') {
-      const contextUrl = this.state.workspace?.contextURL.replace('prebuild/', '')!;
-      this.redirectTo(gitpodHostUrl.withContext(contextUrl).toString());
+    if (workspaceInstance.status.phase === 'preparing') {
+      this.setState({ hasImageBuildLogs: true });
     }
 
     let error;
     if (workspaceInstance.status.conditions.failed) {
       error = { message: workspaceInstance.status.conditions.failed };
+    }
+
+    // Successfully stopped and headless: the prebuild is done, let's try to use it!
+    if (!error && workspaceInstance.status.phase === 'stopped' && this.state.workspace?.type !== 'regular') {
+      const contextUrl = this.state.workspace?.contextURL.replace('prebuild/', '')!;
+      this.redirectTo(gitpodHostUrl.withContext(contextUrl).toString());
     }
 
     this.setState({ workspaceInstance, error });
@@ -244,6 +249,9 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       // Stopped means the workspace ended regularly because it was shut down.
       case "stopped":
         phase = StartPhase.Stopped;
+        if (this.state.hasImageBuildLogs) {
+          return <ImageBuildView workspaceId={this.state.workspaceInstance.workspaceId} phase={phase} />;
+        }
         if (!isHeadless && this.state.workspaceInstance.status.conditions.timeout) {
           title = 'Timed Out';
         }
@@ -299,7 +307,7 @@ function getPendingChanges(workspaceInstance?: WorkspaceInstance) {
   return pendingChanges;
 }
 
-function ImageBuildView(props: { workspaceId: string }) {
+function ImageBuildView(props: { workspaceId: string, phase?: StartPhase }) {
   const logsEmitter = new EventEmitter();
 
   useEffect(() => {
@@ -322,7 +330,7 @@ function ImageBuildView(props: { workspaceId: string }) {
     };
   }, []);
 
-  return <StartPage title="Building Image">
+  return <StartPage title="Building Image" phase={props.phase}>
     <Suspense fallback={<div />}>
       <WorkspaceLogs logsEmitter={logsEmitter}/>
     </Suspense>
