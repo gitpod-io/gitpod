@@ -126,6 +126,11 @@ func clearWorkspace(location string) error {
 		return err
 	}
 	for _, file := range files {
+		// do not remove docker storage.
+		if strings.HasSuffix(file, ".docker-root") {
+			continue
+		}
+
 		err = os.RemoveAll(file)
 		if err != nil {
 			return xerrors.Errorf("prebuild initializer: %w", err)
