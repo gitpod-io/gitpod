@@ -62,21 +62,36 @@ function ProgressBar(props: { phase: number, error: boolean }) {
 
 export interface StartPageProps {
   phase?: number;
-  error?: boolean;
+  error?: StartWorkspaceError;
   title?: string;
   children?: React.ReactNode;
 }
 
+export interface StartWorkspaceError {
+  message?: string;
+  code?: number;
+  data?: any;
+}
+
 export function StartPage(props: StartPageProps) {
   const { phase, error } = props;
-  let title = props.title || getPhaseTitle(phase, error);
+  let title = props.title || getPhaseTitle(phase, !!error);
   return <div className="w-screen h-screen bg-white align-middle">
     <div className="flex flex-col mx-auto items-center text-center h-screen">
       <div className="h-1/3"></div>
       <img src={gitpodIcon} className={`h-16 flex-shrink-0 ${(error || phase === StartPhase.Stopped) ? '' : 'animate-bounce'}`} />
       <h3 className="mt-8 text-xl">{title}</h3>
       {typeof(phase) === 'number' && phase < StartPhase.Stopping && <ProgressBar phase={phase} error={!!error} />}
+      {error && <StartError error={error} />}
       {props.children}
     </div>
   </div>;
+}
+
+function StartError(props: { error: StartWorkspaceError }) {
+  const { error } = props;
+  if (!error) {
+    return null;
+  }
+  return <p className="text-base text-red-500">{error.message}</p>;
 }

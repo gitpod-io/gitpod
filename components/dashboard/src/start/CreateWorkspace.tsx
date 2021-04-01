@@ -10,7 +10,7 @@ import { CreateWorkspaceMode, WorkspaceCreationResult, RunningWorkspacePrebuildS
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import Modal from "../components/Modal";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
-import { StartPage, StartPhase } from "./StartPage";
+import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import StartWorkspace from "./StartWorkspace";
 
 const WorkspaceLogs = React.lazy(() => import('./WorkspaceLogs'));
@@ -21,14 +21,8 @@ export interface CreateWorkspaceProps {
 
 export interface CreateWorkspaceState {
   result?: WorkspaceCreationResult;
-  error?: CreateWorkspaceError;
+  error?: StartWorkspaceError;
   stillParsing: boolean;
-}
-
-export interface CreateWorkspaceError {
-  message?: string;
-  code?: number;
-  data?: any;
 }
 
 export default class CreateWorkspace extends React.Component<CreateWorkspaceProps, CreateWorkspaceState> {
@@ -86,7 +80,6 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
       switch (error.code) {
         case ErrorCodes.CONTEXT_PARSE_ERROR:
           statusMessage = <div className="text-center">
-            <p className="text-base text-red-500">Unrecognized context: '{contextUrl}'</p>
             <p className="text-base mt-2">Learn more about <a className="text-blue" href="https://www.gitpod.io/docs/context-urls/">supported context URLs</a></p>
           </div>;
           break;
@@ -136,7 +129,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
       />;
     }
 
-    return <StartPage phase={phase} error={!!error}>
+    return <StartPage phase={phase} error={error}>
       {statusMessage}
       {error && <div>
         <a href={gitpodHostUrl.asDashboard().toString()}><button className="mt-8 secondary">Go back to dashboard</button></a>
