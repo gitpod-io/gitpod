@@ -19,7 +19,7 @@ export enum StartPhase {
 function getPhaseTitle(phase?: StartPhase, error?: boolean) {
   switch (phase) {
     case StartPhase.Checking:
-      return !error ? "Checking" : "Oh, no! Something went wrong!1";
+      return !error ? "Checking" : "Oh, no! Something went wrong!";
     case StartPhase.Preparing:
       return "Preparing";
     case StartPhase.Creating:
