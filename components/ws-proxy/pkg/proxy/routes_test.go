@@ -199,16 +199,10 @@ func TestRoutes(t *testing.T) {
 			Desc: "favicon",
 			Request: modifyRequest(httptest.NewRequest("GET", workspaces[0].URL+"favicon.ico", nil),
 				addHostHeader,
+				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
 			),
 			Expectation: Expectation{
-				Status: http.StatusSeeOther,
-				Header: http.Header{
-					"Content-Type": {"text/html; charset=utf-8"},
-					"Location": {
-						"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__/favicon.ico",
-					},
-				},
-				Body: "<a href=\"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__/favicon.ico\">See Other</a>.\n\n",
+				Status: http.StatusBadGateway,
 			},
 		},
 		{

@@ -1,6 +1,6 @@
 {
   "short_name": "Gitpod",
-  "name": "Gitpod - Always Ready-to-Code.",
+  "name": "Gitpod",
   "icons": [
     {
       "src": "favicon256.png",
@@ -19,7 +19,7 @@
     }
   ],
   "start_url": ".",
-  "display": "standalone",
+  "display": "fullscreen",
   "theme_color": "#000000",
   "background_color": "#ffffff"
 }

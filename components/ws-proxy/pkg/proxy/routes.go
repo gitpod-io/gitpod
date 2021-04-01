@@ -76,16 +76,15 @@ func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip Worksp
 	//       Routes registered first have priority over those that come afterwards.
 	routes := newIDERoutes(config, ip)
 
-	// The favicon warants special handling, because we pull that from the supervisor frontend
-	// rather than the IDE.
-	faviconRouter := r.Path("/favicon.ico").Subrouter()
-	faviconRouter.Use(func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-			req.URL.Path = "/_supervisor/frontend/favicon.ico"
-			h.ServeHTTP(resp, req)
-		})
-	})
-	routes.HandleSupervisorFrontendRoute(faviconRouter.NewRoute())
+	// proxy pass PWA resources to the dashboard
+	for _, pp := range []string{"/manifest.json", "/service-worker.js", "/favicon.ico", "/favicon256.png", "/favicon192.png", "/favicon512.png"} {
+		pwaRouter := r.Path(pp).Subrouter()
+		pwaRouter.Use(logRouteHandlerHandler("HandlePWARoute"))
+		pwaRouter.NewRoute().HandlerFunc(proxyPass(routes.Config, func(c *Config, req *http.Request) (*url.URL, error) {
+			req.Header.Set("Host", config.Config.GitpodInstallation.HostName)
+			return url.Parse(fmt.Sprintf("%s://%s%s", config.Config.GitpodInstallation.Scheme, config.Config.GitpodInstallation.HostName, req.URL.Path))
+		}))
+	}
 
 	// Theia has a bunch of special routes it probably requires.
 	// TODO(cw): figure out if these routes are still required, and how we deal with specialties of other IDEs.
