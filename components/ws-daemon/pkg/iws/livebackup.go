@@ -104,7 +104,6 @@ func (l *LiveWorkspaceBackup) Backup() (dest string, err error) {
 				continue
 			}
 
-			log.WithField("dir", filepath.Join(gpdir, fn)).Info("Removing directory")
 			os.RemoveAll(filepath.Join(gpdir, fn))
 		}
 	}
