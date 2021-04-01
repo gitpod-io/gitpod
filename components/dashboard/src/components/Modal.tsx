@@ -7,6 +7,8 @@
 import { useEffect } from "react";
 
 export default function Modal(props: {
+    title?: string;
+    buttons?: React.ReactChild[] | React.ReactChild,
     children: React.ReactChild[] | React.ReactChild,
     visible: boolean,
     closeable?: boolean,
@@ -58,7 +60,14 @@ export default function Modal(props: {
                             </svg>
                         </div>
                     )}
-                    {props.children}
+                    {props.title ? <><h3 className="pb-2">{props.title}</h3> 
+                    <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-4">
+                        {props.children}
+                    </div>
+                    <div className="flex justify-end mt-6 space-x-2">
+                        {props.buttons}
+                    </div></>:
+                    props.children }
                 </div>
             </div>
         </div>

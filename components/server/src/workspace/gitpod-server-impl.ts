@@ -1205,7 +1205,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         const user = this.checkAndBlockUser();
 
         if (!this.env.githubAppEnabled) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, 'User is not authenticated. Please login.');
+            throw new ResponseError(ErrorCodes.NOT_FOUND, 'No GitHub app enabled for this installation. Please talk to your administrator.');
         }
 
         await this.appInstallationDB.recordNewInstallation('github', 'user', installationId, user.id);
