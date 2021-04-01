@@ -465,7 +465,7 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 	)
 
 	if startContext.Request.Type == api.WorkspaceType_GHOST {
-		command[1] = "ghost"
+		command = []string{"/.supervisor/supervisor", "ghost"}
 		readinessProbe = nil
 	}
 
