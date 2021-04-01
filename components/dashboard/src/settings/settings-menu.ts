@@ -18,6 +18,10 @@ export default [
         link: ['/plans']
     },
     {
+        title: 'Teams',
+        link: ['/teams']
+    },
+    {
         title: 'Variables',
         link: ['/variables']
     },
