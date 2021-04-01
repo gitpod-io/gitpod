@@ -14,15 +14,7 @@
     stop?: () => void;
     success: (result?: T) => void;
 }
-// export namespace PollOptions {
-//     export const create = (success: () => void) => ({
-//         backoffFactor: 1.2,
-//         warningInSeconds: 40,
-//         retryUntilSeconds: 120,
-    
-//         success
-//     });
-// }
+
 export const poll = <T>(initialDelayInSeconds: number, callback: () => Promise<{done: boolean, result?: T}>, opts: PollOptions<T>) => {
     const start = new Date();
     doPoll(start, initialDelayInSeconds, callback, opts);
