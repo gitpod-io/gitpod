@@ -9,7 +9,7 @@ import React, { useEffect, Suspense } from "react";
 import { DisposableCollection, WorkspaceInstance, WorkspaceImageBuild, Workspace, WithPrebuild } from "@gitpod/gitpod-protocol";
 import { HeadlessLogEvent } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
-import { StartPage, StartPhase } from "./StartPage";
+import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 
 const WorkspaceLogs = React.lazy(() => import('./WorkspaceLogs'));
 
@@ -22,12 +22,6 @@ export interface StartWorkspaceState {
   workspaceInstance?: WorkspaceInstance;
   workspace?: Workspace;
   error?: StartWorkspaceError;
-}
-
-export interface StartWorkspaceError {
-  message?: string;
-  code?: number;
-  data?: any;
 }
 
 export default class StartWorkspace extends React.Component<StartWorkspaceProps, StartWorkspaceState> {
@@ -273,18 +267,8 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         break;
     }
 
-    return <StartPage phase={phase} error={!!error} title={title}>
+    return <StartPage phase={phase} error={error} title={title}>
       {statusMessage}
-      {error && <div>
-        <button className="mt-8 secondary" onClick={() => this.redirectTo(gitpodHostUrl.asDashboard().toString())}>Go back to dashboard</button>
-        <p className="mt-14 text-base text-gray-400 flex space-x-2">
-          <a href="https://www.gitpod.io/docs/">Docs</a>
-          <span>—</span>
-          <a href="https://status.gitpod.io/">Status</a>
-          <span>—</span>
-          <a href="https://www.gitpod.io/blog/">Blog</a>
-        </p>
-      </div>}
     </StartPage>;
   }
 }
