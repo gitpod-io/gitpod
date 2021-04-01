@@ -13,6 +13,11 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
     protected currentlyFetching = new Set<string>();
     protected disposables = new DisposableCollection();
     protected internalLimit = 50;
+
+    get limit(): number {
+        return this.internalLimit;
+    }
+    
     set limit(limit: number) {
         this.internalLimit = limit;
         this.internalRefetch();
