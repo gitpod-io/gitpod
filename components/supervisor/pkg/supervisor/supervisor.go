@@ -698,52 +698,50 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 func terminateChildProcesses() {
 	parent := os.Getpid()
 
-	children, err := findChildProcesses(parent)
+	children, err := processesWithParent(parent)
 	if err != nil {
-		log.WithError(err).WithField("pid", parent).Warn("cannot find process childs")
+		log.WithError(err).WithField("pid", parent).Warn("cannot find children processes")
 		return
 	}
 
-	for _, child := range children {
-		if child.Comm == "sudo" {
-			// We cannot terminate root processes.
-			// Send SIGTERM to the child process
-			children, err := findChildProcesses(child.PID)
-			if err != nil {
-				log.WithError(err).WithField("pid", parent).Warn("cannot find process childs")
-				continue
-			}
-
-			if len(children) == 0 {
-				continue
-			}
-
-			terminateProcess(children[0])
-			continue
+	for pid, uid := range children {
+		privileged := false
+		if initializer.GitpodUID != uid {
+			privileged = true
 		}
 
-		terminateProcess(child)
+		terminateProcess(pid, privileged)
 	}
 }
 
-func terminateProcess(proc procfs.ProcStat) {
-	err := syscall.Kill(proc.PID, unix.SIGTERM)
+func terminateProcess(pid int, privileged bool) {
+	var err error
+	if privileged {
+		cmd := exec.Command("sudo", "kill", "-SIGTERM", fmt.Sprintf("%v", pid))
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		err = cmd.Run()
+	} else {
+		err = syscall.Kill(pid, unix.SIGTERM)
+	}
+
 	if err != nil {
-		log.WithError(err).WithField("command", proc.Comm).WithField("pid", proc.PID).WithField("ppid", proc.PPID).Warn("cannot terminate child process")
+		log.WithError(err).WithField("pid", pid).Warn("cannot terminate child process")
 		return
 	}
 
-	log.WithField("pid", proc.PID).Debug("SIGTERM'ed child process")
+	log.WithField("pid", pid).Debug("SIGTERM'ed child process")
 }
 
-func findChildProcesses(ppid int) ([]procfs.ProcStat, error) {
+func processesWithParent(ppid int) (map[int]int, error) {
 	procs, err := procfs.AllProcs()
 	if err != nil {
 		return nil, err
 	}
 
-	var children []procfs.ProcStat
+	children := make(map[int]int)
 	for _, proc := range procs {
+
 		stat, err := proc.Stat()
 		if err != nil {
 			continue
@@ -753,7 +751,17 @@ func findChildProcesses(ppid int) ([]procfs.ProcStat, error) {
 			continue
 		}
 
-		children = append(children, stat)
+		status, err := proc.NewStatus()
+		if err != nil {
+			continue
+		}
+
+		uid, err := strconv.Atoi(status.UIDs[0])
+		if err != nil {
+			continue
+		}
+
+		children[proc.PID] = uid
 	}
 
 	return children, nil
