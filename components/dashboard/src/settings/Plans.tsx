@@ -25,10 +25,8 @@ export default function () {
     const { user } = useContext(UserContext);
     const { server } = getGitpodService();
     const [ accountStatement, setAccountStatement ] = useState<AccountStatement>();
-    const [ showPaymentUI, setShowPaymentUI ] = useState<boolean>();
     const [ isChargebeeCustomer, setIsChargebeeCustomer ] = useState<boolean>();
     const [ isStudent, setIsStudent ] = useState<boolean>();
-    const [ clientRegion, setClientRegion ] = useState<string>();
     const [ currency, setCurrency ] = useState<Currency>('USD');
     const [ availableCoupons, setAvailableCoupons ] = useState<PlanCoupon[]>();
     const [ appliedCoupons, setAppliedCoupons ] = useState<PlanCoupon[]>();
@@ -40,11 +38,9 @@ export default function () {
     useEffect(() => {
         Promise.all([
             server.getAccountStatement({}).then(v => () => setAccountStatement(v)),
-            server.getShowPaymentUI().then(v => () => setShowPaymentUI(v)),
             server.isChargebeeCustomer().then(v => () => setIsChargebeeCustomer(v)),
             server.isStudent().then(v => () => setIsStudent(v)),
             server.getClientRegion().then(v => () => {
-                setClientRegion(v);
                 // @ts-ignore
                 setCurrency(countries[v]?.currency === 'EUR' ? 'EUR' : 'USD');
             }),
@@ -58,14 +54,6 @@ export default function () {
         }
     }, []);
 
-    console.log('accountStatement', accountStatement);
-    console.log('showPaymentUI', showPaymentUI);
-    console.log('isChargebeeCustomer', isChargebeeCustomer);
-    console.log('isStudent', isStudent);
-    console.log('clientRegion', clientRegion);
-    console.log('availableCoupons', availableCoupons);
-    console.log('appliedCoupons', appliedCoupons);
-    console.log('gitHubUpgradeUrls', gitHubUpgradeUrls);
     console.log('privateRepoTrialEndDate', privateRepoTrialEndDate);
 
     const activeSubscriptions = (accountStatement?.subscriptions || []).filter(s => Subscription.isActive(s, new Date().toISOString()));
@@ -93,8 +81,8 @@ export default function () {
         if (paidPlan?.chargebeeId === pendingUpgradePlan.chargebeeId) {
             // The upgrade already worked
             removePendingUpgrade();
-        } else if ((pendingUpgradePlan.pendingSince + 1000 * 60 * 3) < Date.now()) {
-            // Pending upgrades expire after 3 minutes
+        } else if ((pendingUpgradePlan.pendingSince + 1000 * 60 * 5) < Date.now()) {
+            // Pending upgrades expire after 5 minutes
             removePendingUpgrade();
         } else if (!pollAccountStatementTimeout) {
             // Refresh account statement in 10 seconds in order to poll for upgrade confirmed
@@ -104,17 +92,14 @@ export default function () {
             }, 10000);
         }
     }
-    console.log('pendingUpgradePlan', pendingUpgradePlan);
 
     // Optimistically select a new paid plan even if the transaction is still in progress (i.e. waiting for Chargebee callback)
     const currentPlan = pendingUpgradePlan || paidPlan || freePlan;
-    console.log('currentPlan', currentPlan);
 
     // If the user has a paid plan with a different currency, force that currency.
     if (currency !== currentPlan.currency && !Plans.isFreePlan(currentPlan.chargebeeId)) {
         setCurrency(currentPlan.currency);
     }
-    console.log('currency', currency);
 
     const personalPlan = Plans.getPersonalPlan(currency);
     const professionalPlan = Plans.getNewProPlan(currency);
@@ -124,7 +109,6 @@ export default function () {
     const scheduledDowngradePlanId = !!(paidSubscription?.paymentData?.downgradeDate)
         ? paidSubscription.paymentData.newPlan || personalPlan.chargebeeId
         : undefined;
-    console.log('scheduledDowngradePlanId', scheduledDowngradePlanId);
 
     const [ pendingDowngradePlan, setPendingDowngradePlan ] = useState<PendingPlan | undefined>(getLocalStorageObject('pendingDowngradePlan'));
     const setPendingDowngrade = (to: PendingPlan) => {
@@ -144,8 +128,8 @@ export default function () {
         } else if (scheduledDowngradePlanId === pendingDowngradePlan.chargebeeId) {
             // The Downgrade is already scheduled
             removePendingDowngrade();
-        } else if ((pendingDowngradePlan.pendingSince + 1000 * 60 * 3) < Date.now()) {
-            // Pending downgrades expire after 3 minutes
+        } else if ((pendingDowngradePlan.pendingSince + 1000 * 60 * 5) < Date.now()) {
+            // Pending downgrades expire after 5 minutes
             removePendingDowngrade();
         } else if (!pollAccountStatementTimeout) {
             // Refresh account statement in 10 seconds in orer to poll for downgrade confirmed/scheduled
@@ -155,7 +139,6 @@ export default function () {
             }, 10000);
         }
     }
-    console.log('pendingDowngradePlan', pendingDowngradePlan);
 
     const [ confirmUpgradeToPlan, setConfirmUpgradeToPlan ] = useState<Plan>();
     const [ confirmDowngradeToPlan, setConfirmDowngradeToPlan ] = useState<Plan>();
@@ -330,7 +313,7 @@ export default function () {
         const bottomLabel = ('pendingSince' in currentPlan) ? <p className="text-green-600 animate-pulse">Upgrade in progress</p> : undefined;
         planCards.push(<PlanCard plan={applyCoupons(unleashedPlan, appliedCoupons)} isCurrent={true} bottomLabel={bottomLabel}>{unleashedFeatures}</PlanCard>);
     } else {
-        const targetPlan = applyCoupons(unleashedPlan, availableCoupons);
+        const targetPlan = applyCoupons(isStudent ? studentUnleashedPlan : unleashedPlan, availableCoupons);
         let onUpgrade;
         switch (Plans.subscriptionChange(currentPlan.type, targetPlan.type)) {
             case 'upgrade': onUpgrade = () => confirmUpgrade(targetPlan); break;
