@@ -118,7 +118,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
     else if (result?.existingWorkspaces) {
       statusMessage = <Modal visible={true} closeable={false} onClose={()=>{}}>
         <h3>Running Workspaces</h3>
-        <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-2">
+        <div className="border-t border-b border-gray-200 mt-4 -mx-6 px-6 py-2">
           <p className="mt-1 mb-2 text-base">You already have running workspaces with the same context. You can open an existing one or open a new workspace.</p>
           <>
             {result?.existingWorkspaces?.map(w =>
@@ -148,7 +148,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
     return <StartPage phase={phase} error={error}>
       {statusMessage}
       {error && <div>
-        <a href={gitpodHostUrl.asDashboard().toString()}><button className="mt-8 secondary">Go back to dashboard</button></a>
+        <a href={gitpodHostUrl.asDashboard().toString()}><button className="mt-8 secondary">Go to Dashboard</button></a>
         <p className="mt-14 text-base text-gray-400 flex space-x-2">
           <a href="https://www.gitpod.io/docs/">Docs</a>
           <span>—</span>
