@@ -46,7 +46,7 @@ function App() {
             }
             setLoading(false);
         })();
-    }, [ setUser ]);
+    }, []);
     
     if (loading) {
         return <Loading />
