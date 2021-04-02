@@ -252,7 +252,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       case "stopped":
         phase = StartPhase.Stopped;
         if (this.state.hasImageBuildLogs) {
-          return <ImageBuildView workspaceId={this.state.workspaceInstance.workspaceId} phase={phase} />;
+          return <ImageBuildView workspaceId={this.state.workspaceInstance.workspaceId} phase={phase} error={error} />;
         }
         if (!isHeadless && this.state.workspaceInstance.status.conditions.timeout) {
           title = 'Timed Out';
@@ -314,7 +314,7 @@ function PendingChangesDropdown(props: { workspaceInstance?: WorkspaceInstance }
   </ContextMenu>;
 }
 
-function ImageBuildView(props: { workspaceId: string, phase?: StartPhase }) {
+function ImageBuildView(props: { workspaceId: string, phase?: StartPhase, error?: StartWorkspaceError }) {
   const logsEmitter = new EventEmitter();
 
   useEffect(() => {
@@ -339,7 +339,7 @@ function ImageBuildView(props: { workspaceId: string, phase?: StartPhase }) {
 
   return <StartPage title="Building Image" phase={props.phase}>
     <Suspense fallback={<div />}>
-      <WorkspaceLogs logsEmitter={logsEmitter}/>
+      <WorkspaceLogs logsEmitter={logsEmitter} errorMessage={props.error?.message} />
     </Suspense>
   </StartPage>;
 }
