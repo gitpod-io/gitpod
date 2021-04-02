@@ -897,7 +897,6 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     }
 
     public async mayAccessPrivateRepo(): Promise<boolean> {
-        // TODO remove after IO-split
         return true;
     }
 

@@ -5,7 +5,7 @@
  */
 
 import EventEmitter from "events";
-import React, { useEffect, Suspense, useContext } from "react";
+import React, { useEffect, Suspense, useContext, useState } from "react";
 import { CreateWorkspaceMode, WorkspaceCreationResult, RunningWorkspacePrebuildStarting } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import Modal from "../components/Modal";
@@ -63,7 +63,6 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
   }
 
   render() {
-    const { contextUrl } = this.props;
     let phase = StartPhase.Checking;
     let statusMessage = <p className="text-base text-gray-400">{this.state.stillParsing ? 'Parsing context …' : 'Preparing workspace …'}</p>;
 
@@ -76,33 +75,24 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
           </div>;
           break;
         case ErrorCodes.NOT_FOUND:
-          statusMessage = <div className="text-center">
-            <p className="text-base text-gitpod-red">Not found: {contextUrl}</p>
-          </div>;
-          break;
+          return <RepositoryNotFoundView error={error} />;
         case ErrorCodes.PLAN_DOES_NOT_ALLOW_PRIVATE_REPOS:
           // HACK: Hide the error (behind the modal)
           error = undefined;
           phase = StartPhase.Stopped;
-          statusMessage = <LimitReachedModal>
-            <p className="mt-1 mb-2 text-base">Gitpod is free for public repositories. To work with private repositories, please upgrade to a compatible paid plan.</p>
-          </LimitReachedModal>;
+          statusMessage = <LimitReachedPrivateRepoModal/>;
           break;
         case ErrorCodes.TOO_MANY_RUNNING_WORKSPACES:
           // HACK: Hide the error (behind the modal)
           error = undefined;
           phase = StartPhase.Stopped;
-          statusMessage = <LimitReachedModal>
-            <p className="mt-1 mb-2 text-base">You have reached the limit of parallel running workspaces for your account. Please, upgrade or stop one of the running workspaces.</p>
-          </LimitReachedModal>;
+          statusMessage = <LimitReachedParallelWorkspacesModal/>;
           break;
         case ErrorCodes.NOT_ENOUGH_CREDIT:
           // HACK: Hide the error (behind the modal)
           error = undefined;
           phase = StartPhase.Stopped;
-          statusMessage = <LimitReachedModal>
-            <p className="mt-1 mb-2 text-base">You have reached the limit of monthly workspace hours for your account. Please upgrade to get more hours for your workspaces.</p>
-          </LimitReachedModal>;
+          statusMessage = <LimitReachedOutOfHours/>;
           break;
         default:
           statusMessage = <p className="text-base text-gitpod-red w-96">Unknown Error: {JSON.stringify(this.state?.error, null, 2)}</p>;
@@ -150,11 +140,11 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
       {error && <div>
         <a href={gitpodHostUrl.asDashboard().toString()}><button className="mt-8 secondary">Go to Dashboard</button></a>
         <p className="mt-14 text-base text-gray-400 flex space-x-2">
-          <a href="https://www.gitpod.io/docs/">Docs</a>
+          <a className="hover:text-blue-600" href="https://www.gitpod.io/docs/">Docs</a>
           <span>—</span>
-          <a href="https://status.gitpod.io/">Status</a>
+          <a className="hover:text-blue-600" href="https://status.gitpod.io/">Status</a>
           <span>—</span>
-          <a href="https://www.gitpod.io/blog/">Blog</a>
+          <a className="hover:text-blue-600" href="https://www.gitpod.io/blog/">Blog</a>
         </p>
       </div>}
     </StartPage>;
@@ -176,6 +166,101 @@ function LimitReachedModal(p: { children: React.ReactNode }) {
       <a href={gitpodHostUrl.with({ pathname: 'plans' }).toString()} className="ml-2"><button>Upgrade</button></a>
     </div>
   </Modal>;
+}
+
+function LimitReachedParallelWorkspacesModal() {
+  return <LimitReachedModal>
+    <p className="mt-1 mb-2 text-base">You have reached the limit of parallel running workspaces for your account. Please, upgrade or stop one of the running workspaces.</p>
+  </LimitReachedModal>;
+}
+
+function LimitReachedPrivateRepoModal() {
+  return <LimitReachedModal>
+    <p className="mt-1 mb-2 text-base">Gitpod is free for public repositories. To work with private repositories, please upgrade to a compatible paid plan.</p>
+  </LimitReachedModal>;
+}
+
+function LimitReachedOutOfHours() {
+  return <LimitReachedModal>
+    <p className="mt-1 mb-2 text-base">You have reached the limit of monthly workspace hours for your account. Please upgrade to get more hours for your workspaces.</p>
+  </LimitReachedModal>;
+}
+
+function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
+  const [ statusMessage, setStatusMessage ] = useState<React.ReactNode>();
+  useEffect(() => {
+    (async () => {
+      const service = getGitpodService();
+      const { host, owner, repoName, userIsOwner, userScopes, lastUpdate } = p.error.data;
+      console.log('host', host);
+      console.log('owner', owner);
+      console.log('repoName', repoName);
+      console.log('userIsOwner', userIsOwner);
+      console.log('userScopes', userScopes);
+      console.log('lastUpdate', lastUpdate);
+
+      if ((await service.server.mayAccessPrivateRepo()) === false) {
+        setStatusMessage(<LimitReachedPrivateRepoModal/>);
+        return;
+      }
+
+      const authProvider = (await service.server.getAuthProviders()).find(p => p.host === host);
+      if (!authProvider) {
+        return;
+      }
+
+      const repoFullName = (owner && repoName) ? `${owner}/${repoName}` : '';
+
+      // TODO: this should be aware of already granted permissions
+      const missingScope = authProvider.host === 'github.com' ? 'repo' : 'read_repository';
+      const authorizeURL = gitpodHostUrl.withApi({
+        pathname: '/authorize',
+        search: `returnTo=${encodeURIComponent(window.location.toString())}&host=${host}&scopes=${missingScope}`
+      }).toString();
+
+      if (!userScopes.includes(missingScope)) {
+        setStatusMessage(<div className="mt-2 flex flex-col space-y-8">
+          <p className="text-base text-gray-400 w-96">The repository '{`${repoFullName}`}' may be private. Please authorize Gitpod to access to private repositories.</p>
+          <a className="mx-auto" href={authorizeURL}><button className="secondary">Grant Access</button></a>
+        </div>);
+        return;
+      }
+      
+      if (userIsOwner) {
+        setStatusMessage(<div className="mt-2 flex flex-col space-y-8">
+          <p className="text-base text-gray-400 w-96">The repository '{`${repoFullName}`}' is not found in your account.</p>
+        </div>);
+        return;
+      }
+
+      let updatedRecently = false;
+      if (lastUpdate && typeof lastUpdate === 'string') {
+        try {
+          const minutes = (Date.now() - Date.parse(lastUpdate)) / 1000 / 60;
+          updatedRecently = minutes < 5;
+        } catch {
+          // ignore
+        }
+      }
+
+      if (!updatedRecently) {
+        setStatusMessage(<div className="mt-2 flex flex-col space-y-8">
+          <p className="text-base text-gray-400 w-96">Permission to access private repositories has been granted. If you are a member of '{owner}', please try to request access for Gitpod.</p>
+          <a className="mx-auto" href={authorizeURL}><button className="secondary">Request Access for Gitpod</button></a>
+        </div>);
+        return;
+      }
+
+      setStatusMessage(<div className="mt-2 flex flex-col space-y-8">
+        <p className="text-base text-gray-400 w-96">Your access token was updated recently. Please try again if the repository exists and Gitpod was approved for '{owner}'.</p>
+        <a className="mx-auto" href={authorizeURL}><button className="secondary">Try Again</button></a>
+      </div>);
+    })();
+  }, []);
+
+  return <StartPage phase={StartPhase.Checking} error={p.error}>
+    {statusMessage}
+  </StartPage>;
 }
 
 interface RunningPrebuildViewProps {

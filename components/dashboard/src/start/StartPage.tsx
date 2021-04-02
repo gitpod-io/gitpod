@@ -16,10 +16,13 @@ export enum StartPhase {
   Stopped = 6,
 };
 
-function getPhaseTitle(phase?: StartPhase, error?: boolean) {
+function getPhaseTitle(phase?: StartPhase, error?: StartWorkspaceError) {
+  if (!!error) {
+    return "Oh, no! Something went wrong!";
+  }
   switch (phase) {
     case StartPhase.Checking:
-      return !error ? "Checking" : "Oh, no! Something went wrong!";
+      return "Checking";
     case StartPhase.Preparing:
       return "Preparing";
     case StartPhase.Creating:
@@ -75,7 +78,7 @@ export interface StartWorkspaceError {
 
 export function StartPage(props: StartPageProps) {
   const { phase, error } = props;
-  let title = props.title || getPhaseTitle(phase, !!error);
+  let title = props.title || getPhaseTitle(phase, error);
   return <div className="w-screen h-screen bg-white align-middle">
     <div className="flex flex-col mx-auto items-center text-center h-screen">
       <div className="h-1/3"></div>
