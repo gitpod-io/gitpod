@@ -348,7 +348,7 @@ function ImageBuildView(props: ImageBuildViewProps) {
     <Suspense fallback={<div />}>
       <WorkspaceLogs logsEmitter={logsEmitter} errorMessage={props.error?.message} />
     </Suspense>
-    <button className="mt-6 secondary" onClick={props.onStartWithDefaultImage}>Start with Default Image</button>
+    <button className="mt-6 secondary" onClick={props.onStartWithDefaultImage}>Continue with Default Image</button>
   </StartPage>;
 }
 
