@@ -77,7 +77,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
           break;
         case ErrorCodes.NOT_FOUND:
           statusMessage = <div className="text-center">
-            <p className="text-base text-red-500">Not found: {contextUrl}</p>
+            <p className="text-base text-gitpod-red">Not found: {contextUrl}</p>
           </div>;
           break;
         case ErrorCodes.PLAN_DOES_NOT_ALLOW_PRIVATE_REPOS:
@@ -105,7 +105,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
           </LimitReachedModal>;
           break;
         default:
-          statusMessage = <p className="text-base text-red-500 w-96">Unknown Error: {JSON.stringify(this.state?.error, null, 2)}</p>;
+          statusMessage = <p className="text-base text-gitpod-red w-96">Unknown Error: {JSON.stringify(this.state?.error, null, 2)}</p>;
           break;
       }
     }

@@ -7,7 +7,8 @@
 import React from "react";
 import { WhitelistedRepository, Workspace, WorkspaceInfo } from "@gitpod/gitpod-protocol";
 import Header from "../components/Header";
-import DropDown from "../components/DropDown"
+import DropDown from "../components/DropDown";
+import exclamation from "../images/exclamation.svg";
 import { WorkspaceModel } from "./workspace-model";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
@@ -115,18 +116,7 @@ export default class Workspaces extends React.Component<WorkspacesProps, Workspa
                             wsModel.active || wsModel.searchTerm ? null :
                                 <div className="whitespace-nowrap flex space-x-2 py-6 px-6 w-full justify-between bg-gitpod-kumquat-light rounded-xl">
                                     <div className="pr-3 self-center w-6">
-                                        <div className="relative rounded-full w-3 h-3 bg-red">
-                                            <div className="absolute text-xs text-gray-100"
-                                                style={{
-                                                    left: "5px",
-                                                    top: "-2px"
-                                                }}
-                                                ref={(node) => {
-                                                    if (node) {
-                                                        node.style.setProperty("font-size", "10px", "important");
-                                                    }
-                                                }}>!</div>
-                                        </div>
+                                        <img src={exclamation} />
                                     </div>
                                     <div className="flex-1 flex flex-col overflow-x-auto">
                                         <div className="text-red font-semibold">Garbage Collection</div>

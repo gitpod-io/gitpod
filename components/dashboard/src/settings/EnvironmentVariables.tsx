@@ -52,7 +52,7 @@ function AddEnvVarModal(p: EnvVarModalProps) {
     return <Modal visible={true} onClose={p.onClose} onEnter={save}>
         <h3 className="mb-4">{isNew ? 'New' : 'Edit'} Variable</h3>
         <div className="border-t border-b -mx-6 px-6 py-4 flex flex-col">
-            {error ? <div className="bg-gitpod-kumquat-light rounded-md p-3 text-red-500 text-sm mb-2">
+            {error ? <div className="bg-gitpod-kumquat-light rounded-md p-3 text-gitpod-red text-sm mb-2">
                 {error}
             </div> : null}
             <div>
