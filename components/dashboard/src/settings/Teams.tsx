@@ -461,7 +461,7 @@ function AllTeams() {
                                 </div>
                             )}
                         </div>
-                        <div className="my-auto flex w-1/12 pl-8 opacity-0 group-hover:opacity-100">
+                        <div className="my-auto flex w-1/12 pl-8 mr-4 opacity-0 group-hover:opacity-100">
                             <div className="self-center hover:bg-gray-200 rounded-md cursor-pointer w-8">
                                 <ContextMenu menuEntries={subscriptionMenu(sub)}>
                                     <img className="w-8 h-8 p-1" src={ThreeDots} alt="Actions" />

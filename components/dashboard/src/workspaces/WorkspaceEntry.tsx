@@ -130,7 +130,7 @@ export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: Wo
                         numberOfChanges > 0 ?
                             <div className={"text-sm text-red-600 truncate cursor-pointer bg-red-50 group-hover:bg-red-100 hover:text-red-800 px-1.5 py-0.5 relative rounded-md -top-0.5"} onClick={showChanges}>{changesLabel}</div>
                             :
-                            <div className="text-sm text-gray-500 truncate ">No Changes</div>
+                            <div className="text-sm text-gray-400 truncate ">No Changes</div>
                     }
                 </div>
             </div>

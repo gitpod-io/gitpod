@@ -93,5 +93,5 @@ function StartError(props: { error: StartWorkspaceError }) {
   if (!error) {
     return null;
   }
-  return <p className="text-base text-red-500">{error.message}</p>;
+  return <p className="text-base text-gitpod-red">{error.message}</p>;
 }

@@ -175,7 +175,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     let title = !error ? undefined : 'Oh, no! Something went wrong!1';
     let statusMessage = !error
       ? <p className="text-base text-gray-400">Preparing workspace …</p>
-      : <p className="text-base text-red-500 w-96">{error.message}</p>;
+      : <p className="text-base text-gitpod-red w-96">{error.message}</p>;
 
     switch (this.state?.workspaceInstance?.status.phase) {
       // unknown indicates an issue within the system in that it cannot determine the actual phase of
@@ -239,7 +239,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             <div className="rounded-full w-3 h-3 text-sm bg-gitpod-kumquat">&nbsp;</div>
             <div>
               <p className="text-gray-700 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
-              <a target="_parent" href={this.state.workspace?.contextURL}><p className="w-56 truncate hover:underline" >{this.state.workspace?.contextURL}</p></a>
+              <a target="_parent" href={this.state.workspace?.contextURL}><p className="w-56 truncate hover:text-blue-600" >{this.state.workspace?.contextURL}</p></a>
             </div>
           </div>
           <div className="mt-10 flex justify-center">
@@ -262,7 +262,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
             <div className="rounded-full w-3 h-3 text-sm bg-gray-300">&nbsp;</div>
             <div>
               <p className="text-gray-700 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
-              <a target="_parent" href={this.state.workspace?.contextURL}><p className="w-56 truncate hover:underline" >{this.state.workspace?.contextURL}</p></a>
+              <a target="_parent" href={this.state.workspace?.contextURL}><p className="w-56 truncate hover:text-blue-600" >{this.state.workspace?.contextURL}</p></a>
             </div>
           </div>
           <PendingChangesDropdown workspaceInstance={this.state.workspaceInstance} />

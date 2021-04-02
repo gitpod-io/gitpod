@@ -45,7 +45,7 @@ export default function Account() {
 
         <SettingsPage title='Account' subtitle='Manage account and git configuration.'>
             <h3>Profile</h3>
-            <p className="text-base text-gray-500 pb-4">The following information will be used to set up git configuration. You can override git author name and email per project by using the default environment variables <span className="text-gray--300 bg-gray-100 px-1.5 py-1 rounded-md text-sm font-mono font-medium">GIT_AUTHOR_NAME</span> and <span className="text-gray--300 bg-gray-100 px-1.5 py-1 rounded-md text-sm font-mono font-medium">GIT_COMMITTER_EMAIL</span>.</p>
+            <p className="text-base text-gray-500 pb-4 max-w-2xl">The following information will be used to set up git configuration. You can override git author name and email per project by using the default environment variables <span className="text-gray--300 bg-gray-100 px-1.5 py-1 rounded-md text-sm font-mono font-medium">GIT_AUTHOR_NAME</span> and <span className="text-gray--300 bg-gray-100 px-1.5 py-1 rounded-md text-sm font-mono font-medium">GIT_COMMITTER_EMAIL</span>.</p>
             <div className="flex flex-col lg:flex-row">
                 <div>
                     <div className="mt-4">
