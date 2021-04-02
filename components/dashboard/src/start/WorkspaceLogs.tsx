@@ -13,6 +13,7 @@ import { DisposableCollection } from '@gitpod/gitpod-protocol';
 
 export interface WorkspaceLogsProps {
   logsEmitter: EventEmitter;
+  errorMessage?: string;
 }
 
 export interface WorkspaceLogsState {
@@ -34,9 +35,7 @@ export default class WorkspaceLogs extends React.Component<WorkspaceLogsProps, W
     if (element === null) {
       return;
     }
-    const theme: ITheme = {
-      // background: '#F5F5F4',
-    };
+    const theme: ITheme = {};
     const options: ITerminalOptions = {
       cursorBlink: false,
       disableStdin: true,
@@ -69,6 +68,12 @@ export default class WorkspaceLogs extends React.Component<WorkspaceLogsProps, W
         window.removeEventListener('resize', onWindowResize);
       }
     });
+  }
+
+  componentDidUpdate() {
+    if (this.terminal && this.props.errorMessage) {
+      this.terminal.write('\n' + this.props.errorMessage);
+    }
   }
 
   componentWillUnmount() {
