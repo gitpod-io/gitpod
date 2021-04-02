@@ -26,6 +26,7 @@ const Preferences = React.lazy(() => import(/* webpackPrefetch: true */ './setti
 const StartWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ './start/StartWorkspace'));
 const CreateWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ './start/CreateWorkspace'));
 const InstallGitHubApp = React.lazy(() => import(/* webpackPrefetch: true */ './prebuilds/InstallGitHubApp'));
+const FromReferrer = React.lazy(() => import(/* webpackPrefetch: true */ './FromReferrer'));
 
 function Loading() {
     return <>
@@ -81,6 +82,7 @@ function App() {
                 <Route path="/variables" exact component={EnvironmentVariables} />
                 <Route path="/preferences" exact component={Preferences} />
                 <Route path="/install-github-app" exact component={InstallGitHubApp} />
+                <Route path="/from-referrer" exact component={FromReferrer} />
                 
                 <Route path={["/", "/login"]} exact>
                     <Redirect to="/workspaces"/>
