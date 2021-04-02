@@ -72,7 +72,7 @@ export default class WorkspaceLogs extends React.Component<WorkspaceLogsProps, W
 
   componentDidUpdate() {
     if (this.terminal && this.props.errorMessage) {
-      this.terminal.write('\n' + this.props.errorMessage);
+      this.terminal.write(`\n\u001b[38;5;196m${this.props.errorMessage}\u001b[0m`);
     }
   }
 
