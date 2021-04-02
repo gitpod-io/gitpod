@@ -172,7 +172,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     const isHeadless = this.state.workspace?.type !== 'regular';
     const isPrebuilt = WithPrebuild.is(this.state.workspace?.context);
     let phase = StartPhase.Preparing;
-    let title = !error ? undefined : 'Oh, no! Something went wrong!';
+    let title = undefined;
     let statusMessage = !error
       ? <p className="text-base text-gray-400">Preparing workspace …</p>
       : <p className="text-base text-gitpod-red w-96">{error.message}</p>;
