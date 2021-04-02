@@ -94,6 +94,9 @@ function App() {
                 <Route path={["/subscription", "/usage"]} exact>
                     <Redirect to="/plans"/>
                 </Route>
+                <Route path={["/upgrade-subscription"]} exact>
+                    <Redirect to="/plans"/>
+                </Route>
             </Switch>
         </div>
     </Route>;
