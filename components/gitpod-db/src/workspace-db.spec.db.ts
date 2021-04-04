@@ -192,7 +192,7 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
             });
         }
     }
-    
+
     @test(timeout(10000))
     public async testFindWorkspacesForGarbageCollection() {
         await this.db.transaction(async db => {

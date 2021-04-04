@@ -80,10 +80,10 @@ function AllTeams() {
                 getGitpodService().server.getClientRegion(),
                 getGitpodService().server.isStudent(),
             ]);
-    
+
             setDefaultCurrency((clientRegion && (countries as any)[clientRegion]?.currency === 'EUR') ? 'EUR' : 'USD');
             setIsStudent(isStudent);
-    
+
             setSlots(slots);
             setShowPaymentUI(showPaymentUI);
             setTeamSubscriptions(teamSubscriptions);
@@ -110,7 +110,7 @@ function AllTeams() {
     }, [teamSubscriptions]);
 
     useEffect(() => {
-        if (pendingSlotsPurchase) {   
+        if (pendingSlotsPurchase) {
             if (slots.some(s => s.teamSubscription.id === pendingSlotsPurchase.ts.id)) {
                 setPendingSlotsPurchase(undefined);
             }

@@ -8,7 +8,7 @@ components:
     containerRuntime:
       containerd:
         socket: /run/k3s/containerd/containerd.sock
-      nodeRoots: 
+      nodeRoots:
       - /var/lib
       - /run/k3s/containerd/io.containerd.runtime.v1.linux
       - /run/k3s/containerd/io.containerd.runtime.v2.task/k8s.io

@@ -12,7 +12,7 @@ metadata:
     kind: service
     stage: {{ .Values.installation.stage }}
 spec:
-  ports: 
+  ports:
   - protocol: TCP
     port: 3306
     targetPort: 3306

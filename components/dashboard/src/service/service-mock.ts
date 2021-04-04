@@ -25,7 +25,7 @@ const gitpodServiceMock = createServiceMock({
                     "primaryEmail": "tester@gitpod.io",
                 }
             ]
-        }        
+        }
     },
     getAuthProviders: async () => {
         return [{
@@ -67,7 +67,7 @@ const gitpodServiceMock = createServiceMock({
     },
     onDidOpenConnection: Event.None,
     onDidCloseConnection: Event.None,
-    
+
 });
 
 export { gitpodServiceMock };

@@ -113,7 +113,7 @@ export class BridgeController {
                 this.reconcileTimer = undefined;
             }
         });
-        
+
         for (const [_, bridge] of this.bridges) {
             bridge.stop();
         }

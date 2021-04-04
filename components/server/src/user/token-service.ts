@@ -61,7 +61,7 @@ export class TokenService implements TokenProvider {
 
     async createGitpodToken(user: User, ...scopes: string[]): Promise<TokenEntry> {
         const identity = await this.getOrCreateGitpodIdentity(user);
-        await this.userDB.deleteTokens(identity, 
+        await this.userDB.deleteTokens(identity,
             // delete any tokens with the same scopes
             tokenEntry => tokenEntry.token.scopes.every(s => scopes.indexOf(s) !== -1)
         );
@@ -78,7 +78,7 @@ export class TokenService implements TokenProvider {
      * This relies on two things:
      *  - the frontends to not request too many tokens (puts load on the DB)
      *  - the TokenGarbageCollector to cleanup expired tokens
-     * @param user 
+     * @param user
      * @param workspaceId
      */
     async getFreshPortAuthenticationToken(user: User, workspaceId: string): Promise<Token> {

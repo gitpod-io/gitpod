@@ -14,7 +14,7 @@ import info from "../images/info.svg";
 async function registerApp(installationId: string, setModal: (modal: 'done' | string | undefined) => void) {
     try {
         await getGitpodService().server.registerGithubApp(installationId);
-        
+
         const returnTo = encodeURIComponent(gitpodHostUrl.with({ pathname: `login-success` }).toString());
         const url = gitpodHostUrl.withApi({
             pathname: '/authorize',

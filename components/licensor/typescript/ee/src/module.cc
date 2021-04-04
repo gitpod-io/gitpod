@@ -77,14 +77,14 @@ void ValidateM(const FunctionCallbackInfo<Value> &args) {
     int id = static_cast<int>(rid);
 
     Validate_return r = Validate(id);
-    
+
     Local<Object> obj = Object::New(isolate);
     obj->Set(context,
         String::NewFromUtf8(isolate, "valid", NewStringType::kNormal).ToLocalChecked(),
         Boolean::New(isolate, r.r1)
     ).FromJust();
     obj->Set(context,
-        String::NewFromUtf8(isolate, "msg", NewStringType::kNormal).ToLocalChecked(), 
+        String::NewFromUtf8(isolate, "msg", NewStringType::kNormal).ToLocalChecked(),
         String::NewFromUtf8(isolate, r.r0)
     ).FromJust();
 

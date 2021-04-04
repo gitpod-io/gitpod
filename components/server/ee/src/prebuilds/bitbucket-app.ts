@@ -152,7 +152,7 @@ interface BitbucketRepository {
     links: {
         html: {
             href: string; //e.g. "https://bitbucket.org/sefftinge/sample-repository"
-        } 
+        }
     },
     full_name: string; // e.g. "sefftinge/sample-repository",
     is_private: boolean;

@@ -12,7 +12,7 @@
 
 import * as jspb from "google-protobuf";
 
-export class PluginUploadURLRequest extends jspb.Message { 
+export class PluginUploadURLRequest extends jspb.Message {
     getBucket(): string;
     setBucket(value: string): PluginUploadURLRequest;
 
@@ -37,7 +37,7 @@ export namespace PluginUploadURLRequest {
     }
 }
 
-export class PluginUploadURLResponse extends jspb.Message { 
+export class PluginUploadURLResponse extends jspb.Message {
     getUrl(): string;
     setUrl(value: string): PluginUploadURLResponse;
 
@@ -58,7 +58,7 @@ export namespace PluginUploadURLResponse {
     }
 }
 
-export class PluginDownloadURLRequest extends jspb.Message { 
+export class PluginDownloadURLRequest extends jspb.Message {
     getBucket(): string;
     setBucket(value: string): PluginDownloadURLRequest;
 
@@ -83,7 +83,7 @@ export namespace PluginDownloadURLRequest {
     }
 }
 
-export class PluginDownloadURLResponse extends jspb.Message { 
+export class PluginDownloadURLResponse extends jspb.Message {
     getUrl(): string;
     setUrl(value: string): PluginDownloadURLResponse;
 
@@ -104,7 +104,7 @@ export namespace PluginDownloadURLResponse {
     }
 }
 
-export class PluginHashRequest extends jspb.Message { 
+export class PluginHashRequest extends jspb.Message {
     getBucket(): string;
     setBucket(value: string): PluginHashRequest;
 
@@ -129,7 +129,7 @@ export namespace PluginHashRequest {
     }
 }
 
-export class PluginHashResponse extends jspb.Message { 
+export class PluginHashResponse extends jspb.Message {
     getHash(): string;
     setHash(value: string): PluginHashResponse;
 

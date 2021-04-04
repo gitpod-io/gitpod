@@ -25,5 +25,5 @@ export class DBLayoutData implements LayoutData {
 
     @Column()
     layoutData: string;
-    
+
 }

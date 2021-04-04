@@ -56,7 +56,7 @@ To configure the HTTPS certificates for your domain
     kubectl create secret generic https-certificates --from-file=secrets/https-certificates
     ```
  4. Afterwards, do an `helm upgrade --install -f values.custom.yaml gitpod gitpod.io/gitpod --version=0.7.0` to apply the changes.
- 
+
 
 ### Using Let's Encrypt to generate HTTPS certificates
 

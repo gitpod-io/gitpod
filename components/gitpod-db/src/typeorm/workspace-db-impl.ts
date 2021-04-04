@@ -445,14 +445,14 @@ export abstract class AbstractTypeORMWorkspaceDBImpl extends AbstractWorkspaceDB
                     ws.ownerId AS ownerId
                 FROM d_b_workspace AS ws,
                     d_b_prebuilt_workspace AS pb
-                LEFT OUTER JOIN d_b_workspace AS usages ON usages.basedOnPrebuildId = pb.id 
-                WHERE	
+                LEFT OUTER JOIN d_b_workspace AS usages ON usages.basedOnPrebuildId = pb.id
+                WHERE
                         pb.buildworkspaceId = ws.id
                     AND ws.contentDeletedTime = ''
                     AND ws.pinned = 0
                     AND ws.creationTime < NOW() - INTERVAL ? DAY
                 GROUP BY ws.id, ws.ownerId
-                HAVING 
+                HAVING
                     max(usages.creationTime) IS NULL or max(usages.creationTime) < NOW() - INTERVAL ? DAY
                 LIMIT ?;
             `, [daysUnused, daysUnused, limit]);
@@ -544,10 +544,10 @@ export abstract class AbstractTypeORMWorkspaceDBImpl extends AbstractWorkspaceDB
         const manager = await this.getManager();
         const res = await manager.query(`
             SELECT SUM(COALESCE(STR_TO_DATE(wsi.stoppedTime, "%Y-%m-%dT%H:%i:%s.%fZ") - STR_TO_DATE(wsi.startedTime, "%Y-%m-%dT%H:%i:%s.%fZ"))) AS tps FROM d_b_workspace_instance wsi
-            INNER JOIN d_b_prebuilt_workspace pws ON pws.buildWorkspaceId = wsi.workspaceId 
+            INNER JOIN d_b_prebuilt_workspace pws ON pws.buildWorkspaceId = wsi.workspaceId
             INNER JOIN (
 	            SELECT ws.context->>'$.prebuildWorkspaceId' as sid FROM d_b_workspace ws
-                WHERE  ws.creationTime > NOW() - INTERVAL ? DAY 
+                WHERE  ws.creationTime > NOW() - INTERVAL ? DAY
                   AND  JSON_EXTRACT(ws.context, '$.prebuildWorkspaceId') IS NOT NULL
             ) AS sns ON sns.sid = pws.id
             WHERE wsi.startedTime IS NOT NULL

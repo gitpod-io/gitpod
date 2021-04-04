@@ -22,7 +22,7 @@ fi
 # Completion for gp command
 . <(gp completion)
 # ide cli config - should be removed when registry facade is default
-if [ ! -d "/ide/bin/" ]; then 
+if [ ! -d "/ide/bin/" ]; then
     alias open='gp open'
     alias code='gp open'
 fi

@@ -120,10 +120,10 @@ export class PrebuildManager {
             span.finish();
         }
     }
-    
+
     shouldPrebuild(config: WorkspaceConfig | undefined): boolean {
-        if (!config || 
-            !config._origin || 
+        if (!config ||
+            !config._origin ||
             config._origin !== 'repo') {
             // we demand an explicit gitpod config
             return false;

@@ -26,7 +26,7 @@ export class WorkspaceManagerClientProvider implements Disposable {
 
     /**
      * Throws an error if there is not WorkspaceManagerClient available.
-     * 
+     *
      * @returns The WorkspaceManagerClient that was chosen to start the next workspace with.
      */
     public async getStartManager(): Promise<{ manager: PromisifiedWorkspaceManagerClient, installation: string}> {
@@ -41,7 +41,7 @@ export class WorkspaceManagerClientProvider implements Disposable {
     }
 
     /**
-     * @param name 
+     * @param name
      * @returns The WorkspaceManagerClient identified by the name. Throws an error if there is none.
      */
     public async get(name: string, grpcOptions?: object): Promise<PromisifiedWorkspaceManagerClient> {
@@ -80,7 +80,7 @@ export class WorkspaceManagerClientProvider implements Disposable {
 
     /**
      * Tries to establish a gRPC connection to the specified target. Throws an exception if it fails.
-     * @param info 
+     * @param info
      */
     public async tryConnectTo(info: WorkspaceManagerConnectionInfo) {
         const client = new PromisifiedWorkspaceManagerClient(createClient(info));
@@ -112,8 +112,8 @@ function createClient(info: WorkspaceManagerConnectionInfo, grpcOptions?: object
 }
 
 /**
- * 
- * @param clusters 
+ *
+ * @param clusters
  * @returns The chosen cluster. Throws an error if there are 0 WorkspaceClusters to choose from.
  */
 function chooseCluster(availableCluster: WorkspaceClusterWoTls[]): WorkspaceClusterWoTls {

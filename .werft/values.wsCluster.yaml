@@ -2,7 +2,7 @@
 components:
   proxy:
     disabled: true
-  
+
   wsProxy:
     hostHeader: Host
 

@@ -35,12 +35,12 @@ variable "public_ip" {
 # Kubernetes name of the certificate
 #
 variable "cert_name" {
-  type = string 
+  type = string
 }
 
 #
 # Kubernetes namespace to install the certificate to
 #
 variable "cert_namespace" {
-  type = string 
+  type = string
 }

@@ -12,8 +12,8 @@
  *
  * ***IMPORTANT***: making the dump requires memory twice the size of the heap
  * and can be a subject to OOM Killer.
- * 
- * Snapshots are written to tmp folder and have `.heapsnapshot` extension. 
+ *
+ * Snapshots are written to tmp folder and have `.heapsnapshot` extension.
  * Check server logs for the concrete filename.
  */
 

@@ -11,7 +11,7 @@ export interface DropDownProps {
     prefix?: string;
     contextMenuWidth?: string;
     activeEntry?: string,
-    entries: { 
+    entries: {
         title: string,
         onClick: ()=>void
     }[];

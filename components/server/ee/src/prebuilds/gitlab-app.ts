@@ -21,7 +21,7 @@ export class GitLabApp {
     @inject(UserDB) protected readonly userDB: UserDB;
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
     @inject(TokenService) protected readonly tokenService: TokenService;
-    @inject(HostContextProvider) protected readonly hostCtxProvider: HostContextProvider; 
+    @inject(HostContextProvider) protected readonly hostCtxProvider: HostContextProvider;
 
     protected _router = express.Router();
     public static path = '/apps/gitlab/';
@@ -91,7 +91,7 @@ export class GitLabApp {
                 console.log('No config. No prebuild.');
                 return undefined;
             }
-            
+
             console.log('Starting prebuild.', { contextURL, commit: body.after, gitUrl: body.repository.git_http_url })
             const ws = await this.prebuildManager.startPrebuild({ span }, user, contextURL, body.repository.git_http_url, body.after);
             return ws;

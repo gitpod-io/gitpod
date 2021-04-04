@@ -50,7 +50,7 @@ function App() {
             setLoading(false);
         })();
     }, []);
-    
+
     if (loading) {
         return <Loading />
     }
@@ -61,7 +61,7 @@ function App() {
     if (shouldWhatsNewShown !== isWhatsNewShown) {
         setWhatsNewShown(shouldWhatsNewShown);
     }
-    
+
     window.addEventListener("hashchange", () => {
         // Refresh on hash change if the path is '/' (new context URL)
         if (window.location.pathname === '/') {
@@ -83,7 +83,7 @@ function App() {
                 <Route path="/preferences" exact component={Preferences} />
                 <Route path="/install-github-app" exact component={InstallGitHubApp} />
                 <Route path="/from-referrer" exact component={FromReferrer} />
-                
+
                 <Route path={["/", "/login"]} exact>
                     <Redirect to="/workspaces"/>
                 </Route>

@@ -19,7 +19,7 @@ export class ServerEE<C extends GitpodClient, S extends GitpodServer> extends Se
     @inject(GithubApp) protected readonly githubApp: GithubApp;
     @inject(GitLabApp) protected readonly gitLabApp: GitLabApp;
     @inject(BitbucketApp) protected readonly bitbucketApp: BitbucketApp;
-    
+
     protected async registerRoutes(app: express.Application): Promise<void> {
         await super.registerRoutes(app);
 

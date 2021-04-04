@@ -42,11 +42,11 @@ export default function Modal(props: {
             window.removeEventListener('keydown', handler);
         };
     }, []); // Empty array ensures that effect is only run on mount and unmount
-        
+
     if (!props.visible) {
         return null;
     }
-    
+
     return (
         <div className="fixed top-0 left-0 bg-black bg-opacity-70 z-50 w-screen h-screen" onClick={props.onClose}>
             <div className="w-screen h-screen align-middle" style={{display: 'table-cell'}}>
@@ -60,7 +60,7 @@ export default function Modal(props: {
                             </svg>
                         </div>
                     )}
-                    {props.title ? <><h3 className="pb-2">{props.title}</h3> 
+                    {props.title ? <><h3 className="pb-2">{props.title}</h3>
                     <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-4">
                         {props.children}
                     </div>
