@@ -9,8 +9,9 @@ import { useEffect, useRef, useState } from "react";
 import ContextMenu from "../components/ContextMenu";
 import Modal from "../components/Modal";
 import { getGitpodService } from "../service/service";
-import { SettingsPage } from "./SettingsPage";
 import ThreeDots from '../icons/ThreeDots.svg';
+import { PageWithSubMenu } from "../components/PageWithSubMenu";
+import settingsMenu from "./settings-menu";
 
 interface EnvVarModalProps {
     envVar: UserEnvVarValue;
@@ -141,7 +142,7 @@ export default function EnvVars() {
         return '';
     };
 
-    return <SettingsPage title='Variables' subtitle='Configure environment variables for all workspaces.'>
+    return <PageWithSubMenu subMenu={settingsMenu}  title='Variables' subtitle='Configure environment variables for all workspaces.'>
         {isAddEnvVarModalVisible ? <AddEnvVarModal
             save={save}
             envVar={currentEnvVar}
@@ -203,5 +204,5 @@ export default function EnvVars() {
                 </div>
             </div>
         }
-    </SettingsPage>;
+    </PageWithSubMenu>;
 }

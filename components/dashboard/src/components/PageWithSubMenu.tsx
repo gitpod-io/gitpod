@@ -7,22 +7,25 @@
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
 import Header from '../components/Header';
-import settingsMenu from "./settings-menu";
 
-export interface Props {
+export interface PageWithSubMenuProps {
     title: string;
     subtitle: string;
+    subMenu: {
+        title: string,
+        link: string[]
+    }[];
     children: React.ReactNode;
 }
 
-export function SettingsPage(p: Props) {
+export function PageWithSubMenu(p: PageWithSubMenuProps) {
     const location = useLocation();
     return <div className="w-full">
-        <Header title={p.title} subtitle={p.subtitle}/>
+        <Header title={p.title} subtitle={p.subtitle} />
         <div className='lg:px-28 px-10 flex pt-9'>
             <div>
                 <ul className="flex flex-col text tracking-wide text-gray-500 pt-4 lg:pt-0 w-48 space-y-2">
-                    {settingsMenu.map(e => {
+                    {p.subMenu.map(e => {
                         let classes = "flex block py-2 px-4 rounded-md";
                         if (e.link.some(l => l.toLocaleLowerCase() === location.pathname)) {
                             classes += " bg-gray-800 text-gray-50";

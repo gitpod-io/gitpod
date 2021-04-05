@@ -126,7 +126,7 @@ export default class Workspaces extends React.Component<WorkspacesProps, Workspa
                         }
                         {
                             this.state?.workspaces.map(e => {
-                                return <WorkspaceEntry key={e.workspace.id} desc={e} model={wsModel} />
+                                return <WorkspaceEntry key={e.workspace.id} desc={e} model={wsModel} stopWorkspace={wsId => getGitpodService().server.stopWorkspace(wsId)}/>
                             })
                         }
                     </div>
