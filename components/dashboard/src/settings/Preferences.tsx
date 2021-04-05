@@ -32,7 +32,7 @@ export default function Preferences() {
     return <div>
         <PageWithSubMenu subMenu={settingsMenu}  title='Preferences' subtitle='Configure user preferences.'>
             <h3>Default IDE</h3>
-            <p className="text-base">Choose which IDE you want to use.</p>
+            <p className="text-base text-gray-500">Choose which IDE you want to use.</p>
             <div className="mt-4 space-x-4 flex">
                 <SelectableCard className="w-36 h-40" title="VS Code" selected={defaultIde === 'code'} onClick={() => actuallySetDefaultIde('code')}>
                     <div className="flex-grow flex justify-center align-center">

@@ -35,7 +35,7 @@ export default function Account() {
                     <li className="ml-5">All your workspaces and related data will be deleted and cannot be restored afterwards.</li>
                     <li className="ml-5">Your subscription will be cancelled. If you obtained a Gitpod subscription through the GitHub marketplace, you need to cancel your plan there.</li>
                 </ol>
-                <p className="pt-4 pb-2 text-gray-600 text-base font-bold">Type your email to confirm</p>
+                <p className="pt-4 pb-2 text-gray-600 text-base font-semibold">Type your email to confirm</p>
                 <input className="w-full" type="text" onChange={e => setTypedEmail(e.target.value)}></input>
             </div>
             <div className="flex justify-end mt-6">
