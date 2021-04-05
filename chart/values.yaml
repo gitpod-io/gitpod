@@ -530,6 +530,7 @@ rabbitmq:
   auth:
     username: ""
     password: ""
+    existingErlangSecret: messagebus-erlang-cookie
     tls:
       enabled: true
       existingSecret: messagebus-certificates-secret-core
