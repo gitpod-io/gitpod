@@ -165,12 +165,3 @@ minio:
   serviceAccount:
     name: ws-daemon
     create: false
-
-rabbitmq:
-  # ensure shovels are configured on boot
-  shovels:
-    - name: messagebus-0
-      srcUri: "amqp://$USERNAME:$PASSWORD@messagebus-0"
-  auth:
-    username: override-me
-    password: override-me

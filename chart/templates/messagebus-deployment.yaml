@@ -1,0 +1,80 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.messagebus }}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if not $comp.disabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: messagebus
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: messagebus
+    kind: deployment
+    stage: {{ .Values.installation.stage }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: messagebus
+      kind: pod
+      stage: {{ .Values.installation.stage }}
+  replicas: {{ $comp.replicas | default 1 }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  template:
+    metadata:
+      name: messagebus
+      labels:
+        app: {{ template "gitpod.fullname" . }}
+        component: messagebus
+        kind: pod
+        stage: {{ .Values.installation.stage }}
+      annotations:
+        prometheus.io/scrape: 'true'
+{{ include "gitpod.pod.dependsOn" $this | indent 8 }}
+    spec:
+{{ include "gitpod.pod.affinity" $this | indent 6 }}
+      serviceAccountName: messagebus
+      enableServiceLinks: false
+      containers:
+      - name: messagebus
+        image: {{ template "gitpod.comp.imageFull" $this }}
+{{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
+{{ include "gitpod.container.resources" $this | indent 8 }}
+{{ include "gitpod.container.ports" $this | indent 8 }}
+        securityContext:
+          privileged: false
+{{ include "gitpod.container.defaultEnv" $this | indent 8 }}
+        - name: RABBITMQ_DEFAULT_USER
+          value: "{{ $.Values.messagebus.username }}"
+        - name: RABBITMQ_DEFAULT_PASS
+          value: "{{ $.Values.messagebus.password }}"
+        - name: "RABBITMQ_PID_FILE"
+          value: "/var/run/rabbitmq-pid/rabbitmq.pid"
+        volumeMounts:
+        - name: pid
+          mountPath: "/var/run/rabbitmq-pid"
+{{- if $comp.dynamicConfig }}
+        - name: dynamic-config
+          mountPath: "/cfg"
+          readOnly: true
+{{- end }}
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/usr/local/bin/configure.sh"]
+      volumes:
+      - name: pid
+        emptyDir: {}
+{{- if $comp.dynamicConfig }}
+      - name: dynamic-config
+        secret:
+          secretName: {{ $comp.dynamicConfig }}
+{{- end }}
+{{ toYaml .Values.defaults | indent 6 }}
+{{ end }}
