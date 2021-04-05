@@ -11,3 +11,14 @@ packages:
       yarnLock: ${coreYarnLockBase}/yarn.lock
       tsconfig: tsconfig.json
       dontTest: true
+  - name: docker
+    type: docker
+    srcs:
+      - configure.sh
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: Dockerfile
+      image:
+        - ${imageRepoBase}/messagebus:${version}
+        - ${imageRepoBase}/messagebus:${__pkg_version}

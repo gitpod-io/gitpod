@@ -15,6 +15,7 @@ packages:
       - components/ee/cerc:docker
       - components/ee/ws-scheduler:docker
       - components/gitpod-db:docker
+      - components/gitpod-messagebus:docker
       - components/gitpod-protocol:publish
       - components/ide/code:docker
       - components/ide/theia:docker
