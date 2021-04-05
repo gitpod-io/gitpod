@@ -5,10 +5,11 @@
  */
 
 import { useContext } from "react";
-import { SettingsPage } from "./SettingsPage";
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import CheckBox from "../components/CheckBox";
+import { PageWithSubMenu } from "../components/PageWithSubMenu";
+import settingsMenu from "./settings-menu";
 
 export default function Notifications() {
     const ctx = useContext(UserContext);
@@ -42,7 +43,7 @@ export default function Notifications() {
         }
     }
     return <div>
-        <SettingsPage title='Notifications' subtitle='Choose when to be notified.'>
+        <PageWithSubMenu subMenu={settingsMenu}  title='Notifications' subtitle='Choose when to be notified.'>
             <h3>Email Notification Preferences</h3>
             <CheckBox 
                 title="Account Notifications" 
@@ -54,6 +55,6 @@ export default function Notifications() {
                 desc="Receive product marketing emails"
                 checked={isMarketingMail}
                 onChange={toggleMarketingMail}/>
-        </SettingsPage>
+        </PageWithSubMenu>
     </div>;
 }

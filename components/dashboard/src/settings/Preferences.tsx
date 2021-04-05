@@ -8,9 +8,10 @@ import { useContext, useState } from "react";
 import { getGitpodService } from "../service/service";
 import SelectableCard from "../components/SelectableCard";
 import { UserContext } from "../user-context";
-import { SettingsPage } from "./SettingsPage";
 import theia from '../images/theia-gray.svg';
 import vscode from '../images/vscode.svg';
+import { PageWithSubMenu } from "../components/PageWithSubMenu";
+import settingsMenu from "./settings-menu";
 
 export default function Preferences() {
     const { user } = useContext(UserContext);
@@ -29,7 +30,7 @@ export default function Preferences() {
     }
 
     return <div>
-        <SettingsPage title='Preferences' subtitle='Configure user preferences.'>
+        <PageWithSubMenu subMenu={settingsMenu}  title='Preferences' subtitle='Configure user preferences.'>
             <h3>Default IDE</h3>
             <p className="text-base">Choose which IDE you want to use.</p>
             <div className="mt-4 space-x-4 flex">
@@ -44,6 +45,6 @@ export default function Preferences() {
                     </div>
                 </SelectableCard>
             </div>
-        </SettingsPage>
+        </PageWithSubMenu>
     </div>;
 }

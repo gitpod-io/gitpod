@@ -7,7 +7,6 @@
 import { AuthProviderEntry, AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import React, { useContext, useEffect, useState } from "react";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
-import { SettingsPage } from "./SettingsPage";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import copy from '../images/copy.svg';
@@ -16,15 +15,17 @@ import ThreeDots from '../icons/ThreeDots.svg';
 import Modal from "../components/Modal";
 import { openAuthorizeWindow } from "../provider-utils";
 import CheckBox from '../components/CheckBox';
+import { PageWithSubMenu } from "../components/PageWithSubMenu";
+import settingsMenu from "./settings-menu";
 
 export default function Integrations() {
 
     return (<div>
-        <SettingsPage title='Integrations' subtitle='Manage permissions for git providers and integrations.'>
+        <PageWithSubMenu subMenu={settingsMenu}  title='Integrations' subtitle='Manage permissions for git providers and integrations.'>
             <GitProviders />
             <div className="h-12"></div>
             <GitIntegrations />
-        </SettingsPage>
+        </PageWithSubMenu>
     </div>);
 }
 

@@ -16,7 +16,8 @@ import info from '../images/info.svg';
 import exclamation from '../images/exclamation.svg';
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
-import { SettingsPage } from "./SettingsPage";
+import { PageWithSubMenu } from "../components/PageWithSubMenu";
+import settingsMenu from "./settings-menu";
 
 type PlanWithOriginalPrice = Plan & { originalPrice?: number };
 type PendingPlan = PlanWithOriginalPrice & { pendingSince: number };
@@ -322,7 +323,7 @@ export default function () {
     }
 
     return <div>
-        <SettingsPage title='Plans' subtitle='Manage account usage and billing.'>
+        <PageWithSubMenu subMenu={settingsMenu}  title='Plans' subtitle='Manage account usage and billing.'>
             <div className="w-full text-center">
                 <p className="text-xl text-gray-500">You are currently using the <span className="font-bold">{currentPlan.name}</span> plan.</p>
                 <p className="text-base w-96 m-auto">Upgrade your plan to get access to private repositories or more parallel workspaces.</p>
@@ -377,7 +378,7 @@ export default function () {
                     <button className="bg-red-600 border-red-800" onClick={doDowngrade}>Downgrade Plan</button>
                 </div>
             </Modal>}
-        </SettingsPage>
+        </PageWithSubMenu>
     </div>;
 }
 

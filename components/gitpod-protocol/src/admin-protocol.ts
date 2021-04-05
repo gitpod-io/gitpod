@@ -72,6 +72,27 @@ export interface WorkspaceAndInstance extends Without<Workspace, "id"|"creationT
     phase: WorkspaceInstancePhase;
 }
 
+export namespace WorkspaceAndInstance {
+    export function toWorkspace(wai: WorkspaceAndInstance): Workspace {
+        return {
+            id: wai.workspaceId,
+            creationTime: wai.workspaceCreationTime,
+            ... wai
+        };
+    }
+
+    export function toInstance(wai: WorkspaceAndInstance): WorkspaceInstance | undefined {
+        if (!wai.instanceId) {
+            return undefined;
+        }
+        return {
+            id: wai.instanceId,
+            creationTime: wai.instanceCreationTime,
+            ... wai
+        };
+    }
+}
+
 export interface AdminGetWorkspacesRequest extends AdminGetListRequest<WorkspaceAndInstance> {
     ownerId?: string
 }

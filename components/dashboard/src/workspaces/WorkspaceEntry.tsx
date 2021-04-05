@@ -9,7 +9,6 @@ import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url'
 import ContextMenu, { ContextMenuEntry } from '../components/ContextMenu';
 import ThreeDots from '../icons/ThreeDots.svg';
 import moment from 'moment';
-import { getGitpodService } from '../service/service';
 import Modal from '../components/Modal';
 import { MouseEvent, useState } from 'react';
 import { WorkspaceModel } from './workspace-model';
@@ -19,29 +18,17 @@ function getLabel(state: WorkspaceInstancePhase) {
     return state.substr(0,1).toLocaleUpperCase() + state.substr(1);
 }
 
-export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: WorkspaceModel }) {
+interface Props {
+    desc: WorkspaceInfo; 
+    model: WorkspaceModel; 
+    isAdmin?: boolean;
+    stopWorkspace: (ws: string) => Promise<void>;
+}
+
+export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
     const [isModalVisible, setModalVisible] = useState(false);
     const [isChangesModalVisible, setChangesModalVisible] = useState(false);
     const state: WorkspaceInstancePhase = desc.latestInstance?.status?.phase || 'stopped';
-    let stateClassName = 'rounded-full w-3 h-3 text-sm align-middle';
-    switch (state) {
-        case 'running': {
-            stateClassName += ' bg-green-500'
-            break;
-        }
-        case 'stopped': {
-            stateClassName += ' bg-gray-400'
-            break;
-        }
-        case 'interrupted': {
-            stateClassName += ' bg-red-400'
-            break;
-        }
-        default: {
-            stateClassName += ' bg-gitpod-kumquat animate-pulse'
-            break;
-        }
-    }
     const pendingChanges = getPendingChanges(desc.latestInstance);
     const numberOfChanges = pendingChanges.reduceRight((i, c) => i + c.items.length, 0)
     let changesLabel = 'No Changes';
@@ -67,37 +54,40 @@ export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: Wo
     if (state === 'running') {
         menuEntries.push({
             title: 'Stop',
-            onClick: () => getGitpodService().server.stopWorkspace(ws.id)
+            onClick: () => stopWorkspace(ws.id)
         });
     }
     menuEntries.push(
         {
             title: 'Download',
             href: downloadURL
-        },
-        {
-            title: 'Share',
-            active: !!ws.shareable,
-            onClick: () => {
-                model.toggleShared(ws.id);
+        });
+    if (!isAdmin) {
+        menuEntries.push(
+            {
+                title: 'Share',
+                active: !!ws.shareable,
+                onClick: () => {
+                    model.toggleShared(ws.id);
+                }
+            },
+            {
+                title: 'Pin',
+                active: !!ws.pinned,
+                separator: true,
+                onClick: () => {
+                    model.togglePinned(ws.id);
+                }
+            },
+            {
+                title: 'Delete',
+                customFontStyle: 'text-red-600',
+                onClick: () => {
+                    setModalVisible(true);
+                }
             }
-        },
-        {
-            title: 'Pin',
-            active: !!ws.pinned,
-            separator: true,
-            onClick: () => {
-                model.togglePinned(ws.id);
-            }
-        },
-        {
-            title: 'Delete',
-            customFontStyle: 'text-red-600',
-            onClick: () => {
-                setModalVisible(true);
-            }
-        }
-    );
+        );
+    }
     const project = getProject(ws);
     const showChanges = (event: MouseEvent) => {
         event.preventDefault();
@@ -106,10 +96,7 @@ export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: Wo
     return <div>
         <div className="rounded-xl whitespace-nowrap flex space-x-2 py-6 px-6 w-full justify-between hover:bg-gray-100 focus:bg-gitpod-kumquat-light group">
             <div className="pr-3 self-center">
-                <Tooltip content={getLabel(state)}>
-                    <div className={stateClassName}>
-                    </div>
-                </Tooltip>
+                <WorkspaceStatusIndicator instance={desc?.latestInstance} />
             </div>
             <div className="flex flex-col w-3/12">
                 <a href={startUrl.toString()}><div className="font-medium text-gray-800 truncate hover:text-blue-600">{ws.id}</div></a>
@@ -169,11 +156,11 @@ export function WorkspaceEntry({ desc, model }: { desc: WorkspaceInfo, model: Wo
     </div>;
 }
 
-interface PendingChanges {
+export interface PendingChanges {
     message: string, items: string[]
 }
 
-function getPendingChanges(wsi?: WorkspaceInstance): PendingChanges[] {
+export function getPendingChanges(wsi?: WorkspaceInstance): PendingChanges[] {
     const pendingChanges: { message: string, items: string[] }[] = [];
     const repo = wsi?.status.repo;
     if (repo) {
@@ -199,7 +186,7 @@ function getPendingChanges(wsi?: WorkspaceInstance): PendingChanges[] {
     return pendingChanges;
 }
 
-function getProject(ws: Workspace) {
+export function getProject(ws: Workspace) {
     if (CommitContext.is(ws.context)) {
         return `${ws.context.repository.host}/${ws.context.repository.owner}/${ws.context.repository.name}`;
     } else {
@@ -207,7 +194,7 @@ function getProject(ws: Workspace) {
     }
 }
 
-function getChangesPopup(changes: PendingChanges[]) {
+export function getChangesPopup(changes: PendingChanges[]) {
     return <div className="flex flex-col space-y-4 w-96">
         {changes.map(c => {
             return <div className="">
@@ -216,4 +203,31 @@ function getChangesPopup(changes: PendingChanges[]) {
             </div>;
         })}
     </div>
+}
+
+export function WorkspaceStatusIndicator({instance}: {instance?: WorkspaceInstance}) {
+    const state: WorkspaceInstancePhase = instance?.status?.phase || 'stopped';
+    let stateClassName = 'rounded-full w-3 h-3 text-sm align-middle';
+    switch (state) {
+        case 'running': {
+            stateClassName += ' bg-green-500'
+            break;
+        }
+        case 'stopped': {
+            stateClassName += ' bg-gray-400'
+            break;
+        }
+        case 'interrupted': {
+            stateClassName += ' bg-red-400'
+            break;
+        }
+        default: {
+            stateClassName += ' bg-gitpod-kumquat animate-pulse'
+            break;
+        }
+    }
+    return <Tooltip content={getLabel(state)}>
+        <div className={stateClassName}>
+        </div>
+    </Tooltip>;
 }

@@ -7,7 +7,7 @@
 import React, { useEffect, useState } from "react";
 import { countries } from 'countries-list';
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
-import { SettingsPage } from "./SettingsPage";
+import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getGitpodService } from "../service/service";
 import ThreeDots from '../icons/ThreeDots.svg';
 import Modal from "../components/Modal";
@@ -18,13 +18,14 @@ import copy from '../images/copy.svg';
 import exclamation from '../images/exclamation.svg';
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { poll, PollOptions } from "../utils";
+import settingsMenu from "./settings-menu";
 
 export default function Teams() {
 
     return (<div>
-        <SettingsPage title='Teams' subtitle='View and and manage subscriptions for your team with one centralized billing.'>
+        <PageWithSubMenu subMenu={settingsMenu} title='Teams' subtitle='View and and manage subscriptions for your team with one centralized billing.'>
             <AllTeams />
-        </SettingsPage>
+        </PageWithSubMenu>
     </div>);
 }
 
