@@ -91,10 +91,7 @@ function App() {
                 <Route path={["/access-control"]} exact>
                     <Redirect to="/integrations"/>
                 </Route>
-                <Route path={["/subscription", "/usage"]} exact>
-                    <Redirect to="/plans"/>
-                </Route>
-                <Route path={["/upgrade-subscription"]} exact>
+                <Route path={["/subscription", "/usage", "/upgrade-subscription"]} exact>
                     <Redirect to="/plans"/>
                 </Route>
             </Switch>
