@@ -4,11 +4,11 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { countries } from 'countries-list';
 import { AccountStatement, Subscription, UserPaidSubscription, AssignedTeamSubscription } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { PlanCoupon, GithubUpgradeURL } from "@gitpod/gitpod-protocol/lib/payment-protocol";
-import { Plans, Plan, Currency } from "@gitpod/gitpod-protocol/lib/plans";
+import { Plans, Plan, Currency, PlanType } from "@gitpod/gitpod-protocol/lib/plans";
 import { ChargebeeClient } from "../chargebee/chargebee-client";
 import Modal from "../components/Modal";
 import SelectableCard from "../components/SelectableCard";
@@ -22,6 +22,16 @@ import settingsMenu from "./settings-menu";
 type PlanWithOriginalPrice = Plan & { originalPrice?: number };
 type PendingPlan = PlanWithOriginalPrice & { pendingSince: number };
 
+type TeamClaimModal = {
+    errorText: string;
+    mode: "error";
+} | {
+    text: string;
+    teamId: string;
+    slotId: string;
+    mode: "confirmation";
+}
+
 export default function () {
     const { user } = useContext(UserContext);
     const { server } = getGitpodService();
@@ -33,6 +43,8 @@ export default function () {
     const [ appliedCoupons, setAppliedCoupons ] = useState<PlanCoupon[]>();
     const [ gitHubUpgradeUrls, setGitHubUpgradeUrls ] = useState<GithubUpgradeURL[]>();
     const [ privateRepoTrialEndDate, setPrivateRepoTrialEndDate ] = useState<string>();
+
+    const [ teamClaimModal, setTeamClaimModal ] = useState<TeamClaimModal | undefined>(undefined);
 
     let pollAccountStatementTimeout: NodeJS.Timeout | undefined;
 
@@ -49,11 +61,45 @@ export default function () {
             server.getAppliedCoupons().then(v => () => setAppliedCoupons(v)),
             server.getGithubUpgradeUrls().then(v => () => setGitHubUpgradeUrls(v)),
             server.getPrivateRepoTrialEndDate().then(v => () => setPrivateRepoTrialEndDate(v)),
-        ]).then(setters => setters.forEach(s => s()));
+        ]).then(setters => setters.forEach(s => s()))
+          .then(() => {
+              handleTeamClaim();
+          });
+        
+        
         return function cleanup() {
             clearTimeout(pollAccountStatementTimeout!);
         }
     }, []);
+
+    const handleTeamClaim = async () => {
+        const teamId = new URL(window.location.href).searchParams.get('teamid');
+        if (!teamId) {
+            return;
+        }
+        const currentlyActiveSubscriptions = (accountStatement?.subscriptions || []).filter(s => Subscription.isActive(s, new Date().toISOString()));
+        const assignedSubscriptions = currentlyActiveSubscriptions.filter(s => AssignedTeamSubscription.is(s));
+        if (assignedSubscriptions.some(s => !!s.teamSubscriptionSlotId)) {
+            return;
+        }
+
+        const freeSlot = await getGitpodService().server.tsGetUnassignedSlot(teamId);
+        if (!freeSlot) {
+            setTeamClaimModal({
+                mode: "error",
+                errorText: "This invitation is no longer valid. Please contact the team owner.",
+            });
+            return;
+        }
+
+        setTeamClaimModal({
+            mode: "confirmation",
+            teamId,
+            slotId: freeSlot.id,
+            text: "You are about to claim a seat in a team.",
+        })
+
+    };
 
     console.log('privateRepoTrialEndDate', privateRepoTrialEndDate);
 
@@ -64,8 +110,17 @@ export default function () {
     const freePlan = freeSubscription && Plans.getById(freeSubscription.planId) || Plans.getFreePlan(user?.creationDate || new Date().toISOString());
     const paidSubscription = activeSubscriptions.find(s => UserPaidSubscription.is(s));
     const paidPlan = paidSubscription && Plans.getById(paidSubscription.planId);
+
     const assignedTeamSubscriptions = activeSubscriptions.filter(s => AssignedTeamSubscription.is(s));
     console.log('assignedTeamSubscriptions', assignedTeamSubscriptions);
+    const getAssignedTs = (type: PlanType) => assignedTeamSubscriptions.find(s => {
+        const p = Plans.getById(s.planId);
+        return !!p && p.type === type
+    });
+    const assignedUnleashedTs = getAssignedTs('professional');
+    const assignedProfessionalTs = getAssignedTs('professional-new');
+    const assignedStudentUnleashedTs = getAssignedTs('student');
+    const assignedTs = assignedUnleashedTs || assignedProfessionalTs || assignedStudentUnleashedTs;
 
     const [ pendingUpgradePlan, setPendingUpgradePlan ] = useState<PendingPlan | undefined>(getLocalStorageObject('pendingUpgradePlan'));
     const setPendingUpgrade = (to: PendingPlan) => {
@@ -95,7 +150,7 @@ export default function () {
     }
 
     // Optimistically select a new paid plan even if the transaction is still in progress (i.e. waiting for Chargebee callback)
-    const currentPlan = pendingUpgradePlan || paidPlan || freePlan;
+    const currentPlan = pendingUpgradePlan || paidPlan || Plans.getById(assignedTs?.planId) || freePlan;
 
     // If the user has a paid plan with a different currency, force that currency.
     if (currency !== currentPlan.currency && !Plans.isFreePlan(currentPlan.chargebeeId)) {
@@ -235,7 +290,7 @@ export default function () {
         <p className="truncate" title="30 min Timeout">✓ 30 min Timeout</p>
     </>;
     if (currentPlan.chargebeeId === freePlan.chargebeeId) {
-        planCards.push(<PlanCard plan={freePlan} isCurrent={!!accountStatement}>{openSourceFeatures}</PlanCard>);
+        planCards.push(<PlanCard isDisabled={!!assignedTs} plan={freePlan} isCurrent={!!accountStatement}>{openSourceFeatures}</PlanCard>);
     } else {
         const targetPlan = freePlan;
         let bottomLabel;
@@ -248,7 +303,7 @@ export default function () {
         switch (Plans.subscriptionChange(currentPlan.type, targetPlan.type)) {
             case 'downgrade': onDowngrade = () => confirmDowngrade(targetPlan); break;
         }
-        planCards.push(<PlanCard plan={targetPlan} isCurrent={false} onDowngrade={onDowngrade} bottomLabel={bottomLabel}>{openSourceFeatures}</PlanCard>);
+        planCards.push(<PlanCard isDisabled={!!assignedTs} plan={targetPlan} isCurrent={false} onDowngrade={onDowngrade} bottomLabel={bottomLabel}>{openSourceFeatures}</PlanCard>);
     }
 
     // Plan card: Personal
@@ -258,7 +313,7 @@ export default function () {
     </>;
     if (currentPlan.chargebeeId === personalPlan.chargebeeId) {
         const bottomLabel = ('pendingSince' in currentPlan) ? <p className="text-green-600 animate-pulse">Upgrade in progress</p> : undefined;
-        planCards.push(<PlanCard plan={applyCoupons(personalPlan, appliedCoupons)} isCurrent={true} bottomLabel={bottomLabel}>{personalFeatures}</PlanCard>);
+        planCards.push(<PlanCard isDisabled={!!assignedTs} plan={applyCoupons(personalPlan, appliedCoupons)} isCurrent={true} bottomLabel={bottomLabel}>{personalFeatures}</PlanCard>);
     } else {
         const targetPlan = applyCoupons(personalPlan, availableCoupons);
         let bottomLabel;
@@ -272,7 +327,7 @@ export default function () {
             case 'upgrade': onUpgrade = () => confirmUpgrade(targetPlan); break;
             case 'downgrade': onDowngrade = () => confirmDowngrade(targetPlan); break;
         }
-        planCards.push(<PlanCard plan={targetPlan} isCurrent={false} onUpgrade={onUpgrade} onDowngrade={onDowngrade} bottomLabel={bottomLabel}>{personalFeatures}</PlanCard>);
+        planCards.push(<PlanCard isDisabled={!!assignedTs} plan={targetPlan} isCurrent={false} onUpgrade={onUpgrade} onDowngrade={onDowngrade} bottomLabel={bottomLabel}>{personalFeatures}</PlanCard>);
     }
 
     // Plan card: Professional
@@ -281,9 +336,10 @@ export default function () {
         <p className="truncate" title="8 Parallel Workspaces">✓ 8 Parallel Workspaces</p>
         <p className="truncate" title="Teams">✓ Teams</p>
     </>;
+
     if (currentPlan.chargebeeId === professionalPlan.chargebeeId) {
         const bottomLabel = ('pendingSince' in currentPlan) ? <p className="text-green-600 animate-pulse">Upgrade in progress</p> : undefined;
-        planCards.push(<PlanCard plan={applyCoupons(professionalPlan, appliedCoupons)} isCurrent={true} bottomLabel={bottomLabel}>{professionalFeatures}</PlanCard>);
+        planCards.push(<PlanCard isDisabled={!!assignedTs} plan={applyCoupons(professionalPlan, appliedCoupons)} isCurrent={true} bottomLabel={bottomLabel}>{professionalFeatures}</PlanCard>);
     } else {
         const targetPlan = applyCoupons(professionalPlan, availableCoupons);
         let bottomLabel;
@@ -297,7 +353,7 @@ export default function () {
             case 'upgrade': onUpgrade = () => confirmUpgrade(targetPlan); break;
             case 'downgrade': onDowngrade = () => confirmDowngrade(targetPlan); break;
         }
-        planCards.push(<PlanCard plan={targetPlan} isCurrent={false} onUpgrade={onUpgrade} onDowngrade={onDowngrade} bottomLabel={bottomLabel}>{professionalFeatures}</PlanCard>);
+        planCards.push(<PlanCard isDisabled={!!assignedTs} plan={targetPlan} isCurrent={!!assignedProfessionalTs} onUpgrade={onUpgrade} onDowngrade={onDowngrade} bottomLabel={bottomLabel} isTsAssigned={!!assignedProfessionalTs}>{professionalFeatures}</PlanCard>);
     }
 
     // Plan card: Unleashed (or Student Unleashed)
@@ -307,26 +363,29 @@ export default function () {
         <p className="truncate" title="1h Timeout">✓ 1h Timeout</p>
         <p className="truncate" title="3h Timeout Boost">✓ 3h Timeout Boost</p>
     </>;
+    const isUnleashedTsAssigned = !!assignedStudentUnleashedTs || !!assignedUnleashedTs;
     if (currentPlan.chargebeeId === studentUnleashedPlan.chargebeeId) {
         const bottomLabel = ('pendingSince' in currentPlan) ? <p className="text-green-600 animate-pulse">Upgrade in progress</p> : undefined;
-        planCards.push(<PlanCard plan={applyCoupons(studentUnleashedPlan, appliedCoupons)} isCurrent={true} bottomLabel={bottomLabel}>{unleashedFeatures}</PlanCard>);
+        planCards.push(<PlanCard isDisabled={!!assignedTs} plan={applyCoupons(studentUnleashedPlan, appliedCoupons)} isCurrent={true} bottomLabel={bottomLabel} isTsAssigned={isUnleashedTsAssigned}>{unleashedFeatures}</PlanCard>);
     } else if (currentPlan.chargebeeId === unleashedPlan.chargebeeId) {
         const bottomLabel = ('pendingSince' in currentPlan) ? <p className="text-green-600 animate-pulse">Upgrade in progress</p> : undefined;
-        planCards.push(<PlanCard plan={applyCoupons(unleashedPlan, appliedCoupons)} isCurrent={true} bottomLabel={bottomLabel}>{unleashedFeatures}</PlanCard>);
+        planCards.push(<PlanCard isDisabled={!!assignedTs} plan={applyCoupons(unleashedPlan, appliedCoupons)} isCurrent={true} bottomLabel={bottomLabel} isTsAssigned={isUnleashedTsAssigned}>{unleashedFeatures}</PlanCard>);
     } else {
         const targetPlan = applyCoupons(isStudent ? studentUnleashedPlan : unleashedPlan, availableCoupons);
         let onUpgrade;
         switch (Plans.subscriptionChange(currentPlan.type, targetPlan.type)) {
             case 'upgrade': onUpgrade = () => confirmUpgrade(targetPlan); break;
         }
-        planCards.push(<PlanCard plan={targetPlan} isCurrent={false} onUpgrade={onUpgrade}>{unleashedFeatures}</PlanCard>);
+        planCards.push(<PlanCard isDisabled={!!assignedTs} plan={targetPlan} isCurrent={!!isUnleashedTsAssigned} onUpgrade={onUpgrade} isTsAssigned={isUnleashedTsAssigned}>{unleashedFeatures}</PlanCard>);
     }
 
     return <div>
         <PageWithSubMenu subMenu={settingsMenu}  title='Plans' subtitle='Manage account usage and billing.'>
             <div className="w-full text-center">
-                <p className="text-xl text-gray-500">You are currently using the <span className="font-bold">{currentPlan.name}</span> plan.</p>
-                <p className="text-base w-96 m-auto">Upgrade your plan to get access to private repositories or more parallel workspaces.</p>
+                <p className="text-xl text-gray-500">You are currently using the <span className="font-bold">{Plans.getById(assignedTs?.planId)?.name || currentPlan.name}</span> plan.</p>
+                {!assignedTs && (
+                    <p className="text-base w-96 m-auto">Upgrade your plan to get access to private repositories or more parallel workspaces.</p>
+                )}
                 <p className="mt-2 font-semibold text-gray-500">Remaining hours: {typeof(accountStatement?.remainingHours) === 'number'
                     ? Math.floor(accountStatement.remainingHours * 10) / 10
                     : accountStatement?.remainingHours}</p>
@@ -378,6 +437,38 @@ export default function () {
                     <button className="bg-red-600 border-red-800" onClick={doDowngrade}>Downgrade Plan</button>
                 </div>
             </Modal>}
+            {!!teamClaimModal && (<Modal visible={true} onClose={() => setTeamClaimModal(undefined)}>
+                <h3 className="pb-2">Team Invitation</h3>
+                <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-4">
+                    <p className="pb-4 text-gray-500 text-base">{teamClaimModal.mode === "error" ? teamClaimModal.errorText : teamClaimModal.text}</p>
+                </div>
+                <div className="flex justify-end mt-6">
+                    {teamClaimModal.mode === "confirmation" && (
+                        <React.Fragment>
+                            <button className="secondary" onClick={() => setTeamClaimModal(undefined)}>Cancel</button>
+                            <button className={"ml-2"} onClick={async () => {
+                                try {
+                                    await getGitpodService().server.tsAssignSlot(teamClaimModal.teamId, teamClaimModal.slotId, undefined);
+                                    window.history.replaceState({}, window.document.title, window.location.href.replace(window.location.search, ''));
+
+                                    setTeamClaimModal(undefined);
+
+                                    const statement = await server.getAccountStatement({});
+                                    setAccountStatement(statement);
+                                } catch (error) {
+                                    setTeamClaimModal({
+                                        mode: "error",
+                                        errorText: `Error: ${error.message}`,
+                                    })   
+                                }
+                            }}>Accept Invitation</button>
+                        </React.Fragment>
+                    )}
+                    {teamClaimModal.mode === "error" && (
+                        <button className="secondary" onClick={() => setTeamClaimModal(undefined)}>Close</button>
+                    )}
+                </div>
+            </Modal>)}
         </PageWithSubMenu>
     </div>;
 }
@@ -389,6 +480,8 @@ interface PlanCardProps {
   onUpgrade?: () => void;
   onDowngrade?: () => void;
   bottomLabel?: React.ReactNode;
+  isDisabled?: boolean;
+  isTsAssigned?: boolean;
 }
 
 function PlanCard(p: PlanCardProps) {
@@ -405,11 +498,14 @@ function PlanCard(p: PlanCardProps) {
         }</p>
         {p.isCurrent
             ? <button className="w-full" disabled={true}>Current Plan</button>
-            : ((p.onUpgrade && <button className="w-full secondary group-hover:bg-green-600 group-hover:text-gray-100" onClick={p.onUpgrade}>Upgrade</button>)
-                || (p.onDowngrade && <button className="w-full secondary group-hover:bg-green-600 group-hover:text-gray-100" onClick={p.onDowngrade}>Downgrade</button>)
+            : ((p.onUpgrade && <button disabled={p.isDisabled} className="w-full secondary group-hover:bg-green-600 group-hover:text-gray-100" onClick={p.onUpgrade}>Upgrade</button>)
+                || (p.onDowngrade && <button disabled={p.isDisabled} className="w-full secondary group-hover:bg-green-600 group-hover:text-gray-100" onClick={p.onDowngrade}>Downgrade</button>)
                 || <button className="w-full secondary" disabled={true}>&nbsp;</button>)}
         </div>
         <div className="relative w-full">
+            {p.isTsAssigned && (
+                <div className="absolute w-full mt-5 text-center font-semibold">Team seat assigned</div>    
+            )}
             <div className="absolute w-full mt-5 text-center font-semibold">{p.bottomLabel}</div>
         </div>
     </SelectableCard>;
