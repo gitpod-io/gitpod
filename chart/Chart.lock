@@ -6,10 +6,10 @@ dependencies:
   repository: https://helm.min.io/
   version: 8.0.7
 - name: mysql
-  repository: https://charts.helm.sh/stable
-  version: 1.6.9
+  repository: https://charts.bitnami.com/bitnami
+  version: 8.5.1
 - name: rabbitmq
   repository: https://charts.bitnami.com/bitnami
   version: 8.11.4
-digest: sha256:870b60fff36fb9c2868887cf688931ef1a2ef47c493c46fe27df63d53a71ed7b
-generated: "2021-03-23T19:53:58.841384532-03:00"
+digest: sha256:9cbb115287d3731701c556ac1b16be374e8079afda5911a98b551de7c3f04a2f
+generated: "2021-04-06T15:40:05.531453033-04:00"

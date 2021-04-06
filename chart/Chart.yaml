@@ -17,8 +17,8 @@ dependencies:
   repository: https://helm.min.io/
   condition: minio.enabled
 - name: mysql
-  version: 1.6.9
-  repository: https://charts.helm.sh/stable
+  version: 8.5.1
+  repository: https://charts.bitnami.com/bitnami
   condition: mysql.enabled
 - name: rabbitmq
   version: 8.11.4
