@@ -351,7 +351,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 			return xerrors.Errorf("cannot add gitpod finalizer: %w", err)
 		}
 
-		if wso.IsWorkspaceHeadless() {
+		if tpe, _ := wso.WorkspaceType(); wso.IsWorkspaceHeadless() && tpe != api.WorkspaceType_GHOST {
 			// this is a headless workspace, which means that instead of probing for it becoming available, we'll listen to its log
 			// output, parse it and forward it. Listen() is idempotent.
 			err := m.headlessListener.Listen(context.Background(), pod)
