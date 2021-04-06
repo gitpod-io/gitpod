@@ -85,6 +85,9 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
             <a href={authorizeUrl}><button className="secondary">Authorize with {error.data.host}</button></a>
           </div>;
           break;
+        case ErrorCodes.USER_BLOCKED:
+          window.location.href = '/blocked';
+          return;
         case ErrorCodes.NOT_FOUND:
           return <RepositoryNotFoundView error={error} />;
         case ErrorCodes.PLAN_DOES_NOT_ALLOW_PRIVATE_REPOS:

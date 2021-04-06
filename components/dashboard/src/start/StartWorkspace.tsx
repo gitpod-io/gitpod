@@ -8,6 +8,7 @@ import EventEmitter from "events";
 import React, { useEffect, Suspense } from "react";
 import { DisposableCollection, WorkspaceInstance, WorkspaceImageBuild, Workspace, WithPrebuild } from "@gitpod/gitpod-protocol";
 import { HeadlessLogEvent } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
+import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
 import CaretDown from "../icons/CaretDown.svg";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
@@ -95,6 +96,10 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       if (typeof error === 'string') {
         error = { message: error };
       }
+      if (error?.code === ErrorCodes.USER_BLOCKED) {
+        this.redirectTo(gitpodHostUrl.with({ pathname: '/blocked' }).toString());
+        return;
+      }
       this.setState({ error });
     }
   }
@@ -138,7 +143,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       this.setState({ hasImageBuildLogs: true });
     }
 
-    let error;
+    let error: StartWorkspaceError | undefined;
     if (workspaceInstance.status.conditions.failed) {
       error = { message: workspaceInstance.status.conditions.failed };
     }
@@ -186,9 +191,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     const isPrebuilt = WithPrebuild.is(this.state.workspace?.context);
     let phase = StartPhase.Preparing;
     let title = undefined;
-    let statusMessage = !error
-      ? <p className="text-base text-gray-400">Preparing workspace …</p>
-      : <p className="text-base text-gitpod-red w-96">{error.message}</p>;
+    let statusMessage = !!error ? undefined : <p className="text-base text-gray-400">Preparing workspace …</p>;
 
     switch (this.state?.workspaceInstance?.status.phase) {
       // unknown indicates an issue within the system in that it cannot determine the actual phase of
