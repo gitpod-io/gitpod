@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"strings"
 	"sync"
 	"time"
@@ -20,6 +21,7 @@ import (
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/sirupsen/logrus"
 )
 
 // HeadlessListener can listen to workspace pods, parse the Theia produced output and notify a consumer
@@ -172,6 +174,13 @@ func (hl *HeadlessListener) listenAndRetry(ctx context.Context, pod *corev1.Pod,
 		return err
 	}
 
+	logger := log.WithContext(ctx).WithFields(owi).Logger
+	if wsk8s.IsGhostWorkspace(pod) {
+		// disable logs from ghost workspaces
+		logger = logrus.New()
+		logger.Out = ioutil.Discard
+	}
+
 	// We have two Go routines here: one that tries to read from the pod and gets restarted every now and then,
 	// and the "gouvernor" which initiates said restarting (defined below).
 	lastLineReadChan := make(chan string)
@@ -186,7 +195,7 @@ func (hl *HeadlessListener) listenAndRetry(ctx context.Context, pod *corev1.Pod,
 			Delegate: logs,
 		}
 		go func() {
-			log.Debug("Start listener")
+			logger.Debug("Start listener")
 			scanner := bufio.NewScanner(logs)
 			for scanner.Scan() {
 				l := scanner.Text()
@@ -244,7 +253,7 @@ func (hl *HeadlessListener) listenAndRetry(ctx context.Context, pod *corev1.Pod,
 				return
 
 			case <-timeout.C:
-				log.WithFields(owi).WithField("attempt", attempts).Debug("log listener timed out")
+				logger.WithField("attempt", attempts).Debug("log listener timed out")
 
 				// the timout timer has hit - tear things down and maybe restart
 				if oldLogs != nil {
@@ -254,7 +263,7 @@ func (hl *HeadlessListener) listenAndRetry(ctx context.Context, pod *corev1.Pod,
 				attempts++
 				if attempts >= listenerAttempts {
 					// we're exhaused - let's stop trying
-					log.WithFields(owi).WithError(err).WithField("attempt", attempts).Error("exhausted all attempts listening for log output")
+					logger.WithError(err).WithField("attempt", attempts).Error("exhausted all attempts listening for log output")
 					return
 				}
 
@@ -262,7 +271,7 @@ func (hl *HeadlessListener) listenAndRetry(ctx context.Context, pod *corev1.Pod,
 				oldLogs, err = startListener(from)
 				if err != nil {
 					// we failed to connect - wait for the timeout (without back-off) to try again
-					log.WithFields(owi).WithError(err).WithField("attempt", attempts).Warn("failed while attempting to re-connect to pod log output")
+					logger.WithError(err).WithField("attempt", attempts).Warn("failed while attempting to re-connect to pod log output")
 				}
 				timeout.Reset(time.Duration(attempts) * hl.listenerTimeout)
 
@@ -272,7 +281,7 @@ func (hl *HeadlessListener) listenAndRetry(ctx context.Context, pod *corev1.Pod,
 
 				ts, err := time.Parse(time.RFC3339Nano, parts[0])
 				if err != nil {
-					log.WithFields(owi).WithError(err).WithField("attempt", attempts).WithField("line", line).Error("cannot parse last log timestamp - discarding line")
+					logger.WithError(err).WithField("attempt", attempts).WithField("line", line).Error("cannot parse last log timestamp - discarding line")
 					continue
 				}
 
@@ -286,7 +295,7 @@ func (hl *HeadlessListener) listenAndRetry(ctx context.Context, pod *corev1.Pod,
 				payload := parts[1]
 				continueListening := hl.LogLineHandler(pod, payload)
 				if !continueListening {
-					log.WithFields(owi).Info("finished listening to log output")
+					logger.Info("finished listening to log output")
 					oldLogs.Close()
 					return
 				}
