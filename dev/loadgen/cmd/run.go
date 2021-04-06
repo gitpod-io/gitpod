@@ -5,9 +5,13 @@
 package cmd
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
+	"io/ioutil"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -15,6 +19,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/loadgen/pkg/loadgen"
@@ -22,12 +27,16 @@ import (
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
+var runOpts struct {
+	TLSPath string
+}
+
 // runCmd represents the run command
 var runCmd = &cobra.Command{
 	Use:   "run",
 	Short: "runs the load generator",
 	Run: func(cmd *cobra.Command, args []string) {
-		const workspaceCount = 100
+		const workspaceCount = 500
 
 		var load loadgen.LoadGenerator
 		load = loadgen.NewFixedLoadGenerator(500*time.Millisecond, 300*time.Millisecond)
@@ -42,7 +51,7 @@ var runCmd = &cobra.Command{
 			},
 			ServicePrefix: "will-be-overriden",
 			Spec: &api.StartWorkspaceSpec{
-				IdeImage:         "eu.gcr.io/gitpod-dev/theia-io-ide:master.2999",
+				IdeImage:         "eu.gcr.io/gitpod-dev/ide/theia:master.3206",
 				Admission:        api.AdmissionLevel_ADMIT_OWNER_ONLY,
 				CheckoutLocation: "gitpod",
 				Git: &api.GitSpec{
@@ -54,7 +63,7 @@ var runCmd = &cobra.Command{
 					Spec: &csapi.WorkspaceInitializer_Git{
 						Git: &csapi.GitInitializer{
 							CheckoutLocation: "",
-							CloneTaget:       "master",
+							CloneTaget:       "main",
 							RemoteUri:        "https://github.com/gitpod-io/gitpod.git",
 							TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
 							Config: &csapi.GitConfig{
@@ -76,7 +85,29 @@ var runCmd = &cobra.Command{
 			Type: api.WorkspaceType_REGULAR,
 		}
 
-		conn, err := grpc.Dial("localhost:8080", grpc.WithInsecure())
+		var opts []grpc.DialOption
+		if runOpts.TLSPath != "" {
+			ca, err := ioutil.ReadFile(filepath.Join(runOpts.TLSPath, "ca.crt"))
+			if err != nil {
+				log.Fatal(err)
+			}
+			capool := x509.NewCertPool()
+			capool.AppendCertsFromPEM(ca)
+			cert, err := tls.LoadX509KeyPair(filepath.Join(runOpts.TLSPath, "tls.crt"), filepath.Join(runOpts.TLSPath, "tls.key"))
+			if err != nil {
+				log.Fatal(err)
+			}
+			creds := credentials.NewTLS(&tls.Config{
+				Certificates: []tls.Certificate{cert},
+				RootCAs:      capool,
+				ServerName:   "ws-manager",
+			})
+			opts = append(opts, grpc.WithTransportCredentials(creds))
+		} else {
+			opts = append(opts, grpc.WithInsecure())
+		}
+
+		conn, err := grpc.Dial("localhost:8080", opts...)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -124,4 +155,6 @@ var runCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(runCmd)
+
+	runCmd.Flags().StringVar(&runOpts.TLSPath, "tls", "", "path to ws-manager's TLS certificates")
 }
