@@ -75,7 +75,7 @@ func (cs *WorkspaceService) DeleteWorkspace(ctx context.Context, req *api.Delete
 		err = cs.s.DeleteObject(ctx, cs.s.Bucket(req.OwnerId), &storage.DeleteObjectQuery{Prefix: prefix})
 		if err != nil {
 			if err == storage.ErrNotFound {
-				log.WithError(err).Error("deleting workspace backup: NotFound")
+				log.WithError(err).Debug("deleting workspace backup: NotFound")
 				return &api.DeleteWorkspaceResponse{}, nil
 			}
 			log.WithError(err).Error("error deleting workspace backup")
@@ -88,7 +88,7 @@ func (cs *WorkspaceService) DeleteWorkspace(ctx context.Context, req *api.Delete
 	err = cs.s.DeleteObject(ctx, cs.s.Bucket(req.OwnerId), &storage.DeleteObjectQuery{Name: blobName})
 	if err != nil {
 		if err == storage.ErrNotFound {
-			log.WithError(err).Error("deleting workspace backup: NotFound, ", blobName)
+			log.WithError(err).Debug("deleting workspace backup: NotFound, ", blobName)
 			return &api.DeleteWorkspaceResponse{}, nil
 		}
 		log.WithError(err).Error("error deleting workspace backup: ", blobName)
@@ -99,7 +99,7 @@ func (cs *WorkspaceService) DeleteWorkspace(ctx context.Context, req *api.Delete
 	err = cs.s.DeleteObject(ctx, cs.s.Bucket(req.OwnerId), &storage.DeleteObjectQuery{Prefix: trailPrefix})
 	if err != nil {
 		if err == storage.ErrNotFound {
-			log.WithError(err).Error("deleting workspace backup: NotFound, ", trailPrefix)
+			log.WithError(err).Debug("deleting workspace backup: NotFound, ", trailPrefix)
 			return &api.DeleteWorkspaceResponse{}, nil
 		}
 		log.WithError(err).Error("error deleting workspace backup: ", trailPrefix)
