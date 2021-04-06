@@ -5,6 +5,7 @@
  */
 
 import { AdminGetListResult, User } from "@gitpod/gitpod-protocol";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import moment from "moment";
 import { useContext, useEffect, useState } from "react";
 import { useLocation } from "react-router";
@@ -88,14 +89,23 @@ export default function UserSearch() {
 }
 
 function UserEntry(p: { user: User }) {
-    return <Link to={'/admin/users/' + p.user.id}>
+    if (!p) {
+        return <></>;
+    }
+    let email = '---';
+    try {
+        email = User.getPrimaryEmail(p.user);
+    } catch (e) {
+        log.error(e);
+    }
+    return <Link key={p.user.id} to={'/admin/users/' + p.user.id}>
         <div className="rounded-xl whitespace-nowrap flex space-x-2 py-6 px-6 w-full justify-between hover:bg-gray-100 focus:bg-gitpod-kumquat-light group">
             <div className="pr-3 self-center w-1/12">
-                <img className="rounded-full" src={p.user.avatarUrl} />
+                <img className="rounded-full" src={p.user.avatarUrl} alt={p.user.fullName || p.user.name}/>
             </div>
             <div className="flex flex-col w-6/12">
                 <div className="font-medium text-gray-800 truncate hover:text-blue-600">{p.user.fullName}</div>
-                <div className="text-sm overflow-ellipsis truncate text-gray-400 hover:text-blue-600">{User.getPrimaryEmail(p.user)}</div>
+                <div className="text-sm overflow-ellipsis truncate text-gray-400 hover:text-blue-600">{email}</div>
             </div>
             <div className="flex w-5/12 self-center">
                 <div className="text-sm w-full text-gray-400 truncate">{moment(p.user.creationDate).fromNow()}</div>

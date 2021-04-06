@@ -5,62 +5,62 @@
  */
 
 import { WorkspaceAndInstance } from "@gitpod/gitpod-protocol";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
-export function getAdminLinks(workspace: WorkspaceAndInstance): { name: string, title: string, url: string }[] {
-    const gcpInfo = deriveGcpInfo(workspace.ideUrl, workspace.region);
-    if (gcpInfo == undefined) {
-        return [];
-    }
-    const { gcp, baseDomain } = gcpInfo;
-
-    const context: UrlTemplateContext = {
-        ...gcp,
-        baseDomain,
-        workspaceId: workspace.workspaceId,
-        instanceId: workspace.instanceId,
-        nodeName: workspace.status.nodeName,
-        podName: workspace.status.podName,
-        nodeIp: workspace.status.nodeIp,
-    };
-    const result = [];
-    for (const link of ADMIN_LINKS) {
-        const url = render(link.urlTemplate, context);
-        result.push({
-            name: link.name,
-            title: render(link.title, context),
-            url
-        });
-    }
-    return result;
+export interface Link {
+    readonly name: string;
+    readonly title: string;
+    readonly url: string;
 }
 
-const ADMIN_LINKS: Link[] = [
-    {
-        name: "GKE Pod",
-        title: "${podName}",
-        urlTemplate: "https://console.cloud.google.com/kubernetes/pod/${region}/${clusterName}/${namespace}/${podName}/details?project=${projectName}"
-    },
-    {
-        name: "GKE Node",
-        title: "${nodeName}",
-        urlTemplate: "https://console.cloud.google.com/kubernetes/node/${region}/${clusterName}/${nodeName}/summary?project=${projectName}"
-    },
-    {
-        name: "Workspace Pod Logs",
-        title: "See Logs",
-        urlTemplate: "https://console.cloud.google.com/logs/query;query=resource.type%3D%22k8s_container%22%0Aresource.labels.project_id%3D%22${projectName}%22%0Aresource.labels.location%3D%22${region}%22%0Aresource.labels.cluster_name%3D%22${clusterName}%22%0Aresource.labels.namespace_name%3D%22${namespace}%22%0Aresource.labels.pod_name%3D%22${podName}%22?project=${projectName}"
-    },
-    {
-        name: "Grafana Workspace",
-        title: "Pod Metrics",
-        urlTemplate: "https://monitoring.${baseDomain}/d/admin-workspace/admin-workspace?var-workspace=${podName}"
-    },
-    {
-        name: "Grafana Node",
-        title: "Node Metrics",
-        urlTemplate: "https://monitoring.${baseDomain}/d/admin-node/admin-node?var-node=${nodeName}"
-    },
-];
+export function getAdminLinks(workspace: WorkspaceAndInstance): Link[] {
+    let gcpInfo;
+    try {
+        gcpInfo = deriveGcpInfo(workspace.ideUrl, workspace.region);
+    } catch (e) {
+        log.error(e);
+    }
+    if (gcpInfo === undefined) {
+        return [];
+    }
+    const { baseDomain, gcp } = gcpInfo;
+
+    return internalGetAdminLinks(gcp, baseDomain, workspace.status.podName, workspace.status.nodeName);
+}
+
+function internalGetAdminLinks(gcpInfo: GcpInfo, 
+                            baseDomain: string,
+                            podName?: string,
+                            nodeName?: string): Link[] {
+    const {clusterName, namespace, projectName, region} = gcpInfo;
+    return [
+        {
+            name: "GKE Pod",
+            title: `${podName}`,
+            url: `https://console.cloud.google.com/kubernetes/pod/${region}/${clusterName}/${namespace}/${podName}/details?project=${projectName}`
+        },
+        {
+            name: `GKE Node`,
+            title: `${nodeName}`,
+            url: `https://console.cloud.google.com/kubernetes/node/${region}/${clusterName}/${nodeName}/summary?project=${projectName}`
+        },
+        {
+            name: `Workspace Pod Logs`,
+            title: `See Logs`,
+            url: `https://console.cloud.google.com/logs/query;query=resource.type%3D%22k8s_container%22%0Aresource.labels.project_id%3D%22${projectName}%22%0Aresource.labels.location%3D%22${region}%22%0Aresource.labels.cluster_name%3D%22${clusterName}%22%0Aresource.labels.namespace_name%3D%22${namespace}%22%0Aresource.labels.pod_name%3D%22${podName}%22?project=${projectName}`
+        },
+        {
+            name: `Grafana Workspace`,
+            title: `Pod Metrics`,
+            url: `https://monitoring.${baseDomain}/d/admin-workspace/admin-workspace?var-workspace=${podName}`
+        },
+        {
+            name: `Grafana Node`,
+            title: `Node Metrics`,
+            url: `https://monitoring.${baseDomain}/d/admin-node/admin-node?var-node=${nodeName}`
+        },
+    ];
+}
 
 function deriveGcpInfo(ideUrlStr: string, region: string): { gcp: GcpInfo, baseDomain: string } | undefined {
     const ideUrl = new URL(ideUrlStr);
@@ -131,29 +131,4 @@ interface GcpInfo {
     readonly region: string;
     readonly projectName: string;
     readonly namespace: string;
-}
-
-export interface Link {
-    readonly name: string;
-    // Supports all variables from UrlTemplateContext
-    readonly title: string;
-    // Supports all variables from UrlTemplateContext
-    readonly urlTemplate: string;
-}
-export interface UrlTemplateContext extends GcpInfo {
-    readonly baseDomain: string;
-    readonly workspaceId: string;
-    readonly instanceId: string;
-    readonly podName?: string;
-    readonly nodeName?: string;
-    readonly nodeIp?: string;
-}
-
-function render(template: string, context: UrlTemplateContext): string {
-    const VAR_REGEXP = /\$\{(.*?)\}/g;
-
-    return template.replace(VAR_REGEXP, (match: string, varName: keyof UrlTemplateContext) => {
-        const varValue = context[varName];
-        return varValue !== undefined ? varValue : match;
-    });
 }
