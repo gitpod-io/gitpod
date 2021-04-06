@@ -51,17 +51,11 @@ function AllTeams() {
     const [addMembersModal, setAddMembersModal] = useState<{ sub: TeamSubscription } | undefined>(undefined);
 
     const restorePendingPlanPurchase = () => {
-        if (pendingPlanPurchase) {
-            return;
-        }
         const pendingState = restorePendingState("pendingPlanPurchase") as { planId: string } | undefined;
         return pendingState;
     }
 
     const restorePendingSlotsPurchase = () => {
-        if (pendingSlotsPurchase) {
-            return;
-        }
         const pendingState = restorePendingState("pendingSlotsPurchase") as { tsId: string } | undefined;
         return pendingState;
     }
