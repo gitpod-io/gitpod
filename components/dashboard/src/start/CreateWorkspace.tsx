@@ -74,6 +74,17 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
             <p className="text-base mt-2">Learn more about <a className="text-blue" href="https://www.gitpod.io/docs/context-urls/">supported context URLs</a></p>
           </div>;
           break;
+        case ErrorCodes.NOT_AUTHENTICATED:
+          const authorizeUrl = gitpodHostUrl.withApi({
+              pathname: '/authorize',
+              search: `returnTo=${encodeURIComponent(window.location.toString())}&host=${error.data.host}&scopes=${error.data.scopes.join(',')}`
+          }).toString();
+          window.location.href = authorizeUrl;
+          statusMessage = <div className="mt-2 flex flex-col space-y-8">
+            <p className="text-base w-96">Redirecting to authorize with {error.data.host} …</p>
+            <a href={authorizeUrl}><button className="secondary">Authorize with {error.data.host}</button></a>
+          </div>;
+          break;
         case ErrorCodes.NOT_FOUND:
           return <RepositoryNotFoundView error={error} />;
         case ErrorCodes.PLAN_DOES_NOT_ALLOW_PRIVATE_REPOS:
