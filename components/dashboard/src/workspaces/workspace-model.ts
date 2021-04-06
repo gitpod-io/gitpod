@@ -94,20 +94,20 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
         }
     }
 
-    togglePinned(workspaceId: string) {
+    async togglePinned(workspaceId: string) {
         const ws = this.workspaces.get(workspaceId)?.workspace;
         if (ws) {
             ws.pinned = !ws.pinned;
-            getGitpodService().server.updateWorkspaceUserPin(ws.id, 'toggle');
+            await getGitpodService().server.updateWorkspaceUserPin(ws.id, 'toggle');
             this.notifyWorkpaces();
         }
     }
 
-    toggleShared(workspaceId: string) {
+    async toggleShared(workspaceId: string) {
         const ws = this.workspaces.get(workspaceId)?.workspace;
         if (ws) {
             ws.shareable = !ws.shareable;
-            getGitpodService().server.controlAdmission(ws.id, ws.shareable ? "owner" : "everyone");
+            await getGitpodService().server.controlAdmission(ws.id, ws.shareable ? "everyone" : "owner");
             this.notifyWorkpaces();
         }
     }
