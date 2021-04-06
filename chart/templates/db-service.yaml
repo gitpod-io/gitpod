@@ -12,7 +12,7 @@ metadata:
     kind: service
     stage: {{ .Values.installation.stage }}
 spec:
-  ports: 
+  ports:
   - protocol: TCP
     port: 3306
     targetPort: 3306
@@ -26,7 +26,7 @@ spec:
     component: {{ $comp.name }}
     kind: pod
     {{- else }}
-    app: mysql
+    app.kubernetes.io/name: mysql
     {{- end }}
   type: {{ $comp.serviceType }}
   sessionAffinity: None

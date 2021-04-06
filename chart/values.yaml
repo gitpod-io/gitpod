@@ -506,18 +506,16 @@ minio:
 mysql:
   enabled: true
   fullnameOverride: mysql
-  testFramework:
-    enabled: false
-  existingSecret: db-password
+  image:
+    tag: 5.7
+  auth:
+    existingSecret: db-password
   serviceAccount:
+    create: false
     name: db
-  extraVolumes: |
-    - name: init-scripts
-      configMap:
-        name: db-init-scripts
-  extraVolumeMounts: |
-    - mountPath: /docker-entrypoint-initdb.d
-      name: init-scripts
+  initdbScriptsConfigMap: db-init-scripts
+  volumePermissions:
+    enabled: true
 
 rabbitmq:
   fullnameOverride: "messagebus"
