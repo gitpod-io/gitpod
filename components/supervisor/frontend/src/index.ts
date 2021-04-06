@@ -11,7 +11,7 @@
 
 require('../src/shared/index.css');
 
-import { createGitpodService } from "@gitpod/gitpod-protocol";
+import { createGitpodService, WorkspaceInstancePhase } from "@gitpod/gitpod-protocol";
 import { DisposableCollection } from '@gitpod/gitpod-protocol/lib/util/disposable';
 import * as GitpodServiceClient from "./ide/gitpod-service-client";
 import * as heartBeat from "./ide/heart-beat";
@@ -40,23 +40,30 @@ const loadingIDE = new Promise(resolve => window.addEventListener('DOMContentLoa
     }
 
     //#region ide lifecycle
-    await new Promise<void>(resolve => {
-        const listener = gitpodServiceClient.onDidChangeInfo(() => {
-            if (gitpodServiceClient.info.latestInstance?.status.phase === 'running') {
-                listener.dispose();
-                resolve();
-            }
+    function isWorkspaceInstancePhase(phase: WorkspaceInstancePhase): boolean {
+        return gitpodServiceClient.info.latestInstance?.status.phase === phase;
+    }
+    if (!isWorkspaceInstancePhase('running')) {
+        await new Promise<void>(resolve => {
+            const listener = gitpodServiceClient.onDidChangeInfo(() => {
+                if (isWorkspaceInstancePhase('running')) {
+                    listener.dispose();
+                    resolve();
+                }
+            });
         });
-    });
+    }
     const supervisorServiceClinet = new SupervisorServiceClient(gitpodServiceClient);
     await Promise.all([supervisorServiceClinet.ideReady, supervisorServiceClinet.contentReady, loadingIDE]);
+    if (isWorkspaceInstancePhase('stopping') || isWorkspaceInstancePhase('stopped')) {
+        return;
+    }
     const toStop = new DisposableCollection();
     toStop.pushAll([
         IDEWebSocket.connectWorkspace(),
         ideService.start(),
         gitpodServiceClient.onDidChangeInfo(() => {
-            const phase = gitpodServiceClient.info.latestInstance?.status.phase;
-            if (phase === 'stopping' || phase === 'stopped') {
+            if (isWorkspaceInstancePhase('stopping') || isWorkspaceInstancePhase('stopped')) {
                 toStop.dispose();
             }
         })
