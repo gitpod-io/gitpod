@@ -16,6 +16,7 @@ import { shouldSeeWhatsNew, WhatsNew } from './WhatsNew';
 import settingsMenu from './settings/settings-menu';
 import { User } from '@gitpod/gitpod-protocol';
 import { adminMenu } from './admin/admin-menu';
+import gitpodIcon from './icons/gitpod.svg';
 
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ './workspaces/Workspaces'));
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Account'));
@@ -60,7 +61,15 @@ function App() {
     }
     if (!user) {
         return (<Login />)
-    };
+    }
+    if (window.location.pathname.startsWith('/blocked')) {
+        return <div className="mt-48 text-center">
+            <img src={gitpodIcon} className="h-16 mx-auto"/>
+            <h1 className="mt-12 text-gray-500 text-3xl">Your account has been blocked.</h1>
+            <p className="mt-4 mb-8 text-lg w-96 mx-auto">Please contact support if you think this is an error. See also <a className="hover:text-blue-600" href="https://www.gitpod.io/terms/">terms of service</a>.</p>
+            <a className="mx-auto" href="mailto:support@gitpod.io?Subject=Blocked"><button className="secondary">Contact Support</button></a>
+        </div>;
+    }
     const shouldWhatsNewShown = shouldSeeWhatsNew(user)
     if (shouldWhatsNewShown !== isWhatsNewShown) {
         setWhatsNewShown(shouldWhatsNewShown);
