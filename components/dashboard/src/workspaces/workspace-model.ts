@@ -126,7 +126,7 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
     
     protected isActive(info: WorkspaceInfo): boolean {
         return info.workspace.pinned || 
-            info.latestInstance?.status?.phase !== 'stopped';
+            (!!info.latestInstance && info.latestInstance.status?.phase !== 'stopped');
     }
 
     public getAllFetchedWorkspaces(): Map<string, WorkspaceInfo> {
