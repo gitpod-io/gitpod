@@ -115,6 +115,12 @@ function App() {
                 <Route path={["/admin"]} exact>
                     <Redirect to="/admin/users"/>
                 </Route>
+                <Route path="/sorry" exact>
+                    <div className="mt-48 text-center">
+                        <h1 className="text-gray-500 text-3xl">Oh, no! Something went wrong!</h1>
+                        <p className="mt-4 text-lg text-gitpod-red">{decodeURIComponent(getURLHash())}</p>
+                    </div>
+                </Route>
                 <Route path="*" /* status={404} */>
                     <div className="mt-48 text-center">
                         <h1 className="text-gray-500 text-3xl">404</h1>
