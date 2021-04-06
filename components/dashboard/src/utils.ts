@@ -7,39 +7,43 @@
 
  export interface PollOptions<T> {
     backoffFactor: number;
-    warningInSeconds: number;
     retryUntilSeconds: number;
 
-    warn?: () => void;
     stop?: () => void;
     success: (result?: T) => void;
+
+    token?: { cancelled?: boolean }
 }
 
-export const poll = <T>(initialDelayInSeconds: number, callback: () => Promise<{done: boolean, result?: T}>, opts: PollOptions<T>) => {
+export const poll = async <T>(initialDelayInSeconds: number, callback: () => Promise<{done: boolean, result?: T}>, opts: PollOptions<T>) => {
     const start = new Date();
-    doPoll(start, initialDelayInSeconds, callback, opts);
-};
+    let delayInSeconds = initialDelayInSeconds;
 
-const doPoll = <T>(start: Date, delayInSeconds: number, callback: () => Promise<{done: boolean, result?: T}>, opts: PollOptions<T>) => {
-    const runSinceSeconds = ((new Date().getTime()) - start.getTime()) / 1000;
-    if (runSinceSeconds > opts.retryUntilSeconds) {
-        if (opts.stop) {
-            opts.stop();
-        }
-    } else {
-        if (runSinceSeconds > opts.warningInSeconds) {
-            if (opts.warn) {
-                opts.warn();
+    while (true) {
+        const runSinceSeconds = ((new Date().getTime()) - start.getTime()) / 1000;
+        if (runSinceSeconds > opts.retryUntilSeconds) {
+            if (opts.stop) {
+                opts.stop();
             }
+            return;
         }
-        setTimeout(async () => {
-            const { done, result } = await callback();
-            if (done) {
-                opts.success(result);
-            } else {
-                doPoll(start, opts.backoffFactor * delayInSeconds, callback, opts);
-            }
-            // tslint:disable-next-line:align
-        }, delayInSeconds * 1000);
+        await new Promise(resolve => setTimeout(resolve, delayInSeconds * 1000));
+        if (opts.token?.cancelled) {
+            return;
+        }
+        
+        const { done, result } = await callback();
+        if (opts.token?.cancelled) {
+            return;
+        }
+
+        if (done) {
+            opts.success(result);
+            return;
+        } else {
+            delayInSeconds = opts.backoffFactor * delayInSeconds;
+        }
+    
     }
 };
+

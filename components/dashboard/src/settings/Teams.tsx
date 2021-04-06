@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { countries } from 'countries-list';
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
@@ -19,6 +19,7 @@ import exclamation from '../images/exclamation.svg';
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { poll, PollOptions } from "../utils";
 import settingsMenu from "./settings-menu";
+import { Disposable } from "@gitpod/gitpod-protocol";
 
 export default function Teams() {
 
@@ -49,28 +50,76 @@ function AllTeams() {
     const [inviteMembersModal, setInviteMembersModal] = useState<{ sub: TeamSubscription } | undefined>(undefined);
     const [addMembersModal, setAddMembersModal] = useState<{ sub: TeamSubscription } | undefined>(undefined);
 
-    const [pendingPlanPurchase, setPendingPlanPurchase] = useState<{ plan: Plan } | undefined>(getLocalStorageObject<{ plan: Plan }>("pendingPlanPurchase"));
-    const [pendingSlotsPurchase, setPendingSlotsPurchase] = useState<{ ts: TeamSubscription } | undefined>(getLocalStorageObject<{ ts: TeamSubscription }>("pendingSlotsPurchase"));
+    const restorePendingPlanPurchase = () => {
+        if (pendingPlanPurchase) {
+            return;
+        }
+        const pendingState = restorePendingState("pendingPlanPurchase") as { planId: string } | undefined;
+        return pendingState;
+    }
 
-    useEffect(() => {
-        queryState();
-    }, []);
+    const restorePendingSlotsPurchase = () => {
+        if (pendingSlotsPurchase) {
+            return;
+        }
+        const pendingState = restorePendingState("pendingSlotsPurchase") as { tsId: string } | undefined;
+        return pendingState;
+    }
+
+    const restorePendingState = (key: string) => {
+        const obj = getLocalStorageObject(key);
+        if (typeof obj === "object" && typeof obj.expirationDate === "string") {
+            const now = new Date().toISOString();
+            if (obj.expirationDate >= now) {
+                return obj;
+            } else {
+                removeLocalStorageObject(key);
+            }
+        }
+    }
+    const storePendingState = (key: string, obj: any) => {
+        const expirationDate = new Date(Date.now() + 5 * 60 * 1000).toISOString()
+        setLocalStorageObject(key, { ...obj, expirationDate });
+    }
+
+    const [pendingPlanPurchase, setPendingPlanPurchase] = useState<{ planId: string } | undefined>(restorePendingPlanPurchase());
+    const [pendingSlotsPurchase, setPendingSlotsPurchase] = useState<{ tsId: string } | undefined>(restorePendingSlotsPurchase());
+
+    const pendingPlanPurchasePoller = useRef<Disposable>();
+    const pendingSlotsPurchasePoller = useRef<Disposable>();
+
+    const cancelPollers = () => {
+        pendingPlanPurchasePoller.current?.dispose();
+        pendingSlotsPurchasePoller.current?.dispose();
+    }
 
     useEffect(() => {
         if (pendingPlanPurchase) {
-            setLocalStorageObject("pendingPlanPurchase", pendingPlanPurchase);
+            storePendingState("pendingPlanPurchase", pendingPlanPurchase);
+            pollForPlanPurchased(Plans.getAvailableTeamPlans().filter(p => p.chargebeeId === pendingPlanPurchase.planId)[0])
         } else {
+            pendingPlanPurchasePoller.current?.dispose();
             removeLocalStorageObject("pendingPlanPurchase");
         }
     }, [pendingPlanPurchase]);
 
     useEffect(() => {
         if (pendingSlotsPurchase) {
-            setLocalStorageObject("pendingSlotsPurchase", pendingSlotsPurchase);
+            storePendingState("pendingSlotsPurchase", pendingSlotsPurchase);
+            pollForAdditionalSlotsBought();
         } else {
+            pendingSlotsPurchasePoller.current?.dispose();
             removeLocalStorageObject("pendingSlotsPurchase");
         }
     }, [pendingSlotsPurchase]);
+
+    useEffect(() => {
+        queryState();
+
+        return function cleanup() {
+            cancelPollers();
+        }
+    }, []);
 
     const queryState = async () => {
         try {
@@ -81,10 +130,10 @@ function AllTeams() {
                 getGitpodService().server.getClientRegion(),
                 getGitpodService().server.isStudent(),
             ]);
-    
+
             setDefaultCurrency((clientRegion && (countries as any)[clientRegion]?.currency === 'EUR') ? 'EUR' : 'USD');
             setIsStudent(isStudent);
-    
+
             setSlots(slots);
             setShowPaymentUI(showPaymentUI);
             setTeamSubscriptions(teamSubscriptions);
@@ -104,15 +153,15 @@ function AllTeams() {
             })()
         }
         if (pendingPlanPurchase) {
-            if (teamSubscriptions.some(ts => ts.planId === pendingPlanPurchase.plan.chargebeeId)) {
+            if (teamSubscriptions.some(ts => ts.planId === pendingPlanPurchase.planId)) {
                 setPendingPlanPurchase(undefined);
             }
         }
     }, [teamSubscriptions]);
 
     useEffect(() => {
-        if (pendingSlotsPurchase) {   
-            if (slots.some(s => s.teamSubscription.id === pendingSlotsPurchase.ts.id)) {
+        if (pendingSlotsPurchase) {
+            if (slots.some(s => s.teamSubscription.id === pendingSlotsPurchase.tsId)) {
                 setPendingSlotsPurchase(undefined);
             }
         }
@@ -154,7 +203,6 @@ function AllTeams() {
     const pollForSlotUpdate = (slot: TeamSubscriptionSlotResolved) => {
         const opts: PollOptions<TeamSubscriptionSlotResolved> = {
             backoffFactor: 1.4,
-            warningInSeconds: 40,
             retryUntilSeconds: 2400,
             success: (result) => {
                 if (result) {
@@ -162,9 +210,6 @@ function AllTeams() {
                         return { ...result, loading: false }
                     })
                 }
-            },
-            warn: () => {
-                updateSlot(slot, (s) => ({ ...s, loading: false }))
             },
             stop: () => {
                 updateSlot(slot, (s) => ({ ...s, loading: false }))
@@ -245,10 +290,12 @@ function AllTeams() {
                         return;
                     }
 
-                    setPendingSlotsPurchase({ ts });
 
-                    getGitpodService().server.tsAddSlots(ts.id, quantity)
-                        .then(() => pollForAdditionalSlotsBought(ts))
+                    getGitpodService().server.tsAddSlots(ts.id, quantity).then(() => {
+                        setPendingSlotsPurchase({ tsId: ts.id });
+
+                        pollForAdditionalSlotsBought();
+                    })
                         .catch((err) => {
                             setPendingSlotsPurchase(undefined);
 
@@ -258,9 +305,13 @@ function AllTeams() {
                         });
                 } else {
                     // Buy new subscription + initial slots
-                    setPendingPlanPurchase({ plan });
+
                     let successful = false;
-                    (await ChargebeeClient.getOrCreate()).checkout((server) => server.checkout(plan.chargebeeId, quantity), {
+                    (await ChargebeeClient.getOrCreate()).checkout(async (server) => {
+                        setPendingPlanPurchase({ planId: plan.chargebeeId });
+
+                        return server.checkout(plan.chargebeeId, quantity)
+                    }, {
                         success: () => {
                             successful = true;
                             pollForPlanPurchased(plan);
@@ -277,11 +328,14 @@ function AllTeams() {
         };
     };
     const pollForPlanPurchased = (plan: Plan) => {
+        let token: { cancelled?: boolean } = {};
+        pendingPlanPurchasePoller.current?.dispose();
+        pendingPlanPurchasePoller.current = Disposable.create(() => { token.cancelled = true });
 
         const opts: PollOptions<TeamSubscription[]> = {
+            token,
             backoffFactor: 1.4,
-            warningInSeconds: 40,
-            retryUntilSeconds: 2400,
+            retryUntilSeconds: 240,
             success: async (result) => {
                 const slotsResolved = await getGitpodService().server.tsGetSlots();
 
@@ -289,13 +343,9 @@ function AllTeams() {
                 setTeamSubscriptions(result || []);
 
                 setPendingPlanPurchase(undefined);
-            },
-            warn: () => {
-            },
-            stop: () => {
             }
         };
-        poll<TeamSubscription[]>(1, async () => {
+        poll<TeamSubscription[]>(2, async () => {
             const now = new Date().toISOString();
             const teamSubscriptions = await getGitpodService().server.tsGet();
             // Has active subscription with given plan?
@@ -306,10 +356,14 @@ function AllTeams() {
             }
         }, opts);
     }
-    const pollForAdditionalSlotsBought = (ts: TeamSubscription) => {
+    const pollForAdditionalSlotsBought = () => {
+        let token: { cancelled?: boolean } = {};
+        pendingSlotsPurchasePoller.current?.dispose();
+        pendingSlotsPurchasePoller.current = Disposable.create(() => { token.cancelled = true });
+
         const opts: PollOptions<TeamSubscriptionSlotResolved[]> = {
+            token,
             backoffFactor: 1.4,
-            warningInSeconds: 40,
             retryUntilSeconds: 240,
             success: (result) => {
                 setSlots(result || []);
@@ -319,7 +373,7 @@ function AllTeams() {
             stop: () => {
             }
         };
-        poll<TeamSubscriptionSlotResolved[]>(1, async () => {
+        poll<TeamSubscriptionSlotResolved[]>(2, async () => {
             const freshSlots = await getGitpodService().server.tsGetSlots();
             if (freshSlots.length > slots.length) {
                 return { done: true, result: freshSlots };
@@ -373,7 +427,7 @@ function AllTeams() {
     }
 
     const isPaymentInProgress = (ts: TeamSubscription) => {
-        return pendingSlotsPurchase && pendingSlotsPurchase.ts.id === ts.id
+        return pendingSlotsPurchase && pendingSlotsPurchase.tsId === ts.id
     }
 
     const renderTeams = () => (<React.Fragment>
@@ -421,14 +475,14 @@ function AllTeams() {
         {(getActiveSubs().length > 0 || !!pendingPlanPurchase) && (
             <div className="flex flex-col pt-6 space-y-2">
                 {pendingPlanPurchase && (
-                    <div key={"team-sub-" + pendingPlanPurchase.plan.chargebeeId} className="flex-grow flex flex-row hover:bg-gray-100 rounded-xl h-16 w-full group">
+                    <div key={"team-sub-" + pendingPlanPurchase.planId} className="flex-grow flex flex-row hover:bg-gray-100 rounded-xl h-16 w-full group">
                         <div className="px-4 self-center w-1/12">
                             <div className={"rounded-full w-3 h-3 text-sm align-middle bg-gitpod-kumquat"}>
                                 &nbsp;
                         </div>
                         </div>
                         <div className="p-0 my-auto flex flex-col w-6/12">
-                            <span className="my-auto font-medium truncate overflow-ellipsis">{pendingPlanPurchase.plan.name}</span>
+                            <span className="my-auto font-medium truncate overflow-ellipsis">{Plans.getAvailableTeamPlans().filter(p => p.chargebeeId === pendingPlanPurchase.planId)[0]?.name}</span>
                             <span className="text-sm my-auto text-gray-400 truncate overflow-ellipsis">Purchased on {formatDate(new Date().toString())}</span>
                         </div>
                         <div className="p-0 my-auto flex w-4/12">
@@ -443,7 +497,7 @@ function AllTeams() {
                 {getActiveSubs().map((sub, index) => (
                     <div key={"team-sub-" + sub.id} className="flex-grow flex flex-row hover:bg-gray-100 rounded-xl h-16 w-full group">
                         <div className="px-4 self-center w-1/12">
-                            <div className={"rounded-full w-3 h-3 text-sm align-middle " + (isPaymentInProgress(sub) ? "bg-gitpod-kumquat" : "bg-green-500") }>
+                            <div className={"rounded-full w-3 h-3 text-sm align-middle " + (isPaymentInProgress(sub) ? "bg-gitpod-kumquat" : "bg-green-500")}>
                                 &nbsp;
                         </div>
                         </div>
@@ -831,13 +885,13 @@ function formatDate(date?: string) {
     return ""
 }
 
-function getLocalStorageObject<T>(key: string): T | undefined {
+function getLocalStorageObject(key: string) {
     try {
         const string = window.localStorage.getItem(key);
         if (!string) {
             return;
         }
-        return JSON.parse(string) as T;
+        return JSON.parse(string);
     } catch {
     }
 }
