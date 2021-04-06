@@ -899,9 +899,10 @@ func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, q
 		err = client.Bucket(bucket).Object(query.Name).Delete(ctx)
 		if err != nil {
 			log.WithField("bucket", bucket).WithField("object", query.Name).Error(err)
-			if err == gcpstorage.ErrBucketNotExist {
+			if err == gcpstorage.ErrBucketNotExist || err == gcpstorage.ErrObjectNotExist {
 				return ErrNotFound
 			}
+
 			return err
 		}
 		return nil
