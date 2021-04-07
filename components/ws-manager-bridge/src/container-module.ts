@@ -19,7 +19,7 @@ import { BridgeController, WorkspaceManagerClientProviderConfigSource } from './
 import { filePathTelepresenceAware } from '@gitpod/gitpod-protocol/lib/env';
 import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
 import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientProviderDBSource, WorkspaceManagerClientProviderSource } from '@gitpod/ws-manager/lib/client-provider-source';
-import { ClusterService, ClusterServiceServer } from './cluster-service/cluster-service-server';
+import { ClusterService, ClusterServiceServer } from './cluster-service-server';
 
 export const containerModule = new ContainerModule(bind => {
 

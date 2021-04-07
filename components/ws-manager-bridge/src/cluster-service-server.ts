@@ -25,8 +25,8 @@ import {
 import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
 import * as grpc from "grpc";
 import { inject, injectable } from 'inversify';
-import { BridgeController } from '../bridge-controller';
-import { Configuration } from '../config';
+import { BridgeController } from './bridge-controller';
+import { Configuration } from './config';
 
 export interface ClusterServiceServerOptions {
     port: number;
@@ -177,7 +177,7 @@ export class ClusterService implements IClusterServiceServer {
                     clusterStatus.setState(mapClusterState(cluster.state));
                     clusterStatus.setScore(cluster.score);
                     clusterStatus.setMaxScore(cluster.maxScore);
-                    clusterStatus.setGoverned(true);
+                    clusterStatus.setGoverned(cluster.govern);
                     response.addStatus(clusterStatus);
                 }
 
