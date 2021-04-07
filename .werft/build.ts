@@ -91,26 +91,18 @@ export async function build(context, version) {
      * Build
      */
     werft.phase("build", "build running");
-    // Build using the dev-http-cache gitpod-dev to make 'yarn install' more stable
-    const buildEnvOpts = {
-        env: {
-            ...process.env,
-            "HTTP_PROXY": "http://dev-http-cache:3129",
-            "HTTPS_PROXY": "http://dev-http-cache:3129",
-        }
-    };
     const imageRepo = publishRelease ? "gcr.io/gitpod-io/self-hosted" : "eu.gcr.io/gitpod-core-dev/build";
 
     exec(`LICENCE_HEADER_CHECK_ONLY=true leeway run components:update-license-header || { echo "[build|FAIL] There are some license headers missing. Please run 'leeway run components:update-license-header'."; exit 1; }`)
     exec(`leeway vet --ignore-warnings`);
-    exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`, buildEnvOpts);
+    exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`);
     if (publishRelease) {
         exec(`gcloud auth activate-service-account --key-file "/mnt/secrets/gcp-sa-release/service-account.json"`);
     }
     if (withInstaller || publishRelease) {
-        exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=${imageRepo} install:all`, buildEnvOpts);
+        exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=${imageRepo} install:all`);
     }
-    exec(`leeway build --werft=true -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo}`, buildEnvOpts);
+    exec(`leeway build --werft=true -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo}`);
     if (publishRelease) {
         try {
             werft.phase("publish", "checking version semver compliance...");
