@@ -75,16 +75,8 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
           </div>;
           break;
         case ErrorCodes.NOT_AUTHENTICATED:
-          const authorizeUrl = gitpodHostUrl.withApi({
-              pathname: '/authorize',
-              search: `returnTo=${encodeURIComponent(window.location.toString())}&host=${error.data.host}&scopes=${error.data.scopes.join(',')}`
-          }).toString();
-          window.location.href = authorizeUrl;
-          statusMessage = <div className="mt-2 flex flex-col space-y-8">
-            <p className="text-base w-96">Redirecting to authorize with {error.data.host} …</p>
-            <a href={authorizeUrl}><button className="secondary">Authorize with {error.data.host}</button></a>
-          </div>;
-          break;
+          window.location.href = `/api/authorize?returnTo=${encodeURIComponent(window.location.toString())}&host=${error.data.host}&scopes=${error.data.scopes.join(',')}`;
+          return;
         case ErrorCodes.NOT_FOUND:
           return <RepositoryNotFoundView error={error} />;
         case ErrorCodes.PLAN_DOES_NOT_ALLOW_PRIVATE_REPOS:
@@ -203,12 +195,6 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
     (async () => {
       const service = getGitpodService();
       const { host, owner, repoName, userIsOwner, userScopes, lastUpdate } = p.error.data;
-      console.log('host', host);
-      console.log('owner', owner);
-      console.log('repoName', repoName);
-      console.log('userIsOwner', userIsOwner);
-      console.log('userScopes', userScopes);
-      console.log('lastUpdate', lastUpdate);
 
       if ((await service.server.mayAccessPrivateRepo()) === false) {
         setStatusMessage(<LimitReachedPrivateRepoModal/>);
@@ -224,10 +210,7 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
 
       // TODO: this should be aware of already granted permissions
       const missingScope = authProvider.host === 'github.com' ? 'repo' : 'read_repository';
-      const authorizeURL = gitpodHostUrl.withApi({
-        pathname: '/authorize',
-        search: `returnTo=${encodeURIComponent(window.location.toString())}&host=${host}&scopes=${missingScope}`
-      }).toString();
+      const authorizeURL = `/api/authorize?returnTo=${encodeURIComponent(window.location.toString())}&host=${host}&scopes=${missingScope}`;
 
       if (!userScopes.includes(missingScope)) {
         setStatusMessage(<div className="mt-2 flex flex-col space-y-8">
