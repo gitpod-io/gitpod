@@ -96,13 +96,17 @@ func ServeWorkspace(uidmapper *Uidmapper, fsshift api.FSShiftMethod) func(ctx co
 }
 
 // StopServingWorkspace stops a previously started workspace server
-func StopServingWorkspace(ctx context.Context, ws *session.Workspace) error {
+func StopServingWorkspace(ctx context.Context, ws *session.Workspace) (err error) {
+	//nolint:ineffassign
+	span, ctx := opentracing.StartSpanFromContext(ctx, "iws.StopServingWorkspace")
+	defer tracing.FinishSpan(span, &err)
+
 	rawStop, ok := ws.NonPersistentAttrs[session.AttrWorkspaceServer]
 	if !ok {
 		return nil
 	}
 
-	stopFn, ok := rawStop.(context.CancelFunc)
+	stopFn, ok := rawStop.(func())
 	if !ok {
 		return nil
 	}
@@ -142,10 +146,13 @@ func (wbs *InWorkspaceServiceServer) Start() error {
 	if err != nil {
 		return xerrors.Errorf("cannot create IWS socket: %w", err)
 	}
+
 	err = os.Chmod(socketFN, 0777)
 	if err != nil {
 		return xerrors.Errorf("cannot chmod IWS socket: %w", err)
 	}
+
+	wbs.sckt = sckt
 
 	limits := ratelimitingInterceptor{
 		"/iws.InWorkspaceService/PrepareForUserNS": ratelimit{
@@ -159,10 +166,10 @@ func (wbs *InWorkspaceServiceServer) Start() error {
 		},
 	}
 
-	srv := grpc.NewServer(grpc.ChainUnaryInterceptor(limits.UnaryInterceptor()))
-	api.RegisterInWorkspaceServiceServer(srv, wbs)
+	wbs.srv = grpc.NewServer(grpc.ChainUnaryInterceptor(limits.UnaryInterceptor()))
+	api.RegisterInWorkspaceServiceServer(wbs.srv, wbs)
 	go func() {
-		err := srv.Serve(sckt)
+		err := wbs.srv.Serve(sckt)
 		if err != nil {
 			log.WithError(err).WithFields(wbs.Session.OWI()).Error("IWS server failed")
 		}
