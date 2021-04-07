@@ -95,12 +95,12 @@ export async function build(context, version) {
 
     exec(`LICENCE_HEADER_CHECK_ONLY=true leeway run components:update-license-header || { echo "[build|FAIL] There are some license headers missing. Please run 'leeway run components:update-license-header'."; exit 1; }`)
     exec(`leeway vet --ignore-warnings`);
-    exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`);
+    exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test' : ''} -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`);
     if (publishRelease) {
         exec(`gcloud auth activate-service-account --key-file "/mnt/secrets/gcp-sa-release/service-account.json"`);
     }
     if (withInstaller || publishRelease) {
-        exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=${imageRepo} install:all`);
+        exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test' : ''} -Dversion=${version} -DimageRepoBase=${imageRepo} install:all`);
     }
     exec(`leeway build --werft=true -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo}`);
     if (publishRelease) {
@@ -140,14 +140,14 @@ export async function build(context, version) {
     // gitTag(`build/${version}`);
 
     // if (masterBuild) {
-        /**
-         * Deploy master
-         *
-         * [cw] we don't have a core-staging environment (yet)
-         */
-        // exec(`git config --global user.name "${context.Owner}"`);
-        // exec(`werft run --follow-with-prefix=deploy --remote-job-path .werft/deploy-staging.yaml -a version=${version} github`);
-        // return;
+    /**
+     * Deploy master
+     *
+     * [cw] we don't have a core-staging environment (yet)
+     */
+    // exec(`git config --global user.name "${context.Owner}"`);
+    // exec(`werft run --follow-with-prefix=deploy --remote-job-path .werft/deploy-staging.yaml -a version=${version} github`);
+    // return;
     // }
 
     if (noPreview) {
@@ -156,19 +156,19 @@ export async function build(context, version) {
 
         return
     }
-    
+
     const destname = version.split(".")[0];
     const namespace = `staging-${destname}`;
     const domain = `${destname}.staging.gitpod-dev.com`;
     const url = `https://${domain}`;
     const deploymentConfig = {
-      version,
-      destname,
-      namespace,
-      domain,
-      url,
-      wsCluster,
-      withWsCluster,
+        version,
+        destname,
+        namespace,
+        domain,
+        url,
+        wsCluster,
+        withWsCluster,
     };
     await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover, storage);
 
@@ -194,9 +194,10 @@ interface DeploymentConfig {
 export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover, storage) {
     werft.phase("deploy", "deploying to dev");
     const { version, destname, namespace, domain, url, wsCluster, withWsCluster } = deploymentConfig;
-    const wsdaemonPort = `1${Math.floor(Math.random()*1000)}`;
-    const registryProxyPort = `2${Math.floor(Math.random()*1000)}`;
-    const registryNodePort = `${30000 + Math.floor(Math.random()*1000)}`;
+    const wsdaemonPort = `1${Math.floor(Math.random() * 1000)}`;
+    const registryProxyPort = `2${Math.floor(Math.random() * 1000)}`;
+    const registryNodePort = `${30000 + Math.floor(Math.random() * 1000)}`;
+    const helmInstallName = "gitpod";
 
     // trigger certificate issuing
     werft.log('certificate', "organizing a certificate for the preview environment...");
@@ -204,7 +205,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     let namespaceRecreatedPromise = new Promise((resolve) => {
         namespaceRecreatedResolve = resolve;
     });
-    const certificatePromise = (async function() {
+    const certificatePromise = (async function () {
         if (!wsCluster) {
             const additionalWsSubdomains = withWsCluster ? [withWsCluster.shortname] : [];
             await issueCertficate(werft, ".werft/certs", GCLOUD_SERVICE_ACCOUNT_PATH, namespace, "gitpod-dev.com", domain, "34.76.116.244", additionalWsSubdomains);
@@ -220,8 +221,8 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
     // re-create namespace
     try {
-        wipeAndRecreateNamespace(namespace, {slice: 'prep'});
-        setKubectlContextNamespace(namespace, {slice: 'prep'});
+        wipeAndRecreateNamespace(helmInstallName, namespace, { slice: 'prep' });
+        setKubectlContextNamespace(namespace, { slice: 'prep' });
         namespaceRecreatedResolve();    // <-- signal for certificate
         werft.done('prep');
     } catch (err) {
@@ -233,9 +234,9 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     try {
         const auth = exec(`echo -n "_json_key:$(kubectl get secret gcp-sa-registry-auth --namespace=keys -o yaml \
                         | yq r - data['.dockerconfigjson'] \
-                        | base64 -d)" | base64 -w 0`, {silent: true}).stdout.trim();
+                        | base64 -d)" | base64 -w 0`, { silent: true }).stdout.trim();
         fs.writeFileSync("chart/gcp-sa-registry-auth",
-`{
+            `{
     "auths": {
         "eu.gcr.io": {
             "auth": "${auth}"
@@ -263,7 +264,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     // cleanup non-namespace objects
     werft.log("predeploy cleanup", "removing old unnamespaced objects - this might take a while");
     try {
-        deleteNonNamespaceObjects(namespace, destname, {slice: 'predeploy cleanup'})
+        deleteNonNamespaceObjects(namespace, destname, { slice: 'predeploy cleanup' })
         werft.done('predeploy cleanup');
     } catch (err) {
         werft.fail('predeploy cleanup', err);
@@ -281,34 +282,34 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
     // deployment config
     let flags = "";
-    flags+=` --namespace ${namespace}`;
-    flags+=` --set components.imageBuilder.hostDindData=/mnt/disks/ssd0/docker-${namespace}`;
-    flags+=` --set version=${version}`;
-    flags+=` --set hostname=${domain}`;
-    flags+=` --set devBranch=${destname}`;
-    flags+=` --set components.wsDaemon.servicePort=${wsdaemonPort}`;
-    flags+=` --set components.wsDaemon.registryProxyPort=${registryProxyPort}`;
-    flags+=` --set components.registryFacade.ports.registry.servicePort=${registryNodePort}`;
+    flags += ` --namespace ${namespace}`;
+    flags += ` --set components.imageBuilder.hostDindData=/mnt/disks/ssd0/docker-${namespace}`;
+    flags += ` --set version=${version}`;
+    flags += ` --set hostname=${domain}`;
+    flags += ` --set devBranch=${destname}`;
+    flags += ` --set components.wsDaemon.servicePort=${wsdaemonPort}`;
+    flags += ` --set components.wsDaemon.registryProxyPort=${registryProxyPort}`;
+    flags += ` --set components.registryFacade.ports.registry.servicePort=${registryNodePort}`;
     workspaceFeatureFlags.forEach((f, i) => {
-        flags+=` --set components.server.defaultFeatureFlags[${i}]='${f}'`
+        flags += ` --set components.server.defaultFeatureFlags[${i}]='${f}'`
     })
     if (dynamicCPULimits) {
-        flags+=` -f ../.werft/values.variant.cpuLimits.yaml`;
+        flags += ` -f ../.werft/values.variant.cpuLimits.yaml`;
     }
     if (registryFacadeHandover) {
-        flags+=` --set components.registryFacade.handover.enabled=true`;
-        flags+=` --set components.registryFacade.handover.socket=/var/lib/gitpod/registry-facade-${namespace}`;
+        flags += ` --set components.registryFacade.handover.enabled=true`;
+        flags += ` --set components.registryFacade.handover.socket=/var/lib/gitpod/registry-facade-${namespace}`;
     }
     if (withWsCluster) {
         // Create redirect ${withWsCluster.shortname} -> ws-proxy.${wsCluster.dstNamespace}
-        flags+=` --set components.proxy.withWsCluster.shortname=${withWsCluster.shortname}`;
-        flags+=` --set components.proxy.withWsCluster.namespace=${withWsCluster.namespace}`;
+        flags += ` --set components.proxy.withWsCluster.shortname=${withWsCluster.shortname}`;
+        flags += ` --set components.proxy.withWsCluster.namespace=${withWsCluster.namespace}`;
     }
     if (wsCluster) {
-        flags+=` --set hostname=${wsCluster.domain}`;
-        flags+=` --set installation.shortname=${wsCluster.shortname}`;
+        flags += ` --set hostname=${wsCluster.domain}`;
+        flags += ` --set installation.shortname=${wsCluster.shortname}`;
 
-        flags+=` -f ../.werft/values.wsCluster.yaml`;
+        flags += ` -f ../.werft/values.wsCluster.yaml`;
     }
 
     // const pathToVersions = `${shell.pwd().toString()}/versions.yaml`;
@@ -319,7 +320,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     // }
     if (!certificatePromise) {
         // it's not possible to set certificatesSecret={} so we set secretName to empty string
-        flags+=` --set certificatesSecret.secretName=""`;
+        flags += ` --set certificatesSecret.secretName=""`;
     }
 
     try {
@@ -328,11 +329,11 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
         if (storage === "gcp") {
             exec("kubectl get secret gcp-sa-cloud-storage-dev-sync-key -n werft -o yaml | yq d - metadata | yq w - metadata.name remote-storage-gcloud | kubectl apply -f -")
-            flags+=` -f ../.werft/values.dev.gcp-storage.yaml`;
+            flags += ` -f ../.werft/values.dev.gcp-storage.yaml`;
         }
 
         exec(`helm dependencies up`);
-        exec(`/usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/values.dev.yaml ${flags} gitpod .`);
+        exec(`/usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/values.dev.yaml ${flags} ${helmInstallName} .`);
 
         werft.log('helm', 'installing Jaeger');
         exec(`/usr/local/bin/helm3 upgrade --install -f ../dev/charts/jaeger/values.yaml ${flags} jaeger ../dev/charts/jaeger`);
@@ -404,6 +405,6 @@ async function publishHelmChart(imageRepoBase, version) {
         "helm3 repo index --merge old-index.yaml helm-repo",
         "gsutil -m rsync -r helm-repo/ gs://charts-gitpod-io-public/"
     ].forEach(cmd => {
-        exec(cmd, {slice: 'publish-charts'});
+        exec(cmd, { slice: 'publish-charts' });
     });
 }
