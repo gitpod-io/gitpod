@@ -1,7 +1,7 @@
-const { exec } = require('./shell');
-const { sleep } = require('./util.js');
+import { exec } from './shell';
+import { sleep } from './util';
 
-async function issueCertficate(werft, pathToTerraform, gcpSaPath, namespace, dnsZoneDomain, domain, ip, additionalWsSubdomains) {
+export async function issueCertficate(werft, pathToTerraform, gcpSaPath, namespace, dnsZoneDomain, domain, ip, additionalWsSubdomains) {
     const subdomains = ["", "*.", "*.ws-dev."];
     if (Array.isArray(subdomains)) {
         for (const sd of additionalWsSubdomains) {
@@ -19,7 +19,7 @@ async function issueCertficate(werft, pathToTerraform, gcpSaPath, namespace, dns
             -var 'dns_zone_domain=${dnsZoneDomain}' \
             -var 'domain=${domain}' \
             -var 'public_ip=${ip}' \
-            -var 'subdomains=[${subdomains.map(s => `"${s}"`).join(", ")}]'`, {slice: 'certificate', async: true});
+            -var 'subdomains=[${subdomains.map(s => `"${s}"`).join(", ")}]'`, { slice: 'certificate', async: true });
 
     werft.log('certificate', `waiting until certificate certs/${namespace} is ready...`)
     let notReadyYet = true;
@@ -35,7 +35,7 @@ async function issueCertficate(werft, pathToTerraform, gcpSaPath, namespace, dns
     }
 }
 
-async function installCertficate(werft, fromNamespace, toNamespace, certificateSecretName) {
+export async function installCertficate(werft, fromNamespace, toNamespace, certificateSecretName) {
     werft.log('certificate', `copying certificate from "certs/${fromNamespace}" to "${toNamespace}/${certificateSecretName}"`);
     // certmanager is configured to create a secret in the namespace "certs" with the name "${namespace}".
     exec(`kubectl get secret ${fromNamespace} --namespace=certs -o yaml \
@@ -45,9 +45,4 @@ async function installCertficate(werft, fromNamespace, toNamespace, certificateS
         | yq d - 'metadata.creationTimestamp' \
         | sed 's/${fromNamespace}/${certificateSecretName}/g' \
         | kubectl apply --namespace=${toNamespace} -f -`);
-}
-
-module.exports = {
-    issueCertficate,
-    installCertficate,
 }
