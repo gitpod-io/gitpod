@@ -483,6 +483,18 @@ func (mr *MockImageBuilderServerMockRecorder) ResolveWorkspaceImage(arg0, arg1 i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResolveWorkspaceImage", reflect.TypeOf((*MockImageBuilderServer)(nil).ResolveWorkspaceImage), arg0, arg1)
 }
 
+// mustEmbedUnimplementedImageBuilderServer mocks base method.
+func (m *MockImageBuilderServer) mustEmbedUnimplementedImageBuilderServer() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "mustEmbedUnimplementedImageBuilderServer")
+}
+
+// mustEmbedUnimplementedImageBuilderServer indicates an expected call of mustEmbedUnimplementedImageBuilderServer.
+func (mr *MockImageBuilderServerMockRecorder) mustEmbedUnimplementedImageBuilderServer() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "mustEmbedUnimplementedImageBuilderServer", reflect.TypeOf((*MockImageBuilderServer)(nil).mustEmbedUnimplementedImageBuilderServer))
+}
+
 // MockImageBuilder_BuildServer is a mock of ImageBuilder_BuildServer interface.
 type MockImageBuilder_BuildServer struct {
 	ctrl     *gomock.Controller

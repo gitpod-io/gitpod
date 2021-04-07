@@ -309,6 +309,18 @@ func (mr *MockWorkspaceManagerServerMockRecorder) TakeSnapshot(arg0, arg1 interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TakeSnapshot", reflect.TypeOf((*MockWorkspaceManagerServer)(nil).TakeSnapshot), arg0, arg1)
 }
 
+// mustEmbedUnimplementedWorkspaceManagerServer mocks base method.
+func (m *MockWorkspaceManagerServer) mustEmbedUnimplementedWorkspaceManagerServer() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "mustEmbedUnimplementedWorkspaceManagerServer")
+}
+
+// mustEmbedUnimplementedWorkspaceManagerServer indicates an expected call of mustEmbedUnimplementedWorkspaceManagerServer.
+func (mr *MockWorkspaceManagerServerMockRecorder) mustEmbedUnimplementedWorkspaceManagerServer() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "mustEmbedUnimplementedWorkspaceManagerServer", reflect.TypeOf((*MockWorkspaceManagerServer)(nil).mustEmbedUnimplementedWorkspaceManagerServer))
+}
+
 // MockWorkspaceManager_SubscribeClient is a mock of WorkspaceManager_SubscribeClient interface.
 type MockWorkspaceManager_SubscribeClient struct {
 	ctrl     *gomock.Controller

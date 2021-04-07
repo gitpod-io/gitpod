@@ -80,6 +80,8 @@ type DockerBuilder struct {
 	imgExistsCache map[string]struct{}
 
 	gc *GarbageCollector
+
+	api.UnimplementedImageBuilderServer
 }
 
 // Start iniitializes the docker builder and starts its maintainance functions. This function must be called prior to calling

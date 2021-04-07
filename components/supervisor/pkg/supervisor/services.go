@@ -81,6 +81,8 @@ type statusService struct {
 	Ports        *ports.Manager
 	Tasks        *tasksManager
 	ideReady     *ideReadyState
+
+	api.UnimplementedStatusServiceServer
 }
 
 func (s *statusService) RegisterGRPC(srv *grpc.Server) {
@@ -220,6 +222,8 @@ func (s *statusService) TasksStatus(req *api.TasksStatusRequest, srv api.StatusS
 // RegistrableTokenService can register the token service
 type RegistrableTokenService struct {
 	Service api.TokenServiceServer
+
+	api.UnimplementedTokenServiceServer
 }
 
 // RegisterGRPC registers a gRPC service
@@ -297,6 +301,8 @@ type InMemoryTokenService struct {
 	token    map[string][]*Token
 	provider map[string][]tokenProvider
 	mu       sync.RWMutex
+
+	api.UnimplementedTokenServiceServer
 }
 
 // GetToken returns a token for a host
@@ -560,6 +566,8 @@ func (rt *remoteTokenProvider) GetToken(ctx context.Context, req *api.GetTokenRe
 type InfoService struct {
 	cfg          *Config
 	ContentState ContentState
+
+	api.UnimplementedInfoServiceServer
 }
 
 // RegisterGRPC registers the gRPC info service
@@ -625,6 +633,8 @@ func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest)
 // ControlService implements the supervisor control service
 type ControlService struct {
 	portsManager *ports.Manager
+
+	api.UnimplementedControlServiceServer
 }
 
 // RegisterGRPC registers the gRPC info service

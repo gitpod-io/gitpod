@@ -120,6 +120,8 @@ type InWorkspaceServiceServer struct {
 
 	srv  *grpc.Server
 	sckt io.Closer
+
+	api.UnimplementedInWorkspaceServiceServer
 }
 
 // Start creates the syscall socket the IWS server listens on, and starts the gRPC server on it

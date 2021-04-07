@@ -63,6 +63,9 @@ type Manager struct {
 	subscriberLock sync.RWMutex
 
 	metrics *metrics
+
+	api.UnimplementedWorkspaceManagerServer
+	regapi.UnimplementedSpecProviderServer
 }
 
 type startWorkspaceContext struct {
