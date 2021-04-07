@@ -5,7 +5,7 @@
  */
 
 import { WorkspaceCluster } from "@gitpod/gitpod-protocol/src/workspace-cluster";
-import { ClusterServiceServerOptions } from "./cluster-service/cluster-service-server";
+import { ClusterServiceServerOptions } from "./cluster-service-server";
 
 export const Configuration = Symbol("Configuration");
 export interface Configuration {
