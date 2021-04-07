@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-// source: workspace.proto
+// source: workspace_daemon.proto
 /**
  * @fileoverview
  * @enhanceable

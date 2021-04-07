@@ -15,10 +15,8 @@ import * as jspb from "google-protobuf";
 export class WorkspaceDownloadURLRequest extends jspb.Message { 
     getOwnerId(): string;
     setOwnerId(value: string): WorkspaceDownloadURLRequest;
-
     getWorkspaceId(): string;
     setWorkspaceId(value: string): WorkspaceDownloadURLRequest;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceDownloadURLRequest.AsObject;
@@ -41,7 +39,6 @@ export class WorkspaceDownloadURLResponse extends jspb.Message {
     getUrl(): string;
     setUrl(value: string): WorkspaceDownloadURLResponse;
 
-
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceDownloadURLResponse.AsObject;
     static toObject(includeInstance: boolean, msg: WorkspaceDownloadURLResponse): WorkspaceDownloadURLResponse.AsObject;
@@ -61,13 +58,10 @@ export namespace WorkspaceDownloadURLResponse {
 export class DeleteWorkspaceRequest extends jspb.Message { 
     getOwnerId(): string;
     setOwnerId(value: string): DeleteWorkspaceRequest;
-
     getWorkspaceId(): string;
     setWorkspaceId(value: string): DeleteWorkspaceRequest;
-
     getIncludeSnapshots(): boolean;
     setIncludeSnapshots(value: boolean): DeleteWorkspaceRequest;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DeleteWorkspaceRequest.AsObject;

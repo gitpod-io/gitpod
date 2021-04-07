@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -11,7 +11,7 @@ option go_package = "github.com/gitpod-io/gitpod/content-service/api";
 service WorkspaceService {
     // WorkspaceDownloadURL provides a URL from where the content of a workspace can be downloaded from
     rpc WorkspaceDownloadURL(WorkspaceDownloadURLRequest) returns (WorkspaceDownloadURLResponse) {};
-    
+
     // DeleteWorkspace deletes the content of a single workspace
     rpc DeleteWorkspace(DeleteWorkspaceRequest) returns (DeleteWorkspaceResponse) {};
 }

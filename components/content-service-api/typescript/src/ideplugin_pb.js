@@ -4,14 +4,18 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+// source: ideplugin.proto
 /**
  * @fileoverview
  * @enhanceable
+ * @suppress {missingRequire} reports error on implicit type usages.
  * @suppress {messageConventions} JS Compiler reports an error if a variable or
  *     field starts with 'MSG_' and isn't a translatable message.
  * @public
  */
 // GENERATED CODE -- DO NOT EDIT!
+/* eslint-disable */
+// @ts-nocheck
 
 var jspb = require('google-protobuf');
 var goog = jspb;
@@ -154,13 +158,15 @@ if (goog.DEBUG && !COMPILED) {
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
 /**
- * Creates an object representation of this proto suitable for use in Soy templates.
+ * Creates an object representation of this proto.
  * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
  * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
  * For the list of reserved names please see:
- *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
- * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
- *     for transitional soy proto support: http://goto/soy-param-migration
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
  * @return {!Object}
  */
 proto.ideplugin.PluginUploadURLRequest.prototype.toObject = function(opt_includeInstance) {
@@ -170,8 +176,8 @@ proto.ideplugin.PluginUploadURLRequest.prototype.toObject = function(opt_include
 
 /**
  * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Whether to include the JSPB
- *     instance for transitional soy proto support:
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
  *     http://goto/soy-param-migration
  * @param {!proto.ideplugin.PluginUploadURLRequest} msg The msg instance to transform.
  * @return {!Object}
@@ -280,9 +286,12 @@ proto.ideplugin.PluginUploadURLRequest.prototype.getBucket = function() {
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.ideplugin.PluginUploadURLRequest} returns this
+ */
 proto.ideplugin.PluginUploadURLRequest.prototype.setBucket = function(value) {
-  jspb.Message.setProto3StringField(this, 1, value);
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -295,9 +304,12 @@ proto.ideplugin.PluginUploadURLRequest.prototype.getName = function() {
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.ideplugin.PluginUploadURLRequest} returns this
+ */
 proto.ideplugin.PluginUploadURLRequest.prototype.setName = function(value) {
-  jspb.Message.setProto3StringField(this, 2, value);
+  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 
@@ -306,13 +318,15 @@ proto.ideplugin.PluginUploadURLRequest.prototype.setName = function(value) {
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
 /**
- * Creates an object representation of this proto suitable for use in Soy templates.
+ * Creates an object representation of this proto.
  * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
  * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
  * For the list of reserved names please see:
- *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
- * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
- *     for transitional soy proto support: http://goto/soy-param-migration
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
  * @return {!Object}
  */
 proto.ideplugin.PluginUploadURLResponse.prototype.toObject = function(opt_includeInstance) {
@@ -322,8 +336,8 @@ proto.ideplugin.PluginUploadURLResponse.prototype.toObject = function(opt_includ
 
 /**
  * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Whether to include the JSPB
- *     instance for transitional soy proto support:
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
  *     http://goto/soy-param-migration
  * @param {!proto.ideplugin.PluginUploadURLResponse} msg The msg instance to transform.
  * @return {!Object}
@@ -420,9 +434,12 @@ proto.ideplugin.PluginUploadURLResponse.prototype.getUrl = function() {
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.ideplugin.PluginUploadURLResponse} returns this
+ */
 proto.ideplugin.PluginUploadURLResponse.prototype.setUrl = function(value) {
-  jspb.Message.setProto3StringField(this, 1, value);
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -431,13 +448,15 @@ proto.ideplugin.PluginUploadURLResponse.prototype.setUrl = function(value) {
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
 /**
- * Creates an object representation of this proto suitable for use in Soy templates.
+ * Creates an object representation of this proto.
  * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
  * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
  * For the list of reserved names please see:
- *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
- * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
- *     for transitional soy proto support: http://goto/soy-param-migration
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
  * @return {!Object}
  */
 proto.ideplugin.PluginDownloadURLRequest.prototype.toObject = function(opt_includeInstance) {
@@ -447,8 +466,8 @@ proto.ideplugin.PluginDownloadURLRequest.prototype.toObject = function(opt_inclu
 
 /**
  * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Whether to include the JSPB
- *     instance for transitional soy proto support:
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
  *     http://goto/soy-param-migration
  * @param {!proto.ideplugin.PluginDownloadURLRequest} msg The msg instance to transform.
  * @return {!Object}
@@ -557,9 +576,12 @@ proto.ideplugin.PluginDownloadURLRequest.prototype.getBucket = function() {
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.ideplugin.PluginDownloadURLRequest} returns this
+ */
 proto.ideplugin.PluginDownloadURLRequest.prototype.setBucket = function(value) {
-  jspb.Message.setProto3StringField(this, 1, value);
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -572,9 +594,12 @@ proto.ideplugin.PluginDownloadURLRequest.prototype.getName = function() {
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.ideplugin.PluginDownloadURLRequest} returns this
+ */
 proto.ideplugin.PluginDownloadURLRequest.prototype.setName = function(value) {
-  jspb.Message.setProto3StringField(this, 2, value);
+  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 
@@ -583,13 +608,15 @@ proto.ideplugin.PluginDownloadURLRequest.prototype.setName = function(value) {
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
 /**
- * Creates an object representation of this proto suitable for use in Soy templates.
+ * Creates an object representation of this proto.
  * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
  * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
  * For the list of reserved names please see:
- *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
- * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
- *     for transitional soy proto support: http://goto/soy-param-migration
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
  * @return {!Object}
  */
 proto.ideplugin.PluginDownloadURLResponse.prototype.toObject = function(opt_includeInstance) {
@@ -599,8 +626,8 @@ proto.ideplugin.PluginDownloadURLResponse.prototype.toObject = function(opt_incl
 
 /**
  * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Whether to include the JSPB
- *     instance for transitional soy proto support:
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
  *     http://goto/soy-param-migration
  * @param {!proto.ideplugin.PluginDownloadURLResponse} msg The msg instance to transform.
  * @return {!Object}
@@ -697,9 +724,12 @@ proto.ideplugin.PluginDownloadURLResponse.prototype.getUrl = function() {
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.ideplugin.PluginDownloadURLResponse} returns this
+ */
 proto.ideplugin.PluginDownloadURLResponse.prototype.setUrl = function(value) {
-  jspb.Message.setProto3StringField(this, 1, value);
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -708,13 +738,15 @@ proto.ideplugin.PluginDownloadURLResponse.prototype.setUrl = function(value) {
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
 /**
- * Creates an object representation of this proto suitable for use in Soy templates.
+ * Creates an object representation of this proto.
  * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
  * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
  * For the list of reserved names please see:
- *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
- * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
- *     for transitional soy proto support: http://goto/soy-param-migration
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
  * @return {!Object}
  */
 proto.ideplugin.PluginHashRequest.prototype.toObject = function(opt_includeInstance) {
@@ -724,8 +756,8 @@ proto.ideplugin.PluginHashRequest.prototype.toObject = function(opt_includeInsta
 
 /**
  * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Whether to include the JSPB
- *     instance for transitional soy proto support:
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
  *     http://goto/soy-param-migration
  * @param {!proto.ideplugin.PluginHashRequest} msg The msg instance to transform.
  * @return {!Object}
@@ -834,9 +866,12 @@ proto.ideplugin.PluginHashRequest.prototype.getBucket = function() {
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.ideplugin.PluginHashRequest} returns this
+ */
 proto.ideplugin.PluginHashRequest.prototype.setBucket = function(value) {
-  jspb.Message.setProto3StringField(this, 1, value);
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -849,9 +884,12 @@ proto.ideplugin.PluginHashRequest.prototype.getName = function() {
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.ideplugin.PluginHashRequest} returns this
+ */
 proto.ideplugin.PluginHashRequest.prototype.setName = function(value) {
-  jspb.Message.setProto3StringField(this, 2, value);
+  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 
@@ -860,13 +898,15 @@ proto.ideplugin.PluginHashRequest.prototype.setName = function(value) {
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
 /**
- * Creates an object representation of this proto suitable for use in Soy templates.
+ * Creates an object representation of this proto.
  * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
  * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
  * For the list of reserved names please see:
- *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
- * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
- *     for transitional soy proto support: http://goto/soy-param-migration
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
  * @return {!Object}
  */
 proto.ideplugin.PluginHashResponse.prototype.toObject = function(opt_includeInstance) {
@@ -876,8 +916,8 @@ proto.ideplugin.PluginHashResponse.prototype.toObject = function(opt_includeInst
 
 /**
  * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Whether to include the JSPB
- *     instance for transitional soy proto support:
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
  *     http://goto/soy-param-migration
  * @param {!proto.ideplugin.PluginHashResponse} msg The msg instance to transform.
  * @return {!Object}
@@ -974,9 +1014,12 @@ proto.ideplugin.PluginHashResponse.prototype.getHash = function() {
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.ideplugin.PluginHashResponse} returns this
+ */
 proto.ideplugin.PluginHashResponse.prototype.setHash = function(value) {
-  jspb.Message.setProto3StringField(this, 1, value);
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
