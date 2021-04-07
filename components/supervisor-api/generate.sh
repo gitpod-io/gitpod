@@ -28,6 +28,8 @@ local_go_protoc() {
         -I /usr/lib/protoc/include -I$COMPONENTS_DIR -I. -I$THIRD_PARTY_INCLUDES \
         --go_out=go \
         --go_opt=paths=source_relative \
+        --go-grpc_out=go \
+        --go-grpc_opt=paths=source_relative \
         *.proto
 }
 

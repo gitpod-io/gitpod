@@ -87,3 +87,16 @@ scripts:
               + if .payload == null then "" else .payload | " payload:" + tostring end
               + if .error == null then "" else .error | "\n" + tostring end
       ) catch $line'
+  - name: generate-code-from-protobuf
+    srcs:
+      - components/**/*
+    script: |
+      COMPONENTS=( content-service-api image-builder-api registry-facade-api supervisor-api ws-daemon-api ws-manager-api )
+
+      for COMPONENT in "${COMPONENTS[@]}";do
+        echo "Generating code for component $COMPONENT..."
+        pushd $COMPONENT > /dev/null
+        leeway build components/$COMPONENT/typescript:lib
+        ./generate.sh
+        popd > /dev/null
+      done

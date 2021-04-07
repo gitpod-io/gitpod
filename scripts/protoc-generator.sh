@@ -1,15 +1,13 @@
 #!/bin/bash
 
-# TODO (aledbf) remove nvm dependency
-source /home/gitpod/.nvm/nvm.sh || true
-
 install_dependencies() {
-    go get google.golang.org/protobuf/cmd/protoc-gen-go
-    go get google.golang.org/protobuf/runtime/protoimpl@v1.25.0
-    go get google.golang.org/protobuf/reflect/protoreflect@v1.25.0
-	go get google.golang.org/protobuf/types/known/timestamppb@v1.25.0
+    go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.26.0
 
-    go get google.golang.org/grpc/cmd/protoc-gen-go-grpc
+    go get google.golang.org/protobuf/runtime/protoimpl@v1.26.0
+    go get google.golang.org/protobuf/reflect/protoreflect@v1.26.0
+	go get google.golang.org/protobuf/types/known/timestamppb@v1.26.0
+
+    go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
 
     go get github.com/golang/mock/mockgen@v1.5.0
 
@@ -33,6 +31,8 @@ typescript_protoc() {
     local MODULE_DIR=$(pwd)
 
     pushd typescript > /dev/null
+
+    yarn add grpc_tools_node_protoc_ts@5.1.3 -d
 
     rm -rf $MODULE_DIR/typescript/src/*pb*.*
 
