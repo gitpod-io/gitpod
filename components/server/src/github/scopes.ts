@@ -19,7 +19,7 @@ export namespace GitHubScope {
          * Minimal required permission.
          * GitHub's API is not restricted any further.
          */
-        DEFAULT: [EMAIL, READ_USER],
+        DEFAULT: [EMAIL],
 
         PUBLIC_REPO: [PUBLIC],
         PRIVATE_REPO: [PRIVATE],
