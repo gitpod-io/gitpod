@@ -4,10 +4,11 @@ defaultArgs:
   coreYarnLockBase: ../..
   publishToNPM: true
 
-defaultVariant: 
+defaultVariant:
   config:
     go:
       lintCommand: ["golangci-lint", "run", "--disable", "govet,typecheck"]
+      buildCommand: ["go", "build", "-trimpath", "-ldflags='-buildid= -w -s'"]
 
 variants:
 - name: oss

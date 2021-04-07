@@ -18,7 +18,6 @@ packages:
       - GOOS=linux
     config:
       packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags", "-w -extldflags \"-static\""]
   - name: docker
     type: docker
     deps:

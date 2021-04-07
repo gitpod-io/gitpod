@@ -15,9 +15,6 @@ packages:
     env:
       - CGO_ENABLED=0
       - GOOS=linux
-    config:
-      buildFlags:
-        - "-ldflags=-w"
   - name: docker
     type: docker
     srcs:

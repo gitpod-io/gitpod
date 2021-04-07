@@ -17,6 +17,7 @@ packages:
       - GOOS=linux
     config:
       packaging: app
+      buildCommand: ["go", "build", "-trimpath", "-ldflags=-buildid="]
   - name: content-initializer
     type: go
     srcs:
@@ -37,6 +38,7 @@ packages:
     config:
       packaging: app
       dontTest: true
+      buildCommand: ["go", "build", "-trimpath", "-ldflags=-buildid="]
   - name: docker
     type: docker
     deps:
