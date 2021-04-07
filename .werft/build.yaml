@@ -30,7 +30,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:pluggable-workspace-cluster.9
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-go163.38
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
