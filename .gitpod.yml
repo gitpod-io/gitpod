@@ -1,5 +1,5 @@
 image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:pluggable-workspace-cluster.9
-workspaceLocation: gitpod/gitpod-ws.theia-workspace
+workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
   - port: 1337

@@ -25,7 +25,7 @@ func TestGitpodConfig(t *testing.T) {
 			Desc: "parsing",
 			Content: `
 image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:pluggable-workspace-cluster.9
-workspaceLocation: gitpod/gitpod-ws.theia-workspace
+workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
   - port: 1337
@@ -44,7 +44,7 @@ vscode:
     - zxh404.vscode-proto3@0.4.2:ZnPmyF/Pb8AIWeCqc83gPw==`,
 			Expectation: &GitpodConfig{
 				Image:             "eu.gcr.io/gitpod-core-dev/dev/dev-environment:pluggable-workspace-cluster.9",
-				WorkspaceLocation: "gitpod/gitpod-ws.theia-workspace",
+				WorkspaceLocation: "gitpod/gitpod-ws.code-workspace",
 				CheckoutLocation:  "gitpod",
 				Ports: []*PortsItems{
 					{
