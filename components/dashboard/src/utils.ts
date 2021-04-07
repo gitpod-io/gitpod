@@ -31,7 +31,7 @@ export const poll = async <T>(initialDelayInSeconds: number, callback: () => Pro
         if (opts.token?.cancelled) {
             return;
         }
-        
+
         const { done, result } = await callback();
         if (opts.token?.cancelled) {
             return;
@@ -43,7 +43,7 @@ export const poll = async <T>(initialDelayInSeconds: number, callback: () => Pro
         } else {
             delayInSeconds = opts.backoffFactor * delayInSeconds;
         }
-    
+
     }
 };
 

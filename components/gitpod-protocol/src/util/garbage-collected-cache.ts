@@ -13,13 +13,13 @@ interface CacheEntry<T> {
 
 export class GarbageCollectedCache<T> {
     protected readonly store = new Map<string, CacheEntry<T>>();
-    
+
     constructor(
         protected readonly defaultMaxAgeSeconds: number,
         protected readonly gcIntervalSeconds: number) {
         this.regularlyCollectGarbage();
     }
-    
+
     public set(key: string, value: T) {
         const oldValue = this.store.get(key);
         if (oldValue) {

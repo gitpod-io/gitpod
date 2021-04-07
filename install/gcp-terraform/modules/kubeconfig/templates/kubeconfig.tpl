@@ -23,4 +23,3 @@ users:
     auth-provider:
       name: gcp
       access-token: ${token}
-    

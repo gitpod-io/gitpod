@@ -9,6 +9,6 @@ components:
   db:
     gcloudSqlProxy:
       enabled: false
-  
+
 mysql:
   enabled: false

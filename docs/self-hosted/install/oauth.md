@@ -51,17 +51,17 @@ Alternatively, you can configure it per Helm values file:
 ## GitHub
 To authenticate your users with GitHub you need to create a [GitHub OAuth App](https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/).
 Follow the guide linked above and:
-   - Set "Authentication callback URL" to: 
+   - Set "Authentication callback URL" to:
 
      https://<your-domain.com>/auth/github/callback
- 
+
    - Copy `clientId` and `clientSecret`
 
 ## GitLab
 To authenticate your users with GitLab you need to create an [GitLab OAuth application](https://docs.gitlab.com/ee/integration/oauth_provider.html).
 Follow the guide linked above and:
-   - Set "Authentication callback URL" to: 
-   
+   - Set "Authentication callback URL" to:
+
     https://<your-domain.com>/auth/<gitlab.com-OR-your-gitlab.com>/callback
 
    - Set "Scopes" to `api`, `read_user` and `read_repository`.

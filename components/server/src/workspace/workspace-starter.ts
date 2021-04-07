@@ -80,7 +80,7 @@ export class WorkspaceStarter {
                 const res = await client.resolveBaseImage({span}, req);
                 workspace.imageSource = <WorkspaceImageSourceReference>{
                   baseImageResolved: res.getRef()
-                }   
+                }
             }
 
             // create and store instance
@@ -228,13 +228,13 @@ export class WorkspaceStarter {
 
     /**
      * Creates a new instance for a given workspace and its owner
-     * 
+     *
      * @param workspace the workspace to create an instance for
      */
     protected async newInstance(workspace: Workspace, user: User): Promise<WorkspaceInstance> {
         const theiaVersion = this.env.theiaVersion;
         const ideImage = this.env.ideDefaultImage;
-        
+
         // TODO(cw): once we allow changing the IDE in the workspace config (i.e. .gitpod.yml), we must
         //           give that value precedence over the default choice.
         const configuration: WorkspaceInstanceConfiguration = {
@@ -259,7 +259,7 @@ export class WorkspaceStarter {
         if (user.featureFlags && user.featureFlags.permanentWSFeatureFlags) {
             featureFlags = featureFlags.concat(featureFlags, user.featureFlags.permanentWSFeatureFlags);
         }
-        
+
         // if the user has feature preview enabled, we need to add the respective feature flags.
         // Beware: all feature flags we add here are not workspace-persistent feature flags, e.g. no full-workspace backup.
         if (!!user.additionalData?.featurePreview) {
@@ -304,7 +304,7 @@ export class WorkspaceStarter {
 
                 const src = new BuildSource();
                 src.setRef(ref);
-            
+
                 // It doesn't matter what registries the user has access to at this point.
                 // All they need access to is the base image repository, as we're building the Gitpod layer only.
                 const nauth = new BuildRegistryAuthSelective();
@@ -314,7 +314,7 @@ export class WorkspaceStarter {
 
                 return {src, auth};
             }
-            
+
             const auth = new BuildRegistryAuth();
             const userHasRegistryAccess = this.authService.hasPermission(user, Permission.REGISTRY_ACCESS);
             if (userHasRegistryAccess) {
@@ -363,7 +363,7 @@ export class WorkspaceStarter {
                 src.setRef(ref);
                 return {src, auth};
             }
-            
+
             throw new Error("unknown workspace image source");
         } catch (e) {
             TraceContext.logError({ span }, e);
@@ -787,7 +787,7 @@ export class WorkspaceStarter {
             gitConfig.setAuthUser(token.username || "oauth2");
             gitConfig.setAuthPassword(token.value);
         }
-        
+
         const userGitConfig = workspace.config.gitConfig;
         if (!!userGitConfig) {
             Object.keys(userGitConfig)

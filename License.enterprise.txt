@@ -1,6 +1,6 @@
 
 
-# Gitpod Self-Hosted Free License Terms and 
+# Gitpod Self-Hosted Free License Terms and
 # Gitpod Enterprise Source Code License
 
 
@@ -10,7 +10,7 @@
 that govern usage of the Software Gitpod Self-Hosted Free Edition in source and
 binary form (“Software”). The Software is provided by Gitpod GmbH, Am
 Germaniahafen 1, 24143 Kiel (“Gitpod”). By downloading or using to the
-Software, you agree to be bound by the following Terms. 
+Software, you agree to be bound by the following Terms.
 
 ### 2  Scope of Terms
 
@@ -31,7 +31,7 @@ may only take place in accordance with these Terms.
 
 3.2 In case you want to use additional features or distribute the Software or
 modifications to it without the restrictions of these Terms, please reach out
-for a license key, which is subject to different legal and commercial terms. 
+for a license key, which is subject to different legal and commercial terms.
 
 ### 4 Granting of Rights
 
@@ -48,7 +48,7 @@ accordance with these Terms. You may not distribute Modifications to any third
 party. Nonetheless, you may make such modifications publicly available as fork
 of the repository which hosts the original version of the Software, however only
 under these Terms and only, if accompanied by the complete machine-readable
-source code of the Modifications and of the Software. 
+source code of the Modifications and of the Software.
 
 4.3 The copyright notices in the Software and this entire statement, including
 the above license grant and these Terms must be included in all copies of the
@@ -82,14 +82,14 @@ usage rights and additional features.
 Software on an anonymized basis in the future with a future version of the
 Software. The data will only be used to improve the Software and the data will
 not be sold to third parties. Gitpod will inform about this with the future
-release. 
+release.
 
 ### 6 Warranty and Liability
 
 6.1 THE SOFTWARE IS PROVIDED FREE OF CHARGE ON AN “AS IS” BASIS, WITHOUT
 WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE
 WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE AND
-NON-INFRINGEMENT. 
+NON-INFRINGEMENT.
 
 6.2 IN NO EVENT SHALL THE COPYRIGHT HOLDERS OR ANYONE DISTRIBUTING THE SOFTWARE
 BE LIABLE FOR ANY DAMAGES OR OTHER LIABILITY, WHETHER IN CONTRACT, TORT OR
@@ -109,7 +109,7 @@ Third-Party Components and its respective Third-Party License Terms are
 available via the files License.third-party.npm.txt and
 License.third-party.go.txt. No stipulation in these Terms is intended to impose
 further restrictions on your use of such Third-Party Components licensed under
-Third-Party License Terms. 
+Third-Party License Terms.
 
 7.2 Gitpod reserves the right to introduce deviating or additional Third-Party
 License Terms in the course of modifications of the Software and in case of

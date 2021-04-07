@@ -24,7 +24,7 @@ export interface UserDB {
 
     /**
      * Gets the number of users.
-     * 
+     *
      * @param excludeBuiltinUsers substract the builtin-users from the count (currently only the user builtin-workspace-prober), true by default
      */
     getUserCount(excludeBuiltinUsers?: boolean): Promise<number>;
@@ -33,65 +33,65 @@ export interface UserDB {
 
     /**
      * stores the given token and marks any existing tokens in that identity deleted.
-     * 
-     * @param identity 
-     * @param token 
+     *
+     * @param identity
+     * @param token
      */
     storeSingleToken(identity: Pick<Identity, 'authProviderId' | 'authId'>, token: Token): Promise<TokenEntry>;
 
     /**
      * adds the given token to the identity
-     * 
-     * @param identity 
-     * @param token 
+     *
+     * @param identity
+     * @param token
      */
     addToken(identity: Pick<Identity, 'authProviderId' | 'authId'>, token: Token): Promise<TokenEntry>;
 
     /**
      * Will mark tokens for the given identity as deleted.
-     * 
-     * @param identity 
+     *
+     * @param identity
      * @param shouldDelete optional predicate to suppress deletion of certain entries
      */
     deleteTokens(identity: Identity, shouldDelete?: (entry: TokenEntry) => boolean): Promise<void>
 
     /**
      * Find TokenEntry by id
-     * 
+     *
      * @param uid
      */
     findTokenEntryById(uid: string): Promise<TokenEntry | undefined>;
 
     /**
      * Delete TokenEntry by id
-     * 
+     *
      * @param uid
      */
     deleteTokenEntryById(uid: string): Promise<void>;
 
     /**
      * Delete expired TokenEntries
-     * 
+     *
      * @param date All tokens with an expiry date before (older than) this ISO8601 formatted date are considered expired and will be deleted.
      */
     deleteExpiredTokenEntries(date: string): Promise<void>;
 
     /**
      * Update TokenEntry by id
-     * 
+     *
      * @param tokenEntry
      */
     updateTokenEntry(tokenEntry: Partial<TokenEntry> & Pick<TokenEntry, "uid">): Promise<void>
 
     /**
-     * @param identity 
+     * @param identity
      * @throws an error when there is more than one token
      */
     findTokenForIdentity(identity: Identity): Promise<Token | undefined>;
 
     /**
-     * 
-     * @param identity 
+     *
+     * @param identity
      * @param includeDeleted whether deleted tokens should be returned as well
      */
     findTokensForIdentity(identity: Identity, includeDeleted?: boolean): Promise<TokenEntry[]>;

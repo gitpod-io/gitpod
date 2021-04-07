@@ -236,7 +236,7 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
         </div>);
         return;
       }
-      
+
       if (userIsOwner) {
         setStatusMessage(<div className="mt-2 flex flex-col space-y-8">
           <p className="text-base text-gray-400 w-96">The repository '{`${repoFullName}`}' is not found in your account.</p>

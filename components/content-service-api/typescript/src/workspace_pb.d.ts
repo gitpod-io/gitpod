@@ -12,7 +12,7 @@
 
 import * as jspb from "google-protobuf";
 
-export class WorkspaceDownloadURLRequest extends jspb.Message { 
+export class WorkspaceDownloadURLRequest extends jspb.Message {
     getOwnerId(): string;
     setOwnerId(value: string): WorkspaceDownloadURLRequest;
 
@@ -37,7 +37,7 @@ export namespace WorkspaceDownloadURLRequest {
     }
 }
 
-export class WorkspaceDownloadURLResponse extends jspb.Message { 
+export class WorkspaceDownloadURLResponse extends jspb.Message {
     getUrl(): string;
     setUrl(value: string): WorkspaceDownloadURLResponse;
 
@@ -58,7 +58,7 @@ export namespace WorkspaceDownloadURLResponse {
     }
 }
 
-export class DeleteWorkspaceRequest extends jspb.Message { 
+export class DeleteWorkspaceRequest extends jspb.Message {
     getOwnerId(): string;
     setOwnerId(value: string): DeleteWorkspaceRequest;
 
@@ -87,7 +87,7 @@ export namespace DeleteWorkspaceRequest {
     }
 }
 
-export class DeleteWorkspaceResponse extends jspb.Message { 
+export class DeleteWorkspaceResponse extends jspb.Message {
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DeleteWorkspaceResponse.AsObject;

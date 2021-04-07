@@ -13,7 +13,7 @@
 import * as jspb from "google-protobuf";
 import * as content_service_api_initializer_pb from "@gitpod/content-service/lib";
 
-export class BuildSource extends jspb.Message { 
+export class BuildSource extends jspb.Message {
 
     hasRef(): boolean;
     clearRef(): void;
@@ -51,7 +51,7 @@ export namespace BuildSource {
 
 }
 
-export class BuildSourceReference extends jspb.Message { 
+export class BuildSourceReference extends jspb.Message {
     getRef(): string;
     setRef(value: string): BuildSourceReference;
 
@@ -71,7 +71,7 @@ export namespace BuildSourceReference {
     }
 }
 
-export class BuildSourceDockerfile extends jspb.Message { 
+export class BuildSourceDockerfile extends jspb.Message {
 
     hasSource(): boolean;
     clearSource(): void;
@@ -103,7 +103,7 @@ export namespace BuildSourceDockerfile {
     }
 }
 
-export class ResolveBaseImageRequest extends jspb.Message { 
+export class ResolveBaseImageRequest extends jspb.Message {
     getRef(): string;
     setRef(value: string): ResolveBaseImageRequest;
 
@@ -129,7 +129,7 @@ export namespace ResolveBaseImageRequest {
     }
 }
 
-export class ResolveBaseImageResponse extends jspb.Message { 
+export class ResolveBaseImageResponse extends jspb.Message {
     getRef(): string;
     setRef(value: string): ResolveBaseImageResponse;
 
@@ -149,7 +149,7 @@ export namespace ResolveBaseImageResponse {
     }
 }
 
-export class ResolveWorkspaceImageRequest extends jspb.Message { 
+export class ResolveWorkspaceImageRequest extends jspb.Message {
 
     hasSource(): boolean;
     clearSource(): void;
@@ -178,7 +178,7 @@ export namespace ResolveWorkspaceImageRequest {
     }
 }
 
-export class ResolveWorkspaceImageResponse extends jspb.Message { 
+export class ResolveWorkspaceImageResponse extends jspb.Message {
     getRef(): string;
     setRef(value: string): ResolveWorkspaceImageResponse;
     getBaseRef(): string;
@@ -204,7 +204,7 @@ export namespace ResolveWorkspaceImageResponse {
     }
 }
 
-export class BuildRequest extends jspb.Message { 
+export class BuildRequest extends jspb.Message {
 
     hasSource(): boolean;
     clearSource(): void;
@@ -233,7 +233,7 @@ export namespace BuildRequest {
     }
 }
 
-export class BuildRegistryAuth extends jspb.Message { 
+export class BuildRegistryAuth extends jspb.Message {
 
     hasTotal(): boolean;
     clearTotal(): void;
@@ -271,7 +271,7 @@ export namespace BuildRegistryAuth {
 
 }
 
-export class BuildRegistryAuthTotal extends jspb.Message { 
+export class BuildRegistryAuthTotal extends jspb.Message {
     getAllowAll(): boolean;
     setAllowAll(value: boolean): BuildRegistryAuthTotal;
 
@@ -291,7 +291,7 @@ export namespace BuildRegistryAuthTotal {
     }
 }
 
-export class BuildRegistryAuthSelective extends jspb.Message { 
+export class BuildRegistryAuthSelective extends jspb.Message {
     getAllowBaserep(): boolean;
     setAllowBaserep(value: boolean): BuildRegistryAuthSelective;
     getAllowWorkspacerep(): boolean;
@@ -319,7 +319,7 @@ export namespace BuildRegistryAuthSelective {
     }
 }
 
-export class BuildResponse extends jspb.Message { 
+export class BuildResponse extends jspb.Message {
     getRef(): string;
     setRef(value: string): BuildResponse;
     getBaseRef(): string;
@@ -348,7 +348,7 @@ export namespace BuildResponse {
     }
 }
 
-export class LogsRequest extends jspb.Message { 
+export class LogsRequest extends jspb.Message {
     getBuildRef(): string;
     setBuildRef(value: string): LogsRequest;
     getCensored(): boolean;
@@ -371,7 +371,7 @@ export namespace LogsRequest {
     }
 }
 
-export class LogsResponse extends jspb.Message { 
+export class LogsResponse extends jspb.Message {
     getContent(): Uint8Array | string;
     getContent_asU8(): Uint8Array;
     getContent_asB64(): string;
@@ -393,7 +393,7 @@ export namespace LogsResponse {
     }
 }
 
-export class ListBuildsRequest extends jspb.Message { 
+export class ListBuildsRequest extends jspb.Message {
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ListBuildsRequest.AsObject;
@@ -410,7 +410,7 @@ export namespace ListBuildsRequest {
     }
 }
 
-export class ListBuildsResponse extends jspb.Message { 
+export class ListBuildsResponse extends jspb.Message {
     clearBuildsList(): void;
     getBuildsList(): Array<BuildInfo>;
     setBuildsList(value: Array<BuildInfo>): ListBuildsResponse;
@@ -432,7 +432,7 @@ export namespace ListBuildsResponse {
     }
 }
 
-export class BuildInfo extends jspb.Message { 
+export class BuildInfo extends jspb.Message {
     getRef(): string;
     setRef(value: string): BuildInfo;
     getStatus(): BuildStatus;

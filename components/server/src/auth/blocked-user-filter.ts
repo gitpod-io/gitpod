@@ -25,7 +25,7 @@ export interface BlockedUserFilter {
  * NoOneBlockedUserFilter blocks no one
  */
 @injectable()
-export class NoOneBlockedUserFilter implements BlockedUserFilter { 
+export class NoOneBlockedUserFilter implements BlockedUserFilter {
 
     async isBlocked(primaryEmail: string): Promise<boolean> {
         return false;

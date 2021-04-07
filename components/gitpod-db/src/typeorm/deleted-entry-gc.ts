@@ -13,7 +13,7 @@ import { Config } from "../config";
 export class DeletedEntryGC {
     @inject(TypeORM) protected readonly typeORM: TypeORM;
     @inject(Config) protected readonly config: Config;
-    
+
     public start() {
         const cfg = this.config.deletedEntryGCConfig;
         if (!cfg.enabled) {

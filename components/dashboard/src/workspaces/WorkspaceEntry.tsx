@@ -19,8 +19,8 @@ function getLabel(state: WorkspaceInstancePhase) {
 }
 
 interface Props {
-    desc: WorkspaceInfo; 
-    model: WorkspaceModel; 
+    desc: WorkspaceInfo;
+    model: WorkspaceModel;
     isAdmin?: boolean;
     stopWorkspace: (ws: string) => Promise<void>;
 }

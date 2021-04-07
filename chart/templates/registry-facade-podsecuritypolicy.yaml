@@ -41,7 +41,7 @@ spec:
   hostNetwork: true
   hostIPC: false
   hostPID: false
-  hostPorts: 
+  hostPorts:
   - min: 30000
     max: 33000
   runAsUser:

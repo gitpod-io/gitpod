@@ -11,7 +11,7 @@ import { Without } from './util/without';
 
 export interface WorkspaceCluster {
     // Name of the workspace cluster.
-    // This is the string set in each 
+    // This is the string set in each
     // Must be identical to the installationShortname of the cluster it represents!
     name: string;
 
@@ -53,25 +53,25 @@ export interface WorkspaceClusterDB {
     /**
      * Stores the given WorkspaceCluster to the cluster-local DB in a consistent manner.
      * If there already is an entry with the same name it's merged and updated with the given state.
-     * @param cluster 
+     * @param cluster
      */
     save(cluster: WorkspaceCluster): Promise<void>;
 
     /**
      * Deletes the cluster identified by this name, if any.
-     * @param name 
+     * @param name
      */
     deleteByName(name: string): Promise<void>;
 
     /**
      * Finds a WorkspaceCluster with the given name. If there is none, `undefined` is returned.
-     * @param name 
+     * @param name
      */
     findByName(name: string): Promise<WorkspaceCluster | undefined>;
 
     /**
      * Lists all WorkspaceClusterWoTls for which the given predicate is true (does not return TLS for size/speed concerns)
-     * @param predicate 
+     * @param predicate
      */
     findFiltered(predicate: DeepPartial<WorkspaceClusterFilter>): Promise<WorkspaceClusterWoTls[]>;
 }

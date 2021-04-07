@@ -33,7 +33,7 @@ export class WebSocketConnectionProvider {
                 options
             );
         };
-        
+
         if (typeof path === "string") {
             startListening(path);
         } else {

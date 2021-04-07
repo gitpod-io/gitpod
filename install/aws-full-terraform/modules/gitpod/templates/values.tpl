@@ -6,5 +6,5 @@ certificatesSecret:
 components:
   proxy:
     loadBalancerIP: null
-      
+
 installPodSecurityPolicies: true

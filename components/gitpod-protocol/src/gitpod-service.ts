@@ -8,7 +8,7 @@ import {
     User, WorkspaceInfo, WorkspaceCreationResult, UserMessage, WorkspaceInstanceUser,
     WhitelistedRepository, WorkspaceImageBuild, AuthProviderInfo, Branding, CreateWorkspaceMode,
     Token, UserEnvVarValue, ResolvePluginsParams, PreparePluginUploadParams, Terms,
-    ResolvedPlugins, Configuration, InstallPluginsParams, UninstallPluginParams, UserInfo, GitpodTokenType, 
+    ResolvedPlugins, Configuration, InstallPluginsParams, UninstallPluginParams, UserInfo, GitpodTokenType,
     GitpodToken, AuthProviderEntry, GuessGitTokenScopesParams, GuessedGitTokenScopes
 } from './protocol';
 import { JsonRpcProxy, JsonRpcServer } from './messaging/proxy-factory';
@@ -162,13 +162,13 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getPrivateRepoTrialEndDate(): Promise<string | undefined>;
 
     /**
-     * 
+     *
      */
     getAccountStatement(options: GitpodServer.GetAccountStatementOptions): Promise<AccountStatement | undefined>;
     getRemainingUsageHours(): Promise<number>;
 
     /**
-     * 
+     *
      */
     getChargebeeSiteId(): Promise<string>;
     createPortalSession(): Promise<{}>;

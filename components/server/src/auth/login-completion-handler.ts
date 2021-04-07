@@ -44,10 +44,10 @@ export class LoginCompletionHandler {
             // Clean up the session & avoid loops
             await TosFlow.clear(request.session);
             await AuthFlow.clear(request.session);
-    
+
             if (authHost) {
                 increaseLoginCounter("failed", authHost)
-            } 
+            }
             log.error(logContext, `Redirect to /sorry on login`, err, { err, session: request.session });
             response.redirect(this.env.hostUrl.asSorry("Oops! Something went wrong during login.").toString());
             return;
@@ -78,7 +78,7 @@ export class LoginCompletionHandler {
 
         if (authHost) {
                 increaseLoginCounter("succeeded", authHost)
-        } 
+        }
         response.redirect(returnTo);
     }
 
@@ -87,7 +87,7 @@ export class LoginCompletionHandler {
         if (hostCtx) {
             const { config } = hostCtx.authProvider;
             const { id, verified, ownerId, builtin } = config;
-            if (!builtin && !verified) { 
+            if (!builtin && !verified) {
                 try {
                     await this.authProviderService.markAsVerified({ id, ownerId });
                 } catch (error) {

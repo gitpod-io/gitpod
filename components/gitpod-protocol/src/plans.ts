@@ -43,7 +43,7 @@ export namespace Plan {
     }
 }
 
-export const MAX_PARALLEL_WORKSPACES = 16; 
+export const MAX_PARALLEL_WORKSPACES = 16;
 
 export interface Coupon {
     id: string;
@@ -83,7 +83,7 @@ export namespace Coupons {
 
 // Theoretical maximum of workspace hours: 16 workspaces for 24h a day for 31 days as permitted by the v3 unlimited plan
 // Other unlimited hour plans are restricted by the number of Parallel Workspaces they can start.
-export const ABSOLUTE_MAX_USAGE = MAX_PARALLEL_WORKSPACES * 24 * 31; 
+export const ABSOLUTE_MAX_USAGE = MAX_PARALLEL_WORKSPACES * 24 * 31;
 
 /**
  * Version history:
@@ -329,7 +329,7 @@ export namespace Plans {
         pricePerMonth: 35,
         hoursPerMonth: 'unlimited'
     };
-    
+
     /**
      * This is the 'Unleashed' plan (v1, rebranded v2, v5)
      * It was originally introduced as 'Professional', and we cannot update the ids, so it stays that way in the code.
@@ -345,7 +345,7 @@ export namespace Plans {
         pricePerMonth: 39,
         hoursPerMonth: 'unlimited'
     };
-    
+
     /**
      * This is the Team-'Unleashed' plan (v1, rebranded v2, v5)
      * It was originally introduced as 'Professional', and we cannot update the ids, so it stays that way in the code.
@@ -359,7 +359,7 @@ export namespace Plans {
         pricePerMonth: 39,
         hoursPerMonth: 'unlimited'
     };
-    
+
     /**
      * This is the Team-'Unleashed' plan (v1, rebranded v2, v5)
      * It was originally introduced as 'Professional', and we cannot update the ids, so it stays that way in the code.
@@ -477,7 +477,7 @@ export namespace Plans {
 
     /**
      * Returns the maximum number of parallel workspaces for the given plan
-     * @param plan 
+     * @param plan
      */
     export function getParallelWorkspacesById(planId: string | undefined): number {
         return getParallelWorkspaces(Plans.getById(planId));
@@ -485,7 +485,7 @@ export namespace Plans {
 
     /**
      * Returns the maximum number of parallel workspaces for the given plan
-     * @param plan 
+     * @param plan
      */
     export function getParallelWorkspaces(plan: Plan | undefined): number {
         const DEFAULT = 4;
@@ -531,7 +531,7 @@ export namespace Plans {
 
     /**
      * Returns the preferred plan type with the next higher arity
-     * @param type 
+     * @param type
      */
     export function getNextHigherPlanType(type: PlanType): PlanType {
         const arity = getPlanTypeArity(type);
@@ -541,7 +541,7 @@ export namespace Plans {
 
     /**
      * This imposes a partial order on the plan types
-     * @param planTypeA 
+     * @param planTypeA
      * @param planTypeB
      */
     export function compareTypes(planTypeA: PlanType, planTypeB: PlanType) {

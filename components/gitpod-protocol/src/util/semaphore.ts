@@ -9,7 +9,7 @@ export class Semaphore {
     protected queue: (() => void)[] = [];
     protected used: number;
 
-    constructor(protected readonly capacity: number) { 
+    constructor(protected readonly capacity: number) {
         if(capacity < 1) {
             throw new Error("Capacity cannot be less than 1");
         }
@@ -17,7 +17,7 @@ export class Semaphore {
 
     public release() {
         if(this.used == 0) return;
-        
+
         const queued = this.queue.shift();
         if (queued) {
             queued();

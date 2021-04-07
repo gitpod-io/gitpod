@@ -23,7 +23,7 @@ load:
 	-rmmod $(modname)
 	insmod $(modname).ko
 
-install:	
+install:
 	install -m 0755 -o root -g root $(modname).ko /lib/modules/$(KVERSION)/fs/
 	depmod -a
 

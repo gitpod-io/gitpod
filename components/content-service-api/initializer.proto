@@ -63,7 +63,7 @@ message GitConfig {
 
 	// auth_password is the password used to authenticate the clone (can also be an API token)
     string auth_password = 4;
-    
+
     // auth_ots is a URL where one can download the authentication secret (<username>:<password>)
     // using a GET request.
     string auth_ots = 5;
