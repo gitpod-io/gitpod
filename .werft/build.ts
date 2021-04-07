@@ -1,28 +1,26 @@
-const shell = require('shelljs');
-const fs = require('fs');
-const { werft, exec, gitTag } = require('./util/shell.js');
-const { sleep } = require('./util/util.js');
-const { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects } = require('./util/kubectl.js');
-const { issueCertficate, installCertficate } = require('./util/certs.js');
-const { reportBuildFailureInSlack } = require('./util/slack.js');
-const semver = require('semver');
+import * as shell from 'shelljs';
+import * as fs from 'fs';
+import { werft, exec, gitTag } from './util/shell';
+import { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects } from './util/kubectl';
+import { issueCertficate, installCertficate } from './util/certs';
+import { reportBuildFailureInSlack } from './util/slack';
+import * as semver from 'semver';
 
 const GCLOUD_SERVICE_ACCOUNT_PATH = "/mnt/secrets/gcp-sa/service-account.json";
 
-const context = JSON.parse(fs.readFileSync('context.json'));
+const context = JSON.parse(fs.readFileSync('context.json').toString());
 
 const version = parseVersion(context);
 build(context, version)
     .catch((err) => {
         if (context.Repository.ref === "refs/heads/main") {
             reportBuildFailureInSlack(context, err, () => process.exit(1));
-            process.exit(1);
         } else {
             process.exit(1);
         }
     });
 
-function parseVersion(context) {
+export function parseVersion(context) {
     let buildConfig = context.Annotations || {};
     const explicitVersion = buildConfig.version;
     if (explicitVersion) {
@@ -36,7 +34,7 @@ function parseVersion(context) {
     return version
 }
 
-async function build(context, version) {
+export async function build(context, version) {
     /**
      * Prepare
      */
@@ -69,10 +67,8 @@ async function build(context, version) {
     const storage = buildConfig["storage"] || "";
     const withIntegrationTests = buildConfig["with-integration-tests"] == "true";
 
-    const withWsClusterRaw = buildConfig["with-ws-cluster"];   // e.g., "dev2|gpl-ws-cluster-branch": prepares this branch to host (an additional) workspace cluster
-    let withWsCluster = parseWsCluster(withWsClusterRaw);
-    const wsClusterRaw = buildConfig["as-ws-cluster"];      // e.g., "dev2|gpl-fat-cluster-branch": deploys this build as so that it is available under that subdomain as that cluster
-    let wsCluster = parseWsCluster(wsClusterRaw);
+    const withWsCluster = parseWsCluster(buildConfig["with-ws-cluster"]);   // e.g., "dev2|gpl-ws-cluster-branch": prepares this branch to host (an additional) workspace cluster
+    const wsCluster = parseWsCluster(buildConfig["as-ws-cluster"]);         // e.g., "dev2|gpl-fat-cluster-branch": deploys this build as so that it is available under that subdomain as that cluster
 
     werft.log("job config", JSON.stringify({
         buildConfig,
@@ -96,22 +92,25 @@ async function build(context, version) {
      */
     werft.phase("build", "build running");
     // Build using the dev-http-cache gitpod-dev to make 'yarn install' more stable
-    const buildEnv = {
-        "HTTP_PROXY": "http://dev-http-cache:3129",
-        "HTTPS_PROXY": "http://dev-http-cache:3129",
+    const buildEnvOpts = {
+        env: {
+            ...process.env,
+            "HTTP_PROXY": "http://dev-http-cache:3129",
+            "HTTPS_PROXY": "http://dev-http-cache:3129",
+        }
     };
     const imageRepo = publishRelease ? "gcr.io/gitpod-io/self-hosted" : "eu.gcr.io/gitpod-core-dev/build";
 
     exec(`LICENCE_HEADER_CHECK_ONLY=true leeway run components:update-license-header || { echo "[build|FAIL] There are some license headers missing. Please run 'leeway run components:update-license-header'."; exit 1; }`)
     exec(`leeway vet --ignore-warnings`);
-    exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`, buildEnv);
+    exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`, buildEnvOpts);
     if (publishRelease) {
         exec(`gcloud auth activate-service-account --key-file "/mnt/secrets/gcp-sa-release/service-account.json"`);
     }
     if (withInstaller || publishRelease) {
-        exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=${imageRepo} install:all`, buildEnv);
+        exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=${imageRepo} install:all`, buildEnvOpts);
     }
-    exec(`leeway build --werft=true -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo}`, buildEnv);
+    exec(`leeway build --werft=true -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo}`, buildEnvOpts);
     if (publishRelease) {
         try {
             werft.phase("publish", "checking version semver compliance...");
@@ -165,21 +164,7 @@ async function build(context, version) {
 
         return
     }
-
-    if (wsCluster) {
-        wsCluster = {
-            ...wsCluster,
-            srcNamespace: `staging-${wsCluster.subdomain}`,
-            domain: `${wsCluster.subdomain}.staging.gitpod-dev.com`,
-        }
-    }
-    if (withWsCluster) {
-        withWsCluster = {
-            ...withWsCluster,
-            dstNamespace: `staging-${withWsCluster.subdomain}`,
-        }
-    }
-
+    
     const destname = version.split(".")[0];
     const namespace = `staging-${destname}`;
     const domain = `${destname}.staging.gitpod-dev.com`;
@@ -201,10 +186,20 @@ async function build(context, version) {
     }
 }
 
+interface DeploymentConfig {
+    version: string;
+    destname: string;
+    namespace: string;
+    domain: string;
+    url: string;
+    wsCluster?: PreviewWorkspaceClusterRef | undefined;
+    withWsCluster?: PreviewWorkspaceClusterRef | undefined;
+}
+
 /**
  * Deploy dev
  */
-async function deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover, storage) {
+export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover, storage) {
     werft.phase("deploy", "deploying to dev");
     const { version, destname, namespace, domain, url, wsCluster, withWsCluster } = deploymentConfig;
     const wsdaemonPort = `1${Math.floor(Math.random()*1000)}`;
@@ -226,7 +221,7 @@ async function deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULi
         werft.log('certificate', 'waiting for preview env namespace being re-created...');
         await namespaceRecreatedPromise;
 
-        const fromNamespace = wsCluster ? wsCluster.srcNamespace : namespace;
+        const fromNamespace = wsCluster ? wsCluster.namespace : namespace;
         await installCertficate(werft, fromNamespace, namespace, "proxy-config-certificates");
     })();
 
@@ -315,7 +310,7 @@ async function deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULi
     if (withWsCluster) {
         // Create redirect ${withWsCluster.shortname} -> ws-proxy.${wsCluster.dstNamespace}
         flags+=` --set components.proxy.withWsCluster.shortname=${withWsCluster.shortname}`;
-        flags+=` --set components.proxy.withWsCluster.namespace=${withWsCluster.dstNamespace}`;
+        flags+=` --set components.proxy.withWsCluster.namespace=${withWsCluster.namespace}`;
     }
     if (wsCluster) {
         flags+=` --set hostname=${wsCluster.domain}`;
@@ -376,16 +371,26 @@ async function deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULi
     }
 }
 
-function parseWsCluster(rawString) {
+interface PreviewWorkspaceClusterRef {
+    shortname: string;
+    subdomain: string;
+    namespace: string;
+    domain: string;
+}
+function parseWsCluster(rawString: string): PreviewWorkspaceClusterRef | undefined {
     if (rawString) {
         let parts = rawString.split("|");
         if (parts.length !== 2) {
             throw new Error("'as-|with-ws-cluster' must be of the form 'dev2|gpl-my-branch'!");
         }
+        const shortname = parts[0];
+        const subdomain = parts[1];
         return {
-            shortname: parts[0],
-            subdomain: parts[1]
-        };
+            shortname,
+            subdomain,
+            namespace: `staging-${subdomain}`,
+            domain: `${subdomain}.staging.gitpod-dev.com`,
+        }
     }
     return undefined;
 }
@@ -409,10 +414,4 @@ async function publishHelmChart(imageRepoBase, version) {
     ].forEach(cmd => {
         exec(cmd, {slice: 'publish-charts'});
     });
-}
-
-module.exports = {
-    parseVersion,
-    build,
-    deployToDev
 }

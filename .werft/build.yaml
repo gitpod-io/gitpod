@@ -106,13 +106,9 @@ pod:
         export DOCKER_HOST=tcp://$NODENAME:2375
         sudo chown -R gitpod:gitpod /workspace
 
-        npm install shelljs semver
+        npm install shelljs semver ts-node typescript @types/shelljs @types/node @types/semver
         printf '{{ toJson . }}' > context.json
 
-        {{- if .Annotations.debug }}
-        node --inspect-brk .werft/build.js
-        {{- else }}
-        node --inspect .werft/build.js
-        {{- end }}
+        npx ts-node .werft/build.ts
 sidecars:
 - testdb

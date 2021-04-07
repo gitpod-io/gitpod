@@ -1,14 +1,14 @@
-const { exec } = require('./shell');
+import { exec } from './shell';
 
 
-function setKubectlContextNamespace(namespace, shellOpts) {
+export function setKubectlContextNamespace(namespace, shellOpts) {
     [
         "kubectl config current-context",
         `kubectl config set-context --current --namespace=${namespace}`
     ].forEach(cmd => exec(cmd, shellOpts));
 }
 
-function wipeAndRecreateNamespace(namespace, shellOpts) {
+export function wipeAndRecreateNamespace(namespace, shellOpts) {
     removePodFinalizers(namespace, shellOpts);
     deleteAllWorkspaces(namespace, shellOpts);
 
@@ -61,7 +61,7 @@ function deleteNamespace(namespace, shellOpts, wait) {
     }
 }
 
-function deleteNonNamespaceObjects(namespace, destname, shellOpts) {
+export function deleteNonNamespaceObjects(namespace, destname, shellOpts) {
     exec(`/usr/local/bin/helm3 delete gitpod-${destname} || echo gitpod-${destname} was not installed yet`, {slice: 'predeploy cleanup'});
     exec(`/usr/local/bin/helm3 delete jaeger-${destname} || echo jaeger-${destname} was not installed yet`, {slice: 'predeploy cleanup'});
 
@@ -79,11 +79,4 @@ function deleteNonNamespaceObjects(namespace, destname, shellOpts) {
     objs.forEach(o => {
         exec(`kubectl delete ${o.kind} ${o.obj}`, shellOpts);
     });
-}
-
-
-module.exports = {
-    setKubectlContextNamespace,
-    wipeAndRecreateNamespace,
-    deleteNonNamespaceObjects,
 }

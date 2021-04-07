@@ -1,6 +1,6 @@
-const https = require('https');
+import * as https from 'https';
 
-function reportBuildFailureInSlack(context, err, onErr) {
+export function reportBuildFailureInSlack(context, err, onErr) {
     const repo = context.Repository.host + "/" + context.Repository.owner + "/" + context.Repository.repo;
     const data = JSON.stringify({
         "blocks": [
@@ -44,8 +44,4 @@ function reportBuildFailureInSlack(context, err, onErr) {
     req.on('error', onErr);
     req.write(data);
     req.end();
-}
-
-module.exports = {
-    reportBuildFailureInSlack: reportBuildFailureInSlack,
 }
