@@ -124,6 +124,9 @@ func (mr *MockWorkspaceContentServiceClientMockRecorder) WaitForInit(arg0, arg1 
 type MockWorkspaceContentServiceServer struct {
 	ctrl     *gomock.Controller
 	recorder *MockWorkspaceContentServiceServerMockRecorder
+
+	api.UnimplementedInWorkspaceServiceServer
+	api.UnimplementedWorkspaceContentServiceServer
 }
 
 // MockWorkspaceContentServiceServerMockRecorder is the mock recorder for MockWorkspaceContentServiceServer.
@@ -201,6 +204,18 @@ func (m *MockWorkspaceContentServiceServer) WaitForInit(arg0 context.Context, ar
 func (mr *MockWorkspaceContentServiceServerMockRecorder) WaitForInit(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WaitForInit", reflect.TypeOf((*MockWorkspaceContentServiceServer)(nil).WaitForInit), arg0, arg1)
+}
+
+// mustEmbedUnimplementedWorkspaceContentServiceServer mocks base method.
+func (m *MockWorkspaceContentServiceServer) mustEmbedUnimplementedWorkspaceContentServiceServer() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "mustEmbedUnimplementedWorkspaceContentServiceServer")
+}
+
+// mustEmbedUnimplementedWorkspaceContentServiceServer indicates an expected call of mustEmbedUnimplementedWorkspaceContentServiceServer.
+func (mr *MockWorkspaceContentServiceServerMockRecorder) mustEmbedUnimplementedWorkspaceContentServiceServer() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "mustEmbedUnimplementedWorkspaceContentServiceServer", reflect.TypeOf((*MockWorkspaceContentServiceServer)(nil).mustEmbedUnimplementedWorkspaceContentServiceServer))
 }
 
 // MockInWorkspaceServiceClient is a mock of InWorkspaceServiceClient interface.

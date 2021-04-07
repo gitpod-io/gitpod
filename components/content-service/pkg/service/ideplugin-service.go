@@ -7,19 +7,22 @@ package service
 import (
 	"context"
 
+	"github.com/opentracing/opentracing-go"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
-	"github.com/opentracing/opentracing-go"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // IDEPluginService implements IDEPluginServiceServer
 type IDEPluginService struct {
 	cfg storage.Config
 	s   storage.PresignedAccess
+
+	api.UnimplementedIDEPluginServiceServer
 }
 
 // NewIDEPluginService create a new IDE plugin service
@@ -28,7 +31,7 @@ func NewIDEPluginService(cfg storage.Config) (res *IDEPluginService, err error) 
 	if err != nil {
 		return nil, err
 	}
-	return &IDEPluginService{cfg, s}, nil
+	return &IDEPluginService{cfg: cfg, s: s}, nil
 }
 
 // UploadURL provides a URL to which clients can upload the content via HTTP PUT.

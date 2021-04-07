@@ -162,7 +162,7 @@ func Run(options ...RunOption) {
 			ideReady:     ideReady,
 		},
 		termMuxSrv,
-		RegistrableTokenService{tokenService},
+		RegistrableTokenService{Service: tokenService},
 		notificationService,
 		&InfoService{cfg: cfg, ContentState: cstate},
 		&ControlService{portsManager: portMgmt},

@@ -46,6 +46,9 @@ type WorkspaceService struct {
 	stopService context.CancelFunc
 	sandboxes   quota.SandboxProvider
 	runtime     container.Runtime
+
+	api.UnimplementedInWorkspaceServiceServer
+	api.UnimplementedWorkspaceContentServiceServer
 }
 
 // WorkspaceExistenceCheck is a check that can determine if a workspace container currently exists on this node.

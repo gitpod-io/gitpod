@@ -8,12 +8,13 @@ import (
 	"context"
 	"sync"
 
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
 const (
@@ -36,6 +37,8 @@ type NotificationService struct {
 	subscriptions        map[uint64]*subscription
 	nextNotificationID   uint64
 	pendingNotifications map[uint64]*pendingNotification
+
+	api.UnimplementedNotificationServiceServer
 }
 
 type pendingNotification struct {

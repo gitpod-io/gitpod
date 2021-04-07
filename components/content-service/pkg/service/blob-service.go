@@ -22,6 +22,8 @@ import (
 type BlobService struct {
 	cfg storage.Config
 	s   storage.PresignedAccess
+
+	api.UnimplementedBlobServiceServer
 }
 
 // NewBlobService create a new content service
@@ -30,7 +32,7 @@ func NewBlobService(cfg storage.Config) (res *BlobService, err error) {
 	if err != nil {
 		return nil, err
 	}
-	return &BlobService{cfg, s}, nil
+	return &BlobService{cfg: cfg, s: s}, nil
 }
 
 // UploadUrl provides a upload URL
