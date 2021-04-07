@@ -22,7 +22,7 @@ pod:
       mountPath: /mnt/secrets/gcp-sa
       readOnly: true
     command:
-    - bash 
+    - bash
     - -c
     - |
       sleep 1

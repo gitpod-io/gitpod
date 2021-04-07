@@ -10,5 +10,4 @@ packages:
       - GOOS=linux
     config:
       packaging: library
-      buildFlags:
-        - "-ldflags=-w"
+      buildCommand: ["go", "build", "-trimpath", "-ldflags=-buildid="]

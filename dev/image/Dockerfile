@@ -114,11 +114,13 @@ ENV PATH=/home/gitpod/.nvm/versions/node/v${GITPOD_NODE_VERSION}/bin:$PATH
 # Fix the Go version
 ENV GOPATH=$HOME/go-packages
 ENV GOROOT=$HOME/go
-RUN go get golang.org/dl/go1.16 && \
-    go1.16 download && \
-    mv $(which go1.16) $(which go)
-ENV GOPATH=/workspace/go \
-    PATH=/workspace/go/bin:$PATH
+RUN go get golang.org/dl/go1.16.3 \
+  && go1.16.3 download \
+  && mv $(which go1.16.3) $(which go)
+ENV GOPATH=/workspace/go
+ENV PATH=/workspace/go/bin:$PATH
+
+ENV GOFLAGS="-mod=readonly"
 
 ## Register leeway autocompletion in bashrc
 RUN bash -c "echo . \<\(leeway bash-completion\) >> ~/.bashrc"

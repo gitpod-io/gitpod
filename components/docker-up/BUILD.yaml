@@ -15,7 +15,6 @@ packages:
       - ["go", "generate"]
     config:
       dontTest: true
-      buildCommand: ["go", "build", "-trimpath", "-ldflags='-buildid= -w -s'"]
   - name: bin-runc-facade
     type: go
     srcs:
@@ -30,7 +29,6 @@ packages:
       - ["rmdir", "runc-facade"]
     config:
       dontTest: true
-      buildCommand: ["go", "build", "-trimpath", "-ldflags='-buildid= -w -s'"]
   - name: bin-slirp-docker-proxy
     type: go
     srcs:
@@ -45,7 +43,6 @@ packages:
       - ["rmdir", "slirp-docker-proxy"]
     config:
       dontTest: true
-      buildCommand: ["go", "build", "-trimpath", "-ldflags='-buildid= -w -s'"]
   - name: app
     type: generic
     deps:
