@@ -22,6 +22,7 @@ import {
     UpdateRequest,
     UpdateResponse
 } from '@gitpod/ws-manager-bridge-api/lib';
+import { GetWorkspacesRequest } from '@gitpod/ws-manager/lib';
 import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
 import * as grpc from "grpc";
 import { inject, injectable } from 'inversify';
@@ -107,7 +108,16 @@ export class ClusterService implements IClusterServiceServer {
                 };
 
                 // try to connect to validate the config. Throws an exception if it fails.
-                await this.clientProvider.tryConnectTo(newCluster);
+                await new Promise<void>((resolve, reject) => {
+                    const c = this.clientProvider.createClient(newCluster);
+                    c.getWorkspaces(new GetWorkspacesRequest(), (err, resp) => {
+                        if (err) {
+                            reject(new GRPCError(grpc.status.FAILED_PRECONDITION, `cannot reach ${req.url}: ${err.message}`));
+                        } else {
+                            resolve();
+                        }
+                    });
+                })
 
                 await this.db.save(newCluster);
 
