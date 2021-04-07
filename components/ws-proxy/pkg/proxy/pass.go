@@ -193,7 +193,9 @@ func createDefaultTransport(config *TransportConfig) *http.Transport {
 func withLongTermCaching() proxyPassOpt {
 	return func(cfg *proxyPassConfig) {
 		cfg.appendResponseHandler(func(resp *http.Response, req *http.Request) error {
-			resp.Header.Set("Cache-Control", "public, max-age=31536000")
+			if resp.StatusCode < http.StatusBadRequest {
+				resp.Header.Set("Cache-Control", "public, max-age=31536000")
+			}
 			return nil
 		})
 	}
