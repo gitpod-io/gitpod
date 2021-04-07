@@ -27,6 +27,8 @@ if [ ! -d "/ide/bin/" ]; then
     alias code='gp open'
 fi
 
+export PATH=/ide/bin:$PATH
+
 export GEM_HOME=/workspace/.rvm
 export GEM_PATH=$GEM_HOME:$GEM_PATH
 export PATH=/workspace/.rvm/bin:$PATH
