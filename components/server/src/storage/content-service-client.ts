@@ -58,7 +58,7 @@ export class ContentServiceStorageClient implements StorageClient {
         request.setWorkspaceId(workspaceId);
 
         const response = await new Promise<WorkspaceDownloadURLResponse>((resolve, reject) => {
-            this.workspaceServiceClient.WorkspaceDownloadURL(request, (err: any, resp: WorkspaceDownloadURLResponse) => {
+            this.workspaceServiceClient.workspaceDownloadURL(request, (err: any, resp: WorkspaceDownloadURLResponse) => {
                 if (err) {
                     reject(err);
                 } else {

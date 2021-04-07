@@ -4,14 +4,18 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+// source: workspace.proto
 /**
  * @fileoverview
  * @enhanceable
+ * @suppress {missingRequire} reports error on implicit type usages.
  * @suppress {messageConventions} JS Compiler reports an error if a variable or
  *     field starts with 'MSG_' and isn't a translatable message.
  * @public
  */
 // GENERATED CODE -- DO NOT EDIT!
+/* eslint-disable */
+// @ts-nocheck
 
 var jspb = require('google-protobuf');
 var goog = jspb;
@@ -110,13 +114,15 @@ if (goog.DEBUG && !COMPILED) {
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
 /**
- * Creates an object representation of this proto suitable for use in Soy templates.
+ * Creates an object representation of this proto.
  * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
  * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
  * For the list of reserved names please see:
- *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
- * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
- *     for transitional soy proto support: http://goto/soy-param-migration
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
  * @return {!Object}
  */
 proto.contentservice.WorkspaceDownloadURLRequest.prototype.toObject = function(opt_includeInstance) {
@@ -126,8 +132,8 @@ proto.contentservice.WorkspaceDownloadURLRequest.prototype.toObject = function(o
 
 /**
  * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Whether to include the JSPB
- *     instance for transitional soy proto support:
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
  *     http://goto/soy-param-migration
  * @param {!proto.contentservice.WorkspaceDownloadURLRequest} msg The msg instance to transform.
  * @return {!Object}
@@ -236,9 +242,12 @@ proto.contentservice.WorkspaceDownloadURLRequest.prototype.getOwnerId = function
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.contentservice.WorkspaceDownloadURLRequest} returns this
+ */
 proto.contentservice.WorkspaceDownloadURLRequest.prototype.setOwnerId = function(value) {
-  jspb.Message.setProto3StringField(this, 1, value);
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -251,9 +260,12 @@ proto.contentservice.WorkspaceDownloadURLRequest.prototype.getWorkspaceId = func
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.contentservice.WorkspaceDownloadURLRequest} returns this
+ */
 proto.contentservice.WorkspaceDownloadURLRequest.prototype.setWorkspaceId = function(value) {
-  jspb.Message.setProto3StringField(this, 2, value);
+  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 
@@ -262,13 +274,15 @@ proto.contentservice.WorkspaceDownloadURLRequest.prototype.setWorkspaceId = func
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
 /**
- * Creates an object representation of this proto suitable for use in Soy templates.
+ * Creates an object representation of this proto.
  * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
  * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
  * For the list of reserved names please see:
- *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
- * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
- *     for transitional soy proto support: http://goto/soy-param-migration
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
  * @return {!Object}
  */
 proto.contentservice.WorkspaceDownloadURLResponse.prototype.toObject = function(opt_includeInstance) {
@@ -278,8 +292,8 @@ proto.contentservice.WorkspaceDownloadURLResponse.prototype.toObject = function(
 
 /**
  * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Whether to include the JSPB
- *     instance for transitional soy proto support:
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
  *     http://goto/soy-param-migration
  * @param {!proto.contentservice.WorkspaceDownloadURLResponse} msg The msg instance to transform.
  * @return {!Object}
@@ -376,9 +390,12 @@ proto.contentservice.WorkspaceDownloadURLResponse.prototype.getUrl = function() 
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.contentservice.WorkspaceDownloadURLResponse} returns this
+ */
 proto.contentservice.WorkspaceDownloadURLResponse.prototype.setUrl = function(value) {
-  jspb.Message.setProto3StringField(this, 1, value);
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -387,13 +404,15 @@ proto.contentservice.WorkspaceDownloadURLResponse.prototype.setUrl = function(va
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
 /**
- * Creates an object representation of this proto suitable for use in Soy templates.
+ * Creates an object representation of this proto.
  * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
  * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
  * For the list of reserved names please see:
- *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
- * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
- *     for transitional soy proto support: http://goto/soy-param-migration
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
  * @return {!Object}
  */
 proto.contentservice.DeleteWorkspaceRequest.prototype.toObject = function(opt_includeInstance) {
@@ -403,8 +422,8 @@ proto.contentservice.DeleteWorkspaceRequest.prototype.toObject = function(opt_in
 
 /**
  * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Whether to include the JSPB
- *     instance for transitional soy proto support:
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
  *     http://goto/soy-param-migration
  * @param {!proto.contentservice.DeleteWorkspaceRequest} msg The msg instance to transform.
  * @return {!Object}
@@ -414,7 +433,7 @@ proto.contentservice.DeleteWorkspaceRequest.toObject = function(includeInstance,
   var f, obj = {
     ownerId: jspb.Message.getFieldWithDefault(msg, 1, ""),
     workspaceId: jspb.Message.getFieldWithDefault(msg, 2, ""),
-    includeSnapshots: jspb.Message.getFieldWithDefault(msg, 3, false)
+    includeSnapshots: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
   };
 
   if (includeInstance) {
@@ -525,9 +544,12 @@ proto.contentservice.DeleteWorkspaceRequest.prototype.getOwnerId = function() {
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.contentservice.DeleteWorkspaceRequest} returns this
+ */
 proto.contentservice.DeleteWorkspaceRequest.prototype.setOwnerId = function(value) {
-  jspb.Message.setProto3StringField(this, 1, value);
+  return jspb.Message.setProto3StringField(this, 1, value);
 };
 
 
@@ -540,26 +562,30 @@ proto.contentservice.DeleteWorkspaceRequest.prototype.getWorkspaceId = function(
 };
 
 
-/** @param {string} value */
+/**
+ * @param {string} value
+ * @return {!proto.contentservice.DeleteWorkspaceRequest} returns this
+ */
 proto.contentservice.DeleteWorkspaceRequest.prototype.setWorkspaceId = function(value) {
-  jspb.Message.setProto3StringField(this, 2, value);
+  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 
 /**
  * optional bool include_snapshots = 3;
- * Note that Boolean fields may be set to 0/1 when serialized from a Java server.
- * You should avoid comparisons like {@code val === true/false} in those cases.
  * @return {boolean}
  */
 proto.contentservice.DeleteWorkspaceRequest.prototype.getIncludeSnapshots = function() {
-  return /** @type {boolean} */ (jspb.Message.getFieldWithDefault(this, 3, false));
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 3, false));
 };
 
 
-/** @param {boolean} value */
+/**
+ * @param {boolean} value
+ * @return {!proto.contentservice.DeleteWorkspaceRequest} returns this
+ */
 proto.contentservice.DeleteWorkspaceRequest.prototype.setIncludeSnapshots = function(value) {
-  jspb.Message.setProto3BooleanField(this, 3, value);
+  return jspb.Message.setProto3BooleanField(this, 3, value);
 };
 
 
@@ -568,13 +594,15 @@ proto.contentservice.DeleteWorkspaceRequest.prototype.setIncludeSnapshots = func
 
 if (jspb.Message.GENERATE_TO_OBJECT) {
 /**
- * Creates an object representation of this proto suitable for use in Soy templates.
+ * Creates an object representation of this proto.
  * Field names that are reserved in JavaScript and will be renamed to pb_name.
+ * Optional fields that are not set will be set to undefined.
  * To access a reserved field use, foo.pb_<name>, eg, foo.pb_default.
  * For the list of reserved names please see:
- *     com.google.apps.jspb.JsClassTemplate.JS_RESERVED_WORDS.
- * @param {boolean=} opt_includeInstance Whether to include the JSPB instance
- *     for transitional soy proto support: http://goto/soy-param-migration
+ *     net/proto2/compiler/js/internal/generator.cc#kKeyword.
+ * @param {boolean=} opt_includeInstance Deprecated. whether to include the
+ *     JSPB instance for transitional soy proto support:
+ *     http://goto/soy-param-migration
  * @return {!Object}
  */
 proto.contentservice.DeleteWorkspaceResponse.prototype.toObject = function(opt_includeInstance) {
@@ -584,8 +612,8 @@ proto.contentservice.DeleteWorkspaceResponse.prototype.toObject = function(opt_i
 
 /**
  * Static version of the {@see toObject} method.
- * @param {boolean|undefined} includeInstance Whether to include the JSPB
- *     instance for transitional soy proto support:
+ * @param {boolean|undefined} includeInstance Deprecated. Whether to include
+ *     the JSPB instance for transitional soy proto support:
  *     http://goto/soy-param-migration
  * @param {!proto.contentservice.DeleteWorkspaceResponse} msg The msg instance to transform.
  * @return {!Object}

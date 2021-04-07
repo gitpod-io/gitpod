@@ -16,7 +16,6 @@ export class DeleteUserContentRequest extends jspb.Message {
     getOwnerId(): string;
     setOwnerId(value: string): DeleteUserContentRequest;
 
-
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DeleteUserContentRequest.AsObject;
     static toObject(includeInstance: boolean, msg: DeleteUserContentRequest): DeleteUserContentRequest.AsObject;

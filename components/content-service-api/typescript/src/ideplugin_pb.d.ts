@@ -15,10 +15,8 @@ import * as jspb from "google-protobuf";
 export class PluginUploadURLRequest extends jspb.Message { 
     getBucket(): string;
     setBucket(value: string): PluginUploadURLRequest;
-
     getName(): string;
     setName(value: string): PluginUploadURLRequest;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): PluginUploadURLRequest.AsObject;
@@ -41,7 +39,6 @@ export class PluginUploadURLResponse extends jspb.Message {
     getUrl(): string;
     setUrl(value: string): PluginUploadURLResponse;
 
-
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): PluginUploadURLResponse.AsObject;
     static toObject(includeInstance: boolean, msg: PluginUploadURLResponse): PluginUploadURLResponse.AsObject;
@@ -61,10 +58,8 @@ export namespace PluginUploadURLResponse {
 export class PluginDownloadURLRequest extends jspb.Message { 
     getBucket(): string;
     setBucket(value: string): PluginDownloadURLRequest;
-
     getName(): string;
     setName(value: string): PluginDownloadURLRequest;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): PluginDownloadURLRequest.AsObject;
@@ -87,7 +82,6 @@ export class PluginDownloadURLResponse extends jspb.Message {
     getUrl(): string;
     setUrl(value: string): PluginDownloadURLResponse;
 
-
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): PluginDownloadURLResponse.AsObject;
     static toObject(includeInstance: boolean, msg: PluginDownloadURLResponse): PluginDownloadURLResponse.AsObject;
@@ -107,10 +101,8 @@ export namespace PluginDownloadURLResponse {
 export class PluginHashRequest extends jspb.Message { 
     getBucket(): string;
     setBucket(value: string): PluginHashRequest;
-
     getName(): string;
     setName(value: string): PluginHashRequest;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): PluginHashRequest.AsObject;
@@ -132,7 +124,6 @@ export namespace PluginHashRequest {
 export class PluginHashResponse extends jspb.Message { 
     getHash(): string;
     setHash(value: string): PluginHashResponse;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): PluginHashResponse.AsObject;

@@ -1,7 +1,7 @@
 // GENERATED CODE -- DO NOT EDIT!
 
 // Original file comments:
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 //
@@ -56,7 +56,7 @@ function deserialize_contentservice_WorkspaceDownloadURLResponse(buffer_arg) {
 
 var WorkspaceServiceService = exports.WorkspaceServiceService = {
   // WorkspaceDownloadURL provides a URL from where the content of a workspace can be downloaded from
-WorkspaceDownloadURL: {
+workspaceDownloadURL: {
     path: '/contentservice.WorkspaceService/WorkspaceDownloadURL',
     requestStream: false,
     responseStream: false,
