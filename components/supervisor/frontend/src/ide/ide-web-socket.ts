@@ -34,6 +34,11 @@ class IDEWebSocket extends ReconnectingWebSocket {
             this.reconnect();
         }
     }
+    static disconnectWorkspace(): void {
+        for (const socket of workspaceSockets) {
+            socket.close();
+        }
+    }
 }
 
 export function install(): void {
