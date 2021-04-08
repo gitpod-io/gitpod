@@ -40,6 +40,7 @@ export function load({ gitpodService }: {
             const frameWindow = frame.contentWindow!;
             const writer = new WindowMessageWriter('gitpodServer', frameWindow, serverOrigin);
             const connection = createMessageConnection(reader, writer, new ConsoleLogger())
+            connection.onRequest('$reconnectServer', () => gitpodService.reconnect());
             factory.listen(connection);
             const setState = (state: object) => {
                 frameWindow.postMessage({ type: 'setState', state }, serverOrigin);

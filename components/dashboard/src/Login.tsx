@@ -7,7 +7,7 @@
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "./user-context";
-import { getGitpodService, gitpodHostUrl, reconnectGitpodService } from "./service/service";
+import { getGitpodService, gitpodHostUrl } from "./service/service";
 import { iconForAuthProvider, simplifyProviderName } from "./provider-utils";
 import gitpod from './images/gitpod.svg';
 import gitpodIcon from './icons/gitpod.svg';
@@ -58,7 +58,7 @@ export function Login() {
                     // todo: not here, but add a button to the /login-success page to close, if this should not work as expected
                 }
                 (async () => {
-                    reconnectGitpodService();
+                    await getGitpodService().reconnect();
                     setUser(await getGitpodService().server.getLoggedInUser());
                     markLoggedIn();
                 })();
