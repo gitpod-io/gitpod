@@ -604,9 +604,8 @@ func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest)
 	if contentReady {
 		stat, err := os.Stat(is.cfg.WorkspaceRoot)
 		if err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
-		}
-		if stat.IsDir() {
+			log.WithError(err).Error("workspace info: cannot resolve the workspace root")
+		} else if stat.IsDir() {
 			resp.WorkspaceLocation = &api.WorkspaceInfoResponse_WorkspaceLocationFolder{WorkspaceLocationFolder: is.cfg.WorkspaceRoot}
 		} else {
 			resp.WorkspaceLocation = &api.WorkspaceInfoResponse_WorkspaceLocationFile{WorkspaceLocationFile: is.cfg.WorkspaceRoot}
