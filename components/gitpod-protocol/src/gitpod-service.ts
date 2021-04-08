@@ -8,7 +8,7 @@ import {
     User, WorkspaceInfo, WorkspaceCreationResult, UserMessage, WorkspaceInstanceUser,
     WhitelistedRepository, WorkspaceImageBuild, AuthProviderInfo, Branding, CreateWorkspaceMode,
     Token, UserEnvVarValue, ResolvePluginsParams, PreparePluginUploadParams, Terms,
-    ResolvedPlugins, Configuration, InstallPluginsParams, UninstallPluginParams, UserInfo, GitpodTokenType, 
+    ResolvedPlugins, Configuration, InstallPluginsParams, UninstallPluginParams, UserInfo, GitpodTokenType,
     GitpodToken, AuthProviderEntry, GuessGitTokenScopesParams, GuessedGitTokenScopes
 } from './protocol';
 import { JsonRpcProxy, JsonRpcServer } from './messaging/proxy-factory';
@@ -189,7 +189,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     tsGetSlots(): Promise<TeamSubscriptionSlotResolved[]>;
     tsGetUnassignedSlot(teamSubscriptionId: string): Promise<TeamSubscriptionSlot | undefined>
     tsAddSlots(teamSubscriptionId: string, quantity: number): Promise<void>;
-    tsAssignSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string, identityStr: string|undefined): Promise<void>
+    tsAssignSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string, identityStr: string | undefined): Promise<void>
     tsReassignSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string, newIdentityStr: string): Promise<void>;
     tsDeactivateSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void>;
     tsReactivateSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void>;
@@ -402,7 +402,7 @@ export class WorkspaceInstanceUpdateListener {
     private readonly onDidChangeEmitter = new Emitter<void>();
     readonly onDidChange = this.onDidChangeEmitter.event;
 
-    private source: 'sync' | 'update' = 'sync';
+    private source: 'sync' | 'update' = 'sync';
 
     get info(): WorkspaceInfo {
         return this._info;
@@ -494,11 +494,15 @@ export class WorkspaceInstanceUpdateListener {
 
 }
 
+export interface GitpodServiceOptions {
+    onReconnect?: () => (void | Promise<void>)
+}
+
 export class GitpodServiceImpl<Client extends GitpodClient, Server extends GitpodServer> {
 
     private readonly compositeClient = new GitpodCompositeClient<Client>();
 
-    constructor(public readonly server: JsonRpcProxy<Server>) {
+    constructor(public readonly server: JsonRpcProxy<Server>, private options?: GitpodServiceOptions) {
         server.setClient(this.compositeClient);
         server.onDidOpenConnection(() => this.compositeClient.notifyDidOpenConnection());
         server.onDidCloseConnection(() => this.compositeClient.notifyDidCloseConnection());
@@ -518,6 +522,12 @@ export class GitpodServiceImpl<Client extends GitpodClient, Server extends Gitpo
         this.instanceListeners.set(workspaceId, listener);
         return listener;
     }
+
+    async reconnect(): Promise<void> {
+        if (this.options?.onReconnect) {
+            await this.options.onReconnect();
+        }
+    }
 }
 
 export function createGitpodService<C extends GitpodClient, S extends GitpodServer>(serverUrl: string | Promise<string>) {
@@ -535,6 +545,11 @@ export function createGitpodService<C extends GitpodClient, S extends GitpodServ
     }
 
     const connectionProvider = new WebSocketConnectionProvider();
-    const gitpodServer = connectionProvider.createProxy<S>(url);
-    return new GitpodServiceImpl<C, S>(gitpodServer);
+    let onReconnect = () => { };
+    const gitpodServer = connectionProvider.createProxy<S>(url, undefined, {
+        onListening: socket => {
+            onReconnect = () => socket.reconnect();
+        }
+    });
+    return new GitpodServiceImpl<C, S>(gitpodServer, { onReconnect });
 }

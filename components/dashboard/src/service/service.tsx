@@ -19,7 +19,11 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
         const factory = new JsonRpcProxyFactory<S>();
         const proxy = factory.createProxy();
         factory.listen(connection);
-        return new GitpodServiceImpl<C, S>(proxy);
+        return new GitpodServiceImpl<C, S>(proxy, {
+            onReconnect: async () => {
+                await connection.sendRequest('$reconnectServer');
+            }
+        });
     }
     let host = gitpodHostUrl
         .asWebsocket()
@@ -28,25 +32,20 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
 
     const connectionProvider = new WebSocketConnectionProvider();
     let numberOfErrors = 0;
-    const { proxy, webSocket } = connectionProvider.createProxy2<S>(host.toString(), undefined, {
+    let onReconnect = () => { };
+    const proxy = connectionProvider.createProxy<S>(host.toString(), undefined, {
         onerror: (event: any) => {
             log.error(event);
             if (numberOfErrors++ === 5) {
                 alert('We are having trouble connecting to the server.\nEither you are offline or websocket connections are blocked.');
             }
+        },
+        onListening: socket => {
+            onReconnect = () => socket.reconnect()
         }
     });
 
-    const service = new GitpodServiceImpl<C, S>(proxy);
-    (service as any).reconnect = () => {
-        const ws = (webSocket as any);
-        if (typeof ws.reconnect === "function") {
-            ws.reconnect();
-        } else {
-            console.log("WebSocket reconnect not possible.");
-        }
-    };
-    return service;
+    return new GitpodServiceImpl<C, S>(proxy, { onReconnect });
 }
 
 function getGitpodService(): GitpodService {
@@ -56,13 +55,4 @@ function getGitpodService(): GitpodService {
     return service;
 }
 
-function reconnectGitpodService() {
-    const service = getGitpodService() as any;
-    if (service.reconnect) {
-        service.reconnect();
-    } else {
-        console.error("WebSocket reconnect not possible.")
-    }
-}
-
-export { getGitpodService, reconnectGitpodService }
+export { getGitpodService }

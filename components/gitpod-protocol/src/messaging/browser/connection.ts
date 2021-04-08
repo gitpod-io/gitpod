@@ -12,6 +12,7 @@ import ReconnectingWebSocket from 'reconnecting-websocket';
 
 export interface WebSocketOptions {
     onerror?: (event: Event) => void;
+    onListening?: (socket: ReconnectingWebSocket) => void;
 }
 
 export class WebSocketConnectionProvider {
@@ -26,29 +27,23 @@ export class WebSocketConnectionProvider {
     createProxy<T extends object>(path: string | Promise<string>, target?: object, options?: WebSocketOptions): JsonRpcProxy<T> {
         const factory = new JsonRpcProxyFactory<T>(target);
         const startListening = (path: string) => {
-            this.listen({
-                    path,
-                    onConnection: c => factory.listen(c)
-                },
+            const socket = this.listen({
+                path,
+                onConnection: c => factory.listen(c)
+            },
                 options
             );
+            if (options?.onListening) {
+                options.onListening(socket as any as ReconnectingWebSocket)
+            }
         };
-        
+
         if (typeof path === "string") {
             startListening(path);
         } else {
             path.then(path => startListening(path));
         }
         return factory.createProxy();
-    }
-    createProxy2<T extends object>(path: string, target?: object, options?: WebSocketOptions): { proxy: JsonRpcProxy<T>, webSocket: WebSocket } {
-        const factory = new JsonRpcProxyFactory<T>(target);
-        const webSocket = this.listen({
-            path,
-            onConnection: c => factory.listen(c)
-        }, options);
-        const proxy = factory.createProxy();
-        return { proxy, webSocket };
     }
 
     /**
