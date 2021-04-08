@@ -60,9 +60,9 @@ COPY --from=code_installer /ide/bin /ide/bin
 ENV GITPOD_ENV_APPEND_PATH /ide/bin:
 
 # editor config
-ENV GITPOD_ENV_SET_EDITOR code
+ENV GITPOD_ENV_SET_EDITOR /ide/bin/code
 ENV GITPOD_ENV_SET_VISUAL "$GITPOD_ENV_SET_EDITOR"
 ENV GITPOD_ENV_SET_GP_OPEN_EDITOR "$GITPOD_ENV_SET_EDITOR"
 ENV GITPOD_ENV_SET_GIT_EDITOR "$GITPOD_ENV_SET_EDITOR --wait"
-ENV GITPOD_ENV_SET_GP_PREVIEW_BROWSER "code --command gitpod.api.preview"
-ENV GITPOD_ENV_SET_GP_EXTERNAL_BROWSER "code --open-external"
+ENV GITPOD_ENV_SET_GP_PREVIEW_BROWSER "/ide/bin/code --command gitpod.api.preview"
+ENV GITPOD_ENV_SET_GP_EXTERNAL_BROWSER "/ide/bin/code --open-external"
