@@ -50,8 +50,8 @@ spec:
         readinessProbe:
           failureThreshold: 3
           httpGet:
-            path: /schemas/gitpod-schema.json
-            port: 80
+            path: /ready
+            port: 8080
             scheme: HTTP
           periodSeconds: 1
           successThreshold: 1

@@ -176,8 +176,6 @@ components:
 
   dashboard:
     name: "dashboard"
-    dependsOn:
-    - "dashboard-configmap.yaml"
     resources:
       cpu: 100m
       memory: 32Mi
@@ -186,7 +184,6 @@ components:
         expose: true
         containerPort: 80
         servicePort: 3001
-    config:
     serviceType: ClusterIP
 
   imageBuilder:

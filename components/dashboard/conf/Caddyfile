@@ -1,0 +1,44 @@
+{
+	auto_https off
+	admin off
+}
+
+(compression) {
+	encode zstd gzip
+}
+
+(caching) {
+	header Cache-Control "public, max-age=604800, must-revalidate"
+}
+
+(default) {
+	header -Server
+}
+
+(discard_log) {
+	log {
+		output discard
+	}
+}
+
+:80 {
+	import caching
+	import compression
+	import default
+	import discard_log
+
+	redir /.well-known/security.txt https://www.gitpod.io/.well-known/security.txt permanent
+	redir /environment-variables /settings/ permanent
+
+	root * /www
+	file_server
+	try_files {path} {path}/ /index.html
+}
+
+# health-check
+:8080 {
+	import discard_log
+
+	respond /live 200
+	respond /ready 200
+}

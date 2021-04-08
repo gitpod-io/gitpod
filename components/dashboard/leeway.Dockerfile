@@ -3,13 +3,7 @@
 # See License-AGPL.txt in the project root for license information.
 
 
-FROM nginx:stable-alpine
+FROM caddy/caddy:2.4.0-beta.2-alpine
 
-# Remove default stuff
-RUN rm -Rf /etc/nginx/conf.d \
-    && rm -f /etc/nginx/nginx.conf
-
-COPY components-dashboard--static/conf/nginx.conf /etc/nginx/nginx.conf
-COPY components-dashboard--static/conf/conf.d /etc/nginx/conf.d
-
-COPY components-dashboard--app/build /www/data/dashboard
+COPY components-dashboard--static/conf/Caddyfile /etc/caddy/Caddyfile
+COPY components-dashboard--app/build /www
