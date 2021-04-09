@@ -20,7 +20,7 @@ require (
 	github.com/go-logr/logr v0.3.0
 	github.com/go-ozzo/ozzo-validation v3.5.0+incompatible
 	github.com/golang/mock v1.5.0
-	github.com/google/go-cmp v0.5.2
+	github.com/google/go-cmp v0.5.4
 	github.com/google/uuid v1.1.4
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
