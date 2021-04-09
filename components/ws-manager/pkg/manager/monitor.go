@@ -456,7 +456,7 @@ func (m *Monitor) actOnHeadlessDone(pod *corev1.Pod, failed bool) (err error) {
 			tracing.LogError(span, err)
 			return handleFailure(fmt.Sprintf("cannot take snapshot: %v", err))
 		}
-		res, err := snc.TakeSnapshot(ctx, &wsdaemon.TakeSnapshotRequest{Id: id})
+		res, err := snc.TakeSnapshot(ctx, &wsdaemon.TakeSnapshotRequest{Id: id, UploadLogs: true})
 		if err != nil {
 			tracing.LogError(span, err)
 			return handleFailure(fmt.Sprintf("cannot take snapshot: %v", err))

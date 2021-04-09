@@ -12,6 +12,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -380,7 +381,7 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 			backupName = fmt.Sprintf(storage.FmtFullWorkspaceBackup, time.Now().UnixNano())
 		}
 
-		err = s.uploadWorkspaceContent(ctx, sess, backupName, mfName)
+		err = s.uploadWorkspaceContent(ctx, sess, backupName, mfName, "")
 		if err != nil {
 			log.WithError(err).WithFields(sess.OWI()).Error("final backup failed")
 			return nil, status.Error(codes.DataLoss, "final backup failed")
@@ -419,7 +420,7 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 	return resp, nil
 }
 
-func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *session.Workspace, backupName, mfName string) (err error) {
+func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *session.Workspace, backupName, mfName, logBase string) (err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "uploadWorkspaceContent")
 	defer tracing.FinishSpan(span, &err)
@@ -610,6 +611,20 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		return xerrors.Errorf("cannot upload workspace content manifest: %w", err)
 	}
 
+	if logBase != "" {
+		logFiles, err := filepath.Glob(filepath.Join(loc, ".gitpod", "prebuild-log-*"))
+		if err != nil {
+			log.WithError(err).WithFields(sess.OWI()).Warn("cannot list log files - log upload may have failed")
+		}
+		for _, f := range logFiles {
+			idx := strings.TrimPrefix(filepath.Base(f), "prebuild-log-")
+			_, _, err = rs.Upload(ctx, f, logBase+idx, storage.WithContentType("text/plain"))
+			if err != nil {
+				log.WithError(err).WithFields(sess.OWI()).Warn("cannot upload prebuild log file")
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -715,6 +730,7 @@ func (s *WorkspaceService) TakeSnapshot(ctx context.Context, req *api.TakeSnapsh
 		baseName     = fmt.Sprintf("snapshot-%d", time.Now().UnixNano())
 		backupName   = baseName + ".tar"
 		mfName       = baseName + ".mf.json"
+		logBase      = baseName + ".log"
 		snapshotName string
 	)
 	if sess.FullWorkspaceBackup {
@@ -724,8 +740,11 @@ func (s *WorkspaceService) TakeSnapshot(ctx context.Context, req *api.TakeSnapsh
 	} else {
 		snapshotName = rs.Qualify(backupName)
 	}
+	if !req.UploadLogs {
+		logBase = ""
+	}
 
-	err = s.uploadWorkspaceContent(ctx, sess, backupName, mfName)
+	err = s.uploadWorkspaceContent(ctx, sess, backupName, mfName, logBase)
 	if err != nil {
 		log.WithError(err).WithField("workspaceId", req.Id).Error("snapshot upload failed")
 		return nil, status.Error(codes.Internal, "cannot upload snapshot")
