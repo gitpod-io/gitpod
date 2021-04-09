@@ -96,7 +96,6 @@ scripts:
       for COMPONENT in "${COMPONENTS[@]}";do
         echo "Generating code for component $COMPONENT..."
         pushd $COMPONENT > /dev/null
-        leeway build components/$COMPONENT/typescript:lib
         ./generate.sh
         popd > /dev/null
       done

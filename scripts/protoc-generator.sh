@@ -32,7 +32,7 @@ typescript_protoc() {
 
     pushd typescript > /dev/null
 
-    yarn add grpc_tools_node_protoc_ts@5.1.3 -d
+    yarn install
 
     rm -rf $MODULE_DIR/typescript/src/*pb*.*
 
