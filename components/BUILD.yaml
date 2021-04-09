@@ -100,3 +100,9 @@ scripts:
         ./generate.sh
         popd > /dev/null
       done
+  - name: update-go-modules
+    srcs:
+      - components/**/*
+      - test/**/*
+    script: |
+      leeway exec --filter-type go -v -- go mod tidy -v
