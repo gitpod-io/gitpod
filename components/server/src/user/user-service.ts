@@ -196,9 +196,13 @@ export class UserService {
     }
 
     async checkTermsAccepted(user: User) {
-        const terms = this.termsProvider.getCurrent();
-        const accepted = await this.termsAcceptanceDb.getAcceptedRevision(user.id);
-        return !!accepted && (accepted.termsRevision === terms.revision);
+        // disabled terms acceptance check for now
+
+        return true;
+
+        // const terms = this.termsProvider.getCurrent();
+        // const accepted = await this.termsAcceptanceDb.getAcceptedRevision(user.id);
+        // return !!accepted && (accepted.termsRevision === terms.revision);
     }
 
     async isBlocked(params: CheckIsBlockedParams): Promise<boolean> {
