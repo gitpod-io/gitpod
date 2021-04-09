@@ -265,7 +265,8 @@ export class UserService {
 
     async deauthorize(user: User, authProviderId: string) {
         const externalIdentities = user.identities.filter(i => i.authProviderId !== TokenService.GITPOD_AUTH_PROVIDER_ID);
-        if (!externalIdentities.some(i => i.authProviderId === authProviderId)) {
+        const identity = externalIdentities.find(i => i.authProviderId === authProviderId)
+        if (!identity) {
             log.debug('Cannot deauthorize. Authorization not found.', { userId: user.id, authProviderId });
             return;
         }
@@ -273,6 +274,9 @@ export class UserService {
         if (externalIdentities.length === 1) {
             throw new Error("Cannot remove last provider authorization. Please delete account instead.");
         }
+
+        // explicitly remove associated tokens
+        await this.userDb.deleteTokens(identity);
 
         // effectively remove the provider authorization
         user.identities = user.identities.filter(i => i.authProviderId !== authProviderId);
