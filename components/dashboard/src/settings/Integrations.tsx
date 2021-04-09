@@ -21,7 +21,7 @@ import settingsMenu from "./settings-menu";
 export default function Integrations() {
 
     return (<div>
-        <PageWithSubMenu subMenu={settingsMenu}  title='Integrations' subtitle='Manage permissions for git providers and integrations.'>
+        <PageWithSubMenu subMenu={settingsMenu} title='Integrations' subtitle='Manage permissions for git providers and integrations.'>
             <GitProviders />
             <div className="h-12"></div>
             <GitIntegrations />
@@ -36,7 +36,7 @@ function GitProviders() {
 
     const [authProviders, setAuthProviders] = useState<AuthProviderInfo[]>([]);
     const [allScopes, setAllScopes] = useState<Map<string, string[]>>(new Map());
-    const [diconnectModal, setDisconnectModal] = useState<{ provider: AuthProviderInfo } | undefined>(undefined);
+    const [disconnectModal, setDisconnectModal] = useState<{ provider: AuthProviderInfo } | undefined>(undefined);
     const [editModal, setEditModal] = useState<{ provider: AuthProviderInfo, prevScopes: Set<string>, nextScopes: Set<string> } | undefined>(undefined);
 
     useEffect(() => {
@@ -208,19 +208,19 @@ function GitProviders() {
 
     return (<div>
 
-        {diconnectModal && (
+        {disconnectModal && (
             <Modal visible={true} onClose={() => setDisconnectModal(undefined)}>
                 <h3 className="pb-2">Disconnect Provider</h3>
                 <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-4">
                     <p className="pb-4 text-gray-500 text-base">Are you sure you want to disconnect the following provider?</p>
 
                     <div className="flex flex-col rounded-xl p-3 bg-gray-100">
-                        <div className="text-gray-700 text-md font-semibold">{diconnectModal.provider.authProviderType}</div>
-                        <div className="text-gray-400 text-md">{diconnectModal.provider.host}</div>
+                        <div className="text-gray-700 text-md font-semibold">{disconnectModal.provider.authProviderType}</div>
+                        <div className="text-gray-400 text-md">{disconnectModal.provider.host}</div>
                     </div>
                 </div>
                 <div className="flex justify-end mt-6">
-                    <button className={"ml-2 danger secondary"} onClick={() => disconnect(diconnectModal.provider)}>Disconnect Provider</button>
+                    <button className={"ml-2 danger secondary"} onClick={() => disconnect(disconnectModal.provider)}>Disconnect Provider</button>
                 </div>
             </Modal>
         )}

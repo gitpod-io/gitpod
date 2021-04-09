@@ -380,7 +380,7 @@ export default function () {
     }
 
     return <div>
-        <PageWithSubMenu subMenu={settingsMenu}  title='Plans' subtitle='Manage account usage and billing.'>
+        <PageWithSubMenu subMenu={settingsMenu} title='Plans' subtitle='Manage account usage and billing.'>
             <div className="w-full text-center">
                 <p className="text-xl text-gray-500">You are currently using the <span className="font-bold">{Plans.getById(assignedTs?.planId)?.name || currentPlan.name}</span> plan.</p>
                 {!assignedTs && (
