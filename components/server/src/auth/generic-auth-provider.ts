@@ -13,7 +13,7 @@ import { AuthProviderInfo, Identity, Token, User } from '@gitpod/gitpod-protocol
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
 import fetch from "node-fetch";
 import { oauth2tokenCallback, OAuth2 } from 'oauth';
-import { format as formatURL, URL } from 'url';
+import { URL } from 'url';
 import { runInNewContext } from "vm";
 import { AuthFlow, AuthProvider } from "../auth/auth-provider";
 import { AuthProviderParams, AuthUserSetup } from "../auth/auth-provider";
@@ -289,7 +289,7 @@ export class GenericAuthProvider implements AuthProvider {
         const defaultLogPayload = { authFlow, clientInfo, authProviderId, request };
 
         // check OAuth2 errors
-        const error = new URL(formatURL({ protocol: request.protocol, host: request.get('host'), pathname: request.originalUrl })).searchParams.get("error");
+        const error = new URL(`https://anyhost${request.originalUrl}`).searchParams.get("error");
         if (error) { // e.g. "access_denied"
             // Clean up the session
             await AuthFlow.clear(request.session);
