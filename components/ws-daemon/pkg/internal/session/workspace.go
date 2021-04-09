@@ -72,8 +72,6 @@ type Workspace struct {
 
 	ServiceLocNode   string `json:"serviceLocNode"`
 	ServiceLocDaemon string `json:"serviceLocDaemon"`
-	// TODO (aledbf): remove after April release (user namespace is not a feature preview)
-	UserNamespaced bool `json:"userNamespaced"`
 
 	NonPersistentAttrs map[string]interface{} `json:"-"`
 
