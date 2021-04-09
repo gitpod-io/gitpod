@@ -299,8 +299,11 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                 if (tryIssueContext) {
                     return this.handleIssueContext({span}, user, host, owner, repoName, pullRequestNr, false);
                 } else {
-                    throw new Error(`Couldn't find issue or pull request #${pullRequestNr} in repository ${owner}/${repoName}.`)
+                    throw new Error(`Could not find issue or pull request #${pullRequestNr} in repository ${owner}/${repoName}.`)
                 }
+            }
+            if (pr.headRef === null) {
+                throw new Error(`Could not open pull request ${owner}/${repoName}#${pullRequestNr}. Source branch may have been removed.`);
             }
             return <PullRequestContext>{
                 title: pr.title,
