@@ -22,13 +22,13 @@ export function WhatsNew(props: { visible: boolean, onClose: () => void }) {
         if (!user) {
             return;
         }
-        const additionalData = user.additionalData || {};
+        const additionalData = user.additionalData = user.additionalData || {};
         additionalData.whatsNewSeen = {
             ...additionalData.whatsNewSeen,
             [news]: new Date().toISOString()
         }
         // make sure code is set as the default IDE
-        const ideSettings = additionalData.ideSettings || {};
+        const ideSettings = additionalData.ideSettings = additionalData.ideSettings || {};
         ideSettings.defaultIde = 'code';
         await getGitpodService().server.updateLoggedInUser({
             additionalData
