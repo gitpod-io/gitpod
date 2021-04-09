@@ -89,14 +89,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       this.setState({ startedInstanceId: result.instanceID });
       // Explicitly query state to guarantee we get at least one update
       // (needed for already started workspaces, and not hanging in 'Starting ...' for too long)
-      getGitpodService().server.getWorkspace(workspaceId).then(ws => {
-        if (ws.latestInstance) {
-          this.setState({
-            workspace: ws.workspace
-          });
-          this.onInstanceUpdate(ws.latestInstance);
-        }
-      });
+      this.fetchWorkspaceInfo();
     } catch (error) {
       console.error(error);
       if (typeof error === 'string') {
@@ -104,6 +97,26 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       }
       this.setState({ error });
     }
+  }
+
+  async fetchWorkspaceInfo() {
+    const { workspaceId } = this.props;
+    try {
+      const info = await getGitpodService().server.getWorkspace(workspaceId);
+      if (info.latestInstance) {
+        this.setState({
+          workspace: info.workspace
+        });
+        this.onInstanceUpdate(info.latestInstance);
+      }
+    } catch (error) {
+      console.error(error);
+      this.setState({ error });
+    }
+  }
+
+  notifyDidOpenConnection() {
+    this.fetchWorkspaceInfo();
   }
 
   async onInstanceUpdate(workspaceInstance: WorkspaceInstance) {
