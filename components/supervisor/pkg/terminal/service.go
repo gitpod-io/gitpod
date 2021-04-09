@@ -217,8 +217,8 @@ func (srv *MuxTerminalService) Listen(req *api.ListenTerminalRequest, resp api.T
 	errchan := make(chan error, 1)
 	messages := make(chan *api.ListenTerminalResponse, 1)
 	go func() {
-		buf := make([]byte, 4096)
 		for {
+			buf := make([]byte, 4096)
 			n, err := stdout.Read(buf)
 			if err == io.EOF {
 				break
