@@ -616,7 +616,7 @@ function AddMembersModal(props: {
             <div className="flex flex-col space-y-2 pb-4">
                 <label htmlFor="quantity" className="font-medium">Members</label>
                 <select name="quantity" value={quantity} className="rounded-md w-full border-2 border-gray-400"
-                    onChange={(e) => setQuantity(e.target.value as any)}>
+                    onChange={(e) => setQuantity(parseInt(e.target.value || '1', 10))}>
                     {quantities.map(n => (
                         <option key={`quantity-${n}`} value={n}>{n}</option>
                     ))}
@@ -684,7 +684,7 @@ function NewTeamModal(props: {
             <div className="flex flex-col space-y-2">
                 <label htmlFor="quantity" className="font-medium">Members</label>
                 <select name="quantity" value={quantity} className="rounded-md w-full border-2 border-gray-400"
-                    onChange={(e) => setQuantity(e.target.value as any)}>
+                    onChange={(e) => setQuantity(parseInt(e.target.value || '1', 10))}>
                     {quantities.map(n => (
                         <option key={`quantity-${n}`} value={n}>{n}</option>
                     ))}
