@@ -398,17 +398,17 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 				duration := ""
 				if elapsed >= 1*time.Minute {
 					elapsedInMinutes := strconv.Itoa(int(elapsed.Minutes()))
-					duration = "🎉 You just saved " + elapsedInMinutes + " minute"
+					duration = "🎉 Well done on saving " + elapsedInMinutes + " minute"
 					if elapsedInMinutes != "1" {
 						duration += "s"
 					}
-					duration += " of watching your code build.\n"
+					duration += "\n"
 				}
 				data := string(buf[:n])
 				fileWriter.Write(buf[:n])
 				tm.reporter.write(data, task, terminal)
 
-				endMessage := "\n🍌 This task ran as part of a workspace prebuild.\n" + duration + "\n"
+				endMessage := "\n🤙 This task ran as a workspace prebuild\n" + duration + "\n"
 				fileWriter.WriteString(endMessage)
 				break
 			}
