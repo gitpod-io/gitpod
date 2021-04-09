@@ -61,45 +61,12 @@ export default function () {
             server.getAppliedCoupons().then(v => () => setAppliedCoupons(v)),
             server.getGithubUpgradeUrls().then(v => () => setGitHubUpgradeUrls(v)),
             server.getPrivateRepoTrialEndDate().then(v => () => setPrivateRepoTrialEndDate(v)),
-        ]).then(setters => setters.forEach(s => s()))
-          .then(() => {
-              handleTeamClaim();
-          });
-
+        ]).then(setters => setters.forEach(s => s()));
 
         return function cleanup() {
             clearTimeout(pollAccountStatementTimeout!);
         }
     }, []);
-
-    const handleTeamClaim = async () => {
-        const teamId = new URL(window.location.href).searchParams.get('teamid');
-        if (!teamId) {
-            return;
-        }
-        const currentlyActiveSubscriptions = (accountStatement?.subscriptions || []).filter(s => Subscription.isActive(s, new Date().toISOString()));
-        const assignedSubscriptions = currentlyActiveSubscriptions.filter(s => AssignedTeamSubscription.is(s));
-        if (assignedSubscriptions.some(s => !!s.teamSubscriptionSlotId)) {
-            return;
-        }
-
-        const freeSlot = await getGitpodService().server.tsGetUnassignedSlot(teamId);
-        if (!freeSlot) {
-            setTeamClaimModal({
-                mode: "error",
-                errorText: "This invitation is no longer valid. Please contact the team owner.",
-            });
-            return;
-        }
-
-        setTeamClaimModal({
-            mode: "confirmation",
-            teamId,
-            slotId: freeSlot.id,
-            text: "You are about to claim a seat in a team.",
-        })
-
-    };
 
     console.log('privateRepoTrialEndDate', privateRepoTrialEndDate);
 
@@ -112,15 +79,35 @@ export default function () {
     const paidPlan = paidSubscription && Plans.getById(paidSubscription.planId);
 
     const assignedTeamSubscriptions = activeSubscriptions.filter(s => AssignedTeamSubscription.is(s));
-    console.log('assignedTeamSubscriptions', assignedTeamSubscriptions);
     const getAssignedTs = (type: PlanType) => assignedTeamSubscriptions.find(s => {
         const p = Plans.getById(s.planId);
         return !!p && p.type === type
     });
-    const assignedUnleashedTs = getAssignedTs('professional');
     const assignedProfessionalTs = getAssignedTs('professional-new');
+    const assignedUnleashedTs = getAssignedTs('professional');
     const assignedStudentUnleashedTs = getAssignedTs('student');
-    const assignedTs = assignedUnleashedTs || assignedProfessionalTs || assignedStudentUnleashedTs;
+    const assignedTs = assignedProfessionalTs || assignedUnleashedTs || assignedStudentUnleashedTs;
+
+    const claimedTeamSubscriptionId = new URL(window.location.href).searchParams.get('teamid');
+    if (!!claimedTeamSubscriptionId && !assignedTeamSubscriptions.some(s => !!s.teamSubscriptionSlotId)) {
+        // Remove all query parameters from the current URL, without actually navigating anywhere
+        window.history.replaceState({}, '', window.location.pathname);
+        getGitpodService().server.tsGetUnassignedSlot(claimedTeamSubscriptionId).then(freeSlot => {
+            if (!freeSlot) {
+                setTeamClaimModal({
+                    mode: "error",
+                    errorText: "This invitation is no longer valid. Please contact the team owner.",
+                });
+            } else {
+                setTeamClaimModal({
+                    mode: "confirmation",
+                    teamId: claimedTeamSubscriptionId,
+                    slotId: freeSlot.id,
+                    text: "You are about to claim a seat in a team.",
+                });
+            }
+        });
+    }
 
     const [ pendingUpgradePlan, setPendingUpgradePlan ] = useState<PendingPlan | undefined>(getLocalStorageObject('pendingUpgradePlan'));
     const setPendingUpgrade = (to: PendingPlan) => {
@@ -444,7 +431,7 @@ export default function () {
                 </div>
                 <div className="flex justify-end mt-6">
                     {teamClaimModal.mode === "confirmation" && (
-                        <React.Fragment>
+                        <>
                             <button className="secondary" onClick={() => setTeamClaimModal(undefined)}>Cancel</button>
                             <button className="ml-2" onClick={async () => {
                                 try {
@@ -462,7 +449,7 @@ export default function () {
                                     })
                                 }
                             }}>Accept Invitation</button>
-                        </React.Fragment>
+                        </>
                     )}
                     {teamClaimModal.mode === "error" && (
                         <button className="secondary" onClick={() => setTeamClaimModal(undefined)}>Close</button>
