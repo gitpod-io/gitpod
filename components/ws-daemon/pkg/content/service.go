@@ -265,7 +265,6 @@ func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest, upperdir strin
 			InstanceID:          req.Id,
 			FullWorkspaceBackup: req.FullWorkspaceBackup,
 			ContentManifest:     req.ContentManifest,
-			UserNamespaced:      true,
 
 			ServiceLocDaemon: filepath.Join(s.config.WorkingArea, req.Id+"-daemon"),
 			ServiceLocNode:   filepath.Join(s.config.WorkingAreaNode, req.Id+"-daemon"),
@@ -480,8 +479,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		}()
 
 		var opts []archive.TarOption
-		// TODO (aledbf): remove after April release (user namespace is not a feature preview)
-		if !sess.FullWorkspaceBackup && sess.UserNamespaced {
+		if !sess.FullWorkspaceBackup {
 			mappings := []archive.IDMapping{
 				{ContainerID: 0, HostID: wsinit.GitpodUID, Size: 1},
 				{ContainerID: 1, HostID: 100000, Size: 65534},
