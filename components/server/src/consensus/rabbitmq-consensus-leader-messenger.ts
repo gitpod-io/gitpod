@@ -23,7 +23,7 @@ export class RabbitMQConsensusLeaderMessenger extends AbstractMessageBusIntegrat
 
     async connect(): Promise<void> {
         await super.connect();
-        
+
         this.setupExchangeAndQueue();
     }
 

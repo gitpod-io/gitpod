@@ -38,7 +38,7 @@ if ! id -u gitpod; then
     addgroup -g 33333 gitpod;
     adduser -D -h /home/gitpod -s /bin/sh -u 33333 -G gitpod gitpod;
     echo "gitpod:gitpod" | chpasswd;
-    
+
     # To allow users to not know anything about our gitpod user, copy over all stuff from the previous user (root)
     cp -R /root/. /home/gitpod;
     chown -R gitpod:gitpod /home/gitpod/;

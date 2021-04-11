@@ -1,6 +1,6 @@
   1. login to [AWS](https://console.aws.amazon.com/console/home)
     1. obtain and export AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY following this guide: https://docs.aws.amazon.com/IAM/latest/UserGuide/getting-started_create-admin-group.html
-  
+
   1. open `main.auto.tfvars` and configure:
     1. `domain`: the domain you want gitpod to run on
     1. `region`: the [AWS region](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Concepts.RegionsAndAvailabilityZones.html) the cluster should be created in

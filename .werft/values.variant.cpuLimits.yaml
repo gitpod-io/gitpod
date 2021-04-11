@@ -1,6 +1,6 @@
 workspaceSizing:
   dynamic:
-    cpu: 
+    cpu:
       buckets:
         # three minutes of 5 CPUs: 5 [numCPU] * 100 [jiffies/sec] * (3 * 60) [seconds] = 90000
         - budget: 90000

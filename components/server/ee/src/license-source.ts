@@ -27,5 +27,5 @@ export class DBLicenseKeySource implements LicenseKeySource {
             domain: this.env.hostUrl.url.host,
         };
     }
-    
+
 }

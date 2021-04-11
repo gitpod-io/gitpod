@@ -46,7 +46,7 @@ daemon:
         size: 70000
   resources:
     cgroupBasePath: "/mnt/node-cgroups"
-    cpuBuckets: 
+    cpuBuckets:
 {{ .Values.workspaceSizing.dynamic.cpu.buckets | toYaml | indent 6 }}
     processPriorities:
       supervisor: 0

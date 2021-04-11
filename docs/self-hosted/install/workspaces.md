@@ -40,7 +40,7 @@ If you want to change the default sizing (~ 8GiB per workspace) you should
         #     limit: 200
         #
         # if there are no buckets configured, the dynamic CPU limiting is disabled.
-        cpu: 
+        cpu:
           buckets: []
           samplingPeriod: "10s"
           controlPeriod: "15m"

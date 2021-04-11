@@ -44,7 +44,7 @@ export default function UserDetail(p: { user: User }) {
 
     const email = User.getPrimaryEmail(p.user);
     const emailDomain = email.split('@')[ email.split('@').length - 1];
-    
+
     const updateUser: UpdateUserFunction = async fun => {
         setActivity(true);
         try {

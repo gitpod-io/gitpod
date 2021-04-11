@@ -66,8 +66,8 @@ export class OneTimeSecretServer implements Disposable {
     }
 
     /**
-     * serve registers a secret for one-time servance. 
-     * 
+     * serve registers a secret for one-time servance.
+     *
      * @param secret the secret to serve once
      * @param expirationTime time until which the secret is available
      * @returns the URL under which the secret is available

@@ -54,7 +54,7 @@ export class SessionHandlerProvider {
             // - RFC draft sameSite: http://httpwg.org/http-extensions/draft-ietf-httpbis-cookie-same-site.html
             // - https://bugs.chromium.org/p/chromium/issues/detail?id=150066
             // - google: chromium not sending cookies set with redirect
-            
+
             const hostParts = hostName.split('.');
             const baseDomain = hostParts.slice(hostParts.length - 2).join('.');
             domain = `.${baseDomain}`;

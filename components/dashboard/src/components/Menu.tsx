@@ -13,8 +13,8 @@ import { UserContext } from "../user-context";
 import ContextMenu from "./ContextMenu";
 import { useLocation } from "react-router";
 interface Entry {
-    title: string, 
-    link: string, 
+    title: string,
+    link: string,
     alternatives?: string[]
 }
 

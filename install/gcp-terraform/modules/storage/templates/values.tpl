@@ -27,7 +27,7 @@ components:
       runtime: containerd
       containerd:
         socket: /run/containerd/containerd.sock
-      nodeRoots: 
+      nodeRoots:
         - /var/lib
     userNamespaces:
       shiftfsModuleLoader:

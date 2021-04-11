@@ -64,4 +64,4 @@ module.exports = {
             { from: 'public', to: '.' }
         ]
     })]
-}; 
+};

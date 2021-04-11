@@ -43,7 +43,7 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
     bind(DBWithTracing).toSelf().inSingletonScope();
     bind(TransactionalWorkspaceDbImpl).toSelf().inSingletonScope();
     bind(DeletedEntryGC).toSelf().inSingletonScope();
-    
+
     bind(TypeORMUserDBImpl).toSelf().inSingletonScope();
     bind(UserDB).toService(TypeORMUserDBImpl);
     bind(TermsAcceptanceDBImpl).toSelf().inSingletonScope();
@@ -59,10 +59,10 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
 
     bind(TypeORMUserStorageResourcesDBImpl).toSelf().inSingletonScope();
     bind(UserStorageResourcesDB).toService(TypeORMUserStorageResourcesDBImpl);
-    
+
     bind(TypeORMAppInstallationDBImpl).toSelf().inSingletonScope();
     bind(AppInstallationDB).toService(TypeORMAppInstallationDBImpl);
-    
+
     bind(TheiaPluginDBImpl).toSelf().inSingletonScope();
     bind(TheiaPluginDB).toService(TheiaPluginDBImpl);
 

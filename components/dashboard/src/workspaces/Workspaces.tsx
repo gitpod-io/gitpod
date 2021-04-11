@@ -96,7 +96,7 @@ export default class Workspaces extends React.Component<WorkspacesProps, Workspa
                         onClick: () => { if (wsModel) wsModel.limit = 200; }
                     }]} />
                 </div>
-                {wsModel && this.state?.workspaces.length > 0 ? 
+                {wsModel && this.state?.workspaces.length > 0 ?
                  <button onClick={this.showStartWSModal} className="ml-2">New Workspace</button>
                  : null
                 }
@@ -152,7 +152,7 @@ export default class Workspaces extends React.Component<WorkspacesProps, Workspa
                     description: r.description || r.url,
                     startUrl:  gitpodHostUrl.withContext(r.url).toString()
                 }))}
-                recent={wsModel && this.state?.workspaces ? 
+                recent={wsModel && this.state?.workspaces ?
                     this.getRecentSuggestions()
                 : []} />
         </>;

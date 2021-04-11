@@ -65,8 +65,8 @@ export default function () {
           .then(() => {
               handleTeamClaim();
           });
-        
-        
+
+
         return function cleanup() {
             clearTimeout(pollAccountStatementTimeout!);
         }
@@ -459,7 +459,7 @@ export default function () {
                                     setTeamClaimModal({
                                         mode: "error",
                                         errorText: `Error: ${error.message}`,
-                                    })   
+                                    })
                                 }
                             }}>Accept Invitation</button>
                         </React.Fragment>
@@ -504,7 +504,7 @@ function PlanCard(p: PlanCardProps) {
         </div>
         <div className="relative w-full">
             {p.isTsAssigned && (
-                <div className="absolute w-full mt-5 text-center font-semibold">Team seat assigned</div>    
+                <div className="absolute w-full mt-5 text-center font-semibold">Team seat assigned</div>
             )}
             <div className="absolute w-full mt-5 text-center font-semibold">{p.bottomLabel}</div>
         </div>

@@ -60,7 +60,7 @@ module "gitpod" {
 
     installation:
       region: ${var.region}
-    
+
     components:
       # Necessary to make minio send the right header to S3 (region headers must match)
       contentService:
@@ -72,7 +72,7 @@ module "gitpod" {
         certbot:
           enabled: ${var.certbot_enabled}
           email: ${var.certificate_email}
-      
+
     EOT
   ]
 

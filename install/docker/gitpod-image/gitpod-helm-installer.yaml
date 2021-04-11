@@ -58,7 +58,7 @@ data:
       helm dependency update
       helm install gitpod . --timeout 60m --values /root/install/values.yaml
     fi
-    
+
     echo ""
     echo "Done"
   values.yaml: |-

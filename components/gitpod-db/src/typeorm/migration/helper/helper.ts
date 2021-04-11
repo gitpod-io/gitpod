@@ -25,7 +25,7 @@ export async function indexExists(queryRunner: QueryRunner, tableName: string, i
                 AND table_name = '${tableName}'
                 AND index_name = '${indexName}'`
     );
-    return countResult[0].cnt === 1; 
+    return countResult[0].cnt === 1;
 };
 
 export async function columnExists(queryRunner: QueryRunner, tableName: string, columnName: string): Promise<boolean> {
@@ -36,16 +36,16 @@ export async function columnExists(queryRunner: QueryRunner, tableName: string, 
                 AND table_name = '${tableName}'
                 AND column_name = '${columnName}'`
     );
-    return countResult[0].cnt === 1; 
+    return countResult[0].cnt === 1;
 };
 
 export async function tableExists(queryRunner: QueryRunner, tableName: string): Promise<boolean> {
     const database = queryRunner.connection.options.database;
     const countResult = await queryRunner.query(
-        `SELECT COUNT(1) AS cnt FROM INFORMATION_SCHEMA.TABLES 
-            WHERE table_schema = '${database}' 
+        `SELECT COUNT(1) AS cnt FROM INFORMATION_SCHEMA.TABLES
+            WHERE table_schema = '${database}'
                 AND table_name = '${tableName}'`
     );
-    return countResult[0].cnt === 1; 
+    return countResult[0].cnt === 1;
 };
 

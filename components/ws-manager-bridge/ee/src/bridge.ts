@@ -14,7 +14,7 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()
 export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
-    
+
     protected async cleanupProbeWorkspace(ctx: TraceContext, status: WorkspaceStatus.AsObject | undefined) {
         if (!status) {
             return;

@@ -55,8 +55,8 @@ add_nameserver() {
 
 
 # If we run gitpod-k3s in a docker-compose setting, we probably want to access
-# other containers (e.g. the a local registry or GitLab instance) from within 
-# the k3s cluster (e.g. from the workspaces). For this, we need access to 
+# other containers (e.g. the a local registry or GitLab instance) from within
+# the k3s cluster (e.g. from the workspaces). For this, we need access to
 # Docker's internal DNS from within the k3s cluster.
 # For this, we
 # a) add an IP table rule that redirects DNS traffic to localhost (in the k3s container)
@@ -105,7 +105,7 @@ fi
 
 
 # configure Gitpod for mygitpod.com domain
-case "$DOMAIN" in 
+case "$DOMAIN" in
   *ip.mygitpod.com)
     cat << EOF > /default_values/03_ip_mygitpod_com.yaml
 forceHTTPS: true

@@ -10,9 +10,9 @@ import { GitTokenValidator } from "./git-token-validator";
 
 @injectable()
 export class GitTokenScopeGuesser {
-    
+
     @inject(GitTokenValidator) tokenValidator: GitTokenValidator;
-    
+
     async guessGitTokenScopes(authProvider: AuthProviderInfo | undefined, params: GuessGitTokenScopesParams): Promise<GuessedGitTokenScopes> {
         if (!authProvider) {
             return { message: "Unknown host" };

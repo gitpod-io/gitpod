@@ -23,7 +23,7 @@ export default class WorkspaceLogs extends React.Component<WorkspaceLogsProps, W
   protected xTermParentRef: React.RefObject<HTMLDivElement>;
   protected terminal: Terminal | undefined;
   protected fitAddon: FitAddon | undefined;
-  
+
   constructor(props: WorkspaceLogsProps) {
     super(props);
     this.xTermParentRef = React.createRef();

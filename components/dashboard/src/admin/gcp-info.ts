@@ -28,7 +28,7 @@ export function getAdminLinks(workspace: WorkspaceAndInstance): Link[] {
     return internalGetAdminLinks(gcp, baseDomain, workspace.status.podName, workspace.status.nodeName);
 }
 
-function internalGetAdminLinks(gcpInfo: GcpInfo, 
+function internalGetAdminLinks(gcpInfo: GcpInfo,
                             baseDomain: string,
                             podName?: string,
                             nodeName?: string): Link[] {

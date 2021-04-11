@@ -66,7 +66,7 @@ export class DBWorkspace implements Workspace {
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
     })
     softDeletedTime?: string;
-    
+
     @Column({
         default: '',
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED

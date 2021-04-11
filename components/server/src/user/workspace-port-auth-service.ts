@@ -66,7 +66,7 @@ export class WorkspacePortAuthorizationService {
 
         const decision = this.decide(this.env.portAccessForUsersOnly, hasValidCookieForWorkspace, !!authenticatedUser, wsAndPortConfig);
         this.accessDecisionCache.set(cacheKey, decision);
-        
+
         return decision;
     }
 
