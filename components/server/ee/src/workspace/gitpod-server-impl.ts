@@ -300,7 +300,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
         this.requireEELicense(Feature.FeatureAdminDashboard);
 
         await this.guardAdminAccess("adminGetUsers", {req}, Permission.ADMIN_USERS);
-        
+
         const span = opentracing.globalTracer().startSpan("adminGetUsers");
         try {
             const res = await this.userDB.findAllUsers(req.offset, req.limit, req.orderBy, req.orderDir === "asc" ? "ASC" : "DESC", req.searchTerm);

@@ -10,30 +10,30 @@
 import { WorkspaceClusterDB } from "../workspace-cluster-db";
 import { DBWorkspaceCluster } from "./entity/db-workspace-cluster";
 import { WorkspaceCluster, WorkspaceClusterFilter, WorkspaceClusterWoTls } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
- 
+
  @injectable()
  export class WorkspaceClusterDBImpl implements WorkspaceClusterDB {
- 
+
      @inject(TypeORM) typeORM: TypeORM;
- 
+
      protected async getEntityManager(): Promise<EntityManager> {
          return (await this.typeORM.getConnection()).manager;
      }
- 
+
      protected async getRepo(): Promise<Repository<DBWorkspaceCluster>> {
          return (await this.getEntityManager()).getRepository(DBWorkspaceCluster);
      }
- 
+
      async save(cluster: WorkspaceCluster): Promise<void> {
          const repo = await this.getRepo();
          await repo.save(cluster);
      }
- 
+
      async deleteByName(name: string): Promise<void> {
          const repo = await this.getRepo();
          await repo.deleteById(name);
      }
- 
+
      async findByName(name: string): Promise<WorkspaceCluster | undefined> {
          const repo = await this.getRepo();
          return repo.findOneById(name);
@@ -69,4 +69,3 @@ import { WorkspaceCluster, WorkspaceClusterFilter, WorkspaceClusterWoTls } from 
         return qb.getMany();
     }
  }
- 

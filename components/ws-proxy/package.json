@@ -7,4 +7,3 @@
       "preflight": "go fmt ./... && go test -v ./... && golangci-lint run"
     }
   }
-  

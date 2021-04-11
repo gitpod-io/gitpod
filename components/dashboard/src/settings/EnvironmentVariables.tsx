@@ -66,7 +66,7 @@ function AddEnvVarModal(p: EnvVarModalProps) {
             </div>
             <div className="mt-4">
                 <h4>Scope</h4>
-                <input className="w-full" type="text" value={ev.repositoryPattern} placeholder="e.g. org/project" 
+                <input className="w-full" type="text" value={ev.repositoryPattern} placeholder="e.g. org/project"
                     onChange={(v) => { update({repositoryPattern: v.target.value}) }} />
             </div>
             <div className="mt-1">

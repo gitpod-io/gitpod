@@ -25,7 +25,7 @@ service WorkspaceManager {
 
     // markActive records a workspace as being active which prevents it from timing out
     rpc MarkActive(MarkActiveRequest) returns (MarkActiveResponse) {}
-    
+
     // setTimeout changes the default timeout for a running workspace
     rpc SetTimeout(SetTimeoutRequest) returns (SetTimeoutResponse) {}
 
@@ -117,7 +117,7 @@ message SubscribeResponse {
         WorkspaceStatus status = 1;
         WorkspaceLogMessage log = 2;
     }
-    
+
     map<string, string> header = 3;
 }
 

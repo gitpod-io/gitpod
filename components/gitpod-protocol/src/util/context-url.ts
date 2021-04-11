@@ -14,7 +14,7 @@ export function contextUrlToUrl(contextUrl: string | undefined): URL | undefined
   if (contextUrl === undefined) {
     return undefined;
   }
-  
+
   if (contextUrl.startsWith("http")) {
     return new URL(contextUrl);
   }

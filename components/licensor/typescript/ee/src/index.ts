@@ -60,7 +60,7 @@ export class LicenseEvaluator {
     public canUsePrebuild(totalPrebuildSecondsSpent: number): boolean {
         return canUsePrebuild(this.instanceID, totalPrebuildSecondsSpent);
     }
-    
+
     public inspect(): LicensePayload {
         return JSON.parse(inspect(this.instanceID));
     }

@@ -255,7 +255,7 @@ export class ClusterServiceServer {
         if (port === 0) {
             throw new Error(`binding gRPC server to '${bindTo}' failed`);
         }
-        
+
         server.start();
         log.info(`gRPC server listening on: ${bindTo}`);
     }

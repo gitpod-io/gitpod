@@ -6,12 +6,12 @@
 
 /**
  * Returns the <code>day</code>th of the next month from <code>formDate</code>.
- * If the next month does not have a <code>day</code>th, the last day of that 
+ * If the next month does not have a <code>day</code>th, the last day of that
  * month is taken.
  * The time is copied from <code>fromDate</code>.
- * 
- * @param fromDate 
- * @param day 
+ *
+ * @param fromDate
+ * @param day
  */
 export function oneMonthLater(fromDate: string, day?: number): string {
     const later = new Date(fromDate);

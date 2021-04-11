@@ -179,7 +179,7 @@ export class TypeORMUserDBImpl implements UserDB {
         const repo = await this.getGitpodTokenRepo();
         await repo.insert(token);
     }
-    
+
     public async deleteGitpodToken(tokenHash: string): Promise<void> {
         const repo = await this.getGitpodTokenRepo();
         await repo.query(`
@@ -324,10 +324,10 @@ export class TypeORMUserDBImpl implements UserDB {
         const qBuilder = userRepo.createQueryBuilder('user')
             .leftJoinAndSelect("user.identities", "identity");
         if (searchTerm) {
-            qBuilder.andWhere(`user.name LIKE :searchTerm 
-                OR user.fullName LIKE :searchTerm 
+            qBuilder.andWhere(`user.name LIKE :searchTerm
+                OR user.fullName LIKE :searchTerm
                 OR user.id in (
-                        SELECT userid from d_b_identity AS i WHERE 
+                        SELECT userid from d_b_identity AS i WHERE
                                 i.deleted != true
                             AND i.primaryEmail LIKE :searchTerm
                 )`, { searchTerm: '%' + searchTerm + '%' });

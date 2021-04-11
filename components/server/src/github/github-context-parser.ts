@@ -361,7 +361,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
             const ref = branchRef && branchRef.name || undefined;
             const refType = ref ? "branch" : undefined;
 
-            
+
             return <IssueContext>{
                 title: result.data.repository.issue.title,
                 owner,

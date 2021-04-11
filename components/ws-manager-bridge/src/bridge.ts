@@ -60,7 +60,7 @@ export class WorkspaceManagerBridge implements Disposable {
             log.debug(`starting DB updater: ${cluster.name}`, logPayload);
             /* no await */ this.startDatabaseUpdater(clientProvider, logPayload)
                 // this is a mere safe-guard: we do not expect the code inside to fail
-                .catch(err => log.error("cannot start database updater", err));   
+                .catch(err => log.error("cannot start database updater", err));
 
             const controllerInterval = this.config.controllerIntervalSeconds;
             if (controllerInterval <= 0) {
@@ -144,7 +144,7 @@ export class WorkspaceManagerBridge implements Disposable {
                     };
                 });
             }
-            
+
             if (!instance.status.conditions.firstUserActivity && status.conditions.firstUserActivity) {
                 // Only report this when it's observed the first time
                 const firstUserActivity = mapFirstUserActivity(rawStatus.getConditions()!.getFirstUserActivity())!;
@@ -218,7 +218,7 @@ export class WorkspaceManagerBridge implements Disposable {
             }
 
             await this.updatePrebuiltWorkspace({span}, status);
-            
+
             span.setTag("after", JSON.stringify(instance));
             await this.workspaceDB.trace({span}).storeInstance(instance);
             await this.messagebus.notifyOnInstanceUpdate({span}, userId, instance);

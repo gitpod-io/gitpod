@@ -14,7 +14,7 @@ import { DBOneTimeSecret } from "./entity/db-one-time-secret";
 @injectable()
 export class TypeORMOneTimeSecretDBImpl implements OneTimeSecretDB {
     @inject(TypeORM) protected readonly typeorm: TypeORM;
-    
+
     protected async getEntityManager(): Promise<EntityManager> {
         return (await this.typeorm.getConnection()).manager;
     }

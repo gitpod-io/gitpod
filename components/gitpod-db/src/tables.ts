@@ -31,7 +31,7 @@ export const TableDescriptionProvider = Symbol('TableDescriptionProvider');
 
 /**
  * BEWARE
- * 
+ *
  * When updating this list, make sure you update the deleted-entry-gc in gitpod-db
  * as well, if you're adding a table that needs some of its entries deleted.
  */

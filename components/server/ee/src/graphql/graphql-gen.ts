@@ -182,12 +182,12 @@ export type WorkspaceInstanceConditions = {
   timeout?: Maybe<Scalars['String']>;
   /**
    *  PullingImages marks if the workspace is currently pulling its images. This
-   * condition can only be set during PhaseCreating 
+   * condition can only be set during PhaseCreating
    */
   pullingImages?: Maybe<Scalars['Boolean']>;
   /**
    *  ServiceExists denotes if the workspace theia-/ports- services exist. This
-   * condition will be true if either of the two services exist. 
+   * condition will be true if either of the two services exist.
    */
   serviceExists?: Maybe<Scalars['Boolean']>;
   /**  deployed marks that a workspace instance was sent/deployed at a workspace manager  */

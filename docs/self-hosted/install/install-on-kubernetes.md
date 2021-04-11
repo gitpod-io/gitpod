@@ -11,11 +11,11 @@ For some cloud providers, we offer [Terraform](https://www.terraform.io/) script
 * [Installer for Amazon Web Services (AWS)](../install-on-aws-script/).
 
 ## Prerequisites
- 
- * A Kubernetes cluster in version 1.15 <= x <= 1.17. 
- 
+
+ * A Kubernetes cluster in version 1.15 <= x <= 1.17.
+
  * local `kubectl` with connection to your cluster
- 
+
  * local `helm` in version >= 3.
 
  Gitpod should work on small Kubernetes nodes out of the box (2vCPUs, 8GB RAM). For a better experience we recommend at least 4vCPUs and 16GB RAM for workspaces nodes. For cost efficiency, we recommend to enable cluster-autoscaling.

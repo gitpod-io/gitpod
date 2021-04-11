@@ -42,7 +42,7 @@ export class BitbucketApiFactory {
 @injectable()
 export class BasicAuthBitbucketApiFactory extends BitbucketApiFactory {
     protected createBitbucket(baseUrl: string, token: Token): APIClient {
-        
+
         return new Bitbucket({
             baseUrl,
             auth: {

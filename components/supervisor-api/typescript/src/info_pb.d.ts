@@ -11,7 +11,7 @@
 
 import * as jspb from "google-protobuf";
 
-export class WorkspaceInfoRequest extends jspb.Message { 
+export class WorkspaceInfoRequest extends jspb.Message {
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceInfoRequest.AsObject;
@@ -28,7 +28,7 @@ export namespace WorkspaceInfoRequest {
     }
 }
 
-export class WorkspaceInfoResponse extends jspb.Message { 
+export class WorkspaceInfoResponse extends jspb.Message {
     getWorkspaceId(): string;
     setWorkspaceId(value: string): void;
 
@@ -78,7 +78,7 @@ export namespace WorkspaceInfoResponse {
 
     export enum WorkspaceLocationCase {
         WORKSPACELOCATION_NOT_SET = 0,
-    
+
     WORKSPACE_LOCATION_FILE = 4,
 
     WORKSPACE_LOCATION_FOLDER = 5,

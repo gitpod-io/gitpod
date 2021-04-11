@@ -37,7 +37,7 @@ case "$DISTRO" in
     "alpine")
         DISTRO="alpine"
         ;;
-    
+
     *)
         DISTRO="UNDEFINED"
         ;;

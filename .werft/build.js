@@ -151,7 +151,7 @@ async function build(context, version) {
     // if (masterBuild) {
         /**
          * Deploy master
-         * 
+         *
          * [cw] we don't have a core-staging environment (yet)
          */
         // exec(`git config --global user.name "${context.Owner}"`);
@@ -179,7 +179,7 @@ async function build(context, version) {
             dstNamespace: `staging-${withWsCluster.subdomain}`,
         }
     }
-    
+
     const destname = version.split(".")[0];
     const namespace = `staging-${destname}`;
     const domain = `${destname}.staging.gitpod-dev.com`;
@@ -222,7 +222,7 @@ async function deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULi
             const additionalWsSubdomains = withWsCluster ? [withWsCluster.shortname] : [];
             await issueCertficate(werft, ".werft/certs", GCLOUD_SERVICE_ACCOUNT_PATH, namespace, "gitpod-dev.com", domain, "34.76.116.244", additionalWsSubdomains);
         }
-        
+
         werft.log('certificate', 'waiting for preview env namespace being re-created...');
         await namespaceRecreatedPromise;
 
@@ -334,7 +334,7 @@ async function deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULi
         // it's not possible to set certificatesSecret={} so we set secretName to empty string
         flags+=` --set certificatesSecret.secretName=""`;
     }
-    
+
     try {
         shell.cd("chart");
         werft.log('helm', 'installing Gitpod');
@@ -343,7 +343,7 @@ async function deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULi
             exec("kubectl get secret gcp-sa-cloud-storage-dev-sync-key -n werft -o yaml | yq d - metadata | yq w - metadata.name remote-storage-gcloud | kubectl apply -f -")
             flags+=` -f ../.werft/values.dev.gcp-storage.yaml`;
         }
-        
+
         exec(`helm dependencies up`);
         exec(`/usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/values.dev.yaml ${flags} gitpod .`);
 

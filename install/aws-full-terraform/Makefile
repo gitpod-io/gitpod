@@ -10,7 +10,7 @@ apply:
 
 .PHONY: fmt
 fmt:
-	for i in $(MODULES); do cd modules/$$i; terraform fmt; cd -; done 
+	for i in $(MODULES); do cd modules/$$i; terraform fmt; cd -; done
 	terraform fmt
 
 .PHONY: debug-apply

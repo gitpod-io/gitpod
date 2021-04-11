@@ -18,7 +18,7 @@ export class WorkspaceCluster1617205663692 implements MigrationInterface {
                     score int,
                     maxScore int,
                     govern tinyint(4) NOT NULL,
-                PRIMARY KEY (name), 
+                PRIMARY KEY (name),
                 KEY ind_state (state))
             ENGINE=InnoDB
             DEFAULT CHARSET=utf8mb4;`

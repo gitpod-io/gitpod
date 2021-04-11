@@ -73,7 +73,7 @@ export class Env extends AbstractComponentEnv {
 
     readonly daysBeforeGarbageCollection: number = parseInt(process.env.GITPOD_DAYS_BEFORE_GARBAGE_COLLECTION || '14', 10);
     readonly daysBeforeGarbageCollectingPrebuilds: number = parseInt(process.env.GITPOD_DAYS_BEFORE_GARBAGE_COLLECTING_PREBUILDS || '7', 10);
-    readonly garbageCollectionStartDate: number = process.env.GITPOD_GARBAGE_COLLECTION_START_DATE ? 
+    readonly garbageCollectionStartDate: number = process.env.GITPOD_GARBAGE_COLLECTION_START_DATE ?
         new Date(process.env.GITPOD_GARBAGE_COLLECTION_START_DATE).getTime():
         Date.now();
     readonly garbageCollectionLimit: number = parseInt(process.env.GITPOD_GARBAGE_COLLECTION_LIMIT || '1000', 10);
@@ -134,7 +134,7 @@ export class Env extends AbstractComponentEnv {
     protected parseBool(name: string) {
         return getEnvVar(name, 'false') === 'true';
     }
-    
+
     readonly blockNewUsers: boolean = this.parseBool("BLOCK_NEW_USERS");
     readonly makeNewUsersAdmin: boolean = this.parseBool("MAKE_NEW_USERS_ADMIN");
     readonly disableDynamicAuthProviderLogin: boolean = this.parseBool("DISABLE_DYNAMIC_AUTH_PROVIDER_LOGIN");

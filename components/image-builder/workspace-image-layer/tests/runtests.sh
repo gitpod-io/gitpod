@@ -7,7 +7,7 @@ BASE=$(pwd)
 
 cd positive
 
-for DOCKERFILE in $(ls *.dockerfile); do 
+for DOCKERFILE in $(ls *.dockerfile); do
     echo "********* BEGIN TEST $DOCKERFILE ************"
     BASE_IMG="$DOCKERFILE:test"
     WORKSPACE_IMG="$DOCKERFILE:layered"
@@ -21,8 +21,8 @@ for DOCKERFILE in $(ls *.dockerfile); do
     touch "$BASE/../gitpod-cli"
     docker run -v $WORKSPACE:/workspace -v "$BASE/..":/base $BASE_IMG sh -c "cd /workspace && /base/scripts/generate-dockerfile.sh $BASE_IMG"
 
-    docker build -f "$WORKSPACE/Dockerfile" -t $WORKSPACE_IMG $WORKSPACE 
-    
+    docker build -f "$WORKSPACE/Dockerfile" -t $WORKSPACE_IMG $WORKSPACE
+
     echo "docker run -v $WORKSPACE:/workspace $WORKSPACE_IMG /workspace/verify.sh"
     if ! docker run -v $WORKSPACE:/workspace --entrypoint="" $WORKSPACE_IMG /workspace/verify.sh; then
         echo "verify.sh failed."

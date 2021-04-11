@@ -23,14 +23,14 @@ export interface  IGitTokenValidatorParams {
 }
 
 export interface IGitTokenValidator {
-    checkWriteAccess(params: IGitTokenValidatorParams): Promise<CheckWriteAccessResult | undefined>;   
+    checkWriteAccess(params: IGitTokenValidatorParams): Promise<CheckWriteAccessResult | undefined>;
 }
 
 export const IGitTokenValidator = Symbol("IGitTokenValidator")
 
 @injectable()
 export class GitTokenValidator {
-    
+
     @inject(HostContextProvider) hostContextProvider: HostContextProvider;
 
     async checkWriteAccess(params: IGitTokenValidatorParams): Promise<CheckWriteAccessResult | undefined> {

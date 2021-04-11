@@ -35,7 +35,7 @@ export function WhatsNew(props: { visible: boolean, onClose: () => void }) {
         });
         setUser(user);
         props.onClose();
-    } 
+    }
     return <Modal visible={props.visible} onClose={internalClose}>
         <h3 className="pb-4">What's New 🎁</h3>
         <div className="border-t border-gray-200 -mx-6 px-6 py-4">

@@ -162,13 +162,13 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getPrivateRepoTrialEndDate(): Promise<string | undefined>;
 
     /**
-     * 
+     *
      */
     getAccountStatement(options: GitpodServer.GetAccountStatementOptions): Promise<AccountStatement | undefined>;
     getRemainingUsageHours(): Promise<number>;
 
     /**
-     * 
+     *
      */
     getChargebeeSiteId(): Promise<string>;
     createPortalSession(): Promise<{}>;

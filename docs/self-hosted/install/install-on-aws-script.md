@@ -9,7 +9,7 @@ url: /docs/self-hosted/latest/install/install-on-aws-script/
 This guide explains how to install an instance of Gitpod with 3 simple steps:
 
 ## 1. Get your AWS credentials
- 
+
 You need an [AWS account](https://aws.amazon.com/). Once you have access to an account, follow [these steps](https://docs.aws.amazon.com/IAM/latest/UserGuide/getting-started_create-admin-group.html) to obtain valid credentials.
 
 ```bash

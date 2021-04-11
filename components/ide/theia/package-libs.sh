@@ -38,15 +38,15 @@ do
     if [ "${LIB_ORIG}" = "ldd" ]; then
         continue
     fi
-    if [ -f "${LIB_ORIG}" ]; then 
+    if [ -f "${LIB_ORIG}" ]; then
         LIB_DST="${DST}$(basename $LIB_ORIG)"
-        if [ ! -f $LIB_DST ]; then 
+        if [ ! -f $LIB_DST ]; then
             cp "${LIB_ORIG}" "${LIB_DST}"
             "$0" "${LIB_DST}"
         fi
         patchelf --replace-needed "${LIB_NAME}" "${LIB_DST}" "${BINARY}"
         echo "${BINARY}: changed needed library from ${LIB_NAME} to ${LIB_DST}"
-    else 
+    else
         echo "${BINARY}: library $LIB_ORIG not found."
     fi
 done < <(ldd $BINARY 2>/dev/null)

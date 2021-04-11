@@ -27,7 +27,7 @@ export function skipIf(doSkip: (suite: TestSuiteContext) => boolean): MochaTypeS
             }
         })
     };
-    
+
     // Mark as "trait": mimics the behavior of https://github.com/testdeck/testdeck/blob/9d2dd6a458c2c86c945f6f2999b8278b7528a7a7/index.ts#L433
     (trait as any)["__mts_isTrait"] = true;
     return trait;

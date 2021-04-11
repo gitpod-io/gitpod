@@ -161,7 +161,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     /**
      * We don't need to/want to publish all internal details we maintain about a workspace instance.
      * This function removes instance details we do not want to share with the dashboard/Theia/potential attackers.
-     * 
+     *
      * @param wsi the workspace instance shape we want to censor
      */
     protected censorInstance<T extends WorkspaceInstance | undefined>(wsi: T): T {
@@ -881,17 +881,17 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
     /**
      * Extension point for implementing eligibility checks. Throws a ResponseError if not eligible.
-     * @param ctx 
-     * @param user 
-     * @param runningInstances 
+     * @param ctx
+     * @param user
+     * @param runningInstances
      */
     protected async mayStartWorkspace(ctx: TraceContext, user: User, runningInstances: Promise<WorkspaceInstance[]>): Promise<void> {
     }
 
     /**
      * Extension point for implementing eligibility checks. Throws a ResponseError if not eligible.
-     * @param user 
-     * @param context 
+     * @param user
+     * @param context
      */
     protected async mayOpenContext(user: User, context: WorkspaceContext): Promise<void> {
     }

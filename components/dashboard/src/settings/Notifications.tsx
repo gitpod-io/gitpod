@@ -45,13 +45,13 @@ export default function Notifications() {
     return <div>
         <PageWithSubMenu subMenu={settingsMenu}  title='Notifications' subtitle='Choose when to be notified.'>
             <h3>Email Notification Preferences</h3>
-            <CheckBox 
-                title="Account Notifications" 
+            <CheckBox
+                title="Account Notifications"
                 desc="Receive emails about changes to your account"
                 checked={isTransactionalMail}
                 onChange={toggleTransactionalMail}/>
-            <CheckBox 
-                title="Marketing Notifications" 
+            <CheckBox
+                title="Marketing Notifications"
                 desc="Receive product marketing emails"
                 checked={isMarketingMail}
                 onChange={toggleMarketingMail}/>
