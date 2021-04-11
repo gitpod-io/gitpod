@@ -3,7 +3,7 @@
 
 {{ if not .Values.components.cerc.disabled -}}
 kind: RoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: cerc
   labels:
