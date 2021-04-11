@@ -2,7 +2,7 @@
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 kind: RoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
+apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: workspace
   labels:
