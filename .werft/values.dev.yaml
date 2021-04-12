@@ -34,6 +34,7 @@ components:
     replicas: 1
     makeNewUsersAdmin: true # for development
     theiaPluginsBucketName: gitpod-core-dev-plugins
+    enableLocalApp: true
 
   registryFacade:
     daemonSet: true
