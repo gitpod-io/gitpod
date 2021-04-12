@@ -209,7 +209,7 @@ components:
       requests:
         cpu: 100m
         memory: 128Mi
-    alpineImage: alpine:3.9
+    alpineImage: alpine:3.13
     selfBuildBaseImage: ""
     ports:
       rpc:
