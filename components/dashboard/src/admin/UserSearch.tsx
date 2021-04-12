@@ -63,7 +63,7 @@ export default function UserSearch() {
             setSearching(false);
         }
     }
-    return <PageWithSubMenu subMenu={adminMenu} title="Users" subtitle="Search an manage all users.">
+    return <PageWithSubMenu subMenu={adminMenu} title="Users" subtitle="Search and manage all users.">
         <div className="pt-8 flex">
             <div className="flex justify-between w-full">
                 <div className="flex">
