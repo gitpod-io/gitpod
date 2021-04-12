@@ -453,7 +453,7 @@ func (b *DockerBuilder) createBuildVolume(ctx context.Context, buildID string) (
 	logs := bytes.NewBuffer(nil)
 	err = b.runContainer(ctx, logs, initcontainer.ID)
 	if err != nil {
-		return "", xerrors.Errorf("cannot create build volume: %w", logs.String())
+		return "", xerrors.Errorf("cannot create build volume: %v", logs.String())
 	}
 
 	return buildVolName, nil
