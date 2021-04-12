@@ -4,7 +4,7 @@
 
 ################ Alpine ####################
 # copy nodejs from the official alpine-based image because of https://github.com/TypeFox/gitpod/issues/2579
-FROM node:12.14.1-alpine AS node_installer
+FROM node:12.22.1-alpine AS node_installer
 RUN mkdir -p /theia/node/bin \
     /theia/node/include/node/ \
     /theia/node/lib/node_modules/npm/ \
@@ -15,9 +15,9 @@ RUN mkdir -p /theia/node/bin \
     cp -ar /usr/local/include/node/         /theia/node/include/ && \
     cp -ar /usr/local/lib/node_modules/npm/ /theia/node/lib/node_modules/
 
-FROM alpine:3.9 AS builder_alpine
+FROM alpine:3.13 AS builder_alpine
 
-RUN apk add --no-cache bash gcc g++ make pkgconfig python libc6-compat libexecinfo-dev git patchelf findutils curl jq
+RUN apk add --no-cache bash gcc g++ make pkgconfig python3 libc6-compat libexecinfo-dev git patchelf findutils curl jq
 
 # install node
 COPY --from=node_installer /theia/node/ /theia/node/
@@ -25,13 +25,13 @@ ENV PATH=$PATH:/theia/node/bin/
 
 
 # install yarn by download+unpack to ensure it does NOT put anything into /theia/node/
-RUN wget https://github.com/yarnpkg/yarn/releases/download/v1.15.2/yarn-v1.15.2.tar.gz
-RUN tar zvxf yarn-v1.15.2.tar.gz
-ENV PATH=$PATH:/yarn-v1.15.2/bin/
+RUN wget https://github.com/yarnpkg/yarn/releases/download/v1.22.10/yarn-v1.22.10.tar.gz
+RUN tar zvxf yarn-v1.22.10.tar.gz
+ENV PATH=$PATH:/yarn-v1.22.10/bin/
 
 # yq - jq for YAML files
 RUN cd /usr/bin \
-    && curl -fsSL https://github.com/mikefarah/yq/releases/download/2.4.0/yq_linux_amd64 > yq \
+    && curl -fsSL https://github.com/mikefarah/yq/releases/download/v4.6.3/yq_linux_amd64 > yq \
     && chmod +x yq
 ENV PATH=$PATH:/usr/bin/
 
