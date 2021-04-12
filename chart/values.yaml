@@ -514,6 +514,10 @@ mysql:
   volumePermissions:
     enabled: true
 
+loki:
+  enabled: true
+  fullnameOverride: loki
+
 rabbitmq:
   fullnameOverride: "messagebus"
   # non-standard configuration

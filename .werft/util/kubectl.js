@@ -66,7 +66,7 @@ function deleteNonNamespaceObjects(namespace, destname, shellOpts) {
     exec(`/usr/local/bin/helm3 delete jaeger-${destname} || echo jaeger-${destname} was not installed yet`, {slice: 'predeploy cleanup'});
 
     let objs = [];
-    ["ws-scheduler", "node-daemon", "cluster", "workspace", "jaeger", "jaeger-agent", "ws-sync", "ws-manager-node", "ws-daemon", "registry-facade"].forEach(comp =>
+    ["ws-scheduler", "node-daemon", "cluster", "workspace", "jaeger", "jaeger-agent", "ws-sync", "ws-manager-node", "ws-daemon", "registry-facade", "loki"].forEach(comp =>
         ["ClusterRole", "ClusterRoleBinding", "PodSecurityPolicy"].forEach(kind =>
             exec(`kubectl get ${kind} -l component=${comp} --no-headers -o=custom-columns=:metadata.name | grep ${namespace}-ns`, { dontCheckRc: true })
                 .split("\n")
