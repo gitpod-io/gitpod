@@ -43,7 +43,7 @@ function Menu(props: { left: Entry[], right: Entry[] }) {
     const { user } = useContext(UserContext);
 
     return (
-        <header className="lg:px-28 px-10 bg-white flex flex-wrap items-center py-4">
+        <header className="lg:px-28 px-10 flex flex-wrap items-center py-4">
             <div className="flex justify-between items-center pr-3">
                 <Link to="/">
                     <img src={gitpodIcon} className="h-6" />

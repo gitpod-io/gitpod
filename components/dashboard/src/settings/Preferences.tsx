@@ -28,6 +28,12 @@ export default function Preferences() {
         await getGitpodService().server.updateLoggedInUser({ additionalData });
         setDefaultIde(value);
     }
+    const [ isDarkTheme, setIsDarkTheme ] = useState<boolean>(document.documentElement.classList.contains('dark'));
+    const actuallySetIsDarkTheme = (is: boolean) => {
+        document.documentElement.classList.toggle('dark', is);
+        localStorage.theme = is ? 'dark' : 'light';
+        setIsDarkTheme(is);
+    }
 
     return <div>
         <PageWithSubMenu subMenu={settingsMenu}  title='Preferences' subtitle='Configure user preferences.'>
@@ -44,6 +50,12 @@ export default function Preferences() {
                         <img className="w-16" src={theia}/>
                     </div>
                 </SelectableCard>
+            </div>
+            <h3 className="mt-12">Color Scheme</h3>
+            <p className="text-base text-gray-500">Light or dark?</p>
+            <div className="mt-4 space-x-4 flex">
+                <label><input type="radio" name="theme" value="light" checked={!isDarkTheme} onChange={() => actuallySetIsDarkTheme(false)}></input> Light</label>
+                <label><input type="radio" name="theme" value="dark" checked={isDarkTheme} onChange={() => actuallySetIsDarkTheme(true)}></input> Dark</label>
             </div>
         </PageWithSubMenu>
     </div>;

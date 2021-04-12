@@ -9,8 +9,14 @@
 @tailwind utilities;
 
 @layer base {
+    html, body {
+        @apply h-full;
+    }
+    body {
+        @apply bg-white dark:bg-gitpod-black text-black dark:text-white;
+    }
     h1 {
-        @apply text-gray-900 font-bold;
+        @apply text-gray-900 dark:text-gray-50 font-bold;
         line-height: 64px;
         font-size: 48px;
     }
@@ -18,13 +24,13 @@
         @apply text-base text-gray-500;
     }
     h3 {
-        @apply text-2xl text-gray-800 leading-9 font-semibold;
+        @apply text-2xl text-gray-800 dark:text-gray-100 leading-9 font-semibold;
     }
     h4 {
-        @apply pb-2 text-sm font-semibold text-gray-600;
+        @apply pb-2 text-sm font-semibold text-gray-600 dark:text-gray-400;
     }
     p {
-        @apply text-sm text-gray-400;
+        @apply text-sm text-gray-400 dark:text-gray-600;
     }
 
     .btn-login {
