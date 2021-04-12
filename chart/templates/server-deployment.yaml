@@ -158,6 +158,10 @@ spec:
         - name: BLOCK_NEW_USERS
           value: {{ $comp.blockNewUsers | quote }}
     {{- end }}
+    {{- if $comp.blockNewUsersWhiteList }}
+        - name: BLOCK_NEW_USERS_WHITE_LIST
+          value: {{ $comp.blockNewUsersWhiteList | quote }}
+    {{- end }}
     {{- if $comp.makeNewUsersAdmin }}
         - name: MAKE_NEW_USERS_ADMIN
           value: {{ $comp.makeNewUsersAdmin | quote }}

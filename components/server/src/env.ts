@@ -136,6 +136,7 @@ export class Env extends AbstractComponentEnv {
     }
 
     readonly blockNewUsers: boolean = this.parseBool("BLOCK_NEW_USERS");
+    readonly blockNewUsersWhiteList: string = getEnvVar("BLOCK_NEW_USERS_WHITE_LIST");
     readonly makeNewUsersAdmin: boolean = this.parseBool("MAKE_NEW_USERS_ADMIN");
     readonly disableDynamicAuthProviderLogin: boolean = this.parseBool("DISABLE_DYNAMIC_AUTH_PROVIDER_LOGIN");
 
