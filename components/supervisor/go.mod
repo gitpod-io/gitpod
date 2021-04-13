@@ -7,6 +7,8 @@ replace github.com/docker/distribution v2.7.1+incompatible => github.com/docker/
 
 replace github.com/docker/docker v1.13.1 => github.com/docker/engine v0.0.0-20190822205725-ed20165a37b4 // leeway ignore
 
+replace github.com/jpillora/chisel => github.com/csweichel/chisel v1.7.6-0.20210413131541-40f425137158 // leeway ignore
+
 require (
 	github.com/Netflix/go-env v0.0.0-20200908232752-3e802f601e28
 	github.com/creack/pty v1.1.11
@@ -22,7 +24,8 @@ require (
 	github.com/google/uuid v1.1.4
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.2.0
-	github.com/mailru/easygo v0.0.0-20190618140210-3c14a0dc985f // indirect
+	github.com/jpillora/chisel v1.7.6
+	github.com/mailru/easygo v0.0.0-20190618140210-3c14a0dc985f
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/prometheus/procfs v0.6.0
 	github.com/sirupsen/logrus v1.7.0
