@@ -38,11 +38,11 @@ export function WhatsNew(props: { visible: boolean, onClose: () => void }) {
     }
     return <Modal visible={props.visible} onClose={internalClose}>
         <h3 className="pb-4">What's New 🎁</h3>
-        <div className="border-t border-gray-200 -mx-6 px-6 py-4">
+        <div className="border-t border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4">
             <p className="pb-2 text-gray-900 text-base font-medium">New Dashboard</p>
             <p className="pb-2 text-gray-500 text-sm">We have made some layout changes on the dashboard to improve the overall user experience of Gitpod.</p>
         </div>
-        <div className="border-t border-b border-gray-200 -mx-6 px-6 py-4">
+        <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4">
             <p className="pb-2 text-gray-900 text-base font-medium">VS Code</p>
             <p className="pb-4 text-gray-500 text-sm">We are changing the default IDE to VS Code.</p>
             <ol className="pb-2 text-gray-500 text-sm list-outside list-decimal space-y-2">

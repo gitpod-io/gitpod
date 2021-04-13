@@ -50,9 +50,9 @@ export default function InstallGitHubApp() {
     const installationId = params.get("installation_id") || undefined;
     if (!installationId) {
         return <div className="lg:px-28 px-10 flex flex-col space-y-2">
-            <div className="px-6 py-3 flex justify-between space-x-2 text-gray-400 border-t border-gray-200 h-96">
+            <div className="px-6 py-3 flex justify-between space-x-2 text-gray-400 border-t border-gray-200 dark:border-gray-800 h-96">
                 <div className="flex flex-col items-center w-96 m-auto">
-                    <h3 className="text-center pb-3 text-gray-500">No Installation ID Found</h3>
+                    <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Installation ID Found</h3>
                     <div className="text-center pb-6 text-gray-500">Did you came here from the GitHub app's page?</div>
                 </div>
             </div>
@@ -67,7 +67,7 @@ export default function InstallGitHubApp() {
                 <div className="flex flex-col items-center m-auto max-w-lg mt-40">
                     <h3 className="text-center pb-3 text-gray-500">Install GitHub App</h3>
                     <div className="text-center pb-6 text-gray-500">You are about to install the GitHub app for Gitpod.</div>
-                    <div className="flex rounded-md bg-gray-200 p-3">
+                    <div className="flex rounded-md bg-gray-200 dark:bg-gray-800 p-3">
                         <img className="w-4 h-4 ml-2 mr-3 mt-1" src={info} alt="info" />
                         <span className="text-gray-500">This action will also allow Gitpod to access private repositories. You can edit git provider permissions later in user settings.</span>
                     </div>
@@ -86,7 +86,7 @@ export default function InstallGitHubApp() {
             <button className="" onClick={() => registerApp(installationId, setModal)}>Try Again</button>
         ]}>
             <div className="pb-6 text-gray-500">Could not install the GitHub app.</div>
-            <div className="flex rounded-md bg-gray-200 p-3">
+            <div className="flex rounded-md bg-gray-200 dark:bg-gray-800 p-3">
                 <img className="w-4 h-4 ml-2 mr-3 mt-1" src={info} alt="info" />
                 <span className="text-gray-500">{modal}</span>
             </div>

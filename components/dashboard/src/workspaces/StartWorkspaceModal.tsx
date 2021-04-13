@@ -24,9 +24,9 @@ interface StartWorkspaceModalProps {
 type Mode = 'Recent' | 'Examples';
 
 function Tab(p: { name: Mode, selection: Mode, setSelection: (selection: Mode) => any }) {
-    const selectedTab = 'border-gray-800 text-gray-800';
-    const inactiveTab = 'border-none text-gray-400';
-    return <div onClick={() => p.setSelection(p.name)} className={"cursor-pointer py-2 px-4 border-b-4 " + (p.selection === p.name ? selectedTab : inactiveTab)}>{p.name}</div>
+    const selectedTab = 'text-gray-800 dark:text-gray-200 border-gray-800 dark:border-gray-400';
+    const inactiveTab = 'text-gray-400 dark:text-gray-600 hover:border-gray-400 dark:hover:border-gray-600';
+    return <div onClick={() => p.setSelection(p.name)} className={"cursor-pointer py-2 px-4 border-b-4 border-transparent transition ease-in-out " + (p.selection === p.name ? selectedTab : inactiveTab)}>{p.name}</div>
 }
 
 export function StartWorkspaceModal(p: StartWorkspaceModalProps) {
@@ -35,9 +35,9 @@ export function StartWorkspaceModal(p: StartWorkspaceModalProps) {
     useEffect(() => setSelection(computeSelection()), [p.recent, p.selected]);
 
     const list = (selection === 'Recent' ? p.recent : p.examples).map(e =>
-        <a key={e.title} href={e.startUrl} className="rounded-xl group hover:bg-gray-100 flex p-4 my-1">
+        <a key={e.title} href={e.startUrl} className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex p-4 my-1">
             <div className="w-full">
-                <p className="text-base text-gray-800 font-semibold">{e.title}</p>
+                <p className="text-base text-gray-800 dark:text-gray-200 font-semibold">{e.title}</p>
                 <p>{e.description}</p>
             </div>
         </a>);
@@ -45,13 +45,13 @@ export function StartWorkspaceModal(p: StartWorkspaceModalProps) {
     return <Modal onClose={p.onClose} visible={p.visible}>
         <h3 className="pb-2">New Workspace</h3>
         {/* separator */}
-        <div className="border-t mt-2 -mx-6 px-6 pt-2">
+        <div className="border-t border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 pt-2">
             <div className="flex">
                 <Tab name='Recent' setSelection={setSelection} selection={selection} />
                 <Tab name='Examples' setSelection={setSelection} selection={selection} />
             </div>
         </div>
-        <div className="border-t -mx-6 px-6 py-2">
+        <div className="border-t border-gray-200 dark:border-gray-800 -mx-6 px-6 py-2">
             {list.length > 0 ?
                 <p className="my-4 text-base">
                     {selection === 'Recent' ?
@@ -62,13 +62,13 @@ export function StartWorkspaceModal(p: StartWorkspaceModalProps) {
                 {list.length > 0 ? list :
                     (selection === 'Recent' ?
                         <div className="flex flex-col pt-10 items-center px-2">
-                            <h3 className="mb-2 text-gray-500">No Recent Projects</h3>
+                            <h3 className="mb-2 text-gray-500 dark:text-gray-400">No Recent Projects</h3>
                             <p className="text-center">Projects you use frequently will show up here.</p>
                             <p className="text-center">Prefix a git repository URL with gitpod.io/# or start with an example.</p>
                             <button onClick={() => setSelection('Examples')} className="font-medium mt-8">Select Example</button>
                         </div> :
                         <div className="flex flex-col pt-10 items-center px-2">
-                            <h3 className="mb-2 text-gray-500">No Example Projects</h3>
+                            <h3 className="mb-2 text-gray-500 dark:text-gray-400">No Example Projects</h3>
                             <p className="text-center">Sorry there seem to be no example projects, that work with your current git provider.</p>
                         </div>)
                 }

@@ -16,12 +16,12 @@
         @apply bg-white dark:bg-gitpod-black text-black dark:text-white;
     }
     h1 {
-        @apply text-gray-900 dark:text-gray-50 font-bold;
+        @apply text-gray-900 dark:text-gray-100 font-bold;
         line-height: 64px;
         font-size: 48px;
     }
     h2 {
-        @apply text-base text-gray-500;
+        @apply text-base text-gray-500 dark:text-gray-400;
     }
     h3 {
         @apply text-2xl text-gray-800 dark:text-gray-100 leading-9 font-semibold;
@@ -34,42 +34,44 @@
     }
 
     .btn-login {
-        @apply rounded-md border-none bg-gray-100 hover:bg-gray-200 text-gray-500;
+        @apply rounded-md border-none bg-gray-100 hover:bg-gray-200 text-gray-500 dark:text-gray-200 dark:bg-gray-800 dark:hover:bg-gray-600;
     }
-
+    .dark .dark\:filter-invert {
+        @apply filter-invert;
+    }
 }
 
 @layer components {
     button {
-        @apply cursor-pointer px-4 py-2 my-auto bg-green-600 hover:bg-green-700 text-gray-100 text-sm font-medium rounded-md focus:outline-none focus:ring transition ease-in-out;
+        @apply cursor-pointer px-4 py-2 my-auto bg-green-600 dark:bg-green-700 hover:bg-green-700 dark:hover:bg-green-600 text-gray-100 dark:text-green-100 text-sm font-medium rounded-md focus:outline-none focus:ring transition ease-in-out;
     }
     button.secondary {
-        @apply bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-600;
+        @apply bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-500 dark:text-gray-100 hover:text-gray-600;
     }
     button.danger {
-        @apply bg-red-600 hover:bg-red-700 text-gray-100;
+        @apply bg-red-600 hover:bg-red-700 text-gray-100 dark:text-red-100;
     }
     button.danger.secondary {
-        @apply bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700;
+        @apply bg-red-50 dark:bg-red-300 hover:bg-red-100 dark:hover:bg-red-200 text-red-600 hover:text-red-700;
     }
     button:disabled {
         @apply cursor-default opacity-50 pointer-events-none;
     }
 
-    input[type=text], input[type=password], select {
-        @apply block w-56 text-gray-600 rounded-md border border-gray-300 focus:border-gray-400 focus:bg-white focus:ring-0;
+    input[type=text], input[type=search], input[type=password], select {
+        @apply block w-56 text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-md border border-gray-300 dark:border-gray-500 focus:border-gray-400 dark:focus:border-gray-400 focus:ring-0;
     }
-
-    input[type=text]::placeholder, input[type=password]::placeholder {
-        @apply text-gray-400;
+    input[type=text]::placeholder, input[type=search]::placeholder, input[type=password]::placeholder {
+        @apply text-gray-400 dark:text-gray-500;
     }
-
     input[disabled] {
-        @apply bg-gray-100 border border-gray-200 text-gray-400;
+        @apply bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500;
     }
-
     input[type=radio] {
-        @apply rounded-md border border-gray-300 focus:border-gray-400 focus:bg-white focus:ring-0;
+        @apply border border-gray-300 focus:border-gray-400 focus:bg-white focus:ring-0;
+    }
+    input[type=search] {
+        @apply border-0 dark:bg-transparent;
     }
 
     progress {

@@ -401,15 +401,15 @@ export default function () {
                 </p>
             </div>
             <div className="mt-4 flex justify-center space-x-3 2xl:space-x-7">{planCards}</div>
-            <div className="flex rounded-md w-2/3 bg-gray-200 p-4 mt-14 mx-auto">
+            <div className="flex rounded-md w-2/3 bg-gray-200 dark:bg-gray-800 p-4 mt-14 mx-auto">
                 <img className="w-4 h-4 m-1 ml-2 mr-4" src={info} />
                 <span>If you are interested in purchasing a plan for a team, purchase a Team plan with one centralized billing. <a className="underline" href="https://www.gitpod.io/docs/teams/" target="_blank">Learn more</a></span>
             </div>
             {!!confirmUpgradeToPlan && <Modal visible={true} onClose={() => setConfirmUpgradeToPlan(undefined)}>
                 <h3>Upgrade to {confirmUpgradeToPlan.name}</h3>
-                <div className="border-t border-b border-gray-200 mt-4 -mx-6 px-6 py-2">
+                <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
                     <p className="mt-1 mb-4 text-base">You are about to upgrade to {confirmUpgradeToPlan.name}.</p>
-                    {!Plans.isFreePlan(currentPlan.chargebeeId) && <div className="flex rounded-md bg-gray-200 p-4 mb-4">
+                    {!Plans.isFreePlan(currentPlan.chargebeeId) && <div className="flex rounded-md bg-gray-200 dark:bg-gray-800 p-4 mb-4">
                         <img className="w-4 h-4 m-1 ml-2 mr-4" src={info} />
                         <span>For this billing cycle you will be charged only the total difference ({(confirmUpgradeToPlan.currency === 'EUR' ? '€' : '$') + (confirmUpgradeToPlan.pricePerMonth - applyCoupons(currentPlan, appliedCoupons).pricePerMonth)}). The new total will be effective from the next billing cycle.</span>
                     </div>}
@@ -424,9 +424,9 @@ export default function () {
             </Modal>}
             {!!confirmDowngradeToPlan && <Modal visible={true} onClose={() => setConfirmDowngradeToPlan(undefined)}>
                 <h3>Downgrade to {confirmDowngradeToPlan.name}</h3>
-                <div className="border-t border-b border-gray-200 mt-4 -mx-6 px-6 py-2">
+                <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
                     <p className="mt-1 mb-4 text-base">You are about to downgrade to {confirmDowngradeToPlan.name}.</p>
-                    <div className="flex rounded-md bg-gray-200 p-4 mb-4">
+                    <div className="flex rounded-md bg-gray-200 dark:bg-gray-800 p-4 mb-4">
                         <img className="w-4 h-4 m-1 ml-2 mr-4" src={info} />
                         {!Plans.isFreePlan(confirmDowngradeToPlan.chargebeeId)
                             ? <span>Your account will downgrade to {confirmDowngradeToPlan.name} on the next billing cycle.</span>
@@ -434,19 +434,19 @@ export default function () {
                     </div>
                 </div>
                 <div className="flex justify-end mt-6">
-                    <button className="bg-red-600 border-red-800" onClick={doDowngrade}>Downgrade Plan</button>
+                    <button className="danger" onClick={doDowngrade}>Downgrade Plan</button>
                 </div>
             </Modal>}
             {!!teamClaimModal && (<Modal visible={true} onClose={() => setTeamClaimModal(undefined)}>
                 <h3 className="pb-2">Team Invitation</h3>
-                <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-4">
+                <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
                     <p className="pb-4 text-gray-500 text-base">{teamClaimModal.mode === "error" ? teamClaimModal.errorText : teamClaimModal.text}</p>
                 </div>
                 <div className="flex justify-end mt-6">
                     {teamClaimModal.mode === "confirmation" && (
                         <React.Fragment>
                             <button className="secondary" onClick={() => setTeamClaimModal(undefined)}>Cancel</button>
-                            <button className={"ml-2"} onClick={async () => {
+                            <button className="ml-2" onClick={async () => {
                                 try {
                                     await getGitpodService().server.tsAssignSlot(teamClaimModal.teamId, teamClaimModal.slotId, undefined);
                                     window.history.replaceState({}, window.document.title, window.location.href.replace(window.location.search, ''));

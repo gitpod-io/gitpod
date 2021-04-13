@@ -19,7 +19,7 @@ export default function FromReferrer() {
     return <div className="lg:px-28 px-10 flex flex-col space-y-2">
         <div className="px-6 py-3 flex justify-between space-x-2 text-gray-400 h-96">
             <div className="flex flex-col items-center w-96 m-auto mt-40">
-                <h3 className="text-center pb-3 text-gray-500">No Referrer Found</h3>
+                <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Referrer Found</h3>
                 <div className="text-center pb-6 text-gray-500">
                     <p>It looks like you are trying to open a workspace, but the referrer URL is empty. This happens when the git hoster doesn't send the referrer header.
                     <br/> Please prefix the repository URL with <pre>https://gitpod.io/#</pre> in order to start a workspace.  <a className="text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600" href="https://www.gitpod.io/docs/getting-started/">Learn more</a></p>

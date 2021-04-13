@@ -20,13 +20,13 @@ interface Entry {
 
 function MenuItem(entry: Entry) {
     const location = useLocation();
-    let classes = "flex block text-sm font-medium px-3 px-0 py-1.5 rounded-md transition ease-in-out";
+    let classes = "flex block text-sm font-medium dark:text-gray-200 px-3 px-0 py-1.5 rounded-md transition ease-in-out";
     const all = [entry.link, ...(entry.alternatives||[])];
     const path = location.pathname.toLowerCase();
     if (all.find( n => n === path || n+'/' === path)) {
-        classes += " bg-gray-200";
+        classes += " bg-gray-200 dark:bg-gray-700";
     } else {
-        classes += " text-gray-600 hover:bg-gray-100 transition ease-in-out";
+        classes += " text-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800";
     }
     return <li key={entry.title}>
         {entry.link.startsWith('https://')
@@ -57,7 +57,7 @@ function Menu(props: { left: Entry[], right: Entry[] }) {
                         {props.right.map(MenuItem)}
                     </ul>
                 </nav>
-                <div className="ml-3 flex items-center justify-start mb-0 pointer-cursor m-l-auto rounded-full border-2 border-white hover:border-gray-200 p-0.5 font-medium">
+                <div className="ml-3 flex items-center justify-start mb-0 pointer-cursor m-l-auto rounded-full border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-700 p-0.5 font-medium">
                     <ContextMenu menuEntries={[
                     {
                         title: (user && User.getPrimaryEmail(user)) || '',

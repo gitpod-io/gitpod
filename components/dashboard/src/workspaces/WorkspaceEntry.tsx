@@ -7,7 +7,6 @@
 import { CommitContext, Workspace, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePhase } from '@gitpod/gitpod-protocol';
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 import ContextMenu, { ContextMenuEntry } from '../components/ContextMenu';
-import ThreeDots from '../icons/ThreeDots.svg';
 import moment from 'moment';
 import Modal from '../components/Modal';
 import { MouseEvent, useState } from 'react';
@@ -81,7 +80,7 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
             },
             {
                 title: 'Delete',
-                customFontStyle: 'text-red-600',
+                customFontStyle: 'text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300',
                 onClick: () => {
                     setModalVisible(true);
                 }
@@ -94,19 +93,19 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
         setChangesModalVisible(true);
     }
     return <div>
-        <div className="rounded-xl whitespace-nowrap flex space-x-2 py-6 px-6 w-full justify-between hover:bg-gray-100 focus:bg-gitpod-kumquat-light group">
+        <div className="rounded-xl whitespace-nowrap flex space-x-2 py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light group">
             <div className="pr-3 self-center">
                 <WorkspaceStatusIndicator instance={desc?.latestInstance} />
             </div>
             <div className="flex flex-col w-3/12">
-                <a href={startUrl.toString()}><div className="font-medium text-gray-800 truncate hover:text-blue-600">{ws.id}</div></a>
-                <a href={project ? 'https://' + project : undefined}><div className="text-sm overflow-ellipsis truncate text-gray-400 hover:text-blue-600">{project || 'Unknown'}</div></a>
+                <a href={startUrl.toString()}><div className="font-medium text-gray-800 dark:text-gray-100 truncate hover:text-blue-600 dark:hover:text-blue-400">{ws.id}</div></a>
+                <a href={project ? 'https://' + project : undefined}><div className="text-sm overflow-ellipsis truncate text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">{project || 'Unknown'}</div></a>
             </div>
             <div className="flex w-4/12 truncate overflow-ellipsis">
                 <div className="flex flex-col">
                     <div className="text-gray-500 overflow-ellipsis truncate">{ws.description}</div>
                     <a href={ws.contextURL}>
-                        <div className="text-sm text-gray-400 overflow-ellipsis truncate hover:text-blue-600">{ws.contextURL}</div>
+                        <div className="text-sm text-gray-400 overflow-ellipsis truncate hover:text-blue-600 dark:hover:text-blue-400">{ws.contextURL}</div>
                     </a>
                 </div>
             </div>
@@ -126,9 +125,9 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
                     <div className="text-sm w-full text-gray-400 truncate">{moment(WorkspaceInfo.lastActiveISODate(desc)).fromNow()}</div>
                 </Tooltip>
             </div>
-            <div className="flex w-8 self-center hover:bg-gray-200 rounded-md cursor-pointer opacity-0 group-hover:opacity-100">
+            <div className="flex w-8 self-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer opacity-0 group-hover:opacity-100">
                 <ContextMenu menuEntries={menuEntries}>
-                    <img className="w-8 h-8 p-1" src={ThreeDots} alt="Actions" />
+                    <svg className="w-8 h-8 p-1 text-gray-600 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Actions</title><g fill="currentColor" transform="rotate(90 12 12)"><circle cx="1" cy="1" r="2" transform="translate(5 11)"/><circle cx="1" cy="1" r="2" transform="translate(11 11)"/><circle cx="1" cy="1" r="2" transform="translate(17 11)"/></g></svg>
                 </ContextMenu>
             </div>
         </div>
@@ -138,10 +137,10 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
         {isModalVisible && <Modal visible={isModalVisible} onClose={() => setModalVisible(false)}>
             <div>
                 <h3 className="pb-2">Delete Workspace</h3>
-                <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-2">
+                <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-2">
                     <p className="mt-1 mb-2 text-base">Are you sure you want to delete this workspace?</p>
                     <div className="w-full p-4 mb-2 bg-gray-100 rounded-xl group bg-gray-100">
-                        <p className="text-base text-gray-800 font-semibold">{ws.id}</p>
+                        <p className="text-base text-gray-800 dark:text-gray-100 font-semibold">{ws.id}</p>
                         <p>{ws.description}</p>
                     </div>
                 </div>

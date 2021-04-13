@@ -10,6 +10,7 @@ import { UserContext } from "./user-context";
 import { getGitpodService } from "./service/service";
 import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName } from "./provider-utils";
 import gitpod from './images/gitpod.svg';
+import gitpodDark from './images/gitpod-dark.svg';
 import gitpodIcon from './icons/gitpod.svg';
 import automate from "./images/welcome/automate.svg";
 import code from "./images/welcome/code.svg";
@@ -87,11 +88,12 @@ export function Login() {
     }
 
     return (<div id="login-container" className="z-50 flex w-screen h-screen">
-        {showWelcome ? <div id="feature-section" className="flex-grow bg-gray-100 w-1/2 hidden lg:block">
+        {showWelcome ? <div id="feature-section" className="flex-grow bg-gray-100 dark:bg-gray-800 w-1/2 hidden lg:block">
             <div id="feature-section-column" className="flex max-w-xl h-full mx-auto pt-6">
                 <div className="flex flex-col px-8 my-auto ml-auto">
                     <div className="mb-12">
-                        <img src={gitpod} className="h-8" />
+                        <img src={gitpod} className="h-8 block dark:hidden"/>
+                        <img src={gitpodDark} className="h-8 hidden dark:block"/>
                     </div>
                     <div className="mb-10">
                         <h1 className="text-5xl mb-3">Welcome to Gitpod</h1>
@@ -127,7 +129,7 @@ export function Login() {
                             {authProviders.map(ap => {
                                 return (
                                     <button key={"button" + ap.host} className="btn-login flex-none w-56 h-10 p-0 inline-flex" onClick={() => openLogin(ap.host)}>
-                                        <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={iconForAuthProvider(ap.authProviderType)} />
+                                        {iconForAuthProvider(ap.authProviderType)}
                                         <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">Continue with {simplifyProviderName(ap.host)}</span>
                                     </button>
                                 );

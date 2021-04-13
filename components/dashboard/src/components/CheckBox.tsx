@@ -25,12 +25,12 @@ function CheckBox(props: {
     const checkboxId = `checkbox-${props.title}-${String(Math.random())}`;
 
     return <div className="flex mt-4">
-        <input className={"h-4 w-4 focus:ring-0 mt-1 rounded cursor-pointer border border-gray-300 focus:border-gray-400 " + (props.checked ? 'bg-gray-800' : '')} type="checkbox"
+        <input className={"h-4 w-4 focus:ring-0 mt-1 rounded cursor-pointer bg-transparent border-2 dark:filter-invert border-gray-800 dark:border-gray-900 focus:border-gray-900 dark:focus:border-gray-800 " + (props.checked ? 'bg-gray-800 dark:bg-gray-900' : '')} type="checkbox"
             id={checkboxId}
             {...inputProps}
         />
         <div className="flex flex-col ml-2">
-            <label htmlFor={checkboxId} className="text-gray-800 text-md font-semibold tracking-wide">{props.title}</label>
+            <label htmlFor={checkboxId} className="text-gray-800 dark:text-gray-100 text-md font-semibold tracking-wide">{props.title}</label>
             <div className="text-gray-400 text-md">{props.desc}</div>
         </div>
     </div>
