@@ -10,12 +10,13 @@ import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { useState } from "react";
 import info from "../images/info.svg";
+import { openAuthorizeWindow } from "../provider-utils";
 
 async function registerApp(installationId: string, setModal: (modal: 'done' | string | undefined) => void) {
     try {
         await getGitpodService().server.registerGithubApp(installationId);
 
-        const returnTo = encodeURIComponent(gitpodHostUrl.with({ pathname: `login-success` }).toString());
+        const returnTo = encodeURIComponent(gitpodHostUrl.with({ pathname: 'flow-result', search: 'message=success' }).toString());
         const url = gitpodHostUrl.withApi({
             pathname: '/authorize',
             search: `returnTo=${returnTo}&host=github.com&scopes=repo`
@@ -23,22 +24,19 @@ async function registerApp(installationId: string, setModal: (modal: 'done' | st
         window.open(url, "gitpod-login");
 
         const result = new Deferred<void>(1000 * 60 * 10 /* 10 min */);
-        result.promise.catch(e => setModal('error'));
-        const listener = (event: MessageEvent<any>) => {
-            // todo: check event.origin
-            if (event.data === "auth-success") {
-                if (event.source && "close" in event.source && event.source.close) {
-                    console.log(`try to close window`);
-                    event.source.close();
-                } else {
-                    // todo: not here, but add a button to the /login-success page to close, if this should not work as expected
-                }
-                window.removeEventListener("message", listener);
+
+        openAuthorizeWindow({
+            host: "github.com",
+            scopes: ["repo"],
+            onSuccess: () => {
                 setModal('done');
                 result.resolve();
+            },
+            onError: (error) => {
+                setModal(error);
             }
-        };
-        window.addEventListener("message", listener);
+        })
+
         return result.promise;
     } catch (e) {
         setModal(e.message);

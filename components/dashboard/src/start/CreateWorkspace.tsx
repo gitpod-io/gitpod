@@ -13,6 +13,9 @@ import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import StartWorkspace from "./StartWorkspace";
+import { openAuthorizeWindow } from "../provider-utils";
+import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
+import { SelectAccountModal } from "../settings/SelectAccountModal";
 
 const WorkspaceLogs = React.lazy(() => import('./WorkspaceLogs'));
 
@@ -23,6 +26,7 @@ export interface CreateWorkspaceProps {
 export interface CreateWorkspaceState {
   result?: WorkspaceCreationResult;
   error?: StartWorkspaceError;
+  selectAccountError?: SelectAccountPayload;
   stillParsing: boolean;
 }
 
@@ -62,7 +66,43 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
     }
   }
 
+  async tryAuthorize(host: string, scopes?: string[]) {
+    try {
+        await openAuthorizeWindow({
+            host,
+            scopes,
+            onSuccess: () => {
+              window.location.href = window.location.toString();
+            },
+            onError: (error) => {
+                if (typeof error === "string") {
+                    try {
+                        const payload = JSON.parse(error);
+                        if (SelectAccountPayload.is(payload)) {
+                          this.setState({ selectAccountError: payload });
+                        }
+                    } catch (error) {
+                        console.log(error);
+                    }
+                }
+            }
+        });
+    } catch (error) {
+        console.log(error)
+    }
+  };
+
   render() {
+    if (SelectAccountPayload.is(this.state.selectAccountError)) {
+      return (<StartPage phase={StartPhase.Checking}>
+        <div className="mt-2 flex flex-col space-y-8">
+          <SelectAccountModal {...this.state.selectAccountError} close={() => {
+            window.location.href = gitpodHostUrl.asAccessControl().toString();
+          }} />
+        </div>
+    </StartPage>);
+    }
+
     let phase = StartPhase.Checking;
     let statusMessage = <p className="text-base text-gray-400">{this.state.stillParsing ? 'Parsing context …' : 'Preparing workspace …'}</p>;
 
@@ -75,14 +115,10 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
           </div>;
           break;
         case ErrorCodes.NOT_AUTHENTICATED:
-          const authorizeUrl = gitpodHostUrl.withApi({
-              pathname: '/authorize',
-              search: `returnTo=${encodeURIComponent(window.location.toString())}&host=${error.data.host}&scopes=${error.data.scopes.join(',')}`
-          }).toString();
-          window.location.href = authorizeUrl;
           statusMessage = <div className="mt-2 flex flex-col space-y-8">
-            <p className="text-base w-96">Redirecting to authorize with {error.data.host} …</p>
-            <a href={authorizeUrl}><button className="secondary">Authorize with {error.data.host}</button></a>
+            <button className="secondary" onClick={() => {
+              this.tryAuthorize(error?.data.host, error?.data.scopes)
+            }}>Authorize with {error.data.host}</button>
           </div>;
           break;
         case ErrorCodes.USER_BLOCKED:
