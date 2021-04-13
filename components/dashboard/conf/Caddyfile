@@ -7,14 +7,6 @@
 	encode zstd gzip
 }
 
-(caching) {
-	header Cache-Control "public, max-age=604800, must-revalidate"
-}
-
-(default) {
-	header -Server
-}
-
 (discard_log) {
 	log {
 		output discard
@@ -22,13 +14,30 @@
 }
 
 :80 {
-	import caching
+	@static {
+		path /static/*
+	}
+
+	@notstatic {
+		not path /static/*
+	}
+
 	import compression
-	import default
 	import discard_log
 
 	redir /.well-known/security.txt https://www.gitpod.io/.well-known/security.txt permanent
 	redir /environment-variables /settings/ permanent
+
+	handle @static {
+		header Cache-Control "public, max-age=31536000"
+	}
+
+	handle @notstatic {
+		header Cache-Control "no-cache, no-transform, must-revalidate"
+	}
+
+	header -Server
+	header -Last-Modified
 
 	root * /www
 	file_server
