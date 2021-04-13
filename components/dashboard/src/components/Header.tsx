@@ -12,7 +12,7 @@ export interface HeaderProps {
 }
 
 export default function Header(p: HeaderProps) {
-    return <div className="lg:px-28 px-10 border-gray-200">
+    return <div className="lg:px-28 px-10 border-gray-200 dark:border-gray-800">
         <div className="flex pb-8 pt-6">
             <div className="">
                 <h1 className="tracking-tight">{p.title}</h1>

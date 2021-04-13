@@ -9,17 +9,16 @@ import github from './images/github.svg';
 import gitlab from './images/gitlab.svg';
 import { gitpodHostUrl } from "./service/service";
 
-
 function iconForAuthProvider(type: string) {
     switch (type) {
         case "GitHub":
-            return github
+            return <img className="fill-current dark:filter-invert w-5 h-5 ml-3 mr-3 my-auto" src={github} />;
         case "GitLab":
-            return gitlab
+            return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={gitlab} />;
         case "Bitbucket":
-            return bitbucket
+            return <img className="fill-current filter-grayscale w-5 h-5 ml-3 mr-3 my-auto" src={bitbucket} />;
         default:
-            break;
+            return <></>;
     }
 }
 

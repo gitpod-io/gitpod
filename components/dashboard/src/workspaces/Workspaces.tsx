@@ -72,7 +72,7 @@ export default class Workspaces extends React.Component<WorkspacesProps, Workspa
                             <path fillRule="evenodd" clipRule="evenodd" d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z" fill="#A8A29E"/>
                         </svg>
                     </div>
-                    <input className="border-0" type="text" placeholder="Search Workspaces" onChange={(v) => { if (wsModel) wsModel.setSearch(v.target.value) }} />
+                    <input type="search" placeholder="Search Workspaces" onChange={(v) => { if (wsModel) wsModel.setSearch(v.target.value) }} />
                 </div>
                 <div className="flex-1" />
                 <div className="py-3">
@@ -104,7 +104,7 @@ export default class Workspaces extends React.Component<WorkspacesProps, Workspa
             {wsModel && (
                 this.state?.workspaces.length > 0 || wsModel.searchTerm ?
                     <div className="lg:px-28 px-10 flex flex-col space-y-2">
-                        <div className="px-6 py-3 flex justify-between space-x-2 text-sm text-gray-400 border-t border-b border-gray-200">
+                        <div className="px-6 py-3 flex justify-between space-x-2 text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800">
                             <div className="w-6"></div>
                             <div className="w-3/12">Name</div>
                             <div className="w-4/12">Context</div>
@@ -119,8 +119,8 @@ export default class Workspaces extends React.Component<WorkspacesProps, Workspa
                                         <img src={exclamation} />
                                     </div>
                                     <div className="flex-1 flex flex-col overflow-x-auto">
-                                        <div className="text-red font-semibold">Garbage Collection</div>
-                                        <p className="text-gray-500">Unpinned workspaces that have been stopped for more than 14 days will be automatically deleted. <a className="text-blue-600 underline underline-thickness-thin underline-offset-small hover:text-gray-800" href="https://www.gitpod.io/docs/life-of-workspace/#garbage-collection">Learn more</a></p>
+                                        <div className="text-gitpod-red font-semibold">Garbage Collection</div>
+                                        <p className="text-gray-500">Unpinned workspaces that have been stopped for more than 14 days will be automatically deleted. <a className="text-blue-600 underline underline-thickness-thin underline-offset-small hover:text-gray-800 hover:dark:text-gray-100" href="https://www.gitpod.io/docs/life-of-workspace/#garbage-collection">Learn more</a></p>
                                     </div>
                                 </div>
                         }
@@ -132,10 +132,10 @@ export default class Workspaces extends React.Component<WorkspacesProps, Workspa
                     </div>
                     :
                     <div className="lg:px-28 px-10 flex flex-col space-y-2">
-                        <div className="px-6 py-3 flex justify-between space-x-2 text-gray-400 border-t border-gray-200 h-96">
+                        <div className="px-6 py-3 flex justify-between space-x-2 text-gray-400 border-t border-gray-200 dark:border-gray-800 h-96">
                             <div className="flex flex-col items-center w-96 m-auto">
-                                <h3 className="text-center pb-3 text-gray-500">No Active Workspaces</h3>
-                                <div className="text-center pb-6 text-gray-500">Prefix any git repository URL with gitpod.io/# or create a new workspace for a recently used project. <a className="text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600" href="https://www.gitpod.io/docs/getting-started/">Learn more</a></div>
+                                <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Active Workspaces</h3>
+                                <div className="text-center pb-6 text-gray-500">Prefix any git repository URL with gitpod.io/# or create a new workspace for a recently used project. <a className="text-gray-400 dark:text-gray-600 underline underline-thickness-thin underline-offset-small hover:text-gray-500 dark:hover:text-gray-500" href="https://www.gitpod.io/docs/getting-started/">Learn more</a></div>
                                 <span>
                                     <button onClick={this.showStartWSModal}>New Workspace</button>
                                     {wsModel.getAllFetchedWorkspaces().size > 0 ? <button className="secondary ml-2" onClick={onAll}>View All Workspaces</button>:null}

@@ -50,7 +50,7 @@ function ProgressBar(props: { phase: number, error: boolean }) {
         classes += ' bg-green-400';
       } else if (i > phase) {
         // Haven't reached this phase yet
-        classes += ' bg-gray-200';
+        classes += ' bg-gray-200 dark:bg-gray-800';
       } else if (error) {
         // This phase has failed
         classes += ' bg-red-500';

@@ -30,7 +30,7 @@ export function PageWithSubMenu(p: PageWithSubMenuProps) {
                         if (e.link.some(l => l.toLocaleLowerCase() === location.pathname)) {
                             classes += " bg-gray-800 text-gray-50";
                         } else {
-                            classes += " hover:bg-gray-100";
+                            classes += " hover:bg-gray-100 dark:hover:bg-gray-800";
                         }
                         return <Link to={e.link[0]} key={e.title}>
                             <li className={classes}>

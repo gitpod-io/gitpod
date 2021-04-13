@@ -42,7 +42,7 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
         }
     }
     const adminLinks = getAdminLinks(workspace);
-    const adminLink = (i: number) => <Property key={'admin-'+i} name={adminLinks[i]?.name || ''}><a className="text-blue-400 hover:text-blue-600" href={adminLinks[i]?.url}>{adminLinks[i]?.title || ''}</a></Property>;
+    const adminLink = (i: number) => <Property key={'admin-'+i} name={adminLinks[i]?.name || ''}><a className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400" href={adminLinks[i]?.url}>{adminLinks[i]?.title || ''}</a></Property>;
     return <>
         <div className="flex">
             <div className="flex-1">
@@ -57,10 +57,10 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                 <div className="flex w-full mt-6">
                     <Property name="Created">{moment(workspace.workspaceCreationTime).format('MMM D, YYYY')}</Property>
                     <Property name="Last Start">{moment(workspace.instanceCreationTime).fromNow()}</Property>
-                    <Property name="Context"><a className="text-blue-400 hover:text-blue-600" href={workspace.contextURL}>{workspace.context.title}</a></Property>
+                    <Property name="Context"><a className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400" href={workspace.contextURL}>{workspace.context.title}</a></Property>
                 </div>
                 <div className="flex w-full mt-6">
-                    <Property name="User"><Link className="text-blue-400 hover:text-blue-600" to={"/admin/users/" + props.workspace.ownerId}>{user?.name || props.workspace.ownerId}</Link></Property>
+                    <Property name="User"><Link className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400" to={"/admin/users/" + props.workspace.ownerId}>{user?.name || props.workspace.ownerId}</Link></Property>
                     <Property name="Sharing">{workspace.shareable ? 'Enabled' : 'Disabled'}</Property>
                     <Property name=""><div></div></Property>
                 </div>

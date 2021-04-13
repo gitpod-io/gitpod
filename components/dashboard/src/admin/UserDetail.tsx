@@ -201,7 +201,7 @@ export function Property(p: { name: string, children: string | ReactChild, actio
             {p.children}
         </div>
         {(p.actions || []).map(a =>
-            <div className="cursor-pointer text-sm text-blue-400 hover:text-blue-500 truncate" onClick={a.onClick}>
+            <div className="cursor-pointer text-sm text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400 truncate" onClick={a.onClick}>
                 {a.label || ''}
             </div>
         )}

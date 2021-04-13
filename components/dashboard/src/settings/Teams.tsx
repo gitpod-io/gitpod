@@ -9,7 +9,6 @@ import { countries } from 'countries-list';
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getGitpodService } from "../service/service";
-import ThreeDots from '../icons/ThreeDots.svg';
 import Modal from "../components/Modal";
 import { AssigneeIdentifier, TeamSubscription, TeamSubscriptionSlotResolved } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
 import { Currency, Plan, Plans } from "@gitpod/gitpod-protocol/lib/plans";
@@ -457,9 +456,9 @@ function AllTeams() {
         )}
 
         {(getActiveSubs().length === 0 && !pendingPlanPurchase) && (
-            <div className="w-full flex h-80 mt-2 rounded-xl bg-gray-100">
+            <div className="w-full flex h-80 mt-2 rounded-xl bg-gray-100 dark:bg-gray-900">
                 <div className="m-auto text-center">
-                    <h3 className="self-center text-gray-500 mb-4">No Active Teams</h3>
+                    <h3 className="self-center text-gray-500 dark:text-gray-400 mb-4">No Active Teams</h3>
                     <div className="text-gray-500 mb-6">Get started by creating a team<br /> and adding team members. <a href="https://www.gitpod.io/docs/teams/" target="_blank" rel="noopener" className="text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600">Learn more</a></div>
                     <button className="self-center" onClick={() => showCreateTeamModal()}>Create Team</button>
                 </div>
@@ -469,7 +468,7 @@ function AllTeams() {
         {(getActiveSubs().length > 0 || !!pendingPlanPurchase) && (
             <div className="flex flex-col pt-6 space-y-2">
                 {pendingPlanPurchase && (
-                    <div key={"team-sub-" + pendingPlanPurchase.planId} className="flex-grow flex flex-row hover:bg-gray-100 rounded-xl h-16 w-full group">
+                    <div key={"team-sub-" + pendingPlanPurchase.planId} className="flex-grow flex flex-row hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl h-16 w-full group">
                         <div className="px-4 self-center w-1/12">
                             <div className={"rounded-full w-3 h-3 text-sm align-middle bg-gitpod-kumquat"}>
                                 &nbsp;
@@ -489,7 +488,7 @@ function AllTeams() {
                     </div>
                 )}
                 {getActiveSubs().map((sub, index) => (
-                    <div key={"team-sub-" + sub.id} className="flex-grow flex flex-row hover:bg-gray-100 rounded-xl h-16 w-full group">
+                    <div key={"team-sub-" + sub.id} className="flex-grow flex flex-row hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl h-16 w-full group">
                         <div className="px-4 self-center w-1/12">
                             <div className={"rounded-full w-3 h-3 text-sm align-middle " + (isPaymentInProgress(sub) ? "bg-gitpod-kumquat" : "bg-green-500")}>
                                 &nbsp;
@@ -511,9 +510,9 @@ function AllTeams() {
                             )}
                         </div>
                         <div className="my-auto flex w-1/12 mr-4 opacity-0 group-hover:opacity-100 justify-end">
-                            <div className="self-center hover:bg-gray-200 rounded-md cursor-pointer w-8">
+                            <div className="self-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer w-8">
                                 <ContextMenu menuEntries={subscriptionMenu(sub)}>
-                                    <img className="w-8 h-8 p-1" src={ThreeDots} alt="Actions" />
+                                <svg className="w-8 h-8 p-1 text-gray-600 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Actions</title><g fill="currentColor" transform="rotate(90 12 12)"><circle cx="1" cy="1" r="2" transform="translate(5 11)"/><circle cx="1" cy="1" r="2" transform="translate(11 11)"/><circle cx="1" cy="1" r="2" transform="translate(17 11)"/></g></svg>
                                 </ContextMenu>
                             </div>
                         </div>
@@ -565,7 +564,7 @@ function InviteMembersModal(props: {
 
     return (<Modal visible={true} onClose={props.onClose}>
         <h3 className="pb-2">Invite Members</h3>
-        <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-4 space-y-2">
+        <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4 space-y-2">
             <p className="pb-2 text-gray-500 text-base">Invite members to the team using the URL below.</p>
 
             <div className="flex flex-col space-y-2">
@@ -610,12 +609,12 @@ function AddMembersModal(props: {
 
     return (<Modal visible={true} onClose={props.onClose}>
         <h3 className="pb-2">Add Members</h3>
-        <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-4">
+        <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
             <p className="pb-4 text-gray-500 text-base">Add members to the team.</p>
 
             <div className="flex flex-col space-y-2 pb-4">
                 <label htmlFor="quantity" className="font-medium">Members</label>
-                <select name="quantity" value={quantity} className="rounded-md w-full border-2 border-gray-400"
+                <select name="quantity" value={quantity} className="rounded-md w-full"
                     onChange={(e) => setQuantity(parseInt(e.target.value || '1', 10))}>
                     {quantities.map(n => (
                         <option key={`quantity-${n}`} value={n}>{n}</option>
@@ -625,7 +624,7 @@ function AddMembersModal(props: {
 
             <div className="flex rounded-md bg-gitpod-kumquat-light p-3">
                 <img className="w-4 h-4 mx-2 my-auto" src={exclamation} />
-                <span className="text-red-600">Total: {expectedPrice} per month</span>
+                <span className="text-red-600 dark:text-red-400">Total: {expectedPrice} per month</span>
             </div>
 
         </div>
@@ -668,12 +667,12 @@ function NewTeamModal(props: {
 
     return (<Modal visible={true} onClose={props.onClose}>
         <h3 className="pb-2">New Team</h3>
-        <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-4 space-y-2">
+        <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4 space-y-2">
             <p className="pb-4 text-gray-500 text-base">Create a team and add team members.</p>
 
             <div className="flex flex-col space-y-2">
                 <label htmlFor="type" className="font-medium">Team</label>
-                <select name="type" value={type} className="rounded-md w-full border-2 border-gray-400"
+                <select name="type" value={type} className="rounded-md w-full"
                     onChange={(e) => setType(e.target.value)}>
                     {props.types.map(type => (
                         <option key={`type-option-${type}`} value={type}>{teamTypeLabel(type)}</option>
@@ -683,7 +682,7 @@ function NewTeamModal(props: {
 
             <div className="flex flex-col space-y-2">
                 <label htmlFor="quantity" className="font-medium">Members</label>
-                <select name="quantity" value={quantity} className="rounded-md w-full border-2 border-gray-400"
+                <select name="quantity" value={quantity} className="rounded-md w-full"
                     onChange={(e) => setQuantity(parseInt(e.target.value || '1', 10))}>
                     {quantities.map(n => (
                         <option key={`quantity-${n}`} value={n}>{n}</option>
@@ -693,7 +692,7 @@ function NewTeamModal(props: {
 
             <div className="flex flex-col space-y-2">
                 <label htmlFor="currency" className="font-medium">Currency</label>
-                <select name="currency" value={currency} className="rounded-md w-full border-2 border-gray-400"
+                <select name="currency" value={currency} className="rounded-md w-full"
                     onChange={(e) => setCurrency(e.target.value as any)}>
                     {Currency.getAll().map(c => (
                         <option key={`currency-${c}`} value={c}>{c}</option>
@@ -703,7 +702,7 @@ function NewTeamModal(props: {
 
             <div className="flex rounded-md bg-gitpod-kumquat-light p-3 mt-2">
                 <img className="w-4 h-4 mx-2 my-auto" src={exclamation} />
-                <span className="text-red-600">Total: {expectedPrice} per month</span>
+                <span className="text-red-600 dark:text-red-400">Total: {expectedPrice} per month</span>
             </div>
 
         </div>
@@ -728,7 +727,7 @@ function ManageTeamModal(props: {
 
     return (<Modal visible={true} onClose={props.onClose}>
         <h3 className="pb-2">Manage Team</h3>
-        <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-4 space-y-2">
+        <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4 space-y-2">
             <p className="pb-4 text-gray-500 text-base">Add members using their username prefixed by the Git Provider's host.</p>
 
             <div className="overscroll-contain max-h-96 overflow-y-auto">
@@ -837,7 +836,7 @@ function Slot(props: {
         <div key={key} className="flex flex-col space-y-2 pt-2">
             {/* <label htmlFor={key} className="font-medium">Username</label> */}
             <div className="flex flex-grow flex-row space-x-2">
-                <input name={key} value={editMode ? (assigneeIdentifier || "") : (renderIdentifier(slot.assigneeIdentifier) || "")} className="rounded-md w-full border-2 border-gray-400 pl-2 focus:bg-white bg-gray-200 "
+                <input name={key} value={editMode ? (assigneeIdentifier || "") : (renderIdentifier(slot.assigneeIdentifier) || "")} className="rounded-md w-full pl-2 bg-gray-200 focus:bg-white dark:bg-gray-700 dark:focus:bg-gray-800 "
                     readOnly={!editMode}
                     placeholder={!editMode && (renderIdentifier(slot.assigneeIdentifier) || "e.g. github.com/username") || undefined}
                     onChange={(e) => editMode && setAssigneeIdentifier(e.target.value)}

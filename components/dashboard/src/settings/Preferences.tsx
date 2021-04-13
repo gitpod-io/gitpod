@@ -13,7 +13,7 @@ import vscode from '../images/vscode.svg';
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import settingsMenu from "./settings-menu";
 
-type ColorTheme = 'system' | 'dark' | 'light';
+type Theme = 'system' | 'dark' | 'light';
 
 export default function Preferences() {
     const { user } = useContext(UserContext);
@@ -30,8 +30,8 @@ export default function Preferences() {
         await getGitpodService().server.updateLoggedInUser({ additionalData });
         setDefaultIde(value);
     }
-    const [ theme, setTheme ] = useState<ColorTheme>(localStorage.theme || 'system');
-    const actuallySetTheme = (theme: ColorTheme) => {
+    const [ theme, setTheme ] = useState<Theme>(localStorage.theme || 'system');
+    const actuallySetTheme = (theme: Theme) => {
         if (theme === 'light' || theme === 'dark') {
             localStorage.theme = theme;
         } else {
@@ -54,11 +54,11 @@ export default function Preferences() {
                 </SelectableCard>
                 <SelectableCard className="w-36 h-40" title="Theia" selected={defaultIde === 'theia'} onClick={() => actuallySetDefaultIde('theia')}>
                     <div className="flex-grow flex justify-center align-center">
-                        <img className="w-16" src={theia}/>
+                        <img className="w-16 dark:filter-invert" src={theia}/>
                     </div>
                 </SelectableCard>
             </div>
-            <h3 className="mt-12">Color Scheme</h3>
+            <h3 className="mt-12">Theme</h3>
             <p className="text-base text-gray-500">Light or dark?</p>
             <div className="mt-4 space-x-4 flex">
                 <label><input type="radio" name="theme" value="system" checked={theme === 'system'} onChange={() => actuallySetTheme('system')}></input> System</label>

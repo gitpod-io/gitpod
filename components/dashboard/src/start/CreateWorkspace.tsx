@@ -158,13 +158,13 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
     else if (result?.existingWorkspaces) {
       statusMessage = <Modal visible={true} closeable={false} onClose={()=>{}}>
         <h3>Running Workspaces</h3>
-        <div className="border-t border-b border-gray-200 mt-4 -mx-6 px-6 py-2">
+        <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
           <p className="mt-1 mb-2 text-base">You already have running workspaces with the same context. You can open an existing one or open a new workspace.</p>
           <>
             {result?.existingWorkspaces?.map(w =>
-              <a href={w.latestInstance?.ideUrl} className="rounded-xl group hover:bg-gray-100 flex p-3 my-1">
+              <a href={w.latestInstance?.ideUrl} className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex p-3 my-1">
                 <div className="w-full">
-                  <p className="text-base text-black font-bold">{w.workspace.id}</p>
+                  <p className="text-base text-black dark:text-gray-100 font-bold">{w.workspace.id}</p>
                   <p>{w.workspace.contextURL}</p>
                 </div>
               </a>
@@ -190,11 +190,11 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
       {error && <div>
         <a href={gitpodHostUrl.asDashboard().toString()}><button className="mt-8 secondary">Go to Dashboard</button></a>
         <p className="mt-14 text-base text-gray-400 flex space-x-2">
-          <a className="hover:text-blue-600" href="https://www.gitpod.io/docs/">Docs</a>
+          <a className="hover:text-blue-600 dark:hover:text-blue-400" href="https://www.gitpod.io/docs/">Docs</a>
           <span>—</span>
-          <a className="hover:text-blue-600" href="https://status.gitpod.io/">Status</a>
+          <a className="hover:text-blue-600 dark:hover:text-blue-400" href="https://status.gitpod.io/">Status</a>
           <span>—</span>
-          <a className="hover:text-blue-600" href="https://www.gitpod.io/blog/">Blog</a>
+          <a className="hover:text-blue-600 dark:hover:text-blue-400" href="https://www.gitpod.io/blog/">Blog</a>
         </p>
       </div>}
     </StartPage>;
@@ -208,7 +208,7 @@ function LimitReachedModal(p: { children: React.ReactNode }) {
       <span className="flex-grow">Limit Reached</span>
       <img className="rounded-full w-8 h-8" src={user?.avatarUrl || ''} alt={user?.name || 'Anonymous'} />
     </h3>
-    <div className="border-t border-b border-gray-200 mt-4 -mx-6 px-6 py-2">
+    <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
       {p.children}
     </div>
     <div className="flex justify-end mt-6">
