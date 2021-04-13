@@ -78,20 +78,25 @@ func WorkspaceAuthHandler(domain string, info WorkspaceInfoProvider) mux.Middlew
 				// port seems to be private - subject it to the same access policy as the workspace itself
 			}
 
-			cn := fmt.Sprintf("%s%s_owner_", cookiePrefix, ws.InstanceID)
-			c, err := req.Cookie(cn)
-			if err != nil {
-				log.WithField("cookieName", cn).Warn("no owner cookie present")
-				resp.WriteHeader(http.StatusUnauthorized)
-				return
-			}
+			tkn := req.Header.Get("x-gitpod-owner-token")
+			if tkn == "" {
+				cn := fmt.Sprintf("%s%s_owner_", cookiePrefix, ws.InstanceID)
+				c, err := req.Cookie(cn)
+				if err != nil {
+					log.WithField("cookieName", cn).Warn("no owner cookie present")
+					resp.WriteHeader(http.StatusUnauthorized)
+					return
+				}
 
-			tkn, err := url.QueryUnescape(c.Value)
+				tkn = c.Value
+			}
+			tkn, err := url.QueryUnescape(tkn)
 			if err != nil {
 				log.WithError(err).Warn("cannot decode owner token")
 				resp.WriteHeader(http.StatusBadRequest)
 				return
 			}
+
 			if tkn != ws.Auth.OwnerToken {
 				log.Warn("owner token mismatch")
 				resp.WriteHeader(http.StatusForbidden)
