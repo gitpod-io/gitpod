@@ -333,6 +333,12 @@ func (gp *APIoverJSONRPC) handler(ctx context.Context, conn *jsonrpc2.Conn, req 
 		default:
 		}
 	}
+	for chn := range gp.subs[""] {
+		select {
+		case chn <- &instance:
+		default:
+		}
+	}
 
 	return
 }
