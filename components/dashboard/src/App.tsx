@@ -57,10 +57,17 @@ function App() {
     }, []);
 
     useEffect(() => {
-        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.classList.add('dark');
-        } else {
-            document.documentElement.classList.remove('dark');
+        const updateTheme = () => {
+            const isDark = localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches);
+            document.documentElement.classList.toggle('dark', isDark);
+        }
+        updateTheme();
+        const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+        mediaQuery.addEventListener('change', updateTheme);
+        window.addEventListener('storage', updateTheme);
+        return function cleanup() {
+            mediaQuery.removeEventListener('change', updateTheme);
+            window.removeEventListener('storage', updateTheme);
         }
     }, [localStorage.theme]);
 
