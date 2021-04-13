@@ -26,6 +26,10 @@ To install Gitpod in your Kubernetes cluster, follow these steps:
 
 1. Create a file `values.custom.yaml` with the following content:
    ```
+   rabbitmq:
+     auth:
+       username: your-rabbitmq-user
+       password: your-secret-rabbitmq-password
    minio:
      accessKey: your-random-access-key
      secretKey: your-random-secret-key
@@ -36,7 +40,7 @@ To install Gitpod in your Kubernetes cluster, follow these steps:
     ```console
     helm repo add gitpod.io https://charts.gitpod.io
 
-    helm install -f values.custom.yaml gitpod gitpod.io/gitpod --version=0.8.0
+    helm install -f values.custom.yaml gitpod gitpod.io/gitpod --version=0.9.0
     ```
 
 1. Configure [domain and https](../configure-ingress/).
@@ -52,7 +56,7 @@ To install Gitpod in your Kubernetes cluster, follow these steps:
 
  1. Run the update
     ```console
-    helm install -f values.custom.yaml gitpod gitpod.io/gitpod --version=0.8.0
+    helm install -f values.custom.yaml gitpod gitpod.io/gitpod --version=0.9.0
     ```
 
  1. Run `kubectl get pods` and verify that all pods are in state `RUNNING`. If some are not, please see the [Troubleshooting Guide](../troubleshooting/).

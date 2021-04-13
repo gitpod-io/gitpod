@@ -4,6 +4,25 @@ url: /docs/self-hosted/latest/install/upgrade/
 
 # Gitpod Self-Hosted Upgrade Notes
 
+## Upgrading Gitpod from v0.8.0 to v0.9.0
+
+With version 0.9.0 there is one change that requires user action regarding the rabbitmq messagebus:
+
+### rabbitmq now requires dexplicitly set password and username
+
+Gitpod uses a rabbitmq installation for distributing messages between components. So far that has been using default credentials if not configured otherwise. With v0.9.0 this is now explicitly required.
+To do so add the following to your `values.custom.yaml`:
+```
+rabbitmq:
+  auth:
+    username: your-rabbitmq-user
+    password: your-secret-rabbitmq-password
+```
+
+If this is not present, `helm` will fail with the following message:
+
+> rabbitmq username is required, please add a value to your values.yaml or with the helm flag --set rabbitmq.auth.username=xxxxx
+
 ## Upgrading Gitpod from v0.6.0 to v0.8.0
 
 With version 0.8.0 there are two major changes that require a user action. Both relate to the remote storage.
