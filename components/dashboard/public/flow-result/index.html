@@ -8,9 +8,14 @@
 <html>
 <head>
     <meta charset='utf-8'>
-    <title>Login successful</title>
+    <title>Done</title>
     <script>
-        window.opener.postMessage("auth-success", `https://${window.location.hostname}`);
+        if (window.opener) {
+            const message = new URLSearchParams(window.location.search).get("message");
+            window.opener.postMessage(message, `https://${window.location.hostname}`);
+        } else {
+            console.log("This page is supposed to be opened by Gitpod.")
+        }
     </script>
 </head>
 <body>

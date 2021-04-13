@@ -340,7 +340,9 @@ export class GenericAuthProvider implements AuthProvider {
 
             if (SelectAccountException.is(err)) {
                 this.selectAccountCookie.set(response, err.payload);
-                const url = this.env.hostUrl.with({ pathname: '/select-account' }).toString();
+
+                // option 1: send as GET param on redirect
+                const url = this.env.hostUrl.with({ pathname: '/flow-result', search: "message=error:" + Buffer.from(JSON.stringify(err.payload), "utf-8").toString('base64') }).toString();
                 response.redirect(url);
                 return;
             }

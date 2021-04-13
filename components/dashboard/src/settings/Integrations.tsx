@@ -5,6 +5,7 @@
  */
 
 import { AuthProviderEntry, AuthProviderInfo } from "@gitpod/gitpod-protocol";
+import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import React, { useContext, useEffect, useState } from "react";
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
@@ -17,6 +18,7 @@ import { openAuthorizeWindow } from "../provider-utils";
 import CheckBox from '../components/CheckBox';
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import settingsMenu from "./settings-menu";
+import { SelectAccountModal } from "./SelectAccountModal";
 
 export default function Integrations() {
 
@@ -38,6 +40,7 @@ function GitProviders() {
     const [allScopes, setAllScopes] = useState<Map<string, string[]>>(new Map());
     const [diconnectModal, setDisconnectModal] = useState<{ provider: AuthProviderInfo } | undefined>(undefined);
     const [editModal, setEditModal] = useState<{ provider: AuthProviderInfo, prevScopes: Set<string>, nextScopes: Set<string> } | undefined>(undefined);
+    const [selectAccountModal, setSelectAccountModal] = useState<SelectAccountPayload | undefined>(undefined);
 
     useEffect(() => {
         updateAuthProviders();
@@ -120,7 +123,7 @@ function GitProviders() {
 
     const disconnect = async (ap: AuthProviderInfo) => {
         setDisconnectModal(undefined);
-        const returnTo = gitpodHostUrl.with({ pathname: 'login-success' }).toString();
+        const returnTo = gitpodHostUrl.with({ pathname: 'flow-result', search: 'message=success' }).toString();
         const deauthorizeUrl = gitpodHostUrl.withApi({
             pathname: '/deauthorize',
             search: `returnTo=${returnTo}&host=${ap.host}`
@@ -152,7 +155,23 @@ function GitProviders() {
 
     const doAuthorize = async (host: string, scopes?: string[]) => {
         try {
-            await openAuthorizeWindow({ host, scopes, onSuccess: () => updateUser() });
+            await openAuthorizeWindow({
+                host,
+                scopes,
+                onSuccess: () => updateUser(),
+                onError: (error) => {
+                    if (typeof error === "string") {
+                        try {
+                            const payload = JSON.parse(error);
+                            if (SelectAccountPayload.is(payload)) {
+                                setSelectAccountModal(payload)
+                            }
+                        } catch (error) {
+                            console.log(error);
+                        }
+                    }
+                }
+            });
         } catch (error) {
             console.log(error)
         }
@@ -207,6 +226,10 @@ function GitProviders() {
     }
 
     return (<div>
+
+        {selectAccountModal && (
+            <SelectAccountModal {...selectAccountModal} close={() => setSelectAccountModal(undefined)} /> 
+        )}
 
         {diconnectModal && (
             <Modal visible={true} onClose={() => setDisconnectModal(undefined)}>

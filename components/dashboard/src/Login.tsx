@@ -50,13 +50,12 @@ export function Login() {
         const listener = (event: MessageEvent<any>) => {
             // todo: check event.origin
 
-            if (event.data === "auth-success") {
+            if (event.data === "success") {
                 if (event.source && "close" in event.source && event.source.close) {
                     console.log(`try to close window`);
                     event.source.close();
-                } else {
-                    // todo: not here, but add a button to the /login-success page to close, if this should not work as expected
                 }
+
                 (async () => {
                     await getGitpodService().reconnect();
                     setUser(await getGitpodService().server.getLoggedInUser());
@@ -139,7 +138,7 @@ export function Login() {
 }
 
 function getLoginUrl(host: string) {
-    const returnTo = gitpodHostUrl.with({ pathname: 'login-success' }).toString();
+    const returnTo = gitpodHostUrl.with({ pathname: 'flow-result', search: 'message=success' }).toString();
     return gitpodHostUrl.withApi({
         pathname: '/login',
         search: `host=${host}&returnTo=${encodeURIComponent(returnTo)}`
