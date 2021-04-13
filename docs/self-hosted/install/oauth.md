@@ -46,7 +46,7 @@ Alternatively, you can configure it per Helm values file:
     ```
     Replace `CLIENT_ID` and `SECRET` with their respective values.
 
- 3. Do a `helm upgrade --install -f values.custom.yaml gitpod gitpod.io/gitpod --version=0.8.0` to apply the changes.
+ 3. Do a `helm upgrade --install -f values.custom.yaml gitpod gitpod.io/gitpod --version=0.9.0` to apply the changes.
 
 ## GitHub
 To authenticate your users with GitHub you need to create a [GitHub OAuth App](https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/).
