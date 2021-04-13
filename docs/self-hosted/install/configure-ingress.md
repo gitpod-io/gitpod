@@ -28,10 +28,14 @@ Installing Gitpod on a subdomain works as well. For example:
     kubectl describe svc proxy | grep -i ingress
     ```
 
- 2. Create a file `values.custom.yaml` with the following content:
+ 1. Merge the following into your `values.custom.yaml` file:
     ```yaml
     hostname: your-domain.com
+    components:
+      proxy:
+        loadBalancerIP: <your-IP>
     ```
+    Specifying the `loadBalancerIP` make sure it stays the same across all redeploys.
 
 ## 2. HTTPS
 Gitpod requires HTTPS certificates to function properly. We recommend using [Let's Encrypt](https://letsencrypt.org/) for retrieving certificates as we do for [gitpod.io](https://gitpod.io).
@@ -55,7 +59,7 @@ To configure the HTTPS certificates for your domain
     ```bash
     kubectl create secret generic https-certificates --from-file=secrets/https-certificates
     ```
- 4. Afterwards, do an `helm upgrade --install -f values.custom.yaml gitpod gitpod.io/gitpod --version=0.8.0` to apply the changes. 
+ 4. Afterwards, do an `helm upgrade --install -f values.custom.yaml gitpod gitpod.io/gitpod --version=0.9.0` to apply the changes. 
 
 ### Using Let's Encrypt to generate HTTPS certificates
 
