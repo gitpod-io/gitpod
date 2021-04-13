@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/containerd/containerd/errdefs"
+	"github.com/lpar/gzipped/v2"
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -176,7 +177,7 @@ func (b *diskBlobspace) Get(name string) (fs http.FileSystem, state blobstate) {
 	}
 
 	os.WriteFile(fmt.Sprintf("%s.used", fn), nil, 0644)
-	return http.Dir(fn), blobReady
+	return gzipped.Dir(fn), blobReady
 }
 
 // AddFromTar adds content to this store under the given name.

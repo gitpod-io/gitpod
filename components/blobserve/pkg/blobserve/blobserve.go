@@ -16,7 +16,7 @@ import (
 	"github.com/containerd/containerd/remotes"
 	"github.com/docker/distribution/reference"
 	"github.com/gorilla/mux"
-	"github.com/shurcooL/httpgzip"
+	"github.com/lpar/gzipped/v2"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
@@ -182,12 +182,7 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 		fs = prefixingFilesystem{Prefix: workdir, FS: fs}
 	}
 
-	http.StripPrefix(pathPrefix, httpgzip.FileServer(
-		fs,
-		httpgzip.FileServerOptions{
-			IndexHTML: true,
-		},
-	)).ServeHTTP(w, req)
+	http.StripPrefix(pathPrefix, gzipped.FileServer(fs)).ServeHTTP(w, req)
 }
 
 func isNoWebsocketRequest(req *http.Request, match *mux.RouteMatch) bool {
