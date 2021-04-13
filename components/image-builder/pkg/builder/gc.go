@@ -76,7 +76,12 @@ func (gc *GarbageCollector) CollectGarbage(ctx context.Context, maxAge time.Dura
 
 // Start schedules the garbage collector at regular intervals removing all artifacts older than maxAge
 func (gc *GarbageCollector) Start(ctx context.Context, maxAge time.Duration) {
-	t := time.NewTicker(maxAge / 2)
+	d := maxAge / 10
+	if d > 10*time.Minute {
+		d = 10 * time.Minute
+	}
+
+	t := time.NewTicker(d)
 
 	for {
 		gc.CollectGarbage(ctx, maxAge)
