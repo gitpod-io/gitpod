@@ -289,19 +289,19 @@ function GitProviders() {
                             &nbsp;
                         </div>
                     </div>
-                    <div className="p-0 my-auto flex flex-col w-3/12">
+                    <div className="p-0 my-auto flex flex-col xl:w-3/12 w-4/12">
                         <span className="my-auto font-medium truncate overflow-ellipsis">{ap.authProviderType}</span>
                         <span className="text-sm my-auto text-gray-400 truncate overflow-ellipsis">{ap.host}</span>
                     </div>
-                    <div className="p-0 my-auto flex flex-col w-2/12">
+                    <div className="p-0 my-auto flex flex-col xl:w-2/12 w-6/12">
                         <span className="my-auto truncate text-gray-500 overflow-ellipsis">{getUsername(ap.authProviderId) || "–"}</span>
                         <span className="text-sm my-auto text-gray-400">Username</span>
                     </div>
-                    <div className="p-0 my-auto flex flex-col w-5/12">
+                    <div className="p-0 my-auto hidden xl:flex xl:flex-col xl:w-5/12">
                         <span className="my-auto truncate text-gray-500 overflow-ellipsis">{getPermissions(ap.authProviderId)?.join(", ") || "–"}</span>
                         <span className="text-sm my-auto text-gray-400">Permissions</span>
                     </div>
-                    <div className="my-auto flex w-1/12 pl-8 mr-4 opacity-0 group-hover:opacity-100">
+                    <div className="my-auto flex w-1/12 mr-4 opacity-0 group-hover:opacity-100 justify-end">
                         <div className="self-center hover:bg-gray-200 rounded-md cursor-pointer w-8">
                             <ContextMenu menuEntries={gitProviderMenu(ap)}>
                                 <img className="w-8 h-8 p-1" src={ThreeDots} alt="Actions" />
@@ -417,7 +417,7 @@ function GitIntegrations() {
                     <div className="p-0 my-auto flex flex-col w-7/12">
                         <span className="my-auto truncate text-gray-500 overflow-ellipsis">{ap.host}</span>
                     </div>
-                    <div className="my-auto flex w-1/12 pl-8 opacity-0 group-hover:opacity-100">
+                    <div className="my-auto flex w-1/12 opacity-0 group-hover:opacity-100 justify-end">
                         <div className="self-center hover:bg-gray-200 rounded-md cursor-pointer w-8">
                             <ContextMenu menuEntries={gitProviderMenu(ap)}>
                                 <img className="w-8 h-8 p-1" src={ThreeDots} alt="Actions" />
