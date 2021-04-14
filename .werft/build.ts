@@ -55,7 +55,7 @@ export async function build(context, version) {
     } catch (err) {
         werft.fail('prep', err);
     }
-    const masterBuild = context.Repository.ref.includes("refs/heads/master");
+    const masterBuild = context.Repository.ref.includes("refs/heads/main");
     const dontTest = "no-test" in buildConfig;
     const cacheLevel = "no-cache" in buildConfig ? "remote-push" : "remote";
     const publishRelease = "publish-release" in buildConfig;
@@ -66,6 +66,7 @@ export async function build(context, version) {
     const registryFacadeHandover = "registry-facade-handover" in buildConfig;
     const storage = buildConfig["storage"] || "";
     const withIntegrationTests = buildConfig["with-integration-tests"] == "true";
+    const publishToNpm = "publish-to-npm" in buildConfig || masterBuild;
 
     const withWsCluster = parseWsCluster(buildConfig["with-ws-cluster"]);   // e.g., "dev2|gpl-ws-cluster-branch": prepares this branch to host (an additional) workspace cluster
     const wsCluster = parseWsCluster(buildConfig["as-ws-cluster"]);         // e.g., "dev2|gpl-fat-cluster-branch": deploys this build as so that it is available under that subdomain as that cluster
@@ -85,6 +86,7 @@ export async function build(context, version) {
         withIntegrationTests,
         withWsCluster,
         wsCluster,
+        publishToNpm
     }));
 
     /**
@@ -102,7 +104,7 @@ export async function build(context, version) {
     if (withInstaller || publishRelease) {
         exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test' : ''} -Dversion=${version} -DimageRepoBase=${imageRepo} install:all`);
     }
-    exec(`leeway build --werft=true -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo}`);
+    exec(`leeway build --werft=true -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo} -DnpmPublishTrigger=${publishToNpm ? Date.now() : 'false'}`);
     if (publishRelease) {
         try {
             werft.phase("publish", "checking version semver compliance...");
