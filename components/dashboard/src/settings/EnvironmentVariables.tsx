@@ -85,7 +85,7 @@ export default function EnvVars() {
     const [currentEnvVar, setCurrentEnvVar] = useState({ name: '', value: '', repositoryPattern: '' } as UserEnvVarValue);
     const [isAddEnvVarModalVisible, setAddEnvVarModalVisible] = useState(false);
     const update = async () => {
-        await getGitpodService().server.getEnvVars().then(r => setEnvVars(r));
+        await getGitpodService().server.getAllEnvVars().then(r => setEnvVars(r));
     }
 
     useEffect(() => {

@@ -77,6 +77,7 @@ function readConfig(): RateLimiterConfig {
         "getUserStorageResource": { group: "default", points: 1 },
         "updateUserStorageResource": { group: "default", points: 1 },
         "getEnvVars": { group: "default", points: 1 },
+        "getAllEnvVars": { group: "default", points: 1 },
         "setEnvVar": { group: "default", points: 1 },
         "deleteEnvVar": { group: "default", points: 1 },
         "getContentBlobUploadUrl": { group: "default", points: 1 },

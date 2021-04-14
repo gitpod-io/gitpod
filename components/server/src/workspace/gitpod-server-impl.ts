@@ -1257,6 +1257,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         return layoutData.layoutData;
     }
 
+    // Get environment variables (filter by repository pattern precedence)
     async getEnvVars(): Promise<UserEnvVarValue[]> {
         const user = this.checkUser("getEnvVars");
         const result = new Map<string, { value: UserEnvVar, score: number }>();
@@ -1272,6 +1273,24 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         }
         return [...result.values()]
             .map(({ value: { id, name, value, repositoryPattern } }) => ({ id, name, value, repositoryPattern }));
+    }
+
+    // Get all environment variables (unfiltered)
+    async getAllEnvVars(): Promise<UserEnvVarValue[]> {
+        const user = this.checkUser("getAllEnvVars");
+        const result: UserEnvVarValue[] = [];
+        for (const value of await this.userDB.getEnvVars(user.id)) {
+            if (!await this.resourceAccessGuard.canAccess({ kind: 'envVar', subject: value }, 'get')) {
+                continue;
+            }
+            result.push({
+                id: value.id,
+                name: value.name,
+                value: value.value,
+                repositoryPattern: value.repositoryPattern,
+            });
+        }
+        return result;
     }
 
     async setEnvVar(variable: UserEnvVarValue): Promise<void> {
