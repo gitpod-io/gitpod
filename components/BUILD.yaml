@@ -91,7 +91,7 @@ scripts:
     srcs:
       - components/**/*
     script: |
-      COMPONENTS=( content-service-api image-builder-api registry-facade-api supervisor-api ws-daemon-api ws-manager-api )
+      COMPONENTS=( content-service-api image-builder-api registry-facade-api supervisor-api ws-daemon-api ws-manager-api ws-manager-bridge-api )
 
       for COMPONENT in "${COMPONENTS[@]}";do
         echo "Generating code for component $COMPONENT..."
