@@ -14,4 +14,8 @@ fi
 mkdir -p lib
 export PROTO_INCLUDE="-I$THIRD_PARTY_INCLUDES/third_party -I /usr/lib/protoc/include"
 
-protoc $PROTO_INCLUDE --plugin="protoc-gen-ts=`which protoc-gen-ts`" --js_out="import_style=commonjs,binary:lib" --ts_out="service=grpc-web:lib" -I${PROTOLOC:-..} ${PROTOLOC:-..}/*.proto
+protoc $PROTO_INCLUDE \
+    --plugin="protoc-gen-ts=`which protoc-gen-ts`" \
+    --js_out="import_style=commonjs,binary:lib" \
+    --ts_out="grpc_js,service=grpc-web:lib" \
+    -I${PROTOLOC:-..} ${PROTOLOC:-..}/*.proto
