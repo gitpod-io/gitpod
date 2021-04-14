@@ -315,4 +315,31 @@ export class UserService {
         throw SelectAccountException.create(`User is trying to connect a provider identity twice.`, payload);
     }
 
+    async asserNoAccountWithEmail(email: string) {
+        const existingUser = (await this.userDb.findUsersByEmail(email))[0];
+        if (!existingUser) {
+            // no user has this email address ==> OK
+            return;
+        }
+        const identity = existingUser.identities.find(i => i.primaryEmail === email)!
+
+
+        /*
+         * /!\ the given email address is used in another user account.
+         */
+
+        const authProviderConfigOfCurrentUser = this.hostContextProvider.getAll().find(c => c.authProvider.authProviderId === identity.authProviderId)?.authProvider?.config;
+
+        const payload: SelectAccountPayload = {
+            otherUser: {
+                name: existingUser.name!,
+                avatarUrl: existingUser.avatarUrl!,
+                authHost: authProviderConfigOfCurrentUser?.host || "",
+                authName: identity.authName,
+                authProviderType: authProviderConfigOfCurrentUser?.type || ""
+            }
+        }
+        throw SelectAccountException.create(`User is trying to connect a provider identity twice.`, payload);
+    }
+
 }

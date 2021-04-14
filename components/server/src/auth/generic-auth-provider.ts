@@ -435,6 +435,21 @@ export class GenericAuthProvider implements AuthProvider {
             } else {
                 // no user session present, let's initiate a login
                 currentGitpodUser = await this.userService.findUserForLogin({ candidate });
+
+                if (!currentGitpodUser) {
+
+                    // we disallow 
+                    const existingUserWithSameEmail = (await this.userDb.findUsersByEmail(primaryEmail))[0];
+                    if (existingUserWithSameEmail) {
+                        try {
+                            await this.userService.asserNoAccountWithEmail(primaryEmail);
+                        } catch (error) {
+                            log.warn(`Login attempt with matching email address.`, { ...defaultLogPayload, authUser, candidate, clientInfo });
+                            done(error, undefined);
+                            return;
+                        }
+                    }
+                }
             }
 
             const token = this.createToken(this.tokenUsername, accessToken, refreshToken, currentScopes, tokenResponse.expires_in);

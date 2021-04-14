@@ -5,7 +5,7 @@
  */
 
 export interface SelectAccountPayload {
-    currentUser: {
+    currentUser?: {
         name: string;
         avatarUrl: string;
         authHost: string;
