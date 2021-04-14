@@ -45,7 +45,7 @@ function deleteAllWorkspaces(namespace: string, shellOpts: ExecOptions) {
             exec(`kubectl patch pod --namespace ${namespace} ${o} -p '{"metadata":{"finalizers":null}}'`, { ...shellOpts });
             exec(`kubectl delete pod --namespace ${namespace} ${o}`, { ...shellOpts });
         } catch (err) {
-            const result = exec(`kubectl get pod --namespace ${namespace} ${o}`);
+            const result = exec(`kubectl get pod --namespace ${namespace} ${o}`, { dontCheckRc: true });
             if (result.code === 0) {
                 console.error(`unable to patch/delete ${o} but it's still on the dataplane`);
             }
