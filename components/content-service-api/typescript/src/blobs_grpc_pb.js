@@ -6,7 +6,7 @@
 // See License-AGPL.txt in the project root for license information.
 //
 'use strict';
-var grpc = require('grpc');
+var grpc = require('@grpc/grpc-js');
 var blobs_pb = require('./blobs_pb.js');
 
 function serialize_contentservice_DeleteRequest(arg) {

@@ -6,7 +6,7 @@
 // See License-AGPL.txt in the project root for license information.
 //
 'use strict';
-var grpc = require('grpc');
+var grpc = require('@grpc/grpc-js');
 var workspace_pb = require('./workspace_pb.js');
 
 function serialize_contentservice_DeleteWorkspaceRequest(arg) {

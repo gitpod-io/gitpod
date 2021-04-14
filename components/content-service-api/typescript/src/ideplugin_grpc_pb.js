@@ -6,7 +6,7 @@
 // See License-AGPL.txt in the project root for license information.
 //
 'use strict';
-var grpc = require('grpc');
+var grpc = require('@grpc/grpc-js');
 var ideplugin_pb = require('./ideplugin_pb.js');
 
 function serialize_ideplugin_PluginDownloadURLRequest(arg) {

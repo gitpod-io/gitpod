@@ -12,7 +12,7 @@
 
 import * as jspb from "google-protobuf";
 
-export class UploadUrlRequest extends jspb.Message {
+export class UploadUrlRequest extends jspb.Message { 
     getOwnerId(): string;
     setOwnerId(value: string): UploadUrlRequest;
     getName(): string;
@@ -38,7 +38,7 @@ export namespace UploadUrlRequest {
     }
 }
 
-export class UploadUrlResponse extends jspb.Message {
+export class UploadUrlResponse extends jspb.Message { 
     getUrl(): string;
     setUrl(value: string): UploadUrlResponse;
 
@@ -58,7 +58,7 @@ export namespace UploadUrlResponse {
     }
 }
 
-export class DownloadUrlRequest extends jspb.Message {
+export class DownloadUrlRequest extends jspb.Message { 
     getOwnerId(): string;
     setOwnerId(value: string): DownloadUrlRequest;
     getName(): string;
@@ -84,7 +84,7 @@ export namespace DownloadUrlRequest {
     }
 }
 
-export class DownloadUrlResponse extends jspb.Message {
+export class DownloadUrlResponse extends jspb.Message { 
     getUrl(): string;
     setUrl(value: string): DownloadUrlResponse;
 
@@ -104,7 +104,7 @@ export namespace DownloadUrlResponse {
     }
 }
 
-export class DeleteRequest extends jspb.Message {
+export class DeleteRequest extends jspb.Message { 
     getOwnerId(): string;
     setOwnerId(value: string): DeleteRequest;
 
@@ -145,7 +145,7 @@ export namespace DeleteRequest {
 
 }
 
-export class DeleteResponse extends jspb.Message {
+export class DeleteResponse extends jspb.Message { 
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DeleteResponse.AsObject;
