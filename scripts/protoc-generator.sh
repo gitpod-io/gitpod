@@ -39,13 +39,13 @@ typescript_protoc() {
     protoc \
         --plugin=protoc-gen-grpc=$MODULE_DIR/typescript/node_modules/.bin/grpc_tools_node_protoc_plugin \
         --js_out=import_style=commonjs,binary:src \
-        --grpc_out=src \
+        --grpc_out=grpc_js:src \
         -I /usr/lib/protoc/include -I$ROOT_DIR -I. -I$MODULE_DIR \
         $MODULE_DIR/*.proto
 
     protoc \
         --plugin=protoc-gen-ts=$MODULE_DIR/typescript/node_modules/.bin/protoc-gen-ts \
-        --ts_out=src \
+        --ts_out=grpc_js:src \
         -I /usr/lib/protoc/include -I$ROOT_DIR -I. -I$MODULE_DIR \
         $MODULE_DIR/*.proto
 

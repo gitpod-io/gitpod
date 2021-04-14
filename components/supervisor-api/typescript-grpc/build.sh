@@ -28,7 +28,7 @@ DIR=$(cd $(dirname "${BASH_SOURCE}") && pwd -P)
     $PROTO_INCLUDE \
     -I${PROTOLOC:-..} \
     --plugin=protoc-gen-ts=$DIR/node_modules/.bin/protoc-gen-ts \
-    --ts_out=lib \
+    --ts_out=grpc_js:lib \
     ${PROTOLOC:-..}/*.proto
 
 sed -i '/google_api_annotations_pb/d' lib/*.js
