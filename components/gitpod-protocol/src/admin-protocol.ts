@@ -28,6 +28,7 @@ export interface AdminServer {
     adminSetProfessionalOpenSource(userId: string, shouldGetProfOSS: boolean): Promise<void>;
     adminIsStudent(userId: string): Promise<boolean>;
     adminAddStudentEmailDomain(userId: string, domain: string): Promise<void>;
+    adminGrantExtraHours(userId: string, extraHours: number): Promise<void>;
 }
 
 export interface AdminGetListRequest<T> {

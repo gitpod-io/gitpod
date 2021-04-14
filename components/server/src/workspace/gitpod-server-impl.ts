@@ -1643,6 +1643,9 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     async adminAddStudentEmailDomain(userId: string, domain: string): Promise<void> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
+    async adminGrantExtraHours(userId: string, extraHours: number): Promise<void> {
+        throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
+    }
     async isStudent(): Promise<boolean> {
         throw new ResponseError(ErrorCodes.SAAS_FEATURE, `Not implemented in this version`);
     }
