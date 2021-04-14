@@ -9,7 +9,7 @@
 
 /* tslint:disable */
 
-import * as grpc from "grpc";
+import * as grpc from "@grpc/grpc-js";
 import * as info_pb from "./info_pb";
 
 interface IInfoServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
