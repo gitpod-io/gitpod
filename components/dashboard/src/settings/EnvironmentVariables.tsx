@@ -80,12 +80,19 @@ function AddEnvVarModal(p: EnvVarModalProps) {
     </Modal>
 }
 
+function sortEnvVars(a: UserEnvVarValue, b: UserEnvVarValue) {
+    if (a.name === b.name) {
+        return a.repositoryPattern > b.repositoryPattern ? 1 : -1;
+    }
+    return a.name > b.name ? 1 : -1;
+}
+
 export default function EnvVars() {
     const [envVars, setEnvVars] = useState([] as UserEnvVarValue[]);
     const [currentEnvVar, setCurrentEnvVar] = useState({ name: '', value: '', repositoryPattern: '' } as UserEnvVarValue);
     const [isAddEnvVarModalVisible, setAddEnvVarModalVisible] = useState(false);
     const update = async () => {
-        await getGitpodService().server.getAllEnvVars().then(r => setEnvVars(r));
+        await getGitpodService().server.getAllEnvVars().then(r => setEnvVars(r.sort(sortEnvVars)));
     }
 
     useEffect(() => {
