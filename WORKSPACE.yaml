@@ -2,7 +2,7 @@
 defaultTarget: components:all
 defaultArgs:
   coreYarnLockBase: ../..
-  publishToNPM: true
+  npmPublishTrigger: "false"
 
 defaultVariant:
   config:
