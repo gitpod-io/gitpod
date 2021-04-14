@@ -7,7 +7,7 @@
 // GENERATED CODE -- DO NOT EDIT!
 
 'use strict';
-var grpc = require('grpc');
+var grpc = require('@grpc/grpc-js');
 var core_pb = require('./core_pb.js');
 var content$service$api_initializer_pb = require('@gitpod/content-service/lib');
 var google_protobuf_timestamp_pb = require('google-protobuf/google/protobuf/timestamp_pb.js');

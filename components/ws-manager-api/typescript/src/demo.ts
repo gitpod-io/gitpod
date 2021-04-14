@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import * as grpc from "grpc";
+import * as grpc from "@grpc/grpc-js";
 import { WorkspaceManagerClient } from "./core_grpc_pb";
 import { DescribeWorkspaceRequest, DescribeWorkspaceResponse } from "./core_pb";
 
