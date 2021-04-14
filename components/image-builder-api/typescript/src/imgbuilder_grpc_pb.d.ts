@@ -10,7 +10,8 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import * as grpc from "grpc";
+import * as grpc from "@grpc/grpc-js";
+import {handleClientStreamingCall} from "@grpc/grpc-js/build/src/server-call";
 import * as imgbuilder_pb from "./imgbuilder_pb";
 import * as content_service_api_initializer_pb from "@gitpod/content-service/lib";
 
@@ -70,7 +71,7 @@ interface IImageBuilderService_IListBuilds extends grpc.MethodDefinition<imgbuil
 
 export const ImageBuilderService: IImageBuilderService;
 
-export interface IImageBuilderServer {
+export interface IImageBuilderServer extends grpc.UntypedServiceImplementation {
     resolveBaseImage: grpc.handleUnaryCall<imgbuilder_pb.ResolveBaseImageRequest, imgbuilder_pb.ResolveBaseImageResponse>;
     resolveWorkspaceImage: grpc.handleUnaryCall<imgbuilder_pb.ResolveWorkspaceImageRequest, imgbuilder_pb.ResolveWorkspaceImageResponse>;
     build: grpc.handleServerStreamingCall<imgbuilder_pb.BuildRequest, imgbuilder_pb.BuildResponse>;
@@ -95,7 +96,7 @@ export interface IImageBuilderClient {
 }
 
 export class ImageBuilderClient extends grpc.Client implements IImageBuilderClient {
-    constructor(address: string, credentials: grpc.ChannelCredentials, options?: object);
+    constructor(address: string, credentials: grpc.ChannelCredentials, options?: Partial<grpc.ClientOptions>);
     public resolveBaseImage(request: imgbuilder_pb.ResolveBaseImageRequest, callback: (error: grpc.ServiceError | null, response: imgbuilder_pb.ResolveBaseImageResponse) => void): grpc.ClientUnaryCall;
     public resolveBaseImage(request: imgbuilder_pb.ResolveBaseImageRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: imgbuilder_pb.ResolveBaseImageResponse) => void): grpc.ClientUnaryCall;
     public resolveBaseImage(request: imgbuilder_pb.ResolveBaseImageRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: imgbuilder_pb.ResolveBaseImageResponse) => void): grpc.ClientUnaryCall;
