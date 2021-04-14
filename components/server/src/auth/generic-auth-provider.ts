@@ -286,6 +286,14 @@ export class GenericAuthProvider implements AuthProvider {
             return;
         }
 
+        if (authFlow.host !== this.host) {
+            increaseLoginCounter("failed", this.host);
+
+            log.error(cxt, `(${strategyName}) Host does not match.`, { request, clientInfo });
+            response.redirect(this.getSorryUrl(`Host does not match.`));
+            return;
+        }
+
         const defaultLogPayload = { authFlow, clientInfo, authProviderId, request };
 
         // check OAuth2 errors
