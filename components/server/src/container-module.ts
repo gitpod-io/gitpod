@@ -68,7 +68,7 @@ import { SelectAccountCookie } from './user/select-account-cookie';
 import { ContentServiceClient } from '@gitpod/content-service/lib/content_grpc_pb';
 import { BlobServiceClient } from '@gitpod/content-service/lib/blobs_grpc_pb';
 import { WorkspaceServiceClient } from '@gitpod/content-service/lib/workspace_grpc_pb';
-import * as grpc from "grpc";
+import * as grpc from "@grpc/grpc-js";
 import { CodeSyncService } from './code-sync/code-sync-service';
 import { ContentServiceStorageClient } from './storage/content-service-client';
 import { IDEPluginServiceClient } from '@gitpod/content-service/lib/ideplugin_grpc_pb';

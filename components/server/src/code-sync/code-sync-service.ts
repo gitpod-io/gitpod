@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { status } from 'grpc';
+import { status } from '@grpc/grpc-js';
 import fetch from "node-fetch";
 import { User } from '@gitpod/gitpod-protocol/lib/protocol';
 import bodyParser = require('body-parser');
