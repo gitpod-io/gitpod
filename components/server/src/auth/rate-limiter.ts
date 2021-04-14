@@ -120,6 +120,7 @@ function readConfig(): RateLimiterConfig {
         "adminGetAccountStatement":  { group: "default", points: 1 },
         "adminIsStudent":  { group: "default", points: 1 },
         "adminSetProfessionalOpenSource":  { group: "default", points: 1 },
+        "adminGrantExtraHours":  { group: "default", points: 1 },
         "checkout":  { group: "default", points: 1 },
         "createPortalSession":  { group: "default", points: 1 },
         "getAccountStatement":  { group: "default", points: 1 },

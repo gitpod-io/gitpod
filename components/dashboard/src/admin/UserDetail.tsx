@@ -104,45 +104,52 @@ export default function UserDetail(p: { user: User }) {
                     <div className="flex w-full mt-6">
                         <Property name="Sign Up Date">{moment(user.creationDate).format('MMM D, YYYY')}</Property>
                         <Property name="Remaining Hours"
-                            action={
-                                accountStatement && {
+                            actions={
+                                accountStatement && [{
                                     label: 'View Account Statement',
                                     onClick: () => setViewAccountStatement(true)
-                                }
+                                }, {
+                                    label: 'Grant 20h',
+                                    onClick: async () => {
+                                        await getGitpodService().server.adminGrantExtraHours(user.id, 20);
+                                        setAccountStatement(await getGitpodService().server.adminGetAccountStatement(user.id));
+                                    }
+                                }]
                             }
                         >{accountStatement?.remainingHours ? accountStatement?.remainingHours.toString() : '---'}</Property>
                         <Property
                             name="Plan"
-                            action={accountStatement && {
+                            actions={accountStatement && [{
                                 label: (isProfessionalOpenSource ? 'Disable' : 'Enable') + ' Professional OSS',
-                                onClick: () => {
-                                    getGitpodService().server.adminSetProfessionalOpenSource(user.id, !isProfessionalOpenSource);
+                                onClick: async () => {
+                                    await getGitpodService().server.adminSetProfessionalOpenSource(user.id, !isProfessionalOpenSource);
+                                    setAccountStatement(await getGitpodService().server.adminGetAccountStatement(user.id));
                                 }
-                            }}
+                            }]}
                         >{accountStatement?.subscriptions ? accountStatement.subscriptions.filter(s => Subscription.isActive(s, new Date().toISOString())).map(s => Plans.getById(s.planId)?.name).join(', ') : '---'}</Property>
                     </div>
                     <div className="flex w-full mt-6">
                         <Property name="Feature Flags"
-                            action={{
+                            actions={[{
                                 label: 'Edit Feature Flags',
                                 onClick: () => {
                                     setEditFeatureFlags(true);
                                 }
-                            }}
+                            }]}
                         >{user.featureFlags?.permanentWSFeatureFlags?.join(', ') || '---'}</Property>
                         <Property name="Roles"
-                            action={{
+                            actions={[{
                                 label: 'Edit Roles',
                                 onClick: () => {
                                     setEditRoles(true);
                                 }
-                            }}
+                            }]}
                         >{user.rolesOrPermissions?.join(', ') || '---'}</Property>
                         <Property name="Student"
-                            action={ !isStudent ? {
+                            actions={ !isStudent ? [{
                                 label: `Make '${emailDomain}' a student domain`,
                                 onClick: addStudentDomain
-                            } :  undefined}
+                            }] :  undefined}
                         >{isStudent === undefined ? '---' : (isStudent ? 'Enabled' : 'Disabled')}</Property>
                     </div>
                 </div>
@@ -185,7 +192,7 @@ function Label(p: { text: string, color: string }) {
     return <div className={`ml-3 text-sm text-${p.color}-600 truncate bg-${p.color}-100 px-1.5 py-0.5 rounded-md my-auto`}>{p.text}</div>;
 }
 
-export function Property(p: { name: string, children: string | ReactChild, action?: { label: string, onClick: () => void } }) {
+export function Property(p: { name: string, children: string | ReactChild, actions?: { label: string, onClick: () => void }[] }) {
     return <div className="ml-3 flex flex-col w-4/12 truncate">
         <div className="text-base text-gray-500 truncate">
             {p.name}
@@ -193,9 +200,11 @@ export function Property(p: { name: string, children: string | ReactChild, actio
         <div className="text-lg text-gray-600 font-semibold truncate">
             {p.children}
         </div>
-        <div className="cursor-pointer text-sm text-blue-400 hover:text-blue-500 truncate" onClick={p.action?.onClick}>
-            {p.action?.label || ''}
-        </div>
+        {(p.actions || []).map(a =>
+            <div className="cursor-pointer text-sm text-blue-400 hover:text-blue-500 truncate" onClick={a.onClick}>
+                {a.label || ''}
+            </div>
+        )}
     </div>;
 }
 
