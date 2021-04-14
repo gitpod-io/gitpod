@@ -10,7 +10,8 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import * as grpc from "grpc";
+import * as grpc from "@grpc/grpc-js";
+import {handleClientStreamingCall} from "@grpc/grpc-js/build/src/server-call";
 import * as workspace_daemon_pb from "./workspace_daemon_pb";
 
 interface IInWorkspaceServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
@@ -69,7 +70,7 @@ interface IInWorkspaceServiceService_ITeardown extends grpc.MethodDefinition<wor
 
 export const InWorkspaceServiceService: IInWorkspaceServiceService;
 
-export interface IInWorkspaceServiceServer {
+export interface IInWorkspaceServiceServer extends grpc.UntypedServiceImplementation {
     prepareForUserNS: grpc.handleUnaryCall<workspace_daemon_pb.PrepareForUserNSRequest, workspace_daemon_pb.PrepareForUserNSResponse>;
     writeIDMapping: grpc.handleUnaryCall<workspace_daemon_pb.WriteIDMappingRequest, workspace_daemon_pb.WriteIDMappingResponse>;
     mountProc: grpc.handleUnaryCall<workspace_daemon_pb.MountProcRequest, workspace_daemon_pb.MountProcResponse>;
@@ -96,7 +97,7 @@ export interface IInWorkspaceServiceClient {
 }
 
 export class InWorkspaceServiceClient extends grpc.Client implements IInWorkspaceServiceClient {
-    constructor(address: string, credentials: grpc.ChannelCredentials, options?: object);
+    constructor(address: string, credentials: grpc.ChannelCredentials, options?: Partial<grpc.ClientOptions>);
     public prepareForUserNS(request: workspace_daemon_pb.PrepareForUserNSRequest, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.PrepareForUserNSResponse) => void): grpc.ClientUnaryCall;
     public prepareForUserNS(request: workspace_daemon_pb.PrepareForUserNSRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.PrepareForUserNSResponse) => void): grpc.ClientUnaryCall;
     public prepareForUserNS(request: workspace_daemon_pb.PrepareForUserNSRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.PrepareForUserNSResponse) => void): grpc.ClientUnaryCall;

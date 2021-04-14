@@ -10,7 +10,8 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import * as grpc from "grpc";
+import * as grpc from "@grpc/grpc-js";
+import {handleClientStreamingCall} from "@grpc/grpc-js/build/src/server-call";
 import * as daemon_pb from "./daemon_pb";
 import * as content_service_api_initializer_pb from "@gitpod/content-service/lib";
 
@@ -60,7 +61,7 @@ interface IWorkspaceContentServiceService_IDisposeWorkspace extends grpc.MethodD
 
 export const WorkspaceContentServiceService: IWorkspaceContentServiceService;
 
-export interface IWorkspaceContentServiceServer {
+export interface IWorkspaceContentServiceServer extends grpc.UntypedServiceImplementation {
     initWorkspace: grpc.handleUnaryCall<daemon_pb.InitWorkspaceRequest, daemon_pb.InitWorkspaceResponse>;
     waitForInit: grpc.handleUnaryCall<daemon_pb.WaitForInitRequest, daemon_pb.WaitForInitResponse>;
     takeSnapshot: grpc.handleUnaryCall<daemon_pb.TakeSnapshotRequest, daemon_pb.TakeSnapshotResponse>;
@@ -83,7 +84,7 @@ export interface IWorkspaceContentServiceClient {
 }
 
 export class WorkspaceContentServiceClient extends grpc.Client implements IWorkspaceContentServiceClient {
-    constructor(address: string, credentials: grpc.ChannelCredentials, options?: object);
+    constructor(address: string, credentials: grpc.ChannelCredentials, options?: Partial<grpc.ClientOptions>);
     public initWorkspace(request: daemon_pb.InitWorkspaceRequest, callback: (error: grpc.ServiceError | null, response: daemon_pb.InitWorkspaceResponse) => void): grpc.ClientUnaryCall;
     public initWorkspace(request: daemon_pb.InitWorkspaceRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: daemon_pb.InitWorkspaceResponse) => void): grpc.ClientUnaryCall;
     public initWorkspace(request: daemon_pb.InitWorkspaceRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: daemon_pb.InitWorkspaceResponse) => void): grpc.ClientUnaryCall;
