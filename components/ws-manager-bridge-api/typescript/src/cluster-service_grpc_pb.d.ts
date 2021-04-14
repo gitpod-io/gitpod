@@ -11,6 +11,7 @@
 /* eslint-disable */
 
 import * as grpc from "@grpc/grpc-js";
+import {handleClientStreamingCall} from "@grpc/grpc-js/build/src/server-call";
 import * as cluster_service_pb from "./cluster-service_pb";
 
 interface IClusterServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
@@ -59,7 +60,7 @@ interface IClusterServiceService_IList extends grpc.MethodDefinition<cluster_ser
 
 export const ClusterServiceService: IClusterServiceService;
 
-export interface IClusterServiceServer {
+export interface IClusterServiceServer extends grpc.UntypedServiceImplementation {
     register: grpc.handleUnaryCall<cluster_service_pb.RegisterRequest, cluster_service_pb.RegisterResponse>;
     update: grpc.handleUnaryCall<cluster_service_pb.UpdateRequest, cluster_service_pb.UpdateResponse>;
     deregister: grpc.handleUnaryCall<cluster_service_pb.DeregisterRequest, cluster_service_pb.DeregisterResponse>;
@@ -82,7 +83,7 @@ export interface IClusterServiceClient {
 }
 
 export class ClusterServiceClient extends grpc.Client implements IClusterServiceClient {
-    constructor(address: string, credentials: grpc.ChannelCredentials, options?: object);
+    constructor(address: string, credentials: grpc.ChannelCredentials, options?: Partial<grpc.ClientOptions>);
     public register(request: cluster_service_pb.RegisterRequest, callback: (error: grpc.ServiceError | null, response: cluster_service_pb.RegisterResponse) => void): grpc.ClientUnaryCall;
     public register(request: cluster_service_pb.RegisterRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: cluster_service_pb.RegisterResponse) => void): grpc.ClientUnaryCall;
     public register(request: cluster_service_pb.RegisterRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: cluster_service_pb.RegisterResponse) => void): grpc.ClientUnaryCall;

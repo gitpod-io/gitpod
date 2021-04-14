@@ -24,7 +24,7 @@ import {
 } from '@gitpod/ws-manager-bridge-api/lib';
 import { GetWorkspacesRequest } from '@gitpod/ws-manager/lib';
 import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
-import * as grpc from "grpc";
+import * as grpc from "@grpc/grpc-js";
 import { inject, injectable } from 'inversify';
 import { BridgeController } from './bridge-controller';
 import { Configuration } from './config';
@@ -36,6 +36,8 @@ export interface ClusterServiceServerOptions {
 
 @injectable()
 export class ClusterService implements IClusterServiceServer {
+    [name: string]: grpc.UntypedHandleCall;
+
     @inject(Configuration)
     protected readonly config: Configuration;
 
@@ -247,15 +249,12 @@ export class ClusterServiceServer {
 
     public async start() {
         const server = new grpc.Server();
+        // @ts-ignore
         server.addService(ClusterServiceService, this.service);
         this.server = server;
 
         const bindTo = `${this.config.clusterService.host}:${this.config.clusterService.port}`;
-        const port = server.bind(bindTo, grpc.ServerCredentials.createInsecure());
-        if (port === 0) {
-            throw new Error(`binding gRPC server to '${bindTo}' failed`);
-        }
-
+        server.bind(bindTo, grpc.ServerCredentials.createInsecure());
         server.start();
         log.info(`gRPC server listening on: ${bindTo}`);
     }
