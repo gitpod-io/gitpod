@@ -10,7 +10,8 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import * as grpc from "grpc";
+import * as grpc from "@grpc/grpc-js";
+import {handleClientStreamingCall} from "@grpc/grpc-js/build/src/server-call";
 import * as ideplugin_pb from "./ideplugin_pb";
 
 interface IIDEPluginServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
@@ -49,7 +50,7 @@ interface IIDEPluginServiceService_IPluginHash extends grpc.MethodDefinition<ide
 
 export const IDEPluginServiceService: IIDEPluginServiceService;
 
-export interface IIDEPluginServiceServer {
+export interface IIDEPluginServiceServer extends grpc.UntypedServiceImplementation {
     uploadURL: grpc.handleUnaryCall<ideplugin_pb.PluginUploadURLRequest, ideplugin_pb.PluginUploadURLResponse>;
     downloadURL: grpc.handleUnaryCall<ideplugin_pb.PluginDownloadURLRequest, ideplugin_pb.PluginDownloadURLResponse>;
     pluginHash: grpc.handleUnaryCall<ideplugin_pb.PluginHashRequest, ideplugin_pb.PluginHashResponse>;
@@ -68,7 +69,7 @@ export interface IIDEPluginServiceClient {
 }
 
 export class IDEPluginServiceClient extends grpc.Client implements IIDEPluginServiceClient {
-    constructor(address: string, credentials: grpc.ChannelCredentials, options?: object);
+    constructor(address: string, credentials: grpc.ChannelCredentials, options?: Partial<grpc.ClientOptions>);
     public uploadURL(request: ideplugin_pb.PluginUploadURLRequest, callback: (error: grpc.ServiceError | null, response: ideplugin_pb.PluginUploadURLResponse) => void): grpc.ClientUnaryCall;
     public uploadURL(request: ideplugin_pb.PluginUploadURLRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: ideplugin_pb.PluginUploadURLResponse) => void): grpc.ClientUnaryCall;
     public uploadURL(request: ideplugin_pb.PluginUploadURLRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: ideplugin_pb.PluginUploadURLResponse) => void): grpc.ClientUnaryCall;

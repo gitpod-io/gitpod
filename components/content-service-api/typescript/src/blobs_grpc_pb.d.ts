@@ -10,7 +10,8 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import * as grpc from "grpc";
+import * as grpc from "@grpc/grpc-js";
+import {handleClientStreamingCall} from "@grpc/grpc-js/build/src/server-call";
 import * as blobs_pb from "./blobs_pb";
 
 interface IBlobServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
@@ -49,7 +50,7 @@ interface IBlobServiceService_IDelete extends grpc.MethodDefinition<blobs_pb.Del
 
 export const BlobServiceService: IBlobServiceService;
 
-export interface IBlobServiceServer {
+export interface IBlobServiceServer extends grpc.UntypedServiceImplementation {
     uploadUrl: grpc.handleUnaryCall<blobs_pb.UploadUrlRequest, blobs_pb.UploadUrlResponse>;
     downloadUrl: grpc.handleUnaryCall<blobs_pb.DownloadUrlRequest, blobs_pb.DownloadUrlResponse>;
     delete: grpc.handleUnaryCall<blobs_pb.DeleteRequest, blobs_pb.DeleteResponse>;
@@ -68,7 +69,7 @@ export interface IBlobServiceClient {
 }
 
 export class BlobServiceClient extends grpc.Client implements IBlobServiceClient {
-    constructor(address: string, credentials: grpc.ChannelCredentials, options?: object);
+    constructor(address: string, credentials: grpc.ChannelCredentials, options?: Partial<grpc.ClientOptions>);
     public uploadUrl(request: blobs_pb.UploadUrlRequest, callback: (error: grpc.ServiceError | null, response: blobs_pb.UploadUrlResponse) => void): grpc.ClientUnaryCall;
     public uploadUrl(request: blobs_pb.UploadUrlRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: blobs_pb.UploadUrlResponse) => void): grpc.ClientUnaryCall;
     public uploadUrl(request: blobs_pb.UploadUrlRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: blobs_pb.UploadUrlResponse) => void): grpc.ClientUnaryCall;

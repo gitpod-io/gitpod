@@ -10,7 +10,8 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import * as grpc from "grpc";
+import * as grpc from "@grpc/grpc-js";
+import {handleClientStreamingCall} from "@grpc/grpc-js/build/src/server-call";
 import * as content_pb from "./content_pb";
 
 interface IContentServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
@@ -29,7 +30,7 @@ interface IContentServiceService_IDeleteUserContent extends grpc.MethodDefinitio
 
 export const ContentServiceService: IContentServiceService;
 
-export interface IContentServiceServer {
+export interface IContentServiceServer extends grpc.UntypedServiceImplementation {
     deleteUserContent: grpc.handleUnaryCall<content_pb.DeleteUserContentRequest, content_pb.DeleteUserContentResponse>;
 }
 
@@ -40,7 +41,7 @@ export interface IContentServiceClient {
 }
 
 export class ContentServiceClient extends grpc.Client implements IContentServiceClient {
-    constructor(address: string, credentials: grpc.ChannelCredentials, options?: object);
+    constructor(address: string, credentials: grpc.ChannelCredentials, options?: Partial<grpc.ClientOptions>);
     public deleteUserContent(request: content_pb.DeleteUserContentRequest, callback: (error: grpc.ServiceError | null, response: content_pb.DeleteUserContentResponse) => void): grpc.ClientUnaryCall;
     public deleteUserContent(request: content_pb.DeleteUserContentRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: content_pb.DeleteUserContentResponse) => void): grpc.ClientUnaryCall;
     public deleteUserContent(request: content_pb.DeleteUserContentRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: content_pb.DeleteUserContentResponse) => void): grpc.ClientUnaryCall;
