@@ -109,7 +109,7 @@ export default function UserDetail(p: { user: User }) {
                                     label: 'View Account Statement',
                                     onClick: () => setViewAccountStatement(true)
                                 }, {
-                                    label: 'Grant 20h',
+                                    label: 'Grant 20 Extra Hours',
                                     onClick: async () => {
                                         await getGitpodService().server.adminGrantExtraHours(user.id, 20);
                                         setAccountStatement(await getGitpodService().server.adminGetAccountStatement(user.id));
