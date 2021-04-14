@@ -9,10 +9,10 @@ import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import * as opentracing from 'opentracing';
-import { Metadata } from "grpc";
+import { Metadata } from "@grpc/grpc-js";
 import { BuildRequest, BuildResponse, BuildStatus, LogsRequest, LogsResponse, ResolveWorkspaceImageResponse, ResolveWorkspaceImageRequest, ResolveBaseImageRequest, ResolveBaseImageResponse } from "./imgbuilder_pb";
 import { injectable, inject } from 'inversify';
-import * as grpc from "grpc";
+import * as grpc from "@grpc/grpc-js";
 import { TextDecoder } from "util";
 
 export const ImageBuilderClientProvider = Symbol("ImageBuilderClientProvider");
