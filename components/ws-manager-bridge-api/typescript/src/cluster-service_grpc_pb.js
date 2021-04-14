@@ -6,7 +6,7 @@
 // See License-AGPL.txt in the project root for license information.
 //
 'use strict';
-var grpc = require('grpc');
+var grpc = require('@grpc/grpc-js');
 var cluster$service_pb = require('./cluster-service_pb.js');
 
 function serialize_workspacemanagerbridge_DeregisterRequest(arg) {
