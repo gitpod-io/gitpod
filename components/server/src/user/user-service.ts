@@ -211,21 +211,8 @@ export class UserService {
         return false;
     }
 
-    /**
-     * Try to find the Gitpod user ...
-     *  1. by identity
-     *  2. by email
-     */
-    async findUserForLogin(params: { candidate: Identity, primaryEmail?: string }) {
+    async findUserForLogin(params: { candidate: Identity }) {
         let user = await this.userDb.findUserByIdentity(params.candidate);
-        if (!user && params.primaryEmail) {
-            // - findUsersByEmail is supposed to return users ordered descending by last login time
-            // - we pick the most recently used one and let the old onces "dry out"
-            const usersWithPrimaryEmail = await this.userDb.findUsersByEmail(params.primaryEmail);
-            if (usersWithPrimaryEmail.length > 0) {
-                user = usersWithPrimaryEmail[0];
-            }
-        }
         return user;
     }
 
