@@ -359,6 +359,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
             await certificatePromise;
             werft.done('certificate');
         } catch (err) {
+            werft.log('certificate', err.toString());  // This ensures the err message is picked up by the werft UI
             werft.fail('certificate', err);
         }
     }
