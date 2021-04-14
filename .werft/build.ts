@@ -111,9 +111,6 @@ export async function build(context, version) {
                 throw new Error(`'${version}' is not semver compliant and thus cannot used for Self-Hosted releases!`)
             }
 
-            werft.phase("publish", "publishing docker images...");
-            exec(`leeway run --werft=true install/installer:publish-as-latest -Dversion=${version} -DimageRepoBase=${imageRepo}`);
-
             werft.phase("publish", "publishing Helm chart...");
             publishHelmChart("gcr.io/gitpod-io/self-hosted", version);
 

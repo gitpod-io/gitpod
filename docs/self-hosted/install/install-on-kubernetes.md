@@ -6,19 +6,25 @@ url: /docs/self-hosted/latest/install/install-on-kubernetes/
 
 This section describes how to install Gitpod on any Kubernetes cluster using [Helm](https://helm.sh). This is the most flexible and generic way of installing Gitpod. The chart for stable releases resides in Helm repository [charts.gitpod.io](https://charts.gitpod.io), charts for branch-builds can be found [here](#install-branch-build), and the source of the charts is in our [public git repository](https://github.com/gitpod-io/gitpod/blob/master/chart/).
 
-For some cloud providers, we offer [Terraform](https://www.terraform.io/) scripts packaged into an installer. The installer aims to use the managed services from your cloud provider (Kubernetes Cluster, database, storage, image registry) rather than installing them along with the chart. Also, the script configures the cluster for best performance and cost-efficiency. We recommend using the installer if your cloud provider is supported. Once the installer has created the cluster, it will pre-configure and install this Gitpod helm chart into it.
-* [Installer for Google Cloud Platform (GCP)](../install-on-gcp-script/).
-* [Installer for Amazon Web Services (AWS)](../install-on-aws-script/).
+For some platforms we offer [Terraform](https://www.terraform.io/) scripts that ease the infrastructure setup. Once the script has created the necessary infrastructure it will output a `values.terraform.yaml` that contains infrastructure-specific configuration for the `helm` deployment.
+* [Terraform for Google Cloud Platform (GCP)](../install-on-gcp/).
 
 ## Prerequisites
 
- * A Kubernetes cluster in version 1.15 <= x <= 1.17.
+As we at Gitpod follow a ["Saas First" strategy](https://www.notion.so/gitpod/Gitpod-s-Direction-be35d064c0704fbda61c542b84e07ef6#57d3e4659c50449280411ac1f7dd1906) we have a [very limited set of platforms that we support](https://www.notion.so/gitpod/1b9eac5cb33d42e391f86a87f0e37836?v=4f2ec7c943514ee19203b9d4fe096094).
 
- * local `kubectl` with connection to your cluster
+You still might get Gitpod to run on other platforms (especially with the help of our [awesome community](https://community.gitpod.io/)) but there will be no support from Gitpod for those efforts.
 
- * local `helm` in version >= 3.
+Requirements regarding the Kubernetes the cluster:
+  * Workspace nodes require Ubuntu `= 18.04` as Host OS at the moment
 
- Gitpod should work on small Kubernetes nodes out of the box (2vCPUs, 8GB RAM). For a better experience we recommend at least 4vCPUs and 16GB RAM for workspaces nodes. For cost efficiency, we recommend to enable cluster-autoscaling.
+  * Gitpod should work on small Kubernetes nodes out of the box (2vCPUs, 8GB RAM). For a better experience we recommend at least 4vCPUs and 16GB RAM for workspaces nodes. For cost efficiency, we recommend to enable cluster-autoscaling.
+
+You need the following "local" tools to follow this guide:
+
+ * `kubectl` with connection to your cluster
+
+ * `helm` in version `>= 3`.
 
 ## Installation
 
