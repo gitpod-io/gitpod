@@ -11,16 +11,16 @@
     "lib"
   ],
   "dependencies": {
-    "grpc": "^1.21.1",
-    "google-protobuf": "^3.8.0-rc.1",
+    "@grpc/grpc-js": "^1.2.12",
+    "google-protobuf": "^3.15.8",
     "inversify": "^5.0.1",
-    "opentracing": "^0.14.4",
     "node-pre-gyp": "^0.13.0",
+    "opentracing": "^0.14.4",
     "request": "^2.88.2"
   },
   "devDependencies": {
-    "@types/google-protobuf": "^3.2.7",
-    "grpc-tools": "^1.10.0",
+    "@types/google-protobuf": "^3.7.4",
+    "grpc-tools": "^1.11.1",
     "grpc_tools_node_protoc_ts": "^5.1.0",
     "typescript-formatter": "^7.2.2"
   }

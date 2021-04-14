@@ -10,7 +10,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import * as grpc from "grpc";
+import * as grpc from "@grpc/grpc-js";
 import * as cluster_service_pb from "./cluster-service_pb";
 
 interface IClusterServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
