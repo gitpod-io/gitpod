@@ -25,6 +25,7 @@ import {
 import { GetWorkspacesRequest } from '@gitpod/ws-manager/lib';
 import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
 import * as grpc from "@grpc/grpc-js";
+import { ServiceError as grpcServiceError } from '@grpc/grpc-js';
 import { inject, injectable } from 'inversify';
 import { BridgeController } from './bridge-controller';
 import { Configuration } from './config';
@@ -36,7 +37,8 @@ export interface ClusterServiceServerOptions {
 
 @injectable()
 export class ClusterService implements IClusterServiceServer {
-    [name: string]: grpc.UntypedHandleCall;
+    // Satisfy the grpc.UntypedServiceImplementation interface.
+    [name: string]: any;
 
     @inject(Configuration)
     protected readonly config: Configuration;
@@ -53,7 +55,7 @@ export class ClusterService implements IClusterServiceServer {
     // using a queue to make sure we do concurrency right
     protected readonly queue: Queue = new Queue();
 
-    public register(call: grpc.ServerUnaryCall<RegisterRequest>, callback: grpc.sendUnaryData<RegisterResponse>) {
+    public register(call: grpc.ServerUnaryCall<RegisterRequest, RegisterResponse>, callback: grpc.sendUnaryData<RegisterResponse>) {
         this.queue.enqueue(async () => {
             try {
                 // check if the name or URL are already registered/in use
@@ -112,7 +114,7 @@ export class ClusterService implements IClusterServiceServer {
                 // try to connect to validate the config. Throws an exception if it fails.
                 await new Promise<void>((resolve, reject) => {
                     const c = this.clientProvider.createClient(newCluster);
-                    c.getWorkspaces(new GetWorkspacesRequest(), (err, resp) => {
+                    c.getWorkspaces(new GetWorkspacesRequest(), (err: any) => {
                         if (err) {
                             reject(new GRPCError(grpc.status.FAILED_PRECONDITION, `cannot reach ${req.url}: ${err.message}`));
                         } else {
@@ -132,7 +134,7 @@ export class ClusterService implements IClusterServiceServer {
         });
     }
 
-    public update(call: grpc.ServerUnaryCall<UpdateRequest>, callback: grpc.sendUnaryData<UpdateResponse>) {
+    public update(call: grpc.ServerUnaryCall<UpdateRequest, UpdateResponse>, callback: grpc.sendUnaryData<UpdateResponse>) {
         this.queue.enqueue(async () => {
             try {
                 const req = call.request.toObject();
@@ -161,7 +163,7 @@ export class ClusterService implements IClusterServiceServer {
         });
     }
 
-    public deregister(call: grpc.ServerUnaryCall<DeregisterRequest>, callback: grpc.sendUnaryData<DeregisterResponse>) {
+    public deregister(call: grpc.ServerUnaryCall<DeregisterRequest, DeregisterResponse>, callback: grpc.sendUnaryData<DeregisterResponse>) {
         this.queue.enqueue(async () => {
             try {
                 const req = call.request.toObject();
@@ -176,7 +178,7 @@ export class ClusterService implements IClusterServiceServer {
         });
     }
 
-    public list(call: grpc.ServerUnaryCall<ListRequest>, callback: grpc.sendUnaryData<ListResponse>) {
+    public list(call: grpc.ServerUnaryCall<ListRequest, ListResponse>, callback: grpc.sendUnaryData<ListResponse>) {
         this.queue.enqueue(async () => {
             try {
                 const allClusters = await this.db.findFiltered({})
@@ -248,15 +250,24 @@ export class ClusterServiceServer {
     protected server: grpc.Server | undefined = undefined;
 
     public async start() {
-        const server = new grpc.Server();
+        // Default value for maxSessionMemory is 10 which is low for this gRPC server
+        // See https://nodejs.org/api/http2.html#http2_http2_connect_authority_options_listener.
+        const server = new grpc.Server({
+            'grpc-node.max_session_memory': 50
+        });
         // @ts-ignore
         server.addService(ClusterServiceService, this.service);
         this.server = server;
 
         const bindTo = `${this.config.clusterService.host}:${this.config.clusterService.port}`;
-        server.bind(bindTo, grpc.ServerCredentials.createInsecure());
-        server.start();
-        log.info(`gRPC server listening on: ${bindTo}`);
+        server.bindAsync(bindTo, grpc.ServerCredentials.createInsecure(), (err, port) => {
+            if (err) {
+                throw err;
+            }
+
+            log.info(`gRPC server listening on: ${bindTo}`);
+            server.start();
+        });
     }
 
     public async stop() {
@@ -271,7 +282,9 @@ export class ClusterServiceServer {
 
 }
 
-class GRPCError extends Error implements grpc.ServiceError {
+class GRPCError extends Error implements Partial<grpcServiceError> {
+    public name = 'ServiceError';
+
     details: string;
 
     constructor(

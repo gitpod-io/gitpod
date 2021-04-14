@@ -15,22 +15,18 @@ import * as jspb from "google-protobuf";
 export class RegisterRequest extends jspb.Message { 
     getName(): string;
     setName(value: string): RegisterRequest;
-
     getUrl(): string;
     setUrl(value: string): RegisterRequest;
-
 
     hasTls(): boolean;
     clearTls(): void;
     getTls(): TlsConfig | undefined;
     setTls(value?: TlsConfig): RegisterRequest;
 
-
     hasHints(): boolean;
     clearHints(): void;
     getHints(): RegistrationHints | undefined;
     setHints(value?: RegistrationHints): RegisterRequest;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): RegisterRequest.AsObject;
@@ -71,13 +67,10 @@ export namespace RegisterResponse {
 export class TlsConfig extends jspb.Message { 
     getCa(): string;
     setCa(value: string): TlsConfig;
-
     getCrt(): string;
     setCrt(value: string): TlsConfig;
-
     getKey(): string;
     setKey(value: string): TlsConfig;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): TlsConfig.AsObject;
@@ -100,13 +93,10 @@ export namespace TlsConfig {
 export class RegistrationHints extends jspb.Message { 
     getPerfereability(): Preferability;
     setPerfereability(value: Preferability): RegistrationHints;
-
     getCordoned(): boolean;
     setCordoned(value: boolean): RegistrationHints;
-
     getGovern(): boolean;
     setGovern(value: boolean): RegistrationHints;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): RegistrationHints.AsObject;
@@ -129,22 +119,16 @@ export namespace RegistrationHints {
 export class ClusterStatus extends jspb.Message { 
     getName(): string;
     setName(value: string): ClusterStatus;
-
     getUrl(): string;
     setUrl(value: string): ClusterStatus;
-
     getState(): ClusterState;
     setState(value: ClusterState): ClusterStatus;
-
     getScore(): number;
     setScore(value: number): ClusterStatus;
-
     getMaxScore(): number;
     setMaxScore(value: number): ClusterStatus;
-
     getGoverned(): boolean;
     setGoverned(value: boolean): ClusterStatus;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ClusterStatus.AsObject;
@@ -171,24 +155,20 @@ export class UpdateRequest extends jspb.Message {
     getName(): string;
     setName(value: string): UpdateRequest;
 
-
     hasScore(): boolean;
     clearScore(): void;
     getScore(): number;
     setScore(value: number): UpdateRequest;
-
 
     hasMaxScore(): boolean;
     clearMaxScore(): void;
     getMaxScore(): number;
     setMaxScore(value: number): UpdateRequest;
 
-
     hasCordoned(): boolean;
     clearCordoned(): void;
     getCordoned(): boolean;
     setCordoned(value: boolean): UpdateRequest;
-
 
     getPropertyCase(): UpdateRequest.PropertyCase;
 
@@ -212,13 +192,9 @@ export namespace UpdateRequest {
 
     export enum PropertyCase {
         PROPERTY_NOT_SET = 0,
-    
-    SCORE = 2,
-
-    MAX_SCORE = 3,
-
-    CORDONED = 4,
-
+        SCORE = 2,
+        MAX_SCORE = 3,
+        CORDONED = 4,
     }
 
 }
@@ -243,7 +219,6 @@ export namespace UpdateResponse {
 export class DeregisterRequest extends jspb.Message { 
     getName(): string;
     setName(value: string): DeregisterRequest;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DeregisterRequest.AsObject;
@@ -300,7 +275,6 @@ export class ListResponse extends jspb.Message {
     getStatusList(): Array<ClusterStatus>;
     setStatusList(value: Array<ClusterStatus>): ListResponse;
     addStatus(value?: ClusterStatus, index?: number): ClusterStatus;
-
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ListResponse.AsObject;
