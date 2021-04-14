@@ -1,12 +1,21 @@
 import { exec } from './shell';
 import { sleep } from './util';
 
-export async function issueCertficate(werft, pathToTerraform, gcpSaPath, namespace, dnsZoneDomain, domain, ip, additionalWsSubdomains) {
+export async function issueCertficate(werft, pathToTerraform, gcpSaPath, namespace, dnsZoneDomain, domain: string, ip, additionalWsSubdomains) {
     const subdomains = ["", "*.", "*.ws-dev."];
     if (Array.isArray(subdomains)) {
         for (const sd of additionalWsSubdomains) {
             subdomains.push(`*.ws-${additionalWsSubdomains}.`);
         }
+    }
+
+    // sanity: check if there is a "SAN short enough to fit into CN (63 characters max)"
+    // source: https://community.letsencrypt.org/t/certbot-errors-with-obtaining-a-new-certificate-an-unexpected-error-occurred-the-csr-is-unacceptable-e-g-due-to-a-short-key-error-finalizing-order-issuing-precertificate-csr-doesnt-contain-a-san-short-enough-to-fit-in-cn/105513/2
+    if (!subdomains.some(sd => {
+        const san = sd + domain;
+        return san.length <= 63;
+    })) {
+        throw new Error(`there is no subdomain + '${domain}' shorter or equal to 63 characters, max. allowed length for CN. No HTTPS certs for you! Consider using a short branch name...`);
     }
 
     // Always use 'terraform apply' to make sure the certificate is present and up-to-date
