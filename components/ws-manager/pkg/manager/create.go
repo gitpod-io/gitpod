@@ -746,7 +746,7 @@ func getServicePrefix(req *api.StartWorkspaceRequest) string {
 //
 // The tokens we produce here (e.g. owner token or CLI API token) are likely placed in cookies or transmitted via HTTP.
 // To make the lifes of downstream users easier we'll try and play nice here w.r.t. to the characters used.
-var validCookieChars = []byte("!#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`abcdefghijklmnopqrstuvwxyz{}|")
+var validCookieChars = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-.")
 
 func getRandomString(length int) (string, error) {
 	b := make([]byte, length)
