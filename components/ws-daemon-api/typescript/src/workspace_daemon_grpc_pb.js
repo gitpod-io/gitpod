@@ -7,7 +7,7 @@
 // GENERATED CODE -- DO NOT EDIT!
 
 'use strict';
-var grpc = require('grpc');
+var grpc = require('@grpc/grpc-js');
 var workspace_daemon_pb = require('./workspace_daemon_pb.js');
 
 function serialize_iws_MountProcRequest(arg) {

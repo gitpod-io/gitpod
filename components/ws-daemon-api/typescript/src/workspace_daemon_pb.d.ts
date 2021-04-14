@@ -12,7 +12,7 @@
 
 import * as jspb from "google-protobuf";
 
-export class PrepareForUserNSRequest extends jspb.Message {
+export class PrepareForUserNSRequest extends jspb.Message { 
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): PrepareForUserNSRequest.AsObject;
@@ -29,7 +29,7 @@ export namespace PrepareForUserNSRequest {
     }
 }
 
-export class PrepareForUserNSResponse extends jspb.Message {
+export class PrepareForUserNSResponse extends jspb.Message { 
     getFsShift(): FSShiftMethod;
     setFsShift(value: FSShiftMethod): PrepareForUserNSResponse;
 
@@ -49,7 +49,7 @@ export namespace PrepareForUserNSResponse {
     }
 }
 
-export class WriteIDMappingResponse extends jspb.Message {
+export class WriteIDMappingResponse extends jspb.Message { 
     getMessage(): string;
     setMessage(value: string): WriteIDMappingResponse;
     getErrorCode(): number;
@@ -72,7 +72,7 @@ export namespace WriteIDMappingResponse {
     }
 }
 
-export class WriteIDMappingRequest extends jspb.Message {
+export class WriteIDMappingRequest extends jspb.Message { 
     getPid(): number;
     setPid(value: number): WriteIDMappingRequest;
     getGid(): boolean;
@@ -100,7 +100,7 @@ export namespace WriteIDMappingRequest {
     }
 
 
-    export class Mapping extends jspb.Message {
+    export class Mapping extends jspb.Message { 
         getContainerId(): number;
         setContainerId(value: number): Mapping;
         getHostId(): number;
@@ -128,7 +128,7 @@ export namespace WriteIDMappingRequest {
 
 }
 
-export class MountProcRequest extends jspb.Message {
+export class MountProcRequest extends jspb.Message { 
     getTarget(): string;
     setTarget(value: string): MountProcRequest;
     getPid(): number;
@@ -151,7 +151,7 @@ export namespace MountProcRequest {
     }
 }
 
-export class MountProcResponse extends jspb.Message {
+export class MountProcResponse extends jspb.Message { 
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): MountProcResponse.AsObject;
@@ -168,7 +168,7 @@ export namespace MountProcResponse {
     }
 }
 
-export class UmountProcRequest extends jspb.Message {
+export class UmountProcRequest extends jspb.Message { 
     getTarget(): string;
     setTarget(value: string): UmountProcRequest;
     getPid(): number;
@@ -191,7 +191,7 @@ export namespace UmountProcRequest {
     }
 }
 
-export class UmountProcResponse extends jspb.Message {
+export class UmountProcResponse extends jspb.Message { 
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): UmountProcResponse.AsObject;
@@ -208,7 +208,7 @@ export namespace UmountProcResponse {
     }
 }
 
-export class TeardownRequest extends jspb.Message {
+export class TeardownRequest extends jspb.Message { 
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): TeardownRequest.AsObject;
@@ -225,7 +225,7 @@ export namespace TeardownRequest {
     }
 }
 
-export class TeardownResponse extends jspb.Message {
+export class TeardownResponse extends jspb.Message { 
     getSuccess(): boolean;
     setSuccess(value: boolean): TeardownResponse;
 
