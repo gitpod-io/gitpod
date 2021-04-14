@@ -434,7 +434,7 @@ export class GenericAuthProvider implements AuthProvider {
                 }
             } else {
                 // no user session present, let's initiate a login
-                currentGitpodUser = await this.userService.findUserForLogin({ candidate, primaryEmail });
+                currentGitpodUser = await this.userService.findUserForLogin({ candidate });
             }
 
             const token = this.createToken(this.tokenUsername, accessToken, refreshToken, currentScopes, tokenResponse.expires_in);
