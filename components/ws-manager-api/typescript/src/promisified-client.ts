@@ -9,7 +9,7 @@ import { WorkspaceManagerClient } from "./core_grpc_pb";
 import { ControlPortRequest, ControlPortResponse, DescribeWorkspaceRequest, DescribeWorkspaceResponse, MarkActiveRequest, MarkActiveResponse, StartWorkspaceRequest, StartWorkspaceResponse, StopWorkspaceRequest, StopWorkspaceResponse, GetWorkspacesRequest, GetWorkspacesResponse, TakeSnapshotRequest, SetTimeoutRequest, SetTimeoutResponse, SubscribeRequest, SubscribeResponse, ControlAdmissionRequest, ControlAdmissionResponse, TakeSnapshotResponse } from "./core_pb";
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import * as opentracing from 'opentracing';
-import * as grpc from "grpc";
+import * as grpc from "@grpc/grpc-js";
 import { Disposable } from "@gitpod/gitpod-protocol";
 
 export function withTracing(ctx: TraceContext) {

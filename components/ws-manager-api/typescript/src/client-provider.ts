@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import * as grpc from "grpc";
+import * as grpc from "@grpc/grpc-js";
 import { injectable, inject } from 'inversify';
 import { WorkspaceManagerClient } from './core_grpc_pb';
 import { PromisifiedWorkspaceManagerClient, linearBackoffStrategy } from "./promisified-client";
