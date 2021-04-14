@@ -13,35 +13,63 @@
 	}
 }
 
-:80 {
-	@static {
+(static) {
+	@static_path {
 		path /static/*
 	}
 
-	@notstatic {
+	@static_asset {
+		file
+		path /static/*
+	}
+
+	# static assets configure cache headers and do not check for changes
+	header @static_asset {
+		Cache-Control "public, max-age=31536000"
+		# remove Last-Modified header
+		-Last-Modified
+	}
+}
+
+(notstatic) {
+	@not_static_path {
 		not path /static/*
 	}
 
+	@not_static_assets {
+		not path /static/*
+	}
+
+	header @not_static_assets {
+		Cache-Control "no-cache, no-transform, must-revalidate"
+	}
+}
+
+:80 {
 	import compression
 	import discard_log
+	import static
+	import notstatic
 
 	redir /.well-known/security.txt https://www.gitpod.io/.well-known/security.txt permanent
 	redir /environment-variables /settings/ permanent
 
-	handle @static {
-		header Cache-Control "public, max-age=31536000"
-	}
-
-	handle @notstatic {
-		header Cache-Control "no-cache, no-transform, must-revalidate"
-	}
-
 	header -Server
-	header -Last-Modified
 
 	root * /www
 	file_server
-	try_files {path} {path}/ /index.html
+
+	handle @static_path {
+		try_files {path}
+	}
+
+	handle @not_static_path {
+		try_files {path} {path}/ /index.html
+	}
+
+	handle {
+        respond "404 - Not Found" 404
+    }
 }
 
 # health-check
