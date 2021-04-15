@@ -135,7 +135,7 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
         <Modal visible={isChangesModalVisible} onClose={() => setChangesModalVisible(false)}>
             {getChangesPopup(pendingChanges)}
         </Modal>
-        <Modal visible={isModalVisible} onClose={() => setModalVisible(false)} onEnter={() => { model.deleteWorkspace(ws.id); return true; }}>
+        {isModalVisible && <Modal visible={isModalVisible} onClose={() => setModalVisible(false)}>
             <div>
                 <h3 className="pb-2">Delete Workspace</h3>
                 <div className="border-t border-b border-gray-200 mt-2 -mx-6 px-6 py-2">
@@ -152,7 +152,7 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
                     </button>
                 </div>
             </div>
-        </Modal>
+        </Modal>}
     </div>;
 }
 
