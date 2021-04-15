@@ -506,6 +506,28 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
         await this.internalStopWorkspace({ span }, id, undefined,  StopWorkspacePolicy.IMMEDIATELY);
     }
 
+    async adminRestoreSoftDeletedWorkspace(id: string): Promise<void> {
+        this.requireEELicense(Feature.FeatureAdminDashboard);
+
+        await this.guardAdminAccess("adminRestoreSoftDeletedWorkspace", {id}, Permission.ADMIN_WORKSPACES);
+
+        const span = opentracing.globalTracer().startSpan("adminRestoreSoftDeletedWorkspace");
+        await this.workspaceDb.trace({ span }).transaction(async db => {
+            const ws = await this.internalGetWorkspace(id, db);
+            if (!ws.softDeleted) {
+                return;
+            }
+            if (!!ws.contentDeletedTime) {
+                throw new ResponseError(ErrorCodes.NOT_FOUND, "The workspace content was already garbage-collected.");
+            }
+            // @ts-ignore
+            ws.softDeleted = null;
+            ws.softDeletedTime = '';
+            ws.pinned = true;
+            await db.store(ws);
+        });
+    }
+
     protected async guardAdminAccess(method: string, params: any, requiredPermission: PermissionName) {
         const user = this.checkAndBlockUser(method);
         if (!this.authorizationService.hasPermission(user, requiredPermission)) {
