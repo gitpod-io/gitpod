@@ -1,7 +1,7 @@
 import * as shell from 'shelljs';
 import * as fs from 'fs';
 import { werft, exec, gitTag } from './util/shell';
-import { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects } from './util/kubectl';
+import { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts } from './util/kubectl';
 import { issueCertficate, installCertficate } from './util/certs';
 import { reportBuildFailureInSlack } from './util/slack';
 import * as semver from 'semver';
@@ -196,9 +196,11 @@ interface DeploymentConfig {
 export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover, storage) {
     werft.phase("deploy", "deploying to dev");
     const { version, destname, namespace, domain, url, wsCluster, withWsCluster } = deploymentConfig;
-    const wsdaemonPort = `1${Math.floor(Math.random() * 1000)}`;
-    const registryProxyPort = `2${Math.floor(Math.random() * 1000)}`;
-    const registryNodePort = `${30000 + Math.floor(Math.random() * 1000)}`;
+    const [wsdaemonPort, registryProxyPort, registryNodePort] = findFreeHostPorts([
+        { start: 10000, end: 11000 },
+        { start: 20000, end: 21000 },
+        { start: 30000, end: 31000 },
+    ], 'hostports');
     const helmInstallName = "gitpod";
 
     // trigger certificate issuing
