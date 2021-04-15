@@ -626,8 +626,9 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	// Register chisel before the generic HTTP1 catch-all which would otherwise catch chisel, too
 	chiselMux := m.Match(cmux.HTTP1HeaderFieldPrefix("Sec-WebSocket-Protocol", "chisel-"))
 	chs, err := chisel.NewServer(&chisel.Config{
-		Listener: chiselMux,
-		Reverse:  true,
+		Listener:  chiselMux,
+		Reverse:   true,
+		KeepAlive: 10 * time.Second,
 	})
 	if err != nil {
 		log.WithError(err).Fatal("cannot start chisel server")

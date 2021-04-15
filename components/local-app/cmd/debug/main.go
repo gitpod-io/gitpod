@@ -21,13 +21,13 @@ import (
 )
 
 func main() {
-	keyring.MockInit()
 	app := cli.App{
 		Name: "local-app-debug",
 		Commands: []*cli.Command{
 			{
 				Name: "login",
 				Action: func(c *cli.Context) error {
+					keyring.MockInit()
 					_, err := auth.Login(context.Background(), auth.LoginOpts{
 						GitpodURL: c.String("gitpod-host"),
 					})
@@ -49,7 +49,10 @@ func main() {
 			{
 				Name: "run",
 				Action: func(c *cli.Context) error {
-					return run(c.String("gitpod-host"))
+					if c.Bool("mock-keyring") {
+						keyring.MockInit()
+					}
+					return run(c.String("gitpod-host"), c.String("token"), c.String("ssh_config"))
 				},
 				Flags: []cli.Flag{
 					&cli.StringFlag{
@@ -57,6 +60,18 @@ func main() {
 							"GITPOD_HOST",
 						},
 						Name: "gitpod-host",
+					},
+					&cli.StringFlag{
+						Name: "token",
+						EnvVars: []string{
+							"GITPOD_TOKEN",
+						},
+					},
+					&cli.PathFlag{
+						Name: "ssh_config",
+					},
+					&cli.BoolFlag{
+						Name: "mock-keyring",
 					},
 				},
 			},
@@ -68,13 +83,24 @@ func main() {
 	}
 }
 
-func run(host string) error {
-	tkn, err := auth.GetToken()
+func run(host, token, sshConfig string) error {
+	if token != "" {
+		auth.SetToken(host, token)
+	}
+
+	tkn, err := auth.GetToken(host)
 	if errors.Is(err, keyring.ErrNotFound) {
 		tkn, err = auth.Login(context.Background(), auth.LoginOpts{GitpodURL: host})
 	}
 	if err != nil {
 		return err
+	}
+
+	cb := bastion.CompositeCallbacks{
+		&logCallbacks{},
+	}
+	if sshConfig != "" {
+		cb = append(cb, &bastion.SSHConfigWritingCallback{Path: sshConfig})
 	}
 
 	wshost := host
@@ -89,7 +115,7 @@ func run(host string) error {
 	if err != nil {
 		return err
 	}
-	b := bastion.New(client, &logCallbacks{})
+	b := bastion.New(client, cb)
 	return b.Run()
 }
 
