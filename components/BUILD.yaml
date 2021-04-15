@@ -19,15 +19,16 @@ packages:
       - components/ide/code:docker
       - components/ide/theia:docker
       - components/image-builder:docker
+      - components/local-app:docker
       - components/proxy:docker
       - components/registry-facade:docker
       - components/server:docker
       - components/service-waiter:docker
       - components/supervisor-api/typescript-grpc:publish
       - components/supervisor:docker
+      - components/ws-daemon:docker
       - components/ws-daemon/seccomp-profile-installer:docker
       - components/ws-daemon/shiftfs-module-loader:docker
-      - components/ws-daemon:docker
       - components/ws-manager-bridge:docker
       - components/ws-manager:docker
       - components/ws-proxy:docker

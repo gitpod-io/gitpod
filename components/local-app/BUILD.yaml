@@ -1,5 +1,13 @@
 packages:
     - name: app
+      type: generic
+      config:
+        commands: [["echo"]]
+      deps:
+        - :app-linux
+        - :app-darwin
+        - :app-windows
+    - name: app-linux
       type: go
       srcs:
         - go.mod
@@ -8,5 +16,46 @@ packages:
       deps:
         - components/supervisor-api/go:lib
         - components/gitpod-protocol/go:lib
+      env:
+        - CGO_ENABLED=0
+        - GOOS=linux
       config:
         packaging: app
+    - name: app-darwin
+      type: go
+      srcs:
+        - go.mod
+        - go.sum
+        - "**/*.go"
+      deps:
+        - components/supervisor-api/go:lib
+        - components/gitpod-protocol/go:lib
+      env:
+        - CGO_ENABLED=0
+        - GOOS=darwin
+      config:
+        packaging: app
+    - name: app-windows
+      type: go
+      srcs:
+        - go.mod
+        - go.sum
+        - "**/*.go"
+      deps:
+        - components/supervisor-api/go:lib
+        - components/gitpod-protocol/go:lib
+      env:
+        - CGO_ENABLED=0
+        - GOOS=windows
+      config:
+        packaging: app
+    - name: docker
+      type: docker
+      deps:
+        - :app
+      argdeps:
+        - imageRepoBase
+      config:
+        dockerfile: leeway.Dockerfile
+        image:
+          - ${imageRepoBase}/local-app:${version}
