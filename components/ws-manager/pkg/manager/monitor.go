@@ -65,9 +65,6 @@ type Monitor struct {
 	eventpool *workpool.EventWorkerPool
 	ticker    *time.Ticker
 
-	inPhaseSpans     map[string]opentracing.Span
-	inPhaseSpansLock sync.Mutex
-
 	probeMap     map[string]context.CancelFunc
 	probeMapLock sync.Mutex
 
@@ -93,7 +90,6 @@ func (m *Manager) CreateMonitor() (*Monitor, error) {
 	res := Monitor{
 		manager:          m,
 		ticker:           time.NewTicker(monitorInterval),
-		inPhaseSpans:     make(map[string]opentracing.Span),
 		probeMap:         make(map[string]context.CancelFunc),
 		initializerMap:   make(map[string]struct{}),
 		finalizerMap:     make(map[string]context.CancelFunc),
@@ -202,9 +198,6 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 		status.Conditions.Deployed = api.WorkspaceConditionBool_FALSE
 	}
 
-	// during pod startup we create spans for each workspace phase (e.g. creating/image-pull).
-	m.maintainInPhaseSpan(status, wso)
-
 	// make sure we tell our clients that things changed - no matter if there's an error in our
 	// subsequent handling of the matter or not. However, we want to respond quickly to events,
 	// thus we start OnChange as a goroutine.
@@ -229,33 +222,6 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 	}()
 
 	return err
-}
-
-// maintainInPhaseSpan maintains the spans across each workspace phase (e.g. creating).
-func (m *Monitor) maintainInPhaseSpan(status *api.WorkspaceStatus, wso *workspaceObjects) {
-	wsi, hasWSI := wso.WorkspaceID()
-	if !hasWSI {
-		return
-	}
-
-	m.inPhaseSpansLock.Lock()
-	defer m.inPhaseSpansLock.Unlock()
-
-	// finish the old span
-	ipspan, ok := m.inPhaseSpans[wsi]
-	if ok {
-		ipspan.Finish()
-	}
-
-	if status.Phase == api.WorkspacePhase_RUNNING {
-		// we're up and running and don't care for phase spans anymore, hence don't start a new one
-		return
-	}
-
-	// create the new one
-	ipspan = m.traceWorkspace(fmt.Sprintf("phase-%s", status.Phase.String()), wso)
-	m.inPhaseSpans[wsi] = ipspan
-	ipspan.SetTag("pullingImage", status.Conditions.PullingImages == api.WorkspaceConditionBool_TRUE)
 }
 
 // actOnPodEvent performs actions when a kubernetes event comes in. For example we shut down failed workspaces or start
