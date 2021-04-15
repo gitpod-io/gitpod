@@ -16,7 +16,7 @@ import { BlockedUserFilter } from "../auth/blocked-user-filter";
 import * as uuidv4 from 'uuid/v4';
 import { TermsProvider } from "../terms/terms-provider";
 import { TokenService } from "./token-service";
-import { SelectAccountException } from "../auth/errors";
+import { EmailAddressAlreadyTakenException, SelectAccountException } from "../auth/errors";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 
 export interface FindUserByIdentityStrResult {
@@ -313,6 +313,20 @@ export class UserService {
             }
         }
         throw SelectAccountException.create(`User is trying to connect a provider identity twice.`, payload);
+    }
+
+    async asserNoAccountWithEmail(email: string) {
+        const existingUser = (await this.userDb.findUsersByEmail(email))[0];
+        if (!existingUser) {
+            // no user has this email address ==> OK
+            return;
+        }
+
+        /*
+         * /!\ the given email address is used in another user account.
+         */
+
+        throw EmailAddressAlreadyTakenException.create(`Email address is already in use.`);
     }
 
 }

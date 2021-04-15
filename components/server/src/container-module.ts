@@ -64,7 +64,6 @@ import { MonitoringEndpointsApp } from './monitoring-endpoints';
 import { BearerAuth } from './auth/bearer-authenticator';
 import { TermsProvider } from './terms/terms-provider';
 import { TosCookie } from './user/tos-cookie';
-import { SelectAccountCookie } from './user/select-account-cookie';
 import { ContentServiceClient } from '@gitpod/content-service/lib/content_grpc_pb';
 import { BlobServiceClient } from '@gitpod/content-service/lib/blobs_grpc_pb';
 import { WorkspaceServiceClient } from '@gitpod/content-service/lib/workspace_grpc_pb';
@@ -90,7 +89,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(LoginCompletionHandler).toSelf().inSingletonScope();
     bind(GitpodCookie).toSelf().inSingletonScope();
     bind(TosCookie).toSelf().inSingletonScope();
-    bind(SelectAccountCookie).toSelf().inSingletonScope();
 
     bind(SessionHandlerProvider).toSelf().inSingletonScope();
     bind(Server).toSelf().inSingletonScope();
