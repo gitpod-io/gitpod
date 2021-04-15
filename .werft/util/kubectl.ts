@@ -1,6 +1,8 @@
 import { ShellString } from 'shelljs';
-import { werft, exec, ExecOptions } from './shell';
+import { exec, ExecOptions, werft } from './shell';
 
+
+export const IS_PREVIEW_APP_LABEL: string = "isPreviewApp";
 
 export function setKubectlContextNamespace(namespace, shellOpts) {
     [
@@ -9,15 +11,22 @@ export function setKubectlContextNamespace(namespace, shellOpts) {
     ].forEach(cmd => exec(cmd, shellOpts));
 }
 
-export function wipeAndRecreateNamespace(helmInstallName: string, namespace: string, shellOpts: ExecOptions) {
+export async function wipeAndRecreateNamespace(helmInstallName: string, namespace: string, shellOpts: ExecOptions) {
+    await wipePreviewEnvironment(helmInstallName, namespace, shellOpts);
+
+    createNamespace(namespace, shellOpts);
+}
+
+export async function wipePreviewEnvironment(helmInstallName: string, namespace: string, shellOpts: ExecOptions) {
     // uninstall helm first so that:
     //  - ws-scaler can't create new ghosts in the meantime
     //  - ws-manager can't start new probes/workspaces
     uninstallHelm(helmInstallName, namespace, shellOpts)
 
     deleteAllWorkspaces(namespace, shellOpts);
+    await deleteAllUnnamespacedObjects(namespace, shellOpts);
 
-    recreateNamespace(namespace, shellOpts);
+    deleteNamespace(true, namespace, shellOpts);
 }
 
 function uninstallHelm(installationName: string, namespace: string, shellOpts: ExecOptions) {
@@ -53,20 +62,49 @@ function deleteAllWorkspaces(namespace: string, shellOpts: ExecOptions) {
     });
 }
 
-function recreateNamespace(namespace: string, shellOpts: ExecOptions) {
-    const result = (exec(`kubectl get namespace ${namespace}`, { ...shellOpts, dontCheckRc: true }) as ShellString);
-    if (result.code === 0) {
-        deleteNamespace(true, namespace, shellOpts);
-    }
+// deleteAllUnnamespacedObjects deletes all unnamespaced objects for the given namespace
+async function deleteAllUnnamespacedObjects(namespace: string, shellOpts: ExecOptions): Promise<void> {
+    const slice = shellOpts.slice || "deleteobjs";
 
+    const promisedDeletes: Promise<any>[] = [];
+    for (const resType of ["clusterrole", "clusterrolebinding", "podsecuritypolicy"]) {
+        werft.log(slice, `Deleting old ${resType}s...`);
+        const objs = exec(`kubectl get ${resType} --no-headers -o=custom-columns=:metadata.name`)
+            .split("\n")
+            .map(o => o.trim())
+            .filter(o => o.length > 0)
+            .filter(o => o.startsWith(`${namespace}-ns-`)); // "{{ .Release.Namespace }}-ns-" is the prefix-pattern we use throughout our helm resources for un-namespaced resources
+
+        for (const obj of objs) {
+            promisedDeletes.push(exec(`kubectl delete ${resType} ${obj}`, { slice, async: true }));
+        }
+    }
+    await Promise.all(promisedDeletes);
+}
+
+function createNamespace(namespace: string, shellOpts: ExecOptions) {
     // (re-)create namespace
     [
         `kubectl create namespace ${namespace}`,
-        `kubectl patch namespace ${namespace} --patch '{"metadata": {"labels": {"isPreviewApp": "true"}}}'`
+        `kubectl patch namespace ${namespace} --patch '{"metadata": {"labels": {"${IS_PREVIEW_APP_LABEL}": "true"}}}'`
     ].forEach((cmd) => exec(cmd, shellOpts));
 };
 
-function deleteNamespace(wait: boolean, namespace: string, shellOpts: ExecOptions) {
+export function listAllPreviewNamespaces(): string[] {
+    return exec(`kubectl get namespaces -l ${IS_PREVIEW_APP_LABEL}=true -o=custom-columns=:metadata.name`, { silent: true })
+        .stdout
+        .split("\n")
+        .map(o => o.trim())
+        .filter(o => o.length > 0);
+}
+
+export function deleteNamespace(wait: boolean, namespace: string, shellOpts: ExecOptions) {
+    // check if present
+    const result = (exec(`kubectl get namespace ${namespace}`, { ...shellOpts, dontCheckRc: true }) as ShellString);
+    if (result.code !== 0) {
+        return;
+    }
+
     const cmd = `kubectl delete namespace ${namespace}`;
     exec(cmd, shellOpts);
 

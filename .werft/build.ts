@@ -225,7 +225,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
     // re-create namespace
     try {
-        wipeAndRecreateNamespace(helmInstallName, namespace, { slice: 'prep' });
+        await wipeAndRecreateNamespace(helmInstallName, namespace, { slice: 'prep' });
         setKubectlContextNamespace(namespace, { slice: 'prep' });
         namespaceRecreatedResolve();    // <-- signal for certificate
         werft.done('prep');

@@ -29,7 +29,7 @@ export type ExecResult = {
 // exec executes a command and throws an exception if that command exits with a non-zero exit code
 export function exec(command: string): shell.ShellString;
 export function exec(command: string, options: ExecOptions & { async?: false }): shell.ShellString;
-export function exec(command: string, options: ExecOptions & { async: true }): ChildProcess;
+export function exec(command: string, options: ExecOptions & { async: true }): Promise<ExecResult>;
 export function exec(command: string, options: ExecOptions): shell.ShellString | ChildProcess;
 export function exec(cmd: string, options?: ExecOptions): ChildProcess | shell.ShellString | Promise<ExecResult> {
     if (options && options.slice) {
