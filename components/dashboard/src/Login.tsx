@@ -7,8 +7,8 @@
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "./user-context";
-import { getGitpodService, gitpodHostUrl } from "./service/service";
-import { iconForAuthProvider, simplifyProviderName } from "./provider-utils";
+import { getGitpodService } from "./service/service";
+import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName } from "./provider-utils";
 import gitpod from './images/gitpod.svg';
 import gitpodIcon from './icons/gitpod.svg';
 import automate from "./images/welcome/automate.svg";
@@ -17,10 +17,10 @@ import collaborate from "./images/welcome/collaborate.svg";
 import customize from "./images/welcome/customize.svg";
 import fresh from "./images/welcome/fresh.svg";
 import prebuild from "./images/welcome/prebuild.svg";
+import exclamation from "./images/exclamation.svg";
 
 
-
-function Item(props: {icon: string, iconSize?: string, text:string}) {
+function Item(props: { icon: string, iconSize?: string, text: string }) {
     const iconSize = props.iconSize || 28;
     return <div className="flex-col items-center w-1/3 px-3">
         <img src={props.icon} className={`w-${iconSize} m-auto h-24`} />
@@ -29,7 +29,7 @@ function Item(props: {icon: string, iconSize?: string, text:string}) {
 }
 
 export function markLoggedIn() {
-    document.cookie = "gitpod-user=loggedIn;max-age=" + 60*60*24*365;
+    document.cookie = "gitpod-user=loggedIn;max-age=" + 60 * 60 * 24 * 365;
 }
 
 export function hasLoggedInBefore() {
@@ -41,40 +41,49 @@ export function Login() {
     const showWelcome = !hasLoggedInBefore();
 
     const [authProviders, setAuthProviders] = useState<AuthProviderInfo[]>([]);
+    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         (async () => {
             setAuthProviders(await getGitpodService().server.getAuthProviders());
         })();
-
-        const listener = (event: MessageEvent<any>) => {
-            // todo: check event.origin
-
-            if (event.data === "success") {
-                if (event.source && "close" in event.source && event.source.close) {
-                    console.log(`try to close window`);
-                    event.source.close();
-                }
-
-                (async () => {
-                    await getGitpodService().reconnect();
-                    setUser(await getGitpodService().server.getLoggedInUser());
-                    markLoggedIn();
-                })();
-            }
-        };
-        window.addEventListener("message", listener);
-        return () => {
-            window.removeEventListener("message", listener);
-        }
     }, [])
 
-    const openLogin = (host: string) => {
-        const url = getLoginUrl(host);
-        const newWindow = window.open(url, "gitpod-login");
-        if (!newWindow) {
-            console.log(`Failed to open login window for ${host}`);
+    const openLogin = async (host: string) => {
+        setErrorMessage(undefined);
+
+        try {
+            await openAuthorizeWindow({
+                login: true,
+                host,
+                onSuccess: () => updateUser(),
+                onError: (error) => {
+                    if (typeof error === "string") {
+                        try {
+                            const payload = JSON.parse(error);
+                            if (typeof payload === "object" && payload.error) {
+                                if (payload.error === "email_taken") {
+                                    return setErrorMessage(`Email address already exists. Log in using a different provider.`);
+                                }
+                                return setErrorMessage(payload.description ? payload.description : `Error: ${payload.error}`);
+                            }
+                        } catch (error) {
+                            console.log(error);
+                        }
+                        setErrorMessage(error);
+                    }
+                }
+            });
+        } catch (error) {
+            console.log(error)
         }
+    }
+
+    const updateUser = async () => {
+        await getGitpodService().reconnect();
+        const user = await getGitpodService().server.getLoggedInUser();
+        setUser(user);
+        markLoggedIn();
     }
 
     return (<div id="login-container" className="z-50 flex w-screen h-screen">
@@ -91,18 +100,18 @@ export function Login() {
                         </div>
                     </div>
                     <div className="flex mb-10">
-                        <Item icon={code} iconSize="16" text="Always Ready&#x2011;To&#x2011;Code"/>
-                        <Item icon={customize} text="Personalize your Workspace"/>
-                        <Item icon={automate} text="Automate Your Development Setup"/>
+                        <Item icon={code} iconSize="16" text="Always Ready&#x2011;To&#x2011;Code" />
+                        <Item icon={customize} text="Personalize your Workspace" />
+                        <Item icon={automate} text="Automate Your Development Setup" />
                     </div>
                     <div className="flex">
-                        <Item icon={prebuild} text="Continuously Prebuild Your Project"/>
-                        <Item icon={collaborate} text="Collaborate With Your Team"/>
-                        <Item icon={fresh} text="Fresh Workspace For Each New Task"/>
+                        <Item icon={prebuild} text="Continuously Prebuild Your Project" />
+                        <Item icon={collaborate} text="Collaborate With Your Team" />
+                        <Item icon={fresh} text="Fresh Workspace For Each New Task" />
                     </div>
                 </div>
             </div>
-        </div>: null}
+        </div> : null}
         <div id="login-section" className={"flex-grow flex w-full" + (showWelcome ? " lg:w-1/2" : "")}>
             <div id="login-section-column" className={"flex-grow max-w-2xl flex flex-col h-100 mx-auto" + (showWelcome ? " lg:my-0" : "")}>
                 <div className="flex-grow h-100 flex flex-row items-center justify-center" >
@@ -111,7 +120,7 @@ export function Login() {
                             <img src={gitpodIcon} className="h-16 mx-auto" />
                         </div>
                         <div className="mx-auto text-center pb-8 space-y-2">
-                            <h1 className="text-3xl">Log in{showWelcome? ' to Gitpod' : ''}</h1>
+                            <h1 className="text-3xl">Log in{showWelcome ? ' to Gitpod' : ''}</h1>
                             <h2 className="uppercase text-sm text-gray-400">ALWAYS READY-TO-CODE</h2>
                         </div>
                         <div className="flex flex-col space-y-3 items-center">
@@ -124,6 +133,18 @@ export function Login() {
                                 );
                             })}
                         </div>
+
+                        {errorMessage && (
+                            <div className="mt-16 flex space-x-2 py-6 px-6 w-96 justify-between bg-gitpod-kumquat-light rounded-xl">
+                                <div className="pr-3 self-center w-6">
+                                    <img src={exclamation} />
+                                </div>
+                                <div className="flex-1 flex flex-col">
+                                    <p className="text-gitpod-red text-sm">{errorMessage}</p>
+                                </div>
+                            </div>
+                        )}
+
                     </div>
                 </div>
                 <div className="flex-none mx-auto h-20 text-center">
@@ -135,12 +156,4 @@ export function Login() {
 
         </div>
     </div>);
-}
-
-function getLoginUrl(host: string) {
-    const returnTo = gitpodHostUrl.with({ pathname: 'flow-result', search: 'message=success' }).toString();
-    return gitpodHostUrl.withApi({
-        pathname: '/login',
-        search: `host=${host}&returnTo=${encodeURIComponent(returnTo)}`
-    }).toString();
 }

@@ -16,7 +16,7 @@ async function registerApp(installationId: string, setModal: (modal: 'done' | st
     try {
         await getGitpodService().server.registerGithubApp(installationId);
 
-        const returnTo = encodeURIComponent(gitpodHostUrl.with({ pathname: 'flow-result', search: 'message=success' }).toString());
+        const returnTo = encodeURIComponent(gitpodHostUrl.with({ pathname: 'complete-auth', search: 'message=success' }).toString());
         const url = gitpodHostUrl.withApi({
             pathname: '/authorize',
             search: `returnTo=${returnTo}&host=github.com&scopes=repo`

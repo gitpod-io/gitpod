@@ -123,7 +123,7 @@ function GitProviders() {
 
     const disconnect = async (ap: AuthProviderInfo) => {
         setDisconnectModal(undefined);
-        const returnTo = gitpodHostUrl.with({ pathname: 'flow-result', search: 'message=success' }).toString();
+        const returnTo = gitpodHostUrl.with({ pathname: 'complete-auth', search: 'message=success' }).toString();
         const deauthorizeUrl = gitpodHostUrl.withApi({
             pathname: '/deauthorize',
             search: `returnTo=${returnTo}&host=${ap.host}`

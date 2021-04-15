@@ -36,12 +36,26 @@ function simplifyProviderName(host: string) {
     }
 }
 
-async function openAuthorizeWindow({ host, scopes, onSuccess, onError }: { host: string, scopes?: string[], onSuccess?: (payload?: string) => void, onError?: (error?: string) => void }) {
-    const returnTo = gitpodHostUrl.with({ pathname: 'flow-result', search: 'message=success' }).toString();
-    const url = gitpodHostUrl.withApi({
-        pathname: '/authorize',
-        search: `returnTo=${encodeURIComponent(returnTo)}&host=${host}&override=true&scopes=${(scopes || []).join(',')}`
-    }).toString();
+interface OpenAuthorizeWindowParams {
+    login?: boolean;
+    host: string;
+    scopes?: string[];
+    onSuccess?: (payload?: string) => void;
+    onError?: (error?: string) => void;
+}
+
+async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
+    const { login, host, scopes, onSuccess, onError } = params;
+    const returnTo = gitpodHostUrl.with({ pathname: 'complete-auth', search: 'message=success' }).toString();
+    const url = login
+        ? gitpodHostUrl.withApi({
+            pathname: '/login',
+            search: `host=${host}&returnTo=${encodeURIComponent(returnTo)}`
+        }).toString()
+        : gitpodHostUrl.withApi({
+            pathname: '/authorize',
+            search: `returnTo=${encodeURIComponent(returnTo)}&host=${host}&override=true&scopes=${(scopes || []).join(',')}`
+        }).toString();
 
     const newWindow = window.open(url, "gitpod-auth-window");
     if (!newWindow) {
@@ -55,7 +69,7 @@ async function openAuthorizeWindow({ host, scopes, onSuccess, onError }: { host:
 
         const killAuthWindow = () => {
             window.removeEventListener("message", eventListener);
-    
+
             if (event.source && "close" in event.source && event.source.close) {
                 console.log(`Received Auth Window Result. Closing Window.`);
                 event.source.close();
@@ -67,9 +81,9 @@ async function openAuthorizeWindow({ host, scopes, onSuccess, onError }: { host:
             onSuccess && onSuccess();
         }
         if (typeof event.data === "string" && event.data.startsWith("error:")) {
-            const errorText = atob(event.data.substring("error:".length));
+            const errorAsText = atob(event.data.substring("error:".length));
             killAuthWindow();
-            onError && onError(errorText);
+            onError && onError(errorAsText);
         }
     };
     window.addEventListener("message", eventListener);
