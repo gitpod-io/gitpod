@@ -7,7 +7,6 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"os"
 	"strings"
@@ -22,56 +21,36 @@ import (
 
 func main() {
 	app := cli.App{
-		Name: "local-app-debug",
-		Commands: []*cli.Command{
-			{
-				Name: "login",
-				Action: func(c *cli.Context) error {
-					keyring.MockInit()
-					_, err := auth.Login(context.Background(), auth.LoginOpts{
-						GitpodURL: c.String("gitpod-host"),
-					})
-					if err != nil {
-						return err
-					}
-					fmt.Println("login successful")
-					return nil
-				},
-				Flags: []cli.Flag{
-					&cli.StringFlag{
-						EnvVars: []string{
-							"GITPOD_HOST",
-						},
-						Name: "gitpod-host",
-					},
+		Name:                 "gitpod",
+		Action:               DefaultCommand("run"),
+		EnableBashCompletion: true,
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:  "gitpod-host",
+				Usage: "URL of the Gitpod installation to connect to",
+				EnvVars: []string{
+					"GITPOD_HOST",
 				},
 			},
+			&cli.BoolFlag{
+				Name:  "mock-keyring",
+				Usage: "Don't use system native keyring, but store Gitpod token in memory",
+			},
+		},
+		Commands: []*cli.Command{
 			{
 				Name: "run",
 				Action: func(c *cli.Context) error {
 					if c.Bool("mock-keyring") {
 						keyring.MockInit()
 					}
-					return run(c.String("gitpod-host"), c.String("token"), c.String("ssh_config"))
+					return run(c.String("gitpod-host"), c.String("ssh_config"))
 				},
 				Flags: []cli.Flag{
-					&cli.StringFlag{
-						EnvVars: []string{
-							"GITPOD_HOST",
-						},
-						Name: "gitpod-host",
-					},
-					&cli.StringFlag{
-						Name: "token",
-						EnvVars: []string{
-							"GITPOD_TOKEN",
-						},
-					},
 					&cli.PathFlag{
-						Name: "ssh_config",
-					},
-					&cli.BoolFlag{
-						Name: "mock-keyring",
+						Name:  "ssh_config",
+						Usage: "produce and update an OpenSSH compatible ssh_config file",
+						Value: "/tmp/gitpod_ssh_config",
 					},
 				},
 			},
@@ -83,11 +62,13 @@ func main() {
 	}
 }
 
-func run(host, token, sshConfig string) error {
-	if token != "" {
-		auth.SetToken(host, token)
+func DefaultCommand(name string) cli.ActionFunc {
+	return func(ctx *cli.Context) error {
+		return ctx.App.Command(name).Run(ctx)
 	}
+}
 
+func run(host, sshConfig string) error {
 	tkn, err := auth.GetToken(host)
 	if errors.Is(err, keyring.ErrNotFound) {
 		tkn, err = auth.Login(context.Background(), auth.LoginOpts{GitpodURL: host})
