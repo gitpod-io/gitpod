@@ -1507,6 +1507,10 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }
 
+    async adminRestoreSoftDeletedWorkspace(id: string): Promise<void> {
+        throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
+    }
+
     async adminSetLicense(key: string): Promise<void> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Admin support is implemented in Gitpod's Enterprise Edition`);
     }

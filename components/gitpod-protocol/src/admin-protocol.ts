@@ -21,6 +21,7 @@ export interface AdminServer {
     adminGetWorkspaces(req: AdminGetWorkspacesRequest): Promise<AdminGetListResult<WorkspaceAndInstance>>;
     adminGetWorkspace(id: string): Promise<WorkspaceAndInstance>;
     adminForceStopWorkspace(id: string): Promise<void>;
+    adminRestoreSoftDeletedWorkspace(id: string): Promise<void>;
 
     adminSetLicense(key: string): Promise<void>;
 
