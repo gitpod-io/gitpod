@@ -1,5 +1,5 @@
 import { ShellString } from 'shelljs';
-import { exec, ExecOptions } from './shell';
+import { werft, exec, ExecOptions } from './shell';
 
 
 export function setKubectlContextNamespace(namespace, shellOpts) {
@@ -95,4 +95,41 @@ export function deleteNonNamespaceObjects(namespace, destname, shellOpts) {
     objs.forEach(o => {
         exec(`kubectl delete ${o.kind} ${o.obj}`, shellOpts);
     });
+}
+
+export interface PortRange {
+    start: number;
+    end: number;
+}
+
+export function findFreeHostPorts(ranges: PortRange[], slice: string): number[] {
+    const hostPorts: number[] = exec(`kubectl get pods --all-namespaces -o yaml | yq r - 'items.*.spec.containers.*.ports.*.hostPort'`, { silent: true })
+        .stdout
+        .split("\n")
+        .map(l => l.trim())
+        .filter(l => l.length > 0)
+        .map(l => Number.parseInt(l));
+
+    const alreadyReservedPorts: Set<number> = new Set();
+    for (const port of hostPorts) {
+        alreadyReservedPorts.add(port);
+    }
+    werft.log(slice, `already reserved ports: ${Array.from(alreadyReservedPorts.values())}`);
+
+    const results: number[] = [];
+    for (const range of ranges) {
+        const r = range.end - range.start;
+        while (true) {
+            const hostPort = range.start + Math.floor(Math.random() * r);
+            if (alreadyReservedPorts.has(hostPort)) {
+                continue;
+            }
+
+            // found one, now find the others
+            results.push(hostPort);
+            alreadyReservedPorts.add(hostPort);
+            break;
+        }
+    }
+    return results;
 }
