@@ -20,12 +20,16 @@ import (
 
 const (
 	keyringService = "gitpod-io"
-	keyringUser    = "token"
 )
 
+// SetToken returns the persisted Gitpod token
+func SetToken(host, token string) error {
+	return keyring.Set(keyringService, host, token)
+}
+
 // GetToken returns the persisted Gitpod token
-func GetToken() (token string, err error) {
-	return keyring.Get(keyringService, keyringUser)
+func GetToken(host string) (token string, err error) {
+	return keyring.Get(keyringService, host)
 }
 
 // LoginOpts configure the login process
@@ -106,7 +110,7 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 	}
 	token = string(tkn)
 
-	err = keyring.Set(keyringService, keyringUser, token)
+	err = keyring.Set(keyringService, baseURL, token)
 	if err != nil {
 		return "", err
 	}

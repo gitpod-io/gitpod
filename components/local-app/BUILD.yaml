@@ -6,6 +6,7 @@ packages:
         - go.sum
         - "**/*.go"
       deps:
+        - components/supervisor-api/go:lib
         - components/gitpod-protocol/go:lib
       config:
         packaging: app
