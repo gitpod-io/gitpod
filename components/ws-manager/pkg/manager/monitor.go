@@ -706,11 +706,7 @@ func (m *Monitor) probeWorkspaceReady(ctx context.Context, pod *corev1.Pod) (res
 // If we're already initializing the workspace, thus function will return immediately. If we were not initializing,
 // prior to this call this function returns once initialization is complete.
 func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Pod) (err error) {
-	span, ctx := tracing.FromContext(ctx, "initializeWorkspace")
-	defer tracing.FinishSpan(span, &err)
-
 	_, fullWorkspaceBackup := pod.Labels[fullWorkspaceBackupAnnotation]
-	span.SetTag("fullWorkspaceBackup", fullWorkspaceBackup)
 
 	workspaceID, ok := pod.Annotations[workspaceIDAnnotation]
 	if !ok {
@@ -736,6 +732,11 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 		if alreadyInitializing {
 			return nil
 		}
+
+		// There is no need to emit this span if the operation is noop.
+		span, ctx := tracing.FromContext(ctx, "initializeWorkspace")
+		defer tracing.FinishSpan(span, &err)
+		span.SetTag("fullWorkspaceBackup", fullWorkspaceBackup)
 
 		initializerRaw, ok := pod.Annotations[workspaceInitializerAnnotation]
 		if !ok {
@@ -779,7 +780,6 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 	}
 	if err == nil && snc == nil {
 		// we are already initialising
-		span.LogKV("done", "already initializing")
 		return nil
 	}
 
