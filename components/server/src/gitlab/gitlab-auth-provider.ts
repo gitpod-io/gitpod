@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -63,7 +63,7 @@ export class GitLabAuthProvider extends GenericAuthProvider {
         });
         const getCurrentUser = async () => {
             const response = await api.Users.current();
-            return response as GitLab.User;
+            return response as unknown as GitLab.User;
         }
         const unconfirmedUserMessage = "Please confirm your GitLab account and try again.";
         try {
@@ -86,9 +86,10 @@ export class GitLabAuthProvider extends GenericAuthProvider {
                 currentScopes: this.readScopesFromVerifyParams(tokenResponse)
             }
         } catch (error) {
-            if (error && error.response && error.response.statusText === "Forbidden") {
+            if (error && typeof error.description === "string" && error.description.includes("403 Forbidden")) {
                 // If GitLab is configured to disallow OAuth-token based API access for unconfirmed users, we need to reject this attempt
-                throw UnconfirmedUserException.create(unconfirmedUserMessage, error);
+                // 403 Forbidden  - You (@...) must accept the Terms of Service in order to perform this action. Please access GitLab from a web browser to accept these terms.
+                throw UnconfirmedUserException.create(error.description, error);
             } else {
                 log.error(`(${this.strategyName}) Reading current user info failed`, error, { accessToken, error });
                 throw error;

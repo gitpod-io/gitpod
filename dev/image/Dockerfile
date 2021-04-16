@@ -1,10 +1,10 @@
-# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
 FROM gitpod/workspace-full-vnc:latest
 
-ENV TRIGGER_REBUILD 2
+ENV TRIGGER_REBUILD 3
 
 USER root
 
@@ -13,13 +13,6 @@ ARG CLOUD_SQL_PROXY=/usr/local/bin/cloud_sql_proxy
 RUN curl -fsSL https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 > $CLOUD_SQL_PROXY \
     && chmod +x $CLOUD_SQL_PROXY
 
-### Docker client ###
-RUN curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add - \
-    # 'cosmic' not supported
-    && add-apt-repository -yu "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable" \
-    && apt-get install -yq docker-ce-cli=5:18.09.0~3-0~ubuntu-bionic \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
-
 ### Helm3 ###
 RUN mkdir -p /tmp/helm/ \
     && curl -fsSL https://get.helm.sh/helm-v3.0.3-linux-amd64.tar.gz | tar -xzvC /tmp/helm/ --strip-components=1 \
@@ -27,11 +20,19 @@ RUN mkdir -p /tmp/helm/ \
     && cp /tmp/helm/helm /usr/local/bin/helm3 \
     && rm -rf /tmp/helm/
 
+### kubernetes ###
+RUN mkdir -p /usr/local/kubernetes/ && \
+    curl -fsSL https://github.com/kubernetes/kubernetes/releases/download/v1.17.16/kubernetes.tar.gz \ 
+    | tar -xzvC /usr/local/kubernetes/ --strip-components=1 && \
+    KUBERNETES_SKIP_CONFIRM=true /usr/local/kubernetes/cluster/get-kube-binaries.sh && \
+    chown gitpod:gitpod -R /usr/local/kubernetes
+ENV PATH=$PATH:/usr/local/kubernetes/cluster/:/usr/local/kubernetes/client/bin/
+
 ### kubectl ###
 RUN curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - \
     # really 'xenial'
     && add-apt-repository -yu "deb https://apt.kubernetes.io/ kubernetes-xenial main" \
-    && apt-get install -yq kubectl=1.13.0-00 \
+    && apt-get install -yq kubectl=1.20.0-00 \
     && kubectl completion bash > /usr/share/bash-completion/completions/kubectl \
     && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
 
@@ -48,7 +49,7 @@ RUN cd /usr/local && curl -sfL https://install.goreleaser.com/github.com/golangc
 
 # leeway
 ENV LEEWAY_NESTED_WORKSPACE=true
-RUN cd /usr/bin && curl -L https://github.com/TypeFox/leeway/releases/download/v0.1.0/leeway_0.1.0_Linux_x86_64.tar.gz | tar xz
+RUN cd /usr/bin && curl -L https://github.com/TypeFox/leeway/releases/download/v0.2.0/leeway_0.2.0_Linux_x86_64.tar.gz | tar xz
 
 # dazzle
 RUN cd /usr/bin && curl -L https://github.com/32leaves/dazzle/releases/download/v0.0.3/dazzle_0.0.3_Linux_x86_64.tar.gz | tar xz
@@ -150,12 +151,6 @@ COPY --chown=gitpod kubeconfig.yaml $KUBE_CONFIG_PATH
 # Set Application Default Credentials (ADC) based on user-provided env var
 RUN echo ". /workspace/gitpod/scripts/setup-google-adc.sh" >> ~/.bashrc
 
-## install Terraform kubectl provider
-# https://gavinbunney.github.io/terraform-provider-kubectl/docs/provider.html
-RUN mkdir -p ~/.terraform.d/plugins && \
-    curl -Lo ~/.terraform.d/plugins/terraform-provider-kubectl https://github.com/gavinbunney/terraform-provider-kubectl/releases/download/v1.5.1/terraform-provider-kubectl-linux-amd64 && \
-    chmod +x ~/.terraform.d/plugins/terraform-provider-kubectl
-
 ENV DB_HOST=localhost
 
 ENV LEEWAY_WORKSPACE_ROOT=/workspace/gitpod
@@ -168,10 +163,11 @@ RUN pip install awscli
 RUN sudo curl -o aws-iam-authenticator "https://amazon-eks.s3-us-west-2.amazonaws.com/1.13.7/2019-06-11/bin/linux/amd64/aws-iam-authenticator" \
     && sudo chmod +x ./aws-iam-authenticator \
     && sudo mkdir -p $HOME/.aws-iam \
-    && sudo cp ./aws-iam-authenticator $HOME/.aws-iam/aws-iam-authenticator
+    && sudo mv ./aws-iam-authenticator $HOME/.aws-iam/aws-iam-authenticator \
+    && sudo chown -R gitpod:gitpod $HOME/.aws-iam
 
 # Install Terraform
-ARG RELEASE_URL="https://releases.hashicorp.com/terraform/0.13.0/terraform_0.13.0_linux_amd64.zip"
+ARG RELEASE_URL="https://releases.hashicorp.com/terraform/0.14.2/terraform_0.14.2_linux_amd64.zip"
 RUN mkdir -p ~/.terraform \
     && cd ~/.terraform \
     && wget ${RELEASE_URL} \

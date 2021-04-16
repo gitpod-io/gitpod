@@ -1,4 +1,4 @@
-# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 {{ $comp := .Values.components.wsManager -}}
@@ -38,7 +38,7 @@ spec:
         prometheus.io/scrape: 'true'
         prometheus.io/path: "/metrics"
         prometheus.io/port: '9500'
-        checksum/tlskey: {{ include (print $.Template.BasePath "/ws-sync-tlssecret.yaml") $ | sha256sum }}
+        checksum/tlskey: {{ include (print $.Template.BasePath "/ws-daemon-tlssecret.yaml") $ | sha256sum }}
     spec:
 {{ include "gitpod.pod.affinity" $this | indent 6 }}
       serviceAccountName: ws-manager
@@ -50,7 +50,7 @@ spec:
           name: {{ template "gitpod.comp.configMap" $this }}
       - name: tls-certs
         secret:
-          secretName: ws-sync-tls
+          secretName: ws-daemon-tls
       - name: workspace-template
         configMap:
           name: workspace-template

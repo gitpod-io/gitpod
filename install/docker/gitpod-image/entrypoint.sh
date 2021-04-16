@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 
@@ -37,8 +37,9 @@ echo "DOMAIN:               $DOMAIN"
 echo "BASEDOMAIN:           $BASEDOMAIN"
 
 
-# Fix docker-registry volume ownership
+# Fix volume ownerships
 [ -d "/var/gitpod/docker-registry" ] && chown 1000 /var/gitpod/docker-registry
+[ -d "/var/gitpod/minio" ] && chown 1000 /var/gitpod/minio
 
 
 # Add IP tables rules to access Docker's internal DNS 127.0.0.11 from outside
@@ -96,7 +97,45 @@ EOF
 fi
 
 
+case "$DOMAIN" in 
+  *ip.mygitpod.com)
+    cat << EOF > /default_values/03_ip_mygitpod_com.yaml
+forceHTTPS: true
+ingressMode: pathAndHost
+components:
+  imageBuilder:
+    registry:
+      bypassProxy: true
+EOF
+    ;;
+esac
+
+
+# prepare Gitpod helm installer
+GITPOD_HELM_INSTALLER_FILE=/var/lib/rancher/k3s/server/manifests/gitpod-helm-installer.yaml
+
+touch /values.yaml
+if [ -d /default_values ] && [ "$(ls /default_values/*.y*ml)" ]; then
+    for values_file in /default_values/*.y*ml; do
+        # merge values and update /values.yaml
+        yq m -ixa /values.yaml "$values_file"
+    done
+fi
+if [ -d /values ]&& [ "$(ls /values/*.y*ml)" ]; then
+    for values_file in /values/*.y*ml; do
+        # merge values and update /values.yaml
+        yq m -ixa /values.yaml "$values_file"
+    done
+fi
+sed 's/^/    /' /values.yaml >> "$GITPOD_HELM_INSTALLER_FILE"
+
+sed -i "s/\$DOMAIN/$DOMAIN/g" "$GITPOD_HELM_INSTALLER_FILE"
+sed -i "s/\$BASEDOMAIN/$BASEDOMAIN/g" "$GITPOD_HELM_INSTALLER_FILE"
+
+
+
 prepare_builtin_registry_for_k3s() {
+    echo "Preparing builtin registry for k3s ..."
 
     # config builtin registry for k3s
     mkdir -p /etc/rancher/k3s/
@@ -127,44 +166,12 @@ EOF
     create_resolv_conf "$KUBE_DNS_IP"
 }
 
-
-case "$DOMAIN" in 
-  *ip.mygitpod.com)
-    cat << EOF > /default_values/03_ip_mygitpod_com.yaml
-forceHTTPS: true
-ingressMode: pathAndHost
-components:
-  wsProxy:
-    disabled: false
-  imageBuilder:
-    registry:
-      bypassProxy: true
-EOF
+# In case we want to bypass the proxy when accessing the registry we need to tell k3s how to access the registry as well
+if [ "$(yq r /values.yaml components.imageBuilder.registry.bypassProxy)" = "true" ]; then
     prepare_builtin_registry_for_k3s &
-    ;;
-esac
-
-
-# prepare Gitpod helm installer
-GITPOD_HELM_INSTALLER_FILE=/var/lib/rancher/k3s/server/manifests/gitpod-helm-installer.yaml
-
-touch /values.yaml
-if [ -d /default_values ] && [ "$(ls /default_values/*.y*ml)" ]; then
-    for values_file in /default_values/*.y*ml; do
-        # merge values and update /values.yaml
-        yq m -ixa /values.yaml "$values_file"
-    done
 fi
-if [ -d /values ]&& [ "$(ls /values/*.y*ml)" ]; then
-    for values_file in /values/*.y*ml; do
-        # merge values and update /values.yaml
-        yq m -ixa /values.yaml "$values_file"
-    done
-fi
-sed 's/^/    /' /values.yaml >> "$GITPOD_HELM_INSTALLER_FILE"
 
-sed -i "s/\$DOMAIN/$DOMAIN/g" "$GITPOD_HELM_INSTALLER_FILE"
-sed -i "s/\$BASEDOMAIN/$BASEDOMAIN/g" "$GITPOD_HELM_INSTALLER_FILE"
+
 
 # gitpod-helm-installer.yaml needs access to kubernetes by the public host IP.
 kubeconfig_replaceip() {

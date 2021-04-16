@@ -48,7 +48,7 @@ Flags:
 `
 
 var (
-	holder    = flag.String("c", "TypeFox GmbH", "copyright holder")
+	holder    = flag.String("c", "Gitpod GmbH", "copyright holder")
 	license   = flag.String("l", "agpl", "license type: agpl")
 	licensef  = flag.String("f", "", "license file")
 	year      = flag.String("y", fmt.Sprint(time.Now().Year()), "copyright year(s)")

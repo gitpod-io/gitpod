@@ -1,12 +1,14 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
 package terminal
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"sync"
@@ -15,6 +17,7 @@ import (
 	"github.com/creack/pty"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/google/uuid"
+	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 )
 
@@ -41,7 +44,7 @@ func (m *Mux) Get(alias string) (*Term, bool) {
 
 // Start starts a new command in its own pseudo-terminal and returns an alias
 // for that pseudo terminal.
-func (m *Mux) Start(cmd *exec.Cmd) (alias string, err error) {
+func (m *Mux) Start(cmd *exec.Cmd, options TermOptions) (alias string, err error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -56,7 +59,7 @@ func (m *Mux) Start(cmd *exec.Cmd) (alias string, err error) {
 	}
 	alias = uid.String()
 
-	term, err := newTerm(pty, cmd)
+	term, err := newTerm(pty, cmd, options)
 	if err != nil {
 		pty.Close()
 		return "", err
@@ -66,18 +69,46 @@ func (m *Mux) Start(cmd *exec.Cmd) (alias string, err error) {
 	log.WithField("alias", alias).WithField("cmd", cmd.Path).Info("started new terminal")
 
 	go func() {
-		cmd.Process.Wait()
-		m.Close(alias)
+		term.waitErr = cmd.Wait()
+		close(term.waitDone)
+		m.CloseTerminal(alias, 0*time.Second)
 	}()
 
 	return alias, nil
 }
 
-// Close closes a terminal and ends the process that runs in it
-func (m *Mux) Close(alias string) error {
+// Close closes all terminals with closeTerminaldefaultGracePeriod.
+func (m *Mux) Close() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
+	var err error
+	for k := range m.terms {
+		cerr := m.doClose(k, closeTerminaldefaultGracePeriod)
+		if cerr != nil {
+			log.WithError(cerr).WithField("alias", k).Warn("cannot properly close terminal")
+			if err != nil {
+				err = cerr
+			}
+		}
+	}
+	return err
+}
+
+// CloseTerminal closes a terminal and ends the process that runs in it
+func (m *Mux) CloseTerminal(alias string, gracePeriod time.Duration) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	return m.doClose(alias, gracePeriod)
+}
+
+// doClose closes a terminal and ends the process that runs in it.
+// First, the process receives SIGTERM and is given gracePeriod time
+// to stop. If it still runs after that time, it receives SIGKILL.
+//
+// Callers are expected to hold mu.
+func (m *Mux) doClose(alias string, gracePeriod time.Duration) error {
 	term, ok := m.terms[alias]
 	if !ok {
 		return fmt.Errorf("not found")
@@ -85,11 +116,11 @@ func (m *Mux) Close(alias string) error {
 
 	log := log.WithField("alias", alias)
 	log.Info("closing terminal")
-	if term.Command.ProcessState == nil || !term.Command.ProcessState.Exited() {
-		log.WithField("cmd", term.Command.Args).Debug("killing process")
-		term.Command.Process.Kill()
+	err := gracefullyShutdownProcess(term.Command.Process, gracePeriod)
+	if err != nil {
+		log.WithError(err).Warn("did not gracefully shut down terminal")
 	}
-	err := term.Stdout.Close()
+	err = term.Stdout.Close()
 	if err != nil {
 		log.WithError(err).Warn("cannot close connection to terminal clients")
 	}
@@ -102,12 +133,43 @@ func (m *Mux) Close(alias string) error {
 	return nil
 }
 
+func gracefullyShutdownProcess(p *os.Process, gracePeriod time.Duration) error {
+	if p == nil {
+		// process is alrady gone
+		return nil
+	}
+	if gracePeriod == 0 {
+		return p.Kill()
+	}
+
+	err := p.Signal(unix.SIGTERM)
+	if err != nil {
+		return err
+	}
+	schan := make(chan error)
+	go func() {
+		_, err := p.Wait()
+		schan <- err
+	}()
+	select {
+	case err = <-schan:
+		if err == nil {
+			// process is gone now - we're good
+			return nil
+		}
+	case <-time.After(gracePeriod):
+	}
+
+	// process did not exit in time. Let's kill.
+	return p.Kill()
+}
+
 // terminalBacklogSize is the number of bytes of output we'll store in RAM for each terminal.
 // The higher this number is, the better the UX, but the higher the resource requirements are.
 // For now we assume an average of five terminals per workspace, which makes this consume 1MiB of RAM.
 const terminalBacklogSize = 256 << 10
 
-func newTerm(pty *os.File, cmd *exec.Cmd) (*Term, error) {
+func newTerm(pty *os.File, cmd *exec.Cmd, options TermOptions) (*Term, error) {
 	token, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
@@ -118,18 +180,35 @@ func newTerm(pty *os.File, cmd *exec.Cmd) (*Term, error) {
 		return nil, err
 	}
 
+	timeout := options.ReadTimeout
+	if timeout == 0 {
+		timeout = 1<<63 - 1
+	}
 	res := &Term{
 		PTY:     pty,
 		Command: cmd,
 		Stdout: &multiWriter{
+			timeout:  timeout,
 			listener: make(map[*multiWriterListener]struct{}),
 			recorder: recorder,
 		},
+		Annotations: options.Annotations,
 
 		StarterToken: token.String(),
+
+		waitDone: make(chan struct{}),
 	}
 	go io.Copy(res.Stdout, pty)
 	return res, nil
+}
+
+// TermOptions is a pseudo-terminal configuration
+type TermOptions struct {
+	// timeout after which a listener is dropped. Use 0 for no timeout.
+	ReadTimeout time.Duration
+
+	// Annotations are user-defined metadata that's attached to a terminal
+	Annotations map[string]string
 }
 
 // Term is a pseudo-terminal
@@ -138,12 +217,25 @@ type Term struct {
 	Command      *exec.Cmd
 	Title        string
 	StarterToken string
+	Annotations  map[string]string
 
 	Stdout *multiWriter
+
+	waitErr  error
+	waitDone chan struct{}
+}
+
+// Wait waits for the terminal to exit and returns the resulted process state
+func (term *Term) Wait() (*os.ProcessState, error) {
+	select {
+	case <-term.waitDone:
+	}
+	return term.Command.ProcessState, term.waitErr
 }
 
 // multiWriter is like io.MultiWriter, except that we can listener at runtime.
 type multiWriter struct {
+	timeout  time.Duration
 	closed   bool
 	mu       sync.RWMutex
 	listener map[*multiWriterListener]struct{}
@@ -152,18 +244,29 @@ type multiWriter struct {
 	recorder *RingBuffer
 }
 
+// ErrReadTimeout happens when a listener takes too long to read
+var ErrReadTimeout = errors.New("read timeout")
+
 type multiWriterListener struct {
 	io.Reader
 
 	closed    bool
 	once      sync.Once
+	closeErr  error
 	closeChan chan struct{}
 	cchan     chan []byte
 	done      chan struct{}
 }
 
 func (l *multiWriterListener) Close() error {
+	return l.CloseWithError(nil)
+}
+
+func (l *multiWriterListener) CloseWithError(err error) error {
 	l.once.Do(func() {
+		if err != nil {
+			l.closeErr = err
+		}
 		close(l.closeChan)
 		l.closed = true
 
@@ -176,10 +279,23 @@ func (l *multiWriterListener) Done() <-chan struct{} {
 	return l.closeChan
 }
 
+type closedTerminalListener struct {
+}
+
+func (closedTerminalListener) Read(p []byte) (n int, err error) {
+	return 0, io.EOF
+}
+
+var closedListener = ioutil.NopCloser(closedTerminalListener{})
+
 // Listen listens in on the multi-writer stream
-func (mw *multiWriter) Listen() *multiWriterListener {
+func (mw *multiWriter) Listen() io.ReadCloser {
 	mw.mu.Lock()
 	defer mw.mu.Unlock()
+
+	if mw.closed {
+		return closedListener
+	}
 
 	r, w := io.Pipe()
 	cchan, done, closeChan := make(chan []byte), make(chan struct{}, 1), make(chan struct{}, 1)
@@ -190,10 +306,8 @@ func (mw *multiWriter) Listen() *multiWriterListener {
 		closeChan: closeChan,
 	}
 
+	recording := mw.recorder.Bytes()
 	go func() {
-		mw.mu.RLock()
-		recording := mw.recorder.Bytes()
-		mw.mu.RUnlock()
 		w.Write(recording)
 
 		// copy bytes from channel to writer.
@@ -206,15 +320,19 @@ func (mw *multiWriter) Listen() *multiWriterListener {
 				err = io.ErrShortWrite
 			}
 			if err != nil {
-				log.WithError(err).Error("terminal listener droped out")
-				res.Close()
+				res.CloseWithError(err)
 			}
 		}
 	}()
 	go func() {
 		// listener cleanup on close
 		<-closeChan
-		w.Close()
+		if res.closeErr != nil {
+			log.WithError(res.closeErr).Error("terminal listener droped out")
+			w.CloseWithError(res.closeErr)
+		} else {
+			w.Close()
+		}
 		close(cchan)
 
 		mw.mu.Lock()
@@ -240,14 +358,14 @@ func (mw *multiWriter) Write(p []byte) (n int, err error) {
 
 		select {
 		case lstr.cchan <- p:
-		case <-time.After(5 * time.Second):
-			lstr.Close()
+		case <-time.After(mw.timeout):
+			lstr.CloseWithError(ErrReadTimeout)
 		}
 
 		select {
 		case <-lstr.done:
-		case <-time.After(5 * time.Second):
-			lstr.Close()
+		case <-time.After(mw.timeout):
+			lstr.CloseWithError(ErrReadTimeout)
 		}
 	}
 	return len(p), nil

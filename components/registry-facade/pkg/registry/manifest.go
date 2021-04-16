@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -14,6 +14,7 @@ import (
 	"mime"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/errdefs"
@@ -70,7 +71,13 @@ func (reg *Registry) handleManifest(ctx context.Context, r *http.Request) http.H
 		"DELETE": http.HandlerFunc(manifestHandler.deleteManifest),
 	}
 
-	return mhandler
+	res := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t0 := time.Now()
+		mhandler.ServeHTTP(w, r)
+		dt := time.Since(t0)
+		reg.metrics.ManifestHist.Observe(dt.Seconds())
+	})
+	return res
 }
 
 type manifestHandler struct {
@@ -146,7 +153,7 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 		switch desc.MediaType {
 		case images.MediaTypeDockerSchema2Manifest, ociv1.MediaTypeImageManifest:
 			// download config
-			cfg, err := downloadConfig(ctx, fetcher, manifest.Config)
+			cfg, err := DownloadConfig(ctx, fetcher, manifest.Config)
 			if err != nil {
 				return err
 			}
@@ -209,7 +216,8 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 	tracing.FinishSpan(span, &err)
 }
 
-func downloadConfig(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.Descriptor) (cfg *ociv1.Image, err error) {
+// DownloadConfig downloads and unmarshales OCIv2 image config, refered to by an OCI descriptor.
+func DownloadConfig(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.Descriptor) (cfg *ociv1.Image, err error) {
 	if desc.MediaType != images.MediaTypeDockerSchema2Config &&
 		desc.MediaType != ociv1.MediaTypeImageConfig {
 

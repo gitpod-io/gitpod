@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -30,6 +30,8 @@ import { PendingGithubEventDB } from './pending-github-event-db';
 import { TypeORMPendingGithubEventDBImpl } from './typeorm/pending-github-event-db-impl';
 import { GitpodTableDescriptionProvider, TableDescriptionProvider } from './tables';
 import { PeriodicDbDeleter } from './periodic-deleter';
+import { TermsAcceptanceDB } from './terms-acceptance-db';
+import { TermsAcceptanceDBImpl } from './typeorm/terms-acceptance-db-impl';
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
@@ -41,6 +43,8 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
     
     bind(TypeORMUserDBImpl).toSelf().inSingletonScope();
     bind(UserDB).toService(TypeORMUserDBImpl);
+    bind(TermsAcceptanceDBImpl).toSelf().inSingletonScope();
+    bind(TermsAcceptanceDB).toService(TermsAcceptanceDBImpl);
     bindDbWithTracing(TracedUserDB, bind, UserDB).inSingletonScope();
 
     bind(TypeORMWorkspaceDBImpl).toSelf().inSingletonScope();

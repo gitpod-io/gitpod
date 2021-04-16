@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -61,6 +61,20 @@ export namespace User {
     export function getIdentity(user: User, authProviderId: string): Identity | undefined {
         return user.identities.find(id => id.authProviderId === authProviderId);
     }
+    export function censor(user: User): User {
+        const res = { ...user };
+        delete (res.additionalData);
+        res.identities = res.identities.map(i => {
+            delete (i.tokens);
+
+            // The user field is not in the Identity shape, but actually exists on DBIdentity.
+            // Trying to push this object out via JSON RPC will fail because of the cyclic nature
+            // of this field.
+            delete ((i as any).user);
+            return i;
+        });
+        return res;
+    }
     export function getPrimaryEmail(user: User): string {
         const identities = user.identities.filter(i => !!i.primaryEmail);
         if (identities.length <= 0) {
@@ -87,6 +101,7 @@ export namespace User {
 export interface AdditionalUserData {
     platforms?: UserPlatform[];
     emailNotificationSettings?: EmailNotificationSettings;
+    featurePreview?: boolean;
     ideSettings?: IDESettings;
 }
 
@@ -481,6 +496,7 @@ export interface PreparePluginUploadParams {
 export interface ResolvePluginsParams {
     config?: WorkspaceConfig
     builtins?: ResolvedPlugins
+    vsxRegistryUrl?: string
 }
 
 export interface InstallPluginsParams {
@@ -513,12 +529,10 @@ export interface WorkspaceConfig {
     tasks?: TaskConfig[];
     checkoutLocation?: string;
     workspaceLocation?: string;
-    privileged?: boolean;
     gitConfig?: { [config: string]: string };
     github?: GithubAppConfig;
     vscode?: VSCodeConfig;
-    ide?: 'theia' | 'code' | string;
-
+    
     /**
      * Where the config object originates from.
      * 
@@ -604,6 +618,10 @@ export interface PrebuiltWorkspace {
 }
 
 export namespace PrebuiltWorkspace {
+    export function isDone(pws: PrebuiltWorkspace) {
+        return pws.state === "available" || pws.state === "timeout" || pws.state === 'aborted';
+    }
+
     export function isAvailable(pws: PrebuiltWorkspace) {
         return pws.state === "available" && !!pws.snapshot;
     }
@@ -1104,4 +1122,19 @@ export namespace TheiaPlugin {
         Uploaded = "uploaded",
         CheckinFailed = "checkin-failed",
     }
+}
+
+export interface TermsAcceptanceEntry {
+    readonly userId: string;
+    readonly termsRevision: string;
+    readonly acceptionTime: string;
+}
+
+export interface Terms {
+    readonly revision: string;
+    readonly activeSince: string;
+    readonly adminOnlyTerms: boolean;
+    readonly updateMessage: string;
+    readonly content: string;
+    readonly formElements?: object;
 }

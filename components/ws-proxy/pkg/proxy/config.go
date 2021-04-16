@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -6,6 +6,8 @@ package proxy
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/gitpod-io/gitpod/common-go/util"
 	validation "github.com/go-ozzo/ozzo-validation"
@@ -25,6 +27,8 @@ type Config struct {
 	TheiaServer        *TheiaServer        `json:"theiaServer"`
 	GitpodInstallation *GitpodInstallation `json:"gitpodInstallation"`
 	WorkspacePodConfig *WorkspacePodConfig `json:"workspacePodConfig"`
+
+	BuiltinPages BuiltinPagesConfig `json:"builtinPages"`
 }
 
 // Validate validates the configuration to catch issues during startup and not at runtime
@@ -88,8 +92,7 @@ func (c *GitpodInstallation) Validate() error {
 
 	return validation.ValidateStruct(c,
 		validation.Field(&c.Scheme, validation.Required),
-		validation.Field(&c.HostName, validation.Required),            // TODO IP ONLY: Check if there is any dependency. If yes, remove it.
-		validation.Field(&c.WorkspaceHostSuffix, validation.Required), // TODO IP ONLY: Check if there is any dependency. If yes, remove it.
+		validation.Field(&c.HostName, validation.Required), // TODO IP ONLY: Check if there is any dependency. If yes, remove it.
 	)
 }
 
@@ -155,4 +158,47 @@ func (c *TransportConfig) Validate() error {
 		validation.Field(&c.WebsocketIdleConnTimeout, validation.Required),
 		validation.Field(&c.MaxIdleConns, validation.Required, validation.Min(1)),
 	)
+}
+
+// BuiltinPagesConfig configures pages served directly by ws-proxy
+type BuiltinPagesConfig struct {
+	Location string `json:"location"`
+}
+
+// Validate validates the configuration to catch issues during startup and not at runtime
+func (c *BuiltinPagesConfig) Validate() error {
+	if c == nil {
+		return xerrors.Errorf("BuiltinPagesConfig not configured")
+	}
+
+	return validation.ValidateStruct(c,
+		validation.Field(&c.Location,
+			validation.Required,
+			validation.By(validateFileExists("")),
+			validation.By(validateFileExists(builtinPagePortNotFound)),
+		),
+	)
+}
+
+func validateFileExists(addition string) validation.RuleFunc {
+	tpRoot := os.Getenv("TELEPRESENCE_ROOT")
+
+	return func(value interface{}) error {
+		pth, ok := value.(string)
+		if !ok {
+			return xerrors.Errorf("validateFileExists: value must be a string")
+		}
+
+		fn := filepath.Join(pth, addition)
+		if tpRoot != "" {
+			fn = filepath.Join(tpRoot, fn)
+		}
+
+		_, err := os.Stat(fn)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
 }

@@ -1,8 +1,0 @@
-# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
-# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
-
-apiVersion: v1
-appVersion: "0.1.5"
-description: The configuration chart for your Gitpod installation
-name: gitpod-selfhosted
-version: 0.4.0

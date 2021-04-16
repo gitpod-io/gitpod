@@ -1,8 +1,10 @@
-# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
 FROM node:12.18.3-slim as builder
+
+RUN apt-get update && apt-get install -y build-essential python
 
 COPY components-server--app /installer/
 

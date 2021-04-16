@@ -1,10 +1,12 @@
-# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 {{ $comp := .Values.components.wsManager -}}
 {{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- $gp := $.Values -}}
 {{- $wscomp := .Values.components.workspace -}}
 {{- $wsproxy := .Values.components.wsProxy -}}
+{{- $wsdaemon := .Values.components.wsDaemon -}}
 {{- if not $comp.disabled -}}
 apiVersion: v1
 kind: ConfigMap
@@ -21,9 +23,14 @@ data:
         "manager": {
             "namespace": "{{ .Release.Namespace }}",
             "schedulerName": "{{ .Values.workspaceScheduler }}",
+{{- if $wsdaemon.userNamespaces.seccompProfileInstaller.enabled }}
+            "seccompProfile": "localhost/workspace_default_{{ $gp.version }}.json",
+{{- else }}
+            "seccompProfile": "runtime/default",
+{{- end }}
             "dryRun": false,
-            "wssync": {
-                "port": {{ .Values.components.wsSync.servicePort }},
+            "wsdaemon": {
+                "port": {{ .Values.components.wsDaemon.servicePort }},
                 "tls": {
                     "ca": "/certs/ca.crt",
                     "crt": "/certs/tls.crt",
@@ -70,12 +77,13 @@ data:
             "urlTemplate":     "{{- template "gitpod.scheme" $this -}}://{{ $.Values.hostname }}/workspace/{{"{{ .Prefix }}"}}/",
             "portUrlTemplate": "{{- template "gitpod.scheme" $this -}}://{{"{{ .WorkspacePort }}"}}-{{"{{ .Prefix }}"}}.ws{{- if $.Values.installation.shortname -}}-{{ $.Values.installation.shortname }}{{- end -}}.{{ $.Values.hostname }}",
             {{- end }}
-            "workspaceHostPath": "{{ .Values.components.wsSync.hostWorkspaceArea }}",
+            "workspaceHostPath": "{{ .Values.components.wsDaemon.hostWorkspaceArea }}",
             "theiaHostPath": "{{ .Values.components.nodeDaemon.theiaHostBasePath }}/theia/theia-{{ .Values.version }}",
             "podTemplate": {
                 {{- if $wscomp.templates }}
                 {{ if (or $wscomp.templates.prebuild $wscomp.affinity) -}}"prebuildPath": "/workspace-template/prebuild.yaml",{{- end }}
                 {{ if (or $wscomp.templates.probe $wscomp.affinity) -}}"probePath": "/workspace-template/probe.yaml",{{- end }}
+                {{ if (or $wscomp.templates.ghost $wscomp.affinity) -}}"ghostPath": "/workspace-template/ghost.yaml",{{- end }}
                 {{ if (or $wscomp.templates.regular $wscomp.affinity) -}}"regularPath": "/workspace-template/regular.yaml",{{- end }}
                 {{ end -}}
                 "defaultPath": "/workspace-template/default.yaml"
@@ -92,7 +100,7 @@ data:
             },
             {{ if $comp.eventTraceLogLocation }}"eventTraceLog": "{{ $comp.eventTraceLogLocation }}",{{- end }}
             "reconnectionInterval": "30s",
-            "registryFacadeHost": {{ (printf "reg.%s:%v" (.Values.components.registryFacade.hostname | default .Values.hostname) .Values.components.wsManagerNode.registryProxyPort) | quote }}
+            "registryFacadeHost": {{ (printf "reg.%s:%v" (.Values.components.registryFacade.hostname | default .Values.hostname) .Values.components.registryFacade.ports.registry.servicePort) | quote }}
             {{- if and (not $wsproxy.disabled) (eq .Values.ingressMode "noDomain") -}}
             , "ingressPortAllocator": {
                 "ingressRange": {
@@ -105,10 +113,30 @@ data:
             {{ if $comp.additionalConfig }}, {{ $comp.additionalConfig | toJson | trim | trimPrefix "{" | trimSuffix "}" }}{{- end }}
         },
         "content": {
-            "storage": {{ toJson .Values.components.wsSync.remoteStorage }}
+            "storage": {{ toJson .Values.components.wsDaemon.remoteStorage }}
         },
-        "rpcServerAddr": ":8080",
-        "pprofAddr": "localhost:6060",
-        "prometheusAddr": ":9500"
+        "rpcServer": {
+            {{- if $comp.rpc }}
+            {{- if $comp.rpc.ratelimit }}
+            "ratelimits": { {{ range $i, $v := $comp.rpc.ratelimit }}
+                {{ if (gt $i 0) }},
+                {{- end }}
+                {{ $v.method | quote }}: {
+                    "block": {{ $v.block | default false }},
+                    "bucketSize": {{ $v.bucketSize }},
+                    "refillInterval": {{ $v.refillInterval | quote }}
+                }
+                {{- end }}
+            },
+            {{- end }}
+            {{- end }}
+            "addr": ":{{ $comp.ports.rpc.containerPort }}"
+        },
+        "pprof": {
+            "addr": "localhost:6060"
+        },
+        "prometheus": {
+            "addr": ":9500"
+        }
     }
 {{- end -}}

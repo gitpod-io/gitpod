@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -28,6 +28,10 @@ export class GitpodHostUrl {
         } else {
             log.error('Unexpected urlParam', { urlParam });
         }
+    }
+
+    static fromWorkspaceUrl(url: string) {
+        return new GitpodHostUrl(new URL(url));
     }
 
     withWorkspacePrefix(workspaceId: string, region: string) {
@@ -135,4 +139,23 @@ export class GitpodHostUrl {
 
         return undefined;
     }
+
+    get blobServe(): boolean {
+        const hostSegments = this.url.host.split(".");
+        if (hostSegments[0] === 'blobserve') {
+            return true;
+        }
+
+        const pathSegments = this.url.pathname.split("/")
+        return pathSegments[0] === "blobserve";
+    }
+
+    asSorry(message: string) {
+        return this.with({ pathname: '/sorry', hash: message });
+    }
+
+    asApiLogout(): GitpodHostUrl {
+        return this.withApi(url => ({ pathname: '/logout/' }));
+    }
+
 }

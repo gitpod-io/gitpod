@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -11,6 +11,7 @@ import { AbstractMessageBusIntegration, AbstractTopicListener } from "@gitpod/gi
 import * as uuid from 'uuid/v4';
 import { EventEmitter } from "events";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { CancellationTokenSource } from "vscode-jsonrpc/lib/cancellation";
 
 const exchangeConsensusLeader = 'consensus-leader';
 const queueConsensusPeers = 'consensus-peers';
@@ -58,14 +59,16 @@ export class RabbitMQConsensusLeaderMessenger extends AbstractMessageBusIntegrat
         await this.channel.consume(queueConsensusPeers, message => {}, { noAck: true, consumerTag: uid });
     }
 
-    async on(event: ConsensusLeaderMessageType, cb: (msg: any) => void): Promise<Disposable> {
+    on(event: ConsensusLeaderMessageType, cb: (msg: any) => void): Disposable {
         const forwarder = (ctx: TraceContext, data: RaftMessage): void => {
             if (data.type === event) {
                 cb(data);
             }
         }
 
-        return this.listen(new EventListener(exchangeConsensusLeader, forwarder));
+        const cancellationTokenSource = new CancellationTokenSource()
+        this.listen(new EventListener(exchangeConsensusLeader, forwarder), cancellationTokenSource.token);
+        return Disposable.create(() => cancellationTokenSource.cancel())
     }
 
     async requestVote(sender: string, term: number): Promise<void> {

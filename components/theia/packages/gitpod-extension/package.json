@@ -30,7 +30,7 @@
     "@theia/userstorage": "next",
     "@theia/vsx-registry": "next",
     "@theia/workspace": "next",
-    "bitbucket": "^2.1.0",
+    "bitbucket": "^2.4.2",
     "decompress": "^4.2.0",
     "diff": "^3.4.0",
     "filenamify": "^4.1.0",
@@ -71,9 +71,9 @@
   },
   "scripts": {
     "prepare": "yarn run clean && yarn run build",
-    "clean": "npx rimraf lib",
-    "test": "npx mocha --opts mocha.opts 'src/**/*.spec.ts'",
-    "build": "npx tsc",
+    "clean": "rimraf lib",
+    "test": "mocha --opts mocha.opts 'src/**/*.spec.ts'",
+    "build": "tsc",
     "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput"
   },
   "theiaExtensions": [

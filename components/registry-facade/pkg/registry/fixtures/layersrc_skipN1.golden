@@ -1,0 +1,14 @@
+{
+    "error": "",
+    "layer": [
+        {
+            "Descriptor": {
+                "mediaType": "application/vnd.docker.image.rootfs.diff.tar.gzip",
+                "digest": "sha256:76df200381ce329a7a5658625e84d7529294f8872ff019cc45c31fce33abc28b",
+                "size": 5187403
+            },
+            "DiffID": "sha256:2054c633a61f91d0310e72651089dfb54334949d1cc30a8c88cfbd4c0c9d51b9"
+        }
+    ],
+    "envs": null
+}

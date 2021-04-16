@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the Gitpod Enterprise Source Code License,
 // See License.enterprise.txt in the project root folder.
 
@@ -17,7 +17,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/satori/go.uuid"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 )
@@ -203,10 +203,13 @@ const (
 )
 
 func (r *runner) Probe() (*probe, error) {
-
 	log.WithField("pathway", r.P.Name).Debug("probe started")
 
-	tkn := uuid.NewV4().String()
+	uid, err := uuid.NewRandom()
+	if err != nil {
+		return nil, err
+	}
+	tkn := uid.String()
 
 	r.C.Reporter.ProbeStarted(r.P.Name)
 

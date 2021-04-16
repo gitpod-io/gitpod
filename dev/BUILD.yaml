@@ -4,3 +4,4 @@ packages:
     deps:
       - dev/image:docker
       - dev/sweeper:docker
+      - dev/poolkeeper:docker

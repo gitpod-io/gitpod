@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the Gitpod Enterprise Source Code License,
 // See License.enterprise.txt in the project root folder.
 
@@ -27,6 +27,7 @@ import (
 	"golang.org/x/xerrors"
 
 	corev1 "k8s.io/api/core/v1"
+	res "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/client-go/informers"
@@ -48,13 +49,19 @@ const (
 
 	// rescheduleInterval is the interval in which we scan for yet-unschedulable pods and try to schedule them again
 	rescheduleInterval = 2 * time.Second
+
+	// This value serves as safety-buffer to make sure we do not overbook nodes.
+	// Test have shown that we tend to do that, allthough we currently are not able to understand why that is the case.
+	// It seems that "available RAM" calculation is slightly off between kubernetes master and scheduler
+	defaultRAMSafetyBuffer = "512Mi"
 )
 
 // Scheduler tries to pack workspaces as closely as possible while trying to keep
 // an even load across nodes.
 type Scheduler struct {
-	Config    Configuration
-	Clientset kubernetes.Interface
+	Config          Configuration
+	Clientset       kubernetes.Interface
+	RAMSafetyBuffer res.Quantity
 
 	pods              infov1.PodInformer
 	nodes             infov1.NodeInformer
@@ -65,13 +72,22 @@ type Scheduler struct {
 }
 
 // NewScheduler creates a new scheduler
-func NewScheduler(config Configuration, clientset kubernetes.Interface) *Scheduler {
+func NewScheduler(config Configuration, clientset kubernetes.Interface) (*Scheduler, error) {
+	ramSafetyBuffer, err := res.ParseQuantity(config.RAMSafetyBuffer)
+	if err != nil {
+		ramSafetyBuffer, err = res.ParseQuantity(defaultRAMSafetyBuffer)
+		if err != nil {
+			return nil, xerrors.Errorf("unable to parse RAMSafetBuffer")
+		}
+	}
+
 	return &Scheduler{
-		Config:    config,
-		Clientset: clientset,
+		Config:          config,
+		Clientset:       clientset,
+		RAMSafetyBuffer: ramSafetyBuffer,
 
 		didShutdown: make(chan bool, 1),
-	}
+	}, nil
 }
 
 // Start starts the scheduler - this function returns once we're connected to Kubernetes proper
@@ -96,6 +112,7 @@ func (s *Scheduler) Start(ctx context.Context) error {
 
 			owi := wsk8s.GetOWIFromObject(&pod.ObjectMeta)
 			log.WithField("pod", pod.Name).WithFields(owi).Debug("scheduling pod")
+
 			err := s.schedulePod(ctx, pod)
 			if err != nil {
 				log.WithError(err).WithField("pod", pod.Name).Error("unable to schedule pod: %w", err)
@@ -202,6 +219,11 @@ func (s *Scheduler) startInformer(ctx context.Context) (schedulerQueue chan *cor
 			}
 
 			// If we see a pod that has been scheduled successfully: Delete from local scheduled_store to avoid leaking memory
+			// Note: We _might_ delete entries from localBindingCache too early here, leading to 'OutOfMemory'.
+			//       This might happen if a pod has been scheduled (phase=="pending" && nodeName!=""), we removed it, and the
+			//		scheduler cannot take that info into account because we just removed.
+			//      But we cannot implement an exception for that case, because it leads to leaking localBindingCache entries,
+			//      because some pods are removed in the "pending" phase directly.
 			if pod.Spec.NodeName != "" {
 				s.localBindingCache.delete(pod.Name)
 			}
@@ -291,10 +313,10 @@ func (s *Scheduler) schedulePod(ctx context.Context, pod *corev1.Pod) (err error
 func (s *Scheduler) checkForAndEnqueuePendingPods(ctx context.Context, schedulerQueue chan<- *corev1.Pod) error {
 	tracing.FromContext(ctx, "checkForAndEnqueuePendingPods")
 
-	// We want to scan for pods we have to schedule. As we have a) no local queue and b) can only filter by labels,
-	// we query all here and filter later, manually. Sadly, this polls the Kubernetes api quite often.
+	// We want to scan the namespace for pods we have to schedule. As we have a) no local queue and b) can only filter
+	// by labels, we query all here and filter later, manually. Sadly, this polls the Kubernetes api quite often.
 	// TODO Consider using a local queue of pending pods and try to do the full ".List" only very rarely
-	allPods, podsErr := s.pods.Lister().List(labels.Everything())
+	allPods, podsErr := s.pods.Lister().Pods(s.Config.Namespace).List(labels.Everything())
 	if podsErr != nil {
 		return xerrors.Errorf("cannot list all pods: %w", podsErr)
 	}
@@ -317,14 +339,18 @@ func (s *Scheduler) selectNodeForPod(ctx context.Context, pod *corev1.Pod) (node
 
 	state, err := s.buildState(ctx, pod)
 	if err != nil {
-		return "", xerrors.Errorf("unable to buildState: %w", err)
+		return "", xerrors.Errorf("unable to build state: %w", err)
 	}
 	if len(state.Nodes) == 0 {
-		return "", xerrors.Errorf("Zero nodes available!")
+		return "", xerrors.Errorf("zero nodes available")
 	}
 	node, err = s.strategy.Select(state, pod)
+	if err != nil {
+		span.LogKV("no-node", err.Error())
+		return "", err
+	}
 
-	span.LogFields(tracelog.String("nodeFound", node))
+	span.LogKV("node", DebugStringNodes(state.Nodes[node]))
 	return
 }
 
@@ -338,18 +364,36 @@ func (s *Scheduler) buildState(ctx context.Context, pod *corev1.Pod) (state *Sta
 		return nil, err
 	}
 
-	// We need to take _all_ pods into account to accurately calculate available RAM per node
-	allPods, podsErr := s.pods.Lister().List(labels.Everything())
+	// We need to take into account _all_ pods in _all_ namespaces to accurately calculate available RAM per node
+	// NOTE: .Pods("") - in contrast to omitting it and calling .Lister().List(...) directly - means:
+	//       List from _all_ namespaces !!!
+	allPods, podsErr := s.pods.Lister().Pods(metav1.NamespaceAll).List(labels.Everything())
 	if podsErr != nil {
 		return nil, xerrors.Errorf("cannot list all pods: %w", podsErr)
 	}
 
-	state = NewState()
-	state.UpdateNodes(potentialNodes)
-	state.UpdatePods(allPods)
-	// Don't forget to take into account the bindings we just created (e.g., are still in the cache)
-	// to avoid assigning slots multiple times
-	state.UpdateBindings(s.localBindingCache.getListOfBindings())
+	state = ComputeState(potentialNodes, allPods, s.localBindingCache.getListOfBindings(), &s.RAMSafetyBuffer)
+
+	// The required node services is basically PodAffinity light. They limit the nodes we can schedule
+	// workspace pods to based on other pods running on that node. We do this because we require that
+	// ws-daemon and registry-facade run on the node.
+	//
+	// Alternatively, we could have implemented PodAffinity in ws-scheduler, but that's conceptually
+	// much heavier and more difficult to handle.
+	//
+	// TODO(cw): if we ever implement PodAffinity, use that instead of requiredNodeServices.
+	if rs, ok := pod.Annotations[wsk8s.RequiredNodeServicesAnnotation]; ok {
+		req := strings.Split(rs, ",")
+		state.FilterNodes(func(n *Node) bool {
+			for _, requiredService := range req {
+				if _, present := n.Services[requiredService]; !present {
+					return false
+				}
+			}
+			return true
+		})
+	}
+
 	return state, nil
 }
 
@@ -377,10 +421,10 @@ func (s *Scheduler) gatherPotentialNodesFor(ctx context.Context, pod *corev1.Pod
 		if node.Spec.Unschedulable {
 			continue
 		}
-		// filter: 4: our own diskpressure signal coming from ws-manager-node.
+		// filter: 4: our own diskpressure signal coming from ws-daemon.
 		//            This is not part of the label selector as labelSets cannot negate
 		//            labels. Otherwise !gitpod.io/diskPressure would be a valid selector.
-		if _, fullDisk := node.Labels["gitpod.io/diskPressure"]; fullDisk {
+		if _, fullDisk := node.Labels[wsk8s.GitpodDiskPressureLabel]; fullDisk {
 			continue
 		}
 
@@ -409,8 +453,10 @@ func (s *Scheduler) gatherPotentialNodesFor(ctx context.Context, pod *corev1.Pod
 }
 
 func (s *Scheduler) bindPodToNode(ctx context.Context, pod *corev1.Pod, nodeName string) (err error) {
+	//nolint:ineffassign
 	span, ctx := tracing.FromContext(ctx, "bindPodToNode")
 	defer tracing.FinishSpan(span, nil) // let caller decide whether this is an actual error or not
+	span.LogKV("nodeName", nodeName, "podName", pod.Name)
 
 	binding := &corev1.Binding{
 		ObjectMeta: metav1.ObjectMeta{
@@ -424,16 +470,17 @@ func (s *Scheduler) bindPodToNode(ctx context.Context, pod *corev1.Pod, nodeName
 		},
 	}
 
-	err = s.Clientset.CoreV1().Pods(pod.Namespace).Bind(binding)
+	err = s.Clientset.CoreV1().Pods(pod.Namespace).Bind(ctx, binding, metav1.CreateOptions{})
 	if err != nil {
 		return xerrors.Errorf("cannot bind pod %s to %s: %w", pod.Name, nodeName, err)
 	}
+	span.LogKV("event", "binding created")
 
 	// The default Kubernetes scheduler publishes an event upon successful scheduling.
 	// This is not really neccesary for the scheduling itself, but helps to debug things.
 	message := fmt.Sprintf("Placed pod [%s/%s] on %s\n", pod.Namespace, pod.Name, nodeName)
 	timestamp := time.Now().UTC()
-	_, err = s.Clientset.CoreV1().Events(pod.Namespace).Create(&corev1.Event{
+	_, err = s.Clientset.CoreV1().Events(pod.Namespace).Create(ctx, &corev1.Event{
 		Count:          1,
 		Message:        message,
 		Reason:         "Scheduled",
@@ -452,10 +499,11 @@ func (s *Scheduler) bindPodToNode(ctx context.Context, pod *corev1.Pod, nodeName
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: fmt.Sprintf("%s - scheduled", pod.Name),
 		},
-	})
+	}, metav1.CreateOptions{})
 	if err != nil {
 		return xerrors.Errorf("cannot emit event for pod %s: %w", pod.Name, err)
 	}
+	span.LogKV("event", "event created")
 
 	return nil
 }
@@ -484,6 +532,7 @@ func (s *Scheduler) waitForCacheSync(ctx context.Context) bool {
 }
 
 func (s *Scheduler) recordSchedulingFailure(ctx context.Context, pod *corev1.Pod, failureErr error, reason string, message string) (err error) {
+	//nolint:ineffassign
 	span, ctx := tracing.FromContext(ctx, "recordSchedulingFailure")
 	defer tracing.FinishSpan(span, &err)
 
@@ -503,7 +552,7 @@ func (s *Scheduler) recordSchedulingFailure(ctx context.Context, pod *corev1.Pod
 	}).WithError(failureErr).Warnf("scheduling a pod failed: %s", reason)
 
 	timestamp := time.Now().UTC()
-	_, err = s.Clientset.CoreV1().Events(pod.Namespace).Create(&corev1.Event{
+	_, err = s.Clientset.CoreV1().Events(pod.Namespace).Create(ctx, &corev1.Event{
 		Count:          1,
 		Message:        message,
 		Reason:         "FailedScheduling",
@@ -522,7 +571,7 @@ func (s *Scheduler) recordSchedulingFailure(ctx context.Context, pod *corev1.Pod
 		ObjectMeta: metav1.ObjectMeta{
 			GenerateName: pod.Name + "-",
 		},
-	})
+	}, metav1.CreateOptions{})
 	if err != nil {
 		log.WithField("pod", pod.Name).WithError(err).Warn("cannot record scheduling failure event")
 	}
@@ -532,7 +581,7 @@ func (s *Scheduler) recordSchedulingFailure(ctx context.Context, pod *corev1.Pod
 	//  - this is on the hot path of the single-thread scheduler
 	//  - retry would block other pods from being scheduled
 	//  - the pod is picked up after rescheduleInterval (currently 2s) again anyway
-	updatedPod, err := s.Clientset.CoreV1().Pods(pod.Namespace).Get(pod.Name, metav1.GetOptions{})
+	updatedPod, err := s.Clientset.CoreV1().Pods(pod.Namespace).Get(ctx, pod.Name, metav1.GetOptions{})
 	if err != nil {
 		log.WithField("pod", pod.Name).WithError(err).Warn("cannot get updated pod - subsequent pod modifications may break")
 	} else {
@@ -546,7 +595,7 @@ func (s *Scheduler) recordSchedulingFailure(ctx context.Context, pod *corev1.Pod
 		Message: failureErr.Error(),
 	}
 	pod.Status.Conditions = append(pod.Status.Conditions, failedCondition)
-	_, err = s.Clientset.CoreV1().Pods(pod.Namespace).UpdateStatus(pod)
+	_, err = s.Clientset.CoreV1().Pods(pod.Namespace).UpdateStatus(ctx, pod, metav1.UpdateOptions{})
 	if err != nil {
 		log.WithError(err).Warn("cannot mark pod as unscheduled - will try again")
 		return xerrors.Errorf("cannot mark pod as unscheduled: %w", err)
@@ -592,7 +641,7 @@ func (c *localBindingCache) markAsScheduled(pod *corev1.Pod, nodeName string) {
 	defer c.mu.Unlock()
 
 	c.bindings[pod.Name] = &Binding{
-		Pod:      &Pod{Pod: pod},
+		Pod:      pod,
 		NodeName: nodeName,
 	}
 }

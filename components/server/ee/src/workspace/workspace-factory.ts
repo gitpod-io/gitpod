@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the Gitpod Enterprise Source Code License,
  * See License.enterprise.txt in the project root folder.
  */
@@ -9,7 +9,6 @@ import { WorkspaceFactory } from "../../../src/workspace/workspace-factory";
 import { injectable, inject } from "inversify";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { User, StartPrebuildContext, Workspace, CommitContext, PrebuiltWorkspaceContext, WorkspaceContext, WithSnapshot, WithPrebuild } from "@gitpod/gitpod-protocol";
-import moment = require("moment");
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { LicenseEvaluator } from '@gitpod/licensor/lib';
 import { Feature } from '@gitpod/licensor/lib/api';
@@ -50,16 +49,10 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
             const commitContext: CommitContext = context.actual;
             const existingPWS = await this.db.trace({span}).findPrebuiltWorkspaceByCommit(commitContext.repository.cloneUrl, commitContext.revision);
             if (existingPWS) {
-                const wsPromise = this.db.trace({span}).findById(existingPWS.buildWorkspaceId);
                 const wsInstance = await this.db.trace({span}).findRunningInstance(existingPWS.buildWorkspaceId);
-                if (!wsInstance) {
-                    // not in queued state or queued for more than a minute
-                    if (existingPWS.state !== 'queued' || Date.now() - Date.parse(existingPWS.creationTime) > 1000 * 60) {
-                        return (await wsPromise)!;
-                    }
-                    throw new Error("A prebuild has been queued " + moment(Date.parse(existingPWS.creationTime)) + ". Please wait for it to complete.");
+                if (wsInstance) {
+                    throw new Error("A prebuild is already running for this commit.");
                 }
-                throw new Error("A prebuild is already running for this commit.");
             }
 
             let ws = await this.createForCommit({span}, user, commitContext, normalizedContextURL);

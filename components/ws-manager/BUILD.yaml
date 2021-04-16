@@ -12,7 +12,7 @@ packages:
       - components/content-service:lib
       - components/registry-facade-api/go:lib
       - components/ws-manager-api/go:lib
-      - components/ws-sync-api/go:lib
+      - components/ws-daemon-api/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux
@@ -39,6 +39,13 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/ws-manager:${version}
+  - name: userns-test-fixtures
+    type: generic
+    srcs:
+      - "pkg/manager/testdata/cdwp_userns.golden"
+    config:
+      commands:
+        - ["mv", "pkg/manager/testdata/cdwp_userns.golden", "pod.json"]
   - name: integration-test
     type: generic
     deps:

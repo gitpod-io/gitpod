@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -103,7 +103,7 @@ export namespace DevData {
             host: 'github.com',
             owner: user.identities[0].authName,
             name: "gitpod-test-repo",
-            cloneUrl: "https://github.com/TypeFox/gitpod-test-repo.git"
+            cloneUrl: "https://github.com/gitpod-io/gitpod-test-repo.git"
         };
         return <PullRequestContext>{
             repository,
@@ -123,7 +123,7 @@ export namespace DevData {
             host: 'github.com',
             owner: user.identities[0].authName,
             name: "gitpod-test-repo",
-            cloneUrl: "https://github.com/TypeFox/gitpod-test-repo.git"
+            cloneUrl: "https://github.com/gitpod-io/gitpod-test-repo.git"
         };
         return <IssueContext>{
             ref: 'GH-15',

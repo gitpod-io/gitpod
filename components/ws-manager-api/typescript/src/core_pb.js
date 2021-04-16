@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -6456,7 +6456,8 @@ proto.wsman.WorkspaceFeatureFlag = {
 proto.wsman.WorkspaceType = {
   REGULAR: 0,
   PREBUILD: 1,
-  PROBE: 2
+  PROBE: 2,
+  GHOST: 3
 };
 
 goog.object.extend(exports, proto.wsman);

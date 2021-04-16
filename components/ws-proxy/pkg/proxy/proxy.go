@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -33,11 +33,12 @@ func NewWorkspaceProxy(address string, config Config, workspaceRouter WorkspaceR
 
 // MustServe starts the proxy and ends the process if doing so fails
 func (p *WorkspaceProxy) MustServe() {
-	srv, err := p.Server()
+	handler, err := p.Handler()
 	if err != nil {
 		log.WithError(err).Fatal("cannot initialize proxy - this is likely a configuration issue")
 		return
 	}
+	srv := &http.Server{Addr: p.Address, Handler: handler}
 
 	if p.Config.HTTPS.Enabled {
 		var (
@@ -59,8 +60,8 @@ func (p *WorkspaceProxy) MustServe() {
 	}
 }
 
-// Server is the entry point to the proxy which produces the HTTP server serving the proxy
-func (p *WorkspaceProxy) Server() (*http.Server, error) {
+// Handler returns the HTTP handler that serves the proxy routes
+func (p *WorkspaceProxy) Handler() (http.Handler, error) {
 	r := mux.NewRouter()
 
 	// install routes
@@ -69,9 +70,11 @@ func (p *WorkspaceProxy) Server() (*http.Server, error) {
 		return nil, err
 	}
 	theiaRouter, portRouter, blobserveRouter := p.WorkspaceRouter(r, p.WorkspaceInfoProvider)
-	installTheiaRoutes(theiaRouter, handlerConfig, p.WorkspaceInfoProvider)
-	installWorkspacePortRoutes(portRouter, handlerConfig)
+	installWorkspaceRoutes(theiaRouter, handlerConfig, p.WorkspaceInfoProvider)
+	err = installWorkspacePortRoutes(portRouter, handlerConfig)
+	if err != nil {
+		return nil, err
+	}
 	installBlobserveRoutes(blobserveRouter, handlerConfig)
-
-	return &http.Server{Addr: p.Address, Handler: r}, nil
+	return r, nil
 }

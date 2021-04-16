@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -30,7 +30,7 @@ export class GitpodPluginLocatorImpl implements GitpodPluginLocator {
             if (pck && pck.publisher && pck.name && pck.version) {
                 await this.decompressVSCodeBuiltInExtension(extensionPath);
                 const { publisher, name, version } = pck;
-                const fullPluginName = `${publisher}.${name}@${version}`;
+                const fullPluginName = `${publisher}.${name}@${version}`.toLowerCase();
                 const resolvedExtensionPath = path.join(extensionsPath, filenamify(fullPluginName));
                 await fs.remove(resolvedExtensionPath);
                 await fs.rename(extensionPath, resolvedExtensionPath);

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -7,7 +7,7 @@
 import * as React from 'react';
 
 // tslint:disable-next-line:max-line-length
-import { GitpodService, GitpodClient, WorkspaceInstance, Disposable, WorkspaceInstanceStatus, WorkspaceImageBuild, WithPrebuild, Branding, Workspace, StartWorkspaceResult } from '@gitpod/gitpod-protocol';
+import { GitpodService, GitpodClient, WorkspaceInstance, WorkspaceInstanceStatus, WorkspaceImageBuild, WithPrebuild, Branding, Workspace, StartWorkspaceResult, DisposableCollection } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { ShowWorkspaceBuildLogs, WorkspaceBuildLog } from './show-workspace-build-logs';
 import { WorkspaceLogView } from './workspace-log-view';
@@ -21,11 +21,18 @@ import Button from '@material-ui/core/Button';
 import { ResponseError } from 'vscode-jsonrpc';
 import { WithBranding } from './with-branding';
 import { Context } from '../context';
+import { colors } from '../withRoot';
+import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
+import { ApplicationFrame } from './page-frame';
+import ShowUnauthorizedError from './show-unauthorized-error';
+import { getBlockedUrl } from '../routing';
 
 interface StartWorkspaceState {
+    workspace?: Workspace;
     workspaceInstance?: WorkspaceInstance;
     errorMessage?: string;
     errorCode?: number;
+    errorData?: any;
     buildLog?: WorkspaceBuildLog;
     headlessLog?: string;
     progress: number;
@@ -46,8 +53,7 @@ export interface StartWorkspaceProps {
 }
 export type StartErrorRenderer = (errorCode: number, service: GitpodService, onResolved: () => void) => JSX.Element | undefined;
 
-export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWorkspaceState> implements GitpodClient {
-    private unregister?: Disposable;
+export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWorkspaceState> implements Partial<GitpodClient> {
     private process: StartupProcess;
     private isHeadless: boolean = false;
     private isPrebuilt: boolean | undefined;
@@ -76,9 +82,14 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         }
     }
 
+    private readonly toDispose = new DisposableCollection();
     componentWillMount() {
         this.queryInitialState();
         this.startWorkspace(this.props.workspaceId);
+    }
+
+    notifyDidOpenConnection(): void {
+        this.ensureWorkspaceInfo({ force: true });
     }
 
     protected async queryInitialState() {
@@ -90,10 +101,10 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
             .catch(e => console.log("cannot update branding", e));
 
         const createWorkspacesBeforePromise = this.didUserCreateWorkspaceBefore();
-        const workspaceInfoPromise = this.ensureWorkspaceInfo();
+        const workspaceInfoPromise = this.ensureWorkspaceInfo({ force: false });
 
         try {
-            this.unregister = this.props.service.registerClient(this);
+            this.toDispose.push(this.props.service.registerClient(this));
         } catch (err) {
             log.error(err);
             this.setErrorState(err);
@@ -130,11 +141,14 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                     if (!this.runsInIFrame() && workspaceStartedResult.workspaceURL) {
                         this.redirectTo(workspaceStartedResult.workspaceURL);
                     }
-                    this.setState({ startedInstanceId: workspaceStartedResult.instanceID, errorMessage: undefined, errorCode: undefined });
+                    this.setState({ startedInstanceId: workspaceStartedResult.instanceID, errorMessage: undefined, errorCode: undefined, errorData: undefined });
                     // Explicitly query state to guarantee we get at least one update
                     // (needed for already started workspaces, and not hanging in 'Starting ...' for too long)
                     this.props.service.server.getWorkspace(workspaceId).then(ws => {
                         if (ws.latestInstance) {
+                            this.setState({
+                                workspace: ws.workspace
+                            });
                             this.onInstanceUpdate(ws.latestInstance);
                         }
                     });
@@ -149,22 +163,50 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
     protected setErrorState(err: any, defaultErrorMessage?: string) {
         let errorMessage = defaultErrorMessage;
         let errorCode = undefined;
+        let errorData = undefined;
         if (err instanceof ResponseError) {
             errorCode = err.code;
+            errorData = err.data;
+            errorMessage = err.message;
+
+            switch (err.code) {
+                case ErrorCodes.USER_BLOCKED:
+                    this.redirectTo(getBlockedUrl());
+                    return;
+                case ErrorCodes.SETUP_REQUIRED:
+                    this.redirectTo(new GitpodHostUrl(window.location.toString()).with({ pathname: "first-steps" }).toString());
+                    return;
+                case ErrorCodes.USER_TERMS_ACCEPTANCE_REQUIRED:
+                    const thisUrl = window.location.toString();
+                    this.redirectTo(new GitpodHostUrl(thisUrl).withApi({ pathname: "/tos", search: `mode=update&returnTo=${encodeURIComponent(thisUrl)}` }).toString());
+                    return;
+                case ErrorCodes.NOT_AUTHENTICATED:
+                    if (err.data) {
+                        this.setState({ errorMessage, errorCode, errorData });
+                    } else {
+                        const url = new GitpodHostUrl(window.location.toString()).withApi({
+                            pathname: '/login/',
+                            search: 'returnTo=' + encodeURIComponent(window.location.toString())
+                        }).toString();
+                        this.redirectTo(url);
+                    }
+                    return;
+                case ErrorCodes.USER_DELETED:
+                    window.location.href = new GitpodHostUrl(window.location.toString()).asApiLogout().toString();
+                    return;
+                default:
+            }
         }
         if (err && err.message) {
             errorMessage = err.message;
         } else if (err && typeof err === 'string') {
             errorMessage = err;
         }
-        this.setState({ errorMessage, errorCode });
+        this.setState({ errorMessage, errorCode, errorData });
     }
 
     componentWillUnmount() {
-        if (this.unregister) {
-            this.unregister.dispose();
-            this.unregister = undefined;
-        }
+        this.toDispose.dispose();
     }
 
     onCreditAlert({ remainingUsageHours }: { remainingUsageHours: number }) {
@@ -178,7 +220,7 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
             return;
         }
 
-        await this.ensureWorkspaceInfo();
+        await this.ensureWorkspaceInfo({ force: false });
         await this.ensureWorkspaceAuth(workspaceInstance.id);
 
         // redirect to workspaceURL if we are not yet running in an iframe
@@ -229,14 +271,10 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                 this.props.service.server.watchHeadlessWorkspaceLogs(workspaceInstance.workspaceId);
             }
         }
-        if (workspaceInstance.status.phase === 'stopping') {
-            if (this.isHeadless) {
-                if (this.workspace) {
-                    const ctxUrl = this.workspace.contextURL.replace('prebuild/', '');
-                    this.redirectTo(new GitpodHostUrl(window.location.toString()).withContext(ctxUrl).toString());
-                } else {
-                    this.redirectToDashboard();
-                }
+        if (workspaceInstance.status.phase === 'stopped') {
+            if (this.isHeadless && this.workspace) {
+                const contextUrl = this.workspace.contextURL.replace('prebuild/', '');
+                this.redirectTo(new GitpodHostUrl(window.location.toString()).withContext(contextUrl).toString());
             }
         }
 
@@ -249,12 +287,12 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         });
     }
 
-    protected async ensureWorkspaceInfo() {
-        if (this.props.workspaceId && !this.workspaceInfoReceived) {
+    protected async ensureWorkspaceInfo({ force }: { force: boolean }) {
+        if (this.props.workspaceId && (force || !this.workspaceInfoReceived)) {
             try {
                 const info = await this.props.service.server.getWorkspace(this.props.workspaceId);
                 this.workspace = info.workspace;
-                this.isHeadless = info.workspace.type != 'regular';
+                this.isHeadless = info.workspace.type !== 'regular';
                 this.isPrebuilt = WithPrebuild.is(info.workspace.context);
                 this.workspaceInfoReceived = true;
 
@@ -320,14 +358,40 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         return window.top !== window.self;
     }
 
-    render() {
-        const errorCode = this.state && this.state.errorCode;
-
+    protected renderError() {
+        const { errorCode, errorData } = this.state;
         const startErrorRenderer = this.props.startErrorRenderer;
         if (startErrorRenderer && errorCode) {
             const rendered = startErrorRenderer(errorCode, this.props.service, () => this.startWorkspace(this.props.workspaceId, true, false));
             if (rendered) {
                 return rendered;
+            }
+        }
+        if (errorCode === ErrorCodes.SETUP_REQUIRED) {
+            return <ApplicationFrame />;
+        }
+        if (errorCode === ErrorCodes.USER_TERMS_ACCEPTANCE_REQUIRED) {
+            return <ApplicationFrame />;
+        }
+        if (errorCode === ErrorCodes.NOT_AUTHENTICATED) {
+            if (errorData?.host && errorData?.scopes && errorData?.messageHint) {
+                return (
+                    <ApplicationFrame service={this.props.service}>
+                        <ShowUnauthorizedError data={errorData} />
+                    </ApplicationFrame>
+                );
+            }
+        }
+        return undefined;
+    }
+
+    render() {
+        const { errorCode, errorMessage } = this.state;
+
+        if (errorCode) {
+            const handled = this.renderError();
+            if (handled) {
+                return handled;
             }
         }
 
@@ -336,37 +400,81 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
             message = <div className='message'>
                 {this.process.getLabel(this.state.workspaceInstance.status.phase)}
             </div>;
-            if (this.state.workspaceInstance.status.phase === 'stopping'
-                || this.state.workspaceInstance.status.phase === 'stopped') {
-                let stoppedReason;
+            const phase = this.state.workspaceInstance.status.phase;
+            if (!this.isHeadless && (phase === 'stopped' ||
+                phase === 'stopping')) {
+                let stoppedReason = `The workspace ${phase === 'stopped' ? 'has stopped' : 'is stopping'}.`;
                 if (this.state.workspaceInstance.status.conditions.timeout) {
-                    stoppedReason = "Workspace has timed out.";
+                    stoppedReason = `The workspace timed out and ${phase === 'stopped' ? 'has stopped' : 'is stopping'}.`;
                 } else if (this.state.workspaceInstance.status.conditions.failed) {
                     stoppedReason = this.state.workspaceInstance.status.conditions.failed;
                 } else if (this.state.workspaceInstance.status.message) {
                     stoppedReason = this.state.workspaceInstance.status.message;
                 }
-                if (stoppedReason) {
-                    // capitalize message
-                    stoppedReason = stoppedReason.charAt(0).toUpperCase() + stoppedReason.slice(1);
+                // capitalize message
+                stoppedReason = stoppedReason.charAt(0).toUpperCase() + stoppedReason.slice(1);
 
-                    if (!stoppedReason.endsWith(".")) {
-                        stoppedReason += ".";
-                    }
-                    message = <React.Fragment>
-                        {message}
-                        <div className='message stopped-reason'>{stoppedReason}</div>
-                    </React.Fragment>;
+                if (!stoppedReason.endsWith(".")) {
+                    stoppedReason += ".";
                 }
-            }
-            if (this.state.workspaceInstance.status.phase === 'stopped' && this.props.workspaceId) {
-                const startUrl = new GitpodHostUrl(window.location.toString()).asStart(this.props.workspaceId).toString();
+
+                const pendingChanges: { message: string, items: string[] }[] = [];
+                const repo = this.state.workspaceInstance && this.state.workspaceInstance.status && this.state.workspaceInstance.status.repo;
+                if (repo) {
+                    if (repo.totalUncommitedFiles || 0 > 0) {
+                        pendingChanges.push({
+                            message: repo.totalUncommitedFiles === 1 ? 'an uncommited file' : `${repo.totalUncommitedFiles} uncommited files`,
+                            items: repo.uncommitedFiles || []
+                        });
+                    }
+                    if (repo.totalUntrackedFiles || 0 > 0) {
+                        pendingChanges.push({
+                            message: repo.totalUntrackedFiles === 1 ? 'an untracked file' : `${repo.totalUntrackedFiles} untracked files`,
+                            items: repo.untrackedFiles || []
+                        });
+                    }
+                    if (repo.totalUnpushedCommits || 0 > 0) {
+                        pendingChanges.push({
+                            message: repo.totalUnpushedCommits === 1 ? 'an unpushed commit' : `${repo.totalUnpushedCommits} unpushed commits`,
+                            items: repo.unpushedCommits || []
+                        });
+                    }
+                }
+
+                const urls = new GitpodHostUrl(window.location.toString());
+                const startUrl = urls.asStart(this.props.workspaceId).toString();
+                const ctxURL = new URL(this.state.workspace?.contextURL || urls.asDashboard().toString())
+                const host = "Back to " + ctxURL.host;
                 message = <React.Fragment>
-                    {message}
-                    <div className='message start-action'><Button className='button' variant='outlined' color='secondary' onClick={() => {
-                        this.redirectTo(startUrl)
-                    }}>Start Workspace</Button></div>
-                </React.Fragment>;
+                    <div className='message'>
+                        <div style={{ display: '' }}>
+                            <div style={{ fontWeight: 800 }}>{stoppedReason}</div>
+                            {phase === 'stopped' ? (pendingChanges.length === 0 ? <div style={{ color: colors.fontColor3 }}>There are no pending changes. All good.</div> : (
+                                <div style={{ margin: "20px auto", width: '30%', textAlign: 'left', overflow: 'scroll', maxHeight: 150 }}>
+                                    <div style={{ color: colors.brand2, fontWeight: 800 }}>The workspace has pending changes.  You can restart it to continue your work.</div>
+                                    {pendingChanges.map(c => {
+                                        return <React.Fragment>
+                                            <div style={{ marginLeft: 0, color: colors.fontColor3 }}>
+                                                {c.message}
+                                            </div>
+                                            {c.items.map(i => {
+                                                return <div><code style={{ marginLeft: 20, whiteSpace: 'nowrap' }}>
+                                                    - {i}
+                                                </code></div>
+                                            })}
+                                        </React.Fragment>
+                                    })}
+                                </div>
+                            )) : undefined}
+                            <div className='start-action'>
+                                <Button className='button' variant='outlined' color='primary'
+                                    onClick={() => this.redirectTo(this.state.workspace!.contextURL)}>{host}</Button>
+                                <Button className='button' variant='outlined' color={pendingChanges.length !== 0 ? 'secondary' : 'primary'}
+                                    disabled={phase !== 'stopped'}
+                                    onClick={() => this.redirectTo(startUrl)}>Start Workspace</Button></div>
+                        </div>
+                    </div>
+                </React.Fragment >;
             }
         }
 
@@ -374,14 +482,16 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         const instance = this.state && this.state.workspaceInstance;
         // stopped status happens when the build failed. We still want to see the log output in that case
         const isBuildingWorkspaceImage = instance && (instance.status.phase === 'preparing' || instance.status.phase === 'stopped' && this.state.buildLog);
-        const isHeadlessBuildRunning = this.isHeadless && instance && instance.status.phase === 'running' && this.state.headlessLog;
-        const isError = this.state && !!this.state.errorMessage;
-        let errorMessage = this.state && this.state.errorMessage;
+        const isHeadlessBuildRunning = this.isHeadless && instance && (instance.status.phase === 'running' || instance.status.phase === 'stopping');
+        const isError = !!errorMessage;
+        let cubeErrorMessage = errorMessage;
+
         if (isBuildingWorkspaceImage) {
             logs = <ShowWorkspaceBuildLogs buildLog={this.state.buildLog} errorMessage={errorMessage} showPhase={!isError} />;
-            errorMessage = ""; // errors will be shown in the output already
+            cubeErrorMessage = ""; // errors will be shown in the output already
         } else if (isHeadlessBuildRunning) {
             logs = <WorkspaceLogView content={this.state.headlessLog} />;
+            cubeErrorMessage = "";
         }
 
         if (isError) {
@@ -392,15 +502,15 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
                         this.startWorkspace(this.props.workspaceId, true, true);
                     }}>Start with Default Docker Image</Button>
                 </div>;
-            } else {
+            } else if (!isHeadlessBuildRunning) {
                 message = <div className="message action">
                     <Button className='button' variant='outlined' color='secondary' onClick={() => this.redirectToDashboard()}>Go to Workspaces</Button>
                 </div>;
             }
         }
-        if (this.state && this.state.workspaceInstance && this.state.workspaceInstance.status.phase == 'running') {
+        if (this.state && this.state.workspaceInstance && this.state.workspaceInstance.status.phase === 'running') {
             if (this.state.remainingUsageHours !== undefined && this.state.remainingUsageHours <= 0) {
-                errorMessage = 'You have run out of Gitpod Hours.';
+                cubeErrorMessage = 'You have run out of Gitpod Hours.';
                 message = <div className='message action'>
                     <Button className='button' variant='outlined' color='secondary' onClick={() =>
                         window.open(new GitpodHostUrl(window.location.toString()).asUpgradeSubscription().toString(), '_blank')
@@ -418,14 +528,16 @@ export class StartWorkspace extends React.Component<StartWorkspaceProps, StartWo
         const shouldRenderTips = showProductivityTips && !logs && !isError && this.userHasAlreadyCreatedWorkspaces !== undefined && this.runsInIFrame() &&
             !(this.state.workspaceInstance && (this.state.workspaceInstance.status.phase === 'stopping' || this.state.workspaceInstance.status.phase === 'stopped'));
         const productivityTip = shouldRenderTips ? <ProductivityTips userHasCreatedWorkspaces={this.userHasAlreadyCreatedWorkspaces} /> : undefined;
+        const isStopped = this.state.workspaceInstance && this.state.workspaceInstance.status.phase === 'stopped';
         return (
             <WithBranding service={this.props.service}>
                 <Context.Consumer>
                     {(ctx) =>
                         <CubeFrame
-                            errorMessage={errorMessage}
+                            errorMessage={cubeErrorMessage}
                             errorMode={isError}
-                            branding={ctx.branding}>
+                            branding={ctx.branding}
+                            stoppedAnimation={isStopped}>
                             <LicenseCheck service={this.props.service.server} />
                             <div className="progress"><div className="runner" style={{ width: this.getProgress() + "%" }}></div></div>
                             {message}

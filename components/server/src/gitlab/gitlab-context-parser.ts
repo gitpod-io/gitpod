@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -127,7 +127,7 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
             if (UnauthorizedError.is(error)) {
                 throw error;
             }
-            log.error({ userId: user.id }, error);
+            // log.error({ userId: user.id }, error);
             throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, host, owner, repoName);
         }
     }
@@ -209,7 +209,6 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
         }
 
         if (branchOrTagObject === undefined) {
-            log.error({ userId: user.id }, `Error finding tag/branch for context: ${owner}/${repoName}/tree/${segments.join('/')}.`);
             throw new Error(`Cannot find tag/branch for context: ${owner}/${repoName}/tree/${segments.join('/')}.`);
         }
 
@@ -225,7 +224,6 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
             return g.MergeRequests.show(`${owner}/${repoName}`, nr);
         });
         if (GitLab.ApiError.is(result)) {
-            log.error({ userId: user.id }, result);
             throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, host, owner, repoName);
         }
         const sourceProjectId = result.source_project_id;
@@ -299,7 +297,6 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
             return g.Issues.show(`${owner}/${repoName}`, nr);
         });
         if (GitLab.ApiError.is(result)) {
-            log.error({ userId: user.id }, result);
             throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, host, owner, repoName);
         }
         const context = await ctxPromise;
@@ -316,7 +313,6 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
     protected async handleCommitContext(user: User, host: string, owner: string, repoName: string, sha: string): Promise<NavigatorContext> {
         const repository = await this.fetchRepo(user, `${owner}/${repoName}`);
         if (GitLab.ApiError.is(repository)) {
-            log.error({ userId: user.id }, repository);
             throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, host, owner, repoName);
         }
         const commit = await this.fetchCommit(user, `${owner}/${repoName}`, sha);

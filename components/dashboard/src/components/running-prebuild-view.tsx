@@ -1,15 +1,14 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
 
 import * as React from 'react';
 import Button from "@material-ui/core/Button";
-import { GitpodService, RunningWorkspacePrebuildStarting } from "@gitpod/gitpod-protocol";
+import { GitpodService, RunningWorkspacePrebuildStarting, DisposableCollection } from "@gitpod/gitpod-protocol";
 import { CubeFrame } from "./cube-frame";
 import { WorkspaceLogView } from "./workspace-log-view";
-import { HeadlessWorkspaceEventType } from '@gitpod/gitpod-protocol/lib/headless-workspace-log';
 import { WithBranding } from './with-branding';
 import { Context } from '../context';
 
@@ -19,7 +18,7 @@ export interface RunningPrebuildViewProps {
     justStarting: RunningWorkspacePrebuildStarting;
 
     onIgnorePrebuild: () => void;
-    onBuildDone: (didFinish: boolean) => void;
+    onWatchPrebuild: () => void;
 }
 
 interface RunningPrebuildViewState {
@@ -36,28 +35,35 @@ export class RunningPrebuildView extends React.Component<RunningPrebuildViewProp
         this.state = {};
         this.logline = `Workspace prebuild is ${this.props.justStarting} ...\r\n`;
 
-        let buildIsDone = false;
         this.props.service.registerClient({
             onHeadlessWorkspaceLogs: evt => {
                 if (evt.workspaceID !== this.props.prebuildingWorkspaceId) {
                     return;
                 }
 
+                // TODO(ak) there is no contract that setState should immediately trigger render
+                // it maybe buffer state and then call render, so some log lines can be lost
+                // we should rather get a reference to xterm in this component and write here directly
                 this.logline = evt.text;
                 this.setState({ updateLoglineToggle: !this.state.updateLoglineToggle });
-
-                if (!buildIsDone && !HeadlessWorkspaceEventType.isRunning(evt.type)) {
-                    buildIsDone = true;
-                    this.props.onBuildDone(HeadlessWorkspaceEventType.didFinish(evt.type));
-                }
-            },
-            onInstanceUpdate: () => {},
-            onWorkspaceImageBuildLogs: () => {}
+            }
         });
     }
 
+    private readonly toDispose = new DisposableCollection();
     componentWillMount() {
+        this.watch();
+        this.toDispose.push(this.props.service.registerClient({
+            notifyDidOpenConnection: () => this.watch()
+        }));
+    }
+    componentWillUnmount() {
+        this.toDispose.dispose();
+    }
+
+    private watch(): void {
         this.props.service.server.watchHeadlessWorkspaceLogs(this.props.prebuildingWorkspaceId);
+        this.props.onWatchPrebuild();
     }
 
     public render() {

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -44,6 +44,11 @@ export class Env extends AbstractComponentEnv {
         res["theia"] = this.ideDefaultImage;
         return res;
     })()
+
+    readonly previewFeatureFlags: NamedWorkspaceFeatureFlag[] = (() => {
+        const v = process.env.EXPERIMENTAL_FEATURE_FLAGS;
+        return !!v ? JSON.parse(v) : [];
+    })();
 
     readonly gitpodRegion: string = process.env.GITPOD_REGION || 'unknown';
 

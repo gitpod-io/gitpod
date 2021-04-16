@@ -1,93 +1,67 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
 
-import * as React from 'react';
-import { User, GitpodService, AdditionalUserData } from "@gitpod/gitpod-protocol";
+import { GitpodService, User } from "@gitpod/gitpod-protocol";
 import Checkbox from '@material-ui/core/Checkbox';
 import Grid from '@material-ui/core/Grid';
+import * as React from 'react';
 
 export class UserSettingsProps {
     service: GitpodService;
     user?: User;
+    onChange: (update: Partial<User>) => void
 }
 
-export class UserSettingsState {
-    additionalData?: AdditionalUserData;
-    allowsMarketingCommunication?: boolean;
-}
-
-export class UserSettings extends React.Component<UserSettingsProps, UserSettingsState> {
-
-    constructor(props: UserSettingsProps) {
-        super(props);
-        this.state = {};
-    }
-
-    componentWillMount() {
-        this.update(this.props.user);
-    }
-    componentDidUpdate(prevProps: UserSettingsProps) {
-        if (this.props.user !== prevProps.user) {
-            this.update(this.props.user);
-        }
-    }
-
-    protected update(user: User | undefined) {
-        if (!user) {
-            return;
-        }
-        const additionalData = user.additionalData || {};
-        additionalData.emailNotificationSettings = additionalData.emailNotificationSettings || {};
-        const { allowsMarketingCommunication } = user;
-        this.setState({
-            additionalData,
-            allowsMarketingCommunication
-        });
-    }
-
-
-    private async updateTransactionalMailSettings(allowsTransactionalMail: boolean): Promise<void> {
-        if (!this.state.additionalData) {
-            return undefined;
-        }
-        const settings = this.state.additionalData.emailNotificationSettings!;
-        settings.disallowTransactionalEmails = !allowsTransactionalMail;
-        const additionalData = { ...this.state.additionalData };
-        additionalData.emailNotificationSettings!.disallowTransactionalEmails = !allowsTransactionalMail;
-        const user = await this.props.service.server.updateLoggedInUser({ additionalData });
-        this.update(user);
-    }
-
-    private async updateAllowsMarketingCommunication(allowsMarketingCommunication: boolean): Promise<void> {
-        const user = await this.props.service.server.updateLoggedInUser({ allowsMarketingCommunication });
-        this.update(user);
-    }
+export class UserSettings extends React.Component<UserSettingsProps> {
 
     render() {
-        if (!this.state.additionalData) {
+        if (!this.props.user) {
             return <div></div>;
         }
-        const allowsMarketingCommunication = this.state.allowsMarketingCommunication === true;
-        const allowsTransactionalMail = !this.state.additionalData.emailNotificationSettings!.disallowTransactionalEmails;
+        const { allowsMarketingCommunication, disallowTransactionalEmails } = this;
         return <Grid container spacing={8} justify="flex-end">
             <Grid item xs={12}>
                 <Checkbox
-                    onChange={() => this.updateTransactionalMailSettings(!allowsTransactionalMail)}
-                    checked={allowsTransactionalMail}
+                    onChange={this.updateTransactionalMailSettings}
+                    checked={!disallowTransactionalEmails}
+                    color="default"
                 />
                 Receive important emails about changes to my account
             </Grid>
             <Grid item xs={12}>
                 <Checkbox
-                    onChange={() => this.updateAllowsMarketingCommunication(!allowsMarketingCommunication)}
+                    onChange={this.updateAllowsMarketingCommunication}
                     checked={allowsMarketingCommunication}
+                    color="default"
                 />
                 Receive marketing emails (for example, the Gitpod newsletter)
             </Grid>
         </Grid>;
+    }
+
+    private get allowsMarketingCommunication(): boolean {
+        return this.props.user?.allowsMarketingCommunication === true;
+    }
+
+    private get disallowTransactionalEmails(): boolean {
+        return this.props.user?.additionalData?.emailNotificationSettings?.disallowTransactionalEmails === true;
+    }
+
+    private updateTransactionalMailSettings = () => {
+        const additionalData = (this.props.user?.additionalData || {});
+        const settings = additionalData.emailNotificationSettings || {};
+        settings.disallowTransactionalEmails = !this.disallowTransactionalEmails;
+        additionalData.emailNotificationSettings = settings;
+        this.props.onChange({ additionalData });
+    }
+
+    private updateAllowsMarketingCommunication = () => {
+        this.props.onChange({
+            allowsMarketingCommunication: !this.allowsMarketingCommunication
+        });
     }
 
 }

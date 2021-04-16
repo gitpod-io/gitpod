@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -48,11 +48,11 @@ export class GitpodAboutView extends React.Component<{ branding?: Branding, host
         const customized = branding && !!branding.ide;
         if (customized) {
             return (<span>
-                Copyright {year} TypeFox. All Rights Reserved
+                Copyright {year} GitPod. All Rights Reserved
             </span>);
         } else {
             return (<span>
-                Copyright {year} TypeFox. All Rights Reserved | <a className="theia-href" target="_blank" href="https://www.gitpod.io/terms/">Terms of Service</a>
+                Copyright {year} Gitpod. All Rights Reserved | <a className="theia-href" target="_blank" href="https://www.gitpod.io/terms/">Terms of Service</a>
             </span>);
         }
     }

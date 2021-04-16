@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -65,7 +65,11 @@ h3 {
   font-size: 1.5rem;
   font-weight: 500;
 }
-h4, h5, h6 {
+h4 {
+  font-size: 1rem;
+  font-weight: 500;
+}
+h5, h6 {
   font-size: 30px;
   font-weight: 200;
 }
@@ -473,17 +477,19 @@ footer .logo-icon {
     right: 0;
     margin: auto;
     text-align: center;
-    z-index: 999;
-    user-select: none;
+    z-index: 1001;
 }
 
 .start .message.stopped-reason {
-    top: 43vh;
+    top: 39vh;
 }
 
-.start .message.start-action {
-    top: 50vh;
-    z-index: 1001;
+.start .message .start-action {
+    margin: 20px 0;
+}
+
+.start .message .start-action .button {
+    margin: 0 20px;
 }
 
 .start .error.message {
@@ -703,6 +709,11 @@ footer .logo-icon {
 }
 .tos-buttons .button {
     margin-left: 1em;
+}
+
+.tos-content li, .tos-content p {
+    line-height: 1.4;
+    font-size: 16px;
 }
 
 .loading-skeleton {

@@ -234,8 +234,8 @@
           "lastState": {},
           "ready": true,
           "restartCount": 0,
-          "image": "eu.gcr.io/gitpod-dev/gitpod-ws-sync:cw-integrate-wsman-server.45",
-          "imageID": "docker-pullable://eu.gcr.io/gitpod-dev/gitpod-ws-sync@sha256:cc21efdbebcf0d800e9d1f2a9346d346ca2757a79bc255a4098f8544efb8aaa3",
+          "image": "eu.gcr.io/gitpod-dev/gitpod-ws-daemon:cw-integrate-wsman-server.45",
+          "imageID": "docker-pullable://eu.gcr.io/gitpod-dev/gitpod-ws-daemon@sha256:cc21efdbebcf0d800e9d1f2a9346d346ca2757a79bc255a4098f8544efb8aaa3",
           "containerID": "docker://5208401cb3cb46103dcab5d8c9858d54edebb2c37810f827de27185fe3628f4e"
         },
         {

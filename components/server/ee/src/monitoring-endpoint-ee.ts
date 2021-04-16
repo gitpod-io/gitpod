@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the Gitpod Enterprise Source Code License,
  * See License.enterprise.txt in the project root folder.
  */
@@ -21,8 +21,13 @@ export class MonitoringEndpointsAppEE extends WorkspaceHealthMonitoring {
         const monApp = express();
         prometheusClient.collectDefaultMetrics({ timeout: 5000 });
 
-        monApp.get('/metrics', (_, res) => {
-            res.send(prometheusClient.register.metrics().toString());
+        monApp.get('/metrics', async (req, res) => {
+	        try {
+		        res.set('Content-Type', prometheusClient.register.contentType);
+		        res.end(await prometheusClient.register.metrics());
+	        } catch (ex) {
+    		    res.status(500).end(ex);
+	        }
         });
 
         monApp.post('/server-health', async (req, res) => {

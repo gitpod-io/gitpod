@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -8,7 +8,7 @@ package supervisor;
 
 import "google/api/annotations.proto";
 
-option go_package = "api";
+option go_package = ".;api";
 
 service InfoService {
 
@@ -52,4 +52,7 @@ message WorkspaceInfoResponse {
 
     // GitpodAPI provides information to reach the Gitpod server API.
     GitpodAPI gitpod_api = 7;
+
+    // gitpod_host provides Gitpod host URL.
+    string gitpod_host = 8;
 }

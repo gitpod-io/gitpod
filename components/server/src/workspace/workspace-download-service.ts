@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -49,14 +49,7 @@ export class WorkspaceDownloadService {
                     return;
                 }
 
-                // we must harmonize this with https://github.com/TypeFox/gitpod/blob/8fc0c82a55da1ca4b5f6ab61deb9c9cd49eff644/components/ws-sync/pkg/storage/storage.go
-                // Beware: do NOT use env.kube_stage which has some "legacy" translation mechanism which doesn't fit the ws-sync mapping.
-                const stage: string = ({
-                    "production": "prod",
-                    "staging": "prodcopy",
-                } as any)[process.env.KUBE_STAGE || ""] || "dev";
-
-                const bucketName = `gitpod-${stage}-user-${wsi.ownerId}`;
+                const bucketName = this.storageClient.bucketName(userId);
                 const path = `/workspaces/${workspaceId}/full.tar`;
                 const signedUrl = await this.storageClient.createSignedUrl(bucketName, path, "read", {
                     promptSaveAs: `${workspaceId}.tar`

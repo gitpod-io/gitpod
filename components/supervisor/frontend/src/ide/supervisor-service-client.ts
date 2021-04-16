@@ -1,11 +1,12 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
 
 import { SupervisorStatusResponse, IDEStatusResponse, ContentStatusResponse } from '@gitpod/supervisor-api-grpc/lib/status_pb'
 import { GitpodServiceClient } from './gitpod-service-client';
+import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 
 export class SupervisorServiceClient {
     readonly supervisorReady = this.checkReady('supervisor');
@@ -29,7 +30,20 @@ export class SupervisorServiceClient {
             wait = "";
         }
         try {
-            const response = await fetch(window.location.protocol + '//' + window.location.host + '/_supervisor/v1/status/' + kind + wait, { credentials: 'include' });
+            const supervisorStatusPath = "_supervisor/v1/status/" + kind + wait;
+            const wsSupervisurStatusUrl = GitpodHostUrl.fromWorkspaceUrl(window.location.href)
+                .with(url => {
+                    let pathname = url.pathname;
+                    if (pathname === "") {
+                        pathname = "/";
+                    }
+                    pathname += supervisorStatusPath;
+
+                    return {
+                        pathname
+                    };
+                });
+            const response = await fetch(wsSupervisurStatusUrl.toString(), { credentials: 'include' });
             let result;
             if (response.ok) {
                 result = await response.json();

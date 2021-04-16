@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -212,7 +212,7 @@ func (rs *DirectGCPStorage) download(ctx context.Context, destination string, bk
 }
 
 /* tar files produced by the previous sync process contain their workspace ID in the filenames.
- * This behavior is difficult for snapshot backups, thus ws-syncd does not do that. However,
+ * This behavior is difficult for snapshot backups, thus ws-daemond does not do that. However,
  * we need to be able to handle the "old" tar files, hence this legacy mode. See #1559.
  */
 func (rs *DirectGCPStorage) fixLegacyFilenames(ctx context.Context, destination string) (err error) {
@@ -259,14 +259,25 @@ func (rs *DirectGCPStorage) Download(ctx context.Context, destination string, na
 
 // DownloadSnapshot downloads a snapshot. The snapshot name is expected to be one produced by Qualify
 func (rs *DirectGCPStorage) DownloadSnapshot(ctx context.Context, destination string, name string) (bool, error) {
-	segments := strings.Split(name, "@")
-	if len(segments) != 2 {
-		return false, xerrors.Errorf("%s is not a valid GCloud remote storage FQN", name)
+	bkt, obj, err := ParseSnapshotName(name)
+	if err != nil {
+		return false, err
 	}
 
-	obj := segments[0]
-	bkt := segments[1]
 	return rs.download(ctx, destination, bkt, obj)
+}
+
+// ParseSnapshotName parses the name of a snapshot into bucket and object
+func ParseSnapshotName(name string) (bkt, obj string, err error) {
+	segments := strings.Split(name, "@")
+	if len(segments) != 2 {
+		err = xerrors.Errorf("%s is not a valid GCloud remote storage FQN", name)
+		return
+	}
+
+	obj = segments[0]
+	bkt = segments[1]
+	return
 }
 
 // Qualify fully qualifies a snapshot name so that it can be downloaded using DownloadSnapshot
@@ -632,6 +643,11 @@ func (rs *DirectGCPStorage) Bucket(ownerID string) string {
 	return gcpBucketName(rs.Stage, ownerID)
 }
 
+// BackupObject returns a backup's object name that a direct downloader would download
+func (rs *DirectGCPStorage) BackupObject(name string) string {
+	return rs.objectName(name)
+}
+
 func gcpBucketName(stage Stage, ownerID string) string {
 	return fmt.Sprintf("gitpod-%s-user-%s", stage, ownerID)
 }
@@ -720,8 +736,8 @@ func (p *PresignedGCPStorage) Bucket(owner string) string {
 	return gcpBucketName(p.stage, owner)
 }
 
-// Download provides presigned URLs to access remote storage objects
-func (p *PresignedGCPStorage) Download(ctx context.Context, bucket, object string) (*DownloadInfo, error) {
+// SignDownload provides presigned URLs to access remote storage objects
+func (p *PresignedGCPStorage) SignDownload(ctx context.Context, bucket, object string) (*DownloadInfo, error) {
 	client, err := newGCPClient(ctx, p.config)
 	if err != nil {
 		return nil, err

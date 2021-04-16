@@ -1,4 +1,4 @@
-# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 {{ if .Values.installPodSecurityPolicies -}}
@@ -15,18 +15,13 @@ metadata:
     kind: podsecuritypolicy
     stage: {{ .Values.installation.stage }}
   annotations:
-    seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'runtime/default'
-    apparmor.security.beta.kubernetes.io/allowedProfileNames: 'runtime/default'
+    seccomp.security.alpha.kubernetes.io/allowedProfileNames: '*'
+    apparmor.security.beta.kubernetes.io/allowedProfileNames: 'runtime/default,unconfined'
     seccomp.security.alpha.kubernetes.io/defaultProfileName:  'runtime/default'
     apparmor.security.beta.kubernetes.io/defaultProfileName:  'runtime/default'
 spec:
-  #####
-  # The sync containers currently run as root
-  #####
-  ### TODO root sync
   privileged: false
-  # # Required to prevent escalations to root.
-  allowPrivilegeEscalation: false
+  allowPrivilegeEscalation: true
   # # This is redundant with non-root + disallow privilege escalation,
   # # but we can provide it for defense in depth.
   allowedCapabilities:
@@ -35,28 +30,16 @@ spec:
     - KILL
     - NET_BIND_SERVICE
     - SYS_PTRACE
-  ### TODO root sync
-  # Allow core volume types.
   volumes:
     - 'configMap'
     - 'projected'
     - 'secret'
     - 'hostPath'
-  # See https://kubernetes.io/docs/concepts/policy/pod-security-policy/#volumes-and-file-systems
-  # TODO security hostPath: Use emptyDir an alternative?
-  #allowedHostPaths:
-  # This allows "/foo", "/foo/", "/foo/bar" etc., but
-  # disallows "/fool", "/etc/foo" etc.
-  # "/foo/../" is never valid.
-  #- pathPrefix: "/foo"
-  #  readOnly: false
   hostNetwork: false
   hostIPC: false
   hostPID: false
   runAsUser:
-    ### TODO root sync
     rule: 'RunAsAny'
-    ### TODO root sync
   seLinux:
     # This policy assumes the nodes are using AppArmor rather than SELinux.
     rule: 'RunAsAny'

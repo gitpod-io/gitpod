@@ -1,11 +1,11 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the Gitpod Enterprise Source Code License,
  * See License.enterprise.txt in the project root folder.
  */
 
-import { Probot, Application, Context } from 'probot';
-import { findPrivateKey } from 'probot/lib/private-key';
+import { Probot, Context } from 'probot';
+import { getPrivateKey } from '@probot/get-private-key';
 import * as fs from 'fs-extra';
 import { injectable, inject, decorate } from 'inversify';
 import { Env } from '../../../src/env';
@@ -24,6 +24,7 @@ import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { TracedWorkspaceDB, DBWithTracing } from '@gitpod/gitpod-db/lib/traced-db';
 import { PrebuildManager } from './prebuild-manager';
 import { PrebuildStatusMaintainer } from './prebuilt-status-maintainer';
+import { ApplicationFunctionOptions } from 'probot/lib/types';
 
 /**
  * GitHub app urls:
@@ -53,7 +54,7 @@ export class GithubApp extends Probot {
     ) {
         super({
             id: env.githubAppAppID,
-            cert: GithubApp.loadPrivateKey(env.githubAppCertPath),
+            privateKey: GithubApp.loadPrivateKey(env.githubAppCertPath),
             secret: env.githubAppWebhookSecret
         });
         log.debug("Starting GitHub app integration", {
@@ -65,7 +66,8 @@ export class GithubApp extends Probot {
         this.load(this.buildApp.bind(this));
     }
 
-    protected async buildApp(app: Application) {
+    protected async buildApp(options: ApplicationFunctionOptions) {
+        const app = options.app;
         this.statusMaintainer.start(async id => (await app.auth(parseInt(id))) as any as Octokit);
         // this.queueMaintainer.start();
 
@@ -105,14 +107,17 @@ export class GithubApp extends Probot {
         });
 
         app.on('installation.created', async ctx => {
-            const authId: string = ctx.payload.installation.account.id;
-            const user = await this.userDB.findUserByIdentity({ authProviderId: this.env.githubAppAuthProviderId, authId });
+            const accountId: string = `${ctx.payload.installation.account.id}`;
+            const installationId = `${ctx.payload.installation.id}`;
+            const senderId = `${ctx.payload.sender.id}`;
+            const user = await this.userDB.findUserByIdentity({ authProviderId: this.env.githubAppAuthProviderId, authId: accountId });
             const userId = user ? user.id : undefined;
-            await this.appInstallationDB.recordNewInstallation("github", 'platform', ctx.payload.installation.id, userId, ctx.payload.sender.id);
+            await this.appInstallationDB.recordNewInstallation("github", 'platform', installationId, userId, senderId);
             log.debug({ userId }, "New installation recorded", { userId, platformUserId: ctx.payload.sender.id })
         });
         app.on('installation.deleted', async ctx => {
-            await this.appInstallationDB.recordUninstallation("github", 'platform', ctx.payload.installation.id);
+            const installationId = `${ctx.payload.installation.id}`;
+            await this.appInstallationDB.recordUninstallation("github", 'platform', installationId);
         });
 
         app.on('push', async ctx => {
@@ -228,7 +233,7 @@ export class GithubApp extends Probot {
             const config = await this.prebuildManager.fetchConfig({ span }, user, contextURL);
 
             const prebuildStartPromise = this.onPrStartPrebuild({ span }, config, user, ctx);
-            this.onPrAddCheck({span}, config, user, ctx, prebuildStartPromise);
+            this.onPrAddCheck({ span }, config, user, ctx, prebuildStartPromise);
             this.onPrAddBadge(config, user, ctx);
             this.onPrAddLabel(config, user, ctx, prebuildStartPromise);
             this.onPrAddComment(config, user, ctx);
@@ -252,18 +257,18 @@ export class GithubApp extends Probot {
         const span = TraceContext.startSpan("onPrAddCheck", ctx);
         try {
             const spr = await start;
-            const pws = await this.workspaceDB.trace({span}).findPrebuildByWorkspaceID(spr.wsid);
+            const pws = await this.workspaceDB.trace({ span }).findPrebuildByWorkspaceID(spr.wsid);
             if (!pws) {
                 return;
             }
 
-            await this.statusMaintainer.registerCheckRun({span}, cri.payload.installation.id, pws, {
+            await this.statusMaintainer.registerCheckRun({ span }, cri.payload.installation.id, pws, {
                 ...cri.repo(),
                 head_sha: cri.payload.pull_request.head.sha,
                 details_url: this.env.hostUrl.withContext(cri.payload.pull_request.html_url).toString()
             });
         } catch (err) {
-            TraceContext.logError({span}, err);
+            TraceContext.logError({ span }, err);
             throw err;
         } finally {
             span.finish();
@@ -412,30 +417,29 @@ export namespace GithubApp {
         }
 
         // loadPrivateKey is used in super call - must not be async
-        if (filename && fs.existsSync(filename)) {
-            const key = findPrivateKey(filename);
+        if (fs.existsSync(filename)) {
+            const key = getPrivateKey({ filepath: filename });
             if (key) {
                 return key.toString();
             }
         }
     }
-
 }
 
 class PrebuildListener {
-    protected readonly disposable: Promise<Disposable>;
+    protected readonly disposable: Disposable;
 
     constructor(protected readonly messageBus: MessageBusIntegration, workspaceID: string, protected readonly onBuildDone: (success: HeadlessWorkspaceEventType, msg: string) => void) {
         this.disposable = this.messageBus.listenForHeadlessWorkspaceLogs(workspaceID, this.handleMessage.bind(this));
     }
 
-    protected async handleMessage(ctx: TraceContext, evt: HeadlessLogEvent) {
+    protected handleMessage(ctx: TraceContext, evt: HeadlessLogEvent) {
         if (HeadlessWorkspaceEventType.isRunning(evt.type)) {
             return;
         }
 
         this.onBuildDone(evt.type, evt.text);
-        (await this.disposable).dispose();
+        this.disposable.dispose();
     }
 
 }

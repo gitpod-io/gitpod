@@ -1,5 +1,5 @@
 #!/bin/bash -li
-# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
@@ -30,7 +30,5 @@ export USER=gitpod
 [ -s /home/gitpod/.sdkman/bin/sdkman-init.sh ] && [ -z "$SDKMAN_VERSION" ] && source "/home/gitpod/.sdkman/bin/sdkman-init.sh"
 [ -s ~/.nvm/nvm-lazy.sh ] && source ~/.nvm/nvm-lazy.sh
 
-export GITPOD_CODE_PORT=$GITPOD_THEIA_PORT
-export GITPOD_CODE_FOLDER=$GITPOD_REPO_ROOT
 cd /ide
 exec /ide/node/bin/gitpod-node ./out/gitpod.js $*

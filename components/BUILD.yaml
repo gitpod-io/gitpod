@@ -4,46 +4,53 @@ packages:
     argdeps:
       - version
     deps:
+      - components/blobserve:docker
       - components/dashboard:docker
+      - components/docker-up:docker
       - components/ee/cerc:docker
       - components/ee/ws-scheduler:docker
       - components/gitpod-db:docker
       - components/gitpod-messagebus:docker
+      - components/gitpod-protocol:publish
+      - components/ide/code:docker
       - components/image-builder:docker
       - components/node-daemon:docker
       - components/proxy:docker
       - components/registry-facade:docker
       - components/server:docker
       - components/service-waiter:docker
+      - components/supervisor-api/typescript-grpc:publish
       - components/supervisor:docker
-      - components/ide/code:docker
       - components/theia/app:docker
       - components/theia/static-server:docker
+      - components/ws-daemon:docker
+      - components/ws-daemon/seccomp-profile-installer:docker
+      - components/ws-daemon/shiftfs-module-loader:docker
       - components/ws-manager-bridge:docker
-      - components/ws-manager-node:docker
       - components/ws-manager:docker
       - components/ws-proxy:docker
-      - components/ws-sync:docker
-      - components/ws-sync/shiftfs-module-loader:docker
-      - components/gitpod-protocol:publish
-      - components/supervisor-api/typescript-grpc:publish
+      - dev/blowtorch:app
+      - dev/gpctl:app
+      - dev/loadgen:app
+      - test:docker
   - name: all-apps
     type: generic
     deps:
-      - components/ee/cerc:app
+      - components/blobserve:docker
       - components/dashboard:app
+      - components/docker-up:app
+      - components/ee/cerc:app
+      - components/ee/ws-scheduler:app
       - components/image-builder:app
       - components/registry-facade:app
       - components/server:app
       - components/service-waiter:app
-      - components/supervisor/frontend:app
       - components/supervisor:app
+      - components/supervisor/frontend:app
       - components/theia/static-server:app
+      - components/ws-daemon:app
       - components/ws-manager-bridge:app
-      - components/ws-manager-node:app
       - components/ws-manager:app
-      - components/ee/ws-scheduler:app
-      - components/ws-sync:app
 scripts:
   - name: update-license-header
     deps:

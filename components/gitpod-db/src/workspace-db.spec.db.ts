@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -54,7 +54,8 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
             conditions: {},
         },
         configuration: {
-            theiaVersion: "unknown"
+            theiaVersion: "unknown",
+            ideImage: "unknown"
         },
         deleted: false
     };
@@ -73,7 +74,8 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
             conditions: {},
         },
         configuration: {
-            theiaVersion: "unknown"
+            theiaVersion: "unknown",
+            ideImage: "unknown"
         },
         deleted: false
     };

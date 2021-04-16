@@ -1,4 +1,4 @@
-# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 kind: RoleBinding
@@ -15,5 +15,5 @@ subjects:
   name: registry-facade
 roleRef:
   kind: ClusterRole
-  name: {{ .Release.Namespace }}-ns-psp:restricted-root-user
+  name: {{ .Release.Namespace }}-ns-registry-facade
   apiGroup: rbac.authorization.k8s.io

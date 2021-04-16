@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
 
 
 import * as express from 'express';
-import { Identity, AuthProviderInfo, User, OAuth2Config, AuthProviderEntry } from "@gitpod/gitpod-protocol";
+import { AuthProviderInfo, User, OAuth2Config, AuthProviderEntry } from "@gitpod/gitpod-protocol";
 import { saveSession } from '../express-util';
 
 import { UserEnvVarValue } from "@gitpod/gitpod-protocol";
@@ -75,39 +75,30 @@ export interface AuthProvider {
     readonly config: AuthProviderParams;
     readonly info: AuthProviderInfo;
     readonly authCallbackPath: string;
-    readonly callback: express.RequestHandler;
+    callback(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void>;
     authorize(req: express.Request, res: express.Response, next: express.NextFunction, scopes?: string[]): void;
     refreshToken?(user: User): Promise<void>;
 }
 
-export type AuthBag = AuthBag.AuthorizeBag | AuthBag.AuthenticateBag;
-export namespace AuthBag {
-    export interface AuthorizeBag {
-        readonly requestType: "authorize";
-        readonly host: string;
-        readonly returnTo: string;
-        readonly override: boolean;
-    }
-    export interface AuthenticateBag {
-        readonly requestType: "authenticate";
-        readonly host: string;
-        readonly returnTo: string;
-        readonly identity?: Identity;
-        readonly returnToAfterTos: string;
-        readonly elevateScopes?: string[];
-    }
-    export function get(session: Express.Session | undefined): AuthBag | undefined {
+export interface AuthFlow {
+    readonly host: string;
+    readonly returnTo: string;
+    readonly overrideScopes?: boolean;
+}
+export namespace AuthFlow {
+    const storageKey = "authFlow";
+    export function get(session: Express.Session | undefined): AuthFlow | undefined {
         if (session) {
-            return session['authBag'] as AuthBag | undefined;
+            return session[storageKey] as AuthFlow | undefined;
         }
     }
-    export async function attach(session: Express.Session, authBag: AuthBag): Promise<void> {
-        session['authBag'] = authBag;
+    export async function attach(session: Express.Session, authFlow: AuthFlow): Promise<void> {
+        session[storageKey] = authFlow;
         return saveSession(session);
     }
     export async function clear(session: Express.Session | undefined) {
         if (session) {
-            session['authBag'] = undefined;
+            session[storageKey] = undefined;
             return saveSession(session);
         }
     }

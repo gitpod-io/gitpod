@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -8,7 +8,7 @@ package supervisor;
 
 import "google/api/annotations.proto";
 
-option go_package = "api";
+option go_package = ".;api";
 
 // StatusService provides status feedback for the various in-workspace services.
 service StatusService {
@@ -65,7 +65,7 @@ service StatusService {
         option (google.api.http) = {
             get: "/v1/status/tasks"
             additional_bindings {
-                get: "/v1/status/ports/observe/{observe=true}",
+                get: "/v1/status/tasks/observe/{observe=true}",
             }
         };
     }
@@ -119,6 +119,26 @@ message PortsStatusRequest {
 message PortsStatusResponse {
     repeated PortsStatus ports = 1;
 }
+
+enum PortVisibility {
+    private = 0;
+    public = 1;
+}
+enum OnPortExposedAction {
+    ignore = 0;
+    open_browser = 1;
+    open_preview = 2;
+    notify = 3;
+    notify_private = 4;
+}
+message ExposedPortInfo {
+    // public determines if the port is available without authentication or not
+    PortVisibility visibility = 1;
+    // url is the URL at which the port is available
+    string url = 2;
+    // action hint on expose
+    OnPortExposedAction on_exposed = 3;
+}
 message PortsStatus {
     // local_port is the port a service actually bound to. Some services bind
     // to localhost:<port>, in which case they cannot be made accessible from
@@ -128,6 +148,13 @@ message PortsStatus {
     uint32 local_port = 1;
 
     uint32 global_port = 2;
+
+    // served is true if there is a process in the workspace that serves this port.
+    bool served = 4;
+
+    // Exposed provides information when a port is exposed. If this field isn't set,
+    // the port is not available from outside the workspace (i.e. the internet).
+    ExposedPortInfo exposed = 5;
 }
 
 message TasksStatusRequest {

@@ -4,6 +4,9 @@ about: Create a report to help us improve
 
 ---
 
+<!-- ⚠️⚠️ Do Not Delete This! bug_report_template ⚠️⚠️ -->
+<!-- Please search existing issues to avoid creating duplicates. -->
+
 ### Describe the bug
 <!-- A clear and concise description of what the bug is -->
 

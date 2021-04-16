@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -16,6 +16,14 @@ export interface LogContext {
     userId?: string;
     workspaceId?: string;
 };
+export namespace LogContext {
+    export function from(params : { userId?: string, user?: any, request?: any } ) {
+        return <LogContext>{
+            sessionId: params.request?.requestID,
+            userId: params.userId || params.user?.id
+        }
+    }
+}
 
 export interface LogPayload {
     // placeholder to indicate that only dictionary-style objects should be passed as payload

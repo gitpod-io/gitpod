@@ -12,32 +12,59 @@ Gitpod supports the following authentication providers:
 * github.com
 * GitHub Enterprise in version 2.16.x and higher
 * gitlab.com
-* GitLab Community Edition in version 11.7.x and higher
-* GitLab Enterprise Edition in version 11.7.x and higher
-* Bitbucket — coming soon
-* Custom Auth Provider – Inquiry TypeFox for a quote
+* GitLab Community/Enterprise Edition in version 11.7.x and higher
+* Bitbucket.com
+
+On first access, a fresh Gitpod installation guides the first users to configure one or more OAuth providers.
+
+Alternatively, you can configure it per Helm values file:
+ 1. Configure an OAuth app per instructions linked below (cmp. [GitHub](#GitHub) or [GitLab](#GitLab)) and copy the `clientId` and `clientSecret`.
+
+ 2. Merge the following into your `values.custom.yaml`:
+    ```yaml
+    authProviders:
+    - id: "Public-GitHub"
+      host: "github.com"
+      type: "GitHub"
+      oauth:
+        clientId: "CLIENT_ID"
+        clientSecret: "SECRET"
+        callBackUrl: "https://gitpod.io/auth/github/callback"
+        settingsUrl: "https://github.com/settings/connections/applications/CLIENT_ID"
+      description: ""
+      icon: ""
+    - id: "Public-GitLab"
+      host: "gitlab.com"
+      type: "GitLab"
+      oauth:
+        clientId: "CLIENT_ID"
+        clientSecret: "SECRET"
+        callBackUrl: "https://gitpod.io/auth/gitlab/callback"
+        settingsUrl: "https://gitlab.com/profile/applications"
+      description: ""
+      icon: ""
+    ```
+    Replace `CLIENT_ID` and `SECRET` with their respective values.
+
+ 3. Do a `helm upgrade --install -f values.custom.yaml gitpod gitpod.io/gitpod` to apply the changes.
 
 ## GitHub
 To authenticate your users with GitHub you need to create a [GitHub OAuth App](https://developer.github.com/apps/building-oauth-apps/creating-an-oauth-app/).
 Follow the guide linked above and:
-   - set "Authentication callback URL" to: 
+   - Set "Authentication callback URL" to: 
 
-       
-    https://<your-domain.com>/auth/github/callback
-    
+     https://<your-domain.com>/auth/github/callback
  
-   - copy the following values and configure them in `values.yaml`:
-      - `clientId`
-      - `clientSecret`
+   - Copy `clientId` and `clientSecret`
 
 ## GitLab
 To authenticate your users with GitLab you need to create an [GitLab OAuth application](https://docs.gitlab.com/ee/integration/oauth_provider.html).
 Follow the guide linked above and:
-   - set "Authentication callback URL" to: 
+   - Set "Authentication callback URL" to: 
    
     https://<your-domain.com>/auth/<gitlab.com-OR-your-gitlab.com>/callback
 
-   - set "Scopes" to `api`, `read_user` and `read_repository`.
-   - copy the following values and configure them in `values.yaml`:
+   - Set "Scopes" to `api`, `read_user` and `read_repository`.
+   - Copy the following values:
       - `clientId` is the "Application ID" from the GitLab OAuth appication
       - `clientSecret` is the "Secret" from the GitLab OAuth appication

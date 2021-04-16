@@ -1,24 +1,26 @@
-# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 hostname: $DOMAIN
+ingressMode: hosts
 
 authProviders: null
 
 components:
-  wsManagerNode:
-    containerdSocket: /run/k3s/containerd/containerd.sock
-  wsSync:
-    fullWorkspaceBackup:
+  wsDaemon:
+    containerRuntime:
       containerd:
-          socket: /run/k3s/containerd/containerd.sock
+        socket: /run/k3s/containerd/containerd.sock
+      nodeRoots: 
+      - /var/lib
+      - /run/k3s/containerd/io.containerd.runtime.v1.linux
   workspace:
     template:
       spec:
         dnsConfig: null
         dnsPolicy: ClusterFirst
   imageBuilder:
-    dindImage: docker:19.03-dind
+    dindMtu: 1450
 
 docker-registry:
   persistence:

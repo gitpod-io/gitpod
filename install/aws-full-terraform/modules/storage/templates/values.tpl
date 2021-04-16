@@ -1,7 +1,7 @@
 components:
-  wsSync:
+  wsDaemon:
     hostWorkspaceArea: /var/gitpod/workspaces
-    name: ws-sync
+    name: "ws-daemon"
     remoteStorage:
       kind: minio
       minio:

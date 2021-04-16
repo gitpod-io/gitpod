@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -15,8 +15,6 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import { StopWorkspaceRequest, StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 import { WorkspaceDeletionService } from "../workspace/workspace-deletion-service";
-import { getBucketName } from "../storage/commons";
-import { KubeStage } from "@gitpod/gitpod-protocol/lib/env";
 import { AuthProviderService } from "../auth/auth-provider-service";
 
 @injectable()
@@ -74,7 +72,7 @@ export class UserDeletionService {
             // UserStorageResourcesDB
             this.userStorageResourcesDb.deleteAllForUser(user.id),
             // Bucket
-            this.deleteUserBucket(id, this.env.kubeStage)
+            this.deleteUserBucket(id)
         ]);
     }
 
@@ -117,10 +115,10 @@ export class UserDeletionService {
         }));
     }
 
-    protected async deleteUserBucket(userId: string, stage: KubeStage) {
+    protected async deleteUserBucket(userId: string) {
         const client = this.storageClient;
         if (client) {
-            const bucketName = getBucketName(userId, stage);
+            const bucketName = this.storageClient.bucketName(userId);
             try {
                 await client.deleteBucket(bucketName);
             } catch(error) {

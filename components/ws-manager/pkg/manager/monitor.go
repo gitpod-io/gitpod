@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -23,9 +23,9 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/internal/util"
-	wssync "github.com/gitpod-io/gitpod/ws-sync/api"
 
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -52,16 +52,16 @@ const (
 )
 
 var (
-	// wssyncMaxAttempts is the number of times we'll attempt to work with ws-sync when a former attempt returned unavailable.
-	// We rety for two minutes every 5 seconds (see wssyncRetryInterval).
+	// wsdaemonMaxAttempts is the number of times we'll attempt to work with ws-daemon when a former attempt returned unavailable.
+	// We rety for two minutes every 5 seconds (see wwsdaemonRetryInterval).
 	//
 	// Note: this is a variable rather than a constant so that tests can modify this value.
-	wssyncMaxAttempts = 120 / 5
+	wsdaemonMaxAttempts = 120 / 5
 
-	// wssyncRetryInterval is the time in between attempts to work with ws-sync.
+	// wsdaemonRetryInterval is the time in between attempts to work with ws-daemon.
 	//
 	// Note: this is a variable rather than a constant so that tests can modify this value.
-	wssyncRetryInterval = 5 * time.Second
+	wsdaemonRetryInterval = 5 * time.Second
 )
 
 // Monitor listens for kubernetes events and periodically checks if everything is still ok.
@@ -129,7 +129,7 @@ func (m *Manager) CreateMonitor() (*Monitor, error) {
 }
 
 func (m *Monitor) connectToPodWatch() error {
-	podwatch, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).Watch(workspaceObjectListOptions())
+	podwatch, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).Watch(context.Background(), workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("cannot watch pods: %w", err)
 	}
@@ -139,7 +139,7 @@ func (m *Monitor) connectToPodWatch() error {
 }
 
 func (m *Monitor) connectToConfigMapWatch() error {
-	cfgwatch, err := m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).Watch(workspaceObjectListOptions())
+	cfgwatch, err := m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).Watch(context.Background(), workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("cannot watch config maps: %w", err)
 	}
@@ -301,7 +301,12 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 		return fmt.Errorf("received non-pod event")
 	}
 
-	wso, err := m.manager.getWorkspaceObjects(pod)
+	// We start with the default kubernetes operation timeout to not block everything in case completing
+	// the object hangs for some reason. Further down when notifying clients, we move to a context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
+	defer cancel()
+
+	wso, err := m.manager.getWorkspaceObjects(ctx, pod)
 	if err != nil {
 		return xerrors.Errorf("cannot handle workspace event: %w", err)
 	}
@@ -313,7 +318,7 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 	}
 
 	// There's one bit of the status which we cannot infere from Kubernetes alone, and that's the Git repo status
-	// inside the workspace. To get this information, we have to ask ws-sync. At the moment we only care about this
+	// inside the workspace. To get this information, we have to ask ws-daemon. At the moment we only care about this
 	// information during shutdown, as we're only showing it for stopped workspaces.
 
 	if evt.Type == watch.Deleted {
@@ -342,7 +347,7 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 	// thus we start OnChange as a goroutine.
 	// BEWARE beyond this point one must not modify status anymore - we've already sent it out BEWARE
 	span := m.traceWorkspace("handle-"+status.Phase.String(), wso)
-	ctx := opentracing.ContextWithSpan(context.Background(), span)
+	ctx = opentracing.ContextWithSpan(context.Background(), span)
 	onChangeDone := make(chan bool)
 	go func() {
 		// We call OnChange in a Go routine to make sure it doesn't block our internal handling of events.
@@ -418,7 +423,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 		if status.Conditions.Failed != "" && !hasFailureAnnotation {
 			// If this marking operation failes that's ok - we'll still continue to shut down the workspace.
 			// The failure message won't persist while stopping the workspace though.
-			err := m.manager.markWorkspace(workspaceID, addMark(workspaceFailedBeforeStoppingAnnotation, "true"))
+			err := m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceFailedBeforeStoppingAnnotation, "true"))
 			if err != nil {
 				log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).WithError(err).Debug("cannot mark workspace as workspaceFailedBeforeStoppingAnnotation")
 			}
@@ -447,7 +452,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 
 			if err != nil {
 				// workspace initialization failed, which means the workspace as a whole failed
-				err = m.manager.markWorkspace(workspaceID, addMark(workspaceExplicitFailAnnotation, err.Error()))
+				err = m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, err.Error()))
 				if err != nil {
 					log.WithError(err).Warn("was unable to mark workspace as failed")
 				}
@@ -468,7 +473,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 
 			if err != nil {
 				// workspace initialization failed, which means the workspace as a whole failed
-				err = m.manager.markWorkspace(workspaceID, addMark(workspaceExplicitFailAnnotation, err.Error()))
+				err = m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, err.Error()))
 				if err != nil {
 					log.WithError(err).Warn("was unable to mark workspace as failed")
 				}
@@ -490,7 +495,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 			tracing.LogEvent(span, "removeTraceAnnotation")
 			// once a regular workspace is up and running, we'll remove the traceID information so that the parent span
 			// ends once the workspace has started
-			err := m.manager.markWorkspace(workspaceID, deleteMark(wsk8s.TraceIDAnnotation))
+			err := m.manager.markWorkspace(ctx, workspaceID, deleteMark(wsk8s.TraceIDAnnotation))
 			if err != nil {
 				log.WithError(err).Warn("was unable to remove traceID annotation from workspace")
 			}
@@ -544,7 +549,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 func (m *Monitor) actOnHeadlessDone(pod *corev1.Pod, failed bool) (err error) {
 	wso := workspaceObjects{Pod: pod}
 
-	// This timeout is really a catch-all safety net in case any of the ws-sync interaction
+	// This timeout is really a catch-all safety net in case any of the ws-daemon interaction
 	// goes out of hand. Really it should never play a role.
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Hour)
 	defer cancel()
@@ -563,7 +568,7 @@ func (m *Monitor) actOnHeadlessDone(pod *corev1.Pod, failed bool) (err error) {
 	// That means that the moment anything goes wrong with headless workspaces we need to fail the workspace to issue a status update.
 	handleFailure := func(msg string) error {
 		// marking the workspace as tasked failed will cause the workspace to fail as a whole which in turn will make the monitor actually stop it
-		err := m.manager.markWorkspace(id, addMark(workspaceExplicitFailAnnotation, msg))
+		err := m.manager.markWorkspace(context.Background(), id, addMark(workspaceExplicitFailAnnotation, msg))
 		if err == nil || isKubernetesObjNotFoundError(err) {
 			// workspace is gone - we're good
 			return nil
@@ -592,31 +597,22 @@ func (m *Monitor) actOnHeadlessDone(pod *corev1.Pod, failed bool) (err error) {
 		tpe = api.WorkspaceType_PREBUILD
 	}
 	if tpe == api.WorkspaceType_PREBUILD {
-		snc, err := m.manager.connectToWorkspaceSync(ctx, wso)
+		snc, err := m.manager.connectToWorkspaceDaemon(ctx, wso)
 		if err != nil {
 			tracing.LogError(span, err)
 			return handleFailure(fmt.Sprintf("cannot take snapshot: %v", err))
 		}
-		res, err := snc.TakeSnapshot(ctx, &wssync.TakeSnapshotRequest{Id: id})
+		res, err := snc.TakeSnapshot(ctx, &wsdaemon.TakeSnapshotRequest{Id: id})
 		if err != nil {
 			tracing.LogError(span, err)
 			return handleFailure(fmt.Sprintf("cannot take snapshot: %v", err))
 		}
 
-		err = m.manager.markWorkspace(id, addMark(workspaceSnapshotAnnotation, res.Url))
+		err = m.manager.markWorkspace(context.Background(), id, addMark(workspaceSnapshotAnnotation, res.Url))
 		if err != nil {
 			tracing.LogError(span, err)
 			log.WithError(err).Warn("cannot mark headless workspace with snapshot - that's one prebuild lost")
 			return handleFailure(fmt.Sprintf("cannot remember snapshot: %v", err))
-		}
-	}
-
-	// if the workspace task failed, that means the headless workspace failed
-	if failed {
-		err := handleFailure("task failed")
-		if err != nil {
-			tracing.LogError(span, err)
-			log.WithError(err).Warn("cannot stop failed headless workspace")
 		}
 	}
 
@@ -669,8 +665,11 @@ func (m *Monitor) onConfigMapEvent(evt watch.Event) error {
 	//
 	// In this sequence we would intermittently commpute our state from a new version of the pod. This would break
 	// (and has broken) a stable order of status.
+	ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
+	defer cancel()
+
 	wso := &workspaceObjects{PLIS: cfgmap}
-	err := m.manager.completeWorkspaceObjects(wso)
+	err := m.manager.completeWorkspaceObjects(ctx, wso)
 	if err != nil {
 		return xerrors.Errorf("cannot handle workspace event: %w", err)
 	}
@@ -689,7 +688,7 @@ func (m *Monitor) onConfigMapEvent(evt watch.Event) error {
 	// thus we start OnChange as a goroutine.
 	// BEWARE beyond this point one must not modify status anymore - we've already sent it out BEWARE
 	span := m.traceWorkspace(status.Phase.String(), wso)
-	ctx := opentracing.ContextWithSpan(context.Background(), span)
+	ctx = opentracing.ContextWithSpan(context.Background(), span)
 	onChangeDone := make(chan bool)
 	go func() {
 		// We call OnChange in a Go routine to make sure it doesn't block our internal handling of events.
@@ -725,7 +724,7 @@ func (m *Monitor) actOnConfigMapEvent(ctx context.Context, status *api.Workspace
 
 		// the workspace has stopped, we don't need the workspace state configmap anymore
 		propagationPolicy := metav1.DeletePropagationForeground
-		err = m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).Delete(cfgmap.Name, &metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
+		err = m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).Delete(ctx, cfgmap.Name, metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
 		if err != nil && !isKubernetesObjNotFoundError(err) {
 			return xerrors.Errorf("cannot delete PLIS config map: %w", err)
 		}
@@ -775,12 +774,12 @@ func (m *Monitor) doHousekeeping(ctx context.Context) {
 		m.OnError(err)
 	}
 
-	err = m.deleteDanglingServices()
+	err = m.deleteDanglingServices(ctx)
 	if err != nil {
 		m.OnError(err)
 	}
 
-	err = m.deleteDanglingPodLifecycleIndependentState()
+	err = m.deleteDanglingPodLifecycleIndependentState(ctx)
 	if err != nil {
 		m.OnError(err)
 	}
@@ -906,26 +905,26 @@ func (m *Monitor) waitForWorkspaceReady(ctx context.Context, pod *corev1.Pod) (e
 	}
 
 	// Theia is available - let's wait until the workspace is initialized
-	snc, err := m.manager.connectToWorkspaceSync(ctx, workspaceObjects{Pod: pod})
+	snc, err := m.manager.connectToWorkspaceDaemon(ctx, workspaceObjects{Pod: pod})
 	if err != nil {
-		return xerrors.Errorf("cannot connect to workspace sync: %w", err)
+		return xerrors.Errorf("cannot connect to workspace daemon: %w", err)
 	}
 
 	// Note: we don't have to use the same cancelable context that we used for the original Init call.
 	//       If the init call gets canceled, WaitForInit will return as well. We're synchronizing through
-	//		 wssync here.
+	//		 wsdaemon here.
 	err = retryIfUnavailable(ctx, func(ctx context.Context) error {
-		_, err = snc.WaitForInit(ctx, &wssync.WaitForInitRequest{Id: workspaceID})
+		_, err = snc.WaitForInit(ctx, &wsdaemon.WaitForInitRequest{Id: workspaceID})
 		return err
 	})
 	if st, ok := grpc_status.FromError(err); ok && st.Code() == codes.NotFound {
 		// Looks like we have missed the CREATING phase in which we'd otherwise start the workspace content initialization.
-		// Let's see if we're initializing already. If so, there's something very wrong because ws-sync does not know about
+		// Let's see if we're initializing already. If so, there's something very wrong because ws-daemon does not know about
 		// this workspace yet. In that case we'll run another desperate attempt to initialize the workspace.
 		m.initializerMapLock.Lock()
 		if _, alreadyInitializing := m.initializerMap[pod.Name]; alreadyInitializing {
-			// we're already initializing but wssync does not know about this workspace. That's very bad.
-			log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Error("we were already initializing but wssync does not know about this workspace (bug in ws-sync?). Trying again!")
+			// we're already initializing but wsdaemon does not know about this workspace. That's very bad.
+			log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Error("we were already initializing but wsdaemon does not know about this workspace (bug in ws-daemon?). Trying again!")
 			delete(m.initializerMap, pod.Name)
 		}
 		m.initializerMapLock.Unlock()
@@ -945,7 +944,7 @@ func (m *Monitor) waitForWorkspaceReady(ctx context.Context, pod *corev1.Pod) (e
 	tracing.LogEvent(span, "contentInitDone")
 
 	// workspace is ready - mark it as such
-	err = m.manager.markWorkspace(workspaceID, deleteMark(workspaceNeverReadyAnnotation))
+	err = m.manager.markWorkspace(ctx, workspaceID, deleteMark(workspaceNeverReadyAnnotation))
 	if err != nil {
 		return xerrors.Errorf("cannot workspace: %w", err)
 	}
@@ -1015,7 +1014,7 @@ func (m *Monitor) probeWorkspaceReady(ctx context.Context, pod *corev1.Pod) (res
 	return &probeResult, nil
 }
 
-// initializeWorkspaceContent talks to a ws-sync daemon on the node of the pod and initializes the workspace content.
+// initializeWorkspaceContent talks to a ws-daemon daemon on the node of the pod and initializes the workspace content.
 // If we're already initializing the workspace, thus function will return immediately. If we were not initializing,
 // prior to this call this function returns once initialization is complete.
 func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Pod) (err error) {
@@ -1024,6 +1023,8 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 
 	_, fullWorkspaceBackup := pod.Labels[fullWorkspaceBackupAnnotation]
 	span.SetTag("fullWorkspaceBackup", fullWorkspaceBackup)
+	_, withUsernamespace := pod.Annotations[withUsernamespaceAnnotation]
+	span.SetTag("withUsernamespace", withUsernamespace)
 
 	workspaceID, ok := pod.Annotations[workspaceIDAnnotation]
 	if !ok {
@@ -1036,7 +1037,7 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 
 	var (
 		initializer     csapi.WorkspaceInitializer
-		snc             wssync.WorkspaceContentServiceClient
+		snc             wsdaemon.WorkspaceContentServiceClient
 		contentManifest []byte
 	)
 	// The function below deliniates the initializer lock. It's just there so that we can
@@ -1076,10 +1077,10 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 			}
 		}
 
-		// connect to the appropriate ws-sync
-		snc, err = m.manager.connectToWorkspaceSync(ctx, workspaceObjects{Pod: pod})
+		// connect to the appropriate ws-daemon
+		snc, err = m.manager.connectToWorkspaceDaemon(ctx, workspaceObjects{Pod: pod})
 		if err != nil {
-			return xerrors.Errorf("cannot connect to ws-sync: %w", err)
+			return err
 		}
 
 		// mark that we're already initialising this workspace
@@ -1097,15 +1098,16 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 	}
 
 	err = retryIfUnavailable(ctx, func(ctx context.Context) error {
-		_, err = snc.InitWorkspace(ctx, &wssync.InitWorkspaceRequest{
+		_, err = snc.InitWorkspace(ctx, &wsdaemon.InitWorkspaceRequest{
 			Id: workspaceID,
-			Metadata: &wssync.WorkspaceMetadata{
+			Metadata: &wsdaemon.WorkspaceMetadata{
 				Owner:  workspaceMeta.Owner,
 				MetaId: workspaceMeta.MetaId,
 			},
 			Initializer:         &initializer,
 			FullWorkspaceBackup: fullWorkspaceBackup,
 			ContentManifest:     contentManifest,
+			UserNamespaced:      withUsernamespace,
 		})
 		return err
 	})
@@ -1127,13 +1129,13 @@ func retryIfUnavailable(ctx context.Context, op func(ctx context.Context) error)
 	span, ctx := tracing.FromContext(ctx, "retryIfUnavailable")
 	defer tracing.FinishSpan(span, &err)
 
-	for i := 0; i < wssyncMaxAttempts; i++ {
+	for i := 0; i < wsdaemonMaxAttempts; i++ {
 		err := op(ctx)
 		span.LogKV("attempt", i)
 
 		if st, ok := grpc_status.FromError(err); ok && st.Code() == codes.Unavailable {
 			// service is unavailable - try again after some time
-			time.Sleep(wssyncRetryInterval)
+			time.Sleep(wsdaemonRetryInterval)
 		} else if err != nil {
 			// some other error happened, we'done done here
 			return err
@@ -1147,7 +1149,7 @@ func retryIfUnavailable(ctx context.Context, op func(ctx context.Context) error)
 	return grpc_status.Error(codes.Unavailable, "workspace content initialization is currently unavailable")
 }
 
-// finalizeWorkspaceContent talks to a ws-sync daemon on the node of the pod and initializes the workspace content.
+// finalizeWorkspaceContent talks to a ws-daemon daemon on the node of the pod and initializes the workspace content.
 func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceObjects) {
 	span, ctx := tracing.FromContext(ctx, "finalizeWorkspaceContent")
 	defer tracing.FinishSpan(span, nil)
@@ -1191,18 +1193,18 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		}
 
 		// Maybe the workspace never made it to a phase where we actually initialized a workspace.
-		// Assuming that once we've had a hostIP we've spoken to ws-sync it's safe to assume that if
+		// Assuming that once we've had a hostIP we've spoken to ws-daemon it's safe to assume that if
 		// we don't have a hostIP we don't need to dipose the workspace.
 		// Obviously that only holds if we do not require a backup. If we do require one, we want to
 		// fail as loud as we can in this case.
 		if !doBackup && wso.HostIP() == "" {
-			// we don't need a backup and have never spoken to ws-sync: we're good here.
+			// we don't need a backup and have never spoken to ws-daemon: we're good here.
 			m.finalizerMapLock.Unlock()
 			return true, &csapi.GitStatus{}, nil
 		}
 
 		// we're not yet finalizing - start the process
-		snc, err := m.manager.connectToWorkspaceSync(ctx, *wso)
+		snc, err := m.manager.connectToWorkspaceDaemon(ctx, *wso)
 		if err != nil {
 			m.finalizerMapLock.Unlock()
 			return true, nil, err
@@ -1214,7 +1216,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 
 		// DiposeWorkspace will "degenerate" to a simple wait if the finalization/disposal process is already running.
 		// This is unlike the initialization process where we wait for things to finish in a later phase.
-		resp, err := snc.DisposeWorkspace(ctx, &wssync.DisposeWorkspaceRequest{
+		resp, err := snc.DisposeWorkspace(ctx, &wsdaemon.DisposeWorkspaceRequest{
 			Id:     workspaceID,
 			Backup: doBackup,
 		})
@@ -1235,7 +1237,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		backupError error
 		gitStatus   *csapi.GitStatus
 	)
-	for i := 0; i < wssyncMaxAttempts; i++ {
+	for i := 0; i < wsdaemonMaxAttempts; i++ {
 		tracing.LogKV(span, "attempt", strconv.Itoa(i))
 		didSometing, gs, err := doFinalize()
 		if !didSometing {
@@ -1261,7 +1263,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			st.Code() == codes.Unavailable ||
 			st.Code() == codes.Canceled {
 			// service is currently unavailable or we did not finish in time - let's wait some time and try again
-			time.Sleep(wssyncRetryInterval)
+			time.Sleep(wsdaemonRetryInterval)
 			continue
 		}
 
@@ -1269,7 +1271,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		if doBackup && isGRPCError {
 			switch st.Code() {
 			case codes.DataLoss:
-				// ws-sync told us that it's lost data
+				// ws-daemon told us that it's lost data
 				dataloss = true
 			case codes.FailedPrecondition:
 				// the workspace content was not in the state we thought it was
@@ -1308,8 +1310,8 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 }
 
 // deleteDanglingServices removes services for which there is no corresponding workspace pod anymore
-func (m *Monitor) deleteDanglingServices() error {
-	endpoints, err := m.manager.Clientset.CoreV1().Endpoints(m.manager.Config.Namespace).List(workspaceObjectListOptions())
+func (m *Monitor) deleteDanglingServices(ctx context.Context) error {
+	endpoints, err := m.manager.Clientset.CoreV1().Endpoints(m.manager.Config.Namespace).List(ctx, workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("deleteDanglingServices: %w", err)
 	}
@@ -1331,7 +1333,7 @@ func (m *Monitor) deleteDanglingServices() error {
 			m.OnError(fmt.Errorf("service endpoint %s does not have %s label", e.Name, wsk8s.WorkspaceIDLabel))
 			continue
 		}
-		_, err := m.manager.findWorkspacePod(workspaceID)
+		_, err := m.manager.findWorkspacePod(ctx, workspaceID)
 		if !isKubernetesObjNotFoundError(err) {
 			continue
 		}
@@ -1342,8 +1344,8 @@ func (m *Monitor) deleteDanglingServices() error {
 		}
 
 		// this relies on the Kubernetes convention that endpoints have the same name as their services
-		err = servicesClient.Delete(e.Name, &metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
-		if err != nil {
+		err = servicesClient.Delete(ctx, e.Name, metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
+		if err != nil && !isKubernetesObjNotFoundError(err) {
 			m.OnError(xerrors.Errorf("deleteDanglingServices: %w", err))
 			continue
 		}
@@ -1354,8 +1356,8 @@ func (m *Monitor) deleteDanglingServices() error {
 }
 
 // deleteDanglingPodLifecycleIndependentState removes PLIS config maps for which no pod exists and which have exceded lonelyPLISSurvivalTime
-func (m *Monitor) deleteDanglingPodLifecycleIndependentState() error {
-	pods, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).List(workspaceObjectListOptions())
+func (m *Monitor) deleteDanglingPodLifecycleIndependentState(ctx context.Context) error {
+	pods, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).List(ctx, workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("deleteDanglingPodLifecycleIndependentState: %w", err)
 	}
@@ -1371,7 +1373,7 @@ func (m *Monitor) deleteDanglingPodLifecycleIndependentState() error {
 	}
 
 	cfgmapsClient := m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace)
-	plisConfigmaps, err := cfgmapsClient.List(workspaceObjectListOptions())
+	plisConfigmaps, err := cfgmapsClient.List(ctx, workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("deleteDanglingPodLifecycleIndependentState: %w", err)
 	}
@@ -1407,7 +1409,7 @@ func (m *Monitor) deleteDanglingPodLifecycleIndependentState() error {
 		//       Prior to deletion we should send a final stopped update.
 
 		propagationPolicy := metav1.DeletePropagationForeground
-		err = cfgmapsClient.Delete(cfgmap.Name, &metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
+		err = cfgmapsClient.Delete(ctx, cfgmap.Name, metav1.DeleteOptions{PropagationPolicy: &propagationPolicy})
 		if err != nil {
 			m.OnError(xerrors.Errorf("cannot delete too old PLIS config map: %w", err))
 			continue
@@ -1423,7 +1425,7 @@ func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 	span, ctx := tracing.FromContext(ctx, "markTimedoutWorkspaces")
 	defer tracing.FinishSpan(span, nil)
 
-	pods, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).List(workspaceObjectListOptions())
+	pods, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).List(ctx, workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("stopTimedoutWorkspaces: %w", err)
 	}
@@ -1452,7 +1454,7 @@ func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 		if timedout == "" {
 			continue
 		}
-		err = m.manager.markWorkspace(workspaceID, addMark(workspaceTimedOutAnnotation, timedout))
+		err = m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceTimedOutAnnotation, timedout))
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("workspaceId=%s: %q", workspaceID, err))
 			// don't skip the next step - even if we did not mark the workspace as timed out, we still want to stop it
@@ -1460,7 +1462,7 @@ func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 	}
 
 	// timeout PLIS only workspaces
-	allPlis, err := m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).List(workspaceObjectListOptions())
+	allPlis, err := m.manager.Clientset.CoreV1().ConfigMaps(m.manager.Config.Namespace).List(ctx, workspaceObjectListOptions())
 	if err != nil {
 		return xerrors.Errorf("stopTimedoutWorkspaces: %w", err)
 	}
@@ -1478,6 +1480,15 @@ func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 		}
 
 		timedout, err := m.manager.isWorkspaceTimedOut(workspaceObjects{PLIS: &plis})
+		if xerrors.Is(err, errNoPLIS) {
+			// The pod is gone and the PLIS hasn't been patched yet - there's not much we can do here, except
+			// to ignore the workspace.
+			//
+			// Note: although tempting it would be dangerous to try and patch the PLIS now, because we'd race
+			//       the stopping/stopped PLIS patching, possibly destroying state along the way. Patching the PLIS
+			//       is not an atomic operation.
+			continue
+		}
 		if err != nil {
 			errs = append(errs, fmt.Sprintf("workspaceId=%s: %q", workspaceID, err))
 			continue

@@ -2,24 +2,25 @@
 url: /docs/self-hosted/latest/install/install-on-gcp-script/
 ---
 
+> For this release (0.6.0, December 2019) the installers are broken. We're working in bringing those with the next release (January 2020).
+
 # Getting started with Gitpod on GCP
 
 Gitpod runs best on Google Cloud Platform. That's also where [gitpod.io](https://gitpod.io) is deployed and operated at scale.
-This guide explains how to install an instance of Gitpod with 3 simple steps:
+This guide explains how to install an instance of Gitpod with 4 simple steps:
 
-# 1. Get a GCP project
-
+## 1. Get a GCP project
 You need a fresh [Google Cloud project](https://cloud.google.com/resource-manager/docs/creating-managing-projects), for which you can also use the [Google Cloud Platform trial](https://console.cloud.google.com/freetrial) with $300 worth of resources.
 
 Once you have the project, keep its project ID handy.
 
 ## 2. Run the installer image
-
 ```bash
+mkdir -p $PWD/gpinstall
 docker run --rm -it \
     -v $PWD/gcloud:/root/.config/gcloud \
     -v $PWD/gpinstall:/workspace \
-    eu.gcr.io/gitpod-io/self-hosted/installer:latest \
+    gcr.io/gitpod-io/self-hosted/installer:latest \
     gcp
 ```
 
@@ -40,7 +41,6 @@ Once finished, the installer will print the URL at which your Gitpod installatio
   - [Configure an OAuth application for GitHub](/docs/github-integration/#oauth-application)
 
 ## 4. Configure the Browser extension
-
 Afterwards you can jump right into your first workspace, by prefixing the repository URL with your Gitpod Self-Hosted URL.
 
 Examples:
@@ -48,7 +48,6 @@ Examples:
  - GitHub: `<your-installation-url>/#https://github.com/gitpod-io/spring-petclinic`
 
 # Going further
-
 - Using a [custom domain](../domain/)
 - Configuring a [custom Docker registry](../docker-registry/)
 - Configuring a [storage backend](../storage/)

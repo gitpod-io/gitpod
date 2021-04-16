@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -8,19 +8,100 @@ import (
 	"bytes"
 	"context"
 	"io"
+	"os/exec"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/google/go-cmp/cmp"
+	"golang.org/x/sync/errgroup"
 )
+
+func TestAnnotations(t *testing.T) {
+	tests := []struct {
+		Desc        string
+		Req         *api.OpenTerminalRequest
+		Opts        *TermOptions
+		Expectation map[string]string
+	}{
+		{
+			Desc: "no annotations",
+			Req: &api.OpenTerminalRequest{
+				Annotations: map[string]string{},
+			},
+			Expectation: map[string]string{},
+		},
+		{
+			Desc: "request annotation",
+			Req: &api.OpenTerminalRequest{
+				Annotations: map[string]string{
+					"hello": "world",
+				},
+			},
+			Expectation: map[string]string{
+				"hello": "world",
+			},
+		},
+		{
+			Desc: "option annotation",
+			Req: &api.OpenTerminalRequest{
+				Annotations: map[string]string{
+					"hello": "world",
+				},
+			},
+			Opts: &TermOptions{
+				Annotations: map[string]string{
+					"hello": "foo",
+					"bar":   "baz",
+				},
+			},
+			Expectation: map[string]string{
+				"hello": "world",
+				"bar":   "baz",
+			},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Desc, func(t *testing.T) {
+			mux := NewMux()
+			defer mux.Close()
+
+			terminalService := NewMuxTerminalService(mux)
+			var err error
+			if test.Opts == nil {
+				_, err = terminalService.Open(context.Background(), test.Req)
+			} else {
+				_, err = terminalService.OpenWithOptions(context.Background(), test.Req, *test.Opts)
+			}
+			if err != nil {
+				t.Fatal(err)
+				return
+			}
+
+			lr, err := terminalService.List(context.Background(), &api.ListTerminalsRequest{})
+			if err != nil {
+				t.Fatal(err)
+				return
+			}
+			if len(lr.Terminals) != 1 {
+				t.Fatalf("expected exactly one terminal, got %d", len(lr.Terminals))
+				return
+			}
+
+			if diff := cmp.Diff(test.Expectation, lr.Terminals[0].Annotations); diff != "" {
+				t.Errorf("unexpected output (-want +got):\n%s", diff)
+			}
+		})
+
+	}
+}
 
 func TestTerminals(t *testing.T) {
 	tests := []struct {
 		Desc        string
 		Stdin       []string
-		Delay       time.Duration
 		Expectation func(terminal *Term) string
 	}{
 		{
@@ -30,8 +111,8 @@ func TestTerminals(t *testing.T) {
 				"echo \"gp sync-done init\"",
 				"echo \"yarn --cwd theia-training watch\"",
 				"history",
+				"exit",
 			},
-			Delay: 1000 * time.Millisecond,
 			Expectation: func(terminal *Term) string {
 				return string(terminal.Stdout.recorder.Bytes())
 			},
@@ -49,17 +130,16 @@ func TestTerminals(t *testing.T) {
 				t.Fatal("no terminal")
 			}
 			stdoutOutput := bytes.NewBuffer(nil)
-			go io.Copy(stdoutOutput, terminal.Stdout.Listen())
 
-			for _, stdin := range test.Stdin {
-				terminal.PTY.Write([]byte(stdin + "\r\n"))
-				time.Sleep(test.Delay)
-			}
+			go func() {
+				// give the io.Copy some time to start
+				time.Sleep(500 * time.Millisecond)
 
-			err = terminalService.Mux.Close(resp.Alias)
-			if err != nil {
-				t.Fatal(err)
-			}
+				for _, stdin := range test.Stdin {
+					terminal.PTY.Write([]byte(stdin + "\r\n"))
+				}
+			}()
+			io.Copy(stdoutOutput, terminal.Stdout.Listen())
 
 			expectation := strings.Split(test.Expectation(terminal), "\r\n")
 			actual := strings.Split(string(stdoutOutput.Bytes()), "\r\n")
@@ -67,5 +147,48 @@ func TestTerminals(t *testing.T) {
 				t.Errorf("unexpected output (-want +got):\n%s", diff)
 			}
 		})
+	}
+}
+
+func TestConcurrent(t *testing.T) {
+	var (
+		terminals     = NewMux()
+		terminalCount = 2
+		listenerCount = 2
+	)
+
+	eg, _ := errgroup.WithContext(context.Background())
+	for i := 0; i < terminalCount; i++ {
+		alias, err := terminals.Start(exec.Command("/bin/bash", "-i"), TermOptions{
+			ReadTimeout: 0,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		term, ok := terminals.Get(alias)
+		if !ok {
+			t.Fatal("terminal is not found")
+		}
+
+		for j := 0; j < listenerCount; j++ {
+			stdout := term.Stdout.Listen()
+			eg.Go(func() error {
+				buf := new(strings.Builder)
+				_, err = io.Copy(buf, stdout)
+				if err != nil {
+					return err
+				}
+				return nil
+			})
+		}
+
+		_, err = term.PTY.Write([]byte("echo \"Hello World\"; exit\n"))
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	err := eg.Wait()
+	if err != nil {
+		t.Fatal(err)
 	}
 }

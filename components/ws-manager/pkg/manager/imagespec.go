@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -22,7 +22,7 @@ import (
 
 // GetImageSpec provides the image spec for a particular workspace (instance) ID.
 func (m *Manager) GetImageSpec(ctx context.Context, req *regapi.GetImageSpecRequest) (resp *regapi.GetImageSpecResponse, err error) {
-	pod, err := m.findWorkspacePod(req.Id)
+	pod, err := m.findWorkspacePod(ctx, req.Id)
 	if isKubernetesObjNotFoundError(err) {
 		return nil, status.Error(codes.NotFound, "not found")
 	}

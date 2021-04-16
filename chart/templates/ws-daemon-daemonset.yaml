@@ -1,0 +1,188 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.wsDaemon -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- $gp := $.Values -}}
+{{- if not $comp.disabled -}}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ws-daemon
+  labels:
+    app: {{ template "gitpod.fullname" $ }}
+    component: ws-daemon
+    kind: daemonset
+    stage: {{ .Values.installation.stage }}
+    gitpod.io/nodeService: ws-daemon
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" $ }}
+      component: ws-daemon
+      kind: daemonset
+      stage: {{ .Values.installation.stage }}
+      gitpod.io/nodeService: ws-daemon
+  template:
+    metadata:
+      labels:
+        app: {{ template "gitpod.fullname" $ }}
+        component: ws-daemon
+        kind: daemonset
+        stage: {{ .Values.installation.stage }}
+        gitpod.io/nodeService: ws-daemon
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: '9500'
+        checksum/tlskey: {{ include (print $.Template.BasePath "/ws-daemon-tlssecret.yaml") $ | sha256sum }}
+        {{- if $comp.userNamespaces.shiftfsModuleLoader.enabled }}
+        seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
+        {{- end }}
+    spec:
+{{ include "gitpod.workspaceAffinity" $this | indent 6 }}
+      # see https://kubernetes.io/docs/tasks/administer-cluster/guaranteed-scheduling-critical-addon-pods/ for more
+      # details on this priority class.
+      # Pior to Kubernetes 1.17 critical pods can only be scheduled in kube-system: https://github.com/kubernetes/kubernetes/pull/76310
+      # Leaving this in here so that others might enable it and we don't forget about this when 1.17 comes around in GKE.
+      # priorityClassName: system-node-critical
+      tolerations:
+      - key: node.kubernetes.io/disk-pressure
+        operator: "Exists"
+        effect: "NoExecute"
+      - key: node.kubernetes.io/memory-pressure
+        operator: "Exists"
+        effect: "NoExecute"
+      - key: node.kubernetes.io/out-of-disk
+        operator: "Exists"
+        effect: "NoExecute"
+      serviceAccountName: ws-daemon
+      hostPID: true
+      volumes:
+      - hostPath:
+          path: {{ $comp.hostWorkspaceArea }}
+          type: DirectoryOrCreate
+        name: working-area
+      - name: tls-certs
+        secret:
+          secretName: ws-daemon-tls
+      - name: config
+        configMap:
+          name: {{ template "gitpod.comp.configMap" $this }}
+      - name: containerd-socket
+        hostPath:
+          path: {{ $comp.containerRuntime.containerd.socket }}
+          type: Socket
+      {{- range $idx, $pth := $comp.containerRuntime.nodeRoots }}
+      - name: node-fs{{ $idx }}
+        hostPath:
+          path: {{ $pth }}
+          type: Directory
+      {{- end }}
+      - name: node-mounts
+        hostPath:
+          path: /proc/mounts
+          type: File
+      - name: node-cgroups
+        hostPath:
+          path: {{ $comp.cgroupsRoot | default "/sys/fs/cgroup" }}
+          type: Directory
+      - name: node-hosts
+        hostPath:
+          path: {{ $comp.nodeHosts | default "/etc/hosts" }}
+          type: File
+      {{- if $comp.userNamespaces.shiftfsModuleLoader.enabled }}
+      - name: node-linux-src
+        hostPath: 
+          path: /usr/src
+          type: Directory
+      {{- end }}
+      {{- if $comp.userNamespaces.seccompProfileInstaller.enabled }}
+      - name: hostseccomp
+        hostPath:
+          path: /var/lib/kubelet/seccomp
+      {{- end }}
+{{- if $comp.volumes }}
+{{ toYaml $comp.volumes | indent 6 }}
+{{- end }}
+{{- if (or $comp.userNamespaces.shiftfsModuleLoader.enabled $comp.userNamespaces.seccompProfileInstaller.enabled) }}
+      initContainers:
+{{- end }}
+{{- if $comp.userNamespaces.shiftfsModuleLoader.enabled }}
+      - name: shiftfs-module-loader
+        volumeMounts:
+        - mountPath: /usr/src_node
+          name: node-linux-src
+          readOnly: true
+        image: {{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" $comp.userNamespaces.shiftfsModuleLoader) }}
+        securityContext:
+          privileged: true
+{{- end }}
+{{- if $comp.userNamespaces.seccompProfileInstaller.enabled }}
+      - name: seccomp-profile-installer
+        volumeMounts:
+        - mountPath: /mnt/dst
+          name: hostseccomp
+        image: {{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" $comp.userNamespaces.seccompProfileInstaller) }}
+        securityContext:
+          privileged: true
+        command: ["/bin/sh", "-c", "cp -f /installer/workspace_default.json /mnt/dst/workspace_default_{{ $gp.version }}.json"]
+{{- end }}
+      containers:
+      - name: ws-daemon
+        volumeMounts:
+        - mountPath: /mnt/workingarea
+          name: working-area
+          mountPropagation: Bidirectional
+        - mountPath: /config
+          name: config
+        - mountPath: /mnt/containerd.sock
+          name: containerd-socket
+        {{- range $idx, $pth := $comp.containerRuntime.nodeRoots }}
+        - mountPath: /mnt/node{{ $idx }}
+          name: node-fs{{ $idx }}
+        {{- end }}
+        - mountPath: /mnt/mounts
+          name: node-mounts
+          readOnly: true
+          mountPropagation: HostToContainer
+        - mountPath: /mnt/node-cgroups
+          name: node-cgroups
+          mountPropagation: HostToContainer
+        - mountPath: /mnt/hosts
+          name: node-hosts
+        - mountPath: /certs
+          name: tls-certs
+{{- if $comp.volumeMounts }}
+{{ toYaml $comp.volumeMounts | indent 8 }}
+{{- end }}
+        args: ["run", "-v", "--config", "/config/config.json"]
+        image: {{ template "gitpod.comp.imageFull" $this }}
+{{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
+{{ include "gitpod.container.resources" $this | indent 8 }}
+{{ include "gitpod.container.defaultEnv" $this | indent 8 }}
+{{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+        - name: NODENAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        ports:
+        - name: rpc
+          containerPort: {{ $comp.servicePort }}
+          hostPort: {{ $comp.servicePort }}
+        - name: registry-proxy
+          containerPort: {{ $comp.registryProxyPort }}
+          hostPort: {{ $comp.registryProxyPort }}
+        - name: metrics
+          containerPort: 9500
+        readinessProbe:
+          httpGet:
+            port: 9999
+            path: "/"
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        securityContext:
+          privileged: true
+          procMount: unmasked
+{{ toYaml .Values.defaults | indent 6 }}
+{{ end }}

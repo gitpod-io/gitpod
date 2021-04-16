@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -52,6 +52,8 @@ func (m *Manager) createWorkspacePod(startContext *startWorkspaceContext) (*core
 		typeSpecificTpl, err = getWorkspacePodTemplate(m.Config.WorkspacePodTemplate.PrebuildPath)
 	case api.WorkspaceType_PROBE:
 		typeSpecificTpl, err = getWorkspacePodTemplate(m.Config.WorkspacePodTemplate.ProbePath)
+	case api.WorkspaceType_GHOST:
+		typeSpecificTpl, err = getWorkspacePodTemplate(m.Config.WorkspacePodTemplate.GhostPath)
 	}
 	if err != nil {
 		return nil, xerrors.Errorf("cannot read type-specific pod template - this is a configuration problem: %w", err)
@@ -265,23 +267,29 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		prefix = "prebuild"
 	case api.WorkspaceType_PROBE:
 		prefix = "probe"
+	case api.WorkspaceType_GHOST:
+		prefix = "ghost"
 	default:
 		prefix = "ws"
 	}
 
 	annotations := map[string]string{
-		"prometheus.io/scrape":         "true",
-		"prometheus.io/path":           "/metrics",
-		"prometheus.io/port":           strconv.Itoa(int(startContext.TheiaPort)),
-		workspaceIDAnnotation:          req.Id,
-		servicePrefixAnnotation:        getServicePrefix(req),
-		workspaceURLAnnotation:         startContext.WorkspaceURL,
-		workspaceInitializerAnnotation: initializerConfig,
-		workspaceNeverReadyAnnotation:  "true",
-		workspaceAdmissionAnnotation:   admissionLevel,
-		workspaceImageSpecAnnotation:   imageSpec,
-		ownerTokenAnnotation:           startContext.OwnerToken,
-		wsk8s.TraceIDAnnotation:        startContext.TraceID,
+		"prometheus.io/scrape":               "true",
+		"prometheus.io/path":                 "/metrics",
+		"prometheus.io/port":                 strconv.Itoa(int(startContext.IDEPort)),
+		workspaceIDAnnotation:                req.Id,
+		servicePrefixAnnotation:              getServicePrefix(req),
+		workspaceURLAnnotation:               startContext.WorkspaceURL,
+		workspaceInitializerAnnotation:       initializerConfig,
+		workspaceNeverReadyAnnotation:        "true",
+		workspaceAdmissionAnnotation:         admissionLevel,
+		workspaceImageSpecAnnotation:         imageSpec,
+		ownerTokenAnnotation:                 startContext.OwnerToken,
+		wsk8s.TraceIDAnnotation:              startContext.TraceID,
+		wsk8s.RequiredNodeServicesAnnotation: "ws-daemon",
+		// TODO(cw): once userns workspaces become standard, set this to m.Config.SeccompProfile.
+		//           Until then, the custom seccomp profile isn't suitable for workspaces.
+		"seccomp.security.alpha.kubernetes.io/pod": "runtime/default",
 	}
 	if req.Spec.Timeout != "" {
 		_, err := time.ParseDuration(req.Spec.Timeout)
@@ -315,10 +323,6 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 										Key:      theiaVersionLabel,
 										Operator: corev1.NodeSelectorOpExists,
 									},
-									{
-										Key:      wssyncLabel,
-										Operator: corev1.NodeSelectorOpExists,
-									},
 								},
 							},
 						},
@@ -332,6 +336,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			Containers: []corev1.Container{
 				*workspaceContainer,
 			},
+			RestartPolicy: corev1.RestartPolicyNever,
 			Volumes: []corev1.Volume{
 				theiaVolume,
 				workspaceVolume,
@@ -374,51 +379,66 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			pod.Spec.ServiceAccountName = "workspace-privileged"
 		case api.WorkspaceFeatureFlag_USER_NAMESPACE:
 			// Beware: this allows setuid binaries in the workspace - supervisor needs to set no_new_privs now.
+			// However: the whole user workload now runs in a user namespace, which makes this acceptable.
 			workspaceContainer.SecurityContext.AllowPrivilegeEscalation = &boolTrue
+			pod.Annotations[withUsernamespaceAnnotation] = "true"
 			// TODO(cw): post Kubernetes 1.19 use GA form for settings those profiles
 			pod.Annotations["container.apparmor.security.beta.kubernetes.io/workspace"] = "unconfined"
-			pod.Annotations[withUsernamespaceAnnotation] = "true"
+			// We're using a custom seccomp profile for user namespaces to allow clone, mount and chroot.
+			// Those syscalls don't make much sense in a non-userns setting, where we default to runtime/default using the PodSecurityPolicy.
+			pod.Annotations["seccomp.security.alpha.kubernetes.io/pod"] = m.Config.SeccompProfile
 			// Mounting /dev/net/tun should be fine security-wise, because:
 			//   - the TAP driver documentation says so (see https://www.kernel.org/doc/Documentation/networking/tuntap.txt)
 			//   - systemd's nspawn does the same thing (if it's good enough for them, it's good enough for us)
-			devType := corev1.HostPathFile
-			pod.Spec.Volumes = append(pod.Spec.Volumes, corev1.Volume{
-				Name: "dev-net-tun",
-				VolumeSource: corev1.VolumeSource{
-					HostPath: &corev1.HostPathVolumeSource{
-						Path: "/dev/net/tun",
-						Type: &devType,
+			var (
+				devType          = corev1.HostPathFile
+				hostPathOrCreate = corev1.HostPathDirectoryOrCreate
+				daemonVolumeName = "daemon-mount"
+				mountPropagation = corev1.MountPropagationHostToContainer
+			)
+			pod.Spec.Volumes = append(pod.Spec.Volumes,
+				corev1.Volume{
+					Name: "dev-net-tun",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/dev/net/tun",
+							Type: &devType,
+						},
 					},
 				},
-			})
+				corev1.Volume{
+					Name: daemonVolumeName,
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: filepath.Join(m.Config.WorkspaceHostPath, startContext.Request.Id+"-daemon"),
+							Type: &hostPathOrCreate,
+						},
+					},
+				},
+			)
 			for i, c := range pod.Spec.Containers {
 				if c.Name != "workspace" {
 					continue
 				}
 
-				pod.Spec.Containers[i].VolumeMounts = append(c.VolumeMounts, corev1.VolumeMount{
-					MountPath: "/dev/net/tun",
-					Name:      "dev-net-tun",
-				})
+				pod.Spec.Containers[i].VolumeMounts = append(c.VolumeMounts,
+					corev1.VolumeMount{
+						MountPath: "/dev/net/tun",
+						Name:      "dev-net-tun",
+					},
+					corev1.VolumeMount{
+						MountPath:        "/.workspace",
+						Name:             daemonVolumeName,
+						MountPropagation: &mountPropagation,
+					},
+				)
+				pod.Spec.Containers[i].Command = []string{pod.Spec.Containers[i].Command[0], "ring0"}
 				break
 			}
 		case api.WorkspaceFeatureFlag_FULL_WORKSPACE_BACKUP:
 			removeVolume(&pod, workspaceVolumeName)
 			pod.Labels[fullWorkspaceBackupAnnotation] = "true"
 			pod.Annotations[fullWorkspaceBackupAnnotation] = "true"
-			for i, c := range pod.Spec.Containers {
-				if c.Name != "workspace" {
-					continue
-				}
-
-				pod.Spec.Containers[i].Lifecycle = &corev1.Lifecycle{
-					PreStop: &corev1.Handler{
-						Exec: &corev1.ExecAction{
-							Command: []string{"/.supervisor/supervisor", "container", "backup"},
-						},
-					},
-				}
-			}
 			fallthrough
 		case api.WorkspaceFeatureFlag_REGISTRY_FACADE:
 			removeVolume(&pod, theiaVolumeName)
@@ -427,22 +447,44 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			for i, c := range pod.Spec.Containers {
 				if c.Name == "workspace" {
 					pod.Spec.Containers[i].Image = image
-					pod.Spec.Containers[i].Command = []string{"/.supervisor/supervisor", "run"}
+					pod.Spec.Containers[i].Command = []string{"/.supervisor/supervisor", pod.Spec.Containers[i].Command[1]}
 				}
 			}
 
-			nst := pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms
-			for i, term := range nst {
+			onst := pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms
+			nst := make([]corev1.NodeSelectorTerm, 0, len(onst))
+			for _, term := range onst {
+				var notEmpty bool
 				nt := term.MatchExpressions[:0]
 				for _, expr := range term.MatchExpressions {
 					if strings.HasPrefix(expr.Key, "gitpod.io/theia.") {
 						continue
 					}
 					nt = append(nt, expr)
+					notEmpty = true
 				}
-				nst[i].MatchExpressions = nt
+				if !notEmpty {
+					continue
+				}
+				term.MatchExpressions = nt
+				nst = append(nst, term)
 			}
-			pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms = nst
+
+			if len(nst) == 0 {
+				// if there wasn't a template that added additional terms here we'd be left with an empty term
+				// which would prevent this pod from ever being scheduled.
+				pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution = nil
+			} else {
+				pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution.NodeSelectorTerms = nst
+			}
+			if pod.Spec.Affinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution == nil && len(pod.Spec.Affinity.NodeAffinity.PreferredDuringSchedulingIgnoredDuringExecution) == 0 {
+				pod.Spec.Affinity.NodeAffinity = nil
+			}
+			if pod.Spec.Affinity.NodeAffinity == nil && pod.Spec.Affinity.PodAffinity == nil && pod.Spec.Affinity.PodAntiAffinity == nil {
+				pod.Spec.Affinity = nil
+			}
+
+			pod.Annotations[wsk8s.RequiredNodeServicesAnnotation] += ",registry-facade"
 
 		case api.WorkspaceFeatureFlag_FIXED_RESOURCES:
 			var cpuLimit string
@@ -489,15 +531,15 @@ func removeVolume(pod *corev1.Pod, name string) {
 func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) (*corev1.Container, error) {
 	limits, err := m.Config.Container.Workspace.Limits.ResourceList()
 	if err != nil {
-		return nil, xerrors.Errorf("cannot parse Workspace container limits: %w", err)
+		return nil, xerrors.Errorf("cannot parse workspace container limits: %w", err)
 	}
 	requests, err := m.Config.Container.Workspace.Requests.ResourceList()
 	if err != nil {
-		return nil, xerrors.Errorf("cannot parse Workspace container requests: %w", err)
+		return nil, xerrors.Errorf("cannot parse workspace container requests: %w", err)
 	}
 	env, err := m.createWorkspaceEnvironment(startContext)
 	if err != nil {
-		return nil, xerrors.Errorf("cannot create Workspace env: %w", err)
+		return nil, xerrors.Errorf("cannot create workspace env: %w", err)
 	}
 	sec, err := m.createDefaultSecurityContext()
 	if err != nil {
@@ -505,13 +547,38 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 	}
 	mountPropagation := corev1.MountPropagationHostToContainer
 
+	var (
+		command        = []string{"/theia/supervisor", "run"}
+		readinessProbe = &corev1.Probe{
+			Handler: corev1.Handler{
+				HTTPGet: &corev1.HTTPGetAction{
+					Path:   "/_supervisor/v1/status/content/wait/true",
+					Port:   intstr.FromInt((int)(startContext.SupervisorPort)),
+					Scheme: corev1.URISchemeHTTP,
+				},
+			},
+			// We make the readiness probe more difficult to fail than the liveness probe.
+			// This way, if the workspace really has a problem it will be shut down by Kubernetes rather than end up in
+			// some undefined state.
+			FailureThreshold: 600,
+			PeriodSeconds:    1,
+			SuccessThreshold: 1,
+			TimeoutSeconds:   1,
+		}
+	)
+
+	if startContext.Request.Type == api.WorkspaceType_GHOST {
+		command[1] = "ghost"
+		readinessProbe = nil
+	}
+
 	return &corev1.Container{
 		Name:            "workspace",
 		Image:           startContext.Request.Spec.WorkspaceImage,
 		SecurityContext: sec,
 		ImagePullPolicy: corev1.PullAlways,
 		Ports: []corev1.ContainerPort{
-			{ContainerPort: startContext.TheiaPort},
+			{ContainerPort: startContext.IDEPort},
 		},
 		Resources: corev1.ResourceRequirements{
 			Limits:   limits,
@@ -530,24 +597,10 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 				ReadOnly:  true,
 			},
 		},
-		ReadinessProbe: &corev1.Probe{
-			Handler: corev1.Handler{
-				HTTPGet: &corev1.HTTPGetAction{
-					Path:   "/_supervisor/v1/status/content/wait/true",
-					Port:   intstr.FromInt((int)(startContext.TheiaSupervisorPort)),
-					Scheme: corev1.URISchemeHTTP,
-				},
-			},
-			// We make the readiness probe more difficult to fail than the liveness probe.
-			// This way, if the workspace really has a problem it will be shut down by Kubernetes rather than end up in
-			// some undefined state.
-			FailureThreshold: 600,
-			PeriodSeconds:    1,
-			SuccessThreshold: 1,
-			TimeoutSeconds:   1,
-		},
-		Env:     env,
-		Command: []string{"/theia/supervisor", "run"},
+		ReadinessProbe:           readinessProbe,
+		Env:                      env,
+		Command:                  command,
+		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
 	}, nil
 }
 
@@ -564,13 +617,14 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	result = append(result, corev1.EnvVar{Name: "GITPOD_CLI_APITOKEN", Value: startContext.CLIAPIKey})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_WORKSPACE_ID", Value: startContext.Request.Metadata.MetaId})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_INSTANCE_ID", Value: startContext.Request.Id})
-	result = append(result, corev1.EnvVar{Name: "GITPOD_THEIA_PORT", Value: strconv.Itoa(int(startContext.TheiaPort))})
+	result = append(result, corev1.EnvVar{Name: "GITPOD_THEIA_PORT", Value: strconv.Itoa(int(startContext.IDEPort))})
 	result = append(result, corev1.EnvVar{Name: "THEIA_WORKSPACE_ROOT", Value: getWorkspaceRelativePath(spec.WorkspaceLocation)})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_HOST", Value: m.Config.GitpodHostURL})
 	result = append(result, corev1.EnvVar{Name: "GITPOD_WORKSPACE_URL", Value: startContext.WorkspaceURL})
 	result = append(result, corev1.EnvVar{Name: "THEIA_SUPERVISOR_TOKEN", Value: m.Config.TheiaSupervisorToken})
-	result = append(result, corev1.EnvVar{Name: "THEIA_SUPERVISOR_ENDPOINT", Value: fmt.Sprintf(":%d", startContext.TheiaSupervisorPort)})
+	result = append(result, corev1.EnvVar{Name: "THEIA_SUPERVISOR_ENDPOINT", Value: fmt.Sprintf(":%d", startContext.SupervisorPort)})
 	result = append(result, corev1.EnvVar{Name: "THEIA_WEBVIEW_EXTERNAL_ENDPOINT", Value: "webview-{{hostname}}"})
+	result = append(result, corev1.EnvVar{Name: "THEIA_MINI_BROWSER_HOST_PATTERN", Value: "browser-{{hostname}}"})
 
 	// We don't require that Git be configured for workspaces
 	if spec.Git != nil {
@@ -790,14 +844,14 @@ func (m *Manager) newStartWorkspaceContext(ctx context.Context, req *api.StartWo
 			headlessLabel:          fmt.Sprintf("%v", headless),
 			markerLabel:            "true",
 		},
-		CLIAPIKey:           cliAPIKey,
-		OwnerToken:          ownerToken,
-		Request:             req,
-		TheiaPort:           23000,
-		TheiaSupervisorPort: 22999,
-		WorkspaceURL:        workspaceURL,
-		TraceID:             traceID,
-		Headless:            headless,
+		CLIAPIKey:      cliAPIKey,
+		OwnerToken:     ownerToken,
+		Request:        req,
+		IDEPort:        23000,
+		SupervisorPort: 22999,
+		WorkspaceURL:   workspaceURL,
+		TraceID:        traceID,
+		Headless:       headless,
 	}, nil
 }
 

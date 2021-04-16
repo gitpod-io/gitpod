@@ -1,10 +1,10 @@
-# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
 ARG EXCLUDE_SOURCES=""
 
-FROM nginx:1.13 as source_excluder
+FROM nginx:stable-alpine as source_excluder
 ARG EXCLUDE_SOURCES
 
 COPY components-dashboard--app/node_modules/@gitpod/dashboard/dist /www/data/dashboard
@@ -13,7 +13,7 @@ COPY components-dashboard--app/node_modules/@gitpod/dashboard/public/libs /www/d
 RUN if [ ! -z "$EXCLUDE_SOURCES" ]; then rm /www/data/dashboard/*.map; fi
 
 
-FROM nginx:1.13
+FROM nginx:stable-alpine
 
 # Remove default stuff
 RUN rm -Rf /etc/nginx/conf.d \

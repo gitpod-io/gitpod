@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -9,27 +9,24 @@ import { ExternalUriService } from '@theia/core/lib/browser/external-uri-service
 import URI from '@theia/core/lib/common/uri';
 import { GitpodPortsService } from './ports/gitpod-ports-service';
 import { parseLocalhost } from './gitpod-parse-localhost';
+import { MaybePromise } from '@theia/core/lib/common/types';
 
 @injectable()
 export class GitpodExternalUriService extends ExternalUriService {
     @inject(GitpodPortsService) protected readonly portsService: GitpodPortsService;
 
-    async resolve(uri: URI): Promise<URI> {
+    resolve(uri: URI): MaybePromise<URI> {
         const localhost = this.parseLocalhost(uri);
         if (!localhost) {
             return uri;
         }
-
-        // Actually expose the port
-        let { config } = await this.portsService.findPortConfig(localhost.port);
-        if (!config) {
-            await this.portsService.openPort({
-                port: localhost.port,
-                onOpen: 'ignore'
-            }, 'private');
+        const maybePublicUrl = this.portsService.exposePort({
+            port: localhost.port
+        });
+        if (typeof maybePublicUrl === "string") {
+            return new URI(maybePublicUrl);
         }
-
-        return this.toRemoteUrl(uri, localhost);
+        return maybePublicUrl.then(publicUrl => new URI(publicUrl));
     }
 
     protected toRemoteHost(localhost: { address: string, port: number }): string {

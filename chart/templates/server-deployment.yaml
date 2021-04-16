@@ -1,4 +1,4 @@
-# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 {{ define "ws-manager-list" -}}
@@ -123,6 +123,8 @@ spec:
           value: "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) }}"
         - name: CODE_IMAGE_REPO
           value: "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) }}"
+        - name: EXPERIMENTAL_FEATURE_FLAGS
+          value: {{ .Values.previewFeatureFlags | toJson | quote }}
         - name: WORKSPACE_DEFAULT_IMAGE
           value: "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.defaultImage) }}"
         - name: IDE_IMAGE_ALIASES
@@ -145,7 +147,7 @@ spec:
     {{- end }}
         - name: SESSION_SECRET
           value: {{ $comp.sessionSecret | quote }}
-    {{- if eq .Values.components.wsSync.remoteStorage.kind "minio" }}
+    {{- if eq .Values.components.wsDaemon.remoteStorage.kind "minio" }}
         - name: GITPOD_STORAGE_CLIENT
           value: minio
         - name: MINIO_END_POINT
@@ -195,13 +197,17 @@ spec:
             secretKeyRef:
               name: server-proxy-apikey
               key: apikey
-{{- if (or .Values.components.wsSync.remoteStorage.gcloud $comp.storage) }}
+{{- if (or .Values.components.wsDaemon.remoteStorage.gcloud $comp.storage) }}
         - name: GCLOUD_PROJECT_ID
-          value: {{ .Values.components.wsSync.remoteStorage.gcloud.projectId }}
+          value: {{ .Values.components.wsDaemon.remoteStorage.gcloud.projectId }}
         - name: GCLOUD_REGION
-          value: {{ .Values.components.wsSync.remoteStorage.gcloud.region }}
+          value: {{ .Values.components.wsDaemon.remoteStorage.gcloud.region }}
         - name: GCLOUD_CREDENTIALS_FILE
-          value: {{ base .Values.components.wsSync.remoteStorage.gcloud.credentialsFile }}
+{{- if .Values.components.wsDaemon.remoteStorage.gcloud.credentialsFile }}
+          value: {{ base .Values.components.wsDaemon.remoteStorage.gcloud.credentialsFile }}
+{{- else }}
+          value: key.json
+{{- end }}
 {{- end }}
         - name: GITPOD_GARBAGE_COLLECTION_DISABLED
           value: {{ $comp.garbageCollection.disabled | default "false" | quote }}

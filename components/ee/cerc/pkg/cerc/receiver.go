@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the Gitpod Enterprise Source Code License,
 // See License.enterprise.txt in the project root folder.
 
@@ -49,6 +49,9 @@ func (r *Receiver) ServeHTTP(resp http.ResponseWriter, req *http.Request) {
 
 func defaultResponder(url, tkn string) error {
 	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		return err
+	}
 	req.SetBasicAuth("Bearer", tkn)
 
 	client := http.Client{Timeout: 5 * time.Second}

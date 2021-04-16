@@ -1,34 +1,42 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { User, WorkspaceInfo, WorkspaceCreationResult, UserMessage, WorkspaceInstanceUser,
+import {
+    User, WorkspaceInfo, WorkspaceCreationResult, UserMessage, WorkspaceInstanceUser,
     WhitelistedRepository, WorkspaceImageBuild, AuthProviderInfo, Branding, CreateWorkspaceMode,
-    Token, UserEnvVarValue, ResolvePluginsParams, PreparePluginUploadParams,
-    ResolvedPlugins, Configuration, InstallPluginsParams, UninstallPluginParams, UserInfo, GitpodTokenType, GitpodToken, AuthProviderEntry } from './protocol';
+    Token, UserEnvVarValue, ResolvePluginsParams, PreparePluginUploadParams, Terms,
+    ResolvedPlugins, Configuration, InstallPluginsParams, UninstallPluginParams, UserInfo, GitpodTokenType, GitpodToken, AuthProviderEntry
+} from './protocol';
 import { JsonRpcProxy, JsonRpcServer } from './messaging/proxy-factory';
-import { injectable, inject } from 'inversify';
-import { Disposable } from 'vscode-jsonrpc';
+import { Disposable, CancellationTokenSource } from 'vscode-jsonrpc';
 import { HeadlessLogEvent } from './headless-workspace-log';
-import { WorkspaceInstance, WorkspaceInstancePort } from './workspace-instance';
+import { WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstancePhase } from './workspace-instance';
 import { AdminServer } from './admin-protocol';
 import { GitpodHostUrl } from './util/gitpod-host-url';
 import { WebSocketConnectionProvider } from './messaging/browser/connection';
 import { PermissionName } from './permission';
 import { LicenseService } from './license-protocol';
+import { Emitter } from './util/event';
 
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
     onWorkspaceImageBuildLogs: WorkspaceImageBuild.LogCallback;
     onHeadlessWorkspaceLogs(evt: HeadlessLogEvent): void;
+
+    //#region propagating reconnection to iframe
+    notifyDidOpenConnection(): void;
+    notifyDidCloseConnection(): void;
+    //#endregion
 }
 
 export const GitpodServer = Symbol('GitpodServer');
 export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, LicenseService {
     // User related API
     getLoggedInUser(): Promise<User>;
+    getTerms(): Promise<Terms>;
     updateLoggedInUser(user: Partial<User>): Promise<User>;
     getAuthProviders(): Promise<AuthProviderInfo[]>;
     getOwnAuthProviders(): Promise<AuthProviderEntry[]>;
@@ -37,6 +45,9 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getBranding(): Promise<Branding>;
     getConfiguration(): Promise<Configuration>;
     getToken(query: GitpodServer.GetTokenSearchOptions): Promise<Token | undefined>;
+    /**
+     * @deprecated
+     */
     getPortAuthenticationToken(workspaceId: string): Promise<Token>;
     deleteAccount(): Promise<void>;
     getClientRegion(): Promise<string | undefined>;
@@ -66,8 +77,8 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     sendHeartBeat(options: GitpodServer.SendHeartBeatOptions): Promise<void>;
     watchWorkspaceImageBuildLogs(workspaceId: string): Promise<void>;
     watchHeadlessWorkspaceLogs(workspaceId: string): Promise<void>;
-    isPrebuildAvailable(pwsid: string): Promise<boolean>;
-    
+    isPrebuildDone(pwsid: string): Promise<boolean>;
+
     // Workspace timeout
     setWorkspaceTimeout(workspaceId: string, duration: WorkspaceTimeoutDuration): Promise<SetWorkspaceTimeoutResult>;
     getWorkspaceTimeout(workspaceId: string): Promise<GetWorkspaceTimeoutResult>;
@@ -135,13 +146,13 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
 
 export const WorkspaceTimeoutValues = ["30m", "60m", "180m"] as const;
 
-export const createServiceMock = function<C extends GitpodClient, S extends GitpodServer>(methods: Partial<JsonRpcProxy<S>>): GitpodServiceImpl<C, S> {
+export const createServiceMock = function <C extends GitpodClient, S extends GitpodServer>(methods: Partial<JsonRpcProxy<S>>): GitpodServiceImpl<C, S> {
     return new GitpodServiceImpl<C, S>(createServerMock(methods));
 }
 
-export const createServerMock = function<C extends GitpodClient, S extends GitpodServer>(methods: Partial<JsonRpcProxy<S>>): JsonRpcProxy<S> {
-    methods.setClient = methods.setClient || (() => {});
-    methods.dispose = methods.dispose || (() => {});
+export const createServerMock = function <C extends GitpodClient, S extends GitpodServer>(methods: Partial<JsonRpcProxy<S>>): JsonRpcProxy<S> {
+    methods.setClient = methods.setClient || (() => { });
+    methods.dispose = methods.dispose || (() => { });
     return new Proxy<JsonRpcProxy<S>>(methods as any as JsonRpcProxy<S>, {
         get: (target: S, property: keyof S) => {
             const result = target[property];
@@ -223,7 +234,7 @@ export namespace GitpodServer {
     export interface GenerateNewGitpodTokenOptions {
         name?: string
         type: GitpodTokenType
-        scopes?: string[] 
+        scopes?: string[]
     }
 }
 
@@ -233,7 +244,6 @@ export const GitpodServerProxy = Symbol('GitpodServerProxy');
 export type GitpodServerProxy<S extends GitpodServer> = JsonRpcProxy<S>;
 
 export class GitpodCompositeClient<Client extends GitpodClient> implements GitpodClient {
-
     protected clients: Partial<Client>[] = [];
 
     public registerClient(client: Partial<Client>): Disposable {
@@ -281,22 +291,166 @@ export class GitpodCompositeClient<Client extends GitpodClient> implements Gitpo
             }
         }
     }
+
+    notifyDidOpenConnection(): void {
+        for (const client of this.clients) {
+            if (client.notifyDidOpenConnection) {
+                try {
+                    client.notifyDidOpenConnection();
+                } catch (error) {
+                    console.error(error)
+                }
+            }
+        }
+    }
+
+    notifyDidCloseConnection(): void {
+        for (const client of this.clients) {
+            if (client.notifyDidCloseConnection) {
+                try {
+                    client.notifyDidCloseConnection();
+                } catch (error) {
+                    console.error(error)
+                }
+            }
+        }
+    }
+
 }
 
-export const GitpodService = Symbol('GitpodService');
-export type GitpodService = GitpodServiceImpl<GitpodClient, GitpodServer>
+export type GitpodService = GitpodServiceImpl<GitpodClient, GitpodServer>;
 
-@injectable()
+const hasWindow = (typeof window !== 'undefined');
+const phasesOrder: Record<WorkspaceInstancePhase, number> = {
+    unknown: 0,
+    preparing: 1,
+    pending: 2,
+    creating: 3,
+    initializing: 4,
+    running: 5,
+    interrupted: 6,
+    stopping: 7,
+    stopped: 8
+};
+export class WorkspaceInstanceUpdateListener {
+    private readonly onDidChangeEmitter = new Emitter<void>();
+    readonly onDidChange = this.onDidChangeEmitter.event;
+
+    private source: 'sync' | 'update' = 'sync';
+
+    get info(): WorkspaceInfo {
+        return this._info;
+    }
+
+    constructor(
+        private readonly service: GitpodService,
+        private _info: WorkspaceInfo
+    ) {
+        service.registerClient({
+            onInstanceUpdate: instance => {
+                if (this.isOutOfOrder(instance)) {
+                    return;
+                }
+                this.cancelSync();
+                this._info.latestInstance = instance;
+                this.source = 'update';
+                this.onDidChangeEmitter.fire(undefined);
+            },
+            notifyDidOpenConnection: () => {
+                this.sync();
+            }
+        });
+        if (hasWindow) {
+            // learn about page lifecycle here: https://developers.google.com/web/updates/2018/07/page-lifecycle-api
+            window.document.addEventListener('visibilitychange', async () => {
+                if (window.document.visibilityState === 'visible') {
+                    this.sync();
+                }
+            });
+            window.addEventListener('pageshow', e => {
+                if (e.persisted) {
+                    this.sync();
+                }
+            });
+        }
+    }
+
+    private syncQueue = Promise.resolve();
+    private syncTokenSource: CancellationTokenSource | undefined;
+    /**
+     * Only one sync can be performed at the same time.
+     * Any new sync request or instance update cancels all previously scheduled sync requests.
+     */
+    private sync(): void {
+        this.cancelSync();
+        this.syncTokenSource = new CancellationTokenSource();
+        const token = this.syncTokenSource.token;
+        this.syncQueue = this.syncQueue.then(async () => {
+            if (token.isCancellationRequested) {
+                return;
+            }
+            try {
+                const info = await this.service.server.getWorkspace(this._info.workspace.id);
+                if (token.isCancellationRequested) {
+                    return;
+                }
+                this._info = info;
+                this.source = 'sync';
+                this.onDidChangeEmitter.fire(undefined);
+            } catch (e) {
+                console.error('failed to sync workspace instance:', e)
+            }
+        })
+    }
+    private cancelSync(): void {
+        if (this.syncTokenSource) {
+            this.syncTokenSource.cancel();
+            this.syncTokenSource = undefined;
+        }
+    }
+
+    /**
+     * If sync seen more recent update then ignore all updates with previous phases.
+     * Within the same phase still the race can occur but which should be eventually consistent.
+     */
+    private isOutOfOrder(instance: WorkspaceInstance): boolean {
+        if (instance.workspaceId !== this._info.workspace.id) {
+            return true;
+        }
+        if (this.source === 'update') {
+            return false;
+        }
+        if (instance.id !== this.info.latestInstance?.id) {
+            return false;
+        }
+        return phasesOrder[instance.status.phase] < phasesOrder[this.info.latestInstance.status.phase];
+    }
+
+}
+
 export class GitpodServiceImpl<Client extends GitpodClient, Server extends GitpodServer> {
 
-    protected compositeClient = new GitpodCompositeClient<Client>();
+    private readonly compositeClient = new GitpodCompositeClient<Client>();
 
-    constructor(@inject(GitpodServer) public readonly server: JsonRpcProxy<Server>) {
+    constructor(public readonly server: JsonRpcProxy<Server>) {
         server.setClient(this.compositeClient);
+        server.onDidOpenConnection(() => this.compositeClient.notifyDidOpenConnection());
+        server.onDidCloseConnection(() => this.compositeClient.notifyDidCloseConnection());
     }
 
     public registerClient(client: Partial<Client>): Disposable {
         return this.compositeClient.registerClient(client);
+    }
+
+    private readonly instanceListeners = new Map<string, Promise<WorkspaceInstanceUpdateListener>>();
+    listenToInstance(workspaceId: string): Promise<WorkspaceInstanceUpdateListener> {
+        const listener = this.instanceListeners.get(workspaceId) ||
+            (async () => {
+                const info = await this.server.getWorkspace(workspaceId);
+                return new WorkspaceInstanceUpdateListener(this, info);
+            })();
+        this.instanceListeners.set(workspaceId, listener);
+        return listener;
     }
 }
 

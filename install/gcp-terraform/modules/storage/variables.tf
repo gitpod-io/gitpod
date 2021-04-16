@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the MIT License. See License-MIT.txt in the project root for license information.
  */
 
@@ -8,7 +8,16 @@ variable "project" {
   type = string
 }
 
+variable "location" {
+  type    = string
+  default = "EU"
+}
+
 variable "region" {
+  type = string
+}
+
+variable "name" {
   type = string
 }
 
@@ -21,19 +30,7 @@ variable "gitpod" {
   }
 }
 
-variable "kubernetes" {
-  type = object({
-    enabled   = bool
-    namespace = string
-  })
-  default = {
-    enabled   = true
-    namespace = "default"
-  }
-}
-
-variable "requirements" {
-  type = object({
-    kubernetes = string
-  })
+variable "minio_access_key" {
+  type    = string
+  default = "minio"
 }

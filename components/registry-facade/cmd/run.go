@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -16,7 +16,6 @@ import (
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
-	"github.com/gitpod-io/gitpod/registry-facade/pkg/blobserve"
 	"github.com/gitpod-io/gitpod/registry-facade/pkg/registry"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -56,43 +55,48 @@ var runCmd = &cobra.Command{
 			log.WithField("fn", authCfg).Info("using authentication for backing registries")
 		}
 
+		promreg := prometheus.NewRegistry()
+		gpreg := prometheus.WrapRegistererWithPrefix("gitpod_registry_facade_", promreg)
+		rtt, err := registry.NewMeasuringRegistryRoundTripper(http.DefaultTransport, prometheus.WrapRegistererWithPrefix("downstream_", gpreg))
+		if err != nil {
+			log.WithError(err).Fatal("cannot registry metrics")
+		}
+
 		resolverProvider := func() remotes.Resolver {
 			var resolverOpts docker.ResolverOptions
 			if dockerCfg != nil {
 				resolverOpts.Hosts = docker.ConfigureDefaultRegistries(
 					docker.WithAuthorizer(authorizerFromDockerConfig(dockerCfg)),
+					docker.WithClient(&http.Client{
+						Transport: rtt,
+					}),
 				)
 			}
 
 			return docker.NewResolver(resolverOpts)
 		}
 
-		if cfg.Registry != nil {
-			reg, err := registry.NewRegistry(*cfg.Registry, resolverProvider)
-			if err != nil {
-				log.WithError(err).Fatal("cannot create registry")
-			}
-			go reg.MustServe()
+		registryDoneChan := make(chan struct{})
+		reg, err := registry.NewRegistry(cfg.Registry, resolverProvider, prometheus.WrapRegistererWithPrefix("registry_", gpreg))
+		if err != nil {
+			log.WithError(err).Fatal("cannot create registry")
 		}
-		if cfg.BlobServe != nil {
-			srv, err := blobserve.NewServer(*cfg.BlobServe, resolverProvider)
-			if err != nil {
-				log.WithError(err).Fatal("cannot create blob server")
-			}
-			go srv.MustServe()
-		}
+		go func() {
+			defer close(registryDoneChan)
+			reg.MustServe()
+		}()
+
 		if cfg.PProfAddr != "" {
 			go pprof.Serve(cfg.PProfAddr)
 		}
 		if cfg.PrometheusAddr != "" {
-			reg := prometheus.NewRegistry()
-			reg.MustRegister(
+			promreg.MustRegister(
 				prometheus.NewGoCollector(),
 				prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
 			)
 
 			handler := http.NewServeMux()
-			handler.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+			handler.Handle("/metrics", promhttp.HandlerFor(promreg, promhttp.HandlerOpts{}))
 
 			go func() {
 				err := http.ListenAndServe(cfg.PrometheusAddr, handler)
@@ -106,7 +110,10 @@ var runCmd = &cobra.Command{
 		log.Info("🏪 registry facade is up and running")
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-		<-sigChan
+		select {
+		case <-sigChan:
+		case <-registryDoneChan:
+		}
 	},
 }
 

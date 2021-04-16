@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -30,6 +30,7 @@ func forTestingOnlyGetManager(t *testing.T, objects ...runtime.Object) *Manager 
 	config := Configuration{
 		Namespace:                "default",
 		SchedulerName:            "workspace-scheduler",
+		SeccompProfile:           "localhost/workspace-default",
 		HeartbeatInterval:        util.Duration(30 * time.Second),
 		TheiaHostPath:            "/tmp/theia/theia-xyz",
 		WorkspaceHostPath:        "/tmp/workspaces",

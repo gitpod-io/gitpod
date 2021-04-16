@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -9,10 +9,15 @@ import { KeysToAnyValues, KeysToKeysToAnyValue } from "@theia/plugin-ext/lib/com
 import { CommitContext } from "@gitpod/gitpod-protocol";
 import { GitpodInfoService } from "../../common/gitpod-info";
 import { GitpodServiceProvider } from "../gitpod-service-provider";
+import { CachedUserStorage } from "../gitpod-user-storage-cached";
 
 
 export class GitpodPluginServer implements PluginServer {
-    constructor(protected orig: PluginServer, protected serviceProvider: GitpodServiceProvider, protected info: GitpodInfoService) {    
+    constructor(
+        protected orig: PluginServer,
+        protected serviceProvider: GitpodServiceProvider,
+        protected info: GitpodInfoService,
+        protected cachedUserStorage: CachedUserStorage) {    
     }
 
     deploy(pluginEntry: string, type?: PluginType): Promise<void> {
@@ -45,8 +50,7 @@ export class GitpodPluginServer implements PluginServer {
     protected async getStorage(kind: PluginStorageKind): Promise<KeysToKeysToAnyValue> {
         const uri = await this.getUri(kind);
         if (!this.localCache.has(uri)) {
-            const service = await this.serviceProvider.getService();
-            const storageString = await service.server.getUserStorageResource({ uri });
+            const storageString = await this.cachedUserStorage.read({ uri });
             let storage: KeysToKeysToAnyValue = {};
             if (storageString.trim().length > 0) {
                 try {
@@ -63,19 +67,18 @@ export class GitpodPluginServer implements PluginServer {
     protected async setStorage(storage: KeysToKeysToAnyValue, kind: PluginStorageKind): Promise<boolean> {
         const uri = await this.getUri(kind);
         this.localCache.set(uri, storage);
-        const service = await this.serviceProvider.getService();
-        service.server.updateUserStorageResource({ uri, content: JSON.stringify(storage) }).catch(e => console.error(e));
+        await this.cachedUserStorage.write({ uri, content: JSON.stringify(storage) });
         return true;
     }
 
     async setStorageValue(key: string, value: KeysToAnyValues, kind: PluginStorageKind): Promise<boolean> {
-        const storage= await this.getStorage(kind);
+        const storage = await this.getStorage(kind);
         storage[key] = value;
         return this.setStorage(storage, kind);
     }
 
     async getStorageValue(key: string, kind: PluginStorageKind): Promise<KeysToAnyValues> {
-        const storage= await this.getStorage(kind);
+        const storage = await this.getStorage(kind);
         return storage[key];
     }
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -81,7 +81,7 @@ func Execute(ctx context.Context, destination string, cfgin io.Reader, opts ...i
 		return "", err
 	}
 
-	err = initializer.PlaceWorkspaceReadyFile(ctx, destination, src)
+	err = initializer.PlaceWorkspaceReadyFile(ctx, destination, src, initializer.GitpodUID, initializer.GitpodGID)
 	if err != nil {
 		return src, err
 	}

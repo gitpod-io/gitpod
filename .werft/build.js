@@ -31,6 +31,13 @@ async function build(context, version) {
      * Prepare
      */
     werft.phase("prepare");
+
+    const werftImg = shell.exec("cat .werft/build.yaml | grep dev-environment").trim().split(": ")[1];
+    const devImg = shell.exec("yq r .gitpod.yml image").trim();
+    if (werftImg !== devImg) {
+        werft.fail('prep', `Werft job image (${werftImg}) and Gitpod dev image (${devImg}) do not match`);
+    }
+
     let buildConfig = context.Annotations || {};
     try {
         exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
@@ -44,9 +51,11 @@ async function build(context, version) {
     const dontTest = "no-test" in buildConfig;
     const cacheLevel = "no-cache" in buildConfig ? "remote-push" : "remote";
     const publishRelease = "publish-release" in buildConfig;
-    const previewWithHttps = "https" in buildConfig;
     const workspaceFeatureFlags = (buildConfig["ws-feature-flags"] || "").split(",").map(e => e.trim())
+    const dynamicCPULimits = "dynamic-cpu-limits" in buildConfig;
     const withInstaller = "with-installer" in buildConfig || masterBuild;
+    const noPreview = "no-preview" in buildConfig || publishRelease;
+    const registryFacadeHandover = "registry-facade-handover" in buildConfig;
     werft.log("job config", JSON.stringify({
         buildConfig,
         version,
@@ -54,8 +63,10 @@ async function build(context, version) {
         dontTest,
         cacheLevel,
         publishRelease,
-        previewWithHttps,
         workspaceFeatureFlags,
+        dynamicCPULimits,
+        noPreview,
+        registryFacadeHandover,
     }));
 
     /**
@@ -67,16 +78,20 @@ async function build(context, version) {
         "HTTP_PROXY": "http://dev-http-cache:3129",
         "HTTPS_PROXY": "http://dev-http-cache:3129",
     };
+    const imageRepo = publishRelease ? "gcr.io/gitpod-io/self-hosted" : "eu.gcr.io/gitpod-core-dev/build";
+
     exec(`leeway vet --ignore-warnings`);
     exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`, buildEnv);
-    exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DremoveSources=false -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build`, buildEnv);
-    if (withInstaller) {
-        exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/build install:all`, buildEnv);
-    }
     if (publishRelease) {
         exec(`gcloud auth activate-service-account --key-file "/mnt/secrets/gcp-sa-release/service-account.json"`);
-        exec(`leeway build --werft=true -Dversion=${version} -DremoveSources=false -DimageRepoBase=eu.gcr.io/gitpod-io/self-hosted`, buildEnv);
-        publishHelmChart("eu.gcr.io/gitpod-io/self-hosted")
+    }
+    if (withInstaller || publishRelease) {
+        exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test':''} -Dversion=${version} -DimageRepoBase=${imageRepo} install:all`, buildEnv);
+    }
+    exec(`leeway build --werft=true -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo}`, buildEnv);
+    if (publishRelease) {
+        publishHelmChart("gcr.io/gitpod-io/self-hosted");
+        exec(`leeway run --werft=true install/installer:publish-as-latest -Dversion=${version} -DimageRepoBase=${imageRepo}`)
         exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
     }
     // gitTag(`build/${version}`);
@@ -92,11 +107,11 @@ async function build(context, version) {
         // return;
     // }
 
-    if ("no-preview" in buildConfig) {
+    if (noPreview) {
         werft.phase("deploy", "not deploying");
-        console.log("no-preview is set");
+        console.log("no-preview or publish-release is set");
     } else {
-        await deployToDev(version, previewWithHttps, workspaceFeatureFlags);
+        await deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover);
     }
 }
 
@@ -104,17 +119,28 @@ async function build(context, version) {
 /**
  * Deploy dev
  */
-async function deployToDev(version, previewWithHttps, workspaceFeatureFlags) {
+async function deployToDev(version, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover) {
     werft.phase("deploy", "deploying to dev");
     const destname = version.split(".")[0];
     const namespace = `staging-${destname}`;
     const domain = `${destname}.staging.gitpod-dev.com`;
-    const url = `${!!previewWithHttps ? "https" : "http"}://${domain}`;
-    const wssyncPort = `1${Math.floor(Math.random()*1000)}`;
-    const wsmanNodePort = `2${Math.floor(Math.random()*1000)}`;
+    const url = `https://${domain}`;
+    const wsdaemonPort = `1${Math.floor(Math.random()*1000)}`;
+    const registryProxyPort = `2${Math.floor(Math.random()*1000)}`;
     const registryNodePort = `${30000 + Math.floor(Math.random()*1000)}`;
 
     try {
+        const objs = shell
+            .exec(`kubectl get pod -l component=workspace --namespace ${namespace} --no-headers -o=custom-columns=:metadata.name`)
+            .split("\n")
+            .map(o => o.trim())
+            .filter(o => o.length > 0);
+
+        objs.forEach(o => {
+            werft.log("prep", `deleting workspace ${o}`);
+            exec(`kubectl delete pod --namespace ${namespace} ${o}`, {slice: 'prep'});
+        });
+
         recreateNamespace(namespace, {slice: 'prep'});
         [
             "kubectl config current-context",
@@ -127,7 +153,7 @@ async function deployToDev(version, previewWithHttps, workspaceFeatureFlags) {
 
     werft.log("secret", "copy secret into namespace")
     try {
-        const auth = exec(`echo -n "_json_key:$(kubectl get secret gcp-sa-registry-auth --namespace=keys --export -o yaml \
+        const auth = exec(`echo -n "_json_key:$(kubectl get secret gcp-sa-registry-auth --namespace=keys -o yaml \
                         | yq r - data['.dockerconfigjson'] \
                         | base64 -d)" | base64 -w 0`, {silent: true}).stdout.trim();
         fs.writeFileSync("chart/gcp-sa-registry-auth",
@@ -145,7 +171,7 @@ async function deployToDev(version, previewWithHttps, workspaceFeatureFlags) {
 
     werft.log("authProviders", "copy authProviders")
     try {
-        exec(`kubectl get secret preview-envs-authproviders --namespace=keys --export -o yaml \
+        exec(`kubectl get secret preview-envs-authproviders --namespace=keys -o yaml \
                 | yq r - data.authProviders \
                 | base64 -d -w 0 \
                 > authProviders`, {silent: true}).stdout.trim();
@@ -156,11 +182,10 @@ async function deployToDev(version, previewWithHttps, workspaceFeatureFlags) {
     }
 
     let certificatePromise = undefined;
-    if (previewWithHttps) {
-        // TODO [geropl] Now that the certs reside in a separate namespaces, start the actual certificate issuing _before_ the namespace cleanup
-        werft.log('certificate', "organizing a certificate for the preview environment...");
-        certificatePromise = issueAndInstallCertficate(namespace, domain);
-    }
+    
+    // TODO(geropl): Now that the certs reside in a separate namespaces, start the actual certificate issuing _before_ the namespace cleanup
+    werft.log('certificate', "organizing a certificate for the preview environment...");
+    certificatePromise = issueAndInstallCertficate(namespace, domain);
 
     werft.log("predeploy cleanup", "removing old unnamespaced objects - this might take a while");
     try {
@@ -168,7 +193,7 @@ async function deployToDev(version, previewWithHttps, workspaceFeatureFlags) {
         exec(`/usr/local/bin/helm3 delete jaeger-${destname} || echo jaeger-${destname} was not installed yet`, {slice: 'predeploy cleanup'});
 
         let objs = [];
-        ["ws-scheduler", "node-daemon", "cluster", "workspace", "jaeger", "jaeger-agent", "ws-sync", "ws-manager-node"].forEach(comp => 
+        ["ws-scheduler", "node-daemon", "cluster", "workspace", "jaeger", "jaeger-agent", "ws-sync", "ws-manager-node", "ws-daemon", "registry-facade"].forEach(comp => 
             ["ClusterRole", "ClusterRoleBinding", "PodSecurityPolicy"].forEach(kind =>
                 shell
                     .exec(`kubectl get ${kind} -l component=${comp} --no-headers -o=custom-columns=:metadata.name | grep ${namespace}-ns`)
@@ -203,12 +228,21 @@ async function deployToDev(version, previewWithHttps, workspaceFeatureFlags) {
     flags+=` --set version=${version}`;
     flags+=` --set hostname=${domain}`;
     flags+=` --set devBranch=${destname}`;
-    flags+=` --set components.wsSync.servicePort=${wssyncPort}`;
-    flags+=` --set components.wsManagerNode.registryProxyPort=${wsmanNodePort}`;
+    flags+=` --set components.wsDaemon.servicePort=${wsdaemonPort}`;
+    flags+=` --set components.wsDaemon.registryProxyPort=${registryProxyPort}`;
+    flags+=` --set components.registryFacade.ports.registry.servicePort=${registryNodePort}`;
     flags+=` --set ingressMode=${context.Annotations.ingressMode || "hosts"}`;
     workspaceFeatureFlags.forEach((f, i) => {
         flags+=` --set components.server.defaultFeatureFlags[${i}]='${f}'`
     })
+    if (dynamicCPULimits) {
+        flags+=` -f ../.werft/values.variant.cpuLimits.yaml`;
+    }
+    if (registryFacadeHandover) {
+        flags+=` --set components.registryFacade.handover.enabled=true`;
+        flags+=` --set components.registryFacade.handover.socket=/var/lib/gitpod/registry-facade-${namespace}`;
+    }
+
     // const pathToVersions = `${shell.pwd().toString()}/versions.yaml`;
     // if (fs.existsSync(pathToVersions)) {
     //     flags+=` -f ${pathToVersions}`;
@@ -255,13 +289,15 @@ async function deployToDev(version, previewWithHttps, workspaceFeatureFlags) {
 
 async function issueAndInstallCertficate(namespace, domain) {
     // Always use 'terraform apply' to make sure the certificate is present and up-to-date
-    await exec(`cd .werft/certs \
+    await exec(`set -x \
+        && cd .werft/certs \
         && terraform init \
         && export GOOGLE_APPLICATION_CREDENTIALS="${GCLOUD_SERVICE_ACCOUNT_PATH}" \
         && terraform apply -auto-approve \
             -var 'namespace=${namespace}' \
             -var 'dns_zone_domain=gitpod-dev.com' \
             -var 'domain=${domain}' \
+            -var 'public_ip=34.76.116.244' \
             -var 'subdomains=["", "*.", "*.ws-dev."]'`, {slice: 'certificate', async: true});
 
     werft.log('certificate', `waiting until certificate certs/${namespace} is ready...`)
@@ -279,7 +315,11 @@ async function issueAndInstallCertficate(namespace, domain) {
 
     werft.log('certificate', `copying certificate from "certs/${namespace}" to "${namespace}/proxy-config-certificates"`);
     // certmanager is configured to create a secret in the namespace "certs" with the name "${namespace}".
-    exec(`kubectl get secret ${namespace} --namespace=certs --export -o yaml \
+    exec(`kubectl get secret ${namespace} --namespace=certs -o yaml \
+        | yq d - 'metadata.namespace' \
+        | yq d - 'metadata.uid' \
+        | yq d - 'metadata.resourceVersion' \
+        | yq d - 'metadata.creationTimestamp' \
         | sed 's/${namespace}/proxy-config-certificates/g' \
         | kubectl apply --namespace=${namespace} -f -`);
 }

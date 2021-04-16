@@ -1,51 +1,45 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
 
 import { TasksStatusRequest, TasksStatusResponse } from '@gitpod/supervisor-api-grpc/lib/status_pb';
 import { ApplicationShell } from '@theia/core/lib/browser';
+import { JsonRpcProxy } from '@theia/core/lib/common/messaging/proxy-factory';
 import { Deferred } from '@theia/core/lib/common/promise-util';
-import { ProcessManager, TerminalProcess } from '@theia/process/lib/node';
-import * as fs from 'fs';
+import { ProcessManager } from '@theia/process/lib/node';
 import { inject, injectable, postConstruct } from 'inversify';
-import * as path from 'path';
-import * as util from 'util';
-import { AttachTaskTerminalParams, GitpodTask, GitpodTaskClient, GitpodTaskServer } from '../common/gitpod-task-protocol';
+import { GitpodTask, GitpodTaskClient, GitpodTaskServer, GitpodTaskState } from '../common/gitpod-task-protocol';
 import { SupervisorClientProvider } from './supervisor-client-provider';
-import psTree = require('ps-tree');
+import { GitpodTaskTerminalProcess, GitpodTaskTerminalProcessFactory } from './gitpod-task-terminal-process';
+import { ShellTerminalServer } from '@theia/terminal/lib/node/shell-terminal-server';
+import { IShellTerminalServer } from '@theia/terminal/lib/common/shell-terminal-protocol';
 
 @injectable()
 export class GitpodTaskServerImpl implements GitpodTaskServer {
 
-    protected run = true;
-    protected stopUpdates: (() => void) | undefined;
+    private run = true;
+    private stopUpdates: (() => void) | undefined;
 
     private readonly clients = new Set<GitpodTaskClient>();
 
     private readonly tasks = new Map<string, GitpodTask>();
     private readonly deferredReady = new Deferred<void>();
-    private readonly supervisorBin = (async () => {
-        let supervisor = '/.supervisor/supervisor';
-        try {
-            await util.promisify(fs.stat)(supervisor);
-        } catch (e) {
-            supervisor = '/theia/supervisor';
-            try {
-                await util.promisify(fs.stat)(supervisor);
-            } catch {
-                throw e;
-            }
-        }
-        return supervisor;
-    })();
-
-    @inject(ProcessManager)
-    protected readonly processManager: ProcessManager;
 
     @inject(SupervisorClientProvider)
     private readonly supervisorClientProvider: SupervisorClientProvider;
+
+    @inject(ProcessManager)
+    private readonly processManager: ProcessManager;
+
+    @inject(GitpodTaskTerminalProcessFactory)
+    private readonly processFactory: GitpodTaskTerminalProcessFactory;
+
+    @inject(IShellTerminalServer)
+    private readonly shellTerminalServer: ShellTerminalServer;
+
+    private readonly processes = new Map<string, GitpodTaskTerminalProcess>();
 
     @postConstruct()
     async start(): Promise<void> {
@@ -61,7 +55,6 @@ export class GitpodTaskServerImpl implements GitpodTaskServer {
                     evts.on("close", resolve);
                     evts.on("error", reject);
                     evts.on("data", (response: TasksStatusResponse) => {
-                        const updated: GitpodTask[] = [];
                         for (const task of response.getTasksList()) {
                             const openIn = task.getPresentation()!.getOpenIn();
                             const openMode = task.getPresentation()!.getOpenMode();
@@ -77,12 +70,9 @@ export class GitpodTaskServerImpl implements GitpodTaskServer {
                                 }
                             }
                             this.tasks.set(task.getId(), update);
-                            updated.push(update);
                         }
+                        this.updateProcesses();
                         this.deferredReady.resolve();
-                        for (const client of this.clients) {
-                            client.onDidChange({ updated });
-                        }
                     });
                 });
             } catch (err) {
@@ -92,32 +82,49 @@ export class GitpodTaskServerImpl implements GitpodTaskServer {
         }
     }
 
+    protected updateProcesses(): void {
+        for (const [id, task] of this.tasks) {
+            let process = this.processes.get(id);
+            if (task.state === GitpodTaskState.CLOSED) {
+                if (process) {
+                    process.kill();
+                }
+                continue;
+            }
+            if (!process) {
+                const newProcess = this.processFactory({ id });
+                this.shellTerminalServer['postCreate'](newProcess);
+                this.processes.set(id, newProcess);
+                const listener = this.processManager.onDelete(processId => {
+                    if (newProcess.id === processId) {
+                        this.processes.delete(id);
+                        listener.dispose();
+                    }
+                })
+                process = newProcess;
+            }
+            if (task.state === GitpodTaskState.RUNNING && task.terminal) {
+                process.listen(task.terminal);
+            }
+        }
+    }
+
     async getTasks(): Promise<GitpodTask[]> {
         await this.deferredReady.promise;
         return [...this.tasks.values()];
     }
 
-    async attach({ terminalId, remoteTerminal }: AttachTaskTerminalParams): Promise<void> {
-        const terminalProcess = this.processManager.get(terminalId);
-        if (!(terminalProcess instanceof TerminalProcess)) {
-            return;
-        }
-        const [supervisorBin, children] = await Promise.all([
-            this.supervisorBin,
-            util.promisify(psTree)(terminalProcess.pid)
-        ]);
-        const supervisorCommand = path.basename(supervisorBin);
-        if (children.some(child => child.COMMAND === supervisorCommand)) {
-            return;
-        }
-        terminalProcess.write(`${supervisorBin} terminal attach -ir ${remoteTerminal}\r\n`);
+    async attach(taskId: string): Promise<number> {
+        await this.deferredReady.promise;
+        const process = this.processes.get(taskId)
+        return process ? process.id : -1;
     }
 
-    setClient(client: GitpodTaskClient): void {
+    setClient(client: JsonRpcProxy<GitpodTaskClient>): void {
         this.clients.add(client);
-    }
-    disposeClient(client: GitpodTaskClient): void {
-        this.clients.delete(client);
+        client.onDidCloseConnection(() => {
+            this.clients.delete(client);
+        });
     }
 
     dispose(): void {

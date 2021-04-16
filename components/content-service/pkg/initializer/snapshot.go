@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -35,11 +35,6 @@ func (s *SnapshotInitializer) Run(ctx context.Context) (src csapi.WorkspaceInitS
 	}
 	if !ok {
 		return src, xerrors.Errorf("did not find snapshot %s", s.Snapshot)
-	}
-
-	err = recursiveChown(ctx, s.Location)
-	if err != nil {
-		return src, err
 	}
 
 	return

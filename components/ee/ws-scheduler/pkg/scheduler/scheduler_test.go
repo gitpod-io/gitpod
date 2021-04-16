@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the Gitpod Enterprise Source Code License,
 // See License.enterprise.txt in the project root folder.
 
@@ -10,7 +10,9 @@ import (
 	"testing"
 	"time"
 
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
@@ -91,7 +93,11 @@ func TestGatherPotentialNodesFor(t *testing.T) {
 			objs = append(objs, test.Pod)
 
 			client := fakek8s.NewSimpleClientset(objs...)
-			scheduler := NewScheduler(Configuration{}, client)
+			scheduler, err := NewScheduler(Configuration{}, client)
+			if err != nil {
+				t.Errorf("unexpected error: %+q", err)
+				return
+			}
 
 			ctx, cancel := context.WithCancel(context.Background())
 			scheduler.startInformer(ctx)
@@ -112,6 +118,193 @@ func TestGatherPotentialNodesFor(t *testing.T) {
 
 			if diff := cmp.Diff(test.CandidateNodes, cn); diff != "" {
 				t.Errorf("unexpected candidate nodes (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func TestRequiredServices(t *testing.T) {
+	tests := []struct {
+		Desc        string
+		Nodes       []*corev1.Node
+		Pods        []*corev1.Pod
+		TargetPod   *corev1.Pod
+		Expectation []string
+	}{
+		{
+			Desc: "node with service",
+			Nodes: []*corev1.Node{
+				createNode("node1", nil),
+			},
+			Pods: []*corev1.Pod{
+				createPod("some-pod", nil),
+				createPod("some-other-pod", nil),
+				modifyPod(createPod("service", nil), func(p *corev1.Pod) {
+					p.Labels = map[string]string{
+						wsk8s.GitpodNodeServiceLabel: "service",
+					}
+					p.Spec.NodeName = "node1"
+				}),
+			},
+			TargetPod: modifyPod(createPod("target-pod", nil), func(p *corev1.Pod) {
+				p.Annotations = map[string]string{
+					wsk8s.RequiredNodeServicesAnnotation: "service",
+				}
+			}),
+			Expectation: []string{"node1"},
+		},
+		{
+			Desc: "node without service",
+			Nodes: []*corev1.Node{
+				createNode("node1", nil),
+			},
+			Pods: []*corev1.Pod{
+				createPod("some-pod", nil),
+				createPod("some-other-pod", nil),
+			},
+			TargetPod: modifyPod(createPod("target-pod", nil), func(p *corev1.Pod) {
+				p.Annotations = map[string]string{
+					wsk8s.RequiredNodeServicesAnnotation: "service",
+				}
+			}),
+		},
+		{
+			Desc: "two nodes with service",
+			Nodes: []*corev1.Node{
+				createNode("node1", nil),
+				createNode("node2", nil),
+			},
+			Pods: []*corev1.Pod{
+				createPod("some-pod", nil),
+				createPod("some-other-pod", nil),
+				modifyPod(createPod("service", nil), func(p *corev1.Pod) {
+					p.Labels = map[string]string{
+						wsk8s.GitpodNodeServiceLabel: "service",
+					}
+					p.Spec.NodeName = "node2"
+				}),
+			},
+			TargetPod: modifyPod(createPod("target-pod", nil), func(p *corev1.Pod) {
+				p.Annotations = map[string]string{
+					wsk8s.RequiredNodeServicesAnnotation: "service",
+				}
+			}),
+			Expectation: []string{"node2"},
+		},
+		{
+			Desc: "require two services - no node",
+			Nodes: []*corev1.Node{
+				createNode("node1", nil),
+				createNode("node2", nil),
+			},
+			Pods: []*corev1.Pod{
+				createPod("some-pod", nil),
+				createPod("some-other-pod", nil),
+				modifyPod(createPod("service", nil), func(p *corev1.Pod) {
+					p.Labels = map[string]string{
+						wsk8s.GitpodNodeServiceLabel: "service",
+					}
+					p.Spec.NodeName = "node2"
+				}),
+			},
+			TargetPod: modifyPod(createPod("target-pod", nil), func(p *corev1.Pod) {
+				p.Annotations = map[string]string{
+					wsk8s.RequiredNodeServicesAnnotation: "service,another",
+				}
+			}),
+		},
+		{
+			Desc: "require two services - no node complete",
+			Nodes: []*corev1.Node{
+				createNode("node1", nil),
+				createNode("node2", nil),
+			},
+			Pods: []*corev1.Pod{
+				createPod("some-pod", nil),
+				createPod("some-other-pod", nil),
+				modifyPod(createPod("service", nil), func(p *corev1.Pod) {
+					p.Labels = map[string]string{
+						wsk8s.GitpodNodeServiceLabel: "service",
+					}
+					p.Spec.NodeName = "node1"
+				}),
+				modifyPod(createPod("another", nil), func(p *corev1.Pod) {
+					p.Labels = map[string]string{
+						wsk8s.GitpodNodeServiceLabel: "another",
+					}
+					p.Spec.NodeName = "node2"
+				}),
+			},
+			TargetPod: modifyPod(createPod("target-pod", nil), func(p *corev1.Pod) {
+				p.Annotations = map[string]string{
+					wsk8s.RequiredNodeServicesAnnotation: "service,another",
+				}
+			}),
+		},
+		{
+			Desc: "require two services - positive",
+			Nodes: []*corev1.Node{
+				createNode("node1", nil),
+				createNode("node2", nil),
+			},
+			Pods: []*corev1.Pod{
+				createPod("some-pod", nil),
+				createPod("some-other-pod", nil),
+				modifyPod(createPod("service", nil), func(p *corev1.Pod) {
+					p.Labels = map[string]string{
+						wsk8s.GitpodNodeServiceLabel: "service",
+					}
+					p.Spec.NodeName = "node2"
+				}),
+				modifyPod(createPod("another", nil), func(p *corev1.Pod) {
+					p.Labels = map[string]string{
+						wsk8s.GitpodNodeServiceLabel: "another",
+					}
+					p.Spec.NodeName = "node2"
+				}),
+			},
+			TargetPod: modifyPod(createPod("target-pod", nil), func(p *corev1.Pod) {
+				p.Annotations = map[string]string{
+					wsk8s.RequiredNodeServicesAnnotation: "service,another",
+				}
+			}),
+			Expectation: []string{"node2"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Desc, func(t *testing.T) {
+			var objs []runtime.Object
+			for _, n := range test.Nodes {
+				objs = append(objs, n)
+			}
+			for _, p := range test.Pods {
+				objs = append(objs, p)
+			}
+
+			client := fakek8s.NewSimpleClientset(objs...)
+			scheduler, err := NewScheduler(Configuration{}, client)
+			if err != nil {
+				t.Errorf("unexpected error: %+q", err)
+				return
+			}
+
+			ctx, cancel := context.WithCancel(context.Background())
+			scheduler.startInformer(ctx)
+			state, err := scheduler.buildState(ctx, test.TargetPod)
+			cancel()
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			var act []string
+			for _, n := range state.Nodes {
+				act = append(act, n.Node.Name)
+			}
+			sort.Slice(act, func(i, j int) bool { return act[i] < act[j] })
+
+			if diff := cmp.Diff(test.Expectation, act); diff != "" {
+				t.Errorf("unexpected state (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -142,6 +335,14 @@ func createPod(name string, tolerations []corev1.Toleration) *corev1.Pod {
 			Name:              name,
 			CreationTimestamp: metav1.NewTime(time.Now()),
 		},
+		Status: corev1.PodStatus{
+			Conditions: []corev1.PodCondition{
+				{
+					Type:   corev1.ContainersReady,
+					Status: corev1.ConditionTrue,
+				},
+			},
+		},
 		Spec: corev1.PodSpec{
 			Containers: []corev1.Container{
 				{
@@ -157,4 +358,9 @@ func createPod(name string, tolerations []corev1.Toleration) *corev1.Pod {
 			Tolerations: tolerations,
 		},
 	}
+}
+
+func modifyPod(p *corev1.Pod, m func(p *corev1.Pod)) *corev1.Pod {
+	m(p)
+	return p
 }

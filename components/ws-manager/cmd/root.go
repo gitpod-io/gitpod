@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -12,6 +12,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 
+	"github.com/gitpod-io/gitpod/common-go/grpc"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -96,14 +97,21 @@ type config struct {
 	Content struct {
 		Storage storage.Config `json:"storage"`
 	} `json:"content"`
-	RPCServerAddr string `json:"rpcServerAddr"`
-	TLS           struct {
-		Certificate string `json:"crt"`
-		PrivateKey  string `json:"key"`
-	} `json:"tls"`
+	RPCServer struct {
+		Addr string `json:"addr"`
+		TLS  struct {
+			Certificate string `json:"crt"`
+			PrivateKey  string `json:"key"`
+		} `json:"tls"`
+		RateLimits map[string]grpc.RateLimit `json:"ratelimits"`
+	} `json:"rpcServer"`
 
-	PProfAddr      string `json:"pprofAddr"`
-	PrometheusAddr string `json:"prometheusAddr"`
+	PProf struct {
+		Addr string `json:"addr"`
+	} `json:"pprof"`
+	Prometheus struct {
+		Addr string `json:"addr"`
+	} `json:"prometheus"`
 }
 
 func newClientSet() (*kubernetes.Clientset, error) {

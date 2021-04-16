@@ -1,8 +1,8 @@
-# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM node:12.18.3 AS node_installer
+FROM node:12.14.1 AS node_installer
 RUN mkdir -p /ide/node/bin \
     /ide/node/include/node/ \
     /ide/node/lib/node_modules/npm/ \
@@ -28,15 +28,23 @@ RUN sudo apt-get update \
     && sudo apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-ENV GP_CODE_COMMIT 2b9a3dee974c2ee8cf881f1f4d796ea4cdd2e158
-RUN git clone https://github.com/gitpod-io/vscode.git --branch gp-code --single-branch gp-code
+ENV GP_CODE_COMMIT 001c337aa00d9eff6faa2c07255451d1c33602e0
+RUN mkdir gp-code \
+    && cd gp-code \
+    && git init \
+    && git remote add origin https://github.com/gitpod-io/vscode \
+    && git fetch origin $GP_CODE_COMMIT \
+    && git reset --hard FETCH_HEAD
 WORKDIR /gp-code
-RUN git reset --hard $GP_CODE_COMMIT
 RUN yarn
 RUN yarn gulp gitpod
 
 # grant write permissions for built-in extensions
 RUN chmod -R ugo+w /gitpod-pkg-server/extensions
+
+# cli config
+COPY bin /ide/bin
+RUN chmod -R ugo+x /ide/bin
 
 FROM scratch
 # copy static web resources in first layer to serve from blobserve
@@ -44,3 +52,12 @@ COPY --from=code_installer /gitpod-pkg-web/ /ide/
 COPY --from=code_installer /gitpod-pkg-server/ /ide/
 COPY --from=node_installer /ide/node /ide/node
 COPY startup.sh supervisor-ide-config.json /ide/
+
+# cli config
+COPY --from=code_installer /ide/bin /ide/bin
+ENV GITPOD_APPEND_ENV_PATH /ide/bin:
+
+# editor config
+ENV GITPOD_ENV_SET_EDITOR code
+ENV GITPOD_ENV_SET_VISUAL "$GITPOD_ENV_SET_EDITOR"
+ENV GITPOD_ENV_SET_GIT_EDITOR "$GITPOD_ENV_SET_EDITOR --wait"

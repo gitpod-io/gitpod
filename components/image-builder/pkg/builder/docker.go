@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -269,6 +269,7 @@ func (b *DockerBuilder) getBaseImageRef(ctx context.Context, bs *api.BuildSource
 }
 
 func (b *DockerBuilder) getWorkspaceImageRef(ctx context.Context, baseref string, gitpodLayerHash string, allowedAuth allowedAuthFor) (ref string, err error) {
+	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "getWorkspaceImageRef")
 	defer tracing.FinishSpan(span, &err)
 
@@ -296,7 +297,7 @@ func dockerErrToGRPC(err error, msg string) error {
 	if docker.IsErrConnectionFailed(err) {
 		return status.Error(codes.Unavailable, msg+": daemon is not available")
 	}
-	if docker.IsErrNotFound(err) || strings.Contains(err.Error(), dockerErrResp+"manifest unknown") {
+	if docker.IsErrNotFound(err) || strings.Contains(err.Error(), dockerErrResp+"manifest unknown") || strings.Contains(err.Error(), dockerErrResp+"name unknown") {
 		return status.Error(codes.NotFound, msg+": not found")
 	}
 	if docker.IsErrUnauthorized(err) {

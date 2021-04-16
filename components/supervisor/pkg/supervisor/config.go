@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -185,10 +185,10 @@ type WorkspaceConfig struct {
 	GitpodHost string `env:"GITPOD_HOST"`
 
 	// GitpodTasks is the task configuration of the workspace
-	GitpodTasks *string `env:"GITPOD_TASKS"`
+	GitpodTasks string `env:"GITPOD_TASKS"`
 
 	// GitpodHeadless controls whether the workspace is running headless
-	GitpodHeadless *string `env:"GITPOD_HEADLESS"`
+	GitpodHeadless string `env:"GITPOD_HEADLESS"`
 }
 
 // WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service
@@ -251,12 +251,12 @@ func (c WorkspaceConfig) GetTokens(downloadOTS bool) ([]WorkspaceGitpodToken, er
 			Timeout: 5 * time.Second,
 		}
 
-		for i, tk := range tks {
-			if tk.TokenOTS == "" {
+		for i := range tks {
+			if tks[i].TokenOTS == "" {
 				continue
 			}
 
-			resp, err := client.Get(tk.TokenOTS)
+			resp, err := client.Get(tks[i].TokenOTS)
 			if err != nil {
 				return nil, fmt.Errorf("cannot download token OTS: %w", err)
 			}
@@ -288,12 +288,17 @@ func (c WorkspaceConfig) GitpodAPIEndpoint() (endpoint, host string, err error) 
 	return
 }
 
+// getGitpodTasks returns true if the workspace is headless
+func (c WorkspaceConfig) isHeadless() bool {
+	return c.GitpodHeadless == "true"
+}
+
 // getGitpodTasks parses gitpod tasks
 func (c WorkspaceConfig) getGitpodTasks() (tasks *[]TaskConfig, err error) {
-	if c.GitpodTasks == nil {
+	if c.GitpodTasks == "" {
 		return
 	}
-	err = json.Unmarshal([]byte(*c.GitpodTasks), &tasks)
+	err = json.Unmarshal([]byte(c.GitpodTasks), &tasks)
 	if err != nil {
 		return nil, fmt.Errorf("cannot parse tasks: %w", err)
 	}

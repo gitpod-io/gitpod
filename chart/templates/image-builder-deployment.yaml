@@ -1,9 +1,8 @@
-# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 {{ $comp := .Values.components.imageBuilder -}}
 {{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
-{{- $thisWsSync := dict "root" . "comp" .Values.components.wsSync -}}
 {{- if not $comp.disabled -}}
 apiVersion: apps/v1
 kind: Deployment
@@ -72,7 +71,7 @@ spec:
         securityContext:
           privileged: true
           runAsUser: 0
-        args: [ "dockerd", "--userns-remap=default", "-H tcp://127.0.0.1:2375" ]
+        args: [ "dockerd", "--userns-remap=default", "-H tcp://127.0.0.1:2375" {{- if $comp.dindMtu -}}, "--mtu={{ $comp.dindMtu}}"{{- end -}} ]
         volumeMounts:
         - mountPath: /var/lib/docker
           name: dind-storage

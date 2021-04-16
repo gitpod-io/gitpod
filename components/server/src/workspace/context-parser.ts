@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -24,10 +24,10 @@ export abstract class AbstractContextParser implements IContextParser {
 
     public normalize(contextUrl: string): string | undefined {
         let url = contextUrl.trim();
-        if (url.startsWith(this.config.host)) {
+        if (url.startsWith(`${this.config.host}/`)) {
             url = `https://${url}`;
         }
-        if (url.startsWith(`https://${this.config.host}`)) {
+        if (url.startsWith(`https://${this.config.host}/`)) {
             return url;
         }
         return undefined;

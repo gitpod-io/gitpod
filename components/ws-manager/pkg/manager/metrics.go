@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -22,7 +22,7 @@ func (m *Manager) RegisterMetrics(reg prometheus.Registerer) error {
 }
 
 const (
-	metricsNamespace          = "wsman"
+	metricsNamespace          = "gitpod_ws_manager"
 	metricsWorkspaceSubsystem = "workspace"
 )
 
@@ -102,15 +102,14 @@ func (m *metrics) OnWorkspaceStarted(tpe api.WorkspaceType) {
 
 func (m *metrics) OnChange(status *api.WorkspaceStatus) {
 	var removeFromState bool
+	m.mu.Lock()
 	defer func() {
-		m.mu.Lock()
-		defer m.mu.Unlock()
-
 		if removeFromState {
 			delete(m.phaseState, status.Id)
 		} else {
 			m.phaseState[status.Id] = status.Phase
 		}
+		m.mu.Unlock()
 	}()
 
 	switch status.Phase {
@@ -185,7 +184,10 @@ func (m *phaseTotalVec) Collect(ch chan<- prometheus.Metric) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	pods, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).List(workspaceObjectListOptions())
+	ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
+	defer cancel()
+
+	pods, err := m.manager.Clientset.CoreV1().Pods(m.manager.Config.Namespace).List(ctx, workspaceObjectListOptions())
 	if err != nil {
 		log.WithError(err).Debugf("cannot list workspaces for %s gauge", m.name)
 		return

@@ -1,4 +1,4 @@
-# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 {{ $comp := .Values.components.wsProxy -}}
@@ -19,8 +19,8 @@ data:
     {
         "ingress": {
             {{- if eq .Values.ingressMode "noDomain" }}
-            "kind": "pathAndPorts",
-            "pathAndPorts": {
+            "kind": "pathAndPort",
+            "pathAndPort": {
                 "address": ":8080",
                 "https": {{ $comp.useHTTPS }},
                 "trimPrefix": "/workspace/",
@@ -62,7 +62,7 @@ data:
                 "websocketIdleConnTimeout": "180s",
                 "maxIdleConns": 100
             },
-            {{- if .Values.components.registryFacade.blobserve.disabled }}
+            {{- if .Values.components.blobserve.disabled }}
             "theiaServer": {
                 "scheme": "http",
                 "host": "theia-server.{{- .Release.Namespace -}}.svc.cluster.local:80",
@@ -71,13 +71,19 @@ data:
             {{- else }}
             "blobServer": {
                 "scheme": "http",
-                "host": "blobserve.{{- .Release.Namespace -}}.svc.cluster.local:{{ .Values.components.registryFacade.blobserve.ports.service.servicePort }}"
+                "host": "blobserve.{{- .Release.Namespace -}}.svc.cluster.local:{{ .Values.components.blobserve.ports.service.servicePort }}"
             },
             {{- end }}
             "gitpodInstallation": {
                 "scheme": "{{- template "gitpod.scheme" $this -}}",
                 "hostName": "{{- $gp.hostname -}}",
-                "workspaceHostSuffix": ".{{- if $gp.installation.shortname -}}ws-{{ $gp.installation.shortname }}{{- else -}}ws{{- end -}}.{{- $gp.hostname -}}"
+                {{- if eq .Values.ingressMode "hosts" }}
+                "workspaceHostSuffix":     ".ws{{- if $gp.installation.shortname -}}-{{ $.Values.installation.shortname }}{{- end -}}.{{ $.Values.hostname }}"
+                {{- else if eq .Values.ingressMode "pathAndHost" }}
+                "workspaceHostSuffix":     ""
+                {{- else }}
+                "workspaceHostSuffix":     ""
+                {{- end }}
             },
             "workspacePodConfig": {
                 "serviceTemplate": "http://ws-{{"{{ .workspaceID }}"}}-theia.{{- .Release.Namespace -}}.svc.cluster.local:{{"{{ .port }}"}}",
@@ -85,6 +91,9 @@ data:
                 "theiaPort": {{ .Values.components.workspace.ports.http.containerPort }},
                 "supervisorPort": {{ .Values.components.workspace.ports.http.supervisorPort }},
                 "supervisorImage": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) }}"
+            },
+            "builtinPages": {
+                "location": "/app/public"
             }
         },
         "pprofAddr": ":60060",

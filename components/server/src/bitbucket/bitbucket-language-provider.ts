@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -7,7 +7,7 @@
 import { Repository, User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from 'inversify';
 import { LanguagesProvider } from '../repohost/languages-provider';
-import BitbucketApiFactory from './bitbucket-api-factory';
+import { BitbucketApiFactory } from './bitbucket-api-factory';
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()

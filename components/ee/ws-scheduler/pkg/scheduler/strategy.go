@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the Gitpod Enterprise Source Code License,
 // See License.enterprise.txt in the project root folder.
 
@@ -14,7 +14,6 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	corev1 "k8s.io/api/core/v1"
-	res "k8s.io/apimachinery/pkg/api/resource"
 )
 
 // StrategyName is the type that identifies strategies
@@ -30,7 +29,7 @@ const (
 )
 
 const (
-	errorNoNodeWithEnoughRAMAvailable = "No node with enough RAM available!\nRequested by pod: %s\nNodes:\n%s"
+	errorNoNodeWithEnoughResourcesAvailable = "No node with enough resources available!\nRAM requested: %s\nEph. Storage requested: %s\nNodes:\n%s"
 )
 
 // Strategy is the interface that make the actual scheduling interchangable
@@ -75,7 +74,8 @@ func (e *EvenLoadSpots) Select(state *State, pod *corev1.Pod) (string, error) {
 	allNodes := state.Nodes
 	availableNodes := make([]candidateNode, 0)
 	for _, n := range allNodes {
-		spotsAvailable := int(n.Node.Status.Allocatable.Memory().Value() / podRAMRequest(pod).Value())
+		req := podRAMRequest(pod)
+		spotsAvailable := int(n.Node.Status.Allocatable.Memory().Value() / req.Value())
 		if int64(spotsAvailable) > n.PodSlots.Available {
 			spotsAvailable = int(n.PodSlots.Available)
 		}
@@ -119,19 +119,21 @@ type EvenLoad struct {
 
 // Select will assign pods to the node with the least ressources used
 func (e *EvenLoad) Select(state *State, pod *corev1.Pod) (string, error) {
-	sortedNodes := state.SortNodesByAvailableRAMDesc()
+	sortedNodes := state.SortNodesByAvailableRAM(SortDesc)
 
 	if len(sortedNodes) == 0 {
-		requestedRAM := GetRequestedRAMForPod(pod)
-		ramPerNode := DebugRAMPerNodeAsStr(sortedNodes)
-		return "", xerrors.Errorf(errorNoNodeWithEnoughRAMAvailable, requestedRAM.String(), ramPerNode)
+		requestedRAM := podRAMRequest(pod)
+		requestedEphStorage := podEphemeralStorageRequest(pod)
+		debugStr := DebugStringNodes(sortedNodes...)
+		return "", xerrors.Errorf(errorNoNodeWithEnoughResourcesAvailable, requestedRAM.String(), requestedEphStorage.String(), debugStr)
 	}
 
 	candidate := sortedNodes[0]
 	if !fitsOnNode(pod, candidate) {
-		requestedRAM := GetRequestedRAMForPod(pod)
-		ramPerNode := DebugRAMPerNodeAsStr(sortedNodes)
-		return "", xerrors.Errorf(errorNoNodeWithEnoughRAMAvailable, requestedRAM.String(), ramPerNode)
+		requestedRAM := podRAMRequest(pod)
+		requestedEphStorage := podEphemeralStorageRequest(pod)
+		debugStr := DebugStringNodes(sortedNodes...)
+		return "", xerrors.Errorf(errorNoNodeWithEnoughResourcesAvailable, requestedRAM.String(), requestedEphStorage.String(), debugStr)
 	}
 
 	return candidate.Node.Name, nil
@@ -161,9 +163,10 @@ func (s *DensityAndExperience) Select(state *State, pod *corev1.Pod) (string, er
 	}
 
 	if len(candidates) == 0 {
-		requestedRAM := GetRequestedRAMForPod(pod)
-		ramPerNode := DebugRAMPerNodeAsStr(sortedNodes)
-		return "", xerrors.Errorf(errorNoNodeWithEnoughRAMAvailable, requestedRAM.String(), ramPerNode)
+		requestedRAM := podRAMRequest(pod)
+		requestedEphStorage := podEphemeralStorageRequest(pod)
+		debugStr := DebugStringNodes(sortedNodes...)
+		return "", xerrors.Errorf(errorNoNodeWithEnoughResourcesAvailable, requestedRAM.String(), requestedEphStorage.String(), debugStr)
 	}
 
 	// From this point on we're safe: Choosing any of the candidates would work.
@@ -236,17 +239,18 @@ func (s *DensityAndExperience) Select(state *State, pod *corev1.Pod) (string, er
 // helper functions
 func fitsOnNode(pod *corev1.Pod, node *Node) bool {
 	ramReq := podRAMRequest(pod)
-	return ramReq.Cmp(*node.RAM.Available) < 0
+	ephStorageReq := podEphemeralStorageRequest(pod)
+	return ramReq.Cmp(*node.RAM.Available) <= 0 &&
+		(ephStorageReq.CmpInt64(0) == 0 || ephStorageReq.Cmp(*node.EphemeralStorage.Available) <= 0)
 }
 
 func freshWorkspaceCount(state *State, node *Node, freshSeconds int) int {
-	assignedPods := state.GetAssignedPods(node)
 	var count int
-	for _, p := range assignedPods {
-		if !isWorkspace(p.Pod) {
+	for _, p := range node.Pods {
+		if !isWorkspace(p) {
 			continue
 		}
-		if time.Since(p.Pod.ObjectMeta.CreationTimestamp.Time).Seconds() < float64(freshSeconds) {
+		if time.Since(p.ObjectMeta.CreationTimestamp.Time).Seconds() < float64(freshSeconds) {
 			count = count + 1
 		}
 	}
@@ -295,13 +299,12 @@ func classifyNode(state *State, node *Node) int {
 // The returned count will not include headless workspaces. E.g. if a node has only headless
 // workspaces running on it we'd return zero.
 func regularWorkspaceCount(state *State, node *Node) int {
-	assignedPods := state.GetAssignedPods(node)
 	var count int
-	for _, p := range assignedPods {
-		if !isWorkspace(p.Pod) {
+	for _, p := range node.Pods {
+		if !isWorkspace(p) {
 			continue
 		}
-		if isHeadlessWorkspace(p.Pod) {
+		if isHeadlessWorkspace(p) {
 			continue
 		}
 
@@ -322,12 +325,4 @@ func isHeadlessWorkspace(pod *corev1.Pod) bool {
 
 	val, ok := pod.ObjectMeta.Labels["headless"]
 	return ok && val == "true"
-}
-
-func podRAMRequest(pod *corev1.Pod) *res.Quantity {
-	result := res.NewQuantity(0, res.DecimalSI)
-	for _, c := range pod.Spec.Containers {
-		result.Add(*c.Resources.Requests.Memory())
-	}
-	return result
 }

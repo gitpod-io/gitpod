@@ -12,6 +12,7 @@ certificatesSecret:
   chainName: tls.crt
   keyName: tls.key
 version: not-set
+forceHTTPS: false
 affinity:
   nodeAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
@@ -38,12 +39,15 @@ components:
     - name: "dev"
       address: "ws-manager-dev:8080"
 
+  registryFacade:
+    daemonSet: true
+
   workspace:
     # configure GCP registry
     pullSecret:
       secretName: gcp-sa-registry-auth
     affinity:
-      default: "gitpod.io/workload_workspace_ubuntu"
+      default: "gitpod.io/workload_workspace"
     templates:
       default:
         spec:
@@ -116,7 +120,7 @@ components:
       path: gcp-sa-registry-auth
     registryCerts: []
 
-  wsSync:
+  wsDaemon:
     hostWorkspaceArea: /mnt/disks/ssd0/workspaces
     volumes:
     - name: gcloud-tmp
@@ -129,6 +133,16 @@ components:
     userNamespaces:
       shiftfsModuleLoader:
         enabled: true
+      seccompProfileInstaller:
+        enabled: true
+
+  wsScheduler:
+    scaler:
+      enabled: true
+      controller:
+        kind: "constant"
+        constant:
+          setpoint: 1
 
   # Enable ws-proxy in dev
   wsProxy:
@@ -139,3 +153,8 @@ components:
 # configure GCP registry
 docker-registry:
   enabled: false
+
+minio:
+  serviceAccount:
+    name: ws-daemon
+    create: false

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -13,7 +13,7 @@ import { GitpodTokenType } from '@gitpod/gitpod-protocol';
 import { injectable, inject } from 'inversify';
 import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
 import { WithResourceAccessGuard, TokenResourceGuard } from './resource-access';
-import { WithFunctionAccessGuard, ExplicitFunctionAccessGuard } from './function-access';
+import { WithFunctionAccessGuard, ExplicitFunctionAccessGuard, AllAccessFunctionGuard } from './function-access';
 
 export function getBearerToken(headers: Headers): string | undefined {
     const authorizationHeader = headers["authorization"];
@@ -45,16 +45,24 @@ export class BearerAuth {
                 throw new Error("invalid Bearer token");
             }
 
+            // hack: load the user again to get ahold of all identities
+            // TODO(cw): instead of re-loading the user, we should properly join the identities in findUserByGitpodToken
+            const user = (await this.userDB.findUserById(userAndToken.user.id))!;
+
             const resourceGuard = new TokenResourceGuard(userAndToken.user.id, userAndToken.token.scopes);
             (req as WithResourceAccessGuard).resourceGuard = resourceGuard;
 
             const functionScopes = userAndToken.token.scopes
                 .filter(s => s.startsWith("function:"))
                 .map(s => s.substring("function:".length));
-            // We always install a function access guard. If the token has no scopes, it's not allowed to do anything.
-            (req as WithFunctionAccessGuard).functionGuard = new ExplicitFunctionAccessGuard(functionScopes);
+            if (functionScopes.length === 1 && functionScopes[0] === "*") {
+                (req as WithFunctionAccessGuard).functionGuard = new AllAccessFunctionGuard();
+            } else {
+                // We always install a function access guard. If the token has no scopes, it's not allowed to do anything.
+                (req as WithFunctionAccessGuard).functionGuard = new ExplicitFunctionAccessGuard(functionScopes);
+            }
 
-            req.user = userAndToken.user;
+            req.user = user;
 
             return next();
         }

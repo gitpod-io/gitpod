@@ -1,0 +1,44 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.blobserve -}}
+{{- if not $comp.disabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: blobserve-config
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  config.json: |-
+    {
+        {{ if .Values.components.workspace.pullSecret.secretName -}}"dockerAuth": "/mnt/pull-secret.json",{{- end }}
+        "pprofAddr": ":6060",
+        "prometheusAddr": ":9500"
+        , "blobserve": {
+            "port": {{ $comp.ports.service.containerPort }},
+            "timeout": {{ ($comp.timeout | default "5s") | quote }},
+            "repos": {
+                "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) }}": {
+                    "prePull": ["{{- template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) -}}"],
+                    "workdir": "/theia/node_modules/@gitpod/gitpod-ide/lib"
+                },
+                "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) }}": {
+                    "prePull": ["{{- template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) -}}"],
+                    "workdir": "/ide"
+                },
+                "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) }}": {
+                    "prePull": ["{{- template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.supervisor) -}}"],
+                    "workdir": "/.supervisor/frontend"
+                }
+            },
+            "blobSpace": {
+                "location": "/mnt/cache/blobserve",
+                "maxSizeBytes": {{ $comp.maxCacheSize | default 1073741824 }}
+            }
+        }
+    }
+{{- end -}}

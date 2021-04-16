@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -11,7 +11,7 @@ import { ConnectionHandler } from "@gitpod/gitpod-protocol/lib/messaging/handler
 import { MessageConnection, ResponseError, ErrorCodes as RPCErrorCodes } from "vscode-jsonrpc";
 import { EventEmitter } from "events";
 import * as express from "express";
-import { OwnerResourceGuard, WithResourceAccessGuard } from "./auth/resource-access";
+import { OwnerResourceGuard, WithResourceAccessGuard, ResourceAccessGuard, CompositeResourceAccessGuard, SharedWorkspaceAccessGuard } from "./auth/resource-access";
 import { WithFunctionAccessGuard, AllAccessFunctionGuard, FunctionAccessGuard } from "./auth/function-access";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -54,9 +54,19 @@ export class WebsocketConnectionManager<C extends GitpodClient, S extends Gitpod
         const gitpodServer = this.serverFactory();
         const clientRegion = (expressReq as any).headers["x-glb-client-region"];
         const user = expressReq.user as User;
-        const resourceGuard = 
-            (expressReq as WithResourceAccessGuard).resourceGuard ||
-            (!!user ? new OwnerResourceGuard(user.id) : {canAccess: async () => false });
+
+        let resourceGuard: ResourceAccessGuard;
+        let explicitGuard = (expressReq as WithResourceAccessGuard).resourceGuard;
+        if (!!explicitGuard) {
+            resourceGuard = explicitGuard;
+        } else if (!!user) {
+            resourceGuard = new CompositeResourceAccessGuard([
+                new OwnerResourceGuard(user.id),
+                new SharedWorkspaceAccessGuard(),
+            ]);
+        } else {
+            resourceGuard = {canAccess: async () => false };
+        }
 
         gitpodServer.initialize(client, clientRegion, user, resourceGuard);
         client.onDidCloseConnection(() => {

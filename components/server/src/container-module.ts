@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -23,7 +23,7 @@ import { IContextParser, IPrefixContextParser } from './workspace/context-parser
 import { ContextParser } from './workspace/context-parser-service';
 import { SnapshotContextParser } from './workspace/snapshot-context-parser';
 import { GitpodCookie } from './auth/gitpod-cookie';
-import { EnforcementController } from './user/enforcement-endpoint';
+import { EnforcementController, EnforcementControllerServerFactory } from './user/enforcement-endpoint';
 import { MessagebusConfiguration } from '@gitpod/gitpod-messagebus/lib/config';
 import { HostContextProvider, HostContextProviderFactory } from './auth/host-context-provider';
 import { TokenService } from './user/token-service';
@@ -63,9 +63,11 @@ import { AuthProviderEntryDBImpl } from '@gitpod/gitpod-db/lib/typeorm/auth-prov
 import { AuthProviderService } from './auth/auth-provider-service';
 import { HostContextProviderImpl } from './auth/host-context-provider-impl';
 import { AuthProviderParams } from './auth/auth-provider';
-import { AuthErrorHandler } from './auth/auth-error-handler';
+import { LoginCompletionHandler } from './auth/login-completion-handler';
 import { MonitoringEndpointsApp } from './monitoring-endpoints';
 import { BearerAuth } from './auth/bearer-authenticator';
+import { TermsProvider } from './terms/terms-provider';
+import { TosCookie } from './user/tos-cookie';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Env).toSelf().inSingletonScope();
@@ -79,8 +81,9 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(TokenGarbageCollector).toSelf().inSingletonScope();
 
     bind(Authenticator).toSelf().inSingletonScope();
-    bind(AuthErrorHandler).toSelf().inSingletonScope();
+    bind(LoginCompletionHandler).toSelf().inSingletonScope();
     bind(GitpodCookie).toSelf().inSingletonScope();
+    bind(TosCookie).toSelf().inSingletonScope();
 
     bind(SessionHandlerProvider).toSelf().inSingletonScope();
     bind(Server).toSelf().inSingletonScope();
@@ -96,6 +99,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(ImageSourceProvider).toSelf().inSingletonScope();
 
     bind(UserController).toSelf().inSingletonScope();
+    bind(EnforcementControllerServerFactory).toAutoFactory(GitpodServerImpl);
     bind(EnforcementController).toSelf().inSingletonScope();
     bind(TheiaPluginController).toSelf().inSingletonScope();
 
@@ -191,4 +195,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(AuthProviderEntryDB).to(AuthProviderEntryDBImpl).inSingletonScope();
     bind(AuthProviderService).toSelf().inSingletonScope();
     bind(BearerAuth).toSelf().inSingletonScope();
+
+    bind(TermsProvider).toSelf().inSingletonScope();
 });

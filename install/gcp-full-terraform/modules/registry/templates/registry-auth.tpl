@@ -1,7 +1,0 @@
-{
-	"auths": {
-		"${hostname}": {
-			"auth": "${auth}"
-		}
-	}
-}

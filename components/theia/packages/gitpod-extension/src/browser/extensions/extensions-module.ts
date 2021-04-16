@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -31,6 +31,7 @@ import { ExtensionsInstaller } from './extensions-installer';
 import { GitpodPluginServer } from './gitpod-plugin-server';
 import { DisabledVSXExtensionsContribution } from './disabled-vsx-extensions-contribution';
 import { addUserInfoToSearchResult } from './search-result-enhancement';
+import { CachedUserStorage } from '../gitpod-user-storage-cached';
 
 export const extensionsModule: inversify.ContainerModuleCallBack = (bind, unbind, isBound, rebind) => {
     rebind(PluginFrontendViewContribution).toConstantValue({
@@ -132,7 +133,8 @@ export const extensionsModule: inversify.ContainerModuleCallBack = (bind, unbind
         const original = provider.createProxy<PluginServer>(pluginServerJsonRpcPath);
         const serviceProvider = ctx.container.get(GitpodServiceProvider);
         const infoService = ctx.container.get<GitpodInfoService>(GitpodInfoService);
-        return new GitpodPluginServer(original, serviceProvider, infoService);
+        const cachedUserStorage = ctx.container.get<CachedUserStorage>(CachedUserStorage);
+        return new GitpodPluginServer(original, serviceProvider, infoService, cachedUserStorage);
     }).inSingletonScope();
 
     bind(OpenVSXExtensionProvider).toDynamicValue(ctx => {

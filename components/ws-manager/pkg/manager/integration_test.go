@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -21,11 +21,11 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
+	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
+	wsdaemon_mock "github.com/gitpod-io/gitpod/ws-daemon/api/mock"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/grpcpool"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/test"
-	wssync "github.com/gitpod-io/gitpod/ws-sync/api"
-	wssync_mock "github.com/gitpod-io/gitpod/ws-sync/api/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/google/uuid"
@@ -44,7 +44,7 @@ import (
 var integrationFlag = flag.String("integration-test", "disabled", "configures integration tests. Valid values are disabled, local or a path to a kubeconfig file")
 
 func init() {
-	wssyncRetryInterval = 0
+	wsdaemonRetryInterval = 0
 }
 
 func forIntegrationTestGetManager(t *testing.T) *Manager {
@@ -199,7 +199,10 @@ func (r *StatusRecoder) Log() []api.WorkspaceStatus {
 func ensureIntegrationTestTheiaLabelOnNodes(client kubernetes.Interface, namespace string) (version string, err error) {
 	version = "wsman-test"
 
-	nodes, err := client.CoreV1().Nodes().List(metav1.ListOptions{LabelSelector: fmt.Sprintf("gitpod.io/theia.%s", version)})
+	ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
+	defer cancel()
+
+	nodes, err := client.CoreV1().Nodes().List(ctx, metav1.ListOptions{LabelSelector: fmt.Sprintf("gitpod.io/theia.%s", version)})
 	if err != nil {
 		log.WithError(err).Warnf("cannot list nodes to check if one has the gitpod.io/theia.%s label", version)
 		return "wsman-test", nil
@@ -212,10 +215,10 @@ func ensureIntegrationTestTheiaLabelOnNodes(client kubernetes.Interface, namespa
 	return
 }
 
-func connectToMockWssync(ctx context.Context, wssyncSrv wssync.WorkspaceContentServiceServer) (*grpc.ClientConn, error) {
+func connectToMockWsdaemon(ctx context.Context, wsdaemonSrv wsdaemon.WorkspaceContentServiceServer) (*grpc.ClientConn, error) {
 	lis := bufconn.Listen(1024 * 1024)
 	srv := grpc.NewServer()
-	wssync.RegisterWorkspaceContentServiceServer(srv, wssyncSrv)
+	wsdaemon.RegisterWorkspaceContentServiceServer(srv, wsdaemonSrv)
 	go func() {
 		err := srv.Serve(lis)
 		if err != nil {
@@ -238,19 +241,19 @@ type IntegrationTestPodTemplates struct {
 }
 
 type SingleWorkspaceIntegrationTest struct {
-	MockWssync              func(t *testing.T, s *wssync_mock.MockWorkspaceContentServiceServer)
-	WssyncConnectionContext func() context.Context
-	StartRequestModifier    func(t *testing.T, req *api.StartWorkspaceRequest)
-	PostStart               func(t *testing.T, monitor *Monitor, instanceID string, updates *StatusRecoder)
-	PodTemplates            IntegrationTestPodTemplates
+	MockWsdaemon              func(t *testing.T, s *wsdaemon_mock.MockWorkspaceContentServiceServer)
+	WsdaemonConnectionContext func() context.Context
+	StartRequestModifier      func(t *testing.T, req *api.StartWorkspaceRequest)
+	PostStart                 func(t *testing.T, monitor *Monitor, instanceID string, updates *StatusRecoder)
+	PodTemplates              IntegrationTestPodTemplates
 }
 
 func (test *SingleWorkspaceIntegrationTest) FillDefaults() *SingleWorkspaceIntegrationTest {
-	if test.MockWssync == nil {
-		test.MockWssync = func(t *testing.T, s *wssync_mock.MockWorkspaceContentServiceServer) {}
+	if test.MockWsdaemon == nil {
+		test.MockWsdaemon = func(t *testing.T, s *wsdaemon_mock.MockWorkspaceContentServiceServer) {}
 	}
-	if test.WssyncConnectionContext == nil {
-		test.WssyncConnectionContext = context.Background
+	if test.WsdaemonConnectionContext == nil {
+		test.WsdaemonConnectionContext = context.Background
 	}
 	if test.StartRequestModifier == nil {
 		test.StartRequestModifier = func(t *testing.T, req *api.StartWorkspaceRequest) {}
@@ -300,11 +303,11 @@ func (test *SingleWorkspaceIntegrationTest) Run(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	manager.wssyncPool = grpcpool.New(func(host string) (*grpc.ClientConn, error) {
-		s := wssync_mock.NewMockWorkspaceContentServiceServer(ctrl)
-		test.MockWssync(t, s)
-		ctx := test.WssyncConnectionContext()
-		return connectToMockWssync(ctx, s)
+	manager.wsdaemonPool = grpcpool.New(func(host string) (*grpc.ClientConn, error) {
+		s := wsdaemon_mock.NewMockWorkspaceContentServiceServer(ctrl)
+		test.MockWsdaemon(t, s)
+		ctx := test.WsdaemonConnectionContext()
+		return connectToMockWsdaemon(ctx, s)
 	})
 
 	monitor, err := manager.CreateMonitor()
@@ -365,7 +368,7 @@ func (test *SingleWorkspaceIntegrationTest) Run(t *testing.T) {
 	if err != nil {
 		t.Errorf("cannot start test workspace: %q", err)
 	}
-	defer manager.Clientset.CoreV1().Pods(manager.Config.Namespace).Delete(fmt.Sprintf("ws-%s", instanceID), metav1.NewDeleteOptions(30))
+	defer manager.Clientset.CoreV1().Pods(manager.Config.Namespace).Delete(ctx, fmt.Sprintf("ws-%s", instanceID), *metav1.NewDeleteOptions(30))
 
 	test.PostStart(t, monitor, instanceID, updates)
 }

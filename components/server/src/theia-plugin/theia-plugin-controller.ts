@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -54,7 +54,7 @@ export class TheiaPluginController {
 
             try {
                 const url = await this.pluginService.preflight(id, type);
-                res.send(encodeURI(url));
+                res.send(url);
             } catch (err) {
                 log.warn("Upload failed (Step: preflight)", err, { req });
 

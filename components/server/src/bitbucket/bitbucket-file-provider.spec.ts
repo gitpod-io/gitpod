@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -12,7 +12,7 @@ import { AuthProviderParams } from "../auth/auth-provider";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { DevData } from "../dev/dev-data";
 import { TokenProvider } from "../user/token-provider";
-import BitbucketApiFactory from "./bitbucket-api-factory";
+import { BitbucketApiFactory, BasicAuthBitbucketApiFactory } from './bitbucket-api-factory';
 import { BitbucketFileProvider } from "./bitbucket-file-provider";
 import { BitbucketTokenHelper } from "./bitbucket-token-handler";
 const expect = chai.expect;
@@ -51,7 +51,7 @@ class TestBitbucketFileProvider {
                 getTokenForHost: async () => DevData.createBitbucketTestToken(),
                 getFreshPortAuthenticationToken: async (user: User, workspaceId: string) => DevData.createPortAuthTestToken(workspaceId),
             });
-            bind(BitbucketApiFactory).toSelf().inSingletonScope();
+            bind(BitbucketApiFactory).to(BasicAuthBitbucketApiFactory).inSingletonScope();
             bind(HostContextProvider).toConstantValue({
                 get: (hostname: string) => { authProvider: { "Public-Bitbucket" } }
             });

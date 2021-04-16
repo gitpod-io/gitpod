@@ -1,9 +1,9 @@
-# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
-version: v0.4.0
-hostname: localhost
+version: 0.6.0-beta5
 
+hostname: localhost
 # ingressModes determines how Gitpod makes workspaces and their ports available. Possible values are:
 #           hosts: where workspaces and their ports are made available on subdomains of the hostname, e.g.
 #                  a workspace is made available at <wsid>.<installation.shortname>.<hostname>. This mode provides
@@ -19,8 +19,10 @@ hostname: localhost
 #                  This mode primarily makes sense if you don't have a domain available, but need to run on an IP address only.
 #                  In this mode there is no HTTPS and CORS support, some secrets get transmitted unencrypted (no one-time-secret support) and all exposed ports are public.
 ingressMode: hosts
+certificatesSecret:
+  secretName: https-certificates
 
-imagePrefix: gcr.io/gitpod-io/
+imagePrefix: gcr.io/gitpod-io/self-hosted/
 installation:
   stage: production
   tenant: gitpod
@@ -28,19 +30,13 @@ installation:
   cluster: "00"
   shortname: ""
 license: ""
-certificatesSecret: {}
 installPodSecurityPolicies: true
 imagePullPolicy: Always
 resources:
   default:
     cpu: 100m
     memory: 200Mi
-workspaceSizing:  # for n1-standard-16 (16 vCPUs, 60 GB memory)
-  ## deprecated settings
-  # memoryRequest: 2150   # 2.25 GB in MiB
-  # memoryLimit: 11444   # 12 GB in MiB
-  #
-  # new sizing settings
+workspaceSizing:
   requests:
     cpu: "1m"
     memory: "2.25Gi"
@@ -48,6 +44,27 @@ workspaceSizing:  # for n1-standard-16 (16 vCPUs, 60 GB memory)
   limits:
     cpu: "5"
     memory: "12Gi"
+  dynamic:
+    # Gitpod supports dynamic CPU limiting. We express those limits in "buckets of CPU time" (jiffies where 1 jiffie is 1% of a vCPU).
+    # Each bucket has a limit (i.e. max CPU rate in jiffies/sec, 100 jiffies/sec = 1 vCPU).
+    #
+    # For example:
+    #   # three minutes of 5 CPUs: 5 [numCPU] * 100 [jiffies/sec] * (3 * 60) [seconds] = 90000
+    #   - budget: 90000
+    #     limit: 500
+    #   # five minutes  of 4 CPUs: 4 [numCPU] * 100 [jiffies/sec] * (5 * 60) [seconds] = 120000
+    #   - budget: 120000
+    #     limit: 400
+    #   # remainder of 2 CPUs where a user has to stay below sustained use of 1.8 CPUs for 5 minutes:
+    #   #                       1.8 [numCPU] * 100 [jiffies/sec] * (5 * 60) [seconds] = 54000
+    #   - budget: 54000
+    #     limit: 200
+    #
+    # if there are no buckets configured, the dynamic CPU limiting is disabled.
+    cpu: 
+      buckets: []
+      samplingPeriod: "10s"
+      controlPeriod: "15m"
 db:
   host: db
   port: 3306
@@ -66,27 +83,28 @@ dbEncryptionKeys:
 serviceWaiter:
   imageName: "service-waiter"
 tracing: {}
-authProviders:
-- id: "Public-GitHub"
-  host: "github.com"
-  type: "GitHub"
-  oauth:
-    clientId: "CLIENT_ID"
-    clientSecret: "SECRET"
-    callBackUrl: "https://gitpod.io/auth/github/callback"
-    settingsUrl: "https://github.com/settings/connections/applications/CLIENT_ID"
-  description: ""
-  icon: ""
-- id: "Public-GitLab"
-  host: "gitlab.com"
-  type: "GitLab"
-  oauth:
-    clientId: "CLIENT_ID"
-    clientSecret: "SECRET"
-    callBackUrl: "https://gitpod.io/auth/gitlab/callback"
-    settingsUrl: "https://gitlab.com/profile/applications"
-  description: ""
-  icon: ""
+authProviders: []
+# Example authProvider configurations below:
+# - id: "Public-GitHub"
+#   host: "github.com"
+#   type: "GitHub"
+#   oauth:
+#     clientId: "CLIENT_ID"
+#     clientSecret: "SECRET"
+#     callBackUrl: "https://gitpod.io/auth/github/callback"
+#     settingsUrl: "https://github.com/settings/connections/applications/CLIENT_ID"
+#   description: ""
+#   icon: ""
+# - id: "Public-GitLab"
+#   host: "gitlab.com"
+#   type: "GitLab"
+#   oauth:
+#     clientId: "CLIENT_ID"
+#     clientSecret: "SECRET"
+#     callBackUrl: "https://gitpod.io/auth/gitlab/callback"
+#     settingsUrl: "https://gitlab.com/profile/applications"
+#   description: ""
+#   icon: ""
 branding:
   logo: https://www.devgraph.com/wp-content/uploads/2020/08/devspace-logo1.png
   homepage: https://www.devgraph.com/devspaces
@@ -117,11 +135,24 @@ branding:
         url: https://www.devgraph.com/terms-and-conditions/
 workspaceScheduler: workspace-scheduler
 serverProxyApiKey: "fF7+aCPvF9Pa0AEjmoZ+yWVh6PqBjM5VEA0wyQs3FH4="
+previewFeatureFlags: ["registry_facade", "user_namespace"]
 
 components:
   nodeDaemon:
     name: "node-daemon"
     theiaHostBasePath: /var/gitpod
+
+  blobserve:
+    name: "blobserve"
+    disabled: false
+    resources:
+      cpu: 100m
+      memory: 32Mi
+    ports:
+      service:
+        expose: true
+        containerPort: 32224
+        servicePort: 4000
 
   dbMigrations:
     enabled: true
@@ -168,7 +199,8 @@ components:
     registryCerts:
     - name: builtin
       secret: builtin-registry-certs
-    dindImage: docker:18.06-dind
+    dindImage: docker:19.03-dind
+    dindMtu: ""
     dindResources:
       requests:
         cpu: 100m
@@ -197,17 +229,9 @@ components:
         servicePort: 3000
     svcLabels:
       feature: registry
-    blobserve:
-      name: "registry-facade"
-      svcName: "blobserve"
-      svcLabels:
-        feature: blobserve
-      disabled: false
-      ports:
-        service:
-          expose: true
-          containerPort: 32224
-          servicePort: 4000
+    handover:
+      enabled: false
+      socket: /var/lib/gitpod/registry-facade
     serviceType: "ClusterIP"
 
   server:
@@ -261,6 +285,8 @@ components:
       imageName: "ide/code"
     supervisor:
       imageName: "supervisor"
+    dockerUp:
+      imageName: "docker-up"
     pullSecret:
       secretName: builtin-registry-auth
     template:
@@ -302,11 +328,11 @@ components:
       http:
         expose: true
         containerPort: 80
-        nodePort: 31080
+        # nodePort: 31080
       https:
         expose: true
         containerPort: 443
-        nodePort: 31443
+        # nodePort: 31443
     loadBalancerIP: null
     serviceType: "LoadBalancer"
     serviceSessionAffinity: "None"
@@ -353,29 +379,31 @@ components:
         expose: false
         containerPort: 9500
 
-  wsManagerNode:
-    name: "ws-manager-node"
-    registryProxyPort: 8081
-    resources:
-      cpu: 100m
-      memory: 32Mi
-
-  wsSync:
-    name: "ws-sync"
+  wsDaemon:
+    name: "ws-daemon"
     hostWorkspaceArea: /var/gitpod/workspaces
     servicePort: 8080
     workspaceSizeLimit: ""
-    fullWorkspaceBackup:
+    containerRuntime:
       enabled: true
-      nodeRoots: 
-      - /var/lib
       runtime: containerd
       containerd:
         socket: /run/containerd/containerd.sock
+      nodeRoots: 
+      - /var/lib
+      - /run/containerd/io.containerd.runtime.v1.linux/k8s.io
+      # On some hosts systems containerd uses different paths to store it's containers in, for example:
+      # Find out by ssh onto a node and "mount | grep rootfs" and have a look at the paths
+      # - /run/containerd/io.containerd.runtime.v1.linux/moby
+      # - /run/containerd/io.containerd.runtime.v2.task/k8s.io
     userNamespaces:
       shiftfsModuleLoader:
         enabled: false
         imageName: "shiftfs-module-loader"
+      seccompProfileInstaller:
+        enabled: true
+        imageName: "seccomp-profile-installer"
+    registryProxyPort: 8081
     remoteStorage:
       kind: minio
       minio:
@@ -392,13 +420,17 @@ components:
       cpu: 100m
       memory: 32Mi
     schedulerName: "workspace-scheduler"
-    scalerDisabled: true
-    scalerConfig:
-      scalingPeriod: "60s"
-      bufferRuntime: "5s"
-      slotFactor: 6
-      bufferFactor: 1
-  
+    scaler:
+      enabled: false
+      maxGhostWorkspaces: 10
+      renewal:
+        interval: "5m"
+        percentage: 20
+      controller:
+        kind: "constant"
+        constant:
+          setpoint: 5
+
   cerc:
     name: cerc
     disabled: true
@@ -434,6 +466,10 @@ components:
       memory: 64Mi
     replicas: 1
     useHTTPS: false
+    ingress:
+      portRange:
+        start: 10000
+        end: 11000
     ports:
       httpProxy:
         expose: true
@@ -457,6 +493,10 @@ minio:
   serviceAccount:
     create: true
     name: minio
+  resources:
+    requests:
+      # defaults to 4GB, set to 2GB to be able to start on smaller instances
+      memory: 2G
 
 mysql:
   enabled: true

@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -9,27 +9,27 @@ package supervisor;
 import "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "api";
+option go_package = ".;api";
 
 service TokenService {
     rpc GetToken(GetTokenRequest) returns (GetTokenResponse) {
         option (google.api.http) = {
-            get: "/v1/token/{host}/{scope}"
+            get: "/v1/token/{kind}/{host}/{scope}"
         };
     }
 
     rpc SetToken(SetTokenRequest) returns (SetTokenResponse) {
         option (google.api.http) = {
-            post: "/v1/token/{host}"
+            post: "/v1/token/{kind}/{host}"
             body: "*"
         };
     }
 
     rpc ClearToken(ClearTokenRequest) returns (ClearTokenResponse) {
         option (google.api.http) = {
-            delete: "/v1/token/{value}",
+            delete: "/v1/token/{kind}/{value}",
             additional_bindings {
-                delete: "/v1/token/clear/all/{all=true}",
+                delete: "/v1/token/{kind}/clear/all/{all=true}",
             }
         };
     }
@@ -41,9 +41,12 @@ message GetTokenRequest {
     string host = 1;
     repeated string scope = 2;
     string description = 3;
+    string kind = 4;
 }
 message GetTokenResponse {
     string token = 1;
+    /** The username of the account associated with the token. */
+    string user = 2;
 }
 
 message SetTokenRequest {
@@ -52,6 +55,7 @@ message SetTokenRequest {
     string token = 3;
     google.protobuf.Timestamp expiry_date = 4;
     TokenReuse reuse = 5;
+    string kind = 6;
 }
 message SetTokenResponse {}
 
@@ -74,13 +78,14 @@ message ClearTokenRequest {
         string value = 1;
         bool all = 2;
     };
+    string kind = 3;
 }
 
 message ClearTokenResponse {}
 
 message ProvideTokenRequest {
     message RegisterProvider {
-        string host = 1;
+        string kind = 1;
     }
     
     oneof message {

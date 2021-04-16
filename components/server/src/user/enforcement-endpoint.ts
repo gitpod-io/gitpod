@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -20,6 +20,9 @@ import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 import { GitpodServerImpl } from '../workspace/gitpod-server-impl';
 import { ResourceAccessGuard, OwnerResourceGuard } from '../auth/resource-access';
 
+export const EnforcementControllerServerFactory = Symbol('EnforcementControllerServerFactory');
+export type EnforcementControllerServerFactory = () => GitpodServerImpl<GitpodClient, GitpodServer>;
+
 @injectable()
 export class EnforcementController {
     @inject(Env) protected readonly env: Env;
@@ -28,7 +31,7 @@ export class EnforcementController {
     @inject(WorkspaceManagerClientProvider) protected readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider;
     @inject(UserDeletionService) protected readonly userDeletionService: UserDeletionService;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
-    @inject(GitpodServerImpl) protected readonly _gitpodServer: GitpodServerImpl<GitpodClient, GitpodServer>;
+    @inject(EnforcementControllerServerFactory) private readonly serverFactory: EnforcementControllerServerFactory;
 
     get apiRouter(): express.Router {
         const router = express.Router();
@@ -38,7 +41,7 @@ export class EnforcementController {
         return router;
     }
 
-    protected gitpodServer(user: User, resourceAccessGuard: ResourceAccessGuard) {
+    private createGitpodServer(user: User, resourceAccessGuard: ResourceAccessGuard) {
         /*
             This initialize call is a hack. GitpodServer is intended to be accessed via Wbsocket/JsonRpc (see WebsocketConnectionManager).
             Thus, initialize() needs a GitpodClient. For the methods we use here from GitpodServer we do not need this client.
@@ -46,8 +49,9 @@ export class EnforcementController {
             Since we want to get rid of this enforcement endpoint in the long term having this hack does not harm and looking for
             another architecture is not necessary.
         */
-        this._gitpodServer.initialize({} as GitpodClient, undefined, user, resourceAccessGuard);
-        return this._gitpodServer;
+        const server = this.serverFactory()
+        server.initialize(undefined, undefined, user, resourceAccessGuard);
+        return server;
     }
 
     protected getAuthorizedUser(req: express.Request): { callingUser: User, resourceAccessGuard: ResourceAccessGuard } | undefined {
@@ -98,8 +102,9 @@ export class EnforcementController {
             const { callingUser, resourceAccessGuard } = auth;
 
             const targetUserID = req.params.userid;
+            const server = this.createGitpodServer(callingUser, resourceAccessGuard);
             try {
-                await this.gitpodServer(callingUser, resourceAccessGuard).adminBlockUser({ id: targetUserID, blocked: true });
+                await server.adminBlockUser({ id: targetUserID, blocked: true });
                 res.sendStatus(200);
             } catch (e) {
                 if (e instanceof ResponseError && e.code === ErrorCodes.NOT_FOUND) {
@@ -111,6 +116,8 @@ export class EnforcementController {
                     res.status(500);
                     res.send(e);
                 }
+            } finally {
+                server.dispose();
             }
         });
     }
@@ -139,8 +146,9 @@ export class EnforcementController {
             const { callingUser, resourceAccessGuard } = auth;
 
             const targetWsID = req.params.wsid;
+            const server = this.createGitpodServer(callingUser, resourceAccessGuard);
             try {
-                await this.gitpodServer(callingUser, resourceAccessGuard).adminForceStopWorkspace(targetWsID);
+                await server.adminForceStopWorkspace(targetWsID);
 
                 const target = (await this.workspaceDb.findById(targetWsID))!;
                 const owner = await this.userDB.findUserById(target!.ownerId);
@@ -165,6 +173,8 @@ export class EnforcementController {
                     res.status(500);
                     res.send(e);
                 }
+            } finally {
+                server.dispose()
             }
         });
     }
@@ -178,7 +188,7 @@ export class EnforcementController {
                 res.sendStatus(404);
                 return;
             }
-            
+
             const targetUserID = req.params.userid;
             const actionUrl = this.deleteUserUrl(targetUserID);
             res.send(`<html><body><h1>Click button below</h1><form method="post" action="${actionUrl}"><input type="submit" value="Do it"></form></body></html>`)

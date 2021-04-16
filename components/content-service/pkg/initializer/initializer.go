@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -55,11 +55,11 @@ func (e *EmptyInitializer) Run(ctx context.Context) (csapi.WorkspaceInitSource, 
 }
 
 // recursiveChown chown's the location and all its childen to
-func recursiveChown(ctx context.Context, location string) (err error) {
+func recursiveChown(ctx context.Context, location string, uid, gid int) (err error) {
 	span, _ := opentracing.StartSpanFromContext(ctx, "recursiveChown")
 	defer tracing.FinishSpan(span, &err)
 
-	out, err := exec.Command("chown", "-R", fmt.Sprintf("%d:%d", GitpodUID, GitpodGID), location).CombinedOutput()
+	out, err := exec.Command("chown", "-R", fmt.Sprintf("%d:%d", uid, gid), location).CombinedOutput()
 	if err != nil {
 		return xerrors.Errorf("chown -R %s: %s", location, out)
 	}
@@ -252,6 +252,8 @@ type initializeOpts struct {
 	Initializer Initializer
 	CleanSlate  bool
 	InWorkspace bool
+	UID         int
+	GID         int
 }
 
 // WithInitializer configures the initializer that's used during content initialization
@@ -271,6 +273,14 @@ func WithInWorkspace(o *initializeOpts) {
 	o.InWorkspace = true
 }
 
+// WithChown sets a custom UID/GID the content will have after initialisation
+func WithChown(uid, gid int) InitializeOpt {
+	return func(o *initializeOpts) {
+		o.UID = uid
+		o.GID = gid
+	}
+}
+
 // InitializeWorkspace initializes a workspace from backup or an initializer
 func InitializeWorkspace(ctx context.Context, location string, remoteStorage storage.DirectDownloader, opts ...InitializeOpt) (src csapi.WorkspaceInitSource, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "InitializeWorkspace")
@@ -281,6 +291,8 @@ func InitializeWorkspace(ctx context.Context, location string, remoteStorage sto
 		Initializer: &EmptyInitializer{},
 		CleanSlate:  false,
 		InWorkspace: false,
+		GID:         GitpodGID,
+		UID:         GitpodUID,
 	}
 	for _, o := range opts {
 		o(&cfg)
@@ -312,7 +324,7 @@ func InitializeWorkspace(ctx context.Context, location string, remoteStorage sto
 		}
 
 		// Chown the workspace directory
-		err = os.Chown(location, GitpodUID, GitpodGID)
+		err = os.Chown(location, cfg.UID, cfg.GID)
 		if err != nil {
 			return src, xerrors.Errorf("cannot create workspace: %w", err)
 		}
@@ -335,7 +347,7 @@ func InitializeWorkspace(ctx context.Context, location string, remoteStorage sto
 	}
 
 	if !cfg.InWorkspace {
-		err = recursiveChown(ctx, location)
+		err = recursiveChown(ctx, location, cfg.UID, cfg.GID)
 		if err != nil {
 			return src, xerrors.Errorf("cannot set workspace permissions: %w", err)
 		}
@@ -345,7 +357,7 @@ func InitializeWorkspace(ctx context.Context, location string, remoteStorage sto
 }
 
 // PlaceWorkspaceReadyFile writes a file in the workspace which indicates that the workspace has been initialized
-func PlaceWorkspaceReadyFile(ctx context.Context, wspath string, initsrc csapi.WorkspaceInitSource) (err error) {
+func PlaceWorkspaceReadyFile(ctx context.Context, wspath string, initsrc csapi.WorkspaceInitSource, uid, gid int) (err error) {
 	//nolint:ineffassign,staticcheck
 	span, ctx := opentracing.StartSpanFromContext(ctx, "placeWorkspaceReadyFile")
 	span.SetTag("source", initsrc)
@@ -360,22 +372,22 @@ func PlaceWorkspaceReadyFile(ctx context.Context, wspath string, initsrc csapi.W
 	}
 
 	gitpodDir := filepath.Join(wspath, filepath.Dir(WorkspaceReadyFile))
-	err = os.MkdirAll(gitpodDir, 0700)
+	err = os.MkdirAll(gitpodDir, 0777)
 	if err != nil {
 		return xerrors.Errorf("cannot write workspace ready file: %w", err)
 	}
-	err = os.Chown(gitpodDir, GitpodUID, GitpodGID)
+	err = os.Chown(gitpodDir, uid, gid)
 	if err != nil {
 		return xerrors.Errorf("cannot write workspace-ready file: %w", err)
 	}
 
 	tempWorkspaceReadyFile := WorkspaceReadyFile + ".tmp"
 	fn := filepath.Join(wspath, tempWorkspaceReadyFile)
-	err = ioutil.WriteFile(fn, []byte(fc), 0600)
+	err = ioutil.WriteFile(fn, []byte(fc), 0644)
 	if err != nil {
 		return xerrors.Errorf("cannot write workspace ready file: %w", err)
 	}
-	err = os.Chown(fn, GitpodUID, GitpodGID)
+	err = os.Chown(fn, uid, gid)
 	if err != nil {
 		return xerrors.Errorf("cannot write workspace ready file: %w", err)
 	}

@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -32,6 +32,8 @@ type Configuration struct {
 	Namespace string `json:"namespace"`
 	// SchedulerName is the name of the workspace scheduler all pods are created with
 	SchedulerName string `json:"schedulerName"`
+	// SeccompProfile names the seccomp profile workspaces will use
+	SeccompProfile string `json:"seccompProfile"`
 	// Container configures all three workspace containers
 	Container AllContainerConfiguration `json:"container"`
 	// Timeouts configures how long workspaces can be without activity before they're shut down.
@@ -69,8 +71,8 @@ type Configuration struct {
 	ReconnectionInterval util.Duration `json:"reconnectionInterval"`
 	// DryRun prevents us from ever stopping a pod. It is considered equivalent to a listener mode
 	DryRun bool `json:"dryRun,omitempty"`
-	// WorkspaceSync configures our connection to the workspace sync daemons runnin on the nodes
-	WorkspaceSync WorkspaceSyncConfiguration `json:"wssync"`
+	// WorkspaceDaemon configures our connection to the workspace sync daemons runnin on the nodes
+	WorkspaceDaemon WorkspaceDaemonConfiguration `json:"wsdaemon"`
 	// TheiaSupervisorToken is the bearer token required to talk to the sentinel part of the supervisor health endpoint
 	TheiaSupervisorToken string `json:"theiaSupervisorToken"`
 	// RegistryFacadeHost is the host (possibly including port) on which the registry facade resolves
@@ -126,13 +128,15 @@ type WorkspacePodTemplateConfiguration struct {
 	PrebuildPath string `json:"prebuildPath,omitempty"`
 	// ProbePath is a path to an additional workspace pod template YAML file for probe workspaces
 	ProbePath string `json:"probePath,omitempty"`
+	// GhostPath is a path to an additional workspace pod template YAML file for ghost workspaces
+	GhostPath string `json:"ghostPath,omitempty"`
 }
 
-// WorkspaceSyncConfiguration configures our connection to the workspace sync daemons runnin on the nodes
-type WorkspaceSyncConfiguration struct {
-	// Port is the port on the node on which the ws-sync is listening
+// WorkspaceDaemonConfiguration configures our connection to the workspace sync daemons runnin on the nodes
+type WorkspaceDaemonConfiguration struct {
+	// Port is the port on the node on which the ws-daemon is listening
 	Port int `json:"port"`
-	// TLS is the certificate/key config to connect to ws-sync
+	// TLS is the certificate/key config to connect to ws-daemon
 	TLS struct {
 		// Authority is the root certificate that was used to sign the certificate itself
 		Authority string `json:"ca"`
@@ -169,6 +173,7 @@ func (c *Configuration) Validate() error {
 		validation.Field(&c.WorkspacePodTemplate.DefaultPath, validPodTemplate),
 		validation.Field(&c.WorkspacePodTemplate.PrebuildPath, validPodTemplate),
 		validation.Field(&c.WorkspacePodTemplate.ProbePath, validPodTemplate),
+		validation.Field(&c.WorkspacePodTemplate.GhostPath, validPodTemplate),
 		validation.Field(&c.WorkspacePodTemplate.RegularPath, validPodTemplate),
 	)
 	if err != nil {
@@ -264,19 +269,21 @@ func (r *ResourceConfiguration) ResourceList() (corev1.ResourceList, error) {
 		corev1.ResourceEphemeralStorage: r.Storage,
 	}
 
-	var (
-		l   = make(corev1.ResourceList)
-		err error
-	)
+	var l = make(corev1.ResourceList)
 	for k, v := range res {
 		if v == "" {
 			continue
 		}
 
-		l[k], err = resource.ParseQuantity(v)
+		q, err := resource.ParseQuantity(v)
 		if err != nil {
 			return nil, xerrors.Errorf("%s: %w", k, err)
 		}
+		if q.Value() == 0 {
+			continue
+		}
+
+		l[k] = q
 	}
 	return l, nil
 }

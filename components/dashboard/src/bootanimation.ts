@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -26,6 +26,7 @@ export class Bootanimation {
     };
     protected buffers: { position: WebGLBuffer | null; normals: WebGLBuffer | null; indices: WebGLBuffer | null; };
     protected inErrorMode: boolean = false;
+    protected isStopped: boolean = false;
 
     protected projectionMatrix = new mat4();
     protected modelViewMatrix = new mat4();
@@ -194,6 +195,10 @@ export class Bootanimation {
     }
 
     start() {
+        if (!!this.isStopped) {
+            this.isStopped = false;
+            return;
+        }
         let then = 0;
 
         // Draw the scene repeatedly
@@ -203,7 +208,7 @@ export class Bootanimation {
                 return;
             }
 
-            now *= 0.001;  // convert to seconds
+            now = !this.isStopped ? now * 0.001 : then; // convert to seconds
             const deltaTime = now - then;
             then = now;
 
@@ -220,7 +225,14 @@ export class Bootanimation {
         this.onResize();
     }
 
+    stop() {
+        this.isStopped = true;
+    }
+
     protected updateMousePosition(evt: MouseEvent) {
+        if (!!this.isStopped) {
+            return;
+        }
         this.mousePosition = [(evt.clientX / this.canvas.clientWidth) - 0.5, (evt.clientY / this.canvas.clientHeight) - 0.5];
     }
 
@@ -257,7 +269,7 @@ export class Bootanimation {
         var rotateX = Math.sin(now) * 0.1 + 0.75 + this.mousePosition[1];
         var rotateY = Math.cos(now) * 0.1 - 0.75 + this.mousePosition[0];
 
-        if (this.inErrorMode) {
+        if (this.isStopped) {
             xoffset = yoffset = 0;
             rotateX = 0.75;
             rotateY = -0.75;
@@ -311,7 +323,7 @@ export class Bootanimation {
             glow);
         this.gl.uniform3fv(
             this.programInfo.uniformLocations.baseColor,
-            this.inErrorMode ? [0.83, 0.153, 0.243] : [0, 0.53, 0.75]);
+            this.inErrorMode ? [0.83, 0.153, 0.243] : (this.isStopped ? [0.53, 0.53, 0.53] :[0, 0.53, 0.75]));
 
         this.gl.drawElements(this.gl.TRIANGLES, 90, this.gl.UNSIGNED_SHORT, 0);
     }

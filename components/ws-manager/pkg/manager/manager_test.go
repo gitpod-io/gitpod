@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -100,8 +100,11 @@ func TestControlPort(t *testing.T) {
 				return &result
 			}
 
+			ctx, cancel := context.WithTimeout(context.Background(), kubernetesOperationTimeout)
+			defer cancel()
+
 			result.Response = resp
-			result.PortsService, _ = manager.Clientset.CoreV1().Services(manager.Config.Namespace).Get(getPortsServiceName(startCtx.Request.ServicePrefix), metav1.GetOptions{})
+			result.PortsService, _ = manager.Clientset.CoreV1().Services(manager.Config.Namespace).Get(ctx, getPortsServiceName(startCtx.Request.ServicePrefix), metav1.GetOptions{})
 
 			return &result
 		},
@@ -215,7 +218,7 @@ func TestFindWorkspacePod(t *testing.T) {
 			}
 			manager.Clientset = fakek8s.NewSimpleClientset(objs...)
 
-			p, err := manager.findWorkspacePod(test.WorkspaceID)
+			p, err := manager.findWorkspacePod(context.Background(), test.WorkspaceID)
 
 			var errmsg string
 			if err != nil {

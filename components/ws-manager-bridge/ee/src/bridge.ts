@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the Gitpod Enterprise Source Code License,
  * See License.enterprise.txt in the project root folder.
  */
@@ -74,11 +74,14 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
                     prebuild.state = "timeout";
                     prebuild.error = status.conditions!.timeout;
                     headlessUpdateType = HeadlessWorkspaceEventType.AbortedTimedOut;
+                } else if (!!status.conditions!.failed) {
+                    prebuild.state = "aborted";
+                    prebuild.error = status.conditions!.failed;
+                    headlessUpdateType = HeadlessWorkspaceEventType.FinishedButFailed;
                 } else {
                     prebuild.state = "available";
-                    prebuild.error = status.conditions!.failed;
                     prebuild.snapshot = status.conditions!.snapshot;
-                    headlessUpdateType = !!status.conditions!.failed ? HeadlessWorkspaceEventType.FinishedButFailed : HeadlessWorkspaceEventType.FinishedSuccessfully;
+                    headlessUpdateType = HeadlessWorkspaceEventType.FinishedSuccessfully;
                 }
                 await this.workspaceDB.trace({span}).storePrebuiltWorkspace(prebuild);
 
@@ -91,7 +94,7 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
                 await this.messagebus.notifyHeadlessUpdate({}, userId, workspaceId, <HeadlessLogEvent>{
                     type: HeadlessWorkspaceEventType.LogOutput,
                     workspaceID: workspaceId,
-                    text: status.message
+                    text: status.message + "\n"
                 });
             }
         } catch (e) {

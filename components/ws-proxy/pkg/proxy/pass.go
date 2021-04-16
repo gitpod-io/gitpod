@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -17,17 +17,18 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
-
-	"github.com/koding/websocketproxy"
 )
 
 // ProxyPassConfig is used as intermediate struct to assemble a configurable proxy
 type proxyPassConfig struct {
-	TargetResolver   targetResolver
-	ResponseHandler  responseHandler
-	ErrorHandler     errorHandler
-	Transport        http.RoundTripper
-	WebsocketSupport bool
+	TargetResolver  targetResolver
+	ResponseHandler []responseHandler
+	ErrorHandler    errorHandler
+	Transport       http.RoundTripper
+}
+
+func (ppc *proxyPassConfig) appendResponseHandler(handler responseHandler) {
+	ppc.ResponseHandler = append(ppc.ResponseHandler, handler)
 }
 
 // proxyPassOpt allows to compose ProxyHandler options
@@ -51,90 +52,64 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 	}
 	h.TargetResolver = resolver
 
-	var eh errorHandler
 	if h.ErrorHandler != nil {
-		eh = func(w http.ResponseWriter, req *http.Request, connectErr error) {
+		oeh := h.ErrorHandler
+		h.ErrorHandler = func(w http.ResponseWriter, req *http.Request, connectErr error) {
 			log.Debugf("could not connect to backend %s: %s", req.URL.String(), connectErrorToCause(connectErr))
-
-			h.ErrorHandler(w, req, connectErr)
+			oeh(w, req, connectErr)
 		}
 	}
 
-	// proxy constructors
-	createWebsocketProxy := func(h *proxyPassConfig, targetURL *url.URL) http.Handler {
-		// TODO configure custom IdleConnTimeout for websockets
-		proxy := websocketproxy.NewProxy(targetURL)
-		return proxy
-	}
-	createRegularProxy := func(h *proxyPassConfig, targetURL *url.URL) http.Handler {
+	return func(w http.ResponseWriter, req *http.Request) {
+		targetURL, err := h.TargetResolver(config.Config, req)
+		if err != nil {
+			if h.ErrorHandler != nil {
+				h.ErrorHandler(w, req, err)
+			} else {
+				log.WithError(err).Errorf("Unable to resolve targetURL: %s", req.URL.String())
+			}
+			return
+		}
+
+		var originalURL = *req.URL
+
+		// TODO(cw): we should cache the proxy for some time for each target URL
 		proxy := httputil.NewSingleHostReverseProxy(targetURL)
 		proxy.Transport = h.Transport
-		proxy.ErrorHandler = eh
 		proxy.ModifyResponse = func(resp *http.Response) error {
 			url := resp.Request.URL
 			if url == nil {
 				return xerrors.Errorf("response's request without URL")
 			}
 
-			if log.Log.Level <= logrus.DebugLevel && resp.StatusCode != http.StatusOK {
+			if log.Log.Level <= logrus.DebugLevel && resp.StatusCode >= http.StatusBadRequest {
 				dmp, _ := httputil.DumpRequest(resp.Request, false)
 				log.WithField("url", url.String()).WithField("req", dmp).WithField("status", resp.Status).Debug("proxied request failed")
 			}
-			if resp.StatusCode == http.StatusNotFound {
-				return fmt.Errorf("not found")
+
+			// execute response handlers in order of registration
+			for _, handler := range h.ResponseHandler {
+				err := handler(resp, req)
+				if err != nil {
+					return err
+				}
 			}
+
 			return nil
 		}
-		return proxy
-	}
 
-	return func(w http.ResponseWriter, req *http.Request) {
-		targetURL, err := h.TargetResolver(config.Config, req)
-		if err != nil {
-			log.WithError(err).Errorf("Unable to resolve targetURL: %s", req.URL.String())
-			return
+		proxy.ErrorHandler = func(rw http.ResponseWriter, req *http.Request, err error) {
+			if h.ErrorHandler != nil {
+				req.URL = &originalURL
+				h.ErrorHandler(w, req, err)
+				return
+			}
+
+			log.WithField("url", originalURL.String()).WithError(err).Error("proxied request failed")
+			rw.WriteHeader(http.StatusBadGateway)
 		}
 
-		// TODO Would it make sense to cache these constructs per target URL?
-		var (
-			proxy       http.Handler
-			proxyType   string
-			originalURL = *req.URL
-		)
-		if h.WebsocketSupport && isWebsocketRequest(req) {
-			if targetURL.Scheme == "https" {
-				targetURL.Scheme = "wss"
-			} else if targetURL.Scheme == "http" {
-				targetURL.Scheme = "ws"
-			}
-			proxy = createWebsocketProxy(&h, targetURL)
-			proxyType = "websocket"
-		} else {
-			proxy = createRegularProxy(&h, targetURL)
-			proxyType = "regular"
-		}
-
-		if proxy, ok := proxy.(*httputil.ReverseProxy); ok {
-			if proxy.ErrorHandler != nil {
-				orgErrHndlr := proxy.ErrorHandler
-				proxy.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
-					req.URL = &originalURL
-					orgErrHndlr(w, req, err)
-				}
-			}
-			if h.ResponseHandler != nil {
-				originalModifyResponse := proxy.ModifyResponse
-				proxy.ModifyResponse = func(resp *http.Response) error {
-					err := originalModifyResponse(resp)
-					if err != nil {
-						return err
-					}
-					return h.ResponseHandler(resp, req)
-				}
-			}
-		}
-
-		getLog(req.Context()).WithField("targetURL", targetURL.String()).WithField("proxyType", proxyType).Debug("proxy-passing request")
+		getLog(req.Context()).WithField("targetURL", targetURL.String()).Debug("proxy-passing request")
 		proxy.ServeHTTP(w, req)
 	}
 }
@@ -195,20 +170,6 @@ func withErrorHandler(h errorHandler) proxyPassOpt {
 	}
 }
 
-// // withTransport allows to configure a http.RoundTripper that handles the actual sending and receiving of the HTTP request to the proxy target
-// func withTransport(transport http.RoundTripper) proxyPassOpt {
-// 	return func(h *proxyPassConfig) {
-// 		h.Transport = transport
-// 	}
-// }
-
-// withWebsocketSupport treats this route as websocket route
-func withWebsocketSupport() proxyPassOpt {
-	return func(h *proxyPassConfig) {
-		h.WebsocketSupport = true
-	}
-}
-
 func createDefaultTransport(config *TransportConfig) *http.Transport {
 	// TODO equivalent of client_max_body_size 2048m; necessary ???
 	// this is based on http.DefaultTransport, with some values exposed to config
@@ -224,5 +185,24 @@ func createDefaultTransport(config *TransportConfig) *http.Transport {
 		IdleConnTimeout:       time.Duration(config.IdleConnTimeout), // default: 90s
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
+	}
+}
+
+// tell the browser to cache for 1 year and don't ask the server during this period
+func withLongTermCaching() proxyPassOpt {
+	return func(cfg *proxyPassConfig) {
+		cfg.appendResponseHandler(func(resp *http.Response, req *http.Request) error {
+			resp.Header.Set("Cache-Control", "public, max-age=31536000")
+			return nil
+		})
+	}
+}
+
+func withXFrameOptionsFilter() proxyPassOpt {
+	return func(cfg *proxyPassConfig) {
+		cfg.appendResponseHandler(func(resp *http.Response, req *http.Request) error {
+			resp.Header.Del("X-Frame-Options")
+			return nil
+		})
 	}
 }

@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -33,7 +33,7 @@ var debugHeadlessLogCmd = &cobra.Command{
 		}
 		log.Info("connected to Kubernetes")
 
-		pod, err := clientset.CoreV1().Pods(debugHeadlessLogNS).Get(args[0], metav1.GetOptions{})
+		pod, err := clientset.CoreV1().Pods(debugHeadlessLogNS).Get(context.Background(), args[0], metav1.GetOptions{})
 		if err != nil {
 			log.WithError(err).Fatal("cannot start listener")
 			return

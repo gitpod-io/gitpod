@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -11,7 +11,7 @@ import { Schema } from "bitbucket";
 import { inject, injectable } from "inversify";
 import { NotFoundError } from "../errors";
 import { AbstractContextParser, IContextParser, IssueContexts } from "../workspace/context-parser";
-import BitbucketApiFactory from "./bitbucket-api-factory";
+import { BitbucketApiFactory } from './bitbucket-api-factory';
 import { BitbucketTokenHelper } from "./bitbucket-token-handler";
 
 
@@ -233,13 +233,18 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
         if (!repo) {
             throw new Error('Unknown repository.');
         }
-        const owner = repo.workspace && repo.workspace.slug || repo.full_name!.split("/")[0];
+        // full_name: string
+        // The concatenation of the repository owner's username and the slugified name, e.g. "evzijst/interruptingcow". This is the same string used in Bitbucket URLs.
+        const fullName = repo.full_name!.split("/");
+        const owner = fullName[0];
+        const name = fullName[1];
+
         const result: Repository = {
             cloneUrl: `https://${host}/${repo.full_name}.git`,
             // cloneUrl: repoQueryResult.links.html.href + ".git",
             // cloneUrl: repoQueryResult.links.clone.find((x: any) => x.name === "https").href,
             host,
-            name: repo.slug,
+            name,
             owner,
             private: !!repo.isPrivate,
             defaultBranch: repo.mainbranch ? repo.mainbranch.name : "master"

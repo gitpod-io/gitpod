@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -28,17 +28,30 @@ export class HostContextProviderImpl implements HostContextProvider {
     @inject(HostContextProviderFactory)
     protected factory: HostContextProviderFactory;
 
+    async init() {
+        await this.ensureInitialized();
+    }
+
     protected initialized = false;
-    protected ensureInitialized() {
+    protected async ensureInitialized() {
         if (this.initialized) {
             return;
         }
-        this.createFixedHosts()
-        this.updateDynamicHosts();
+        this.createFixedHosts();
+
+        try {
+            await this.updateDynamicHosts();
+        } catch (error) {
+            log.error(`Failed to update dynamic hosts.`, error);
+        }
 
         // schedule periodic update of dynamic hosts
         const scheduler = () => setTimeout(async () => {
-            await this.updateDynamicHosts();
+            try {
+                await this.updateDynamicHosts();
+            } catch (error) {
+                log.error(`Failed to update dynamic hosts.`, error);
+            }
             scheduler();
         }, 1999);
         scheduler();
@@ -58,7 +71,7 @@ export class HostContextProviderImpl implements HostContextProvider {
     protected async updateDynamicHosts() {
         const all = await this.authProviderService.getAllAuthProviders();
 
-        const currentHosts = all.map(p => p.host);
+        const currentHosts = new Set(all.map(p => p.host.toLowerCase()));
         for (const config of all) {
             const { host } = config;
 
@@ -88,7 +101,7 @@ export class HostContextProviderImpl implements HostContextProvider {
         }
 
         // remove obsolete entries
-        const tobeRemoved = [...this.dynamicHosts.keys()].filter(h => !currentHosts.includes(h));
+        const tobeRemoved = [...this.dynamicHosts.keys()].filter(h => !currentHosts.has(h));
         for (const host of tobeRemoved) {
             const hostContext = this.dynamicHosts.get(host);
             log.debug("Disposing dynamic Auth Provider: " + host, { host, hostContext });
@@ -106,6 +119,7 @@ export class HostContextProviderImpl implements HostContextProvider {
 
     get(hostname: string): HostContext | undefined {
         this.ensureInitialized();
+        hostname = hostname.toLowerCase();
         const hostContext = this.fixedHosts.get(hostname) || this.dynamicHosts.get(hostname);
         if (!hostContext) {
             log.debug("No HostContext for " + hostname);

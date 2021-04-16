@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -12,13 +12,14 @@ import { GitlabContextParser } from './gitlab-context-parser';
 import { User } from "@gitpod/gitpod-protocol";
 import { ContainerModule, Container } from "inversify";
 import { DevData } from "../dev/dev-data";
-import { GitLabApi } from "./api";
+import { GitLabApi, GitLab } from "./api";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { NotFoundError } from "../errors";
 import { GitLabTokenHelper } from "./gitlab-token-helper";
 import { TokenProvider } from "../user/token-provider";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { skipIfEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
+
 
 @suite(timeout(10000), retries(2), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_GITLAB"))
 class TestGitlabContextParser {
@@ -74,7 +75,6 @@ class TestGitlabContextParser {
             "ref": "master",
             "refType": "branch",
             "path": "",
-            "revision": "3cbb7be8212f00bcbea6a2ff9ae889219b391e63",
             "isFile": false,
             "repository": {
                 "host": "gitlab.com",
@@ -85,6 +85,26 @@ class TestGitlabContextParser {
                 "private": false
             },
             "title": "AlexTugarev/gp-test - master"
+        })
+    }
+
+    @test public async testTreeContext_01_regression() {
+        const result = await this.parser.handle({}, this.user, 'https://gitlab.com/gitlab-org/gitlab');
+        console.log("result")
+        expect(result).to.deep.include({
+            "ref": "master",
+            "refType": "branch",
+            "path": "",
+            "isFile": false,
+            "repository": {
+                "host": "gitlab.com",
+                "owner": "gitlab-org",
+                "name": "gitlab",
+                "cloneUrl": "https://gitlab.com/gitlab-org/gitlab.git",
+                "defaultBranch": "master",
+                "private": false
+            },
+            "title": "gitlab-org/gitlab - master"
         })
     }
 
@@ -214,7 +234,11 @@ class TestGitlabContextParser {
             // ensure that an error has been thrown
             chai.assert.fail();
         } catch (e) {
-            expect(e.message).contains("Couldn't find commit");
+            if (GitLab.ApiError.is(e)) {
+                expect(e.httpError?.description).equals("404 Commit Not Found");
+            } else {
+                chai.assert.fail("Unknown Error: " + JSON.stringify(e));
+            }
         }
     }
 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -28,6 +28,7 @@ export interface GuardedWorkspaceInstance {
     kind: "workspaceInstance";
     subject: WorkspaceInstance | undefined;
     workspaceOwnerID: string;
+    workspaceIsShared: boolean;
 }
 
 export interface GuardedUser {
@@ -119,6 +120,20 @@ export class OwnerResourceGuard implements ResourceAccessGuard {
 
 }
 
+export class SharedWorkspaceAccessGuard implements ResourceAccessGuard {
+
+    async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
+        switch (resource.kind) {
+            case "workspace":
+                return resource.subject.shareable === true;
+            case "workspaceInstance":
+                return !!resource.workspaceIsShared;
+            default:
+                return false;
+        }
+    }
+}
+
 export class ScopedResourceGuard implements ResourceAccessGuard {
     protected readonly scopes: { [index: string]: ScopedResourceGuard.ResourceScope } = {};
 
@@ -205,7 +220,7 @@ export namespace ScopedResourceGuard {
             case "snapshot":
                 return resource.subject ? resource.subject.id : undefined;
             case "token":
-                return;
+                return resource.subject.value;
             case "user":
                 return resource.subject.id;
             case "userStorage":

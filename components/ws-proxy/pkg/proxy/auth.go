@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -37,7 +37,7 @@ func WorkspaceAuthHandler(domain string, info WorkspaceInfoProvider) mux.Middlew
 				return
 			}
 
-			ws := info.WorkspaceInfo(wsID)
+			ws := info.WorkspaceInfo(req.Context(), wsID)
 			if ws == nil {
 				log.Warn("did not find workspace info")
 				resp.WriteHeader(http.StatusNotFound)

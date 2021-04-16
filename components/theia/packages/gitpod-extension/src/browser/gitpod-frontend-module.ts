@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -18,10 +18,8 @@ import { TerminalWidget } from "@theia/terminal/lib/browser/base/terminal-widget
 import { GitpodTerminalWidget } from "./gitpod-terminal-widget";
 import { GitpodInfoService, gitpodInfoPath } from "../common/gitpod-info";
 import { GitpodServiceProvider } from "./gitpod-service-provider";
-import { GitpodService, GitpodServiceImpl } from "@gitpod/gitpod-protocol/lib/gitpod-service";
 import { GitpodUiContribution } from "./gitpod-ui-contribution";
 import { CommandContribution, MenuContribution, MenuModelRegistry } from "@theia/core";
-import { ServedPortsService, ServedPortsServiceServer } from "../common/served-ports-service";
 import { GitpodAccountInfoDialog, GitpodAccountInfoDialogProps } from "./gitpod-account-info";
 import { UserMessageContribution } from "./user-message/user-message-contribution";
 import { GitpodShareWidget, GitpodShareDialog, GitpodShareDialogProps } from "./gitpod-share-widget";
@@ -44,13 +42,11 @@ import { GitpodMarkdownPreviewHandler } from "./user-message/GitpodMarkdownPrevi
 import { GitpodPreviewLinkNormalizer } from "./user-message/GitpodPreviewLinkNormalizer";
 import { PreviewLinkNormalizer } from "@theia/preview/lib/browser/preview-link-normalizer";
 import { GitpodMenuModelRegistry } from "./gitpod-menu";
-import { WaitForContentContribution } from './waitfor-content-contribution';
 import { GitpodWebSocketConnectionProvider } from './gitpod-ws-connection-provider';
 import { GitHostWatcher } from './git-host-watcher';
 import { GitpodExternalUriService } from './gitpod-external-uri-service';
 import { ExternalUriService } from '@theia/core/lib/browser/external-uri-service';
 import { GitpodGitTokenProvider } from './gitpod-git-token-provider';
-import { GitpodPortsAuthManger } from './ports/gitpod-ports-auth-manager';
 import { setupModule } from './setup/setup-module';
 import { GitpodBranding } from './gitpod-branding';
 import { GitpodMainMenuFactory } from './gitpod-main-menu';
@@ -66,6 +62,11 @@ import { Disposable, DisposableCollection } from '@theia/core/lib/common/disposa
 import { Deferred } from '@theia/core/lib/common/promise-util';
 import { GitpodTaskContribution } from './gitpod-task-contribution';
 import { GitpodTaskServer, gitpodTaskServicePath } from '../common/gitpod-task-protocol';
+import { GitpodPortServer, gitpodPortServicePath } from '../common/gitpod-port-server';
+import { LocationMapper, LocationMapperService } from '@theia/mini-browser/lib/browser/location-mapper-service';
+import { GitpodLocationMapperService, SecureFileLocationMapper } from './mini-browser/gitpod-location-mapper-service';
+import { MiniBrowserEnvironment } from './mini-browser/mini-browser-environment';
+import { CachedUserStorage } from './gitpod-user-storage-cached';
 
 @injectable()
 class GitpodFrontendApplication extends FrontendApplication {
@@ -142,16 +143,14 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(GitpodAccountInfoDialogProps).toConstantValue({ title: 'Account' });
 
     bind(GitpodServiceProvider).toSelf().inSingletonScope();
-    bind(GitpodService).to(GitpodServiceImpl).inSingletonScope();
 
     rebind(StorageService).to(GitpodLocalStorageService).inSingletonScope();
     rebind(WorkspaceService).to(GitpodWorkspaceService).inSingletonScope();
 
     rebind(TerminalWidget).to(GitpodTerminalWidget).inTransientScope();
 
-    bind(ServedPortsServiceServer).toDynamicValue(context => WebSocketConnectionProvider.createProxy(context.container, ServedPortsService.SERVICE_PATH)).inSingletonScope();
-    bind(ServedPortsService).toSelf().inSingletonScope();
-    bind(GitpodPortsAuthManger).toSelf().inSingletonScope();
+    bind(GitpodPortServer).toDynamicValue(context => WebSocketConnectionProvider.createProxy(context.container, gitpodPortServicePath)).inSingletonScope();
+    bind(GitpodPortsService).toSelf().inSingletonScope();
 
     bind(CliServiceClientImpl).toSelf().inSingletonScope();
     bind(CliServiceClient).toDynamicValue(context => {
@@ -162,8 +161,6 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
 
     bind(CliServiceContribution).toSelf().inSingletonScope();
     bind(FrontendApplicationContribution).toService(CliServiceContribution);
-
-    bind(GitpodPortsService).toSelf().inSingletonScope();
 
     bind(UserMessageContribution).toSelf().inSingletonScope();
     bind(FrontendApplicationContribution).toService(UserMessageContribution);
@@ -186,6 +183,7 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
 
     bind(GitpodUserStorageProvider).toSelf().inSingletonScope();
     rebind(UserStorageContribution).to(GitpodUserStorageContribution).inSingletonScope();
+    bind(CachedUserStorage).toSelf().inSingletonScope();
 
     bind(SnapshotSupport).toSelf().inSingletonScope();
     bind(CommandContribution).toService(SnapshotSupport);
@@ -213,8 +211,6 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
         return provider.createProxy<GitpodInfoService>(gitpodInfoPath);
     });
 
-    bind(FrontendApplicationContribution).to(WaitForContentContribution).inSingletonScope();
-
     bind(FrontendApplicationContribution).to(GitHostWatcher).inSingletonScope();
 
     bind(GitpodExternalUriService).toSelf().inSingletonScope();
@@ -229,4 +225,11 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(ConnectionStatusOptions).toConstantValue({
         offlineTimeout: 20000
     });
+
+    //#region mini-browser run local files in own origin, should be reverted after next upgrade
+    rebind(LocationMapperService).to(GitpodLocationMapperService).inSingletonScope();
+    bind(LocationMapper).to(SecureFileLocationMapper).inSingletonScope();
+    bind(MiniBrowserEnvironment).toSelf().inSingletonScope();
+    bind(FrontendApplicationContribution).toService(MiniBrowserEnvironment);
+    //#endregion
 });

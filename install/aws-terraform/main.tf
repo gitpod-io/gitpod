@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the MIT License. See License-MIT.txt in the project root for license information.
  */
 
@@ -64,7 +64,7 @@ module "gitpod" {
     
     components:
       # Necessary to make minio send the right header to S3 (region headers must match)
-      wsSync:
+      wsDaemon:
         remoteStorage:
           minio:
             region: ${var.region}

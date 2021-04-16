@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -163,7 +163,7 @@ export class MainMenu extends React.Component<MainMenuProps, MainMenuState> {
             <AppBar position='static'>
                 <Toolbar className="content toolbar">
                     <div className="gitpod-logo">
-                        <a href={this.props.branding ? this.props.branding.homepage : 'javascript:void(0)'}>
+                        <a href="/">
                             <img src={getLogoPath(this.props.branding)} aria-hidden="true" className="logo" />
                         </a>
                     </div>

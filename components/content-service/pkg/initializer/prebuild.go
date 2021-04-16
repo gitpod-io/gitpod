@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -64,18 +64,13 @@ func (p *PrebuildInitializer) Run(ctx context.Context) (src csapi.WorkspaceInitS
 		)
 		_, err = p.Prebuild.Run(ctx)
 		if err != nil {
-			log.WithError(err).Warnf("prebuilt init did was unable to restore snapshot %s. Resorting the regular Git init", snapshot)
+			log.WithError(err).Warnf("prebuilt init was unable to restore snapshot %s. Resorting the regular Git init", snapshot)
 
 			if err := clearWorkspace(location); err != nil {
 				return csapi.WorkspaceInitFromOther, xerrors.Errorf("prebuild initializer: %w", err)
 			}
 
 			return p.Git.Run(ctx)
-		}
-
-		err = recursiveChown(ctx, location)
-		if err != nil {
-			return src, err
 		}
 	}
 

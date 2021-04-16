@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -232,22 +232,43 @@ export class WorkspaceStarter {
      */
     protected async newInstance(workspace: Workspace, user: User): Promise<WorkspaceInstance> {
         const theiaVersion = this.env.theiaVersion;
+        const ideImage = this.env.ideDefaultImage;
+        
+        // TODO(cw): once we allow changing the IDE in the workspace config (i.e. .gitpod.yml), we must
+        //           give that value precedence over the default choice.
         const configuration: WorkspaceInstanceConfiguration = {
-            theiaVersion
+            theiaVersion,
+            ideImage,
         };
 
         let featureFlags: NamedWorkspaceFeatureFlag[] = workspace.config._featureFlags || [];
-        if (workspace.config.privileged) {
-            featureFlags.push("privileged");
-        }
         featureFlags = featureFlags.concat(this.env.defaultFeatureFlags);
         if (user.featureFlags && user.featureFlags.permanentWSFeatureFlags) {
             featureFlags = featureFlags.concat(featureFlags, user.featureFlags.permanentWSFeatureFlags);
         }
-        // privileged and user_namespace are special cases which require the privileged-ws permission
+        // privileged are special cases which require the privileged-ws permission
         if (!this.authService.hasPermission(user, "privileged-ws")) {
-            featureFlags = featureFlags.filter(f => f != "privileged" && f != "user_namespace");
+            featureFlags = featureFlags.filter(f => f != "privileged");
         }
+
+        // if the user has feature preview enabled, we need to add the respective feature flags.
+        // Beware: all feature flags we add here are not workspace-persistent feature flags, e.g. no full-workspace backup.
+        if (!!user.additionalData?.featurePreview) {
+            featureFlags = featureFlags.concat(this.env.previewFeatureFlags.filter(f => !featureFlags.includes(f)));
+
+            const ideChoice = user.additionalData?.ideSettings?.defaultIde;
+            if (!!ideChoice) {
+                const mappedImage = this.env.ideImageAliases[ideChoice];
+                if (!!mappedImage) {
+                    configuration.ideImage = mappedImage;
+                } else if (this.authService.hasPermission(user, "ide-settings")) {
+                    // if the IDE choice isn't one of the preconfiured choices, we assume its the image name.
+                    // For now, this feature requires special permissions.
+                    configuration.ideImage = ideChoice;
+                }
+            }
+        }
+
         if (!!featureFlags) {
             // only set feature flags if there actually are any. Otherwise we waste the
             // few bytes of JSON in the database for no good reason.
@@ -521,6 +542,7 @@ export class WorkspaceStarter {
             ev.setValue(JSON.stringify([{
                 tokenOTS: ots.token,
                 token: "ots",
+                kind: "gitpod",
                 host: this.env.hostUrl.url.host,
                 scope: scopes,
                 expiryDate: tokenExpirationTime.toISOString(),
@@ -565,9 +587,17 @@ export class WorkspaceStarter {
         const userTimeoutPromise = this.userService.getDefaultWorkspaceTimeout(user);
 
         const featureFlags = instance.configuration!.featureFlags || [];
-        let ideImage = workspace.config.ide;
-        if (!ideImage || featureFlags.every(f => f !== 'registry_facade')) {
+
+        let ideImage: string;
+        if (!featureFlags.includes('registry_facade')) {
+            // We don't have registry facade enabled. Theia is the only IDE we support in this mode.
+            // We assemble the image name here instead of resorting to env.ideDefaultImage, because
+            // the latter might not be Theia after all.
             ideImage = `${this.env.theiaImageRepo}:${instance.configuration!.theiaVersion}`
+        } else if (!!instance.configuration?.ideImage) {
+            ideImage = instance.configuration?.ideImage;
+        } else {
+            ideImage = this.env.ideDefaultImage;
         }
 
         const spec = new StartWorkspaceSpec();
@@ -607,12 +637,14 @@ export class WorkspaceStarter {
             "function:takeSnapshot",
             "function:storeLayout",
             "function:stopWorkspace",
+            "function:getToken",
 
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspace", subjectID: workspace.id, operations: ["get", "update"]}),
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspaceInstance", subjectID: instance.id, operations: ["get", "update", "delete"]}),
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "snapshot", subjectID: "*", operations: ["create", "get"]}),
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "gitpodToken", subjectID: "*", operations: ["create"]}),
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "userStorage", subjectID: "*", operations: ["create", "get", "update"]}),
+            "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "token", subjectID: "*", operations: ["get"]}),
         ]
     }
 

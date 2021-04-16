@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -69,9 +69,9 @@ export class ConsensusLeaderQorum implements Disposable {
 
         this.clock = setInterval(() => this.beatClock().catch((err) => log.error("consensus beatClock", err)), this.clockPeriod);
         this.disposables.push({ dispose: () => clearTimeout(this.clock!) });
-        this.disposables.push(await this.messenger.on("heartbeat", msg => this.messages.push(msg)));
-        this.disposables.push(await this.messenger.on("requestVote", msg => this.messages.push(msg)));
-        this.disposables.push(await this.messenger.on("castVote", msg => this.messages.push(msg)));
+        this.disposables.push(this.messenger.on("heartbeat", msg => this.messages.push(msg)));
+        this.disposables.push(this.messenger.on("requestVote", msg => this.messages.push(msg)));
+        this.disposables.push(this.messenger.on("castVote", msg => this.messages.push(msg)));
     }
 
     protected async beatClock() {

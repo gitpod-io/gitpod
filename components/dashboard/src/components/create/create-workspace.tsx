@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -7,6 +7,7 @@
 import "reflect-metadata";
 import * as React from 'react';
 
+import { CancellationTokenSource } from 'vscode-jsonrpc/lib/cancellation';
 import { GitpodService, WorkspaceCreationResult, CreateWorkspaceMode } from '@gitpod/gitpod-protocol';
 
 import { StartWorkspace } from "../start-workspace";
@@ -60,7 +61,6 @@ export async function getWayoutURL(service: GitpodService): Promise<string> {
 }
 
 export class CreateWorkspace extends React.Component<CreateWorkspaceProps, CreateWorkspaceState> {
-    protected timeout?: NodeJS.Timer;
 
     constructor(props: CreateWorkspaceProps) {
         super(props);
@@ -82,14 +82,13 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
     }
 
     protected async doCreateWorkspaceWithMode(mode: CreateWorkspaceMode): Promise<WorkspaceCreationResult | undefined> {
+        this.cancelPollWorkspacePrebuild();
         if (mode !== CreateWorkspaceMode.UsePrebuild) {
             /* When we're creating a new workspace explicitly using a prebuild, we might be waiting
              * for the prebuild (polling the DB). In that case we want to keep the appearance of waiting
              * for the prebuild.
              */
             this.setState({ createWorkspaceResult: {} });
-        } else {
-            this.clearPollTimeout();
         }
         const result = await this.doCreateWorkspace(this.props.service.server.createWorkspace({ contextUrl: this.props.contextUrl, mode }).catch());
         if (result && result.runningWorkspacePrebuild) {
@@ -113,22 +112,27 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
         return;
     }
 
-    protected pollWorkspacePrebuild(pwsid: string) {
-        this.timeout = setInterval(async () => {
-            const isAvailable = await this.props.service.server.isPrebuildAvailable(pwsid);
-            if (!isAvailable) {
+    private pollWorkspacePrebuildTokenSource: CancellationTokenSource | undefined;
+    private async pollWorkspacePrebuild(prebuildID: string): Promise<void> {
+        this.cancelPollWorkspacePrebuild();
+        this.pollWorkspacePrebuildTokenSource = new CancellationTokenSource();
+        const token = this.pollWorkspacePrebuildTokenSource.token;
+        let available = false;
+        while (!available && !token.isCancellationRequested) {
+            await new Promise(resolve => setTimeout(resolve, 10000));
+            if (token.isCancellationRequested) {
                 return;
             }
-
+            available = await this.props.service.server.isPrebuildDone(prebuildID);
+        }
+        if (available) {
             this.doCreateWorkspaceWithMode(CreateWorkspaceMode.UsePrebuild);
-            this.clearPollTimeout();
-        }, 10000);
+        }
     }
-
-    protected clearPollTimeout() {
-        if (this.timeout) {
-            clearInterval(this.timeout);
-            this.timeout = undefined;
+    private cancelPollWorkspacePrebuild(): void {
+        if (this.pollWorkspacePrebuildTokenSource) {
+            this.pollWorkspacePrebuildTokenSource.cancel();
+            this.pollWorkspacePrebuildTokenSource = undefined;
         }
     }
 
@@ -139,6 +143,16 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
             switch (code) {
                 case ErrorCodes.USER_BLOCKED:
                     window.location.href = getBlockedUrl();
+                    return;
+                case ErrorCodes.SETUP_REQUIRED:
+                    window.location.href = new GitpodHostUrl(window.location.toString()).with({ pathname: "first-steps" }).toString();
+                    return;
+                case ErrorCodes.USER_TERMS_ACCEPTANCE_REQUIRED:
+                    const thisUrl = window.location.toString();
+                    window.location.href = new GitpodHostUrl(thisUrl).withApi({ pathname: "/tos", search: `mode=update&returnTo=${encodeURIComponent(thisUrl)}` }).toString();
+                    return;
+                case ErrorCodes.USER_DELETED:
+                    window.location.href = new GitpodHostUrl(window.location.toString()).asApiLogout().toString();
                     return;
                 case ErrorCodes.NOT_AUTHENTICATED:
                     if (data) {
@@ -163,8 +177,6 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
                 case ErrorCodes.REPOSITORY_NOT_WHITELISTED:
                     this.setState({ showWhitelistedRepoList: true });
                     return;
-                case ErrorCodes.NOT_ENOUGH_CREDIT:
-                case ErrorCodes.PLAN_DOES_NOT_ALLOW_PRIVATE_REPOS:
                 case ErrorCodes.CONTEXT_PARSE_ERROR:
                 case ErrorCodes.NOT_FOUND:
                 default:
@@ -201,7 +213,10 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
             }
         }
         if (code === ErrorCodes.SETUP_REQUIRED) {
-            window.location.href = new GitpodHostUrl(window.location.toString()).with({ pathname: "first-steps" }).toString();
+            return <ApplicationFrame />;
+        }
+        if (code === ErrorCodes.USER_TERMS_ACCEPTANCE_REQUIRED) {
+            return <ApplicationFrame />;
         }
         if (code === ErrorCodes.NOT_AUTHENTICATED) {
             if (data.host && data.scopes && data.messageHint) {
@@ -257,10 +272,10 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
                     <h3 className="heading">The repository you are trying to use will become available once we are out of the beta phase.</h3>
                     <p>Until then, please try Gitpod with one of the repositories below:</p>
                     <Context.Consumer>
-                        {(ctx) => 
+                        {(ctx) =>
                             <FeaturedRepositories
                                 service={this.props.service}
-                                disableActions={ctx.disabledActions} />    
+                                disableActions={ctx.disabledActions} />
                         }
                     </Context.Consumer>
                 </ApplicationFrame>
@@ -278,7 +293,7 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
                 return (
                     <ApplicationFrame service={this.props.service}>
                         <Context.Consumer>
-                            {(ctx) => 
+                            {(ctx) =>
                                 <RunningWorkspaceSelector
                                     service={this.props.service}
                                     disableActions={ctx.disabledActions}
@@ -299,7 +314,7 @@ export class CreateWorkspace extends React.Component<CreateWorkspaceProps, Creat
                         service={this.props.service}
                         prebuildingWorkspaceId={runningPrebuild.workspaceID}
                         justStarting={runningPrebuild.starting}
-                        onBuildDone={() => this.doCreateWorkspaceWithMode(CreateWorkspaceMode.UsePrebuild)}
+                        onWatchPrebuild={() => this.doCreateWorkspaceWithMode(CreateWorkspaceMode.UsePrebuild)}
                         onIgnorePrebuild={() => this.doCreateWorkspaceWithMode(CreateWorkspaceMode.ForceNew)} />
                 );
             }

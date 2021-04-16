@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the Gitpod Enterprise Source Code License,
 // See License.enterprise.txt in the project root folder.
 
@@ -83,7 +83,17 @@ func getConfig() *config {
 
 type config struct {
 	Scheduler scheduler.Configuration `json:"scheduler"`
-	Scaler    *scaler.Configuration   `json:"scaler,omitempty"`
+	Scaler    struct {
+		Enabled    bool                                        `json:"enabled"`
+		Driver     scaler.WorkspaceManagerPrescaleDriverConfig `json:"driver"`
+		Controller scaler.ControllerConfig                     `json:"controller"`
+	}
+	Prometheus struct {
+		Addr string `json:"addr"`
+	} `json:"prometheus"`
+	PProf struct {
+		Addr string `json:"addr"`
+	} `json:"pprof"`
 }
 
 func newClientSet() (*kubernetes.Clientset, error) {

@@ -1,10 +1,11 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the Gitpod Enterprise Source Code License,
 // See License.enterprise.txt in the project root folder.
 
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -154,8 +155,8 @@ func playScaleupScenario(clientSet *kubernetes.Clientset, stopChan chan struct{}
 
 	// 2.3 No OutOfMemory
 	for _, p := range stateOverflow.Pods {
-		if p.Pod.Status.Phase == corev1.PodFailed && p.Pod.Status.Reason == "OutOfMemory" {
-			return xerrors.Errorf("OutOfMemory error: %s", p.Pod.Name)
+		if p.Status.Phase == corev1.PodFailed && p.Status.Reason == "OutOfMemory" {
+			return xerrors.Errorf("OutOfMemory error: %s", p.Name)
 		}
 	}
 	log.Infof("No OutOfMemory error detected")
@@ -168,7 +169,7 @@ func waitUntilAllTestPodsAreScheduled(clientSet *kubernetes.Clientset, stopChan 
 	for {
 		select {
 		case <-time.After(2 * time.Second):
-			pods, err := clientSet.CoreV1().Pods("").List(metav1.ListOptions{
+			pods, err := clientSet.CoreV1().Pods("").List(context.Background(), metav1.ListOptions{
 				LabelSelector: labels.SelectorFromSet(testPodIdentifier).String(),
 			})
 			if err != nil {
@@ -203,7 +204,7 @@ func waitUntilAllTestPodsAreScheduled(clientSet *kubernetes.Clientset, stopChan 
 }
 
 func buildCurrentState(clientSet *kubernetes.Clientset) (*scheduler.State, error) {
-	allWorkspaceNodes, err := clientSet.CoreV1().Nodes().List(metav1.ListOptions{
+	allWorkspaceNodes, err := clientSet.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{
 		LabelSelector: labels.SelectorFromSet(workspaceNodeIdentifier).String(),
 	})
 	if err != nil {
@@ -218,20 +219,19 @@ func buildCurrentState(clientSet *kubernetes.Clientset) (*scheduler.State, error
 		potentialNodes = append(potentialNodes, &allWorkspaceNodes.Items[i])
 	}
 
-	allPods, err := clientSet.CoreV1().Pods("").List(metav1.ListOptions{})
+	allPods, err := clientSet.CoreV1().Pods("").List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		log.WithError(err).Fatal("cannot list pods")
 		return nil, err
 	}
 
-	state := scheduler.NewState()
-	for i := 0; i < len(allPods.Items); i++ {
-		state.UpdatePod(&allPods.Items[i])
-	}
-	for _, n := range potentialNodes {
-		state.UpdateNode(n)
+	pods := make([]*corev1.Pod, len(allPods.Items))
+	for i := range allPods.Items {
+		pods[i] = &allPods.Items[i]
 	}
 
+	ramSafetyBuffer := res.MustParse("0Mi")
+	state := scheduler.ComputeState(potentialNodes, pods, nil, &ramSafetyBuffer)
 	return state, nil
 }
 
@@ -260,9 +260,9 @@ func startTestPod(clientSet *kubernetes.Clientset, nr int, suffix string) error 
 				NodeAffinity: &corev1.NodeAffinity{
 					RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
 						NodeSelectorTerms: []corev1.NodeSelectorTerm{
-							corev1.NodeSelectorTerm{
+							{
 								MatchExpressions: []corev1.NodeSelectorRequirement{
-									corev1.NodeSelectorRequirement{
+									{
 										Key:      "gitpod.io/workload_workspace",
 										Operator: corev1.NodeSelectorOpIn,
 										Values:   []string{"true"},
@@ -274,7 +274,7 @@ func startTestPod(clientSet *kubernetes.Clientset, nr int, suffix string) error 
 				},
 			},
 			Containers: []corev1.Container{
-				corev1.Container{
+				{
 					Name:    "main",
 					Image:   "alpine:latest",
 					Command: []string{"bash", "-c", "while true; do sleep 2; echo 'sleeping...'; done"},
@@ -293,7 +293,7 @@ func startTestPod(clientSet *kubernetes.Clientset, nr int, suffix string) error 
 			},
 		},
 	}
-	_, err := clientSet.CoreV1().Pods(testNamespace).Create(&pod)
+	_, err := clientSet.CoreV1().Pods(testNamespace).Create(context.Background(), &pod, metav1.CreateOptions{})
 	return err
 }
 
@@ -311,7 +311,7 @@ func calcEmptySlots(nodes []*scheduler.Node) int {
 
 func cleanup(clientSet *kubernetes.Clientset) {
 	foreground := metav1.DeletePropagationForeground
-	err := clientSet.CoreV1().Pods(testNamespace).DeleteCollection(&metav1.DeleteOptions{
+	err := clientSet.CoreV1().Pods(testNamespace).DeleteCollection(context.Background(), metav1.DeleteOptions{
 		PropagationPolicy: &foreground,
 	}, metav1.ListOptions{
 		LabelSelector: labels.SelectorFromSet(testPodIdentifier).String(),

@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the Gitpod Enterprise Source Code License,
 // See License.enterprise.txt in the project root folder.
 
@@ -16,8 +16,8 @@ import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
+	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
-	wssync "github.com/gitpod-io/gitpod/ws-sync/api"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -29,7 +29,7 @@ func (m *Manager) TakeSnapshot(ctx context.Context, req *api.TakeSnapshotRequest
 	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
 	defer tracing.FinishSpan(span, &err)
 
-	pod, err := m.findWorkspacePod(req.Id)
+	pod, err := m.findWorkspacePod(ctx, req.Id)
 	if isKubernetesObjNotFoundError(err) {
 		return nil, status.Errorf(codes.NotFound, "workspace %s does not exist", req.Id)
 	}
@@ -39,7 +39,7 @@ func (m *Manager) TakeSnapshot(ctx context.Context, req *api.TakeSnapshotRequest
 	tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
 	tracing.LogEvent(span, "get pod")
 
-	wso, err := m.getWorkspaceObjects(pod)
+	wso, err := m.getWorkspaceObjects(ctx, pod)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get workspace status: %q", err)
 	}
@@ -53,12 +53,12 @@ func (m *Manager) TakeSnapshot(ctx context.Context, req *api.TakeSnapshotRequest
 		return nil, status.Errorf(codes.FailedPrecondition, "can only take snapshots of running workspaces")
 	}
 
-	sync, err := m.connectToWorkspaceSync(ctx, workspaceObjects{Pod: pod})
+	sync, err := m.connectToWorkspaceDaemon(ctx, workspaceObjects{Pod: pod})
 	if err != nil {
-		return nil, status.Errorf(codes.Unavailable, "cannot connect to workspace sync: %q", err)
+		return nil, status.Errorf(codes.Unavailable, "cannot connect to workspace daemon: %q", err)
 	}
 
-	r, err := sync.TakeSnapshot(ctx, &wssync.TakeSnapshotRequest{Id: req.Id})
+	r, err := sync.TakeSnapshot(ctx, &wsdaemon.TakeSnapshotRequest{Id: req.Id})
 	if err != nil {
 		// err is already a grpc error - no need to faff with that
 		return nil, err
@@ -69,12 +69,13 @@ func (m *Manager) TakeSnapshot(ctx context.Context, req *api.TakeSnapshotRequest
 
 // ControlAdmission makes a workspace accessible for everyone or for the owner only
 func (m *Manager) ControlAdmission(ctx context.Context, req *api.ControlAdmissionRequest) (res *api.ControlAdmissionResponse, err error) {
+	//nolint:ineffassign
 	span, ctx := tracing.FromContext(ctx, "ControlAdmission")
 	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
 	tracing.LogRequestSafe(span, req)
 	defer tracing.FinishSpan(span, &err)
 
-	pod, err := m.findWorkspacePod(req.Id)
+	pod, err := m.findWorkspacePod(ctx, req.Id)
 	if isKubernetesObjNotFoundError(err) {
 		return nil, status.Errorf(codes.NotFound, "workspace %s does not exist", req.Id)
 	}
@@ -84,7 +85,7 @@ func (m *Manager) ControlAdmission(ctx context.Context, req *api.ControlAdmissio
 	tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
 	tracing.LogEvent(span, "get pod")
 
-	wso, err := m.getWorkspaceObjects(pod)
+	wso, err := m.getWorkspaceObjects(ctx, pod)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot get workspace status: %q", err)
 	}
@@ -105,7 +106,7 @@ func (m *Manager) ControlAdmission(ctx context.Context, req *api.ControlAdmissio
 	// lowercase is just for vanity's sake
 	val = strings.ToLower(val)
 
-	err = m.markWorkspace(req.Id, addMark(workspaceAdmissionAnnotation, val))
+	err = m.markWorkspace(ctx, req.Id, addMark(workspaceAdmissionAnnotation, val))
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "cannot change workspace admission level: %q", err)
 	}
@@ -115,6 +116,7 @@ func (m *Manager) ControlAdmission(ctx context.Context, req *api.ControlAdmissio
 
 // SetTimeout changes the default timeout for a running workspace
 func (m *Manager) SetTimeout(ctx context.Context, req *api.SetTimeoutRequest) (res *api.SetTimeoutResponse, err error) {
+	//nolint:ineffassign
 	span, ctx := tracing.FromContext(ctx, "SetTimeout")
 	tracing.ApplyOWI(span, log.OWI("", "", req.Id))
 	defer tracing.FinishSpan(span, &err)
@@ -124,7 +126,7 @@ func (m *Manager) SetTimeout(ctx context.Context, req *api.SetTimeoutRequest) (r
 		return nil, xerrors.Errorf("invalid duration \"%s\": %w", req.Duration, err)
 	}
 
-	err = m.markWorkspace(req.Id, addMark(customTimeoutAnnotation, req.Duration))
+	err = m.markWorkspace(ctx, req.Id, addMark(customTimeoutAnnotation, req.Duration))
 	if err != nil {
 		return nil, xerrors.Errorf("cannot set workspace timeout: %w", err)
 	}

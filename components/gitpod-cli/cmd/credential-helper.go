@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -7,12 +7,14 @@ package cmd
 import (
 	"bufio"
 	"fmt"
-	"log"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
 	"github.com/spf13/cobra"
@@ -30,12 +32,24 @@ var credentialHelper = &cobra.Command{
 			return
 		}
 
-		f, err := os.OpenFile(os.Getenv("HOME")+"/git-credential-helper.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
-		if err != nil {
-			log.Fatal(err)
+		var user, token string
+		defer func() {
+			// token was not found, thus we return just a dummy to satisfy the git protocol
+			if user == "" {
+				user = "oauth2"
+			}
+			if token == "" {
+				token = "no"
+			}
+			fmt.Printf("username=%s\npassword=%s\n", user, token)
+		}()
+
+		log.SetOutput(ioutil.Discard)
+		f, err := os.OpenFile(os.TempDir()+"/gitpod-git-credential-helper.log", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
+		if err == nil {
+			defer f.Close()
+			log.SetOutput(f)
 		}
-		defer f.Close()
-		log.SetOutput(f)
 
 		url, gitCommand := parsePstree()
 		host := parseHostFromStdin()
@@ -45,7 +59,8 @@ var credentialHelper = &cobra.Command{
 
 		service, err := theialib.NewServiceFromEnv()
 		if err != nil {
-			log.Fatal(err)
+			log.WithError(err).Print("cannot connect to Theia")
+			return
 		}
 
 		resp, err := service.GetGitToken(theialib.GetGitTokenRequest{
@@ -54,10 +69,11 @@ var credentialHelper = &cobra.Command{
 			RepoURL: url,
 		})
 		if err != nil {
-			log.Fatal(err)
+			log.WithError(err).Print("cannot get token")
+			return
 		}
-
-		fmt.Printf("username=%s\npassword=%s\n", resp.User, resp.Token)
+		user = resp.User
+		token = resp.Token
 	},
 }
 

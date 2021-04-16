@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -6,25 +6,39 @@ package terminal
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"time"
 
 	"github.com/creack/pty"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/supervisor/api"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
+const (
+	// closeTerminaldefaultGracePeriod is the time terminal
+	// processes get between SIGTERM and SIGKILL.
+	closeTerminaldefaultGracePeriod = 10 * time.Second
+)
+
 // NewMuxTerminalService creates a new terminal service
 func NewMuxTerminalService(m *Mux) *MuxTerminalService {
+	shell := os.Getenv("SHELL")
+	if shell == "" {
+		shell = "/bin/bash"
+	}
 	return &MuxTerminalService{
 		Mux:            m,
 		DefaultWorkdir: "/workspace",
-		LoginShell:     []string{"/bin/bash", "-i", "-l"},
+		DefaultShell:   shell,
+		Env:            os.Environ(),
 	}
 }
 
@@ -33,7 +47,8 @@ type MuxTerminalService struct {
 	Mux *Mux
 
 	DefaultWorkdir string
-	LoginShell     []string
+	DefaultShell   string
+	Env            []string
 
 	tokens map[*Term]string
 }
@@ -48,15 +63,31 @@ func (srv *MuxTerminalService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint 
 	return api.RegisterTerminalServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithInsecure()})
 }
 
-// Open opens a new terminal running the login shell
+// Open opens a new terminal running the shell
 func (srv *MuxTerminalService) Open(ctx context.Context, req *api.OpenTerminalRequest) (*api.OpenTerminalResponse, error) {
-	cmd := exec.Command(srv.LoginShell[0], srv.LoginShell[1:]...)
-	cmd.Dir = srv.DefaultWorkdir
-	cmd.Env = append(os.Environ(), "TERM=xterm-color")
+	return srv.OpenWithOptions(ctx, req, TermOptions{
+		ReadTimeout: 5 * time.Second,
+		Annotations: req.Annotations,
+	})
+}
+
+// OpenWithOptions opens a new terminal running the shell with given options.
+// req.Annotations override options.Annotations.
+func (srv *MuxTerminalService) OpenWithOptions(ctx context.Context, req *api.OpenTerminalRequest, options TermOptions) (*api.OpenTerminalResponse, error) {
+	cmd := exec.Command(srv.DefaultShell)
+	if req.Workdir == "" {
+		cmd.Dir = srv.DefaultWorkdir
+	} else {
+		cmd.Dir = req.Workdir
+	}
+	cmd.Env = append(srv.Env, "TERM=xterm-color")
 	for key, value := range req.Env {
 		cmd.Env = append(cmd.Env, key+"="+value)
 	}
-	alias, err := srv.Mux.Start(cmd)
+	for k, v := range req.Annotations {
+		options.Annotations[k] = v
+	}
+	alias, err := srv.Mux.Start(cmd, options)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -76,7 +107,7 @@ func (srv *MuxTerminalService) Open(ctx context.Context, req *api.OpenTerminalRe
 
 // Close closes a terminal for the given alias
 func (srv *MuxTerminalService) Close(ctx context.Context, req *api.CloseTerminalRequest) (*api.CloseTerminalResponse, error) {
-	err := srv.Mux.Close(req.Alias)
+	err := srv.Mux.CloseTerminal(req.Alias, closeTerminaldefaultGracePeriod)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
@@ -90,9 +121,27 @@ func (srv *MuxTerminalService) List(ctx context.Context, req *api.ListTerminalsR
 
 	res := make([]*api.ListTerminalsResponse_Terminal, 0, len(srv.Mux.terms))
 	for alias, term := range srv.Mux.terms {
+		var (
+			pid int64
+			cwd string
+			err error
+		)
+		if proc := term.Command.Process; proc != nil {
+			pid = int64(proc.Pid)
+			cwd, err = filepath.EvalSymlinks(fmt.Sprintf("/proc/%d/cwd", pid))
+			if err != nil {
+				log.WithError(err).WithField("pid", pid).Warn("unable to resolve terminal's current working dir")
+				cwd = term.Command.Dir
+			}
+		}
+
 		res = append(res, &api.ListTerminalsResponse_Terminal{
-			Alias:   alias,
-			Command: term.Command.Args,
+			Alias:          alias,
+			Command:        term.Command.Args,
+			Pid:            pid,
+			InitialWorkdir: term.Command.Dir,
+			CurrentWorkdir: cwd,
+			Annotations:    term.Annotations,
 		})
 	}
 

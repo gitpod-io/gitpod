@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -44,7 +44,7 @@ const (
 	workspaceSnapshotAnnotation = "gitpod/snapshot"
 
 	// workspaceInitializerAnnotation contains the protobuf serialized initializer config in base64 encoding. We need to keep this around post-request
-	// as we'll pass on the request to ws-sync later in the workspace's lifecycle. This is not a configmap as we cannot create the map prior to the pod,
+	// as we'll pass on the request to ws-daemon later in the workspace's lifecycle. This is not a configmap as we cannot create the map prior to the pod,
 	// because then we would not know which configmaps to delete; we cannot create the map after the pod as then the pod could reach the state what the
 	// configmap is needed, but isn't present yet.
 	// According to the K8S documentation, storing "large" amounts of data in annotations is not an issue:
@@ -80,17 +80,17 @@ const (
 	ingressPortsAnnotation = "gitpod/ingressPorts"
 
 	// withUsernamespaceAnnotation is set on workspaces which are wrapped in a user namespace (or have some form of user namespace support)
-	// Beware: this annotation is duplicated/copied in ws-manager-node
+	// Beware: this annotation is duplicated/copied in ws-daemon
 	withUsernamespaceAnnotation = "gitpod/withUsernamespace"
 )
 
 // markWorkspaceAsReady adds annotations to a workspace pod
-func (m *Manager) markWorkspace(workspaceID string, annotations ...*annotation) error {
+func (m *Manager) markWorkspace(ctx context.Context, workspaceID string, annotations ...*annotation) error {
 	client := m.Clientset.CoreV1().Pods(m.Config.Namespace)
 
 	// Retry on failure. Sometimes this doesn't work because of concurrent modification. The Kuberentes way is to just try again after waiting a bit.
 	err := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		pod, err := m.findWorkspacePod(workspaceID)
+		pod, err := m.findWorkspacePod(ctx, workspaceID)
 		if err != nil {
 			return xerrors.Errorf("cannot find workspace %s: %w", workspaceID, err)
 		}
@@ -109,7 +109,7 @@ func (m *Manager) markWorkspace(workspaceID string, annotations ...*annotation) 
 			}
 		}
 
-		_, err = client.Update(pod)
+		_, err = client.Update(ctx, pod, metav1.UpdateOptions{})
 
 		return err
 	})
@@ -181,11 +181,15 @@ type podLifecycleIndependentState struct {
 // non-zero values of the patch. Calling this function triggers a status update. This function is
 // neither atomic, nor synchronized.
 func (m *Manager) patchPodLifecycleIndependentState(ctx context.Context, workspaceID string, patch func(*podLifecycleIndependentState) (needsUpdate bool), annotations ...*annotation) (err error) {
+	//nolint:ineffassign
 	span, ctx := tracing.FromContext(ctx, "patchPodLifecycleIndependentState")
 	defer tracing.FinishSpan(span, &err)
 
 	err = retry.RetryOnConflict(retry.DefaultBackoff, func() error {
-		plisCfg, err := m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Get(getPodLifecycleIndependentCfgMapName(workspaceID), metav1.GetOptions{})
+		ctx, cancel := context.WithTimeout(ctx, kubernetesOperationTimeout)
+		defer cancel()
+
+		plisCfg, err := m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Get(ctx, getPodLifecycleIndependentCfgMapName(workspaceID), metav1.GetOptions{})
 		if isKubernetesObjNotFoundError(err) {
 			return xerrors.Errorf("workspace %s has no pod lifecycle independent state", workspaceID)
 		}
@@ -228,7 +232,7 @@ func (m *Manager) patchPodLifecycleIndependentState(ctx context.Context, workspa
 		tracing.LogKV(span, "postPatchPLIS", plisCfg.Annotations[plisDataAnnotation])
 		tracing.LogKV(span, "needsUpdate", "true")
 
-		_, err = m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Update(plisCfg)
+		_, err = m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Update(ctx, plisCfg, metav1.UpdateOptions{})
 		return err
 	})
 

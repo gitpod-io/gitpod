@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -68,6 +68,9 @@ export class InstallGithubApp extends React.Component<{}, InstallGithubAppState>
                             search: 'returnTo=' + encodeURIComponent(window.location.toString())
                         }).toString();
                         window.location.href = url.toString();
+                        break;
+                    case ErrorCodes.USER_DELETED:
+                        window.location.href = new GitpodHostUrl(window.location.toString()).asApiLogout().toString();
                         break;
                     default:
                 }

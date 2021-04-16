@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -21,6 +21,9 @@ const (
 
 	// Used as key for storing the workspace ID in the requests mux.Vars() map
 	workspaceIDIdentifier = "workspaceID"
+
+	// Used as key for storing the origin prefix to fetch foreign content
+	foreignOriginPrefix = "foreignOriginPrefix"
 
 	// The header that is used to communicate the "Host" from proxy -> ws-proxy in scenarios where ws-proxy is _not_ directly exposed
 	forwardedHostnameHeader = "x-wsproxy-host"
@@ -59,7 +62,7 @@ func HostBasedRouter(header, wsHostSuffix string) WorkspaceRouter {
 type hostHeaderProvider func(req *http.Request) string
 
 func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProvider) mux.MatcherFunc {
-	r := regexp.MustCompile("^(webview-)?" + workspaceIDRegex + wsHostSuffix)
+	r := regexp.MustCompile("^(webview-|browser-)?" + workspaceIDRegex + wsHostSuffix)
 	return func(req *http.Request, m *mux.RouteMatch) bool {
 		hostname := headerProvider(req)
 		if hostname == "" {
@@ -80,12 +83,15 @@ func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 			m.Vars = make(map[string]string)
 		}
 		m.Vars[workspaceIDIdentifier] = workspaceID
+		if len(matches) == 3 {
+			m.Vars[foreignOriginPrefix] = matches[1]
+		}
 		return true
 	}
 }
 
 func matchWorkspacePortHostHeader(wsHostSuffix string, headerProvider hostHeaderProvider) mux.MatcherFunc {
-	r := regexp.MustCompile("^(webview-)?" + workspacePortRegex + workspaceIDRegex + wsHostSuffix)
+	r := regexp.MustCompile("^(webview-|browser-)?" + workspacePortRegex + workspaceIDRegex + wsHostSuffix)
 	return func(req *http.Request, m *mux.RouteMatch) bool {
 		hostname := headerProvider(req)
 		if hostname == "" {
@@ -112,6 +118,9 @@ func matchWorkspacePortHostHeader(wsHostSuffix string, headerProvider hostHeader
 		}
 		m.Vars[workspaceIDIdentifier] = workspaceID
 		m.Vars[workspacePortIdentifier] = workspacePort
+		if len(matches) == 4 {
+			m.Vars[foreignOriginPrefix] = matches[1]
+		}
 		return true
 	}
 }
@@ -217,10 +226,13 @@ func getWorkspaceCoords(req *http.Request) WorkspaceCoords {
 // PathBasedTheiaRouter routes workspaces using a /workspaceID prefix.
 // Doesn't do port routing.
 func pathBasedTheiaRouter(r *mux.Router, wsInfoProvider WorkspaceInfoProvider, trimPrefix string) *mux.Router {
+	if trimPrefix == "" {
+		trimPrefix = "/"
+	}
+	trimPrefix = strings.TrimSuffix(trimPrefix, "/") + "/"
+
+	prefixedWorkspaceIDRegex := regexp.MustCompile("^(" + trimPrefix + ")" + workspaceIDRegex)
 	return r.MatcherFunc(func(req *http.Request, match *mux.RouteMatch) (res bool) {
-		if trimPrefix == "" {
-			trimPrefix = "/"
-		}
 
 		var wsID string
 		defer func() {
@@ -241,9 +253,17 @@ func pathBasedTheiaRouter(r *mux.Router, wsInfoProvider WorkspaceInfoProvider, t
 			return true
 		}
 
-		path := strings.TrimPrefix(req.URL.Path, trimPrefix)
-		wsID = strings.Split(path, "/")[0]
-		if wsInfoProvider.WorkspaceInfo(wsID) == nil {
+		matches := prefixedWorkspaceIDRegex.FindStringSubmatch(req.URL.Path)
+		if len(matches) < 3 {
+			return false
+		}
+
+		wsID = matches[2]
+		if wsID == "" {
+			return false
+		}
+
+		if wsInfoProvider.WorkspaceInfo(req.Context(), wsID) == nil {
 			log.WithFields(log.OWI("", wsID, "")).Debug("PathBasedTheiaRouter: no workspace info found")
 			return false
 		}

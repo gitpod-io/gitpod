@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -33,7 +33,7 @@ export class Footer extends React.Component<FooterProps, {}> {
                     </div>)
                 }
                 <div className="row" style={{ height: 30, fontSize: 10, marginBottom: 15 }}>
-                    <p>Copyright © 2020&nbsp;<a href="https://www.typefox.io/" target="_blank" rel="noopener">TypeFox</a>&nbsp;|&nbsp;All Rights Reserved
+                    <p>Copyright © 2020&nbsp;<a href="https://www.gitpod.io/" target="_blank" rel="noopener">Gitpod</a>&nbsp;|&nbsp;All Rights Reserved
                     {(branding ? branding.links.legal : []).map(({ name, url }: Branding.Link) => {
                     return (<span key={name}>&nbsp;|&nbsp;{this.createAnchor(name, url)}</span>);
                     })}

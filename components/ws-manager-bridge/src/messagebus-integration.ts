@@ -1,12 +1,12 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
 
 import { injectable, inject } from 'inversify';
 import { MessageBusHelper, AbstractMessageBusIntegration, TopicListener, AbstractTopicListener, MessageBusHelperImpl } from "@gitpod/gitpod-messagebus/lib";
-import { Disposable } from 'vscode-jsonrpc';
+import { Disposable, CancellationTokenSource } from 'vscode-jsonrpc';
 import { WorkspaceStatus, WorkspaceLogMessage } from '@gitpod/ws-manager/lib';
 import { WorkspaceInstance } from '@gitpod/gitpod-protocol';
 import { HeadlessLogEvent, HeadlessWorkspaceEventType } from '@gitpod/gitpod-protocol/lib/headless-workspace-log';
@@ -28,16 +28,18 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
         await this.channel.bindExchange(MessageBusHelperImpl.WORKSPACE_EXCHANGE, MessageBusHelperImpl.WORKSPACE_EXCHANGE_LOCAL, "#");
     }
 
-    async listenForWorkspaceStatusUpdates(topic: string, callback: (ctx: TraceContext, status: WorkspaceStatus.AsObject) => void): Promise<Disposable> {
+    listenForWorkspaceStatusUpdates(topic: string, callback: (ctx: TraceContext, status: WorkspaceStatus.AsObject) => void): Disposable {
         const listener = new WorkspaceStatusUpdateListener(callback, MessageBusIntegration.WORKSPACE_EXCHANGE, topic);
-        const result = await this.listen(listener);
-        return result;
+        const cancellationTokenSource = new CancellationTokenSource()
+        this.listen(listener, cancellationTokenSource.token);
+        return Disposable.create(() => cancellationTokenSource.cancel())
     }
 
-    async listenForWorkspaceLogs(topic: string, callback: (ctx: TraceContext, status: WorkspaceLogMessage.AsObject) => void): Promise<Disposable> {
+    listenForWorkspaceLogs(topic: string, callback: (ctx: TraceContext, status: WorkspaceLogMessage.AsObject) => void): Disposable {
         const listener = new WorkspaceLogListener(callback, MessageBusIntegration.WORKSPACE_EXCHANGE, topic);
-        const result = await this.listen(listener);
-        return result;
+        const cancellationTokenSource = new CancellationTokenSource()
+        this.listen(listener, cancellationTokenSource.token);
+        return Disposable.create(() => cancellationTokenSource.cancel())
     }
 
     async notifyOnInstanceUpdate(ctx: TraceContext, userId: string, instance: WorkspaceInstance) {

@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -26,7 +26,7 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 	}
 
 	const (
-		domain      = "gitpod.io"
+		domain      = "test-domain.com"
 		workspaceID = "workspac-65f4-43c9-bf46-3541b89dca85"
 		instanceID  = "instance-fce1-4ff6-9364-cf6dff0c4ecf"
 		ownerToken  = "owner-token"
@@ -230,7 +230,7 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 			rr := httptest.NewRecorder()
 			req := httptest.NewRequest(http.MethodGet, fmt.Sprintf("http://%s/", domain), nil)
 			if test.OwnerCookie != "" {
-				req.AddCookie(&http.Cookie{Name: "_gitpod_io_ws_" + instanceID + "_owner_", Value: test.OwnerCookie})
+				setOwnerTokenCookie(req, instanceID, test.OwnerCookie)
 			}
 			vars := map[string]string{
 				workspaceIDIdentifier: test.WorkspaceID,
@@ -248,4 +248,9 @@ func TestWorkspaceAuthHandler(t *testing.T) {
 			}
 		})
 	}
+}
+
+func setOwnerTokenCookie(r *http.Request, instanceID, token string) *http.Request {
+	r.AddCookie(&http.Cookie{Name: "_test_domain_com_ws_" + instanceID + "_owner_", Value: token})
+	return r
 }

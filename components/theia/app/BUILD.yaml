@@ -7,6 +7,7 @@ packages:
       - "webpack.config.js"
       - "startup.sh"
       - "**/*.ico"
+      - "patches/*.patch"
     deps:
       - components/gitpod-protocol:lib
       - components/theia/packages/gitpod-extension:lib
@@ -33,10 +34,13 @@ packages:
       - "package-libs.sh"
       - "supervisor-config.json"
       - "supervisor-ide-config.json"
+      - "bin/*"
     deps:
       - :installer
       - :builtin-plugins
+      # TODO(cw): remove these dependencies when registry-facade is standard
       - components/supervisor:app
+      - components/docker-up:app
     argdeps:
       - imageRepoBase
     config:

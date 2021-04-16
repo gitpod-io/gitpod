@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -186,8 +186,12 @@ export interface WorkspaceInstanceRepoStatus {
 // WorkspaceInstanceConfiguration contains all per-instance configuration
 export interface WorkspaceInstanceConfiguration {
     // theiaVersion is the version of Theia this workspace instance uses
-    theiaVersion: string;
+    // @deprected: replaced with the ideImage field
+    theiaVersion?: string;
 
     // feature flags are the lowercase feature-flag names as passed to ws-manager
     featureFlags?: NamedWorkspaceFeatureFlag[];
+
+    // ideImage is the ref of the IDE image this instance uses.
+    ideImage: string;
 }

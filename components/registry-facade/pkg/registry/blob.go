@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -13,6 +13,7 @@ import (
 	"mime"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/containerd/containerd/content"
 	"github.com/containerd/containerd/errdefs"
@@ -61,14 +62,20 @@ func (reg *Registry) handleBlob(ctx context.Context, r *http.Request) http.Handl
 			reg.LayerSource,
 		},
 		ConfigModifier: reg.ConfigModifier,
+
+		Metrics: reg.metrics,
 	}
 
 	mhandler := handlers.MethodHandler{
 		"GET":  http.HandlerFunc(blobHandler.getBlob),
 		"HEAD": http.HandlerFunc(blobHandler.getBlob),
 	}
+	res := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		reg.metrics.BlobCounter.Inc()
+		mhandler.ServeHTTP(w, r)
+	})
 
-	return mhandler
+	return res
 }
 
 type blobHandler struct {
@@ -81,6 +88,8 @@ type blobHandler struct {
 	Store             content.Store
 	AdditionalSources []BlobSource
 	ConfigModifier    ConfigModifier
+
+	Metrics *metrics
 }
 
 func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
@@ -144,7 +153,13 @@ func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 
 		w.Header().Set("Content-Type", mediaType)
 		w.Header().Set("Etag", bh.Digest.String())
-		io.Copy(w, rc)
+		t0 := time.Now()
+		n, err := io.Copy(w, rc)
+		dt := time.Since(t0)
+		if err != nil {
+			return err
+		}
+		bh.Metrics.BlobDownloadSpeedHist.Observe(float64(n) / dt.Seconds())
 
 		return nil
 	}()
@@ -287,7 +302,7 @@ func (pbs *configBlobSource) GetBlob(ctx context.Context, spec *api.ImageSpec, d
 
 func (pbs *configBlobSource) getConfig(ctx context.Context) (rawCfg []byte, err error) {
 	manifest := *pbs.Manifest
-	cfg, err := downloadConfig(ctx, pbs.Fetcher, manifest.Config)
+	cfg, err := DownloadConfig(ctx, pbs.Fetcher, manifest.Config)
 	if err != nil {
 		return
 	}

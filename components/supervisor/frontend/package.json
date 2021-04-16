@@ -12,6 +12,7 @@
     "@babel/plugin-transform-classes": "^7.10.0",
     "@babel/plugin-transform-runtime": "^7.10.0",
     "@babel/preset-env": "^7.10.0",
+    "@types/sharedworker": "^0.0.29",
     "babel-loader": "^8.0.6",
     "concurrently": "^5.3.0",
     "copy-webpack-plugin": "^6.2.0",

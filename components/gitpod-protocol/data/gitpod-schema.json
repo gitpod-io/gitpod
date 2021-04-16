@@ -51,6 +51,7 @@
                             "private",
                             "public"
                         ],
+                        "default": "public",
                         "description": "Whether the port visibility should be private or public. 'public' (default) will allow everyone with the port URL to access the port. 'private' will only allow users with workspace access to access the port."
                     },
                     "name": {
@@ -133,7 +134,8 @@
                 "object",
                 "string"
             ],
-            "description": "List of tasks to run on start.",
+            "description": "The Docker image to run your workspace in.",
+            "default": "gitpod/workspace-full",
             "required": [
                 "file"
             ],
@@ -156,11 +158,6 @@
         "workspaceLocation": {
             "type": "string",
             "description": "Path to where the IDE's workspace should be opened."
-        },
-        "privileged": {
-            "type": "boolean",
-            "deprecationMessage": "The 'privileged' property only works for privileged users.",
-            "description": "Whether the workspace is started in privileged mode."
         },
         "gitConfig": {
             "type": [

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the Gitpod Enterprise Source Code License,
  * See License.enterprise.txt in the project root folder.
  */
@@ -33,8 +33,8 @@ export class PrebuildQueueMaintainer implements Disposable {
     protected messagebusListener?: Disposable;
     protected periodicMaintainer?: NodeJS.Timer;
 
-    public async start(): Promise<void> {
-        this.messagebusListener = await this.messagebus.listenForPrebuildUpdatableQueue((ctx, msg) => this.handlePrebuildFinished(ctx, msg));
+    start(): void {
+        this.messagebusListener = this.messagebus.listenForPrebuildUpdatableQueue((ctx, msg) => this.handlePrebuildFinished(ctx, msg));
         this.periodicMaintainer = setInterval(this.periodicQueueMaintainance.bind(this), 60 * 1000) as any as NodeJS.Timer;
         log.debug("prebuild queue maintainer started");
     }

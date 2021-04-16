@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -12,6 +12,7 @@ export interface CubeFrameProps {
     errorMode: boolean;
     errorMessage?: string;
     branding?: Branding;
+    stoppedAnimation?: boolean;
 }
 
 export interface CubeFrameState {
@@ -59,6 +60,9 @@ export class CubeFrame extends React.Component<CubeFrameProps, CubeFrameState> {
     render() {
         if (this.bootanimation) {
             this.bootanimation.setInErrorMode(this.props.errorMode);
+            if (!!this.props.stoppedAnimation) {
+                this.bootanimation.stop();
+            }
         }
 
         return (

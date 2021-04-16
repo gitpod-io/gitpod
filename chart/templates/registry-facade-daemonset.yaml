@@ -1,0 +1,136 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.registryFacade -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if not $comp.disabled -}}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: registry-facade
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: registry-facade
+    kind: deployment
+    stage: {{ .Values.installation.stage }}
+    gitpod.io/nodeService: registry-facade
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: registry-facade
+      kind: pod
+      stage: {{ .Values.installation.stage }}
+      gitpod.io/nodeService: registry-facade
+  template:
+    metadata:
+      name: registry-facade
+      labels:
+        app: {{ template "gitpod.fullname" . }}
+        component: registry-facade
+        kind: pod
+        stage: {{ .Values.installation.stage }}
+        gitpod.io/nodeService: registry-facade
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: '9500'
+    spec:
+{{ include "gitpod.workspaceAffinity" $this | indent 6 }}
+      serviceAccountName: registry-facade
+{{- if $comp.handover.enabled }}
+      initContainers:
+      - name: handover-ownership
+        image: {{ template "gitpod.comp.imageFull" $this }}
+        command:
+        - "/bin/sh"
+        - "-c"
+        - "chown -R 1000:1000 /mnt/handover"
+        volumeMounts:
+        - name: handover
+          mountPath: "/mnt/handover"
+        securityContext:
+          privileged: false
+          runAsUser: 0
+{{- end }}
+      {{- if $comp.handover.enabled }}
+      hostNetwork: true
+      {{- end }}
+      containers:
+      - name: registry-facade
+        image: {{ template "gitpod.comp.imageFull" $this }}
+        args: ["run", "-v", "/mnt/config/config.json"]
+{{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
+{{ include "gitpod.container.resources" $this | indent 8 }}
+        ports:
+        - name: registry
+          {{- if $comp.handover.enabled }}
+          # if hostNetwork == true then containerPort == hostPort
+          containerPort: {{ $comp.ports.registry.servicePort }}
+          {{- else }}
+          containerPort: {{ $comp.ports.registry.containerPort }}
+          hostPort: {{ $comp.ports.registry.servicePort }}
+        - name: metrics
+          containerPort: 9500
+          {{- end }}
+        securityContext:
+          privileged: false
+          runAsUser: 1000
+{{ include "gitpod.container.defaultEnv" $this | indent 8 }}
+{{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+        volumeMounts:
+        - name: cache
+          mountPath: "/mnt/cache"
+        - name: config
+          mountPath: "/mnt/config"
+          readOnly: true
+        {{- if $comp.handover.enabled }}
+        - name: handover
+          mountPath: "/mnt/handover"
+        {{- end }}
+        {{- if .Values.components.workspace.pullSecret.secretName }}
+        - name: pull-secret
+          mountPath: /mnt/pull-secret.json
+          subPath: .dockerconfigjson
+        {{- end }}
+        {{- if (or $comp.certificatesSecret.secretName .Values.certificatesSecret.secretName) }}
+        - name: https-certificates
+          mountPath: "/mnt/certificates"
+        {{- end }}
+      volumes:
+      - name: cache
+        emptyDir: {}
+      - name: config
+        configMap:
+          name: {{ template "gitpod.comp.configMap" $this }}
+      {{- if $comp.handover.enabled }}
+      - name: handover
+        hostPath:
+          path: {{ $comp.handover.socket | quote }}
+          type: DirectoryOrCreate
+      {{- end }}
+      {{- if .Values.components.workspace.pullSecret.secretName }}
+      - name: pull-secret
+        secret:
+          secretName: {{ .Values.components.workspace.pullSecret.secretName }}
+      {{- end }}
+      {{- if $comp.certificatesSecret.secretName }}
+      - name: https-certificates
+        secret:
+          secretName: {{ $comp.certificatesSecret.secretName }}
+      {{- else if .Values.certificatesSecret.secretName }}
+      - name: https-certificates
+        secret:
+          secretName: {{ .Values.certificatesSecret.secretName }}
+          {{- if (and $.Values.certificatesSecret.fullChainName $.Values.certificatesSecret.chainName $.Values.certificatesSecret.keyName) }}
+          items:
+          - key: {{ $.Values.certificatesSecret.fullChainName }}
+            path: fullchain.pem
+          - key: {{ $.Values.certificatesSecret.chainName }}
+            path: chain.pem
+          - key: {{ $.Values.certificatesSecret.keyName }}
+            path: privkey.pem
+          {{- end }}
+      {{- end }}
+{{ toYaml .Values.defaults | indent 6 }}
+{{ end }}

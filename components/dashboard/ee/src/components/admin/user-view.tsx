@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the Gitpod Enterprise Source Code License,
  * See License.enterprise.txt in the project root folder.
  */
@@ -20,6 +20,7 @@ import { SelectRoleOrPermissionDialog } from './select-role-dialog';
 import { SelectWorkspaceFeatureFlagDialog } from './select-feature-flag-dialog';
 import { ResponseError } from 'vscode-jsonrpc';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
+import { Dialog, DialogTitle, DialogContent, TextField, DialogActions } from '@material-ui/core';
 
 export interface UserViewProps {
     service: GitpodService;
@@ -36,6 +37,8 @@ interface UserViewState {
     blockingOp: boolean;
     addingRoleOp: 'none' | 'choose' | 'working';
     addingFeatureFlagOp: 'none' | 'choose' | 'working';
+    deletingOp: 'none' | 'confirmation' | 'working' | 'done';
+    deletingConfirmedUsername: string;
 }
 
 interface DetailRowSpec {
@@ -51,16 +54,20 @@ export class UserView extends React.Component<UserViewProps, UserViewState> {
         this.state = {
             blockingOp: false,
             addingRoleOp: 'none',
-            addingFeatureFlagOp: 'none'
+            addingFeatureFlagOp: 'none',
+            deletingOp: 'none',
+            deletingConfirmedUsername: '',
         };
     }
 
     async componentDidMount() {
+        await this.fetchUser();
+    }
+
+    protected async fetchUser() {
         try {
             const loggedInUser = await this.props.service.server.getLoggedInUser();
-            const [ user ] = await Promise.all([
-                this.props.service.server.adminGetUser(this.props.userID)
-            ]);
+            const user = await this.props.service.server.adminGetUser(this.props.userID);
             this.setState({user, ourself: loggedInUser.id === this.props.userID});
         } catch (err) {
             var rerr: ResponseError<any> = err;
@@ -150,6 +157,29 @@ export class UserView extends React.Component<UserViewProps, UserViewState> {
                 open={this.state.addingFeatureFlagOp === 'choose'}
                 onSelect={r => this.modifyWorkspaceFeatureFlags(r, true)}
             />
+            <Dialog open={this.state.deletingOp == 'confirmation'}>
+                <React.Fragment>
+                    <DialogTitle>Delete User: Are your sure?</DialogTitle>
+                    <DialogContent>
+                        <Typography variant="body1" style={{ width: "100%" }}>
+                            <div>Are you sure that you would like to delete user <strong>{this.state.user?.name}</strong>?</div>
+                            <div>
+                                Please type in the username <strong>{this.state.user?.name}</strong> to confirm: <br />
+                                <TextField value={this.state.deletingConfirmedUsername} onChange={e => this.setState({ deletingConfirmedUsername: (e.target as HTMLInputElement).value })} />
+                            </div>
+                        </Typography>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button onClick={() => this.setState({ deletingOp: 'none' })} variant="outlined" color="primary">Cancel</Button>
+                        <Button
+                            onClick={this.deleteUser} variant="outlined"
+                            color="secondary" disabled={this.state.user?.name != this.state.deletingConfirmedUsername}
+                        >
+                            I'm Sure. Delete Account!
+                        </Button>
+                    </DialogActions>
+                </React.Fragment>
+            </Dialog>
             { user && 
                 <Grid container>
                     <Grid item xs={1}>
@@ -161,12 +191,19 @@ export class UserView extends React.Component<UserViewProps, UserViewState> {
                                 marginLeft: 20
                             }}
                             data-testid={"avatar-" + user.id}>
-                            </Avatar>
+                        </Avatar>
                     </Grid>
-                    <Grid item xs={11}>
+                    <Grid item xs={9}>
                         <Typography variant="h1">{user.name}</Typography>
                     </Grid>
-                    {/* { !this.state.ourself && <Grid item xs={2} style={{textAlign: "right"}}><Button color="secondary" variant="contained">Delete</Button></Grid>} */}
+                    <Grid item xs={2} style={{ textAlign: "right" }}>
+                        <Button color="secondary" variant="contained"
+                            disabled={this.state.ourself || this.state.deletingOp !== 'none' || this.state.user?.markedDeleted}
+                            onClick={() => this.setState({ deletingOp: 'confirmation' })}
+                        >
+                            Delete
+                        </Button>
+                    </Grid>
                 </Grid>
             }
             { !user && <div className="loading-skeleton dummy" style={{ minWidth: "20em", minHeight: "10em" }} /> }
@@ -241,6 +278,22 @@ export class UserView extends React.Component<UserViewProps, UserViewState> {
             alert(err);
         } finally {
             this.setState({ addingFeatureFlagOp: 'none' });
+        }
+    }
+
+    private deleteUser = async () => {
+        this.setState({ deletingOp: 'working' });
+        try {
+            if (!this.state.user) {
+                throw new Error("User is undefined. That was unexpected.");
+            }
+            await this.props.service.server.adminDeleteUser(this.state.user.id);
+            await this.fetchUser();
+        } catch (err) {
+            console.error("Error deleting user: " + err);
+            alert(err);
+        } finally {
+            this.setState({ deletingOp: 'done' });
         }
     }
 

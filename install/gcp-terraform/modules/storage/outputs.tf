@@ -1,12 +1,8 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the MIT License. See License-MIT.txt in the project root for license information.
  */
 
 output "values" {
-  value = data.template_file.gitpod_storage_values.rendered
-}
-
-output "done" {
-  value = null_resource.done.id
+  value = data.template_file.values.rendered
 }

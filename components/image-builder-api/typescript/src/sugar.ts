@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -68,17 +68,17 @@ export interface StagedBuildResponse {
 
 export class PromisifiedImageBuilderClient {
 
-    constructor(public readonly client: ImageBuilderClient) {}
+    constructor(public readonly client: ImageBuilderClient) { }
 
     public isConnectionAlive() {
         const cs = this.client.getChannel().getConnectivityState(false);
-            return cs == grpc.connectivityState.CONNECTING || cs == grpc.connectivityState.IDLE || cs == grpc.connectivityState.READY;
+        return cs == grpc.connectivityState.CONNECTING || cs == grpc.connectivityState.IDLE || cs == grpc.connectivityState.READY;
     }
 
     public resolveBaseImage(ctx: TraceContext, request: ResolveBaseImageRequest): Promise<ResolveBaseImageResponse> {
         return new Promise<ResolveBaseImageResponse>((resolve, reject) => {
             const span = TraceContext.startSpan(`/image-builder/resolveBaseImage`, ctx);
-            this.client.resolveBaseImage(request, withTracing({span}), (err, resp) => {
+            this.client.resolveBaseImage(request, withTracing({ span }), (err, resp) => {
                 if (err) {
                     TraceContext.logError({ span }, err);
                     reject(err);
@@ -93,7 +93,7 @@ export class PromisifiedImageBuilderClient {
     public resolveWorkspaceImage(ctx: TraceContext, request: ResolveWorkspaceImageRequest): Promise<ResolveWorkspaceImageResponse> {
         return new Promise<ResolveWorkspaceImageResponse>((resolve, reject) => {
             const span = TraceContext.startSpan(`/image-builder/resolveWorkspaceImage`, ctx);
-            this.client.resolveWorkspaceImage(request, withTracing({span}), (err, resp) => {
+            this.client.resolveWorkspaceImage(request, withTracing({ span }), (err, resp) => {
                 span.finish();
                 if (err) {
                     TraceContext.logError({ span }, err);
@@ -121,7 +121,7 @@ export class PromisifiedImageBuilderClient {
         }
 
         try {
-            const stream = this.client.build(request, withTracing({span}));
+            const stream = this.client.build(request, withTracing({ span }));
             stream.on('error', err => {
                 log.debug("stream err", err)
 
@@ -168,12 +168,12 @@ export class PromisifiedImageBuilderClient {
                 }
 
                 if (!spanFinished) {
-                    TraceContext.logError({span}, err);
+                    TraceContext.logError({ span }, err);
                     span.finish();
                 }
             });
         } catch (err) {
-            TraceContext.logError({span}, err);
+            TraceContext.logError({ span }, err);
             span.finish();
 
             log.error("failed to start image build", request);
@@ -184,15 +184,17 @@ export class PromisifiedImageBuilderClient {
     }
 
     // logs subscribes to build logs. This function returns when there are no more logs to provide
-    public logs(ctx: TraceContext, request: LogsRequest, cb: (data: string)=>void): Promise<void> {
+    public logs(ctx: TraceContext, request: LogsRequest, cb: (data: string) => 'continue' | 'stop'): Promise<void> {
         const span = TraceContext.startSpan(`/image-builder/logs`, ctx);
 
-        const stream = this.client.logs(request, withTracing({span}));
+        const stream = this.client.logs(request, withTracing({ span }));
         return new Promise<void>((resolve, reject) => {
             stream.on('end', () => resolve())
             stream.on('error', err => reject(err));
             stream.on('data', (resp: LogsResponse) => {
-                cb(new TextDecoder("utf-8").decode(resp.getContent_asU8()));
+                if (cb(new TextDecoder("utf-8").decode(resp.getContent_asU8())) === 'stop') {
+                    stream.cancel()
+                }
             });
         })
     }

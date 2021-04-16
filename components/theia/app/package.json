@@ -4,6 +4,9 @@
   "version": "0.1.2",
   "license": "UNLICENSED",
   "dependencies": {
+    "@gitpod/gitpod-extension": "0.1.7",
+    "@gitpod/gitpod-protocol": "0.1.5",
+    "@theia/asciidoc": "next",
     "@theia/callhierarchy": "next",
     "@theia/console": "next",
     "@theia/core": "next",
@@ -32,9 +35,7 @@
     "@theia/userstorage": "next",
     "@theia/variable-resolver": "next",
     "@theia/workspace": "next",
-    "@theia/asciidoc": "next",
-    "@gitpod/gitpod-extension": "0.1.7",
-    "@gitpod/gitpod-protocol": "0.1.5"
+    "patch-package": "^6.2.2"
   },
   "devDependencies": {
     "@theia/cli": "next"
@@ -43,7 +44,8 @@
     "/lib",
     "/favicon.ico",
     "/startup.sh",
-    "/src-gen"
+    "/src-gen",
+    "/patches"
   ],
   "scripts": {
     "start": "yarn start:theia --port=23000",

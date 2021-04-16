@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -15,7 +15,6 @@ import { GitpodFileParser } from '@gitpod/gitpod-protocol/lib/gitpod-file-parser
 
 import { GitpodInfoProviderNodeImpl } from "./gitpod-info-backend";
 import { ConnectionHandler, JsonRpcConnectionHandler } from "@theia/core";
-import { ServedPortsServiceClient, ServedPortsService, ServedPortsServiceServer } from "../common/served-ports-service";
 import { GitpodEnvVariablesServer } from "./gitpod-env-variables-server";
 import { ShellProcess } from "@theia/terminal/lib/node/shell-process";
 import { GitpodShellProcess } from "./gitpod-shell-process";
@@ -39,10 +38,14 @@ import { gitpodInfoPath } from "../common/gitpod-info";
 import { OpenVSXExtensionProviderImpl } from "./extensions/openvsx-extension-provider-impl";
 import { openVSXExtensionProviderPath } from "../common/openvsx-extension-provider";
 import { EnvVariablesServer } from "@theia/core/lib/common/env-variables";
-import { SupervisorServedPortsServiceImpl } from "./supervisor-serverd-ports-service";
+import { GitpodPortServerImpl } from "./gitpod-port-server-impl";
 import { SupervisorClientProvider } from "./supervisor-client-provider";
 import { GitpodTaskServer, GitpodTaskClient, gitpodTaskServicePath } from "../common/gitpod-task-protocol";
 import { GitpodTaskServerImpl } from "./gitpod-task-server-impl";
+import { GitpodPortServer, GitpodPortClient, gitpodPortServicePath } from "../common/gitpod-port-server";
+import { GitpodTaskTerminalProcess, GitpodTaskTerminalProcessFactory, GitpodTaskTerminalProcessOptions } from "./gitpod-task-terminal-process";
+import { MiniBrowserEndpoint } from "@theia/mini-browser/lib/node/mini-browser-endpoint";
+import { GitpodMiniBrowserEndpoint } from "./gitpod-mini-browser-endpoint";
 
 export default new ContainerModule((bind, unbind, isBound, rebind) => {
     rebind(ShellProcess).to(GitpodShellProcess).inTransientScope();
@@ -55,21 +58,28 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(BackendApplicationContribution).toService(GitPodExpressService);
 
     bind(SupervisorClientProvider).toSelf().inSingletonScope();
-    bind(ServedPortsServiceServer).to(SupervisorServedPortsServiceImpl).inSingletonScope();
+    bind(GitpodPortServer).to(GitpodPortServerImpl).inSingletonScope();
     bind(ConnectionHandler).toDynamicValue(context =>
-        new JsonRpcConnectionHandler<ServedPortsServiceClient>(ServedPortsService.SERVICE_PATH, client => {
-            const server = context.container.get<ServedPortsServiceServer>(ServedPortsServiceServer);
+        new JsonRpcConnectionHandler<GitpodPortClient>(gitpodPortServicePath, client => {
+            const server = context.container.get<GitpodPortServerImpl>(GitpodPortServer);
             server.setClient(client);
-            client.onDidCloseConnection(() => server.disposeClient(client));
             return server;
         })
     ).inSingletonScope();
+
+    bind(GitpodTaskTerminalProcessFactory).toFactory(context =>
+        (options: GitpodTaskTerminalProcessOptions) => {
+            const child = context.container.createChild();
+            child.bind(GitpodTaskTerminalProcessOptions).toConstantValue(options);
+            child.bind(GitpodTaskTerminalProcess).toSelf().inSingletonScope();
+            return child.get(GitpodTaskTerminalProcess);
+        }
+    );
     bind(GitpodTaskServer).to(GitpodTaskServerImpl).inSingletonScope();
     bind(ConnectionHandler).toDynamicValue(context =>
         new JsonRpcConnectionHandler<GitpodTaskClient>(gitpodTaskServicePath, client => {
             const server = context.container.get<GitpodTaskServerImpl>(GitpodTaskServer);
             server.setClient(client);
-            client.onDidCloseConnection(() => server.disposeClient(client));
             return server;
         })
     ).inSingletonScope();
@@ -123,4 +133,8 @@ export default new ContainerModule((bind, unbind, isBound, rebind) => {
             return service;
         })
     ).inSingletonScope();
+
+    //#region mini-browser run local files in own origin, should be reverted after next upgrade
+    rebind(MiniBrowserEndpoint).to(GitpodMiniBrowserEndpoint).inSingletonScope();
+    //#endregion
 });

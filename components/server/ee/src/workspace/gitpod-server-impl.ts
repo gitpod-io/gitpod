@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the Gitpod Enterprise Source Code License,
  * See License.enterprise.txt in the project root folder.
  */
@@ -76,7 +76,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
             if (!runningInstance) {
                 throw new ResponseError(ErrorCodes.NOT_FOUND, "Can only set keep-alive for running workspaces");
             }
-            await this.guardAccess({kind: "workspaceInstance", subject: runningInstance, workspaceOwnerID: workspace.ownerId}, "update");
+            await this.guardAccess({kind: "workspaceInstance", subject: runningInstance, workspaceOwnerID: workspace.ownerId, workspaceIsShared: workspace.shareable || false}, "update");
 
             // if any other running instance has a custom timeout other than the user's default, we'll reset that timeout
             const client = await this.workspaceManagerClientProvider.get(runningInstance.region);
@@ -128,7 +128,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
                 log.warn({ userId: user.id, workspaceId }, 'Can only get keep-alive for running workspaces');
                 return { duration: "30m", canChange };
             }
-            await this.guardAccess({kind: "workspaceInstance", subject: runningInstance, workspaceOwnerID: workspace.ownerId}, "get");
+            await this.guardAccess({kind: "workspaceInstance", subject: runningInstance, workspaceOwnerID: workspace.ownerId, workspaceIsShared: workspace.shareable || false}, "get");
 
             const req = new DescribeWorkspaceRequest();
             req.setId(runningInstance.id);
@@ -146,11 +146,11 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
     }
 
 
-    public async isPrebuildAvailable(pwsid: string): Promise<boolean> {
+    public async isPrebuildDone(pwsid: string): Promise<boolean> {
         // Allowed in the free version, because it is read only.
         // this.requireEELicense(Feature.FeaturePrebuild);
 
-        const span = opentracing.globalTracer().startSpan("isPrebuildAvailable");
+        const span = opentracing.globalTracer().startSpan("isPrebuildDone");
         span.setTag("pwsid", pwsid);
         const ctx: TraceContext = { span };
         try {
@@ -160,7 +160,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
                 return true;
             }
 
-            return PrebuiltWorkspace.isAvailable(pws);
+            return PrebuiltWorkspace.isDone(pws);
         } catch (e) {
             TraceContext.logError({ span }, e);
             throw e;
@@ -198,7 +198,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
 
             const instance = await this.workspaceDb.trace({ span }).findRunningInstance(id);
             if (instance) {
-                await this.guardAccess({kind: "workspaceInstance", subject: instance, workspaceOwnerID: workspace.ownerId}, "update");
+                await this.guardAccess({kind: "workspaceInstance", subject: instance, workspaceOwnerID: workspace.ownerId, workspaceIsShared: workspace.shareable || false}, "update");
 
                 const req = new ControlAdmissionRequest();
                 req.setId(instance.id);
@@ -241,7 +241,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
                 throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} has no running instance`);
             }
 
-            await this.guardAccess({kind: "workspaceInstance", subject: instance, workspaceOwnerID: workspace.ownerId}, "get");
+            await this.guardAccess({kind: "workspaceInstance", subject: instance, workspaceOwnerID: workspace.ownerId, workspaceIsShared: workspace.shareable || false}, "get");
             await this.guardAccess({kind: "snapshot", subject: undefined, workspaceOwnerID: workspace.ownerId}, "create");
 
             const client = await this.workspaceManagerClientProvider.get(instance.region);
@@ -370,6 +370,25 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
             // For some reason, returning the result of `this.userDB.storeUser(target)` does not work. The response never arrives the caller.
             // Returning `target` instead (which should be equivalent).
             return this.censorUser(target);
+        } catch (e) {
+            TraceContext.logError({ span }, e);
+            throw new ResponseError(500, e.toString());
+        } finally {
+            span.finish();
+        }
+    }
+
+    async adminDeleteUser(id: string): Promise<void> {
+        this.requireEELicense(Feature.FeatureAdminDashboard);
+
+        const user = this.checkAndBlockUser("adminDeleteUser");
+        if (!this.authorizationService.hasPermission(user, Permission.ADMIN_USERS)) {
+            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "not allowed");
+        }
+
+        const span = opentracing.globalTracer().startSpan("adminDeleteUser");
+        try {
+            await this.userDeletionService.deleteUser(id);
         } catch (e) {
             TraceContext.logError({ span }, e);
             throw new ResponseError(500, e.toString());

@@ -1,4 +1,4 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	grpc_gitpod "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/gitpod-io/gitpod/content-service/pkg/layer"
@@ -59,6 +60,17 @@ var runCmd = &cobra.Command{
 		}
 		defer mgmt.Close()
 
+		if len(cfg.RPCServer.RateLimits) > 0 {
+			log.WithField("ratelimits", cfg.RPCServer.RateLimits).Info("imposing rate limits on the gRPC interface")
+		}
+		ratelimits := grpc_gitpod.NewRatelimitingInterceptor(cfg.RPCServer.RateLimits)
+
+		reg := prometheus.NewRegistry()
+		callMetrics, err := grpc_gitpod.NewUnaryCallMetricsInterceptor(prometheus.WrapRegistererWithPrefix("gitpod_ws_manager_", reg))
+		if err != nil {
+			log.WithError(err).Fatal("cannot register gRPC call metrics")
+		}
+
 		grpcOpts := []grpc.ServerOption{
 			// We don't know how good our cients are at closing connections. If they don't close them properly
 			// we'll be leaking goroutines left and right. Closing Idle connections should prevent that.
@@ -67,16 +79,19 @@ var runCmd = &cobra.Command{
 				grpc_opentracing.StreamServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
 			)),
 			grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
+				// add call metrics first to capture ratelimit errors
+				callMetrics,
+				ratelimits.UnaryInterceptor(),
 				grpc_opentracing.UnaryServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
 			)),
 		}
-		if cfg.TLS.Certificate != "" && cfg.TLS.PrivateKey != "" {
-			creds, err := credentials.NewServerTLSFromFile(cfg.TLS.Certificate, cfg.TLS.PrivateKey)
+		if cfg.RPCServer.TLS.Certificate != "" && cfg.RPCServer.TLS.PrivateKey != "" {
+			creds, err := credentials.NewServerTLSFromFile(cfg.RPCServer.TLS.Certificate, cfg.RPCServer.TLS.PrivateKey)
 			if err != nil {
-				log.WithError(err).WithField("crt", cfg.TLS.Certificate).WithField("key", cfg.TLS.PrivateKey).Fatal("could not load TLS keys")
+				log.WithError(err).WithField("crt", cfg.RPCServer.TLS.Certificate).WithField("key", cfg.RPCServer.TLS.PrivateKey).Fatal("could not load TLS keys")
 			}
 			grpcOpts = append(grpcOpts, grpc.Creds(creds))
-			log.WithField("crt", cfg.TLS.Certificate).WithField("key", cfg.TLS.PrivateKey).Debug("securing gRPC server with TLS")
+			log.WithField("crt", cfg.RPCServer.TLS.Certificate).WithField("key", cfg.RPCServer.TLS.PrivateKey).Debug("securing gRPC server with TLS")
 		} else {
 			log.Warn("no TLS configured - gRPC server will be unsecured")
 		}
@@ -85,13 +100,13 @@ var runCmd = &cobra.Command{
 		defer grpcServer.Stop()
 
 		manager.Register(grpcServer, mgmt)
-		lis, err := net.Listen("tcp", cfg.RPCServerAddr)
+		lis, err := net.Listen("tcp", cfg.RPCServer.Addr)
 		if err != nil {
-			log.WithError(err).WithField("addr", cfg.RPCServerAddr).Fatal("cannot start RPC server")
+			log.WithError(err).WithField("addr", cfg.RPCServer.Addr).Fatal("cannot start RPC server")
 		}
 		//nolint:errcheck
 		go grpcServer.Serve(lis)
-		log.WithField("addr", cfg.RPCServerAddr).Info("started gRPC server")
+		log.WithField("addr", cfg.RPCServer.Addr).Info("started gRPC server")
 
 		monitor, err := mgmt.CreateMonitor()
 		if err != nil {
@@ -104,12 +119,11 @@ var runCmd = &cobra.Command{
 		defer monitor.Stop()
 		log.Info("workspace monitor is up and running")
 
-		if cfg.PProfAddr != "" {
-			go pprof.Serve(cfg.PProfAddr)
+		if cfg.PProf.Addr != "" {
+			go pprof.Serve(cfg.PProf.Addr)
 		}
 
-		if cfg.PrometheusAddr != "" {
-			reg := prometheus.NewRegistry()
+		if cfg.Prometheus.Addr != "" {
 			reg.MustRegister(
 				prometheus.NewGoCollector(),
 				prometheus.NewProcessCollector(prometheus.ProcessCollectorOpts{}),
@@ -124,12 +138,12 @@ var runCmd = &cobra.Command{
 			handler.Handle("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 
 			go func() {
-				err := http.ListenAndServe(cfg.PrometheusAddr, handler)
+				err := http.ListenAndServe(cfg.Prometheus.Addr, handler)
 				if err != nil {
 					log.WithError(err).Error("Prometheus metrics server failed")
 				}
 			}()
-			log.WithField("addr", cfg.PrometheusAddr).Info("started Prometheus metrics server")
+			log.WithField("addr", cfg.Prometheus.Addr).Info("started Prometheus metrics server")
 		}
 
 		// run until we're told to stop

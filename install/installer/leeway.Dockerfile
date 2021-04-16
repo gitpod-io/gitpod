@@ -1,4 +1,4 @@
-# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
@@ -16,7 +16,8 @@ RUN wget https://github.com/mikefarah/yq/releases/download/3.3.2/yq_linux_amd64 
     echo ${VERSION} > version && \
     rm yq
 
-COPY install-gcp-terraform--lib terraform/gcp
+COPY install-gcp-terraform-environment-installer--lib terraform/gcp
+COPY install-gcp-terraform-modules--installer terraform/gcp/modules
 COPY install-aws-terraform--lib terraform/aws
 RUN echo "chart_location = \"../helm/gitpod\"" >> installer.auto.tfvars && \
     echo "image_prefix   = \"$IMAGE_PREFIX/\""  >> installer.auto.tfvars && \
@@ -35,7 +36,7 @@ ENV GITPOD_INSTALLER_IN_DOCKER="true"
 ENV KUBECONFIG="/workspace/kubectl"
 RUN apk add --no-cache aws-cli python3 curl git bash ncurses
 
-RUN curl -o terraform.zip -L https://releases.hashicorp.com/terraform/0.13.4/terraform_0.13.4_linux_amd64.zip && \
+RUN curl -o terraform.zip -L https://releases.hashicorp.com/terraform/0.14.2/terraform_0.14.2_linux_amd64.zip && \
     unzip terraform.zip && \
     rm terraform.zip && \
     mv terraform /usr/bin

@@ -16,6 +16,7 @@
                 "workspaceType": "regular"
             },
             "annotations": {
+                "gitpod.io/requiredNodeServices": "ws-daemon,registry-facade",
                 "gitpod/admission": "admit_owner_only",
                 "gitpod/contentInitializer": "GmcKZXdvcmtzcGFjZXMvY3J5cHRpYy1pZC1nb2VzLWhlcmcvZmQ2MjgwNGItNGNhYi0xMWU5LTg0M2EtNGU2NDUzNzMwNDhlLnRhckBnaXRwb2QtZGV2LXVzZXItY2hyaXN0ZXN0aW5n",
                 "gitpod/fullWorkspaceBackup": "true",
@@ -28,7 +29,8 @@
                 "gitpod/url": "test-foobarservice-gitpod.io",
                 "prometheus.io/path": "/metrics",
                 "prometheus.io/port": "23000",
-                "prometheus.io/scrape": "true"
+                "prometheus.io/scrape": "true",
+                "seccomp.security.alpha.kubernetes.io/pod": "runtime/default"
             }
         },
         "spec": {
@@ -87,6 +89,10 @@
                             "value": "webview-{{hostname}}"
                         },
                         {
+                            "name": "THEIA_MINI_BROWSER_HOST_PATTERN",
+                            "value": "browser-{{hostname}}"
+                        },
+                        {
                             "name": "GITPOD_GIT_USER_NAME",
                             "value": "usernameGoesHere"
                         },
@@ -129,17 +135,7 @@
                         "successThreshold": 1,
                         "failureThreshold": 600
                     },
-                    "lifecycle": {
-                        "preStop": {
-                            "exec": {
-                                "command": [
-                                    "/.supervisor/supervisor",
-                                    "container",
-                                    "backup"
-                                ]
-                            }
-                        }
-                    },
+                    "terminationMessagePolicy": "FallbackToLogsOnError",
                     "imagePullPolicy": "Always",
                     "securityContext": {
                         "capabilities": {
@@ -171,24 +167,9 @@
                     }
                 }
             ],
+            "restartPolicy": "Never",
             "serviceAccountName": "workspace",
             "automountServiceAccountToken": false,
-            "affinity": {
-                "nodeAffinity": {
-                    "requiredDuringSchedulingIgnoredDuringExecution": {
-                        "nodeSelectorTerms": [
-                            {
-                                "matchExpressions": [
-                                    {
-                                        "key": "gitpod.io/ws-sync",
-                                        "operator": "Exists"
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                }
-            },
             "schedulerName": "workspace-scheduler",
             "tolerations": [
                 {

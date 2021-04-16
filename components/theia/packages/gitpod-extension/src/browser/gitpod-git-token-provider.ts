@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -138,7 +138,8 @@ export class GitpodGitTokenProvider {
             const validationResult = await this.tokenValidator.checkWriteAccess(authProvider, repoFullName, tokenResult);
             const hasWriteAccess = validationResult && validationResult.writeAccessToRepo === true;
 
-            if (!hasWriteAccess) {
+            if (hasWriteAccess) {
+
                 // first of all check if the current token includes write permission
                 const isPublic = validationResult && !validationResult.isPrivateRepo;
                 const requiredScopesForGitCommand = isPublic ? authProvider.requirements!.publicRepo : authProvider.requirements!.privateRepo;
@@ -147,14 +148,14 @@ export class GitpodGitTokenProvider {
                     const messagePart = `The command "git ${gitCommand}" requires additional permissions: ${missingScopes.join(", ")}`;
                     const notificationMessage = message ? message : `${messagePart} Please try again after updating the permissions.`;
                     await this.showMessage(notificationMessage, host, missingScopes.join(','));
-                } else {
-                    // warn about missing write access
-                    const notificationMessage = `The remote repository "${repoFullName}" is not accessible with the current token.
-                    Please make sure Gitpod is authorized for the organization this repository belongs to.`;
-                    await this.showMessage(notificationMessage, host);
                 }
-            }
+            } else {
 
+                // warn about missing write access
+                const notificationMessage = `The remote repository "${repoFullName}" is not accessible with the current token.
+                Please make sure Gitpod is authorized for the organization this repository belongs to.`;
+                await this.showMessage(notificationMessage, host);
+            }
 
         }
     }

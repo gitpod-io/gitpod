@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
@@ -139,20 +139,6 @@ export class ConfigProvider {
                 config._featureFlags = workspacePersistedFlags.filter(f => (user.featureFlags!.permanentWSFeatureFlags || []).includes(f));
             }
 
-            if (this.authService.hasPermission(user, 'ide-settings')) {
-                if (!config.ide) {
-                    config.ide = user.additionalData?.ideSettings?.defaultIde;
-                }
-                if (config.ide) {
-                    const mapped = this.env.ideImageAliases[config.ide];
-                    if (!!mapped) {
-                        config.ide = mapped;
-                    }
-                }
-            } else {
-                delete config.ide;
-            }
-
             return config;
         } catch (e) {
             TraceContext.logError({ span }, e);
@@ -168,7 +154,6 @@ export class ConfigProvider {
                 port: 3000
             }],
             tasks: [],
-            ide: this.env.ideDefaultImage,
             image: this.env.workspaceDefaultImage
         };
     }
@@ -261,7 +246,7 @@ export class ConfigProvider {
         span.setTag("filePath", filePath);
 
         try {
-            const url = `https://raw.githubusercontent.com/TypeFox/definitely-gp/master/${filePath}`;
+            const url = `https://raw.githubusercontent.com/gitpod-io/definitely-gp/master/${filePath}`;
             const response = await fetch(url, { method: 'GET' });
             let content;
             if (response.ok) {
@@ -280,7 +265,7 @@ export class ConfigProvider {
 
     protected async validateConfig(config: WorkspaceConfig, user: User): Promise<void> {
         // Make sure the projectRoot does not leave POD_PATH_WORKSPACE_BASE as that's a common
-        // assumption throughout the code (e.g. ws-sync)
+        // assumption throughout the code (e.g. ws-daemon)
         const checkoutLocation = config.checkoutLocation;
         if (checkoutLocation) {
             const normalizedPath = path.join(POD_PATH_WORKSPACE_BASE, checkoutLocation);

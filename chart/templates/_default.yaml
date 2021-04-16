@@ -1,4 +1,4 @@
-# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 {{ define "gitpod.service.default" }}
@@ -18,6 +18,10 @@ metadata:
     {{- range $k, $v := $comp.svcLabels }}
     {{ $k }}: {{ $v }}
     {{- end }}
+{{- if $comp.serviceAnnotations }}
+  annotations:
+{{ toYaml $comp.serviceAnnotations | indent 4 }}
+{{- end }}
 spec:
   ports:
   {{- range $key, $val := $comp.ports }}

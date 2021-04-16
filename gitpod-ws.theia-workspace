@@ -1,21 +1,28 @@
 {
    "folders": [
-      { "path": "" },
+      { "path": "." },
+      { "path": "components/blobserve" },
       { "path": "components/common-go" },
       { "path": "components/content-service" },
       { "path": "components/ee/cerc" },
       { "path": "components/ee/ws-scheduler" },
+      { "path": "components/docker-up" },
       { "path": "components/gitpod-cli" },
       { "path": "components/image-builder" },
       { "path": "components/licensor" },
       { "path": "components/registry-facade" },
       { "path": "components/service-waiter" },
       { "path": "components/supervisor" },
-      { "path": "components/ws-manager-node" },
+      { "path": "components/ws-daemon" },
       { "path": "components/ws-manager" },
       { "path": "components/ws-proxy" },
-      { "path": "components/ws-sync" },
-      { "path": "install/installer" }
+      { "path": "install/installer" },
+      { "path": "test" },
+      { "path": "dev/blowtorch" },
+      { "path": "dev/gpctl" },
+      { "path": "dev/loadgen" },
+      { "path": "dev/poolkeeper" },
+      { "path": "dev/sweeper" }
    ],
    "settings": {
       "typescript.tsdk": "gitpod/node_modules/typescript/lib",
@@ -50,6 +57,7 @@
       "launch": {},
       "files.exclude": {
          "**/.git": true
-      }
+    },
+    "go.lintTool": "golangci-lint"
    }
 }

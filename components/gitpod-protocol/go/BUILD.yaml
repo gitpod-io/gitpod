@@ -1,0 +1,16 @@
+packages:
+  - name: lib
+    type: go
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    deps:
+      - components/common-go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    config:
+      packaging: library
+      buildFlags:
+        - "-ldflags=-w"

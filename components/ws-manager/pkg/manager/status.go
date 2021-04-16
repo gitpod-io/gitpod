@@ -1,10 +1,13 @@
-// Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
 package manager
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -174,9 +177,9 @@ func (wso *workspaceObjects) HostIP() string {
 	return ""
 }
 
-func (m *Manager) getWorkspaceObjects(pod *corev1.Pod) (*workspaceObjects, error) {
+func (m *Manager) getWorkspaceObjects(ctx context.Context, pod *corev1.Pod) (*workspaceObjects, error) {
 	wso := &workspaceObjects{Pod: pod}
-	err := m.completeWorkspaceObjects(wso)
+	err := m.completeWorkspaceObjects(ctx, wso)
 	if err != nil {
 		return nil, xerrors.Errorf("getWorkspaceObjects: %w", err)
 	}
@@ -185,7 +188,7 @@ func (m *Manager) getWorkspaceObjects(pod *corev1.Pod) (*workspaceObjects, error
 
 // completeWorkspaceObjects finds the remaining Kubernetes objects based on the pod description
 // or pod lifecycle indepedent state.
-func (m *Manager) completeWorkspaceObjects(wso *workspaceObjects) error {
+func (m *Manager) completeWorkspaceObjects(ctx context.Context, wso *workspaceObjects) error {
 	if wso.Pod == nil && wso.PLIS == nil {
 		return xerrors.Errorf("completeWorkspaceObjects: need either pod or lifecycle independent state")
 	}
@@ -197,7 +200,7 @@ func (m *Manager) completeWorkspaceObjects(wso *workspaceObjects) error {
 			return xerrors.Errorf("cannot find %s annotation on %s", workspaceIDAnnotation, wso.PLIS.Name)
 		}
 
-		pod, err := m.findWorkspacePod(workspaceID)
+		pod, err := m.findWorkspacePod(ctx, workspaceID)
 		if err == nil {
 			wso.Pod = pod
 		}
@@ -220,7 +223,7 @@ func (m *Manager) completeWorkspaceObjects(wso *workspaceObjects) error {
 	}
 	serviceClient := m.Clientset.CoreV1().Services(m.Config.Namespace)
 	if wso.TheiaService == nil {
-		service, err := serviceClient.Get(getTheiaServiceName(servicePrefix), metav1.GetOptions{})
+		service, err := serviceClient.Get(ctx, getTheiaServiceName(servicePrefix), metav1.GetOptions{})
 		if err == nil {
 			wso.TheiaService = service
 		}
@@ -230,7 +233,7 @@ func (m *Manager) completeWorkspaceObjects(wso *workspaceObjects) error {
 		}
 	}
 	if wso.PortsService == nil {
-		service, err := serviceClient.Get(getPortsServiceName(servicePrefix), metav1.GetOptions{})
+		service, err := serviceClient.Get(ctx, getPortsServiceName(servicePrefix), metav1.GetOptions{})
 		if err == nil {
 			wso.PortsService = service
 		}
@@ -260,7 +263,7 @@ func (m *Manager) completeWorkspaceObjects(wso *workspaceObjects) error {
 			return fmt.Errorf("cannot act on pod %s: has no %s annotation", wso.Pod.Name, workspaceIDAnnotation)
 		}
 
-		plis, err := m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Get(getPodLifecycleIndependentCfgMapName(workspaceID), metav1.GetOptions{})
+		plis, err := m.Clientset.CoreV1().ConfigMaps(m.Config.Namespace).Get(ctx, getPodLifecycleIndependentCfgMapName(workspaceID), metav1.GetOptions{})
 		if !isKubernetesObjNotFoundError(err) && err != nil {
 			return xerrors.Errorf("completeWorkspaceObjects: %w", err)
 		}
@@ -605,7 +608,7 @@ func extractFailure(wso workspaceObjects) (string, *api.WorkspacePhase) {
 	}
 
 	status := pod.Status
-	if status.Phase == corev1.PodFailed {
+	if status.Phase == corev1.PodFailed && (status.Reason != "" || status.Message != "") {
 		// Don't force the phase to UNKNONWN here to leave a chance that we may detect the actual phase of
 		// the workspace, e.g. stopping.
 		return fmt.Sprintf("%s: %s", status.Reason, status.Message), nil
@@ -637,7 +640,7 @@ func extractFailure(wso workspaceObjects) (string, *api.WorkspacePhase) {
 			// container is terminating.
 			if terminationState.Message != "" {
 				// the container itself told us why it was terminated - use that as failure reason
-				return terminationState.Message, nil
+				return extractFailureFromLogs([]byte(terminationState.Message)), nil
 			} else if terminationState.Reason == "Error" {
 				if !isPodBeingDeleted(pod) && terminationState.ExitCode != containerKilledExitCode {
 					return fmt.Sprintf("container %s ran with an error: exit code %d", cs.Name, terminationState.ExitCode), nil
@@ -675,6 +678,42 @@ func extractFailure(wso workspaceObjects) (string, *api.WorkspacePhase) {
 	}
 
 	return "", nil
+}
+
+// extractFailureFromLogs attempts to extract the last error message from a workspace
+// container's log output.
+func extractFailureFromLogs(logs []byte) string {
+	var sep = []byte("\n")
+	var msg struct {
+		Error   string `json:"error"`
+		Message string `json:"message"`
+	}
+
+	var nidx int
+	for idx := bytes.LastIndex(logs, sep); idx > 0; idx = nidx {
+		nidx = bytes.LastIndex(logs[:idx], sep)
+		if nidx < 0 {
+			nidx = 0
+		}
+
+		line := logs[nidx:idx]
+		err := json.Unmarshal(line, &msg)
+		if err != nil {
+			continue
+		}
+
+		if msg.Message == "" {
+			continue
+		}
+
+		if msg.Error == "" {
+			return msg.Message
+		}
+
+		return msg.Message + ": " + msg.Error
+	}
+
+	return string(logs)
 }
 
 // isPodBeingDeleted returns true if the pod is currently being stopped/deleted
@@ -824,6 +863,10 @@ func formatDuration(d time.Duration) string {
 	return fmt.Sprintf("%02dh%02dm", h, m)
 }
 
+// errNoPLIS is returned by getWorkspaceStatusFromPLIS if the PLIS configMap is present, but
+// does not contain a PLIS annotation.
+var errNoPLIS = xerrors.Errorf("workspace has no pod lifecycle independent state")
+
 // getWorkspaceStatusFromPLIS tries to compute the workspace status from the pod lifecycle independent state alone.
 // For this to work the PLIS must be set and contain the last pod-based status.
 func (m *Manager) getWorkspaceStatusFromPLIS(wso workspaceObjects) (*api.WorkspaceStatus, error) {
@@ -836,7 +879,7 @@ func (m *Manager) getWorkspaceStatusFromPLIS(wso workspaceObjects) (*api.Workspa
 		return nil, xerrors.Errorf("cannot get status from pod lifecycle independent state: %w", err)
 	}
 	if plis == nil {
-		return nil, xerrors.Errorf("workspace has no pod lifecycle independent state")
+		return nil, errNoPLIS
 	}
 
 	if plis.LastPodStatus == nil {

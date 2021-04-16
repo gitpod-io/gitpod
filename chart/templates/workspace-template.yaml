@@ -1,4 +1,4 @@
-# Copyright (c) 2020 TypeFox GmbH. All rights reserved.
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
 {{ $comp := .Values.components.workspace -}}
@@ -48,6 +48,10 @@ data:
 {{ if (or $comp.templates.probe $comp.affinity) }}
   "probe.yaml": |
 {{ dict | merge ($comp.templates.probe | default dict) (include "coreWorkspaceAffinity" (dict "comp" $comp "tpe" "probe") | fromYaml) | toJson | indent 4 }}
+{{- end }}
+{{ if (or $comp.templates.regular $comp.affinity) }}
+  "ghost.yaml": |
+{{ dict | merge ($comp.templates.ghost | default dict) (include "coreWorkspaceAffinity" (dict "comp" $comp "tpe" "ghost") | fromYaml) | toJson | indent 4 }}
 {{- end }}
 {{ if (or $comp.templates.regular $comp.affinity) }}
   "regular.yaml": |
