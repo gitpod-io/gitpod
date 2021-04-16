@@ -106,8 +106,8 @@ authProviders: []
 #   description: ""
 #   icon: ""
 branding:
-  logo: https://www.devgraph.com/wp-content/uploads/2020/08/devspace-logo1.png
-  homepage: https://www.devgraph.com/devspaces
+  logo: /images/gitpod-ddd.svg
+  homepage: https://www.gitpod.io/
   links:
     header:
       - name: Workspaces
@@ -131,8 +131,12 @@ branding:
       - type: Twitter
         url: https://twitter.com/gitpod
     legal:
-      - name: Terms and conditions
-        url: https://www.devgraph.com/terms-and-conditions/
+      - name: Imprint
+        url: https://www.gitpod.io/imprint/
+      - name: Privacy Policy
+        url: https://www.gitpod.io/privacy/
+      - name: Terms of Service
+        url: https://www.gitpod.io/terms/
 workspaceScheduler: workspace-scheduler
 serverProxyApiKey: "fF7+aCPvF9Pa0AEjmoZ+yWVh6PqBjM5VEA0wyQs3FH4="
 previewFeatureFlags: ["registry_facade", "user_namespace"]
