@@ -153,6 +153,10 @@ func serveContainerdMetrics(socket, namespace string) error {
 
 		switch evt := evt.(type) {
 		case *apievents.SnapshotPrepare:
+			if _, exists := prepByKey[evt.Key]; exists {
+				log.WithField("obj", *prepByKey[evt.Key]).Debug("ignoring duplicate prep")
+				continue
+			}
 			prepByKey[evt.Key] = &Prep{
 				T:      time.Now(),
 				Parent: evt.Parent,
@@ -169,6 +173,10 @@ func serveContainerdMetrics(socket, namespace string) error {
 				Name:   evt.Name,
 				Parent: p.Parent,
 				Key:    evt.Key,
+			}
+			if _, exists := commitByKey[evt.Key]; exists {
+				log.WithField("obj", *c).Debug("ignoring duplicate commit")
+				continue
 			}
 			commitByKey[evt.Key] = c
 			commitByName[evt.Name] = c
