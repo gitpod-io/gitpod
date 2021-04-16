@@ -123,6 +123,8 @@ branding:
         url: https://www.gitpod.io/docs/
       - name: Blog
         url: https://www.gitpod.io/blog/
+      - name: Status
+        url: https://status.gitpod.io/
     social:
       - type: GitHub
         url: https://github.com/gitpod-io/gitpod
