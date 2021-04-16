@@ -1,18 +1,18 @@
 #!/bin/bash
 
 # Set the AWS auth environment variables
-AWS_DEFAULT_REGION=${region}
-AWS_SECRET_ACCESS_KEY=${secret_key}
-AWS_ACCESS_KEY_ID=${access_key}
+export AWS_DEFAULT_REGION=${region}
+export AWS_SECRET_ACCESS_KEY=${secret_key}
+export AWS_ACCESS_KEY_ID=${access_key}
 
 # Generate the auth token from the aws account 
-TOKEN=`aws ecr get-authorization-token --output text --query 'authorizationData[].authorizationToken'`
+export TOKEN=`aws ecr get-authorization-token --output text --query 'authorizationData[].authorizationToken'`
 
 # Delete the original secret
 kubectl delete secret --ignore-not-found ${secret_name}
 
 # Generate the new docker registry auth config
-CONFIGJSON='{"auths": {"%s": {"auth": "%s"}}}\n'
+CONFIGJSON='{"auths": {"%s": {"auth": "%s"}}}'
 UPDATEDCONFIG=$(printf "$CONFIGJSON" "${host}" "$TOKEN")
 echo $UPDATEDCONFIG > /tmp/config.json
 

@@ -66,6 +66,36 @@ EOF
   role   = var.worker_iam_role_name
 }
 
+resource "aws_iam_user_policy" "gitpod_registry" {
+  name = "${var.project.name}-user-registry"
+
+  policy = <<-EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ecr:*",
+                "cloudtrail:LookupEvents"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:BatchGetImage",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:GetAuthorizationToken"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+EOF
+  user   = aws_iam_user.gitpod_registry.name
+}
 
 data "aws_ecr_authorization_token" "gitpod_registry" {
   registry_id = aws_ecr_repository.gitpod_registry.registry_id
@@ -107,7 +137,7 @@ data "template_file" "gitpod_registry_values" {
   }
 }
 
-esource "aws_iam_user" "gitpod_registry" {
+resource "aws_iam_user" "gitpod_registry" {
   name = "${var.project.name}-registry"
 
   tags = {
@@ -117,6 +147,33 @@ esource "aws_iam_user" "gitpod_registry" {
 
 resource "aws_iam_access_key" "gitpod_registry" {
   user = aws_iam_user.gitpod_registry.name
+}
+
+resource "kubernetes_cluster_role" "regenerate-ecr-role" {
+  metadata {
+    name = "regenerate-ecr-role"
+  }
+  rule {
+    api_groups = [""]
+    resources = ["secrets", "serviceaccounts"]
+    verbs = ["get", "list", "watch", "create", "update", "patch", "delete"]
+  }
+}
+
+resource "kubernetes_cluster_role_binding" "regenerate-ecr-role-binding" {
+  metadata {
+    name = "regenerate-ecr-role-binding"
+  }
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "ClusterRole"
+    name      = "regenerate-ecr-role"
+  }
+  subject {
+    kind      = "ServiceAccount"
+    name      = "default"
+    namespace = "default"
+  }
 }
 
 data "template_file" "ecr_regeneration_script" {
@@ -159,4 +216,3 @@ resource "kubernetes_cron_job" "ecr_regeneration_cron" {
     }
   }
 }
-
