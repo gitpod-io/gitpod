@@ -340,3 +340,16 @@ storage:
 {{ toYaml .remoteStorage | indent 2 }}
 {{- end -}}
 {{- end -}}
+
+{{/* custom ca bundle volume and volumeMount */}}
+{{- define "gitpod.caBundleVolume" -}}
+- name: ca-bundle-certs
+  secret:
+    secretName: {{ .Values.caBundleSecretName }}
+{{- end -}}
+
+{{- define "gitpod.caBundleVolumeMount" -}}
+- name: ca-bundle-certs
+  mountPath: /etc/ssl/certs/ca-certificates.crt
+  subPath: ca-certificates.crt
+{{- end -}}
