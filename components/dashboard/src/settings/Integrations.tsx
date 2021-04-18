@@ -227,7 +227,7 @@ function GitProviders() {
     return (<div>
 
         {selectAccountModal && (
-            <SelectAccountModal {...selectAccountModal} close={() => setSelectAccountModal(undefined)} /> 
+            <SelectAccountModal {...selectAccountModal} close={() => setSelectAccountModal(undefined)} />
         )}
 
         {diconnectModal && (

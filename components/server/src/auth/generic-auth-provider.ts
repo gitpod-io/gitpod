@@ -298,7 +298,7 @@ export class GenericAuthProvider implements AuthProvider {
         const callbackParams = new URL(`https://anyhost${request.originalUrl}`).searchParams;
         const error = callbackParams.get("error");
         const description: string | null = callbackParams.get("error_description");
-        
+
         if (error) { // e.g. "access_denied"
             // Clean up the session
             await AuthFlow.clear(request.session);
