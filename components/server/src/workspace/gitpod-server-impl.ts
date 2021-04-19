@@ -396,17 +396,21 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             const user = this.checkAndBlockUser();
             await this.checkTermsAcceptance();
 
-            log.info({ userId: user.id, workspaceId }, 'startWorkspace');
+            const logCtx = { userId: user.id, workspaceId };
+            log.info(logCtx, 'startWorkspace');
 
             const mayStartPromise = this.mayStartWorkspace({ span }, user, this.workspaceDb.trace({ span }).findRegularRunningInstances(user.id));
             const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace({ span }));
             await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
 
             const runningInstance = await this.workspaceDb.trace({ span }).findRunningInstance(workspace.id);
-            if (runningInstance) {
-                // We already have a running workspace.
-                // Note: ownership doesn't matter here as this is basically a noop. It's not StartWorkspace's concern
-                //       to guard workspace access - just to prevent non-owners from starting workspaces.
+            if (runningInstance && !options.forceDefaultImage) {
+                // We already have a running workspace, and we're not forcing the default image.
+                // Notes:
+                //   * ownership doesn't matter here as this is basically a noop. It's not StartWorkspace's concern
+                //     to guard workspace access - just to prevent non-owners from starting workspaces.
+                //   * forceDefaultImage now always interrupts a previously-running instance, even if the previous
+                //     instance already had options.forceDefaultImage === true.
 
                 await this.guardAccess({ kind: "workspaceInstance", subject: runningInstance, workspaceOwnerID: workspace.ownerId, workspaceIsShared: workspace.shareable || false }, "get");
                 return {
@@ -432,6 +436,14 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             const envVars = this.userDB.getEnvVars(user.id);
 
             await mayStartPromise;
+
+            if (runningInstance) {
+                // We already had a running workspace. This may happen if we're forcing the default image.
+                // In that case, we first stop the previous workspace, and wait for it to be completely gone.
+                await this.internalStopWorkspaceAndWaitForInstance({ span }, workspaceId, workspace.ownerId).catch(err => {
+                    log.error(logCtx, "internalStopWorkspaceAndWaitForInstance error: ", err);
+                });
+            }
 
             // at this point we're about to actually start a new workspace
             return await this.workspaceStarter.startWorkspace({ span }, workspace, user, await envVars, {
@@ -467,6 +479,51 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         } finally {
             span.finish();
         }
+    }
+
+    protected async internalStopWorkspaceAndWaitForInstance(ctx: TraceContext, workspaceId: string, ownerId?: string, policy?: StopWorkspacePolicy): Promise<void> {
+        const runningInstance = await this.workspaceDb.trace(ctx).findRunningInstance(workspaceId);
+        let instanceStoppedPromise = Promise.resolve();
+        if (runningInstance) {
+            // If a previous workspace instance is still running, we'll wait for it to be completely gone.
+            let toDispose: Disposable | undefined;
+            let timeout: NodeJS.Timeout | undefined;
+            instanceStoppedPromise = new Promise<void>((resolve, reject) => {
+                toDispose = this.messageBusIntegration.listenForWorkspaceInstanceUpdates(
+                    ownerId,
+                    (ctx: TraceContext, instance: WorkspaceInstance) => {
+                        if (instance.workspaceId !== runningInstance.workspaceId || instance.id !== runningInstance.id) {
+                            return;
+                        }
+                        if (instance.status.phase === 'stopped') {
+                            resolve();
+                        }
+                    }
+                );
+                // Time out if the instance still isn't stopped after 5 minutes
+                timeout = setTimeout(() => {
+                    reject(new Error('Timed out while waiting for previous workspace instance to stop'));
+                }, 1000 * 60 * 5);
+            }).finally(() => {
+                if (toDispose) {
+                    toDispose.dispose();
+                }
+                if (timeout) {
+                    clearTimeout(timeout);
+                }
+            });
+            if (!runningInstance.region) {
+                // If there is an instance, but it doesn't have a region, it means that the instance wasn't actually
+                // started yet, i.e. it didn't go through `actuallyStartWorkspace` yet.
+                // Instead of calling ws-manager, we just wait for some time -- we would not know which workspace
+                // manager to talk to after all. There's a chance for a race condition here (some other `server`
+                // instance could be starting the instance currently), so in lieu of proper cross-server-instance-
+                // locking we wait for 10 seconds to prevent that race.
+                await new Promise(resolve => setTimeout(resolve, 10 * 1000));
+            }
+        }
+        await this.internalStopWorkspace(ctx, workspaceId, ownerId, policy);
+        await instanceStoppedPromise;
     }
 
     protected async internalStopWorkspace(ctx: TraceContext, workspaceId: string, ownerId?: string, policy?: StopWorkspacePolicy): Promise<void> {
