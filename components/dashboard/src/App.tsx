@@ -17,7 +17,9 @@ import settingsMenu from './settings/settings-menu';
 import { User } from '@gitpod/gitpod-protocol';
 import { adminMenu } from './admin/admin-menu';
 import gitpodIcon from './icons/gitpod.svg';
+import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 
+const Setup = React.lazy(() => import(/* webpackPrefetch: true */ './Setup'));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ './workspaces/Workspaces'));
 const Account = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Account'));
 const Notifications = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Notifications'));
@@ -43,6 +45,7 @@ function App() {
 
     const [loading, setLoading] = useState<boolean>(true);
     const [isWhatsNewShown, setWhatsNewShown] = useState(false);
+    const [isSetupRequired, setSetupRequired] = useState(false);
 
     useEffect(() => {
         (async () => {
@@ -51,6 +54,11 @@ function App() {
                 setUser(usr);
             } catch (error) {
                 console.log(error);
+                if (error && "code" in error) {
+                    if (error.code === ErrorCodes.SETUP_REQUIRED) {
+                        setSetupRequired(true);
+                    }
+                }
             }
             setLoading(false);
         })();
@@ -88,10 +96,15 @@ function App() {
     }
 
     if (loading) {
-        return <Loading />
+        return (<Loading />);
+    }
+    if (isSetupRequired) {
+        return (<Suspense fallback={<Loading />}>
+            <Setup />
+        </Suspense>);
     }
     if (!user) {
-        return (<Login />)
+        return (<Login />);
     }
     if (window.location.pathname.startsWith('/blocked')) {
         return <div className="mt-48 text-center">
@@ -117,6 +130,7 @@ function App() {
         <div className="container">
             {renderMenu(user)}
             <Switch>
+                <Route path="/setup" exact component={Setup} />
                 <Route path="/workspaces" exact component={Workspaces} />
                 <Route path="/account" exact component={Account} />
                 <Route path="/integrations" exact component={Integrations} />

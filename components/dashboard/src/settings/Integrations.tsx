@@ -38,7 +38,7 @@ function GitProviders() {
 
     const [authProviders, setAuthProviders] = useState<AuthProviderInfo[]>([]);
     const [allScopes, setAllScopes] = useState<Map<string, string[]>>(new Map());
-    const [diconnectModal, setDisconnectModal] = useState<{ provider: AuthProviderInfo } | undefined>(undefined);
+    const [disconnectModal, setDisconnectModal] = useState<{ provider: AuthProviderInfo } | undefined>(undefined);
     const [editModal, setEditModal] = useState<{ provider: AuthProviderInfo, prevScopes: Set<string>, nextScopes: Set<string> } | undefined>(undefined);
     const [selectAccountModal, setSelectAccountModal] = useState<SelectAccountPayload | undefined>(undefined);
 
@@ -232,18 +232,18 @@ function GitProviders() {
             <SelectAccountModal {...selectAccountModal} close={() => setSelectAccountModal(undefined)} />
         )}
 
-        {diconnectModal && (
+        {disconnectModal && (
             <Modal visible={true} onClose={() => setDisconnectModal(undefined)}>
                 <h3 className="pb-2">Disconnect Provider</h3>
                 <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
                     <p className="pb-4 text-gray-500 text-base">Are you sure you want to disconnect the following provider?</p>
                     <div className="flex flex-col rounded-xl p-3 bg-gray-100 dark:bg-gray-800">
-                        <div className="text-gray-700 text-md font-semibold">{diconnectModal.provider.authProviderType}</div>
-                        <div className="text-gray-400 text-md">{diconnectModal.provider.host}</div>
+                        <div className="text-gray-700 text-md font-semibold">{disconnectModal.provider.authProviderType}</div>
+                        <div className="text-gray-400 text-md">{disconnectModal.provider.host}</div>
                     </div>
                 </div>
                 <div className="flex justify-end mt-6">
-                    <button className={"ml-2 danger secondary"} onClick={() => disconnect(diconnectModal.provider)}>Disconnect Provider</button>
+                    <button className={"ml-2 danger secondary"} onClick={() => disconnect(disconnectModal.provider)}>Disconnect Provider</button>
                 </div>
             </Modal>
         )}
@@ -358,10 +358,10 @@ function GitIntegrations() {
     return (<div>
 
         {modal?.mode === "new" && (
-            <GitIntegrationModal mode={modal.mode} userId={user?.id || "no-user"} onClose={() => setModal(undefined)} update={updateOwnAuthProviders} />
+            <GitIntegrationModal mode={modal.mode} userId={user?.id || "no-user"} onClose={() => setModal(undefined)} onUpdate={updateOwnAuthProviders} />
         )}
         {modal?.mode === "edit" && (
-            <GitIntegrationModal mode={modal.mode} userId={user?.id || "no-user"} provider={modal.provider} onClose={() => setModal(undefined)} update={updateOwnAuthProviders} />
+            <GitIntegrationModal mode={modal.mode} userId={user?.id || "no-user"} provider={modal.provider} onClose={() => setModal(undefined)} onUpdate={updateOwnAuthProviders} />
         )}
         {modal?.mode === "delete" && (
             <Modal visible={true} onClose={() => setModal(undefined)}>
@@ -397,7 +397,7 @@ function GitIntegrations() {
             <div className="w-full flex h-80 mt-2 rounded-xl bg-gray-100 dark:bg-gray-900">
                 <div className="m-auto text-center">
                     <h3 className="self-center text-gray-500 dark:text-gray-400 mb-4">No Git Integrations</h3>
-                    <div className="text-gray-500 mb-6">In addition to the default Git Providers you can authorize<br /> with a self hosted instace of a provider.</div>
+                    <div className="text-gray-500 mb-6">In addition to the default Git Providers you can authorize<br /> with a self-hosted instace of a provider.</div>
                     <button className="self-center" onClick={() => setModal({ mode: "new" })}>New Integration</button>
                 </div>
             </div>
@@ -430,21 +430,28 @@ function GitIntegrations() {
     </div>);
 }
 
-function GitIntegrationModal(props: ({
+export function GitIntegrationModal(props: ({
     mode: "new",
 } | {
     mode: "edit",
     provider: AuthProviderEntry
 }) & {
+    login?: boolean,
+    headerText?: string,
     userId: string,
-    onClose?: () => void
-    update?: () => void
+    onClose?: () => void,
+    closeable?: boolean,
+    onUpdate?: () => void,
+    onAuthorize?: (payload?: string) => void
 }) {
 
     const callbackUrl = (host: string) => {
         const pathname = `/auth/${host}/callback`;
         return gitpodHostUrl.with({ pathname }).toString();
     }
+
+    const [mode, setMode] = useState<"new" | "edit">("new");
+    const [providerEntry, setProviderEntry] = useState<AuthProviderEntry | undefined>(undefined);
 
     const [type, setType] = useState<string>("GitLab");
     const [host, setHost] = useState<string>("gitlab.example.com");
@@ -456,7 +463,9 @@ function GitIntegrationModal(props: ({
     const [validationError, setValidationError] = useState<string | undefined>();
 
     useEffect(() => {
+        setMode(props.mode);
         if (props.mode === "edit") {
+            setProviderEntry(props.provider);
             setType(props.provider.type);
             setHost(props.provider.host);
             setClientId(props.provider.oauth.clientId);
@@ -466,21 +475,22 @@ function GitIntegrationModal(props: ({
     }, []);
 
     useEffect(() => {
+        setErrorMessage(undefined);
         validate();
     }, [clientId, clientSecret])
 
-    const close = () => props.onClose && props.onClose();
-    const updateList = () => props.update && props.update();
+    const onClose = () => props.onClose && props.onClose();
+    const onUpdate = () => props.onUpdate && props.onUpdate();
 
     const activate = async () => {
-        let entry = (props.mode === "new") ? {
+        let entry = (mode === "new") ? {
             host,
             type,
             clientId,
             clientSecret,
             ownerId: props.userId
         } as AuthProviderEntry.NewEntry : {
-            id: props.provider.id,
+            id: providerEntry?.id,
             ownerId: props.userId,
             clientId,
             clientSecret: clientSecret === "redacted" ? undefined : clientSecret
@@ -495,13 +505,45 @@ function GitIntegrationModal(props: ({
             // wait at least 2 seconds for the changes to be propagated before we try to use this provider.
             await new Promise(resolve => setTimeout(resolve, 2000));
 
-            updateList();
+            onUpdate();
+
+            const updateProviderEntry = async () => {
+                const provider = (await getGitpodService().server.getOwnAuthProviders()).find(ap => ap.id === newProvider.id);
+                if (provider) {
+                    setProviderEntry(provider);
+                }
+            }
 
             // just open the authorization window and do *not* await
-            openAuthorizeWindow({ host: newProvider.host, onSuccess: updateList });
+            openAuthorizeWindow({
+                login: props.login,
+                host: newProvider.host,
+                onSuccess: (payload) => {
+                    updateProviderEntry();
+                    onUpdate();
+                    props.onAuthorize && props.onAuthorize(payload);
+                },
+                onError: (payload) => {
+                    updateProviderEntry();
+                    let errorMessage: string;
+                    if (typeof payload === "string") {
+                        errorMessage = payload;
+                    } else {
+                        errorMessage = payload.description ? payload.description : `Error: ${payload.error}`;
+                    }
+                    setErrorMessage(errorMessage);
+                }
+            });
 
-            // close the modal, as the creation phase is done anyways.
-            close();
+            if (props.closeable) {
+                // close the modal, as the creation phase is done anyways.
+                onClose();
+            } else {
+                // switch mode to stay and edit this integration.
+                // this modal is expected to be closed programmatically.
+                setMode("edit");
+                setProviderEntry(newProvider);
+            }
         } catch (error) {
             console.log(error);
             setErrorMessage("message" in error ? error.message : "Failed to update Git provider");
@@ -510,7 +552,7 @@ function GitIntegrationModal(props: ({
     }
 
     const updateHostValue = (host: string) => {
-        if (props.mode === "new") {
+        if (mode === "new") {
             setHost(host);
             setRedirectURL(callbackUrl(host));
             setErrorMessage(undefined);
@@ -582,60 +624,58 @@ function GitIntegrationModal(props: ({
         }
     };
 
-    return (<Modal visible={!!props} onClose={close}>
-        <h3 className="pb-2">{props.mode === "new" ? "New Git Integration" : "Git Integration"}</h3>
+    return (<Modal visible={!!props} onClose={onClose} closeable={props.closeable}>
+        <h3 className="pb-2">{mode === "new" ? "New Git Integration" : "Git Integration"}</h3>
         <div className="space-y-4 border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
-            {props.mode === "edit" && props.provider.status === "pending" && (
+            {mode === "edit" && providerEntry?.status !== "verified" && (
                 <AlertBox>You need to activate this integration.</AlertBox>
             )}
             <div className="flex flex-col">
-                <span className="text-gray-500">Configure a git integration with a GitLab or GitHub self-hosted instance.</span>
+                <span className="text-gray-500">{props.headerText || "Configure a git integration with a GitLab or GitHub self-hosted instance."}</span>
             </div>
-            {props.mode === "new" && (
-                <div className="flex flex-col space-y-2">
-                    <label htmlFor="type" className="font-medium">Provider Type</label>
-                    <select name="type" value={type} disabled={props.mode !== "new"} className="w-full"
-                        onChange={(e) => setType(e.target.value)}>
-                        <option value="GitHub">GitHub</option>
-                        <option value="GitLab">GitLab</option>
-                    </select>
-                </div>
-            )}
-            <div className="flex flex-col space-y-2">
-                <label htmlFor="hostName" className="font-medium">Provider Host Name</label>
-                <input name="hostName" disabled={props.mode === "edit"} type="text" value={host} className="w-full"
-                    onChange={(e) => updateHostValue(e.target.value)} />
-            </div>
-            <div className="flex flex-col space-y-2">
-                <label htmlFor="redirectURL" className="font-medium">Redirect URL</label>
-                <div className="w-full relative">
-                    <input name="redirectURL" disabled={true} readOnly={true} type="text" value={redirectURL} className="w-full truncate" />
-                    <div className="cursor-pointer" onClick={() => copyRedirectUrl()}>
-                        <img src={copy} title="Copy the Redirect URL to clippboard" className="absolute top-1/3 right-3" />
+
+            <div className="overscroll-contain max-h-96 overflow-y-auto pr-2">
+                {mode === "new" && (
+                    <div className="flex flex-col space-y-2">
+                        <label htmlFor="type" className="font-medium">Provider Type</label>
+                        <select name="type" value={type} disabled={mode !== "new"} className="w-full"
+                            onChange={(e) => setType(e.target.value)}>
+                            <option value="GitHub">GitHub</option>
+                            <option value="GitLab">GitLab</option>
+                        </select>
                     </div>
+                )}
+                <div className="flex flex-col space-y-2">
+                    <label htmlFor="hostName" className="font-medium">Provider Host Name</label>
+                    <input name="hostName" disabled={mode === "edit"} type="text" value={host} className="w-full"
+                        onChange={(e) => updateHostValue(e.target.value)} />
                 </div>
-                <span className="text-gray-500 text-sm">{getRedirectUrlDescription(type, host)}</span>
-            </div>
-            <div className="flex flex-col space-y-2">
-                <label htmlFor="clientId" className="font-medium">Client ID</label>
-                <input name="clientId" type="text" value={clientId} className="w-full"
-                    onChange={(e) => updateClientId(e.target.value)} />
-            </div>
-            <div className="flex flex-col space-y-2">
-                <label htmlFor="clientSecret" className="font-medium">Client Secret</label>
-                <input name="clientSecret" type="password" value={clientSecret} className="w-full"
-                    onChange={(e) => updateClientSecret(e.target.value)} />
-            </div>
-            {errorMessage && (
-                <div className="flex rounded-md bg-red-600 p-3">
-                    <img className="w-4 h-4 mx-2 my-auto" src={exclamation} />
-                    <span className="text-white">{errorMessage}</span>
+                <div className="flex flex-col space-y-2">
+                    <label htmlFor="redirectURL" className="font-medium">Redirect URL</label>
+                    <div className="w-full relative">
+                        <input name="redirectURL" disabled={true} readOnly={true} type="text" value={redirectURL} className="w-full pr-8" />
+                        <div className="cursor-pointer" onClick={() => copyRedirectUrl()}>
+                            <img src={copy} title="Copy the Redirect URL to clippboard" className="absolute top-1/3 right-3" />
+                        </div>
+                    </div>
+                    <span className="text-gray-500 text-sm">{getRedirectUrlDescription(type, host)}</span>
                 </div>
-            )}
-            {!!validationError && (
+                <div className="flex flex-col space-y-2">
+                    <label htmlFor="clientId" className="font-medium">Client ID</label>
+                    <input name="clientId" type="text" value={clientId} className="w-full"
+                        onChange={(e) => updateClientId(e.target.value)} />
+                </div>
+                <div className="flex flex-col space-y-2">
+                    <label htmlFor="clientSecret" className="font-medium">Client Secret</label>
+                    <input name="clientSecret" type="password" value={clientSecret} className="w-full"
+                        onChange={(e) => updateClientSecret(e.target.value)} />
+                </div>
+            </div>
+
+            {(errorMessage || validationError) && (
                 <div className="flex rounded-md bg-red-600 p-3">
                     <img className="w-4 h-4 mx-2 my-auto filter-brightness-10" src={exclamation} />
-                    <span className="text-white">{validationError}</span>
+                    <span className="text-white">{errorMessage || validationError}</span>
                 </div>
             )}
         </div>
