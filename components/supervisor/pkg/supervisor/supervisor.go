@@ -33,6 +33,7 @@ import (
 	"github.com/gitpod-io/gitpod/content-service/pkg/initializer"
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/gitpod/supervisor/api"
+	"github.com/gitpod-io/gitpod/supervisor/pkg/activation"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/dropwriter"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/ports"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
@@ -188,6 +189,7 @@ func Run(options ...RunOption) {
 	go startContentInit(ctx, cfg, &wg, cstate)
 	go startAPIEndpoint(ctx, cfg, &wg, apiServices, apiEndpointOpts...)
 	go taskManager.Run(ctx, &wg)
+	go socketActivationForDocker(ctx, &wg, termMux)
 
 	if !cfg.isHeadless() {
 		wg.Add(1)
@@ -765,6 +767,34 @@ func processesWithParent(ppid int) (map[int]int, error) {
 	}
 
 	return children, nil
+}
+
+func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *terminal.Mux) {
+	defer wg.Done()
+
+	fn := "/var/run/docker.sock"
+	l, err := net.Listen("unix", fn)
+	if err != nil {
+		log.WithError(err).Error("cannot provide Docker activation socket")
+	}
+	_ = os.Chown(fn, 33333, 33333)
+	err = activation.Listen(ctx, l, func(socketFD *os.File) error {
+		cmd := exec.Command("sudo", "docker-up")
+		cmd.Env = append(os.Environ(), "LISTEN_FDS=1")
+		cmd.ExtraFiles = []*os.File{socketFD}
+		cmd.Stderr = os.Stderr
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		_, err := term.Start(cmd, terminal.TermOptions{
+			Annotations: map[string]string{
+				"supervisor": "true",
+			},
+		})
+		return err
+	})
+	if err != nil {
+		log.WithError(err).Error("cannot provide Docker activation socket")
+	}
 }
 
 func callDaemonTeardown() {
