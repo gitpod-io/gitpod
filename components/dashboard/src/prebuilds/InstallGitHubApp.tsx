@@ -25,8 +25,14 @@ async function registerApp(installationId: string, setModal: (modal: 'done' | st
                 setModal('done');
                 result.resolve();
             },
-            onError: (error) => {
-                setModal(error);
+            onError: (payload) => {
+                let errorMessage: string;
+                if (typeof payload === "string") {
+                    errorMessage = payload;
+                } else {
+                    errorMessage = payload.description ? payload.description : `Error: ${payload.error}`;
+                }
+                setModal(errorMessage);
             }
         })
 
@@ -46,7 +52,7 @@ export default function InstallGitHubApp() {
             <div className="px-6 py-3 flex justify-between space-x-2 text-gray-400 border-t border-gray-200 dark:border-gray-800 h-96">
                 <div className="flex flex-col items-center w-96 m-auto">
                     <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Installation ID Found</h3>
-                    <div className="text-center pb-6 text-gray-500">Did you came here from the GitHub app's page?</div>
+                    <div className="text-center pb-6 text-gray-500">Did you come here from the GitHub app's page?</div>
                 </div>
             </div>
         </div>

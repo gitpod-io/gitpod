@@ -58,21 +58,17 @@ export function Login() {
                 login: true,
                 host,
                 onSuccess: () => updateUser(),
-                onError: (error) => {
-                    if (typeof error === "string") {
-                        try {
-                            const payload = JSON.parse(error);
-                            if (typeof payload === "object" && payload.error) {
-                                if (payload.error === "email_taken") {
-                                    return setErrorMessage(`Email address already exists. Log in using a different provider.`);
-                                }
-                                return setErrorMessage(payload.description ? payload.description : `Error: ${payload.error}`);
-                            }
-                        } catch (error) {
-                            console.log(error);
+                onError: (payload) => {
+                    let errorMessage: string;
+                    if (typeof payload === "string") {
+                        errorMessage = payload;
+                    } else {
+                        errorMessage = payload.description ? payload.description : `Error: ${payload.error}`;
+                        if (payload.error === "email_taken") {
+                            errorMessage = `Email address already exists. Log in using a different provider.`;
                         }
-                        setErrorMessage(error);
                     }
+                    setErrorMessage(errorMessage);
                 }
             });
         } catch (error) {
