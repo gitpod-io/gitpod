@@ -49,6 +49,8 @@ typescript_protoc() {
         -I /usr/lib/protoc/include -I$ROOT_DIR -I. -I$MODULE_DIR \
         $MODULE_DIR/*.proto
 
+    ls -1 $MODULE_DIR/typescript/src/*_pb.d.ts | xargs sed -i -e "s/[[:space:]]*$//"
+
     popd > /dev/null
 }
 
