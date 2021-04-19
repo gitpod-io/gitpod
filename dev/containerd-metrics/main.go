@@ -71,6 +71,7 @@ type Prep struct {
 	Name   string
 }
 type Commit struct {
+	PrepT  time.Time
 	Dur    time.Duration
 	Parent string
 	Name   string
@@ -84,8 +85,11 @@ type Image struct {
 }
 
 type Layer struct {
-	ID   string
-	Prep time.Duration
+	T      time.Time
+	ID     string
+	Key    string
+	Prep   time.Duration
+	Parent string
 }
 
 var (
@@ -169,6 +173,7 @@ func serveContainerdMetrics(socket, namespace string) error {
 				continue
 			}
 			c := &Commit{
+				PrepT:  p.T,
 				Dur:    time.Since(p.T),
 				Name:   evt.Name,
 				Parent: p.Parent,
@@ -243,8 +248,11 @@ func pushContainerMetrics(id, image, instanceID string, imageSpec *regapi.ImageS
 	c, ok = commitByName[initialPrep.Parent]
 	for ok {
 		img.Layer = append(img.Layer, Layer{
-			ID:   c.Name,
-			Prep: c.Dur,
+			T:      c.PrepT,
+			ID:     c.Name,
+			Key:    c.Key,
+			Prep:   c.Dur,
+			Parent: c.Parent,
 		})
 		img.TotalPrep += c.Dur
 		c, ok = commitByName[c.Parent]
