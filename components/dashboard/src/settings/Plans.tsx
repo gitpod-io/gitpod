@@ -20,7 +20,8 @@ import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import settingsMenu from "./settings-menu";
 
 type PlanWithOriginalPrice = Plan & { originalPrice?: number };
-type PendingPlan = PlanWithOriginalPrice & { pendingSince: number };
+type Pending = { pendingSince: number };
+type PendingPlan = PlanWithOriginalPrice & Pending;
 
 type TeamClaimModal = {
     errorText: string;
@@ -121,7 +122,7 @@ export default function () {
         setPendingUpgradePlan(undefined);
     }
     if (!!pendingUpgradePlan) {
-        if (paidPlan?.chargebeeId === pendingUpgradePlan.chargebeeId) {
+        if (!!accountStatement && (paidPlan?.chargebeeId === pendingUpgradePlan.chargebeeId)) {
             // The upgrade already worked
             removePendingUpgrade();
         } else if ((pendingUpgradePlan.pendingSince + 1000 * 60 * 5) < Date.now()) {
@@ -183,11 +184,38 @@ export default function () {
         }
     }
 
+    const [ pendingDowngradeCancellation, setPendingDowngradeCancellation ] = useState<Pending | undefined>(getLocalStorageObject('pendingDowngradeCancellation'));
+    const setPendingCancelDowngrade = (cancellation: Pending) => {
+        clearTimeout(pollAccountStatementTimeout!);
+        setLocalStorageObject('pendingDowngradeCancellation', cancellation);
+        setPendingDowngradeCancellation(cancellation);
+    };
+    const removePendingCancelDowngrade = () => {
+        clearTimeout(pollAccountStatementTimeout!);
+        removeLocalStorageObject('pendingDowngradeCancellation');
+        setPendingDowngradeCancellation(undefined);
+    }
+    if (!!pendingDowngradeCancellation) {
+        if (!!accountStatement && !scheduledDowngradePlanId) {
+            // The downgrade cancellation worked
+            removePendingCancelDowngrade();
+        } else if ((pendingDowngradeCancellation.pendingSince + 1000 * 60 * 5) < Date.now()) {
+            // Pending downgrade cancellations expire after 5 minutes
+            removePendingCancelDowngrade();
+        } else if (!pollAccountStatementTimeout) {
+            // Refresh account statement in 10 seconds in orer to poll for downgrade cancelled
+            pollAccountStatementTimeout = setTimeout(async () => {
+                const statement = await server.getAccountStatement({});
+                setAccountStatement(statement);
+            }, 10000);
+        }
+    }
+
     const [ confirmUpgradeToPlan, setConfirmUpgradeToPlan ] = useState<Plan>();
     const [ confirmDowngradeToPlan, setConfirmDowngradeToPlan ] = useState<Plan>();
     const [ isConfirmCancelDowngrade, setIsConfirmCancelDowngrade ] = useState<boolean>(false);
     const confirmUpgrade = (to: Plan) => {
-        if (pendingUpgradePlan || pendingDowngradePlan) {
+        if (pendingUpgradePlan || pendingDowngradePlan || pendingDowngradeCancellation) {
             // Don't upgrade if we're still waiting for a Chargebee callback
             return;
         }
@@ -229,7 +257,7 @@ export default function () {
         }
     }
     const confirmDowngrade = (to: Plan) => {
-        if (pendingUpgradePlan || pendingDowngradePlan) {
+        if (pendingUpgradePlan || pendingDowngradePlan || pendingDowngradeCancellation) {
             // Don't downgrade if we're still waiting for a Chargebee callback
             return;
         }
@@ -269,6 +297,10 @@ export default function () {
         }
     }
     const confirmCancelDowngrade = () => {
+        if (pendingUpgradePlan || pendingDowngradePlan || pendingDowngradeCancellation) {
+            // Don't cancel downgrade if we're still waiting for a Chargebee callback
+            return;
+        }
         if (!scheduledDowngradePlanId) {
             // No scheduled downgrade to be cancelled?
             return;
@@ -284,7 +316,9 @@ export default function () {
         }
         try {
             await server.subscriptionCancelDowngrade(paidSubscription.uid);
-            // TODO: Update state somehow?
+            setPendingCancelDowngrade({
+                pendingSince: Date.now(),
+            })
         } catch (error) {
             console.error('Cancel Downgrade Error', error);
         } finally {
@@ -305,7 +339,7 @@ export default function () {
     } else {
         const targetPlan = freePlan;
         let bottomLabel;
-        if (scheduledDowngradePlanId === targetPlan.chargebeeId) {
+        if (scheduledDowngradePlanId === targetPlan.chargebeeId && !pendingDowngradeCancellation) {
             bottomLabel = <p className="text-green-600">Downgrade scheduled<br/><a className="text-blue-light leading-6" href="javascript:void(0)" onClick={() => confirmCancelDowngrade()}>Cancel</a></p>;
         } else if (pendingDowngradePlan?.chargebeeId === targetPlan.chargebeeId) {
             bottomLabel = <p className="text-green-600 animate-pulse">Downgrade scheduled</p>;
@@ -328,7 +362,7 @@ export default function () {
     } else {
         const targetPlan = applyCoupons(personalPlan, availableCoupons);
         let bottomLabel;
-        if (scheduledDowngradePlanId === targetPlan.chargebeeId) {
+        if (scheduledDowngradePlanId === targetPlan.chargebeeId && !pendingDowngradeCancellation) {
             bottomLabel = <p className="text-green-600">Downgrade scheduled<br/><a className="text-blue-light leading-6" href="javascript:void(0)"  onClick={() => confirmCancelDowngrade()}>Cancel</a></p>;
         } else if (pendingDowngradePlan?.chargebeeId === targetPlan.chargebeeId) {
             bottomLabel = <p className="text-green-600">Downgrade scheduled</p>;
@@ -354,7 +388,7 @@ export default function () {
     } else {
         const targetPlan = applyCoupons(professionalPlan, availableCoupons);
         let bottomLabel;
-        if (scheduledDowngradePlanId === targetPlan.chargebeeId) {
+        if (scheduledDowngradePlanId === targetPlan.chargebeeId && !pendingDowngradeCancellation) {
             bottomLabel = <p className="text-green-600">Downgrade scheduled<br/><a className="text-blue-light leading-6" href="javascript:void(0)" onClick={() => confirmCancelDowngrade()}>Cancel</a></p>;
         } else if (pendingDowngradePlan?.chargebeeId === targetPlan.chargebeeId) {
             bottomLabel = <p className="text-green-600">Downgrade scheduled</p>;
