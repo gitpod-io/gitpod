@@ -202,7 +202,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       // Preparing means that we haven't actually started the workspace instance just yet, but rather
       // are still preparing for launch. This means we're building the Docker image for the workspace.
       case "preparing":
-        return <ImageBuildView workspaceId={this.state.workspaceInstance.workspaceId} onStartWithDefaultImage={() => this.startWorkspace(true, true)} />;
+        return <ImageBuildView workspaceId={this.state.workspaceInstance.workspaceId} onStartWithDefaultImage={e => { (e.target as HTMLButtonElement).disabled = true; this.startWorkspace(true, true); }} />;
 
       // Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
       // some space within the cluster. If for example the cluster needs to scale up to accomodate the
@@ -268,7 +268,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       case "stopped":
         phase = StartPhase.Stopped;
         if (this.state.hasImageBuildLogs) {
-          return <ImageBuildView workspaceId={this.state.workspaceInstance.workspaceId} onStartWithDefaultImage={() => this.startWorkspace(true, true)} phase={phase} error={error} />;
+          return <ImageBuildView workspaceId={this.state.workspaceInstance.workspaceId} onStartWithDefaultImage={e => { (e.target as HTMLButtonElement).disabled = true; this.startWorkspace(true, true); }} phase={phase} error={error} />;
         }
         if (!isHeadless && this.state.workspaceInstance.status.conditions.timeout) {
           title = 'Timed Out';
@@ -332,7 +332,7 @@ function PendingChangesDropdown(props: { workspaceInstance?: WorkspaceInstance }
 
 interface ImageBuildViewProps {
   workspaceId: string;
-  onStartWithDefaultImage: () => void;
+  onStartWithDefaultImage: (event: React.MouseEvent) => void;
   phase?: StartPhase;
   error?: StartWorkspaceError;
 }
