@@ -54,7 +54,7 @@ func newMetrics(reg prometheus.Registerer, upstream bool) (*metrics, error) {
 	manifestHist := prometheus.NewHistogram(prometheus.HistogramOpts{
 		Name:    "manifest_req_seconds",
 		Help:    "time of manifest requests made to the downstream registry",
-		Buckets: []float64{0.1, 0.5, 1, 2, 5, 10},
+		Buckets: []float64{0.1, 0.5, 1, 2, 5, 10, 60, 300, 600, 1800},
 	})
 	err := reg.Register(manifestHist)
 	if err != nil {
