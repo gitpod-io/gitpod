@@ -9,7 +9,7 @@ import Menu from './components/Menu';
 import { BrowserRouter } from "react-router-dom";
 import { Redirect, Route, Switch } from "react-router";
 
-import { Login } from './Login';
+import { Login, hasLoggedInBefore } from './Login';
 import { UserContext } from './user-context';
 import { getGitpodService } from './service/service';
 import { shouldSeeWhatsNew, WhatsNew } from './WhatsNew';
@@ -70,6 +70,12 @@ function App() {
             window.removeEventListener('storage', updateTheme);
         }
     }, [localStorage.theme]);
+
+    if (window.location.pathname === '/' && window.location.hash === '' && !hasLoggedInBefore()) {
+        if (window.location.host === "gitpod.io" || window.location.host === "gitpod-staging.com") {
+            window.location.href = `https://www.${window.location.host}`;
+        }
+    }
 
     if (loading) {
         return <Loading />
