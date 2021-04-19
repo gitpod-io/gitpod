@@ -28,6 +28,7 @@ import (
 	sigproxysignal "github.com/rootless-containers/rootlesskit/pkg/sigproxy/signal"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
+	"golang.org/x/sys/unix"
 )
 
 var log *logrus.Entry
@@ -83,8 +84,10 @@ func main() {
 }
 
 func runWithinNetns() (err error) {
-	// magic file descriptor 3 was passed in from the parent using ExtraFiles
-	fd := os.NewFile(uintptr(3), "")
+	listenFDs, _ := strconv.Atoi(os.Getenv("LISTEN_FDS"))
+
+	// magic file descriptor 3+listenFDs was passed in from the parent using ExtraFiles
+	fd := os.NewFile(uintptr(3+listenFDs), "")
 	defer fd.Close()
 
 	log.Debug("waiting for parent")
@@ -114,6 +117,19 @@ func runWithinNetns() (err error) {
 			"--add-runtime", "gitpod="+filepath.Join(opts.BinDir, "runc-facade"),
 			"--default-runtime", "gitpod",
 		)
+	}
+
+	if listenFDs > 0 {
+		os.Setenv("LISTEN_PID", strconv.Itoa(os.Getpid()))
+		args = append(args, "-H", "fd://")
+
+		dockerd, err := exec.LookPath("dockerd")
+		if err != nil {
+			return err
+		}
+		argv := []string{dockerd}
+		argv = append(argv, args...)
+		return unix.Exec(dockerd, argv, os.Environ())
 	}
 
 	cmd := exec.Command("dockerd", args...)
@@ -181,13 +197,22 @@ func runOutsideNetns() error {
 		Pdeathsig:    syscall.SIGKILL,
 		Unshareflags: syscall.CLONE_NEWNET,
 	}
-	cmd.ExtraFiles = []*os.File{pipeR}
+	if fds, err := strconv.Atoi(os.Getenv("LISTEN_FDS")); err == nil {
+		for i := 0; i < fds; i++ {
+			fmt.Printf("passing fd %d\n", i)
+			cmd.ExtraFiles = append(cmd.ExtraFiles, os.NewFile(uintptr(3+i), ""))
+		}
+	} else {
+		log.WithError(err).WithField("LISTEN_FDS", os.Getenv("listen_fds")).Warn("no LISTEN_FDS")
+	}
+	cmd.ExtraFiles = append(cmd.ExtraFiles, pipeR)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Env = append(os.Environ(),
 		"DOCKERUP_SLIRP4NETNS_SOCKET="+slirpAPI.Name(),
 	)
+
 	err = cmd.Start()
 	if err != nil {
 		return err
