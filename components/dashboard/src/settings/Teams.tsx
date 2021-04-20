@@ -9,6 +9,7 @@ import { countries } from 'countries-list';
 import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getGitpodService } from "../service/service";
+import AlertBox from "../components/AlertBox";
 import Modal from "../components/Modal";
 import { AssigneeIdentifier, TeamSubscription, TeamSubscriptionSlotResolved } from "@gitpod/gitpod-protocol/lib/team-subscription-protocol";
 import { Currency, Plan, Plans } from "@gitpod/gitpod-protocol/lib/plans";
@@ -622,10 +623,7 @@ function AddMembersModal(props: {
                 </select>
             </div>
 
-            <div className="flex rounded-md bg-gitpod-kumquat-light p-3">
-                <img className="w-4 h-4 mx-2 my-auto" src={exclamation} />
-                <span className="text-red-600 dark:text-red-400">Total: {expectedPrice} per month</span>
-            </div>
+            <AlertBox>Total: {expectedPrice} per month</AlertBox>
 
         </div>
         <div className="flex justify-end mt-6">
@@ -700,10 +698,7 @@ function NewTeamModal(props: {
                 </select>
             </div>
 
-            <div className="flex rounded-md bg-gitpod-kumquat-light p-3 mt-2">
-                <img className="w-4 h-4 mx-2 my-auto" src={exclamation} />
-                <span className="text-red-600 dark:text-red-400">Total: {expectedPrice} per month</span>
-            </div>
+            <AlertBox className="mt-2">Total: {expectedPrice} per month</AlertBox>
 
         </div>
         <div className="flex justify-end mt-6">

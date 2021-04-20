@@ -12,6 +12,7 @@ import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import copy from '../images/copy.svg';
 import exclamation from '../images/exclamation.svg';
+import AlertBox from "../components/AlertBox";
 import Modal from "../components/Modal";
 import { openAuthorizeWindow } from "../provider-utils";
 import CheckBox from '../components/CheckBox';
@@ -584,10 +585,7 @@ function GitIntegrationModal(props: ({
         <h3 className="pb-2">{props.mode === "new" ? "New Git Integration" : "Git Integration"}</h3>
         <div className="space-y-4 border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
             {props.mode === "edit" && props.provider.status === "pending" && (
-                <div className="flex rounded-md bg-gitpod-kumquat-light p-3">
-                    <img className="w-4 h-4 mx-2 my-auto" src={exclamation} />
-                    <span className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300">You need to activate this integration.</span>
-                </div>
+                <AlertBox>You need to activate this integration.</AlertBox>
             )}
             <div className="flex flex-col">
                 <span className="text-gray-500">Configure a git integration with a GitLab or GitHub self-hosted instance.</span>
