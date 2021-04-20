@@ -386,7 +386,7 @@ export default function () {
 
     if (currentPlan.chargebeeId === professionalPlan.chargebeeId) {
         const bottomLabel = ('pendingSince' in currentPlan) ? <p className="text-green-600 animate-pulse">Upgrade in progress</p> : undefined;
-        planCards.push(<PlanCard isDisabled={!!assignedTs || pendingChargebeeCallback} plan={applyCoupons(professionalPlan, appliedCoupons)} isCurrent={true} bottomLabel={bottomLabel}>{professionalFeatures}</PlanCard>);
+        planCards.push(<PlanCard isDisabled={!!assignedTs || pendingChargebeeCallback} plan={applyCoupons(professionalPlan, appliedCoupons)} isCurrent={true} bottomLabel={bottomLabel} isTsAssigned={!!assignedProfessionalTs}>{professionalFeatures}</PlanCard>);
     } else {
         const targetPlan = applyCoupons(professionalPlan, availableCoupons);
         let bottomLabel;
