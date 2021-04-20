@@ -37,6 +37,7 @@ spec:
     spec:
 {{ include "gitpod.pod.affinity" $this | indent 6 }}
       serviceAccountName: db
+      enableServiceLinks: false
       containers:
       - name: cloud-sql-proxy
         securityContext:

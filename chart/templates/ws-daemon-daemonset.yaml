@@ -105,6 +105,7 @@ spec:
 {{- if $comp.volumes }}
 {{ toYaml $comp.volumes | indent 6 }}
 {{- end }}
+      enableServiceLinks: false
 {{- if (or $comp.userNamespaces.shiftfsModuleLoader.enabled $comp.userNamespaces.seccompProfileInstaller.enabled) }}
       initContainers:
 {{- end }}

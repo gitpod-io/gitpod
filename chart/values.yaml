@@ -312,6 +312,7 @@ components:
     template:
       default:
         spec:
+            enableServiceLinks: false
             dnsConfig:
             nameservers:
             - 1.1.1.1

@@ -41,6 +41,7 @@ spec:
     spec:
 {{ include "gitpod.pod.affinity" $this | indent 6 }}
       serviceAccountName: ws-manager-bridge
+      enableServiceLinks: false
       initContainers:
 {{ include "gitpod.databaseWaiter.container" $this | indent 6 }}
 {{ include "gitpod.msgbusWaiter.container" $this | indent 6 }}

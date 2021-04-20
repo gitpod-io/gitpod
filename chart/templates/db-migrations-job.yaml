@@ -38,6 +38,7 @@ spec:
 {{- range $key, $value := .Values.defaults.imagePullSecrets }}
       - name: {{ $value.name }}
 {{- end }}
+      enableServiceLinks: false
       containers:
       - name: db-migrations
         image: "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" .Values "comp" $.Values.components.dbMigrations) }}"

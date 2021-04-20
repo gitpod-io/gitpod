@@ -83,6 +83,7 @@ spec:
     spec:
 {{ include "gitpod.pod.affinity" $this | indent 6 }}
       serviceAccountName: server
+      enableServiceLinks: false
       initContainers:
 {{ include "gitpod.msgbusWaiter.container" $this | indent 6 }}
 {{ include "gitpod.databaseWaiter.container" $this | indent 6 }}

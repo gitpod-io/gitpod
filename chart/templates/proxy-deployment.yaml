@@ -74,6 +74,7 @@ spec:
       serviceAccount: proxy
       securityContext:
         runAsNonRoot: false
+      enableServiceLinks: false
       initContainers:
         - name: "sysctl"
           image: "alpine:3.13"
