@@ -10,10 +10,10 @@ import { AccountStatement, Subscription, UserPaidSubscription, AssignedTeamSubsc
 import { PlanCoupon, GithubUpgradeURL } from "@gitpod/gitpod-protocol/lib/payment-protocol";
 import { Plans, Plan, Currency, PlanType } from "@gitpod/gitpod-protocol/lib/plans";
 import { ChargebeeClient } from "../chargebee/chargebee-client";
+import AlertBox from "../components/AlertBox";
+import InfoBox from "../components/InfoBox";
 import Modal from "../components/Modal";
 import SelectableCard from "../components/SelectableCard";
-import info from '../images/info.svg';
-import exclamation from '../images/exclamation.svg';
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
@@ -448,22 +448,19 @@ export default function () {
                 </p>
             </div>
             <div className="mt-4 flex justify-center space-x-3 2xl:space-x-7">{planCards}</div>
-            <div className="flex rounded-md w-2/3 bg-gray-200 dark:bg-gray-800 p-4 mt-14 mx-auto">
-                <img className="w-4 h-4 m-1 ml-2 mr-4" src={info} />
-                <span>If you are interested in purchasing a plan for a team, purchase a Team plan with one centralized billing. <a className="underline" href="https://www.gitpod.io/docs/teams/" target="_blank">Learn more</a></span>
-            </div>
+            <InfoBox className="w-2/3 mt-14 mx-auto">
+                If you are interested in purchasing a plan for a team, purchase a Team plan with one centralized billing. <a className="underline" href="https://www.gitpod.io/docs/teams/">Learn more</a>
+            </InfoBox>
             {!!confirmUpgradeToPlan && <Modal visible={true} onClose={() => setConfirmUpgradeToPlan(undefined)}>
                 <h3>Upgrade to {confirmUpgradeToPlan.name}</h3>
                 <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
-                    <p className="mt-1 mb-4 text-base">You are about to upgrade to {confirmUpgradeToPlan.name}.</p>
-                    {!Plans.isFreePlan(currentPlan.chargebeeId) && <div className="flex rounded-md bg-gray-200 dark:bg-gray-800 p-4 mb-4">
-                        <img className="w-4 h-4 m-1 ml-2 mr-4" src={info} />
-                        <span>For this billing cycle you will be charged only the total difference ({(confirmUpgradeToPlan.currency === 'EUR' ? '€' : '$') + (confirmUpgradeToPlan.pricePerMonth - applyCoupons(currentPlan, appliedCoupons).pricePerMonth)}). The new total will be effective from the next billing cycle.</span>
-                    </div>}
-                    <div className="flex rounded-md bg-gitpod-kumquat-light p-4 mb-4">
-                        <img className="w-4 h-4 m-1 ml-2 mr-4" src={exclamation} />
-                        <span className="text-red-700">Total: {(confirmUpgradeToPlan.currency === 'EUR' ? '€' : '$') + confirmUpgradeToPlan.pricePerMonth} per month</span>
-                    </div>
+                    <p className="mt-1 mb-4 text-gray-500 text-base">You are about to upgrade to {confirmUpgradeToPlan.name}.</p>
+                    {!Plans.isFreePlan(currentPlan.chargebeeId) && <InfoBox className="mb-4">
+                        For this billing cycle you will be charged only the total difference ({(confirmUpgradeToPlan.currency === 'EUR' ? '€' : '$') + (confirmUpgradeToPlan.pricePerMonth - applyCoupons(currentPlan, appliedCoupons).pricePerMonth)}). The new total will be effective from the next billing cycle.
+                    </InfoBox>}
+                    <AlertBox className="mb-4">
+                        Total: {(confirmUpgradeToPlan.currency === 'EUR' ? '€' : '$') + confirmUpgradeToPlan.pricePerMonth} per month
+                    </AlertBox>
                 </div>
                 <div className="flex justify-end mt-6">
                     <button onClick={doUpgrade}>Upgrade Plan</button>
@@ -473,12 +470,11 @@ export default function () {
                 <h3>Downgrade to {confirmDowngradeToPlan.name}</h3>
                 <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
                     <p className="mt-1 mb-4 text-base">You are about to downgrade to {confirmDowngradeToPlan.name}.</p>
-                    <div className="flex rounded-md bg-gray-200 dark:bg-gray-800 p-4 mb-4">
-                        <img className="w-4 h-4 m-1 ml-2 mr-4" src={info} />
+                    <InfoBox className="mb-4">
                         {!Plans.isFreePlan(confirmDowngradeToPlan.chargebeeId)
                             ? <span>Your account will downgrade to {confirmDowngradeToPlan.name} on the next billing cycle.</span>
                             : <span>Your account will downgrade to {confirmDowngradeToPlan.name}. The remaining hours in your current plan will be available to use until the next billing cycle.</span>}
-                    </div>
+                    </InfoBox>
                 </div>
                 <div className="flex justify-end mt-6">
                     <button className="danger" onClick={doDowngrade}>Downgrade Plan</button>
@@ -486,12 +482,9 @@ export default function () {
             </Modal>}
             {isConfirmCancelDowngrade && <Modal visible={true} onClose={() => setIsConfirmCancelDowngrade(false)}>
                 <h3>Cancel downgrade and stay with {currentPlan.name}</h3>
-                <div className="border-t border-b border-gray-200 mt-4 -mx-6 px-6 py-2">
+                <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
                     <p className="mt-1 mb-4 text-base">You are about to cancel the scheduled downgrade and stay with {currentPlan.name}.</p>
-                    <div className="flex rounded-md bg-gray-200 p-4 mb-4">
-                        <img className="w-4 h-4 m-1 ml-2 mr-4" src={info} />
-                        <span>You can continue using it right away.</span>
-                    </div>
+                    <InfoBox className="mb-4">You can continue using it right away.</InfoBox>
                 </div>
                 <div className="flex justify-end mt-6">
                     <button className="bg-red-600 border-red-800" onClick={doCancelDowngrade}>Cancel Downgrade</button>
