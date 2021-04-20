@@ -124,6 +124,9 @@ func (mr *MockWorkspaceContentServiceClientMockRecorder) WaitForInit(arg0, arg1 
 type MockWorkspaceContentServiceServer struct {
 	ctrl     *gomock.Controller
 	recorder *MockWorkspaceContentServiceServerMockRecorder
+
+	api.UnimplementedInWorkspaceServiceServer
+	api.UnimplementedWorkspaceContentServiceServer
 }
 
 // MockWorkspaceContentServiceServerMockRecorder is the mock recorder for MockWorkspaceContentServiceServer.
