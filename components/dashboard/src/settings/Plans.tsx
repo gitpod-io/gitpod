@@ -90,7 +90,7 @@ export default function () {
     const assignedTs = assignedProfessionalTs || assignedUnleashedTs || assignedStudentUnleashedTs;
 
     const claimedTeamSubscriptionId = new URL(window.location.href).searchParams.get('teamid');
-    if (!!claimedTeamSubscriptionId && !assignedTeamSubscriptions.some(s => !!s.teamSubscriptionSlotId)) {
+    if (!!accountStatement && !!claimedTeamSubscriptionId && !assignedTeamSubscriptions.some(s => !!s.teamSubscriptionSlotId)) {
         // Remove all query parameters from the current URL, without actually navigating anywhere
         window.history.replaceState({}, '', window.location.pathname);
         getGitpodService().server.tsGetUnassignedSlot(claimedTeamSubscriptionId).then(freeSlot => {
@@ -129,11 +129,11 @@ export default function () {
             // Pending upgrades expire after 5 minutes
             removePendingUpgrade();
         } else if (!pollAccountStatementTimeout) {
-            // Refresh account statement in 10 seconds in order to poll for upgrade confirmed
+            // Refresh account statement in 5 seconds in order to poll for upgrade confirmed
             pollAccountStatementTimeout = setTimeout(async () => {
                 const statement = await server.getAccountStatement({});
                 setAccountStatement(statement);
-            }, 10000);
+            }, 5000);
         }
     }
 
@@ -176,11 +176,11 @@ export default function () {
             // Pending downgrades expire after 5 minutes
             removePendingDowngrade();
         } else if (!pollAccountStatementTimeout) {
-            // Refresh account statement in 10 seconds in orer to poll for downgrade confirmed/scheduled
+            // Refresh account statement in 5 seconds in orer to poll for downgrade confirmed/scheduled
             pollAccountStatementTimeout = setTimeout(async () => {
                 const statement = await server.getAccountStatement({});
                 setAccountStatement(statement);
-            }, 10000);
+            }, 5000);
         }
     }
 
@@ -203,19 +203,21 @@ export default function () {
             // Pending downgrade cancellations expire after 5 minutes
             removePendingCancelDowngrade();
         } else if (!pollAccountStatementTimeout) {
-            // Refresh account statement in 10 seconds in orer to poll for downgrade cancelled
+            // Refresh account statement in 5 seconds in orer to poll for downgrade cancelled
             pollAccountStatementTimeout = setTimeout(async () => {
                 const statement = await server.getAccountStatement({});
                 setAccountStatement(statement);
-            }, 10000);
+            }, 5000);
         }
     }
+
+    const pendingChargebeeCallback = !!pendingUpgradePlan || !!pendingDowngradePlan || !!pendingDowngradeCancellation;
 
     const [ confirmUpgradeToPlan, setConfirmUpgradeToPlan ] = useState<Plan>();
     const [ confirmDowngradeToPlan, setConfirmDowngradeToPlan ] = useState<Plan>();
     const [ isConfirmCancelDowngrade, setIsConfirmCancelDowngrade ] = useState<boolean>(false);
     const confirmUpgrade = (to: Plan) => {
-        if (pendingUpgradePlan || pendingDowngradePlan || pendingDowngradeCancellation) {
+        if (pendingChargebeeCallback) {
             // Don't upgrade if we're still waiting for a Chargebee callback
             return;
         }
@@ -257,7 +259,7 @@ export default function () {
         }
     }
     const confirmDowngrade = (to: Plan) => {
-        if (pendingUpgradePlan || pendingDowngradePlan || pendingDowngradeCancellation) {
+        if (pendingChargebeeCallback) {
             // Don't downgrade if we're still waiting for a Chargebee callback
             return;
         }
@@ -297,7 +299,7 @@ export default function () {
         }
     }
     const confirmCancelDowngrade = () => {
-        if (pendingUpgradePlan || pendingDowngradePlan || pendingDowngradeCancellation) {
+        if (pendingChargebeeCallback) {
             // Don't cancel downgrade if we're still waiting for a Chargebee callback
             return;
         }
@@ -335,7 +337,7 @@ export default function () {
         <p className="truncate" title="30 min Timeout">✓ 30 min Timeout</p>
     </>;
     if (currentPlan.chargebeeId === freePlan.chargebeeId) {
-        planCards.push(<PlanCard isDisabled={!!assignedTs} plan={freePlan} isCurrent={!!accountStatement}>{openSourceFeatures}</PlanCard>);
+        planCards.push(<PlanCard isDisabled={!!assignedTs || pendingChargebeeCallback} plan={freePlan} isCurrent={!!accountStatement}>{openSourceFeatures}</PlanCard>);
     } else {
         const targetPlan = freePlan;
         let bottomLabel;
@@ -348,7 +350,7 @@ export default function () {
         switch (Plans.subscriptionChange(currentPlan.type, targetPlan.type)) {
             case 'downgrade': onDowngrade = () => confirmDowngrade(targetPlan); break;
         }
-        planCards.push(<PlanCard isDisabled={!!assignedTs} plan={targetPlan} isCurrent={false} onDowngrade={onDowngrade} bottomLabel={bottomLabel}>{openSourceFeatures}</PlanCard>);
+        planCards.push(<PlanCard isDisabled={!!assignedTs || pendingChargebeeCallback} plan={targetPlan} isCurrent={false} onDowngrade={onDowngrade} bottomLabel={bottomLabel}>{openSourceFeatures}</PlanCard>);
     }
 
     // Plan card: Personal
@@ -358,7 +360,7 @@ export default function () {
     </>;
     if (currentPlan.chargebeeId === personalPlan.chargebeeId) {
         const bottomLabel = ('pendingSince' in currentPlan) ? <p className="text-green-600 animate-pulse">Upgrade in progress</p> : undefined;
-        planCards.push(<PlanCard isDisabled={!!assignedTs} plan={applyCoupons(personalPlan, appliedCoupons)} isCurrent={true} bottomLabel={bottomLabel}>{personalFeatures}</PlanCard>);
+        planCards.push(<PlanCard isDisabled={!!assignedTs || pendingChargebeeCallback} plan={applyCoupons(personalPlan, appliedCoupons)} isCurrent={true} bottomLabel={bottomLabel}>{personalFeatures}</PlanCard>);
     } else {
         const targetPlan = applyCoupons(personalPlan, availableCoupons);
         let bottomLabel;
@@ -372,7 +374,7 @@ export default function () {
             case 'upgrade': onUpgrade = () => confirmUpgrade(targetPlan); break;
             case 'downgrade': onDowngrade = () => confirmDowngrade(targetPlan); break;
         }
-        planCards.push(<PlanCard isDisabled={!!assignedTs} plan={targetPlan} isCurrent={false} onUpgrade={onUpgrade} onDowngrade={onDowngrade} bottomLabel={bottomLabel}>{personalFeatures}</PlanCard>);
+        planCards.push(<PlanCard isDisabled={!!assignedTs || pendingChargebeeCallback} plan={targetPlan} isCurrent={false} onUpgrade={onUpgrade} onDowngrade={onDowngrade} bottomLabel={bottomLabel}>{personalFeatures}</PlanCard>);
     }
 
     // Plan card: Professional
@@ -384,7 +386,7 @@ export default function () {
 
     if (currentPlan.chargebeeId === professionalPlan.chargebeeId) {
         const bottomLabel = ('pendingSince' in currentPlan) ? <p className="text-green-600 animate-pulse">Upgrade in progress</p> : undefined;
-        planCards.push(<PlanCard isDisabled={!!assignedTs} plan={applyCoupons(professionalPlan, appliedCoupons)} isCurrent={true} bottomLabel={bottomLabel}>{professionalFeatures}</PlanCard>);
+        planCards.push(<PlanCard isDisabled={!!assignedTs || pendingChargebeeCallback} plan={applyCoupons(professionalPlan, appliedCoupons)} isCurrent={true} bottomLabel={bottomLabel}>{professionalFeatures}</PlanCard>);
     } else {
         const targetPlan = applyCoupons(professionalPlan, availableCoupons);
         let bottomLabel;
@@ -398,7 +400,7 @@ export default function () {
             case 'upgrade': onUpgrade = () => confirmUpgrade(targetPlan); break;
             case 'downgrade': onDowngrade = () => confirmDowngrade(targetPlan); break;
         }
-        planCards.push(<PlanCard isDisabled={!!assignedTs} plan={targetPlan} isCurrent={!!assignedProfessionalTs} onUpgrade={onUpgrade} onDowngrade={onDowngrade} bottomLabel={bottomLabel} isTsAssigned={!!assignedProfessionalTs}>{professionalFeatures}</PlanCard>);
+        planCards.push(<PlanCard isDisabled={!!assignedTs || pendingChargebeeCallback} plan={targetPlan} isCurrent={!!assignedProfessionalTs} onUpgrade={onUpgrade} onDowngrade={onDowngrade} bottomLabel={bottomLabel} isTsAssigned={!!assignedProfessionalTs}>{professionalFeatures}</PlanCard>);
     }
 
     // Plan card: Unleashed (or Student Unleashed)
@@ -411,17 +413,17 @@ export default function () {
     const isUnleashedTsAssigned = !!assignedStudentUnleashedTs || !!assignedUnleashedTs;
     if (currentPlan.chargebeeId === studentUnleashedPlan.chargebeeId) {
         const bottomLabel = ('pendingSince' in currentPlan) ? <p className="text-green-600 animate-pulse">Upgrade in progress</p> : undefined;
-        planCards.push(<PlanCard isDisabled={!!assignedTs} plan={applyCoupons(studentUnleashedPlan, appliedCoupons)} isCurrent={true} bottomLabel={bottomLabel} isTsAssigned={isUnleashedTsAssigned}>{unleashedFeatures}</PlanCard>);
+        planCards.push(<PlanCard isDisabled={!!assignedTs || pendingChargebeeCallback} plan={applyCoupons(studentUnleashedPlan, appliedCoupons)} isCurrent={true} bottomLabel={bottomLabel} isTsAssigned={isUnleashedTsAssigned}>{unleashedFeatures}</PlanCard>);
     } else if (currentPlan.chargebeeId === unleashedPlan.chargebeeId) {
         const bottomLabel = ('pendingSince' in currentPlan) ? <p className="text-green-600 animate-pulse">Upgrade in progress</p> : undefined;
-        planCards.push(<PlanCard isDisabled={!!assignedTs} plan={applyCoupons(unleashedPlan, appliedCoupons)} isCurrent={true} bottomLabel={bottomLabel} isTsAssigned={isUnleashedTsAssigned}>{unleashedFeatures}</PlanCard>);
+        planCards.push(<PlanCard isDisabled={!!assignedTs || pendingChargebeeCallback} plan={applyCoupons(unleashedPlan, appliedCoupons)} isCurrent={true} bottomLabel={bottomLabel} isTsAssigned={isUnleashedTsAssigned}>{unleashedFeatures}</PlanCard>);
     } else {
         const targetPlan = applyCoupons(isStudent ? studentUnleashedPlan : unleashedPlan, availableCoupons);
         let onUpgrade;
         switch (Plans.subscriptionChange(currentPlan.type, targetPlan.type)) {
             case 'upgrade': onUpgrade = () => confirmUpgrade(targetPlan); break;
         }
-        planCards.push(<PlanCard isDisabled={!!assignedTs} plan={targetPlan} isCurrent={!!isUnleashedTsAssigned} onUpgrade={onUpgrade} isTsAssigned={isUnleashedTsAssigned}>{unleashedFeatures}</PlanCard>);
+        planCards.push(<PlanCard isDisabled={!!assignedTs || pendingChargebeeCallback} plan={targetPlan} isCurrent={!!isUnleashedTsAssigned} onUpgrade={onUpgrade} isTsAssigned={isUnleashedTsAssigned}>{unleashedFeatures}</PlanCard>);
     }
 
     return <div>
