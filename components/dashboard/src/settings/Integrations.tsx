@@ -22,7 +22,7 @@ import { SelectAccountModal } from "./SelectAccountModal";
 export default function Integrations() {
 
     return (<div>
-        <PageWithSubMenu subMenu={settingsMenu}  title='Integrations' subtitle='Manage permissions for git providers and integrations.'>
+        <PageWithSubMenu subMenu={settingsMenu} title='Integrations' subtitle='Manage permissions for git providers and integrations.'>
             <GitProviders />
             <div className="h-12"></div>
             <GitIntegrations />
@@ -227,7 +227,7 @@ function GitProviders() {
     return (<div>
 
         {selectAccountModal && (
-            <SelectAccountModal {...selectAccountModal} close={() => setSelectAccountModal(undefined)} /> 
+            <SelectAccountModal {...selectAccountModal} close={() => setSelectAccountModal(undefined)} />
         )}
 
         {diconnectModal && (
@@ -277,8 +277,8 @@ function GitProviders() {
             </Modal>
         )}
 
-    <h3>Git Providers</h3>
-    <h2>Manage permissions for git providers.</h2>
+        <h3>Git Providers</h3>
+        <h2>Manage permissions for git providers.</h2>
         <div className="flex flex-col pt-6 space-y-2">
             {authProviders && authProviders.map(ap => (
                 <div key={"ap-" + ap.authProviderId} className="flex-grow flex flex-row hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl h-16 w-full transition ease-in-out group">
@@ -302,7 +302,7 @@ function GitProviders() {
                     <div className="my-auto flex w-1/12 mr-4 opacity-0 group-hover:opacity-100 justify-end">
                         <div className="self-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer w-8">
                             <ContextMenu menuEntries={gitProviderMenu(ap)}>
-                            <svg className="w-8 h-8 p-1 text-gray-600 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Actions</title><g fill="currentColor" transform="rotate(90 12 12)"><circle cx="1" cy="1" r="2" transform="translate(5 11)"/><circle cx="1" cy="1" r="2" transform="translate(11 11)"/><circle cx="1" cy="1" r="2" transform="translate(17 11)"/></g></svg>
+                                <svg className="w-8 h-8 p-1 text-gray-600 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Actions</title><g fill="currentColor" transform="rotate(90 12 12)"><circle cx="1" cy="1" r="2" transform="translate(5 11)" /><circle cx="1" cy="1" r="2" transform="translate(11 11)" /><circle cx="1" cy="1" r="2" transform="translate(17 11)" /></g></svg>
                             </ContextMenu>
                         </div>
                     </div>
@@ -384,11 +384,11 @@ function GitIntegrations() {
                 <h2 className="text-gray-500">Manage git integrations for GitLab or GitHub self-hosted instances.</h2>
             </div>
             {providers.length !== 0
-            ?
-            <div className="mt-3 flex mt-0">
-                <button onClick={() => setModal({ mode: "new" })} className="ml-2">New Integration</button>
-            </div>
-            : null}
+                ?
+                <div className="mt-3 flex mt-0">
+                    <button onClick={() => setModal({ mode: "new" })} className="ml-2">New Integration</button>
+                </div>
+                : null}
         </div>
 
         {providers && providers.length === 0 && (
@@ -415,10 +415,10 @@ function GitIntegrations() {
                     <div className="p-0 my-auto flex flex-col w-7/12">
                         <span className="my-auto truncate text-gray-500 overflow-ellipsis">{ap.host}</span>
                     </div>
-                    <div className="my-auto flex w-1/12 opacity-0 group-hover:opacity-100 justify-end">
+                    <div className="my-auto flex w-1/12 mr-4 opacity-0 group-hover:opacity-100 justify-end">
                         <div className="self-center hover:bg-gray-200 dark:dark:bg-gray-800 rounded-md cursor-pointer w-8">
                             <ContextMenu menuEntries={gitProviderMenu(ap)}>
-                                <svg className="w-8 h-8 p-1 text-gray-600 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Actions</title><g fill="currentColor" transform="rotate(90 12 12)"><circle cx="1" cy="1" r="2" transform="translate(5 11)"/><circle cx="1" cy="1" r="2" transform="translate(11 11)"/><circle cx="1" cy="1" r="2" transform="translate(17 11)"/></g></svg>
+                                <svg className="w-8 h-8 p-1 text-gray-600 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Actions</title><g fill="currentColor" transform="rotate(90 12 12)"><circle cx="1" cy="1" r="2" transform="translate(5 11)" /><circle cx="1" cy="1" r="2" transform="translate(11 11)" /><circle cx="1" cy="1" r="2" transform="translate(17 11)" /></g></svg>
                             </ContextMenu>
                         </div>
                     </div>
