@@ -48,22 +48,34 @@ export default function Preferences() {
             <p className="text-base text-gray-500">Choose which IDE you want to use.</p>
             <div className="mt-4 space-x-4 flex">
                 <SelectableCard className="w-36 h-40" title="VS Code" selected={defaultIde === 'code'} onClick={() => actuallySetDefaultIde('code')}>
-                    <div className="flex-grow flex justify-center align-center">
+                    <div className="flex-grow flex justify-center items-center">
                         <img className="w-16 filter-grayscale" src={vscode}/>
                     </div>
                 </SelectableCard>
                 <SelectableCard className="w-36 h-40" title="Theia" selected={defaultIde === 'theia'} onClick={() => actuallySetDefaultIde('theia')}>
-                    <div className="flex-grow flex justify-center align-center">
+                    <div className="flex-grow flex justify-center items-center">
                         <img className="w-16 dark:filter-invert" src={theia}/>
                     </div>
                 </SelectableCard>
             </div>
             <h3 className="mt-12">Theme</h3>
-            <p className="text-base text-gray-500">Light or dark?</p>
+            <p className="text-base text-gray-500">Early bird or night owl? Choose your side.</p>
             <div className="mt-4 space-x-4 flex">
-                <label><input type="radio" name="theme" value="system" checked={theme === 'system'} onChange={() => actuallySetTheme('system')}></input> System</label>
-                <label><input type="radio" name="theme" value="dark" checked={theme === 'dark'} onChange={() => actuallySetTheme('dark')}></input> Dark</label>
-                <label><input type="radio" name="theme" value="light" checked={theme === 'light'} onChange={() => actuallySetTheme('light')}></input> Light</label>
+                <SelectableCard className="w-36 h-32" title="Light" selected={theme === 'light'} onClick={() => actuallySetTheme('light')}>
+                    <div className="flex-grow flex justify-center items-end">
+                        <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64"><rect width="68" height="40" x="40" fill="#C4C4C4" rx="8"/><rect width="32" height="16" fill="#C4C4C4" rx="8"/><rect width="32" height="16" y="24" fill="#C4C4C4" rx="8"/><rect width="32" height="16" y="48" fill="#C4C4C4" rx="8"/></svg>
+                    </div>
+                </SelectableCard>
+                <SelectableCard className="w-36 h-32" title="Dark" selected={theme === 'dark'} onClick={() => actuallySetTheme('dark')}>
+                    <div className="flex-grow flex justify-center items-end">
+                        <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64"><rect width="68" height="40" x="40" fill="#737373" rx="8"/><rect width="32" height="16" fill="#737373" rx="8"/><rect width="32" height="16" y="24" fill="#737373" rx="8"/><rect width="32" height="16" y="48" fill="#737373" rx="8"/></svg>
+                    </div>
+                </SelectableCard>
+                <SelectableCard className="w-36 h-32" title="System" selected={theme === 'system'} onClick={() => actuallySetTheme('system')}>
+                    <div className="flex-grow flex justify-center items-end">
+                        <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64"><rect width="68" height="40" x="40" fill="#C4C4C4" rx="8"/><path fill="#737373" d="M74.111 3.412A8 8 0 0180.665 0H100a8 8 0 018 8v24a8 8 0 01-8 8H48.5L74.111 3.412z"/><rect width="32" height="16" fill="#C4C4C4" rx="8"/><rect width="32" height="16" y="24" fill="#737373" rx="8"/><rect width="32" height="16" y="48" fill="#C4C4C4" rx="8"/></svg>
+                    </div>
+                </SelectableCard>
             </div>
         </PageWithSubMenu>
     </div>;
