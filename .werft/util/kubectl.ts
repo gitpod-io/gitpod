@@ -117,7 +117,6 @@ export function deleteNamespace(wait: boolean, namespace: string, shellOpts: Exe
 
 export function deleteNonNamespaceObjects(namespace, destname, shellOpts) {
     exec(`/usr/local/bin/helm3 delete gitpod-${destname} || echo gitpod-${destname} was not installed yet`, { slice: 'predeploy cleanup' });
-    exec(`/usr/local/bin/helm3 delete jaeger-${destname} || echo jaeger-${destname} was not installed yet`, { slice: 'predeploy cleanup' });
 
     let objs = [];
     ["ws-scheduler", "node-daemon", "cluster", "workspace", "jaeger", "jaeger-agent", "ws-sync", "ws-manager-node", "ws-daemon", "registry-facade"].forEach(comp =>

@@ -21,8 +21,8 @@ export async function issueCertficate(werft, pathToTerraform, gcpSaPath, namespa
     // Always use 'terraform apply' to make sure the certificate is present and up-to-date
     await exec(`set -x \
         && cd ${pathToTerraform} \
-        && terraform init \
         && export GOOGLE_APPLICATION_CREDENTIALS="${gcpSaPath}" \
+        && terraform init -backend-config='prefix=${namespace}'\
         && terraform apply -auto-approve \
             -var 'namespace=${namespace}' \
             -var 'dns_zone_domain=${dnsZoneDomain}' \

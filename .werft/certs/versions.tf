@@ -1,4 +1,7 @@
 terraform {
+  backend "gcs" {
+    bucket  = "gitpod-core-dev-terraform"
+  }
   required_providers {
     google = {
       source = "hashicorp/google"
