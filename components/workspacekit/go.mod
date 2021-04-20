@@ -13,7 +13,6 @@ require (
 	github.com/spf13/cobra v1.1.1
 	golang.org/x/sys v0.0.0-20210113181707-4bcb84eeeb78
 	google.golang.org/grpc v1.36.0
-	kernel.org/pub/linux/libs/security/libcap/cap v0.2.46
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway

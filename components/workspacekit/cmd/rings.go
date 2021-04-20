@@ -24,7 +24,6 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
-	"kernel.org/pub/linux/libs/security/libcap/cap"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/workspacekit/pkg/lift"
@@ -566,19 +565,6 @@ var ring2Cmd = &cobra.Command{
 		connf.Close()
 		if err != nil {
 			log.WithError(err).Error("cannot send seccomp fd")
-			failed = true
-			return
-		}
-
-		err = cap.SetGroups(33333)
-		if err != nil {
-			log.WithError(err).Error("cannot setgid")
-			failed = true
-			return
-		}
-		err = cap.SetUID(33333)
-		if err != nil {
-			log.WithError(err).Error("cannot setuid")
 			failed = true
 			return
 		}
