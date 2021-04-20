@@ -12,7 +12,7 @@
 
 import * as jspb from "google-protobuf";
 
-export class RegisterRequest extends jspb.Message { 
+export class RegisterRequest extends jspb.Message {
     getName(): string;
     setName(value: string): RegisterRequest;
     getUrl(): string;
@@ -47,7 +47,7 @@ export namespace RegisterRequest {
     }
 }
 
-export class RegisterResponse extends jspb.Message { 
+export class RegisterResponse extends jspb.Message {
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): RegisterResponse.AsObject;
@@ -64,7 +64,7 @@ export namespace RegisterResponse {
     }
 }
 
-export class TlsConfig extends jspb.Message { 
+export class TlsConfig extends jspb.Message {
     getCa(): string;
     setCa(value: string): TlsConfig;
     getCrt(): string;
@@ -90,7 +90,7 @@ export namespace TlsConfig {
     }
 }
 
-export class RegistrationHints extends jspb.Message { 
+export class RegistrationHints extends jspb.Message {
     getPerfereability(): Preferability;
     setPerfereability(value: Preferability): RegistrationHints;
     getCordoned(): boolean;
@@ -116,7 +116,7 @@ export namespace RegistrationHints {
     }
 }
 
-export class ClusterStatus extends jspb.Message { 
+export class ClusterStatus extends jspb.Message {
     getName(): string;
     setName(value: string): ClusterStatus;
     getUrl(): string;
@@ -151,7 +151,7 @@ export namespace ClusterStatus {
     }
 }
 
-export class UpdateRequest extends jspb.Message { 
+export class UpdateRequest extends jspb.Message {
     getName(): string;
     setName(value: string): UpdateRequest;
 
@@ -199,7 +199,7 @@ export namespace UpdateRequest {
 
 }
 
-export class UpdateResponse extends jspb.Message { 
+export class UpdateResponse extends jspb.Message {
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): UpdateResponse.AsObject;
@@ -216,7 +216,7 @@ export namespace UpdateResponse {
     }
 }
 
-export class DeregisterRequest extends jspb.Message { 
+export class DeregisterRequest extends jspb.Message {
     getName(): string;
     setName(value: string): DeregisterRequest;
 
@@ -236,7 +236,7 @@ export namespace DeregisterRequest {
     }
 }
 
-export class DeregisterResponse extends jspb.Message { 
+export class DeregisterResponse extends jspb.Message {
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DeregisterResponse.AsObject;
@@ -253,7 +253,7 @@ export namespace DeregisterResponse {
     }
 }
 
-export class ListRequest extends jspb.Message { 
+export class ListRequest extends jspb.Message {
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ListRequest.AsObject;
@@ -270,7 +270,7 @@ export namespace ListRequest {
     }
 }
 
-export class ListResponse extends jspb.Message { 
+export class ListResponse extends jspb.Message {
     clearStatusList(): void;
     getStatusList(): Array<ClusterStatus>;
     setStatusList(value: Array<ClusterStatus>): ListResponse;
