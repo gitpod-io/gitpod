@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-// generated using github.com/32leaves/bel on 2021-04-06 11:13:32.850582875 +0000 UTC m=+0.004688828
+// generated using github.com/32leaves/bel on 2021-04-20 10:08:58.0197329 +0000 UTC m=+0.008313436
 // DO NOT MODIFY
 
 export enum WorkspaceInitSource {

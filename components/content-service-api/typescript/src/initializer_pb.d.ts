@@ -12,7 +12,7 @@
 
 import * as jspb from "google-protobuf";
 
-export class WorkspaceInitializer extends jspb.Message { 
+export class WorkspaceInitializer extends jspb.Message {
 
     hasEmpty(): boolean;
     clearEmpty(): void;
@@ -64,7 +64,7 @@ export namespace WorkspaceInitializer {
 
 }
 
-export class EmptyInitializer extends jspb.Message { 
+export class EmptyInitializer extends jspb.Message {
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): EmptyInitializer.AsObject;
@@ -81,7 +81,7 @@ export namespace EmptyInitializer {
     }
 }
 
-export class GitInitializer extends jspb.Message { 
+export class GitInitializer extends jspb.Message {
     getRemoteUri(): string;
     setRemoteUri(value: string): GitInitializer;
     getUpstreamRemoteUri(): string;
@@ -119,7 +119,7 @@ export namespace GitInitializer {
     }
 }
 
-export class GitConfig extends jspb.Message { 
+export class GitConfig extends jspb.Message {
 
     getCustomConfigMap(): jspb.Map<string, string>;
     clearCustomConfigMap(): void;
@@ -153,7 +153,7 @@ export namespace GitConfig {
     }
 }
 
-export class SnapshotInitializer extends jspb.Message { 
+export class SnapshotInitializer extends jspb.Message {
     getSnapshot(): string;
     setSnapshot(value: string): SnapshotInitializer;
 
@@ -173,7 +173,7 @@ export namespace SnapshotInitializer {
     }
 }
 
-export class PrebuildInitializer extends jspb.Message { 
+export class PrebuildInitializer extends jspb.Message {
 
     hasPrebuild(): boolean;
     clearPrebuild(): void;
@@ -202,7 +202,7 @@ export namespace PrebuildInitializer {
     }
 }
 
-export class GitStatus extends jspb.Message { 
+export class GitStatus extends jspb.Message {
     getBranch(): string;
     setBranch(value: string): GitStatus;
     getLatestCommit(): string;
