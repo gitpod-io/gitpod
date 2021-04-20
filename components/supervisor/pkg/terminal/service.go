@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"syscall"
 	"time"
 
 	"github.com/creack/pty"
@@ -50,6 +51,7 @@ type MuxTerminalService struct {
 	DefaultWorkdir string
 	DefaultShell   string
 	Env            []string
+	DefaultCreds   *syscall.Credential
 
 	api.UnimplementedTerminalServiceServer
 }
@@ -80,6 +82,11 @@ func (srv *MuxTerminalService) OpenWithOptions(ctx context.Context, req *api.Ope
 		shell = srv.DefaultShell
 	}
 	cmd := exec.Command(shell, req.ShellArgs...)
+	if srv.DefaultCreds != nil {
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			Credential: srv.DefaultCreds,
+		}
+	}
 	if req.Workdir == "" {
 		cmd.Dir = srv.DefaultWorkdir
 	} else {

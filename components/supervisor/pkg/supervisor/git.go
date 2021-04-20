@@ -66,6 +66,7 @@ func (p *GitTokenProvider) GetToken(ctx context.Context, req *api.GetTokenReques
 				return nil, err
 			}
 			gpCmd := exec.Command(gpPath, "preview", "--external", p.workspaceConfig.GitpodHost+"/access-control")
+			gpCmd = runAsGitpodUser(gpCmd)
 			err = gpCmd.Start()
 			if err != nil {
 				return nil, err

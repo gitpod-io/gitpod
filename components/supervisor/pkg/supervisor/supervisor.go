@@ -154,6 +154,10 @@ func Run(options ...RunOption) {
 
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
 	termMuxSrv.Env = buildIDEEnv(cfg)
+	termMuxSrv.DefaultCreds = &syscall.Credential{
+		Uid: 33333,
+		Gid: 33333,
+	}
 
 	apiServices := []RegisterableService{
 		&statusService{
@@ -288,6 +292,7 @@ func configureGit(cfg *Config) {
 
 	for _, s := range settings {
 		cmd := exec.Command("git", append([]string{"config", "--global"}, s...)...)
+		cmd = runAsGitpodUser(cmd)
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err := cmd.Run()
@@ -475,6 +480,10 @@ func prepareIDELaunch(cfg *Config) *exec.Cmd {
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid:   true,
 		Pdeathsig: syscall.SIGKILL,
+		Credential: &syscall.Credential{
+			Uid: 33333,
+			Gid: 33333,
+		},
 	}
 
 	// Here we must resist the temptation to "neaten up" the IDE output for headless builds.
@@ -719,7 +728,7 @@ func terminateChildProcesses() {
 func terminateProcess(pid int, privileged bool) {
 	var err error
 	if privileged {
-		cmd := exec.Command("sudo", "kill", "-SIGTERM", fmt.Sprintf("%v", pid))
+		cmd := exec.Command("kill", "-SIGTERM", fmt.Sprintf("%v", pid))
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
 		err = cmd.Run()
@@ -779,12 +788,9 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 	}
 	_ = os.Chown(fn, 33333, 33333)
 	err = activation.Listen(ctx, l, func(socketFD *os.File) error {
-		cmd := exec.Command("sudo", "docker-up")
+		cmd := exec.Command("docker-up")
 		cmd.Env = append(os.Environ(), "LISTEN_FDS=1")
 		cmd.ExtraFiles = []*os.File{socketFD}
-		cmd.Stderr = os.Stderr
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
 		_, err := term.Start(cmd, terminal.TermOptions{
 			Annotations: map[string]string{
 				"supervisor": "true",
@@ -839,4 +845,16 @@ func ConnectToInWorkspaceDaemonService(ctx context.Context) (daemon.InWorkspaceS
 		return nil, nil, err
 	}
 	return daemon.NewInWorkspaceServiceClient(conn), conn, nil
+}
+
+func runAsGitpodUser(cmd *exec.Cmd) *exec.Cmd {
+	if cmd.SysProcAttr == nil {
+		cmd.SysProcAttr = &syscall.SysProcAttr{}
+	}
+	if cmd.SysProcAttr.Credential == nil {
+		cmd.SysProcAttr.Credential = &syscall.Credential{}
+	}
+	cmd.SysProcAttr.Credential.Gid = 33333
+	cmd.SysProcAttr.Credential.Uid = 33333
+	return cmd
 }
