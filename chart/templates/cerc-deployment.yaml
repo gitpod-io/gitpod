@@ -38,6 +38,7 @@ spec:
       serviceAccountName: cerc
       securityContext:
         runAsUser: 1000
+      enableServiceLinks: false
       containers:
       - name: cerc
         image: {{ template "gitpod.comp.imageFull" $this }}

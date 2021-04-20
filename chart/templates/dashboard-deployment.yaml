@@ -39,6 +39,7 @@ spec:
     spec:
 {{ include "gitpod.pod.affinity" $this | indent 6 }}
       serviceAccountName: dashboard
+      enableServiceLinks: false
       containers:
       - name: dashboard
         image: {{ template "gitpod.comp.imageFull" $this }}

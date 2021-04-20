@@ -50,6 +50,7 @@ spec:
       - name: ws-manager-client-tls-certs
         secret:
           secretName: {{ .Values.components.wsManager.tls.client.secretName }}
+      enableServiceLinks: false
       containers:
       - name: scheduler
         args: ["run", "-v", "--config", "/config/config.json"]

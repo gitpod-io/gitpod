@@ -21,6 +21,7 @@ spec:
     spec:
       template:
         spec:
+          enableServiceLinks: false
           containers:
           - name: kubectl
             image: {{ .Values.components.restarter.image }}

@@ -60,6 +60,7 @@ spec:
 {{- if $comp.volumes }}
 {{ toYaml $comp.volumes | indent 6 }}
 {{- end }}
+      enableServiceLinks: false
       containers:
       - name: ws-manager
         args: ["run", "-v", "--config", "/config/config.json"]

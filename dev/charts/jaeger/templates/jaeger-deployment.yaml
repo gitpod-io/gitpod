@@ -29,6 +29,7 @@ spec:
       serviceAccountName: monitoring-jaeger
       securityContext:
         runAsUser: 1000
+      enableServiceLinks: false
       containers:
       - image: jaegertracing/all-in-one:1.14
         imagePullPolicy: Always

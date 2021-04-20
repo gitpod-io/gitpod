@@ -55,6 +55,7 @@ spec:
         secret:
           secretName: {{ $.Values.certificatesSecret.secretName }}
 {{- end }}
+      enableServiceLinks: false
       containers:
       - name: ws-proxy
         image: {{ template "gitpod.comp.imageFull" $this }}

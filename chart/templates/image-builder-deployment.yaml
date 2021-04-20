@@ -64,6 +64,7 @@ spec:
         secret:
           secretName: {{ $sec.secret }}
 {{- end }}
+      enableServiceLinks: false
       containers:
       - name: dind
         image: {{ $comp.dindImage | default "docker:19.03-dind" }}

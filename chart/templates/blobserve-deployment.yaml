@@ -45,6 +45,7 @@ spec:
     spec:
 {{ include "gitpod.workspaceAffinity" $this | indent 6 }}
       serviceAccountName: blobserve
+      enableServiceLinks: false
       containers:
       - name: blobserve
         image: {{ template "gitpod.comp.imageFull" $this }}

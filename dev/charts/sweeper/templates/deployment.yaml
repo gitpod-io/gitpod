@@ -21,6 +21,7 @@ spec:
       serviceAccountName: {{ .Values.serviceAccountName }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      enableServiceLinks: false
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
