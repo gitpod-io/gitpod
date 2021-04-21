@@ -28,7 +28,11 @@ go_protoc() {
 
 typescript_protoc() {
     local ROOT_DIR=$1
-    local MODULE_DIR=$(pwd)
+    local MODULE_DIR
+    # Assigning external program output directly
+    # after the `local` keyword masks the return value (Could be an error).
+    # Should be done in a separate line.
+    MODULE_DIR=$(pwd)
 
     pushd typescript > /dev/null
 

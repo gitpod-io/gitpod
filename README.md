@@ -33,24 +33,24 @@ Tightly integrated with GitLab, GitHub, and Bitbucket, Gitpod automatically and 
 
 [Learn more 👉](https://www.gitpod.io/features/)
 
-Gitpod is provided as a [managed Saas version](https://gitpod.io) with a free subscription for open-source or a [free self-hosted version](https://www.gitpod.io/self-hosted/). An enterprise license is available [here](https://www.gitpod.io/self-hosted/).
+Gitpod is provided as a [managed Saas version](https://gitpod.io) with a free subscription for open-source or a [free self-hosted version](https://www.gitpod.io/self-hosted). An enterprise license is available [here](https://www.gitpod.io/self-hosted).
 
 ## Getting Started
 
 You can start using Gitpod with one or more of the following ways:
-1. [Use a Prefixed URL](https://www.gitpod.io/docs/context-urls/)
-1. [Install Browser Extension](https://www.gitpod.io/docs/browser-extension/)
-1. [Enable GitLab Integration](https://www.gitpod.io/docs/gitlab-integration/)
+1. [Use a Prefixed URL](https://www.gitpod.io/docs/getting-started/#prefixed-url)
+1. [Install Browser Extension](https://www.gitpod.io/docs/getting-started#browser-extension)
+1. [Enable GitLab Integration](https://www.gitpod.io/docs/getting-started#gitlab-integration)
 1. Quick start using an [Example Project](https://www.gitpod.io/docs/getting-started/#example-project) or [OSS Project](https://www.gitpod.io/docs/getting-started/#gitpodified-open-source-project)
 
 ## Documentation
 
-All documentation can be found on https://docs.gitpod.io.
-For example, see [Introduction](https://www.gitpod.io/docs/) and [Getting Started](https://www.gitpod.io/docs/getting-started/) sections. 📚
+All documentation can be found on https://www.gitpod.io/docs.
+For example, see [Introduction](https://www.gitpod.io/docs) and [Getting Started](https://www.gitpod.io/docs/getting-started) sections. 📚
 
 ## Questions
 
-For questions and support please use the [community forum](http://community.gitpod.io/).
+For questions and support please use the [community forum](http://community.gitpod.io).
 Join the conversation, and connect with other community members. 💬
 
 You can also follow [`@gitpod`](https://twitter.com/gitpod) for announcements and updates from our team.
