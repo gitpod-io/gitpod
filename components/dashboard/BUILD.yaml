@@ -11,6 +11,9 @@ packages:
       - package.json
       - tailwind.config.js
       - tsconfig.*
+      - craco.config.js
+      - postcss.config.js
+      - .eslintrc.js
     deps:
       - components/gitpod-protocol:lib
     config:
