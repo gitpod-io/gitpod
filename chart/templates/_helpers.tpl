@@ -373,8 +373,8 @@ storage:
 {{- define "gitpod.serverProxyApiKey" -}}
 {{- if .Values.serverProxyApiKey }}
   .Values.serverProxyApiKey
-{{- else if  (and  .Values.serverProxyApiKey.secretName .Values.serverProxyApiKey.secretKeyRef ) }}
-  {{ index (lookup "v1" "Secret" .Release.Namespace .Values.serverProxyApiKey.secretName).data .Values.serverProxyApiKey.secretKeyRef }}
+{{- else if  (and  .Values.serverProxyApiKeyExistingSecret.secretName .Values.serverProxyApiKeyExistingSecret.secretKeyRef ) }}
+  {{ index (lookup "v1" "Secret" .Release.Namespace .Values.serverProxyApiKeyExistingSecret.secretName).data .Values.serverProxyApiKeyExistingSecret.secretKeyRef }}
 {{- else }}
   {{- randAlphaNum 30 }}
 {{- end -}}
