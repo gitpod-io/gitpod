@@ -194,13 +194,16 @@ env:
 {{- end -}}
 
 {{- define "gitpod.secret-db-password" -}}
-{{- if .Values.db.password }}
-.Values.db.password
-{{- else if  (and  .Values.db.existingSecret.secretName .Values.db.existingSecret.secretKeyRef) }}
-{{ index (lookup "v1" "Secret" .Release.Namespace .Values.db.existingSecret).data  .Values.db.existingSecret.secretKeyRef }}
+{{- $gp := .gp -}}
+{{- with $gp.db }}
+{{- if .password }}
+.password
+{{- else if  (and  .existingSecret.secretName .existingSecret.secretKeyRef) }}
+{{ index (lookup "v1" "Secret" .Release.Namespace .existingSecret).data  .existingSecret.secretKeyRef }}
 {{- else }}
 {{- randAlphaNum 30 }}
 {{- end -}}
+{{- end }}
 
 {{- define "gitpod.container.dbEnv" -}}
 {{- $ := .root -}}
@@ -210,7 +213,7 @@ env:
 - name: DB_PORT
   value: "{{ $gp.db.port }}"
 - name: DB_PASSWORD
-  value: "{{ $gitpod.secret-db-password }}"
+  value: "{{ include "gitpod.secret-db-password" . }}"
 {{- if $gp.db.disableDeletedEntryGC }}
 - name: DB_DELETED_ENTRIES_GC_ENABLED
   value: "false"
