@@ -9,7 +9,7 @@ import ReactDOM from 'react-dom';
 import App from './App';
 import { UserContextProvider } from './user-context';
 
-import "./tailwind.output.css"
+import "./index.css"
 
 ReactDOM.render(
     <React.StrictMode>
