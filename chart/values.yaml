@@ -58,7 +58,7 @@ db:
   password:
   existingSecret:
     secretName:
-    secretKeyRef: "password"
+    secretKeyRef: "mysql-root-password"
 
 defaults:
   dnsPolicy: ClusterFirst
@@ -134,7 +134,7 @@ workspaceScheduler: workspace-scheduler
 serverProxyApiKey:
 serverProxyApiKeyExistingSecret:
   secretName:
-  secretKeyRef:
+  secretKeyRef: "apikey"
 previewFeatureFlags: []
 
 components:
