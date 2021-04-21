@@ -561,8 +561,8 @@ rabbitmq:
       load_definition.json: |
         {
           "users": [{
-            "name": {{ required "rabbitmq username is required, please add a value to your values.yaml or with the helm flag --set rabbitmq.auth.username=xxxxx" $gitpod.messageBus.auth.username | quote }},
-            "password": {{ required "rabbitmq password is required, please add a value to your values.yaml or with the helm flag --set rabbitmq.auth.password=xxxxx" $gitpod.messageBus.auth.username | quote }},
+            "name": {{ required "rabbitmq username is required, please add a value to your values.yaml or with the helm flag --set rabbitmq.auth.username=xxxxx" (include "gitpod.messageBus.auth" .Values).username  | quote }},
+            "password": {{ required "rabbitmq password is required, please add a value to your values.yaml or with the helm flag --set rabbitmq.auth.password=xxxxx" (include "gitpod.messageBus.auth" .Values).password | quote }},
             "tags": "administrator"
           }],
           "vhosts": [{
@@ -645,7 +645,7 @@ rabbitmq:
     minAvailable: 0
     maxUnavailable: 1
   shovelsTemplate: |
-    {{ $auth := .Values.auth }}
+    {{ $auth := include "gitpod.messageBus.auth" .Values }}
     {{- range $index, $shovel := .Values.shovels }}
     - name: {{ $shovel.name | default (randAlphaNum 20) | quote }}
       vhost: "/"

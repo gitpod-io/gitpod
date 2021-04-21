@@ -230,25 +230,28 @@ env:
 {{- end -}}
 
 {{- define "gitpod.messageBus.auth" -}}
-{{- if (and .Values.rabbitmq.auth.username .Values.rabbitmq.auth.password) }}
-username: .Values.rabbitmq.auth.username
-password: .Values.rabbitmq.auth.password
-{{- else if .Values.rabbitmq.auth.existingAuthSecret }}
-{{- $gitpod.rabbitmq.auth.secret := lookup "v1" "Secret" .Release.Namespace .Values.rabbitmq.auth.existingAuthSecret }}
-username: index ($gitpod.rabbitmq.auth.secret).data "username"
-password: index ($gitpod.rabbitmq.auth.secret).data "password"
+{{- with .rabbitmq.auth }}
+{{- if (and .username .password) }}
+  username: .username
+  password: .password
+{{- else if .existingAuthSecret }}
+{{- $gitpod.rabbitmq.auth.secret := lookup "v1" "Secret" .existingAuthSecret }}
+  username: index ($gitpod.rabbitmq.auth.secret).data "username"
+  password: index ($gitpod.rabbitmq.auth.secret).data "password"
 {{- else }}
-username: ""
-password: ""
+  username: ""
+  password: ""
+{{- end }
 {{- end -}}
 
 {{- define "gitpod.container.messagebusEnv" -}}
 {{- $ := .root -}}
 {{- $gp := .gp -}}
+{{- $auth := include "gitpod.messageBus.auth" $gp -}}
 - name: MESSAGEBUS_USERNAME
-  value: "{{ $gitpod.messageBus.auth.username }}"
+  value: "{{ $auth.username }}"
 - name: MESSAGEBUS_PASSWORD
-  value: "{{ $gitpod.messageBus.auth.password }}"
+  value: "{{ $auth.password }}"
 - name: MESSAGEBUS_CA
   valueFrom:
     secretKeyRef:
