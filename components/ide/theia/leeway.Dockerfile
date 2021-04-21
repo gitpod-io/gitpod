@@ -38,7 +38,7 @@ ENV PATH=$PATH:/usr/bin/
 
 WORKDIR /theia
 
-ENV THEIA_APP_COMMIT 04b3d2db03f140a9a3cd463f921fe717ce6deefe
+ENV THEIA_APP_COMMIT 1ca36afb4c1b4a756d5133c06b97e01b4551bc8b
 RUN mkdir theia-app \
     && cd theia-app \
     && git init \
