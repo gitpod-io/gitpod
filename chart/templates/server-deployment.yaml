@@ -172,7 +172,7 @@ spec:
           value: {{ $comp.sessionMaxAgeMs | quote }}
     {{- end }}
         - name: SESSION_SECRET
-          value: {{ $comp.sessionSecret | quote }}
+          value: {{ $gitpod.server.sessionSecret | quote }}
     {{- if .Values.components.workspace.localTheia }}
         - name: LOCAL_THEIA
           value: "true"
