@@ -57,6 +57,14 @@ func main() {
 					return serveContainerdMetrics(c.String("socket"), c.String("namespace"))
 				},
 			},
+			{
+				Name:  "bermuda",
+				Usage: "Calculates and logs the time between kubelet starting to pull an image and registry-facade pulling the manifest",
+				Action: func(c *cli.Context) error {
+					log.Init("containerd-metrics", "", true, true)
+					return listenToLogs(context.Background())
+				},
+			},
 		},
 	}
 	err := app.Run(os.Args)
@@ -134,6 +142,7 @@ func serveContainerdMetrics(socket, namespace string) error {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	PullGapListener(ctx)
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
