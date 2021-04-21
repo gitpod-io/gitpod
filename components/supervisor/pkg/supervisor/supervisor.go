@@ -795,6 +795,7 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 			Annotations: map[string]string{
 				"supervisor": "true",
 			},
+			LogToStdout: true,
 		})
 		return err
 	})

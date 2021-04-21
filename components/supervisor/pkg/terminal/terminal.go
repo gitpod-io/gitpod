@@ -17,6 +17,7 @@ import (
 
 	"github.com/creack/pty"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 	"golang.org/x/xerrors"
 
@@ -62,7 +63,7 @@ func (m *Mux) Start(cmd *exec.Cmd, options TermOptions) (alias string, err error
 	}
 	alias = uid.String()
 
-	term, err := newTerm(pty, cmd, options)
+	term, err := newTerm(alias, pty, cmd, options)
 	if err != nil {
 		pty.Close()
 		return "", err
@@ -188,7 +189,7 @@ func (term *Term) shutdownProcessImmediately() error {
 // For now we assume an average of five terminals per workspace, which makes this consume 1MiB of RAM.
 const terminalBacklogSize = 256 << 10
 
-func newTerm(pty *os.File, cmd *exec.Cmd, options TermOptions) (*Term, error) {
+func newTerm(alias string, pty *os.File, cmd *exec.Cmd, options TermOptions) (*Term, error) {
 	token, err := uuid.NewRandom()
 	if err != nil {
 		return nil, err
@@ -207,9 +208,11 @@ func newTerm(pty *os.File, cmd *exec.Cmd, options TermOptions) (*Term, error) {
 		PTY:     pty,
 		Command: cmd,
 		Stdout: &multiWriter{
-			timeout:  timeout,
-			listener: make(map[*multiWriterListener]struct{}),
-			recorder: recorder,
+			timeout:   timeout,
+			listener:  make(map[*multiWriterListener]struct{}),
+			recorder:  recorder,
+			logStdout: options.LogToStdout,
+			logLabel:  alias,
 		},
 		Annotations: options.Annotations,
 		title:       options.Title,
@@ -245,6 +248,9 @@ type TermOptions struct {
 
 	// Title describes the terminal title.
 	Title string
+
+	// LogToStdout forwards the terminal's stdout to supervisor's stdout
+	LogToStdout bool
 }
 
 // Term is a pseudo-terminal
@@ -312,6 +318,9 @@ type multiWriter struct {
 	// ring buffer to record last 256kb of pty output
 	// new listener is initialized with the latest recodring first
 	recorder *RingBuffer
+
+	logStdout bool
+	logLabel  string
 }
 
 var (
@@ -424,6 +433,12 @@ func (mw *multiWriter) Write(p []byte) (n int, err error) {
 	defer mw.mu.Unlock()
 
 	mw.recorder.Write(p)
+	if mw.logStdout {
+		log.WithFields(logrus.Fields{
+			"terminalOutput": true,
+			"label":          mw.logLabel,
+		}).Info(string(p))
+	}
 
 	for lstr := range mw.listener {
 		if lstr.closed {
