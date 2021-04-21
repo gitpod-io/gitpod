@@ -46,10 +46,14 @@ var opts struct {
 //go:embed slirp4netns
 var binaries embed.FS
 
+const (
+	dockerSocketFN = "/var/run/docker.sock"
+)
+
 func main() {
 	self, err := os.Executable()
 	if err != nil {
-		log.WithError(err).Fatal()
+		logrus.WithError(err).Fatal()
 	}
 
 	pflag.BoolVarP(&opts.Verbose, "verbose", "v", false, "enables verbose logging")
@@ -67,6 +71,10 @@ func main() {
 	var cmd string
 	if args := pflag.Args(); len(args) > 0 {
 		cmd = args[0]
+	}
+
+	if _, err := os.Stat(dockerSocketFN); err == nil || !os.IsNotExist(err) {
+		logger.Fatalf("Docker socket already exists at %s.\nIn a Gitpod workspace Docker will start automatically when used.\nIf all else fails, please remove %s and try again.", dockerSocketFN, dockerSocketFN)
 	}
 
 	switch cmd {
@@ -152,7 +160,7 @@ func runWithinNetns() (err error) {
 	if opts.UserAccessibleSocket {
 		go func() {
 			for {
-				err := os.Chmod("/var/run/docker.sock", 0666)
+				err := os.Chmod(dockerSocketFN, 0666)
 
 				if os.IsNotExist(err) {
 					time.Sleep(500 * time.Millisecond)
