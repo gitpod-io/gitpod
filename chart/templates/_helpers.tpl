@@ -370,37 +370,27 @@ storage:
   If there's a value for serverProxyApiKey, use it; autogenerate it otherwise.
   We can grab it from a separate secret if required.
 */ -}}
-{{- define "gitpod.server-proxy-apikey-secret" -}}
-{{- $ := .root -}}
-apiVersion: v1
-kind: Secret
-metadata:
-  name: server-proxy-apikey
-  labels:
-    app: {{ template "gitpod.fullname" . }}
-    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
-    release: "{{ .Release.Name }}"
-    heritage: "{{ .Release.Service }}"
-type: Opaque
-data:
+{{- define "gitpod.serverProxyApiKey" -}}
 {{- if .Values.serverProxyApiKey }}
-  apikey: {{ .Values.serverProxyApiKey | b64enc }}
+  .Values.serverProxyApiKey
 {{- else if  (and  .Values.serverProxyApiKey.secretName .Values.serverProxyApiKey.secretKeyRef ) }}
-  apikey: {{ index (lookup "v1" "Secret" .Release.Namespace .Values.serverProxyApiKey.secretName).data .Values.serverProxyApiKey.secretKeyRef }}
+  {{ index (lookup "v1" "Secret" .Release.Namespace .Values.serverProxyApiKey.secretName).data .Values.serverProxyApiKey.secretKeyRef }}
 {{- else }}
-  apikey: {{- randAlphaNum 30 | b64enc }}
+  {{- randAlphaNum 30 }}
 {{- end -}}
 
 {{- /*
   the gitpod sessionSecret; generate it or get it from a secret
 */ -}}
 {{- define "gitpod.server.sessionSecret" -}}
-{{- if .Values.components.server.sessionSecret }}
-.Values.components.server.sessionSecret
-{{- else if  (and  .Values.components.server.sessionSecretFromExistingSecret.secretName .Values.components.server.sessionSecret.FromExistingSecret.secretKeyRef) }}
-{{ index (lookup "v1" "Secret" .Release.Namespace .Values.components.server.sessionSecretFromExistingSecret.secretName).data .Values.components.server.sessionSecretFromExistingSecret.secretName.secretKeyRef }}
+{{- with .Values.components.server }}
+{{- if .sessionSecret }}
+  .sessionSecret
+{{- else if  (and  .sessionExistingSecret.secretName .server.sessionExistingSecret.secretKeyRef) }}
+  {{ index (lookup "v1" "Secret" .Release.Namespace .sessionExistingSecret.secretName).data .sessionExistingSecret.secretName.secretKeyRef }}
 {{- else }}
-{{- randAlphaNum 30 }}
+  {{- randAlphaNum 30 }}
+{{- end }}
 {{- end -}}
 
 
