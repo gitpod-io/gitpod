@@ -29,6 +29,15 @@ kind: Jaeger
 metadata:
   name: jaeger
 spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: dev/workload
+                operator: In
+                values:
+                  - workload
   strategy: allInOne
   storage:
     options:
