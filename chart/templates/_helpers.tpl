@@ -197,13 +197,13 @@ env:
 {{- $gp := .gp -}}
 {{- with $gp.db }}
 {{- if .password }}
-.password
+  .password
 {{- else if  (and  .existingSecret.secretName .existingSecret.secretKeyRef) }}
-{{ index (lookup "v1" "Secret" .Release.Namespace .existingSecret).data  .existingSecret.secretKeyRef }}
+  {{ index (lookup "v1" "Secret" .Release.Namespace .existingSecret).data  .existingSecret.secretKeyRef }}
 {{- else }}
-{{- randAlphaNum 30 }}
-{{- end -}}
+  {{- randAlphaNum 30 }}
 {{- end }}
+{{- end -}}
 
 {{- define "gitpod.container.dbEnv" -}}
 {{- $ := .root -}}
@@ -383,14 +383,12 @@ storage:
   the gitpod sessionSecret; generate it or get it from a secret
 */ -}}
 {{- define "gitpod.server.sessionSecret" -}}
-{{- with .Values.components.server }}
 {{- if .sessionSecret }}
   .sessionSecret
 {{- else if  (and  .sessionExistingSecret.secretName .server.sessionExistingSecret.secretKeyRef) }}
   {{ index (lookup "v1" "Secret" .Release.Namespace .sessionExistingSecret.secretName).data .sessionExistingSecret.secretName.secretKeyRef }}
 {{- else }}
   {{- randAlphaNum 30 }}
-{{- end }}
 {{- end -}}
 
 
