@@ -23,8 +23,8 @@ func (m *Manager) RegisterMetrics(reg prometheus.Registerer) error {
 }
 
 const (
-	metricsNamespace          = "gitpod_ws_manager"
-	metricsWorkspaceSubsystem = "workspace"
+	metricsNamespace          = "gitpod"
+	metricsWorkspaceSubsystem = "ws_manager"
 )
 
 type metrics struct {
@@ -33,8 +33,8 @@ type metrics struct {
 	startupTimeHistVec    *prometheus.HistogramVec
 	totalStartsCounterVec *prometheus.CounterVec
 	totalStopsCounterVec  *prometheus.CounterVec
-	openedPorts           *prometheus.Gauge
-	controlPortDuration       *prometheus.Histogram
+	controlPortDuration   *prometheus.HistogramVec
+	openedPorts           prometheus.Gauge
 
 	mu         sync.Mutex
 	phaseState map[string]api.WorkspacePhase
@@ -47,23 +47,36 @@ func newMetrics(m *Manager) *metrics {
 		startupTimeHistVec: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
-			Name:      "startup_seconds",
-			Help:      "time it took for workspace pods to reach the running phase",
+			Name:      "workspace_startup_seconds",
+			Help:      "Time it took for workspace pods to reach the running phase.",
 			// same as components/ws-manager-bridge/src/prometheus-metrics-exporter.ts#L15
 			Buckets: prometheus.ExponentialBuckets(2, 2, 10),
 		}, []string{"type"}),
 		totalStartsCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
-			Name:      "starts_total",
-			Help:      "total number of workspaces started",
+			Name:      "workspace_starts_total",
+			Help:      "Total number of workspaces started.",
 		}, []string{"type"}),
 		totalStopsCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
-			Name:      "stops_total",
-			Help:      "total number of workspaces stopped",
+			Name:      "workspace_stops_total",
+			Help:      "Total number of workspaces stopped.",
 		}, []string{"reason"}),
+		openedPorts: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      "control_ports_open",
+			Help:      "Current amount of open control ports.",
+		}),
+		controlPortDuration: prometheus.NewHistogramVec(prometheus.HistogramOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      "control_ports_duration_seconds",
+			Help:      "Amount of time spent controlling port exposure/un-exposure.",
+			Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
+		}, []string{"status"}),
 	}
 }
 

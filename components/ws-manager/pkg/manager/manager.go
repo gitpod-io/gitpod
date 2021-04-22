@@ -607,55 +607,109 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 			return &api.ControlPortResponse{}, nil
 		}
 
-		// service does not exist - create it
-		newService, err := m.createPortsService(req.Id, metaID, servicePrefix, []*api.PortSpec{req.Spec})
+		res, err := m.createControlPort(ctx, req, metaID, servicePrefix, pod, service)
 		if err != nil {
-			return nil, xerrors.Errorf("cannot create workspace's public service: %w", err)
+			return nil, xerrors.Errorf("cannot control port: %w", err)
 		}
-		err = m.Clientset.Create(ctx, newService, &client.CreateOptions{})
-		if err != nil {
-			return nil, xerrors.Errorf("cannot create service: %w", err)
-		}
-		tracing.LogEvent(span, "port service created")
-
-		service = *newService
-
-		// the KubeDNS need a short while to pick up the new service. When we can resolve the service name, so can the proxy
-		// which means the user won't get an error if they try to access the port.
-		host := fmt.Sprintf("%s.%s", service.Name, m.Config.Namespace)
-		for {
-			if m.Config.InitProbe.Disabled {
-				// In tests we'd like to mock net.LookupHost(host) instead of disabling the probe,
-				// but we can't (see https://github.com/golang/go/issues/12503 and https://groups.google.com/forum/#!topic/golang-codereviews/6jmR0F6BZVU)
-				break
-			}
-
-			_, err = net.LookupHost(host)
-			// There's no direct way to check if the host wasn't found in Go1.12: https://go-review.googlesource.com/c/go/+/168597/
-			// Thus we assume any error means we can't resolve the host yet.
-			if err == nil {
-				break
-			}
-
-			// abort if the context deadline is exceeded
-			if err := ctx.Err(); err != nil {
-				return nil, err
-			}
-		}
-		tracing.LogEvent(span, "host available")
-
-		// we've successfully exposed the port by creating the service
 		err = notifyStatusChange()
 		if err != nil {
 			return nil, err
 		}
-		return &api.ControlPortResponse{}, nil
+		return res, nil
 	}
+	// In case we get an error different from KubernetesObjNotFoundError
 	if err != nil {
 		return nil, xerrors.Errorf("cannot control port: %w", err)
 	}
 
 	// the service exists - let's modify it
+	res, err = m.updateControlPort(ctx, req, port, servicePrefix, pod, service)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot update port: %w", err)
+	}
+	err = notifyStatusChange()
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// createControlPort creates a new service for a workspace that requested a new port exposure.
+func (m *Manager) createControlPort(ctx context.Context, req *api.ControlPortRequest, metaID string, servicePrefix string, pod *corev1.Pod, service corev1.Service) (res *api.ControlPortResponse, err error) {
+	span, ctx := tracing.FromContext(ctx, "createControlPort")
+	tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
+	defer tracing.FinishSpan(span, &err)
+
+	startControl := time.Now()
+	defer func() {
+		if err != nil {
+			m.metrics.controlPortDuration.WithLabelValues("failed").Observe(time.Since(startControl).Seconds())
+			return
+		}
+		m.metrics.controlPortDuration.WithLabelValues("success").Observe(time.Since(startControl).Seconds())
+		m.metrics.openedPorts.Inc()
+	}()
+
+	newService, err := m.createPortsService(req.Id, metaID, servicePrefix, []*api.PortSpec{req.Spec})
+	if err != nil {
+		return nil, xerrors.Errorf("cannot create workspace's public service: %w", err)
+	}
+	err = m.Clientset.Create(ctx, newService, &client.CreateOptions{})
+	if err != nil {
+		return nil, xerrors.Errorf("cannot create service: %w", err)
+	}
+	tracing.LogEvent(span, "port service created")
+
+	// the KubeDNS need a short while to pick up the new service. When we can resolve the service name, so can the proxy
+	// which means the user won't get an error if they try to access the port.
+	host := fmt.Sprintf("%s.%s", service.Name, m.Config.Namespace)
+	for {
+		if m.Config.InitProbe.Disabled {
+			// In tests we'd like to mock net.LookupHost(host) instead of disabling the probe,
+			// but we can't (see https://github.com/golang/go/issues/12503 and https://groups.google.com/forum/#!topic/golang-codereviews/6jmR0F6BZVU)
+			break
+		}
+
+		_, err = net.LookupHost(host)
+		// There's no direct way to check if the host wasn't found in Go1.12: https://go-review.googlesource.com/c/go/+/168597/
+		// Thus we assume any error means we can't resolve the host yet.
+		if err == nil {
+			break
+		}
+
+		// abort if the context deadline is exceeded
+		if err := ctx.Err(); err != nil {
+			return nil, err
+		}
+	}
+	tracing.LogEvent(span, "host available")
+	return &api.ControlPortResponse{}, nil
+}
+
+// updateControlPort Updates an already exposed k8s service. It may change the exposed port number or un-expose a given port.
+// It deletes the existing service if the service ends up with 0 exposed ports.
+func (m *Manager) updateControlPort(ctx context.Context, req *api.ControlPortRequest, port int32, servicePrefix string, pod *corev1.Pod, service corev1.Service) (res *api.ControlPortResponse, err error) {
+	span, ctx := tracing.FromContext(ctx, "createControlPort")
+	tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
+	defer tracing.FinishSpan(span, &err)
+
+	gaugeMethod := ""
+	startControl := time.Now()
+	defer func() {
+		if err != nil {
+			// TODO(arthursens): Enable exemplars: https://vbehar.medium.com/using-prometheus-exemplars-to-jump-from-metrics-to-traces-in-grafana-249e721d4192
+			m.metrics.controlPortDuration.WithLabelValues("failed").Observe(time.Since(startControl).Seconds())
+			return
+		}
+		// We can't use a simple if with no else because there's a change we don' update a port at all with no errors.
+		if gaugeMethod == "Inc" {
+			m.metrics.openedPorts.Inc()
+		} else if gaugeMethod == "Dec" {
+			m.metrics.openedPorts.Dec()
+		}
+		m.metrics.controlPortDuration.WithLabelValues("success").Observe(time.Since(startControl).Seconds())
+	}()
+
 	spec := &service.Spec
 	existingPortSpecIdx := -1
 	for i, p := range service.Spec.Ports {
@@ -676,6 +730,7 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 			portSpec.TargetPort = intstr.FromInt(int(req.Spec.Target))
 		}
 		spec.Ports = append(spec.Ports, portSpec)
+		gaugeMethod = "Inc"
 	} else if req.Expose && existingPortSpecIdx >= 0 {
 		service.Spec.Ports[existingPortSpecIdx].TargetPort = intstr.FromInt(int(req.Spec.Target))
 		service.Spec.Ports[existingPortSpecIdx].Name = portSpecToName(req.Spec)
@@ -685,6 +740,7 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 	} else if !req.Expose && existingPortSpecIdx >= 0 {
 		// port is exposed but shouldn't be - remove it from the port list
 		spec.Ports = append(spec.Ports[:existingPortSpecIdx], spec.Ports[existingPortSpecIdx+1:]...)
+		gaugeMethod = "Dec"
 	}
 
 	if len(spec.Ports) == 0 {
@@ -726,10 +782,6 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 		return nil, xerrors.Errorf("cannot control port: %w", err)
 	}
 
-	err = notifyStatusChange()
-	if err != nil {
-		return nil, err
-	}
 	return &api.ControlPortResponse{}, nil
 }
 
