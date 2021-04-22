@@ -31,4 +31,4 @@ export USER=gitpod
 [ -s ~/.nvm/nvm-lazy.sh ] && source ~/.nvm/nvm-lazy.sh
 
 cd /ide
-exec /ide/node/bin/gitpod-node --inspect=0 ./out/gitpod.js $*
+exec /ide/node/bin/gitpod-node ./out/gitpod.js $*
