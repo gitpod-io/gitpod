@@ -580,7 +580,7 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 	notifyStatusChange := func() error {
 		// by modifying the ports service we have changed the workspace status. However, this status change is not propagated
 		// through the regular monitor mechanism as we did not modify the pod itself. We have to send out a status update
-		// outselves. Doing it ourselves lets us synchronize the status update with probing for actual availability, not just
+		// ourselves. Doing it ourselves lets us synchronize the status update with probing for actual availability, not just
 		// the service modification in Kubernetes.
 		wso := workspaceObjects{Pod: pod, PortsService: &service}
 		err := m.completeWorkspaceObjects(ctx, &wso)

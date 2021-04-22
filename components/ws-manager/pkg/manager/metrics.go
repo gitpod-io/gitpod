@@ -33,6 +33,8 @@ type metrics struct {
 	startupTimeHistVec    *prometheus.HistogramVec
 	totalStartsCounterVec *prometheus.CounterVec
 	totalStopsCounterVec  *prometheus.CounterVec
+	openedPorts           *prometheus.Gauge
+	controlPortDuration       *prometheus.Histogram
 
 	mu         sync.Mutex
 	phaseState map[string]api.WorkspacePhase
