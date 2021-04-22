@@ -236,9 +236,9 @@ env:
   username: .username
   password: .password
 {{- else if .existingAuthSecret }}
-{{- $gitpod.rabbitmq.auth.secret := lookup "v1" "Secret" .existingAuthSecret }}
-  username: index ($gitpod.rabbitmq.auth.secret).data "username"
-  password: index ($gitpod.rabbitmq.auth.secret).data "password"
+{{- $rabbitmq-auth-secret := lookup "v1" "Secret" .existingAuthSecret }}
+  username: index ($rabbitmq-auth-secret).data "username"
+  password: index ($rabbitmq-auth-secret).data "password"
 {{- else }}
   username: ""
   password: ""
