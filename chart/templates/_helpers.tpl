@@ -203,6 +203,7 @@ env:
 {{- else }}
   {{- randAlphaNum 30 }}
 {{- end }}
+{{- end }}
 {{- end -}}
 
 {{- define "gitpod.container.dbEnv" -}}
@@ -241,6 +242,7 @@ env:
 {{- else }}
   username: ""
   password: ""
+{{- end }
 {{- end }
 {{- end -}}
 
