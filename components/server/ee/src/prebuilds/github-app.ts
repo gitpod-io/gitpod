@@ -247,7 +247,7 @@ export class GithubApp extends Probot {
         }
 
         const newBody = body + `\n\n${button}\n\n`;
-        const updatePrPromise: Promise<void> = (ctx.github as any).pullRequests.update({ ...ctx.repo(), number: pr.number, body: newBody });
+        const updatePrPromise = ctx.octokit.pulls.update({ ...ctx.repo(), pull_number: pr.number, body: newBody });
         updatePrPromise.catch(err => log.error(err, "Error while updating PR body", { contextURL }));
     }
 
@@ -265,7 +265,7 @@ export class GithubApp extends Probot {
 
             if (ctx.payload.action === 'synchronize') {
                 // someone just pushed a commit, remove the label
-                const delLabelPromise: Promise<void> = (ctx.github as any).issues.removeLabel({ ...ctx.repo(), number: pr.number, name: label });
+                const delLabelPromise = ctx.octokit.issues.removeLabel({ ...ctx.repo(), number: pr.number, name: label });
                 delLabelPromise.catch(err => log.error(err, "Error while removing label from PR"));
             }
 
@@ -273,13 +273,13 @@ export class GithubApp extends Probot {
                 prebuildStartPromise.then(startWsResult => {
                     if (startWsResult.done) {
                         if (!!startWsResult.didFinish) {
-                            const addLabelPromise: Promise<void> = (ctx.github as any).issues.addLabels({ ...ctx.repo(), number: pr.number, labels: [label] });
+                            const addLabelPromise = ctx.octokit.issues.addLabels({ ...ctx.repo(), number: pr.number, labels: [label] });
                             addLabelPromise.catch(err => log.error(err, "Error while adding label to PR"));
                         }
                     } else {
                         new PrebuildListener(this.messageBus, startWsResult.wsid, evt => {
                             if (!HeadlessWorkspaceEventType.isRunning(evt) && HeadlessWorkspaceEventType.didFinish(evt)) {
-                                const addLabelPromise: Promise<void> = (ctx.github as any).issues.addLabels({ ...ctx.repo(), number: pr.number, labels: [label] });
+                                const addLabelPromise = ctx.octokit.issues.addLabels({ ...ctx.repo(), number: pr.number, labels: [label] });
                                 addLabelPromise.catch(err => log.error(err, "Error while adding label to PR"));
                             }
                         });
@@ -297,14 +297,14 @@ export class GithubApp extends Probot {
         const pr = ctx.payload.pull_request;
         const contextURL = pr.html_url;
         const button = `<a href="${this.env.hostUrl.withContext(contextURL)}"><img src="${this.getBadgeImageURL()}"/></a>`;
-        const comments = await ((ctx.github as any).issues.listComments(ctx.issue()) as Promise<any>);
+        const comments = await ctx.octokit.issues.listComments(ctx.issue());
         const existingComment = comments.data.find((c: any) => c.body.indexOf(button) > -1);
         if (existingComment) {
             return;
         }
 
         const newComment = ctx.issue({ body: `\n\n${button}\n\n` });
-        const newCommentPromise: Promise<void> = (ctx.github as any).issues.createComment(newComment);
+        const newCommentPromise = ctx.octokit.issues.createComment(newComment);
         newCommentPromise.catch(err => log.error(err, "Error while adding new PR comment", { contextURL }));
     }
 
