@@ -664,9 +664,10 @@ func (m *Manager) createPortsService(workspaceID string, metaID string, serviceP
 			Name:      serviceName,
 			Namespace: m.Config.Namespace,
 			Labels: map[string]string{
-				"workspaceID":     workspaceID,
-				wsk8s.MetaIDLabel: metaID,
-				markerLabel:       "true",
+				"workspaceID":          workspaceID,
+				wsk8s.MetaIDLabel:      metaID,
+				markerLabel:            "true",
+				wsk8s.ServiceTypeLabel: "ports",
 			},
 			Annotations: annotations,
 		},

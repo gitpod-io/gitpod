@@ -7,6 +7,7 @@
             "labels": {
                 "gpwsman": "true",
                 "metaID": "",
+                "serviceType": "ports",
                 "workspaceID": "foobar"
             },
             "annotations": {
