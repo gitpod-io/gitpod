@@ -190,7 +190,7 @@ func Run(options ...RunOption) {
 
 	var ideWG sync.WaitGroup
 	ideWG.Add(1)
-	go startAndWatchIDE(ctx, cfg, &ideWG, ideReady)
+	go startAndWatchIDE(ctx, cfg, &ideWG, ideReady, termMux)
 
 	var wg sync.WaitGroup
 	wg.Add(1)
@@ -378,7 +378,7 @@ func reaper(terminatingReaper <-chan bool) {
 	}
 }
 
-func startAndWatchIDE(ctx context.Context, cfg *Config, wg *sync.WaitGroup, ideReady *ideReadyState) {
+func startAndWatchIDE(ctx context.Context, cfg *Config, wg *sync.WaitGroup, ideReady *ideReadyState, termMux *terminal.Mux) {
 	defer wg.Done()
 	defer log.Debug("startAndWatchIDE shutdown")
 
@@ -417,8 +417,11 @@ supervisorLoop:
 			// see https://github.com/golang/go/issues/27505#issuecomment-713706104
 			runtime.LockOSThread()
 			defer runtime.UnlockOSThread()
-
-			err := cmd.Start()
+			_, err := termMux.Start(cmd, terminal.TermOptions{
+				Annotations: map[string]string{
+					"supervisor": "true",
+				},
+			})
 			if err != nil {
 				if s == statusNeverRan {
 					log.WithError(err).Fatal("IDE failed to start")
