@@ -79,6 +79,26 @@ function AddEnvVarModal(p: EnvVarModalProps) {
     </Modal>
 }
 
+function DeleteEnvVarModal(p: { variable: UserEnvVarValue, deleteVariable: () => void, onClose: () => void }) {
+    return <Modal visible={true} onClose={p.onClose}>
+        <h3 className="mb-4">Delete Variable?</h3>
+        <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">
+            <div className="grid grid-cols-2 gap-4 px-3 text-sm text-gray-400">
+                <span className="truncate">Name</span>
+                <span className="truncate">Scope</span>
+            </div>
+            <div className="grid grid-cols-2 gap-4 p-3 mt-3 text-gray-400 bg-gray-100 dark:bg-gray-800 rounded-xl">
+                <span className="truncate text-gray-900 dark:text-gray-50">{p.variable.name}</span>
+                <span className="truncate text-sm">{p.variable.repositoryPattern}</span>
+            </div>
+        </div>
+        <div className="flex justify-end mt-6">
+            <button className="secondary" onClick={p.onClose}>Cancel</button>
+            <button className="ml-2 danger" onClick={() => { p.deleteVariable(); p.onClose(); }} >Delete Variable</button>
+        </div>
+    </Modal>;
+}
+
 function sortEnvVars(a: UserEnvVarValue, b: UserEnvVarValue) {
     if (a.name === b.name) {
         return a.repositoryPattern > b.repositoryPattern ? 1 : -1;
@@ -90,6 +110,7 @@ export default function EnvVars() {
     const [envVars, setEnvVars] = useState([] as UserEnvVarValue[]);
     const [currentEnvVar, setCurrentEnvVar] = useState({ name: '', value: '', repositoryPattern: '' } as UserEnvVarValue);
     const [isAddEnvVarModalVisible, setAddEnvVarModalVisible] = useState(false);
+    const [isDeleteEnvVarModalVisible, setDeleteEnvVarModalVisible] = useState(false);
     const update = async () => {
         await getGitpodService().server.getAllEnvVars().then(r => setEnvVars(r.sort(sortEnvVars)));
     }
@@ -102,11 +123,19 @@ export default function EnvVars() {
     const add = () => {
         setCurrentEnvVar({ name: '', value: '', repositoryPattern: '' });
         setAddEnvVarModalVisible(true);
+        setDeleteEnvVarModalVisible(false);
     }
 
-    const edit = (ev: UserEnvVarValue) => {
-        setCurrentEnvVar(ev);
+    const edit = (variable: UserEnvVarValue) => {
+        setCurrentEnvVar(variable);
         setAddEnvVarModalVisible(true);
+        setDeleteEnvVarModalVisible(false);
+    }
+
+    const confirmDeleteVariable = (variable: UserEnvVarValue) => {
+        setCurrentEnvVar(variable);
+        setAddEnvVarModalVisible(false);
+        setDeleteEnvVarModalVisible(true);
     }
 
     const save = async (variable: UserEnvVarValue) => {
@@ -114,7 +143,7 @@ export default function EnvVars() {
         await update();
     };
 
-    const deleteV = async (variable: UserEnvVarValue) => {
+    const deleteVariable = async (variable: UserEnvVarValue) => {
         await getGitpodService().server.deleteEnvVar(variable);
         await update();
     };
@@ -145,26 +174,32 @@ export default function EnvVars() {
                 }
             }
         }
+        if (!variable.id && envVars.some(v => v.name === name && v.repositoryPattern === pattern)) {
+            return 'A variable with this name and scope already exists';
+        }
         return '';
     };
 
-    return <PageWithSubMenu subMenu={settingsMenu}  title='Variables' subtitle='Configure environment variables for all workspaces.'>
-        {isAddEnvVarModalVisible ? <AddEnvVarModal
+    return <PageWithSubMenu subMenu={settingsMenu} title='Variables' subtitle='Configure environment variables for all workspaces.'>
+        {isAddEnvVarModalVisible && <AddEnvVarModal
             save={save}
             envVar={currentEnvVar}
             validate={validate}
-            onClose={() => setAddEnvVarModalVisible(false)} /> : null}
+            onClose={() => setAddEnvVarModalVisible(false)} />}
+        {isDeleteEnvVarModalVisible && <DeleteEnvVarModal
+            variable={currentEnvVar}
+            deleteVariable={() => deleteVariable(currentEnvVar)}
+            onClose={() => setDeleteEnvVarModalVisible(false)} />}
         <div className="flex items-start sm:justify-between mb-2">
             <div>
                 <h3>Environment Variables</h3>
                 <h2 className="text-gray-500">Variables are used to store information like passwords.</h2>
             </div>
             {envVars.length !== 0
-            ?
-            <div className="mt-3 flex mt-0">
-                <button onClick={add} className="ml-2">New Variable</button>
-            </div>
-            : null}
+                ? <div className="mt-3 flex mt-0">
+                    <button onClick={add} className="ml-2">New Variable</button>
+                </div>
+                : null}
         </div>
         {envVars.length === 0
             ? <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full h-96">
@@ -183,22 +218,22 @@ export default function EnvVars() {
                     </div>
                 </div>
                 <div className="flex flex-col">
-                    {envVars.map(ev => {
+                    {envVars.map(variable => {
                         return <div className="rounded-xl whitespace-nowrap flex space-x-2 py-3 px-3 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light transition ease-in-out group">
-                            <div className="w-5/12 m-auto">{ev.name}</div>
-                            <div className="w-5/12 m-auto text-sm text-gray-400">{ev.repositoryPattern}</div>
+                            <div className="w-5/12 m-auto">{variable.name}</div>
+                            <div className="w-5/12 m-auto text-sm text-gray-400">{variable.repositoryPattern}</div>
                             <div className="w-2/12 flex justify-end">
                                 <div className="flex w-8 self-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer opacity-0 group-hover:opacity-100">
                                     <ContextMenu menuEntries={[
                                         {
                                             title: 'Edit',
-                                            onClick: () => edit(ev),
+                                            onClick: () => edit(variable),
                                             separator: true
                                         },
                                         {
                                             title: 'Delete',
                                             customFontStyle: 'text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300',
-                                            onClick: () => deleteV(ev)
+                                            onClick: () => confirmDeleteVariable(variable)
                                         },
                                     ]}>
                                         <svg className="w-8 h-8 p-1 text-gray-600 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Actions</title><g fill="currentColor" transform="rotate(90 12 12)"><circle cx="1" cy="1" r="2" transform="translate(5 11)"/><circle cx="1" cy="1" r="2" transform="translate(11 11)"/><circle cx="1" cy="1" r="2" transform="translate(17 11)"/></g></svg>
