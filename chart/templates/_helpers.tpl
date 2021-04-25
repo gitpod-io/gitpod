@@ -235,11 +235,9 @@ env:
 {{- with $gp.rabbitmq.auth }}
 {{- if (.password) }}
   .password
-{{- else if .existingAuthSecret }}
+{{- else .existingAuthSecret }}
   {{- $secret := (lookup "v1" "Secret" .existingAuthSecret).data -}}
   index $secret "password"
-{{- else }}
-  ""
 {{- end }}
 {{- end }}
 {{- end -}}
