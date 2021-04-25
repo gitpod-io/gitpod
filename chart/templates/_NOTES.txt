@@ -1,3 +1,0 @@
-Coool
-{{ include "gitpod.messageBus.auth" .Values }}
-Beaans
