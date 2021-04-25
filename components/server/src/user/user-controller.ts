@@ -229,20 +229,20 @@ export class UserController {
                     res.sendStatus(401);
                     return;
                 }
-    
+
                 const user = req.user as User;
                 if (user.blocked) {
                     res.sendStatus(403);
                     return;
                 }
-    
+
                 const rt = req.query.returnTo;
                 if (!rt || !rt.startsWith("localhost:")) {
                     log.error(`auth/local-app: invalid returnTo URL: "${rt}"`)
                     res.sendStatus(400);
                     return;
                 }
-    
+
                 const token = crypto.randomBytes(30).toString('hex');
                 const tokenHash = crypto.createHash('sha256').update(token, 'utf8').digest("hex");
                 const dbToken: GitpodToken & { user: DBUser } = {
@@ -259,11 +259,11 @@ export class UserController {
                     created: new Date().toISOString(),
                 };
                 await this.userDb.storeGitpodToken(dbToken);
-    
+
                 const otsExpirationTime = new Date();
                 otsExpirationTime.setMinutes(otsExpirationTime.getMinutes() + 2);
                 const ots = await this.otsServer.serve({}, token, otsExpirationTime);
-    
+
                 res.redirect(`http://${rt}/?ots=${encodeURI(ots.token)}`);
             });
         }
