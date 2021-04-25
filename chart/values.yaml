@@ -556,13 +556,14 @@ rabbitmq:
     allowExternal: true
   plugins: "rabbitmq_management rabbitmq_peer_discovery_k8s"
   extraPlugins: "rabbitmq_shovel rabbitmq_shovel_management"
+  {{- $rabbitmqpassword := (include "gitpod.messageBus.auth" .Values) -}}
   extraSecrets:
     load-definition:
       load_definition.json: |
         {
           "users": [{
             "name": {{ required "rabbitmq username is required, please add a value to your values.yaml or with the helm flag --set rabbitmq.auth.username=xxxxx" .Values.auth.username | quote }},
-            "password": {{ required "rabbitmq password is required, please add a value to your values.yaml or with the helm flag --set rabbitmq.auth.password=xxxxx" (include "gitpod.messageBus.auth" .Values) | quote }},
+            "password": {{ required "rabbitmq password is required, please add a value to your values.yaml or with the helm flag --set rabbitmq.auth.password=xxxxx" $rabbitmqpassword | quote }},
             "tags": "administrator"
           }],
           "vhosts": [{
@@ -656,7 +657,7 @@ rabbitmq:
         src-exchange: {{ $shovel.srcExchange | default "gitpod.ws.local" | quote }}
         src-exchange-key: {{ $shovel.srcExchangeKey | default "#" | quote  }}
         src-protocol: "amqp091"
-        src-uri: {{ $shovel.srcUri | replace "$USERNAME" $auth.username | replace "$PASSWORD" (include "gitpod.messageBus.auth" .Values) | quote }}
+        src-uri: {{ $shovel.srcUri | replace "$USERNAME" $auth.username | replace "$PASSWORD" $rabbitmqpassword | quote }}
         dest-add-forward-headers: {{ $shovel.destAddForwardHeaders | default true }}
         dest-exchange: {{ $shovel.destExchange | default "gitpod.ws" | quote }}
         dest-protocol: "amqp091"
