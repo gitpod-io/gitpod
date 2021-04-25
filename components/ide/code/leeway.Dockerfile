@@ -4,7 +4,7 @@
 
 # we use latest major version of Node.js distributed VS Code. (see about dialog in your local VS Code)
 # ideallay we should use exact version, but it has criticla bugs in regards to grpc over http2 streams
-ARG NODE_VERSION=12.21.0
+ARG NODE_VERSION=12.22.1
 
 
 FROM node:${NODE_VERSION} AS node_installer
