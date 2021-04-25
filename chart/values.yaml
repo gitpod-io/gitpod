@@ -645,7 +645,7 @@ rabbitmq:
     minAvailable: 0
     maxUnavailable: 1
   shovelsTemplate: |
-    {{ $auth := include "gitpod.messageBus.auth" .Values }}
+    {{ $auth := include .Values.auth }}
     {{- range $index, $shovel := .Values.shovels }}
     - name: {{ $shovel.name | default (randAlphaNum 20) | quote }}
       vhost: "/"
