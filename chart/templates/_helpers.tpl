@@ -236,9 +236,9 @@ env:
   username: .username
   password: .password
 {{- else if .existingAuthSecret }}
-  {{- $.secret := (lookup "v1" "Secret" .existingAuthSecret).data -}}
-  username: index $.secret "username"
-  password: index $.secret "password"
+  {{- $secret := (lookup "v1" "Secret" .existingAuthSecret).data -}}
+  username: index $secret "username"
+  password: index $secret "password"
 {{- else }}
   username: ""
   password: ""
