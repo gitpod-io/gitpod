@@ -245,11 +245,10 @@ env:
 {{- define "gitpod.container.messagebusEnv" -}}
 {{- $ := .root -}}
 {{- $gp := .gp -}}
-{{- $auth := include "gitpod.messageBus.auth" . -}}
 - name: MESSAGEBUS_USERNAME
-  value: {{ $gp.rabbitmq.auth.username | quote }}
+  value: {{ $gp.rabbitmq.auth.username }}
 - name: MESSAGEBUS_PASSWORD
-  value: {{ $auth | quote }}
+  value: {{ include "gitpod.messageBus.auth" . | quote }}
 - name: MESSAGEBUS_CA
   valueFrom:
     secretKeyRef:
