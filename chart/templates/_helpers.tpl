@@ -234,13 +234,12 @@ env:
 {{- $gp := .gp -}}
 {{- with $gp.rabbitmq.auth }}
 {{- if (.password) }}
-  password: .password
+  .password
 {{- else if .existingAuthSecret }}
   {{- $secret := (lookup "v1" "Secret" .existingAuthSecret).data -}}
-  password: index $secret "password"
+  index $secret "password"
 {{- else }}
-  username: ""
-  password: ""
+  ""
 {{- end }}
 {{- end }}
 {{- end -}}
@@ -252,7 +251,7 @@ env:
 - name: MESSAGEBUS_USERNAME
   value: {{ $gp.rabbitmq.auth.username | quote }}
 - name: MESSAGEBUS_PASSWORD
-  value: {{ $auth.password | quote }}
+  value: {{ $auth | quote }}
 - name: MESSAGEBUS_CA
   valueFrom:
     secretKeyRef:
