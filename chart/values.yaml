@@ -656,7 +656,7 @@ rabbitmq:
         src-exchange: {{ $shovel.srcExchange | default "gitpod.ws.local" | quote }}
         src-exchange-key: {{ $shovel.srcExchangeKey | default "#" | quote  }}
         src-protocol: "amqp091"
-        src-uri: {{ $shovel.srcUri | replace "$USERNAME" $auth.username | replace "$PASSWORD" $auth.password | quote }}
+        src-uri: {{ $shovel.srcUri | replace "$USERNAME" $auth.username | replace "$PASSWORD" (include "gitpod.messageBus.auth" .Values) | quote }}
         dest-add-forward-headers: {{ $shovel.destAddForwardHeaders | default true }}
         dest-exchange: {{ $shovel.destExchange | default "gitpod.ws" | quote }}
         dest-protocol: "amqp091"
