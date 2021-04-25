@@ -233,12 +233,10 @@ env:
 {{- define "gitpod.messageBus.auth" -}}
 {{- $gp := .gp -}}
 {{- with $gp.rabbitmq.auth }}
-{{- if (and .username .password) }}
-  username: .username
+{{- if (.password) }}
   password: .password
 {{- else if .existingAuthSecret }}
   {{- $secret := (lookup "v1" "Secret" .existingAuthSecret).data -}}
-  username: index $secret "username"
   password: index $secret "password"
 {{- else }}
   username: ""
@@ -252,9 +250,9 @@ env:
 {{- $gp := .gp -}}
 {{- $auth := include "gitpod.messageBus.auth" . -}}
 - name: MESSAGEBUS_USERNAME
-  value: "{{ $auth.username }}"
+  value: {{ $gp.rabbitmq.auth.username | quote }}
 - name: MESSAGEBUS_PASSWORD
-  value: "{{ $auth.password }}"
+  value: {{ $auth.password | quote }}
 - name: MESSAGEBUS_CA
   valueFrom:
     secretKeyRef:

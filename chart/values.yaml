@@ -538,7 +538,7 @@ rabbitmq:
   auth:
     username:
     password:
-    existingAuthSecret:
+    existingPasswordSecret: # key must be rabbitmq-password for rabbitmq chart compatibility!
     existingErlangSecret: messagebus-erlang-cookie
     tls:
       enabled: true
