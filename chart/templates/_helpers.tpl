@@ -231,7 +231,8 @@ env:
 {{- end -}}
 
 {{- define "gitpod.messageBus.auth" -}}
-{{- with .rabbitmq.auth }}
+{{- $gp := .gp -}}
+{{- with $gp.rabbitmq.auth }}
 {{- if (and .username .password) }}
   username: .username
   password: .password
@@ -249,7 +250,7 @@ env:
 {{- define "gitpod.container.messagebusEnv" -}}
 {{- $ := .root -}}
 {{- $gp := .gp -}}
-{{- $auth := include "gitpod.messageBus.auth" $gp -}}
+{{- $auth := include "gitpod.messageBus.auth" . -}}
 - name: MESSAGEBUS_USERNAME
   value: "{{ $auth.username }}"
 - name: MESSAGEBUS_PASSWORD
