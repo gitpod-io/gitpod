@@ -561,7 +561,7 @@ rabbitmq:
       load_definition.json: |
         {
           "users": [{
-            "name": {{ required "rabbitmq username is required, please add a value to your values.yaml or with the helm flag --set rabbitmq.auth.username=xxxxx" (include "gitpod.messageBus.auth" .Values).username  | quote }},
+            "name": {{ required "rabbitmq username is required, please add a value to your values.yaml or with the helm flag --set rabbitmq.auth.username=xxxxx" .Values.auth.username | quote }},
             "password": {{ required "rabbitmq password is required, please add a value to your values.yaml or with the helm flag --set rabbitmq.auth.password=xxxxx" (include "gitpod.messageBus.auth" .Values).password | quote }},
             "tags": "administrator"
           }],
