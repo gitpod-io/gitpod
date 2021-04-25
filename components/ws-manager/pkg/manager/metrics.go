@@ -6,6 +6,7 @@ package manager
 
 import (
 	"context"
+	"math"
 	"strings"
 	"sync"
 	"time"
@@ -13,6 +14,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	corev1 "k8s.io/api/core/v1"
 
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
@@ -23,8 +25,8 @@ func (m *Manager) RegisterMetrics(reg prometheus.Registerer) error {
 }
 
 const (
-	metricsNamespace          = "gitpod_ws_manager"
-	metricsWorkspaceSubsystem = "workspace"
+	metricsNamespace          = "gitpod"
+	metricsWorkspaceSubsystem = "ws_manager"
 )
 
 type metrics struct {
@@ -33,6 +35,7 @@ type metrics struct {
 	startupTimeHistVec    *prometheus.HistogramVec
 	totalStartsCounterVec *prometheus.CounterVec
 	totalStopsCounterVec  *prometheus.CounterVec
+	totalOpenPortGauge    prometheus.GaugeFunc
 
 	mu         sync.Mutex
 	phaseState map[string]api.WorkspacePhase
@@ -45,7 +48,7 @@ func newMetrics(m *Manager) *metrics {
 		startupTimeHistVec: prometheus.NewHistogramVec(prometheus.HistogramOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
-			Name:      "startup_seconds",
+			Name:      "workspace_startup_seconds",
 			Help:      "time it took for workspace pods to reach the running phase",
 			// same as components/ws-manager-bridge/src/prometheus-metrics-exporter.ts#L15
 			Buckets: prometheus.ExponentialBuckets(2, 2, 10),
@@ -53,15 +56,56 @@ func newMetrics(m *Manager) *metrics {
 		totalStartsCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
-			Name:      "starts_total",
+			Name:      "workspace_starts_total",
 			Help:      "total number of workspaces started",
 		}, []string{"type"}),
 		totalStopsCounterVec: prometheus.NewCounterVec(prometheus.CounterOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
-			Name:      "stops_total",
+			Name:      "workspace_stops_total",
 			Help:      "total number of workspaces stopped",
 		}, []string{"reason"}),
+		totalOpenPortGauge: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
+			Namespace: metricsNamespace,
+			Subsystem: metricsWorkspaceSubsystem,
+			Name:      "exposed_ports",
+			Help:      "total number of currently exposed ports",
+		}, newTotalOpenPortGaugeHandler(m)),
+	}
+}
+
+func newTotalOpenPortGaugeHandler(m *Manager) func() float64 {
+	countExposedPorts := func(ctx context.Context) (float64, error) {
+		var l corev1.ServiceList
+		err := m.Clientset.List(ctx, &l, workspaceObjectListOptions(m.Config.Namespace))
+		if err != nil {
+			return 0, err
+		}
+		var portCount int
+		for _, s := range l.Items {
+			tpe, ok := s.Labels[wsk8s.ServiceTypeLabel]
+			if !ok {
+				continue
+			}
+			if tpe != "ports" {
+				continue
+			}
+			portCount += len(s.Spec.Ports)
+		}
+		return float64(portCount), nil
+	}
+
+	return func() float64 {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		r, err := countExposedPorts(ctx)
+		if err != nil {
+			log.WithError(err).Warn("cannot compute exposed_ports metric")
+			return math.NaN()
+		}
+
+		return r
 	}
 }
 
@@ -75,6 +119,7 @@ func (m *metrics) Register(reg prometheus.Registerer) error {
 		newSubscriberQueueLevelVec(m.manager),
 		m.totalStartsCounterVec,
 		m.totalStopsCounterVec,
+		m.totalOpenPortGauge,
 	}
 	for _, c := range collectors {
 		err := reg.Register(c)

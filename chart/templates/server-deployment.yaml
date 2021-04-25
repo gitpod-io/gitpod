@@ -163,6 +163,10 @@ spec:
         - name: MAKE_NEW_USERS_ADMIN
           value: {{ $comp.makeNewUsersAdmin | quote }}
     {{- end }}
+    {{- if $comp.enableLocalApp }}
+        - name: ENABLE_LOCAL_APP
+          value: "true"
+    {{- end }}
     {{- if $comp.portAccessForUsersOnly }}
         - name: PORT_ACCESS_FOR_USERS_ONLY
           value: "true"

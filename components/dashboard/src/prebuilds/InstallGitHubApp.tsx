@@ -5,11 +5,11 @@
  */
 
 import { useLocation } from "react-router";
+import InfoBox from "../components/InfoBox";
 import Modal from "../components/Modal";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { useState } from "react";
-import info from "../images/info.svg";
 import { openAuthorizeWindow } from "../provider-utils";
 
 async function registerApp(installationId: string, setModal: (modal: 'done' | string | undefined) => void) {
@@ -67,10 +67,7 @@ export default function InstallGitHubApp() {
                 <div className="flex flex-col items-center m-auto max-w-lg mt-40">
                     <h3 className="text-center pb-3 text-gray-500">Install GitHub App</h3>
                     <div className="text-center pb-6 text-gray-500">You are about to install the GitHub app for Gitpod.</div>
-                    <div className="flex rounded-md bg-gray-200 dark:bg-gray-800 p-3">
-                        <img className="w-4 h-4 ml-2 mr-3 mt-1" src={info} alt="info" />
-                        <span className="text-gray-500">This action will also allow Gitpod to access private repositories. You can edit git provider permissions later in user settings.</span>
-                    </div>
+                    <InfoBox>This action will also allow Gitpod to access private repositories. You can edit git provider permissions later in user settings.</InfoBox>
                     <div className="mt-6">
                         <button className="secondary">Cancel</button>
                         <button className="ml-2" onClick={() => registerApp(installationId, setModal)}>Install App</button>
@@ -86,9 +83,6 @@ export default function InstallGitHubApp() {
             <button className="" onClick={() => registerApp(installationId, setModal)}>Try Again</button>
         ]}>
             <div className="pb-6 text-gray-500">Could not install the GitHub app.</div>
-            <div className="flex rounded-md bg-gray-200 dark:bg-gray-800 p-3">
-                <img className="w-4 h-4 ml-2 mr-3 mt-1" src={info} alt="info" />
-                <span className="text-gray-500">{modal}</span>
-            </div>
+            <InfoBox>{modal}</InfoBox>
         </Modal></>;
 }

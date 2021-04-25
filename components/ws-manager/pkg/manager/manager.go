@@ -191,6 +191,11 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	// mandatory Theia service
 	servicePrefix := getServicePrefix(req)
 	theiaServiceName := getTheiaServiceName(servicePrefix)
+	theiaServiceLabels := make(map[string]string, len(startContext.Labels)+1)
+	for k, v := range startContext.Labels {
+		theiaServiceLabels[k] = v
+	}
+	theiaServiceLabels[wsk8s.ServiceTypeLabel] = "ide"
 	theiaService := corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      theiaServiceName,

@@ -55,18 +55,19 @@ export async function build(context, version) {
     } catch (err) {
         werft.fail('prep', err);
     }
-    const masterBuild = context.Repository.ref.includes("refs/heads/main");
+    const repo = `${context.Repository.host}/${context.Repository.owner}/${context.Repository.repo}`;
+    const mainBuild = repo === "github.com/gitpod-io/gitpod" && context.Repository.ref.includes("refs/heads/main");
     const dontTest = "no-test" in buildConfig;
     const cacheLevel = "no-cache" in buildConfig ? "remote-push" : "remote";
     const publishRelease = "publish-release" in buildConfig;
     const workspaceFeatureFlags = (buildConfig["ws-feature-flags"] || "").split(",").map(e => e.trim())
     const dynamicCPULimits = "dynamic-cpu-limits" in buildConfig;
-    const withInstaller = "with-installer" in buildConfig || masterBuild;
+    const withInstaller = "with-installer" in buildConfig || mainBuild;
     const noPreview = "no-preview" in buildConfig || publishRelease;
     const registryFacadeHandover = "registry-facade-handover" in buildConfig;
     const storage = buildConfig["storage"] || "";
     const withIntegrationTests = buildConfig["with-integration-tests"] == "true";
-    const publishToNpm = "publish-to-npm" in buildConfig || masterBuild;
+    const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
 
     const withWsCluster = parseWsCluster(buildConfig["with-ws-cluster"]);   // e.g., "dev2|gpl-ws-cluster-branch": prepares this branch to host (an additional) workspace cluster
     const wsCluster = parseWsCluster(buildConfig["as-ws-cluster"]);         // e.g., "dev2|gpl-fat-cluster-branch": deploys this build as so that it is available under that subdomain as that cluster
@@ -74,7 +75,7 @@ export async function build(context, version) {
     werft.log("job config", JSON.stringify({
         buildConfig,
         version,
-        masterBuild,
+        mainBuild,
         dontTest,
         cacheLevel,
         publishRelease,
@@ -141,7 +142,7 @@ export async function build(context, version) {
     }
     // gitTag(`build/${version}`);
 
-    // if (masterBuild) {
+    // if (mainBuild) {
     /**
      * Deploy master
      *

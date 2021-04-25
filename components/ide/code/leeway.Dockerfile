@@ -4,7 +4,10 @@
 
 # we use latest major version of Node.js distributed VS Code. (see about dialog in your local VS Code)
 # ideallay we should use exact version, but it has criticla bugs in regards to grpc over http2 streams
-FROM node:12.21.0 AS node_installer
+ARG NODE_VERSION=12.21.0
+
+
+FROM node:${NODE_VERSION} AS node_installer
 RUN mkdir -p /ide/node/bin \
     /ide/node/include/node/ \
     /ide/node/lib/node_modules/npm/ \
@@ -19,18 +22,27 @@ RUN mkdir -p /ide/node/bin \
 RUN cp /ide/node/bin/node /ide/node/bin/gitpod-node && rm /ide/node/bin/node
 
 
-FROM mcr.microsoft.com/vscode/devcontainers/typescript-node:0-12 as code_installer
+FROM ubuntu:18.04 as code_installer
 
-
-# see https://github.com/gitpod-io/vscode/blob/bdeca3f8709b70b339f41fc2a14e94f83d6475ac/.github/workflows/ci.yml#L130
-RUN sudo apt-get update \
-    && sudo apt-get -y install --no-install-recommends libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0 libgbm1 \
+RUN apt-get update \
+    # see https://github.com/microsoft/vscode/blob/42e271dd2e7c8f320f991034b62d4c703afb3e28/.github/workflows/ci.yml#L94
+    && apt-get -y install --no-install-recommends libxkbfile-dev pkg-config libsecret-1-dev libxss1 dbus xvfb libgtk-3-0 libgbm1 \
+    && apt-get -y install --no-install-recommends git curl build-essential libssl-dev ca-certificates python \
     # Clean up
-    && sudo apt-get autoremove -y \
-    && sudo apt-get clean -y \
+    && apt-get autoremove -y \
+    && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-ENV GP_CODE_COMMIT cbe1690286445dde2260d88e6de5bce1413465c6
+ARG NODE_VERSION
+ENV NVM_DIR /root/.nvm
+RUN curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh | sh \
+    && . $NVM_DIR/nvm.sh  \
+    && nvm install $NODE_VERSION \
+    && nvm alias default $NODE_VERSION \
+    && npm install -g yarn node-gyp
+ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
+
+ENV GP_CODE_COMMIT cee6bf3c885a93cb6344da8747db3c66b6590991
 RUN mkdir gp-code \
     && cd gp-code \
     && git init \
@@ -47,6 +59,7 @@ RUN chmod -R ugo+w /gitpod-pkg-server/extensions
 # cli config
 COPY bin /ide/bin
 RUN chmod -R ugo+x /ide/bin
+
 
 FROM scratch
 # copy static web resources in first layer to serve from blobserve

@@ -72,6 +72,9 @@ type StaticConfig struct {
 
 	// APIEndpointPort is the port where to serve the API endpoint on
 	APIEndpointPort int `json:"apiEndpointPort"`
+
+	// SSHPort is the port we run the SSH server on
+	SSHPort int `json:"sshPort"`
 }
 
 // Validate validates this configuration
@@ -84,6 +87,9 @@ func (c StaticConfig) Validate() error {
 	}
 	if !(0 < c.APIEndpointPort && c.APIEndpointPort <= math.MaxUint16) {
 		return fmt.Errorf("apiEndpointPort must be between 0 and %d", math.MaxUint16)
+	}
+	if !(0 < c.SSHPort && c.SSHPort <= math.MaxUint16) {
+		return fmt.Errorf("sshPort must be between 0 and %d", math.MaxUint16)
 	}
 
 	return nil

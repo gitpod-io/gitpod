@@ -8,11 +8,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -40,6 +42,7 @@ import (
 	daemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	chisel "github.com/jpillora/chisel/server"
 )
 
 var (
@@ -144,6 +147,7 @@ func Run(options ...RunOption) {
 			ports.NewConfigService(cfg.WorkspaceID, gitpodConfigService, gitpodService),
 			uint32(cfg.IDEPort),
 			uint32(cfg.APIEndpointPort),
+			uint32(cfg.SSHPort),
 		)
 		termMux     = terminal.NewMux()
 		termMuxSrv  = terminal.NewMuxTerminalService(termMux)
@@ -189,9 +193,13 @@ func Run(options ...RunOption) {
 	go startAndWatchIDE(ctx, cfg, &ideWG, ideReady)
 
 	var wg sync.WaitGroup
-	wg.Add(4)
+	wg.Add(1)
 	go startContentInit(ctx, cfg, &wg, cstate)
+	wg.Add(1)
 	go startAPIEndpoint(ctx, cfg, &wg, apiServices, apiEndpointOpts...)
+	wg.Add(1)
+	go startSSHServer(ctx, cfg, &wg)
+	wg.Add(1)
 	go taskManager.Run(ctx, &wg)
 	go socketActivationForDocker(ctx, &wg, termMux)
 
@@ -615,6 +623,21 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	}
 	go grpcServer.Serve(grpcMux)
 
+	// Register chisel before the generic HTTP1 catch-all which would otherwise catch chisel, too
+	chiselMux := m.Match(cmux.HTTP1HeaderFieldPrefix("Sec-WebSocket-Protocol", "chisel-"))
+	chs, err := chisel.NewServer(&chisel.Config{
+		Listener:  chiselMux,
+		Reverse:   true,
+		KeepAlive: 10 * time.Second,
+	})
+	if err != nil {
+		log.WithError(err).Fatal("cannot start chisel server")
+	}
+	err = chs.Start("", strconv.Itoa(cfg.APIEndpointPort))
+	if err != nil {
+		log.WithError(err).Fatal("cannot start chisel server")
+	}
+
 	httpMux := m.Match(cmux.HTTP1Fast())
 	routes := http.NewServeMux()
 	routes.Handle("/_supervisor/v1/", http.StripPrefix("/_supervisor", restMux))
@@ -629,6 +652,66 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	<-ctx.Done()
 	log.Info("shutting down API endpoint")
 	l.Close()
+}
+
+func startSSHServer(ctx context.Context, cfg *Config, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	bin, err := os.Executable()
+	if err != nil {
+		log.WithError(err).Error("cannot find executable path")
+		return
+	}
+	dropbear := filepath.Join(filepath.Dir(bin), "dropbear", "dropbear")
+	if _, err := os.Stat(dropbear); err != nil {
+		log.WithError(err).WithField("path", dropbear).Error("cannot locate dropebar binary")
+		return
+	}
+	dropbearkey := filepath.Join(filepath.Dir(bin), "dropbear", "dropbearkey")
+	if _, err := os.Stat(dropbearkey); err != nil {
+		log.WithError(err).WithField("path", dropbearkey).Error("cannot locate dropebarkey")
+		return
+	}
+
+	hostkeyFN, err := ioutil.TempFile("", "hostkey")
+	if err != nil {
+		log.WithError(err).Error("cannot create hostkey file")
+		return
+	}
+	hostkeyFN.Close()
+	os.Remove(hostkeyFN.Name())
+
+	out, err := exec.Command(dropbearkey, "-t", "rsa", "-f", hostkeyFN.Name()).CombinedOutput()
+	if err != nil {
+		log.WithError(err).WithField("out", string(out)).Error("cannot create hostkey file")
+		return
+	}
+
+	cmd := exec.Command(dropbear, "-F", "-E", "-w", "-s", "-p", fmt.Sprintf(":%d", cfg.SSHPort), "-r", hostkeyFN.Name())
+	cmd.Env = buildIDEEnv(cfg)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	err = cmd.Start()
+	if err != nil {
+		log.WithError(err).Error("cannot start SSH server")
+		return
+	}
+
+	done := make(chan error, 1)
+	go func() {
+		done <- cmd.Wait()
+	}()
+	select {
+	case <-ctx.Done():
+		if cmd.Process != nil {
+			cmd.Process.Kill()
+		}
+		return
+	case err = <-done:
+		if err != nil {
+			log.WithError(err).Error("SSH server stopped")
+		}
+	}
 }
 
 func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst ContentState) {

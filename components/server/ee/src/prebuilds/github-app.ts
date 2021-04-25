@@ -13,10 +13,9 @@ import { AppInstallationDB } from '@gitpod/gitpod-db/lib/app-installation-db';
 import * as express from 'express';
 import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { WorkspaceConfig, User, PrebuiltWorkspaceState, GithubAppPrebuildConfig, Disposable } from '@gitpod/gitpod-protocol';
+import { WorkspaceConfig, User, GithubAppPrebuildConfig, Disposable } from '@gitpod/gitpod-protocol';
 import { MessageBusIntegration } from '../../../src/workspace/messagebus-integration';
 import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
-import * as crypto from 'crypto';
 import { HeadlessWorkspaceEventType, HeadlessLogEvent } from '@gitpod/gitpod-protocol/lib/headless-workspace-log';
 import { GithubAppRules } from './github-app-rules';
 import * as Octokit from '@octokit/rest';
@@ -72,39 +71,9 @@ export class GithubApp extends Probot {
         this.statusMaintainer.start(async id => (await app.auth(parseInt(id))) as any as Octokit);
         // this.queueMaintainer.start();
 
-        app.route('/pbs').get('/*', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-            let status: PrebuiltWorkspaceState | 'failed' | undefined;
-
-            try {
-                const segments = req.path.split('/');
-                if (segments.length >= 3) {
-                    const cloneURL = `https://${segments.slice(1, segments.length - 1).join('/')}`;
-                    const commitWithSuffix = segments[segments.length - 1];
-                    const commit = commitWithSuffix.substring(0, commitWithSuffix.length - '.svg'.length);
-
-                    const pws = await this.workspaceDB.trace({}).findPrebuiltWorkspaceByCommit(cloneURL, commit);
-                    if (pws) {
-                        status = pws.state;
-                        if (status === 'available' && pws.error) {
-                            status = 'failed';
-                        }
-                    }
-                }
-            } catch (err) {
-                log.info("error while serving prebuild status image", err);
-            }
-
-
-            const btn = this.buildReviewButton(status);
-            const btnhash = crypto.createHmac('sha1', "this-does-not-matter")
-                .update(btn)
-                .digest('hex')
-
-            res.status(200);
-            res.header("content-type", "image/svg+xml");
-            res.header("Cache-Control", "no-cache");
-            res.header("ETag", btnhash)
-            res.send(btn);
+        // Backward-compatibility: Redirect old badge URLs (e.g. "/api/apps/github/pbs/github.com/gitpod-io/gitpod/5431d5735c32ab7d5d840a4d1a7d7c688d1f0ce9.svg")
+        options.getRouter('/pbs').get('/*', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+            res.redirect(301, this.getBadgeImageURL());
         });
 
         app.on('installation.created', async ctx => {
@@ -128,38 +97,6 @@ export class GithubApp extends Probot {
         app.on(['pull_request.opened', 'pull_request.synchronize', 'pull_request.reopened'], async ctx => {
             await this.handlePullRequest(ctx);
         });
-    }
-
-    protected buildReviewButton(status?: PrebuiltWorkspaceState | 'failed') {
-        let color = '#1966D2';
-        if (status === 'aborted' || status === 'failed' || status === 'timeout') {
-            color = '#d4273e';
-        } else if (status === 'building') {
-            color = '#586069';
-        }
-
-        return `<svg width="150px" height="32px" viewBox="0 0 1500 320" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-<g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-    <g id="button">
-        <rect id="Background" fill="${color}" x="0" y="0" width="1500" height="320" rx="40"></rect>
-        <text id="in-Gitpod" opacity="0.703985305" font-family="Helvetica" font-size="140" font-weight="normal" fill="#FFFFFF">
-            <tspan x="850" y="210">in Gitpod</tspan>
-        </text>
-        <text id="Code" font-family="Helvetica" font-size="140" font-weight="normal" fill="#FFFFFF">
-            <tspan x="350" y="210">Review</tspan>
-        </text>
-
-        <g id="logo" fill="#FFFFFF" transform="translate(112.000000, 57.000000)">
-            <polygon id="Path" points="17.74 144.58 17.74 63.57 0 53.33 0 154.76 0 154.77 87.77 205.43 87.77 184.7"></polygon>
-            <polygon id="Path" points="87.77 163.95 87.77 104 35.74 73.96 35.74 134.15"></polygon>
-            <polygon id="Path" points="89.35 20.55 159.49 60.97 177.21 50.74 89.35 0 1.49 50.73 19.27 60.99"></polygon>
-            <polygon id="Path" points="141.48 71.37 89.36 41.33 37.27 71.38 89.35 101.45"></polygon>
-            <polygon id="Path" points="90.77 164.06 143.02 134.14 143.02 113.66 107.01 134.15 107.01 113.44 161.02 82.7 161.02 144.58 90.77 184.79 90.77 205.53 178.7 154.78 178.7 154.78 178.7 154.77 178.7 53.35 90.77 104.1"></polygon>
-            <polygon id="Path" points="89.35 103.18 89.35 103.19 89.35 103.19 89.35 103.19 89.35 103.18 89.35 103.18"></polygon>
-        </g>
-    </g>
-</g>
-</svg>`
     }
 
     protected async handlePushEvent(ctx: Context): Promise<void> {
@@ -295,27 +232,23 @@ export class GithubApp extends Probot {
     }
 
     protected onPrAddBadge(config: WorkspaceConfig | undefined, user: User, ctx: Context) {
-        const pr = ctx.payload.pull_request;
-        const pr_head = pr.head;
-        const cloneURL = pr_head.repo.clone_url;
-        const contextURL = pr.html_url;
+        if (!this.appRules.shouldDo(config, 'addBadge')) {
+            // we shouldn't add (or update) a button here
+            return;
+        }
 
+        const pr = ctx.payload.pull_request;
+        const contextURL = pr.html_url;
         const body: string = pr.body;
-        const oldBadge = this.getBadgeImageURL(cloneURL, ctx.payload.before);
-        const newBadge = this.getBadgeImageURL(cloneURL, pr_head.sha);
-        let newBody = body.replace(oldBadge, newBadge);
-        let updatePRBody = this.appRules.shouldDo(config, 'addBadge');
-        if (newBody === body && oldBadge !== newBadge) {
-            // we did not replace anything in the text despite the URLs being different -> the button is not yet in the comment
-            newBody += `\n\n<a href="${this.env.hostUrl.withContext(contextURL)}"><img src="${this.getBadgeImageURL(cloneURL, pr_head.sha)}" /></a>\n\n`;
-        } else {
-            // we had previously added the badge to this PR - now we must keep it up to date even if we do not add badges to new PRs anymore
-            updatePRBody = true;
+        const button = `<a href="${this.env.hostUrl.withContext(contextURL)}"><img src="${this.getBadgeImageURL()}"/></a>`;
+        if (body.includes(button)) {
+            // the button is already in the comment
+            return;
         }
-        if (updatePRBody) {
-            const updatePrPromise: Promise<void> = (ctx.github as any).pullRequests.update({ ...ctx.repo(), number: pr.number, body: newBody });
-            updatePrPromise.catch(err => log.error(err, "Error while updating PR body", { contextURL: contextURL }));
-        }
+
+        const newBody = body + `\n\n${button}\n\n`;
+        const updatePrPromise = ctx.octokit.pulls.update({ ...ctx.repo(), pull_number: pr.number, body: newBody });
+        updatePrPromise.catch(err => log.error(err, "Error while updating PR body", { contextURL }));
     }
 
     protected onPrAddLabel(config: WorkspaceConfig | undefined, user: User, ctx: Context, prebuildStartPromise: Promise<StartPrebuildResult> | undefined) {
@@ -332,7 +265,7 @@ export class GithubApp extends Probot {
 
             if (ctx.payload.action === 'synchronize') {
                 // someone just pushed a commit, remove the label
-                const delLabelPromise: Promise<void> = (ctx.github as any).issues.removeLabel({ ...ctx.repo(), number: pr.number, name: label });
+                const delLabelPromise = ctx.octokit.issues.removeLabel({ ...ctx.repo(), number: pr.number, name: label });
                 delLabelPromise.catch(err => log.error(err, "Error while removing label from PR"));
             }
 
@@ -340,13 +273,13 @@ export class GithubApp extends Probot {
                 prebuildStartPromise.then(startWsResult => {
                     if (startWsResult.done) {
                         if (!!startWsResult.didFinish) {
-                            const addLabelPromise: Promise<void> = (ctx.github as any).issues.addLabels({ ...ctx.repo(), number: pr.number, labels: [label] });
+                            const addLabelPromise = ctx.octokit.issues.addLabels({ ...ctx.repo(), number: pr.number, labels: [label] });
                             addLabelPromise.catch(err => log.error(err, "Error while adding label to PR"));
                         }
                     } else {
                         new PrebuildListener(this.messageBus, startWsResult.wsid, evt => {
                             if (!HeadlessWorkspaceEventType.isRunning(evt) && HeadlessWorkspaceEventType.didFinish(evt)) {
-                                const addLabelPromise: Promise<void> = (ctx.github as any).issues.addLabels({ ...ctx.repo(), number: pr.number, labels: [label] });
+                                const addLabelPromise = ctx.octokit.issues.addLabels({ ...ctx.repo(), number: pr.number, labels: [label] });
                                 addLabelPromise.catch(err => log.error(err, "Error while adding label to PR"));
                             }
                         });
@@ -357,33 +290,26 @@ export class GithubApp extends Probot {
     }
 
     protected async onPrAddComment(config: WorkspaceConfig | undefined, user: User, ctx: Context) {
-        const pr = ctx.payload.pull_request;
-        const pr_head = pr.head;
-        const cloneURL = pr_head.repo.clone_url;
-        const contextURL = pr.html_url;
-
-        const oldBadge = this.getBadgeImageURL(cloneURL, ctx.payload.before);
-        const newBadge = this.getBadgeImageURL(cloneURL, pr_head.sha);
-
-        const comments = await ((ctx.github as any).issues.listComments(ctx.issue()) as Promise<any>);
-        const existingComment = comments.data.find((c: any) => c.body.indexOf(oldBadge) > -1);
-        if (existingComment) {
-            const promise: Promise<void> = (ctx.github as any).issues.updateComment(ctx.issue({ comment_id: existingComment.id, body: existingComment.body.replace(oldBadge, newBadge) }));
-            promise.catch(err => log.error(err, "Error while updating PR comment", { contextURL: contextURL }));
-        } else if (this.appRules.shouldDo(config, 'addComment')) {
-            const body = `\n\n<a href="${this.env.hostUrl.withContext(contextURL)}"><img src="${newBadge}" /></a>\n\n`;
-            const newComment = ctx.issue({ body });
-            const newCommentPromise: Promise<void> = (ctx.github as any).issues.createComment(newComment);
-            newCommentPromise.catch(err => log.error(err, "Error while adding new PR comment", { contextURL: contextURL }));
+        if (!this.appRules.shouldDo(config, 'addComment')) {
+            return;
         }
+
+        const pr = ctx.payload.pull_request;
+        const contextURL = pr.html_url;
+        const button = `<a href="${this.env.hostUrl.withContext(contextURL)}"><img src="${this.getBadgeImageURL()}"/></a>`;
+        const comments = await ctx.octokit.issues.listComments(ctx.issue());
+        const existingComment = comments.data.find((c: any) => c.body.indexOf(button) > -1);
+        if (existingComment) {
+            return;
+        }
+
+        const newComment = ctx.issue({ body: `\n\n${button}\n\n` });
+        const newCommentPromise = ctx.octokit.issues.createComment(newComment);
+        newCommentPromise.catch(err => log.error(err, "Error while adding new PR comment", { contextURL }));
     }
 
-    protected getBadgeImageURL(cloneURL: string, commit: string): string {
-        if (cloneURL.startsWith("https://")) {
-            cloneURL = cloneURL.substring("https://".length);
-        }
-        const name = `${cloneURL}/${commit}.svg`;
-        return this.env.hostUrl.withApi({ pathname: `/apps/github/pbs/${name}` }).toString();
+    protected getBadgeImageURL(): string {
+        return this.env.hostUrl.with({ pathname: '/button/open-in-gitpod.svg' }).toString();
     }
 
     protected async findUserForInstallation(ctx: Context): Promise<User | undefined> {
