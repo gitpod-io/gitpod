@@ -556,7 +556,7 @@ rabbitmq:
     allowExternal: true
   plugins: "rabbitmq_management rabbitmq_peer_discovery_k8s"
   extraPlugins: "rabbitmq_shovel rabbitmq_shovel_management"
-  {{- $rabbitmqpassword := (include "gitpod.messageBus.auth" .Values) -}}
+  {{- $rabbitmqpassword := (include "gitpod.messageBus.auth" .Values) }}
   extraSecrets:
     load-definition:
       load_definition.json: |
