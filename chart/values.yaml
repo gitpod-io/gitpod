@@ -536,8 +536,8 @@ rabbitmq:
     enabled: false
   replicaCount: 1
   auth:
-    username:
-    password:
+    username: # must be set
+    password: # must be set or use existingPasswordSecret
     existingPasswordSecret: # key must be rabbitmq-password for rabbitmq chart compatibility!
     existingErlangSecret: messagebus-erlang-cookie
     tls:
