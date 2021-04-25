@@ -383,6 +383,7 @@ storage:
 {{- else }}
   {{- randAlphaNum 30 }}
 {{- end -}}
+{{- end -}}
 
 {{- /*
   the gitpod sessionSecret; generate it or get it from a secret
@@ -395,5 +396,5 @@ storage:
 {{- else }}
   {{- randAlphaNum 30 }}
 {{- end -}}
-
+{{- end -}}
 
