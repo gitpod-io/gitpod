@@ -558,8 +558,8 @@ rabbitmq:
   extraPlugins: "rabbitmq_shovel rabbitmq_shovel_management"
   extraSecrets:
     load-definition:
-      {{ $rabbitmqpassword := include "gitpod.messageBus.auth" .Values }}
       load_definition.json: |
+        {{ $rabbitmqpassword := "popo" }}
         {
           "users": [{
             "name": {{ required "rabbitmq username is required, please add a value to your values.yaml or with the helm flag --set rabbitmq.auth.username=xxxxx" .Values.auth.username | quote }},
