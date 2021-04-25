@@ -242,8 +242,8 @@ env:
 {{- else }}
   username: ""
   password: ""
-{{- end }
-{{- end }
+{{- end }}
+{{- end }}
 {{- end -}}
 
 {{- define "gitpod.container.messagebusEnv" -}}
