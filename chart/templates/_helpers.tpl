@@ -236,9 +236,9 @@ env:
   username: .username
   password: .password
 {{- else if .existingAuthSecret }}
-{{- $rabbitmq.auth.secret := lookup "v1" "Secret" .existingAuthSecret }}
-  username: index ($rabbitmq.auth.secret).data "username"
-  password: index ($rabbitmq.auth.secret).data "password"
+{{- .secret := lookup "v1" "Secret" .existingAuthSecret }}
+  username: index (.secret).data "username"
+  password: index (.secret).data "password"
 {{- else }}
   username: ""
   password: ""
