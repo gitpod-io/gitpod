@@ -63,10 +63,20 @@ function App() {
         }
         updateTheme();
         const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-        mediaQuery.addEventListener('change', updateTheme);
+        if (mediaQuery instanceof EventTarget) {
+            mediaQuery.addEventListener('change', updateTheme);
+        } else {
+            // backward compatibility for Safari < 14
+            (mediaQuery as MediaQueryList).addListener(updateTheme);
+        }
         window.addEventListener('storage', updateTheme);
         return function cleanup() {
-            mediaQuery.removeEventListener('change', updateTheme);
+            if (mediaQuery instanceof EventTarget) {
+                mediaQuery.removeEventListener('change', updateTheme);
+            } else {
+                // backward compatibility for Safari < 14
+                (mediaQuery as MediaQueryList).removeListener(updateTheme);
+            }
             window.removeEventListener('storage', updateTheme);
         }
     }, [localStorage.theme]);
@@ -79,7 +89,7 @@ function App() {
     }
     if (window.location.pathname.startsWith('/blocked')) {
         return <div className="mt-48 text-center">
-            <img src={gitpodIcon} className="h-16 mx-auto"/>
+            <img src={gitpodIcon} className="h-16 mx-auto" />
             <h1 className="mt-12 text-gray-500 text-3xl">Your account has been blocked.</h1>
             <p className="mt-4 mb-8 text-lg w-96 mx-auto">Please contact support if you think this is an error. See also <a className="hover:text-blue-600 dark:hover:text-blue-400" href="https://www.gitpod.io/terms/">terms of service</a>.</p>
             <a className="mx-auto" href="mailto:support@gitpod.io?Subject=Blocked"><button className="secondary">Contact Support</button></a>
@@ -116,19 +126,19 @@ function App() {
                 <Route path="/admin/workspaces" component={WorkspacesSearch} />
 
                 <Route path={["/", "/login"]} exact>
-                    <Redirect to="/workspaces"/>
+                    <Redirect to="/workspaces" />
                 </Route>
                 <Route path={["/settings"]} exact>
-                    <Redirect to="/account"/>
+                    <Redirect to="/account" />
                 </Route>
                 <Route path={["/access-control"]} exact>
-                    <Redirect to="/integrations"/>
+                    <Redirect to="/integrations" />
                 </Route>
                 <Route path={["/subscription", "/usage", "/upgrade-subscription"]} exact>
-                    <Redirect to="/plans"/>
+                    <Redirect to="/plans" />
                 </Route>
                 <Route path={["/admin"]} exact>
-                    <Redirect to="/admin/users"/>
+                    <Redirect to="/admin/users" />
                 </Route>
                 <Route path="/sorry" exact>
                     <div className="mt-48 text-center">
@@ -171,7 +181,7 @@ function getURLHash() {
 }
 
 const renderMenu = (user?: User) => {
-        const left = [
+    const left = [
         {
             title: 'Workspaces',
             link: '/workspaces',
