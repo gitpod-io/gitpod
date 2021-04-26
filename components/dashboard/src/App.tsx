@@ -79,7 +79,13 @@ function App() {
             }
             window.removeEventListener('storage', updateTheme);
         }
-    }, [localStorage.theme]);
+    }, []);
+
+    if ((window.location.hostname === 'gitpod.io' || window.location.hostname === 'gitpod-staging.com' || window.location.hostname.endsWith('gitpod-dev.com')) 
+        && window.location.pathname === '/' && window.location.hash === '' && !loading && !user) {
+        window.location.href = `https://www.gitpod.io`;
+        return <div></div>;
+    }
 
     if (loading) {
         return <Loading />
