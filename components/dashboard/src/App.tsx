@@ -58,7 +58,7 @@ function App() {
 
     useEffect(() => {
         const updateTheme = () => {
-            const isDark = localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia("(prefers-color-scheme: dark)").matches);
+            const isDark = localStorage.theme === 'dark' || (localStorage.theme === 'system' && window.matchMedia("(prefers-color-scheme: dark)").matches);
             document.documentElement.classList.toggle('dark', isDark);
         }
         updateTheme();
