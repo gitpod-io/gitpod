@@ -1,7 +1,12 @@
+// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
 package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"strings"
 	"time"
@@ -9,6 +14,8 @@ import (
 	logging "cloud.google.com/go/logging/apiv2"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/compute/v1"
 	loggingpb "google.golang.org/genproto/googleapis/logging/v2"
 )
 
@@ -52,8 +59,19 @@ func listenToLogs(ctx context.Context) error {
 		return err
 	}
 
+	log.Info("Getting GCE projectID")
+	credentials, err := google.FindDefaultCredentials(ctx, compute.ComputeScope)
+	if err != nil {
+		return err
+	}
+	projectID := credentials.ProjectID
+	if projectID == "" {
+		log.Error("GCE projectID not set in credential file. Using 'gitpod-191109'")
+		projectID = "gitpod-191109"
+	}
+
 	log.Info("Registering log query")
-	resourceNames := []string{"projects/gitpod-191109"} // TODO get project ID from somewhere else
+	resourceNames := []string{fmt.Sprintf("projects/%s", projectID)}
 	req := &loggingpb.TailLogEntriesRequest{
 		ResourceNames: resourceNames,
 		Filter: `
