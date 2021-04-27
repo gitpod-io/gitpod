@@ -139,7 +139,10 @@ export class Env extends AbstractComponentEnv {
 
     readonly blockNewUsers: boolean = this.parseBool("BLOCK_NEW_USERS");
     readonly blockNewUsersPassList: string[] = (() => {
-        const l = getEnvVar("BLOCK_NEW_USERS_PASSLIST");
+        const l = process.env.BLOCK_NEW_USERS_PASSLIST;
+        if (!l) {
+            return [];
+        }
         try {
             const res = JSON.parse(l);
             if (!Array.isArray(res) || res.some(e => typeof e !== 'string')) {
