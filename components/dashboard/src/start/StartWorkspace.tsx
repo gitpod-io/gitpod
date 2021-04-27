@@ -9,8 +9,7 @@ import React, { useEffect, Suspense } from "react";
 import { DisposableCollection, WorkspaceInstance, WorkspaceImageBuild, Workspace, WithPrebuild } from "@gitpod/gitpod-protocol";
 import { HeadlessLogEvent } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
-import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
-import CaretDown from "../icons/CaretDown.svg";
+import PendingChangesDropdown from "../components/PendingChangesDropdown";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 
@@ -274,7 +273,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
           title = 'Timed Out';
         }
         statusMessage = <div>
-          <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 bg-gray-100 dark:bg-gray-800">
+          <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 mb-2 bg-gray-100 dark:bg-gray-800">
             <div className="rounded-full w-3 h-3 text-sm bg-gray-300">&nbsp;</div>
             <div>
               <p className="text-gray-700 dark:text-gray-200 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
@@ -294,40 +293,6 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       {statusMessage}
     </StartPage>;
   }
-}
-
-function PendingChangesDropdown(props: { workspaceInstance?: WorkspaceInstance }) {
-  const repo = props.workspaceInstance?.status?.repo;
-  const headingStyle = 'text-gray-500 text-left';
-  const itemStyle = 'text-gray-400 text-left -mt-5';
-  const menuEntries: ContextMenuEntry[] = [];
-  let totalChanges = 0;
-  if (repo) {
-    if ((repo.totalUntrackedFiles || 0) > 0) {
-      totalChanges += repo.totalUntrackedFiles || 0;
-      menuEntries.push({ title: 'Untracked Files', customFontStyle: headingStyle });
-      (repo.untrackedFiles || []).forEach(item => menuEntries.push({ title: item, customFontStyle: itemStyle }));
-    }
-    if ((repo.totalUncommitedFiles || 0) > 0) {
-      totalChanges += repo.totalUncommitedFiles || 0;
-      menuEntries.push({ title: 'Uncommitted Files', customFontStyle: headingStyle });
-      (repo.uncommitedFiles || []).forEach(item => menuEntries.push({ title: item, customFontStyle: itemStyle }));
-    }
-    if ((repo.totalUnpushedCommits || 0) > 0) {
-      totalChanges += repo.totalUnpushedCommits || 0;
-      menuEntries.push({ title: 'Unpushed Commits', customFontStyle: headingStyle });
-      (repo.unpushedCommits || []).forEach(item => menuEntries.push({ title: item, customFontStyle: itemStyle }));
-    }
-  }
-  if (totalChanges <= 0) {
-    return <p className="mt-2">No Changes</p>;
-  }
-  return <ContextMenu menuEntries={menuEntries} width="w-64 max-h-48 overflow-scroll mx-auto left-0 right-0">
-    <p className="mt-2 flex justify-center text-gitpod-red">
-      <span>{totalChanges} Change{totalChanges === 1 ? '' : 's'}</span>
-      <img className="m-2" src={CaretDown}/>
-    </p>
-  </ContextMenu>;
 }
 
 interface ImageBuildViewProps {
