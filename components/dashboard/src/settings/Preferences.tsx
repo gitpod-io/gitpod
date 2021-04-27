@@ -13,7 +13,7 @@ import vscode from '../images/vscode.svg';
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import settingsMenu from "./settings-menu";
 
-type Theme = 'system' | 'dark' | 'light';
+type Theme = 'light' | 'dark' | 'system';
 
 export default function Preferences() {
     const { user } = useContext(UserContext);
@@ -30,20 +30,20 @@ export default function Preferences() {
         await getGitpodService().server.updateLoggedInUser({ additionalData });
         setDefaultIde(value);
     }
-    const [ theme, setTheme ] = useState<Theme>(localStorage.theme || 'system');
+    const [ theme, setTheme ] = useState<Theme>(localStorage.theme || 'light');
     const actuallySetTheme = (theme: Theme) => {
-        if (theme === 'light' || theme === 'dark') {
+        if (theme === 'dark' || theme === 'system') {
             localStorage.theme = theme;
         } else {
             localStorage.removeItem('theme');
         }
-        const isDark = localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        const isDark = localStorage.theme === 'dark' || (localStorage.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
         document.documentElement.classList.toggle('dark', isDark);
         setTheme(theme);
     }
 
     return <div>
-        <PageWithSubMenu subMenu={settingsMenu}  title='Preferences' subtitle='Configure user preferences.'>
+        <PageWithSubMenu subMenu={settingsMenu} title='Preferences' subtitle='Configure user preferences.'>
             <h3>Default IDE</h3>
             <p className="text-base text-gray-500">Choose which IDE you want to use.</p>
             <div className="mt-4 space-x-4 flex">
