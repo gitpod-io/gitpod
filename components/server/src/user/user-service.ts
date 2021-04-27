@@ -140,7 +140,10 @@ export class UserService {
     }
     protected handleNewUser(newUser: User, isFirstUser: boolean) {
         if (this.env.blockNewUsers) {
-            newUser.blocked = true;
+            const emailDomainInPasslist = (mail: string) => this.env.blockNewUsersPassList.some(e => mail.endsWith(`@${e}`));
+            const canPass = newUser.identities.some(i => !!i.primaryEmail && emailDomainInPasslist(i.primaryEmail));
+
+            newUser.blocked = !canPass;
         }
         if (isFirstUser || this.env.makeNewUsersAdmin) {
             newUser.rolesOrPermissions = ['admin'];
