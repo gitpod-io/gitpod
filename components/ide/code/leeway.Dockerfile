@@ -66,7 +66,7 @@ FROM scratch
 COPY --from=code_installer /gitpod-pkg-web/ /ide/
 COPY --from=code_installer /gitpod-pkg-server/ /ide/
 COPY --from=node_installer /ide/node /ide/node
-COPY startup.sh supervisor-ide-config.json /ide/
+COPY --chown=0755 startup.sh supervisor-ide-config.json /ide/
 
 # cli config
 COPY --from=code_installer /ide/bin /ide/bin

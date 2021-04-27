@@ -83,7 +83,7 @@ ENV GITPOD_ENV_SET_GITPOD_BUILT_IN_PLUGINS /theia/theia-app/plugins/
 WORKDIR /ide/
 COPY supervisor-ide-config.json /ide/
 
-COPY startup.sh supervisor-ide-config.json /theia/
+COPY --chown=0755 startup.sh supervisor-ide-config.json /theia/
 
 # cli config
 COPY --from=builder_alpine /ide/bin /ide/bin
