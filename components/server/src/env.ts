@@ -138,6 +138,20 @@ export class Env extends AbstractComponentEnv {
     }
 
     readonly blockNewUsers: boolean = this.parseBool("BLOCK_NEW_USERS");
+    readonly blockNewUsersPassList: string[] = (() => {
+        const l = getEnvVar("BLOCK_NEW_USERS_PASSLIST");
+        try {
+            const res = JSON.parse(l);
+            if (!Array.isArray(res) || res.some(e => typeof e !== 'string')) {
+                console.error("BLOCK_NEW_USERS_PASSLIST is not an array of string");
+                return [];
+            }
+            return res;
+        } catch (err) {
+            console.error("cannot parse BLOCK_NEW_USERS_PASSLIST", err);
+            return [];
+        }
+    })();
     readonly makeNewUsersAdmin: boolean = this.parseBool("MAKE_NEW_USERS_ADMIN");
     readonly disableDynamicAuthProviderLogin: boolean = this.parseBool("DISABLE_DYNAMIC_AUTH_PROVIDER_LOGIN");
 

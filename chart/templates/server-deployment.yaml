@@ -158,6 +158,8 @@ spec:
     {{- if $comp.blockNewUsers }}
         - name: BLOCK_NEW_USERS
           value: {{ $comp.blockNewUsers | quote }}
+        - name: BLOCK_NEW_USERS_PASSLIST
+          value: {{ $comp.blockNewUsersPasslist | toJson | quote }}
     {{- end }}
     {{- if $comp.makeNewUsersAdmin }}
         - name: MAKE_NEW_USERS_ADMIN
