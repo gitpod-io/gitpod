@@ -56,12 +56,8 @@ async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
             search: `returnTo=${encodeURIComponent(returnTo)}&host=${host}&override=true&scopes=${(scopes || []).join(',')}`
         }).toString();
 
-    const newWindow = window.open(url, "gitpod-auth-window");
-    if (!newWindow) {
-        console.log(`Failed to open the authorize window for ${host}`);
-        onError && onError("failed");
-        return;
-    }
+    // Optimistically assume that the new window was opened.
+    window.open(url, "gitpod-auth-window");
 
     const eventListener = (event: MessageEvent) => {
         // todo: check event.origin
