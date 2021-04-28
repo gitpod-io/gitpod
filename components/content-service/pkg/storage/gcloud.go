@@ -923,6 +923,10 @@ func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, q
 		if err == iterator.Done {
 			break
 		}
+		if err != nil {
+			log.WithField("bucket", bucket).WithField("object", attrs.Name).Error(err)
+			return err
+		}
 		err = b.Object(attrs.Name).Delete(ctx)
 		if err != nil {
 			log.WithField("bucket", bucket).WithField("object", attrs.Name).Error(err)
