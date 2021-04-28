@@ -158,6 +158,7 @@ function GitProviders() {
             await openAuthorizeWindow({
                 host,
                 scopes,
+                overrideScopes: true,
                 onSuccess: () => updateUser(),
                 onError: (error) => {
                     if (typeof error === "string") {

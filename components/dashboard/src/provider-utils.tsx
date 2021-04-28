@@ -39,13 +39,15 @@ interface OpenAuthorizeWindowParams {
     login?: boolean;
     host: string;
     scopes?: string[];
+    overrideScopes?: boolean;
     onSuccess?: (payload?: string) => void;
     onError?: (error?: string) => void;
 }
 
 async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
-    const { login, host, scopes, onSuccess, onError } = params;
+    const { login, host, scopes, overrideScopes, onSuccess, onError } = params;
     const returnTo = gitpodHostUrl.with({ pathname: 'complete-auth', search: 'message=success' }).toString();
+    const requestedScopes = scopes || [];
     const url = login
         ? gitpodHostUrl.withApi({
             pathname: '/login',
@@ -53,7 +55,7 @@ async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
         }).toString()
         : gitpodHostUrl.withApi({
             pathname: '/authorize',
-            search: `returnTo=${encodeURIComponent(returnTo)}&host=${host}&override=true&scopes=${(scopes || []).join(',')}`
+            search: `returnTo=${encodeURIComponent(returnTo)}&host=${host}${overrideScopes ? "&override=true" : ""}&scopes=${requestedScopes.join(',')}`
         }).toString();
 
     // Optimistically assume that the new window was opened.
