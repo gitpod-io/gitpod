@@ -52,7 +52,7 @@ export function SelectAccountModal(props: SelectAccountPayload & {
         <div className="mt-10 mb-6 flex-grow flex flex-row justify-around align-center">
             <SelectableCard className="w-2/5 h-56" title="Current Account" selected={useAccount === 'current'} onClick={() => setUseAccount('current')}>
                 <div className="flex-grow flex flex-col justify-center align-center">
-                    <img className="m-auto rounded-full w-24 h-24 py-4" src={props.currentUser.avatarUrl} alt={props.currentUser.name}/>
+                    <img className="m-auto rounded-full w-24 h-24 my-4" src={props.currentUser.avatarUrl} alt={props.currentUser.name}/>
                     <span className="m-auto text-gray-700 text-md font-semibold">{props.currentUser.authName}</span>
                     <span className="m-auto text-gray-400 text-md">{props.currentUser.authHost}</span>
                 </div>
@@ -60,7 +60,7 @@ export function SelectAccountModal(props: SelectAccountPayload & {
 
             <SelectableCard className="w-2/5 h-56" title="Other Account" selected={useAccount === 'other'} onClick={() => setUseAccount('other')}>
                 <div className="flex-grow flex flex-col justify-center align-center">
-                    <img className="m-auto rounded-full w-24 h-24 py-4" src={props.otherUser.avatarUrl} alt={props.otherUser.name}/>
+                    <img className="m-auto rounded-full w-24 h-24 my-4" src={props.otherUser.avatarUrl} alt={props.otherUser.name}/>
                     <span className="m-auto text-gray-700 text-md font-semibold">{props.otherUser.authName}</span>
                     <span className="m-auto text-gray-400 text-md">{props.otherUser.authHost}</span>
                 </div>
