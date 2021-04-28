@@ -15,7 +15,6 @@ metadata:
     stage: {{ .Values.installation.stage }}
     gitpod.io/nodeService: containerd-metrics
 spec:
-{{ include "gitpod.nodeAffinity" $this | indent 6 }}
   selector:
     matchLabels:
       app: {{ template "gitpod.fullname" . }}
