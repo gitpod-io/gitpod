@@ -1,0 +1,70 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.registryFacade -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if not $comp.disabled -}}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: containerd-metrics
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: containerd-metrics
+    kind: daemonset
+    stage: {{ .Values.installation.stage }}
+    gitpod.io/nodeService: containerd-metrics
+spec:
+{{ include "gitpod.nodeAffinity" $this | indent 6 }}
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: containerd-metrics
+      kind: pod
+      stage: {{ .Values.installation.stage }}
+      gitpod.io/nodeService: containerd-metrics
+  template:
+    metadata:
+      name: containerd-metrics
+      labels:
+        app: {{ template "gitpod.fullname" . }}
+        component: containerd-metrics
+        kind: pod
+        stage: {{ .Values.installation.stage }}
+        gitpod.io/nodeService: containerd-metrics
+    spec:
+{{ include "gitpod.workspaceAffinity" $this | indent 6 }}
+      containers:
+      - image: {{ template "gitpod.comp.imageFull" $this }}
+        args: ["export", "--socket", "/mnt/containerd.sock", "--verbose"]
+        name: containerd-metrics
+{{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
+{{ include "gitpod.container.resources" $this | indent 8 }}
+{{ include "gitpod.container.defaultEnv" $this | indent 8 }}
+        - name: GOOGLE_APPLICATION_CREDENTIALS
+          value: /var/secrets/google/key.json
+        securityContext:
+          privileged: true
+          procMount: Default
+        volumeMounts:
+        - mountPath: /mnt/containerd.sock
+          name: containerd-socket
+        - mountPath: /var/secrets/google
+          name: google-cloud-key
+      imagePullSecrets:
+      - name: workspace-registry-pull-secret
+      serviceAccount: ws-daemon
+      serviceAccountName: ws-daemon
+      volumes:
+      - hostPath:
+          path: /run/containerd/containerd.sock
+          type: Socket
+        name: containerd-socket
+      - name: google-cloud-key
+        secret:
+          defaultMode: 420
+          secretName: containerd-metrics-key
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
