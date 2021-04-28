@@ -16,13 +16,6 @@ async function registerApp(installationId: string, setModal: (modal: 'done' | st
     try {
         await getGitpodService().server.registerGithubApp(installationId);
 
-        const returnTo = encodeURIComponent(gitpodHostUrl.with({ pathname: 'complete-auth', search: 'message=success' }).toString());
-        const url = gitpodHostUrl.withApi({
-            pathname: '/authorize',
-            search: `returnTo=${returnTo}&host=github.com&scopes=repo`
-        }).toString();
-        window.open(url, "gitpod-login");
-
         const result = new Deferred<void>(1000 * 60 * 10 /* 10 min */);
 
         openAuthorizeWindow({
