@@ -68,3 +68,5 @@ spec:
     rollingUpdate:
       maxUnavailable: 1
     type: RollingUpdate
+{{ toYaml .Values.defaults | indent 6 }}
+{{ end }}
