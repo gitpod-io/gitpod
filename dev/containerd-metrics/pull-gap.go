@@ -177,6 +177,7 @@ func listenToLogs(ctx context.Context) error {
 func logGap(entry *workspaceEntry) {
 	if entry.registryFacadePullStart != nil && entry.kubeletPullStart != nil {
 		gap := entry.registryFacadePullStart.Sub(*entry.kubeletPullStart).Seconds()
+		bermudaGapDuration.WithLabelValues(entry.nodeId).Observe(gap)
 		logEntry(entry).WithField("gapInSeconds", gap).Info("Gap between kubelet pull and registry facade pull")
 		gapsLoggedSinceGC++
 	}
