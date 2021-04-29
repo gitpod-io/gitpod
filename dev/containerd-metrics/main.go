@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -81,10 +82,20 @@ func main() {
 		},
 	}
 
+	srv := &http.Server{Addr: ":9500"}
 	http.Handle("/metrics", promhttp.Handler())
 	prometheus.MustRegister(bermudaGapDuration)
-	http.ListenAndServe(":9500", nil)
+	httpServerExitDone := &sync.WaitGroup{}
+	httpServerExitDone.Add(1)
+	defer func() {
+		srv.Shutdown(context.Background())
+		httpServerExitDone.Wait()
+	}()
 
+	go func() {
+		defer httpServerExitDone.Done()
+		srv.ListenAndServe()
+	}()
 	err := app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)

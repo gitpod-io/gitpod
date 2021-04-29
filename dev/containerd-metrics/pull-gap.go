@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"time"
 
@@ -36,7 +37,6 @@ type workspaceEntry struct {
 	id                                        string
 	kubeletPullStart, registryFacadePullStart *time.Time
 	kind                                      string
-	nodeId                                    string
 }
 
 const gcInterval = 1 * time.Hour
@@ -44,9 +44,11 @@ const gcInterval = 1 * time.Hour
 var (
 	logEntries        = make(map[string]*workspaceEntry)
 	gapsLoggedSinceGC = 0
+	nodeName          string
 )
 
 func listenToLogs(ctx context.Context) error {
+	fmt.Print("Hi")
 	log.Info("Creating GCE logging client")
 	c, err := logging.NewClient(ctx)
 	if err != nil {
@@ -70,21 +72,29 @@ func listenToLogs(ctx context.Context) error {
 		projectID = "gitpod-191109"
 	}
 
+	nodeName = os.Getenv("NODENAME")
+	if nodeName == "" {
+		return fmt.Errorf("Environment variable NODENAME not set")
+	}
+	log.WithField("nodeName", nodeName).Info("Setting nodeName")
+
 	log.Info("Registering log query")
 	resourceNames := []string{fmt.Sprintf("projects/%s", projectID)}
 	req := &loggingpb.TailLogEntriesRequest{
 		ResourceNames: resourceNames,
-		Filter: `
+		Filter: fmt.Sprintf(`
 			(
 				jsonPayload.source.component="kubelet"
 				jsonPayload.message=~"Pulling image"
+				jsonPayload.source.host="%s"
 			) OR (
 				labels.k8s-pod/component="registry-facade"
 				labels.k8s-pod/gitpod_io/nodeService="registry-facade"
 				jsonPayload.message="get manifest"
-				jsonPayload.name!=undefined			
+				(jsonPayload.name!=undefined OR jsonPayload.instanceId!=undefined)			
+				labels."compute.googleapis.com/resource_name"="%s"
 			)
-		`,
+		`, nodeName, nodeName),
 	}
 	if err := stream.Send(req); err != nil {
 		return err
@@ -114,8 +124,11 @@ func listenToLogs(ctx context.Context) error {
 				// registry-facade log "get manifest"
 				wsId := jsonPayload.Fields["name"].GetStringValue()
 				if wsId == "" {
-					log.WithField("logEntry", logEntry).Error("registry-facade log entry lacks jsonPayload.name")
-					continue
+					wsId = jsonPayload.Fields["instanceId"].GetStringValue()
+					if wsId == "" {
+						log.WithField("logEntry", logEntry).Error("registry-facade log must either have a jsonPayload.name or a jsonPayload.instanceId")
+						continue
+					}
 				}
 				entry := logEntries[wsId]
 				if entry == nil {
@@ -129,8 +142,6 @@ func listenToLogs(ctx context.Context) error {
 				}
 				log.WithField("workspaceId", wsId).Debug("Received manifest pull log from registry-facade")
 				entry.registryFacadePullStart = &timestamp
-				nodeId := logEntry.GetLabels()["compute.googleapis.com/resource_name"]
-				entry.nodeId = nodeId
 				logGap(entry)
 			} else {
 				// kubelet log "Pulling image...."
@@ -177,7 +188,7 @@ func listenToLogs(ctx context.Context) error {
 func logGap(entry *workspaceEntry) {
 	if entry.registryFacadePullStart != nil && entry.kubeletPullStart != nil {
 		gap := entry.registryFacadePullStart.Sub(*entry.kubeletPullStart).Seconds()
-		bermudaGapDuration.WithLabelValues(entry.nodeId).Observe(gap)
+		bermudaGapDuration.WithLabelValues(nodeName).Observe(gap)
 		logEntry(entry).WithField("gapInSeconds", gap).Info("Gap between kubelet pull and registry facade pull")
 		gapsLoggedSinceGC++
 	}
@@ -202,10 +213,7 @@ func collectGarbage() {
 }
 
 func logEntry(entry *workspaceEntry) *logrus.Entry {
-	l := log.WithField("workspaceId", entry.id).WithField("kind", entry.kind)
-	if entry.nodeId != "" {
-		l = l.WithField("nodeId", entry.nodeId)
-	}
+	l := log.WithField("workspaceId", entry.id).WithField("kind", entry.kind).WithField("nodeId", nodeName)
 	if entry.registryFacadePullStart != nil {
 		l = l.WithField("registryFacadePullStart", entry.registryFacadePullStart.Format(time.RFC3339))
 	}
