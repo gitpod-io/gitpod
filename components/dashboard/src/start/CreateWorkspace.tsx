@@ -72,7 +72,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
             host,
             scopes,
             onSuccess: () => {
-              window.location.href = window.location.toString();
+              window.location.reload();
             },
             onError: (error) => {
                 if (typeof error === "string") {
