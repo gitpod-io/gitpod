@@ -289,8 +289,7 @@ export class TypeORMUserDBImpl implements UserDB {
         const dbUser = user as DBUser;
         // Here we need to fill the pseudo column 'user' in DBIdentity (see there for details)
         dbUser.identities.forEach(id => id.user = dbUser);
-        // TODO deprecated: Remove once we delete that column
-        dbUser.identities.forEach(id => id.tokens = []);
+        dbUser.identities.forEach(id => id.additionalEmails = id.additionalEmails || []);
         return dbUser;
     }
 

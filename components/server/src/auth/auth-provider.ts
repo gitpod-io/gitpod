@@ -6,7 +6,7 @@
 
 
 import * as express from 'express';
-import { AuthProviderInfo, User, OAuth2Config, AuthProviderEntry } from "@gitpod/gitpod-protocol";
+import { AuthProviderInfo, User, OAuth2Config, AuthProviderEntry, Email } from "@gitpod/gitpod-protocol";
 import { saveSession } from '../express-util';
 
 import { UserEnvVarValue } from "@gitpod/gitpod-protocol";
@@ -65,6 +65,7 @@ export interface AuthUser {
     readonly authId: string;
     readonly authName: string;
     readonly primaryEmail: string;
+    readonly additionalEmails?: Email[];
     readonly name?: string;
     readonly avatarUrl?: string;
 }

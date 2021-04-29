@@ -193,6 +193,7 @@ export namespace GitLab {
     // https://docs.gitlab.com/ee/api/users.html#list-current-user-for-normal-users
     export interface User extends UserSchemaDefault {
         email: string;
+        commit_email?: string;
         state: "active" | string;
         confirmed_at: string | undefined,
         private_profile: boolean;
