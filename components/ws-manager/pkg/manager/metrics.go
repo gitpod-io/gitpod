@@ -205,7 +205,7 @@ type phaseTotalVec struct {
 }
 
 func newPhaseTotalVec(m *Manager) *phaseTotalVec {
-	name := prometheus.BuildFQName(metricsNamespace, metricsWorkspaceSubsystem, "phase_total")
+	name := prometheus.BuildFQName(metricsNamespace, metricsWorkspaceSubsystem, "workspace_phase_total")
 	return &phaseTotalVec{
 		name:    name,
 		desc:    prometheus.NewDesc(name, "Current number of workspaces per phase", []string{"phase", "type"}, prometheus.Labels(map[string]string{})),
