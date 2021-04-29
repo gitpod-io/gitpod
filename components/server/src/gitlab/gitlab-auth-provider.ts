@@ -7,7 +7,7 @@
 import * as express from "express";
 import { injectable } from 'inversify';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { AuthProviderInfo } from '@gitpod/gitpod-protocol';
+import { AuthProviderInfo, EmailType } from '@gitpod/gitpod-protocol';
 import { GitLabScope } from "./scopes";
 import { UnconfirmedUserException } from "../auth/errors";
 import { GitLab } from "./api";
@@ -73,7 +73,7 @@ export class GitLabAuthProvider extends GenericAuthProvider {
                     throw UnconfirmedUserException.create(unconfirmedUserMessage, result);
                 }
             }
-            const { id, username, avatar_url, name, email } = result;
+            const { id, username, avatar_url, name, email, commit_email } = result;
 
             return <AuthUserSetup>{
                 authUser: {
@@ -81,7 +81,8 @@ export class GitLabAuthProvider extends GenericAuthProvider {
                     authName: username,
                     avatarUrl: avatar_url || undefined,
                     name,
-                    primaryEmail: email
+                    primaryEmail: email,
+                    additionalEmails: commit_email ? [{ "address": commit_email, "type": EmailType.COMMIT }] : [],
                 },
                 currentScopes: this.readScopesFromVerifyParams(tokenResponse)
             }
