@@ -301,6 +301,7 @@ export interface Identity {
     authId: string;
     authName: string;
     primaryEmail?: string;
+    commitEmail?: string;
     /** @deprecated */
     tokens?: Token[];
     /** This is a flag that triggers the HARD DELETION of this entity */

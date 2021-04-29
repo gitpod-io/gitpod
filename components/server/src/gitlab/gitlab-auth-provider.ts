@@ -73,7 +73,7 @@ export class GitLabAuthProvider extends GenericAuthProvider {
                     throw UnconfirmedUserException.create(unconfirmedUserMessage, result);
                 }
             }
-            const { id, username, avatar_url, name, email } = result;
+            const { id, username, avatar_url, name, email, commit_email } = result;
 
             return <AuthUserSetup>{
                 authUser: {
@@ -81,7 +81,8 @@ export class GitLabAuthProvider extends GenericAuthProvider {
                     authName: username,
                     avatarUrl: avatar_url || undefined,
                     name,
-                    primaryEmail: email
+                    primaryEmail: email,
+                    commitEmail: commit_email
                 },
                 currentScopes: this.readScopesFromVerifyParams(tokenResponse)
             }

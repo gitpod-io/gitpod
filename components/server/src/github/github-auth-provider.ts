@@ -104,11 +104,11 @@ export class GitHubAuthProvider extends GenericAuthProvider {
                     const emailDomainInPasslist = (mail: string) => this.env.blockNewUsersPassList.some(e => mail.endsWith(`@${e}`));
                     const result = emails.filter(e => e.verified).filter(e => emailDomainInPasslist(e.email))
                     if (result.length > 0) {
-                        return result[0].email;
+                        return result[0];
                     }
                 }
                 // otherwise use GitHub's primary email as Gitpod's primary email
-                return emails.filter(e => e.primary)[0].email;
+                return emails.filter(e => e.primary)[0];
             };
 
             return <AuthUserSetup>{
@@ -117,7 +117,8 @@ export class GitHubAuthProvider extends GenericAuthProvider {
                     authName: login,
                     avatarUrl: avatar_url,
                     name,
-                    primaryEmail: filterPrimaryEmail(userEmails)
+                    primaryEmail: filterPrimaryEmail(userEmails).email,
+                    commitEmail: userEmails.find(e => e.visibility === 'public')?.email || `${id}+${login}@users.noreply.${this.config.host}`
                 },
                 currentScopes
             }
