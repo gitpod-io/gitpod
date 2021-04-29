@@ -8,7 +8,7 @@ import * as uuidv4 from 'uuid/v4';
 import { WorkspaceFactory } from "../../../src/workspace/workspace-factory";
 import { injectable, inject } from "inversify";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { User, StartPrebuildContext, Workspace, CommitContext, PrebuiltWorkspaceContext, WorkspaceContext, WithSnapshot, WithPrebuild } from "@gitpod/gitpod-protocol";
+import { User, StartPrebuildContext, Workspace, CommitContext, PrebuiltWorkspaceContext, WorkspaceContext, WithSnapshot, WithPrebuild, TaskConfig } from "@gitpod/gitpod-protocol";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { LicenseEvaluator } from '@gitpod/licensor/lib';
 import { Feature } from '@gitpod/licensor/lib/api';
@@ -56,7 +56,62 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 }
             }
 
-            let ws = await this.createForCommit({span}, user, commitContext, normalizedContextURL);
+            const config = await this.configProvider.fetchConfig({span}, user, context.actual);
+            const imageSource = await this.imageSourceProvider.getImageSource(ctx, user, context.actual, config);
+
+            // Walk back the commit history to find suitable parent prebuild to start an incremental prebuild on.
+            let ws;
+            for (const parent of (context.commitHistory || [])) {
+                const parentPrebuild = await this.db.trace({span}).findPrebuiltWorkspaceByCommit(commitContext.repository.cloneUrl, parent);
+                if (!parentPrebuild) {
+                    continue;
+                }
+                if (parentPrebuild.state !== 'available') {
+                    continue;
+                }
+                log.debug(`Considering parent prebuild for ${commitContext.revision}`, parentPrebuild);
+                const buildWorkspace = await this.db.trace({span}).findById(parentPrebuild.buildWorkspaceId);
+                if (!buildWorkspace) {
+                    continue;
+                }
+                if (!!buildWorkspace.basedOnPrebuildId) {
+                    continue;
+                }
+                if (JSON.stringify(imageSource) !== JSON.stringify(buildWorkspace.imageSource)) {
+                    log.debug(`Skipping parent prebuild: Outdated image`, {
+                        imageSource,
+                        parentImageSource: buildWorkspace.imageSource,
+                    });
+                    continue;
+                }
+                const filterPrebuildTasks = (tasks: TaskConfig[] = []) => (tasks
+                    .map(task => Object.keys(task)
+                        .filter(key => ['before', 'init', 'prebuild'].includes(key))
+                        // @ts-ignore
+                        .reduce((obj, key) => ({ ...obj, [key]: task[key] }), {}))
+                    .filter(task => Object.keys(task).length > 0));
+                const prebuildTasks = filterPrebuildTasks(config.tasks);
+                const parentPrebuildTasks = filterPrebuildTasks(buildWorkspace.config.tasks);
+                if (JSON.stringify(prebuildTasks) !== JSON.stringify(parentPrebuildTasks)) {
+                    log.debug(`Skipping parent prebuild: Outdated prebuild tasks`, {
+                        prebuildTasks,
+                        parentPrebuildTasks,
+                    });
+                    continue;
+                }
+                const incrementalPrebuildContext: PrebuiltWorkspaceContext = {
+                    title: `Incremental prebuild of "${commitContext.title}"`,
+                    originalContext: commitContext,
+                    prebuiltWorkspace: parentPrebuild,
+                }
+                ws = await this.createForPrebuiltWorkspace({span}, user, incrementalPrebuildContext, normalizedContextURL);
+                break;
+            }
+
+            if (!ws) {
+                // No suitable parent prebuild was found -- create a (fresh) full prebuild.
+                ws = await this.createForCommit({span}, user, commitContext, normalizedContextURL);
+            }
             ws.type = "prebuild";
             ws = await this.db.trace({span}).store(ws);
 
@@ -82,7 +137,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
 
     protected async createForPrebuiltWorkspace(ctx: TraceContext, user: User, context: PrebuiltWorkspaceContext, normalizedContextURL: string): Promise<Workspace> {
         this.requireEELicense(Feature.FeaturePrebuild);
-        const span = TraceContext.startSpan("createForStartPrebuild", ctx);
+        const span = TraceContext.startSpan("createForPrebuiltWorkspace", ctx);
 
         const fallback = await this.fallbackIfOutPrebuildTime(ctx, user, context, normalizedContextURL);
         if (!!fallback) {

@@ -451,6 +451,13 @@ class TestBitbucketContextParser {
             "title": "gitpod/clu-sample-repo - master"
         })
     }
+
+    @test public async testFetchCommitHistory() {
+        const result = await this.parser.fetchCommitHistory({}, this.user, 'https://bitbucket.org/gitpod/sample-repository', 'dd0aef8097a7c521b8adfced795fcf96c9e598ef', 100);
+        expect(result).to.deep.equal([
+            'da2119f51b0e744cb6b36399f8433b477a4174ef',
+        ])
+    }
 }
 
 module.exports = new TestBitbucketContextParser();

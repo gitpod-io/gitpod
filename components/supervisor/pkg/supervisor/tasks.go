@@ -378,6 +378,8 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 		defer stdout.Close()
 
 		fileName := tm.prebuildLogFileName(task)
+		// TODO(janx): If the file already exists (from a parent prebuild), extract its "time saved", and log that below
+		// (instead, or in addition to, the incremental prebuild time).
 		file, err := os.Create(fileName)
 		var fileWriter *bufio.Writer
 		if err != nil {

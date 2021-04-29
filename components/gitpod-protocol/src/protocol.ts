@@ -813,6 +813,7 @@ export namespace SnapshotContext {
 
 export interface StartPrebuildContext extends WorkspaceContext {
     actual: WorkspaceContext;
+    commitHistory?: string[];
 }
 
 export namespace StartPrebuildContext {

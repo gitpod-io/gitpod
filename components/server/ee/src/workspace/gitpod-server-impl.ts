@@ -549,7 +549,7 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
 
             const logCtx: LogContext = { userId: user.id };
             const cloneUrl = context.repository.cloneUrl;
-            const prebuiltWorkspace = await this.workspaceDb.trace({ span }).findPrebuiltWorkspaceByCommit(context.repository.cloneUrl, context.revision);
+            const prebuiltWorkspace = await this.workspaceDb.trace({ span }).findPrebuiltWorkspaceByCommit(cloneUrl, context.revision);
             const logPayload = { mode, cloneUrl, commit: context.revision, prebuiltWorkspace };
             log.debug(logCtx, "Looking for prebuilt workspace: ", logPayload);
             if (!prebuiltWorkspace) {
@@ -568,6 +568,10 @@ export class GitpodServerEEImpl<C extends GitpodClient, S extends GitpodServer> 
                 if (mode === CreateWorkspaceMode.ForceNew) {
                     // in force mode we ignore running prebuilds as we want to start a workspace as quickly as we can.
                     return;
+                    // TODO(janx): Fall back to parent prebuild instead, if it's available:
+                    //   const buildWorkspace = await this.workspaceDb.trace({span}).findById(prebuiltWorkspace.buildWorkspaceId);
+                    //   const parentPrebuild = await this.workspaceDb.trace({span}).findPrebuildByID(buildWorkspace.basedOnPrebuildId);
+                    // Also, make sure to initialize it by both printing the parent prebuild logs AND re-runnnig the before/init/prebuild tasks.
                 }
 
                 let result: WorkspaceCreationResult = {
