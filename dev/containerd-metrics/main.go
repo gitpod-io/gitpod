@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -27,6 +28,18 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+)
+
+var (
+	bermudaGapDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Namespace: "gitpod",
+		Subsystem: "containerd_metrics",
+		Name:      "bermuda_gap_duration_seconds",
+		Help:      "Duration between the request from kubelet to pull an image until registry-facade actually starts pulling it.",
+		Buckets:   prometheus.ExponentialBuckets(2, 2, 10),
+	}, []string{"node"})
 )
 
 func main() {
@@ -67,6 +80,11 @@ func main() {
 			},
 		},
 	}
+
+	http.Handle("/metrics", promhttp.Handler())
+	prometheus.MustRegister(bermudaGapDuration)
+	http.ListenAndServe(":9500", nil)
+
 	err := app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
