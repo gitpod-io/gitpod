@@ -703,6 +703,11 @@ export abstract class AbstractTypeORMWorkspaceDBImpl extends AbstractWorkspaceDB
             joinConditions.push("ws.ownerId = :ownerId");
             joinConditionParams.ownerId = ownerId;
         }
+
+        // TODO: I could extend this with more join conditions so it also looks for
+        // - workspaces name (e.g "pink-teddybear-1245") aka workspace-ID
+        // - instance-UUID
+        // TODO: Figure out how to describe the ws table so I know what to join on
         if (!!searchTerm) {
             joinConditions.push(`ws.contextUrl LIKE '%${searchTerm}%'`);
         }
