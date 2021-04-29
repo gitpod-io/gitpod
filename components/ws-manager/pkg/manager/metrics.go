@@ -275,7 +275,7 @@ func newWorkspaceActivityVec(m *Manager) *workspaceActivityVec {
 	opts := prometheus.GaugeOpts{
 		Namespace: metricsNamespace,
 		Subsystem: metricsWorkspaceSubsystem,
-		Name:      "activity_total",
+		Name:      "workspace_activity_total",
 	}
 	return &workspaceActivityVec{
 		GaugeVec: prometheus.NewGaugeVec(opts, []string{"active"}),
