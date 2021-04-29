@@ -33,7 +33,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
             if (moreSegments.length > 0) {
                 switch (moreSegments[0]) {
                     case 'pull': {
-                        return await this.handlePullRequestContext({span}, user, host, owner, repoName, parseInt(moreSegments[1]));
+                        return await this.handlePullRequestContext({span}, user, host, owner, repoName, parseInt(moreSegments[1], 10));
                     }
                     case 'tree':
                     case 'blob':
@@ -41,7 +41,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                         return await this.handleTreeContext({span}, user, host, owner, repoName, moreSegments.slice(1));
                     }
                     case 'issues': {
-                        return await this.handleIssueContext({span}, user, host, owner, repoName, parseInt(moreSegments[1]));
+                        return await this.handleIssueContext({span}, user, host, owner, repoName, parseInt(moreSegments[1], 10));
                     }
                     case 'commit': {
                         return await this.handleCommitContext({span}, user, host, owner, repoName, moreSegments[1]);
@@ -72,7 +72,7 @@ export class GithubContextParser extends AbstractContextParser implements IConte
 
         try {
             const result: any = await this.githubQueryApi.runQuery(user, `
-            query {
+                query {
                     repository(name: "${repoName}", owner: "${owner}") {
                         ${this.repoProperties()}
                         defaultBranchRef {
@@ -210,24 +210,24 @@ export class GithubContextParser extends AbstractContextParser implements IConte
 
         try {
             const result: any = await this.githubQueryApi.runQuery(user, `
-                    query {
-                        repository(name: "${repoName}", owner: "${owner}") {
-                            object(oid: "${sha}") {
-                                oid,
-                                ... on Commit {
-                                    messageHeadline
-                                }
+                query {
+                    repository(name: "${repoName}", owner: "${owner}") {
+                        object(oid: "${sha}") {
+                            oid,
+                            ... on Commit {
+                                messageHeadline
                             }
-                            ${this.repoProperties()}
-                            defaultBranchRef {
-                                name,
-                                target {
-                                    oid
-                                }
-                            },
                         }
+                        ${this.repoProperties()}
+                        defaultBranchRef {
+                            name,
+                            target {
+                                oid
+                            }
+                        },
                     }
-                `);
+                }
+            `);
             span.log({"request.finished": ""});
 
             if (result.data.repository === null) {
@@ -264,30 +264,30 @@ export class GithubContextParser extends AbstractContextParser implements IConte
             const result: any = await this.githubQueryApi.runQuery(user, `
                 query {
                     repository(name: "${repoName}", owner: "${owner}") {
-                    pullRequest(number: ${pullRequestNr}) {
-                        title
-                        headRef {
-                        name
-                        repository {
-                            ${this.repoProperties()}
+                        pullRequest(number: ${pullRequestNr}) {
+                            title
+                            headRef {
+                                name
+                                repository {
+                                    ${this.repoProperties()}
+                                }
+                                target {
+                                    oid
+                                }
+                            }
+                            baseRef {
+                                name
+                                repository {
+                                    ${this.repoProperties()}
+                                }
+                                target {
+                                    oid
+                                }
+                            }
                         }
-                        target {
-                            oid
-                        }
-                        }
-                        baseRef {
-                        name
-                        repository {
-                            ${this.repoProperties()}
-                        }
-                        target {
-                            oid
-                        }
-                        }
-                    }
                     }
                 }
-                `);
+            `);
             span.log({"request.finished": ""});
 
             if (result.data.repository === null) {
@@ -331,21 +331,21 @@ export class GithubContextParser extends AbstractContextParser implements IConte
 
         try {
             const result: any = await this.githubQueryApi.runQuery(user, `
-                    query {
-                        repository(name: "${repoName}", owner: "${owner}") {
-                            issue(number: ${issueNr}) {
-                                title
-                            }
-                            ${this.repoProperties()}
-                            defaultBranchRef {
-                                name,
-                                target {
-                                    oid
-                                }
-                            },
+                query {
+                    repository(name: "${repoName}", owner: "${owner}") {
+                        issue(number: ${issueNr}) {
+                            title
                         }
+                        ${this.repoProperties()}
+                        defaultBranchRef {
+                            name,
+                            target {
+                                oid
+                            }
+                        },
                     }
-                `);
+                }
+            `);
             span.log({"request.finished": ""});
 
             if (result.data.repository === null) {
@@ -415,5 +415,57 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                 ${this.repoProperties(parents - 1)}
             }` : ''}
         `;
+    }
+
+    public async fetchCommitHistory(ctx: TraceContext, user: User, contextUrl: string, sha: string, maxDepth: number): Promise<string[]> {
+        const span = TraceContext.startSpan("GithubContextParser.fetchCommitHistory", ctx);
+
+        try {
+            if (sha.length != 40) {
+                throw new Error(`Invalid commit ID ${sha}.`);
+            }
+
+            // TODO(janx): To get more results than GitHub API's max page size (seems to be 100), pagination should be handled.
+            // These additional history properties may be helfpul:
+            //     totalCount,
+            //     pageInfo {
+            //         haxNextPage,
+            //     },
+            const { owner, repoName } = await this.parseURL(user, contextUrl);
+            const result: any = await this.githubQueryApi.runQuery(user, `
+                query {
+                    repository(name: "${repoName}", owner: "${owner}") {
+                        object(oid: "${sha}") {
+                            ... on Commit {
+                                history(first: ${maxDepth}) {
+                                    edges {
+                                        node {
+                                            oid
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            `);
+            span.log({"request.finished": ""});
+
+            if (result.data.repository === null) {
+                throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, this.config.host, owner, repoName);
+            }
+
+            const commit = result.data.repository.object;
+            if (commit === null) {
+                throw new Error(`Couldn't find commit ${sha} in repository ${owner}/${repoName}.`);
+            }
+
+            return commit.history.edges.slice(1).map((e: any) => e.node.oid) || [];
+        } catch (e) {
+            span.log({"error": e});
+            throw e;
+        } finally {
+            span.finish();
+        }
     }
 }

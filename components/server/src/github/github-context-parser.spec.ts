@@ -320,7 +320,6 @@ class TestGithubContextParser {
         })
     }
 
-
     @test public async testCommitContext_02_notExistingCommit() {
         try {
             await this.parser.handle({}, this.user, 'https://github.com/gitpod-io/gitpod-test-repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa');
@@ -535,6 +534,14 @@ class TestGithubContextParser {
                 "path": "folder1/folder2/content2"
             }
         )
+    }
+
+    @test public async testFetchCommitHistory() {
+        const result = await this.parser.fetchCommitHistory({}, this.user, 'https://github.com/gitpod-io/gitpod-test-repo', '409ac2de49a53d679989d438735f78204f441634', 100);
+        expect(result).to.deep.equal([
+            '506e5aed317f28023994ecf8ca6ed91430e9c1a4',
+            'f5b041513bfab914b5fbf7ae55788d9835004d76',
+        ])
     }
 
 }

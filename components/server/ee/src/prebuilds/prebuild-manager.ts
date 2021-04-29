@@ -16,6 +16,7 @@ import { StartPrebuildResult } from './github-app';
 import { WorkspaceFactory } from '../../../src/workspace/workspace-factory';
 import { ConfigProvider } from '../../../src/workspace/config-provider';
 import { WorkspaceStarter } from '../../../src/workspace/workspace-starter';
+import { Env } from '../../../src/env';
 
 export class WorkspaceRunningError extends Error {
     constructor(msg: string, public instance: WorkspaceInstance) {
@@ -30,6 +31,7 @@ export class PrebuildManager {
     @inject(WorkspaceStarter) protected readonly workspaceStarter: WorkspaceStarter;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(ConfigProvider) protected readonly configProvider: ConfigProvider;
+    @inject(Env) protected env: Env;
 
     async hasAutomatedPrebuilds(ctx: TraceContext, cloneURL: string): Promise<boolean> {
         const span = TraceContext.startSpan("hasPrebuilds", ctx);
@@ -74,6 +76,11 @@ export class PrebuildManager {
                 title: `Prebuild of "${actual.title}"`,
                 actual
             };
+
+            if (this.shouldPrebuildIncrementally(actual.repository.cloneUrl)) {
+                const maxDepth = this.env.incrementalPrebuildsCommitHistory;
+                prebuildContext.commitHistory = await contextParser.fetchCommitHistory({ span }, user, contextURL, commit, maxDepth);
+            }
 
             log.debug("Created prebuild context", prebuildContext);
 
@@ -135,6 +142,12 @@ export class PrebuildManager {
         }
 
         return true;
+    }
+
+    protected shouldPrebuildIncrementally(cloneUrl: string): boolean {
+        const trimRepoUrl = (url: string) => url.replace(/\/$/, '').replace(/\.git$/, '');
+        const repoUrl = trimRepoUrl(cloneUrl);
+        return this.env.incrementalPrebuildsRepositoryPassList.some(url => trimRepoUrl(url) === repoUrl);
     }
 
     async fetchConfig(ctx: TraceContext, user: User, contextURL: string): Promise<WorkspaceConfig | undefined> {

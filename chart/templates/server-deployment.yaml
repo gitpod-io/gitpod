@@ -202,6 +202,14 @@ spec:
           value: {{ $comp.defaultBaseImageRegistryWhitelist | toJson | quote }}
         - name: GITPOD_DEFAULT_FEATURE_FLAGS
           value: {{ $comp.defaultFeatureFlags | toJson | quote }}
+    {{- if $comp.incrementalPrebuilds.repositoryPasslist }}
+        - name: INCREMENTAL_PREBUILDS_REPO_PASSLIST
+          value: {{ $comp.incrementalPrebuilds.repositoryPasslist | toJson | quote }}
+    {{- end }}
+    {{- if $comp.incrementalPrebuilds.commitHistory }}
+        - name: INCREMENTAL_PREBUILDS_COMMIT_HISTORY
+          value: {{ $comp.incrementalPrebuilds.commitHistory | quote }}
+    {{- end }}
         - name: AUTH_PROVIDERS_CONFIG
           valueFrom:
             configMapKeyRef:

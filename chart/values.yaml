@@ -280,6 +280,9 @@ components:
     wsman: []
     defaultBaseImageRegistryWhitelist: []
     defaultFeatureFlags: []
+    incrementalPrebuilds:
+      repositoryPasslist: []
+      commitHistory: 100
     ports:
       http:
         expose: true
