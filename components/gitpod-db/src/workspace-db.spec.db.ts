@@ -232,5 +232,17 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
             expect(dbResult.length).to.eq(0);
         });
     }
+
+    @test(timeout(10000))
+    public async testFindAllWorkspaceAndInstances_contextUrl() {
+        await this.db.transaction(async db => {
+            await Promise.all([
+                db.store(this.ws),
+                db.storeInstance(this.wsi1)
+            ]);
+            const dbResult = await db.findAllWorkspaceAndInstances(0, 10, "contextURL", "DESC", undefined, this.ws.contextURL);
+            expect(dbResult.total).to.eq(1);
+        });
+    }
 }
 module.exports = new WorkspaceDBSpec()
