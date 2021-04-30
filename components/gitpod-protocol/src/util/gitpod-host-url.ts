@@ -128,9 +128,13 @@ export class GitpodHostUrl {
 
     get workspaceId(): string | undefined {
         const hostSegs = this.url.host.split(".");
-        if (hostSegs.length > 1 && hostSegs[0].match(workspaceIDRegex)) {
-            // URL has a workspace prefix
-            return hostSegs[0];
+        if (hostSegs.length > 1) {
+            const matchResults = hostSegs[0].match(workspaceIDRegex);
+            if (matchResults) {
+                // URL has a workspace prefix
+                // port prefixes are excluded
+                return matchResults[0];
+            }
         }
 
         const pathSegs = this.url.pathname.split("/")

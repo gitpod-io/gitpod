@@ -18,7 +18,7 @@ import { BitbucketTokenHelper } from "./bitbucket-token-handler";
 const expect = chai.expect;
 import { skipIfEnvVarNotSet } from "@gitpod/gitpod-protocol/lib/util/skip-if";
 
-@suite.only(timeout(10000), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET"))
+@suite(timeout(10000), skipIfEnvVarNotSet("GITPOD_TEST_TOKEN_BITBUCKET"))
 class TestBitbucketContextParser {
 
     protected parser: BitbucketContextParser;
