@@ -67,12 +67,12 @@ spec:
       enableServiceLinks: false
       containers:
       - name: dind
-        image: {{ $comp.dindImage | default "docker:19.03-dind" }}
+        image: {{ $comp.dindImage | default "docker:20.10.6-dind-rootless" }}
 {{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
         securityContext:
           privileged: true
           runAsUser: 0
-        args: [ "dockerd", "--userns-remap=default", "-H tcp://127.0.0.1:2375" {{- if $comp.dindMtu -}}, "--mtu={{ $comp.dindMtu}}"{{- end -}} ]
+        args: [ "dockerd", "--experimental", "--rootless", "--userns-remap=default", "-H tcp://127.0.0.1:2375" {{- if $comp.dindMtu -}}, "--mtu={{ $comp.dindMtu}}"{{- end -}} ]
         volumeMounts:
         - mountPath: /var/lib/docker
           name: dind-storage

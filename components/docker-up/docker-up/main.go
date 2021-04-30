@@ -130,7 +130,7 @@ func runWithinNetns() (err error) {
 
 	if listenFDs > 0 {
 		os.Setenv("LISTEN_PID", strconv.Itoa(os.Getpid()))
-		args = append(args, "-H", "fd://")
+		args = append(args, "-H", "fd://", "--experimental", "--rootless")
 
 		dockerd, err := exec.LookPath("dockerd")
 		if err != nil {

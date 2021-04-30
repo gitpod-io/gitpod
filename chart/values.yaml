@@ -203,7 +203,7 @@ components:
     registryCerts:
     - name: builtin
       secret: builtin-registry-certs
-    dindImage: docker:19.03-dind
+    dindImage: docker:20.10.6-dind-rootless
     dindMtu: ""
     dindResources:
       requests:
