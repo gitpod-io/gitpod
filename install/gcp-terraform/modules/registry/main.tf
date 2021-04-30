@@ -26,9 +26,9 @@ resource "google_project_service" "gitpod_registry" {
 #
 
 resource "google_service_account" "gitpod_registry" {
-  account_id   = "gitpod-registry-${var.name}"
-  display_name = "gitpod-registry-${var.name}"
-  description  = "Gitpod Registry ${var.name}"
+  account_id   = "gitpod-registry"
+  display_name = "gitpod-registry"
+  description  = "Gitpod Registry "
   project      = var.project
 }
 

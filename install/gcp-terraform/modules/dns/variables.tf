@@ -11,17 +11,12 @@ variable "region" {
   type = string
 }
 
-variable "zone_name" {
+variable "hostname" {
   type = string
 }
 
 variable "name" {
   type = string
-}
-
-variable "subdomain" {
-  type    = string
-  default = "gitpod"
 }
 
 variable "gitpod" {

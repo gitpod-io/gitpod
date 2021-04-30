@@ -20,7 +20,6 @@ module "kubernetes" {
   region  = var.region
 }
 
-
 module "kubeconfig" {
   source = "../../modules/kubeconfig"
 
@@ -36,11 +35,10 @@ module "kubeconfig" {
 module "dns" {
   source = "../../modules/dns"
 
+  hostname  = var.hostname
   project   = var.project
   region    = var.region
-  zone_name = var.zone_name
   name      = "gitpod-dns"
-  subdomain = var.subdomain
 
   providers = {
     google     = google
@@ -48,18 +46,16 @@ module "dns" {
   }
 }
 
-
 module "certmanager" {
   source = "../../modules/certmanager"
 
   project = var.project
   email   = var.certificate_email
-  domain  = module.dns.hostname
+  domain  = var.hostname
 
   providers = {
     google     = google
     kubernetes = kubernetes
-    helm       = helm
     kubectl    = kubectl
   }
 }
@@ -67,9 +63,7 @@ module "certmanager" {
 module "registry" {
   source = "../../modules/registry"
 
-  name     = var.subdomain
   project  = var.project
-  location = var.container_registry.location
 
   providers = {
     google     = google
@@ -77,21 +71,18 @@ module "registry" {
   }
 }
 
-
 module "storage" {
   source = "../../modules/storage"
 
-  name     = var.subdomain
   project  = var.project
   region   = var.region
-  location = "EU"
 }
 
 module "database" {
   source = "../../modules/database"
 
   project = var.project
-  name    = var.database.name
+  name    = "gitpod-db"
   region  = var.region
   network = {
     id   = google_compute_network.gitpod.id
@@ -102,29 +93,15 @@ module "database" {
 #
 # Gitpod
 #
-
-module "gitpod" {
-  source = "../../modules/gitpod"
-
-  project            = var.project
-  region             = var.region
-  namespace          = var.namespace
-  values             = file("values.yaml")
-  dns_values         = module.dns.values
-  certificate_values = module.certmanager.values
-  database_values    = module.database.values
-  registry_values    = module.registry.values
-  storage_values     = module.storage.values
-  license            = var.license
-
-  gitpod = {
-    chart        = "../../../../chart"
-    image_prefix = "gcr.io/gitpod-io/self-hosted/"
-  }
-
-  providers = {
-    google     = google
-    kubernetes = kubernetes
-    helm       = helm
-  }
+output "values" {
+  value = yamlencode(
+      merge(
+        yamldecode(file("./values.static.yaml")),
+        try(yamldecode(module.dns.values), {}),
+        try(yamldecode(module.certmanager.values), {}),
+        try(yamldecode(module.registry.values), {}),
+        try(yamldecode(module.storage.values), {}),
+        try(yamldecode(module.database.values), {})
+      )
+    )
 }

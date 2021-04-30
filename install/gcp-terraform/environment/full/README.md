@@ -6,6 +6,16 @@
 
 Terraform is used to deploy the cloud infrastructure (https://terraform.io)
 
+TODO:
+ - update values files to new helm structure
+ - see if we can reduce (required) variables to:
+   - GCP project
+   - region
+   - dns.hostname -> zone_name
+   - dns.certificate_email
+   - ? location (ÈU|US for storage, and image registy?)
+
+
 ### GCP Project
 
 To install Gitpod, a GCP project has to be present (https://support.google.com/googleapi/answer/6251787?hl=en).

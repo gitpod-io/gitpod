@@ -22,9 +22,12 @@ resource "google_project_service" "dns" {
   disable_on_destroy         = false
 }
 
-data "google_dns_managed_zone" "gitpod" {
-  name    = var.zone_name
+resource "google_dns_managed_zone" "gitpod" {
+  name    = replace(var.hostname, ".", "-")
   project = var.project
+
+  dns_name    = "${var.hostname}."
+  description = "Gitpod DNS zone"
 }
 
 resource "google_compute_address" "gitpod" {
@@ -35,10 +38,10 @@ resource "google_compute_address" "gitpod" {
 
 resource "google_dns_record_set" "gitpod" {
   count        = length(local.dns_prefixes)
-  name         = "${local.dns_prefixes[count.index]}${var.subdomain}.${data.google_dns_managed_zone.gitpod.dns_name}"
+  name         = "${local.dns_prefixes[count.index]}${google_dns_managed_zone.gitpod.dns_name}"
   type         = "A"
   ttl          = 300
-  managed_zone = data.google_dns_managed_zone.gitpod.name
+  managed_zone = google_dns_managed_zone.gitpod.name
   rrdatas      = [google_compute_address.gitpod.address]
   project      = var.project
 }
@@ -82,7 +85,7 @@ resource "kubernetes_secret" "dns" {
 data "template_file" "values" {
   template = file("${path.module}/templates/values.tpl")
   vars = {
-    hostname       = local.hostname
+    hostname       = var.hostname
     loadBalancerIP = google_compute_address.gitpod.address
   }
 }
