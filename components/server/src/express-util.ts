@@ -9,7 +9,7 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { URL } from 'url';
 import * as express from 'express';
 import * as crypto from 'crypto';
-import { GitpodHostUrl, workspaceIDRegex } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
+import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 
 export const pingPong: WsRequestHandler = (ws, req, next) => {
     let pingSentTimer: any;
@@ -91,7 +91,14 @@ const looksLikeWorkspaceHostname = (originHostname: URL, gitpodHostName: string)
         return false;
     }
     const url = new GitpodHostUrl(originHostname);
-    return workspaceIDRegex.test(url.workspaceId || '')
+    const workspaceId = url.workspaceId;
+    if (workspaceId) {
+        const hostname = url.url.hostname as string;
+        if (hostname.startsWith(workspaceId)) {
+            return true;
+        }
+    }
+    return false;
 };
 
 export function saveSession(reqOrSession: express.Request | Express.Session): Promise<void> {
