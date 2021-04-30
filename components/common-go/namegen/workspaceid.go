@@ -74,6 +74,7 @@ var colors = []string{
 	"indigo",
 	"ivory",
 	"jade",
+	"kumquat",
 	"lavender",
 	"lime",
 	"magenta",

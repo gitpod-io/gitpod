@@ -48,6 +48,7 @@ export const colors = [
     'indigo',
     'ivory',
     'jade',
+    'kumquat',
     'lavender',
     'lime',
     'magenta',
