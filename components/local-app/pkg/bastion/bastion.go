@@ -142,7 +142,10 @@ func (b *Bastion) fullUpdate(uchan chan<- *gitpod.WorkspaceInstance) {
 func (b *Bastion) acceptUpdates(updates chan *gitpod.WorkspaceInstance) {
 	for u := range updates {
 		ws, ok := b.workspaces[u.ID]
-		if !ok && u.Status.Phase != "stopping" {
+		if !ok {
+			if u.Status.Phase == "stopping" || u.Status.Phase == "stopped" {
+				continue
+			}
 			ctx, cancel := context.WithCancel(b.ctx)
 			ws = &Workspace{
 				WorkspaceID: u.WorkspaceID,
@@ -179,11 +182,11 @@ func (b *Bastion) acceptUpdates(updates chan *gitpod.WorkspaceInstance) {
 				}
 			}
 
-		case "stopping":
+		case "stopping", "stopped":
 			ws.cancel()
 			delete(b.workspaces, ws.WorkspaceID)
 			b.Callbacks.InstanceUpdate(ws)
-			return
+			continue
 		}
 
 		b.workspaces[u.ID] = ws
