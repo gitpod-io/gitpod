@@ -105,7 +105,7 @@ resource "google_container_node_pool" "gitpod" {
 
   node_config {
     preemptible     = false
-    machine_type    = "n1-standard-8"
+    machine_type    = "n2-standard-8"
     disk_size_gb    = 100
     disk_type       = "pd-ssd"
     local_ssd_count = 1

@@ -131,18 +131,6 @@ resource "google_compute_network_peering_routes_config" "servicenetwork" {
   ]
 }
 
-resource "google_compute_network_peering_routes_config" "cloudsql" {
-  peering = "cloudsql-mysql-googleapis-com"
-  network = var.network.name
-
-  import_custom_routes = true
-  export_custom_routes = true
-
-  depends_on = [
-    google_sql_database_instance.gitpod
-  ]
-}
-
 
 resource "kubernetes_secret" "database" {
   metadata {

@@ -13,11 +13,11 @@
     "gcloudSqlProxy":
       "credentials": "gcloud-sql-token"
       "enabled": true
-      "instance": "gpl-sh-090-3:europe-west1:gitpod-db-401d32b0"
+      "instance": "gpl-sh-090-3:europe-west3:gitpod-db-f68922fd"
     "serviceType": "ClusterIP"
 "db":
-  "host": "10.3.0.3"
-  "password": "xu80uOFw4BaRYDiL"
+  "host": "10.194.0.3"
+  "password": "kqbPzZLO29P%N_tq"
 "docker-registry":
   "enabled": false
 "hostname": "gpl.gitpod-self-hosted.com"

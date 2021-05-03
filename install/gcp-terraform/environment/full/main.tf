@@ -57,6 +57,7 @@ module "certmanager" {
     google     = google
     kubernetes = kubernetes
     kubectl    = kubectl
+    helm       = helm
   }
 }
 

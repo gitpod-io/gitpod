@@ -2,8 +2,7 @@
 # Manual edits may be lost in future updates.
 
 provider "registry.terraform.io/gavinbunney/kubectl" {
-  version     = "1.9.4"
-  constraints = "1.9.4"
+  version = "1.9.4"
   hashes = [
     "h1:i/U6AFQ0carwoKyZTyePBMnz11UMZSE+7vgSPbRnqpA=",
     "zh:4cde6a0dacb2046e501b906c67deafaf424162b7ffa827d3003d62ee1d815169",
