@@ -13,6 +13,9 @@ You need a fresh [Google Cloud project](https://cloud.google.com/resource-manage
 Once you have the project, keep its project ID handy.
 
 ## 2. Run Terraform
+Running the following Terraform script will create a Gitpod Cluster, Database, Service Accounts and everything else necessary to run Gitpod installation .
+
+ > Note: While this is the most integrated and powerful setup, it will burn some money (users reported ~100$/week) even if not used. This obviously depends on the specific configuration, especially node sizing.
 
   1. Enable APIs:
 
@@ -29,21 +32,24 @@ Once you have the project, keep its project ID handy.
     terraform plan -var "project=$PROJECT_ID" -var 'region=europe-west1' -var 'hostname=gpl.gitpod-self-hosted.com' -var 'certificate_email=test@test.sh'
     terraform apply -var "project=$PROJECT_ID" -var 'region=europe-west1' -var 'hostname=gpl.gitpod-self-hosted.com' -var 'certificate_email=test@test.sh'
     ```
+    At the end there are two files:
+     - a `values.terraform.yaml` containing all infrastructure-specific helm config
+     - a `secrets/kubeconfig` containing the `kubectl` config to connect to the cluster
+    
+  
+## 3. Setup DNS nameserver
 
-## 3. Launch the first workspace
-Once finished, the installer will print the URL at which your Gitpod installation can be found. There you need to connect Gitpod to at least one Git provider:
-  - [Configure an OAuth application for GitLab](/docs/gitlab-integration/#oauth-application)
-  - [Configure an OAuth application for GitHub](/docs/github-integration/#oauth-application)
+  The Terraform scripts create a "dangling" DNS zone with Google's [Cloud DNS](https://cloud.google.com/dns). To finish the setup you have two options:
+  - Buy a domain from Google Cloud Domain: https://console.cloud.google.com/net-services/dns/zones?project=|your-project-id|
+  - Install Gitpod on a subdomain (`gitpod.my-domain.com`) of an existing domain (`my-domain.com`) that might be from another registrar: For this to work you need to add several `NS` records to the DNS zone `my-domain.com` that point to Google's nameservers.
+    1. Go to https://console.cloud.google.com/net-services/dns/zones?project=|your-project-id|, open your Gitpod DNS zone to learn and look for the `NS` entry. This contains a list of nameservers.
+    2. Go to the registrar of `my-domain.com` and add a `NS` entry for `gitpod.my-domain.com` that points to _all_ of the Google nameservers (typically 4).
 
-## 4. Configure the Browser extension
-Afterwards you can jump right into your first workspace, by prefixing the repository URL with your Gitpod Self-Hosted URL.
+## 4. Install Gitpod using Helm
+To actually install Gitpod follow the [the generic Kubernetes instructions](../install-on-kubernetes/) to install Gitpod.
+ > Note: You can skip "Configure Ingress to your Gitpod installation" entirely, as this has already been taken care of.
 
-Examples:
- - GitLab: `<your-installation-url>/#https://gitlab.com/gitpod/spring-petclinic`
- - GitHub: `<your-installation-url>/#https://github.com/gitpod-io/spring-petclinic`
+Make sure to always:
+ - prepend `values.terraform.yaml` like this: `helm upgrade --install -f values.terraform.yaml -f values.custom.yaml`
+ - append your `kubeconfig` file to your `KUBECONFIG` environment variable so `kubectl` is able to access the Gitpod cluster: `export KUBECONFIG=$KUBECONFIG:$PWD/secrets/kubeconfig`
 
-# Going further
-- Using a [custom domain](../domain/)
-- Configuring a [custom Docker registry](../docker-registry/)
-- Configuring a [storage backend](../storage/)
-- Configuring [workspace sizes](../workspaces/)
