@@ -14,7 +14,3 @@ components:
 
 docker-registry:
   enabled: false
-
-gitpod_selfhosted:
-  variants:
-    customRegistry: true

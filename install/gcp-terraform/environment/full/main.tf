@@ -90,18 +90,27 @@ module "database" {
   }
 }
 
+locals {
+  helmValues = yamlencode(
+    merge(
+      yamldecode(file("./values.static.yaml")),
+      try(yamldecode(module.dns.values), {}),
+      try(yamldecode(module.certmanager.values), {}),
+      try(yamldecode(module.registry.values), {}),
+      try(yamldecode(module.storage.values), {}),
+      try(yamldecode(module.database.values), {})
+    )
+  )
+}
+
 #
-# Gitpod
+# Gitpod Terraform values
 #
 output "values" {
-  value = yamlencode(
-      merge(
-        yamldecode(file("./values.static.yaml")),
-        try(yamldecode(module.dns.values), {}),
-        try(yamldecode(module.certmanager.values), {}),
-        try(yamldecode(module.registry.values), {}),
-        try(yamldecode(module.storage.values), {}),
-        try(yamldecode(module.database.values), {})
-      )
-    )
+  value = local.helmValues
+}
+
+resource "local_file" "values" {
+  content     = local.helmValues
+  filename = "${path.module}/values.terraform.yaml"
 }

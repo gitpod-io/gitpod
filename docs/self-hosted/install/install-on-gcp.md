@@ -14,7 +14,11 @@ Once you have the project, keep its project ID handy.
 
 ## 2. Run Terraform
 
-  1. Visit https://console.cloud.google.com/apis/library/dns.googleapis.com?project=|your-project-id| and hit "Enable".
+  1. Enable APIs:
+
+     1. Visit https://console.cloud.google.com/apis/library/dns.googleapis.com?project=|your-project-id| and hit "Enable".
+
+     2. Visit https://console.cloud.google.com/apis/api/compute.googleapis.com/overview?project=|your-project-id| and hit "Enable".
 
   2. Install all necessary infrastructure using the following commands:
 
@@ -22,8 +26,8 @@ Once you have the project, keep its project ID handy.
     export PROJECT_ID=|your-project-id|
     cd install/gcp-terraform/environment/full
     terraform init
-    terraform plan -var "project=$PROJECT_ID" -var "region=europe-west1" -var "zone_name=gitpod.test" -var "certificate_email=test@test.sh"
-    terraform apply -var "project=$PROJECT_ID" -var "region=europe-west1" -var "zone_name=gitpod.test" -var "certificate_email=test@test.sh"
+    terraform plan -var "project=$PROJECT_ID" -var 'region=europe-west1' -var 'hostname=gpl.gitpod-self-hosted.com' -var 'certificate_email=test@test.sh'
+    terraform apply -var "project=$PROJECT_ID" -var 'region=europe-west1' -var 'hostname=gpl.gitpod-self-hosted.com' -var 'certificate_email=test@test.sh'
     ```
 
 ## 3. Launch the first workspace

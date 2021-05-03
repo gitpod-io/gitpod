@@ -1,0 +1,27 @@
+"branding":
+  "homepage": "gpl.gitpod-self-hosted.com"
+  "redirectUrlAfterLogout": "gpl.gitpod-self-hosted.com"
+  "redirectUrlIfNotAuthenticated": "/workspaces/"
+"certificatesSecret":
+  "chainName": "tls.crt"
+  "fullChainName": "tls.crt"
+  "keyName": "tls.key"
+  "secretName": "gitpod-certificate"
+"components":
+  "db":
+    "autoMigrate": true
+    "gcloudSqlProxy":
+      "credentials": "gcloud-sql-token"
+      "enabled": true
+      "instance": "gpl-sh-090-3:europe-west1:gitpod-db-401d32b0"
+    "serviceType": "ClusterIP"
+"db":
+  "host": "10.3.0.3"
+  "password": "xu80uOFw4BaRYDiL"
+"docker-registry":
+  "enabled": false
+"hostname": "gpl.gitpod-self-hosted.com"
+"minio":
+  "enabled": false
+"mysql":
+  "enabled": false
