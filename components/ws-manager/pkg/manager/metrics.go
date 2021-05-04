@@ -181,6 +181,7 @@ func (m *metrics) OnChange(status *api.WorkspaceStatus) {
 			reason = "timeout"
 		} else if status.Conditions.Failed != "" {
 			reason = "failed"
+			log.WithField("failure", status.Conditions.Failed).Error("workspace stopped due to a failure")
 		} else {
 			reason = "regular-stop"
 		}
