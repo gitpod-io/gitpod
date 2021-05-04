@@ -285,11 +285,15 @@ export class UserController {
             router.get("/local-app/login", passport.authenticate('local-pkce'));
 
             router.get("/local-app/auth", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-                log.info(`PKCE auth: ${req}`);
+                log.info(`PKCE auth: ${JSON.stringify(req.query)}`);
+                res.sendStatus(401);
+                return;
             });
 
             router.get("/local-app/token", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-                log.info(`PKCE token: ${req}`);
+                log.info(`PKCE token: ${JSON.stringify(req.query)}`);
+                res.sendStatus(401);
+                return;
             });
         }
         router.get("/auth/workspace", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
