@@ -235,9 +235,6 @@ components:
         servicePort: 3000
     svcLabels:
       feature: registry
-    handover:
-      enabled: false
-      socket: /var/lib/gitpod/registry-facade
     serviceType: "ClusterIP"
 
   # enabled cronjob to restart the proxy deployment

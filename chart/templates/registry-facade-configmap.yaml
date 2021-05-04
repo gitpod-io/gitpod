@@ -17,11 +17,7 @@ data:
     {
         {{ if .Values.components.workspace.pullSecret.secretName -}}"dockerAuth": "/mnt/pull-secret.json",{{- end }}
         "registry": {
-            {{- if $comp.handover.enabled }}
-            "port": {{ $comp.ports.registry.servicePort }},
-            {{- else }}
             "port": {{ $comp.ports.registry.containerPort }},
-            {{- end }}
             {{- if (or .Values.certificatesSecret.secretName $comp.certificatesSecret.secretName) }}
             {{- if (or .Values.certificatesSecret.certManager $comp.certificatesSecret.certManager) }}
             "tls": {
@@ -54,11 +50,7 @@ data:
                     "ref": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.dockerUp) }}",
                     "type": "image"
                 }
-            ],
-            "handover": {
-                "enabled": {{ $comp.handover.enabled }},
-                "sockets": "/mnt/handover"
-            }
+            ]
         },
         "pprofAddr": ":6060",
         "prometheusAddr": ":9500"
