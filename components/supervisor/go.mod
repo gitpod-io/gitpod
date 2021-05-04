@@ -19,7 +19,6 @@ require (
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-daemon/api v0.0.0-00010101000000-000000000000
 	github.com/golang/mock v1.5.0
-	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.5
 	github.com/google/uuid v1.1.4
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
@@ -36,6 +35,7 @@ require (
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	google.golang.org/grpc v1.37.0
 	google.golang.org/grpc/examples v0.0.0-20200902210233-8630cac324bf // indirect
+	google.golang.org/protobuf v1.26.0
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway

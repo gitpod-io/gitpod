@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -391,10 +390,12 @@ func convertReceivedToken(req *api.SetTokenRequest) (tkn *Token, err error) {
 		Reuse: req.Reuse,
 	}
 	if req.ExpiryDate != nil {
-		te, err := ptypes.Timestamp(req.GetExpiryDate())
+		err := req.GetExpiryDate().CheckValid()
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid expiry date: %q", err)
 		}
+
+		te := req.GetExpiryDate().AsTime()
 		if time.Now().After(te) {
 			return nil, status.Error(codes.InvalidArgument, "invalid expiry date: already expired")
 		}

@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/docker/distribution/reference"
-	"github.com/golang/protobuf/ptypes"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	"golang.org/x/xerrors"
@@ -396,11 +395,15 @@ func (wspd *WorkspaceManagerPrescaleDriver) maintainWorkspaceStatus(ctx context.
 	}
 
 	for _, s := range wss.Status {
-		startedAt, err := ptypes.Timestamp(s.Metadata.StartedAt)
+		var startedAt time.Time
+		err := s.Metadata.StartedAt.CheckValid()
 		if err != nil {
 			log.WithError(err).WithFields(log.OWI(s.Metadata.Owner, s.Metadata.MetaId, s.Id)).Warn("cannot convert startedAt timestamp")
 			startedAt = time.Now()
+		} else {
+			startedAt = s.Metadata.StartedAt.AsTime()
 		}
+
 		state[s.Id] = workspaceState{
 			Started: startedAt,
 			Type:    s.Spec.Type,
@@ -430,11 +433,15 @@ func (wspd *WorkspaceManagerPrescaleDriver) maintainWorkspaceStatus(ctx context.
 		if known && s.Phase == api.WorkspacePhase_STOPPED {
 			delete(state, s.Id)
 		} else if !known && s.Phase == api.WorkspacePhase_PENDING {
-			startedAt, err := ptypes.Timestamp(s.Metadata.StartedAt)
+			var startedAt time.Time
+			err := s.Metadata.StartedAt.CheckValid()
 			if err != nil {
 				log.WithError(err).WithFields(log.OWI(s.Metadata.Owner, s.Metadata.MetaId, s.Id)).Warn("cannot convert startedAt timestamp")
 				startedAt = time.Now()
+			} else {
+				startedAt = s.Metadata.StartedAt.AsTime()
 			}
+
 			state[s.Id] = workspaceState{
 				Started: startedAt,
 				Type:    s.Spec.Type,
