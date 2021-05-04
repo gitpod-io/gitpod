@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/golang/protobuf/ptypes"
 	"github.com/google/go-cmp/cmp"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
@@ -30,7 +30,7 @@ func TestWorkspaceManagerPrescaleDriverRenewal(t *testing.T) {
 		{
 			Name: "no ghosts",
 			Workspaces: []*api.WorkspaceStatus{
-				{Id: "w1", Metadata: &api.WorkspaceMetadata{StartedAt: ptypes.TimestampNow()}, Phase: api.WorkspacePhase_RUNNING, Spec: &api.WorkspaceSpec{Type: api.WorkspaceType_REGULAR}},
+				{Id: "w1", Metadata: &api.WorkspaceMetadata{StartedAt: timestamppb.Now()}, Phase: api.WorkspacePhase_RUNNING, Spec: &api.WorkspaceSpec{Type: api.WorkspaceType_REGULAR}},
 			},
 			RenewalPercentage: 100,
 		},
@@ -46,7 +46,7 @@ func TestWorkspaceManagerPrescaleDriverRenewal(t *testing.T) {
 			Name: "mixed ghost regular",
 			Workspaces: []*api.WorkspaceStatus{
 				ghostWorkspace("g1"),
-				{Id: "w1", Metadata: &api.WorkspaceMetadata{StartedAt: ptypes.TimestampNow()}, Phase: api.WorkspacePhase_RUNNING, Spec: &api.WorkspaceSpec{Type: api.WorkspaceType_REGULAR}},
+				{Id: "w1", Metadata: &api.WorkspaceMetadata{StartedAt: timestamppb.Now()}, Phase: api.WorkspacePhase_RUNNING, Spec: &api.WorkspaceSpec{Type: api.WorkspaceType_REGULAR}},
 			},
 			RenewalPercentage: 100,
 			ExpectedDeletions: []string{"g1"},
@@ -56,7 +56,7 @@ func TestWorkspaceManagerPrescaleDriverRenewal(t *testing.T) {
 			Workspaces: []*api.WorkspaceStatus{
 				ghostWorkspace("g1"),
 				ghostWorkspace("g2"),
-				{Id: "w1", Metadata: &api.WorkspaceMetadata{StartedAt: ptypes.TimestampNow()}, Phase: api.WorkspacePhase_RUNNING, Spec: &api.WorkspaceSpec{Type: api.WorkspaceType_REGULAR}},
+				{Id: "w1", Metadata: &api.WorkspaceMetadata{StartedAt: timestamppb.Now()}, Phase: api.WorkspacePhase_RUNNING, Spec: &api.WorkspaceSpec{Type: api.WorkspaceType_REGULAR}},
 			},
 			RenewalPercentage: 50,
 			ExpectedDeletions: []string{"g1"},
@@ -149,7 +149,7 @@ func ghostWorkspace(name string) *api.WorkspaceStatus {
 	return &api.WorkspaceStatus{
 		Id: name,
 		Metadata: &api.WorkspaceMetadata{
-			StartedAt: ptypes.TimestampNow(),
+			StartedAt: timestamppb.Now(),
 		},
 		Phase: api.WorkspacePhase_RUNNING,
 		Spec: &api.WorkspaceSpec{

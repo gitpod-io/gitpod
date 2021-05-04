@@ -15,11 +15,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/loadgen/pkg/loadgen"
@@ -47,7 +47,7 @@ var runCmd = &cobra.Command{
 			Metadata: &api.WorkspaceMetadata{
 				MetaId:    "will-be-overriden",
 				Owner:     "00000000-0000-0000-0000-000000000000",
-				StartedAt: ptypes.TimestampNow(),
+				StartedAt: timestamppb.Now(),
 			},
 			ServicePrefix: "will-be-overriden",
 			Spec: &api.StartWorkspaceSpec{

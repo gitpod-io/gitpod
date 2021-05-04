@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/gitpod-io/gitpod/supervisor/api"
 )
@@ -269,8 +269,8 @@ func TestInMemoryTokenServiceSetToken(t *testing.T) {
 		defaultToken = "foobar"
 	)
 
-	tExpired, _ := ptypes.TimestampProto(time.Now().Add(-2 * time.Hour))
-	tValid, _ := ptypes.TimestampProto(time.Now().Add(2 * time.Hour))
+	tExpired := timestamppb.New(time.Now().Add(-2 * time.Hour))
+	tValid := timestamppb.New(time.Now().Add(2 * time.Hour))
 
 	type Expectation struct {
 		Err        string
