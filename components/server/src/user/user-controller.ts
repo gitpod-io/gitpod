@@ -227,8 +227,8 @@ export class UserController {
         });
         if (this.env.enableLocalApp) {
             passport.use('local-pkce', new OAuth2Strategy({
-                authorizationURL: 'https://',
-                tokenURL: 'https://www.example.com/oauth2/token',
+                authorizationURL: `${this.env.hostUrl}/api/local-app/auth`,
+                tokenURL: `{this.env.hostUrl}/api/local-app/token`,
                 clientID: 'LOCAL_CLIENT_ID',
                 clientSecret: 'LOCAL_CLIENT_SECRET',
                 state: true,
@@ -285,9 +285,11 @@ export class UserController {
             router.get("/local-app/login", passport.authenticate('local-pkce'));
 
             router.get("/local-app/auth", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+                log.info(`PKCE auth: ${req}`);
             });
 
             router.get("/local-app/token", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+                log.info(`PKCE token: ${req}`);
             });
         }
         router.get("/auth/workspace", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
