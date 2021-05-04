@@ -286,7 +286,34 @@ export class UserController {
 
             router.get("/local-app/auth", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
                 log.info(`PKCE auth: ${JSON.stringify(req.query)}`);
-                res.sendStatus(401);
+                if (!User.is(req.user)) {
+                    log.info(`PKCE auth user fail ${req.user}`);
+                    res.sendStatus(401);
+                    return;
+                }
+
+                const user = req.user as User;
+                if (user.blocked) {
+                    log.info(`PKCE auth user blocked`);
+                    res.sendStatus(403);
+                    return;
+                }
+
+                const method = req.query.code_challenge_method;
+                if (!method || method !== 'S256') {
+                    log.error(`PKCE auth user, invalid method "${method}"`)
+                    res.sendStatus(400);
+                    return;
+                }
+
+                const challenge = req.query.code_challenge;
+                if (!challenge ) {
+                    log.error(`PKCE auth user, no challenge`)
+                    res.sendStatus(400);
+                    return;
+                }
+
+                res.sendStatus(200);
                 return;
             });
 
