@@ -64,7 +64,6 @@ export async function build(context, version) {
     const dynamicCPULimits = "dynamic-cpu-limits" in buildConfig;
     const withInstaller = "with-installer" in buildConfig || mainBuild;
     const noPreview = "no-preview" in buildConfig || publishRelease;
-    const registryFacadeHandover = "registry-facade-handover" in buildConfig;
     const storage = buildConfig["storage"] || "";
     const withIntegrationTests = buildConfig["with-integration-tests"] == "true";
     const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
@@ -82,7 +81,6 @@ export async function build(context, version) {
         workspaceFeatureFlags,
         dynamicCPULimits,
         noPreview,
-        registryFacadeHandover,
         storage: storage,
         withIntegrationTests,
         withWsCluster,
@@ -173,7 +171,7 @@ export async function build(context, version) {
         wsCluster,
         withWsCluster,
     };
-    await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover, storage);
+    await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
 
     if (withIntegrationTests) {
         exec(`git config --global user.name "${context.Owner}"`);
@@ -194,7 +192,7 @@ interface DeploymentConfig {
 /**
  * Deploy dev
  */
-export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceFeatureFlags, dynamicCPULimits, registryFacadeHandover, storage) {
+export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage) {
     werft.phase("deploy", "deploying to dev");
     const { version, destname, namespace, domain, url, wsCluster, withWsCluster } = deploymentConfig;
     const [wsdaemonPort, registryProxyPort, registryNodePort] = findFreeHostPorts([
@@ -300,10 +298,6 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     })
     if (dynamicCPULimits) {
         flags += ` -f ../.werft/values.variant.cpuLimits.yaml`;
-    }
-    if (registryFacadeHandover) {
-        flags += ` --set components.registryFacade.handover.enabled=true`;
-        flags += ` --set components.registryFacade.handover.socket=/var/lib/gitpod/registry-facade-${namespace}`;
     }
     if (withWsCluster) {
         // Create redirect ${withWsCluster.shortname} -> ws-proxy.${wsCluster.dstNamespace}
