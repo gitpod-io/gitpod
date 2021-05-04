@@ -27,6 +27,7 @@ import { AuthProviderService } from './auth-provider-service';
 import { LoginCompletionHandler } from './login-completion-handler';
 import { TosFlow } from '../terms/tos-flow';
 import { increaseLoginCounter } from '../../src/prometheus-metrics';
+import { OutgoingHttpHeaders } from 'http';
 
 /**
  * This is a generic implementation of OAuth2-based AuthProvider.
@@ -641,8 +642,8 @@ interface GenericOAuthStrategyOptions {
     userAgent: string;
 
     scopeSeparator?: string;
-    customHeaders?: any;
-    skipUserProfile?: true;
+    customHeaders?: OutgoingHttpHeaders;
+    skipUserProfile?: any;
     /**
      * Non-spec autorization params.
      */
