@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"os"
 
-	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
 
@@ -55,7 +54,7 @@ func init() {
 
 // Config configures this servuce
 type Config struct {
-	Ingress                     HostBasedIngressConfig            `json:"ingress"`
+	Ingress                     proxy.HostBasedIngressConfig      `json:"ingress"`
 	Proxy                       proxy.Config                      `json:"proxy"`
 	WorkspaceInfoProviderConfig proxy.WorkspaceInfoProviderConfig `json:"workspaceInfoProviderConfig"`
 	PProfAddr                   string                            `json:"pprofAddr"`
@@ -80,23 +79,6 @@ func (c *Config) Validate() error {
 	}
 
 	return nil
-}
-
-// HostBasedIngressConfig configures the host-based ingress
-type HostBasedIngressConfig struct {
-	Address string `json:"address"`
-	Header  string `json:"header"`
-}
-
-// Validate validates this config
-func (c *HostBasedIngressConfig) Validate() error {
-	if c == nil {
-		return xerrors.Errorf("host based ingress config is mandatory")
-	}
-	return validation.ValidateStruct(c,
-		validation.Field(&c.Address, validation.Required),
-		validation.Field(&c.Header, validation.Required),
-	)
 }
 
 // WSManagerProxyConfig configures the ws-manager TCP proxy

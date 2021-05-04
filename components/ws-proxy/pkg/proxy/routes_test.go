@@ -605,7 +605,13 @@ func TestRoutes(t *testing.T) {
 				router = test.Router(&cfg)
 			}
 
-			proxy := NewWorkspaceProxy(":8080", cfg, router, &fakeWsInfoProvider{infos: workspaces})
+			ingress := HostBasedIngressConfig{
+				HttpAddress:  "8080",
+				HttpsAddress: "9090",
+				Header:       "",
+			}
+
+			proxy := NewWorkspaceProxy(ingress, cfg, router, &fakeWsInfoProvider{infos: workspaces})
 			handler, err := proxy.Handler()
 			if err != nil {
 				t.Fatalf("cannot create proxy handler: %q", err)

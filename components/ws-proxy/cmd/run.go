@@ -56,9 +56,8 @@ var runCmd = &cobra.Command{
 		}
 		log.Infof("workspace info provider started")
 
-		addr := cfg.Ingress.Address
-		go proxy.NewWorkspaceProxy(addr, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix), workspaceInfoProvider).MustServe()
-		log.Infof("started proxying on %s", addr)
+		go proxy.NewWorkspaceProxy(cfg.Ingress, cfg.Proxy, proxy.HostBasedRouter(cfg.Ingress.Header, cfg.Proxy.GitpodInstallation.WorkspaceHostSuffix), workspaceInfoProvider).MustServe()
+		log.Infof("started proxying on %s", cfg.Ingress.HttpAddress)
 
 		if cfg.PProfAddr != "" {
 			go pprof.Serve(cfg.PProfAddr)
