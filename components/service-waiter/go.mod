@@ -8,7 +8,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.3.2
-	github.com/streadway/amqp v0.0.0-20190404075320-75d898a42a94
+	github.com/streadway/amqp v0.0.0-20190827072141-edfb9018d271
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway

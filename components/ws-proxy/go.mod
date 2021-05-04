@@ -12,7 +12,7 @@ require (
 	github.com/google/tcpproxy v0.0.0-20200125044825-b6bb9b5b8252
 	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.7.4
-	github.com/prometheus/client_golang v1.1.0
+	github.com/prometheus/client_golang v1.9.0
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v0.0.5
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba

@@ -3,12 +3,10 @@ module github.com/gitpod-io/gitpod/common-go
 go 1.16
 
 require (
-	github.com/codahale/hdrhistogram v0.0.0-20161010025455-3a0bb77429bd // indirect
 	github.com/go-test/deep v1.0.5
 	github.com/google/go-cmp v0.5.5
 	github.com/opentracing/opentracing-go v1.1.0
-	github.com/prometheus/client_golang v1.1.0
-	github.com/prometheus/procfs v0.0.5 // indirect
+	github.com/prometheus/client_golang v1.9.0
 	github.com/sirupsen/logrus v1.7.0
 	github.com/uber-go/atomic v1.4.0 // indirect
 	github.com/uber/jaeger-client-go v2.16.1-0.20190821210114-30e625686abe+incompatible

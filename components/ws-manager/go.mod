@@ -24,9 +24,9 @@ require (
 	github.com/google/uuid v1.1.4
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/imdario/mergo v0.3.10
+	github.com/imdario/mergo v0.3.11
 	github.com/opentracing/opentracing-go v1.1.0
-	github.com/prometheus/client_golang v1.7.1
+	github.com/prometheus/client_golang v1.9.0
 	github.com/sirupsen/logrus v1.7.0
 	github.com/spf13/cobra v1.1.1
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
@@ -37,7 +37,7 @@ require (
 	k8s.io/apimachinery v0.21.0
 	k8s.io/client-go v0.21.0
 	k8s.io/utils v0.0.0-20210111153108-fddb29f9d009
-	sigs.k8s.io/controller-runtime v0.8.3
+	sigs.k8s.io/controller-runtime v0.9.0-beta.0
 	sigs.k8s.io/yaml v1.2.0
 )
 
