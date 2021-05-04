@@ -47,7 +47,7 @@ export class WorkspaceFactory {
         const span = TraceContext.startSpan("createForWorkspaceProbe", ctx);
 
         try {
-            // TODO: we need to find a better base image. We could build something ourselves (e.g. as part of cerc).
+            // TODO: we need to find a better base image.
             const image = "csweichel/alpine-curl:latest";
             const config = <WorkspaceConfig>{
                 image,

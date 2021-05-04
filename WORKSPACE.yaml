@@ -16,7 +16,6 @@ variants:
   components:
     exclude:
       - components/ee/ws-scheduler
-      - components/ee/cerc
   srcs:
     exclude:
     - "**/ee"

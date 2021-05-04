@@ -432,30 +432,6 @@ components:
         expose: true
         containerPort: 9500
 
-  cerc:
-    name: cerc
-    disabled: true
-    dependsOn:
-      - "cerc-configmap.yaml"
-    ports:
-      http:
-        expose: true
-        containerPort: 8080
-        servicePort: 80
-    resources:
-      requests:
-        cpu: 100m
-        memory: 128Mi
-    config:
-      selftest:
-        period: 10s
-      serverHealth:
-        period: 1m
-      workspaceHealth:
-        period: 1m
-      workspaceProbe:
-        period: 5m
-
   wsProxy:
     name: "ws-proxy"
     disabled: false

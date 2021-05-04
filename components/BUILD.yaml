@@ -12,7 +12,6 @@ packages:
       - components/content-service:docker
       - components/dashboard:docker
       - components/docker-up:docker
-      - components/ee/cerc:docker
       - components/ee/ws-scheduler:docker
       - components/gitpod-db:docker
       - components/gitpod-protocol:publish
@@ -43,7 +42,6 @@ packages:
       - components/content-service:docker
       - components/dashboard:app
       - components/docker-up:app
-      - components/ee/cerc:app
       - components/ee/ws-scheduler:app
       - components/image-builder:app
       - components/registry-facade:app

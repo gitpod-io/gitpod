@@ -40,8 +40,4 @@ spec:
         matchLabels:
           app: {{ template "gitpod.fullname" . }}
           component: proxy
-    - podSelector:
-        matchLabels:
-          app: {{ template "gitpod.fullname" . }}
-          component: cerc
 {{- end -}}
