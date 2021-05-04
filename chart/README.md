@@ -19,7 +19,7 @@ cd gitpod/chart
 
 helm repo add charts.gitpod.io https://charts.gitpod.io
 helm repo add stable https://charts.helm.sh/stable
-helm repo add stable https://helm.min.io/
+helm repo add minio https://helm.min.io/
 helm repo update
 helm dep up
 ```
