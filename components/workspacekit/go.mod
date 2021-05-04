@@ -12,7 +12,7 @@ require (
 	github.com/seccomp/libseccomp-golang v0.9.1
 	github.com/spf13/cobra v1.1.1
 	golang.org/x/sys v0.0.0-20210225134936-a50acf3fe073
-	google.golang.org/grpc v1.36.0
+	google.golang.org/grpc v1.37.0
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway

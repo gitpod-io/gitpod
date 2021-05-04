@@ -11,7 +11,7 @@ require (
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/zalando/go-keyring v0.1.1
 	golang.org/x/sys v0.0.0-20210403161142-5e06dd20ab57 // indirect
-	google.golang.org/grpc v1.36.0
+	google.golang.org/grpc v1.37.0
 )
 
 replace github.com/gitpod-io/gitpod/gitpod-protocol => ../gitpod-protocol/go // leeway
