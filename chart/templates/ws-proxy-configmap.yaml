@@ -18,8 +18,8 @@ data:
   config.json: |-
     {
         "ingress": {
-            "address": ":{{- $comp.ports.httpProxy.containerPort -}}",
-            "https": {{ $comp.useHTTPS -}},
+            "httpAddress": ":{{- $comp.ports.httpProxy.containerPort -}}",
+            "httpsAddress": ":{{- $comp.ports.httpsProxy.containerPort -}}",
             "header": "{{- $comp.hostHeader -}}"
         },
         "workspaceInfoProviderConfig": {
@@ -32,13 +32,10 @@ data:
             }
         },
         "proxy": {
-            {{- if and $comp.useHTTPS $.Values.certificatesSecret.secretName }}
             "https": {
-                "enabled": true,
                 "crt": "/mnt/certificates/tls.crt",
                 "key": "/mnt/certificates/tls.key"
             },
-            {{- end }}
             "transportConfig": {
                 "connectTimeout": "10s",
                 "idleConnTimeout": "60s",

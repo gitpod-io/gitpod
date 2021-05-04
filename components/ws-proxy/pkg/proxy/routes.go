@@ -257,12 +257,16 @@ func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig) error
 
 	// forward request to workspace port
 	r.NewRoute().HandlerFunc(
-		proxyPass(
-			config,
-			workspacePodPortResolver,
-			withHTTPErrorHandler(showPortNotFoundPage),
-			withXFrameOptionsFilter(),
-		),
+		func(rw http.ResponseWriter, r *http.Request) {
+			r.Header.Add("X-Forwarded-Proto", "https")
+			r.Header.Add("X-Forwarded-Host", r.Host+":443")
+			proxyPass(
+				config,
+				workspacePodPortResolver,
+				withHTTPErrorHandler(showPortNotFoundPage),
+				withXFrameOptionsFilter(),
+			)(rw, r)
+		},
 	)
 
 	return nil

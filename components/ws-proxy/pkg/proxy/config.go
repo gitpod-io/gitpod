@@ -18,7 +18,6 @@ import (
 // Config is the configuration for a WorkspaceProxy
 type Config struct {
 	HTTPS struct {
-		Enabled     bool   `json:"enabled"`
 		Key         string `json:"key"`
 		Certificate string `json:"crt"`
 	} `json:"https,omitempty"`
@@ -49,6 +48,25 @@ func (c *Config) Validate() error {
 	}
 
 	return nil
+}
+
+// HostBasedIngressConfig configures the host-based ingress
+type HostBasedIngressConfig struct {
+	HttpAddress  string `json:"httpAddress"`
+	HttpsAddress string `json:"httpsAddress"`
+	Header       string `json:"header"`
+}
+
+// Validate validates this config
+func (c *HostBasedIngressConfig) Validate() error {
+	if c == nil {
+		return xerrors.Errorf("host based ingress config is mandatory")
+	}
+	return validation.ValidateStruct(c,
+		validation.Field(&c.HttpAddress, validation.Required),
+		validation.Field(&c.HttpsAddress, validation.Required),
+		validation.Field(&c.Header, validation.Required),
+	)
 }
 
 // WorkspacePodConfig contains config around the workspace pod

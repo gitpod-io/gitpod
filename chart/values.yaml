@@ -466,7 +466,6 @@ components:
       cpu: 100m
       memory: 64Mi
     replicas: 1
-    useHTTPS: false
     hostHeader: "x-wsproxy-host"
     wsManagerProxy:
       enabled: false
@@ -478,6 +477,9 @@ components:
       httpProxy:
         expose: true
         containerPort: 8080
+      httpsProxy:
+        expose: true
+        containerPort: 9090
       metrics:
         expose: false
         containerPort: 9500

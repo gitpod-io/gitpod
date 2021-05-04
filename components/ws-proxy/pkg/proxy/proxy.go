@@ -16,20 +16,29 @@ import (
 
 // WorkspaceProxy is the entity which forwards all inbound requests to the relevant workspace pods
 type WorkspaceProxy struct {
-	Address               string
+	Ingress               HostBasedIngressConfig
 	Config                Config
 	WorkspaceRouter       WorkspaceRouter
 	WorkspaceInfoProvider WorkspaceInfoProvider
 }
 
 // NewWorkspaceProxy creates a new workspace proxy
-func NewWorkspaceProxy(address string, config Config, workspaceRouter WorkspaceRouter, workspaceInfoProvider WorkspaceInfoProvider) *WorkspaceProxy {
+func NewWorkspaceProxy(ingress HostBasedIngressConfig, config Config, workspaceRouter WorkspaceRouter, workspaceInfoProvider WorkspaceInfoProvider) *WorkspaceProxy {
 	return &WorkspaceProxy{
-		Address:               address,
+		Ingress:               ingress,
 		Config:                config,
 		WorkspaceRouter:       workspaceRouter,
 		WorkspaceInfoProvider: workspaceInfoProvider,
 	}
+}
+
+func redirectToHttps(w http.ResponseWriter, r *http.Request) {
+	target := "https://" + r.Host + r.URL.Path
+	if len(r.URL.RawQuery) > 0 {
+		target += "?" + r.URL.RawQuery
+	}
+	log.WithField("target", target).Debug("redirect to https")
+	http.Redirect(w, r, target, http.StatusTemporaryRedirect)
 }
 
 // MustServe starts the proxy and ends the process if doing so fails
@@ -39,22 +48,24 @@ func (p *WorkspaceProxy) MustServe() {
 		log.WithError(err).Fatal("cannot initialize proxy - this is likely a configuration issue")
 		return
 	}
-	srv := &http.Server{Addr: p.Address, Handler: handler}
+	srv := &http.Server{Addr: p.Ingress.HttpsAddress, Handler: handler}
 
-	if p.Config.HTTPS.Enabled {
-		var (
-			crt = p.Config.HTTPS.Certificate
-			key = p.Config.HTTPS.Key
-		)
-		if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
-			crt = filepath.Join(tproot, crt)
-			key = filepath.Join(tproot, key)
-		}
-		err = srv.ListenAndServeTLS(crt, key)
-	} else {
-		err = srv.ListenAndServe()
+	var (
+		crt = p.Config.HTTPS.Certificate
+		key = p.Config.HTTPS.Key
+	)
+	if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
+		crt = filepath.Join(tproot, crt)
+		key = filepath.Join(tproot, key)
 	}
+	go func() {
+		err := http.ListenAndServe(p.Ingress.HttpAddress, http.HandlerFunc(redirectToHttps))
+		if err != nil {
+			log.WithError(err).Fatal("cannot start http proxy")
+		}
+	}()
 
+	err = srv.ListenAndServeTLS(crt, key)
 	if err != nil {
 		log.WithError(err).Fatal("cannot start proxy")
 		return
