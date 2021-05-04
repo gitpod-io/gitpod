@@ -108,13 +108,12 @@ export class UserController {
             this.ensureSafeReturnToParam(req);
             this.authenticator.deauthorize(req, res, next);
         });
-        const branding = this.env.brandingConfig;
         router.get("/logout", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             const logContext = LogContext.from({ user: req.user, request: req });
             const clientInfo = getRequestingClientInfo(req);
             const logPayload = { session: req.session, clientInfo };
 
-            let redirectToUrl = this.getSafeReturnToParam(req) || branding.redirectUrlAfterLogout || this.env.hostUrl.toString();
+            let redirectToUrl = this.getSafeReturnToParam(req) || this.env.hostUrl.toString();
 
             if (req.isAuthenticated()) {
                 req.logout();
@@ -590,9 +589,6 @@ export class UserController {
         if (returnToURL) {
             const hostUrl = this.env.hostUrl.url as URL;
             if (returnToURL.toLowerCase().startsWith(`${hostUrl.protocol}//${hostUrl.host}`.toLowerCase())) {
-                return returnToURL;
-            }
-            if (returnToURL.toLowerCase().startsWith(this.env.brandingConfig.homepage.toLowerCase())) {
                 return returnToURL;
             }
         }

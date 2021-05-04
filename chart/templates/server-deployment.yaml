@@ -202,8 +202,6 @@ spec:
             configMapKeyRef:
               name: auth-providers-config
               key: auth-providers.json
-        - name: BRANDING_CONFIG
-          value: {{ .Values.branding | toJson | quote }}
     {{- if $comp.runDbDeleter }}
         - name: RUN_DB_DELETER
           value: {{ $comp.runDbDeleter | quote }}

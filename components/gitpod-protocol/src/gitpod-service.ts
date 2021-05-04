@@ -6,7 +6,7 @@
 
 import {
     User, WorkspaceInfo, WorkspaceCreationResult, UserMessage, WorkspaceInstanceUser,
-    WhitelistedRepository, WorkspaceImageBuild, AuthProviderInfo, Branding, CreateWorkspaceMode,
+    WhitelistedRepository, WorkspaceImageBuild, AuthProviderInfo, CreateWorkspaceMode,
     Token, UserEnvVarValue, ResolvePluginsParams, PreparePluginUploadParams, Terms,
     ResolvedPlugins, Configuration, InstallPluginsParams, UninstallPluginParams, UserInfo, GitpodTokenType,
     GitpodToken, AuthProviderEntry, GuessGitTokenScopesParams, GuessedGitTokenScopes
@@ -48,7 +48,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getOwnAuthProviders(): Promise<AuthProviderEntry[]>;
     updateOwnAuthProvider(params: GitpodServer.UpdateOwnAuthProviderParams): Promise<AuthProviderEntry>;
     deleteOwnAuthProvider(params: GitpodServer.DeleteOwnAuthProviderParams): Promise<void>;
-    getBranding(): Promise<Branding>;
     getConfiguration(): Promise<Configuration>;
     getToken(query: GitpodServer.GetTokenSearchOptions): Promise<Token | undefined>;
     /**

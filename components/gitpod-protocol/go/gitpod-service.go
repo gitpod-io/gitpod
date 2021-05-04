@@ -31,7 +31,6 @@ type APIInterface interface {
 	GetOwnAuthProviders(ctx context.Context) (res []*AuthProviderEntry, err error)
 	UpdateOwnAuthProvider(ctx context.Context, params *UpdateOwnAuthProviderParams) (err error)
 	DeleteOwnAuthProvider(ctx context.Context, params *DeleteOwnAuthProviderParams) (err error)
-	GetBranding(ctx context.Context) (res *Branding, err error)
 	GetConfiguration(ctx context.Context) (res *Configuration, err error)
 	GetToken(ctx context.Context, query *GetTokenSearchOptions) (res *Token, err error)
 	GetPortAuthenticationToken(ctx context.Context, workspaceID string) (res *Token, err error)
@@ -105,8 +104,6 @@ const (
 	FunctionUpdateOwnAuthProvider FunctionName = "updateOwnAuthProvider"
 	// FunctionDeleteOwnAuthProvider is the name of the deleteOwnAuthProvider function
 	FunctionDeleteOwnAuthProvider FunctionName = "deleteOwnAuthProvider"
-	// FunctionGetBranding is the name of the getBranding function
-	FunctionGetBranding FunctionName = "getBranding"
 	// FunctionGetConfiguration is the name of the getConfiguration function
 	FunctionGetConfiguration FunctionName = "getConfiguration"
 	// FunctionGetToken is the name of the getToken function
@@ -466,24 +463,6 @@ func (gp *APIoverJSONRPC) DeleteOwnAuthProvider(ctx context.Context, params *Del
 	if err != nil {
 		return
 	}
-
-	return
-}
-
-// GetBranding calls getBranding on the server
-func (gp *APIoverJSONRPC) GetBranding(ctx context.Context) (res *Branding, err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	var result Branding
-	err = gp.C.Call(ctx, "getBranding", _params, &result)
-	if err != nil {
-		return
-	}
-	res = &result
 
 	return
 }
@@ -2047,49 +2026,6 @@ type GitToken struct {
 type GuessedGitTokenScopes struct {
 	Scopes  []string `json:"scopes,omitempty"`
 	Message string   `json:"message,omitempty"`
-}
-
-// BrandingLink is the BrandingLink message type
-type BrandingLink struct {
-	Name string `json:"name,omitempty"`
-	URL  string `json:"url,omitempty"`
-}
-
-// BrandingSocialLink is the BrandingSocialLink message type
-type BrandingSocialLink struct {
-	Type string `json:"type,omitempty"`
-	URL  string `json:"url,omitempty"`
-}
-
-// Ide is the Ide message type
-type Ide struct {
-	HelpMenu         []*BrandingLink `json:"helpMenu,omitempty"`
-	Logo             string          `json:"logo,omitempty"`
-	ShowReleaseNotes bool            `json:"showReleaseNotes,omitempty"`
-}
-
-// Links is the Links message type
-type Links struct {
-	Footer []*BrandingLink       `json:"footer,omitempty"`
-	Header []*BrandingLink       `json:"header,omitempty"`
-	Legal  []*BrandingLink       `json:"legal,omitempty"`
-	Social []*BrandingSocialLink `json:"social,omitempty"`
-}
-
-// Branding is the Branding message type
-type Branding struct {
-	Favicon  string `json:"favicon,omitempty"`
-	Homepage string `json:"homepage,omitempty"`
-	Ide      *Ide   `json:"ide,omitempty"`
-	Links    *Links `json:"links,omitempty"`
-
-	// Either including domain OR absolute path (interpreted relative to host URL)
-	Logo                          string `json:"logo,omitempty"`
-	Name                          string `json:"name,omitempty"`
-	RedirectURLAfterLogout        string `json:"redirectUrlAfterLogout,omitempty"`
-	RedirectURLIfNotAuthenticated string `json:"redirectUrlIfNotAuthenticated,omitempty"`
-	ShowProductivityTips          bool   `json:"showProductivityTips,omitempty"`
-	StartupLogo                   string `json:"startupLogo,omitempty"`
 }
 
 // WorkspaceInstanceUser is the WorkspaceInstanceUser message type

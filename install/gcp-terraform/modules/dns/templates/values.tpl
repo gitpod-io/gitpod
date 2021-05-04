@@ -4,8 +4,3 @@
 components:
   proxy:
     loadBalancerIP: ${loadBalancerIP}
-
-branding:
-  homepage: ${hostname}
-  redirectUrlIfNotAuthenticated: /workspaces/
-  redirectUrlAfterLogout: ${hostname}

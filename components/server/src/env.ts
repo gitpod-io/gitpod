@@ -11,9 +11,7 @@ import { AbstractComponentEnv, getEnvVar } from '@gitpod/gitpod-protocol/lib/env
 import { AuthProviderParams, parseAuthProviderParamsFromEnv } from './auth/auth-provider';
 
 import * as fs from "fs";
-import { Branding, NamedWorkspaceFeatureFlag, WorkspaceFeatureFlags } from '@gitpod/gitpod-protocol';
-
-import { BrandingParser } from './branding-parser';
+import { NamedWorkspaceFeatureFlag, WorkspaceFeatureFlags } from '@gitpod/gitpod-protocol';
 
 @injectable()
 export class Env extends AbstractComponentEnv {
@@ -92,13 +90,6 @@ export class Env extends AbstractComponentEnv {
     protected parseAuthProviderParamss(): AuthProviderParams[] {
         const envVar = getEnvVar('AUTH_PROVIDERS_CONFIG');
         return parseAuthProviderParamsFromEnv(JSON.parse(envVar));
-    }
-
-    readonly brandingConfig = this.parseBrandingConfig();
-
-    protected parseBrandingConfig(): Branding {
-        const envVar = getEnvVar('BRANDING_CONFIG');
-        return BrandingParser.parse(envVar);
     }
 
     readonly gitpodLicense: string | undefined = process.env.GITPOD_LICENSE;

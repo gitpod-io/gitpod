@@ -139,21 +139,6 @@ func (mr *MockAPIInterfaceMockRecorder) DeleteOwnAuthProvider(ctx, params interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOwnAuthProvider", reflect.TypeOf((*MockAPIInterface)(nil).DeleteOwnAuthProvider), ctx, params)
 }
 
-// GetBranding mocks base method
-func (m *MockAPIInterface) GetBranding(ctx context.Context) (*Branding, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBranding", ctx)
-	ret0, _ := ret[0].(*Branding)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetBranding indicates an expected call of GetBranding
-func (mr *MockAPIInterfaceMockRecorder) GetBranding(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBranding", reflect.TypeOf((*MockAPIInterface)(nil).GetBranding), ctx)
-}
-
 // GetConfiguration mocks base method
 func (m *MockAPIInterface) GetConfiguration(ctx context.Context) (*Configuration, error) {
 	m.ctrl.T.Helper()
