@@ -108,7 +108,7 @@
     "@types/node-fetch": "^2.5.0",
     "@types/p-throttle": "^2.1.0",
     "@types/passport": "^1.0.3",
-    "@types/passport-oauth2": "1.4.7",
+    "@types/passport-oauth2": "1.4.10",
     "@types/rasha": "^1.2.0",
     "@types/request": "^2.48.1",
     "@types/request-promise": "^4.1.41",
