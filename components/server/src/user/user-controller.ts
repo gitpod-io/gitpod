@@ -32,6 +32,8 @@ import * as uuidv4 from 'uuid/v4';
 import { DBUser } from "@gitpod/gitpod-db";
 import { ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from '../one-time-secret-server';
+import passport = require('passport');
+import OAuth2Strategy = require('passport-oauth2');
 
 @injectable()
 export class UserController {
@@ -224,6 +226,18 @@ export class UserController {
             res.sendStatus(200);
         });
         if (this.env.enableLocalApp) {
+            passport.use('local-pkce', new OAuth2Strategy({
+                authorizationURL: 'https://',
+                tokenURL: 'https://www.example.com/oauth2/token',
+                clientID: 'LOCAL_CLIENT_ID',
+                clientSecret: 'LOCAL_CLIENT_SECRET',
+                state: true,
+                pkce: true
+              },
+              function(accessToken: string, refreshToken: string, profile: any, verified: Function) {
+                log.info(`PKCE verify: ${accessToken}:${refreshToken} ${profile}`);
+              }));
+              
             router.get("/auth/local-app", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
                 if (!req.isAuthenticated() || !User.is(req.user)) {
                     res.sendStatus(401);
@@ -265,6 +279,15 @@ export class UserController {
                 const ots = await this.otsServer.serve({}, token, otsExpirationTime);
 
                 res.redirect(`http://${rt}/?ots=${encodeURI(ots.token)}`);
+            });
+
+            // Passport
+            router.get("/local-app/login", passport.authenticate('local-pkce'));
+
+            router.get("/local-app/auth", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+            });
+
+            router.get("/local-app/token", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             });
         }
         router.get("/auth/workspace", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
