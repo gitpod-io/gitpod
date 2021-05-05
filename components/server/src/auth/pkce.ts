@@ -55,7 +55,7 @@ export function verifyPKCE(verifier: string, challenge: string, method: string):
 // Preserve the code challenge values per user
 // NOTE: this will need to move to the db or some other external store
 //       as server needs to be stateless
-const challenges = new WeakMap();
+const challenges = new Map();
 
 interface State {
     challenge: string;  // code_challange from PKCE
