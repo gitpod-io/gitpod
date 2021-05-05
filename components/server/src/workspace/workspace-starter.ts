@@ -156,7 +156,7 @@ export class WorkspaceStarter {
             startRequest.setServicePrefix(workspace.id);
 
             // tell the world we're starting this instance
-            const { manager, installation } = await this.clientProvider.getStartManager();
+            const { manager, installation } = await this.clientProvider.getStartManager(user, workspace, instance);
             instance.status.phase = "pending";
             instance.region = installation;
             await this.workspaceDb.trace({ span }).storeInstance(instance);

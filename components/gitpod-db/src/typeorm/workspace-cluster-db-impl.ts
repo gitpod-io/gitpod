@@ -9,7 +9,7 @@
  import { TypeORM } from "./typeorm";
 import { WorkspaceClusterDB } from "../workspace-cluster-db";
 import { DBWorkspaceCluster } from "./entity/db-workspace-cluster";
-import { WorkspaceCluster, WorkspaceClusterFilter, WorkspaceClusterWoTls } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import { WorkspaceCluster, WorkspaceClusterFilter, WorkspaceClusterWoTLS } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 
  @injectable()
  export class WorkspaceClusterDBImpl implements WorkspaceClusterDB {
@@ -40,8 +40,8 @@ import { WorkspaceCluster, WorkspaceClusterFilter, WorkspaceClusterWoTls } from 
      }
 
 
-    async findFiltered(predicate: DeepPartial<WorkspaceClusterFilter>): Promise<WorkspaceClusterWoTls[]> {
-        const prototype: WorkspaceClusterWoTls = {
+    async findFiltered(predicate: DeepPartial<WorkspaceClusterFilter>): Promise<WorkspaceClusterWoTLS[]> {
+        const prototype: WorkspaceClusterWoTLS = {
             name: "",
             url: "",
             score: 0,

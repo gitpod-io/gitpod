@@ -10,7 +10,7 @@ import { Configuration } from "./config";
 import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
 import { WorkspaceManagerClientProviderSource } from '@gitpod/ws-manager/lib/client-provider-source';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { TLSConfig, WorkspaceClusterDB, WorkspaceClusterWoTls } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
+import { TLSConfig, WorkspaceClusterDB, WorkspaceClusterWoTLS } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { WorkspaceCluster } from "@gitpod/gitpod-protocol/lib/workspace-cluster";
 import { Queue } from "@gitpod/gitpod-protocol";
 
@@ -98,9 +98,9 @@ export class BridgeController {
         return bridge;
     }
 
-    protected async getAllWorkspaceClusters(): Promise<Map<string, WorkspaceClusterWoTls>> {
+    protected async getAllWorkspaceClusters(): Promise<Map<string, WorkspaceClusterWoTLS>> {
         const allInfos = await this.clientProvider.getAllWorkspaceClusters();
-        const result: Map<string, WorkspaceClusterWoTls> = new Map();
+        const result: Map<string, WorkspaceClusterWoTLS> = new Map();
         for (const cluster of allInfos) {
             result.set(cluster.name, cluster);
         }
@@ -131,7 +131,7 @@ export class WorkspaceManagerClientProviderConfigSource implements WorkspaceMana
         return this.clusters.find(m => m.name === name);
     }
 
-    public async getAllWorkspaceClusters(): Promise<WorkspaceClusterWoTls[]> {
+    public async getAllWorkspaceClusters(): Promise<WorkspaceClusterWoTLS[]> {
         return this.clusters;
     }
 
