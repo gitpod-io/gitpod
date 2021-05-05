@@ -3,8 +3,7 @@ packages:
     type: docker
     srcs:
       - "conf/**"
-      - "startup/**"
-      - "nodomain-certs/**"
+      - "plugins/**"
     argdeps:
       - imageRepoBase
     config:
