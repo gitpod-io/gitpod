@@ -47,7 +47,7 @@ data:
                 "host": "blobserve.{{- .Release.Namespace -}}.svc.cluster.local:{{ .Values.components.blobserve.ports.service.servicePort }}"
             },
             "gitpodInstallation": {
-                "scheme": "{{- template "gitpod.scheme" $this -}}",
+                "scheme": "https",
                 "hostName": "{{- $gp.hostname -}}",
                 "workspaceHostSuffix": ".ws{{- if $gp.installation.shortname -}}-{{ $.Values.installation.shortname }}{{- end -}}.{{ $.Values.hostname }}"
             },

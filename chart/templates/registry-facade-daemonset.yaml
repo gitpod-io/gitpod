@@ -96,15 +96,11 @@ spec:
       - name: https-certificates
         secret:
           secretName: {{ .Values.certificatesSecret.secretName }}
-          {{- if (and $.Values.certificatesSecret.fullChainName $.Values.certificatesSecret.chainName $.Values.certificatesSecret.keyName) }}
           items:
-          - key: {{ $.Values.certificatesSecret.fullChainName }}
-            path: fullchain.pem
-          - key: {{ $.Values.certificatesSecret.chainName }}
-            path: chain.pem
-          - key: {{ $.Values.certificatesSecret.keyName }}
-            path: privkey.pem
-          {{- end }}
+          - key: tls.crt
+            path: tls.crt
+          - key: tls.key
+            path: tls.key
       {{- end }}
 {{ toYaml .Values.defaults | indent 6 }}
 {{ end }}
