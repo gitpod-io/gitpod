@@ -1,0 +1,50 @@
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Values.components.proxy.name }}-config
+  labels:
+    app: {{ template "gitpod.fullname" $ }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  vhost.empty: |
+    # Placeholder to avoid errors loading files using a glob pattern
+{{- if index .Values "minio" "enabled" }}
+  vhost.minio: |
+    https://minio.{$GITPOD_DOMAIN} {
+      import enable_log
+      import remove_server_header
+      import ssl_configuration
+
+      reverse_proxy {{ index .Values "minio" "fullnameOverride" }}.{{ .Release.Namespace }}.{$KUBE_DOMAIN}:9000 {
+        flush_interval -1
+      }
+    }
+{{- end }}
+{{- if index .Values "docker-registry" "enabled" }}
+{{- if index .Values "docker-registry" "authentication" -}}
+{{ $t := set . "username" (index .Values "docker-registry" "authentication" "username") }}
+{{ $t := set . "password" (index .Values "docker-registry" "authentication" "password") }}
+{{- else }}
+{{ $t := set . "username" (randAlphaNum 20) }}
+{{ $t := set . "password" (randAlphaNum 20) }}
+{{- end }}
+  vhost.docker-registry: |
+    https://minio.{$GITPOD_DOMAIN} {
+      import enable_log
+      import remove_server_header
+      import ssl_configuration
+
+      basicauth bcrypt "Docker Registry" {
+        {{ .username }} {{ bcrypt .password | b64enc }}
+      }
+
+      reverse_proxy https://{{ index .Values "docker-registry" "fullnameOverride" }}.{{ .Release.Namespace }}.{$KUBE_DOMAIN} {
+        flush_interval -1
+      }
+    }
+{{- end }}

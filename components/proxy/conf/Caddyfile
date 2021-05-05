@@ -1,0 +1,244 @@
+{
+	# disable automatic SSL certificate generation
+	auto_https off
+	# disable admin API server
+	admin off
+
+	# set default SNI for old clients
+	default_sni {$GITPOD_DOMAIN}
+
+	# debug
+
+	# configure plugin order
+	# https://caddyserver.com/docs/caddyfile/directives#directive-order
+	order gitpod.cors_origin         before header
+	order gitpod.workspace_download  before redir
+}
+
+(compression) {
+	encode zstd gzip
+}
+
+# configure headers to force HTTPS and enable more strict rules for the browser
+(security_headers) {
+	header {
+		# enable HSTS
+		Strict-Transport-Security  max-age=31536000
+		# disable clients from sniffing the media type
+		X-Content-Type-Options     nosniff
+		# Define valid parents that may embed a page
+		Content-Security-Policy    "frame-ancestors self https://*.{$GITPOD_DOMAIN} https://{$GITPOD_DOMAIN}"
+		# keep referrer data off of HTTP connections
+		Referrer-Policy            no-referrer-when-downgrade
+		# Enable cross-site filter (XSS) and tell browser to block detected attacks
+		X-XSS-Protection           "1; mode=block"
+
+		defer # delay changes
+	}
+}
+
+(enable_log) {
+	log {
+		output stdout
+		format filter {
+			wrap json
+			fields {
+				logger			delete
+				msg				delete
+				size			delete
+				status			delete
+				resp_headers	delete
+				request			delete
+			}
+		}
+	}
+}
+
+(remove_server_header) {
+	header {
+		-server
+		-x-powered-by
+	}
+}
+
+(ssl_configuration) {
+	tls /etc/caddy/certificates/tls.crt /etc/caddy/certificates/tls.key {
+		#ca_root   <pem_file>
+	}
+}
+
+(upstream_headers) {
+	header_up X-Real-IP {http.request.remote.host}
+}
+
+(upstream_connection) {
+	lb_try_duration 1s
+}
+
+(debug_headers) {
+	header X-Gitpod-Region {$GITPOD_INSTALLATION_LONGNAME}
+}
+
+# Kubernetes health-check
+:8003 {
+	respond /live 200
+	respond /ready 200
+}
+
+# always redirect to HTTPS
+http:// {
+	redir https://{host}{uri} permanent
+}
+
+https://{$GITPOD_DOMAIN} {
+	import enable_log
+	import remove_server_header
+	import ssl_configuration
+	import security_headers
+
+	@workspace_download path /workspace-download*
+	handle @workspace_download {
+		header {
+			# The browser needs to see the correct archive content type to trigger the download.
+			content-type "application/tar+gzip"
+			-x-guploader-uploadid
+			-etag
+			-x-goog-generation
+			-x-goog-metageneration
+			-x-goog-hash
+			-x-goog-stored-content-length
+			-x-gitpod-region
+			-x-goog-stored-content-encoding
+			-x-goog-storage-class
+			-x-goog-generation
+			-x-goog-metageneration
+			-cache-control
+			-expires
+
+			defer # delay changes
+		}
+
+		gitpod.workspace_download {
+			service http://server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000
+		}
+
+		redir {http.gitpod.workspace_download_url} 303
+	}
+
+	@backend_wss path /api/gitpod
+	handle @backend_wss {
+		uri strip_prefix /api
+		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+			import upstream_headers
+		}
+	}
+
+	@backend path /api/* /admin/*
+	handle @backend {
+		gitpod.cors_origin {
+			base_domain {$GITPOD_DOMAIN}
+		}
+
+		import compression
+
+		uri strip_prefix /api
+		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+			import upstream_headers
+			import upstream_connection
+		}
+	}
+
+	@codesync path /code-sync*
+	handle @codesync {
+		gitpod.cors_origin {
+			base_domain {$GITPOD_DOMAIN}
+		}
+
+		import compression
+
+		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+			import upstream_headers
+			import upstream_connection
+
+			flush_interval -1
+		}
+	}
+
+	@to_server path /auth/github/callback /auth /auth/* /apps /apps/*
+	handle @to_server {
+		import compression
+
+		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+			import upstream_headers
+			import upstream_connection
+		}
+	}
+
+	handle {
+		reverse_proxy dashboard.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3001 {
+			import upstream_headers
+			import upstream_connection
+		}
+	}
+
+	handle_errors {
+		redir https://{$GITPOD_DOMAIN}/sorry/#Error%20{http.reverse_proxy.status_text} 302
+	}
+}
+
+# workspaces
+https://*.*.{$GITPOD_DOMAIN} {
+	import enable_log
+	import security_headers
+	import remove_server_header
+	import ssl_configuration
+	import debug_headers
+
+	@workspace_blobserve header_regexp host Host ^blobserve.ws(?P<location>-[a-z0-9]+)?.{$GITPOD_DOMAIN}
+	handle @workspace_blobserve {
+		gitpod.cors_origin {
+			base_domain {$GITPOD_DOMAIN}
+		}
+
+		reverse_proxy https://ws-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9090 {
+			transport http {
+				tls_insecure_skip_verify
+			}
+
+			import upstream_headers
+
+			header_up X-WSProxy-Host       {http.request.host}
+
+			header_down -access-control-allow-origin
+		}
+	}
+
+	@workspace_port header_regexp host Host ^(webview-|browser-|extensions-)?(?P<workspacePort>[0-9]{2,5})-(?P<workspaceID>[a-z0-9][0-9a-z\-]+).ws(?P<location>-[a-z0-9]+)?.{$GITPOD_DOMAIN}
+	handle @workspace_port {
+		reverse_proxy ws-{re.host.workspaceID}-ports.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:{re.host.workspacePort} {
+			import upstream_headers
+
+			header_up X-Gitpod-WorkspaceId {re.host.workspaceID}
+			header_up X-Gitpod-Port        {re.host.workspacePort}
+			header_up X-WSProxy-Host       {http.request.host}
+		}
+	}
+
+	@workspace 	header_regexp host Host ^(webview-|browser-|extensions-)?(?P<workspaceID>[a-z0-9][0-9a-z\-]+).ws(?P<location>-[a-z0-9]+)?.{$GITPOD_DOMAIN}
+	handle @workspace {
+		reverse_proxy https://ws-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9090 {
+			transport http {
+				tls_insecure_skip_verify
+			}
+
+			import upstream_headers
+
+			header_up X-Gitpod-WorkspaceId {re.host.workspaceID}
+			header_up X-WSProxy-Host       {http.request.host}
+		}
+	}
+
+	respond "Not found" 404
+}
+
+import /etc/caddy/vhosts/vhost.*
