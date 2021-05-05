@@ -19,7 +19,7 @@ require (
 	github.com/moby/sys/mount v0.2.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.0.1
-	github.com/opentracing/opentracing-go v1.1.0
+	github.com/opentracing/opentracing-go v1.2.0
 	github.com/prometheus/client_golang v1.9.0
 	github.com/spf13/cobra v1.1.1
 	golang.org/x/oauth2 v0.0.0-20210427180440-81ed05c6b58c
