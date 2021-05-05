@@ -283,6 +283,13 @@ export class UserController {
                     return;
                 }
 
+                const redirect_url = req.query.redirect_url;
+                if (!redirect_url || !redirect_url.startsWith("localhost:")) {
+                    log.error(`auth/local-app: invalid redirect URL: "${redirect_url}"`)
+                    res.sendStatus(400);
+                    return;
+                }
+
                 const method = req.query.code_challenge_method;
                 if (!method || method !== 'S256') {
                     log.error(`PKCE auth user, invalid method "${method}"`)
@@ -298,8 +305,21 @@ export class UserController {
                 }
 
                 pkce.checkFormat(challenge, 'code_challenge');
-                res.sendStatus(200);
-                return;
+
+                const authorization_code = crypto.randomBytes(30).toString('hex');
+
+                // Preserve the challenge and authorization hash for this user
+                // TODO: do we need to support multiple logins per user?
+                //       as it stands the challenge+hash is overwritten 
+                //       but the resulting token will still be valid.
+                //       Generating the token is ephemeral so is probably ok.
+                const state = pkce.userState(user);
+                state.challenge = challenge;
+                state.code_hash = crypto.createHash('sha256').update(authorization_code, 'utf8').digest("hex");
+                // TODO: add state? oauth.com says:
+                // "The state value isn't strictly necessary here since the PKCE parameters provide CSRF protection themselves."
+                log.info(`PKCE auth redirecting: ${JSON.stringify(pkce.userState(user))}`);
+                res.redirect(`http://${redirect_url}/?code=${encodeURI(authorization_code)}`);
             });
 
             router.get("/local-app/token", async (req: express.Request, res: express.Response, next: express.NextFunction) => {

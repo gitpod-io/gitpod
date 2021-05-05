@@ -6,8 +6,12 @@
 import * as crypto from 'crypto';
 import encode from 'base64url';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { User } from '@gitpod/gitpod-protocol';
 
 const check = /[^\w.\-~]/;
+
+// Preserve the code challenge values per user
+const challenges = new WeakMap();
 
 /**
  * These functions are based on the PKCE helper code from https://github.com/panva/node-oidc-provider
@@ -50,3 +54,14 @@ export function verifyPKCE(verifier: string, challenge: string, method: string):
     }
     return false;
   };
+
+interface State {
+    challenge: string;  // code_challange from PKCE
+    code_hash: string; // the authorization code hash
+}
+
+// Get the authentication state, if any, for the specified user
+export function userState(user: User): State {
+  if (!challenges.has(user)) challenges.set(user, {});
+  return challenges.get(user);
+}
