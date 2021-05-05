@@ -193,6 +193,19 @@ env:
   value: {{ template "gitpod.installation.shortname" . }}
 {{- end -}}
 
+{{- define "gitpod.secret-db-password" -}}
+{{- $gp := .gp -}}
+{{- with $gp.db }}
+{{- if .password }}
+  .password
+{{- else if  (and  .existingSecret.secretName .existingSecret.secretKeyRef) }}
+  {{ index (lookup "v1" "Secret" .Release.Namespace .existingSecret).data  .existingSecret.secretKeyRef }}
+{{- else }}
+  {{- randAlphaNum 30 }}
+{{- end }}
+{{- end }}
+{{- end -}}
+
 {{- define "gitpod.container.dbEnv" -}}
 {{- $ := .root -}}
 {{- $gp := .gp -}}
@@ -201,7 +214,7 @@ env:
 - name: DB_PORT
   value: "{{ $gp.db.port }}"
 - name: DB_PASSWORD
-  value: "{{ $gp.db.password }}"
+  value: "{{ include "gitpod.secret-db-password" . }}"
 {{- if $gp.db.disableDeletedEntryGC }}
 - name: DB_DELETED_ENTRIES_GC_ENABLED
   value: "false"
@@ -217,13 +230,24 @@ env:
 {{- end -}}
 {{- end -}}
 
+{{- define "gitpod.messageBus.auth" -}}
+{{- with .auth }}
+{{- if (.password) }}
+  .password
+{{- else }}
+  {{- $secret := (lookup "v1" "Secret" .existingPasswordSecret).data -}}
+  index $secret "password"
+{{- end }}
+{{- end }}
+{{- end -}}
+
 {{- define "gitpod.container.messagebusEnv" -}}
 {{- $ := .root -}}
 {{- $gp := .gp -}}
 - name: MESSAGEBUS_USERNAME
-  value: "{{ $gp.rabbitmq.auth.username }}"
+  value: {{ $gp.rabbitmq.auth.username }}
 - name: MESSAGEBUS_PASSWORD
-  value: "{{ $gp.rabbitmq.auth.password }}"
+  value: {{ include "gitpod.messageBus.auth" $gp.rabbitmq | quote }}
 - name: MESSAGEBUS_CA
   valueFrom:
     secretKeyRef:
@@ -340,3 +364,31 @@ storage:
 {{ toYaml .remoteStorage | indent 2 }}
 {{- end -}}
 {{- end -}}
+
+{{- /*
+  If there's a value for serverProxyApiKey, use it; autogenerate it otherwise.
+  We can grab it from a separate secret if required.
+*/ -}}
+{{- define "gitpod.serverProxyApiKey" -}}
+{{- if .Values.serverProxyApiKey }}
+  .Values.serverProxyApiKey
+{{- else if  (and  .Values.serverProxyApiKeyExistingSecret.secretName .Values.serverProxyApiKeyExistingSecret.secretKeyRef ) }}
+  {{ index (lookup "v1" "Secret" .Release.Namespace .Values.serverProxyApiKeyExistingSecret.secretName).data .Values.serverProxyApiKeyExistingSecret.secretKeyRef }}
+{{- else }}
+  {{- randAlphaNum 30 }}
+{{- end -}}
+{{- end -}}
+
+{{- /*
+  the gitpod sessionSecret; generate it or get it from a secret
+*/ -}}
+{{- define "gitpod.server.sessionSecret" -}}
+{{- if .sessionSecret }}
+  .sessionSecret
+{{- else if  (and  .sessionExistingSecret.secretName .server.sessionExistingSecret.secretKeyRef) }}
+  {{ index (lookup "v1" "Secret" .Release.Namespace .sessionExistingSecret.secretName).data .sessionExistingSecret.secretName.secretKeyRef }}
+{{- else }}
+  {{- randAlphaNum 30 }}
+{{- end -}}
+{{- end -}}
+
