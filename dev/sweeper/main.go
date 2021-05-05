@@ -99,13 +99,12 @@ func getLastActivity(db *sql.DB) (lastActivity *time.Time) {
 		{"latest user", "SELECT creationDate FROM d_b_user ORDER BY creationDate DESC LIMIT 1", time.RFC3339},
 		{"heartbeat", "SELECT lastSeen FROM d_b_workspace_instance_user ORDER BY lastSeen DESC LIMIT 1", "2006-01-02 15:04:05.999999"},
 	}
-	var errors []error
+
 	for _, src := range srcs {
 		var rt string
 		err := db.QueryRow(src.Query).Scan(&rt)
 		if err != nil {
 			log.Printf("cannot query %s: %+v", src.Name, err)
-			errors = append(errors, err)
 			continue
 		}
 
@@ -113,7 +112,6 @@ func getLastActivity(db *sql.DB) (lastActivity *time.Time) {
 		t, err = time.Parse(src.Format, rt)
 		if err != nil {
 			log.Printf("cannot parse %s: %+v", src.Name, err)
-			errors = append(errors, err)
 			continue
 		}
 

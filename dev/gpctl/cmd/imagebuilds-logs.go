@@ -49,8 +49,6 @@ var imagebuildsLogsCmd = &cobra.Command{
 			}
 			fmt.Print(string(l.Content))
 		}
-
-		return
 	},
 }
 

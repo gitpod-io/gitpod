@@ -8,11 +8,6 @@ import (
 	"github.com/gitpod-io/gitpod/gitpod-cli/cmd"
 )
 
-var (
-	// VERSION is set during build
-	VERSION = "0.0.1"
-)
-
 func main() {
 	cmd.Execute()
 }

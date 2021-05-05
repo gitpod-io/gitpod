@@ -217,7 +217,12 @@ func (reg *Registry) Serve() error {
 		// HTTP service.
 		//
 		// Note: this is is just meant for a telepresence setup
-		go http.ListenAndServe(addr, mux)
+		go func() {
+			err := http.ListenAndServe(addr, mux)
+			if err != nil {
+				log.WithError(err).Error("start of registry server failed")
+			}
+		}()
 	}
 
 	addr := fmt.Sprintf(":%d", reg.Config.Port)

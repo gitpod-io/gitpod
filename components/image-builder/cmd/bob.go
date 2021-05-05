@@ -37,7 +37,8 @@ const (
 	red    = 31
 	yellow = 33
 	blue   = 36
-	gray   = 37
+	//nolint:deadcode,unused,varcheck
+	gray = 37
 )
 
 func (f *bobsFormatter) Format(entry *logrus.Entry) ([]byte, error) {

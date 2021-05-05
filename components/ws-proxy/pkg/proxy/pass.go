@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"strings"
 	"syscall"
 	"time"
 
@@ -115,10 +114,6 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 	}
 }
 
-func isWebsocketRequest(req *http.Request) bool {
-	return strings.ToLower(req.Header.Get("Connection")) == "upgrade" && strings.ToLower(req.Header.Get("Upgrade")) == "websocket"
-}
-
 func connectErrorToCause(err error) string {
 	if err == nil {
 		return ""
@@ -145,29 +140,11 @@ func connectErrorToCause(err error) string {
 	return err.Error()
 }
 
-// withOnProxyErrorRedirectToWorkspaceStartHandler is an error handler that redirects to gitpod.io/start/#<wsid>
-func withOnProxyErrorRedirectToWorkspaceStartHandler(config *Config) proxyPassOpt {
-	return func(h *proxyPassConfig) {
-		h.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
-			// the default impl reports all errors as 502, so we'll do the same with the rest
-			ws := getWorkspaceCoords(req)
-			redirectURL := fmt.Sprintf("%s://%s/start/#%s", config.GitpodInstallation.Scheme, config.GitpodInstallation.HostName, ws.ID)
-			http.Redirect(w, req, redirectURL, 302)
-		}
-	}
-}
-
 func withHTTPErrorHandler(h http.Handler) proxyPassOpt {
 	return func(cfg *proxyPassConfig) {
 		cfg.ErrorHandler = func(w http.ResponseWriter, req *http.Request, err error) {
 			h.ServeHTTP(w, req)
 		}
-	}
-}
-
-func withErrorHandler(h errorHandler) proxyPassOpt {
-	return func(cfg *proxyPassConfig) {
-		cfg.ErrorHandler = h
 	}
 }
 

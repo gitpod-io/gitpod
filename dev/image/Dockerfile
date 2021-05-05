@@ -49,7 +49,7 @@ RUN curl -fsSL https://go.kubebuilder.io/dl/2.3.2/linux/amd64 | tar -xz -C /tmp/
 RUN install-packages mysql-client
 
 # golangci-lint
-RUN cd /usr/local && curl -fsSL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.16.0
+RUN cd /usr/local && curl -fsSL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.39.0
 
 # leeway
 ENV LEEWAY_NESTED_WORKSPACE=true

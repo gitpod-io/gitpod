@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
-	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
@@ -27,9 +26,6 @@ const (
 
 	// The header that is used to communicate the "Host" from proxy -> ws-proxy in scenarios where ws-proxy is _not_ directly exposed
 	forwardedHostnameHeader = "x-wsproxy-host"
-
-	// Used to communicate router error happening in the matcher with the error handler which set the code to the HTTP response
-	routerErrorCode = "routerErrorCode"
 
 	// This pattern matches v4 UUIDs as well as the new generated workspace ids (e.g. pink-panda-ns35kd21)
 	workspaceIDRegex   = "(?P<" + workspaceIDIdentifier + ">[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-z]{2,16}-[0-9a-z]{2,16}-[0-9a-z]{8})"
@@ -142,27 +138,8 @@ func matchBlobserveHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 		}
 
 		matches := r.FindStringSubmatch(hostname)
-		if len(matches) < 1 {
-			return false
-		}
-
-		return true
+		return len(matches) >= 1
 	}
-}
-
-// getPublicPortFromPortReq extracts the public port from requests to "exposed ports"
-func getPublicPortFromPortReq(req *http.Request) (string, error) {
-	parts := strings.SplitN(req.Host, ":", 2)
-	if len(parts) == 0 {
-		return "", xerrors.Errorf("request without proper host: %s", req.Host)
-	} else if len(parts) == 1 {
-		// only hostname, no port specified:
-		return "", xerrors.Errorf("request without explicit port: %s", req.Host)
-	} else if len(parts) == 2 {
-		// "regular" <host>:<port>
-		return parts[1], nil
-	}
-	return "", xerrors.Errorf("request without proper host: %s", req.Host)
 }
 
 func getWorkspaceCoords(req *http.Request) WorkspaceCoords {

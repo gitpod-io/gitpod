@@ -647,9 +647,7 @@ func TestPortsConcurrentSubscribe(t *testing.T) {
 				// status
 				select {
 				case <-sub.Updates():
-				}
 				// update
-				select {
 				case <-sub.Updates():
 				}
 				sub.Close()

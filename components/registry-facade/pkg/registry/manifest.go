@@ -93,6 +93,7 @@ type manifestHandler struct {
 }
 
 func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
+	//nolint:staticcheck,ineffassign
 	span, ctx := opentracing.StartSpanFromContext(r.Context(), "getManifest")
 	logFields := log.OWI("", "", mh.Name)
 	logFields["tag"] = mh.Tag

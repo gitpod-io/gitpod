@@ -164,14 +164,14 @@ func parsePstree() (string, string) {
 		logDebug(pstree)
 
 		// git command
-		re := regexp.MustCompile("git(,\\d+\\s+|\\s+)(push|clone|fetch|pull|diff)")
+		re := regexp.MustCompile(`git(,\d+\s+|\s+)(push|clone|fetch|pull|diff)`)
 		match := re.FindStringSubmatch(pstree)
 		if len(match) == 3 {
 			gitCommand = match[2]
 		}
 
 		// url
-		re = regexp.MustCompile("origin\\s*(https:.*\\.git)\\n")
+		re = regexp.MustCompile(`origin\s*(https:.*\.git)\n`)
 		match = re.FindStringSubmatch(pstree)
 		if len(match) == 2 {
 			url = match[1]

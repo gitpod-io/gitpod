@@ -23,10 +23,6 @@ import (
 
 const (
 	DefaultSocketPath = "/tmp/workspacekit-lift.socket"
-
-	// must not clash with the socket control message types:
-	//    https://github.com/torvalds/linux/blob/master/include/linux/socket.h#L163
-	msgTypeLiftRequest = 0xCA01
 )
 
 type LiftRequest struct {

@@ -248,7 +248,8 @@ func runOutsideNetns() error {
 	if err != nil {
 		return err
 	}
-	defer slirpCmd.Process.Kill()
+	//nolint:errcheck
+	slirpCmd.Process.Kill()
 
 	_, err = msgutil.MarshalToWriter(pipeW, message{Stage: 1})
 	if err != nil {
@@ -343,7 +344,7 @@ func installDocker() error {
 
 			file.Close()
 		}
-
+		//nolint:errcheck
 		os.Chtimes(dstpath, hdr.AccessTime, hdr.ModTime)
 	}
 

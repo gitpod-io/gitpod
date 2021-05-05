@@ -105,7 +105,8 @@ func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOp
 				UID:       hdr.Uid,
 				GID:       hdr.Gid,
 				IsSymlink: (hdr.Linkname != ""),
-				Xattrs:    hdr.Xattrs,
+				//nolint:staticcheck
+				Xattrs: hdr.Xattrs,
 			}
 		}
 	}()

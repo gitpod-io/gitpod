@@ -61,6 +61,7 @@ func prefix(t *template.Template, d *copyrightData, top, mid, bot string) ([]byt
 	return out.Bytes(), nil
 }
 
+/*
 const tmplApache = `Copyright {{.Year}} {{.Holder}}
 
 Licensed under the Apache License, Version 2.0 (the "License");
@@ -82,6 +83,7 @@ license that can be found in the LICENSE file.`
 const tmplMPL = `This Source Code Form is subject to the terms of the Mozilla Public
 License, v. 2.0. If a copy of the MPL was not distributed with this
 file, You can obtain one at https://mozilla.org/MPL/2.0/.`
+*/
 
 const tmplMIT = `Copyright (c) {{.Year}} {{.Holder}}. All rights reserved.
 Licensed under the MIT License. See License-MIT.txt in the project root for license information.`

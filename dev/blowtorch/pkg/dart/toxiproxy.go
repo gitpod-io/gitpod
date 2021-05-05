@@ -11,7 +11,6 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strings"
 	"sync"
 
@@ -60,8 +59,6 @@ func (p *ProxiedToxiproxy) Close() error {
 	return nil
 }
 
-var kubernetesDialerAddrRegexp = regexp.MustCompile(`(?P<namespace>[\w-\.]+)\/(?P<label>[\w-\.]+):(?P<port>\d+)`)
-
 // ForwardPort establishes a TCP port forwarding to a Kubernetes pod
 func forwardPort(ctx context.Context, config *rest.Config, namespace, pod, port string) (readychan chan struct{}, errchan chan error) {
 	errchan = make(chan error, 1)
@@ -74,7 +71,7 @@ func forwardPort(ctx context.Context, config *rest.Config, namespace, pod, port 
 	}
 
 	path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", namespace, pod)
-	hostIP := strings.TrimLeft(config.Host, "https://")
+	hostIP := strings.TrimPrefix(config.Host, "https://")
 	serverURL := url.URL{Scheme: "https", Path: path, Host: hostIP}
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: roundTripper}, http.MethodPost, &serverURL)
 
