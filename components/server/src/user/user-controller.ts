@@ -32,8 +32,7 @@ import * as uuidv4 from 'uuid/v4';
 import { DBUser } from "@gitpod/gitpod-db";
 import { ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from '../one-time-secret-server';
-import passport = require('passport');
-import OAuth2Strategy = require('passport-oauth2');
+import * as pkce from '../auth/pkce';
 
 @injectable()
 export class UserController {
@@ -225,19 +224,7 @@ export class UserController {
             });
             res.sendStatus(200);
         });
-        if (this.env.enableLocalApp) {
-            passport.use('local-pkce', new OAuth2Strategy({
-                authorizationURL: `${this.env.hostUrl}/api/local-app/auth`,
-                tokenURL: `{this.env.hostUrl}/api/local-app/token`,
-                clientID: 'LOCAL_CLIENT_ID',
-                clientSecret: 'LOCAL_CLIENT_SECRET',
-                state: true,
-                pkce: true
-              },
-              function(accessToken: string, refreshToken: string, profile: any, verified: Function) {
-                log.info(`PKCE verify: ${accessToken}:${refreshToken} ${profile}`);
-              }));
-              
+        if (this.env.enableLocalApp) {              
             router.get("/auth/local-app", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
                 if (!req.isAuthenticated() || !User.is(req.user)) {
                     res.sendStatus(401);
@@ -281,12 +268,9 @@ export class UserController {
                 res.redirect(`http://${rt}/?ots=${encodeURI(ots.token)}`);
             });
 
-            // Passport
-            router.get("/local-app/login", passport.authenticate('local-pkce'));
-
-            router.get("/local-app/auth", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+            router.get("/local-app/authenticate", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
                 log.info(`PKCE auth: ${JSON.stringify(req.query)}`);
-                if (!User.is(req.user)) {
+                if (!req.isAuthenticated() || !User.is(req.user)) {
                     log.info(`PKCE auth user fail ${req.user}`);
                     res.sendStatus(401);
                     return;
@@ -313,6 +297,7 @@ export class UserController {
                     return;
                 }
 
+                pkce.checkFormat(challenge, 'code_challenge');
                 res.sendStatus(200);
                 return;
             });
