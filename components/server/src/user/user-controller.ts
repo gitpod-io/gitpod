@@ -337,26 +337,19 @@ export class UserController {
                     res.sendStatus(403);
                     return;
                 }
-
-                const redirect_url = req.query.redirect_url;
-                if (!redirect_url || !redirect_url.startsWith("localhost:")) {
-                    log.error(`PKCE token invalid redirect URL: "${redirect_url}"`)
-                    res.sendStatus(400);
-                    return;
-                }
                 
                 const state = pkce.userState(user);
                 const code = req.query.code;
                 const code_hash = crypto.createHash('sha256').update(code, 'utf8').digest("hex");
 
                 if (code_hash != state.code_hash) {
-                    log.error(`PKCE token invalid code`)
+                    log.error(`PKCE token invalid code ${code_hash}?${state.code_hash}:${code}`)
                     res.sendStatus(401);
                     return;
                 }
 
                 const verifier = req.query.code_verifier;
-                if (!pkce.verifyPKCE(verifier, state.code_hash, 'S256')) {
+                if (!pkce.verifyPKCE(verifier, state.challenge, 'S256')) {
                     log.error(`PKCE token, invalid challenge`)
                     res.sendStatus(401);
                     return;
