@@ -64,6 +64,7 @@ interface State {
 
 // Get the authentication state, if any, for the specified user
 export function userState(user: User): State {
-  if (!challenges.has(user)) challenges.set(user, {});
-  return challenges.get(user);
+  const key = user.id;
+  if (!challenges.has(key)) challenges.set(key, {});
+  return challenges.get(key);
 }
