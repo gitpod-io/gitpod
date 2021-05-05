@@ -16,6 +16,7 @@ ports:
     onOpen: ignore
   - port: 6080
     onOpen: ignore
+    visibility: private
   - port: 9229
     onOpen: ignore
 # Go proxy
