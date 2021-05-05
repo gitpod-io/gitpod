@@ -57,17 +57,19 @@ func (s *Provider) downloadContentManifest(ctx context.Context, bkt, obj string)
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "downloadContentManifest")
 	defer func() {
+		var lerr error
 		if manifest != nil {
 			r, _ := json.Marshal(manifest)
 			span.LogKV("manifest", string(r))
 
-			lerr := err
+			lerr = err
 			if lerr == storage.ErrNotFound {
 				span.LogKV("found", false)
 				lerr = nil
 			}
-			tracing.FinishSpan(span, &lerr)
 		}
+
+		tracing.FinishSpan(span, &lerr)
 	}()
 
 	info, err = s.Storage.SignDownload(ctx, bkt, obj, &storage.SignedURLOptions{})
