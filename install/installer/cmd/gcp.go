@@ -70,10 +70,6 @@ var gcpCmd = &cobra.Command{
 		} else if !strings.Contains(domain, "ip.mygitpod.com") {
 			err = terraform.PersistVariable(tfvarsfn,
 				terraform.PersistVariableOpts{
-					Name:    "force_https",
-					Sources: []terraform.VariableValueSource{func(name string, spec terraform.VariableSpec) (value string, ok bool) { return "true", true }},
-				},
-				terraform.PersistVariableOpts{
 					Name:    "certbot_enabled",
 					Sources: []terraform.VariableValueSource{func(name string, spec terraform.VariableSpec) (value string, ok bool) { return "true", true }},
 				},
@@ -121,11 +117,7 @@ var gcpCmd = &cobra.Command{
 					},
 				},
 				ForceOverwrite: true,
-			}, terraform.PersistVariableOpts{Name: "force_https", ForceOverwrite: true, Sources: []terraform.VariableValueSource{
-				func(name string, spec terraform.VariableSpec) (value string, ok bool) {
-					return "true", true
-				},
-			}})
+			})
 			if err != nil {
 				ui.Fatalf("cannot update the \"domain\" terraform variables - please re-run this installer:\n\t%q", err)
 			}

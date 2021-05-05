@@ -62,7 +62,6 @@ data "template_file" "values" {
     loadbalancer_ip = google_compute_address.gitpod.address
     certbot_enabled = var.certbot_enabled
     certbot_email   = var.certificate_email
-    force_https     = var.force_https
   }
 }
 module "gitpod" {

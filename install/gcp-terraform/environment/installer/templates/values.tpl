@@ -13,5 +13,4 @@ components:
                 end: 11000
 
 installPodSecurityPolicies: true
-forceHTTPS: ${force_https}
 authProviders: []
