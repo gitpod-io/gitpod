@@ -6,7 +6,7 @@
 
 import { Queue } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterState, TLSConfig, AdmissionConstraint, AdmissionConstraintHasRole } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
+import { WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterState, TLSConfig, AdmissionConstraint, AdmissionConstraintHasRole, WorkspaceClusterWoTLS } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
 import {
     ClusterServiceService,
     ClusterState,
@@ -25,6 +25,7 @@ import {
 } from '@gitpod/ws-manager-bridge-api/lib';
 import { GetWorkspacesRequest } from '@gitpod/ws-manager/lib';
 import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
+import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientProviderSource } from '@gitpod/ws-manager/lib/client-provider-source';
 import * as grpc from "@grpc/grpc-js";
 import { ServiceError as grpcServiceError } from '@grpc/grpc-js';
 import { inject, injectable } from 'inversify';
@@ -52,6 +53,9 @@ export class ClusterService implements IClusterServiceServer {
 
     @inject(WorkspaceManagerClientProvider)
     protected readonly clientProvider: WorkspaceManagerClientProvider;
+
+    @inject(WorkspaceManagerClientProviderCompositeSource)
+    protected readonly allClientProvider: WorkspaceManagerClientProviderSource;
 
     // using a queue to make sure we do concurrency right
     protected readonly queue: Queue = new Queue();
@@ -204,17 +208,24 @@ export class ClusterService implements IClusterServiceServer {
     public list(call: grpc.ServerUnaryCall<ListRequest, ListResponse>, callback: grpc.sendUnaryData<ListResponse>) {
         this.queue.enqueue(async () => {
             try {
-                const allClusters = await this.db.findFiltered({})
-
                 const response = new ListResponse();
-                for (const cluster of allClusters) {
-                    const clusterStatus = new ClusterStatus();
-                    clusterStatus.setName(cluster.name);
-                    clusterStatus.setUrl(cluster.url);
-                    clusterStatus.setState(mapClusterState(cluster.state));
-                    clusterStatus.setScore(cluster.score);
-                    clusterStatus.setMaxScore(cluster.maxScore);
-                    clusterStatus.setGoverned(cluster.govern);
+
+                const dbClusterIdx = new Map<string, boolean>();
+                const allDBClusters = await this.db.findFiltered({});
+                for (const cluster of allDBClusters) {
+                    const clusterStatus = convertToGRPC(cluster);
+                    response.addStatus(clusterStatus);
+                    dbClusterIdx.set(cluster.name, true);
+                }
+
+                const allCluster = await this.allClientProvider.getAllWorkspaceClusters();
+                for (const cluster of allCluster) {
+                    if (dbClusterIdx.get(cluster.name)) {
+                        continue;
+                    }
+
+                    const clusterStatus = convertToGRPC(cluster);
+                    clusterStatus.setStatic(true);
                     response.addStatus(clusterStatus);
                 }
 
@@ -231,6 +242,33 @@ export class ClusterService implements IClusterServiceServer {
         this.bridgeController.runReconcileNow()
             .catch(err => log.error("error during forced reconcile", err, payload));
     }
+}
+
+function convertToGRPC(ws: WorkspaceClusterWoTLS): ClusterStatus {
+    const clusterStatus = new ClusterStatus();
+    clusterStatus.setName(ws.name);
+    clusterStatus.setUrl(ws.url);
+    clusterStatus.setState(mapClusterState(ws.state));
+    clusterStatus.setScore(ws.score);
+    clusterStatus.setMaxScore(ws.maxScore);
+    clusterStatus.setGoverned(ws.govern);
+    ws.admissionConstraints?.forEach(c => {
+        const constraint = new GRPCAdmissionConstraint();
+        switch (c.type) {
+            case "has-feature-preview":
+                constraint.setHasFeaturePreview(new GRPCAdmissionConstraint.FeaturePreview());
+                break;
+            case "has-permission":
+                const perm = new GRPCAdmissionConstraint.HasPermission();
+                perm.setPermission(c.permission);
+                constraint.setHasPermission(perm);
+                break;
+            default:
+                return;
+        }
+        clusterStatus.addAdmissionConstraints(constraint);
+    });
+    return clusterStatus;
 }
 
 function mapAdmissionConstraint(c: GRPCAdmissionConstraint | undefined): AdmissionConstraint | undefined {
