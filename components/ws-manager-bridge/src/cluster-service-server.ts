@@ -6,7 +6,7 @@
 
 import { Queue } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterState, TLSConfig } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
+import { WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterState, TLSConfig, AdmissionConstraint, AdmissionConstraintHasRole } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
 import {
     ClusterServiceService,
     ClusterState,
@@ -20,7 +20,8 @@ import {
     RegisterRequest,
     RegisterResponse,
     UpdateRequest,
-    UpdateResponse
+    UpdateResponse,
+    AdmissionConstraint as GRPCAdmissionConstraint,
 } from '@gitpod/ws-manager-bridge-api/lib';
 import { GetWorkspacesRequest } from '@gitpod/ws-manager/lib';
 import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
@@ -101,6 +102,8 @@ export class ClusterService implements IClusterServiceServer {
                     key: req.tls.key
                 };
 
+                const admissionConstraints = call.request.getAdmissionConstraintsList().map(mapAdmissionConstraint).filter(c => !!c) as AdmissionConstraint[];
+
                 const newCluster: WorkspaceCluster = {
                     name: req.name,
                     url: req.url,
@@ -109,6 +112,7 @@ export class ClusterService implements IClusterServiceServer {
                     maxScore: 100,
                     govern,
                     tls,
+                    admissionConstraints
                 };
 
                 // try to connect to validate the config. Throws an exception if it fails.
@@ -151,6 +155,25 @@ export class ClusterService implements IClusterServiceServer {
                 }
                 if (call.request.hasCordoned()) {
                     cluster.state = mapCordoned(req.cordoned);
+                }
+                if (call.request.hasAdmissionConstraints()) {
+                    const mod = call.request.getAdmissionConstraints()!;
+                    const c = mapAdmissionConstraint(mod.getConstraint());
+                    if (!!c) {
+                        if (mod.getAdd()) {
+                            cluster.admissionConstraints = (cluster.admissionConstraints || []).concat([c]);
+                        } else {
+                            cluster.admissionConstraints = cluster.admissionConstraints?.filter(v => {
+                                if (v.type !== c.type) {
+                                    return true;
+                                }
+                                if (v.type === "has-permission" && v.permission === (c as AdmissionConstraintHasRole).permission) {
+                                    return true;
+                                }
+                                return false;
+                            })
+                        }
+                    }
                 }
                 await this.db.save(cluster);
 
@@ -208,6 +231,25 @@ export class ClusterService implements IClusterServiceServer {
         this.bridgeController.runReconcileNow()
             .catch(err => log.error("error during forced reconcile", err, payload));
     }
+}
+
+function mapAdmissionConstraint(c: GRPCAdmissionConstraint | undefined): AdmissionConstraint | undefined {
+    if (!c) {
+        return;
+    }
+
+    if (c.hasHasFeaturePreview()) {
+        return <AdmissionConstraint>{type: "has-feature-preview"};
+    }
+    if (c.hasHasPermission()) {
+        const permission = c.getHasPermission()?.getPermission();
+        if (!permission) {
+            return;
+        }
+
+        return <AdmissionConstraintHasRole>{type: "has-permission", permission};
+    }
+    return;
 }
 
 function mapPreferabilityToScore(p: Preferability): number | undefined {

@@ -17,9 +17,8 @@ import (
 
 // clustersCordonCmd represents the clustersCordonCmd command
 var clustersCordonCmd = &cobra.Command{
-	Use:   "cordon [cluster name]",
+	Use:   "cordon --name [cluster name]",
 	Short: "Cordon a cluster",
-	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -30,7 +29,7 @@ var clustersCordonCmd = &cobra.Command{
 		}
 		defer conn.Close()
 
-		name := args[0]
+		name := getClusterName()
 		request := &api.UpdateRequest{Name: name, Property: &api.UpdateRequest_Cordoned{Cordoned: true}}
 		_, err = client.Update(ctx, request)
 		if err != nil && err != io.EOF {
