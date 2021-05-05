@@ -27,6 +27,7 @@ packages:
       - components/supervisor-api/typescript-grpc:publish
       - components/supervisor:docker
       - components/ws-daemon:docker
+      - components/ws-daemon/kubelet-config-fix:docker
       - components/ws-daemon/seccomp-profile-installer:docker
       - components/ws-daemon/shiftfs-module-loader:docker
       - components/ws-manager-bridge:docker
