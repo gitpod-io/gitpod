@@ -318,14 +318,76 @@ export class UserController {
                 state.code_hash = crypto.createHash('sha256').update(authorization_code, 'utf8').digest("hex");
                 // TODO: add state? oauth.com says:
                 // "The state value isn't strictly necessary here since the PKCE parameters provide CSRF protection themselves."
+                // Similarly a check for response_type=code, client_id & client_secret is not really necessary
                 log.info(`PKCE auth redirecting: ${JSON.stringify(pkce.userState(user))}`);
                 res.redirect(`http://${redirect_url}/?code=${encodeURI(authorization_code)}`);
             });
 
-            router.get("/local-app/token", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+            router.post("/local-app/token", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
                 log.info(`PKCE token: ${JSON.stringify(req.query)}`);
-                res.sendStatus(401);
-                return;
+                if (!req.isAuthenticated() || !User.is(req.user)) {
+                    log.info(`PKCE token user fail ${req.user}`);
+                    res.sendStatus(401);
+                    return;
+                }
+
+                const user = req.user as User;
+                if (user.blocked) {
+                    log.info(`PKCE token user blocked`);
+                    res.sendStatus(403);
+                    return;
+                }
+
+                const redirect_url = req.query.redirect_url;
+                if (!redirect_url || !redirect_url.startsWith("localhost:")) {
+                    log.error(`PKCE token invalid redirect URL: "${redirect_url}"`)
+                    res.sendStatus(400);
+                    return;
+                }
+                
+                const state = pkce.userState(user);
+                const code = req.query.code;
+                const code_hash = crypto.createHash('sha256').update(code, 'utf8').digest("hex");
+
+                if (code_hash != state.code_hash) {
+                    log.error(`PKCE token invalid code`)
+                    res.sendStatus(401);
+                    return;
+                }
+
+                const verifier = req.query.code_verifier;
+                if (!pkce.verifyPKCE(verifier, state.code_hash, 'S256')) {
+                    log.error(`PKCE token, invalid challenge`)
+                    res.sendStatus(401);
+                    return;
+                }
+
+                const token = crypto.randomBytes(30).toString('hex');
+                const tokenHash = crypto.createHash('sha256').update(token, 'utf8').digest("hex");
+                const dbToken: GitpodToken & { user: DBUser } = {
+                    tokenHash,
+                    name: `local-app`,
+                    type: GitpodTokenType.MACHINE_AUTH_TOKEN,
+                    user: req.user as DBUser,
+                    scopes: [
+                        "function:getWorkspaces",
+                        "function:listenForWorkspaceInstanceUpdates",
+                        "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspace", subjectID: "*", operations: ["get"]}),
+                        "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspaceInstance", subjectID: "*", operations: ["get"]}),
+                    ],
+                    created: new Date().toISOString(),
+                };
+                await this.userDb.storeGitpodToken(dbToken);
+
+                log.info(`PKCE token done: ${JSON.stringify(dbToken)}`);
+                // TODO: return a refresh token?
+                //       expiry?
+                res.json({
+                    "access_token": dbToken,
+                    "token_type": "access_token",
+                    // "refresh_token": "",
+                    // "expires_in": 11972
+                })
             });
         }
         router.get("/auth/workspace", async (req: express.Request, res: express.Response, next: express.NextFunction) => {

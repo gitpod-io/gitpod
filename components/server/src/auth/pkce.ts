@@ -10,9 +10,6 @@ import { User } from '@gitpod/gitpod-protocol';
 
 const check = /[^\w.\-~]/;
 
-// Preserve the code challenge values per user
-const challenges = new WeakMap();
-
 /**
  * These functions are based on the PKCE helper code from https://github.com/panva/node-oidc-provider
  */ 
@@ -54,6 +51,11 @@ export function verifyPKCE(verifier: string, challenge: string, method: string):
     }
     return false;
   };
+
+// Preserve the code challenge values per user
+// NOTE: this will need to move to the db or some other external store
+//       as server needs to be stateless
+const challenges = new WeakMap();
 
 interface State {
     challenge: string;  // code_challange from PKCE
