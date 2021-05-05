@@ -110,6 +110,8 @@ export class GitHubAuthProvider extends GenericAuthProvider {
                 // otherwise use GitHub's primary email as Gitpod's primary email
                 return emails.filter(e => e.primary)[0];
             };
+            const primary = filterPrimaryEmail(userEmails);
+            const proxy = userEmails.find(e => e.email.endsWith(`@users.noreply.${this.config.host}`));
 
             return <AuthUserSetup>{
                 authUser: {
@@ -117,8 +119,8 @@ export class GitHubAuthProvider extends GenericAuthProvider {
                     authName: login,
                     avatarUrl: avatar_url,
                     name,
-                    primaryEmail: filterPrimaryEmail(userEmails).email,
-                    commitEmail: userEmails.find(e => e.visibility === 'public')?.email || `${id}+${login}@users.noreply.${this.config.host}`
+                    primaryEmail: primary.email,
+                    commitEmail: primary.visibility === 'private' ? proxy?.email : primary.email
                 },
                 currentScopes
             }
