@@ -35,12 +35,6 @@ variable "image_prefix" {
   description = "Image prefix for the registry in which the images for the components are hosted"
 }
 
-variable "force_https" {
-  type        = bool
-  default     = false
-  description = "Force the domain to use HTTPS"
-}
-
 variable "certbot_enabled" {
   type        = bool
   default     = false

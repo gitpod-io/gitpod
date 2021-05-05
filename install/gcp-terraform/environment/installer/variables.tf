@@ -41,11 +41,6 @@ variable "image_prefix" {
   default = "eu.gcr.io/gitpod-core-dev/build/"
 }
 
-variable "force_https" {
-  type    = bool
-  default = false
-}
-
 variable "certbot_enabled" {
   type    = bool
   default = false

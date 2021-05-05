@@ -108,7 +108,6 @@ fi
 case "$DOMAIN" in
   *ip.mygitpod.com)
     cat << EOF > /default_values/03_ip_mygitpod_com.yaml
-forceHTTPS: true
 components:
   imageBuilder:
     registry:
