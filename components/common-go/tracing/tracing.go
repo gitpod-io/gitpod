@@ -135,7 +135,7 @@ func FromTraceID(traceID string) opentracing.SpanContext {
 	return spanCtx
 }
 
-// LogEvent logs an event in the trace. This is similar to the (now deprecated) span.LogEvent
+// LogEvent logs an event in the trace.
 func LogEvent(span opentracing.Span, name string) {
 	span.LogFields(tracelog.String("event", name))
 }
