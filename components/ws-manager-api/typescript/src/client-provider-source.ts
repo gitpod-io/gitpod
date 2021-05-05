@@ -4,14 +4,14 @@
  * See License-AGPL.txt in the project root for license information.
  */
 import { injectable, inject, multiInject } from 'inversify';
-import { TLSConfig, WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterWoTls } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
+import { TLSConfig, WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterWoTLS } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
 export const WorkspaceManagerClientProviderSource = Symbol("WorkspaceManagerClientProviderSource");
 
 export interface WorkspaceManagerClientProviderSource {
     getWorkspaceCluster(name: string): Promise<WorkspaceCluster | undefined>;
-    getAllWorkspaceClusters(): Promise<WorkspaceClusterWoTls[]>;
+    getAllWorkspaceClusters(): Promise<WorkspaceClusterWoTLS[]>;
 }
 
 
@@ -23,7 +23,7 @@ export class WorkspaceManagerClientProviderEnvSource implements WorkspaceManager
         return this.clusters.find(m => m.name === name);
     }
 
-    public async getAllWorkspaceClusters(): Promise<WorkspaceClusterWoTls[]> {
+    public async getAllWorkspaceClusters(): Promise<WorkspaceClusterWoTLS[]> {
         return this.clusters;
     }
 
@@ -68,7 +68,7 @@ export class WorkspaceManagerClientProviderDBSource implements WorkspaceManagerC
         return await this.db.findByName(name);
     }
 
-    public async getAllWorkspaceClusters(): Promise<WorkspaceClusterWoTls[]> {
+    public async getAllWorkspaceClusters(): Promise<WorkspaceClusterWoTLS[]> {
         return await this.db.findFiltered({});
     }
 }
@@ -88,8 +88,8 @@ export class WorkspaceManagerClientProviderCompositeSource implements WorkspaceM
         return undefined;
     }
 
-    async getAllWorkspaceClusters(): Promise<WorkspaceClusterWoTls[]> {
-        const allClusters: Map<string, WorkspaceClusterWoTls> = new Map();
+    async getAllWorkspaceClusters(): Promise<WorkspaceClusterWoTLS[]> {
+        const allClusters: Map<string, WorkspaceClusterWoTLS> = new Map();
         for (const source of this.sources) {
             const clusters = await source.getAllWorkspaceClusters();
             for (const cluster of clusters) {
@@ -99,7 +99,7 @@ export class WorkspaceManagerClientProviderCompositeSource implements WorkspaceM
                 allClusters.set(cluster.name, cluster);
             }
         }
-        const result: WorkspaceClusterWoTls[] = [];
+        const result: WorkspaceClusterWoTLS[] = [];
         for (const [_, cluster] of allClusters) {
             result.push(cluster);
         }

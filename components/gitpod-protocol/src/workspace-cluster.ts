@@ -32,7 +32,11 @@ export interface WorkspaceCluster {
 
     // True if this bridge should control this cluster
     govern: boolean;
+
+    // An optional set of constraints that limit who can start workspaces on the cluster
+    admissionConstraints?: AdmissionConstraint[];
 }
+
 export type WorkspaceClusterState = "available" | "cordoned" | "draining";
 export interface TLSConfig {
     // the CA shared between client and server (base64 encoded)
@@ -45,8 +49,13 @@ export interface TLSConfig {
 export namespace TLSConfig {
     export const loadFromBase64File = (path: string): string => fs.readFileSync(filePathTelepresenceAware(path)).toString("base64");
 }
-export type WorkspaceClusterWoTls = Without<WorkspaceCluster, "tls">;
+export type WorkspaceClusterWoTLS = Without<WorkspaceCluster, "tls">;
 export type WorkspaceManagerConnectionInfo = Pick<WorkspaceCluster, "name" | "url" | "tls">;
+
+export type AdmissionConstraint = AdmissionConstraintFeaturePreview | AdmissionConstraintHasRole;
+export type AdmissionConstraintFeaturePreview = { type: "has-feature-preview" };
+export type AdmissionConstraintHasRole = { type: "has-permission", permission: PermissionName };
+
 
 export const WorkspaceClusterDB = Symbol("WorkspaceClusterDB");
 export interface WorkspaceClusterDB {
@@ -73,7 +82,7 @@ export interface WorkspaceClusterDB {
      * Lists all WorkspaceClusterWoTls for which the given predicate is true (does not return TLS for size/speed concerns)
      * @param predicate
      */
-    findFiltered(predicate: DeepPartial<WorkspaceClusterFilter>): Promise<WorkspaceClusterWoTls[]>;
+    findFiltered(predicate: DeepPartial<WorkspaceClusterFilter>): Promise<WorkspaceClusterWoTLS[]>;
 }
 export interface WorkspaceClusterFilter extends Pick<WorkspaceCluster, "state" | "govern" | "url"> {
     minScore: number;

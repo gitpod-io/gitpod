@@ -8,8 +8,8 @@ import * as grpc from "@grpc/grpc-js";
 import { injectable, inject } from 'inversify';
 import { WorkspaceManagerClient } from './core_grpc_pb';
 import { PromisifiedWorkspaceManagerClient, linearBackoffStrategy } from "./promisified-client";
-import { Disposable } from "@gitpod/gitpod-protocol";
-import { WorkspaceClusterWoTls, WorkspaceManagerConnectionInfo } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
+import { Disposable, User, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { WorkspaceClusterWoTLS, WorkspaceManagerConnectionInfo } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
 import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientProviderSource } from "./client-provider-source";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
@@ -28,15 +28,20 @@ export class WorkspaceManagerClientProvider implements Disposable {
      *
      * @returns The WorkspaceManagerClient that was chosen to start the next workspace with.
      */
-    public async getStartManager(): Promise<{ manager: PromisifiedWorkspaceManagerClient, installation: string}> {
-        const allClusters = await this.source.getAllWorkspaceClusters();
-        const availableClusters = allClusters.filter((c) => c.score >= 0 && c.govern && c.state === "available");
-        const chosenCluster = chooseCluster(availableClusters);
+    public async getStartManager(user: User, workspace: Workspace, instance: WorkspaceInstance): Promise<{ manager: PromisifiedWorkspaceManagerClient, installation: string}> {
+        const availableCluster = await this.getAvailableStartCluster(user, workspace, instance);
+        const chosenCluster = chooseCluster(availableCluster);
         const client = await this.get(chosenCluster.name);
         return {
             manager: client,
             installation: chosenCluster.name,
         };
+    }
+
+    public async getAvailableStartCluster(user: User, workspace: Workspace, instance: WorkspaceInstance): Promise<WorkspaceClusterWoTLS[]> {
+        const allClusters = await this.source.getAllWorkspaceClusters();
+        const availableClusters = allClusters.filter(c => c.score >= 0 && c.state === "available").filter(admissionConstraintsFilter(user, workspace, instance));
+        return availableClusters;
     }
 
     /**
@@ -73,7 +78,7 @@ export class WorkspaceManagerClientProvider implements Disposable {
     /**
      * @returns All WorkspaceClusters (without TLS config)
      */
-    public async getAllWorkspaceClusters(): Promise<WorkspaceClusterWoTls[]> {
+    public async getAllWorkspaceClusters(): Promise<WorkspaceClusterWoTLS[]> {
         return this.source.getAllWorkspaceClusters();
     }
 
@@ -106,12 +111,12 @@ export class WorkspaceManagerClientProvider implements Disposable {
  * @param clusters
  * @returns The chosen cluster. Throws an error if there are 0 WorkspaceClusters to choose from.
  */
-function chooseCluster(availableCluster: WorkspaceClusterWoTls[]): WorkspaceClusterWoTls {
+function chooseCluster(availableCluster: WorkspaceClusterWoTLS[]): WorkspaceClusterWoTLS {
     if (availableCluster.length === 0) {
         throw new Error("No cluster to choose from!");
     }
 
-    const scoreFunc = (c: WorkspaceClusterWoTls): number => {
+    const scoreFunc = (c: WorkspaceClusterWoTLS): number => {
         let score = c.score;    // here is the point where we may want to implement non-static approaches
 
         // clamp to maxScore
@@ -134,4 +139,21 @@ function chooseCluster(availableCluster: WorkspaceClusterWoTls[]): WorkspaceClus
         }
     }
     return availableCluster[availableCluster.length - 1];
+}
+
+function admissionConstraintsFilter(user: User, workspace: Workspace, instance: WorkspaceInstance): (c: WorkspaceClusterWoTLS) => boolean {
+    return (c: WorkspaceClusterWoTLS) => {
+        if (!c.admissionConstraints) {
+            return true;
+        }
+
+        return (c.admissionConstraints || []).every(con => {
+            switch (con.type) {
+                case "has-feature-preview":
+                    return !!user.additionalData && !!user.additionalData.featurePreview;
+                case "has-permission":
+                    return user.rolesOrPermissions?.includes(con.permission);
+            }
+        });
+    };
 }

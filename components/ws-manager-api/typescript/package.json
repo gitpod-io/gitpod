@@ -9,7 +9,8 @@
   ],
   "scripts": {
     "build": "tsc && cp -f src/*.js src/*d.ts lib",
-    "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput"
+    "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput",
+    "test": "mocha --opts mocha.opts 'src/**/*.spec.ts'"
   },
   "dependencies": {
     "@gitpod/content-service": "0.1.5",
@@ -24,6 +25,8 @@
     "@types/node": "^10",
     "grpc-tools": "^1.11.1",
     "grpc_tools_node_protoc_ts": "^5.2.1",
-    "typescript-formatter": "^7.2.2"
+    "typescript-formatter": "^7.2.2",
+    "@testdeck/mocha": "0.1.2",
+    "@types/chai": "^4.1.2"
   }
 }
