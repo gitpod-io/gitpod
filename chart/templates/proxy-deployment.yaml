@@ -1,34 +1,9 @@
 # Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
-{{ define "gitpod.container.configmap.volumeMounts" -}}
-{{- $ := .root -}}
-{{- $gp := .gp -}}
-{{- $comp := .comp -}}
-{{- if $comp.configmaps -}}
-{{- range $name := $comp.configmaps -}}
-- name: mount-{{ $name }}
-  mountPath: "/mnt/configmaps/{{ $name }}"
-{{ end }}
-{{- end }}
-{{- end -}}
-
-{{- define "gitpod.container.configmap.volumes" -}}
-{{- $ := .root -}}
-{{- $comp := .comp -}}
-{{- if $comp.configmaps -}}
-{{- range $name := $comp.configmaps -}}
-- name: mount-{{ $name }}
-  configMap:
-    name: {{ $name }}
-{{ end }}
-{{- end }}
-{{- end -}}
-
 {{ $comp := .Values.components.proxy -}}
 {{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
 {{- $wsProxy := .Values.components.wsProxy -}}
-{{- $thisWsProxy := dict "root" . "gp" $.Values "comp" $wsProxy -}}
 {{- if not $comp.disabled -}}
 kind: Deployment
 apiVersion: apps/v1
@@ -97,29 +72,22 @@ spec:
           privileged: false
         readinessProbe:
           httpGet:
-            path: "/nginx/status"
+            path: "/ready"
             port: 8003
-          initialDelaySeconds: 0
-          periodSeconds: 1
+          initialDelaySeconds: 5
+          periodSeconds: 5
           timeoutSeconds: 1
           successThreshold: 1
           failureThreshold: 3
         volumeMounts:
-        - name: config-nginx
-          mountPath: "/mnt/nginx"
+        - name: vhosts
+          mountPath: "/etc/caddy/vhosts"
 {{- if index .Values "docker-registry" "enabled" }}
         - name: builtin-registry-auth
-          mountPath: "/mnt/nginx/registry-auth"
+          mountPath: "/etc/caddy/registry-auth"
 {{- end }}
-{{- if $.Values.certificatesSecret.secretName }}
         - name: config-certificates
-          mountPath: "/mnt/nginx/certificates"
-{{- end }}
-{{- if $comp.sslDHParam }}
-        - name: config-ssl-dhparam
-          mountPath: "/mnt/nginx/ssl-dhparam"
-{{- end }}
-{{ include "gitpod.container.configmap.volumeMounts" $this | indent 8 }}
+          mountPath: "/etc/caddy/certificates"
 {{ include "gitpod.container.defaultEnv" (dict "root" . "gp" $.Values "comp" $comp "noVersion" true) | indent 8 }}
         - name: PROXY_DOMAIN
           value: "{{ $.Values.hostname }}"
@@ -128,66 +96,20 @@ spec:
             secretKeyRef:
               name: server-proxy-apikey
               key: apikey
-{{- if $comp.certbot.enabled }}
-        - name: CERTBOT_ENABLED
-          value: "true"
-        - name: CERTBOT_EMAIL
-          value: "{{ $comp.certbot.email }}"
-{{- end }}
-{{- if (and $wsProxy (not $wsProxy.disabled) $wsProxy.portRange) }}
-      - name: ws-proxy
-        image: {{ template "gitpod.comp.imageFull" $thisWsProxy }}
-        args: ["run", "-v", "/config/config.json"]
-{{ include "gitpod.container.imagePullPolicy" $thisWsProxy | indent 8 }}
-{{ include "gitpod.container.resources" $thisWsProxy | indent 8 }}
-{{ include "gitpod.container.ports" $thisWsProxy | indent 8 }}
-{{- range $index, $port := untilStep (int $wsProxy.portRange.start) (int (add $wsProxy.portRange.end 1)) 1 }}
-        - name: "wsproxy-{{ $port }}"
-          containerPort: {{ $port }}
-{{- end }}
 {{ include "gitpod.container.defaultEnv" (dict "root" . "gp" $.Values "comp" $wsProxy "noVersion" true) | indent 8 }}
-        volumeMounts:
-{{- if (and $wsProxy (not $wsProxy.disabled) $wsProxy.portRange) }}
-        - name: {{ template "gitpod.comp.configMap" $thisWsProxy }}
-          mountPath: "/config"
-          readOnly: true
-{{- end }}
         securityContext:
           privileged: false
-{{- end }}
       volumes:
-      - name: config-nginx
+      - name: vhosts
         configMap:
-          name: {{ $comp.name }}-config-nginx
+          name: {{ template "gitpod.comp.configMap" $this }}
 {{- if index .Values "docker-registry" "enabled" }}
       - name: builtin-registry-auth
         secret:
           secretName: builtin-registry-auth
 {{- end }}
-{{- if (and $wsProxy (not $wsProxy.disabled) $wsProxy.portRange) }}
-      - name: ws-proxy-config
-        configMap:
-          name: ws-proxy-config
-{{- end }}
-{{- if $comp.sslDHParam }}
-      - name: config-ssl-dhparam
-        secret:
-          secretName: server-proxy-ssl-dhparam
-{{- end }}
-{{- if $.Values.certificatesSecret.secretName }}
       - name: config-certificates
         secret:
           secretName: {{ $.Values.certificatesSecret.secretName }}
-{{- if (and $.Values.certificatesSecret.fullChainName $.Values.certificatesSecret.chainName $.Values.certificatesSecret.keyName) }}
-          items:
-          - key: {{ $.Values.certificatesSecret.fullChainName }}
-            path: fullchain.pem
-          - key: {{ $.Values.certificatesSecret.chainName }}
-            path: chain.pem
-          - key: {{ $.Values.certificatesSecret.keyName }}
-            path: privkey.pem
-{{- end }}
-{{- end }}
-{{ include "gitpod.container.configmap.volumes" $this | indent 6 }}
 {{ toYaml .Values.defaults | indent 6 }}
 {{ end }}

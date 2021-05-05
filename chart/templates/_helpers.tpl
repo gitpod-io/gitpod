@@ -160,15 +160,6 @@ affinity:
 {{ include "gitpod.container.dbEnv" . | indent 2 }}
 {{- end -}}
 
-{{- define "gitpod.scheme" -}}
-{{- $gp := .gp -}}
-{{- if or $gp.certificatesSecret.secretName $gp.forceHTTPS -}}
-https
-{{- else -}}
-http
-{{- end -}}
-{{- end -}}
-
 {{- define "gitpod.container.defaultEnv" -}}
 {{- $ := .root -}}
 {{- $gp := .gp -}}
@@ -179,14 +170,18 @@ env:
   valueFrom:
     fieldRef:
       fieldPath: metadata.namespace
+- name: KUBE_DOMAIN
+  value: "{{ $gp.installation.kubedomain | default "svc.cluster.local" }}"
 {{- if not .noVersion }}
 - name: VERSION
   value: "{{ $gp.version }}"
 {{- end }}
+- name: GITPOD_DOMAIN
+  value: {{ $gp.hostname | quote }}
 - name: HOST_URL
-  value: "{{- template "gitpod.scheme" . -}}://{{ $gp.hostname }}"
+  value: "https://{{ $gp.hostname }}"
 - name: GITPOD_REGION
-  value: "{{ $gp.installation.region }}"
+  value: {{ $gp.installation.region | quote }}
 - name: GITPOD_INSTALLATION_LONGNAME
   value: {{ template "gitpod.installation.longname" . }}
 - name: GITPOD_INSTALLATION_SHORTNAME

@@ -25,7 +25,6 @@ metadata:
 spec:
   ports:
   {{- range $key, $val := $comp.ports }}
-  {{- if $val.expose }}
   - name: {{ $key | lower }}
     protocol: TCP
     {{ if $val.nodePort -}}nodePort: {{ $val.nodePort }}{{ end }}
@@ -35,7 +34,6 @@ spec:
     {{- else -}}
     port: {{ $val.containerPort }}
     {{ end -}}
-  {{- end -}}
   {{ end }}
   {{- if $comp.portRange }}
   {{- range $index, $port := untilStep (int $comp.portRange.start) (int (add $comp.portRange.end 1)) 1 }}
