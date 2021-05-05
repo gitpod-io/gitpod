@@ -8,6 +8,7 @@ import * as fs from 'fs';
 import { filePathTelepresenceAware } from './env';
 import { DeepPartial } from "./util/deep-partial";
 import { Without } from './util/without';
+import { PermissionName } from './permission';
 
 export interface WorkspaceCluster {
     // Name of the workspace cluster.
