@@ -27,6 +27,10 @@ export class RegisterRequest extends jspb.Message {
     clearHints(): void;
     getHints(): RegistrationHints | undefined;
     setHints(value?: RegistrationHints): RegisterRequest;
+    clearAdmissionConstraintsList(): void;
+    getAdmissionConstraintsList(): Array<AdmissionConstraint>;
+    setAdmissionConstraintsList(value: Array<AdmissionConstraint>): RegisterRequest;
+    addAdmissionConstraints(value?: AdmissionConstraint, index?: number): AdmissionConstraint;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): RegisterRequest.AsObject;
@@ -44,6 +48,7 @@ export namespace RegisterRequest {
         url: string,
         tls?: TlsConfig.AsObject,
         hints?: RegistrationHints.AsObject,
+        admissionConstraintsList: Array<AdmissionConstraint.AsObject>,
     }
 }
 
@@ -116,6 +121,83 @@ export namespace RegistrationHints {
     }
 }
 
+export class AdmissionConstraint extends jspb.Message {
+
+    hasHasFeaturePreview(): boolean;
+    clearHasFeaturePreview(): void;
+    getHasFeaturePreview(): AdmissionConstraint.FeaturePreview | undefined;
+    setHasFeaturePreview(value?: AdmissionConstraint.FeaturePreview): AdmissionConstraint;
+
+    hasHasPermission(): boolean;
+    clearHasPermission(): void;
+    getHasPermission(): AdmissionConstraint.HasPermission | undefined;
+    setHasPermission(value?: AdmissionConstraint.HasPermission): AdmissionConstraint;
+
+    getConstraintCase(): AdmissionConstraint.ConstraintCase;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): AdmissionConstraint.AsObject;
+    static toObject(includeInstance: boolean, msg: AdmissionConstraint): AdmissionConstraint.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: AdmissionConstraint, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): AdmissionConstraint;
+    static deserializeBinaryFromReader(message: AdmissionConstraint, reader: jspb.BinaryReader): AdmissionConstraint;
+}
+
+export namespace AdmissionConstraint {
+    export type AsObject = {
+        hasFeaturePreview?: AdmissionConstraint.FeaturePreview.AsObject,
+        hasPermission?: AdmissionConstraint.HasPermission.AsObject,
+    }
+
+
+    export class FeaturePreview extends jspb.Message {
+
+        serializeBinary(): Uint8Array;
+        toObject(includeInstance?: boolean): FeaturePreview.AsObject;
+        static toObject(includeInstance: boolean, msg: FeaturePreview): FeaturePreview.AsObject;
+        static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+        static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+        static serializeBinaryToWriter(message: FeaturePreview, writer: jspb.BinaryWriter): void;
+        static deserializeBinary(bytes: Uint8Array): FeaturePreview;
+        static deserializeBinaryFromReader(message: FeaturePreview, reader: jspb.BinaryReader): FeaturePreview;
+    }
+
+    export namespace FeaturePreview {
+        export type AsObject = {
+        }
+    }
+
+    export class HasPermission extends jspb.Message {
+        getPermission(): string;
+        setPermission(value: string): HasPermission;
+
+        serializeBinary(): Uint8Array;
+        toObject(includeInstance?: boolean): HasPermission.AsObject;
+        static toObject(includeInstance: boolean, msg: HasPermission): HasPermission.AsObject;
+        static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+        static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+        static serializeBinaryToWriter(message: HasPermission, writer: jspb.BinaryWriter): void;
+        static deserializeBinary(bytes: Uint8Array): HasPermission;
+        static deserializeBinaryFromReader(message: HasPermission, reader: jspb.BinaryReader): HasPermission;
+    }
+
+    export namespace HasPermission {
+        export type AsObject = {
+            permission: string,
+        }
+    }
+
+
+    export enum ConstraintCase {
+        CONSTRAINT_NOT_SET = 0,
+        HAS_FEATURE_PREVIEW = 1,
+        HAS_PERMISSION = 2,
+    }
+
+}
+
 export class ClusterStatus extends jspb.Message {
     getName(): string;
     setName(value: string): ClusterStatus;
@@ -129,6 +211,10 @@ export class ClusterStatus extends jspb.Message {
     setMaxScore(value: number): ClusterStatus;
     getGoverned(): boolean;
     setGoverned(value: boolean): ClusterStatus;
+    clearAdmissionConstraintsList(): void;
+    getAdmissionConstraintsList(): Array<AdmissionConstraint>;
+    setAdmissionConstraintsList(value: Array<AdmissionConstraint>): ClusterStatus;
+    addAdmissionConstraints(value?: AdmissionConstraint, index?: number): AdmissionConstraint;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ClusterStatus.AsObject;
@@ -148,6 +234,7 @@ export namespace ClusterStatus {
         score: number,
         maxScore: number,
         governed: boolean,
+        admissionConstraintsList: Array<AdmissionConstraint.AsObject>,
     }
 }
 
@@ -170,6 +257,11 @@ export class UpdateRequest extends jspb.Message {
     getCordoned(): boolean;
     setCordoned(value: boolean): UpdateRequest;
 
+    hasAdmissionConstraints(): boolean;
+    clearAdmissionConstraints(): void;
+    getAdmissionConstraints(): ModifyAdmissionConstraint | undefined;
+    setAdmissionConstraints(value?: ModifyAdmissionConstraint): UpdateRequest;
+
     getPropertyCase(): UpdateRequest.PropertyCase;
 
     serializeBinary(): Uint8Array;
@@ -188,6 +280,7 @@ export namespace UpdateRequest {
         score: number,
         maxScore: number,
         cordoned: boolean,
+        admissionConstraints?: ModifyAdmissionConstraint.AsObject,
     }
 
     export enum PropertyCase {
@@ -195,8 +288,35 @@ export namespace UpdateRequest {
         SCORE = 2,
         MAX_SCORE = 3,
         CORDONED = 4,
+        ADMISSION_CONSTRAINTS = 5,
     }
 
+}
+
+export class ModifyAdmissionConstraint extends jspb.Message {
+    getAdd(): boolean;
+    setAdd(value: boolean): ModifyAdmissionConstraint;
+
+    hasConstraint(): boolean;
+    clearConstraint(): void;
+    getConstraint(): AdmissionConstraint | undefined;
+    setConstraint(value?: AdmissionConstraint): ModifyAdmissionConstraint;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): ModifyAdmissionConstraint.AsObject;
+    static toObject(includeInstance: boolean, msg: ModifyAdmissionConstraint): ModifyAdmissionConstraint.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: ModifyAdmissionConstraint, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): ModifyAdmissionConstraint;
+    static deserializeBinaryFromReader(message: ModifyAdmissionConstraint, reader: jspb.BinaryReader): ModifyAdmissionConstraint;
+}
+
+export namespace ModifyAdmissionConstraint {
+    export type AsObject = {
+        add: boolean,
+        constraint?: AdmissionConstraint.AsObject,
+    }
 }
 
 export class UpdateResponse extends jspb.Message {

@@ -38,7 +38,7 @@ class TestClientProvider {
                 },
                 {
                     name: "con2", govern: true, maxScore: 100, score: 50, state: "available", url: "", admissionConstraints: [
-                        { type: "has-permission", permission: "admin" },
+                        { type: "has-permission", permission: "new-workspace-cluster" },
                     ]
                 },
             ];

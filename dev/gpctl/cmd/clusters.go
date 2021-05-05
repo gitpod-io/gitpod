@@ -14,6 +14,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"k8s.io/client-go/kubernetes"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/gpctl/pkg/util"
 	"github.com/gitpod-io/gitpod/ws-manager-bridge/api"
 )
@@ -21,15 +22,30 @@ import (
 // clustersCmd represents the clusters command
 var clustersCmd = &cobra.Command{
 	Use:   "clusters",
-	Short: "Controls and inspects clusters",
+	Short: "Controls and inspects cluster",
 	Args:  cobra.ExactArgs(1),
 }
 
+var clustersCmdOpts struct {
+	TLS  string
+	Port int
+	Name string
+}
+
 func init() {
-	clustersCmd.PersistentFlags().StringP("tls", "t", "", "TLS certificate when connecting to a secured gRPC endpoint")
-	clustersCmd.PersistentFlags().StringP("port", "p", "8080", "port of the gRPC endpoint")
+	clustersCmd.PersistentFlags().StringVarP(&clustersCmdOpts.TLS, "tls", "t", "", "TLS certificate when connecting to a secured gRPC endpoint")
+	clustersCmd.PersistentFlags().IntVarP(&clustersCmdOpts.Port, "port", "p", 8080, "port of the gRPC endpoint")
+	clustersCmd.PersistentFlags().StringVarP(&clustersCmdOpts.Name, "name", "n", "", "name of the cluster to affect")
 
 	rootCmd.AddCommand(clustersCmd)
+}
+
+func getClusterName() string {
+	name := clustersCmdOpts.Name
+	if name == "" {
+		log.Fatal("missing --name")
+	}
+	return name
 }
 
 func getClustersClient(ctx context.Context) (*grpc.ClientConn, api.ClusterServiceClient, error) {
@@ -43,11 +59,11 @@ func getClustersClient(ctx context.Context) (*grpc.ClientConn, api.ClusterServic
 	}
 
 	localPort := "30303"
-	remotePort, _ := clustersCmd.Flags().GetString("port")
-	if remotePort == "" {
-		remotePort = "8099"
+	remotePort := clustersCmdOpts.Port
+	if remotePort == 0 {
+		remotePort = 8099
 	}
-	port := fmt.Sprintf("%s:%s", localPort, remotePort)
+	port := fmt.Sprintf("%s:%d", localPort, remotePort)
 	podName, err := util.FindAnyPodForComponent(clientSet, namespace, "ws-manager-bridge")
 	if err != nil {
 		return nil, nil, err

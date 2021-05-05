@@ -20,6 +20,7 @@ message RegisterRequest {
   string url = 2;
   TlsConfig tls = 3;
   RegistrationHints hints = 4;
+  repeated AdmissionConstraint admission_constraints = 5;
 }
 
 message RegisterResponse {}
@@ -36,6 +37,18 @@ message RegistrationHints {
   bool govern = 3;
 }
 
+message AdmissionConstraint {
+  message FeaturePreview {}
+  message HasPermission {
+    string permission = 1;
+  }
+
+  oneof constraint {
+    FeaturePreview has_feature_preview = 1;
+    HasPermission has_permission = 2;
+  }
+}
+
 enum Preferability {
   None = 0;
   Prefer = 1;
@@ -49,6 +62,7 @@ message ClusterStatus {
   int32 score = 4;
   int32 max_score = 5;
   bool governed = 6;
+  repeated AdmissionConstraint admission_constraints = 7;
 }
 
 enum ClusterState {
@@ -64,7 +78,13 @@ message UpdateRequest {
     int32 score = 2;
     int32 max_score = 3;
     bool cordoned = 4;
+    ModifyAdmissionConstraint admission_constraints = 5;
   }
+}
+
+message ModifyAdmissionConstraint {
+  bool add = 1;
+  AdmissionConstraint constraint = 2;
 }
 
 message UpdateResponse {}

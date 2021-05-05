@@ -17,10 +17,9 @@ import (
 
 // clustersDeregisterCmd represents the clustersDeregisterCmd command
 var clustersDeregisterCmd = &cobra.Command{
-	Use:   "deregister [cluster name]",
+	Use:   "deregister --name [cluster name]",
 	Short: "Deregister a cluster",
 	Long:  "Deregisters the cluster [cluster name].",
-	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -31,8 +30,7 @@ var clustersDeregisterCmd = &cobra.Command{
 		}
 		defer conn.Close()
 
-		name := args[0]
-
+		name := getClusterName()
 		_, err = client.Deregister(ctx, &api.DeregisterRequest{Name: name})
 		if err != nil && err != io.EOF {
 			log.Fatal(err)
