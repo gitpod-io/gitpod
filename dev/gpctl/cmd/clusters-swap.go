@@ -78,7 +78,7 @@ var clustersSwapCmd = &cobra.Command{
 			}
 		}
 
-		fmt.Printf("updated '%s' to score=%d,cordoned=%v and %s to score=%d,cordoned=%v \n", src.Name, dst.Score, dst.State==api.ClusterState_CORDONED, dst.Name, src.Score, src.State==api.ClusterState_CORDONED)
+		fmt.Printf("updated '%s' to score=%d,cordoned=%v and %s to score=%d,cordoned=%v \n", src.Name, dst.Score, dst.State == api.ClusterState_CORDONED, dst.Name, src.Score, src.State == api.ClusterState_CORDONED)
 	},
 }
 

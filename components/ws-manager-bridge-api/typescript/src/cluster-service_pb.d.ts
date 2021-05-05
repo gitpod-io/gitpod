@@ -215,6 +215,8 @@ export class ClusterStatus extends jspb.Message {
     getAdmissionConstraintsList(): Array<AdmissionConstraint>;
     setAdmissionConstraintsList(value: Array<AdmissionConstraint>): ClusterStatus;
     addAdmissionConstraints(value?: AdmissionConstraint, index?: number): AdmissionConstraint;
+    getStatic(): boolean;
+    setStatic(value: boolean): ClusterStatus;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): ClusterStatus.AsObject;
@@ -235,6 +237,7 @@ export namespace ClusterStatus {
         maxScore: number,
         governed: boolean,
         admissionConstraintsList: Array<AdmissionConstraint.AsObject>,
+        pb_static: boolean,
     }
 }
 

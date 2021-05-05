@@ -1663,7 +1663,8 @@ proto.workspacemanagerbridge.ClusterStatus.toObject = function(includeInstance, 
     maxScore: jspb.Message.getFieldWithDefault(msg, 5, 0),
     governed: jspb.Message.getBooleanFieldWithDefault(msg, 6, false),
     admissionConstraintsList: jspb.Message.toObjectList(msg.getAdmissionConstraintsList(),
-    proto.workspacemanagerbridge.AdmissionConstraint.toObject, includeInstance)
+    proto.workspacemanagerbridge.AdmissionConstraint.toObject, includeInstance),
+    pb_static: jspb.Message.getBooleanFieldWithDefault(msg, 8, false)
   };
 
   if (includeInstance) {
@@ -1728,6 +1729,10 @@ proto.workspacemanagerbridge.ClusterStatus.deserializeBinaryFromReader = functio
       var value = new proto.workspacemanagerbridge.AdmissionConstraint;
       reader.readMessage(value,proto.workspacemanagerbridge.AdmissionConstraint.deserializeBinaryFromReader);
       msg.addAdmissionConstraints(value);
+      break;
+    case 8:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setStatic(value);
       break;
     default:
       reader.skipField();
@@ -1806,6 +1811,13 @@ proto.workspacemanagerbridge.ClusterStatus.serializeBinaryToWriter = function(me
       7,
       f,
       proto.workspacemanagerbridge.AdmissionConstraint.serializeBinaryToWriter
+    );
+  }
+  f = message.getStatic();
+  if (f) {
+    writer.writeBool(
+      8,
+      f
     );
   }
 };
@@ -1954,6 +1966,24 @@ proto.workspacemanagerbridge.ClusterStatus.prototype.addAdmissionConstraints = f
  */
 proto.workspacemanagerbridge.ClusterStatus.prototype.clearAdmissionConstraintsList = function() {
   return this.setAdmissionConstraintsList([]);
+};
+
+
+/**
+ * optional bool static = 8;
+ * @return {boolean}
+ */
+proto.workspacemanagerbridge.ClusterStatus.prototype.getStatic = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 8, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.workspacemanagerbridge.ClusterStatus} returns this
+ */
+proto.workspacemanagerbridge.ClusterStatus.prototype.setStatic = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 8, value);
 };
 
 
