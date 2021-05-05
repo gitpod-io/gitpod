@@ -235,6 +235,10 @@ func Inject(cfg *rest.Config, namespace, targetService string, options ...Inject
 	tppod := proxyPods.Items[0].Name
 
 	tpc, err := NewProxiedToxiproxy(cfg, namespace, tppod)
+	if err != nil {
+		return nil, fmt.Errorf("cannot start proxy: %w", err)
+	}
+
 	for _, p := range oldService.Spec.Ports {
 		_, err := tpc.CreateProxy(targetService, fmt.Sprintf(":%d", p.TargetPort.IntVal), fmt.Sprintf("%s:%d", renamedService.Name, p.Port))
 		if err != nil {

@@ -176,13 +176,13 @@ func setEnvs(args []string) {
 
 			key := strings.TrimSpace(kv[0])
 			if key == "" {
-				fail(fmt.Sprintf("variable must have a name"))
+				fail("variable must have a name")
 			}
 			// Do not trim value - the user might want whitespace here
 			// Also do not check if the value is empty, as an empty value means we want to delete the variable
 			val := kv[1]
 			if val == "" {
-				fail(fmt.Sprintf("variable must have a value; use -u to unset a variable"))
+				fail("variable must have a value; use -u to unset a variable")
 			}
 
 			vars[i] = &serverapi.UserEnvVarValue{Name: key, Value: val, RepositoryPattern: result.repositoryPattern}
@@ -195,7 +195,7 @@ func setEnvs(args []string) {
 			go func(v *serverapi.UserEnvVarValue) {
 				err = result.client.SetEnvVar(ctx, v)
 				if err != nil {
-					fmt.Fprintln(os.Stderr, fmt.Sprintf("cannot set %s: %v", v.Name, err))
+					fmt.Fprintf(os.Stderr, "cannot set %s: %v\n", v.Name, err)
 					exitCode = -1
 				} else {
 					printVar(v, exportEnvs)
@@ -221,13 +221,13 @@ func setEnvs(args []string) {
 
 		key := strings.TrimSpace(kv[0])
 		if key == "" {
-			fail(fmt.Sprintf("variable must have a name"))
+			fail("variable must have a name")
 		}
 		// Do not trim value - the user might want whitespace here
 		// Also do not check if the value is empty, as an empty value means we want to delete the variable
 		val := kv[1]
 		if val == "" {
-			fail(fmt.Sprintf("variable must have a value; use -u to unset a variable"))
+			fail("variable must have a value; use -u to unset a variable")
 		}
 
 		vars[i] = theialib.EnvironmentVariable{Name: key, Value: val}
@@ -259,7 +259,7 @@ func deleteEnvs(args []string) {
 			go func(name string) {
 				err = result.client.DeleteEnvVar(ctx, &serverapi.UserEnvVarValue{Name: name, RepositoryPattern: result.repositoryPattern})
 				if err != nil {
-					fmt.Fprintln(os.Stderr, fmt.Sprintf("cannot unset %s: %v", name, err))
+					fmt.Fprintf(os.Stderr, "cannot unset %s: %v\n", name, err)
 					exitCode = -1
 				}
 				wg.Done()

@@ -139,7 +139,7 @@ var runCmd = &cobra.Command{
 		}
 
 		go func() {
-			sigc := make(chan os.Signal)
+			sigc := make(chan os.Signal, 1)
 			signal.Notify(sigc, syscall.SIGINT)
 			<-sigc
 			os.Exit(0)

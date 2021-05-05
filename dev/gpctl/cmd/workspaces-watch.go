@@ -4,20 +4,7 @@
 
 package cmd
 
-import (
-	"context"
-	"io"
-	"os"
-	"os/signal"
-	"syscall"
-	"text/template"
-
-	"github.com/spf13/cobra"
-
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/ws-manager/api"
-)
-
+/*
 var defaultTemplate = `{{.Id}} {{.Phase}}: {{.Message}}{{"\n"}}`
 
 // clientStartCmd starts a new workspace
@@ -83,7 +70,7 @@ var clientWatchCmd = &cobra.Command{
 		}
 	},
 }
-
+*/
 func init() {
 	// TODO: re-enable this once we're not talking over messagebus anymore
 	// workspacesCmd.AddCommand(workspacesWatchCmd)

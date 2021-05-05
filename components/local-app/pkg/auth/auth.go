@@ -64,6 +64,7 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 			ec <- err
 		}
 	}()
+	//nolint:staticcheck
 	defer returnServer.Shutdown(ctx)
 
 	baseURL := opts.GitpodURL

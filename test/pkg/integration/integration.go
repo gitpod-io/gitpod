@@ -320,7 +320,7 @@ func forwardPort(ctx context.Context, config *rest.Config, namespace, pod, port 
 	}
 
 	path := fmt.Sprintf("/api/v1/namespaces/%s/pods/%s/portforward", namespace, pod)
-	hostIP := strings.TrimLeft(config.Host, "https://")
+	hostIP := strings.TrimPrefix(config.Host, "https://")
 	serverURL := url.URL{Scheme: "https", Path: path, Host: hostIP}
 	dialer := spdy.NewDialer(upgrader, &http.Client{Transport: roundTripper}, http.MethodPost, &serverURL)
 

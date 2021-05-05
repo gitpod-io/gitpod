@@ -628,9 +628,9 @@ func TestRoutes(t *testing.T) {
 				Body:   string(body),
 				Header: resp.Header,
 			}
-			if _, ok := act.Header["Date"]; ok {
-				delete(act.Header, "Date")
-			}
+
+			delete(act.Header, "Date")
+
 			if len(act.Header) == 0 {
 				act.Header = nil
 			}

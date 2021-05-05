@@ -227,10 +227,14 @@ func newTerm(alias string, pty *os.File, cmd *exec.Cmd, options TermOptions) (*T
 		return nil, err
 	}
 
-	rawConn.Control(func(fileFd uintptr) {
+	err = rawConn.Control(func(fileFd uintptr) {
 		res.fd = int(fileFd)
 	})
+	if err != nil {
+		return nil, err
+	}
 
+	//nolint:errcheck
 	go io.Copy(res.Stdout, pty)
 	return res, nil
 }
@@ -303,9 +307,7 @@ func (term *Term) resolveForegroundCommand() (string, error) {
 
 // Wait waits for the terminal to exit and returns the resulted process state
 func (term *Term) Wait() (*os.ProcessState, error) {
-	select {
-	case <-term.waitDone:
-	}
+	<-term.waitDone
 	return term.Command.ProcessState, term.waitErr
 }
 

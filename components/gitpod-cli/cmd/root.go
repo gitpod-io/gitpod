@@ -35,21 +35,3 @@ func Execute() {
 		os.Exit(1)
 	}
 }
-
-func getGitpodAPIToken() (string, error) {
-	apiToken := os.Getenv("GITPOD_REMOTE_APITOKEN")
-	if apiToken == "" {
-		return "", fmt.Errorf("No Gitpod API token present ($GITPOD_REMOTE_APITOKEN env var isn't set)")
-	}
-
-	return apiToken, nil
-}
-
-func getWorkspaceID() (string, error) {
-	result := os.Getenv("GITPOD_WORKSPACE_ID")
-	if result == "" {
-		return "", fmt.Errorf("No Gitpod workspace ID present ($GITPOD_WORKSPACE_ID env var isn't set)")
-	}
-
-	return result, nil
-}

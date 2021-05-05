@@ -761,6 +761,7 @@ func (p *PresignedGCPStorage) EnsureExists(ctx context.Context, bucket string) (
 	if err != nil {
 		return err
 	}
+	//nolint:staticcheck
 	defer client.Close()
 
 	return gcpEnsureExists(ctx, client, bucket, p.config)
@@ -772,6 +773,7 @@ func (p *PresignedGCPStorage) DiskUsage(ctx context.Context, bucket string, pref
 	if err != nil {
 		return
 	}
+	//nolint:staticcheck
 	defer client.Close()
 
 	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
@@ -805,6 +807,7 @@ func (p *PresignedGCPStorage) SignDownload(ctx context.Context, bucket, object s
 	if err != nil {
 		return nil, err
 	}
+	//nolint:staticcheck
 	defer client.Close()
 
 	bkt := client.Bucket(bucket)
@@ -863,6 +866,7 @@ func (p *PresignedGCPStorage) SignUpload(ctx context.Context, bucket, object str
 	if err != nil {
 		return nil, err
 	}
+	//nolint:staticcheck
 	defer client.Close()
 
 	bkt := client.Bucket(bucket)
@@ -893,6 +897,7 @@ func (p *PresignedGCPStorage) SignUpload(ctx context.Context, bucket, object str
 // DeleteObject deletes objects in the given bucket specified by the given query
 func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, query *DeleteObjectQuery) (err error) {
 	client, err := newGCPClient(ctx, p.config)
+	//nolint:staticcheck
 	defer client.Close()
 
 	if query.Name != "" {
@@ -942,6 +947,7 @@ func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, q
 // DeleteBucket deletes a bucket
 func (p *PresignedGCPStorage) DeleteBucket(ctx context.Context, bucket string) (err error) {
 	client, err := newGCPClient(ctx, p.config)
+	//nolint:staticcheck
 	defer client.Close()
 
 	err = p.DeleteObject(ctx, bucket, &DeleteObjectQuery{})
@@ -965,6 +971,7 @@ func (p *PresignedGCPStorage) DeleteBucket(ctx context.Context, bucket string) (
 // ObjectHash gets a hash value of an object
 func (p *PresignedGCPStorage) ObjectHash(ctx context.Context, bucket string, obj string) (hash string, err error) {
 	client, err := newGCPClient(ctx, p.config)
+	//nolint:staticcheck
 	defer client.Close()
 
 	attr, err := client.Bucket(bucket).Object(obj).Attrs(ctx)

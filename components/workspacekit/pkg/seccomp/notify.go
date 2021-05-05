@@ -6,13 +6,11 @@ package seccomp
 
 import (
 	"context"
-	"encoding/binary"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
-	"unsafe"
 
 	"github.com/moby/sys/mountinfo"
 	"golang.org/x/sys/unix"
@@ -352,7 +350,6 @@ func (h *InWorkspaceHandler) Bind(req *libseccomp.ScmpNotifReq) (val uint64, err
 		val = 0
 		errno = 0
 		flags = libseccomp.NotifRespFlagContinue
-		return
 	}()
 
 	memFile, err := readarg.OpenMem(req.Pid)
@@ -413,6 +410,7 @@ func (h *InWorkspaceHandler) Chown(req *libseccomp.ScmpNotifReq) (val uint64, er
 	return 0, 0, libseccomp.NotifRespFlagContinue
 }
 
+/*
 var nativeEndian binary.ByteOrder
 
 func init() {
@@ -428,3 +426,4 @@ func init() {
 		panic("Could not determine native endianness.")
 	}
 }
+*/

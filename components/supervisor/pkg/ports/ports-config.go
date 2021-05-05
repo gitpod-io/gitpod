@@ -162,7 +162,7 @@ func (service *ConfigService) update(config *gitpod.GitpodConfig, current *Confi
 	return !reflect.DeepEqual(currentPortConfigs, portConfigs) || !reflect.DeepEqual(currentRangeConfigs, rangeConfigs)
 }
 
-var portRangeRegexp = regexp.MustCompile("^(\\d+)[-:](\\d+)$")
+var portRangeRegexp = regexp.MustCompile(`^(\d+)[-:](\d+)$`)
 
 func parseWorkspaceConfigs(ports []*gitpod.PortConfig) (portConfigs map[uint32]*gitpod.PortConfig) {
 	if len(ports) == 0 {

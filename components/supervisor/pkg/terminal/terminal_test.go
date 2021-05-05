@@ -73,6 +73,7 @@ func TestTitle(t *testing.T) {
 			}
 			titles := listener.Titles(2)
 			go func() {
+				//nolint:errcheck
 				terminalService.Listen(&api.ListenTerminalRequest{Alias: term.Terminal.Alias}, listener)
 			}()
 
@@ -119,6 +120,7 @@ func (listener *TestTitleTerminalServiceListener) Context() context.Context {
 func (listener *TestTitleTerminalServiceListener) Titles(size int) chan string {
 	title := make(chan string, size)
 	go func() {
+		//nolint:gosimple
 		for {
 			select {
 			case resp := <-listener.resps:

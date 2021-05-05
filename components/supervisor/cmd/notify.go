@@ -47,15 +47,6 @@ var notifyCmd = &cobra.Command{
 	},
 }
 
-func toLevel(arg string) api.NotifyRequest_Level {
-	level, ok := api.NotifyRequest_Level_value[strings.ToUpper(arg)]
-	if !ok {
-		log.WithField("level", arg).Error("Invalid level. Using ERROR")
-		return api.NotifyRequest_ERROR
-	}
-	return api.NotifyRequest_Level(level)
-}
-
 func init() {
 	rootCmd.AddCommand(notifyCmd)
 

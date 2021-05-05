@@ -224,10 +224,10 @@ func (b *Bastion) establishChiselTunnel(ws *Workspace, logprefix string, remoteP
 	}
 	go func() {
 		for ws.ctx.Err() == nil {
-			cl.Wait()
+			_ = cl.Wait()
 			time.Sleep(100 * time.Millisecond)
 			logrus.Debugf("reconnecting %s", logprefix)
-			cl.Start(ws.ctx)
+			_ = cl.Start(ws.ctx)
 		}
 	}()
 	return
@@ -273,7 +273,8 @@ func installSSHAuthorizedKey(ws *Workspace, key string) error {
 	if err != nil {
 		return err
 	}
-	defer term.Shutdown(ctx, &supervisor.ShutdownTerminalRequest{Alias: tres.Terminal.Alias})
+	//nolint:errcheck
+	term.Shutdown(ctx, &supervisor.ShutdownTerminalRequest{Alias: tres.Terminal.Alias})
 
 	_, err = term.Write(ctx, &supervisor.WriteTerminalRequest{
 		Alias: tres.Terminal.Alias,

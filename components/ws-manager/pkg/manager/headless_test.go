@@ -72,6 +72,7 @@ func TestHeadlessLogFirstAttempt(t *testing.T) {
 	}
 }
 
+//nolint:unused
 func newSegmentedStream(segments []string) *segmentedStream {
 	return &segmentedStream{
 		Segments: segments,

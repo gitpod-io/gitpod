@@ -584,14 +584,6 @@ func createGhostPod(name string, ram string, nodeName string, phase corev1.PodPh
 	})
 }
 
-func createProbePod(name string, ram string, nodeName string, phase corev1.PodPhase, age string) *corev1.Pod {
-	return createTPod(name, ram, nodeName, phase, age, map[string]string{
-		"component":     "workspace",
-		"headless":      "true",
-		wsk8s.TypeLabel: "probe",
-	})
-}
-
 func createTPod(name string, ram string, nodeName string, phase corev1.PodPhase, ageStr string, labels map[string]string) *corev1.Pod {
 	creationTimestamp := testBaseTime.Add(-MustParseDuration(ageStr))
 	return &corev1.Pod{

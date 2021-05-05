@@ -91,6 +91,7 @@ type blobHandler struct {
 
 func (bh *blobHandler) getBlob(w http.ResponseWriter, r *http.Request) {
 	// v2.ErrorCodeBlobUnknown.WithDetail(bh.Digest)
+	//nolint:staticcheck,ineffassign
 	span, ctx := opentracing.StartSpanFromContext(r.Context(), "getBlob")
 
 	ctx, cancel := context.WithCancel(context.Background())
