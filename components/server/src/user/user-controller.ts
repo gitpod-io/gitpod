@@ -376,7 +376,7 @@ export class UserController {
                 // TODO: return a refresh token?
                 //       expiry?
                 res.json({
-                    "access_token": dbToken,
+                    "access_token": token,
                     "token_type": "access_token",
                     // "refresh_token": "",
                     // "expires_in": 11972
