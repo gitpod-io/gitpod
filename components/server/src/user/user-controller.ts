@@ -224,7 +224,7 @@ export class UserController {
             });
             res.sendStatus(200);
         });
-        if (this.env.enableLocalApp) {              
+        if (this.env.enableLocalApp) {
             router.get("/auth/local-app", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
                 if (!req.isAuthenticated() || !User.is(req.user)) {
                     res.sendStatus(401);
@@ -254,8 +254,8 @@ export class UserController {
                     scopes: [
                         "function:getWorkspaces",
                         "function:listenForWorkspaceInstanceUpdates",
-                        "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspace", subjectID: "*", operations: ["get"]}),
-                        "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspaceInstance", subjectID: "*", operations: ["get"]}),
+                        "resource:" + ScopedResourceGuard.marshalResourceScope({ kind: "workspace", subjectID: "*", operations: ["get"] }),
+                        "resource:" + ScopedResourceGuard.marshalResourceScope({ kind: "workspaceInstance", subjectID: "*", operations: ["get"] }),
                     ],
                     created: new Date().toISOString(),
                 };
@@ -267,6 +267,9 @@ export class UserController {
 
                 res.redirect(`http://${rt}/?ots=${encodeURI(ots.token)}`);
             });
+
+            // Reusable authentication code creator
+            const pkceAuthCoder = new pkce.PKCEAuthCoder();
 
             router.get("/local-app/authenticate", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
                 log.info(`PKCE auth: ${JSON.stringify(req.query)}`);
@@ -298,7 +301,7 @@ export class UserController {
                 }
 
                 const challenge = req.query.code_challenge;
-                if (!challenge ) {
+                if (!challenge) {
                     log.error(`PKCE auth user, no challenge`)
                     res.sendStatus(400);
                     return;
@@ -306,20 +309,9 @@ export class UserController {
 
                 pkce.checkFormat(challenge, 'code_challenge');
 
-                const authorization_code = crypto.randomBytes(30).toString('hex');
+                const authorization_code = pkceAuthCoder.encode(challenge, method);
 
-                // Preserve the challenge and authorization hash for this user
-                // TODO: do we need to support multiple logins per user?
-                //       as it stands the challenge+hash is overwritten 
-                //       but the resulting token will still be valid.
-                //       Generating the token is ephemeral so is probably ok.
-                const state = pkce.userState(user);
-                state.challenge = challenge;
-                state.code_hash = crypto.createHash('sha256').update(authorization_code, 'utf8').digest("hex");
-                // TODO: add state? oauth.com says:
-                // "The state value isn't strictly necessary here since the PKCE parameters provide CSRF protection themselves."
-                // Similarly a check for response_type=code, client_id & client_secret is not really necessary
-                log.info(`PKCE auth redirecting: ${JSON.stringify(pkce.userState(user))}`);
+                log.info(`PKCE auth redirecting: ${challenge}:${method}`);
                 res.redirect(`http://${redirect_url}/?code=${encodeURI(authorization_code)}`);
             });
 
@@ -337,19 +329,12 @@ export class UserController {
                     res.sendStatus(403);
                     return;
                 }
-                
-                const state = pkce.userState(user);
-                const code = req.query.code;
-                const code_hash = crypto.createHash('sha256').update(code, 'utf8').digest("hex");
 
-                if (code_hash != state.code_hash) {
-                    log.error(`PKCE token invalid code ${code_hash}?${state.code_hash}:${code}`)
-                    res.sendStatus(401);
-                    return;
-                }
+                const code = req.query.code;
+                const challengeObj = pkceAuthCoder.decode(code);
 
                 const verifier = req.query.code_verifier;
-                if (!pkce.verifyPKCE(verifier, state.challenge, 'S256')) {
+                if (!pkce.verifyPKCE(verifier, challengeObj.challenge, challengeObj.method)) {
                     log.error(`PKCE token, invalid challenge`)
                     res.sendStatus(401);
                     return;
@@ -365,8 +350,8 @@ export class UserController {
                     scopes: [
                         "function:getWorkspaces",
                         "function:listenForWorkspaceInstanceUpdates",
-                        "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspace", subjectID: "*", operations: ["get"]}),
-                        "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspaceInstance", subjectID: "*", operations: ["get"]}),
+                        "resource:" + ScopedResourceGuard.marshalResourceScope({ kind: "workspace", subjectID: "*", operations: ["get"] }),
+                        "resource:" + ScopedResourceGuard.marshalResourceScope({ kind: "workspaceInstance", subjectID: "*", operations: ["get"] }),
                     ],
                     created: new Date().toISOString(),
                 };

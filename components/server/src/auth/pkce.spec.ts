@@ -24,21 +24,21 @@ export class PKCESpec {
         expect(() => pkce.checkFormat('EPZvjDwOrCzgAnOaoqyhO9OFwwsTr80GT2NvR7myho3HDYG-._~', 'all valid characters')).to.not.throw();
 
         // NOTE: converting to hex will double length
-        expect(() => pkce.checkFormat(crypto.randomBytes(42/2).toString('hex'), '42 chars == too short')).to.throw(/minimum length of 43 characters/);
-        expect(() => pkce.checkFormat(crypto.randomBytes(128/2).toString('hex') + '-', '129 chars == too long')).to.throw(/maximum length of 128 characters/);
-        expect(() => pkce.checkFormat(crypto.randomBytes(42/2).toString('hex') + '0', '43 chars == just right')).to.not.throw();
-        expect(() => pkce.checkFormat(crypto.randomBytes(128/2).toString('hex'), '128 chars == just right')).to.not.throw();
+        expect(() => pkce.checkFormat(crypto.randomBytes(42 / 2).toString('hex'), '42 chars == too short')).to.throw(/minimum length of 43 characters/);
+        expect(() => pkce.checkFormat(crypto.randomBytes(128 / 2).toString('hex') + '-', '129 chars == too long')).to.throw(/maximum length of 128 characters/);
+        expect(() => pkce.checkFormat(crypto.randomBytes(42 / 2).toString('hex') + '0', '43 chars == just right')).to.not.throw();
+        expect(() => pkce.checkFormat(crypto.randomBytes(128 / 2).toString('hex'), '128 chars == just right')).to.not.throw();
     }
 
     @test public canVerifyPKCE() {
-        const validVerifier = crypto.randomBytes(42/2).toString('hex') + '0';
+        const validVerifier = crypto.randomBytes(42 / 2).toString('hex') + '0';
 
         expect(pkce.verifyPKCE(validVerifier, validVerifier, 'BOGUS'), 'bogus verifier').is.false;
         expect(pkce.verifyPKCE(validVerifier, validVerifier, 'plain'), 'plain verifier').is.false;
         expect(pkce.verifyPKCE(validVerifier, validVerifier, 's256'), 's256 verifier').is.false;
-        expect(pkce.verifyPKCE('', '', 'S256'), 'both empty').is.false;  
-        expect(pkce.verifyPKCE('', '123', 'S256'), 'verifier empty').is.false;  
-        expect(pkce.verifyPKCE(validVerifier, '123', 'S256'), 'short challenge').is.false;  
+        expect(pkce.verifyPKCE('', '', 'S256'), 'both empty').is.false;
+        expect(pkce.verifyPKCE('', '123', 'S256'), 'verifier empty').is.false;
+        expect(pkce.verifyPKCE(validVerifier, '123', 'S256'), 'short challenge').is.false;
         expect(pkce.verifyPKCE(validVerifier, validVerifier, 'PLAIN'), 'plain verifier').is.true;
         // Valid values from oauth 2.0 playground PKCE flow
         expect(pkce.verifyPKCE('oXPuJHLIMdGLQYOm7Z-_cO4N3WoaK6aQA0i7JKKeGGLTD7G-', 'cNerW3ccX3K10Yp5LJMSAT8ehENHcNILeGKmEbaL2pI', 'S256'), 'oauth-a').is.true;
@@ -48,6 +48,22 @@ export class PKCESpec {
         expect(pkce.verifyPKCE('dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk', 'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM', 'S256'), 'spec-a').is.true;
         // Invalid (includes '/')
         expect(pkce.verifyPKCE('dBjftJeZ4CVP-mB92K27uhbUJU1p1r/wW1gFWFOEjXk', 'E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM', 'S256'), 'spec-with-/').is.false;
+    }
+
+    @test public canManagePlainAuthenticationCode() {
+        const pkceAuthCoder = new pkce.PKCEAuthCoder()
+        const code = pkceAuthCoder.encode("this is a challenge code", "PLAIN");
+        const result = pkceAuthCoder.decode(code);
+        expect(result.challenge).to.equal("this is a challenge code");
+        expect(result.method).to.equal("PLAIN");
+    }
+
+    @test public canManageS256AuthenticationCode() {
+        const pkceAuthCoder = new pkce.PKCEAuthCoder()
+        const code = pkceAuthCoder.encode("cNerW3ccX3K10Yp5LJMSAT8ehENHcNILeGKmEbaL2pI", "S256");
+        const result = pkceAuthCoder.decode(code);
+        expect(result.challenge).to.equal("cNerW3ccX3K10Yp5LJMSAT8ehENHcNILeGKmEbaL2pI");
+        expect(result.method).to.equal("S256");
     }
 }
 

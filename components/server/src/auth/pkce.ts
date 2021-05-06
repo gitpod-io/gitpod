@@ -3,11 +3,13 @@
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
-import { User } from '@gitpod/gitpod-protocol';
+import { injectable } from "inversify";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import * as assert from 'assert';
 import encode from 'base64url';
 import * as crypto from 'crypto';
+// import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
+import { EncryptionEngine, EncryptionEngineImpl } from "@gitpod/gitpod-protocol/lib/encryption/encryption-engine";
 
 const check = /[^\w.\-~]/;
 
@@ -56,19 +58,53 @@ export function verifyPKCE(verifier: string, challenge: string, method: string):
   return false;
 };
 
-// Preserve the code challenge values per user
-// NOTE: this will need to move to the db or some other external store
-//       as server needs to be stateless
-const challenges = new Map();
+interface AuthenticationCode {
+  random: string,
+  challenge: string,
+  time: string,
+  method: string,
+};
 
-interface State {
-  challenge: string;  // code_challange from PKCE
-  code_hash: string; // the authorization code hash
+interface Challenge {
+  challenge: string,
+  method: string,
 }
 
-// Get the authentication state, if any, for the specified user
-export function userState(user: User): State {
-  const key = user.id;
-  if (!challenges.has(key)) challenges.set(key, {});
-  return challenges.get(key);
+@injectable()
+export class PKCEAuthCoder {
+
+  // @inject(EncryptionService) protected readonly encryptionService: EncryptionService;
+  protected encryptionEngine: EncryptionEngine;
+  protected key: Buffer;
+
+  // @postConstruct()
+  // init() {
+  constructor() {
+    // TODO: FIXME!
+    this.key = Buffer.from('jJgYSA69K7HMNWvUxY20dtKddDZuT4+vpGSBdKBAc0U=', 'base64');
+    this.encryptionEngine = new EncryptionEngineImpl();
+  }
+
+  // Creates an encrypted code to be returned when authenticating.
+  // It includes the challenge and method to avoid requirement for state in server.
+  // TODO: remove 'any'
+  public encode(challenge: string, method: string): any {
+    const code: AuthenticationCode = {
+      random: crypto.randomBytes(42 / 2).toString('hex'),
+      challenge: challenge,
+      time: Date.now().toLocaleString(),
+      method: method,
+    };
+    log.info(`BUFFER: ${this.key}`)
+    return this.encryptionEngine.encrypt(JSON.stringify(code), this.key);
+  }
+
+  // Extract the challenge values from the configuration code
+  public decode(code: any): Challenge {
+    const decryptedCode = JSON.parse(this.encryptionEngine.decrypt(code, this.key)) as AuthenticationCode;
+    return {
+      challenge: decryptedCode.challenge,
+      method: decryptedCode.method,
+    }
+  }
 }
