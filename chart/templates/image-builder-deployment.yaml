@@ -86,6 +86,7 @@ spec:
 {{- end }}
 {{ include "gitpod.container.defaultEnv" $this | indent 8 }}
 {{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+{{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
       - name: service
         image: {{ template "gitpod.comp.imageFull" $this }}
         args:

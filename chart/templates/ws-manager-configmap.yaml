@@ -118,7 +118,7 @@ data:
             "addr": "localhost:6060"
         },
         "prometheus": {
-            "addr": ":9500"
+            "addr": "127.0.0.1:9500"
         }
     }
 {{- end -}}

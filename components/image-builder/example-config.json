@@ -13,7 +13,7 @@
         "address": ":9999"
     },
     "prometheus": {
-        "address": ":9500"
+        "address": "127.0.0.1:9500"
     },
     "service": {
         "address": ":8080"

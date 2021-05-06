@@ -17,7 +17,7 @@ data:
     {
         {{ if .Values.components.workspace.pullSecret.secretName -}}"dockerAuth": "/mnt/pull-secret.json",{{- end }}
         "pprofAddr": ":6060",
-        "prometheusAddr": ":9500"
+        "prometheusAddr": "127.0.0.1:9500"
         , "blobserve": {
             "port": {{ $comp.ports.service.containerPort }},
             "timeout": {{ ($comp.timeout | default "5s") | quote }},

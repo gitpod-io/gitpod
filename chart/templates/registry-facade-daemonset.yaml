@@ -74,6 +74,7 @@ spec:
         - name: https-certificates
           mountPath: "/mnt/certificates"
         {{- end }}
+{{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
       volumes:
       - name: cache
         emptyDir: {}

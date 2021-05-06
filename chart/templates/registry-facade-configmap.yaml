@@ -53,6 +53,6 @@ data:
             ]
         },
         "pprofAddr": ":6060",
-        "prometheusAddr": ":9500"
+        "prometheusAddr": "127.0.0.1:9500"
     }
 {{- end -}}

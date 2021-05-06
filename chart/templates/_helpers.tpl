@@ -340,3 +340,29 @@ storage:
 {{ toYaml .remoteStorage | indent 2 }}
 {{- end -}}
 {{- end -}}
+
+{{- define "gitpod.kube-rbac-proxy" -}}
+- name: kube-rbac-proxy
+  image: quay.io/brancz/kube-rbac-proxy:v0.9.0
+  args:
+  - --logtostderr
+  - --insecure-listen-address=[$(IP)]:9500
+  - --upstream=http://127.0.0.1:9500/
+  env:
+  - name: IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.podIP
+  ports:
+  - containerPort: 9500
+    name: metrics
+  resources:
+    requests:
+      cpu: 1m
+      memory: 30Mi
+  securityContext:
+    runAsGroup: 65532
+    runAsNonRoot: true
+    runAsUser: 65532
+  terminationMessagePolicy: FallbackToLogsOnError
+{{- end -}}

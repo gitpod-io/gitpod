@@ -71,6 +71,7 @@ spec:
           mountPath: /mnt/pull-secret.json
           subPath: .dockerconfigjson
         {{- end }}
+{{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
       volumes:
       - name: cache
         emptyDir: {}

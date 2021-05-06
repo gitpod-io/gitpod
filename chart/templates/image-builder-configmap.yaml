@@ -44,7 +44,7 @@ data:
             "address": ":6060"
         },
         "prometheus": {
-            "address": ":9500"
+            "address": "127.0.0.1:9500"
         },
         "service": {
             "address": ":8080"
