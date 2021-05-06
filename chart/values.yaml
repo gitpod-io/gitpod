@@ -219,6 +219,18 @@ components:
         expose: false
         containerPort: 9500
 
+  kedge:
+    name: "kedge"
+    resources:
+      memory: 128Mi
+    disabled: true
+    config: config/kedge/prod-config.json
+    ports:
+      http:
+        expose: true
+        containerPort: 8080
+        servicePort: 8080
+
   registryFacade:
     name: "registry-facade"
     disabled: false

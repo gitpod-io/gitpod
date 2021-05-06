@@ -1,42 +1,18 @@
-module github.com/gitpod-io/gitpod/gpctl
+module github.com/gitpod-io/gitpod/kedge
 
-go 1.16
+go 1.12
 
 require (
-	github.com/Masterminds/goutils v1.1.0 // indirect
-	github.com/Masterminds/semver v1.5.0 // indirect
-	github.com/Masterminds/sprig v2.22.0+incompatible
-	github.com/alecthomas/repr v0.0.0-20200325044227-4184120f674c
-	github.com/elazarl/goproxy v0.0.0-20191011121108-aa519ddbe484 // indirect
+	github.com/alecthomas/jsonschema v0.0.0-20190122210438-a6952de1bbe6
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/image-builder/api v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/ws-manager-bridge/api v0.0.0-00010101000000-000000000000
-	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
-	github.com/huandu/xstrings v1.2.0 // indirect
-	github.com/mitchellh/copystructure v1.0.0 // indirect
-	github.com/mitchellh/go-homedir v1.1.0
-	github.com/spf13/cobra v1.1.3
-	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
-	google.golang.org/grpc v1.37.0
-	google.golang.org/protobuf v1.26.0
+	github.com/imdario/mergo v0.3.8 // indirect
+	github.com/spf13/cobra v0.0.3
+	k8s.io/api v0.21.0
 	k8s.io/apimachinery v0.21.0
 	k8s.io/client-go v0.0.0
 )
 
-replace github.com/gitpod-io/gitpod/common-go => ../../components/common-go // leeway
-
-replace github.com/gitpod-io/gitpod/content-service/api => ../../components/content-service-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/image-builder/api => ../../components/image-builder-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/registry-facade/api => ../../components/registry-facade-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/ws-daemon/api => ../../components/ws-daemon-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/ws-manager-bridge/api => ../../components/ws-manager-bridge-api/go // leeway
-
-replace github.com/gitpod-io/gitpod/ws-manager/api => ../../components/ws-manager-api/go // leeway
+replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway
 
 replace k8s.io/api => k8s.io/api v0.21.0 // leeway indirect from components/common-go:lib
 

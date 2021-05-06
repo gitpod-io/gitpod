@@ -1,0 +1,92 @@
+{
+    "services": [
+        {
+            "name": "",
+            "service": {
+                "kind": "Service",
+                "apiVersion": "v1",
+                "metadata": {
+                    "name": "ws-manager",
+                    "namespace": "test-namespace",
+                    "selfLink": "/api/v1/namespaces/test-namespace/services/ws-manager",
+                    "uid": "80573de3-a0e7-4410-b4b7-b9c2b32ecd2b",
+                    "resourceVersion": "12783515",
+                    "creationTimestamp": "2020-02-18T09:07:37Z",
+                    "labels": {
+                        "app": "gitpod",
+                        "component": "ws-manager",
+                        "kind": "service",
+                        "stage": "devstaging"
+                    }
+                },
+                "spec": {
+                    "ports": [
+                        {
+                            "name": "rpc",
+                            "protocol": "TCP",
+                            "port": 8080,
+                            "targetPort": 8080
+                        }
+                    ],
+                    "selector": {
+                        "app": "gitpod",
+                        "component": "ws-manager",
+                        "kind": "pod",
+                        "stage": "devstaging"
+                    },
+                    "clusterIP": "10.0.2.183",
+                    "type": "ClusterIP",
+                    "sessionAffinity": "None"
+                },
+                "status": {
+                    "loadBalancer": {}
+                }
+            },
+            "endpoint": {
+                "kind": "Endpoints",
+                "apiVersion": "v1",
+                "metadata": {
+                    "name": "ws-manager",
+                    "namespace": "test-namespace",
+                    "selfLink": "/api/v1/namespaces/test-namespace/endpoints/ws-manager",
+                    "uid": "5f9dbc4b-7979-423a-8cc5-8672e968c12c",
+                    "resourceVersion": "13096227",
+                    "creationTimestamp": "2020-02-18T09:07:37Z",
+                    "labels": {
+                        "app": "gitpod",
+                        "component": "ws-manager",
+                        "kind": "service",
+                        "stage": "devstaging"
+                    },
+                    "annotations": {
+                        "endpoints.kubernetes.io/last-change-trigger-time": "2020-02-18T20:35:26Z"
+                    }
+                },
+                "subsets": [
+                    {
+                        "addresses": [
+                            {
+                                "ip": "10.8.10.50",
+                                "nodeName": "gke-gitpod-dev-worker-pool-1-500f9817-9n9j",
+                                "targetRef": {
+                                    "kind": "Pod",
+                                    "namespace": "test-namespace",
+                                    "name": "ws-manager-898656978-k5zv5",
+                                    "uid": "a10a33ba-a489-42fb-9d53-c8c09fbb5613",
+                                    "resourceVersion": "13096225"
+                                }
+                            }
+                        ],
+                        "ports": [
+                            {
+                                "name": "rpc",
+                                "port": 8080,
+                                "protocol": "TCP"
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ]
+}
