@@ -88,20 +88,19 @@ export class PKCEAuthCoder {
   // Creates an encrypted code to be returned when authenticating.
   // It includes the challenge and method to avoid requirement for state in server.
   // TODO: remove 'any'
-  public encode(challenge: string, method: string): any {
+  public encode(challenge: string, method: string): string {
     const code: AuthenticationCode = {
       random: crypto.randomBytes(42 / 2).toString('hex'),
       challenge: challenge,
       time: Date.now().toLocaleString(),
       method: method,
     };
-    log.info(`BUFFER: ${this.key}`)
-    return this.encryptionEngine.encrypt(JSON.stringify(code), this.key);
+    return JSON.stringify(this.encryptionEngine.encrypt(JSON.stringify(code), this.key));
   }
 
   // Extract the challenge values from the configuration code
-  public decode(code: any): Challenge {
-    const decryptedCode = JSON.parse(this.encryptionEngine.decrypt(code, this.key)) as AuthenticationCode;
+  public decode(code: string): Challenge {
+    const decryptedCode = JSON.parse(this.encryptionEngine.decrypt(JSON.parse(code), this.key)) as AuthenticationCode;
     return {
       challenge: decryptedCode.challenge,
       method: decryptedCode.method,
