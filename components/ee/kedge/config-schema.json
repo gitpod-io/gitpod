@@ -1,0 +1,69 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$ref": "#/definitions/config",
+  "title": "kedge config schema - generated using kedge config-schema",
+  "definitions": {
+    "": {
+      "required": [
+        "period",
+        "collectors",
+        "failureTTLService",
+        "failureTTLCollector"
+      ],
+      "properties": {
+        "collectors": {
+          "$ref": "#/definitions/"
+        },
+        "failureTTLCollector": {
+          "type": "integer"
+        },
+        "failureTTLService": {
+          "type": "integer"
+        },
+        "period": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "config": {
+      "required": [
+        "token",
+        "namespace",
+        "kubeconfig",
+        "services",
+        "collection"
+      ],
+      "properties": {
+        "collection": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/"
+        },
+        "kubeconfig": {
+          "type": "string"
+        },
+        "namespace": {
+          "type": "string"
+        },
+        "port": {
+          "type": "integer"
+        },
+        "registration": {
+          "$ref": "#/definitions/"
+        },
+        "services": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "token": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    }
+  }
+}

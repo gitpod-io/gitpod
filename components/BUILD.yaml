@@ -12,6 +12,7 @@ packages:
       - components/content-service:docker
       - components/dashboard:docker
       - components/docker-up:docker
+      - components/ee/kedge:docker
       - components/ee/ws-scheduler:docker
       - components/gitpod-db:docker
       - components/gitpod-protocol:publish
@@ -42,6 +43,7 @@ packages:
       - components/content-service:docker
       - components/dashboard:app
       - components/docker-up:app
+      - components/ee/kedge:app
       - components/ee/ws-scheduler:app
       - components/image-builder:app
       - components/registry-facade:app
@@ -54,6 +56,7 @@ packages:
       - components/ws-manager:app
 scripts:
   - name: update-license-header
+    description: Updates the license header in all source files
     deps:
       - dev/addlicense:app
     script: |
