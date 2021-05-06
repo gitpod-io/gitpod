@@ -7,6 +7,7 @@ package ports
 import (
 	"context"
 	"io"
+	"net"
 	"sync"
 	"testing"
 	"time"
@@ -29,12 +30,14 @@ func TestPortsUpdateState(t *testing.T) {
 		instance  []*gitpod.PortsItems
 	}
 	type Change struct {
-		Config     *ConfigChange
-		Served     []ServedPort
-		Exposed    []ExposedPort
-		ConfigErr  error
-		ServedErr  error
-		ExposedErr error
+		Config      *ConfigChange
+		Served      []ServedPort
+		Exposed     []ExposedPort
+		Tunneled    []PortTunnelState
+		ConfigErr   error
+		ServedErr   error
+		ExposedErr  error
+		TunneledErr error
 	}
 	tests := []struct {
 		Desc             string
@@ -463,8 +466,12 @@ func TestPortsUpdateState(t *testing.T) {
 					Changes: make(chan *Configs),
 					Error:   make(chan error, 1),
 				}
+				tunneled = &testTunneledPorts{
+					Changes: make(chan []PortTunnelState),
+					Error:   make(chan error, 1),
+				}
 
-				pm    = NewManager(exposed, served, config, test.InternalPorts...)
+				pm    = NewManager(exposed, served, config, tunneled, test.InternalPorts...)
 				updts [][]*api.PortsStatus
 			)
 			pm.proxyStarter = func(localPort uint32, globalPort uint32) (io.Closer, error) {
@@ -496,6 +503,8 @@ func TestPortsUpdateState(t *testing.T) {
 				defer close(served.Changes)
 				defer close(exposed.Error)
 				defer close(exposed.Changes)
+				defer close(tunneled.Error)
+				defer close(tunneled.Changes)
 
 				for _, c := range test.Changes {
 					if c.Config != nil {
@@ -515,6 +524,10 @@ func TestPortsUpdateState(t *testing.T) {
 						exposed.Changes <- c.Exposed
 					} else if c.ExposedErr != nil {
 						exposed.Error <- c.ExposedErr
+					} else if c.Tunneled != nil {
+						tunneled.Changes <- c.Tunneled
+					} else if c.TunneledErr != nil {
+						tunneled.Error <- c.TunneledErr
 					}
 				}
 			}()
@@ -539,6 +552,24 @@ func TestPortsUpdateState(t *testing.T) {
 			}
 		})
 	}
+}
+
+type testTunneledPorts struct {
+	Changes chan []PortTunnelState
+	Error   chan error
+}
+
+func (tep *testTunneledPorts) Observe(ctx context.Context) (<-chan []PortTunnelState, <-chan error) {
+	return tep.Changes, tep.Error
+}
+func (tep *testTunneledPorts) Tunnel(ctx context.Context, options *TunnelOptions, descs ...*PortTunnelDescription) ([]uint32, error) {
+	return nil, nil
+}
+func (tep *testTunneledPorts) CloseTunnel(ctx context.Context, localPorts ...uint32) ([]uint32, error) {
+	return nil, nil
+}
+func (tep *testTunneledPorts) EstablishTunnel(ctx context.Context, clientID string, localPort uint32, targetPort uint32) (net.Conn, error) {
+	return nil, nil
 }
 
 type testConfigService struct {
@@ -603,7 +634,11 @@ func TestPortsConcurrentSubscribe(t *testing.T) {
 			Changes: make(chan *Configs),
 			Error:   make(chan error, 1),
 		}
-		pm = NewManager(exposed, served, config)
+		tunneled = &testTunneledPorts{
+			Changes: make(chan []PortTunnelState),
+			Error:   make(chan error, 1),
+		}
+		pm = NewManager(exposed, served, config, tunneled)
 	)
 	pm.proxyStarter = func(localPort uint32, globalPort uint32) (io.Closer, error) {
 		return io.NopCloser(nil), nil
@@ -622,6 +657,8 @@ func TestPortsConcurrentSubscribe(t *testing.T) {
 		defer close(served.Changes)
 		defer close(exposed.Error)
 		defer close(exposed.Changes)
+		defer close(tunneled.Error)
+		defer close(tunneled.Changes)
 
 		var j uint32
 		for {

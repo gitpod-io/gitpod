@@ -5,8 +5,11 @@
 package protocol
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -23,11 +26,14 @@ type ReconnectingWebsocket struct {
 	maxReconnectionDelay        time.Duration
 	reconnectionDelayGrowFactor float64
 
+	once     sync.Once
 	closedCh chan struct{}
-	connCh   chan chan *websocket.Conn
+	connCh   chan chan *WebsocketConnection
 	errCh    chan error
 
 	log *logrus.Entry
+
+	ReconnectionHandler func()
 }
 
 // NewReconnectingWebsocket creates a new instance of ReconnectingWebsocket
@@ -39,7 +45,7 @@ func NewReconnectingWebsocket(url string, reqHeader http.Header, log *logrus.Ent
 		maxReconnectionDelay:        30 * time.Second,
 		reconnectionDelayGrowFactor: 1.5,
 		handshakeTimeout:            2 * time.Second,
-		connCh:                      make(chan chan *websocket.Conn),
+		connCh:                      make(chan chan *WebsocketConnection),
 		closedCh:                    make(chan struct{}),
 		errCh:                       make(chan error),
 		log:                         log,
@@ -48,65 +54,93 @@ func NewReconnectingWebsocket(url string, reqHeader http.Header, log *logrus.Ent
 
 // Close closes the underlying webscoket connection.
 func (rc *ReconnectingWebsocket) Close() error {
-	close(rc.closedCh)
+	rc.once.Do(func() {
+		close(rc.closedCh)
+	})
 	return nil
+}
+
+// EnsureConnection ensures ws connections
+// Returns only if connection is permanently failed
+// If the passed handler returns false as closed then err is returned to the client,
+// otherwise err is treated as a connection error, and new conneciton is provided.
+func (rc *ReconnectingWebsocket) EnsureConnection(handler func(conn *WebsocketConnection) (closed bool, err error)) error {
+	for {
+		connCh := make(chan *WebsocketConnection, 1)
+		select {
+		case <-rc.closedCh:
+			return errors.New("closed")
+		case rc.connCh <- connCh:
+		}
+		conn := <-connCh
+		closed, err := handler(conn)
+		if !closed {
+			return err
+		}
+		select {
+		case <-rc.closedCh:
+			return errors.New("closed")
+		case rc.errCh <- err:
+		}
+	}
+}
+
+func isJSONError(err error) bool {
+	_, isJsonErr := err.(*json.InvalidUTF8Error)
+	if isJsonErr {
+		return true
+	}
+	_, isJsonErr = err.(*json.InvalidUnmarshalError)
+	if isJsonErr {
+		return true
+	}
+	_, isJsonErr = err.(*json.MarshalerError)
+	if isJsonErr {
+		return true
+	}
+	_, isJsonErr = err.(*json.SyntaxError)
+	if isJsonErr {
+		return true
+	}
+	_, isJsonErr = err.(*json.UnmarshalFieldError)
+	if isJsonErr {
+		return true
+	}
+	_, isJsonErr = err.(*json.UnmarshalTypeError)
+	if isJsonErr {
+		return true
+	}
+	_, isJsonErr = err.(*json.UnsupportedTypeError)
+	if isJsonErr {
+		return true
+	}
+	_, isJsonErr = err.(*json.UnsupportedValueError)
+	return isJsonErr
 }
 
 // WriteObject writes the JSON encoding of v as a message.
 // See the documentation for encoding/json Marshal for details about the conversion of Go values to JSON.
 func (rc *ReconnectingWebsocket) WriteObject(v interface{}) error {
-	for {
-		connCh := make(chan *websocket.Conn, 1)
-		select {
-		case <-rc.closedCh:
-			return errors.New("closed")
-		case rc.connCh <- connCh:
-		}
-		conn := <-connCh
+	return rc.EnsureConnection(func(conn *WebsocketConnection) (bool, error) {
 		err := conn.WriteJSON(v)
-		if err == nil {
-			return nil
-		}
-		if !websocket.IsUnexpectedCloseError(err) {
-			return err
-		}
-		select {
-		case <-rc.closedCh:
-			return errors.New("closed")
-		case rc.errCh <- err:
-		}
-	}
+		closed := err != nil && !isJSONError(err)
+		return closed, err
+	})
 }
 
 // ReadObject reads the next JSON-encoded message from the connection and stores it in the value pointed to by v.
 // See the documentation for the encoding/json Unmarshal function for details about the conversion of JSON to a Go value.
 func (rc *ReconnectingWebsocket) ReadObject(v interface{}) error {
-	for {
-		connCh := make(chan *websocket.Conn, 1)
-		select {
-		case <-rc.closedCh:
-			return errors.New("closed")
-		case rc.connCh <- connCh:
-		}
-		conn := <-connCh
+	return rc.EnsureConnection(func(conn *WebsocketConnection) (bool, error) {
 		err := conn.ReadJSON(v)
-		if err == nil {
-			return nil
-		}
-		if !websocket.IsUnexpectedCloseError(err) {
-			return err
-		}
-		select {
-		case <-rc.closedCh:
-			return errors.New("closed")
-		case rc.errCh <- err:
-		}
-	}
+		closed := err != nil && !isJSONError(err)
+		return closed, err
+	})
 }
 
 // Dial creates a new client connection.
 func (rc *ReconnectingWebsocket) Dial() {
-	var conn *websocket.Conn
+	var conn *WebsocketConnection
 	defer func() {
 		if conn == nil {
 			return
@@ -129,19 +163,26 @@ func (rc *ReconnectingWebsocket) Dial() {
 
 			time.Sleep(1 * time.Second)
 			conn = rc.connect()
+			if conn != nil && rc.ReconnectionHandler != nil {
+				go rc.ReconnectionHandler()
+			}
 		}
 	}
 }
 
-func (rc *ReconnectingWebsocket) connect() *websocket.Conn {
+func (rc *ReconnectingWebsocket) connect() *WebsocketConnection {
 	delay := rc.minReconnectionDelay
 	for {
 		dialer := websocket.Dialer{HandshakeTimeout: rc.handshakeTimeout}
 		conn, _, err := dialer.Dial(rc.url, rc.reqHeader)
 		if err == nil {
 			rc.log.WithField("url", rc.url).Info("connection was successfully established")
-
-			return conn
+			ws, err := NewWebsocketConnection(context.Background(), conn, func(staleErr error) {
+				rc.errCh <- staleErr
+			})
+			if err == nil {
+				return ws
+			}
 		}
 
 		rc.log.WithError(err).WithField("url", rc.url).Errorf("failed to connect, trying again in %d seconds...", uint32(delay.Seconds()))
