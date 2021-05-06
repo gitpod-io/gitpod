@@ -218,9 +218,10 @@ var errNotConnected = errors.New("not connected to Gitpod server")
 
 // ConnectToServerOpts configures the server connection
 type ConnectToServerOpts struct {
-	Context context.Context
-	Token   string
-	Log     *logrus.Entry
+	Context             context.Context
+	Token               string
+	Log                 *logrus.Entry
+	ReconnectionHandler func()
 }
 
 // ConnectToServer establishes a new websocket connection to the server
@@ -248,6 +249,7 @@ func ConnectToServer(endpoint string, opts ConnectToServerOpts) (*APIoverJSONRPC
 		reqHeader.Set("Authorization", "Bearer "+opts.Token)
 	}
 	ws := NewReconnectingWebsocket(endpoint, reqHeader, opts.Log)
+	ws.ReconnectionHandler = opts.ReconnectionHandler
 	go ws.Dial()
 
 	var res APIoverJSONRPC

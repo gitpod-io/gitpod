@@ -9,13 +9,19 @@ import (
 
 	"context"
 	"errors"
+	"fmt"
 	"log"
+	"net/http"
+	"net/url"
 	"os"
+	"regexp"
+	"strconv"
 	"strings"
 
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	"github.com/gitpod-io/local-app/pkg/auth"
 	"github.com/gitpod-io/local-app/pkg/bastion"
+	"github.com/gorilla/handlers"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli/v2"
 	"github.com/zalando/go-keyring"
@@ -47,6 +53,10 @@ func main() {
 				Name:  "mock-keyring",
 				Usage: "Don't use system native keyring, but store Gitpod token in memory",
 			},
+			&cli.BoolFlag{
+				Name:  "allow-cors-from-port",
+				Usage: "Allow CORS requests from workspace port location",
+			},
 		},
 		Commands: []*cli.Command{
 			{
@@ -55,7 +65,7 @@ func main() {
 					if c.Bool("mock-keyring") {
 						keyring.MockInit()
 					}
-					return run(c.String("gitpod-host"), c.String("ssh_config"))
+					return run(c.String("gitpod-host"), c.String("ssh_config"), c.Bool("allow-cors-from-port"))
 				},
 				Flags: []cli.Flag{
 					&cli.PathFlag{
@@ -79,11 +89,25 @@ func DefaultCommand(name string) cli.ActionFunc {
 	}
 }
 
-func run(host, sshConfig string) error {
-	tkn, err := auth.GetToken(host)
+func run(origin, sshConfig string, allowCORSFromPort bool) error {
+	tkn, err := auth.GetToken(origin)
 	if errors.Is(err, keyring.ErrNotFound) {
-		tkn, err = auth.Login(context.Background(), auth.LoginOpts{GitpodURL: host})
+		tkn, err = auth.Login(context.Background(), auth.LoginOpts{GitpodURL: origin})
 	}
+	if err != nil {
+		return err
+	}
+
+	originURL, err := url.Parse(origin)
+	if err != nil {
+		return err
+	}
+	wsHostRegex := "(\\.[^.]+)\\." + strings.ReplaceAll(originURL.Host, ".", "\\.")
+	wsHostRegex = "([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-z]{2,16}-[0-9a-z]{2,16}-[0-9a-z]{8})" + wsHostRegex
+	if allowCORSFromPort {
+		wsHostRegex = "([0-9]+)-" + wsHostRegex
+	}
+	hostRegex, err := regexp.Compile("^" + wsHostRegex)
 	if err != nil {
 		return err
 	}
@@ -95,7 +119,9 @@ func run(host, sshConfig string) error {
 		cb = append(cb, &bastion.SSHConfigWritingCallback{Path: sshConfig})
 	}
 
-	wshost := host
+	var b *bastion.Bastion
+
+	wshost := origin
 	wshost = strings.ReplaceAll(wshost, "https://", "wss://")
 	wshost = strings.ReplaceAll(wshost, "http://", "ws://")
 	wshost += "/api/v1"
@@ -103,11 +129,46 @@ func run(host, sshConfig string) error {
 		Context: context.Background(),
 		Token:   tkn,
 		Log:     logrus.NewEntry(logrus.New()),
+		ReconnectionHandler: func() {
+			if b != nil {
+				b.FullUpdate()
+			}
+		},
 	})
 	if err != nil {
 		return err
 	}
-	b := bastion.New(client, cb)
+
+	b = bastion.New(client, cb)
+	go http.ListenAndServe("localhost:5000", handlers.CORS(
+		handlers.AllowedOriginValidator(func(origin string) bool {
+			url, err := url.Parse(origin)
+			if err != nil {
+				return false
+			}
+			// Is the origin a subdomain of the installations hostname?
+			matches := hostRegex.Match([]byte(url.Host))
+			return matches
+		}),
+	)(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		segs := strings.Split(r.URL.Path, "/")
+		if len(segs) < 3 {
+			http.Error(rw, "invalid URL Path", http.StatusBadRequest)
+			return
+		}
+		worksapceID := segs[1]
+		port, err := strconv.Atoi(segs[2])
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusBadRequest)
+			return
+		}
+		localAddr, err := b.GetTunnelLocalAddr(worksapceID, uint32(port))
+		if err != nil {
+			http.Error(rw, err.Error(), http.StatusNotFound)
+			return
+		}
+		fmt.Fprintf(rw, localAddr)
+	})))
 	return b.Run()
 }
 
