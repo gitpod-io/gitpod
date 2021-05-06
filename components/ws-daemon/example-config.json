@@ -28,6 +28,6 @@
       "address": ":8080"
     },
     "prometheus": {
-      "address": ":9500"
+      "address": "127.0.0.1:9500"
     }
 }

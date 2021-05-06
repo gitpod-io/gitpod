@@ -72,7 +72,7 @@ service:
     crt: "/certs/tls.crt"
     key: "/certs/tls.key"
 prometheus:
-  address: ":9500"
+  address: "127.0.0.1:9500"
 pprof:
   address: ":6060"
 {{ end }}

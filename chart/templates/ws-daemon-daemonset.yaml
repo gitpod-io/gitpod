@@ -201,5 +201,6 @@ spec:
         securityContext:
           privileged: true
           procMount: Unmasked
+{{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
 {{ toYaml .Values.defaults | indent 6 }}
 {{ end }}
