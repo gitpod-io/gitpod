@@ -3,16 +3,17 @@
  * Licensed under the GNU Affero General Public License (AGPL).
  * See License-AGPL.txt in the project root for license information.
  */
-import * as crypto from 'crypto';
-import encode from 'base64url';
-import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { User } from '@gitpod/gitpod-protocol';
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import * as assert from 'assert';
+import encode from 'base64url';
+import * as crypto from 'crypto';
 
 const check = /[^\w.\-~]/;
 
 /**
  * These functions are based on the PKCE helper code from https://github.com/panva/node-oidc-provider
- */ 
+ */
 
 // Check that the PKCE value meets the specifications
 export function checkFormat(input: string, name: string) {
@@ -30,27 +31,30 @@ export function checkFormat(input: string, name: string) {
 };
 
 // Check that the supplied challenge matches the verifier value according to the specified method
-export function verifyPKCE(verifier: string, challenge: string, method: string): boolean {  
-    if (verifier || challenge) {
-      
-      try {
-        let expected = verifier;
-        assert(expected);
-        checkFormat(expected, 'code_verifier');
-    
-        if (method === 'S256') {
-          expected = encode(crypto.createHash('sha256').update(expected).digest());
-        }
-  
-        assert.equal(challenge, expected);
-        return true;
-
-      } catch (err) {
-        log.error(`Invalid grant: PKCE verification failed`)
-      }
-    }
+export function verifyPKCE(verifier: string, challenge: string, method: string): boolean {
+  if (!['PLAIN', 'S256'].includes(method)) {
+    log.error(`invalid method ${method}`);
     return false;
-  };
+  }
+
+  if (verifier || challenge) {
+    try {
+      let expected = verifier;
+      checkFormat(expected, 'code_verifier');
+
+      if (method === 'S256') {
+        expected = encode(crypto.createHash('sha256').update(expected).digest());
+      }
+
+      assert.strictEqual(challenge, expected);
+      return true;
+
+    } catch (err) {
+      log.error(`Invalid grant: PKCE verification failed ${err}`)
+    }
+  }
+  return false;
+};
 
 // Preserve the code challenge values per user
 // NOTE: this will need to move to the db or some other external store
@@ -58,8 +62,8 @@ export function verifyPKCE(verifier: string, challenge: string, method: string):
 const challenges = new Map();
 
 interface State {
-    challenge: string;  // code_challange from PKCE
-    code_hash: string; // the authorization code hash
+  challenge: string;  // code_challange from PKCE
+  code_hash: string; // the authorization code hash
 }
 
 // Get the authentication state, if any, for the specified user
