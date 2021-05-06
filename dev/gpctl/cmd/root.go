@@ -20,10 +20,9 @@ import (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:                    "gpctl",
-	Short:                  "Gpctl controls a Gitpod installation",
-	Args:                   cobra.MinimumNArgs(1),
-	BashCompletionFunction: bashCompletionFunc,
+	Use:   "gpctl",
+	Short: "Gpctl controls a Gitpod installation",
+	Args:  cobra.MinimumNArgs(1),
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
