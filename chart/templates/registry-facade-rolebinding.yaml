@@ -23,7 +23,7 @@ roleRef:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: registry-facade-kube-rbac-proxy
+  name: {{ .Release.Namespace }}-registry-facade-kube-rbac-proxy
   labels:
     app: {{ template "gitpod.fullname" . }}
     component: registry-facade
