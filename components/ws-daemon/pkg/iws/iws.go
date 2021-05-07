@@ -221,6 +221,13 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		log.WithError(err).WithFields(wbs.Session.OWI()).Error("PrepareForUserNS: cannot mknod fuse")
 		return nil, status.Errorf(codes.Internal, "cannot prepare FUSE")
 	}
+	err = nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
+		c.Args = append(c.Args, "mknod-devnettun")
+	})
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("PrepareForUserNS: cannot create /dev/net/tun")
+		return nil, status.Errorf(codes.Internal, "cannot create /dev/net/tun")
+	}
 
 	_ = os.MkdirAll(filepath.Join(wbs.Session.ServiceLocDaemon, "mark"), 0755)
 	mountpoint := filepath.Join(wbs.Session.ServiceLocNode, "mark")
