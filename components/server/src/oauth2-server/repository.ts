@@ -6,11 +6,13 @@
 
 import { DateInterval, ExtraAccessTokenFields, GrantIdentifier, OAuthAuthCode, OAuthAuthCodeRepository, OAuthClient, OAuthClientRepository, OAuthScope, OAuthScopeRepository, OAuthToken, OAuthTokenRepository, OAuthUser, OAuthUserRepository } from "@jmondi/oauth2-server";
 import { inMemoryDatabase } from "./db";
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
 const oneHourInFuture = new DateInterval("1h").getEndDate();
 
 export const inMemoryClientRepository: OAuthClientRepository = {
     async getByIdentifier(clientId: string): Promise<OAuthClient> {
+        log.info(`getByIdentifier: ${JSON.stringify(inMemoryDatabase.clients)}`)
         return inMemoryDatabase.clients[clientId];
     },
 
@@ -112,6 +114,7 @@ export const inMemoryUserRepository: OAuthUserRepository = {
         grantType?: GrantIdentifier,
         client?: OAuthClient,
     ): Promise<OAuthUser | undefined> {
+        log.info(`getUserByCredentials: ${JSON.stringify(inMemoryDatabase.users)} && ${identifier}`)
         const user = inMemoryDatabase.users[identifier];
         if (user?.password !== password) return;
         return user;

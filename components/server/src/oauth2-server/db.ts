@@ -20,12 +20,27 @@ export interface InMemory {
   flush(): void;
 }
 
+const getWorkspaceScope: OAuthScope = { name: "function:getWorkspace" };
+const localClient: OAuthClient = {
+  id: 'gplctl-1.0',
+  name: 'Gitpod local control client',
+  redirectUris: [],
+  allowedGrants: ['client_credentials'],
+  scopes: [getWorkspaceScope]
+}
+const rl: OAuthUser = {
+  id: 'rl-gitpod',
+  email: 'someone@example.com',
+}
+
 export const inMemoryDatabase: InMemory = {
-  clients: {},
+  clients: {
+    [localClient.id]: localClient,
+  },
   authCodes: {},
   tokens: {},
-  scopes: {},
-  users: {},
+  scopes: { [getWorkspaceScope.name]: getWorkspaceScope },
+  users: { [rl.id]: rl },
   flush() {
     this.clients = {};
     this.authCodes = {};
