@@ -144,7 +144,7 @@ export class UserService {
 
             newUser.blocked = !canPass;
         }
-        if (!newUser.blocked && (isFirstUser || this.env.makeNewUsersAdmin)) {
+        if (!newUser.blocked && this.env.makeNewUsersAdmin) {
             newUser.rolesOrPermissions = ['admin'];
         }
     }
