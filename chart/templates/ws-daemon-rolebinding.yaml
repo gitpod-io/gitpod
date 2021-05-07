@@ -23,7 +23,7 @@ roleRef:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: ws-daemon-rb-kube-rbac-proxy
+  name: {{ .Release.Namespace }}-ws-daemon-rb-kube-rbac-proxy
   labels:
     app: {{ template "gitpod.fullname" . }}
     component: ws-daemon

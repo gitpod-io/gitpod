@@ -23,7 +23,7 @@ roleRef:
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
-  name: image-builder-kube-rbac-proxy
+  name: {{ .Release.Namespace }}-image-builder-kube-rbac-proxy
   labels:
     app: {{ template "gitpod.fullname" . }}
     component: image-builder
