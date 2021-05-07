@@ -313,7 +313,7 @@ export class UserController {
                 }
             });
 
-            router.post("/token", async (req: express.Request, res: express.Response) => {
+            router.post("/local-app/token", async (req: express.Request, res: express.Response) => {
                 const response = new OAuthResponse(res);
                 try {
                     const oauthResponse = await authorizationServer.respondToAccessTokenRequest(req, response);
@@ -325,6 +325,8 @@ export class UserController {
             });
 
             function handleError(e: any, res: express.Response) {
+                log.error(`handleError: ${JSON.stringify(e)}`)
+                
                 // @todo clean up error handling
                 if (e instanceof OAuthException) {
                     res.status(e.status);

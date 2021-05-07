@@ -49,7 +49,3 @@ export const inMemoryDatabase: InMemory = {
     this.users = {};
   },
 };
-
-// beforeEach(() => {
-//   inMemoryDatabase.flush();
-// });

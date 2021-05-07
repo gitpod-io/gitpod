@@ -30,6 +30,6 @@ const authorizationServer = new AuthorizationServer(
   jwtService,
 );
 
-authorizationServer.enableGrantType("authorization_code", new DateInterval("1m"));
+authorizationServer.enableGrantType("authorization_code", new DateInterval("1h"));
 
 export { authorizationServer as inMemoryAuthorizationServer };
