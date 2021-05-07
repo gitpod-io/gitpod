@@ -23,7 +23,7 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: ws-manager-kube-rbac-proxy
+  name: {{ .Release.Namespace }}-ws-manager-kube-rbac-proxy
   labels:
     app: {{ template "gitpod.fullname" . }}
     component: ws-manager
