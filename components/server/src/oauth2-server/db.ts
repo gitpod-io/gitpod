@@ -24,7 +24,7 @@ const getWorkspaceScope: OAuthScope = { name: "function:getWorkspace" };
 const localClient: OAuthClient = {
   id: 'gplctl-1.0',
   name: 'Gitpod local control client',
-  redirectUris: [],
+  redirectUris: ['http://localhost'],
   allowedGrants: ['client_credentials'],
   scopes: [getWorkspaceScope]
 }
