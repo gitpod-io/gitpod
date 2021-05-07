@@ -33,6 +33,8 @@ import * as uuidv4 from 'uuid/v4';
 import { DBUser } from "@gitpod/gitpod-db";
 import { ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from '../one-time-secret-server';
+import { inMemoryAuthorizationServer } from '../oauth2-server/oauth_authorization_server';
+import { OAuthException, OAuthRequest, OAuthResponse } from '@jmondi/oauth2-server';
 
 @injectable()
 export class UserController {
@@ -255,8 +257,8 @@ export class UserController {
                     scopes: [
                         "function:getWorkspaces",
                         "function:listenForWorkspaceInstanceUpdates",
-                        "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspace", subjectID: "*", operations: ["get"]}),
-                        "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspaceInstance", subjectID: "*", operations: ["get"]}),
+                        "resource:" + ScopedResourceGuard.marshalResourceScope({ kind: "workspace", subjectID: "*", operations: ["get"] }),
+                        "resource:" + ScopedResourceGuard.marshalResourceScope({ kind: "workspaceInstance", subjectID: "*", operations: ["get"] }),
                     ],
                     created: new Date().toISOString(),
                 };
@@ -268,6 +270,85 @@ export class UserController {
 
                 res.redirect(`http://${rt}/?ots=${encodeURI(ots.token)}`);
             });
+
+            const authorizationServer = inMemoryAuthorizationServer;
+
+            router.get("/local-app/authorize", async (req: express.Request, res: express.Response) => {
+                const request = new OAuthRequest(req);
+
+                try {
+                    // Validate the HTTP request and return an AuthorizationRequest object.
+                    const authRequest = await authorizationServer.validateAuthorizationRequest(request);
+
+                    if (!req.isAuthenticated() || !User.is(req.user)) {
+                        res.sendStatus(401);
+                        return;
+                    }
+    
+                    const user = req.user as User;
+                    if (user.blocked) {
+                        res.sendStatus(403);
+                        return;
+                    }
+
+                    // The auth request object can be serialized and saved into a user's session.
+                    // You will probably want to redirect the user at this point to a login endpoint.
+
+                    // Once the user has logged in set the user on the AuthorizationRequest
+                    console.log("user has logged in - setting the user on the AuthorizationRequest");
+                    authRequest.user = user;
+
+                    // At this point you should redirect the user to an authorization page.
+                    // This form will ask the user to approve the client and the scopes requested.
+
+                    // Once the user has approved or denied the client update the status
+                    // (true = approved, false = denied)
+                    authRequest.isAuthorizationApproved = true;
+
+                    // Return the HTTP redirect response
+                    const oauthResponse = await authorizationServer.completeAuthorizationRequest(authRequest);
+                    return handleResponse(req, res, oauthResponse);
+                } catch (e) {
+                    handleError(e, res);
+                }
+            });
+
+            router.post("/token", async (req: express.Request, res: express.Response) => {
+                const response = new OAuthResponse(res);
+                try {
+                    const oauthResponse = await authorizationServer.respondToAccessTokenRequest(req, response);
+                    return handleResponse(req, res, oauthResponse);
+                } catch (e) {
+                    handleError(e, res);
+                    return;
+                }
+            });
+
+            function handleError(e: any, res: express.Response) {
+                // @todo clean up error handling
+                if (e instanceof OAuthException) {
+                    res.status(e.status);
+                    res.send({
+                        status: e.status,
+                        message: e.message,
+                    });
+                    return;
+                }
+                throw e;
+            }
+
+            function handleResponse(req: express.Request, res: express.Response, response: OAuthResponse) {
+                if (response.status === 302) {
+                    if (!response.headers.location) {
+                        throw new Error("missing redirect location"); // @todo this
+                    }
+                    res.set(response.headers);
+                    res.redirect(response.headers.location);
+                } else {
+                    res.set(response.headers);
+                    res.status(response.status).send(response.body);
+                }
+            }
         }
         router.get("/auth/workspace", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             if (!req.isAuthenticated() || !User.is(req.user)) {
