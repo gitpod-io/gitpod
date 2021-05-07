@@ -25,7 +25,7 @@ const localClient: OAuthClient = {
   id: 'gplctl-1.0',
   name: 'Gitpod local control client',
   redirectUris: ['http://localhost'],
-  allowedGrants: ['client_credentials'],
+  allowedGrants: ['authorization_code'],
   scopes: [getWorkspaceScope]
 }
 const rl: OAuthUser = {
