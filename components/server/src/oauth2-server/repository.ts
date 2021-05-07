@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
 import { DateInterval, ExtraAccessTokenFields, GrantIdentifier, OAuthAuthCode, OAuthAuthCodeRepository, OAuthClient, OAuthClientRepository, OAuthScope, OAuthScopeRepository, OAuthToken, OAuthTokenRepository, OAuthUser, OAuthUserRepository } from "@jmondi/oauth2-server";
 import { inMemoryDatabase } from "./db";
 
