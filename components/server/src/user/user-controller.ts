@@ -38,7 +38,7 @@ import { OAuthException, OAuthRequest, OAuthResponse } from '@jmondi/oauth2-serv
 
 @injectable()
 export class UserController {
-    @inject(WorkspaceDB) protected readonly workspaceDB: WorkspaceDB;
+@inject(WorkspaceDB) protected readonly workspaceDB: WorkspaceDB;
     @inject(UserDB) protected readonly userDb: UserDB;
     @inject(Authenticator) protected readonly authenticator: Authenticator;
     @inject(Env) protected readonly env: Env;
@@ -229,6 +229,7 @@ export class UserController {
         });
         if (this.env.enableLocalApp) {
             router.get("/auth/local-app", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+                log.info('AUTH');
                 if (!req.isAuthenticated() || !User.is(req.user)) {
                     res.sendStatus(401);
                     return;
@@ -274,6 +275,7 @@ export class UserController {
             const authorizationServer = inMemoryAuthorizationServer;
 
             router.get("/local-app/authorize", async (req: express.Request, res: express.Response) => {
+                log.info('AUTHORIZE');
                 const request = new OAuthRequest(req);
 
                 try {
@@ -314,6 +316,7 @@ export class UserController {
             });
 
             router.post("/local-app/token", async (req: express.Request, res: express.Response) => {
+                log.info('TOKEN');
                 const response = new OAuthResponse(res);
                 try {
                     const oauthResponse = await authorizationServer.respondToAccessTokenRequest(req, response);

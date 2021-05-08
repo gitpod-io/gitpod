@@ -58,6 +58,6 @@ scripts:
       export GITPOD_LAYER_NAME=`git log -n 1 --pretty=format:%H -- ../../devops/images/workspace-image-builder/`
 
       telepresence --swap-deployment server \
-                   --method vpn-tcp \
-                   --run yarn start-ee-inspect | \
+                   --method inject-tcp \
+                   --run yarn start-inspect | \
         leeway run components:dejson-log-output

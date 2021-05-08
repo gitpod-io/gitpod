@@ -4,7 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { AuthorizationServer, DateInterval, JwtService } from "@jmondi/oauth2-server";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { AuthorizationRequest, AuthorizationServer, DateInterval, GrantIdentifier, JwtService, RequestInterface, ResponseInterface } from "@jmondi/oauth2-server";
 import {
   inMemoryAccessTokenRepository,
   inMemoryAuthCodeRepository,
@@ -21,7 +22,26 @@ const userRepository = inMemoryUserRepository;
 
 const jwtService = new JwtService("secret secret secret");
 
-const authorizationServer = new AuthorizationServer(
+class MyAuthorizationServer extends AuthorizationServer {
+  enableGrantType(grantType: GrantIdentifier, accessTokenTTL?: DateInterval): void {
+    log.info(`enableGrantType: ${grantType}:${accessTokenTTL}`)
+    super.enableGrantType(grantType, accessTokenTTL);
+  }
+  respondToAccessTokenRequest(req: RequestInterface, res: ResponseInterface): Promise<ResponseInterface> {
+    log.info(`respondToAccessTokenRequest: ${JSON.stringify(req)}`)
+    return super.respondToAccessTokenRequest(req, res)
+  }
+  validateAuthorizationRequest(req: RequestInterface): Promise<AuthorizationRequest> {
+    log.info(`validateAuthorizationRequest: ${JSON.stringify(req)}`)
+    return super.validateAuthorizationRequest(req)
+  }
+  completeAuthorizationRequest(authorizationRequest: AuthorizationRequest): Promise<ResponseInterface> {
+    log.info(`completeAuthorizationRequest: ${JSON.stringify(authorizationRequest)}`)
+    return super.completeAuthorizationRequest(authorizationRequest)
+  }
+}
+
+const authorizationServer = new MyAuthorizationServer(
   authCodeRepository,
   clientRepository,
   tokenRepository,
