@@ -28,11 +28,11 @@ class MyAuthorizationServer extends AuthorizationServer {
     super.enableGrantType(grantType, accessTokenTTL);
   }
   respondToAccessTokenRequest(req: RequestInterface, res: ResponseInterface): Promise<ResponseInterface> {
-    log.info(`respondToAccessTokenRequest: ${JSON.stringify(req)}`)
+    log.info(`respondToAccessTokenRequest: ${JSON.stringify(req.query)}`)
     return super.respondToAccessTokenRequest(req, res)
   }
   validateAuthorizationRequest(req: RequestInterface): Promise<AuthorizationRequest> {
-    log.info(`validateAuthorizationRequest: ${JSON.stringify(req)}`)
+    log.info(`validateAuthorizationRequest: ${JSON.stringify(req.query)}`)
     return super.validateAuthorizationRequest(req)
   }
   completeAuthorizationRequest(authorizationRequest: AuthorizationRequest): Promise<ResponseInterface> {
