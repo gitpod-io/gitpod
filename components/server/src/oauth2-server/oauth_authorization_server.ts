@@ -29,7 +29,9 @@ class MyAuthorizationServer extends AuthorizationServer {
   }
   respondToAccessTokenRequest(req: RequestInterface, res: ResponseInterface): Promise<ResponseInterface> {
     log.info(`respondToAccessTokenRequest: ${JSON.stringify(req.query)}`)
-    return super.respondToAccessTokenRequest(req, res)
+    const grantType = this.getGrant('authorization_code')
+    return grantType.respondToAccessTokenRequest(req, res, grantType.accessTokenTTL);
+    // return super.respondToAccessTokenRequest(req, res)
   }
   validateAuthorizationRequest(req: RequestInterface): Promise<AuthorizationRequest> {
     log.info(`validateAuthorizationRequest: ${JSON.stringify(req.query)}`)
