@@ -29,10 +29,10 @@ class MyAuthorizationServer extends AuthorizationServer {
   }
   respondToAccessTokenRequest(req: RequestInterface, res: ResponseInterface): Promise<ResponseInterface> {
     log.info(`respondToAccessTokenRequest: ${JSON.stringify(req.body)}`)
-    const grantType = this.getGrant('authorization_code')
-    log.info(`respond grant type: ${JSON.stringify(grantType)}`)
-    return grantType.respondToAccessTokenRequest(req, res, grantType.accessTokenTTL);
-    // return super.respondToAccessTokenRequest(req, res)
+    // const grantType = this.getGrant('authorization_code')
+    // log.info(`respond grant type: ${JSON.stringify(grantType)}`)
+    // return grantType.respondToAccessTokenRequest(req, res, grantType.accessTokenTTL);
+    return super.respondToAccessTokenRequest(req, res)
   }
   validateAuthorizationRequest(req: RequestInterface): Promise<AuthorizationRequest> {
     log.info(`validateAuthorizationRequest: ${JSON.stringify(req.query)}`)
@@ -53,6 +53,6 @@ const authorizationServer = new MyAuthorizationServer(
   jwtService,
 );
 
-authorizationServer.enableGrantType("authorization_code");
+authorizationServer.enableGrantType("authorization_code", new DateInterval('1d'));
 
 export { authorizationServer as inMemoryAuthorizationServer };
