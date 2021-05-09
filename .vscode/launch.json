@@ -4,7 +4,7 @@
             "name": "Attach to Node",
             "type": "node",
             "request": "attach",
-            "smartStep": true,
+            "smartStep": false,
             "port": 9229,
             "sourceMaps": true,
             "sourceMapPathOverrides": {
