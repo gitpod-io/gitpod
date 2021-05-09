@@ -24,12 +24,13 @@ const jwtService = new JwtService("secret secret secret");
 
 class MyAuthorizationServer extends AuthorizationServer {
   enableGrantType(grantType: GrantIdentifier, accessTokenTTL?: DateInterval): void {
-    log.info(`enableGrantType: ${grantType}:${accessTokenTTL}`)
+    log.info(`enableGrantType: ${grantType}:${JSON.stringify(accessTokenTTL)}`)
     super.enableGrantType(grantType, accessTokenTTL);
   }
   respondToAccessTokenRequest(req: RequestInterface, res: ResponseInterface): Promise<ResponseInterface> {
-    log.info(`respondToAccessTokenRequest: ${JSON.stringify(req.query)}`)
+    log.info(`respondToAccessTokenRequest: ${JSON.stringify(req.body)}`)
     const grantType = this.getGrant('authorization_code')
+    log.info(`respond grant type: ${JSON.stringify(grantType)}`)
     return grantType.respondToAccessTokenRequest(req, res, grantType.accessTokenTTL);
     // return super.respondToAccessTokenRequest(req, res)
   }
@@ -52,6 +53,6 @@ const authorizationServer = new MyAuthorizationServer(
   jwtService,
 );
 
-authorizationServer.enableGrantType("authorization_code", new DateInterval("1h"));
+authorizationServer.enableGrantType("authorization_code");
 
 export { authorizationServer as inMemoryAuthorizationServer };

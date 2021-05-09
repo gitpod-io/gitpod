@@ -51,6 +51,7 @@ export const inMemoryAccessTokenRepository: OAuthTokenRepository = {
         inMemoryDatabase.tokens[accessToken.accessToken] = token;
     },
     async issueToken(client: OAuthClient, scopes: OAuthScope[], user: OAuthUser): Promise<OAuthToken> {
+        log.info(`issueToken ${JSON.stringify(oneHourInFuture)}`)
         return <OAuthToken>{
             accessToken: "new token",
             accessTokenExpiresAt: oneHourInFuture,
