@@ -282,23 +282,23 @@ export class UserController {
                     // Validate the HTTP request and return an AuthorizationRequest object.
                     const authRequest = await authorizationServer.validateAuthorizationRequest(request);
 
-                    if (!req.isAuthenticated() || !User.is(req.user)) {
-                        res.sendStatus(401);
-                        return;
-                    }
+                    // if (!req.isAuthenticated() || !User.is(req.user)) {
+                    //     res.sendStatus(401);
+                    //     return;
+                    // }
     
-                    const user = req.user as User;
-                    if (user.blocked) {
-                        res.sendStatus(403);
-                        return;
-                    }
+                    // const user = req.user as User;
+                    // if (user.blocked) {
+                    //     res.sendStatus(403);
+                    //     return;
+                    // }
 
                     // The auth request object can be serialized and saved into a user's session.
                     // You will probably want to redirect the user at this point to a login endpoint.
 
                     // Once the user has logged in set the user on the AuthorizationRequest
-                    console.log("user has logged in - setting the user on the AuthorizationRequest");
-                    authRequest.user = user;
+                    // console.log("user has logged in - setting the user on the AuthorizationRequest");
+                    // authRequest.user = user;
 
                     // At this point you should redirect the user to an authorization page.
                     // This form will ask the user to approve the client and the scopes requested.
