@@ -81,14 +81,14 @@ export class LoginCompletionHandler {
         if (authHost) {
             increaseLoginCounter("succeeded", authHost);
             this.analytics.identify({ anonymousId: request.sessionID, userId: user.id });
-            this.analytics.track({ 
-                userId: user.id, 
+            this.analytics.track({
+                userId: user.id,
                 event: "login",
                 properties: {
                     "loginContext": authHost,
                 }
             });
-        } 
+        }
         response.redirect(returnTo);
     }
 

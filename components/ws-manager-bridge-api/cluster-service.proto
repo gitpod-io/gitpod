@@ -90,14 +90,14 @@ message ModifyAdmissionConstraint {
 
 message UpdateResponse {}
 
-message DeregisterRequest { 
-  string name = 1; 
+message DeregisterRequest {
+  string name = 1;
 }
 
 message DeregisterResponse {}
 
 message ListRequest {}
 
-message ListResponse { 
-  repeated ClusterStatus status = 1; 
+message ListResponse {
+  repeated ClusterStatus status = 1;
 }

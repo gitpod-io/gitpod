@@ -50,7 +50,7 @@ export interface IAnalyticsWriter {
 }
 
 class SegmentAnalyticsWriter implements IAnalyticsWriter {
-    
+
     protected readonly analytics: Analytics;
 
     constructor(writeKey: string) {
