@@ -23,10 +23,11 @@ export interface InMemory {
 const getWorkspaceScope: OAuthScope = { name: "function:getWorkspace" };
 const localClient: OAuthClient = {
   id: 'gplctl-1.0',
+  secret: "gplctl-secret",
   name: 'Gitpod local control client',
   redirectUris: ['http://localhost:64110'],
   allowedGrants: ['authorization_code'],
-  scopes: [getWorkspaceScope]
+  scopes: [getWorkspaceScope],
 }
 const rl: OAuthUser = {
   id: 'rl-gitpod',

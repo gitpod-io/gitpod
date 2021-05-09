@@ -156,7 +156,7 @@ func main() {
 
 	conf := &oauth2.Config{
 		ClientID: "gplctl-1.0",
-		// ClientSecret: "YOUR_CLIENT_SECRET",
+		ClientSecret: "gplctl-secret", // Required (even though it is marked as optional?!)
 		Scopes: []string{"function:getWorkspace"},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://rl-gplctl-oauth2-server.staging.gitpod-dev.com/api/local-app/authorize",
