@@ -317,7 +317,7 @@ export class UserController {
             });
 
             router.post("/local-app/token", async (req: express.Request, res: express.Response) => {
-                log.info('TOKEN');
+                log.info(`TOKEN: ${req.body}`);
                 const response = new OAuthResponse(res);
                 try {
                     const oauthResponse = await authorizationServer.respondToAccessTokenRequest(req, response);
