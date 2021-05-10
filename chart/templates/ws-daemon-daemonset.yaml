@@ -102,19 +102,11 @@ spec:
         hostPath:
           path: /var/lib/kubelet/seccomp
       {{- end }}
-      {{- if $comp.kubeletConfigFix.enabled }}
-      - name: dbus
-        hostPath:
-          path: /var/run/dbus
-      - name: kubelet-config
-        hostPath:
-          path: /etc/default/kubelet
-      {{- end }}
 {{- if $comp.volumes }}
 {{ toYaml $comp.volumes | indent 6 }}
 {{- end }}
       enableServiceLinks: false
-{{- if (or (or $comp.userNamespaces.shiftfsModuleLoader.enabled $comp.userNamespaces.seccompProfileInstaller.enabled) $comp.kubeletConfigFix.enabled) }}
+{{- if (or $comp.userNamespaces.shiftfsModuleLoader.enabled $comp.userNamespaces.seccompProfileInstaller.enabled) }}
       initContainers:
 {{- end }}
 {{- if $comp.userNamespaces.shiftfsModuleLoader.enabled }}
@@ -136,17 +128,6 @@ spec:
         securityContext:
           privileged: true
         command: ["/bin/sh", "-c", "cp -f /installer/workspace_default.json /mnt/dst/workspace_default_{{ $gp.version }}.json"]
-{{- end }}
-{{- if $comp.kubeletConfigFix.enabled }}
-      - name: kubelet-config-fix
-        volumeMounts:
-        - mountPath: /var/run/dbus
-          name: dbus
-        - mountPath: /etc/default/kubelet
-          name: kubelet-config
-        image: {{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" $comp.kubeletConfigFix) }}
-        securityContext:
-          privileged: true
 {{- end }}
       - name: sysctl
         image: {{ template "gitpod.comp.imageFull" $this }}

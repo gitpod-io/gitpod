@@ -410,11 +410,6 @@ components:
         imageName: "seccomp-profile-installer"
     registryProxyPort: 8081
 
-    # Fix kubelet config, see components/ws-daemon/kubelet-config-fix/README.md
-    kubeletConfigFix:
-      enabled: false
-      imageName: kubelet-config-fix
-
   wsScheduler:
     name: "ws-scheduler"
     disabled: false
