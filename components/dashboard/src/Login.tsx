@@ -57,7 +57,7 @@ export function Login() {
             await openAuthorizeWindow({
                 login: true,
                 host,
-                onSuccess: () => updateUser(),
+                onSuccess: () => authorizeSuccessful(),
                 onError: (payload) => {
                     let errorMessage: string;
                     if (typeof payload === "string") {
@@ -73,6 +73,27 @@ export function Login() {
             });
         } catch (error) {
             console.log(error)
+        }
+    }
+
+    const authorizeSuccessful = async () => {
+        await updateUser();
+        // Check for a valid returnTo
+        const safeReturnTo = getSafeURLRedirect();
+        if (safeReturnTo) {
+            // ... and if it is, redirect to it 
+            window.location.replace(safeReturnTo);
+        }
+    }
+
+    const getSafeURLRedirect = () => {
+        const returnToURL: string | null = new URLSearchParams(window.location.search).get("returnTo");
+        console.log(`getSafe: ${returnToURL} | ${window.location}`);
+        if (returnToURL) {
+            // Only allow local-app on the same host
+            if (returnToURL.toLowerCase().startsWith(`${window.location.protocol}//${window.location.host}/api/local-app/`.toLowerCase())) {
+                return returnToURL;
+            }
         }
     }
 
