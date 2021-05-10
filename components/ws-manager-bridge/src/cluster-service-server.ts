@@ -4,6 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
 import { Queue } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { WorkspaceCluster, WorkspaceClusterDB, WorkspaceClusterState, TLSConfig, AdmissionConstraint, AdmissionConstraintHasRole, WorkspaceClusterWoTLS } from '@gitpod/gitpod-protocol/lib/workspace-cluster';
@@ -46,7 +47,10 @@ export class ClusterService implements IClusterServiceServer {
     protected readonly config: Configuration;
 
     @inject(WorkspaceClusterDB)
-    protected readonly db: WorkspaceClusterDB;
+    protected readonly clusterDB: WorkspaceClusterDB;
+
+    @inject(WorkspaceDB)
+    protected readonly workspaceDB: WorkspaceDB;
 
     @inject(BridgeController)
     protected readonly bridgeController: BridgeController;
@@ -67,13 +71,13 @@ export class ClusterService implements IClusterServiceServer {
                 const req = call.request.toObject();
                 await Promise.all([
                     async () => {
-                        const oldCluster = await this.db.findByName(req.name);
+                        const oldCluster = await this.clusterDB.findByName(req.name);
                         if (!oldCluster) {
                             throw new GRPCError(grpc.status.ALREADY_EXISTS, `a WorkspaceCluster with name ${req.name} already exists in the DB`);
                         }
                     },
                     async () => {
-                        const oldCluster = await this.db.findFiltered({ url: req.url });
+                        const oldCluster = await this.clusterDB.findFiltered({ url: req.url });
                         if (!oldCluster) {
                             throw new GRPCError(grpc.status.ALREADY_EXISTS, `a WorkspaceCluster with url ${req.url} already exists in the DB`);
                         }
@@ -131,8 +135,8 @@ export class ClusterService implements IClusterServiceServer {
                     });
                 })
 
-                await this.db.save(newCluster);
-
+                await this.clusterDB.save(newCluster);
+                log.warn({}, "cluster registered", {cluster: req.name});
                 this.triggerReconcile("register", req.name);
 
                 callback(null, new RegisterResponse());
@@ -146,7 +150,7 @@ export class ClusterService implements IClusterServiceServer {
         this.queue.enqueue(async () => {
             try {
                 const req = call.request.toObject();
-                const cluster = await this.db.findByName(req.name);
+                const cluster = await this.clusterDB.findByName(req.name);
                 if (!cluster) {
                     throw new GRPCError(grpc.status.ALREADY_EXISTS, `a WorkspaceCluster with name ${req.name} already exists in the DB!`);
                 }
@@ -179,8 +183,8 @@ export class ClusterService implements IClusterServiceServer {
                         }
                     }
                 }
-                await this.db.save(cluster);
-
+                await this.clusterDB.save(cluster);
+                log.warn({}, "cluster updated", {cluster: req.name});
                 this.triggerReconcile("update", req.name);
 
                 callback(null, new UpdateResponse());
@@ -194,8 +198,15 @@ export class ClusterService implements IClusterServiceServer {
         this.queue.enqueue(async () => {
             try {
                 const req = call.request.toObject();
-                await this.db.deleteByName(req.name);
+                
+                const instances = await this.workspaceDB.findRegularRunningInstances();
+                const relevantInstances = instances.filter(i => i.region === req.name);
+                if (relevantInstances.length > 0) {
+                    throw new GRPCError(grpc.status.FAILED_PRECONDITION, `cluster is not empty (${relevantInstances.length} instances remaining)`);
+                }
 
+                await this.clusterDB.deleteByName(req.name);
+                log.warn({}, "cluster deregistered", {cluster: req.name});
                 this.triggerReconcile("deregister", req.name);
 
                 callback(null, new DeregisterResponse());
@@ -211,7 +222,7 @@ export class ClusterService implements IClusterServiceServer {
                 const response = new ListResponse();
 
                 const dbClusterIdx = new Map<string, boolean>();
-                const allDBClusters = await this.db.findFiltered({});
+                const allDBClusters = await this.clusterDB.findFiltered({});
                 for (const cluster of allDBClusters) {
                     const clusterStatus = convertToGRPC(cluster);
                     response.addStatus(clusterStatus);
