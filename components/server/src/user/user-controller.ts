@@ -278,7 +278,8 @@ export class UserController {
                 log.info(`AUTHORIZE: ${JSON.stringify(req.query)}`);
 
                 if (!req.isAuthenticated() || !User.is(req.user)) {
-                    const redirectTo = `${this.env.hostUrl}/api/login?returnTo=${this.env.hostUrl}/api${req.originalUrl}`;
+                    const redirectTarget = encodeURIComponent(`${this.env.hostUrl}api${req.originalUrl}`);
+                    const redirectTo = `${this.env.hostUrl}api/login?redirect=${redirectTarget}`;
                     log.info(`AUTH Redirecting to ${redirectTo}`);
                     res.redirect(redirectTo)
                     return
