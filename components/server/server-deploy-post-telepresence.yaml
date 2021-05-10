@@ -1,0 +1,9 @@
+spec:
+  template:
+    spec:
+      containers:
+      - env:
+        name: server
+        securityContext:
+          privileged: false
+          runAsUser: 31001 
