@@ -278,7 +278,10 @@ export class UserController {
                 log.info(`AUTHORIZE: ${JSON.stringify(req.query)}`);
 
                 if (!req.isAuthenticated() || !User.is(req.user)) {
-                    res.redirect(`${this.env.hostUrl}/api/login?returnTo=${this.env.hostUrl}/api${req.originalUrl}`)
+                    const redirectTo = `${this.env.hostUrl}/api/login?returnTo=${this.env.hostUrl}/api${req.originalUrl}`;
+                    log.info(`AUTH Redirecting to ${redirectTo}`);
+                    res.redirect(redirectTo)
+                    return
                 }
 
                 const user = req.user as User;
@@ -674,6 +677,7 @@ export class UserController {
 
     protected getSafeReturnToParam(req: express.Request) {
         const returnToURL: string | undefined = req.query.redirect || req.query.returnTo;
+        log.info(`getSafe: ${returnToURL}`)
         if (returnToURL) {
             const hostUrl = this.env.hostUrl.url as URL;
             if (returnToURL.toLowerCase().startsWith(`${hostUrl.protocol}//${hostUrl.host}`.toLowerCase())) {
