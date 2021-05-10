@@ -5,5 +5,4 @@ spec:
       - env:
         name: server
         securityContext:
-          privileged: true
           runAsUser: 0

@@ -55,12 +55,10 @@ packages:
 scripts:
   - name: telepresence
     script: |
-      export GITPOD_LAYER_NAME=`git log -n 1 --pretty=format:%H -- ../../devops/images/workspace-image-builder/`
-
       kubectl patch deployment server --patch "$(cat server-deploy-telepresence.yaml)" && \
-      telepresence --swap-deployment server \
-                   --method vpn-tcp \
-                   --run yarn start-ee-inspect | \
+      env TELEPRESENCE_USE_DEPLOYMENT=1 telepresence --swap-deployment server \
+                   --method inject-tcp \
+                   --run yarn start-inspect | \
         leeway run components:dejson-log-output
 
       kubectl patch deployment server --patch "$(cat server-deploy-post-telepresence.yaml)"
