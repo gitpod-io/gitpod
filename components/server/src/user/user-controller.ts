@@ -38,7 +38,7 @@ import { OAuthException, OAuthRequest, OAuthResponse } from '@jmondi/oauth2-serv
 
 @injectable()
 export class UserController {
-@inject(WorkspaceDB) protected readonly workspaceDB: WorkspaceDB;
+    @inject(WorkspaceDB) protected readonly workspaceDB: WorkspaceDB;
     @inject(UserDB) protected readonly userDb: UserDB;
     @inject(Authenticator) protected readonly authenticator: Authenticator;
     @inject(Env) protected readonly env: Env;
@@ -275,34 +275,31 @@ export class UserController {
             const authorizationServer = inMemoryAuthorizationServer;
 
             router.get("/local-app/authorize", async (req: express.Request, res: express.Response) => {
-                log.info('AUTHORIZE');
+                log.info(`AUTHORIZE: ${JSON.stringify(req.query)}`);
+
+                if (!req.isAuthenticated() || !User.is(req.user)) {
+                    res.redirect(`${this.env.hostUrl}/api/login?returnTo=${req.query}`)
+                }
+
+                const user = req.user as User;
+                if (user.blocked) {
+                    res.sendStatus(403);
+                    return;
+                }
+
                 const request = new OAuthRequest(req);
 
                 try {
                     // Validate the HTTP request and return an AuthorizationRequest object.
                     const authRequest = await authorizationServer.validateAuthorizationRequest(request);
 
-                    // if (!req.isAuthenticated() || !User.is(req.user)) {
-                    //     res.sendStatus(401);
-                    //     return;
-                    // }
-    
-                    // const user = req.user as User;
-                    // if (user.blocked) {
-                    //     res.sendStatus(403);
-                    //     return;
-                    // }
-
-                    // The auth request object can be serialized and saved into a user's session.
-                    // You will probably want to redirect the user at this point to a login endpoint.
-
                     // Once the user has logged in set the user on the AuthorizationRequest
-                    // console.log("user has logged in - setting the user on the AuthorizationRequest");
-                    // authRequest.user = user;
-                    authRequest.user = { id: "1234" }
+                    console.log("user has logged in - setting the user on the AuthorizationRequest");
+                    authRequest.user = user
 
                     // At this point you should redirect the user to an authorization page.
                     // This form will ask the user to approve the client and the scopes requested.
+                    // TODO!
 
                     // Once the user has approved or denied the client update the status
                     // (true = approved, false = denied)
@@ -330,7 +327,7 @@ export class UserController {
 
             function handleError(e: any, res: express.Response) {
                 log.error(`handleError: ${JSON.stringify(e)}`)
-                
+
                 // @todo clean up error handling
                 if (e instanceof OAuthException) {
                     res.status(e.status);
