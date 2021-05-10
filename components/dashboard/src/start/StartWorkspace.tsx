@@ -149,7 +149,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
     // Successfully stopped and headless: the prebuild is done, let's try to use it!
     if (!error && workspaceInstance.status.phase === 'stopped' && this.state.workspace?.type !== 'regular') {
-      const contextUrl = this.state.workspace?.contextURL.replace('prebuild/', '')!;
+      const contextUrl = this.state.workspace?.contextURL.replace('incremental-prebuild/', '').replace('prebuild/', '')!;
       this.redirectTo(gitpodHostUrl.withContext(contextUrl).toString());
     }
 
