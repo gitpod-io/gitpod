@@ -79,6 +79,7 @@ export class UserController {
                 const returnTo = this.getSafeReturnToParam(req);
                 const search = returnTo ? `returnTo=${returnTo}` : '';
                 const loginPageUrl = this.env.hostUrl.asLogin().with({ search }).toString();
+                log.info(`Redirecting to login ${loginPageUrl}`)
                 res.redirect(loginPageUrl);
                 return;
             }
@@ -279,7 +280,7 @@ export class UserController {
 
                 if (!req.isAuthenticated() || !User.is(req.user)) {
                     const redirectTarget = encodeURIComponent(`${this.env.hostUrl}api${req.originalUrl}`);
-                    const redirectTo = `${this.env.hostUrl}api/login?redirect=${redirectTarget}`;
+                    const redirectTo = `${this.env.hostUrl}api/login?returnTo=${redirectTarget}`;
                     log.info(`AUTH Redirecting to ${redirectTo}`);
                     res.redirect(redirectTo)
                     return
