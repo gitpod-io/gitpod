@@ -278,7 +278,7 @@ export class UserController {
                 log.info(`AUTHORIZE: ${JSON.stringify(req.query)}`);
 
                 if (!req.isAuthenticated() || !User.is(req.user)) {
-                    res.redirect(`${this.env.hostUrl}/api/login?returnTo=${this.env.hostUrl}/${req.originalUrl}`)
+                    res.redirect(`${this.env.hostUrl}/api/login?returnTo=${this.env.hostUrl}/api${req.originalUrl}`)
                 }
 
                 const user = req.user as User;
