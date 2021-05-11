@@ -15,7 +15,7 @@
             let message = search.get("message");
             const returnTo = search.get("returnTo");
             if (returnTo) {
-                message = `${message}&returnTo=${returnTo}`;
+                message = `${message}&returnTo=${encodeURIComponent(returnTo)}`;
             }
             window.opener.postMessage(message, `https://${window.location.hostname}`);
         } else {
