@@ -280,7 +280,7 @@ export class UserController {
 
                 if (!req.isAuthenticated() || !User.is(req.user)) {
                     const redirectTarget = encodeURIComponent(`${this.env.hostUrl}api${req.originalUrl}`);
-                    const redirectTo = `${this.env.hostUrl}api/login?returnTo=${redirectTarget}`;
+                    const redirectTo = `${this.env.hostUrl}login?returnTo=${redirectTarget}`;
                     log.info(`AUTH Redirecting to ${redirectTo}`);
                     res.redirect(redirectTo)
                     return
