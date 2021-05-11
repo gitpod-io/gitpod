@@ -57,7 +57,7 @@ export function Login() {
             await openAuthorizeWindow({
                 login: true,
                 host,
-                onSuccess: () => authorizeSuccessful(),
+                onSuccess: (payload?: string) => authorizeSuccessful(payload),
                 onError: (payload) => {
                     let errorMessage: string;
                     if (typeof payload === "string") {

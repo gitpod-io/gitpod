@@ -12,7 +12,7 @@
     <script>
         if (window.opener) {
             const search = new URLSearchParams(window.location.search);
-            const message = search.get("message");
+            let message = search.get("message");
             const returnTo = search.get("returnTo");
             if (returnTo) {
                 message = `${message}&returnTo=${returnTo}`;
