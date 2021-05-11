@@ -111,20 +111,55 @@ package main
 import (
 	// "context"
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"log"
+	"math/rand"
 	"net"
 	"net/http"
+	"time"
 
 	// "log"
+	"io"
 	"os"
 
 	"github.com/skratchdot/open-golang/open"
 	"golang.org/x/oauth2"
 )
 
+// == PKCE
+func PkceInit() {
+	rand.Seed(time.Now().UnixNano())
+}
+
+//string of pkce allowed chars
+func PkceVerifier(length int) string {
+	if length > 128 {
+		length = 128
+	}
+	if length < 43 {
+		length = 43
+	}
+	const charset = "abcdefghijklmnopqrstuvwxyz" +
+		"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~"
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[rand.Intn(len(charset))]
+	}
+	return string(b)
+}
+
+// base64-URL-encoded SHA256 hash of verifier, per rfc 7636
+func PkceChallenge(verifier string) string {
+	sum := sha256.Sum256([]byte(verifier))
+	challenge := base64.URLEncoding.WithPadding(base64.NoPadding).EncodeToString(sum[:])
+	return (challenge)
+}
+
 func main() {
 	ctx := context.Background()
+	PkceInit()
 
 	rl, err := net.Listen("tcp", "localhost:64110")
 	if err != nil {
@@ -134,12 +169,34 @@ func main() {
 	defer rl.Close()
 
 	var (
-		ec = make(chan error, 1)
-		tc = make(chan string, 1)
+		errChan   = make(chan error, 1)
+		codeChan  = make(chan string, 1)
+		tokenChan = make(chan string, 1)
 	)
 
 	returnHandler := func(rw http.ResponseWriter, req *http.Request) {
-		tc <- req.URL.Query().Get("ots")
+		log.Printf("RETURN:%s\n", req.URL.Query())
+		codeChan <- req.URL.Query().Get("code")
+		tokenChan <- req.URL.Query().Get("access_token")
+		io.WriteString(rw, `
+<html>
+	<head>
+    	<meta charset="utf-8">
+    	<title>Done</title>
+		<script>
+			if (window.opener) {
+				const message = new URLSearchParams(window.location.search).get("message");
+				window.opener.postMessage(message, "https://${window.location.hostname}");
+			} else {
+				console.log("This page was not opened by Gitpod.")
+				setTimeout("window.close();", 1000);
+			}
+		</script>
+	</head>
+	<body>
+		If this tab is not closed automatically, feel free to close it and proceed. <button type="button" onclick="window.open('', '_self', ''); window.close();">Close</button>
+	</body>
+</html>`)
 	}
 
 	returnServer := &http.Server{
@@ -149,7 +206,7 @@ func main() {
 	go func() {
 		err := returnServer.Serve(rl)
 		if err != nil {
-			ec <- err
+			errChan <- err
 		}
 	}()
 	defer returnServer.Shutdown(ctx)
@@ -166,12 +223,13 @@ func main() {
 	responseTypeParam := oauth2.SetAuthURLParam("response_type", "code")
 	redirectURIParam := oauth2.SetAuthURLParam("redirect_uri", fmt.Sprintf("http://localhost:%d", rl.Addr().(*net.TCPAddr).Port))
 	codeChallengeMethodParam := oauth2.SetAuthURLParam("code_challenge_method", "S256")
-	codeChallengeParam := oauth2.SetAuthURLParam("code_challenge", "cNerW3ccX3K10Yp5LJMSAT8ehENHcNILeGKmEbaL2pI")
+	codeVerifier := PkceVerifier(84)
+	codeChallengeParam := oauth2.SetAuthURLParam("code_challenge", PkceChallenge(codeVerifier))
 
 	// Redirect user to consent page to ask for permission
 	// for the scopes specified above.
 	authorizationURL := conf.AuthCodeURL("state", responseTypeParam, redirectURIParam, codeChallengeParam, codeChallengeMethodParam)
-	fmt.Printf("URL for the auth: %v", authorizationURL)
+	fmt.Printf("URL for the auth: %v\n", authorizationURL)
 
 	// open a browser window to the authorizationURL
 	err = open.Start(authorizationURL)
@@ -180,31 +238,31 @@ func main() {
 		os.Exit(1)
 	}
 
-	var response string
+	var code string
 	select {
 	case <-ctx.Done():
-		fmt.Printf("DONE: %v", ctx.Err())
+		fmt.Printf("DONE: %v\n", ctx.Err())
 		os.Exit(1)
-	case err = <-ec:
-		fmt.Printf("ERR: %v", err)
+	case err = <-errChan:
+		fmt.Printf("ERR: %v\n", err)
 		os.Exit(1)
-	case response = <-tc:
+	case code = <-codeChan:
 	}
-	fmt.Printf("response: %s\n", response)
+	fmt.Printf("code: %s\n", code)
 
 	// Use the authorization code that is pushed to the redirect
 	// URL. Exchange will do the handshake to retrieve the
-	// initial access token. The HTTP Client returned by
-	// conf.Client will refresh the token as necessary.
-	// 	var code string
-	// 	if _, err := fmt.Scan(&code); err != nil {
-	// 		log.Fatal(err)
-	// 	}
-	tok, err := conf.Exchange(ctx, response)
+	// initial access token.
+	// We need to add the required PKCE param as well...
+	// NOTE: we do not currently support refreshing so using the client from conf.Client will fail when token expires (which technically it doesn't)
+	codeVerifierParam := oauth2.SetAuthURLParam("code_verifier", codeVerifier)
+	tok, err := conf.Exchange(ctx, code, codeVerifierParam, redirectURIParam)
 	if err != nil {
 		log.Fatal(err)
 	}
+	log.Printf("TOK: %#v\n", tok)
 
-	client := conf.Client(ctx, tok)
-	client.Get("...")
+	// client := conf.Client(ctx, tok)
+	// client.Get("...")
+	os.Exit(0)
 }
