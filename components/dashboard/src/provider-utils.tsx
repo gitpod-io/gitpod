@@ -101,9 +101,9 @@ async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
     window.addEventListener("message", eventListener);
 }
 
-const getSafeURLRedirect = () => {
-    const returnToURL: string | null = new URLSearchParams(window.location.search).get("returnTo");
-    console.log(`getSafeURLRedirect: ${returnToURL} | ${window.location}`);
+const getSafeURLRedirect = (source?: string) => {
+    const returnToURL: string | null = new URLSearchParams(source ? source : window.location.search).get("returnTo");
+    console.log(`getSafeURLRedirect: ${returnToURL} | ${window.location} | ${source}`);
     if (returnToURL) {
         // Only allow local-app on the same host
         if (returnToURL.toLowerCase().startsWith(`${window.location.protocol}//${window.location.host}/api/local-app/`.toLowerCase())) {

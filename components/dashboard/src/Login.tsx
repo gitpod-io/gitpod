@@ -76,10 +76,10 @@ export function Login() {
         }
     }
 
-    const authorizeSuccessful = async () => {
+    const authorizeSuccessful = async (payload?: string) => {
         await updateUser();
-        // Check for a valid returnTo
-        const safeReturnTo = getSafeURLRedirect();
+        // Check for a valid returnTo in payload
+        const safeReturnTo = getSafeURLRedirect(payload);
         if (safeReturnTo) {
             // ... and if it is, redirect to it 
             window.location.replace(safeReturnTo);
