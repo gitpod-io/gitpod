@@ -71,17 +71,45 @@ func (b *RingBuffer) TotalWritten() int64 {
 // Bytes provides a slice of the bytes written. This
 // slice should not be written to.
 func (b *RingBuffer) Bytes() []byte {
-	switch {
-	case b.written >= b.size && b.writeCursor == 0:
-		return b.data
-	case b.written > b.size:
-		out := make([]byte, b.size)
-		copy(out, b.data[b.writeCursor:])
-		copy(out[b.size-b.writeCursor:], b.data[:b.writeCursor])
-		return out
-	default:
-		return b.data[:b.writeCursor]
+	out := make([]byte, b.size)
+	n := b.Read(out, 0)
+	return out[:n]
+}
+
+// Read reads a slice from the buffer
+func (b *RingBuffer) Read(buf []byte, offset int64) (bytesRead int64) {
+	if offset >= b.written {
+		return -1
 	}
+	if b.written >= b.size {
+		// wrap around the full buffer: after write cursor until the buffer end + buffer beginning until the write cursor
+		if b.writeCursor+offset < b.size {
+			n := copy(buf, b.data[offset:])
+			n += copy(buf[n:], b.data[:b.writeCursor])
+			return int64(n)
+		}
+
+		off := (b.writeCursor + offset) % b.size
+		// offset wrapped around buffer: from the beginning of buffer until the write cursor
+		if off < b.writeCursor {
+			n := copy(buf, b.data[off:b.writeCursor])
+			return int64(n)
+		}
+
+		// offset wrapped around the buffer and overtook write cursor: from the offset unil the end of the buffer
+		n := copy(buf, b.data[off:])
+		return int64(n)
+	}
+
+	// buffer isn't full yet, can only read until the write cursor
+	if offset > b.writeCursor {
+		return 0
+	}
+	bytesRead = b.writeCursor - offset
+	if bytesRead > int64(len(buf)) {
+		bytesRead = int64(len(buf))
+	}
+	return int64(copy(buf, b.data[offset:b.writeCursor]))
 }
 
 // Reset resets the buffer so it has no content.

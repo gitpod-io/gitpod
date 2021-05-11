@@ -24,6 +24,11 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
+var (
+	// ErrNotFound means the terminal was not found
+	ErrNotFound = errors.New("not found")
+)
+
 // NewMux creates a new terminal mux
 func NewMux() *Mux {
 	return &Mux{
@@ -195,25 +200,10 @@ func newTerm(alias string, pty *os.File, cmd *exec.Cmd, options TermOptions) (*T
 		return nil, err
 	}
 
-	recorder, err := NewRingBuffer(terminalBacklogSize)
-	if err != nil {
-		return nil, err
-	}
-
-	timeout := options.ReadTimeout
-	if timeout == 0 {
-		timeout = 1<<63 - 1
-	}
 	res := &Term{
-		PTY:     pty,
-		Command: cmd,
-		Stdout: &multiWriter{
-			timeout:   timeout,
-			listener:  make(map[*multiWriterListener]struct{}),
-			recorder:  recorder,
-			logStdout: options.LogToStdout,
-			logLabel:  alias,
-		},
+		PTY:         pty,
+		Command:     cmd,
+		Stdout:      newBufferedMultiWriter(options.LogToStdout, alias),
 		Annotations: options.Annotations,
 		title:       options.Title,
 
@@ -237,9 +227,6 @@ func newTerm(alias string, pty *os.File, cmd *exec.Cmd, options TermOptions) (*T
 
 // TermOptions is a pseudo-terminal configuration
 type TermOptions struct {
-	// timeout after which a listener is dropped. Use 0 for no timeout.
-	ReadTimeout time.Duration
-
 	// Annotations are user-defined metadata that's attached to a terminal
 	Annotations map[string]string
 
@@ -261,7 +248,7 @@ type Term struct {
 	Annotations  map[string]string
 	title        string
 
-	Stdout *multiWriter
+	Stdout *bufferedMultiWriter
 
 	waitErr  error
 	waitDone chan struct{}
@@ -309,57 +296,96 @@ func (term *Term) Wait() (*os.ProcessState, error) {
 	return term.Command.ProcessState, term.waitErr
 }
 
-// multiWriter is like io.MultiWriter, except that we can listener at runtime.
-type multiWriter struct {
-	timeout  time.Duration
-	closed   bool
-	mu       sync.RWMutex
-	listener map[*multiWriterListener]struct{}
-	// ring buffer to record last 256kb of pty output
-	// new listener is initialized with the latest recodring first
-	recorder *RingBuffer
+type bufferedMultiWriter struct {
+	closed bool
+	mu     sync.RWMutex
+	buffer *RingBuffer
+	cond   *sync.Cond
 
 	logStdout bool
 	logLabel  string
 }
 
-var (
-	// ErrNotFound means the terminal was not found
-	ErrNotFound = errors.New("not found")
-	// ErrReadTimeout happens when a listener takes too long to read
-	ErrReadTimeout = errors.New("read timeout")
-)
-
-type multiWriterListener struct {
-	io.Reader
-
-	closed    bool
-	once      sync.Once
-	closeErr  error
-	closeChan chan struct{}
-	cchan     chan []byte
-	done      chan struct{}
+func newBufferedMultiWriter(logStdout bool, label string) *bufferedMultiWriter {
+	buf, _ := NewRingBuffer(4 * 1024)
+	res := &bufferedMultiWriter{
+		buffer:    buf,
+		logStdout: logStdout,
+		logLabel:  label,
+	}
+	res.cond = sync.NewCond(&res.mu)
+	return res
 }
 
-func (l *multiWriterListener) Close() error {
-	return l.CloseWithError(nil)
+func (mw *bufferedMultiWriter) Write(p []byte) (n int, err error) {
+	mw.mu.Lock()
+	defer mw.mu.Unlock()
+
+	n, err = mw.buffer.Write(p)
+	if mw.logStdout {
+		log.WithFields(logrus.Fields{
+			"terminalOutput": true,
+			"label":          mw.logLabel,
+		}).Info(string(p))
+	}
+
+	mw.cond.Broadcast()
+
+	return
 }
 
-func (l *multiWriterListener) CloseWithError(err error) error {
-	l.once.Do(func() {
-		if err != nil {
-			l.closeErr = err
-		}
-		close(l.closeChan)
-		l.closed = true
+func (mw *bufferedMultiWriter) Reader() io.Reader {
+	if mw.closed {
+		return closedListener
+	}
 
-		// actual cleanup happens in a go routine started by Listen()
-	})
+	return &bufferedMultiWriterReader{
+		p:      mw,
+		offset: 0,
+	}
+}
+
+func (mw *bufferedMultiWriter) Close() error {
+	mw.cond.L.Lock()
+	defer mw.cond.L.Unlock()
+
+	mw.closed = true
+	mw.cond.Broadcast()
 	return nil
 }
 
-func (l *multiWriterListener) Done() <-chan struct{} {
-	return l.closeChan
+type bufferedMultiWriterReader struct {
+	p      *bufferedMultiWriter
+	offset int64
+}
+
+func (r *bufferedMultiWriterReader) Read(p []byte) (n int, err error) {
+	r.p.mu.RLock()
+	if r.p.closed {
+		r.p.mu.RUnlock()
+		return 0, io.EOF
+	}
+	rn := r.p.buffer.Read(p, r.offset)
+	r.p.mu.RUnlock()
+
+	if rn < 0 {
+		r.p.cond.L.Lock()
+		r.p.cond.Wait()
+		closed := r.p.closed
+		if !closed {
+			rn = r.p.buffer.Read(p, r.offset)
+		}
+		r.p.cond.L.Unlock()
+
+		if closed {
+			return 0, io.EOF
+		}
+	}
+	if rn < 0 {
+		return 0, io.EOF
+	}
+	r.offset += rn
+	return int(rn), nil
 }
 
 type closedTerminalListener struct {
@@ -370,115 +396,3 @@ func (closedTerminalListener) Read(p []byte) (n int, err error) {
 }
 
 var closedListener = io.NopCloser(closedTerminalListener{})
-
-// Listen listens in on the multi-writer stream
-func (mw *multiWriter) Listen() io.ReadCloser {
-	mw.mu.Lock()
-	defer mw.mu.Unlock()
-
-	if mw.closed {
-		return closedListener
-	}
-
-	r, w := io.Pipe()
-	cchan, done, closeChan := make(chan []byte), make(chan struct{}, 1), make(chan struct{}, 1)
-	res := &multiWriterListener{
-		Reader:    r,
-		cchan:     cchan,
-		done:      done,
-		closeChan: closeChan,
-	}
-
-	recording := mw.recorder.Bytes()
-	go func() {
-		_, _ = w.Write(recording)
-
-		// copy bytes from channel to writer.
-		// Note: we close the writer independently of the write operation s.t. we don't
-		//       block the closing because the write's blocking.
-		for b := range cchan {
-			n, err := w.Write(b)
-			done <- struct{}{}
-			if err == nil && n != len(b) {
-				err = io.ErrShortWrite
-			}
-			if err != nil {
-				_ = res.CloseWithError(err)
-			}
-		}
-	}()
-	go func() {
-		// listener cleanup on close
-		<-closeChan
-		if res.closeErr != nil {
-			log.WithError(res.closeErr).Error("terminal listener droped out")
-			w.CloseWithError(res.closeErr)
-		} else {
-			w.Close()
-		}
-		close(cchan)
-
-		mw.mu.Lock()
-		delete(mw.listener, res)
-		mw.mu.Unlock()
-	}()
-
-	mw.listener[res] = struct{}{}
-
-	return res
-}
-
-func (mw *multiWriter) Write(p []byte) (n int, err error) {
-	mw.mu.Lock()
-	defer mw.mu.Unlock()
-
-	mw.recorder.Write(p)
-	if mw.logStdout {
-		log.WithFields(logrus.Fields{
-			"terminalOutput": true,
-			"label":          mw.logLabel,
-		}).Info(string(p))
-	}
-
-	for lstr := range mw.listener {
-		if lstr.closed {
-			continue
-		}
-
-		select {
-		case lstr.cchan <- p:
-		case <-time.After(mw.timeout):
-			lstr.CloseWithError(ErrReadTimeout)
-		}
-
-		select {
-		case <-lstr.done:
-		case <-time.After(mw.timeout):
-			lstr.CloseWithError(ErrReadTimeout)
-		}
-	}
-	return len(p), nil
-}
-
-func (mw *multiWriter) Close() error {
-	mw.mu.Lock()
-	defer mw.mu.Unlock()
-
-	mw.closed = true
-
-	var err error
-	for w := range mw.listener {
-		cerr := w.Close()
-		if cerr != nil {
-			err = cerr
-		}
-	}
-	return err
-}
-
-func (mw *multiWriter) ListenerCount() int {
-	mw.mu.Lock()
-	defer mw.mu.Unlock()
-
-	return len(mw.listener)
-}

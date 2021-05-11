@@ -10,7 +10,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"strings"
 	"testing"
 	"time"
 
@@ -219,7 +218,7 @@ func TestTerminals(t *testing.T) {
 	tests := []struct {
 		Desc        string
 		Stdin       []string
-		Expectation func(terminal *Term) string
+		Expectation func(terminal *Term) []byte
 	}{
 		{
 			Desc: "recorded output should be equals read output",
@@ -230,8 +229,8 @@ func TestTerminals(t *testing.T) {
 				"history",
 				"exit",
 			},
-			Expectation: func(terminal *Term) string {
-				return string(terminal.Stdout.recorder.Bytes())
+			Expectation: func(terminal *Term) []byte {
+				return terminal.Stdout.buffer.Bytes()
 			},
 		},
 	}
@@ -256,10 +255,10 @@ func TestTerminals(t *testing.T) {
 					terminal.PTY.Write([]byte(stdin + "\r\n"))
 				}
 			}()
-			io.Copy(stdoutOutput, terminal.Stdout.Listen())
+			io.Copy(stdoutOutput, terminal.Stdout.Reader())
 
-			expectation := strings.Split(test.Expectation(terminal), "\r\n")
-			actual := strings.Split(stdoutOutput.String(), "\r\n")
+			expectation := test.Expectation(terminal)
+			actual := stdoutOutput.Bytes()
 			if diff := cmp.Diff(expectation, actual); diff != "" {
 				t.Errorf("unexpected output (-want +got):\n%s", diff)
 			}
@@ -276,9 +275,7 @@ func TestConcurrent(t *testing.T) {
 
 	eg, _ := errgroup.WithContext(context.Background())
 	for i := 0; i < terminalCount; i++ {
-		alias, err := terminals.Start(exec.Command("/bin/bash", "-i"), TermOptions{
-			ReadTimeout: 0,
-		})
+		alias, err := terminals.Start(exec.Command("/bin/bash", "-i"), TermOptions{})
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -288,10 +285,9 @@ func TestConcurrent(t *testing.T) {
 		}
 
 		for j := 0; j < listenerCount; j++ {
-			stdout := term.Stdout.Listen()
+			stdout := term.Stdout.Reader()
 			eg.Go(func() error {
-				buf := new(strings.Builder)
-				_, err = io.Copy(buf, stdout)
+				_, err = io.Copy(io.Discard, stdout)
 				if err != nil {
 					return err
 				}

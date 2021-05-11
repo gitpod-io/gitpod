@@ -220,13 +220,8 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup) {
 		if t.config.Env != nil {
 			openRequest.Env = *t.config.Env
 		}
-		var readTimeout time.Duration
-		if !tm.config.isHeadless() {
-			readTimeout = 5 * time.Second
-		}
 		resp, err := tm.terminalService.OpenWithOptions(ctx, openRequest, terminal.TermOptions{
-			ReadTimeout: readTimeout,
-			Title:       t.title,
+			Title: t.title,
 		})
 		if err != nil {
 			taskLog.WithError(err).Error("cannot open new task terminal")
@@ -371,12 +366,10 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 
 	var (
 		terminalLog = log.WithField("pid", terminal.Command.Process.Pid)
-		stdout      = terminal.Stdout.Listen()
+		stdout      = terminal.Stdout.Reader()
 		start       = time.Now()
 	)
 	go func() {
-		defer stdout.Close()
-
 		fileName := tm.prebuildLogFileName(task)
 		file, err := os.Create(fileName)
 		var fileWriter *bufio.Writer
