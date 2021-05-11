@@ -50,7 +50,7 @@ async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
     let search = 'message=success';
     const redirectURL = getSafeURLRedirect();
     if (redirectURL) {
-        search = `${search}&returnTo=${redirectURL}`
+        search = `${search}&returnTo=${encodeURIComponent(redirectURL)}`
     }
     const returnTo = gitpodHostUrl.with({ pathname: 'complete-auth', search: search }).toString();
     const requestedScopes = scopes || [];
