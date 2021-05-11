@@ -40,13 +40,14 @@ interface OpenAuthorizeWindowParams {
     host: string;
     scopes?: string[];
     overrideScopes?: boolean;
+    overrideReturn?: string;
     onSuccess?: (payload?: string) => void;
     onError?: (error: string | { error: string, description?: string }) => void;
 }
 
 async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
     const { login, host, scopes, overrideScopes, onSuccess, onError } = params;
-    const returnTo = gitpodHostUrl.with({ pathname: 'complete-auth', search: 'message=success' }).toString();
+    const returnTo = getSafeURLRedirect() || gitpodHostUrl.with({ pathname: 'complete-auth', search: 'message=success' }).toString();
     const requestedScopes = scopes || [];
     const url = login
         ? gitpodHostUrl.withApi({
@@ -94,5 +95,17 @@ async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
     };
     window.addEventListener("message", eventListener);
 }
+
+const getSafeURLRedirect = () => {
+    const returnToURL: string | null = new URLSearchParams(window.location.search).get("returnTo");
+    console.log(`getSafe: ${returnToURL} | ${window.location}`);
+    if (returnToURL) {
+        // Only allow local-app on the same host
+        if (returnToURL.toLowerCase().startsWith(`${window.location.protocol}//${window.location.host}/api/local-app/`.toLowerCase())) {
+            return returnToURL;
+        }
+    }
+}
+
 
 export { iconForAuthProvider, simplifyProviderName, openAuthorizeWindow }
