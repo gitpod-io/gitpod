@@ -88,7 +88,15 @@ func main() {
 						Required: true,
 					},
 					&cli.StringFlag{
-						Name:     "target",
+						Name:     "merged",
+						Required: true,
+					},
+					&cli.StringFlag{
+						Name:     "upper",
+						Required: true,
+					},
+					&cli.StringFlag{
+						Name:     "work",
 						Required: true,
 					},
 					&cli.StringFlag{
@@ -101,26 +109,13 @@ func main() {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					target := filepath.Clean(c.String("target"))
-					if target == "/tmp" || target == "/" || strings.Contains(target, ",") {
-						return fmt.Errorf("%s cannot be copied up", target)
-					}
-
-					tmp, err := os.MkdirTemp("", "fuse")
-					if err != nil {
-						return err
-					}
-
-					for _, base := range []string{"u", "w"} {
-						dir := filepath.Join(tmp, base)
-						if err := os.MkdirAll(dir, 0755); err != nil {
-							return err
-						}
-					}
-
+					target := filepath.Clean(c.String("merged"))
+					upper := filepath.Clean(c.String("upper"))
+					work := filepath.Clean(c.String("work"))
 					source := filepath.Clean(c.String("source"))
+
 					args := []string{
-						fmt.Sprintf("lowerdir=%s,upperdir=u,workdir=w", source),
+						fmt.Sprintf("lowerdir=%s,upperdir=%v,workdir=%v", source, upper, work),
 					}
 
 					if len(c.String("uidmapping")) > 0 {
@@ -132,13 +127,13 @@ func main() {
 					}
 
 					cmd := exec.Command(
-						fmt.Sprintf("%v/.supervisor/fuse-overlayfs", c.String("source")),
+						fmt.Sprintf("%v/.supervisor/fuse-overlayfs", source),
 						"-o",
 						strings.Join(args, ","),
 						"none",
 						target,
 					)
-					cmd.Dir = tmp
+					cmd.Dir = source
 
 					out, err := cmd.CombinedOutput()
 					if err != nil {

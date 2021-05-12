@@ -229,7 +229,11 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		return nil, status.Errorf(codes.Internal, "cannot create /dev/net/tun")
 	}
 
+	// create overlayfs directories to be used in ring2 as rootfs and also upper layer to track changes in the workspace
+	_ = os.MkdirAll(filepath.Join(wbs.Session.ServiceLocDaemon, "upper"), 0755)
+	_ = os.MkdirAll(filepath.Join(wbs.Session.ServiceLocDaemon, "work"), 0755)
 	_ = os.MkdirAll(filepath.Join(wbs.Session.ServiceLocDaemon, "mark"), 0755)
+
 	mountpoint := filepath.Join(wbs.Session.ServiceLocNode, "mark")
 
 	if wbs.FSShift == api.FSShiftMethod_FUSE {
@@ -238,12 +242,14 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 			mappings := fmt.Sprintf("0:%v:1:1:100000:65534", wsinit.GitpodUID)
 			c.Args = append(c.Args, "mount-fusefs-mark",
 				"--source", rootfs,
-				"--target", mountpoint,
+				"--merged", filepath.Join(wbs.Session.ServiceLocNode, "mark"),
+				"--upper", filepath.Join(wbs.Session.ServiceLocNode, "upper"),
+				"--work", filepath.Join(wbs.Session.ServiceLocNode, "work"),
 				"--uidmapping", mappings,
 				"--gidmapping", mappings)
 		})
 		if err != nil {
-			log.WithField("rootfs", rootfs).WithField("mountpoint", mountpoint).WithError(err).Error("cannot mount fusefs mark")
+			log.WithField("rootfs", rootfs).WithError(err).Error("cannot mount fusefs mark")
 			return nil, status.Errorf(codes.Internal, "cannot mount fusefs mark")
 		}
 
