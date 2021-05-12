@@ -18,12 +18,12 @@ export default function OAuth2ClientApproval() {
     const client = params.get("client") || "";
     const redirectTo = getSafeURLRedirect(params.get("redirectTo") || undefined) || "/";
 
-    const updateClientApproval = async (isAccepted: boolean) => {
+    const updateClientApproval = async (isApproved: boolean) => {
         if (!user) {
             return;
         }
         const additionalData = user.additionalData = user.additionalData || {};
-        if (isAccepted) {
+        if (isApproved) {
             additionalData.oauth2ClientsApproved = {
                 ...additionalData.oauth2ClientsApproved,
                 [client]: new Date().toISOString()
@@ -35,7 +35,7 @@ export default function OAuth2ClientApproval() {
             additionalData
         });
         setUser(user);
-        window.location.replace(`${redirectTo}&approved=${isAccepted ? 'yes' : 'no'}`);
+        window.location.replace(`${redirectTo}&approved=${isApproved ? 'yes' : 'no'}`);
     }
 
     return (<div id="oauth2-container" className="z-50 flex w-screen h-screen">
@@ -51,8 +51,8 @@ export default function OAuth2ClientApproval() {
                             <h4>Select 'Yes' to approve access to your workspace using this client. 'No' to reject it.</h4>
                         </div>
                         <div className="flex flex-col space-y-3 items-center">
-                            <button key={"button-yes"} className="btn-oauth2 flex-none w-56 h-10 p-0 inline-flex" onClick={() => updateClientApproval(true)}>
-                                <span className="primary">Yes</span>
+                            <button key={"button-yes"} className="primary" onClick={() => updateClientApproval(true)}>
+                                <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">Yes</span>
                             </button>
                             <button className="secondary" onClick={() => updateClientApproval(false)}>No</button>
                         </div>

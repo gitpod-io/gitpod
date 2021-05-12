@@ -294,9 +294,9 @@ export class UserController {
                 }
 
                 // Have they authorized the local-app?
-                const wasAccepted = req.query['accepted'] || '';
-                log.info(`ACCEPTED?: ${wasAccepted}`)
-                if (wasAccepted === 'no') {
+                const wasApproved = req.query['approved'] || '';
+                log.info(`APPROVED?: ${wasApproved}`)
+                if (wasApproved === 'no') {
                     // Let the local app know they rejected the approval
                     const rt = req.query.returnTo;
                     if (!rt || !rt.startsWith("http://localhost:")) {
@@ -304,7 +304,7 @@ export class UserController {
                         res.sendStatus(400);
                         return;
                     }
-                    res.redirect(`http://${rt}/?accepted=no}`);
+                    res.redirect(`http://${rt}/?approved=no}`);
                     return;
                 }
 
@@ -565,7 +565,7 @@ export class UserController {
                 return;
             }
 
-            // The user has accepted the terms.
+            // The user has approved the terms.
             log.info(logContext, '(TOS) User did agree.', logPayload);
 
             if (TosFlow.WithIdentity.is(tosFlowInfo)) {
