@@ -314,6 +314,7 @@ export class UserController {
                     const redirectTo = `${this.env.hostUrl}oauth2-approval?client=${localAppClientID}&returnTo=${redirectTarget}`;
                     log.info(`AUTH Redirecting to approval: ${redirectTo}`);
                     res.redirect(redirectTo)
+                    return;
                 }
 
                 const request = new OAuthRequest(req);
