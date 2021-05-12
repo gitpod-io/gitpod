@@ -120,7 +120,11 @@ function App() {
         setWhatsNewShown(shouldWhatsNewShown);
     }
     if (window.location.pathname.startsWith('/oauth2-approval')) {
-        return (<OAuth2ClientApproval />);
+        return (
+            <Suspense fallback={<Loading />}>
+                <OAuth2ClientApproval />
+            </Suspense>
+        );
     }
 
     window.addEventListener("hashchange", () => {
