@@ -298,7 +298,7 @@ export class UserController {
                 log.info(`APPROVED?: ${wasApproved}`)
                 if (wasApproved === 'no') {
                     // Let the local app know they rejected the approval
-                    const rt = req.query.returnTo;
+                    const rt = req.query.redirect_uri;
                     if (!rt || !rt.startsWith("http://localhost:")) {
                         log.error(`/local-app/authorize: invalid returnTo URL: "${rt}"`)
                         res.sendStatus(400);
