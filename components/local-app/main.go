@@ -118,6 +118,7 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"net/url"
 	"time"
 
 	// "log"
@@ -170,14 +171,12 @@ func main() {
 
 	var (
 		errChan   = make(chan error, 1)
-		codeChan  = make(chan string, 1)
-		tokenChan = make(chan string, 1)
+		queryChan = make(chan url.Values, 1)
 	)
 
 	returnHandler := func(rw http.ResponseWriter, req *http.Request) {
 		log.Printf("RETURN:%s\n", req.URL.Query())
-		codeChan <- req.URL.Query().Get("code")
-		tokenChan <- req.URL.Query().Get("access_token")
+		queryChan <- req.URL.Query()
 		io.WriteString(rw, `
 <html>
 	<head>
@@ -213,7 +212,7 @@ func main() {
 
 	conf := &oauth2.Config{
 		ClientID:     "gplctl-1.0",
-		ClientSecret: "gplctl-secret", // Required (even though it is marked as optional?!)
+		ClientSecret: "gplctl-1.0-secret", // Required (even though it is marked as optional?!)
 		Scopes:       []string{"function:getWorkspace"},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://rl-gplctl-oauth2-server.staging.gitpod-dev.com/api/local-app/authorize",
@@ -238,7 +237,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	var code string
+	var query url.Values
+	var code, approved string
 	select {
 	case <-ctx.Done():
 		fmt.Printf("DONE: %v\n", ctx.Err())
@@ -246,9 +246,16 @@ func main() {
 	case err = <-errChan:
 		fmt.Printf("ERR: %v\n", err)
 		os.Exit(1)
-	case code = <-codeChan:
+	case query = <-queryChan:
+		code = query.Get("code")
+		approved = query.Get("approved")
 	}
-	fmt.Printf("code: %s\n", code)
+	fmt.Printf("code: %s, approved:%s\n", code, approved)
+
+	if approved == "no" {
+		log.Println("Client approval was not granted... exiting")
+		os.Exit(1)
+	}
 
 	// Use the authorization code that is pushed to the redirect
 	// URL. Exchange will do the handshake to retrieve the
