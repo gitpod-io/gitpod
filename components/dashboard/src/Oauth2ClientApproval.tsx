@@ -8,7 +8,6 @@ import { useContext } from "react";
 import { UserContext } from "./user-context";
 import { getGitpodService } from "./service/service";
 import gitpodIcon from './icons/gitpod.svg';
-import { Link } from "react-router-dom";
 import { useLocation } from "react-router";
 import { getSafeURLRedirect } from "./provider-utils";
 
@@ -28,7 +27,7 @@ export default function OAuth2ClientApproval() {
             additionalData.oauth2ClientsApproved = {
                 ...additionalData.oauth2ClientsApproved,
                 [client]: new Date().toISOString()
-            }                
+            }
         } else if (additionalData.oauth2ClientsApproved) {
             delete additionalData.oauth2ClientsApproved[client];
         }
