@@ -5,7 +5,7 @@
  */
 
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { AuthorizationRequest, AuthorizationServer, DateInterval, GrantIdentifier, JwtService, RequestInterface, ResponseInterface } from "@jmondi/oauth2-server";
+import { AuthorizationRequest, AuthorizationServer, DateInterval, GrantIdentifier, JwtService, OAuthClient, RequestInterface, ResponseInterface } from "@jmondi/oauth2-server";
 import {
   inMemoryAccessTokenRepository,
   inMemoryAuthCodeRepository,
@@ -41,6 +41,11 @@ class MyAuthorizationServer extends AuthorizationServer {
   completeAuthorizationRequest(authorizationRequest: AuthorizationRequest): Promise<ResponseInterface> {
     log.info(`completeAuthorizationRequest: ${JSON.stringify(authorizationRequest)}`)
     return super.completeAuthorizationRequest(authorizationRequest)
+  }
+  async getClientByIdentifier(clientId: string): Promise<OAuthClient> {
+    log.info(`getByIdentifier: ${clientId}`)
+    // this is a little hacky but it is not exposed by the lib
+    return clientRepository.getByIdentifier(clientId);
   }
 }
 

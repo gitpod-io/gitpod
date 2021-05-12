@@ -309,12 +309,20 @@ export class UserController {
                 }
 
                 const oauth2ClientsApproved = user?.additionalData?.oauth2ClientsApproved;
-                if (!oauth2ClientsApproved || !oauth2ClientsApproved[localAppClientID]) {
-                    const redirectTarget = encodeURIComponent(`${this.env.hostUrl}api${req.originalUrl}`);
-                    const redirectTo = `${this.env.hostUrl}oauth2-approval?client=${localAppClientID}&returnTo=${redirectTarget}`;
-                    log.info(`AUTH Redirecting to approval: ${redirectTo}`);
-                    res.redirect(redirectTo)
-                    return;
+                const clientID = localAppClientID;
+                if (!oauth2ClientsApproved || !oauth2ClientsApproved[clientID]) {
+                    const client = await authorizationServer.getClientByIdentifier(clientID)
+                    if (client) {
+                        const redirectTarget = encodeURIComponent(`${this.env.hostUrl}api${req.originalUrl}`);
+                        const redirectTo = `${this.env.hostUrl}oauth2-approval?clientID=${client.id}&clientName=${client.name}&returnTo=${redirectTarget}`;
+                        log.info(`AUTH Redirecting to approval: ${redirectTo}`);
+                        res.redirect(redirectTo)
+                        return;    
+                    } else {
+                        log.error(`/local-app/authorize unknown client id: "${clientID}"`)
+                        res.sendStatus(400);
+                        return;    
+                    }
                 }
 
                 const request = new OAuthRequest(req);

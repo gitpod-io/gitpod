@@ -15,7 +15,8 @@ export default function OAuth2ClientApproval() {
     const { user, setUser } = useContext(UserContext);
     const location = useLocation();
     const params = new URLSearchParams(location.search);
-    const client = params.get("client") || "";
+    const clientID = params.get("clientID") || "";
+    const clientName = params.get("clientName") || "";
     const redirectTo = getSafeURLRedirect(params.get("redirectTo") || undefined) || "/";
 
     const updateClientApproval = async (isApproved: boolean) => {
@@ -26,10 +27,10 @@ export default function OAuth2ClientApproval() {
         if (isApproved) {
             additionalData.oauth2ClientsApproved = {
                 ...additionalData.oauth2ClientsApproved,
-                [client]: new Date().toISOString()
+                [clientID]: new Date().toISOString()
             }
         } else if (additionalData.oauth2ClientsApproved) {
-            delete additionalData.oauth2ClientsApproved[client];
+            delete additionalData.oauth2ClientsApproved[clientID];
         }
         await getGitpodService().server.updateLoggedInUser({
             additionalData
@@ -47,12 +48,12 @@ export default function OAuth2ClientApproval() {
                             <img src={gitpodIcon} className="h-16 mx-auto" />
                         </div>
                         <div className="mx-auto text-center pb-8 space-y-2">
-                            <h1 className="text-3xl">{client} Client Approval</h1>
-                            <h4>Select 'Yes' to approve access to your workspace using this client. 'No' to reject it.</h4>
+                            <h1 className="text-3xl">{clientName} Client Access Approval</h1>
+                            <h4>Select 'Yes' to allow this client access to your workspace. 'No' to reject it.</h4>
                         </div>
                         <div className="flex flex-col space-y-3 items-center">
                             <button key={"button-yes"} className="primary" onClick={() => updateClientApproval(true)}>
-                                <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">Yes</span>
+                                Yes
                             </button>
                             <button className="secondary" onClick={() => updateClientApproval(false)}>No</button>
                         </div>
