@@ -18,6 +18,7 @@ import { User } from '@gitpod/gitpod-protocol';
 import { adminMenu } from './admin/admin-menu';
 import gitpodIcon from './icons/gitpod.svg';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
+import { OAuth2ClientApproval } from './Oauth2ClientApproval'
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ './Setup'));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ './workspaces/Workspaces'));
@@ -166,6 +167,7 @@ function App() {
                         <p className="mt-4 text-lg text-gitpod-red">{decodeURIComponent(getURLHash())}</p>
                     </div>
                 </Route>
+                <Route path="/oauth2-approval" exact component={OAuth2ClientApproval} />
                 <Route path="*" /* status={404} */>
                     <div className="mt-48 text-center">
                         <h1 className="text-gray-500 text-3xl">404</h1>
