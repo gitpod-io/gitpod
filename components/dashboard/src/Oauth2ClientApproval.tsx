@@ -8,13 +8,11 @@ import { useContext } from "react";
 import { UserContext } from "./user-context";
 import { getGitpodService } from "./service/service";
 import gitpodIcon from './icons/gitpod.svg';
-import { useLocation } from "react-router";
 import { getSafeURLRedirect } from "./provider-utils";
 
 export default function OAuth2ClientApproval() {
     const { user, setUser } = useContext(UserContext);
-    const location = useLocation();
-    const params = new URLSearchParams(location.search);
+    const params = new URLSearchParams(window.location.search);
     const clientID = params.get("clientID") || "";
     const clientName = params.get("clientName") || "";
     const redirectTo = getSafeURLRedirect(params.get("redirectTo") || undefined) || "/";
