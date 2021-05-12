@@ -48,7 +48,7 @@ export default function OAuth2ClientApproval() {
                             <img src={gitpodIcon} className="h-16 mx-auto" />
                         </div>
                         <div className="mx-auto text-center pb-8 space-y-2">
-                            <h1 className="text-3xl">{clientName} Client Access Approval</h1>
+                            <h1 className="text-3xl">The client: "{clientName}"" is requesting access</h1>
                             <h4>Select 'Yes' to allow this client access to your workspace. 'No' to reject it.</h4>
                         </div>
                         <div className="flex flex-col space-y-3 items-center">

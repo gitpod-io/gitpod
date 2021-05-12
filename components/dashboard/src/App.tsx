@@ -119,6 +119,9 @@ function App() {
     if (shouldWhatsNewShown !== isWhatsNewShown) {
         setWhatsNewShown(shouldWhatsNewShown);
     }
+    if (window.location.pathname.startsWith('/oauth2-approval')) {
+        return (<OAuth2ClientApproval />);
+    }
 
     window.addEventListener("hashchange", () => {
         // Refresh on hash change if the path is '/' (new context URL)
@@ -167,7 +170,6 @@ function App() {
                         <p className="mt-4 text-lg text-gitpod-red">{decodeURIComponent(getURLHash())}</p>
                     </div>
                 </Route>
-                <Route path="/oauth2-approval" exact component={OAuth2ClientApproval} />
                 <Route path="*" /* status={404} */>
                     <div className="mt-48 text-center">
                         <h1 className="text-gray-500 text-3xl">404</h1>
