@@ -100,7 +100,6 @@ async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
     };
     window.addEventListener("message", eventListener);
 }
-
 const getSafeURLRedirect = (source?: string) => {
     const returnToURL: string | null = new URLSearchParams(source ? source : window.location.search).get("returnTo");
     console.log(`getSafeURLRedirect: ${returnToURL} | ${window.location} | ${source}`);

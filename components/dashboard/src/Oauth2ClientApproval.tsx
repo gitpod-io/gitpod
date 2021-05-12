@@ -9,9 +9,15 @@ import { UserContext } from "./user-context";
 import { getGitpodService } from "./service/service";
 import gitpodIcon from './icons/gitpod.svg';
 import { Link } from "react-router-dom";
+import { useLocation } from "react-router";
+import { getSafeURLRedirect } from "./provider-utils";
 
-export default function OAuth2ClientApproval(props: { clientID: string, redirectTo: string }) {
+export default function OAuth2ClientApproval() {
     const { user, setUser } = useContext(UserContext);
+    const location = useLocation();
+    const params = new URLSearchParams(location.search);
+    const client = params.get("client") || "";
+    const redirectTo = getSafeURLRedirect(params.get("redirectTo") || undefined) || "/";
 
     const approveClient = async () => {
         if (!user) {
@@ -20,13 +26,13 @@ export default function OAuth2ClientApproval(props: { clientID: string, redirect
         const additionalData = user.additionalData = user.additionalData || {};
         additionalData.oauth2ClientsApproved = {
             ...additionalData.oauth2ClientsApproved,
-            [props.clientID]: new Date().toISOString()
+            [client]: new Date().toISOString()
         }
         await getGitpodService().server.updateLoggedInUser({
             additionalData
         });
         setUser(user);
-        window.location.replace(props.redirectTo);
+        window.location.replace(redirectTo);
     }
 
     return (<div id="oauth2-container" className="z-50 flex w-screen h-screen">
@@ -38,7 +44,7 @@ export default function OAuth2ClientApproval(props: { clientID: string, redirect
                             <img src={gitpodIcon} className="h-16 mx-auto" />
                         </div>
                         <div className="mx-auto text-center pb-8 space-y-2">
-                            <h1 className="text-3xl">{props.clientID} Client Approval</h1>
+                            <h1 className="text-3xl">{client} Client Approval</h1>
                             <h4>Select 'Yes' to approve access to your workspace using this client. 'No' to reject it.</h4>
                         </div>
                         <div className="flex flex-col space-y-3 items-center">

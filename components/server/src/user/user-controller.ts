@@ -297,7 +297,7 @@ export class UserController {
                 const oauth2ClientsApproved = user?.additionalData?.oauth2ClientsApproved;
                 if (!oauth2ClientsApproved || !oauth2ClientsApproved[localAppClientID]) {
                     const redirectTarget = encodeURIComponent(`${this.env.hostUrl}api${req.originalUrl}`);
-                    const redirectTo = `${this.env.hostUrl}/oauth2-approval?clientID=${localAppClientID}&returnTo=${redirectTarget}`;
+                    const redirectTo = `${this.env.hostUrl}/oauth2-approval?client=${localAppClientID}&returnTo=${redirectTarget}`;
                     log.info(`AUTH Redirecting to approval: ${redirectTo}`);
                     res.redirect(redirectTo)
                 }
