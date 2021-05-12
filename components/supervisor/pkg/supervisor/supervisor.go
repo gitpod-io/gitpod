@@ -197,6 +197,7 @@ func Run(options ...RunOption) {
 	go startSSHServer(ctx, cfg, &wg)
 	wg.Add(1)
 	go taskManager.Run(ctx, &wg)
+	wg.Add(1)
 	go socketActivationForDocker(ctx, &wg, termMux)
 
 	if !cfg.isHeadless() {
