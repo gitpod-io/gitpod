@@ -4,11 +4,12 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable, inject } from "inversify";
-import { ImageBuilderClientProvider, ResolveBaseImageRequest, BuildRegistryAuthTotal, BuildRegistryAuth } from "@gitpod/image-builder/lib";
-import { HostContextProvider } from "../auth/host-context-provider";
+import { Commit, CommitContext, ExternalImageConfigFile, ImageConfigFile, User, WorkspaceConfig, WorkspaceImageSource, WorkspaceImageSourceDocker, WorkspaceImageSourceReference } from "@gitpod/gitpod-protocol";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { CommitContext, WorkspaceImageSource, WorkspaceConfig, WorkspaceImageSourceReference, WorkspaceImageSourceDocker, ImageConfigFile, ExternalImageConfigFile, User } from "@gitpod/gitpod-protocol";
+import { BuildRegistryAuth, BuildRegistryAuthTotal, ImageBuilderClientProvider, ResolveBaseImageRequest } from "@gitpod/image-builder/lib";
+import { inject, injectable } from "inversify";
+import { HostContextProvider } from "../auth/host-context-provider";
+import { RepositoryHost } from "../repohost";
 
 @injectable()
 export class ImageSourceProvider {
@@ -33,7 +34,8 @@ export class ImageSourceProvider {
                 result = <WorkspaceImageSourceDocker>{
                     dockerFilePath: imgcfg.file,
                     dockerFileSource: imgcfg.externalSource,
-                    dockerFileHash: lastDockerFileSha
+                    dockerFileHash: lastDockerFileSha,
+                    dockerFileFrom: await this.dockerFileFrom(hostContext.services, imgcfg.externalSource, user, imgcfg.file),
                 }
             } else if (ImageConfigFile.is(imgcfg)) {
                 // There are no special instructions as to where to get the Dockerfile from, hence we use the context of the current workspace.
@@ -46,6 +48,7 @@ export class ImageSourceProvider {
                     dockerFilePath: imgcfg.file,
                     dockerFileSource: context,
                     dockerFileHash: lastDockerFileSha,
+                    dockerFileFrom: await this.dockerFileFrom(hostContext.services, context, user, imgcfg.file),
                 }
             } else if (typeof(imgcfg) === "string") {
                 // We resolve this request allowing all configured auth because at this poing we don't have access to the user or permission service.
@@ -83,5 +86,18 @@ export class ImageSourceProvider {
         }
     }
 
+    private async dockerFileFrom(repositoryHost: RepositoryHost, commit: Commit, user: User, path: string): Promise<string | undefined> {
+        const dockerFileContent = await repositoryHost.fileProvider.getFileContent(commit, user, path)
+        if (!dockerFileContent) {
+            return undefined;
+        }
+        const fromPrefix = "FROM ";
+        const fromLines = dockerFileContent.split("\n").filter(line => line.startsWith(fromPrefix));
+        if (fromLines.length == 0) {
+            return undefined;
+        }
+        const lastFromLine = fromLines[fromLines.length - 1];
+        return lastFromLine.substring(fromPrefix.length).trim();
+    }
 
 }

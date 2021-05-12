@@ -363,6 +363,9 @@ export class WorkspaceStarter {
                 file.setDockerfilePath(dockerFilePath);
                 file.setSource(source);
                 file.setDockerfileVersion(imgsrc.dockerFileHash);
+                if (imgsrc.dockerFileFrom) {
+                    file.setDockerfileFrom(imgsrc.dockerFileFrom);
+                }
 
                 const src = new BuildSource();
                 src.setFile(file);

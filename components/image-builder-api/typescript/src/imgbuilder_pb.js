@@ -793,7 +793,8 @@ proto.builder.BuildSourceDockerfile.toObject = function(includeInstance, msg) {
     source: (f = msg.getSource()) && content$service$api_initializer_pb.WorkspaceInitializer.toObject(includeInstance, f),
     dockerfileVersion: jspb.Message.getFieldWithDefault(msg, 2, ""),
     dockerfilePath: jspb.Message.getFieldWithDefault(msg, 3, ""),
-    contextPath: jspb.Message.getFieldWithDefault(msg, 4, "")
+    contextPath: jspb.Message.getFieldWithDefault(msg, 4, ""),
+    dockerfileFrom: jspb.Message.getFieldWithDefault(msg, 5, "")
   };
 
   if (includeInstance) {
@@ -846,6 +847,10 @@ proto.builder.BuildSourceDockerfile.deserializeBinaryFromReader = function(msg, 
     case 4:
       var value = /** @type {string} */ (reader.readString());
       msg.setContextPath(value);
+      break;
+    case 5:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setDockerfileFrom(value);
       break;
     default:
       reader.skipField();
@@ -902,6 +907,13 @@ proto.builder.BuildSourceDockerfile.serializeBinaryToWriter = function(message, 
   if (f.length > 0) {
     writer.writeString(
       4,
+      f
+    );
+  }
+  f = /** @type {string} */ (jspb.Message.getField(message, 5));
+  if (f != null) {
+    writer.writeString(
+      5,
       f
     );
   }
@@ -996,6 +1008,42 @@ proto.builder.BuildSourceDockerfile.prototype.getContextPath = function() {
  */
 proto.builder.BuildSourceDockerfile.prototype.setContextPath = function(value) {
   return jspb.Message.setProto3StringField(this, 4, value);
+};
+
+
+/**
+ * optional string dockerfile_from = 5;
+ * @return {string}
+ */
+proto.builder.BuildSourceDockerfile.prototype.getDockerfileFrom = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 5, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.builder.BuildSourceDockerfile} returns this
+ */
+proto.builder.BuildSourceDockerfile.prototype.setDockerfileFrom = function(value) {
+  return jspb.Message.setField(this, 5, value);
+};
+
+
+/**
+ * Clears the field making it undefined.
+ * @return {!proto.builder.BuildSourceDockerfile} returns this
+ */
+proto.builder.BuildSourceDockerfile.prototype.clearDockerfileFrom = function() {
+  return jspb.Message.setField(this, 5, undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.builder.BuildSourceDockerfile.prototype.hasDockerfileFrom = function() {
+  return jspb.Message.getField(this, 5) != null;
 };
 
 

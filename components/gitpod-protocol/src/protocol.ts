@@ -595,6 +595,8 @@ export interface WorkspaceImageSourceDocker {
     dockerFileHash: string
     dockerFileSource: Commit
     dockerFilePath: string
+    /** The FROM part in the Dockerfile (optional). */
+    dockerFileFrom: string | undefined
 }
 export namespace WorkspaceImageSourceDocker {
     export function is(obj: object): obj is WorkspaceImageSourceDocker {

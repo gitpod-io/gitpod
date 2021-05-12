@@ -229,6 +229,18 @@ func (b *DockerBuilder) getBaseImageRef(ctx context.Context, bs *api.BuildSource
 			"DockerfileVersion": src.File.DockerfileVersion,
 			"ContextPath":       src.File.ContextPath,
 		}
+		if src.File.DockerfileFrom != nil {
+			res, err := b.getAbsoluteImageRef(ctx, *src.File.DockerfileFrom, allowedAuth)
+			if err != nil {
+				log.WithField("from", *src.File.DockerfileFrom).Warn("cannot get absolute image ref from Dockerfile FROM ref")
+			} else {
+				log.
+					WithField("from", *src.File.DockerfileFrom).
+					WithField("ref", res).
+					Info("absolute image ref from Dockerfile FROM ref")
+				manifest["DockerfileFrom"] = res
+			}
+		}
 		// workspace starter will only ever send us Git sources. Should that ever change, we'll need to add
 		// manifest support for the other initializer types.
 		if src.File.Source.GetGit() != nil {

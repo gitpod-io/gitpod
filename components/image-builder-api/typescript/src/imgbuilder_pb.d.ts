@@ -84,6 +84,11 @@ export class BuildSourceDockerfile extends jspb.Message {
     getContextPath(): string;
     setContextPath(value: string): BuildSourceDockerfile;
 
+    hasDockerfileFrom(): boolean;
+    clearDockerfileFrom(): void;
+    getDockerfileFrom(): string | undefined;
+    setDockerfileFrom(value: string): BuildSourceDockerfile;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): BuildSourceDockerfile.AsObject;
     static toObject(includeInstance: boolean, msg: BuildSourceDockerfile): BuildSourceDockerfile.AsObject;
@@ -100,6 +105,7 @@ export namespace BuildSourceDockerfile {
         dockerfileVersion: string,
         dockerfilePath: string,
         contextPath: string,
+        dockerfileFrom?: string,
     }
 }
 

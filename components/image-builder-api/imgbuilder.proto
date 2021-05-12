@@ -39,6 +39,7 @@ message BuildSourceDockerfile {
     string dockerfile_version = 2;
     string dockerfile_path = 3;
     string context_path = 4;
+    optional string dockerfile_from = 5;
 }
 
 message ResolveBaseImageRequest {
