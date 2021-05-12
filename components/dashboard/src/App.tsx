@@ -18,7 +18,6 @@ import { User } from '@gitpod/gitpod-protocol';
 import { adminMenu } from './admin/admin-menu';
 import gitpodIcon from './icons/gitpod.svg';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
-import { OAuth2ClientApproval } from './Oauth2ClientApproval'
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ './Setup'));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ './workspaces/Workspaces'));
@@ -35,6 +34,7 @@ const InstallGitHubApp = React.lazy(() => import(/* webpackPrefetch: true */ './
 const FromReferrer = React.lazy(() => import(/* webpackPrefetch: true */ './FromReferrer'));
 const UserSearch = React.lazy(() => import(/* webpackPrefetch: true */ './admin/UserSearch'));
 const WorkspacesSearch = React.lazy(() => import(/* webpackPrefetch: true */ './admin/WorkspacesSearch'));
+const OAuth2ClientApproval = React.lazy(() => import(/* webpackPrefetch: true */ './Oauth2ClientApproval'));
 
 function Loading() {
     return <>

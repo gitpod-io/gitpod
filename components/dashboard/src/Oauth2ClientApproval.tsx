@@ -10,7 +10,7 @@ import { getGitpodService } from "./service/service";
 import gitpodIcon from './icons/gitpod.svg';
 import { Link } from "react-router-dom";
 
-export function OAuth2ClientApproval(props: { clientID: string, redirectTo: string }) {
+export default function OAuth2ClientApproval(props: { clientID: string, redirectTo: string }) {
     const { user, setUser } = useContext(UserContext);
 
     const approveClient = async () => {
