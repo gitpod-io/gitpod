@@ -78,8 +78,7 @@ func WithArgs(args []string) RunOption {
 
 // The sum of those timeBudget* times has to fit within the terminationGracePeriod of the workspace pod.
 const (
-	timeBudgetIDEShutdown    = 5 * time.Second
-	timeBudgetDaemonTeardown = 10 * time.Second
+	timeBudgetIDEShutdown = 5 * time.Second
 )
 
 const (
