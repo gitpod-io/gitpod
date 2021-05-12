@@ -107,3 +107,34 @@ scripts:
       - test/**/*
     script: |
       leeway exec --filter-type go -v -- go mod tidy -v
+  - name: unblock-user
+    deps:
+      - components/service-waiter:app
+    script: |
+      export DB_USERNAME=root
+      export DB_PASSWORD=test
+      kubectl port-forward statefulset/mysql 3306 &
+      PID=$!
+      service-waiter database -t 10s
+      if [ $? -ne 0 ]; then
+        echo "could not connect to DB"
+        kill $PID || true
+        exit 1
+      fi
+      query="select name, blocked from d_b_user limit 10;"
+      result=$(mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod)
+
+      printf "\nCurrent context:           $(kubectx -c)"
+      printf "\nCurrent namespace:         $(kubens -c)\n"
+
+      printf "\nAvailable users (max 10):\n$result\n\n"
+      printf "Enter user to unblock (empty to abort): "
+      read user
+      if [[ -z "$user" ]]; then
+        echo "No input."
+      else
+        echo "User: $user"
+        query="update d_b_user set blocked=0 where name=\"$user\";"
+        mysql -e "$query" -u$DB_USERNAME -p$DB_PASSWORD -h 127.0.0.1 gitpod
+      fi
+      kill $PID || true
