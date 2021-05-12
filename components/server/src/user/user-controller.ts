@@ -35,6 +35,7 @@ import { ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from '../one-time-secret-server';
 import { inMemoryAuthorizationServer } from '../oauth2-server/oauth_authorization_server';
 import { OAuthException, OAuthRequest, OAuthResponse } from '@jmondi/oauth2-server';
+import { localAppClientID } from '../oauth2-server/db';
 
 @injectable()
 export class UserController {
@@ -281,7 +282,7 @@ export class UserController {
                 if (!req.isAuthenticated() || !User.is(req.user)) {
                     const redirectTarget = encodeURIComponent(`${this.env.hostUrl}api${req.originalUrl}`);
                     const redirectTo = `${this.env.hostUrl}login?returnTo=${redirectTarget}`;
-                    log.info(`AUTH Redirecting to ${redirectTo}`);
+                    log.info(`AUTH Redirecting to login: ${redirectTo}`);
                     res.redirect(redirectTo)
                     return
                 }
@@ -292,6 +293,15 @@ export class UserController {
                     return;
                 }
 
+                // Have they authorized the local-app?
+                const oauth2ClientsApproved = user?.additionalData?.oauth2ClientsApproved;
+                if (!oauth2ClientsApproved || !oauth2ClientsApproved[localAppClientID]) {
+                    const redirectTarget = encodeURIComponent(`${this.env.hostUrl}api${req.originalUrl}`);
+                    const redirectTo = `${this.env.hostUrl}/oauth2-approval?clientID=${localAppClientID}&returnTo=${redirectTarget}`;
+                    log.info(`AUTH Redirecting to approval: ${redirectTo}`);
+                    res.redirect(redirectTo)
+                }
+                
                 const request = new OAuthRequest(req);
 
                 try {
