@@ -19,20 +19,24 @@ export default function OAuth2ClientApproval() {
     const client = params.get("client") || "";
     const redirectTo = getSafeURLRedirect(params.get("redirectTo") || undefined) || "/";
 
-    const approveClient = async () => {
+    const updateClientApproval = async (isAccepted: boolean) => {
         if (!user) {
             return;
         }
         const additionalData = user.additionalData = user.additionalData || {};
-        additionalData.oauth2ClientsApproved = {
-            ...additionalData.oauth2ClientsApproved,
-            [client]: new Date().toISOString()
+        if (isAccepted) {
+            additionalData.oauth2ClientsApproved = {
+                ...additionalData.oauth2ClientsApproved,
+                [client]: new Date().toISOString()
+            }                
+        } else if (additionalData.oauth2ClientsApproved) {
+            delete additionalData.oauth2ClientsApproved[client];
         }
         await getGitpodService().server.updateLoggedInUser({
             additionalData
         });
         setUser(user);
-        window.location.replace(redirectTo);
+        window.location.replace(`${redirectTo}&approved=${isAccepted ? 'yes' : 'no'}`);
     }
 
     return (<div id="oauth2-container" className="z-50 flex w-screen h-screen">
@@ -48,10 +52,10 @@ export default function OAuth2ClientApproval() {
                             <h4>Select 'Yes' to approve access to your workspace using this client. 'No' to reject it.</h4>
                         </div>
                         <div className="flex flex-col space-y-3 items-center">
-                            <button key={"button-yes"} className="btn-oauth2 flex-none w-56 h-10 p-0 inline-flex" onClick={() => approveClient()}>
-                                <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">Yes. I approve</span>
+                            <button key={"button-yes"} className="btn-oauth2 flex-none w-56 h-10 p-0 inline-flex" onClick={() => updateClientApproval(true)}>
+                                <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">Yes</span>
                             </button>
-                            <Link to="/"><button className="secondary">No. Do not allow access my workspace</button></Link>
+                            <button className="secondary" onClick={() => updateClientApproval(false)}>No</button>
                         </div>
                     </div>
                 </div>

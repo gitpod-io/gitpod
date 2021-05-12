@@ -295,11 +295,22 @@ export class UserController {
 
                 // Have they authorized the local-app?
                 const oauth2ClientsApproved = user?.additionalData?.oauth2ClientsApproved;
-                if (!oauth2ClientsApproved || !oauth2ClientsApproved[localAppClientID]) {
+                const wasAccepted = req.query['accepted'] || undefined;
+                if (!wasAccepted && (!oauth2ClientsApproved || !oauth2ClientsApproved[localAppClientID])) {
                     const redirectTarget = encodeURIComponent(`${this.env.hostUrl}api${req.originalUrl}`);
-                    const redirectTo = `${this.env.hostUrl}/oauth2-approval?client=${localAppClientID}&returnTo=${redirectTarget}`;
+                    const redirectTo = `${this.env.hostUrl}oauth2-approval?client=${localAppClientID}&returnTo=${redirectTarget}`;
                     log.info(`AUTH Redirecting to approval: ${redirectTo}`);
                     res.redirect(redirectTo)
+                } else if (wasAccepted === 'no') {
+                    // Let the local app know they rejected the approval
+                    const rt = req.query.returnTo;
+                    if (!rt || !rt.startsWith("http://localhost:")) {
+                        log.error(`/local-app/authorize: invalid returnTo URL: "${rt}"`)
+                        res.sendStatus(400);
+                        return;
+                    }
+                    res.redirect(`http://${rt}/?accepted=no}`);
+                    return;
                 }
                 
                 const request = new OAuthRequest(req);
