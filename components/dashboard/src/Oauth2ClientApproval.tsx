@@ -52,7 +52,7 @@ export default function OAuth2ClientApproval() {
                         </div>
                         <div className="flex flex-col space-y-3 items-center">
                             <button key={"button-yes"} className="btn-oauth2 flex-none w-56 h-10 p-0 inline-flex" onClick={() => updateClientApproval(true)}>
-                                <span className="pt-2 pb-2 mr-3 text-sm my-auto font-medium truncate overflow-ellipsis">Yes</span>
+                                <span className="primary">Yes</span>
                             </button>
                             <button className="secondary" onClick={() => updateClientApproval(false)}>No</button>
                         </div>
