@@ -304,7 +304,7 @@ export class UserController {
                         res.sendStatus(400);
                         return;
                     }
-                    res.redirect(`${rt}/?approved=no}`);
+                    res.redirect(`${rt}/?approved=no`);
                     return;
                 }
 
