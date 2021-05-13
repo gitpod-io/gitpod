@@ -127,7 +127,7 @@ func (rs *DirectMinIOStorage) Init(ctx context.Context, owner, workspace string)
 
 func (rs *DirectMinIOStorage) defaultObjectAccess(ctx context.Context, bkt, obj string) (io.ReadCloser, error) {
 	if rs.client == nil {
-		return nil, xerrors.Errorf("no MinIO client avialable - did you call Init()?")
+		return nil, xerrors.Errorf("no MinIO client available - did you call Init()?")
 	}
 
 	object, err := rs.client.GetObject(ctx, bkt, obj, minio.GetObjectOptions{})
@@ -153,7 +153,7 @@ func minioEnsureExists(ctx context.Context, client *minio.Client, bucketName str
 	defer tracing.FinishSpan(span, &err)
 
 	if client == nil {
-		return xerrors.Errorf("no MinIO client avialable - did you call Init()?")
+		return xerrors.Errorf("no MinIO client available - did you call Init()?")
 	}
 
 	exists, err := client.BucketExists(ctx, bucketName)
@@ -228,7 +228,7 @@ func (rs *DirectMinIOStorage) Upload(ctx context.Context, source string, name st
 	}
 
 	if rs.client == nil {
-		err = xerrors.Errorf("no minio client avialable - did you call Init()?")
+		err = xerrors.Errorf("no minio client available - did you call Init()?")
 		return
 	}
 

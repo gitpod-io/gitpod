@@ -28,7 +28,7 @@ func (*osFS) Open(name string) (iofs.File, error) {
 	return os.Open(name)
 }
 
-// fs is used to load files refered to by this configuration.
+// fs is used to load files referred to by this configuration.
 // We use a library here to be able to test things properly.
 var fs iofs.FS = &osFS{}
 

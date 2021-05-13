@@ -68,6 +68,8 @@ func redactObject(data *map[string]interface{}) {
 		}
 
 		if (*data)[k] != redactedValue {
+			//TODO: refactor
+			//nolint:gosec
 			(*data)[k] = redactValue(&v)
 		}
 	}

@@ -92,7 +92,7 @@ func (ft *FixtureTest) Run() {
 			goldenFilePath := fmt.Sprintf("%s.golden", strings.TrimSuffix(fn, filepath.Ext(fn)))
 			if *update {
 				if _, err := os.Stat(goldenFilePath); *force || os.IsNotExist(err) {
-					err = os.WriteFile(goldenFilePath, actual, 0644)
+					err = os.WriteFile(goldenFilePath, actual, 0600)
 					if err != nil {
 						t.Errorf("cannot write gold standard %s: %v", goldenFilePath, err)
 						return

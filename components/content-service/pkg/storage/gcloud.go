@@ -150,7 +150,7 @@ func gcpEnsureExists(ctx context.Context, client *gcpstorage.Client, bucketName 
 	defer tracing.FinishSpan(span, &err)
 
 	if client == nil {
-		return xerrors.Errorf("no gcloud client avialable - did you call Init()?")
+		return xerrors.Errorf("no gcloud client available - did you call Init()?")
 	}
 
 	hdl := client.Bucket(bucketName)
@@ -179,7 +179,7 @@ func gcpEnsureExists(ctx context.Context, client *gcpstorage.Client, bucketName 
 
 func (rs *DirectGCPStorage) defaultObjectAccess(ctx context.Context, bkt, obj string) (io.ReadCloser, bool, error) {
 	if rs.client == nil {
-		return nil, false, xerrors.Errorf("no gcloud client avialable - did you call Init()?")
+		return nil, false, xerrors.Errorf("no gcloud client available - did you call Init()?")
 	}
 
 	hdl := rs.client.Bucket(bkt).Object(obj)
@@ -304,7 +304,7 @@ func (rs *DirectGCPStorage) Upload(ctx context.Context, source string, name stri
 	}
 
 	if rs.client == nil {
-		err = xerrors.Errorf("no gcloud client avialable - did you call Init()?")
+		err = xerrors.Errorf("no gcloud client available - did you call Init()?")
 		return
 	}
 
@@ -435,7 +435,7 @@ func (rs *DirectGCPStorage) ensureBackupSlotAvailable() error {
 		return nil
 	}
 	if rs.client == nil {
-		return xerrors.Errorf("no gcloud client avialable - did you call Init()?")
+		return xerrors.Errorf("no gcloud client available - did you call Init()?")
 	}
 
 	bkt := rs.client.Bucket(rs.bucketName())

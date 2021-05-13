@@ -174,7 +174,7 @@ func TestGetContentLayer(t *testing.T) {
 					t.Fatalf("fixture %s exists already - not overwriting", fixfn)
 				}
 
-				err = os.WriteFile(fixfn, fixc, 0644)
+				err = os.WriteFile(fixfn, fixc, 0600)
 				if err != nil {
 					t.Fatalf("cannot write fixture: %q", err)
 					return

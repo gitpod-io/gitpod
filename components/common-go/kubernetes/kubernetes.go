@@ -72,7 +72,7 @@ func GetOWIFromObject(pod *metav1.ObjectMeta) logrus.Fields {
 	return log.OWI(owner, workspace, instance)
 }
 
-// UnlimitedRateLimiter implements an emtpy, unlimited flowcontrol.RateLimiter
+// UnlimitedRateLimiter implements an empty, unlimited flowcontrol.RateLimiter
 type UnlimitedRateLimiter struct {
 }
 

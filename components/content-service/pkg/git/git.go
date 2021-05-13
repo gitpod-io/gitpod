@@ -132,16 +132,16 @@ func (s *Status) ToAPI() *csapi.GitStatus {
 	}
 }
 
-// GitOpFailedError is returned by GitWithOutput if the operation fails
+// OpFailedError is returned by GitWithOutput if the operation fails
 // e.g. returns with a non-zero exit code.
-type GitOpFailedError struct {
+type OpFailedError struct {
 	Subcommand string
 	Args       []string
 	ExecErr    error
 	Output     string
 }
 
-func (e GitOpFailedError) Error() string {
+func (e OpFailedError) Error() string {
 	return fmt.Sprintf("git %s %s failed (%v): %v", e.Subcommand, strings.Join(e.Args, " "), e.ExecErr, e.Output)
 }
 
@@ -187,7 +187,7 @@ func (c *Client) GitWithOutput(ctx context.Context, subcommand string, args ...s
 
 	res, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, GitOpFailedError{
+		return nil, OpFailedError{
 			Args:       args,
 			ExecErr:    err,
 			Output:     string(res),

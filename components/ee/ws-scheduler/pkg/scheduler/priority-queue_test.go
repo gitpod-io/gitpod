@@ -57,7 +57,7 @@ func TestOrderByPodPriority(t *testing.T) {
 			for _, expected := range test.Expected {
 				act, wasClosed := q.Pop()
 				if wasClosed {
-					t.Errorf("queue already emtpy, but still expected pod '%s'", expected)
+					t.Errorf("queue already empty, but still expected pod '%s'", expected)
 				}
 				if act.Pod.Name != expected {
 					t.Errorf("expected pod '%s' but got '%s'!", expected, act.Pod.Name)

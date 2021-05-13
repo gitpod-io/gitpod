@@ -15,6 +15,10 @@ import (
 	"golang.org/x/xerrors"
 )
 
+const (
+	notEmpty = "not-empty"
+)
+
 func TestGitStatus(t *testing.T) {
 	tests := []struct {
 		Name   string
@@ -49,9 +53,9 @@ func TestGitStatus(t *testing.T) {
 			&Status{
 				porcelainStatus: porcelainStatus{
 					BranchHead: "master",
-					BranchOID:  "not-empty",
+					BranchOID:  notEmpty,
 				},
-				LatestCommit: "not-empty",
+				LatestCommit: notEmpty,
 			},
 			nil,
 		},
@@ -69,15 +73,15 @@ func TestGitStatus(t *testing.T) {
 			&Status{
 				porcelainStatus: porcelainStatus{
 					BranchHead:     "master",
-					BranchOID:      "not-empty",
+					BranchOID:      notEmpty,
 					UntrackedFiles: []string{"another-file"},
 				},
-				LatestCommit: "not-empty",
+				LatestCommit: notEmpty,
 			},
 			nil,
 		},
 		{
-			"uncommited files",
+			"uncommitted files",
 			func(ctx context.Context, c *Client) error {
 				if err := initFromRemote(ctx, c); err != nil {
 					return err
@@ -90,10 +94,10 @@ func TestGitStatus(t *testing.T) {
 			&Status{
 				porcelainStatus: porcelainStatus{
 					BranchHead:      "master",
-					BranchOID:       "not-empty",
+					BranchOID:       notEmpty,
 					UncommitedFiles: []string{"first-file"},
 				},
-				LatestCommit: "not-empty",
+				LatestCommit: notEmpty,
 			},
 			nil,
 		},
@@ -114,10 +118,10 @@ func TestGitStatus(t *testing.T) {
 			&Status{
 				porcelainStatus: porcelainStatus{
 					BranchHead: "master",
-					BranchOID:  "not-empty",
+					BranchOID:  notEmpty,
 				},
-				UnpushedCommits: []string{"not-empty"},
-				LatestCommit:    "not-empty",
+				UnpushedCommits: []string{notEmpty},
+				LatestCommit:    notEmpty,
 			},
 			nil,
 		},
@@ -141,10 +145,10 @@ func TestGitStatus(t *testing.T) {
 			&Status{
 				porcelainStatus: porcelainStatus{
 					BranchHead: "otherbranch",
-					BranchOID:  "not-empty",
+					BranchOID:  notEmpty,
 				},
-				UnpushedCommits: []string{"not-empty"},
-				LatestCommit:    "not-empty",
+				UnpushedCommits: []string{notEmpty},
+				LatestCommit:    notEmpty,
 			},
 			nil,
 		},
@@ -166,10 +170,10 @@ func TestGitStatus(t *testing.T) {
 			&Status{
 				porcelainStatus: porcelainStatus{
 					BranchHead:     "master",
-					BranchOID:      "not-empty",
+					BranchOID:      notEmpty,
 					UntrackedFiles: []string{"this/is/a/nested/test/first-file"},
 				},
-				LatestCommit: "not-empty",
+				LatestCommit: notEmpty,
 			},
 			nil,
 		},
@@ -199,14 +203,14 @@ func TestGitStatus(t *testing.T) {
 			}
 
 			if status != nil {
-				if test.Result.BranchOID == "not-empty" && status.LatestCommit != "" {
+				if test.Result.BranchOID == notEmpty && status.LatestCommit != "" {
 					test.Result.BranchOID = status.LatestCommit
 				}
-				if test.Result.LatestCommit == "not-empty" && status.LatestCommit != "" {
+				if test.Result.LatestCommit == notEmpty && status.LatestCommit != "" {
 					test.Result.LatestCommit = status.LatestCommit
 				}
 				for _, c := range test.Result.UnpushedCommits {
-					if c == "not-empty" {
+					if c == notEmpty {
 						if len(status.UnpushedCommits) == 0 {
 							t.Errorf("expected unpushed commits")
 						}

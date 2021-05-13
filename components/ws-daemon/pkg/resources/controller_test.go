@@ -247,7 +247,7 @@ plt.title(fn)
 fig.savefig(fname="diff%s.png"%fn)
 `
 	script = strings.ReplaceAll(script, "FILENAME", base)
-	err := os.WriteFile(".plot.py", []byte(script), 0644)
+	err := os.WriteFile(".plot.py", []byte(script), 0600)
 	if err != nil {
 		return err
 	}

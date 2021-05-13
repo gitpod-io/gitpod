@@ -1699,7 +1699,7 @@ type Workspace struct {
 type WorkspaceConfig struct {
 	CheckoutLocation string `json:"checkoutLocation,omitempty"`
 
-	// Set of automatically infered feature flags. That's not something the user can set, but
+	// Set of automatically inferred feature flags. That's not something the user can set, but
 	// that is set by gitpod at workspace creation time.
 	FeatureFlags []string          `json:"_featureFlags,omitempty"`
 	GitConfig    map[string]string `json:"gitConfig,omitempty"`
@@ -1710,7 +1710,7 @@ type WorkspaceConfig struct {
 	// Where the config object originates from.
 	//
 	// repo - from the repository
-	// definitly-gp - from github.com/gitpod-io/definitely-gp
+	// definitely-gp - from github.com/gitpod-io/definitely-gp
 	// derived - computed based on analyzing the repository
 	// default - our static catch-all default config
 	Origin            string        `json:"_origin,omitempty"`

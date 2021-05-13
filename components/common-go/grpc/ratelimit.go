@@ -36,7 +36,7 @@ func NewRatelimitingInterceptor(f map[string]RateLimit) RatelimitingInterceptor 
 }
 
 // RatelimitingInterceptor limits how often a gRPC function may be called. If the limit has been
-// exceeded, we'll return resource exahusted.
+// exceeded, we'll return resource exhausted.
 type RatelimitingInterceptor map[string]ratelimitedFunction
 
 type ratelimitedFunction struct {
