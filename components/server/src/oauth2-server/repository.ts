@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { DateInterval, ExtraAccessTokenFields, GrantIdentifier, OAuthAuthCode, OAuthAuthCodeRepository, OAuthClient, OAuthClientRepository, OAuthScope, OAuthScopeRepository, OAuthToken, OAuthTokenRepository, OAuthUser, OAuthUserRepository } from "@jmondi/oauth2-server";
+import { DateInterval, ExtraAccessTokenFields, GrantIdentifier, OAuthClient, OAuthClientRepository, OAuthScope, OAuthScopeRepository, OAuthToken, OAuthTokenRepository, OAuthUser, OAuthUserRepository } from "@jmondi/oauth2-server";
 import { inMemoryDatabase } from "./db";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
@@ -80,33 +80,33 @@ export const inMemoryAccessTokenRepository: OAuthTokenRepository = {
     },
 };
 
-export const inMemoryAuthCodeRepository: OAuthAuthCodeRepository = {
-    issueAuthCode(client: OAuthClient, user: OAuthUser | undefined, scopes: OAuthScope[]): OAuthAuthCode {
-        return {
-            code: "my-super-secret-auth-code",
-            user,
-            client,
-            redirectUri: "",
-            codeChallenge: undefined,
-            codeChallengeMethod: undefined,
-            expiresAt: oneHourInFuture,
-            scopes: [],
-        };
-    },
-    async persist(authCode: OAuthAuthCode): Promise<void> {
-        inMemoryDatabase.authCodes[authCode.code] = authCode;
-    },
-    async isRevoked(authCodeCode: string): Promise<boolean> {
-        const authCode = await this.getByIdentifier(authCodeCode);
-        return Date.now() > authCode.expiresAt.getTime();
-    },
-    async getByIdentifier(authCodeCode: string): Promise<OAuthAuthCode> {
-        return inMemoryDatabase.authCodes[authCodeCode];
-    },
-    async revoke(authCodeCode: string): Promise<void> {
-        inMemoryDatabase.authCodes[authCodeCode].expiresAt = new Date(0);
-    },
-};
+// export const inMemoryAuthCodeRepository: OAuthAuthCodeRepository = {
+//     issueAuthCode(client: OAuthClient, user: OAuthUser | undefined, scopes: OAuthScope[]): OAuthAuthCode {
+//         return {
+//             code: "my-super-secret-auth-code",
+//             user,
+//             client,
+//             redirectUri: "",
+//             codeChallenge: undefined,
+//             codeChallengeMethod: undefined,
+//             expiresAt: oneHourInFuture,
+//             scopes: [],
+//         };
+//     },
+//     async persist(authCode: OAuthAuthCode): Promise<void> {
+//         inMemoryDatabase.authCodes[authCode.code] = authCode;
+//     },
+//     async isRevoked(authCodeCode: string): Promise<boolean> {
+//         const authCode = await this.getByIdentifier(authCodeCode);
+//         return Date.now() > authCode.expiresAt.getTime();
+//     },
+//     async getByIdentifier(authCodeCode: string): Promise<OAuthAuthCode> {
+//         return inMemoryDatabase.authCodes[authCodeCode];
+//     },
+//     async revoke(authCodeCode: string): Promise<void> {
+//         inMemoryDatabase.authCodes[authCodeCode].expiresAt = new Date(0);
+//     },
+// };
 
 export const inMemoryUserRepository: OAuthUserRepository = {
     async getUserByCredentials(

@@ -17,10 +17,13 @@ import { DBTokenEntry } from "./entity/db-token-entry";
 import { DBUserEnvVar } from "./entity/db-user-env-vars";
 import { DBGitpodToken } from "./entity/db-gitpod-token";
 import { DBWorkspace } from "./entity/db-workspace";
+import { OAuthAuthCode, OAuthClient, OAuthScope, OAuthUser, DateInterval } from "@jmondi/oauth2-server";
+import { DBOAuth2AuthCodeEntry } from "./entity/db-oauth2-auth-code";
 
 /** HACK ahead: Some entities - namely DBTokenEntry for now - need access to an EncryptionService so we publish it here */
 export let encryptionService: EncryptionService;
 
+const oneHourInFuture = new DateInterval("1h").getEndDate();
 @injectable()
 export class TypeORMUserDBImpl implements UserDB {
 
@@ -349,6 +352,50 @@ export class TypeORMUserDBImpl implements UserDB {
 
     public async findUserByName(name: string): Promise<User | undefined> {
         return (await this.getUserRepo()).findOne({ name });
+    }
+
+    // OAuthAuthCodeRepository
+    async getOauth2AuthCodeRepo(): Promise<Repository<DBOAuth2AuthCodeEntry>> {
+        return (await this.getEntityManager()).getRepository<DBOAuth2AuthCodeEntry>(DBOAuth2AuthCodeEntry);
+    }
+
+    public async getByIdentifier(authCodeCode: string): Promise<OAuthAuthCode> {
+        const authCodeRepo = await this.getOauth2AuthCodeRepo();
+        const authCode = await authCodeRepo.findOneById(authCodeCode)
+        return new Promise<OAuthAuthCode>((resolve, reject) => {
+            if (authCode) {
+                resolve(authCode);
+            } else {
+                reject();
+            }
+        });
+    }
+    public issueAuthCode(client: OAuthClient, user: OAuthUser | undefined, scopes: OAuthScope[]): OAuthAuthCode {
+        return {
+            code: "my-super-secret-auth-code",
+            user,
+            client,
+            redirectUri: "",
+            codeChallenge: undefined,
+            codeChallengeMethod: undefined,
+            expiresAt: oneHourInFuture,
+            scopes: [],
+        };
+    }
+    public async persist(authCode: OAuthAuthCode): Promise<void> {
+        const authCodeRepo = await this.getOauth2AuthCodeRepo();
+        authCodeRepo.save(authCode);
+    }
+    public async isRevoked(authCodeCode: string): Promise<boolean> {
+        const authCode = await this.getByIdentifier(authCodeCode);
+        return Date.now() > authCode.expiresAt.getTime();
+    }
+    public async revoke(authCodeCode: string): Promise<void> {
+        const authCode = await this.getByIdentifier(authCodeCode);
+        if (authCode) {
+            authCode.expiresAt = new Date(0);
+            return this.persist(authCode)
+        }
     }
 }
 

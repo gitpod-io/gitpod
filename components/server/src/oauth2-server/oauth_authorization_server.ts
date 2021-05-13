@@ -5,24 +5,22 @@
  */
 
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { AuthorizationRequest, AuthorizationServer, DateInterval, GrantIdentifier, JwtService, OAuthClient, RequestInterface, ResponseInterface } from "@jmondi/oauth2-server";
+import { AuthorizationRequest, AuthorizationServer, DateInterval, GrantIdentifier, JwtService, OAuthAuthCodeRepository, OAuthClient, RequestInterface, ResponseInterface } from "@jmondi/oauth2-server";
 import {
   inMemoryAccessTokenRepository,
-  inMemoryAuthCodeRepository,
   inMemoryClientRepository,
   inMemoryScopeRepository,
   inMemoryUserRepository,
 } from "./repository";
 
 const clientRepository = inMemoryClientRepository;
-const authCodeRepository = inMemoryAuthCodeRepository;
 const tokenRepository = inMemoryAccessTokenRepository;
 const scopeRepository = inMemoryScopeRepository;
 const userRepository = inMemoryUserRepository;
 
 const jwtService = new JwtService("secret secret secret");
 
-class MyAuthorizationServer extends AuthorizationServer {
+class GitpodAuthorizationServer extends AuthorizationServer {
   enableGrantType(grantType: GrantIdentifier, accessTokenTTL?: DateInterval): void {
     log.info(`enableGrantType: ${grantType}:${JSON.stringify(accessTokenTTL)}`)
     super.enableGrantType(grantType, accessTokenTTL);
@@ -49,15 +47,16 @@ class MyAuthorizationServer extends AuthorizationServer {
   }
 }
 
-const authorizationServer = new MyAuthorizationServer(
-  authCodeRepository,
-  clientRepository,
-  tokenRepository,
-  scopeRepository,
-  userRepository,
-  jwtService,
-);
-
-authorizationServer.enableGrantType("authorization_code", new DateInterval('1d'));
-
-export { authorizationServer as inMemoryAuthorizationServer };
+export function createAuthorizationServer(authCodeRepository: OAuthAuthCodeRepository): GitpodAuthorizationServer {
+  const authorizationServer = new GitpodAuthorizationServer(
+    authCodeRepository,
+    clientRepository,
+    tokenRepository,
+    scopeRepository,
+    userRepository,
+    jwtService,
+  );
+  
+  authorizationServer.enableGrantType("authorization_code", new DateInterval('1d'));
+  return authorizationServer;
+}

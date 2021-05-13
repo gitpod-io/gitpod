@@ -8,11 +8,12 @@ import { User, Identity, IdentityLookup, Token, TokenEntry, UserEnvVar, GitpodTo
 import { Without } from "@gitpod/gitpod-protocol/lib/util/without";
 import { Repository } from "typeorm";
 import { DBUser } from "./typeorm/entity/db-user";
+import { OAuthAuthCodeRepository } from "@jmondi/oauth2-server";
 
 export type MaybeUser = User | undefined;
 
 export const UserDB = Symbol('UserDB');
-export interface UserDB {
+export interface UserDB extends OAuthAuthCodeRepository {
     transaction<T>(code: (db: UserDB) => Promise<T>): Promise<T>;
 
     newUser(): Promise<User>;

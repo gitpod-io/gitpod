@@ -33,7 +33,7 @@ import * as uuidv4 from 'uuid/v4';
 import { DBUser } from "@gitpod/gitpod-db";
 import { ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from '../one-time-secret-server';
-import { inMemoryAuthorizationServer } from '../oauth2-server/oauth_authorization_server';
+import { createAuthorizationServer } from '../oauth2-server/oauth_authorization_server';
 import { OAuthException, OAuthRequest, OAuthResponse } from '@jmondi/oauth2-server';
 import { localAppClientID } from '../oauth2-server/db';
 
@@ -89,7 +89,7 @@ export class UserController {
             try {
                 await saveSession(req);
             } catch (error) {
-                increaseLoginCounter("failed", "unkown")
+                increaseLoginCounter("failed", "unknown")
                 log.error(`Login failed due to session save error; redirecting to /sorry`, { req, error, clientInfo });
                 res.redirect(this.getSorryUrl("Login failed 🦄 Please try again"));
             }
@@ -274,7 +274,7 @@ export class UserController {
                 res.redirect(`http://${rt}/?ots=${encodeURI(ots.token)}`);
             });
 
-            const authorizationServer = inMemoryAuthorizationServer;
+            const authorizationServer = createAuthorizationServer(this.userDb);
 
             router.get("/local-app/authorize", async (req: express.Request, res: express.Response) => {
                 log.info(`AUTHORIZE: ${JSON.stringify(req.query)}`);
