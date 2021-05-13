@@ -359,7 +359,8 @@ export class UserController {
             });
 
             function handleError(e: any, res: express.Response) {
-                log.error(`handleError: ${JSON.stringify(e)}`)
+                log.info('handleError')
+                log.error(e)
 
                 // @todo clean up error handling
                 if (e instanceof OAuthException) {
@@ -370,7 +371,11 @@ export class UserController {
                     });
                     return;
                 }
-                throw e;
+                // Generic error
+                res.status(500)
+                res.send({
+                    err: e
+                })
             }
 
             function handleResponse(req: express.Request, res: express.Response, response: OAuthResponse) {
