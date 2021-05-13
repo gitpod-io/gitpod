@@ -5,18 +5,16 @@
  */
 
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { AuthorizationRequest, AuthorizationServer, DateInterval, GrantIdentifier, JwtService, OAuthAuthCodeRepository, OAuthClient, RequestInterface, ResponseInterface } from "@jmondi/oauth2-server";
+import { AuthorizationRequest, AuthorizationServer, DateInterval, GrantIdentifier, JwtService, OAuthAuthCodeRepository, OAuthClient, OAuthUserRepository, RequestInterface, ResponseInterface } from "@jmondi/oauth2-server";
 import {
   inMemoryAccessTokenRepository,
   inMemoryClientRepository,
-  inMemoryScopeRepository,
-  inMemoryUserRepository,
+  inMemoryScopeRepository
 } from "./repository";
 
 const clientRepository = inMemoryClientRepository;
 const tokenRepository = inMemoryAccessTokenRepository;
 const scopeRepository = inMemoryScopeRepository;
-const userRepository = inMemoryUserRepository;
 
 const jwtService = new JwtService("secret secret secret");
 
@@ -47,7 +45,7 @@ class GitpodAuthorizationServer extends AuthorizationServer {
   }
 }
 
-export function createAuthorizationServer(authCodeRepository: OAuthAuthCodeRepository): GitpodAuthorizationServer {
+export function createAuthorizationServer(authCodeRepository: OAuthAuthCodeRepository, userRepository: OAuthUserRepository): GitpodAuthorizationServer {
   const authorizationServer = new GitpodAuthorizationServer(
     authCodeRepository,
     clientRepository,
@@ -56,7 +54,7 @@ export function createAuthorizationServer(authCodeRepository: OAuthAuthCodeRepos
     userRepository,
     jwtService,
   );
-  
+
   authorizationServer.enableGrantType("authorization_code", new DateInterval('1d'));
   return authorizationServer;
 }

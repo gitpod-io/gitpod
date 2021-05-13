@@ -7,7 +7,7 @@
 import { GitpodToken, GitpodTokenType, Identity, IdentityLookup, Token, TokenEntry, User, UserEnvVar } from "@gitpod/gitpod-protocol";
 import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { DateInterval, OAuthAuthCode, OAuthClient, OAuthScope, OAuthUser } from "@jmondi/oauth2-server";
+import { DateInterval, ExtraAccessTokenFields, GrantIdentifier, OAuthAuthCode, OAuthClient, OAuthScope, OAuthUser } from "@jmondi/oauth2-server";
 import * as crypto from 'crypto';
 import { inject, injectable, postConstruct } from "inversify";
 import { EntityManager, Repository } from "typeorm";
@@ -400,6 +400,15 @@ export class TypeORMUserDBImpl implements UserDB {
             authCode.expiresAt = new Date(0);
             return this.persist(authCode)
         }
+    }
+
+    // OAuthUserRepository
+    public async getUserByCredentials(identifier: string, password?: string, grantType?: GrantIdentifier, client?: OAuthClient): Promise<OAuthUser | undefined> {
+        return this.findUserById(identifier);
+    }
+    public async extraAccessTokenFields?(user: OAuthUser): Promise<ExtraAccessTokenFields | undefined> {
+        // No extra fields in token
+        return undefined;
     }
 }
 

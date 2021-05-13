@@ -274,7 +274,7 @@ export class UserController {
                 res.redirect(`http://${rt}/?ots=${encodeURI(ots.token)}`);
             });
 
-            const authorizationServer = createAuthorizationServer(this.userDb);
+            const authorizationServer = createAuthorizationServer(this.userDb, this.userDb);
 
             router.get("/local-app/authorize", async (req: express.Request, res: express.Response) => {
                 log.info(`AUTHORIZE: ${JSON.stringify(req.query)}`);
@@ -317,11 +317,11 @@ export class UserController {
                         const redirectTo = `${this.env.hostUrl}oauth2-approval?clientID=${client.id}&clientName=${client.name}&returnTo=${redirectTarget}`;
                         log.info(`AUTH Redirecting to approval: ${redirectTo}`);
                         res.redirect(redirectTo)
-                        return;    
+                        return;
                     } else {
                         log.error(`/local-app/authorize unknown client id: "${clientID}"`)
                         res.sendStatus(400);
-                        return;    
+                        return;
                     }
                 }
 
@@ -332,15 +332,10 @@ export class UserController {
                     const authRequest = await authorizationServer.validateAuthorizationRequest(request);
 
                     // Once the user has logged in set the user on the AuthorizationRequest
-                    console.log("user has logged in - setting the user on the AuthorizationRequest");
                     authRequest.user = { id: user.id }
+                    console.log(`user has logged in - setting the user on the AuthorizationRequest ${JSON.stringify(user)}, ${JSON.stringify(authRequest)}`);
 
-                    // At this point you should redirect the user to an authorization page.
-                    // This form will ask the user to approve the client and the scopes requested.
-                    // TODO!
-
-                    // Once the user has approved or denied the client update the status
-                    // (true = approved, false = denied)
+                    // The user has approved the client so update the status
                     authRequest.isAuthorizationApproved = true;
 
                     // Return the HTTP redirect response

@@ -4,16 +4,16 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { User, Identity, IdentityLookup, Token, TokenEntry, UserEnvVar, GitpodTokenType, GitpodToken } from "@gitpod/gitpod-protocol"
+import { GitpodToken, GitpodTokenType, Identity, IdentityLookup, Token, TokenEntry, User, UserEnvVar } from "@gitpod/gitpod-protocol";
 import { Without } from "@gitpod/gitpod-protocol/lib/util/without";
+import { OAuthAuthCodeRepository, OAuthUserRepository } from "@jmondi/oauth2-server";
 import { Repository } from "typeorm";
 import { DBUser } from "./typeorm/entity/db-user";
-import { OAuthAuthCodeRepository } from "@jmondi/oauth2-server";
 
 export type MaybeUser = User | undefined;
 
 export const UserDB = Symbol('UserDB');
-export interface UserDB extends OAuthAuthCodeRepository {
+export interface UserDB extends OAuthAuthCodeRepository, OAuthUserRepository {
     transaction<T>(code: (db: UserDB) => Promise<T>): Promise<T>;
 
     newUser(): Promise<User>;
@@ -108,10 +108,10 @@ export interface UserDB extends OAuthAuthCodeRepository {
     deleteEnvVar(envVar: UserEnvVar): Promise<void>;
     getEnvVars(userId: string): Promise<UserEnvVar[]>;
 
-    findAllUsers(offset: number, limit: number, orderBy: keyof User, orderDir: "ASC" | "DESC", searchTerm?: string, minCreationDate?: Date, maxCreationDate?: Date, excludeBuiltinUsers?: boolean): Promise<{total: number, rows: User[]}>;
+    findAllUsers(offset: number, limit: number, orderBy: keyof User, orderDir: "ASC" | "DESC", searchTerm?: string, minCreationDate?: Date, maxCreationDate?: Date, excludeBuiltinUsers?: boolean): Promise<{ total: number, rows: User[] }>;
     findUserByName(name: string): Promise<User | undefined>;
 
-    findUserByGitpodToken(tokenHash: string, tokenType?: GitpodTokenType): Promise<{user: User, token: GitpodToken} | undefined>;
+    findUserByGitpodToken(tokenHash: string, tokenType?: GitpodTokenType): Promise<{ user: User, token: GitpodToken } | undefined>;
     findAllGitpodTokensOfUser(userId: string): Promise<GitpodToken[]>;
     storeGitpodToken(token: GitpodToken & { user: DBUser }): Promise<void>;
     deleteGitpodToken(tokenHash: string): Promise<void>;

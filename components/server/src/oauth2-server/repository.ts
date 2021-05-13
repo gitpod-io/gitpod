@@ -4,9 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { DateInterval, ExtraAccessTokenFields, GrantIdentifier, OAuthClient, OAuthClientRepository, OAuthScope, OAuthScopeRepository, OAuthToken, OAuthTokenRepository, OAuthUser, OAuthUserRepository } from "@jmondi/oauth2-server";
-import { inMemoryDatabase } from "./db";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { DateInterval, GrantIdentifier, OAuthClient, OAuthClientRepository, OAuthScope, OAuthScopeRepository, OAuthToken, OAuthTokenRepository, OAuthUser } from "@jmondi/oauth2-server";
+import { inMemoryDatabase } from "./db";
 
 const oneHourInFuture = new DateInterval("1h").getEndDate();
 
@@ -108,21 +108,21 @@ export const inMemoryAccessTokenRepository: OAuthTokenRepository = {
 //     },
 // };
 
-export const inMemoryUserRepository: OAuthUserRepository = {
-    async getUserByCredentials(
-        identifier: string,
-        password?: string,
-        grantType?: GrantIdentifier,
-        client?: OAuthClient,
-    ): Promise<OAuthUser | undefined> {
-        log.info(`getUserByCredentials: ${JSON.stringify(inMemoryDatabase.users)} && ${identifier}`)
-        const user = inMemoryDatabase.users[identifier];
-        if (user?.password !== password) return;
-        return user;
-    },
-    async extraAccessTokenFields(user: OAuthUser): Promise<ExtraAccessTokenFields | undefined> {
-        return {
-            email: user.email,
-        };
-    },
-};
+// export const inMemoryUserRepository: OAuthUserRepository = {
+//     async getUserByCredentials(
+//         identifier: string,
+//         password?: string,
+//         grantType?: GrantIdentifier,
+//         client?: OAuthClient,
+//     ): Promise<OAuthUser | undefined> {
+//         log.info(`getUserByCredentials: ${JSON.stringify(inMemoryDatabase.users)} && ${identifier}`)
+//         const user = inMemoryDatabase.users[identifier];
+//         if (user?.password !== password) return;
+//         return user;
+//     },
+//     async extraAccessTokenFields(user: OAuthUser): Promise<ExtraAccessTokenFields | undefined> {
+//         return {
+//             email: user.email,
+//         };
+//     },
+// };
