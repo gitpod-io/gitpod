@@ -8,7 +8,6 @@ import { GitpodToken, GitpodTokenType, Identity, IdentityLookup, Token, TokenEnt
 import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { DateInterval, ExtraAccessTokenFields, GrantIdentifier, OAuthAuthCode, OAuthClient, OAuthScope, OAuthUser } from "@jmondi/oauth2-server";
-import * as crypto from 'crypto';
 import { inject, injectable, postConstruct } from "inversify";
 import { EntityManager, Repository } from "typeorm";
 import * as uuidv4 from 'uuid/v4';
@@ -373,7 +372,7 @@ export class TypeORMUserDBImpl implements UserDB {
         });
     }
     public issueAuthCode(client: OAuthClient, user: OAuthUser | undefined, scopes: OAuthScope[]): OAuthAuthCode {
-        const code = crypto.randomBytes(30).toString('hex');
+        const code = 'some secret code' // crypto.randomBytes(30).toString('hex');
         log.info(`issueAuthCode: ${JSON.stringify(client)}, ${JSON.stringify(user)}, ${JSON.stringify(scopes)}, ${code}`)
         return {
             code: code,
