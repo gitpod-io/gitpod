@@ -10,12 +10,12 @@ import { tableExists } from "./helper/helper";
 export class OAuth2AuthCodeDB1620865190518 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<any> {
-        await queryRunner.query("CREATE TABLE IF NOT EXISTS `d_b_oauth2_auth_code` (`id` int NOT NULL AUTO_INCREMENT, `code` varchar(1024) NOT NULL, `redirectURI` varchar(1024) NOT NULL, `codeChallenge` varchar(128) NOT NULL, `codeChallengeMethod` varchar(10) NOT NULL, `expiryDate` timestamp(6) NOT NULL, `userId` char(36) NOT NULL, `client` text NOT NULL, `scopes` varchar(255) NOT NULL, PRIMARY KEY(`id`)) ENGINE=InnoDB;");
+        await queryRunner.query("CREATE TABLE IF NOT EXISTS `d_b_oauth2_auth_code_entry` (`id` int NOT NULL AUTO_INCREMENT, `code` varchar(1024) NOT NULL, `redirectURI` varchar(1024) NOT NULL, `codeChallenge` varchar(128) NOT NULL, `codeChallengeMethod` varchar(10) NOT NULL, `expiryDate` timestamp(6) NOT NULL, `userId` char(36) NOT NULL, `client` text NOT NULL, `scopes` varchar(255) NOT NULL, PRIMARY KEY(`id`)) ENGINE=InnoDB;");
     }
 
     public async down(queryRunner: QueryRunner): Promise<any> {
-        if (await tableExists(queryRunner, "d_b_oauth2_auth_code")) {
-            await queryRunner.query("DROP TABLE `d_b_oauth2_auth_code`");
+        if (await tableExists(queryRunner, "d_b_oauth2_auth_code_entry")) {
+            await queryRunner.query("DROP TABLE `d_b_oauth2_auth_code_entry`");
         }
     }
 

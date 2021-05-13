@@ -8,7 +8,7 @@ import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from "t
 import { OAuthAuthCode, OAuthScope, OAuthClient } from "@jmondi/oauth2-server";
 import { DBUser } from "./db-user";
 
-@Entity()
+@Entity({name: 'd_b_oauth2_auth_code_entry'})
 export class DBOAuth2AuthCodeEntry implements OAuthAuthCode {
     @PrimaryGeneratedColumn()
     uid: number;
