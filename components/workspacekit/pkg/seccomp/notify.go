@@ -116,7 +116,7 @@ func Handle(fd libseccomp.ScmpFd, handler SyscallHandler) (stop chan<- struct{},
 				// if we're asked stop we might still have to answer a syscall.
 				// We do this on a best effort basis answering with EPERM.
 				if err != nil {
-					libseccomp.NotifRespond(fd, &libseccomp.ScmpNotifResp{
+					_ = libseccomp.NotifRespond(fd, &libseccomp.ScmpNotifResp{
 						ID:    req.ID,
 						Error: 1,
 						Val:   0,
