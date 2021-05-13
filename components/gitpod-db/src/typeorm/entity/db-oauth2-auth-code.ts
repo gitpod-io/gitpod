@@ -11,7 +11,7 @@ import { DBUser } from "./db-user";
 @Entity({name: 'd_b_oauth2_auth_code_entry'})
 export class DBOAuth2AuthCodeEntry implements OAuthAuthCode {
     @PrimaryGeneratedColumn()
-    uid: number;
+    id: number;
 
     @Column({
         type: "varchar",
