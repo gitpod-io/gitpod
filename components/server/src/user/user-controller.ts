@@ -358,9 +358,14 @@ export class UserController {
                 }
             });
 
-            function handleError(e: any, res: express.Response) {
+            function handleError(e: Error | undefined, res: express.Response) {
                 log.info('handleError')
-                log.error(e)
+                if (e) {
+                    log.info(e.message)
+                    log.info('error stack: ', e, e.stack ? e.stack : 'no stack') 
+                } else {
+                    log.info('no error')
+                }
 
                 // @todo clean up error handling
                 if (e instanceof OAuthException) {

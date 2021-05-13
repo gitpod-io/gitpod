@@ -23,12 +23,14 @@ class GitpodAuthorizationServer extends AuthorizationServer {
     log.info(`enableGrantType: ${grantType}:${JSON.stringify(accessTokenTTL)}`)
     super.enableGrantType(grantType, accessTokenTTL);
   }
-  respondToAccessTokenRequest(req: RequestInterface, res: ResponseInterface): Promise<ResponseInterface> {
+  async respondToAccessTokenRequest(req: RequestInterface, res: ResponseInterface): Promise<ResponseInterface> {
     log.info(`respondToAccessTokenRequest: ${JSON.stringify(req.body)}`)
     // const grantType = this.getGrant('authorization_code')
     // log.info(`respond grant type: ${JSON.stringify(grantType)}`)
     // return grantType.respondToAccessTokenRequest(req, res, grantType.accessTokenTTL);
-    return super.respondToAccessTokenRequest(req, res)
+    const result = await super.respondToAccessTokenRequest(req, res)
+    log.info(`respondToAccessTokenRequest returned: ${JSON.stringify(result)}`)
+    return result
   }
   validateAuthorizationRequest(req: RequestInterface): Promise<AuthorizationRequest> {
     log.info(`validateAuthorizationRequest: ${JSON.stringify(req.query)}`)
