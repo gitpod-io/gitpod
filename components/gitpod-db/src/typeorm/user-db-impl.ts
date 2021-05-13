@@ -4,26 +4,28 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import { GitpodToken, GitpodTokenType, Identity, IdentityLookup, Token, TokenEntry, User, UserEnvVar } from "@gitpod/gitpod-protocol";
+import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { DateInterval, OAuthAuthCode, OAuthClient, OAuthScope, OAuthUser } from "@jmondi/oauth2-server";
+import * as crypto from 'crypto';
 import { inject, injectable, postConstruct } from "inversify";
-import { Identity, User, IdentityLookup, Token, TokenEntry, UserEnvVar, GitpodTokenType, GitpodToken } from "@gitpod/gitpod-protocol";
 import { EntityManager, Repository } from "typeorm";
 import * as uuidv4 from 'uuid/v4';
-import { MaybeUser, UserDB, PartialUserUpdate, BUILTIN_WORKSPACE_PROBE_USER_NAME } from "../user-db";
-import { DBUser } from './entity/db-user';
-import { TypeORM } from './typeorm';
-import { DBIdentity } from "./entity/db-identity";
-import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
-import { DBTokenEntry } from "./entity/db-token-entry";
-import { DBUserEnvVar } from "./entity/db-user-env-vars";
+import { BUILTIN_WORKSPACE_PROBE_USER_NAME, MaybeUser, PartialUserUpdate, UserDB } from "../user-db";
 import { DBGitpodToken } from "./entity/db-gitpod-token";
-import { DBWorkspace } from "./entity/db-workspace";
-import { OAuthAuthCode, OAuthClient, OAuthScope, OAuthUser, DateInterval } from "@jmondi/oauth2-server";
+import { DBIdentity } from "./entity/db-identity";
 import { DBOAuth2AuthCodeEntry } from "./entity/db-oauth2-auth-code";
+import { DBTokenEntry } from "./entity/db-token-entry";
+import { DBUser } from './entity/db-user';
+import { DBUserEnvVar } from "./entity/db-user-env-vars";
+import { DBWorkspace } from "./entity/db-workspace";
+import { TypeORM } from './typeorm';
 
 /** HACK ahead: Some entities - namely DBTokenEntry for now - need access to an EncryptionService so we publish it here */
 export let encryptionService: EncryptionService;
 
-const oneHourInFuture = new DateInterval("1h").getEndDate();
+const expiryInFuture = new DateInterval("5m").getEndDate();
 @injectable()
 export class TypeORMUserDBImpl implements UserDB {
 
@@ -152,7 +154,7 @@ export class TypeORMUserDBImpl implements UserDB {
         return result.sort(order);
     }
 
-    public async findUserByGitpodToken(tokenHash: string, tokenType?: GitpodTokenType): Promise<{user: User, token: GitpodToken} | undefined> {
+    public async findUserByGitpodToken(tokenHash: string, tokenType?: GitpodTokenType): Promise<{ user: User, token: GitpodToken } | undefined> {
         const repo = await this.getGitpodTokenRepo();
         const qBuilder = repo.createQueryBuilder('gitpodToken')
             .leftJoinAndSelect("gitpodToken.user", "user");
@@ -167,7 +169,7 @@ export class TypeORMUserDBImpl implements UserDB {
             return;
         }
 
-        return {user: token.user, token};
+        return { user: token.user, token };
     }
 
     public async findAllGitpodTokensOfUser(userId: string): Promise<GitpodToken[]> {
@@ -371,14 +373,16 @@ export class TypeORMUserDBImpl implements UserDB {
         });
     }
     public issueAuthCode(client: OAuthClient, user: OAuthUser | undefined, scopes: OAuthScope[]): OAuthAuthCode {
+        const code = crypto.randomBytes(30).toString('hex');
+        log.info(`issueAuthCode: ${JSON.stringify(client)}, ${JSON.stringify(user)}, ${JSON.stringify(scopes)}, ${code}0w`)
         return {
-            code: "my-super-secret-auth-code",
+            code: code,
             user,
             client,
             redirectUri: "",
             codeChallenge: undefined,
             codeChallengeMethod: undefined,
-            expiresAt: oneHourInFuture,
+            expiresAt: expiryInFuture,
             scopes: [],
         };
     }
