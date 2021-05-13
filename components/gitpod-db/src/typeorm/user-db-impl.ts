@@ -405,7 +405,16 @@ export class TypeORMUserDBImpl implements UserDB {
     // OAuthUserRepository
     public async getUserByCredentials(identifier: string, password?: string, grantType?: GrantIdentifier, client?: OAuthClient): Promise<OAuthUser | undefined> {
         log.info(`getUserByCredentials ${identifier}`)
-        return this.findUserById(identifier);
+        const user = await this.findUserById(identifier);
+        if (user) {
+            log.info(`getUserByCredentials returned: ${user.id}, ${user.name}`)
+            return {
+                id: user.id,
+                name: user.name,
+            };
+        }
+        log.info(`getUserByCredentials returned nothing!`)
+        return;
     }
     public async extraAccessTokenFields?(user: OAuthUser): Promise<ExtraAccessTokenFields | undefined> {
         // No extra fields in token
