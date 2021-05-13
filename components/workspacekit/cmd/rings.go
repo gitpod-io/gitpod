@@ -119,11 +119,11 @@ var ring0Cmd = &cobra.Command{
 			for {
 				sig := <-sigc
 				if sig != unix.SIGTERM {
-					cmd.Process.Signal(sig)
+					_ = cmd.Process.Signal(sig)
 					continue
 				}
 
-				cmd.Process.Signal(unix.SIGTERM)
+				_ = cmd.Process.Signal(unix.SIGTERM)
 				time.Sleep(ring1ShutdownTimeout)
 				if cmd.Process == nil {
 					return
@@ -216,7 +216,7 @@ var ring1Cmd = &cobra.Command{
 		// (cw) I have been able to reproduce this issue without newuidmap/newgidmap.
 		//      See https://gist.github.com/csweichel/3fc9d4b0752367d4a436f969c8685c06
 		runtime.LockOSThread()
-		unix.Prctl(unix.PR_SET_PDEATHSIG, uintptr(unix.SIGKILL), 0, 0, 0)
+		_ = unix.Prctl(unix.PR_SET_PDEATHSIG, uintptr(unix.SIGKILL), 0, 0, 0)
 		runtime.UnlockOSThread()
 
 		ring2Root, err := os.MkdirTemp("", "supervisor")

@@ -34,7 +34,13 @@ func ServeLift(socket string) error {
 	if err != nil {
 		return err
 	}
-	defer skt.Close()
+
+	defer func() {
+		err := skt.Close()
+		if err != nil {
+			log.WithError(err).Error("unexpected error closing listener")
+		}
+	}()
 
 	for {
 		conn, err := skt.Accept()
@@ -59,11 +65,21 @@ func serveLiftClient(conn net.Conn) error {
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-	connfd := int(f.Fd())
+
+	defer func() {
+		err := f.Close()
+		if err != nil {
+			log.WithError(err).Error("unexpected error closing connection")
+		}
+
+		err = conn.Close()
+		if err != nil {
+			log.WithError(err).Error("unexpected error closing connection")
+		}
+	}()
 
 	buf := make([]byte, unix.CmsgSpace(3*4)) // we expect 3 FDs
-	_, _, _, _, err = unix.Recvmsg(connfd, nil, buf, 0)
+	_, _, _, _, err = unix.Recvmsg(int(f.Fd()), nil, buf, 0)
 	if err != nil {
 		return err
 	}
@@ -72,20 +88,19 @@ func serveLiftClient(conn net.Conn) error {
 	if err != nil {
 		return err
 	}
+
 	if len(msgs) != 1 {
 		return fmt.Errorf("expected a single socket control message")
 	}
+
 	fds, err := unix.ParseUnixRights(&msgs[0])
 	if err != nil {
 		return err
 	}
+
 	if len(fds) != 3 {
 		return fmt.Errorf("expected three file descriptors")
 	}
-
-	soutW := os.NewFile(uintptr(fds[0]), "stdout")
-	serrW := os.NewFile(uintptr(fds[1]), "stderr")
-	sinR := os.NewFile(uintptr(fds[2]), "stdin")
 
 	rd := bufio.NewReader(f)
 	line, err := rd.ReadBytes('\n')
@@ -98,6 +113,7 @@ func serveLiftClient(conn net.Conn) error {
 	if err != nil {
 		return err
 	}
+
 	if len(msg.Command) == 0 {
 		return fmt.Errorf("expected non-empty command")
 	}
@@ -108,18 +124,26 @@ func serveLiftClient(conn net.Conn) error {
 	cmd.SysProcAttr = &unix.SysProcAttr{
 		Setpgid: true,
 	}
-	cmd.Stdout = soutW
-	cmd.Stderr = serrW
-	cmd.Stdin = sinR
+	cmd.Stdout = os.NewFile(uintptr(fds[0]), "stdout")
+	cmd.Stderr = os.NewFile(uintptr(fds[1]), "stderr")
+	cmd.Stdin = os.NewFile(uintptr(fds[2]), "stdin")
 
 	err = cmd.Start()
 	if err != nil {
 		return err
 	}
+
 	defer func() {
-		cmd.Process.Kill()
+		err := cmd.Process.Kill()
+		if err != nil && err.Error() != "os: process already finished" {
+			log.WithError(err).Error("unexpected error terminating process")
+		}
 	}()
-	cmd.Wait()
+
+	err = cmd.Wait()
+	if err != nil {
+		log.WithError(err).Error("unexpected error running process")
+	}
 
 	return nil
 }
@@ -129,15 +153,21 @@ func RunCommand(socket string, command []string) error {
 	if err != nil {
 		return err
 	}
+
 	conn := rconn.(*net.UnixConn)
 	f, err := conn.File()
 	if err != nil {
 		return err
 	}
-	defer f.Close()
-	connfd := int(f.Fd())
 
-	err = unix.Sendmsg(connfd, nil, unix.UnixRights(int(os.Stdout.Fd()), int(os.Stderr.Fd()), int(os.Stdin.Fd())), nil, 0)
+	defer func() {
+		err := f.Close()
+		if err != nil {
+			log.WithError(err).Error("unexpected error closing lift connection")
+		}
+	}()
+
+	err = unix.Sendmsg(int(f.Fd()), nil, unix.UnixRights(int(os.Stdout.Fd()), int(os.Stderr.Fd()), int(os.Stdin.Fd())), nil, 0)
 	if err != nil {
 		return err
 	}
@@ -146,10 +176,12 @@ func RunCommand(socket string, command []string) error {
 	if err != nil {
 		return err
 	}
+
 	_, err = conn.Write(msg)
 	if err != nil {
 		return err
 	}
+
 	_, err = conn.Write([]byte{'\n'})
 	if err != nil {
 		return err
