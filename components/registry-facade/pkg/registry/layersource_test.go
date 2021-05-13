@@ -45,7 +45,7 @@ func TestStaticLayerSource(t *testing.T) {
 			t.Fatalf("cannot marshal fixture: %+q", err)
 		}
 
-		err = os.WriteFile("fixtures/layersrc_new.json", out, 0644)
+		err = os.WriteFile("fixtures/layersrc_new.json", out, 0600)
 		if err != nil {
 			t.Fatalf("cannot write fixture: %+q", err)
 		}

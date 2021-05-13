@@ -100,7 +100,7 @@ vscode:
 					t.Fatal(err)
 				}
 
-				err = os.WriteFile(configService.location, []byte(test.Content), 0644)
+				err = os.WriteFile(configService.location, []byte(test.Content), 0600)
 				if err != nil {
 					t.Fatal(err)
 				}

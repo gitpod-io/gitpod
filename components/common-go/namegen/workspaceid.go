@@ -11,8 +11,8 @@ import (
 	"strings"
 )
 
-// GenerateWorkspaceID generates a new workspace ID by randomly choosing
-var WorkspaceIdPattern = regexp.MustCompile(`^[a-z]{3,12}-[a-z]{2,16}-[a-z0-9]{8}$`)
+// WorkspaceIDPattern generates a new workspace ID by randomly choosing
+var WorkspaceIDPattern = regexp.MustCompile(`^[a-z]{3,12}-[a-z]{2,16}-[a-z0-9]{8}$`)
 
 func GenerateWorkspaceID() (string, error) {
 	s1, err := chooseRandomly(colors, 1)

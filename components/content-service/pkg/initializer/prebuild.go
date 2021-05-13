@@ -87,7 +87,7 @@ func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 	if git.IsWorkingCopy(p.Git.Location) {
 		out, err := p.Git.GitWithOutput(ctx, "stash", "push", "-u")
 		if err != nil {
-			var giterr git.GitOpFailedError
+			var giterr git.OpFailedError
 			if errors.As(err, &giterr) && strings.Contains(giterr.Output, "You do not have the initial commit yet") {
 				// git stash push returns a non-zero exit code if the repository does not have a single commit.
 				// In this case that's not an error though, hence we don't want to fail here.

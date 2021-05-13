@@ -63,7 +63,7 @@ func (rs *DirectNoopStorage) SnapshotObject(name string) string {
 // PresignedNoopStorage does nothing
 type PresignedNoopStorage struct{}
 
-func (*PresignedNoopStorage) EnsureExists(ctx context.Context, ownerId string) (err error) {
+func (*PresignedNoopStorage) EnsureExists(ctx context.Context, ownerID string) (err error) {
 	return nil
 }
 

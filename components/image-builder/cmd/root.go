@@ -126,6 +126,7 @@ func (c *tlsConfig) ServerOption() (grpc.ServerOption, error) {
 		ClientAuth:   tls.RequireAndVerifyClientCert,
 		Certificates: []tls.Certificate{certificate},
 		ClientCAs:    certPool,
+		MinVersion:   tls.VersionTLS12,
 	})
 
 	return grpc.Creds(creds), nil

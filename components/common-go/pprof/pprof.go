@@ -57,6 +57,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 		if name == "mutex" {
 			frac, ferr := strconv.ParseInt(r.URL.Query().Get("frac"), 10, 64)
 			if serr == nil && ferr == nil && seconds > 0 && frac > 0 {
+				//nolint:gosec
 				id := rand.Uint32()
 				log.WithField("id", id).WithField("frac", frac).WithField("seconds", seconds).Debug("enabled mutex profiling")
 
@@ -69,6 +70,7 @@ func index(w http.ResponseWriter, r *http.Request) {
 		} else if name == "block" {
 			rate, rerr := strconv.ParseInt(r.URL.Query().Get("rate"), 10, 64)
 			if rerr == nil && rate > 0 && serr == nil && seconds > 0 {
+				//nolint:gosec
 				id := rand.Uint32()
 				log.WithField("id", id).WithField("rate", rate).WithField("seconds", seconds).Debug("enabled mutex block sampling")
 				runtime.SetBlockProfileRate(int(rate))

@@ -72,7 +72,7 @@ func TestBuildTarbalMaxSize(t *testing.T) {
 		}
 		cleanup = append(cleanup, wd)
 
-		err = os.WriteFile(filepath.Join(wd, "content.txt"), make([]byte, test.ContentSize), 0644)
+		err = os.WriteFile(filepath.Join(wd, "content.txt"), make([]byte, test.ContentSize), 0600)
 		if err != nil {
 			t.Errorf("cannot prepare test: %v", err)
 			continue

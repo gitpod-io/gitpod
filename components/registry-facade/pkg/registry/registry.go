@@ -168,6 +168,7 @@ func NewRegistry(cfg Config, newResolver ResolverProvider, reg prometheus.Regist
 			creds := credentials.NewTLS(&tls.Config{
 				Certificates: []tls.Certificate{certificate},
 				RootCAs:      certPool,
+				MinVersion:   tls.VersionTLS12,
 			})
 			opts = append(opts, grpc.WithTransportCredentials(creds))
 			log.

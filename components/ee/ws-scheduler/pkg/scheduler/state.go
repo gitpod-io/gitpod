@@ -58,7 +58,7 @@ type ResourceUsage struct {
 	// Total quantity of resource available on this machine, used or not.
 	Total *res.Quantity
 
-	// Quantity avialable/free on the node in total.
+	// Quantity available/free on the node in total.
 	// This figure is: total - (headlessWorkspaces + regularWorkspaces + allOtherPods)
 	Available *res.Quantity
 

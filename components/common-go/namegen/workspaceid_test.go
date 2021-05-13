@@ -17,7 +17,7 @@ func TestGenerateWorkspaceID(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		if !namegen.WorkspaceIdPattern.MatchString(name) {
+		if !namegen.WorkspaceIDPattern.MatchString(name) {
 			t.Errorf("The workspace id \"%s\" didn't met the expectation.", name)
 		}
 	}

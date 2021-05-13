@@ -238,7 +238,7 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 	tracing.FinishSpan(span, &err)
 }
 
-// DownloadConfig downloads and unmarshales OCIv2 image config, refered to by an OCI descriptor.
+// DownloadConfig downloads and unmarshales OCIv2 image config, referred to by an OCI descriptor.
 func DownloadConfig(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.Descriptor) (cfg *ociv1.Image, err error) {
 	if desc.MediaType != images.MediaTypeDockerSchema2Config &&
 		desc.MediaType != ociv1.MediaTypeImageConfig {
