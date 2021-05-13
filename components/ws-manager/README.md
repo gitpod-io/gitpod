@@ -19,8 +19,7 @@ To run `ws-manager` you need:
 Then run `wsman run --config example-config.json --kubeconfig ~/.kube/config -v`
 
 ### Making changes to the protocol
-First, make sure those changes are really neccesary. We want to keep the interface as trim as possible.
-To make changes, edit `pkg/protocol/core.proto` ideally in a backwards compatible manner. Then run `go generate ./...` in this directory to re-generate the GO and TypeScript protocol implementations.
+Protocol changes are to be made in ws-manager-api component.
 
 ### Interacting with ws-manager
 There's a handy CLI that can be used to interact with a `ws-manager` instance: `wsman client`.
