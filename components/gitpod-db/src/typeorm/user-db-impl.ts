@@ -24,7 +24,7 @@ import { TypeORM } from './typeorm';
 /** HACK ahead: Some entities - namely DBTokenEntry for now - need access to an EncryptionService so we publish it here */
 export let encryptionService: EncryptionService;
 
-const expiryInFuture = new DateInterval("5m");
+const expiryInFuture = new DateInterval("1h");
 @injectable()
 export class TypeORMUserDBImpl implements UserDB {
 
