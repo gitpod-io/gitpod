@@ -374,7 +374,7 @@ export class TypeORMUserDBImpl implements UserDB {
     }
     public issueAuthCode(client: OAuthClient, user: OAuthUser | undefined, scopes: OAuthScope[]): OAuthAuthCode {
         const code = crypto.randomBytes(30).toString('hex');
-        log.info(`issueAuthCode: ${JSON.stringify(client)}, ${JSON.stringify(user)}, ${JSON.stringify(scopes)}, ${code}0w`)
+        log.info(`issueAuthCode: ${JSON.stringify(client)}, ${JSON.stringify(user)}, ${JSON.stringify(scopes)}, ${code}`)
         return {
             code: code,
             user,
@@ -404,11 +404,13 @@ export class TypeORMUserDBImpl implements UserDB {
 
     // OAuthUserRepository
     public async getUserByCredentials(identifier: string, password?: string, grantType?: GrantIdentifier, client?: OAuthClient): Promise<OAuthUser | undefined> {
+        log.info(`getUserByCredentials ${identifier}`)
         return this.findUserById(identifier);
     }
     public async extraAccessTokenFields?(user: OAuthUser): Promise<ExtraAccessTokenFields | undefined> {
         // No extra fields in token
-        return undefined;
+        log.info(`getUserByCredentials ${JSON.stringify(user)}`);
+        return;
     }
 }
 

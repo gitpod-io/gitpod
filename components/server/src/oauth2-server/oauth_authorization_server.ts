@@ -39,7 +39,7 @@ class GitpodAuthorizationServer extends AuthorizationServer {
     return super.completeAuthorizationRequest(authorizationRequest)
   }
   async getClientByIdentifier(clientId: string): Promise<OAuthClient> {
-    log.info(`getByIdentifier: ${clientId}`)
+    log.info(`getClientByIdentifier: ${clientId}`)
     // this is a little hacky but it is not exposed by the lib
     return clientRepository.getByIdentifier(clientId);
   }
