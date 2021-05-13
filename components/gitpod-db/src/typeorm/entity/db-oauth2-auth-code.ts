@@ -4,11 +4,12 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from "typeorm";
-import { OAuthAuthCode, OAuthScope, OAuthClient } from "@jmondi/oauth2-server";
+import { OAuthAuthCode, OAuthClient, OAuthScope } from "@jmondi/oauth2-server";
+import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Transformer } from "../transformer";
 import { DBUser } from "./db-user";
 
-@Entity({name: 'd_b_oauth2_auth_code_entry'})
+@Entity({ name: 'd_b_oauth2_auth_code_entry' })
 export class DBOAuth2AuthCodeEntry implements OAuthAuthCode {
     @PrimaryGeneratedColumn()
     id: number;
@@ -22,15 +23,17 @@ export class DBOAuth2AuthCodeEntry implements OAuthAuthCode {
     @Column({
         type: "varchar",
         length: 1024,
+        default: '',
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
     })
-    redirectURI: string;
+    redirectURI?: string;
 
     @Column({
         type: "varchar",
         length: 128,
     })
     codeChallenge: string
-    
+
     @Column({
         type: "varchar",
         length: 10,
@@ -38,7 +41,7 @@ export class DBOAuth2AuthCodeEntry implements OAuthAuthCode {
     codeChallengeMethod: string
 
     @Column({
-        type: 'timestamp', 
+        type: 'timestamp',
         precision: 6
     })
     expiresAt: Date;
