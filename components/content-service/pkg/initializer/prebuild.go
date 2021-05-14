@@ -110,7 +110,12 @@ func (p *PrebuildInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 		// If any of these cleanup operations fail that's no reason to fail ws initialization.
 		// It just results in a slightly degraded state.
 		if didStash {
-			_ = p.Git.Git(ctx, "stash", "pop")
+			err = p.Git.Git(ctx, "stash", "pop")
+			if err != nil {
+				// If restoring the stashed changes produces merge conflicts on the new Git ref, simply
+				// throw them away (they'll remain in the stash, but are likely outdated anyway).
+				_ = p.Git.Git(ctx, "reset", "--hard")
+			}
 		}
 
 		log.Debug("prebuild initializer Git operations complete")
