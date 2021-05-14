@@ -36,7 +36,7 @@ import { OneTimeSecretServer } from '../one-time-secret-server';
 import { createAuthorizationServer } from '../oauth2-server/oauth-authorization-server';
 import { OAuthException, OAuthRequest, OAuthResponse } from '@jmondi/oauth2-server';
 import { localAppClientID } from '../oauth2-server/db';
-import { AuthCodeRepositoryDB } from '@gitpod/gitpod-db/src/typeorm/auth-code-repository-db';
+import { AuthCodeRepositoryDB } from '@gitpod/gitpod-db/lib/typeorm/auth-code-repository-db';
 
 @injectable()
 export class UserController {
