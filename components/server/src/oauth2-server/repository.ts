@@ -8,7 +8,7 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { DateInterval, GrantIdentifier, OAuthClient, OAuthClientRepository, OAuthScope, OAuthScopeRepository, OAuthToken, OAuthTokenRepository, OAuthUser } from "@jmondi/oauth2-server";
 import { inMemoryDatabase } from "./db";
 
-const oneHourInFuture = new DateInterval("1h").getEndDate();
+export const expiryInFuture = new DateInterval("1h");
 
 export const inMemoryClientRepository: OAuthClientRepository = {
     async getByIdentifier(clientId: string): Promise<OAuthClient> {
@@ -55,10 +55,11 @@ export const inMemoryAccessTokenRepository: OAuthTokenRepository = {
         inMemoryDatabase.tokens[accessToken.accessToken] = token;
     },
     async issueToken(client: OAuthClient, scopes: OAuthScope[], user: OAuthUser): Promise<OAuthToken> {
-        log.info(`issueToken ${JSON.stringify(oneHourInFuture)}`)
+        const expiry = expiryInFuture.getEndDate();
+        log.info(`issueToken ${JSON.stringify(expiry)}`)
         return <OAuthToken>{
             accessToken: "new token",
-            accessTokenExpiresAt: oneHourInFuture,
+            accessTokenExpiresAt: expiry,
             client,
             user,
             scopes: [],

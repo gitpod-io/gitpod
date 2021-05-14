@@ -33,9 +33,10 @@ import * as uuidv4 from 'uuid/v4';
 import { DBUser } from "@gitpod/gitpod-db";
 import { ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from '../one-time-secret-server';
-import { createAuthorizationServer } from '../oauth2-server/oauth_authorization_server';
+import { createAuthorizationServer } from '../oauth2-server/oauth-authorization-server';
 import { OAuthException, OAuthRequest, OAuthResponse } from '@jmondi/oauth2-server';
 import { localAppClientID } from '../oauth2-server/db';
+import { dbAuthCodeRepository } from '../oauth2-server/db-auth-code-repository';
 
 @injectable()
 export class UserController {
@@ -274,7 +275,7 @@ export class UserController {
                 res.redirect(`http://${rt}/?ots=${encodeURI(ots.token)}`);
             });
 
-            const authorizationServer = createAuthorizationServer(this.userDb, this.userDb);
+            const authorizationServer = createAuthorizationServer(dbAuthCodeRepository, this.userDb);
 
             router.get("/local-app/authorize", async (req: express.Request, res: express.Response) => {
                 log.info(`AUTHORIZE: ${JSON.stringify(req.query)}`);

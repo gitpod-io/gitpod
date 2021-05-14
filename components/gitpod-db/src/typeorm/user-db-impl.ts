@@ -7,14 +7,13 @@
 import { GitpodToken, GitpodTokenType, Identity, IdentityLookup, Token, TokenEntry, User, UserEnvVar } from "@gitpod/gitpod-protocol";
 import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { DateInterval, ExtraAccessTokenFields, GrantIdentifier, OAuthAuthCode, OAuthClient, OAuthScope, OAuthUser } from "@jmondi/oauth2-server";
+import { ExtraAccessTokenFields, GrantIdentifier, OAuthClient, OAuthUser } from "@jmondi/oauth2-server";
 import { inject, injectable, postConstruct } from "inversify";
 import { EntityManager, Repository } from "typeorm";
 import * as uuidv4 from 'uuid/v4';
 import { BUILTIN_WORKSPACE_PROBE_USER_NAME, MaybeUser, PartialUserUpdate, UserDB } from "../user-db";
 import { DBGitpodToken } from "./entity/db-gitpod-token";
 import { DBIdentity } from "./entity/db-identity";
-import { DBOAuth2AuthCodeEntry } from "./entity/db-oauth2-auth-code";
 import { DBTokenEntry } from "./entity/db-token-entry";
 import { DBUser } from './entity/db-user';
 import { DBUserEnvVar } from "./entity/db-user-env-vars";
@@ -24,7 +23,6 @@ import { TypeORM } from './typeorm';
 /** HACK ahead: Some entities - namely DBTokenEntry for now - need access to an EncryptionService so we publish it here */
 export let encryptionService: EncryptionService;
 
-const expiryInFuture = new DateInterval("1h");
 @injectable()
 export class TypeORMUserDBImpl implements UserDB {
 
@@ -356,59 +354,6 @@ export class TypeORMUserDBImpl implements UserDB {
     }
 
     // OAuthAuthCodeRepository
-    async getOauth2AuthCodeRepo(): Promise<Repository<DBOAuth2AuthCodeEntry>> {
-        return (await this.getEntityManager()).getRepository<DBOAuth2AuthCodeEntry>(DBOAuth2AuthCodeEntry);
-    }
-
-    public async getByIdentifier(authCodeCode: string): Promise<OAuthAuthCode> {
-        log.info(`getByIdentifier ${authCodeCode}`)
-        const authCodeRepo = await this.getOauth2AuthCodeRepo();
-        const authCode = await authCodeRepo.findOne({ code: authCodeCode})
-        return new Promise<OAuthAuthCode>((resolve, reject) => {
-            if (authCode) {
-                log.info(`getByIdentifier found ${authCodeCode} ${JSON.stringify(authCode)}`)
-                resolve(authCode);
-            } else {
-                log.info(`getByIdentifier failed to find ${authCodeCode}`)
-                reject(`authentication code not found`);
-            }
-        });
-    }
-    public issueAuthCode(client: OAuthClient, user: OAuthUser | undefined, scopes: OAuthScope[]): OAuthAuthCode {
-        const code = 'some secret code' // crypto.randomBytes(30).toString('hex');
-        log.info(`issueAuthCode: ${JSON.stringify(client)}, ${JSON.stringify(user)}, ${JSON.stringify(scopes)}, ${code}`)
-        return {
-            code: code,
-            user,
-            client,
-            redirectUri: "",
-            codeChallenge: undefined,
-            codeChallengeMethod: undefined,
-            expiresAt: expiryInFuture.getEndDate(),
-            scopes: [],
-        };
-    }
-    public async persist(authCode: OAuthAuthCode): Promise<void> {
-        log.info(`persist auth ${JSON.stringify(authCode)}`)
-        const authCodeRepo = await this.getOauth2AuthCodeRepo();
-        authCodeRepo.save(authCode);
-    }
-    public async isRevoked(authCodeCode: string): Promise<boolean> {
-        log.info(`isRevoked auth ${authCodeCode}`)
-        const authCode = await this.getByIdentifier(authCodeCode);
-        log.info(`isRevoked authCode ${authCodeCode} ${JSON.stringify(authCode)}`)
-        return Date.now() > authCode.expiresAt.getTime();
-    }
-    public async revoke(authCodeCode: string): Promise<void> {
-        log.info(`revoke auth ${authCodeCode}`)
-        const authCode = await this.getByIdentifier(authCodeCode);
-        if (authCode) {
-            log.info(`revoke auth ${authCodeCode} ${JSON.stringify(authCode)}`)
-            authCode.expiresAt = new Date(0);
-            return this.persist(authCode)
-        }
-    }
-
     // OAuthUserRepository
     public async getUserByCredentials(identifier: string, password?: string, grantType?: GrantIdentifier, client?: OAuthClient): Promise<OAuthUser | undefined> {
         log.info(`getUserByCredentials ${identifier}`)
@@ -428,6 +373,8 @@ export class TypeORMUserDBImpl implements UserDB {
         log.info(`getUserByCredentials ${JSON.stringify(user)}`);
         return;
     }
+
+    // OAuthTokenRepository
 }
 
 export class TransactionalUserDBImpl extends TypeORMUserDBImpl {
