@@ -25,5 +25,5 @@
     "include": [
         "src",
         "ee/src"
-    ]
+, "../gitpod-db/src/typeorm/db-auth-code-repository.ts"    ]
 }

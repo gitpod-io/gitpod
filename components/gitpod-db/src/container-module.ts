@@ -35,6 +35,7 @@ import { TermsAcceptanceDBImpl } from './typeorm/terms-acceptance-db-impl';
 import { CodeSyncResourceDB } from './typeorm/code-sync-resource-db';
 import { WorkspaceClusterDBImpl } from './typeorm/workspace-cluster-db-impl';
 import { WorkspaceClusterDB } from './workspace-cluster-db';
+import { AuthCodeRepositoryDB } from './typeorm/auth-code-repository-db';
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
@@ -89,4 +90,6 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
     bind(CodeSyncResourceDB).toSelf().inSingletonScope();
 
     bind(WorkspaceClusterDB).to(WorkspaceClusterDBImpl).inSingletonScope();
+
+    bind(AuthCodeRepositoryDB).toSelf().inSingletonScope();
 });

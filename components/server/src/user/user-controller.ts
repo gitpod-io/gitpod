@@ -36,7 +36,7 @@ import { OneTimeSecretServer } from '../one-time-secret-server';
 import { createAuthorizationServer } from '../oauth2-server/oauth-authorization-server';
 import { OAuthException, OAuthRequest, OAuthResponse } from '@jmondi/oauth2-server';
 import { localAppClientID } from '../oauth2-server/db';
-import { dbAuthCodeRepository } from '../oauth2-server/db-auth-code-repository';
+import { AuthCodeRepositoryDB } from '@gitpod/gitpod-db/src/typeorm/auth-code-repository-db';
 
 @injectable()
 export class UserController {
@@ -275,6 +275,7 @@ export class UserController {
                 res.redirect(`http://${rt}/?ots=${encodeURI(ots.token)}`);
             });
 
+            const dbAuthCodeRepository = new AuthCodeRepositoryDB();
             const authorizationServer = createAuthorizationServer(dbAuthCodeRepository, this.userDb);
 
             router.get("/local-app/authorize", async (req: express.Request, res: express.Response) => {

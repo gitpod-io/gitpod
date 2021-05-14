@@ -10,10 +10,10 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { OAuthAuthCode, OAuthAuthCodeRepository, OAuthClient, OAuthScope, OAuthUser } from "@jmondi/oauth2-server";
 import { inject, injectable } from "inversify";
 import { EntityManager, Repository } from "typeorm";
-import { expiryInFuture } from './repository';
+import { expiryInFuture } from '../../../server/src/oauth2-server/repository';
 
 @injectable()
-class DBAuthCodeRepository implements OAuthAuthCodeRepository {
+export class AuthCodeRepositoryDB implements OAuthAuthCodeRepository {
 
     @inject(TypeORM) protected readonly typeorm: TypeORM;
 
@@ -74,5 +74,3 @@ class DBAuthCodeRepository implements OAuthAuthCodeRepository {
         }
     }
 }
-
-export const dbAuthCodeRepository = new DBAuthCodeRepository();
