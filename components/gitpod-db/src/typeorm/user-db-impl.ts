@@ -363,7 +363,7 @@ export class TypeORMUserDBImpl implements UserDB {
     public async getByIdentifier(authCodeCode: string): Promise<OAuthAuthCode> {
         log.info(`getByIdentifier ${authCodeCode}`)
         const authCodeRepo = await this.getOauth2AuthCodeRepo();
-        const authCode = await authCodeRepo.findOneById(authCodeCode)
+        const authCode = await authCodeRepo.findOne({ code: authCodeCode})
         return new Promise<OAuthAuthCode>((resolve, reject) => {
             if (authCode) {
                 log.info(`getByIdentifier found ${authCodeCode} ${JSON.stringify(authCode)}`)
