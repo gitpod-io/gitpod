@@ -93,14 +93,24 @@ scripts:
     srcs:
       - components/**/*
     script: |
-      COMPONENTS=( content-service-api image-builder-api registry-facade-api supervisor-api ws-daemon-api ws-manager-api ws-manager-bridge-api )
+      GO_COMPONENTS=( content-service-api image-builder-api registry-facade-api supervisor-api ws-daemon-api ws-manager-api ws-manager-bridge-api )
 
-      for COMPONENT in "${COMPONENTS[@]}";do
+      for COMPONENT in "${GO_COMPONENTS[@]}";do
         echo "Generating code for component $COMPONENT..."
         pushd $COMPONENT > /dev/null
         ./generate.sh
         popd > /dev/null
       done
+
+      WEB_COMPONENTS=( supervisor-api/typescript-grpc supervisor-api/typescript-rest supervisor-api/typescript-grpcweb )
+      for COMPONENT in "${WEB_COMPONENTS[@]}";do
+        echo "Generating code for component $COMPONENT..."
+        pushd $COMPONENT > /dev/null
+        yarn install
+        ./build.sh
+        popd > /dev/null
+      done
+
   - name: update-go-modules
     srcs:
       - components/**/*
