@@ -4,22 +4,23 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { TypeORM } from './typeorm';
-import { DBOAuth2AuthCodeEntry } from './entity/db-oauth2-auth-code';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { DateInterval, OAuthAuthCode, OAuthAuthCodeRepository, OAuthClient, OAuthScope, OAuthUser } from "@jmondi/oauth2-server";
 import { inject, injectable } from "inversify";
 import { EntityManager, Repository } from "typeorm";
+import { DBOAuth2AuthCodeEntry } from './entity/db-oauth2-auth-code';
+import { TypeORM } from './typeorm';
 
 const expiryInFuture = new DateInterval("1h");
 
 @injectable()
 export class AuthCodeRepositoryDB implements OAuthAuthCodeRepository {
 
-    @inject(TypeORM) protected readonly typeorm: TypeORM;
+    @inject(TypeORM)
+    private readonly typeORM: TypeORM;
 
     protected async getEntityManager(): Promise<EntityManager> {
-        return (await this.typeorm.getConnection()).manager;
+        return (await this.typeORM.getConnection()).manager;
     }
 
     async getOauth2AuthCodeRepo(): Promise<Repository<DBOAuth2AuthCodeEntry>> {

@@ -54,6 +54,7 @@ export class UserController {
     @inject(SessionHandlerProvider) protected readonly sessionHandlerProvider: SessionHandlerProvider;
     @inject(LoginCompletionHandler) protected readonly loginCompletionHandler: LoginCompletionHandler;
     @inject(OneTimeSecretServer) protected readonly otsServer: OneTimeSecretServer;
+    @inject(AuthCodeRepositoryDB) protected readonly authCodeRepositoryDb: AuthCodeRepositoryDB;
 
     get apiRouter(): express.Router {
         const router = express.Router();
@@ -275,8 +276,7 @@ export class UserController {
                 res.redirect(`http://${rt}/?ots=${encodeURI(ots.token)}`);
             });
 
-            const dbAuthCodeRepository = new AuthCodeRepositoryDB();
-            const authorizationServer = createAuthorizationServer(dbAuthCodeRepository, this.userDb);
+            const authorizationServer = createAuthorizationServer(this.authCodeRepositoryDb, this.userDb);
 
             router.get("/local-app/authorize", async (req: express.Request, res: express.Response) => {
                 log.info(`AUTHORIZE: ${JSON.stringify(req.query)}`);
