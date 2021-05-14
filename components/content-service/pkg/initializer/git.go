@@ -93,12 +93,13 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 
 	// checkout branch
 	if ws.TargetMode == RemoteBranch {
-		// create local branch based on remote
+		// create local branch based on specific remote branch
 		if err := ws.Git(ctx, "checkout", "-B", ws.CloneTarget, "origin/"+ws.CloneTarget); err != nil {
 			return err
 		}
 	} else if ws.TargetMode == LocalBranch {
-		if err := ws.Git(ctx, "checkout", "-b", ws.CloneTarget); err != nil {
+		// checkout local branch based on remote HEAD
+		if err := ws.Git(ctx, "checkout", "-B", ws.CloneTarget, "origin/HEAD"); err != nil {
 			return err
 		}
 	} else if ws.TargetMode == RemoteCommit {
@@ -106,8 +107,11 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 		if err := ws.Git(ctx, "checkout", ws.CloneTarget); err != nil {
 			return err
 		}
-	} else { //nolint:staticcheck
-		// nothing to do - we're already on the remote branch
+	} else {
+		// update to remote HEAD
+		if err := ws.Git(ctx, "reset", "--hard", "origin/HEAD"); err != nil {
+			return err
+		}
 	}
 	return nil
 }
