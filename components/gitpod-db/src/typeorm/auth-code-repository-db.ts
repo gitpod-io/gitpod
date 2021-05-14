@@ -5,12 +5,13 @@
  */
 
 import { TypeORM } from '@gitpod/gitpod-db';
-import { DBOAuth2AuthCodeEntry } from '@gitpod/gitpod-db/lib/typeorm/entity/db-oauth2-auth-code';
+import { DBOAuth2AuthCodeEntry } from './entity/db-oauth2-auth-code';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { OAuthAuthCode, OAuthAuthCodeRepository, OAuthClient, OAuthScope, OAuthUser } from "@jmondi/oauth2-server";
+import { DateInterval, OAuthAuthCode, OAuthAuthCodeRepository, OAuthClient, OAuthScope, OAuthUser } from "@jmondi/oauth2-server";
 import { inject, injectable } from "inversify";
 import { EntityManager, Repository } from "typeorm";
-import { expiryInFuture } from '../../../server/src/oauth2-server/repository';
+
+const expiryInFuture = new DateInterval("1h");
 
 @injectable()
 export class AuthCodeRepositoryDB implements OAuthAuthCodeRepository {

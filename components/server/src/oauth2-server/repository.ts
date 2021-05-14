@@ -8,7 +8,7 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { DateInterval, GrantIdentifier, OAuthClient, OAuthClientRepository, OAuthScope, OAuthScopeRepository, OAuthToken, OAuthTokenRepository, OAuthUser } from "@jmondi/oauth2-server";
 import { inMemoryDatabase } from "./db";
 
-export const expiryInFuture = new DateInterval("1h");
+const expiryInFuture = new DateInterval("1h");
 
 export const inMemoryClientRepository: OAuthClientRepository = {
     async getByIdentifier(clientId: string): Promise<OAuthClient> {
