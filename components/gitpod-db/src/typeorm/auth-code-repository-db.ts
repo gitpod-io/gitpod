@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { TypeORM } from '@gitpod/gitpod-db';
+import { TypeORM } from './typeorm';
 import { DBOAuth2AuthCodeEntry } from './entity/db-oauth2-auth-code';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { DateInterval, OAuthAuthCode, OAuthAuthCodeRepository, OAuthClient, OAuthScope, OAuthUser } from "@jmondi/oauth2-server";
