@@ -12,19 +12,23 @@ const oneHourInFuture = new DateInterval("1h").getEndDate();
 
 export const inMemoryClientRepository: OAuthClientRepository = {
     async getByIdentifier(clientId: string): Promise<OAuthClient> {
-        log.info(`getByIdentifier: ${JSON.stringify(inMemoryDatabase.clients)}`)
+        log.info(`getByIdentifier: ${clientId}:${JSON.stringify(inMemoryDatabase.clients)}`)
         return inMemoryDatabase.clients[clientId];
     },
 
     async isClientValid(grantType: GrantIdentifier, client: OAuthClient, clientSecret?: string): Promise<boolean> {
+        log.info(`isClientValid: ${JSON.stringify(client)}:${clientSecret}`)
         if (client.secret !== clientSecret) {
+            log.info(`isClientValid: bad secret`)
             return false;
         }
 
         if (!client.allowedGrants.includes(grantType)) {
+            log.info(`isClientValid: bad grant`)
             return false;
         }
 
+        log.info(`isClientValid: yes`)
         return true;
     },
 };

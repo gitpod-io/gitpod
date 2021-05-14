@@ -361,12 +361,15 @@ export class TypeORMUserDBImpl implements UserDB {
     }
 
     public async getByIdentifier(authCodeCode: string): Promise<OAuthAuthCode> {
+        log.info(`getByIdentifier ${authCodeCode}`)
         const authCodeRepo = await this.getOauth2AuthCodeRepo();
         const authCode = await authCodeRepo.findOneById(authCodeCode)
         return new Promise<OAuthAuthCode>((resolve, reject) => {
             if (authCode) {
+                log.info(`getByIdentifier found ${authCodeCode} ${JSON.stringify(authCode)}`)
                 resolve(authCode);
             } else {
+                log.info(`getByIdentifier not found ${authCodeCode}`)
                 reject();
             }
         });
@@ -386,16 +389,21 @@ export class TypeORMUserDBImpl implements UserDB {
         };
     }
     public async persist(authCode: OAuthAuthCode): Promise<void> {
+        log.info(`persist auth ${JSON.stringify(authCode)}`)
         const authCodeRepo = await this.getOauth2AuthCodeRepo();
         authCodeRepo.save(authCode);
     }
     public async isRevoked(authCodeCode: string): Promise<boolean> {
+        log.info(`isRevoked auth ${authCodeCode}`)
         const authCode = await this.getByIdentifier(authCodeCode);
+        log.info(`isRevoked authCode ${authCodeCode} ${JSON.stringify(authCode)}`)
         return Date.now() > authCode.expiresAt.getTime();
     }
     public async revoke(authCodeCode: string): Promise<void> {
+        log.info(`revoke auth ${authCodeCode}`)
         const authCode = await this.getByIdentifier(authCodeCode);
         if (authCode) {
+            log.info(`revoke auth ${authCodeCode} ${JSON.stringify(authCode)}`)
             authCode.expiresAt = new Date(0);
             return this.persist(authCode)
         }
