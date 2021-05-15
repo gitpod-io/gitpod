@@ -6,7 +6,7 @@
 
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { DateInterval, OAuthAuthCode, OAuthAuthCodeRepository, OAuthClient, OAuthScope, OAuthUser } from "@jmondi/oauth2-server";
-// import * as crypto from 'crypto';
+import * as crypto from 'crypto';
 import { inject, injectable } from "inversify";
 import { EntityManager, Repository } from "typeorm";
 import { DBOAuth2AuthCodeEntry } from './entity/db-oauth2-auth-code';
@@ -47,7 +47,7 @@ export class AuthCodeRepositoryDB implements OAuthAuthCodeRepository {
         });
     }
     public issueAuthCode(client: OAuthClient, user: OAuthUser | undefined, scopes: OAuthScope[]): OAuthAuthCode {
-        const code = 'some secret code'; // crypto.randomBytes(30).toString('hex');
+        const code = crypto.randomBytes(30).toString('hex');
         log.info(`issueAuthCode: ${JSON.stringify(client)}, ${JSON.stringify(user)}, ${JSON.stringify(scopes)}, ${code}`);
         return {
             code: code,
