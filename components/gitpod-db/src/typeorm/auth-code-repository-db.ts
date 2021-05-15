@@ -6,6 +6,7 @@
 
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { DateInterval, OAuthAuthCode, OAuthAuthCodeRepository, OAuthClient, OAuthScope, OAuthUser } from "@jmondi/oauth2-server";
+// import * as crypto from 'crypto';
 import { inject, injectable } from "inversify";
 import { EntityManager, Repository } from "typeorm";
 import { DBOAuth2AuthCodeEntry } from './entity/db-oauth2-auth-code';
@@ -30,7 +31,11 @@ export class AuthCodeRepositoryDB implements OAuthAuthCodeRepository {
     public async getByIdentifier(authCodeCode: string): Promise<OAuthAuthCode> {
         log.info(`getByIdentifier ${authCodeCode}`);
         const authCodeRepo = await this.getOauth2AuthCodeRepo();
-        const authCode = await authCodeRepo.findOne({ code: authCodeCode });
+        const authCodes = await authCodeRepo.find({ code: authCodeCode });
+        log.info(`getByIdentifier pre: ${JSON.stringify(authCodes)}`);
+        authCodes.filter(te => (new Date(te.expiresAt)).getTime() < Date.now());
+        log.info(`getByIdentifier post: ${JSON.stringify(authCodes)}`);
+        const authCode = authCodes.length > 0 ? authCodes[0] : undefined;
         return new Promise<OAuthAuthCode>((resolve, reject) => {
             if (authCode) {
                 log.info(`getByIdentifier found ${authCodeCode} ${JSON.stringify(authCode)}`);
