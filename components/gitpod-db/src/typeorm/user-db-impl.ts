@@ -7,7 +7,7 @@
 import { GitpodToken, GitpodTokenType, Identity, IdentityLookup, Token, TokenEntry, User, UserEnvVar } from "@gitpod/gitpod-protocol";
 import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { ExtraAccessTokenFields, GrantIdentifier, OAuthClient, OAuthUser } from "@jmondi/oauth2-server";
+import { DateInterval, ExtraAccessTokenFields, GrantIdentifier, OAuthClient, OAuthScope, OAuthToken, OAuthUser } from "@jmondi/oauth2-server";
 import { inject, injectable, postConstruct } from "inversify";
 import { EntityManager, Repository } from "typeorm";
 import * as uuidv4 from 'uuid/v4';
@@ -19,6 +19,8 @@ import { DBUser } from './entity/db-user';
 import { DBUserEnvVar } from "./entity/db-user-env-vars";
 import { DBWorkspace } from "./entity/db-workspace";
 import { TypeORM } from './typeorm';
+
+const expiryInFuture = new DateInterval("1h");
 
 /** HACK ahead: Some entities - namely DBTokenEntry for now - need access to an EncryptionService so we publish it here */
 export let encryptionService: EncryptionService;
@@ -375,6 +377,67 @@ export class TypeORMUserDBImpl implements UserDB {
     }
 
     // OAuthTokenRepository
+    async issueToken(client: OAuthClient, scopes: OAuthScope[], user?: OAuthUser): Promise<OAuthToken> {
+        const expiry = expiryInFuture.getEndDate();
+        log.info(`issueToken ${JSON.stringify(expiry)}`)
+        return <OAuthToken>{
+            accessToken: "new token",
+            accessTokenExpiresAt: expiry,
+            client,
+            user,
+            scopes: [],
+        };
+    }
+    async issueRefreshToken(accessToken: OAuthToken): Promise<OAuthToken> {
+        accessToken.refreshToken = "refreshtokentoken";
+        accessToken.refreshTokenExpiresAt = new DateInterval("1h").getEndDate();
+        await this.persist(accessToken);
+        return accessToken;
+    }
+    async persist(accessToken: OAuthToken): Promise<void> {
+        log.info(`persist access token ${JSON.stringify(accessToken)}`);
+        var scopes: string[] = [];
+        for (const scope of accessToken.scopes) {
+            scopes.concat(scope.name);
+        }
+        const entry: TokenEntry = {
+            uid: uuidv4(),
+            authProviderId: "Gitpod",
+            authId: "Gitpod-OAuth-1.0",
+            token: {
+                value: accessToken.accessToken,
+                scopes: scopes,
+                expiryDate: accessToken.accessTokenExpiresAt.toISOString(),
+                refreshToken: accessToken.refreshToken,
+            },
+            expiryDate: accessToken.accessTokenExpiresAt.toISOString(),
+            refreshable: !!accessToken.refreshToken,
+        };
+        log.info(`persist access token save: ${JSON.stringify(entry)}`);
+        const repo = await this.getTokenRepo();
+        await repo.save(entry);
+    }
+    async revoke(accessTokenToken: OAuthToken): Promise<void> {
+        log.info(`revoke ${JSON.stringify(accessTokenToken)}`);
+        const repo = await this.getTokenRepo();
+        const tokenEntry = await repo.createQueryBuilder('by-token-value')
+        .where('d_b_token_entry.token ::jsonb @> :token', {
+            token: {
+                token: accessTokenToken.accessToken
+            }
+        })
+        .getOne();
+        if (tokenEntry) {
+            tokenEntry.expiryDate = new Date(0).toISOString();
+            await repo.save(tokenEntry);
+        }
+    }
+    async isRefreshTokenRevoked(refreshToken: OAuthToken): Promise<boolean> {
+        return Date.now() > (refreshToken.refreshTokenExpiresAt?.getTime() ?? 0);
+    }
+    async getByRefreshToken(refreshTokenToken: string): Promise<OAuthToken> {
+        throw new Error("Not implemented");
+    }
 }
 
 export class TransactionalUserDBImpl extends TypeORMUserDBImpl {
