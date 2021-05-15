@@ -428,7 +428,8 @@ export class TypeORMUserDBImpl implements UserDB {
         })
         .getOne();
         if (tokenEntry) {
-            tokenEntry.expiryDate = new Date(0).toISOString();
+            // Set date to earliest timestamp that MySQL allows
+            tokenEntry.expiryDate = new Date(1000).toISOString();
             await repo.save(tokenEntry);
         }
     }

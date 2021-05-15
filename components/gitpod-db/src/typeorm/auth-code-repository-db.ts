@@ -71,7 +71,8 @@ export class AuthCodeRepositoryDB implements OAuthAuthCodeRepository {
         const authCode = await this.getByIdentifier(authCodeCode);
         if (authCode) {
             log.info(`revoke auth ${authCodeCode} ${JSON.stringify(authCode)}`);
-            authCode.expiresAt = new Date(0);
+            // Set date to earliest timestamp that MySQL allows
+            authCode.expiresAt = new Date(1000);
             return this.persist(authCode);
         }
     }
