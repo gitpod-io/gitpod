@@ -31,9 +31,9 @@ export class AuthCodeRepositoryDB implements OAuthAuthCodeRepository {
     public async getByIdentifier(authCodeCode: string): Promise<OAuthAuthCode> {
         log.info(`getByIdentifier ${authCodeCode}`);
         const authCodeRepo = await this.getOauth2AuthCodeRepo();
-        const authCodes = await authCodeRepo.find({ code: authCodeCode });
+        let authCodes = await authCodeRepo.find({ code: authCodeCode });
         log.info(`getByIdentifier pre: ${JSON.stringify(authCodes)}`);
-        authCodes.filter(te => (new Date(te.expiresAt)).getTime() > Date.now());
+        authCodes = authCodes.filter(te => (new Date(te.expiresAt)).getTime() > Date.now());
         log.info(`getByIdentifier post: ${JSON.stringify(authCodes)}`);
         const authCode = authCodes.length > 0 ? authCodes[0] : undefined;
         return new Promise<OAuthAuthCode>((resolve, reject) => {
