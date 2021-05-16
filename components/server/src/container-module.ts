@@ -74,6 +74,7 @@ import { IDEPluginServiceClient } from '@gitpod/content-service/lib/ideplugin_gr
 import { GitTokenScopeGuesser } from './workspace/git-token-scope-guesser';
 import { GitTokenValidator } from './workspace/git-token-validator';
 import { newAnalyticsWriterFromEnv, IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/util/analytics';
+import { OAuthController } from './oauth2-server/oauth-controller';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Env).toSelf().inSingletonScope();
@@ -188,4 +189,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(CodeSyncService).toSelf().inSingletonScope();
 
     bind(IAnalyticsWriter).toDynamicValue(newAnalyticsWriterFromEnv).inSingletonScope();
+    
+    bind(OAuthController).toSelf().inSingletonScope();
 });
