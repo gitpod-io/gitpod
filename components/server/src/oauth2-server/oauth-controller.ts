@@ -48,7 +48,7 @@ export class OAuthController {
                 // Let the local app know they rejected the approval
                 const rt = req.query.redirect_uri;
                 if (!rt || !rt.startsWith("http://localhost:")) {
-                    log.error(`/local-app/authorize: invalid returnTo URL: "${rt}"`)
+                    log.error(`/oauth/authorize: invalid returnTo URL: "${rt}"`)
                     res.sendStatus(400);
                     return;
                 }
@@ -67,7 +67,7 @@ export class OAuthController {
                     res.redirect(redirectTo)
                     return;
                 } else {
-                    log.error(`/local-app/authorize unknown client id: "${clientID}"`)
+                    log.error(`/oauth/authorize unknown client id: "${clientID}"`)
                     res.sendStatus(400);
                     return;
                 }

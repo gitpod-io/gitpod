@@ -104,8 +104,8 @@ const getSafeURLRedirect = (source?: string) => {
     const returnToURL: string | null = new URLSearchParams(source ? source : window.location.search).get("returnTo");
     console.log(`getSafeURLRedirect: ${returnToURL} | ${window.location} | ${source}`);
     if (returnToURL) {
-        // Only allow local-app on the same host
-        if (returnToURL.toLowerCase().startsWith(`${window.location.protocol}//${window.location.host}/api/local-app/`.toLowerCase())) {
+        // Only allow oauth on the same host
+        if (returnToURL.toLowerCase().startsWith(`${window.location.protocol}//${window.location.host}/api/oauth/`.toLowerCase())) {
             return returnToURL;
         }
     }
