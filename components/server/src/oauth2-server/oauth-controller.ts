@@ -1,3 +1,9 @@
+/**
+ * Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+ * Licensed under the GNU Affero General Public License (AGPL).
+ * See License-AGPL.txt in the project root for license information.
+ */
+
 import { AuthCodeRepositoryDB } from '@gitpod/gitpod-db/lib/typeorm/auth-code-repository-db';
 import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
 import { User } from "@gitpod/gitpod-protocol";
