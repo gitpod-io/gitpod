@@ -215,8 +215,8 @@ func main() {
 		ClientSecret: "gplctl-1.0-secret", // Required (even though it is marked as optional?!)
 		Scopes:       []string{"function:getWorkspace"},
 		Endpoint: oauth2.Endpoint{
-			AuthURL:  "https://rl-gplctl-oauth2-server.staging.gitpod-dev.com/api/local-app/authorize",
-			TokenURL: "https://rl-gplctl-oauth2-server.staging.gitpod-dev.com/api/local-app/token",
+			AuthURL:  "https://rl-gplctl-oauth2-server.staging.gitpod-dev.com/api/oauth/authorize",
+			TokenURL: "https://rl-gplctl-oauth2-server.staging.gitpod-dev.com/api/oauth/token",
 		},
 	}
 	responseTypeParam := oauth2.SetAuthURLParam("response_type", "code")
