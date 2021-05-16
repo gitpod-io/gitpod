@@ -86,6 +86,7 @@ export class Env extends AbstractComponentEnv {
     readonly devBranch = process.env.DEV_BRANCH || '';
 
     readonly enableLocalApp = process.env.ENABLE_LOCAL_APP === "true";
+    readonly enableOAuthServer = process.env.ENABLE_OAUTH_SERVER === "true";
 
     readonly authProviderConfigs = this.parseAuthProviderParamss();
 
