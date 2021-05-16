@@ -33,10 +33,6 @@ import * as uuidv4 from 'uuid/v4';
 import { DBUser } from "@gitpod/gitpod-db";
 import { ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from '../one-time-secret-server';
-import { createAuthorizationServer } from '../oauth2-server/oauth-authorization-server';
-import { OAuthException, OAuthRequest, OAuthResponse } from '@jmondi/oauth2-server';
-import { localAppClientID } from '../oauth2-server/db';
-import { AuthCodeRepositoryDB } from '@gitpod/gitpod-db/lib/typeorm/auth-code-repository-db';
 
 @injectable()
 export class UserController {
@@ -54,7 +50,6 @@ export class UserController {
     @inject(SessionHandlerProvider) protected readonly sessionHandlerProvider: SessionHandlerProvider;
     @inject(LoginCompletionHandler) protected readonly loginCompletionHandler: LoginCompletionHandler;
     @inject(OneTimeSecretServer) protected readonly otsServer: OneTimeSecretServer;
-    @inject(AuthCodeRepositoryDB) protected readonly authCodeRepositoryDb: AuthCodeRepositoryDB;
 
     get apiRouter(): express.Router {
         const router = express.Router();
@@ -275,128 +270,6 @@ export class UserController {
 
                 res.redirect(`http://${rt}/?ots=${encodeURI(ots.token)}`);
             });
-
-            const authorizationServer = createAuthorizationServer(this.authCodeRepositoryDb, this.userDb);
-
-            router.get("/local-app/authorize", async (req: express.Request, res: express.Response) => {
-                log.info(`AUTHORIZE: ${JSON.stringify(req.query)}`);
-
-                if (!req.isAuthenticated() || !User.is(req.user)) {
-                    const redirectTarget = encodeURIComponent(`${this.env.hostUrl}api${req.originalUrl}`);
-                    const redirectTo = `${this.env.hostUrl}login?returnTo=${redirectTarget}`;
-                    log.info(`AUTH Redirecting to login: ${redirectTo}`);
-                    res.redirect(redirectTo)
-                    return
-                }
-
-                const user = req.user as User;
-                if (user.blocked) {
-                    res.sendStatus(403);
-                    return;
-                }
-
-                // Have they authorized the local-app?
-                const wasApproved = req.query['approved'] || '';
-                log.info(`APPROVED?: ${wasApproved}`)
-                if (wasApproved === 'no') {
-                    // Let the local app know they rejected the approval
-                    const rt = req.query.redirect_uri;
-                    if (!rt || !rt.startsWith("http://localhost:")) {
-                        log.error(`/local-app/authorize: invalid returnTo URL: "${rt}"`)
-                        res.sendStatus(400);
-                        return;
-                    }
-                    res.redirect(`${rt}/?approved=no`);
-                    return;
-                }
-
-                const oauth2ClientsApproved = user?.additionalData?.oauth2ClientsApproved;
-                const clientID = localAppClientID;
-                if (!oauth2ClientsApproved || !oauth2ClientsApproved[clientID]) {
-                    const client = await authorizationServer.getClientByIdentifier(clientID)
-                    if (client) {
-                        const redirectTarget = encodeURIComponent(`${this.env.hostUrl}api${req.originalUrl}`);
-                        const redirectTo = `${this.env.hostUrl}oauth2-approval?clientID=${client.id}&clientName=${client.name}&returnTo=${redirectTarget}`;
-                        log.info(`AUTH Redirecting to approval: ${redirectTo}`);
-                        res.redirect(redirectTo)
-                        return;
-                    } else {
-                        log.error(`/local-app/authorize unknown client id: "${clientID}"`)
-                        res.sendStatus(400);
-                        return;
-                    }
-                }
-
-                const request = new OAuthRequest(req);
-
-                try {
-                    // Validate the HTTP request and return an AuthorizationRequest object.
-                    const authRequest = await authorizationServer.validateAuthorizationRequest(request);
-
-                    // Once the user has logged in set the user on the AuthorizationRequest
-                    authRequest.user = { id: user.id }
-                    console.log(`user has logged in - setting the user on the AuthorizationRequest ${JSON.stringify(user)}, ${JSON.stringify(authRequest)}`);
-
-                    // The user has approved the client so update the status
-                    authRequest.isAuthorizationApproved = true;
-
-                    // Return the HTTP redirect response
-                    const oauthResponse = await authorizationServer.completeAuthorizationRequest(authRequest);
-                    return handleResponse(req, res, oauthResponse);
-                } catch (e) {
-                    handleError(e, res);
-                }
-            });
-
-            router.post("/local-app/token", async (req: express.Request, res: express.Response) => {
-                log.info(`TOKEN: ${JSON.stringify(req.body)}`);
-                const response = new OAuthResponse(res);
-                try {
-                    const oauthResponse = await authorizationServer.respondToAccessTokenRequest(req, response);
-                    return handleResponse(req, res, oauthResponse);
-                } catch (e) {
-                    handleError(e, res);
-                    return;
-                }
-            });
-
-            function handleError(e: Error | undefined, res: express.Response) {
-                log.info('handleError')
-                if (e) {
-                    log.info(e.message)
-                    log.info('error stack: ', e, e.stack ? e.stack : 'no stack') 
-                } else {
-                    log.info('no error')
-                }
-
-                // @todo clean up error handling
-                if (e instanceof OAuthException) {
-                    res.status(e.status);
-                    res.send({
-                        status: e.status,
-                        message: e.message,
-                    });
-                    return;
-                }
-                // Generic error
-                res.status(500)
-                res.send({
-                    err: e
-                })
-            }
-
-            function handleResponse(req: express.Request, res: express.Response, response: OAuthResponse) {
-                if (response.status === 302) {
-                    if (!response.headers.location) {
-                        throw new Error("missing redirect location"); // @todo this
-                    }
-                    res.set(response.headers);
-                    res.redirect(response.headers.location);
-                } else {
-                    res.set(response.headers);
-                    res.status(response.status).send(response.body);
-                }
-            }
         }
         router.get("/auth/workspace", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             if (!req.isAuthenticated() || !User.is(req.user)) {

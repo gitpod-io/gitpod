@@ -8,8 +8,13 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { DateInterval, GrantIdentifier, OAuthClient, OAuthClientRepository, OAuthScope, OAuthScopeRepository, OAuthToken, OAuthTokenRepository, OAuthUser } from "@jmondi/oauth2-server";
 import { inMemoryDatabase } from "./db";
 
-const expiryInFuture = new DateInterval("1h");
+// Expire tokens reasonably quickly
+const expiryInFuture = new DateInterval("5m");
 
+/**
+* Currently (2021-05-15) we only support 1 client and a fixed set of scopes so using in-memory here is acceptable.
+* This will change in time, in which case we can move to using the DB.
+*/
 export const inMemoryClientRepository: OAuthClientRepository = {
     async getByIdentifier(clientId: string): Promise<OAuthClient> {
         log.info(`getByIdentifier: ${clientId}:${JSON.stringify(inMemoryDatabase.clients)}`)
@@ -68,7 +73,6 @@ export const inMemoryAccessTokenRepository: OAuthTokenRepository = {
     async persist(accessToken: OAuthToken): Promise<void> {
         inMemoryDatabase.tokens[accessToken.accessToken] = accessToken;
     },
-    // @todo
     async getByRefreshToken(refreshTokenToken: string): Promise<OAuthToken> {
         const token = Object.values(inMemoryDatabase.tokens).find(token => token.refreshToken === refreshTokenToken);
         if (!token) throw new Error("token not found");
