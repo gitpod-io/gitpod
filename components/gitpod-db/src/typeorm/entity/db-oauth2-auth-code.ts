@@ -56,6 +56,9 @@ export class DBOAuth2AuthCodeEntry implements OAuthAuthCode {
     })
     client: OAuthClient
 
-    @Column("varchar")
+    @Column({
+        type: 'simple-json',
+        nullable: false,
+    })
     scopes: OAuthScope[]
 }
