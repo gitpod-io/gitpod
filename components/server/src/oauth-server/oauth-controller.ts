@@ -57,13 +57,13 @@ export class OAuthController {
                     return;
                 }
 
-                const oauth2ClientsApproved = user?.additionalData?.oauth2ClientsApproved;
+                const oauthClientsApproved = user?.additionalData?.oauthClientsApproved;
                 const clientID = localAppClientID;
-                if (!oauth2ClientsApproved || !oauth2ClientsApproved[clientID]) {
+                if (!oauthClientsApproved || !oauthClientsApproved[clientID]) {
                     const client = await authorizationServer.getClientByIdentifier(clientID)
                     if (client) {
                         const redirectTarget = encodeURIComponent(`${this.env.hostUrl}api${req.originalUrl}`);
-                        const redirectTo = `${this.env.hostUrl}oauth2-approval?clientID=${client.id}&clientName=${client.name}&returnTo=${redirectTarget}`;
+                        const redirectTo = `${this.env.hostUrl}oauth-approval?clientID=${client.id}&clientName=${client.name}&returnTo=${redirectTarget}`;
                         log.info(`AUTH Redirecting to approval: ${redirectTo}`);
                         res.redirect(redirectTo)
                         return;

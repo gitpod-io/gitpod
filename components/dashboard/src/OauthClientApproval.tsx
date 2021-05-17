@@ -10,7 +10,7 @@ import { getGitpodService } from "./service/service";
 import gitpodIcon from './icons/gitpod.svg';
 import { getSafeURLRedirect } from "./provider-utils";
 
-export default function OAuth2ClientApproval() {
+export default function OAuthClientApproval() {
     const { user, setUser } = useContext(UserContext);
     const params = new URLSearchParams(window.location.search);
     const clientID = params.get("clientID") || "";
@@ -23,12 +23,12 @@ export default function OAuth2ClientApproval() {
         }
         const additionalData = user.additionalData = user.additionalData || {};
         if (isApproved) {
-            additionalData.oauth2ClientsApproved = {
-                ...additionalData.oauth2ClientsApproved,
+            additionalData.oauthClientsApproved = {
+                ...additionalData.oauthClientsApproved,
                 [clientID]: new Date().toISOString()
             }
-        } else if (additionalData.oauth2ClientsApproved) {
-            delete additionalData.oauth2ClientsApproved[clientID];
+        } else if (additionalData.oauthClientsApproved) {
+            delete additionalData.oauthClientsApproved[clientID];
         }
         await getGitpodService().server.updateLoggedInUser({
             additionalData
@@ -37,9 +37,9 @@ export default function OAuth2ClientApproval() {
         window.location.replace(`${redirectTo}&approved=${isApproved ? 'yes' : 'no'}`);
     }
 
-    return (<div id="oauth2-container" className="z-50 flex w-screen h-screen">
-        <div id="oauth2-section" className="flex-grow flex w-full">
-            <div id="oauth2-section-column" className="flex-grow max-w-2xl flex flex-col h-100 mx-auto">
+    return (<div id="oauth-container" className="z-50 flex w-screen h-screen">
+        <div id="oauth-section" className="flex-grow flex w-full">
+            <div id="oauth-section-column" className="flex-grow max-w-2xl flex flex-col h-100 mx-auto">
                 <div className="flex-grow h-100 flex flex-row items-center justify-center" >
                     <div className="rounded-xl px-10 py-10 mx-auto">
                         <div className="mx-auto pb-8">

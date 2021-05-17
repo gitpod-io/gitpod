@@ -21,8 +21,8 @@ import { DBUserEnvVar } from "./entity/db-user-env-vars";
 import { DBWorkspace } from "./entity/db-workspace";
 import { TypeORM } from './typeorm';
 
-// OAuth2 token expiry
-const tokenExpiryInFuture = new DateInterval("1d");
+// OAuth token expiry
+const tokenExpiryInFuture = new DateInterval("7d");
 
 /** HACK ahead: Some entities - namely DBTokenEntry for now - need access to an EncryptionService so we publish it here */
 export let encryptionService: EncryptionService;
@@ -391,7 +391,7 @@ export class TypeORMUserDBImpl implements UserDB {
         };
     }
     async issueRefreshToken(accessToken: OAuthToken): Promise<OAuthToken> {
-        // NOTE(rl): this exists for the OAuth2 server code - Gitpod tokens are non-refreshable (atm)
+        // NOTE(rl): this exists for the OAuth server code - Gitpod tokens are non-refreshable (atm)
         accessToken.refreshToken = "refreshtokentoken";
         accessToken.refreshTokenExpiresAt = new DateInterval("30d").getEndDate();
         await this.persist(accessToken);
@@ -411,7 +411,7 @@ export class TypeORMUserDBImpl implements UserDB {
         if (userAndToken) {
             // Yes, update it (~)
             // NOTE(rl): as we don't support refresh tokens yet this is not really required 
-            // since the OAuth2 server lib calls issueRefreshToken immediately after issueToken
+            // since the OAuth server lib calls issueRefreshToken immediately after issueToken
             // We do not allow changes of name, type, user or scope.
             dbToken = userAndToken.token as GitpodToken & { user: DBUser };
             const repo = await this.getGitpodTokenRepo();

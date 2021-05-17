@@ -7,7 +7,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 import { tableExists } from "./helper/helper";
 
-export class OAuth2AuthCodeDB1620865190518 implements MigrationInterface {
+export class OAuthAuthCodeDB1620865190518 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.query("CREATE TABLE IF NOT EXISTS `d_b_oauth_auth_code_entry` (`id` int NOT NULL AUTO_INCREMENT, `code` varchar(1024) NOT NULL, `redirectURI` varchar(1024) NOT NULL DEFAULT '', `codeChallenge` varchar(128) NOT NULL, `codeChallengeMethod` varchar(10) NOT NULL, `expiresAt` timestamp(6) NOT NULL, `userId` char(36) NOT NULL, `client` text NOT NULL, `scopes` text NOT NULL, PRIMARY KEY(`id`)) ENGINE=InnoDB;");

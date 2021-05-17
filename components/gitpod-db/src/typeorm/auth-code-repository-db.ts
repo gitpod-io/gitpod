@@ -24,13 +24,13 @@ export class AuthCodeRepositoryDB implements OAuthAuthCodeRepository {
         return (await this.typeORM.getConnection()).manager;
     }
 
-    async getOauth2AuthCodeRepo(): Promise<Repository<DBOAuthAuthCodeEntry>> {
+    async getOauthAuthCodeRepo(): Promise<Repository<DBOAuthAuthCodeEntry>> {
         return (await this.getEntityManager()).getRepository<DBOAuthAuthCodeEntry>(DBOAuthAuthCodeEntry);
     }
 
     public async getByIdentifier(authCodeCode: string): Promise<OAuthAuthCode> {
         log.info(`getByIdentifier ${authCodeCode}`);
-        const authCodeRepo = await this.getOauth2AuthCodeRepo();
+        const authCodeRepo = await this.getOauthAuthCodeRepo();
         let authCodes = await authCodeRepo.find({ code: authCodeCode });
         log.info(`getByIdentifier pre: ${JSON.stringify(authCodes)}`);
         authCodes = authCodes.filter(te => (new Date(te.expiresAt)).getTime() > Date.now());
@@ -62,7 +62,7 @@ export class AuthCodeRepositoryDB implements OAuthAuthCodeRepository {
     }
     public async persist(authCode: OAuthAuthCode): Promise<void> {
         log.info(`persist auth ${JSON.stringify(authCode)}`);
-        const authCodeRepo = await this.getOauth2AuthCodeRepo();
+        const authCodeRepo = await this.getOauthAuthCodeRepo();
         authCodeRepo.save(authCode);
     }
     public async isRevoked(authCodeCode: string): Promise<boolean> {
