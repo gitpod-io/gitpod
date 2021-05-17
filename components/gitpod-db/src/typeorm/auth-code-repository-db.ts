@@ -9,7 +9,7 @@ import { DateInterval, OAuthAuthCode, OAuthAuthCodeRepository, OAuthClient, OAut
 import * as crypto from 'crypto';
 import { inject, injectable } from "inversify";
 import { EntityManager, Repository } from "typeorm";
-import { DBOAuth2AuthCodeEntry } from './entity/db-oauth2-auth-code';
+import { DBOAuthAuthCodeEntry } from './entity/db-oauth-auth-code';
 import { TypeORM } from './typeorm';
 
 const expiryInFuture = new DateInterval("5m");
@@ -24,8 +24,8 @@ export class AuthCodeRepositoryDB implements OAuthAuthCodeRepository {
         return (await this.typeORM.getConnection()).manager;
     }
 
-    async getOauth2AuthCodeRepo(): Promise<Repository<DBOAuth2AuthCodeEntry>> {
-        return (await this.getEntityManager()).getRepository<DBOAuth2AuthCodeEntry>(DBOAuth2AuthCodeEntry);
+    async getOauth2AuthCodeRepo(): Promise<Repository<DBOAuthAuthCodeEntry>> {
+        return (await this.getEntityManager()).getRepository<DBOAuthAuthCodeEntry>(DBOAuthAuthCodeEntry);
     }
 
     public async getByIdentifier(authCodeCode: string): Promise<OAuthAuthCode> {

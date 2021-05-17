@@ -9,8 +9,8 @@ import { Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "t
 import { Transformer } from "../transformer";
 import { DBUser } from "./db-user";
 
-@Entity({ name: 'd_b_oauth2_auth_code_entry' })
-export class DBOAuth2AuthCodeEntry implements OAuthAuthCode {
+@Entity({ name: 'd_b_oauth_auth_code_entry' })
+export class DBOAuthAuthCodeEntry implements OAuthAuthCode {
     @PrimaryGeneratedColumn()
     id: number;
 
