@@ -401,7 +401,7 @@ export class TypeORMUserDBImpl implements UserDB {
         log.info(`persist access token ${JSON.stringify(accessToken)}`);
         var scopes: string[] = [];
         for (const scope of accessToken.scopes) {
-            scopes.concat(scope.name);
+            scopes = scopes.concat(scope.name);
         }
 
         // Does the token already exist?
@@ -409,12 +409,13 @@ export class TypeORMUserDBImpl implements UserDB {
         const tokenHash = crypto.createHash('sha256').update(accessToken.accessToken, 'utf8').digest("hex");
         const userAndToken = await this.findUserByGitpodToken(tokenHash);
         if (userAndToken) {
-            // Yes, update it (sort of)
+            // Yes, update it (~)
             // NOTE(rl): as we don't support refresh tokens yet this is not really required 
             // since the OAuth2 server lib calls issueRefreshToken immediately after issueToken
             // We do not allow changes of name, type, user or scope.
             dbToken = userAndToken.token as GitpodToken & { user: DBUser };
             const repo = await this.getGitpodTokenRepo();
+            log.info(`persist access token update: ${JSON.stringify(dbToken)}`);
             return repo.updateById(tokenHash, dbToken);
         } else {
             var user: MaybeUser;
