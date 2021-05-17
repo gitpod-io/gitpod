@@ -188,6 +188,8 @@ namespace TestData {
         ideUrl: 'example.org',
         region: 'unknown',
         workspaceImage: 'abc.io/test/image:123',
+        projectName: 'unknown',
+        clusterName: 'unknown',
         creationTime: new Date().toISOString(),
         startedTime: undefined,
         deployedTime: undefined,
