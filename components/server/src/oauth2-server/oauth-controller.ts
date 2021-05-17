@@ -24,7 +24,7 @@ export class OAuthController {
     get oauthRouter(): express.Router {
         const router = express.Router();
         if (this.env.enableOAuthServer) {
-            const authorizationServer = createAuthorizationServer(this.authCodeRepositoryDb, this.userDb);
+            const authorizationServer = createAuthorizationServer(this.authCodeRepositoryDb, this.userDb, this.userDb);
             router.get("/oauth/authorize", async (req: express.Request, res: express.Response) => {
                 log.info(`AUTHORIZE: ${JSON.stringify(req.query)}`);
 

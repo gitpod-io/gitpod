@@ -5,15 +5,13 @@
  */
 
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { AuthorizationRequest, AuthorizationServer, DateInterval, GrantIdentifier, JwtService, OAuthAuthCodeRepository, OAuthClient, OAuthUserRepository, RequestInterface, ResponseInterface } from "@jmondi/oauth2-server";
+import { AuthorizationRequest, AuthorizationServer, DateInterval, GrantIdentifier, JwtService, OAuthAuthCodeRepository, OAuthClient, OAuthTokenRepository, OAuthUserRepository, RequestInterface, ResponseInterface } from "@jmondi/oauth2-server";
 import {
-  inMemoryAccessTokenRepository,
   inMemoryClientRepository,
   inMemoryScopeRepository
 } from "./repository";
 
 const clientRepository = inMemoryClientRepository;
-const tokenRepository = inMemoryAccessTokenRepository;
 const scopeRepository = inMemoryScopeRepository;
 
 // TODO(rl) - get this from external secret
@@ -45,7 +43,7 @@ class GitpodAuthorizationServer extends AuthorizationServer {
   }
 }
 
-export function createAuthorizationServer(authCodeRepository: OAuthAuthCodeRepository, userRepository: OAuthUserRepository): GitpodAuthorizationServer {
+export function createAuthorizationServer(authCodeRepository: OAuthAuthCodeRepository, userRepository: OAuthUserRepository, tokenRepository: OAuthTokenRepository): GitpodAuthorizationServer {
   const authorizationServer = new GitpodAuthorizationServer(
     authCodeRepository,
     clientRepository,

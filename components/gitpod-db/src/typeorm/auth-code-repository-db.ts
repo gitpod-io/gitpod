@@ -12,7 +12,7 @@ import { EntityManager, Repository } from "typeorm";
 import { DBOAuth2AuthCodeEntry } from './entity/db-oauth2-auth-code';
 import { TypeORM } from './typeorm';
 
-const expiryInFuture = new DateInterval("1h");
+const expiryInFuture = new DateInterval("5m");
 
 @injectable()
 export class AuthCodeRepositoryDB implements OAuthAuthCodeRepository {

@@ -4,7 +4,9 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { OAuthClient, OAuthScope, OAuthToken } from "@jmondi/oauth2-server";
+import { ScopedResourceGuard } from "../auth/resource-access";
 
 /**
 * Currently (2021-05-15) we only support 1 client and a fixed set of scopes so hard-coding here is acceptable.
@@ -20,6 +22,9 @@ export interface InMemory {
 
 export const localAppClientID = 'gplctl-1.0';
 const getWorkspaceScope: OAuthScope = { name: "function:getWorkspace" };
+const listenForWorkspaceInstanceUpdatesScope: OAuthScope = { name: "function:listenForWorkspaceInstanceUpdates" };
+const getWorkspaceResourceScope: OAuthScope = { name: "resource:" + ScopedResourceGuard.marshalResourceScope({ kind: "workspace", subjectID: "*", operations: ["get"] }) };
+const getWorkspaceInstanceResourceScope: OAuthScope = { name: "resource:" + ScopedResourceGuard.marshalResourceScope({ kind: "workspaceInstance", subjectID: "*", operations: ["get"] }) };
 const localClient: OAuthClient = {
   id: localAppClientID,
   secret: `${localAppClientID}-secret`,
@@ -27,8 +32,9 @@ const localClient: OAuthClient = {
   // TODO(rl) - allow port range/external specification
   redirectUris: ['http://localhost:64110'],
   allowedGrants: ['authorization_code'],
-  scopes: [getWorkspaceScope],
+  scopes: [getWorkspaceScope, listenForWorkspaceInstanceUpdatesScope, getWorkspaceResourceScope, getWorkspaceInstanceResourceScope],
 }
+log.info(`SCOPES: ${JSON.stringify(localClient.scopes)}`)
 
 export const inMemoryDatabase: InMemory = {
   clients: {
@@ -37,6 +43,7 @@ export const inMemoryDatabase: InMemory = {
   tokens: {},
   scopes: { [getWorkspaceScope.name]: getWorkspaceScope },
   flush() {
+    log.info('flush')
     this.clients = {};
     this.tokens = {};
     this.scopes = {};

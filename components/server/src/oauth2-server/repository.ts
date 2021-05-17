@@ -5,11 +5,8 @@
  */
 
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { DateInterval, GrantIdentifier, OAuthClient, OAuthClientRepository, OAuthScope, OAuthScopeRepository, OAuthToken, OAuthTokenRepository, OAuthUser } from "@jmondi/oauth2-server";
+import { GrantIdentifier, OAuthClient, OAuthClientRepository, OAuthScope, OAuthScopeRepository } from "@jmondi/oauth2-server";
 import { inMemoryDatabase } from "./db";
-
-// Expire tokens reasonably quickly
-const expiryInFuture = new DateInterval("5m");
 
 /**
 * Currently (2021-05-15) we only support 1 client and a fixed set of scopes so using in-memory here is acceptable.
@@ -49,42 +46,5 @@ export const inMemoryScopeRepository: OAuthScopeRepository = {
         user_id?: string,
     ): Promise<OAuthScope[]> {
         return scopes;
-    },
-};
-
-export const inMemoryAccessTokenRepository: OAuthTokenRepository = {
-    async revoke(accessToken: OAuthToken): Promise<void> {
-        const token = inMemoryDatabase.tokens[accessToken.accessToken];
-        token.accessTokenExpiresAt = new Date(0);
-        token.refreshTokenExpiresAt = new Date(0);
-        inMemoryDatabase.tokens[accessToken.accessToken] = token;
-    },
-    async issueToken(client: OAuthClient, scopes: OAuthScope[], user: OAuthUser): Promise<OAuthToken> {
-        const expiry = expiryInFuture.getEndDate();
-        log.info(`issueToken ${JSON.stringify(expiry)}`)
-        return <OAuthToken>{
-            accessToken: "new token",
-            accessTokenExpiresAt: expiry,
-            client,
-            user,
-            scopes: [],
-        };
-    },
-    async persist(accessToken: OAuthToken): Promise<void> {
-        inMemoryDatabase.tokens[accessToken.accessToken] = accessToken;
-    },
-    async getByRefreshToken(refreshTokenToken: string): Promise<OAuthToken> {
-        const token = Object.values(inMemoryDatabase.tokens).find(token => token.refreshToken === refreshTokenToken);
-        if (!token) throw new Error("token not found");
-        return token;
-    },
-    async isRefreshTokenRevoked(token: OAuthToken): Promise<boolean> {
-        return Date.now() > (token.refreshTokenExpiresAt?.getTime() ?? 0);
-    },
-    async issueRefreshToken(token): Promise<OAuthToken> {
-        token.refreshToken = "refreshtokentoken";
-        token.refreshTokenExpiresAt = new DateInterval("1h").getEndDate();
-        inMemoryDatabase.tokens[token.accessToken] = token;
-        return token;
     },
 };

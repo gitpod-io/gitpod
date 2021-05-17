@@ -4,6 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import * as crypto from 'crypto';
 import { GitpodToken, GitpodTokenType, Identity, IdentityLookup, Token, TokenEntry, User, UserEnvVar } from "@gitpod/gitpod-protocol";
 import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
@@ -400,38 +401,27 @@ export class TypeORMUserDBImpl implements UserDB {
         for (const scope of accessToken.scopes) {
             scopes.concat(scope.name);
         }
-        const entry: TokenEntry = {
-            uid: uuidv4(),
-            authProviderId: "Gitpod",
-            authId: "Gitpod-OAuth-1.0",
-            token: {
-                value: accessToken.accessToken,
-                scopes: scopes,
-                expiryDate: accessToken.accessTokenExpiresAt.toISOString(),
-                refreshToken: accessToken.refreshToken,
-            },
-            expiryDate: accessToken.accessTokenExpiresAt.toISOString(),
-            refreshable: !!accessToken.refreshToken,
+        var user: MaybeUser;
+        if (accessToken.user) {
+            user = await this.findUserById(accessToken.user.id)
+        }
+        const token = crypto.randomBytes(30).toString('hex');
+        const tokenHash = crypto.createHash('sha256').update(token, 'utf8').digest("hex");
+        const dbToken: GitpodToken & { user: DBUser } = {
+            tokenHash,
+            name: `local-app`,
+            type: GitpodTokenType.MACHINE_AUTH_TOKEN,
+            user: user as DBUser,
+            scopes: scopes,
+            created: new Date().toISOString(),
         };
-        log.info(`persist access token save: ${JSON.stringify(entry)}`);
-        const repo = await this.getTokenRepo();
-        await repo.save(entry);
+        log.info(`persist access token save: ${JSON.stringify(dbToken)}`);
+        await this.storeGitpodToken(dbToken);
     }
     async revoke(accessTokenToken: OAuthToken): Promise<void> {
         log.info(`revoke ${JSON.stringify(accessTokenToken)}`);
-        const repo = await this.getTokenRepo();
-        const tokenEntry = await repo.createQueryBuilder('by-token-value')
-        .where('d_b_token_entry.token ::jsonb @> :token', {
-            token: {
-                token: accessTokenToken.accessToken
-            }
-        })
-        .getOne();
-        if (tokenEntry) {
-            // Set date to earliest timestamp that MySQL allows
-            tokenEntry.expiryDate = new Date(1000).toISOString();
-            await repo.save(tokenEntry);
-        }
+        const tokenHash = crypto.createHash('sha256').update(accessTokenToken.accessToken, 'utf8').digest("hex");
+        this.deleteGitpodToken(tokenHash)
     }
     async isRefreshTokenRevoked(refreshToken: OAuthToken): Promise<boolean> {
         return Date.now() > (refreshToken.refreshTokenExpiresAt?.getTime() ?? 0);
