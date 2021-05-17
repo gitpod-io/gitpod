@@ -12,7 +12,7 @@ import { OAuthException, OAuthRequest, OAuthResponse } from "@jmondi/oauth2-serv
 import * as express from 'express';
 import { inject, injectable } from "inversify";
 import { Env } from "../env";
-import { createAuthorizationServer } from '../oauth2-server/oauth-authorization-server';
+import { createAuthorizationServer } from './oauth-authorization-server';
 import { localAppClientID } from "./db";
 
 @injectable()

@@ -39,7 +39,7 @@ import { BearerAuth } from './auth/bearer-authenticator';
 import { HostContextProvider } from './auth/host-context-provider';
 import { CodeSyncService } from './code-sync/code-sync-service';
 import { increaseHttpRequestCounter, observeHttpRequestDuration } from './prometheus-metrics';
-import { OAuthController } from './oauth2-server/oauth-controller';
+import { OAuthController } from './oauth-server/oauth-controller';
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
