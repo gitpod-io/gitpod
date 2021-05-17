@@ -52,7 +52,11 @@ function deleteAllWorkspaces(namespace: string, shellOpts: ExecOptions) {
         try {
             // In most cases the calls below fails because the workspace is already gone. Ignore those cases, log others.
             exec(`kubectl patch pod --namespace ${namespace} ${o} -p '{"metadata":{"finalizers":null}}'`, { ...shellOpts });
-            exec(`kubectl delete pod --namespace ${namespace} ${o}`, { ...shellOpts });
+            const result = exec(`kubectl delete pod --namespace ${namespace} ${o} --ignore-not-found=true --timeout=10s`, { ...shellOpts, async: false, dontCheckRc: true });
+            if (result.code !== 0) {
+                // We hit a timeout, and have no clue why. Manually re-trying has shown to consistenly being not helpful, either. Thus use THE FORCE.
+                exec(`kubectl delete pod --namespace ${namespace} ${o} --ignore-not-found=true --force`, { ...shellOpts });
+            }
         } catch (err) {
             const result = exec(`kubectl get pod --namespace ${namespace} ${o}`, { dontCheckRc: true });
             if (result.code === 0) {
