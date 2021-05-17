@@ -21,7 +21,8 @@ import { DBUserEnvVar } from "./entity/db-user-env-vars";
 import { DBWorkspace } from "./entity/db-workspace";
 import { TypeORM } from './typeorm';
 
-const expiryInFuture = new DateInterval("1h");
+// OAuth2 token expiry
+const tokenExpiryInFuture = new DateInterval("1d");
 
 /** HACK ahead: Some entities - namely DBTokenEntry for now - need access to an EncryptionService so we publish it here */
 export let encryptionService: EncryptionService;
@@ -379,19 +380,20 @@ export class TypeORMUserDBImpl implements UserDB {
 
     // OAuthTokenRepository
     async issueToken(client: OAuthClient, scopes: OAuthScope[], user?: OAuthUser): Promise<OAuthToken> {
-        const expiry = expiryInFuture.getEndDate();
+        const expiry = tokenExpiryInFuture.getEndDate();
         log.info(`issueToken ${JSON.stringify(expiry)}`)
         return <OAuthToken>{
-            accessToken: "new token",
+            accessToken: crypto.randomBytes(30).toString('hex'),
             accessTokenExpiresAt: expiry,
             client,
             user,
-            scopes: [],
+            scopes: scopes,
         };
     }
     async issueRefreshToken(accessToken: OAuthToken): Promise<OAuthToken> {
+        // NOTE(rl): this exists for the OAuth2 server code - Gitpod tokens are non-refreshable (atm)
         accessToken.refreshToken = "refreshtokentoken";
-        accessToken.refreshTokenExpiresAt = new DateInterval("1h").getEndDate();
+        accessToken.refreshTokenExpiresAt = new DateInterval("30d").getEndDate();
         await this.persist(accessToken);
         return accessToken;
     }
@@ -401,22 +403,35 @@ export class TypeORMUserDBImpl implements UserDB {
         for (const scope of accessToken.scopes) {
             scopes.concat(scope.name);
         }
-        var user: MaybeUser;
-        if (accessToken.user) {
-            user = await this.findUserById(accessToken.user.id)
+
+        // Does the token already exist?
+        var dbToken: GitpodToken & { user: DBUser };
+        const tokenHash = crypto.createHash('sha256').update(accessToken.accessToken, 'utf8').digest("hex");
+        const userAndToken = await this.findUserByGitpodToken(tokenHash);
+        if (userAndToken) {
+            // Yes, update it (sort of)
+            // NOTE(rl): as we don't support refresh tokens yet this is not really required 
+            // since the OAuth2 server lib calls issueRefreshToken immediately after issueToken
+            // We do not allow changes of name, type, user or scope.
+            dbToken = userAndToken.token as GitpodToken & { user: DBUser };
+            const repo = await this.getGitpodTokenRepo();
+            return repo.updateById(tokenHash, dbToken);
+        } else {
+            var user: MaybeUser;
+            if (accessToken.user) {
+                user = await this.findUserById(accessToken.user.id)
+            }
+            dbToken = {
+                tokenHash,
+                name: `local-app`,
+                type: GitpodTokenType.MACHINE_AUTH_TOKEN,
+                user: user as DBUser,
+                scopes: scopes,
+                created: new Date().toISOString(),
+            };
+            log.info(`persist access token store: ${JSON.stringify(dbToken)}`);
+            return this.storeGitpodToken(dbToken);
         }
-        const token = crypto.randomBytes(30).toString('hex');
-        const tokenHash = crypto.createHash('sha256').update(token, 'utf8').digest("hex");
-        const dbToken: GitpodToken & { user: DBUser } = {
-            tokenHash,
-            name: `local-app`,
-            type: GitpodTokenType.MACHINE_AUTH_TOKEN,
-            user: user as DBUser,
-            scopes: scopes,
-            created: new Date().toISOString(),
-        };
-        log.info(`persist access token save: ${JSON.stringify(dbToken)}`);
-        await this.storeGitpodToken(dbToken);
     }
     async revoke(accessTokenToken: OAuthToken): Promise<void> {
         log.info(`revoke ${JSON.stringify(accessTokenToken)}`);
