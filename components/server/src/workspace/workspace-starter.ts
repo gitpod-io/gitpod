@@ -51,13 +51,13 @@ export class WorkspaceStarter {
     @inject(TheiaPluginService) protected readonly theiaService: TheiaPluginService;
     @inject(OneTimeSecretServer) protected readonly otsServer: OneTimeSecretServer;
 
-    public async startWorkspace(ctx: TraceContext, workspace: Workspace, user: User, userEnvVars?: UserEnvVar[], options: {rethrow?: boolean, forceDefaultImage?: boolean} = {rethrow: undefined, forceDefaultImage: false}): Promise<StartWorkspaceResult> {
+    public async startWorkspace(ctx: TraceContext, workspace: Workspace, user: User, userEnvVars?: UserEnvVar[], options: {rethrow?: boolean, forceDefaultImage?: boolean, forceLatestSuccessfulImage?: boolean} = {rethrow: undefined, forceDefaultImage: false, forceLatestSuccessfulImage: false}): Promise<StartWorkspaceResult> {
         const span = TraceContext.startSpan("WorkspaceStarter.startWorkspace", ctx);
 
         try {
             // Some workspaces do not have an image source.
             // Workspaces without image source are not only legacy, but also happened due to what looks like a bug.
-            // Whenever a such a workspace is re-started we'll give it an image source now. This is in line with how this thing used to work.
+            // Whenever such a workspace is re-started we'll give it an image source now. This is in line with how this thing used to work.
             //
             // At this point any workspace that has no imageSource should have a commit context (we don't have any other contexts which don't resolve
             // to a commit context prior to being started, or which don't get an imageSource).
@@ -67,6 +67,10 @@ export class WorkspaceStarter {
 
                 workspace.imageSource = imageSource;
                 await this.workspaceDb.trace({ span }).store(workspace);
+            }
+
+            if (options.forceLatestSuccessfulImage && 'dockerFileFrom' in workspace.imageSource) {
+                workspace.imageSource.dockerFileFrom = undefined;
             }
 
             if (options.forceDefaultImage) {
@@ -93,7 +97,7 @@ export class WorkspaceStarter {
             try {
                 // if we need to build the workspace image we musn't wait for actuallyStartWorkspace to return as that would block the
                 // frontend until the image is built.
-                needsImageBuild = await this.needsImageBuild({ span }, user, workspace, instance);
+                needsImageBuild = await this.needsImageBuild({ span }, user, workspace);
                 if (needsImageBuild) {
                     instance.status.conditions = {
                         neededImageBuild: true,
@@ -389,7 +393,7 @@ export class WorkspaceStarter {
         }
     }
 
-    protected async needsImageBuild(ctx: TraceContext, user: User, workspace: Workspace, instance: WorkspaceInstance): Promise<boolean> {
+    public async needsImageBuild(ctx: TraceContext, user: User, workspace: Workspace): Promise<boolean> {
         const span = TraceContext.startSpan("needsImageBuild", ctx);
         try {
             const client = this.imagebuilderClientProvider.getDefault();

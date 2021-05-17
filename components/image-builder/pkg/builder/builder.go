@@ -240,7 +240,7 @@ func (b *DockerBuilder) Build(req *api.BuildRequest, resp api.ImageBuilder_Build
 		return nil
 	}
 
-	// Once a build is running we don't want it cancelled becuase the server disconnected i.e. during deployment.
+	// Once a build is running we don't want it cancelled because the server disconnected i.e. during deployment.
 	// Instead we want to impose our own timeout/lifecycle on the build. Using context.WithTimeout does not shadow its parent's
 	// cancelation (see https://play.golang.org/p/N3QBIGlp8Iw for an example/experiment).
 	ctx, cancel := context.WithTimeout(&parentCantCancelContext{Delegate: ctx}, maxBuildRuntime)
@@ -361,6 +361,12 @@ func (b *DockerBuilder) Build(req *api.BuildRequest, resp api.ImageBuilder_Build
 	// is a Dockerfile. In this case the getBaseImage ref works no matter the authentication, but we need to elevate the
 	// auth to allow checking for its existence.
 
+	additionalBaseRefs, err := b.getAdditionalBaseImageRefs(ctx, req.Source, reqauth)
+	if err != nil {
+		log.WithError(err).WithField("buildRef", thisBuild.Ref).Warn("error getting additional base refs")
+		additionalBaseRefs = []string{}
+	}
+
 	// Resolving the base image will fail if the user is trying to use an image they have no permission to use
 	baserefAuth, err := reqauth.Elevate(baseref).getAuthFor(b.Auth, baseref)
 	if err != nil {
@@ -391,13 +397,13 @@ func (b *DockerBuilder) Build(req *api.BuildRequest, resp api.ImageBuilder_Build
 		}
 
 		basesrc := req.Source.GetFile()
-		err = b.buildBaseImage(ctx, thisBuild, basesrc, baseref, reqauth)
+		err = b.buildBaseImage(ctx, thisBuild, basesrc, baseref, reqauth, additionalBaseRefs)
 		if err != nil {
 			return err
 		}
 	}
 
-	// Get digest form of the image (absolute ref) so that we can compute the the workspace ref if one were to pass the (digest form) baseref back as base image.
+	// Get digest form of the image (absolute ref) so that we can compute the workspace ref if one were to pass the (digest form) baseref back as base image.
 	// This way users of the image builder can Resolve/Build a workspace image using the baseref we return from this build without us having to build this image again.
 	baserefAbsolute, err = b.getAbsoluteImageRef(ctx, baseref, allowedAuthForNone.Elevate(baseref))
 	if err != nil {
@@ -407,9 +413,17 @@ func (b *DockerBuilder) Build(req *api.BuildRequest, resp api.ImageBuilder_Build
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot produce workspace image ref: %v", err)
 	}
+	additionalWsRefs := []string{}
+	for _, ref := range additionalBaseRefs {
+		addwsrefstr, err := b.getWorkspaceImageRef(ctx, ref, b.gplayerHash, reqauth)
+		if err != nil {
+			return status.Errorf(codes.Internal, "cannot produce workspace image ref: %v", err)
+		}
+		additionalWsRefs = append(additionalWsRefs, addwsrefstr)
+	}
 
 	// build workspace image
-	err = b.buildWorkspaceImage(ctx, thisBuild, baseref, []string{wsrefstr, abswsrefstr}, reqauth)
+	err = b.buildWorkspaceImage(ctx, thisBuild, baseref, append([]string{wsrefstr, abswsrefstr}, additionalWsRefs...), reqauth)
 	if err != nil {
 		return err
 	}
@@ -459,7 +473,7 @@ func (b *DockerBuilder) createBuildVolume(ctx context.Context, buildID string) (
 	return buildVolName, nil
 }
 
-func (b *DockerBuilder) buildBaseImage(ctx context.Context, bld *build, src *api.BuildSourceDockerfile, ref string, allowedAuth allowedAuthFor) (err error) {
+func (b *DockerBuilder) buildBaseImage(ctx context.Context, bld *build, src *api.BuildSourceDockerfile, ref string, allowedAuth allowedAuthFor, additionalRefs []string) (err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "buildBaseImage")
 	defer tracing.FinishSpan(span, &err)
@@ -508,13 +522,13 @@ func (b *DockerBuilder) buildBaseImage(ctx context.Context, bld *build, src *api
 	ctxsrvChan, buildChan := make(chan error), make(chan error)
 	go func() {
 		ctxsrvChan <- b.serveContext(ctx, bld, bld.buildVolume, "/workspace/context", w)
-		log.WithField("buildRef", bld.Ref).Debug("base image context sent")
+		log.WithField("buildRef", bld.Ref).WithField("ref", ref).Debug("base image context sent")
 	}()
 	go func() {
-		log.WithField("buildRef", bld.Ref).Debug("base image build started")
+		log.WithField("buildRef", bld.Ref).WithField("ref", ref).Debug("base image build started")
 
 		resp, err := b.Docker.ImageBuild(ctx, r, types.ImageBuildOptions{
-			Tags:        []string{ref},
+			Tags:        append([]string{ref}, additionalRefs...),
 			PullParent:  true,
 			Dockerfile:  "Dockerfile",
 			AuthConfigs: buildauth,
@@ -550,26 +564,46 @@ func (b *DockerBuilder) buildBaseImage(ctx context.Context, bld *build, src *api
 	}
 
 	// Push image
-	fmt.Fprintln(bld, "\npushing base image")
-	auth, err := allowedAuthForAll.getAuthFor(b.Auth, ref)
-	if err != nil {
-		return xerrors.Errorf("cannot authenticate base image push: %w", err)
-	}
-	if len(auth) == 0 {
-		// prevent missing X-Registry-Auth header for push when no auth is needed
-		// see https://github.com/moby/moby/issues/10983#issuecomment-85892396
-		auth = "nobody"
-	}
-	pushresp, err := b.Docker.ImagePush(ctx, ref, types.ImagePushOptions{
-		RegistryAuth: auth,
-	})
-	if err != nil {
-		return xerrors.Errorf("cannot push base image: %w", err)
-	}
-	err = jsonmessage.DisplayJSONMessagesStream(pushresp, bld, 0, bld.isTTY, nil)
-	pushresp.Close()
-	if err != nil {
-		return xerrors.Errorf("cannot push base image: %w", err)
+	for i, ref := range append([]string{ref}, additionalRefs...) {
+		fmt.Fprintf(bld, "\npushing base image (%d)\n", i)
+		auth, err := allowedAuthForAll.getAuthFor(b.Auth, ref)
+		if err != nil {
+			// fail if the push of the main ref fails but continue if an additional ref fails
+			if i == 0 {
+				return xerrors.Errorf("cannot authenticate base image push: %w", err)
+			} else {
+				log.WithError(err).WithField("buildRef", bld.Ref).WithField("ref", ref).Error("cannot authenticate base image push (additional ref)")
+				continue
+			}
+		}
+		if len(auth) == 0 {
+			// prevent missing X-Registry-Auth header for push when no auth is needed
+			// see https://github.com/moby/moby/issues/10983#issuecomment-85892396
+			auth = "nobody"
+		}
+		pushresp, err := b.Docker.ImagePush(ctx, ref, types.ImagePushOptions{
+			RegistryAuth: auth,
+		})
+		if err != nil {
+			// fail if the push of the main ref fails but continue if an additional ref fails
+			if i == 0 {
+				return xerrors.Errorf("cannot push base image: %w", err)
+			} else {
+				log.WithError(err).WithField("buildRef", bld.Ref).WithField("ref", ref).Error("cannot push base image (additional ref)")
+				continue
+			}
+		}
+		err = jsonmessage.DisplayJSONMessagesStream(pushresp, bld, 0, bld.isTTY, nil)
+		pushresp.Close()
+		if err != nil {
+			// fail if the push of the main ref fails but continue if an additional ref fails
+			if i == 0 {
+				return xerrors.Errorf("cannot push base image: %w", err)
+			} else {
+				log.WithError(err).WithField("buildRef", bld.Ref).WithField("ref", ref).Error("cannot push base image (additional ref)")
+				continue
+			}
+		}
 	}
 
 	return nil

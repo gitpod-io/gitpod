@@ -78,6 +78,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     deleteWorkspace(id: string): Promise<void>;
     setWorkspaceDescription(id: string, desc: string): Promise<void>;
     controlAdmission(id: string, level: GitpodServer.AdmissionLevel): Promise<void>;
+    hasWorkspaceImageIgnoringDockerfileFrom(id: string): Promise<boolean>;
 
     updateWorkspaceUserPin(id: string, action: GitpodServer.PinAction): Promise<void>;
     sendHeartBeat(options: GitpodServer.SendHeartBeatOptions): Promise<void>;
@@ -251,6 +252,7 @@ export namespace GitpodServer {
     }
     export interface StartWorkspaceOptions {
         forceDefaultImage: boolean;
+        forceLatestSuccessfulImage: boolean;
     }
     export interface TakeSnapshotOptions {
         workspaceId: string;

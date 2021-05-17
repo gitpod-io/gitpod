@@ -24,6 +24,7 @@ export interface StartWorkspaceState {
   workspaceInstance?: WorkspaceInstance;
   workspace?: Workspace;
   hasImageBuildLogs?: boolean;
+  hasLatestSuccessfulImage?: boolean;
   error?: StartWorkspaceError;
 }
 
@@ -65,7 +66,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     this.toDispose.dispose();
   }
 
-  async startWorkspace(restart = false, forceDefaultImage = false) {
+  async startWorkspace(restart = false, force: undefined | "default" | "latest" = undefined) {
     const state = this.state;
     if (state) {
       if (!restart && (state.startedInstanceId /* || state.errorMessage */)) {
@@ -76,7 +77,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
     const { workspaceId } = this.props;
     try {
-      const result = await getGitpodService().server.startWorkspace(workspaceId, { forceDefaultImage });
+      const result = await getGitpodService().server.startWorkspace(workspaceId, { forceDefaultImage: force === "default", forceLatestSuccessfulImage: force === "latest" });
       if (!result) {
         throw new Error("No result!");
       }
@@ -269,9 +270,22 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
         if (this.state.hasImageBuildLogs) {
           const restartWithDefaultImage = (event: React.MouseEvent) => {
             (event.target as HTMLButtonElement).disabled = true;
-            this.startWorkspace(true, true);
+            this.startWorkspace(true, "default");
           }
-          return <ImageBuildView workspaceId={this.state.workspaceInstance.workspaceId} onStartWithDefaultImage={restartWithDefaultImage} phase={phase} error={error} />;
+          this.state.hasLatestSuccessfulImage === undefined &&
+            getGitpodService().server.hasWorkspaceImageIgnoringDockerfileFrom(this.props.workspaceId).then(hasLatestSuccessfulImage => this.setState({ hasLatestSuccessfulImage }));
+          const restartWithLatestSuccessfulImage = this.state.hasLatestSuccessfulImage ?
+            (event: React.MouseEvent) => {
+              (event.target as HTMLButtonElement).disabled = true;
+              this.startWorkspace(true, "latest");
+            } : undefined;
+          return <ImageBuildView
+            workspaceId={this.state.workspaceInstance.workspaceId}
+            onStartWithDefaultImage={restartWithDefaultImage}
+            onRestartWithLatestSuccessfulImage={restartWithLatestSuccessfulImage}
+            phase={phase}
+            error={error}
+          />;
         }
         if (!isHeadless && this.state.workspaceInstance.status.conditions.timeout) {
           title = 'Timed Out';
@@ -302,6 +316,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 interface ImageBuildViewProps {
   workspaceId: string;
   onStartWithDefaultImage?: (event: React.MouseEvent) => void;
+  onRestartWithLatestSuccessfulImage?: (event: React.MouseEvent) => void;
   phase?: StartPhase;
   error?: StartWorkspaceError;
 }
@@ -333,7 +348,10 @@ function ImageBuildView(props: ImageBuildViewProps) {
     <Suspense fallback={<div />}>
       <WorkspaceLogs logsEmitter={logsEmitter} errorMessage={props.error?.message} />
     </Suspense>
-    {!!props.onStartWithDefaultImage && <button className="mt-6 secondary" onClick={props.onStartWithDefaultImage}>Continue with Default Image</button>}
+    <div className="mt-10 justify-center flex space-x-2">
+      {!!props.onRestartWithLatestSuccessfulImage && <button className="mt-6 secondary" onClick={props.onRestartWithLatestSuccessfulImage}>Continue with Latest Successfully Built Image</button>}
+      {!!props.onStartWithDefaultImage && <button className="mt-6 secondary" onClick={props.onStartWithDefaultImage}>Continue with Default Image</button>}
+    </div>
   </StartPage>;
 }
 

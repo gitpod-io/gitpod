@@ -62,6 +62,7 @@ function readConfig(): RateLimiterConfig {
         "deleteWorkspace": { group: "default", points: 1 },
         "setWorkspaceDescription": { group: "default", points: 1 },
         "controlAdmission": { group: "default", points: 1 },
+        "hasWorkspaceImageIgnoringDockerfileFrom": { group: "default", points: 1 },
         "updateWorkspaceUserPin": { group: "default", points: 1 },
         "sendHeartBeat": { group: "default", points: 1 },
         "watchWorkspaceImageBuildLogs": { group: "default", points: 1 },

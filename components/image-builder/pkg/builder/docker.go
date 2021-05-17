@@ -214,6 +214,37 @@ func (b *DockerBuilder) getAbsoluteImageRef(ctx context.Context, ref string, all
 	return b.Resolver.Resolve(ctx, ref, resolve.WithAuthentication(auth))
 }
 
+/*
+getAdditionalBaseImageRefs returns a potentially empty list of additional image
+refs that should be added as tags to a newly built base image
+
+The current implementation returns a tag that is the same hash value as the
+result of getBaseImageRef(...) but without DockerfileFrom. That means that this
+tag is independent of the upstream image revision. That allows to use the latest
+successfully build when the image build fails due to changes in the upstream
+image.
+*/
+func (b *DockerBuilder) getAdditionalBaseImageRefs(ctx context.Context, bs *api.BuildSource, allowedAuth allowedAuthFor) (res []string, err error) {
+	res = []string{}
+	switch src := bs.From.(type) {
+	case *api.BuildSource_File:
+		if src.File.DockerfileFrom != nil {
+			var ref string
+
+			dockerfileFrom := src.File.DockerfileFrom
+			src.File.DockerfileFrom = nil
+			ref, err = b.getBaseImageRef(ctx, bs, allowedAuth)
+			src.File.DockerfileFrom = dockerfileFrom
+
+			if err != nil {
+				return
+			}
+			res = append(res, ref)
+		}
+	}
+	return
+}
+
 func (b *DockerBuilder) getBaseImageRef(ctx context.Context, bs *api.BuildSource, allowedAuth allowedAuthFor) (res string, err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "getBaseImageRef")

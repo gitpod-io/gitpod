@@ -406,7 +406,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         }
     }
 
-    public async startWorkspace(workspaceId: string, options: { forceDefaultImage: boolean }): Promise<StartWorkspaceResult> {
+    public async startWorkspace(workspaceId: string, options: GitpodServer.StartWorkspaceOptions): Promise<StartWorkspaceResult> {
         const span = opentracing.globalTracer().startSpan("startWorkspace");
         span.setTag("workspaceId", workspaceId);
 
@@ -452,9 +452,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             await mayStartPromise;
 
             // at this point we're about to actually start a new workspace
-            return await this.workspaceStarter.startWorkspace({ span }, workspace, user, await envVars, {
-                forceDefaultImage: !!options.forceDefaultImage
-            });
+            return await this.workspaceStarter.startWorkspace({ span }, workspace, user, await envVars, options);
         } catch (e) {
             TraceContext.logError({ span }, e);
             throw e;
@@ -574,6 +572,26 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
     public async controlAdmission(id: string, level: "owner" | "everyone"): Promise<void> {
         throw new ResponseError(ErrorCodes.EE_FEATURE, `Workspace sharing support is implemented in Gitpod's Enterprise Edition`)
+    }
+
+    public async hasWorkspaceImageIgnoringDockerfileFrom(workspaceId: string): Promise<boolean> {
+        const span = opentracing.globalTracer().startSpan("hasWorkspaceImageIgnoringDockerfileFrom");
+        span.setTag("workspaceId", workspaceId);
+        const user = this.checkAndBlockUser();
+        await this.checkTermsAcceptance();
+        log.info({ userId: user.id, workspaceId }, 'hasWorkspaceImageIgnoringDockerfileFrom');
+        const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace({ span }));
+        await this.guardAccess({ kind: "workspace", subject: workspace }, "get");
+        if (workspace.imageSource && 'dockerFileFrom' in workspace.imageSource) {
+            const dockerFileFrom = workspace.imageSource.dockerFileFrom
+            workspace.imageSource.dockerFileFrom = undefined;
+            const needsImageBuild = await this.workspaceStarter.needsImageBuild({ span }, user, workspace);
+            workspace.imageSource.dockerFileFrom = dockerFileFrom;
+            log.info({ userId: user.id, workspaceId }, `hasWorkspaceImageIgnoringDockerfileFrom done, result: ${!needsImageBuild}`);
+            return !needsImageBuild;
+        }
+        log.info({ userId: user.id, workspaceId }, 'hasWorkspaceImageIgnoringDockerfileFrom done, result: false (no dockerFileFrom in imageSource)');
+        return false;
     }
 
     public async setWorkspaceDescription(id: string, description: string): Promise<void> {
