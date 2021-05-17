@@ -20,11 +20,14 @@ export interface InMemory {
   flush(): void;
 }
 
-export const localAppClientID = 'gplctl-1.0';
+// Scopes
 const getWorkspaceScope: OAuthScope = { name: "function:getWorkspace" };
 const listenForWorkspaceInstanceUpdatesScope: OAuthScope = { name: "function:listenForWorkspaceInstanceUpdates" };
 const getWorkspaceResourceScope: OAuthScope = { name: "resource:" + ScopedResourceGuard.marshalResourceScope({ kind: "workspace", subjectID: "*", operations: ["get"] }) };
 const getWorkspaceInstanceResourceScope: OAuthScope = { name: "resource:" + ScopedResourceGuard.marshalResourceScope({ kind: "workspaceInstance", subjectID: "*", operations: ["get"] }) };
+
+// Clients
+export const localAppClientID = 'gplctl-1.0';
 const localClient: OAuthClient = {
   id: localAppClientID,
   secret: `${localAppClientID}-secret`,
@@ -34,14 +37,18 @@ const localClient: OAuthClient = {
   allowedGrants: ['authorization_code'],
   scopes: [getWorkspaceScope, listenForWorkspaceInstanceUpdatesScope, getWorkspaceResourceScope, getWorkspaceInstanceResourceScope],
 }
-log.info(`SCOPES: ${JSON.stringify(localClient.scopes)}`)
 
 export const inMemoryDatabase: InMemory = {
   clients: {
     [localClient.id]: localClient,
   },
   tokens: {},
-  scopes: { [getWorkspaceScope.name]: getWorkspaceScope },
+  scopes: {
+    [getWorkspaceScope.name]: getWorkspaceScope,
+    [listenForWorkspaceInstanceUpdatesScope.name]: listenForWorkspaceInstanceUpdatesScope,
+    [getWorkspaceResourceScope.name]: getWorkspaceResourceScope,
+    [getWorkspaceInstanceResourceScope.name]: getWorkspaceInstanceResourceScope,
+  },
   flush() {
     log.info('flush')
     this.clients = {};
