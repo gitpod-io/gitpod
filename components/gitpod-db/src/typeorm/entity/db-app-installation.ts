@@ -33,6 +33,7 @@ export class DBAppInstallation implements AppInstallation {
     @Column({
         type: 'timestamp',
         precision: 6,
+        default: () => 'CURRENT_TIMESTAMP(6)',
         transformer: Transformer.MAP_ISO_STRING_TO_TIMESTAMP_DROP
     })
     creationTime: string;
@@ -40,6 +41,7 @@ export class DBAppInstallation implements AppInstallation {
     @Column({
         type: 'timestamp',
         precision: 6,
+        default: () => 'CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6)',
         transformer: Transformer.MAP_ISO_STRING_TO_TIMESTAMP_DROP
     })
     lastUpdateTime: string;

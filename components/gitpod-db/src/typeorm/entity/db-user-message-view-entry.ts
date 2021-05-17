@@ -20,6 +20,7 @@ export class DBUserMessageViewEntry  {
     @Column({
         type: 'timestamp',
         precision: 6,
+        default: () => 'CURRENT_TIMESTAMP(6)',
         transformer: Transformer.MAP_ISO_STRING_TO_TIMESTAMP_DROP
     })
     viewedAt: string;
