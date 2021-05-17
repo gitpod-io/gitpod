@@ -494,6 +494,12 @@ mysql:
   fullnameOverride: mysql
   image:
     tag: 5.7
+  primary:
+    extraEnvVars:
+      # We rely on this in our DB implementations: NULL (re-)sets configured columns to be initialized with CURRENT_TIMESTAMP.
+      # OFF is the default as documented [here](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_explicit_defaults_for_timestamp) (we also see this in GCP), but not for this chart.
+    - name: MYSQL_EXTRA_FLAGS
+      value: --explicit-defaults-for-timestamp=OFF
   auth:
     existingSecret: db-password
   serviceAccount:

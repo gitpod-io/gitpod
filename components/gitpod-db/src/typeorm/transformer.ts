@@ -26,7 +26,11 @@ export namespace Transformer {
 
     export const MAP_ISO_STRING_TO_TIMESTAMP_DROP: ValueTransformer = {
         to(value: any): any {
-            // DROP all input values as they are set by the DB 'ON UPDATE'/ as default value
+            // DROP all input values as they are set by the DB 'ON UPDATE'/ as default value.
+            // We're relying on the system variable explicit-defaults-for-timestamp here (link: https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_explicit_defaults_for_timestamp):
+            // `undefined` get's converted to NULL, which on the DB is turned into the configured default value for the column.
+            // In our case, that's 100% CURRENT_TIMESTAMP.
+            // This was done initially so we don't have to make fields like `creationTime` optional, or have to use two types for the same table.
             return undefined;
         },
         from(value: any): any {
