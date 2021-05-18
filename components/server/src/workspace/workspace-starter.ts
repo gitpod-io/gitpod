@@ -633,7 +633,9 @@ export class WorkspaceStarter {
         spec.setWorkspaceImage(instance.workspaceImage);
         spec.setWorkspaceLocation(workspace.config.workspaceLocation || spec.getCheckoutLocation());
         spec.setFeatureFlagsList(this.toWorkspaceFeatureFlags(featureFlags));
-        spec.setTimeout(await userTimeoutPromise);
+        if (workspace.type === 'regular') {
+            spec.setTimeout(await userTimeoutPromise);
+        }
         spec.setAdmission(admissionLevel);
         return spec;
     }
