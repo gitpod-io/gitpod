@@ -5,6 +5,8 @@
 package main
 
 import (
+	_ "embed"
+
 	"context"
 	"errors"
 	"log"
@@ -19,11 +21,20 @@ import (
 	"github.com/zalando/go-keyring"
 )
 
+var (
+	// Version : current version
+	Version string = strings.TrimSpace(version)
+	//go:embed version.txt
+	version string
+)
+
 func main() {
 	app := cli.App{
-		Name:                 "gitpod",
+		Name:                 "gitpod-local-companion",
+		Usage:                "connect your Gitpod workspaces",
 		Action:               DefaultCommand("run"),
 		EnableBashCompletion: true,
+		Version:              Version,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
 				Name:  "gitpod-host",

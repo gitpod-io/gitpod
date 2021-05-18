@@ -14,11 +14,14 @@ packages:
         - go.sum
         - "**/*.go"
       deps:
+        - :version
         - components/supervisor-api/go:lib
         - components/gitpod-protocol/go:lib
       env:
         - CGO_ENABLED=0
         - GOOS=linux
+      prep:
+        - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
       config:
         packaging: app
     - name: app-darwin
@@ -28,11 +31,14 @@ packages:
         - go.sum
         - "**/*.go"
       deps:
+        - :version
         - components/supervisor-api/go:lib
         - components/gitpod-protocol/go:lib
       env:
         - CGO_ENABLED=0
         - GOOS=darwin
+      prep:
+        - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
       config:
         packaging: app
     - name: app-windows
@@ -42,13 +48,24 @@ packages:
         - go.sum
         - "**/*.go"
       deps:
+        - :version
         - components/supervisor-api/go:lib
         - components/gitpod-protocol/go:lib
       env:
         - CGO_ENABLED=0
         - GOOS=windows
+      prep:
+        - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
       config:
         packaging: app
+    - name: version
+      type: generic
+      argdeps:
+        - localAppVersion
+      config:
+        commands:
+          - ["sh", "-c", "echo '${localAppVersion}' > version.txt"]
+          - ["echo", "Local App Version: ${localAppVersion}"]
     - name: docker
       type: docker
       deps:
