@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/Netflix/go-env v0.0.0-20200908232752-3e802f601e28
 	github.com/creack/pty v1.1.11
+	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
@@ -17,9 +18,11 @@ require (
 	github.com/gorilla/websocket v1.4.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.2.0
+	github.com/improbable-eng/grpc-web v0.14.0
 	github.com/mailru/easygo v0.0.0-20190618140210-3c14a0dc985f
 	github.com/prometheus/procfs v0.6.0
 	github.com/sirupsen/logrus v1.8.1
+	github.com/rs/cors v1.7.0 // indirect
 	github.com/soheilhy/cmux v0.1.4
 	github.com/spf13/cobra v1.1.3
 	golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf
@@ -30,6 +33,7 @@ require (
 	google.golang.org/grpc v1.38.0
 	google.golang.org/grpc/examples v0.0.0-20210609180517-95e48a892d6c // indirect
 	google.golang.org/protobuf v1.26.0
+	nhooyr.io/websocket v1.8.7 // indirect
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
