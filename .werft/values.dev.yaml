@@ -147,6 +147,7 @@ components:
         kind: "constant"
         constant:
           setpoint: 1
+      maxGhostWorkspaces: 0
 
   # Enable ws-proxy in dev
   wsProxy:
