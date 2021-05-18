@@ -293,6 +293,8 @@ export class WorkspaceStarter {
             ideUrl: '', // Initially empty, filled during starting process
             region: '', // Initially empty, filled during starting process
             workspaceImage: '', // Initially empty, filled during starting process
+            clusterName: '', // Initially empty, filled during starting process
+            projectName: '', // Initially empty, filled during starting process
             status: {
                 conditions: {},
                 phase: 'unknown',

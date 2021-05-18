@@ -13,7 +13,7 @@ export class AlterWorkspaceInstance1621244852650 implements MigrationInterface {
 
         if (await tableExists(queryRunner, "d_b_workspace_instance")) {
             if (!(await columnExists(queryRunner, "d_b_workspace_instance", "clusterName")) && !(await columnExists(queryRunner, "d_b_workspace_instance", "projectName"))) {
-                await queryRunner.query("ALTER TABLE `d_b_workspace_instance` ADD COLUMN projectName TEXT NOT NULL DEFAULT '', ADD COLUMN clusterName TEXT NOT NULL DEFAULT ''");
+                await queryRunner.query("ALTER TABLE `d_b_workspace_instance` ADD COLUMN projectName TEXT NOT NULL, ADD COLUMN clusterName TEXT NOT NULL");
             }
         }
     }
