@@ -29,6 +29,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/websocket"
 	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/prometheus/procfs"
 	"github.com/soheilhy/cmux"
 	"golang.org/x/crypto/ssh"
@@ -641,7 +642,15 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 
 	httpMux := m.Match(cmux.HTTP1Fast())
 	routes := http.NewServeMux()
-	routes.Handle("/_supervisor/v1/", http.StripPrefix("/_supervisor", restMux))
+	grpcWebServer := grpcweb.WrapServer(grpcServer)
+	routes.Handle("/_supervisor/v1/", http.StripPrefix("/_supervisor", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.Header.Get("Content-Type"), "application/grpc") ||
+			websocket.IsWebSocketUpgrade(r) {
+			http.StripPrefix("/v1", grpcWebServer).ServeHTTP(w, r)
+		} else {
+			restMux.ServeHTTP(w, r)
+		}
+	})))
 	upgrader := websocket.Upgrader{}
 	routes.Handle("/_supervisor/tunnel", http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 		wsConn, err := upgrader.Upgrade(rw, r, nil)
