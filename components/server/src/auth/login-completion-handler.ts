@@ -86,6 +86,7 @@ export class LoginCompletionHandler {
                 event: "login",
                 properties: {
                     "loginContext": authHost,
+                    "location": (request.header as any)["x-glb-client-city-lat-long"]
                 }
             });
         } 
