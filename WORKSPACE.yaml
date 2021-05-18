@@ -4,6 +4,7 @@ defaultArgs:
   coreYarnLockBase: ../..
   npmPublishTrigger: "false"
   publishToNPM: true
+  localAppVersion: unknown
 
 defaultVariant:
   config:
