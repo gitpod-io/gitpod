@@ -36,6 +36,7 @@ packages:
     deps:
       - :app
       - :static
+      - components/local-app:app
     argdeps:
       - imageRepoBase
     config:
