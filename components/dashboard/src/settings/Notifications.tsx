@@ -51,8 +51,8 @@ export default function Notifications() {
                 checked={isTransactionalMail}
                 onChange={toggleTransactionalMail}/>
             <CheckBox
-                title="Marketing Notifications"
-                desc="Receive product marketing emails"
+                title="Product Notifications"
+                desc="Receive emails about product updates and news"
                 checked={isMarketingMail}
                 onChange={toggleMarketingMail}/>
         </PageWithSubMenu>
