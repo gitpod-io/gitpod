@@ -13,6 +13,7 @@ metadata:
     component: ws-proxy
     kind: deployment
     stage: {{ .Values.installation.stage }}
+    gitpod.io/requiresCerts: 'true'
 spec:
   selector:
     matchLabels:
@@ -20,6 +21,7 @@ spec:
       component: ws-proxy
       kind: pod
       stage: {{ .Values.installation.stage }}
+      gitpod.io/requiresCerts: 'true'
   replicas: {{ $comp.replicas | default 1 }}
   strategy:
     type: RollingUpdate
@@ -34,6 +36,7 @@ spec:
         component: ws-proxy
         kind: pod
         stage: {{ .Values.installation.stage }}
+        gitpod.io/requiresCerts: 'true'
       annotations:
         prometheus.io/scrape: 'true'
         prometheus.io/path: "/metrics"
