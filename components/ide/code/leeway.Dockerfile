@@ -4,7 +4,7 @@
 
 # we use latest major version of Node.js distributed VS Code. (see about dialog in your local VS Code)
 # ideallay we should use exact version, but it has criticla bugs in regards to grpc over http2 streams
-ARG NODE_VERSION=12.21.0
+ARG NODE_VERSION=14.16.0
 
 
 FROM node:${NODE_VERSION} AS node_installer
@@ -42,7 +42,7 @@ RUN curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh |
     && npm install -g yarn node-gyp
 ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 
-ENV GP_CODE_COMMIT e01c9d7b3bb46f68cb7d38ec3e8eb394621bba41
+ENV GP_CODE_COMMIT f5cfbfee13cdd5e98de05ce609859577617009e4
 RUN mkdir gp-code \
     && cd gp-code \
     && git init \
