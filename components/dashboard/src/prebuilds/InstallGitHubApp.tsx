@@ -74,7 +74,7 @@ export default function InstallGitHubApp() {
                 </div>
             </div>
         </div>
-        <Modal title="Installation Successfull" visible={modal === 'done'} onClose={goToApp} buttons={<button onClick={goToApp}>Go to Dashboard</button>}>
+        <Modal title="Installation Successful" visible={modal === 'done'} onClose={goToApp} buttons={<button onClick={goToApp}>Go to Dashboard</button>}>
             <div className="pb-6 text-gray-500">The GitHub app was installed successfully. Have a look at the <a className="text-blue-500" href="https://www.gitpod.io/docs/prebuilds/" rel="noopener">documentation</a> to find out how to configure it.</div>
         </Modal>
         <Modal title="Failed to Install" visible={!!modal && modal !== 'done'} onClose={goToApp} buttons={[
