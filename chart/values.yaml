@@ -7,6 +7,9 @@ version:
 hostname: localhost
 certificatesSecret:
   secretName: https-certificates
+  keyName: privkey.pem
+  chainName: chain.pem
+  fullChainName: fullchain.pem
 
 imagePrefix: gcr.io/gitpod-io/self-hosted/
 installation:
