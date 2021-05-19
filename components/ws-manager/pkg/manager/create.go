@@ -53,6 +53,8 @@ func (m *Manager) createWorkspacePod(startContext *startWorkspaceContext) (*core
 		typeSpecificTpl, err = getWorkspacePodTemplate(m.Config.WorkspacePodTemplate.ProbePath)
 	case api.WorkspaceType_GHOST:
 		typeSpecificTpl, err = getWorkspacePodTemplate(m.Config.WorkspacePodTemplate.GhostPath)
+	case api.WorkspaceType_IMAGEBUILD:
+		typeSpecificTpl, err = getWorkspacePodTemplate(m.Config.WorkspacePodTemplate.ImagebuildPath)
 	}
 	if err != nil {
 		return nil, xerrors.Errorf("cannot read type-specific pod template - this is a configuration problem: %w", err)
@@ -262,6 +264,8 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		prefix = "probe"
 	case api.WorkspaceType_GHOST:
 		prefix = "ghost"
+	case api.WorkspaceType_IMAGEBUILD:
+		prefix = "imagebuild"
 	default:
 		prefix = "ws"
 	}
@@ -292,6 +296,9 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			return nil, xerrors.Errorf("invalid workspace timeout \"%s\": %w", req.Spec.Timeout, err)
 		}
 		annotations[customTimeoutAnnotation] = req.Spec.Timeout
+	}
+	for k, v := range req.Metadata.Annotations {
+		annotations[workspaceAnnotationPrefix+k] = v
 	}
 
 	// By default we embue our workspace pods with some tolerance towards pressure taints,

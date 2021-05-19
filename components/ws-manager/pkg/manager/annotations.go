@@ -79,6 +79,9 @@ const (
 
 	// disposalStatusAnnotation contains the status of the workspace disposal process
 	disposalStatusAnnotation = "gitpod.io/disposalStatus"
+
+	// workspaceAnnotationPrefix prefixes pod annotations that contain annotations specified during the workspaces start request
+	workspaceAnnotationPrefix = "gitpod/annotation."
 )
 
 // markWorkspaceAsReady adds annotations to a workspace pod

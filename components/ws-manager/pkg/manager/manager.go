@@ -806,7 +806,55 @@ func (m *Manager) DescribeWorkspace(ctx context.Context, req *api.DescribeWorksp
 
 // Subscribe streams all status updates to a client
 func (m *Manager) Subscribe(req *api.SubscribeRequest, srv api.WorkspaceManager_SubscribeServer) (err error) {
-	return m.subscribe(srv.Context(), srv)
+	var sub subscriber = srv
+	if req.MustMatch != nil {
+		sub = &filteringSubscriber{srv, req.MustMatch}
+	}
+
+	return m.subscribe(srv.Context(), sub)
+}
+
+type filteringSubscriber struct {
+	Sub    subscriber
+	Filter *api.MetadataFilter
+}
+
+func matchesMetadataFilter(filter *api.MetadataFilter, md *api.WorkspaceMetadata) bool {
+	if filter == nil {
+		return true
+	}
+
+	if filter.MetaId != "" && filter.MetaId != md.MetaId {
+		return false
+	}
+	if filter.Owner != "" && filter.Owner != md.Owner {
+		return false
+	}
+	for k, v := range filter.Annotations {
+		av, ok := md.Annotations[k]
+		if !ok || av != v {
+			return false
+		}
+	}
+	return true
+}
+
+func (f *filteringSubscriber) Send(resp *api.SubscribeResponse) error {
+	var md *api.WorkspaceMetadata
+	if lg := resp.GetLog(); lg != nil {
+		md = lg.Metadata
+	} else if sts := resp.GetStatus(); sts != nil {
+		md = sts.Metadata
+	}
+	if md == nil {
+		// no metadata, no forwarding
+		return nil
+	}
+	if !matchesMetadataFilter(f.Filter, md) {
+		return nil
+	}
+
+	return f.Sub.Send(resp)
 }
 
 type subscriber interface {
@@ -973,6 +1021,10 @@ func (m *Manager) GetWorkspaces(ctx context.Context, req *api.GetWorkspacesReque
 		status, err := m.getWorkspaceStatus(wso)
 		if err != nil {
 			log.WithError(err).Error("cannot get complete workspace list")
+			continue
+		}
+
+		if !matchesMetadataFilter(req.MustMatch, status.Metadata) {
 			continue
 		}
 

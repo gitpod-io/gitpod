@@ -46,14 +46,9 @@ spec:
       - name: configuration
         configMap:
           name: {{ template "gitpod.comp.configMap" $this }}
-      - name: dind-storage
-        {{- if $comp.hostDindData }}
-        hostPath:
-          path: {{ $comp.hostDindData }}
-          type: DirectoryOrCreate
-        {{- else }}
-        emptyDir: {}
-        {{- end }}
+      - name: authkey
+        secret:
+          secretName: image-builder-authkey
       {{- if $comp.registry.secretName }}
       - name: pull-secret
         secret:
@@ -64,30 +59,15 @@ spec:
         secret:
           secretName: {{ $sec.secret }}
 {{- end }}
+      - name: wsman-tls-certs
+        secret:
+          secretName: {{ .Values.components.wsManager.tls.server.secretName }}
       enableServiceLinks: false
       containers:
-      - name: dind
-        image: {{ $comp.dindImage | default "docker:19.03-dind" }}
-{{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
-        securityContext:
-          privileged: true
-          runAsUser: 0
-        args: [ "dockerd", "--userns-remap=default", "-H tcp://127.0.0.1:2375" {{- if $comp.dindMtu -}}, "--mtu={{ $comp.dindMtu}}"{{- end -}} ]
-        volumeMounts:
-        - mountPath: /var/lib/docker
-          name: dind-storage
-{{- range $idx, $sec := $comp.registryCerts }}
-        - mountPath: /etc/docker/certs.d/{{- if eq $sec.name "builtin" -}}{{ template "gitpod.builtinRegistry.name" $this.root }}{{ else }}{{ $sec.name }}{{ end }}
-          name: docker-tls-certs-{{ $idx }}
-{{- end }}
-{{- if $comp.dindResources }}
-        resources:
-{{ toYaml $comp.dindResources | indent 10 }}
-{{- end }}
+{{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
+      - name: image-builder
 {{ include "gitpod.container.defaultEnv" $this | indent 8 }}
 {{ include "gitpod.container.tracingEnv" $this | indent 8 }}
-{{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
-      - name: service
         image: {{ template "gitpod.comp.imageFull" $this }}
         args:
         - "run"
@@ -99,6 +79,12 @@ spec:
         - mountPath: /config/image-builder.json
           subPath: "image-builder.json"
           name: configuration
+        - mountPath: /config/authkey
+          subPath: "keyfile"
+          name: authkey
+        - mountPath: /wsman-certs
+          name: wsman-tls-certs
+          readOnly: true
 {{- if $comp.registry }}
 {{- if $comp.registry.secretName }}
         - mountPath: /config/pull-secret.json
@@ -116,7 +102,5 @@ spec:
           privileged: false
 {{ include "gitpod.container.defaultEnv" $this | indent 8 }}
 {{ include "gitpod.container.tracingEnv" $this | indent 8 }}
-        - name: DOCKER_HOST
-          value: "tcp://localhost:2375"
 {{ toYaml .Values.defaults | indent 6 }}
 {{ end }}

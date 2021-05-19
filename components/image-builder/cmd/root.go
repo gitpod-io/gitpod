@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -9,17 +9,18 @@ import (
 	"crypto/x509"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/image-builder/pkg/orchestrator"
 
 	"github.com/mattn/go-isatty"
 	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/image-builder/pkg/builder"
 )
 
 var (
@@ -53,7 +54,7 @@ func Execute() {
 }
 
 func getConfig() *config {
-	ctnt, err := os.ReadFile(configFile)
+	ctnt, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		log.WithError(xerrors.Errorf("cannot read config: %w", err)).Error("cannot read configuration. Maybe missing --config?")
 		os.Exit(1)
@@ -75,9 +76,9 @@ func init() {
 }
 
 type config struct {
-	Builder  builder.Configuration `json:"builder"`
-	RefCache refcacheConfig        `json:"refCache,omitempty"`
-	Service  struct {
+	Orchestrator *orchestrator.Configuration `json:"orchestrator"`
+	RefCache     refcacheConfig              `json:"refCache,omitempty"`
+	Service      struct {
 		Addr string    `json:"address"`
 		TLS  tlsConfig `json:"tls"`
 	} `json:"service"`
@@ -114,7 +115,7 @@ func (c *tlsConfig) ServerOption() (grpc.ServerOption, error) {
 
 	// Create a certificate pool from the certificate authority
 	certPool := x509.NewCertPool()
-	ca, err := os.ReadFile(c.Authority)
+	ca, err := ioutil.ReadFile(c.Authority)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot not read ca certificate: %w", err)
 	}
@@ -126,7 +127,6 @@ func (c *tlsConfig) ServerOption() (grpc.ServerOption, error) {
 		ClientAuth:   tls.RequireAndVerifyClientCert,
 		Certificates: []tls.Certificate{certificate},
 		ClientCAs:    certPool,
-		MinVersion:   tls.VersionTLS12,
 	})
 
 	return grpc.Creds(creds), nil

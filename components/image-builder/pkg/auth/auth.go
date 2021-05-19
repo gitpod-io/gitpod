@@ -1,27 +1,27 @@
-// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package builder
+package auth
 
 import (
 	"encoding/base64"
 	"encoding/json"
 	"os"
 
+	"github.com/gitpod-io/gitpod/image-builder/api"
+
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
-	"golang.org/x/xerrors"
-
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/image-builder/api"
+	"golang.org/x/xerrors"
 )
 
 // RegistryAuthenticator can provide authentication for some registries
 type RegistryAuthenticator interface {
 	// Authenticate attempts to provide authentication for Docker registry access
-	Authenticate(registry string) (auth *types.AuthConfig, err error)
+	Authenticate(registry string) (auth *Authentication, err error)
 }
 
 // NewDockerConfigFileAuth reads a docker config file to provide authentication
@@ -47,13 +47,13 @@ type DockerConfigFileAuth struct {
 }
 
 // Authenticate attempts to provide an encoded authentication string for Docker registry access
-func (a *DockerConfigFileAuth) Authenticate(registry string) (auth *types.AuthConfig, err error) {
+func (a *DockerConfigFileAuth) Authenticate(registry string) (auth *Authentication, err error) {
 	ac, err := a.C.GetAuthConfig(registry)
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.AuthConfig{
+	return &Authentication{
 		Username:      ac.Username,
 		Password:      ac.Password,
 		Auth:          ac.Auth,
@@ -64,38 +64,67 @@ func (a *DockerConfigFileAuth) Authenticate(registry string) (auth *types.AuthCo
 	}, nil
 }
 
-type allowedAuthFor struct {
+// Authentication represents docker usable authentication
+type Authentication types.AuthConfig
+
+// ToBase64 produces a base64 encoded JSON string usable as Docker auth
+func (a *Authentication) ToBase64() string {
+	if a == nil {
+		return ""
+	}
+
+	encodedJSON, err := json.Marshal(a)
+	if err != nil {
+		log.WithError(err).Warn("cannot marshal authentication - this might break things down the road")
+		return ""
+	}
+	return base64.URLEncoding.EncodeToString(encodedJSON)
+}
+
+// AllowedAuthFor describes for which repositories authentication may be provided for
+type AllowedAuthFor struct {
 	All      bool
 	Explicit []string
 }
 
 var (
-	allowedAuthForAll  allowedAuthFor = allowedAuthFor{true, nil}
-	allowedAuthForNone allowedAuthFor = allowedAuthFor{false, nil}
+	// AllowedAuthForAll means auth for all repositories is allowed
+	AllowedAuthForAll AllowedAuthFor = AllowedAuthFor{true, nil}
+	// AllowedAuthForNone means auth for no repositories is allowed
+	AllowedAuthForNone AllowedAuthFor = AllowedAuthFor{false, nil}
 )
 
-func (a allowedAuthFor) IsAllowNone() bool {
+// IsAllowNone returns true if we are to allow authentication for no repos
+func (a AllowedAuthFor) IsAllowNone() bool {
 	return !a.All && len(a.Explicit) == 0
 }
 
-func (a allowedAuthFor) IsAllowAll() bool {
+// IsAllowAll returns true if we are to allow authentication for all repos
+func (a AllowedAuthFor) IsAllowAll() bool {
 	return a.All
 }
 
-func (a allowedAuthFor) Elevate(ref string) allowedAuthFor {
+// Elevate adds a ref to the list of authenticated repositories
+func (a AllowedAuthFor) Elevate(ref string) AllowedAuthFor {
 	pref, _ := reference.ParseNormalizedNamed(ref)
 	if pref == nil {
 		log.WithField("ref", ref).Debug("cannot elevate auth for invalid image ref")
 		return a
 	}
 
-	return allowedAuthFor{a.All, append(a.Explicit, reference.Domain(pref))}
+	return AllowedAuthFor{a.All, append(a.Explicit, reference.Domain(pref))}
 }
 
-// resolveRequestAuth computes the allowed authentication for a build based on its request
-func (b *DockerBuilder) resolveRequestAuth(auth *api.BuildRegistryAuth) (authFor allowedAuthFor) {
+// Resolver resolves an auth request determining which authentication is actually allowed
+type Resolver struct {
+	BaseImageRepository      string
+	WorkspaceImageRepository string
+}
+
+// ResolveRequestAuth computes the allowed authentication for a build based on its request
+func (r Resolver) ResolveRequestAuth(auth *api.BuildRegistryAuth) (authFor AllowedAuthFor) {
 	// by default we allow nothing
-	authFor = allowedAuthForNone
+	authFor = AllowedAuthForNone
 	if auth == nil {
 		return
 	}
@@ -103,37 +132,37 @@ func (b *DockerBuilder) resolveRequestAuth(auth *api.BuildRegistryAuth) (authFor
 	switch ath := auth.Mode.(type) {
 	case *api.BuildRegistryAuth_Total:
 		if ath.Total.AllowAll {
-			authFor = allowedAuthForAll
+			authFor = AllowedAuthForAll
 		} else {
-			authFor = allowedAuthForNone
+			authFor = AllowedAuthForNone
 		}
 	case *api.BuildRegistryAuth_Selective:
 		var explicit []string
 		if ath.Selective.AllowBaserep {
-			ref, _ := reference.ParseNormalizedNamed(b.Config.BaseImageRepository)
+			ref, _ := reference.ParseNormalizedNamed(r.BaseImageRepository)
 			explicit = append(explicit, reference.Domain(ref))
 		}
 		if ath.Selective.AllowWorkspacerep {
-			ref, _ := reference.ParseNormalizedNamed(b.Config.WorkspaceImageRepository)
+			ref, _ := reference.ParseNormalizedNamed(r.WorkspaceImageRepository)
 			explicit = append(explicit, reference.Domain(ref))
 		}
 		explicit = append(explicit, ath.Selective.AnyOf...)
-		authFor = allowedAuthFor{false, explicit}
+		authFor = AllowedAuthFor{false, explicit}
 	default:
-		authFor = allowedAuthForNone
+		authFor = AllowedAuthForNone
 	}
 	return
 }
 
-// getAuthFor computes the base64 encoded auth format for a Docker image pull/push
-func (a allowedAuthFor) getAuthFor(auth RegistryAuthenticator, refstr string) (res string, err error) {
+// GetAuthFor computes the base64 encoded auth format for a Docker image pull/push
+func (a AllowedAuthFor) GetAuthFor(auth RegistryAuthenticator, refstr string) (res *Authentication, err error) {
 	if auth == nil {
-		return "", nil
+		return
 	}
 
 	ref, err := reference.ParseNormalizedNamed(refstr)
 	if err != nil {
-		return "", xerrors.Errorf("cannot parse image ref: %v", err)
+		return nil, xerrors.Errorf("cannot parse image ref: %v", err)
 	}
 
 	reg := reference.Domain(ref)
@@ -151,32 +180,22 @@ func (a allowedAuthFor) getAuthFor(auth RegistryAuthenticator, refstr string) (r
 	}
 	if !regAllowed {
 		log.WithField("reg", reg).WithField("ref", ref).WithField("a", a).Debug("registry not allowed")
-		return "", nil
+		return nil, nil
 	}
 
-	rauth, err := auth.Authenticate(reg)
-	if err != nil {
-		return "", xerrors.Errorf("cannot get registry authentication: %v", err)
-	}
-
-	encodedJSON, err := json.Marshal(rauth)
-	if err != nil {
-		return "", err
-	}
-	res = base64.URLEncoding.EncodeToString(encodedJSON)
-
-	return
+	return auth.Authenticate(reg)
 }
 
-// imageBuildAuth is the format image builds needs
-type imageBuildAuth map[string]types.AuthConfig
+// ImageBuildAuth is the format image builds needs
+type ImageBuildAuth map[string]types.AuthConfig
 
-func (a allowedAuthFor) getImageBuildAuthFor(auth RegistryAuthenticator, refstr []string) (res imageBuildAuth, err error) {
+// GetImageBuildAuthFor produces authentication in the format an image builds needs
+func (a AllowedAuthFor) GetImageBuildAuthFor(auth RegistryAuthenticator, refstr []string) (res ImageBuildAuth, err error) {
 	if auth == nil {
 		return nil, nil
 	}
 
-	res = make(imageBuildAuth)
+	res = make(ImageBuildAuth)
 	for _, r := range refstr {
 		ref, err := reference.ParseNormalizedNamed(r)
 		if err != nil {
@@ -205,7 +224,7 @@ func (a allowedAuthFor) getImageBuildAuthFor(auth RegistryAuthenticator, refstr 
 			return nil, xerrors.Errorf("cannot get registry authentication: %v", err)
 		}
 
-		res[reg] = *ra
+		res[reg] = types.AuthConfig(*ra)
 	}
 	for _, reg := range a.Explicit {
 		if _, ok := res[reg]; ok {
@@ -217,7 +236,7 @@ func (a allowedAuthFor) getImageBuildAuthFor(auth RegistryAuthenticator, refstr 
 			return nil, xerrors.Errorf("cannot get registry authentication: %v", err)
 		}
 
-		res[reg] = *ra
+		res[reg] = types.AuthConfig(*ra)
 	}
 
 	return

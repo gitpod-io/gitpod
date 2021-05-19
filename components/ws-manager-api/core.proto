@@ -39,8 +39,25 @@ service WorkspaceManager {
     rpc ControlAdmission(ControlAdmissionRequest) returns (ControlAdmissionResponse) {}
 }
 
+// MetadataFilter describes conditions for matching a set of workspaces.
+// The values of the fields have to match exactly, and set values must match.
+message MetadataFilter {
+    // owner is the ID of the Gitpod user to whom we'll bill this workspace and who we consider responsible for its content
+	string owner = 1;
+
+    // meta_id is the workspace ID of this currently running workspace instance on the "meta pool" side
+    string meta_id = 2;
+
+    // annotations must be a subset of the annotations of a workspace's metadata
+    map<string, string> annotations = 3;
+}
+
 // GetWorkspacesRequest requests a list of running workspaces
-message GetWorkspacesRequest {}
+message GetWorkspacesRequest {
+    // MustMatch can specify an exactly matching filter for listing workspaces.
+    // If not set, or all fields are empty, all workspaces are returned.
+    MetadataFilter must_match = 1;
+}
 
 // GetWorkspacesResponse is the response to a get w
 message GetWorkspacesResponse {
@@ -109,7 +126,11 @@ message DescribeWorkspaceResponse {
 }
 
 // SubscribeRequest requests to be notified whenever the workspace status changes
-message SubscribeRequest {}
+message SubscribeRequest {
+    // MustMatch can specify an exactly matching filter for listening to workspaces.
+    // If not set, or all fields are empty, all workspace status updates or log output are returned.
+    MetadataFilter must_match = 1;
+}
 
 // SubscribeResponse notifies a client when a workspace's status changes
 message SubscribeResponse {
@@ -360,6 +381,10 @@ message WorkspaceMetadata {
 
     // started_at is the time when this workspace was started. Consider this field read-only, i.e. setting in a request will have no effect.
     google.protobuf.Timestamp started_at = 3;
+
+    // Annotations are key/value pairs that gets attached to the workspace.
+    // This is primarily intended for annotating headless workspace loads.
+    map<string, string> annotations = 4;
 }
 
 // WorkspaceRuntimeInfo details the workspace's runtime, e.g. executing system, node other information
@@ -480,6 +505,9 @@ enum WorkspaceType {
     // Ghost workspaces are placeholders that pre-scale a cluster for faster workspace startup. They request the same amount of resources
     // as a regular workspace, but run no actual load. They're removed at will to make space for an actual workspace.
     GHOST = 3;
+
+    // Imagebuild workspaces build a workspace, incl. their Gitpod layer. They run headless and have no direct user-interaction.
+    IMAGEBUILD = 4;
 }
 
 // HeadlessWorkspaceEvent is a log statement issued by a headless workspace

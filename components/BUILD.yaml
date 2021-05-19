@@ -21,6 +21,7 @@ packages:
       - components/ide/code:docker
       - components/ide/theia:docker
       - components/image-builder:docker
+      - components/image-builder-bob:docker
       - components/local-app:docker
       - components/local-app-api/typescript-grpcweb:publish
       - components/proxy:docker
@@ -52,6 +53,7 @@ packages:
       - components/ee/payment-endpoint:app
       - components/ee/ws-scheduler:app
       - components/image-builder:app
+      - components/image-builder-bob:app
       - components/registry-facade:app
       - components/server:app
       - components/service-waiter:app

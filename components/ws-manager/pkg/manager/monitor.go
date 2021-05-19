@@ -499,7 +499,7 @@ func (m *Monitor) writeEventTraceLog(status *api.WorkspaceStatus, wso *workspace
 		}
 		for _, c := range twso.Pod.Spec.Containers {
 			for i, env := range c.Env {
-				isGitpodVar := strings.HasPrefix(env.Name, "GITPOD_") || strings.HasPrefix(env.Name, "THEIA_")
+				isGitpodVar := strings.HasPrefix(env.Name, "GITPOD_") || strings.HasPrefix(env.Name, "SUPERVISOR_") || strings.HasPrefix(env.Name, "BOB_") || strings.HasPrefix(env.Name, "THEIA_")
 				if isGitpodVar {
 					continue
 				}

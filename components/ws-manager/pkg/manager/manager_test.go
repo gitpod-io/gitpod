@@ -6,6 +6,7 @@ package manager
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -140,10 +141,14 @@ func TestControlPort(t *testing.T) {
 }
 
 func TestGetWorkspaces(t *testing.T) {
-	t.Skipf("skipping flaky getWorkspaces_podOnly test")
+	t.Skip("not working yet")
 
 	type fixture struct {
-		Pods []*corev1.Pod `json:"pods"`
+		Workspaces []struct {
+			Type     api.WorkspaceType      `json:"type"`
+			Metadata *api.WorkspaceMetadata `json:"metadata"`
+		} `json:"workspaces"`
+		Filter *api.MetadataFilter `json:"filter,omitempty"`
 	}
 	type gold struct {
 		Status []*api.WorkspaceStatus `json:"result"`
@@ -158,8 +163,21 @@ func TestGetWorkspaces(t *testing.T) {
 
 			manager := forTestingOnlyGetManager(t)
 
-			for _, o := range fixture.Pods {
-				err := manager.Clientset.Create(context.Background(), o)
+			for i, o := range fixture.Workspaces {
+				startCtx, err := forTestingOnlyCreateStartWorkspaceContext(manager, fmt.Sprintf("workspace-%03d", i), o.Type)
+				if err != nil {
+					t.Errorf("cannot create test pod start context; this is a bug in the unit test itself: %v", err)
+					return nil
+				}
+				startCtx.Request.Metadata = o.Metadata
+
+				pod, err := manager.createDefiniteWorkspacePod(startCtx)
+				if err != nil {
+					t.Errorf("cannot create test pod; this is a bug in the unit test itself: %v", err)
+					return nil
+				}
+
+				err = manager.Clientset.Create(context.Background(), pod)
 				if err != nil {
 					t.Errorf("cannot create test pod start context; this is a bug in the unit test itself: %v", err)
 					return nil
@@ -188,7 +206,9 @@ func TestGetWorkspaces(t *testing.T) {
 			}
 
 			var result gold
-			resp, err := manager.GetWorkspaces(context.Background(), &api.GetWorkspacesRequest{})
+			resp, err := manager.GetWorkspaces(context.Background(), &api.GetWorkspacesRequest{
+				MustMatch: fixture.Filter,
+			})
 			result.Error = err
 			if resp != nil {
 				result.Status = cleanTemporalAttributes(resp.Status)

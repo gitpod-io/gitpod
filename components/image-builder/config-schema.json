@@ -28,9 +28,6 @@
         "workdir"
       ],
       "properties": {
-        "alpineImage": {
-          "type": "string"
-        },
         "baseImageRepository": {
           "type": "string"
         },
@@ -44,9 +41,6 @@
           "type": "string"
         },
         "imagebuilderRef": {
-          "type": "string"
-        },
-        "selfBuildBaseImage": {
           "type": "string"
         },
         "workdir": {

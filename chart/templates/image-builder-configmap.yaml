@@ -27,14 +27,22 @@ metadata:
 data:
   image-builder.json: |-
     {
-        "builder": {
-            {{- if $comp.registry.secretName -}}"dockerCfgFile": "/config/pull-secret.json",{{- end -}}
+        "orchestrator": {
+            {{- if $comp.registry.secretName -}}"authFile": "/config/pull-secret.json",{{- end -}}
             "gitpodLayerLoc": "/app/workspace-image-layer.tar.gz",
             "baseImageRepository": "{{ or $comp.registry.baseImageName (print (include "registry-name" $this) "/base-images") }}",
             "workspaceImageRepository": "{{ or $comp.registry.workspaceImageName (print (include "registry-name" $this) "/workspace-images") }}",
             "imageBuildSalt": "{{ $comp.imageBuildSalt | default "" }}",
-            "alpineImage": "{{ $comp.alpineImage | default "" }}",
-            "selfBuildBaseImage": "{{ $comp.selfBuildBaseImage | default "" }}"
+            "wsman": {
+                "address": "ws-manager:8080",
+                "tls": {
+                    "ca": "/wsman-certs/ca.crt",
+                    "crt": "/wsman-certs/tls.crt",
+                    "key": "/wsman-certs/tls.key"
+                }
+            },
+            "builderImage": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" (dict "imageName" (printf "%s/bob" $comp.name))) }}",
+            "builderAuthKeyFile": "/config/authkey"
         },
         "refCache": {
             "interval": "6h",

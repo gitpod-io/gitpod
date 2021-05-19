@@ -1,4 +1,4 @@
-// Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
@@ -13,21 +13,19 @@ import (
 	"syscall"
 	"time"
 
-	docker "github.com/docker/docker/client"
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/pprof"
+	"github.com/gitpod-io/gitpod/image-builder/api"
+	"github.com/gitpod-io/gitpod/image-builder/pkg/orchestrator"
+	"github.com/gitpod-io/gitpod/image-builder/pkg/resolve"
+
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
-	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/keepalive"
-
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/pprof"
-	"github.com/gitpod-io/gitpod/image-builder/api"
-	"github.com/gitpod-io/gitpod/image-builder/pkg/builder"
-	"github.com/gitpod-io/gitpod/image-builder/pkg/resolve"
 )
 
 // runCmd represents the run command
@@ -37,33 +35,14 @@ var runCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		cfg := getConfig()
 
-		if err := cfg.Builder.Validate(); err != nil {
-			log.WithError(err).Fatal("builder configuration is invalid")
-		}
-
-		client, err := docker.NewClientWithOpts(docker.FromEnv)
-		if err != nil {
-			log.Fatal(err)
-		}
-		client.NegotiateAPIVersion(context.Background())
-
-		_, err = client.ServerVersion(context.Background())
-		if err != nil {
-			log.Fatal(err)
-		}
-
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 		span, ctx := opentracing.StartSpanFromContext(ctx, "/cmd/Run")
 		defer span.Finish()
 
-		service := builder.NewDockerBuilder(&cfg.Builder, client)
-		if cfg.Builder.DockerCfgFile != "" {
-			auth, err := builder.NewDockerConfigFileAuth(cfg.Builder.DockerCfgFile)
-			if err != nil {
-				log.Fatal(err)
-			}
-			service.Auth = auth
+		service, err := orchestrator.NewOrchestratingBuilder(*cfg.Orchestrator)
+		if err != nil {
+			log.Fatal(err)
 		}
 		if cfg.RefCache.Interval != "" && len(cfg.RefCache.Refs) > 0 {
 			interval, err := time.ParseDuration(cfg.RefCache.Interval)
@@ -72,13 +51,11 @@ var runCmd = &cobra.Command{
 			}
 
 			resolver := &resolve.PrecachingRefResolver{
-				Resolver: &resolve.DockerRegistryResolver{
-					Client: client,
-				},
+				Resolver:   &resolve.StandaloneRefResolver{},
 				Candidates: cfg.RefCache.Refs,
 			}
 			go resolver.StartCaching(ctx, interval)
-			service.Resolver = resolver
+			service.RefResolver = resolver
 		}
 
 		err = service.Start(ctx)
@@ -91,11 +68,9 @@ var runCmd = &cobra.Command{
 			// we'll be leaking goroutines left and right. Closing Idle connections should prevent that.
 			grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionIdle: 30 * time.Minute}),
 			grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
-				grpc_prometheus.StreamServerInterceptor,
 				grpc_opentracing.StreamServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
 			)),
 			grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
-				grpc_prometheus.UnaryServerInterceptor,
 				grpc_opentracing.UnaryServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
 			)),
 		}
@@ -125,9 +100,6 @@ var runCmd = &cobra.Command{
 		log.WithField("addr", cfg.Service.Addr).Info("started workspace content server")
 
 		if cfg.Prometheus.Addr != "" {
-			grpc_prometheus.EnableHandlingTimeHistogram()
-			grpc_prometheus.Register(server)
-
 			handler := http.NewServeMux()
 			handler.Handle("/metrics", promhttp.Handler())
 

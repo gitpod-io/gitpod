@@ -1,0 +1,14 @@
+{
+    "filter": {
+      "owner": "some-other-user-foobar"
+    },
+    "workspaces": [
+        {
+            "type": 0,
+            "metadata": {
+                "owner": "some-other-user-foobar",
+                "meta_id": "abcdefgh-150a-40db-a699-7c8afc8a7122"
+            }
+        }
+    ]
+}
