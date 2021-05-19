@@ -31,7 +31,7 @@ You need the following "local" tools to follow this guide:
 To install Gitpod in your Kubernetes cluster, follow these steps:
 
 1. Create a file `values.custom.yaml` with the following content:
-   ```
+   ```yaml
    rabbitmq:
      auth:
        username: your-rabbitmq-user
