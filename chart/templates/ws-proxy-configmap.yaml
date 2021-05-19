@@ -33,8 +33,13 @@ data:
         },
         "proxy": {
             "https": {
+{{- if (and $.Values.certificatesSecret.certName $.Values.certificatesSecret.keyName) }}
+                "crt": "/mnt/certificates/{{ $.Values.certificatesSecret.certName }}",
+                "key": "/mnt/certificates/{{ $.Values.certificatesSecret.keyName }}"
+{{- else }}
                 "crt": "/mnt/certificates/tls.crt",
                 "key": "/mnt/certificates/tls.key"
+{{- end }}
             },
             "transportConfig": {
                 "connectTimeout": "10s",
