@@ -1,4 +1,0 @@
-helm: "../../chart"
-terraform:
-  gcp: "../gcp-terraform/environment/installer"
-  aws: "../aws-terraform"
