@@ -709,7 +709,7 @@ func (m *Manager) isWorkspaceTimedOut(wso workspaceObjects) (reason string, err 
 			return "", nil
 		}
 
-		return fmt.Sprintf("workspace timed out after %s took longer than %s", activity, formatDuration(inactivity)), nil
+		return fmt.Sprintf("workspace timed out after %s (%s) took longer than %s", activity, formatDuration(inactivity), formatDuration(td)), nil
 	}
 
 	start := wso.Pod.ObjectMeta.CreationTimestamp.Time
