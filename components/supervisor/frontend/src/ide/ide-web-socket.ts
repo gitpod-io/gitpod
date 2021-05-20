@@ -12,26 +12,23 @@ const workspaceSockets = new Set<IDEWebSocket>();
 
 const workspaceOrigin = new URL(window.location.href).origin;
 const WebSocket = window.WebSocket;
+function isWorkspaceOrigin(url: string): boolean {
+    const originUrl = new URL(url);
+    originUrl.protocol = window.location.protocol;
+    return originUrl.origin === workspaceOrigin;
+}
 class IDEWebSocket extends ReconnectingWebSocket {
     constructor(url: string, protocol?: string | string[]) {
         super(url, protocol, {
             WebSocket,
-            startClosed: true,
+            startClosed: isWorkspaceOrigin(url) && !connected,
             maxRetries: 0
         });
-        const originUrl = new URL(url);
-        originUrl.protocol = window.location.protocol;
-        if (originUrl.origin === workspaceOrigin) {
+        if (isWorkspaceOrigin(url)) {
             workspaceSockets.add(this);
             this.addEventListener('close', () => {
                 workspaceSockets.delete(this);
             });
-
-            if (connected) {
-                this.reconnect();
-            }
-        } else {
-            this.reconnect();
         }
     }
     static disconnectWorkspace(): void {

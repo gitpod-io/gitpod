@@ -5,6 +5,7 @@ components/*/typescript/lib/
 components/theia/app/lib/
 components/theia/packages/*/lib/
 components/theia/supervisor-api/*/lib/
+components/local-app-api/*/lib/
 components/supervisor/frontend/lib/
 src-gen/
 css-gen/

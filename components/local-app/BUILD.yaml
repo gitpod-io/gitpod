@@ -17,6 +17,7 @@ packages:
         - :version
         - components/supervisor-api/go:lib
         - components/gitpod-protocol/go:lib
+        - components/local-app-api/go:lib
       env:
         - CGO_ENABLED=0
         - GOOS=linux
@@ -34,6 +35,7 @@ packages:
         - :version
         - components/supervisor-api/go:lib
         - components/gitpod-protocol/go:lib
+        - components/local-app-api/go:lib
       env:
         - CGO_ENABLED=0
         - GOOS=darwin
@@ -51,6 +53,7 @@ packages:
         - :version
         - components/supervisor-api/go:lib
         - components/gitpod-protocol/go:lib
+        - components/local-app-api/go:lib
       env:
         - CGO_ENABLED=0
         - GOOS=windows
