@@ -1,0 +1,42 @@
+packages:
+  - name: lib
+    type: yarn
+    srcs:
+      - src/**
+      - package.json
+      - build.sh
+      - webpack.config.js
+      - tsconfig.json
+    deps:
+      - components/local-app-api:proto
+      - components/supervisor-api/typescript-grpcweb:lib
+    env:
+      - PROTOLOC=components-local-app-api--proto
+    config:
+      packaging: library
+      dontTest: true
+      commands:
+        build: ["yarn", "build"]
+      yarnLock: ${coreYarnLockBase}/../yarn.lock
+  - name: scripts
+    type: generic
+    srcs:
+      - "scripts/*"
+    deps:
+      - components/gitpod-protocol:scripts
+    config:
+      commands:
+        - ["sh", "-c", "mv scripts/* ."]
+  - name: publish
+    type: generic
+    env:
+      - DO_PUBLISH=${publishToNPM}
+    argdeps:
+      - npmPublishTrigger
+    deps:
+      - :lib
+      - :scripts
+      - components/supervisor-api/typescript-grpcweb:publish
+    config:
+      commands:
+        - ["node", "components-local-app-api-typescript-grpcweb--scripts/publish.js", "${version}"]

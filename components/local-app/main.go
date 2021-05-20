@@ -6,25 +6,27 @@ package main
 
 import (
 	_ "embed"
+	"strconv"
+	"time"
 
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"regexp"
-	"strconv"
 	"strings"
 
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
+	appapi "github.com/gitpod-io/gitpod/local-app/api"
 	"github.com/gitpod-io/local-app/pkg/auth"
 	"github.com/gitpod-io/local-app/pkg/bastion"
-	"github.com/gorilla/handlers"
+	"github.com/improbable-eng/grpc-web/go/grpcweb"
 	"github.com/sirupsen/logrus"
 	cli "github.com/urfave/cli/v2"
 	keyring "github.com/zalando/go-keyring"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -57,6 +59,11 @@ func main() {
 				Name:  "allow-cors-from-port",
 				Usage: "Allow CORS requests from workspace port location",
 			},
+			&cli.IntFlag{
+				Name:  "api-port",
+				Usage: "Local App API endpoint's port",
+				Value: 63100,
+			},
 		},
 		Commands: []*cli.Command{
 			{
@@ -65,7 +72,7 @@ func main() {
 					if c.Bool("mock-keyring") {
 						keyring.MockInit()
 					}
-					return run(c.String("gitpod-host"), c.String("ssh_config"), c.Bool("allow-cors-from-port"))
+					return run(c.String("gitpod-host"), c.String("ssh_config"), c.Int("api-port"), c.Bool("allow-cors-from-port"))
 				},
 				Flags: []cli.Flag{
 					&cli.PathFlag{
@@ -89,7 +96,7 @@ func DefaultCommand(name string) cli.ActionFunc {
 	}
 }
 
-func run(origin, sshConfig string, allowCORSFromPort bool) error {
+func run(origin, sshConfig string, apiPort int, allowCORSFromPort bool) error {
 	tkn, err := auth.GetToken(origin)
 	if errors.Is(err, keyring.ErrNotFound) {
 		tkn, err = auth.Login(context.Background(), auth.LoginOpts{GitpodURL: origin})
@@ -140,35 +147,26 @@ func run(origin, sshConfig string, allowCORSFromPort bool) error {
 	}
 
 	b = bastion.New(client, cb)
-	go http.ListenAndServe("localhost:5000", handlers.CORS(
-		handlers.AllowedOriginValidator(func(origin string) bool {
-			url, err := url.Parse(origin)
+	grpcServer := grpc.NewServer()
+	appapi.RegisterLocalAppServer(grpcServer, bastion.NewLocalAppService(b))
+	allowOrigin := func(origin string) bool {
+		// Is the origin a subdomain of the installations hostname?
+		return hostRegex.Match([]byte(origin))
+	}
+	go http.ListenAndServe("localhost:"+strconv.Itoa(apiPort), grpcweb.WrapServer(grpcServer,
+		grpcweb.WithCorsForRegisteredEndpointsOnly(false),
+		grpcweb.WithOriginFunc(allowOrigin),
+		grpcweb.WithWebsockets(true),
+		grpcweb.WithWebsocketOriginFunc(func(req *http.Request) bool {
+			origin, err := grpcweb.WebsocketRequestOrigin(req)
 			if err != nil {
 				return false
 			}
-			// Is the origin a subdomain of the installations hostname?
-			matches := hostRegex.Match([]byte(url.Host))
-			return matches
+			return allowOrigin(origin)
 		}),
-	)(http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		segs := strings.Split(r.URL.Path, "/")
-		if len(segs) < 3 {
-			http.Error(rw, "invalid URL Path", http.StatusBadRequest)
-			return
-		}
-		worksapceID := segs[1]
-		port, err := strconv.Atoi(segs[2])
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusBadRequest)
-			return
-		}
-		localAddr, err := b.GetTunnelLocalAddr(worksapceID, uint32(port))
-		if err != nil {
-			http.Error(rw, err.Error(), http.StatusNotFound)
-			return
-		}
-		fmt.Fprintf(rw, localAddr)
-	})))
+		grpcweb.WithWebsocketPingInterval(15*time.Second),
+	))
+	defer grpcServer.Stop()
 	return b.Run()
 }
 

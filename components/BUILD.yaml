@@ -22,11 +22,13 @@ packages:
       - components/ide/theia:docker
       - components/image-builder:docker
       - components/local-app:docker
+      - components/local-app-api/typescript-grpcweb:publish
       - components/proxy:docker
       - components/registry-facade:docker
       - components/server:docker
       - components/service-waiter:docker
       - components/supervisor-api/typescript-grpc:publish
+      - components/supervisor-api/typescript-grpcweb:publish
       - components/supervisor:docker
       - components/ws-daemon:docker
       - components/ws-daemon/seccomp-profile-installer:docker

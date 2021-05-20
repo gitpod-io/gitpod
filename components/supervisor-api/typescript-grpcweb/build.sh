@@ -20,3 +20,6 @@ protoc $PROTO_INCLUDE \
     --js_out="import_style=commonjs,binary:lib" \
     --ts_out="service=grpc-web:lib" \
     -I${PROTOLOC:-..} ${PROTOLOC:-..}/*.proto
+
+find lib -iname '*.js' -or -iname '*.ts' | xargs sed -i '\/google\/api\/annotations_pb/d'
+find lib -iname '*.js' -or -iname '*.ts' | xargs sed -i '/google_api_annotations_pb/d'

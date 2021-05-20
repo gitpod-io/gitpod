@@ -27,6 +27,8 @@ if (process.env.NPM_AUTH_TOKEN) {
 }
 
 const pck = JSON.parse(fs.readFileSync(path.join(pckDir, 'package.json'), 'utf-8'));
+pck.version = `${pck.version}-${qualifier}`;
+fs.writeFileSync(path.join(pckDir, 'package.json'), JSON.stringify(pck, undefined, 2), 'utf-8');
 
 const tag = qualifier.substr(0, qualifier.lastIndexOf('.'));
 
@@ -35,8 +37,6 @@ child_process.execSync([
     "--cwd",
     pckDir,
     "publish",
-    "--new-version",
-    `${pck.version}-${qualifier}`,
     "--tag",
     tag,
     "--access",
