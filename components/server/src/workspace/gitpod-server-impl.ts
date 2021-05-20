@@ -406,7 +406,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         }
     }
 
-    public async startWorkspace(workspaceId: string, options: { forceDefaultImage: boolean }): Promise<StartWorkspaceResult> {
+    public async startWorkspace(workspaceId: string, options: GitpodServer.StartWorkspaceOptions): Promise<StartWorkspaceResult> {
         const span = opentracing.globalTracer().startSpan("startWorkspace");
         span.setTag("workspaceId", workspaceId);
 

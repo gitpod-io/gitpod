@@ -1735,7 +1735,8 @@ proto.builder.BuildRequest.prototype.toObject = function(opt_includeInstance) {
 proto.builder.BuildRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     source: (f = msg.getSource()) && proto.builder.BuildSource.toObject(includeInstance, f),
-    auth: (f = msg.getAuth()) && proto.builder.BuildRegistryAuth.toObject(includeInstance, f)
+    auth: (f = msg.getAuth()) && proto.builder.BuildRegistryAuth.toObject(includeInstance, f),
+    forcerebuild: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
   };
 
   if (includeInstance) {
@@ -1782,6 +1783,10 @@ proto.builder.BuildRequest.deserializeBinaryFromReader = function(msg, reader) {
       reader.readMessage(value,proto.builder.BuildRegistryAuth.deserializeBinaryFromReader);
       msg.setAuth(value);
       break;
+    case 3:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setForcerebuild(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1825,6 +1830,13 @@ proto.builder.BuildRequest.serializeBinaryToWriter = function(message, writer) {
       2,
       f,
       proto.builder.BuildRegistryAuth.serializeBinaryToWriter
+    );
+  }
+  f = message.getForcerebuild();
+  if (f) {
+    writer.writeBool(
+      3,
+      f
     );
   }
 };
@@ -1901,6 +1913,24 @@ proto.builder.BuildRequest.prototype.clearAuth = function() {
  */
 proto.builder.BuildRequest.prototype.hasAuth = function() {
   return jspb.Message.getField(this, 2) != null;
+};
+
+
+/**
+ * optional bool forceRebuild = 3;
+ * @return {boolean}
+ */
+proto.builder.BuildRequest.prototype.getForcerebuild = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 3, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.builder.BuildRequest} returns this
+ */
+proto.builder.BuildRequest.prototype.setForcerebuild = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 3, value);
 };
 
 

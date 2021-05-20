@@ -766,6 +766,7 @@ export interface WorkspaceContext {
     title: string;
     normalizedContextURL?: string;
     forceCreateNewWorkspace?: boolean;
+    forceImageBuild?: boolean;
 }
 
 export namespace WorkspaceContext {

@@ -64,6 +64,7 @@ message ResolveWorkspaceImageResponse {
 message BuildRequest {
     BuildSource source = 1;
     BuildRegistryAuth auth = 2;
+    bool forceRebuild = 3;
 }
 
 message BuildRegistryAuth {
