@@ -75,6 +75,7 @@ import { GitTokenScopeGuesser } from './workspace/git-token-scope-guesser';
 import { GitTokenValidator } from './workspace/git-token-validator';
 import { newAnalyticsWriterFromEnv, IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/util/analytics';
 import { OAuthController } from './oauth-server/oauth-controller';
+import { ImageBuildPrefixContextParser } from './workspace/imagebuild-prefix-context-parser';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Env).toSelf().inSingletonScope();
@@ -127,13 +128,14 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(CachingImageBuilderClientProvider).toSelf().inSingletonScope();
     bind(ImageBuilderClientProvider).toService(CachingImageBuilderClientProvider);
 
-    /* The binding order of the context parser does not configure preference/a working prder. Each context parser must be able
+    /* The binding order of the context parser does not configure preference/a working order. Each context parser must be able
      * to decide for themselves, independently and without overlap to the other parsers what to do.
      */
     bind(ContextParser).toSelf().inSingletonScope();
     bind(SnapshotContextParser).toSelf().inSingletonScope();
     bind(IContextParser).to(SnapshotContextParser).inSingletonScope();
     bind(IPrefixContextParser).to(EnvvarPrefixParser).inSingletonScope();
+    bind(IPrefixContextParser).to(ImageBuildPrefixContextParser).inSingletonScope();
 
     bind(GitTokenScopeGuesser).toSelf().inSingletonScope();
     bind(GitTokenValidator).toSelf().inSingletonScope();

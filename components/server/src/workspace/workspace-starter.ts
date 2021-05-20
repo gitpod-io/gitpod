@@ -89,11 +89,13 @@ export class WorkspaceStarter {
             let instance = await this.workspaceDb.trace({ span }).storeInstance(await this.newInstance(workspace, user));
             span.log({ "newInstance": instance.id });
 
+            const forceRebuild = !!workspace.context.forceImageBuild;
+
             let needsImageBuild: boolean;
             try {
                 // if we need to build the workspace image we musn't wait for actuallyStartWorkspace to return as that would block the
                 // frontend until the image is built.
-                needsImageBuild = await this.needsImageBuild({ span }, user, workspace, instance);
+                needsImageBuild = forceRebuild || await this.needsImageBuild({ span }, user, workspace, instance);
                 if (needsImageBuild) {
                     instance.status.conditions = {
                         neededImageBuild: true,
@@ -112,11 +114,11 @@ export class WorkspaceStarter {
             // If the caller requested that errors be rethrown we must await the actual workspace start to be in the exception path.
             // To this end we disable the needsImageBuild behaviour if rethrow is true.
             if (needsImageBuild && !options.rethrow) {
-                this.actuallyStartWorkspace({ span }, instance, workspace, user, userEnvVars, options.rethrow);
+                this.actuallyStartWorkspace({ span }, instance, workspace, user, userEnvVars, options.rethrow, forceRebuild);
                 return { instanceID: instance.id };
             }
 
-            return await this.actuallyStartWorkspace({ span }, instance, workspace, user, userEnvVars);
+            return await this.actuallyStartWorkspace({ span }, instance, workspace, user, userEnvVars, options.rethrow, forceRebuild);
         } catch (e) {
             TraceContext.logError({ span }, e);
             throw e;
@@ -127,12 +129,12 @@ export class WorkspaceStarter {
 
     // Note: this function does not expect to be awaited for by its caller. This means that it takes care of error handling itself
     //       and creates its tracing span as followFrom rather than the usual childOf reference.
-    protected async actuallyStartWorkspace(ctx: TraceContext, instance: WorkspaceInstance, workspace: Workspace, user: User, userEnvVars?: UserEnvVar[], rethrow?: boolean): Promise<StartWorkspaceResult> {
+    protected async actuallyStartWorkspace(ctx: TraceContext, instance: WorkspaceInstance, workspace: Workspace, user: User, userEnvVars?: UserEnvVar[], rethrow?: boolean, forceRebuild?: boolean): Promise<StartWorkspaceResult> {
         const span = TraceContext.startAsyncSpan("actuallyStartWorkspace", ctx);
 
         try {
             // build workspace image
-            instance = await this.buildWorkspaceImage({ span }, user, workspace, instance);
+            instance = await this.buildWorkspaceImage({ span }, user, workspace, instance, forceRebuild, forceRebuild);
 
             let type: WorkspaceType = WorkspaceType.REGULAR;
             if (workspace.type === 'prebuild') {
@@ -410,17 +412,18 @@ export class WorkspaceStarter {
         }
     }
 
-    protected async buildWorkspaceImage(ctx: TraceContext, user: User, workspace: Workspace, instance: WorkspaceInstance, ignoreBaseImageresolvedAndRebuildBase: boolean = false): Promise<WorkspaceInstance> {
+    protected async buildWorkspaceImage(ctx: TraceContext, user: User, workspace: Workspace, instance: WorkspaceInstance, ignoreBaseImageresolvedAndRebuildBase: boolean = false, forceRebuild: boolean = false): Promise<WorkspaceInstance> {
         const span = TraceContext.startSpan("buildWorkspaceImage", ctx);
 
         try {
             // Start build...
             const client = this.imagebuilderClientProvider.getDefault();
-            const {src, auth, disposable} = await this.prepareBuildRequest({ span }, workspace, workspace.imageSource!, user, ignoreBaseImageresolvedAndRebuildBase);
+            const {src, auth, disposable} = await this.prepareBuildRequest({ span }, workspace, workspace.imageSource!, user, ignoreBaseImageresolvedAndRebuildBase || forceRebuild);
 
             const req = new BuildRequest();
             req.setSource(src);
             req.setAuth(auth);
+            req.setForcerebuild(forceRebuild);
 
             const result = await client.build({ span }, req);
 
@@ -446,7 +449,7 @@ export class WorkspaceStarter {
                 if (err && err.message && err.message.includes("base image does not exist") && !ignoreBaseImageresolvedAndRebuildBase) {
                     // we've attempted to add the base layer for a workspace whoose base image has gone missing.
                     // Ignore the previously built (now missing) base image and force a rebuild.
-                    return this.buildWorkspaceImage(ctx, user, workspace, instance, true);
+                    return this.buildWorkspaceImage(ctx, user, workspace, instance, true, forceRebuild);
                 } else {
                     throw err;
                 }

@@ -215,29 +215,33 @@ func (b *DockerBuilder) Build(req *api.BuildRequest, resp api.ImageBuilder_Build
 		return status.Errorf(codes.Internal, "cannot get workspace image authentication: %v", err)
 	}
 
-	// check if needs build -> early return
-	exists, err := b.checkImageExists(ctx, wsrefstr, wsrefAuth)
-	if err != nil {
-		return dockerErrToGRPC(err, "cannot check if image is already built")
-	}
-	if exists {
-		// If the workspace image exists, so should the baseimage if we've built it.
-		// If we didn't build it and the base image doesn't exist anymore, getWorkspaceImageRef will have failed to resolve the baseref.
-		baserefAbsolute, err := b.getAbsoluteImageRef(ctx, baseref, allowedAuthForAll)
-		if err != nil {
-			return status.Errorf(codes.Internal, "cannot resolve base image ref: %v", err)
-		}
+	forceRebuid := req.GetForceRebuild()
 
-		// image has already been built - no need for us to start building
-		err = resp.Send(&api.BuildResponse{
-			Status:  api.BuildStatus_done_success,
-			Ref:     wsrefstr,
-			BaseRef: baserefAbsolute,
-		})
+	if !forceRebuid {
+		// check if needs build -> early return
+		exists, err := b.checkImageExists(ctx, wsrefstr, wsrefAuth)
 		if err != nil {
-			return err
+			return dockerErrToGRPC(err, "cannot check if image is already built")
 		}
-		return nil
+		if exists {
+			// If the workspace image exists, so should the baseimage if we've built it.
+			// If we didn't build it and the base image doesn't exist anymore, getWorkspaceImageRef will have failed to resolve the baseref.
+			baserefAbsolute, err := b.getAbsoluteImageRef(ctx, baseref, allowedAuthForAll)
+			if err != nil {
+				return status.Errorf(codes.Internal, "cannot resolve base image ref: %v", err)
+			}
+
+			// image has already been built - no need for us to start building
+			err = resp.Send(&api.BuildResponse{
+				Status:  api.BuildStatus_done_success,
+				Ref:     wsrefstr,
+				BaseRef: baserefAbsolute,
+			})
+			if err != nil {
+				return err
+			}
+			return nil
+		}
 	}
 
 	// Once a build is running we don't want it cancelled becuase the server disconnected i.e. during deployment.
@@ -372,7 +376,15 @@ func (b *DockerBuilder) Build(req *api.BuildRequest, resp api.ImageBuilder_Build
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot check base image exists: %v", err)
 	}
-	if baseExists {
+
+	var isRefSource bool
+	switch req.Source.From.(type) {
+	case *api.BuildSource_Ref:
+		isRefSource = true
+	default:
+		isRefSource = false
+	}
+	if baseExists && (!forceRebuid || isRefSource) {
 		if strings.HasPrefix(baseref, b.Config.BaseImageRepository) {
 			// the base image we're about to pull is one that we've built before.
 			// In that case we enter the workspace phase prematurely to give the censor
