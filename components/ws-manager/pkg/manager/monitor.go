@@ -244,6 +244,9 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 		//
 		// Beware: do not else-if this condition with the other phases as we don't want the stop
 		//         login in any other phase, too.
+		m.initializerMapLock.Lock()
+		delete(m.initializerMap, pod.Name)
+		m.initializerMapLock.Unlock()
 	} else if status.Conditions.Failed != "" || status.Conditions.Timeout != "" {
 		// the workspace has failed to run/start - shut it down
 		// we should mark the workspace as failedBeforeStopping - this way the failure status will persist

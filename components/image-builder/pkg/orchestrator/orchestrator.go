@@ -419,7 +419,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 					{Name: "BOB_DOCKERFILE_PATH", Value: dockerfilePath},
 					{Name: "BOB_CONTEXT_DIR", Value: contextPath},
 					{Name: "BOB_AUTH_KEY", Value: string(o.builderAuthKey[:])},
-					{Name: "GITPOD_TASKS", Value: `[{"name": "build", "init": "sudo /app/bob build"}]`},
+					{Name: "GITPOD_TASKS", Value: `[{"name": "build", "init": "sudo -E /app/bob build"}]`},
 				},
 			},
 			Type: wsmanapi.WorkspaceType_IMAGEBUILD,
