@@ -23,6 +23,7 @@
     "workspaces": {
         "packages": [
             "components/*",
+            "components/ee/*",
             "components/*/typescript",
             "components/*/typescript-*",
             "components/supervisor/frontend",
