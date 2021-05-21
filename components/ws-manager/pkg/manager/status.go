@@ -709,7 +709,7 @@ func (m *Manager) isWorkspaceTimedOut(wso workspaceObjects) (reason string, err 
 			return "", nil
 		}
 
-		return fmt.Sprintf("workspace timed out after %s took longer than %s", activity, formatDuration(inactivity)), nil
+		return fmt.Sprintf("workspace timed out after %s (%s) took longer than %s", activity, formatDuration(inactivity), formatDuration(td)), nil
 	}
 
 	start := wso.Pod.ObjectMeta.CreationTimestamp.Time
@@ -731,24 +731,26 @@ func (m *Manager) isWorkspaceTimedOut(wso workspaceObjects) (reason string, err 
 		return decide(start, m.Config.Timeouts.TotalStartup, activity)
 
 	case api.WorkspacePhase_RUNNING:
+		timeout := m.Config.Timeouts.RegularWorkspace
+		activity := activityNone
 		if wso.IsWorkspaceHeadless() {
-			return decide(start, m.Config.Timeouts.HeadlessWorkspace, activityRunningHeadless)
+			timeout = m.Config.Timeouts.HeadlessWorkspace
+			lastActivity = &start
+			activity = activityRunningHeadless
 		} else if lastActivity == nil {
 			// the workspace is up and running, but the user has never produced any activity
 			return decide(start, m.Config.Timeouts.TotalStartup, activityNone)
 		} else if isClosed {
 			return decide(*lastActivity, m.Config.Timeouts.AfterClose, activityClosed)
 		}
-		timeout := m.Config.Timeouts.RegularWorkspace
 		if ctv, ok := wso.Pod.Annotations[customTimeoutAnnotation]; ok {
-			if ct, err := time.ParseDuration(ctv); err != nil {
-				log.WithError(err).WithField("customTimeout", ctv).WithFields(wsk8s.GetOWIFromObject(&wso.Pod.ObjectMeta)).Warn("pod had custom timeout annotation set, but could not parse its value. Defaulting to ws-manager config.")
-				timeout = m.Config.Timeouts.RegularWorkspace
-			} else {
+			if ct, err := time.ParseDuration(ctv); err == nil {
 				timeout = util.Duration(ct)
+			} else {
+				log.WithError(err).WithField("customTimeout", ctv).WithFields(wsk8s.GetOWIFromObject(&wso.Pod.ObjectMeta)).Warn("pod had custom timeout annotation set, but could not parse its value. Defaulting to ws-manager config.")
 			}
 		}
-		return decide(*lastActivity, timeout, activityNone)
+		return decide(*lastActivity, timeout, activity)
 
 	case api.WorkspacePhase_INTERRUPTED:
 		if lastActivity == nil {

@@ -7,6 +7,7 @@ syntax = "proto3";
 package supervisor;
 
 import "google/api/annotations.proto";
+import "port.proto";
 
 option go_package = "github.com/gitpod-io/gitpod/supervisor/api";
 
@@ -139,6 +140,15 @@ message ExposedPortInfo {
     // action hint on expose
     OnPortExposedAction on_exposed = 3;
 }
+message TunneledPortInfo {
+  // target port is the desired port on the remote machine
+  uint32 target_port = 1;
+  // visibility determines if the listener on remote machine should accept connections from localhost or network
+  // visibility none means that the port should not be tunneled
+  TunnelVisiblity visibility = 2;
+  // map of remote clients indicates on which remote port each client is listening to
+  map<string, uint32> clients = 3;
+}
 message PortsStatus {
     // local_port is the port a service actually bound to. Some services bind
     // to localhost:<port>, in which case they cannot be made accessible from
@@ -155,6 +165,10 @@ message PortsStatus {
     // Exposed provides information when a port is exposed. If this field isn't set,
     // the port is not available from outside the workspace (i.e. the internet).
     ExposedPortInfo exposed = 5;
+
+    // Tunneled provides information when a port is tunneled. If not present then
+    // the port is not tunneled.
+    TunneledPortInfo tunneled = 6;
 }
 
 message TasksStatusRequest {

@@ -14,7 +14,6 @@ metadata:
     kind: deployment
     stage: {{ .Values.installation.stage }}
 spec:
-  replicas: 1
   strategy:
     type: RollingUpdate
     rollingUpdate:

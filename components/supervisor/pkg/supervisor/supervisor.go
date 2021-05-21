@@ -6,9 +6,12 @@ package supervisor
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -23,9 +26,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/golang/protobuf/proto"
+	"github.com/gorilla/websocket"
 	grpcruntime "github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"github.com/prometheus/procfs"
 	"github.com/soheilhy/cmux"
+	"golang.org/x/crypto/ssh"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
@@ -43,7 +49,6 @@ import (
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
 
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
-	chisel "github.com/jpillora/chisel/server"
 )
 
 var (
@@ -124,6 +129,22 @@ func Run(options ...RunOption) {
 		}
 	}
 
+	tunneledPortsService := ports.NewTunneledPortsService(cfg.DebugEnable)
+	_, err = tunneledPortsService.Tunnel(context.Background(), &ports.TunnelOptions{
+		SkipIfExists: false,
+	}, &ports.PortTunnelDescription{
+		LocalPort:  uint32(cfg.APIEndpointPort),
+		TargetPort: uint32(cfg.APIEndpointPort),
+		Visibility: api.TunnelVisiblity_host,
+	}, &ports.PortTunnelDescription{
+		LocalPort:  uint32(cfg.SSHPort),
+		TargetPort: uint32(cfg.SSHPort),
+		Visibility: api.TunnelVisiblity_host,
+	})
+	if err != nil {
+		log.WithError(err).Warn("cannot tunnel internal ports")
+	}
+
 	ctx, cancel := context.WithCancel(context.Background())
 	var (
 		shutdown            = make(chan struct{})
@@ -137,6 +158,7 @@ func Run(options ...RunOption) {
 				RefreshInterval: 2 * time.Second,
 			},
 			ports.NewConfigService(cfg.WorkspaceID, gitpodConfigService, gitpodService),
+			tunneledPortsService,
 			uint32(cfg.IDEPort),
 			uint32(cfg.APIEndpointPort),
 			uint32(cfg.SSHPort),
@@ -171,6 +193,7 @@ func Run(options ...RunOption) {
 		notificationService,
 		&InfoService{cfg: cfg, ContentState: cstate},
 		&ControlService{portsManager: portMgmt},
+		&portService{portsManager: portMgmt},
 	}
 	apiServices = append(apiServices, additionalServices...)
 
@@ -192,7 +215,7 @@ func Run(options ...RunOption) {
 	wg.Add(1)
 	go startContentInit(ctx, cfg, &wg, cstate)
 	wg.Add(1)
-	go startAPIEndpoint(ctx, cfg, &wg, apiServices, apiEndpointOpts...)
+	go startAPIEndpoint(ctx, cfg, &wg, apiServices, tunneledPortsService, apiEndpointOpts...)
 	wg.Add(1)
 	go startSSHServer(ctx, cfg, &wg)
 	wg.Add(1)
@@ -582,7 +605,7 @@ func isBlacklistedEnvvar(name string) bool {
 	return false
 }
 
-func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, services []RegisterableService, opts ...grpc.ServerOption) {
+func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, services []RegisterableService, tunneled *ports.TunneledPortsService, opts ...grpc.ServerOption) {
 	defer wg.Done()
 	defer log.Debug("startAPIEndpoint shutdown")
 
@@ -616,26 +639,32 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	}
 	go grpcServer.Serve(grpcMux)
 
-	// Register chisel before the generic HTTP1 catch-all which would otherwise catch chisel, too
-	chiselMux := m.Match(cmux.HTTP1HeaderFieldPrefix("Sec-WebSocket-Protocol", "chisel-"))
-	chs, err := chisel.NewServer(&chisel.Config{
-		Listener:  chiselMux,
-		Reverse:   true,
-		KeepAlive: 10 * time.Second,
-	})
-	if err != nil {
-		log.WithError(err).Fatal("cannot start chisel server")
-	}
-	err = chs.Start("", strconv.Itoa(cfg.APIEndpointPort))
-	if err != nil {
-		log.WithError(err).Fatal("cannot start chisel server")
-	}
-
 	httpMux := m.Match(cmux.HTTP1Fast())
 	routes := http.NewServeMux()
 	routes.Handle("/_supervisor/v1/", http.StripPrefix("/_supervisor", restMux))
+	upgrader := websocket.Upgrader{}
+	routes.Handle("/_supervisor/tunnel", http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		wsConn, err := upgrader.Upgrade(rw, r, nil)
+		if err != nil {
+			log.WithError(err).Error("tunnel: upgrade to the WebSocket protocol failed")
+			return
+		}
+		conn, err := gitpod.NewWebsocketConnection(ctx, wsConn, func(staleErr error) {
+			log.WithError(staleErr).Error("tunnel: closing stale connection")
+		})
+		if err != nil {
+			log.WithError(err).Error("tunnel: upgrade to the WebSocket protocol failed")
+			return
+		}
+		tunnelOverWebSocket(tunneled, conn)
+	}))
 	routes.Handle("/_supervisor/frontend", http.FileServer(http.Dir(cfg.FrontendLocation)))
 	if cfg.DebugEnable {
+		routes.Handle("/_supervisor/debug/tunnels", http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+			rw.Header().Set("X-Content-Type-Options", "nosniff")
+			rw.Header().Set("Content-Type", "text/plain; charset=utf-8")
+			tunneled.Snapshot(rw)
+		}))
 		routes.Handle("/_supervisor"+pprof.Path, http.StripPrefix("/_supervisor", pprof.Handler()))
 	}
 	go http.Serve(httpMux, routes)
@@ -645,6 +674,83 @@ func startAPIEndpoint(ctx context.Context, cfg *Config, wg *sync.WaitGroup, serv
 	<-ctx.Done()
 	log.Info("shutting down API endpoint")
 	l.Close()
+}
+
+func tunnelOverWebSocket(tunneled *ports.TunneledPortsService, conn *gitpod.WebsocketConnection) {
+	hostKey, err := generateHostKey()
+	if err != nil {
+		log.WithError(err).Error("tunnel: failed to generate host key")
+		conn.Close()
+		return
+	}
+	config := &ssh.ServerConfig{
+		NoClientAuth: true,
+	}
+	config.AddHostKey(hostKey)
+	sshConn, chans, reqs, err := ssh.NewServerConn(conn, config)
+	if err != nil {
+		log.WithError(err).Error("tunnel: ssh connection handshake failed")
+		return
+	}
+	go func() {
+		conn.Wait()
+		sshConn.Close()
+	}()
+	go ssh.DiscardRequests(reqs)
+	go func() {
+		for ch := range chans {
+			go tunnelOverSSH(conn.Ctx, tunneled, ch)
+		}
+	}()
+	err = sshConn.Wait()
+	if err != nil {
+		log.WithError(err).Error("tunnel: ssh connection failed")
+	}
+}
+
+func generateHostKey() (ssh.Signer, error) {
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, err
+	}
+	return ssh.NewSignerFromKey(key)
+}
+
+func tunnelOverSSH(ctx context.Context, tunneled *ports.TunneledPortsService, newCh ssh.NewChannel) {
+	tunnelReq := &api.TunnelPortRequest{}
+	err := proto.Unmarshal(newCh.ExtraData(), tunnelReq)
+	if err != nil {
+		log.WithError(err).Error("tunnel: invalid ssh chan request")
+		newCh.Reject(ssh.Prohibited, err.Error())
+		return
+	}
+
+	tunnel, err := tunneled.EstablishTunnel(ctx, tunnelReq.ClientId, tunnelReq.Port, tunnelReq.TargetPort)
+	if err != nil {
+		log.WithError(err).Error("tunnel: failed to establish")
+		newCh.Reject(ssh.Prohibited, err.Error())
+		return
+	}
+	defer tunnel.Close()
+
+	sshChan, reqs, err := newCh.Accept()
+	if err != nil {
+		log.WithError(err).Error("tunnel: accepting ssh channel failed")
+		return
+	}
+	defer sshChan.Close()
+	go ssh.DiscardRequests(reqs)
+	var wg sync.WaitGroup
+	wg.Add(2)
+	go func() {
+		_, _ = io.Copy(sshChan, tunnel)
+		wg.Done()
+	}()
+	go func() {
+		_, _ = io.Copy(tunnel, sshChan)
+		wg.Done()
+	}()
+	wg.Wait()
 }
 
 func startSSHServer(ctx context.Context, cfg *Config, wg *sync.WaitGroup) {

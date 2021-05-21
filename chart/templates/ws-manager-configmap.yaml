@@ -60,12 +60,12 @@ data:
                 }
             },
             "heartbeatInterval": "30s",
-            "hostURL": "{{- template "gitpod.scheme" $this -}}://{{ $.Values.hostname }}",
+            "hostURL": "https://{{ $.Values.hostname }}",
             "initProbe": {
                 "timeout": "1s"
             },
-            "urlTemplate":     "{{- template "gitpod.scheme" $this -}}://{{"{{ .Prefix }}"}}.ws{{- if $.Values.installation.shortname -}}-{{ $.Values.installation.shortname }}{{- end -}}.{{ $.Values.hostname }}",
-            "portUrlTemplate": "{{- template "gitpod.scheme" $this -}}://{{"{{ .WorkspacePort }}"}}-{{"{{ .Prefix }}"}}.ws{{- if $.Values.installation.shortname -}}-{{ $.Values.installation.shortname }}{{- end -}}.{{ $.Values.hostname }}",
+            "urlTemplate":     "https://{{"{{ .Prefix }}"}}.ws{{- if $.Values.installation.shortname -}}-{{ $.Values.installation.shortname }}{{- end -}}.{{ $.Values.hostname }}",
+            "portUrlTemplate": "https://{{"{{ .WorkspacePort }}"}}-{{"{{ .Prefix }}"}}.ws{{- if $.Values.installation.shortname -}}-{{ $.Values.installation.shortname }}{{- end -}}.{{ $.Values.hostname }}",
             "workspaceHostPath": "{{ .Values.components.wsDaemon.hostWorkspaceArea }}",
             "podTemplate": {
                 {{- if $wscomp.templates }}

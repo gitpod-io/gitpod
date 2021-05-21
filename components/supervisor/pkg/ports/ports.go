@@ -32,7 +32,7 @@ const (
 )
 
 // NewManager creates a new port manager
-func NewManager(exposed ExposedPortsInterface, served ServedPortsObserver, config ConfigInterace, internalPorts ...uint32) *Manager {
+func NewManager(exposed ExposedPortsInterface, served ServedPortsObserver, config ConfigInterace, tunneled TunneledPortsInterface, internalPorts ...uint32) *Manager {
 	state := make(map[uint32]*managedPort)
 	internal := make(map[uint32]struct{})
 	for _, p := range internalPorts {
@@ -43,14 +43,18 @@ func NewManager(exposed ExposedPortsInterface, served ServedPortsObserver, confi
 		E: exposed,
 		S: served,
 		C: config,
+		T: tunneled,
 
-		internal:    internal,
-		proxies:     make(map[uint32]*localhostProxy),
-		autoExposed: make(map[uint32]uint32),
+		internal:     internal,
+		proxies:      make(map[uint32]*localhostProxy),
+		autoExposed:  make(map[uint32]uint32),
+		autoTunneled: make(map[uint32]struct{}),
 
 		state:         state,
 		subscriptions: make(map[*Subscription]struct{}),
 		proxyStarter:  startLocalhostProxy,
+
+		autoTunnelEnabled: true,
 	}
 }
 
@@ -65,15 +69,20 @@ type Manager struct {
 	E ExposedPortsInterface
 	S ServedPortsObserver
 	C ConfigInterace
+	T TunneledPortsInterface
 
 	internal     map[uint32]struct{}
 	proxies      map[uint32]*localhostProxy
 	proxyStarter func(LocalhostPort uint32, GlobalPort uint32) (proxy io.Closer, err error)
 	autoExposed  map[uint32]uint32
 
-	configs *Configs
-	exposed []ExposedPort
-	served  []ServedPort
+	autoTunneled      map[uint32]struct{}
+	autoTunnelEnabled bool
+
+	configs  *Configs
+	exposed  []ExposedPort
+	served   []ServedPort
+	tunneled []PortTunnelState
 
 	state map[uint32]*managedPort
 	mu    sync.RWMutex
@@ -91,6 +100,11 @@ type managedPort struct {
 
 	LocalhostPort uint32
 	GlobalPort    uint32
+
+	Tunneled           bool
+	TunneledTargetPort uint32
+	TunneledVisibility api.TunnelVisiblity
+	TunneledClients    map[string]uint32
 }
 
 // Subscription is a Subscription to status updates
@@ -131,11 +145,13 @@ func (pm *Manager) Run(ctx context.Context, wg *sync.WaitGroup) {
 	exposedUpdates, exposedErrors := pm.E.Observe(ctx)
 	servedUpdates, servedErrors := pm.S.Observe(ctx)
 	configUpdates, configErrors := pm.C.Observe(ctx)
+	tunneledUpdates, tunneledErrors := pm.T.Observe(ctx)
 	for {
 		var (
 			exposed    []ExposedPort
 			served     []ServedPort
 			configured *Configs
+			tunneled   []PortTunnelState
 		)
 		select {
 		case exposed = <-exposedUpdates:
@@ -151,6 +167,11 @@ func (pm *Manager) Run(ctx context.Context, wg *sync.WaitGroup) {
 		case configured = <-configUpdates:
 			if configured == nil {
 				log.Error("configured ports observer stopped")
+				return
+			}
+		case tunneled = <-tunneledUpdates:
+			if tunneled == nil {
+				log.Error("tunneled ports observer stopped")
 				return
 			}
 
@@ -172,13 +193,19 @@ func (pm *Manager) Run(ctx context.Context, wg *sync.WaitGroup) {
 				return
 			}
 			log.WithError(err).Warn("error while observing served port configs")
+		case err := <-tunneledErrors:
+			if err == nil {
+				log.Error("tunneled ports observer stopped")
+				return
+			}
+			log.WithError(err).Warn("error while observing tunneled ports")
 		}
 
-		if exposed == nil && served == nil && configured == nil {
+		if exposed == nil && served == nil && configured == nil && tunneled == nil {
 			// we received just an error, but no update
 			continue
 		}
-		pm.updateState(ctx, exposed, served, configured)
+		pm.updateState(ctx, exposed, served, configured, tunneled)
 	}
 }
 
@@ -190,12 +217,16 @@ func (pm *Manager) Status() []*api.PortsStatus {
 	return pm.getStatus()
 }
 
-func (pm *Manager) updateState(ctx context.Context, exposed []ExposedPort, served []ServedPort, configured *Configs) {
+func (pm *Manager) updateState(ctx context.Context, exposed []ExposedPort, served []ServedPort, configured *Configs, tunneled []PortTunnelState) {
 	pm.mu.Lock()
 	defer pm.mu.Unlock()
 
 	if exposed != nil && !reflect.DeepEqual(pm.exposed, exposed) {
 		pm.exposed = exposed
+	}
+
+	if tunneled != nil && !reflect.DeepEqual(pm.tunneled, tunneled) {
+		pm.tunneled = tunneled
 	}
 
 	if served != nil {
@@ -217,6 +248,7 @@ func (pm *Manager) updateState(ctx context.Context, exposed []ExposedPort, serve
 		if !reflect.DeepEqual(pm.served, newServed) {
 			pm.served = newServed
 			pm.updateProxies()
+			pm.autoTunnel(ctx)
 		}
 	}
 
@@ -247,7 +279,7 @@ func (pm *Manager) updateState(ctx context.Context, exposed []ExposedPort, serve
 func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 	state := make(map[uint32]*managedPort)
 
-	// 1. first capture exposed since they don't depend on configured or served ports
+	// 1. first capture exposed and tunneled since they don't depend on configured or served ports
 	for _, exposed := range pm.exposed {
 		port := exposed.LocalPort
 		if pm.boundInternally(port) {
@@ -267,6 +299,23 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 			URL:           exposed.URL,
 			OnExposed:     getOnExposedAction(config, port),
 		}
+	}
+
+	for _, tunneled := range pm.tunneled {
+		port := tunneled.Desc.LocalPort
+		if pm.boundInternally(port) {
+			continue
+		}
+		mp, exists := state[port]
+		if !exists {
+			mp = &managedPort{}
+			state[port] = mp
+		}
+		mp.LocalhostPort = port
+		mp.Tunneled = true
+		mp.TunneledTargetPort = tunneled.Desc.TargetPort
+		mp.TunneledVisibility = tunneled.Desc.Visibility
+		mp.TunneledClients = tunneled.Clients
 	}
 
 	// 2. second capture configured since we don't want to auto expose already exposed ports
@@ -370,6 +419,45 @@ func (pm *Manager) autoExpose(ctx context.Context, mp *managedPort, public bool)
 	}()
 	pm.autoExposed[mp.LocalhostPort] = mp.GlobalPort
 	log.WithField("port", *mp).Info("auto-exposing port")
+}
+
+func (pm *Manager) autoTunnel(ctx context.Context) {
+	if !pm.autoTunnelEnabled {
+		var localPorts []uint32
+		for localPort := range pm.autoTunneled {
+			localPorts = append(localPorts, localPort)
+		}
+		// CloseTunnel ensures that everything is closed
+		pm.autoTunneled = make(map[uint32]struct{})
+		_, err := pm.T.CloseTunnel(ctx, localPorts...)
+		if err != nil {
+			log.WithError(err).Error("cannot close auto tunneled ports")
+		}
+		return
+	}
+	var descs []*PortTunnelDescription
+	for _, served := range pm.served {
+		if pm.boundInternally(served.Port) {
+			continue
+		}
+		_, autoTunneled := pm.autoTunneled[served.Port]
+		if !autoTunneled {
+			descs = append(descs, &PortTunnelDescription{
+				LocalPort:  served.Port,
+				TargetPort: served.Port,
+				Visibility: api.TunnelVisiblity_host,
+			})
+		}
+	}
+	autoTunneled, err := pm.T.Tunnel(ctx, &TunnelOptions{
+		SkipIfExists: true,
+	}, descs...)
+	if err != nil {
+		log.WithError(err).Error("cannot auto tunnel ports")
+	}
+	for _, localPort := range autoTunneled {
+		pm.autoTunneled[localPort] = struct{}{}
+	}
 }
 
 func (pm *Manager) updateProxies() {
@@ -508,6 +596,56 @@ func (pm *Manager) Expose(ctx context.Context, port uint32, targetPort uint32) e
 	return err
 }
 
+// Tunnel opens a new tunnel.
+func (pm *Manager) Tunnel(ctx context.Context, desc *PortTunnelDescription) error {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+	if pm.boundInternally(desc.LocalPort) {
+		return xerrors.New("cannot tunnel internal port")
+	}
+	tunneled, err := pm.T.Tunnel(ctx, &TunnelOptions{
+		SkipIfExists: false,
+	}, desc)
+	for _, localPort := range tunneled {
+		delete(pm.autoTunneled, localPort)
+	}
+	return err
+}
+
+// CloseTunnel closes the tunnel.
+func (pm *Manager) CloseTunnel(ctx context.Context, port uint32) error {
+	unlock := true
+	pm.mu.RLock()
+	defer func() {
+		if unlock {
+			pm.mu.RUnlock()
+		}
+	}()
+	if pm.boundInternally(port) {
+		return xerrors.New("cannot close internal port tunnel")
+	}
+	// we don't need the lock anymore. Let's unlock and make sure the defer doesn't try
+	// the same thing again.
+	pm.mu.RUnlock()
+	unlock = false
+
+	_, err := pm.T.CloseTunnel(ctx, port)
+	return err
+}
+
+// EstablishTunnel actually establishes the tunnel
+func (pm *Manager) EstablishTunnel(ctx context.Context, clientID string, localPort uint32, targetPort uint32) (net.Conn, error) {
+	return pm.T.EstablishTunnel(ctx, clientID, localPort, targetPort)
+}
+
+// AutoTunnel controls enablement of auto tunneling
+func (pm *Manager) AutoTunnel(ctx context.Context, enabled bool) {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+	pm.autoTunnelEnabled = enabled
+	pm.autoTunnel(ctx)
+}
+
 var (
 	// ErrClosed when the port management is stopped
 	ErrClosed = errors.New("closed")
@@ -570,6 +708,13 @@ func (pm *Manager) getPortStatus(port uint32) *api.PortsStatus {
 			Visibility: mp.Visibility,
 			Url:        mp.URL,
 			OnExposed:  mp.OnExposed,
+		}
+	}
+	if mp.Tunneled {
+		ps.Tunneled = &api.TunneledPortInfo{
+			TargetPort: mp.TunneledTargetPort,
+			Visibility: mp.TunneledVisibility,
+			Clients:    mp.TunneledClients,
 		}
 	}
 	return ps

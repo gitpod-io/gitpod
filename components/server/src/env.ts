@@ -86,6 +86,7 @@ export class Env extends AbstractComponentEnv {
     readonly devBranch = process.env.DEV_BRANCH || '';
 
     readonly enableLocalApp = process.env.ENABLE_LOCAL_APP === "true";
+    readonly enableOAuthServer = process.env.ENABLE_OAUTH_SERVER === "true";
 
     readonly authProviderConfigs = this.parseAuthProviderParamss();
 
@@ -201,4 +202,5 @@ export class Env extends AbstractComponentEnv {
 
     readonly runDbDeleter: boolean = getEnvVar('RUN_DB_DELETER', 'false') === 'true';
 
+    readonly oauthServerJWTSecret = getEnvVar("OAUTH_SERVER_JWT_SECRET")
 }

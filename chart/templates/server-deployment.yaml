@@ -170,6 +170,10 @@ spec:
         - name: ENABLE_LOCAL_APP
           value: "true"
     {{- end }}
+    {{- if $comp.enableOAuthServer }}
+        - name: ENABLE_OAUTH_SERVER
+          value: "true"
+    {{- end }}
     {{- if $comp.portAccessForUsersOnly }}
         - name: PORT_ACCESS_FOR_USERS_ONLY
           value: "true"
@@ -216,6 +220,8 @@ spec:
               key: apikey
         - name: GITPOD_GARBAGE_COLLECTION_DISABLED
           value: {{ $comp.garbageCollection.disabled | default "false" | quote }}
+        - name: OAUTH_SERVER_JWT_SECRET
+          value: {{ (randAlphaNum 20) | quote }}
 {{- if $comp.serverContainer.env }}
 {{ toYaml $comp.serverContainer.env | indent 8 }}
 {{- end }}

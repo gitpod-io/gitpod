@@ -6,6 +6,7 @@ package supervisor
 
 import (
 	"context"
+	"io"
 	"os"
 	"strings"
 	"sync"
@@ -692,4 +693,110 @@ func (state *InMemoryContentState) ContentSource() (src csapi.WorkspaceInitSourc
 		return "", false
 	}
 	return state.contentSource, true
+}
+
+type portService struct {
+	portsManager *ports.Manager
+
+	api.UnimplementedPortServiceServer
+}
+
+func (s *portService) RegisterGRPC(srv *grpc.Server) {
+	api.RegisterPortServiceServer(srv, s)
+}
+
+func (s *portService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) error {
+	return api.RegisterPortServiceHandlerFromEndpoint(context.Background(), mux, grpcEndpoint, []grpc.DialOption{grpc.WithInsecure()})
+}
+
+// Tunnel opens a new tunnel.
+func (s *portService) Tunnel(ctx context.Context, req *api.TunnelPortRequest) (*api.TunnelPortResponse, error) {
+	err := s.portsManager.Tunnel(ctx, &ports.PortTunnelDescription{
+		LocalPort:  req.Port,
+		TargetPort: req.TargetPort,
+		Visibility: req.Visibility,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &api.TunnelPortResponse{}, nil
+}
+
+// CloseTunnel closes the tunnel.
+func (s *portService) CloseTunnel(ctx context.Context, req *api.CloseTunnelRequest) (*api.CloseTunnelResponse, error) {
+	err := s.portsManager.CloseTunnel(ctx, req.Port)
+	if err != nil {
+		return nil, err
+	}
+	return &api.CloseTunnelResponse{}, nil
+}
+
+// EstablishTunnel actually establishes the tunnel
+func (s *portService) EstablishTunnel(stream api.PortService_EstablishTunnelServer) error {
+	req, err := stream.Recv()
+	if err != nil {
+		return status.Error(codes.Internal, err.Error())
+	}
+	desc := req.GetDesc()
+	if desc != nil {
+		return status.Error(codes.FailedPrecondition, "first request should be a desc")
+	}
+
+	tunnel, err := s.portsManager.EstablishTunnel(stream.Context(), desc.ClientId, desc.Port, desc.TargetPort)
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed establish the tunnel: %v", err)
+	}
+	defer tunnel.Close()
+
+	errChan := make(chan error)
+
+	go func() {
+		for {
+			req, err := stream.Recv()
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			data := req.GetData()
+			if data == nil {
+				errChan <- status.Errorf(codes.InvalidArgument, "unexped req, expected data: %v", req)
+				return
+			}
+			_, err = tunnel.Write(data)
+			if err != nil {
+				errChan <- status.Errorf(codes.Internal, "unable to write to connection: %v", err)
+				return
+			}
+		}
+	}()
+
+	go func() {
+		for {
+			buff := make([]byte, 4096)
+			bytesRead, err := tunnel.Read(buff)
+			if err != nil {
+				errChan <- err
+				return
+			}
+
+			err = stream.Send(&api.EstablishTunnelResponse{Data: buff[0:bytesRead]})
+			if err != nil {
+				errChan <- err
+				return
+			}
+		}
+	}()
+
+	returnedError := <-errChan
+	if returnedError == io.EOF {
+		return nil
+	}
+	return status.Error(codes.Internal, returnedError.Error())
+}
+
+// AutoTunnel controls enablement of auto tunneling
+func (s *portService) AutoTunnel(ctx context.Context, req *api.AutoTunnelRequest) (*api.AutoTunnelResponse, error) {
+	s.portsManager.AutoTunnel(ctx, req.Enabled)
+	return &api.AutoTunnelResponse{}, nil
 }

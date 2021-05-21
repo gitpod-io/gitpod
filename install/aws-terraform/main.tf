@@ -56,7 +56,6 @@ module "gitpod" {
     # simply setting "{}" does not work as it does not override: https://github.com/helm/helm/issues/5407
     certificatesSecret:
       secretName: ""
-    forceHTTPS: ${var.force_https}
 
     installation:
       region: ${var.region}

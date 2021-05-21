@@ -8,7 +8,7 @@ import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "./user-context";
 import { getGitpodService } from "./service/service";
-import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName } from "./provider-utils";
+import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName, getSafeURLRedirect } from "./provider-utils";
 import gitpod from './images/gitpod.svg';
 import gitpodDark from './images/gitpod-dark.svg';
 import gitpodIcon from './icons/gitpod.svg';
@@ -50,6 +50,23 @@ export function Login() {
         })();
     }, [])
 
+    const authorizeSuccessful = async (payload?: string) => {
+        updateUser();
+        // Check for a valid returnTo in payload
+        const safeReturnTo = getSafeURLRedirect(payload);
+        if (safeReturnTo) {
+            // ... and if it is, redirect to it 
+            window.location.replace(safeReturnTo);
+        }
+    }
+
+    const updateUser = async () => {
+        await getGitpodService().reconnect();
+        const user = await getGitpodService().server.getLoggedInUser();
+        setUser(user);
+        markLoggedIn();
+    }
+
     const openLogin = async (host: string) => {
         setErrorMessage(undefined);
 
@@ -57,7 +74,7 @@ export function Login() {
             await openAuthorizeWindow({
                 login: true,
                 host,
-                onSuccess: () => updateUser(),
+                onSuccess: authorizeSuccessful,
                 onError: (payload) => {
                     let errorMessage: string;
                     if (typeof payload === "string") {
@@ -76,20 +93,13 @@ export function Login() {
         }
     }
 
-    const updateUser = async () => {
-        await getGitpodService().reconnect();
-        const user = await getGitpodService().server.getLoggedInUser();
-        setUser(user);
-        markLoggedIn();
-    }
-
     return (<div id="login-container" className="z-50 flex w-screen h-screen">
         {showWelcome ? <div id="feature-section" className="flex-grow bg-gray-100 dark:bg-gray-800 w-1/2 hidden lg:block">
             <div id="feature-section-column" className="flex max-w-xl h-full mx-auto pt-6">
                 <div className="flex flex-col px-8 my-auto ml-auto">
                     <div className="mb-12">
-                        <img src={gitpod} className="h-8 block dark:hidden"/>
-                        <img src={gitpodDark} className="h-8 hidden dark:block"/>
+                        <img src={gitpod} className="h-8 block dark:hidden" />
+                        <img src={gitpodDark} className="h-8 hidden dark:block" />
                     </div>
                     <div className="mb-10">
                         <h1 className="text-5xl mb-3">Welcome to Gitpod</h1>
