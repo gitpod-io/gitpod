@@ -3,24 +3,14 @@
 	admin off
 }
 
-(compression) {
-	encode zstd gzip
-}
-
-(discard_log) {
-	log {
-		output discard
-	}
-}
-
 (static) {
 	@static_path {
-		path /static/*
+		path /static/* /favicon* /manifest.json
 	}
 
 	@static_asset {
 		file
-		path /static/*
+		path /static/* /favicon* /manifest.json
 	}
 
 	# static assets configure cache headers and do not check for changes
@@ -46,8 +36,6 @@
 }
 
 :80 {
-	import compression
-	import discard_log
 	import static
 	import notstatic
 
@@ -57,7 +45,9 @@
 	header -Server
 
 	root * /www
-	file_server
+	file_server {
+		precompressed gzip br
+	}
 
 	handle @static_path {
 		try_files {path}
@@ -74,8 +64,6 @@
 
 # health-check
 :8080 {
-	import discard_log
-
 	respond /live 200
 	respond /ready 200
 }
