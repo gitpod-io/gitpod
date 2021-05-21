@@ -28,6 +28,21 @@ export interface TableDescriptionProvider {
 
 export const TableDescriptionProvider = Symbol('TableDescriptionProvider');
 
+@injectable()
+export class GitpodSessionTableDescriptionProvider implements TableDescriptionProvider {
+    readonly name = "gitpod-sessions";
+    getSortedTables(): TableDescription[] {
+        return [
+            {
+                name: "sessions",
+                primaryKeys: ['session_id'],
+                timeColumn: '_lastModified',
+                expiryColumn: 'expires'
+            }
+        ]
+    }
+
+}
 
 /**
  * BEWARE
@@ -39,6 +54,22 @@ export const TableDescriptionProvider = Symbol('TableDescriptionProvider');
 export class GitpodTableDescriptionProvider implements TableDescriptionProvider {
     readonly name = "gitpod";
     protected readonly tables: TableDescription[] = [
+        {
+            name: 'd_b_account_entry',
+            primaryKeys: ['uid'],
+            timeColumn: '_lastModified'
+        },
+        {
+            name: 'd_b_subscription',
+            primaryKeys: ['uid'],
+            timeColumn: '_lastModified',
+            dependencies: ['d_b_user']
+        },
+        {
+            name: 'd_b_subscription_additional_data',
+            primaryKeys: ['paymentReference'],
+            timeColumn: 'lastModified'
+        },
         {
             name: 'd_b_identity',
             primaryKeys: ['authProviderId', 'authId'],
@@ -98,6 +129,11 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             dependencies: ['d_b_workspace']
         },
         {
+            name: 'd_b_email_domain_filter',
+            primaryKeys: ['domain'],
+            timeColumn: '_lastModified'
+        },
+        {
             name: 'd_b_prebuilt_workspace',
             primaryKeys: ['id'],
             timeColumn: '_lastModified'
@@ -114,6 +150,21 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             timeColumn: '_lastModified'
         },
         {
+            name: 'd_b_team_subscription',
+            primaryKeys: ['id'],
+            timeColumn: '_lastModified'
+        },
+        {
+            name: 'd_b_team_subscription_slot',
+            primaryKeys: ['id'],
+            timeColumn: '_lastModified'
+        },
+        {
+            name: 'd_b_edu_email_domain',
+            primaryKeys: ['domain'],
+            timeColumn: '_lastModified'
+        },
+        {
             name: 'd_b_theia_plugin',
             primaryKeys: ['id'],
             timeColumn: '_lastModified'
@@ -121,6 +172,16 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
         {
             name: 'd_b_user_env_var',
             primaryKeys: ['id', 'userId'],
+            timeColumn: '_lastModified'
+        },
+        {
+            name: 'd_b_email',
+            primaryKeys: ['uid'],
+            timeColumn: '_lastModified'
+        },
+        {
+            name: 'd_b_payment_source_info',
+            primaryKeys: ['id', 'resourceVersion'],
             timeColumn: '_lastModified'
         },
         {
@@ -139,6 +200,7 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
         {
             name: 'd_b_auth_provider_entry',
             primaryKeys: ['id'],
+            deletionColumn: 'deleted',
             timeColumn: '_lastModified',
         },
         {
@@ -146,6 +208,11 @@ export class GitpodTableDescriptionProvider implements TableDescriptionProvider 
             primaryKeys: ['userId','kind','rev'],
             deletionColumn: 'deleted',
             timeColumn: 'created',
+        },
+        {
+            name: 'd_b_terms_acceptance_entry',
+            primaryKeys: ['userId'],
+            timeColumn: '_lastModified',
         },
     ]
 

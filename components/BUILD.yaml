@@ -12,6 +12,7 @@ packages:
       - components/content-service:docker
       - components/dashboard:docker
       - components/docker-up:docker
+      - components/ee/db-sync:docker
       - components/ee/kedge:docker
       - components/ee/ws-scheduler:docker
       - components/gitpod-db:docker
@@ -43,6 +44,7 @@ packages:
       - components/content-service:docker
       - components/dashboard:app
       - components/docker-up:app
+      - components/ee/db-sync:app
       - components/ee/kedge:app
       - components/ee/ws-scheduler:app
       - components/image-builder:app

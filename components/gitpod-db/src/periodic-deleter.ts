@@ -45,6 +45,13 @@ export class PeriodicDbDeleter {
         }
     }
     protected async collectRowsToBeDeleted(table: TableDescription): Promise<{ table: string, deletions: string[] }> {
+        try {
+            await this.query(`SELECT COUNT(1) FROM ${table}`);
+        } catch (err) {
+            // table does not exist - we're done here
+            return { table: table.name, deletions: [] };
+        }
+
         const deletions: string[] = [];
         const result = { table: table.name, deletions };
         if (!table.deletionColumn) {

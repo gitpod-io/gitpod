@@ -175,6 +175,10 @@ components:
       credentials: not-set
     serviceType: ClusterIP
 
+  dbSync:
+    name: "db-sync"
+    disabled: true
+
   dashboard:
     name: "dashboard"
     resources:

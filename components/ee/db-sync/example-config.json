@@ -1,0 +1,23 @@
+{
+    "syncPeriod": 30000,
+    "roundRobin": true,
+    "tableSet": "gitpod",
+    "disableTransactions": false,
+    "replicationLogDir": "/var/log/db-sync",
+    "targets": [
+        {
+            "host": "gitpod.io-local",
+            "port": 23306,
+            "database": "gitpod",
+            "user": "gitpod",
+            "password": "test"
+        },
+        {
+            "host": "gitpod.io-local",
+            "port": 23306,
+            "database": "gitpod-trgt",
+            "user": "gitpod",
+            "password": "test"
+        }
+    ]
+}
