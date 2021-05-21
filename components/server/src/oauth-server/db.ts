@@ -29,8 +29,9 @@ const localClient: OAuthClient = {
   id: localAppClientID,
   secret: `${localAppClientID}-secret`,
   name: 'Gitpod local control client',
-  // TODO(rl) - allow port range/external specification
-  redirectUris: ['http://localhost:64110'],
+  // Set of valid redirect URIs
+  // NOTE: these need to be kept in sync with the port range in the local app
+  redirectUris: Array.from({length: 10}, (_, i) => 'http://127.0.0.1:' + (63110 + i)),
   allowedGrants: ['authorization_code'],
   scopes: [getWorkspacesScope, listenForWorkspaceInstanceUpdatesScope, getWorkspaceResourceScope, getWorkspaceInstanceResourceScope],
 }

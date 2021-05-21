@@ -23,8 +23,8 @@ import (
 	"github.com/gitpod-io/local-app/pkg/bastion"
 	"github.com/gorilla/handlers"
 	"github.com/sirupsen/logrus"
-	"github.com/urfave/cli/v2"
-	"github.com/zalando/go-keyring"
+	cli "github.com/urfave/cli/v2"
+	keyring "github.com/zalando/go-keyring"
 )
 
 var (
@@ -73,13 +73,6 @@ func main() {
 						Usage: "produce and update an OpenSSH compatible ssh_config file",
 						Value: "/tmp/gitpod_ssh_config",
 					},
-				},
-			},
-			{
-				Name: "test",
-				Action: func(c *cli.Context) error {
-					testOAuth(c.String("gitpod-host"))
-					return nil
 				},
 			},
 		},
