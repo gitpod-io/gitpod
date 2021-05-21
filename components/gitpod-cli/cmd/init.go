@@ -17,12 +17,10 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/gitpodlib"
-	"github.com/gitpod-io/gitpod/gitpod-cli/pkg/theialib"
 )
 
 var (
 	interactive = false
-	minimal     = false
 )
 
 // initCmd initializes the workspace's .gitpod.yml file
@@ -45,16 +43,8 @@ Create a Gitpod configuration for this project.
 				log.Fatal(err)
 			}
 		} else {
-			if !minimal {
-				cfg.SetImage(gitpodlib.GitpodImage{
-					File:    ".gitpod.Dockerfile",
-					Context: "",
-				})
-				cfg.AddPort(3000)
-				cfg.AddTask("echo 'start script'", "echo 'init script'")
-			} else {
-				cfg.AddTask("echo 'start script'", "echo 'init script'")
-			}
+			cfg.AddPort(3000)
+			cfg.AddTask("echo 'start script'", "echo 'init script'")
 		}
 
 		d, err := yaml.Marshal(cfg)
@@ -62,27 +52,16 @@ Create a Gitpod configuration for this project.
 			log.Fatal(err)
 		}
 		if !interactive {
-			if !minimal {
-				d = []byte(`image:
-  file: .gitpod.Dockerfile
-
-# List the ports you want to expose and what to do when they are served. See https://www.gitpod.io/docs/config-ports/
-ports:
-  - port: 3000
-    onOpen: open-preview
-
-# List the start up tasks. You can start them in parallel in multiple terminals. See https://www.gitpod.io/docs/config-start-tasks/
+			d = []byte(`# List the start up tasks. Learn more https://www.gitpod.io/docs/config-start-tasks/
 tasks:
   - init: echo 'init script' # runs during prebuild
     command: echo 'start script'
+  
+# List the ports to expose. Learn more https://www.gitpod.io/docs/config-ports/
+ports:
+  - port: 3000
+    onOpen: open-preview
 `)
-			} else {
-				d = []byte(`tasks:
-  - init: echo 'init script' # runs during prebuild
-    command: echo 'start script'
-`)
-			}
-
 		} else {
 			fmt.Printf("\n\n---\n%s", d)
 		}
@@ -104,15 +83,6 @@ tasks:
 		}
 
 		// open .gitpod.yml and Dockerfile
-		service, err := theialib.NewServiceFromEnv()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		_, err = service.OpenFile(theialib.OpenFileRequest{Path: ".gitpod.yml"})
-		if err != nil {
-			log.Fatal(err)
-		}
 		if v, ok := cfg.Image.(gitpodlib.GitpodImage); ok {
 			if _, err := os.Stat(v.File); os.IsNotExist(err) {
 				if err := os.WriteFile(v.File, []byte(`FROM gitpod/workspace-full
@@ -132,11 +102,9 @@ USER gitpod
 				}
 			}
 
-			_, err := service.OpenFile(theialib.OpenFileRequest{Path: v.File})
-			if err != nil {
-				log.Fatal(err)
-			}
+			openCmd.Run(cmd, []string{v.File})
 		}
+		openCmd.Run(cmd, []string{".gitpod.yml"})
 	},
 }
 
@@ -256,5 +224,4 @@ func askForTask(cfg *gitpodlib.GitpodFile) error {
 func init() {
 	rootCmd.AddCommand(initCmd)
 	initCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "walk me through an interactive setup.")
-	initCmd.Flags().BoolVarP(&minimal, "minimal", "m", false, "Create a minimal Gitpod configuration without a Dockerfile")
 }
