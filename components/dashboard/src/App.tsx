@@ -34,6 +34,7 @@ const InstallGitHubApp = React.lazy(() => import(/* webpackPrefetch: true */ './
 const FromReferrer = React.lazy(() => import(/* webpackPrefetch: true */ './FromReferrer'));
 const UserSearch = React.lazy(() => import(/* webpackPrefetch: true */ './admin/UserSearch'));
 const WorkspacesSearch = React.lazy(() => import(/* webpackPrefetch: true */ './admin/WorkspacesSearch'));
+const OAuthClientApproval = React.lazy(() => import(/* webpackPrefetch: true */ './OauthClientApproval'));
 
 function Loading() {
     return <>
@@ -117,6 +118,13 @@ function App() {
     const shouldWhatsNewShown = shouldSeeWhatsNew(user)
     if (shouldWhatsNewShown !== isWhatsNewShown) {
         setWhatsNewShown(shouldWhatsNewShown);
+    }
+    if (window.location.pathname.startsWith('/oauth-approval')) {
+        return (
+            <Suspense fallback={<Loading />}>
+                <OAuthClientApproval />
+            </Suspense>
+        );
     }
 
     window.addEventListener("hashchange", () => {

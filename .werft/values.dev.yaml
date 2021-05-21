@@ -31,6 +31,7 @@ components:
     makeNewUsersAdmin: true # for development
     theiaPluginsBucketName: gitpod-core-dev-plugins
     enableLocalApp: true
+    enableOAuthServer: true
     blockNewUsers: true
     blockNewUsersPasslist:
     - "gitpod.io"

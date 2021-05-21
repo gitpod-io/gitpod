@@ -100,6 +100,9 @@ export interface AdditionalUserData {
     ideSettings?: IDESettings;
     // key is the name of the news, string the iso date when it was seen
     whatsNewSeen?: { [key: string]: string }
+    // key is the name of the OAuth client i.e. local app, string the iso date when it was approved
+    // TODO(rl): provide a management UX to allow rescinding of approval
+    oauthClientsApproved?: { [key: string]: string }
 }
 
 export interface EmailNotificationSettings {

@@ -39,6 +39,7 @@ import { BearerAuth } from './auth/bearer-authenticator';
 import { HostContextProvider } from './auth/host-context-provider';
 import { CodeSyncService } from './code-sync/code-sync-service';
 import { increaseHttpRequestCounter, observeHttpRequestDuration } from './prometheus-metrics';
+import { OAuthController } from './oauth-server/oauth-controller';
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -67,6 +68,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(BearerAuth) protected readonly bearerAuth: BearerAuth;
 
     @inject(HostContextProvider) protected readonly hostCtxProvider: HostContextProvider;
+    @inject(OAuthController) protected readonly oauthController: OAuthController;
 
     protected readonly eventEmitter = new EventEmitter();
     protected app?: express.Application;
@@ -254,6 +256,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         app.use("/version", (req: express.Request, res: express.Response, next: express.NextFunction) => {
             res.send(this.env.version);
         });
+        app.use(this.oauthController.oauthRouter);
     }
 
     protected isAnsweredRequest(req: express.Request, res: express.Response) {

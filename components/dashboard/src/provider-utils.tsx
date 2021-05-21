@@ -40,13 +40,19 @@ interface OpenAuthorizeWindowParams {
     host: string;
     scopes?: string[];
     overrideScopes?: boolean;
+    overrideReturn?: string;
     onSuccess?: (payload?: string) => void;
     onError?: (error: string | { error: string, description?: string }) => void;
 }
 
 async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
     const { login, host, scopes, overrideScopes, onSuccess, onError } = params;
-    const returnTo = gitpodHostUrl.with({ pathname: 'complete-auth', search: 'message=success' }).toString();
+    let search = 'message=success';
+    const redirectURL = getSafeURLRedirect();
+    if (redirectURL) {
+        search = `${search}&returnTo=${encodeURIComponent(redirectURL)}`
+    }
+    const returnTo = gitpodHostUrl.with({ pathname: 'complete-auth', search: search }).toString();
     const requestedScopes = scopes || [];
     const url = login
         ? gitpodHostUrl.withApi({
@@ -94,5 +100,15 @@ async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
     };
     window.addEventListener("message", eventListener);
 }
+const getSafeURLRedirect = (source?: string) => {
+    const returnToURL: string | null = new URLSearchParams(source ? source : window.location.search).get("returnTo");
+    if (returnToURL) {
+        // Only allow oauth on the same host
+        if (returnToURL.toLowerCase().startsWith(`${window.location.protocol}//${window.location.host}/api/oauth/`.toLowerCase())) {
+            return returnToURL;
+        }
+    }
+}
 
-export { iconForAuthProvider, simplifyProviderName, openAuthorizeWindow }
+
+export { iconForAuthProvider, simplifyProviderName, openAuthorizeWindow, getSafeURLRedirect }
