@@ -1,9 +1,11 @@
 import * as shell from 'shelljs';
 import * as fs from 'fs';
+import * as gcpConstants from './constants/gcp';
 import { werft, exec, gitTag } from './util/shell';
 import { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts } from './util/kubectl';
 import { issueCertficate, installCertficate } from './util/certs';
 import { reportBuildFailureInSlack } from './util/slack';
+import { getXDigitsCode } from './util/hash'
 import * as semver from 'semver';
 
 const GCLOUD_SERVICE_ACCOUNT_PATH = "/mnt/secrets/gcp-sa/service-account.json";
@@ -35,6 +37,18 @@ export function parseVersion(context) {
 }
 
 export async function build(context, version) {
+    let shouldCreateTFPreviewEnv = isTerraformPreviewEnvironment(context)
+    if (shouldCreateTFPreviewEnv) {
+        try {
+            werft.phase("infraSetup")
+            const projectName = createGCProjectName();
+            findOrCreateGCPProject(projectName)
+            installGitpod()
+        } catch (err) {
+            werft.fail('prep', err);
+        }
+        return
+    }
     /**
      * Prepare
      */
@@ -181,6 +195,65 @@ export async function build(context, version) {
     if (withIntegrationTests) {
         exec(`git config --global user.name "${context.Owner}"`);
         exec(`werft run --follow-with-prefix="int-tests: " --remote-job-path .werft/run-integration-tests.yaml -a version=${deploymentConfig.version} -a namespace=${deploymentConfig.namespace} github`);
+    }
+}
+
+function findOrCreateGCPProject(name) {
+    let projectExists = doesProjectWithNameExists(name)
+    if (projectExists) {
+        // TODO: Add logic to check if this project already exists
+    } else {
+        createGCPProject(name)
+    }
+}
+
+// TODO: Figure out the best way to check if project exists.
+function doesProjectWithNameExists(name: string): boolean {
+    return false;
+}
+
+function createGCPProject(name: string): object {
+    werft.phase("setup", "create GCP project");
+    let pathToTerraform = gcpConstants.terraformModulePath;
+    let pathToGcpSA = gcpConstants.pathToGcpSA;
+    let override = createTerraformBlockOverride(name)
+
+    let oldCwd = shell.pwd();
+    let out = executeTerraform();
+
+    shell.cd(oldCwd);
+
+    return JSON.parse(out);
+
+    // inner helper functions
+    function executeTerraform() {
+        // setup path and gcloud config
+        shell.cd(pathToTerraform);
+        setupGCloudBin();
+
+        // create an override file for terraform
+        createOverrideTFFile();
+
+        runTerraformInitAndApply();
+
+        let out = shell.exec(`terraform output --json`, { silent: true }).stdout;
+        werft.logOutput("terraform apply", out);
+        return out;
+    }
+
+    function runTerraformInitAndApply() {
+        exec("terraform init", { slice: 'setup' });
+        exec(`terraform apply -auto-approve -var 'name=${name}'`, { slice: 'terraform apply' });
+    }
+
+    function createOverrideTFFile() {
+        werft.logOutput("override.tf", override);
+        fs.writeFileSync("override.tf", override);
+    }
+
+    function setupGCloudBin() {
+        shell.env["GOOGLE_APPLICATION_CREDENTIALS"] = pathToGcpSA;
+        exec(`gcloud auth activate-service-account --key-file "${pathToGcpSA}"`, { slice: 'setup' });
     }
 }
 
@@ -417,4 +490,30 @@ async function publishHelmChart(imageRepoBase, version) {
     ].forEach(cmd => {
         exec(cmd, { slice: 'publish-charts' });
     });
+}
+
+function createGCProjectName(): string {
+    let destName = version.split(".")[0]
+    let projectName = getXDigitsCode(destName, 10)
+
+    // we will always append 'gptf-' as a prefix
+    // This tells us that this is a gitpod preview env using terraform and the project name will always start with a alphabet
+    return "gptf-" + projectName
+}
+
+function isTerraformPreviewEnvironment(context: any): boolean {
+    return false;
+}
+
+function createTerraformBlockOverride(name: string): string {
+    return `terraform {
+        backend "gcs" {
+          bucket  = "gitpod-core-preview-terraform-state"
+          prefix  = "${name}"
+        }
+      }`
+}
+
+// TODO: Implement this
+function installGitpod() {
 }
