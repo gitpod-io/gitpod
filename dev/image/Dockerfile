@@ -181,7 +181,7 @@ RUN sudo curl -fsSL -o aws-iam-authenticator "https://amazon-eks.s3-us-west-2.am
     && sudo chown -R gitpod:gitpod $HOME/.aws-iam
 
 # Install Terraform
-ARG RELEASE_URL="https://releases.hashicorp.com/terraform/0.14.2/terraform_0.14.2_linux_amd64.zip"
+ARG RELEASE_URL="https://releases.hashicorp.com/terraform/0.15.4/terraform_0.15.4_linux_amd64.zip"
 RUN mkdir -p ~/.terraform \
     && cd ~/.terraform \
     && curl -fsSL -o terraform_linux_amd64.zip ${RELEASE_URL} \
