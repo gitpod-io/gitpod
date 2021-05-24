@@ -5,7 +5,6 @@ variable "name" {
 terraform {
   backend "gcs" {
     bucket  = "gitpod-core-preview-terraform-state"
-    #prefix  = "terraform/state"
     prefix  = "" # override me
   }
 }
@@ -32,13 +31,6 @@ data "google_dns_managed_zone" "gcp-gitpod-dev-com" {
 resource "random_id" "gitpod" {
   byte_length = 4
 }
-
-# resource "google_project_service" "project" {
-#   project = "your-project-id"
-#   service = "iam.googleapis.com"
-
-#   disable_dependent_services = true
-# }
 
 resource "google_project" "gitpod" {
   name       = var.name

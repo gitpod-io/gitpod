@@ -42,7 +42,8 @@ export async function build(context, version) {
         try {
             werft.phase("infraSetup")
             const projectName = createGCProjectName();
-            findOrCreateGCPProject(projectName)
+            // even if the project exists, trying to recreate would not cause any problems as we will reuse the statefile from the bucket
+            createGCPProject(projectName)
             installGitpod()
         } catch (err) {
             werft.fail('prep', err);
@@ -198,20 +199,6 @@ export async function build(context, version) {
     }
 }
 
-function findOrCreateGCPProject(name) {
-    let projectExists = doesProjectWithNameExists(name)
-    if (projectExists) {
-        // TODO: Add logic to check if this project already exists
-    } else {
-        createGCPProject(name)
-    }
-}
-
-// TODO: Figure out the best way to check if project exists.
-function doesProjectWithNameExists(name: string): boolean {
-    return false;
-}
-
 function createGCPProject(name: string): object {
     werft.phase("setup", "create GCP project");
     let pathToTerraform = gcpConstants.terraformModulePath;
@@ -219,8 +206,9 @@ function createGCPProject(name: string): object {
     let override = createTerraformBlockOverride(name)
 
     let oldCwd = shell.pwd();
-    let out = executeTerraform();
 
+    shell.cd(pathToTerraform);
+    let out = executeTerraform();
     shell.cd(oldCwd);
 
     return JSON.parse(out);
@@ -228,7 +216,6 @@ function createGCPProject(name: string): object {
     // inner helper functions
     function executeTerraform() {
         // setup path and gcloud config
-        shell.cd(pathToTerraform);
         setupGCloudBin();
 
         // create an override file for terraform
@@ -501,11 +488,11 @@ function createGCProjectName(): string {
     return "gptf-" + projectName
 }
 
-// As of now we only build branches with suffix 'tf-build' in the tf preview env
+// As of now we only build branches with suffix 'tf-build' in the tf preview env.
 function isTerraformPreviewEnvironment(context: any): boolean {
     let buildConfig = context.Annotations || {};
     let branchName: string = context.Repository.ref;
-    return branchName.endsWith('tf-build') || "tf-Preview" in buildConfig
+    return branchName.endsWith('tf-build') || "tf-preview" in buildConfig
 }
 
 function createTerraformBlockOverride(name: string): string {
