@@ -488,11 +488,9 @@ function createGCProjectName(): string {
     return "gptf-" + projectName
 }
 
-// As of now we only build branches with suffix 'tf-build' in the tf preview env.
 function isTerraformPreviewEnvironment(context: any): boolean {
     let buildConfig = context.Annotations || {};
-    let branchName: string = context.Repository.ref;
-    return branchName.endsWith('tf-build') || "tf-preview" in buildConfig
+    return buildConfig["deploytarget"] === "gke"
 }
 
 function createTerraformBlockOverride(name: string): string {
