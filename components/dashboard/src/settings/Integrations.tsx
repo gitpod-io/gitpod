@@ -477,8 +477,8 @@ export function GitIntegrationModal(props: ({
     useEffect(() => {
         setErrorMessage(undefined);
         validate();
-    }, [clientId, clientSecret])
-    
+    }, [clientId, clientSecret, type])
+
     useEffect(() => {
         if (props.mode === "new") {
             const exampleHostname = `${type.toLowerCase()}.example.com`;
