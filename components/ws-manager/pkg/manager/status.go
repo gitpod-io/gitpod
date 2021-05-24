@@ -120,15 +120,7 @@ func (wso *workspaceObjects) WorkspaceID() (id string, ok bool) {
 }
 
 func (wso *workspaceObjects) WasEverReady() (res bool) {
-	const deprecatedWorkspaceReadyAnnotation = "gitpod/ready"
-
 	check := func(a map[string]string) bool {
-		// we may still have some legacy pods running that used the former deprecatedWorkspaceReadyAnnotation
-		// If we see that flag we have to give that one precedence.
-		if _, ok := a[deprecatedWorkspaceReadyAnnotation]; ok {
-			return true
-		}
-
 		_, neverReady := a[workspaceNeverReadyAnnotation]
 		return !neverReady
 	}
