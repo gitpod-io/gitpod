@@ -5,7 +5,7 @@ import { werft, exec, gitTag } from './util/shell';
 import { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts } from './util/kubectl';
 import { issueCertficate, installCertficate } from './util/certs';
 import { reportBuildFailureInSlack } from './util/slack';
-import { getXDigitsCode } from './util/hash'
+import { getXDigitsHashCode } from './util/hash'
 import * as semver from 'semver';
 
 const GCLOUD_SERVICE_ACCOUNT_PATH = "/mnt/secrets/gcp-sa/service-account.json";
@@ -494,26 +494,28 @@ async function publishHelmChart(imageRepoBase, version) {
 
 function createGCProjectName(): string {
     let destName = version.split(".")[0]
-    let projectName = getXDigitsCode(destName, 10)
+    let projectName = getXDigitsHashCode(destName, 10)
 
     // we will always append 'gptf-' as a prefix
     // This tells us that this is a gitpod preview env using terraform and the project name will always start with a alphabet
     return "gptf-" + projectName
 }
 
+// As of now we only build branches with suffix 'tf-build' in the tf preview env
 function isTerraformPreviewEnvironment(context: any): boolean {
-    return false;
+    let branchName: string = context.Repository.ref;
+    return branchName.endsWith('tf-build')
 }
 
 function createTerraformBlockOverride(name: string): string {
     return `terraform {
         backend "gcs" {
-          bucket  = "gitpod-core-preview-terraform-state"
+          bucket  = "${gcpConstants.previewTerraformEnvStateBucketName}"
           prefix  = "${name}"
         }
       }`
 }
 
-// TODO: Implement this
+// TODO: Implement this once we have a TF module for gcp self hosted
 function installGitpod() {
 }
