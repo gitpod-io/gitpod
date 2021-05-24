@@ -116,7 +116,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
           break;
         case ErrorCodes.NOT_AUTHENTICATED:
           statusMessage = <div className="mt-2 flex flex-col space-y-8">
-            <button className="secondary" onClick={() => {
+            <button className="" onClick={() => {
               this.tryAuthorize(error?.data.host, error?.data.scopes)
             }}>Authorize with {error.data.host}</button>
           </div>;
