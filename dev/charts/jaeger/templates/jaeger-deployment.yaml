@@ -31,8 +31,8 @@ spec:
         runAsUser: 1000
       enableServiceLinks: false
       containers:
-      - image: jaegertracing/all-in-one:1.14
-        imagePullPolicy: Always
+      - image: jaegertracing/all-in-one:1.22
+        imagePullPolicy: IfNotPresent
         name: jaeger
 {{- if eq .Values.jaeger.storage "badger" }}
         args:
