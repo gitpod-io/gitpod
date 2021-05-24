@@ -478,6 +478,8 @@ export function GitIntegrationModal(props: ({
         setErrorMessage(undefined);
         validate();
     }, [clientId, clientSecret])
+    
+    // JH-TODO: Create new useEffect function to update the host and redirectURL values when the type value changes, restrict to running only while creating a new integration
 
     const onClose = () => props.onClose && props.onClose();
     const onUpdate = () => props.onUpdate && props.onUpdate();
@@ -569,9 +571,11 @@ export function GitIntegrationModal(props: ({
     const validate = () => {
         const errors: string[] = [];
         if (clientId.trim().length === 0) {
+            // JH-TODO: Use template literal string to display error message per provider's terminology
             errors.push("Client ID is missing.");
         }
         if (clientSecret.trim().length === 0) {
+            // JH-TODO: Use template literal string to display error message per provider's terminology
             errors.push("Client Secret is missing.");
         }
         if (errors.length === 0) {
@@ -655,17 +659,20 @@ export function GitIntegrationModal(props: ({
                     <div className="w-full relative">
                         <input name="redirectURL" disabled={true} readOnly={true} type="text" value={redirectURL} className="w-full pr-8" />
                         <div className="cursor-pointer" onClick={() => copyRedirectUrl()}>
+                            {/* JH-TODO: Fix Typo */}
                             <img src={copy} title="Copy the Redirect URL to clippboard" className="absolute top-1/3 right-3" />
                         </div>
                     </div>
                     <span className="text-gray-500 text-sm">{getRedirectUrlDescription(type, host)}</span>
                 </div>
                 <div className="flex flex-col space-y-2">
+                    {/* JH-TODO: Use template literal string to update label per provider's terminology */}
                     <label htmlFor="clientId" className="font-medium">Client ID</label>
                     <input name="clientId" type="text" value={clientId} className="w-full"
                         onChange={(e) => updateClientId(e.target.value)} />
                 </div>
                 <div className="flex flex-col space-y-2">
+                    {/* JH-TODO: Use template literal string to update label per provider's terminology */}
                     <label htmlFor="clientSecret" className="font-medium">Client Secret</label>
                     <input name="clientSecret" type="password" value={clientSecret} className="w-full"
                         onChange={(e) => updateClientSecret(e.target.value)} />
