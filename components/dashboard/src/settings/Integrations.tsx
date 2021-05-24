@@ -466,6 +466,8 @@ export function GitIntegrationModal(props: ({
 
     useEffect(() => {
         if (props.mode === "new") {
+            // If the host value has been modified e.g. not gitlab.example.com, assume it has been set by user and end operation
+            if (!host.includes(".example.com")) return;
             const exampleHostname = `${type.toLowerCase()}.example.com`;
             updateHostValue(exampleHostname);
         }
