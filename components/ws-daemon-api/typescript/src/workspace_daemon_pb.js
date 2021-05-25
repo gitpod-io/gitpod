@@ -397,7 +397,8 @@ proto.iws.PrepareForUserNSResponse.prototype.toObject = function(opt_includeInst
  */
 proto.iws.PrepareForUserNSResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-    fsShift: jspb.Message.getFieldWithDefault(msg, 1, 0)
+    fsShift: jspb.Message.getFieldWithDefault(msg, 1, 0),
+    fullWorkspaceBackup: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
   };
 
   if (includeInstance) {
@@ -438,6 +439,10 @@ proto.iws.PrepareForUserNSResponse.deserializeBinaryFromReader = function(msg, r
       var value = /** @type {!proto.iws.FSShiftMethod} */ (reader.readEnum());
       msg.setFsShift(value);
       break;
+    case 2:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setFullWorkspaceBackup(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -474,6 +479,13 @@ proto.iws.PrepareForUserNSResponse.serializeBinaryToWriter = function(message, w
       f
     );
   }
+  f = message.getFullWorkspaceBackup();
+  if (f) {
+    writer.writeBool(
+      2,
+      f
+    );
+  }
 };
 
 
@@ -492,6 +504,24 @@ proto.iws.PrepareForUserNSResponse.prototype.getFsShift = function() {
  */
 proto.iws.PrepareForUserNSResponse.prototype.setFsShift = function(value) {
   return jspb.Message.setProto3EnumField(this, 1, value);
+};
+
+
+/**
+ * optional bool full_workspace_backup = 2;
+ * @return {boolean}
+ */
+proto.iws.PrepareForUserNSResponse.prototype.getFullWorkspaceBackup = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 2, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.iws.PrepareForUserNSResponse} returns this
+ */
+proto.iws.PrepareForUserNSResponse.prototype.setFullWorkspaceBackup = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 2, value);
 };
 
 

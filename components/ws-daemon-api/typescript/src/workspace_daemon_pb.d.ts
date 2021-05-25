@@ -32,6 +32,8 @@ export namespace PrepareForUserNSRequest {
 export class PrepareForUserNSResponse extends jspb.Message {
     getFsShift(): FSShiftMethod;
     setFsShift(value: FSShiftMethod): PrepareForUserNSResponse;
+    getFullWorkspaceBackup(): boolean;
+    setFullWorkspaceBackup(value: boolean): PrepareForUserNSResponse;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): PrepareForUserNSResponse.AsObject;
@@ -46,6 +48,7 @@ export class PrepareForUserNSResponse extends jspb.Message {
 export namespace PrepareForUserNSResponse {
     export type AsObject = {
         fsShift: FSShiftMethod,
+        fullWorkspaceBackup: boolean,
     }
 }
 
