@@ -5,12 +5,14 @@
 package content
 
 import (
+	"archive/tar"
 	"bufio"
 	"context"
 	"fmt"
 	"io"
 	"os"
 
+	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/idtools"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
@@ -19,8 +21,11 @@ import (
 	carchive "github.com/gitpod-io/gitpod/content-service/pkg/archive"
 )
 
+// ConvertWhiteout converts whiteout files from the archive
+type ConvertWhiteout func(*tar.Header, string) (bool, error)
+
 // BuildTarbal creates an OCI compatible tar file dst from the folder src, expecting the overlay whiteout format
-func BuildTarbal(ctx context.Context, src string, dst string, opts ...carchive.TarOption) (err error) {
+func BuildTarbal(ctx context.Context, src string, dst string, fullWorkspaceBackup bool, opts ...carchive.TarOption) (err error) {
 	var cfg carchive.TarConfig
 	for _, opt := range opts {
 		opt(&cfg)
@@ -53,10 +58,21 @@ func BuildTarbal(ctx context.Context, src string, dst string, opts ...carchive.T
 		}
 	}
 
-	tarout, err := TarWithOptions(src, &TarOptions{
-		UIDMaps: uidMaps,
-		GIDMaps: gidMaps,
-	})
+	var tarout io.ReadCloser
+	if fullWorkspaceBackup {
+		tarout, err = archive.TarWithOptions(src, &archive.TarOptions{
+			UIDMaps:        uidMaps,
+			GIDMaps:        gidMaps,
+			InUserNS:       true,
+			WhiteoutFormat: archive.OverlayWhiteoutFormat,
+		})
+	} else {
+		tarout, err = TarWithOptions(src, &TarOptions{
+			UIDMaps: uidMaps,
+			GIDMaps: gidMaps,
+		})
+	}
+
 	if err != nil {
 		return xerrors.Errorf("cannot create tar: %w", err)
 	}

@@ -86,7 +86,7 @@ func TestBuildTarbalMaxSize(t *testing.T) {
 		tgt.Close()
 		cleanup = append(cleanup, tgt.Name())
 
-		err = BuildTarbal(context.Background(), wd, tgt.Name(), carchive.TarbalMaxSize(test.MaxSize))
+		err = BuildTarbal(context.Background(), wd, tgt.Name(), false, carchive.TarbalMaxSize(test.MaxSize))
 		if (err == nil && test.Err != nil) || (err != nil && test.Err == nil) || (err != nil && test.Err != nil && err.Error() != test.Err.Error()) {
 			t.Errorf("%s: unexpected error: expected \"%v\", actual \"%v\"", test.Name, test.Err, err)
 		}
