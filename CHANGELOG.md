@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## June 2021
+
+- Better reflect incremental prebuilds in prebuilt workspace logs ([#4293](https://github.com/gitpod-io/gitpod/pull/4293))
+- Run shellcheck against scripts ([#4280](https://github.com/gitpod-io/gitpod/pull/4280))
+- Implement new Project and Team DB tables and entities ([#4368](https://github.com/gitpod-io/gitpod/pull/4368))
+- On gitpod.io 404 redirect to www.gitpod.io ([#4364](https://github.com/gitpod-io/gitpod/pull/4364))
+- Fix disk space leak in ws-manager ([#4388](https://github.com/gitpod-io/gitpod/pull/4388))
+- Fix memory leak in ws-manager ([#4384](https://github.com/gitpod-io/gitpod/pull/4384))
+- Handle GitHub issues page context URL ([#4370](https://github.com/gitpod-io/gitpod/pull/4370))
+- Fix issues blocking SSH from local terminal ([#4358](https://github.com/gitpod-io/gitpod/pull/4358))
+- Fix remote tracking branch for issue context ([#4367](https://github.com/gitpod-io/gitpod/pull/4367))
+- Fix opening empty repositories ([#4337](https://github.com/gitpod-io/gitpod/pull/4337))
 
 ## May 2021
 

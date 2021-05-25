@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -377,9 +378,16 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 	go func() {
 		defer stdout.Close()
 
-		fileName := tm.prebuildLogFileName(task)
-		// TODO(janx): If the file already exists (from a parent prebuild), extract its "time saved", and log that below
-		// (instead, or in addition to, the incremental prebuild time).
+		var (
+			fileName    = tm.prebuildLogFileName(task)
+			oldFileName = fileName + "-old"
+		)
+		if _, err := os.Stat(fileName); err == nil {
+			// If the file already exists (from a parent prebuild), temporarily move it so that it doesn't get truncated.
+			// On the off chance that renaming fails here, we silently ignore that -- the new prebuild logs simply won't reflect
+			// the older logs and elapsed time (`importParentLogAndGetDuration` is always safe thanks to its initial `os.Stat`).
+			_ = os.Rename(fileName, oldFileName)
+		}
 		file, err := os.Create(fileName)
 		var fileWriter *bufio.Writer
 		if err != nil {
@@ -391,12 +399,17 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 			fileWriter = bufio.NewWriter(file)
 			defer fileWriter.Flush()
 		}
+		// Import any parent prebuild logs and parse their total duration if available
+		parentElapsed := importParentLogAndGetDuration(oldFileName, fileWriter)
 
 		buf := make([]byte, 4096)
 		for {
 			n, err := stdout.Read(buf)
 			if err == io.EOF {
 				elapsed := time.Since(start)
+				if parentElapsed > elapsed {
+					elapsed = parentElapsed
+				}
 				duration := ""
 				if elapsed >= 1*time.Minute {
 					elapsedInMinutes := strconv.Itoa(int(elapsed.Minutes()))
@@ -423,6 +436,46 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 			tm.reporter.write(data, task, terminal)
 		}
 	}()
+}
+
+func importParentLogAndGetDuration(fn string, out io.Writer) time.Duration {
+	if _, err := os.Stat(fn); err != nil {
+		return 0
+	}
+	defer os.Remove(fn)
+
+	file, err := os.Open(fn)
+	if err != nil {
+		return 0
+	}
+	defer file.Close()
+
+	defer out.Write([]byte("♻️ Re-running task as an incremental workspace prebuild\n\n"))
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		l := scanner.Text()
+		if strings.Contains(l, "🤙 This task ran as a workspace prebuild") {
+			break
+		}
+		out.Write([]byte(l + "\n"))
+	}
+	if !scanner.Scan() {
+		return 0
+	}
+	reg, err := regexp.Compile(`🎉 Well done on saving (\d+) minute`)
+	if err != nil {
+		return 0
+	}
+	res := reg.FindStringSubmatch(scanner.Text())
+	if res == nil {
+		return 0
+	}
+	elapsedInMinutes, err := strconv.Atoi(res[1])
+	if err != nil {
+		return 0
+	}
+	return time.Duration(elapsedInMinutes) * time.Minute
 }
 
 type composeCommandOptions struct {
