@@ -146,9 +146,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 	log.Info("InitWorkspace called")
 
 	var (
-		wsloc         string
-		upperdir      string
-		wscontainerID container.ID
+		wsloc string
 	)
 	if req.FullWorkspaceBackup {
 		if s.runtime == nil {
@@ -162,24 +160,11 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 		if err != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "invalid content manifest: %s", err.Error())
 		}
-
-		wscont, err := s.runtime.WaitForContainer(ctx, req.Id)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "cannot find workspace container: %s", err.Error())
-		}
-		upperdir, err = s.runtime.ContainerUpperdir(ctx, wscont)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "cannot find workspace upperdir: %s", err.Error())
-		}
-		log.WithField("cid", wscontainerID).WithField("upperdir", upperdir).Debug("workspace container found")
-
-		// This this point the workspace content is present and initialized because it was part of the container image.
-		// There is no need to wait for the ready file here.
 	} else {
 		wsloc = filepath.Join(s.store.Location, req.Id)
 	}
 
-	workspace, err := s.store.NewWorkspace(ctx, req.Id, wsloc, s.creator(req, upperdir))
+	workspace, err := s.store.NewWorkspace(ctx, req.Id, wsloc, s.creator(req))
 	if err == session.ErrAlreadyExists {
 		return nil, status.Error(codes.AlreadyExists, "workspace exists already")
 	}
@@ -248,7 +233,7 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 	return &api.InitWorkspaceResponse{}, nil
 }
 
-func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest, upperdir string) session.WorkspaceFactory {
+func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest) session.WorkspaceFactory {
 	return func(ctx context.Context, location string) (res *session.Workspace, err error) {
 		err = s.createSandbox(ctx, req, location)
 		if err != nil {
@@ -257,7 +242,6 @@ func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest, upperdir strin
 
 		return &session.Workspace{
 			Location:            location,
-			UpperdirLocation:    upperdir,
 			CheckoutLocation:    getCheckoutLocation(req),
 			CreatedAt:           time.Now(),
 			Owner:               req.Metadata.Owner,
@@ -428,16 +412,10 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		opts []storage.UploadOption
 		mf   csapi.WorkspaceContentManifest
 	)
-	if sess.FullWorkspaceBackup {
-		lb, ok := sess.NonPersistentAttrs[session.AttrLiveBackup].(*iws.LiveWorkspaceBackup)
-		if lb == nil || !ok {
-			return xerrors.Errorf("workspace has no live backup configured")
-		}
 
-		loc, err = lb.Latest()
-		if err != nil {
-			return xerrors.Errorf("no live backup available: %w", err)
-		}
+	if sess.FullWorkspaceBackup {
+		// Backup any change located in the upper overlay directory of the workspace in the node
+		loc = filepath.Join(sess.ServiceLocDaemon, "upper")
 
 		err = json.Unmarshal(sess.ContentManifest, &mf)
 		if err != nil {
@@ -445,7 +423,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		}
 	}
 
-	err = os.Remove(filepath.Join(loc, wsinit.WorkspaceReadyFile))
+	err = os.Remove(filepath.Join(sess.Location, wsinit.WorkspaceReadyFile))
 	if err != nil && !os.IsNotExist(err) {
 		// We'll still upload the backup, well aware that the UX during restart will be broken.
 		// But it's better to have a backup with all files (albeit one too many), than having no backup at all.
@@ -696,18 +674,6 @@ func (s *WorkspaceService) TakeSnapshot(ctx context.Context, req *api.TakeSnapsh
 		log.WithFields(sess.OWI()).WithError(err).Error("cannot upload snapshot: no remote storage configured")
 		return nil, status.Error(codes.Internal, "workspace has no remote storage")
 	}
-	if sess.FullWorkspaceBackup {
-		lb, ok := sess.NonPersistentAttrs[session.AttrLiveBackup].(*iws.LiveWorkspaceBackup)
-		if lb == nil || !ok {
-			log.WithFields(sess.OWI()).WithError(err).Error("cannot upload snapshot: no live backup available")
-			return nil, status.Error(codes.Internal, "workspace has no live backup")
-		}
-		_, err = lb.Backup()
-		if err != nil {
-			log.WithFields(sess.OWI()).WithError(err).Error("cannot upload snapshot: live backup failed")
-			return nil, status.Error(codes.Internal, "cannot upload snapshot")
-		}
-	}
 
 	var (
 		baseName     = fmt.Sprintf("snapshot-%d", time.Now().UnixNano())
@@ -717,8 +683,6 @@ func (s *WorkspaceService) TakeSnapshot(ctx context.Context, req *api.TakeSnapsh
 	)
 	if sess.FullWorkspaceBackup {
 		snapshotName = rs.Qualify(mfName)
-
-		// TODO: pause theia
 	} else {
 		snapshotName = rs.Qualify(backupName)
 	}
@@ -794,43 +758,12 @@ func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceEx
 			ws.NonPersistentAttrs[session.AttrRemoteStorage] = remoteStorage
 		}
 
-		if _, ok := ws.NonPersistentAttrs[session.AttrLiveBackup]; ws.FullWorkspaceBackup && !ok {
-			ws.NonPersistentAttrs[session.AttrLiveBackup] = &iws.LiveWorkspaceBackup{
-				OWI:         ws.OWI(),
-				Location:    ws.UpperdirLocation,
-				Destination: filepath.Join(cfg.FullWorkspaceBackup.WorkDir, ws.InstanceID),
-			}
-		}
-
 		return nil
-	}
-	var startLiveBackup session.WorkspaceLivecycleHook = func(ctx context.Context, ws *session.Workspace) (err error) {
-		if !ws.FullWorkspaceBackup {
-			return
-		}
-
-		lbr, ok := ws.NonPersistentAttrs[session.AttrLiveBackup]
-		if lbr == nil || !ok {
-			log.WithFields(ws.OWI()).Warn("workspace is ready but did not have a live backup")
-
-			ws.NonPersistentAttrs[session.AttrLiveBackup] = &iws.LiveWorkspaceBackup{
-				OWI:         ws.OWI(),
-				Location:    ws.UpperdirLocation,
-				Destination: filepath.Join(cfg.FullWorkspaceBackup.WorkDir, ws.InstanceID),
-			}
-		}
-
-		lb, ok := lbr.(*iws.LiveWorkspaceBackup)
-		if lbr == nil || !ok {
-			return xerrors.Errorf("cannot start live backup - expected *LiveWorkspaceBackup")
-		}
-
-		return lb.Start()
 	}
 
 	return map[session.WorkspaceState][]session.WorkspaceLivecycleHook{
 		session.WorkspaceInitializing: {setupWorkspace, iws.ServeWorkspace(uidmapper, api.FSShiftMethod(cfg.UserNamespaces.FSShift))},
-		session.WorkspaceReady:        {setupWorkspace, startLiveBackup},
+		session.WorkspaceReady:        {setupWorkspace},
 		session.WorkspaceDisposing:    {iws.StopServingWorkspace},
 	}
 }

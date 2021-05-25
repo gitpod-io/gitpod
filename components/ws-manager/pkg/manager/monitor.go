@@ -863,11 +863,6 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		}
 	}()
 
-	if _, fwb := wso.Pod.Labels[fullWorkspaceBackupAnnotation]; fwb {
-		disposalStatus = &workspaceDisposalStatus{BackupComplete: true}
-		return
-	}
-
 	doBackup := wso.WasEverReady() && !wso.IsWorkspaceHeadless()
 	doFinalize := func() (worked bool, gitStatus *csapi.GitStatus, err error) {
 		m.finalizerMapLock.Lock()

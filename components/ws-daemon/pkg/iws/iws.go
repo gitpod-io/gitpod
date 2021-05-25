@@ -646,37 +646,14 @@ func (wbs *InWorkspaceServiceServer) Teardown(ctx context.Context, req *api.Tear
 		success = true
 		err     error
 	)
-	err = wbs.performLiveBackup()
-	if err != nil {
-		log.WithError(err).WithFields(owi).Error("FWB teardown failed")
-		success = false
-	}
 
 	err = wbs.unPrepareForUserNS()
 	if err != nil {
-		log.WithError(err).WithFields(owi).Error("ShiftFS unmount failed")
+		log.WithError(err).WithFields(owi).Error("mark FS unmount failed")
 		success = false
 	}
 
 	return &api.TeardownResponse{Success: success}, nil
-}
-
-func (wbs *InWorkspaceServiceServer) performLiveBackup() error {
-	if !wbs.Session.FullWorkspaceBackup {
-		return nil
-	}
-
-	lb, ok := wbs.Session.NonPersistentAttrs[session.AttrLiveBackup].(*LiveWorkspaceBackup)
-	if lb == nil || !ok {
-		return xerrors.Errorf("FWB workspace has no associated live backup")
-	}
-
-	_, err := lb.Backup()
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (wbs *InWorkspaceServiceServer) unPrepareForUserNS() error {
@@ -685,7 +662,7 @@ func (wbs *InWorkspaceServiceServer) unPrepareForUserNS() error {
 		c.Args = append(c.Args, "unmount", "--target", mountpoint)
 	})
 	if err != nil {
-		return xerrors.Errorf("cannot unmount shiftfs mark at %s: %w", mountpoint, err)
+		return xerrors.Errorf("cannot unmount mark at %s: %w", mountpoint, err)
 	}
 
 	return nil

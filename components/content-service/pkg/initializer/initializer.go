@@ -240,7 +240,6 @@ type InitializeOpt func(*initializeOpts)
 type initializeOpts struct {
 	Initializer Initializer
 	CleanSlate  bool
-	InWorkspace bool
 	UID         int
 	GID         int
 	mappings    []archive.IDMapping
@@ -265,11 +264,6 @@ func WithCleanSlate(o *initializeOpts) {
 	o.CleanSlate = true
 }
 
-// WithInWorkspace makes the initialization process behave well when running within a workspace
-func WithInWorkspace(o *initializeOpts) {
-	o.InWorkspace = true
-}
-
 // WithChown sets a custom UID/GID the content will have after initialisation
 func WithChown(uid, gid int) InitializeOpt {
 	return func(o *initializeOpts) {
@@ -288,7 +282,6 @@ func InitializeWorkspace(ctx context.Context, location string, remoteStorage sto
 	cfg := initializeOpts{
 		Initializer: &EmptyInitializer{},
 		CleanSlate:  false,
-		InWorkspace: false,
 		GID:         GitpodGID,
 		UID:         GitpodUID,
 	}
@@ -304,7 +297,7 @@ func InitializeWorkspace(ctx context.Context, location string, remoteStorage sto
 			// in the very unlikely event that the workspace Pod did not mount (and thus create) the workspace directory, create it
 			err = os.Mkdir(location, 0755)
 			if os.IsExist(err) {
-				log.WithError(err).WithField("location", location).Debug("ran into non-atomic workspce location existence check")
+				log.WithError(err).WithField("location", location).Debug("ran into non-atomic workspace location existence check")
 				span.SetTag("exists", true)
 			} else if err != nil {
 				return src, xerrors.Errorf("cannot create workspace: %w", err)
