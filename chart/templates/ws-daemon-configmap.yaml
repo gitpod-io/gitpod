@@ -32,8 +32,6 @@ daemon:
       attempts: 3
     userNamespaces:
       fsShift: {{ $comp.userNamespaces.fsShift | default "fuse" }}
-    fullWorkspaceBackup:
-      workdir: "/mnt/node0/gitpod-{{ .Release.Namespace }}"
     initializer:
       command: "/app/content-initializer"
   uidmapper:

@@ -77,7 +77,7 @@ var ring0Cmd = &cobra.Command{
 			return
 		}
 		defer func() {
-			ctx, cancel = context.WithTimeout(context.Background(), 10*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 
 			_, err = client.Teardown(ctx, &daemonapi.TeardownRequest{})

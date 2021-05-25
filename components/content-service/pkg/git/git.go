@@ -183,10 +183,13 @@ func (c *Client) GitWithOutput(ctx context.Context, subcommand string, args ...s
 	cmd := exec.Command("git", fullArgs...)
 	cmd.Dir = c.Location
 	cmd.Env = env
-	// cmd.SysProcAttr = &syscall.SysProcAttr{Credential: &syscall.Credential{Uid: common.GitpodUID, Gid: common.GitpodGID}}
 
 	res, err := cmd.CombinedOutput()
 	if err != nil {
+		if err.Error() == "wait: no child processes" || err.Error() == "waitid: no child processes" {
+			return res, nil
+		}
+
 		return nil, OpFailedError{
 			Args:       args,
 			ExecErr:    err,
@@ -194,6 +197,7 @@ func (c *Client) GitWithOutput(ctx context.Context, subcommand string, args ...s
 			Subcommand: subcommand,
 		}
 	}
+
 	return res, nil
 }
 
@@ -269,6 +273,23 @@ func (c *Client) Clone(ctx context.Context) (err error) {
 	args = append(args, ".")
 	if err := c.Git(ctx, "clone", args...); err != nil {
 		return err
+	}
+
+	// TODO (aledbf): refactor to remove the need of manual chown
+	args = []string{"-R", "-L", "gitpod", c.Location}
+	cmd := exec.Command("chown", args...)
+	res, err := cmd.CombinedOutput()
+	if err != nil {
+		if err.Error() == "wait: no child processes" || err.Error() == "waitid: no child processes" {
+			return nil
+		}
+
+		return OpFailedError{
+			Args:       args,
+			ExecErr:    err,
+			Output:     string(res),
+			Subcommand: "chown",
+		}
 	}
 
 	return nil

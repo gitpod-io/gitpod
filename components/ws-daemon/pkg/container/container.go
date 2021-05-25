@@ -25,15 +25,7 @@ type Runtime interface {
 	// container's state, which may be running, stopped, deleted, unkown or something else.
 	ContainerExists(ctx context.Context, id ID) (exists bool, err error)
 
-	// ContainerUpperdir finds the workspace container's overlayfs upperdir. The location returned here has to be accessible from
-	// the calling process (i.e. if the calling process runs in a container itself, the returned location has to be accessible from
-	// within that container).
-	//
-	// If the container is not found ErrNotFound is returned.
-	// If the container has no upperdir ErrNoUpperdir is returned.
-	ContainerUpperdir(ctx context.Context, id ID) (loc string, err error)
-
-	// ContainerUpperdir finds the workspace container's rootfs. By default the location returned here has to be accessible from
+	// ContainerRootfs finds the workspace container's rootfs. By default the location returned here has to be accessible from
 	// the calling process (i.e. if the calling process runs in a container itself, the returned location has to be accessible from
 	// within that container).
 	// If opts.Unmapped == true, the location returned here is relative to root mount namespace, i.e. not the container.

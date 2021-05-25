@@ -411,16 +411,6 @@ func (s *Containerd) ContainerExists(ctx context.Context, id ID) (exists bool, e
 	return true, nil
 }
 
-// ContainerUpperdir finds the workspace container's overlayfs upperdir.
-func (s *Containerd) ContainerUpperdir(ctx context.Context, id ID) (loc string, err error) {
-	info, ok := s.cntIdx[string(id)]
-	if !ok {
-		return "", ErrNotFound
-	}
-
-	return s.Mapping.Translate(info.UpperDir)
-}
-
 // ContainerRootfs finds the workspace container's rootfs.
 func (s *Containerd) ContainerRootfs(ctx context.Context, id ID, opts OptsContainerRootfs) (loc string, err error) {
 	info, ok := s.cntIdx[string(id)]

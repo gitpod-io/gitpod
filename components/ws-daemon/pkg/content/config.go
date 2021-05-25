@@ -53,14 +53,6 @@ type Config struct {
 		FSShift FSShiftMethod `json:"fsShift"`
 	} `json:"userNamespaces,omitempty"`
 
-	// FullWorkspaceBackup configures the FWB behaviour
-	FullWorkspaceBackup struct {
-		Enabled bool `json:"enabled"`
-
-		// WorkDir is a directory located on the same disk as the upperdir of containers
-		WorkDir string `json:"workdir"`
-	} `json:"fullWorkspaceBackup,omitempty"`
-
 	// Initializer configures the isolated content initializer runtime
 	Initializer struct {
 		// Command is the path to content-initializer executable
