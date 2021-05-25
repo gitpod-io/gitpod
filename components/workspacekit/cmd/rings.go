@@ -96,7 +96,10 @@ var ring0Cmd = &cobra.Command{
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
-		cmd.Env = append(os.Environ(), "WORKSPACEKIT_FSSHIFT="+prep.FsShift.String())
+		cmd.Env = append(os.Environ(),
+			"WORKSPACEKIT_FSSHIFT="+prep.FsShift.String(),
+			fmt.Sprintf("WORKSPACEKIT_FULL_WORKSPACE_BACKUP=%v", prep.FullWorkspaceBackup),
+		)
 
 		if err := cmd.Start(); err != nil {
 			log.WithError(err).Error("failed to start ring0")
@@ -256,13 +259,19 @@ var ring1Cmd = &cobra.Command{
 		mnts = append(mnts,
 			mnte{Target: "/sys", Flags: unix.MS_BIND | unix.MS_REC},
 			mnte{Target: "/dev", Flags: unix.MS_BIND | unix.MS_REC},
-			// TODO(cw): only mount /workspace if it's in the mount table, i.e. this isn't an FWB workspace
-			mnte{Target: "/workspace", Flags: unix.MS_BIND | unix.MS_REC},
 			mnte{Target: "/etc/hosts", Flags: unix.MS_BIND | unix.MS_REC},
 			mnte{Target: "/etc/hostname", Flags: unix.MS_BIND | unix.MS_REC},
 			mnte{Target: "/etc/resolv.conf", Flags: unix.MS_BIND | unix.MS_REC},
 			mnte{Target: "/tmp", Source: "tmpfs", FSType: "tmpfs"},
 		)
+
+		// FWB workspaces do not require mounting /workspace
+		// if that is done, the backup will not contain any change in the directory
+		if os.Getenv("WORKSPACEKIT_FULL_WORKSPACE_BACKUP") != "true" {
+			mnts = append(mnts,
+				mnte{Target: "/workspace", Flags: unix.MS_BIND | unix.MS_REC},
+			)
+		}
 
 		for _, m := range mnts {
 			dst := filepath.Join(ring2Root, m.Target)

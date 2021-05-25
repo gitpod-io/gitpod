@@ -35,6 +35,7 @@ service InWorkspaceService {
 message PrepareForUserNSRequest {}
 message PrepareForUserNSResponse {
     FSShiftMethod fs_shift = 1;
+    bool full_workspace_backup = 2;
 }
 
 // FSShiftMethod describes the means by which we establish the ID shift for
