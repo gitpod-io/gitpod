@@ -4,8 +4,7 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
-import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
+import { UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { Permission, PermissionName, User } from '@gitpod/gitpod-protocol';
 import { inject, injectable } from "inversify";
 import { AuthorizationService } from "../../../src/user/authorization-service";

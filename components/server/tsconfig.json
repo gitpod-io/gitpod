@@ -1,8 +1,7 @@
 {
     "compilerOptions": {
-        "rootDir": ".",
-        "experimentalDecorators": true,
         "outDir": "dist",
+        "experimentalDecorators": true,
         "lib": [
             "es6",
             "esnext.asynciterable"

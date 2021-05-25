@@ -564,35 +564,6 @@ func (mr *MockAPIInterfaceMockRecorder) ClosePort(ctx, workspaceID, port interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ClosePort", reflect.TypeOf((*MockAPIInterface)(nil).ClosePort), ctx, workspaceID, port)
 }
 
-// GetUserMessages mocks base method
-func (m *MockAPIInterface) GetUserMessages(ctx context.Context, options *GetUserMessagesOptions) ([]*UserMessage, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetUserMessages", ctx, options)
-	ret0, _ := ret[0].([]*UserMessage)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetUserMessages indicates an expected call of GetUserMessages
-func (mr *MockAPIInterfaceMockRecorder) GetUserMessages(ctx, options interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserMessages", reflect.TypeOf((*MockAPIInterface)(nil).GetUserMessages), ctx, options)
-}
-
-// UpdateUserMessages mocks base method
-func (m *MockAPIInterface) UpdateUserMessages(ctx context.Context, options *UpdateUserMessagesOptions) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateUserMessages", ctx, options)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// UpdateUserMessages indicates an expected call of UpdateUserMessages
-func (mr *MockAPIInterfaceMockRecorder) UpdateUserMessages(ctx, options interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserMessages", reflect.TypeOf((*MockAPIInterface)(nil).UpdateUserMessages), ctx, options)
-}
-
 // GetUserStorageResource mocks base method
 func (m *MockAPIInterface) GetUserStorageResource(ctx context.Context, options *GetUserStorageResourceOptions) (string, error) {
 	m.ctrl.T.Helper()

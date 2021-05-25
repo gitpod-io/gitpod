@@ -60,8 +60,6 @@ type APIInterface interface {
 	GetOpenPorts(ctx context.Context, workspaceID string) (res []*WorkspaceInstancePort, err error)
 	OpenPort(ctx context.Context, workspaceID string, port *WorkspaceInstancePort) (res *WorkspaceInstancePort, err error)
 	ClosePort(ctx context.Context, workspaceID string, port float32) (err error)
-	GetUserMessages(ctx context.Context, options *GetUserMessagesOptions) (res []*UserMessage, err error)
-	UpdateUserMessages(ctx context.Context, options *UpdateUserMessagesOptions) (err error)
 	GetUserStorageResource(ctx context.Context, options *GetUserStorageResourceOptions) (res string, err error)
 	UpdateUserStorageResource(ctx context.Context, options *UpdateUserStorageResourceOptions) (err error)
 	GetEnvVars(ctx context.Context) (res []*UserEnvVarValue, err error)
@@ -163,10 +161,6 @@ const (
 	FunctionOpenPort FunctionName = "openPort"
 	// FunctionClosePort is the name of the closePort function
 	FunctionClosePort FunctionName = "closePort"
-	// FunctionGetUserMessages is the name of the getUserMessages function
-	FunctionGetUserMessages FunctionName = "getUserMessages"
-	// FunctionUpdateUserMessages is the name of the updateUserMessages function
-	FunctionUpdateUserMessages FunctionName = "updateUserMessages"
 	// FunctionGetUserStorageResource is the name of the getUserStorageResource function
 	FunctionGetUserStorageResource FunctionName = "getUserStorageResource"
 	// FunctionUpdateUserStorageResource is the name of the updateUserStorageResource function
@@ -1029,44 +1023,6 @@ func (gp *APIoverJSONRPC) ClosePort(ctx context.Context, workspaceID string, por
 	return
 }
 
-// GetUserMessages calls getUserMessages on the server
-func (gp *APIoverJSONRPC) GetUserMessages(ctx context.Context, options *GetUserMessagesOptions) (res []*UserMessage, err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	_params = append(_params, options)
-
-	var result []*UserMessage
-	err = gp.C.Call(ctx, "getUserMessages", _params, &result)
-	if err != nil {
-		return
-	}
-	res = result
-
-	return
-}
-
-// UpdateUserMessages calls updateUserMessages on the server
-func (gp *APIoverJSONRPC) UpdateUserMessages(ctx context.Context, options *UpdateUserMessagesOptions) (err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	_params = append(_params, options)
-
-	err = gp.C.Call(ctx, "updateUserMessages", _params, nil)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
 // GetUserStorageResource calls getUserStorageResource on the server
 func (gp *APIoverJSONRPC) GetUserStorageResource(ctx context.Context, options *GetUserStorageResourceOptions) (res string, err error) {
 	if gp == nil {
@@ -1548,12 +1504,6 @@ type GetWorkspacesOptions struct {
 type StartWorkspaceResult struct {
 	InstanceID   string `json:"instanceID,omitempty"`
 	WorkspaceURL string `json:"workspaceURL,omitempty"`
-}
-
-// GetUserMessagesOptions is the GetUserMessagesOptions message type
-type GetUserMessagesOptions struct {
-	ReleaseNotes        bool   `json:"releaseNotes,omitempty"`
-	WorkspaceInstanceID string `json:"workspaceInstanceId,omitempty"`
 }
 
 // APIToken is the APIToken message type
@@ -2259,9 +2209,4 @@ type UserMessage struct {
 	ID    string `json:"id,omitempty"`
 	Title string `json:"title,omitempty"`
 	URL   string `json:"url,omitempty"`
-}
-
-// UpdateUserMessagesOptions is the UpdateUserMessagesOptions message type
-type UpdateUserMessagesOptions struct {
-	MessageIds []string `json:"messageIds,omitempty"`
 }

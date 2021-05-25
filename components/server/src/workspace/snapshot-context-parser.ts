@@ -6,7 +6,7 @@
 
 import { User, SnapshotContext } from "@gitpod/gitpod-protocol";
 import { injectable, inject } from "inversify";
-import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
+import { WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { IContextParser } from "../workspace/context-parser";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 

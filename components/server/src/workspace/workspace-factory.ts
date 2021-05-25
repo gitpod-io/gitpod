@@ -4,23 +4,18 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { injectable, inject } from 'inversify';
-
-import { User, PullRequestContext, IssueContext, WorkspaceContext, Repository, CommitContext, WorkspaceProbeContext, WorkspaceConfig } from '@gitpod/gitpod-protocol';
-import { Workspace, SnapshotContext } from '@gitpod/gitpod-protocol';
-import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
-import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
-
-import { ConfigProvider } from './config-provider';
-import { ResponseError } from 'vscode-jsonrpc';
+import { DBWithTracing, TracedWorkspaceDB, UserDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
+import { CommitContext, IssueContext, PullRequestContext, Repository, SnapshotContext, User, Workspace, WorkspaceConfig, WorkspaceContext, WorkspaceProbeContext } from '@gitpod/gitpod-protocol';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
+import { generateWorkspaceID } from '@gitpod/gitpod-protocol/lib/util/generate-workspace-id';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { ImageBuilderClientProvider } from '@gitpod/image-builder/lib';
-import { TracedWorkspaceDB, DBWithTracing } from '@gitpod/gitpod-db/lib/traced-db';
-import { ImageSourceProvider } from './image-source-provider';
+import { inject, injectable } from 'inversify';
+import { ResponseError } from 'vscode-jsonrpc';
 import { TheiaPluginService } from '../theia-plugin/theia-plugin-service';
-import { generateWorkspaceID } from '@gitpod/gitpod-protocol/lib/util/generate-workspace-id';
+import { ConfigProvider } from './config-provider';
+import { ImageSourceProvider } from './image-source-provider';
 
 @injectable()
 export class WorkspaceFactory {

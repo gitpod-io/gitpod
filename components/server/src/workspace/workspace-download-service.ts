@@ -6,8 +6,7 @@
 
 import { injectable, inject } from "inversify";
 import * as express from 'express';
-import { TracedWorkspaceDB, DBWithTracing } from "@gitpod/gitpod-db/lib/traced-db";
-import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
+import { TracedWorkspaceDB, DBWithTracing, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Permission, User } from "@gitpod/gitpod-protocol";
 import { StorageClient } from "../storage/storage-client";

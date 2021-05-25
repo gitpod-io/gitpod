@@ -6,8 +6,7 @@
 
 import { injectable, inject } from "inversify";
 import { User, Identity, WorkspaceTimeoutDuration, UserEnvVarValue, Token } from "@gitpod/gitpod-protocol";
-import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
-import { TermsAcceptanceDB } from "@gitpod/gitpod-db/lib/terms-acceptance-db";
+import { TermsAcceptanceDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Env } from "../env";

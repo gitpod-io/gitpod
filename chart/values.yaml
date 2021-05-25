@@ -307,6 +307,9 @@ components:
       disabled: "false"
     definitelyGpDisabled: "false"
 
+  paymentEndpoint:
+    disabled: true
+
   workspace:
     ports:
       http:

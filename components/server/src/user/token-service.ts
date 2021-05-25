@@ -7,7 +7,7 @@
 import { injectable, inject, postConstruct } from "inversify";
 import { Token, Identity, User, TokenEntry } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
-import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
+import { UserDB } from "@gitpod/gitpod-db/lib";
 import * as uuid from "uuid/v4";
 import { TokenProvider } from "./token-provider";
 import { TokenGarbageCollector } from "./token-garbage-collector";

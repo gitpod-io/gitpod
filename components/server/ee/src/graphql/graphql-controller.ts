@@ -4,7 +4,7 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
+import { UserDB } from '@gitpod/gitpod-db/lib';
 import { GitpodTokenType, User } from '@gitpod/gitpod-protocol';
 import * as crypto from 'crypto';
 import * as graphqlHTTP from 'express-graphql';

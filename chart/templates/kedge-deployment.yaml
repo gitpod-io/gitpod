@@ -1,8 +1,8 @@
 # Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
-{{- $comp := .Values.components.kedge -}}
-{{- $this := dict "root" . "gp" $.Values.gitpod "comp" $comp -}}
+{{ $comp := .Values.components.kedge -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
 {{- if not $comp.disabled -}}
 apiVersion: apps/v1
 kind: Deployment
@@ -12,14 +12,14 @@ metadata:
     app: {{ template "gitpod.fullname" . }}
     component: kedge
     kind: deployment
-    stage: {{ .Values.gitpod.installation.stage }}
+    stage: {{ .Values.installation.stage }}
 spec:
   selector:
     matchLabels:
       app: {{ template "gitpod.fullname" . }}
       component: kedge
       kind: pod
-      stage: {{ .Values.gitpod.installation.stage }}
+      stage: {{ .Values.installation.stage }}
   replicas: {{ $comp.replicas | default 1 }}
   strategy:
     type: RollingUpdate
@@ -33,7 +33,7 @@ spec:
         app: {{ template "gitpod.fullname" . }}
         component: kedge
         kind: pod
-        stage: {{ .Values.gitpod.installation.stage }}
+        stage: {{ .Values.installation.stage }}
     spec:
 {{ include "gitpod.pod.affinity" $this | indent 6 }}
       serviceAccountName: kedge
@@ -60,6 +60,6 @@ spec:
       volumes:
       - name: kedge-config
         secret:
-          secretName: kedge-config
-{{ toYaml .Values.gitpod.defaults | indent 6 }}
+          secretName: {{ $comp.secretName }}
+{{ toYaml .Values.defaults | indent 6 }}
 {{ end }}

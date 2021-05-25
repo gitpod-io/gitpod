@@ -9,7 +9,7 @@ import * as passport from "passport"
 import { injectable, postConstruct, inject } from 'inversify';
 import { User } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
+import { UserDB } from '@gitpod/gitpod-db/lib';
 import { Env } from '../env';
 import { HostContextProvider } from './host-context-provider';
 import { AuthProvider, AuthFlow } from './auth-provider';

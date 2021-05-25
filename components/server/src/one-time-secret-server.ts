@@ -8,11 +8,10 @@ import { injectable, inject } from "inversify";
 import * as express from 'express';
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Env } from "./env";
-import { OneTimeSecretDB } from "@gitpod/gitpod-db/lib/one-time-secret-db";
+import { OneTimeSecretDB, DBWithTracing, TracedOneTimeSecretDB } from "@gitpod/gitpod-db/lib";
 import { Disposable } from "@gitpod/gitpod-protocol";
 import * as opentracing from 'opentracing';
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { DBWithTracing, TracedOneTimeSecretDB } from "@gitpod/gitpod-db/lib/traced-db";
 
 @injectable()
 export class OneTimeSecretServer implements Disposable {

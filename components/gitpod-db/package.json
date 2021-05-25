@@ -2,8 +2,6 @@
   "name": "@gitpod/gitpod-db",
   "license": "UNLICENSED",
   "version": "0.1.5",
-  "main": "lib/index.js",
-  "types": "./lib/index.d.ts",
   "scripts": {
     "prepare": "yarn clean && yarn build",
     "build": "npx tsc",

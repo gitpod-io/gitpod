@@ -5,15 +5,13 @@
  */
 
 import { injectable, inject } from "inversify";
-import { TracedWorkspaceDB, DBWithTracing, TracedUserDB } from "@gitpod/gitpod-db/lib/traced-db";
-import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceInstance, WorkspaceProbeContext, RunningWorkspaceInfo } from "@gitpod/gitpod-protocol";
 import * as request from "request-promise";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { URL } from "url";
 import { WorkspaceFactory } from "../../../src/workspace/workspace-factory";
-import { UserDB, BUILTIN_WORKSPACE_PROBE_USER_NAME } from "@gitpod/gitpod-db/lib/user-db";
+import { UserDB, BUILTIN_WORKSPACE_PROBE_USER_NAME, WorkspaceDB, TracedWorkspaceDB, DBWithTracing, TracedUserDB } from "@gitpod/gitpod-db/lib";
 import { Env } from "../../../src/env";
 import { WorkspaceStarter } from "../../../src/workspace/workspace-starter";
 

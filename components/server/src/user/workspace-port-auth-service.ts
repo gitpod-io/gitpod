@@ -7,8 +7,7 @@
 import { injectable, inject } from "inversify";
 
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
-import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
+import { WorkspaceDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { User } from "@gitpod/gitpod-protocol";
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
 import { DescribeWorkspaceRequest, PortVisibility } from "@gitpod/ws-manager/lib";

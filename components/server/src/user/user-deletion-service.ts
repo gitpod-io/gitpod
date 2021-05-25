@@ -5,10 +5,8 @@
  */
 
 import { injectable, inject } from "inversify";
-import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
+import { UserDB, WorkspaceDB, UserStorageResourcesDB } from '@gitpod/gitpod-db/lib';
 import { User, Workspace } from "@gitpod/gitpod-protocol";
-import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
-import { UserStorageResourcesDB } from "@gitpod/gitpod-db/lib/user-storage-resources-db";
 import { Env } from "../env";
 import { StorageClient } from "../storage/storage-client";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';

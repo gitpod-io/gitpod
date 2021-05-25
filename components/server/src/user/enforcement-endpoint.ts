@@ -6,10 +6,9 @@
 
 import * as express from 'express';
 import { injectable, inject } from "inversify";
-import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
+import { WorkspaceDB, UserDB } from '@gitpod/gitpod-db/lib';
 import { User, GitpodClient, GitpodServer } from '@gitpod/gitpod-protocol';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
 import { Env } from '../env';
 import { UserDeletionService } from '../user/user-deletion-service';
 import { AuthorizationService } from './authorization-service';

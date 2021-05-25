@@ -13,7 +13,7 @@ import { bitbucketContainerModuleEE } from "../bitbucket/container-module";
 export class HostContainerMappingEE extends HostContainerMapping {
 
     public get(type: string): interfaces.ContainerModule[] | undefined {
-        let modules = super.get(type);
+        let modules = super.get(type) || [];
 
         switch (type) {
         case "GitLab":

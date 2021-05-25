@@ -6,10 +6,9 @@
 
 import { inject, injectable } from "inversify";
 import { WorkspaceSoftDeletion } from "@gitpod/gitpod-protocol";
-import { WorkspaceDB, WorkspaceAndOwner, WorkspaceOwnerAndSoftDeleted } from "@gitpod/gitpod-db/lib/workspace-db";
+import { WorkspaceDB, WorkspaceAndOwner, WorkspaceOwnerAndSoftDeleted, TracedWorkspaceDB, DBWithTracing } from "@gitpod/gitpod-db/lib";
 import { StorageClient } from "../storage/storage-client";
 import { Env } from "../env";
-import { TracedWorkspaceDB, DBWithTracing } from "@gitpod/gitpod-db/lib/traced-db";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 
 @injectable()

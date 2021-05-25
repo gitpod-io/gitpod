@@ -6,11 +6,10 @@
 
 import * as crypto from 'crypto';
 import { inject, injectable } from "inversify";
-import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
+import { UserDB, DBUser, WorkspaceDB } from '@gitpod/gitpod-db/lib';
 import * as express from 'express';
 import { Authenticator } from "../auth/authenticator";
 import { Env } from "../env";
-import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { GitpodCookie } from "../auth/gitpod-cookie";
 import { AuthorizationService } from "./authorization-service";
@@ -30,7 +29,6 @@ import { TosCookie } from "./tos-cookie";
 import { TosFlow } from "../terms/tos-flow";
 import { increaseLoginCounter } from '../../src/prometheus-metrics';
 import * as uuidv4 from 'uuid/v4';
-import { DBUser } from "@gitpod/gitpod-db";
 import { ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from '../one-time-secret-server';
 

@@ -8,7 +8,7 @@ import * as url from 'url';
 import * as util from 'util';
 import { injectable, inject } from 'inversify';
 import { ResolvePluginsParams, ResolvedPlugins, TheiaPlugin, PreparePluginUploadParams, InstallPluginsParams, UninstallPluginParams, ResolvedPluginKind } from '@gitpod/gitpod-protocol';
-import { TheiaPluginDB } from "@gitpod/gitpod-db/lib/theia-plugin-db";
+import { TheiaPluginDB, UserStorageResourcesDB } from "@gitpod/gitpod-db/lib";
 import { Env } from '../env';
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
@@ -16,7 +16,7 @@ import { ResponseError } from 'vscode-jsonrpc';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 import { PluginIndexEntry } from '@gitpod/gitpod-protocol/lib/theia-plugins';
 import { StorageClient } from '../storage/storage-client';
-import { UserStorageResourcesDB } from '@gitpod/gitpod-db/lib/user-storage-resources-db';
+import {  } from '@gitpod/gitpod-db/lib';
 import * as request from 'request';
 
 const builtinExtensions: PluginIndexEntry[] = require('@gitpod/gitpod-protocol/data/builtin-theia-plugins.json');

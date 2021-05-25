@@ -7,7 +7,7 @@
 import { LicenseKeySource } from "@gitpod/licensor/lib";
 import { inject, injectable } from "inversify";
 import { Env } from "../../src/env";
-import { LicenseDB } from "@gitpod/gitpod-db/lib/license-db";
+import { LicenseDB } from "@gitpod/gitpod-db/lib";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 @injectable()

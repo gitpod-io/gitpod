@@ -6,14 +6,13 @@
 
 import * as Octokit from '@octokit/rest';
 import { injectable, inject } from 'inversify';
-import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
+import { WorkspaceDB, TracedWorkspaceDB, DBWithTracing } from '@gitpod/gitpod-db/lib';
 import { v4 as uuidv4 } from 'uuid'
 import { MessageBusIntegration } from '../../../src/workspace/messagebus-integration';
 import { HeadlessLogEvent } from '@gitpod/gitpod-protocol/lib/headless-workspace-log';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { PrebuiltWorkspaceUpdatable, PrebuiltWorkspace, Disposable } from '@gitpod/gitpod-protocol';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { TracedWorkspaceDB, DBWithTracing } from '@gitpod/gitpod-db/lib/traced-db';
 
 export interface CheckRunInfo {
     owner: string;

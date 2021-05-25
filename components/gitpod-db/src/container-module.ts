@@ -36,6 +36,20 @@ import { CodeSyncResourceDB } from './typeorm/code-sync-resource-db';
 import { WorkspaceClusterDBImpl } from './typeorm/workspace-cluster-db-impl';
 import { WorkspaceClusterDB } from './workspace-cluster-db';
 import { AuthCodeRepositoryDB } from './typeorm/auth-code-repository-db';
+import { AuthProviderEntryDB } from './auth-provider-entry-db';
+import { AuthProviderEntryDBImpl } from './typeorm/auth-provider-entry-db-impl';
+import { TeamSubscriptionDB } from './team-subscription-db';
+import { AccountingDB } from './accounting-db';
+import { EmailDomainFilterDB } from './email-domain-filter-db';
+import { EduEmailDomainDB } from './edu-email-domain-db';
+import { EMailDB } from './email-db';
+import { LicenseDB } from './license-db';
+import { LicenseDBImpl } from './typeorm/license-db-impl';
+import { TypeORMEMailDBImpl } from './typeorm/email-db-impl';
+import { EduEmailDomainDBImpl } from './typeorm/edu-email-domain-db-impl';
+import { EmailDomainFilterDBImpl } from './typeorm/email-domain-filter-db-impl';
+import { TeamSubscriptionDBImpl } from './typeorm/team-subscription-db-impl';
+import { TypeORMAccountingDBImpl } from './typeorm/accounting-db-impl';
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
@@ -50,6 +64,8 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
     bind(TermsAcceptanceDBImpl).toSelf().inSingletonScope();
     bind(TermsAcceptanceDB).toService(TermsAcceptanceDBImpl);
     bindDbWithTracing(TracedUserDB, bind, UserDB).inSingletonScope();
+
+    bind(AuthProviderEntryDB).to(AuthProviderEntryDBImpl).inSingletonScope();
 
     bind(TypeORMWorkspaceDBImpl).toSelf().inSingletonScope();
     bind(WorkspaceDB).toService(TypeORMWorkspaceDBImpl);
@@ -92,4 +108,12 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
     bind(WorkspaceClusterDB).to(WorkspaceClusterDBImpl).inSingletonScope();
 
     bind(AuthCodeRepositoryDB).toSelf().inSingletonScope();
+
+    // com concerns
+    bind(AccountingDB).to(TypeORMAccountingDBImpl).inSingletonScope();
+    bind(TeamSubscriptionDB).to(TeamSubscriptionDBImpl).inSingletonScope();
+    bind(EmailDomainFilterDB).to(EmailDomainFilterDBImpl).inSingletonScope();
+    bind(EduEmailDomainDB).to(EduEmailDomainDBImpl).inSingletonScope();
+    bind(EMailDB).to(TypeORMEMailDBImpl).inSingletonScope();
+    bind(LicenseDB).to(LicenseDBImpl).inSingletonScope();
 });

@@ -72,8 +72,6 @@ function readConfig(): RateLimiterConfig {
         "getOpenPorts": { group: "default", points: 1 },
         "openPort": { group: "default", points: 1 },
         "closePort": { group: "default", points: 1 },
-        "getUserMessages": { group: "default", points: 1 },
-        "updateUserMessages": { group: "default", points: 1 },
         "getUserStorageResource": { group: "default", points: 1 },
         "updateUserStorageResource": { group: "default", points: 1 },
         "getEnvVars": { group: "default", points: 1 },
