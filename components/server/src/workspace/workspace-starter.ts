@@ -28,6 +28,12 @@ import { UserService } from "../user/user-service";
 import { ImageSourceProvider } from "./image-source-provider";
 import { MessageBusIntegration } from "./messagebus-integration";
 
+export interface StartWorkspaceOptions {
+    rethrow?: boolean;
+    forceDefaultImage?: boolean;
+    excludeFeatureFlags?: NamedWorkspaceFeatureFlag[];
+}
+
 @injectable()
 export class WorkspaceStarter {
     @inject(WorkspaceManagerClientProvider) protected readonly clientProvider: WorkspaceManagerClientProvider;
@@ -45,9 +51,10 @@ export class WorkspaceStarter {
     @inject(TheiaPluginService) protected readonly theiaService: TheiaPluginService;
     @inject(OneTimeSecretServer) protected readonly otsServer: OneTimeSecretServer;
 
-    public async startWorkspace(ctx: TraceContext, workspace: Workspace, user: User, userEnvVars?: UserEnvVar[], options: {rethrow?: boolean, forceDefaultImage?: boolean} = {rethrow: undefined, forceDefaultImage: false}): Promise<StartWorkspaceResult> {
+    public async startWorkspace(ctx: TraceContext, workspace: Workspace, user: User, userEnvVars?: UserEnvVar[], options?: StartWorkspaceOptions): Promise<StartWorkspaceResult> {
         const span = TraceContext.startSpan("WorkspaceStarter.startWorkspace", ctx);
 
+        options = options || {};
         try {
             // Some workspaces do not have an image source.
             // Workspaces without image source are not only legacy, but also happened due to what looks like a bug.
@@ -80,7 +87,7 @@ export class WorkspaceStarter {
             }
 
             // create and store instance
-            let instance = await this.workspaceDb.trace({ span }).storeInstance(await this.newInstance(workspace, user));
+            let instance = await this.workspaceDb.trace({ span }).storeInstance(await this.newInstance(workspace, user, options.excludeFeatureFlags || []));
             span.log({ "newInstance": instance.id });
 
             const forceRebuild = !!workspace.context.forceImageBuild;
@@ -240,7 +247,7 @@ export class WorkspaceStarter {
      *
      * @param workspace the workspace to create an instance for
      */
-    protected async newInstance(workspace: Workspace, user: User): Promise<WorkspaceInstance> {
+    protected async newInstance(workspace: Workspace, user: User, excludeFeatureFlags: NamedWorkspaceFeatureFlag[]): Promise<WorkspaceInstance> {
         const theiaVersion = this.env.theiaVersion;
         const ideImage = this.env.ideDefaultImage;
 
@@ -274,6 +281,8 @@ export class WorkspaceStarter {
         if (!!user.additionalData?.featurePreview) {
             featureFlags = featureFlags.concat(this.env.previewFeatureFlags.filter(f => !featureFlags.includes(f)));
         }
+
+        featureFlags = featureFlags.filter(f => !excludeFeatureFlags.includes(f));
 
         if (!!featureFlags) {
             // only set feature flags if there actually are any. Otherwise we waste the

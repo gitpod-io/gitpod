@@ -93,7 +93,7 @@ export class PrebuildManager {
             // }
 
             span.setTag("starting", true);
-            await this.workspaceStarter.startWorkspace({ span }, workspace, user);
+            await this.workspaceStarter.startWorkspace({ span }, workspace, user, [], {excludeFeatureFlags: ['full_workspace_backup']});
             return { wsid: workspace.id, done: false };
         } catch (err) {
             TraceContext.logError({ span }, err);
