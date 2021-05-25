@@ -7,7 +7,7 @@
 import { injectable, inject } from "inversify";
 import { AuthProviderEntry as AuthProviderEntry, User } from "@gitpod/gitpod-protocol";
 import { AuthProviderParams } from "./auth-provider";
-import { AuthProviderEntryDB } from "@gitpod/gitpod-db/lib/auth-provider-entry-db";
+import { AuthProviderEntryDB } from "@gitpod/gitpod-db/lib";
 import { Env } from "../env";
 import * as uuidv4 from 'uuid/v4';
 import { oauthUrls as githubUrls } from "../github/github-urls";

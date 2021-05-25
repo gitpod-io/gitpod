@@ -6,8 +6,7 @@
 
 import { User, PrebuiltWorkspace } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
-import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
-import { DBWithTracing, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-db";
+import { WorkspaceDB, DBWithTracing, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { Env } from "../../../src/env";
 

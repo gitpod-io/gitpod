@@ -92,19 +92,10 @@ spec:
         secret:
           secretName: {{ .Values.components.workspace.pullSecret.secretName }}
       {{- end }}
-      {{- if $comp.certificatesSecret.secretName }}
-      - name: https-certificates
-        secret:
-          secretName: {{ $comp.certificatesSecret.secretName }}
-      {{- else if .Values.certificatesSecret.secretName }}
+      {{- if .Values.certificatesSecret.secretName }}
       - name: https-certificates
         secret:
           secretName: {{ .Values.certificatesSecret.secretName }}
-          items:
-          - key: tls.crt
-            path: tls.crt
-          - key: tls.key
-            path: tls.key
       {{- end }}
 {{ toYaml .Values.defaults | indent 6 }}
 {{ end }}

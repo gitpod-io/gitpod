@@ -5,8 +5,7 @@
  */
 
 import { inject, injectable } from "inversify";
-import { TracedWorkspaceDB, DBWithTracing, TracedUserDB } from '@gitpod/gitpod-db/lib/traced-db';
-import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
+import { TracedWorkspaceDB, DBWithTracing, TracedUserDB, UserDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
 import { MessageBusIntegration } from "../../../src/workspace/messagebus-integration";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
@@ -14,7 +13,6 @@ import { HeadlessLogEvent, HeadlessWorkspaceEventType } from "@gitpod/gitpod-pro
 import { Disposable, PrebuiltWorkspace } from "@gitpod/gitpod-protocol";
 import { PrebuildRateLimiter } from "./prebuild-rate-limiter";
 import { WorkspaceStarter } from "../../../src/workspace/workspace-starter";
-import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
 import { IClientDataPrometheusAdapter } from "../../../src/workspace/client-data-prometheus-adapter";
 import { ConsensusLeaderQorum } from "../../../src/consensus/consensus-leader-quorum";
 

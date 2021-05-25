@@ -14,3 +14,4 @@ export * from './workspace-instance';
 export * from './permission';
 export * from './admin-protocol';
 export * from './email-protocol';
+export * from './headless-workspace-log';

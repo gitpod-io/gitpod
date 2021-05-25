@@ -1,0 +1,59 @@
+{
+  "name": "@gitpod/gitpod-payment-endpoint",
+  "license": "UNLICENSED",
+  "version": "0.1.5",
+  "private": true,
+  "docker_name": "eu.gcr.io/gitpod-dev/gitpod-payment-endpoint",
+  "dependencies": {
+    "@octokit/rest": "16.35.0",
+    "@octokit/webhooks": "^7.15.0",
+    "@gitpod/gitpod-db": "0.1.5",
+    "@gitpod/gitpod-protocol": "0.1.5",
+    "body-parser": "^1.18.2",
+    "chargebee": "^2.4.6",
+    "express": "^4.16.1",
+    "inversify": "^5.0.1",
+    "jsonwebtoken": "^8.5.0",
+    "passport": "^0.4.0",
+    "passport-http": "^0.3.0",
+    "reflect-metadata": "^0.1.10",
+    "request": "^2.87.0",
+    "request-promise": "^4.2.2"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.16.5",
+    "@types/jsonwebtoken": "^8.3.2",
+    "@types/passport-http": "^0.3.0", 
+    "@types/chai": "^4.2.2",
+    "chai": "^4.1.2",
+    "@types/request-promise": "^4.1.41",
+    "mocha-typescript": "^1.1.17",
+    "tslint": "^5.7.0",
+    "tslint-react": "^3.2.0",
+    "rimraf": "^2.6.1",
+    "mocha": "^5.0.0",
+    "ts-node": "<7.0.0",
+    "typescript": "~4.1.2"
+  },
+  "scripts": {
+    "start": "yarn serve",
+    "prepare": "yarn clean && yarn build",
+    "build": "npx tsc",
+    "build:clean": "yarn clean && yarn build",
+    "rebuild": "yarn build:clean",
+    "build:watch": "watch 'yarn build' .",
+    "watch": "yarn tsc -w",
+    "clean": "yarn run rimraf lib",
+    "clean:node": "yarn run rimraf node_modules",
+    "purge": "yarn clean && yarn clean:node && yarn run rimraf yarn.lock",
+    "serve": "node ./lib/main.js",
+    "debug": "nodemon -w ./lib --inspect=9300 ./lib/main.js",
+    "debug:local": "yarn debug",
+    "debug-brk": "nodemon -w ./lib --inspect-brk ./lib/main.js",
+    "telepresence": "leeway run .:telepresence",
+    "test": "mocha --opts mocha.opts './lib/**/*.spec.js'"
+  },
+  "files": [
+    "/lib"
+  ]
+}

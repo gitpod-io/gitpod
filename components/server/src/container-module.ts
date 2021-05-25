@@ -54,8 +54,6 @@ import { OneTimeSecretServer } from './one-time-secret-server';
 import { GitpodServer, GitpodClient } from '@gitpod/gitpod-protocol';
 import { HostContainerMapping } from './auth/host-container-mapping';
 import { BlockedUserFilter, NoOneBlockedUserFilter } from './auth/blocked-user-filter';
-import { AuthProviderEntryDB } from '@gitpod/gitpod-db/lib/auth-provider-entry-db';
-import { AuthProviderEntryDBImpl } from '@gitpod/gitpod-db/lib/typeorm/auth-provider-entry-db-impl';
 import { AuthProviderService } from './auth/auth-provider-service';
 import { HostContextProviderImpl } from './auth/host-context-provider-impl';
 import { AuthProviderParams } from './auth/auth-provider';
@@ -170,7 +168,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(OneTimeSecretServer).toSelf().inSingletonScope();
 
-    bind(AuthProviderEntryDB).to(AuthProviderEntryDBImpl).inSingletonScope();
     bind(AuthProviderService).toSelf().inSingletonScope();
     bind(BearerAuth).toSelf().inSingletonScope();
 

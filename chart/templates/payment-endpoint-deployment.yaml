@@ -1,0 +1,92 @@
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.paymentEndpoint -}}
+{{- $server := .Values.components.server -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+{{- if not $comp.disabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-endpoint
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: payment-endpoint
+    kind: deployment
+    stage: {{ .Values.installation.stage }}
+spec:
+  selector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: payment-endpoint
+      kind: pod
+      stage: {{ .Values.installation.stage }}
+  replicas: {{ $comp.replicas | default 1 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      name: payment-endpoint
+      labels:
+        app: {{ template "gitpod.fullname" . }}
+        component: payment-endpoint
+        kind: pod
+        stage: {{ .Values.installation.stage }}
+    spec:
+{{ include "gitpod.pod.affinity" $this | indent 6 }}
+      serviceAccountName: payment-endpoint
+      securityContext:
+        runAsUser: 31006
+      initContainers:
+{{ include "gitpod.databaseWaiter.container" $this | indent 6 }}
+      containers:
+      - name: main
+        image: {{ template "gitpod.comp.imageFull" $this }}
+{{ include "gitpod.container.resources" $this | indent 8 }}
+{{ include "gitpod.container.ports" $this | indent 8 }}
+        securityContext:
+          privileged: false
+{{ include "gitpod.container.defaultEnv" $this | indent 8 }}
+{{ include "gitpod.container.dbEnv" $this | indent 8 }}
+{{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+        - name: CHARGEBEE_WEBHOOK
+          value: '{{ .Values.components.paymentEndpoint.webhook | toJson }}'
+{{- if $server.github.app }}
+        - name: GITPOD_GITHUB_APP_ENABLED
+          value: "{{ $server.github.app.enabled | default "false" }}"
+        - name: GITPOD_GITHUB_APP_ID
+          value: "{{ $server.github.app.appId }}"
+        - name: GITPOD_GITHUB_APP_WEBHOOK_SECRET
+          value: "{{ $server.github.app.webhookSecret }}"
+{{- if $server.github.app.githubHost }}
+        - name: GHE_HOST
+          value: "{{ $server.github.app.githubHost }}"
+{{- end }}
+        - name: GITPOD_GITHUB_APP_CERT_PATH
+          value: "/github-app-cert/cert"
+        - name: GITPOD_GITHUB_APP_MKT_NAME
+          value: "{{ $server.github.app.marketPlaceName }}"
+{{- end }}
+        volumeMounts:
+{{- if $server.github.app }}
+        - name: github-app-cert-secret
+          mountPath: "/github-app-cert"
+          readOnly: true
+{{- end }}
+        - name: chargebee-config
+          mountPath: "/chargebee"
+          readOnly: true
+      volumes:
+{{- if $server.github.app }}
+      - name: github-app-cert-secret
+        secret:
+          secretName: {{ $server.github.app.appCert }}
+{{- end }}
+      - name: chargebee-config
+        secret:
+          secretName: chargebee-config
+{{ toYaml .Values.defaults | indent 6 }}
+{{ end }}

@@ -4,35 +4,29 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import * as crypto from 'crypto';
-import { injectable, inject } from "inversify";
-import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { Workspace, User, WorkspaceInstance, CommitContext, WithEnvvarsContext, UserEnvVarValue, WithPrebuild, IssueContext, PullRequestContext, WorkspaceInstanceStatus, RefType, WorkspaceProbeContext, WorkspaceImageSourceDocker, WorkspaceImageSourceReference, WorkspaceContext, ImageConfigFile, StartWorkspaceResult, SnapshotContext, NamedWorkspaceFeatureFlag, WorkspaceInstanceConfiguration, Disposable, GitpodTokenType, GitpodToken } from "@gitpod/gitpod-protocol";
-import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
-import { Env } from "../env";
-import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
-import { WorkspaceImageSource, UserEnvVar } from '@gitpod/gitpod-protocol';
+import { CloneTargetMode, GitAuthMethod, GitConfig, GitInitializer, PrebuildInitializer, SnapshotInitializer, WorkspaceInitializer } from "@gitpod/content-service/lib";
+import { DBUser, DBWithTracing, TracedUserDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
+import { CommitContext, Disposable, GitpodToken, GitpodTokenType, ImageConfigFile, IssueContext, NamedWorkspaceFeatureFlag, PullRequestContext, RefType, SnapshotContext, StartWorkspaceResult, User, UserEnvVar, UserEnvVarValue, WithEnvvarsContext, WithPrebuild, Workspace, WorkspaceContext, WorkspaceImageSource, WorkspaceImageSourceDocker, WorkspaceImageSourceReference, WorkspaceInstance, WorkspaceInstanceConfiguration, WorkspaceInstanceStatus, WorkspaceProbeContext, Permission, HeadlessLogEvent, HeadlessWorkspaceEventType } from "@gitpod/gitpod-protocol";
+import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/util/analytics';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { TracedWorkspaceDB, DBWithTracing, TracedUserDB } from '@gitpod/gitpod-db/lib/traced-db';
-import * as uuidv4 from 'uuid/v4';
-import { StartWorkspaceRequest, WorkspaceMetadata, EnvironmentVariable, GitSpec, PortSpec, WorkspaceType, PortVisibility, AdmissionLevel } from "@gitpod/ws-manager/lib/core_pb";
-import { HostContextProvider } from "../auth/host-context-provider";
-import { MessageBusIntegration } from "./messagebus-integration";
+import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { BuildRegistryAuth, BuildRegistryAuthSelective, BuildRegistryAuthTotal, BuildRequest, BuildResponse, BuildSource, BuildSourceDockerfile, BuildSourceReference, BuildStatus, ImageBuilderClientProvider, ResolveBaseImageRequest, ResolveWorkspaceImageRequest } from "@gitpod/image-builder/lib";
 import { StartWorkspaceSpec, WorkspaceFeatureFlag } from "@gitpod/ws-manager/lib";
-import { WorkspaceInitializer, SnapshotInitializer, PrebuildInitializer, GitInitializer, CloneTargetMode, GitConfig, GitAuthMethod } from "@gitpod/content-service/lib";
+import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
+import { AdmissionLevel, EnvironmentVariable, GitSpec, PortSpec, PortVisibility, StartWorkspaceRequest, WorkspaceMetadata, WorkspaceType } from "@gitpod/ws-manager/lib/core_pb";
+import * as crypto from 'crypto';
+import { inject, injectable } from "inversify";
+import * as uuidv4 from 'uuid/v4';
+import { HostContextProvider } from "../auth/host-context-provider";
+import { ScopedResourceGuard } from '../auth/resource-access';
+import { Env } from "../env";
+import { OneTimeSecretServer } from "../one-time-secret-server";
+import { TheiaPluginService } from "../theia-plugin/theia-plugin-service";
 import { AuthorizationService } from "../user/authorization-service";
-import { Permission } from "@gitpod/gitpod-protocol/lib/permission";
-import { ImageBuilderClientProvider, BuildSource, BuildSourceDockerfile, BuildSourceReference, BuildRequest, BuildRegistryAuth, BuildRegistryAuthTotal, BuildStatus, ResolveWorkspaceImageRequest, BuildRegistryAuthSelective, BuildResponse, ResolveBaseImageRequest } from "@gitpod/image-builder/lib";
-import { ImageSourceProvider } from "./image-source-provider";
 import { TokenProvider } from "../user/token-provider";
 import { UserService } from "../user/user-service";
-import { HeadlessLogEvent, HeadlessWorkspaceEventType } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
-import { TheiaPluginService } from "../theia-plugin/theia-plugin-service";
-import { OneTimeSecretServer } from "../one-time-secret-server";
-import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
-import { DBUser } from '@gitpod/gitpod-db/lib/typeorm/entity/db-user';
-import { ScopedResourceGuard } from '../auth/resource-access';
-import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/util/analytics';
+import { ImageSourceProvider } from "./image-source-provider";
+import { MessageBusIntegration } from "./messagebus-integration";
 
 @injectable()
 export class WorkspaceStarter {

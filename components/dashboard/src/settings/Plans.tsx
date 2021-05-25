@@ -35,7 +35,6 @@ type TeamClaimModal = {
 
 export default function () {
     const { user } = useContext(UserContext);
-    const { server } = getGitpodService();
     const [ accountStatement, setAccountStatement ] = useState<AccountStatement>();
     const [ isChargebeeCustomer, setIsChargebeeCustomer ] = useState<boolean>();
     const [ isStudent, setIsStudent ] = useState<boolean>();
@@ -50,6 +49,7 @@ export default function () {
     let pollAccountStatementTimeout: NodeJS.Timeout | undefined;
 
     useEffect(() => {
+        const { server } = getGitpodService();
         Promise.all([
             server.getAccountStatement({}).then(v => () => setAccountStatement(v)),
             server.isChargebeeCustomer().then(v => () => setIsChargebeeCustomer(v)),
@@ -131,7 +131,7 @@ export default function () {
         } else if (!pollAccountStatementTimeout) {
             // Refresh account statement in 5 seconds in order to poll for upgrade confirmed
             pollAccountStatementTimeout = setTimeout(async () => {
-                const statement = await server.getAccountStatement({});
+                const statement = await getGitpodService().server.getAccountStatement({});
                 setAccountStatement(statement);
             }, 5000);
         }
@@ -178,7 +178,7 @@ export default function () {
         } else if (!pollAccountStatementTimeout) {
             // Refresh account statement in 5 seconds in orer to poll for downgrade confirmed/scheduled
             pollAccountStatementTimeout = setTimeout(async () => {
-                const statement = await server.getAccountStatement({});
+                const statement = await getGitpodService().server.getAccountStatement({});
                 setAccountStatement(statement);
             }, 5000);
         }
@@ -205,7 +205,7 @@ export default function () {
         } else if (!pollAccountStatementTimeout) {
             // Refresh account statement in 5 seconds in orer to poll for downgrade cancelled
             pollAccountStatementTimeout = setTimeout(async () => {
-                const statement = await server.getAccountStatement({});
+                const statement = await getGitpodService().server.getAccountStatement({});
                 setAccountStatement(statement);
             }, 5000);
         }
@@ -246,7 +246,7 @@ export default function () {
                     }).catch(reject);
                 });
             } else {
-                await server.subscriptionUpgradeTo(paidSubscription.uid, confirmUpgradeToPlan.chargebeeId);
+                await getGitpodService().server.subscriptionUpgradeTo(paidSubscription.uid, confirmUpgradeToPlan.chargebeeId);
             }
             setPendingUpgrade({
               ... confirmUpgradeToPlan,
@@ -284,9 +284,9 @@ export default function () {
         try {
             (event.target as HTMLButtonElement).disabled = true;
             if (Plans.isFreePlan(confirmDowngradeToPlan.chargebeeId)) {
-                await server.subscriptionCancel(paidSubscription.uid);
+                await getGitpodService().server.subscriptionCancel(paidSubscription.uid);
             } else {
-                await server.subscriptionDowngradeTo(paidSubscription.uid, confirmDowngradeToPlan.chargebeeId);
+                await getGitpodService().server.subscriptionDowngradeTo(paidSubscription.uid, confirmDowngradeToPlan.chargebeeId);
             }
             setPendingDowngrade({
               ... confirmDowngradeToPlan,
@@ -317,7 +317,7 @@ export default function () {
             return;
         }
         try {
-            await server.subscriptionCancelDowngrade(paidSubscription.uid);
+            await getGitpodService().server.subscriptionCancelDowngrade(paidSubscription.uid);
             setPendingCancelDowngrade({
                 pendingSince: Date.now(),
             })
@@ -506,7 +506,7 @@ export default function () {
 
                                     setTeamClaimModal(undefined);
 
-                                    const statement = await server.getAccountStatement({});
+                                    const statement = await getGitpodService().server.getAccountStatement({});
                                     setAccountStatement(statement);
                                 } catch (error) {
                                     setTeamClaimModal({

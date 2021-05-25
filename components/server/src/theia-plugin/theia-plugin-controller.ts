@@ -7,10 +7,9 @@
 import * as express from 'express';
 import { injectable, inject } from "inversify";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
+import { UserDB, TheiaPluginDB } from '@gitpod/gitpod-db/lib';
 import { Env } from '../env';
 import { TheiaPluginService } from './theia-plugin-service';
-import { TheiaPluginDB } from '@gitpod/gitpod-db/lib/theia-plugin-db';
 import { ResponseError } from 'vscode-jsonrpc';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 

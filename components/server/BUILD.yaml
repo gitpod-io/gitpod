@@ -11,6 +11,7 @@ packages:
       - components/content-service-api/typescript:lib
       - components/gitpod-db:lib
       - components/gitpod-messagebus:lib
+      - components/ee/payment-endpoint:lib
       - components/gitpod-protocol:lib
       - components/image-builder-api/typescript:lib
       - components/licensor/typescript:lib
@@ -41,6 +42,7 @@ packages:
       - components/content-service-api/typescript:lib
       - components/gitpod-db:lib
       - components/gitpod-messagebus:lib
+      - components/ee/payment-endpoint:lib
       - components/gitpod-protocol:lib
       - components/image-builder-api/typescript:lib
       - components/licensor/typescript:lib

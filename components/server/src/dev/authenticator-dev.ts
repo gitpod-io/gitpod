@@ -6,7 +6,7 @@
 
 import * as express from 'express';
 import { injectable, inject } from 'inversify';
-import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
+import { UserDB } from '@gitpod/gitpod-db/lib';
 import { Strategy as DummyStrategy } from "passport-dummy";
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 import { ResponseError } from 'vscode-jsonrpc';

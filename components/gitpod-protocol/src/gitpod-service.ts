@@ -5,7 +5,7 @@
  */
 
 import {
-    User, WorkspaceInfo, WorkspaceCreationResult, UserMessage, WorkspaceInstanceUser,
+    User, WorkspaceInfo, WorkspaceCreationResult, WorkspaceInstanceUser,
     WhitelistedRepository, WorkspaceImageBuild, AuthProviderInfo, Branding, CreateWorkspaceMode,
     Token, UserEnvVarValue, ResolvePluginsParams, PreparePluginUploadParams, Terms,
     ResolvedPlugins, Configuration, InstallPluginsParams, UninstallPluginParams, UserInfo, GitpodTokenType,
@@ -96,10 +96,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getOpenPorts(workspaceId: string): Promise<WorkspaceInstancePort[]>;
     openPort(workspaceId: string, port: WorkspaceInstancePort): Promise<WorkspaceInstancePort | undefined>;
     closePort(workspaceId: string, port: number): Promise<void>;
-
-    // User messages
-    getUserMessages(options: GitpodServer.GetUserMessagesOptions): Promise<UserMessage[]>;
-    updateUserMessages(options: GitpodServer.UpdateUserMessagesOptions): Promise<void>;
 
     // User storage
     getUserStorageResource(options: GitpodServer.GetUserStorageResourceOptions): Promise<string>;
@@ -255,13 +251,6 @@ export namespace GitpodServer {
     export interface TakeSnapshotOptions {
         workspaceId: string;
         layoutData?: string;
-    }
-    export interface GetUserMessagesOptions {
-        readonly releaseNotes?: boolean;
-        readonly workspaceInstanceId: string;
-    }
-    export interface UpdateUserMessagesOptions {
-        readonly messageIds: string[];
     }
     export interface GetUserStorageResourceOptions {
         readonly uri: string;

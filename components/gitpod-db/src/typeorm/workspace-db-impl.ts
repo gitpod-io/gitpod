@@ -208,6 +208,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl extends AbstractWorkspaceDB
                 wasClosed: Boolean(result[0].wasClosed)
             }
         }
+        return undefined;
     }
 
     public async getWorkspaceUsers(workspaceId: string, minLastSeen: number): Promise<WorkspaceInstanceUser[]> {

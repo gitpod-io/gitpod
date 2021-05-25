@@ -1,0 +1,47 @@
+packages:
+  - name: app
+    type: yarn
+    srcs:
+      - "src/**/*.ts" 
+      - "test/**/*.ts"
+      - "test/fixtures/**/*"
+      - package.json
+      - mocha.opts
+    deps:
+      - components/gitpod-db:lib
+      - components/gitpod-protocol:lib
+    config:
+      packaging: offline-mirror
+      yarnLock: ${coreYarnLockBase}/../yarn.lock
+      tsconfig: tsconfig.json
+  - name: lib
+    type: yarn
+    srcs:
+      - "src/**/*.ts"
+      - "test/**/*.ts"
+      - package.json
+      - mocha.opts
+    deps:
+      - components/gitpod-db:lib
+      - components/gitpod-protocol:lib
+    config:
+      packaging: library
+      yarnLock: ${coreYarnLockBase}/../yarn.lock
+      tsconfig: tsconfig.json
+  - name: docker
+    type: docker
+    deps:
+      - :app
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      image:
+        - ${imageRepoBase}/payment-endpoint:${version}
+scripts:
+  - name: telepresence
+    script: |-
+      telepresence --swap-deployment payment-endpoint \
+                   --method inject-tcp \
+                   --run node --inspect dist/main.js | \
+        leeway run gitpod-core/components:dejson-log-output

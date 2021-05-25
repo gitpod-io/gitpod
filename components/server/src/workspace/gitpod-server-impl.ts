@@ -6,15 +6,8 @@
 
 import { BlobServiceClient } from "@gitpod/content-service/lib/blobs_grpc_pb";
 import { DownloadUrlRequest, DownloadUrlResponse, UploadUrlRequest, UploadUrlResponse } from '@gitpod/content-service/lib/blobs_pb';
-import { AppInstallationDB } from '@gitpod/gitpod-db/lib/app-installation-db';
-import { DBWithTracing, TracedWorkspaceDB } from '@gitpod/gitpod-db/lib/traced-db';
-import { DBGitpodToken } from '@gitpod/gitpod-db/lib/typeorm/entity/db-gitpod-token';
-import { DBUser } from '@gitpod/gitpod-db/lib/typeorm/entity/db-user';
-import { UserDB } from '@gitpod/gitpod-db/lib/user-db';
-import { UserMessageViewsDB } from '@gitpod/gitpod-db/lib/user-message-views-db';
-import { UserStorageResourcesDB } from '@gitpod/gitpod-db/lib/user-storage-resources-db';
-import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
-import { AuthProviderEntry, AuthProviderInfo, Branding, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, UserMessage, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes } from '@gitpod/gitpod-protocol';
+import { AppInstallationDB, UserDB, UserMessageViewsDB, WorkspaceDB, DBWithTracing, TracedWorkspaceDB, DBGitpodToken, DBUser, UserStorageResourcesDB } from '@gitpod/gitpod-db/lib';
+import { AuthProviderEntry, AuthProviderInfo, Branding, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes } from '@gitpod/gitpod-protocol';
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { AdminBlockUserRequest, AdminGetListRequest, AdminGetListResult, AdminGetWorkspacesRequest, AdminModifyPermanentWorkspaceFeatureFlagRequest, AdminModifyRoleOrPermissionRequest, WorkspaceAndInstance } from '@gitpod/gitpod-protocol/lib/admin-protocol';
 import { GetLicenseInfoResult, LicenseFeature, LicenseValidationResult } from '@gitpod/gitpod-protocol/lib/license-protocol';
@@ -281,10 +274,22 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         return this.clientRegion;
     }
 
+    /**
+     * Returns the descriptions of auth providers. This also controls the visibility of
+     * auth providers on the dashbard.
+     * 
+     * If this call is unauthenticated (i.e. for anonumous users,) it returns only information
+     * necessary for the Login page.
+     * 
+     * If there are built-in auth providers configured, only these are returned. 
+     */
     public async getAuthProviders(): Promise<AuthProviderInfo[]> {
+        const { builtinAuthProvidersConfigured } = this.env;
+
         const hostContexts = this.hostContextProvider.getAll();
         const authProviders = hostContexts.map(hc => hc.authProvider.info);
 
+        const isBuiltIn = (info: AuthProviderInfo) => !info.ownerId;
         const isNotHidden = (info: AuthProviderInfo) => !info.hiddenOnDashboard;
         const isVerified = (info: AuthProviderInfo) => info.verified;
 
@@ -298,7 +303,10 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
                 icon: info.icon,
                 description: info.description
             }
-            const result = authProviders.filter(isNotHidden).filter(isVerified).map(toPublic);
+            let result = authProviders.filter(isNotHidden).filter(isVerified).map(toPublic);
+            if (builtinAuthProvidersConfigured) {
+                result = result.filter(isBuiltIn);
+            }
             return result;
         }
 
@@ -312,6 +320,9 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             }
             if (info.ownerId === this.user.id) {
                 result.push(info);
+                continue;
+            }
+            if (builtinAuthProvidersConfigured && !isBuiltIn(info)) {
                 continue;
             }
             if (isNotHidden(info) && isVerified(info)) {
@@ -916,17 +927,6 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
     public async mayAccessPrivateRepo(): Promise<boolean> {
         return true;
-    }
-
-    public async getUserMessages(options: GitpodServer.GetUserMessagesOptions): Promise<UserMessage[]> {
-        // TODO remove after IO-split
-        return [];
-    }
-
-    public async updateUserMessages(options: GitpodServer.UpdateUserMessagesOptions): Promise<void> {
-        const userId = this.checkUser("updateUserMessages").id;
-        const messageIds = options.messageIds;
-        await this.userMessageViewsDB.markAsViewed(userId, messageIds);
     }
 
     public async getFeaturedRepositories(): Promise<WhitelistedRepository[]> {

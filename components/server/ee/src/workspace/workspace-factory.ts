@@ -14,7 +14,7 @@ import { LicenseEvaluator } from '@gitpod/licensor/lib';
 import { Feature } from '@gitpod/licensor/lib/api';
 import { ResponseError } from 'vscode-jsonrpc';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
-import { WorkspaceDB } from '@gitpod/gitpod-db/lib/workspace-db';
+import { WorkspaceDB } from '@gitpod/gitpod-db/lib';
 import { generateWorkspaceID } from '@gitpod/gitpod-protocol/lib/util/generate-workspace-id';
 
 @injectable()
