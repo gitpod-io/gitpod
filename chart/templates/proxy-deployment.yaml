@@ -14,7 +14,6 @@ metadata:
     component: proxy
     kind: deployment
     stage: {{ .Values.installation.stage }}
-    gitpod.io/requiresCerts: 'true'
 spec:
   selector:
     matchLabels:
@@ -22,7 +21,6 @@ spec:
       component: proxy
       kind: pod
       stage: {{ .Values.installation.stage }}
-      gitpod.io/requiresCerts: 'true'
   replicas: {{ $comp.replicas | default 1 }}
   strategy:
     type: RollingUpdate
@@ -46,7 +44,6 @@ spec:
         component: proxy
         kind: pod
         stage: {{ .Values.installation.stage }}
-        gitpod.io/requiresCerts: 'true'
     spec:
 {{ include "gitpod.pod.affinity" $this | indent 6 }}
       serviceAccount: proxy

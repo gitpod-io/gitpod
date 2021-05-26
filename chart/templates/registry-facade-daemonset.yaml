@@ -14,7 +14,6 @@ metadata:
     kind: deployment
     stage: {{ .Values.installation.stage }}
     gitpod.io/nodeService: registry-facade
-    gitpod.io/requiresCerts: 'true'
 spec:
   selector:
     matchLabels:
@@ -23,7 +22,6 @@ spec:
       kind: pod
       stage: {{ .Values.installation.stage }}
       gitpod.io/nodeService: registry-facade
-      gitpod.io/requiresCerts: 'true'
   template:
     metadata:
       name: registry-facade
@@ -33,7 +31,6 @@ spec:
         kind: pod
         stage: {{ .Values.installation.stage }}
         gitpod.io/nodeService: registry-facade
-        gitpod.io/requiresCerts: 'true'
       annotations:
         prometheus.io/scrape: 'true'
         prometheus.io/path: "/metrics"
