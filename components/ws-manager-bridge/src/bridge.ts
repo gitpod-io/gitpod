@@ -208,7 +208,7 @@ export class WorkspaceManagerBridge implements Disposable {
                             event: "workspace-running",
                             messageId: `bridge-wsrun-${instance.id}`,
                             properties: { instanceId: instance.id, workspaceId: workspaceId },
-                            anonymousId: ""
+                            userId,
                         });
                     }
 
