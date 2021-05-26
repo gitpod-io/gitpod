@@ -236,7 +236,7 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 
 	mountpoint := filepath.Join(wbs.Session.ServiceLocNode, "mark")
 
-	if wbs.FSShift == api.FSShiftMethod_FUSE {
+	if wbs.FSShift == api.FSShiftMethod_FUSE || wbs.Session.FullWorkspaceBackup {
 		err = nsinsider(wbs.Session.InstanceID, int(1), func(c *exec.Cmd) {
 			// In case of any change in the user mapping, the next line must be updated.
 			mappings := fmt.Sprintf("0:%v:1:1:100000:65534", wsinit.GitpodUID)
@@ -253,6 +253,7 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 			return nil, status.Errorf(codes.Internal, "cannot mount fusefs mark")
 		}
 
+		log.WithFields(wbs.Session.OWI()).WithField("configuredShift", wbs.FSShift).WithField("fwb", wbs.Session.FullWorkspaceBackup).Info("fs-shift using fuse")
 		return &api.PrepareForUserNSResponse{
 			FsShift:             api.FSShiftMethod_FUSE,
 			FullWorkspaceBackup: wbs.Session.FullWorkspaceBackup,

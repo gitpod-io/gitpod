@@ -131,9 +131,9 @@ components:
     - mountPath: /mnt/sync-tmp
       name: gcloud-tmp
     userNamespaces:
-      fsShift: fuse
+      fsShift: shiftfs
       shiftfsModuleLoader:
-        enabled: false
+        enabled: true
       seccompProfileInstaller:
         enabled: true
 
