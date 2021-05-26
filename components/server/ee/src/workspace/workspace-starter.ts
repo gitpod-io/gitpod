@@ -4,7 +4,7 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { Workspace, User, WorkspaceInstance, WorkspaceInstanceConfiguration } from "@gitpod/gitpod-protocol";
+import { Workspace, User, WorkspaceInstance, WorkspaceInstanceConfiguration, NamedWorkspaceFeatureFlag } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { WorkspaceStarter } from "../../../src/workspace/workspace-starter";
 import { EligibilityService } from "../user/eligibility-service";
@@ -18,8 +18,8 @@ export class WorkspaceStarterEE extends WorkspaceStarter {
      * 
      * @param workspace the workspace to create an instance for
      */
-    protected async newInstance(workspace: Workspace, user: User): Promise<WorkspaceInstance> {
-        const instance = await super.newInstance(workspace, user);
+    protected async newInstance(workspace: Workspace, user: User, excludeFeatureFlags: NamedWorkspaceFeatureFlag[]): Promise<WorkspaceInstance> {
+        const instance = await super.newInstance(workspace, user, excludeFeatureFlags);
         if (await this.eligibilityService.hasFixedWorkspaceResources(user)) {
             const config: WorkspaceInstanceConfiguration = instance.configuration!;
             const ff = (config.featureFlags || []);
