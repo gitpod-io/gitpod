@@ -226,10 +226,9 @@ components:
 
   kedge:
     name: "kedge"
+    disabled: true
     resources:
       memory: 128Mi
-    disabled: true
-    config: config/kedge/prod-config.json
     ports:
       http:
         expose: true
