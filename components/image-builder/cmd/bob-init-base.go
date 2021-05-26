@@ -48,7 +48,7 @@ var bobInitBase = &cobra.Command{
 
 		ctx := context.Background()
 		rms := &storage.DirectNoopStorage{}
-		ilr, err := initializer.NewFromRequest(ctx, initwd, rms, src.Source)
+		ilr, err := initializer.NewFromRequest(ctx, initwd, rms, src.Source, initializer.NewFromRequestOpts{ForceGitpodUserForGit: false})
 		if err != nil {
 			log.Fatalf("cannot create initializer: %v", err)
 		}
