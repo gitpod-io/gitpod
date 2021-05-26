@@ -731,6 +731,8 @@ func tunnelOverSSH(ctx context.Context, tunneled *ports.TunneledPortsService, ne
 		newCh.Reject(ssh.Prohibited, err.Error())
 		return
 	}
+	log.Debug("tunnel: accepted new connection")
+	defer log.Debug("tunnel: connection closed")
 	defer tunnel.Close()
 
 	sshChan, reqs, err := newCh.Accept()
@@ -740,17 +742,16 @@ func tunnelOverSSH(ctx context.Context, tunneled *ports.TunneledPortsService, ne
 	}
 	defer sshChan.Close()
 	go ssh.DiscardRequests(reqs)
-	var wg sync.WaitGroup
-	wg.Add(2)
+	ctx, cancel := context.WithCancel(ctx)
 	go func() {
 		_, _ = io.Copy(sshChan, tunnel)
-		wg.Done()
+		cancel()
 	}()
 	go func() {
 		_, _ = io.Copy(tunnel, sshChan)
-		wg.Done()
+		cancel()
 	}()
-	wg.Wait()
+	<-ctx.Done()
 }
 
 func startSSHServer(ctx context.Context, cfg *Config, wg *sync.WaitGroup) {
