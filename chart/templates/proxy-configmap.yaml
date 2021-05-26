@@ -67,3 +67,24 @@ data:
       }
     }
 {{- end }}
+
+{{- if not .Values.components.kedge.disabled }}
+  vhost.kedge: |
+    https://*.{$GITPOD_DOMAIN} {
+      import enable_log
+      import remove_server_header
+      import ssl_configuration
+      import debug_headers
+
+      @kedge header_regexp host Host ^kedge-([a-z0-9]+).{$GITPOD_DOMAIN}
+      handle @kedge {
+        reverse_proxy kedge.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:{{.Values.components.kedge.ports.http.servicePort} {
+          import upstream_headers
+          import upstream_connection
+        }
+      }
+
+      respond "Not found" 404
+    }
+{{- end }}
+
