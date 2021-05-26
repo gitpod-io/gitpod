@@ -303,11 +303,11 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
                 icon: info.icon,
                 description: info.description
             }
-            let result = authProviders.filter(isNotHidden).filter(isVerified).map(toPublic);
+            let result = authProviders.filter(isNotHidden).filter(isVerified);
             if (builtinAuthProvidersConfigured) {
                 result = result.filter(isBuiltIn);
             }
-            return result;
+            return result.map(toPublic);
         }
 
         // otherwise show all the details
