@@ -57,16 +57,24 @@ class SegmentAnalyticsWriter implements IAnalyticsWriter {
         this.analytics = new Analytics(writeKey);
     }
 
-    identify(msg: IdentifyMessage) {
-        this.analytics.identify(msg, (err: Error) => {
-            log.warn("analytics.identify failed", err, msg);
-        });
+        identify(msg: IdentifyMessage) {
+        try {
+            this.analytics.identify(msg, (err: Error) => {
+                log.warn("analytics.identify failed", err);
+            });
+        } catch (err) {
+            log.warn("analytics.identify failed", err);
+        }
     }
 
     track(msg: TrackMessage) {
-        this.analytics.track(msg, (err: Error) => {
-            log.warn("analytics.track failed", err, msg);
-        });
+        try {
+            this.analytics.track(msg, (err: Error) => {
+                log.warn("analytics.track failed", err);
+            });
+        } catch (err) {
+            log.warn("analytics.track failed", err);
+        }
     }
 
 }

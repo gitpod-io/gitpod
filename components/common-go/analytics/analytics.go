@@ -79,6 +79,8 @@ type segmentAnalyticsWriter struct {
 }
 
 func (s *segmentAnalyticsWriter) Identify(m IdentifyMessage) {
+	defer recover()
+
 	_ = s.Client.Enqueue(segment.Identify{
 		AnonymousId: m.AnonymousID,
 		UserId:      m.UserID,
@@ -88,6 +90,8 @@ func (s *segmentAnalyticsWriter) Identify(m IdentifyMessage) {
 }
 
 func (s *segmentAnalyticsWriter) Track(m TrackMessage) {
+	defer recover()
+
 	_ = s.Client.Enqueue(segment.Track{
 		AnonymousId: m.AnonymousID,
 		UserId:      m.UserID,
@@ -98,5 +102,7 @@ func (s *segmentAnalyticsWriter) Track(m TrackMessage) {
 }
 
 func (s *segmentAnalyticsWriter) Close() error {
+	defer recover()
+
 	return s.Client.Close()
 }
