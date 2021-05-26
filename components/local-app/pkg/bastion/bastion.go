@@ -26,7 +26,6 @@ import (
 	"github.com/kevinburke/ssh_config"
 	"github.com/prometheus/common/log"
 	"golang.org/x/crypto/ssh"
-	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 
@@ -449,7 +448,9 @@ func (b *Bastion) establishTunnel(ctx context.Context, ws *Workspace, logprefix 
 				logrus.WithError(err).WithField("workspace", ws.WorkspaceID).Warn(logprefix + ": failed to accept connection")
 				continue
 			}
+			logrus.WithField("workspace", ws.WorkspaceID).Debug(logprefix + ": accepted new connection")
 			go func() {
+				defer logrus.WithField("workspace", ws.WorkspaceID).Debug(logprefix + ": connection closed")
 				defer conn.Close()
 
 				clientCh := make(chan *TunnelClient, 1)
@@ -476,16 +477,17 @@ func (b *Bastion) establishTunnel(ctx context.Context, ws *Workspace, logprefix 
 				}
 				defer sshChan.Close()
 				go ssh.DiscardRequests(reqs)
-				eg, _ := errgroup.WithContext(listenerCtx)
-				eg.Go(func() error {
+
+				ctx, cancel := context.WithCancel(listenerCtx)
+				go func() {
 					_, _ = io.Copy(sshChan, conn)
-					return nil
-				})
-				eg.Go(func() error {
+					cancel()
+				}()
+				go func() {
 					_, _ = io.Copy(conn, sshChan)
-					return nil
-				})
-				eg.Wait()
+					cancel()
+				}()
+				<-ctx.Done()
 			}()
 		}
 	}()
