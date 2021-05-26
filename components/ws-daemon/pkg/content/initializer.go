@@ -278,7 +278,7 @@ func RunInitializerChild() (err error) {
 
 	rs := &remoteContentStorage{RemoteContent: initmsg.RemoteContent}
 
-	initializer, err := wsinit.NewFromRequest(ctx, "/dst", rs, &req)
+	initializer, err := wsinit.NewFromRequest(ctx, "/dst", rs, &req, wsinit.NewFromRequestOpts{ForceGitpodUserForGit: false})
 	if err != nil {
 		return err
 	}

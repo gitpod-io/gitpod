@@ -870,7 +870,7 @@ func startContentInit(ctx context.Context, cfg *Config, wg *sync.WaitGroup, cst 
 		return
 	}
 
-	src, err := executor.Execute(ctx, "/workspace", f)
+	src, err := executor.Execute(ctx, "/workspace", f, true)
 	if err != nil {
 		return
 	}

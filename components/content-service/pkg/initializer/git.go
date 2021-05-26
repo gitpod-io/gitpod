@@ -7,6 +7,7 @@ package initializer
 import (
 	"context"
 	"os"
+	"os/exec"
 
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
@@ -44,6 +45,9 @@ type GitInitializer struct {
 
 	// The value for the clone target mode - use depends on the target mode
 	CloneTarget string
+
+	// If true, the Git initializer will chown(gitpod) after the clone
+	Chown bool
 }
 
 // Run initializes the workspace using Git
@@ -67,6 +71,21 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 	log.WithField("stage", "init").WithField("location", ws.Location).Debug("Running git clone on workspace")
 	if err := ws.Clone(ctx); err != nil {
 		return src, xerrors.Errorf("git initializer: %w", err)
+	}
+	if ws.Chown {
+		// TODO (aledbf): refactor to remove the need of manual chown
+		args := []string{"-R", "-L", "gitpod", ws.Location}
+		cmd := exec.Command("chown", args...)
+		res, cerr := cmd.CombinedOutput()
+		if cerr != nil && !(cerr.Error() == "wait: no child processes" || cerr.Error() == "waitid: no child processes") {
+			err = git.OpFailedError{
+				Args:       args,
+				ExecErr:    cerr,
+				Output:     string(res),
+				Subcommand: "chown",
+			}
+			return
+		}
 	}
 	if err := ws.realizeCloneTarget(ctx); err != nil {
 		return src, xerrors.Errorf("git initializer: %w", err)

@@ -275,23 +275,6 @@ func (c *Client) Clone(ctx context.Context) (err error) {
 		return err
 	}
 
-	// TODO (aledbf): refactor to remove the need of manual chown
-	args = []string{"-R", "-L", "gitpod", c.Location}
-	cmd := exec.Command("chown", args...)
-	res, err := cmd.CombinedOutput()
-	if err != nil {
-		if err.Error() == "wait: no child processes" || err.Error() == "waitid: no child processes" {
-			return nil
-		}
-
-		return OpFailedError{
-			Args:       args,
-			ExecErr:    err,
-			Output:     string(res),
-			Subcommand: "chown",
-		}
-	}
-
 	return nil
 }
 
