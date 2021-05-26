@@ -29,7 +29,7 @@ metadata:
     app: {{ template "gitpod.fullname" . }}
     component: db
     kind: secret
-    stage: {{ .Values.gitpod.installation.stage }}
+    stage: {{ .Values.installation.stage }}
     chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
     release: "{{ .Release.Name }}"
     heritage: "{{ .Release.Service }}"
