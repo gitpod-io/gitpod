@@ -1314,6 +1314,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     async setEnvVar(variable: UserEnvVarValue): Promise<void> {
         // Note: this operation is per-user only, hence needs no resource guard
         const user = this.checkUser("setEnvVar");
+        const userId = user.id;
 
         variable.repositoryPattern = UserEnvVar.normalizeRepoPattern(variable.repositoryPattern);
         const existingVars = (await this.userDB.getEnvVars(user.id)).filter(v => !v.deleted);
@@ -1335,10 +1336,10 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         const envvar: UserEnvVar = {
             ...variable,
             id: variable.id || uuidv4(),
-            userId: user.id,
+            userId,
         };
         await this.guardAccess({ kind: 'envVar', subject: envvar }, typeof variable.id === 'string' ? 'update' : 'create');
-        this.analytics.track({ event: "envvar-set", userId: this.user?.id || "" });
+        this.analytics.track({ event: "envvar-set", userId });
 
         await this.userDB.setEnvVar(envvar);
     }
@@ -1346,6 +1347,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     async deleteEnvVar(variable: UserEnvVarValue): Promise<void> {
         // Note: this operation is per-user only, hence needs no resource guard
         const user = this.checkUser("deleteEnvVar");
+        const userId = user.id;
 
         if (!variable.id && variable.name && variable.repositoryPattern) {
             variable.repositoryPattern = UserEnvVar.normalizeRepoPattern(variable.repositoryPattern);
@@ -1361,10 +1363,10 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         const envvar: UserEnvVar = {
             ...variable,
             id: variable.id!,
-            userId: user.id,
+            userId,
         };
         await this.guardAccess({ kind: 'envVar', subject: envvar }, 'delete');
-        this.analytics.track({ event: "envvar-deleted", userId: this.user?.id || "" });
+        this.analytics.track({ event: "envvar-deleted", userId });
 
         await this.userDB.deleteEnvVar(envvar);
     }
