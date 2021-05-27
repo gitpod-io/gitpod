@@ -52,9 +52,6 @@ spec:
         args: ["run", "-v", "/mnt/config/config.json"]
 {{ include "gitpod.container.imagePullPolicy" $this | indent 8 }}
 {{ include "gitpod.container.resources" $this | indent 8 }}
-        ports:
-        - name: metrics
-          containerPort: 9500
         securityContext:
           privileged: false
           runAsUser: 1000

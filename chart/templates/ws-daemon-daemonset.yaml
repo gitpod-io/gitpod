@@ -190,8 +190,6 @@ spec:
         - name: registry-proxy
           containerPort: {{ $comp.registryProxyPort }}
           hostPort: {{ $comp.registryProxyPort }}
-        - name: metrics
-          containerPort: 9500
         readinessProbe:
           httpGet:
             port: 9999
