@@ -631,3 +631,12 @@ rabbitmq:
         dest-uri: {{ $shovel.destUri | default "amqp://" | quote }}
         reconnect-delay: {{ $shovel.reconnectDelay | default 5 }}
     {{- end }}
+
+cert-manager:
+  enabled: false
+  installCRDs: true
+  ca:
+    issuerName: ca-issuer
+    certificate:
+      selfSigned: true
+      secretName: gitpod-ca-certificate
