@@ -34,8 +34,8 @@ export function StartWorkspaceModal(p: StartWorkspaceModalProps) {
     const [selection, setSelection] = useState(computeSelection());
     useEffect(() => setSelection(computeSelection()), [p.recent, p.selected]);
 
-    const list = (selection === 'Recent' ? p.recent : p.examples).map(e =>
-        <a key={e.title} href={e.startUrl} className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex p-4 my-1">
+    const list = (selection === 'Recent' ? p.recent : p.examples).map((e, i) =>
+        <a key={`item-${i}-${e.title}`} href={e.startUrl} className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex p-4 my-1">
             <div className="w-full">
                 <p className="text-base text-gray-800 dark:text-gray-200 font-semibold">{e.title}</p>
                 <p>{e.description}</p>
