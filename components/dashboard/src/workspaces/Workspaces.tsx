@@ -38,10 +38,11 @@ export default class Workspaces extends React.Component<WorkspacesProps, Workspa
 
     async componentDidMount() {
         this.workspaceModel = new WorkspaceModel(this.setWorkspaces);
+        document.title = 'Workspaces — Gitpod';
         const repos = await getGitpodService().server.getFeaturedRepositories();
         this.setState({
             repos
-        })
+        });
     }
 
     protected setWorkspaces = (workspaces: WorkspaceInfo[]) => {

@@ -4,6 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import { useEffect } from 'react';
 import gitpodIcon from '../icons/gitpod.svg';
 
 export enum StartPhase {
@@ -79,6 +80,7 @@ export interface StartWorkspaceError {
 export function StartPage(props: StartPageProps) {
   const { phase, error } = props;
   let title = props.title || getPhaseTitle(phase, error);
+  useEffect(() => { document.title = 'Starting — Gitpod' }, []);
   return <div className="w-screen h-screen align-middle">
     <div className="flex flex-col mx-auto items-center text-center h-screen">
       <div className="h-1/3"></div>
