@@ -25,7 +25,7 @@ data:
           "host": "localhost",
           "port": "8080"
         },
-        "staticBridges": {{ index (include "ws-manager-list" (dict "root" . "gp" $.Values "comp" .Values.components.server) | fromYaml) "manager" | default dict | toJson }}
+        "staticBridges": {{ index (include "ws-manager-list" (dict "root" . "gp" $.Values "comp" .Values.components.server) | fromYaml) "manager" | default list | toJson }}
     }
 {{- end -}}
 {{- end -}}

@@ -4,7 +4,11 @@
 {{ define "ws-manager-list" -}}
 {{- $ := .root -}}
 {{- $comp := .comp -}}
+{{- if (and $comp.wsmanSkipSelf (eq (len $comp.wsman) 0)) -}}
+manager: []
+{{- else }}
 manager:
+{{- if not $comp.wsmanSkipSelf }}
 - name: "{{ template "gitpod.installation.shortname" . }}"
   url: "ws-manager:8080"
   state: "available"
@@ -15,6 +19,7 @@ manager:
     ca: /ws-manager-client-tls-certs/ca.crt
     crt: /ws-manager-client-tls-certs/tls.crt
     key: /ws-manager-client-tls-certs/tls.key
+{{- end }}
 {{- range $_, $wsman := $comp.wsman }}
 {{ "- " -}}
 {{ $wsman | toYaml | indent 2 | trim }}
@@ -23,6 +28,7 @@ manager:
     crt: /ws-manager-client-tls-certs/tls.crt
     key: /ws-manager-client-tls-certs/tls.key
 {{- end }}
+{{- end -}}
 {{- end -}}
 
 {{ define "rate-limiter-config" -}}
@@ -197,7 +203,7 @@ spec:
           value: "{{ .Values.devBranch }}"
     {{- end }}
         - name: WSMAN_CFG_MANAGERS
-          value: {{ index (include "ws-manager-list" $this | fromYaml) "manager" | default dict | toJson | b64enc | quote }}
+          value: {{ index (include "ws-manager-list" $this | fromYaml) "manager" | default list | toJson | b64enc | quote }}
         - name: GITPOD_BASEIMG_REGISTRY_WHITELIST
           value: {{ $comp.defaultBaseImageRegistryWhitelist | toJson | quote }}
         - name: GITPOD_DEFAULT_FEATURE_FLAGS
