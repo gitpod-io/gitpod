@@ -133,7 +133,7 @@ https://{$GITPOD_DOMAIN} {
 		}
 	}
 
-	@backend path /api/* /admin/*
+	@backend path /api/*
 	handle @backend {
 		gitpod.cors_origin {
 			base_domain {$GITPOD_DOMAIN}
