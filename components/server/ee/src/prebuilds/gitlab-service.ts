@@ -37,18 +37,7 @@ export class GitlabService extends RepositoryService {
         if (GitLab.ApiError.is(response)) {
             throw response;
         }
-        const hooks = (await api.ProjectHooks.all(response.id)) as unknown as GitLab.ProjectHook[];
-        if (GitLab.ApiError.is(hooks)) {
-            throw hooks;
-        }
-        let existingProps: any = {};
-        for (const hook of hooks) {
-            if (hook.url === this.getHookUrl()) {
-                console.log('Deleting existing hook');
-                existingProps = hook
-                await api.ProjectHooks.remove(response.id, hook.id);
-            }
-        }
+        const existingProps = (await this.uninstallAutomatedPrebuilds(user, cloneUrl)) || {};
         const tokenEntry = await this.tokenService.createGitpodToken(user, GitlabService.PREBUILD_TOKEN_SCOPE, cloneUrl);
         await api.ProjectHooks.add(response.id, this.getHookUrl(), <Partial<GitLab.ProjectHook>>{
             ...existingProps,
@@ -56,6 +45,31 @@ export class GitlabService extends RepositoryService {
             token: user.id+'|'+tokenEntry.token.value
         });
         console.log('Installed Webhook for ' + cloneUrl);
+    }
+
+    async uninstallAutomatedPrebuilds(user: User, cloneUrl: string): Promise<GitLab.ProjectHook|undefined> {
+        const api = await this.api.create(user);
+        const { owner, repoName } = await this.gitlabContextParser.parseURL(user, cloneUrl);
+        const response = (await api.Projects.show(`${owner}/${repoName}`)) as unknown as GitLab.Project;
+        if (GitLab.ApiError.is(response)) {
+            throw response;
+        }
+        const hooks = (await api.ProjectHooks.all(response.id)) as unknown as GitLab.ProjectHook[];
+        if (GitLab.ApiError.is(hooks)) {
+            throw hooks;
+        }
+        let deletedHook;
+        for (const hook of hooks) {
+            if (hook.url === this.getHookUrl()) {
+                console.log('Deleting existing hook');
+                deletedHook = hook
+                await api.ProjectHooks.remove(response.id, hook.id);
+            }
+        }
+        if (!!deletedHook) {
+            console.log('Uninstalled Webhook for ' + cloneUrl);
+        }
+        return deletedHook;
     }
 
     protected getHookUrl() {

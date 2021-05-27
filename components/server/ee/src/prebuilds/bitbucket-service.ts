@@ -67,6 +67,29 @@ export class BitbucketService extends RepositoryService {
         }
     }
 
+    async uninstallAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {
+        try {
+            const api = await this.api.create(user);
+            const { owner, repoName } = await this.bitbucketContextParser.parseURL(user, cloneUrl);
+            const existing = await api.repositories.listWebhooks({
+                repo_slug: repoName,
+                workspace: owner
+            });
+            const hookUrl = this.getHookUrl();
+            const installedHooks = (existing.data.values || []).filter(hook => hook.url && hook.url.includes(hookUrl));
+            await Promise.all(installedHooks.map(hook => api.repositories.deleteWebhook({
+                uid: hook.uuid || '',
+                repo_slug: repoName,
+                workspace: owner
+            })));
+            if (installedHooks.length > 0) {
+                console.log('Uninstalled Bitbucket Webhook for ' + cloneUrl);
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
     protected getHookUrl() {
         return this.env.hostUrl.with({
             pathname: BitbucketApp.path

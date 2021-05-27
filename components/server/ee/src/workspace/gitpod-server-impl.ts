@@ -38,6 +38,7 @@ import { ChargebeeCouponComputer } from "../user/coupon-computer";
 import { ChargebeeService } from "../user/chargebee-service";
 import { Chargebee as chargebee } from '@gitpod/gitpod-payment-endpoint/lib/chargebee';
 import { EnvEE } from "../env";
+import { URL } from "url";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodServer> {
@@ -628,6 +629,25 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
             ws.pinned = true;
             await db.store(ws);
         });
+    }
+
+    async adminDisablePrebuilds(userId: string, cloneUrl: string): Promise<void> {
+        this.requireEELicense(Feature.FeatureAdminDashboard);
+
+        await this.guardAdminAccess("adminDisablePrebuilds", { userId, cloneUrl }, Permission.ADMIN_WORKSPACES);
+
+        const user = await this.userDB.findUserById(userId);
+        if (!user) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, `user ${userId} not found`);
+        }
+
+        const host = new URL(cloneUrl).hostname;
+        const hostContext = this.hostContextProvider.get(host);
+        const services = hostContext && hostContext.services;
+        if (!hostContext || !services) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, `cloneUrl host ${host} not found`);
+        }
+        await services.repositoryService.uninstallAutomatedPrebuilds(user, cloneUrl);
     }
 
     protected async guardAdminAccess(method: string, params: any, requiredPermission: PermissionName) {
