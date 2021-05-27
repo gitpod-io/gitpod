@@ -2,7 +2,7 @@ packages:
   - name: app
     type: yarn
     srcs:
-      - "src/**/*.ts" 
+      - "src/**/*.ts"
       - "test/**/*.ts"
       - "test/fixtures/**/*"
       - package.json
@@ -38,6 +38,7 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/payment-endpoint:${version}
+        - ${imageRepoBase}/payment-endpoint:${__pkg_version}
 scripts:
   - name: telepresence
     script: |-

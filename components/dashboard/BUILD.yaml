@@ -43,6 +43,7 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/dashboard:${version}
+        - ${imageRepoBase}/dashboard:${__pkg_version}
 scripts:
   - name: telepresence
     script: |-

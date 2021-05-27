@@ -12,3 +12,4 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/ide/theia:${version}
+        - ${imageRepoBase}/ide/theia:${__pkg_version}

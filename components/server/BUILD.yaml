@@ -30,6 +30,7 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/server:${version}
+        - ${imageRepoBase}/server:${__pkg_version}
   - name: lib
     type: yarn
     srcs:

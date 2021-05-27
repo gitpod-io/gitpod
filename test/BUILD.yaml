@@ -38,3 +38,4 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/integration-tests:${version}
+        - ${imageRepoBase}/integration-tests:${__pkg_version}

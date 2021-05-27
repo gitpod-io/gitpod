@@ -22,3 +22,4 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/poolkeeper:${version}
+        - ${imageRepoBase}/poolkeeper:${__pkg_version}

@@ -24,6 +24,7 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/ws-scheduler:${version}
+        - ${imageRepoBase}/ws-scheduler:${__pkg_version}
 scripts:
   - name: telepresence
     script: |

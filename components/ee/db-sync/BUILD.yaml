@@ -24,6 +24,7 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/db-sync:${version}
+        - ${imageRepoBase}/db-sync:${__pkg_version}
   - name: dbtest
     type: yarn
     srcs:

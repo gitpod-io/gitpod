@@ -38,3 +38,4 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/content-service:${version}
+        - ${imageRepoBase}/content-service:${__pkg_version}
