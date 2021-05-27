@@ -32,9 +32,6 @@ spec:
         stage: {{ .Values.installation.stage }}
         gitpod.io/nodeService: ws-daemon
       annotations:
-        prometheus.io/scrape: 'true'
-        prometheus.io/path: "/metrics"
-        prometheus.io/port: '9500'
         checksum/tlskey: {{ include (print $.Template.BasePath "/ws-daemon-tlssecret.yaml") $ | sha256sum }}
         {{- if $comp.userNamespaces.shiftfsModuleLoader.enabled }}
         seccomp.security.alpha.kubernetes.io/shiftfs-module-loader: unconfined
