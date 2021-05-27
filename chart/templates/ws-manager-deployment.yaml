@@ -62,6 +62,7 @@ spec:
 {{- end }}
       enableServiceLinks: false
       containers:
+{{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
       - name: ws-manager
         args: ["run", "-v", "--config", "/config/config.json"]
         image: {{ template "gitpod.comp.imageFull" $this }}
