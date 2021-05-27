@@ -30,15 +30,6 @@ spec:
   template:
     metadata:
       name: proxy
-      annotations:
-        prometheus.io/scrape: 'true'
-        prometheus.io/path: "/metrics"
-        prometheus.io/port: '9145'
-{{- if index .Values "docker-registry" "enabled" }}
-        checksum/builtin-registry-auth: {{ include (print $.Template.BasePath "/builtin-registry-auth-secret.yaml") . | sha256sum }}
-{{- end -}}
-{{ include "gitpod.pod.dependsOn" $this | indent 8 }}
-      creationTimestamp:
       labels:
         app: {{ template "gitpod.fullname" . }}
         component: proxy

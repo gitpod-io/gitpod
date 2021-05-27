@@ -34,10 +34,6 @@ spec:
         component: ws-manager-bridge
         kind: pod
         stage: {{ .Values.installation.stage }}
-      annotations:
-        prometheus.io/scrape: 'true'
-        prometheus.io/path: "/metrics"
-        prometheus.io/port: '9500'
     spec:
 {{ include "gitpod.pod.affinity" $this | indent 6 }}
       serviceAccountName: ws-manager-bridge
