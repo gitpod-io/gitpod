@@ -11,3 +11,4 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/shiftfs-module-loader:${version}
+        - ${imageRepoBase}/shiftfs-module-loader:${__pkg_version}

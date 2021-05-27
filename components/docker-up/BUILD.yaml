@@ -67,3 +67,4 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/docker-up:${version}
+        - ${imageRepoBase}/docker-up:${__pkg_version}

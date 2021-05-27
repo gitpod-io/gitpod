@@ -41,3 +41,4 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/registry-facade:${version}
+        - ${imageRepoBase}/registry-facade:${__pkg_version}

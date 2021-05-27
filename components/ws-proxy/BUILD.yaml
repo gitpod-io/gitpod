@@ -30,3 +30,4 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/ws-proxy:${version}
+        - ${imageRepoBase}/ws-proxy:${__pkg_version}

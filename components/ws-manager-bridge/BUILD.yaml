@@ -26,6 +26,7 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/ws-manager-bridge:${version}
+        - ${imageRepoBase}/ws-manager-bridge:${__pkg_version}
 scripts:
   - name: telepresence
     script: |-

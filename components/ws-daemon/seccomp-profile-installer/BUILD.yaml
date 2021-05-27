@@ -28,3 +28,4 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/seccomp-profile-installer:${version}
+        - ${imageRepoBase}/seccomp-profile-installer:${__pkg_version}

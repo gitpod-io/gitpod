@@ -11,3 +11,4 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/ide/code:${version}
+        - ${imageRepoBase}/ide/code:${__pkg_version}

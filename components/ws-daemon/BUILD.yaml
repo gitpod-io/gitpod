@@ -51,6 +51,7 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/ws-daemon:${version}
+        - ${imageRepoBase}/ws-daemon:${__pkg_version}
 scripts:
   - name: kube-exec
     description: Executes into the ws-daemon for a workspace pod in $WS

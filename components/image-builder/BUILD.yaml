@@ -26,3 +26,4 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/image-builder:${version}
+        - ${imageRepoBase}/image-builder:${__pkg_version}

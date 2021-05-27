@@ -8,6 +8,25 @@ packages:
     argdeps:
       - version
     deps:
+      - :all-docker
+      - :docker-versions
+      - dev/blowtorch:app
+      - dev/gpctl:app
+      - dev/loadgen:app
+  - name: docker-versions
+    type: docker
+    config:
+      dockerfile: leeway.Dockerfile
+      image:
+        - ${imageRepoBase}/versions:${version}
+    deps:
+      - :all-docker
+  - name: all-docker
+    type: generic
+    argdeps:
+      - version
+      - imageRepoBase
+    deps:
       - components/blobserve:docker
       - components/content-service:docker
       - components/dashboard:docker
@@ -36,10 +55,11 @@ packages:
       - components/ws-manager-bridge:docker
       - components/ws-manager:docker
       - components/ws-proxy:docker
-      - dev/blowtorch:app
-      - dev/gpctl:app
-      - dev/loadgen:app
       - test:docker
+    config:
+      commands:
+        - ["sh", "-c", "(find . -name imgnames.txt | while read f; do tail -n1 $f; done) > versions.txt"]
+        - ["sh", "-c", "rm -r components*"]
   - name: all-apps
     type: generic
     deps:

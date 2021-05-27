@@ -31,6 +31,7 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/supervisor:${version}
+        - ${imageRepoBase}/supervisor:${__pkg_version}
   - name: dropbear
     type: generic
     config:

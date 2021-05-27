@@ -77,3 +77,4 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/db-migrations:${version}
+        - ${imageRepoBase}/db-migrations:${__pkg_version}

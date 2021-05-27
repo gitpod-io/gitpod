@@ -1,81 +1,82 @@
 packages:
-    - name: app
-      type: generic
-      config:
-        commands: [["echo"]]
-      deps:
-        - :app-linux
-        - :app-darwin
-        - :app-windows
-    - name: app-linux
-      type: go
-      srcs:
-        - go.mod
-        - go.sum
-        - "**/*.go"
-      deps:
-        - :version
-        - components/supervisor-api/go:lib
-        - components/gitpod-protocol/go:lib
-        - components/local-app-api/go:lib
-      env:
-        - CGO_ENABLED=0
-        - GOOS=linux
-      prep:
-        - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
-      config:
-        packaging: app
-    - name: app-darwin
-      type: go
-      srcs:
-        - go.mod
-        - go.sum
-        - "**/*.go"
-      deps:
-        - :version
-        - components/supervisor-api/go:lib
-        - components/gitpod-protocol/go:lib
-        - components/local-app-api/go:lib
-      env:
-        - CGO_ENABLED=0
-        - GOOS=darwin
-      prep:
-        - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
-      config:
-        packaging: app
-    - name: app-windows
-      type: go
-      srcs:
-        - go.mod
-        - go.sum
-        - "**/*.go"
-      deps:
-        - :version
-        - components/supervisor-api/go:lib
-        - components/gitpod-protocol/go:lib
-        - components/local-app-api/go:lib
-      env:
-        - CGO_ENABLED=0
-        - GOOS=windows
-      prep:
-        - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
-      config:
-        packaging: app
-    - name: version
-      type: generic
-      argdeps:
-        - localAppVersion
-      config:
-        commands:
-          - ["sh", "-c", "echo '${localAppVersion}' > version.txt"]
-          - ["echo", "Local App Version: ${localAppVersion}"]
-    - name: docker
-      type: docker
-      deps:
-        - :app
-      argdeps:
-        - imageRepoBase
-      config:
-        dockerfile: leeway.Dockerfile
-        image:
-          - ${imageRepoBase}/local-app:${version}
+  - name: app
+    type: generic
+    config:
+      commands: [["echo"]]
+    deps:
+      - :app-linux
+      - :app-darwin
+      - :app-windows
+  - name: app-linux
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+    deps:
+      - :version
+      - components/supervisor-api/go:lib
+      - components/gitpod-protocol/go:lib
+      - components/local-app-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    prep:
+      - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
+    config:
+      packaging: app
+  - name: app-darwin
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+    deps:
+      - :version
+      - components/supervisor-api/go:lib
+      - components/gitpod-protocol/go:lib
+      - components/local-app-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=darwin
+    prep:
+      - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
+    config:
+      packaging: app
+  - name: app-windows
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+    deps:
+      - :version
+      - components/supervisor-api/go:lib
+      - components/gitpod-protocol/go:lib
+      - components/local-app-api/go:lib
+    env:
+      - CGO_ENABLED=0
+      - GOOS=windows
+    prep:
+      - ["cp", "_deps/components-local-app--version/version.txt", "version.txt"]
+    config:
+      packaging: app
+  - name: version
+    type: generic
+    argdeps:
+      - localAppVersion
+    config:
+      commands:
+        - ["sh", "-c", "echo '${localAppVersion}' > version.txt"]
+        - ["echo", "Local App Version: ${localAppVersion}"]
+  - name: docker
+    type: docker
+    deps:
+      - :app
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      image:
+        - ${imageRepoBase}/local-app:${version}
+        - ${imageRepoBase}/local-app:${__pkg_version}

@@ -22,3 +22,4 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/service-waiter:${version}
+        - ${imageRepoBase}/service-waiter:${__pkg_version}
