@@ -2,7 +2,7 @@
 
 # This script builds the image builder and replaces the current deployment with it.
 
-docker ps &> /dev/null || (echo "You need a working Docker daemon. Maybe set DOCKER_HOST?"; exit -1)
+docker ps &> /dev/null || (echo "You need a working Docker daemon. Maybe set DOCKER_HOST?"; exit 1)
 gcloud auth list | grep typefox &>/dev/null || (echo "Login using 'gcloud auth login' for the docker push to work"; exit 1)
 
 leeway build .:docker -Dversion=dev

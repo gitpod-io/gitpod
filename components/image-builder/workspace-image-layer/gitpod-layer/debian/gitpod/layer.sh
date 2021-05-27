@@ -10,7 +10,7 @@ set -e;
 
 # Install necessary tools only if they are not yet installed
 INSTALLED_PACKAGES=$(dpkg-query -f '${Package} ${Status}\n' -W bash-completion git | wc -l)
-if [ $INSTALLED_PACKAGES != 2 ]; then
+if [ "$INSTALLED_PACKAGES" != 2 ]; then
     # The first 'clean' is needed to avoid apt-get detecting package meta data changes
     # (like changed labels) which result in errors and broken builds/workspaces!
     apt-get clean && rm -rf /var/lib/apt/lists/*;
@@ -52,13 +52,13 @@ if ! id -u gitpod; then
     chown -R gitpod:gitpod /home/gitpod/;
 else
     USER_ID=$(id -u gitpod)
-    if [ $USER_ID -eq 33333 ]; then
+    if [ "$USER_ID" -eq 33333 ]; then
         # users exists and has user id 33333. We hope that the user does not have ID 0, because that grants root privileges
         echo "Found user 'gitpod'. Reusing it.";
         echo "gitpod:gitpod" | chpasswd;
     else
         # error
-        echo "Error: User 'gitpod' exists but does not have user-id 33333. The user-id is $UID";
+        echo "Error: User 'gitpod' exists but does not have user-id 33333. The user-id is $(id -u)";
         exit 1;
     fi
 fi

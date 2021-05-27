@@ -3,7 +3,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-DIR=$(cd "$(dirname "${BASH_SOURCE}")" && pwd -P)
+DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 
 PROTO_DIR=${PROTOLOC:-$DIR/..}
 

@@ -23,9 +23,9 @@ echo "$BINARY: Starting rewiring libs to $DST"
 
 [ -d "$DST" ] || mkdir -p "$DST"
 
-INTERPRETER_ORIG=$(patchelf --print-interpreter $BINARY 2>/dev/null)
-if [ ! -z "$INTERPRETER_ORIG" ]; then
-    INTERPRETER_DST="${DST}$(basename $INTERPRETER_ORIG)"
+INTERPRETER_ORIG=$(patchelf --print-interpreter "$BINARY" 2>/dev/null)
+if [ -n "$INTERPRETER_ORIG" ]; then
+    INTERPRETER_DST="${DST}$(basename "$INTERPRETER_ORIG")"
     [ -f "${INTERPRETER_DST}" ] || cp "${INTERPRETER_ORIG}" "${INTERPRETER_DST}"
     patchelf --set-interpreter "${INTERPRETER_DST}" "${BINARY}"
     echo "${BINARY}: changed ELF interpreter from ${INTERPRETER_ORIG} to ${INTERPRETER_DST}"
@@ -39,8 +39,8 @@ do
         continue
     fi
     if [ -f "${LIB_ORIG}" ]; then
-        LIB_DST="${DST}$(basename $LIB_ORIG)"
-        if [ ! -f $LIB_DST ]; then
+        LIB_DST="${DST}$(basename "$LIB_ORIG")"
+        if [ ! -f "$LIB_DST" ]; then
             cp "${LIB_ORIG}" "${LIB_DST}"
             "$0" "${LIB_DST}"
         fi
@@ -49,6 +49,6 @@ do
     else
         echo "${BINARY}: library $LIB_ORIG not found."
     fi
-done < <(ldd $BINARY 2>/dev/null)
+done < <(ldd "$BINARY" 2>/dev/null)
 
 echo "$BINARY: Finished rewiring libs to $DST"

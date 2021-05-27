@@ -5,30 +5,29 @@
 
 set -e
 
-THIRD_PARTY_INCLUDES=${PROTOLOC:-..}
-if [ ! -d $THIRD_PARTY_INCLUDES/third_party/google/api ]; then
+THIRD_PARTY_INCLUDES="${PROTOLOC:-..}"
+if [ ! -d "$THIRD_PARTY_INCLUDES"/third_party/google/api ]; then
     echo "missing $THIRD_PARTY_INCLUDES/third_party/google/api"
-    exit -1
+    exit 1
 fi
 
 mkdir -p lib
-export PROTO_INCLUDE="-I$THIRD_PARTY_INCLUDES/third_party -I /usr/lib/protoc/include"
 
-DIR=$(cd $(dirname "${BASH_SOURCE}") && pwd -P)
+DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
 
-/usr/bin/protoc \
-    $PROTO_INCLUDE  \
-    -I${PROTOLOC:-..} \
-    --plugin=protoc-gen-grpc=$DIR/node_modules/.bin/grpc_tools_node_protoc_plugin \
+protoc \
+    -I"$THIRD_PARTY_INCLUDES"/third_party -I/usr/lib/protoc/include \
+    -I"${PROTOLOC:-..}" \
+    --plugin=protoc-gen-grpc="$DIR"/node_modules/.bin/grpc_tools_node_protoc_plugin \
     --js_out=import_style=commonjs,binary:lib \
     --grpc_out=grpc_js:lib \
-    ${PROTOLOC:-..}/*.proto
+    "${PROTOLOC:-..}"/*.proto
 
-/usr/bin/protoc \
-    $PROTO_INCLUDE \
-    -I${PROTOLOC:-..} \
-    --plugin=protoc-gen-ts=$DIR/node_modules/.bin/protoc-gen-ts \
+protoc \
+    -I"$THIRD_PARTY_INCLUDES"/third_party -I/usr/lib/protoc/include \
+    -I"${PROTOLOC:-..}" \
+    --plugin=protoc-gen-ts="$DIR"/node_modules/.bin/protoc-gen-ts \
     --ts_out=grpc_js:lib \
-    ${PROTOLOC:-..}/*.proto
+    "${PROTOLOC:-..}"/*.proto
 
 sed -i '/google_api_annotations_pb/d' lib/*.js

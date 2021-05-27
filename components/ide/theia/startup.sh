@@ -9,7 +9,7 @@
  # the bash history.
  set +o history
  history -c
- truncate -s 0 $HISTFILE
+ truncate -s 0 "$HISTFILE"
 
 # This is the main entrypoint to workspace container in Gitpod. It is called (and controlled) by the supervisor
 # container root process.
@@ -27,8 +27,10 @@ export USER=gitpod
 # (+ compatibility period)
 # Also to mitigate compatibility issues let's try to source recently added configuration explicitly
 [ -d "/home/gitpod/.sdkman" ] && [ -z "$SDKMAN_DIR" ] && export SDKMAN_DIR="/home/gitpod/.sdkman"
+# shellcheck disable=SC1090,SC1091
 [ -s /home/gitpod/.sdkman/bin/sdkman-init.sh ] && [ -z "$SDKMAN_VERSION" ] && source "/home/gitpod/.sdkman/bin/sdkman-init.sh"
-[ -s ~/.nvm/nvm-lazy.sh ] && source ~/.nvm/nvm-lazy.sh
+# shellcheck disable=SC1090,SC1091
+[ -s ~/.nvm/nvm-lazy.sh ] && source /home/gitpod/.nvm/nvm-lazy.sh
 
-cd /theia/theia-app/app
-exec /theia/node/bin/gitpod-node ./src-gen/backend/main.js --vscode-api-version=1.53.2 $*
+cd /theia/theia-app/app || exit
+exec /theia/node/bin/gitpod-node ./src-gen/backend/main.js --vscode-api-version=1.53.2 "$@"

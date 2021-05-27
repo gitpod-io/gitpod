@@ -11,4 +11,4 @@ if [ "$1" == "intp" ]; then
     exit $?
 fi
 
-telepresence --mount /tmp/c --swap-deployment registry-facade --method vpn-tcp --run $0 dbg-intp
+telepresence --mount /tmp/c --swap-deployment registry-facade --method vpn-tcp --run "$0" dbg-intp

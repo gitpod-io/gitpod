@@ -56,6 +56,7 @@ EOF
 
 insertoauth () {
     echo "Waiting for GitLab DB migrations ..."
+    # shellcheck disable=SC2143
     while [ -z "$(kubectl get pods | grep gitlab-migrations | grep Completed)" ]; do sleep 10; done
 
     echo "Adding OAuth application to DB ..."
@@ -67,6 +68,7 @@ insertoauth () {
 insertoauth &
 
 installation_completed_hook() {
+    # shellcheck disable=SC2143
     while [ -z "$(kubectl get pods --all-namespaces | grep helm-install-gitlab | grep Completed)" ]; do sleep 10; done
 
     echo "Removing installer manifest ..."
@@ -75,23 +77,23 @@ installation_completed_hook() {
 
     echo "Backup secrets ..."
     mkdir -p /var/gitlab/secrets-backup && cd /var/gitlab/secrets-backup
-
+    # shellcheck disable=SC2143
     while [ -z "$(kubectl get secrets gitlab-rails-secret | grep Opaque)" ]; do sleep 10; done
-    [ -f gitlab-rails-secret ] && cp gitlab-rails-secret .gitlab-rails-secret_$(date -Iseconds).backup
+    [ -f gitlab-rails-secret ] && cp gitlab-rails-secret .gitlab-rails-secret_"$(date -Iseconds)".backup
     printf "secrets.yml: %s\n" "$(kubectl get secrets gitlab-rails-secret -o jsonpath="{.data['secrets\.yml']}")" > gitlab-rails-secret
-
+    # shellcheck disable=SC2143
     while [ -z "$(kubectl get secrets gitlab-postgresql-password | grep Opaque)" ]; do sleep 10; done
-    [ -f gitlab-postgresql-password ] && cp gitlab-postgresql-password .gitlab-postgresql-password_$(date -Iseconds).backup
+    [ -f gitlab-postgresql-password ] && cp gitlab-postgresql-password .gitlab-postgresql-password_"$(date -Iseconds)".backup
     printf "postgresql-password: %s\n" "$(kubectl get secrets gitlab-postgresql-password -o jsonpath='{.data.postgresql-password}')" > gitlab-postgresql-password
     printf "postgresql-postgres-password: %s\n" "$(kubectl get secrets gitlab-postgresql-password -o jsonpath='{.data.postgresql-postgres-password}')" >> gitlab-postgresql-password
-
+    # shellcheck disable=SC2143
     while [ -z "$(kubectl get secrets gitlab-gitlab-runner-secret | grep Opaque)" ]; do sleep 10; done
-    [ -f gitlab-gitlab-runner-secret ] && cp gitlab-gitlab-runner-secret .gitlab-gitlab-runner-secret_$(date -Iseconds).backup
+    [ -f gitlab-gitlab-runner-secret ] && cp gitlab-gitlab-runner-secret .gitlab-gitlab-runner-secret_"$(date -Iseconds)".backup
     printf "runner-registration-token: %s\n" "$(kubectl get secrets gitlab-gitlab-runner-secret -o jsonpath='{.data.runner-registration-token}')" > gitlab-gitlab-runner-secret
     printf "runner-token: %s\n" "$(kubectl get secrets gitlab-gitlab-runner-secret -o jsonpath='{.data.runner-token}')" >> gitlab-gitlab-runner-secret
-
+    # shellcheck disable=SC2143
     while [ -z "$(kubectl get secrets gitlab-gitlab-initial-root-password | grep Opaque)" ]; do sleep 10; done
-    [ -f gitlab-gitlab-initial-root-password ] && cp gitlab-gitlab-initial-root-password .gitlab-gitlab-initial-root-password_$(date -Iseconds).backup
+    [ -f gitlab-gitlab-initial-root-password ] && cp gitlab-gitlab-initial-root-password .gitlab-gitlab-initial-root-password_"$(date -Iseconds)".backup
     printf "password: %s\n" "$(kubectl get secrets gitlab-gitlab-initial-root-password -o jsonpath='{.data.password}')" > gitlab-gitlab-initial-root-password
 }
 installation_completed_hook &
@@ -115,6 +117,7 @@ EOF
 # restore secrets
 if [ -d /var/gitlab/secrets-backup ]; then
     cd /var/gitlab/secrets-backup
+    # shellcheck disable=SC2045
     for s in $(ls); do
         echo "Restoring secret $s ..."
         cat << EOF > "/var/lib/rancher/k3s/server/manifests/$s.yaml"

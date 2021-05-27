@@ -17,12 +17,12 @@ HELMIMAGE=${HELMIMAGE:-alpine/helm:3.2.4}           # Image that is used for the
 mkdir -p /values
 
 
-if [ ! -z "$BASEDOMAIN" ] && [ -z "$DOMAIN" ]; then
+if [ -n "$BASEDOMAIN" ] && [ -z "$DOMAIN" ]; then
     DOMAIN="gitpod.$BASEDOMAIN"
     export DOMAIN
 fi
 
-if [ -z "$BASEDOMAIN" ] && [ ! -z "$DOMAIN" ]; then
+if [ -z "$BASEDOMAIN" ] && [ -n "$DOMAIN" ]; then
     BASEDOMAIN="$DOMAIN"
     export BASEDOMAIN
 fi
@@ -69,7 +69,7 @@ add_nameserver() {
 TCP_DNS_ADDR=$(iptables-save | grep DOCKER_OUTPUT | grep tcp | grep -o '127\.0\.0\.11:.*$' || printf '')
 UDP_DNS_ADDR=$(iptables-save | grep DOCKER_OUTPUT | grep udp | grep -o '127\.0\.0\.11:.*$' || printf '')
 
-if [ ! -z "$TCP_DNS_ADDR" ] && [ ! -z "$UDP_DNS_ADDR" ]; then
+if [ -n "$TCP_DNS_ADDR" ] && [ -n "$UDP_DNS_ADDR" ]; then
     iptables -t nat -A PREROUTING -p tcp --dport 53 -j DNAT --to "$TCP_DNS_ADDR"
     iptables -t nat -A PREROUTING -p udp --dport 53 -j DNAT --to "$UDP_DNS_ADDR"
 
@@ -161,6 +161,7 @@ configs:
 EOF
 
     echo "Waiting for builtin-registry-certs secrets ..."
+    # shellcheck disable=SC2143
     while [ -z "$(kubectl get secrets builtin-registry-certs |  grep builtin-registry-certs | grep Opaque)" ]; do sleep 10; done
 
     # save registry certs for k3s
@@ -188,6 +189,7 @@ kubeconfig_replaceip() {
 kubeconfig_replaceip &
 
 installation_completed_hook() {
+    # shellcheck disable=SC2143
     while [ -z "$(kubectl get pods | grep gitpod-helm-installer | grep Completed)" ]; do sleep 10; done
 
     echo "Removing installer manifest ..."
