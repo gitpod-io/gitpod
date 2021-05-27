@@ -351,6 +351,7 @@ storage:
 - name: kube-rbac-proxy
   image: quay.io/brancz/kube-rbac-proxy:v0.9.0
   args:
+  - --v=10
   - --logtostderr
   - --insecure-listen-address=[$(IP)]:9500
   - --upstream=http://127.0.0.1:9500/
