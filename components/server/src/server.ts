@@ -273,7 +273,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         })
         this.httpServer = httpServer;
         if (this.monApp) {
-            this.monHttpServer = this.monApp.listen(9500, () => {
+            this.monHttpServer = this.monApp.listen(9500, 'localhost', () => {
                 log.info(`Monitoring server listening on port: ${(<AddressInfo>this.monHttpServer!.address()).port}`);
             });
         }
