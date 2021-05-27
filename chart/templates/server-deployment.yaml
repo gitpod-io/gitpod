@@ -234,6 +234,7 @@ spec:
 {{- if $comp.serverContainer.env }}
 {{ toYaml $comp.serverContainer.env | indent 8 }}
 {{- end }}
+{{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
       volumes:
       - name: ws-manager-client-tls-certs
         secret:
