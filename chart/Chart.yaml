@@ -24,3 +24,4 @@ dependencies:
 - name: rabbitmq
   version: 8.11.4
   repository: https://charts.bitnami.com/bitnami
+  condition: rabbitmq.enabled

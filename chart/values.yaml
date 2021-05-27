@@ -506,6 +506,7 @@ mysql:
     enabled: true
 
 rabbitmq:
+  enabled: true
   fullnameOverride: "messagebus"
   # non-standard configuration
   # defined by gitpod.io
