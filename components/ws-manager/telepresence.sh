@@ -12,4 +12,4 @@ for h in $(kubectl get pods -l component=ws-daemon --no-headers -o=custom-column
     alsoProxy="${alsoProxy} --also-proxy ${h}"
 done
 
-telepresence ${alsoProxy} --mount /tmp/c --swap-deployment ws-manager --method vpn-tcp --run $0 intp
+telepresence "${alsoProxy}" --mount /tmp/c --swap-deployment ws-manager --method vpn-tcp --run "$0" intp

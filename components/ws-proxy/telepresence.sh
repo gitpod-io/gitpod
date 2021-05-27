@@ -12,7 +12,7 @@ if [ "$1" == "intp" ]; then
 fi
 
 if [ "$1" == "debug" ]; then
-    telepresence --mount /tmp/c --swap-deployment ws-proxy --method vpn-tcp --run $0 dbg-intp
+    telepresence --mount /tmp/c --swap-deployment ws-proxy --method vpn-tcp --run "$0" dbg-intp
     exit $?
 fi
-telepresence --mount /tmp/c --swap-deployment ws-proxy --method vpn-tcp --run $0 intp
+telepresence --mount /tmp/c --swap-deployment ws-proxy --method vpn-tcp --run "$0" intp

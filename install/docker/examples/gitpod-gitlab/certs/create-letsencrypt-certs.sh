@@ -3,7 +3,8 @@
 DOMAIN=example.com
 EMAIL=info@example.com
 
-docker run -it --rm -v $(pwd)/letsencrypt:/letsencrypt --user $(id -u):$(id -g) certbot/certbot certonly \
+# shellcheck disable=SC2035
+docker run -it --rm -v "$(pwd)"/letsencrypt:/letsencrypt --user "$(id -u)":"$(id -g)" certbot/certbot certonly \
     --config-dir /letsencrypt/config \
     --work-dir /letsencrypt/work \
     --logs-dir /letsencrypt/logs \

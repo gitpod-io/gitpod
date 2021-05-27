@@ -5,7 +5,7 @@
 
 # Parameters:
 #   $1: BASE_IMAGE
-BASE_DIR="$( cd "$( dirname $0 )/.." >/dev/null 2>&1 && pwd )"
+BASE_DIR="$( cd "$( dirname "$0" )/.." >/dev/null 2>&1 && pwd )"
 BASE_IMAGE=$1
 
 # 1. Read distro value
@@ -24,10 +24,10 @@ rm -f $DISTRO_IN_FILE
 
 # 2. Copy distro-specific files into workspace (default path in Google Cloud Container builder: /workspace)
 DISTRO_PATH="$BASE_DIR/gitpod-layer/$DISTRO"
-cp -R $DISTRO_PATH/. ./
+cp -R "$DISTRO_PATH"/. ./
 
 # 3. Copy the gitpod-cli into the workspaace
-cp $BASE_DIR/gitpod-cli gitpod-cli
+cp "$BASE_DIR"/gitpod-cli gitpod-cli
 
 # 4. Create Dockerfile in /workspace starting from BASE_IMAGE and append the distro-specific part
 echo "FROM $BASE_IMAGE" > Dockerfile
