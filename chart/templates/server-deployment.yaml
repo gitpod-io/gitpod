@@ -105,6 +105,7 @@ spec:
         - mountPath: /ws-manager-client-tls-certs
           name: ws-manager-client-tls-certs
           readOnly: true
+{{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
 {{- if $comp.github.app }}
         - name: github-app-cert-secret
           mountPath: "/github-app-cert"

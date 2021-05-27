@@ -69,5 +69,6 @@ spec:
           privileged: false
 {{ include "gitpod.container.defaultEnv" $this | indent 8 }}
 {{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+{{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
 {{ toYaml .Values.defaults | indent 6 }}
 {{ end }}
