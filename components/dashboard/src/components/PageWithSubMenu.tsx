@@ -4,6 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import { useEffect } from "react";
 import { useLocation } from "react-router";
 import { Link } from "react-router-dom";
 import Header from '../components/Header';
@@ -20,6 +21,7 @@ export interface PageWithSubMenuProps {
 
 export function PageWithSubMenu(p: PageWithSubMenuProps) {
     const location = useLocation();
+    useEffect(() => { document.title = `${p.title} — Gitpod` }, []);
     return <div className="w-full">
         <Header title={p.title} subtitle={p.subtitle} />
         <div className='lg:px-28 px-10 flex pt-9'>
