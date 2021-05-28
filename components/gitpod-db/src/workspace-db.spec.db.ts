@@ -234,6 +234,17 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
     }
 
     @test(timeout(10000))
+    public async testFindAllWorkspaces_contextUrl() {
+        await this.db.transaction(async db => {
+            await Promise.all([
+                db.store(this.ws)
+            ]);
+            const dbResult = await db.findAllWorkspaces(0, 10, "contextURL", "DESC", undefined, this.ws.contextURL);
+            expect(dbResult.total).to.eq(1);
+        });
+    }
+
+    @test(timeout(10000))
     public async testFindAllWorkspaceAndInstances_contextUrl() {
         await this.db.transaction(async db => {
             await Promise.all([
