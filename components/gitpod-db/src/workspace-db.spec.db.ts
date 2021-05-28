@@ -79,6 +79,40 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
         },
         deleted: false
     };
+    readonly ws2: Workspace = {
+        id: '2',
+        type: 'regular',
+        creationTime: this.timeWs,
+        config: {
+            ports: [],
+            image: '',
+            tasks: []
+        },
+        context: { title: 'example' },
+        contextURL: 'https://github.com/gitpod-io/gitpod',
+        description: 'Gitpod',
+        ownerId: '12345'
+    };
+    readonly ws2i1: WorkspaceInstance = {
+        workspaceId: this.ws2.id,
+        id: '4',
+        ideUrl: 'example.org',
+        region: 'unknown',
+        workspaceImage: 'abc.io/test/image:123',
+        creationTime: this.timeBefore,
+        startedTime: undefined,
+        deployedTime: undefined,
+        stoppedTime: undefined,
+        status: {
+            phase: "preparing",
+            conditions: {},
+        },
+        configuration: {
+            theiaVersion: "unknown",
+            ideImage: "unknown"
+        },
+        deleted: false
+    };
 
     async before() {
         await this.wipeRepo();
@@ -249,10 +283,22 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
         await this.db.transaction(async db => {
             await Promise.all([
                 db.store(this.ws),
-                db.storeInstance(this.wsi1)
+                db.storeInstance(this.wsi1),
+                db.storeInstance(this.wsi2),
+                db.store(this.ws2),
+                db.storeInstance(this.ws2i1),
             ]);
             const dbResult = await db.findAllWorkspaceAndInstances(0, 10, "contextURL", "DESC", undefined, this.ws.contextURL);
+            // It should only find one workspace instance
             expect(dbResult.total).to.eq(1);
+
+            const workspaceAndInstance = dbResult.rows[0]
+
+            // It should find the workspace that uses the queried context url
+            expect(workspaceAndInstance.workspaceId).to.eq(this.ws.id)
+
+            // It should select the workspace instance that was most recently created
+            expect(workspaceAndInstance.instanceId).to.eq(this.wsi2.id)
         });
     }
 }
