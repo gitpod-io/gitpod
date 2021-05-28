@@ -249,7 +249,7 @@ func runOutsideNetns() error {
 		return err
 	}
 	//nolint:errcheck
-	slirpCmd.Process.Kill()
+	defer slirpCmd.Process.Kill()
 
 	_, err = msgutil.MarshalToWriter(pipeW, message{Stage: 1})
 	if err != nil {
