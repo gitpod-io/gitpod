@@ -322,7 +322,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	if err != nil {
 		return status.Errorf(codes.Internal, "cannot check if image is already built: %q", err)
 	}
-	if exists {
+	if exists && !req.GetForceRebuild() {
 		// If the workspace image exists, so should the baseimage if we've built it.
 		// If we didn't build it and the base image doesn't exist anymore, getWorkspaceImageRef will have failed to resolve the baseref.
 		baserefAbsolute, err := o.getAbsoluteImageRef(ctx, baseref, auth.AllowedAuthForAll)
