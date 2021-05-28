@@ -6,8 +6,10 @@ package initializer
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
@@ -128,8 +130,14 @@ func (ws *GitInitializer) realizeCloneTarget(ctx context.Context) (err error) {
 		}
 	} else {
 		// update to remote HEAD
-		if err := ws.Git(ctx, "reset", "--hard", "origin/HEAD"); err != nil {
-			return err
+		if _, err := ws.GitWithOutput(ctx, "reset", "--hard", "origin/HEAD"); err != nil {
+			var giterr git.OpFailedError
+			if errors.As(err, &giterr) && strings.Contains(giterr.Output, "unknown revision or path not in the working tree") {
+				// 'git reset --hard origin/HEAD' returns a non-zero exit code if origin does not have a single commit (empty repository).
+				// In this case that's not an error though, hence we don't want to fail here.
+			} else {
+				return err
+			}
 		}
 	}
 	return nil
