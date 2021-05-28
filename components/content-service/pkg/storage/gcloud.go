@@ -903,7 +903,7 @@ func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, q
 	if query.Name != "" {
 		err = client.Bucket(bucket).Object(query.Name).Delete(ctx)
 		if err != nil {
-			log.WithField("bucket", bucket).WithField("object", query.Name).Error(err)
+			log.WithField("bucket", bucket).WithField("object", query.Name).WithError(err).Error("cannot delete objects")
 			if err == gcpstorage.ErrBucketNotExist || err == gcpstorage.ErrObjectNotExist {
 				return ErrNotFound
 			}
@@ -929,12 +929,12 @@ func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, q
 			break
 		}
 		if err != nil {
-			log.WithField("bucket", bucket).WithField("object", attrs.Name).Error(err)
+			log.WithField("bucket", bucket).WithError(err).Error("cannot delete objects")
 			return err
 		}
 		err = b.Object(attrs.Name).Delete(ctx)
 		if err != nil {
-			log.WithField("bucket", bucket).WithField("object", attrs.Name).Error(err)
+			log.WithField("bucket", bucket).WithField("object", attrs.Name).WithError(err).Error("cannot delete objects")
 		}
 	}
 
