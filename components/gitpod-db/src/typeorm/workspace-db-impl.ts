@@ -683,7 +683,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl extends AbstractWorkspaceDB
             queryBuilder.andWhere("ownerId = :ownerId", { ownerId });
         }
         if (searchTerm) {
-            queryBuilder.andWhere("(contextUrl LIKE :searchTerm OR description LIKE :searchTerm)", { searchTerm });
+            queryBuilder.andWhere("(contextURL LIKE :searchTerm OR description LIKE :searchTerm)", { searchTerm });
         }
         if (minCreationTime) {
             queryBuilder.andWhere("creationTime >= :minCreationTime", { minCreationTime: minCreationTime.toISOString() });
@@ -705,14 +705,14 @@ export abstract class AbstractTypeORMWorkspaceDBImpl extends AbstractWorkspaceDB
             joinConditionParams.ownerId = ownerId;
         }
         if (!!searchTerm) {
-            joinConditions.push(`ws.contextUrl LIKE '%${searchTerm}%'`);
+            joinConditions.push(`ws.contextURL LIKE '%${searchTerm}%'`);
         }
 
         let orderField: string = orderBy;
         switch (orderField) {
             case "workspaceId": orderField = "ws.id"; break;
             case "instanceId": orderField = "wsi.id"; break;
-            case "contextURL": orderField = "ws.contextUrl"; break;
+            case "contextURL": orderField = "ws.contextURL"; break;
             case "workspaceCreationTime": orderField = "ws.creationTime"; break;
             case "instanceCreationTime": orderField = "wsi.creationTime"; break;
             case "phase": orderField = "wsi.status->>phase"; break;
