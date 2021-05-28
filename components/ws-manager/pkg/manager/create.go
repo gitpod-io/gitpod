@@ -305,6 +305,7 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 	//   - the TAP driver documentation says so (see https://www.kernel.org/doc/Documentation/networking/tuntap.txt)
 	//   - systemd's nspawn does the same thing (if it's good enough for them, it's good enough for us)
 	var (
+		devType          = corev1.HostPathFile
 		hostPathOrCreate = corev1.HostPathDirectoryOrCreate
 		daemonVolumeName = "daemon-mount"
 	)
@@ -327,6 +328,15 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			RestartPolicy: corev1.RestartPolicyNever,
 			Volumes: []corev1.Volume{
 				workspaceVolume,
+				{
+					Name: "dev-net-tun",
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
+							Path: "/dev/net/tun",
+							Type: &devType,
+						},
+					},
+				},
 				{
 					Name: daemonVolumeName,
 					VolumeSource: corev1.VolumeSource{
@@ -479,6 +489,10 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 				MountPath:        workspaceDir,
 				ReadOnly:         false,
 				MountPropagation: &mountPropagation,
+			},
+			{
+				MountPath: "/dev/net/tun",
+				Name:      "dev-net-tun",
 			},
 			{
 				MountPath:        "/.workspace",

@@ -44,6 +44,13 @@
                     }
                 },
                 {
+                    "name": "dev-net-tun",
+                    "hostPath": {
+                        "path": "/dev/net/tun",
+                        "type": "File"
+                    }
+                },
+                {
                     "name": "daemon-mount",
                     "hostPath": {
                         "path": "/tmp/workspaces/test-daemon",
@@ -146,6 +153,10 @@
                             "name": "vol-this-workspace",
                             "mountPath": "/workspace",
                             "mountPropagation": "HostToContainer"
+                        },
+                        {
+                            "name": "dev-net-tun",
+                            "mountPath": "/dev/net/tun"
                         },
                         {
                             "name": "daemon-mount",
