@@ -175,3 +175,6 @@ rabbitmq:
   auth:
     username: override-me
     password: override-me
+
+cert-manager:
+  enabled: true
