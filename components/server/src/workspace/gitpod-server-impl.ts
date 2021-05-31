@@ -265,6 +265,16 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
                 (user[p] as any) = partialUser[p];
             }
         }
+
+        if (partialUser['allowsMarketingCommunication'] !== undefined) {
+            this.analytics.track({
+                userId: user.id,
+                event: "notification_change",
+                properties: {
+                    "unsubscribed": !partialUser['allowsMarketingCommunication']
+                }
+            });
+        }
         await this.userDB.updateUserPartial(user);
         return user;
     }

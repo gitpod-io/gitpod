@@ -17,6 +17,7 @@ import { TermsProvider } from "../terms/terms-provider";
 import { TokenService } from "./token-service";
 import { EmailAddressAlreadyTakenException, SelectAccountException } from "../auth/errors";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
+import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/util/analytics";
 
 export interface FindUserByIdentityStrResult {
     user: User;
@@ -54,6 +55,7 @@ export class UserService {
     @inject(Env) protected readonly env: Env;
     @inject(TermsAcceptanceDB) protected readonly termsAcceptanceDb: TermsAcceptanceDB;
     @inject(TermsProvider) protected readonly termsProvider: TermsProvider;
+    @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
 
     /**
      * Takes strings in the form of <authHost>/<authName> and returns the matching User
@@ -143,6 +145,20 @@ export class UserService {
             const canPass = newUser.identities.some(i => !!i.primaryEmail && emailDomainInPasslist(i.primaryEmail));
 
             newUser.blocked = !canPass;
+
+            //call analytics to track user signup
+            this.analytics.track({ 
+                userId: newUser.id,
+                event: "signup",
+                properties: {
+                    "auth_provider": newUser.identities[0].authProviderId,
+                    "email": User.getPrimaryEmail(newUser),
+                    "name": User.getName(newUser),
+                    "full_name": newUser.fullName,
+                    "unsubscribed": !newUser.allowsMarketingCommunication,
+                    "blocked": newUser.blocked
+                }
+            });
         }
         if (!newUser.blocked && (isFirstUser || this.env.makeNewUsersAdmin)) {
             newUser.rolesOrPermissions = ['admin'];
