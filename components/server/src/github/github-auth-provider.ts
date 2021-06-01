@@ -78,7 +78,7 @@ export class GitHubAuthProvider extends GenericAuthProvider {
             }
             return response;
         }
-        const fetchPrimaryEmail = async () => {
+        const fetchUserEmails = async () => {
             const response = await api.users.listEmails({});
             if (response.status !== 200) {
                 throw new GitHubApiError(response);
@@ -86,7 +86,7 @@ export class GitHubAuthProvider extends GenericAuthProvider {
             return response.data;
         }
         const currentUserPromise = this.retry(() => fetchCurrentUser());
-        const userEmailsPromise = this.retry(() => fetchPrimaryEmail());
+        const userEmailsPromise = this.retry(() => fetchUserEmails());
 
         try {
             const [ { data: { id, login, avatar_url, name }, headers }, userEmails ] = await Promise.all([ currentUserPromise, userEmailsPromise ]);
@@ -98,13 +98,26 @@ export class GitHubAuthProvider extends GenericAuthProvider {
                 .map((s: string) => s.trim())
             );
 
+            const filterPrimaryEmail = (emails: GitHub.UsersListEmailsResponse) => {
+                if (this.env.blockNewUsers) {
+                    // if there is any verified email with a domain that is in the blockNewUsersPassList then use this email as primary email
+                    const emailDomainInPasslist = (mail: string) => this.env.blockNewUsersPassList.some(e => mail.endsWith(`@${e}`));
+                    const result = emails.filter(e => e.verified).filter(e => emailDomainInPasslist(e.email))
+                    if (result.length > 0) {
+                        return result[0].email;
+                    }
+                }
+                // otherwise use GitHub's primary email as Gitpod's primary email
+                return emails.filter(e => e.primary)[0].email;
+            };
+
             return <AuthUserSetup>{
                 authUser: {
                     authId: String(id),
                     authName: login,
                     avatarUrl: avatar_url,
                     name,
-                    primaryEmail: userEmails.filter(e => e.primary)[0].email
+                    primaryEmail: filterPrimaryEmail(userEmails)
                 },
                 currentScopes
             }
