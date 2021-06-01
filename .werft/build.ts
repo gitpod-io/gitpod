@@ -403,13 +403,15 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
  * Trigger integration tests
  */
 export async function triggerIntegrationTests(deploymentConfig: DeploymentConfig) {
+    werft.phase(phases.INTEGRATION_TESTS, "Integration tests");
     exec(`git config --global user.name "${context.Owner}"`);
     const annotations = [
         `version=${deploymentConfig.version}`,
         `namespace=${deploymentConfig.namespace}`,
         `username=${context.Owner}`,
     ].map(annotation => `-a ${annotation}`).join(' ')
-    exec(`werft run --remote-job-path .werft/run-integration-tests.yaml ${annotations} github`);
+    exec(`werft run --remote-job-path .werft/run-integration-tests.yaml ${annotations} github`, {slice: phases.INTEGRATION_TESTS});
+    werft.done(phases.INTEGRATION_TESTS);
 }
 
 interface PreviewWorkspaceClusterRef {
