@@ -50,6 +50,10 @@ import { EduEmailDomainDBImpl } from './typeorm/edu-email-domain-db-impl';
 import { EmailDomainFilterDBImpl } from './typeorm/email-domain-filter-db-impl';
 import { TeamSubscriptionDBImpl } from './typeorm/team-subscription-db-impl';
 import { TypeORMAccountingDBImpl } from './typeorm/accounting-db-impl';
+import { TeamDB } from './team-db';
+import { TeamDBImpl } from './typeorm/team-db-impl';
+import { ProjectDB } from './project-db';
+import { ProjectDBImpl } from './typeorm/project-db-impl';
 
 // THE DB container module that contains all DB implementations
 export const dbContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
@@ -98,7 +102,6 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
         };
     }).inSingletonScope();
 
-
     bind(GitpodTableDescriptionProvider).toSelf().inSingletonScope();
     bind(TableDescriptionProvider).toService(GitpodTableDescriptionProvider);
     bind(PeriodicDbDeleter).toSelf().inSingletonScope();
@@ -108,6 +111,11 @@ export const dbContainerModule = new ContainerModule((bind, unbind, isBound, reb
     bind(WorkspaceClusterDB).to(WorkspaceClusterDBImpl).inSingletonScope();
 
     bind(AuthCodeRepositoryDB).toSelf().inSingletonScope();
+
+    bind(TeamDBImpl).toSelf().inSingletonScope();
+    bind(TeamDB).toService(TeamDBImpl);
+    bind(ProjectDBImpl).toSelf().inSingletonScope();
+    bind(ProjectDB).toService(ProjectDBImpl);
 
     // com concerns
     bind(AccountingDB).to(TypeORMAccountingDBImpl).inSingletonScope();

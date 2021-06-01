@@ -9,7 +9,7 @@ import {
     WhitelistedRepository, WorkspaceImageBuild, AuthProviderInfo, Branding, CreateWorkspaceMode,
     Token, UserEnvVarValue, ResolvePluginsParams, PreparePluginUploadParams, Terms,
     ResolvedPlugins, Configuration, InstallPluginsParams, UninstallPluginParams, UserInfo, GitpodTokenType,
-    GitpodToken, AuthProviderEntry, GuessGitTokenScopesParams, GuessedGitTokenScopes
+    GitpodToken, AuthProviderEntry, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team
 } from './protocol';
 import { JsonRpcProxy, JsonRpcServer } from './messaging/proxy-factory';
 import { Disposable, CancellationTokenSource } from 'vscode-jsonrpc';
@@ -106,6 +106,9 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getAllEnvVars(): Promise<UserEnvVarValue[]>;
     setEnvVar(variable: UserEnvVarValue): Promise<void>;
     deleteEnvVar(variable: UserEnvVarValue): Promise<void>;
+
+    // teams and projects
+    getTeams(): Promise<Team[]>;
 
     // content service
     getContentBlobUploadUrl(name: string): Promise<string>
