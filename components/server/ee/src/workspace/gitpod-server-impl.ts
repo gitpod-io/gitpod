@@ -676,32 +676,37 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
                     // Also, make sure to initialize it by both printing the parent prebuild logs AND re-runnnig the before/init/prebuild tasks.
                 }
 
-                let result: WorkspaceCreationResult = {
-                    runningWorkspacePrebuild: {
-                        prebuildID: prebuiltWorkspace.id,
-                        workspaceID: prebuiltWorkspace.buildWorkspaceId,
-                        starting: 'queued',
-                        sameCluster: false,
-                    }
+                const workspaceID = prebuiltWorkspace.buildWorkspaceId;
+                const makeResult = (instanceID: string): WorkspaceCreationResult => {
+                    return {
+                        runningWorkspacePrebuild: {
+                            prebuildID: prebuiltWorkspace.id,
+                            workspaceID,
+                            instanceID,
+                            starting: 'queued',
+                            sameCluster: false,
+                        }
+                    };
                 };
 
-                const wsi = await this.workspaceDb.trace({ span }).findCurrentInstance(prebuiltWorkspace.buildWorkspaceId);
+                const wsi = await this.workspaceDb.trace({}).findCurrentInstance(workspaceID);
                 if (!wsi || wsi.stoppedTime !== undefined) {
                     if (prebuiltWorkspace.state === 'queued') {
                         if (Date.now() - Date.parse(prebuiltWorkspace.creationTime) > 1000 * 60) {
                             // queued for long than a minute? Let's retrigger
                             console.warn('Retriggering queued prebuild.', prebuiltWorkspace);
                             try {
-                                await this.prebuildManager.retriggerPrebuild({ span }, user, prebuiltWorkspace.buildWorkspaceId);
+                                await this.prebuildManager.retriggerPrebuild({ span }, user, workspaceID);
                             } catch (err) {
                                 console.error(err);
                             }
                         }
-                        return result;
+                        return makeResult(wsi!.id);
                     }
 
                     return;
                 }
+                const result = makeResult(wsi.id);
 
                 const inSameCluster = wsi.region === this.env.installationShortname;
                 if (!inSameCluster) {

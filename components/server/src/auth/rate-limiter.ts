@@ -10,7 +10,8 @@ import { RateLimiterMemory, RateLimiterRes } from "rate-limiter-flexible";
 
 
 export const accessCodeSyncStorage = 'accessCodeSyncStorage';
-type GitpodServerMethodType = keyof Omit<GitpodServer, "dispose" | "setClient"> | typeof accessCodeSyncStorage;
+export const accesHeadlessLogs = 'accesHeadlessLogs';
+type GitpodServerMethodType = keyof Omit<GitpodServer, "dispose" | "setClient"> | typeof accessCodeSyncStorage | typeof accesHeadlessLogs;
 type GroupsConfig = {
     [key: string]: {
         points: number,
@@ -67,6 +68,7 @@ function readConfig(): RateLimiterConfig {
         "watchWorkspaceImageBuildLogs": { group: "default", points: 1 },
         "watchHeadlessWorkspaceLogs": { group: "default", points: 1 },
         "isPrebuildDone": { group: "default", points: 1 },
+        "getHeadlessLog": { group: "default", points: 1 },
         "setWorkspaceTimeout": { group: "default", points: 1 },
         "getWorkspaceTimeout": { group: "default", points: 1 },
         "getOpenPorts": { group: "default", points: 1 },
@@ -117,7 +119,9 @@ function readConfig(): RateLimiterConfig {
         "getLicenseInfo": { group: "default", points: 1 },
         "licenseIncludesFeature": { group: "default", points: 1 },
 
-        "accessCodeSyncStorage":  { group: "default", points: 1 },
+        "accessCodeSyncStorage": { group: "default", points: 1 },
+
+        accesHeadlessLogs: { group: "default", points: 1 },
 
         /**
          * gitpod.io concerns

@@ -13,8 +13,9 @@ import { EventEmitter } from "events";
 import * as express from "express";
 import { ErrorCodes as RPCErrorCodes, MessageConnection, ResponseError } from "vscode-jsonrpc";
 import { AllAccessFunctionGuard, FunctionAccessGuard, WithFunctionAccessGuard } from "./auth/function-access";
+import { HostContextProvider } from "./auth/host-context-provider";
 import { RateLimiter, UserRateLimiter } from "./auth/rate-limiter";
-import { CompositeResourceAccessGuard, OwnerResourceGuard, ResourceAccessGuard, SharedWorkspaceAccessGuard, WithResourceAccessGuard } from "./auth/resource-access";
+import { CompositeResourceAccessGuard, OwnerResourceGuard, ResourceAccessGuard, SharedWorkspaceAccessGuard, WithResourceAccessGuard, WorkspaceLogAccessGuard } from "./auth/resource-access";
 import { increaseApiCallCounter, increaseApiConnectionClosedCounter, increaseApiConnectionCounter, increaseApiCallUserCounter } from "./prometheus-metrics";
 import { GitpodServerImpl } from "./workspace/gitpod-server-impl";
 
@@ -33,7 +34,9 @@ export class WebsocketConnectionManager<C extends GitpodClient, S extends Gitpod
     protected readonly events = new EventEmitter();
     protected readonly servers: GitpodServerImpl<C, S>[] = [];
 
-    constructor(protected readonly serverFactory: GitpodServiceFactory<C, S>) {
+    constructor(
+        protected readonly serverFactory: GitpodServiceFactory<C, S>,
+        protected readonly hostContextProvider: HostContextProvider) {
         this.jsonRpcConnectionHandler = new GitpodJsonRpcConnectionHandler<C>(
             this.path,
             this.createProxyTarget.bind(this),
@@ -67,6 +70,7 @@ export class WebsocketConnectionManager<C extends GitpodClient, S extends Gitpod
             resourceGuard = new CompositeResourceAccessGuard([
                 new OwnerResourceGuard(user.id),
                 new SharedWorkspaceAccessGuard(),
+                new WorkspaceLogAccessGuard(user, this.hostContextProvider),
             ]);
         } else {
             resourceGuard = { canAccess: async () => false };

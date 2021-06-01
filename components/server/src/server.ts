@@ -39,6 +39,7 @@ import { HostContextProvider } from './auth/host-context-provider';
 import { CodeSyncService } from './code-sync/code-sync-service';
 import { increaseHttpRequestCounter, observeHttpRequestDuration } from './prometheus-metrics';
 import { OAuthController } from './oauth-server/oauth-controller';
+import { HeadlessLogController } from './workspace/headless-log-controller';
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -55,6 +56,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(WorkspaceDownloadService) protected readonly workspaceDownloadService: WorkspaceDownloadService;
     @inject(MonitoringEndpointsApp) protected readonly monitoringEndpointsApp: MonitoringEndpointsApp;
     @inject(CodeSyncService) private readonly codeSyncService: CodeSyncService;
+    @inject(HeadlessLogController) protected readonly headlessLogController: HeadlessLogController;
 
     @inject(RabbitMQConsensusLeaderMessenger) protected readonly consensusMessenger: RabbitMQConsensusLeaderMessenger;
     @inject(ConsensusLeaderQorum) protected readonly qorum: ConsensusLeaderQorum;
@@ -255,6 +257,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         app.use('/plugins', this.pluginController.apiRouter);
         app.use('/workspace-download', this.workspaceDownloadService.apiRouter);
         app.use('/code-sync', this.codeSyncService.apiRouter);
+        app.use('/headless-logs', this.headlessLogController.apiRouter);
         app.use("/version", (req: express.Request, res: express.Response, next: express.NextFunction) => {
             res.send(this.env.version);
         });
