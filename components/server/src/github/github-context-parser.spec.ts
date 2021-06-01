@@ -438,6 +438,28 @@ class TestGithubContextParser {
             }
         )
     }
+    
+    @test public async testIssuePageContext() {
+        const result = await this.parser.handle({}, this.user, 'https://github.com/gitpod-io/gitpod-test-repo/issues');
+        expect(result).to.deep.include(
+            {
+                "title": "Test issue web-extension",
+                "repository": {
+                    "host": "github.com",
+                    "owner": "TypeFox",
+                    "name": "gitpod-test-repo",
+                    "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
+                    "private": true
+                },
+                "owner": "TypeFox",
+                "nr": 42,
+                "ref": "1test",
+                "refType": "branch",
+                "localBranch": "master"
+            }
+        )
+    }
+
 
     @test public async testIssueThroughPullRequestContext() {
         const result = await this.parser.handle({}, this.user, 'https://github.com/gitpod-io/gitpod-test-repo/pull/42');

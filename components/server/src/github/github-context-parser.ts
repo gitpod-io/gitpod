@@ -41,7 +41,10 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                         return await this.handleTreeContext({span}, user, host, owner, repoName, moreSegments.slice(1));
                     }
                     case 'issues': {
-                        return await this.handleIssueContext({span}, user, host, owner, repoName, parseInt(moreSegments[1], 10));
+                        const issueNr = parseInt(moreSegments[1], 10);
+                        if (isNaN(issueNr))
+                            break;
+                        return await this.handleIssueContext({span}, user, host, owner, repoName, issueNr);
                     }
                     case 'commit': {
                         return await this.handleCommitContext({span}, user, host, owner, repoName, moreSegments[1]);
