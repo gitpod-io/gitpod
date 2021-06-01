@@ -63,6 +63,7 @@
 
 (ssl_configuration) {
 	tls /etc/caddy/certificates/tls.crt /etc/caddy/certificates/tls.key {
+		protocols tls1.2
 		#ca_root   <pem_file>
 	}
 }
