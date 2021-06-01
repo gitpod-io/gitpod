@@ -201,8 +201,7 @@ export async function build(context, version) {
     await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
 
     if (withIntegrationTests) {
-        exec(`git config --global user.name "${context.Owner}"`);
-        exec(`werft run --follow-with-prefix="int-tests: " --remote-job-path .werft/run-integration-tests.yaml -a version=${deploymentConfig.version} -a namespace=${deploymentConfig.namespace} github`);
+        await triggerIntegrationTests(deploymentConfig)
     } else {
         werft.phase(phases.INTEGRATION_TESTS, "Integration tests");
         werft.log(phases.INTEGRATION_TESTS, "Skipped integration tests")
@@ -398,6 +397,14 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
             werft.fail('certificate', err);
         }
     }
+}
+
+/**
+ * Trigger integration tests
+ */
+export async function triggerIntegrationTests(deploymentConfig: DeploymentConfig) {
+    exec(`git config --global user.name "${context.Owner}"`);
+    exec(`werft run --follow-with-prefix="int-tests: " --remote-job-path .werft/run-integration-tests.yaml -a version=${deploymentConfig.version} -a namespace=${deploymentConfig.namespace} github`);
 }
 
 interface PreviewWorkspaceClusterRef {
