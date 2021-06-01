@@ -7,7 +7,7 @@
 import { suite, test } from "mocha-typescript"
 import * as chai from "chai"
 import { generateWorkspaceID, colors, animals } from "./generate-workspace-id";
-import { workspaceIDRegex } from "./gitpod-host-url";
+import { GitpodHostUrl } from "./gitpod-host-url";
 
 const expect = chai.expect
 
@@ -15,8 +15,8 @@ const expect = chai.expect
 
     @test public async testGenerateWorkspaceId() {
         for (let i = 0; i < 100; i++) {
-            const name = await generateWorkspaceID();
-            expect(workspaceIDRegex.test(name), name).to.be.true;
+            const id = await generateWorkspaceID();
+            expect(new GitpodHostUrl().withWorkspacePrefix(id, "eu").workspaceId).to.equal(id);
         }
     }
 

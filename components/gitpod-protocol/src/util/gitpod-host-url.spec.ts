@@ -21,5 +21,9 @@ export class GitpodHostUrlTest {
         const actual = GitpodHostUrl.fromWorkspaceUrl("https://gray-grasshopper-nfbitfia.ws-eu02.gitpod-staging.com/#passedin=test%20value/https://github.com/gitpod-io/gitpod-test-repo").workspaceId;
         expect(actual).to.equal("gray-grasshopper-nfbitfia");
     }
+
+    @test public async testWithoutWorkspacePrefix() {
+        expect(GitpodHostUrl.fromWorkspaceUrl("https://3000-moccasin-ferret-155799b3.ws-eu02.gitpod-staging.com/").withoutWorkspacePrefix().toString()).to.equal("https://gitpod-staging.com/");
+    }
 }
 module.exports = new GitpodHostUrlTest()
