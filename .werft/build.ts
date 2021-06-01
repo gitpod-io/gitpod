@@ -404,7 +404,12 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
  */
 export async function triggerIntegrationTests(deploymentConfig: DeploymentConfig) {
     exec(`git config --global user.name "${context.Owner}"`);
-    exec(`werft run --follow-with-prefix="int-tests: " --remote-job-path .werft/run-integration-tests.yaml -a version=${deploymentConfig.version} -a namespace=${deploymentConfig.namespace} github`);
+    const annotations = [
+        `version=${deploymentConfig.version}`,
+        `namespace=${deploymentConfig.namespace}`,
+        `username=${context.Owner}`,
+    ].map(annotation => `-a ${annotation}`).join(' ')
+    exec(`werft run --follow-with-prefix="int-tests: " --remote-job-path .werft/run-integration-tests.yaml ${annotations} github`);
 }
 
 interface PreviewWorkspaceClusterRef {
