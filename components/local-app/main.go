@@ -50,6 +50,7 @@ func main() {
 				EnvVars: []string{
 					"GITPOD_HOST",
 				},
+				Value: "https://gitpod.io",
 			},
 			&cli.BoolFlag{
 				Name:  "mock-keyring",
@@ -97,9 +98,19 @@ func DefaultCommand(name string) cli.ActionFunc {
 }
 
 func run(origin, sshConfig string, apiPort int, allowCORSFromPort bool) error {
+	// Trailing slash(es) result in connection issues, so remove them preemptively
+	origin = strings.TrimRight(origin, "/")
 	tkn, err := auth.GetToken(origin)
 	if errors.Is(err, keyring.ErrNotFound) {
 		tkn, err = auth.Login(context.Background(), auth.LoginOpts{GitpodURL: origin})
+		if tkn != "" {
+			err = auth.SetToken(origin, tkn)
+			if err != nil {
+				logrus.WithField("origin", origin).Warnf("could not write token to keyring: %s", err)
+				// Allow to continue
+				err = nil
+			}
+		}
 	}
 	if err != nil {
 		return err

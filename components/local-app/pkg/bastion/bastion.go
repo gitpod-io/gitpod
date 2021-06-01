@@ -529,7 +529,7 @@ func readPublicSSHKey() (key string, err error) {
 }
 
 func installSSHAuthorizedKey(ws *Workspace, key string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	term := supervisor.NewTerminalServiceClient(ws.supervisorClient)
 	tres, err := term.Open(ctx, &supervisor.OpenTerminalRequest{Workdir: "/", Shell: "/bin/sh"})
@@ -537,7 +537,7 @@ func installSSHAuthorizedKey(ws *Workspace, key string) error {
 		return err
 	}
 	//nolint:errcheck
-	term.Shutdown(ctx, &supervisor.ShutdownTerminalRequest{Alias: tres.Terminal.Alias})
+	defer term.Shutdown(ctx, &supervisor.ShutdownTerminalRequest{Alias: tres.Terminal.Alias})
 
 	_, err = term.Write(ctx, &supervisor.WriteTerminalRequest{
 		Alias: tres.Terminal.Alias,
