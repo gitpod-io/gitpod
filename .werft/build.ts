@@ -20,6 +20,11 @@ build(context, version)
         }
     });
 
+// Werft phases
+const phases = {
+    INTEGRATION_TESTS: 'integration tests'
+}
+
 export function parseVersion(context) {
     let buildConfig = context.Annotations || {};
     const explicitVersion = buildConfig.version;
@@ -199,7 +204,9 @@ export async function build(context, version) {
         exec(`git config --global user.name "${context.Owner}"`);
         exec(`werft run --follow-with-prefix="int-tests: " --remote-job-path .werft/run-integration-tests.yaml -a version=${deploymentConfig.version} -a namespace=${deploymentConfig.namespace} github`);
     } else {
-        werft.phase("integration tests", "Skipping integration tests");
+        werft.phase(phases.INTEGRATION_TESTS, "Integration tests");
+        werft.log(phases.INTEGRATION_TESTS, "Skipped integration tests")
+        werft.done(phases.INTEGRATION_TESTS);
     }
 }
 
