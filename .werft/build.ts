@@ -409,7 +409,7 @@ export async function triggerIntegrationTests(deploymentConfig: DeploymentConfig
         `namespace=${deploymentConfig.namespace}`,
         `username=${context.Owner}`,
     ].map(annotation => `-a ${annotation}`).join(' ')
-    exec(`werft run --follow-with-prefix="int-tests: " --remote-job-path .werft/run-integration-tests.yaml ${annotations} github`);
+    exec(`werft run --remote-job-path .werft/run-integration-tests.yaml ${annotations} github`);
 }
 
 interface PreviewWorkspaceClusterRef {
