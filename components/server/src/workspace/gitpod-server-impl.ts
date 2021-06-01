@@ -6,8 +6,8 @@
 
 import { BlobServiceClient } from "@gitpod/content-service/lib/blobs_grpc_pb";
 import { DownloadUrlRequest, DownloadUrlResponse, UploadUrlRequest, UploadUrlResponse } from '@gitpod/content-service/lib/blobs_pb';
-import { AppInstallationDB, UserDB, UserMessageViewsDB, WorkspaceDB, DBWithTracing, TracedWorkspaceDB, DBGitpodToken, DBUser, UserStorageResourcesDB } from '@gitpod/gitpod-db/lib';
-import { AuthProviderEntry, AuthProviderInfo, Branding, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes } from '@gitpod/gitpod-protocol';
+import { AppInstallationDB, UserDB, UserMessageViewsDB, WorkspaceDB, DBWithTracing, TracedWorkspaceDB, DBGitpodToken, DBUser, UserStorageResourcesDB, ProjectDB, TeamDB } from '@gitpod/gitpod-db/lib';
+import { AuthProviderEntry, AuthProviderInfo, Branding, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team } from '@gitpod/gitpod-protocol';
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { AdminBlockUserRequest, AdminGetListRequest, AdminGetListResult, AdminGetWorkspacesRequest, AdminModifyPermanentWorkspaceFeatureFlagRequest, AdminModifyRoleOrPermissionRequest, WorkspaceAndInstance } from '@gitpod/gitpod-protocol/lib/admin-protocol';
 import { GetLicenseInfoResult, LicenseFeature, LicenseValidationResult } from '@gitpod/gitpod-protocol/lib/license-protocol';
@@ -71,6 +71,8 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     @inject(UserDeletionService) protected readonly userDeletionService: UserDeletionService;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(AuthorizationService) protected readonly authorizationService: AuthorizationService;
+    @inject(ProjectDB) protected readonly projectDB: ProjectDB;
+    @inject(TeamDB) protected readonly teamDB: TeamDB;
 
     @inject(AppInstallationDB) protected readonly appInstallationDB: AppInstallationDB;
 
@@ -287,11 +289,11 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     /**
      * Returns the descriptions of auth providers. This also controls the visibility of
      * auth providers on the dashbard.
-     * 
+     *
      * If this call is unauthenticated (i.e. for anonumous users,) it returns only information
      * necessary for the Login page.
-     * 
-     * If there are built-in auth providers configured, only these are returned. 
+     *
+     * If there are built-in auth providers configured, only these are returned.
      */
     public async getAuthProviders(): Promise<AuthProviderInfo[]> {
         const { builtinAuthProvidersConfigured } = this.env;
@@ -1379,6 +1381,13 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         this.analytics.track({ event: "envvar-deleted", userId });
 
         await this.userDB.deleteEnvVar(envvar);
+    }
+
+    public async getTeams(): Promise<Team[]> {
+        // Note: this operation is per-user only, hence needs no resource guard
+        const user = this.checkUser("deleteEnvVar");
+
+        return this.teamDB.findTeamsByUser(user.id);
     }
 
     public async getContentBlobUploadUrl(name: string): Promise<string> {

@@ -1177,3 +1177,21 @@ export interface Terms {
     readonly content: string;
     readonly formElements?: object;
 }
+
+export interface Project {
+    id: string;
+    cloneUrl: string;
+    teamId: string;
+    appInstallationId: string;
+    creationTime: string;
+    /** This is a flag that triggers the HARD DELETION of this entity */
+    deleted?: boolean;
+}
+
+export interface Team {
+    id: string;
+    name: string;
+    creationTime: string;
+    /** This is a flag that triggers the HARD DELETION of this entity */
+    deleted?: boolean;
+}

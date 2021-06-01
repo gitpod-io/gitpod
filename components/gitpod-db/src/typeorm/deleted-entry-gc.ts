@@ -40,7 +40,13 @@ const tables: TableWithDeletion[] = [
     { deletionColumn: "deleted", name: "d_b_workspace" },
     { deletionColumn: "deleted", name: "d_b_workspace_instance" },
     { deletionColumn: "deleted", name: "d_b_token_entry" },
-    { deletionColumn: "deleted", name: "d_b_gitpod_token" }
+    { deletionColumn: "deleted", name: "d_b_gitpod_token" },
+    { deletionColumn: "deleted", name: "d_b_one_time_secret" },
+    { deletionColumn: "deleted", name: "d_b_auth_provider_entry" },
+    { deletionColumn: "deleted", name: "d_b_code_sync_resource" },
+    { deletionColumn: "deleted", name: "d_b_team" },
+    { deletionColumn: "deleted", name: "d_b_team_membership" },
+    { deletionColumn: "deleted", name: "d_b_project" }
 ];
 
 interface TableWithDeletion {

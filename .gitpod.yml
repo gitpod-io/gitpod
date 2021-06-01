@@ -38,10 +38,12 @@ tasks:
     openMode: split-right
 vscode:
   extensions:
-    - hangxingliu.vscode-nginx-conf-hint
-    - zxh404.vscode-proto3
-    - ms-kubernetes-tools.vscode-kubernetes-tools
     - bajdzis.vscode-database
-    - hashicorp.terraform
-    - stkb.rewrap
+    - EditorConfig.EditorConfig
     - golang.go
+    - hangxingliu.vscode-nginx-conf-hint
+    - hashicorp.terraform
+    - ms-azuretools.vscode-docker
+    - ms-kubernetes-tools.vscode-kubernetes-tools
+    - stkb.rewrap
+    - zxh404.vscode-proto3
