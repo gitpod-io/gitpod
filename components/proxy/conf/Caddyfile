@@ -151,18 +151,21 @@ https://{$GITPOD_DOMAIN} {
 		}
 	}
 
-	@backend path /api/*
+	@backend path /api/* /headless-logs/*
 	handle @backend {
 		gitpod.cors_origin {
 			base_domain {$GITPOD_DOMAIN}
 		}
 
-		import compression
+		# note: no compression, as that breaks streaming for headless logs
 
 		uri strip_prefix /api
 		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
 			import upstream_headers
 			import upstream_connection
+
+			# required for smooth streaming of terminal logs
+			flush_interval -1
 		}
 	}
 

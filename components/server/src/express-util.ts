@@ -139,3 +139,17 @@ export function getRequestingClientInfo(req: express.Request) {
     const fingerprint = crypto.createHash('sha256').update(`${ip}–${ua}`).digest('hex');
     return { ua, fingerprint };
 }
+
+/**
+ * Catches exceptions from an async handler and puts them back into the express handler chain.
+ * Assumes handlers take care of regular forwarding themselves.
+ *
+ * @param handler
+ * @returns
+ */
+export function asyncHandler(handler: (req: express.Request, res: express.Response, next?: express.NextFunction) => Promise<void>): express.Handler {
+    return (req: express.Request, res: express.Response, next: express.NextFunction) => {
+        handler(req, res)
+            .catch(err => next(err));
+    }
+}

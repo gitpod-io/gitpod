@@ -16,6 +16,7 @@ packages:
       - components/image-builder-api/typescript:lib
       - components/licensor/typescript:lib
       - components/ws-manager-api/typescript:lib
+      - components/supervisor-api/typescript-grpcweb:lib
     config:
       packaging: offline-mirror
       yarnLock: ${coreYarnLockBase}/yarn.lock
@@ -50,6 +51,7 @@ packages:
       - components/image-builder-api/typescript:lib
       - components/licensor/typescript:lib
       - components/ws-manager-api/typescript:lib
+      - components/supervisor-api/typescript-grpcweb:lib
       - :dbtest
     config:
       packaging: library
@@ -74,6 +76,7 @@ packages:
       - components/image-builder-api/typescript:lib
       - components/licensor/typescript:lib
       - components/ws-manager-api/typescript:lib
+      - components/supervisor-api/typescript-grpcweb:lib
     config:
       packaging: library
       yarnLock: ${coreYarnLockBase}/yarn.lock

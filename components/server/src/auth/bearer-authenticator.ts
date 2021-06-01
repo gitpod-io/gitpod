@@ -59,6 +59,17 @@ export class BearerAuth {
         }
     }
 
+    get restHandlerOptionally(): express.RequestHandler {
+        return async (req, res, next) => {
+            try {
+                await this.doAuth(req);
+            } catch (e) {
+                // don't error the request, we just have not bearer authentication token
+            }
+            return next();
+        }
+    }
+
     public get websocketHandler(): WsRequestHandler {
         return async (ws: websocket, req: express.Request, next: WsNextFunction): Promise<void> => {
             await this.doAuth(req);

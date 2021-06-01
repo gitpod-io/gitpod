@@ -5,6 +5,9 @@
  */
 
 import { GitpodToken, Snapshot, Team, TeamMemberInfo, Token, User, UserEnvVar, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { HostContextProvider } from "./host-context-provider";
+import { URL } from 'url';
+import { contextUrlToUrl } from "@gitpod/gitpod-protocol/lib/util/context-url";
 
 declare var resourceInstance: GuardedResource;
 export type GuardedResourceKind = typeof resourceInstance.kind;
@@ -19,7 +22,8 @@ export type GuardedResource =
     GuardedUserStorage |
     GuardedContentBlob |
     GuardEnvVar |
-    GuardedTeam
+    GuardedTeam |
+    GuardedWorkspaceLog
     ;
 
 const ALL_GUARDED_RESOURCE_KINDS = new Set<GuardedResourceKind>([
@@ -33,6 +37,7 @@ const ALL_GUARDED_RESOURCE_KINDS = new Set<GuardedResourceKind>([
     'contentBlob',
     'envVar',
     'team',
+    'workspaceLog'
 ]);
 export function isGuardedResourceKind(kind: any): kind is GuardedResourceKind {
     return typeof kind === 'string' && ALL_GUARDED_RESOURCE_KINDS.has(kind as GuardedResourceKind);
@@ -96,6 +101,11 @@ export interface GuardedToken {
     tokenOwnerID: string;
 }
 
+export interface GuardedWorkspaceLog {
+    kind: "workspaceLog";
+    subject: Workspace;
+}
+
 export type ResourceAccessOp =
     "create" |
     "update" |
@@ -157,6 +167,8 @@ export class OwnerResourceGuard implements ResourceAccessGuard {
                 return resource.subject.userId === this.userId;
             case "team":
                 return resource.members.some(m => m.userId === this.userId);
+            case "workspaceLog":
+                return resource.subject.ownerId === this.userId;
         }
     }
 
@@ -329,6 +341,7 @@ export namespace ScopedResourceGuard {
             case "envVar":
                 return resource.subject.repositoryPattern;
             case "team":
+            case "workspaceLog":
                 return resource.subject.id;
         }
     }
@@ -413,4 +426,34 @@ export namespace TokenResourceGuard {
         return true;
     }
 
+}
+
+export class WorkspaceLogAccessGuard implements ResourceAccessGuard {
+    constructor(
+        protected readonly user: User,
+        protected readonly hostContextProvider: HostContextProvider) {}
+
+    async canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean> {
+        if (resource.kind !== 'workspaceLog') {
+            return false;
+        }
+        // only get operations are supported
+        if (operation !== 'get') {
+            return false;
+        }
+
+        // Check if user can access repositories headless logs
+        const ws = resource.subject;
+        const url = new URL(contextUrlToUrl(ws.contextURL));
+        const hostContext = this.hostContextProvider.get(url.hostname);
+        if (!hostContext) {
+            throw new Error(`no HostContext found for hostname: ${url.hostname}`);
+        }
+
+        const svcs = hostContext.services;
+        if (!svcs) {
+            throw new Error(`no services found in HostContext for hostname: ${url.hostname}`);
+        }
+        return svcs.repositoryService.canAccessHeadlessLogs(this.user, ws.context);
+    }
 }

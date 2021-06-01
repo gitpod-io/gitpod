@@ -40,3 +40,12 @@ export interface TheiaHeadlessLogMessage {
     error?: string;
     snapshotURL?: string;
 }
+
+export interface HeadlessLogSources {
+    // A map of id to URL
+    streams: { [streamID: string]: string };
+}
+
+/** cmp. @const HEADLESS_LOG_STREAM_STATUS_CODE_REGEX */
+export const HEADLESS_LOG_STREAM_STATUS_CODE = "X-LogStream-StatusCode";
+export const HEADLESS_LOG_STREAM_STATUS_CODE_REGEX = /X-LogStream-StatusCode: ([0-9]{3})/;

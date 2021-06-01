@@ -75,6 +75,8 @@ import { newAnalyticsWriterFromEnv, IAnalyticsWriter } from '@gitpod/gitpod-prot
 import { OAuthController } from './oauth-server/oauth-controller';
 import { ImageBuildPrefixContextParser } from './workspace/imagebuild-prefix-context-parser';
 import { AdditionalContentPrefixContextParser } from './workspace/additional-content-prefix-context-parser';
+import { WorkspaceLogService } from './workspace/workspace-log-service';
+import { HeadlessLogController } from './workspace/headless-log-controller';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Env).toSelf().inSingletonScope();
@@ -117,8 +119,11 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(IClientDataPrometheusAdapter).to(ClientDataPrometheusAdapterImpl).inSingletonScope();
 
     bind(GitpodServerImpl).toSelf();
-    bind(WebsocketConnectionManager).toDynamicValue(ctx =>
-        new WebsocketConnectionManager<GitpodClient, GitpodServer>(() => ctx.container.get<GitpodServerImpl<GitpodClient, GitpodServer>>(GitpodServerImpl))
+    bind(WebsocketConnectionManager).toDynamicValue(ctx => {
+            const serverFactory = () => ctx.container.get<GitpodServerImpl<GitpodClient, GitpodServer>>(GitpodServerImpl);
+            const hostContextProvider = ctx.container.get<HostContextProvider>(HostContextProvider);
+            return new WebsocketConnectionManager<GitpodClient, GitpodServer>(serverFactory, hostContextProvider);
+        }
     ).inSingletonScope();
 
     bind(ImageBuilderClientConfig).toDynamicValue(() => {
@@ -192,4 +197,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(IAnalyticsWriter).toDynamicValue(newAnalyticsWriterFromEnv).inSingletonScope();
 
     bind(OAuthController).toSelf().inSingletonScope();
+
+    bind(WorkspaceLogService).toSelf().inSingletonScope();
+    bind(HeadlessLogController).toSelf().inSingletonScope();
 });
