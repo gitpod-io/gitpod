@@ -198,6 +198,8 @@ export async function build(context, version) {
     if (withIntegrationTests) {
         exec(`git config --global user.name "${context.Owner}"`);
         exec(`werft run --follow-with-prefix="int-tests: " --remote-job-path .werft/run-integration-tests.yaml -a version=${deploymentConfig.version} -a namespace=${deploymentConfig.namespace} github`);
+    } else {
+        werft.phase("integration tests", "Skipping integration tests");
     }
 }
 
