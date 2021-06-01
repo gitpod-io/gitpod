@@ -410,7 +410,8 @@ export async function triggerIntegrationTests(deploymentConfig: DeploymentConfig
         `namespace=${deploymentConfig.namespace}`,
         `username=${context.Owner}`,
     ].map(annotation => `-a ${annotation}`).join(' ')
-    exec(`werft run --remote-job-path .werft/run-integration-tests.yaml ${annotations} github`, {slice: phases.INTEGRATION_TESTS});
+    const job = exec(`werft run --remote-job-path .werft/run-integration-tests.yaml ${annotations} github`, {slice: phases.INTEGRATION_TESTS});
+    werft.log(phases.INTEGRATION_TESTS, `Job: ${job}`)
     werft.done(phases.INTEGRATION_TESTS);
 }
 
