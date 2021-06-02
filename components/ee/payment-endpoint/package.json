@@ -50,7 +50,7 @@
     "debug:local": "yarn debug",
     "debug-brk": "nodemon -w ./lib --inspect-brk ./lib/main.js",
     "telepresence": "leeway run .:telepresence",
-    "test": "mocha --opts mocha.opts './lib/**/*.spec.js'"
+    "test": "mocha --opts mocha.opts './**/*.spec.ts' --exclude './node_modules/**'"
   },
   "files": [
     "/lib"
