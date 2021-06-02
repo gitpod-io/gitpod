@@ -10,6 +10,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"regexp"
@@ -55,7 +56,7 @@ var credentialHelper = &cobra.Command{
 			fmt.Printf("username=%s\npassword=%s\n", user, token)
 		}()
 
-		repoURL, gitCommand := parsePstree()
+		repoURL, gitCommand := parseProcessTree()
 		host := parseHostFromStdin()
 		if len(host) == 0 {
 			log.Println("'host' is missing")
@@ -145,39 +146,70 @@ func parseHostFromStdin() string {
 	return host
 }
 
-func logDebug(v ...interface{}) {
-	if os.Getenv("CREDENTIAL_HELPER_DEBUG_LOG") == "true" {
-		log.Println(v...)
+func parseProcessTree() (repoUrl string, gitCommand string) {
+	gitCommandRegExp := regexp.MustCompile(`git(,\d+\s+|\s+)(push|clone|fetch|pull|diff)`)
+	repoUrlRegExp := regexp.MustCompile(`\sorigin\s*(https:.*\.git)\s`)
+	pid := os.Getpid()
+	for {
+		cmdLine := readProc(pid, "cmdline")
+		if cmdLine == "" {
+			return
+		}
+		cmdLineString := strings.ReplaceAll(cmdLine, string(byte(0)), " ")
+		if gitCommand == "" {
+			match := gitCommandRegExp.FindStringSubmatch(cmdLineString)
+			if len(match) == 3 {
+				gitCommand = match[2]
+			}
+		}
+		if repoUrl == "" {
+			match := repoUrlRegExp.FindStringSubmatch(cmdLineString)
+			if len(match) == 2 {
+				repoUrl = match[1]
+			}
+		}
+		if repoUrl != "" && gitCommand != "" {
+			return
+		}
+		statsString := readProc(pid, "stat")
+		if statsString == "" {
+			return
+		}
+		stats := strings.Fields(statsString)
+		if len(stats) < 3 {
+			log.Printf("Couldn't parse 3rd element from stats: '%s'", statsString)
+			return
+		}
+		ppid, err := strconv.Atoi(stats[3])
+		if err != nil {
+			log.Printf("ppid '%s' is not a number", stats[3])
+			return
+		}
+		if ppid == pid {
+			return
+		}
+		pid = ppid
 	}
 }
 
-func parsePstree() (string, string) {
-	url := ""
-	gitCommand := ""
-	cmd := exec.Command("pstree", "-sa", strconv.Itoa(os.Getpid()))
-	msg, err := cmd.CombinedOutput()
+func readProc(pid int, file string) string {
+	procFile := fmt.Sprintf("/proc/%d/%s", pid, file)
+	// read file not using os.Stat
+	// see https://github.com/prometheus/procfs/blob/5162bec877a860b5ff140b5d13db31ebb0643dd3/internal/util/readfile.go#L27
+	const maxBufferSize = 1024 * 512
+	f, err := os.Open(procFile)
 	if err != nil {
-		log.Println(err)
-	} else {
-		pstree := string(msg)
-		logDebug("debug> pstree: ")
-		logDebug(pstree)
-
-		// git command
-		re := regexp.MustCompile(`git(,\d+\s+|\s+)(push|clone|fetch|pull|diff)`)
-		match := re.FindStringSubmatch(pstree)
-		if len(match) == 3 {
-			gitCommand = match[2]
-		}
-
-		// url
-		re = regexp.MustCompile(`origin\s*(https:.*\.git)\n`)
-		match = re.FindStringSubmatch(pstree)
-		if len(match) == 2 {
-			url = match[1]
-		}
+		log.WithError(err).Printf("Error opening %s", procFile)
+		return ""
 	}
-	return url, gitCommand
+	defer f.Close()
+	reader := io.LimitReader(f, maxBufferSize)
+	buffer, err := ioutil.ReadAll(reader)
+	if err != nil {
+		log.WithError(err).Printf("Error reading %s", procFile)
+		return ""
+	}
+	return string(buffer)
 }
 
 func init() {
