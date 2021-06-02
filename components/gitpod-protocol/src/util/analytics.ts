@@ -50,7 +50,7 @@ export interface IAnalyticsWriter {
 }
 
 class SegmentAnalyticsWriter implements IAnalyticsWriter {
-    
+
     protected readonly analytics: Analytics;
 
     constructor(writeKey: string) {
@@ -60,7 +60,9 @@ class SegmentAnalyticsWriter implements IAnalyticsWriter {
         identify(msg: IdentifyMessage) {
         try {
             this.analytics.identify(msg, (err: Error) => {
-                log.warn("analytics.identify failed", err);
+                if (err) {
+                    log.warn("analytics.identify failed", err);
+                }
             });
         } catch (err) {
             log.warn("analytics.identify failed", err);
@@ -70,7 +72,9 @@ class SegmentAnalyticsWriter implements IAnalyticsWriter {
     track(msg: TrackMessage) {
         try {
             this.analytics.track(msg, (err: Error) => {
-                log.warn("analytics.track failed", err);
+                if (err) {
+                    log.warn("analytics.track failed", err);
+                }
             });
         } catch (err) {
             log.warn("analytics.track failed", err);
