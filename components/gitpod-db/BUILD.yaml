@@ -36,7 +36,7 @@ packages:
   - name: dbtest
     type: yarn
     srcs:
-      - "src/**/*.ts"
+      - "**/*.ts"
       - package.json
       - mocha.opts
     deps:
@@ -78,3 +78,13 @@ packages:
       image:
         - ${imageRepoBase}/db-migrations:${version}
         - ${imageRepoBase}/db-migrations:${__pkg_version}
+scripts:
+- name: db-test-env
+  description: "Creates a file with env vars necessary for running DB tests. The file delets itself after being sourced. Usage: '. $(leeway run components/gitpod-db:db-test-env)'"
+  deps: []
+  script: |
+    TMP="$(mktemp)"
+    echo '#!/bin/bash' > $TMP
+    echo 'export DB_ENCRYPTION_KEYS="[{\"name\":\"general\",\"version\":1,\"primary\":true,\"material\":\"5vRrp0H4oRgdkPnX1qQcS54Q0xggr6iyho42IQ1rO+c=\"}]";export DB_HOST=127.0.0.1;export DB_PORT=23306;export DB_USER=root;export DB_PASSWORD=test;' >> $TMP
+    echo "rm -f $TMP" >> $TMP
+    echo $TMP
