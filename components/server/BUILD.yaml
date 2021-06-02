@@ -48,12 +48,36 @@ packages:
       - components/image-builder-api/typescript:lib
       - components/licensor/typescript:lib
       - components/ws-manager-api/typescript:lib
+      - :dbtest
     config:
       packaging: library
       yarnLock: ${coreYarnLockBase}/yarn.lock
       tsconfig: tsconfig.json
       commands:
         test: ["yarn", "test"]
+        build: ["npx", "tsc"]
+  - name: dbtest
+    type: yarn
+    srcs:
+      - "**/*.ts"
+      - package.json
+      - mocha.opts
+    deps:
+      - components/gitpod-db:dbtest-init
+      - components/gitpod-db:lib
+      - components/content-service-api/typescript:lib
+      - components/gitpod-messagebus:lib
+      - components/ee/payment-endpoint:lib
+      - components/gitpod-protocol:lib
+      - components/image-builder-api/typescript:lib
+      - components/licensor/typescript:lib
+      - components/ws-manager-api/typescript:lib
+    config:
+      packaging: library
+      yarnLock: ${coreYarnLockBase}/yarn.lock
+      tsconfig: tsconfig.json
+      commands:
+        test: ["yarn", "db-test"]
         build: ["npx", "tsc"]
 scripts:
   - name: telepresence

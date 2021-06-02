@@ -24,6 +24,7 @@ packages:
     deps:
       - components/gitpod-db:lib
       - components/gitpod-protocol:lib
+      - :dbtest
     config:
       packaging: library
       yarnLock: ${coreYarnLockBase}/../yarn.lock
@@ -39,6 +40,23 @@ packages:
       image:
         - ${imageRepoBase}/payment-endpoint:${version}
         - ${imageRepoBase}/payment-endpoint:${__pkg_version}
+  - name: dbtest
+    type: yarn
+    srcs:
+      - "**/*.ts"
+      - package.json
+      - mocha.opts
+    deps:
+      - components/gitpod-db:dbtest-init
+      - components/gitpod-db:lib
+      - components/gitpod-protocol:lib
+    config:
+      packaging: library
+      yarnLock: ${coreYarnLockBase}/../yarn.lock
+      tsconfig: tsconfig.json
+      commands:
+        test: ["yarn", "db-test"]
+        build: ["npx", "tsc"]
 scripts:
   - name: telepresence
     script: |-
