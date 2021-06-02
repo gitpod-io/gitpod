@@ -3,6 +3,7 @@ packages:
     type: go
     srcs:
       - "**/*.go"
+      - "**/fixtures/*"
       - "go.mod"
       - "go.sum"
     deps:

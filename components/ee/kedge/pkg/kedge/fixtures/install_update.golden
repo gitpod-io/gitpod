@@ -2,36 +2,6 @@
     "services": [
         {
             "metadata": {
-                "name": "ab-ws-manager-cd",
-                "namespace": "default",
-                "creationTimestamp": null,
-                "labels": {
-                    "app": "gitpod",
-                    "component": "ws-manager",
-                    "gitpod.io/Kedge": "true",
-                    "gitpod.io/KedgeSrc": "demosrc",
-                    "kind": "service",
-                    "stage": "devstaging"
-                }
-            },
-            "spec": {
-                "ports": [
-                    {
-                        "name": "rpc",
-                        "protocol": "TCP",
-                        "port": 8080,
-                        "targetPort": 0
-                    }
-                ],
-                "type": "ClusterIP",
-                "sessionAffinity": "None"
-            },
-            "status": {
-                "loadBalancer": {}
-            }
-        },
-        {
-            "metadata": {
                 "name": "ab-messagebus-cd",
                 "namespace": "default",
                 "creationTimestamp": null,
@@ -77,9 +47,7 @@
             "status": {
                 "loadBalancer": {}
             }
-        }
-    ],
-    "endpoints": [
+        },
         {
             "metadata": {
                 "name": "ab-ws-manager-cd",
@@ -94,23 +62,24 @@
                     "stage": "devstaging"
                 }
             },
-            "subsets": [
-                {
-                    "addresses": [
-                        {
-                            "ip": "10.8.10.50"
-                        }
-                    ],
-                    "ports": [
-                        {
-                            "name": "rpc",
-                            "port": 8080,
-                            "protocol": "TCP"
-                        }
-                    ]
-                }
-            ]
-        },
+            "spec": {
+                "ports": [
+                    {
+                        "name": "rpc",
+                        "protocol": "TCP",
+                        "port": 8080,
+                        "targetPort": 0
+                    }
+                ],
+                "type": "ClusterIP",
+                "sessionAffinity": "None"
+            },
+            "status": {
+                "loadBalancer": {}
+            }
+        }
+    ],
+    "endpoints": [
         {
             "metadata": {
                 "name": "ab-messagebus-cd",
@@ -151,6 +120,37 @@
                         {
                             "name": "amqp",
                             "port": 5672,
+                            "protocol": "TCP"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "metadata": {
+                "name": "ab-ws-manager-cd",
+                "namespace": "default",
+                "creationTimestamp": null,
+                "labels": {
+                    "app": "gitpod",
+                    "component": "ws-manager",
+                    "gitpod.io/Kedge": "true",
+                    "gitpod.io/KedgeSrc": "demosrc",
+                    "kind": "service",
+                    "stage": "devstaging"
+                }
+            },
+            "subsets": [
+                {
+                    "addresses": [
+                        {
+                            "ip": "10.8.10.50"
+                        }
+                    ],
+                    "ports": [
+                        {
+                            "name": "rpc",
+                            "port": 8080,
                             "protocol": "TCP"
                         }
                     ]
