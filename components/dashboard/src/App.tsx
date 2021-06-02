@@ -41,6 +41,10 @@ function Loading() {
     </>;
 }
 
+function isGitpodIo() {
+    return window.location.hostname === 'gitpod.io' || window.location.hostname === 'gitpod-staging.com' || window.location.hostname.endsWith('gitpod-dev.com')
+}
+
 function App() {
     const { user, setUser } = useContext(UserContext);
 
@@ -90,8 +94,7 @@ function App() {
         }
     }, []);
 
-    if ((window.location.hostname === 'gitpod.io' || window.location.hostname === 'gitpod-staging.com' || window.location.hostname.endsWith('gitpod-dev.com'))
-        && window.location.pathname === '/' && window.location.hash === '' && !loading && !user) {
+    if (isGitpodIo() && window.location.pathname === '/' && window.location.hash === '' && !loading && !user) {
         window.location.href = `https://www.gitpod.io`;
         return <div></div>;
     }
@@ -174,11 +177,18 @@ function App() {
                         <p className="mt-4 text-lg text-gitpod-red">{decodeURIComponent(getURLHash())}</p>
                     </div>
                 </Route>
-                <Route path="*" /* status={404} */>
-                    <div className="mt-48 text-center">
-                        <h1 className="text-gray-500 text-3xl">404</h1>
-                        <p className="mt-4 text-lg">Page not found.</p>
-                    </div>
+                <Route path="*" render={
+                    (match) => {
+                        
+                        return isGitpodIo() ?
+                            // delegate to our website to handle the request
+                            (window.location.host = 'www.gitpod.io') :
+                                <div className="mt-48 text-center">
+                                    <h1 className="text-gray-500 text-3xl">404</h1>
+                                    <p className="mt-4 text-lg">Page not found.</p>
+                                </div>;
+                    }
+                }>
                 </Route>
             </Switch>
         </div>
