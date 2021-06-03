@@ -399,7 +399,9 @@ export async function triggerIntegrationTests(deploymentConfig: DeploymentConfig
     werft.phase(phases.INTEGRATION_TESTS, "Integration tests");
 
     if (skip) {
+        werft.log(phases.INTEGRATION_TESTS, "Skipped integration tests")
         exec(`werft log result -d "${phases.INTEGRATION_TESTS}" -c github-check-integration-tests conclusion success`);
+        werft.done(phases.INTEGRATION_TESTS);
         return
     }
 
