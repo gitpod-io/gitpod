@@ -30,7 +30,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:jk-go-install-4379.0
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-cilint-fork.0
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:
