@@ -60,7 +60,7 @@ func (dr *DockerRegistryResolver) Resolve(ctx context.Context, ref string, opts 
 
 	options := getOptions(opts)
 
-	tracing.LogKV(span, "original-ref", ref)
+	span.LogKV("original-ref", ref)
 
 	// The ref may be what Docker calls a "familiar" name, e.g. ubuntu:latest instead of docker.io/library/ubuntu:latest.
 	// To make this a valid digested form we first need to normalize that familiar name.
@@ -71,19 +71,19 @@ func (dr *DockerRegistryResolver) Resolve(ctx context.Context, ref string, opts 
 
 	// The reference is already in digest form we don't have to do anything
 	if _, ok := pref.(reference.Canonical); ok {
-		tracing.LogKV(span, "result", ref)
+		span.LogKV("result", ref)
 		return ref, nil
 	}
 
 	nref := pref.String()
-	tracing.LogKV(span, "normalized-ref", nref)
+	span.LogKV("normalized-ref", nref)
 
 	manifest, err := dr.Client.DistributionInspect(ctx, nref, options.Auth)
 	// do not wrap this error so that others can check if this IsErrNotFound (Docker SDK doesn't use Go2 error values)
 	if err != nil {
 		return "", err
 	}
-	tracing.LogEvent(span, "got manifest")
+	span.LogKV("event", "got manifest")
 
 	cres, err := reference.WithDigest(pref, manifest.Descriptor.Digest)
 	if err != nil {
@@ -91,7 +91,7 @@ func (dr *DockerRegistryResolver) Resolve(ctx context.Context, ref string, opts 
 	}
 	res = cres.String()
 
-	tracing.LogKV(span, "result", res)
+	span.LogKV("result", res)
 
 	return res, nil
 }

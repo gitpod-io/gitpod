@@ -135,16 +135,6 @@ func FromTraceID(traceID string) opentracing.SpanContext {
 	return spanCtx
 }
 
-// LogEvent logs an event in the trace.
-func LogEvent(span opentracing.Span, name string) {
-	span.LogFields(tracelog.String("event", name))
-}
-
-// LogKV is a convenience method which logs a single key-value pair to a span
-func LogKV(span opentracing.Span, key, value string) {
-	span.LogFields(tracelog.String(key, value))
-}
-
 // LogError logs an error and marks the span as errornous
 func LogError(span opentracing.Span, err error) {
 	span.LogFields(tracelog.Error(err))
@@ -168,5 +158,5 @@ func LogMessageSafe(span opentracing.Span, name string, req proto.Message) {
 		msg = string(safeReqs)
 	}
 
-	LogKV(span, name, msg)
+	span.LogKV(name, msg)
 }
