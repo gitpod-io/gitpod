@@ -399,6 +399,12 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 		return nil, status.Error(codes.Internal, "cannot delete workspace from store")
 	}
 
+	// remove workspace daemon directory in the node
+	err = os.RemoveAll(sess.ServiceLocDaemon)
+	if err != nil {
+		log.WithError(err).WithField("workspaceId", req.Id).Error("cannot delete workspace daemon directory")
+	}
+
 	return resp, nil
 }
 
