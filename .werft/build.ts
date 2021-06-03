@@ -199,14 +199,7 @@ export async function build(context, version) {
         analytics
     };
     await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
-
-    if (withIntegrationTests) {
-        await triggerIntegrationTests(deploymentConfig)
-    } else {
-        werft.phase(phases.INTEGRATION_TESTS, "Integration tests");
-        werft.log(phases.INTEGRATION_TESTS, "Skipped integration tests")
-        werft.done(phases.INTEGRATION_TESTS);
-    }
+    await triggerIntegrationTests(deploymentConfig, skip=!withIntegrationTests)
 }
 
 interface DeploymentConfig {
@@ -402,8 +395,14 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 /**
  * Trigger integration tests
  */
-export async function triggerIntegrationTests(deploymentConfig: DeploymentConfig) {
+export async function triggerIntegrationTests(deploymentConfig: DeploymentConfig, skip: boolean) {
     werft.phase(phases.INTEGRATION_TESTS, "Integration tests");
+
+    if (skip) {
+        exec(`werft log result -d "${phases.INTEGRATION_TESTS}" -c github-check-integration-tests conclusion success`);
+        return
+    }
+
     exec(`git config --global user.name "${context.Owner}"`);
     const annotations = [
         `version=${deploymentConfig.version}`,
@@ -412,7 +411,7 @@ export async function triggerIntegrationTests(deploymentConfig: DeploymentConfig
         `updateGitHubStatus=gitpod-io/gitpod`
     ].map(annotation => `-a ${annotation}`).join(' ')
     const job = exec(`werft run --remote-job-path .werft/run-integration-tests.yaml ${annotations} github`, {slice: phases.INTEGRATION_TESTS});
-    werft.log(phases.INTEGRATION_TESTS, `Job: ${job}`)
+    werft.log(phases.INTEGRATION_TESTS, `Job ID: ${job}`)
     werft.done(phases.INTEGRATION_TESTS);
 }
 
