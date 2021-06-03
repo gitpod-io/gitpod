@@ -77,9 +77,9 @@ pod:
 
       RC=${PIPESTATUS[0]}
       if [ $RC -eq 1 ]; then
-        echo '[conclusion|RESULT] {"payload":"failure","channels":["github-check-integration-test"],"description":"integration tests"}'
+        echo '[conclusion|RESULT] {"payload":"failure","channels":["github-check-integration-tests"],"description":"integration tests"}'
         echo "[int-tests|FAIL]"
       else
-        echo '[conclusion|RESULT] {"payload":"success","channels":["github-check-integration-test"],"description":"integration tests"}'
+        echo '[conclusion|RESULT] {"payload":"success","channels":["github-check-integration-tests"],"description":"integration tests"}'
         echo "[int-tests|DONE]"
       fi
