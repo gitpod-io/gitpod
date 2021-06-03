@@ -152,18 +152,18 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	if exists {
 		return nil, xerrors.Errorf("workspace %s exists already", req.Id)
 	}
-	tracing.LogEvent(span, "workspace does not exist")
+	span.LogKV("event", "workspace does not exist")
 	err = validateStartWorkspaceRequest(req)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot start workspace: %w", err)
 	}
-	tracing.LogEvent(span, "validated workspace start request")
+	span.LogKV("event", "validated workspace start request")
 	// create the objects required to start the workspace pod/service
 	startContext, err := m.newStartWorkspaceContext(ctx, req)
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create context: %w", err)
 	}
-	tracing.LogEvent(span, "created start workspace context")
+	span.LogKV("event", "created start workspace context")
 	clog.Info("starting new workspace")
 	// we must create the workspace pod first to make sure we don't clean up the services or configmap we're about to create
 	// because they're "dangling".
@@ -171,7 +171,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	if err != nil {
 		return nil, xerrors.Errorf("cannot create workspace pod: %w", err)
 	}
-	tracing.LogEvent(span, "pod description created")
+	span.LogKV("event", "pod description created")
 	err = m.Clientset.Create(ctx, pod)
 	if err != nil {
 		m, _ := json.Marshal(pod)
@@ -180,7 +180,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		clog.WithError(err).WithField("req", req).WithField("pod", safePod).Error("was unable to start workspace")
 		return nil, err
 	}
-	tracing.LogEvent(span, "pod created")
+	span.LogKV("event", "pod created")
 
 	// only regular workspaces get a service, the others are fine with just pod
 	okResponse := &api.StartWorkspaceResponse{Url: startContext.WorkspaceURL}
@@ -224,7 +224,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		// could not create Theia service
 		return nil, xerrors.Errorf("cannot create workspace's Theia service: %w", err)
 	}
-	tracing.LogEvent(span, "theia service created")
+	span.LogKV("event", "theia service created")
 
 	// if we have ports configured already, create the ports service
 	if len(req.Spec.Ports) > 0 {
@@ -239,7 +239,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 			// could not create ports service
 			return nil, xerrors.Errorf("cannot create workspace's public service: %w", err)
 		}
-		tracing.LogEvent(span, "ports service created")
+		span.LogKV("event", "ports service created")
 	}
 
 	m.metrics.OnWorkspaceStarted(req.Type)
@@ -397,7 +397,7 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 			PropagationPolicy:  &propagationPolicy,
 		},
 	)
-	tracing.LogEvent(span, "theia service deleted")
+	span.LogKV("event", "theia service deleted")
 
 	portsServiceErr := m.Clientset.Delete(ctx, &corev1.Service{
 		ObjectMeta: metav1.ObjectMeta{
@@ -410,7 +410,7 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 			PropagationPolicy:  &propagationPolicy,
 		},
 	)
-	tracing.LogEvent(span, "ports service deleted")
+	span.LogKV("event", "ports service deleted")
 
 	podErr := m.Clientset.Delete(ctx,
 		&corev1.Pod{
@@ -424,7 +424,7 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 			PropagationPolicy:  &propagationPolicy,
 		},
 	)
-	tracing.LogEvent(span, "pod deleted")
+	span.LogKV("event", "pod deleted")
 
 	if podErr != nil {
 		return xerrors.Errorf("stopWorkspace: %w", podErr)
@@ -621,7 +621,7 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 		if err != nil {
 			return nil, xerrors.Errorf("cannot create service: %w", err)
 		}
-		tracing.LogEvent(span, "port service created")
+		span.LogKV("event", "port service created")
 
 		service = *newService
 
@@ -647,7 +647,7 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 				return nil, err
 			}
 		}
-		tracing.LogEvent(span, "host available")
+		span.LogKV("event", "host available")
 
 		// we've successfully exposed the port by creating the service
 		err = notifyStatusChange()
@@ -699,7 +699,7 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 			PropagationPolicy: &propagationPolicy,
 		})
 
-		tracing.LogEvent(span, "port service deleted")
+		span.LogKV("event", "port service deleted")
 	} else {
 		// we've made it here which means we need to actually patch the service
 		service.Spec = *spec
@@ -725,7 +725,7 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 		if err != nil {
 			return nil, xerrors.Errorf("cannot update service: %w", err)
 		}
-		tracing.LogEvent(span, "port service updated")
+		span.LogKV("event", "port service updated")
 	}
 	if err != nil {
 		return nil, xerrors.Errorf("cannot control port: %w", err)
@@ -781,7 +781,7 @@ func (m *Manager) DescribeWorkspace(ctx context.Context, req *api.DescribeWorksp
 		return nil, status.Errorf(codes.Internal, "cannot get workspace status: %q", err)
 	}
 	tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
-	tracing.LogEvent(span, "get pod")
+	span.LogKV("event", "get pod")
 
 	wso, err := m.getWorkspaceObjects(ctx, pod)
 	if err != nil {

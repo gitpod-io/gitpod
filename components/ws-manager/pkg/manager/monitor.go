@@ -327,7 +327,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 		}
 
 		if !wso.IsWorkspaceHeadless() {
-			tracing.LogEvent(span, "removeTraceAnnotation")
+			span.LogKV("event", "removeTraceAnnotation")
 			// once a regular workspace is up and running, we'll remove the traceID information so that the parent span
 			// ends once the workspace has started
 			err := m.manager.markWorkspace(ctx, workspaceID, deleteMark(wsk8s.TraceIDAnnotation))
@@ -556,7 +556,7 @@ func (m *Monitor) traceWorkspace(occasion string, wso *workspaceObjects) opentra
 	if wso.Pod != nil {
 		tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&wso.Pod.ObjectMeta))
 	}
-	tracing.LogKV(span, "occasion", occasion)
+	span.LogKV("occasion", occasion)
 
 	// OpenTracing does not support creating a span from a SpanContext https://github.com/opentracing/specification/issues/81.
 	// Until that changes we just finish the span immediately after calling on-change.
@@ -584,7 +584,7 @@ func (m *Monitor) waitForWorkspaceReady(ctx context.Context, pod *corev1.Pod) (e
 		return
 	}
 
-	tracing.LogEvent(span, "probeDone")
+	span.LogKV("event", "probeDone")
 	probeResult := *r
 	if probeResult == WorkspaceProbeStopped {
 		// Workspace probe was stopped most likely because the workspace itself was stopped.
@@ -629,7 +629,7 @@ func (m *Monitor) waitForWorkspaceReady(ctx context.Context, pod *corev1.Pod) (e
 	m.initializerMapLock.Lock()
 	delete(m.initializerMap, pod.Name)
 	m.initializerMapLock.Unlock()
-	tracing.LogEvent(span, "contentInitDone")
+	span.LogKV("event", "contentInitDone")
 
 	// workspace is ready - mark it as such
 	err = m.manager.markWorkspace(ctx, workspaceID, deleteMark(workspaceNeverReadyAnnotation))
@@ -918,7 +918,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		gitStatus   *csapi.GitStatus
 	)
 	for i := 0; i < wsdaemonMaxAttempts; i++ {
-		tracing.LogKV(span, "attempt", strconv.Itoa(i))
+		span.LogKV("attempt", strconv.Itoa(i))
 		didSometing, gs, err := doFinalize()
 		if !didSometing {
 			// someone else is managing finalization process ... we don't have to bother

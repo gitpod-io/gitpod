@@ -79,25 +79,25 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 			return WorkspaceProbeStopped
 		}
 
-		tracing.LogEvent(span, "probe start")
+		span.LogKV("event", "probe start")
 		resp, err := client.Get(p.readyURL)
 
 		if err != nil {
 			urlerr, ok := err.(*url.Error)
 			if !ok || !urlerr.Timeout() {
-				tracing.LogKV(span, "response", "error")
+				span.LogKV("response", "error")
 				log.WithError(err).Debug("got a non-timeout error during workspace probe")
 				time.Sleep(p.RetryDelay)
 				continue
 			}
 
 			// we've timed out - do not log this as it would spam the logs for no good reason
-			tracing.LogKV(span, "response", "timeout")
+			span.LogKV("response", "timeout")
 			continue
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			tracing.LogKV(span, "response", fmt.Sprintf("%v", resp.StatusCode))
+			span.LogKV("response", fmt.Sprintf("%v", resp.StatusCode))
 			log.WithField("url", p.readyURL).WithField("status", resp.StatusCode).Debug("workspace did not respond to ready probe with OK status")
 			time.Sleep(p.RetryDelay)
 			continue

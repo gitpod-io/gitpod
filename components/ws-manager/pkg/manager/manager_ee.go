@@ -36,7 +36,7 @@ func (m *Manager) TakeSnapshot(ctx context.Context, req *api.TakeSnapshotRequest
 		return nil, status.Errorf(codes.Internal, "cannot get workspace status: %q", err)
 	}
 	tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
-	tracing.LogEvent(span, "get pod")
+	span.LogKV("event", "get pod")
 
 	wso, err := m.getWorkspaceObjects(ctx, pod)
 	if err != nil {
@@ -82,7 +82,7 @@ func (m *Manager) ControlAdmission(ctx context.Context, req *api.ControlAdmissio
 		return nil, status.Errorf(codes.Internal, "cannot get workspace status: %q", err)
 	}
 	tracing.ApplyOWI(span, wsk8s.GetOWIFromObject(&pod.ObjectMeta))
-	tracing.LogEvent(span, "get pod")
+	span.LogKV("event", "get pod")
 
 	wso, err := m.getWorkspaceObjects(ctx, pod)
 	if err != nil {
