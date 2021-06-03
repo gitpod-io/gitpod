@@ -519,6 +519,7 @@ export class UserController {
                 "email": User.getPrimaryEmail(user),
                 "name": User.getName(user),
                 "full_name": user.fullName,
+                "created_at": user.creationDate,
                 "unsubscribed": !user.allowsMarketingCommunication,
                 "blocked": user.blocked
             }
