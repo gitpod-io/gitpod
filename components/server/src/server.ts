@@ -42,6 +42,7 @@ import { HeadlessLogController, HEADLESS_LOGS_PATH_PREFIX, HEADLESS_LOG_DOWNLOAD
 import { NewsletterSubscriptionController } from './user/newsletter-subscription-controller';
 import { Config } from './config';
 import { DebugApp } from './debug-app';
+import { TestController, testControllerApp } from './user/test-user-controller';
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -75,11 +76,15 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(OAuthController) protected readonly oauthController: OAuthController;
     @inject(NewsletterSubscriptionController) protected readonly newsletterSubscriptionController: NewsletterSubscriptionController;
 
+    @inject(TestController) protected readonly testController: TestController;
+
     protected readonly eventEmitter = new EventEmitter();
     protected app?: express.Application;
     protected httpServer?: http.Server;
     protected monitoringApp?: express.Application;
     protected monitoringHttpServer?: http.Server;
+    protected testApp?: express.Application;
+    protected testHttpServer?: http.Server;
 
     public async init(app: express.Application) {
         log.setVersion(this.config.version);
@@ -214,6 +219,11 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // Health check + metrics endpoints
         this.monitoringApp = this.monitoringEndpointsApp.create();
 
+        // Test app + controller
+        if (this.config.testToken) {
+            this.testApp = testControllerApp(this.sessionHandlerProvider, this.testController);
+        }
+
         // Report current websocket connections
         this.installWebsocketConnectionGauge();
 
@@ -283,12 +293,19 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         }
 
         this.debugApp.start(6060);
+
+        if (this.testApp) {
+            this.testHttpServer = this.testApp.listen(9333, () => {
+                log.info(`Test server listening on port: ${(<AddressInfo>this.testHttpServer!.address()).port}`);
+            });
+        }
     }
 
     public async stop() {
         await this.debugApp.stop();
         await this.stopServer(this.monitoringHttpServer);
         await this.stopServer(this.httpServer);
+        await this.stopServer(this.testHttpServer);
         log.info('server stopped.');
     }
 

@@ -48,6 +48,7 @@
     "body-parser": "^1.18.2",
     "cookie": "^0.4.1",
     "cookie-parser": "^1.4.5",
+    "cookie-signature": "^1.1.0",
     "cors": "^2.8.4",
     "deep-equal": "^1.0.1",
     "deepmerge": "^2.2.1",

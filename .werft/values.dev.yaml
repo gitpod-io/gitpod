@@ -53,6 +53,7 @@ components:
     resources:
       # in preview envs, we want deployments to push scale-up early
       memory: 350Mi
+    testToken: "4vT7RHLEAJ6wX2rJ+31MdVCpRAco2RH66AUEXv9aJj4="
 
   registryFacade:
     daemonSet: true

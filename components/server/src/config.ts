@@ -149,6 +149,9 @@ export interface ConfigSerialized {
      */
     chargebeeProviderOptionsFile?: string;
     enablePayment?: boolean;
+
+    /** A token that allows testing of this Gitpod instance */
+    testToken?: string;
 }
 
 export namespace ConfigFile {

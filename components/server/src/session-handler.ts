@@ -9,6 +9,8 @@ import * as session from 'express-session'
 import { SessionOptions } from 'express-session'
 import * as uuidv4 from "uuid/v4"
 import { injectable, inject , postConstruct } from 'inversify';
+import * as signature from 'cookie-signature';
+import * as cookie from 'cookie';
 
 import * as MySQLStore from 'express-mysql-session';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
@@ -86,6 +88,22 @@ export class SessionHandlerProvider {
         delete options.expires;
         delete options.maxAge;
         res.clearCookie(name, options);
+    }
+
+    static generateCookieForSession(config: Config, session: Express.Session) {
+        // This replicates the behavior of https://github.com/expressjs/session/blob/85682a2a56c5bdbed8d7e7cd2cc5e1343c951af6/index.js#L644
+        const name = SessionHandlerProvider.getCookieName(config);
+        const secret = config.session.secret;
+        const signed = encodeURIComponent('s:' + signature.sign(session.id, secret));
+        const cookieOptions = (session.cookie as any).data;
+        return {
+            cookie: {
+                name,
+                value: signed,
+                ...cookieOptions
+            },
+            serialized: cookie.serialize(name, signed, cookieOptions)
+        };
     }
 
     protected createStore(): any | undefined {
