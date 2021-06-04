@@ -12,8 +12,7 @@ import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import settingsMenu from "./settings-menu";
 
 export default function Notifications() {
-    const ctx = useContext(UserContext);
-    const user = ctx.user;
+    const { user, setUser } = useContext(UserContext);
     const isTransactionalMail = !user?.additionalData?.emailNotificationSettings?.disallowTransactionalEmails;
     const toggleTransactionalMail = async ()=>{
         if (user) {
@@ -29,7 +28,7 @@ export default function Notifications() {
             await getGitpodService().server.updateLoggedInUser({
                 additionalData: user.additionalData
             });
-            ctx.setUser(user);
+            setUser(user);
         }
     };
     const isMarketingMail = !!user?.allowsMarketingCommunication;
@@ -39,7 +38,7 @@ export default function Notifications() {
             await getGitpodService().server.updateLoggedInUser({
                 allowsMarketingCommunication: user.allowsMarketingCommunication
             });
-            ctx.setUser(user);
+            setUser(user);
         }
     }
     return <div>

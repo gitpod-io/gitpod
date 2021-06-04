@@ -4,7 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { GitpodToken, Snapshot, Token, User, UserEnvVar, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { GitpodToken, Snapshot, Team, Token, User, UserEnvVar, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { DBTeamMembership } from '@gitpod/gitpod-db/lib/typeorm/entity/db-team-membership';
 
 declare var resourceInstance: GuardedResource;
 export type GuardedResourceKind = typeof resourceInstance.kind;
@@ -18,7 +19,8 @@ export type GuardedResource =
     GuardedToken |
     GuardedUserStorage |
     GuardedContentBlob |
-    GuardEnvVar
+    GuardEnvVar |
+    GuardedTeam
     ;
 
 const ALL_GUARDED_RESOURCE_KINDS = new Set<GuardedResourceKind>([
@@ -30,7 +32,8 @@ const ALL_GUARDED_RESOURCE_KINDS = new Set<GuardedResourceKind>([
     'token',
     'userStorage',
     'contentBlob',
-    'envVar'
+    'envVar',
+    'team',
 ]);
 export function isGuardedResourceKind(kind: any): kind is GuardedResourceKind {
     return typeof kind === 'string' && ALL_GUARDED_RESOURCE_KINDS.has(kind as GuardedResourceKind);
@@ -77,6 +80,12 @@ export interface GuardEnvVar {
     subject: UserEnvVar;
 }
 
+export interface GuardedTeam {
+    kind: "team";
+    subject: Team;
+    memberships: DBTeamMembership[];
+}
+
 export interface GuardedGitpodToken {
     kind: "gitpodToken";
     subject: GitpodToken;
@@ -100,7 +109,6 @@ export const ResourceAccessGuard = Symbol("ResourceAccessGuard");
 export interface ResourceAccessGuard {
     canAccess(resource: GuardedResource, operation: ResourceAccessOp): Promise<boolean>;
 }
-
 
 export interface WithResourceAccessGuard {
     resourceGuard?: ResourceAccessGuard;
@@ -148,6 +156,8 @@ export class OwnerResourceGuard implements ResourceAccessGuard {
                 return resource.workspaceOwnerID === this.userId;
             case "envVar":
                 return resource.subject.userId === this.userId;
+            case "team":
+                return resource.memberships.some(membership => membership.userId === this.userId);
         }
     }
 
@@ -319,6 +329,8 @@ export namespace ScopedResourceGuard {
                 return resource.subject ? resource.subject.id : undefined;
             case "envVar":
                 return resource.subject.repositoryPattern;
+            case "team":
+                return resource.subject.id;
         }
     }
 }

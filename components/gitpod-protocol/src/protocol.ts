@@ -1191,7 +1191,16 @@ export interface Project {
 export interface Team {
     id: string;
     name: string;
+    slug: string;
     creationTime: string;
     /** This is a flag that triggers the HARD DELETION of this entity */
     deleted?: boolean;
+}
+
+export interface TeamMemberInfo {
+    userId: string;
+    fullName?: string;
+    primaryEmail?: string;
+    avatarUrl?: string;
+    memberSince: string;
 }

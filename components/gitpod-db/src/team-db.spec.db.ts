@@ -38,10 +38,14 @@ import { DBUser } from './typeorm/entity/db-user';
     }
 
     @test(timeout(10000))
-    public async findTeamsByUser() {
+    public async createAndFindATeam() {
         const user = await this.userDb.newUser();
-        const dbResult = await this.db.findTeamsByUser(user.id);
+        let dbResult = await this.db.findTeamsByUser(user.id);
         expect(dbResult.length).to.eq(0);
+        await this.db.createTeam(user.id, 'Ground Control');
+        dbResult = await this.db.findTeamsByUser(user.id);
+        expect(dbResult.length).to.eq(1);
+        expect(dbResult[0].name).to.eq('Ground Control');
     }
 
 }

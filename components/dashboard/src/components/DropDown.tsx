@@ -38,7 +38,7 @@ function DropDown(props: DropDownProps) {
     })
     const font = "text-gray-400 dark:text-gray-500 text-sm leading-1 group hover:text-gray-600 dark:hover:text-gray-400 transition ease-in-out"
     return (
-        <ContextMenu menuEntries={enhancedEntries} width={props.contextMenuWidth}>
+        <ContextMenu menuEntries={enhancedEntries} classes={`${props.contextMenuWidth} right-0`}>
             <span className={`py-2 cursor-pointer ${font}`}>{props.prefix}{current}<Arrow up={false}/></span>
         </ContextMenu>
     );

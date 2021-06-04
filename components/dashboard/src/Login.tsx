@@ -7,6 +7,7 @@
 import { AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { UserContext } from "./user-context";
+import { TeamsContext } from "./teams/teams-context";
 import { getGitpodService } from "./service/service";
 import { iconForAuthProvider, openAuthorizeWindow, simplifyProviderName, getSafeURLRedirect } from "./provider-utils";
 import gitpod from './images/gitpod.svg';
@@ -39,10 +40,11 @@ export function hasLoggedInBefore() {
 
 export function Login() {
     const { setUser } = useContext(UserContext);
+    const { setTeams } = useContext(TeamsContext);
     const showWelcome = !hasLoggedInBefore();
 
-    const [authProviders, setAuthProviders] = useState<AuthProviderInfo[]>([]);
-    const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+    const [ authProviders, setAuthProviders ] = useState<AuthProviderInfo[]>([]);
+    const [ errorMessage, setErrorMessage ] = useState<string | undefined>(undefined);
 
     useEffect(() => {
         (async () => {
@@ -62,8 +64,12 @@ export function Login() {
 
     const updateUser = async () => {
         await getGitpodService().reconnect();
-        const user = await getGitpodService().server.getLoggedInUser();
+        const [ user, teams ] = await Promise.all([
+            getGitpodService().server.getLoggedInUser(),
+            getGitpodService().server.getTeams(),
+        ]);
         setUser(user);
+        setTeams(teams);
         markLoggedIn();
     }
 

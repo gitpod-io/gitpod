@@ -79,6 +79,8 @@ function readConfig(): RateLimiterConfig {
         "setEnvVar": { group: "default", points: 1 },
         "deleteEnvVar": { group: "default", points: 1 },
         "getTeams": { group: "default", points: 1 },
+        "getTeamMembers": { group: "default", points: 1 },
+        "createTeam": { group: "default", points: 1 },
         "getContentBlobUploadUrl": { group: "default", points: 1 },
         "getContentBlobDownloadUrl": { group: "default", points: 1 },
         "getGitpodTokens": { group: "default", points: 1 },

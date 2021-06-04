@@ -8,13 +8,16 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
 import { UserContextProvider } from './user-context';
+import { TeamsContextProvider } from './teams/teams-context';
 
 import "./index.css"
 
 ReactDOM.render(
     <React.StrictMode>
         <UserContextProvider>
-            <App />
+            <TeamsContextProvider>
+                <App />
+            </TeamsContextProvider>
         </UserContextProvider>
     </React.StrictMode>,
     document.getElementById('root')

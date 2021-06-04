@@ -17,7 +17,7 @@ export function shouldSeeWhatsNew(user: User): boolean {
 }
 
 export function WhatsNew(props: { visible: boolean, onClose: () => void }) {
-    const {user, setUser} = useContext(UserContext);
+    const { user, setUser } = useContext(UserContext);
     const internalClose = async () => {
         if (!user) {
             return;

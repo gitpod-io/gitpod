@@ -6,6 +6,7 @@
 
 import { useEffect, useState } from "react";
 import Modal from "../components/Modal";
+import TabMenuItem from "../components/TabMenuItem";
 
 export interface WsStartEntry {
     title: string
@@ -22,12 +23,6 @@ interface StartWorkspaceModalProps {
 }
 
 type Mode = 'Recent' | 'Examples';
-
-function Tab(p: { name: Mode, selection: Mode, setSelection: (selection: Mode) => any }) {
-    const selectedTab = 'text-gray-800 dark:text-gray-200 border-gray-800 dark:border-gray-400';
-    const inactiveTab = 'text-gray-400 dark:text-gray-600 hover:border-gray-400 dark:hover:border-gray-600';
-    return <div onClick={() => p.setSelection(p.name)} className={"cursor-pointer py-2 px-4 border-b-4 border-transparent transition ease-in-out " + (p.selection === p.name ? selectedTab : inactiveTab)}>{p.name}</div>
-}
 
 export function StartWorkspaceModal(p: StartWorkspaceModalProps) {
     const computeSelection = () => p.selected || (p.recent.length > 0 ? 'Recent' : 'Examples');
@@ -47,8 +42,8 @@ export function StartWorkspaceModal(p: StartWorkspaceModalProps) {
         {/* separator */}
         <div className="border-t border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 pt-2">
             <div className="flex">
-                <Tab name='Recent' setSelection={setSelection} selection={selection} />
-                <Tab name='Examples' setSelection={setSelection} selection={selection} />
+                <TabMenuItem name='Recent' selected={selection === 'Recent'} onClick={() => setSelection('Recent')} />
+                <TabMenuItem name='Examples' selected={selection === 'Examples'} onClick={() => setSelection('Examples')} />
             </div>
         </div>
         <div className="border-t border-gray-200 dark:border-gray-800 -mx-6 px-6 py-2">
