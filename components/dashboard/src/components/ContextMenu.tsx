@@ -10,7 +10,7 @@ import { Link } from 'react-router-dom';
 export interface ContextMenuProps {
     children?: React.ReactChild[] | React.ReactChild;
     menuEntries: ContextMenuEntry[];
-    width?: string;
+    classes?: string;
 }
 
 export interface ContextMenuEntry {
@@ -21,6 +21,7 @@ export interface ContextMenuEntry {
      */
     separator?: boolean;
     customFontStyle?: string;
+    customContent?: React.ReactChild;
     onClick?: (event: React.MouseEvent) => void;
     href?: string;
     link?: string;
@@ -69,11 +70,11 @@ function ContextMenu(props: ContextMenuProps) {
                 {children}
             </div>
             {expanded ?
-                <div className={`mt-2 z-50 ${props.width || 'w-48'} bg-white dark:bg-gray-900 absolute right-0 flex flex-col border border-gray-200 dark:border-gray-800 rounded-lg truncated`}>
+                <div className={`mt-2 z-50 bg-white dark:bg-gray-900 absolute flex flex-col border border-gray-200 dark:border-gray-800 rounded-lg truncated ${props.classes || 'w-48 right-0'}`}>
                     {props.menuEntries.map((e, index) => {
                         const clickable = e.href || e.onClick || e.link;
-                        const entry = <div className={`px-4 flex py-3 ${clickable ? 'hover:bg-gray-200 dark:hover:bg-gray-800' : ''} text-sm leading-1 ${e.customFontStyle || font} ${e.separator ? ' border-b border-gray-200 dark:border-gray-800' : ''}`} >
-                            <div className="truncate w-52">{e.title}</div><div className="flex-1"></div>{e.active ? <div className="pl-1 font-semibold">&#x2713;</div> : null}
+                        const entry = <div className={`px-4 flex py-3 ${clickable ? 'hover:bg-gray-200 dark:hover:bg-gray-800' : ''} text-sm leading-1 ${e.customFontStyle || font} ${e.separator ? ' border-b border-gray-200 dark:border-gray-800' : ''}`} title={e.title}>
+                            {e.customContent || <><div className="truncate w-52">{e.title}</div><div className="flex-1"></div>{e.active ? <div className="pl-1 font-semibold">&#x2713;</div> : null}</>}
                         </div>
                         const key = `entry-${menuId}-${index}-${e.title}`;
                         if (e.link) {

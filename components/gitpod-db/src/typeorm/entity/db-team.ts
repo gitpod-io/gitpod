@@ -17,6 +17,9 @@ export class DBTeam {
   name: string;
 
   @Column("varchar")
+  slug: string;
+
+  @Column("varchar")
   creationTime: string;
 
   // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.

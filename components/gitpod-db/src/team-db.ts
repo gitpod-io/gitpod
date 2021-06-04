@@ -5,8 +5,12 @@
  */
 
 import { Team } from "@gitpod/gitpod-protocol";
+import { DBTeamMembership } from "./typeorm/entity/db-team-membership";
 
 export const TeamDB = Symbol('TeamDB');
 export interface TeamDB {
+    findTeamById(teamId: string): Promise<Team | undefined>;
+    findMembershipsByTeam(teamId: string): Promise<DBTeamMembership[]>;
     findTeamsByUser(userId: string): Promise<Team[]>;
+    createTeam(userId: string, name: string): Promise<Team>;
 }

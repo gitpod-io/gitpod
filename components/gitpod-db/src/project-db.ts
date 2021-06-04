@@ -4,6 +4,9 @@
  * See License.enterprise.txt in the project root folder.
  */
 
- export const ProjectDB = Symbol('ProjectDB');
- export interface ProjectDB {
- }
+import { Project } from "@gitpod/gitpod-protocol";
+
+export const ProjectDB = Symbol('ProjectDB');
+export interface ProjectDB {
+    findProjectsByTeam(teamId: string): Promise<Project[]>;
+}

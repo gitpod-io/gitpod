@@ -64,6 +64,9 @@
     input[type=text]::placeholder, input[type=search]::placeholder, input[type=password]::placeholder {
         @apply text-gray-400 dark:text-gray-500;
     }
+    input[type=text].error, input[type=password].error, select.error {
+        @apply border-gitpod-red dark:border-gitpod-red focus:border-gitpod-red dark:focus:border-gitpod-red;
+    }
     input[disabled] {
         @apply bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500;
     }

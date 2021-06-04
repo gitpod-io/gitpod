@@ -5,17 +5,15 @@
  */
 
 import React, { Suspense, useContext, useEffect, useState } from 'react';
-import Menu from './components/Menu';
+import Menu from './Menu';
 import { BrowserRouter } from "react-router-dom";
 import { Redirect, Route, Switch } from "react-router";
 
 import { Login } from './Login';
 import { UserContext } from './user-context';
+import { TeamsContext } from './teams/teams-context';
 import { getGitpodService } from './service/service';
 import { shouldSeeWhatsNew, WhatsNew } from './WhatsNew';
-import settingsMenu from './settings/settings-menu';
-import { User } from '@gitpod/gitpod-protocol';
-import { adminMenu } from './admin/admin-menu';
 import gitpodIcon from './icons/gitpod.svg';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 
@@ -30,6 +28,9 @@ const Integrations = React.lazy(() => import(/* webpackPrefetch: true */ './sett
 const Preferences = React.lazy(() => import(/* webpackPrefetch: true */ './settings/Preferences'));
 const StartWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ './start/StartWorkspace'));
 const CreateWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ './start/CreateWorkspace'));
+const NewTeam = React.lazy(() => import(/* webpackPrefetch: true */ './teams/NewTeam'));
+const Members = React.lazy(() => import(/* webpackPrefetch: true */ './teams/Members'));
+const Projects = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Projects'));
 const InstallGitHubApp = React.lazy(() => import(/* webpackPrefetch: true */ './prebuilds/InstallGitHubApp'));
 const FromReferrer = React.lazy(() => import(/* webpackPrefetch: true */ './FromReferrer'));
 const UserSearch = React.lazy(() => import(/* webpackPrefetch: true */ './admin/UserSearch'));
@@ -42,23 +43,28 @@ function Loading() {
 }
 
 function isGitpodIo() {
-    return window.location.hostname === 'gitpod.io' || window.location.hostname === 'gitpod-staging.com' || window.location.hostname.endsWith('gitpod-dev.com')
+    return window.location.hostname === 'gitpod.io' || window.location.hostname === 'gitpod-staging.com' || window.location.hostname.endsWith('gitpod-dev.com') || window.location.hostname.endsWith('gitpod-io-dev.com')
 }
 
 function App() {
     const { user, setUser } = useContext(UserContext);
+    const { teams, setTeams } = useContext(TeamsContext);
 
-    const [loading, setLoading] = useState<boolean>(true);
-    const [isWhatsNewShown, setWhatsNewShown] = useState(false);
-    const [isSetupRequired, setSetupRequired] = useState(false);
+    const [ loading, setLoading ] = useState<boolean>(true);
+    const [ isWhatsNewShown, setWhatsNewShown ] = useState(false);
+    const [ isSetupRequired, setSetupRequired ] = useState(false);
 
     useEffect(() => {
         (async () => {
             try {
-                const usr = await getGitpodService().server.getLoggedInUser()
-                setUser(usr);
+                const [ user, teams ] = await Promise.all([
+                    getGitpodService().server.getLoggedInUser(),
+                    getGitpodService().server.getTeams(),
+                ]);
+                setUser(user);
+                setTeams(teams);
             } catch (error) {
-                console.log(error);
+                console.error(error);
                 if (error && "code" in error) {
                     if (error.code === ErrorCodes.SETUP_REQUIRED) {
                         setSetupRequired(true);
@@ -139,7 +145,7 @@ function App() {
 
     let toRender: React.ReactElement = <Route>
         <div className="container">
-            {renderMenu(user)}
+            <Menu />
             <Switch>
                 <Route path="/setup" exact component={Setup} />
                 <Route path="/workspaces" exact component={Workspaces} />
@@ -148,6 +154,7 @@ function App() {
                 <Route path="/notifications" exact component={Notifications} />
                 <Route path="/plans" exact component={Plans} />
                 <Route path="/teams" exact component={Teams} />
+                <Route path="/new-team" exact component={NewTeam} />
                 <Route path="/variables" exact component={EnvironmentVariables} />
                 <Route path="/preferences" exact component={Preferences} />
                 <Route path="/install-github-app" exact component={InstallGitHubApp} />
@@ -177,6 +184,13 @@ function App() {
                         <p className="mt-4 text-lg text-gitpod-red">{decodeURIComponent(getURLHash())}</p>
                     </div>
                 </Route>
+                {(teams || []).map(team => <Route path={`/${team.slug}`}>
+                    <Route exact path={`/${team.slug}`}>
+                        <Redirect to={`/${team.slug}/projects`} />
+                    </Route>
+                    <Route exact path={`/${team.slug}/members`} component={Members} />
+                    <Route exact path={`/${team.slug}/projects`} component={Projects} />
+                </Route>)}
                 <Route path="*" render={
                     (match) => {
 
@@ -187,8 +201,7 @@ function App() {
                                     <h1 className="text-gray-500 text-3xl">404</h1>
                                     <p className="mt-4 text-lg">Page not found.</p>
                                 </div>;
-                    }
-                }>
+                }}>
                 </Route>
             </Switch>
         </div>
@@ -216,43 +229,6 @@ function App() {
 
 function getURLHash() {
     return window.location.hash.replace(/^[#/]+/, '');
-}
-
-const renderMenu = (user?: User) => {
-    const left = [
-        {
-            title: 'Workspaces',
-            link: '/workspaces',
-            alternatives: ['/']
-        },
-        {
-            title: 'Settings',
-            link: '/settings',
-            alternatives: settingsMenu.flatMap(e => e.link)
-        }
-    ];
-
-    if (user && user?.rolesOrPermissions?.includes('admin')) {
-        left.push({
-            title: 'Admin',
-            link: '/admin',
-            alternatives: adminMenu.flatMap(e => e.link)
-        });
-    }
-
-    return <Menu
-        left={left}
-        right={[
-            {
-                title: 'Docs',
-                link: 'https://www.gitpod.io/docs/',
-            },
-            {
-                title: 'Community',
-                link: 'https://community.gitpod.io/',
-            }
-        ]}
-    />;
 }
 
 export default App;
