@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM gitpod/workspace-full-vnc
+FROM gitpod/workspace-full-vnc:latest
 
 ENV TRIGGER_REBUILD 11
 
