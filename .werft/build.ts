@@ -411,7 +411,8 @@ export async function triggerIntegrationTests(deploymentConfig: DeploymentConfig
     const annotations = [
         `version=${deploymentConfig.version}`,
         `namespace=${deploymentConfig.namespace}`,
-        `username=${context.Owner}`
+        `username=${context.Owner}`,
+        `updateGitHubStatus=gitpod-io/gitpod`
     ].map(annotation => `-a ${annotation}`).join(' ')
     const jobId = exec(`werft run --remote-job-path .werft/run-integration-tests.yaml ${annotations} github`, {slice: phases.INTEGRATION_TESTS}).trim();
     werft.log(phases.INTEGRATION_TESTS, `Triggered job ${jobId} - https://werft.gitpod-dev.com/job/${jobId}/logs`)
