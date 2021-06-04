@@ -69,7 +69,6 @@ func (srv *MuxTerminalService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint 
 // Open opens a new terminal running the shell
 func (srv *MuxTerminalService) Open(ctx context.Context, req *api.OpenTerminalRequest) (*api.OpenTerminalResponse, error) {
 	return srv.OpenWithOptions(ctx, req, TermOptions{
-		ReadTimeout: 5 * time.Second,
 		Annotations: req.Annotations,
 	})
 }
@@ -215,8 +214,7 @@ func (srv *MuxTerminalService) Listen(req *api.ListenTerminalRequest, resp api.T
 	if !ok {
 		return status.Error(codes.NotFound, "terminal not found")
 	}
-	stdout := term.Stdout.Listen()
-	defer stdout.Close()
+	stdout := term.Stdout.Reader()
 
 	log.WithField("alias", req.Alias).Info("new terminal client")
 	defer log.WithField("alias", req.Alias).Info("terminal client left")
