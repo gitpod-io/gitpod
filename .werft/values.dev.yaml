@@ -35,6 +35,7 @@ components:
     blockNewUsers: true
     blockNewUsersPasslist:
     - "gitpod.io"
+    testToken: "4vT7RHLEAJ6wX2rJ+31MdVCpRAco2RH66AUEXv9aJj4="
 
   registryFacade:
     daemonSet: true

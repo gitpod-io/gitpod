@@ -44,6 +44,8 @@
     "base-64": "^0.1.0",
     "bitbucket": "^2.4.2",
     "body-parser": "^1.18.2",
+    "cookie": "^0.4.1",
+    "cookie-signature": "^1.1.0",
     "cors": "^2.8.4",
     "deep-equal": "^1.0.1",
     "deepmerge": "^2.2.1",

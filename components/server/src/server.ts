@@ -39,6 +39,7 @@ import { HostContextProvider } from './auth/host-context-provider';
 import { CodeSyncService } from './code-sync/code-sync-service';
 import { increaseHttpRequestCounter, observeHttpRequestDuration } from './prometheus-metrics';
 import { OAuthController } from './oauth-server/oauth-controller';
+import { TestController, testControllerApp } from './user/test-user-controller';
 
 @injectable()
 export class Server<C extends GitpodClient, S extends GitpodServer> {
@@ -69,11 +70,15 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
     @inject(HostContextProvider) protected readonly hostCtxProvider: HostContextProvider;
     @inject(OAuthController) protected readonly oauthController: OAuthController;
 
+    @inject(TestController) protected readonly testController: TestController;
+
     protected readonly eventEmitter = new EventEmitter();
     protected app?: express.Application;
     protected httpServer?: http.Server;
     protected monApp?: express.Application;
     protected monHttpServer?: http.Server;
+    protected testApp?: express.Application;
+    protected testHttpServer?: http.Server;
 
     public async init(app: express.Application) {
         log.info('Initializing');
@@ -210,6 +215,11 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // Health check + metrics endpoints
         this.monApp = this.monitoringEndpointsApp.create();
 
+        // Test app + controller
+        if (this.env.testToken) {
+            this.testApp = testControllerApp(this.sessionHandlerProvider, this.testController);
+        }
+
         // Report current websocket connections
         this.installWebsocketConnectionGauge();
 
@@ -277,9 +287,15 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                 log.info(`Monitoring server listening on port: ${(<AddressInfo>this.monHttpServer!.address()).port}`);
             });
         }
+        if (this.testApp) {
+            this.testHttpServer = this.testApp.listen(9333, () => {
+                log.info(`Test server listening on port: ${(<AddressInfo>this.testHttpServer!.address()).port}`);
+            });
+        }
     }
 
     public async stop() {
+        await this.stopServer(this.testHttpServer);
         await this.stopServer(this.monHttpServer);
         await this.stopServer(this.httpServer);
         log.info('Stopped');
