@@ -21,6 +21,9 @@ export class DBTeamMembership {
   @Index("ind_userId")
   userId: string;
 
+  @Column("varchar")
+  creationTime: string;
+
   // This column triggers the db-sync deletion mechanism. It's not intended for public consumption.
   @Column()
   deleted: boolean;
