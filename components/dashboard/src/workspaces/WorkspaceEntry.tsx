@@ -86,19 +86,19 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
                 <WorkspaceStatusIndicator instance={desc?.latestInstance} />
             </div>
             <div className="flex flex-col w-3/12">
-                <a href={startUrl.toString()}><div className="font-medium text-gray-800 dark:text-gray-100 truncate hover:text-blue-600 dark:hover:text-blue-400">{ws.id}</div></a>
-                <a href={project ? 'https://' + project : undefined}><div className="text-sm overflow-ellipsis truncate text-gray-400 hover:text-blue-600 dark:hover:text-blue-400">{project || 'Unknown'}</div></a>
+                <a href={startUrl.toString()}><div className="font-medium text-gray-800 dark:text-gray-200 truncate hover:text-blue-600 dark:hover:text-blue-400">{ws.id}</div></a>
+                <a href={project ? 'https://' + project : undefined}><div className="text-sm overflow-ellipsis truncate text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400">{project || 'Unknown'}</div></a>
             </div>
             <div className="flex w-4/12 truncate overflow-ellipsis">
                 <div className="flex flex-col">
-                    <div className="text-gray-500 overflow-ellipsis truncate">{ws.description}</div>
+                    <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">{ws.description}</div>
                     <a href={ws.contextURL}>
-                        <div className="text-sm text-gray-400 overflow-ellipsis truncate hover:text-blue-600 dark:hover:text-blue-400">{ws.contextURL}</div>
+                        <div className="text-sm text-gray-400 dark:text-gray-500 overflow-ellipsis truncate hover:text-blue-600 dark:hover:text-blue-400">{ws.contextURL}</div>
                     </a>
                 </div>
             </div>
             <div className="flex flex-col items-start w-2/12">
-                <div className="text-gray-500 truncate">{currentBranch}</div>
+                <div className="text-gray-500 dark:text-gray-400 truncate">{currentBranch}</div>
                 <PendingChangesDropdown workspaceInstance={desc.latestInstance} />
             </div>
             <div className="flex w-2/12 self-center">
