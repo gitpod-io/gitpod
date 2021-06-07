@@ -238,8 +238,8 @@ function GitProviders() {
                 title="Disconnect Provider"
                 areYouSureText="Are you sure you want to disconnect the following provider?"
                 children={{
-                    line1: disconnectModal.provider.authProviderType,
-                    line2: disconnectModal.provider.host,
+                    name: disconnectModal.provider.authProviderType,
+                    description: disconnectModal.provider.host,
                 }}
                 buttonText="Disconnect Provider"
                 onClose={() => setDisconnectModal(undefined)}
@@ -367,8 +367,8 @@ function GitIntegrations() {
                 title="Remove Integration"
                 areYouSureText="Are you sure you want to remove the following git integration?"
                 children={{
-                    line1: modal.provider.type,
-                    line2: modal.provider.host,
+                    name: modal.provider.type,
+                    description: modal.provider.host,
                 }}
                 buttonText="Delete Workspace"
                 onClose={() => setModal(undefined)}
@@ -415,7 +415,7 @@ function GitIntegrations() {
                         <span className="my-auto truncate text-gray-500 overflow-ellipsis">{ap.host}</span>
                     </div>
                     <div className="my-auto flex w-1/12 mr-4 opacity-0 group-hover:opacity-100 justify-end">
-                        <div className="self-center hover:bg-gray-200 dark:dark:bg-gray-800 rounded-md cursor-pointer w-8">
+                        <div className="self-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer w-8">
                             <ContextMenu menuEntries={gitProviderMenu(ap)}>
                                 <svg className="w-8 h-8 p-1 text-gray-600 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Actions</title><g fill="currentColor" transform="rotate(90 12 12)"><circle cx="1" cy="1" r="2" transform="translate(5 11)" /><circle cx="1" cy="1" r="2" transform="translate(11 11)" /><circle cx="1" cy="1" r="2" transform="translate(17 11)" /></g></svg>
                             </ContextMenu>

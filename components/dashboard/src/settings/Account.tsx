@@ -28,7 +28,7 @@ export default function Account() {
     const close = () => setModal(false);
     return <div>
         <ConfirmationModal
-            title="Delete Accont"
+            title="Delete Account"
             areYouSureText="You are about to permanently delete your account."
             buttonText="Delete Account"
             buttonDisabled={typedEmail !== primaryEmail}
