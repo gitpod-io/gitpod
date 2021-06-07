@@ -6,6 +6,7 @@ package log
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
@@ -42,6 +43,23 @@ type ServiceContext struct {
 // Log is the application wide console logger
 var Log = log.WithFields(log.Fields{})
 
+// setup default log level for components without initial invocation of log.Init.
+func init() {
+	logLevelFromEnv()
+}
+
+func logLevelFromEnv() {
+	level := os.Getenv("LOG_LEVEL")
+	if level == "" {
+		return
+	}
+
+	newLevel, err := logrus.ParseLevel(level)
+	if err == nil {
+		Log.Logger.SetLevel(newLevel)
+	}
+}
+
 // Init initializes/configures the application-wide logger
 func Init(service, version string, json, verbose bool) {
 	Log = log.WithFields(log.Fields{
@@ -49,7 +67,7 @@ func Init(service, version string, json, verbose bool) {
 	})
 
 	if json {
-		log.SetFormatter(&gcpFormatter{
+		Log.Logger.SetFormatter(&gcpFormatter{
 			log.JSONFormatter{
 				FieldMap: log.FieldMap{
 					log.FieldKeyMsg: "message",
@@ -57,12 +75,14 @@ func Init(service, version string, json, verbose bool) {
 			},
 		})
 	} else {
-		log.SetFormatter(&logrus.TextFormatter{})
+		Log.Logger.SetFormatter(&logrus.TextFormatter{})
 	}
+
+	// update default log level
+	logLevelFromEnv()
+
 	if verbose {
-		log.SetLevel(log.DebugLevel)
-	} else {
-		log.SetLevel(log.InfoLevel)
+		Log.Logger.SetLevel(log.DebugLevel)
 	}
 }
 

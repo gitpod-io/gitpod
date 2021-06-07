@@ -38,6 +38,9 @@ func Handler() *http.ServeMux {
 	mux.HandleFunc(Path+"profile", pprof.Profile)
 	mux.HandleFunc(Path+"symbol", pprof.Symbol)
 	mux.HandleFunc(Path+"trace", pprof.Trace)
+
+	mux.HandleFunc("/debug/logging", log.LevelHandler)
+
 	return mux
 }
 

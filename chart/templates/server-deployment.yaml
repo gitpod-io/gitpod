@@ -137,8 +137,6 @@ spec:
 {{- end }}
         - name: GITPOD_DEFINITELY_GP_DISABLED
           value: "{{ $comp.definitelyGpDisabled | default "false" }}"
-        - name: LOG_LEVEL
-          value: "trace"
         - name: NODE_ENV
           value: "{{ .Values.installation.stage }}"
         - name: SERVER_VERSION
