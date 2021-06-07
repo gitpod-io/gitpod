@@ -10,8 +10,8 @@ import CaretDown from "../icons/CaretDown.svg";
 
 export default function PendingChangesDropdown(props: { workspaceInstance?: WorkspaceInstance }) {
   const repo = props.workspaceInstance?.status?.repo;
-  const headingStyle = 'text-gray-500 text-left';
-  const itemStyle = 'text-gray-400 text-left -mt-5';
+  const headingStyle = 'text-gray-500 dark:text-gray-400 text-left';
+  const itemStyle = 'text-gray-400 dark:text-gray-500 text-left -mt-5';
   const menuEntries: ContextMenuEntry[] = [];
   let totalChanges = 0;
   if (repo) {
@@ -32,7 +32,7 @@ export default function PendingChangesDropdown(props: { workspaceInstance?: Work
     }
   }
   if (totalChanges <= 0) {
-    return <p>No Changes</p>;
+    return <div className="text-sm text-gray-400 dark:text-gray-500">No Changes</div>;
   }
   return <ContextMenu menuEntries={menuEntries} width="w-64 max-h-48 overflow-scroll mx-auto left-0 right-0">
     <p className="flex justify-center text-gitpod-red">
