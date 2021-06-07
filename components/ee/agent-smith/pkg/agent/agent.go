@@ -527,6 +527,8 @@ type Execve struct {
 	Envp     []string
 }
 
+// todo(fntlnz): move this to a package for parsers and write a test
+// todo(fntlnz): finish parsing arguments
 func parseExecveExit(evtHdr EventHeader, buffer []byte) *Execve {
 	var i int16
 	dataOffsetPtr := unsafe.Sizeof(evtHdr) + unsafe.Sizeof(i)*uintptr(evtHdr.NParams) - 6 // todo(fntlnz): check why this -6 is necessary
