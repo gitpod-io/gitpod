@@ -1,0 +1,45 @@
+const:
+  falcoLibsVersion: 5c0b863ddade7a45568c0ac97d037422c9efb750
+packages:
+  - name: app
+    type: go
+    srcs:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+    deps:
+      - components/common-go:lib
+      - components/gitpod-protocol/go:lib
+      - :falco-bpf-probe
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    config:
+      packaging: app
+  - name: falco-bpf-probe
+    type: generic
+    config:
+      commands:
+        - [
+            "curl",
+            "-L",
+            "-o",
+            "probe.o",
+            "https://download.falco.org/driver/${falcoLibsVersion}/falco_ubuntu-generic_5.4.0-1033-gke_35.o",
+          ]
+  - name: docker
+    type: docker
+    deps:
+      - :app
+      - :falco-bpf-probe
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      image:
+        - ${imageRepoBase}/agent-smith:${version}
+scripts:
+  - name: prepare-environment
+    script: scripts/prepare-bpf-dev-environment.sh
+  - name: qemu
+    script: scripts/qemu.sh

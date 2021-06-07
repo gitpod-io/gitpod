@@ -1,0 +1,208 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "$ref": "#/definitions/config",
+  "title": "agent-smith config schema - generated using agent-smith config-schema",
+  "definitions": {
+    "": {
+      "required": [
+        "threshold",
+        "averageOverMinutes"
+      ],
+      "properties": {
+        "threshold": {
+          "type": "number"
+        },
+        "averageOverMinutes": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Blacklists": {
+      "properties": {
+        "barely": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/PerLevelBlacklist"
+        },
+        "audit": {
+          "$ref": "#/definitions/PerLevelBlacklist"
+        },
+        "very": {
+          "$ref": "#/definitions/PerLevelBlacklist"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "EgressTraffic": {
+      "required": [
+        "dt",
+        "excessive",
+        "veryExcessive"
+      ],
+      "properties": {
+        "dt": {
+          "type": "integer"
+        },
+        "excessive": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/PerLevelEgressTraffic"
+        },
+        "veryExcessive": {
+          "$ref": "#/definitions/PerLevelEgressTraffic"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "PerLevelBlacklist": {
+      "properties": {
+        "binaries": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "signatures": {
+          "items": {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "$ref": "#/definitions/Signature"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "PerLevelEgressTraffic": {
+      "required": [
+        "baseBudget",
+        "perDtThreshold"
+      ],
+      "properties": {
+        "baseBudget": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/Quantity"
+        },
+        "perDtThreshold": {
+          "$ref": "#/definitions/Quantity"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Quantity": {
+      "properties": {},
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Signature": {
+      "required": [
+        "pattern",
+        "regexp"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "domain": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "pattern": {
+          "type": "string",
+          "media": {
+            "binaryEncoding": "base64"
+          }
+        },
+        "regexp": {
+          "type": "boolean"
+        },
+        "slice": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/Slice"
+        },
+        "filenames": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "Slice": {
+      "properties": {
+        "start": {
+          "type": "integer"
+        },
+        "end": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    },
+    "config": {
+      "properties": {
+        "namespace": {
+          "type": "string"
+        },
+        "pprofAddr": {
+          "type": "string"
+        },
+        "prometheusAddr": {
+          "type": "string"
+        },
+        "blacklists": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/Blacklists"
+        },
+        "egressTraffic": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/EgressTraffic"
+        },
+        "excessiveCPUCheck": {
+          "$schema": "http://json-schema.org/draft-04/schema#",
+          "$ref": "#/definitions/"
+        },
+        "periodicCheck": {
+          "type": "integer"
+        },
+        "podPolicingRetryInterval": {
+          "type": "integer"
+        },
+        "podPolicingMaxRetries": {
+          "type": "integer"
+        },
+        "podPolicingTimeout": {
+          "type": "integer"
+        },
+        "longCheckLag": {
+          "type": "integer"
+        },
+        "slackWebhooks": {
+          "$ref": "#/definitions/"
+        },
+        "enforcement": {
+          "$ref": "#/definitions/"
+        },
+        "systemMemoryLimitMib": {
+          "type": "integer"
+        },
+        "hostURL": {
+          "type": "string"
+        },
+        "gitpodAPIToken": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
+    }
+  }
+}
