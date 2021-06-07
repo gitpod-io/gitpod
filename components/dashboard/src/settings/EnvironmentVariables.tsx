@@ -11,6 +11,7 @@ import Modal from "../components/Modal";
 import { getGitpodService } from "../service/service";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import settingsMenu from "./settings-menu";
+import ConfirmationModal from "../components/ConfirmationModal";
 
 interface EnvVarModalProps {
     envVar: UserEnvVarValue;
@@ -80,10 +81,14 @@ function AddEnvVarModal(p: EnvVarModalProps) {
 }
 
 function DeleteEnvVarModal(p: { variable: UserEnvVarValue, deleteVariable: () => void, onClose: () => void }) {
-    return <Modal visible={true} onClose={p.onClose}>
-        <h3 className="mb-4">Delete Variable?</h3>
-        <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">
-            <div className="grid grid-cols-2 gap-4 px-3 text-sm text-gray-400">
+    return <ConfirmationModal
+        title="Delete Variable"
+        areYouSureText="Are you sure you want to delete this variable?"
+        buttonText="Delete Variable"
+        onClose={p.onClose}
+        onConfirm={() => { p.deleteVariable(); p.onClose(); }}
+    >
+        <div className="grid grid-cols-2 gap-4 px-3 text-sm text-gray-400">
                 <span className="truncate">Name</span>
                 <span className="truncate">Scope</span>
             </div>
@@ -91,12 +96,7 @@ function DeleteEnvVarModal(p: { variable: UserEnvVarValue, deleteVariable: () =>
                 <span className="truncate text-gray-900 dark:text-gray-50">{p.variable.name}</span>
                 <span className="truncate text-sm">{p.variable.repositoryPattern}</span>
             </div>
-        </div>
-        <div className="flex justify-end mt-6">
-            <button className="secondary" onClick={p.onClose}>Cancel</button>
-            <button className="ml-2 danger" onClick={() => { p.deleteVariable(); p.onClose(); }} >Delete Variable</button>
-        </div>
-    </Modal>;
+    </ConfirmationModal>;
 }
 
 function sortEnvVars(a: UserEnvVarValue, b: UserEnvVarValue) {
