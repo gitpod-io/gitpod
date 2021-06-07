@@ -9,7 +9,7 @@ ENV TRIGGER_REBUILD 11
 USER root
 
 ### QEMU (x86) and workspace kernel development tools
-RUN install-packages qemu qemu-system-x86 linux-image-$(uname -r) libguestfs-tools
+RUN install-packages qemu qemu-system-x86 linux-image-$(uname -r) libguestfs-tools sshpass
 
 ### Clang and LLVM
 RUN install-packages clang-7 llvm-7
@@ -44,7 +44,7 @@ RUN curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key a
     && kubectl completion bash > /usr/share/bash-completion/completions/kubectl
 
 RUN curl -fsSL -o /usr/bin/kubectx https://raw.githubusercontent.com/ahmetb/kubectx/master/kubectx && chmod +x /usr/bin/kubectx \
- && curl -fsSL -o /usr/bin/kubens  https://raw.githubusercontent.com/ahmetb/kubectx/master/kubens  && chmod +x /usr/bin/kubens
+    && curl -fsSL -o /usr/bin/kubens  https://raw.githubusercontent.com/ahmetb/kubectx/master/kubens  && chmod +x /usr/bin/kubens
 
 RUN curl -fsSL https://go.kubebuilder.io/dl/2.3.2/linux/amd64 | tar -xz -C /tmp/ \
     && sudo mkdir -p /usr/local/kubebuilder \
@@ -92,11 +92,11 @@ RUN curl -fsSL https://packagecloud.io/datawireio/telepresence/gpgkey | apt-key 
     && add-apt-repository -yu "deb https://packagecloud.io/datawireio/telepresence/ubuntu/ bionic main" \
     # 0.95 (current at the time of this commit) is broken
     && install-packages \
-        iproute2 \
-        iptables \
-        net-tools \
-        socat \
-        telepresence=0.109
+    iproute2 \
+    iptables \
+    net-tools \
+    socat \
+    telepresence=0.109
 
 ### Toxiproxy CLI
 RUN curl -fsSL -o /usr/bin/toxiproxy https://github.com/Shopify/toxiproxy/releases/download/v2.1.4/toxiproxy-cli-linux-amd64 \
@@ -113,8 +113,8 @@ USER gitpod
 # Fix node version we develop against
 ARG GITPOD_NODE_VERSION=12.22.1
 RUN bash -c ". .nvm/nvm.sh \
-        && nvm install $GITPOD_NODE_VERSION \
-        && npm install -g typescript yarn"
+    && nvm install $GITPOD_NODE_VERSION \
+    && npm install -g typescript yarn"
 ENV PATH=/home/gitpod/.nvm/versions/node/v${GITPOD_NODE_VERSION}/bin:$PATH
 
 # Go
@@ -145,9 +145,9 @@ RUN sudo chown gitpod: /opt \
 
 # Install tools for gsutil
 RUN sudo install-packages \
-        gcc \
-        python-dev \
-        python-setuptools
+    gcc \
+    python-dev \
+    python-setuptools
 
 RUN bash -c "pip uninstall crcmod; pip install --no-cache-dir -U crcmod"
 

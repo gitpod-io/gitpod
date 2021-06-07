@@ -1,17 +1,31 @@
 # Agent Smith 🕵️‍♂️
 
-TODO: write intro section
+Agent smith is the component that takes care of policing workspaces
+against threats and noisy neighbours to make sure that everyone gets a safe and
+smooth Gitpod experience.
 
-TODO: write architectural section
+Agent smith makes use of eBPF to audit kernel events. In particular, it uses
+the [Falco BPF driver](https://github.com/falcosecurity/libs/tree/master/driver/bpf)
+as its BPF program to extract syscall information at runtime.
+
+
+## State of the project
+
+- [x] Loading of the Falco BPF probe using `cilium/ebpf`
+- [x] Support for execve
+- [ ] Parsing arguments for the syscalls we support
+- [ ] Support for clone, vfork, fork, connect
+- [ ] Glue together the data extracted from the syscalls perf loop with the Infringements
+- [ ] Hook to Kubernetes and Gitpod WSS for blocking users/workspaces/pods
 
 ## eBPF development inside the Gitpod workspace
 
-TODO: change this to leeway run components/agent-smith:prepare-environment
+
+### Environment preparation
 Prepare the environment (it should've been already prepared when you started your Gitpod wrokspace)
 
 ```bash
-cd components/agent-smith
-./scripts/prepare-bpf-dev-environment.sh
+leeway run components/ee/agent-smith:prepare-environment
 ```
 
 Start the VM, if it was not started with your Gitpod workspace.
@@ -19,31 +33,20 @@ Start the VM, if it was not started with your Gitpod workspace.
 (username: root, password: root)
 
 ```bash
-cd components/agent-smith
-./scripts/qemu.sh
+leeway run components/ee/agent-smith:qemu
 ```
+
+### Build and execute
 
 Build agent-smith and copy it in the VM
 
-TODO: change the chart path when we do an agent-smith chart.
+TODO: write this section
 
-```
-go build .
-scp -P 2222 agent-smith root@127.0.0.1:/root/agent-smith
-scp -P 2222 /workspace/gitpod/charts/gitpod_io/config/agent-smith/config.json  root@127.0.0.1:/root/config.json
-```
+## Falco libs BPF probe development
 
-
-Start agent-smith in the VM
-
-```
-ssh -p 2222 root@127.0.0.1 /tmp/agent-smith run --config /root/config.json
-```
-
-You can now SSH into the VM and test infringements to see how agent-smith reacts
-
-
-Build the BPF probe (only needed if the downloaded one is not enough, i.e: doing some development or debugging)
+In case you need to do development of new features or fix bugs against the
+probe and downloading it is not a viable option, you can always build it manually
+as follows.
 
 ```
 sudo apt install clang-7 llvm-7 -y
@@ -57,14 +60,4 @@ cd ..
 cd driver/bpf
 make CLANG=clang-7 LLC=llc-7 -j16
 scp -P 2222 probe.o root@127.0.0.1:/root/probe.o
-```
-
-
-
-
-# Scratchpad
-
-```
-leeway build components/agent-smith:falco-bpf-probe --serve 0.0.0.0:8081
-ssh -p 2222 root@127.0.0.1  curl -L -o /root/probe.o http://10.0.2.2:8081/probe.o
 ```
