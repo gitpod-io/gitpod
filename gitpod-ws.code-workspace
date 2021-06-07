@@ -1,13 +1,14 @@
 {
    "folders": [
       { "path": "." },
-      { "path": "components/gitpod-protocol" },
       { "path": "components/blobserve" },
       { "path": "components/common-go" },
       { "path": "components/content-service" },
       { "path": "components/docker-up" },
+      { "path": "components/ee/agent-smith" },
       { "path": "components/ee/ws-scheduler" },
       { "path": "components/gitpod-cli" },
+      { "path": "components/gitpod-protocol" },
       { "path": "components/image-builder" },
       { "path": "components/licensor" },
       { "path": "components/local-app" },
