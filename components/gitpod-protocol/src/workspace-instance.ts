@@ -83,7 +83,7 @@ export interface WorkspaceInstanceStatus {
 // WorkspaceInstancePhase describes a high-level state of a workspace instance
 export type WorkspaceInstancePhase =
     // unknown indicates an issue within the system in that it cannot determine the actual phase of
-	// a workspace. This phase is usually accompanied by an error.
+    // a workspace. This phase is usually accompanied by an error.
     "unknown" |
 
     // Preparing means that we haven't actually started the workspace instance just yet, but rather
@@ -91,21 +91,21 @@ export type WorkspaceInstancePhase =
     "preparing" |
 
     // Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
-	// some space within the cluster. If for example the cluster needs to scale up to accomodate the
-	// workspace, the workspace will be in Pending state until that happened.
+    // some space within the cluster. If for example the cluster needs to scale up to accomodate the
+    // workspace, the workspace will be in Pending state until that happened.
     "pending" |
 
     // Creating means the workspace is currently being created. Thati includes downloading the images required
-	// to run the workspace over the network. The time spent in this phase varies widely and depends on the current
-	// network speed, image size and cache states.
+    // to run the workspace over the network. The time spent in this phase varies widely and depends on the current
+    // network speed, image size and cache states.
     "creating" |
 
     // Initializing is the phase in which the workspace is executing the appropriate workspace initializer (e.g. Git
-	// clone or backup download). After this phase one can expect the workspace to either be Running or Failed.
+    // clone or backup download). After this phase one can expect the workspace to either be Running or Failed.
     "initializing" |
 
     // Running means the workspace is able to actively perform work, either by serving a user through Theia,
-	// or as a headless workspace.
+    // or as a headless workspace.
     "running" |
 
     // Interrupted is an exceptional state where the container should be running but is temporarily unavailable.
