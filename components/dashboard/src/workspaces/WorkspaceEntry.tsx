@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { CommitContext, Workspace, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePhase } from '@gitpod/gitpod-protocol';
+import { CommitContext, Workspace, WorkspaceInfo, WorkspaceInstance, WorkspaceInstanceConditions, WorkspaceInstancePhase } from '@gitpod/gitpod-protocol';
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 import moment from 'moment';
 import React, { useState } from 'react';
@@ -15,8 +15,11 @@ import PendingChangesDropdown from '../components/PendingChangesDropdown';
 import Tooltip from '../components/Tooltip';
 import { WorkspaceModel } from './workspace-model';
 
-function getLabel(state: WorkspaceInstancePhase) {
-    return state.substr(0,1).toLocaleUpperCase() + state.substr(1);
+function getLabel(state: WorkspaceInstancePhase, conditions?: WorkspaceInstanceConditions) {
+    if (conditions?.failed) {
+        return "Failed";
+    }
+    return state.substr(0, 1).toLocaleUpperCase() + state.substr(1);
 }
 
 interface Props {
@@ -131,6 +134,7 @@ export function getProject(ws: Workspace) {
 
 export function WorkspaceStatusIndicator({instance}: {instance?: WorkspaceInstance}) {
     const state: WorkspaceInstancePhase = instance?.status?.phase || 'stopped';
+    const conditions = instance?.status?.conditions;
     let stateClassName = 'rounded-full w-3 h-3 text-sm align-middle';
     switch (state) {
         case 'running': {
@@ -138,10 +142,18 @@ export function WorkspaceStatusIndicator({instance}: {instance?: WorkspaceInstan
             break;
         }
         case 'stopped': {
-            stateClassName += ' bg-gray-400'
+            if (conditions?.failed) {
+                stateClassName += ' bg-red-400'
+            } else {
+                stateClassName += ' bg-gray-400'
+            }
             break;
         }
         case 'interrupted': {
+            stateClassName += ' bg-red-400'
+            break;
+        }
+        case 'unknown': {
             stateClassName += ' bg-red-400'
             break;
         }
@@ -151,7 +163,7 @@ export function WorkspaceStatusIndicator({instance}: {instance?: WorkspaceInstan
         }
     }
     return <div className="m-auto">
-        <Tooltip content={getLabel(state)}>
+        <Tooltip content={getLabel(state, conditions)}>
             <div className={stateClassName} />
         </Tooltip>
     </div>;
