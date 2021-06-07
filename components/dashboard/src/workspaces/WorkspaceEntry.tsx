@@ -8,11 +8,11 @@ import { CommitContext, Workspace, WorkspaceInfo, WorkspaceInstance, WorkspaceIn
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 import ContextMenu, { ContextMenuEntry } from '../components/ContextMenu';
 import moment from 'moment';
-import Modal from '../components/Modal';
 import { useState } from 'react';
 import { WorkspaceModel } from './workspace-model';
 import PendingChangesDropdown from '../components/PendingChangesDropdown';
 import Tooltip from '../components/Tooltip';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 function getLabel(state: WorkspaceInstancePhase) {
     return state.substr(0,1).toLocaleUpperCase() + state.substr(1);
@@ -112,24 +112,18 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
                 </ContextMenu>
             </div>
         </div>
-        {isModalVisible && <Modal visible={isModalVisible} onClose={() => setModalVisible(false)}>
-            <div>
-                <h3 className="pb-2">Delete Workspace</h3>
-                <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-2">
-                    <p className="mt-1 mb-2 text-base">Are you sure you want to delete this workspace?</p>
-                    <div className="w-full p-4 mb-2 bg-gray-100 rounded-xl group bg-gray-100">
-                        <p className="text-base text-gray-800 dark:text-gray-100 font-semibold">{ws.id}</p>
-                        <p>{ws.description}</p>
-                    </div>
-                </div>
-                <div className="flex justify-end mt-5">
-                    <button className="danger"
-                        onClick={() => model.deleteWorkspace(ws.id)}>
-                        Delete Workspace
-                    </button>
-                </div>
-            </div>
-        </Modal>}
+        {isModalVisible && <ConfirmationModal
+            title="Delete Workspace"
+            areYouSureText="Are you sure you want to delete this workspace?"
+            children={{
+                line1: ws.id,
+                line2: ws.description,
+            }}
+            buttonText="Delete Workspace"
+            visible={isModalVisible}
+            onClose={() => setModalVisible(false)}
+            onConfirm={() => model.deleteWorkspace(ws.id)}
+        />}
     </div>;
 }
 

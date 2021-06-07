@@ -6,11 +6,11 @@
 
 import { User } from "@gitpod/gitpod-protocol";
 import { useContext, useState } from "react";
-import Modal from "../components/Modal";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { UserContext } from "../user-context";
 import settingsMenu from "./settings-menu";
+import ConfirmationModal from "../components/ConfirmationModal";
 
 export default function Account() {
     const { user } = useContext(UserContext);
@@ -27,22 +27,22 @@ export default function Account() {
 
     const close = () => setModal(false);
     return <div>
-        <Modal visible={modal} onClose={close}>
-            <h3 className="pb-2">Delete Account</h3>
-            <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
-                <p className="pb-4 text-gray-900 dark:text-gray-50 text-base">You are about to permanently delete your account.</p>
-                <ol className="text-gray-500 text-sm list-outside list-decimal">
-                    <li className="ml-5">All your workspaces and related data will be deleted and cannot be restored afterwards.</li>
-                    <li className="ml-5">Your subscription will be cancelled. If you obtained a Gitpod subscription through the GitHub marketplace, you need to cancel your plan there.</li>
-                </ol>
-                <p className="pt-4 pb-2 text-gray-600 text-base font-semibold">Type your email to confirm</p>
-                <input className="w-full" type="text" onChange={e => setTypedEmail(e.target.value)}></input>
-            </div>
-            <div className="flex justify-end mt-6">
-                <button className="secondary" onClick={close}>Cancel</button>
-                <button className="ml-2 danger" onClick={deleteAccount} disabled={typedEmail !== primaryEmail}>Delete Account</button>
-            </div>
-        </Modal>
+        <ConfirmationModal
+            title="Delete Accont"
+            areYouSureText="You are about to permanently delete your account."
+            buttonText="Delete Account"
+            buttonDisabled={typedEmail !== primaryEmail}
+            visible={modal}
+            onClose={close}
+            onConfirm={deleteAccount}
+        >
+            <ol className="text-gray-500 text-sm list-outside list-decimal">
+                <li className="ml-5">All your workspaces and related data will be deleted and cannot be restored afterwards.</li>
+                <li className="ml-5">Your subscription will be cancelled. If you obtained a Gitpod subscription through the GitHub marketplace, you need to cancel your plan there.</li>
+            </ol>
+            <p className="pt-4 pb-2 text-gray-600 dark:text-gray-400 text-base font-semibold">Type your email to confirm</p>
+            <input className="w-full" type="text" onChange={e => setTypedEmail(e.target.value)}></input>
+        </ConfirmationModal>
 
         <PageWithSubMenu subMenu={settingsMenu}  title='Account' subtitle='Manage account and git configuration.'>
             <h3>Profile</h3>

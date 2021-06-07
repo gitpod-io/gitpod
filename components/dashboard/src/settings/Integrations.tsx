@@ -19,6 +19,7 @@ import CheckBox from '../components/CheckBox';
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import settingsMenu from "./settings-menu";
 import { SelectAccountModal } from "./SelectAccountModal";
+import ConfirmationModal from "../components/ConfirmationModal";
 
 export default function Integrations() {
 
@@ -233,19 +234,17 @@ function GitProviders() {
         )}
 
         {disconnectModal && (
-            <Modal visible={true} onClose={() => setDisconnectModal(undefined)}>
-                <h3 className="pb-2">Disconnect Provider</h3>
-                <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
-                    <p className="pb-4 text-gray-500 text-base">Are you sure you want to disconnect the following provider?</p>
-                    <div className="flex flex-col rounded-xl p-3 bg-gray-100 dark:bg-gray-800">
-                        <div className="text-gray-700 text-md font-semibold">{disconnectModal.provider.authProviderType}</div>
-                        <div className="text-gray-400 text-md">{disconnectModal.provider.host}</div>
-                    </div>
-                </div>
-                <div className="flex justify-end mt-6">
-                    <button className={"ml-2 danger secondary"} onClick={() => disconnect(disconnectModal.provider)}>Disconnect Provider</button>
-                </div>
-            </Modal>
+            <ConfirmationModal
+                title="Disconnect Provider"
+                areYouSureText="Are you sure you want to disconnect the following provider?"
+                children={{
+                    line1: disconnectModal.provider.authProviderType,
+                    line2: disconnectModal.provider.host,
+                }}
+                buttonText="Disconnect Provider"
+                onClose={() => setDisconnectModal(undefined)}
+                onConfirm={() => disconnect(disconnectModal.provider)}
+            />
         )}
 
         {editModal && (
@@ -364,20 +363,18 @@ function GitIntegrations() {
             <GitIntegrationModal mode={modal.mode} userId={user?.id || "no-user"} provider={modal.provider} onClose={() => setModal(undefined)} onUpdate={updateOwnAuthProviders} />
         )}
         {modal?.mode === "delete" && (
-            <Modal visible={true} onClose={() => setModal(undefined)}>
-                <h3 className="pb-2">Remove Integration</h3>
-                <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-2 -mx-6 px-6 py-4">
-                    <p className="pb-4 text-gray-500 text-base">Are you sure you want to remove the following git integration?</p>
+            <ConfirmationModal
+                title="Remove Integration"
+                areYouSureText="Are you sure you want to remove the following git integration?"
+                children={{
+                    line1: modal.provider.type,
+                    line2: modal.provider.host,
+                }}
+                buttonText="Delete Workspace"
+                onClose={() => setModal(undefined)}
+                onConfirm={() => deleteProvider(modal.provider)}
+            />
 
-                    <div className="flex flex-col rounded-xl p-3 bg-gray-100">
-                        <div className="text-gray-700 text-md font-semibold">{modal.provider.type}</div>
-                        <div className="text-gray-400 text-md">{modal.provider.host}</div>
-                    </div>
-                </div>
-                <div className="flex justify-end mt-6">
-                    <button className={"ml-2 danger secondary"} onClick={() => deleteProvider(modal.provider)}>Remove Integration</button>
-                </div>
-            </Modal>
         )}
 
         <div className="flex items-start sm:justify-between mb-2">
