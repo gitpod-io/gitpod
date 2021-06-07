@@ -42,7 +42,7 @@ export function PageWithSubMenu(p: PageWithSubMenuProps) {
                     })}
                 </ul>
             </div>
-            <div className='ml-32 w-full pt-1 mb-40'>
+            <div className='ml-32 w-full pt-1'>
                 {p.children}
             </div>
         </div>
