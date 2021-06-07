@@ -9,6 +9,7 @@ certificatesSecret:
   secretName: https-certificates
 
 imagePrefix: gcr.io/gitpod-io/self-hosted/
+
 installation:
   stage: production
   tenant: gitpod
@@ -20,6 +21,11 @@ license: ""
 installNetworkPolicies: true
 installPodSecurityPolicies: true
 imagePullPolicy: IfNotPresent
+
+# configure default log level
+log:
+  level: trace
+
 resources:
   default:
     cpu: 100m

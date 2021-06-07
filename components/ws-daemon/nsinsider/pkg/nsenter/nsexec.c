@@ -114,7 +114,11 @@ void nsexec(void)
 	if (in_init == NULL || *in_init == '\0')
 		return;
 
-	write_log(DEBUG, "nsexec started");
+	char *log_level = getenv("LOG_LEVEL");
+	if (!log_level || strlen(log_level) == 0)
+		log_level = "INFO";
+
+	write_log(log_level, "nsexec started");
 
 	/*
 	 * Make the process non-dumpable, to avoid various race conditions that
@@ -129,31 +133,31 @@ void nsexec(void)
 
 	char *mntnsfd = getenv("_LIBNSENTER_MNTNSFD");
 	if (mntnsfd != NULL) {
-		write_log(DEBUG, "join mnt namespace: %s", mntnsfd);
+		write_log(log_level, "join mnt namespace: %s", mntnsfd);
 		join_ns(mntnsfd, CLONE_NEWNS);
 	}
 
 	char *rootfd = getenv("_LIBNSENTER_ROOTFD");
 	if (rootfd != NULL) {
-		write_log(DEBUG, "chroot: %s", rootfd);
+		write_log(log_level, "chroot: %s", rootfd);
 		fchdir(atoi(rootfd));
 		chroot(".");
 	}
 	char *cwdfd = getenv("_LIBNSENTER_CWDFD");
 	if (cwdfd != NULL) {
-		write_log(DEBUG, "chcwd: %s", cwdfd);
+		write_log(log_level, "chcwd: %s", cwdfd);
 		fchdir(atoi(cwdfd));
 	}
 
 	char *netnsfd = getenv("_LIBNSENTER_NETNSFD");
 	if (netnsfd != NULL) {
-		write_log(DEBUG, "join net namespace: %s", netnsfd);
+		write_log(log_level, "join net namespace: %s", netnsfd);
 		join_ns(netnsfd, CLONE_NEWNET);
 	}
 
 	char *pidnsfd = getenv("_LIBNSENTER_PIDNSFD");
 	if (pidnsfd != NULL) {
-		write_log(DEBUG, "join pid namespace: %s", pidnsfd);
+		write_log(log_level, "join pid namespace: %s", pidnsfd);
 		join_ns(pidnsfd, CLONE_NEWPID);
 	}
 

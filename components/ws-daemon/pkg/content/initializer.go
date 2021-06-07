@@ -224,7 +224,12 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 		return err
 	}
 
-	cmd = exec.Command("runc", "--root", "state", "--debug", "--log-format", "json", "run", "gogogo")
+	var withDebug string
+	if log.Log.Logger.IsLevelEnabled(logrus.DebugLevel) {
+		withDebug = "--debug"
+	}
+
+	cmd = exec.Command("runc", "--root", "state", withDebug, "--log-format", "json", "run", "gogogo")
 	cmd.Dir = tmpdir
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

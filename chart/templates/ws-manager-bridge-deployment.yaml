@@ -61,8 +61,6 @@ spec:
 {{ include "gitpod.container.tracingEnv" $this | indent 8 }}
 {{ include "gitpod.container.analyticsEnv" $this | indent 8 }}
 {{ include "gitpod.container.messagebusEnv" $this | indent 8 }}
-        - name: LOG_LEVEL
-          value: "trace"
         - name: WSMAN_BRIDGE_CONFIGPATH
           value: /config/ws-manager-bridge.json
       volumes:
