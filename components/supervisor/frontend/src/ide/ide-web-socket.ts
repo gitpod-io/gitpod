@@ -17,12 +17,19 @@ function isWorkspaceOrigin(url: string): boolean {
     originUrl.protocol = window.location.protocol;
     return originUrl.origin === workspaceOrigin;
 }
+/**
+ * IDEWebSocket is a proxy to standard WebSocket
+ * which allows to control when web sockets to the workspace
+ * should be opened or closed.
+ * It should not deviate from standard WebSocket in any other way.
+ */
 class IDEWebSocket extends ReconnectingWebSocket {
     constructor(url: string, protocol?: string | string[]) {
         super(url, protocol, {
             WebSocket,
             startClosed: isWorkspaceOrigin(url) && !connected,
-            maxRetries: 0
+            maxRetries: 0,
+            connectionTimeout: 2147483647 // disable connection timeout, clients should handle it
         });
         if (isWorkspaceOrigin(url)) {
             workspaceSockets.add(this);
