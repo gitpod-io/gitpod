@@ -9,14 +9,15 @@ import { useState } from 'react';
 export interface TooltipProps {
     children: React.ReactChild[] | React.ReactChild;
     content: string;
+    className?: string;
 }
 
 function Tooltip(props: TooltipProps) {
     const [expanded, setExpanded] = useState(false);
 
     return (
-        <div onMouseLeave={() => setExpanded(false)} onMouseEnter={() => setExpanded(true)} className="relative">
-            <div>
+        <div onMouseLeave={() => setExpanded(false)} onMouseEnter={() => setExpanded(true)} className={"relative " + (props.className || "")}>
+            <div className={props.className}>
                 {props.children}
             </div>
             {expanded ?
