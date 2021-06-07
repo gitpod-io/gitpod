@@ -21,13 +21,13 @@ export default function ConfirmationModal(props: {
         <p className="mt-1 mb-2 text-base text-gray-500">{props.areYouSureText || "Are you sure?"}</p>,
     ]
 
-    const isEntity = (x: any): x is Entity => typeof x === "object" && "line1" in x;
+    const isEntity = (x: any): x is Entity => typeof x === "object" && "name" in x;
     if (props.children) {
         if (isEntity(props.children)) {
             c.push(
                 <div className="w-full p-4 mb-2 bg-gray-100 dark:bg-gray-700 rounded-xl group">
-                    <p className="text-base text-gray-800 dark:text-gray-100 font-semibold">{props.children.line1}</p>
-                    {props.children.line2 && <p className="text-gray-500">{props.children.line2}</p>}
+                    <p className="text-base text-gray-800 dark:text-gray-100 font-semibold">{props.children.name}</p>
+                    {props.children.description && <p className="text-gray-500">{props.children.description}</p>}
                 </div>
             )
         } else if (Array.isArray(props.children)) {
@@ -58,6 +58,6 @@ export default function ConfirmationModal(props: {
 }
 
 export interface Entity {
-    line1: string,
-    line2?: string,
+    name: string,
+    description?: string,
 }

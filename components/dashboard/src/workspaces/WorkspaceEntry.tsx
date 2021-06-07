@@ -116,8 +116,8 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
             title="Delete Workspace"
             areYouSureText="Are you sure you want to delete this workspace?"
             children={{
-                line1: ws.id,
-                line2: ws.description,
+                name: ws.id,
+                description: ws.description,
             }}
             buttonText="Delete Workspace"
             visible={isModalVisible}
