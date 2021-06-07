@@ -36,6 +36,9 @@ tasks:
   - name: Go
     init: leeway exec --filter-type go -v -- go mod verify
     openMode: split-right
+  - name: Prepare Agent Smith BPF dev environment
+    init: leeway run components/ee/agent-smith:prepare-environment
+    command: leeway run components/ee/agent-smith:qemu
 vscode:
   extensions:
     - bajdzis.vscode-database
