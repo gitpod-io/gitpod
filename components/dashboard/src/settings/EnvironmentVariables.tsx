@@ -220,8 +220,8 @@ export default function EnvVars() {
                 <div className="flex flex-col">
                     {envVars.map(variable => {
                         return <div className="rounded-xl whitespace-nowrap flex space-x-2 py-3 px-3 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light transition ease-in-out group">
-                            <div className="w-5/12 m-auto">{variable.name}</div>
-                            <div className="w-5/12 m-auto text-sm text-gray-400">{variable.repositoryPattern}</div>
+                            <div className="w-5/12 m-auto overflow-ellipsis truncate">{variable.name}</div>
+                            <div className="w-5/12 m-auto overflow-ellipsis truncate text-sm text-gray-400">{variable.repositoryPattern}</div>
                             <div className="w-2/12 flex justify-end">
                                 <div className="flex w-8 self-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer opacity-0 group-hover:opacity-100">
                                     <ContextMenu menuEntries={[
