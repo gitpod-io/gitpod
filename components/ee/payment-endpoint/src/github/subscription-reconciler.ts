@@ -7,7 +7,6 @@
 import { Config } from "../config";
 import { inject, injectable } from "inversify";
 import * as fs from 'fs';
-import * as request from "request-promise";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import * as jwt from 'jsonwebtoken';
 import { PendingGithubEventDB, UserDB } from "@gitpod/gitpod-db/lib";
@@ -18,6 +17,7 @@ import { AccountingDB } from "@gitpod/gitpod-db/lib/accounting-db";
 import { SubscriptionModel } from "../accounting/subscription-model";
 import { Plans, Plan } from "@gitpod/gitpod-protocol/lib/plans";
 import * as Webhooks from '@octokit/webhooks';
+import fetch from "node-fetch";
 
 @injectable()
 export class GithubSubscriptionReconciler {
@@ -86,16 +86,16 @@ export class GithubSubscriptionReconciler {
         const maxPlanAccounts = 2000;
         let allPlanAccounts = new Map<number, MarketplaceAccountListing>();
         for (let i = 1; i < maxPlanAccounts; i++) {
-            const resp = await request(`https://api.github.com/marketplace_listing/plans/${plan.githubId}/accounts?sort=updated&direction=desc&page=${i}`, {
+            const resp = await fetch(`https://api.github.com/marketplace_listing/plans/${plan.githubId}/accounts?sort=updated&direction=desc&page=${i}`, {
                 method: 'GET',
-                auth: { bearer: token },
                 headers: {
+                    'Authorization': 'Bearer ' + token,
                     accept: 'application/vnd.github.machine-man-preview+json',
                     'User-Agent': 'gitpod/payment'
                 }
             });
 
-            const items: MarketplaceAccountListing[] = JSON.parse(resp);
+            const items: MarketplaceAccountListing[] = JSON.parse(await resp.text());
             if (items.length == 0) {
                 // we've reached the end of the list, i.e. the page GitHub gave us is empty
                 break;

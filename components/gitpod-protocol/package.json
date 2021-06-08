@@ -42,11 +42,11 @@
         "opentracing": "^0.14.4",
         "prom-client": "^10.2.0",
         "random-number-csprng": "^1.0.2",
-        "reconnecting-websocket": "^4.2.0",
+        "reconnecting-websocket": "^4.4.0",
         "reflect-metadata": "^0.1.10",
         "uuid": "^3.3.3",
         "vscode-uri": "^1.0.1",
         "vscode-ws-jsonrpc": "^0.2.0",
-        "ws": "^5.2.2"
+        "ws": "^7.4.6"
     }
 }

@@ -10,7 +10,7 @@ import { AuthProviderInfo } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { GitHubScope } from "./scopes";
 import { AuthUserSetup } from "../auth/auth-provider";
-import * as GitHub from "@octokit/rest"
+import { Octokit } from "@octokit/rest"
 import { GitHubApiError } from "./api";
 import { GenericAuthProvider } from "../auth/generic-auth-provider";
 import { oauthUrls } from "./github-urls";
@@ -63,7 +63,7 @@ export class GitHubAuthProvider extends GenericAuthProvider {
     }
 
     protected readAuthUserSetup = async (accessToken: string, _tokenResponse: object) => {
-        const api = new GitHub({
+        const api = new Octokit({
             auth: accessToken,
             request: {
                 timeout: 5000,
@@ -79,7 +79,7 @@ export class GitHubAuthProvider extends GenericAuthProvider {
             return response;
         }
         const fetchUserEmails = async () => {
-            const response = await api.users.listEmails({});
+            const response = await api.users.listEmailsForAuthenticated({});
             if (response.status !== 200) {
                 throw new GitHubApiError(response);
             }
@@ -98,7 +98,7 @@ export class GitHubAuthProvider extends GenericAuthProvider {
                 .map((s: string) => s.trim())
             );
 
-            const filterPrimaryEmail = (emails: GitHub.UsersListEmailsResponse) => {
+            const filterPrimaryEmail = (emails: typeof userEmails) => {
                 if (this.env.blockNewUsers) {
                     // if there is any verified email with a domain that is in the blockNewUsersPassList then use this email as primary email
                     const emailDomainInPasslist = (mail: string) => this.env.blockNewUsersPassList.some(e => mail.endsWith(`@${e}`));

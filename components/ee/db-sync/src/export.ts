@@ -7,7 +7,6 @@
 import { TableDescription, TableDescriptionProvider } from "@gitpod/gitpod-db/lib/tables";
 import { Connection, escape } from "mysql";
 import { Transform } from "stream";
-import { now } from "moment";
 import { query } from "./database";
 import { injectable, multiInject } from "inversify";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -83,7 +82,7 @@ export class TableUpdate {
                     .pipe(new Transform({
                         objectMode: true,
                         transform: (data: any, encoding, cb) => {
-                            if(data[this.table.timeColumn] > now()) {
+                            if(data[this.table.timeColumn] > Date.now()) {
                                 const pk = this.table.primaryKeys.map(pk => data[pk]).join(", ");
                                 console.warn(`Row (${this.table.name}: ${pk}) was modified in the future. Possible time sync issue between database and db-sync.`);
                             }

@@ -10,7 +10,6 @@ import { FileProvider, MaybeContent } from "../repohost/file-provider";
 import { Commit, User, Repository } from "@gitpod/gitpod-protocol"
 import { GitHubGraphQlEndpoint, GitHubRestApi } from "./api";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { ReposListCommitsResponse } from '@octokit/rest';
 
 @injectable()
 export class GithubFileProvider implements FileProvider {
@@ -27,7 +26,7 @@ export class GithubFileProvider implements FileProvider {
     }
 
     public async getLastChangeRevision(repository: Repository, revisionOrBranch: string, user: User, path: string): Promise<string> {
-        const commits = (await this.githubApi.run<ReposListCommitsResponse>(user, (gh) => gh.repos.listCommits({
+        const commits = (await this.githubApi.run(user, (gh) => gh.repos.listCommits({
             owner: repository.owner,
             repo: repository.name,
             sha: revisionOrBranch,

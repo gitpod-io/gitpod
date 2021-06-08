@@ -5,7 +5,7 @@
   "private": true,
   "docker_name": "eu.gcr.io/gitpod-dev/gitpod-payment-endpoint",
   "dependencies": {
-    "@octokit/rest": "16.35.0",
+    "@octokit/rest": "18.5.6",
     "@octokit/webhooks": "^7.15.0",
     "@gitpod/gitpod-db": "0.1.5",
     "@gitpod/gitpod-protocol": "0.1.5",
@@ -14,19 +14,18 @@
     "express": "^4.16.1",
     "inversify": "^5.0.1",
     "jsonwebtoken": "^8.5.0",
+    "node-fetch": "^2.6.1",
     "passport": "^0.4.0",
     "passport-http": "^0.3.0",
-    "reflect-metadata": "^0.1.10",
-    "request": "^2.87.0",
-    "request-promise": "^4.2.2"
+    "reflect-metadata": "^0.1.10"
   },
   "devDependencies": {
     "@types/body-parser": "^1.16.5",
     "@types/jsonwebtoken": "^8.3.2",
     "@types/passport-http": "^0.3.0", 
     "@types/chai": "^4.2.2",
+    "@types/node-fetch": "^2.5.0",
     "chai": "^4.1.2",
-    "@types/request-promise": "^4.1.41",
     "mocha-typescript": "^1.1.17",
     "tslint": "^5.7.0",
     "tslint-react": "^3.2.0",

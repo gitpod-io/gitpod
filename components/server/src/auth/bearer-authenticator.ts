@@ -8,14 +8,14 @@ import { UserDB } from '@gitpod/gitpod-db/lib';
 import { GitpodTokenType } from '@gitpod/gitpod-protocol';
 import * as crypto from 'crypto';
 import * as express from 'express';
+import { IncomingHttpHeaders } from 'http';
 import { inject, injectable } from 'inversify';
-import { Headers } from 'request';
 import * as websocket from 'ws';
 import { WsNextFunction, WsRequestHandler } from '../express/ws-handler';
 import { AllAccessFunctionGuard, ExplicitFunctionAccessGuard, WithFunctionAccessGuard } from './function-access';
 import { TokenResourceGuard, WithResourceAccessGuard } from './resource-access';
 
-export function getBearerToken(headers: Headers): string | undefined {
+export function getBearerToken(headers: IncomingHttpHeaders): string | undefined {
     const authorizationHeader = headers["authorization"];
     if (!authorizationHeader || !(typeof authorizationHeader === "string")) {
         return;
