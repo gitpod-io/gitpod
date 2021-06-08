@@ -2,12 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
-## July 2021
-
-- Improve backup stability when pods get evicted ([#4405](https://github.com/gitpod-io/gitpod/pull/4405))
-
 ## June 2021
 
+- Improve backup stability when pods get evicted ([#4405](https://github.com/gitpod-io/gitpod/pull/4405))
 - Better reflect incremental prebuilds in prebuilt workspace logs ([#4293](https://github.com/gitpod-io/gitpod/pull/4293))
 - Run shellcheck against scripts ([#4280](https://github.com/gitpod-io/gitpod/pull/4280))
 - Implement new Project and Team DB tables and entities ([#4368](https://github.com/gitpod-io/gitpod/pull/4368))
