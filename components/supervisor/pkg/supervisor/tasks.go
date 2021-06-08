@@ -18,6 +18,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/content-service/pkg/logs"
 	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
 )
@@ -94,7 +95,7 @@ func newTasksManager(config *Config, terminalService *terminal.MuxTerminalServic
 		reporter:        reporter,
 		subscriptions:   make(map[*tasksSubscription]struct{}),
 		ready:           make(chan struct{}),
-		storeLocation:   "/workspace/.gitpod",
+		storeLocation:   logs.TerminalStoreLocation,
 	}
 }
 
@@ -350,7 +351,7 @@ func (tm *tasksManager) getCommands(task *task) []*string {
 	if tm.contentSource == csapi.WorkspaceInitFromPrebuild {
 		// prebuilt
 		prebuildLogFileName := tm.prebuildLogFileName(task)
-		legacyPrebuildLogFileName := "/workspace/.prebuild-log-" + task.Id
+		legacyPrebuildLogFileName := logs.LegacyPrebuildLogFileName(task.Id)
 		printlogs := "[ -r " + legacyPrebuildLogFileName + " ] && cat " + legacyPrebuildLogFileName + "; [ -r " + prebuildLogFileName + " ] && cat " + prebuildLogFileName + "; true"
 		return []*string{task.config.Before, &printlogs, task.config.Command}
 	}
@@ -364,7 +365,7 @@ func (tm *tasksManager) getCommands(task *task) []*string {
 }
 
 func (tm *tasksManager) prebuildLogFileName(task *task) string {
-	return tm.storeLocation + "/prebuild-log-" + task.Id
+	return logs.PrebuildLogFileName(tm.storeLocation, task.Id)
 }
 
 func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {

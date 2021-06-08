@@ -16,7 +16,7 @@ var _ DirectAccess = &DirectNoopStorage{}
 type DirectNoopStorage struct{}
 
 // Init does nothing
-func (rs *DirectNoopStorage) Init(ctx context.Context, owner, workspace string) error {
+func (rs *DirectNoopStorage) Init(ctx context.Context, owner, workspace, instance string) error {
 	return nil
 }
 
@@ -38,6 +38,11 @@ func (rs *DirectNoopStorage) DownloadSnapshot(ctx context.Context, destination s
 // Qualify just returns the name
 func (rs *DirectNoopStorage) Qualify(name string) string {
 	return name
+}
+
+// UploadInstance takes all files from a local location and uploads it to the per-instance remote storage
+func (rs *DirectNoopStorage) UploadInstance(ctx context.Context, source string, name string, opts ...UploadOption) (bucket, object string, err error) {
+	return "", "", nil
 }
 
 // Upload does nothing

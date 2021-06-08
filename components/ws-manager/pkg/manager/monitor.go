@@ -823,8 +823,9 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		// DiposeWorkspace will "degenerate" to a simple wait if the finalization/disposal process is already running.
 		// This is unlike the initialization process where we wait for things to finish in a later phase.
 		resp, err := snc.DisposeWorkspace(ctx, &wsdaemon.DisposeWorkspaceRequest{
-			Id:     workspaceID,
-			Backup: doBackup,
+			Id:         workspaceID,
+			Backup:     doBackup,
+			BackupLogs: true,
 		})
 		if resp != nil {
 			gitStatus = resp.GitStatus

@@ -29,6 +29,7 @@ import (
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
 	wsinit "github.com/gitpod-io/gitpod/content-service/pkg/initializer"
+	"github.com/gitpod-io/gitpod/content-service/pkg/logs"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
@@ -354,6 +355,13 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 	}
 
 	// Ok, we have to do all the work
+	err = s.uploadWorkspaceLogs(ctx, sess)
+	if err != nil {
+		log.WithError(err).WithFields(sess.OWI()).Error("log backup failed")
+		// atm we do not fail the workspace here, yet, because we still might succeed with its content!
+		return nil, status.Error(codes.DataLoss, "log backup failed")
+	}
+
 	if req.Backup {
 		var (
 			backupName = storage.DefaultBackup
@@ -594,6 +602,38 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 	return nil
 }
 
+func (s *WorkspaceService) uploadWorkspaceLogs(ctx context.Context, sess *session.Workspace) (err error) {
+	rs, ok := sess.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
+	if rs == nil || !ok {
+		return xerrors.Errorf("no remote storage configured")
+	}
+
+	logFiles, err := logs.ListPrebuildLogFiles(ctx, sess.Location)
+	if err != nil {
+		return err
+	}
+	for _, absLogPath := range logFiles {
+		streamID, parseErr := logs.ParseStreamID(absLogPath)
+		if parseErr != nil {
+			log.WithError(parseErr).Warn("cannot parse workspace log file name")
+			continue
+		}
+
+		err = retryIfErr(ctx, s.config.Backup.Attempts, log.WithFields(sess.OWI()).WithField("op", "upload log"), func(ctx context.Context) (err error) {
+			_, _, err = rs.UploadInstance(ctx, absLogPath, streamID)
+			if err != nil {
+				return
+			}
+
+			return
+		})
+		if err != nil {
+			return xerrors.Errorf("cannot upload workspace content: %w", err)
+		}
+	}
+	return err
+}
+
 func retryIfErr(ctx context.Context, attempts int, log *logrus.Entry, op func(ctx context.Context) error) (err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "retryIfErr")
@@ -750,7 +790,7 @@ func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceEx
 				return xerrors.Errorf("cannot use configured storage: %w", err)
 			}
 
-			err = remoteStorage.Init(ctx, ws.Owner, ws.WorkspaceID)
+			err = remoteStorage.Init(ctx, ws.Owner, ws.WorkspaceID, ws.InstanceID)
 			if err != nil {
 				return xerrors.Errorf("cannot use configured storage: %w", err)
 			}
