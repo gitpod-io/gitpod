@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 export interface ContextMenuProps {
-    children: React.ReactChild[] | React.ReactChild;
+    children?: React.ReactChild[] | React.ReactChild;
     menuEntries: ContextMenuEntry[];
     width?: string;
 }
@@ -57,13 +57,16 @@ function ContextMenu(props: ContextMenuProps) {
 
     const menuId = String(Math.random());
 
+    // Default 'children' is the three dots hamburger button.
+    const children = props.children || <svg className="w-8 h-8 p-1 text-gray-600 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Actions</title><g fill="currentColor" transform="rotate(90 12 12)"><circle cx="1" cy="1" r="2" transform="translate(5 11)" /><circle cx="1" cy="1" r="2" transform="translate(11 11)" /><circle cx="1" cy="1" r="2" transform="translate(17 11)" /></g></svg>;
+
     return (
         <div className="relative cursor-pointer">
             <div onClick={(e) => {
                 toggleExpanded();
                 e.stopPropagation();
             }}>
-                {props.children}
+                {children}
             </div>
             {expanded ?
                 <div className={`mt-2 z-50 ${props.width || 'w-48'} bg-white dark:bg-gray-900 absolute right-0 flex flex-col border border-gray-200 dark:border-gray-800 rounded-lg truncated`}>

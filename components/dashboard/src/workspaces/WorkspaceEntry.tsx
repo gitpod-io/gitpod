@@ -107,9 +107,7 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
                 </Tooltip>
             </div>
             <div className="flex w-8 self-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer opacity-0 group-hover:opacity-100">
-                <ContextMenu menuEntries={menuEntries}>
-                    <svg className="w-8 h-8 p-1 text-gray-600 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Actions</title><g fill="currentColor" transform="rotate(90 12 12)"><circle cx="1" cy="1" r="2" transform="translate(5 11)"/><circle cx="1" cy="1" r="2" transform="translate(11 11)"/><circle cx="1" cy="1" r="2" transform="translate(17 11)"/></g></svg>
-                </ContextMenu>
+                <ContextMenu menuEntries={menuEntries} />
             </div>
         </div>
         {isModalVisible && <ConfirmationModal
