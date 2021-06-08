@@ -5,7 +5,6 @@
  */
 
 import * as url from 'url';
-import * as util from 'util';
 import { injectable, inject } from 'inversify';
 import { ResolvePluginsParams, ResolvedPlugins, TheiaPlugin, PreparePluginUploadParams, InstallPluginsParams, UninstallPluginParams, ResolvedPluginKind } from '@gitpod/gitpod-protocol';
 import { TheiaPluginDB, UserStorageResourcesDB } from "@gitpod/gitpod-db/lib";
@@ -17,7 +16,7 @@ import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 import { PluginIndexEntry } from '@gitpod/gitpod-protocol/lib/theia-plugins';
 import { StorageClient } from '../storage/storage-client';
 import {  } from '@gitpod/gitpod-db/lib';
-import * as request from 'request';
+import fetch from 'node-fetch';
 
 const builtinExtensions: PluginIndexEntry[] = require('@gitpod/gitpod-protocol/data/builtin-theia-plugins.json');
 
@@ -241,8 +240,7 @@ export class TheiaPluginService {
             const queryUrl = url.parse(vsxRegistryUrl);
             queryUrl.pathname = '/api/-/query';
             const queryHref = url.format(queryUrl)
-            const response = await util.promisify(request)({
-                url: queryHref,
+            const response = await fetch(queryHref, {
                 method: 'POST',
                 timeout: 5000,
                 headers: {
@@ -254,8 +252,8 @@ export class TheiaPluginService {
                     extensionVersion: version
                 })
             });
-            if (response.statusCode !== 200) {
-                log.error(`Failed to find extension '${name}@${version || 'latest'}' with '${queryHref}': ${response.statusCode} (${response.statusMessage}).`);
+            if (response.status !== 200) {
+                log.error(`Failed to find extension '${name}@${version || 'latest'}' with '${queryHref}': ${response.status} (${response.statusText}).`);
                 return undefined;
             }
             const result: {
@@ -265,7 +263,7 @@ export class TheiaPluginService {
                     version: string
                     files: { download: string }
                 } | undefined]
-            } = JSON.parse(response.body)
+            } = JSON.parse(await response.text())
             const extension = result.extensions[0];
             if (!extension) {
                 log.debug(`Extension '${name}@${version || 'latest'}' not found in '${vsxRegistryUrl}' registry.`);

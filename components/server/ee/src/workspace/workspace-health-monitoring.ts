@@ -7,13 +7,13 @@
 import { injectable, inject } from "inversify";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceInstance, WorkspaceProbeContext, RunningWorkspaceInfo } from "@gitpod/gitpod-protocol";
-import * as request from "request-promise";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { URL } from "url";
 import { WorkspaceFactory } from "../../../src/workspace/workspace-factory";
 import { UserDB, BUILTIN_WORKSPACE_PROBE_USER_NAME, WorkspaceDB, TracedWorkspaceDB, DBWithTracing, TracedUserDB } from "@gitpod/gitpod-db/lib";
 import { Env } from "../../../src/env";
 import { WorkspaceStarter } from "../../../src/workspace/workspace-starter";
+import fetch from "node-fetch";
 
 export interface ProbeResult {
     workspaceID: string
@@ -122,8 +122,8 @@ export class WorkspaceHealthMonitoring {
 
         let up = false;
         try {
-            const response = await request.get(probeURL.toString(), { timeout: 5000 })
-            span.log({ probeURL, response });
+            const response = await fetch(probeURL.toString(), { timeout: 5000 });
+            span.log({ probeURL, response: await response.text() });
             up = true;
         } catch (err) {
             log.error({ instanceId: wsi.id, workspaceId: wsi.workspaceId }, "workspace health check failed", err, { "probeURL": probeURL.toString() });

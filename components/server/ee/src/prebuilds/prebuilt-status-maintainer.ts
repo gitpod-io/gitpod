@@ -4,7 +4,7 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import * as Octokit from '@octokit/rest';
+import { ProbotOctokit } from 'probot';
 import { injectable, inject } from 'inversify';
 import { WorkspaceDB, TracedWorkspaceDB, DBWithTracing } from '@gitpod/gitpod-db/lib';
 import { v4 as uuidv4 } from 'uuid'
@@ -26,19 +26,19 @@ const MAX_UPDATABLE_AGE = 6 * 60 * 60 * 1000;
 const DEFAULT_STATUS_DESCRIPTION = "Open a prebuilt online workspace in Gitpod";
 const NON_PREBUILT_STATUS_DESCRIPTION = "Open an online workspace in Gitpod";
 
-export type AuthenticatedGithubProvider = (installationId: string) => Promise<Octokit>;
+export type AuthenticatedGithubProvider = (installationId: string) => Promise<InstanceType<typeof ProbotOctokit> | undefined>;
 
 @injectable()
 export class PrebuildStatusMaintainer implements Disposable {
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
     @inject(MessageBusIntegration) protected readonly messagebus: MessageBusIntegration;
-    protected authProvider: AuthenticatedGithubProvider;
+    protected githubApiProvider: AuthenticatedGithubProvider;
     protected messagebusListener?: Disposable;
     protected periodicChecker?: NodeJS.Timer;
 
-    start(authProvider: AuthenticatedGithubProvider): void {
+    start(githubApiProvider: AuthenticatedGithubProvider): void {
         // set github before registering the msgbus listener - otherwise an incoming message and the github set might race
-        this.authProvider = authProvider;
+        this.githubApiProvider = githubApiProvider;
 
         this.messagebusListener = this.messagebus.listenForPrebuildUpdatableQueue((ctx, msg) => this.handlePrebuildFinished(ctx, msg));
         this.periodicChecker = setInterval(this.periodicUpdatableCheck.bind(this), 60 * 1000) as any as NodeJS.Timer;
@@ -50,8 +50,8 @@ export class PrebuildStatusMaintainer implements Disposable {
         span.setTag("pws-state", pws.state);
 
         try {
-            const github = await this.authProvider(installationId);
-            if (!github) {
+            const githubApi = await this.githubApiProvider(installationId);
+            if (!githubApi) {
                 throw new Error("unable to authenticate GitHub app");
             }
 
@@ -65,7 +65,7 @@ export class PrebuildStatusMaintainer implements Disposable {
                     contextUrl: cri.details_url,
                     prebuiltWorkspaceId: pws.id,
                 });
-                await github.repos.createStatus({
+                await githubApi.repos.createCommitStatus({
                     repo: cri.repo,
                     owner: cri.owner,
                     sha: cri.head_sha,
@@ -77,7 +77,7 @@ export class PrebuildStatusMaintainer implements Disposable {
             } else {
                 // prebuild isn't running - mark with check
                 const conclusion = this.getConclusionFromPrebuildState(pws);
-                await github.repos.createStatus({
+                await githubApi.repos.createCommitStatus({
                     repo: cri.repo,
                     owner: cri.owner,
                     sha: cri.head_sha,
@@ -141,7 +141,7 @@ export class PrebuildStatusMaintainer implements Disposable {
         const span = TraceContext.startSpan("doUpdate", ctx);
 
         try {
-            const github = await this.authProvider(updatatable.installationId);
+            const github = await this.githubApiProvider(updatatable.installationId);
             if (!github) {
                 log.error("unable to authenticate GitHub app - this leaves user-facing checks dangling.");
                 return;
@@ -152,7 +152,7 @@ export class PrebuildStatusMaintainer implements Disposable {
 
                 let found = true;
                 try {
-                    await github!.repos.createStatus({
+                    await github!.repos.createCommitStatus({
                         owner: updatatable.owner,
                         repo: updatatable.repo,
                         context: "Gitpod",

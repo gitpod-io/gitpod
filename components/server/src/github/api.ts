@@ -5,7 +5,9 @@
  */
 
 import fetch from 'node-fetch';
-import * as GitHub from "@octokit/rest"
+import { Octokit, RestEndpointMethodTypes } from "@octokit/rest"
+import { OctokitResponse } from "@octokit/types"
+import { OctokitOptions } from "@octokit/core/dist-types/types"
 
 import { User } from "@gitpod/gitpod-protocol"
 import { injectable, inject } from 'inversify';
@@ -18,7 +20,7 @@ import { Deferred } from '@gitpod/gitpod-protocol/lib/util/deferred';
 import { URL } from 'url';
 
 export class GitHubApiError extends Error {
-    constructor(public readonly response: GitHub.Response<any>) {
+    constructor(public readonly response: OctokitResponse<any>) {
         super(`GitHub API Error. Status: ${response.status}`);
         this.name = 'GitHubApiError';
     }
@@ -132,7 +134,7 @@ export class GitHubRestApi {
             const githubToken = await this.tokenHelper.getTokenWithScopes(userOrToken, GitHubScope.Requirements.DEFAULT);
             token = githubToken.value;
         }
-        const api = new GitHub(this.getGitHubOptions(token));
+        const api = new Octokit(this.getGitHubOptions(token));
         return api;
     }
 
@@ -152,7 +154,7 @@ export class GitHubRestApi {
         return (this.config.host === 'github.com') ? 'https://api.github.com' : `https://${this.config.host}/api/v3`;
     }
 
-    protected getGitHubOptions(auth: string): GitHub.Options {
+    protected getGitHubOptions(auth: string): OctokitOptions {
         return {
             auth,
             request: {
@@ -163,7 +165,7 @@ export class GitHubRestApi {
         };
     }
 
-    public async run<R>(userOrToken: User | string, operation: (api: GitHub) => Promise<GitHub.Response<R>>): Promise<GitHub.Response<R>> {
+    public async run<R>(userOrToken: User | string, operation: (api: Octokit) => Promise<OctokitResponse<R>>): Promise<OctokitResponse<R>> {
         const before = new Date().getTime();
         const userApi = await this.create(userOrToken);
 
@@ -184,9 +186,9 @@ export class GitHubRestApi {
         }
     }
 
-    protected readonly cachedResponses = new Map<string, GitHub.AnyResponse>();
-    public async runWithCache(key: string, user: User, operation: (api: GitHub) => Promise<GitHub.AnyResponse>): Promise<GitHub.AnyResponse> {
-        const result = new Deferred<GitHub.AnyResponse>();
+    protected readonly cachedResponses = new Map<string, OctokitResponse<any>>();
+    public async runWithCache(key: string, user: User, operation: (api: Octokit) => Promise<OctokitResponse<any>>): Promise<OctokitResponse<any>> {
+        const result = new Deferred<OctokitResponse<any>>();
         const before = new Date().getTime();
         const cacheKey = `${this.config.host}-${key}`;
         const cachedResponse = this.cachedResponses.get(cacheKey);
@@ -221,7 +223,7 @@ export class GitHubRestApi {
                 // resolve with cached resource if GH tells us that it's not modified (HTTP 304)
                 if (error.status === 304 && cachedResponse) {
                     result.resolve(cachedResponse);
-                    return;
+                    return cachedResponse;
                 }
                 this.cachedResponses.delete(cacheKey);
                 throw error;
@@ -238,7 +240,7 @@ export class GitHubRestApi {
         return result.promise;
     }
 
-    public async getRepository(user: User, params: GitHub.ReposGetParams): Promise<Repository> {
+    public async getRepository(user: User, params: RestEndpointMethodTypes["repos"]["get"]["parameters"]): Promise<Repository> {
         const key = `getRepository:${params.owner}/${params.owner}:${user.id}`
         const response = await this.runWithCache(key, user, (api) => api.repos.get(params));
         return response.data;
@@ -246,18 +248,18 @@ export class GitHubRestApi {
 
 }
 
-export interface GitHubResult<T> extends GitHub.Response<T> { }
+export interface GitHubResult<T> extends OctokitResponse<T> { }
 export namespace GitHubResult {
-    export function actualScopes(result: GitHub.Response<any>): string[] {
-        return ((result.headers as any)["x-oauth-scopes"] || "").split(",").map((s: any) => s.trim());
+    export function actualScopes(result: OctokitResponse<any>): string[] {
+        return (result.headers['x-oauth-scopes'] || "").split(",").map((s: any) => s.trim());
     }
-    export function mayReadOrgs(result: GitHub.Response<any>): boolean {
+    export function mayReadOrgs(result: OctokitResponse<any>): boolean {
         return actualScopes(result).some(scope => scope === "read:org" || scope === "user");
     }
-    export function mayWritePrivate(result: GitHub.Response<any>): boolean {
+    export function mayWritePrivate(result: OctokitResponse<any>): boolean {
         return actualScopes(result).some(scope => scope === "repo");
     }
-    export function mayWritePublic(result: GitHub.Response<any>): boolean {
+    export function mayWritePublic(result: OctokitResponse<any>): boolean {
         return actualScopes(result).some(scope => scope === "repo" || scope === "public_repo");
     }
 }

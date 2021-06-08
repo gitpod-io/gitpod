@@ -15,8 +15,7 @@
     "google-protobuf": "^3.15.8",
     "inversify": "^5.0.1",
     "node-pre-gyp": "^0.13.0",
-    "opentracing": "^0.14.4",
-    "request": "^2.88.2"
+    "opentracing": "^0.14.4"
   },
   "devDependencies": {
     "@types/google-protobuf": "^3.7.4",
