@@ -16,5 +16,5 @@ WORKDIR /app/node_modules/@gitpod/gitpod-db
 
 RUN echo "#!/bin/bash"                                                            >> /app/migrate.sh && \
     echo "yarn --cwd /app/node_modules/@gitpod/gitpod-db run wait-for-db"        >> /app/migrate.sh && \
-    echo "yarn --cwd /app/node_modules/@gitpod/gitpod-db typeorm migrations:run" >> /app/migrate.sh && \
+    echo "yarn --cwd /app/node_modules/@gitpod/gitpod-db typeorm migration:run" >> /app/migrate.sh && \
     chmod +x /app/migrate.sh

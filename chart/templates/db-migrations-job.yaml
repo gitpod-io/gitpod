@@ -49,5 +49,5 @@ spec:
           value: "{{ $.Values.db.port }}"
         - name: "DB_HOST"
           value: "{{ $.Values.db.host }}"
-        command: ["sh","-c","cd /app/node_modules/@gitpod/gitpod-db && yarn run wait-for-db && yarn run typeorm migrations:run"]
+        command: ["sh","-c","cd /app/node_modules/@gitpod/gitpod-db && yarn run wait-for-db && yarn run typeorm migration:run"]
 {{- end }}

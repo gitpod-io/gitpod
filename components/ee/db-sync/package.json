@@ -22,13 +22,13 @@
     "@gitpod/gitpod-protocol": "0.1.5",
     "argparse": "^1.0.10",
     "moment": "^2.21.0",
-    "mysql": "^2.15.0",
+    "mysql": "2.18.1",
     "progress": "^2.0.1",
     "reflect-metadata": "^0.1.10"
   },
   "devDependencies": {
     "@types/argparse": "^1.0.35",
-    "@types/mysql": "^2.15.0",
+    "@types/mysql": "2.15.18",
     "@types/progress": "^2.0.1",
     "@types/chai": "^4.0.4",
     "@types/mocha": "^5.2.7",
