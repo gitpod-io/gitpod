@@ -95,7 +95,7 @@ export class DBSubscriptionAdditionalData {
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
     })
     nextBilling?: string;
-    
+
     @Column({
         type: 'timestamp',
         precision: 6,
@@ -111,8 +111,8 @@ export interface CouponData {
     coupon_id: string;
 
     /*
-     * The date till the coupon is to be applied. 
-     * Applicable for "limited months" coupons. 
+     * The date till the coupon is to be applied.
+     * Applicable for "limited months" coupons.
      * optional, timestamp(UTC) in seconds
      */
     apply_till?: number;
@@ -123,7 +123,7 @@ export interface CouponData {
     applied_count: number;
 
     /*
-     * The coupon code used to redeem the coupon. 
+     * The coupon code used to redeem the coupon.
      * Will be present only when associated code for a coupon is used.
      */
     coupon_code?: string;

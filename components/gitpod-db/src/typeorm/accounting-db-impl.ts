@@ -8,10 +8,10 @@ import { AccountingDB } from "../accounting-db";
 import { DBAccountEntry } from "./entity/db-account-entry";
 import { User } from "@gitpod/gitpod-protocol";
 import { AccountEntry, Subscription, Credit, SubscriptionAndUser } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
-import { EntityManager, Repository } from "typeorm";
+import { DeleteResult, EntityManager, Repository } from "typeorm";
 import { DBSubscription, DBSubscriptionAdditionalData, DBPaymentSourceInfo } from "./entity/db-subscription";
 import { injectable, inject } from "inversify";
-import * as uuidv4 from 'uuid/v4';
+import { v4 as uuidv4 } from 'uuid';
 import { Without } from "@gitpod/gitpod-protocol/lib/util/without";
 import { DBUser } from "../typeorm/entity/db-user";
 import { TypeORM } from "./typeorm";
@@ -117,10 +117,10 @@ export class TypeORMAccountingDBImpl implements AccountingDB {
 
     async findSubscriptionById(id: string): Promise<Subscription | undefined> {
         const repo = await this.getSubscriptionRepo();
-        return repo.findOneById(id);
+        return repo.findOne(id);
     }
 
-    async deleteSubscription(subscription: Subscription): Promise<void> {
+    async deleteSubscription(subscription: Subscription): Promise<DeleteResult> {
         return await (await this.getSubscriptionRepo()).delete(subscription as DBSubscription);
     }
 

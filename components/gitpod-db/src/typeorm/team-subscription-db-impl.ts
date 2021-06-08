@@ -47,7 +47,7 @@ export class TeamSubscriptionDBImpl implements TeamSubscriptionDB {
 
     async findTeamSubscriptionById(id: string): Promise<TeamSubscription | undefined> {
         const repo = await this.getRepo();
-        return repo.findOneById(id);
+        return repo.findOne(id);
     }
 
     async findTeamSubscriptionByPaymentRef(userId: string, paymentReference: string): Promise<TeamSubscription | undefined> {
@@ -63,7 +63,7 @@ export class TeamSubscriptionDBImpl implements TeamSubscriptionDB {
             .andWhere('ts.endDate = "" OR ts.endDate > :date', { date: date });
         return query.getMany();
     }
-    
+
     async findTeamSubscriptions(partial: DeepPartial<TeamSubscription>): Promise<TeamSubscription[]> {
         const repo = await this.getRepo();
         return repo.find(partial);
@@ -86,7 +86,7 @@ export class TeamSubscriptionDBImpl implements TeamSubscriptionDB {
 
     async findSlotById(id: string): Promise<TeamSubscriptionSlot | undefined> {
         const repo = await this.getSlotsRepo();
-        return repo.findOneById(id);
+        return repo.findOne(id);
     }
 
     async findSlotsByTeamSubscriptionId(teamSubscriptionId: string): Promise<TeamSubscriptionSlot[]> {

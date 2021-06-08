@@ -92,12 +92,12 @@ export class TypeORMUserDBImpl implements UserDB {
 
     public async updateUserPartial(partial: PartialUserUpdate): Promise<void> {
         const userRepo = await this.getUserRepo();
-        await userRepo.updateById(partial.id, partial);
+        await userRepo.update(partial.id, partial);
     }
 
     public async findUserById(id: string): Promise<MaybeUser> {
         const userRepo = await this.getUserRepo();
-        return userRepo.findOneById(id);
+        return userRepo.findOne(id);
     }
 
     public async findUserByIdentity(identity: IdentityLookup): Promise<User | undefined> {
@@ -233,12 +233,12 @@ export class TypeORMUserDBImpl implements UserDB {
 
     public async findTokenEntryById(uid: string): Promise<TokenEntry | undefined> {
         const repo = await this.getTokenRepo();
-        return repo.findOneById(uid);
+        return repo.findOne(uid);
     }
 
     public async deleteTokenEntryById(uid: string): Promise<void> {
         const repo = await this.getTokenRepo();
-        await repo.deleteById(uid);
+        await repo.delete(uid);
     }
 
     public async deleteExpiredTokenEntries(date: string): Promise<void> {
@@ -254,7 +254,7 @@ export class TypeORMUserDBImpl implements UserDB {
 
     public async updateTokenEntry(tokenEntry: Partial<TokenEntry> & Pick<TokenEntry, "uid">): Promise<void> {
         const repo = await this.getTokenRepo();
-        await repo.updateById(tokenEntry.uid, tokenEntry);
+        await repo.update(tokenEntry.uid, tokenEntry);
     }
 
     public async deleteTokens(identity: Identity, shouldDelete?: (entry: TokenEntry) => boolean): Promise<void> {
@@ -400,12 +400,13 @@ export class TypeORMUserDBImpl implements UserDB {
         const userAndToken = await this.findUserByGitpodToken(tokenHash);
         if (userAndToken) {
             // Yes, update it (~)
-            // NOTE(rl): as we don't support refresh tokens yet this is not really required 
+            // NOTE(rl): as we don't support refresh tokens yet this is not really required
             // since the OAuth server lib calls issueRefreshToken immediately after issueToken
             // We do not allow changes of name, type, user or scope.
             dbToken = userAndToken.token as GitpodToken & { user: DBUser };
             const repo = await this.getGitpodTokenRepo();
-            return repo.updateById(tokenHash, dbToken);
+            await repo.update(tokenHash, dbToken);
+            return;
         } else {
             var user: MaybeUser;
             if (accessToken.user) {

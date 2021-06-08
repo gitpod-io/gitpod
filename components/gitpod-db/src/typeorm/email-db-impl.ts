@@ -31,7 +31,7 @@ export class TypeORMEMailDBImpl implements EMailDB {
 
     async updatePartial(partial: PartialEMailUpdate): Promise<void> {
         const repo = await this.getEMailRepo();
-        return repo.updateById(partial.uid, partial);
+        await repo.update(partial.uid, partial);
     }
 
     async findEMailsToSend(limit: number): Promise<EMail[]> {
@@ -43,7 +43,7 @@ export class TypeORMEMailDBImpl implements EMailDB {
 
         return await query.getMany();
     }
-    
+
     async findEMailsByCampaignAndUserId(campaignId: string, userId: string): Promise<EMail[]> {
         const repo = await this.getEMailRepo();
         const qb = repo.createQueryBuilder('email')

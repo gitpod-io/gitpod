@@ -10,7 +10,7 @@ import { TypeORM } from "./typeorm";
 import { TheiaPluginDB } from "../theia-plugin-db";
 import { DBTheiaPlugin } from "./entity/db-theia-plugin";
 import { TheiaPlugin } from "@gitpod/gitpod-protocol";
-import * as uuidv4 from 'uuid/v4';
+import { v4 as uuidv4 } from 'uuid';
 
 @injectable()
 export class TheiaPluginDBImpl implements TheiaPluginDB {
@@ -50,7 +50,7 @@ export class TheiaPluginDBImpl implements TheiaPluginDB {
 
     async findById(id: string): Promise<TheiaPlugin | undefined> {
         const repo = await this.getTheiaPluginRepo();
-        return repo.findOneById(id);
+        return repo.findOne(id);
     }
 
     async findByPluginId(pluginId: string): Promise<TheiaPlugin[]> {
