@@ -338,7 +338,7 @@ func (s *presignedMinIOStorage) SignDownload(ctx context.Context, bucket, object
 	if err != nil {
 		return nil, translateMinioError(err)
 	}
-	span.LogKV("stat", stat)
+
 	return &DownloadInfo{
 		Meta: ObjectMeta{
 			ContentType:        stat.ContentType,

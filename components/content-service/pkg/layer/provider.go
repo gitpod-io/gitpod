@@ -59,9 +59,6 @@ func (s *Provider) downloadContentManifest(ctx context.Context, bkt, obj string)
 	defer func() {
 		var lerr error
 		if manifest != nil {
-			r, _ := json.Marshal(manifest)
-			span.LogKV("manifest", string(r))
-
 			lerr = err
 			if lerr == storage.ErrNotFound {
 				span.LogKV("found", false)
@@ -103,7 +100,6 @@ func (s *Provider) downloadContentManifest(ctx context.Context, bkt, obj string)
 	if err != nil {
 		return
 	}
-	span.LogKV("manifest", string(mfr))
 
 	var mf csapi.WorkspaceContentManifest
 	err = json.Unmarshal(mfr, &mf)

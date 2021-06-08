@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"net/url"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -918,7 +917,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		gitStatus   *csapi.GitStatus
 	)
 	for i := 0; i < wsdaemonMaxAttempts; i++ {
-		span.LogKV("attempt", strconv.Itoa(i))
+		span.LogKV("attempt", i)
 		didSometing, gs, err := doFinalize()
 		if !didSometing {
 			// someone else is managing finalization process ... we don't have to bother

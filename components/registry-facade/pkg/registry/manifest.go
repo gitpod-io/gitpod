@@ -219,7 +219,6 @@ func (mh *manifestHandler) getManifest(w http.ResponseWriter, r *http.Request) {
 		}
 
 		dgst := digest.FromBytes(p).String()
-		span.LogKV("manifest", string(p))
 
 		w.Header().Set("Content-Type", desc.MediaType)
 		w.Header().Set("Content-Length", fmt.Sprint(len(p)))
