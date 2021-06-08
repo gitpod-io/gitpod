@@ -12,7 +12,7 @@ import { ResponseError } from "vscode-jsonrpc";
 import { TakeSnapshotRequest, AdmissionLevel, ControlAdmissionRequest, StopWorkspacePolicy, DescribeWorkspaceRequest, SetTimeoutRequest } from "@gitpod/ws-manager/lib";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import * as opentracing from 'opentracing';
-import * as uuidv4 from 'uuid/v4';
+import { v4 as uuidv4 } from 'uuid';
 import { log, LogContext } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { LicenseEvaluator, LicenseKeySource } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";

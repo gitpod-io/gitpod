@@ -28,7 +28,7 @@ import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/util/analytics";
 import { TosCookie } from "./tos-cookie";
 import { TosFlow } from "../terms/tos-flow";
 import { increaseLoginCounter } from '../../src/prometheus-metrics';
-import * as uuidv4 from 'uuid/v4';
+import { v4 as uuidv4 } from 'uuid';
 import { ScopedResourceGuard } from "../auth/resource-access";
 import { OneTimeSecretServer } from '../one-time-secret-server';
 
@@ -511,7 +511,7 @@ export class UserController {
         await this.userService.updateUserEnvVarsOnLogin(user, envVars);
         await this.userService.acceptCurrentTerms(user);
         this.analytics.identify({ anonymousId: req.sessionID || "unknown", userId: user.id, });
-        this.analytics.track({ 
+        this.analytics.track({
             userId: user.id,
             event: "signup",
             properties: {

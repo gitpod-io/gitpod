@@ -5,7 +5,7 @@
  */
 
 import { Without } from "./util/without";
-import uuidv4 = require("uuid/v4");
+import { v4 as uuidv4 } from 'uuid';
 
 export type EMailState = "scheduledInternal"
     | "scheduledSendgrid";

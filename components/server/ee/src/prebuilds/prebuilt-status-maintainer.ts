@@ -7,7 +7,7 @@
 import { ProbotOctokit } from 'probot';
 import { injectable, inject } from 'inversify';
 import { WorkspaceDB, TracedWorkspaceDB, DBWithTracing } from '@gitpod/gitpod-db/lib';
-import { v4 as uuidv4 } from 'uuid'
+import { v4 as uuidv4 } from 'uuid';
 import { MessageBusIntegration } from '../../../src/workspace/messagebus-integration';
 import { HeadlessLogEvent } from '@gitpod/gitpod-protocol/lib/headless-workspace-log';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';

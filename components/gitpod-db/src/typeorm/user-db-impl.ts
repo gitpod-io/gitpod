@@ -10,7 +10,7 @@ import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryp
 import { DateInterval, ExtraAccessTokenFields, GrantIdentifier, OAuthClient, OAuthScope, OAuthToken, OAuthUser } from "@jmondi/oauth2-server";
 import { inject, injectable, postConstruct } from "inversify";
 import { EntityManager, Repository } from "typeorm";
-import * as uuidv4 from 'uuid/v4';
+import { v4 as uuidv4 } from 'uuid';
 import { BUILTIN_WORKSPACE_PROBE_USER_NAME, MaybeUser, PartialUserUpdate, UserDB } from "../user-db";
 import { DBGitpodToken } from "./entity/db-gitpod-token";
 import { DBIdentity } from "./entity/db-identity";
