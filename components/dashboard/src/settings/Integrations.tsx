@@ -302,9 +302,7 @@ function GitProviders() {
                     </div>
                     <div className="my-auto flex w-1/12 mr-4 opacity-0 group-hover:opacity-100 justify-end">
                         <div className="self-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer w-8">
-                            <ContextMenu menuEntries={gitProviderMenu(ap)}>
-                                <svg className="w-8 h-8 p-1 text-gray-600 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Actions</title><g fill="currentColor" transform="rotate(90 12 12)"><circle cx="1" cy="1" r="2" transform="translate(5 11)" /><circle cx="1" cy="1" r="2" transform="translate(11 11)" /><circle cx="1" cy="1" r="2" transform="translate(17 11)" /></g></svg>
-                            </ContextMenu>
+                            <ContextMenu menuEntries={gitProviderMenu(ap)} />
                         </div>
                     </div>
                 </div>
@@ -399,9 +397,9 @@ function GitIntegrations() {
                 </div>
             </div>
         )}
-        <div className="flex flex-col pt-6 space-y-2">
+        <div className="items pt-6 space-y-2">
             {providers && providers.map(ap => (
-                <div key={"ap-" + ap.id} className="flex-grow flex flex-row hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl h-16 w-full transition ease-in-out group">
+                <div key={"ap-" + ap.id} className="item h-16">
 
                     <div className="px-4 self-center w-1/12">
                         <div className={"rounded-full w-3 h-3 text-sm align-middle " + (ap.status === "verified" ? "bg-green-500" : "bg-gray-400")}>
@@ -415,10 +413,8 @@ function GitIntegrations() {
                         <span className="my-auto truncate text-gray-500 overflow-ellipsis">{ap.host}</span>
                     </div>
                     <div className="my-auto flex w-1/12 mr-4 opacity-0 group-hover:opacity-100 justify-end">
-                        <div className="self-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer w-8">
-                            <ContextMenu menuEntries={gitProviderMenu(ap)}>
-                                <svg className="w-8 h-8 p-1 text-gray-600 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Actions</title><g fill="currentColor" transform="rotate(90 12 12)"><circle cx="1" cy="1" r="2" transform="translate(5 11)" /><circle cx="1" cy="1" r="2" transform="translate(11 11)" /><circle cx="1" cy="1" r="2" transform="translate(17 11)" /></g></svg>
-                            </ContextMenu>
+                        <div className="item-context-menu">
+                            <ContextMenu menuEntries={gitProviderMenu(ap)} />
                         </div>
                     </div>
                 </div>

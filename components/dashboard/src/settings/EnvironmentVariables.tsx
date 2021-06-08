@@ -235,9 +235,7 @@ export default function EnvVars() {
                                             customFontStyle: 'text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300',
                                             onClick: () => confirmDeleteVariable(variable)
                                         },
-                                    ]}>
-                                        <svg className="w-8 h-8 p-1 text-gray-600 dark:text-gray-300" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><title>Actions</title><g fill="currentColor" transform="rotate(90 12 12)"><circle cx="1" cy="1" r="2" transform="translate(5 11)"/><circle cx="1" cy="1" r="2" transform="translate(11 11)"/><circle cx="1" cy="1" r="2" transform="translate(17 11)"/></g></svg>
-                                    </ContextMenu>
+                                    ]} />
                                 </div>
                             </div>
                         </div>
