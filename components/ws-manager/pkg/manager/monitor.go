@@ -333,7 +333,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 		// In preparation for those cases, we'll add it as an annotation.
 		err := m.manager.markWorkspace(ctx, workspaceID, deleteMark(wsk8s.TraceIDAnnotation), addMark(hostIPAnnotation, wso.HostIP()))
 		if err != nil {
-			log.WithError(err).Warn("was unable to remove traceID annotation from workspace")
+			log.WithError(err).Warn("was unable to remove traceID and/or add host IP annotation from/to workspace")
 		}
 	}
 
