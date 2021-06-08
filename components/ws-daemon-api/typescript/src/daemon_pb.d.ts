@@ -175,6 +175,8 @@ export class DisposeWorkspaceRequest extends jspb.Message {
     setId(value: string): DisposeWorkspaceRequest;
     getBackup(): boolean;
     setBackup(value: boolean): DisposeWorkspaceRequest;
+    getBackupLogs(): boolean;
+    setBackupLogs(value: boolean): DisposeWorkspaceRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): DisposeWorkspaceRequest.AsObject;
@@ -190,6 +192,7 @@ export namespace DisposeWorkspaceRequest {
     export type AsObject = {
         id: string,
         backup: boolean,
+        backupLogs: boolean,
     }
 }
 

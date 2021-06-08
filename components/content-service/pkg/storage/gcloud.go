@@ -88,6 +88,7 @@ func newDirectGCPAccess(cfg GCPConfig, stage Stage) (*DirectGCPStorage, error) {
 type DirectGCPStorage struct {
 	Username      string
 	WorkspaceName string
+	InstanceID    string
 	GCPConfig     GCPConfig
 	Stage         Stage
 
@@ -112,13 +113,14 @@ func (rs *DirectGCPStorage) Validate() error {
 }
 
 // Init initializes the remote storage - call this before calling anything else on the interface
-func (rs *DirectGCPStorage) Init(ctx context.Context, owner, workspace string) (err error) {
+func (rs *DirectGCPStorage) Init(ctx context.Context, owner, workspace, instance string) (err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "GCloudBucketRemotegcpStorage.Init")
 	defer tracing.FinishSpan(span, &err)
 
 	rs.Username = owner
 	rs.WorkspaceName = workspace
+	rs.InstanceID = instance
 
 	// now that we have all the information complete, validate if we're good to go
 	err = rs.Validate()
@@ -288,6 +290,15 @@ func ParseSnapshotName(name string) (bkt, obj string, err error) {
 // Qualify fully qualifies a snapshot name so that it can be downloaded using DownloadSnapshot
 func (rs *DirectGCPStorage) Qualify(name string) string {
 	return fmt.Sprintf("%s@%s", rs.objectName(name), rs.bucketName())
+}
+
+// UploadInstance takes all files from a local location and uploads it to the per-instance remote storage
+func (rs *DirectGCPStorage) UploadInstance(ctx context.Context, source string, name string, opts ...UploadOption) (bucket, object string, err error) {
+	objName, err := InstanceObjectName(rs.InstanceID, name)
+	if err != nil {
+		return "", "", err
+	}
+	return rs.Upload(ctx, source, objName, opts...)
 }
 
 // Upload takes all files from a local location and uploads it to the remote storage

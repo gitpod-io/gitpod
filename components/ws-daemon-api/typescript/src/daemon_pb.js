@@ -1323,7 +1323,8 @@ proto.wsdaemon.DisposeWorkspaceRequest.prototype.toObject = function(opt_include
 proto.wsdaemon.DisposeWorkspaceRequest.toObject = function(includeInstance, msg) {
   var f, obj = {
     id: jspb.Message.getFieldWithDefault(msg, 1, ""),
-    backup: jspb.Message.getBooleanFieldWithDefault(msg, 2, false)
+    backup: jspb.Message.getBooleanFieldWithDefault(msg, 2, false),
+    backupLogs: jspb.Message.getBooleanFieldWithDefault(msg, 3, false)
   };
 
   if (includeInstance) {
@@ -1368,6 +1369,10 @@ proto.wsdaemon.DisposeWorkspaceRequest.deserializeBinaryFromReader = function(ms
       var value = /** @type {boolean} */ (reader.readBool());
       msg.setBackup(value);
       break;
+    case 3:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setBackupLogs(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1411,6 +1416,13 @@ proto.wsdaemon.DisposeWorkspaceRequest.serializeBinaryToWriter = function(messag
       f
     );
   }
+  f = message.getBackupLogs();
+  if (f) {
+    writer.writeBool(
+      3,
+      f
+    );
+  }
 };
 
 
@@ -1447,6 +1459,24 @@ proto.wsdaemon.DisposeWorkspaceRequest.prototype.getBackup = function() {
  */
 proto.wsdaemon.DisposeWorkspaceRequest.prototype.setBackup = function(value) {
   return jspb.Message.setProto3BooleanField(this, 2, value);
+};
+
+
+/**
+ * optional bool backup_logs = 3;
+ * @return {boolean}
+ */
+proto.wsdaemon.DisposeWorkspaceRequest.prototype.getBackupLogs = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 3, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.wsdaemon.DisposeWorkspaceRequest} returns this
+ */
+proto.wsdaemon.DisposeWorkspaceRequest.prototype.setBackupLogs = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 3, value);
 };
 
 

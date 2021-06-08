@@ -36,8 +36,8 @@ type objDoesNotExistGCloudStorage struct {
 }
 
 // Init does nothing
-func (rs *objDoesNotExistGCloudStorage) Init(ctx context.Context, owner, workspace string) error {
-	return rs.Delegate.Init(ctx, owner, workspace)
+func (rs *objDoesNotExistGCloudStorage) Init(ctx context.Context, owner, workspace, instance string) error {
+	return rs.Delegate.Init(ctx, owner, workspace, instance)
 }
 
 // EnsureExists does nothing

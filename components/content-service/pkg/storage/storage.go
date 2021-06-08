@@ -131,7 +131,7 @@ type DirectAccess interface {
 	DirectDownloader
 
 	// Init initializes the remote storage - call this before calling anything else on the interface
-	Init(ctx context.Context, owner, workspace string) error
+	Init(ctx context.Context, owner, workspace, instance string) error
 
 	// EnsureExists makes sure that the remote storage location exists and can be up- or downloaded from
 	EnsureExists(ctx context.Context) error
@@ -141,6 +141,9 @@ type DirectAccess interface {
 
 	// Upload takes all files from a local location and uploads it to the remote storage
 	Upload(ctx context.Context, source string, name string, options ...UploadOption) (bucket, obj string, err error)
+
+	// UploadInstance takes all files from a local location and uploads it to the remote storage
+	UploadInstance(ctx context.Context, source string, name string, options ...UploadOption) (bucket, obj string, err error)
 }
 
 // UploadOptions configure remote storage upload
@@ -347,4 +350,11 @@ func blobObjectName(name string) (string, error) {
 		return "", xerrors.Errorf("blob name '%s' needs to match regex '%s'", name, blobRegex)
 	}
 	return fmt.Sprintf("blobs/%s", name), nil
+}
+
+func InstanceObjectName(instanceID, name string) (string, error) {
+	if instanceID == "" {
+		return "", fmt.Errorf("instanceID is required to comput object name")
+	}
+	return "instances/" + instanceID + "/" + name, nil
 }

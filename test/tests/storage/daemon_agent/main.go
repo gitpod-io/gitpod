@@ -52,7 +52,7 @@ func (*DaemonAgent) CreateBucket(args *api.CreateBucketRequest, resp *api.Create
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	err = ac.Init(ctx, args.Owner, args.Workspace)
+	err = ac.Init(ctx, args.Owner, args.Workspace, "")
 	if err != nil {
 		return err
 	}

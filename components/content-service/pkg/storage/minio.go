@@ -82,6 +82,7 @@ func newDirectMinIOAccess(cfg MinIOConfig) (*DirectMinIOStorage, error) {
 type DirectMinIOStorage struct {
 	Username      string
 	WorkspaceName string
+	InstanceID    string
 	MinIOConfig   MinIOConfig
 
 	client *minio.Client
@@ -104,9 +105,10 @@ func (rs *DirectMinIOStorage) Validate() error {
 }
 
 // Init initializes the remote storage - call this before calling anything else on the interface
-func (rs *DirectMinIOStorage) Init(ctx context.Context, owner, workspace string) (err error) {
+func (rs *DirectMinIOStorage) Init(ctx context.Context, owner, workspace, instance string) (err error) {
 	rs.Username = owner
 	rs.WorkspaceName = workspace
+	rs.InstanceID = instance
 	err = rs.Validate()
 	if err != nil {
 		return err
@@ -213,6 +215,15 @@ func (rs *DirectMinIOStorage) DownloadSnapshot(ctx context.Context, destination 
 // Qualify fully qualifies a snapshot name so that it can be downloaded using DownloadSnapshot
 func (rs *DirectMinIOStorage) Qualify(name string) string {
 	return fmt.Sprintf("%s@%s", rs.objectName(name), rs.bucketName())
+}
+
+// UploadInstance takes all files from a local location and uploads it to the per-instance remote storage
+func (rs *DirectMinIOStorage) UploadInstance(ctx context.Context, source string, name string, opts ...UploadOption) (bucket, object string, err error) {
+	objName, err := InstanceObjectName(rs.InstanceID, name)
+	if err != nil {
+		return "", "", err
+	}
+	return rs.Upload(ctx, source, objName, opts...)
 }
 
 // Upload takes all files from a local location and uploads it to the remote storage

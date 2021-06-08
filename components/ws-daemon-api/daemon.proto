@@ -99,6 +99,9 @@ message DisposeWorkspaceRequest {
 
     // Backup triggers a final backup prior to disposal
     bool backup = 2;
+
+    // backup_logs triggers the upload of terminal logs
+    bool backup_logs = 3;
 }
 
 message DisposeWorkspaceResponse {
