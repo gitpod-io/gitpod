@@ -98,11 +98,9 @@ func collectRemoteContent(ctx context.Context, rs storage.DirectAccess, ps stora
 
 // RunInitializer runs a content initializer in a user, PID and mount namespace to isolate it from ws-daemon
 func RunInitializer(ctx context.Context, destination string, initializer *csapi.WorkspaceInitializer, remoteContent map[string]storage.DownloadInfo, opts RunInitializerOpts) (err error) {
-	//nolint:ineffassign
+	//nolint:ineffassign,staticcheck
 	span, ctx := opentracing.StartSpanFromContext(ctx, "RunInitializer")
 	defer tracing.FinishSpan(span, &err)
-
-	span.LogKV("remoteContent", remoteContent)
 
 	// it's possible the destination folder doesn't exist yet, because the kubelet hasn't created it yet.
 	// If we fail to create the folder, it either already exists, or we'll fail when we try and mount it.

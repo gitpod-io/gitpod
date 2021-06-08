@@ -7,7 +7,6 @@ package manager
 import (
 	"context"
 	"crypto/tls"
-	"fmt"
 	"net/http"
 	"net/url"
 	"time"
@@ -97,7 +96,7 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 		}
 
 		if resp.StatusCode != http.StatusOK {
-			span.LogKV("response", fmt.Sprintf("%v", resp.StatusCode))
+			span.LogKV("response", resp.StatusCode)
 			log.WithField("url", p.readyURL).WithField("status", resp.StatusCode).Debug("workspace did not respond to ready probe with OK status")
 			time.Sleep(p.RetryDelay)
 			continue

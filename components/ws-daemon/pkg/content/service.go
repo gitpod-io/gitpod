@@ -374,7 +374,7 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 	repo, err = sess.UpdateGitStatus(ctx)
 	if err != nil {
 		log.WithError(err).WithField("workspaceId", req.Id).Error("cannot get git status")
-		span.LogKV("error", err)
+		span.LogKV("error", err.Error())
 		return nil, status.Error(codes.Internal, "cannot get git status")
 	}
 	if repo != nil {
@@ -387,7 +387,7 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 		err = s.sandboxes.Dispose(ctx, sess.Location)
 		if err != nil {
 			log.WithError(err).WithField("workspaceId", req.Id).Error("cannot dispose sandbox")
-			span.LogKV("error", err)
+			span.LogKV("error", err.Error())
 			return nil, status.Error(codes.Internal, "cannot dispose sandbox")
 		}
 	}
@@ -395,7 +395,7 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 	err = s.store.Delete(ctx, req.Id)
 	if err != nil {
 		log.WithError(err).WithField("workspaceId", req.Id).Error("cannot delete workspace from store")
-		span.LogKV("error", err)
+		span.LogKV("error", err.Error())
 		return nil, status.Error(codes.Internal, "cannot delete workspace from store")
 	}
 
@@ -566,7 +566,6 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 			return err
 		}
 		log.WithFields(sess.OWI()).WithField("manifest", mf).Debug("uploading content manifest")
-		span.LogKV("manifest", mf)
 
 		tmpmf, err := os.CreateTemp(s.config.TmpDir, fmt.Sprintf("mf-%s-*.json", sess.InstanceID))
 		if err != nil {
@@ -623,7 +622,7 @@ func retryIfErr(ctx context.Context, attempts int, log *logrus.Entry, op func(ct
 		}
 
 		log.WithError(err).Error("op failed")
-		span.LogKV("error", err)
+		span.LogKV("error", err.Error())
 		if i < attempts-1 {
 			log.WithField("backoff", backoff.String()).Debug("retrying op after backoff")
 			if cerr := ctx.Err(); cerr != nil {

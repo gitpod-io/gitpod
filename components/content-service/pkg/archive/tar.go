@@ -65,7 +65,7 @@ func WithGIDMapping(mappings []IDMapping) TarOption {
 func ExtractTarbal(ctx context.Context, src io.Reader, dst string, opts ...TarOption) (err error) {
 	//nolint:staticcheck,ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "extractTarbal")
-	span.LogKV("src", src, "dst", dst)
+	span.LogKV("dst", dst)
 	defer tracing.FinishSpan(span, &err)
 
 	var cfg TarConfig
