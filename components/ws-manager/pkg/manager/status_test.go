@@ -12,11 +12,13 @@ import (
 	"testing"
 	"time"
 
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	ctesting "github.com/gitpod-io/gitpod/common-go/testing"
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
+	"github.com/google/go-cmp/cmp"
 )
 
 func TestIsWorkspaceTimedout(t *testing.T) {
@@ -151,5 +153,81 @@ func BenchmarkGetStatus(b *testing.B) {
 			}
 		})
 	}
+}
 
+func TestGetHostIP(t *testing.T) {
+	tests := []struct {
+		Name        string
+		WSO         workspaceObjects
+		Expectation string
+	}{
+		{
+			Name: "no hostIP",
+		},
+		{
+			Name: "spec",
+			WSO: workspaceObjects{
+				Pod: &v1.Pod{
+					Status: v1.PodStatus{
+						HostIP: "foobar",
+					},
+				},
+			},
+			Expectation: "foobar",
+		},
+		{
+			Name: "annotation",
+			WSO: workspaceObjects{
+				Pod: &v1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							hostIPAnnotation: "from-anno",
+						},
+					},
+					Status: v1.PodStatus{
+						HostIP: "",
+					},
+				},
+			},
+			Expectation: "from-anno",
+		},
+		{
+			Name: "annotation pod no status",
+			WSO: workspaceObjects{
+				Pod: &v1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							hostIPAnnotation: "from-anno",
+						},
+					},
+				},
+			},
+			Expectation: "from-anno",
+		},
+		{
+			Name: "spec and annotation",
+			WSO: workspaceObjects{
+				Pod: &v1.Pod{
+					ObjectMeta: metav1.ObjectMeta{
+						Annotations: map[string]string{
+							hostIPAnnotation: "from-anno",
+						},
+					},
+					Status: v1.PodStatus{
+						HostIP: "from-spec",
+					},
+				},
+			},
+			Expectation: "from-spec",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			act := test.WSO.HostIP()
+			if diff := cmp.Diff(test.Expectation, act); diff != "" {
+				t.Errorf("unexpected hostIP (-want +got):\n%s", diff)
+			}
+		})
+	}
 }

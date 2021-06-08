@@ -79,6 +79,9 @@ const (
 
 	// disposalStatusAnnotation contains the status of the workspace disposal process
 	disposalStatusAnnotation = "gitpod.io/disposalStatus"
+
+	// hostIPAnnotation contains the IP of the node the pod ran on. We use this to remeber the IP in case the pod gets evicted.
+	hostIPAnnotation = "gitpod.io/hostIP"
 )
 
 // markWorkspaceAsReady adds annotations to a workspace pod

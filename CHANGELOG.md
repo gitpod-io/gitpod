@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## June 2021
 
+- Improve backup stability when pods get evicted ([#4405](https://github.com/gitpod-io/gitpod/pull/4405))
 - Fix text color in workspaces list for dark theme ([#4410](https://github.com/gitpod-io/gitpod/pull/4410))
 - Better reflect incremental prebuilds in prebuilt workspace logs ([#4293](https://github.com/gitpod-io/gitpod/pull/4293))
 - Run shellcheck against scripts ([#4280](https://github.com/gitpod-io/gitpod/pull/4280))

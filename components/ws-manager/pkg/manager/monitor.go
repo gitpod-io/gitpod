@@ -326,14 +326,14 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 			}
 		}
 
-		if !wso.IsWorkspaceHeadless() {
-			span.LogKV("event", "removeTraceAnnotation")
-			// once a regular workspace is up and running, we'll remove the traceID information so that the parent span
-			// ends once the workspace has started
-			err := m.manager.markWorkspace(ctx, workspaceID, deleteMark(wsk8s.TraceIDAnnotation))
-			if err != nil {
-				log.WithError(err).Warn("was unable to remove traceID annotation from workspace")
-			}
+		// once a regular workspace is up and running, we'll remove the traceID information so that the parent span
+		// ends once the workspace has started.
+		//
+		// Also, in case the pod gets evicted we would not know the hostIP that pod ran on anymore.
+		// In preparation for those cases, we'll add it as an annotation.
+		err := m.manager.markWorkspace(ctx, workspaceID, deleteMark(wsk8s.TraceIDAnnotation), addMark(hostIPAnnotation, wso.HostIP()))
+		if err != nil {
+			log.WithError(err).Warn("was unable to remove traceID and/or add host IP annotation from/to workspace")
 		}
 	}
 

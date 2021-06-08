@@ -136,9 +136,16 @@ func (wso *workspaceObjects) WasEverReady() (res bool) {
 
 // HostIP returns the IP of the node this workspace is/was deployed to. If this workspace has never been deployed anywhere, HostIP returns an empty string.
 func (wso *workspaceObjects) HostIP() string {
-	if wso.Pod != nil {
+	if wso.Pod == nil {
+		return ""
+	}
+	if wso.Pod.Status.HostIP != "" {
 		return wso.Pod.Status.HostIP
 	}
+	if res, ok := wso.Pod.Annotations[hostIPAnnotation]; ok {
+		return res
+	}
+
 	return ""
 }
 
