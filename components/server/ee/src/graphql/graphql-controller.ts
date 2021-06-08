@@ -10,9 +10,9 @@ import * as crypto from 'crypto';
 import * as graphqlHTTP from 'express-graphql';
 import * as fs from "fs";
 import { makeExecutableSchema } from 'graphql-tools';
+import { IncomingHttpHeaders } from 'http';
 import { inject, injectable } from "inversify";
 import * as path from "path";
-import { Headers } from 'request';
 import { GraphQLResolvers } from './resolvers';
 
 @injectable()
@@ -48,7 +48,7 @@ export class GraphQLController {
         });
     }
 
-    protected bearerToken(headers: Headers): string | undefined {
+    protected bearerToken(headers: IncomingHttpHeaders): string | undefined {
         const authorizationHeader = headers["authorization"];
         if (authorizationHeader && typeof authorizationHeader === "string" && authorizationHeader.startsWith("Bearer ")) {
             const token = authorizationHeader.substring("Bearer ".length);

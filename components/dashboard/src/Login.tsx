@@ -55,7 +55,7 @@ export function Login() {
         // Check for a valid returnTo in payload
         const safeReturnTo = getSafeURLRedirect(payload);
         if (safeReturnTo) {
-            // ... and if it is, redirect to it 
+            // ... and if it is, redirect to it
             window.location.replace(safeReturnTo);
         }
     }
@@ -128,7 +128,7 @@ export function Login() {
                             <img src={gitpodIcon} className="h-16 mx-auto" />
                         </div>
                         <div className="mx-auto text-center pb-8 space-y-2">
-                            <h1 className="text-3xl">Log in{showWelcome ? ' to Gitpod' : ''}</h1>
+                            <h1 className="text-3xl">Log in{showWelcome ? '' : ' to Gitpod'}</h1>
                             <h2 className="uppercase text-sm text-gray-400">ALWAYS READY-TO-CODE</h2>
                         </div>
                         <div className="flex flex-col space-y-3 items-center">

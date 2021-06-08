@@ -11,13 +11,13 @@ import { TokenProvider } from "../../../src/user/token-provider";
 import { User, WorkspaceTimeoutDuration, WorkspaceInstance, WorkspaceContext, CommitContext, PrebuiltWorkspaceContext } from "@gitpod/gitpod-protocol";
 import { RemainingHours } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import * as request from "request-promise";
 import { Plans, MAX_PARALLEL_WORKSPACES } from "@gitpod/gitpod-protocol/lib/plans";
 import { Accounting, SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
 import { millisecondsToHours} from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { AccountStatementProvider, CachedAccountStatement } from "./account-statement-provider";
 import { EnvEE } from "../env";
 import { EMailDomainService } from "../auth/email-domain-service";
+import fetch from "node-fetch";
 
 export interface MayStartWorkspaceResult {
     hitParallelWorkspaceLimit?: HitParallelWorkspaceLimit;
@@ -95,13 +95,13 @@ export class EligibilityService {
         }
 
         try {
-            const rawResponse = await request("https://education.github.com/api/user", {
+            const rawResponse = await fetch("https://education.github.com/api/user", {
                 headers: {
                     "Authorization": `token ${token}`,
-                    "faculty-check-preview": true
+                    "faculty-check-preview": "true"
                 }
             });
-            const result : GitHubEducationPack = JSON.parse(rawResponse);
+            const result : GitHubEducationPack = JSON.parse(await rawResponse.text());
             if(result.student && result.faculty) {
                 // That violates the API contract: `student` and `faculty` need to be mutually exclusive
                 log.warn({userId: user.id}, "result of GitHub Eduction API violates the API contract: student and faculty need to be mutually exclusive", result);

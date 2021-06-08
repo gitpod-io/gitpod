@@ -4,7 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import GitHub = require("@octokit/rest");
 import { inject, injectable } from "inversify";
 import { CheckWriteAccessResult, IGitTokenValidator, IGitTokenValidatorParams } from "../workspace/git-token-validator";
 import { GitHubApiError, GitHubGraphQlEndpoint, GitHubRestApi, GitHubResult } from "./api";
@@ -22,8 +21,7 @@ export class GitHubTokenValidator implements IGitTokenValidator {
 		if (!parsedRepoName) {
 			throw new Error(`Could not parse repo name: ${repoFullName}`);
 		}
-
-		let repo: GitHub.Response<GitHub.ReposGetResponse>;
+		let repo;
 		try {
 			repo = await this.githubRestApi.run(token, api => api.repos.get(parsedRepoName));
 		} catch (error) {
@@ -37,8 +35,8 @@ export class GitHubTokenValidator implements IGitTokenValidator {
 		const mayWritePublic = GitHubResult.mayWritePublic(repo);
 
 		const isPrivateRepo = repo.data.private;
-		let writeAccessToRepo = repo.data.permissions.push;
-		const inOrg = repo.data.owner.type === "Organization";
+		let writeAccessToRepo = repo.data.permissions?.push;
+		const inOrg = repo.data.owner?.type === "Organization";
 
 		if (inOrg) {
 			// if this repository belongs to an organization and Gitpod is not authorized,
