@@ -9,7 +9,6 @@ packages:
       - install/installer:docker
   - name: release-tar
     srcs:
-    - "aws-terraform"
     - "gcp-terraform"
     type: generic
     config:
