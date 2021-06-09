@@ -12,7 +12,6 @@ import (
 	"net/url"
 	"sort"
 	"strings"
-	"time"
 	"unsafe"
 
 	"github.com/cilium/ebpf/perf"
@@ -24,8 +23,8 @@ import (
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/xerrors"
 
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 )
 
@@ -36,19 +35,10 @@ const (
 
 // Smith can perform operations within a users workspace and judge a user
 type Smith struct {
-	GitpodAPI                gitpod.APIInterface
-	Namespace                string
-	Blacklists               *Blacklists
-	CPUUseThreshold          float32
-	CPUUseInterval           int
-	EgressTraffic            *EgressTraffic
-	PodPolicingRetryInterval util.Duration
-	PodPolicingMaxRetries    int
-	PodPolicingTimeout       util.Duration
-	LongCheckVariationTime   util.Duration
-	EnforcementRules         map[string]EnforcementRules
-	SlackWebhooks            *SlackWebhooks
-	metrics                  *metrics
+	Config           Config
+	GitpodAPI        gitpod.APIInterface
+	EnforcementRules map[string]EnforcementRules
+	metrics          *metrics
 
 	notifiedInfringements *lru.Cache
 }
@@ -86,129 +76,34 @@ type SlackWebhooks struct {
 	Warning string `json:"warning,omitempty"`
 }
 
-// NewAgentSmithOption configures an agent
-type NewAgentSmithOption func(*Smith) error
-
-// WithGitpodAPI configures an agent smith instance to work within a Kubernetes namespace
-func WithGitpodAPI(hostURL string, gitpodAPIToken string) NewAgentSmithOption {
-	return func(agent *Smith) error {
-		if gitpodAPIToken == "" {
-			return fmt.Errorf("expected gitpodAPIToken but got none")
-		}
-
-		u, err := url.Parse(hostURL)
-		if err != nil {
-			return err
-		}
-		endpoint := fmt.Sprintf("wss://%s/api/v1", u.Hostname())
-
-		api, err := gitpod.ConnectToServer(endpoint, gitpod.ConnectToServerOpts{
-			Context: context.Background(),
-			Token:   gitpodAPIToken,
-			Log:     log.Log,
-		})
-		if err != nil {
-			return err
-		}
-		agent.GitpodAPI = api
-		return nil
-	}
-}
-
-// WithNamespace configures an agent smith instance to work within a Kubernetes namespace
-func WithNamespace(ns string) NewAgentSmithOption {
-	return func(agent *Smith) error {
-		agent.Namespace = ns
-		return nil
-	}
-}
-
-// WithBlacklists establishes a list of commands prohibited in a workspace
-func WithBlacklists(b *Blacklists) NewAgentSmithOption {
-	return func(agent *Smith) error {
-		agent.Blacklists = b
-		return nil
-	}
-}
-
-// WithCPUUseCheck enables high-CPU use warnings/infringements
-func WithCPUUseCheck(threshold float32, averageOverMinutes int) NewAgentSmithOption {
-	return func(agent *Smith) error {
-		agent.CPUUseThreshold = threshold
-		agent.CPUUseInterval = averageOverMinutes
-		return nil
-	}
-}
-
-// WithEgressTraffic configures an upper limit of egress traffic of a workspace
-func WithEgressTraffic(m *EgressTraffic) NewAgentSmithOption {
-	return func(agent *Smith) error {
-		agent.EgressTraffic = m
-		return nil
-	}
-}
-
-// WithPodPolicingRetry configures the retry interval for policing pods
-func WithPodPolicingRetry(retries int, timeBetweenRetries util.Duration) NewAgentSmithOption {
-	return func(agent *Smith) error {
-		agent.PodPolicingMaxRetries = retries
-		agent.PodPolicingRetryInterval = timeBetweenRetries
-		return nil
-	}
-}
-
-// WithPodPolicingTimeout configures the upper bound a pod inspection may take per check
-func WithPodPolicingTimeout(policingTimeout util.Duration) NewAgentSmithOption {
-	return func(agent *Smith) error {
-		agent.PodPolicingTimeout = policingTimeout
-		return nil
-	}
-}
-
-// WithDefaultEnforcementRules configures the default enforcement rules
-func WithDefaultEnforcementRules(rules EnforcementRules) NewAgentSmithOption {
-	return func(agent *Smith) error {
-		agent.EnforcementRules[defaultRuleset] = rules
-		return nil
-	}
-}
-
-// WithRepoEnforcementRules configures per-repo enforcement rules.
-// The map key is expected to be the Git remote origin URL of the repo we want to target with those rules.
-// Note: this option is only ever additive, i.e. one cannot remove rules once set.
-func WithRepoEnforcementRules(rules map[string]EnforcementRules) NewAgentSmithOption {
-	return func(agent *Smith) error {
-		for k, v := range rules {
-			if k == defaultRuleset {
-				continue
-			}
-			if err := v.Validate(); err != nil {
-				return fmt.Errorf("invalid enforcement rules for %s: %w", k, err)
-			}
-
-			agent.EnforcementRules[k] = v
-		}
-		return nil
-	}
-}
-
-func WithSlackWebhooks(s *SlackWebhooks) NewAgentSmithOption {
-	return func(agent *Smith) error {
-		agent.SlackWebhooks = s
-		return nil
-	}
-}
-
 // NewAgentSmith creates a new agent smith
-func NewAgentSmith(opts ...NewAgentSmithOption) (*Smith, error) {
+func NewAgentSmith(cfg Config) (*Smith, error) {
 	notificationCache, err := lru.New(notificationCacheSize)
 	if err != nil {
 		return nil, err
 	}
 
+	var api gitpod.APIInterface
+	if cfg.GitpodAPI.HostURL != "" {
+		u, err := url.Parse(cfg.GitpodAPI.HostURL)
+		if err != nil {
+			return nil, xerrors.Errorf("cannot parse Gitpod API host url: %w", err)
+		}
+		endpoint := fmt.Sprintf("wss://%s/api/v1", u.Hostname())
+
+		api, err = gitpod.ConnectToServer(endpoint, gitpod.ConnectToServerOpts{
+			Context: context.Background(),
+			Token:   cfg.GitpodAPI.APIToken,
+			Log:     log.Log,
+		})
+		if err != nil {
+			return nil, xerrors.Errorf("cannot connect to Gitpod API: %w", err)
+		}
+	}
+
 	res := &Smith{
 		EnforcementRules: map[string]EnforcementRules{
-			defaultRuleset: EnforcementRules{
+			defaultRuleset: {
 				GradeKind(InfringementExecBlacklistedCmd, InfringementSeverityBarely): PenaltyLimitCPU,
 				GradeKind(InfringementHasBlacklistedFile, InfringementSeverityBarely): PenaltyLimitCPU,
 				GradeKind(InfringementExecBlacklistedCmd, InfringementSeverityAudit):  PenaltyStopWorkspaceAndBlockUser,
@@ -216,15 +111,22 @@ func NewAgentSmith(opts ...NewAgentSmithOption) (*Smith, error) {
 				GradeKind(InfringementExcessiveEgress, InfringementSeverityVery):      PenaltyStopWorkspace,
 			},
 		},
-		LongCheckVariationTime: util.Duration(15 * time.Second),
-		notifiedInfringements:  notificationCache,
-		metrics:                newAgentMetrics(),
+		Config:                cfg,
+		GitpodAPI:             api,
+		notifiedInfringements: notificationCache,
+		metrics:               newAgentMetrics(),
 	}
-	for _, o := range opts {
-		err = o(res)
-		if err != nil {
+	if cfg.Enforcement.Default != nil {
+		if err := cfg.Enforcement.Default.Validate(); err != nil {
 			return nil, err
 		}
+		res.EnforcementRules[defaultRuleset] = *cfg.Enforcement.Default
+	}
+	for repo, rules := range cfg.Enforcement.PerRepo {
+		if err := rules.Validate(); err != nil {
+			return nil, err
+		}
+		res.EnforcementRules[repo] = rules
 	}
 
 	return res, nil
@@ -362,10 +264,10 @@ func (er EnforcementRules) Validate() error {
 	}
 
 	validPenalties := map[PenaltyKind]struct{}{
-		PenaltyLimitCPU:                  struct{}{},
-		PenaltyNone:                      struct{}{},
-		PenaltyStopWorkspace:             struct{}{},
-		PenaltyStopWorkspaceAndBlockUser: struct{}{},
+		PenaltyLimitCPU:                  {},
+		PenaltyNone:                      {},
+		PenaltyStopWorkspace:             {},
+		PenaltyStopWorkspaceAndBlockUser: {},
 	}
 	for _, v := range er {
 		if _, ok := validPenalties[v]; !ok {
@@ -379,8 +281,7 @@ func (er EnforcementRules) Validate() error {
 // Start gets a stream of Infringements from Run and executes a callback on them to apply a Penalty
 func (agent *Smith) Start(callback func(InfringingWorkspace, []PenaltyKind)) {
 	// todo(fntlnz): do the bpf loading here before running Run so that we have everything sorted out
-	// todo(fntlnz): do not hardcode this path
-	abpf, err := bpf.LoadAndAttach("/root/probe.o")
+	abpf, err := bpf.LoadAndAttach(agent.Config.ProbePath)
 
 	if err != nil {
 		log.WithError(err).Fatal("error while loading and attaching bpf program")
@@ -588,6 +489,7 @@ func (agent *Smith) Run(rec perf.Record) *InfringingWorkspace {
 	}
 }
 
+//nolint:deadcode,unused
 func mergeInfringingWorkspaces(vws []InfringingWorkspace) (vw InfringingWorkspace) {
 	for _, r := range vws {
 		if vw.Pod == "" {
@@ -626,256 +528,6 @@ func mergeInfringingWorkspaces(vws []InfringingWorkspace) (vw InfringingWorkspac
 	}
 	return
 }
-
-func (agent *Smith) workOnPod(ctx context.Context, pod *corev1.Pod, longCheck bool) (result *InfringingWorkspace, err error) {
-	// if longCheck {
-	// 	// we randomise the start of a long check somewhat do avoid thundering herd problems
-	// 	// otherwise caused by all sentinel running expensive operations.
-	// 	time.Sleep(time.Duration(rand.Int63n(int64(agent.LongCheckVariationTime))))
-	// }
-	// ctx, cancel := context.WithTimeout(ctx, time.Duration(agent.PodPolicingTimeout))
-	// defer cancel()
-
-	// // try connecting via
-	// workspaceID := pod.Labels[wsk8s.MetaIDLabel]
-	// host := wsk8s.WorkspaceSupervisorEndpoint(workspaceID, agent.Namespace)
-	// sen, err := sentinel.ConnectViaNetwork(ctx, host, defaultSentinelToken)
-	// if err != nil {
-	// 	return nil, err
-	// }
-
-	// defer func() {
-	// 	cerr := sen.Close()
-	// 	if cerr != nil {
-	// 		log.WithError(err).WithField("pod", pod.Name).Debug("could not close sentinel connection - leaking memory here")
-
-	// 		if err == nil {
-	// 			// don't overwrite previous errors
-	// 			err = cerr
-	// 		}
-	// 	}
-	// }()
-
-	// var infringements []Infringement
-	// infringement, err := agent.checkEgressTraffic(ctx, pod, sen)
-	// if infringement != nil {
-	// 	infringements = append(infringements, *infringement)
-	// }
-	// if err != nil {
-	// 	return result, err
-	// }
-
-	// infringement, err = agent.checkForBlacklistedCommand(ctx, pod.Name, sen)
-	// if infringement != nil {
-	// 	infringements = append(infringements, *infringement)
-	// }
-	// if err != nil {
-	// 	return result, err
-	// }
-
-	// infringement, err = agent.checkForCPUUse(ctx, pod.Name, sen)
-	// if infringement != nil {
-	// 	infringements = append(infringements, *infringement)
-	// }
-	// if err != nil {
-	// 	return result, err
-	// }
-
-	// if longCheck {
-	// 	var (
-	// 		blacklists = []*PerLevelBlacklist{agent.Blacklists.Very, agent.Blacklists.Audit, agent.Blacklists.Barely}
-	// 		severities = []InfringementSeverity{InfringementSeverityVery, InfringementSeverityAudit, InfringementSeverityBarely}
-	// 	)
-	// 	for i, bl := range blacklists {
-	// 		if bl == nil || len(bl.Signatures) == 0 {
-	// 			continue
-	// 		}
-
-	// 		s := severities[i]
-
-	// 		// Fist: check the running processes binaries
-	// 		infringement, err = agent.checkForSignature(ctx, pod.Name, sen, s, signature.DomainProcess, bl.Signatures)
-	// 		if infringement != nil {
-	// 			infringements = append(infringements, *infringement)
-	// 		}
-	// 		if err != nil {
-	// 			return result, err
-	// 		}
-
-	// 		// Check the filesystem (if there is any time left)
-	// 		infringement, err = agent.checkForSignature(ctx, pod.Name, sen, s, signature.DomainFileSystem, bl.Signatures)
-	// 		if infringement != nil {
-	// 			infringements = append(infringements, *infringement)
-	// 		}
-	// 		if err != nil {
-	// 			return result, err
-	// 		}
-	// 	}
-	// }
-
-	// if len(infringements) > 0 {
-	// 	owner, workspaceID, instanceID := agent.getWorkspaceInfo(pod)
-	// 	if err != nil {
-	// 		log.WithError(err).WithField("pod", pod.Name).Warn("cannot determine workspace info")
-	// 	}
-	// 	res, err := sen.GetGitRemoteURL(ctx, &sentinel.GetGitRemoteURLRequest{})
-	// 	if err != nil {
-	// 		res = &sentinel.GetGitRemoteURLResponse{}
-	// 		log.WithError(err).WithField("pod", pod.Name).WithFields(log.OWI(owner, workspaceID, instanceID)).Warn("cannot get Git remote URL")
-	// 	}
-	// 	result = &InfringingWorkspace{
-	// 		GitRemoteURL:  res.Url,
-	// 		InstanceID:    instanceID,
-	// 		Pod:           pod.Name,
-	// 		Owner:         owner,
-	// 		Infringements: infringements,
-	// 		WorkspaceID:   workspaceID,
-	// 	}
-	// }
-
-	// return result, err
-
-	return nil, nil
-}
-
-// func (agent *Smith) checkEgressTraffic(ctx context.Context, pod *corev1.Pod, sen sentinel.SentinelClient) (*Infringement, error) {
-// 	if agent.EgressTraffic == nil {
-// 		return nil, nil
-// 	}
-// 	log := log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta))
-
-// 	podLifetime := time.Since(pod.CreationTimestamp.Time)
-// 	resp, err := sen.GetEgressTraffic(ctx, &sentinel.GetEgressTrafficRequest{})
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	if resp.TotalBytes <= 0 {
-// 		log.WithField("total egress bytes", resp.TotalBytes).Warn("GetEgressTraffic returned <= 0 value")
-// 		return nil, nil
-// 	}
-
-// 	type level struct {
-// 		V GradedInfringementKind
-// 		T *PerLevelEgressTraffic
-// 	}
-// 	levels := make([]level, 0, 2)
-// 	if agent.EgressTraffic.VeryExcessiveLevel != nil {
-// 		levels = append(levels, level{V: GradeKind(InfringementExcessiveEgress, InfringementSeverityVery), T: agent.EgressTraffic.VeryExcessiveLevel})
-// 	}
-// 	if agent.EgressTraffic.ExcessiveLevel != nil {
-// 		levels = append(levels, level{V: GradeKind(InfringementExcessiveEgress, InfringementSeverityAudit), T: agent.EgressTraffic.ExcessiveLevel})
-// 	}
-
-// 	dt := int64(podLifetime / time.Duration(agent.EgressTraffic.WindowDuration))
-// 	for _, lvl := range levels {
-// 		allowance := dt*lvl.T.Threshold.Value() + lvl.T.BaseBudget.Value()
-// 		excess := resp.TotalBytes - allowance
-
-// 		// log.WithFields(logrus.Fields{"pod": pod.Name, "lifetime": podLifetime.String(), "egressBytes": resp.TotalBytes, "allowance": allowance, "excess": excess}).Debugf("checking %s traffic", lvl.V)
-// 		if excess > 0 {
-// 			return &Infringement{Description: fmt.Sprintf("egress traffic is %.3f megabytes over limit", float64(excess)/(1024.0*1024.0)), Kind: lvl.V}, nil
-// 		}
-// 	}
-
-// 	return nil, nil
-// }
-
-// func (agent *Smith) checkForBlacklistedCommand(ctx context.Context, podName string, sen sentinel.SentinelClient) (*Infringement, error) {
-// 	if agent.Blacklists == nil {
-// 		return nil, nil
-// 	}
-
-// 	// Note: mind the order of severity here. We check, hence return very blacklisted command infringements first
-// 	var (
-// 		blacklists = []*PerLevelBlacklist{agent.Blacklists.Very, agent.Blacklists.Audit, agent.Blacklists.Barely}
-// 		severities = []InfringementSeverity{InfringementSeverityVery, InfringementSeverityAudit, InfringementSeverityBarely}
-// 		rerr       error
-// 	)
-// 	for i, bl := range blacklists {
-// 		if bl == nil || len(bl.Binaries) == 0 {
-// 			continue
-// 		}
-
-// 		resp, err := sen.IsCommandRunning(ctx, &sentinel.IsCommandRunningRequest{Command: bl.Binaries})
-// 		if err != nil {
-// 			rerr = xerrors.Errorf("error while checking for blacklisted command: %v", err)
-// 			continue
-// 		}
-// 		if len(resp.Findings) == 0 {
-// 			continue
-// 		}
-
-// 		s := severities[i]
-// 		return &Infringement{Description: fmt.Sprintf("user ran %s blacklisted command: %s", s, resp.Findings[0]), Kind: GradeKind(InfringementExecBlacklistedCmd, s)}, nil
-// 	}
-
-// 	return nil, rerr
-// }
-
-// func (agent *Smith) checkForCPUUse(ctx context.Context, podName string, sen sentinel.SentinelClient) (*Infringement, error) {
-// 	if agent.CPUUseInterval <= 0 {
-// 		return nil, nil
-// 	}
-
-// 	resp, err := sen.GetCPUInfo(ctx, &sentinel.GetCPUInfoRequest{AverageOverMinutes: int64(agent.CPUUseInterval)})
-// 	if status.Code(err) == codes.FailedPrecondition {
-// 		// we don't have enough data yet - pod isn't running long enough
-// 		return nil, nil
-// 	}
-// 	if err != nil {
-// 		return nil, xerrors.Errorf("error while checking for CPU usage: %v", err)
-// 	}
-
-// 	if resp.Load < agent.CPUUseThreshold {
-// 		return nil, nil
-// 	}
-
-// 	topcmd := resp.TopCommand
-// 	return &Infringement{Description: fmt.Sprintf("CPU load %.2f > %.2f for %d minutes. Top command is %s", resp.Load, agent.CPUUseThreshold, agent.CPUUseInterval, topcmd), Kind: GradeKind(InfringementExcessiveCPUUse, InfringementSeverityAudit)}, nil
-// }
-
-// func (agent *Smith) checkForSignature(ctx context.Context, podName string, sen sentinel.SentinelClient, severity InfringementSeverity, domain signature.Domain, signatures []*signature.Signature) (*Infringement, error) {
-// 	fsigs := make([]*signature.Signature, 0, len(signatures))
-// 	for _, s := range signatures {
-// 		if s.Domain == domain {
-// 			fsigs = append(fsigs, s)
-// 		}
-// 	}
-// 	if len(fsigs) == 0 {
-// 		return nil, nil
-// 	}
-
-// 	var sd sentinel.FindSignatureDomain
-// 	switch domain {
-// 	case signature.DomainFileSystem:
-// 		sd = sentinel.FindSignatureDomain_Filesystem
-// 	case signature.DomainProcess:
-// 		sd = sentinel.FindSignatureDomain_Process
-// 	default:
-// 		return nil, xerrors.Errorf("unknown domain: %q", domain)
-// 	}
-
-// 	resp, err := sen.FindSignature(ctx, &sentinel.FindSignatureRequest{
-// 		Signature: sentinel.ConvertSignaturesToProtocol(fsigs),
-// 		Domain:    sd,
-// 	})
-// 	if err != nil {
-// 		return nil, xerrors.Errorf("find signature returned error: %v", err)
-// 	}
-// 	if resp == nil {
-// 		return nil, xerrors.Errorf("findSignature: no error with no response: %v", err)
-// 	}
-
-// 	if resp.Target == "" {
-// 		return nil, nil
-// 	}
-
-// 	if domain == signature.DomainProcess {
-// 		return &Infringement{Description: fmt.Sprintf("user ran program matching %s signature: %s", resp.Signature.Name, resp.Target), Kind: GradeKind(InfringementExecBlacklistedCmd, severity)}, nil
-// 	}
-
-// 	return &Infringement{Description: fmt.Sprintf("found file matching %s signature: %s", resp.Signature.Name, resp.Target), Kind: GradeKind(InfringementHasBlacklistedFile, severity)}, nil
-// }
 
 // RegisterMetrics registers prometheus metrics for this driver
 func (agent *Smith) RegisterMetrics(reg prometheus.Registerer) error {

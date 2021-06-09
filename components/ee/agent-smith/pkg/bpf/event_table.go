@@ -111,8 +111,8 @@ const (
 )
 
 type PPMNameValue struct {
-	name  *[]byte
-	value uint32
+	Name  *[]byte
+	Value uint32
 }
 
 type PPMParamInfo struct {
@@ -203,6 +203,7 @@ var (
 	CLONE_NEWCGROUP      = []byte("CLONE_NEWCGROUP")
 )
 
+//nolint:deadcode,unused,varcheck
 var cloneFlags = []PPMNameValue{
 	{&CLONE_FILES, PPM_CL_CLONE_FILES},
 	{&CLONE_FS, PPM_CL_CLONE_FS},

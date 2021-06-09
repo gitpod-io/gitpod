@@ -10,12 +10,10 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/gitpod-io/gitpod/agent-smith/pkg/agent"
-
 	goflag "flag"
 
+	"github.com/gitpod-io/gitpod/agent-smith/pkg/agent"
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
 )
@@ -86,29 +84,12 @@ func getConfig() (*config, error) {
 // $ go run main.go config-schema > config-schema.json
 // And also update the examples accordingly.
 type config struct {
+	agent.Config
+
 	Namespace string `json:"namespace,omitempty"`
 
 	PProfAddr      string `json:"pprofAddr,omitempty"`
 	PrometheusAddr string `json:"prometheusAddr,omitempty"`
-
-	Blacklists        *agent.Blacklists    `json:"blacklists,omitempty"`
-	EgressTraffic     *agent.EgressTraffic `json:"egressTraffic,omitempty"`
-	ExcessiveCPUCheck *struct {
-		Threshold   float32 `json:"threshold"`
-		AverageOver int     `json:"averageOverMinutes"`
-	} `json:"excessiveCPUCheck,omitempty"`
-
-	PeriodicCheck            util.Duration        `json:"periodicCheck,omitempty"`
-	PodPolicingRetryInterval util.Duration        `json:"podPolicingRetryInterval,omitempty"`
-	PodPolicingMaxRetries    int                  `json:"podPolicingMaxRetries,omitempty"`
-	PodPolicingTimeout       util.Duration        `json:"podPolicingTimeout,omitempty"`
-	LongCheckLag             int                  `json:"longCheckLag,omitempty"`
-	SlackWebhooks            *agent.SlackWebhooks `json:"slackWebhooks,omitempty"`
-
-	Enforcement struct {
-		Default *agent.EnforcementRules           `json:"default,omitempty"`
-		PerRepo map[string]agent.EnforcementRules `json:"perRepo,omitempty"`
-	} `json:"enforcement,omitempty"`
 
 	// We have had memory leak issues with agent smith in the past due to experimental gRPC use.
 	// This upper limit causes agent smith to stop itself should it go above this limit.

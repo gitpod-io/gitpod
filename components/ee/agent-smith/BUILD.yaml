@@ -10,7 +10,6 @@ packages:
     deps:
       - components/common-go:lib
       - components/gitpod-protocol/go:lib
-      - :falco-bpf-probe
     env:
       - CGO_ENABLED=0
       - GOOS=linux
@@ -38,8 +37,23 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/agent-smith:${version}
+  - name: example-config
+    type: generic
+    srcs:
+      - "example-config.json"
+    config:
+      commands: [["echo"]]
 scripts:
   - name: prepare-environment
     script: scripts/prepare-bpf-dev-environment.sh
   - name: qemu
     script: scripts/qemu.sh
+  - name: copy-to-qemu
+    workdir: "packages"
+    deps:
+      - :app
+      - :falco-bpf-probe
+      - :example-config
+    script: |
+      sshpass -p 'root' scp -o StrictHostKeychecking=no -P 2222 ./components-ee-agent-smith--falco-bpf-probe/probe.o ./components-ee-agent-smith--app/agent-smith ./components-ee-agent-smith--example-config/example-config.json root@localhost:/
+      echo "copied agent-smith to /"
