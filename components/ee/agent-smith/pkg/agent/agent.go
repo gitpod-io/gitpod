@@ -10,12 +10,14 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net/url"
+	"os"
+	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"unsafe"
 
 	"github.com/cilium/ebpf/perf"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/bpf"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/signature"
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -23,6 +25,7 @@ import (
 	gitpod "github.com/gitpod-io/gitpod/gitpod-protocol"
 	lru "github.com/hashicorp/golang-lru"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/procfs"
 	"golang.org/x/xerrors"
 
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -33,6 +36,8 @@ const (
 	notificationCacheSize = 1000
 )
 
+type perfHandlerFunc func() (*InfringingWorkspace, error)
+
 // Smith can perform operations within a users workspace and judge a user
 type Smith struct {
 	Config           Config
@@ -41,6 +46,7 @@ type Smith struct {
 	metrics          *metrics
 
 	notifiedInfringements *lru.Cache
+	perfHandler           chan perfHandlerFunc
 }
 
 // EgressTraffic configures an upper limit of allowed egress traffic over time
@@ -62,6 +68,20 @@ type Blacklists struct {
 	Barely *PerLevelBlacklist `json:"barely,omitempty"`
 	Audit  *PerLevelBlacklist `json:"audit,omitempty"`
 	Very   *PerLevelBlacklist `json:"very,omitempty"`
+}
+
+func (b *Blacklists) Levels() map[InfringementSeverity]*PerLevelBlacklist {
+	res := make(map[InfringementSeverity]*PerLevelBlacklist)
+	if b.Barely != nil {
+		res[InfringementSeverityBarely] = b.Barely
+	}
+	if b.Audit != nil {
+		res[InfringementSeverityAudit] = b.Audit
+	}
+	if b.Very != nil {
+		res[InfringementSeverityVery] = b.Very
+	}
+	return res
 }
 
 // PerLevelBlacklist lists blacklists for level of infringement
@@ -106,14 +126,17 @@ func NewAgentSmith(cfg Config) (*Smith, error) {
 			defaultRuleset: {
 				GradeKind(InfringementExecBlacklistedCmd, InfringementSeverityBarely): PenaltyLimitCPU,
 				GradeKind(InfringementHasBlacklistedFile, InfringementSeverityBarely): PenaltyLimitCPU,
-				GradeKind(InfringementExecBlacklistedCmd, InfringementSeverityAudit):  PenaltyStopWorkspaceAndBlockUser,
-				GradeKind(InfringementHasBlacklistedFile, InfringementSeverityAudit):  PenaltyStopWorkspaceAndBlockUser,
+				GradeKind(InfringementExecBlacklistedCmd, InfringementSeverityAudit):  PenaltyStopWorkspace,
+				GradeKind(InfringementHasBlacklistedFile, InfringementSeverityAudit):  PenaltyStopWorkspace,
+				GradeKind(InfringementExecBlacklistedCmd, InfringementSeverityVery):   PenaltyStopWorkspaceAndBlockUser,
+				GradeKind(InfringementHasBlacklistedFile, InfringementSeverityVery):   PenaltyStopWorkspaceAndBlockUser,
 				GradeKind(InfringementExcessiveEgress, InfringementSeverityVery):      PenaltyStopWorkspace,
 			},
 		},
 		Config:                cfg,
 		GitpodAPI:             api,
 		notifiedInfringements: notificationCache,
+		perfHandler:           make(chan perfHandlerFunc, 10),
 		metrics:               newAgentMetrics(),
 	}
 	if cfg.Enforcement.Default != nil {
@@ -134,6 +157,7 @@ func NewAgentSmith(cfg Config) (*Smith, error) {
 
 // InfringingWorkspace reports a user's wrongdoing in a workspace
 type InfringingWorkspace struct {
+	SupervisorPID int
 	Namespace     string
 	Pod           string
 	Owner         string
@@ -289,6 +313,36 @@ func (agent *Smith) Start(callback func(InfringingWorkspace, []PenaltyKind)) {
 
 	defer abpf.Close()
 
+	for i := 0; i < 10; i++ {
+		go func(i int) {
+			for h := range agent.perfHandler {
+				if h == nil {
+					continue
+				}
+
+				v, err := h()
+				if err != nil {
+					log.WithError(err).Warn("error while running perf handler")
+				}
+
+				// event did not generate an infringement
+				if v == nil {
+					continue
+				}
+				ps, err := agent.Penalize(*v)
+				if err != nil {
+					log.WithError(err).WithField("infringement", v).Warn("error while reacting to infringement")
+				}
+
+				alreadyNotified, _ := agent.notifiedInfringements.ContainsOrAdd(v.VID(), nil)
+				if alreadyNotified {
+					continue
+				}
+				callback(*v, ps)
+			}
+		}(i)
+	}
+
 	// todo(fntlnz): use a channel to cancel this execution
 	for {
 		rec, err := abpf.Read()
@@ -299,23 +353,7 @@ func (agent *Smith) Start(callback func(InfringingWorkspace, []PenaltyKind)) {
 			}
 			log.WithError(err).Error("error reading from event perf buffer")
 		}
-		v := agent.Run(rec)
-
-		// event did not generate an infringement
-		if v == nil {
-			continue
-		}
-		ps, err := agent.Penalize(*v)
-		if err != nil {
-			log.WithError(err).WithField("infringement", v).Warn("error while reacting to infringement")
-		}
-
-		alreadyNotified, _ := agent.notifiedInfringements.ContainsOrAdd(v.VID(), nil)
-		if alreadyNotified {
-			continue
-		}
-		callback(*v, ps)
-
+		agent.processPerfRecord(rec)
 	}
 }
 
@@ -331,14 +369,14 @@ func (agent *Smith) Penalize(ws InfringingWorkspace) ([]PenaltyKind, error) {
 		switch p {
 		case PenaltyStopWorkspace:
 			agent.metrics.penaltyAttempts.WithLabelValues(string(p)).Inc()
-			err := agent.stopWorkspace(ws.Pod)
+			err := agent.stopWorkspace(ws.SupervisorPID)
 			if err != nil {
 				agent.metrics.penaltyFailures.WithLabelValues(string(p), err.Error()).Inc()
 			}
 			return penalty, err
 		case PenaltyStopWorkspaceAndBlockUser:
 			agent.metrics.penaltyAttempts.WithLabelValues(string(p)).Inc()
-			err := agent.stopWorkspaceAndBlockUser(ws.Pod, ws.Owner)
+			err := agent.stopWorkspaceAndBlockUser(ws.SupervisorPID, ws.Owner)
 			if err != nil {
 				agent.metrics.penaltyFailures.WithLabelValues(string(p), err.Error()).Inc()
 			}
@@ -419,18 +457,19 @@ func cStrLen(n []byte) int {
 			return i
 		}
 	}
-	return len(n)
+	return -1
 }
 
 type Execve struct {
 	Filename string
 	Argv     []string
+	TID      int
 	Envp     []string
 }
 
 // todo(fntlnz): move this to a package for parsers and write a test
 // todo(fntlnz): finish parsing arguments
-func parseExecveExit(evtHdr EventHeader, buffer []byte) *Execve {
+func parseExecveExit(evtHdr EventHeader, buffer []byte) Execve {
 	var i int16
 	dataOffsetPtr := unsafe.Sizeof(evtHdr) + unsafe.Sizeof(i)*uintptr(evtHdr.NParams) - 6 // todo(fntlnz): check why this -6 is necessary
 	scratchHeaderOffset := uint32(dataOffsetPtr)
@@ -438,55 +477,194 @@ func parseExecveExit(evtHdr EventHeader, buffer []byte) *Execve {
 	retval := int64(buffer[scratchHeaderOffset])
 
 	// einfo := bpf.EventTable[bpf.PPME_SYSCALL_EXECVE_19_X]
-	// einfo.Params[0].
 
 	scratchHeaderOffset += uint32(unsafe.Sizeof(retval))
-	spew.Dump(scratchHeaderOffset)
 	command := buffer[scratchHeaderOffset:]
 	commandLen := cStrLen(command)
 	command = command[0:commandLen]
 
 	scratchHeaderOffset += uint32(commandLen) + 1
-	argv := buffer[scratchHeaderOffset:]
-	argv = argv[0:cStrLen(argv)]
-	spew.Dump(argv)
-
-	execve := &Execve{
-		Filename: string(command[:]),
+	var argv []string
+	rawParams := buffer[scratchHeaderOffset:]
+	byteSlice := bytes.Split(rawParams, rawParams[len(rawParams)-1:])
+	for _, b := range byteSlice {
+		if len(b) == 0 || bytes.HasPrefix(b, []byte("\\x")) {
+			break
+		}
+		if len(b) > 0 {
+			argv = append(argv, string(b))
+		}
 	}
 
-	spew.Dump(execve)
+	execve := Execve{
+		Filename: string(command[:]),
+		Argv:     argv,
+		TID:      int(evtHdr.Tid),
+	}
 
 	return execve
 }
 
 // Run continuously queries the perf event array to determine if there was an
 // infringement
-func (agent *Smith) Run(rec perf.Record) *InfringingWorkspace {
+func (agent *Smith) processPerfRecord(rec perf.Record) {
 	if rec.LostSamples != 0 {
 		log.WithField("lost-samples", rec.LostSamples).Warn("event buffer is full, events dropped")
 	}
 
 	var evtHdr EventHeader
 	if err := binary.Read(bytes.NewBuffer(rec.RawSample), binary.LittleEndian, &evtHdr); err != nil {
-		log.Printf("parsing perf event: %s", err)
-		return nil
+		log.WithError(err).Warn("cannot parse perf record")
 	}
 
 	switch evtHdr.Type {
 	case uint16(bpf.PPME_SYSCALL_EXECVE_19_X):
-		parseExecveExit(evtHdr, rec.RawSample)
-	default:
-		return nil
+		execve := parseExecveExit(evtHdr, rec.RawSample)
+		agent.perfHandler <- agent.handleExecveEvent(execve)
+	}
+}
+
+// handles an execve event checks if it's infringing
+func (agent *Smith) handleExecveEvent(execve Execve) func() (*InfringingWorkspace, error) {
+	return func() (*InfringingWorkspace, error) {
+		if agent.Config.Blacklists == nil {
+			return nil, nil
+		}
+
+		// Note: mind the order of severity here. We check, hence return very blacklisted command infringements first
+		bls := agent.Config.Blacklists.Levels()
+		var res []Infringement
+		for s, bl := range bls {
+			if bl == nil || len(bl.Binaries) == 0 {
+				continue
+			}
+
+			for _, b := range bl.Binaries {
+				if strings.Contains(execve.Filename, b) || strings.Contains(strings.Join(execve.Argv, "|"), b) {
+					infr := Infringement{Description: fmt.Sprintf("user ran %s blacklisted command: %s", s, execve.Filename), Kind: GradeKind(InfringementExecBlacklistedCmd, s)}
+					res = append(res, infr)
+				}
+			}
+		}
+
+		if len(res) == 0 {
+			fd, err := os.Open(filepath.Join("/proc", strconv.Itoa(execve.TID), "exe"))
+			if err != nil {
+				log.WithError(err).WithField("path", execve.Filename).Warn("cannot open executable to check signatures")
+				return nil, nil
+			}
+			defer fd.Close()
+
+			for severity, bl := range bls {
+				if bl == nil || len(bl.Signatures) == 0 {
+					continue
+				}
+
+				for _, sig := range bl.Signatures {
+					if sig.Domain != signature.DomainProcess {
+						continue
+					}
+
+					m, err := sig.Matches(fd)
+					if err != nil {
+						log.WithError(err).WithField("path", execve.Filename).WithField("signature", sig.Name).Warn("cannot check signature")
+						continue
+					}
+					if !m {
+						continue
+					}
+
+					infr := Infringement{Description: fmt.Sprintf("user ran %s blacklisted command: %s", sig.Name, execve.Filename), Kind: GradeKind(InfringementExecBlacklistedCmd, severity)}
+					res = append(res, infr)
+				}
+			}
+		}
+
+		if len(res) == 0 {
+			return nil, nil
+		}
+
+		ws, err := getWorkspaceFromProcess(execve.TID)
+		if err != nil {
+			log.WithField("tid", execve.TID).WithError(err).Warn("cannot get workspace details from process")
+			ws = &InfringingWorkspace{}
+		}
+		ws.Infringements = res
+		return ws, nil
+	}
+}
+
+func getWorkspaceFromProcess(tid int) (res *InfringingWorkspace, err error) {
+	proc, err := procfs.NewProc(tid)
+	if err != nil {
+		return nil, err
+	}
+
+	parent := func(proc procfs.Proc) (procfs.Proc, error) {
+		stat, err := proc.Stat()
+		if err != nil {
+			return proc, err
+		}
+		return procfs.NewProc(stat.PPID)
+	}
+
+	// We need to get the workspace information from the process itself.
+	// To do this, we aim to find the workspacekit process furthest up in the tree.
+	var (
+		supervisor   procfs.Proc
+		workspacekit procfs.Proc
+	)
+	for ; err == nil; proc, err = parent(proc) {
+		sl, err := proc.CmdLine()
+		if err != nil {
+			log.WithError(err).WithField("pid", proc.PID).Warn("cannot read command slice")
+			continue
+		}
+
+		if supervisor.PID == 0 && len(sl) == 2 && sl[0] == "supervisor" && sl[1] == "run" {
+			supervisor = proc
+		} else if supervisor.PID != 0 && len(sl) >= 2 && sl[0] == "/proc/self/exe" && sl[1] == "ring1" {
+			workspacekit = proc
+			break
+		}
+	}
+	if supervisor.PID == 0 || workspacekit.PID == 0 {
+		return nil, fmt.Errorf("did not find supervisor or workspacekit parent")
+	}
+
+	env, err := workspacekit.Environ()
+	if err != nil {
+		return nil, err
+	}
+	var (
+		ownerID, workspaceID, instanceID string
+		gitURL                           string
+	)
+	for _, e := range env {
+		if strings.HasPrefix(e, "GITPOD_OWNER_ID=") {
+			ownerID = strings.TrimPrefix(e, "GITPOD_OWNER_ID=")
+			continue
+		}
+		if strings.HasPrefix(e, "GITPOD_WORKSPACE_ID=") {
+			workspaceID = strings.TrimPrefix(e, "GITPOD_WORKSPACE_ID=")
+			continue
+		}
+		if strings.HasPrefix(e, "GITPOD_INSTANCE_ID=") {
+			instanceID = strings.TrimPrefix(e, "GITPOD_INSTANCE_ID=")
+			continue
+		}
+		if strings.HasPrefix(e, "GITPOD_WORKSPACE_CONTEXT_URL=") {
+			gitURL = strings.TrimPrefix(e, "GITPOD_WORKSPACE_CONTEXT_URL=")
+			continue
+		}
 	}
 	return &InfringingWorkspace{
-		Pod:           "test-lore",
-		Owner:         "lore",
-		InstanceID:    "",
-		WorkspaceID:   "",
-		Infringements: []Infringement{},
-		GitRemoteURL:  []string{},
-	}
+		SupervisorPID: supervisor.PID,
+		Owner:         ownerID,
+		WorkspaceID:   workspaceID,
+		InstanceID:    instanceID,
+		GitRemoteURL:  []string{gitURL},
+	}, nil
 }
 
 //nolint:deadcode,unused

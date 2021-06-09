@@ -54,6 +54,8 @@ scripts:
       - :app
       - :falco-bpf-probe
       - :example-config
+      - components/ee/agent-smith/cmd/testbed:app
+      - components/ee/agent-smith/cmd/testtarget:app
     script: |
-      sshpass -p 'root' scp -o StrictHostKeychecking=no -P 2222 ./components-ee-agent-smith--falco-bpf-probe/probe.o ./components-ee-agent-smith--app/agent-smith ./components-ee-agent-smith--example-config/example-config.json root@localhost:/
+      sshpass -p 'root' scp -o StrictHostKeychecking=no -P 2222 ./components-ee-agent-smith--falco-bpf-probe/probe.o ./components-ee-agent-smith--app/agent-smith ./components-ee-agent-smith--example-config/example-config.json ./components-ee-agent-smith-cmd-testbed--app/testbed ./components-ee-agent-smith-cmd-testtarget--app/testtarget root@localhost:/
       echo "copied agent-smith to /"

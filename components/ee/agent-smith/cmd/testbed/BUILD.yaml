@@ -1,0 +1,11 @@
+packages:
+    - name: app
+      type: go
+      srcs:
+        - go.mod
+        - go.sum
+        - "**/*.go"
+      env:
+        - CGO_ENABLED=0
+      config:
+        packaging: app
