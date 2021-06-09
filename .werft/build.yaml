@@ -94,6 +94,11 @@ pod:
     #     secretKeyRef:
     #       name: gitpod-test-tokens
     #       key: bitbucket-test-token.json
+    - name: CODECOV_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: codecov
+          key: token
     command:
       - bash
       - -c
