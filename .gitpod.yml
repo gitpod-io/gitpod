@@ -47,3 +47,4 @@ vscode:
     - ms-kubernetes-tools.vscode-kubernetes-tools
     - stkb.rewrap
     - zxh404.vscode-proto3
+    - matthewpi.caddyfile-support
