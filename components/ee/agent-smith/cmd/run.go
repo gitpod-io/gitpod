@@ -62,7 +62,7 @@ var runCmd = &cobra.Command{
 		}
 
 		go smith.Start(func(violation agent.InfringingWorkspace, penalties []agent.PenaltyKind) {
-			log.WithField("violation", violation).Info("Found violation")
+			log.WithField("violation", violation).WithField("penalties", penalties).Info("Found violation")
 
 			if cfg.SlackWebhooks != nil {
 				for _, i := range violation.Infringements {
