@@ -33,7 +33,7 @@ export class AccountingDBSpec {
         await manager.clear(DBSubscription);
         await manager.clear(DBWorkspaceInstance);
         await manager.clear(DBWorkspace);
-        
+
         this.queryRunner = connection.createQueryRunner();
         await this.queryRunner.connect();
         await this.queryRunner.startTransaction();
@@ -132,7 +132,7 @@ export class AccountingDBSpec {
         expectExactlyOne(await this.db.findActiveSubscriptionsForUser(subscription.userId, later), subscription);
         Subscription.cancelSubscription(dbSubscription, later);
         await this.db.storeSubscription(dbSubscription);
-        
+
         expectExactlyOne(await this.db.findActiveSubscriptionsForUser(subscription.userId, rightBefore(later)), dbSubscription);
         expect(await this.db.findActiveSubscriptionsForUser(subscription.userId, later)).to.be.an('array').and.empty;
     }

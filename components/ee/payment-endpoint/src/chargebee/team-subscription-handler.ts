@@ -33,7 +33,7 @@ export class TeamSubscriptionHandler implements EventHandler<chargebee.Subscript
         }
         return false;
     }
-    
+
     async handleSingleEvent(event: chargebee.Event<chargebee.SubscriptionEventV2>): Promise<boolean> {
         const chargebeeSubscription = event.content.subscription;
         const userId = chargebeeSubscription.customer_id;

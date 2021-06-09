@@ -52,9 +52,9 @@ export class AccountServiceImpl implements AccountService {
         // Gather all expected changes to our credits from now (statement.endDate) into the future
         const projectedCreditChanges = this.projectCreditChanges(statement, considerNextPeriod);
         const creditChangesSorted = new SortedArray(projectedCreditChanges, (c1, c2) => orderByDateAscPosFirst(c1, c2));
-        
+
         // Starting point: the credits we have now are the cummulated remainingAmounts of all credits in the statement
-        // that are still valid at statement.endDate 
+        // that are still valid at statement.endDate
         const creditsNow = statement.credits
             .filter(c => within(statement.endDate, c))
             .reduce((v, c) => (v + (c.remainingAmount !== undefined ? c.remainingAmount : c.amount)), 0);

@@ -94,7 +94,7 @@ const end = new Date(Date.UTC(2000, 2, 1)).toISOString();
 
         // The following is a bug where we did not calculate the current remainingHours properly.
         // In case someone cancelled two subscriptions (with equal hours) + regular usage within on month time frame
-        // they would run out of hours, regardless of having an unlimited plan. 
+        // they would run out of hours, regardless of having an unlimited plan.
         const subscription = async (plan: Plan, startDate: string, endDate?: string) => {
             const s = await this.accountingDb.newSubscription({
                 userId: 'Sven',

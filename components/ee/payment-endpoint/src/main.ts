@@ -20,7 +20,7 @@ const init = async () => {
     const container = new Container();
     container.load(productionContainerModule);
     container.load(dbContainerModule);
-    
+
     const server = container.get(Server);
     const app = express();
 

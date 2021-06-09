@@ -400,7 +400,7 @@ export class TypeORMUserDBImpl implements UserDB {
         const userAndToken = await this.findUserByGitpodToken(tokenHash);
         if (userAndToken) {
             // Yes, update it (~)
-            // NOTE(rl): as we don't support refresh tokens yet this is not really required 
+            // NOTE(rl): as we don't support refresh tokens yet this is not really required
             // since the OAuth server lib calls issueRefreshToken immediately after issueToken
             // We do not allow changes of name, type, user or scope.
             dbToken = userAndToken.token as GitpodToken & { user: DBUser };

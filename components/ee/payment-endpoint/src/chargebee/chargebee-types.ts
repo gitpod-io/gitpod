@@ -18,7 +18,7 @@ export namespace Chargebee {
 
         // A more specific code allowing you to handle the specific errors.
         api_error_code: string;
-        
+
         /**
          * An optional attribute which is filled if the error was due to a specific parameter. The parameter name format that is sent is based on the underlying Chargebee's REST api format which can be referred in cURL api documentation.
          * For example, in create subscription for a customer API call if the plan referred in the plan_id parameter is not present in the site, then param value set as plan_id. For 'multivalued' parameters , the index is part of the parameter name. For the same API, if the second addon id is wrongly passed then the param value is set as addons[id][2].
@@ -250,7 +250,7 @@ export namespace Chargebee {
         applied_count: number;
 
         /*
-         * The coupon code used to redeem the coupon. 
+         * The coupon code used to redeem the coupon.
          * Will be present only when associated code for a coupon is used.
          */
         coupon_code?: string;
@@ -450,7 +450,7 @@ export namespace Chargebee {
     export type PaymentSourceStatus = "valid" | "expiring" | "expired" | "invalid" | "pending_verification";
     /** // There are a gazillion other types not listed here for brevity: https://apidocs.chargebee.com/docs/api/payment_sources#payment_source_gateway */
     export type Gateway = "chargebee" | "stripe";
-    
+
     export interface BankAccount {
         // not relevant yet
     }

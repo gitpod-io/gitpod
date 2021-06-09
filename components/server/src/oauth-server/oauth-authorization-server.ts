@@ -23,7 +23,7 @@ export function createAuthorizationServer(authCodeRepository: OAuthAuthCodeRepos
     new JwtService(jwtSecret),
     {
       // Be explicit, communicate intent. Default is true but let's not assume that
-      requiresPKCE: true, 
+      requiresPKCE: true,
     }
   );
 

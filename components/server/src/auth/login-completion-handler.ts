@@ -81,15 +81,15 @@ export class LoginCompletionHandler {
         if (authHost) {
             increaseLoginCounter("succeeded", authHost);
             this.analytics.identify({ anonymousId: request.sessionID, userId: user.id });
-            this.analytics.track({ 
-                userId: user.id, 
+            this.analytics.track({
+                userId: user.id,
                 event: "login",
                 properties: {
                     "loginContext": authHost,
                     "location": (request.header as any)["x-glb-client-city-lat-long"]
                 }
             });
-        } 
+        }
         response.redirect(returnTo);
     }
 

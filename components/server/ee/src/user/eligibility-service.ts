@@ -32,9 +32,9 @@ export interface HitParallelWorkspaceLimit {
 /**
  * Response from the GitHub Education Student Developer / Faculty Member Pack.
  * The flags `student` and `faculty` are mutually exclusive (the cannot both become `true`).
- * 
+ *
  * https://education.github.com/pack
- * 
+ *
  */
 export interface GitHubEducationPack {
     student: boolean
@@ -117,9 +117,9 @@ export class EligibilityService {
     /**
      * Whether a user is allowed to start a workspace
      * !!! This is executed on the hot path of workspace startup, be careful with async when changing !!!
-     * @param user 
+     * @param user
      * @param date now
-     * @param runningInstances 
+     * @param runningInstances
      */
     async mayStartWorkspace(user: User, date: Date, runningInstances: Promise<WorkspaceInstance[]>): Promise<MayStartWorkspaceResult> {
         if (!this.env.enablePayment) {
@@ -207,7 +207,7 @@ export class EligibilityService {
      *  - has a paid subscription
      *  - has assigned team subscription
      * @param user
-     * @param context 
+     * @param context
      * @param date The date for which we want to know whether the user is allowed to set a timeout (depends on active subscription)
      */
     async mayOpenContext(user: User, context: WorkspaceContext, date: Date): Promise<boolean> {
@@ -254,11 +254,11 @@ export class EligibilityService {
 
         return this.subscriptionService.hasActiveAndNotYetCancelledPaidSubscription(user.id, date);
     }
-    
+
     /**
      * Marks the users free private repo trial as started _now_ (if not already set)
-     * @param user 
-     * @param now 
+     * @param user
+     * @param now
      */
     protected async ensureFreePrivateRepoTrialStarted(user: User, now: string): Promise<void> {
         // If user has not yet started his free private repo trial yet: do that
@@ -288,8 +288,8 @@ export class EligibilityService {
     /**
      * the time left for the trial in milliseconds or `undefined` if the trial hasn't started or the user already has a paid subscription.
      * A negative number denotes the milliseconds the trial is over.
-     * 
-     * @param user 
+     *
+     * @param user
      * @param date The date for which we want to know how much time the user has left (depends on active subscription)
      */
     async getPrivateRepoTrialTimeLeft(user: User, date: Date = new Date()): Promise<number | undefined> {
@@ -305,8 +305,8 @@ export class EligibilityService {
 
     /**
      * End date for the users free private trial or `undefined` if the trial hasn't started or the user already has a paid subscription.
-     * 
-     * @param user 
+     *
+     * @param user
      * @param date The date for which we want to know how much time the user has left (depends on active subscription)
      */
     async getPrivateRepoTrialEndDate(user: User, date: Date = new Date()): Promise<Date | undefined> {
@@ -322,7 +322,7 @@ export class EligibilityService {
 
     /**
      * A user may set the workspace timeout if they have a professional subscription
-     * @param user 
+     * @param user
      * @param date The date for which we want to know whether the user is allowed to set a timeout (depends on active subscription)
      */
     async maySetTimeout(user: User, date: Date = new Date()): Promise<boolean> {

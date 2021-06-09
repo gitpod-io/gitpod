@@ -49,7 +49,7 @@ export class SubscriptionHandler implements EventHandler<chargebee.SubscriptionE
                 try {
                     await this.storeAdditionalData(event.content.subscription, event.content.invoice);
                 } catch(err) {
-                    log.error(logContext, 'Failed to store additional subscription data', event);   
+                    log.error(logContext, 'Failed to store additional subscription data', event);
                 }
             }
 

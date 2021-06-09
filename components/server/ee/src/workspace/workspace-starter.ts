@@ -15,7 +15,7 @@ export class WorkspaceStarterEE extends WorkspaceStarter {
 
     /**
      * Creates a new instance for a given workspace and its owner
-     * 
+     *
      * @param workspace the workspace to create an instance for
      */
     protected async newInstance(workspace: Workspace, user: User, excludeFeatureFlags: NamedWorkspaceFeatureFlag[]): Promise<WorkspaceInstance> {

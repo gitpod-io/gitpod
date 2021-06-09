@@ -56,7 +56,7 @@ Create a Gitpod configuration for this project.
 tasks:
   - init: echo 'init script' # runs during prebuild
     command: echo 'start script'
-  
+
 # List the ports to expose. Learn more https://www.gitpod.io/docs/config-ports/
 ports:
   - port: 3000

@@ -44,7 +44,7 @@ export class SortedArray<T> {
         protected readonly comparator: (t1: T, t2: T) => number) {
         this.array.sort(this.comparator);
     }
-    
+
     push(t: T) {
         this.array.push(t);
         this.array.sort(this.comparator);

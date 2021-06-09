@@ -179,7 +179,7 @@ function App() {
                 </Route>
                 <Route path="*" render={
                     (match) => {
-                        
+
                         return isGitpodIo() ?
                             // delegate to our website to handle the request
                             (window.location.host = 'www.gitpod.io') :
