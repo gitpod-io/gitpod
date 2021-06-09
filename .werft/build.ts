@@ -98,16 +98,18 @@ export async function build(context, version) {
     werft.phase("build", "build running");
     const imageRepo = publishRelease ? "gcr.io/gitpod-io/self-hosted" : "eu.gcr.io/gitpod-core-dev/build";
 
+    const coverageOutput = exec("mktemp -d", { silent: true }).stdout.trim();
+
     exec(`LICENCE_HEADER_CHECK_ONLY=true leeway run components:update-license-header || { echo "[build|FAIL] There are some license headers missing. Please run 'leeway run components:update-license-header'."; exit 1; }`)
     exec(`leeway vet --ignore-warnings`);
-    exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test' : ''} -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`);
+    exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test' : ''} --coverage-output-path=${coverageOutput} -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`);
     if (publishRelease) {
         exec(`gcloud auth activate-service-account --key-file "/mnt/secrets/gcp-sa-release/service-account.json"`);
     }
     if (withInstaller || publishRelease) {
         exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test' : ''} -Dversion=${version} -DimageRepoBase=${imageRepo} install:all`);
     }
-    exec(`leeway build --werft=true -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo} -DlocalAppVersion=${localAppVersion} -DnpmPublishTrigger=${publishToNpm ? Date.now() : 'false'}`);
+    exec(`leeway build --werft=true -c ${cacheLevel} --coverage-output-path=${coverageOutput} -Dversion=${version} -DremoveSources=false -DimageRepoBase=${imageRepo} -DlocalAppVersion=${localAppVersion} -DnpmPublishTrigger=${publishToNpm ? Date.now() : 'false'}`);
     if (publishRelease) {
         try {
             werft.phase("publish", "checking version semver compliance...");
@@ -143,6 +145,22 @@ export async function build(context, version) {
         }
     }
     // gitTag(`build/${version}`);
+
+    // Configure codecov as docker: SOURCE_BRANCH, SOURCE_COMMIT, DOCKER_REPO
+    // (there is no support for werft)
+    // -Z Exit with 1 if not successful. Default will Exit with 0
+    // -N commit SHA of the parent
+    // -s
+    werft.phase('coverage', 'uploading code coverage to codecov');
+    const commit = exec(`git rev-parse HEAD`, { silent: true }).stdout.trim();
+    const parent_commit = exec(`git rev-parse HEAD^`, { silent: true }).stdout.trim();;
+    const branch = context.Repository.ref.replace('refs/heads/','');
+    try {
+        exec(`set -x;curl -s https://codecov.io/bash | SOURCE_BRANCH=${branch} SOURCE_COMMIT=${commit} DOCKER_REPO=gitpod-io/gitpod bash -s - -Z -N "${parent_commit}" -s "${coverageOutput}"`);
+        werft.done('coverage');
+    } catch (err) {
+        werft.fail('coverage', err);
+    }
 
     // if (mainBuild) {
     /**
