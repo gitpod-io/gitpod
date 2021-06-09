@@ -18,7 +18,7 @@ const parser = new ArgumentParser({
     addHelp: true,
     description: "Process for synchronising a cache database with a central master"
 });
-const subparser = parser.addSubparsers({ 
+const subparser = parser.addSubparsers({
     title: 'commands',
     dest: 'cmd'
 });
@@ -38,7 +38,7 @@ container.load(productionContainerModule);
 
 let commands = container.getAll(ICommand) as ICommand[];
 commands.forEach(c => {
-    const cmdparser = subparser.addParser(c.name, { 
+    const cmdparser = subparser.addParser(c.name, {
         addHelp: true ,
         help: c.help
     });

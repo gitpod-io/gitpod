@@ -50,7 +50,7 @@ export class WorkspaceManagerBridge implements Disposable {
     @inject(Configuration)
     protected readonly config: Configuration;
 
-    @inject(IAnalyticsWriter) 
+    @inject(IAnalyticsWriter)
     protected readonly analytics: IAnalyticsWriter;
 
     protected readonly disposables: Disposable[] = [];
@@ -324,11 +324,11 @@ export class WorkspaceManagerBridge implements Disposable {
 
         try {
             await this.userDB.trace({span}).deleteGitpodTokensNamedLike(ownerUserID, `${instance.id}-%`);
-            await this.analytics.track({ 
-                userId: ownerUserID, 
-                event: "workspace-stopped", 
+            await this.analytics.track({
+                userId: ownerUserID,
+                event: "workspace-stopped",
                 messageId: `bridge-wsstopped-${instance.id}`,
-                properties: { "instanceId": instance.id, "workspaceId": instance.workspaceId } 
+                properties: { "instanceId": instance.id, "workspaceId": instance.workspaceId }
             });
         } catch (err) {
             TraceContext.logError({span}, err);

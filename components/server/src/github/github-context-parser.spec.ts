@@ -438,7 +438,7 @@ class TestGithubContextParser {
             }
         )
     }
-    
+
     @test public async testIssuePageContext() {
         const result = await this.parser.handle({}, this.user, 'https://github.com/gitpod-io/gitpod-test-repo/issues');
         expect(result).to.deep.include(

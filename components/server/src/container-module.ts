@@ -188,6 +188,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(CodeSyncService).toSelf().inSingletonScope();
 
     bind(IAnalyticsWriter).toDynamicValue(newAnalyticsWriterFromEnv).inSingletonScope();
-    
+
     bind(OAuthController).toSelf().inSingletonScope();
 });

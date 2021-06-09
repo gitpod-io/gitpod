@@ -176,9 +176,9 @@ export class WorkspaceStarter {
             const resp = (await manager.startWorkspace({ span }, startRequest)).toObject();
             span.log({ "resp": resp });
 
-            this.analytics.track({ 
-                userId: user.id, 
-                event: "workspace-started", 
+            this.analytics.track({
+                userId: user.id,
+                event: "workspace-started",
                 properties: {
                     workspaceId: workspace.id,
                     instanceId: instance.id,

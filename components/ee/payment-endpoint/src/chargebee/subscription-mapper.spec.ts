@@ -198,14 +198,14 @@ import { Plans, ABSOLUTE_MAX_USAGE } from '@gitpod/gitpod-protocol/lib/plans';
             endDate: "2019-04-07T13:17:58.000Z",
             cancellationDate: '2019-04-07T13:17:58.000Z',
             amount: 100,
-            uid: '7f76687f-8b09-482b-b059-5779e51c3a44', 
+            uid: '7f76687f-8b09-482b-b059-5779e51c3a44',
             planId: "free"
         },
         {
             userId: '643ac637-74ae-4f82-9a86-c8527eb1e496',
             startDate: '2019-04-07T13:17:58.000Z',
             amount: 5952,
-            uid: '7f76687f-8b09-482b-b059-5779e51c3a22', 
+            uid: '7f76687f-8b09-482b-b059-5779e51c3a22',
             planId: 'professional-eur',
             paymentReference: '1mkVvmiRMxfTZj1JGs',
             paymentData: {

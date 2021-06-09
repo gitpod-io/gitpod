@@ -15,12 +15,12 @@ export class UpgradeHelper {
     /**
      * Uses subscription.add_charge_at_term_end to 'manually' add a charge to the given Chargebee Subscription
      * (see https://apidocs.chargebee.com/docs/api/subscriptions#add_charge_at_term_end)
-     * 
-     * @param userId 
-     * @param chargebeeSubscriptionId 
-     * @param amountInCents 
-     * @param description 
-     * @param upgradeTimestamp 
+     *
+     * @param userId
+     * @param chargebeeSubscriptionId
+     * @param amountInCents
+     * @param description
+     * @param upgradeTimestamp
      */
     async chargeForUpgrade(userId: string, chargebeeSubscriptionId: string, amountInCents: number, description: string, upgradeTimestamp: string) {
         const logContext: LogContext = { userId };

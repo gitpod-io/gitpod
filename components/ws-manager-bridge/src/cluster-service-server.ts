@@ -198,7 +198,7 @@ export class ClusterService implements IClusterServiceServer {
         this.queue.enqueue(async () => {
             try {
                 const req = call.request.toObject();
-                
+
                 const instances = await this.workspaceDB.findRegularRunningInstances();
                 const relevantInstances = instances.filter(i => i.region === req.name);
                 if (relevantInstances.length > 0) {

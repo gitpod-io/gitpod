@@ -43,7 +43,7 @@ export class TypeORMEMailDBImpl implements EMailDB {
 
         return await query.getMany();
     }
-    
+
     async findEMailsByCampaignAndUserId(campaignId: string, userId: string): Promise<EMail[]> {
         const repo = await this.getEMailRepo();
         const qb = repo.createQueryBuilder('email')

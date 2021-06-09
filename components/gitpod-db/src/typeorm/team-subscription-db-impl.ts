@@ -63,7 +63,7 @@ export class TeamSubscriptionDBImpl implements TeamSubscriptionDB {
             .andWhere('ts.endDate = "" OR ts.endDate > :date', { date: date });
         return query.getMany();
     }
-    
+
     async findTeamSubscriptions(partial: DeepPartial<TeamSubscription>): Promise<TeamSubscription[]> {
         const repo = await this.getRepo();
         return repo.find(partial);

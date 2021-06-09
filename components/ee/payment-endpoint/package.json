@@ -22,7 +22,7 @@
   "devDependencies": {
     "@types/body-parser": "^1.16.5",
     "@types/jsonwebtoken": "^8.3.2",
-    "@types/passport-http": "^0.3.0", 
+    "@types/passport-http": "^0.3.0",
     "@types/chai": "^4.2.2",
     "@types/node-fetch": "^2.5.0",
     "chai": "^4.1.2",

@@ -17,7 +17,7 @@ export interface EventHandler<E> {
 @injectable()
 export class CompositeEventHandler {
     @multiInject(EventHandler) @optional() protected readonly _handlers?: EventHandler<any>[];
-    
+
     async handle(event: any): Promise<boolean> {
 
         const handlers = this._handlers || [];

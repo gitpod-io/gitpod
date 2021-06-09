@@ -31,12 +31,12 @@ const s8 = { startDate: '2018-11-27T15:25:48.000Z', endDate: undefined } as Subs
         expect([s1, s2].sort(orderByEndDateDescThenStartDateDesc)).to.deep.equal([s2, s1]);
         expect([s2, s1].sort(orderByEndDateDescThenStartDateDesc)).to.deep.equal([s2, s1]);
     }
-    
+
     @test test_orderByEndDateDescThenStartDateDesc_sameEndDate() {
         expect([s2, s3].sort(orderByEndDateDescThenStartDateDesc)).to.deep.equal([s2, s3]);
         expect([s3, s2].sort(orderByEndDateDescThenStartDateDesc)).to.deep.equal([s2, s3]);
     }
-    
+
     @test test_orderByEndDateDescThenStartDateDesc_sameStartDate() {
         expect([s1, s3].sort(orderByEndDateDescThenStartDateDesc)).to.deep.equal([s3, s1]);
         expect([s3, s1].sort(orderByEndDateDescThenStartDateDesc)).to.deep.equal([s3, s1]);

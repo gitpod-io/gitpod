@@ -49,7 +49,7 @@ const userServiceTestContainerModule = new ContainerModule((bind, unbind, isBoun
     bind(ConsensusLeaderMessenger).to(InMemoryConsensusLeaderMessenger).inSingletonScope();
     bindDbWithTracing(TracedWorkspaceDB, bind, WorkspaceDB).inSingletonScope();
     bind(TracingManager).toSelf().inSingletonScope();
-    
+
     // TODO: something pulls in env which makes this test really difficult.
     //       How do we deal with this in other scenarios?
     bind(Env).toSelf();
@@ -58,7 +58,7 @@ function getContainer() {
     const userServiceTestContainer = testContainer.createChild();
     userServiceTestContainer.load(userServiceTestContainerModule);
     return userServiceTestContainer;
-} 
+}
 
 @suite.skip
 export class EligibilityServiceSpec {

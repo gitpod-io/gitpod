@@ -19,7 +19,7 @@ export type CachedAccountStatement = Pick<AccountStatement, "remainingHours" | "
 @injectable()
 export class AccountStatementProvider {
     @inject(AccountService) protected readonly accountService: AccountService;
-    
+
     protected cachedStatement: CachedAccountStatement | undefined;
 
     setCachedStatement(cachedStatement: CachedAccountStatement) {

@@ -73,12 +73,12 @@ export class SubscriptionService {
 
         return this.accountingDB.transaction(async db => {
             await this.doUnsubscribe(db, userId, startDate, plan.chargebeeId);
-            const newSubscription = <Subscription> { 
-                userId, 
-                amount: Plans.getHoursPerMonth(plan), 
-                planId: plan.chargebeeId, 
-                paymentReference, 
-                startDate, 
+            const newSubscription = <Subscription> {
+                userId,
+                amount: Plans.getHoursPerMonth(plan),
+                planId: plan.chargebeeId,
+                paymentReference,
+                startDate,
                 endDate };
             log.info({ userId }, 'Creating subscription', { subscription: newSubscription });
             return db.newSubscription(newSubscription);
