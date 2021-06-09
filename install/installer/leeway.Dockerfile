@@ -18,12 +18,10 @@ RUN wget https://github.com/mikefarah/yq/releases/download/3.3.2/yq_linux_amd64 
 
 COPY install-gcp-terraform-environment-installer--lib terraform/gcp
 COPY install-gcp-terraform-modules--installer terraform/gcp/modules
-COPY install-aws-terraform--lib terraform/aws
 RUN echo "chart_location = \"../helm/gitpod\"" >> installer.auto.tfvars && \
     echo "image_prefix   = \"$IMAGE_PREFIX/\""  >> installer.auto.tfvars && \
     echo "image_version   = \"$VERSION\""       >> installer.auto.tfvars && \
     cp installer.auto.tfvars terraform/gcp && \
-    cp installer.auto.tfvars terraform/aws && \
     rm installer.auto.tfvars
 
 FROM alpine:3.13
@@ -38,7 +36,7 @@ RUN addgroup -g 1000 installer && \
 
 ENV GITPOD_INSTALLER_IN_DOCKER="true"
 ENV KUBECONFIG="/workspace/kubectl"
-RUN apk add --no-cache aws-cli python3 curl git bash ncurses \
+RUN apk add --no-cache python3 curl git bash ncurses \
   && rm -rf /var/cache/apk/*
 
 RUN curl -o terraform.zip -L https://releases.hashicorp.com/terraform/0.14.2/terraform_0.14.2_linux_amd64.zip && \
