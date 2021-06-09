@@ -258,6 +258,14 @@ func installWorkspacePortRoutes(r *mux.Router, config *RouteHandlerConfig) error
 	// forward request to workspace port
 	r.NewRoute().HandlerFunc(
 		func(rw http.ResponseWriter, r *http.Request) {
+			// a work-around for servers which does not respect case-insensitive headers, see https://github.com/gitpod-io/gitpod/issues/4047#issuecomment-856566526
+			for _, name := range []string{"Key", "Extensions", "Accept", "Protocol", "Version"} {
+				values := r.Header["Sec-Websocket-"+name]
+				if len(values) != 0 {
+					r.Header.Del("Sec-Websocket-" + name)
+					r.Header["Sec-WebSocket-"+name] = values
+				}
+			}
 			r.Header.Add("X-Forwarded-Proto", "https")
 			r.Header.Add("X-Forwarded-Host", r.Host+":443")
 			proxyPass(

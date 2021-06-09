@@ -207,6 +207,7 @@ func TestRoutes(t *testing.T) {
 					"Location": {
 						"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__/favicon.ico",
 					},
+					"Vary": {"Accept-Encoding"},
 				},
 				Body: "<a href=\"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__/favicon.ico\">See Other</a>.\n\n",
 			},
@@ -222,6 +223,7 @@ func TestRoutes(t *testing.T) {
 				Header: http.Header{
 					"Content-Type": {"text/html; charset=utf-8"},
 					"Location":     {"https://blobserve.ws.test-domain.com/gitpod-io/ide:latest/__files__/"},
+					"Vary":         {"Accept-Encoding"},
 				},
 				Body: "<a href=\"https://blobserve.ws.test-domain.com/gitpod-io/ide:latest/__files__/\">See Other</a>.\n\n",
 			},
@@ -238,6 +240,7 @@ func TestRoutes(t *testing.T) {
 				Header: http.Header{
 					"Content-Length": {"38"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
+					"Vary":           {"Accept-Encoding"},
 				},
 				Body: "blobserve hit: /gitpod-io/ide:latest/\n",
 			},
@@ -254,6 +257,7 @@ func TestRoutes(t *testing.T) {
 				Header: http.Header{
 					"Content-Length": {"38"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
+					"Vary":           {"Accept-Encoding"},
 				},
 				Body: "blobserve hit: /gitpod-io/ide:latest/\n",
 			},
@@ -271,6 +275,7 @@ func TestRoutes(t *testing.T) {
 				Header: http.Header{
 					"Content-Length": {"24"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
+					"Vary":           {"Accept-Encoding"},
 				},
 				Body: "workspace hit: /?foobar\n",
 			},
@@ -288,6 +293,7 @@ func TestRoutes(t *testing.T) {
 				Header: http.Header{
 					"Content-Length": {"35"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
+					"Vary":           {"Accept-Encoding"},
 				},
 				Body: "workspace hit: /not-from-blobserve\n",
 			},
@@ -305,6 +311,7 @@ func TestRoutes(t *testing.T) {
 				Header: http.Header{
 					"Content-Length": {"42"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
+					"Vary":           {"Accept-Encoding"},
 				},
 				Body: "workspace hit: /not-from-failed-blobserve\n",
 			},
@@ -327,6 +334,7 @@ func TestRoutes(t *testing.T) {
 					"Access-Control-Expose-Headers":    {"Authorization"},
 					"Content-Length":                   {"37"},
 					"Content-Type":                     {"text/plain; charset=utf-8"},
+					"Vary":                             {"Accept-Encoding"},
 				},
 				Body: "workspace hit: /somewhere/in/the/ide\n",
 			},
@@ -341,6 +349,7 @@ func TestRoutes(t *testing.T) {
 				Header: http.Header{
 					"Content-Length": {"50"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
+					"Vary":           {"Accept-Encoding"},
 				},
 				Body: "supervisor hit: /_supervisor/v1/status/supervisor\n",
 			},
@@ -355,6 +364,7 @@ func TestRoutes(t *testing.T) {
 				Header: http.Header{
 					"Content-Length": {"43"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
+					"Vary":           {"Accept-Encoding"},
 				},
 				Body: "supervisor hit: /_supervisor/v1/status/ide\n",
 			},
@@ -366,6 +376,9 @@ func TestRoutes(t *testing.T) {
 			),
 			Expectation: Expectation{
 				Status: http.StatusUnauthorized,
+				Header: http.Header{
+					"Vary": {"Accept-Encoding"},
+				},
 			},
 		},
 		{
@@ -379,6 +392,7 @@ func TestRoutes(t *testing.T) {
 				Header: http.Header{
 					"Content-Length": {"47"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
+					"Vary":           {"Accept-Encoding"},
 				},
 				Body: "supervisor hit: /_supervisor/v1/status/content\n",
 			},
@@ -394,6 +408,7 @@ func TestRoutes(t *testing.T) {
 				Header: http.Header{
 					"Content-Type": {"text/html; charset=utf-8"},
 					"Location":     {"https://test-domain.com/start/#blabla-smelt-9ba20cc1"},
+					"Vary":         {"Accept-Encoding"},
 				},
 				Body: ("<a href=\"https://test-domain.com/start/#blabla-smelt-9ba20cc1\">Found</a>.\n\n"),
 			},
@@ -408,6 +423,7 @@ func TestRoutes(t *testing.T) {
 				Header: http.Header{
 					"Content-Type": {"text/html; charset=utf-8"},
 					"Location":     {"https://test-domain.com/start/#blabla-smelt-9ba20cc1"},
+					"Vary":         {"Accept-Encoding"},
 				},
 				Body: ("<a href=\"https://test-domain.com/start/#blabla-smelt-9ba20cc1\">Found</a>.\n\n"),
 			},
@@ -423,6 +439,7 @@ func TestRoutes(t *testing.T) {
 				Header: http.Header{
 					"Content-Length": {"60"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
+					"Vary":           {"Accept-Encoding"},
 				},
 				Body: "blobserve hit: /gitpod-io/supervisor:latest/worker-proxy.js\n",
 			},
@@ -438,6 +455,7 @@ func TestRoutes(t *testing.T) {
 				Header: http.Header{
 					"Content-Type": {"text/html; charset=utf-8"},
 					"Location":     {"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__/main.js"},
+					"Vary":         {"Accept-Encoding"},
 				},
 				Body: "<a href=\"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__/main.js\">See Other</a>.\n\n",
 			},
@@ -463,6 +481,7 @@ func TestRoutes(t *testing.T) {
 				Header: http.Header{
 					"Content-Type": {"text/html; charset=utf-8"},
 					"Location":     {"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__/main.js"},
+					"Vary":         {"Accept-Encoding"},
 				},
 				Body: "<a href=\"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__/main.js\">See Other</a>.\n\n",
 			},
@@ -542,6 +561,7 @@ func TestRoutes(t *testing.T) {
 					"Cache-Control":  {"public, max-age=31536000"},
 					"Content-Length": {"62"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
+					"Vary":           {"Accept-Encoding"},
 				},
 				Status: http.StatusOK,
 				Body:   "blobserve hit: /blobserve/gitpod-io/supervisor:latest/main.js\n",
