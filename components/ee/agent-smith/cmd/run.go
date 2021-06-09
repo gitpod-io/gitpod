@@ -51,23 +51,7 @@ var runCmd = &cobra.Command{
 			log.WithField("addr", cfg.PrometheusAddr).Info("started Prometheus metrics server")
 		}
 
-		opts := []agent.NewAgentSmithOption{
-			// agent.WithGitpodAPI(cfg.HostURL, cfg.GitpodAPIToken), // todo(fntlnz): pass a mock to this when testing and restore
-			agent.WithBlacklists(cfg.Blacklists),
-			agent.WithEgressTraffic(cfg.EgressTraffic),
-			agent.WithPodPolicingRetry(cfg.PodPolicingMaxRetries, cfg.PodPolicingRetryInterval),
-			agent.WithPodPolicingTimeout(cfg.PodPolicingTimeout),
-			agent.WithRepoEnforcementRules(cfg.Enforcement.PerRepo),
-			agent.WithSlackWebhooks(cfg.SlackWebhooks),
-		}
-		if cfg.ExcessiveCPUCheck != nil {
-			opts = append(opts, agent.WithCPUUseCheck(cfg.ExcessiveCPUCheck.Threshold, cfg.ExcessiveCPUCheck.AverageOver))
-		}
-		if cfg.Enforcement.Default != nil {
-			opts = append(opts, agent.WithDefaultEnforcementRules(*cfg.Enforcement.Default))
-		}
-
-		smith, err := agent.NewAgentSmith(opts...)
+		smith, err := agent.NewAgentSmith(cfg.Config)
 		if err != nil {
 			log.WithError(err).Fatal("cannot create agent smith")
 		}
@@ -77,10 +61,6 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal("cannot register metrics")
 		}
 
-		period := time.Duration(cfg.PeriodicCheck)
-		if period < 1*time.Second {
-			log.Fatalf("parse periodic check period must be at least one second (is %v)", period)
-		}
 		go smith.Start(func(violation agent.InfringingWorkspace, penalties []agent.PenaltyKind) {
 			log.WithField("violation", violation).Info("Found violation")
 
@@ -110,7 +90,7 @@ var runCmd = &cobra.Command{
 			go startMemoryWatchdog(cfg.MaxSysMemMib)
 		}
 
-		log.WithField("period", period).WithField("namespace", cfg.Namespace).Info("agent smith is up and running")
+		log.WithField("namespace", cfg.Namespace).Info("agent smith is up and running")
 
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)

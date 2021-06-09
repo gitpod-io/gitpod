@@ -39,8 +39,6 @@ const (
 	gplLicense = "GPL"
 
 	defaultSnapLen = 80
-
-	fillerPrefix = "filler/"
 )
 
 // Settings is the Go representation of the settings map in the falco-libs BPF probe

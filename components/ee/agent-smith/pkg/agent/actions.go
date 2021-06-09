@@ -16,17 +16,17 @@ import (
 // call one of ws-manager's libraries.
 
 // getWorkspaceOwner retrieves the Gitpod user ID of the workspace owner
-func (agent *Smith) getWorkspaceInfo() (owner, workspaceID, instanceID string) {
-	// todo(fntlnz): get this from the process
-	// they are GITPOD_WORKSPACE_ID, GITPOD_INSTANCE_ID
-	// maybe owner needs to be pushed via downard API
+// func (agent *Smith) getWorkspaceInfo() (owner, workspaceID, instanceID string) {
+// 	// todo(fntlnz): get this from the process
+// 	// they are GITPOD_WORKSPACE_ID, GITPOD_INSTANCE_ID
+// 	// maybe owner needs to be pushed via downard API
 
-	// This is now in those pod labels, move it to the filesystem via downard API is probably a solution
-	// owner = pod.Labels[wsk8s.OwnerLabel]
-	// workspaceID = pod.Labels[wsk8s.MetaIDLabel]
-	// instanceID = pod.Labels[wsk8s.WorkspaceIDLabel]
-	return "e7f1c402-cf64-41ed-8f9b-87246fead063", "blue-rodent-dgmnfn9f", "a6e117c2-4290-4ce0-a6df-4602fd28e1a5"
-}
+// 	// This is now in those pod labels, move it to the filesystem via downard API is probably a solution
+// 	// owner = pod.Labels[wsk8s.OwnerLabel]
+// 	// workspaceID = pod.Labels[wsk8s.MetaIDLabel]
+// 	// instanceID = pod.Labels[wsk8s.WorkspaceIDLabel]
+// 	return "e7f1c402-cf64-41ed-8f9b-87246fead063", "blue-rodent-dgmnfn9f", "a6e117c2-4290-4ce0-a6df-4602fd28e1a5"
+// }
 
 // stopWorkspace stops a workspace
 func (agent *Smith) stopWorkspace(podname string) error {

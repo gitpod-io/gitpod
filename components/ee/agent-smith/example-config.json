@@ -1,0 +1,4 @@
+{
+    "$schema": "file:///workspace/gitpod/components/ee/agent-smith/config-schema.json",
+    "probePath": "./probe.o"
+}
