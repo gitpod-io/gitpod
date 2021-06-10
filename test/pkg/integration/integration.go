@@ -533,14 +533,22 @@ func (t *Test) selectPod(component ComponentType, options selectPodOptions) (pod
 	return
 }
 
-func envvarFromPod(pods *corev1.PodList, name string) (value string, err error) {
+func envvarFromPod(pods *corev1.PodList, name, containerName string) (value string, err error) {
 	if len(pods.Items) == 0 {
-		return "", xerrors.Errorf("envvarFromPod: no pods found", name)
+		return "", xerrors.Errorf("envvarFromPod: no pods found for %s", name)
 	}
-	if len(pods.Items[0].Spec.Containers) != 1 {
-		return "", xerrors.Errorf("envvarFromPod: pod has more than one container", name)
+	var container *corev1.Container
+	for _, c := range pods.Items[0].Spec.Containers {
+		if c.Name == containerName {
+			cc := c
+			container = &cc
+			break
+		}
 	}
-	for _, e := range pods.Items[0].Spec.Containers[0].Env {
+	if container == nil {
+		return "", fmt.Errorf("envvarFromPod: cannot find container %s", containerName)
+	}
+	for _, e := range container.Env {
 		if e.Name == name {
 			value = e.Value
 			break

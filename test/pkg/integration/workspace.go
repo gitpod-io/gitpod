@@ -141,11 +141,11 @@ func LaunchWorkspaceDirectly(it *Test, opts ...LaunchWorkspaceDirectlyOpt) (res 
 		if err != nil {
 			it.t.Fatalf("cannot find server pod: %q", err)
 		}
-		theiaImage, err := envvarFromPod(pods, "THEIA_IMAGE_REPO")
+		theiaImage, err := envvarFromPod(pods, "THEIA_IMAGE_REPO", "server")
 		if err != nil {
 			it.t.Fatal(err)
 		}
-		version, err := envvarFromPod(pods, "VERSION")
+		version, err := envvarFromPod(pods, "VERSION", "server")
 		if err != nil {
 			it.t.Fatal(err)
 		}
