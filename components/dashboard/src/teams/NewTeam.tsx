@@ -29,7 +29,7 @@ export default function () {
     }
     return <div className="flex flex-col w-96 mt-16 mx-auto items-center">
         <h1>New Team</h1>
-        <p className="text-gray-500 text-center text-base">Teams allow you to <strong>group multiple projects</strong>, <strong>collaborate with others</strong>, <strong>manage subscriptions</strong> with one centralized billing, and more. <a href="">Learn more</a></p>
+        <p className="text-gray-500 text-center text-base">Teams allow you to <strong>group multiple projects</strong>, <strong>collaborate with others</strong>, <strong>manage subscriptions</strong> with one centralized billing, and more. <a className="learn-more" href="https://www.gitpod.io/docs/teams/">Learn more</a></p>
         <form className="mt-16 w-full" onSubmit={createTeam}>
             <div className="border rounded-xl p-6 border-gray-100 dark:border-gray-800">
                 <h3 className="text-center text-xl mb-6">What's your team's name?</h3>
