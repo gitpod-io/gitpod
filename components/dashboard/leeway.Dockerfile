@@ -20,6 +20,8 @@ COPY components-local-app--app/components-local-app--app-linux/local-app /www/st
 COPY components-local-app--app/components-local-app--app-darwin/local-app /www/static/bin/gitpod-local-companion-darwin
 COPY components-local-app--app/components-local-app--app-windows/local-app.exe /www/static/bin/gitpod-local-companion-windows.exe
 
+COPY components-gitpod-protocol--gitpod-schema/gitpod-schema.json /www/static/schemas/gitpod-schema.json
+
 RUN for PLATFORM in linux darwin windows.exe;do \
   gzip -v -f -9 -k "/www/static/bin/gitpod-local-companion-$PLATFORM"; \
 done
