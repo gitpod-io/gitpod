@@ -21,7 +21,7 @@ RUN curl -fsSL https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 > $CLO
 
 ### Helm3 ###
 RUN mkdir -p /tmp/helm/ \
-    && curl -fsSL https://get.helm.sh/helm-v3.5.2-linux-amd64.tar.gz | tar -xzvC /tmp/helm/ --strip-components=1 \
+    && curl -fsSL https://get.helm.sh/helm-v3.6.0-linux-amd64.tar.gz | tar -xzvC /tmp/helm/ --strip-components=1 \
     && cp /tmp/helm/helm /usr/local/bin/helm \
     && cp /tmp/helm/helm /usr/local/bin/helm3 \
     && rm -rf /tmp/helm/ \
@@ -123,20 +123,13 @@ ENV GOFLAGS="-mod=readonly"
 ## Register leeway autocompletion in bashrc
 RUN bash -c "echo . \<\(leeway bash-completion\) >> ~/.bashrc"
 
-# Install pulumi
-RUN curl -fsSL https://get.pulumi.com/releases/sdk/pulumi-v1.9.1-linux-x64.tar.gz | tar xvzC . \
-    && mkdir -p /home/gitpod/.pulumi/bin \
-    && mv pulumi/* /home/gitpod/.pulumi/bin \
-    && echo "export PATH=\$PATH:/home/gitpod/.pulumi/bin" >> /home/gitpod/.bashrc \
-    && rm -Rf ./pulumi
-
 ### Google Cloud ###
 # not installed via repository as then 'docker-credential-gcr' is not available
 ARG GCS_DIR=/opt/google-cloud-sdk
 ENV PATH=$GCS_DIR/bin:$PATH
 RUN sudo chown gitpod: /opt \
     && mkdir $GCS_DIR \
-    && curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-245.0.0-linux-x86_64.tar.gz \
+    && curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-344.0.0-linux-x86_64.tar.gz \
     | tar -xzvC /opt \
     && /opt/google-cloud-sdk/install.sh --quiet --usage-reporting=false --bash-completion=true \
     --additional-components docker-credential-gcr alpha beta \
@@ -191,3 +184,8 @@ RUN mkdir -p ~/.terraform \
 RUN sudo install-packages graphviz
 
 ENV PATH=$PATH:$HOME/.aws-iam:$HOME/.terraform
+
+# Install codecov uploader
+# https://about.codecov.io/blog/introducing-codecovs-new-uploader
+RUN sudo curl -fsSL https://uploader.codecov.io/latest/codecov-linux -o /usr/local/bin/codecov \
+    && sudo chmod +x /usr/local/bin/codecov
