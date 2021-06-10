@@ -148,14 +148,12 @@ export async function build(context, version) {
 
     // Configure codecov as docker: SOURCE_BRANCH, SOURCE_COMMIT, DOCKER_REPO
     // (there is no support for werft)
-    // -N commit SHA of the parent
-    // -s
+    // --parent The commit SHA of the parent for which you are uploading coverage
+    // --dir    Directory to search for coverage reports
     werft.phase('coverage', 'uploading code coverage to codecov');
-    const commit = exec(`git rev-parse HEAD`, { silent: true }).stdout.trim();
     const parent_commit = exec(`git rev-parse HEAD^`, { silent: true }).stdout.trim();;
-    const branch = context.Repository.ref.replace('refs/heads/','');
     try {
-        exec(`set -x;curl -s https://codecov.io/bash | SOURCE_BRANCH=${branch} SOURCE_COMMIT=${commit} DOCKER_REPO=gitpod-io/gitpod bash -s - -N "${parent_commit}" -s "${coverageOutput}"`);
+        exec(`codecov -N "${parent_commit}" --dir "${coverageOutput}"`);
         werft.done('coverage');
     } catch (err) {
         werft.fail('coverage', err);
