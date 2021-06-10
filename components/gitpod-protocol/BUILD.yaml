@@ -18,6 +18,13 @@ packages:
     config:
       commands:
         - ["mv", "data/builtin-theia-plugins.json", "manifest.json"]
+  - name: gitpod-schema
+    type: generic
+    srcs:
+      - data/gitpod-schema.json
+    config:
+      commands:
+        - ["mv", "data/gitpod-schema.json", "gitpod-schema.json"]
   - name: scripts
     type: generic
     srcs:
