@@ -575,7 +575,7 @@ export function GitIntegrationModal(props: ({
                 settingsUrl = `${host}/settings/developers`;
                 break;
             case "GitLab":
-                settingsUrl = `${host}/profile/applications`;
+                settingsUrl = `${host}/-/profile/applications`;
                 break;
             default: return undefined;
         }
