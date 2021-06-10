@@ -13,6 +13,7 @@ import { WorkspaceModel } from "./workspace-model";
 import { WorkspaceEntry } from "./WorkspaceEntry";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import {StartWorkspaceModal, WsStartEntry} from "./StartWorkspaceModal";
+import { Item, ItemField, ItemFieldContextMenu, ItemFieldIcon, ItemsList } from "../components/ItemsList";
 
 export interface WorkspacesProps {
 }
@@ -104,33 +105,33 @@ export default class Workspaces extends React.Component<WorkspacesProps, Workspa
             </div>
             {wsModel && (
                 this.state?.workspaces.length > 0 || wsModel.searchTerm ?
-                    <div className="lg:px-28 px-10 flex flex-col space-y-2">
-                        <div className="px-6 py-3 flex justify-between space-x-2 text-sm text-gray-400 border-t border-b border-gray-200 dark:border-gray-800">
-                            <div className="w-6"></div>
-                            <div className="w-3/12">Name</div>
-                            <div className="w-4/12">Context</div>
-                            <div className="w-2/12">Pending Changes</div>
-                            <div className="w-2/12">Last Start</div>
-                            <div className="w-8"></div>
-                        </div>
+                    <ItemsList className="lg:px-28 px-10">
+                        <Item header={true} className="px-6">
+                            <ItemFieldIcon />
+                            <ItemField className="w-3/12">Name</ItemField>
+                            <ItemField className="w-4/12">Context</ItemField>
+                            <ItemField className="w-2/12">Pending Changes</ItemField>
+                            <ItemField className="w-2/12">Last Start</ItemField>
+                            <ItemFieldContextMenu />
+                        </Item>
                         {
                             wsModel.active || wsModel.searchTerm ? null :
-                                <div className="whitespace-nowrap flex space-x-2 py-6 px-6 w-full justify-between bg-gitpod-kumquat-light rounded-xl">
-                                    <div className="pr-3 self-center w-6">
-                                        <img src={exclamation} />
-                                    </div>
-                                    <div className="flex-1 flex flex-col overflow-x-auto">
+                                <Item className="w-full bg-gitpod-kumquat-light py-6 px-6">
+                                    <ItemFieldIcon>
+                                        <img src={exclamation} alt="Exclamation Mark" className="m-auto" />
+                                    </ItemFieldIcon>
+                                    <ItemField className=" flex flex-col">
                                         <div className="text-gitpod-red font-semibold">Garbage Collection</div>
                                         <p className="text-gray-500">Unpinned workspaces that have been stopped for more than 14 days will be automatically deleted. <a className="text-blue-600 underline underline-thickness-thin underline-offset-small hover:text-gray-800 hover:dark:text-gray-100" href="https://www.gitpod.io/docs/life-of-workspace/#garbage-collection">Learn more</a></p>
-                                    </div>
-                                </div>
+                                    </ItemField>
+                                </Item>
                         }
                         {
                             this.state?.workspaces.map(e => {
                                 return <WorkspaceEntry key={e.workspace.id} desc={e} model={wsModel} stopWorkspace={wsId => getGitpodService().server.stopWorkspace(wsId)}/>
                             })
                         }
-                    </div>
+                    </ItemsList>
                     :
                     <div className="lg:px-28 px-10 flex flex-col space-y-2">
                         <div className="px-6 py-3 flex justify-between space-x-2 text-gray-400 border-t border-gray-200 dark:border-gray-800 h-96">

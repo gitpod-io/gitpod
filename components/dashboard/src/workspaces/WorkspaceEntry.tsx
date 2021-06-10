@@ -6,13 +6,14 @@
 
 import { CommitContext, Workspace, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePhase } from '@gitpod/gitpod-protocol';
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
-import ContextMenu, { ContextMenuEntry } from '../components/ContextMenu';
 import moment from 'moment';
-import { useState } from 'react';
-import { WorkspaceModel } from './workspace-model';
+import React, { useState } from 'react';
+import ConfirmationModal from '../components/ConfirmationModal';
+import { ContextMenuEntry } from '../components/ContextMenu';
+import { Item, ItemField, ItemFieldContextMenu, ItemFieldIcon } from '../components/ItemsList';
 import PendingChangesDropdown from '../components/PendingChangesDropdown';
 import Tooltip from '../components/Tooltip';
-import ConfirmationModal from '../components/ConfirmationModal';
+import { WorkspaceModel } from './workspace-model';
 
 function getLabel(state: WorkspaceInstancePhase) {
     return state.substr(0,1).toLocaleUpperCase() + state.substr(1);
@@ -80,36 +81,31 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
         );
     }
     const project = getProject(ws);
-    return <div>
-        <div className="rounded-xl whitespace-nowrap flex space-x-2 py-6 px-6 w-full justify-between hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light group">
-            <div className="pr-3 self-center">
-                <WorkspaceStatusIndicator instance={desc?.latestInstance} />
-            </div>
-            <div className="flex flex-col w-3/12">
-                <a href={startUrl.toString()}><div className="font-medium text-gray-800 dark:text-gray-200 truncate hover:text-blue-600 dark:hover:text-blue-400">{ws.id}</div></a>
-                <a href={project ? 'https://' + project : undefined}><div className="text-sm overflow-ellipsis truncate text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400">{project || 'Unknown'}</div></a>
-            </div>
-            <div className="flex w-4/12 truncate overflow-ellipsis">
-                <div className="flex flex-col">
-                    <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">{ws.description}</div>
-                    <a href={ws.contextURL}>
-                        <div className="text-sm text-gray-400 dark:text-gray-500 overflow-ellipsis truncate hover:text-blue-600 dark:hover:text-blue-400">{ws.contextURL}</div>
-                    </a>
-                </div>
-            </div>
-            <div className="flex flex-col items-start w-2/12">
-                <div className="text-gray-500 dark:text-gray-400 truncate">{currentBranch}</div>
-                <PendingChangesDropdown workspaceInstance={desc.latestInstance} />
-            </div>
-            <div className="flex w-2/12 self-center">
-                <Tooltip content={`Created ${moment(desc.workspace.creationTime).fromNow()}`}>
-                    <div className="text-sm w-full text-gray-400 truncate">{moment(WorkspaceInfo.lastActiveISODate(desc)).fromNow()}</div>
-                </Tooltip>
-            </div>
-            <div className="flex w-8 self-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer opacity-0 group-hover:opacity-100">
-                <ContextMenu menuEntries={menuEntries} />
-            </div>
-        </div>
+
+    return <Item className="whitespace-nowrap py-6 px-6">
+        <ItemFieldIcon>
+            <WorkspaceStatusIndicator instance={desc?.latestInstance} />
+        </ItemFieldIcon>
+        <ItemField className="w-3/12 flex flex-col">
+            <a href={startUrl.toString()}><div className="font-medium text-gray-800 dark:text-gray-200 truncate hover:text-blue-600 dark:hover:text-blue-400">{ws.id}</div></a>
+            <a href={project ? 'https://' + project : undefined}><div className="text-sm overflow-ellipsis truncate text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400">{project || 'Unknown'}</div></a>
+        </ItemField>
+        <ItemField className="w-4/12 flex flex-col">
+            <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">{ws.description}</div>
+            <a href={ws.contextURL}>
+                <div className="text-sm text-gray-400 dark:text-gray-500 overflow-ellipsis truncate hover:text-blue-600 dark:hover:text-blue-400">{ws.contextURL}</div>
+            </a>
+        </ItemField>
+        <ItemField className="w-2/12 flex flex-col">
+            <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">{currentBranch}</div>
+            <PendingChangesDropdown workspaceInstance={desc.latestInstance} />
+        </ItemField>
+        <ItemField className="w-2/12 flex">
+            <Tooltip content={`Created ${moment(desc.workspace.creationTime).fromNow()}`}>
+                <div className="text-sm w-full text-gray-400 overflow-ellipsis truncate">{moment(WorkspaceInfo.lastActiveISODate(desc)).fromNow()}</div>
+            </Tooltip>
+        </ItemField>
+        <ItemFieldContextMenu menuEntries={menuEntries} />
         {isModalVisible && <ConfirmationModal
             title="Delete Workspace"
             areYouSureText="Are you sure you want to delete this workspace?"
@@ -122,7 +118,7 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
             onClose={() => setModalVisible(false)}
             onConfirm={() => model.deleteWorkspace(ws.id)}
         />}
-    </div>;
+    </Item>;
 }
 
 export function getProject(ws: Workspace) {
@@ -154,8 +150,9 @@ export function WorkspaceStatusIndicator({instance}: {instance?: WorkspaceInstan
             break;
         }
     }
-    return <Tooltip content={getLabel(state)}>
-        <div className={stateClassName}>
-        </div>
-    </Tooltip>;
+    return <div className="m-auto">
+        <Tooltip content={getLabel(state)}>
+            <div className={stateClassName} />
+        </Tooltip>
+    </div>;
 }

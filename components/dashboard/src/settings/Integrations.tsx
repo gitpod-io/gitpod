@@ -7,19 +7,20 @@
 import { AuthProviderEntry, AuthProviderInfo } from "@gitpod/gitpod-protocol";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import React, { useContext, useEffect, useState } from "react";
-import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
-import { getGitpodService, gitpodHostUrl } from "../service/service";
-import { UserContext } from "../user-context";
+import AlertBox from "../components/AlertBox";
+import CheckBox from '../components/CheckBox';
+import ConfirmationModal from "../components/ConfirmationModal";
+import { ContextMenuEntry } from "../components/ContextMenu";
+import { Item, ItemField, ItemFieldContextMenu, ItemFieldIcon, ItemsList } from "../components/ItemsList";
+import Modal from "../components/Modal";
+import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import copy from '../images/copy.svg';
 import exclamation from '../images/exclamation.svg';
-import AlertBox from "../components/AlertBox";
-import Modal from "../components/Modal";
 import { openAuthorizeWindow } from "../provider-utils";
-import CheckBox from '../components/CheckBox';
-import { PageWithSubMenu } from "../components/PageWithSubMenu";
-import settingsMenu from "./settings-menu";
+import { getGitpodService, gitpodHostUrl } from "../service/service";
+import { UserContext } from "../user-context";
 import { SelectAccountModal } from "./SelectAccountModal";
-import ConfirmationModal from "../components/ConfirmationModal";
+import settingsMenu from "./settings-menu";
 
 export default function Integrations() {
 
@@ -280,34 +281,30 @@ function GitProviders() {
 
         <h3>Git Providers</h3>
         <h2>Manage permissions for git providers.</h2>
-        <div className="flex flex-col pt-6 space-y-2">
+        <ItemsList className="pt-6">
             {authProviders && authProviders.map(ap => (
-                <div key={"ap-" + ap.authProviderId} className="flex-grow flex flex-row hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl h-16 w-full transition ease-in-out group">
-                    <div className="px-4 self-center w-1/12">
-                        <div className={"rounded-full w-3 h-3 text-sm align-middle " + (isConnected(ap.authProviderId) ? "bg-green-500" : "bg-gray-400")}>
+                <Item key={"ap-" + ap.authProviderId} className="h-16">
+                    <ItemFieldIcon>
+                        <div className={"rounded-full w-3 h-3 text-sm align-middle m-auto " + (isConnected(ap.authProviderId) ? "bg-green-500" : "bg-gray-400")}>
                             &nbsp;
                         </div>
-                    </div>
-                    <div className="p-0 my-auto flex flex-col xl:w-3/12 w-4/12">
+                    </ItemFieldIcon>
+                    <ItemField className="w-4/12 xl:w-3/12 flex flex-col">
                         <span className="my-auto font-medium truncate overflow-ellipsis">{ap.authProviderType}</span>
                         <span className="text-sm my-auto text-gray-400 truncate overflow-ellipsis">{ap.host}</span>
-                    </div>
-                    <div className="p-0 my-auto flex flex-col xl:w-2/12 w-6/12">
+                    </ItemField>
+                    <ItemField className="w-6/12 xl:w-3/12 flex flex-col">
                         <span className="my-auto truncate text-gray-500 overflow-ellipsis">{getUsername(ap.authProviderId) || "–"}</span>
                         <span className="text-sm my-auto text-gray-400">Username</span>
-                    </div>
-                    <div className="p-0 my-auto hidden xl:flex xl:flex-col xl:w-5/12">
+                    </ItemField>
+                    <ItemField className="hidden xl:w-5/12 xl:flex xl:flex-col">
                         <span className="my-auto truncate text-gray-500 overflow-ellipsis">{getPermissions(ap.authProviderId)?.join(", ") || "–"}</span>
                         <span className="text-sm my-auto text-gray-400">Permissions</span>
-                    </div>
-                    <div className="my-auto flex w-1/12 mr-4 opacity-0 group-hover:opacity-100 justify-end">
-                        <div className="self-center hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md cursor-pointer w-8">
-                            <ContextMenu menuEntries={gitProviderMenu(ap)} />
-                        </div>
-                    </div>
-                </div>
+                    </ItemField>
+                    <ItemFieldContextMenu menuEntries={gitProviderMenu(ap)} />
+                </Item>
             ))}
-        </div>
+        </ItemsList>
     </div>);
 }
 
@@ -397,29 +394,24 @@ function GitIntegrations() {
                 </div>
             </div>
         )}
-        <div className="items pt-6 space-y-2">
+        <ItemsList className="pt-6">
             {providers && providers.map(ap => (
-                <div key={"ap-" + ap.id} className="item h-16">
-
-                    <div className="px-4 self-center w-1/12">
-                        <div className={"rounded-full w-3 h-3 text-sm align-middle " + (ap.status === "verified" ? "bg-green-500" : "bg-gray-400")}>
+                <Item key={"ap-" + ap.id} className="h-16">
+                    <ItemFieldIcon>
+                        <div className={"rounded-full w-3 h-3 text-sm align-middle m-auto " + (ap.status === "verified" ? "bg-green-500" : "bg-gray-400")}>
                             &nbsp;
                         </div>
-                    </div>
-                    <div className="p-0 my-auto flex flex-col w-3/12">
-                        <span className="my-auto font-medium truncate overflow-ellipsis">{ap.type}</span>
-                    </div>
-                    <div className="p-0 my-auto flex flex-col w-7/12">
+                    </ItemFieldIcon>
+                    <ItemField className="w-3/12 flex flex-col">
+                        <span className="font-medium truncate overflow-ellipsis">{ap.type}</span>
+                    </ItemField>
+                    <ItemField className="w-7/12 flex flex-col">
                         <span className="my-auto truncate text-gray-500 overflow-ellipsis">{ap.host}</span>
-                    </div>
-                    <div className="my-auto flex w-1/12 mr-4 opacity-0 group-hover:opacity-100 justify-end">
-                        <div className="item-context-menu">
-                            <ContextMenu menuEntries={gitProviderMenu(ap)} />
-                        </div>
-                    </div>
-                </div>
+                    </ItemField>
+                    <ItemFieldContextMenu menuEntries={gitProviderMenu(ap)} />
+                </Item>
             ))}
-        </div>
+        </ItemsList>
     </div>);
 }
 
