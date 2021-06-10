@@ -7,6 +7,8 @@ package integration
 import (
 	"context"
 	"crypto/sha256"
+	"crypto/tls"
+	"crypto/x509"
 	"database/sql"
 	"errors"
 	"fmt"
@@ -19,6 +21,7 @@ import (
 	"github.com/google/uuid"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -169,7 +172,7 @@ func (c *ComponentAPI) GitpodServer(opts ...GitpodServerOpt) (res gitpod.APIInte
 		if err != nil {
 			return err
 		}
-		hostURL, err := envvarFromPod(pods, "HOST_URL")
+		hostURL, err := envvarFromPod(pods, "HOST_URL", "server")
 		if err != nil {
 			return err
 		}
@@ -307,7 +310,36 @@ func (c *ComponentAPI) WorkspaceManager() wsmanapi.WorkspaceManagerClient {
 		c.wsmanStatus.Port = localPort
 	}
 
-	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", c.wsmanStatus.Port), grpc.WithInsecure())
+	secretName := "ws-manager-client-tls"
+	ctx, cancel := context.WithCancel(context.Background())
+	secret, err := c.t.clientset.CoreV1().Secrets(c.t.namespace).Get(ctx, secretName, metav1.GetOptions{})
+	if err != nil {
+		log.Fatal(err)
+	}
+	cancel()
+	caCrt := secret.Data["ca.crt"]
+	tlsCrt := secret.Data["tls.crt"]
+	tlsKey := secret.Data["tls.key"]
+
+	log.Debug("using TLS config to connect ws-manager")
+	certPool := x509.NewCertPool()
+	if !certPool.AppendCertsFromPEM(caCrt) {
+		rerr = fmt.Errorf("failed appending CA cert")
+		return nil
+	}
+	cert, err := tls.X509KeyPair(tlsCrt, tlsKey)
+	if err != nil {
+		rerr = err
+		return nil
+	}
+	creds := credentials.NewTLS(&tls.Config{
+		Certificates: []tls.Certificate{cert},
+		RootCAs:      certPool,
+		ServerName:   "ws-manager",
+	})
+	dialOption := grpc.WithTransportCredentials(creds)
+
+	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", c.wsmanStatus.Port), dialOption)
 	if err != nil {
 		rerr = err
 		return nil
