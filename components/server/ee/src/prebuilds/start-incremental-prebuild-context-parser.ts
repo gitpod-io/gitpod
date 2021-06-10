@@ -4,7 +4,7 @@
  * See License.enterprise.txt in the project root folder.
  */
 
-import { User, WorkspaceContext, StartPrebuildContext, CommitContext } from "@gitpod/gitpod-protocol";
+import { User, WorkspaceContext, StartPrebuildContext, CommitContext, ContextURL } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { URL } from "url";
 import { Env } from '../../../src/env';
@@ -15,7 +15,7 @@ import { IPrefixContextParser } from "../../../src/workspace/context-parser";
 export class StartIncrementalPrebuildContextParser implements IPrefixContextParser {
     @inject(Env) protected env: Env;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
-    static PREFIX = 'incremental-prebuild/';
+    static PREFIX = ContextURL.INCREMENTAL_PREBUILD_PREFIX + '/';
 
     findPrefix(user: User, context: string): string | undefined {
         if (context.startsWith(StartIncrementalPrebuildContextParser.PREFIX)) {
