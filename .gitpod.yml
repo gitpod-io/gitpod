@@ -1,5 +1,4 @@
-image:
-  file: dev/image/Dockerfile
+image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:aledbf-trigger.4
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
