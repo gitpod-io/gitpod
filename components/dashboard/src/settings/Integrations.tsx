@@ -592,8 +592,8 @@ export function GitIntegrationModal(props: ({
 
         return (<span>
             Use this redirect URL to update the OAuth application.
-            Go to <a href={`https://${settingsUrl}`} target="_blank" rel="noopener" className="text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600">developer settings</a> and setup the OAuth application.&nbsp;
-            <a href={docsUrl} target="_blank" rel="noopener" className="text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600">Learn more</a>.
+            Go to <a href={`https://${settingsUrl}`} target="_blank" rel="noopener" className="text-gray-400 learn-more hover:text-gray-600">developer settings</a> and setup the OAuth application.&nbsp;
+            <a href={docsUrl} target="_blank" rel="noopener" className="text-gray-400 learn-more hover:text-gray-600">Learn more</a>.
         </span>);
     }
 

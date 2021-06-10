@@ -14,7 +14,7 @@ export default function() {
         <div>
             <img alt="Projects (empty)" className="h-44 mt-24 mx-auto" role="presentation" src={projectsEmpty} />
             <h3 className="text-center text-gray-500 mt-8">No Recent Projects</h3>
-            <p className="text-center text-base text-gray-500 mt-4">Add projects to enable and manage Prebuilds.<br/><a className="underline" href="https://www.gitpod.io/docs/prebuilds/">Learn more about Prebuilds</a></p>
+            <p className="text-center text-base text-gray-500 mt-4">Add projects to enable and manage Prebuilds.<br/><a className="learn-more" href="https://www.gitpod.io/docs/prebuilds/">Learn more about Prebuilds</a></p>
             <div className="flex space-x-2 justify-center mt-7">
                 <button>New Project</button>
                 <Link to="./members"><button className="secondary">Invite Members</button></Link>

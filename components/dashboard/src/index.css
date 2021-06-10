@@ -58,6 +58,10 @@
         @apply cursor-default opacity-50 pointer-events-none;
     }
 
+    a.learn-more {
+        @apply underline underline-thickness-thin underline-offset-small;
+    }
+
     input[type=text], input[type=search], input[type=password], select {
         @apply block w-56 text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 rounded-md border border-gray-300 dark:border-gray-500 focus:border-gray-400 dark:focus:border-gray-400 focus:ring-0;
     }
