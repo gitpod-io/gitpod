@@ -9,11 +9,11 @@ import (
 	"sort"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 // StrategyName is the type that identifies strategies

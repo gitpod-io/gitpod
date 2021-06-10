@@ -8,9 +8,9 @@ import (
 	"context"
 
 	"github.com/alecthomas/repr"
-	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
 )

@@ -2,12 +2,10 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-package log_test
+package log
 
 import (
 	"testing"
-
-	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
 func TestRedactJSON(t *testing.T) {
@@ -22,7 +20,7 @@ func TestRedactJSON(t *testing.T) {
 	}
 
 	for i, test := range tests {
-		res, err := log.RedactJSON([]byte(test.Input))
+		res, err := RedactJSON([]byte(test.Input))
 		if err != nil {
 			t.Errorf("test %d failed: %v", i, err)
 			continue

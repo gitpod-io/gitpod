@@ -10,9 +10,10 @@ import (
 	"os"
 	"syscall"
 
-	"github.com/gitpod-io/installer/pkg/sources"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+
+	"github.com/gitpod-io/installer/pkg/sources"
 )
 
 // bashCmd represents the gcp command

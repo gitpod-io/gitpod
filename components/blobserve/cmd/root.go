@@ -5,10 +5,12 @@
 package cmd
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 
+	containerd_log "github.com/containerd/containerd/log"
 	"github.com/spf13/cobra"
 
 	"github.com/gitpod-io/gitpod/blobserve/pkg/blobserve"
@@ -30,6 +32,9 @@ var rootCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, jsonLog, jsonLog)
+
+		// configure containerd log with gitpod-io configuration
+		containerd_log.WithLogger(context.Background(), log.Log)
 	},
 }
 

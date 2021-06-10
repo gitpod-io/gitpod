@@ -13,9 +13,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/gitpod-io/installer/pkg/terraform"
 	"github.com/gitpod-io/installer/pkg/ui"
-	log "github.com/sirupsen/logrus"
 )
 
 var availableRegions = []string{
