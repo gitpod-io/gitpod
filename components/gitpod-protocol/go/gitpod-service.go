@@ -2,7 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
-//go:generate sh -c "go get github.com/golang/mock/mockgen@latest && mockgen -package gitpod -source=gitpod-service.go > mock.go_tmp > mock.go_tmp && mv mock.go_tmp mock.go"
+//go:generate ./generate-mock.sh
 
 package protocol
 

@@ -5,6 +5,7 @@ packages:
       - "**/*.go"
       - "go.mod"
       - "go.sum"
+      - "*.sh"
     env:
       - CGO_ENABLED=0
       - GOOS=linux
