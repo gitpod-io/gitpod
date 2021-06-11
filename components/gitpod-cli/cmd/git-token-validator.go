@@ -88,12 +88,19 @@ var gitTokenValidator = &cobra.Command{
 				User:   gitTokenValidatorOpts.User,
 			},
 		}
+		log.WithField("host", gitTokenValidatorOpts.Host).
+			WithField("repoURL", gitTokenValidatorOpts.RepoURL).
+			WithField("command", gitTokenValidatorOpts.GitCommand).
+			WithField("user", gitTokenValidatorOpts.User).
+			WithField("tokenScopes", gitTokenValidatorOpts.TokenScopes).
+			Info("guessing required token scopes")
 		guessedTokenScopes, err := client.GuessGitTokenScopes(ctx, params)
 		if err != nil {
 			log.WithError(err).Fatal("error guessing token scopes on server")
 		}
 		if guessedTokenScopes.Message != "" {
 			message := fmt.Sprintf("%s Please grant the necessary permissions.", guessedTokenScopes.Message)
+			log.WithField("guessedTokenScopes", guessedTokenScopes.Scopes).Info("insufficient permissions")
 			result, err := supervisor.NewNotificationServiceClient(supervisorConn).Notify(ctx,
 				&supervisor.NotifyRequest{
 					Level:   supervisor.NotifyRequest_INFO,
