@@ -38,8 +38,14 @@ const (
 type WorkspaceRouter func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (ideRouter *mux.Router, portRouter *mux.Router, blobserveRouter *mux.Router)
 
 // HostBasedRouter is a WorkspaceRouter that routes simply based on the "Host" header
-func HostBasedRouter(header, wsHostSuffix string) WorkspaceRouter {
+func HostBasedRouter(header, wsHostSuffix string, wsHostSuffixRegex string) WorkspaceRouter {
 	return func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (*mux.Router, *mux.Router, *mux.Router) {
+
+		allClusterWsHostSuffixRegex := wsHostSuffixRegex
+		if allClusterWsHostSuffixRegex == "" {
+			allClusterWsHostSuffixRegex = wsHostSuffix
+		}
+
 		var (
 			getHostHeader = func(req *http.Request) string {
 				if header == "Host" {
@@ -51,7 +57,7 @@ func HostBasedRouter(header, wsHostSuffix string) WorkspaceRouter {
 			}
 			blobserveRouter = r.MatcherFunc(matchBlobserveHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
 			portRouter      = r.MatcherFunc(matchWorkspacePortHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
-			ideRouter       = r.MatcherFunc(matchWorkspaceHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
+			ideRouter       = r.MatcherFunc(matchWorkspaceHostHeader(allClusterWsHostSuffixRegex, getHostHeader)).Subrouter()
 		)
 
 		r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
