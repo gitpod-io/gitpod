@@ -36,6 +36,7 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
         const typeorm = testContainer.get<TypeORM>(TypeORM);
         const mnr = await typeorm.getConnection();
         await mnr.getRepository(DBUser).delete({});
+        await mnr.getRepository(DBIdentity).delete({});
         await mnr.getRepository(DBWorkspace).delete({});
         await mnr.getRepository(DBWorkspaceInstance).delete({});
     }

@@ -15,6 +15,7 @@ import { TypeORM } from './typeorm/typeorm';
 import { DBTeam } from './typeorm/entity/db-team';
 import { DBTeamMembership } from './typeorm/entity/db-team-membership';
 import { DBUser } from './typeorm/entity/db-user';
+import { DBIdentity } from './typeorm/entity/db-identity';
 
 @suite class TeamDBSpec {
 
@@ -35,6 +36,7 @@ import { DBUser } from './typeorm/entity/db-user';
         await manager.getRepository(DBTeam).delete({});
         await manager.getRepository(DBTeamMembership).delete({});
         await manager.getRepository(DBUser).delete({});
+        await manager.getRepository(DBIdentity).delete({});
     }
 
     @test(timeout(10000))
@@ -48,5 +50,18 @@ import { DBUser } from './typeorm/entity/db-user';
         expect(dbResult[0].name).to.eq('Ground Control');
     }
 
+    @test(timeout(10000))
+    public async findTeamMembers() {
+        const user = await this.userDb.newUser();
+        user.identities.push({ authProviderId: 'GitHub', authId: '1234', authName: 'Major Tom', primaryEmail: 'tom@example.com' });
+        await this.userDb.storeUser(user);
+        const team = await this.db.createTeam(user.id, 'Flight Crew');
+        const members = await this.db.findMembersByTeam(team.id);
+        expect(members.length).to.eq(1);
+        expect(members[0].userId).to.eq(user.id);
+        expect(members[0].primaryEmail).to.eq('tom@example.com');
+    }
+
 }
+
 module.exports = new TeamDBSpec()

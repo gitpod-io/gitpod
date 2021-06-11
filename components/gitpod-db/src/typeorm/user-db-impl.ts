@@ -205,8 +205,8 @@ export class TypeORMUserDBImpl implements UserDB {
     }
 
     public async findIdentitiesByName(identity: Identity): Promise<Identity[]> {
-        const userRepo = await this.getIdentitiesRepo();
-        const qBuilder = userRepo.createQueryBuilder('identity')
+        const repo = await this.getIdentitiesRepo();
+        const qBuilder = repo.createQueryBuilder('identity')
             .where(`identity.authProviderId = :authProviderId`, { authProviderId: identity.authProviderId })
             .andWhere(`identity.deleted != true`)
             .andWhere(`identity.authName = :authName`, { authName: identity.authName });
