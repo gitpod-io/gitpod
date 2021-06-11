@@ -398,13 +398,10 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 export async function triggerIntegrationTests(deploymentConfig: DeploymentConfig, skip: boolean) {
     werft.phase(phases.TRIGGER_INTEGRATION_TESTS, "Trigger integration tests");
 
-    // If we're skipping integration tests we wont trigger the job, which in turn won't create the
-    // ci/werft/run-integration-tests Github Check.
-    //
-    // If a *required* Github Check isn't present you are still allowed to merge the PR.
-    //
-    // This gives us a break-glass mechanism to merge a PR without running integration tests
     if (skip) {
+        // If we're skipping integration tests we wont trigger the job, which in turn won't create the
+        // ci/werft/run-integration-tests Github Check. As ci/werft/run-integration-tests is a required
+        // check this means you can't merge your PR without override checks.
         werft.log(phases.TRIGGER_INTEGRATION_TESTS, "Skipped integration tests")
         werft.done(phases.TRIGGER_INTEGRATION_TESTS);
         return
