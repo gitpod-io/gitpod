@@ -22,7 +22,7 @@ build(context, version)
 
 // Werft phases
 const phases = {
-    INTEGRATION_TESTS: 'integration tests'
+    TRIGGER_INTEGRATION_TESTS: 'trigger integration tests'
 }
 
 export function parseVersion(context) {
@@ -396,14 +396,17 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
  * Trigger integration tests
  */
 export async function triggerIntegrationTests(deploymentConfig: DeploymentConfig, skip: boolean) {
-    werft.phase(phases.INTEGRATION_TESTS, "Integration tests");
+    werft.phase(phases.TRIGGER_INTEGRATION_TESTS, "Trigger integration tests");
 
+    // If we're skipping integration tests we wont trigger the job, which in turn won't create the
+    // ci/werft/run-integration-tests Github Check.
+    //
+    // If a *required* Github Check isn't present you are still allowed to merge the PR.
+    //
+    // This gives us a break-glass mechanism to merge a PR without running integration tests
     if (skip) {
-        werft.log(phases.INTEGRATION_TESTS, "Skipped integration tests")
-        // If we're skipping integration tests we're still marking the Github Check as succeeded as this allows us to
-        // have a break-glass mechanism to merge a PR without running integration tests
-        exec(`werft log result -d "${phases.INTEGRATION_TESTS}" -c github-check-integration-tests conclusion success`);
-        werft.done(phases.INTEGRATION_TESTS);
+        werft.log(phases.TRIGGER_INTEGRATION_TESTS, "Skipped integration tests")
+        werft.done(phases.TRIGGER_INTEGRATION_TESTS);
         return
     }
 
@@ -414,9 +417,9 @@ export async function triggerIntegrationTests(deploymentConfig: DeploymentConfig
         `username=${context.Owner}`,
         `updateGitHubStatus=gitpod-io/gitpod`
     ].map(annotation => `-a ${annotation}`).join(' ')
-    const jobId = exec(`werft run --remote-job-path .werft/run-integration-tests.yaml ${annotations} github`, {slice: phases.INTEGRATION_TESTS}).trim();
-    werft.log(phases.INTEGRATION_TESTS, `Triggered job ${jobId} - https://werft.gitpod-dev.com/job/${jobId}/logs`)
-    werft.done(phases.INTEGRATION_TESTS);
+    const jobId = exec(`werft run --remote-job-path .werft/run-integration-tests.yaml ${annotations} github`, {slice: phases.TRIGGER_INTEGRATION_TESTS}).trim();
+    werft.log(phases.TRIGGER_INTEGRATION_TESTS, `Triggered job ${jobId} - https://werft.gitpod-dev.com/job/${jobId}/logs`)
+    werft.done(phases.TRIGGER_INTEGRATION_TESTS);
 }
 
 interface PreviewWorkspaceClusterRef {
