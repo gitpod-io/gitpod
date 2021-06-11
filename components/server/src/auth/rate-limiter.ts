@@ -81,6 +81,7 @@ function readConfig(): RateLimiterConfig {
         "getTeams": { group: "default", points: 1 },
         "getTeamMembers": { group: "default", points: 1 },
         "createTeam": { group: "default", points: 1 },
+        "joinTeam": { group: "default", points: 1 },
         "getContentBlobUploadUrl": { group: "default", points: 1 },
         "getContentBlobDownloadUrl": { group: "default", points: 1 },
         "getGitpodTokens": { group: "default", points: 1 },

@@ -1197,10 +1197,13 @@ export interface Team {
     deleted?: boolean;
 }
 
+export type TeamMemberRole = "owner" | "member";
+
 export interface TeamMemberInfo {
     userId: string;
     fullName?: string;
     primaryEmail?: string;
     avatarUrl?: string;
+    role: TeamMemberRole;
     memberSince: string;
 }

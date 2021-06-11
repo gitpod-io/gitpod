@@ -4,6 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import { TeamMemberRole } from "@gitpod/gitpod-protocol";
 import { Entity, Column, PrimaryColumn, Index } from "typeorm";
 import { TypeORM } from "../typeorm";
 
@@ -20,6 +21,9 @@ export class DBTeamMembership {
   @Column(TypeORM.UUID_COLUMN_TYPE)
   @Index("ind_userId")
   userId: string;
+
+  @Column("varchar")
+  role: TeamMemberRole;
 
   @Column("varchar")
   creationTime: string;
