@@ -21,11 +21,10 @@ data:
     {
       "blacklists": {
         "very": {
-            "binaries": ["find"],
-            "signatures": [
-              {"name":"testtarget","domain":"process","kind":"elf","pattern":"YWdlbnRTbWl0aFRlc3RUYXJnZXQ=","regexp":false}
-            ]
-          }
+          "signatures": [
+            {"name":"testtarget","domain":"process","kind":"elf","pattern":"YWdlbnRTbWl0aFRlc3RUYXJnZXQ=","regexp":false}
+          ]
         }
+      }
     }
 {{- end -}}

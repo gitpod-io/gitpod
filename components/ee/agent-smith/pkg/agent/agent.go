@@ -549,7 +549,7 @@ func (agent *Smith) handleExecveEvent(execve Execve) func() (*InfringingWorkspac
 
 		if len(res) == 0 {
 			fd, err := os.Open(filepath.Join("/proc", strconv.Itoa(execve.TID), "exe"))
-			if err != nil {
+			if err != nil && !os.IsNotExist(err) {
 				log.WithError(err).WithField("path", execve.Filename).Warn("cannot open executable to check signatures")
 				return nil, nil
 			}
