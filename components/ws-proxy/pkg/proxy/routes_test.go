@@ -56,10 +56,10 @@ var (
 
 	config = Config{
 		TransportConfig: &TransportConfig{
-			ConnectTimeout:           util.Duration(10 * time.Second),
-			IdleConnTimeout:          util.Duration(60 * time.Second),
-			WebsocketIdleConnTimeout: util.Duration(5 * time.Minute),
-			MaxIdleConns:             100,
+			ConnectTimeout:      util.Duration(10 * time.Second),
+			IdleConnTimeout:     util.Duration(60 * time.Second),
+			MaxIdleConns:        0,
+			MaxIdleConnsPerHost: 100,
 		},
 		GitpodInstallation: &GitpodInstallation{
 			HostName:            "test-domain.com",

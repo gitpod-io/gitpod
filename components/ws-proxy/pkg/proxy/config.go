@@ -138,10 +138,10 @@ func (c *BlobServerConfig) Validate() error {
 
 // TransportConfig configures the way how ws-proxy connects to it's backend services
 type TransportConfig struct {
-	ConnectTimeout           util.Duration `json:"connectTimeout"`
-	IdleConnTimeout          util.Duration `json:"idleConnTimeout"`
-	WebsocketIdleConnTimeout util.Duration `json:"websocketIdleConnTimeout"`
-	MaxIdleConns             int           `json:"maxIdleConns"`
+	ConnectTimeout      util.Duration `json:"connectTimeout"`
+	IdleConnTimeout     util.Duration `json:"idleConnTimeout"`
+	MaxIdleConns        int           `json:"maxIdleConns"`
+	MaxIdleConnsPerHost int           `json:"maxIdleConnsPerHost"`
 }
 
 // Validate validates the configuration to catch issues during startup and not at runtime
@@ -153,8 +153,8 @@ func (c *TransportConfig) Validate() error {
 	return validation.ValidateStruct(c,
 		validation.Field(&c.ConnectTimeout, validation.Required),
 		validation.Field(&c.IdleConnTimeout, validation.Required),
-		validation.Field(&c.WebsocketIdleConnTimeout, validation.Required),
-		validation.Field(&c.MaxIdleConns, validation.Required, validation.Min(1)),
+		validation.Field(&c.MaxIdleConns, validation.Min(0)),
+		validation.Field(&c.MaxIdleConnsPerHost, validation.Required, validation.Min(1)),
 	)
 }
 
