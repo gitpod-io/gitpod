@@ -29,6 +29,7 @@ const Preferences = React.lazy(() => import(/* webpackPrefetch: true */ './setti
 const StartWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ './start/StartWorkspace'));
 const CreateWorkspace = React.lazy(() => import(/* webpackPrefetch: true */ './start/CreateWorkspace'));
 const NewTeam = React.lazy(() => import(/* webpackPrefetch: true */ './teams/NewTeam'));
+const JoinTeam = React.lazy(() => import(/* webpackPrefetch: true */ './teams/JoinTeam'));
 const Members = React.lazy(() => import(/* webpackPrefetch: true */ './teams/Members'));
 const Projects = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Projects'));
 const InstallGitHubApp = React.lazy(() => import(/* webpackPrefetch: true */ './prebuilds/InstallGitHubApp'));
@@ -154,7 +155,6 @@ function App() {
                 <Route path="/notifications" exact component={Notifications} />
                 <Route path="/plans" exact component={Plans} />
                 <Route path="/teams" exact component={Teams} />
-                <Route path="/new-team" exact component={NewTeam} />
                 <Route path="/variables" exact component={EnvironmentVariables} />
                 <Route path="/preferences" exact component={Preferences} />
                 <Route path="/install-github-app" exact component={InstallGitHubApp} />
@@ -184,6 +184,8 @@ function App() {
                         <p className="mt-4 text-lg text-gitpod-red">{decodeURIComponent(getURLHash())}</p>
                     </div>
                 </Route>
+                <Route path="/new-team" exact component={NewTeam} />
+                <Route path="/join-team" exact component={JoinTeam} />
                 {(teams || []).map(team => <Route path={`/${team.slug}`}>
                     <Route exact path={`/${team.slug}`}>
                         <Redirect to={`/${team.slug}/projects`} />

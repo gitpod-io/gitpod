@@ -49,6 +49,7 @@ export class TeamDBImpl implements TeamDB {
             fullName: u.fullName || u.name,
             primaryEmail: User.getPrimaryEmail(u),
             avatarUrl: u.avatarUrl,
+            role: memberships.find(m => m.userId === u.id)!.role,
             memberSince: u.creationDate,
         }));
     }
@@ -85,8 +86,32 @@ export class TeamDBImpl implements TeamDB {
             id: uuidv4(),
             teamId: team.id,
             userId,
+            role: 'owner',
             creationTime: team.creationTime,
         });
         return team;
+    }
+
+    public async addMemberToTeam(userId: string, teamId: string): Promise<void> {
+        if (teamId.length !== 36) {
+            throw new Error('This team ID is incorrect');
+        }
+        const teamRepo = await this.getTeamRepo();
+        const team = await teamRepo.findOneById(teamId);
+        if (!team) {
+            throw new Error('A team with this ID could not be found');
+        }
+        const membershipRepo = await this.getMembershipRepo();
+        const membership = await membershipRepo.findOne({ teamId, userId });
+        if (!!membership) {
+            throw new Error('You are already a member of this team');
+        }
+        await membershipRepo.save({
+            id: uuidv4(),
+            teamId: team.id,
+            userId,
+            role: 'member',
+            creationTime: new Date().toISOString(),
+        });
     }
 }

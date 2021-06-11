@@ -1406,6 +1406,13 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         return this.teamDB.createTeam(user.id, name);
     }
 
+    public async joinTeam(teamId: string): Promise<void> {
+        // TODO(janx): Any user who knows a team's "secret" UUID can join it. If this becomes a problem, we should
+        // look into generating (temporary and/or member-specific) invite codes.
+        const user = this.checkUser("joinTeam");
+        await this.teamDB.addMemberToTeam(user.id, teamId);
+    }
+
     public async getContentBlobUploadUrl(name: string): Promise<string> {
         const user = this.checkAndBlockUser("getContentBlobUploadUrl");
         await this.guardAccess({ kind: "contentBlob", name: name, userID: user.id }, "create");

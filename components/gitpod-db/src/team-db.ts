@@ -12,4 +12,5 @@ export interface TeamDB {
     findMembersByTeam(teamId: string): Promise<TeamMemberInfo[]>;
     findTeamsByUser(userId: string): Promise<Team[]>;
     createTeam(userId: string, name: string): Promise<Team>;
+    addMemberToTeam(userId: string, teamId: string): Promise<void>;
 }
