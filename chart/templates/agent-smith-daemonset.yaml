@@ -1,7 +1,7 @@
 # Copyright (c) 2020 Gitpod GmbH. All rights reserved.
 # Licensed under the MIT License. See License-MIT.txt in the project root for license information.
 
-{{ $comp := .Values.components.wsDaemon -}}
+{{ $comp := .Values.components.agentSmith -}}
 {{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
 {{- $gp := $.Values -}}
 {{- if not $comp.disabled -}}
@@ -28,8 +28,6 @@ spec:
         component: agent-smith
         kind: daemonset
         stage: {{ .Values.installation.stage }}
-      annotations:
-        # checksum/tlskey: {{ include (print $.Template.BasePath "/agent-smith-tlssecret.yaml") $ | sha256sum }}
     spec:
 {{ include "gitpod.workspaceAffinity" $this | indent 6 }}
       serviceAccountName: agent-smith

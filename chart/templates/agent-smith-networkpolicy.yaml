@@ -12,13 +12,13 @@ metadata:
     app: {{ template "gitpod.fullname" . }}
     component: agent-smith
     kind: networkpolicy
-    stage: {{ .Values..installation.stage }}
+    stage: {{ .Values.installation.stage }}
 spec:
   podSelector:
     matchLabels:
       app: {{ template "gitpod.fullname" . }}
       component: agent-smith
-      stage: {{ .Values..installation.stage }}
+      stage: {{ .Values.installation.stage }}
   policyTypes:
   - Ingress
 {{- end -}}
