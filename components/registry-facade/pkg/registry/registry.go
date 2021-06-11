@@ -37,12 +37,9 @@ import (
 
 // Config configures the registry
 type Config struct {
-	Port        int    `json:"port"`
-	Prefix      string `json:"prefix"`
-	StaticLayer []struct {
-		Ref  string `json:"ref"`
-		Type string `json:"type"`
-	} `json:"staticLayer"`
+	Port               int              `json:"port"`
+	Prefix             string           `json:"prefix"`
+	StaticLayer        []StaticLayerCfg `json:"staticLayer"`
 	RemoteSpecProvider *struct {
 		Addr string `json:"addr"`
 		TLS  *struct {
@@ -59,6 +56,36 @@ type Config struct {
 	} `json:"tls"`
 }
 
+// StaticLayerCfg configure statically added layer
+type StaticLayerCfg struct {
+	Ref  string `json:"ref"`
+	Type string `json:"type"`
+}
+
+// BuildStaticLayer builds a layer set from a static layer configuration
+func buildStaticLayer(ctx context.Context, cfg []StaticLayerCfg, newResolver ResolverProvider) (CompositeLayerSource, error) {
+	var l CompositeLayerSource
+	for _, sl := range cfg {
+		switch sl.Type {
+		case "file":
+			src, err := NewFileLayerSource(ctx, sl.Ref)
+			if err != nil {
+				return nil, fmt.Errorf("cannot source layer from %s: %w", sl.Ref, err)
+			}
+			l = append(l, src)
+		case "image":
+			src, err := NewStaticSourceFromImage(ctx, newResolver(), sl.Ref)
+			if err != nil {
+				return nil, fmt.Errorf("cannot source layer from %s: %w", sl.Ref, err)
+			}
+			l = append(l, src)
+		default:
+			return nil, fmt.Errorf("unknown static layer type: %s", sl.Type)
+		}
+	}
+	return l, nil
+}
+
 // ResolverProvider provides new resolver
 type ResolverProvider func() remotes.Resolver
 
@@ -71,8 +98,9 @@ type Registry struct {
 	ConfigModifier ConfigModifier
 	SpecProvider   map[string]ImageSpecProvider
 
-	metrics *metrics
-	srv     *http.Server
+	staticLayerSource *RevisioningLayerSource
+	metrics           *metrics
+	srv               *http.Server
 }
 
 // NewRegistry creates a new registry
@@ -107,23 +135,14 @@ func NewRegistry(cfg Config, newResolver ResolverProvider, reg prometheus.Regist
 	layerSources = append(layerSources, ideLayerSource)
 
 	log.Info("preparing static layer")
-	for _, sl := range cfg.StaticLayer {
-		switch sl.Type {
-		case "file":
-			src, err := NewFileLayerSource(ctx, sl.Ref)
-			if err != nil {
-				return nil, fmt.Errorf("cannot source layer from %s: %w", sl.Ref, err)
-			}
-			layerSources = append(layerSources, src)
-		case "image":
-			src, err := NewStaticSourceFromImage(ctx, newResolver(), sl.Ref)
-			if err != nil {
-				return nil, fmt.Errorf("cannot source layer from %s: %w", sl.Ref, err)
-			}
-			layerSources = append(layerSources, src)
-		default:
-			return nil, fmt.Errorf("unknown static layer type: %s", sl.Type)
+	staticLayer := NewRevisioningLayerSource(CompositeLayerSource{})
+	layerSources = append(layerSources, staticLayer)
+	if len(cfg.StaticLayer) > 0 {
+		l, err := buildStaticLayer(ctx, cfg.StaticLayer, newResolver)
+		if err != nil {
+			return nil, err
 		}
+		staticLayer.Update(l)
 	}
 	clsrc, err := NewContentLayerSource()
 	if err != nil {
@@ -189,14 +208,25 @@ func NewRegistry(cfg Config, newResolver ResolverProvider, reg prometheus.Regist
 
 	layerSource := CompositeLayerSource(layerSources)
 	return &Registry{
-		Config:         cfg,
-		Resolver:       newResolver,
-		Store:          store,
-		SpecProvider:   specProvider,
-		LayerSource:    layerSource,
-		ConfigModifier: NewConfigModifierFromLayerSource(layerSource),
-		metrics:        metrics,
+		Config:            cfg,
+		Resolver:          newResolver,
+		Store:             store,
+		SpecProvider:      specProvider,
+		LayerSource:       layerSource,
+		staticLayerSource: staticLayer,
+		ConfigModifier:    NewConfigModifierFromLayerSource(layerSource),
+		metrics:           metrics,
 	}, nil
+}
+
+// UpdateStaticLayer updates the static layer a registry-facade adds
+func (reg *Registry) UpdateStaticLayer(ctx context.Context, cfg []StaticLayerCfg) error {
+	l, err := buildStaticLayer(ctx, cfg, reg.Resolver)
+	if err != nil {
+		return err
+	}
+	reg.staticLayerSource.Update(l)
+	return nil
 }
 
 // Serve serves the registry on the given port

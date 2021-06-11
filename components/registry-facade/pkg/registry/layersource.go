@@ -12,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/remotes"
@@ -569,6 +570,7 @@ type ParsedEnvs struct {
 	values map[string]string
 }
 
+// ParseEnv parses environment variables
 func parseEnvs(envs []string) *ParsedEnvs {
 	result := ParsedEnvs{
 		values: make(map[string]string),
@@ -646,4 +648,74 @@ func newPrependEnvModifier(name, value string) EnvModifier {
 	return func(pe *ParsedEnvs) {
 		pe.Prepend(name, value)
 	}
+}
+
+// NewRevisioningLayerSource produces a new revisioning layer source
+func NewRevisioningLayerSource(active LayerSource) *RevisioningLayerSource {
+	return &RevisioningLayerSource{
+		active: active,
+	}
+}
+
+type RevisioningLayerSource struct {
+	mu     sync.RWMutex
+	active LayerSource
+	past   []LayerSource
+}
+
+func (src *RevisioningLayerSource) Update(s LayerSource) {
+	src.mu.Lock()
+	defer src.mu.Unlock()
+
+	src.past = append(src.past, src.active)
+	src.active = s
+}
+
+func (src *RevisioningLayerSource) GetLayer(ctx context.Context, spec *api.ImageSpec) ([]AddonLayer, error) {
+	src.mu.RLock()
+	defer src.mu.RUnlock()
+
+	return src.active.GetLayer(ctx, spec)
+}
+
+func (src *RevisioningLayerSource) Envs(ctx context.Context, spec *api.ImageSpec) ([]EnvModifier, error) {
+	src.mu.RLock()
+	defer src.mu.RUnlock()
+
+	return src.active.Envs(ctx, spec)
+}
+
+// HasBlob checks if a digest can be served by this blob source
+func (src *RevisioningLayerSource) HasBlob(ctx context.Context, details *api.ImageSpec, dgst digest.Digest) bool {
+	src.mu.RLock()
+	defer src.mu.RUnlock()
+
+	if src.active.HasBlob(ctx, details, dgst) {
+		return true
+	}
+	for _, p := range src.past {
+		if p.HasBlob(ctx, details, dgst) {
+			return true
+		}
+	}
+	return false
+}
+
+// GetBlob provides access to a blob. If a ReadCloser is returned the receiver is expected to
+// call close on it eventually.
+func (src *RevisioningLayerSource) GetBlob(ctx context.Context, details *api.ImageSpec, dgst digest.Digest) (mediaType string, url string, data io.ReadCloser, err error) {
+	src.mu.RLock()
+	defer src.mu.RUnlock()
+
+	if src.active.HasBlob(ctx, details, dgst) {
+		return src.active.GetBlob(ctx, details, dgst)
+	}
+	for _, p := range src.past {
+		if p.HasBlob(ctx, details, dgst) {
+			return p.GetBlob(ctx, details, dgst)
+		}
+	}
+
+	err = errdefs.ErrNotFound
+	return
 }
