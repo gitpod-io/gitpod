@@ -18,7 +18,8 @@
     "gitpodInstallation": {
       "scheme": "http",
       "hostName": "gpl-portal.staging.gitpod-dev.com",
-      "workspaceHostSuffix": ".ws-dev.gpl-portal.staging.gitpod-dev.com"
+      "workspaceHostSuffix": ".ws-dev.gpl-portal.staging.gitpod-dev.com",
+      "workspaceHostSuffixRegex": "\\.ws[^\\.]*\\.gpl-portal\\.staging\\.gitpod-dev\\.com"
     },
     "workspacePodConfig": {
       "serviceTemplate": "http://ws-{{ .workspaceID }}-theia.staging-gpl-portal.svc.cluster.local:{{ .port }}",

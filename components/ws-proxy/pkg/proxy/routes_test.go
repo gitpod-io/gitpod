@@ -27,6 +27,7 @@ import (
 const (
 	hostBasedHeader = "x-host-header"
 	wsHostSuffix    = ".test-domain.com"
+	wsHostNameRegex = "\\.test-domain\\.com"
 )
 
 var (
@@ -620,7 +621,7 @@ func TestRoutes(t *testing.T) {
 			if test.Config != nil {
 				cfg = *test.Config
 			}
-			router := HostBasedRouter(hostBasedHeader, wsHostSuffix)
+			router := HostBasedRouter(hostBasedHeader, wsHostSuffix, wsHostNameRegex)
 			if test.Router != nil {
 				router = test.Router(&cfg)
 			}

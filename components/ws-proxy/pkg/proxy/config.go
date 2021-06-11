@@ -96,9 +96,10 @@ func (c *WorkspacePodConfig) Validate() error {
 
 // GitpodInstallation contains config regarding the Gitpod installation
 type GitpodInstallation struct {
-	Scheme              string `json:"scheme"`
-	HostName            string `json:"hostName"`
-	WorkspaceHostSuffix string `json:"workspaceHostSuffix"`
+	Scheme                   string `json:"scheme"`
+	HostName                 string `json:"hostName"`
+	WorkspaceHostSuffix      string `json:"workspaceHostSuffix"`
+	WorkspaceHostSuffixRegex string `json:"workspaceHostSuffixRegex"`
 }
 
 // Validate validates the configuration to catch issues during startup and not at runtime

@@ -14,6 +14,7 @@ import (
 )
 
 func TestWorkspaceRouter(t *testing.T) {
+	const wsHostRegex = "\\.ws\\.gitpod\\.dev"
 	const wsHostSuffix = ".ws.gitpod.dev"
 	type Expectation struct {
 		WorkspaceID        string
@@ -37,7 +38,7 @@ func TestWorkspaceRouter(t *testing.T) {
 			Headers: map[string]string{
 				forwardedHostnameHeader: "amaranth-smelt-9ba20cc1.ws.gitpod.dev",
 			},
-			Router:       HostBasedRouter(forwardedHostnameHeader, wsHostSuffix),
+			Router:       HostBasedRouter(forwardedHostnameHeader, wsHostSuffix, wsHostRegex),
 			WSHostSuffix: wsHostSuffix,
 			Expected: Expectation{
 				WorkspaceID: "amaranth-smelt-9ba20cc1",
@@ -51,7 +52,7 @@ func TestWorkspaceRouter(t *testing.T) {
 			Headers: map[string]string{
 				forwardedHostnameHeader: "1234-amaranth-smelt-9ba20cc1.ws.gitpod.dev",
 			},
-			Router:       HostBasedRouter(forwardedHostnameHeader, wsHostSuffix),
+			Router:       HostBasedRouter(forwardedHostnameHeader, wsHostSuffix, wsHostRegex),
 			WSHostSuffix: wsHostSuffix,
 			Expected: Expectation{
 				WorkspaceID:   "amaranth-smelt-9ba20cc1",
@@ -66,7 +67,7 @@ func TestWorkspaceRouter(t *testing.T) {
 			Headers: map[string]string{
 				forwardedHostnameHeader: "blobserve.ws.gitpod.dev",
 			},
-			Router:       HostBasedRouter(forwardedHostnameHeader, wsHostSuffix),
+			Router:       HostBasedRouter(forwardedHostnameHeader, wsHostSuffix, wsHostRegex),
 			WSHostSuffix: wsHostSuffix,
 			Expected: Expectation{
 				Status: http.StatusOK,
