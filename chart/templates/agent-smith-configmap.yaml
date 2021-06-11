@@ -1,0 +1,23 @@
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.agentSmith -}}
+{{- $this := dict "root" . "gp" $.Values. "comp" $comp -}}
+{{- if not $comp.disabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agent-smith-config
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: agent-smith
+    kind: secret
+    stage: {{ .Values..installation.stage }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+    version: "{{ .Values..version }}"
+data:
+  config.json: |
+    {}
+{{- end -}}
