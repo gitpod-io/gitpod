@@ -2,12 +2,12 @@
 # Licensed under the Gitpod Enterprise Source Code License,
 # See License.enterprise.txt in the project root folder.
 
-FROM alpine:latest
+FROM alpine:3.13
 
 RUN apk add --no-cache git bash ca-certificates
-COPY components-agent-smith--app/agent-smith /app/
+COPY components-ee-agent-smith--app/agent-smith /app/
 RUN chmod +x /app/agent-smith
-COPY components-agent-smith--falco-bpf-probe/probe.o /app/probe.o
+COPY components-ee-agent-smith--falco-bpf-probe/probe.o /app/probe.o
 
 ENTRYPOINT [ "/app/agent-smith" ]
 CMD [ "-v", "help" ]
