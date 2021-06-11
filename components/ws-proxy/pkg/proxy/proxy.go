@@ -81,8 +81,8 @@ func (p *WorkspaceProxy) Handler() (http.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	theiaRouter, portRouter, blobserveRouter := p.WorkspaceRouter(r, p.WorkspaceInfoProvider)
-	installWorkspaceRoutes(theiaRouter, handlerConfig, p.WorkspaceInfoProvider)
+	ideRouter, portRouter, blobserveRouter := p.WorkspaceRouter(r, p.WorkspaceInfoProvider)
+	installWorkspaceRoutes(ideRouter, handlerConfig, p.WorkspaceInfoProvider)
 	err = installWorkspacePortRoutes(portRouter, handlerConfig)
 	if err != nil {
 		return nil, err

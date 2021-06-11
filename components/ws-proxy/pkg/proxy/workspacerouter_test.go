@@ -78,7 +78,7 @@ func TestWorkspaceRouter(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			r := mux.NewRouter()
-			theiaRouter, portRouter, blobserveRouter := test.Router(r, &fakeWsInfoProvider{infos: test.Infos})
+			ideRouter, portRouter, blobserveRouter := test.Router(r, &fakeWsInfoProvider{infos: test.Infos})
 			var act Expectation
 			actRecorder := func(w http.ResponseWriter, req *http.Request) {
 				defer w.WriteHeader(200)
@@ -94,9 +94,9 @@ func TestWorkspaceRouter(t *testing.T) {
 				act.AdditionalHitCount++
 			}
 
-			if theiaRouter != nil {
-				theiaRouter.HandleFunc("/", actRecorder)
-				theiaRouter.HandleFunc("/services", actRecorder)
+			if ideRouter != nil {
+				ideRouter.HandleFunc("/", actRecorder)
+				ideRouter.HandleFunc("/services", actRecorder)
 			}
 			if portRouter != nil {
 				portRouter.HandleFunc("/", actRecorder)
