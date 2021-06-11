@@ -35,7 +35,7 @@ const (
 // WorkspaceRouter is a function that configures subrouters (one for theia, one for the exposed ports) on the given router
 // which resolve workspace coordinates (ID, port?) from each request. The contract is to store those in the request's mux.Vars
 // with the keys workspacePortIdentifier and workspaceIDIdentifier
-type WorkspaceRouter func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (theiaRouter *mux.Router, portRouter *mux.Router, blobserveRouter *mux.Router)
+type WorkspaceRouter func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (ideRouter *mux.Router, portRouter *mux.Router, blobserveRouter *mux.Router)
 
 // HostBasedRouter is a WorkspaceRouter that routes simply based on the "Host" header
 func HostBasedRouter(header, wsHostSuffix string) WorkspaceRouter {
@@ -51,7 +51,7 @@ func HostBasedRouter(header, wsHostSuffix string) WorkspaceRouter {
 			}
 			blobserveRouter = r.MatcherFunc(matchBlobserveHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
 			portRouter      = r.MatcherFunc(matchWorkspacePortHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
-			theiaRouter     = r.MatcherFunc(matchWorkspaceHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
+			ideRouter       = r.MatcherFunc(matchWorkspaceHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
 		)
 
 		r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -59,7 +59,7 @@ func HostBasedRouter(header, wsHostSuffix string) WorkspaceRouter {
 			log.Debugf("no match for path %s, host: %s", req.URL.Path, hostname)
 			w.WriteHeader(404)
 		})
-		return theiaRouter, portRouter, blobserveRouter
+		return ideRouter, portRouter, blobserveRouter
 	}
 }
 
