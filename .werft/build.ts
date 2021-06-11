@@ -402,7 +402,7 @@ export async function triggerIntegrationTests(deploymentConfig: DeploymentConfig
         werft.log(phases.INTEGRATION_TESTS, "Skipped integration tests")
         // If we're skipping integration tests we're still marking the Github Check as succeeded as this allows us to
         // have a break-glass mechanism to merge a PR without running integration tests
-        exec(`werft log result -d "${phases.INTEGRATION_TESTS}" -c github-check-integration-tests conclusion neutral`);
+        exec(`werft log result -d "${phases.INTEGRATION_TESTS}" -c github-check-integration-tests conclusion success`);
         werft.done(phases.INTEGRATION_TESTS);
         return
     }
