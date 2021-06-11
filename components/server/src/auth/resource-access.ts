@@ -4,8 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { GitpodToken, Snapshot, Team, Token, User, UserEnvVar, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
-import { DBTeamMembership } from '@gitpod/gitpod-db/lib/typeorm/entity/db-team-membership';
+import { GitpodToken, Snapshot, Team, TeamMemberInfo, Token, User, UserEnvVar, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 
 declare var resourceInstance: GuardedResource;
 export type GuardedResourceKind = typeof resourceInstance.kind;
@@ -83,7 +82,7 @@ export interface GuardEnvVar {
 export interface GuardedTeam {
     kind: "team";
     subject: Team;
-    memberships: DBTeamMembership[];
+    members: TeamMemberInfo[];
 }
 
 export interface GuardedGitpodToken {
@@ -157,7 +156,7 @@ export class OwnerResourceGuard implements ResourceAccessGuard {
             case "envVar":
                 return resource.subject.userId === this.userId;
             case "team":
-                return resource.memberships.some(membership => membership.userId === this.userId);
+                return resource.members.some(m => m.userId === this.userId);
         }
     }
 
