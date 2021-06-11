@@ -75,6 +75,10 @@ func getConfig() (*config, error) {
 		return nil, xerrors.Errorf("cannot unmarshal config: %v", err)
 	}
 
+	if cfg.ProbePath == "" {
+		cfg.ProbePath = "/app/probe.o"
+	}
+
 	return &cfg, nil
 }
 
