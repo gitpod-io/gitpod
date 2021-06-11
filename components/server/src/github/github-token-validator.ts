@@ -7,6 +7,7 @@
 import { inject, injectable } from "inversify";
 import { CheckWriteAccessResult, IGitTokenValidator, IGitTokenValidatorParams } from "../workspace/git-token-validator";
 import { GitHubApiError, GitHubGraphQlEndpoint, GitHubRestApi, GitHubResult } from "./api";
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
 @injectable()
 export class GitHubTokenValidator implements IGitTokenValidator {
@@ -28,6 +29,7 @@ export class GitHubTokenValidator implements IGitTokenValidator {
 			if (GitHubApiError.is(error) && error.response?.status === 404) {
 				return { found: false };
 			}
+			log.error('Error getting repo information from GitHub', error, { repoFullName, parsedRepoName })
 			return { found: false, error };
 		}
 
@@ -61,6 +63,7 @@ export class GitHubTokenValidator implements IGitTokenValidator {
 				if (errors && errors[0] && (errors[0] as any)["type"] === "FORBIDDEN") {
 					writeAccessToRepo = false;
 				} else {
+					log.error('Error getting organization information from GitHub', error, { org: parsedRepoName.owner })
 					throw error;
 				}
 			}
