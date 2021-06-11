@@ -4,6 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import { Team, TeamMemberInfo, User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { TypeORM } from "./typeorm";
 import { Repository } from "typeorm";
@@ -11,7 +12,7 @@ import * as uuidv4 from 'uuid/v4';
 import { TeamDB } from "../team-db";
 import { DBTeam } from "./entity/db-team";
 import { DBTeamMembership } from "./entity/db-team-membership";
-import { Team } from "@gitpod/gitpod-protocol";
+import { DBUser } from "./entity/db-user";
 
 @injectable()
 export class TeamDBImpl implements TeamDB {
@@ -29,14 +30,27 @@ export class TeamDBImpl implements TeamDB {
         return (await this.getEntityManager()).getRepository<DBTeamMembership>(DBTeamMembership);
     }
 
+    protected async getUserRepo(): Promise<Repository<DBUser>> {
+        return (await this.getEntityManager()).getRepository<DBUser>(DBUser);
+    }
+
     public async findTeamById(teamId: string): Promise<Team | undefined> {
         const teamRepo = await this.getTeamRepo();
         return teamRepo.findOne({ id: teamId });
     }
 
-    public async findMembershipsByTeam(teamId: string): Promise<DBTeamMembership[]> {
+    public async findMembersByTeam(teamId: string): Promise<TeamMemberInfo[]> {
         const membershipRepo = await this.getMembershipRepo();
-        return membershipRepo.find({ teamId });
+        const userRepo = await this.getUserRepo();
+        const memberships = await membershipRepo.find({ teamId });
+        const users = await userRepo.findByIds(memberships.map(m => m.userId));
+        return users.map(u => ({
+            userId: u.id,
+            fullName: u.fullName || u.name,
+            primaryEmail: User.getPrimaryEmail(u),
+            avatarUrl: u.avatarUrl,
+            memberSince: u.creationDate,
+        }));
     }
 
     public async findTeamsByUser(userId: string): Promise<Team[]> {

@@ -46,7 +46,6 @@ import { MessageBusIntegration } from './messagebus-integration';
 import { WorkspaceDeletionService } from './workspace-deletion-service';
 import { WorkspaceFactory } from './workspace-factory';
 import { WorkspaceStarter } from './workspace-starter';
-import { DBTeamMembership } from "@gitpod/gitpod-db/lib/typeorm/entity/db-team-membership";
 
 
 @injectable()
@@ -1396,18 +1395,9 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         if (!team) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
         }
-        const memberships = await this.teamDB.findMembershipsByTeam(team.id);
-        await this.guardAccess({ kind: "team", subject: team, memberships }, "get");
-        return Promise.all(memberships.map(async (m: DBTeamMembership): Promise<TeamMemberInfo> => {
-            const member = await this.userDB.findUserById(m.userId);
-            return {
-                userId: m.userId,
-                fullName: member?.fullName || member?.name,
-                primaryEmail: !!member ? User.getPrimaryEmail(member) : undefined,
-                avatarUrl: member?.avatarUrl,
-                memberSince: m.creationTime,
-            };
-        }));
+        const members = await this.teamDB.findMembersByTeam(team.id);
+        await this.guardAccess({ kind: "team", subject: team, members }, "get");
+        return members;
     }
 
     public async createTeam(name: string): Promise<Team> {
