@@ -12,8 +12,8 @@
     "transportConfig": {
       "connectTimeout": "10s",
       "idleConnTimeout": "60s",
-      "websocketIdleConnTimeout": "180s",
-      "maxIdleConns": 100
+      "maxIdleConns": 0,
+      "maxIdleConnsPerHost": 100
     },
     "gitpodInstallation": {
       "scheme": "http",

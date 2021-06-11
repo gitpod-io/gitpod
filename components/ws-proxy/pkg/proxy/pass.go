@@ -159,7 +159,8 @@ func createDefaultTransport(config *TransportConfig) *http.Transport {
 			DualStack: true,
 		}).DialContext,
 		ForceAttemptHTTP2:     true,
-		MaxIdleConns:          config.MaxIdleConns,                   // default: 100
+		MaxIdleConns:          config.MaxIdleConns,                   // default: 0 (unlimited connections in pool)
+		MaxIdleConnsPerHost:   config.MaxIdleConnsPerHost,            // default: 100 (max connections per host in pool)
 		IdleConnTimeout:       time.Duration(config.IdleConnTimeout), // default: 90s
 		TLSHandshakeTimeout:   10 * time.Second,
 		ExpectContinueTimeout: 1 * time.Second,
