@@ -133,6 +133,13 @@ previewFeatureFlags: []
 
 components:
 
+  agentSmith:
+    name: "agent-smith"
+    disabled: false
+    resources:
+      cpu: 100m
+      memory: 32Mi
+
   blobserve:
     name: "blobserve"
     disabled: false
