@@ -24,6 +24,8 @@ packages:
       - imageRepoBase
     config:
       dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: imageBuilder
       image:
         - ${imageRepoBase}/image-builder:${version}
         - ${imageRepoBase}/image-builder:${__pkg_version}

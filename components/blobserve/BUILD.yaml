@@ -23,6 +23,8 @@ packages:
       - imageRepoBase
     config:
       dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: blobserve
       image:
         - ${imageRepoBase}/blobserve:${version}
         - ${imageRepoBase}/blobserve:${__pkg_version}

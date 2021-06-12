@@ -28,6 +28,8 @@ packages:
       - imageRepoBase
     config:
       dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: wsProxy
       image:
         - ${imageRepoBase}/ws-proxy:${version}
         - ${imageRepoBase}/ws-proxy:${__pkg_version}

@@ -10,6 +10,8 @@ packages:
       - imageRepoBase
     config:
       dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.theiaImage
       image:
         - ${imageRepoBase}/ide/theia:${version}
         - ${imageRepoBase}/ide/theia:${__pkg_version}

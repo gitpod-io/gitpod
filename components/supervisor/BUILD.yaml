@@ -29,6 +29,8 @@ packages:
       - imageRepoBase
     config:
       dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.supervisor
       image:
         - ${imageRepoBase}/supervisor:${version}
         - ${imageRepoBase}/supervisor:${__pkg_version}
