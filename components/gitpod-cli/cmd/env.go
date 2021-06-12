@@ -12,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -167,25 +169,9 @@ func setEnvs(args []string) {
 			fail(err.Error())
 		}
 
-		vars := make([]*serverapi.UserEnvVarValue, len(args))
-		for i, arg := range args {
-			kv := strings.Split(arg, "=")
-			if len(kv) != 2 {
-				fail(fmt.Sprintf("%s has no value (correct format is %s=some_value)", arg, arg))
-			}
-
-			key := strings.TrimSpace(kv[0])
-			if key == "" {
-				fail("variable must have a name")
-			}
-			// Do not trim value - the user might want whitespace here
-			// Also do not check if the value is empty, as an empty value means we want to delete the variable
-			val := kv[1]
-			if val == "" {
-				fail("variable must have a value; use -u to unset a variable")
-			}
-
-			vars[i] = &serverapi.UserEnvVarValue{Name: key, Value: val, RepositoryPattern: result.repositoryPattern}
+		vars, err := parseArgs(args, result.repositoryPattern)
+		if err != nil {
+			fail(err.Error())
 		}
 
 		var exitCode int
@@ -305,6 +291,133 @@ func printVarFromTheia(v theialib.EnvironmentVariable, export bool) {
 	} else {
 		fmt.Printf("%s=%s\n", v.Name, val)
 	}
+}
+
+// helper to parse words (i.e space delimited or quoted strings) in a statement.
+// The quotes are preserved as part of this function and they are stripped later
+// as part of processWords().
+// From moby-parser - https://github.com/moby/buildkit/tree/master/frontend/dockerfile/parser
+func parseWords(rest string) []string {
+	const (
+		inSpaces = iota // looking for start of a word
+		inWord
+		inQuote
+	)
+
+	escapeToken := '\\'
+	words := []string{}
+	phase := inSpaces
+	word := ""
+	quote := '\000'
+	blankOK := false
+	var ch rune
+	var chWidth int
+
+	for pos := 0; pos <= len(rest); pos += chWidth {
+		if pos != len(rest) {
+			ch, chWidth = utf8.DecodeRuneInString(rest[pos:])
+		}
+
+		if phase == inSpaces { // Looking for start of word
+			if pos == len(rest) { // end of input
+				break
+			}
+			if unicode.IsSpace(ch) { // skip spaces
+				continue
+			}
+			phase = inWord // found it, fall through
+		}
+		if (phase == inWord || phase == inQuote) && (pos == len(rest)) {
+			if blankOK || len(word) > 0 {
+				words = append(words, word)
+			}
+			break
+		}
+		if phase == inWord {
+			if unicode.IsSpace(ch) {
+				phase = inSpaces
+				if blankOK || len(word) > 0 {
+					words = append(words, word)
+				}
+				word = ""
+				blankOK = false
+				continue
+			}
+			if ch == '\'' || ch == '"' {
+				quote = ch
+				blankOK = true
+				phase = inQuote
+			}
+			if ch == escapeToken {
+				if pos+chWidth == len(rest) {
+					continue // just skip an escape token at end of line
+				}
+				// If we're not quoted and we see an escape token, then always just
+				// add the escape token plus the char to the word, even if the char
+				// is a quote.
+				word += string(ch)
+				pos += chWidth
+				ch, chWidth = utf8.DecodeRuneInString(rest[pos:])
+			}
+			word += string(ch)
+			continue
+		}
+		if phase == inQuote {
+			if ch == quote {
+				phase = inWord
+			}
+			// The escape token is special except for ' quotes - can't escape anything for '
+			if ch == escapeToken && quote != '\'' {
+				if pos+chWidth == len(rest) {
+					phase = inWord
+					continue // just skip the escape token at end
+				}
+				pos += chWidth
+				word += string(ch)
+				ch, chWidth = utf8.DecodeRuneInString(rest[pos:])
+			}
+			word += string(ch)
+		}
+	}
+
+	return words
+}
+
+func parseArgs(args []string, pattern string) ([]*serverapi.UserEnvVarValue, error) {
+	vars := make([]*serverapi.UserEnvVarValue, len(args))
+	for i, arg := range args {
+		kv := parseWords(arg)
+		if len(kv) != 1 {
+			return nil, fmt.Errorf("empty string (correct format is key=value)")
+		}
+
+		if !strings.Contains(kv[0], "=") {
+			return nil, fmt.Errorf("%s has no equal character (correct format is %s=some_value)", arg, arg)
+		}
+
+		parts := strings.SplitN(kv[0], "=", 2)
+
+		key := strings.TrimSpace(parts[0])
+		if key == "" {
+			return nil, fmt.Errorf("variable must have a name")
+		}
+
+		// Do not trim value - the user might want whitespace here
+		// Also do not check if the value is empty, as an empty value means we want to delete the variable
+		val := parts[1]
+		// the value could be defined with known separators
+		val = strings.Trim(val, `"`)
+		val = strings.Trim(val, `'`)
+		val = strings.ReplaceAll(val, `\ `, " ")
+
+		if val == "" {
+			return nil, fmt.Errorf("variable must have a value; use -u to unset a variable")
+		}
+
+		vars[i] = &serverapi.UserEnvVarValue{Name: key, Value: val, RepositoryPattern: pattern}
+	}
+
+	return vars, nil
 }
 
 func init() {
