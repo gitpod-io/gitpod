@@ -294,16 +294,6 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         werft.fail('predeploy cleanup', err);
     }
 
-    // versions
-    werft.log("deploy", "extracting versions");
-    try {
-        // TODO [geropl] versions is not a core component yet
-        // exec(`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${version} cat /versions.yaml | tee versions.yaml`);
-        werft.done('deploy');
-    } catch (err) {
-        werft.fail('deploy', err);
-    }
-
     // deployment config
     let flags = "";
     flags += ` --namespace ${namespace}`;
@@ -338,12 +328,15 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         flags += ` --set analytics.writer=${deploymentConfig.analytics!}`;
     }
 
-    // const pathToVersions = `${shell.pwd().toString()}/versions.yaml`;
-    // if (fs.existsSync(pathToVersions)) {
-    //     flags+=` -f ${pathToVersions}`;
-    // } else {
-    //     werft.log(`versions file not found at '${pathToVersions}', not using it.`);
-    // }
+    werft.log("helm", "extracting versions");
+    try {
+        exec(`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${version} cat /versions.yaml | tee versions.yaml`);
+    } catch (err) {
+        werft.fail('helm', err);
+    }
+    const pathToVersions = `${shell.pwd().toString()}/versions.yaml`;
+    flags+=` -f ${pathToVersions}`;
+
     if (!certificatePromise) {
         // it's not possible to set certificatesSecret={} so we set secretName to empty string
         flags += ` --set certificatesSecret.secretName=""`;
@@ -357,6 +350,8 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
             exec("kubectl get secret gcp-sa-cloud-storage-dev-sync-key -n werft -o yaml | yq d - metadata | yq w - metadata.name remote-storage-gcloud | kubectl apply -f -")
             flags += ` -f ../.werft/values.dev.gcp-storage.yaml`;
         }
+
+        werft.log('helm', `helm flags: ${flags}`)
 
         exec(`helm dependencies up`);
         exec(`/usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/values.dev.yaml ${flags} ${helmInstallName} .`);
