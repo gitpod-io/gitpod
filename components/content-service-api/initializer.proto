@@ -11,7 +11,33 @@ message WorkspaceInitializer {
         GitInitializer git = 2;
         SnapshotInitializer snapshot = 3;
         PrebuildInitializer prebuild = 4;
+        CompositeInitializer composite = 5;
+        FileDownloadInitializer download = 6;
     }
+}
+
+// CompositeInitializer uses a collection of initializer to produce workspace content.
+// All initializer are executed in the order they're provided.
+message CompositeInitializer {
+    repeated WorkspaceInitializer initializer = 1;
+}
+
+// FileDownloadInitializer downloads files and uses them as workspace content.
+message FileDownloadInitializer {
+    message FileInfo {
+       string url = 1;
+       // file_path is relative to the target_location, e.g. if target_location is in `/workspace/myrepo`
+       // a file_path of `foobar/file` would produce a file in `/workspace/myrepo/foobar/file`.
+       // file_path must include the filename. The FileDownloadInitializer will create any parent directories
+       // necessary to place the file.
+       string file_path = 2;
+       // digest is a hash of the file content in the OCI digest format (see https://github.com/opencontainers/image-spec/blob/master/descriptor.md#digests).
+       // This information is used to compute subsequent
+       // content versions, and to validate the file content was downloaded correctly.
+       string digest = 3;
+    }
+    repeated FileInfo files = 1;
+    string target_location = 2;
 }
 
 message EmptyInitializer { }

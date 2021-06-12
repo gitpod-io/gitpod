@@ -9,7 +9,7 @@ import fetch from 'node-fetch';
 import * as path from 'path';
 
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { User, WorkspaceConfig, CommitContext, Repository, ImageConfigString, ExternalImageConfigFile, ImageConfigFile, Commit, NamedWorkspaceFeatureFlag } from "@gitpod/gitpod-protocol";
+import { User, WorkspaceConfig, CommitContext, Repository, ImageConfigString, ExternalImageConfigFile, ImageConfigFile, Commit, NamedWorkspaceFeatureFlag, AdditionalContentContext } from "@gitpod/gitpod-protocol";
 import { GitpodFileParser } from "@gitpod/gitpod-protocol/lib/gitpod-file-parser";
 
 import { MaybeContent } from "../repohost/file-provider";
@@ -43,53 +43,64 @@ export class ConfigProvider {
         span.addTags({
             commit
         })
-
+        const logContext: LogContext = { userId: user.id };
+        let configBasePath = '';
         try {
-            // try and find config file in the context repo or remote in
-            const host = commit.repository.host;
-            const hostContext = this.hostContextProvider.get(host);
-            if (!hostContext || !hostContext.services) {
-                throw new Error(`Cannot fetch config for host: ${host}`);
-            }
-            const services = hostContext.services;
-            const contextRepoConfig = services.fileProvider.getGitpodFileContent(commit, user);
-            const definitelyGpConfig = this.fetchExternalGitpodFileContent({ span }, commit.repository);
-            const inferredConfig = this.inferingConfigProvider.infer(user, commit);
-
-            let customConfigString = await contextRepoConfig;
-            let configBasePath = '';
-            let fromDefinitelyGp = false;
-            if (!customConfigString) {
-                /* We haven't found a Gitpod configuration file in the context repo - check definitely-gp.
-                *
-                * In case we had found a config file here, we'd still be checking the definitely GP repo, just to save some time.
-                * While all those checks will be in vain, they should not leak memory either as they'll simply
-                * be resolved and garbage collected.
-                */
-                const { content, basePath } = await definitelyGpConfig;
-                customConfigString = content;
-                // We do not only care about the config itself but also where we got it from
-                configBasePath = basePath;
-                fromDefinitelyGp = true;
-            }
-
             let customConfig: WorkspaceConfig | undefined;
-            const logContext: LogContext = { userId: user.id };
-            if (customConfigString) {
+            if (AdditionalContentContext.is(commit) && commit.additionalFiles['.gitpod.yml']) {
+                const customConfigString = commit.additionalFiles['.gitpod.yml'];
                 const parseResult = this.gitpodParser.parse(customConfigString);
-                customConfig = parseResult.config
-                await this.fillInDefaultLocations(customConfig, inferredConfig);
+                customConfig = parseResult.config;
+                customConfig._origin = 'additional-content';
                 if (parseResult.validationErrors) {
-                    log.error(logContext, `Skipping invalid config. Errors are ${parseResult.validationErrors.join(',')}`, { repoCloneUrl: commit.repository.cloneUrl, revision: commit.revision, customConfigString });
+                    log.error(logContext, `Invalid config. Errors are ${parseResult.validationErrors.join(',')}`, { repoCloneUrl: commit.repository.cloneUrl, revision: commit.revision, customConfigString });
                 }
-                customConfig._origin = fromDefinitelyGp ? 'definitely-gp' : 'repo';
-            } else {
-                /* There is no configuration for this repository. Before we fall back to the default config,
-                * let's see if there is language specific configuration we might want to apply.
-                */
-                customConfig = await inferredConfig;
-                if (customConfig) {
-                    customConfig._origin = 'derived';
+            }
+            if (!customConfig) {
+
+                // try and find config file in the context repo or remote in
+                const host = commit.repository.host;
+                const hostContext = this.hostContextProvider.get(host);
+                if (!hostContext || !hostContext.services) {
+                    throw new Error(`Cannot fetch config for host: ${host}`);
+                }
+                const services = hostContext.services;
+                const contextRepoConfig = services.fileProvider.getGitpodFileContent(commit, user);
+                const definitelyGpConfig = this.fetchExternalGitpodFileContent({ span }, commit.repository);
+                const inferredConfig = this.inferingConfigProvider.infer(user, commit);
+
+                let customConfigString = await contextRepoConfig;
+                let fromDefinitelyGp = false;
+                if (!customConfigString) {
+                    /* We haven't found a Gitpod configuration file in the context repo - check definitely-gp.
+                    *
+                    * In case we had found a config file here, we'd still be checking the definitely GP repo, just to save some time.
+                    * While all those checks will be in vain, they should not leak memory either as they'll simply
+                    * be resolved and garbage collected.
+                    */
+                    const { content, basePath } = await definitelyGpConfig;
+                    customConfigString = content;
+                    // We do not only care about the config itself but also where we got it from
+                    configBasePath = basePath;
+                    fromDefinitelyGp = true;
+                }
+
+                if (customConfigString) {
+                    const parseResult = this.gitpodParser.parse(customConfigString);
+                    customConfig = parseResult.config
+                    await this.fillInDefaultLocations(customConfig, inferredConfig);
+                    if (parseResult.validationErrors) {
+                        log.error(logContext, `Skipping invalid config. Errors are ${parseResult.validationErrors.join(',')}`, { repoCloneUrl: commit.repository.cloneUrl, revision: commit.revision, customConfigString });
+                    }
+                    customConfig._origin = fromDefinitelyGp ? 'definitely-gp' : 'repo';
+                } else {
+                    /* There is no configuration for this repository. Before we fall back to the default config,
+                    * let's see if there is language specific configuration we might want to apply.
+                    */
+                    customConfig = await inferredConfig;
+                    if (customConfig) {
+                        customConfig._origin = 'derived';
+                    }
                 }
             }
 
@@ -112,15 +123,16 @@ export class ConfigProvider {
                 let rev = commit.revision;
                 let image = config.image!;
 
-                if (fromDefinitelyGp) {
+                if (config._origin === 'definitely-gp') {
                     repo = ConfigProvider.DEFINITELY_GP_REPO;
                     rev = 'master';
                     image.file = dockerfilePath;
                 }
-
-                config.image = <ExternalImageConfigFile>{
-                    ...image,
-                    externalSource: await this.fetchWorkspaceImageSourceDocker({ span }, repo, rev, user, dockerfilePath)
+                if (!(AdditionalContentContext.is(commit) && commit.additionalFiles[dockerfilePath])) {
+                    config.image = <ExternalImageConfigFile>{
+                        ...image,
+                        externalSource: await this.fetchWorkspaceImageSourceDocker({ span }, repo, rev, user, dockerfilePath)
+                    }
                 }
             }
 

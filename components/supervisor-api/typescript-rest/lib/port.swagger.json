@@ -1,0 +1,211 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "port.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "PortService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/port/tunnel/auto/{enabled}": {
+      "post": {
+        "summary": "AutoTunnel controls enablement of auto tunneling",
+        "operationId": "PortService_AutoTunnel",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/supervisorAutoTunnelResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "enabled",
+            "in": "path",
+            "required": true,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "PortService"
+        ]
+      }
+    },
+    "/v1/port/tunnel/{port}": {
+      "delete": {
+        "summary": "CloseTunnel notifies clients to remove listeners on remote machines.",
+        "operationId": "PortService_CloseTunnel",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/supervisorCloseTunnelResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "port",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          }
+        ],
+        "tags": [
+          "PortService"
+        ]
+      },
+      "post": {
+        "summary": "Tunnel notifies clients to install listeners on remote machines.\nAfter that such clients should call EstablishTunnel to forward incoming connections.",
+        "operationId": "PortService_Tunnel",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/supervisorTunnelPortResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "port",
+            "in": "path",
+            "required": true,
+            "type": "integer",
+            "format": "int64"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "targetPort": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "visibility": {
+                  "$ref": "#/definitions/supervisorTunnelVisiblity"
+                },
+                "clientId": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        ],
+        "tags": [
+          "PortService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "typeUrl": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "supervisorAutoTunnelResponse": {
+      "type": "object"
+    },
+    "supervisorCloseTunnelResponse": {
+      "type": "object"
+    },
+    "supervisorEstablishTunnelResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "supervisorTunnelPortRequest": {
+      "type": "object",
+      "properties": {
+        "port": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "targetPort": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "visibility": {
+          "$ref": "#/definitions/supervisorTunnelVisiblity"
+        },
+        "clientId": {
+          "type": "string"
+        }
+      }
+    },
+    "supervisorTunnelPortResponse": {
+      "type": "object"
+    },
+    "supervisorTunnelVisiblity": {
+      "type": "string",
+      "enum": [
+        "none",
+        "host",
+        "network"
+      ],
+      "default": "none"
+    }
+  }
+}

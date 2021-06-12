@@ -8,7 +8,8 @@ import { injectable, inject } from "inversify";
 import { ImageBuilderClientProvider, ResolveBaseImageRequest, BuildRegistryAuthTotal, BuildRegistryAuth } from "@gitpod/image-builder/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { CommitContext, WorkspaceImageSource, WorkspaceConfig, WorkspaceImageSourceReference, WorkspaceImageSourceDocker, ImageConfigFile, ExternalImageConfigFile, User } from "@gitpod/gitpod-protocol";
+import { CommitContext, WorkspaceImageSource, WorkspaceConfig, WorkspaceImageSourceReference, WorkspaceImageSourceDocker, ImageConfigFile, ExternalImageConfigFile, User, AdditionalContentContext } from "@gitpod/gitpod-protocol";
+import { createHmac } from 'crypto';
 
 @injectable()
 export class ImageSourceProvider {
@@ -36,6 +37,14 @@ export class ImageSourceProvider {
                     dockerFileHash: lastDockerFileSha
                 }
             } else if (ImageConfigFile.is(imgcfg)) {
+                // if a dockerfile sits in the additional content we use its contents sha
+                if (AdditionalContentContext.is(context) && ImageConfigFile.is(config.image) && context.additionalFiles[config.image.file]) {
+                    return {
+                        dockerFilePath: config.image.file,
+                        dockerFileHash: this.getContentSHA(context.additionalFiles[config.image.file]),
+                        dockerFileSource: CommitContext.is(context) ? context : undefined
+                    }
+                }
                 // There are no special instructions as to where to get the Dockerfile from, hence we use the context of the current workspace.
                 const hostContext = this.hostContextProvider.get(context.repository.host);
                 if (!hostContext || !hostContext.services) {
@@ -47,7 +56,7 @@ export class ImageSourceProvider {
                     dockerFileSource: context,
                     dockerFileHash: lastDockerFileSha,
                 }
-            } else if (typeof(imgcfg) === "string") {
+            } else if (typeof (imgcfg) === "string") {
                 // We resolve this request allowing all configured auth because at this poing we don't have access to the user or permission service.
                 // If anyone feels like changing this and properly use the REGISTRY_ACCESS permission, be my guest.
                 //
@@ -65,7 +74,7 @@ export class ImageSourceProvider {
                 req.setAuth(auth);
 
                 const client = this.imagebuilderClientProvider.getDefault();
-                const res = await client.resolveBaseImage({span}, req);
+                const res = await client.resolveBaseImage({ span }, req);
 
                 result = <WorkspaceImageSourceReference>{
                     baseImageResolved: res.getRef()
@@ -76,11 +85,17 @@ export class ImageSourceProvider {
 
             return result;
         } catch (e) {
-            TraceContext.logError({span}, e);
+            TraceContext.logError({ span }, e);
             throw e;
         } finally {
             span.finish();
         }
+    }
+
+    protected getContentSHA(contents: string): string {
+        return createHmac('sha256', '')
+            .update(contents)
+            .digest('hex');
     }
 
 

@@ -19,6 +19,7 @@ import (
 	"github.com/docker/docker/api/types/mount"
 	docker "github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/jsonmessage"
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
@@ -214,6 +215,19 @@ func (b *DockerBuilder) getAbsoluteImageRef(ctx context.Context, ref string, all
 	return b.Resolver.Resolve(ctx, ref, resolve.WithAuthentication(auth))
 }
 
+func findGitInit(init *csapi.WorkspaceInitializer) *csapi.GitInitializer {
+	if init.GetGit() != nil {
+		return init.GetGit()
+	}
+	for _, current := range init.GetComposite().GetInitializer() {
+		nestedGitInit := findGitInit(current)
+		if nestedGitInit != nil {
+			return nestedGitInit
+		}
+	}
+	return nil
+}
+
 func (b *DockerBuilder) getBaseImageRef(ctx context.Context, bs *api.BuildSource, allowedAuth allowedAuthFor) (res string, err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "getBaseImageRef")
@@ -229,13 +243,14 @@ func (b *DockerBuilder) getBaseImageRef(ctx context.Context, bs *api.BuildSource
 			"DockerfileVersion": src.File.DockerfileVersion,
 			"ContextPath":       src.File.ContextPath,
 		}
+
+		gitInit := findGitInit(src.File.Source)
 		// workspace starter will only ever send us Git sources. Should that ever change, we'll need to add
 		// manifest support for the other initializer types.
-		if src.File.Source.GetGit() != nil {
-			fsrc := src.File.Source.GetGit()
+		if gitInit != nil {
 			manifest["Source"] = "git"
-			manifest["CloneTarget"] = fsrc.CloneTaget
-			manifest["RemoteURI"] = fsrc.RemoteUri
+			manifest["CloneTarget"] = gitInit.CloneTaget
+			manifest["RemoteURI"] = gitInit.RemoteUri
 		} else {
 			return "", xerrors.Errorf("unsupported context initializer")
 		}

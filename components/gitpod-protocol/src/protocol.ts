@@ -561,9 +561,10 @@ export interface WorkspaceConfig {
      * repo - from the repository
      * definitly-gp - from github.com/gitpod-io/definitely-gp
      * derived - computed based on analyzing the repository
+     * additional-content - config comes from additional content, usually provided through the project's configuration
      * default - our static catch-all default config
      */
-    _origin?: 'repo' | 'definitely-gp' | 'derived' | 'default';
+    _origin?: 'repo' | 'definitely-gp' | 'derived' | 'additional-content' | 'default';
 
     /**
      * Set of automatically infered feature flags. That's not something the user can set, but
@@ -593,16 +594,13 @@ export namespace GithubAppPrebuildConfig {
 
 export type WorkspaceImageSource = WorkspaceImageSourceDocker | WorkspaceImageSourceReference;
 export interface WorkspaceImageSourceDocker {
-    // TODO: clean this up. We should have the commit and an ImageSource in here, not duplicate the whole thing again.
-    //       We have a ton of those objects in the database, thus cleaning this up means lengthy DB migrations. Yuck.
-    dockerFileHash: string
-    dockerFileSource: Commit
     dockerFilePath: string
+    dockerFileHash: string
+    dockerFileSource?: Commit
 }
 export namespace WorkspaceImageSourceDocker {
     export function is(obj: object): obj is WorkspaceImageSourceDocker {
         return 'dockerFileHash' in obj
-            && 'dockerFileSource' in obj
             && 'dockerFilePath' in obj;
     }
 }
@@ -882,6 +880,25 @@ export interface Commit {
 
     // refType is only set if ref is present (and not for old workspaces, before this feature was added)
     refType?: RefType
+}
+
+export interface AdditionalContentContext {
+
+    /**
+     * utf-8 encoded contents that will be copied on top of the workspace's filesystem
+     */
+    additionalFiles: {[filePath: string]: string};
+
+}
+
+export namespace AdditionalContentContext {
+    export function is(ctx: any): ctx is AdditionalContentContext {
+        return 'additionalFiles' in ctx;
+    }
+
+    export function hasDockerConfig(ctx: any, config: WorkspaceConfig): boolean {
+        return is(ctx) && ImageConfigFile.is(config.image) && !!ctx.additionalFiles[config.image.file];
+    }
 }
 
 export interface CommitContext extends WorkspaceContext, Commit {
