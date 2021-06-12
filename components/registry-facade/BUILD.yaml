@@ -39,6 +39,8 @@ packages:
       - imageRepoBase
     config:
       dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: registryFacade
       image:
         - ${imageRepoBase}/registry-facade:${version}
         - ${imageRepoBase}/registry-facade:${__pkg_version}

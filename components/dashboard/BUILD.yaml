@@ -41,6 +41,8 @@ packages:
       - imageRepoBase
     config:
       dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: dashboard
       image:
         - ${imageRepoBase}/dashboard:${version}
         - ${imageRepoBase}/dashboard:${__pkg_version}

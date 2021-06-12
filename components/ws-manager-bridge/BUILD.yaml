@@ -24,6 +24,8 @@ packages:
       - imageRepoBase
     config:
       dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: wsManagerBridge
       image:
         - ${imageRepoBase}/ws-manager-bridge:${version}
         - ${imageRepoBase}/ws-manager-bridge:${__pkg_version}

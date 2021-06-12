@@ -49,6 +49,8 @@ packages:
       - imageRepoBase
     config:
       dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: wsDaemon
       image:
         - ${imageRepoBase}/ws-daemon:${version}
         - ${imageRepoBase}/ws-daemon:${__pkg_version}

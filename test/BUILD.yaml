@@ -36,6 +36,8 @@ packages:
       - imageRepoBase
     config:
       dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: integrationTest
       image:
         - ${imageRepoBase}/integration-tests:${version}
         - ${imageRepoBase}/integration-tests:${__pkg_version}

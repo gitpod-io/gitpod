@@ -36,6 +36,8 @@ packages:
       - imageRepoBase
     config:
       dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: contentService
       image:
         - ${imageRepoBase}/content-service:${version}
         - ${imageRepoBase}/content-service:${__pkg_version}

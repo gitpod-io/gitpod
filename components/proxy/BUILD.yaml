@@ -8,6 +8,8 @@ packages:
       - imageRepoBase
     config:
       dockerfile: Dockerfile
+      metadata:
+        helm-component: proxy
       image:
         - ${imageRepoBase}/proxy:${version}
         - ${imageRepoBase}/proxy:${__pkg_version}

@@ -22,6 +22,8 @@ packages:
       - imageRepoBase
     config:
       dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: dbSync
       image:
         - ${imageRepoBase}/db-sync:${version}
         - ${imageRepoBase}/db-sync:${__pkg_version}

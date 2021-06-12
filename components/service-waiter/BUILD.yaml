@@ -20,6 +20,8 @@ packages:
       - imageRepoBase
     config:
       dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: serviceWaiter
       image:
         - ${imageRepoBase}/service-waiter:${version}
         - ${imageRepoBase}/service-waiter:${__pkg_version}

@@ -13,6 +13,10 @@ packages:
       - dev/blowtorch:app
       - dev/gpctl:app
       - dev/loadgen:app
+      - components/local-app-api/typescript-grpcweb:publish
+      - components/gitpod-protocol:publish
+      - components/supervisor-api/typescript-grpc:publish
+      - components/supervisor-api/typescript-grpcweb:publish
   - name: docker-versions
     type: docker
     config:
@@ -36,18 +40,14 @@ packages:
       - components/ee/payment-endpoint:docker
       - components/ee/ws-scheduler:docker
       - components/gitpod-db:docker
-      - components/gitpod-protocol:publish
       - components/ide/code:docker
       - components/ide/theia:docker
       - components/image-builder:docker
       - components/local-app:docker
-      - components/local-app-api/typescript-grpcweb:publish
       - components/proxy:docker
       - components/registry-facade:docker
       - components/server:docker
       - components/service-waiter:docker
-      - components/supervisor-api/typescript-grpc:publish
-      - components/supervisor-api/typescript-grpcweb:publish
       - components/supervisor:docker
       - components/ws-daemon:docker
       - components/ws-daemon/seccomp-profile-installer:docker
@@ -56,10 +56,11 @@ packages:
       - components/ws-manager:docker
       - components/ws-proxy:docker
       - test:docker
+      - dev/version-manifest:app
     config:
       commands:
-        - ["sh", "-c", "(find . -name imgnames.txt | while read f; do tail -n1 $f; done) > versions.txt"]
-        - ["sh", "-c", "rm -r components*"]
+        - ["sh", "-c", "dev-version-manifest--app/version-manifest > versions.yaml"]
+        - ["sh", "-c", "rm -r components* dev-*"]
   - name: all-apps
     type: generic
     deps:

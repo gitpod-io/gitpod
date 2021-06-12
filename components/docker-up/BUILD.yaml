@@ -65,6 +65,8 @@ packages:
       - imageRepoBase
     config:
       dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: workspace.dockerUp
       image:
         - ${imageRepoBase}/docker-up:${version}
         - ${imageRepoBase}/docker-up:${__pkg_version}
