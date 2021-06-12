@@ -1,0 +1,316 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "terminal.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "TerminalService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/terminal/get/{alias}": {
+      "get": {
+        "summary": "Get returns an opened terminal info",
+        "operationId": "TerminalService_Get",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/supervisorTerminal"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "alias",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "TerminalService"
+        ]
+      }
+    },
+    "/v1/terminal/list": {
+      "get": {
+        "summary": "List lists all open terminals",
+        "operationId": "TerminalService_List",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/supervisorListTerminalsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "TerminalService"
+        ]
+      }
+    },
+    "/v1/terminal/listen/{alias}": {
+      "get": {
+        "summary": "Listen listens to a terminal",
+        "operationId": "TerminalService_Listen",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/supervisorListenTerminalResponse"
+                },
+                "error": {
+                  "$ref": "#/definitions/rpcStatus"
+                }
+              },
+              "title": "Stream result of supervisorListenTerminalResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "alias",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "TerminalService"
+        ]
+      }
+    },
+    "/v1/terminal/shutdown/{alias}": {
+      "get": {
+        "summary": "Shutdown closes a terminal for the given alias, SIGKILL'ing all child processes\nbefore closing the pseudo-terminal.",
+        "operationId": "TerminalService_Shutdown",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/supervisorShutdownTerminalResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "alias",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "TerminalService"
+        ]
+      }
+    },
+    "/v1/terminal/write/{alias}": {
+      "post": {
+        "summary": "Write writes to a terminal",
+        "operationId": "TerminalService_Write",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/supervisorWriteTerminalResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "alias",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "TerminalService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "typeUrl": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "supervisorListTerminalsResponse": {
+      "type": "object",
+      "properties": {
+        "terminals": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/supervisorTerminal"
+          }
+        }
+      }
+    },
+    "supervisorListenTerminalResponse": {
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "string",
+          "format": "byte"
+        },
+        "exitCode": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "title": {
+          "type": "string"
+        }
+      }
+    },
+    "supervisorOpenTerminalResponse": {
+      "type": "object",
+      "properties": {
+        "terminal": {
+          "$ref": "#/definitions/supervisorTerminal"
+        },
+        "starterToken": {
+          "type": "string",
+          "description": "starter_token can be used to change the terminal size if there are\nmultiple listerns, without having to force your way in."
+        }
+      }
+    },
+    "supervisorSetTerminalSizeResponse": {
+      "type": "object"
+    },
+    "supervisorShutdownTerminalResponse": {
+      "type": "object"
+    },
+    "supervisorTerminal": {
+      "type": "object",
+      "properties": {
+        "alias": {
+          "type": "string"
+        },
+        "command": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "title": {
+          "type": "string"
+        },
+        "pid": {
+          "type": "string",
+          "format": "int64"
+        },
+        "initialWorkdir": {
+          "type": "string"
+        },
+        "currentWorkdir": {
+          "type": "string"
+        },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "supervisorTerminalSize": {
+      "type": "object",
+      "properties": {
+        "rows": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "cols": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "widthPx": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "heightPx": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "supervisorWriteTerminalResponse": {
+      "type": "object",
+      "properties": {
+        "bytesWritten": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    }
+  }
+}

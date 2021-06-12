@@ -73,11 +73,11 @@ var bobInitBase = &cobra.Command{
 			log.WithError(err).Fatal("init failed")
 		}
 		if stat, err := os.Stat(initctx); os.IsNotExist(err) {
-			log.Fatalf("Context directory \"%s\" does not exist", src.ContextPath)
+			log.Fatalf("Context directory \"%s\" does not exist", initctx)
 		} else if err != nil {
 			log.Fatalf("Context directory error: %v", err)
 		} else if !stat.IsDir() {
-			log.Fatalf("Context path \"%s\" is not a directory", src.ContextPath)
+			log.Fatalf("Context path \"%s\" is not a directory", initctx)
 		}
 
 		initdf, err := securejoin.SecureJoin(initwd, src.DockerfilePath)
@@ -85,7 +85,7 @@ var bobInitBase = &cobra.Command{
 			log.WithError(err).Fatal("init failed")
 		}
 		if stat, err := os.Stat(initdf); os.IsNotExist(err) {
-			log.Fatalf("Dockerfile \"%s\" does not exist", src.DockerfilePath)
+			log.Fatalf("Dockerfile \"%s\" does not exist", initdf)
 		} else if err != nil {
 			log.Fatalf("Dockerfile error: %v", err)
 		} else if stat.IsDir() {

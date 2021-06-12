@@ -1,0 +1,591 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "status.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "StatusService"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/v1/status/backup": {
+      "get": {
+        "summary": "BackupStatus offers feedback on the workspace backup status. This status information can\nbe relayed to the user to provide transparency as to how \"safe\" their files/content\ndata are w.r.t. to being lost.",
+        "operationId": "StatusService_BackupStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/supervisorBackupStatusResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "StatusService"
+        ]
+      }
+    },
+    "/v1/status/content": {
+      "get": {
+        "summary": "ContentStatus returns the status of the workspace content. When used with `wait`, the call\nreturns when the content has become available.",
+        "operationId": "StatusService_ContentStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/supervisorContentStatusResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "wait",
+            "description": "if true this request will return either when it times out or when the workspace content\nhas become available.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "StatusService"
+        ]
+      }
+    },
+    "/v1/status/content/wait/{wait}": {
+      "get": {
+        "summary": "ContentStatus returns the status of the workspace content. When used with `wait`, the call\nreturns when the content has become available.",
+        "operationId": "StatusService_ContentStatus2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/supervisorContentStatusResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "wait",
+            "description": "if true this request will return either when it times out or when the workspace content\nhas become available.",
+            "in": "path",
+            "required": true,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "StatusService"
+        ]
+      }
+    },
+    "/v1/status/ide": {
+      "get": {
+        "summary": "IDEStatus returns OK if the IDE can serve requests.",
+        "operationId": "StatusService_IDEStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/supervisorIDEStatusResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "wait",
+            "description": "if true this request will return either when it times out or when the workspace IDE\nhas become available.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "StatusService"
+        ]
+      }
+    },
+    "/v1/status/ide/wait/{wait}": {
+      "get": {
+        "summary": "IDEStatus returns OK if the IDE can serve requests.",
+        "operationId": "StatusService_IDEStatus2",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/supervisorIDEStatusResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "wait",
+            "description": "if true this request will return either when it times out or when the workspace IDE\nhas become available.",
+            "in": "path",
+            "required": true,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "StatusService"
+        ]
+      }
+    },
+    "/v1/status/ports": {
+      "get": {
+        "summary": "PortsStatus provides feedback about the network ports currently in use.",
+        "operationId": "StatusService_PortsStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/supervisorPortsStatusResponse"
+                },
+                "error": {
+                  "$ref": "#/definitions/rpcStatus"
+                }
+              },
+              "title": "Stream result of supervisorPortsStatusResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "observe",
+            "description": "if observe is true, we'll return a stream of changes rather than just the\ncurrent state of affairs.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "StatusService"
+        ]
+      }
+    },
+    "/v1/status/ports/observe/{observe}": {
+      "get": {
+        "summary": "PortsStatus provides feedback about the network ports currently in use.",
+        "operationId": "StatusService_PortsStatus2",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/supervisorPortsStatusResponse"
+                },
+                "error": {
+                  "$ref": "#/definitions/rpcStatus"
+                }
+              },
+              "title": "Stream result of supervisorPortsStatusResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "observe",
+            "description": "if observe is true, we'll return a stream of changes rather than just the\ncurrent state of affairs.",
+            "in": "path",
+            "required": true,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "StatusService"
+        ]
+      }
+    },
+    "/v1/status/supervisor": {
+      "get": {
+        "summary": "SupervisorStatus returns once supervisor is running.",
+        "operationId": "StatusService_SupervisorStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/supervisorSupervisorStatusResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "tags": [
+          "StatusService"
+        ]
+      }
+    },
+    "/v1/status/tasks": {
+      "get": {
+        "summary": "TasksStatus provides tasks status information.",
+        "operationId": "StatusService_TasksStatus",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/supervisorTasksStatusResponse"
+                },
+                "error": {
+                  "$ref": "#/definitions/rpcStatus"
+                }
+              },
+              "title": "Stream result of supervisorTasksStatusResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "observe",
+            "description": "if observe is true, we'll return a stream of changes rather than just the\ncurrent state of affairs.",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "StatusService"
+        ]
+      }
+    },
+    "/v1/status/tasks/observe/{observe}": {
+      "get": {
+        "summary": "TasksStatus provides tasks status information.",
+        "operationId": "StatusService_TasksStatus2",
+        "responses": {
+          "200": {
+            "description": "A successful response.(streaming responses)",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "result": {
+                  "$ref": "#/definitions/supervisorTasksStatusResponse"
+                },
+                "error": {
+                  "$ref": "#/definitions/rpcStatus"
+                }
+              },
+              "title": "Stream result of supervisorTasksStatusResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "observe",
+            "description": "if observe is true, we'll return a stream of changes rather than just the\ncurrent state of affairs.",
+            "in": "path",
+            "required": true,
+            "type": "boolean"
+          }
+        ],
+        "tags": [
+          "StatusService"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "typeUrl": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string",
+          "format": "byte"
+        }
+      }
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "supervisorBackupStatusResponse": {
+      "type": "object",
+      "properties": {
+        "canaryAvailable": {
+          "type": "boolean"
+        }
+      }
+    },
+    "supervisorContentSource": {
+      "type": "string",
+      "enum": [
+        "from_other",
+        "from_backup",
+        "from_prebuild"
+      ],
+      "default": "from_other"
+    },
+    "supervisorContentStatusResponse": {
+      "type": "object",
+      "properties": {
+        "available": {
+          "type": "boolean",
+          "title": "true if the workspace content is available"
+        },
+        "source": {
+          "$ref": "#/definitions/supervisorContentSource",
+          "title": "source indicates where the workspace content came from"
+        }
+      }
+    },
+    "supervisorExposedPortInfo": {
+      "type": "object",
+      "properties": {
+        "visibility": {
+          "$ref": "#/definitions/supervisorPortVisibility",
+          "title": "public determines if the port is available without authentication or not"
+        },
+        "url": {
+          "type": "string",
+          "title": "url is the URL at which the port is available"
+        },
+        "onExposed": {
+          "$ref": "#/definitions/supervisorOnPortExposedAction",
+          "title": "action hint on expose"
+        }
+      }
+    },
+    "supervisorIDEStatusResponse": {
+      "type": "object",
+      "properties": {
+        "ok": {
+          "type": "boolean"
+        }
+      }
+    },
+    "supervisorOnPortExposedAction": {
+      "type": "string",
+      "enum": [
+        "ignore",
+        "open_browser",
+        "open_preview",
+        "notify",
+        "notify_private"
+      ],
+      "default": "ignore"
+    },
+    "supervisorPortVisibility": {
+      "type": "string",
+      "enum": [
+        "private",
+        "public"
+      ],
+      "default": "private"
+    },
+    "supervisorPortsStatus": {
+      "type": "object",
+      "properties": {
+        "localPort": {
+          "type": "integer",
+          "format": "int64",
+          "description": "local_port is the port a service actually bound to. Some services bind\nto localhost:\u003cport\u003e, in which case they cannot be made accessible from\noutside the container. To help with this, supervisor then starts a proxy\nthat forwards traffic to this local port. In those cases, global_port\ncontains the port where the proxy is listening on."
+        },
+        "globalPort": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "served": {
+          "type": "boolean",
+          "description": "served is true if there is a process in the workspace that serves this port."
+        },
+        "exposed": {
+          "$ref": "#/definitions/supervisorExposedPortInfo",
+          "description": "Exposed provides information when a port is exposed. If this field isn't set,\nthe port is not available from outside the workspace (i.e. the internet)."
+        },
+        "tunneled": {
+          "$ref": "#/definitions/supervisorTunneledPortInfo",
+          "description": "Tunneled provides information when a port is tunneled. If not present then\nthe port is not tunneled."
+        }
+      }
+    },
+    "supervisorPortsStatusResponse": {
+      "type": "object",
+      "properties": {
+        "ports": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/supervisorPortsStatus"
+          }
+        }
+      }
+    },
+    "supervisorSupervisorStatusResponse": {
+      "type": "object",
+      "properties": {
+        "ok": {
+          "type": "boolean"
+        }
+      }
+    },
+    "supervisorTaskPresentation": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "openIn": {
+          "type": "string"
+        },
+        "openMode": {
+          "type": "string"
+        }
+      }
+    },
+    "supervisorTaskState": {
+      "type": "string",
+      "enum": [
+        "opening",
+        "running",
+        "closed"
+      ],
+      "default": "opening"
+    },
+    "supervisorTaskStatus": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/definitions/supervisorTaskState"
+        },
+        "terminal": {
+          "type": "string"
+        },
+        "presentation": {
+          "$ref": "#/definitions/supervisorTaskPresentation"
+        }
+      }
+    },
+    "supervisorTasksStatusResponse": {
+      "type": "object",
+      "properties": {
+        "tasks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/supervisorTaskStatus"
+          }
+        }
+      }
+    },
+    "supervisorTunnelVisiblity": {
+      "type": "string",
+      "enum": [
+        "none",
+        "host",
+        "network"
+      ],
+      "default": "none"
+    },
+    "supervisorTunneledPortInfo": {
+      "type": "object",
+      "properties": {
+        "targetPort": {
+          "type": "integer",
+          "format": "int64",
+          "title": "target port is the desired port on the remote machine"
+        },
+        "visibility": {
+          "$ref": "#/definitions/supervisorTunnelVisiblity",
+          "title": "visibility determines if the listener on remote machine should accept connections from localhost or network\nvisibility none means that the port should not be tunneled"
+        },
+        "clients": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": "map of remote clients indicates on which remote port each client is listening to"
+        }
+      }
+    }
+  }
+}

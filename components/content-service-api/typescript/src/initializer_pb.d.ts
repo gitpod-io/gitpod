@@ -34,6 +34,16 @@ export class WorkspaceInitializer extends jspb.Message {
     getPrebuild(): PrebuildInitializer | undefined;
     setPrebuild(value?: PrebuildInitializer): WorkspaceInitializer;
 
+    hasComposite(): boolean;
+    clearComposite(): void;
+    getComposite(): CompositeInitializer | undefined;
+    setComposite(value?: CompositeInitializer): WorkspaceInitializer;
+
+    hasDownload(): boolean;
+    clearDownload(): void;
+    getDownload(): FileDownloadInitializer | undefined;
+    setDownload(value?: FileDownloadInitializer): WorkspaceInitializer;
+
     getSpecCase(): WorkspaceInitializer.SpecCase;
 
     serializeBinary(): Uint8Array;
@@ -52,6 +62,8 @@ export namespace WorkspaceInitializer {
         git?: GitInitializer.AsObject,
         snapshot?: SnapshotInitializer.AsObject,
         prebuild?: PrebuildInitializer.AsObject,
+        composite?: CompositeInitializer.AsObject,
+        download?: FileDownloadInitializer.AsObject,
     }
 
     export enum SpecCase {
@@ -60,6 +72,83 @@ export namespace WorkspaceInitializer {
         GIT = 2,
         SNAPSHOT = 3,
         PREBUILD = 4,
+        COMPOSITE = 5,
+        DOWNLOAD = 6,
+    }
+
+}
+
+export class CompositeInitializer extends jspb.Message {
+    clearInitializerList(): void;
+    getInitializerList(): Array<WorkspaceInitializer>;
+    setInitializerList(value: Array<WorkspaceInitializer>): CompositeInitializer;
+    addInitializer(value?: WorkspaceInitializer, index?: number): WorkspaceInitializer;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): CompositeInitializer.AsObject;
+    static toObject(includeInstance: boolean, msg: CompositeInitializer): CompositeInitializer.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: CompositeInitializer, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): CompositeInitializer;
+    static deserializeBinaryFromReader(message: CompositeInitializer, reader: jspb.BinaryReader): CompositeInitializer;
+}
+
+export namespace CompositeInitializer {
+    export type AsObject = {
+        initializerList: Array<WorkspaceInitializer.AsObject>,
+    }
+}
+
+export class FileDownloadInitializer extends jspb.Message {
+    clearFilesList(): void;
+    getFilesList(): Array<FileDownloadInitializer.FileInfo>;
+    setFilesList(value: Array<FileDownloadInitializer.FileInfo>): FileDownloadInitializer;
+    addFiles(value?: FileDownloadInitializer.FileInfo, index?: number): FileDownloadInitializer.FileInfo;
+    getTargetLocation(): string;
+    setTargetLocation(value: string): FileDownloadInitializer;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): FileDownloadInitializer.AsObject;
+    static toObject(includeInstance: boolean, msg: FileDownloadInitializer): FileDownloadInitializer.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: FileDownloadInitializer, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): FileDownloadInitializer;
+    static deserializeBinaryFromReader(message: FileDownloadInitializer, reader: jspb.BinaryReader): FileDownloadInitializer;
+}
+
+export namespace FileDownloadInitializer {
+    export type AsObject = {
+        filesList: Array<FileDownloadInitializer.FileInfo.AsObject>,
+        targetLocation: string,
+    }
+
+
+    export class FileInfo extends jspb.Message {
+        getUrl(): string;
+        setUrl(value: string): FileInfo;
+        getFilePath(): string;
+        setFilePath(value: string): FileInfo;
+        getDigest(): string;
+        setDigest(value: string): FileInfo;
+
+        serializeBinary(): Uint8Array;
+        toObject(includeInstance?: boolean): FileInfo.AsObject;
+        static toObject(includeInstance: boolean, msg: FileInfo): FileInfo.AsObject;
+        static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+        static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+        static serializeBinaryToWriter(message: FileInfo, writer: jspb.BinaryWriter): void;
+        static deserializeBinary(bytes: Uint8Array): FileInfo;
+        static deserializeBinaryFromReader(message: FileInfo, reader: jspb.BinaryReader): FileInfo;
+    }
+
+    export namespace FileInfo {
+        export type AsObject = {
+            url: string,
+            filePath: string,
+            digest: string,
+        }
     }
 
 }

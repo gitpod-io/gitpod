@@ -8274,7 +8274,7 @@ create-require@^1.1.0:
   resolved "https://registry.yarnpkg.com/create-require/-/create-require-1.1.1.tgz#c1d7e8f1e5f6cfc9ff65f9cd352d37348756c333"
   integrity sha512-dcKFX3jn0MpIaXjisoRvexIJVEKzaq7z2rZKxf+MSr9TkdmHmsU4m2lcLojrj/FHl8mk5VxMmYA+ftRkP/3oKQ==
 
-cross-fetch@3.0.6, cross-fetch@^3.0.4, cross-fetch@^3.0.5, cross-fetch@^3.0.6:
+cross-fetch@3.0.6, cross-fetch@^3.0.4, cross-fetch@^3.0.6:
   version "3.0.6"
   resolved "https://registry.yarnpkg.com/cross-fetch/-/cross-fetch-3.0.6.tgz#3a4040bc8941e653e0e9cf17f29ebcd177d3365c"
   integrity sha512-KBPUbqgFjzWlVcURG+Svp9TlhA5uliYtiNx/0r8nv0pdypeQCRJ9IaSIc3q/x3q8t3F75cHuwxVql1HFGHCNJQ==
@@ -9219,21 +9219,6 @@ dotenv@8.2.0, dotenv@^8.2.0, dotenv@~8.2.0:
 dotenv@^4.0.0:
   version "4.0.0"
   resolved "http://registry.npmjs.org/dotenv/-/dotenv-4.0.0.tgz#864ef1379aced55ce6f95debecdce179f7a0cd1d"
-
-dtsgenerator@~3.3.0:
-  version "3.3.1"
-  resolved "https://registry.yarnpkg.com/dtsgenerator/-/dtsgenerator-3.3.1.tgz#00ab61551e646569043794137f709cc068f3347c"
-  integrity sha512-agBZATxyr+iUs/THNqJUxVzSrc4VK6c+U4kI5/MhSUL+vcvUi1eiZWpOHQz5QVz4GgQshlRf2HqBn/FzX3sShA==
-  dependencies:
-    commander "^6.0.0"
-    cross-fetch "^3.0.5"
-    debug "^4.1.1"
-    glob "^7.1.6"
-    https-proxy-agent "^5.0.0"
-    js-yaml "^3.14.0"
-    mkdirp "^1.0.4"
-    tslib "^2.0.0"
-    typescript "^3.9.7"
 
 duplexer3@^0.1.4:
   version "0.1.4"
@@ -20821,7 +20806,7 @@ typescript-parser@^2.6.1:
     tslib "^1.9.3"
     typescript "^3.0.3"
 
-typescript@^3.0.3, typescript@^3.9.7:
+typescript@^3.0.3:
   version "3.9.7"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.9.7.tgz#98d600a5ebdc38f40cb277522f12dc800e9e25fa"
   integrity sha512-BLbiRkiBzAwsjut4x/dsibSTB6yWpwT5qWmC2OfuCg3GgVQCSgMs4vEctYPhsaGtd0AeuuHMkjZ2h2WG8MSzRw==

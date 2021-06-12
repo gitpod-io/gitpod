@@ -55,6 +55,20 @@ func (e *EmptyInitializer) Run(ctx context.Context, mappings []archive.IDMapping
 	return csapi.WorkspaceInitFromOther, nil
 }
 
+// CompositeInitializer does nothing
+type CompositeInitializer struct {
+	Initializer []Initializer
+}
+
+// Run calls run on all child initializers
+func (e *CompositeInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (csapi.WorkspaceInitSource, error) {
+	_, ctx = opentracing.StartSpanFromContext(ctx, "CompositeInitializer.Run")
+	for _, init := range e.Initializer {
+		init.Run(ctx, mappings)
+	}
+	return csapi.WorkspaceInitFromOther, nil
+}
+
 // NewFromRequestOpts configures the initializer produced from a content init request
 type NewFromRequestOpts struct {
 	// ForceGitpodUserForGit forces gitpod:gitpod ownership on all files produced by the Git initializer.
@@ -76,6 +90,17 @@ func NewFromRequest(ctx context.Context, loc string, rs storage.DirectDownloader
 	var initializer Initializer
 	if _, ok := spec.(*csapi.WorkspaceInitializer_Empty); ok {
 		initializer = &EmptyInitializer{}
+	} else if ir, ok := spec.(*csapi.WorkspaceInitializer_Composite); ok {
+		initializers := make([]Initializer, len(ir.Composite.Initializer))
+		for i, init := range ir.Composite.Initializer {
+			initializers[i], err = NewFromRequest(ctx, loc, rs, init, opts)
+			if err != nil {
+				return nil, err
+			}
+		}
+		initializer = &CompositeInitializer{
+			Initializer: initializers,
+		}
 	} else if ir, ok := spec.(*csapi.WorkspaceInitializer_Git); ok {
 		if ir.Git == nil {
 			return nil, status.Error(codes.InvalidArgument, "missing Git initializer spec")
@@ -108,13 +133,31 @@ func NewFromRequest(ctx context.Context, loc string, rs storage.DirectDownloader
 		}
 	} else if ir, ok := spec.(*csapi.WorkspaceInitializer_Snapshot); ok {
 		initializer, err = newSnapshotInitializer(loc, rs, ir.Snapshot)
+	} else if ir, ok := spec.(*csapi.WorkspaceInitializer_Download); ok {
+		initializer, err = newFileDownloadInitializer(loc, ir.Download)
 	} else {
 		initializer = &EmptyInitializer{}
 	}
 	if err != nil {
 		return nil, status.Error(codes.Internal, fmt.Sprintf("cannot initialize workspace: %v", err))
 	}
+	return initializer, nil
+}
 
+// newFileDownloadInitializer creates a download initializer for a request
+func newFileDownloadInitializer(loc string, req *csapi.FileDownloadInitializer) (*FileDownloadInitializer, error) {
+	fileInfos := make([]FileInfo, len(req.Files))
+	for i, f := range req.Files {
+		fileInfos[i] = FileInfo{
+			url:      f.Url,
+			filePath: f.FilePath,
+			digest:   f.Digest,
+		}
+	}
+	initializer := &FileDownloadInitializer{
+		FilesInfos:     fileInfos,
+		TargetLocation: filepath.Join(loc, req.TargetLocation),
+	}
 	return initializer, nil
 }
 

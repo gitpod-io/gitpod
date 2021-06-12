@@ -74,6 +74,7 @@ import { GitTokenValidator } from './workspace/git-token-validator';
 import { newAnalyticsWriterFromEnv, IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/util/analytics';
 import { OAuthController } from './oauth-server/oauth-controller';
 import { ImageBuildPrefixContextParser } from './workspace/imagebuild-prefix-context-parser';
+import { AdditionalContentPrefixContextParser } from './workspace/additional-content-prefix-context-parser';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Env).toSelf().inSingletonScope();
@@ -134,6 +135,7 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(IContextParser).to(SnapshotContextParser).inSingletonScope();
     bind(IPrefixContextParser).to(EnvvarPrefixParser).inSingletonScope();
     bind(IPrefixContextParser).to(ImageBuildPrefixContextParser).inSingletonScope();
+    bind(IPrefixContextParser).to(AdditionalContentPrefixContextParser).inSingletonScope();
 
     bind(GitTokenScopeGuesser).toSelf().inSingletonScope();
     bind(GitTokenValidator).toSelf().inSingletonScope();
@@ -188,6 +190,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(CodeSyncService).toSelf().inSingletonScope();
 
     bind(IAnalyticsWriter).toDynamicValue(newAnalyticsWriterFromEnv).inSingletonScope();
-    
+
     bind(OAuthController).toSelf().inSingletonScope();
 });
