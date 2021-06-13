@@ -5,6 +5,9 @@ import { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespac
 import { issueCertficate, installCertficate } from './util/certs';
 import { reportBuildFailureInSlack } from './util/slack';
 import * as semver from 'semver';
+import * as util from 'util';
+
+const readDir = util.promisify(fs.readdir)
 
 const GCLOUD_SERVICE_ACCOUNT_PATH = "/mnt/secrets/gcp-sa/service-account.json";
 
@@ -163,7 +166,18 @@ export async function build(context, version) {
     werft.phase('coverage', 'uploading code coverage to codecov');
     const parent_commit = exec(`git rev-parse HEAD^`, { silent: true }).stdout.trim();;
     try {
-        exec(`codecov -N "${parent_commit}" --dir "${coverageOutput}"`);
+        // if we don't remove the go directory codecov will scan it recursively
+        exec(`sudo rm -rf go`);
+        const coverageFiles = await readDir(coverageOutput);
+        for (let index = 0; index < coverageFiles.length; index++) {
+            const file = coverageFiles[index];
+            if (file.indexOf("-coverage.out") == -1) {
+                continue
+            }
+            let flag = file.substring(0, file.length - "-coverage.out".length);
+            exec(`codecov -N "${parent_commit}" --flags=${flag} --file "${coverageOutput}/${file}"`);
+        }
+
         werft.done('coverage');
     } catch (err) {
         werft.fail('coverage', err);
