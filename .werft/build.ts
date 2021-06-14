@@ -1,7 +1,7 @@
 import * as shell from 'shelljs';
 import * as fs from 'fs';
 import { werft, exec, gitTag } from './util/shell';
-import { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts } from './util/kubectl';
+import { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace } from './util/kubectl';
 import { issueCertficate, installCertficate } from './util/certs';
 import { reportBuildFailureInSlack } from './util/slack';
 import * as semver from 'semver';
@@ -70,6 +70,7 @@ export async function build(context, version) {
     const analytics = buildConfig["analytics"];
     const localAppVersion = mainBuild || ("with-localapp-version" in buildConfig) ? version : "unknown";
     const retag = mainBuild || ("with-retag" in buildConfig) ? "" : "--dont-retag";
+    const cleanSlateDeployment = mainBuild || ("with-clean-slate-deployment" in buildConfig);
 
     const withWsCluster = parseWsCluster(buildConfig["with-ws-cluster"]);   // e.g., "dev2|gpl-ws-cluster-branch": prepares this branch to host (an additional) workspace cluster
     const wsCluster = parseWsCluster(buildConfig["as-ws-cluster"]);         // e.g., "dev2|gpl-fat-cluster-branch": deploys this build as so that it is available under that subdomain as that cluster
@@ -91,7 +92,8 @@ export async function build(context, version) {
         publishToNpm,
         analytics,
         localAppVersion,
-        retag
+        retag,
+        cleanSlateDeployment,
     }));
 
     /**
@@ -191,7 +193,8 @@ export async function build(context, version) {
         url,
         wsCluster,
         withWsCluster,
-        analytics
+        analytics,
+        cleanSlateDeployment,
     };
     await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
 
@@ -210,6 +213,7 @@ interface DeploymentConfig {
     wsCluster?: PreviewWorkspaceClusterRef | undefined;
     withWsCluster?: PreviewWorkspaceClusterRef | undefined;
     analytics?: string;
+    cleanSlateDeployment: boolean;
 }
 
 /**
@@ -244,10 +248,21 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         await installCertficate(werft, fromNamespace, namespace, "proxy-config-certificates");
     })();
 
-
-    // re-create namespace
     try {
-        await wipeAndRecreateNamespace(helmInstallName, namespace, { slice: 'prep' });
+        if (deploymentConfig.cleanSlateDeployment) {
+            // re-create namespace
+            await wipeAndRecreateNamespace(helmInstallName, namespace, { slice: 'prep' });
+            // cleanup non-namespace objects
+            werft.log("predeploy cleanup", "removing old unnamespaced objects - this might take a while");
+            try {
+                deleteNonNamespaceObjects(namespace, destname, { slice: 'predeploy cleanup' })
+                werft.done('predeploy cleanup');
+            } catch (err) {
+                werft.fail('predeploy cleanup', err);
+            }
+        } else {
+            createNamespace(namespace, { slice: 'prep' });
+        }
         setKubectlContextNamespace(namespace, { slice: 'prep' });
         namespaceRecreatedResolve();    // <-- signal for certificate
         werft.done('prep');
@@ -286,15 +301,6 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         werft.fail('authProviders', err);
     }
     // core-dev specific section end
-
-    // cleanup non-namespace objects
-    werft.log("predeploy cleanup", "removing old unnamespaced objects - this might take a while");
-    try {
-        deleteNonNamespaceObjects(namespace, destname, { slice: 'predeploy cleanup' })
-        werft.done('predeploy cleanup');
-    } catch (err) {
-        werft.fail('predeploy cleanup', err);
-    }
 
     // deployment config
     let flags = "";
