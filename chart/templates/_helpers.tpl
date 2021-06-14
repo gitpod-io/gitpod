@@ -131,7 +131,7 @@ affinity:
 {{- define "gitpod.msgbusWaiter.container" -}}
 {{- $ := .root -}}
 {{- $gp := .gp -}}
-{{- $this := dict "root" $ "gp" $gp "comp" $gp.serviceWaiter -}}
+{{- $this := dict "root" $ "gp" $gp "comp" $gp.components.serviceWaiter -}}
 - name: msgbus-waiter
   image: {{ template "gitpod.comp.imageFull" $this }}
   args:
@@ -147,7 +147,7 @@ affinity:
 {{- define "gitpod.databaseWaiter.container" -}}
 {{- $ := .root -}}
 {{- $gp := .gp -}}
-{{- $this := dict "root" $ "gp" $gp "comp" $gp.serviceWaiter -}}
+{{- $this := dict "root" $ "gp" $gp "comp" $gp.components.serviceWaiter -}}
 - name: database-waiter
   image: {{ template "gitpod.comp.imageFull" $this }}
   args:
