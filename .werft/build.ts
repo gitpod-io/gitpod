@@ -106,7 +106,8 @@ export async function build(context, version) {
 
     exec(`LICENCE_HEADER_CHECK_ONLY=true leeway run components:update-license-header || { echo "[build|FAIL] There are some license headers missing. Please run 'leeway run components:update-license-header'."; exit 1; }`)
     exec(`leeway vet --ignore-warnings`);
-    exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test' : ''} --dont-retag --coverage-output-path=${coverageOutput} -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`);
+    exec(`leeway build --werft=true -c ${cacheLevel} ${dontTest ? '--dont-test' : ''} --dont-retag --coverage-output-path=${coverageOutput} --save /tmp/dev.tar.gz -Dversion=${version} -DimageRepoBase=eu.gcr.io/gitpod-core-dev/dev dev:all`);
+    const sweeperImage = exec(`tar xfO /tmp/dev.tar.gz ./sweeper.txt`).stdout.trim();
     if (publishRelease) {
         exec(`gcloud auth activate-service-account --key-file "/mnt/secrets/gcp-sa-release/service-account.json"`);
     }
@@ -195,6 +196,7 @@ export async function build(context, version) {
         withWsCluster,
         analytics,
         cleanSlateDeployment,
+        sweeperImage
     };
     await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
 
@@ -214,6 +216,7 @@ interface DeploymentConfig {
     withWsCluster?: PreviewWorkspaceClusterRef | undefined;
     analytics?: string;
     cleanSlateDeployment: boolean;
+    sweeperImage: string;
 }
 
 /**
@@ -367,7 +370,9 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
         if (!wsCluster) {
             werft.log('helm', 'installing Sweeper');
-            exec(`/usr/local/bin/helm3 upgrade --install --set image.version=${version} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" sweeper ../dev/charts/sweeper`);
+            const sweeperVersion = deploymentConfig.sweeperImage.split(":")[1];
+            werft.log('helm', `Sweeper version: ${sweeperVersion}`);
+            exec(`/usr/local/bin/helm3 upgrade --install --set image.version=${sweeperVersion} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" sweeper ../dev/charts/sweeper`);
         }
 
         werft.log('helm', 'done');

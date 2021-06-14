@@ -27,7 +27,7 @@ packages:
     config:
       dockerfile: leeway.Dockerfile
       metadata:
-        helm-component: wsDaemon.seccompProfileInstaller
+        helm-component: wsDaemon.userNamespaces.seccompProfileInstaller
       image:
         - ${imageRepoBase}/seccomp-profile-installer:${version}
         - ${imageRepoBase}/seccomp-profile-installer:${__pkg_version}
