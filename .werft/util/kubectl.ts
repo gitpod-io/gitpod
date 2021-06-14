@@ -86,7 +86,13 @@ async function deleteAllUnnamespacedObjects(namespace: string, shellOpts: ExecOp
     await Promise.all(promisedDeletes);
 }
 
-function createNamespace(namespace: string, shellOpts: ExecOptions) {
+export function createNamespace(namespace: string, shellOpts: ExecOptions) {
+    const result = (exec(`kubectl get namespace ${namespace}`, { ...shellOpts, dontCheckRc: true }) as ShellString);
+    const exists = result.code === 0;
+    if (exists) {
+        return;
+    }
+
     // (re-)create namespace
     [
         `kubectl create namespace ${namespace}`,
