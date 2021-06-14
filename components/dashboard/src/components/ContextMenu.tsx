@@ -4,6 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -39,8 +40,17 @@ function ContextMenu(props: ContextMenuProps) {
         }
     }
 
+    const skipClickHandlerRef = React.useRef(false);
+    const setSkipClickHandler = (data: boolean) => {
+        skipClickHandlerRef.current = data;
+    }
     const clickHandler = (evt: MouseEvent) => {
-        setExpanded(false);
+        if (skipClickHandlerRef.current) {
+            // skip only once
+            setSkipClickHandler(false);
+        } else {
+            setExpanded(false);
+        }
     }
 
     useEffect(() => {
@@ -65,7 +75,8 @@ function ContextMenu(props: ContextMenuProps) {
         <div className="relative cursor-pointer">
             <div onClick={(e) => {
                 toggleExpanded();
-                e.stopPropagation();
+                // Don't use `e.stopPropagation();` because that prevents that clicks on other context menus closes this one.
+                setSkipClickHandler(true);
             }}>
                 {children}
             </div>
