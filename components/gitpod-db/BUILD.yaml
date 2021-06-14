@@ -81,6 +81,8 @@ packages:
       - imageRepoBase
     config:
       dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: dbMigrations
       image:
         - ${imageRepoBase}/db-migrations:${version}
         - ${imageRepoBase}/db-migrations:${__pkg_version}
