@@ -63,6 +63,7 @@ export async function build(context, version) {
     const repo = `${context.Repository.host}/${context.Repository.owner}/${context.Repository.repo}`;
     const mainBuild = repo === "github.com/gitpod-io/gitpod" && context.Repository.ref.includes("refs/heads/main");
     const dontTest = "no-test" in buildConfig;
+    const noIntegrationTests = "no-integration-tests" in buildConfig;
     const cacheLevel = "no-cache" in buildConfig ? "remote-push" : "remote";
     const publishRelease = "publish-release" in buildConfig;
     const workspaceFeatureFlags = (buildConfig["ws-feature-flags"] || "").split(",").map(e => e.trim())
@@ -70,7 +71,6 @@ export async function build(context, version) {
     const withInstaller = "with-installer" in buildConfig || mainBuild;
     const noPreview = "no-preview" in buildConfig || publishRelease;
     const storage = buildConfig["storage"] || "";
-    const withIntegrationTests = "with-integration-tests" in buildConfig;
     const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
     const analytics = buildConfig["analytics"];
     const localAppVersion = mainBuild || ("with-localapp-version" in buildConfig) ? version : "unknown";
@@ -89,7 +89,7 @@ export async function build(context, version) {
         dynamicCPULimits,
         noPreview,
         storage: storage,
-        withIntegrationTests,
+        noIntegrationTests,
         withWsCluster,
         wsCluster,
         publishToNpm,
@@ -197,7 +197,9 @@ export async function build(context, version) {
         analytics
     };
     await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
-    await triggerIntegrationTests(deploymentConfig, !withIntegrationTests)
+
+    const skipIntegrationTests = dontTest || noIntegrationTests
+    await triggerIntegrationTests(deploymentConfig, skipIntegrationTests)
 }
 
 interface DeploymentConfig {
