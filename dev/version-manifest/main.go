@@ -58,26 +58,61 @@ func produceManifest(out io.Writer, dir fs.FS) error {
 		versions[mdobj.HelmComponent] = version
 	}
 
-	keys := make([]string, 0, len(versions))
-	for v := range versions {
-		keys = append(keys, v)
-	}
-	sort.Strings(keys)
-
-	fmt.Fprintln(out, "components:")
-	for _, v := range keys {
-		img := versions[v]
-		segs := strings.Split(v, ".")
-		for i, s := range segs {
-			fmt.Fprintf(out, "%s%s:", strings.Repeat("  ", i+1), s)
+	// We need to deduplicate keys in the resulting yaml file. To this end, we first build up
+	// a map of maps and later print that map YAML style.
+	res := make(map[string]interface{})
+	comps := make(map[string]interface{})
+	res["components"] = comps
+	for k, v := range versions {
+		var (
+			m    = comps
+			segs = strings.Split(k+".version", ".")
+		)
+		for i, seg := range segs {
 			if i == len(segs)-1 {
-				fmt.Fprintf(out, "\n%sversion: %s\n", strings.Repeat("  ", i+2), img)
-			} else {
-				fmt.Fprintln(out)
+				m[seg] = v
+				continue
 			}
+
+			if _, ok := m[seg]; !ok {
+				m[seg] = make(map[string]interface{})
+			}
+			m = m[seg].(map[string]interface{})
 		}
-		fmt.Fprintln(out)
 	}
 
-	return nil
+	// It's not clear how to maintain a stable order of keys using the YAML serializer.
+	// If it were, we could just through this map at the YAML serializer and call it a day.
+	// Right now, we have to produce the YAML ourselves.
+	var print func(m map[string]interface{}, indent int) error
+	print = func(m map[string]interface{}, indent int) error {
+		keys := make([]string, 0, len(m))
+		for v := range m {
+			keys = append(keys, v)
+		}
+		sort.Strings(keys)
+
+		for _, k := range keys {
+			v := m[k]
+			fmt.Fprintf(out, "%s%s:", strings.Repeat("  ", indent), k)
+			if c, ok := v.(map[string]interface{}); ok {
+				fmt.Fprintln(out)
+				err := print(c, indent+1)
+				if err != nil {
+					return err
+				}
+				continue
+			}
+			if c, ok := v.(string); ok {
+				fmt.Fprintf(out, " %s\n", c)
+				fmt.Fprintln(out)
+				continue
+			}
+
+			return fmt.Errorf("unknown value type - this should never happen")
+		}
+		return nil
+	}
+
+	return print(res, 0)
 }
