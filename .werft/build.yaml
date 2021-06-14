@@ -10,6 +10,9 @@ pod:
   - name: gcp-sa-release
     secret:
       secretName: gcp-sa-gitpod-release-deployer
+  - name: gcp-sa-preview-manager
+    secret:
+      secretName: gcp-sa-gitpod-preview-manager
   # - name: deploy-key
   #   secret:
   #     secretName: deploy-key
@@ -39,6 +42,9 @@ pod:
       readOnly: true
     - name: gcp-sa-release
       mountPath: /mnt/secrets/gcp-sa-release
+      readOnly: true
+    - name: gcp-sa-preview-manager
+      mountPath: /mnt/secrets/gcp-sa-preview-manager
       readOnly: true
     # - name: deploy-key
     #   mountPath: /mnt/secrets/deploy-key

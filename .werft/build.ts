@@ -1,9 +1,11 @@
 import * as shell from 'shelljs';
 import * as fs from 'fs';
+import * as gcpConstants from './constants/gcp';
 import { werft, exec, gitTag } from './util/shell';
 import { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts } from './util/kubectl';
 import { issueCertficate, installCertficate } from './util/certs';
 import { reportBuildFailureInSlack } from './util/slack';
+import { getXDigitsHashCode } from './util/hash'
 import * as semver from 'semver';
 
 const GCLOUD_SERVICE_ACCOUNT_PATH = "/mnt/secrets/gcp-sa/service-account.json";
@@ -40,6 +42,19 @@ export function parseVersion(context) {
 }
 
 export async function build(context, version) {
+    let shouldCreateTFPreviewEnv = isTerraformPreviewEnvironment(context)
+    if (shouldCreateTFPreviewEnv) {
+        try {
+            werft.phase("infraSetup")
+            const projectName = createGCProjectName();
+            // even if the project exists, trying to recreate would not cause any problems as we will reuse the statefile from the bucket
+            createGCPProject(projectName)
+            installGitpod()
+        } catch (err) {
+            werft.fail('prep', err);
+        }
+        return
+    }
     /**
      * Prepare
      */
@@ -198,6 +213,51 @@ export async function build(context, version) {
     };
     await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
     await triggerIntegrationTests(deploymentConfig, !withIntegrationTests)
+}
+
+function createGCPProject(name: string): object {
+    werft.phase("setup", "create GCP project");
+    let pathToTerraform = gcpConstants.terraformModulePath;
+    let pathToGcpSA = gcpConstants.pathToGcpSA;
+    let override = createTerraformBlockOverride(name)
+
+    let oldCwd = shell.pwd();
+
+    shell.cd(pathToTerraform);
+    let out = executeTerraform();
+    shell.cd(oldCwd);
+
+    return JSON.parse(out);
+
+    // inner helper functions
+    function executeTerraform() {
+        // setup path and gcloud config
+        setupGCloudBin();
+
+        // create an override file for terraform
+        createOverrideTFFile();
+
+        runTerraformInitAndApply();
+
+        let out = shell.exec(`terraform output --json`, { silent: true }).stdout;
+        werft.logOutput("terraform apply", out);
+        return out;
+    }
+
+    function runTerraformInitAndApply() {
+        exec("terraform init", { slice: 'setup' });
+        exec(`terraform apply -auto-approve -var 'name=${name}'`, { slice: 'terraform apply' });
+    }
+
+    function createOverrideTFFile() {
+        werft.logOutput("override.tf", override);
+        fs.writeFileSync("override.tf", override);
+    }
+
+    function setupGCloudBin() {
+        shell.env["GOOGLE_APPLICATION_CREDENTIALS"] = pathToGcpSA;
+        exec(`gcloud auth activate-service-account --key-file "${pathToGcpSA}"`, { slice: 'setup' });
+    }
 }
 
 interface DeploymentConfig {
@@ -455,4 +515,31 @@ async function publishHelmChart(imageRepoBase, version) {
     ].forEach(cmd => {
         exec(cmd, { slice: 'publish-charts' });
     });
+}
+
+function createGCProjectName(): string {
+    let destName = version.split(".")[0]
+    let projectName = getXDigitsHashCode(destName, 10)
+
+    // we will always append 'gptf-' as a prefix
+    // This tells us that this is a gitpod preview env using terraform and the project name will always start with a alphabet
+    return "gptf-" + projectName
+}
+
+function isTerraformPreviewEnvironment(context: any): boolean {
+    let buildConfig = context.Annotations || {};
+    return buildConfig["deploytarget"] === "gke"
+}
+
+function createTerraformBlockOverride(name: string): string {
+    return `terraform {
+        backend "gcs" {
+          bucket  = "${gcpConstants.previewTerraformEnvStateBucketName}"
+          prefix  = "${name}"
+        }
+      }`
+}
+
+// TODO: Implement this once we have a TF module for gcp self hosted
+function installGitpod() {
 }
