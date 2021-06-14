@@ -800,6 +800,16 @@ export namespace WithPrebuild {
     }
 }
 
+export interface WithTimeout {
+    timeout: string;
+}
+export namespace WithTimeout {
+    export function is(context: any): context is WithTimeout {
+        return context
+            && 'timeout' in context;
+    }
+}
+
 export interface SnapshotContext extends WorkspaceContext, WithSnapshot {
     snapshotId: string;
 }
