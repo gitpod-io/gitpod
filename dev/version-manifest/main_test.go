@@ -26,10 +26,12 @@ func TestProduceManifest(t *testing.T) {
 		{
 			Name: "happy path",
 			FS: fstest.MapFS{
-				"c1/metadata.yaml": &fstest.MapFile{Data: []byte("helm-component: c1")},
-				"c1/imgnames.txt":  &fstest.MapFile{Data: []byte("failthis\nimgc1:v1")},
-				"c2/metadata.yaml": &fstest.MapFile{Data: []byte("helm-component: c2.nested")},
-				"c2/imgnames.txt":  &fstest.MapFile{Data: []byte("failthis\nimgc2:v2\n\n")},
+				"c1/metadata.yaml":  &fstest.MapFile{Data: []byte("helm-component: c1")},
+				"c1/imgnames.txt":   &fstest.MapFile{Data: []byte("failthis\nimgc1:v1")},
+				"c2/metadata.yaml":  &fstest.MapFile{Data: []byte("helm-component: c2.nested")},
+				"c2/imgnames.txt":   &fstest.MapFile{Data: []byte("failthis\nimgc2:v2\n\n")},
+				"c20/metadata.yaml": &fstest.MapFile{Data: []byte("helm-component: c2.other")},
+				"c20/imgnames.txt":  &fstest.MapFile{Data: []byte("failthis\nimgc2:v2\n\n")},
 			},
 			Expectation: Expectation{
 				MF: `components:
@@ -38,6 +40,9 @@ func TestProduceManifest(t *testing.T) {
 
   c2:
     nested:
+      version: v2
+
+    other:
       version: v2
 
 `,
