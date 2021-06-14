@@ -5,6 +5,7 @@ go 1.16
 require (
 	cloud.google.com/go/storage v1.14.0
 	github.com/Microsoft/hcsshim v0.8.15 // indirect
+	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/containerd/continuity v0.0.0-20210315143101-93e15499afd5 // indirect
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000

@@ -10,7 +10,9 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 
+	"github.com/cenkalti/backoff"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
 
@@ -66,14 +68,36 @@ func (ws *GitInitializer) Run(ctx context.Context, mappings []archive.IDMapping)
 		return
 	}
 
-	if err := os.MkdirAll(ws.Location, 0770); err != nil {
+	gitClone := func() error {
+		if err := os.MkdirAll(ws.Location, 0770); err != nil {
+			return err
+		}
+
+		log.WithField("stage", "init").WithField("location", ws.Location).Debug("Running git clone on workspace")
+		return ws.Clone(ctx)
+	}
+	onGitCloneFailure := func(e error, d time.Duration) {
+		if err := os.RemoveAll(ws.Location); err != nil {
+			log.
+				WithField("stage", "init").
+				WithField("location", ws.Location).
+				WithError(err).
+				Error("Cleaning workspace location failed.")
+		}
+		log.
+			WithField("stage", "init").
+			WithField("location", ws.Location).
+			WithField("sleepTime", d).
+			WithError(e).
+			Debugf("Running git clone on workspace failed. Retrying in %s ...", d)
+	}
+
+	b := backoff.NewExponentialBackOff()
+	b.MaxElapsedTime = 5 * time.Minute
+	if err = backoff.RetryNotify(gitClone, b, onGitCloneFailure); err != nil {
 		return src, xerrors.Errorf("git initializer: %w", err)
 	}
 
-	log.WithField("stage", "init").WithField("location", ws.Location).Debug("Running git clone on workspace")
-	if err := ws.Clone(ctx); err != nil {
-		return src, xerrors.Errorf("git initializer: %w", err)
-	}
 	if ws.Chown {
 		// TODO (aledbf): refactor to remove the need of manual chown
 		args := []string{"-R", "-L", "gitpod", ws.Location}
