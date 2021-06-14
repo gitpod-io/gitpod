@@ -67,9 +67,6 @@ dbEncryptionKeys:
   secretName: null
   file: secrets/encryption-key.json
 
-serviceWaiter:
-  imageName: "service-waiter"
-
 tracing: {}
 authProviders: []
 # Example authProvider configurations below:
@@ -302,6 +299,9 @@ components:
     garbageCollection:
       disabled: "false"
     definitelyGpDisabled: "false"
+
+  serviceWaiter:
+    imageName: "service-waiter"
 
   paymentEndpoint:
     disabled: true
