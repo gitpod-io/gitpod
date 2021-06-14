@@ -20,6 +20,11 @@ build(context, version)
         }
     });
 
+// Werft phases
+const phases = {
+    TRIGGER_INTEGRATION_TESTS: 'trigger integration tests'
+}
+
 export function parseVersion(context) {
     let buildConfig = context.Annotations || {};
     const explicitVersion = buildConfig.version;
@@ -192,11 +197,7 @@ export async function build(context, version) {
         analytics
     };
     await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
-
-    if (withIntegrationTests) {
-        exec(`git config --global user.name "${context.Owner}"`);
-        exec(`werft run --follow-with-prefix="int-tests: " --remote-job-path .werft/run-integration-tests.yaml -a version=${deploymentConfig.version} -a namespace=${deploymentConfig.namespace} github`);
-    }
+    await triggerIntegrationTests(deploymentConfig, !withIntegrationTests)
 }
 
 interface DeploymentConfig {
@@ -382,6 +383,33 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
             werft.fail('certificate', err);
         }
     }
+}
+
+/**
+ * Trigger integration tests
+ */
+export async function triggerIntegrationTests(deploymentConfig: DeploymentConfig, skip: boolean) {
+    werft.phase(phases.TRIGGER_INTEGRATION_TESTS, "Trigger integration tests");
+
+    if (skip) {
+        // If we're skipping integration tests we wont trigger the job, which in turn won't create the
+        // ci/werft/run-integration-tests Github Check. As ci/werft/run-integration-tests is a required
+        // check this means you can't merge your PR without override checks.
+        werft.log(phases.TRIGGER_INTEGRATION_TESTS, "Skipped integration tests")
+        werft.done(phases.TRIGGER_INTEGRATION_TESTS);
+        return
+    }
+
+    exec(`git config --global user.name "${context.Owner}"`);
+    const annotations = [
+        `version=${deploymentConfig.version}`,
+        `namespace=${deploymentConfig.namespace}`,
+        `username=${context.Owner}`,
+        `updateGitHubStatus=gitpod-io/gitpod`
+    ].map(annotation => `-a ${annotation}`).join(' ')
+    const jobId = exec(`werft run --remote-job-path .werft/run-integration-tests.yaml ${annotations} github`, {slice: phases.TRIGGER_INTEGRATION_TESTS}).trim();
+    werft.log(phases.TRIGGER_INTEGRATION_TESTS, `Triggered job ${jobId} - https://werft.gitpod-dev.com/job/${jobId}/logs`)
+    werft.done(phases.TRIGGER_INTEGRATION_TESTS);
 }
 
 interface PreviewWorkspaceClusterRef {
