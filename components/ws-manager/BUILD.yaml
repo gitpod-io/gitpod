@@ -22,7 +22,7 @@ packages:
     type: docker
     deps:
       - :app
-      - :integration-test
+      # - :integration-test
     argdeps:
       - imageRepoBase
     config:
