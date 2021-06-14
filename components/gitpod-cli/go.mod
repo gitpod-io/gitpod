@@ -6,7 +6,8 @@ require (
 	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d // indirect
 	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
-	github.com/golang/mock v1.4.4
+	github.com/golang/mock v1.5.0
+	github.com/google/go-cmp v0.5.5
 	github.com/google/shlex v0.0.0-20181106134648-c34317bd91bf
 	github.com/google/tcpproxy v0.0.0-20180808230851-dfa16c61dad2
 	github.com/gorilla/handlers v1.4.2

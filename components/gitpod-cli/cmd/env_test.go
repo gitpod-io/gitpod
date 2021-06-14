@@ -5,8 +5,9 @@
 package cmd
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/google/go-cmp/cmp"
 
 	serverapi "github.com/gitpod-io/gitpod/gitpod-protocol"
 )
@@ -50,8 +51,8 @@ func TestParseArgs(t *testing.T) {
 				return
 			}
 
-			if !reflect.DeepEqual(kv, test.Expectation) {
-				t.Errorf("unexpected result: %v, expected %v", kv, test.Expectation)
+			if diff := cmp.Diff(test.Expectation, kv); diff != "" {
+				t.Errorf("parseArgs() mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
