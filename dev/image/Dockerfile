@@ -5,11 +5,12 @@
 FROM gitpod/workspace-full-vnc:latest
 
 ENV TRIGGER_REBUILD 12
+ENV WORKSPACE_KERNEL 5.4.0-1033-gke
 
 USER root
 
 ### QEMU (x86) and workspace kernel development tools
-RUN install-packages qemu qemu-system-x86 linux-image-$(uname -r) libguestfs-tools sshpass
+RUN install-packages qemu qemu-system-x86 linux-image-$WORKSPACE_KERNEL libguestfs-tools sshpass
 
 ### Clang and LLVM
 RUN install-packages clang-7 llvm-7

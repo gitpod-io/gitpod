@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
-vmlinuz="vmlinuz-5.4.0-1033-gke"
+vmlinuz="vmlinuz-${WORKSPACE_KERNEL}"
 
 script_dirname="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 outdir="${script_dirname}/_output"
 
-sudo qemu-system-x86_64 -kernel "${outdir}/boot/${vmlinuz}" \
+sudo qemu-system-x86_64 -kernel "/boot/${vmlinuz}" \
 -boot c -m 2049M -hda "${outdir}/bionic-server-cloudimg-amd64.img" \
 -net user \
 -smp 2 \
