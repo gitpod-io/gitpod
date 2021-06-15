@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { TeamMemberInfo } from "@gitpod/gitpod-protocol";
+import { TeamMemberInfo, TeamMembershipInvite } from "@gitpod/gitpod-protocol";
 import moment from "moment";
 import { useContext, useEffect, useState } from "react";
 import { useLocation } from "react-router";
@@ -22,6 +22,7 @@ export default function() {
     const location = useLocation();
     const team = getCurrentTeam(location, teams);
     const [ members, setMembers ] = useState<TeamMemberInfo[]>([]);
+    const [ genericInvite, setGenericInvite ] = useState<TeamMembershipInvite>();
     const [ showInviteModal, setShowInviteModal ] = useState<boolean>(false);
 
     useEffect(() => {
@@ -29,15 +30,19 @@ export default function() {
             return;
         }
         (async () => {
-            const infos = await getGitpodService().server.getTeamMembers(team.id);
+            const [infos, invite] = await Promise.all([
+                getGitpodService().server.getTeamMembers(team.id),
+                getGitpodService().server.getGenericInvite(team.id)]);
+
             setMembers(infos);
+            setGenericInvite(invite);
         })();
     }, [ team ]);
 
-    const getInviteURL = () => {
+    const getInviteURL = (inviteId: string) => {
         const link = new URL(window.location.href);
         link.pathname = '/join-team';
-        link.search = '?teamId=' + team?.id;
+        link.search = '?inviteId=' + inviteId;
         return link.href;
     }
 
@@ -55,6 +60,15 @@ export default function() {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
     };
+
+    const resetInviteLink = async () => {
+        // reset genericInvite first to prevent races on double click
+        if (genericInvite) {
+            setGenericInvite(undefined);
+            const newInvite = await getGitpodService().server.resetGenericInvite(team!.id);
+            setGenericInvite(newInvite);
+        }
+    }
 
     return <>
         <Header title="Members" subtitle="Manage team members." />
@@ -118,20 +132,21 @@ export default function() {
                 </Item>)}
             </ItemsList>
         </div>
-        {showInviteModal && <Modal visible={true} onClose={() => setShowInviteModal(false)}>
+        {genericInvite && showInviteModal && <Modal visible={true} onClose={() => setShowInviteModal(false)}>
             <h3 className="mb-4">Invite Members</h3>
             <div className="border-t border-b border-gray-200 dark:border-gray-800 -mx-6 px-6 py-4 flex flex-col">
                 <label htmlFor="inviteUrl" className="font-medium">Invite URL</label>
                 <div className="w-full relative">
-                    <input name="inviteUrl" disabled={true} readOnly={true} type="text" value={getInviteURL()} className="rounded-md w-full truncate pr-8" />
-                    <div className="cursor-pointer" onClick={() => copyToClipboard(getInviteURL())}>
+                    <input name="inviteUrl" disabled={true} readOnly={true} type="text" value={getInviteURL(genericInvite.id)} className="rounded-md w-full truncate pr-8" />
+                    <div className="cursor-pointer" onClick={() => copyToClipboard(getInviteURL(genericInvite.id))}>
                         <img src={copy} title="Copy Invite URL" className="absolute top-1/3 right-3" />
                     </div>
                 </div>
                 <p className="mt-1 text-gray-500 text-sm">{copied ? 'Copied to clipboard!' : 'Use this URL to join this team as a Member.'}</p>
             </div>
-            <div className="flex justify-end mt-6">
-                <button className="secondary" onClick={() => setShowInviteModal(false)}>Done</button>
+            <div className="flex justify-end mt-6 space-x-2">
+                <button className="secondary" onClick={() => resetInviteLink()}>Reset Invite Link</button>
+                <button className="secondary" onClick={() => setShowInviteModal(false)}>Close</button>
             </div>
         </Modal>}
     </>;

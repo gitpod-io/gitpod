@@ -14,20 +14,16 @@ export default function() {
     const history = useHistory();
 
     const [ joinError, setJoinError ] = useState<Error>();
-    const teamId = new URL(window.location.href).searchParams.get('teamId');
+    const inviteId = new URL(window.location.href).searchParams.get('inviteId');
 
     useEffect(() => {
         (async () => {
             try {
-                if (!teamId) {
-                    throw new Error('This invite URL is incorrect: No team ID specified');
+                if (!inviteId) {
+                    throw new Error('This invite URL is incorrect.');
                 }
-                await getGitpodService().server.joinTeam(teamId);
+                const team = await getGitpodService().server.joinTeam(inviteId);
                 const teams = await getGitpodService().server.getTeams();
-                const team = teams.find(t => t.id === teamId);
-                if (!team) {
-                    throw new Error('Failed to join team. Please contact support.');
-                }
                 setTeams(teams);
                 history.push(`/${team.slug}/members`);
             } catch (error) {

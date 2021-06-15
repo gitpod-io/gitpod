@@ -1207,3 +1207,15 @@ export interface TeamMemberInfo {
     role: TeamMemberRole;
     memberSince: string;
 }
+
+export interface TeamMembershipInvite {
+    id: string;
+    teamId: string;
+    role: TeamMemberRole;
+    creationTime: string;
+    invalidationTime: string;
+    invitedEmail?: string;
+
+    /** This is a flag that triggers the HARD DELETION of this entity */
+    deleted?: boolean;
+}
