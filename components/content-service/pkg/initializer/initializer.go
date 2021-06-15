@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/opencontainers/go-digest"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
@@ -145,18 +146,24 @@ func NewFromRequest(ctx context.Context, loc string, rs storage.DirectDownloader
 }
 
 // newFileDownloadInitializer creates a download initializer for a request
-func newFileDownloadInitializer(loc string, req *csapi.FileDownloadInitializer) (*FileDownloadInitializer, error) {
-	fileInfos := make([]FileInfo, len(req.Files))
+func newFileDownloadInitializer(loc string, req *csapi.FileDownloadInitializer) (*fileDownloadInitializer, error) {
+	fileInfos := make([]fileInfo, len(req.Files))
 	for i, f := range req.Files {
-		fileInfos[i] = FileInfo{
-			url:      f.Url,
-			filePath: f.FilePath,
-			digest:   f.Digest,
+		dgst, err := digest.Parse(f.Digest)
+		if err != nil {
+			return nil, xerrors.Errorf("invalid digest %s: %w", f.Digest, err)
+		}
+		fileInfos[i] = fileInfo{
+			URL:    f.Url,
+			Path:   f.FilePath,
+			Digest: dgst,
 		}
 	}
-	initializer := &FileDownloadInitializer{
+	initializer := &fileDownloadInitializer{
 		FilesInfos:     fileInfos,
 		TargetLocation: filepath.Join(loc, req.TargetLocation),
+		HTTPClient:     http.DefaultClient,
+		RetryTimeout:   1 * time.Second,
 	}
 	return initializer, nil
 }
