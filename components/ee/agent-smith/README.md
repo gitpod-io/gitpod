@@ -40,7 +40,13 @@ leeway run components/ee/agent-smith:qemu
 
 Build agent-smith and copy it in the VM
 
-TODO: write this section
+```bash
+leeway run components/ee/agent-smith:copy-to-qemu
+```
+
+```bash
+TODO: command here to execute agent-smith in the vm
+```
 
 ## Falco libs BPF probe development
 

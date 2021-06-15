@@ -5,9 +5,7 @@
 package agent
 
 import (
-	"bytes"
 	"context"
-	"encoding/binary"
 	"fmt"
 	"net/url"
 	"os"
@@ -15,10 +13,10 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"unsafe"
 
 	"github.com/cilium/ebpf/perf"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/bpf"
+	"github.com/gitpod-io/gitpod/agent-smith/pkg/bpf/event"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/signature"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
@@ -442,90 +440,47 @@ func getPenalty(defaultRules, perRepoRules EnforcementRules, vs []Infringement) 
 	return ps
 }
 
-// Event is the Go representation of ppm_event_hdr
-type EventHeader struct {
-	Ts      uint64 /* timestamp, in nanoseconds from epoch */
-	Tid     uint64 /* the tid of the thread that generated this event */
-	Len     uint32 /* the event len, including the header */
-	Type    uint16 /* the event type */
-	NParams uint32 /* the number of parameters of the event */
-}
-
-func cStrLen(n []byte) int {
-	for i := 0; i < len(n); i++ {
-		if n[i] == 0 {
-			return i
-		}
-	}
-	return -1
-}
-
-type Execve struct {
-	Filename string
-	Argv     []string
-	TID      int
-	Envp     []string
-}
-
-// todo(fntlnz): move this to a package for parsers and write a test
-// todo(fntlnz): finish parsing arguments
-func parseExecveExit(evtHdr EventHeader, buffer []byte) Execve {
-	var i int16
-	dataOffsetPtr := unsafe.Sizeof(evtHdr) + unsafe.Sizeof(i)*uintptr(evtHdr.NParams) - 6 // todo(fntlnz): check why this -6 is necessary
-	scratchHeaderOffset := uint32(dataOffsetPtr)
-
-	retval := int64(buffer[scratchHeaderOffset])
-
-	// einfo := bpf.EventTable[bpf.PPME_SYSCALL_EXECVE_19_X]
-
-	scratchHeaderOffset += uint32(unsafe.Sizeof(retval))
-	command := buffer[scratchHeaderOffset:]
-	commandLen := cStrLen(command)
-	command = command[0:commandLen]
-
-	scratchHeaderOffset += uint32(commandLen) + 1
-	var argv []string
-	rawParams := buffer[scratchHeaderOffset:]
-	byteSlice := bytes.Split(rawParams, rawParams[len(rawParams)-1:])
-	for _, b := range byteSlice {
-		if len(b) == 0 || bytes.HasPrefix(b, []byte("\\x")) {
-			break
-		}
-		if len(b) > 0 {
-			argv = append(argv, string(b))
-		}
-	}
-
-	execve := Execve{
-		Filename: string(command[:]),
-		Argv:     argv,
-		TID:      int(evtHdr.Tid),
-	}
-
-	return execve
-}
-
 // Run continuously queries the perf event array to determine if there was an
 // infringement
 func (agent *Smith) processPerfRecord(rec perf.Record) {
 	if rec.LostSamples != 0 {
 		log.WithField("lost-samples", rec.LostSamples).Warn("event buffer is full, events dropped")
+		return
 	}
 
-	var evtHdr EventHeader
-	if err := binary.Read(bytes.NewBuffer(rec.RawSample), binary.LittleEndian, &evtHdr); err != nil {
-		log.WithError(err).Warn("cannot parse perf record")
+	e, err := event.NewFromPerfRecord(rec)
+	if err != nil {
+		log.WithError(err).Error("error creating event from perf record")
+		return
 	}
 
-	switch evtHdr.Type {
-	case uint16(bpf.PPME_SYSCALL_EXECVE_19_X):
-		execve := parseExecveExit(evtHdr, rec.RawSample)
-		agent.perfHandler <- agent.handleExecveEvent(execve)
+	res, err := e.Unmarshal()
+	if err != nil {
+		log.WithError(err).Error("error unmarshaling event")
+		return
 	}
+
+	handler, err := agent.handleEvent(res)
+	if err != nil {
+		log.WithError(err).Error("handler not found for event")
+		return
+	}
+	agent.perfHandler <- handler
+}
+
+func (agent *Smith) handleEvent(res interface{}) (func() (*InfringingWorkspace, error), error) {
+	switch v := res.(type) {
+	case event.Execve:
+		return agent.handleExecveEvent(v), nil
+	}
+
+	return func() (*InfringingWorkspace, error) {
+		return nil, nil
+	}, fmt.Errorf("unable to handle event of unknown type")
 }
 
 // handles an execve event checks if it's infringing
-func (agent *Smith) handleExecveEvent(execve Execve) func() (*InfringingWorkspace, error) {
+func (agent *Smith) handleExecveEvent(execve event.Execve) func() (*InfringingWorkspace, error) {
 	return func() (*InfringingWorkspace, error) {
 		if agent.Config.Blacklists == nil {
 			return nil, nil
