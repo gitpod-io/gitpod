@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Team, TeamMemberInfo, User } from "@gitpod/gitpod-protocol";
+import { Team, TeamMemberInfo, TeamMembershipInvite, User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { TypeORM } from "./typeorm";
 import { Repository } from "typeorm";
@@ -13,6 +13,7 @@ import { TeamDB } from "../team-db";
 import { DBTeam } from "./entity/db-team";
 import { DBTeamMembership } from "./entity/db-team-membership";
 import { DBUser } from "./entity/db-user";
+import { DBTeamMembershipInvite } from "./entity/db-team-membership-invite";
 
 @injectable()
 export class TeamDBImpl implements TeamDB {
@@ -30,6 +31,10 @@ export class TeamDBImpl implements TeamDB {
         return (await this.getEntityManager()).getRepository<DBTeamMembership>(DBTeamMembership);
     }
 
+    protected async getMembershipInviteRepo(): Promise<Repository<DBTeamMembershipInvite>> {
+        return (await this.getEntityManager()).getRepository<DBTeamMembershipInvite>(DBTeamMembershipInvite);
+    }
+
     protected async getUserRepo(): Promise<Repository<DBUser>> {
         return (await this.getEntityManager()).getRepository<DBUser>(DBUser);
     }
@@ -44,7 +49,7 @@ export class TeamDBImpl implements TeamDB {
         const userRepo = await this.getUserRepo();
         const memberships = await membershipRepo.find({ teamId });
         const users = await userRepo.findByIds(memberships.map(m => m.userId));
-        return users.map(u => ({
+        const infos = users.map(u => ({
             userId: u.id,
             fullName: u.fullName || u.name,
             primaryEmail: User.getPrimaryEmail(u),
@@ -52,6 +57,7 @@ export class TeamDBImpl implements TeamDB {
             role: memberships.find(m => m.userId === u.id)!.role,
             memberSince: u.creationDate,
         }));
+        return infos.sort((a,b) => a.memberSince < b.memberSince ? 1 : (a.memberSince === b.memberSince ? 0 : -1));
     }
 
     public async findTeamsByUser(userId: string): Promise<Team[]> {
@@ -113,5 +119,39 @@ export class TeamDBImpl implements TeamDB {
             role: 'member',
             creationTime: new Date().toISOString(),
         });
+    }
+
+    public async findTeamMembershipInviteById(inviteId: string): Promise<TeamMembershipInvite> {
+        const inviteRepo = await this.getMembershipInviteRepo();
+        const invite = await inviteRepo.findOneById(inviteId);
+        if (!invite) {
+            throw new Error('No invite found for the given ID.');
+        }
+        return invite;
+    }
+
+    public async findGenericInviteByTeamId(teamId: string): Promise<TeamMembershipInvite| undefined> {
+        const inviteRepo = await this.getMembershipInviteRepo();
+        const all = await inviteRepo.find({ teamId });
+        return all.filter(i => i.invalidationTime === '' && !i.invitedEmail)[0];
+    }
+
+    public async resetGenericInvite(teamId: string): Promise<TeamMembershipInvite> {
+        const inviteRepo = await this.getMembershipInviteRepo();
+        const invite = await this.findGenericInviteByTeamId(teamId);
+        if (invite && invite.invalidationTime === '') {
+            invite.invalidationTime = new Date().toISOString();
+            await inviteRepo.save(invite);
+        }
+
+        const newInvite :TeamMembershipInvite = {
+            id: uuidv4(),
+            creationTime: new Date().toISOString(),
+            invalidationTime: '',
+            role: 'member',
+            teamId
+        }
+        await inviteRepo.save(newInvite);
+        return newInvite;
     }
 }
