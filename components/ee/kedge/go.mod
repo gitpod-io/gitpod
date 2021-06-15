@@ -5,8 +5,7 @@ go 1.12
 require (
 	github.com/alecthomas/jsonschema v0.0.0-20190122210438-a6952de1bbe6
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
-	github.com/imdario/mergo v0.3.8 // indirect
-	github.com/spf13/cobra v0.0.3
+	github.com/spf13/cobra v1.1.3
 	k8s.io/api v0.21.0
 	k8s.io/apimachinery v0.21.0
 	k8s.io/client-go v0.0.0

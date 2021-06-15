@@ -6,7 +6,7 @@ require (
 	github.com/fatih/gomodifytags v1.13.0
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	github.com/golang/mock v1.5.0
-	google.golang.org/grpc v1.37.0
+	google.golang.org/grpc v1.38.0
 	google.golang.org/protobuf v1.26.0
 )
 

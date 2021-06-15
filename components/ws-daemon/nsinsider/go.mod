@@ -7,7 +7,7 @@ replace github.com/seccomp/libseccomp-golang => github.com/kinvolk/libseccomp-go
 require (
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/urfave/cli/v2 v2.3.0
-	golang.org/x/sys v0.0.0-20210225134936-a50acf3fe073
+	golang.org/x/sys v0.0.0-20210603081109-ebe580a85c40
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway
