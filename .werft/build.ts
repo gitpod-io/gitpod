@@ -43,9 +43,20 @@ export function parseVersion(context) {
 }
 
 export async function build(context, version) {
+    werft.phase('validate-changes', 'validating changes');
+
+    try {
+        exec(`pre-commit run --from-ref origin/HEAD --to-ref HEAD`);
+        exec(`werft log result -d "validate changes" -c github-check-test conclusion success`);
+        werft.done('validate-changes');
+    } catch (err) {
+        exec(`werft log result -d "validate changes" -c github-check-tests conclusion failure`);
+        werft.fail('validate-changes', err);
+    }
+
     /**
-     * Prepare
-     */
+    * Prepare
+    */
     werft.phase("prepare");
 
     const werftImg = shell.exec("cat .werft/build.yaml | grep dev-environment").trim().split(": ")[1];
