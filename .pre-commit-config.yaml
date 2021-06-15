@@ -1,0 +1,24 @@
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.0.0
+  hooks:
+    #- id: check-yaml
+    #  args: [--allow-multiple-documents]
+    # - id: end-of-file-fixer
+    - id: trailing-whitespace
+    - id: check-symlinks
+    - id: mixed-line-ending
+
+# keep fork in sync!
+- repo: https://github.com/gitpod-io/pre-commit-hooks
+  rev: "2.1.5"
+  hooks:
+    - id: forbid-binary
+      exclude: |
+        (?x)^(
+          .*example-layer.tar.gz|
+          .*\.(png|svg|ico|gpg)
+        )$
+    - id: script-must-have-extension
+    - id: shellcheck
+      args: [-e, "SC1090,SC1091"]

@@ -190,3 +190,7 @@ ENV PATH=$PATH:$HOME/.aws-iam:$HOME/.terraform
 # https://about.codecov.io/blog/introducing-codecovs-new-uploader
 RUN sudo curl -fsSL https://uploader.codecov.io/latest/codecov-linux -o /usr/local/bin/codecov \
     && sudo chmod +x /usr/local/bin/codecov
+
+# Install pre-commit https://pre-commit.com/#install
+RUN sudo install-packages shellcheck \
+    && sudo pip3 install pre-commit
