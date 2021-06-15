@@ -22,6 +22,7 @@ import (
 	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 )
 
 // NewMux creates a new terminal mux
@@ -214,12 +215,15 @@ func newTerm(alias string, pty *os.File, cmd *exec.Cmd, options TermOptions) (*T
 			logStdout: options.LogToStdout,
 			logLabel:  alias,
 		},
-		Annotations: options.Annotations,
-		title:       options.Title,
+		annotations:  options.Annotations,
+		defaultTitle: options.Title,
 
 		StarterToken: token.String(),
 
 		waitDone: make(chan struct{}),
+	}
+	if res.annotations == nil {
+		res.annotations = make(map[string]string)
 	}
 
 	rawConn, err := pty.SyscallConn()
@@ -262,7 +266,10 @@ type Term struct {
 	PTY          *os.File
 	Command      *exec.Cmd
 	StarterToken string
-	Annotations  map[string]string
+
+	mu           sync.RWMutex
+	annotations  map[string]string
+	defaultTitle string
 	title        string
 
 	Stdout *multiWriter
@@ -273,16 +280,49 @@ type Term struct {
 	fd int
 }
 
-func (term *Term) GetTitle() (string, error) {
-	var b bytes.Buffer
+func (term *Term) GetTitle() (string, api.TerminalTitleSource, error) {
+	term.mu.RLock()
 	title := term.title
-	b.WriteString(title)
+	term.mu.RUnlock()
+	if title != "" {
+		return title, api.TerminalTitleSource_api, nil
+	}
+	var b bytes.Buffer
+	defaultTitle := term.defaultTitle
+	b.WriteString(defaultTitle)
 	command, err := term.resolveForegroundCommand()
-	if title != "" && command != "" {
+	if defaultTitle != "" && command != "" {
 		b.WriteString(": ")
 	}
 	b.WriteString(command)
-	return b.String(), err
+	return b.String(), api.TerminalTitleSource_process, err
+}
+
+func (term *Term) SetTitle(title string) {
+	term.mu.Lock()
+	defer term.mu.Unlock()
+	term.title = title
+}
+
+func (term *Term) GetAnnotations() map[string]string {
+	term.mu.RLock()
+	defer term.mu.RUnlock()
+	annotations := make(map[string]string, len(term.annotations))
+	for k, v := range term.annotations {
+		annotations[k] = v
+	}
+	return annotations
+}
+
+func (term *Term) UpdateAnnotations(changed map[string]string, deleted []string) {
+	term.mu.Lock()
+	defer term.mu.Unlock()
+	for k, v := range changed {
+		term.annotations[k] = v
+	}
+	for _, k := range deleted {
+		delete(term.annotations, k)
+	}
 }
 
 func (term *Term) resolveForegroundCommand() (string, error) {

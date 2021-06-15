@@ -191,7 +191,7 @@ func (srv *MuxTerminalService) get(alias string) (*api.Terminal, bool) {
 		}
 	}
 
-	title, err := term.GetTitle()
+	title, titleSource, err := term.GetTitle()
 	if err != nil {
 		log.WithError(err).WithField("pid", pid).Warn("unable to resolve terminal's title")
 	}
@@ -202,8 +202,9 @@ func (srv *MuxTerminalService) get(alias string) (*api.Terminal, bool) {
 		Pid:            pid,
 		InitialWorkdir: term.Command.Dir,
 		CurrentWorkdir: cwd,
-		Annotations:    term.Annotations,
+		Annotations:    term.GetAnnotations(),
 		Title:          title,
+		TitleSource:    titleSource,
 	}, true
 }
 
@@ -247,8 +248,8 @@ func (srv *MuxTerminalService) Listen(req *api.ListenTerminalRequest, resp api.T
 		errchan <- io.EOF
 	}()
 	go func() {
-		title, _ := term.GetTitle()
-		messages <- &api.ListenTerminalResponse{Output: &api.ListenTerminalResponse_Title{Title: title}}
+		title, titleSource, _ := term.GetTitle()
+		messages <- &api.ListenTerminalResponse{Output: &api.ListenTerminalResponse_Title{Title: title}, TitleSource: titleSource}
 
 		t := time.NewTicker(200 * time.Millisecond)
 		defer t.Stop()
@@ -257,12 +258,13 @@ func (srv *MuxTerminalService) Listen(req *api.ListenTerminalRequest, resp api.T
 			case <-resp.Context().Done():
 				return
 			case <-t.C:
-				newTitle, _ := term.GetTitle()
-				if title == newTitle {
+				newTitle, newTitleSource, _ := term.GetTitle()
+				if title == newTitle && titleSource == newTitleSource {
 					continue
 				}
 				title = newTitle
-				messages <- &api.ListenTerminalResponse{Output: &api.ListenTerminalResponse_Title{Title: title}}
+				titleSource = newTitleSource
+				messages <- &api.ListenTerminalResponse{Output: &api.ListenTerminalResponse_Title{Title: title}, TitleSource: titleSource}
 			}
 		}
 	}()
@@ -327,4 +329,28 @@ func (srv *MuxTerminalService) SetSize(ctx context.Context, req *api.SetTerminal
 	}
 
 	return &api.SetTerminalSizeResponse{}, nil
+}
+
+// SetTitle sets the terminal's title
+func (srv *MuxTerminalService) SetTitle(ctx context.Context, req *api.SetTerminalTitleRequest) (*api.SetTerminalTitleResponse, error) {
+	srv.Mux.mu.RLock()
+	term, ok := srv.Mux.terms[req.Alias]
+	srv.Mux.mu.RUnlock()
+	if !ok {
+		return nil, status.Error(codes.NotFound, "terminal not found")
+	}
+	term.SetTitle(req.Title)
+	return &api.SetTerminalTitleResponse{}, nil
+}
+
+// UpdateAnnotations sets the terminal's title
+func (srv *MuxTerminalService) UpdateAnnotations(ctx context.Context, req *api.UpdateTerminalAnnotationsRequest) (*api.UpdateTerminalAnnotationsResponse, error) {
+	srv.Mux.mu.RLock()
+	term, ok := srv.Mux.terms[req.Alias]
+	srv.Mux.mu.RUnlock()
+	if !ok {
+		return nil, status.Error(codes.NotFound, "terminal not found")
+	}
+	term.UpdateAnnotations(req.Changed, req.Deleted)
+	return &api.UpdateTerminalAnnotationsResponse{}, nil
 }
