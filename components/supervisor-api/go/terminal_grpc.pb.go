@@ -37,6 +37,10 @@ type TerminalServiceClient interface {
 	Write(ctx context.Context, in *WriteTerminalRequest, opts ...grpc.CallOption) (*WriteTerminalResponse, error)
 	// SetSize sets the terminal's size
 	SetSize(ctx context.Context, in *SetTerminalSizeRequest, opts ...grpc.CallOption) (*SetTerminalSizeResponse, error)
+	// SetTitle sets the terminal's title
+	SetTitle(ctx context.Context, in *SetTerminalTitleRequest, opts ...grpc.CallOption) (*SetTerminalTitleResponse, error)
+	// UpdateAnnotations updates the terminal's annotations
+	UpdateAnnotations(ctx context.Context, in *UpdateTerminalAnnotationsRequest, opts ...grpc.CallOption) (*UpdateTerminalAnnotationsResponse, error)
 }
 
 type terminalServiceClient struct {
@@ -133,6 +137,24 @@ func (c *terminalServiceClient) SetSize(ctx context.Context, in *SetTerminalSize
 	return out, nil
 }
 
+func (c *terminalServiceClient) SetTitle(ctx context.Context, in *SetTerminalTitleRequest, opts ...grpc.CallOption) (*SetTerminalTitleResponse, error) {
+	out := new(SetTerminalTitleResponse)
+	err := c.cc.Invoke(ctx, "/supervisor.TerminalService/SetTitle", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *terminalServiceClient) UpdateAnnotations(ctx context.Context, in *UpdateTerminalAnnotationsRequest, opts ...grpc.CallOption) (*UpdateTerminalAnnotationsResponse, error) {
+	out := new(UpdateTerminalAnnotationsResponse)
+	err := c.cc.Invoke(ctx, "/supervisor.TerminalService/UpdateAnnotations", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TerminalServiceServer is the server API for TerminalService service.
 // All implementations must embed UnimplementedTerminalServiceServer
 // for forward compatibility
@@ -152,6 +174,10 @@ type TerminalServiceServer interface {
 	Write(context.Context, *WriteTerminalRequest) (*WriteTerminalResponse, error)
 	// SetSize sets the terminal's size
 	SetSize(context.Context, *SetTerminalSizeRequest) (*SetTerminalSizeResponse, error)
+	// SetTitle sets the terminal's title
+	SetTitle(context.Context, *SetTerminalTitleRequest) (*SetTerminalTitleResponse, error)
+	// UpdateAnnotations updates the terminal's annotations
+	UpdateAnnotations(context.Context, *UpdateTerminalAnnotationsRequest) (*UpdateTerminalAnnotationsResponse, error)
 	mustEmbedUnimplementedTerminalServiceServer()
 }
 
@@ -179,6 +205,12 @@ func (UnimplementedTerminalServiceServer) Write(context.Context, *WriteTerminalR
 }
 func (UnimplementedTerminalServiceServer) SetSize(context.Context, *SetTerminalSizeRequest) (*SetTerminalSizeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetSize not implemented")
+}
+func (UnimplementedTerminalServiceServer) SetTitle(context.Context, *SetTerminalTitleRequest) (*SetTerminalTitleResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetTitle not implemented")
+}
+func (UnimplementedTerminalServiceServer) UpdateAnnotations(context.Context, *UpdateTerminalAnnotationsRequest) (*UpdateTerminalAnnotationsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateAnnotations not implemented")
 }
 func (UnimplementedTerminalServiceServer) mustEmbedUnimplementedTerminalServiceServer() {}
 
@@ -322,6 +354,42 @@ func _TerminalService_SetSize_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TerminalService_SetTitle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetTerminalTitleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TerminalServiceServer).SetTitle(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/supervisor.TerminalService/SetTitle",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TerminalServiceServer).SetTitle(ctx, req.(*SetTerminalTitleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _TerminalService_UpdateAnnotations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateTerminalAnnotationsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TerminalServiceServer).UpdateAnnotations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/supervisor.TerminalService/UpdateAnnotations",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TerminalServiceServer).UpdateAnnotations(ctx, req.(*UpdateTerminalAnnotationsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TerminalService_ServiceDesc is the grpc.ServiceDesc for TerminalService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -352,6 +420,14 @@ var TerminalService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetSize",
 			Handler:    _TerminalService_SetSize_Handler,
+		},
+		{
+			MethodName: "SetTitle",
+			Handler:    _TerminalService_SetTitle_Handler,
+		},
+		{
+			MethodName: "UpdateAnnotations",
+			Handler:    _TerminalService_UpdateAnnotations_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

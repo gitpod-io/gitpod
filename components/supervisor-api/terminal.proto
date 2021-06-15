@@ -52,6 +52,12 @@ service TerminalService {
 
     // SetSize sets the terminal's size
     rpc SetSize(SetTerminalSizeRequest) returns (SetTerminalSizeResponse) {}
+
+    // SetTitle sets the terminal's title
+    rpc SetTitle(SetTerminalTitleRequest) returns (SetTerminalTitleResponse) {}
+
+    // UpdateAnnotations updates the terminal's annotations
+    rpc UpdateAnnotations(UpdateTerminalAnnotationsRequest) returns (UpdateTerminalAnnotationsResponse) {}
 }
 
 message TerminalSize {
@@ -84,6 +90,12 @@ message ShutdownTerminalRequest {
 }
 message ShutdownTerminalResponse {}
 
+enum TerminalTitleSource {
+    // From the foreground process
+    process = 0;
+    // From SetTitle API
+    api = 1;
+}
 message Terminal {
     string alias = 1;
     repeated string command = 2;
@@ -92,6 +104,7 @@ message Terminal {
     string initial_workdir = 5;
     string current_workdir = 6;
     map<string, string> annotations = 7;
+    TerminalTitleSource title_source = 8;
 }
 
 message GetTerminalRequest {
@@ -112,6 +125,8 @@ message ListenTerminalResponse {
         int32 exit_code = 2;
         string title = 3;
     };
+    // only present if output is title
+    TerminalTitleSource title_source = 4;
 }
 
 message WriteTerminalRequest {
@@ -137,3 +152,20 @@ message SetTerminalSizeRequest {
     TerminalSize size = 4;
 }
 message SetTerminalSizeResponse {}
+
+message SetTerminalTitleRequest {
+    string alias = 1;
+    // omitting title will reset to process title
+    string title = 2;
+}
+message SetTerminalTitleResponse {}
+
+
+message UpdateTerminalAnnotationsRequest {
+    string alias = 1;
+    // annotations to create or update
+    map<string, string> changed = 2;
+    // annotations to remove
+    repeated string deleted = 3;
+}
+message UpdateTerminalAnnotationsResponse {}
