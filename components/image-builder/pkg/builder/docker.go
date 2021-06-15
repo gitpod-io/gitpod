@@ -167,7 +167,7 @@ func (b *DockerBuilder) serveContext(ctx context.Context, bld *build, volume, pa
 		Mounts: []mount.Mount{
 			{Type: mount.TypeVolume, Source: volume, Target: "/workspace"},
 		},
-	}, nil, containerName)
+	}, nil, nil, containerName)
 	if err != nil {
 		return xerrors.Errorf("cannot create context server: %w", err)
 	}
