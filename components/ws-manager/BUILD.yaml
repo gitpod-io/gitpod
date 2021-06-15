@@ -27,6 +27,8 @@ packages:
       - imageRepoBase
     config:
       dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: wsManager
       image:
         - ${imageRepoBase}/ws-manager:${version}
         - ${imageRepoBase}/ws-manager:${__pkg_version}
@@ -38,8 +40,6 @@ packages:
       - imageRepoBase
     config:
       dockerfile: leeway.Dockerfile
-      metadata:
-        helm-component: wsManager
       image:
         - ${imageRepoBase}/ws-manager:${version}
   - name: userns-test-fixtures

@@ -35,6 +35,8 @@ packages:
       - imageRepoBase
     config:
       dockerfile: leeway.Dockerfile
+      metadata:
+        helm-component: agentSmith
       image:
         - ${imageRepoBase}/agent-smith:${version}
   - name: example-config
