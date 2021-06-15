@@ -330,6 +330,12 @@ func installDocker() error {
 		dstpath := path.Join("/usr/bin", strings.TrimPrefix(hdr.Name, "docker/"))
 		mode := hdrInfo.Mode()
 
+		p, _ := filepath.Abs(hdrInfo.Name())
+		if strings.Contains(p, "..") {
+			// do not allow directory traversal
+			continue
+		}
+
 		switch hdr.Typeflag {
 		case tar.TypeReg, tar.TypeRegA:
 			file, err := os.OpenFile(dstpath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, mode)

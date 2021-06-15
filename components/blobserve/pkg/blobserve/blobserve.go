@@ -7,6 +7,7 @@ package blobserve
 import (
 	"context"
 	"fmt"
+	"html"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -109,7 +110,7 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 	image := vars["image"]
 	pref, err := reference.ParseNamed(image)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("cannot parse image '%s': %q", image, err), http.StatusNotFound)
+		http.Error(w, fmt.Sprintf("cannot parse image '%q': %q", html.EscapeString(image), err), http.StatusNotFound)
 		return
 	}
 	repo := pref.Name()
@@ -117,7 +118,7 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 	if refTagged, ok := pref.(reference.Tagged); ok {
 		tag = refTagged.Tag()
 	} else {
-		http.Error(w, fmt.Sprintf("cannot parse image '%s': tag is missing", image), http.StatusNotFound)
+		http.Error(w, fmt.Sprintf("cannot parse image '%q': tag is missing", html.EscapeString(image)), http.StatusNotFound)
 		return
 	}
 
@@ -126,7 +127,7 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 		workdir = cfg.Workdir
 	} else if !reg.Config.AllowAnyRepo {
 		log.WithField("repo", repo).Debug("forbidden repo access attempt")
-		http.Error(w, fmt.Sprintf("forbidden repo: %s", repo), http.StatusForbidden)
+		http.Error(w, fmt.Sprintf("forbidden repo: %q", html.EscapeString(repo)), http.StatusForbidden)
 		return
 	}
 
@@ -136,7 +137,7 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 	// serve this request in time, we might want to serve another from the same ref in the future.
 	blob, hash, err := reg.refstore.BlobFor(context.Background(), ref, req.Header.Get("X-BlobServe-ReadOnly") == "true")
 	if err == errdefs.ErrNotFound {
-		http.Error(w, fmt.Sprintf("image %s not found: %q", ref, err), http.StatusNotFound)
+		http.Error(w, fmt.Sprintf("image %s not found: %q", html.EscapeString(ref), err), http.StatusNotFound)
 		return
 	} else if err != nil {
 		http.Error(w, fmt.Sprintf("internal error: %q", err), http.StatusInternalServerError)
