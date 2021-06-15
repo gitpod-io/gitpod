@@ -231,6 +231,10 @@ spec:
           value: {{ $comp.garbageCollection.disabled | default "false" | quote }}
         - name: OAUTH_SERVER_JWT_SECRET
           value: {{ (randAlphaNum 20) | quote }}
+{{- if $comp.testToken }}
+        - name: GITPOD_TEST_TOKEN
+          value: "{{ $comp.testToken }}"
+{{- end }}
 {{- if $comp.serverContainer.env }}
 {{ toYaml $comp.serverContainer.env | indent 8 }}
 {{- end }}

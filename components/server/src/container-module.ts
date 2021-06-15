@@ -74,6 +74,7 @@ import { GitTokenValidator } from './workspace/git-token-validator';
 import { newAnalyticsWriterFromEnv, IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/util/analytics';
 import { OAuthController } from './oauth-server/oauth-controller';
 import { ImageBuildPrefixContextParser } from './workspace/imagebuild-prefix-context-parser';
+import { TestController as TestUserController } from './user/test-user-controller';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Env).toSelf().inSingletonScope();
@@ -190,4 +191,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(IAnalyticsWriter).toDynamicValue(newAnalyticsWriterFromEnv).inSingletonScope();
 
     bind(OAuthController).toSelf().inSingletonScope();
+
+    bind(TestUserController).toSelf().inSingletonScope();
 });
