@@ -14,12 +14,12 @@ img_url="https://cloud-images.ubuntu.com/bionic/current/bionic-server-cloudimg-a
 script_dirname="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 outdir="${script_dirname}/_output"
 
-rm -Rf $outdir
-mkdir -p $outdir
+rm -Rf "$outdir"
+mkdir -p "$outdir"
 
 curl -L -o "${outdir}/rootfs.tar.gz" $img_url
 
-cd $outdir
+cd "$outdir"
 
 tar -xvf rootfs.tar.gz
 
@@ -30,7 +30,7 @@ sudo virt-customize -a bionic-server-cloudimg-amd64.img --run-command 'resize2fs
 sudo virt-customize -a bionic-server-cloudimg-amd64.img --root-password password:root
 
 # copy kernel modules
-sudo virt-customize -a bionic-server-cloudimg-amd64.img --copy-in /lib/modules/$WORKSPACE_KERNEL:/lib/modules
+sudo virt-customize -a bionic-server-cloudimg-amd64.img --copy-in /lib/modules/"$WORKSPACE_KERNEL":/lib/modules
 
 sudo virt-customize -a bionic-server-cloudimg-amd64.img --run-command 'echo "[Network]\nDHCP=ipv4" > /etc/systemd/network/20-dhcp.network'
 
