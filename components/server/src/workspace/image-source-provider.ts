@@ -9,7 +9,7 @@ import { ImageBuilderClientProvider, ResolveBaseImageRequest, BuildRegistryAuthT
 import { HostContextProvider } from "../auth/host-context-provider";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { CommitContext, WorkspaceImageSource, WorkspaceConfig, WorkspaceImageSourceReference, WorkspaceImageSourceDocker, ImageConfigFile, ExternalImageConfigFile, User, AdditionalContentContext } from "@gitpod/gitpod-protocol";
-import { createHmac } from 'crypto';
+import { createHash } from 'crypto';
 
 @injectable()
 export class ImageSourceProvider {
@@ -93,9 +93,7 @@ export class ImageSourceProvider {
     }
 
     protected getContentSHA(contents: string): string {
-        return createHmac('sha256', '')
-            .update(contents)
-            .digest('hex');
+        return createHash('sha256').update(contents).digest('hex');
     }
 
 

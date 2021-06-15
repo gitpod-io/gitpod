@@ -759,9 +759,7 @@ export class WorkspaceStarter {
             const additionalInit =  new FileDownloadInitializer();
 
             const getDigest = (contents: string) => {
-                return 'sha256:'+crypto.createHmac('sha256', '')
-                    .update(contents)
-                    .digest('hex');
+                return 'sha256:'+crypto.createHash('sha256').update(contents).digest('hex');
             }
 
             const tokenExpirationTime = new Date();

@@ -7,7 +7,6 @@ package initializer
 import (
 	"context"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -17,83 +16,111 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/content-service/pkg/archive"
+	"github.com/opencontainers/go-digest"
 	"github.com/opentracing/opentracing-go"
+	"golang.org/x/sync/errgroup"
 	"golang.org/x/xerrors"
 )
 
-type FileInfo struct {
-	url string
-	// filePath is relative to the FileDownloadInitializer's TargetLocation, e.g. if TargetLocation is in `/workspace/myrepo`
-	// a filePath of `foobar/file` would produce a file in `/workspace/myrepo/foobar/file`.
-	// filePath must include the filename. The FileDownloadInitializer will create any parent directories
+type fileInfo struct {
+	URL string
+
+	// Path is relative to the FileDownloadInitializer's TargetLocation, e.g. if TargetLocation is in `/workspace/myrepo`
+	// a Path of `foobar/file` would produce a file in `/workspace/myrepo/foobar/file`.
+	// Path must include the filename. The FileDownloadInitializer will create any parent directories
 	// necessary to place the file.
-	filePath string
-	// digest is a hash of the file content in the OCI digest format (see https://github.com/opencontainers/image-spec/blob/master/descriptor.md#digests).
+	Path string
+
+	// Digest is a hash of the file content in the OCI Digest format (see https://github.com/opencontainers/image-spec/blob/master/descriptor.md#digests).
 	// This information is used to compute subsequent
 	// content versions, and to validate the file content was downloaded correctly.
-	digest string
+	Digest digest.Digest
 }
 
-type FileDownloadInitializer struct {
-	FilesInfos     []FileInfo
+type fileDownloadInitializer struct {
+	FilesInfos     []fileInfo
 	TargetLocation string
+	HTTPClient     *http.Client
+	RetryTimeout   time.Duration
 }
 
 // Run initializes the workspace
-func (ws *FileDownloadInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, err error) {
+func (ws *fileDownloadInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "FileDownloadInitializer.Run")
 	defer tracing.FinishSpan(span, &err)
 
 	for _, info := range ws.FilesInfos {
-		contents, err := downloadFile(ctx, info.url)
+		err := ws.downloadFile(ctx, info)
 		if err != nil {
-			tracing.LogError(span, xerrors.Errorf("cannot download file '%s' from '%s': %w", info.filePath, info.url, err))
-		}
-
-		fullPath := filepath.Join(ws.TargetLocation, info.filePath)
-		err = os.MkdirAll(filepath.Dir(fullPath), 0755)
-		if err != nil {
-			tracing.LogError(span, xerrors.Errorf("cannot mkdir %s: %w", filepath.Dir(fullPath), err))
-		}
-		err = ioutil.WriteFile(fullPath, contents, 0755)
-		if err != nil {
-			tracing.LogError(span, xerrors.Errorf("cannot write %s: %w", fullPath, err))
+			tracing.LogError(span, xerrors.Errorf("cannot download file '%s' from '%s': %w", info.Path, info.URL, err))
+			return src, err
 		}
 	}
-	return src, nil
+	return csapi.WorkspaceInitFromOther, nil
 }
 
-func downloadFile(ctx context.Context, url string) (content []byte, err error) {
+func (ws *fileDownloadInitializer) downloadFile(ctx context.Context, info fileInfo) (err error) {
 	//nolint:ineffassign
 	span, ctx := opentracing.StartSpanFromContext(ctx, "downloadFile")
 	defer tracing.FinishSpan(span, &err)
-	span.LogKV("url", url)
+	span.LogKV("url", info.URL)
 
-	dl := func() (content []byte, err error) {
-		req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	fn := filepath.Join(ws.TargetLocation, info.Path)
+	err = os.MkdirAll(filepath.Dir(fn), 0755)
+	if err != nil {
+		tracing.LogError(span, xerrors.Errorf("cannot mkdir %s: %w", filepath.Dir(fn), err))
+	}
+
+	fd, err := os.OpenFile(fn, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+
+	dl := func() (err error) {
+		req, err := http.NewRequestWithContext(ctx, "GET", info.URL, nil)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		_ = opentracing.GlobalTracer().Inject(span.Context(), opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(req.Header))
 
-		resp, err := http.DefaultClient.Do(req)
+		resp, err := ws.HTTPClient.Do(req)
 		if err != nil {
-			return nil, err
+			return err
 		}
 		defer resp.Body.Close()
 		if resp.StatusCode != http.StatusOK {
-			return nil, xerrors.Errorf("non-OK OTS response: %s", resp.Status)
+			return xerrors.Errorf("non-OK download response: %s", resp.Status)
 		}
 
-		return io.ReadAll(resp.Body)
+		pr, pw := io.Pipe()
+		body := io.TeeReader(resp.Body, pw)
+
+		eg, _ := errgroup.WithContext(ctx)
+		eg.Go(func() error {
+			_, err = io.Copy(fd, body)
+			pw.Close()
+			return err
+		})
+		eg.Go(func() error {
+			dgst, err := digest.FromReader(pr)
+			if err != nil {
+				return err
+			}
+			if dgst != info.Digest {
+				return xerrors.Errorf("digest mismatch")
+			}
+			return nil
+		})
+
+		return eg.Wait()
 	}
 	for i := 0; i < otsDownloadAttempts; i++ {
 		span.LogKV("attempt", i)
 		if i > 0 {
-			time.Sleep(time.Second)
+			time.Sleep(ws.RetryTimeout)
 		}
 
-		content, err = dl()
+		err = dl()
 		if err == context.Canceled || err == context.DeadlineExceeded {
 			return
 		}
@@ -103,8 +130,8 @@ func downloadFile(ctx context.Context, url string) (content []byte, err error) {
 		log.WithError(err).WithField("attempt", i).Warn("cannot download additional content files")
 	}
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return content, nil
+	return nil
 }
