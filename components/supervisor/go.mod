@@ -2,11 +2,6 @@ module github.com/gitpod-io/gitpod/supervisor
 
 go 1.16
 
-// containerd, see https://github.com/containerd/containerd/issues/3031
-replace github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible // leeway ignore
-
-replace github.com/docker/docker v1.13.1 => github.com/docker/engine v0.0.0-20190822205725-ed20165a37b4 // leeway ignore
-
 require (
 	github.com/Netflix/go-env v0.0.0-20200908232752-3e802f601e28
 	github.com/creack/pty v1.1.11
@@ -17,23 +12,23 @@ require (
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
 	github.com/golang/mock v1.5.0
 	github.com/golang/protobuf v1.5.2
-	github.com/google/go-cmp v0.5.5
-	github.com/google/uuid v1.1.4
+	github.com/google/go-cmp v0.5.6
+	github.com/google/uuid v1.2.0
 	github.com/gorilla/websocket v1.4.2
-	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.2.0
 	github.com/mailru/easygo v0.0.0-20190618140210-3c14a0dc985f
 	github.com/prometheus/procfs v0.6.0
-	github.com/sirupsen/logrus v1.7.0
+	github.com/sirupsen/logrus v1.8.1
 	github.com/soheilhy/cmux v0.1.4
-	github.com/spf13/cobra v1.1.1
+	github.com/spf13/cobra v1.1.3
 	golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210503080704-8803ae5d1324
+	golang.org/x/sys v0.0.0-20210603125802-9665404d3644
 	golang.org/x/term v0.0.0-20210220032956-6a3ed077a48d
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
-	google.golang.org/grpc v1.37.0
-	google.golang.org/grpc/examples v0.0.0-20200902210233-8630cac324bf // indirect
+	google.golang.org/grpc v1.38.0
+	google.golang.org/grpc/examples v0.0.0-20210609180517-95e48a892d6c // indirect
 	google.golang.org/protobuf v1.26.0
 )
 

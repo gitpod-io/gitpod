@@ -3,34 +3,32 @@ module github.com/gitpod-io/gitpod/ws-daemon
 go 1.16
 
 require (
-	github.com/Microsoft/hcsshim/test v0.0.0-20210209090606-7bf6ec3b3171 // indirect
-	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
+	github.com/StackExchange/wmi v0.0.0-20210224194228-fe8f1750fd46 // indirect
 	github.com/alecthomas/jsonschema v0.0.0-20190504002508-159cbd5dba26
 	github.com/alecthomas/repr v0.0.0-20200325044227-4184120f674c
-	github.com/containerd/containerd v1.5.0-beta.1
-	github.com/containerd/go-runc v0.0.0-20200930051345-7c5957f67ef4 // indirect
-	github.com/containerd/typeurl v1.0.1
+	github.com/containerd/containerd v1.5.2
+	github.com/containerd/typeurl v1.0.2
 	github.com/docker/docker v20.10.5+incompatible
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-daemon/api v0.0.0-00010101000000-000000000000
-	github.com/go-ole/go-ole v1.2.4 // indirect
-	github.com/google/go-cmp v0.5.5
-	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
+	github.com/go-ole/go-ole v1.2.5 // indirect
+	github.com/google/go-cmp v0.5.6
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.0.1
 	github.com/opencontainers/runtime-spec v1.0.3-0.20200929063507-e6143ca7d51d
 	github.com/opentracing/opentracing-go v1.2.0
-	github.com/prometheus/client_golang v1.9.0
+	github.com/prometheus/client_golang v1.11.0
 	github.com/shirou/gopsutil v2.20.9+incompatible
-	github.com/sirupsen/logrus v1.7.0
-	github.com/spf13/cobra v1.1.1
-	golang.org/x/sys v0.0.0-20210503080704-8803ae5d1324
+	github.com/sirupsen/logrus v1.8.1
+	github.com/spf13/cobra v1.1.3
+	golang.org/x/sys v0.0.0-20210603125802-9665404d3644
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
-	google.golang.org/grpc v1.37.0
+	google.golang.org/grpc v1.38.0
 	google.golang.org/protobuf v1.26.0
 	k8s.io/api v0.21.0
 	k8s.io/apimachinery v0.21.0

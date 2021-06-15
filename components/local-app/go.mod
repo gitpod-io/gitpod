@@ -11,16 +11,15 @@ require (
 	github.com/google/uuid v1.1.2
 	github.com/improbable-eng/grpc-web v0.14.0
 	github.com/kevinburke/ssh_config v1.1.0
-	github.com/prometheus/common v0.25.0
+	github.com/prometheus/common v0.26.0
 	github.com/rs/cors v1.7.0 // indirect
-	github.com/sirupsen/logrus v1.7.0
+	github.com/sirupsen/logrus v1.8.1
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/zalando/go-keyring v0.1.1
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
 	golang.org/x/oauth2 v0.0.0-20210201163806-010130855d6c
-	golang.org/x/sys v0.0.0-20210403161142-5e06dd20ab57 // indirect
-	google.golang.org/grpc v1.37.0
+	google.golang.org/grpc v1.38.0
 	google.golang.org/protobuf v1.26.0
 	nhooyr.io/websocket v1.8.7 // indirect
 )

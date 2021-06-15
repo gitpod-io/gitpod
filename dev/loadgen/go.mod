@@ -8,9 +8,9 @@ require (
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
 	github.com/google/uuid v1.1.2
-	github.com/sirupsen/logrus v1.7.0
-	github.com/spf13/cobra v1.1.1
-	google.golang.org/grpc v1.37.0
+	github.com/sirupsen/logrus v1.8.1
+	github.com/spf13/cobra v1.1.3
+	google.golang.org/grpc v1.38.0
 	google.golang.org/protobuf v1.26.0
 )
 

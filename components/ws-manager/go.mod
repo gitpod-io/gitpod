@@ -2,11 +2,6 @@ module github.com/gitpod-io/gitpod/ws-manager
 
 go 1.16
 
-// containerd, see https://github.com/containerd/containerd/issues/3031
-replace github.com/docker/distribution v2.7.1+incompatible => github.com/docker/distribution v2.7.1-0.20190205005809-0d3efadf0154+incompatible // leeway ignore
-
-replace github.com/docker/docker v1.13.1 => github.com/docker/engine v0.0.0-20190822205725-ed20165a37b4 // leeway ignore
-
 require (
 	github.com/alecthomas/jsonschema v0.0.0-20210214200137-e6fc2822d59d
 	github.com/alecthomas/repr v0.0.0-20201120212035-bb82daffcca2
@@ -20,18 +15,18 @@ require (
 	github.com/go-logr/logr v0.4.0
 	github.com/go-ozzo/ozzo-validation v3.5.0+incompatible
 	github.com/golang/mock v1.5.0
-	github.com/google/go-cmp v0.5.5
-	github.com/google/uuid v1.1.4
-	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
+	github.com/google/go-cmp v0.5.6
+	github.com/google/uuid v1.2.0
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/imdario/mergo v0.3.11
 	github.com/opentracing/opentracing-go v1.2.0
-	github.com/prometheus/client_golang v1.9.0
-	github.com/sirupsen/logrus v1.7.0
-	github.com/spf13/cobra v1.1.1
+	github.com/prometheus/client_golang v1.11.0
+	github.com/sirupsen/logrus v1.8.1
+	github.com/spf13/cobra v1.1.3
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
-	google.golang.org/grpc v1.37.0
+	google.golang.org/grpc v1.38.0
 	google.golang.org/protobuf v1.26.0
 	k8s.io/api v0.21.0
 	k8s.io/apimachinery v0.21.0

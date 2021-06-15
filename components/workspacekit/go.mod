@@ -10,9 +10,9 @@ require (
 	github.com/moby/sys/mountinfo v0.4.0
 	github.com/rootless-containers/rootlesskit v0.11.1
 	github.com/seccomp/libseccomp-golang v0.9.1
-	github.com/spf13/cobra v1.1.1
-	golang.org/x/sys v0.0.0-20210225134936-a50acf3fe073
-	google.golang.org/grpc v1.37.0
+	github.com/spf13/cobra v1.1.3
+	golang.org/x/sys v0.0.0-20210603081109-ebe580a85c40
+	google.golang.org/grpc v1.38.0
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway
