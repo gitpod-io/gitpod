@@ -85,7 +85,10 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             res.send = (body) => {
                 const result = originalSend(body);
                 const method = req.method;
-                const route = req.route.path;
+                const route = req.route?.path || "";
+                if (!req.route) {
+                    log.warn(`route is undefined, url: ${req.url}`);
+                }
                 observeHttpRequestDuration(method, route, res.statusCode, (Date.now() - startTime) / 1000)
                 increaseHttpRequestCounter(method, route, res.statusCode);
                 return result;
