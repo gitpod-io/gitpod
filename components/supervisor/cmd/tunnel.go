@@ -19,14 +19,14 @@ var tunnelCmd = &cobra.Command{
 	Short: "opens a new tunnel",
 	Args:  cobra.RangeArgs(1, 3),
 	Run: func(cmd *cobra.Command, args []string) {
-		localPort, err := strconv.Atoi(args[0])
+		localPort, err := strconv.ParseUint(args[0], 10, 16)
 		if err != nil {
 			log.WithError(err).Fatal("invalid local port")
 			return
 		}
 		targetPort := localPort
 		if len(args) > 1 {
-			targetPort, err = strconv.Atoi(args[1])
+			targetPort, err = strconv.ParseUint(args[1], 10, 16)
 			if err != nil {
 				log.WithError(err).Fatal("invalid target port")
 			}
@@ -56,7 +56,7 @@ var closeTunnelCmd = &cobra.Command{
 	Short: "close the tunnel",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		localPort, err := strconv.Atoi(args[0])
+		localPort, err := strconv.ParseUint(args[0], 10, 16)
 		if err != nil {
 			log.WithError(err).Fatal("invalid local port")
 			return
