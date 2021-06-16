@@ -33,7 +33,7 @@
 		# Enable cross-site filter (XSS) and tell browser to block detected attacks
 		X-XSS-Protection           "1; mode=block"
 		# Disallow sharing the same browsing context when opened in a popup
-		Cross-Origin-Opener-Policy same-origin
+		Cross-Origin-Opener-Policy same-origin-allow-popups
 
 		defer # delay changes
 	}
