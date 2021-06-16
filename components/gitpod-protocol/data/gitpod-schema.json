@@ -116,10 +116,8 @@
                     "openMode": {
                         "type": "string",
                         "enum": [
-                            "split-top",
                             "split-left",
                             "split-right",
-                            "split-bottom",
                             "tab-before",
                             "tab-after"
                         ],
