@@ -25,4 +25,4 @@ packages:
         helm-component: kedge
       image:
         - ${imageRepoBase}/kedge:${version}
-        - ${imageRepoBase}/kedge:${__pkg_version}
+        - ${imageRepoBase}/kedge:commit-${__git_commit}

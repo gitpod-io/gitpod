@@ -85,7 +85,7 @@ packages:
         helm-component: dbMigrations
       image:
         - ${imageRepoBase}/db-migrations:${version}
-        - ${imageRepoBase}/db-migrations:${__pkg_version}
+        - ${imageRepoBase}/db-migrations:commit-${__git_commit}
 scripts:
 - name: db-test-env
   description: "Creates a file with env vars necessary for running DB tests. The file delets itself after being sourced. Usage: '. $(leeway run components/gitpod-db:db-test-env)'"

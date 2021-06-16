@@ -53,7 +53,7 @@ packages:
         helm-component: wsDaemon
       image:
         - ${imageRepoBase}/ws-daemon:${version}
-        - ${imageRepoBase}/ws-daemon:${__pkg_version}
+        - ${imageRepoBase}/ws-daemon:commit-${__git_commit}
 scripts:
   - name: kube-exec
     description: Executes into the ws-daemon for a workspace pod in $WS

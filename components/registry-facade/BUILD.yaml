@@ -43,4 +43,4 @@ packages:
         helm-component: registryFacade
       image:
         - ${imageRepoBase}/registry-facade:${version}
-        - ${imageRepoBase}/registry-facade:${__pkg_version}
+        - ${imageRepoBase}/registry-facade:commit-${__git_commit}

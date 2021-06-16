@@ -33,7 +33,7 @@ packages:
         helm-component: workspace.supervisor
       image:
         - ${imageRepoBase}/supervisor:${version}
-        - ${imageRepoBase}/supervisor:${__pkg_version}
+        - ${imageRepoBase}/supervisor:commit-${__git_commit}
   - name: dropbear
     type: generic
     config:

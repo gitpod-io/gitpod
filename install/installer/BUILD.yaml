@@ -27,7 +27,7 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/installer:${version}
-        - ${imageRepoBase}/installer:${__pkg_version}
+        - ${imageRepoBase}/installer:commit-${__git_commit}
       buildArgs:
         VERSION: ${version}
         IMAGE_PREFIX: ${imageRepoBase}

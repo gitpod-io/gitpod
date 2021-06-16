@@ -12,4 +12,4 @@ packages:
         helm-component: proxy
       image:
         - ${imageRepoBase}/proxy:${version}
-        - ${imageRepoBase}/proxy:${__pkg_version}
+        - ${imageRepoBase}/proxy:commit-${__git_commit}

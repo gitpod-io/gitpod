@@ -24,4 +24,4 @@ packages:
         helm-component: serviceWaiter
       image:
         - ${imageRepoBase}/service-waiter:${version}
-        - ${imageRepoBase}/service-waiter:${__pkg_version}
+        - ${imageRepoBase}/service-waiter:commit-${__git_commit}

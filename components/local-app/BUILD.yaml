@@ -79,4 +79,4 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/local-app:${version}
-        - ${imageRepoBase}/local-app:${__pkg_version}
+        - ${imageRepoBase}/local-app:commit-${__git_commit}

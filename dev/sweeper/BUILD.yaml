@@ -20,4 +20,4 @@ packages:
       dockerfile: leeway.Dockerfile
       image:
         - ${imageRepoBase}/sweeper:${version}
-        - ${imageRepoBase}/sweeper:${__pkg_version}
+        - ${imageRepoBase}/sweeper:commit-${__git_commit}

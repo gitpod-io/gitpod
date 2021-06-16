@@ -31,7 +31,7 @@ packages:
         helm-component: wsManager
       image:
         - ${imageRepoBase}/ws-manager:${version}
-        - ${imageRepoBase}/ws-manager:${__pkg_version}
+        - ${imageRepoBase}/ws-manager:commit-${__git_commit}
   - name: docker-debug
     type: docker
     deps:

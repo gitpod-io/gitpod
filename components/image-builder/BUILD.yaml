@@ -28,4 +28,4 @@ packages:
         helm-component: imageBuilder
       image:
         - ${imageRepoBase}/image-builder:${version}
-        - ${imageRepoBase}/image-builder:${__pkg_version}
+        - ${imageRepoBase}/image-builder:commit-${__git_commit}

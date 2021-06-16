@@ -26,7 +26,7 @@ packages:
         helm-component: wsScheduler
       image:
         - ${imageRepoBase}/ws-scheduler:${version}
-        - ${imageRepoBase}/ws-scheduler:${__pkg_version}
+        - ${imageRepoBase}/ws-scheduler:commit-${__git_commit}
 scripts:
   - name: telepresence
     script: |

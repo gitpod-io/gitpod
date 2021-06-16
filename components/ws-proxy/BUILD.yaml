@@ -32,4 +32,4 @@ packages:
         helm-component: wsProxy
       image:
         - ${imageRepoBase}/ws-proxy:${version}
-        - ${imageRepoBase}/ws-proxy:${__pkg_version}
+        - ${imageRepoBase}/ws-proxy:commit-${__git_commit}
