@@ -46,7 +46,7 @@ packages:
         helm-component: dashboard
       image:
         - ${imageRepoBase}/dashboard:${version}
-        - ${imageRepoBase}/dashboard:${__pkg_version}
+        - ${imageRepoBase}/dashboard:commit-${__git_commit}
 scripts:
   - name: telepresence
     script: |-

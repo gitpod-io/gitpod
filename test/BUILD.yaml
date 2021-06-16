@@ -40,4 +40,4 @@ packages:
         helm-component: integrationTest
       image:
         - ${imageRepoBase}/integration-tests:${version}
-        - ${imageRepoBase}/integration-tests:${__pkg_version}
+        - ${imageRepoBase}/integration-tests:commit-${__git_commit}

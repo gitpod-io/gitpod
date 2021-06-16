@@ -40,4 +40,4 @@ packages:
         helm-component: contentService
       image:
         - ${imageRepoBase}/content-service:${version}
-        - ${imageRepoBase}/content-service:${__pkg_version}
+        - ${imageRepoBase}/content-service:commit-${__git_commit}

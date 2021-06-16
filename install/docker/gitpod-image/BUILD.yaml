@@ -14,4 +14,4 @@ packages:
       dockerfile: Dockerfile
       image:
         - ${imageRepoBase}/gitpod-k3s:${version}
-        - ${imageRepoBase}/gitpod-k3s:${__pkg_version}
+        - ${imageRepoBase}/gitpod-k3s:commit-${__git_commit}

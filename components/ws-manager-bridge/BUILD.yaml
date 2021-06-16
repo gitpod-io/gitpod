@@ -28,7 +28,7 @@ packages:
         helm-component: wsManagerBridge
       image:
         - ${imageRepoBase}/ws-manager-bridge:${version}
-        - ${imageRepoBase}/ws-manager-bridge:${__pkg_version}
+        - ${imageRepoBase}/ws-manager-bridge:commit-${__git_commit}
 scripts:
   - name: telepresence
     script: |-

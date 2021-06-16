@@ -69,4 +69,4 @@ packages:
         helm-component: workspace.dockerUp
       image:
         - ${imageRepoBase}/docker-up:${version}
-        - ${imageRepoBase}/docker-up:${__pkg_version}
+        - ${imageRepoBase}/docker-up:commit-${__git_commit}

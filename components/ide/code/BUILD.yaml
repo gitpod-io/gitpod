@@ -13,4 +13,4 @@ packages:
         helm-component: workspace.codeImage
       image:
         - ${imageRepoBase}/ide/code:${version}
-        - ${imageRepoBase}/ide/code:${__pkg_version}
+        - ${imageRepoBase}/ide/code:commit-${__git_commit}

@@ -26,7 +26,7 @@ packages:
         helm-component: dbSync
       image:
         - ${imageRepoBase}/db-sync:${version}
-        - ${imageRepoBase}/db-sync:${__pkg_version}
+        - ${imageRepoBase}/db-sync:commit-${__git_commit}
   - name: dbtest
     type: yarn
     srcs:

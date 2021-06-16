@@ -32,7 +32,7 @@ packages:
         helm-component: server
       image:
         - ${imageRepoBase}/server:${version}
-        - ${imageRepoBase}/server:${__pkg_version}
+        - ${imageRepoBase}/server:commit-${__git_commit}
   - name: lib
     type: yarn
     srcs:

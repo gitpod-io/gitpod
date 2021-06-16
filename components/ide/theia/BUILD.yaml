@@ -14,4 +14,4 @@ packages:
         helm-component: workspace.theiaImage
       image:
         - ${imageRepoBase}/ide/theia:${version}
-        - ${imageRepoBase}/ide/theia:${__pkg_version}
+        - ${imageRepoBase}/ide/theia:commit-${__git_commit}

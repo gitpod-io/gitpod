@@ -13,4 +13,4 @@ packages:
       dockerfile: Dockerfile
       image:
         - ${imageRepoBase}/gitlab-k3s:${version}
-        - ${imageRepoBase}/gitlab-k3s:${__pkg_version}
+        - ${imageRepoBase}/gitlab-k3s:commit-${__git_commit}

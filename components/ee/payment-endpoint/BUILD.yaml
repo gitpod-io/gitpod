@@ -41,7 +41,7 @@ packages:
         helm-component: paymentEndpoint
       image:
         - ${imageRepoBase}/payment-endpoint:${version}
-        - ${imageRepoBase}/payment-endpoint:${__pkg_version}
+        - ${imageRepoBase}/payment-endpoint:commit-${__git_commit}
   - name: dbtest
     type: yarn
     srcs:

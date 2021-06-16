@@ -27,4 +27,4 @@ packages:
         helm-component: blobserve
       image:
         - ${imageRepoBase}/blobserve:${version}
-        - ${imageRepoBase}/blobserve:${__pkg_version}
+        - ${imageRepoBase}/blobserve:commit-${__git_commit}
