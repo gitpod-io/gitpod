@@ -548,7 +548,7 @@ OuterLoop:
 			if v.Name == "DB_PASSWORD" {
 				password = v.Value
 			} else if v.Name == "DB_PORT" {
-				pPort, err := strconv.Atoi(v.Value)
+				pPort, err := strconv.ParseUint(v.Value, 10, 16)
 				if err != nil {
 					return nil, fmt.Errorf("error parsing DB_PORT '%s' on pod %s!", v.Value, pod.Name)
 				}

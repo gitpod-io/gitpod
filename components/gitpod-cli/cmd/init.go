@@ -176,12 +176,10 @@ func parsePorts(input string) ([]int32, error) {
 	prts := strings.Split(input, ",")
 	rst := make([]int32, 0)
 	for _, prt := range prts {
-		if pv, err := strconv.ParseInt(strings.Trim(prt, " "), 10, 32); err != nil {
+		if pv, err := strconv.ParseUint(strings.TrimSpace(prt), 10, 16); err != nil {
 			return nil, err
-		} else if 0 < pv && pv <= 65535 {
-			rst = append(rst, int32(pv))
 		} else {
-			return nil, fmt.Errorf("%d: port is out of range", pv)
+			rst = append(rst, int32(pv))
 		}
 	}
 	return rst, nil

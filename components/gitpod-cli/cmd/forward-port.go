@@ -26,14 +26,9 @@ var portFwdCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.RangeArgs(1, 2),
 	Run: func(cmd *cobra.Command, args []string) {
-		srcp, err := strconv.ParseInt(args[0], 10, 32)
+		srcp, err := strconv.ParseUint(args[0], 10, 16)
 		if err != nil {
 			log.Fatalf("local-port cannot be parsed as int: %s", err)
-			os.Exit(-1)
-			return
-		}
-		if err := checkPortRange(srcp); err != nil {
-			log.Fatalf("local-port: %s", err)
 			os.Exit(-1)
 			return
 		}
@@ -41,14 +36,9 @@ var portFwdCmd = &cobra.Command{
 		trgp := srcp + 1
 		if len(args) > 1 {
 			var err error
-			trgp, err = strconv.ParseInt(args[1], 10, 32)
+			trgp, err = strconv.ParseUint(args[1], 10, 16)
 			if err != nil {
 				log.Fatalf("target-port cannot be parsed as int: %s", err)
-				os.Exit(-1)
-				return
-			}
-			if err := checkPortRange(trgp); err != nil {
-				log.Fatalf("target-port: %s", err)
 				os.Exit(-1)
 				return
 			}
@@ -79,13 +69,6 @@ var portFwdCmd = &cobra.Command{
 		fmt.Printf("Forwarding traffic: 0.0.0.0:%d -> 127.0.0.1:%d\n", trgp, srcp)
 		log.Fatal(p.Run())
 	},
-}
-
-func checkPortRange(prt int64) error {
-	if !(0 < prt && prt < 65535) {
-		return fmt.Errorf("Port is not within range: 0 < %d < 65535", prt)
-	}
-	return nil
 }
 
 func init() {

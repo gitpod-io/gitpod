@@ -34,13 +34,13 @@ var injectCmd = &cobra.Command{
 			log.WithError(err).Fatal("bug in blowtorch")
 		}
 		for tps, apss := range arflag {
-			tp, err := strconv.ParseInt(tps, 10, 64)
+			tp, err := strconv.ParseUint(tps, 10, 16)
 			if err != nil {
 				log.WithField("targetPort", tps).WithError(err).Fatal("additional route: target port is not a number")
 			}
 			for _, s := range strings.Split(apss, ",") {
 				s = strings.TrimSpace(s)
-				ap, err := strconv.ParseInt(s, 10, 64)
+				ap, err := strconv.ParseUint(s, 10, 16)
 				if err != nil {
 					log.WithField("targetPort", tps).WithField("additionalPort", ap).WithError(err).Fatal("additional route: additional port is not a number")
 				}

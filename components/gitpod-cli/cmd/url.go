@@ -6,7 +6,6 @@ package cmd
 
 import (
 	"fmt"
-	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -30,17 +29,13 @@ will print the URL of a service/server exposed on port 8080.`,
 			return
 		}
 
-		port, err := strconv.Atoi(args[0])
+		port, err := strconv.ParseUint(args[0], 10, 16)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "port \"%s\" is not a valid number\n", args[0])
 			return
 		}
-		if port <= 0 || port > math.MaxUint16 {
-			fmt.Fprintf(os.Stderr, "port \"%s\" is out of range\n", args[0])
-			return
-		}
 
-		fmt.Println(GetWorkspaceURL(port))
+		fmt.Println(GetWorkspaceURL(int(port)))
 	},
 }
 

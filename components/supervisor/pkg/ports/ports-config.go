@@ -186,7 +186,7 @@ func parseInstanceConfigs(ports []*gitpod.PortsItems) (portConfigs map[uint32]*g
 		}
 
 		rawPort := fmt.Sprintf("%v", config.Port)
-		Port, err := strconv.Atoi(rawPort)
+		Port, err := strconv.ParseUint(rawPort, 10, 16)
 		if err == nil {
 			if portConfigs == nil {
 				portConfigs = make(map[uint32]*gitpod.PortConfig)
