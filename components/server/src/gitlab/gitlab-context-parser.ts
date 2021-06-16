@@ -122,7 +122,40 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
     protected async handleDefaultContext(user: User, host: string, owner: string, repoName: string): Promise<NavigatorContext> {
         try {
             const repository = await this.fetchRepo(user, `${owner}/${repoName}`);
-            return this.handleTreeContext(user, host, owner, repoName, repository.defaultBranch ? [ repository.defaultBranch ] : []);
+            if (!repository.defaultBranch) {
+                return <NavigatorContext>{
+                    isFile: false,
+                    path: '',
+                    title: `${owner}/${repoName}`,
+                    repository
+                }
+            }
+
+            try {
+                const branchOrTag = await this.getBranchOrTag(user, owner, repoName, [repository.defaultBranch!]);
+                return <NavigatorContext>{
+                    isFile: false,
+                    path: '',
+                    title: `${owner}/${repoName} - ${branchOrTag.name}`,
+                    ref: branchOrTag.name,
+                    revision: branchOrTag.revision,
+                    refType: branchOrTag.type,
+                    repository
+                };
+            } catch (error) {
+                if (error && error.message && (error.message as string).startsWith("Cannot find tag/branch for context")) {
+                    // the repo is empty (has no branches)
+                    return <NavigatorContext>{
+                        isFile: false,
+                        path: '',
+                        title: `${owner}/${repoName} - ${repository.defaultBranch}`,
+                        revision: '',
+                        repository
+                    }
+                } else {
+                    throw error;
+                }
+            }
         } catch (error) {
             if (UnauthorizedError.is(error)) {
                 throw error;
@@ -148,7 +181,7 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
             revision: branchOrTag && branchOrTag.revision,
             refType: branchOrTag && branchOrTag.type,
             repository
-        }
+        };
         if (!branchOrTag) {
             return context;
         }
