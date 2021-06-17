@@ -18,7 +18,7 @@ const basewoWkspaceIDRegex = "(([a-f][0-9a-f]{7}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f
 const workspaceIDRegex = RegExp(`^${basewoWkspaceIDRegex}$`);
 
 // this pattern matches URL prefixes of workspaces
-const workspaceUrlPrefixRegex = RegExp(`^([0-9]{4,6}-)?${basewoWkspaceIDRegex}\.`);
+const workspaceUrlPrefixRegex = RegExp(`^([0-9]{4,6}-)?${basewoWkspaceIDRegex}\\.`);
 
 export class GitpodHostUrl {
     readonly url: URL;

@@ -25,5 +25,25 @@ export class GitpodHostUrlTest {
     @test public async testWithoutWorkspacePrefix() {
         expect(GitpodHostUrl.fromWorkspaceUrl("https://3000-moccasin-ferret-155799b3.ws-eu02.gitpod-staging.com/").withoutWorkspacePrefix().toString()).to.equal("https://gitpod-staging.com/");
     }
+
+    @test public async testWithoutWorkspacePrefix2() {
+        expect(GitpodHostUrl.fromWorkspaceUrl("https://gitpod-staging.com/").withoutWorkspacePrefix().toString()).to.equal("https://gitpod-staging.com/");
+    }
+
+    @test public async testWithoutWorkspacePrefix3() {
+        expect(GitpodHostUrl.fromWorkspaceUrl("https://gray-rook-5523v5d8.ws-dev.my-branch-1234.staging.gitpod-dev.com/").withoutWorkspacePrefix().toString()).to.equal("https://my-branch-1234.staging.gitpod-dev.com/");
+    }
+
+    @test public async testWithoutWorkspacePrefix4() {
+        expect(GitpodHostUrl.fromWorkspaceUrl("https://my-branch-1234.staging.gitpod-dev.com/").withoutWorkspacePrefix().toString()).to.equal("https://my-branch-1234.staging.gitpod-dev.com/");
+    }
+
+    @test public async testWithoutWorkspacePrefix5() {
+        expect(GitpodHostUrl.fromWorkspaceUrl("https://abc-nice-brunch-4224.staging.gitpod-dev.com/").withoutWorkspacePrefix().toString()).to.equal("https://abc-nice-brunch-4224.staging.gitpod-dev.com/");
+    }
+
+    @test public async testWithoutWorkspacePrefix6() {
+        expect(GitpodHostUrl.fromWorkspaceUrl("https://gray-rook-5523v5d8.ws-dev.abc-nice-brunch-4224.staging.gitpod-dev.com/").withoutWorkspacePrefix().toString()).to.equal("https://abc-nice-brunch-4224.staging.gitpod-dev.com/");
+    }
 }
 module.exports = new GitpodHostUrlTest()
