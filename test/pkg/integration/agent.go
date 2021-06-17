@@ -40,7 +40,12 @@ func ServeAgent(rcvr interface{}) {
 		log.Fatalf("cannot start RPC server on :%d", *port)
 	}
 
-	go http.Serve(l, nil)
+	go func() {
+		err := http.Serve(l, nil)
+		if err != nil {
+			log.Fatalf("cannot start RPC server on :%d", *port)
+		}
+	}()
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)

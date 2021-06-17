@@ -14,6 +14,7 @@ import (
 	agent "github.com/gitpod-io/gitpod/test/tests/workspace/workspace_agent/api"
 )
 
+//
 type GitTest struct {
 	Skip          bool
 	Name          string

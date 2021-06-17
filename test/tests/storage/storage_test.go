@@ -17,7 +17,7 @@ func TestCreateBucket(t *testing.T) {
 	it, _ := integration.NewTest(t, 30*time.Second)
 	defer it.Done()
 
-	rsa, err := it.Instrument(integration.ComponentWorkspaceDaemon, "daemon")
+	rsa, err := it.Instrument(integration.ComponentWorkspaceDaemon, "daemon", integration.WithContainer("ws-daemon"))
 	if err != nil {
 		t.Fatal(err)
 		return

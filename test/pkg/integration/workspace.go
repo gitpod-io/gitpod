@@ -194,7 +194,7 @@ func LaunchWorkspaceDirectly(it *Test, opts ...LaunchWorkspaceDirectlyOpt) (res 
 	}
 
 	// TODO(geropl) It seems we're sometimes loosing events here.
-	time.Sleep(2 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	it.WaitForWorkspace(it.ctx, instanceID.String())
 
@@ -271,7 +271,9 @@ func (t *Test) WaitForWorkspace(ctx context.Context, instanceID string) {
 		t.t.Fatalf("cannot listen for workspace updates: %q", err)
 		return
 	}
-	defer sub.CloseSend()
+	defer func() {
+		_ = sub.CloseSend()
+	}()
 
 	done := make(chan struct{})
 	go func() {
@@ -279,7 +281,7 @@ func (t *Test) WaitForWorkspace(ctx context.Context, instanceID string) {
 		for {
 			resp, err := sub.Recv()
 			if err != nil {
-				t.t.Fatalf("workspace update error: %q", err)
+				t.t.Errorf("workspace update error: %q", err)
 				return
 			}
 			status := resp.GetStatus()
@@ -291,15 +293,15 @@ func (t *Test) WaitForWorkspace(ctx context.Context, instanceID string) {
 			}
 
 			if status.Conditions.Failed != "" {
-				t.t.Fatalf("workspace instance %s failed: %s", instanceID, status.Conditions.Failed)
+				t.t.Errorf("workspace instance %s failed: %s", instanceID, status.Conditions.Failed)
 				return
 			}
 			if status.Phase == wsmanapi.WorkspacePhase_STOPPING {
-				t.t.Fatalf("workspace instance %s is stopping", instanceID)
+				t.t.Errorf("workspace instance %s is stopping", instanceID)
 				return
 			}
 			if status.Phase == wsmanapi.WorkspacePhase_STOPPED {
-				t.t.Fatalf("workspace instance %s has stopped", instanceID)
+				t.t.Errorf("workspace instance %s has stopped", instanceID)
 				return
 			}
 			if status.Phase != wsmanapi.WorkspacePhase_RUNNING {
@@ -343,7 +345,9 @@ func (it *Test) WaitForWorkspaceStop(instanceID string) (lastStatus *wsmanapi.Wo
 		it.t.Fatalf("cannot listen for workspace updates: %q", err)
 		return
 	}
-	defer sub.CloseSend()
+	defer func() {
+		_ = sub.CloseSend()
+	}()
 
 	done := make(chan struct{})
 	go func() {
@@ -351,7 +355,7 @@ func (it *Test) WaitForWorkspaceStop(instanceID string) (lastStatus *wsmanapi.Wo
 		for {
 			resp, err := sub.Recv()
 			if err != nil {
-				it.t.Fatalf("workspace update error: %q", err)
+				it.t.Errorf("workspace update error: %q", err)
 				return
 			}
 			status := resp.GetStatus()
@@ -363,7 +367,7 @@ func (it *Test) WaitForWorkspaceStop(instanceID string) (lastStatus *wsmanapi.Wo
 			}
 
 			if status.Conditions.Failed != "" {
-				it.t.Fatalf("workspace instance %s failed: %s", instanceID, status.Conditions.Failed)
+				it.t.Errorf("workspace instance %s failed: %s", instanceID, status.Conditions.Failed)
 				return
 			}
 			if status.Phase == wsmanapi.WorkspacePhase_STOPPED {
