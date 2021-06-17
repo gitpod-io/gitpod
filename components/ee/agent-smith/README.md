@@ -8,7 +8,6 @@ Agent smith makes use of eBPF to audit kernel events. In particular, it uses
 the [Falco BPF driver](https://github.com/falcosecurity/libs/tree/master/driver/bpf)
 as its BPF program to extract syscall information at runtime.
 
-
 ## State of the project
 
 - [x] Loading of the Falco BPF probe using `cilium/ebpf`
@@ -19,7 +18,6 @@ as its BPF program to extract syscall information at runtime.
 - [ ] Hook to Kubernetes and Gitpod WSS for blocking users/workspaces/pods
 
 ## eBPF development inside the Gitpod workspace
-
 
 ### Environment preparation
 Prepare the environment (it should've been already prepared when you started your Gitpod wrokspace)
@@ -45,7 +43,7 @@ leeway run components/ee/agent-smith:copy-to-qemu
 ```
 
 ```bash
-TODO: command here to execute agent-smith in the vm
+ssh -p 2222 root@127.0.0.1
 ```
 
 ## Falco libs BPF probe development

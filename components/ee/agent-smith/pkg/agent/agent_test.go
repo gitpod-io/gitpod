@@ -93,3 +93,11 @@ func BenchmarkFindEnforcementRules(b *testing.B) {
 		findEnforcementRules(rules, "foobar")
 	}
 }
+
+func TestSmithHandleNilEvent(t *testing.T) {
+	agent := &Smith{}
+	_, err := agent.handleEvent(nil)
+	if err == nil {
+		t.Error("Smith.handleEvent(): should error when the passed event is nil")
+	}
+}

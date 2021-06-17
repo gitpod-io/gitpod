@@ -469,8 +469,11 @@ func (agent *Smith) processPerfRecord(rec perf.Record) {
 }
 
 func (agent *Smith) handleEvent(res interface{}) (func() (*InfringingWorkspace, error), error) {
+	if res == nil {
+		return nil, fmt.Errorf("unable to process nil event")
+	}
 	switch v := res.(type) {
-	case event.Execve:
+	case *event.Execve:
 		return agent.handleExecveEvent(v), nil
 	}
 
@@ -480,7 +483,7 @@ func (agent *Smith) handleEvent(res interface{}) (func() (*InfringingWorkspace, 
 }
 
 // handles an execve event checks if it's infringing
-func (agent *Smith) handleExecveEvent(execve event.Execve) func() (*InfringingWorkspace, error) {
+func (agent *Smith) handleExecveEvent(execve *event.Execve) func() (*InfringingWorkspace, error) {
 	return func() (*InfringingWorkspace, error) {
 		if agent.Config.Blacklists == nil {
 			return nil, nil
