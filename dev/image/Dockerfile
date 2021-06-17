@@ -4,7 +4,7 @@
 
 FROM gitpod/workspace-full-vnc:branch-rl-gitpod-add-golangci-lint-to-418
 
-ENV TRIGGER_REBUILD 12
+ENV TRIGGER_REBUILD 13
 ENV WORKSPACE_KERNEL 5.4.0-1033-gke
 
 USER root
