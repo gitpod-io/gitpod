@@ -21,7 +21,7 @@ func TestBackup(t *testing.T) {
 	defer it.Done()
 
 	ws := integration.LaunchWorkspaceDirectly(it)
-	rsa, err := it.Instrument(integration.ComponentWorkspace, "workspace", integration.WithInstanceID(ws.Req.Id))
+	rsa, err := it.Instrument(integration.ComponentWorkspace, "workspace", integration.WithInstanceID(ws.Req.Id), integration.WithContainer("workspace"))
 	if err != nil {
 		t.Fatal(err)
 		return
@@ -38,6 +38,8 @@ func TestBackup(t *testing.T) {
 		return
 	}
 	rsa.Close()
+
+	time.Sleep(3600 * time.Second)
 
 	sctx, scancel := context.WithTimeout(ctx, 5*time.Second)
 	defer scancel()

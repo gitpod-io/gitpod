@@ -170,6 +170,8 @@ type instrumentOptions struct {
 
 type selectPodOptions struct {
 	InstanceID string
+
+	Container string
 }
 
 // WithInstanceID provides a hint during pod selection for Instrument.
@@ -179,6 +181,14 @@ type selectPodOptions struct {
 func WithInstanceID(instanceID string) InstrumentOption {
 	return func(io *instrumentOptions) error {
 		io.SPO.InstanceID = instanceID
+		return nil
+	}
+}
+
+// Container provides a hint during pod selection for Instrument a particular container
+func WithContainer(container string) InstrumentOption {
+	return func(io *instrumentOptions) error {
+		io.SPO.Container = container
 		return nil
 	}
 }
@@ -450,15 +460,18 @@ func (it *Test) uploadAgent(srcFN, tgtFN string, pod, container string) (err err
 		if err != nil {
 			return xerrors.Errorf("cannot upload agent: %w", err)
 		}
+
 		_, err = io.Copy(tarw, srcIn)
 		if err != nil {
 			return xerrors.Errorf("cannot upload agent: %w", err)
 		}
+
 		tarw.Close()
 		tarOut.Close()
 
 		return nil
 	})
+
 	return eg.Wait()
 }
 
@@ -528,6 +541,23 @@ func (t *Test) selectPod(component ComponentType, options selectPodOptions) (pod
 	pod = p.Name
 	if len(pods.Items) > 1 {
 		t.t.Logf("found multiple pods for %s, choosing %s", component, pod)
+	}
+
+	if options.Container != "" {
+		var found bool
+		for _, container := range pods.Items[0].Spec.Containers {
+			if container.Name == options.Container {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			err = xerrors.Errorf("no container name %s found", options.Container)
+			return
+		}
+
+		container = options.Container
 	}
 
 	return
