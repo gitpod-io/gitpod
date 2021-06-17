@@ -14,6 +14,7 @@ import { AbstractContextParser, IContextParser, IssueContexts } from "../workspa
 import { BitbucketApiFactory } from './bitbucket-api-factory';
 import { BitbucketTokenHelper } from "./bitbucket-token-handler";
 
+const DEFAULT_BRANCH = "master";
 
 @injectable()
 export class BitbucketContextParser extends AbstractContextParser implements IContextParser {
@@ -34,7 +35,7 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
                 switch (moreSegments[0]) {
                     case "src": {
                         const more: Partial<NavigatorContext> = {};
-                        const branchTagOrHash = moreSegments.length > 1 ? moreSegments[1] : "master";
+                        const branchTagOrHash = moreSegments.length > 1 ? moreSegments[1] : "";
                         const isHash = await this.isValidCommitHash(user, owner, repoName, branchTagOrHash);
                         if (isHash) {
                             more.revision = branchTagOrHash;
@@ -57,7 +58,7 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
                     }
                     case "branch": {
                         const more: Partial<NavigatorContext> = {};
-                        const branch = moreSegments.length > 1 ? moreSegments[1] : "master";
+                        const branch = moreSegments.length > 1 ? moreSegments[1] : "";
                         more.ref = branch;
                         more.refType = "branch";
                         return this.handleNavigatorContext(ctx, user, host, owner, repoName, more);
@@ -131,19 +132,27 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
         try {
             const api = await this.api(user);
             const repo = givenRepo || (await api.repositories.get({ workspace: owner, repo_slug: repoName })).data;
+            const repository = await this.toRepository(user, host, repo);
             span.log({ "request.finished": "" });
 
             if (!repo) {
                 throw await NotFoundError.create(await this.tokenHelper.getCurrentToken(user), user, this.config.host, owner, repoName);
             }
 
-            if (!more.revision)
-                more.ref = more.ref || "master";
+            if (!more.revision) {
+                more.ref = more.ref || repository.defaultBranch;
+            }
             more.refType = more.refType || "branch";
 
             if (!more.revision) {
                 const commits = (await api.repositories.listCommitsAt({ workspace: owner, repo_slug: repoName, revision: more.ref!, pagelen: 1 })).data;
                 more.revision = commits.values.length > 0 ? commits.values[0].hash : "";
+                if (commits.values.length === 0 && more.ref === repository.defaultBranch) {
+                    // empty repo
+                    more.ref = undefined;
+                    more.revision = "";
+                    more.refType = undefined;
+                }
             }
 
             if (!more.path) {
@@ -157,7 +166,7 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
             return {
                 ...more,
                 title: `${owner}/${repoName} - ${more.ref || more.revision}${more.path ? ':' + more.path : ''}`,
-                repository: await this.toRepository(user, host, repo)
+                repository,
             } as NavigatorContext;
         } catch (e) {
             span.log({ error: e });
@@ -247,7 +256,7 @@ export class BitbucketContextParser extends AbstractContextParser implements ICo
             name,
             owner,
             private: !!repo.isPrivate,
-            defaultBranch: repo.mainbranch ? repo.mainbranch.name : "master"
+            defaultBranch: repo.mainbranch ? repo.mainbranch.name : DEFAULT_BRANCH,
         }
         if (!!repo.parent && !!repo.parent.full_name) {
             const api = await this.api(user);
