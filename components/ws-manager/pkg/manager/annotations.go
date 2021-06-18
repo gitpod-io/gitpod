@@ -82,6 +82,9 @@ const (
 
 	// nodeNameAnnotation contains the name of the node the pod ran on. We use this to remeber the name in case the pod gets evicted.
 	nodeNameAnnotation = "gitpod.io/nodeName"
+
+	// workspaceAnnotationPrefix prefixes pod annotations that contain annotations specified during the workspaces start request
+	workspaceAnnotationPrefix = "gitpod/annotation."
 )
 
 // markWorkspaceAsReady adds annotations to a workspace pod
