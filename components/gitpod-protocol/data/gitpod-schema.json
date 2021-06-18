@@ -4,23 +4,6 @@
     "title": "Gitpod Config",
     "type": "object",
     "properties": {
-        "ide": {
-          "anyOf": [
-            {
-              "type": "string"
-            },
-            {
-              "type": "string",
-              "enum": [
-                "theia",
-                "code"
-              ]
-            }
-          ],
-          "default": "theia",
-          "description": "Controls what ide should be used for a workspace.",
-          "deprecationMessage": "The 'ide' property is an experimental feature and enabled only for some users."
-        },
         "ports": {
             "type": "array",
             "description": "List of exposed ports.",
