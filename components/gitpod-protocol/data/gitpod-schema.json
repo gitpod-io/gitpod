@@ -93,7 +93,8 @@
                     },
                     "prebuild": {
                         "type": "string",
-                        "description": "A shell command to run after `before`. This command is executed only on during workspace prebuilds. This command is expected to terminate. If it fails, the workspace build fails."
+                        "description": "A shell command to run after `before`. This command is executed only on during workspace prebuilds. This command is expected to terminate. If it fails, the workspace build fails.",
+                        "deprecationMessage": "Deprecated. Please use `init` task instead. See https://www.gitpod.io/docs/config-start-tasks."
                     },
                     "command": {
                         "type": "string",
