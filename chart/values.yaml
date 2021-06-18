@@ -234,6 +234,18 @@ components:
         expose: true
         containerPort: 8080
 
+  imageBuilderMk3:
+    name: "image-builder-mk3"
+    dependsOn:
+    - "image-builder-mk3-configmap.yaml"
+    alpineImage: alpine:3.13
+    builderImage:
+      imageName: "image-builder-mk3/bob"
+    ports:
+      rpc:
+        expose: true
+        containerPort: 8080
+
   kedge:
     name: "kedge"
     disabled: true

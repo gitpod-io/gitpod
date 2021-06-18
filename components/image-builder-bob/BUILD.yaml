@@ -26,7 +26,7 @@ packages:
         - imageRepoBase
     dockerfile: leeway.Dockerfile
     metadata:
-      helm-component: imageBuilderMk3.bob
+      helm-component: imageBuilderMk3.builderImage
     image:
-    - ${imageRepoBase}/image-builder/bob:${version}
-    - ${imageRepoBase}/image-builder/bob:${__git_commit}
+    - ${imageRepoBase}/image-builder-mk3/bob:${version}
+    - ${imageRepoBase}/image-builder-mk3/bob:${__git_commit}

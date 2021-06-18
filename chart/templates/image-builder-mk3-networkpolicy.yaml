@@ -1,0 +1,37 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ if .Values.installNetworkPolicies -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: image-builder-mk3
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    component: image-builder-mk3
+    kind: networkpolicy
+    stage: {{ .Values.installation.stage }}
+spec:
+  podSelector:
+    matchLabels:
+      app: {{ template "gitpod.fullname" . }}
+      component: image-builder-mk3
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+    # server
+  - from:
+    - podSelector:
+        matchLabels:
+          app: {{ template "gitpod.fullname" $ }}
+          component: {{ .Values.components.server.name }}
+  egress:
+  - to:
+    # Allow egress to everywhere, except...
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        # Google Compute engine special, reserved VM metadata IP
+        - 169.254.169.254/32
+{{- end -}}
