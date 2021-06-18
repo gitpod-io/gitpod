@@ -1,0 +1,32 @@
+packages:
+- name: app
+  type: go
+  srcs:
+  - "**/*.go"
+  - "go.mod"
+  - "go.sum"
+  env:
+  - CGO_ENABLED=0
+  - GOOS=linux
+  - GOPROXY=
+  deps:
+  - components/common-go:lib
+  config:
+    packaging: app
+- name: docker
+  type: docker
+  srcs:
+  - supervisor-ide-config.json
+  - ide-startup.sh
+  deps:
+  - :app
+  - components/image-builder-mk3/workspace-image-layer:pack
+  config:
+    argdeps:
+        - imageRepoBase
+    dockerfile: leeway.Dockerfile
+    metadata:
+      helm-component: imageBuilderMk3.bob
+    image:
+    - ${imageRepoBase}/image-builder/bob:${version}
+    - ${imageRepoBase}/image-builder/bob:${__git_commit}

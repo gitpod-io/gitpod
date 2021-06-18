@@ -84,7 +84,7 @@ const (
 	nodeNameAnnotation = "gitpod.io/nodeName"
 
 	// workspaceAnnotationPrefix prefixes pod annotations that contain annotations specified during the workspaces start request
-	workspaceAnnotationPrefix = "gitpod/annotation."
+	workspaceAnnotationPrefix = "gitpod.io/annotation."
 )
 
 // markWorkspaceAsReady adds annotations to a workspace pod
