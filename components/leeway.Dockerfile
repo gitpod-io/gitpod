@@ -3,4 +3,5 @@
 # See License-AGPL.txt in the project root for license information.
 
 FROM alpine:3.13
+COPY components--all-docker/commit.yaml /
 COPY components--all-docker/versions.yaml /
