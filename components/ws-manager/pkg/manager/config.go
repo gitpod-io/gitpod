@@ -132,6 +132,8 @@ type WorkspacePodTemplateConfiguration struct {
 	ProbePath string `json:"probePath,omitempty"`
 	// GhostPath is a path to an additional workspace pod template YAML file for ghost workspaces
 	GhostPath string `json:"ghostPath,omitempty"`
+	// ImagebuildPath is a oath to an additional workspace pod template YAML file for imagebuild workspaces
+	ImagebuildPath string `json:"imagebuildPath,omitempty"`
 }
 
 // WorkspaceDaemonConfiguration configures our connection to the workspace sync daemons runnin on the nodes
