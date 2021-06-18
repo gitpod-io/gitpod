@@ -33,4 +33,8 @@ export USER=gitpod
 [ -s ~/.nvm/nvm-lazy.sh ] && source /home/gitpod/.nvm/nvm-lazy.sh
 
 cd /ide || exit
-exec /ide/node/bin/gitpod-node ./out/gitpod.js "$@"
+if [ "$SUPERVISOR_DEBUG_ENABLE" = "true" ]; then
+    exec /ide/node/bin/gitpod-node --inspect ./out/gitpod.js "$@" --verbose --log=trace
+else
+    exec /ide/node/bin/gitpod-node ./out/gitpod.js "$@"
+fi
