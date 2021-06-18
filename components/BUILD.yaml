@@ -44,6 +44,8 @@ packages:
       - components/ide/code:docker
       - components/ide/theia:docker
       - components/image-builder:docker
+      - components/image-builder-mk3:docker
+      - components/image-builder-bob:docker
       - components/local-app:docker
       - components/proxy:docker
       - components/registry-facade:docker
