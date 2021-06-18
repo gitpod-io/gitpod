@@ -79,7 +79,7 @@ export class GitLabAuthProvider extends GenericAuthProvider {
                 authUser: {
                     authId: String(id),
                     authName: username,
-                    avatarUrl: avatar_url,
+                    avatarUrl: avatar_url || undefined,
                     name,
                     primaryEmail: email
                 },
