@@ -10,6 +10,10 @@ pod:
   - name: gcp-sa-release
     secret:
       secretName: gcp-sa-gitpod-release-deployer
+  - name: go-build-cache
+    hostPath:
+      path: /mnt/disks/ssd0/go-build-cache
+      type: DirectoryOrCreate
   # - name: deploy-key
   #   secret:
   #     secretName: deploy-key
@@ -40,6 +44,9 @@ pod:
     - name: gcp-sa-release
       mountPath: /mnt/secrets/gcp-sa-release
       readOnly: true
+    - name: go-build-cache
+      mountPath: /go-build-cache
+      readOnly: false
     # - name: deploy-key
     #   mountPath: /mnt/secrets/deploy-key
     #   readOnly: true
@@ -57,6 +64,8 @@ pod:
       {{- end }}
     - name: GOPROXY
       value: http://athens-athens-proxy.athens.svc.cluster.local:9999
+    - name: GOCACHE
+      value: /go-build-cache
     - name: WERFT_HOST
       value: "werft.werft.svc.cluster.local:7777"
     - name: NODENAME
@@ -106,6 +115,7 @@ pod:
         sleep 1
         set -Eeuo pipefail
 
+        sudo chown -R gitpod:gitpod $GOCACHE
         export GITHUB_TOKEN=$(echo $GITHUB_TOKEN | xargs)
 
         export DOCKER_HOST=tcp://$NODENAME:2375
