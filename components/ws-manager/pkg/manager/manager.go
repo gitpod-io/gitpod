@@ -29,6 +29,7 @@ import (
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -151,7 +152,7 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 		return nil, xerrors.Errorf("cannot start workspace: %w", err)
 	}
 	if exists {
-		return nil, xerrors.Errorf("workspace %s exists already", req.Id)
+		return nil, status.Error(codes.AlreadyExists, "workspace instance already exists")
 	}
 	span.LogKV("event", "workspace does not exist")
 	err = validateStartWorkspaceRequest(req)
@@ -177,6 +178,11 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	if err != nil {
 		m, _ := json.Marshal(pod)
 		safePod, _ := log.RedactJSON(m)
+
+		if errors.IsAlreadyExists(err) {
+			clog.WithError(err).WithField("req", req).WithField("pod", safePod).Warn("was unable to start workspace which already exists")
+			return nil, status.Error(codes.AlreadyExists, "workspace instance already exists")
+		}
 
 		clog.WithError(err).WithField("req", req).WithField("pod", safePod).Error("was unable to start workspace")
 		return nil, err
