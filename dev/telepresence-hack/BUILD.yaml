@@ -1,0 +1,15 @@
+packages:
+    - name: copy-mounts
+      type: go
+      deps:
+        - components/common-go:lib
+      srcs:
+        - go.mod
+        - go.sum
+        - "copy-mounts/*.go"
+      env:
+        - CGO_ENABLED=0
+      prep:
+        - ["sh", "-c", "mv copy-mounts/* ."]
+      config:
+        packaging: app
