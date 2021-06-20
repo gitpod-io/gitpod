@@ -573,15 +573,36 @@ OuterLoop:
 	return &config, nil
 }
 
+// APIImageBuilderOpt configures the image builder API access
+type APIImageBuilderOpt func(*apiImageBuilderOpts)
+
+// SelectImageBuilderMK3 selects the image builder mk3
+func SelectImageBuilderMK3(o *apiImageBuilderOpts) {
+	o.SelectMK3 = true
+}
+
+type apiImageBuilderOpts struct {
+	SelectMK3 bool
+}
+
 // ImageBuilder provides access to the image builder service.
-func (c *ComponentAPI) ImageBuilder() imgbldr.ImageBuilderClient {
+func (c *ComponentAPI) ImageBuilder(opts ...APIImageBuilderOpt) imgbldr.ImageBuilderClient {
+	var cfg apiImageBuilderOpts
+	for _, o := range opts {
+		o(&cfg)
+	}
+
 	if c.imgbldStatus.Client != nil {
 		return c.imgbldStatus.Client
 	}
 
 	err := func() error {
 		if c.imgbldStatus.Port == 0 {
-			pod, _, err := c.t.selectPod(ComponentImageBuilder, selectPodOptions{})
+			cmp := ComponentImageBuilder
+			if cfg.SelectMK3 {
+				cmp = ComponentImageBuilderMK3
+			}
+			pod, _, err := c.t.selectPod(cmp, selectPodOptions{})
 			if err != nil {
 				return err
 			}
