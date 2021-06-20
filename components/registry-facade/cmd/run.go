@@ -182,9 +182,13 @@ func watchConfig(fn string, reg *registry.Registry) {
 			log.WithError(err).Warn("cannot check if config has changed")
 		}
 
+		if oldHash == "" {
+			oldHash = currentHash
+		}
 		if currentHash == oldHash {
 			continue
 		}
+		oldHash = currentHash
 
 		err = reloadConfig()
 		if err == nil {
