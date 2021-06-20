@@ -21,6 +21,23 @@ import (
 func (o *Orchestrator) monitor() {
 	ctx := context.Background()
 	for {
+		wss, err := o.wsman.GetWorkspaces(ctx, &wsmanapi.GetWorkspacesRequest{
+			MustMatch: &wsmanapi.MetadataFilter{
+				Owner: buildWorkspaceOwnerID,
+			},
+		})
+		if err != nil {
+			log.WithError(err).Info("cannot get running builds from ws-manager - retrying")
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		o.runningBuildsMu.Lock()
+		o.runningBuilds = make(map[string]*api.BuildInfo, len(wss.Status))
+		for _, ws := range wss.Status {
+			o.runningBuilds[ws.Id] = extractBuildStatus(ws)
+		}
+		o.runningBuildsMu.Unlock()
+
 		sub, err := o.wsman.Subscribe(ctx, &wsmanapi.SubscribeRequest{
 			MustMatch: &wsmanapi.MetadataFilter{
 				Owner: buildWorkspaceOwnerID,
@@ -138,6 +155,14 @@ func (o *Orchestrator) publishStatus(msg *wsmanapi.WorkspaceStatus) {
 	}
 
 	resp := extractBuildResponse(msg)
+	o.runningBuildsMu.Lock()
+	if resp.Status != api.BuildStatus_running {
+		delete(o.runningBuilds, msg.Id)
+	} else {
+		o.runningBuilds[msg.Id] = extractBuildStatus(msg)
+	}
+	o.runningBuildsMu.Unlock()
+
 	for l := range listener {
 		select {
 		case l <- resp:

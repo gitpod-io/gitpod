@@ -179,6 +179,7 @@ func NewOrchestratingBuilder(cfg Configuration) (res *Orchestrator, err error) {
 		gplayerHash:    gplayerHash,
 		buildListener:  make(map[string]map[buildListener]struct{}),
 		logListener:    make(map[string]map[logListener]struct{}),
+		runningBuilds:  make(map[string]*protocol.BuildInfo),
 		censorship:     make(map[string][]string),
 		builderAuthKey: builderAuthKey,
 	}, nil
@@ -216,11 +217,13 @@ type Orchestrator struct {
 	gplayerHash string
 	wsman       wsmanapi.WorkspaceManagerClient
 
-	builderAuthKey [32]byte
-	buildListener  map[string]map[buildListener]struct{}
-	logListener    map[string]map[logListener]struct{}
-	censorship     map[string][]string
-	mu             sync.RWMutex
+	builderAuthKey  [32]byte
+	buildListener   map[string]map[buildListener]struct{}
+	logListener     map[string]map[logListener]struct{}
+	runningBuilds   map[string]*protocol.BuildInfo
+	runningBuildsMu sync.RWMutex
+	censorship      map[string][]string
+	mu              sync.RWMutex
 
 	protocol.UnimplementedImageBuilderServer
 }
@@ -426,8 +429,16 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 		})
 		return
 	}, 1*time.Second, 5)
-	if err != nil && status.Code(err) != codes.AlreadyExists {
+	if status.Code(err) == codes.AlreadyExists {
+		// build is already running - do not add it to the list of builds
+	} else if err != nil {
 		return status.Errorf(codes.Internal, "cannot start build: %q", err)
+	} else {
+		o.runningBuilds[buildID] = &protocol.BuildInfo{
+			Ref:       wsrefstr,
+			Status:    protocol.BuildStatus_running,
+			StartedAt: time.Now().Unix(),
+		}
 	}
 
 	updates, cancel := o.registerBuildListener(buildID)
@@ -505,7 +516,7 @@ func (o *Orchestrator) ListBuilds(ctx context.Context, req *protocol.ListBuildsR
 	return &protocol.ListBuildsResponse{Builds: res}, nil
 }
 
-func extractBuildStats(ws *wsmanapi.WorkspaceStatus) *protocol.BuildInfo {
+func extractBuildStatus(ws *wsmanapi.WorkspaceStatus) *protocol.BuildInfo {
 	return &protocol.BuildInfo{
 		Ref:       ws.Metadata.Annotations["ref"],
 		StartedAt: ws.Metadata.StartedAt.Seconds,
@@ -514,21 +525,12 @@ func extractBuildStats(ws *wsmanapi.WorkspaceStatus) *protocol.BuildInfo {
 }
 
 func (o *Orchestrator) getAllRunningBuilds(ctx context.Context) (res []*protocol.BuildInfo, err error) {
-	span, ctx := opentracing.StartSpanFromContext(ctx, "getAllRunningBuilds")
-	defer tracing.FinishSpan(span, &err)
+	o.runningBuildsMu.RLock()
+	defer o.runningBuildsMu.RUnlock()
 
-	wss, err := o.wsman.GetWorkspaces(ctx, &wsmanapi.GetWorkspacesRequest{
-		MustMatch: &wsmanapi.MetadataFilter{
-			Owner: buildWorkspaceOwnerID,
-		},
-	})
-	if err != nil {
-		return
-	}
-
-	res = make([]*protocol.BuildInfo, len(wss.Status))
-	for i, ws := range wss.Status {
-		res[i] = extractBuildStats(ws)
+	res = make([]*protocol.BuildInfo, 0, len(o.runningBuilds))
+	for _, ws := range o.runningBuilds {
+		res = append(res, ws)
 	}
 
 	return
