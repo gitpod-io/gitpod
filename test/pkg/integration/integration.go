@@ -635,4 +635,6 @@ const (
 	ComponentWorkspace ComponentType = "workspace"
 	// ComponentImageBuilder points to the image-builder
 	ComponentImageBuilder ComponentType = "image-builder"
+	// ComponentImageBuilder points to the image-builder-mk3
+	ComponentImageBuilderMK3 ComponentType = "image-builder-mk3"
 )
