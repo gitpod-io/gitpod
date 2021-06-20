@@ -9,26 +9,21 @@ import {MigrationInterface, QueryRunner} from "typeorm";
 export class UpdateExamples1623220362199 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<any> {
+        let priority = 90;
         const newEntries = [
-
-            { url: 'https://github.com/gitpod-io/template-dotnet-core-cli-csharp', description: 'A CLI starter for .NET written in C#.', priority: 90 },
-            { url: 'https://github.com/gitpod-io/template-golang-cli', description: 'A CLI template, written in Go.', priority: 90 },
-            { url: 'https://github.com/gitpod-io/template-rust-cli', description: 'A CLI template, written in Rust.', priority: 90 },
-
-            { url: 'https://github.com/gitpod-io/template-typescript-node', description: 'A Node.js app, written in TypeScript.', priority: 85 },
-            { url: 'https://github.com/gitpod-io/template-typescript-react', description: 'A create-react-app template, written in TypeScript.', priority: 85 },
-
-            { url: 'https://github.com/gitpod-io/template-sveltejs', description: 'A Svelte.js app writtten in JavaScript.', priority: 80 },
-            { url: 'https://github.com/gitpod-io/template-sveltejskit', description: 'A SvelteKit app template.', priority: 80 },
-
-            { url: 'https://github.com/gitpod-io/spring-petclinic', description: 'A Spring app written in Java.', priority: 75 },
-
-            { url: 'https://github.com/gitpod-io/template-php-drupal-ddev', description: 'A Drupal app template, scaffolded by DDEV.', priority: 70 },
-            { url: 'https://github.com/gitpod-io/template-php-laravel-mysql', description: 'A Laravel app template, with MySQL.', priority: 70 },
-            { url: 'https://github.com/gitpod-io/template-python-django', description: 'A Django app template. ', priority: 70 },
-            { url: 'https://github.com/gitpod-io/template-python-flask', description: 'A Flasker app template.', priority: 70 },
-            { url: 'https://github.com/gitpod-io/template-ruby-on-rails', description: 'A Ruby on Rails app template, with Postgres. ', priority: 70 },
-
+            { url: 'https://github.com/gitpod-io/template-typescript-node', description: 'A Node.js app, written in TypeScript.', priority: priority-- },
+            { url: 'https://github.com/gitpod-io/template-typescript-react', description: 'A create-react-app template, written in TypeScript.', priority: priority-- },
+            { url: 'https://github.com/gitpod-io/template-python-django', description: 'A Django app template. ', priority: priority-- },
+            { url: 'https://github.com/gitpod-io/template-python-flask', description: 'A Flasker app template.', priority: priority-- },
+            { url: 'https://github.com/gitpod-io/spring-petclinic', description: 'A Spring app written in Java.', priority: priority-- },
+            { url: 'https://github.com/gitpod-io/template-php-drupal-ddev', description: 'A Drupal app template, scaffolded by DDEV.', priority: priority-- },
+            { url: 'https://github.com/gitpod-io/template-php-laravel-mysql', description: 'A Laravel app template, with MySQL.', priority: priority-- },
+            { url: 'https://github.com/gitpod-io/template-ruby-on-rails', description: 'A Ruby on Rails app template, with Postgres. ', priority: priority-- },
+            { url: 'https://github.com/gitpod-io/template-golang-cli', description: 'A CLI template, written in Go.', priority: priority-- },
+            { url: 'https://github.com/gitpod-io/template-rust-cli', description: 'A CLI template, written in Rust.', priority: priority-- },
+            { url: 'https://github.com/gitpod-io/template-dotnet-core-cli-csharp', description: 'A CLI starter for .NET written in C#.', priority: priority-- },
+            { url: 'https://github.com/gitpod-io/template-sveltejs', description: 'A Svelte.js app writtten in JavaScript.', priority: priority-- },
+            { url: 'https://github.com/gitpod-io/template-sveltejskit', description: 'A SvelteKit app template.', priority: priority-- },
         ]
         // delete old entries
         await queryRunner.query("DELETE FROM d_b_repository_white_list");
