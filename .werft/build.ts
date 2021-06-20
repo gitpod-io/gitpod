@@ -88,7 +88,7 @@ export async function build(context, version) {
     const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
     const analytics = buildConfig["analytics"];
     const localAppVersion = mainBuild || ("with-localapp-version" in buildConfig) ? version : "unknown";
-    const retag = mainBuild || ("with-retag" in buildConfig) ? "" : "--dont-retag";
+    const retag = ("with-retag" in buildConfig) ? "" : "--dont-retag";
     const cleanSlateDeployment = mainBuild || ("with-clean-slate-deployment" in buildConfig);
 
     const withWsCluster = parseWsCluster(buildConfig["with-ws-cluster"]);   // e.g., "dev2|gpl-ws-cluster-branch": prepares this branch to host (an additional) workspace cluster
