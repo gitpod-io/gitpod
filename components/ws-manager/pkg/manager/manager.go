@@ -750,14 +750,14 @@ func portNameToVisibility(s string) api.PortVisibility {
 	parts := strings.Split(s, "-")
 	if len(parts) != 2 {
 		// old or wrong port name: return default
-		return api.PortVisibility_PORT_VISIBILITY_PUBLIC
+		return api.PortVisibility_PORT_VISIBILITY_PRIVATE
 	}
 
 	// parse (or public as fallback: important for backwards compatibility during rollout)
 	visibilitStr := fmt.Sprintf("PORT_VISIBILITY_%s", strings.ToUpper(parts[1]))
 	i32Value, present := api.PortVisibility_value[visibilitStr]
 	if !present {
-		return api.PortVisibility_PORT_VISIBILITY_PUBLIC
+		return api.PortVisibility_PORT_VISIBILITY_PRIVATE
 	}
 	return api.PortVisibility(i32Value)
 }

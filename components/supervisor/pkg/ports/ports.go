@@ -342,9 +342,9 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 				return
 			}
 			mp.GlobalPort = port
-			mp.Visibility = api.PortVisibility_public
-			if config.Visibility == "private" {
-				mp.Visibility = api.PortVisibility_private
+			mp.Visibility = api.PortVisibility_private
+			if config.Visibility == "public" {
+				mp.Visibility = api.PortVisibility_public
 			}
 			public := mp.Visibility == api.PortVisibility_public
 			pm.autoExpose(ctx, mp, public)
@@ -396,7 +396,7 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 		if mp.Exposed || configured {
 			public = mp.Visibility == api.PortVisibility_public
 		} else {
-			public = exists && config.Visibility != "private"
+			public = exists && config.Visibility == "public"
 		}
 
 		pm.autoExpose(ctx, mp, public)
