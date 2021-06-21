@@ -1,0 +1,11 @@
+[Unit]
+Description=Mount workspace inside of the VM
+
+[Install]
+WantedBy=multi-user.target
+
+[Mount]
+What=gitpod@10.0.2.2:/workspace
+Where=/workspace
+Type=fuse.sshfs
+Options=noauto,user,idmap=user,allow_other,Port=23001,IdentityFile=/root/.ssh/id_rsa

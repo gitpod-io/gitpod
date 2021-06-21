@@ -20,7 +20,6 @@ as its BPF program to extract syscall information at runtime.
 
 ## eBPF development inside the Gitpod workspace
 
-
 ### Environment preparation
 Prepare the environment (it should've been already prepared when you started your Gitpod wrokspace)
 
@@ -36,11 +35,13 @@ Start the VM, if it was not started with your Gitpod workspace.
 leeway run components/ee/agent-smith:qemu
 ```
 
-### Build and execute
+SSH in the VM
 
-Build agent-smith and copy it in the VM
+```
+ssh vm
+```
 
-TODO: write this section
+If you now go under the `/workspace` folder in the VM, you will find all your workspace stuff.
 
 ## Falco libs BPF probe development
 
@@ -59,5 +60,4 @@ cmake -DBUILD_BPF=On ..
 cd ..
 cd driver/bpf
 make CLANG=clang-7 LLC=llc-7 -j16
-scp -P 2222 probe.o root@127.0.0.1:/root/probe.o
 ```
