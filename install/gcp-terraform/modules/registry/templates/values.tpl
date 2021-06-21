@@ -5,9 +5,8 @@ components:
   imageBuilder:
     registryCerts: []
     registry:
-      name: "eu.gcr.io/${project}"
+      name: "gcr.io/${project}"
       secretName: ${secretName}
-#      path: secrets/registry-auth.json
 
   workspace:
     pullSecret:
@@ -15,7 +14,3 @@ components:
 
 docker-registry:
   enabled: false
-
-gitpod_selfhosted:
-  variants:
-    customRegistry: true

@@ -1,6 +1,6 @@
 {
 	"auths": {
-		"eu.gcr.io": {
+		"gcr.io": {
 			"auth": "${auth}"
 		}
 	}

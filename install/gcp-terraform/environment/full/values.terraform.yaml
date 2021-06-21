@@ -1,0 +1,27 @@
+"branding":
+  "homepage": "yeamesolomon.com"
+  "redirectUrlAfterLogout": "yeamesolomon.com"
+  "redirectUrlIfNotAuthenticated": "/workspaces/"
+"certificatesSecret":
+  "chainName": "tls.crt"
+  "fullChainName": "tls.crt"
+  "keyName": "tls.key"
+  "secretName": "gitpod-certificate"
+"components":
+  "db":
+    "autoMigrate": true
+    "gcloudSqlProxy":
+      "credentials": "gcloud-sql-token"
+      "enabled": true
+      "instance": "sf-experiment-with-tf:europe-west2:gitpod-db-d9dbd5c2"
+    "serviceType": "ClusterIP"
+"db":
+  "host": "10.190.0.3"
+  "password": "g4XC7Qo48hmb@b_O"
+"docker-registry":
+  "enabled": false
+"hostname": "yeamesolomon.com"
+"minio":
+  "enabled": false
+"mysql":
+  "enabled": false
