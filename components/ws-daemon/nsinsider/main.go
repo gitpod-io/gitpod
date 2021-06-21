@@ -202,6 +202,19 @@ func main() {
 					return os.Chmod("/dev/fuse", os.FileMode(0666))
 				},
 			},
+			{
+				Name:  "mknod-devnettun",
+				Usage: "creates /dev/net/tun",
+				Action: func(c *cli.Context) error {
+					_ = os.MkdirAll("/dev/net", 0755)
+					err := unix.Mknod("/dev/net/tun", 0666, int(unix.Mkdev(10, 200)))
+					if err != nil {
+						return err
+					}
+
+					return os.Chmod("/dev/net/tun", os.FileMode(0666))
+				},
+			},
 		},
 	}
 

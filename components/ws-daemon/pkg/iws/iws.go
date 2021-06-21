@@ -221,6 +221,13 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 		log.WithError(err).WithFields(wbs.Session.OWI()).Error("PrepareForUserNS: cannot mknod fuse")
 		return nil, status.Errorf(codes.Internal, "cannot prepare FUSE")
 	}
+	err = nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
+		c.Args = append(c.Args, "mknod-devnettun")
+	})
+	if err != nil {
+		log.WithError(err).WithFields(wbs.Session.OWI()).Error("PrepareForUserNS: cannot create /dev/net/tun")
+		return nil, status.Errorf(codes.Internal, "cannot create /dev/net/tun")
+	}
 
 	// create overlayfs directories to be used in ring2 as rootfs and also upper layer to track changes in the workspace
 	_ = os.MkdirAll(filepath.Join(wbs.Session.ServiceLocDaemon, "upper"), 0755)
