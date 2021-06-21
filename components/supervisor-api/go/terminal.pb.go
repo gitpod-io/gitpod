@@ -28,7 +28,7 @@ const (
 type TerminalTitleSource int32
 
 const (
-	// From the process name property
+	// From the foreground process
 	TerminalTitleSource_process TerminalTitleSource = 0
 	// From SetTitle API
 	TerminalTitleSource_api TerminalTitleSource = 1
