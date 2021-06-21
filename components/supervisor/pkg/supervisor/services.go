@@ -800,3 +800,9 @@ func (s *portService) AutoTunnel(ctx context.Context, req *api.AutoTunnelRequest
 	s.portsManager.AutoTunnel(ctx, req.Enabled)
 	return &api.AutoTunnelResponse{}, nil
 }
+
+// RetryAutoExpose retries auto exposing the give port
+func (s *portService) RetryAutoExpose(ctx context.Context, req *api.RetryAutoExposeRequest) (*api.RetryAutoExposeResponse, error) {
+	s.portsManager.RetryAutoExpose(ctx, req.Port)
+	return &api.RetryAutoExposeResponse{}, nil
+}

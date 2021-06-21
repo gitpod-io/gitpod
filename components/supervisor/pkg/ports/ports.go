@@ -45,9 +45,11 @@ func NewManager(exposed ExposedPortsInterface, served ServedPortsObserver, confi
 		C: config,
 		T: tunneled,
 
+		forceUpdates: make(chan struct{}, 1),
+
 		internal:     internal,
 		proxies:      make(map[uint32]*localhostProxy),
-		autoExposed:  make(map[uint32]uint32),
+		autoExposed:  make(map[uint32]*autoExposure),
 		autoTunneled: make(map[uint32]struct{}),
 
 		state:         state,
@@ -63,6 +65,13 @@ type localhostProxy struct {
 	proxyPort uint32
 }
 
+type autoExposure struct {
+	state      api.PortAutoExposure
+	ctx        context.Context
+	globalPort uint32
+	public     bool
+}
+
 // Manager brings together served and exposed ports. It keeps track of which port is exposed, which one is served,
 // auto-exposes ports and proxies ports served on localhost only.
 type Manager struct {
@@ -71,10 +80,12 @@ type Manager struct {
 	C ConfigInterace
 	T TunneledPortsInterface
 
+	forceUpdates chan struct{}
+
 	internal     map[uint32]struct{}
 	proxies      map[uint32]*localhostProxy
 	proxyStarter func(LocalhostPort uint32, GlobalPort uint32) (proxy io.Closer, err error)
-	autoExposed  map[uint32]uint32
+	autoExposed  map[uint32]*autoExposure
 
 	autoTunneled      map[uint32]struct{}
 	autoTunnelEnabled bool
@@ -92,11 +103,12 @@ type Manager struct {
 }
 
 type managedPort struct {
-	Served     bool
-	Exposed    bool
-	Visibility api.PortVisibility
-	URL        string
-	OnExposed  api.OnPortExposedAction
+	Served       bool
+	Exposed      bool
+	Visibility   api.PortVisibility
+	URL          string
+	OnExposed    api.OnPortExposedAction
+	AutoExposure api.PortAutoExposure
 
 	LocalhostPort uint32
 	GlobalPort    uint32
@@ -148,12 +160,15 @@ func (pm *Manager) Run(ctx context.Context, wg *sync.WaitGroup) {
 	tunneledUpdates, tunneledErrors := pm.T.Observe(ctx)
 	for {
 		var (
-			exposed    []ExposedPort
-			served     []ServedPort
-			configured *Configs
-			tunneled   []PortTunnelState
+			exposed     []ExposedPort
+			served      []ServedPort
+			configured  *Configs
+			tunneled    []PortTunnelState
+			forceUpdate bool
 		)
 		select {
+		case <-pm.forceUpdates:
+			forceUpdate = true
 		case exposed = <-exposedUpdates:
 			if exposed == nil {
 				log.Error("exposed ports observer stopped")
@@ -201,7 +216,7 @@ func (pm *Manager) Run(ctx context.Context, wg *sync.WaitGroup) {
 			log.WithError(err).Warn("error while observing tunneled ports")
 		}
 
-		if exposed == nil && served == nil && configured == nil && tunneled == nil {
+		if exposed == nil && served == nil && configured == nil && tunneled == nil && !forceUpdate {
 			// we received just an error, but no update
 			continue
 		}
@@ -332,12 +347,15 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 			}
 			mp.LocalhostPort = port
 
+			autoExpose, autoExposed := pm.autoExposed[port]
+			if autoExposed {
+				mp.AutoExposure = autoExpose.state
+			}
 			if mp.Exposed {
 				return
 			}
 			mp.OnExposed = getOnExposedAction(config, port)
 
-			_, autoExposed := pm.autoExposed[port]
 			if autoExposed {
 				return
 			}
@@ -347,7 +365,7 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 				mp.Visibility = api.PortVisibility_public
 			}
 			public := mp.Visibility == api.PortVisibility_public
-			pm.autoExpose(ctx, mp, public)
+			mp.AutoExposure = pm.autoExpose(ctx, mp.LocalhostPort, mp.GlobalPort, public).state
 		})
 	}
 
@@ -369,8 +387,12 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 		mp.LocalhostPort = port
 		mp.Served = true
 
-		exposedGlobalPort, autoExposed := pm.autoExposed[port]
-		if !autoExposed && mp.Exposed {
+		var exposedGlobalPort uint32
+		autoExposure, autoExposed := pm.autoExposed[port]
+		if autoExposed {
+			exposedGlobalPort = autoExposure.globalPort
+			mp.AutoExposure = autoExposure.state
+		} else if mp.Exposed {
 			exposedGlobalPort = mp.GlobalPort
 		}
 
@@ -399,26 +421,53 @@ func (pm *Manager) nextState(ctx context.Context) map[uint32]*managedPort {
 			public = exists && config.Visibility == "public"
 		}
 
-		pm.autoExpose(ctx, mp, public)
+		mp.AutoExposure = pm.autoExpose(ctx, mp.LocalhostPort, mp.GlobalPort, public).state
 	}
 	return state
 }
 
 // clients should guard a call with check whether such port is already exposed or auto exposed
-func (pm *Manager) autoExpose(ctx context.Context, mp *managedPort, public bool) {
-	exposing := pm.E.Expose(ctx, mp.LocalhostPort, mp.GlobalPort, public)
+func (pm *Manager) autoExpose(ctx context.Context, localPort uint32, globalPort uint32, public bool) *autoExposure {
+	exposing := pm.E.Expose(ctx, localPort, globalPort, public)
+	autoExpose := &autoExposure{
+		state:      api.PortAutoExposure_trying,
+		ctx:        ctx,
+		globalPort: globalPort,
+		public:     public,
+	}
 	go func() {
 		err := <-exposing
 		if err != nil {
 			if err != context.Canceled {
-				log.WithError(err).WithField("port", *mp).Warn("cannot auto-expose port")
+				autoExpose.state = api.PortAutoExposure_failed
+				log.WithError(err).WithField("localPort", localPort).WithField("globalPort", globalPort).Warn("cannot auto-expose port")
 			}
 			return
 		}
-		log.WithField("port", *mp).Info("auto-exposed port")
+		autoExpose.state = api.PortAutoExposure_succeeded
+		log.WithField("localPort", localPort).WithField("globalPort", globalPort).Info("auto-exposed port")
 	}()
-	pm.autoExposed[mp.LocalhostPort] = mp.GlobalPort
-	log.WithField("port", *mp).Info("auto-exposing port")
+	pm.autoExposed[localPort] = autoExpose
+	log.WithField("localPort", localPort).WithField("globalPort", globalPort).Info("auto-exposing port")
+	return autoExpose
+}
+
+// RetryAutoExpose retries auto exposing the give port
+func (pm *Manager) RetryAutoExpose(ctx context.Context, localPort uint32) {
+	pm.mu.Lock()
+	defer pm.mu.Unlock()
+	autoExpose, autoExposed := pm.autoExposed[localPort]
+	if !autoExposed || autoExpose.state != api.PortAutoExposure_failed || autoExpose.ctx.Err() != nil {
+		return
+	}
+	pm.autoExpose(autoExpose.ctx, localPort, autoExpose.globalPort, autoExpose.public)
+	pm.forceUpdate()
+}
+
+func (pm *Manager) forceUpdate() {
+	if len(pm.forceUpdates) == 0 {
+		pm.forceUpdates <- struct{}{}
+	}
 }
 
 func (pm *Manager) autoTunnel(ctx context.Context) {
@@ -710,6 +759,7 @@ func (pm *Manager) getPortStatus(port uint32) *api.PortsStatus {
 			OnExposed:  mp.OnExposed,
 		}
 	}
+	ps.AutoExposure = mp.AutoExposure
 	if mp.Tunneled {
 		ps.Tunneled = &api.TunneledPortInfo{
 			TargetPort: mp.TunneledTargetPort,

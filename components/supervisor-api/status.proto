@@ -149,6 +149,11 @@ message TunneledPortInfo {
   // map of remote clients indicates on which remote port each client is listening to
   map<string, uint32> clients = 3;
 }
+enum PortAutoExposure {
+    trying = 0;
+    succeeded = 1;
+    failed = 2;
+}
 message PortsStatus {
     // local_port is the port a service actually bound to. Some services bind
     // to localhost:<port>, in which case they cannot be made accessible from
@@ -165,6 +170,9 @@ message PortsStatus {
     // Exposed provides information when a port is exposed. If this field isn't set,
     // the port is not available from outside the workspace (i.e. the internet).
     ExposedPortInfo exposed = 5;
+
+    // AutoExposure indicates the state of auto exposure
+    PortAutoExposure auto_exposure = 7;
 
     // Tunneled provides information when a port is tunneled. If not present then
     // the port is not tunneled.

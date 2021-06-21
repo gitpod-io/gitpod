@@ -37,6 +37,13 @@ service PortService {
       post : "/v1/port/tunnel/auto/{enabled}"
     };
   }
+
+  // RetryAutoExpose retries auto exposing the give port
+  rpc RetryAutoExpose(RetryAutoExposeRequest) returns (RetryAutoExposeResponse) {
+    option (google.api.http) = {
+      post : "/v1/port/ports/exposed/retry/{port}"
+    };
+  }
 }
 enum TunnelVisiblity {
   none = 0;
@@ -65,3 +72,8 @@ message EstablishTunnelResponse { bytes data = 1; }
 
 message AutoTunnelRequest { bool enabled = 1; }
 message AutoTunnelResponse {}
+
+message RetryAutoExposeRequest {
+  uint32 port = 1;
+}
+message RetryAutoExposeResponse {}

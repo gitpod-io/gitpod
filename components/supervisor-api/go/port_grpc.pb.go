@@ -31,6 +31,8 @@ type PortServiceClient interface {
 	EstablishTunnel(ctx context.Context, opts ...grpc.CallOption) (PortService_EstablishTunnelClient, error)
 	// AutoTunnel controls enablement of auto tunneling
 	AutoTunnel(ctx context.Context, in *AutoTunnelRequest, opts ...grpc.CallOption) (*AutoTunnelResponse, error)
+	// RetryAutoExpose retries auto exposing the give port
+	RetryAutoExpose(ctx context.Context, in *RetryAutoExposeRequest, opts ...grpc.CallOption) (*RetryAutoExposeResponse, error)
 }
 
 type portServiceClient struct {
@@ -99,6 +101,15 @@ func (c *portServiceClient) AutoTunnel(ctx context.Context, in *AutoTunnelReques
 	return out, nil
 }
 
+func (c *portServiceClient) RetryAutoExpose(ctx context.Context, in *RetryAutoExposeRequest, opts ...grpc.CallOption) (*RetryAutoExposeResponse, error) {
+	out := new(RetryAutoExposeResponse)
+	err := c.cc.Invoke(ctx, "/supervisor.PortService/RetryAutoExpose", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PortServiceServer is the server API for PortService service.
 // All implementations must embed UnimplementedPortServiceServer
 // for forward compatibility
@@ -112,6 +123,8 @@ type PortServiceServer interface {
 	EstablishTunnel(PortService_EstablishTunnelServer) error
 	// AutoTunnel controls enablement of auto tunneling
 	AutoTunnel(context.Context, *AutoTunnelRequest) (*AutoTunnelResponse, error)
+	// RetryAutoExpose retries auto exposing the give port
+	RetryAutoExpose(context.Context, *RetryAutoExposeRequest) (*RetryAutoExposeResponse, error)
 	mustEmbedUnimplementedPortServiceServer()
 }
 
@@ -130,6 +143,9 @@ func (UnimplementedPortServiceServer) EstablishTunnel(PortService_EstablishTunne
 }
 func (UnimplementedPortServiceServer) AutoTunnel(context.Context, *AutoTunnelRequest) (*AutoTunnelResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AutoTunnel not implemented")
+}
+func (UnimplementedPortServiceServer) RetryAutoExpose(context.Context, *RetryAutoExposeRequest) (*RetryAutoExposeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RetryAutoExpose not implemented")
 }
 func (UnimplementedPortServiceServer) mustEmbedUnimplementedPortServiceServer() {}
 
@@ -224,6 +240,24 @@ func _PortService_AutoTunnel_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PortService_RetryAutoExpose_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RetryAutoExposeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PortServiceServer).RetryAutoExpose(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/supervisor.PortService/RetryAutoExpose",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PortServiceServer).RetryAutoExpose(ctx, req.(*RetryAutoExposeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PortService_ServiceDesc is the grpc.ServiceDesc for PortService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -242,6 +276,10 @@ var PortService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AutoTunnel",
 			Handler:    _PortService_AutoTunnel_Handler,
+		},
+		{
+			MethodName: "RetryAutoExpose",
+			Handler:    _PortService_RetryAutoExpose_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
