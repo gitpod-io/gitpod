@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## June 2021
 
+- Breaking Change: Make ports configured in `.gitpod.yml` private by default when no value for `visibility` is given (was public). This change is for security reasons. ([#4548](https://github.com/gitpod-io/gitpod/pull/4548))
 - Fix active workspace list in dashboard (show also older pinned workspaces) ([#4523](https://github.com/gitpod-io/gitpod/pull/4523))
 - Adding `ItemsList` component as a more maintainable and consistent way to render a list of workspaces, git integrations, environment variables, etc. ([#4454](https://github.com/gitpod-io/gitpod/pull/4454))
 - Improve backup stability when pods get evicted ([#4405](https://github.com/gitpod-io/gitpod/pull/4405))

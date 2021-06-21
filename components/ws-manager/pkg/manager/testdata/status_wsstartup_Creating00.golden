@@ -13,8 +13,7 @@
             "url": "http://10.0.0.114:8082",
             "exposed_ports": [
                 {
-                    "port": 8080,
-                    "visibility": 1
+                    "port": 8080
                 }
             ]
         },

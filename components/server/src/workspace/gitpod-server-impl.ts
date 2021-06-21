@@ -1073,9 +1073,9 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
     protected portVisibilityToProto(visibility: PortVisibility | undefined): ProtoPortVisibility {
         switch (visibility) {
+            default:    // the default for requests is: private
             case 'private':
                 return ProtoPortVisibility.PORT_VISIBILITY_PRIVATE;
-            default:    // the default for requests is: public
             case 'public':
                 return ProtoPortVisibility.PORT_VISIBILITY_PUBLIC;
         }

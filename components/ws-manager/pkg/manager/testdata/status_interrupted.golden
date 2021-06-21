@@ -14,13 +14,11 @@
             "exposed_ports": [
                 {
                     "port": 5900,
-                    "target": 35900,
-                    "visibility": 1
+                    "target": 35900
                 },
                 {
                     "port": 8080,
-                    "target": 38080,
-                    "visibility": 1
+                    "target": 38080
                 }
             ]
         },
