@@ -7,6 +7,7 @@ package proxy
 import (
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -37,7 +38,7 @@ func TestWorkspaceRouter(t *testing.T) {
 			Headers: map[string]string{
 				forwardedHostnameHeader: "amaranth-smelt-9ba20cc1.ws.gitpod.dev",
 			},
-			Router:       HostBasedRouter(forwardedHostnameHeader, wsHostSuffix),
+			Router:       HostBasedRouter(forwardedHostnameHeader, forwardedPortHeader, wsHostSuffix),
 			WSHostSuffix: wsHostSuffix,
 			Expected: Expectation{
 				WorkspaceID: "amaranth-smelt-9ba20cc1",
@@ -51,7 +52,7 @@ func TestWorkspaceRouter(t *testing.T) {
 			Headers: map[string]string{
 				forwardedHostnameHeader: "1234-amaranth-smelt-9ba20cc1.ws.gitpod.dev",
 			},
-			Router:       HostBasedRouter(forwardedHostnameHeader, wsHostSuffix),
+			Router:       HostBasedRouter(forwardedHostnameHeader, forwardedPortHeader, wsHostSuffix),
 			WSHostSuffix: wsHostSuffix,
 			Expected: Expectation{
 				WorkspaceID:   "amaranth-smelt-9ba20cc1",
@@ -66,7 +67,7 @@ func TestWorkspaceRouter(t *testing.T) {
 			Headers: map[string]string{
 				forwardedHostnameHeader: "blobserve.ws.gitpod.dev",
 			},
-			Router:       HostBasedRouter(forwardedHostnameHeader, wsHostSuffix),
+			Router:       HostBasedRouter(forwardedHostnameHeader, forwardedPortHeader, wsHostSuffix),
 			WSHostSuffix: wsHostSuffix,
 			Expected: Expectation{
 				Status: http.StatusOK,
@@ -143,6 +144,7 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 	tests := []struct {
 		Name       string
 		HostHeader string
+		PortHeader string
 		Expected   matchResult
 	}{
 		{
@@ -225,20 +227,26 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
+			reqUrl, err := url.Parse("https://" + test.HostHeader)
+			if err != nil {
+				t.Fatal(err)
+			}
 			req := &http.Request{
 				Host:   test.HostHeader,
 				Method: http.MethodGet,
 				Header: http.Header{
 					forwardedHostnameHeader: []string{test.HostHeader},
 				},
+				URL: reqUrl,
 			}
 
 			prov := func(req *http.Request) string { return test.HostHeader }
+			portProv := func(req *http.Request) string { return test.PortHeader }
 
 			wsMatch := mux.RouteMatch{Vars: make(map[string]string)}
 			matchesWS := matchWorkspaceHostHeader(wsHostSuffix, prov)(req, &wsMatch)
 			portMatch := mux.RouteMatch{Vars: make(map[string]string)}
-			matchesPort := matchWorkspacePortHostHeader(wsHostSuffix, prov)(req, &portMatch)
+			matchesPort := matchWorkspacePortHostHeader(wsHostSuffix, prov, portProv)(req, &portMatch)
 			res := matchResult{
 				MatchesPort:      matchesPort,
 				MatchesWorkspace: matchesWS,

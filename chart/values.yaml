@@ -451,6 +451,7 @@ components:
       memory: 64Mi
     replicas: 1
     hostHeader: "x-wsproxy-host"
+    portHeader: "x-wsproxy-port"
     wsManagerProxy:
       enabled: false
       listenAddress: ":8081"

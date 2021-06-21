@@ -223,6 +223,7 @@ https://*.*.{$GITPOD_DOMAIN} {
 			import upstream_headers
 
 			header_up X-WSProxy-Host       {http.request.host}
+			header_up X-WSProxy-Port 	   {http.request.port}
 
 			header_down -access-control-allow-origin
 		}
@@ -237,6 +238,7 @@ https://*.*.{$GITPOD_DOMAIN} {
 			header_up X-Gitpod-WorkspaceId {re.host.workspaceID}
 			header_up X-Gitpod-Port        {re.host.workspacePort}
 			header_up X-WSProxy-Host       {http.request.host}
+			header_up X-WSProxy-Port 	   {http.request.port}
 		}
 	}
 
@@ -248,6 +250,7 @@ https://*.*.{$GITPOD_DOMAIN} {
 
 			header_up X-Gitpod-WorkspaceId {re.host.workspaceID}
 			header_up X-WSProxy-Host       {http.request.host}
+			header_up X-WSProxy-Port 	   {http.request.port}
 		}
 	}
 

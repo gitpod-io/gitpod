@@ -55,6 +55,7 @@ type HostBasedIngressConfig struct {
 	HttpAddress  string `json:"httpAddress"`
 	HttpsAddress string `json:"httpsAddress"`
 	Header       string `json:"header"`
+	PortHeader   string `json:"portHeader"`
 }
 
 // Validate validates this config
@@ -66,6 +67,7 @@ func (c *HostBasedIngressConfig) Validate() error {
 		validation.Field(&c.HttpAddress, validation.Required),
 		validation.Field(&c.HttpsAddress, validation.Required),
 		validation.Field(&c.Header, validation.Required),
+		validation.Field(&c.PortHeader, validation.Required),
 	)
 }
 

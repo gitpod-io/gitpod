@@ -5,6 +5,7 @@ components:
 
   wsProxy:
     hostHeader: Host
+    porttHeader: Port
 
   wsManagerBridge:
     disabled: true

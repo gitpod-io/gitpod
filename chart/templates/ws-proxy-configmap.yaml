@@ -20,7 +20,8 @@ data:
         "ingress": {
             "httpAddress": ":{{- $comp.ports.httpProxy.containerPort -}}",
             "httpsAddress": ":{{- $comp.ports.httpsProxy.containerPort -}}",
-            "header": "{{- $comp.hostHeader -}}"
+            "header": "{{- $comp.hostHeader -}}",
+            "portHeader": "{{- $comp.portHeader -}}"
         },
         "workspaceInfoProviderConfig": {
             "wsManagerAddr": "ws-manager:8080",

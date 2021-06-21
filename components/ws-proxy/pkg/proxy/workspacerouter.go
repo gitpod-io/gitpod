@@ -26,6 +26,7 @@ const (
 
 	// The header that is used to communicate the "Host" from proxy -> ws-proxy in scenarios where ws-proxy is _not_ directly exposed
 	forwardedHostnameHeader = "x-wsproxy-host"
+	forwardedPortHeader     = "x-wsproxy-port"
 
 	// This pattern matches v4 UUIDs as well as the new generated workspace ids (e.g. pink-panda-ns35kd21)
 	workspaceIDRegex   = "(?P<" + workspaceIDIdentifier + ">[a-f][0-9a-f]{7}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-z]{2,16}-[0-9a-z]{2,16}-[0-9a-z]{8})"
@@ -38,19 +39,26 @@ const (
 type WorkspaceRouter func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (theiaRouter *mux.Router, portRouter *mux.Router, blobserveRouter *mux.Router)
 
 // HostBasedRouter is a WorkspaceRouter that routes simply based on the "Host" header
-func HostBasedRouter(header, wsHostSuffix string) WorkspaceRouter {
+func HostBasedRouter(hostHeader, portHeader, wsHostSuffix string) WorkspaceRouter {
 	return func(r *mux.Router, wsInfoProvider WorkspaceInfoProvider) (*mux.Router, *mux.Router, *mux.Router) {
 		var (
 			getHostHeader = func(req *http.Request) string {
-				if header == "Host" {
+				if hostHeader == "Host" {
 					parts := strings.Split(req.Host, ":")
 					return parts[0]
 				}
 
-				return req.Header.Get(header)
+				return req.Header.Get(hostHeader)
+			}
+			getPortHeader = func(req *http.Request) string {
+				if portHeader == "Port" {
+					return req.URL.Port()
+				}
+
+				return req.Header.Get(portHeader)
 			}
 			blobserveRouter = r.MatcherFunc(matchBlobserveHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
-			portRouter      = r.MatcherFunc(matchWorkspacePortHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
+			portRouter      = r.MatcherFunc(matchWorkspacePortHostHeader(wsHostSuffix, getHostHeader, getPortHeader)).Subrouter()
 			theiaRouter     = r.MatcherFunc(matchWorkspaceHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
 		)
 
@@ -63,9 +71,9 @@ func HostBasedRouter(header, wsHostSuffix string) WorkspaceRouter {
 	}
 }
 
-type hostHeaderProvider func(req *http.Request) string
+type headerProvider func(req *http.Request) string
 
-func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProvider) mux.MatcherFunc {
+func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider headerProvider) mux.MatcherFunc {
 	r := regexp.MustCompile("^(webview-|browser-|extensions-)?" + workspaceIDRegex + wsHostSuffix)
 	return func(req *http.Request, m *mux.RouteMatch) bool {
 		hostname := headerProvider(req)
@@ -94,7 +102,7 @@ func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProv
 	}
 }
 
-func matchWorkspacePortHostHeader(wsHostSuffix string, headerProvider hostHeaderProvider) mux.MatcherFunc {
+func matchWorkspacePortHostHeader(wsHostSuffix string, headerProvider headerProvider, portProvider headerProvider) mux.MatcherFunc {
 	r := regexp.MustCompile("^(webview-|browser-|extensions-)?" + workspacePortRegex + workspaceIDRegex + wsHostSuffix)
 	return func(req *http.Request, m *mux.RouteMatch) bool {
 		hostname := headerProvider(req)
@@ -117,6 +125,13 @@ func matchWorkspacePortHostHeader(wsHostSuffix string, headerProvider hostHeader
 			return false
 		}
 
+		port := portProvider(req)
+		log.WithField("hostname", hostname).WithField("matches", matches).WithField("workspacePort", workspacePort).WithField("port", port).Info("matchWorkspacePortHostHeader")
+
+		if port != "" && port != "443" {
+			workspacePort = port
+		}
+
 		if m.Vars == nil {
 			m.Vars = make(map[string]string)
 		}
@@ -129,7 +144,7 @@ func matchWorkspacePortHostHeader(wsHostSuffix string, headerProvider hostHeader
 	}
 }
 
-func matchBlobserveHostHeader(wsHostSuffix string, headerProvider hostHeaderProvider) mux.MatcherFunc {
+func matchBlobserveHostHeader(wsHostSuffix string, headerProvider headerProvider) mux.MatcherFunc {
 	r := regexp.MustCompile("^blobserve" + wsHostSuffix)
 	return func(req *http.Request, m *mux.RouteMatch) bool {
 		hostname := headerProvider(req)
