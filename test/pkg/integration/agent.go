@@ -35,7 +35,8 @@ func ServeAgent(rcvr interface{}) {
 		log.Fatalf("cannot register agent service: %q", err)
 	}
 	rpc.HandleHTTP()
-	l, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
+	addr := fmt.Sprintf(":%d", *port)
+	l, err := net.Listen("tcp", addr)
 	if err != nil {
 		log.Fatalf("cannot start RPC server on :%d", *port)
 	}
@@ -47,6 +48,7 @@ func ServeAgent(rcvr interface{}) {
 		}
 	}()
 
+	fmt.Printf("agent running on %s\n", addr)
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
 
