@@ -4,17 +4,19 @@
 
 FROM node:12.18.3-slim as builder
 COPY components-gitpod-db--migrations /installer/
-
 WORKDIR /app
 RUN /installer/install.sh
 
+FROM node:12.18.3 as proxy
+RUN wget https://storage.googleapis.com/cloudsql-proxy/v1.23.0/cloud_sql_proxy.linux.amd64 -O /bin/cloud_sql_proxy \
+ && chmod +x /bin/cloud_sql_proxy
 
 FROM node:12.18.3-slim
+COPY migrate.sh /app/migrate.sh
+COPY migrate_gcp.sh /app/migrate_gcp.sh
 RUN mkdir /home/jenkins && chown -R 10000 /home/jenkins
+COPY --from=proxy /bin/cloud_sql_proxy /bin/cloud_sql_proxy
+COPY --from=proxy /etc/ssl/certs/ /etc/ssl/certs/
 COPY --chown=10000:10000 --from=builder /app /app/
 WORKDIR /app/node_modules/@gitpod/gitpod-db
 
-RUN echo "#!/bin/bash"                                                            >> /app/migrate.sh && \
-    echo "yarn --cwd /app/node_modules/@gitpod/gitpod-db run wait-for-db"        >> /app/migrate.sh && \
-    echo "yarn --cwd /app/node_modules/@gitpod/gitpod-db typeorm migrations:run" >> /app/migrate.sh && \
-    chmod +x /app/migrate.sh
