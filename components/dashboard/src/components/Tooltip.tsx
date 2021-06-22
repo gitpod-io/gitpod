@@ -20,7 +20,7 @@ function Tooltip(props: TooltipProps) {
                 {props.children}
             </div>
             {expanded ?
-                <div style={{top: '-100%', left: '50%', transform: 'translate(-50%, -100%)'}} className={`mt-2 z-50 py-1 px-2 bg-gray-900 text-gray-100 text-sm absolute flex flex-col border border-gray-200 dark:border-gray-800 rounded-md truncated`}>
+                <div style={{top: '-100%', left: '50%', transform: 'translate(-50%, -100%)'}} className={`mt-2 z-50 py-1 px-2 bg-gray-900 text-gray-100 text-sm absolute flex flex-col border border-gray-200 dark:border-gray-800 rounded-md truncated whitespace-nowrap`}>
                     {props.content}
                 </div>
                 :

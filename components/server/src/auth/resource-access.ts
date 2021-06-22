@@ -166,9 +166,20 @@ export class OwnerResourceGuard implements ResourceAccessGuard {
             case "envVar":
                 return resource.subject.userId === this.userId;
             case "team":
-                return resource.members.some(m => m.userId === this.userId);
-            case "workspaceLog":
-                return resource.subject.ownerId === this.userId;
+                switch (operation) {
+                    case "create":
+                        // Anyone can create a new team.
+                        return true;
+                    case "get":
+                        // Only members can get infos about a team.
+                        return resource.members.some(m => m.userId === this.userId);
+                    case "update":
+                    case "delete":
+                        // Only owners can update or delete a team.
+                        return resource.members.some(m => m.userId === this.userId && m.role === "owner");
+                }
+                case "workspaceLog":
+                    return resource.subject.ownerId === this.userId;
         }
     }
 

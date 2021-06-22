@@ -159,7 +159,6 @@ function App() {
                 <Route path="/integrations" exact component={Integrations} />
                 <Route path="/notifications" exact component={Notifications} />
                 <Route path="/plans" exact component={Plans} />
-                <Route path="/teams" exact component={Teams} />
                 <Route path="/variables" exact component={EnvironmentVariables} />
                 <Route path="/preferences" exact component={Preferences} />
                 <Route path="/install-github-app" exact component={InstallGitHubApp} />
@@ -189,8 +188,11 @@ function App() {
                         <p className="mt-4 text-lg text-gitpod-red">{decodeURIComponent(getURLHash())}</p>
                     </div>
                 </Route>
-                <Route path="/new-team" exact component={NewTeam} />
-                <Route path="/join-team" exact component={JoinTeam} />
+                <Route path="/teams">
+                    <Route exact path="/teams" component={Teams} />
+                    <Route exact path="/teams/new" component={NewTeam} />
+                    <Route exact path="/teams/join" component={JoinTeam} />
+                </Route>
                 {(teams || []).map(team => <Route path={`/${team.slug}`}>
                     <Route exact path={`/${team.slug}`}>
                         <Redirect to={`/${team.slug}/projects`} />
