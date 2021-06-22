@@ -65,7 +65,7 @@ export interface AuthUser {
     readonly authId: string;
     readonly authName: string;
     readonly primaryEmail: string;
-    readonly commitEmail?: string;
+    readonly additionalEmails?: { address: string, type: string }[];
     readonly name?: string;
     readonly avatarUrl?: string;
 }

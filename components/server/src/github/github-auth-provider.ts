@@ -98,20 +98,26 @@ export class GitHubAuthProvider extends GenericAuthProvider {
                 .map((s: string) => s.trim())
             );
 
-            const filterPrimaryEmail = (emails: typeof userEmails) => {
+            const blockPassListEmail = ((emails: typeof userEmails) => {
                 if (this.env.blockNewUsers) {
-                    // if there is any verified email with a domain that is in the blockNewUsersPassList then use this email as primary email
+                    // if there is any verified email with a domain that is in the blockNewUsersPassList then use this email as block pass list email
                     const emailDomainInPasslist = (mail: string) => this.env.blockNewUsersPassList.some(e => mail.endsWith(`@${e}`));
                     const result = emails.filter(e => e.verified).filter(e => emailDomainInPasslist(e.email))
                     if (result.length > 0) {
                         return result[0];
                     }
                 }
-                // otherwise use GitHub's primary email as Gitpod's primary email
-                return emails.filter(e => e.primary)[0];
-            };
-            const primary = filterPrimaryEmail(userEmails);
+            })(userEmails);
+            const primary = userEmails.filter(e => e.primary)[0]!;
             const proxy = userEmails.find(e => e.email.endsWith(`@users.noreply.${this.config.host}`));
+
+            const additionalEmails: { address: string; type: string; }[] = [];
+            if (primary.visibility === 'private' && proxy) {
+                additionalEmails.push({ "address": proxy.email, "type": "commit" });
+            }
+            if (blockPassListEmail) {
+                additionalEmails.push({ "address": blockPassListEmail.email, "type": "block_pass" })
+            }
 
             return <AuthUserSetup>{
                 authUser: {
@@ -120,7 +126,7 @@ export class GitHubAuthProvider extends GenericAuthProvider {
                     avatarUrl: avatar_url,
                     name,
                     primaryEmail: primary.email,
-                    commitEmail: primary.visibility === 'private' ? proxy?.email : primary.email
+                    additionalEmails,
                 },
                 currentScopes
             }

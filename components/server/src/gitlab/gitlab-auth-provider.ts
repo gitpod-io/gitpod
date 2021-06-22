@@ -82,7 +82,7 @@ export class GitLabAuthProvider extends GenericAuthProvider {
                     avatarUrl: avatar_url || undefined,
                     name,
                     primaryEmail: email,
-                    commitEmail: commit_email
+                    additionalEmails: commit_email ? [{ "address": commit_email, "type": "commit" }] : [],
                 },
                 currentScopes: this.readScopesFromVerifyParams(tokenResponse)
             }

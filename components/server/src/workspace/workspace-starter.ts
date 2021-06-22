@@ -722,7 +722,7 @@ export class WorkspaceStarter {
 
         const gitSpec = new GitSpec();
         gitSpec.setUsername(user.fullName || identity.authName);
-        gitSpec.setEmail(identity.commitEmail || identity.primaryEmail!);
+        gitSpec.setEmail(identity.additionalEmails?.find(e => e.type === "commit")?.address || identity.primaryEmail!);
         return gitSpec;
     }
 

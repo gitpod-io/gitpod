@@ -140,7 +140,8 @@ export class UserService {
     protected handleNewUser(newUser: User, isFirstUser: boolean) {
         if (this.env.blockNewUsers) {
             const emailDomainInPasslist = (mail: string) => this.env.blockNewUsersPassList.some(e => mail.endsWith(`@${e}`));
-            const canPass = newUser.identities.some(i => !!i.primaryEmail && emailDomainInPasslist(i.primaryEmail));
+            const canPass = newUser.identities.some(i => (!!i.primaryEmail && emailDomainInPasslist(i.primaryEmail)) ||
+                i.additionalEmails?.some(e => emailDomainInPasslist(e.address)));
 
             newUser.blocked = !canPass;
         }

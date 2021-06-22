@@ -60,8 +60,6 @@ export namespace User {
         const res = { ...user };
         delete (res.additionalData);
         res.identities = res.identities.map(i => {
-            delete (i.tokens);
-
             // The user field is not in the Identity shape, but actually exists on DBIdentity.
             // Trying to push this object out via JSON RPC will fail because of the cyclic nature
             // of this field.
@@ -301,9 +299,7 @@ export interface Identity {
     authId: string;
     authName: string;
     primaryEmail?: string;
-    commitEmail?: string;
-    /** @deprecated */
-    tokens?: Token[];
+    additionalEmails?: Email[];
     /** This is a flag that triggers the HARD DELETION of this entity */
     deleted?: boolean;
     // readonly identities cannot be modified by the user
@@ -321,6 +317,21 @@ export namespace Identity {
     export function equals(id1: IdentityLookup, id2: IdentityLookup) {
         return id1.authProviderId === id2.authProviderId
             && id1.authId === id2.authId
+    }
+}
+
+export interface Email {
+    address: string;
+    type: string;
+}
+
+export namespace Email {
+    export function is(data: any): data is Email {
+        return data.hasOwnProperty('address')
+            && data.hasOwnProperty('type');
+    }
+    export function isEmailArray(data: any): data is Email[] {
+        return Array.isArray(data) && data.every(x => Email.is(x));
     }
 }
 

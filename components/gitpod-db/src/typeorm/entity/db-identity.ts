@@ -6,7 +6,7 @@
 
 import { Entity, Column, PrimaryColumn, ManyToOne, Index } from "typeorm";
 
-import { Identity, Token } from "@gitpod/gitpod-protocol";
+import { Identity, Email } from "@gitpod/gitpod-protocol";
 import { DBUser } from "./db-user";
 import { Transformer } from "../transformer";
 
@@ -33,20 +33,24 @@ export class DBIdentity implements Identity {
     })
     primaryEmail?: string;
 
-    /** @deprecated */
     @Column({
-        type: "simple-json",
-        // We want to deprecate the field without changing the schema just yet so we silence all writes and reads
-        transformer: {
-            to(value: any): any {
-                return [];
+        type: 'simple-json',
+        transformer: Transformer.compose(
+            {
+                to(value: any): any {
+                    return value;
+                },
+                from(value: any): Email[] {
+                    // We reused the 'tokens' database field. Ignore old values
+                    // in the DB and replace them with an empty array.
+                    return Email.isEmailArray(value) ? value : [];
+                }
             },
-            from(value: any): any {
-                return [];
-            }
-        }
+            Transformer.SIMPLE_JSON([])
+        ),
+        nullable: false,
     })
-    tokens: Token[];
+    additionalEmails?: Email[];
 
     @Column()
     deleted?: boolean;
