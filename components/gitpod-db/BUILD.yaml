@@ -75,6 +75,9 @@ packages:
         - ["yarn", "--cwd", "mig/node_modules/@gitpod/gitpod-db", "typeorm", "migrations:run"]
   - name: docker
     type: docker
+    srcs:
+      - migrate.sh
+      - migrate_gcp.sh
     deps:
       - :migrations
     argdeps:
