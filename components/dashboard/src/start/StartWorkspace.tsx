@@ -7,11 +7,11 @@
 import EventEmitter from "events";
 import React, { useEffect, Suspense } from "react";
 import { DisposableCollection, WorkspaceInstance, WorkspaceImageBuild, Workspace, WithPrebuild } from "@gitpod/gitpod-protocol";
-import { HeadlessLogEvent } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import PendingChangesDropdown from "../components/PendingChangesDropdown";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
+import { watchHeadlessLogs } from "./WorkspaceLogs";
 
 const WorkspaceLogs = React.lazy(() => import('./WorkspaceLogs'));
 
@@ -230,7 +230,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       // or as a headless workspace.
       case "running":
         if (isHeadless) {
-          return <HeadlessWorkspaceView workspaceId={this.state.workspaceInstance.workspaceId} />;
+          return <HeadlessWorkspaceView instanceId={this.state.workspaceInstance.id} />;
         }
         phase = StartPhase.Running;
         statusMessage = <p className="text-base text-gray-400">Opening IDE …</p>;
@@ -246,7 +246,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
       // Stopping means that the workspace is currently shutting down. It could go to stopped every moment.
       case "stopping":
         if (isHeadless) {
-          return <HeadlessWorkspaceView workspaceId={this.state.workspaceInstance.workspaceId} />;
+          return <HeadlessWorkspaceView instanceId={this.state.workspaceInstance.id} />;
         }
         phase = StartPhase.Stopping;
         statusMessage = <div>
@@ -337,23 +337,14 @@ function ImageBuildView(props: ImageBuildViewProps) {
   </StartPage>;
 }
 
-function HeadlessWorkspaceView(props: { workspaceId: string }) {
+function HeadlessWorkspaceView(props: { instanceId: string }) {
   const logsEmitter = new EventEmitter();
 
   useEffect(() => {
     const service = getGitpodService();
-    const watchHeadlessWorkspace = () => service.server.watchHeadlessWorkspaceLogs(props.workspaceId);;
-    watchHeadlessWorkspace();
-
-    const toDispose = service.registerClient({
-      notifyDidOpenConnection: () => watchHeadlessWorkspace(),
-      onHeadlessWorkspaceLogs(event: HeadlessLogEvent): void {
-        logsEmitter.emit('logs', event.text);
-      },
-    });
-
+    const disposables = watchHeadlessLogs(service.server, props.instanceId, (chunk) => logsEmitter.emit('logs', chunk), () => {});
     return function cleanup() {
-      toDispose.dispose();
+      disposables.dispose();
     };
   }, []);
 
