@@ -165,7 +165,8 @@ func (it *Test) Username() string {
 type InstrumentOption func(*instrumentOptions) error
 
 type instrumentOptions struct {
-	SPO selectPodOptions
+	SPO              selectPodOptions
+	WorkspacekitLift bool
 }
 
 type selectPodOptions struct {
@@ -193,6 +194,16 @@ func WithContainer(container string) InstrumentOption {
 	}
 }
 
+// WithWorkspacekitLift executes the agent using `workspacekit lift` thereby lifting it into ring1.
+// Only relevant for ComponentWorkspace and ignored for all other components.
+// Defaults to true.
+func WithWorkspacekitLift(lift bool) InstrumentOption {
+	return func(io *instrumentOptions) error {
+		io.WorkspacekitLift = true
+		return nil
+	}
+}
+
 // Instrument builds and uploads an agent to a pod, then connects to its RPC service.
 // We first check if there's an executable in the path named `gitpod-integration-test-<agentName>-agent`.
 // If there isn't, we attempt to build `<agentName>_agent/main.go`.
@@ -200,7 +211,9 @@ func WithContainer(container string) InstrumentOption {
 // create an RPC client.
 // Test.Done() will stop the agent and port-forwarding.
 func (it *Test) Instrument(component ComponentType, agentName string, opts ...InstrumentOption) (agent *rpc.Client, err error) {
-	var options instrumentOptions
+	options := instrumentOptions{
+		WorkspacekitLift: true,
+	}
 	for _, o := range opts {
 		err := o(&options)
 		if err != nil {
@@ -235,10 +248,15 @@ func (it *Test) Instrument(component ComponentType, agentName string, opts ...In
 		return nil, err
 	}
 
+	cmd := []string{filepath.Join("/tmp", tgtFN), "-rpc-port", strconv.Itoa(localAgentPort)}
+	if options.WorkspacekitLift {
+		cmd = append([]string{"/.supervisor/workspacekit", "lift"}, cmd...)
+	}
+
 	execErrs := make(chan error, 1)
 	go func() {
 		defer close(execErrs)
-		execErr := it.executeAgent(filepath.Join("/tmp", tgtFN), podName, containerName, localAgentPort)
+		execErr := it.executeAgent(cmd, podName, containerName)
 		if err != nil {
 			execErrs <- execErr
 		}
@@ -375,7 +393,7 @@ func forwardPort(ctx context.Context, config *rest.Config, namespace, pod, port 
 	return
 }
 
-func (it *Test) executeAgent(tgtPath string, pod, container string, port int) (err error) {
+func (it *Test) executeAgent(cmd []string, pod, container string) (err error) {
 	restClient := it.clientset.CoreV1().RESTClient()
 	req := restClient.Post().
 		Resource("pods").
@@ -385,7 +403,7 @@ func (it *Test) executeAgent(tgtPath string, pod, container string, port int) (e
 		Param("container", container)
 	req.VersionedParams(&corev1.PodExecOptions{
 		Container: container,
-		Command:   []string{tgtPath, "-rpc-port", strconv.Itoa(port)},
+		Command:   cmd,
 		Stdin:     false,
 		Stdout:    true,
 		Stderr:    true,
