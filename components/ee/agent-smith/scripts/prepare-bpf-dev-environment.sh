@@ -41,6 +41,9 @@ sudo virt-customize -a bionic-server-cloudimg-amd64.img --run-command 'apt insta
 sudo virt-customize -a bionic-server-cloudimg-amd64.img --run-command 'ssh-keygen -b 2048 -t rsa -f /root/.ssh/id_rsa -q -N ""'
 sudo virt-customize -a bionic-server-cloudimg-amd64.img --run-command 'mkdir /workspace'
 sudo virt-copy-out -a bionic-server-cloudimg-amd64.img /root/.ssh/id_rsa.pub /tmp
+
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
 cat /tmp/id_rsa.pub >> ~/.ssh/authorized_keys
 chmod 600 ~/.ssh/authorized_keys
 
