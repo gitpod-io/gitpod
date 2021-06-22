@@ -19,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Fix issues blocking SSH from local terminal ([#4358](https://github.com/gitpod-io/gitpod/pull/4358))
 - Fix remote tracking branch for issue context ([#4367](https://github.com/gitpod-io/gitpod/pull/4367))
 - Fix opening empty repositories ([#4337](https://github.com/gitpod-io/gitpod/pull/4337))
+- Fix unvalidated redirects (credit: Arif Khan from SaveBreach Team) ([#2879](https://github.com/gitpod-io/gitpod/pull/2879))
 
 ## May 2021
 
