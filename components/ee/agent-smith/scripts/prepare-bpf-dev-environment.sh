@@ -36,6 +36,9 @@ sudo virt-customize -a bionic-server-cloudimg-amd64.img --run-command 'echo "[Ne
 
 sudo virt-customize -a bionic-server-cloudimg-amd64.img --run-command 'apt update && apt remove openssh-server -y && apt install openssh-server -y'
 
+# code binary
+sudo virt-customize -a bionic-server-cloudimg-amd64.img --copy-in "${script_dirname}/code":/usr/bin
+
 # workspace mount under /workspace
 sudo virt-customize -a bionic-server-cloudimg-amd64.img --run-command 'apt install sshfs -y'
 sudo virt-customize -a bionic-server-cloudimg-amd64.img --run-command 'ssh-keygen -b 2048 -t rsa -f /root/.ssh/id_rsa -q -N ""'
