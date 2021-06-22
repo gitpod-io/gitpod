@@ -108,30 +108,11 @@ func LaunchWorkspaceDirectly(it *Test, opts ...LaunchWorkspaceDirectlyOpt) (res 
 
 	var workspaceImage string
 	if options.BaseImage != "" {
-		rctx, rcancel := context.WithTimeout(it.ctx, perCallTimeout)
-		cl := it.API().ImageBuilder()
-		reslv, err := cl.ResolveWorkspaceImage(rctx, &imgbldr.ResolveWorkspaceImageRequest{
-			Source: &imgbldr.BuildSource{
-				From: &imgbldr.BuildSource_Ref{
-					Ref: &imgbldr.BuildSourceReference{
-						Ref: options.BaseImage,
-					},
-				},
-			},
-			Auth: &imgbldr.BuildRegistryAuth{
-				Mode: &imgbldr.BuildRegistryAuth_Total{
-					Total: &imgbldr.BuildRegistryAuthTotal{
-						AllowAll: true,
-					},
-				},
-			},
-		})
-		rcancel()
+		workspaceImage, err = it.resolveOrBuildImage(options.BaseImage)
 		if err != nil {
-			it.t.Fatal(err)
+			it.t.Fatalf("cannot resolve base image: %v", err)
 			return
 		}
-		workspaceImage = reslv.Ref
 	}
 
 	ideImage := options.IdeImage
@@ -397,6 +378,74 @@ func (it *Test) WaitForWorkspaceStop(instanceID string) (lastStatus *wsmanapi.Wo
 	case <-done:
 	}
 	return
+}
+
+func (it *Test) resolveOrBuildImage(baseRef string) (absref string, err error) {
+	rctx, rcancel := context.WithTimeout(it.ctx, perCallTimeout)
+	cl := it.API().ImageBuilder()
+	reslv, err := cl.ResolveWorkspaceImage(rctx, &imgbldr.ResolveWorkspaceImageRequest{
+		Source: &imgbldr.BuildSource{
+			From: &imgbldr.BuildSource_Ref{
+				Ref: &imgbldr.BuildSourceReference{
+					Ref: baseRef,
+				},
+			},
+		},
+		Auth: &imgbldr.BuildRegistryAuth{
+			Mode: &imgbldr.BuildRegistryAuth_Total{
+				Total: &imgbldr.BuildRegistryAuthTotal{
+					AllowAll: true,
+				},
+			},
+		},
+	})
+	rcancel()
+	if err != nil {
+		return
+	}
+
+	if reslv.Status == imgbldr.BuildStatus_done_success {
+		return reslv.Ref, nil
+	}
+
+	it.t.Log("workspace image isn't built - building now")
+
+	rctx, rcancel = context.WithTimeout(it.ctx, 5*time.Minute)
+	defer rcancel()
+	bld, err := cl.Build(rctx, &imgbldr.BuildRequest{
+		Source: &imgbldr.BuildSource{
+			From: &imgbldr.BuildSource_Ref{
+				Ref: &imgbldr.BuildSourceReference{
+					Ref: baseRef,
+				},
+			},
+		},
+		Auth: &imgbldr.BuildRegistryAuth{
+			Mode: &imgbldr.BuildRegistryAuth_Total{
+				Total: &imgbldr.BuildRegistryAuthTotal{
+					AllowAll: true,
+				},
+			},
+		},
+	})
+	if err != nil {
+		return
+	}
+
+	for {
+		resp, err := bld.Recv()
+		if err != nil {
+			return "", err
+		}
+
+		if resp.Status == imgbldr.BuildStatus_done_success {
+			break
+		} else if resp.Status == imgbldr.BuildStatus_done_failure {
+			return "", fmt.Errorf("cannot build workspace image: %s", resp.Message)
+		}
+	}
+
+	return reslv.Ref, nil
 }
 
 // DeleteWorkspace cleans up a workspace started during an integration test
