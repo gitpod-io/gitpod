@@ -16,6 +16,7 @@ import StartWorkspace from "./StartWorkspace";
 import { openAuthorizeWindow } from "../provider-utils";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { SelectAccountModal } from "../settings/SelectAccountModal";
+import { watchHeadlessLogs } from "./WorkspaceLogs";
 
 const WorkspaceLogs = React.lazy(() => import('./WorkspaceLogs'));
 
@@ -68,27 +69,27 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
 
   async tryAuthorize(host: string, scopes?: string[]) {
     try {
-        await openAuthorizeWindow({
-            host,
-            scopes,
-            onSuccess: () => {
-              window.location.reload();
-            },
-            onError: (error) => {
-                if (typeof error === "string") {
-                    try {
-                        const payload = JSON.parse(error);
-                        if (SelectAccountPayload.is(payload)) {
-                          this.setState({ selectAccountError: payload });
-                        }
-                    } catch (error) {
-                        console.log(error);
-                    }
-                }
+      await openAuthorizeWindow({
+        host,
+        scopes,
+        onSuccess: () => {
+          window.location.reload();
+        },
+        onError: (error) => {
+          if (typeof error === "string") {
+            try {
+              const payload = JSON.parse(error);
+              if (SelectAccountPayload.is(payload)) {
+                this.setState({ selectAccountError: payload });
+              }
+            } catch (error) {
+              console.log(error);
             }
-        });
+          }
+        }
+      });
     } catch (error) {
-        console.log(error)
+      console.log(error)
     }
   };
 
@@ -100,7 +101,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
             window.location.href = gitpodHostUrl.asAccessControl().toString();
           }} />
         </div>
-    </StartPage>);
+      </StartPage>);
     }
 
     let phase = StartPhase.Checking;
@@ -130,19 +131,19 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
           // HACK: Hide the error (behind the modal)
           error = undefined;
           phase = StartPhase.Stopped;
-          statusMessage = <LimitReachedPrivateRepoModal/>;
+          statusMessage = <LimitReachedPrivateRepoModal />;
           break;
         case ErrorCodes.TOO_MANY_RUNNING_WORKSPACES:
           // HACK: Hide the error (behind the modal)
           error = undefined;
           phase = StartPhase.Stopped;
-          statusMessage = <LimitReachedParallelWorkspacesModal/>;
+          statusMessage = <LimitReachedParallelWorkspacesModal />;
           break;
         case ErrorCodes.NOT_ENOUGH_CREDIT:
           // HACK: Hide the error (behind the modal)
           error = undefined;
           phase = StartPhase.Stopped;
-          statusMessage = <LimitReachedOutOfHours/>;
+          statusMessage = <LimitReachedOutOfHours />;
           break;
         default:
           statusMessage = <p className="text-base text-gitpod-red w-96">Unknown Error: {JSON.stringify(this.state?.error, null, 2)}</p>;
@@ -156,7 +157,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
     }
 
     else if (result?.existingWorkspaces) {
-      statusMessage = <Modal visible={true} closeable={false} onClose={()=>{}}>
+      statusMessage = <Modal visible={true} closeable={false} onClose={() => { }}>
         <h3>Running Workspaces</h3>
         <div className="border-t border-b border-gray-200 dark:border-gray-800 mt-4 -mx-6 px-6 py-2">
           <p className="mt-1 mb-2 text-base">You already have running workspaces with the same context. You can open an existing one or open a new workspace.</p>
@@ -203,7 +204,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
 
 function LimitReachedModal(p: { children: React.ReactNode }) {
   const { user } = useContext(UserContext);
-  return <Modal visible={true} closeable={false} onClose={()=>{}}>
+  return <Modal visible={true} closeable={false} onClose={() => { }}>
     <h3 className="flex">
       <span className="flex-grow">Limit Reached</span>
       <img className="rounded-full w-8 h-8" src={user?.avatarUrl || ''} alt={user?.name || 'Anonymous'} />
@@ -237,7 +238,7 @@ function LimitReachedOutOfHours() {
 }
 
 function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
-  const [ statusMessage, setStatusMessage ] = useState<React.ReactNode>();
+  const [statusMessage, setStatusMessage] = useState<React.ReactNode>();
   useEffect(() => {
     (async () => {
       const service = getGitpodService();
@@ -250,7 +251,7 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
       console.log('lastUpdate', lastUpdate);
 
       if ((await service.server.mayAccessPrivateRepo()) === false) {
-        setStatusMessage(<LimitReachedPrivateRepoModal/>);
+        setStatusMessage(<LimitReachedPrivateRepoModal />);
         return;
       }
 
@@ -317,6 +318,7 @@ interface RunningPrebuildViewProps {
   runningPrebuild: {
     prebuildID: string
     workspaceID: string
+    instanceID: string
     starting: RunningWorkspacePrebuildStarting
     sameCluster: boolean
   };
@@ -339,25 +341,11 @@ function RunningPrebuildView(props: RunningPrebuildViewProps) {
       }
       pollTimeout = setTimeout(pollIsPrebuildDone, 10000);
     };
-    const watchPrebuild = () => {
-      service.server.watchHeadlessWorkspaceLogs(props.runningPrebuild.workspaceID);
-      pollIsPrebuildDone();
-    };
-    watchPrebuild();
 
-    const toDispose = service.registerClient({
-      notifyDidOpenConnection: () => watchPrebuild(),
-      onHeadlessWorkspaceLogs: event => {
-        if (event.workspaceID !== props.runningPrebuild.workspaceID) {
-          return;
-        }
-        logsEmitter.emit('logs', event.text);
-      },
-    });
-
+    const disposables = watchHeadlessLogs(service.server, props.runningPrebuild.instanceID, (chunk) => logsEmitter.emit('logs', chunk), pollIsPrebuildDone);
     return function cleanup() {
       clearTimeout(pollTimeout!);
-      toDispose.dispose();
+      disposables.dispose();
     };
   }, []);
 

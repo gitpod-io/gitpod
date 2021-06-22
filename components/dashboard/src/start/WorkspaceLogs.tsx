@@ -9,7 +9,7 @@ import React from 'react';
 import { Terminal, ITerminalOptions, ITheme } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit'
 import 'xterm/css/xterm.css';
-import { DisposableCollection } from '@gitpod/gitpod-protocol';
+import { DisposableCollection, GitpodServer, HEADLESS_LOG_STREAM_STATUS_CODE_REGEX } from '@gitpod/gitpod-protocol';
 
 export interface WorkspaceLogsProps {
   logsEmitter: EventEmitter;
@@ -85,4 +85,83 @@ export default class WorkspaceLogs extends React.Component<WorkspaceLogsProps, W
       <div className="h-full w-full" ref={this.xTermParentRef}></div>
     </div>;
   }
+}
+
+export function watchHeadlessLogs(server: GitpodServer, instanceId: string, onLog: (chunk: string) => void, checkIsDone: () => Promise<void> | void): DisposableCollection {
+  const disposables = new DisposableCollection();
+
+  const startWatchingLogs = async () => {
+    await checkIsDone();
+
+    const retry = async (reason: string, err?: Error) => {
+      console.debug("re-trying headless-logs because: " + reason, err);
+      await new Promise((resolve) => {
+        setTimeout(resolve, 2000);
+      });
+      startWatchingLogs().catch(console.error);
+    };
+
+    let response: Response | undefined = undefined;
+    let reader: ReadableStreamDefaultReader<Uint8Array> | undefined = undefined;
+    try {
+      const logSources = await server.getHeadlessLog(instanceId);
+      // TODO(gpl) Only listening on first stream for now
+      const streamIds = Object.keys(logSources.streams);
+      if (streamIds.length < 1) {
+        await retry("no streams");
+        return;
+      }
+
+      const streamUrl = logSources.streams[streamIds[0]];
+      console.log("fetching from streamUrl: " + streamUrl);
+      response = await fetch(streamUrl, {
+        method: 'GET',
+        cache: 'no-cache',
+        credentials: 'include',
+        keepalive: true,
+        headers: {
+          'TE': 'trailers', // necessary to receive stream status code
+        },
+      });
+      reader = response.body?.getReader();
+      if (!reader) {
+        await retry("no reader");
+        return;
+      }
+      disposables.push({ dispose: () => reader?.cancel() });
+
+      const decoder = new TextDecoder('utf-8');
+      let chunk = await reader.read();
+      while (!chunk.done) {
+        const msg = decoder.decode(chunk.value, { stream: true });
+
+        // In an ideal world, we'd use res.addTrailers()/response.trailer here. But despite being introduced with HTTP/1.1 in 1999, trailers are not supported by popular proxies (nginx, for example).
+        // So we resort to this hand-written solution:
+        const matches = msg.match(HEADLESS_LOG_STREAM_STATUS_CODE_REGEX);
+        if (matches) {
+          if (matches.length < 2) {
+            console.debug("error parsing log stream status code. msg: " + msg);
+          } else {
+            const streamStatusCode = matches[1];
+            if (streamStatusCode !== "200") {
+              throw new Error("received status code: " + streamStatusCode);
+            }
+          }
+        } else {
+          onLog(msg);
+        }
+
+        chunk = await reader.read();
+      }
+      reader.cancel()
+
+      await checkIsDone();
+    } catch(err) {
+      reader?.cancel().catch(console.debug);
+      await retry("error while listening to stream", err);
+    }
+  };
+  startWatchingLogs().catch(console.error);
+
+  return disposables;
 }
