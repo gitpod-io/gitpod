@@ -8,4 +8,4 @@ WantedBy=multi-user.target
 What=gitpod@10.0.2.2:/workspace
 Where=/workspace
 Type=fuse.sshfs
-Options=noauto,user,idmap=user,allow_other,Port=23001,IdentityFile=/root/.ssh/id_rsa
+Options=noauto,user,idmap=user,allow_other,Port=23001,IdentityFile=/root/.ssh/id_rsa,StrictHostKeyChecking=no
