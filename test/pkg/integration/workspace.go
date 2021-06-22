@@ -6,6 +6,7 @@ package integration
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -141,15 +142,19 @@ func LaunchWorkspaceDirectly(it *Test, opts ...LaunchWorkspaceDirectlyOpt) (res 
 		if err != nil {
 			it.t.Fatalf("cannot find server pod: %q", err)
 		}
-		theiaImage, err := envvarFromPod(pods, "THEIA_IMAGE_REPO", "server")
+		imageAliases, err := envvarFromPod(pods, "IDE_IMAGE_ALIASES", "server")
 		if err != nil {
 			it.t.Fatal(err)
 		}
-		version, err := envvarFromPod(pods, "VERSION", "server")
-		if err != nil {
-			it.t.Fatal(err)
+		var aliases struct {
+			Code string `json:"code"`
 		}
-		ideImage = fmt.Sprintf("%s:%s", theiaImage, version)
+		err = json.Unmarshal([]byte(imageAliases), &aliases)
+		if err != nil {
+			it.t.Fatalf("cannot unmarshal image aliases from server: %v", err)
+		}
+
+		ideImage = aliases.Code
 	}
 
 	req := &wsmanapi.StartWorkspaceRequest{
