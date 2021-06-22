@@ -84,6 +84,8 @@ function readConfig(): RateLimiterConfig {
         "getTeamMembers": { group: "default", points: 1 },
         "createTeam": { group: "default", points: 1 },
         "joinTeam": { group: "default", points: 1 },
+        "setTeamMemberRole": { group: "default", points: 1 },
+        "removeTeamMember": { group: "default", points: 1 },
         "getGenericInvite": { group: "default", points: 1 },
         "resetGenericInvite": { group: "default", points: 1 },
         "getContentBlobUploadUrl": { group: "default", points: 1 },

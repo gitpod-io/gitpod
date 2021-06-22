@@ -305,7 +305,7 @@ export default function NewProject() {
         </>)
     };
 
-    return (<div className="flex flex-col w-96 mt-16 mx-auto items-center">
+    return (<div className="flex flex-col w-96 mt-24 mx-auto items-center">
         <h1>New Project</h1>
         <p className="text-gray-500 text-center text-base">Projects allow you to set up and acess Prebuilds.</p>
 
