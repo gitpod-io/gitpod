@@ -21,7 +21,7 @@ func TestBackup(t *testing.T) {
 	defer it.Done()
 
 	ws := integration.LaunchWorkspaceDirectly(it)
-	rsa, err := it.Instrument(integration.ComponentWorkspace, "workspace", integration.WithInstanceID(ws.Req.Id), integration.WithContainer("workspace"))
+	rsa, err := it.Instrument(integration.ComponentWorkspace, "workspace", integration.WithInstanceID(ws.Req.Id), integration.WithContainer("workspace"), integration.WithWorkspacekitLift(true))
 	if err != nil {
 		t.Fatal(err)
 		return
@@ -34,12 +34,11 @@ func TestBackup(t *testing.T) {
 		Mode:    0644,
 	}, &resp)
 	if err != nil {
+		_, _ = it.API().WorkspaceManager().StopWorkspace(ctx, &wsapi.StopWorkspaceRequest{Id: ws.Req.Id})
 		t.Fatal(err)
 		return
 	}
 	rsa.Close()
-
-	time.Sleep(3600 * time.Second)
 
 	sctx, scancel := context.WithTimeout(ctx, 5*time.Second)
 	defer scancel()
