@@ -42,18 +42,18 @@ sudo virt-customize -a bionic-server-cloudimg-amd64.img --run-command 'ssh-keyge
 sudo virt-customize -a bionic-server-cloudimg-amd64.img --run-command 'mkdir /workspace'
 sudo virt-copy-out -a bionic-server-cloudimg-amd64.img /root/.ssh/id_rsa.pub /tmp
 
-mkdir -p ~/.ssh
-chmod 700 ~/.ssh
-cat /tmp/id_rsa.pub >> ~/.ssh/authorized_keys
-chmod 600 ~/.ssh/authorized_keys
+mkdir -p .ssh
+chmod 700 .ssh
+cat /tmp/id_rsa.pub >> .ssh/authorized_keys
+chmod 600 .ssh/authorized_keys
 
-rm -f ~/.ssh/id_rsa_vm
-ssh-keygen -b 2048 -t rsa -f ~/.ssh/id_rsa_vm -q -N ""
+rm -f .ssh/id_rsa_vm
+ssh-keygen -b 2048 -t rsa -f .ssh/id_rsa_vm -q -N ""
 
-rm -f ~/.ssh/config
-cp "${script_dirname}/config" ~/.ssh/config
+rm -f .ssh/config
+cp "${script_dirname}/config" .ssh/config
 
-sudo virt-customize -a bionic-server-cloudimg-amd64.img --copy-in ~/.ssh/id_rsa_vm.pub:/tmp
+sudo virt-customize -a bionic-server-cloudimg-amd64.img --copy-in .ssh/id_rsa_vm.pub:/tmp
 sudo virt-customize -a bionic-server-cloudimg-amd64.img --run-command 'cat /tmp/id_rsa_vm.pub >> /root/.ssh/authorized_keys'
 sudo virt-customize -a bionic-server-cloudimg-amd64.img --run-command 'chmod 600 /root/.ssh/authorized_keys'
 

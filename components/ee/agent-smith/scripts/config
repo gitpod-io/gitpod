@@ -2,5 +2,6 @@ Host vm
   User root
   Hostname 127.0.0.1
   PreferredAuthentications publickey
+  StrictHostKeyChecking no
   IdentityFile  ~/.ssh/id_rsa_vm
   Port 2222

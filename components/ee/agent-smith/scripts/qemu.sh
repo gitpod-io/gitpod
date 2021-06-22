@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+
 vmlinuz="vmlinuz-${WORKSPACE_KERNEL}"
 
 script_dirname="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 outdir="${script_dirname}/_output"
+
+rm -Rf ~/.ssh
+cp -r "${outdir}/.ssh" ~/.ssh
 
 sudo qemu-system-x86_64 -kernel "/boot/${vmlinuz}" \
 -boot c -m 2049M -hda "${outdir}/bionic-server-cloudimg-amd64.img" \
