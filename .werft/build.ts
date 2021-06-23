@@ -90,7 +90,7 @@ export async function build(context, version) {
     const localAppVersion = mainBuild || ("with-localapp-version" in buildConfig) ? version : "unknown";
     const retag = ("with-retag" in buildConfig) ? "" : "--dont-retag";
     const cleanSlateDeployment = mainBuild || ("with-clean-slate-deployment" in buildConfig);
-
+    const installEELicense = !("without-ee-license" in buildConfig);
     const withWsCluster = parseWsCluster(buildConfig["with-ws-cluster"]);   // e.g., "dev2|gpl-ws-cluster-branch": prepares this branch to host (an additional) workspace cluster
     const wsCluster = parseWsCluster(buildConfig["as-ws-cluster"]);         // e.g., "dev2|gpl-fat-cluster-branch": deploys this build as so that it is available under that subdomain as that cluster
 
@@ -113,6 +113,7 @@ export async function build(context, version) {
         localAppVersion,
         retag,
         cleanSlateDeployment,
+        installEELicense,
     }));
 
     /**
@@ -226,7 +227,8 @@ export async function build(context, version) {
         withWsCluster,
         analytics,
         cleanSlateDeployment,
-        sweeperImage
+        sweeperImage,
+        installEELicense,
     };
     await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
     await triggerIntegrationTests(deploymentConfig, !withIntegrationTests)
@@ -243,6 +245,7 @@ interface DeploymentConfig {
     analytics?: string;
     cleanSlateDeployment: boolean;
     sweeperImage: string;
+    installEELicense: boolean;
 }
 
 /**
@@ -388,7 +391,11 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
             flags += ` -f ../.werft/values.dev.gcp-storage.yaml`;
         }
 
-        werft.log('helm', `helm flags: ${flags}`)
+        if (deploymentConfig.installEELicense) {
+            // We're adding the license rather late just to prevent accidentially printing it.
+            // If anyone got ahold of the license not much would be lost, but hey, no need to plaster it on the walls.
+            flags += ` --set license=${fs.readFileSync('/mnt/secrets/gpsh-coredev/license').toString()}`
+        }
 
         exec(`helm dependencies up`);
         exec(`/usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/values.dev.yaml ${flags} ${helmInstallName} .`);

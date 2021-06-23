@@ -10,6 +10,9 @@ pod:
   - name: gcp-sa-release
     secret:
       secretName: gcp-sa-gitpod-release-deployer
+  - name: gpsh-coredev-license
+    secret:
+      secretName: gpsh-coredev-license
   - name: go-build-cache
     hostPath:
       path: /mnt/disks/ssd0/go-build-cache
@@ -43,6 +46,9 @@ pod:
       readOnly: true
     - name: gcp-sa-release
       mountPath: /mnt/secrets/gcp-sa-release
+      readOnly: true
+    - name: gpsh-coredev-license
+      mountPath: /mnt/secrets/gpsh-coredev
       readOnly: true
     - name: go-build-cache
       mountPath: /go-build-cache
