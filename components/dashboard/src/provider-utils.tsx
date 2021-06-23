@@ -64,8 +64,13 @@ async function openAuthorizeWindow(params: OpenAuthorizeWindowParams) {
             search: `returnTo=${encodeURIComponent(returnTo)}&host=${host}${overrideScopes ? "&override=true" : ""}&scopes=${requestedScopes.join(',')}`
         }).toString();
 
+    const width = 800;
+    const height = 800;
+    const left = (window.screen.width / 2) - (width / 2);
+    const top = (window.screen.height / 2) - (height / 2);
+
     // Optimistically assume that the new window was opened.
-    window.open(url, "gitpod-auth-window");
+    window.open(url, "gitpod-auth-window", `width=${width},height=${height},top=${top},left=${left}status=yes,scrollbars=yes,resizable=yes`);
 
     const eventListener = (event: MessageEvent) => {
         // todo: check event.origin

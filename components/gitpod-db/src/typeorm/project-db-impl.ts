@@ -10,6 +10,7 @@ import { Repository } from "typeorm";
 import { ProjectDB } from "../project-db";
 import { DBProject } from "./entity/db-project";
 import { Project } from "@gitpod/gitpod-protocol";
+import * as uuidv4 from 'uuid/v4';
 
 @injectable()
 export class ProjectDBImpl implements ProjectDB {
@@ -26,5 +27,20 @@ export class ProjectDBImpl implements ProjectDB {
     public async findProjectsByTeam(teamId: string): Promise<Project[]> {
         const repo = await this.getRepo();
         return repo.find({ teamId });
+    }
+
+    public async createProject(name: string, cloneUrl: string, teamId: string, appInstallationId: string): Promise<Project> {
+        const repo = await this.getRepo();
+
+        const project: Project = {
+            id: uuidv4(),
+            name,
+            teamId,
+            cloneUrl,
+            appInstallationId,
+            creationTime: new Date().toISOString(),
+        }
+        await repo.save(project);
+        return project;
     }
 }

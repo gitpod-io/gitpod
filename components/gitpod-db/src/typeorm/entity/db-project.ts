@@ -14,6 +14,9 @@ export class DBProject {
   id: string;
 
   @Column()
+  name: string;
+
+  @Column()
   cloneUrl: string;
 
   @Column(TypeORM.UUID_COLUMN_TYPE)

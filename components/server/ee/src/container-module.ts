@@ -52,6 +52,7 @@ import { UserDeletionService } from "../../src/user/user-deletion-service";
 import { BlockedUserFilter } from "../../src/auth/blocked-user-filter";
 import { EMailDomainService, EMailDomainServiceImpl } from "./auth/email-domain-service";
 import { UserDeletionServiceEE } from "./user/user-deletion-service";
+import { GitHubAppSupport } from "./github/github-app-support";
 
 export const productionEEContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     rebind(Server).to(ServerEE).inSingletonScope();
@@ -66,6 +67,7 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(IPrefixContextParser).to(StartPrebuildContextParser).inSingletonScope();
     bind(IPrefixContextParser).to(StartIncrementalPrebuildContextParser).inSingletonScope();
     bind(GithubApp).toSelf().inSingletonScope();
+    bind(GitHubAppSupport).toSelf().inSingletonScope();
     bind(GithubAppRules).toSelf().inSingletonScope();
     bind(PrebuildStatusMaintainer).toSelf().inSingletonScope();
     bind(GitLabApp).toSelf().inSingletonScope();
