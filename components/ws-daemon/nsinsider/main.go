@@ -193,13 +193,32 @@ func main() {
 			{
 				Name:  "mknod-fuse",
 				Usage: "creates /dev/fuse",
+				Flags: []cli.Flag{
+					&cli.IntFlag{
+						Name:     "uid",
+						Required: true,
+					},
+					&cli.IntFlag{
+						Name:     "gid",
+						Required: true,
+					},
+				},
 				Action: func(c *cli.Context) error {
 					err := unix.Mknod("/dev/fuse", 0666|unix.S_IFCHR, int(unix.Mkdev(10, 229)))
 					if err != nil {
 						return err
 					}
 
-					return os.Chmod("/dev/fuse", os.FileMode(0666))
+					err = os.Chmod("/dev/fuse", os.FileMode(0666))
+					if err != nil {
+						return err
+					}
+					err = os.Chown("/dev/fuse", c.Int("uid"), c.Int("gid"))
+					if err != nil {
+						return err
+					}
+
+					return nil
 				},
 			},
 		},
