@@ -53,10 +53,6 @@ const (
 
 	// RequiredNodeServicesAnnotation lists all Gitpod services required on the node
 	RequiredNodeServicesAnnotation = "gitpod.io/requiredNodeServices"
-
-	// ContainerIsGoneAnnotation is used as workaround for containerd https://github.com/containerd/containerd/pull/4214
-	// which might cause workspace container status propagation to fail, which in turn would keep a workspace running indefinitely.
-	ContainerIsGoneAnnotation = "gitpod.io/containerIsGone"
 )
 
 // WorkspaceSupervisorEndpoint produces the supervisor endpoint of a workspace.
