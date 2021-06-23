@@ -13,6 +13,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -149,7 +150,7 @@ func NewEvaluator(key []byte, domain string) (res *Evaluator) {
 		return &Evaluator{invalid: fmt.Sprintf("cannot verify key: %q", err)}
 	}
 
-	if domain != lic.Domain {
+	if !matchesDomain(lic.Domain, domain) {
 		return &Evaluator{invalid: "wrong domain"}
 	}
 
@@ -160,6 +161,24 @@ func NewEvaluator(key []byte, domain string) (res *Evaluator) {
 	return &Evaluator{
 		lic: lic.LicensePayload,
 	}
+}
+
+func matchesDomain(pattern, domain string) bool {
+	if pattern == "" {
+		return true
+	}
+	if domain == pattern {
+		return true
+	}
+
+	if strings.HasPrefix(pattern, "*.") && len(pattern) > 2 {
+		domainSuffix := pattern[1:]
+		if strings.HasSuffix(domain, domainSuffix) {
+			return true
+		}
+	}
+
+	return false
 }
 
 // Evaluator determines what a license allows for

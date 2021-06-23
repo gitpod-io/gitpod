@@ -286,3 +286,30 @@ func TestEvalutorKeys(t *testing.T) {
 		})
 	}
 }
+
+func TestMatchesDomain(t *testing.T) {
+	tests := []struct {
+		Name    string
+		Pattern string
+		Domain  string
+		Matches bool
+	}{
+		{Name: "no domain pattern", Pattern: "", Domain: "foobar.com", Matches: true},
+		{Name: "exact match", Pattern: "foobar.com", Domain: "foobar.com", Matches: true},
+		{Name: "exact mismatch", Pattern: "foobar.com", Domain: "does-not-match.com", Matches: false},
+		{Name: "direct pattern match", Pattern: "*.foobar.com", Domain: "foobar.com", Matches: false},
+		{Name: "pattern sub match", Pattern: "*.foobar.com", Domain: "foo.foobar.com", Matches: true},
+		{Name: "direct pattern mismatch", Pattern: "*.foobar.com", Domain: "does-not-match.com", Matches: false},
+		{Name: "pattern sub mismatch", Pattern: "*.foobar.com", Domain: "foo.does-not-match.com", Matches: false},
+		{Name: "invalid pattern sub", Pattern: "foo.*.foobar.com", Domain: "foo.foobar.com", Matches: false},
+		{Name: "invalid pattern empty", Pattern: "*.", Domain: "foobar.com", Matches: false},
+	}
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			act := matchesDomain(test.Pattern, test.Domain)
+			if act != test.Matches {
+				t.Errorf("unexpected domain match: expected %v, got %v", test.Matches, act)
+			}
+		})
+	}
+}
