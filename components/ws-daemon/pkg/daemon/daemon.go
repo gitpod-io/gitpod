@@ -52,7 +52,6 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	}
 	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename,
 		resources.NewDispatchListener(&config.Resources, reg),
-		&Containerd4214Workaround{},
 	)
 	if err != nil {
 		return nil, err
