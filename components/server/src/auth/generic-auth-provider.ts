@@ -427,6 +427,14 @@ export class GenericAuthProvider implements AuthProvider {
             if (currentGitpodUser) {
                 // user is already logged in
 
+                // check for matching auth ID
+                const currentIdentity = currentGitpodUser.identities.find(i => i.authProviderId === this.authProviderId);
+                if (currentIdentity && currentIdentity.authId !== candidate.authId) {
+                    log.warn(`User is trying to connect with another provider identity.`, { ...defaultLogPayload, authUser, candidate, currentGitpodUser: User.censor(currentGitpodUser), clientInfo });
+                    done(AuthException.create("authId-mismatch", "Auth ID does not match with existing provider identity.", {}), undefined);
+                    return;
+                }
+
                 // we need to check current provider authorizations first...
                 try {
                     await this.userService.asserNoTwinAccount(currentGitpodUser, this.host, this.authProviderId, candidate);
