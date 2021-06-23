@@ -251,7 +251,7 @@ interface DeploymentConfig {
 export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage) {
     werft.phase("deploy", "deploying to dev");
     const { version, destname, namespace, domain, url, wsCluster, withWsCluster } = deploymentConfig;
-    const [wsdaemonPort, registryProxyPort, registryNodePort] = findFreeHostPorts([
+    const [wsdaemonPort, registryNodePort] = findFreeHostPorts([
         { start: 10000, end: 11000 },
         { start: 20000, end: 21000 },
         { start: 30000, end: 31000 },
@@ -339,7 +339,6 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     flags += ` --set hostname=${domain}`;
     flags += ` --set devBranch=${destname}`;
     flags += ` --set components.wsDaemon.servicePort=${wsdaemonPort}`;
-    flags += ` --set components.wsDaemon.registryProxyPort=${registryProxyPort}`;
     flags += ` --set components.registryFacade.ports.registry.servicePort=${registryNodePort}`;
     workspaceFeatureFlags.forEach((f, i) => {
         flags += ` --set components.server.defaultFeatureFlags[${i}]='${f}'`

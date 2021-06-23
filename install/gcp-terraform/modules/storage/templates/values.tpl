@@ -33,7 +33,6 @@ components:
       shiftfsModuleLoader:
         enabled: false
         imageName: "shiftfs-module-loader"
-    registryProxyPort: 8081
     volumes:
     - name: gcloud-creds
       secret:
