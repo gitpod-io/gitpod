@@ -184,9 +184,6 @@ spec:
         - name: rpc
           containerPort: {{ $comp.servicePort }}
           hostPort: {{ $comp.servicePort }}
-        - name: registry-proxy
-          containerPort: {{ $comp.registryProxyPort }}
-          hostPort: {{ $comp.registryProxyPort }}
         readinessProbe:
           httpGet:
             port: 9999

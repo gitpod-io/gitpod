@@ -420,7 +420,6 @@ components:
       seccompProfileInstaller:
         enabled: true
         imageName: "seccomp-profile-installer"
-    registryProxyPort: 8081
 
   wsScheduler:
     name: "ws-scheduler"
