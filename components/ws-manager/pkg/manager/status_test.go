@@ -155,21 +155,21 @@ func BenchmarkGetStatus(b *testing.B) {
 	}
 }
 
-func TestGetHostIP(t *testing.T) {
+func TestGetNodeName(t *testing.T) {
 	tests := []struct {
 		Name        string
 		WSO         workspaceObjects
 		Expectation string
 	}{
 		{
-			Name: "no hostIP",
+			Name: "no nodeName",
 		},
 		{
 			Name: "spec",
 			WSO: workspaceObjects{
 				Pod: &v1.Pod{
-					Status: v1.PodStatus{
-						HostIP: "foobar",
+					Spec: v1.PodSpec{
+						NodeName: "foobar",
 					},
 				},
 			},
@@ -181,23 +181,7 @@ func TestGetHostIP(t *testing.T) {
 				Pod: &v1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: map[string]string{
-							hostIPAnnotation: "from-anno",
-						},
-					},
-					Status: v1.PodStatus{
-						HostIP: "",
-					},
-				},
-			},
-			Expectation: "from-anno",
-		},
-		{
-			Name: "annotation pod no status",
-			WSO: workspaceObjects{
-				Pod: &v1.Pod{
-					ObjectMeta: metav1.ObjectMeta{
-						Annotations: map[string]string{
-							hostIPAnnotation: "from-anno",
+							nodeNameAnnotation: "from-anno",
 						},
 					},
 				},
@@ -210,11 +194,11 @@ func TestGetHostIP(t *testing.T) {
 				Pod: &v1.Pod{
 					ObjectMeta: metav1.ObjectMeta{
 						Annotations: map[string]string{
-							hostIPAnnotation: "from-anno",
+							nodeNameAnnotation: "from-anno",
 						},
 					},
-					Status: v1.PodStatus{
-						HostIP: "from-spec",
+					Spec: v1.PodSpec{
+						NodeName: "from-spec",
 					},
 				},
 			},
@@ -224,9 +208,9 @@ func TestGetHostIP(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
-			act := test.WSO.HostIP()
+			act := test.WSO.NodeName()
 			if diff := cmp.Diff(test.Expectation, act); diff != "" {
-				t.Errorf("unexpected hostIP (-want +got):\n%s", diff)
+				t.Errorf("unexpected nodeName (-want +got):\n%s", diff)
 			}
 		})
 	}

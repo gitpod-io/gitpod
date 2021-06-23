@@ -330,7 +330,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 		//
 		// Also, in case the pod gets evicted we would not know the hostIP that pod ran on anymore.
 		// In preparation for those cases, we'll add it as an annotation.
-		err := m.manager.markWorkspace(ctx, workspaceID, deleteMark(wsk8s.TraceIDAnnotation), addMark(hostIPAnnotation, wso.HostIP()))
+		err := m.manager.markWorkspace(ctx, workspaceID, deleteMark(wsk8s.TraceIDAnnotation), addMark(nodeNameAnnotation, wso.NodeName()))
 		if err != nil {
 			log.WithError(err).Warn("was unable to remove traceID and/or add host IP annotation from/to workspace")
 		}
@@ -872,11 +872,11 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		}
 
 		// Maybe the workspace never made it to a phase where we actually initialized a workspace.
-		// Assuming that once we've had a hostIP we've spoken to ws-daemon it's safe to assume that if
-		// we don't have a hostIP we don't need to dipose the workspace.
+		// Assuming that once we've had a nodeName we've spoken to ws-daemon it's safe to assume that if
+		// we don't have a nodeName we don't need to dipose the workspace.
 		// Obviously that only holds if we do not require a backup. If we do require one, we want to
 		// fail as loud as we can in this case.
-		if !doBackup && wso.HostIP() == "" {
+		if !doBackup && wso.NodeName() == "" {
 			// we don't need a backup and have never spoken to ws-daemon: we're good here.
 			m.finalizerMapLock.Unlock()
 			return true, &csapi.GitStatus{}, nil
