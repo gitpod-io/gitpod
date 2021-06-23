@@ -194,7 +194,7 @@ func main() {
 				Name:  "mknod-fuse",
 				Usage: "creates /dev/fuse",
 				Action: func(c *cli.Context) error {
-					err := unix.Mknod("/dev/fuse", 0666, int(unix.Mkdev(10, 229)))
+					err := unix.Mknod("/dev/fuse", 0666|unix.S_IFCHR, int(unix.Mkdev(10, 229)))
 					if err != nil {
 						return err
 					}
