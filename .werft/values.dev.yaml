@@ -106,9 +106,6 @@ components:
   # Enable events trace
   wsManager:
     eventTraceLogLocation: "/tmp/evts.json"
-     # TODO: [geropl] Why is this not part of values.yaml?
-    additionalConfig:
-      theiaSupervisorToken: "354c0b368f2b4a93b7b812564e663d23"
 
   imageBuilder:
     hostDindData: "/mnt/disks/ssd0/builder"

@@ -49,8 +49,7 @@
         "heartbeatInterval",
         "hostURL",
         "reconnectionInterval",
-        "wsdaemon",
-        "theiaSupervisorToken"
+        "wsdaemon"
       ],
       "properties": {
         "container": {
@@ -86,9 +85,6 @@
           "type": "string"
         },
         "theiaHostPath": {
-          "type": "string"
-        },
-        "theiaSupervisorToken": {
           "type": "string"
         },
         "timeouts": {
