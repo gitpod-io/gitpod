@@ -23,9 +23,8 @@ export class DBLicenseKeySource implements LicenseKeySource {
             log.error("cannot get license key - even if you have a license, the EE features won't work", err);
         }
         return {
-            key: key || "",
+            key: key || this.env.gitpodLicense || "",
             domain: this.env.hostUrl.url.host,
         };
     }
-
 }
