@@ -1078,12 +1078,11 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 	tracing.ApplyOWI(span, wso.GetOWI())
 	defer tracing.FinishSpan(span, nil)
 
-	var hostIP string
-	if wso.Pod == nil {
-		return nil, xerrors.Errorf("cannot connect to ws-daemon: no workspace pod")
+	nodeName := wso.NodeName()
+	if nodeName == "" {
+		return nil, xerrors.Errorf("no nodeName found")
 	}
 
-	nodeName := wso.Pod.Spec.NodeName
 	// Get all the ws-daemon endpoints (headless)
 	// NOTE: we could do a DNS lookup but currently keeping it k8s-centric
 	// to allow for transitioning to the newer service topology support.
@@ -1103,6 +1102,7 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 	}
 
 	// Find the ws-daemon endpoint on this node
+	var hostIP string
 	for _, pod := range endpointsList.Items {
 		for _, subset := range pod.Subsets {
 			for _, endpointAddress := range subset.Addresses {

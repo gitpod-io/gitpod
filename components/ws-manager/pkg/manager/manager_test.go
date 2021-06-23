@@ -293,34 +293,34 @@ func TestFindWorkspacePod(t *testing.T) {
 	}
 }
 
-func TestManager_connectToWorkspaceDaemon(t *testing.T) {
+func TestConnectToWorkspaceDaemon(t *testing.T) {
 	badNodeName := "not-matching-node"
 	goodNodeName := "a-matching-node"
 
-	type args struct {
-		ctx  context.Context
-		wso  workspaceObjects
-		objs []client.Object
+	type Args struct {
+		Ctx  context.Context
+		WSO  workspaceObjects
+		Objs []client.Object
 	}
 	tests := []struct {
-		name        string
-		args        args
-		wantErr     bool
-		expectedErr string
+		Name        string
+		Args        Args
+		WantErr     bool
+		ExpectedErr string
 	}{
 		{
-			name: "handles empty wso",
-			args: args{
-				ctx: context.Background(),
-				wso: workspaceObjects{},
+			Name: "handles empty wso",
+			Args: Args{
+				Ctx: context.Background(),
+				WSO: workspaceObjects{},
 			},
-			expectedErr: "no workspace pod",
+			ExpectedErr: "no nodeName found",
 		},
 		{
-			name: "handles no endpoints",
-			args: args{
-				ctx: context.Background(),
-				wso: workspaceObjects{
+			Name: "handles no endpoints",
+			Args: Args{
+				Ctx: context.Background(),
+				WSO: workspaceObjects{
 					Pod: &corev1.Pod{
 						Spec: corev1.PodSpec{
 							NodeName: "a_node_name",
@@ -328,20 +328,20 @@ func TestManager_connectToWorkspaceDaemon(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "no matching endpoint",
+			ExpectedErr: "no matching endpoint",
 		},
 		{
-			name: "handles no endpoint on current node",
-			args: args{
-				ctx: context.Background(),
-				wso: workspaceObjects{
+			Name: "handles no endpoint on current node",
+			Args: Args{
+				Ctx: context.Background(),
+				WSO: workspaceObjects{
 					Pod: &corev1.Pod{
 						Spec: corev1.PodSpec{
 							NodeName: "a_node_name",
 						},
 					},
 				},
-				objs: []client.Object{
+				Objs: []client.Object{
 					&corev1.Endpoints{
 						TypeMeta: metav1.TypeMeta{
 							Kind:       "Endpoints",
@@ -375,20 +375,20 @@ func TestManager_connectToWorkspaceDaemon(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: "no matching endpoint",
+			ExpectedErr: "no matching endpoint",
 		},
 		{
-			name: "finds endpoint on current node",
-			args: args{
-				ctx: context.Background(),
-				wso: workspaceObjects{
+			Name: "finds endpoint on current node",
+			Args: Args{
+				Ctx: context.Background(),
+				WSO: workspaceObjects{
 					Pod: &corev1.Pod{
 						Spec: corev1.PodSpec{
 							NodeName: goodNodeName,
 						},
 					},
 				},
-				objs: []client.Object{
+				Objs: []client.Object{
 					&corev1.Endpoints{
 						TypeMeta: metav1.TypeMeta{
 							Kind:       "Endpoints",
@@ -425,16 +425,16 @@ func TestManager_connectToWorkspaceDaemon(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		manager := forTestingOnlyGetManager(t, tt.args.objs...)
+		manager := forTestingOnlyGetManager(t, tt.Args.Objs...)
 		// Add dummy daemon pool - slightly hacky but we aren't testing the actual connectivity here
 		manager.wsdaemonPool = grpcpool.New(func(host string) (*grpc.ClientConn, error) {
 			return nil, nil
 		})
 
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := manager.connectToWorkspaceDaemon(tt.args.ctx, tt.args.wso)
-			if (err != nil) && !strings.Contains(err.Error(), tt.expectedErr) {
-				t.Errorf("Manager.connectToWorkspaceDaemon() error = %v, wantErr %v", err, tt.wantErr)
+		t.Run(tt.Name, func(t *testing.T) {
+			got, err := manager.connectToWorkspaceDaemon(tt.Args.Ctx, tt.Args.WSO)
+			if (err != nil) && !strings.Contains(err.Error(), tt.ExpectedErr) {
+				t.Errorf("Manager.connectToWorkspaceDaemon() error = %v, wantErr %v", err, tt.WantErr)
 				return
 			}
 			if err != nil && got != nil {
