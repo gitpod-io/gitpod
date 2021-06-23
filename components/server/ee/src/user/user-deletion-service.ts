@@ -40,17 +40,18 @@ export class UserDeletionServiceEE extends UserDeletionService {
                     } else if (Plans.isFreePlan(planId)) {
                         // we do not care about transient plans
                         continue;
-                    }
-                    if (!paymentReference) {
-                        const teamSlots = await this.teamSubscriptionService.findTeamSubscriptionSlotsByAssignee(id);
-                        teamSlots.forEach(async ts => await this.teamSubscriptionService.deactivateSlot(ts.teamSubscriptionId, ts.id, now))
-                    } else if (paymentReference.startsWith("github:")) {
-                        throw new Error("Cannot delete user subscription from GitHub")
                     } else {
-                        // cancel Chargebee subscriptions
-                        const subscriptionId = subscription.uid;
-                        const chargebeeSubscriptionId = subscription.paymentReference!;
-                        await this.chargebeeService.cancelSubscription(chargebeeSubscriptionId, { userId: user.id }, { subscriptionId, chargebeeSubscriptionId });
+                        if (!paymentReference) {
+                            const teamSlots = await this.teamSubscriptionService.findTeamSubscriptionSlotsByAssignee(id);
+                            teamSlots.forEach(async ts => await this.teamSubscriptionService.deactivateSlot(ts.teamSubscriptionId, ts.id, now))
+                        } else if (paymentReference.startsWith("github:")) {
+                            throw new Error("Cannot delete user subscription from GitHub")
+                        } else {
+                            // cancel Chargebee subscriptions
+                            const subscriptionId = subscription.uid;
+                            const chargebeeSubscriptionId = subscription.paymentReference!;
+                            await this.chargebeeService.cancelSubscription(chargebeeSubscriptionId, { userId: user.id }, { subscriptionId, chargebeeSubscriptionId });
+                        }
                     }
                 } catch (error) {
                     errors.push(error);
