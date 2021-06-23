@@ -173,6 +173,7 @@ export const colors = [
     'deer',
     'dingo',
     'dinosaur',
+    'dodo',
     'dog',
     'dolphin',
     'donkey',
