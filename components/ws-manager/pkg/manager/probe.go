@@ -43,7 +43,7 @@ func NewWorkspaceReadyProbe(workspaceID string, workspaceURL url.URL) WorkspaceR
 
 	return WorkspaceReadyProbe{
 		Timeout:     5 * time.Second,
-		RetryDelay:  1 * time.Second,
+		RetryDelay:  500 * time.Millisecond,
 		readyURL:    readyURL,
 		workspaceID: workspaceID,
 	}
@@ -80,7 +80,6 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 
 		span.LogKV("event", "probe start")
 		resp, err := client.Get(p.readyURL)
-
 		if err != nil {
 			urlerr, ok := err.(*url.Error)
 			if !ok || !urlerr.Timeout() {
@@ -94,6 +93,7 @@ func (p *WorkspaceReadyProbe) Run(ctx context.Context) WorkspaceProbeResult {
 			span.LogKV("response", "timeout")
 			continue
 		}
+		resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
 			span.LogKV("response", resp.StatusCode)
