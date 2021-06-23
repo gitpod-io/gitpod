@@ -7,7 +7,7 @@
 import { User, TeamMemberInfo } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { Link, useHistory } from "react-router-dom";
-import { useLocation } from "react-router";
+import { useLocation, useRouteMatch } from "react-router";
 import { Location } from "history";
 import gitpodIcon from './icons/gitpod.svg';
 import CaretDown from "./icons/CaretDown.svg";
@@ -39,6 +39,14 @@ export default function Menu() {
     const history = useHistory();
     const location = useLocation();
 
+    const match = useRouteMatch<{ team: string, resource: string }>("/:team/:resource");
+    const projectName = (() => {
+        const resource = match?.params?.resource;
+        if (resource !== "projects" && resource !== "members") {
+            return resource;
+        }
+    })();
+
     const userFullName = user?.fullName || user?.name || '...';
     const showTeamsUI = user?.rolesOrPermissions?.includes('teams-and-projects') || window.location.hostname.endsWith('gitpod-dev.com') || window.location.hostname.endsWith('gitpod-io-dev.com');
     const team = getCurrentTeam(location, teams);
@@ -58,8 +66,36 @@ export default function Menu() {
         })();
     }, [ teams ]);
 
-    const leftMenu = (!!team
-        ? [
+    const leftMenu: Entry[] = (() => {
+        if (!team) {
+            return [
+                {
+                    title: 'Workspaces',
+                    link: '/workspaces',
+                    alternatives: ['/']
+                },
+                {
+                    title: 'Settings',
+                    link: '/settings',
+                    alternatives: settingsMenu.flatMap(e => e.link)
+                }
+            ];
+        }
+        return projectName ? [
+            {
+                title: 'Overview',
+                link: `/${team.slug}/${projectName}`,
+                alternatives: [`/${team.slug}`]
+            },
+            {
+                title: 'Prebuilds',
+                link: `/${team.slug}/${projectName}/prebuilds`
+            },
+            {
+                title: 'Settings',
+                link: `/${team.slug}/${projectName}/settings`
+            }
+        ] : [
             {
                 title: 'Projects',
                 link: `/${team.slug}/projects`,
@@ -70,20 +106,8 @@ export default function Menu() {
                 link: `/${team.slug}/members`
             }
         ]
-        : [
-            {
-                title: 'Workspaces',
-                link: '/workspaces',
-                alternatives: ['/']
-            },
-            {
-                title: 'Settings',
-                link: '/settings',
-                alternatives: settingsMenu.flatMap(e => e.link)
-            }
-        ]
-    );
-    const rightMenu = [
+    })();
+    const rightMenu: Entry[] = [
         ...(user?.rolesOrPermissions?.includes('admin') ? [{
             title: 'Admin',
             link: '/admin',
@@ -99,6 +123,61 @@ export default function Menu() {
         }
     ];
 
+    const renderTeamMenu = () => {
+        return (
+            <div className="flex p-1 pl-3 ">
+                <div className="flex h-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1">
+                    <Link to={team ? `/${team.slug}/projects` : "/workspaces"}>
+
+                        <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{team?.name || userFullName}</span>
+                    </Link>
+                </div>
+                <div className="flex h-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 py-1">
+                    <ContextMenu classes="w-64 left-0" menuEntries={[
+                        {
+                            title: userFullName,
+                            customContent: <div className="w-full text-gray-400 flex flex-col">
+                                <span className="text-gray-800 dark:text-gray-100 text-base font-semibold">{userFullName}</span>
+                                <span className="">Personal Account</span>
+                            </div>,
+                            separator: true,
+                            onClick: () => history.push("/"),
+                        },
+                        ...(teams || []).map(t => ({
+                            title: t.name,
+                            customContent: <div className="w-full text-gray-400 flex flex-col">
+                                <span className="text-gray-800 dark:text-gray-300 text-base font-semibold">{t.name}</span>
+                                <span className="">{!!teamMembers[t.id]
+                                    ? `${teamMembers[t.id].length} member${teamMembers[t.id].length === 1 ? '' : 's'}`
+                                    : '...'
+                                }</span>
+                            </div>,
+                            separator: true,
+                            onClick: () => history.push(`/${t.slug}`),
+                        })).sort((a, b) => a.title.toLowerCase() > b.title.toLowerCase() ? 1 : -1),
+                        {
+                            title: 'Create a new team',
+                            customContent: <div className="w-full text-gray-400 flex items-center">
+                                <span className="flex-1 font-semibold">New Team</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" className="w-3.5"><path fill="currentColor" fill-rule="evenodd" d="M7 0a1 1 0 011 1v5h5a1 1 0 110 2H8v5a1 1 0 11-2 0V8H1a1 1 0 010-2h5V1a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                            </div>,
+                            onClick: () => history.push("/new-team"),
+                        }
+                    ]}>
+                        <div className="flex h-full p-2 mt-0.5">
+                            <img className="filter-grayscale m-auto" src={CaretDown} />
+                        </div>
+                    </ContextMenu>
+                </div>
+                { projectName && (
+                    <div className="flex h-full ml-2 py-1">
+                        <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{projectName}</span>
+                    </div>
+                )}
+            </div>
+        )
+    }
+
     return <>
         <header className="lg:px-28 px-10 flex flex-col pt-4 space-y-4">
             <div className="flex">
@@ -108,42 +187,7 @@ export default function Menu() {
                     </Link>
                     <div className="ml-2 text-base">
                         {showTeamsUI
-                            ? <ContextMenu classes="w-64 left-0" menuEntries={[
-                                {
-                                    title: userFullName,
-                                    customContent: <div className="w-full text-gray-400 flex flex-col">
-                                        <span className="text-gray-800 dark:text-gray-100 text-base font-semibold">{userFullName}</span>
-                                        <span className="">Personal Account</span>
-                                    </div>,
-                                    separator: true,
-                                    onClick: () => history.push("/"),
-                                },
-                                ...(teams || []).map(t => ({
-                                    title: t.name,
-                                    customContent: <div className="w-full text-gray-400 flex flex-col">
-                                        <span className="text-gray-800 dark:text-gray-300 text-base font-semibold">{t.name}</span>
-                                        <span className="">{!!teamMembers[t.id]
-                                            ? `${teamMembers[t.id].length} member${teamMembers[t.id].length === 1 ? '' : 's'}`
-                                            : '...'
-                                        }</span>
-                                    </div>,
-                                    separator: true,
-                                    onClick: () => history.push(`/${t.slug}`),
-                                })).sort((a,b) => a.title.toLowerCase() > b.title.toLowerCase() ? 1 : -1),
-                                {
-                                    title: 'Create a new team',
-                                    customContent: <div className="w-full text-gray-400 flex items-center">
-                                        <span className="flex-1 font-semibold">New Team</span>
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" className="w-3.5"><path fill="currentColor" fill-rule="evenodd" d="M7 0a1 1 0 011 1v5h5a1 1 0 110 2H8v5a1 1 0 11-2 0V8H1a1 1 0 010-2h5V1a1 1 0 011-1z" clip-rule="evenodd"/></svg>
-                                    </div>,
-                                    onClick: () => history.push("/new-team"),
-                                }
-                            ]}>
-                                <div className="flex p-1.5 pl-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
-                                    <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{team?.name || userFullName}</span>
-                                    <img className="m-2 filter-grayscale" src={CaretDown}/>
-                                </div>
-                            </ContextMenu>
+                            ? renderTeamMenu()
                             : <nav className="flex-1">
                                 <ul className="flex flex-1 items-center justify-between text-base text-gray-700 space-x-2">
                                     <li className="flex-1"></li>

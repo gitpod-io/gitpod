@@ -7,7 +7,7 @@
 import { Server, Probot, Context } from 'probot';
 import { getPrivateKey } from '@probot/get-private-key';
 import * as fs from 'fs-extra';
-import { injectable, inject, decorate } from 'inversify';
+import { injectable, inject } from 'inversify';
 import { Env } from '../../../src/env';
 import { AppInstallationDB, TracedWorkspaceDB, DBWithTracing, UserDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
 import * as express from 'express';
@@ -31,8 +31,6 @@ import { Options, ApplicationFunctionOptions } from 'probot/lib/types';
  * values.yaml file (GITPOD_GITHUB_APP_WEBHOOK_SECRET) - it's not a bad idea to
  * look at those values to begin with.
  */
-
-decorate(injectable(), Probot)
 
 @injectable()
 export class GithubApp {
@@ -102,6 +100,31 @@ export class GithubApp {
 
         app.on(['pull_request.opened', 'pull_request.synchronize', 'pull_request.reopened'], async ctx => {
             await this.handlePullRequest(ctx);
+        });
+
+        options.getRouter && options.getRouter('/reconfigure').get('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+            const gh = await app.auth();
+            const data = await gh.apps.getAuthenticated();
+            const slug = data.data.slug;
+
+            const state = req.query.state;
+            res.redirect(`https://github.com/apps/${slug}/installations/new?state=${state}`)
+        });
+        options.getRouter && options.getRouter('/setup').get('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+            const state = req.query.state;
+            const installationId = req.query.installation_id;
+            const setupAction = req.query.setup_action;
+            const payload = { installationId, setupAction };
+            req.query
+
+            if (state) {
+                const url = this.env.hostUrl.with({ pathname: '/complete-auth', search: "message=payload:" + Buffer.from(JSON.stringify(payload), "utf-8").toString('base64') }).toString();
+                res.redirect(url);
+            } else {
+                const url = this.env.hostUrl.with({ pathname: 'install-github-app', search: `installation_id=${installationId}` }).toString();
+                res.redirect(url);
+            }
+
         });
     }
 
