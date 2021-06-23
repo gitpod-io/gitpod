@@ -77,8 +77,6 @@ type Configuration struct {
 	DryRun bool `json:"dryRun,omitempty"`
 	// WorkspaceDaemon configures our connection to the workspace sync daemons runnin on the nodes
 	WorkspaceDaemon WorkspaceDaemonConfiguration `json:"wsdaemon"`
-	// TheiaSupervisorToken is the bearer token required to talk to the sentinel part of the supervisor health endpoint
-	TheiaSupervisorToken string `json:"theiaSupervisorToken"`
 	// RegistryFacadeHost is the host (possibly including port) on which the registry facade resolves
 	RegistryFacadeHost string `json:"registryFacadeHost"`
 }
