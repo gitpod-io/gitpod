@@ -6,7 +6,7 @@
 
 import {MigrationInterface, QueryRunner} from "typeorm";
 
-export class UpdateExamples1623220362199 implements MigrationInterface {
+export class UpdateExamples1623652164640 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<any> {
         let priority = 90;
