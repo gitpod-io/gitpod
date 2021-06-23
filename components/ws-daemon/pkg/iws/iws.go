@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -215,7 +216,7 @@ func (wbs *InWorkspaceServiceServer) PrepareForUserNS(ctx context.Context, req *
 	//   - https://lists.linuxcontainers.org/pipermail/lxc-devel/2014-July/009797.html
 	//   - https://lists.linuxcontainers.org/pipermail/lxc-users/2014-October/007948.html
 	err = nsinsider(wbs.Session.InstanceID, int(containerPID), func(c *exec.Cmd) {
-		c.Args = append(c.Args, "mknod-fuse")
+		c.Args = append(c.Args, "mknod-fuse", "--uid", strconv.Itoa(wsinit.GitpodUID), "--gid", strconv.Itoa(wsinit.GitpodGID))
 	})
 	if err != nil {
 		log.WithError(err).WithFields(wbs.Session.OWI()).Error("PrepareForUserNS: cannot mknod fuse")
