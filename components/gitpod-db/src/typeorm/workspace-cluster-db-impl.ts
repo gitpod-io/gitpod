@@ -31,12 +31,12 @@ import { WorkspaceCluster, WorkspaceClusterFilter, WorkspaceClusterWoTLS } from 
 
      async deleteByName(name: string): Promise<void> {
          const repo = await this.getRepo();
-         await repo.deleteById(name);
+         await repo.delete(name);
      }
 
      async findByName(name: string): Promise<WorkspaceCluster | undefined> {
          const repo = await this.getRepo();
-         return repo.findOneById(name);
+         return repo.findOne(name);
      }
 
 

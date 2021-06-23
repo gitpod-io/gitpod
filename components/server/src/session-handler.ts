@@ -5,9 +5,9 @@
  */
 
 import * as express from 'express';
-import * as session from 'express-session'
-import { SessionOptions } from 'express-session'
-import * as uuidv4 from "uuid/v4"
+import * as session from 'express-session';
+import { SessionOptions } from 'express-session';
+import { v4 as uuidv4 } from 'uuid';
 import { injectable, inject , postConstruct } from 'inversify';
 
 import * as MySQLStore from 'express-mysql-session';

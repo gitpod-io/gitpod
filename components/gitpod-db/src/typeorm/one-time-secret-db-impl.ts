@@ -6,7 +6,7 @@
 
 import { inject, injectable } from "inversify";
 import { EntityManager, Repository } from "typeorm";
-import * as uuidv4 from 'uuid/v4';
+import { v4 as uuidv4 } from 'uuid';
 import { TypeORM } from './typeorm';
 import { OneTimeSecretDB } from "../one-time-secret-db";
 import { DBOneTimeSecret } from "./entity/db-one-time-secret";
@@ -39,7 +39,7 @@ export class TypeORMOneTimeSecretDBImpl implements OneTimeSecretDB {
 
     public async get(key: string): Promise<string | undefined> {
         const repo = await this.getRepo();
-        const r = await repo.findOneById(key);
+        const r = await repo.findOne(key);
         if (!r) {
             return undefined;
         }
@@ -60,7 +60,7 @@ export class TypeORMOneTimeSecretDBImpl implements OneTimeSecretDB {
 
     public async remove(key: string): Promise<void> {
         const repo = await this.getRepo();
-        await repo.deleteById(key);
+        await repo.delete(key);
     }
 
     public async pruneExpired(): Promise<void> {
