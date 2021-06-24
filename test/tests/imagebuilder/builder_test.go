@@ -50,12 +50,14 @@ func TestBaseImageBuild(t *testing.T) {
 		t.Fatal("cannot start build", err)
 	}
 
+	var ref string
 	for {
 		msg, err := bld.Recv()
 		if err != nil && err != io.EOF {
 			t.Fatal(err)
 		}
 
+		ref = msg.Ref
 		if msg.Status == imgapi.BuildStatus_done_success {
 			break
 		} else if msg.Status == imgapi.BuildStatus_done_failure {
@@ -63,6 +65,9 @@ func TestBaseImageBuild(t *testing.T) {
 		} else {
 			t.Logf("build output: %s", msg.Message)
 		}
+	}
+	if ref == "" {
+		t.Error("ref was empty")
 	}
 }
 
