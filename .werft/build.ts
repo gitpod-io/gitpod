@@ -438,16 +438,23 @@ export async function triggerIntegrationTests(deploymentConfig: DeploymentConfig
         return
     }
 
-    exec(`git config --global user.name "${context.Owner}"`);
-    const annotations = [
-        `version=${deploymentConfig.version}`,
-        `namespace=${deploymentConfig.namespace}`,
-        `username=${context.Owner}`,
-        `updateGitHubStatus=gitpod-io/gitpod`
-    ].map(annotation => `-a ${annotation}`).join(' ')
-    const jobId = exec(`werft run --remote-job-path .werft/run-integration-tests.yaml ${annotations} github`, {slice: phases.TRIGGER_INTEGRATION_TESTS}).trim();
-    werft.log(phases.TRIGGER_INTEGRATION_TESTS, `Triggered job ${jobId} - https://werft.gitpod-dev.com/job/${jobId}/logs`)
-    werft.done(phases.TRIGGER_INTEGRATION_TESTS);
+    try {
+        const imageVersion = exec(`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${version} cat /versions.yaml | yq r - 'components.integrationTest.version'`, { silent: true })
+            .stdout.trim();
+
+        exec(`git config --global user.name "${context.Owner}"`);
+        const annotations = [
+            `version=${imageVersion}`,
+            `namespace=${deploymentConfig.namespace}`,
+            `username=${context.Owner}`,
+            `updateGitHubStatus=gitpod-io/gitpod`
+        ].map(annotation => `-a ${annotation}`).join(' ')
+        const jobId = exec(`werft run --remote-job-path .werft/run-integration-tests.yaml ${annotations} github`, {slice: phases.TRIGGER_INTEGRATION_TESTS}).trim();
+        werft.log(phases.TRIGGER_INTEGRATION_TESTS, `Triggered job ${jobId} - https://werft.gitpod-dev.com/job/${jobId}/logs`)
+        werft.done(phases.TRIGGER_INTEGRATION_TESTS);
+    } catch (err) {
+        werft.fail(phases.TRIGGER_INTEGRATION_TESTS, err);
+    }
 }
 
 interface PreviewWorkspaceClusterRef {
