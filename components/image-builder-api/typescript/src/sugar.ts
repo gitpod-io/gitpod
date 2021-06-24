@@ -137,16 +137,19 @@ export class PromisifiedImageBuilderClient {
             stream.on('data', (resp: BuildResponse) => {
                 log.debug("stream resp", resp)
 
+                if (!resultResp.ref || resultResp.ref === "unknown") {
+                    resultResp.ref = resp.getRef();
+                }
+                if (!resultResp.baseRef || resultResp.baseRef === "unknown") {
+                    resultResp.baseRef = resp.getBaseRef();
+                }
+
                 if (resp.getStatus() == BuildStatus.RUNNING) {
                     resultResp.actuallyNeedsBuild = true;
-                    resultResp.ref = resp.getRef();
-                    resultResp.baseRef = resp.getBaseRef();
                     result.resolve(resultResp);
                 } else if (resp.getStatus() == BuildStatus.DONE_FAILURE || resp.getStatus() == BuildStatus.DONE_SUCCESS) {
                     if (!result.isResolved) {
                         resultResp.actuallyNeedsBuild = false;
-                        resultResp.ref = resp.getRef();
-                        resultResp.baseRef = resp.getBaseRef();
                         result.resolve(resultResp);
                         buildResult.resolve(resp);
                     } else {
