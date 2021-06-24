@@ -95,6 +95,13 @@ const (
 	KindGit = "git"
 )
 
+type ShutdownReason int16
+
+const (
+	ShutdownReasonSuccess        ShutdownReason = 0
+	ShutdownReasonExecutionError ShutdownReason = 1
+)
+
 // Run serves as main entrypoint to the supervisor
 func Run(options ...RunOption) {
 	defer log.Info("supervisor shut down")
@@ -148,7 +155,7 @@ func Run(options ...RunOption) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	var (
-		shutdown            = make(chan struct{})
+		shutdown            = make(chan ShutdownReason, 1)
 		ideReady            = &ideReadyState{cond: sync.NewCond(&sync.Mutex{})}
 		cstate              = NewInMemoryContentState(cfg.RepoRoot)
 		gitpodService       = createGitpodService(cfg, tokenService)
@@ -202,7 +209,7 @@ func Run(options ...RunOption) {
 	// When in terminating mode, the reaper will send SIGTERM to each child that gets reparented
 	// to us and is still running. We use this mechanism to send SIGTERM to a shell child processes
 	// that get reparented once their parent shell terminates during shutdown.
-	terminatingReaper := make(chan bool)
+	terminatingReaper := make(chan bool, 1)
 	// We keep the reaper until the bitter end because:
 	//   - it doesn't need graceful shutdown
 	//   - we want to do as much work as possible (SIGTERM'ing reparented processes during shutdown).
@@ -220,11 +227,15 @@ func Run(options ...RunOption) {
 	wg.Add(1)
 	go startSSHServer(ctx, cfg, &wg)
 	wg.Add(1)
-	go taskManager.Run(ctx, &wg)
+	tasksSuccessChan := make(chan bool, 1)
+	go taskManager.Run(ctx, &wg, tasksSuccessChan)
 	wg.Add(1)
 	go socketActivationForDocker(ctx, &wg, termMux)
 
-	if !cfg.isHeadless() {
+	if cfg.isHeadless() {
+		wg.Add(1)
+		go stopWhenTasksAreDone(ctx, &wg, shutdown, tasksSuccessChan)
+	} else {
 		wg.Add(1)
 		go portMgmt.Run(ctx, &wg)
 	}
@@ -236,18 +247,20 @@ func Run(options ...RunOption) {
 			}
 
 			log.Error("metadata access is possible - shutting down")
-			close(shutdown)
+			shutdown <- ShutdownReasonExecutionError
 		}()
 	}
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	var exitCode int
 	select {
 	case <-sigChan:
-	case <-shutdown:
+	case shutdownReason := <-shutdown:
+		exitCode = int(shutdownReason)
 	}
 
-	log.Info("received SIGTERM - tearing down")
+	log.Info("received SIGTERM (or shutdown) - tearing down")
 	terminatingReaper <- true
 	cancel()
 	err = termMux.Close()
@@ -260,6 +273,9 @@ func Run(options ...RunOption) {
 	terminateChildProcesses()
 
 	wg.Wait()
+
+	log.WithField("exitCode", exitCode).Debug("supervisor exit")
+	os.Exit(exitCode)
 }
 
 func createGitpodService(cfg *Config, tknsrv api.TokenServiceServer) *gitpod.APIoverJSONRPC {
@@ -770,6 +786,22 @@ func tunnelOverSSH(ctx context.Context, tunneled *ports.TunneledPortsService, ne
 		cancel()
 	}()
 	<-ctx.Done()
+}
+
+func stopWhenTasksAreDone(ctx context.Context, wg *sync.WaitGroup, shutdown chan ShutdownReason, successChan <-chan bool) {
+	defer wg.Done()
+	defer close(shutdown)
+
+	success := <-successChan
+	if !success {
+		// we signal task failure via kubernetes termination log
+		msg := []byte("headless task failed")
+		err := ioutil.WriteFile("/dev/termination-log", msg, 0644)
+		if err != nil {
+			log.WithError(err).Error("err while writing termination log")
+		}
+	}
+	shutdown <- ShutdownReasonSuccess
 }
 
 func startSSHServer(ctx context.Context, cfg *Config, wg *sync.WaitGroup) {

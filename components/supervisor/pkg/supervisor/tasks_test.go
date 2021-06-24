@@ -131,7 +131,8 @@ func TestTaskManager(t *testing.T) {
 			contentState.MarkContentReady(test.Source)
 			var wg sync.WaitGroup
 			wg.Add(1)
-			go taskManager.Run(context.Background(), &wg)
+			tasksSuccessChan := make(chan bool, 1)
+			go taskManager.Run(context.Background(), &wg, tasksSuccessChan)
 			wg.Wait()
 			if diff := cmp.Diff(test.ExpectedReporter, reporter); diff != "" {
 				t.Errorf("unexpected output (-want +got):\n%s", diff)

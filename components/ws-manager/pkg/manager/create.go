@@ -489,7 +489,7 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 		ReadinessProbe:           readinessProbe,
 		Env:                      env,
 		Command:                  command,
-		TerminationMessagePolicy: corev1.TerminationMessageFallbackToLogsOnError,
+		TerminationMessagePolicy: corev1.TerminationMessageReadFile,
 	}, nil
 }
 func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext) ([]corev1.EnvVar, error) {

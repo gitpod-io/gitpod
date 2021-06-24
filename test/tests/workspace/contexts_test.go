@@ -109,7 +109,7 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 
 			wctx, wcancel := context.WithTimeout(ctx, 1*time.Minute)
 			defer wcancel()
-			it.WaitForWorkspace(wctx, nfo.LatestInstance.ID)
+			it.WaitForWorkspaceStart(wctx, nfo.LatestInstance.ID)
 
 			rsa, err := it.Instrument(integration.ComponentWorkspace, "workspace", integration.WithInstanceID(nfo.LatestInstance.ID))
 			if err != nil {

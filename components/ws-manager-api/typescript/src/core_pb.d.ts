@@ -616,6 +616,8 @@ export class WorkspaceConditions extends jspb.Message {
     clearFirstUserActivity(): void;
     getFirstUserActivity(): google_protobuf_timestamp_pb.Timestamp | undefined;
     setFirstUserActivity(value?: google_protobuf_timestamp_pb.Timestamp): WorkspaceConditions;
+    getHeadlessTaskFailed(): string;
+    setHeadlessTaskFailed(value: string): WorkspaceConditions;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceConditions.AsObject;
@@ -638,6 +640,7 @@ export namespace WorkspaceConditions {
         deployed: WorkspaceConditionBool,
         networkNotReady: WorkspaceConditionBool,
         firstUserActivity?: google_protobuf_timestamp_pb.Timestamp.AsObject,
+        headlessTaskFailed: string,
     }
 }
 

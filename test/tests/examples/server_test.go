@@ -55,7 +55,7 @@ func TestStartWorkspace(t *testing.T) {
 		t.Fatal("CreateWorkspace did not start the workspace")
 	}
 
-	it.WaitForWorkspace(ctx, nfo.LatestInstance.ID)
+	it.WaitForWorkspaceStart(ctx, nfo.LatestInstance.ID)
 
 	t.Logf("workspace is running: instanceID=%s", nfo.LatestInstance.ID)
 }

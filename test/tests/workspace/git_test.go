@@ -107,7 +107,7 @@ func runGitTests(t *testing.T, tests []GitTest) {
 			nfo, stopWS := integration.LaunchWorkspaceFromContextURL(it, test.ContextURL)
 			defer stopWS(false)
 
-			it.WaitForWorkspace(ctx, nfo.LatestInstance.ID)
+			it.WaitForWorkspaceStart(ctx, nfo.LatestInstance.ID)
 
 			rsa, err := it.Instrument(integration.ComponentWorkspace, "workspace", integration.WithInstanceID(nfo.LatestInstance.ID))
 			if err != nil {

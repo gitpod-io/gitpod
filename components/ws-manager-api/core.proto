@@ -303,6 +303,9 @@ message WorkspaceConditions {
 
     // first_user_activity is the time when MarkActive was first called on the workspace
     google.protobuf.Timestamp first_user_activity = 9;
+
+    // headless_task_failed indicates that a headless workspace task failed
+    string headless_task_failed = 10;
 }
 
 // WorkspaceConditionBool is a trinary bool: true/false/empty
