@@ -10,10 +10,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/gitpod-io/gitpod/registry-facade/pkg/registry"
-	"github.com/gitpod-io/gitpod/registry-facade/pkg/registry/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/opencontainers/go-digest"
+
+	"github.com/gitpod-io/gitpod/registry-facade/pkg/registry"
+	"github.com/gitpod-io/gitpod/registry-facade/pkg/registry/mock"
 )
 
 func TestRevisioingLayerSource(t *testing.T) {

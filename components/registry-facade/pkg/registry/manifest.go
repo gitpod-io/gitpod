@@ -20,14 +20,15 @@ import (
 	"github.com/containerd/containerd/images"
 	"github.com/containerd/containerd/remotes"
 	distv2 "github.com/docker/distribution/registry/api/v2"
-	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/registry-facade/api"
 	"github.com/gorilla/handlers"
 	"github.com/opencontainers/go-digest"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/common-go/tracing"
+	"github.com/gitpod-io/gitpod/registry-facade/api"
 )
 
 func (reg *Registry) handleManifest(ctx context.Context, r *http.Request) http.Handler {
