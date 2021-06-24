@@ -50,6 +50,8 @@ spec:
           runAsUser: 1000
 {{ include "gitpod.container.defaultEnv" $this | indent 8 }}
 {{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+        - name: GRPC_GO_RETRY
+          value: "on"
         volumeMounts:
         - name: cache
           mountPath: "/mnt/cache"

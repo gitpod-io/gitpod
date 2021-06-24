@@ -42,7 +42,7 @@ data:
             "enabled": true,
             "driver": {
                 "wsman": {
-                    "addr": "ws-manager:8080",
+                    "addr": "dns:///ws-manager:8080",
                     "tls": {
                         "ca": "/ws-manager-client-tls-certs/ca.crt",
                         "crt": "/ws-manager-client-tls-certs/tls.crt",

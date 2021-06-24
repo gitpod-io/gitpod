@@ -42,6 +42,11 @@ var runCmd = &cobra.Command{
 		reg.MustRegister(grpcMetrics)
 
 		grpcOpts := []grpc.ServerOption{
+			// terminate the connection if the client pings more than once every 2 seconds
+			grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
+				MinTime:             2 * time.Second,
+				PermitWithoutStream: true,
+			}),
 			// We don't know how good our cients are at closing connections. If they don't close them properly
 			// we'll be leaking goroutines left and right. Closing Idle connections should prevent that.
 			grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionIdle: 30 * time.Minute}),

@@ -23,7 +23,7 @@ data:
             "header": "{{- $comp.hostHeader -}}"
         },
         "workspaceInfoProviderConfig": {
-            "wsManagerAddr": "ws-manager:8080",
+            "wsManagerAddr": "dns:///ws-manager:8080",
             "reconnectInterval": "3s",
             "tls": {
                 "ca": "/ws-manager-client-tls-certs/ca.crt",
