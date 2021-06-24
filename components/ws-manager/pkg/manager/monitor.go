@@ -24,6 +24,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -978,45 +979,56 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 
 // deleteDanglingServices removes services for which there is no corresponding workspace pod anymore
 func (m *Monitor) deleteDanglingServices(ctx context.Context) error {
-	var endpoints corev1.EndpointsList
-	err := m.manager.Clientset.List(ctx, &endpoints, workspaceObjectListOptions(m.manager.Config.Namespace))
+	var services corev1.ServiceList
+	err := m.manager.Clientset.List(ctx, &services, workspaceObjectListOptions(m.manager.Config.Namespace))
 	if err != nil {
 		return xerrors.Errorf("deleteDanglingServices: %w", err)
 	}
 
+	var zero int64 = 0
 	propagationPolicy := metav1.DeletePropagationForeground
 
-	for _, e := range endpoints.Items {
+	for _, service := range services.Items {
+		var endpoints corev1.Endpoints
+		err := m.manager.Clientset.Get(ctx, types.NamespacedName{Namespace: service.Namespace, Name: service.Name}, &endpoints)
+		if err != nil {
+			return xerrors.Errorf("deleteDanglingServices: %w", err)
+		}
+
 		hasReadyEndpoint := false
-		for _, s := range e.Subsets {
+		for _, s := range endpoints.Subsets {
 			hasReadyEndpoint = len(s.Addresses) > 0
 		}
 		if hasReadyEndpoint {
 			continue
 		}
 
-		workspaceID, ok := e.Labels[wsk8s.WorkspaceIDLabel]
+		workspaceID, ok := endpoints.Labels[wsk8s.WorkspaceIDLabel]
 		if !ok {
-			m.OnError(fmt.Errorf("service endpoint %s does not have %s label", e.Name, wsk8s.WorkspaceIDLabel))
+			m.OnError(fmt.Errorf("service endpoint %s does not have %s label", service.Name, wsk8s.WorkspaceIDLabel))
 			continue
 		}
-		_, err := m.manager.findWorkspacePod(ctx, workspaceID)
+
+		_, err = m.manager.findWorkspacePod(ctx, workspaceID)
 		if !isKubernetesObjNotFoundError(err) {
 			continue
 		}
 
 		if m.manager.Config.DryRun {
-			log.WithFields(log.OWI("", "", workspaceID)).WithField("name", e.Name).Info("should have deleted dangling service but this is a dry run")
+			log.WithFields(log.OWI("", "", workspaceID)).WithField("name", service.Name).Info("should have deleted dangling service but this is a dry run")
 			continue
 		}
 
 		// this relies on the Kubernetes convention that endpoints have the same name as their services
-		err = m.manager.Clientset.Delete(ctx, &e, &client.DeleteOptions{PropagationPolicy: &propagationPolicy})
+		err = m.manager.Clientset.Delete(ctx, &service, &client.DeleteOptions{
+			GracePeriodSeconds: &zero,
+			PropagationPolicy:  &propagationPolicy,
+		})
 		if err != nil && !isKubernetesObjNotFoundError(err) {
 			m.OnError(xerrors.Errorf("deleteDanglingServices: %w", err))
 			continue
 		}
-		log.WithFields(log.OWI("", "", workspaceID)).WithField("name", e.Name).Info("deleted dangling service")
+		log.WithFields(log.OWI("", "", workspaceID)).WithField("name", service.Name).Info("deleted dangling service")
 	}
 
 	return nil

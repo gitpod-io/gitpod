@@ -693,8 +693,10 @@ func (m *Manager) ControlPort(ctx context.Context, req *api.ControlPortRequest) 
 	if len(spec.Ports) == 0 {
 		// we don't have any ports exposed anymore: remove the service
 		propagationPolicy := metav1.DeletePropagationForeground
+		var zero int64 = 0
 		err = m.Clientset.Delete(ctx, &service, &client.DeleteOptions{
-			PropagationPolicy: &propagationPolicy,
+			GracePeriodSeconds: &zero,
+			PropagationPolicy:  &propagationPolicy,
 		})
 
 		span.LogKV("event", "port service deleted")
