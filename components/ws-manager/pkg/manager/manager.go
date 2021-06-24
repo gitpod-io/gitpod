@@ -25,6 +25,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
@@ -1089,35 +1090,17 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 
 // newWssyncConnectionFactory creates a new wsdaemon connection factory based on the wsmanager configuration
 func newWssyncConnectionFactory(managerConfig Configuration) (grpcpool.Factory, error) {
-	// We use client-side retry when ws-daemon is unavilable. The unavailability need just cover the time ws-daemon
-	// needs to restart. If ws-daemon is unavailable during a connection attempt, the WithBlock and WithBackoffMaxDelay
-	// configure the behaviour.
-	// Once the connection has been established, but becomes unavailable during a call, this retry mechanism takes hold.
-	//
-	// Note: the retry policy only has an effect if ws-manager is run with the GRPC_GO_RETRY=on env var set.
-	//       see https://github.com/grpc/grpc-go/blob/506b7730668b5a13465224b0d8133f974a3f843d/dialoptions.go#L522-L524
-	var retryPolicy = `{
-		"methodConfig": [{
-			"name": [{"service": "wsdaemon.WorkspaceContentService"}],
-			"waitForReady": true,
-
-			"retryPolicy": {
-				"MaxAttempts": 6,
-				"InitialBackoff": ".5s",
-				"MaxBackoff": "10s",
-				"BackoffMultiplier": 2,
-				"RetryableStatusCodes": [ "UNAVAILABLE" ]
-			}
-		}]
-	}`
-
 	cfg := managerConfig.WorkspaceDaemon
 	opts := []grpc.DialOption{
 		grpc.WithUnaryInterceptor(grpc_opentracing.UnaryClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer()))),
 		grpc.WithStreamInterceptor(grpc_opentracing.StreamClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer()))),
 		grpc.WithBlock(),
 		grpc.WithBackoffMaxDelay(5 * time.Second),
-		grpc.WithDefaultServiceConfig(retryPolicy),
+		grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:                5 * time.Second,
+			Timeout:             time.Second,
+			PermitWithoutStream: true,
+		}),
 	}
 	if cfg.TLS.Authority != "" || cfg.TLS.Certificate != "" && cfg.TLS.PrivateKey != "" {
 		ca := cfg.TLS.Authority

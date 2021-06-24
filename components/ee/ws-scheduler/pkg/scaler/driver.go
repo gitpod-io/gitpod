@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/status"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -78,7 +79,16 @@ func NewWorkspaceManagerPrescaleDriver(config WorkspaceManagerPrescaleDriverConf
 	}
 	config.WorkspaceImage = imgRef.String()
 
-	var grpcOpts []grpc.DialOption
+	grpcOpts := []grpc.DialOption{
+		grpc.WithBlock(),
+		grpc.WithBackoffMaxDelay(5 * time.Second),
+		grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:                5 * time.Second,
+			Timeout:             time.Second,
+			PermitWithoutStream: true,
+		}),
+	}
+
 	if config.WsManager.TLS != nil {
 		ca := config.WsManager.TLS.CA
 		crt := config.WsManager.TLS.Certificate

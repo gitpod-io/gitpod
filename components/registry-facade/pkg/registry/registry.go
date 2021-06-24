@@ -11,10 +11,10 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"net/http/httputil"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/registry-facade/api"
@@ -33,6 +33,7 @@ import (
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/keepalive"
 )
 
 // Config configures the registry
@@ -155,6 +156,13 @@ func NewRegistry(cfg Config, newResolver ResolverProvider, reg prometheus.Regist
 		opts := []grpc.DialOption{
 			grpc.WithUnaryInterceptor(grpc_opentracing.UnaryClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer()))),
 			grpc.WithStreamInterceptor(grpc_opentracing.StreamClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer()))),
+			grpc.WithBlock(),
+			grpc.WithBackoffMaxDelay(5 * time.Second),
+			grpc.WithKeepaliveParams(keepalive.ClientParameters{
+				Time:                5 * time.Second,
+				Timeout:             time.Second,
+				PermitWithoutStream: true,
+			}),
 		}
 
 		if cfg.RemoteSpecProvider.TLS != nil {
@@ -343,8 +351,8 @@ type dispatchFunc func(ctx context.Context, r *http.Request) http.Handler
 // dispatcher wraps a dispatchFunc and provides context
 func dispatcher(d dispatchFunc) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fc, _ := httputil.DumpRequest(r, false)
-		log.WithField("req", string(fc)).Debug("dispatching request")
+		//fc, _ := httputil.DumpRequest(r, false)
+		//log.WithField("req", string(fc)).Debug("dispatching request")
 
 		// Get context from request, add vars and other info and sync back
 		ctx := r.Context()

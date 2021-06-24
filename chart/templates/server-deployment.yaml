@@ -10,7 +10,7 @@ manager: []
 manager:
 {{- if not $comp.wsmanSkipSelf }}
 - name: "{{ template "gitpod.installation.shortname" . }}"
-  url: "ws-manager:8080"
+  url: "dns:///ws-manager:8080"
   state: "available"
   maxScore: 100
   score: 50

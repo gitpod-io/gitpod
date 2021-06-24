@@ -118,5 +118,7 @@ spec:
 {{ include "gitpod.container.tracingEnv" $this | indent 8 }}
         - name: DOCKER_HOST
           value: "tcp://localhost:2375"
+        - name: GRPC_GO_RETRY
+          value: "on"
 {{ toYaml .Values.defaults | indent 6 }}
 {{ end }}
