@@ -66,7 +66,9 @@ pod:
       export GOOGLE_APPLICATION_CREDENTIALS=/config/gcloud/legacy_credentials/gitpod-deployer@gitpod-core-dev.iam.gserviceaccount.com/adc.json
       echo "[prep] received config."
 
+      echo "[test] before npm"
       npm install shelljs ts-node typescript @types/shelljs @types/node
       printf '{{ toJson . }}' > context.json
+      echo "[test] after context"
 
       npx ts-node .werft/run-integration-tests.ts

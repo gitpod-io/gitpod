@@ -1,6 +1,8 @@
 import * as fs from 'fs';
 import { werft, exec } from './util/shell';
 
+werft.log('prep', "test: start");
+
 const context = JSON.parse(fs.readFileSync('context.json').toString());
 const config = context.Annotations || {};
 
