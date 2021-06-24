@@ -574,7 +574,6 @@ func runIDEReadinessProbe(cfg *Config) {
 		for {
 			resp, err := client.Get(url)
 			if err != nil {
-				log.WithError(err).Info("IDE is not ready yet")
 				continue
 			}
 			resp.Body.Close()
