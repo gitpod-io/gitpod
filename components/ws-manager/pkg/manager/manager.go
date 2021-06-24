@@ -365,7 +365,7 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 		// If the status is nil (e.g. because an error occured), we'll still try and stop the workspace
 		// This is merely an optimization that prevents deleting the workspace pod multiple times.
 		// If we do try and delete the pod a few times though, that's ok, too.
-		if status.Phase == api.WorkspacePhase_STOPPING {
+		if isPodBeingDeleted(pod) {
 			return nil
 		}
 	}
@@ -947,15 +947,6 @@ func (m *Manager) onChange(ctx context.Context, status *api.WorkspaceStatus) {
 	if status.Phase == 0 {
 		log.WithField("status", status).Error("workspace in UNKNOWN phase")
 	}
-}
-
-// OnWorkspaceLog notifies subscribers about a headless log message
-func (m *Manager) OnWorkspaceLog(ctx context.Context, log *api.WorkspaceLogMessage) {
-	// We do not extract trace header for log messages to keep the effort/CPU load/bandwidth minimal.
-	// We wouldn't want any of this in Jaeger anyways to keep the load on Jaeger low.
-	m.publishToSubscribers(ctx, &api.SubscribeResponse{
-		Payload: &api.SubscribeResponse_Log{Log: log},
-	})
 }
 
 // GetWorkspaces produces a list of running workspaces and their status

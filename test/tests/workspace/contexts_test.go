@@ -104,7 +104,7 @@ func runContextTests(t *testing.T, tests []ContextTest) {
 				t.SkipNow()
 			}
 
-			nfo, stopWS := integration.LaunchWorkspaceFromContextURL(it, test.ContextURL)
+			nfo, stopWS := it.LaunchWorkspaceFromContextURL(test.ContextURL)
 			defer stopWS(false) // we do not wait for stopped here as it does not matter for this test case and speeds things up
 
 			wctx, wcancel := context.WithTimeout(ctx, 1*time.Minute)

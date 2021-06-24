@@ -104,7 +104,7 @@ func runGitTests(t *testing.T, tests []GitTest) {
 			it, ctx := integration.NewTest(t, 5*time.Minute)
 			defer it.Done()
 
-			nfo, stopWS := integration.LaunchWorkspaceFromContextURL(it, test.ContextURL)
+			nfo, stopWS := it.LaunchWorkspaceFromContextURL(test.ContextURL)
 			defer stopWS(false)
 
 			it.WaitForWorkspace(ctx, nfo.LatestInstance.ID)

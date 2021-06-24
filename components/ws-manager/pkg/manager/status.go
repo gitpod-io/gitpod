@@ -86,14 +86,7 @@ func (wso *workspaceObjects) WorkspaceType() (api.WorkspaceType, error) {
 
 	lbl, ok := meta.Labels[wsk8s.TypeLabel]
 	if !ok {
-		// LEGACY
-		// this is a legacy pod without explicit workspace type. If it's headless it must be a prebuild, otherwise it's a regular workspace
-		var tpe api.WorkspaceType
-		if wso.IsWorkspaceHeadless() {
-			tpe = api.WorkspaceType_PREBUILD
-		} else {
-			tpe = api.WorkspaceType_REGULAR
-		}
+		tpe := api.WorkspaceType_REGULAR
 		log.WithFields(wsk8s.GetOWIFromObject(meta)).WithField("workspaceType", tpe).Info("determining type of legacy pod")
 		return tpe, nil
 	}
@@ -509,8 +502,14 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 			}
 		}
 
-		if wso.IsWorkspaceHeadless() {
-			// headless workspaces don't expose a public service and thus cannot be asked about their status.
+		tpe, err := wso.WorkspaceType()
+		if err != nil {
+			log.WithError(err).Warn("cannot determine workspace type - assuming this is a regular")
+			tpe = api.WorkspaceType_REGULAR
+		}
+
+		if wso.IsWorkspaceHeadless() && tpe != api.WorkspaceType_PREBUILD {
+			// headless workspaces (except prebuilds) don't expose a public service and thus cannot be asked about their status.
 			// once kubernetes reports the workspace running, so do we.
 			result.Phase = api.WorkspacePhase_RUNNING
 			return nil
@@ -525,6 +524,11 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 		// workspace has not yet been marked ready by one of monitor's probes. It must be initializing then.
 		result.Phase = api.WorkspacePhase_INITIALIZING
 		result.Message = "workspace initializer is running"
+		return nil
+	} else if isCompletedHeadless(&wso) {
+		// note: in case of a failed headless workspace "failed" is set at the beginning of the method
+		result.Phase = api.WorkspacePhase_STOPPING
+		result.Message = "headless workspace is stopping"
 		return nil
 	} else if status.Phase == corev1.PodUnknown {
 		result.Phase = api.WorkspacePhase_UNKNOWN
@@ -557,10 +561,24 @@ func extractFailure(wso workspaceObjects) (string, *api.WorkspacePhase) {
 		return reason, nil
 	}
 
+	tpe, err := wso.WorkspaceType()
+	if err != nil {
+		log.WithError(err).Warn("cannot determine workspace type - assuming this is a regular")
+		tpe = api.WorkspaceType_REGULAR
+	}
+
 	status := pod.Status
 	if status.Phase == corev1.PodFailed && (status.Reason != "" || status.Message != "") {
 		// Don't force the phase to UNKNONWN here to leave a chance that we may detect the actual phase of
 		// the workspace, e.g. stopping.
+		if tpe == api.WorkspaceType_PREBUILD {
+			// default way for failed prebuilds to exit
+			cs := status.ContainerStatuses[0]
+			if cs.State.Terminated.ExitCode == wsk8s.PrebuildTaskErrorExitCode {
+				return "prebuild tasks failed during execution", nil
+			}
+		}
+
 		return fmt.Sprintf("%s: %s", status.Reason, status.Message), nil
 	}
 
@@ -596,6 +614,14 @@ func extractFailure(wso workspaceObjects) (string, *api.WorkspacePhase) {
 					return fmt.Sprintf("container %s ran with an error: exit code %d", cs.Name, terminationState.ExitCode), nil
 				}
 			} else if terminationState.Reason == "Completed" {
+				if tpe == api.WorkspaceType_PREBUILD {
+					if terminationState.ExitCode == 0 {
+						// default way for prebuilds to be done
+						return "", nil
+					}
+
+					return fmt.Sprintf("prebuild failed with exit code: %d", terminationState.ExitCode), nil
+				}
 				return fmt.Sprintf("container %s completed; containers of a workspace pod are not supposed to do that", cs.Name), nil
 			} else if !isPodBeingDeleted(pod) && terminationState.ExitCode != containerUnknownExitCode {
 				// if a container is terminated and it wasn't because of either:
@@ -666,10 +692,15 @@ func extractFailureFromLogs(logs []byte) string {
 	return string(logs)
 }
 
-// isPodBeingDeleted returns true if the pod is currently being stopped/deleted
+// isPodBeingDeleted returns true if the pod is currently being deleted
 func isPodBeingDeleted(pod *corev1.Pod) bool {
 	// if the pod is being deleted the only marker we have is that the deletionTimestamp is set
 	return pod.ObjectMeta.DeletionTimestamp != nil
+}
+
+// isCompletedHeadless returns true if the pod is a headless workspace and either succeeded or failed (e.g., ran to completion)
+func isCompletedHeadless(wso *workspaceObjects) bool {
+	return wso.IsWorkspaceHeadless() && (wso.Pod.Status.Phase == corev1.PodSucceeded || wso.Pod.Status.Phase == corev1.PodFailed)
 }
 
 type activity string
@@ -762,6 +793,10 @@ func (m *Manager) isWorkspaceTimedOut(wso workspaceObjects) (reason string, err 
 		activity := activityStopping
 		if status.Conditions.FinalBackupComplete != api.WorkspaceConditionBool_TRUE {
 			activity = activityBackup
+		}
+		if !isPodBeingDeleted(wso.Pod) {
+			// pods that have not been deleted have never timed out
+			return "", nil
 		}
 		return decide(wso.Pod.DeletionTimestamp.Time, m.Config.Timeouts.Stopping, activity)
 

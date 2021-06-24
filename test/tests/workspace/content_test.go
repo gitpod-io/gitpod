@@ -20,7 +20,7 @@ func TestBackup(t *testing.T) {
 	it, ctx := integration.NewTest(t, 5*time.Minute)
 	defer it.Done()
 
-	ws := integration.LaunchWorkspaceDirectly(it)
+	ws := it.LaunchWorkspaceDirectly()
 	rsa, err := it.Instrument(integration.ComponentWorkspace, "workspace", integration.WithInstanceID(ws.Req.Id), integration.WithContainer("workspace"), integration.WithWorkspacekitLift(true))
 	if err != nil {
 		t.Fatal(err)
@@ -52,7 +52,7 @@ func TestBackup(t *testing.T) {
 
 	it.WaitForWorkspaceStop(ws.Req.Id)
 
-	ws = integration.LaunchWorkspaceDirectly(it, integration.WithRequestModifier(func(w *wsapi.StartWorkspaceRequest) error {
+	ws = it.LaunchWorkspaceDirectly(integration.WithRequestModifier(func(w *wsapi.StartWorkspaceRequest) error {
 		w.ServicePrefix = ws.Req.ServicePrefix
 		w.Metadata.MetaId = ws.Req.Metadata.MetaId
 		w.Metadata.Owner = ws.Req.Metadata.Owner

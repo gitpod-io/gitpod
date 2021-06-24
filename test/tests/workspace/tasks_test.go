@@ -59,10 +59,10 @@ func TestRegularWorkspaceTasks(t *testing.T) {
 				return nil
 			}
 
-			nfo := integration.LaunchWorkspaceDirectly(it,
+			nfo := it.LaunchWorkspaceDirectly(
 				integration.WithRequestModifier(addInitTask),
 			)
-			defer integration.DeleteWorkspace(it, nfo.Req.Id)
+			defer it.DeleteWorkspace(nfo.Req.Id)
 
 			conn := it.API().Supervisor(nfo.Req.Id)
 			statusService := supervisor.NewStatusServiceClient(conn)

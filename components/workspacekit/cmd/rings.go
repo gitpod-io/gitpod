@@ -25,6 +25,7 @@ import (
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/workspacekit/pkg/lift"
 	"github.com/gitpod-io/gitpod/workspacekit/pkg/seccomp"
@@ -53,13 +54,8 @@ var ring0Cmd = &cobra.Command{
 		log.Init(ServiceName, Version, true, true)
 		log := log.WithField("ring", 0)
 
-		var failed bool
-		defer func() {
-			if !failed {
-				return
-			}
-			sleepForDebugging()
-		}()
+		exitCode := 1
+		defer handleExit(&exitCode)
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
@@ -83,7 +79,6 @@ var ring0Cmd = &cobra.Command{
 			_, err = client.Teardown(ctx, &daemonapi.TeardownRequest{})
 			if err != nil {
 				log.WithError(err).Error("cannot trigger teardown")
-				failed = true
 				return
 			}
 		}()
@@ -103,7 +98,6 @@ var ring0Cmd = &cobra.Command{
 
 		if err := cmd.Start(); err != nil {
 			log.WithError(err).Error("failed to start ring0")
-			failed = true
 			return
 		}
 
@@ -150,10 +144,13 @@ var ring0Cmd = &cobra.Command{
 			}
 		}
 		if err != nil {
+			if eerr, ok := err.(*exec.ExitError); ok {
+				exitCode = eerr.ExitCode()
+			}
 			log.WithError(err).Error("unexpected exit")
-			failed = true
 			return
 		}
+		exitCode = 0 // once we get here everythings good
 	},
 }
 
@@ -168,13 +165,8 @@ var ring1Cmd = &cobra.Command{
 		log := log.WithField("ring", 1)
 		defer log.Info("done")
 
-		var failed bool
-		defer func() {
-			if !failed {
-				return
-			}
-			sleepForDebugging()
-		}()
+		exitCode := 1
+		defer handleExit(&exitCode)
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
@@ -182,7 +174,6 @@ var ring1Cmd = &cobra.Command{
 		client, conn, err := connectToInWorkspaceDaemonService(ctx)
 		if err != nil {
 			log.WithError(err).Error("cannot connect to daemon")
-			failed = true
 			return
 		}
 		defer conn.Close()
@@ -195,19 +186,16 @@ var ring1Cmd = &cobra.Command{
 			_, err = client.WriteIDMapping(ctx, &daemonapi.WriteIDMappingRequest{Pid: int64(os.Getpid()), Gid: false, Mapping: mapping})
 			if err != nil {
 				log.WithError(err).Error("cannot establish UID mapping")
-				failed = true
 				return
 			}
 			_, err = client.WriteIDMapping(ctx, &daemonapi.WriteIDMappingRequest{Pid: int64(os.Getpid()), Gid: true, Mapping: mapping})
 			if err != nil {
 				log.WithError(err).Error("cannot establish GID mapping")
-				failed = true
 				return
 			}
 			err = syscall.Exec("/proc/self/exe", append(os.Args, "--mapping-established"), os.Environ())
 			if err != nil {
 				log.WithError(err).Error("cannot exec /proc/self/exe")
-				failed = true
 				return
 			}
 			return
@@ -293,7 +281,6 @@ var ring1Cmd = &cobra.Command{
 			err = unix.Mount(m.Source, dst, m.FSType, m.Flags, "")
 			if err != nil {
 				log.WithError(err).WithField("dest", dst).Error("cannot establish mount")
-				failed = true
 				return
 			}
 		}
@@ -310,7 +297,6 @@ var ring1Cmd = &cobra.Command{
 		skt, err := net.Listen("unix", socketFN)
 		if err != nil {
 			log.WithError(err).Error("cannot create socket for ring2")
-			failed = true
 			return
 		}
 		defer skt.Close()
@@ -327,7 +313,6 @@ var ring1Cmd = &cobra.Command{
 		cmd.Env = env
 		if err := cmd.Start(); err != nil {
 			log.WithError(err).Error("failed to start the child process")
-			failed = true
 			return
 		}
 		sigc := sigproxy.ForwardAllSignals(context.Background(), cmd.Process.Pid)
@@ -337,7 +322,6 @@ var ring1Cmd = &cobra.Command{
 		err = os.MkdirAll(procLoc, 0755)
 		if err != nil {
 			log.WithError(err).Error("cannot mount proc")
-			failed = true
 			return
 		}
 		_, err = client.MountProc(ctx, &daemonapi.MountProcRequest{
@@ -346,7 +330,6 @@ var ring1Cmd = &cobra.Command{
 		})
 		if err != nil {
 			log.WithError(err).Error("cannot mount proc")
-			failed = true
 			return
 		}
 
@@ -393,7 +376,6 @@ var ring1Cmd = &cobra.Command{
 		}
 		if err != nil {
 			log.WithError(err).Error("ring2 did not connect successfully")
-			failed = true
 			return
 		}
 
@@ -405,7 +387,6 @@ var ring1Cmd = &cobra.Command{
 		})
 		if err != nil {
 			log.WithError(err).Error("cannot send ring sync msg to ring2")
-			failed = true
 			return
 		}
 
@@ -413,7 +394,6 @@ var ring1Cmd = &cobra.Command{
 		scmpfd, err := receiveSeccmpFd(ring2Conn)
 		if err != nil {
 			log.WithError(err).Error("did not receive seccomp fd from ring2")
-			failed = true
 			return
 		}
 
@@ -456,10 +436,13 @@ var ring1Cmd = &cobra.Command{
 
 		err = cmd.Wait()
 		if err != nil {
+			if eerr, ok := err.(*exec.ExitError); ok {
+				exitCode = eerr.ExitCode()
+			}
 			log.WithError(err).Error("unexpected exit")
-			failed = true
 			return
 		}
+		exitCode = 0 // once we get here everythings good
 	},
 }
 
@@ -514,19 +497,13 @@ var ring2Cmd = &cobra.Command{
 		log := log.WithField("ring", 2)
 		defer log.Info("done")
 
-		var failed bool
-		defer func() {
-			if !failed {
-				return
-			}
-			sleepForDebugging()
-		}()
+		exitCode := 1
+		defer handleExit(&exitCode)
 
 		// we talk to ring1 using a Unix socket, so that we can send the seccomp fd across.
 		rconn, err := net.Dial("unix", args[0])
 		if err != nil {
 			log.WithError(err).Error("cannot connect to parent")
-			failed = true
 			return
 		}
 		conn := rconn.(*net.UnixConn)
@@ -537,19 +514,16 @@ var ring2Cmd = &cobra.Command{
 		_, err = msgutil.UnmarshalFromReader(conn, &msg)
 		if err != nil {
 			log.WithError(err).Error("cannot read parent message")
-			failed = true
 			return
 		}
 		if msg.Stage != 1 {
 			log.WithError(err).WithField("msg", fmt.Sprintf("%+q", msg)).Error("expected stage 1 sync message")
-			failed = true
 			return
 		}
 
 		err = pivotRoot(msg.Rootfs, msg.FSShift)
 		if err != nil {
 			log.WithError(err).Error("cannot pivot root")
-			failed = true
 			return
 		}
 
@@ -558,13 +532,11 @@ var ring2Cmd = &cobra.Command{
 		scmpFd, err := seccomp.LoadFilter()
 		if err != nil {
 			log.WithError(err).Error("cannot load seccomp filter - syscall handling would be broken")
-			failed = true
 			return
 		}
 		connf, err := conn.File()
 		if err != nil {
 			log.WithError(err).Error("cannot get parent socket fd")
-			failed = true
 			return
 		}
 		defer connf.Close()
@@ -574,16 +546,18 @@ var ring2Cmd = &cobra.Command{
 		connf.Close()
 		if err != nil {
 			log.WithError(err).Error("cannot send seccomp fd")
-			failed = true
 			return
 		}
 
 		err = unix.Exec(ring2Opts.SupervisorPath, []string{"supervisor", "run"}, os.Environ())
 		if err != nil {
+			if eerr, ok := err.(*exec.ExitError); ok {
+				exitCode = eerr.ExitCode()
+			}
 			log.WithError(err).WithField("cmd", ring2Opts.SupervisorPath).Error("cannot exec")
-			failed = true
 			return
 		}
+		exitCode = 0 // once we get here everythings good
 	},
 }
 
@@ -663,6 +637,14 @@ func pivotRoot(rootfs string, fsshift api.FSShiftMethod) error {
 	return nil
 }
 
+func handleExit(ec *int) {
+	exitCode := *ec
+	if exitCode != 0 && exitCode != wsk8s.PrebuildTaskErrorExitCode {
+		sleepForDebugging()
+	}
+	os.Exit(exitCode)
+}
+
 func sleepForDebugging() {
 	log.Info("sleeping five minutes to allow debugging")
 	sigChan := make(chan os.Signal, 1)
@@ -671,7 +653,6 @@ func sleepForDebugging() {
 	case <-sigChan:
 	case <-time.After(5 * time.Minute):
 	}
-	os.Exit(1)
 }
 
 type ringSyncMsg struct {

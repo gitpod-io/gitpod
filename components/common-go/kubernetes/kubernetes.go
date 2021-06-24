@@ -57,6 +57,9 @@ const (
 	// ContainerIsGoneAnnotation is used as workaround for containerd https://github.com/containerd/containerd/pull/4214
 	// which might cause workspace container status propagation to fail, which in turn would keep a workspace running indefinitely.
 	ContainerIsGoneAnnotation = "gitpod.io/containerIsGone"
+
+	// PrebuildTaskErrorExitCode is the exit code a prebuild workspace returns when one of it's tasks failed. This is necessary to differentiate it from other classes of generic execution errors.
+	PrebuildTaskErrorExitCode = 222
 )
 
 // WorkspaceSupervisorEndpoint produces the supervisor endpoint of a workspace.
