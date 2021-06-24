@@ -12,12 +12,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/spf13/cobra"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/gitpod-io/gitpod/common-go/grpc"
-	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
@@ -113,22 +109,4 @@ type config struct {
 	Prometheus struct {
 		Addr string `json:"addr"`
 	} `json:"prometheus"`
-}
-
-func newClientSet() (*kubernetes.Clientset, error) {
-	if kubeconfig != "" {
-		res, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-		if err != nil {
-			return nil, err
-		}
-		res.RateLimiter = &wsk8s.UnlimitedRateLimiter{}
-		return kubernetes.NewForConfig(res)
-	}
-
-	k8s, err := rest.InClusterConfig()
-	if err != nil {
-		return nil, err
-	}
-	k8s.RateLimiter = &wsk8s.UnlimitedRateLimiter{}
-	return kubernetes.NewForConfig(k8s)
 }

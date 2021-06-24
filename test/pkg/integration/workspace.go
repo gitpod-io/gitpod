@@ -8,6 +8,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -191,7 +193,7 @@ func LaunchWorkspaceDirectly(it *Test, opts ...LaunchWorkspaceDirectlyOpt) (res 
 		it.t.Fatalf("cannot start workspace: %q", err)
 	}
 
-	lastStatus := it.WaitForWorkspace(it.ctx, instanceID.String(), options.WaitForOpts...)
+	lastStatus := it.WaitForWorkspaceStart(it.ctx, instanceID.String(), options.WaitForOpts...)
 
 	it.t.Logf("workspace is running: instanceID=%s", instanceID.String())
 
@@ -251,7 +253,7 @@ func LaunchWorkspaceFromContextURL(it *Test, contextURL string, serverOpts ...Gi
 		it.t.Fatal(err)
 	}
 
-	it.WaitForWorkspace(it.ctx, nfo.LatestInstance.ID)
+	it.WaitForWorkspaceStart(it.ctx, nfo.LatestInstance.ID)
 
 	it.t.Logf("workspace is running: instanceID=%s", nfo.LatestInstance.ID)
 
@@ -272,7 +274,7 @@ func WorkspaceCanFail(o *waitForWorkspaceOpts) {
 
 // WaitForWorkspace waits until a workspace is running. Fails the test if the workspace
 // fails or does not become RUNNING before the context is canceled.
-func (t *Test) WaitForWorkspace(ctx context.Context, instanceID string, opts ...WaitForWorkspaceOpt) (lastStatus *wsmanapi.WorkspaceStatus) {
+func (t *Test) WaitForWorkspaceStart(ctx context.Context, instanceID string, opts ...WaitForWorkspaceOpt) (lastStatus *wsmanapi.WorkspaceStatus) {
 	var cfg waitForWorkspaceOpts
 	for _, o := range opts {
 		o(&cfg)
@@ -459,6 +461,70 @@ func (it *Test) WaitForWorkspaceStop(instanceID string) (lastStatus *wsmanapi.Wo
 	}
 
 	return
+}
+
+// WaitForWorkspace waits until the condition function returns true. Fails the test if the condition does
+// not become true before the context is canceled.
+func (it *Test) WaitForWorkspace(instanceID string, condition func(status *wsmanapi.WorkspaceStatus) bool) (lastStatus *wsmanapi.WorkspaceStatus) {
+	wsman := it.API().WorkspaceManager()
+	sub, err := wsman.Subscribe(it.ctx, &wsmanapi.SubscribeRequest{})
+	if err != nil {
+		it.t.Errorf("cannot listen for workspace updates: %q", err)
+		return
+	}
+
+	done := make(chan *wsmanapi.WorkspaceStatus, 1)
+	var once sync.Once
+	go func() {
+		var status *wsmanapi.WorkspaceStatus
+		defer func() {
+			once.Do(func() {
+				done <- status
+				close(done)
+			})
+			_ = sub.CloseSend()
+		}()
+		for {
+			resp, err := sub.Recv()
+			if err == io.EOF {
+				return
+			}
+			if err != nil {
+				it.t.Errorf("workspace update error: %q", err)
+				return
+			}
+			status = resp.GetStatus()
+			if status == nil {
+				continue
+			}
+			if status.Id != instanceID {
+				continue
+			}
+
+			if condition(status) {
+				return
+			}
+		}
+	}()
+
+	// maybe the workspace has started in the meantime and we've missed the update
+	desc, err := wsman.DescribeWorkspace(it.ctx, &wsmanapi.DescribeWorkspaceRequest{Id: instanceID})
+	if err != nil {
+		it.t.Fatalf("cannot get workspace: %q", err)
+		return
+	}
+	if condition(desc.Status) {
+		once.Do(func() { close(done) })
+		return desc.Status
+	}
+
+	select {
+	case <-it.ctx.Done():
+		it.t.Fatalf("cannot wait for workspace: %q", it.ctx.Err())
+		return
+	case s := <-done:
+		return s
+	}
 }
 
 func (it *Test) resolveOrBuildImage(baseRef string) (absref string, err error) {

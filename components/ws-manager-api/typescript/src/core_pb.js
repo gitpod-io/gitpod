@@ -4783,7 +4783,8 @@ proto.wsman.WorkspaceConditions.toObject = function(includeInstance, msg) {
     finalBackupComplete: jspb.Message.getFieldWithDefault(msg, 6, 0),
     deployed: jspb.Message.getFieldWithDefault(msg, 7, 0),
     networkNotReady: jspb.Message.getFieldWithDefault(msg, 8, 0),
-    firstUserActivity: (f = msg.getFirstUserActivity()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f)
+    firstUserActivity: (f = msg.getFirstUserActivity()) && google_protobuf_timestamp_pb.Timestamp.toObject(includeInstance, f),
+    headlessTaskFailed: jspb.Message.getFieldWithDefault(msg, 10, "")
   };
 
   if (includeInstance) {
@@ -4856,6 +4857,10 @@ proto.wsman.WorkspaceConditions.deserializeBinaryFromReader = function(msg, read
       var value = new google_protobuf_timestamp_pb.Timestamp;
       reader.readMessage(value,google_protobuf_timestamp_pb.Timestamp.deserializeBinaryFromReader);
       msg.setFirstUserActivity(value);
+      break;
+    case 10:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setHeadlessTaskFailed(value);
       break;
     default:
       reader.skipField();
@@ -4948,6 +4953,13 @@ proto.wsman.WorkspaceConditions.serializeBinaryToWriter = function(message, writ
       9,
       f,
       google_protobuf_timestamp_pb.Timestamp.serializeBinaryToWriter
+    );
+  }
+  f = message.getHeadlessTaskFailed();
+  if (f.length > 0) {
+    writer.writeString(
+      10,
+      f
     );
   }
 };
@@ -5131,6 +5143,24 @@ proto.wsman.WorkspaceConditions.prototype.clearFirstUserActivity = function() {
  */
 proto.wsman.WorkspaceConditions.prototype.hasFirstUserActivity = function() {
   return jspb.Message.getField(this, 9) != null;
+};
+
+
+/**
+ * optional string headless_task_failed = 10;
+ * @return {string}
+ */
+proto.wsman.WorkspaceConditions.prototype.getHeadlessTaskFailed = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 10, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.wsman.WorkspaceConditions} returns this
+ */
+proto.wsman.WorkspaceConditions.prototype.setHeadlessTaskFailed = function(value) {
+  return jspb.Message.setProto3StringField(this, 10, value);
 };
 
 

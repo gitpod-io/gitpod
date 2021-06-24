@@ -161,7 +161,7 @@
                         "successThreshold": 1,
                         "failureThreshold": 600
                     },
-                    "terminationMessagePolicy": "FallbackToLogsOnError",
+                    "terminationMessagePolicy": "File",
                     "imagePullPolicy": "Always",
                     "securityContext": {
                         "capabilities": {
