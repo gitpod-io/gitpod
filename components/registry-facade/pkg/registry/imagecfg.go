@@ -9,12 +9,13 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/gitpod-io/gitpod/registry-facade/api"
 	lru "github.com/hashicorp/golang-lru"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/connectivity"
+
+	"github.com/gitpod-io/gitpod/registry-facade/api"
 )
 
 // ErrRefInvalid is returned by spec provider who cannot interpret the ref
