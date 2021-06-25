@@ -16,9 +16,9 @@ import StartWorkspace from "./StartWorkspace";
 import { openAuthorizeWindow } from "../provider-utils";
 import { SelectAccountPayload } from "@gitpod/gitpod-protocol/lib/auth";
 import { SelectAccountModal } from "../settings/SelectAccountModal";
-import { watchHeadlessLogs } from "./WorkspaceLogs";
+import { watchHeadlessLogs } from "../components/PrebuildLogs";
 
-const WorkspaceLogs = React.lazy(() => import('./WorkspaceLogs'));
+const WorkspaceLogs = React.lazy(() => import('../components/WorkspaceLogs'));
 
 export interface CreateWorkspaceProps {
   contextUrl: string;

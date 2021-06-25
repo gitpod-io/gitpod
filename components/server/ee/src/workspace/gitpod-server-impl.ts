@@ -1446,8 +1446,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         return 'Thank you for you feedback. We have added 50 Gitpod Hours to your account. Have fun!';
     }
 
-    //#region Projects concerns
-    //
+    // Projects
     async getProviderRepositoriesForUser(params: { provider: string, hints?: object }): Promise<ProviderRepository[]> {
         const user = this.checkAndBlockUser("getProviderRepositoriesForUser");
 
@@ -1457,11 +1456,14 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
 
     public async getPrebuilds(teamId: string, projectName: string): Promise<PrebuildInfo[]> {
         this.checkAndBlockUser("getPrebuilds");
+        const span = opentracing.globalTracer().startSpan("getPrebuilds");
+        span.setTag("teamId", teamId);
+        span.setTag("projectName", projectName);
         const result: PrebuildInfo[] = [];
 
         const project = (await this.projectDB.findProjectsByTeam(teamId)).find(p => p.name === projectName);
         if (project) {
-            const pwss = await this.workspaceDb.trace({}).findPrebuiltWorkspacesByProject(project.id);
+            const pwss = await this.workspaceDb.trace({ span }).findPrebuiltWorkspacesByProject(project.id);
 
             for (const pws of pwss) {
                 result.push({
@@ -1479,6 +1481,4 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
 
         return result;
     }
-    //
-    //#endregion
 }

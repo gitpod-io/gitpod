@@ -11,9 +11,9 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import PendingChangesDropdown from "../components/PendingChangesDropdown";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
-import { watchHeadlessLogs } from "./WorkspaceLogs";
+import { watchHeadlessLogs } from "../components/PrebuildLogs";
 
-const WorkspaceLogs = React.lazy(() => import('./WorkspaceLogs'));
+const WorkspaceLogs = React.lazy(() => import('../components/WorkspaceLogs'));
 
 export interface StartWorkspaceProps {
   workspaceId: string;

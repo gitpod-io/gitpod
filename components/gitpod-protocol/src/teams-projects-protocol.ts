@@ -7,12 +7,17 @@
 import { PrebuiltWorkspaceState } from "./protocol";
 import uuidv4 = require("uuid/v4");
 
+export interface ProjectConfig {
+    '.gitpod.yml': string;
+}
+
 export interface Project {
     id: string;
     name: string;
     cloneUrl: string;
     teamId: string;
     appInstallationId: string;
+    config?: ProjectConfig;
     creationTime: string;
     /** This is a flag that triggers the HARD DELETION of this entity */
     deleted?: boolean;

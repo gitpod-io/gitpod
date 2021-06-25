@@ -9,7 +9,7 @@ import { TypeORM } from "./typeorm";
 import { Repository } from "typeorm";
 import { ProjectDB } from "../project-db";
 import { DBProject } from "./entity/db-project";
-import { Project } from "@gitpod/gitpod-protocol";
+import { Project, ProjectConfig } from "@gitpod/gitpod-protocol";
 
 @injectable()
 export class ProjectDBImpl implements ProjectDB {
@@ -23,12 +23,17 @@ export class ProjectDBImpl implements ProjectDB {
         return (await this.getEntityManager()).getRepository<DBProject>(DBProject);
     }
 
-    async findProjectByCloneUrl(cloneUrl: string): Promise<Project | undefined> {
+    public async findProjectById(projectId: string): Promise<Project | undefined> {
+        const repo = await this.getRepo();
+        return repo.findOne({ id: projectId });
+    }
+
+    public async findProjectByCloneUrl(cloneUrl: string): Promise<Project | undefined> {
         const repo = await this.getRepo();
         return repo.findOne({ cloneUrl });
     }
 
-    async findProjectByInstallationId(appInstallationId: string): Promise<Project | undefined> {
+    public async findProjectByInstallationId(appInstallationId: string): Promise<Project | undefined> {
         const repo = await this.getRepo();
         return repo.findOne({ appInstallationId });
     }
@@ -41,5 +46,15 @@ export class ProjectDBImpl implements ProjectDB {
     public async storeProject(project: Project): Promise<Project> {
         const repo = await this.getRepo();
         return repo.save(project);
+    }
+
+    public async setProjectConfiguration(projectId: string, config: ProjectConfig): Promise<void> {
+        const repo = await this.getRepo();
+        const project = await repo.findOne({ id: projectId, deleted: false });
+        if (!project) {
+            throw new Error('A project with this ID could not be found');
+        }
+        project.config = config;
+        await repo.save(project);
     }
 }
