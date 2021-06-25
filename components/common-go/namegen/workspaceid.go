@@ -199,6 +199,7 @@ var animals = []string{
 	"deer",
 	"dingo",
 	"dinosaur",
+	"dodo",
 	"dog",
 	"dolphin",
 	"donkey",
