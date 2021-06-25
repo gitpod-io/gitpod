@@ -5,13 +5,14 @@
  */
 
 import { UserEnvVarValue } from "@gitpod/gitpod-protocol";
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ConfirmationModal from "../components/ConfirmationModal";
 import { Item, ItemField, ItemFieldContextMenu, ItemsList } from "../components/ItemsList";
 import Modal from "../components/Modal";
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import { getGitpodService } from "../service/service";
 import settingsMenu from "./settings-menu";
+import CodeText from "../components/CodeText";
 
 interface EnvVarModalProps {
     envVar: UserEnvVarValue;
@@ -70,7 +71,7 @@ function AddEnvVarModal(p: EnvVarModalProps) {
                     onChange={(v) => { update({repositoryPattern: v.target.value}) }} />
             </div>
             <div className="mt-1">
-                <p className="text-gray-500">You can pass a variable for a specific project or use wildcard character (<span className="bg-gray-100 dark:bg-gray-800 px-1.5 py-1 rounded-md text-sm font-mono font-medium">*/*</span>) to make it available in more projects.</p>
+                <p className="text-gray-500">You can pass a variable for a specific project or use wildcard character (<CodeText>*/*</CodeText>) to make it available in more projects.</p>
             </div>
         </div>
         <div className="flex justify-end mt-6">
