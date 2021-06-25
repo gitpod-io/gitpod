@@ -1,4 +1,4 @@
-image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:lf-workspace-vm-mount.0
+image: docker.io/aledbf/dev-environment:lf-workspace-vm-mount.0-esgz
 workspaceLocation: gitpod/gitpod-ws.code-workspace
 checkoutLocation: gitpod
 ports:
