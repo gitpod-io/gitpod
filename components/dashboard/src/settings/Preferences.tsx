@@ -12,12 +12,13 @@ import theia from '../images/theia-gray.svg';
 import vscode from '../images/vscode.svg';
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import settingsMenu from "./settings-menu";
+import AlertBox from "../components/AlertBox";
 
 type Theme = 'light' | 'dark' | 'system';
 
 export default function Preferences() {
     const { user } = useContext(UserContext);
-    const [ defaultIde, setDefaultIde ] = useState<string>(user?.additionalData?.ideSettings?.defaultIde || 'theia');
+    const [ defaultIde, setDefaultIde ] = useState<string>(user?.additionalData?.ideSettings?.defaultIde || 'code');
     const actuallySetDefaultIde = async (value: string) => {
         const additionalData = user?.additionalData || {};
         const settings = additionalData.ideSettings || {};
@@ -46,6 +47,9 @@ export default function Preferences() {
         <PageWithSubMenu subMenu={settingsMenu} title='Preferences' subtitle='Configure user preferences.'>
             <h3>Default IDE</h3>
             <p className="text-base text-gray-500">Choose which IDE you want to use.</p>
+            <AlertBox className="mt-3 mb-4 w-3/4">
+                We're deprecating the Theia editor. You can still switch back to Theia for the next few weeks but the preference will be removed by the end of August 2021.
+            </AlertBox>
             <div className="mt-4 space-x-4 flex">
                 <SelectableCard className="w-36 h-40" title="VS Code" selected={defaultIde === 'code'} onClick={() => actuallySetDefaultIde('code')}>
                     <div className="flex-grow flex justify-center items-center">
