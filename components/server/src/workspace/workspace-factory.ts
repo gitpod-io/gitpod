@@ -5,7 +5,7 @@
  */
 
 import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB, ProjectDB } from '@gitpod/gitpod-db/lib';
-import { CommitContext, IssueContext, PullRequestContext, Repository, SnapshotContext, User, Workspace, WorkspaceConfig, WorkspaceContext, WorkspaceProbeContext } from '@gitpod/gitpod-protocol';
+import { AdditionalContentContext, CommitContext, IssueContext, PullRequestContext, Repository, SnapshotContext, User, Workspace, WorkspaceConfig, WorkspaceContext, WorkspaceProbeContext } from '@gitpod/gitpod-protocol';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 import { generateWorkspaceID } from '@gitpod/gitpod-protocol/lib/util/generate-workspace-id';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
@@ -141,6 +141,13 @@ export class WorkspaceFactory {
                 this.projectDB.findProjectByCloneUrl(context.repository.cloneUrl),
             ]);
             const imageSource = await this.imageSourceProvider.getImageSource(ctx, user, context, config);
+            if (config._origin === 'project-db') {
+                // If the project is configured via the Project DB, place the uncommitted configuration into the workspace,
+                // thus encouraging Git-based configurations.
+                if (project?.config) {
+                    (context as any as AdditionalContentContext).additionalFiles = { '.gitpod.yml': project.config };
+                }
+            }
 
             const id = await generateWorkspaceID();
             const newWs: Workspace = {

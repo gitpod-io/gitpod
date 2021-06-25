@@ -52,7 +52,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
             const existingPWS = await this.db.trace({span}).findPrebuiltWorkspaceByCommit(commitContext.repository.cloneUrl, commitContext.revision);
             if (existingPWS) {
                 const wsInstance = await this.db.trace({span}).findRunningInstance(existingPWS.buildWorkspaceId);
-                if (wsInstance) {
+                if (wsInstance /* && project config is the same */) {
                     throw new Error("A prebuild is already running for this commit.");
                 }
             }

@@ -39,7 +39,7 @@ export class AdditionalContentPrefixContextParser implements IPrefixContextParse
         }
         const text = base64decode(decodeURIComponent(match[1]));
         const files = JSON.parse(text);
-        (context as any as AdditionalContentContext).additionalFiles = files
+        (context as AdditionalContentContext).additionalFiles = files
         return context;
     }
 }

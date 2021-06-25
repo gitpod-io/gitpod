@@ -26,6 +26,9 @@ export class DBProject {
   @Column()
   appInstallationId: string;
 
+  @Column()
+  config?: string;
+
   @Column("varchar")
   creationTime: string;
 

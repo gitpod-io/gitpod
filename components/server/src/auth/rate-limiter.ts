@@ -88,6 +88,12 @@ function readConfig(): RateLimiterConfig {
         "removeTeamMember": { group: "default", points: 1 },
         "getGenericInvite": { group: "default", points: 1 },
         "resetGenericInvite": { group: "default", points: 1 },
+        "getProviderRepositoriesForUser":  { group: "default", points: 1 },
+        "createProject":  { group: "default", points: 1 },
+        "getProjects":  { group: "default", points: 1 },
+        "getPrebuilds":  { group: "default", points: 1 },
+        "setProjectConfiguration":  { group: "default", points: 1 },
+        "fetchProjectRepositoryConfiguration":  { group: "default", points: 1 },
         "getContentBlobUploadUrl": { group: "default", points: 1 },
         "getContentBlobDownloadUrl": { group: "default", points: 1 },
         "getGitpodTokens": { group: "default", points: 1 },
@@ -158,12 +164,6 @@ function readConfig(): RateLimiterConfig {
         "tsGetUnassignedSlot":  { group: "default", points: 1 },
         "tsReactivateSlot":  { group: "default", points: 1 },
         "tsReassignSlot":  { group: "default", points: 1 },
-
-        "getProviderRepositoriesForUser":  { group: "default", points: 1 },
-        "createProject":  { group: "default", points: 1 },
-        "getProjects":  { group: "default", points: 1 },
-        "getPrebuilds":  { group: "default", points: 1 },
-
         "trackEvent":  { group: "default", points: 1 },
     };
 

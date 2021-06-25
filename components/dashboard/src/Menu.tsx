@@ -97,6 +97,10 @@ export default function Menu() {
             {
                 title: 'Settings',
                 link: `/${team.slug}/${projectName}/settings`
+            },
+            {
+                title: 'Configure',
+                link: `/${team.slug}/${projectName}/configure`
             }
         ] : [
             {
