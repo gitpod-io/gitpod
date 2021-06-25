@@ -47,10 +47,10 @@ export async function build(context, version) {
 
     try {
         exec(`pre-commit run --from-ref origin/HEAD --to-ref HEAD`);
-        exec(`werft log result -d "validate changes" -c github-check-test conclusion success`);
+        werft.result("validate changes", "github-check-changes", "conclusion success");
         werft.done('validate-changes');
     } catch (err) {
-        exec(`werft log result -d "validate changes" -c github-check-tests conclusion failure`);
+        werft.result("validate changes", "github-check-changes", "conclusion failure");
         werft.fail('validate-changes', err);
     }
 
@@ -231,7 +231,7 @@ export async function build(context, version) {
         installEELicense,
     };
     await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
-    await triggerIntegrationTests(deploymentConfig, !withIntegrationTests)
+    await triggerIntegrationTests(deploymentConfig.version, deploymentConfig.namespace, context.Owner, !withIntegrationTests)
 }
 
 interface DeploymentConfig {
@@ -431,7 +431,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 /**
  * Trigger integration tests
  */
-export async function triggerIntegrationTests(deploymentConfig: DeploymentConfig, skip: boolean) {
+export async function triggerIntegrationTests(version: string, namespace: string, username: string, skip: boolean) {
     werft.phase(phases.TRIGGER_INTEGRATION_TESTS, "Trigger integration tests");
 
     if (skip) {
@@ -447,15 +447,15 @@ export async function triggerIntegrationTests(deploymentConfig: DeploymentConfig
         const imageVersion = exec(`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${version} cat /versions.yaml | yq r - 'components.integrationTest.version'`, { silent: true })
             .stdout.trim();
 
-        exec(`git config --global user.name "${context.Owner}"`);
+        exec(`git config --global user.name "${username}"`);
         const annotations = [
             `version=${imageVersion}`,
-            `namespace=${deploymentConfig.namespace}`,
-            `username=${context.Owner}`,
+            `namespace=${namespace}`,
+            `username=${username}`,
             `updateGitHubStatus=gitpod-io/gitpod`
         ].map(annotation => `-a ${annotation}`).join(' ')
-        const jobId = exec(`werft run --remote-job-path .werft/run-integration-tests.yaml ${annotations} github`, {slice: phases.TRIGGER_INTEGRATION_TESTS}).trim();
-        werft.log(phases.TRIGGER_INTEGRATION_TESTS, `Triggered job ${jobId} - https://werft.gitpod-dev.com/job/${jobId}/logs`)
+        exec(`werft run --remote-job-path .werft/run-integration-tests.yaml ${annotations} github`, {slice: phases.TRIGGER_INTEGRATION_TESTS}).trim();
+
         werft.done(phases.TRIGGER_INTEGRATION_TESTS);
     } catch (err) {
         werft.fail(phases.TRIGGER_INTEGRATION_TESTS, err);
