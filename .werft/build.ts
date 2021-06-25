@@ -256,7 +256,6 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     const { version, destname, namespace, domain, url, wsCluster, withWsCluster } = deploymentConfig;
     const [wsdaemonPort, registryNodePort] = findFreeHostPorts([
         { start: 10000, end: 11000 },
-        { start: 20000, end: 21000 },
         { start: 30000, end: 31000 },
     ], 'hostports');
     const helmInstallName = "gitpod";
