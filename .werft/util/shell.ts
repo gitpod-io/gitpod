@@ -14,6 +14,9 @@ export const werft = {
         throw err;
     },
     done: (slice) => console.log(`[${slice}|DONE]`),
+    result: (description: string, channel: string, value: string) => {
+        exec(`werft log result -d "${description}" -c "${channel}" ${value}`);
+    },
 }
 
 export type ExecOptions = shell.ExecOptions & {
