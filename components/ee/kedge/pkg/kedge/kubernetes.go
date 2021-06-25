@@ -248,6 +248,15 @@ func createTargetService(clientset kubernetes.Interface, namespace, source, name
 			SessionAffinity: srv.Service.Spec.SessionAffinity,
 		},
 	}
+
+	// 'app.kubernetes.io/instance' is automatically added to kedge when it is deployed by ArgoCD.
+	// This mechanism is used so ArgoCD knows which resource it is supposed to control and which ones it isn't.
+	// If we add this label to the resources created by kedge, ArgoCD will think that ArgoCD should be controlled,
+	// and since their resource definitions are not in git, ArgoCD will try to delete them.
+	labels := targetService.GetLabels()
+	delete(labels, "app.kubernetes.io/instance")
+	targetService.SetLabels(labels)
+
 	_, err := api.Services(namespace).Create(context.Background(), targetService, metav1.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("cannot create target service: %w", err)
