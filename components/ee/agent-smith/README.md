@@ -61,3 +61,80 @@ cd ..
 cd driver/bpf
 make CLANG=clang-7 LLC=llc-7 -j16
 ```
+
+
+## Debugging the Linux kernel
+
+In case you need to debug the kernel while working on it.
+
+First, you need to compile the ubuntu kernel yourself, the default one
+does not come with debugging symbols unfortunately.
+
+
+### Step zero: obtain build dependencies
+
+```
+sudo apt update -y
+sudo apt install flex bison gcc make libelf-dev liblz4-tool -y
+```
+
+### First step: Obtain kernel sources
+
+
+You can either obtain Ubuntu's sources (**slower**)
+
+```shell
+git clone --depth 1  git://kernel.ubuntu.com/ubuntu/ubuntu-$(lsb_release --codename | cut -f2).git /workspace/kernel
+```
+
+Or get the released tarball (**faster**)
+
+```shell
+cd /workspace
+wget https://mirrors.edge.kernel.org/ubuntu/pool/main/l/linux-gke/linux-gke_5.4.0.orig.tar.gz
+tar -xvf linux-gke_5.4.0.orig.tar.gz
+mv linux-5.4 kernel
+```
+
+### Second step: configure and compile
+
+Now you can compile it, make sure to create the proper config.
+
+Remember to:
+
+- Enable debugging sysmbols under Kernel Hacking -> compile options  OR set : `CONFIG_DEBUG_INFO=y` in `.config`j
+
+```shell
+cd /workspace/kernel
+# to create the config
+make menuconfig
+# everything compiled into the kernel, no modules. Tricky to get modules in the vm at this stage
+sed  -i 's/=m/=y/g' .config
+make -j16
+```
+
+### Third step: debug!
+
+Now stop the already started qemu VM (if any) by using `Ctrl-a c` in its terminal pane, then start
+it with the new `VMLINUX_PATH`.
+
+```shell
+VMLINUX_PATH=$PWD/vmlinux leeway run components/ee/agent-smith:qemu
+```
+
+Now that you have the qemu machine in debugging mode, you can connect via gdb.
+
+
+```shell
+gdb vmlinux
+```
+
+Once gdb opens:
+
+```gdb
+(gdb) target remote localhost:1234
+```
+
+Now you can put breakpoints in the kernel source and use gdb against it.
+
+Please refer to the [QEMU docs](https://qemu.readthedocs.io/en/latest/system/gdb.html) for more useful tips.
