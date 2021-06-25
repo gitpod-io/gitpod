@@ -18,7 +18,7 @@ type Theme = 'light' | 'dark' | 'system';
 
 export default function Preferences() {
     const { user } = useContext(UserContext);
-    const [ defaultIde, setDefaultIde ] = useState<string>(user?.additionalData?.ideSettings?.defaultIde || 'code');
+    const [ defaultIde, setDefaultIde ] = useState<string>(user?.additionalData?.ideSettings?.defaultIde || 'theia');
     const actuallySetDefaultIde = async (value: string) => {
         const additionalData = user?.additionalData || {};
         const settings = additionalData.ideSettings || {};

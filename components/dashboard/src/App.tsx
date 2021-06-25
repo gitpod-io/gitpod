@@ -13,7 +13,7 @@ import { Login } from './Login';
 import { UserContext } from './user-context';
 import { TeamsContext } from './teams/teams-context';
 import { getGitpodService } from './service/service';
-import { shouldSeeWhatsNew, WhatsNew } from './WhatsNew';
+import { shouldSeeWhatsNew, WhatsNew } from './whatsnew/WhatsNew';
 import gitpodIcon from './icons/gitpod.svg';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 
@@ -234,7 +234,7 @@ function App() {
     const isCreation = window.location.pathname === '/' && hash !== '';
     const isWsStart = /\/start\/?/.test(window.location.pathname) && hash !== '';
     if (isWhatsNewShown) {
-        toRender = <WhatsNew visible={true} onClose={() => setWhatsNewShown(false)} />;
+        toRender = <WhatsNew onClose={() => setWhatsNewShown(false)} />;
     } else if (isCreation) {
         toRender = <CreateWorkspace contextUrl={hash} />;
     } else if (isWsStart) {
