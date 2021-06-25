@@ -12,6 +12,8 @@ All notable changes to this project will be documented in this file.
 - Improve backup stability when pods get evicted ([#4405](https://github.com/gitpod-io/gitpod/pull/4405))
 - Fix text color in workspaces list for dark theme ([#4410](https://github.com/gitpod-io/gitpod/pull/4410))
 - Better reflect incremental prebuilds in prebuilt workspace logs ([#4293](https://github.com/gitpod-io/gitpod/pull/4293))
+- Removing secondary class from the main CTA button to give proper weight (thanks @jordanhailey!) ([#4288](https://github.com/gitpod-io/gitpod/pull/4288)
+- Modify the "New Git Integration" experience to align with provider terminology (thanks @jordanhailey!) ([#4287](https://github.com/gitpod-io/gitpod/pull/4287)
 - Run shellcheck against scripts ([#4280](https://github.com/gitpod-io/gitpod/pull/4280))
 - Implement new Project and Team DB tables and entities ([#4368](https://github.com/gitpod-io/gitpod/pull/4368))
 - On gitpod.io 404 redirect to www.gitpod.io ([#4364](https://github.com/gitpod-io/gitpod/pull/4364))
