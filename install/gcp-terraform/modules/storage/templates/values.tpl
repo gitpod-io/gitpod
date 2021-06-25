@@ -6,6 +6,7 @@ components:
   contentService:
     remoteStorage:
       kind: gcloud
+      # Not strictly necessary, but nice-to-have
       backupTrail:
         enabled: true
         maxLength: 3
@@ -16,24 +17,21 @@ components:
         region: ${region}
         credentialsFile: /credentials/key.json
         tmpdir: /mnt/sync-tmp
-        parallelUpload: 6
 
   wsDaemon:
-    name: "ws-daemon"
     hostWorkspaceArea: /var/gitpod/workspaces
-    servicePort: 8080
-    workspaceSizeLimit: ""
     containerRuntime:
       runtime: containerd
       containerd:
         socket: /run/containerd/containerd.sock
       nodeRoots:
         - /var/lib
+    # we want to be as compatible as possible, so disable those
     userNamespaces:
       shiftfsModuleLoader:
         enabled: false
-        imageName: "shiftfs-module-loader"
-    registryProxyPort: 8081
+      # seccompProfileInstaller:
+      #   enabled: true
     volumes:
     - name: gcloud-creds
       secret:
@@ -57,9 +55,5 @@ components:
     - mountPath: /credentials
       name: gcloud-creds
 
-  server:
-    storage:
-      secretName: ${secretName}
-      keyFilePath: key.json
 minio:
   enabled: false

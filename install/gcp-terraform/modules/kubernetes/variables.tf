@@ -30,3 +30,8 @@ variable "subnet" {
     cidr = "10.23.0.0/16"
   }
 }
+
+variable "min_master_version" {
+  type = string
+  default = "1.18"
+}

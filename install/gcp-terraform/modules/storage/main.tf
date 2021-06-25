@@ -28,9 +28,9 @@ resource "google_project_service" "storage" {
 #
 
 resource "google_service_account" "gitpod_storage" {
-  account_id   = "gitpod-storage-${var.name}"
-  display_name = "gitpod-storage-${var.name}"
-  description  = "gitpod-workspace-syncer ${var.name}"
+  account_id   = "gitpod-storage"
+  display_name = "gitpod-storage"
+  description  = "gitpod-workspace-syncer"
   project      = var.project
 }
 

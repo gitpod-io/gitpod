@@ -1,9 +1,7 @@
 *.auto.tfvars
+*.tfvars.json
+*.tfstate
 certificates/**
 secrets/**
-# Local .terraform directories
-**/.terraform/*
-
-# .tfstate files
-*.tfstate
-*.tfstate.*
+.terraform.lock.hcl
+.terraform

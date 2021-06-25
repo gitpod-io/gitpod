@@ -4,11 +4,9 @@
 db:
   host: "${host}"
   password: "${password}"
-  port: 3306
 
 components:
   db:
-    name: db
     autoMigrate: true
     gcloudSqlProxy:
       enabled: true

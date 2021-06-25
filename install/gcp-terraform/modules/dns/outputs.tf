@@ -11,10 +11,6 @@ output "values" {
   value = data.template_file.values.rendered
 }
 
-output "hostname" {
-  value = local.hostname
-}
-
 output "address" {
   value = google_compute_address.gitpod.address
 }
