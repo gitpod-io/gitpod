@@ -107,13 +107,13 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getUserStorageResource(options: GitpodServer.GetUserStorageResourceOptions): Promise<string>;
     updateUserStorageResource(options: GitpodServer.UpdateUserStorageResourceOptions): Promise<void>;
 
-    // user env vars
+    // User env vars
     getEnvVars(): Promise<UserEnvVarValue[]>;
     getAllEnvVars(): Promise<UserEnvVarValue[]>;
     setEnvVar(variable: UserEnvVarValue): Promise<void>;
     deleteEnvVar(variable: UserEnvVarValue): Promise<void>;
 
-    // teams and projects
+    // Teams
     getTeams(): Promise<Team[]>;
     getTeamMembers(teamId: string): Promise<TeamMemberInfo[]>;
     createTeam(name: string): Promise<Team>;
@@ -122,6 +122,14 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     removeTeamMember(teamId: string, userId: string): Promise<void>;
     getGenericInvite(teamId: string): Promise<TeamMembershipInvite>;
     resetGenericInvite(inviteId: string): Promise<TeamMembershipInvite>;
+
+    // Projects
+    getProviderRepositoriesForUser(params: GetProviderRepositoriesParams): Promise<ProviderRepository[]>;
+    createProject(params: CreateProjectParams): Promise<Project>;
+    getProjects(teamId: string): Promise<ProjectInfo[]>;
+    getPrebuilds(teamId: string, projectId: string): Promise<PrebuildInfo[]>;
+    setProjectConfiguration(projectId: string, configString: string): Promise<void>;
+    fetchProjectRepositoryConfiguration(projectId: string): Promise<string | undefined>;
 
     // content service
     getContentBlobUploadUrl(name: string): Promise<string>
@@ -208,14 +216,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     tsReactivateSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void>;
 
     getGithubUpgradeUrls(): Promise<GithubUpgradeURL[]>;
-
-    /**
-     * projects
-     */
-    getProviderRepositoriesForUser(params: GetProviderRepositoriesParams): Promise<ProviderRepository[]>;
-    createProject(params: CreateProjectParams): Promise<Project>;
-    getProjects(teamId: string): Promise<ProjectInfo[]>;
-    getPrebuilds(teamId: string, project: string): Promise<PrebuildInfo[]>;
 
     /**
      * Analytics

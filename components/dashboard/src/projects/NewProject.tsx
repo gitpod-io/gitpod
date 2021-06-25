@@ -144,7 +144,7 @@ export default function NewProject() {
             teamId: team.id
         });
 
-        history.push(`/${team.slug}/projects`);
+        history.push(`/${team.slug}/${repo.name}/configure`);
     }
 
     const toSimpleName = (fullName: string) => {

@@ -10,6 +10,7 @@ import * as path from 'path';
 
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { User, WorkspaceConfig, CommitContext, Repository, ImageConfigString, ExternalImageConfigFile, ImageConfigFile, Commit, NamedWorkspaceFeatureFlag, AdditionalContentContext, WithDefaultConfig } from "@gitpod/gitpod-protocol";
+import { ProjectDB } from '@gitpod/gitpod-db/lib';
 import { GitpodFileParser } from "@gitpod/gitpod-protocol/lib/gitpod-file-parser";
 
 import { MaybeContent } from "../repohost/file-provider";
@@ -31,11 +32,12 @@ export class ConfigProvider {
         cloneUrl: 'https://github.com/gitpod-io/definitely-gp'
     };
 
-    @inject(GitpodFileParser) protected readonly gitpodParser: GitpodFileParser
+    @inject(GitpodFileParser) protected readonly gitpodParser: GitpodFileParser;
     @inject(ConfigInferenceProvider) protected readonly inferingConfigProvider: ConfigInferenceProvider;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
     @inject(TheiaPluginService) protected readonly pluginService: TheiaPluginService;
+    @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(Env) protected readonly env: Env;
 
     public async fetchConfig(ctx: TraceContext, user: User, commit: CommitContext): Promise<WorkspaceConfig> {
@@ -140,13 +142,24 @@ export class ConfigProvider {
                 }
                 const services = hostContext.services;
                 const contextRepoConfig = services.fileProvider.getGitpodFileContent(commit, user);
+                const projectDBConfig = this.projectDB.findProjectByCloneUrl(commit.repository.cloneUrl).then(project => project?.config);
                 const definitelyGpConfig = this.fetchExternalGitpodFileContent({ span }, commit.repository);
                 const inferredConfig = this.inferingConfigProvider.infer(user, commit);
 
                 let customConfigString = await contextRepoConfig;
+                let fromProjectDB = false;
+                if (!customConfigString) {
+                    // We haven't found a Gitpod configuration file in the context repo - check the "Project" in the DB.
+                    const config = await projectDBConfig;
+                    if (config) {
+                        customConfigString = config['.gitpod.yml'];
+                        fromProjectDB = true;
+                    }
+                }
+
                 let fromDefinitelyGp = false;
                 if (!customConfigString) {
-                    /* We haven't found a Gitpod configuration file in the context repo - check definitely-gp.
+                    /* We haven't found a Gitpod configuration file in the context repo or "Project" - check definitely-gp.
                     *
                     * In case we had found a config file here, we'd still be checking the definitely GP repo, just to save some time.
                     * While all those checks will be in vain, they should not leak memory either as they'll simply
@@ -169,7 +182,7 @@ export class ConfigProvider {
                         log.info(logContext, err.message, { repoCloneUrl: commit.repository.cloneUrl, revision: commit.revision, customConfigString });
                         throw err;
                     }
-                    customConfig._origin = fromDefinitelyGp ? 'definitely-gp' : 'repo';
+                    customConfig._origin = fromProjectDB ? 'project-db' : (fromDefinitelyGp ? 'definitely-gp' : 'repo');
                 } else {
                     /* There is no configuration for this repository. Before we fall back to the default config,
                     * let's see if there is language specific configuration we might want to apply.

@@ -48,7 +48,7 @@ export default function Menu() {
     })();
 
     const userFullName = user?.fullName || user?.name || '...';
-    const showTeamsUI = user?.rolesOrPermissions?.includes('teams-and-projects') || window.location.hostname.endsWith('gitpod-dev.com') || window.location.hostname.endsWith('gitpod-io-dev.com');
+    const showTeamsUI = user?.rolesOrPermissions?.includes('teams-and-projects');
     const team = getCurrentTeam(location, teams);
 
     // Hide most of the top menu when in a full-page form.
@@ -97,6 +97,10 @@ export default function Menu() {
             {
                 title: 'Settings',
                 link: `/${team.slug}/${projectName}/settings`
+            },
+            {
+                title: 'Configure',
+                link: `/${team.slug}/${projectName}/configure`
             }
         ] : [
             {

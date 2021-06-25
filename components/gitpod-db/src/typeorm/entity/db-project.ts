@@ -6,6 +6,7 @@
 
 import { Entity, Column, PrimaryColumn, Index } from "typeorm";
 import { TypeORM } from "../typeorm";
+import { ProjectConfig } from "@gitpod/gitpod-protocol";
 
 @Entity()
 // on DB but not Typeorm: @Index("ind_lastModified", ["_lastModified"])   // DBSync
@@ -25,6 +26,9 @@ export class DBProject {
 
   @Column()
   appInstallationId: string;
+
+  @Column("simple-json", { nullable: true })
+  config?: ProjectConfig;
 
   @Column("varchar")
   creationTime: string;
