@@ -567,11 +567,16 @@ func runIDEReadinessProbe(cfg *Config) {
 	case ReadinessHTTPProbe:
 		var (
 			url    = fmt.Sprintf("http://localhost:%d/%s", cfg.IDEPort, strings.TrimPrefix(cfg.ReadinessProbe.HTTPProbe.Path, "/"))
-			client = http.Client{Timeout: 5 * time.Second}
-			tick   = time.NewTicker(1 * time.Second)
+			client = http.Client{Timeout: 1 * time.Second}
+			tick   = time.NewTicker(500 * time.Millisecond)
 		)
 		defer tick.Stop()
+
+		t0 := time.Now()
+
 		for {
+			<-tick.C
+
 			resp, err := client.Get(url)
 			if err != nil {
 				continue
@@ -579,12 +584,11 @@ func runIDEReadinessProbe(cfg *Config) {
 			resp.Body.Close()
 
 			if resp.StatusCode == http.StatusOK {
+				log.WithField("status", resp.StatusCode).Infof("IDE readiness took %.3f seconds", time.Since(t0).Seconds())
 				break
 			}
 
 			log.WithField("status", resp.StatusCode).Info("IDE readiness probe came back with non-200 status code")
-
-			<-tick.C
 		}
 	}
 }
