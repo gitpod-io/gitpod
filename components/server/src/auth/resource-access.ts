@@ -4,10 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { GitpodToken, Snapshot, Team, TeamMemberInfo, Token, User, UserEnvVar, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { ContextURL, GitpodToken, Snapshot, Team, TeamMemberInfo, Token, User, UserEnvVar, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "./host-context-provider";
-import { URL } from 'url';
-import { contextUrlToUrl } from "@gitpod/gitpod-protocol/lib/util/context-url";
 
 declare var resourceInstance: GuardedResource;
 export type GuardedResourceKind = typeof resourceInstance.kind;
@@ -455,15 +453,18 @@ export class WorkspaceLogAccessGuard implements ResourceAccessGuard {
 
         // Check if user can access repositories headless logs
         const ws = resource.subject;
-        const url = new URL(contextUrlToUrl(ws.contextURL));
-        const hostContext = this.hostContextProvider.get(url.hostname);
+        const contextURL = ContextURL.parseToURL(ws.contextURL);
+        if (!contextURL) {
+            throw new Error(`unable to parse ContextURL: ${contextURL}`);
+        }
+        const hostContext = this.hostContextProvider.get(contextURL.hostname);
         if (!hostContext) {
-            throw new Error(`no HostContext found for hostname: ${url.hostname}`);
+            throw new Error(`no HostContext found for hostname: ${contextURL.hostname}`);
         }
 
         const svcs = hostContext.services;
         if (!svcs) {
-            throw new Error(`no services found in HostContext for hostname: ${url.hostname}`);
+            throw new Error(`no services found in HostContext for hostname: ${contextURL.hostname}`);
         }
         return svcs.repositoryService.canAccessHeadlessLogs(this.user, ws.context);
     }

@@ -6,7 +6,7 @@
 
 import EventEmitter from "events";
 import React, { useEffect, Suspense } from "react";
-import { DisposableCollection, WorkspaceInstance, WorkspaceImageBuild, Workspace, WithPrebuild } from "@gitpod/gitpod-protocol";
+import { DisposableCollection, WorkspaceInstance, WorkspaceImageBuild, Workspace, WithPrebuild, ContextURL } from "@gitpod/gitpod-protocol";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import PendingChangesDropdown from "../components/PendingChangesDropdown";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
@@ -149,8 +149,12 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
     // Successfully stopped and headless: the prebuild is done, let's try to use it!
     if (!error && workspaceInstance.status.phase === 'stopped' && this.state.workspace?.type !== 'regular') {
-      const contextUrl = this.state.workspace?.contextURL.replace('incremental-prebuild/', '').replace('prebuild/', '')!;
-      this.redirectTo(gitpodHostUrl.withContext(contextUrl).toString());
+      const contextURL = ContextURL.parseToURL(this.state.workspace?.contextURL);
+      if (contextURL) {
+        this.redirectTo(gitpodHostUrl.withContext(contextURL.toString()).toString());
+      } else {
+        console.error(`unable to parse contextURL: ${contextURL}`);
+      }
     }
 
     this.setState({ workspaceInstance, error });
