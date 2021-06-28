@@ -163,6 +163,29 @@ minio:
   serviceAccount:
     name: ws-daemon
     create: false
+  # make sure the pod ends up where it's supposed to stay
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: dev/workload
+            operator: In
+            values:
+            - "workload"
+
+mysql:
+  primary:
+    # make sure the pod ends up where it's supposed to stay
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+          - matchExpressions:
+            - key: dev/workload
+              operator: In
+              values:
+              - "workload"
 
 rabbitmq:
   # ensure shovels are configured on boot
@@ -172,6 +195,16 @@ rabbitmq:
   auth:
     username: override-me
     password: override-me
+  # make sure the pod ends up where it's supposed to stay
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: dev/workload
+            operator: In
+            values:
+            - "workload"
 
 cert-manager:
   enabled: true
