@@ -10,11 +10,13 @@ import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/account
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import { ChargebeeService } from "./chargebee-service";
 import { EnvEE } from "../env";
+import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/util/analytics';
 @injectable()
 export class UserDeletionServiceEE extends UserDeletionService {
     @inject(ChargebeeService) protected readonly chargebeeService: ChargebeeService;
     @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
     @inject(EnvEE) protected readonly env: EnvEE;
+    @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
 
     async deleteUser(id: string): Promise<void> {
         const user = await this.db.findUserById(id);
@@ -22,8 +24,8 @@ export class UserDeletionServiceEE extends UserDeletionService {
             throw new Error(`No user with id ${id} found!`);
         }
 
+        const now = new Date().toISOString();
         if (this.env.enablePayment) {
-            const now = new Date().toISOString();
             const subscriptions = await this.subscriptionService.getNotYetCancelledSubscriptions(user, now);
             for (const subscription of subscriptions) {
                 const planId = subscription.planId!;
@@ -41,6 +43,15 @@ export class UserDeletionServiceEE extends UserDeletionService {
                 }
             }
         }
+
+        // track the deletion event in downstream analytics tools
+        this.analytics.track({
+            userId: user.id,
+            event: "deletion",
+            properties: {
+                "deleted_at":now
+            }
+        });
 
         return super.deleteUser(id);
     }
