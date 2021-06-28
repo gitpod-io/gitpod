@@ -26,6 +26,15 @@ tracing:
   samplerParam: "1"
 
 components:
+
+  agentSmith:
+    name: "agent-smith"
+    disabled: false
+    # in preview envs, we never want DaemonSets not to be scheduled (because they don't trigger scaleup)
+    resources:
+      cpu: 1m
+      memory: 32Mi
+
   server:
     replicas: 1
     makeNewUsersAdmin: true # for development
@@ -38,6 +47,10 @@ components:
 
   registryFacade:
     daemonSet: true
+    # in preview envs, we never want DaemonSets not to be scheduled (because they don't trigger scaleup)
+    resources:
+      cpu: 1m
+      memory: 32Mi
 
   contentService:
     remoteStorage:
@@ -132,6 +145,10 @@ components:
         enabled: true
       seccompProfileInstaller:
         enabled: true
+    # in preview envs, we never want DaemonSets not to be scheduled (because they don't trigger scaleup)
+    resources:
+      cpu: 1m
+      memory: 32Mi
 
   wsScheduler:
     scaler:
