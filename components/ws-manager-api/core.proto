@@ -303,6 +303,9 @@ message WorkspaceConditions {
 
     // first_user_activity is the time when MarkActive was first called on the workspace
     google.protobuf.Timestamp first_user_activity = 9;
+
+    // prebuild_task_failed indicates if a workspace failed because of a failed prebuild task.
+    WorkspaceConditionBool prebuild_task_failed = 10;
 }
 
 // WorkspaceConditionBool is a trinary bool: true/false/empty

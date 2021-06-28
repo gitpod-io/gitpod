@@ -941,7 +941,7 @@ func (m *Manager) onChange(ctx context.Context, status *api.WorkspaceStatus) {
 	// There are some conditions we'd like to get notified about, for example while running experiements or because
 	// they represent out-of-the-ordinary situations.
 	// We attempt to use the GCP Error Reporting for this, hence log these situations as errors.
-	if status.Conditions.Failed != "" {
+	if status.Conditions.Failed != "" && status.Conditions.PrebuildTaskFailed != api.WorkspaceConditionBool_TRUE {
 		log.WithField("status", status).Error("workspace failed")
 	}
 	if status.Phase == 0 {

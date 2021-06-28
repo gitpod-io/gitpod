@@ -366,6 +366,12 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 		}
 		result.Conditions.Timeout = reason
 	}
+	for _, cs := range pod.Status.ContainerStatuses {
+		if cs.State.Terminated != nil && cs.State.Terminated.ExitCode == wsk8s.PrebuildTaskErrorExitCode {
+			result.Conditions.PrebuildTaskFailed = api.WorkspaceConditionBool_TRUE
+			break
+		}
+	}
 
 	if isPodBeingDeleted(pod) {
 		result.Phase = api.WorkspacePhase_STOPPING
