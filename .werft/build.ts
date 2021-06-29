@@ -477,7 +477,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         metaClusterParams.ip = "34.79.158.226"; // External ip of ingress service in k3s cluster
         metaClusterParams.additionalWsSubdomains = additionalWsSubdomains;
         metaClusterParams.includeDefaults = false;
-        metaClusterParams.pathToKubeConfig = "/workspace/gitpod/k3s-external.yaml";
+        metaClusterParams.pathToKubeConfig = "/workspace/k3s-external.yaml";
         metaClusterParams.bucketPrefixTail = "-k3s-ws"
         await issueCertficate(werft, metaClusterParams);
     }
