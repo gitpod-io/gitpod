@@ -6,7 +6,7 @@ import { issueCertficate, installCertficate, IssueCertificateParams } from './ut
 import { reportBuildFailureInSlack } from './util/slack';
 import * as semver from 'semver';
 import * as util from 'util';
-import { sleep } from './util/util';
+// import { sleep } from './util/util';
 
 
 const readDir = util.promisify(fs.readdir)
@@ -288,7 +288,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         if (!wsCluster) {
             issueMetaCerts();
         }
-        sleep(55000)
+        // sleep(55000)
         if(k3sWsCluster){
             issueK3sWsCerts();
         }
@@ -460,6 +460,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         metaClusterParams.additionalWsSubdomains = additionalWsSubdomains;
         metaClusterParams.includeDefaults = true;
         metaClusterParams.pathToKubeConfig = "";
+        metaClusterParams.bucketPrefixTail = ""
         await issueCertficate(werft, metaClusterParams);
     }
 
@@ -474,7 +475,8 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         metaClusterParams.ip = "34.79.158.226"; // External ip of ingress service in k3s cluster
         metaClusterParams.additionalWsSubdomains = additionalWsSubdomains;
         metaClusterParams.includeDefaults = false;
-        metaClusterParams.pathToKubeConfig = "k3s-external.yaml";
+        metaClusterParams.pathToKubeConfig = "/workspace/gitpod/k3s-external.yaml";
+        metaClusterParams.bucketPrefixTail = "-k3s-ws"
         await issueCertficate(werft, metaClusterParams);
     }
 }
