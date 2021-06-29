@@ -82,8 +82,8 @@ export async function build(context, version) {
             werft.log("prep", "kubectl config view: "+v)
             v = shell.exec("kubectl get secret k3sdev -n werft -o=go-template='{{index .data \"k3s-external.yaml\"}}' | base64 -d > k3s-external.yaml").trim()
             werft.log("prep", "kubeconfig save result: "+v)
-            v = shell.exec("ls && cat k3s-external.yaml").trim()
-            werft.log("prep", "kubeconfig ls and cat result: "+v)
+            v = shell.exec("k3s-external.yaml").trim()
+            werft.log("prep", "kubeconfig cat result: "+v)
         }
         werft.done('prep');
     } catch (err) {
@@ -474,7 +474,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         metaClusterParams.ip = "34.79.158.226"; // External ip of ingress service in k3s cluster
         metaClusterParams.additionalWsSubdomains = additionalWsSubdomains;
         metaClusterParams.includeDefaults = false;
-        metaClusterParams.pathToKubeConfig = "./k3s-external.yaml";
+        metaClusterParams.pathToKubeConfig = "k3s-external.yaml";
         await issueCertficate(werft, metaClusterParams);
     }
 }
