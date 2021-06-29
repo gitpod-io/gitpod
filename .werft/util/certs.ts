@@ -20,10 +20,8 @@ function getDefaultSubDomains(): string[] {
 
 export async function issueCertficate(werft, params: IssueCertificateParams) {
     const subdomains = params.includeDefaults ? getDefaultSubDomains() : [];
-    if (Array.isArray(subdomains)) {
-        for (const sd of params.additionalWsSubdomains) {
-            subdomains.push(`*.ws-${params.additionalWsSubdomains}.`);
-        }
+    for (const sd of params.additionalWsSubdomains) {
+        subdomains.push(`*.ws-${sd}.`);
     }
 
     // sanity: check if there is a "SAN short enough to fit into CN (63 characters max)"
@@ -49,7 +47,9 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
         -var 'subdomains=[${subdomains.map(s => `"${s}"`).join(", ")}]'`;
 
     if (params.pathToKubeConfig != "") {
-        `export KUBE_LOAD_CONFIG_FILE=` + params.pathToKubeConfig + " && " + cmd
+        cmd += `export KUBE_LOAD_CONFIG_FILE=` + params.pathToKubeConfig + " && " + cmd
+        werft.log("certificate", "k3s certificate command: " + cmd)
+        return
     }
 
     await exec(cmd, { slice: 'certificate', async: true });
