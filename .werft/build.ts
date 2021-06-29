@@ -68,6 +68,10 @@ export async function build(context, version) {
     let buildConfig = context.Annotations || {};
     const k3sWsCluster = "k3s-ws" in buildConfig;
     try {
+        exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
+        exec("gcloud auth configure-docker --quiet");
+        exec('gcloud container clusters get-credentials dev --zone europe-west1-b --project gitpod-core-dev');
+
         if(k3sWsCluster) {
             // get and store the ws clsuter kubeconfig to root of the project
             var v = shell.exec("kubectl get secret -n werft").trim()
@@ -79,9 +83,6 @@ export async function build(context, version) {
             v = shell.exec("ls && cat k3s-external.yaml").trim()
             werft.log("prep", "kubeconfig ls and cat result: "+v)
         }
-        exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
-        exec("gcloud auth configure-docker --quiet");
-        exec('gcloud container clusters get-credentials dev --zone europe-west1-b --project gitpod-core-dev');
         werft.done('prep');
     } catch (err) {
         werft.fail('prep', err);
