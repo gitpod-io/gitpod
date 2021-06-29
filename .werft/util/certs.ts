@@ -47,7 +47,7 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
         -var 'public_ip=${params.ip}' \
         -var 'subdomains=[${subdomains.map(s => `"${s}"`).join(", ")}]'`;
 
-
+    werft.log("certificate", "command: "+cmd)
     await exec(cmd, { slice: 'certificate', async: true });
 
     werft.log('certificate', `waiting until certificate certs/${params.namespace} is ready...`)
