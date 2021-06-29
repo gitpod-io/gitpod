@@ -455,9 +455,10 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     async function issueMetaCerts() {
         var additionalWsSubdomains = withWsCluster ? [withWsCluster.shortname] : [];
         var metaClusterParams = new IssueCertificateParams();
-        metaClusterParams.pathToTerraform = ".werft/certs";
+        metaClusterParams.pathToTerraform = "/workspace/.werft/certs";
         metaClusterParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
         metaClusterParams.namespace = namespace;
+        metaClusterParams.certNamespace = "certs";
         metaClusterParams.dnsZoneDomain = "gitpod-dev.com";
         metaClusterParams.domain = domain;
         metaClusterParams.ip = "34.76.116.244";
@@ -471,11 +472,12 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     async function issueK3sWsCerts() {
         var additionalWsSubdomains = ["k3s"];
         var metaClusterParams = new IssueCertificateParams();
-        metaClusterParams.pathToTerraform = ".werft/certs";
+        metaClusterParams.pathToTerraform = "/workspace/.werft/certs";
         metaClusterParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
-        metaClusterParams.namespace = "certmanager"; // k3s workspace has certmanager named namespace
+        metaClusterParams.namespace = namespace;
         metaClusterParams.dnsZoneDomain = "gitpod-dev.com";
         metaClusterParams.domain = domain;
+        metaClusterParams.certNamespace = "certmanager";
         metaClusterParams.ip = "34.79.158.226"; // External ip of ingress service in k3s cluster
         metaClusterParams.additionalWsSubdomains = additionalWsSubdomains;
         metaClusterParams.includeDefaults = false;

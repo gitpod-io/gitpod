@@ -13,6 +13,7 @@ export class IssueCertificateParams {
     includeDefaults: boolean
     pathToKubeConfig: string
     bucketPrefixTail: string
+    certNamespace: string
 }
 
 function getDefaultSubDomains(): string[] {
@@ -39,12 +40,13 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
     && export KUBECONFIG="${params.pathToKubeConfig}" \
     && cd ${params.pathToTerraform} \
     && export GOOGLE_APPLICATION_CREDENTIALS="${params.gcpSaPath}" \
-    && terraform init -backend-config='prefix=${params.namespace}${params.bucketPrefixTail}' -migrate-state\
+    && terraform init -backend-config='prefix=${params.namespace}${params.bucketPrefixTail}' -migrate-state \
     && terraform apply -auto-approve \
         -var 'namespace=${params.namespace}' \
         -var 'dns_zone_domain=${params.dnsZoneDomain}' \
         -var 'domain=${params.domain}' \
         -var 'public_ip=${params.ip}' \
+        -var 'cert_namespace=${params.certNamespace}' \
         -var 'subdomains=[${subdomains.map(s => `"${s}"`).join(", ")}]'`;
 
     werft.log("certificate", "command: "+cmd)

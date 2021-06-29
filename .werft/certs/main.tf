@@ -11,7 +11,7 @@ module "cert" {
   public_ip = var.public_ip
 
   cert_name = var.namespace
-  cert_namespace = "certs"
+  cert_namespace = var.cert_namespace
 
 }
 
