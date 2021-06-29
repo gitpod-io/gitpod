@@ -6,6 +6,8 @@ import { issueCertficate, installCertficate, IssueCertificateParams } from './ut
 import { reportBuildFailureInSlack } from './util/slack';
 import * as semver from 'semver';
 import * as util from 'util';
+import { sleep } from './util/util';
+
 
 const readDir = util.promisify(fs.readdir)
 
@@ -286,6 +288,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         if (!wsCluster) {
             issueMetaCerts();
         }
+        sleep(55000)
         if(k3sWsCluster){
             issueK3sWsCerts();
         }
