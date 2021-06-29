@@ -84,6 +84,8 @@ export async function build(context, version) {
             werft.log("prep", "kubeconfig save result: "+v)
             v = shell.exec("cat /workspace/gitpod/k3s-external.yaml").trim()
             werft.log("prep", "kubeconfig cat result: "+v)
+            v = shell.exec("pwd && ls").trim()
+            werft.log("prep", "pwd && ls: "+v)
         }
         werft.done('prep');
     } catch (err) {
