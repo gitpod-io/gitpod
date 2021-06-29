@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ## June 2021
 
+- Fix gp open/preview to await till VS Code UI is available ([#4633](https://github.com/gitpod-io/gitpod/pull/4633))
+- Support workspace sharing from VS Code ([#4580](https://github.com/gitpod-io/gitpod/pull/4580))
+- Deprecate user uploaded extensions ([#4627](https://github.com/gitpod-io/gitpod/pull/4627))
+- Validate .gitpod.yml for missing no synced (workspace) extensions ([#4627](https://github.com/gitpod-io/gitpod/pull/4627))
+- Notify about failed port autoexposure and allow to retry again from VS Code ([#4565](https://github.com/gitpod-io/gitpod/pull/4565))
+- Fix caching `Not Found` as OTS token in the supervsior ([#4577](https://github.com/gitpod-io/gitpod/pull/4577))
+- Fix out of order typing in terminals ([#4560](https://github.com/gitpod-io/gitpod/pull/4560))
+- Minify VS Code bundles and reduce the static layer ([#4569](https://github.com/gitpod-io/gitpod/pull/4569))
+- Fix dropping path, fragment and query of a URI while converting from localhost to exposed/tunneled ([#4557](https://github.com/gitpod-io/gitpod/pull/4557))
+- Work around blocking VS Code for gitpod/workspace-postgres image based workspaces ([#4541](https://github.com/gitpod-io/gitpod/pull/4541))
+- Upgrade to VS Code 1.57.1 ([#4507](https://github.com/gitpod-io/gitpod/pull/4507))
+- Preserve terminals' icons and colors between page sessions. ([#4507](https://github.com/gitpod-io/gitpod/pull/4507))
+- Fix corrupted fonts in terminals. ([#4507](https://github.com/gitpod-io/gitpod/pull/4507))
+- Add more loggigng to track down reconnection causes, prevent showing the dialog on reconnections ([#4498](https://github.com/gitpod-io/gitpod/pull/4498))
+- Optimize ws-proxy connection pool to prevent timeouts on port location ([#4461](https://github.com/gitpod-io/gitpod/pull/4461))
+- Enable debugging of a single VS Code extension from sources in VS Code ([#4446](https://github.com/gitpod-io/gitpod/pull/4446))
+- Fix websocket connections on port location ([#4419](https://github.com/gitpod-io/gitpod/pull/4419))
+- Fix reconnections because of custom timeout error in the supervisor frontend ([#4404](https://github.com/gitpod-io/gitpod/pull/4404))
+- Support VS Code web extensions which are running in a browser worker, [particularly Vim](https://github.com/gitpod-io/gitpod/issues/3259#issuecomment-864355629)
+- Preview version of the Gitpod Local Companion: https://www.gitpod.io/blog/local-app
 - Add dodo to animals (thanks @a2br!) ([#4589](https://github.com/gitpod-io/gitpod/pull/4589))
 - Implement a new Teams UI in the dashboard (behind a feature flag). ([#4401)](https://github.com/gitpod-io/gitpod/pull/4401), )
 - Breaking Change: Make ports configured in `.gitpod.yml` private by default when no value for `visibility` is given (was public). This change is for security reasons. ([#4548](https://github.com/gitpod-io/gitpod/pull/4548))
