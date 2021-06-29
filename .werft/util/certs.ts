@@ -39,7 +39,7 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
     && export KUBECONFIG="${params.pathToKubeConfig}" \
     && cd ${params.pathToTerraform} \
     && export GOOGLE_APPLICATION_CREDENTIALS="${params.gcpSaPath}" \
-    && terraform init -backend-config='prefix=${params.namespace}' -migrate-state\
+    && terraform init -backend-config='prefix=${params.namespace}${params.bucketPrefixTail}' -migrate-state\
     && terraform apply -auto-approve \
         -var 'namespace=${params.namespace}' \
         -var 'dns_zone_domain=${params.dnsZoneDomain}' \

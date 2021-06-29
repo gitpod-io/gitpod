@@ -288,12 +288,14 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     });
     const certificatePromise = (async function () {
         if (!wsCluster) {
-            issueMetaCerts();
+            issueMetaCerts().then(()=> {
+                // sleep(55000)
+                if(k3sWsCluster){
+                    issueK3sWsCerts();
+                }
+            });
         }
-        // sleep(55000)
-        if(k3sWsCluster){
-            issueK3sWsCerts();
-        }
+
 
         werft.log('certificate', 'waiting for preview env namespace being re-created...');
         await namespaceRecreatedPromise;
