@@ -2,7 +2,7 @@
 # Licensed under the Gitpod Enterprise Source Code License,
 # See License.enterprise.txt in the project root folder.
 
-FROM alpine:3.13
+FROM alpine:3.14
 
 # Ensure latest packages are present, like security updates.
 RUN  apk upgrade --no-cache \
