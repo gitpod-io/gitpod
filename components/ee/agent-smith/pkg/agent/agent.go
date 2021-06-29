@@ -15,6 +15,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 	"unsafe"
@@ -51,7 +52,7 @@ type Smith struct {
 
 	notifiedInfringements *lru.Cache
 	perfHandler           chan perfHandlerFunc
-	pids                  map[int]time.Time
+	pidsMap               sync.Map
 }
 
 // EgressTraffic configures an upper limit of allowed egress traffic over time
@@ -143,6 +144,7 @@ func NewAgentSmith(cfg Config) (*Smith, error) {
 		notifiedInfringements: notificationCache,
 		perfHandler:           make(chan perfHandlerFunc, 10),
 		metrics:               newAgentMetrics(),
+		pidsMap:               sync.Map{},
 	}
 	if cfg.Enforcement.Default != nil {
 		if err := cfg.Enforcement.Default.Validate(); err != nil {
@@ -327,16 +329,21 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 			for {
 				select {
 				case <-egressTicker.C:
-					for p, t := range agent.pids {
+					agent.pidsMap.Range(func(key, value interface{}) bool {
+						p := key.(int)
+						t := value.(time.Time)
 						infr, err := agent.checkEgressTrafficCallback(strconv.Itoa(p), t)
 						if err != nil {
-							log.WithError(err).Warn("error checking egress for pid: %d", p)
-							continue
+							log.WithError(err).Warnf("error checking egress for pid: %d", p)
+							return true
+						}
+						if infr == nil {
+							return true
 						}
 						v, err := getWorkspaceFromProcess(p)
 						if err != nil {
-							log.WithError(err).Warn("error getting workspace from process with pid: %d", p)
-							continue
+							// this is not from a workspace, let's skip
+							return true
 						}
 						v.Infringements = append(v.Infringements, *infr)
 						ps, err := agent.Penalize(*v)
@@ -345,10 +352,11 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 						}
 						alreadyNotified, _ := agent.notifiedInfringements.ContainsOrAdd(v.VID(), nil)
 						if alreadyNotified {
-							continue
+							return true
 						}
 						callback(*v, ps)
-					}
+						return true
+					})
 				case h := <-agent.perfHandler:
 					if h == nil {
 						continue
@@ -409,18 +417,24 @@ func (agent *Smith) cleanupDeadPIDS(ctx context.Context) {
 }
 
 func (agent *Smith) cleanupDeadPidsCallback() {
-	for p, _ := range agent.pids {
+	agent.pidsMap.Range(func(key, value interface{}) bool {
+		p := key.(int)
+
 		process, _ := os.FindProcess(p)
 		if process == nil {
-			delete(agent.pids, p)
-			continue
+			agent.pidsMap.Delete(p)
+			return true
 		}
 
 		err := process.Signal(syscall.Signal(0))
 		if err != nil {
-			delete(agent.pids, p)
+			agent.pidsMap.Delete(p)
+			return true
 		}
-	}
+
+		return true
+	})
+
 }
 
 // Penalize acts on infringements and e.g. stops pods
@@ -594,7 +608,7 @@ func (agent *Smith) processPerfRecord(rec perf.Record) {
 func (agent *Smith) handleExecveEvent(execve Execve) func() (*InfringingWorkspace, error) {
 	// this is not the exact process startup time
 	// but for the type of comparison we need to do is enough
-	agent.pids[execve.TID] = time.Now()
+	agent.pidsMap.Store(execve.TID, time.Now())
 
 	return func() (*InfringingWorkspace, error) {
 		if agent.Config.Blacklists == nil {

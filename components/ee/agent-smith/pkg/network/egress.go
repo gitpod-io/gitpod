@@ -23,6 +23,9 @@ func readDeviceEgress(inpt io.Reader, dev string) (total int64, err error) {
 	var totalEgress int64 = -1
 	//nolint:errcheck,staticcheck
 	for rec, err := csvreader.Read(); rec != nil; rec, err = csvreader.Read() {
+		if err != nil {
+			return 0, err
+		}
 		if len(rec) < 9 {
 			continue
 		}
