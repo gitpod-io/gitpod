@@ -70,7 +70,10 @@ export async function build(context, version) {
     try {
         if(k3sWsCluster) {
             // get and store the ws clsuter kubeconfig to root of the project
-            exec("kubectl get secret k3sdev -n werft -o=go-template='{{index .data \"k3s-external.yaml\"}}' | base64 -d > k3s-external.yaml")
+            var v = shell.exec("kubectl get secret k3sdev -n werft -o=go-template='{{index .data \"k3s-external.yaml\"}}' | base64 -d > k3s-external.yaml").trim()
+            werft.log("prep", "kubeconfig save result: "+v)
+            var v = shell.exec("ls && cat k3s-external.yaml").trim()
+            werft.log("prep", "kubeconfig ls and cat result: "+v)
         }
         exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
         exec("gcloud auth configure-docker --quiet");
