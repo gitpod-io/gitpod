@@ -2,7 +2,7 @@ import * as shell from 'shelljs';
 import * as fs from 'fs';
 import { werft, exec, gitTag } from './util/shell';
 import { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace } from './util/kubectl';
-import { issueCertficate, installCertficate } from './util/certs';
+import { issueCertficate, installCertficate, IssueCertificateParams } from './util/certs';
 import { reportBuildFailureInSlack } from './util/slack';
 import * as semver from 'semver';
 import * as util from 'util';
@@ -66,6 +66,7 @@ export async function build(context, version) {
     }
 
     let buildConfig = context.Annotations || {};
+    const k3sWsCluster = "k3s-ws" in buildConfig;
     try {
         exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
         exec("gcloud auth configure-docker --quiet");
@@ -108,6 +109,7 @@ export async function build(context, version) {
         withIntegrationTests,
         withWsCluster,
         wsCluster,
+        k3sWsCluster,
         publishToNpm,
         analytics,
         localAppVersion,
@@ -269,7 +271,17 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     const certificatePromise = (async function () {
         if (!wsCluster) {
             const additionalWsSubdomains = withWsCluster ? [withWsCluster.shortname] : [];
-            await issueCertficate(werft, ".werft/certs", GCLOUD_SERVICE_ACCOUNT_PATH, namespace, "gitpod-dev.com", domain, "34.76.116.244", additionalWsSubdomains);
+            const metaClusterParams = new IssueCertificateParams()
+            metaClusterParams.pathToTerraform = ".werft/certs"
+            metaClusterParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH
+            metaClusterParams.namespace = namespace
+            metaClusterParams.dnsZoneDomain = "gitpod-dev.com"
+            metaClusterParams.domain = domain
+            metaClusterParams.ip = "34.76.116.244"
+            metaClusterParams.additionalWsSubdomains = additionalWsSubdomains
+            metaClusterParams.includeDefaults = true
+            metaClusterParams.pathToKubeConfig = ""
+            await issueCertficate(werft, metaClusterParams);
         }
 
         werft.log('certificate', 'waiting for preview env namespace being re-created...');
