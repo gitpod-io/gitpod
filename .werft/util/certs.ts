@@ -49,7 +49,6 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
     if (params.pathToKubeConfig != "") {
         cmd = `export KUBE_LOAD_CONFIG_FILE=` + params.pathToKubeConfig + " && " + cmd
         werft.log("certificate", "k3s certificate command: " + cmd)
-        return
     }
 
     await exec(cmd, { slice: 'certificate', async: true });
