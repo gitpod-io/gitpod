@@ -20,3 +20,8 @@ variable "subdomains" {
 variable "public_ip" {
     type = string
 }
+
+variable "kube_config_path" {
+    type = string
+    default = ""
+}

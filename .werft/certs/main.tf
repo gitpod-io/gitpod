@@ -12,6 +12,10 @@ module "cert" {
 
   cert_name = var.namespace
   cert_namespace = "certs"
+
+  providers = {
+    kubectl.target-cluster = var.kube_config_path != "" ? kubectl.custom : kubectl.default
+  }
 }
 
 # https://www.terraform.io/docs/providers/google/guides/provider_reference.html
@@ -23,5 +27,11 @@ provider "google" {
 
 # https://gavinbunney.github.io/terraform-provider-kubectl/docs/provider.html
 provider "kubectl" {
+  alias = "default"
   load_config_file       = true
+}
+
+provider "kubectl" {
+  alias = "custom"
+  config_path = var.kube_config_path
 }

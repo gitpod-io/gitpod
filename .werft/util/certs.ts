@@ -44,6 +44,7 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
         -var 'dns_zone_domain=${params.dnsZoneDomain}' \
         -var 'domain=${params.domain}' \
         -var 'public_ip=${params.ip}' \
+        -var 'kube_config_path=${params.pathToKubeConfig}' \
         -var 'subdomains=[${subdomains.map(s => `"${s}"`).join(", ")}]'`;
 
     if (params.pathToKubeConfig != "") {
