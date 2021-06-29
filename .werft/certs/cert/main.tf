@@ -42,6 +42,7 @@ data "template_file" "certificate" {
 # https://gavinbunney.github.io/terraform-provider-kubectl/docs/kubectl_manifest
 resource "kubectl_manifest" "cert_manager_certificate" {
   yaml_body = data.template_file.certificate.rendered
+  wait_for_rollout = true
 }
 
 
