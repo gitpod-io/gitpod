@@ -2,13 +2,13 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM alpine:3.13 as dl
+FROM alpine:3.14 as dl
 WORKDIR /dl
 RUN apk add --no-cache curl \
   && curl -OL https://github.com/opencontainers/runc/releases/download/v1.0.0-rc95/runc.amd64 \
   && chmod +x runc.amd64
 
-FROM alpine:3.13
+FROM alpine:3.14
 
 RUN apk upgrade \
   && rm -rf /var/cache/apk/*

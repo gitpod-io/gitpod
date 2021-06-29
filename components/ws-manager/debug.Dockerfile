@@ -1,4 +1,4 @@
-FROM alpine:3.13
+FROM alpine:3.14
 
 # Ensure latest packages are present, like security updates.
 RUN  apk upgrade --no-cache \

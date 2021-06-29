@@ -43,7 +43,7 @@ spec:
       enableServiceLinks: false
       initContainers:
         - name: "sysctl"
-          image: "alpine:3.13"
+          image: "alpine:3.14"
           securityContext:
             privileged: true
           command:

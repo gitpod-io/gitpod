@@ -24,7 +24,7 @@ RUN echo "chart_location = \"../helm/gitpod\"" >> installer.auto.tfvars && \
     cp installer.auto.tfvars terraform/gcp && \
     rm installer.auto.tfvars
 
-FROM alpine:3.13
+FROM alpine:3.14
 
 # Ensure latest packages are present, like security updates.
 RUN  apk upgrade --no-cache

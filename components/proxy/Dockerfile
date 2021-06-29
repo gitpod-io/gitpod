@@ -27,7 +27,7 @@ RUN xcaddy build \
   --with github.com/caddyserver/caddy/v2=$PWD/caddy-fork \
   --with github.com/gitpod-io/gitpod/proxy/plugins=/plugins
 
-FROM alpine:3.13
+FROM alpine:3.14
 
 # Ensure latest packages are present, like security updates.
 RUN  apk upgrade --no-cache \
