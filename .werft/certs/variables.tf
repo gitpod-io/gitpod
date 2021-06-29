@@ -23,4 +23,5 @@ variable "public_ip" {
 
 variable "cert_namespace" {
     type = string
+    default = "certs"
 }

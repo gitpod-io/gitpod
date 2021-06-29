@@ -6,7 +6,6 @@ import { issueCertficate, installCertficate, IssueCertificateParams } from './ut
 import { reportBuildFailureInSlack } from './util/slack';
 import * as semver from 'semver';
 import * as util from 'util';
-// import { sleep } from './util/util';
 
 
 const readDir = util.promisify(fs.readdir)
@@ -76,16 +75,7 @@ export async function build(context, version) {
 
         if(k3sWsCluster) {
             // get and store the ws clsuter kubeconfig to root of the project
-            var v = shell.exec("kubectl get secret -n werft").trim()
-            werft.log("prep", "kubectl get secret: "+v)
-            var v = shell.exec("kubectl config view").trim()
-            werft.log("prep", "kubectl config view: "+v)
-            v = shell.exec("kubectl get secret k3sdev -n werft -o=go-template='{{index .data \"k3s-external.yaml\"}}' | base64 -d > k3s-external.yaml").trim()
-            werft.log("prep", "kubeconfig save result: "+v)
-            v = shell.exec("cat /workspace/gitpod/k3s-external.yaml").trim()
-            werft.log("prep", "kubeconfig cat result: "+v)
-            v = shell.exec("pwd && ls").trim()
-            werft.log("prep", "pwd && ls: "+v)
+            shell.exec("kubectl get secret k3sdev -n werft -o=go-template='{{index .data \"k3s-external.yaml\"}}' | base64 -d > k3s-external.yaml").trim()
         }
         werft.done('prep');
     } catch (err) {
@@ -289,7 +279,6 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     const certificatePromise = (async function () {
         if (!wsCluster) {
             issueMetaCerts().then(()=> {
-                // sleep(55000)
                 if(k3sWsCluster){
                     issueK3sWsCerts();
                 }
