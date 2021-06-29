@@ -37,6 +37,7 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
     // Always use 'terraform apply' to make sure the certificate is present and up-to-date
     var cmd = `set -x \
     && cd ${params.pathToTerraform} \
+    && export KUBECONFIG="${params.pathToKubeConfig}" \
     && export GOOGLE_APPLICATION_CREDENTIALS="${params.gcpSaPath}" \
     && terraform init -backend-config='prefix=${params.namespace}'\
     && terraform apply -auto-approve \
@@ -44,13 +45,8 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
         -var 'dns_zone_domain=${params.dnsZoneDomain}' \
         -var 'domain=${params.domain}' \
         -var 'public_ip=${params.ip}' \
-        -var 'kube_config_path=${params.pathToKubeConfig}' \
         -var 'subdomains=[${subdomains.map(s => `"${s}"`).join(", ")}]'`;
 
-    if (params.pathToKubeConfig != "") {
-        cmd = `export KUBE_LOAD_CONFIG_FILE=` + params.pathToKubeConfig + " && " + cmd
-        werft.log("certificate", "k3s certificate command: " + cmd)
-    }
 
     await exec(cmd, { slice: 'certificate', async: true });
 
