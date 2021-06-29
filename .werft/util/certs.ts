@@ -36,8 +36,8 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
 
     // Always use 'terraform apply' to make sure the certificate is present and up-to-date
     var cmd = `set -x \
+    && export KUBECONFIG="${params.pathToKubeConfig}" \
     && cd ${params.pathToTerraform} \
-    && export KUBECONFIG="../${params.pathToKubeConfig}" \
     && export GOOGLE_APPLICATION_CREDENTIALS="${params.gcpSaPath}" \
     && terraform init -backend-config='prefix=${params.namespace}'\
     && terraform apply -auto-approve \
