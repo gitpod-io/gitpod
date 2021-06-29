@@ -25,6 +25,7 @@ spec:
       component: db
       kind: pod
       stage: {{ .Values.installation.stage }}
+  replicas: {{ $comp.replicas | default 1 }}
   template:
     metadata:
       name: db
