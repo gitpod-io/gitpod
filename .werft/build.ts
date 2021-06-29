@@ -2,7 +2,7 @@ import * as shell from 'shelljs';
 import * as fs from 'fs';
 import { werft, exec, gitTag } from './util/shell';
 import { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace } from './util/kubectl';
-import { issueCertficate, installCertficate } from './util/certs';
+import { issueCertficate, installCertficate, IssueCertificateParams } from './util/certs';
 import { reportBuildFailureInSlack } from './util/slack';
 import * as semver from 'semver';
 import * as util from 'util';
@@ -66,6 +66,7 @@ export async function build(context, version) {
     }
 
     let buildConfig = context.Annotations || {};
+    const k3sWsCluster = "k3s-ws" in buildConfig;
     try {
         exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
         exec("gcloud auth configure-docker --quiet");
@@ -93,12 +94,6 @@ export async function build(context, version) {
     const installEELicense = !("without-ee-license" in buildConfig);
     const withWsCluster = parseWsCluster(buildConfig["with-ws-cluster"]);   // e.g., "dev2|gpl-ws-cluster-branch": prepares this branch to host (an additional) workspace cluster
     const wsCluster = parseWsCluster(buildConfig["as-ws-cluster"]);         // e.g., "dev2|gpl-fat-cluster-branch": deploys this build as so that it is available under that subdomain as that cluster
-    const k3sWsCluster = "k3s-ws" in buildConfig;
-    if(k3sWsCluster){
-        shell.exec("$pwd").trim()
-        exec("kubectl get secret k3sdev -n werft -o=go-template='{{index .data \"k3s-external.yaml\"}}' | base64 -d > k3s-external.yaml")
-        exec("ls && cat k3s-external.yaml")
-    }
 
     werft.log("job config", JSON.stringify({
         buildConfig,
@@ -276,8 +271,17 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     const certificatePromise = (async function () {
         if (!wsCluster) {
             const additionalWsSubdomains = withWsCluster ? [withWsCluster.shortname] : [];
-            await issueCertficate(werft, ".werft/certs", GCLOUD_SERVICE_ACCOUNT_PATH, namespace, "gitpod-dev.com", domain, "34.76.116.244", additionalWsSubdomains, true, "");
-            await issueCertficate(werft, ".werft/certs", GCLOUD_SERVICE_ACCOUNT_PATH, namespace, "gitpod-dev.com", domain, "34.79.158.226", "k3s", false, "./k3s-external.yaml");
+            const metaClusterParams = new IssueCertificateParams()
+            metaClusterParams.pathToTerraform = ".werft/certs"
+            metaClusterParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH
+            metaClusterParams.namespace = namespace
+            metaClusterParams.dnsZoneDomain = "gitpod-dev.com"
+            metaClusterParams.domain = domain
+            metaClusterParams.ip = "34.76.116.244"
+            metaClusterParams.additionalWsSubdomains = additionalWsSubdomains
+            metaClusterParams.includeDefaults = true
+            metaClusterParams.pathToKubeConfig = ""
+            await issueCertficate(werft, metaClusterParams);
         }
 
         werft.log('certificate', 'waiting for preview env namespace being re-created...');
