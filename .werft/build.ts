@@ -471,7 +471,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         var metaClusterParams = new IssueCertificateParams();
         metaClusterParams.pathToTerraform = ".werft/certs";
         metaClusterParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
-        metaClusterParams.namespace = namespace; // have we created this namespace in ws cluster already?
+        metaClusterParams.namespace = "certmanager"; // k3s workspace has certmanager named namespace
         metaClusterParams.dnsZoneDomain = "gitpod-dev.com";
         metaClusterParams.domain = domain;
         metaClusterParams.ip = "34.79.158.226"; // External ip of ingress service in k3s cluster
