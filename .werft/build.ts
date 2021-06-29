@@ -82,7 +82,7 @@ export async function build(context, version) {
             werft.log("prep", "kubectl config view: "+v)
             v = shell.exec("kubectl get secret k3sdev -n werft -o=go-template='{{index .data \"k3s-external.yaml\"}}' | base64 -d > k3s-external.yaml").trim()
             werft.log("prep", "kubeconfig save result: "+v)
-            v = shell.exec("k3s-external.yaml").trim()
+            v = shell.exec("cat k3s-external.yaml").trim()
             werft.log("prep", "kubeconfig cat result: "+v)
         }
         werft.done('prep');
