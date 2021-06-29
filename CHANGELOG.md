@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## June 2021
 
+- Complete validations of VS Code extensions in .gitpod.yml ([#4645](https://github.com/gitpod-io/gitpod/pull/4645)):
+
+| Check | Quick Fixes |
+| --- | --- |
+| Deprecated user uploaded extensions | Resolve them against Open VSX |
+| Extensions cannot be found in Open VSX | Remove from .gitpod.yml or search for them in Open VSX |
+| Extensions URLs cannot be resolved to valid VSIX files | Remove from .gitpod.yml |
+| Extensions is installed for the workspace but missing in .gitpod.yml | Add to .gitpod.yml or uninstall |
+| Extensions is uninstalled but present in .gitpod.yml | Remove from .gitpod.yml or install as no synced |
+
 - Add dodo to animals (thanks @a2br!) ([#4589](https://github.com/gitpod-io/gitpod/pull/4589))
 - Implement a new Teams UI in the dashboard (behind a feature flag). ([#4401)](https://github.com/gitpod-io/gitpod/pull/4401), )
 - Breaking Change: Make ports configured in `.gitpod.yml` private by default when no value for `visibility` is given (was public). This change is for security reasons. ([#4548](https://github.com/gitpod-io/gitpod/pull/4548))
