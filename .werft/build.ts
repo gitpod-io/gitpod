@@ -93,6 +93,12 @@ export async function build(context, version) {
     const installEELicense = !("without-ee-license" in buildConfig);
     const withWsCluster = parseWsCluster(buildConfig["with-ws-cluster"]);   // e.g., "dev2|gpl-ws-cluster-branch": prepares this branch to host (an additional) workspace cluster
     const wsCluster = parseWsCluster(buildConfig["as-ws-cluster"]);         // e.g., "dev2|gpl-fat-cluster-branch": deploys this build as so that it is available under that subdomain as that cluster
+    const k3sWsCluster = "k3s-ws" in buildConfig;
+    if(k3sWsCluster){
+        shell.exec("$pwd").trim()
+        exec("kubectl get secret k3sdev -n werft -o=go-template='{{index .data \"k3s-external.yaml\"}}' | base64 -d > k3s-external.yaml")
+        exec("ls && cat k3s-external.yaml")
+    }
 
     werft.log("job config", JSON.stringify({
         buildConfig,
@@ -108,6 +114,7 @@ export async function build(context, version) {
         withIntegrationTests,
         withWsCluster,
         wsCluster,
+        k3sWsCluster,
         publishToNpm,
         analytics,
         localAppVersion,
@@ -269,7 +276,8 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     const certificatePromise = (async function () {
         if (!wsCluster) {
             const additionalWsSubdomains = withWsCluster ? [withWsCluster.shortname] : [];
-            await issueCertficate(werft, ".werft/certs", GCLOUD_SERVICE_ACCOUNT_PATH, namespace, "gitpod-dev.com", domain, "34.76.116.244", additionalWsSubdomains);
+            await issueCertficate(werft, ".werft/certs", GCLOUD_SERVICE_ACCOUNT_PATH, namespace, "gitpod-dev.com", domain, "34.76.116.244", additionalWsSubdomains, true, "");
+            await issueCertficate(werft, ".werft/certs", GCLOUD_SERVICE_ACCOUNT_PATH, namespace, "gitpod-dev.com", domain, "34.79.158.226", "k3s", false, "./k3s-external.yaml");
         }
 
         werft.log('certificate', 'waiting for preview env namespace being re-created...');

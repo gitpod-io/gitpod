@@ -1,8 +1,12 @@
 import { exec } from './shell';
 import { sleep } from './util';
 
-export async function issueCertficate(werft, pathToTerraform, gcpSaPath, namespace, dnsZoneDomain, domain: string, ip, additionalWsSubdomains) {
-    const subdomains = ["", "*.", "*.ws-dev."];
+function getDefaultSubDomains(): string[] {
+    return ["", "*.", "*.ws-dev."];
+}
+
+export async function issueCertficate(werft, pathToTerraform, gcpSaPath, namespace, dnsZoneDomain, domain: string, ip, additionalWsSubdomains, includeDefualts: boolean, pathToKubeConfig: string) {
+    const subdomains = includeDefualts? getDefaultSubDomains(): [];
     if (Array.isArray(subdomains)) {
         for (const sd of additionalWsSubdomains) {
             subdomains.push(`*.ws-${additionalWsSubdomains}.`);
@@ -18,17 +22,26 @@ export async function issueCertficate(werft, pathToTerraform, gcpSaPath, namespa
         throw new Error(`there is no subdomain + '${domain}' shorter or equal to 63 characters, max. allowed length for CN. No HTTPS certs for you! Consider using a short branch name...`);
     }
 
+
     // Always use 'terraform apply' to make sure the certificate is present and up-to-date
-    await exec(`set -x \
-        && cd ${pathToTerraform} \
-        && export GOOGLE_APPLICATION_CREDENTIALS="${gcpSaPath}" \
-        && terraform init -backend-config='prefix=${namespace}'\
-        && terraform apply -auto-approve \
-            -var 'namespace=${namespace}' \
-            -var 'dns_zone_domain=${dnsZoneDomain}' \
-            -var 'domain=${domain}' \
-            -var 'public_ip=${ip}' \
-            -var 'subdomains=[${subdomains.map(s => `"${s}"`).join(", ")}]'`, { slice: 'certificate', async: true });
+    var cmd = `set -x \
+    && cd ${pathToTerraform} \
+    && export GOOGLE_APPLICATION_CREDENTIALS="${gcpSaPath}" \
+    && terraform init -backend-config='prefix=${namespace}'\
+    && terraform apply -auto-approve \
+        -var 'namespace=${namespace}' \
+        -var 'dns_zone_domain=${dnsZoneDomain}' \
+        -var 'domain=${domain}' \
+        -var 'public_ip=${ip}' \
+        -var 'subdomains=[${subdomains.map(s => `"${s}"`).join(", ")}]'`;
+
+    if(pathToKubeConfig!=""){
+        `export KUBE_LOAD_CONFIG_FILE=`+pathToKubeConfig+ " && " + cmd
+    }
+
+    werft.log("certificate", cmd);
+    werft.fail("certificate", "forceful")
+    await exec(cmd, { slice: 'certificate', async: true });
 
     werft.log('certificate', `waiting until certificate certs/${namespace} is ready...`)
     let notReadyYet = true;
