@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -61,7 +62,11 @@ var runCmd = &cobra.Command{
 			log.WithError(err).Fatal("cannot register metrics")
 		}
 
-		go smith.Start(func(violation agent.InfringingWorkspace, penalties []agent.PenaltyKind) {
+		ctx := context.Background()
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		go smith.Start(ctx, func(violation agent.InfringingWorkspace, penalties []agent.PenaltyKind) {
 			log.WithField("violation", violation).WithField("penalties", penalties).Info("Found violation")
 
 			if cfg.SlackWebhooks != nil {
@@ -94,7 +99,13 @@ var runCmd = &cobra.Command{
 
 		sigChan := make(chan os.Signal, 1)
 		signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-		<-sigChan
+
+		select {
+		case <-ctx.Done():
+			return
+		case <-sigChan:
+			return
+		}
 	},
 }
 
