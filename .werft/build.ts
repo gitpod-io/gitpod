@@ -356,7 +356,9 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         werft.log('helm', 'installing Gitpod');
 
         installGitpod(commonFlags);
-        installGitpodOnK3sWsCluster(commonFlags, getK3sWsKubeConfigPath());
+        if (k3sWsCluster) {
+            installGitpodOnK3sWsCluster(commonFlags, getK3sWsKubeConfigPath());
+        }
 
         werft.log('helm', 'done');
         werft.done('helm');
@@ -399,9 +401,6 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     }
 
     function installGitpodOnK3sWsCluster(commonFlags: string, pathToKubeConfig: string) {
-        if (!k3sWsCluster) {
-            return
-        }
         let flags = commonFlags
         flags += ` -f ../.werft/values.k3sWsCluster.yaml`;
         if (storage === "gcp") {
@@ -412,6 +411,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
             flags += ` -f ../.werft/values.dev.gcp-storage.yaml`;
         }
 
+        werft.log("helm", "installing k3s ws cluster")
         exec(`export KUBECONFIG=${pathToKubeConfig} && helm dependencies up`);
         exec(`export KUBECONFIG=${pathToKubeConfig} && /usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/values.dev.yaml ${flags} ${helmInstallName} .`);
         // exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl apply -f ../.werft/jaeger.yaml`);
