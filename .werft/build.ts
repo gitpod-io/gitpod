@@ -73,7 +73,7 @@ export async function build(context, version) {
         exec("gcloud auth configure-docker --quiet");
         exec('gcloud container clusters get-credentials dev --zone europe-west1-b --project gitpod-core-dev');
 
-        if(k3sWsCluster) {
+        if (k3sWsCluster) {
             // get and store the ws clsuter kubeconfig to root of the project
             shell.exec("kubectl get secret k3sdev -n werft -o=go-template='{{index .data \"k3s-external.yaml\"}}' | base64 -d > k3s-external.yaml").trim()
         }
@@ -280,7 +280,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         if (!wsCluster) {
             await issueMetaCerts();
         }
-        if(k3sWsCluster){
+        if (k3sWsCluster) {
             await issueK3sWsCerts();
         }
 
@@ -289,7 +289,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
         await installMetaCertificates();
 
-        if(k3sWsCluster){
+        if (k3sWsCluster) {
             await installWsCertificates();
         }
 
@@ -389,7 +389,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         werft.fail('helm', err);
     }
     const pathToVersions = `${shell.pwd().toString()}/versions.yaml`;
-    flags+=` -f ${pathToVersions}`;
+    flags += ` -f ${pathToVersions}`;
 
     if (!certificatePromise) {
         // it's not possible to set certificatesSecret={} so we set secretName to empty string
@@ -526,7 +526,7 @@ export async function triggerIntegrationTests(version: string, namespace: string
             `username=${username}`,
             `updateGitHubStatus=gitpod-io/gitpod`
         ].map(annotation => `-a ${annotation}`).join(' ')
-        exec(`werft run --remote-job-path .werft/run-integration-tests.yaml ${annotations} github`, {slice: phases.TRIGGER_INTEGRATION_TESTS}).trim();
+        exec(`werft run --remote-job-path .werft/run-integration-tests.yaml ${annotations} github`, { slice: phases.TRIGGER_INTEGRATION_TESTS }).trim();
 
         werft.done(phases.TRIGGER_INTEGRATION_TESTS);
     } catch (err) {

@@ -12,7 +12,6 @@ module "cert" {
 
   cert_name = var.namespace
   cert_namespace = var.cert_namespace
-
 }
 
 # https://www.terraform.io/docs/providers/google/guides/provider_reference.html
