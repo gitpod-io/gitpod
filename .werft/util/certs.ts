@@ -42,6 +42,7 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
     var cmd = `set -x \
     && export KUBECONFIG="${params.pathToKubeConfig}" \
     && cd ${params.pathToTerraform} \
+    && rm -rf .terraform* \
     && export GOOGLE_APPLICATION_CREDENTIALS="${params.gcpSaPath}" \
     && terraform init -backend-config='prefix=${params.namespace}${params.bucketPrefixTail}' -migrate-state \
     && terraform apply -auto-approve \
