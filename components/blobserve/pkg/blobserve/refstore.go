@@ -12,6 +12,7 @@ import (
 
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/remotes"
+	"github.com/docker/distribution/reference"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"golang.org/x/xerrors"
 
@@ -25,6 +26,17 @@ const (
 	parallelBlobDownloads = 10
 )
 
+// BlobModifier modifies files in a blob. The map keys are paths relative to the
+// the blob's workdir.
+type blobModifier map[string]FileModifier
+
+// BlobConfig configures the behaviour of blobs served from a refstore
+type blobConfig struct {
+	// Workdir is the path that files are served from relative to the blob root.
+	Workdir  string
+	Modifier blobModifier
+}
+
 type refstore struct {
 	Resolver ResolverProvider
 
@@ -32,6 +44,7 @@ type refstore struct {
 	refcache  map[string]*refstate
 	requests  chan downloadRequest
 	blobspace blobspace
+	config    map[string]blobConfig
 
 	close chan struct{}
 	once  *sync.Once
@@ -43,9 +56,23 @@ func newRefStore(cfg Config, resolver ResolverProvider) (*refstore, error) {
 		return nil, err
 	}
 
+	config := make(map[string]blobConfig)
+	for ref, repo := range cfg.Repos {
+		mods := make(map[string]FileModifier, len(repo.Replacements))
+		for _, mod := range repo.Replacements {
+			mods[mod.Path] = modifySearchAndReplace(mod.Search, mod.Replacement)
+		}
+
+		config[ref] = blobConfig{
+			Workdir:  repo.Workdir,
+			Modifier: mods,
+		}
+	}
+
 	res := &refstore{
 		Resolver:  resolver,
 		blobspace: bs,
+		config:    config,
 		refcache:  make(map[string]*refstate),
 		requests:  make(chan downloadRequest),
 		once:      &sync.Once{},
@@ -83,6 +110,11 @@ func (r *refstate) Wait(ctx context.Context) (err error) {
 
 func (r *refstate) MarkDone() {
 	close(r.ch)
+}
+
+type BlobForOpts struct {
+	ReadOnly bool
+	Modifier map[string]FileModifier
 }
 
 func (store *refstore) BlobFor(ctx context.Context, ref string, readOnly bool) (fs http.FileSystem, hash string, err error) {
@@ -218,7 +250,18 @@ func (store *refstore) handleRequest(ctx context.Context, ref string, force bool
 				return err
 			}
 
-			err = store.blobspace.AddFromTarGzip(ctx, digest, in)
+			pref, err := reference.ParseNamed(ref)
+			if err != nil {
+				return err
+			}
+
+			var mods blobModifier
+			cfg, ok := store.config[reference.Domain(pref)+"/"+reference.Path(pref)]
+			if ok {
+				mods = cfg.Modifier
+			}
+
+			err = store.blobspace.AddFromTarGzip(ctx, digest, in, mods)
 			in.Close()
 			if err != nil {
 				return xerrors.Errorf("cannot download blob: %w", err)

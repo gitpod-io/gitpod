@@ -38,8 +38,9 @@ type Config struct {
 	Port    int           `json:"port"`
 	Timeout util.Duration `json:"timeout,omitempty"`
 	Repos   map[string]struct {
-		PrePull []string `json:"prePull,omitempty"`
-		Workdir string   `json:"workdir,omitempty"`
+		PrePull      []string            `json:"prePull,omitempty"`
+		Workdir      string              `json:"workdir,omitempty"`
+		Replacements []StringReplacement `json:"replacements,omitempty"`
 	} `json:"repos"`
 	// AllowAnyRepo enables users to access any repo/image, irregardles if they're listed in the
 	// ref config or not.
@@ -48,6 +49,12 @@ type Config struct {
 		Location string `json:"location"`
 		MaxSize  int64  `json:"maxSizeBytes,omitempty"`
 	} `json:"blobSpace"`
+}
+
+type StringReplacement struct {
+	Path        string `json:"path"`
+	Search      string `json:"search"`
+	Replacement string `json:"replacement"`
 }
 
 // NewServer creates a new blob server
