@@ -298,14 +298,10 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     try {
         if (deploymentConfig.cleanSlateDeployment) {
             // re-create namespace
-            for (let pathToKubeConfig of [""]) {
-                await cleanStateEnv(pathToKubeConfig);
-            }
+            await cleanStateEnv("");
 
         } else {
-            for (let pathToKubeConfig of [""]) {
-                createNamespace(pathToKubeConfig, namespace, { slice: 'prep' });
-            }
+            createNamespace("", namespace, { slice: 'prep' });
         }
         // check how this affects further steps
         setKubectlContextNamespace(namespace, { slice: 'prep' });
@@ -398,7 +394,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     }
 
     function installGitpodOnK3sWsCluster(commonFlags: string, pathToKubeConfig: string) {
-        if(!k3sWsCluster){
+        if (!k3sWsCluster) {
             return
         }
         let flags = commonFlags
