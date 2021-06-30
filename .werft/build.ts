@@ -299,9 +299,14 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         if (deploymentConfig.cleanSlateDeployment) {
             // re-create namespace
             await cleanStateEnv("");
-
+            if(k3sWsCluster){
+                await cleanStateEnv(getK3sWsKubeConfigPath());
+            }
         } else {
             createNamespace("", namespace, { slice: 'prep' });
+            if(k3sWsCluster){
+                createNamespace(getK3sWsKubeConfigPath(), namespace, { slice: 'prep' });
+            }
         }
         // check how this affects further steps
         setKubectlContextNamespace(namespace, { slice: 'prep' });
@@ -351,7 +356,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         werft.log('helm', 'installing Gitpod');
 
         installGitpod(commonFlags);
-        installGitpodOnK3sWsCluster(commonFlags, "/workspace/k3s-external.yaml");
+        installGitpodOnK3sWsCluster(commonFlags, getK3sWsKubeConfigPath());
 
         werft.log('helm', 'done');
         werft.done('helm');
@@ -496,7 +501,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         wsInstallCertParams.certNamespace = "certmanager"
         wsInstallCertParams.certSecretName = "proxy-config-certificates"
         wsInstallCertParams.destinationNamespace = namespace
-        wsInstallCertParams.pathToKubeConfig = "/workspace/k3s-external.yaml"
+        wsInstallCertParams.pathToKubeConfig = getK3sWsKubeConfigPath()
         await installCertficate(werft, wsInstallCertParams);
     }
 
@@ -530,10 +535,14 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         metaClusterParams.ip = "34.79.158.226"; // External ip of ingress service in k3s cluster
         metaClusterParams.additionalWsSubdomains = additionalWsSubdomains;
         metaClusterParams.includeDefaults = false;
-        metaClusterParams.pathToKubeConfig = "/workspace/k3s-external.yaml";
+        metaClusterParams.pathToKubeConfig = getK3sWsKubeConfigPath();
         metaClusterParams.bucketPrefixTail = "-k3s-ws"
         await issueCertficate(werft, metaClusterParams);
     }
+}
+
+function getK3sWsKubeConfigPath(): string {
+    return "/workspace/k3s-external.yaml";
 }
 
 /**
