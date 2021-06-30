@@ -450,6 +450,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         metaInstallCertParams.certNamespace = "certs"
         metaInstallCertParams.certSecretName = "proxy-config-certificates"
         metaInstallCertParams.destinationNamespace = namespace
+        metaInstallCertParams.pathToKubeConfig = ""
         await installCertficate(werft, metaInstallCertParams);
     }
 
@@ -459,6 +460,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         wsInstallCertParams.certNamespace = "certmanager"
         wsInstallCertParams.certSecretName = "proxy-config-certificates"
         wsInstallCertParams.destinationNamespace = namespace
+        wsInstallCertParams.pathToKubeConfig = "/workspace/k3s-external.yaml"
         await installCertficate(werft, wsInstallCertParams);
     }
 

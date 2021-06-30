@@ -17,6 +17,7 @@ export class IssueCertificateParams {
 }
 
 export class InstallCertificateParams {
+    pathToKubeConfig: string
     certName: string
     certSecretName: string
     certNamespace: string
@@ -60,11 +61,11 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
     werft.log("certificate", "command: "+cmd)
     await exec(cmd, { slice: 'certificate', async: true });
 
-    werft.log('certificate', `waiting until certificate ${}/${params.namespace} is ready...`)
+    werft.log('certificate', `waiting until certificate ${params.certNamespace}/${params.namespace} is ready...`)
     let notReadyYet = true;
     while (notReadyYet) {
         werft.log('certificate', `polling state of certs/${params.namespace}...`)
-        const result = exec(`kubectl -n ${params.certNamespace} get certificate ${params.namespace} -o jsonpath="{.status.conditions[?(@.type == 'Ready')].status}"`, { silent: true, dontCheckRc: true });
+        const result = exec(`export KUBECONFIG=${params.pathToKubeConfig} && kubectl -n ${params.certNamespace} get certificate ${params.namespace} -o jsonpath="{.status.conditions[?(@.type == 'Ready')].status}"`, { silent: true, dontCheckRc: true });
         if (result.code === 0 && result.stdout === "True") {
             notReadyYet = false;
             break;
@@ -77,7 +78,7 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
 export async function installCertficate(werft, params: InstallCertificateParams) {
     werft.log('certificate', `copying certificate from "${params.certNamespace}/${params.certName}" to "${params.destinationNamespace}/${params.certSecretName}"`);
     // certmanager is configured to create a secret in the namespace "certs" with the name "${namespace}".
-    exec(`kubectl get secret ${params.certName} --namespace=${params.certNamespace} -o yaml \
+    exec(`export KUBECONFIG=${params.pathToKubeConfig} && kubectl get secret ${params.certName} --namespace=${params.certNamespace} -o yaml \
         | yq d - 'metadata.namespace' \
         | yq d - 'metadata.uid' \
         | yq d - 'metadata.resourceVersion' \
