@@ -24,7 +24,7 @@ import (
 
 func TestBlobFor(t *testing.T) {
 	const (
-		refDescriptor = "test"
+		refDescriptor = "gitpod.io/test:tag"
 		hashManifest  = "5de870aced7e6c182a10e032e94de15893c95edd80d9cc20348b0f1627826d93"
 		hashLayer     = "4970405cb2a3a461cc00fd755712beded51919d7e69270d7d10d0dcf5e209714"
 	)
@@ -85,7 +85,7 @@ func TestBlobFor(t *testing.T) {
 
 				// fetching again with an empty fake fetcher should work just fine - everything is cached now
 				s.Resolver = func() remotes.Resolver { return &fakeFetcher{} }
-				_, hash, err := s.BlobFor(context.Background(), "test", false)
+				_, hash, err := s.BlobFor(context.Background(), refDescriptor, false)
 
 				if diff := cmp.Diff(hashLayer, hash); diff != "" {
 					t.Errorf("unexpected blob hash (-want +got):\n%s", diff)
@@ -242,7 +242,7 @@ func TestBlobFor(t *testing.T) {
 				return err
 			},
 			Expectation: Expectation{
-				Refcache: map[string]string{"test": "4970405cb2a3a461cc00fd755712beded51919d7e69270d7d10d0dcf5e209714"},
+				Refcache: map[string]string{refDescriptor: "4970405cb2a3a461cc00fd755712beded51919d7e69270d7d10d0dcf5e209714"},
 				Content:  map[string]blobstate{"4970405cb2a3a461cc00fd755712beded51919d7e69270d7d10d0dcf5e209714": blobReady},
 			},
 		},
@@ -265,7 +265,7 @@ func TestBlobFor(t *testing.T) {
 				return nil
 			},
 			Expectation: Expectation{
-				Refcache: map[string]string{"test": "4970405cb2a3a461cc00fd755712beded51919d7e69270d7d10d0dcf5e209714"},
+				Refcache: map[string]string{refDescriptor: "4970405cb2a3a461cc00fd755712beded51919d7e69270d7d10d0dcf5e209714"},
 				Content:  map[string]blobstate{"4970405cb2a3a461cc00fd755712beded51919d7e69270d7d10d0dcf5e209714": blobReady},
 			},
 		},
@@ -443,7 +443,7 @@ func (s *inMemoryBlobspace) Get(name string) (fs http.FileSystem, state blobstat
 	return nil, s.Content[name]
 }
 
-func (s *inMemoryBlobspace) AddFromTarGzip(ctx context.Context, name string, in io.Reader) (err error) {
+func (s *inMemoryBlobspace) AddFromTarGzip(ctx context.Context, name string, in io.Reader, modifications map[string]FileModifier) (err error) {
 	return s.Adder(ctx, name, in)
 }
 

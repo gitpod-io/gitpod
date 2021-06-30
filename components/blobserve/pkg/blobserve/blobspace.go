@@ -5,10 +5,12 @@
 package blobserve
 
 import (
+	"bytes"
 	"compress/gzip"
 	"context"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"os/exec"
@@ -23,9 +25,12 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
+// FileModifier can modify the content of a file in blobspace
+type FileModifier func(in io.Reader, out io.Writer) error
+
 type blobspace interface {
 	Get(name string) (fs http.FileSystem, state blobstate)
-	AddFromTarGzip(ctx context.Context, name string, in io.Reader) (err error)
+	AddFromTarGzip(ctx context.Context, name string, in io.Reader, modifications map[string]FileModifier) (err error)
 }
 
 type diskBlobspace struct {
@@ -181,7 +186,7 @@ func (b *diskBlobspace) Get(name string) (fs http.FileSystem, state blobstate) {
 
 // AddFromTar adds content to this store under the given name.
 // In is expected to yield an uncompressed tar stream.
-func (b *diskBlobspace) AddFromTar(ctx context.Context, name string, in io.Reader) (err error) {
+func (b *diskBlobspace) AddFromTar(ctx context.Context, name string, in io.Reader, modifications map[string]FileModifier) (err error) {
 	fn := filepath.Join(b.Location, name)
 	if _, err := os.Stat(fn); !os.IsNotExist(err) {
 		return errdefs.ErrAlreadyExists
@@ -208,6 +213,13 @@ func (b *diskBlobspace) AddFromTar(ctx context.Context, name string, in io.Reade
 		return xerrors.Errorf("cannot untar: %w: %s", err, string(out))
 	}
 
+	for path, mod := range modifications {
+		err := b.modifyFile(name, path, mod)
+		if err != nil {
+			return xerrors.Errorf("cannot modify blob %s: %w", path, err)
+		}
+	}
+
 	os.WriteFile(fmt.Sprintf("%s.size", fn), []byte(fmt.Sprintf("%d", cw.C)), 0644)
 	os.WriteFile(fmt.Sprintf("%s.used", fn), nil, 0644)
 	os.WriteFile(fmt.Sprintf("%s.ready", fn), nil, 0644)
@@ -217,13 +229,46 @@ func (b *diskBlobspace) AddFromTar(ctx context.Context, name string, in io.Reade
 
 // AddFromTarGzip adds content to this store under the given name.
 // In is expected to yield a gzip compressed tar stream.
-func (b *diskBlobspace) AddFromTarGzip(ctx context.Context, name string, in io.Reader) (err error) {
+func (b *diskBlobspace) AddFromTarGzip(ctx context.Context, name string, in io.Reader, modifications map[string]FileModifier) (err error) {
 	gin, err := gzip.NewReader(in)
 	if err != nil {
 		return err
 	}
 
-	return b.AddFromTar(ctx, name, gin)
+	return b.AddFromTar(ctx, name, gin, modifications)
+}
+
+// ModifyFile modifies a file in the blobspace.
+// Beware: this function is not synchronised.
+// Beware: this function is not safe for user-provided input (does not file path sanitisation).
+func (b *diskBlobspace) modifyFile(blobName, filename string, mod FileModifier) (err error) {
+	fn := filepath.Join(b.Location, blobName, filename)
+	log.WithField("fn", fn).Debug("modifying file")
+	stat, err := os.Stat(fn)
+	if os.IsNotExist(err) {
+		return errdefs.ErrNotFound
+	}
+	if stat.IsDir() {
+		return errdefs.ErrInvalidArgument
+	}
+
+	input, err := ioutil.ReadFile(fn)
+	if err != nil {
+		return err
+	}
+	f, err := os.OpenFile(fn, os.O_TRUNC|os.O_WRONLY, 0644)
+	f.Seek(0, 0)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	err = mod(bytes.NewReader(input), f)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type countingWriter struct {
@@ -233,4 +278,19 @@ type countingWriter struct {
 func (c *countingWriter) Write(b []byte) (int, error) {
 	c.C += int64(len(b))
 	return len(b), nil
+}
+
+func modifySearchAndReplace(search, replace string) FileModifier {
+	return func(in io.Reader, out io.Writer) error {
+		buf, err := io.ReadAll(in)
+		if err != nil {
+			return err
+		}
+		buf = bytes.ReplaceAll(buf, []byte(search), []byte(replace))
+		_, err = io.Copy(out, bytes.NewReader(buf))
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 }
