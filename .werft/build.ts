@@ -298,12 +298,12 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     try {
         if (deploymentConfig.cleanSlateDeployment) {
             // re-create namespace
-            for (const pathToKubeConfig in [""]) {
+            for (let pathToKubeConfig of [""]) {
                 await cleanStateEnv(pathToKubeConfig);
             }
 
         } else {
-            for (const pathToKubeConfig in [""]) {
+            for (let pathToKubeConfig of [""]) {
                 createNamespace(pathToKubeConfig, namespace, { slice: 'prep' });
             }
         }
