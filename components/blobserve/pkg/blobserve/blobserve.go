@@ -5,9 +5,13 @@
 package blobserve
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"html"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -17,6 +21,7 @@ import (
 	"github.com/containerd/containerd/remotes"
 	"github.com/docker/distribution/reference"
 	"github.com/gorilla/mux"
+	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
@@ -33,6 +38,11 @@ type Server struct {
 	refstore *refstore
 }
 
+type BlobserveInlineVars struct {
+	IDE             string `json:"ide"`
+	SupervisorImage string `json:"supervisor"`
+}
+
 // Config configures a server.
 type Config struct {
 	Port    int           `json:"port"`
@@ -41,6 +51,7 @@ type Config struct {
 		PrePull      []string            `json:"prePull,omitempty"`
 		Workdir      string              `json:"workdir,omitempty"`
 		Replacements []StringReplacement `json:"replacements,omitempty"`
+		InlineStatic []InlineReplacement `json:"inlineStatic,omitempty"`
 	} `json:"repos"`
 	// AllowAnyRepo enables users to access any repo/image, irregardles if they're listed in the
 	// ref config or not.
@@ -53,6 +64,11 @@ type Config struct {
 
 type StringReplacement struct {
 	Path        string `json:"path"`
+	Search      string `json:"search"`
+	Replacement string `json:"replacement"`
+}
+
+type InlineReplacement struct {
 	Search      string `json:"search"`
 	Replacement string `json:"replacement"`
 }
@@ -130,8 +146,10 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 	}
 
 	var workdir string
+	var inlineReplacements []InlineReplacement
 	if cfg, ok := reg.Config.Repos[repo]; ok {
 		workdir = cfg.Workdir
+		inlineReplacements = cfg.InlineStatic
 	} else if !reg.Config.AllowAnyRepo {
 		log.WithField("repo", repo).Debug("forbidden repo access attempt")
 		http.Error(w, fmt.Sprintf("forbidden repo: %q", html.EscapeString(repo)), http.StatusForbidden)
@@ -163,12 +181,13 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 	// http.FileServer has a special case where ServeFile redirects any request where r.URL.Path
 	// ends in "/index.html" to the same path, without the final "index.html".
 	// We do not want this behaviour to make the gitpod-ide-index mechanism in ws-proxy work.
-	if strings.TrimPrefix(req.URL.Path, pathPrefix) == "/index.html" {
+	imagePath := strings.TrimPrefix(req.URL.Path, pathPrefix)
+	if imagePath == "/index.html" || imagePath == "/" {
 		fn := filepath.Join(workdir, "index.html")
 
 		fc, err := blob.Open(fn)
 		if err != nil {
-			log.WithError(err).WithField("fn", fn).Debug("cannot stat index.html")
+			log.WithError(err).WithField("fn", fn).Error("cannot stat index.html")
 			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 			return
 		}
@@ -179,7 +198,11 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 			modTime = s.ModTime()
 		}
 
-		http.ServeContent(w, req, "index.html", modTime, fc)
+		content, err := inlineVars(req, fc, inlineReplacements)
+		if err != nil {
+			log.WithError(err).Error()
+		}
+		http.ServeContent(w, req, "index.html", modTime, content)
 		return
 	}
 
@@ -189,6 +212,30 @@ func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
 		fs = prefixingFilesystem{Prefix: workdir, FS: fs}
 	}
 	http.StripPrefix(pathPrefix, http.FileServer(fs)).ServeHTTP(w, req)
+}
+
+func inlineVars(req *http.Request, r io.ReadSeeker, inlineReplacements []InlineReplacement) (io.ReadSeeker, error) {
+	inlineVarsValue := req.Header.Get("X-BlobServe-InlineVars")
+	if len(inlineReplacements) == 0 || inlineVarsValue == "" {
+		return r, nil
+	}
+
+	var inlineVars BlobserveInlineVars
+	err := json.Unmarshal([]byte(inlineVarsValue), &inlineVars)
+	if err != nil {
+		return r, xerrors.Errorf("cannot parse inline vars: %w: %s", err, inlineVars)
+	}
+
+	content, err := ioutil.ReadAll(r)
+	if err != nil {
+		return r, xerrors.Errorf("cannot read index.html: %w", err)
+	}
+
+	for _, replacement := range inlineReplacements {
+		replace := strings.ReplaceAll(strings.ReplaceAll(replacement.Replacement, "${ide}", inlineVars.IDE), "${supervisor}", inlineVars.SupervisorImage)
+		content = bytes.ReplaceAll(content, []byte(replacement.Search), []byte(replace))
+	}
+	return bytes.NewReader(content), nil
 }
 
 func isNoWebsocketRequest(req *http.Request, match *mux.RouteMatch) bool {

@@ -7,6 +7,7 @@ package proxy
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math/rand"
@@ -163,17 +164,13 @@ func (ir *ideRoutes) HandleSupervisorFrontendRoute(route *mux.Route) {
 		})
 	})
 	// always hit the blobserver to ensure that blob is downloaded
-	r.NewRoute().HandlerFunc(proxyPass(ir.Config, func(cfg *Config, req *http.Request) (tgt *url.URL, err error) {
-		var dst url.URL
-		dst.Scheme = cfg.BlobServer.Scheme
-		dst.Host = cfg.BlobServer.Host
-		dst.Path = "/" + cfg.WorkspacePodConfig.SupervisorImage
-		return &dst, nil
+	r.NewRoute().HandlerFunc(proxyPass(ir.Config, func(cfg *Config, req *http.Request) (*url.URL, error) {
+		return resolveSupervisorURL(cfg), nil
 	}, func(h *proxyPassConfig) {
 		h.Transport = &blobserveTransport{
 			transport: h.Transport,
 			Config:    ir.Config.Config,
-			resolveImage: func(req *http.Request) string {
+			resolveImage: func(t *blobserveTransport, req *http.Request) string {
 				var (
 					image = ir.Config.Config.WorkspacePodConfig.SupervisorImage
 					path  = strings.TrimPrefix(req.URL.Path, "/"+image)
@@ -186,6 +183,19 @@ func (ir *ideRoutes) HandleSupervisorFrontendRoute(route *mux.Route) {
 			},
 		}
 	}))
+}
+
+func resolveSupervisorURL(cfg *Config) *url.URL {
+	var dst url.URL
+	dst.Scheme = cfg.BlobServer.Scheme
+	dst.Host = cfg.BlobServer.Host
+	dst.Path = "/" + cfg.WorkspacePodConfig.SupervisorImage
+	return &dst
+}
+
+type BlobserveInlineVars struct {
+	IDE             string `json:"ide"`
+	SupervisorImage string `json:"supervisor"`
 }
 
 func (ir *ideRoutes) HandleRoot(route *mux.Route) {
@@ -202,13 +212,50 @@ func (ir *ideRoutes) HandleRoot(route *mux.Route) {
 		h.Transport = &blobserveTransport{
 			transport: h.Transport,
 			Config:    ir.Config.Config,
-			resolveImage: func(req *http.Request) string {
+			resolveImage: func(t *blobserveTransport, req *http.Request) string {
 				info := getWorkspaceInfoFromContext(req.Context())
 				if info == nil {
 					// no workspace information available - cannot resolve IDE image and path
 					return ""
 				}
-				return info.IDEImage
+				image := info.IDEImage
+				imagePath := strings.TrimPrefix(req.URL.Path, "/"+image)
+				if imagePath != "/index.html" && imagePath != "/" {
+					return image
+				}
+				// blobserve can inline static links in index.html for IDE and supervisor to avoid redirects for each resource
+				// but it has to know exposed URLs in the context of current workspace cluster
+				// so first we ask blobserve to preload the supervisor image
+				// and if it is succesful we pass exposed URLs to IDE and supervisor to blobserve for inlining
+				supervisorURL := resolveSupervisorURL(t.Config).String() + "/main.js"
+				preloadSupervisorReq, err := http.NewRequest("GET", supervisorURL, nil)
+				if err != nil {
+					log.WithField("supervisorURL", supervisorURL).WithError(err).Error("could not preload supervisor")
+					return image
+				}
+				resp, err := t.DoRoundTrip(preloadSupervisorReq)
+				if err != nil {
+					log.WithField("supervisorURL", supervisorURL).WithError(err).Error("could not preload supervisor")
+					return image
+				}
+				_ = resp.Body.Close()
+				if resp.StatusCode != http.StatusOK {
+					log.WithField("supervisorURL", supervisorURL).WithField("statusCode", resp.StatusCode).WithField("status", resp.Status).Error("could not preload supervisor")
+					return image
+				}
+
+				inlineVars := &BlobserveInlineVars{
+					IDE:             t.asBlobserveURL(image, ""),
+					SupervisorImage: t.asBlobserveURL(t.Config.WorkspacePodConfig.SupervisorImage, ""),
+				}
+				inlinveVarsValue, err := json.Marshal(inlineVars)
+				if err != nil {
+					log.WithError(err).WithField("inlineVars", inlineVars).Error("could no serialize inline vars")
+					return image
+				}
+
+				req.Header.Add("X-BlobServe-InlineVars", string(inlinveVarsValue))
+				return image
 			},
 		}
 	}, withHTTPErrorHandler(workspaceIDEPass)))
@@ -229,6 +276,9 @@ func installBlobserveRoutes(r *mux.Router, config *RouteHandlerConfig) {
 
 	targetResolver := func(cfg *Config, req *http.Request) (tgt *url.URL, err error) {
 		segments := strings.SplitN(req.URL.Path, imagePathSeparator, 2)
+		if len(segments) < 2 {
+			return nil, xerrors.Errorf("invalid URL")
+		}
 		image, path := segments[0], segments[1]
 
 		req.URL.Path = path
@@ -471,7 +521,7 @@ func workspaceMustExistHandler(config *Config, infoProvider WorkspaceInfoProvide
 			if info == nil {
 				log.WithFields(log.OWI("", coords.ID, "")).Info("no workspace info found - redirecting to start")
 				redirectURL := fmt.Sprintf("%s://%s/start/#%s", config.GitpodInstallation.Scheme, config.GitpodInstallation.HostName, coords.ID)
-				http.Redirect(resp, req, redirectURL, 302)
+				http.Redirect(resp, req, redirectURL, http.StatusFound)
 				return
 			}
 
@@ -524,10 +574,10 @@ func removeSensitiveCookies(cookies []*http.Cookie, domain string) []*http.Cooki
 type blobserveTransport struct {
 	transport    http.RoundTripper
 	Config       *Config
-	resolveImage func(req *http.Request) string
+	resolveImage func(t *blobserveTransport, req *http.Request) string
 }
 
-func (t *blobserveTransport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
+func (t *blobserveTransport) DoRoundTrip(req *http.Request) (resp *http.Response, err error) {
 	for {
 		resp, err = t.transport.RoundTrip(req)
 		if err != nil {
@@ -539,7 +589,7 @@ func (t *blobserveTransport) RoundTrip(req *http.Request) (resp *http.Response, 
 			if err != nil {
 				return nil, err
 			}
-			resp.Body.Close()
+			_ = resp.Body.Close()
 
 			if resp.StatusCode == http.StatusServiceUnavailable && string(respBody) == "timeout" {
 				// on timeout try again till the client request is cancelled
@@ -551,6 +601,16 @@ func (t *blobserveTransport) RoundTrip(req *http.Request) (resp *http.Response, 
 			return nil, fmt.Errorf("blobserver error: (%d) %s", resp.StatusCode, string(respBody))
 		}
 		break
+	}
+	return resp, err
+}
+
+func (t *blobserveTransport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
+	image := t.resolveImage(t, req)
+
+	resp, err = t.DoRoundTrip(req)
+	if err != nil {
+		return nil, err
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -582,25 +642,17 @@ func (t *blobserveTransport) RoundTrip(req *http.Request) (resp *http.Response, 
 	}
 	// endregion
 
-	image := t.resolveImage(req)
 	if image == "" {
 		return resp, nil
 	}
 
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	return t.redirect(image, req)
 }
 
 func (t *blobserveTransport) redirect(image string, req *http.Request) (*http.Response, error) {
 	path := strings.TrimPrefix(req.URL.Path, "/"+image)
-	location := fmt.Sprintf("%s://%s%s/%s%s%s",
-		t.Config.GitpodInstallation.Scheme,
-		"blobserve",
-		t.Config.GitpodInstallation.WorkspaceHostSuffix,
-		image,
-		imagePathSeparator,
-		path,
-	)
+	location := t.asBlobserveURL(image, path)
 
 	header := make(http.Header, 2)
 	header.Set("Location", location)
@@ -620,6 +672,17 @@ func (t *blobserveTransport) redirect(image string, req *http.Request) (*http.Re
 		StatusCode:    code,
 		Status:        status,
 	}, nil
+}
+
+func (t *blobserveTransport) asBlobserveURL(image string, path string) string {
+	return fmt.Sprintf("%s://%s%s/%s%s%s",
+		t.Config.GitpodInstallation.Scheme,
+		"blobserve",
+		t.Config.GitpodInstallation.WorkspaceHostSuffix,
+		image,
+		imagePathSeparator,
+		path,
+	)
 }
 
 // endregion

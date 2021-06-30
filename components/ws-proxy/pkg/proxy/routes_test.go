@@ -125,7 +125,19 @@ func startTestTarget(t *testing.T, host, name string) *testTarget {
 		if tt.Target.Status == http.StatusOK {
 			w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 			w.WriteHeader(http.StatusOK)
-			fmt.Fprintf(w, "%s hit: %s\n", name, r.URL.String())
+			format := "%s hit: %s\n"
+			args := []interface{}{name, r.URL.String()}
+			readonly := r.Header.Get("X-BlobServe-ReadOnly")
+			if readonly != "" {
+				format += "readOnly: %s\n"
+				args = append(args, readonly)
+			}
+			inlineVars := r.Header.Get("X-BlobServe-InlineVars")
+			if inlineVars != "" {
+				format += "inlineVars: %s\n"
+				args = append(args, inlineVars)
+			}
+			fmt.Fprintf(w, format, args...)
 			return
 		}
 
@@ -239,11 +251,11 @@ func TestRoutes(t *testing.T) {
 			Expectation: Expectation{
 				Status: http.StatusOK,
 				Header: http.Header{
-					"Content-Length": {"38"},
+					"Content-Length": {"218"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
 					"Vary":           {"Accept-Encoding"},
 				},
-				Body: "blobserve hit: /gitpod-io/ide:latest/\n",
+				Body: "blobserve hit: /gitpod-io/ide:latest/\ninlineVars: {\"ide\":\"https://blobserve.ws.test-domain.com/gitpod-io/ide:latest/__files__\",\"supervisor\":\"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__\"}\n",
 			},
 		},
 		{
@@ -256,11 +268,11 @@ func TestRoutes(t *testing.T) {
 			Expectation: Expectation{
 				Status: http.StatusOK,
 				Header: http.Header{
-					"Content-Length": {"38"},
+					"Content-Length": {"218"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
 					"Vary":           {"Accept-Encoding"},
 				},
-				Body: "blobserve hit: /gitpod-io/ide:latest/\n",
+				Body: "blobserve hit: /gitpod-io/ide:latest/\ninlineVars: {\"ide\":\"https://blobserve.ws.test-domain.com/gitpod-io/ide:latest/__files__\",\"supervisor\":\"https://blobserve.ws.test-domain.com/gitpod-io/supervisor:latest/__files__\"}\n",
 			},
 		},
 		{
@@ -560,12 +572,12 @@ func TestRoutes(t *testing.T) {
 			Expectation: Expectation{
 				Header: http.Header{
 					"Cache-Control":  {"public, max-age=31536000"},
-					"Content-Length": {"62"},
+					"Content-Length": {"77"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
 					"Vary":           {"Accept-Encoding"},
 				},
 				Status: http.StatusOK,
-				Body:   "blobserve hit: /blobserve/gitpod-io/supervisor:latest/main.js\n",
+				Body:   "blobserve hit: /blobserve/gitpod-io/supervisor:latest/main.js\nreadOnly: true\n",
 			},
 		},
 	}
