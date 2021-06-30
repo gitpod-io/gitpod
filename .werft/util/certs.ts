@@ -12,6 +12,16 @@ export class IssueCertificateParams {
     additionalWsSubdomains: string[]
     includeDefaults: boolean
     pathToKubeConfig: string
+    bucketPrefixTail: string
+    certNamespace: string
+}
+
+export class InstallCertificateParams {
+    pathToKubeConfig: string
+    certName: string
+    certSecretName: string
+    certNamespace: string
+    destinationNamespace: string
 }
 
 function getDefaultSubDomains(): string[] {
@@ -20,10 +30,8 @@ function getDefaultSubDomains(): string[] {
 
 export async function issueCertficate(werft, params: IssueCertificateParams) {
     const subdomains = params.includeDefaults ? getDefaultSubDomains() : [];
-    if (Array.isArray(subdomains)) {
-        for (const sd of params.additionalWsSubdomains) {
-            subdomains.push(`*.ws-${params.additionalWsSubdomains}.`);
-        }
+    for (const sd of params.additionalWsSubdomains) {
+        subdomains.push(`*.ws-${sd}.`);
     }
 
     // sanity: check if there is a "SAN short enough to fit into CN (63 characters max)"
@@ -35,30 +43,29 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
         throw new Error(`there is no subdomain + '${params.domain}' shorter or equal to 63 characters, max. allowed length for CN. No HTTPS certs for you! Consider using a short branch name...`);
     }
 
-
     // Always use 'terraform apply' to make sure the certificate is present and up-to-date
     var cmd = `set -x \
+    && export KUBECONFIG="${params.pathToKubeConfig}" \
     && cd ${params.pathToTerraform} \
+    && rm -rf .terraform* \
     && export GOOGLE_APPLICATION_CREDENTIALS="${params.gcpSaPath}" \
-    && terraform init -backend-config='prefix=${params.namespace}'\
+    && terraform init -backend-config='prefix=${params.namespace}${params.bucketPrefixTail}' -migrate-state \
     && terraform apply -auto-approve \
         -var 'namespace=${params.namespace}' \
         -var 'dns_zone_domain=${params.dnsZoneDomain}' \
         -var 'domain=${params.domain}' \
         -var 'public_ip=${params.ip}' \
+        -var 'cert_namespace=${params.certNamespace}' \
         -var 'subdomains=[${subdomains.map(s => `"${s}"`).join(", ")}]'`;
 
-    if (params.pathToKubeConfig != "") {
-        `export KUBE_LOAD_CONFIG_FILE=` + params.pathToKubeConfig + " && " + cmd
-    }
-
+    werft.log("certificate", "Terraform command for cert creation: " + cmd)
     await exec(cmd, { slice: 'certificate', async: true });
 
-    werft.log('certificate', `waiting until certificate certs/${params.namespace} is ready...`)
+    werft.log('certificate', `waiting until certificate ${params.certNamespace}/${params.namespace} is ready...`)
     let notReadyYet = true;
     while (notReadyYet) {
         werft.log('certificate', `polling state of certs/${params.namespace}...`)
-        const result = exec(`kubectl -n certs get certificate ${params.namespace} -o jsonpath="{.status.conditions[?(@.type == 'Ready')].status}"`, { silent: true, dontCheckRc: true });
+        const result = exec(`export KUBECONFIG=${params.pathToKubeConfig} && kubectl -n ${params.certNamespace} get certificate ${params.namespace} -o jsonpath="{.status.conditions[?(@.type == 'Ready')].status}"`, { silent: true, dontCheckRc: true });
         if (result.code === 0 && result.stdout === "True") {
             notReadyYet = false;
             break;
@@ -68,14 +75,14 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
     }
 }
 
-export async function installCertficate(werft, fromNamespace, toNamespace, certificateSecretName) {
-    werft.log('certificate', `copying certificate from "certs/${fromNamespace}" to "${toNamespace}/${certificateSecretName}"`);
+export async function installCertficate(werft, params: InstallCertificateParams) {
+    werft.log('certificate', `copying certificate from "${params.certNamespace}/${params.certName}" to "${params.destinationNamespace}/${params.certSecretName}"`);
     // certmanager is configured to create a secret in the namespace "certs" with the name "${namespace}".
-    exec(`kubectl get secret ${fromNamespace} --namespace=certs -o yaml \
+    exec(`export KUBECONFIG=${params.pathToKubeConfig} && kubectl get secret ${params.certName} --namespace=${params.certNamespace} -o yaml \
         | yq d - 'metadata.namespace' \
         | yq d - 'metadata.uid' \
         | yq d - 'metadata.resourceVersion' \
         | yq d - 'metadata.creationTimestamp' \
-        | sed 's/${fromNamespace}/${certificateSecretName}/g' \
-        | kubectl apply --namespace=${toNamespace} -f -`);
+        | sed 's/${params.certName}/${params.certSecretName}/g' \
+        | kubectl apply --namespace=${params.destinationNamespace} -f -`);
 }

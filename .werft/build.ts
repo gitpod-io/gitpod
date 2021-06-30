@@ -2,10 +2,11 @@ import * as shell from 'shelljs';
 import * as fs from 'fs';
 import { werft, exec, gitTag } from './util/shell';
 import { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace } from './util/kubectl';
-import { issueCertficate, installCertficate, IssueCertificateParams } from './util/certs';
+import { issueCertficate, installCertficate, IssueCertificateParams, InstallCertificateParams } from './util/certs';
 import { reportBuildFailureInSlack } from './util/slack';
 import * as semver from 'semver';
 import * as util from 'util';
+
 
 const readDir = util.promisify(fs.readdir)
 
@@ -71,6 +72,11 @@ export async function build(context, version) {
         exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
         exec("gcloud auth configure-docker --quiet");
         exec('gcloud container clusters get-credentials dev --zone europe-west1-b --project gitpod-core-dev');
+
+        if (k3sWsCluster) {
+            // get and store the ws clsuter kubeconfig to root of the project
+            shell.exec("kubectl get secret k3sdev -n werft -o=go-template='{{index .data \"k3s-external.yaml\"}}' | base64 -d > k3s-external.yaml").trim()
+        }
         werft.done('prep');
     } catch (err) {
         werft.fail('prep', err);
@@ -231,6 +237,7 @@ export async function build(context, version) {
         cleanSlateDeployment,
         sweeperImage,
         installEELicense,
+        k3sWsCluster,
     };
     await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
     await triggerIntegrationTests(deploymentConfig.version, deploymentConfig.namespace, context.Owner, !withIntegrationTests)
@@ -244,6 +251,7 @@ interface DeploymentConfig {
     url: string;
     wsCluster?: PreviewWorkspaceClusterRef | undefined;
     withWsCluster?: PreviewWorkspaceClusterRef | undefined;
+    k3sWsCluster?: boolean;
     analytics?: string;
     cleanSlateDeployment: boolean;
     sweeperImage: string;
@@ -255,7 +263,7 @@ interface DeploymentConfig {
  */
 export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage) {
     werft.phase("deploy", "deploying to dev");
-    const { version, destname, namespace, domain, url, wsCluster, withWsCluster } = deploymentConfig;
+    const { version, destname, namespace, domain, url, wsCluster, withWsCluster, k3sWsCluster } = deploymentConfig;
     const [wsdaemonPort, registryNodePort] = findFreeHostPorts([
         { start: 10000, end: 11000 },
         { start: 30000, end: 31000 },
@@ -270,25 +278,21 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     });
     const certificatePromise = (async function () {
         if (!wsCluster) {
-            const additionalWsSubdomains = withWsCluster ? [withWsCluster.shortname] : [];
-            const metaClusterParams = new IssueCertificateParams()
-            metaClusterParams.pathToTerraform = ".werft/certs"
-            metaClusterParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH
-            metaClusterParams.namespace = namespace
-            metaClusterParams.dnsZoneDomain = "gitpod-dev.com"
-            metaClusterParams.domain = domain
-            metaClusterParams.ip = "34.76.116.244"
-            metaClusterParams.additionalWsSubdomains = additionalWsSubdomains
-            metaClusterParams.includeDefaults = true
-            metaClusterParams.pathToKubeConfig = ""
-            await issueCertficate(werft, metaClusterParams);
+            await issueMetaCerts();
+        }
+        if (k3sWsCluster) {
+            await issueK3sWsCerts();
         }
 
         werft.log('certificate', 'waiting for preview env namespace being re-created...');
         await namespaceRecreatedPromise;
 
-        const fromNamespace = wsCluster ? wsCluster.namespace : namespace;
-        await installCertficate(werft, fromNamespace, namespace, "proxy-config-certificates");
+        await installMetaCertificates();
+
+        if (k3sWsCluster) {
+            await installWsCertificates();
+        }
+
     })();
 
     try {
@@ -385,7 +389,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         werft.fail('helm', err);
     }
     const pathToVersions = `${shell.pwd().toString()}/versions.yaml`;
-    flags+=` -f ${pathToVersions}`;
+    flags += ` -f ${pathToVersions}`;
 
     if (!certificatePromise) {
         // it's not possible to set certificatesSecret={} so we set secretName to empty string
@@ -438,6 +442,62 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
             werft.fail('certificate', err);
         }
     }
+
+    async function installMetaCertificates() {
+        const certName = wsCluster ? wsCluster.namespace : namespace;
+        const metaInstallCertParams = new InstallCertificateParams()
+        metaInstallCertParams.certName = certName
+        metaInstallCertParams.certNamespace = "certs"
+        metaInstallCertParams.certSecretName = "proxy-config-certificates"
+        metaInstallCertParams.destinationNamespace = namespace
+        metaInstallCertParams.pathToKubeConfig = ""
+        await installCertficate(werft, metaInstallCertParams);
+    }
+
+    async function installWsCertificates() {
+        const wsInstallCertParams = new InstallCertificateParams()
+        wsInstallCertParams.certName = namespace
+        wsInstallCertParams.certNamespace = "certmanager"
+        wsInstallCertParams.certSecretName = "proxy-config-certificates"
+        wsInstallCertParams.destinationNamespace = namespace
+        wsInstallCertParams.pathToKubeConfig = "/workspace/k3s-external.yaml"
+        await installCertficate(werft, wsInstallCertParams);
+    }
+
+
+    async function issueMetaCerts() {
+        var additionalWsSubdomains = withWsCluster ? [withWsCluster.shortname] : [];
+        var metaClusterParams = new IssueCertificateParams();
+        metaClusterParams.pathToTerraform = "/workspace/.werft/certs";
+        metaClusterParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
+        metaClusterParams.namespace = namespace;
+        metaClusterParams.certNamespace = "certs";
+        metaClusterParams.dnsZoneDomain = "gitpod-dev.com";
+        metaClusterParams.domain = domain;
+        metaClusterParams.ip = "34.76.116.244";
+        metaClusterParams.additionalWsSubdomains = additionalWsSubdomains;
+        metaClusterParams.includeDefaults = true;
+        metaClusterParams.pathToKubeConfig = "";
+        metaClusterParams.bucketPrefixTail = ""
+        await issueCertficate(werft, metaClusterParams);
+    }
+
+    async function issueK3sWsCerts() {
+        var additionalWsSubdomains = ["k3s"];
+        var metaClusterParams = new IssueCertificateParams();
+        metaClusterParams.pathToTerraform = "/workspace/.werft/certs";
+        metaClusterParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
+        metaClusterParams.namespace = namespace;
+        metaClusterParams.dnsZoneDomain = "gitpod-dev.com";
+        metaClusterParams.domain = domain;
+        metaClusterParams.certNamespace = "certmanager";
+        metaClusterParams.ip = "34.79.158.226"; // External ip of ingress service in k3s cluster
+        metaClusterParams.additionalWsSubdomains = additionalWsSubdomains;
+        metaClusterParams.includeDefaults = false;
+        metaClusterParams.pathToKubeConfig = "/workspace/k3s-external.yaml";
+        metaClusterParams.bucketPrefixTail = "-k3s-ws"
+        await issueCertficate(werft, metaClusterParams);
+    }
 }
 
 /**
@@ -466,7 +526,7 @@ export async function triggerIntegrationTests(version: string, namespace: string
             `username=${username}`,
             `updateGitHubStatus=gitpod-io/gitpod`
         ].map(annotation => `-a ${annotation}`).join(' ')
-        exec(`werft run --remote-job-path .werft/run-integration-tests.yaml ${annotations} github`, {slice: phases.TRIGGER_INTEGRATION_TESTS}).trim();
+        exec(`werft run --remote-job-path .werft/run-integration-tests.yaml ${annotations} github`, { slice: phases.TRIGGER_INTEGRATION_TESTS }).trim();
 
         werft.done(phases.TRIGGER_INTEGRATION_TESTS);
     } catch (err) {
