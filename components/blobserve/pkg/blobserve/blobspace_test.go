@@ -6,8 +6,10 @@ package blobserve
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"testing"
@@ -109,6 +111,72 @@ func Test_modifySearchAndReplace(t *testing.T) {
 
 			if diff := cmp.Diff(tt.Expected, buf.String()); diff != "" {
 				t.Errorf("modifySearchAndReplace() mismatch (-want +got):\n%s", diff)
+			}
+		})
+	}
+}
+
+func Test_inlineVars(t *testing.T) {
+	tests := []struct {
+		Name         string
+		InlineVars   *BlobserveInlineVars
+		Replacements []InlineReplacement
+		Content      string
+		Expected     string
+	}{
+		{
+			Name: "no replacements",
+			InlineVars: &BlobserveInlineVars{
+				IDE:             "foo",
+				SupervisorImage: "bar",
+			},
+			Content:  "aaa\nbbb\n",
+			Expected: "aaa\nbbb\n",
+		},
+		{
+			Name: "no inline vars",
+			Replacements: []InlineReplacement{
+				{Search: "aaa", Replacement: "${ide}"},
+				{Search: "bbb", Replacement: "${supervisor}"},
+			},
+			Content:  "aaa\nbbb\n",
+			Expected: "aaa\nbbb\n",
+		},
+		{
+			Name: "happy",
+			InlineVars: &BlobserveInlineVars{
+				IDE:             "foo",
+				SupervisorImage: "bar",
+			},
+			Replacements: []InlineReplacement{
+				{Search: "aaa", Replacement: "${ide}"},
+				{Search: "bbb", Replacement: "${supervisor}"},
+			},
+			Content:  "aaa\nbbb\n",
+			Expected: "foo\nbar\n",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.Name, func(t *testing.T) {
+			req := &http.Request{}
+			if tt.InlineVars != nil {
+				value, err := json.Marshal(tt.InlineVars)
+				if err != nil {
+					t.Fatal(err)
+				}
+				req.Header = make(http.Header)
+				req.Header.Add("X-BlobServe-InlineVars", string(value))
+			}
+			content, err := inlineVars(req, bytes.NewReader([]byte(tt.Content)), tt.Replacements)
+			if err != nil {
+				t.Fatal(err)
+			}
+			result, err := io.ReadAll(content)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if diff := cmp.Diff(tt.Expected, string(result)); diff != "" {
+				t.Errorf("inlineVars() mismatch (-want +got):\n%s", diff)
 			}
 		})
 	}
