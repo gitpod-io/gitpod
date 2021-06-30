@@ -11,26 +11,26 @@ export function setKubectlContextNamespace(namespace, shellOpts) {
     ].forEach(cmd => exec(cmd, shellOpts));
 }
 
-export async function wipeAndRecreateNamespace(helmInstallName: string, namespace: string, shellOpts: ExecOptions) {
-    await wipePreviewEnvironment(helmInstallName, namespace, shellOpts);
+export async function wipeAndRecreateNamespace(pathToKubeConfig: string, helmInstallName: string, namespace: string, shellOpts: ExecOptions) {
+    await wipePreviewEnvironment(pathToKubeConfig, helmInstallName, namespace, shellOpts);
 
-    createNamespace(namespace, shellOpts);
+    createNamespace(pathToKubeConfig, namespace, shellOpts);
 }
 
-export async function wipePreviewEnvironment(helmInstallName: string, namespace: string, shellOpts: ExecOptions) {
+export async function wipePreviewEnvironment(pathToKubeConfig: string, helmInstallName: string, namespace: string, shellOpts: ExecOptions) {
     // uninstall helm first so that:
     //  - ws-scaler can't create new ghosts in the meantime
     //  - ws-manager can't start new probes/workspaces
-    uninstallHelm(helmInstallName, namespace, shellOpts)
+    uninstallHelm(pathToKubeConfig, helmInstallName, namespace, shellOpts)
 
-    deleteAllWorkspaces(namespace, shellOpts);
-    await deleteAllUnnamespacedObjects(namespace, shellOpts);
+    deleteAllWorkspaces(pathToKubeConfig, namespace, shellOpts);
+    await deleteAllUnnamespacedObjects(pathToKubeConfig, namespace, shellOpts);
 
-    deleteNamespace(true, namespace, shellOpts);
+    deleteNamespace(pathToKubeConfig, true, namespace, shellOpts);
 }
 
-function uninstallHelm(installationName: string, namespace: string, shellOpts: ExecOptions) {
-    const installations = exec(`helm --namespace ${namespace} list -q`, { silent: true, dontCheckRc: true })
+function uninstallHelm(pathToKubeConfig: string, installationName: string, namespace: string, shellOpts: ExecOptions) {
+    const installations = exec(`export KUBECONFIG=${pathToKubeConfig} && helm --namespace ${namespace} list -q`, { silent: true, dontCheckRc: true })
         .stdout
         .split("\n")
         .map(o => o.trim())
@@ -39,11 +39,11 @@ function uninstallHelm(installationName: string, namespace: string, shellOpts: E
         return;
     }
 
-    exec(`helm --namespace ${namespace} delete ${installationName}`, shellOpts);
+    exec(`export KUBECONFIG=${pathToKubeConfig} && helm --namespace ${namespace} delete ${installationName}`, shellOpts);
 }
 
-function deleteAllWorkspaces(namespace: string, shellOpts: ExecOptions) {
-    const objs = exec(`kubectl get pod -l component=workspace --namespace ${namespace} --no-headers -o=custom-columns=:metadata.name`)
+function deleteAllWorkspaces(pathToKubeConfig: string, namespace: string, shellOpts: ExecOptions) {
+    const objs = exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl get pod -l component=workspace --namespace ${namespace} --no-headers -o=custom-columns=:metadata.name`)
         .split("\n")
         .map(o => o.trim())
         .filter(o => o.length > 0);
@@ -51,14 +51,14 @@ function deleteAllWorkspaces(namespace: string, shellOpts: ExecOptions) {
     objs.forEach(o => {
         try {
             // In most cases the calls below fails because the workspace is already gone. Ignore those cases, log others.
-            exec(`kubectl patch pod --namespace ${namespace} ${o} -p '{"metadata":{"finalizers":null}}'`, { ...shellOpts });
-            const result = exec(`kubectl delete pod --namespace ${namespace} ${o} --ignore-not-found=true --timeout=10s`, { ...shellOpts, async: false, dontCheckRc: true });
+            exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl patch pod --namespace ${namespace} ${o} -p '{"metadata":{"finalizers":null}}'`, { ...shellOpts });
+            const result = exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl delete pod --namespace ${namespace} ${o} --ignore-not-found=true --timeout=10s`, { ...shellOpts, async: false, dontCheckRc: true });
             if (result.code !== 0) {
                 // We hit a timeout, and have no clue why. Manually re-trying has shown to consistenly being not helpful, either. Thus use THE FORCE.
-                exec(`kubectl delete pod --namespace ${namespace} ${o} --ignore-not-found=true --force`, { ...shellOpts });
+                exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl delete pod --namespace ${namespace} ${o} --ignore-not-found=true --force`, { ...shellOpts });
             }
         } catch (err) {
-            const result = exec(`kubectl get pod --namespace ${namespace} ${o}`, { dontCheckRc: true });
+            const result = exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl get pod --namespace ${namespace} ${o}`, { dontCheckRc: true });
             if (result.code === 0) {
                 console.error(`unable to patch/delete ${o} but it's still on the dataplane`);
             }
@@ -67,27 +67,27 @@ function deleteAllWorkspaces(namespace: string, shellOpts: ExecOptions) {
 }
 
 // deleteAllUnnamespacedObjects deletes all unnamespaced objects for the given namespace
-async function deleteAllUnnamespacedObjects(namespace: string, shellOpts: ExecOptions): Promise<void> {
+async function deleteAllUnnamespacedObjects(pathToKubeConfig: string, namespace: string, shellOpts: ExecOptions): Promise<void> {
     const slice = shellOpts.slice || "deleteobjs";
 
     const promisedDeletes: Promise<any>[] = [];
     for (const resType of ["clusterrole", "clusterrolebinding", "podsecuritypolicy"]) {
         werft.log(slice, `Deleting old ${resType}s...`);
-        const objs = exec(`kubectl get ${resType} --no-headers -o=custom-columns=:metadata.name`)
+        const objs = exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl get ${resType} --no-headers -o=custom-columns=:metadata.name`)
             .split("\n")
             .map(o => o.trim())
             .filter(o => o.length > 0)
             .filter(o => o.startsWith(`${namespace}-ns-`)); // "{{ .Release.Namespace }}-ns-" is the prefix-pattern we use throughout our helm resources for un-namespaced resources
 
         for (const obj of objs) {
-            promisedDeletes.push(exec(`kubectl delete ${resType} ${obj}`, { slice, async: true }));
+            promisedDeletes.push(exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl delete ${resType} ${obj}`, { slice, async: true }));
         }
     }
     await Promise.all(promisedDeletes);
 }
 
-export function createNamespace(namespace: string, shellOpts: ExecOptions) {
-    const result = (exec(`kubectl get namespace ${namespace}`, { ...shellOpts, dontCheckRc: true }) as ShellString);
+export function createNamespace(pathToKubeConfig: string, namespace: string, shellOpts: ExecOptions) {
+    const result = (exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl get namespace ${namespace}`, { ...shellOpts, dontCheckRc: true }) as ShellString);
     const exists = result.code === 0;
     if (exists) {
         return;
@@ -95,43 +95,43 @@ export function createNamespace(namespace: string, shellOpts: ExecOptions) {
 
     // (re-)create namespace
     [
-        `kubectl create namespace ${namespace}`,
-        `kubectl patch namespace ${namespace} --patch '{"metadata": {"labels": {"${IS_PREVIEW_APP_LABEL}": "true"}}}'`
+        `export KUBECONFIG=${pathToKubeConfig} && kubectl create namespace ${namespace}`,
+        `export KUBECONFIG=${pathToKubeConfig} && kubectl patch namespace ${namespace} --patch '{"metadata": {"labels": {"${IS_PREVIEW_APP_LABEL}": "true"}}}'`
     ].forEach((cmd) => exec(cmd, shellOpts));
 };
 
-export function listAllPreviewNamespaces(): string[] {
-    return exec(`kubectl get namespaces -l ${IS_PREVIEW_APP_LABEL}=true -o=custom-columns=:metadata.name`, { silent: true })
+export function listAllPreviewNamespaces(pathToKubeConfig: string): string[] {
+    return exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl get namespaces -l ${IS_PREVIEW_APP_LABEL}=true -o=custom-columns=:metadata.name`, { silent: true })
         .stdout
         .split("\n")
         .map(o => o.trim())
         .filter(o => o.length > 0);
 }
 
-export function deleteNamespace(wait: boolean, namespace: string, shellOpts: ExecOptions) {
+export function deleteNamespace(pathToKubeConfig: string, wait: boolean, namespace: string, shellOpts: ExecOptions) {
     // check if present
-    const result = (exec(`kubectl get namespace ${namespace}`, { ...shellOpts, dontCheckRc: true }) as ShellString);
+    const result = (exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl get namespace ${namespace}`, { ...shellOpts, dontCheckRc: true }) as ShellString);
     if (result.code !== 0) {
         return;
     }
 
-    const cmd = `kubectl delete namespace ${namespace}`;
+    const cmd = `export KUBECONFIG=${pathToKubeConfig} && kubectl delete namespace ${namespace}`;
     exec(cmd, shellOpts);
 
     // wait until deletion was successful
     while (wait) {
-        const result = (exec(`kubectl get namespace ${namespace}`, { ...shellOpts, dontCheckRc: true }) as ShellString);
+        const result = (exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl get namespace ${namespace}`, { ...shellOpts, dontCheckRc: true }) as ShellString);
         wait = result.code === 0;
     }
 }
 
-export function deleteNonNamespaceObjects(namespace, destname, shellOpts) {
-    exec(`/usr/local/bin/helm3 delete gitpod-${destname} || echo gitpod-${destname} was not installed yet`, { slice: 'predeploy cleanup' });
+export function deleteNonNamespaceObjects(pathToKubeConfig: string, namespace, destname, shellOpts) {
+    exec(`export KUBECONFIG=${pathToKubeConfig} && /usr/local/bin/helm3 delete gitpod-${destname} || echo gitpod-${destname} was not installed yet`, { slice: 'predeploy cleanup' });
 
     let objs = [];
     ["ws-scheduler", "node-daemon", "cluster", "workspace", "jaeger", "jaeger-agent", "ws-sync", "ws-manager-node", "ws-daemon", "registry-facade"].forEach(comp =>
         ["ClusterRole", "ClusterRoleBinding", "PodSecurityPolicy"].forEach(kind =>
-            exec(`kubectl get ${kind} -l component=${comp} --no-headers -o=custom-columns=:metadata.name | grep ${namespace}-ns`, { dontCheckRc: true })
+            exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl get ${kind} -l component=${comp} --no-headers -o=custom-columns=:metadata.name | grep ${namespace}-ns`, { dontCheckRc: true })
                 .split("\n")
                 .map(o => o.trim())
                 .filter(o => o.length > 0)
@@ -140,7 +140,7 @@ export function deleteNonNamespaceObjects(namespace, destname, shellOpts) {
     )
 
     objs.forEach(o => {
-        exec(`kubectl delete ${o.kind} ${o.obj}`, shellOpts);
+        exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl delete ${o.kind} ${o.obj}`, shellOpts);
     });
 }
 
@@ -149,8 +149,8 @@ export interface PortRange {
     end: number;
 }
 
-export function findFreeHostPorts(ranges: PortRange[], slice: string): number[] {
-    const hostPorts: number[] = exec(`kubectl get pods --all-namespaces -o yaml | yq r - 'items.*.spec.containers.*.ports.*.hostPort'`, { silent: true })
+export function findFreeHostPorts(pathToKubeConfig: string, ranges: PortRange[], slice: string): number[] {
+    const hostPorts: number[] = exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl get pods --all-namespaces -o yaml | yq r - 'items.*.spec.containers.*.ports.*.hostPort'`, { silent: true })
         .stdout
         .split("\n")
         .map(l => l.trim())
