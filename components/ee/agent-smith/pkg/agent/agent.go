@@ -21,6 +21,7 @@ import (
 	"unsafe"
 
 	"github.com/cilium/ebpf/perf"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/bpf"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/network"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/signature"
@@ -345,7 +346,9 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 							// this is not from a workspace, let's skip
 							return true
 						}
+						spew.Dump("found workspace for pid", v)
 						v.Infringements = append(v.Infringements, *infr)
+						spew.Dump(*v)
 						ps, err := agent.Penalize(*v)
 						if err != nil {
 							log.WithError(err).WithField("infringement", v).Warn("error while reacting to infringement")
@@ -651,7 +654,8 @@ func (agent *Smith) handleExecveEvent(execve Execve) func() (*InfringingWorkspac
 
 					m, err := sig.Matches(fd)
 					if err != nil {
-						log.WithError(err).WithField("path", execve.Filename).WithField("signature", sig.Name).Warn("cannot check signature")
+						// todo(fntlnz): restore this log after understanding why it happens so much
+						// log.WithError(err).WithField("path", execve.Filename).WithField("signature", sig.Name).Warn("cannot check signature")
 						continue
 					}
 					if !m {
