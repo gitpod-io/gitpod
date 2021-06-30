@@ -264,7 +264,7 @@ interface DeploymentConfig {
 export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage) {
     werft.phase("deploy", "deploying to dev");
     const { version, destname, namespace, domain, url, wsCluster, withWsCluster, k3sWsCluster } = deploymentConfig;
-    const [wsdaemonPort, registryNodePort] = findFreeHostPorts([
+    const [wsdaemonPort, registryNodePort] = findFreeHostPorts("", [
         { start: 10000, end: 11000 },
         { start: 30000, end: 31000 },
     ], 'hostports');
@@ -298,17 +298,17 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     try {
         if (deploymentConfig.cleanSlateDeployment) {
             // re-create namespace
-            await wipeAndRecreateNamespace(helmInstallName, namespace, { slice: 'prep' });
+            await wipeAndRecreateNamespace("", helmInstallName, namespace, { slice: 'prep' });
             // cleanup non-namespace objects
             werft.log("predeploy cleanup", "removing old unnamespaced objects - this might take a while");
             try {
-                deleteNonNamespaceObjects(namespace, destname, { slice: 'predeploy cleanup' })
+                deleteNonNamespaceObjects("", namespace, destname, { slice: 'predeploy cleanup' })
                 werft.done('predeploy cleanup');
             } catch (err) {
                 werft.fail('predeploy cleanup', err);
             }
         } else {
-            createNamespace(namespace, { slice: 'prep' });
+            createNamespace("", namespace, { slice: 'prep' });
         }
         setKubectlContextNamespace(namespace, { slice: 'prep' });
         namespaceRecreatedResolve();    // <-- signal for certificate
