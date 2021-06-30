@@ -7,7 +7,7 @@ async function wipeDevstaging() {
     const namespaces: string[] = [];
     if (namespace_raw === "<no value>" || !namespace_raw) {
         werft.log('wipe', "Going to wipe all namespaces");
-        listAllPreviewNamespaces()
+        listAllPreviewNamespaces("")
             .map(ns => namespaces.push(ns));
     } else {
         werft.log('wipe', `Going to wipe namespace ${namespace_raw}`);
@@ -15,7 +15,7 @@ async function wipeDevstaging() {
     }
 
     for (const namespace of namespaces) {
-        await wipePreviewEnvironment("gitpod", namespace, { slice: 'wipe' });
+        await wipePreviewEnvironment("", "gitpod", namespace, { slice: 'wipe' });
     }
     werft.done('wipe');
 }
