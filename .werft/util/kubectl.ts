@@ -9,7 +9,6 @@ export function setKubectlContextNamespace(namespace, shellOpts) {
         "kubectl config current-context",
         `kubectl config set-context --current --namespace=${namespace}`
     ].forEach(cmd => exec(cmd, shellOpts));
-    // fake commit
 }
 
 export async function wipeAndRecreateNamespace(pathToKubeConfig: string, helmInstallName: string, namespace: string, shellOpts: ExecOptions) {

@@ -264,7 +264,7 @@ interface DeploymentConfig {
 export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage) {
     werft.phase("deploy", "deploying to dev");
     const { version, destname, namespace, domain, url, wsCluster, withWsCluster, k3sWsCluster } = deploymentConfig;
-    const [wsdaemonPort, registryNodePort] = findFreeHostPorts([
+    const [wsdaemonPort, registryNodePort] = findFreeHostPorts("", [
         { start: 10000, end: 11000 },
         { start: 30000, end: 31000 },
     ], 'hostports');
