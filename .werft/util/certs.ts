@@ -35,9 +35,9 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
         throw new Error(`there is no subdomain + '${params.domain}' shorter or equal to 63 characters, max. allowed length for CN. No HTTPS certs for you! Consider using a short branch name...`);
     }
 
-    if(params.pathToKubeConfig!=""){
-        sleep(120000)
-    }
+    // if(params.pathToKubeConfig!=""){
+    //     sleep(120000)
+    // }
     // Always use 'terraform apply' to make sure the certificate is present and up-to-date
     var cmd = `set -x \
     && export KUBECONFIG="${params.pathToKubeConfig}" \
