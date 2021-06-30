@@ -16,6 +16,13 @@ export class IssueCertificateParams {
     certNamespace: string
 }
 
+export class InstallCertificateParams {
+    certName: string
+    certSecretName: string
+    certNamespace: string
+    destinationNamespace: string
+}
+
 function getDefaultSubDomains(): string[] {
     return ["", "*.", "*.ws-dev."];
 }
@@ -35,9 +42,6 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
         throw new Error(`there is no subdomain + '${params.domain}' shorter or equal to 63 characters, max. allowed length for CN. No HTTPS certs for you! Consider using a short branch name...`);
     }
 
-    // if(params.pathToKubeConfig!=""){
-    //     sleep(120000)
-    // }
     // Always use 'terraform apply' to make sure the certificate is present and up-to-date
     var cmd = `set -x \
     && export KUBECONFIG="${params.pathToKubeConfig}" \
@@ -56,11 +60,11 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
     werft.log("certificate", "command: "+cmd)
     await exec(cmd, { slice: 'certificate', async: true });
 
-    werft.log('certificate', `waiting until certificate certs/${params.namespace} is ready...`)
+    werft.log('certificate', `waiting until certificate ${}/${params.namespace} is ready...`)
     let notReadyYet = true;
     while (notReadyYet) {
         werft.log('certificate', `polling state of certs/${params.namespace}...`)
-        const result = exec(`kubectl -n certs get certificate ${params.namespace} -o jsonpath="{.status.conditions[?(@.type == 'Ready')].status}"`, { silent: true, dontCheckRc: true });
+        const result = exec(`kubectl -n ${params.certNamespace} get certificate ${params.namespace} -o jsonpath="{.status.conditions[?(@.type == 'Ready')].status}"`, { silent: true, dontCheckRc: true });
         if (result.code === 0 && result.stdout === "True") {
             notReadyYet = false;
             break;
@@ -70,14 +74,14 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
     }
 }
 
-export async function installCertficate(werft, fromNamespace, toNamespace, certificateSecretName) {
-    werft.log('certificate', `copying certificate from "certs/${fromNamespace}" to "${toNamespace}/${certificateSecretName}"`);
+export async function installCertficate(werft, params: InstallCertificateParams) {
+    werft.log('certificate', `copying certificate from "${params.certNamespace}/${params.certName}" to "${params.destinationNamespace}/${params.certSecretName}"`);
     // certmanager is configured to create a secret in the namespace "certs" with the name "${namespace}".
-    exec(`kubectl get secret ${fromNamespace} --namespace=certs -o yaml \
+    exec(`kubectl get secret ${params.certName} --namespace=${params.certNamespace} -o yaml \
         | yq d - 'metadata.namespace' \
         | yq d - 'metadata.uid' \
         | yq d - 'metadata.resourceVersion' \
         | yq d - 'metadata.creationTimestamp' \
-        | sed 's/${fromNamespace}/${certificateSecretName}/g' \
-        | kubectl apply --namespace=${toNamespace} -f -`);
+        | sed 's/${params.certName}/${params.certSecretName}/g' \
+        | kubectl apply --namespace=${params.destinationNamespace} -f -`);
 }

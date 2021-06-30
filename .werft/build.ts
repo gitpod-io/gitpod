@@ -2,7 +2,7 @@ import * as shell from 'shelljs';
 import * as fs from 'fs';
 import { werft, exec, gitTag } from './util/shell';
 import { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace } from './util/kubectl';
-import { issueCertficate, installCertficate, IssueCertificateParams } from './util/certs';
+import { issueCertficate, installCertficate, IssueCertificateParams, InstallCertificateParams } from './util/certs';
 import { reportBuildFailureInSlack } from './util/slack';
 import * as semver from 'semver';
 import * as util from 'util';
@@ -287,8 +287,12 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         werft.log('certificate', 'waiting for preview env namespace being re-created...');
         await namespaceRecreatedPromise;
 
-        const fromNamespace = wsCluster ? wsCluster.namespace : namespace;
-        await installCertficate(werft, fromNamespace, namespace, "proxy-config-certificates");
+        await installMetaCertificates();
+
+        if(k3sWsCluster){
+            await installWsCertificates();
+        }
+
     })();
 
     try {
@@ -438,6 +442,26 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
             werft.fail('certificate', err);
         }
     }
+
+    async function installMetaCertificates() {
+        const certName = wsCluster ? wsCluster.namespace : namespace;
+        const metaInstallCertParams = new InstallCertificateParams()
+        metaInstallCertParams.certName = certName
+        metaInstallCertParams.certNamespace = "certs"
+        metaInstallCertParams.certSecretName = "proxy-config-certificates"
+        metaInstallCertParams.destinationNamespace = namespace
+        await installCertficate(werft, metaInstallCertParams);
+    }
+
+    async function installWsCertificates() {
+        const wsInstallCertParams = new InstallCertificateParams()
+        wsInstallCertParams.certName = namespace
+        wsInstallCertParams.certNamespace = "certmanager"
+        wsInstallCertParams.certSecretName = "proxy-config-certificates"
+        wsInstallCertParams.destinationNamespace = namespace
+        await installCertficate(werft, wsInstallCertParams);
+    }
+
 
     async function issueMetaCerts() {
         var additionalWsSubdomains = withWsCluster ? [withWsCluster.shortname] : [];
