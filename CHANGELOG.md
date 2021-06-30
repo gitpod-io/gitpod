@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## June 2021
 
+- Complete validations of VS Code extensions in .gitpod.yml ([#4645](https://github.com/gitpod-io/gitpod/pull/4645)):
+    | Check | Quick Fixes |
+    | --- | --- |
+    | Deprecated user uploaded extensions | Resolve them against Open VSX |
+    | Extensions cannot be found in Open VSX | Remove from .gitpod.yml or search for them in Open VSX |
+    | Extensions URLs cannot be resolved to valid VSIX files | Remove from .gitpod.yml |
+    | Extensions is installed for the workspace but missing in .gitpod.yml | Add to .gitpod.yml or uninstall |
+    | Extensions is uninstalled but present in .gitpod.yml | Remove from .gitpod.yml or install as no synced |
 - Breaking Change: Make ports configured in `.gitpod.yml` private by default when no value for `visibility` is given (was public). This change is for security reasons. ([#4548](https://github.com/gitpod-io/gitpod/pull/4548))
 - Added a deprecation warning for Theia ([#4614](https://github.com/gitpod-io/gitpod/pull/4614))
 - Deprecate `prebuild` task in `gitpod.yml` ([#4543](https://github.com/gitpod-io/gitpod/pull/4543))

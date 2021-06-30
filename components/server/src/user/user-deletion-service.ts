@@ -14,6 +14,7 @@ import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-pr
 import { StopWorkspaceRequest, StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 import { WorkspaceDeletionService } from "../workspace/workspace-deletion-service";
 import { AuthProviderService } from "../auth/auth-provider-service";
+import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/util/analytics';
 
 @injectable()
 export class UserDeletionService {
@@ -25,6 +26,7 @@ export class UserDeletionService {
     @inject(WorkspaceManagerClientProvider) protected readonly workspaceManagerClientProvider: WorkspaceManagerClientProvider;
     @inject(WorkspaceDeletionService) protected readonly workspaceDeletionService: WorkspaceDeletionService;
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
+    @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
 
     /**
      * This method deletes a User logically. The contract here is that after running this method without receiving an
@@ -72,6 +74,15 @@ export class UserDeletionService {
             // Bucket
             this.deleteUserBucket(id)
         ]);
+
+        // Track the deletion Event for Analytics Purposes
+        this.analytics.track({
+            userId: user.id,
+            event: "deletion",
+            properties: {
+                "deleted_at":new Date().toISOString()
+            }
+        });
     }
 
     protected async stopWorkspaces(user: User) {

@@ -20,3 +20,8 @@ variable "subdomains" {
 variable "public_ip" {
     type = string
 }
+
+variable "cert_namespace" {
+    type = string
+    default = "certs"
+}
