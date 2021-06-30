@@ -1,0 +1,45 @@
+
+## by default stuff is owned by the engineering team as a whole
+* @gitpod-io/engineering
+
+## Meta Team
+/components/dashboard/               @gitpod-io/engineering-meta
+/components/ee/db-sync/              @gitpod-io/engineering-meta
+/components/ee/kedge/                @gitpod-io/engineering-meta
+/components/ee/payment-endpoint/     @gitpod-io/engineering-meta
+/components/gitpod-db/               @gitpod-io/engineering-meta
+/components/gitpod-messagebus/       @gitpod-io/engineering-meta
+/components/gitpod-protocol/         @gitpod-io/engineering-meta
+/components/licensor/                @gitpod-io/engineering-meta
+/components/proxy/                   @gitpod-io/engineering-meta
+/components/server/                  @gitpod-io/engineering-meta
+/components/service-waiter/          @gitpod-io/engineering-meta
+/components/ws-manager-bridge/       @gitpod-io/engineering-meta
+/components/ws-manager-bridge-api/   @gitpod-io/engineering-meta
+
+## Workspace Team
+/components/blobserve/               @gitpod-io/engineering-workspace
+/components/common-go/               @gitpod-io/engineering-workspace
+/components/content-service/         @gitpod-io/engineering-workspace
+/components/content-service-api/     @gitpod-io/engineering-workspace
+/components/docker-up/               @gitpod-io/engineering-workspace
+/components/ee/agent-smith/          @gitpod-io/engineering-workspace
+/components/ee/ws-scheduler/         @gitpod-io/engineering-workspace
+/components/gitpod-cli/              @gitpod-io/engineering-workspace
+/components/ide/                     @gitpod-io/engineering-workspace
+/components/image-builder/           @gitpod-io/engineering-workspace
+/components/image-builder-api/       @gitpod-io/engineering-workspace
+/components/local-app/               @gitpod-io/engineering-workspace
+/components/local-app-api/           @gitpod-io/engineering-workspace
+/components/registry-facade/         @gitpod-io/engineering-workspace
+/components/registry-facade-api/     @gitpod-io/engineering-workspace
+/components/supervisor/              @gitpod-io/engineering-workspace
+/components/supervisor-api/          @gitpod-io/engineering-workspace
+/components/workspacekit/            @gitpod-io/engineering-workspace
+/components/ws-daemon/               @gitpod-io/engineering-workspace
+/components/ws-daemon-api/           @gitpod-io/engineering-workspace
+/components/ws-manager/              @gitpod-io/engineering-workspace
+/components/ws-manager-api/          @gitpod-io/engineering-workspace
+/components/ws-proxy/                @gitpod-io/engineering-workspace
+/dev/gpctl/                          @gitpod-io/engineering-workspace
+/dev/loadgen/                        @gitpod-io/engineering-workspace
