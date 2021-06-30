@@ -298,18 +298,16 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     try {
         if (deploymentConfig.cleanSlateDeployment) {
             // re-create namespace
-            await wipeAndRecreateNamespace("", helmInstallName, namespace, { slice: 'prep' });
-            // cleanup non-namespace objects
-            werft.log("predeploy cleanup", "removing old unnamespaced objects - this might take a while");
-            try {
-                deleteNonNamespaceObjects("", namespace, destname, { slice: 'predeploy cleanup' })
-                werft.done('predeploy cleanup');
-            } catch (err) {
-                werft.fail('predeploy cleanup', err);
+            for (const pathToKubeConfig in [""]) {
+                await cleanStateEnv(pathToKubeConfig);
             }
+
         } else {
-            createNamespace("", namespace, { slice: 'prep' });
+            for (const pathToKubeConfig in [""]) {
+                createNamespace(pathToKubeConfig, namespace, { slice: 'prep' });
+            }
         }
+        // check how this affects further steps
         setKubectlContextNamespace(namespace, { slice: 'prep' });
         namespaceRecreatedResolve();    // <-- signal for certificate
         werft.done('prep');
@@ -350,77 +348,14 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     // core-dev specific section end
 
     // deployment config
-    let flags = "";
-    flags += ` --namespace ${namespace}`;
-    flags += ` --set components.imageBuilder.hostDindData=/mnt/disks/ssd0/docker-${namespace}`;
-    flags += ` --set version=${version}`;
-    flags += ` --set hostname=${domain}`;
-    flags += ` --set devBranch=${destname}`;
-    flags += ` --set components.wsDaemon.servicePort=${wsdaemonPort}`;
-    flags += ` --set components.registryFacade.ports.registry.servicePort=${registryNodePort}`;
-    workspaceFeatureFlags.forEach((f, i) => {
-        flags += ` --set components.server.defaultFeatureFlags[${i}]='${f}'`
-    })
-    if (dynamicCPULimits) {
-        flags += ` -f ../.werft/values.variant.cpuLimits.yaml`;
-    }
-    if (withWsCluster) {
-        // Create redirect ${withWsCluster.shortname} -> ws-proxy.${wsCluster.dstNamespace}
-        flags += ` --set components.proxy.withWsCluster.shortname=${withWsCluster.shortname}`;
-        flags += ` --set components.proxy.withWsCluster.namespace=${withWsCluster.namespace}`;
-    }
-    if (wsCluster) {
-        flags += ` --set hostname=${wsCluster.domain}`;
-        flags += ` --set installation.shortname=${wsCluster.shortname}`;
-
-        flags += ` -f ../.werft/values.wsCluster.yaml`;
-    }
-    if ((deploymentConfig.analytics || "").startsWith("segment|")) {
-        flags += ` --set analytics.writer=segment`;
-        flags += ` --set analytics.segmentKey=${deploymentConfig.analytics!.substring("segment|".length)}`
-    } else if (!!deploymentConfig.analytics) {
-        flags += ` --set analytics.writer=${deploymentConfig.analytics!}`;
-    }
-
-    werft.log("helm", "extracting versions");
-    try {
-        exec(`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${version} cat /versions.yaml | tee versions.yaml`);
-    } catch (err) {
-        werft.fail('helm', err);
-    }
-    const pathToVersions = `${shell.pwd().toString()}/versions.yaml`;
-    flags += ` -f ${pathToVersions}`;
-
-    if (!certificatePromise) {
-        // it's not possible to set certificatesSecret={} so we set secretName to empty string
-        flags += ` --set certificatesSecret.secretName=""`;
-    }
+    let commonFlags = addDeploymentFlags();
 
     try {
         shell.cd("chart");
         werft.log('helm', 'installing Gitpod');
 
-        if (storage === "gcp") {
-            exec("kubectl get secret gcp-sa-cloud-storage-dev-sync-key -n werft -o yaml | yq d - metadata | yq w - metadata.name remote-storage-gcloud | kubectl apply -f -")
-            flags += ` -f ../.werft/values.dev.gcp-storage.yaml`;
-        }
-
-        if (deploymentConfig.installEELicense) {
-            // We're adding the license rather late just to prevent accidentially printing it.
-            // If anyone got ahold of the license not much would be lost, but hey, no need to plaster it on the walls.
-            flags += ` --set license=${fs.readFileSync('/mnt/secrets/gpsh-coredev/license').toString()}`
-        }
-
-        exec(`helm dependencies up`);
-        exec(`/usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/values.dev.yaml ${flags} ${helmInstallName} .`);
-        exec(`kubectl apply -f ../.werft/jaeger.yaml`);
-
-        if (!wsCluster) {
-            werft.log('helm', 'installing Sweeper');
-            const sweeperVersion = deploymentConfig.sweeperImage.split(":")[1];
-            werft.log('helm', `Sweeper version: ${sweeperVersion}`);
-            exec(`/usr/local/bin/helm3 upgrade --install --set image.version=${sweeperVersion} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" sweeper ../dev/charts/sweeper`);
-        }
+        installGitpod(commonFlags);
+        installGitpodOnK3sWsCluster(commonFlags, "/workspace/k3s-external.yaml");
 
         werft.log('helm', 'done');
         werft.done('helm');
@@ -440,6 +375,111 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         } catch (err) {
             werft.log('certificate', err.toString());  // This ensures the err message is picked up by the werft UI
             werft.fail('certificate', err);
+        }
+    }
+
+    function installGitpod(commonFlags: string) {
+        let flags = commonFlags
+        if (storage === "gcp") {
+            exec("kubectl get secret gcp-sa-cloud-storage-dev-sync-key -n werft -o yaml | yq d - metadata | yq w - metadata.name remote-storage-gcloud | kubectl apply -f -");
+            flags += ` -f ../.werft/values.dev.gcp-storage.yaml`;
+        }
+
+        exec(`helm dependencies up`);
+        exec(`/usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/values.dev.yaml ${flags} ${helmInstallName} .`);
+        exec(`kubectl apply -f ../.werft/jaeger.yaml`);
+
+        if (!wsCluster) {
+            werft.log('helm', 'installing Sweeper');
+            const sweeperVersion = deploymentConfig.sweeperImage.split(":")[1];
+            werft.log('helm', `Sweeper version: ${sweeperVersion}`);
+            exec(`/usr/local/bin/helm3 upgrade --install --set image.version=${sweeperVersion} --set command="werft run github -a namespace=${namespace} --remote-job-path .werft/wipe-devstaging.yaml github.com/gitpod-io/gitpod:main" sweeper ../dev/charts/sweeper`);
+        }
+    }
+
+    function installGitpodOnK3sWsCluster(commonFlags: string, pathToKubeConfig: string) {
+        if(!k3sWsCluster){
+            return
+        }
+        let flags = commonFlags
+        flags += ` -f ../.werft/values.k3sWsCluster.yaml`;
+        if (storage === "gcp") {
+            // notice below that we are not using the k3s cluster to get the gcp-sa-cloud-storage-dev-sync-key. As it is present in the dev cluster only
+            exec("kubectl get secret gcp-sa-cloud-storage-dev-sync-key -n werft -o yaml | yq d - metadata | yq w - metadata.name remote-storage-gcloud > remote-storage-gcloud.yaml");
+            // After storing the yaml we apply it to the k3s cluster
+            exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl apply -f remote-storage-gcloud.yaml`)
+            flags += ` -f ../.werft/values.dev.gcp-storage.yaml`;
+        }
+
+        exec(`export KUBECONFIG=${pathToKubeConfig} && helm dependencies up`);
+        exec(`export KUBECONFIG=${pathToKubeConfig} && /usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/values.dev.yaml ${flags} ${helmInstallName} .`);
+        // exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl apply -f ../.werft/jaeger.yaml`);
+    }
+
+    function addDeploymentFlags() {
+        let flags = ""
+        flags += ` --namespace ${namespace}`;
+        flags += ` --set components.imageBuilder.hostDindData=/mnt/disks/ssd0/docker-${namespace}`;
+        flags += ` --set version=${version}`;
+        flags += ` --set hostname=${domain}`;
+        flags += ` --set devBranch=${destname}`;
+        flags += ` --set components.wsDaemon.servicePort=${wsdaemonPort}`;
+        flags += ` --set components.registryFacade.ports.registry.servicePort=${registryNodePort}`;
+        workspaceFeatureFlags.forEach((f, i) => {
+            flags += ` --set components.server.defaultFeatureFlags[${i}]='${f}'`;
+        });
+        if (dynamicCPULimits) {
+            flags += ` -f ../.werft/values.variant.cpuLimits.yaml`;
+        }
+        if (withWsCluster) {
+            // Create redirect ${withWsCluster.shortname} -> ws-proxy.${wsCluster.dstNamespace}
+            flags += ` --set components.proxy.withWsCluster.shortname=${withWsCluster.shortname}`;
+            flags += ` --set components.proxy.withWsCluster.namespace=${withWsCluster.namespace}`;
+        }
+        if (wsCluster) {
+            flags += ` --set hostname=${wsCluster.domain}`;
+            flags += ` --set installation.shortname=${wsCluster.shortname}`;
+
+            flags += ` -f ../.werft/values.wsCluster.yaml`;
+        }
+        if ((deploymentConfig.analytics || "").startsWith("segment|")) {
+            flags += ` --set analytics.writer=segment`;
+            flags += ` --set analytics.segmentKey=${deploymentConfig.analytics!.substring("segment|".length)}`;
+        } else if (!!deploymentConfig.analytics) {
+            flags += ` --set analytics.writer=${deploymentConfig.analytics!}`;
+        }
+
+        werft.log("helm", "extracting versions");
+        try {
+            exec(`docker run --rm eu.gcr.io/gitpod-core-dev/build/versions:${version} cat /versions.yaml | tee versions.yaml`);
+        } catch (err) {
+            werft.fail('helm', err);
+        }
+        const pathToVersions = `${shell.pwd().toString()}/versions.yaml`;
+        flags += ` -f ${pathToVersions}`;
+
+        if (!certificatePromise) {
+            // it's not possible to set certificatesSecret={} so we set secretName to empty string
+            flags += ` --set certificatesSecret.secretName=""`;
+        }
+
+        if (deploymentConfig.installEELicense) {
+            // We're adding the license rather late just to prevent accidentially printing it.
+            // If anyone got ahold of the license not much would be lost, but hey, no need to plaster it on the walls.
+            flags += ` --set license=${fs.readFileSync('/mnt/secrets/gpsh-coredev/license').toString()}`
+        }
+        return flags;
+    }
+
+    async function cleanStateEnv(pathToKubeConfig: string) {
+        await wipeAndRecreateNamespace(pathToKubeConfig, helmInstallName, namespace, { slice: 'prep' });
+        // cleanup non-namespace objects
+        werft.log("predeploy cleanup", "removing old unnamespaced objects - this might take a while");
+        try {
+            deleteNonNamespaceObjects(pathToKubeConfig, namespace, destname, { slice: 'predeploy cleanup' });
+            werft.done('predeploy cleanup');
+        } catch (err) {
+            werft.fail('predeploy cleanup', err);
         }
     }
 
