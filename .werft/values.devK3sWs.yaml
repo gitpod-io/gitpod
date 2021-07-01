@@ -141,6 +141,8 @@ components:
       name: gcloud-tmp
     userNamespaces:
       fsShift: fuse
+      shiftfsModuleLoader:
+        enabled: false
       seccompProfileInstaller:
         enabled: true
     # in preview envs, we never want DaemonSets not to be scheduled (because they don't trigger scaleup)
