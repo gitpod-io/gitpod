@@ -200,10 +200,6 @@ func (rs *DirectGCPStorage) download(ctx context.Context, destination string, bk
 
 	rc, _, err := rs.ObjectAccess(ctx, bkt, obj)
 	if rc == nil {
-		// Hack: we messed up the prod deployment at some point and need to fall back to prodcopy
-		rc, _, err = rs.ObjectAccess(ctx, gcpBucketName(StageStaging, rs.Username), obj)
-	}
-	if rc == nil {
 		return false, nil
 	}
 	defer rc.Close()
