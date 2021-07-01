@@ -210,7 +210,7 @@
             "failureThreshold": 600
           },
           "terminationMessagePath": "/dev/termination-log",
-          "terminationMessagePolicy": "FallbackToLogsOnError",
+          "terminationMessagePolicy": "File",
           "imagePullPolicy": "Always",
           "securityContext": {
             "capabilities": {

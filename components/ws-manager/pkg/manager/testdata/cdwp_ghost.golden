@@ -156,7 +156,7 @@
                             "mountPropagation": "HostToContainer"
                         }
                     ],
-                    "terminationMessagePolicy": "FallbackToLogsOnError",
+                    "terminationMessagePolicy": "File",
                     "imagePullPolicy": "Always",
                     "securityContext": {
                         "capabilities": {
