@@ -47,7 +47,6 @@ type Smith struct {
 	Config           Config
 	GitpodAPI        gitpod.APIInterface
 	EnforcementRules map[string]EnforcementRules
-	EgressTraffic    *EgressTraffic
 	metrics          *metrics
 
 	notifiedInfringements *lru.Cache
@@ -332,20 +331,20 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 					agent.pidsMap.Range(func(key, value interface{}) bool {
 						p := key.(int)
 						t := value.(time.Time)
-						infr, err := agent.checkEgressTrafficCallback(strconv.Itoa(p), t)
+						infr, err := agent.checkEgressTrafficCallback(p, t)
 						if err != nil {
-							log.WithError(err).Warnf("error checking egress for pid: %d", p)
 							return true
 						}
 						if infr == nil {
 							return true
 						}
+						var res []Infringement
 						v, err := getWorkspaceFromProcess(p)
 						if err != nil {
-							// this is not from a workspace, let's skip
 							return true
 						}
-						v.Infringements = append(v.Infringements, *infr)
+						res = append(res, *infr)
+						v.Infringements = res
 						ps, err := agent.Penalize(*v)
 						if err != nil {
 							log.WithError(err).WithField("infringement", v).Warn("error while reacting to infringement")
@@ -427,6 +426,12 @@ func (agent *Smith) cleanupDeadPidsCallback() {
 		}
 
 		err := process.Signal(syscall.Signal(0))
+		if err != nil {
+			agent.pidsMap.Delete(p)
+			return true
+		}
+
+		_, err = getWorkspaceFromProcess(p)
 		if err != nil {
 			agent.pidsMap.Delete(p)
 			return true
@@ -805,15 +810,17 @@ func (agent *Smith) RegisterMetrics(reg prometheus.Registerer) error {
 	return agent.metrics.Register(reg)
 }
 
-func (agent *Smith) checkEgressTrafficCallback(pid string, pidCreationTime time.Time) (*Infringement, error) {
-	if agent.EgressTraffic == nil {
+func (agent *Smith) checkEgressTrafficCallback(pid int, pidCreationTime time.Time) (*Infringement, error) {
+	if agent.Config.EgressTraffic == nil {
 		return nil, nil
 	}
+
 	podLifetime := time.Since(pidCreationTime)
 	resp, err := network.GetEgressTraffic(pid)
 	if err != nil {
 		return nil, err
 	}
+
 	if resp <= 0 {
 		log.WithField("total egress bytes", resp).Warn("GetEgressTraffic returned <= 0 value")
 		return nil, nil
@@ -824,14 +831,14 @@ func (agent *Smith) checkEgressTrafficCallback(pid string, pidCreationTime time.
 		T *PerLevelEgressTraffic
 	}
 	levels := make([]level, 0, 2)
-	if agent.EgressTraffic.VeryExcessiveLevel != nil {
-		levels = append(levels, level{V: GradeKind(InfringementExcessiveEgress, InfringementSeverityVery), T: agent.EgressTraffic.VeryExcessiveLevel})
+	if agent.Config.EgressTraffic.VeryExcessiveLevel != nil {
+		levels = append(levels, level{V: GradeKind(InfringementExcessiveEgress, InfringementSeverityVery), T: agent.Config.EgressTraffic.VeryExcessiveLevel})
 	}
-	if agent.EgressTraffic.ExcessiveLevel != nil {
-		levels = append(levels, level{V: GradeKind(InfringementExcessiveEgress, InfringementSeverityAudit), T: agent.EgressTraffic.ExcessiveLevel})
+	if agent.Config.EgressTraffic.ExcessiveLevel != nil {
+		levels = append(levels, level{V: GradeKind(InfringementExcessiveEgress, InfringementSeverityAudit), T: agent.Config.EgressTraffic.ExcessiveLevel})
 	}
 
-	dt := int64(podLifetime / time.Duration(agent.EgressTraffic.WindowDuration))
+	dt := int64(podLifetime / time.Duration(agent.Config.EgressTraffic.WindowDuration))
 	for _, lvl := range levels {
 		allowance := dt*lvl.T.Threshold.Value() + lvl.T.BaseBudget.Value()
 		excess := resp - allowance
