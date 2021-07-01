@@ -13,6 +13,7 @@ import (
 	"github.com/urfave/cli/v2"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/api/iterator"
+	"google.golang.org/api/option"
 )
 
 const (
@@ -109,7 +110,7 @@ func main() {
 				Name: "list-objects",
 				Action: func(c *cli.Context) error {
 					ctx := context.Background()
-					client, err := storage.NewClient(ctx)
+					client, err := storage.NewClient(ctx, option.WithServiceAccountFile("service-account.json"))
 					if err != nil {
 						return fmt.Errorf("storage.NewClient: %v", err)
 					}
