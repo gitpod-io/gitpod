@@ -413,7 +413,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
         werft.log("helm", "installing k3s ws cluster")
         exec(`export KUBECONFIG=${pathToKubeConfig} && helm dependencies up`);
-        exec(`export KUBECONFIG=${pathToKubeConfig} && /usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/values.dev.yaml -f ../werft/values.devK3sWs.yaml ${flags} ${helmInstallName} .`);
+        exec(`export KUBECONFIG=${pathToKubeConfig} && /usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/values.dev.yaml -f ../.werft/values.devK3sWs.yaml ${flags} ${helmInstallName} .`);
     }
 
     function addDeploymentFlags() {
