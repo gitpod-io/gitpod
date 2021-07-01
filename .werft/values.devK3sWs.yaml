@@ -206,6 +206,8 @@ mysql:
 
 rabbitmq:
   # ensure shovels are configured on boot
+  disabled: true
+  enabled: false
   shovels:
     - name: messagebus-0
       srcUri: "amqp://$USERNAME:$PASSWORD@messagebus-0"
