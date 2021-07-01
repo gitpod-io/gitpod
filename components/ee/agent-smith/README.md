@@ -43,6 +43,12 @@ ssh vm
 
 If you now go under the `/workspace` folder in the VM, you will find all your workspace stuff.
 
+If you want to compile with leeway and have the compiled artifacts in the VM you can do
+
+```
+leeway run components/ee/agent-smith:copy-to-qemu
+```
+
 ## Falco libs BPF probe development
 
 In case you need to do development of new features or fix bugs against the
