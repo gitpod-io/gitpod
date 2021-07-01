@@ -50,7 +50,7 @@ RUN curl -L https://get.helm.sh/helm-v2.16.10-linux-amd64.tar.gz | tar xz && \
 
 USER installer
 WORKDIR /home/installer
-RUN curl -L https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-305.0.0-linux-x86_64.tar.gz | tar xz && \
+RUN curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-347.0.0-linux-x86_64.tar.gz | tar xz && \
     ./google-cloud-sdk/install.sh && \
     echo source $PWD/google-cloud-sdk/completion.bash.inc >> ~/.bashrc && \
     echo source $PWD/google-cloud-sdk/path.bash.inc >> ~/.bashrc && \
