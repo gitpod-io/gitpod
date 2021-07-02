@@ -538,7 +538,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         metaClusterParams.includeDefaults = true;
         metaClusterParams.pathToKubeConfig = getK3sWsKubeConfigPath();
         metaClusterParams.bucketPrefixTail = "-k3s-ws"
-        metaClusterParams.additionalSubdomains = ["*"]
+        // metaClusterParams.additionalSubdomains = ["*"]
         await issueCertficate(werft, metaClusterParams);
     }
 }

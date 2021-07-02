@@ -30,14 +30,19 @@ function getDefaultSubDomains(): string[] {
 }
 
 export async function issueCertficate(werft, params: IssueCertificateParams) {
-    const subdomains = [];
-    for (const wssd of params.additionalWsSubdomains) {
-        subdomains.push(`*.ws-${wssd}.`);
+    var subdomains = [];
+    if (params.pathToKubeConfig != "") {
+        subdomains = ["*.ws-k3s.", "*."]
+    } else {
+        subdomains = ["*.ws-dev."]
     }
-    for (const sd of params.additionalSubdomains) {
-        subdomains.push(`${sd}.`);
-        // subdomains.push(`*.${sd}.`);
-    }
+    // for (const wssd of params.additionalWsSubdomains) {
+    //     subdomains.push(`*.ws-${wssd}.`);
+    // }
+    // for (const sd of params.additionalSubdomains) {
+    //     subdomains.push(`${sd}.`);
+    //     // subdomains.push(`*.${sd}.`);
+    // }
 
     // sanity: check if there is a "SAN short enough to fit into CN (63 characters max)"
     // source: https://community.letsencrypt.org/t/certbot-errors-with-obtaining-a-new-certificate-an-unexpected-error-occurred-the-csr-is-unacceptable-e-g-due-to-a-short-key-error-finalizing-order-issuing-precertificate-csr-doesnt-contain-a-san-short-enough-to-fit-in-cn/105513/2
