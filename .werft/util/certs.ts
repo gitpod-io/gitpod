@@ -32,7 +32,7 @@ function getDefaultSubDomains(): string[] {
 export async function issueCertficate(werft, params: IssueCertificateParams) {
     var subdomains = [];
     if (params.pathToKubeConfig != "") {
-        subdomains = ["*.ws-k3s.", "*."]
+        subdomains = ["*.ws-k3s."]
     } else {
         subdomains = ["*.ws-dev."]
     }
