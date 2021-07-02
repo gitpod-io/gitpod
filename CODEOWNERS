@@ -1,6 +1,6 @@
 
 ## by default stuff is owned by the engineering team as a whole
-* @gitpod-io/engineering
+* @gitpod-io/engineering-meta @gitpod-io/engineering-workspace
 
 ## Meta Team
 /components/dashboard/               @gitpod-io/engineering-meta
