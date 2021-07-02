@@ -507,7 +507,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
     async function issueMetaCerts() {
         var additionalWsSubdomains = withWsCluster ? [withWsCluster.shortname] : [];
-        additionalWsSubdomains = additionalWsSubdomains.concat(["dev"])
+        // additionalWsSubdomains = additionalWsSubdomains.concat(["dev"])
         var metaClusterParams = new IssueCertificateParams();
         metaClusterParams.pathToTerraform = "/workspace/.werft/certs";
         metaClusterParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
