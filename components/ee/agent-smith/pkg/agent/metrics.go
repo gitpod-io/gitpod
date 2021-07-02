@@ -7,8 +7,10 @@ package agent
 import "github.com/prometheus/client_golang/prometheus"
 
 type metrics struct {
-	penaltyAttempts *prometheus.CounterVec
-	penaltyFailures *prometheus.CounterVec
+	penaltyAttempts        *prometheus.CounterVec
+	penaltyFailures        *prometheus.CounterVec
+	signatureCheckMiss     prometheus.Counter
+	signatureCheckFailures prometheus.Counter
 }
 
 func newAgentMetrics() *metrics {
@@ -30,6 +32,18 @@ func newAgentMetrics() *metrics {
 			Help:      "The total amount of failed attempts that agent-smith is trying to apply a penalty.",
 		}, []string{"penalty", "reason"},
 	)
+	m.signatureCheckMiss = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: "gitpod",
+		Subsystem: "agent_smith",
+		Name:      "signature_check_missed_total",
+		Help:      "The total amount of times where the processes ended before we could open the executable.",
+	})
+	m.signatureCheckFailures = prometheus.NewCounter(prometheus.CounterOpts{
+		Namespace: "gitpod",
+		Subsystem: "agent_smith",
+		Name:      "signature_check_failed_total",
+		Help:      "The total amount of failed signature check attempts",
+	})
 	return m
 }
 
@@ -41,6 +55,8 @@ func (m *metrics) Register(reg prometheus.Registerer) error {
 	collectors := []prometheus.Collector{
 		m.penaltyAttempts,
 		m.penaltyFailures,
+		m.signatureCheckMiss,
+		m.signatureCheckFailures,
 	}
 	for _, c := range collectors {
 		err := reg.Register(c)
