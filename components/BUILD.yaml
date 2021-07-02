@@ -100,7 +100,6 @@ scripts:
       grep -v -f $tmpdir/oss $tmpdir/all > $tmpdir/ee
       grep -E "^components\/ee\/" $tmpdir/oss >> $tmpdir/ee
       grep -v -E "^chart\/" $tmpdir/oss | grep -v -E "^install\/" > $tmpdir/agpl
-      grep -E "^install\/installer" $tmpdir/oss >> $tmpdir/agpl
       grep -v -f $tmpdir/agpl $tmpdir/oss > $tmpdir/mit
 
       # set `export LICENCE_HEADER_CHECK_ONLY=true` to just check if all headers are there (and exit with status code 1 if not)

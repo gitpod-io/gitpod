@@ -6,7 +6,6 @@ packages:
     deps:
       - install/docker/examples/gitpod-gitlab/gitlab:docker
       - install/docker/gitpod-image:docker
-      - install/installer:docker
   - name: release-tar
     srcs:
     - "gcp-terraform"
