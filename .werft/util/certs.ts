@@ -34,7 +34,7 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
     if (params.pathToKubeConfig != "") {
         subdomains = ["*.ws-k3s."]
     } else {
-        subdomains = ["*.ws-dev."]
+        subdomains = ["*.ws-dev.", "*."]
     }
     // for (const wssd of params.additionalWsSubdomains) {
     //     subdomains.push(`*.ws-${wssd}.`);
