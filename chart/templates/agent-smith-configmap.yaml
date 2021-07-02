@@ -25,6 +25,9 @@ data:
             {"name":"testtarget","domain":"process","kind":"elf","pattern":"YWdlbnRTbWl0aFRlc3RUYXJnZXQ=","regexp":false}
           ]
         }
-      }
+      },
+      "pprofAddr": "localhost:6060",
+      "prometheusAddr": "localhost:9500",
+      "hostURL": "https://{{ $.Values.hostname }}"
     }
 {{- end -}}
