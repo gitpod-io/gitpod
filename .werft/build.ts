@@ -533,7 +533,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         metaClusterParams.certNamespace = "certmanager";
         metaClusterParams.ip = "34.79.158.226"; // External ip of ingress service in k3s cluster
         metaClusterParams.additionalWsSubdomains = additionalWsSubdomains;
-        metaClusterParams.includeDefaults = false;
+        metaClusterParams.includeDefaults = true;
         metaClusterParams.pathToKubeConfig = getK3sWsKubeConfigPath();
         metaClusterParams.bucketPrefixTail = "-k3s-ws"
         await issueCertficate(werft, metaClusterParams);
