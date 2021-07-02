@@ -10,6 +10,7 @@ export class IssueCertificateParams {
     domain: string
     ip: string
     additionalWsSubdomains: string[]
+    additionalSubdomains: string[]
     includeDefaults: boolean
     pathToKubeConfig: string
     bucketPrefixTail: string
@@ -29,9 +30,12 @@ function getDefaultSubDomains(): string[] {
 }
 
 export async function issueCertficate(werft, params: IssueCertificateParams) {
-    const subdomains = params.includeDefaults ? getDefaultSubDomains() : [];
+    const subdomains = [];
     for (const sd of params.additionalWsSubdomains) {
         subdomains.push(`*.ws-${sd}.`);
+    }
+    for (const sd of params.additionalSubdomains) {
+        subdomains.push(`${sd}.`);
     }
 
     // sanity: check if there is a "SAN short enough to fit into CN (63 characters max)"
