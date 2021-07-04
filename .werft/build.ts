@@ -506,39 +506,39 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
 
     async function issueMetaCerts() {
-        var additionalWsSubdomains = withWsCluster ? [withWsCluster.shortname] : [];
-        additionalWsSubdomains = additionalWsSubdomains.concat(["dev"])
-        var metaClusterParams = new IssueCertificateParams();
-        metaClusterParams.pathToTerraform = "/workspace/.werft/certs";
-        metaClusterParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
-        metaClusterParams.namespace = namespace;
-        metaClusterParams.certNamespace = "certs";
-        metaClusterParams.dnsZoneDomain = "gitpod-dev.com";
-        metaClusterParams.domain = domain;
-        metaClusterParams.ip = "34.76.116.244";
-        metaClusterParams.includeDefaults = true;
-        metaClusterParams.pathToKubeConfig = "";
-        metaClusterParams.bucketPrefixTail = ""
-        metaClusterParams.additionalSubdomains = []
-        await issueCertficate(werft, metaClusterParams);
+        var additionalWsSubdomains = new Array["dev"]
+        additionalWsSubdomains = withWsCluster ?  additionalWsSubdomains.push(withWsCluster.shortname) : additionalWsSubdomains;
+        var metaClusterCertParams = new IssueCertificateParams();
+        metaClusterCertParams.pathToTerraform = "/workspace/.werft/certs";
+        metaClusterCertParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
+        metaClusterCertParams.namespace = namespace;
+        metaClusterCertParams.certNamespace = "certs";
+        metaClusterCertParams.dnsZoneDomain = "gitpod-dev.com";
+        metaClusterCertParams.domain = domain;
+        metaClusterCertParams.ip = "34.76.116.244";
+        metaClusterCertParams.includeDefaults = true;
+        metaClusterCertParams.pathToKubeConfig = "";
+        metaClusterCertParams.bucketPrefixTail = ""
+        metaClusterCertParams.additionalSubdomains = []
+        await issueCertficate(werft, metaClusterCertParams);
     }
 
     async function issueK3sWsCerts() {
         var additionalWsSubdomains = ["k3s"];
-        var metaClusterParams = new IssueCertificateParams();
-        metaClusterParams.pathToTerraform = "/workspace/.werft/certs";
-        metaClusterParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
-        metaClusterParams.namespace = namespace;
-        metaClusterParams.dnsZoneDomain = "gitpod-dev.com";
-        metaClusterParams.domain = domain;
-        metaClusterParams.certNamespace = "certmanager";
-        metaClusterParams.ip = "34.79.158.226"; // External ip of ingress service in k3s cluster
-        metaClusterParams.additionalWsSubdomains = additionalWsSubdomains;
-        metaClusterParams.includeDefaults = true;
-        metaClusterParams.pathToKubeConfig = getK3sWsKubeConfigPath();
-        metaClusterParams.bucketPrefixTail = "-k3s-ws"
-        metaClusterParams.additionalSubdomains = ["*"]
-        await issueCertficate(werft, metaClusterParams);
+        var k3sClusterCertParams = new IssueCertificateParams();
+        k3sClusterCertParams.pathToTerraform = "/workspace/.werft/certs";
+        k3sClusterCertParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
+        k3sClusterCertParams.namespace = namespace;
+        k3sClusterCertParams.dnsZoneDomain = "gitpod-dev.com";
+        k3sClusterCertParams.domain = domain;
+        k3sClusterCertParams.certNamespace = "certmanager";
+        k3sClusterCertParams.ip = "34.79.158.226"; // External ip of ingress service in k3s cluster
+        k3sClusterCertParams.additionalWsSubdomains = additionalWsSubdomains;
+        k3sClusterCertParams.includeDefaults = true;
+        k3sClusterCertParams.pathToKubeConfig = getK3sWsKubeConfigPath();
+        k3sClusterCertParams.bucketPrefixTail = "-k3s-ws"
+        k3sClusterCertParams.additionalSubdomains = ["*"]
+        await issueCertficate(werft, k3sClusterCertParams);
     }
 }
 
