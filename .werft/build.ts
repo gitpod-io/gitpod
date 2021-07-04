@@ -519,7 +519,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         metaClusterCertParams.includeDefaults = true;
         metaClusterCertParams.pathToKubeConfig = "";
         metaClusterCertParams.bucketPrefixTail = ""
-        metaClusterCertParams.additionalSubdomains = additionalWsSubdomains
+        metaClusterCertParams.additionalWsSubdomains = additionalWsSubdomains
         metaClusterCertParams.additionalSubdomains = []
         await issueCertficate(werft, metaClusterCertParams);
     }
