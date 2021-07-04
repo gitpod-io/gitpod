@@ -6,7 +6,7 @@ import { issueCertficate, installCertficate, IssueCertificateParams, InstallCert
 import { reportBuildFailureInSlack } from './util/slack';
 import * as semver from 'semver';
 import * as util from 'util';
-
+import { sleep } from './util/util';
 
 const readDir = util.promisify(fs.readdir)
 
@@ -277,9 +277,6 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         namespaceRecreatedResolve = resolve;
     });
     const certificatePromise = (async function () {
-        if (k3sWsCluster) {
-            await issueK3sWsCerts();
-        }
         if (!wsCluster) {
             await issueMetaCerts();
         }
@@ -289,11 +286,16 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
         await installMetaCertificates();
 
-        if (k3sWsCluster) {
-            await installWsCertificates();
-        }
-
     })();
+
+    const k3sWscertificatePromise = (async function (ip: string) {
+        await issueK3sWsCerts(ip);
+
+        werft.log('certificate', 'waiting for preview env namespace being re-created...');
+        await namespaceRecreatedPromise;
+
+        await installWsCertificates();
+    });
 
     try {
         if (deploymentConfig.cleanSlateDeployment) {
@@ -350,13 +352,13 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
     // deployment config
     let commonFlags = addDeploymentFlags();
-
     try {
         shell.cd("chart");
         werft.log('helm', 'installing Gitpod');
 
         if (k3sWsCluster) {
             installGitpodOnK3sWsCluster(commonFlags, getK3sWsKubeConfigPath());
+            const k3sWsIP = getWsProxyIP(namespace, getK3sWsKubeConfigPath());
         }
         installGitpod(commonFlags);
 
@@ -374,6 +376,10 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         werft.log('certificate', "awaiting promised certificate")
         try {
             await certificatePromise;
+            if (k3sWsCluster) {
+                let k3sWsIP = getWsProxyIP(namespace, getK3sWsKubeConfigPath());
+                await k3sWscertificatePromise(k3sWsIP)
+            }
             werft.done('certificate');
         } catch (err) {
             werft.log('certificate', err.toString());  // This ensures the err message is picked up by the werft UI
@@ -516,15 +522,13 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         metaClusterCertParams.dnsZoneDomain = "gitpod-dev.com";
         metaClusterCertParams.domain = domain;
         metaClusterCertParams.ip = "34.76.116.244";
-        // metaClusterCertParams.includeBaseDomain = true;
         metaClusterCertParams.pathToKubeConfig = "";
         metaClusterCertParams.bucketPrefixTail = ""
-        // metaClusterCertParams.additionalWsSubdomains = additionalWsSubdomains
         metaClusterCertParams.additionalSubdomains = additionalSubdomains
         await issueCertficate(werft, metaClusterCertParams);
     }
 
-    async function issueK3sWsCerts() {
+    async function issueK3sWsCerts(ip: string) {
         let additionalSubdomains: string[] = ["reg.", "*.ws-k3s."]
         var k3sClusterCertParams = new IssueCertificateParams();
         k3sClusterCertParams.pathToTerraform = "/workspace/.werft/certs";
@@ -533,9 +537,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         k3sClusterCertParams.dnsZoneDomain = "gitpod-dev.com";
         k3sClusterCertParams.domain = domain;
         k3sClusterCertParams.certNamespace = "certmanager";
-        k3sClusterCertParams.ip = "34.79.158.226"; // External ip of ingress service in k3s cluster
-        // k3sClusterCertParams.additionalWsSubdomains = additionalWsSubdomains;
-        k3sClusterCertParams.includeBaseDomain = false;
+        k3sClusterCertParams.ip = ip; // the ip assigned to the ws-proxy
         k3sClusterCertParams.pathToKubeConfig = getK3sWsKubeConfigPath();
         k3sClusterCertParams.bucketPrefixTail = "-k3s-ws"
         k3sClusterCertParams.additionalSubdomains = additionalSubdomains
@@ -547,6 +549,20 @@ function getK3sWsKubeConfigPath(): string {
     return "/workspace/k3s-external.yaml";
 }
 
+function getWsProxyIP(namespace: string, pathToKubeConfig: string): string {
+    let notReadyYet = true;
+    for (let i = 0; i < 30 && notReadyYet; i++) {
+        werft.log('certificate', `polling state of gitpod ws-proxy service installation`)
+        const result = exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl -n ${namespace} get svc -lcomponent=ws-proxy -ojsonpath="{.items[0].status.loadBalancer.ingress[0].ip}"`, { silent: true, dontCheckRc: true });
+        if (result != undefined && result.code === 0 && result != "" && result.stdout === "True") {
+            notReadyYet = false;
+            return result;
+        }
+
+        sleep(5000);
+    }
+    return "";
+}
 /**
  * Trigger integration tests
  */

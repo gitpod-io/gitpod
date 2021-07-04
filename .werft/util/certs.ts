@@ -31,14 +31,7 @@ function getDefaultSubDomains(): string[] {
 
 export async function issueCertficate(werft, params: IssueCertificateParams) {
     var subdomains = [];
-    // if(params.includeBaseDomain){
-    //     subdomains.push("");
-    // }
-    // werft.log("certificate", `WS Subdomains: ${params.additionalWsSubdomains}`)
     werft.log("certificate", `Subdomains: ${params.additionalSubdomains}`)
-    // for (const wssd of params.additionalWsSubdomains) {
-    //     subdomains.push(`*.ws-${wssd}.`);
-    // }
     for (const sd of params.additionalSubdomains) {
         subdomains.push(sd);
     }
