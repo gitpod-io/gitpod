@@ -516,7 +516,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         metaClusterCertParams.dnsZoneDomain = "gitpod-dev.com";
         metaClusterCertParams.domain = domain;
         metaClusterCertParams.ip = "34.76.116.244";
-        metaClusterCertParams.includeDefaults = true;
+        metaClusterCertParams.includeBaseDomain = true;
         metaClusterCertParams.pathToKubeConfig = "";
         metaClusterCertParams.bucketPrefixTail = ""
         metaClusterCertParams.additionalWsSubdomains = additionalWsSubdomains
@@ -535,7 +535,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         k3sClusterCertParams.certNamespace = "certmanager";
         k3sClusterCertParams.ip = "34.79.158.226"; // External ip of ingress service in k3s cluster
         k3sClusterCertParams.additionalWsSubdomains = additionalWsSubdomains;
-        k3sClusterCertParams.includeDefaults = true;
+        k3sClusterCertParams.includeBaseDomain = false;
         k3sClusterCertParams.pathToKubeConfig = getK3sWsKubeConfigPath();
         k3sClusterCertParams.bucketPrefixTail = "-k3s-ws"
         k3sClusterCertParams.additionalSubdomains = ["*"]

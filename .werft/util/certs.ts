@@ -11,7 +11,7 @@ export class IssueCertificateParams {
     ip: string
     additionalWsSubdomains: string[]
     additionalSubdomains: string[]
-    includeDefaults: boolean
+    includeBaseDomain: boolean
     pathToKubeConfig: string
     bucketPrefixTail: string
     certNamespace: string
@@ -26,11 +26,14 @@ export class InstallCertificateParams {
 }
 
 function getDefaultSubDomains(): string[] {
-    return ["*.", "*.ws-dev."];
+    return [""];
 }
 
 export async function issueCertficate(werft, params: IssueCertificateParams) {
     var subdomains = [];
+    if(params.includeBaseDomain){
+        subdomains.push("");
+    }
     werft.log("certificate", `WS Subdomains: ${params.additionalWsSubdomains}`)
     werft.log("certificate", `Subdomains: ${params.additionalSubdomains}`)
     for (const wssd of params.additionalWsSubdomains) {
