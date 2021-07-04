@@ -551,7 +551,7 @@ function getK3sWsKubeConfigPath(): string {
 
 function getWsProxyIP(namespace: string, pathToKubeConfig: string): string {
     let notReadyYet = true;
-    for (let i = 0; i < 30 && notReadyYet; i++) {
+    for (let i = 0; i < 300 && notReadyYet; i++) {
         werft.log('certificate', `polling state of gitpod ws-proxy service installation`)
         const result = exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl -n ${namespace} get svc -lcomponent=ws-proxy -ojsonpath="{.items[0].status.loadBalancer.ingress[0].ip}"`, { silent: true, dontCheckRc: true });
         if (result != undefined && result.code === 0 && result != "" && result.stdout === "True") {
@@ -559,7 +559,7 @@ function getWsProxyIP(namespace: string, pathToKubeConfig: string): string {
             return result;
         }
 
-        sleep(5000);
+        sleep(10000);
     }
     return "";
 }
