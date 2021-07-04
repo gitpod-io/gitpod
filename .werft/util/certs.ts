@@ -9,7 +9,7 @@ export class IssueCertificateParams {
     dnsZoneDomain: string
     domain: string
     ip: string
-    additionalWsSubdomains: string[]
+    // additionalWsSubdomains: string[]
     additionalSubdomains: string[]
     includeBaseDomain: boolean
     pathToKubeConfig: string
@@ -34,13 +34,13 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
     // if(params.includeBaseDomain){
     //     subdomains.push("");
     // }
-    werft.log("certificate", `WS Subdomains: ${params.additionalWsSubdomains}`)
+    // werft.log("certificate", `WS Subdomains: ${params.additionalWsSubdomains}`)
     werft.log("certificate", `Subdomains: ${params.additionalSubdomains}`)
-    for (const wssd of params.additionalWsSubdomains) {
-        subdomains.push(`*.ws-${wssd}.`);
-    }
+    // for (const wssd of params.additionalWsSubdomains) {
+    //     subdomains.push(`*.ws-${wssd}.`);
+    // }
     for (const sd of params.additionalSubdomains) {
-        subdomains.push(`${sd}.`);
+        subdomains.push(sd);
     }
 
     // sanity: check if there is a "SAN short enough to fit into CN (63 characters max)"

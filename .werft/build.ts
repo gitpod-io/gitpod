@@ -506,8 +506,8 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
 
     async function issueMetaCerts() {
-        let additionalWsSubdomains: string[] = ["dev"]
-        if (withWsCluster) { additionalWsSubdomains.push(withWsCluster.shortname) }
+        let additionalSubdomains: string[] = ["", "*.", "*.ws-dev."]
+        if (withWsCluster) { additionalSubdomains.push(`*.ws-${withWsCluster.shortname}.`) }
         var metaClusterCertParams = new IssueCertificateParams();
         metaClusterCertParams.pathToTerraform = "/workspace/.werft/certs";
         metaClusterCertParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
@@ -516,16 +516,16 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         metaClusterCertParams.dnsZoneDomain = "gitpod-dev.com";
         metaClusterCertParams.domain = domain;
         metaClusterCertParams.ip = "34.76.116.244";
-        metaClusterCertParams.includeBaseDomain = true;
+        // metaClusterCertParams.includeBaseDomain = true;
         metaClusterCertParams.pathToKubeConfig = "";
         metaClusterCertParams.bucketPrefixTail = ""
-        metaClusterCertParams.additionalWsSubdomains = additionalWsSubdomains
-        metaClusterCertParams.additionalSubdomains = ["*"]
+        // metaClusterCertParams.additionalWsSubdomains = additionalWsSubdomains
+        metaClusterCertParams.additionalSubdomains = additionalSubdomains
         await issueCertficate(werft, metaClusterCertParams);
     }
 
     async function issueK3sWsCerts() {
-        let additionalWsSubdomains: string[] = ["k3s"];
+        let additionalSubdomains: string[] = ["reg.", "*.ws-k3s."]
         var k3sClusterCertParams = new IssueCertificateParams();
         k3sClusterCertParams.pathToTerraform = "/workspace/.werft/certs";
         k3sClusterCertParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
@@ -534,11 +534,11 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         k3sClusterCertParams.domain = domain;
         k3sClusterCertParams.certNamespace = "certmanager";
         k3sClusterCertParams.ip = "34.79.158.226"; // External ip of ingress service in k3s cluster
-        k3sClusterCertParams.additionalWsSubdomains = additionalWsSubdomains;
+        // k3sClusterCertParams.additionalWsSubdomains = additionalWsSubdomains;
         k3sClusterCertParams.includeBaseDomain = false;
         k3sClusterCertParams.pathToKubeConfig = getK3sWsKubeConfigPath();
         k3sClusterCertParams.bucketPrefixTail = "-k3s-ws"
-        k3sClusterCertParams.additionalSubdomains = ["reg"]
+        k3sClusterCertParams.additionalSubdomains = additionalSubdomains
         await issueCertficate(werft, k3sClusterCertParams);
     }
 }
