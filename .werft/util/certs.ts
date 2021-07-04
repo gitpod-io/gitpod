@@ -36,6 +36,8 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
     // } else {
     //     subdomains = ["*.ws-dev.", "*."]
     // }
+    werft.log("certificate", `WS Subdomains: ${params.additionalWsSubdomains}`)
+    werft.log("certificate", `Subdomains: ${params.additionalSubdomains}`)
     for (const wssd of params.additionalWsSubdomains) {
         subdomains.push(`*.ws-${wssd}.`);
     }
@@ -76,7 +78,7 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
     for(let i=0; i<60 && notReadyYet; i++) {
         werft.log('certificate', `polling state of certs/${params.namespace}...`)
         const result = exec(`export KUBECONFIG=${params.pathToKubeConfig} && kubectl -n ${params.certNamespace} get certificate ${params.namespace} -o jsonpath="{.status.conditions[?(@.type == 'Ready')].status}"`, { silent: true, dontCheckRc: true });
-        if (result.code === 0 && result.stdout === "True") {
+        if (result != undefined && result.code === 0 && result.stdout === "True") {
             notReadyYet = false;
             break;
         }
