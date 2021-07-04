@@ -298,12 +298,12 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     try {
         if (deploymentConfig.cleanSlateDeployment) {
             // re-create namespace
-            if(k3sWsCluster){
+            if (k3sWsCluster) {
                 await cleanStateEnv(getK3sWsKubeConfigPath());
             }
             await cleanStateEnv("");
         } else {
-            if(k3sWsCluster){
+            if (k3sWsCluster) {
                 createNamespace(getK3sWsKubeConfigPath(), namespace, { slice: 'prep' });
             }
             createNamespace("", namespace, { slice: 'prep' });
@@ -506,8 +506,8 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
 
     async function issueMetaCerts() {
-        var additionalWsSubdomains = new Array["dev"]
-        additionalWsSubdomains = withWsCluster ?  additionalWsSubdomains.push(withWsCluster.shortname) : additionalWsSubdomains;
+        var additionalWsSubdomains = new Array("dev")
+        if (withWsCluster) { additionalWsSubdomains.push(withWsCluster.shortname) }
         var metaClusterCertParams = new IssueCertificateParams();
         metaClusterCertParams.pathToTerraform = "/workspace/.werft/certs";
         metaClusterCertParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
