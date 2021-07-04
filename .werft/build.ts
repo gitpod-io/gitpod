@@ -520,7 +520,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         metaClusterCertParams.pathToKubeConfig = "";
         metaClusterCertParams.bucketPrefixTail = ""
         metaClusterCertParams.additionalWsSubdomains = additionalWsSubdomains
-        metaClusterCertParams.additionalSubdomains = ["minio"]
+        metaClusterCertParams.additionalSubdomains = ["*"]
         await issueCertficate(werft, metaClusterCertParams);
     }
 
@@ -538,7 +538,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         k3sClusterCertParams.includeBaseDomain = false;
         k3sClusterCertParams.pathToKubeConfig = getK3sWsKubeConfigPath();
         k3sClusterCertParams.bucketPrefixTail = "-k3s-ws"
-        k3sClusterCertParams.additionalSubdomains = ["*"]
+        k3sClusterCertParams.additionalSubdomains = ["reg"]
         await issueCertficate(werft, k3sClusterCertParams);
     }
 }
