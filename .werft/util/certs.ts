@@ -43,7 +43,6 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
     }
     for (const sd of params.additionalSubdomains) {
         subdomains.push(`${sd}.`);
-        // subdomains.push(`*.${sd}.`);
     }
 
     // sanity: check if there is a "SAN short enough to fit into CN (63 characters max)"

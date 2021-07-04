@@ -506,7 +506,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
 
     async function issueMetaCerts() {
-        var additionalWsSubdomains = new Array("dev")
+        let additionalWsSubdomains: string[] = ["dev"]
         if (withWsCluster) { additionalWsSubdomains.push(withWsCluster.shortname) }
         var metaClusterCertParams = new IssueCertificateParams();
         metaClusterCertParams.pathToTerraform = "/workspace/.werft/certs";
@@ -519,12 +519,13 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         metaClusterCertParams.includeDefaults = true;
         metaClusterCertParams.pathToKubeConfig = "";
         metaClusterCertParams.bucketPrefixTail = ""
+        metaClusterCertParams.additionalSubdomains = additionalWsSubdomains
         metaClusterCertParams.additionalSubdomains = []
         await issueCertficate(werft, metaClusterCertParams);
     }
 
     async function issueK3sWsCerts() {
-        var additionalWsSubdomains = ["k3s"];
+        let additionalWsSubdomains: string[] = ["k3s"];
         var k3sClusterCertParams = new IssueCertificateParams();
         k3sClusterCertParams.pathToTerraform = "/workspace/.werft/certs";
         k3sClusterCertParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
