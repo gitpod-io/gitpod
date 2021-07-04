@@ -277,11 +277,11 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         namespaceRecreatedResolve = resolve;
     });
     const certificatePromise = (async function () {
-        if (!wsCluster) {
-            await issueMetaCerts();
-        }
         if (k3sWsCluster) {
             await issueK3sWsCerts();
+        }
+        if (!wsCluster) {
+            await issueMetaCerts();
         }
 
         werft.log('certificate', 'waiting for preview env namespace being re-created...');
@@ -298,15 +298,15 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     try {
         if (deploymentConfig.cleanSlateDeployment) {
             // re-create namespace
-            await cleanStateEnv("");
             if(k3sWsCluster){
                 await cleanStateEnv(getK3sWsKubeConfigPath());
             }
+            await cleanStateEnv("");
         } else {
-            createNamespace("", namespace, { slice: 'prep' });
             if(k3sWsCluster){
                 createNamespace(getK3sWsKubeConfigPath(), namespace, { slice: 'prep' });
             }
+            createNamespace("", namespace, { slice: 'prep' });
         }
         // check how this affects further steps
         setKubectlContextNamespace(namespace, { slice: 'prep' });
@@ -355,10 +355,10 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         shell.cd("chart");
         werft.log('helm', 'installing Gitpod');
 
-        installGitpod(commonFlags);
         if (k3sWsCluster) {
             installGitpodOnK3sWsCluster(commonFlags, getK3sWsKubeConfigPath());
         }
+        installGitpod(commonFlags);
 
         werft.log('helm', 'done');
         werft.done('helm');
@@ -507,7 +507,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
     async function issueMetaCerts() {
         var additionalWsSubdomains = withWsCluster ? [withWsCluster.shortname] : [];
-        // additionalWsSubdomains = additionalWsSubdomains.concat(["dev"])
+        additionalWsSubdomains = additionalWsSubdomains.concat(["dev"])
         var metaClusterParams = new IssueCertificateParams();
         metaClusterParams.pathToTerraform = "/workspace/.werft/certs";
         metaClusterParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
@@ -537,7 +537,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         metaClusterParams.includeDefaults = true;
         metaClusterParams.pathToKubeConfig = getK3sWsKubeConfigPath();
         metaClusterParams.bucketPrefixTail = "-k3s-ws"
-        // metaClusterParams.additionalSubdomains = ["*"]
+        metaClusterParams.additionalSubdomains = ["*", "*.ws-k3s"]
         await issueCertficate(werft, metaClusterParams);
     }
 }
