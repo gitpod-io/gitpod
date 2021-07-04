@@ -5,6 +5,7 @@ components:
 
   wsProxy:
     hostHeader: Host
+    serviceType: "LoadBalancer"
 
   wsManagerBridge:
     disabled: true
