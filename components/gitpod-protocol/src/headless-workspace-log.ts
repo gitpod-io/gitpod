@@ -41,7 +41,7 @@ export interface TheiaHeadlessLogMessage {
     snapshotURL?: string;
 }
 
-export interface HeadlessLogSources {
+export interface HeadlessLogUrls {
     // A map of id to URL
     streams: { [streamID: string]: string };
 }

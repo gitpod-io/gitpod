@@ -75,9 +75,10 @@ import { newAnalyticsWriterFromEnv } from '@gitpod/gitpod-protocol/lib/util/anal
 import { OAuthController } from './oauth-server/oauth-controller';
 import { ImageBuildPrefixContextParser } from './workspace/imagebuild-prefix-context-parser';
 import { AdditionalContentPrefixContextParser } from './workspace/additional-content-prefix-context-parser';
-import { WorkspaceLogService } from './workspace/workspace-log-service';
+import { HeadlessLogService } from './workspace/headless-log-service';
 import { HeadlessLogController } from './workspace/headless-log-controller';
 import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
+import { HeadlessLogServiceClient } from '@gitpod/content-service/lib/headless-log_grpc_pb';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Env).toSelf().inSingletonScope();
@@ -190,6 +191,8 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(WorkspaceServiceClient).toConstantValue(workspaceServiceClient);
     const idePluginServiceClient = new IDEPluginServiceClient(contentServiceAddress, grpc.credentials.createInsecure())
     bind(IDEPluginServiceClient).toConstantValue(idePluginServiceClient);
+    const headlessLogServiceClient = new HeadlessLogServiceClient(contentServiceAddress, grpc.credentials.createInsecure())
+    bind(HeadlessLogServiceClient).toConstantValue(headlessLogServiceClient);
 
     bind(StorageClient).to(ContentServiceStorageClient).inSingletonScope();
 
@@ -199,6 +202,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(OAuthController).toSelf().inSingletonScope();
 
-    bind(WorkspaceLogService).toSelf().inSingletonScope();
+    bind(HeadlessLogService).toSelf().inSingletonScope();
     bind(HeadlessLogController).toSelf().inSingletonScope();
 });

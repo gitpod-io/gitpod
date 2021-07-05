@@ -5,7 +5,7 @@
  */
 
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
-import { HeadlessLogSources } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
+import { HeadlessLogUrls } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { inject, injectable } from "inversify";
 import * as url from "url";
 import { Status, StatusServiceClient } from '@gitpod/supervisor-api-grpcweb/lib/status_pb_service'
@@ -13,46 +13,84 @@ import { TasksStatusRequest, TasksStatusResponse, TaskStatus } from "@gitpod/sup
 import { ResponseStream, TerminalServiceClient } from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb_service";
 import { ListenTerminalRequest, ListenTerminalResponse } from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
-import { status as grpcStatus } from '@grpc/grpc-js';
+import * as grpc from '@grpc/grpc-js';
 import { Env } from "../env";
 import * as browserHeaders from "browser-headers";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TextDecoder } from "util";
 import { WebsocketTransport } from "../util/grpc-web-ws-transport";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
+import { HeadlessLogServiceClient } from '@gitpod/content-service/lib/headless-log_grpc_pb';
+import { ListLogsRequest, ListLogsResponse, LogDownloadURLRequest, LogDownloadURLResponse } from '@gitpod/content-service/lib/headless-log_pb';
 
 @injectable()
-export class WorkspaceLogService {
+export class HeadlessLogService {
     static readonly SUPERVISOR_API_PATH = "/_supervisor/v1";
 
     @inject(WorkspaceDB) protected readonly db: WorkspaceDB;
     @inject(Env) protected readonly env: Env;
+    @inject(HeadlessLogServiceClient) protected readonly headlessLogClient: HeadlessLogServiceClient;
 
-    public async getWorkspaceLogURLs(wsi: WorkspaceInstance, maxTimeoutSecs: number = 30): Promise<HeadlessLogSources | undefined> {
-        const aborted = new Deferred<boolean>();
-        setTimeout(() => aborted.resolve(true), maxTimeoutSecs * 1000);
-        const streamIds = await this.retryWhileInstanceIsRunning(wsi, () => this.listWorkspaceLogs(wsi), "list workspace log streams", aborted);
-        if (streamIds === undefined) {
-            return undefined;
+    public async getHeadlessLogURLs(userId: string, wsi: WorkspaceInstance, maxTimeoutSecs: number = 30): Promise<HeadlessLogUrls | undefined> {
+        if (isSupervisorAvailableSoon(wsi)) {
+            const aborted = new Deferred<boolean>();
+            setTimeout(() => aborted.resolve(true), maxTimeoutSecs * 1000);
+            const streamIds = await this.retryWhileInstanceIsRunning(wsi, () => this.supervisorListHeadlessLogs(wsi), "list headless log streams", aborted);
+            if (streamIds !== undefined) {
+                return streamIds;
+            }
         }
 
-        // render URLs
+        // we were unable to get a repsonse from supervisor - let's try content service next
+        return await this.contentServiceListLogs(userId, wsi);
+    }
+
+    protected async contentServiceListLogs(userId: string, wsi: WorkspaceInstance): Promise<HeadlessLogUrls | undefined> {
+        const req = new ListLogsRequest();
+        req.setOwnerId(userId);
+        req.setWorkspaceId(wsi.workspaceId);
+        req.setInstanceId(wsi.id);
+        const response = await new Promise<ListLogsResponse>((resolve, reject) => {
+            this.headlessLogClient.listLogs(req, (err: grpc.ServiceError | null, response: ListLogsResponse) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(response);
+                }
+            });
+        });
+
+        log.info(`got ${response.getTaskIdList().length} taskIds from content-service`);
+
+        // fetch a download URL for each task
+        const responses: Promise<[string, string]>[] = response.getTaskIdList()
+            .map((taskId) => new Promise<[string, string]>((resolve, reject) => {
+                const req = new LogDownloadURLRequest();
+                req.setOwnerId(userId);
+                req.setWorkspaceId(wsi.workspaceId);
+                req.setInstanceId(wsi.id);
+                req.setTaskId(taskId);
+                this.headlessLogClient.logDownloadURL(req, (err: grpc.ServiceError | null, response: LogDownloadURLResponse) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve([taskId, response.getUrl()]);
+                    }
+                });
+            }));
+        const urlForTaskId = await Promise.all(responses);
+
+        // TODO translate to URL of proxy endpoint from where this can be downloaded
         const streams: { [id: string]: string } = {};
-        for (const [streamId, terminalId] of streamIds.entries()) {
-            streams[streamId] = this.env.hostUrl.with({
-                pathname: `/headless-logs/${wsi.id}/${terminalId}`,
-            }).toString();
+        for (const [taskId, url] of urlForTaskId) {
+            streams[taskId] = url;
         }
         return {
             streams
         };
     }
 
-    /**
-     * Returns a list of ids of streams for the given workspace
-     * @param workspace
-     */
-    protected async listWorkspaceLogs(wsi: WorkspaceInstance): Promise<Map<string, string>> {
+    protected async supervisorListHeadlessLogs(wsi: WorkspaceInstance): Promise<HeadlessLogUrls> {
         if (wsi.ideUrl === "") {
             // if ideUrl is not yet set we're too early and we deem the workspace not ready yet: retry later!
             throw new Error(`instance's ${wsi.id} has no ideUrl, yet`);
@@ -70,7 +108,7 @@ export class WorkspaceLogService {
                 stream.cancel();
             });
             stream.on('end', (status?: Status) => {
-                if (status && status.code !== grpcStatus.OK) {
+                if (status && status.code !== grpc.status.OK) {
                     const err = new Error(`upstream ended with status code: ${status.code}`);
                     (err as any).status = status;
                     reject(err);
@@ -78,17 +116,24 @@ export class WorkspaceLogService {
             });
         });
 
-        const result = new Map<string, string>();
-        for (const t of tasks) {
-            if (t.getTerminal() === "") {
+        // render URLs that point to server's /headless-logs/ endpoint which forwards calls to the running workspaces's supervisor
+        const streams: { [id: string]: string } = {};
+        for (const task of tasks) {
+            const taskId = task.getId();
+            const terminalId = task.getTerminal();
+            if (terminalId === "") {
                 // this might be the case when there is no terminal for this task, yet.
                 // if we find any such case, we deem the workspace not ready yet, and try to reconnect later,
                 // to be sure to get hold of all terminals created.
-                throw new Error(`instance's ${wsi.id} task ${t.getId} has no terminal yet`);
+                throw new Error(`instance's ${wsi.id} task ${task.getId} has no terminal yet`);
             }
-            result.set(t.getId(), t.getTerminal());
+            streams[taskId] = this.env.hostUrl.with({
+                pathname: `/headless-logs/${wsi.id}/${terminalId}`,
+            }).toString();
         }
-        return result;
+        return {
+            streams
+        };
     }
 
     /**
@@ -123,14 +168,14 @@ export class WorkspaceLogService {
                     });
             });
             stream.on('end', (status?: Status) => {
-                if (!status || status.code === grpcStatus.OK) {
+                if (!status || status.code === grpc.status.OK) {
                     resolve();
                     return;
                 }
 
                 const err = new Error(`upstream ended with status code: ${status.code}`);
                 (err as any).status = status;
-                if (!receivedDataYet && status.code === grpcStatus.UNAVAILABLE) {
+                if (!receivedDataYet && status.code === grpc.status.UNAVAILABLE) {
                     log.debug("stream headless workspace log", err);
                     reject(err);
                     return;
@@ -186,22 +231,26 @@ export class WorkspaceLogService {
     }
 
     protected shouldRetry(wsi: WorkspaceInstance): boolean {
-        switch (wsi.status.phase) {
-            case "creating":
-            case "preparing":
-            case "initializing":
-            case "pending":
-            case "running":
-                return true;
-            default:
-                return false;
-        }
+        return isSupervisorAvailableSoon(wsi);
+    }
+}
+
+function isSupervisorAvailableSoon(wsi: WorkspaceInstance): boolean {
+    switch (wsi.status.phase) {
+        case "creating":
+        case "preparing":
+        case "initializing":
+        case "pending":
+        case "running":
+            return true;
+        default:
+            return false;
     }
 }
 
 function toSupervisorURL(ideUrl: string): string {
     const u = new url.URL(ideUrl);
-    u.pathname = WorkspaceLogService.SUPERVISOR_API_PATH;
+    u.pathname = HeadlessLogService.SUPERVISOR_API_PATH;
     return u.toString();
 }
 

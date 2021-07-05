@@ -14,7 +14,7 @@ import {
 } from './protocol';
 import { JsonRpcProxy, JsonRpcServer } from './messaging/proxy-factory';
 import { Disposable, CancellationTokenSource } from 'vscode-jsonrpc';
-import { HeadlessLogEvent, HeadlessLogSources } from './headless-workspace-log';
+import { HeadlessLogEvent, HeadlessLogUrls } from './headless-workspace-log';
 import { WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstancePhase } from './workspace-instance';
 import { AdminServer } from './admin-protocol';
 import { GitpodHostUrl } from './util/gitpod-host-url';
@@ -86,7 +86,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     watchWorkspaceImageBuildLogs(workspaceId: string): Promise<void>;
     watchHeadlessWorkspaceLogs(workspaceId: string): Promise<void>;
     isPrebuildDone(pwsid: string): Promise<boolean>;
-    getHeadlessLog(instanceId: string): Promise<HeadlessLogSources>;
+    getHeadlessLog(instanceId: string): Promise<HeadlessLogUrls>;
 
     // Workspace timeout
     setWorkspaceTimeout(workspaceId: string, duration: WorkspaceTimeoutDuration): Promise<SetWorkspaceTimeoutResult>;
