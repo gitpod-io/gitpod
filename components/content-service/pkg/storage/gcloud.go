@@ -287,6 +287,30 @@ func ParseSnapshotName(name string) (bkt, obj string, err error) {
 	return
 }
 
+// ListObjects returns all objects found with the given prefix. Returns an empty list if the bucket does not exuist (yet).
+func (rs *DirectGCPStorage) ListObjects(ctx context.Context, prefix string) (objects []string, err error) {
+	bkt := rs.client.Bucket(rs.bucketName())
+	_, err = bkt.Attrs(ctx)
+	if err == gcpstorage.ErrBucketNotExist {
+		// bucket does not exist: nothing to list
+		return nil, nil
+	}
+	if err != nil {
+		return nil, xerrors.Errorf("cannot list objects: %w", err)
+	}
+
+	iter := bkt.Objects(ctx, &gcpstorage.Query{Prefix: prefix})
+	var obj *gcpstorage.ObjectAttrs
+	for obj, err = iter.Next(); obj != nil; obj, err = iter.Next() {
+		objects = append(objects, obj.Name)
+	}
+	if err != iterator.Done && err != nil {
+		return nil, xerrors.Errorf("cannot iterate list objects: %w", err)
+	}
+
+	return objects, nil
+}
+
 // Qualify fully qualifies a snapshot name so that it can be downloaded using DownloadSnapshot
 func (rs *DirectGCPStorage) Qualify(name string) string {
 	return fmt.Sprintf("%s@%s", rs.objectName(name), rs.bucketName())
@@ -294,11 +318,10 @@ func (rs *DirectGCPStorage) Qualify(name string) string {
 
 // UploadInstance takes all files from a local location and uploads it to the per-instance remote storage
 func (rs *DirectGCPStorage) UploadInstance(ctx context.Context, source string, name string, opts ...UploadOption) (bucket, object string, err error) {
-	objName, err := InstanceObjectName(rs.InstanceID, name)
-	if err != nil {
-		return "", "", err
+	if rs.InstanceID == "" {
+		return "", "", fmt.Errorf("instanceID is required to comput object name")
 	}
-	return rs.Upload(ctx, source, objName, opts...)
+	return rs.Upload(ctx, source, InstanceObjectName(rs.InstanceID, name), opts...)
 }
 
 // Upload takes all files from a local location and uploads it to the remote storage
@@ -998,4 +1021,9 @@ func (p *PresignedGCPStorage) ObjectHash(ctx context.Context, bucket string, obj
 // BackupObject returns a backup's object name that a direct downloader would download
 func (p *PresignedGCPStorage) BackupObject(workspaceID string, name string) string {
 	return fmt.Sprintf("workspaces/%s", gcpWorkspaceBackupObjectName(workspaceID, name))
+}
+
+// InstanceObject returns a instance's object name that a direct downloader would download
+func (p *PresignedGCPStorage) InstanceObject(workspaceID string, instanceID string, name string) string {
+	return p.BackupObject(workspaceID, InstanceObjectName(instanceID, name))
 }

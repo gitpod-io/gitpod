@@ -359,7 +359,6 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 	if err != nil {
 		log.WithError(err).WithFields(sess.OWI()).Error("log backup failed")
 		// atm we do not fail the workspace here, yet, because we still might succeed with its content!
-		return nil, status.Error(codes.DataLoss, "log backup failed")
 	}
 
 	if req.Backup {
@@ -608,19 +607,20 @@ func (s *WorkspaceService) uploadWorkspaceLogs(ctx context.Context, sess *sessio
 		return xerrors.Errorf("no remote storage configured")
 	}
 
+	// currently we're only uploading prebuild log files
 	logFiles, err := logs.ListPrebuildLogFiles(ctx, sess.Location)
 	if err != nil {
 		return err
 	}
 	for _, absLogPath := range logFiles {
-		streamID, parseErr := logs.ParseStreamID(absLogPath)
+		taskID, parseErr := logs.ParseTaskIDFromPrebuildLogFilePath(absLogPath)
 		if parseErr != nil {
-			log.WithError(parseErr).Warn("cannot parse workspace log file name")
+			log.WithError(parseErr).Warn("cannot parse headless workspace log file name")
 			continue
 		}
 
 		err = retryIfErr(ctx, s.config.Backup.Attempts, log.WithFields(sess.OWI()).WithField("op", "upload log"), func(ctx context.Context) (err error) {
-			_, _, err = rs.UploadInstance(ctx, absLogPath, streamID)
+			_, _, err = rs.UploadInstance(ctx, absLogPath, logs.UploadedHeadlessLogPath(taskID))
 			if err != nil {
 				return
 			}

@@ -248,6 +248,10 @@ func (*testStorage) BackupObject(workspaceID string, name string) string {
 	return ""
 }
 
+func (*testStorage) InstanceObject(workspaceID string, instanceID string, name string) string {
+	return ""
+}
+
 func (*testStorage) ObjectHash(ctx context.Context, bucket string, obj string) (string, error) {
 	return "", nil
 }

@@ -9,6 +9,7 @@ require (
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/content-service/api v0.0.0-00010101000000-000000000000
 	github.com/go-ozzo/ozzo-validation v3.5.0+incompatible
+	github.com/golang/mock v1.5.0 // indirect
 	github.com/google/go-cmp v0.5.6
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0

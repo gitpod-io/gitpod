@@ -90,6 +90,12 @@ var runCmd = &cobra.Command{
 		}
 		api.RegisterWorkspaceServiceServer(server, workspaceService)
 
+		headlessLogService, err := service.NewHeadlessLogService(cfg.Storage)
+		if err != nil {
+			log.WithError(err).Fatalf("cannot create log service")
+		}
+		api.RegisterHeadlessLogServiceServer(server, headlessLogService)
+
 		idePluginService, err := service.NewIDEPluginService(cfg.Storage)
 		if err != nil {
 			log.WithError(err).Fatalf("cannot create IDE Plugin service")

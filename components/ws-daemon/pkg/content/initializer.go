@@ -347,6 +347,11 @@ func (rs *remoteContentStorage) DownloadSnapshot(ctx context.Context, destinatio
 	return rs.Download(ctx, destination, name, mappings)
 }
 
+// ListObjects returns all objects found with the given prefix. Returns an empty list if the bucket does not exuist (yet).
+func (rs *remoteContentStorage) ListObjects(ctx context.Context, prefix string) (objects []string, err error) {
+	return []string{}, nil
+}
+
 // Qualify just returns the name
 func (rs *remoteContentStorage) Qualify(name string) string {
 	return name
@@ -369,6 +374,11 @@ func (rs *remoteContentStorage) Bucket(string) string {
 
 // BackupObject returns a backup's object name that a direct downloader would download
 func (rs *remoteContentStorage) BackupObject(name string) string {
+	return ""
+}
+
+// InstanceObject returns a instance's object name that a direct downloader would download
+func (rs *remoteContentStorage) InstanceObject(workspaceID string, instanceID string, name string) string {
 	return ""
 }
 

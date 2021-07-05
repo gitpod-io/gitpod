@@ -1,0 +1,36 @@
+// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
+syntax = "proto3";
+
+package contentservice;
+
+option go_package = "github.com/gitpod-io/gitpod/content-service/api";
+
+service HeadlessLogService {
+    // LogDownloadURL provides a URL from where the content of a workspace can be downloaded from
+    rpc LogDownloadURL(LogDownloadURLRequest) returns (LogDownloadURLResponse) {};
+
+    // ListLogs returns a list of taskIds for the specified workspace instance
+    rpc ListLogs(ListLogsRequest) returns (ListLogsResponse) {};
+}
+
+message LogDownloadURLRequest {
+    string owner_id = 1;
+    string workspace_id = 2;
+    string instance_id = 3;
+    string task_id = 4;
+}
+message LogDownloadURLResponse {
+    string url = 1;
+}
+
+message ListLogsRequest {
+    string owner_id = 1;
+    string workspace_id = 2;
+    string instance_id = 3;
+}
+message ListLogsResponse {
+    repeated string task_id = 1;
+}
