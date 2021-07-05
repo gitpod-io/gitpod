@@ -168,7 +168,17 @@ components:
     ports:
       wsManagerProxy:
         expose: true
-        containerPort: 8081
+        containerPort: 6666
+        servicePort: 8081
+      httpsproxy:
+        expose: true
+        containerPort: 443
+        servicePort: 9090
+      httpproxy:
+        expose: true
+        containerPort: 80
+        servicePort: 8080
+
 
 # configure GCP registry
 docker-registry:

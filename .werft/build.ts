@@ -26,7 +26,8 @@ build(context, version)
 
 // Werft phases
 const phases = {
-    TRIGGER_INTEGRATION_TESTS: 'trigger integration tests'
+    TRIGGER_INTEGRATION_TESTS: 'trigger integration tests',
+    REGISTER_K3S_WS_CLUSTER: "register k3s ws cluster"
 }
 
 export function parseVersion(context) {
@@ -288,6 +289,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
     })();
 
+    // As we depend on the dynamically generated LB IP of k3s ws proxy, we will not execute below for now
     const k3sWscertificatePromise = (async function (ip: string) {
         await issueK3sWsCerts(ip);
 
@@ -311,7 +313,10 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
             createNamespace("", namespace, { slice: 'prep' });
         }
         // check how this affects further steps
-        setKubectlContextNamespace(namespace, { slice: 'prep' });
+        setKubectlContextNamespace("", namespace, { slice: 'prep' });
+        if (k3sWsCluster) {
+            setKubectlContextNamespace(getK3sWsKubeConfigPath(), namespace, { slice: 'prep' });
+        }
         namespaceRecreatedResolve();    // <-- signal for certificate
         werft.done('prep');
     } catch (err) {
@@ -386,6 +391,13 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
             werft.fail('certificate', err);
         }
     }
+    // if (k3sWsCluster) {
+    //     try {
+    //         registerK3sWsCluster(namespace, domain, "", getK3sWsKubeConfigPath())
+    //     } catch (err) {
+    //         werft.fail(phases.REGISTER_K3S_WS_CLUSTER, err.toString())
+    //     }
+    // }
 
     function installGitpod(commonFlags: string) {
         let flags = commonFlags
@@ -529,7 +541,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     }
 
     async function issueK3sWsCerts(ip: string) {
-        let additionalSubdomains: string[] = ["reg.", "*.ws-k3s."]
+        let additionalSubdomains: string[] = ["reg.", "*.ws-k3s.", "ws-k3s."]
         var k3sClusterCertParams = new IssueCertificateParams();
         k3sClusterCertParams.pathToTerraform = "/workspace/.werft/certs";
         k3sClusterCertParams.gcpSaPath = GCLOUD_SERVICE_ACCOUNT_PATH;
@@ -620,6 +632,64 @@ function parseWsCluster(rawString: string): PreviewWorkspaceClusterRef | undefin
         }
     }
     return undefined;
+}
+
+function registerK3sWsCluster(namespace: string, domain: string, pathToKubeConfigMeta: string, pathToKubeConfigK3s: string) {
+    const wsProxyUrl = `ws-k3s.${domain}:8081`
+    werft.phase(phases.REGISTER_K3S_WS_CLUSTER, "Register K3s ws cluster")
+
+    // list available clusters
+    werft.log(phases.REGISTER_K3S_WS_CLUSTER, printClustersList(pathToKubeConfigMeta))
+
+    // get certificate of ws cluster
+    werft.log(phases.REGISTER_K3S_WS_CLUSTER, getClusterTLS(pathToKubeConfigK3s))
+
+    // register the ws cluster
+    werft.log(phases.REGISTER_K3S_WS_CLUSTER, registerCluster(pathToKubeConfigMeta, "k3s", wsProxyUrl))
+
+    // clear the constraint and uncordon
+    werft.log(phases.REGISTER_K3S_WS_CLUSTER, uncordonCluster(pathToKubeConfigMeta, "k3s"))
+
+    // cordon the meta cluster
+    werft.log(phases.REGISTER_K3S_WS_CLUSTER, updateScore(pathToKubeConfigMeta, "k3s", "1000"))
+
+    werft.phase(phases.REGISTER_K3S_WS_CLUSTER, "done")
+}
+
+function printClustersList(pathToKubeConfig: string): string {
+    let cmd = `gpctl clusters list --kubeconfig=${pathToKubeConfig}`
+    const result = shell.exec(cmd).trim()
+    return result
+}
+
+function uncordonCluster(pathToKubeConfig: string, name: string): string {
+    let cmd = `gpctl clusters uncordon --name=${name} --kubeconfig=${pathToKubeConfig}`
+    const result = shell.exec(cmd).trim()
+    return result
+}
+
+function updateScore(pathToKubeConfig: string, name: string, score: string): string {
+    let cmd = `gpctl clusters update score ${score} --name=${name} --kubeconfig=${pathToKubeConfig}`
+    const result = shell.exec(cmd).trim()
+    return result
+}
+
+function registerCluster(pathToKubeConfig: string, name: string, url: string): string {
+    let cmd = `./gpctl clusters register \
+	--name ${name} \
+	--hint-cordoned \
+	--hint-govern \
+	--tls-path ./wsman-tls \
+	--url ${url}`
+
+    const result = shell.exec(cmd).trim()
+    return result
+}
+
+function getClusterTLS(pathToKubeConfig: string): string {
+    let cmd = `gpctl clusters get-tls-config --kubeconfig=${pathToKubeConfig}`
+    const result = shell.exec(cmd).trim()
+    return result
 }
 
 
