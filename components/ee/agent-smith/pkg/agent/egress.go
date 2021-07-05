@@ -2,13 +2,13 @@
 // Licensed under the Gitpod Enterprise Source Code License,
 // See License.enterprise.txt in the project root folder.
 
-package network
+package agent
 
 import (
 	"github.com/prometheus/procfs"
 )
 
-func GetEgressTraffic(pid int) (int64, error) {
+func getEgressTraffic(pid int) (int64, error) {
 	pproc, err := procfs.NewProc(pid)
 	if err != nil {
 		return -1, err

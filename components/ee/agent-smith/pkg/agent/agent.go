@@ -22,7 +22,6 @@ import (
 
 	"github.com/cilium/ebpf/perf"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/bpf"
-	"github.com/gitpod-io/gitpod/agent-smith/pkg/network"
 	"github.com/gitpod-io/gitpod/agent-smith/pkg/signature"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
@@ -52,6 +51,9 @@ type Smith struct {
 	notifiedInfringements *lru.Cache
 	perfHandler           chan perfHandlerFunc
 	pidsMap               sync.Map
+
+	egressTrafficCheckHandler func(pid int) (int64, error)
+	timeElapsedHandler        func(t time.Time) time.Duration
 }
 
 // EgressTraffic configures an upper limit of allowed egress traffic over time
@@ -138,12 +140,13 @@ func NewAgentSmith(cfg Config) (*Smith, error) {
 				GradeKind(InfringementExcessiveEgress, InfringementSeverityVery):      PenaltyStopWorkspace,
 			},
 		},
-		Config:                cfg,
-		GitpodAPI:             api,
-		notifiedInfringements: notificationCache,
-		perfHandler:           make(chan perfHandlerFunc, 10),
-		metrics:               newAgentMetrics(),
-		pidsMap:               sync.Map{},
+		Config:                    cfg,
+		GitpodAPI:                 api,
+		notifiedInfringements:     notificationCache,
+		perfHandler:               make(chan perfHandlerFunc, 10),
+		metrics:                   newAgentMetrics(),
+		egressTrafficCheckHandler: getEgressTraffic,
+		timeElapsedHandler:        time.Since,
 	}
 	if cfg.Enforcement.Default != nil {
 		if err := cfg.Enforcement.Default.Validate(); err != nil {
@@ -246,7 +249,10 @@ type GradedInfringementKind string
 
 // GradeKind produces a graded infringement kind from severity and kind
 func GradeKind(kind InfringementKind, severity InfringementSeverity) GradedInfringementKind {
-	return GradedInfringementKind(fmt.Sprintf("%s %s", severity, kind))
+	if len(severity) > 0 {
+		return GradedInfringementKind(fmt.Sprintf("%s %s", severity, kind))
+	}
+	return GradedInfringementKind(kind)
 }
 
 // Severity returns the severity of the graded infringement kind
@@ -319,7 +325,7 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 
 	defer abpf.Close()
 
-	agent.cleanupDeadPIDS(ctx)
+	go agent.cleanupDeadPIDS(ctx)
 
 	egressTicker := time.NewTicker(30 * time.Second)
 
@@ -402,17 +408,15 @@ func (agent *Smith) Start(ctx context.Context, callback func(InfringingWorkspace
 
 func (agent *Smith) cleanupDeadPIDS(ctx context.Context) {
 	ticker := time.NewTicker(30 * time.Second)
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				agent.cleanupDeadPidsCallback()
-			case <-ctx.Done():
-				ticker.Stop()
-				return
-			}
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			agent.cleanupDeadPidsCallback()
+		case <-ctx.Done():
+			return
 		}
-	}()
+	}
 }
 
 func (agent *Smith) cleanupDeadPidsCallback() {
@@ -559,6 +563,7 @@ func parseExecveExit(evtHdr EventHeader, buffer []byte) Execve {
 	dataOffsetPtr := unsafe.Sizeof(evtHdr) + unsafe.Sizeof(i)*uintptr(evtHdr.NParams) - 6 // todo(fntlnz): check why this -6 is necessary
 	scratchHeaderOffset := uint32(dataOffsetPtr)
 
+	//lint:ignore SA4006 this is used with unsafe.Sizeof
 	retval := int64(buffer[scratchHeaderOffset])
 
 	// einfo := bpf.EventTable[bpf.PPME_SYSCALL_EXECVE_19_X]
@@ -765,46 +770,6 @@ func getWorkspaceFromProcess(tid int) (res *InfringingWorkspace, err error) {
 	}, nil
 }
 
-//nolint:deadcode,unused
-func mergeInfringingWorkspaces(vws []InfringingWorkspace) (vw InfringingWorkspace) {
-	for _, r := range vws {
-		if vw.Pod == "" {
-			vw.Pod = r.Pod
-		}
-		if vw.Owner == "" {
-			vw.Owner = r.Owner
-		}
-		if vw.InstanceID == "" {
-			vw.InstanceID = r.InstanceID
-		}
-		if vw.WorkspaceID == "" {
-			vw.WorkspaceID = r.WorkspaceID
-		}
-
-		// Note: the remote URL list is likekly to be very small hence the O^2 complexity is ok
-		//       And just in case the remote URL list isn't small we have a circuit breaker
-		if len(r.GitRemoteURL) < 100 && len(vw.GitRemoteURL) < 100 {
-			for _, rr := range r.GitRemoteURL {
-				var found bool
-				for _, vr := range vw.GitRemoteURL {
-					if rr == vr {
-						found = true
-						break
-					}
-				}
-				if !found {
-					vw.GitRemoteURL = append(vw.GitRemoteURL, rr)
-				}
-			}
-		} else if len(vw.GitRemoteURL) == 0 {
-			vw.GitRemoteURL = r.GitRemoteURL
-		}
-
-		vw.Infringements = append(vw.Infringements, r.Infringements...)
-	}
-	return
-}
-
 // RegisterMetrics registers prometheus metrics for this driver
 func (agent *Smith) RegisterMetrics(reg prometheus.Registerer) error {
 	return agent.metrics.Register(reg)
@@ -815,8 +780,8 @@ func (agent *Smith) checkEgressTrafficCallback(pid int, pidCreationTime time.Tim
 		return nil, nil
 	}
 
-	podLifetime := time.Since(pidCreationTime)
-	resp, err := network.GetEgressTraffic(pid)
+	podLifetime := agent.timeElapsedHandler(pidCreationTime)
+	resp, err := agent.egressTrafficCheckHandler(pid)
 	if err != nil {
 		return nil, err
 	}
