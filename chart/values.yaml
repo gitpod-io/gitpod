@@ -93,7 +93,7 @@ authProviders: []
 #     clientId: "CLIENT_ID"
 #     clientSecret: "SECRET"
 #     callBackUrl: "https://gitpod.io/auth/gitlab/callback"
-#     settingsUrl: "https://gitlab.com/profile/applications"
+#     settingsUrl: "https://gitlab.com/-/profile/applications"
 #   description: ""
 #   icon: ""
 branding:

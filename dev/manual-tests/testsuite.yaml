@@ -189,13 +189,13 @@ case:
   description: ""
   steps: |-
     Test1)
-    - Delete GitpodStaging entry from https://gitlab.com/profile/applications if present.
+    - Delete GitpodStaging entry from https://gitlab.com/-/profile/applications if present.
     - open a new private browser
     - open https://gitpod-staging.com/#https://gitlab.com/AlexTugarev/gp-test
     - ensure the onboarding flow works nicely.
 
     Test2)
-    - Delete GitpodStaging entry from https://gitlab.com/profile/applications if present.
+    - Delete GitpodStaging entry from https://gitlab.com/-/profile/applications if present.
     - open a new private browser
     - login to https://gitpod-staging.com/login/ using GitHub Auth
     - open https://gitpod-staging.com/#https://gitlab.com/AlexTugarev/gp-test

@@ -57,7 +57,7 @@ const gitpodServiceMock = createServiceMock({
             "oauth": {
               "authorizationUrl": "https://testing.doptig.com/gitlab/oauth/authorize",
               "tokenUrl": "https://testing.doptig.com/gitlab/oauth/token",
-              "settingsUrl": "https://testing.doptig.com/gitlab/profile/applications",
+              "settingsUrl": "https://testing.doptig.com/gitlab/-/profile/applications",
               "callBackUrl": "https://gitpod-staging.com/auth/testing.doptig.com/gitlab/callback",
               "clientId": "clientid-123",
               "clientSecret": "redacted"
