@@ -5,8 +5,14 @@
 package agent
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"path"
+	"reflect"
 	"sort"
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -91,5 +97,137 @@ func BenchmarkFindEnforcementRules(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		findEnforcementRules(rules, "foobar")
+	}
+}
+
+func TestCeckEgressTrafficCallback(t *testing.T) {
+	simpleTime, _ := time.Parse(time.RFC3339, "2021-07-05T15:16:17+02:00")
+
+	type args struct {
+		pid             int
+		pidCreationTime time.Time
+	}
+	tests := map[string]struct {
+		args                      args
+		want                      *Infringement
+		egressTrafficCheckHandler func(pid int) (int64, error)
+		timeElapsedHandler        func(t time.Time) time.Duration
+		wantErr                   bool
+	}{
+		"no_infringement": {
+			args: args{
+				pid:             1234,
+				pidCreationTime: simpleTime,
+			},
+			want: nil,
+			egressTrafficCheckHandler: func(pid int) (int64, error) {
+				return 2000000, nil
+			},
+			timeElapsedHandler: func(t time.Time) time.Duration {
+				d, _ := time.ParseDuration("1m")
+				return d
+			},
+			wantErr: false,
+		},
+		"zero_egress": {
+			args: args{
+				pid:             1234,
+				pidCreationTime: simpleTime,
+			},
+			want: nil,
+			egressTrafficCheckHandler: func(pid int) (int64, error) {
+				return 0, nil
+			},
+			timeElapsedHandler: func(t time.Time) time.Duration {
+				d, _ := time.ParseDuration("1m")
+				return d
+			},
+			wantErr: false,
+		},
+		"excessive_egress": {
+			args: args{
+				pid:             1234,
+				pidCreationTime: simpleTime,
+			},
+			want: &Infringement{
+				Kind:        GradedInfringementKind(InfringementExcessiveEgress),
+				Description: "egress traffic is 12.805 megabytes over limit",
+			},
+			egressTrafficCheckHandler: func(pid int) (int64, error) {
+				return 328000000, nil
+			},
+			timeElapsedHandler: func(t time.Time) time.Duration {
+				d, _ := time.ParseDuration("1m")
+				return d
+			},
+			wantErr: false,
+		},
+		"very_excessive_egress_simple": {
+			args: args{
+				pid:             1234,
+				pidCreationTime: simpleTime,
+			},
+			want: &Infringement{
+				Kind:        GradedInfringementKind(InfringementVeryExcessiveEgress),
+				Description: "egress traffic is 188686.863 megabytes over limit",
+			},
+			egressTrafficCheckHandler: func(pid int) (int64, error) {
+				return 200000000000, nil
+			},
+			timeElapsedHandler: func(t time.Time) time.Duration {
+				d, _ := time.ParseDuration("1s")
+				return d
+			},
+			wantErr: false,
+		},
+		"very_excessive_egress": {
+			args: args{
+				pid:             1234,
+				pidCreationTime: simpleTime,
+			},
+			want: &Infringement{
+				Kind:        GradedInfringementKind(InfringementVeryExcessiveEgress),
+				Description: "egress traffic is 188686.863 megabytes over limit",
+			},
+			egressTrafficCheckHandler: func(pid int) (int64, error) {
+				return 200000000000, nil
+			},
+			timeElapsedHandler: func(t time.Time) time.Duration {
+				d, _ := time.ParseDuration("1m")
+				return d
+			},
+			wantErr: false,
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			fc, err := ioutil.ReadFile(path.Join("testdata", fmt.Sprintf("agent_check_egress_%s.golden", name)))
+			if err != nil {
+				t.Errorf("cannot read config: %v", err)
+				return
+			}
+			var cfg Config
+			err = json.Unmarshal(fc, &cfg)
+			if err != nil {
+				t.Errorf("cannot unmarshal config: %v", err)
+				return
+			}
+			agent, err := NewAgentSmith(cfg)
+			if err != nil {
+				t.Errorf("cannot create test agent smith from config: %v", err)
+				return
+			}
+			agent.egressTrafficCheckHandler = tt.egressTrafficCheckHandler
+			agent.timeElapsedHandler = tt.timeElapsedHandler
+			got, err := agent.checkEgressTrafficCallback(tt.args.pid, tt.args.pidCreationTime)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Smith.checkEgressTrafficCallback() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Smith.checkEgressTrafficCallback() = %s", cmp.Diff(got, tt.want))
+			}
+		})
 	}
 }
