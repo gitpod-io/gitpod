@@ -423,6 +423,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
     function installGitpodOnK3sWsCluster(commonFlags: string, pathToKubeConfig: string) {
         let flags = commonFlags
+        flags += ` -f ../.werft/values.k3sWsDisable.yaml`
         if (storage === "gcp") {
             // notice below that we are not using the k3s cluster to get the gcp-sa-cloud-storage-dev-sync-key. As it is present in the dev cluster only
             exec("kubectl get secret gcp-sa-cloud-storage-dev-sync-key -n werft -o yaml | yq d - metadata | yq w - metadata.name remote-storage-gcloud > remote-storage-gcloud.yaml");
@@ -433,7 +434,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
         werft.log("helm", "installing k3s ws cluster")
         exec(`export KUBECONFIG=${pathToKubeConfig} && helm dependencies up`);
-        exec(`export KUBECONFIG=${pathToKubeConfig} && /usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/values.dev.yaml -f ../.werft/values.k3sWsCluster.yaml ${flags} ${helmInstallName} .`);
+        exec(`export KUBECONFIG=${pathToKubeConfig} && /usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/values.k3sWsCluster.yaml ${flags} ${helmInstallName} .`);
     }
 
     function addDeploymentFlags() {
