@@ -322,6 +322,22 @@ func (it *Test) Instrument(component ComponentType, agentName string, opts ...In
 	return res, nil
 }
 
+func (it *Test) Child(t *testing.T) *Test {
+	ctx, cancel := context.WithCancel(it.ctx)
+	res := &Test{
+		t:          t,
+		clientset:  it.clientset,
+		restConfig: it.restConfig,
+		namespace:  it.namespace,
+		ctx:        ctx,
+		ctxCancel:  cancel,
+		api:        it.api,
+		username:   it.username,
+	}
+	it.closer = append(it.closer, func() error { res.Done(); return nil })
+	return res
+}
+
 func getFreePort() (int, error) {
 	addr, err := net.ResolveTCPAddr("tcp", "localhost:0")
 	if err != nil {

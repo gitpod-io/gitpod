@@ -203,6 +203,11 @@ func (s *Provider) GetContentLayer(ctx context.Context, owner, workspaceID strin
 		}
 		return []Layer{*layer}, nil, nil
 	}
+	if initializer.GetBackup() != nil {
+		// We were asked to restore a backup and have tried above. We've failed to restore the backup,
+		// hance the backup initializer failed.
+		return nil, nil, xerrors.Errorf("no backup found")
+	}
 
 	return nil, nil, xerrors.Errorf("no backup or valid initializer present")
 }
