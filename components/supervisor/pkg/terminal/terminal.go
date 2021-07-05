@@ -440,8 +440,9 @@ func (mw *multiWriter) Listen() io.ReadCloser {
 		//       block the closing because the write's blocking.
 		for b := range cchan {
 			n, err := w.Write(b)
+			blen := len(b)
 			done <- struct{}{}
-			if err == nil && n != len(b) {
+			if err == nil && n != blen {
 				err = io.ErrShortWrite
 			}
 			if err != nil {
