@@ -35,6 +35,11 @@ func (rs *DirectNoopStorage) DownloadSnapshot(ctx context.Context, destination s
 	return false, nil
 }
 
+// ListObjects returns all objects found with the given prefix. Returns an empty list if the bucket does not exuist (yet).
+func (rs *DirectNoopStorage) ListObjects(ctx context.Context, prefix string) (objects []string, err error) {
+	return nil, nil
+}
+
 // Qualify just returns the name
 func (rs *DirectNoopStorage) Qualify(name string) string {
 	return name
@@ -113,5 +118,10 @@ func (*PresignedNoopStorage) ObjectHash(ctx context.Context, bucket string, obj 
 
 // BackupObject returns a backup's object name that a direct downloader would download
 func (*PresignedNoopStorage) BackupObject(workspaceID string, name string) string {
+	return ""
+}
+
+// InstanceObject returns a instance's object name that a direct downloader would download
+func (*PresignedNoopStorage) InstanceObject(workspaceID string, instanceID string, name string) string {
 	return ""
 }

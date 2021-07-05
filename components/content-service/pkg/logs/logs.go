@@ -21,15 +21,23 @@ const (
 
 	legacyTerminalStoreLocation = "/workspace"
 	legacyPrebuildLogFilePrefix = ".prebuild-log-"
+
+	// UploadedHeadlessLogPathPrefix is the prefix under which headless logs are stored inside an instance
+	UploadedHeadlessLogPathPrefix = "logs"
 )
 
-// PrebuildLogFileName is the absolute path to the file containing the outpuit of the prebuild log for the given task
+// UploadedHeadlessLogPath returns the path relative to the workspace instance
+func UploadedHeadlessLogPath(taskID string) string {
+	return fmt.Sprintf("%s/%s", UploadedHeadlessLogPathPrefix, taskID)
+}
+
+// PrebuildLogFileName is the absolute path to the file containing the output of the prebuild log for the given task in recent workspaces
 func PrebuildLogFileName(storeLocation string, taskId string) string {
 	return storeLocation + "/" + prebuildLogFilePrefix + taskId
 }
 
-// LegacyPrebuildLogFileName is the absolute path to the file containing the outpuit of the prebuild log for the given
-// task for older workspaces
+// LegacyPrebuildLogFileName is the absolute path to the file containing the output of the prebuild log for the given
+// task in older workspaces
 func LegacyPrebuildLogFileName(taskId string) string {
 	return legacyTerminalStoreLocation + "/" + legacyPrebuildLogFilePrefix + taskId
 }
@@ -65,8 +73,8 @@ func ListPrebuildLogFiles(ctx context.Context, location string) (filePaths []str
 	return filePaths, nil
 }
 
-// ParseStreamID tries to parse the streamID from the given file name path
-func ParseStreamID(filePath string) (string, error) {
+// ParseTaskIDFromPrebuildLogFilePath tries to parse the streamID from the given file name path
+func ParseTaskIDFromPrebuildLogFilePath(filePath string) (string, error) {
 	fileName := filepath.Base(filePath)
 
 	var streamID string

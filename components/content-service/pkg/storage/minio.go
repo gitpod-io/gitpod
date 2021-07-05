@@ -212,6 +212,34 @@ func (rs *DirectMinIOStorage) DownloadSnapshot(ctx context.Context, destination 
 	return rs.download(ctx, destination, bkt, obj, mappings)
 }
 
+// ListObjects returns all objects found with the given prefix. Returns an empty list if the bucket does not exuist (yet).
+func (rs *DirectMinIOStorage) ListObjects(ctx context.Context, prefix string) (objects []string, err error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	bucketName := rs.bucketName()
+	exists, err := rs.client.BucketExists(ctx, bucketName)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot list objects: %w", err)
+	}
+	if !exists {
+		// bucket does not exist: nothing to list
+		return nil, nil
+	}
+
+	objectCh := rs.client.ListObjects(ctx, bucketName, minio.ListObjectsOptions{
+		Prefix:    prefix,
+		Recursive: true,
+	})
+	for object := range objectCh {
+		if object.Err != nil {
+			return nil, xerrors.Errorf("cannot iterate list objects: %w", object.Err)
+		}
+		objects = append(objects, object.Key)
+	}
+	return objects, nil
+}
+
 // Qualify fully qualifies a snapshot name so that it can be downloaded using DownloadSnapshot
 func (rs *DirectMinIOStorage) Qualify(name string) string {
 	return fmt.Sprintf("%s@%s", rs.objectName(name), rs.bucketName())
@@ -219,11 +247,10 @@ func (rs *DirectMinIOStorage) Qualify(name string) string {
 
 // UploadInstance takes all files from a local location and uploads it to the per-instance remote storage
 func (rs *DirectMinIOStorage) UploadInstance(ctx context.Context, source string, name string, opts ...UploadOption) (bucket, object string, err error) {
-	objName, err := InstanceObjectName(rs.InstanceID, name)
-	if err != nil {
-		return "", "", err
+	if rs.InstanceID == "" {
+		return "", "", fmt.Errorf("instanceID is required to comput object name")
 	}
-	return rs.Upload(ctx, source, objName, opts...)
+	return rs.Upload(ctx, source, InstanceObjectName(rs.InstanceID, name), opts...)
 }
 
 // Upload takes all files from a local location and uploads it to the remote storage
@@ -461,6 +488,11 @@ func (s *presignedMinIOStorage) BlobObject(name string) (string, error) {
 // BackupObject returns a backup's object name that a direct downloader would download
 func (s *presignedMinIOStorage) BackupObject(workspaceID string, name string) string {
 	return minioWorkspaceBackupObjectName(workspaceID, name)
+}
+
+// InstanceObject returns a instance's object name that a direct downloader would download
+func (s *presignedMinIOStorage) InstanceObject(workspaceID string, instanceID string, name string) string {
+	return s.BackupObject(workspaceID, InstanceObjectName(instanceID, name))
 }
 
 func translateMinioError(err error) error {

@@ -2,6 +2,8 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
+//go:generate ./generate-mock.sh
+
 package storage
 
 import (
@@ -45,6 +47,12 @@ type BackupObjectNamer interface {
 	BackupObject(name string) string
 }
 
+// InstanceObjectNamer provides names for objects per workspace instance
+type InstanceObjectNamer interface {
+	// InstanceObject returns a instance's object name that a direct downloader would download
+	InstanceObject(name string) string
+}
+
 // BlobObjectNamer provides names for blob objects
 type BlobObjectNamer interface {
 	// BlobObject returns a blob's object name
@@ -79,6 +87,9 @@ type PresignedAccess interface {
 
 	// BackupObject returns a backup's object name that a direct downloader would download
 	BackupObject(workspaceID string, name string) string
+
+	// InstanceObject returns a instance's object name that a direct downloader would download
+	InstanceObject(workspaceID string, instanceID string, name string) string
 }
 
 // ObjectMeta describtes the metadata of a remote object
@@ -135,6 +146,9 @@ type DirectAccess interface {
 
 	// EnsureExists makes sure that the remote storage location exists and can be up- or downloaded from
 	EnsureExists(ctx context.Context) error
+
+	// ListObjects returns all objects found with the given prefix. Returns an empty list if the bucket does not exuist (yet).
+	ListObjects(ctx context.Context, prefix string) ([]string, error)
 
 	// Fully qualifies a snapshot name so that it can be downloaded using DownloadSnapshot
 	Qualify(name string) string
@@ -352,9 +366,6 @@ func blobObjectName(name string) (string, error) {
 	return fmt.Sprintf("blobs/%s", name), nil
 }
 
-func InstanceObjectName(instanceID, name string) (string, error) {
-	if instanceID == "" {
-		return "", fmt.Errorf("instanceID is required to comput object name")
-	}
-	return "instances/" + instanceID + "/" + name, nil
+func InstanceObjectName(instanceID, name string) string {
+	return fmt.Sprintf("instances/%s/%s", instanceID, name)
 }
