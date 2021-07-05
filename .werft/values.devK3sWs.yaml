@@ -3,7 +3,7 @@ installation:
   tenant: gitpod-core
   region: europe-west1
   cluster: "00"
-  shortname: "dev"
+  shortname: "k3s"
 hostname: staging.gitpod-dev.com
 imagePrefix: eu.gcr.io/gitpod-core-dev/build/
 certificatesSecret:
