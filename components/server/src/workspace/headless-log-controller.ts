@@ -12,7 +12,7 @@ import { CompositeResourceAccessGuard, OwnerResourceGuard, WorkspaceLogAccessGua
 import { HostContextProvider } from "../auth/host-context-provider";
 import { DBWithTracing, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib/traced-db";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
-import { WorkspaceLogService } from "./workspace-log-service";
+import { HeadlessLogService } from "./headless-log-service";
 import * as opentracing from 'opentracing';
 import { asyncHandler } from "../express-util";
 import { Deferred } from "@gitpod/gitpod-protocol/lib/util/deferred";
@@ -26,7 +26,7 @@ export class HeadlessLogController {
 
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
-    @inject(WorkspaceLogService) protected readonly workspaceLogService: WorkspaceLogService;
+    @inject(HeadlessLogService) protected readonly headlessLogService: HeadlessLogService;
     @inject(BearerAuth) protected readonly auth: BearerAuth;
 
     get apiRouter(): express.Router {
@@ -117,7 +117,7 @@ export class HeadlessLogController {
                         process.nextTick(resolve);
                     }
                 }));
-                await this.workspaceLogService.streamWorkspaceLog(instance, params.terminalId, writeToResponse, aborted);
+                await this.headlessLogService.streamWorkspaceLog(instance, params.terminalId, writeToResponse, aborted);
 
                 // In an ideal world, we'd use res.addTrailers()/response.trailer here. But despite being introduced with HTTP/1.1 in 1999, trailers are not supported by popular proxies (nginx, for example).
                 // So we resort to this hand-written solution
