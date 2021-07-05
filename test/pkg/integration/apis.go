@@ -68,6 +68,7 @@ type ComponentAPI struct {
 	contentServiceStatus struct {
 		Port              int
 		BlobServiceClient csapi.BlobServiceClient
+		ContentService    ContentService
 	}
 	dbStatus struct {
 		Config *DBConfig
@@ -616,4 +617,67 @@ func (c *ComponentAPI) ImageBuilder() imgbldr.ImageBuilderClient {
 		return nil
 	}
 	return c.imgbldStatus.Client
+}
+
+// ContentService groups content service interfaces for convenience
+type ContentService interface {
+	csapi.ContentServiceClient
+	csapi.WorkspaceServiceClient
+}
+
+func (c *ComponentAPI) ContentService() ContentService {
+	var rerr error
+	defer func() {
+		if rerr == nil {
+			return
+		}
+
+		c.t.t.Fatalf("cannot access blob service: %q", rerr)
+	}()
+
+	if c.contentServiceStatus.ContentService != nil {
+		return c.contentServiceStatus.ContentService
+	}
+	if c.contentServiceStatus.Port == 0 {
+		pod, _, err := c.t.selectPod(ComponentContentService, selectPodOptions{})
+		if err != nil {
+			rerr = err
+			return nil
+		}
+
+		localPort, err := getFreePort()
+		if err != nil {
+			rerr = err
+			return nil
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		ready, errc := forwardPort(ctx, c.t.restConfig, c.t.namespace, pod, fmt.Sprintf("%d:8080", localPort))
+		select {
+		case rerr = <-errc:
+			cancel()
+			return nil
+		case <-ready:
+		}
+		c.t.closer = append(c.t.closer, func() error { cancel(); return nil })
+		c.contentServiceStatus.Port = localPort
+	}
+
+	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", c.contentServiceStatus.Port), grpc.WithInsecure())
+	if err != nil {
+		rerr = err
+		return nil
+	}
+	c.t.closer = append(c.t.closer, conn.Close)
+
+	type cs struct {
+		csapi.ContentServiceClient
+		csapi.WorkspaceServiceClient
+	}
+
+	c.contentServiceStatus.ContentService = cs{
+		ContentServiceClient:   csapi.NewContentServiceClient(conn),
+		WorkspaceServiceClient: csapi.NewWorkspaceServiceClient(conn),
+	}
+	return c.contentServiceStatus.ContentService
 }

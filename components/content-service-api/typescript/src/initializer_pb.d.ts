@@ -44,6 +44,11 @@ export class WorkspaceInitializer extends jspb.Message {
     getDownload(): FileDownloadInitializer | undefined;
     setDownload(value?: FileDownloadInitializer): WorkspaceInitializer;
 
+    hasBackup(): boolean;
+    clearBackup(): void;
+    getBackup(): FromBackupInitializer | undefined;
+    setBackup(value?: FromBackupInitializer): WorkspaceInitializer;
+
     getSpecCase(): WorkspaceInitializer.SpecCase;
 
     serializeBinary(): Uint8Array;
@@ -64,6 +69,7 @@ export namespace WorkspaceInitializer {
         prebuild?: PrebuildInitializer.AsObject,
         composite?: CompositeInitializer.AsObject,
         download?: FileDownloadInitializer.AsObject,
+        backup?: FromBackupInitializer.AsObject,
     }
 
     export enum SpecCase {
@@ -74,6 +80,7 @@ export namespace WorkspaceInitializer {
         PREBUILD = 4,
         COMPOSITE = 5,
         DOWNLOAD = 6,
+        BACKUP = 7,
     }
 
 }
@@ -288,6 +295,23 @@ export namespace PrebuildInitializer {
     export type AsObject = {
         prebuild?: SnapshotInitializer.AsObject,
         git?: GitInitializer.AsObject,
+    }
+}
+
+export class FromBackupInitializer extends jspb.Message {
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): FromBackupInitializer.AsObject;
+    static toObject(includeInstance: boolean, msg: FromBackupInitializer): FromBackupInitializer.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: FromBackupInitializer, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): FromBackupInitializer;
+    static deserializeBinaryFromReader(message: FromBackupInitializer, reader: jspb.BinaryReader): FromBackupInitializer;
+}
+
+export namespace FromBackupInitializer {
+    export type AsObject = {
     }
 }
 

@@ -136,6 +136,8 @@ func NewFromRequest(ctx context.Context, loc string, rs storage.DirectDownloader
 		initializer, err = newSnapshotInitializer(loc, rs, ir.Snapshot)
 	} else if ir, ok := spec.(*csapi.WorkspaceInitializer_Download); ok {
 		initializer, err = newFileDownloadInitializer(loc, ir.Download)
+	} else if ir, ok := spec.(*csapi.WorkspaceInitializer_Backup); ok {
+		initializer, err = newFromBackupInitializer(loc, rs, ir.Backup)
 	} else {
 		initializer = &EmptyInitializer{}
 	}
@@ -166,6 +168,31 @@ func newFileDownloadInitializer(loc string, req *csapi.FileDownloadInitializer) 
 		RetryTimeout:   1 * time.Second,
 	}
 	return initializer, nil
+}
+
+// newFromBackupInitializer creates a backup restoration initializer for a request
+func newFromBackupInitializer(loc string, rs storage.DirectDownloader, req *csapi.FromBackupInitializer) (*fromBackupInitializer, error) {
+	return &fromBackupInitializer{
+		Location:      loc,
+		RemoteStorage: rs,
+	}, nil
+}
+
+type fromBackupInitializer struct {
+	Location      string
+	RemoteStorage storage.DirectDownloader
+}
+
+func (bi *fromBackupInitializer) Run(ctx context.Context, mappings []archive.IDMapping) (src csapi.WorkspaceInitSource, err error) {
+	hasBackup, err := bi.RemoteStorage.Download(ctx, bi.Location, storage.DefaultBackup, mappings)
+	if !hasBackup {
+		return src, fmt.Errorf("no backup found")
+	}
+	if err != nil {
+		return src, xerrors.Errorf("cannot restore backup: %w", err)
+	}
+
+	return csapi.WorkspaceInitFromBackup, nil
 }
 
 // newGitInitializer creates a Git initializer based on the request.
