@@ -6,8 +6,8 @@ export const IS_PREVIEW_APP_LABEL: string = "isPreviewApp";
 
 export function setKubectlContextNamespace(pathToKubeConfig, namespace, shellOpts) {
     [
-        `export KUBECONFIG=${pathToKubeConfig} kubectl config current-context`,
-        `export KUBECONFIG=${pathToKubeConfig} kubectl config set-context --current --namespace=${namespace}`
+        `export KUBECONFIG=${pathToKubeConfig} && kubectl config current-context`,
+        `export KUBECONFIG=${pathToKubeConfig} && kubectl config set-context --current --namespace=${namespace}`
     ].forEach(cmd => exec(cmd, shellOpts));
 }
 

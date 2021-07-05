@@ -36,6 +36,7 @@ components:
       memory: 32Mi
 
   server:
+    wsmanSkipSelf: true
     replicas: 1
     makeNewUsersAdmin: true # for development
     theiaPluginsBucketName: gitpod-core-dev-plugins
@@ -163,6 +164,7 @@ components:
     name: "ws-proxy"
     disabled: false
     replicas: 1
+    serviceType: "LoadBalancer"
     wsManagerProxy:
       enabled: true
     ports:
@@ -170,11 +172,11 @@ components:
         expose: true
         containerPort: 6666
         servicePort: 8081
-      httpsproxy:
+      httpsProxy:
         expose: true
         containerPort: 443
         servicePort: 9090
-      httpproxy:
+      httpProxy:
         expose: true
         containerPort: 80
         servicePort: 8080
