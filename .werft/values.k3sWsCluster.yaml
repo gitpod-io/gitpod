@@ -142,6 +142,8 @@ components:
 
   # Enable ws-proxy in dev
   wsProxy:
+    useHTTPS: true
+    hostHeader: Host
     name: "ws-proxy"
     disabled: false
     replicas: 1
@@ -156,11 +158,11 @@ components:
       httpsProxy:
         expose: true
         containerPort: 9090
-        servicePort: 9090
+        servicePort: 443
       httpProxy:
         expose: true
         containerPort: 8080
-        servicePort: 8080
+        servicePort: 80
 
 
 # configure GCP registry
@@ -185,19 +187,8 @@ minio:
             values:
             - "true"
 
-# mysql:
-#   enabled: false
-#   primary:
-#     # make sure the pod ends up where it's supposed to stay
-#     affinity:
-#       nodeAffinity:
-#         requiredDuringSchedulingIgnoredDuringExecution:
-#           nodeSelectorTerms:
-#           - matchExpressions:
-#             - key: gitpod.io/workload_workspace
-#               operator: In
-#               values:
-#               - "true"
+mysql:
+  enabled: false
 
 rabbitmq:
   # ensure shovels are configured on boot
