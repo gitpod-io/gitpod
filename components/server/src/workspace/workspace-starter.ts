@@ -5,7 +5,7 @@
  */
 
 import { CloneTargetMode, FileDownloadInitializer, GitAuthMethod, GitConfig, GitInitializer, PrebuildInitializer, SnapshotInitializer, WorkspaceInitializer } from "@gitpod/content-service/lib";
-import { CompositeInitializer } from "@gitpod/content-service/lib/initializer_pb";
+import { CompositeInitializer, FromBackupInitializer } from "@gitpod/content-service/lib/initializer_pb";
 import { DBUser, DBWithTracing, TracedUserDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
 import { CommitContext, Disposable, GitpodToken, GitpodTokenType, IssueContext, NamedWorkspaceFeatureFlag, PullRequestContext, RefType, SnapshotContext, StartWorkspaceResult, User, UserEnvVar, UserEnvVarValue, WithEnvvarsContext, WithPrebuild, Workspace, WorkspaceContext, WorkspaceImageSource, WorkspaceImageSourceDocker, WorkspaceImageSourceReference, WorkspaceInstance, WorkspaceInstanceConfiguration, WorkspaceInstanceStatus, WorkspaceProbeContext, Permission, HeadlessLogEvent, HeadlessWorkspaceEventType, DisposableCollection, AdditionalContentContext } from "@gitpod/gitpod-protocol";
 import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/util/analytics';
@@ -87,6 +87,10 @@ export class WorkspaceStarter {
                 }
             }
 
+            // check if there has been an instance before, i.e. if this is a restart
+            const pastInstances = await this.workspaceDb.trace({ span }).findInstances(workspace.id);
+            const mustHaveBackup = pastInstances.some(i => !!i.status && !!i.status.conditions && !i.status.conditions.failed);
+
             // create and store instance
             let instance = await this.workspaceDb.trace({ span }).storeInstance(await this.newInstance(workspace, user, options.excludeFeatureFlags || []));
             span.log({ "newInstance": instance.id });
@@ -116,11 +120,11 @@ export class WorkspaceStarter {
             // If the caller requested that errors be rethrown we must await the actual workspace start to be in the exception path.
             // To this end we disable the needsImageBuild behaviour if rethrow is true.
             if (needsImageBuild && !options.rethrow) {
-                this.actuallyStartWorkspace({ span }, instance, workspace, user, userEnvVars, options.rethrow, forceRebuild);
+                this.actuallyStartWorkspace({ span }, instance, workspace, user, mustHaveBackup, userEnvVars, options.rethrow, forceRebuild);
                 return { instanceID: instance.id };
             }
 
-            return await this.actuallyStartWorkspace({ span }, instance, workspace, user, userEnvVars, options.rethrow, forceRebuild);
+            return await this.actuallyStartWorkspace({ span }, instance, workspace, user, mustHaveBackup, userEnvVars, options.rethrow, forceRebuild);
         } catch (e) {
             TraceContext.logError({ span }, e);
             throw e;
@@ -131,7 +135,7 @@ export class WorkspaceStarter {
 
     // Note: this function does not expect to be awaited for by its caller. This means that it takes care of error handling itself
     //       and creates its tracing span as followFrom rather than the usual childOf reference.
-    protected async actuallyStartWorkspace(ctx: TraceContext, instance: WorkspaceInstance, workspace: Workspace, user: User, userEnvVars?: UserEnvVar[], rethrow?: boolean, forceRebuild?: boolean): Promise<StartWorkspaceResult> {
+    protected async actuallyStartWorkspace(ctx: TraceContext, instance: WorkspaceInstance, workspace: Workspace, user: User, mustHaveBackup: boolean, userEnvVars?: UserEnvVar[], rethrow?: boolean, forceRebuild?: boolean): Promise<StartWorkspaceResult> {
         const span = TraceContext.startAsyncSpan("actuallyStartWorkspace", ctx);
 
         try {
@@ -146,7 +150,7 @@ export class WorkspaceStarter {
             }
 
             // create spec
-            const spec = await this.createSpec({span}, user, workspace, instance, userEnvVars);
+            const spec = await this.createSpec({span}, user, workspace, instance, mustHaveBackup, userEnvVars);
 
             // create start workspace request
             const metadata = new WorkspaceMetadata();
@@ -365,7 +369,7 @@ export class WorkspaceStarter {
                     source = new WorkspaceInitializer();
                     source.setGit(git);
                 } else {
-                    const {initializer, disposable} = await this.createInitializer({span}, workspace, workspace.context, user);
+                    const {initializer, disposable} = await this.createInitializer({span}, workspace, workspace.context, user, false);
                     source = initializer;
                     disp.push(disposable);
                 }
@@ -504,7 +508,7 @@ export class WorkspaceStarter {
         }
     }
 
-    protected async createSpec(traceCtx: TraceContext, user: User, workspace: Workspace, instance: WorkspaceInstance, userEnvVars?: UserEnvVarValue[]): Promise<StartWorkspaceSpec> {
+    protected async createSpec(traceCtx: TraceContext, user: User, workspace: Workspace, instance: WorkspaceInstance, mustHaveBackup: boolean, userEnvVars?: UserEnvVarValue[]): Promise<StartWorkspaceSpec> {
         const context = workspace.context;
 
         let allEnvVars: UserEnvVarValue[] = [];
@@ -625,7 +629,7 @@ export class WorkspaceStarter {
                 checkoutLocation = ".";
             }
         }
-        const initializerPromise = this.createInitializer(traceCtx, workspace, workspace.context, user);
+        const initializerPromise = this.createInitializer(traceCtx, workspace, workspace.context, user, mustHaveBackup);
         const userTimeoutPromise = this.userService.getDefaultWorkspaceTimeout(user);
 
         const featureFlags = instance.configuration!.featureFlags || [];
@@ -726,11 +730,13 @@ export class WorkspaceStarter {
         return gitSpec;
     }
 
-    protected async createInitializer(traceCtx: TraceContext, workspace: Workspace, context: WorkspaceContext, user: User): Promise<{initializer: WorkspaceInitializer, disposable: Disposable}> {
+    protected async createInitializer(traceCtx: TraceContext, workspace: Workspace, context: WorkspaceContext, user: User, mustHaveBackup: boolean): Promise<{initializer: WorkspaceInitializer, disposable: Disposable}> {
         let result = new WorkspaceInitializer();
         const disp = new DisposableCollection();
 
-        if (SnapshotContext.is(context)) {
+        if (mustHaveBackup) {
+            result.setBackup(new FromBackupInitializer());
+        } else if (SnapshotContext.is(context)) {
             const snapshot = new SnapshotInitializer();
             snapshot.setSnapshot(context.snapshotBucketId);
             result.setSnapshot(snapshot);
