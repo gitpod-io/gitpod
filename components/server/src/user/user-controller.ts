@@ -601,15 +601,22 @@ export class UserController {
     }
 
     protected getSafeReturnToParam(req: express.Request) {
-        const returnToURL: string | undefined = req.query.redirect || req.query.returnTo;
-        if (returnToURL) {
-            const hostUrl = this.env.hostUrl.url as URL;
-            if (returnToURL.toLowerCase().startsWith(`${hostUrl.protocol}//${hostUrl.host}`.toLowerCase())) {
-                return returnToURL;
-            }
-            if (returnToURL.toLowerCase().startsWith(this.env.brandingConfig.homepage.toLowerCase())) {
-                return returnToURL;
-            }
+        const where: string | undefined = req.query.redirect || req.query.returnTo;
+        if (!where) {
+            log.debug({ sessionId: req.sessionID }, "Empty redirect URL");
+            return;
         }
+        try {
+            const redirectUrl = new URL(where).toString();
+            const hostUrl = (this.env.hostUrl.url as URL).toString();
+            const brandingUrl = new URL(this.env.brandingConfig.homepage).toString();
+            if (redirectUrl === hostUrl || redirectUrl === brandingUrl) {
+                return redirectUrl;
+            }
+        } catch {
+            log.debug({ sessionId: req.sessionID }, "Unexpected URL error", { query: req.query });
+        }
+        log.debug({ sessionId: req.sessionID }, "Valid redirect URL but not matching", { query: req.query });
+        return;
     }
 }
