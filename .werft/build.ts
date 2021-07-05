@@ -391,17 +391,17 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
             werft.fail('certificate', err);
         }
     }
-    // if (k3sWsCluster) {
-    //     try {
-    //         registerK3sWsCluster(namespace, domain, "", getK3sWsKubeConfigPath())
-    //     } catch (err) {
-    //         werft.fail(phases.REGISTER_K3S_WS_CLUSTER, err.toString())
-    //     }
-    // }
+    if (k3sWsCluster) {
+        try {
+            registerK3sWsCluster(namespace, domain, "", getK3sWsKubeConfigPath())
+        } catch (err) {
+            werft.fail(phases.REGISTER_K3S_WS_CLUSTER, err.toString())
+        }
+    }
 
     function installGitpod(commonFlags: string) {
         let flags = commonFlags
-        if(k3sWsCluster){
+        if (k3sWsCluster) {
             flags += ` --set components.server.wsmanSkipSelf=true`
         }
         if (storage === "gcp") {
@@ -637,7 +637,14 @@ function parseWsCluster(rawString: string): PreviewWorkspaceClusterRef | undefin
     return undefined;
 }
 
+function updatePermissionGpctl() {
+    shell.exec(`cd /workspace/dev/gpctl && go build && cd -`)
+    shell.exec(`tree /workspace/dev`)
+    shell.exec(`sudo chmod +777 /workspace/dev/gpctl/gpctl`)
+}
+
 function registerK3sWsCluster(namespace: string, domain: string, pathToKubeConfigMeta: string, pathToKubeConfigK3s: string) {
+    updatePermissionGpctl()
     const wsProxyUrl = `ws-k3s.${domain}:8081`
     werft.phase(phases.REGISTER_K3S_WS_CLUSTER, "Register K3s ws cluster")
 
@@ -653,44 +660,47 @@ function registerK3sWsCluster(namespace: string, domain: string, pathToKubeConfi
     // clear the constraint and uncordon
     werft.log(phases.REGISTER_K3S_WS_CLUSTER, uncordonCluster(pathToKubeConfigMeta, "k3s"))
 
-    // cordon the meta cluster
-    werft.log(phases.REGISTER_K3S_WS_CLUSTER, updateScore(pathToKubeConfigMeta, "k3s", "1000"))
-
     werft.phase(phases.REGISTER_K3S_WS_CLUSTER, "done")
 }
 
 function printClustersList(pathToKubeConfig: string): string {
-    let cmd = `gpctl clusters list --kubeconfig=${pathToKubeConfig}`
+    let cmd = `/workspace/dev/gpctl/gpctl clusters list`
+    if (pathToKubeConfig != "") {
+        cmd += ` --kubeconfig=${pathToKubeConfig}`
+    }
     const result = shell.exec(cmd).trim()
     return result
 }
 
 function uncordonCluster(pathToKubeConfig: string, name: string): string {
-    let cmd = `gpctl clusters uncordon --name=${name} --kubeconfig=${pathToKubeConfig}`
-    const result = shell.exec(cmd).trim()
-    return result
-}
-
-function updateScore(pathToKubeConfig: string, name: string, score: string): string {
-    let cmd = `gpctl clusters update score ${score} --name=${name} --kubeconfig=${pathToKubeConfig}`
+    let cmd = `/workspace/dev/gpctl/gpctl clusters uncordon --name=${name}`
+    if (pathToKubeConfig != "") {
+        cmd += ` --kubeconfig=${pathToKubeConfig}`
+    }
     const result = shell.exec(cmd).trim()
     return result
 }
 
 function registerCluster(pathToKubeConfig: string, name: string, url: string): string {
-    let cmd = `./gpctl clusters register \
+    let cmd = `/workspace/dev/gpctl/gpctl clusters register \
 	--name ${name} \
 	--hint-cordoned \
 	--hint-govern \
 	--tls-path ./wsman-tls \
 	--url ${url}`
 
+    if (pathToKubeConfig != "") {
+        cmd += ` --kubeconfig=${pathToKubeConfig}`
+    }
     const result = shell.exec(cmd).trim()
     return result
 }
 
 function getClusterTLS(pathToKubeConfig: string): string {
-    let cmd = `gpctl clusters get-tls-config --kubeconfig=${pathToKubeConfig}`
+    let cmd = `/workspace/dev/gpctl/gpctl clusters get-tls-config`
+    if (pathToKubeConfig != "") {
+        cmd += ` --kubeconfig=${pathToKubeConfig}`
+    }
     const result = shell.exec(cmd).trim()
     return result
 }
