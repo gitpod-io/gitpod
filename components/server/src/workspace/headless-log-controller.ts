@@ -43,6 +43,10 @@ export class HeadlessLogController {
             }
 
             const user = req.user as User;
+            if (!User.is(user)) {
+                res.sendStatus(401);
+                return;
+            }
             if (user.blocked) {
                 res.sendStatus(403);
                 log.warn("blocked user attempted to fetch workspace cookie", { ...params, userId: user.id });
@@ -127,6 +131,21 @@ export class HeadlessLogController {
                 res.end();
             }
         }));
+        router.get("/", (req: express.Request, res: express.Response) => {
+            // This is an error case: every request should match the handler above
+            const user = req.user as User;
+            if (!User.is(user)) {
+                res.sendStatus(401);
+                return;
+            }
+            if (user.blocked) {
+                res.sendStatus(403);
+                return;
+            }
+
+            log.error({ userId: user.id }, "/headless-logs: malformed request", { path: req.path });
+            res.status(400);
+        });
         return router;
     }
 }
