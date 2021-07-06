@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## July 2021
+
+- Fix `image.context` in `.gitpod.yml` ([#4715](https://github.com/gitpod-io/gitpod/pull/4715))
+
 ## June 2021
 
 - Complete validations of VS Code extensions in .gitpod.yml ([#4645](https://github.com/gitpod-io/gitpod/pull/4645)):
