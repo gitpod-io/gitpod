@@ -73,6 +73,8 @@ spec:
 {{- if index .Values "docker-registry" "enabled" }}
         - name: builtin-registry-auth
           mountPath: "/etc/caddy/registry-auth"
+        - name: builtin-registry-certs
+          mountPath: "/etc/caddy/registry-certs"
 {{- end }}
         - name: config-certificates
           mountPath: "/etc/caddy/certificates"
@@ -95,6 +97,9 @@ spec:
       - name: builtin-registry-auth
         secret:
           secretName: builtin-registry-auth
+      - name: builtin-registry-certs
+        secret:
+          secretName: builtin-registry-certs
 {{- end }}
       - name: config-certificates
         secret:
