@@ -25,6 +25,8 @@ public async up(queryRunner: QueryRunner): Promise<any> {
             { url: 'https://github.com/gitpod-io/template-sveltejs', description: 'A Svelte.js app writtten in JavaScript.', priority: priority-- },
             { url: 'https://github.com/gitpod-io/template-sveltejskit', description: 'A SvelteKit app template.', priority: priority-- },
             { url: 'https://github.com/gitpod-io/template-datasette', description: 'A Datasette template.', priority: priority-- },
+            { url: 'https://github.com/gitpod-io/template-nix', description: 'A nix template for reproducible development environments.', priority: priority-- },
+            { url: 'https://github.com/gitpod-io/template-haskell', description: 'A Haskell template.', priority: priority-- },
 
         ]
         // delete old entries
