@@ -273,10 +273,16 @@ env:
 
 {{- define "gitpod.builtinRegistry.name" -}}
 {{- if .Values.components.imageBuilder.registry.bypassProxy -}}
-{{ index .Values "docker-registry" "fullnameOverride" }}.{{ .Release.Namespace }}.svc.cluster.local
+{{ include "gitpod.builtinRegistry.internal_name" . }}
 {{- else -}}
 registry.{{ .Values.hostname }}
 {{- end -}}
+{{- end -}}
+
+{{- define "gitpod.builtinRegistry.internal_name" -}}
+{{- $ := .root -}}
+{{- $gp := .gp -}}
+{{ index .Values "docker-registry" "fullnameOverride" }}.{{ .Release.Namespace }}.{{ $gp.installation.kubedomain | default "svc.cluster.local" }}
 {{- end -}}
 
 {{- define "gitpod.comp.version" -}}

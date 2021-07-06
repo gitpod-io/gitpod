@@ -34,7 +34,7 @@ data:
 {{ $t := set . "password" (randAlphaNum 20) }}
 {{- end }}
   vhost.docker-registry: |
-    https://minio.{$GITPOD_DOMAIN} {
+    https://registry.{$GITPOD_DOMAIN} {
       import enable_log
       import remove_server_header
       import ssl_configuration
@@ -43,8 +43,11 @@ data:
         {{ .username }} {{ bcrypt .password | b64enc }}
       }
 
-      reverse_proxy https://{{ index .Values "docker-registry" "fullnameOverride" }}.{{ .Release.Namespace }}.{$KUBE_DOMAIN} {
+      reverse_proxy https://{{ include "gitpod.builtinRegistry.internal_name" . }} {
         flush_interval -1
+        transport http {
+          tls_trusted_ca_certs /etc/caddy/registry-certs/ca.crt
+        }
       }
     }
 {{- end }}
