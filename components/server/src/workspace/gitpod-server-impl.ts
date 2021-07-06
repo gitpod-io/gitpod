@@ -1184,7 +1184,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         }
 
         const sources = await this.workspaceLogService.getWorkspaceLogURLs(wsi);
-        if (!sources) {
+        if (!sources || (typeof sources.streams === "object" && Object.keys(sources.streams).length === 0)) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, `Headless logs for ${instanceId} not found`);
         }
         return sources;
