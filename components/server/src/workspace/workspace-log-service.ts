@@ -74,7 +74,15 @@ export class WorkspaceLogService {
         });
 
         const result = new Map<string, string>();
-        tasks.forEach(t => result.set(t.getId(), t.getTerminal()));
+        for (const t of tasks) {
+            if (t.getTerminal() === "") {
+                // this might be the case when there is no terminal for this task, yet.
+                // if we find any such case, we deem the workspace not ready yet, and try to reconnect later,
+                // to be sure to get hold of all terminals created.
+                throw new Error(`task ${t.getId} has no terminal yet`);
+            }
+            result.set(t.getId(), t.getTerminal());
+        }
         return result;
     }
 
@@ -130,6 +138,17 @@ export class WorkspaceLogService {
         await this.retryWhileInstanceIsRunning(wsi, doStream, "stream workspace logs", aborted);
     }
 
+    /**
+     * Retries op while the passed WorkspaceInstance is still starting. Retries are stopped if either:
+     *  - `op` calls `cancel()` and an err is thrown, it is re-thrown by this method
+     *  - `aborted` resolves to `true`: `undefined` is returned
+     *  - if the instance enters the either STOPPING/STOPPED phases, we stop retrying, and return `undefined`
+     * @param wsi
+     * @param op
+     * @param description
+     * @param aborted
+     * @returns
+     */
     protected async retryWhileInstanceIsRunning<T>(wsi: WorkspaceInstance, op: (cancel: () => void) => Promise<T>, description: string, aborted: Deferred<boolean>): Promise<T | undefined> {
         let cancelled = false;
         const cancel = () => { cancelled = true; };
