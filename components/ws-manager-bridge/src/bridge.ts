@@ -283,14 +283,14 @@ export class WorkspaceManagerBridge implements Disposable {
         let ctx: TraceContext = {};
 
         const runningInstances = await this.workspaceDB.trace(ctx).findRunningInstancesWithWorkspaces(installation);
-        const runningInstacesIdx = new Map<string, RunningWorkspaceInfo>();
-        runningInstances.forEach(i => runningInstacesIdx.set(i.latestInstance.id, i));
+        const runningInstancesIdx = new Map<string, RunningWorkspaceInfo>();
+        runningInstances.forEach(i => runningInstancesIdx.set(i.latestInstance.id, i));
 
         const actuallyRunningInstances = await client.getWorkspaces(ctx, new GetWorkspacesRequest());
-        actuallyRunningInstances.getStatusList().forEach(s => runningInstacesIdx.delete(s.getId()));
+        actuallyRunningInstances.getStatusList().forEach(s => runningInstancesIdx.delete(s.getId()));
 
         const promises: Promise<any>[] = [];
-        for (const [instanceId, ri] of runningInstacesIdx.entries()) {
+        for (const [instanceId, ri] of runningInstancesIdx.entries()) {
             const instance = ri.latestInstance;
             if (!(instance.status.phase === 'running' || durationLongerThanSeconds(Date.parse(instance.creationTime), maxTimeToRunningPhaseSeconds))) {
                 log.debug({ instanceId }, "skipping instance", { phase: instance.status.phase, creationTime: instance.creationTime, region: instance.region });

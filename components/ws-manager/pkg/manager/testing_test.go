@@ -26,7 +26,7 @@ import (
 //    Because we need to modify package internal state
 //
 
-// forTestingOnlyGetManager creates a workspace manager instace for testing purposes
+// forTestingOnlyGetManager creates a workspace manager instance for testing purposes
 func forTestingOnlyGetManager(t *testing.T, objects ...client.Object) *Manager {
 	config := Configuration{
 		Namespace:                "default",
