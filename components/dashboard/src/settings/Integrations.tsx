@@ -389,7 +389,7 @@ function GitIntegrations() {
             <div className="w-full flex h-80 mt-2 rounded-xl bg-gray-100 dark:bg-gray-900">
                 <div className="m-auto text-center">
                     <h3 className="self-center text-gray-500 dark:text-gray-400 mb-4">No Git Integrations</h3>
-                    <div className="text-gray-500 mb-6">In addition to the default Git Providers you can authorize<br /> with a self-hosted instace of a provider.</div>
+                    <div className="text-gray-500 mb-6">In addition to the default Git Providers you can authorize<br /> with a self-hosted instance of a provider.</div>
                     <button className="self-center" onClick={() => setModal({ mode: "new" })}>New Integration</button>
                 </div>
             </div>
