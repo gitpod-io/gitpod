@@ -1120,6 +1120,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         return slots[0];
     }
 
+    // Get the current number of "active" slots in a team subscription (count all "assigned" and "unassigned", but not "deactivated" or "cancelled").
+    protected async tsGetActiveSlotQuantity(teamSubscriptionId: string): Promise<number> {
+        const slots = await this.teamSubscriptionDB.findSlotsByTeamSubscriptionId(teamSubscriptionId);
+        return slots.filter(slot => !slot.cancellationDate).length;
+    }
+
     async tsAddSlots(teamSubscriptionId: string, addQuantity: number): Promise<void> {
         const user = this.checkAndBlockUser('tsAddSlots');
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
@@ -1130,7 +1136,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
             throw err;
         }
 
-        const oldQuantity = ts.quantity;
+        const oldQuantity = await this.tsGetActiveSlotQuantity(teamSubscriptionId);
         const newQuantity = oldQuantity + addQuantity;
         try {
             const now = new Date();
@@ -1234,12 +1240,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         const user = this.checkAndBlockUser('tsDeactivateSlot');
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
 
-        // TODO Check number of currently active slots for validation!
-        const newQuantity = ts.quantity - 1;
+        // Check number of currently active slots
+        const newQuantity = (await this.tsGetActiveSlotQuantity(teamSubscriptionId)) - 1;
         try {
             const now = new Date();
-            // Downgrade by 1 unit to the end of the current term
-            await this.doUpdateTeamSubscription(user.id, ts.id, newQuantity, true);
+            // Downgrade by 1 unit
+            await this.doUpdateTeamSubscription(user.id, ts.id, newQuantity, false);
             await this.teamSubscriptionService.deactivateSlot(ts, teamSubscriptionSlotId, now);
         } catch (err) {
             log.error({ userId: user.id }, 'tsDeactivateSlot', err);
@@ -1250,12 +1256,12 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         const user = this.checkAndBlockUser('tsReactivateSlot');
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
 
-        // TODO Check number of currently active slots for validation!
-        const newQuantity = ts.quantity - 1;
+        // Check number of currently active slots
+        const newQuantity = (await this.tsGetActiveSlotQuantity(teamSubscriptionId)) + 1;
         try {
             const now = new Date();
-            // Upgrade by 1 unit to the end of the current term (but don't charge again!)
-            await this.doUpdateTeamSubscription(user.id, ts.id, newQuantity, true);
+            // Upgrade by 1 unit (but don't charge again!)
+            await this.doUpdateTeamSubscription(user.id, ts.id, newQuantity, false);
             await this.teamSubscriptionService.reactivateSlot(ts, teamSubscriptionSlotId, now);
         } catch (err) {
             log.error({ userId: user.id }, 'tsReactivateSlot', err);
