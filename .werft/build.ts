@@ -76,7 +76,7 @@ export async function build(context, version) {
         exec('gcloud container clusters get-credentials dev --zone europe-west1-b --project gitpod-core-dev');
 
         if (k3sWsCluster) {
-            // get and store the ws clsuter kubeconfig to root of the project
+            // get and store the ws cluster kubeconfig to root of the project
             shell.exec("kubectl get secret k3sdev -n werft -o=go-template='{{index .data \"k3s-external.yaml\"}}' | base64 -d > k3s-external.yaml").trim()
         }
         werft.done('prep');
@@ -100,8 +100,6 @@ export async function build(context, version) {
     const retag = ("with-retag" in buildConfig) ? "" : "--dont-retag";
     const cleanSlateDeployment = mainBuild || ("with-clean-slate-deployment" in buildConfig);
     const installEELicense = !("without-ee-license" in buildConfig);
-    // const withWsCluster = parseWsCluster(buildConfig["with-ws-cluster"]);   // e.g., "dev2|gpl-ws-cluster-branch": prepares this branch to host (an additional) workspace cluster
-    // const wsCluster = parseWsCluster(buildConfig["as-ws-cluster"]);         // e.g., "dev2|gpl-fat-cluster-branch": deploys this build as so that it is available under that subdomain as that cluster
 
     werft.log("job config", JSON.stringify({
         buildConfig,
@@ -259,8 +257,12 @@ interface DeploymentConfig {
  */
 export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage) {
     werft.phase("deploy", "deploying to dev");
-    const { version, destname, namespace, domain, url, /*wsCluster, withWsCluster,*/ k3sWsCluster } = deploymentConfig;
-    const [wsdaemonPort, registryNodePort] = findFreeHostPorts("", [
+    const { version, destname, namespace, domain, url, k3sWsCluster } = deploymentConfig;
+    const [wsdaemonPortMeta, registryNodePortMeta] = findFreeHostPorts("", [
+        { start: 10000, end: 11000 },
+        { start: 30000, end: 31000 },
+    ], 'hostports');
+    const [wsdaemonPortK3sWs, registryNodePortK3sWs] = !k3sWsCluster ? [0, 0] : findFreeHostPorts(getK3sWsKubeConfigPath(), [
         { start: 10000, end: 11000 },
         { start: 30000, end: 31000 },
     ], 'hostports');
@@ -359,7 +361,6 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
         if (k3sWsCluster) {
             installGitpodOnK3sWsCluster(commonFlags, getK3sWsKubeConfigPath());
-            // const k3sWsIP = getWsProxyIP(namespace, getK3sWsKubeConfigPath());
         }
         installGitpod(commonFlags);
 
@@ -400,6 +401,8 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
     function installGitpod(commonFlags: string) {
         let flags = commonFlags
+        flags += ` --set components.wsDaemon.servicePort=${wsdaemonPortMeta}`;
+        flags += ` --set components.registryFacade.ports.registry.servicePort=${registryNodePortMeta}`;
         if (k3sWsCluster) {
             // we do not need meta cluster ws components when k3s ws is enabled
             // TODO: Add flags to disable ws component in the meta cluster
@@ -423,6 +426,8 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     function installGitpodOnK3sWsCluster(commonFlags: string, pathToKubeConfig: string) {
         let flags = commonFlags
         flags += ` -f ../.werft/values.k3sWsDisable.yaml`
+        flags += ` --set components.wsDaemon.servicePort=${wsdaemonPortK3sWs}`;
+        flags += ` --set components.registryFacade.ports.registry.servicePort=${registryNodePortK3sWs}`;
         if (storage === "gcp") {
             // notice below that we are not using the k3s cluster to get the gcp-sa-cloud-storage-dev-sync-key. As it is present in the dev cluster only
             exec("kubectl get secret gcp-sa-cloud-storage-dev-sync-key -n werft -o yaml | yq d - metadata | yq w - metadata.name remote-storage-gcloud > remote-storage-gcloud.yaml");
@@ -443,8 +448,6 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         flags += ` --set version=${version}`;
         flags += ` --set hostname=${domain}`;
         flags += ` --set devBranch=${destname}`;
-        flags += ` --set components.wsDaemon.servicePort=${wsdaemonPort}`;
-        flags += ` --set components.registryFacade.ports.registry.servicePort=${registryNodePort}`;
         workspaceFeatureFlags.forEach((f, i) => {
             flags += ` --set components.server.defaultFeatureFlags[${i}]='${f}'`;
         });

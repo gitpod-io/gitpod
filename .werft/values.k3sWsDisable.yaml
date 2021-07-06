@@ -26,6 +26,8 @@ components:
 
 minio:
   enabled: false
+  accessKey: EXAMPLEvalue
+  secretKey: Someone.Should/ReallyChangeThisKey!!
 
 mysql:
   enabled: false

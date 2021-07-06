@@ -145,6 +145,16 @@ components:
         containerPort: 8080
         servicePort: 80
 
+  imageBuilder:
+    disabled: true
+    hostDindData: "/mnt/disks/ssd0/builder"
+    # configure GCP registry
+    registry:
+      name: eu.gcr.io/gitpod-core-dev/registry
+      secretName: gcp-sa-registry-auth
+      path: gcp-sa-registry-auth
+    registryCerts: []
+
 
 # configure GCP registry
 docker-registry:
