@@ -135,7 +135,7 @@ components:
       wsManagerProxy:
         expose: true
         containerPort: 8081
-        servicePort: 6666
+        servicePort: 8081
       httpsProxy:
         expose: true
         containerPort: 9090

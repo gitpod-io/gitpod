@@ -613,7 +613,7 @@ export async function triggerIntegrationTests(version: string, namespace: string
 function registerK3sWsCluster(namespace: string, domain: string, pathToKubeConfigMeta: string, pathToKubeConfigK3s: string) {
     gpctl.buildGpctlBinary()
 
-    const wsProxyUrl = `ws-k3s.${domain}:6666`
+    const wsProxyUrl = `ws-k3s.${domain}:8081`
     werft.phase(phases.REGISTER_K3S_WS_CLUSTER, "Register K3s ws cluster")
 
     // list available clusters
