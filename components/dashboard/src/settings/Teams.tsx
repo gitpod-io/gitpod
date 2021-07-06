@@ -500,7 +500,7 @@ function AllTeams() {
                             <span className="text-sm my-auto text-gray-400 truncate overflow-ellipsis">Purchased on {formatDate(sub?.startDate)}</span>
                         </div>
                         <div className="p-0 my-auto flex flex-col w-2/12">
-                            <span className="my-auto truncate text-gray-500 overflow-ellipsis">{slots.filter(s => s.teamSubscription.id === sub.id).length || "–"}</span>
+                            <span className="my-auto truncate text-gray-500 overflow-ellipsis">{slots.filter(s => s.state !== 'cancelled' && s.teamSubscription.id === sub.id).length || "–"}</span>
                             <span className="text-sm my-auto text-gray-400">Members</span>
                         </div>
                         <div className="p-0 my-auto flex w-4/12">
@@ -726,7 +726,7 @@ function ManageTeamModal(props: {
             <div className="overscroll-contain max-h-96 overflow-y-auto">
                 {slots.map((slot, index) => {
                     return (
-                        <Slot key={slot.id} slot={slot} inputHandler={props.slotInputHandler} />
+                        <SlotInput key={slot.id} slot={slot} inputHandler={props.slotInputHandler} />
                     )
                 })}
             </div>
@@ -744,7 +744,7 @@ interface SlotInputHandler {
     reactivate: (slot: TeamSubscriptionSlotResolved) => void;
 }
 
-function Slot(props: {
+function SlotInput(props: {
     slot: Slot,
     inputHandler: SlotInputHandler;
 }) {
