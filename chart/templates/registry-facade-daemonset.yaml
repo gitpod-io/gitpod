@@ -35,6 +35,8 @@ spec:
 {{ include "gitpod.workspaceAffinity" $this | indent 6 }}
       serviceAccountName: registry-facade
       enableServiceLinks: false
+      initContainers:
+{{ include "gitpod.ca-certificates.container" $this | indent 8 }}
       containers:
       - name: registry-facade
         image: {{ template "gitpod.comp.imageFull" $this }}
@@ -53,6 +55,7 @@ spec:
         - name: GRPC_GO_RETRY
           value: "on"
         volumeMounts:
+{{ include "gitpod.ca-certificates.volumeMount" $this | indent 8 }}
         - name: cache
           mountPath: "/mnt/cache"
         - name: config
@@ -90,5 +93,6 @@ spec:
         secret:
           secretName: {{ .Values.certificatesSecret.secretName }}
       {{- end }}
+{{- include "gitpod.ca-certificates.volume" $this | indent 6 }}
 {{ toYaml .Values.defaults | indent 6 }}
 {{ end }}
