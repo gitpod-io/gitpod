@@ -34,7 +34,7 @@ data:
       },
       "pprofAddr": "localhost:6060",
       "prometheusAddr": "localhost:9500",
-      "hostURL": "https://{{ $.Values.hostname }}"
+      "hostURL": "https://{{ $.Values.hostname }}",
       "egressTraffic": {
         "dt": "2m",
         "excessive": {

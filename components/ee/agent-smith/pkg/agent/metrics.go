@@ -4,13 +4,23 @@
 
 package agent
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"sync"
+
+	"github.com/prometheus/client_golang/prometheus"
+)
+
+const (
+	counterMapStatusStored  = "stored"
+	counterMapStatusDeleted = "deleted"
+)
 
 type metrics struct {
 	penaltyAttempts        *prometheus.CounterVec
 	penaltyFailures        *prometheus.CounterVec
 	signatureCheckMiss     prometheus.Counter
 	signatureCheckFailures prometheus.Counter
+	currentlyMonitoredPIDS *prometheus.CounterVec
 }
 
 func newAgentMetrics() *metrics {
@@ -32,18 +42,30 @@ func newAgentMetrics() *metrics {
 			Help:      "The total amount of failed attempts that agent-smith is trying to apply a penalty.",
 		}, []string{"penalty", "reason"},
 	)
-	m.signatureCheckMiss = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: "gitpod",
-		Subsystem: "agent_smith",
-		Name:      "signature_check_missed_total",
-		Help:      "The total amount of times where the processes ended before we could open the executable.",
-	})
-	m.signatureCheckFailures = prometheus.NewCounter(prometheus.CounterOpts{
-		Namespace: "gitpod",
-		Subsystem: "agent_smith",
-		Name:      "signature_check_failed_total",
-		Help:      "The total amount of failed signature check attempts",
-	})
+	m.signatureCheckMiss = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: "gitpod",
+			Subsystem: "agent_smith",
+			Name:      "signature_check_missed_total",
+			Help:      "The total amount of times where the processes ended before we could open the executable.",
+		},
+	)
+	m.signatureCheckFailures = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: "gitpod",
+			Subsystem: "agent_smith",
+			Name:      "signature_check_failed_total",
+			Help:      "The total amount of failed signature check attempts",
+		},
+	)
+	m.currentlyMonitoredPIDS = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "gitpod",
+			Subsystem: "agent_smith",
+			Name:      "monitored_pids",
+			Help:      "Current count of pids under investigation",
+		}, []string{"process_state"},
+	)
 	return m
 }
 
@@ -57,6 +79,7 @@ func (m *metrics) Register(reg prometheus.Registerer) error {
 		m.penaltyFailures,
 		m.signatureCheckMiss,
 		m.signatureCheckFailures,
+		m.currentlyMonitoredPIDS,
 	}
 	for _, c := range collectors {
 		err := reg.Register(c)
@@ -66,4 +89,31 @@ func (m *metrics) Register(reg prometheus.Registerer) error {
 	}
 
 	return nil
+}
+
+type syncMapCounter struct {
+	sync.Map
+	counter *prometheus.CounterVec
+}
+
+func (m *syncMapCounter) WithCounter(c *prometheus.CounterVec) {
+	m.counter = c
+}
+
+func (m *syncMapCounter) Store(key, value interface{}) {
+	m.Map.Store(key, value)
+	if m.counter != nil {
+		m.counter.WithLabelValues(counterMapStatusStored).Inc()
+	}
+}
+
+func (m *syncMapCounter) Delete(key interface{}) {
+	m.Map.Delete(key)
+	if m.counter != nil {
+		m.counter.WithLabelValues(counterMapStatusDeleted).Inc()
+	}
+}
+
+func (m *syncMapCounter) Range(f func(key, value interface{}) bool) {
+	m.Map.Range(f)
 }

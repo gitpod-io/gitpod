@@ -15,7 +15,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 	"unsafe"
@@ -50,7 +49,7 @@ type Smith struct {
 
 	notifiedInfringements *lru.Cache
 	perfHandler           chan perfHandlerFunc
-	pidsMap               sync.Map
+	pidsMap               syncMapCounter
 
 	egressTrafficCheckHandler func(pid int) (int64, error)
 	timeElapsedHandler        func(t time.Time) time.Duration
@@ -128,6 +127,10 @@ func NewAgentSmith(cfg Config) (*Smith, error) {
 		}
 	}
 
+	m := newAgentMetrics()
+	pidsMap := syncMapCounter{}
+	pidsMap.WithCounter(m.currentlyMonitoredPIDS)
+
 	res := &Smith{
 		EnforcementRules: map[string]EnforcementRules{
 			defaultRuleset: {
@@ -144,9 +147,10 @@ func NewAgentSmith(cfg Config) (*Smith, error) {
 		GitpodAPI:                 api,
 		notifiedInfringements:     notificationCache,
 		perfHandler:               make(chan perfHandlerFunc, 10),
-		metrics:                   newAgentMetrics(),
+		metrics:                   m,
 		egressTrafficCheckHandler: getEgressTraffic,
 		timeElapsedHandler:        time.Since,
+		pidsMap:                   pidsMap,
 	}
 	if cfg.Enforcement.Default != nil {
 		if err := cfg.Enforcement.Default.Validate(); err != nil {
@@ -249,10 +253,10 @@ type GradedInfringementKind string
 
 // GradeKind produces a graded infringement kind from severity and kind
 func GradeKind(kind InfringementKind, severity InfringementSeverity) GradedInfringementKind {
-	if len(severity) > 0 {
-		return GradedInfringementKind(fmt.Sprintf("%s %s", severity, kind))
+	if len(severity) == 0 {
+		return GradedInfringementKind(kind)
 	}
-	return GradedInfringementKind(kind)
+	return GradedInfringementKind(fmt.Sprintf("%s %s", severity, kind))
 }
 
 // Severity returns the severity of the graded infringement kind
@@ -419,6 +423,8 @@ func (agent *Smith) cleanupDeadPIDS(ctx context.Context) {
 	}
 }
 
+// cleanupDeadPidsCallback removes from pidsMap all the process IDs
+// that are not active anymore or don't have a workspace associated
 func (agent *Smith) cleanupDeadPidsCallback() {
 	agent.pidsMap.Range(func(key, value interface{}) bool {
 		p := key.(int)
@@ -443,7 +449,6 @@ func (agent *Smith) cleanupDeadPidsCallback() {
 
 		return true
 	})
-
 }
 
 // Penalize acts on infringements and e.g. stops pods
