@@ -38,21 +38,7 @@ spec:
         {{- end }}
     spec:
 {{ include "gitpod.workspaceAffinity" $this | indent 6 }}
-      # see https://kubernetes.io/docs/tasks/administer-cluster/guaranteed-scheduling-critical-addon-pods/ for more
-      # details on this priority class.
-      # Pior to Kubernetes 1.17 critical pods can only be scheduled in kube-system: https://github.com/kubernetes/kubernetes/pull/76310
-      # Leaving this in here so that others might enable it and we don't forget about this when 1.17 comes around in GKE.
-      # priorityClassName: system-node-critical
-      tolerations:
-      - key: node.kubernetes.io/disk-pressure
-        operator: "Exists"
-        effect: "NoExecute"
-      - key: node.kubernetes.io/memory-pressure
-        operator: "Exists"
-        effect: "NoExecute"
-      - key: node.kubernetes.io/out-of-disk
-        operator: "Exists"
-        effect: "NoExecute"
+      priorityClassName: system-node-critical
       serviceAccountName: ws-daemon
       hostPID: true
       volumes:
