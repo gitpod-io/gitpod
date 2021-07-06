@@ -51,7 +51,6 @@ spec:
   {{- if $comp.clusterIP }}
   clusterIP: {{ $comp.clusterIP }}
   {{- end }}
-  sessionAffinity: {{ $comp.serviceSessionAffinity | default "None" }}
   {{ if $comp.serviceExternalTrafficPolicy -}}
   externalTrafficPolicy: {{ $comp.serviceExternalTrafficPolicy }}
   {{- end }}
