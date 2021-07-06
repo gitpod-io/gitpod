@@ -143,12 +143,24 @@ https://{$GITPOD_DOMAIN} {
 		redir {http.gitpod.workspace_download_url} 303
 	}
 
+	@backend_wss_hdr {
+			header sec-websocket-key *
+			path /api/gitpod
+	}
+	handle @backend_wss_hdr {
+			uri strip_prefix /api
+			reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+					import upstream_headers
+			}
+	}
+
 	@backend_wss path /api/gitpod
 	handle @backend_wss {
-		uri strip_prefix /api
-		reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-			import upstream_headers
-		}
+			uri strip_prefix /api
+			reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
+					header_up +sec-websocket-key "bxQxhPbGKQYJK1buwLGVpg=="
+					import upstream_headers
+			}
 	}
 
 	@backend path /api/* /headless-logs/*
