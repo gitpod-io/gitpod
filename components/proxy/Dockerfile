@@ -42,4 +42,4 @@ COPY --from=builder /caddy /usr/bin/caddy
 COPY conf/Caddyfile /etc/caddy/Caddyfile
 COPY conf/vhost.empty /etc/caddy/vhosts/vhost.empty
 
-CMD [ "caddy", "run", "-config", "/etc/caddy/Caddyfile" ]
+CMD [ "caddy", "run", "-watch", "-config", "/etc/caddy/Caddyfile" ]
