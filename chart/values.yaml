@@ -215,9 +215,12 @@ components:
       # By default, the builtin registry is accessed through the proxy.
       # If bypassProxy is true, the builtin registry is accessed via <registry-name>.<namespace>.svc.cluster.local directly.
       bypassProxy: false
-    registryCerts:
-    - name: builtin
-      secret: builtin-registry-certs
+    # When your registry uses self-signed certs (that's the default) and you set `bypassProxy: true`,
+    # then you should set the certs here like this:
+    # registryCerts:
+    #   - name: builtin
+    #     secret: builtin-registry-certs
+    registryCerts: []
     dindImage: docker:19.03-dind
     dindMtu: ""
     dindResources:
