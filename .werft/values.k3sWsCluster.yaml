@@ -37,12 +37,6 @@ components:
       cpu: 1m
       memory: 32Mi
 
-  server:
-    disabled: true
-  messagebus:
-    disabled: true
-  dashboard:
-    disabled: true
   registryFacade:
     daemonSet: true
     # in preview envs, we never want DaemonSets not to be scheduled (because they don't trigger scaleup)
@@ -94,22 +88,9 @@ components:
                 ephemeral-storage: 5Gi
                 memory: 4608Mi  # = 2 * 2304Mi
 
-  proxy:
-    disabled: true
-
   # Enable events trace
   wsManager:
     eventTraceLogLocation: "/tmp/evts.json"
-
-  imageBuilder:
-    disabled: true
-    hostDindData: "/mnt/disks/ssd0/builder"
-    # configure GCP registry
-    registry:
-      name: eu.gcr.io/gitpod-core-dev/registry
-      secretName: gcp-sa-registry-auth
-      path: gcp-sa-registry-auth
-    registryCerts: []
 
   wsDaemon:
     hostWorkspaceArea: /mnt/disks/ssd0/workspaces
@@ -154,7 +135,7 @@ components:
       wsManagerProxy:
         expose: true
         containerPort: 8081
-        servicePort: 8081
+        servicePort: 6666
       httpsProxy:
         expose: true
         containerPort: 9090
@@ -167,27 +148,6 @@ components:
 
 # configure GCP registry
 docker-registry:
-  enabled: false
-
-minio:
-  enabled: false
-  accessKey: EXAMPLEvalue
-  secretKey: Someone.Should/ReallyChangeThisKey!!
-  serviceAccount:
-    name: ws-daemon
-    create: false
-      # make sure the pod ends up where it's supposed to stay
-  affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-        - matchExpressions:
-          - key: gitpod.io/workload_workspace
-            operator: In
-            values:
-            - "true"
-
-mysql:
   enabled: false
 
 rabbitmq:
