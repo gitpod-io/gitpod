@@ -89,42 +89,13 @@ affinity:
 {{- define "gitpod.workspaceAffinity" -}}
 {{- $ := .root -}}
 {{- $gp := .gp -}}
-{{- $expr := dict -}}
-{{- if $gp.components.workspace.affinity -}}
-{{- if $gp.components.workspace.affinity.default -}}{{- $_ := set $expr $gp.components.workspace.affinity.default "" -}}{{- end -}}
-{{- if $gp.components.workspace.affinity.prebuild -}}{{- $_ := set $expr $gp.components.workspace.affinity.prebuild "" -}}{{- end -}}
-{{- if $gp.components.workspace.affinity.probe -}}{{- $_ := set $expr $gp.components.workspace.affinity.probe "" -}}{{- end -}}
-{{- if $gp.components.workspace.affinity.regular -}}{{- $_ := set $expr $gp.components.workspace.affinity.regular "" -}}{{- end -}}
-{{- end -}}
-{{- /*
-  In a previous iteration of the templates the node affinity was part of the workspace pod template.
-  In that case we need to extract the affinity from the template and add it to the workspace affinity set.
-*/ -}}
-{{- if $gp.components.workspace.template -}}
-{{- if $gp.components.workspace.template.spec -}}
-{{- if $gp.components.workspace.template.spec.affinity -}}
-{{- if $gp.components.workspace.template.spec.affinity.nodeAffinity -}}
-{{- if $gp.components.workspace.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution -}}
-{{- range $_, $t := $gp.components.workspace.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms -}}
-{{- range $_, $m := $t.matchExpressions -}}
-    {{- $_ := set $expr $m.key "" -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-{{- if not (eq (len $expr) 0) -}}
+{{- $comp := .comp -}}
+{{- if $comp.affinity -}}
 affinity:
-  nodeAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-      {{- range $key, $val := $expr }}
-      - matchExpressions:
-        - key: {{ $key }}
-          operator: Exists
-      {{- end }}
+{{ $comp.affinity | toYaml | indent 2 }}
+{{- else if $gp.affinity -}}
+affinity:
+{{ $gp.affinity | toYaml | indent 2 }}
 {{- end -}}
 {{- end -}}
 
@@ -374,4 +345,40 @@ storage:
     runAsNonRoot: true
     runAsUser: 65532
   terminationMessagePolicy: FallbackToLogsOnError
+{{- end -}}
+
+{{/* Container definition to update ca-certificates and add gitpod self-signed CA certificate */}}
+{{- define "gitpod.ca-certificates.container" -}}
+- name: update-ca-certificates
+  image: alpine:3.14
+  command:
+  - sh
+  - -c
+  - |
+    set -e
+    apk add --update ca-certificates
+    cp /etc/ssl/gitpod-ca.crt /usr/local/share/ca-certificates
+    update-ca-certificates
+    cp /etc/ssl/certs/* /ssl-certs
+  volumeMounts:
+    - name: cacerts
+      mountPath: "/ssl-certs"
+    - name: registry-certs
+      subPath: ca.crt
+      mountPath: /etc/ssl/gitpod-ca.crt
+{{- end -}}
+
+{{/* Volume mount for updated ca-certificates */}}
+{{- define "gitpod.ca-certificates.volumeMount" }}
+- name: cacerts
+  mountPath: /etc/ssl/certs
+{{- end -}}
+
+{{/* emptyDir volume ca-certificates */}}
+{{- define "gitpod.ca-certificates.volume" }}
+- name: cacerts
+  emptyDir: {}
+- name: registry-certs
+  secret:
+    secretName: builtin-registry-certs
 {{- end -}}
