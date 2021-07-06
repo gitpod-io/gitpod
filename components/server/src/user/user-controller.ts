@@ -600,23 +600,24 @@ export class UserController {
         req.query.returnTo = this.getSafeReturnToParam(req);
     }
 
+    protected urlStartsWith(url: string, prefixUrl: string): boolean {
+        prefixUrl += prefixUrl.endsWith("/") ? "" : "/";
+        return url.toLowerCase().startsWith(prefixUrl.toLowerCase());
+    }
+
     protected getSafeReturnToParam(req: express.Request) {
-        const where: string | undefined = req.query.redirect || req.query.returnTo;
-        if (!where) {
+        const returnToURL: string | undefined = req.query.redirect || req.query.returnTo;
+        if (!returnToURL) {
             log.debug({ sessionId: req.sessionID }, "Empty redirect URL");
             return;
         }
-        try {
-            const redirectUrl = new URL(where).toString();
-            const hostUrl = (this.env.hostUrl.url as URL).toString();
-            const brandingUrl = new URL(this.env.brandingConfig.homepage).toString();
-            if (redirectUrl === hostUrl || redirectUrl === brandingUrl) {
-                return redirectUrl;
-            }
-        } catch {
-            log.debug({ sessionId: req.sessionID }, "Unexpected URL error", { query: req.query });
+
+        const hostUrl = this.env.hostUrl.url as URL;
+        if (this.urlStartsWith(returnToURL, hostUrl.toString()) || this.urlStartsWith(returnToURL, this.env.brandingConfig.homepage)) {
+            return returnToURL
         }
-        log.debug({ sessionId: req.sessionID }, "Valid redirect URL but not matching", { query: req.query });
+
+        log.debug({ sessionId: req.sessionID }, "The redirect URL does not match", { query: req.query });
         return;
     }
 }
