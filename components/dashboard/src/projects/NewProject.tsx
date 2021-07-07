@@ -156,20 +156,21 @@ export default function NewProject() {
     }
 
     const reposToRender = Array.from(reposInAccounts).filter(r => r.account === selectedAccount && r.name.includes(repoSearchFilter));
-    const accounts = Array.from(new Set(Array.from(reposInAccounts).map(r => ({ name: r.account, avatarUrl: r.accountAvatarUrl }))));
+    const accounts = new Map<string, { avatarUrl: string }>();
+    reposInAccounts.forEach(r => { if (!accounts.has(r.account)) accounts.set(r.account, { avatarUrl: r.accountAvatarUrl }) });
 
-    const getDropDownEntries = (accounts: {name: string, avatarUrl: string}[]) => {
+    const getDropDownEntries = (accounts: Map<string, { avatarUrl: string }>) => {
         const renderItemContent = (label: string, icon: string, addClasses?: string) => (<div className="w-full flex">
-            <img src={icon} className="w-4 my-auto" />
-            <span className={"pl-3 text-gray-600 dark:text-gray-100 text-base " + (addClasses || "")}>{label}</span>
+            <img src={icon} className="rounded-full w-6 h-6 my-auto" />
+            <span className={"pl-2 text-gray-600 dark:text-gray-100 text-base " + (addClasses || "")}>{label}</span>
         </div>)
         const result: ContextMenuEntry[] = [];
-        for (const account of accounts) {
+        for (const [ account, props ] of accounts.entries()) {
             result.push({
-                title: account.name,
-                customContent: renderItemContent(account.name, account.avatarUrl, "font-semibold"),
+                title: account,
+                customContent: renderItemContent(account, props.avatarUrl, "font-semibold"),
                 separator: true,
-                onClick: () => setSelectedAccount(account.name),
+                onClick: () => setSelectedAccount(account),
             })
         }
         if (isGitHub()) {
@@ -191,14 +192,14 @@ export default function NewProject() {
 
     const renderSelectRepository = () => {
 
-        const icon = accounts.find(a => a.name === selectedAccount)?.avatarUrl;
+        const icon = selectedAccount && accounts.get(selectedAccount)?.avatarUrl;
 
         const renderRepos = () => (<div className="mt-10 border rounded-t-xl border-gray-100 flex-col">
             <div className="px-8 pt-8 flex flex-col space-y-2">
                 <ContextMenu classes="w-full left-0 cursor-pointer" menuEntries={getDropDownEntries(accounts)}>
                     <div className="w-full">
-                        <img src={icon} className="w-4 absolute top-1/3 left-4" />
-                        <input className="w-full px-11 cursor-pointer font-semibold" readOnly type="text" value={selectedAccount || ""}></input>
+                        <img src={icon} className="rounded-full w-6 h-6 absolute top-1/4 left-4" />
+                        <input className="w-full px-12 cursor-pointer font-semibold" readOnly type="text" value={selectedAccount || ""}></input>
                         <img src={CaretDown} title="Select Account" className="filter-grayscale absolute top-1/2 right-3" />
                     </div>
                 </ContextMenu>
