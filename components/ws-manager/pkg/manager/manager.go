@@ -984,13 +984,13 @@ func (m *Manager) GetWorkspaces(ctx context.Context, req *api.GetWorkspacesReque
 
 // getAllWorkspaceObjects retturns all (possibly incomplete) workspaceObjects of all workspaces this manager is currently aware of.
 // If a workspace has a pod that pod is part of the returned WSO.
-func (m *Manager) getAllWorkspaceObjects(ctx context.Context) ([]workspaceObjects, error) {
+func (m *Manager) getAllWorkspaceObjects(ctx context.Context) (objs []workspaceObjects, err error) {
 	//nolint:ineffassign
 	span, ctx := tracing.FromContext(ctx, "getAllWorkspaceObjects")
-	defer tracing.FinishSpan(span, nil)
+	defer tracing.FinishSpan(span, &err)
 
 	var pods corev1.PodList
-	err := m.Clientset.List(ctx, &pods, workspaceObjectListOptions(m.Config.Namespace))
+	err = m.Clientset.List(ctx, &pods, workspaceObjectListOptions(m.Config.Namespace))
 	if err != nil {
 		return nil, xerrors.Errorf("cannot list workspaces: %w", err)
 	}
@@ -1072,11 +1072,11 @@ func isKubernetesObjNotFoundError(err error) bool {
 }
 
 // connectToWorkspaceDaemon establishes a connection to the ws-daemon daemon running on the node of the pod/workspace.
-func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObjects) (wsdaemon.WorkspaceContentServiceClient, error) {
+func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObjects) (wcsClient wsdaemon.WorkspaceContentServiceClient, err error) {
 	//nolint:ineffassign
 	span, ctx := tracing.FromContext(ctx, "connectToWorkspaceDaemon")
 	tracing.ApplyOWI(span, wso.GetOWI())
-	defer tracing.FinishSpan(span, nil)
+	defer tracing.FinishSpan(span, &err)
 
 	nodeName := wso.NodeName()
 	if nodeName == "" {
@@ -1088,7 +1088,7 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 	// to allow for transitioning to the newer service topology support.
 	// Also the Clientset is cache-enabled so we can leverage that.
 	var endpointsList corev1.EndpointsList
-	err := m.Clientset.List(ctx, &endpointsList,
+	err = m.Clientset.List(ctx, &endpointsList,
 		&client.ListOptions{
 			Namespace: m.Config.Namespace,
 			LabelSelector: labels.SelectorFromSet(labels.Set{

@@ -458,7 +458,7 @@ func (s *Scheduler) selectNodeForPod(ctx context.Context, pod *corev1.Pod, ghost
 	span, ctx := tracing.FromContext(ctx, "selectNodeForPod")
 	// We deliberately DO NOT add the err to tracing here. If things actually fail the caller will trace the error.
 	// If we did trace the error here we'd just spam our traces with false positives.
-	defer tracing.FinishSpan(span, nil)
+	defer tracing.FinishSpan(span, &err)
 
 	state, err = s.buildState(ctx, pod, ghostsVisible)
 	if err != nil {
