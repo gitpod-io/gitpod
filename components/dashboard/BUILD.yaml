@@ -52,9 +52,9 @@ scripts:
     script: |-
       trap "kill 0" EXIT
       export NODE_OPTIONS='--max-old-space-size=3192'
-      yarn start &
+      PORT=3001 yarn start &
 
       telepresence --swap-deployment dashboard \
                    --method inject-tcp \
-                   --expose 13000:80 \
-                   --run socat TCP-LISTEN:13000,reuseaddr,fork TCP:localhost:3000
+                   --expose 13001:80 \
+                   --run socat TCP-LISTEN:13001,reuseaddr,fork TCP:localhost:3001
