@@ -315,14 +315,12 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         // trigger certificate issuing
         werft.log('certificate', "organizing a certificate for the preview environment...");
         await issueMetaCerts();
+        await installMetaCertificates();
         if (k3sWsCluster) {
             await issueK3sWsCerts(k3sWsProxyIP);
-        }
-        await installMetaCertificates();
-
-        if (k3sWsCluster) {
             await installWsCertificates();
         }
+
         werft.done('certificate');
 
         werft.done('prep');
