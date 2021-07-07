@@ -9,8 +9,7 @@ export class IssueCertificateParams {
     dnsZoneDomain: string
     domain: string
     ip: string
-    additionalWsSubdomains: string[]
-    includeDefaults: boolean
+    additionalSubdomains: string[]
     pathToKubeConfig: string
     bucketPrefixTail: string
     certNamespace: string
@@ -24,14 +23,11 @@ export class InstallCertificateParams {
     destinationNamespace: string
 }
 
-function getDefaultSubDomains(): string[] {
-    return ["", "*.", "*.ws-dev."];
-}
-
 export async function issueCertficate(werft, params: IssueCertificateParams) {
-    const subdomains = params.includeDefaults ? getDefaultSubDomains() : [];
-    for (const sd of params.additionalWsSubdomains) {
-        subdomains.push(`*.ws-${sd}.`);
+    var subdomains = [];
+    werft.log("certificate", `Subdomains: ${params.additionalSubdomains}`)
+    for (const sd of params.additionalSubdomains) {
+        subdomains.push(sd);
     }
 
     // sanity: check if there is a "SAN short enough to fit into CN (63 characters max)"
@@ -63,10 +59,10 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
 
     werft.log('certificate', `waiting until certificate ${params.certNamespace}/${params.namespace} is ready...`)
     let notReadyYet = true;
-    while (notReadyYet) {
-        werft.log('certificate', `polling state of certs/${params.namespace}...`)
+    for (let i = 0; i < 90 && notReadyYet; i++) {
+        werft.log('certificate', `polling state of ${params.certNamespace}/${params.namespace}...`)
         const result = exec(`export KUBECONFIG=${params.pathToKubeConfig} && kubectl -n ${params.certNamespace} get certificate ${params.namespace} -o jsonpath="{.status.conditions[?(@.type == 'Ready')].status}"`, { silent: true, dontCheckRc: true });
-        if (result.code === 0 && result.stdout === "True") {
+        if (result != undefined && result.code === 0 && result.stdout === "True") {
             notReadyYet = false;
             break;
         }
@@ -76,13 +72,26 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
 }
 
 export async function installCertficate(werft, params: InstallCertificateParams) {
+    let notReadyYet = true;
     werft.log('certificate', `copying certificate from "${params.certNamespace}/${params.certName}" to "${params.destinationNamespace}/${params.certSecretName}"`);
-    // certmanager is configured to create a secret in the namespace "certs" with the name "${namespace}".
-    exec(`export KUBECONFIG=${params.pathToKubeConfig} && kubectl get secret ${params.certName} --namespace=${params.certNamespace} -o yaml \
-        | yq d - 'metadata.namespace' \
-        | yq d - 'metadata.uid' \
-        | yq d - 'metadata.resourceVersion' \
-        | yq d - 'metadata.creationTimestamp' \
-        | sed 's/${params.certName}/${params.certSecretName}/g' \
-        | kubectl apply --namespace=${params.destinationNamespace} -f -`);
+    const cmd = `export KUBECONFIG=${params.pathToKubeConfig} && kubectl get secret ${params.certName} --namespace=${params.certNamespace} -o yaml \
+    | yq d - 'metadata.namespace' \
+    | yq d - 'metadata.uid' \
+    | yq d - 'metadata.resourceVersion' \
+    | yq d - 'metadata.creationTimestamp' \
+    | sed 's/${params.certName}/${params.certSecretName}/g' \
+    | kubectl apply --namespace=${params.destinationNamespace} -f -`
+
+    for (let i = 0; i < 60 && notReadyYet; i++) {
+        const result = exec(cmd, { silent: true, dontCheckRc: true });
+        if (result != undefined && result.code === 0) {
+            notReadyYet = false;
+            break;
+        }
+        werft.log('certificate', `Could not copy "${params.certNamespace}/${params.certName}", will retry`);
+        await sleep(5000);
+    }
+    if (!notReadyYet) {
+        werft.log('certificate', `copied certificate from "${params.certNamespace}/${params.certName}" to "${params.destinationNamespace}/${params.certSecretName}"`);
+    }
 }
