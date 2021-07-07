@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -619,11 +620,37 @@ func (agent *Smith) processPerfRecord(rec perf.Record) {
 	}
 }
 
+// isSupervisor checks if the execve syscall
+// is relative to a supervisor process
+// This check must be very fast to avoid blocking the
+// reading of the perf buffer so no library have been used
+// like prometheus/procfs which reads the whole process tree before
+// allowing to read the executable path
+// What does it do
+// - check if the binary name is supervisor
+// - check if it is the actual supervisor we ship in the workspace
+func isSupervisor(execve Execve) bool {
+	if execve.Filename == "supervisor" {
+		exePath := path.Join("/proc", strconv.Itoa(execve.TID), "exe")
+
+		// error checking is skipped because the readlink syscall will not find
+		// the destiantion path since its in another mount namespace.
+		absPath, _ := os.Readlink(exePath)
+		if absPath == "/.supervisor/supervisor" {
+			return true
+		}
+	}
+	return false
+}
+
 // handles an execve event checks if it's infringing
 func (agent *Smith) handleExecveEvent(execve Execve) func() (*InfringingWorkspace, error) {
-	// this is not the exact process startup time
-	// but for the type of comparison we need to do is enough
-	agent.pidsMap.Store(execve.TID, time.Now())
+
+	if isSupervisor(execve) {
+		// this is not the exact process startup time
+		// but for the type of comparison we need to do is enough
+		agent.pidsMap.Store(execve.TID, time.Now())
+	}
 
 	return func() (*InfringingWorkspace, error) {
 		if agent.Config.Blacklists == nil {
