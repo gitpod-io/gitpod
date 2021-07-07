@@ -59,7 +59,7 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
         -var 'subdomains=[${subdomains.map(s => `"${s}"`).join(", ")}]'`;
 
     werft.log("certificate", "Terraform command for cert creation: " + cmd)
-    await exec(cmd, { slice: 'certificate', async: true });
+    exec(cmd, { slice: 'certificate' });
 
     werft.log('certificate', `waiting until certificate ${params.certNamespace}/${params.namespace} is ready...`)
     let notReadyYet = true;
