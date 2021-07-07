@@ -1909,10 +1909,13 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     public async createProject(params: CreateProjectParams): Promise<Project> {
         this.checkUser("createProject");
         const { name, cloneUrl, teamId, appInstallationId } = params;
+        // Anyone who can read a team's information (i.e. any team member) can create a new project.
+        await this.guardTeamOperation(teamId, "get");
         return this.projectDB.createProject(name, cloneUrl, teamId, appInstallationId);
     }
     public async getProjects(teamId: string): Promise<ProjectInfo[]> {
         this.checkUser("getProjects");
+        await this.guardTeamOperation(teamId, "get");
         const result: Project[] = [];
         const toProjectInfo = (p: Project) => ({ ...p });
         result.push(...(await this.projectDB.findProjectsByTeam(teamId)).map(toProjectInfo));
@@ -1920,6 +1923,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     }
     public async getPrebuilds(teamId: string, project: string): Promise<PrebuildInfo[]> {
         this.checkAndBlockUser("getPrebuilds");
+        await this.guardTeamOperation(teamId, "get");
         return [];
     }
     //

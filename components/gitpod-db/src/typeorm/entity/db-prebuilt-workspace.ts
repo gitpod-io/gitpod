@@ -24,6 +24,18 @@ export class DBPrebuiltWorkspace implements PrebuiltWorkspace {
     @Column()
     commit: string;
 
+    @Column({
+        default: '',
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+    })
+    projectId?: string;
+
+    @Column({
+        default: '',
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+    })
+    branch?: string;
+
     @Column()
     @Index("ind_6a04b7005d5ad0e664725f9f17")
     state: PrebuiltWorkspaceState;

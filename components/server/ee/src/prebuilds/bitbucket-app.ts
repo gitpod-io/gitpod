@@ -10,7 +10,7 @@ import { UserDB } from '@gitpod/gitpod-db/lib';
 import { User } from '@gitpod/gitpod-protocol';
 import { PrebuildManager } from '../prebuilds/prebuild-manager';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { StartPrebuildResult } from './github-app';
+import { StartPrebuildResult } from './prebuild-manager';
 import { TokenService } from '../../../src/user/token-service';
 
 @injectable()
@@ -91,7 +91,8 @@ export class BitbucketApp {
             }
 
             console.log('Starting prebuild.', { contextURL })
-            const ws = await this.prebuildManager.startPrebuild({ span }, user, contextURL, data.gitCloneUrl, data.commitHash);
+            // todo@alex: add branch and project args
+            const ws = await this.prebuildManager.startPrebuild({ span }, { user, contextURL, cloneURL: data.gitCloneUrl, commit: data.commitHash});
             return ws;
         } finally {
             span.finish();

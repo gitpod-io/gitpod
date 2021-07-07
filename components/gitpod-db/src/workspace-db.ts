@@ -5,7 +5,6 @@
  */
 
 import { DeepPartial } from 'typeorm';
-import { injectable } from 'inversify';
 
 import { Workspace, WorkspaceInfo, WorkspaceInstance, WorkspaceInstanceUser, WhitelistedRepository, Snapshot, LayoutData, PrebuiltWorkspace, PrebuiltWorkspaceUpdatable, RunningWorkspaceInfo, WorkspaceAndInstance, WorkspaceType } from '@gitpod/gitpod-protocol';
 
@@ -112,80 +111,6 @@ export interface WorkspaceDB {
     storeLayoutData(layoutData: LayoutData): Promise<LayoutData>;
 
     hardDeleteWorkspace(workspaceID: string): Promise<void>;
-}
 
-@injectable()
-export abstract class AbstractWorkspaceDB implements WorkspaceDB {
-    abstract connect(maxTries: number, timeout: number): Promise<void>;
-
-    abstract store(workspace: Workspace): Promise<Workspace>;
-    abstract updatePartial(workspaceId: string, partial: DeepPartial<Workspace>): Promise<void>;
-    abstract findById(id: string): Promise<MaybeWorkspace>;
-    abstract findByInstanceId(id: string): Promise<MaybeWorkspace>;
-    abstract find(options: FindWorkspacesOptions): Promise<WorkspaceInfo[]>;
-    abstract findWorkspacePortsAuthDataById(workspaceId: string): Promise<WorkspacePortsAuthData | undefined>;
-
-    abstract findInstanceById(workspaceInstanceId: string): Promise<MaybeWorkspaceInstance>;
-    abstract findInstances(workspaceId: string): Promise<WorkspaceInstance[]>;
-    abstract findWorkspacesByUser(userId: string): Promise<Workspace[]>;
-    abstract internalStoreInstance(instance: WorkspaceInstance): Promise<WorkspaceInstance>;
-    abstract findRegularRunningInstances(userId?: string): Promise<WorkspaceInstance[]>;
-    abstract findRunningInstancesWithWorkspaces(installation?: string, userId?: string): Promise<RunningWorkspaceInfo[]>;
-    abstract findSessionsInPeriod(userId: string, periodStart: string, periodEnd: string): Promise<WorkspaceInstanceSessionWithWorkspace[]>;
-    abstract findWorkspacesForGarbageCollection(minAgeInDays: number, limit: number): Promise<WorkspaceAndOwner[]>;
-    abstract findWorkspacesForContentDeletion(minSoftDeletedTimeInDays: number, limit: number): Promise<WorkspaceOwnerAndSoftDeleted[]>;
-    abstract findPrebuiltWorkspacesForGC(daysUnused: number, limit: number): Promise<WorkspaceAndOwner[]>
-    abstract findAllWorkspaceAndInstances(offset: number, limit: number, orderBy: keyof WorkspaceAndInstance, orderDir: "ASC" | "DESC", ownerId?: string, searchTerm?: string): Promise<{ total: number, rows: WorkspaceAndInstance[] }>;
-    abstract findWorkspaceAndInstance(id: string): Promise<WorkspaceAndInstance | undefined>;
-    abstract findAllWorkspaces(offset: number, limit: number, orderBy: keyof Workspace, orderDir: "ASC" | "DESC", ownerId?: string, searchTerm?: string, minCreationTime?: Date, maxCreationDateTime?: Date, type?: WorkspaceType): Promise<{ total: number, rows: Workspace[] }>;
-    abstract findAllWorkspaceInstances(offset: number, limit: number, orderBy: keyof WorkspaceInstance, orderDir: "ASC" | "DESC", ownerId?: string, minCreationTime?: Date, maxCreationTime?: Date, onlyRunning?: boolean, type?: WorkspaceType): Promise<{ total: number, rows: WorkspaceInstance[] }>;
-
-    public async transaction<T>(code: (db: WorkspaceDB) => Promise<T>): Promise<T> {
-        return code(this);
-    }
-
-    async storeInstance(instance: WorkspaceInstance): Promise<WorkspaceInstance> {
-        const inst = await this.internalStoreInstance(instance);
-        return inst;
-    }
-
-    abstract updateLastHeartbeat(instanceId: string, userId: string, newHeartbeat: Date, wasClosed?: boolean): Promise<void>;
-    abstract getLastOwnerHeartbeatFor(instance: WorkspaceInstance): Promise<{ lastSeen: Date, wasClosed?: boolean} | undefined>;
-    abstract getWorkspaceUsers(workspaceId: string, minLastSeen: number): Promise<WorkspaceInstanceUser[]>;
-    abstract updateInstancePartial(instanceId: string, partial: DeepPartial<WorkspaceInstance>): Promise<WorkspaceInstance>;
-
-    abstract findCurrentInstance(workspaceId: string): Promise<MaybeWorkspaceInstance>;
-
-    public async findRunningInstance(workspaceId: string): Promise<MaybeWorkspaceInstance> {
-        const instance = await this.findCurrentInstance(workspaceId)
-        if (instance && instance.status.phase !== 'stopped') {
-            return instance;
-        }
-        return undefined;
-    }
-
-    abstract isWhitelisted(repositoryUrl : string): Promise<boolean>;
-    abstract getFeaturedRepositories(): Promise<Partial<WhitelistedRepository>[]>;
-
-    abstract findSnapshotById(snapshotId: string): Promise<Snapshot | undefined>;
-    abstract findSnapshotsByWorkspaceId(workspaceId: string): Promise<Snapshot[]>;
-    abstract storeSnapshot(snapshot: Snapshot): Promise<Snapshot>;
-
-    abstract getTotalPrebuildUseSeconds(forDays: number): Promise<number | undefined>;
-    abstract storePrebuiltWorkspace(pws: PrebuiltWorkspace): Promise<PrebuiltWorkspace>;
-    abstract findPrebuiltWorkspaceByCommit(cloneURL: string, commit: string): Promise<PrebuiltWorkspace | undefined>;
-    abstract findPrebuildsWithWorkpace(cloneURL: string): Promise<PrebuildWithWorkspace[]>;
-    abstract findPrebuildByWorkspaceID(wsid: string): Promise<PrebuiltWorkspace | undefined>;
-    abstract findPrebuildByID(pwsid: string): Promise<PrebuiltWorkspace | undefined>;
-    abstract countRunningPrebuilds(cloneURL: string): Promise<number>;
-    abstract findQueuedPrebuilds(cloneURL?: string): Promise<PrebuildWithWorkspace[]>;
-    abstract attachUpdatableToPrebuild(pwsid: string, update: PrebuiltWorkspaceUpdatable): Promise<void>;
-    abstract findUpdatablesForPrebuild(pwsid: string): Promise<PrebuiltWorkspaceUpdatable[]>;
-    abstract markUpdatableResolved(updatableId: string): Promise<void>;
-    abstract getUnresolvedUpdatables(): Promise<PrebuiltUpdatableAndWorkspace[]>;
-
-    abstract findLayoutDataByWorkspaceId(workspaceId: string): Promise<LayoutData | undefined>;
-    abstract storeLayoutData(layoutData: LayoutData): Promise<LayoutData>;
-
-    abstract hardDeleteWorkspace(workspaceID: string): Promise<void>;
+    findPrebuiltWorkspacesByProject(projectId: string): Promise<PrebuiltWorkspace[]>;
 }
