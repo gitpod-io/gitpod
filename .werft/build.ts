@@ -272,10 +272,10 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 
     // trigger certificate issuing
     werft.log('certificate', "organizing a certificate for the preview environment...");
-    let namespaceRecreatedResolve = undefined;
-    let namespaceRecreatedPromise = new Promise((resolve) => {
-        namespaceRecreatedResolve = resolve;
-    });
+    // let namespaceRecreatedResolve = undefined;
+    // let namespaceRecreatedPromise = new Promise((resolve) => {
+    //     namespaceRecreatedResolve = resolve;
+    // });
     const certificatePromise = (async function () {
         if (!wsCluster) {
             await issueMetaCerts();
@@ -285,7 +285,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         }
 
         werft.log('certificate', 'waiting for preview env namespace being re-created...');
-        await namespaceRecreatedPromise;
+        // await namespaceRecreatedPromise;
 
         await installMetaCertificates();
 
@@ -311,10 +311,23 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
             createNamespace("", namespace, { slice: 'prep' });
         }
         setKubectlContextNamespace(namespace, { slice: 'prep' });
-        namespaceRecreatedResolve();    // <-- signal for certificate
+        // namespaceRecreatedResolve();    // <-- signal for certificate
         werft.done('prep');
     } catch (err) {
         werft.fail('prep', err);
+    }
+
+
+    if (certificatePromise) {
+        // Delay success until certificate is actually present
+        werft.log('certificate', "awaiting promised certificate")
+        try {
+            await certificatePromise;
+            werft.done('certificate');
+        } catch (err) {
+            werft.log('certificate', err.toString());  // This ensures the err message is picked up by the werft UI
+            werft.fail('certificate', err);
+        }
     }
 
     // core-dev specific section start
@@ -429,18 +442,6 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     } finally {
         // produce the result independently of Helm succeding, so that in case Helm fails we still have the URL.
         exec(`werft log result -d "dev installation" -c github url ${url}/workspaces/`);
-    }
-
-    if (certificatePromise) {
-        // Delay success until certificate is actually present
-        werft.log('certificate', "awaiting promised certificate")
-        try {
-            await certificatePromise;
-            werft.done('certificate');
-        } catch (err) {
-            werft.log('certificate', err.toString());  // This ensures the err message is picked up by the werft UI
-            werft.fail('certificate', err);
-        }
     }
 
     async function installMetaCertificates() {
