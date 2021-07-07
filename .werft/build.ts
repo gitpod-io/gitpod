@@ -270,31 +270,6 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     ], 'hostports');
     const helmInstallName = "gitpod";
 
-    // trigger certificate issuing
-    werft.log('certificate', "organizing a certificate for the preview environment...");
-    // let namespaceRecreatedResolve = undefined;
-    // let namespaceRecreatedPromise = new Promise((resolve) => {
-    //     namespaceRecreatedResolve = resolve;
-    // });
-    const certificatePromise = (async function () {
-        if (!wsCluster) {
-            await issueMetaCerts();
-        }
-        if (k3sWsCluster) {
-            await issueK3sWsCerts();
-        }
-
-        werft.log('certificate', 'waiting for preview env namespace being re-created...');
-        // await namespaceRecreatedPromise;
-
-        await installMetaCertificates();
-
-        if (k3sWsCluster) {
-            await installWsCertificates();
-        }
-
-    })();
-
     try {
         if (deploymentConfig.cleanSlateDeployment) {
             // re-create namespace
@@ -311,23 +286,26 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
             createNamespace("", namespace, { slice: 'prep' });
         }
         setKubectlContextNamespace(namespace, { slice: 'prep' });
-        // namespaceRecreatedResolve();    // <-- signal for certificate
+
+        // trigger certificate issuing
+        werft.log('certificate', "organizing a certificate for the preview environment...");
+        if (!wsCluster) {
+            await issueMetaCerts();
+        }
+        if (k3sWsCluster) {
+            await issueK3sWsCerts();
+        }
+
+        await installMetaCertificates();
+
+        if (k3sWsCluster) {
+            await installWsCertificates();
+        }
+        werft.done('certificate');
+
         werft.done('prep');
     } catch (err) {
         werft.fail('prep', err);
-    }
-
-
-    if (certificatePromise) {
-        // Delay success until certificate is actually present
-        werft.log('certificate', "awaiting promised certificate")
-        try {
-            await certificatePromise;
-            werft.done('certificate');
-        } catch (err) {
-            werft.log('certificate', err.toString());  // This ensures the err message is picked up by the werft UI
-            werft.fail('certificate', err);
-        }
     }
 
     // core-dev specific section start
@@ -403,11 +381,6 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     }
     const pathToVersions = `${shell.pwd().toString()}/versions.yaml`;
     flags += ` -f ${pathToVersions}`;
-
-    if (!certificatePromise) {
-        // it's not possible to set certificatesSecret={} so we set secretName to empty string
-        flags += ` --set certificatesSecret.secretName=""`;
-    }
 
     try {
         shell.cd("chart");
