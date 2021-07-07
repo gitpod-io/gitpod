@@ -1037,7 +1037,7 @@ func (m *Monitor) deleteDanglingServices(ctx context.Context) error {
 // markTimedoutWorkspaces finds workspaces which haven't been active recently and marks them as timed out
 func (m *Monitor) markTimedoutWorkspaces(ctx context.Context) (err error) {
 	span, ctx := tracing.FromContext(ctx, "markTimedoutWorkspaces")
-	defer tracing.FinishSpan(span, nil)
+	defer tracing.FinishSpan(span, &err)
 
 	var pods corev1.PodList
 	err = m.manager.Clientset.List(ctx, &pods, workspaceObjectListOptions(m.manager.Config.Namespace))

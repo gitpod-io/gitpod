@@ -156,7 +156,7 @@ func (s *Workspace) MarkInitDone(ctx context.Context) (err error) {
 func (s *Workspace) WaitOrMarkForDisposal(ctx context.Context) (done bool, repo *csapi.GitStatus, err error) {
 	//nolint:ineffassign,staticcheck
 	span, ctx := opentracing.StartSpanFromContext(ctx, "workspace.WaitOrMarkForDisposal")
-	defer tracing.FinishSpan(span, nil)
+	defer tracing.FinishSpan(span, &err)
 
 	s.stateLock.Lock()
 	if s.state == WorkspaceDisposed {
