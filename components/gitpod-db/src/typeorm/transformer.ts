@@ -6,6 +6,7 @@
 
 import { ValueTransformer } from "typeorm/decorator/options/ValueTransformer";
 import { EncryptionService } from "@gitpod/gitpod-protocol/lib/encryption/encryption-service";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
 
 export namespace Transformer {
@@ -45,7 +46,12 @@ export namespace Transformer {
                 return JSON.stringify(value || defaultValue);
             },
             from(value: any): any {
-                return JSON.parse(value);
+                try {
+                    return typeof value === 'object' ? value : JSON.parse(value);
+                } catch (e) {
+                    log.error(`Cannot parse JSON during TypeORM transformation. Returning default value '${JSON.stringify(defaultValue)}' instead. Value: ${JSON.stringify(value)}`, e);
+                    return defaultValue;
+                }
             }
         };
     }
