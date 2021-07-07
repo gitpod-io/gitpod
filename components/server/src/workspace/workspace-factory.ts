@@ -4,27 +4,23 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { DBWithTracing, TracedWorkspaceDB, UserDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
+import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
 import { CommitContext, IssueContext, PullRequestContext, Repository, SnapshotContext, User, Workspace, WorkspaceConfig, WorkspaceContext, WorkspaceProbeContext } from '@gitpod/gitpod-protocol';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 import { generateWorkspaceID } from '@gitpod/gitpod-protocol/lib/util/generate-workspace-id';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { ImageBuilderClientProvider } from '@gitpod/image-builder/lib';
 import { inject, injectable } from 'inversify';
 import { ResponseError } from 'vscode-jsonrpc';
-import { TheiaPluginService } from '../theia-plugin/theia-plugin-service';
 import { ConfigProvider } from './config-provider';
 import { ImageSourceProvider } from './image-source-provider';
 
 @injectable()
 export class WorkspaceFactory {
-    @inject(UserDB) protected readonly userDb: UserDB;
+
     @inject(TracedWorkspaceDB) protected readonly db: DBWithTracing<WorkspaceDB>;
     @inject(ConfigProvider) protected configProvider: ConfigProvider;
-    @inject(ImageBuilderClientProvider) protected imagebuilderClientProvider: ImageBuilderClientProvider;
     @inject(ImageSourceProvider) protected imageSourceProvider: ImageSourceProvider;
-    @inject(TheiaPluginService) protected readonly pluginService: TheiaPluginService;
 
     public async createForContext(ctx: TraceContext, user: User, context: WorkspaceContext, normalizedContextURL: string): Promise<Workspace> {
         if (SnapshotContext.is(context)) {
@@ -44,7 +40,7 @@ export class WorkspaceFactory {
         try {
             // TODO: we need to find a better base image.
             const image = "csweichel/alpine-curl:latest";
-            const config = <WorkspaceConfig>{
+            const config: WorkspaceConfig = {
                 image,
                 tasks: [
                     {

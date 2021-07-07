@@ -14,13 +14,12 @@ import { LicenseEvaluator } from '@gitpod/licensor/lib';
 import { Feature } from '@gitpod/licensor/lib/api';
 import { ResponseError } from 'vscode-jsonrpc';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
-import { WorkspaceDB } from '@gitpod/gitpod-db/lib';
 import { generateWorkspaceID } from '@gitpod/gitpod-protocol/lib/util/generate-workspace-id';
 
 @injectable()
 export class WorkspaceFactoryEE extends WorkspaceFactory {
+
     @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
-    @inject(WorkspaceDB) protected readonly workspaceDB: WorkspaceDB;
 
     protected requireEELicense(feature: Feature) {
         if (!this.licenseEvaluator.isEnabled(feature)) {
@@ -46,6 +45,8 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
             if (!CommitContext.is(context.actual)) {
                 throw new Error("Can only prebuild workspaces with a commit context")
             }
+
+            const { project, branch } = context;
 
             const commitContext: CommitContext = context.actual;
             const existingPWS = await this.db.trace({span}).findPrebuiltWorkspaceByCommit(commitContext.repository.cloneUrl, commitContext.revision);
@@ -121,7 +122,9 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 cloneURL: commitContext.repository.cloneUrl,
                 commit: commitContext.revision,
                 state: "queued",
-                creationTime: new Date().toISOString()
+                creationTime: new Date().toISOString(),
+                projectId: project?.id,
+                branch
             });
 
             log.debug({ userId: user.id, workspaceId: ws.id }, `Registered workspace prebuild: ${pws.id} for ${commitContext.repository.cloneUrl}:${commitContext.revision}`);
@@ -188,7 +191,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
     }
 
     protected async fallbackIfOutPrebuildTime(ctx: TraceContext, user: User, context: PrebuiltWorkspaceContext, normalizedContextURL: string): Promise<Workspace | undefined> {
-        const prebuildTime = await this.workspaceDB.getTotalPrebuildUseSeconds(30);
+        const prebuildTime = await this.db.trace({}).getTotalPrebuildUseSeconds(30);
         if (!this.licenseEvaluator.canUsePrebuild(prebuildTime || 0)) {
             // TODO: find a way to signal the out-of-prebuild-time situation
             log.warn({}, "cannot use prebuild because enterprise license prevents it", {prebuildTime});

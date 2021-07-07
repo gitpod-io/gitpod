@@ -6,7 +6,7 @@
 
 import { injectable, inject } from "inversify";
 import { Repository, EntityManager, DeepPartial, UpdateQueryBuilder } from "typeorm";
-import { AbstractWorkspaceDB, MaybeWorkspace, MaybeWorkspaceInstance, WorkspaceDB, FindWorkspacesOptions, PrebuiltUpdatableAndWorkspace, WorkspaceInstanceSessionWithWorkspace, PrebuildWithWorkspace, WorkspaceAndOwner, WorkspacePortsAuthData, WorkspaceOwnerAndSoftDeleted } from "../workspace-db";
+import { MaybeWorkspace, MaybeWorkspaceInstance, WorkspaceDB, FindWorkspacesOptions, PrebuiltUpdatableAndWorkspace, WorkspaceInstanceSessionWithWorkspace, PrebuildWithWorkspace, WorkspaceAndOwner, WorkspacePortsAuthData, WorkspaceOwnerAndSoftDeleted } from "../workspace-db";
 import { Workspace, WorkspaceInstance, WorkspaceInfo, WorkspaceInstanceUser, WhitelistedRepository, Snapshot, LayoutData, PrebuiltWorkspace, RunningWorkspaceInfo, PrebuiltWorkspaceUpdatable, WorkspaceAndInstance, WorkspaceType } from "@gitpod/gitpod-protocol";
 import { TypeORM } from "./typeorm";
 import { DBWorkspace } from "./entity/db-workspace";
@@ -27,11 +27,9 @@ interface OrderBy {
 }
 
 @injectable()
-export abstract class AbstractTypeORMWorkspaceDBImpl extends AbstractWorkspaceDB {
+export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
 
     protected abstract getManager(): Promise<EntityManager>;
-
-    abstract transaction<T>(code: (db: WorkspaceDB) => Promise<T>): Promise<T>;
 
     protected async getWorkspaceRepo(): Promise<Repository<DBWorkspace>> {
         return await (await this.getManager()).getRepository<DBWorkspace>(DBWorkspace);
@@ -78,6 +76,23 @@ export abstract class AbstractTypeORMWorkspaceDBImpl extends AbstractWorkspaceDB
             tries++;
         }
         throw new Error("Could not establish connection to database!");
+    }
+
+    public async transaction<T>(code: (db: WorkspaceDB) => Promise<T>): Promise<T> {
+        return code(this);
+    }
+
+    async storeInstance(instance: WorkspaceInstance): Promise<WorkspaceInstance> {
+        const inst = await this.internalStoreInstance(instance);
+        return inst;
+    }
+
+    public async findRunningInstance(workspaceId: string): Promise<MaybeWorkspaceInstance> {
+        const instance = await this.findCurrentInstance(workspaceId)
+        if (instance && instance.status.phase !== 'stopped') {
+            return instance;
+        }
+        return undefined;
     }
 
     public async store(workspace: Workspace) {
@@ -796,6 +811,18 @@ export abstract class AbstractTypeORMWorkspaceDBImpl extends AbstractWorkspaceDB
         delete res["creationTime"];
 
         return <WorkspaceAndInstance>(res);
+    }
+
+    async findPrebuiltWorkspacesByProject(projectId: string): Promise<PrebuiltWorkspace[]> {
+        const repo = await this.getPrebuiltWorkspaceRepo();
+
+        const query = repo.createQueryBuilder('pws')
+            .orderBy('pws.creationTime', 'ASC')
+            .innerJoinAndMapOne('pws.workspace', DBWorkspace, 'ws', 'pws.buildWorkspaceId = ws.id')
+            .andWhere('pws.projectId = :projectId', { projectId })
+
+        const res = await query.getMany();
+        return res;
     }
 
 }

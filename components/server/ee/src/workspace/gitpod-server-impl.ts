@@ -685,7 +685,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
 
                 const workspaceID = prebuiltWorkspace.buildWorkspaceId;
                 const makeResult = (instanceID: string): WorkspaceCreationResult => {
-                    return {
+                    return <WorkspaceCreationResult>{
                         runningWorkspacePrebuild: {
                             prebuildID: prebuiltWorkspace.id,
                             workspaceID,
@@ -1457,25 +1457,27 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
 
     public async getPrebuilds(teamId: string, projectName: string): Promise<PrebuildInfo[]> {
         this.checkAndBlockUser("getPrebuilds");
+        const result: PrebuildInfo[] = [];
 
         const project = (await this.projectDB.findProjectsByTeam(teamId)).find(p => p.name === projectName);
         if (project) {
-            const pws = (await this.workspaceDb.trace({}).findPrebuildsWithWorkpace(project.cloneUrl))[0];
-            if (pws) {
-                return [{
-                    id: pws.prebuild.id,
-                    startedAt: pws.prebuild.creationTime,
-                    startedBy: "Owner",
+            const pwss = await this.workspaceDb.trace({}).findPrebuiltWorkspacesByProject(project.id);
+
+            for (const pws of pwss) {
+                result.push({
+                    id: pws.id,
+                    startedAt: pws.creationTime,
+                    startedBy: "UNKNOWN",
                     teamId,
                     project: projectName,
-                    branch: "main",
-                    cloneUrl: pws.prebuild.cloneURL,
-                    status: pws.prebuild.state
-                }]
+                    branch: pws.branch || "unknown",
+                    cloneUrl: pws.cloneURL,
+                    status: pws.state
+                });
             }
         }
 
-        return [];
+        return result;
     }
     //
     //#endregion

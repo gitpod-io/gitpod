@@ -648,6 +648,8 @@ export type PrebuiltWorkspaceState
 export interface PrebuiltWorkspace {
     id: string;
     cloneURL: string;
+    branch?: string;
+    projectId?: string;
     commit: string;
     buildWorkspaceId: string;
     creationTime: string;
@@ -832,6 +834,8 @@ export namespace SnapshotContext {
 export interface StartPrebuildContext extends WorkspaceContext {
     actual: WorkspaceContext;
     commitHistory?: string[];
+    project?: Project;
+    branch?: string;
 }
 
 export namespace StartPrebuildContext {

@@ -5,13 +5,12 @@
  */
 
 import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
-import { CommitContext, StartPrebuildContext, User, WorkspaceConfig, WorkspaceInstance } from '@gitpod/gitpod-protocol';
+import { CommitContext, Project, StartPrebuildContext, User, WorkspaceConfig, WorkspaceInstance } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { inject, injectable } from 'inversify';
 import { URL } from 'url';
 import { HostContextProvider } from '../../../src/auth/host-context-provider';
-import { StartPrebuildResult } from './github-app';
 import { WorkspaceFactory } from '../../../src/workspace/workspace-factory';
 import { ConfigProvider } from '../../../src/workspace/config-provider';
 import { WorkspaceStarter } from '../../../src/workspace/workspace-starter';
@@ -22,6 +21,21 @@ export class WorkspaceRunningError extends Error {
         super(msg);
     }
 }
+
+export interface StartPrebuildParams {
+    user: User;
+    contextURL: string;
+    cloneURL: string;
+    branch?: string;
+    commit: string;
+    project?: Project;
+}
+export interface StartPrebuildResult {
+    wsid: string;
+    done: boolean;
+    didFinish?: boolean;
+}
+
 
 @injectable()
 export class PrebuildManager {
@@ -51,7 +65,7 @@ export class PrebuildManager {
         }
     }
 
-    async startPrebuild(ctx: TraceContext, user: User, contextURL: string, cloneURL: string, commit: string): Promise<StartPrebuildResult> {
+    async startPrebuild(ctx: TraceContext, { contextURL, cloneURL, commit, branch, project, user }: StartPrebuildParams): Promise<StartPrebuildResult> {
         const span = TraceContext.startSpan("startPrebuild", ctx);
         span.setTag("contextURL", contextURL);
         span.setTag("cloneURL", cloneURL);
@@ -73,7 +87,9 @@ export class PrebuildManager {
 
             const prebuildContext: StartPrebuildContext = {
                 title: `Prebuild of "${actual.title}"`,
-                actual
+                actual,
+                project,
+                branch,
             };
 
             if (this.shouldPrebuildIncrementally(actual.repository.cloneUrl)) {

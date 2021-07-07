@@ -10,7 +10,7 @@ import { UserDB } from '@gitpod/gitpod-db/lib';
 import { User } from '@gitpod/gitpod-protocol';
 import { PrebuildManager } from '../prebuilds/prebuild-manager';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { StartPrebuildResult } from './github-app';
+import { StartPrebuildResult } from './prebuild-manager';
 import { TokenService } from '../../../src/user/token-service';
 import { HostContextProvider } from '../../../src/auth/host-context-provider';
 import { GitlabService } from './gitlab-service';
@@ -96,8 +96,10 @@ export class GitLabApp {
                 return undefined;
             }
 
-            log.debug({ userId: user.id }, "GitLab push hook: Starting prebuild", { context: body, contextURL });
-            const ws = await this.prebuildManager.startPrebuild({ span }, user, contextURL, body.repository.git_http_url, body.after);
+            log.debug({ userId: user.id }, "GitLab push hook: Starting prebuild", { body, contextURL });
+            // todo@alex: add branch and project args
+            const ws = await this.prebuildManager.startPrebuild({ span }, { user, contextURL, cloneURL: body.repository.git_http_url, commit: body.after });
+
             return ws;
         } finally {
             span.finish();

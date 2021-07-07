@@ -43,4 +43,10 @@ export class ProjectDBImpl implements ProjectDB {
         await repo.save(project);
         return project;
     }
+
+    async findProjectByInstallationId(appInstallationId: string): Promise<Project | undefined> {
+        const repo = await this.getRepo();
+        const project = await repo.findOne({ appInstallationId });
+        return project;
+    }
 }
