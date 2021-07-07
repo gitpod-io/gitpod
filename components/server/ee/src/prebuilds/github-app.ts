@@ -207,7 +207,6 @@ export class GithubApp {
             const prebuildStartPromise = this.onPrStartPrebuild({ span }, config, owner, ctx);
             this.onPrAddCheck({ span }, config, ctx, prebuildStartPromise);
             this.onPrAddBadge(config, ctx);
-            this.onPrAddLabel(config, ctx, prebuildStartPromise);
             this.onPrAddComment(config, ctx);
         } catch (e) {
             TraceContext.logError({ span }, e);
@@ -286,44 +285,6 @@ export class GithubApp {
         const newBody = body + `\n\n${button}\n\n`;
         const updatePrPromise = ctx.octokit.pulls.update({ ...ctx.repo(), pull_number: pr.number, body: newBody });
         updatePrPromise.catch(err => log.error(err, "Error while updating PR body", { contextURL }));
-    }
-
-    protected onPrAddLabel(config: WorkspaceConfig | undefined, ctx: Context, prebuildStartPromise: Promise<StartPrebuildResult> | undefined) {
-        const pr = ctx.payload.pull_request;
-        if (this.appRules.shouldDo(config, "addLabel") === true) {
-            const label =
-                config
-                    && config.github
-                    && config.github.prebuilds
-                    && GithubAppPrebuildConfig.is(config.github.prebuilds)
-                    && typeof config.github.prebuilds.addLabel === 'string'
-                    ? config.github.prebuilds.addLabel as string
-                    : "prebuilt-in-gitpod";
-
-            if (ctx.payload.action === 'synchronize') {
-                // someone just pushed a commit, remove the label
-                const delLabelPromise = ctx.octokit.issues.removeLabel({ ...ctx.repo(), number: pr.number, name: label });
-                delLabelPromise.catch(err => log.error(err, "Error while removing label from PR"));
-            }
-
-            if (prebuildStartPromise) {
-                prebuildStartPromise.then(startWsResult => {
-                    if (startWsResult.done) {
-                        if (!!startWsResult.didFinish) {
-                            const addLabelPromise = ctx.octokit.issues.addLabels({ ...ctx.repo(), number: pr.number, labels: [label] });
-                            addLabelPromise.catch(err => log.error(err, "Error while adding label to PR"));
-                        }
-                    } else {
-                        new PrebuildListener(this.messageBus, startWsResult.wsid, evt => {
-                            if (!HeadlessWorkspaceEventType.isRunning(evt) && HeadlessWorkspaceEventType.didFinish(evt)) {
-                                const addLabelPromise = ctx.octokit.issues.addLabels({ ...ctx.repo(), number: pr.number, labels: [label] });
-                                addLabelPromise.catch(err => log.error(err, "Error while adding label to PR"));
-                            }
-                        });
-                    }
-                })
-            }
-        }
     }
 
     protected async onPrAddComment(config: WorkspaceConfig | undefined, ctx: Context) {
