@@ -79,7 +79,7 @@
     "swot-js": "^1.0.3",
     "uuid": "^3.1.0",
     "vscode-ws-jsonrpc": "^0.2.0",
-    "ws": "^5.2.2"
+    "ws": "^7.4.6"
   },
   "devDependencies": {
     "@graphql-codegen/cli": "^1.19.4",
