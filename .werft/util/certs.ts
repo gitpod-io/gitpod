@@ -71,7 +71,7 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
             break;
         }
 
-        sleep(5000);
+        await sleep(5000);
     }
 }
 
