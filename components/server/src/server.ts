@@ -81,21 +81,16 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         log.info('Initializing');
 
         // metrics
-        app.use(async (req, res, next) => {
-            const startTime = Date.now()
-            const originalSend = res.send.bind(res);
-            res.send = (body) => {
-                const result = originalSend(body);
+        app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+            const startTime = Date.now();
+            req.on("end", () =>{
                 const method = req.method;
-                const route = req.route?.path || "";
-                if (!req.route) {
-                    log.warn(`route is undefined, url: ${req.url}`);
-                }
+                const route = req.route?.path || req.baseUrl || req.url || "unknown";
                 observeHttpRequestDuration(method, route, res.statusCode, (Date.now() - startTime) / 1000)
                 increaseHttpRequestCounter(method, route, res.statusCode);
-                return result;
-            }
-            next();
+            });
+
+            return next();
         });
 
         // Express configuration
@@ -211,6 +206,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                 response.status(500).send({ error: msg });
             }
         });
+
 
         // Health check + metrics endpoints
         this.monApp = this.monitoringEndpointsApp.create();
