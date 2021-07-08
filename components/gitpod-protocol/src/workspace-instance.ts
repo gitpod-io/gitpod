@@ -27,12 +27,15 @@ export interface WorkspaceInstance {
     stoppedTime?: string;
 
     // ideUrl is the URL at which the workspace is available on the internet
+    // Note: this is nitially empty, filled during starting process!
     ideUrl: string;
 
     // region is the name of the workspace cluster this instance runs in
+    // Note: this is nitially empty, filled during starting process!
     region: string;
 
     // workspaceImage is the name of the Docker image this instance runs
+    // Note: this is nitially empty, filled during starting process!
     workspaceImage: string;
 
     // status is the latest status of the instance that we're aware of
