@@ -612,8 +612,7 @@ export class UserController {
             return;
         }
 
-        const hostUrl = this.env.hostUrl.url as URL;
-        if (this.urlStartsWith(returnToURL, hostUrl.toString()) || this.urlStartsWith(returnToURL, this.env.brandingConfig.homepage)) {
+        if (this.urlStartsWith(returnToURL, this.env.hostUrl.toString()) || this.urlStartsWith(returnToURL, this.env.brandingConfig.homepage)) {
             return returnToURL
         }
 
