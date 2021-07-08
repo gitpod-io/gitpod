@@ -180,3 +180,7 @@ export function findFreeHostPorts(pathToKubeConfig: string, ranges: PortRange[],
     }
     return results;
 }
+
+export function waitForDeploymentToSucceed(pathToKubeConfig: string, name: string, namespace: string, type: string) {
+    exec(`export KUBECONFIG=${pathToKubeConfig} && kubectl rollout status ${type} ${name} -n ${namespace}`)
+}

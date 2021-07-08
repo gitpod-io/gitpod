@@ -1,7 +1,7 @@
 import * as shell from 'shelljs';
 import * as fs from 'fs';
 import { werft, exec, gitTag } from './util/shell';
-import { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace } from './util/kubectl';
+import { waitForDeploymentToSucceed, wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace } from './util/kubectl';
 import { issueCertficate, installCertficate, IssueCertificateParams, InstallCertificateParams } from './util/certs';
 import { reportBuildFailureInSlack } from './util/slack';
 import * as semver from 'semver';
@@ -585,7 +585,13 @@ async function registerK3sWsCluster(namespace: string, domain: string, pathToKub
     // When we deploy the ws proxy then certs are not generate. So the pods could go into a long waiting state without kubelet reattempting to mount the volume
     // So, we just restart the deployment for secrets to be mounted.
     shell.exec(`export KUBECONFIG=${pathToKubeConfigK3s} && kubectl rollout restart deploy ws-proxy -n ${namespace}`)
-    shell.exec(`export KUBECONFIG=${pathToKubeConfigK3s} && kubectl rollout status deploy ws-proxy -n ${namespace}`)
+    waitForDeploymentToSucceed(pathToKubeConfigK3s, "ws-proxy", namespace, "deploy")
+
+    // Following deployments must have succeede for us to register the cluster
+    waitForDeploymentToSucceed("", "ws-manager-bridge", namespace, "deploy")
+    waitForDeploymentToSucceed("", "ws-manager", namespace, "deploy")
+    waitForDeploymentToSucceed("", "server", namespace, "deploy")
+
     // explicitly wait for 15s assuming the k3s service would have picked the new ws-proxy pod
     await sleep(15000)
 
