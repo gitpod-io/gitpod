@@ -129,7 +129,7 @@ func (e *EvenLoad) Select(state *State, pod *corev1.Pod) (string, error) {
 	}
 
 	candidate := sortedNodes[0]
-	if !fitsOnNode(pod, candidate) {
+	if !FitsOnNode(pod, candidate) {
 		requestedRAM := podRAMRequest(pod)
 		requestedEphStorage := podEphemeralStorageRequest(pod)
 		debugStr := DebugStringNodes(sortedNodes...)
@@ -156,7 +156,7 @@ func (s *DensityAndExperience) Select(state *State, pod *corev1.Pod) (string, er
 
 	var candidates []*Node
 	for _, node := range sortedNodes {
-		if !fitsOnNode(pod, node) {
+		if !FitsOnNode(pod, node) {
 			continue
 		}
 		candidates = append(candidates, node)
@@ -236,12 +236,27 @@ func (s *DensityAndExperience) Select(state *State, pod *corev1.Pod) (string, er
 	return defaultCandidate.Node.Name, nil
 }
 
-// helper functions
-func fitsOnNode(pod *corev1.Pod, node *Node) bool {
+// FitsOnNode checks if a pod can be scheduled to a node
+func FitsOnNode(pod *corev1.Pod, node *Node) bool {
 	ramReq := podRAMRequest(pod)
 	ephStorageReq := podEphemeralStorageRequest(pod)
-	return ramReq.Cmp(*node.RAM.Available) <= 0 &&
-		(ephStorageReq.CmpInt64(0) == 0 || ephStorageReq.Cmp(*node.EphemeralStorage.Available) <= 0)
+
+	if ramReq.Cmp(*node.RAM.Available) > 0 {
+		// out of RAM
+		return false
+	}
+
+	if ephStorageReq.CmpInt64(0) != 0 && ephStorageReq.Cmp(*node.EphemeralStorage.Available) > 0 {
+		// out of ephemeral storage
+		return false
+	}
+
+	if node.PodSlots.Available == 0 {
+		// out of pod slots
+		return false
+	}
+
+	return true
 }
 
 func freshWorkspaceCount(state *State, node *Node, freshSeconds int) int {
