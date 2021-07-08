@@ -6,7 +6,9 @@ FROM alpine:3.14
 
 # Ensure latest packages are present, like security updates.
 RUN  apk upgrade --no-cache \
-  && apk add --no-cache ca-certificates
+  # bash: for devx
+  # tar: make kubectl cp work
+  && apk add --no-cache ca-certificates bash tar
 
 COPY components-ws-manager--app/ws-manager /app/ws-manager
 ENTRYPOINT [ "/app/ws-manager" ]
