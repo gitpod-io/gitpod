@@ -21,8 +21,11 @@ const (
 	// Used as key for storing the workspace ID in the requests mux.Vars() map
 	workspaceIDIdentifier = "workspaceID"
 
-	// Used as key for storing the origin prefix to fetch foreign content
-	foreignOriginPrefix = "foreignOriginPrefix"
+	// Used as key for storing the origin to fetch foreign content
+	foreignOriginIdentifier = "foreignOrigin"
+
+	// Used as key for storing the path to fetch foreign content
+	foreignPathIdentifier = "foreignPath"
 
 	// The header that is used to communicate the "Host" from proxy -> ws-proxy in scenarios where ws-proxy is _not_ directly exposed
 	forwardedHostnameHeader = "x-wsproxy-host"
@@ -56,8 +59,8 @@ func HostBasedRouter(header, wsHostSuffix string, wsHostSuffixRegex string) Work
 				return req.Header.Get(header)
 			}
 			blobserveRouter = r.MatcherFunc(matchBlobserveHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
-			portRouter      = r.MatcherFunc(matchWorkspacePortHostHeader(wsHostSuffix, getHostHeader)).Subrouter()
-			ideRouter       = r.MatcherFunc(matchWorkspaceHostHeader(allClusterWsHostSuffixRegex, getHostHeader)).Subrouter()
+			portRouter      = r.MatcherFunc(matchWorkspaceHostHeader(wsHostSuffix, getHostHeader, true)).Subrouter()
+			ideRouter       = r.MatcherFunc(matchWorkspaceHostHeader(allClusterWsHostSuffixRegex, getHostHeader, false)).Subrouter()
 		)
 
 		r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -71,55 +74,98 @@ func HostBasedRouter(header, wsHostSuffix string, wsHostSuffixRegex string) Work
 
 type hostHeaderProvider func(req *http.Request) string
 
-func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProvider) mux.MatcherFunc {
-	r := regexp.MustCompile("^(webview-|browser-|extensions-)?" + workspaceIDRegex + wsHostSuffix)
-	return func(req *http.Request, m *mux.RouteMatch) bool {
-		hostname := headerProvider(req)
-		if hostname == "" {
-			return false
-		}
-
-		matches := r.FindStringSubmatch(hostname)
-		if len(matches) < 3 {
-			return false
-		}
-
-		workspaceID := matches[2]
-		if workspaceID == "" {
-			return false
-		}
-
-		if m.Vars == nil {
-			m.Vars = make(map[string]string)
-		}
-		m.Vars[workspaceIDIdentifier] = workspaceID
-		if len(matches) == 3 {
-			m.Vars[foreignOriginPrefix] = matches[1]
-		}
-		return true
+func matchWorkspaceHostHeader(wsHostSuffix string, headerProvider hostHeaderProvider, matchPort bool) mux.MatcherFunc {
+	regexPrefix := workspaceIDRegex
+	if matchPort {
+		regexPrefix = workspacePortRegex + workspaceIDRegex
 	}
-}
 
-func matchWorkspacePortHostHeader(wsHostSuffix string, headerProvider hostHeaderProvider) mux.MatcherFunc {
-	r := regexp.MustCompile("^(webview-|browser-|extensions-)?" + workspacePortRegex + workspaceIDRegex + wsHostSuffix)
+	// remove (webview-|browser-|extensions-) prefix as soon as Theia removed and new VS Code is used in all workspaces
+	r := regexp.MustCompile("^(webview-|browser-|extensions-)?" + regexPrefix + wsHostSuffix)
+	foreignContentHostR := regexp.MustCompile("^(.+)(?:foreign)" + wsHostSuffix)
+	foreignContentPathR := regexp.MustCompile("^/" + regexPrefix + "(/.*)")
 	return func(req *http.Request, m *mux.RouteMatch) bool {
 		hostname := headerProvider(req)
 		if hostname == "" {
 			return false
 		}
 
-		matches := r.FindStringSubmatch(hostname)
-		if len(matches) < 4 {
-			return false
+		var workspaceID, workspacePort, foreignOrigin, foreignPath string
+		matches := foreignContentHostR.FindStringSubmatch(hostname)
+		if len(matches) == 2 {
+			foreignOrigin = matches[1]
+			matches = foreignContentPathR.FindStringSubmatch(req.URL.Path)
+			if matchPort {
+				if len(matches) < 4 {
+					return false
+				}
+				// https://extensions-foreign.ws-eu10.gitpod.io/3000-coral-dragon-ilr0r6eq/index.html
+				// workspaceID: coral-dragon-ilr0r6eq
+				// workspacePort: 3000
+				// foreignOrigin: extensions-
+				// foreignPath: /index.html
+				workspaceID = matches[2]
+				workspacePort = matches[1]
+				foreignPath = matches[3]
+			} else {
+				if len(matches) < 3 {
+					return false
+				}
+				// https://extensions-foreign.ws-eu10.gitpod.io/coral-dragon-ilr0r6eq/index.html
+				// workspaceID: coral-dragon-ilr0r6eq
+				// workspacePort:
+				// foreignOrigin: extensions-
+				// foreignPath: /index.html
+				workspaceID = matches[1]
+				foreignPath = matches[2]
+			}
+		} else {
+			matches = r.FindStringSubmatch(hostname)
+			if matchPort {
+				if len(matches) < 4 {
+					return false
+				}
+				// https://3000-coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
+				// workspaceID: coral-dragon-ilr0r6eq
+				// workspacePort: 3000
+				// foreignOrigin:
+				// foreignPath:
+				workspaceID = matches[3]
+				workspacePort = matches[2]
+				if len(matches) == 4 {
+					// https://extensions-3000-coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
+					// workspaceID: coral-dragon-ilr0r6eq
+					// workspacePort: 3000
+					// foreignOrigin: extensions-
+					// foreignPath:
+					foreignOrigin = matches[1]
+				}
+			} else {
+				if len(matches) < 3 {
+					return false
+				}
+				// https://coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
+				// workspaceID: coral-dragon-ilr0r6eq
+				// workspacePort:
+				// foreignOrigin:
+				// foreignPath:
+				workspaceID = matches[2]
+				if len(matches) == 3 {
+					// https://extensions-coral-dragon-ilr0r6eq.ws-eu10.gitpod.io/index.html
+					// workspaceID: coral-dragon-ilr0r6eq
+					// workspacePort:
+					// foreignOrigin: extensions-
+					// foreignPath:
+					foreignOrigin = matches[1]
+				}
+			}
 		}
 
-		workspaceID := matches[3]
 		if workspaceID == "" {
 			return false
 		}
 
-		workspacePort := matches[2]
-		if workspacePort == "" {
+		if matchPort && workspacePort == "" {
 			return false
 		}
 
@@ -127,9 +173,14 @@ func matchWorkspacePortHostHeader(wsHostSuffix string, headerProvider hostHeader
 			m.Vars = make(map[string]string)
 		}
 		m.Vars[workspaceIDIdentifier] = workspaceID
-		m.Vars[workspacePortIdentifier] = workspacePort
-		if len(matches) == 4 {
-			m.Vars[foreignOriginPrefix] = matches[1]
+		if workspacePort != "" {
+			m.Vars[workspacePortIdentifier] = workspacePort
+		}
+		if foreignOrigin != "" {
+			m.Vars[foreignOriginIdentifier] = foreignOrigin
+		}
+		if foreignPath != "" {
+			m.Vars[foreignPathIdentifier] = foreignPath
 		}
 		return true
 	}

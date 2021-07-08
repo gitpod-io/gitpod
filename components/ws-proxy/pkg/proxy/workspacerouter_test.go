@@ -7,6 +7,7 @@ package proxy
 import (
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -144,6 +145,7 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 	tests := []struct {
 		Name       string
 		HostHeader string
+		Path       string
 		Expected   matchResult
 	}{
 		{
@@ -160,7 +162,6 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 			Expected: matchResult{
 				MatchesWorkspace: true,
 				WorkspaceVars: map[string]string{
-					foreignOriginPrefix:   "",
 					workspaceIDIdentifier: "amaranth-smelt-9ba20cc1",
 				},
 			},
@@ -171,8 +172,34 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 			Expected: matchResult{
 				MatchesWorkspace: true,
 				WorkspaceVars: map[string]string{
-					foreignOriginPrefix:   "webview-",
-					workspaceIDIdentifier: "amaranth-smelt-9ba20cc1",
+					foreignOriginIdentifier: "webview-",
+					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
+				},
+			},
+		},
+		{
+			Name:       "unique webview workspace match",
+			HostHeader: "ad859a83-b5a8-43ef-8e82-cfbf36cafacb-webview-foreign" + wsHostSuffix,
+			Path:       "/amaranth-smelt-9ba20cc1/index.html",
+			Expected: matchResult{
+				MatchesWorkspace: true,
+				WorkspaceVars: map[string]string{
+					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
+					foreignOriginIdentifier: "ad859a83-b5a8-43ef-8e82-cfbf36cafacb-webview-",
+					foreignPathIdentifier:   "/index.html",
+				},
+			},
+		},
+		{
+			Name:       "extension host workspace match",
+			HostHeader: "extensions-foreign" + wsHostSuffix,
+			Path:       "/amaranth-smelt-9ba20cc1/index.html",
+			Expected: matchResult{
+				MatchesWorkspace: true,
+				WorkspaceVars: map[string]string{
+					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
+					foreignOriginIdentifier: "extensions-",
+					foreignPathIdentifier:   "/index.html",
 				},
 			},
 		},
@@ -182,8 +209,8 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 			Expected: matchResult{
 				MatchesWorkspace: true,
 				WorkspaceVars: map[string]string{
-					foreignOriginPrefix:   "browser-",
-					workspaceIDIdentifier: "amaranth-smelt-9ba20cc1",
+					foreignOriginIdentifier: "browser-",
+					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
 				},
 			},
 		},
@@ -193,7 +220,6 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 			Expected: matchResult{
 				MatchesPort: true,
 				PortVars: map[string]string{
-					foreignOriginPrefix:     "",
 					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
 					workspacePortIdentifier: "8080",
 				},
@@ -205,9 +231,37 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 			Expected: matchResult{
 				MatchesPort: true,
 				PortVars: map[string]string{
-					foreignOriginPrefix:     "webview-",
+					foreignOriginIdentifier: "webview-",
 					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
 					workspacePortIdentifier: "8080",
+				},
+			},
+		},
+		{
+			Name:       "unique webview port match",
+			HostHeader: "ad859a83-b5a8-43ef-8e82-cfbf36cafacb-webview-foreign" + wsHostSuffix,
+			Path:       "/8080-amaranth-smelt-9ba20cc1/index.html",
+			Expected: matchResult{
+				MatchesPort: true,
+				PortVars: map[string]string{
+					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
+					workspacePortIdentifier: "8080",
+					foreignOriginIdentifier: "ad859a83-b5a8-43ef-8e82-cfbf36cafacb-webview-",
+					foreignPathIdentifier:   "/index.html",
+				},
+			},
+		},
+		{
+			Name:       "extension host port match",
+			HostHeader: "extensions-foreign" + wsHostSuffix,
+			Path:       "/8080-amaranth-smelt-9ba20cc1/index.html",
+			Expected: matchResult{
+				MatchesPort: true,
+				PortVars: map[string]string{
+					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
+					workspacePortIdentifier: "8080",
+					foreignOriginIdentifier: "extensions-",
+					foreignPathIdentifier:   "/index.html",
 				},
 			},
 		},
@@ -217,7 +271,7 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 			Expected: matchResult{
 				MatchesPort: true,
 				PortVars: map[string]string{
-					foreignOriginPrefix:     "browser-",
+					foreignOriginIdentifier: "browser-",
 					workspaceIDIdentifier:   "amaranth-smelt-9ba20cc1",
 					workspacePortIdentifier: "8080",
 				},
@@ -227,7 +281,10 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			req := &http.Request{
-				Host:   test.HostHeader,
+				Host: test.HostHeader,
+				URL: &url.URL{
+					Path: test.Path,
+				},
 				Method: http.MethodGet,
 				Header: http.Header{
 					forwardedHostnameHeader: []string{test.HostHeader},
@@ -237,9 +294,9 @@ func TestMatchWorkspaceHostHeader(t *testing.T) {
 			prov := func(req *http.Request) string { return test.HostHeader }
 
 			wsMatch := mux.RouteMatch{Vars: make(map[string]string)}
-			matchesWS := matchWorkspaceHostHeader(wsHostSuffix, prov)(req, &wsMatch)
+			matchesWS := matchWorkspaceHostHeader(wsHostSuffix, prov, false)(req, &wsMatch)
 			portMatch := mux.RouteMatch{Vars: make(map[string]string)}
-			matchesPort := matchWorkspacePortHostHeader(wsHostSuffix, prov)(req, &portMatch)
+			matchesPort := matchWorkspaceHostHeader(wsHostSuffix, prov, true)(req, &portMatch)
 			res := matchResult{
 				MatchesPort:      matchesPort,
 				MatchesWorkspace: matchesWS,

@@ -580,6 +580,26 @@ func TestRoutes(t *testing.T) {
 				Body:   "blobserve hit: /blobserve/gitpod-io/supervisor:latest/main.js\nreadOnly: true\n",
 			},
 		},
+		{
+			Desc: "extensions route GET",
+			Request: modifyRequest(httptest.NewRequest("GET", "https://extensions-foreign.test-domain.com/"+workspaces[0].WorkspaceID+"/extensions.js", nil),
+				addHostHeader,
+				addHeader("Origin", config.GitpodInstallation.HostName),
+				addOwnerToken(workspaces[0].InstanceID, workspaces[0].Auth.OwnerToken),
+			),
+			Expectation: Expectation{
+				Status: http.StatusOK,
+				Header: http.Header{
+					"Access-Control-Allow-Credentials": {"true"},
+					"Access-Control-Allow-Origin":      {"test-domain.com"},
+					"Access-Control-Expose-Headers":    {"Authorization"},
+					"Content-Length":                   {"30"},
+					"Content-Type":                     {"text/plain; charset=utf-8"},
+					"Vary":                             {"Accept-Encoding"},
+				},
+				Body: "workspace hit: /extensions.js\n",
+			},
+		},
 	}
 
 	log.Init("ws-proxy-test", "", false, true)

@@ -585,11 +585,12 @@ func (is *InfoService) RegisterREST(mux *runtime.ServeMux, grpcEndpoint string) 
 // WorkspaceInfo provides information about the workspace
 func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest) (*api.WorkspaceInfoResponse, error) {
 	resp := &api.WorkspaceInfoResponse{
-		CheckoutLocation:    is.cfg.RepoRoot,
-		InstanceId:          is.cfg.WorkspaceInstanceID,
-		WorkspaceId:         is.cfg.WorkspaceID,
-		GitpodHost:          is.cfg.GitpodHost,
-		WorkspaceContextUrl: is.cfg.WorkspaceContextURL,
+		CheckoutLocation:     is.cfg.RepoRoot,
+		InstanceId:           is.cfg.WorkspaceInstanceID,
+		WorkspaceId:          is.cfg.WorkspaceID,
+		GitpodHost:           is.cfg.GitpodHost,
+		WorkspaceContextUrl:  is.cfg.WorkspaceContextURL,
+		WorkspaceClusterHost: is.cfg.WorkspaceClusterHost,
 	}
 
 	commit, err := is.cfg.getCommit()
