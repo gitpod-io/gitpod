@@ -4,10 +4,10 @@ import { exec, ExecOptions, werft } from './shell';
 
 export const IS_PREVIEW_APP_LABEL: string = "isPreviewApp";
 
-export function setKubectlContextNamespace(namespace, shellOpts) {
+export function setKubectlContextNamespace(pathToKubeConfig, namespace, shellOpts) {
     [
-        "kubectl config current-context",
-        `kubectl config set-context --current --namespace=${namespace}`
+        `export KUBECONFIG=${pathToKubeConfig} && kubectl config current-context`,
+        `export KUBECONFIG=${pathToKubeConfig} && kubectl config set-context --current --namespace=${namespace}`
     ].forEach(cmd => exec(cmd, shellOpts));
 }
 

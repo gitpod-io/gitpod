@@ -3,9 +3,6 @@ components:
   proxy:
     disabled: true
 
-  wsProxy:
-    hostHeader: Host
-
   wsManagerBridge:
     disabled: true
 
@@ -35,5 +32,3 @@ minio:
 mysql:
   enabled: false
 
-registry-facade:
-  enabled: false
