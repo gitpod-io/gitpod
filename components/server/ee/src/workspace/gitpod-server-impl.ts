@@ -1123,7 +1123,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
     // Get the current number of "active" slots in a team subscription (count all "assigned" and "unassigned", but not "deactivated" or "cancelled").
     protected async tsGetActiveSlotQuantity(teamSubscriptionId: string): Promise<number> {
         const slots = await this.teamSubscriptionDB.findSlotsByTeamSubscriptionId(teamSubscriptionId);
-        return slots.filter(slot => !slot.cancellationDate).length;
+        return slots.filter(TeamSubscriptionSlot.isActive).length;
     }
 
     async tsAddSlots(teamSubscriptionId: string, addQuantity: number): Promise<void> {

@@ -83,6 +83,9 @@ export namespace TeamSubscriptionSlot {
         }
 
     }
+    export const isActive = (slot: TeamSubscriptionSlot): boolean => {
+        return !slot.cancellationDate;
+    }
 }
 
 /**
