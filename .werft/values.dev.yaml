@@ -25,6 +25,18 @@ tracing:
   samplerType: const
   samplerParam: "1"
 
+# we hit the "max. 110 pods/node" situation pretty often with our current core-dev setup.
+# the proper way to fix those would be to adjust the CIDR for workload NodePool which is a bit more work.
+# as a workaround, we blow up our RAM requests to trigger scaleup earlier.
+# Note: This only works because we tune down our DaemonSet's requests to near-0 (because DS pods don't trigger scalups!)
+resources:
+  default:
+    # as opposed to 200Mi, the default
+    # we make static pods big enough so that 100 pods fill up the whole node (we ignore other DaemonSets here because they are quite small),
+    # and assume not all envs carry workspaces all the time:
+    # => 32Gi / 100 ~ 328Mi => 350Mi
+    memory: 350Mi
+
 components:
 
   agentSmith:
@@ -33,7 +45,7 @@ components:
     # in preview envs, we never want DaemonSets not to be scheduled (because they don't trigger scaleup)
     resources:
       cpu: 1m
-      memory: 32Mi
+      memory: 1Mi
 
   server:
     replicas: 1
@@ -50,7 +62,7 @@ components:
     # in preview envs, we never want DaemonSets not to be scheduled (because they don't trigger scaleup)
     resources:
       cpu: 1m
-      memory: 32Mi
+      memory: 1Mi
 
   contentService:
     remoteStorage:
@@ -148,7 +160,7 @@ components:
     # in preview envs, we never want DaemonSets not to be scheduled (because they don't trigger scaleup)
     resources:
       cpu: 1m
-      memory: 32Mi
+      memory: 1Mi
 
   wsScheduler:
     scaler:
