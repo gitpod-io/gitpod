@@ -12,6 +12,7 @@ import * as url from 'url';
 import * as net from 'net';
 import { WsLayer } from './ws-layer';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { increaseHttpRequestCounter } from '../prometheus-metrics';
 
 export type HttpServer = http.Server | https.Server;
 export type Route = string | RegExp;
@@ -58,6 +59,10 @@ export class WsExpressHandler {
             stack.dispatch(ws, request).catch(err => {
                 log.error("websocket stack error", err);
                 ws.terminate();
+            }).finally(() => {
+                const pathname = request.url ? url.parse(request.url).pathname : undefined;
+                const method = request.method || "UNKNOWN";
+                increaseHttpRequestCounter(method, pathname || "unkown-websocket", request.statusCode || 0);
             });
         }
 
