@@ -60,6 +60,7 @@
 				request			delete
 			}
 		}
+		level WARN
 	}
 }
 
