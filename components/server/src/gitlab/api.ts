@@ -100,6 +100,12 @@ export namespace GitLab {
         export function is(something: any): something is ApiError {
             return !!something && something.name === 'GitLabApiError';
         }
+        export function isNotFound(error: ApiError): boolean {
+            return !!error.httpError?.description.startsWith("404");
+        }
+        export function isInternalServerError(error: ApiError): boolean {
+            return !!error.httpError?.description.startsWith("500");
+        }
     }
     /**
      * https://github.com/gitlabhq/gitlabhq/blob/master/doc/api/projects.md#get-single-project

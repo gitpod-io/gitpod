@@ -170,80 +170,97 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
     // https://gitlab.com/AlexTugarev/gp-test/blob/wip/folder/empty.file.jpeg
     protected async handleTreeContext(user: User, host: string, owner: string, repoName: string, segments: string[]): Promise<NavigatorContext> {
 
-        const branchOrTagPromise = segments.length > 0 ? this.getBranchOrTag(user, owner, repoName, segments) : undefined;
-        const repository = await this.fetchRepo(user, `${owner}/${repoName}`);
-        const branchOrTag = await branchOrTagPromise;
-        const context = <NavigatorContext>{
-            isFile: false,
-            path: '',
-            title: `${owner}/${repoName}` + (branchOrTag ? ` - ${branchOrTag.name}` : ''),
-            ref: branchOrTag && branchOrTag.name,
-            revision: branchOrTag && branchOrTag.revision,
-            refType: branchOrTag && branchOrTag.type,
-            repository
-        };
-        if (!branchOrTag) {
-            return context;
-        }
-        if (segments.length === 1 || branchOrTag.fullPath.length === 0) {
-            return context;
-        }
-
-        const result = await this.gitlabApi.run<GitLab.TreeObject[]>(user, async g => {
-            return g.Repositories.tree(`${owner}/${repoName}`, { ref: branchOrTag.name, path: path.dirname(branchOrTag.fullPath) });
-        });
-        if (GitLab.ApiError.is(result)) {
-            log.debug(`Error reading TREE ${owner}/${repoName}/tree/${segments.join('/')}.`, result);
-        } else {
-            const object = result.find(o => o.path === branchOrTag.fullPath);
-            if (object) {
-                const isFile = object.type === "blob";
-                context.isFile = isFile;
-                context.path = branchOrTag.fullPath;
+        try {
+            const branchOrTagPromise = segments.length > 0 ? this.getBranchOrTag(user, owner, repoName, segments) : undefined;
+            const repository = await this.fetchRepo(user, `${owner}/${repoName}`);
+            const branchOrTag = await branchOrTagPromise;
+            const context = <NavigatorContext>{
+                isFile: false,
+                path: '',
+                title: `${owner}/${repoName}` + (branchOrTag ? ` - ${branchOrTag.name}` : ''),
+                ref: branchOrTag && branchOrTag.name,
+                revision: branchOrTag && branchOrTag.revision,
+                refType: branchOrTag && branchOrTag.type,
+                repository
+            };
+            if (!branchOrTag) {
+                return context;
             }
+            if (segments.length === 1 || branchOrTag.fullPath.length === 0) {
+                return context;
+            }
+
+            const result = await this.gitlabApi.run<GitLab.TreeObject[]>(user, async g => {
+                return g.Repositories.tree(`${owner}/${repoName}`, { ref: branchOrTag.name, path: path.dirname(branchOrTag.fullPath) });
+            });
+            if (GitLab.ApiError.is(result)) {
+                throw new Error(`Error reading TREE ${owner}/${repoName}/tree/${segments.join('/')}: ${result}`);
+            } else {
+                const object = result.find(o => o.path === branchOrTag.fullPath);
+                if (object) {
+                    const isFile = object.type === "blob";
+                    context.isFile = isFile;
+                    context.path = branchOrTag.fullPath;
+                }
+            }
+            return context;
+        } catch (e) {
+            log.debug("GitLab context parser: Error handle tree context.", e);
+            throw e;
         }
-        return context;
     }
 
     protected async getBranchOrTag(user: User, owner: string, repoName: string, segments: string[]): Promise<{ type: RefType, name: string, revision: string, fullPath: string }> {
 
         let branchOrTagObject: { type: RefType, name: string, revision: string } | undefined = undefined;
 
-        const search = `^${segments[0]}`; // search for tags/branches that start with the first segment
-
-        const possibleBranches = await this.gitlabApi.run<GitLab.Branch[]>(user, async g => {
-            return g.Branches.all(`${owner}/${repoName}`, { search });
-        });
-        if (GitLab.ApiError.is(possibleBranches)) {
-            throw new Error(`GitLab ApiError on searching for possible branches for ${owner}/${repoName}/tree/${segments.join('/')}: ${possibleBranches}`);
+        // `segments` could have branch/tag name parts as well as file path parts.
+        // We never know which segments belong to the branch/tag name and which are already folder names.
+        // Here we generate a list of candidates for branch/tag names.
+        const branchOrTagCandidates: string[] = [];
+        // Try the concatination of all segments first.
+        branchOrTagCandidates.push(segments.join("/"));
+        // Then all subsets.
+        for (let i = 1; i < segments.length; i++) {
+            branchOrTagCandidates.push(segments.slice(0, i).join("/"));
         }
-        for (let candidate of possibleBranches) {
-            const name = candidate.name;
-            const nameSegements = candidate.name.split('/');
-            if (segments.length >= nameSegements.length && segments.slice(0, nameSegements.length).join('/') === name) {
-                branchOrTagObject = { type: 'branch', name, revision: candidate.commit.id };
+
+        for (const candidate of branchOrTagCandidates) {
+
+            // Check if there is a BRANCH with name `candidate`:
+            const possibleBranch = await this.gitlabApi.run<GitLab.Branch>(user, async g => {
+                return g.Branches.show(`${owner}/${repoName}`, candidate);
+            });
+            // If the branch does not exist, the GitLab API returns with NotFound or InternalServerError.
+            const isNotFoundBranch = GitLab.ApiError.is(possibleBranch) && (GitLab.ApiError.isNotFound(possibleBranch) || GitLab.ApiError.isInternalServerError(possibleBranch));
+            if (!isNotFoundBranch) {
+                if (GitLab.ApiError.is(possibleBranch)) {
+                    throw new Error(`GitLab ApiError on searching for possible branches for ${owner}/${repoName}/tree/${segments.join('/')}: ${possibleBranch}`);
+                }
+                branchOrTagObject = { type: 'branch', name: possibleBranch.name, revision: possibleBranch.commit.id };
+                break;
+            }
+
+            // Check if there is a TAG with name `candidate`:
+            const possibleTag = await this.gitlabApi.run<GitLab.Tag>(user, async g => {
+                return g.Tags.show(`${owner}/${repoName}`, candidate);
+            });
+            // If the tag does not exist, the GitLab API returns with NotFound or InternalServerError.
+            const isNotFoundTag = GitLab.ApiError.is(possibleTag) && (GitLab.ApiError.isNotFound(possibleTag) || GitLab.ApiError.isInternalServerError(possibleTag));
+            if (!isNotFoundTag) {
+                if (GitLab.ApiError.is(possibleTag)) {
+                    throw new Error(`GitLab ApiError on searching for possible tags for ${owner}/${repoName}/tree/${segments.join('/')}: ${possibleTag}`);
+                }
+                branchOrTagObject = { type: 'tag', name: possibleTag.name, revision: possibleTag.commit.id };
                 break;
             }
         }
 
+        // There seems to be no matching branch or tag.
         if (branchOrTagObject === undefined) {
-            const possibleTags = await this.gitlabApi.run<GitLab.Tag[]>(user, async g => {
-                return g.Tags.all(`${owner}/${repoName}`, { search });
-            });
-            if (GitLab.ApiError.is(possibleTags)) {
-                throw new Error(`GitLab ApiError on searching for possible tags for ${owner}/${repoName}/tree/${segments.join('/')}: ${possibleTags}`);
-            }
-            for (let candidate of possibleTags) {
-                const name = candidate.name;
-                const nameSegements = candidate.name.split('/');
-                if (segments.length >= nameSegements.length && segments.slice(0, nameSegements.length).join('/') === name) {
-                    branchOrTagObject = { type: 'tag', name, revision: candidate.commit.id };
-                    break;
-                }
-            }
-        }
-
-        if (branchOrTagObject === undefined) {
+            log.debug(`Cannot find tag/branch for context: ${owner}/${repoName}/tree/${segments.join('/')}.`,
+                { branchOrTagCandidates }
+            );
             throw new Error(`Cannot find tag/branch for context: ${owner}/${repoName}/tree/${segments.join('/')}.`);
         }
 
