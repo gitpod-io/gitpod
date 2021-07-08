@@ -6,7 +6,7 @@
 
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class IdentityTokensToEmails1624290876856 implements MigrationInterface {
+export class IdentityTokensToEmails1625759714856 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<any> {
         await queryRunner.renameColumn("d_b_identity", "tokens", "additionalEmails");
