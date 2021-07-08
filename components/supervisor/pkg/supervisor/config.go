@@ -205,6 +205,9 @@ type WorkspaceConfig struct {
 
 	// WorkspaceContext is a context for this workspace
 	WorkspaceContext string `env:"GITPOD_WORKSPACE_CONTEXT"`
+
+	// WorkspaceClusterHost is a host under which this workspace is served, e.g. ws-eu11.gitpod.io
+	WorkspaceClusterHost string `env:"GITPOD_WORKSPACE_CLUSTER_HOST"`
 }
 
 // WorkspaceGitpodToken is a list of tokens that should be added to supervisor's token service

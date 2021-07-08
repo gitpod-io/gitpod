@@ -61,6 +61,7 @@ data:
             },
             "heartbeatInterval": "30s",
             "hostURL": "https://{{ $.Values.hostname }}",
+            "workspaceClusterHost": "ws{{- if $gp.installation.shortname -}}-{{ $.Values.installation.shortname }}{{- end -}}.{{ $.Values.hostname }}",
             "initProbe": {
                 "timeout": "1s"
             },

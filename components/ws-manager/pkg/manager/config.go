@@ -79,6 +79,8 @@ type Configuration struct {
 	WorkspaceDaemon WorkspaceDaemonConfiguration `json:"wsdaemon"`
 	// RegistryFacadeHost is the host (possibly including port) on which the registry facade resolves
 	RegistryFacadeHost string `json:"registryFacadeHost"`
+	// Cluster host under which workspaces are served, e.g. ws-eu11.gitpod.io
+	WorkspaceClusterHost string `json:"workspaceClusterHost"`
 }
 
 // AllContainerConfiguration contains the configuration for all container in a workspace pod
