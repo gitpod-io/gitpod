@@ -17,6 +17,7 @@ import { TeamSubscription, TeamSubscriptionSlot, TeamSubscriptionSlotResolved } 
 import { Cancelable } from '@gitpod/gitpod-protocol/lib/util/cancelable';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
+import { RemoteTrackMessage, TrackMessage } from '@gitpod/gitpod-protocol/lib/analytics';
 import { ImageBuilderClientProvider, LogsRequest } from '@gitpod/image-builder/lib';
 import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
 import { ControlPortRequest, DescribeWorkspaceRequest, MarkActiveRequest, PortSpec, PortVisibility as ProtoPortVisibility, StopWorkspacePolicy, StopWorkspaceRequest } from '@gitpod/ws-manager/lib/core_pb';
@@ -26,7 +27,7 @@ import * as opentracing from 'opentracing';
 import { URL } from 'url';
 import * as uuidv4 from 'uuid/v4';
 import { Disposable, ResponseError } from 'vscode-jsonrpc';
-import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/util/analytics";
+import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { AuthProviderService } from '../auth/auth-provider-service';
 import { HostContextProvider } from '../auth/host-context-provider';
 import { GuardedResource, ResourceAccessGuard, ResourceAccessOp } from '../auth/resource-access';
@@ -1773,6 +1774,27 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             const message = error && error.message ? error.message : "Failed to delete the provider.";
             throw new ResponseError(ErrorCodes.CONFLICT, message);
         }
+    }
+
+    public async trackEvent(event: RemoteTrackMessage): Promise<void> {
+        if (!this.user) {
+            // we cannot track events if don't know the user, because we have no sensible means
+            // to produce a correlatable anonymousId.
+            return;
+        }
+
+        // Beware: DO NOT just event... the message, but consume it individually as the message is coming from
+        //         the wire and we have no idea what's in it. Even passing the context and properties directly
+        //         is questionable. Considering we're handing down the msg and do not know how the analytics library
+        //         handles potentially broken or malicious input, we better err on the side of caution.
+        const msg: TrackMessage = {
+            userId: this.user.id,
+            event: event.event,
+            messageId: event.messageId,
+            context: event.context,
+            properties: event.properties,
+        }
+        this.analytics.track(msg);
     }
 
     async getTerms(): Promise<Terms> {

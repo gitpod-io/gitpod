@@ -20,7 +20,8 @@ import { filePathTelepresenceAware } from '@gitpod/gitpod-protocol/lib/env';
 import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
 import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientProviderDBSource, WorkspaceManagerClientProviderSource } from '@gitpod/ws-manager/lib/client-provider-source';
 import { ClusterService, ClusterServiceServer } from './cluster-service-server';
-import { IAnalyticsWriter, newAnalyticsWriterFromEnv } from '@gitpod/gitpod-protocol/lib/util/analytics';
+import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
+import { newAnalyticsWriterFromEnv } from '@gitpod/gitpod-protocol/lib/util/analytics';
 
 export const containerModule = new ContainerModule(bind => {
 

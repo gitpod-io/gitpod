@@ -25,6 +25,7 @@ import { Emitter } from './util/event';
 import { AccountStatement, CreditAlert } from './accounting-protocol';
 import { GithubUpgradeURL, PlanCoupon } from './payment-protocol';
 import { TeamSubscription, TeamSubscriptionSlot, TeamSubscriptionSlotResolved } from './team-subscription-protocol';
+import { RemoteTrackMessage } from './analytics';
 
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
@@ -212,6 +213,11 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     createProject(params: CreateProjectParams): Promise<Project>;
     getProjects(teamId: string): Promise<ProjectInfo[]>;
     getPrebuilds(teamId: string, project: string): Promise<PrebuildInfo[]>;
+
+    /**
+     * Analytics
+     */
+    trackEvent(event: RemoteTrackMessage): Promise<void>;
 }
 
 export interface CreateProjectParams {

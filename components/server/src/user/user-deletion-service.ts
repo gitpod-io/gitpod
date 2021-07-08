@@ -14,7 +14,7 @@ import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-pr
 import { StopWorkspaceRequest, StopWorkspacePolicy } from "@gitpod/ws-manager/lib";
 import { WorkspaceDeletionService } from "../workspace/workspace-deletion-service";
 import { AuthProviderService } from "../auth/auth-provider-service";
-import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/util/analytics';
+import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
 
 @injectable()
 export class UserDeletionService {

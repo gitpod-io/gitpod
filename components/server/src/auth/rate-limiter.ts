@@ -163,6 +163,8 @@ function readConfig(): RateLimiterConfig {
         "createProject":  { group: "default", points: 1 },
         "getProjects":  { group: "default", points: 1 },
         "getPrebuilds":  { group: "default", points: 1 },
+
+        "trackEvent":  { group: "default", points: 1 },
     };
 
     const fromEnv = JSON.parse(process.env.RATE_LIMITER_CONFIG || "{}")
