@@ -53,6 +53,11 @@ export class WorkspaceLogService {
      * @param workspace
      */
     protected async listWorkspaceLogs(wsi: WorkspaceInstance): Promise<Map<string, string>> {
+        if (wsi.ideUrl === "") {
+            // if ideUrl is not yet set we're too early and we deem the workspace not ready yet: retry later!
+            throw new Error(`instance's ${wsi.id} has no ideUrl, yet`);
+        }
+
         const tasks = await new Promise<TaskStatus[]>((resolve, reject) => {
             const client = new StatusServiceClient(toSupervisorURL(wsi.ideUrl), {
                 transport: WebsocketTransport(),
@@ -79,7 +84,7 @@ export class WorkspaceLogService {
                 // this might be the case when there is no terminal for this task, yet.
                 // if we find any such case, we deem the workspace not ready yet, and try to reconnect later,
                 // to be sure to get hold of all terminals created.
-                throw new Error(`task ${t.getId} has no terminal yet`);
+                throw new Error(`instance's ${wsi.id} task ${t.getId} has no terminal yet`);
             }
             result.set(t.getId(), t.getTerminal());
         }
