@@ -276,21 +276,23 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     });
 
     var k3sWsProxyIP = "";
-    try {
-        // The output of gcloud compute addresses describe contains a list of values in <key>:__<value> form. We get rid of the `address:  ` to find the ip
-        const existingIP = exec(`gcloud compute addresses describe ${namespace} --region europe-west1 | grep 'address:' | cut -c 10-`, { silent: true }).trim();
-        werft.log('certificate', `The gcloud compute address describe returned: ${existingIP}`)
-        if (existingIP.indexOf("ERROR:") == -1 && existingIP != "") {
-            k3sWsProxyIP = existingIP;
-            werft.log('certificate', `found existing ip named ${namespace} and value: ${k3sWsProxyIP}`)
-        } else {
-            exec(`gcloud compute addresses create ${namespace} --region europe-west1`)
-            const newIP = exec(`gcloud compute addresses describe ${namespace} --region europe-west1 | grep 'address:' | cut -c 10-`).trim();
-            k3sWsProxyIP = newIP
-            werft.log('certificate', `created new ip named ${namespace} and value: ${k3sWsProxyIP}`)
+    if (k3sWsCluster) {
+        try {
+            // The output of gcloud compute addresses describe contains a list of values in <key>:__<value> form. We get rid of the `address:  ` to find the ip
+            const existingIP = exec(`gcloud compute addresses describe ${namespace} --region europe-west1 | grep 'address:' | cut -c 10-`, { silent: true }).trim();
+            werft.log('certificate', `The gcloud compute address describe returned: ${existingIP}`)
+            if (existingIP.indexOf("ERROR:") == -1 && existingIP != "") {
+                k3sWsProxyIP = existingIP;
+                werft.log('certificate', `found existing ip named ${namespace} and value: ${k3sWsProxyIP}`)
+            } else {
+                exec(`gcloud compute addresses create ${namespace} --region europe-west1`)
+                const newIP = exec(`gcloud compute addresses describe ${namespace} --region europe-west1 | grep 'address:' | cut -c 10-`).trim();
+                k3sWsProxyIP = newIP
+                werft.log('certificate', `created new ip named ${namespace} and value: ${k3sWsProxyIP}`)
+            }
+        } catch (err) {
+            werft.fail('certificate', err.toString())
         }
-    } catch (err) {
-        werft.fail('certificate', err.toString())
     }
 
     try {
