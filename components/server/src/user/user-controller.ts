@@ -24,7 +24,7 @@ import { GitpodToken, GitpodTokenType, User } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { AuthFlow } from "../auth/auth-provider";
 import { LoginCompletionHandler } from "../auth/login-completion-handler";
-import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/util/analytics";
+import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { TosCookie } from "./tos-cookie";
 import { TosFlow } from "../terms/tos-flow";
 import { increaseLoginCounter } from '../../src/prometheus-metrics';

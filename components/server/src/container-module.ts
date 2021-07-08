@@ -71,12 +71,13 @@ import { ContentServiceStorageClient } from './storage/content-service-client';
 import { IDEPluginServiceClient } from '@gitpod/content-service/lib/ideplugin_grpc_pb';
 import { GitTokenScopeGuesser } from './workspace/git-token-scope-guesser';
 import { GitTokenValidator } from './workspace/git-token-validator';
-import { newAnalyticsWriterFromEnv, IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/util/analytics';
+import { newAnalyticsWriterFromEnv } from '@gitpod/gitpod-protocol/lib/util/analytics';
 import { OAuthController } from './oauth-server/oauth-controller';
 import { ImageBuildPrefixContextParser } from './workspace/imagebuild-prefix-context-parser';
 import { AdditionalContentPrefixContextParser } from './workspace/additional-content-prefix-context-parser';
 import { WorkspaceLogService } from './workspace/workspace-log-service';
 import { HeadlessLogController } from './workspace/headless-log-controller';
+import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Env).toSelf().inSingletonScope();

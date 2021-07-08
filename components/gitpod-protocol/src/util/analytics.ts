@@ -5,30 +5,9 @@
  */
 
 import Analytics = require("analytics-node");
+import { IAnalyticsWriter, IdentifyMessage, TrackMessage } from "../analytics";
 import { log } from './logging';
 
-export const IAnalyticsWriter = Symbol("IAnalyticsWriter");
-
-type Identity =
-    | { userId: string | number }
-    | { userId?: string | number; anonymousId: string | number };
-
-interface Message {
-    messageId?: string;
-}
-
-export type IdentifyMessage = Message & Identity & {
-    traits?: any;
-    timestamp?: Date;
-    context?: any;
-};
-
-export type TrackMessage = Message & Identity & {
-    event: string;
-    properties?: any;
-    timestamp?: Date;
-    context?: any;
-};
 
 export function newAnalyticsWriterFromEnv(): IAnalyticsWriter {
     switch (process.env.GITPOD_ANALYTICS_WRITER) {
@@ -39,14 +18,6 @@ export function newAnalyticsWriterFromEnv(): IAnalyticsWriter {
         default:
             return new NoAnalyticsWriter();
     }
-}
-
-export interface IAnalyticsWriter {
-
-    identify(msg: IdentifyMessage): void;
-
-    track(msg: TrackMessage): void;
-
 }
 
 class SegmentAnalyticsWriter implements IAnalyticsWriter {

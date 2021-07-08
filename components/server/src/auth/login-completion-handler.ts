@@ -15,7 +15,7 @@ import { HostContextProvider } from './host-context-provider';
 import { AuthProviderService } from './auth-provider-service';
 import { TosFlow } from '../terms/tos-flow';
 import { increaseLoginCounter } from '../../src/prometheus-metrics';
-import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/util/analytics';
+import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
 
 /**
  * The login completion handler pulls the strings between the OAuth2 flow, the ToS flow, and the session management.

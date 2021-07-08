@@ -13,7 +13,7 @@ import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { HeadlessLogEvent } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/util/analytics";
+import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { TracedWorkspaceDB, TracedUserDB, DBWithTracing } from '@gitpod/gitpod-db/lib/traced-db';
 import { PrometheusMetricsExporter } from "./prometheus-metrics-exporter";
 import { ClientProvider, WsmanSubscriber } from "./wsman-subscriber";
