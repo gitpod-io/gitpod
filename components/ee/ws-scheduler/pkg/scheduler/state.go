@@ -47,6 +47,10 @@ type PodSlots struct {
 	Available int64
 }
 
+func (p PodSlots) DebugStringResourceUsage() string {
+	return fmt.Sprintf("pods scheduled %d, capacity %d, avail %d", p.Total-p.Available, p.Total, p.Available)
+}
+
 // Binding models a k8s binding pod -> node
 type Binding struct {
 	Pod      *corev1.Pod
@@ -372,7 +376,7 @@ func (s *State) FindSpareGhostToDelete(nodeName string, pod *corev1.Pod, namespa
 		}
 	}
 	nodeWithGhostsVisible.update(namespace, ramSafetyBuffer, ghostsVisible)
-	if fitsOnNode(pod, nodeWithGhostsVisible) {
+	if FitsOnNode(pod, nodeWithGhostsVisible) {
 		// the pod fits onto the node (even with ghosts) we do not need to delete a ghost at all
 		return "", false
 	}
@@ -453,6 +457,7 @@ func DebugStringNodes(nodes ...*Node) string {
 		lines = append(lines, fmt.Sprintf("- %s:", node.Node.Name))
 		lines = append(lines, fmt.Sprintf("  RAM: %s", node.RAM.DebugStringResourceUsage()))
 		lines = append(lines, fmt.Sprintf("  Eph. Storage: %s", node.EphemeralStorage.DebugStringResourceUsage()))
+		lines = append(lines, fmt.Sprintf("  Pods: %s", node.PodSlots.DebugStringResourceUsage()))
 	}
 	return strings.Join(lines, "\n")
 }

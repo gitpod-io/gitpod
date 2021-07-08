@@ -14,6 +14,7 @@ import (
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	sched "github.com/gitpod-io/gitpod/ws-scheduler/pkg/scheduler"
+	"github.com/google/go-cmp/cmp"
 )
 
 const (
@@ -26,26 +27,30 @@ var (
 )
 
 func TestDensityAndExperience(t *testing.T) {
+	type Expectation struct {
+		Node          string
+		Error         string
+		GhostReplaced string
+	}
+
 	tests := []struct {
-		Desc                  string
-		Broken                string
-		RAMSafetyBuffer       string
-		Nodes                 []*corev1.Node
-		Pods                  []*corev1.Pod
-		ScheduledPod          *corev1.Pod
-		ExpectedNode          string
-		ExpectedError         string
-		ExpectedGhostReplaced string
+		Desc            string
+		Broken          string
+		RAMSafetyBuffer string
+		Nodes           []*corev1.Node
+		Pods            []*corev1.Pod
+		ScheduledPod    *corev1.Pod
+		Expectation     Expectation
 	}{
 		{
 			Desc:            "no node",
 			RAMSafetyBuffer: "512Mi",
 			ScheduledPod:    &corev1.Pod{ObjectMeta: metav1.ObjectMeta{Name: "testpod"}},
-			ExpectedError: `No node with enough resources available!
+			Expectation: Expectation{Error: `No node with enough resources available!
 RAM requested: 0
 Eph. Storage requested: 0
 Nodes:
-`,
+`},
 		},
 		{
 			Desc:            "no node with enough RAM",
@@ -53,20 +58,21 @@ Nodes:
 			Nodes:           []*corev1.Node{createNode("node1", "10000Mi", "0Mi", false, 100)},
 			Pods:            []*corev1.Pod{createNonWorkspacePod("existingPod1", "8000Mi", "0Mi", "node1", "10s")},
 			ScheduledPod:    createWorkspacePod("pod", "6000Mi", "0Mi", "", "1000s"),
-			ExpectedError: `No node with enough resources available!
+			Expectation: Expectation{Error: `No node with enough resources available!
 RAM requested: 6000Mi
 Eph. Storage requested: 0
 Nodes:
 - node1:
   RAM: used 0(r)+0(g)+0(h)+8389(o) of 9949, avail 1561 Mi
-  Eph. Storage: used 0(r)+0(g)+0(h)+0(o) of 0, avail 0 Mi`,
+  Eph. Storage: used 0(r)+0(g)+0(h)+0(o) of 0, avail 0 Mi
+  Pods: pods scheduled 1, capacity 100, avail 99`},
 		},
 		{
 			Desc:            "single empty node",
 			RAMSafetyBuffer: "512Mi",
 			Nodes:           []*corev1.Node{createNode("node1", "10000Mi", "0Mi", false, 100)},
 			ScheduledPod:    createWorkspacePod("pod", "6000Mi", "0Mi", "", "1000s"),
-			ExpectedNode:    "node1",
+			Expectation:     Expectation{Node: "node1"},
 		},
 		{
 			Desc:            "two nodes, one full",
@@ -77,7 +83,7 @@ Nodes:
 			},
 			Pods:         []*corev1.Pod{createNonWorkspacePod("existingPod1", "8000Mi", "0Mi", "node1", "10s")},
 			ScheduledPod: createWorkspacePod("pod", "6000Mi", "0Mi", "", "1000s"),
-			ExpectedNode: "node2",
+			Expectation:  Expectation{Node: "node2"},
 		},
 		{
 			Desc:            "two nodes, prefer density",
@@ -88,7 +94,7 @@ Nodes:
 			},
 			Pods:         []*corev1.Pod{createWorkspacePod("existingPod1", "1000Mi", "0Mi", "node1", "10s")},
 			ScheduledPod: createWorkspacePod("pod", "6000Mi", "0Mi", "", "1000s"),
-			ExpectedNode: "node1",
+			Expectation:  Expectation{Node: "node1"},
 		},
 		{
 			Desc:            "three nodes, prefer with image",
@@ -103,7 +109,7 @@ Nodes:
 				createWorkspacePod("existingPod2", "1000Mi", "0Mi", "node2", "10s"),
 			},
 			ScheduledPod: createWorkspacePod("pod", "6000Mi", "0Mi", "", "1000s"),
-			ExpectedNode: "node2",
+			Expectation:  Expectation{Node: "node2"},
 		},
 		{
 			Desc:            "three nodes, prefer with image in class",
@@ -118,7 +124,7 @@ Nodes:
 				createWorkspacePod("existingPod2", "1000Mi", "0Mi", "node2", "10s"),
 			},
 			ScheduledPod: createWorkspacePod("pod", "6000Mi", "0Mi", "", "1000s"),
-			ExpectedNode: "node1",
+			Expectation:  Expectation{Node: "node1"},
 		},
 		{
 			// We musn't place headless pods on nodes without regular workspaces
@@ -135,7 +141,7 @@ Nodes:
 				createHeadlessWorkspacePod("hpod", "500Mi", "0Mi", "node3", "1000s"),
 			},
 			ScheduledPod: createHeadlessWorkspacePod("pod", "6000Mi", "0Mi", "", "1000s"),
-			ExpectedNode: "node2",
+			Expectation:  Expectation{Node: "node2"},
 		},
 		{
 			Desc:            "three empty nodes, place headless pod",
@@ -146,7 +152,7 @@ Nodes:
 				createNode("node3", "10000Mi", "0Mi", true, 100),
 			},
 			ScheduledPod: createHeadlessWorkspacePod("pod", "6000Mi", "0Mi", "", "1000s"),
-			ExpectedNode: "node1",
+			Expectation:  Expectation{Node: "node1"},
 		},
 		{
 			Desc:            "filter full nodes, headless workspaces",
@@ -160,7 +166,7 @@ Nodes:
 				createWorkspacePod("existingPod2", "4000Mi", "0Mi", "node1", "10s"),
 			},
 			ScheduledPod: createWorkspacePod("pod", "4000Mi", "0Mi", "", "10s"),
-			ExpectedNode: "node2",
+			Expectation:  Expectation{Node: "node2"},
 		},
 		{
 			// Should choose node1 because it has more free RAM but chooses 2 because node1's pod capacity is depleted
@@ -174,7 +180,7 @@ Nodes:
 				createWorkspacePod("existingPod1", "4000Mi", "0Mi", "node2", "10s"),
 			},
 			ScheduledPod: createWorkspacePod("new pod", "4000Mi", "0Mi", "node1", "10s"),
-			ExpectedNode: "node2",
+			Expectation:  Expectation{Node: "node2"},
 		},
 		{
 			// Should choose node1 because it has more free RAM but chooses 2 because node1's ephemeral storage is depleted
@@ -188,7 +194,7 @@ Nodes:
 				createWorkspacePod("existingPod1", "4000Mi", "5000Mi", "node2", "10s"),
 			},
 			ScheduledPod: createWorkspacePod("new pod", "4000Mi", "5000Mi", "node1", "10s"),
-			ExpectedNode: "node2",
+			Expectation:  Expectation{Node: "node2"},
 		},
 		{
 			// Throws an error because both nodes have enough RAM but not enough ephemeral storage
@@ -202,16 +208,18 @@ Nodes:
 				createWorkspacePod("existingPod1", "4000Mi", "5000Mi", "node2", "10s"),
 			},
 			ScheduledPod: createWorkspacePod("new pod", "4000Mi", "5000Mi", "node1", "10s"),
-			ExpectedError: `No node with enough resources available!
+			Expectation: Expectation{Error: `No node with enough resources available!
 RAM requested: 4000Mi
 Eph. Storage requested: 5000Mi
 Nodes:
 - node2:
   RAM: used 4195(r)+0(g)+0(h)+0(o) of 9949, avail 5755 Mi
   Eph. Storage: used 5243(r)+0(g)+0(h)+0(o) of 7341, avail 2098 Mi
+  Pods: pods scheduled 1, capacity 100, avail 99
 - node1:
   RAM: used 0(r)+0(g)+0(h)+0(o) of 9949, avail 9949 Mi
-  Eph. Storage: used 0(r)+0(g)+0(h)+0(o) of 3146, avail 3146 Mi`,
+  Eph. Storage: used 0(r)+0(g)+0(h)+0(o) of 3146, avail 3146 Mi
+  Pods: pods scheduled 0, capacity 100, avail 100`},
 		},
 		{
 			// Should prefer 1 and 2 over 3, but 1 has not enough pod slots and 2 not enough ephemeral storage
@@ -228,7 +236,7 @@ Nodes:
 				createWorkspacePod("existingPod3", "4000Mi", "5000Mi", "node3", "10s"),
 			},
 			ScheduledPod: createWorkspacePod("new pod", "4000Mi", "5000Mi", "node1", "10s"),
-			ExpectedNode: "node3",
+			Expectation:  Expectation{Node: "node3"},
 		},
 		{
 			// Schedules on 1 because node2 is more dense but full already
@@ -243,7 +251,7 @@ Nodes:
 				createGhostPod("ghost1", "4000Mi", "5000Mi", "node2", "10s"),
 			},
 			ScheduledPod: createGhostPod("new ghost", "4000Mi", "5000Mi", "", "10s"),
-			ExpectedNode: "node1",
+			Expectation:  Expectation{Node: "node1"},
 		},
 		{
 			// Should schedule to 2 because of density and it does ignore the ghost that blocks its slot
@@ -258,7 +266,7 @@ Nodes:
 				createGhostPod("ghost1", "4000Mi", "5000Mi", "node2", "10s"),
 			},
 			ScheduledPod: createWorkspacePod("new workspace", "4000Mi", "5000Mi", "", "10s"),
-			ExpectedNode: "node2",
+			Expectation:  Expectation{Node: "node2", GhostReplaced: "ghost1"},
 		},
 		{
 			// Should schedule to 2 because of density and it ignores ghosts.
@@ -274,9 +282,8 @@ Nodes:
 				createGhostPod("ghost1", "3000Mi", "3000Mi", "node2", "8s"),
 				createGhostPod("ghost2", "3000Mi", "3000Mi", "node2", "10s"),
 			},
-			ScheduledPod:          createProbePod("workspace2", "3000Mi", "3000Mi", "", "10s"),
-			ExpectedNode:          "node2",
-			ExpectedGhostReplaced: "ghost2",
+			ScheduledPod: createProbePod("workspace2", "3000Mi", "3000Mi", "", "10s"),
+			Expectation:  Expectation{Node: "node2", GhostReplaced: "ghost2"},
 		},
 	}
 
@@ -300,25 +307,16 @@ Nodes:
 			}
 
 			node, err := strategy.Select(state, test.ScheduledPod)
-			var errmsg string
-			if err != nil {
-				errmsg = err.Error()
-			}
-			if errmsg != test.ExpectedError {
-				t.Errorf("expected error \"%s\", got \"%s\"", test.ExpectedError, errmsg)
-				return
-			}
-			if node != test.ExpectedNode {
-				t.Errorf("expected node \"%s\", got \"%s\"", test.ExpectedNode, node)
-				return
-			}
 
-			if test.ExpectedGhostReplaced != "" {
-				ghostToDelete, _ := state.FindSpareGhostToDelete(node, test.ScheduledPod, defaultTestNamespace, &ramSafetyBuffer, make(map[string]*sched.Slot))
-				if ghostToDelete != test.ExpectedGhostReplaced {
-					t.Errorf("expected ghost to be replaced \"%s\", got \"%s\"", test.ExpectedGhostReplaced, ghostToDelete)
-					return
-				}
+			var act Expectation
+			act.Node = node
+			if err != nil {
+				act.Error = err.Error()
+			}
+			act.GhostReplaced, _ = state.FindSpareGhostToDelete(node, test.ScheduledPod, defaultTestNamespace, &ramSafetyBuffer, make(map[string]*sched.Slot))
+
+			if diff := cmp.Diff(test.Expectation, act); diff != "" {
+				t.Errorf("unexpected TestDensityAndExperience result (-want +got):\n%s", diff)
 			}
 		})
 	}
@@ -415,4 +413,51 @@ func MustParseDuration(str string) time.Duration {
 		panic("duration does not parse")
 	}
 	return dur
+}
+
+func TestFitsOnNode(t *testing.T) {
+	tests := []struct {
+		Name       string
+		Pod        *corev1.Pod
+		Node       *corev1.Node
+		Expecation bool
+	}{
+		{
+			Name:       "happy path",
+			Pod:        createPod("pod", "100Mi", "0Mi", "", "0s", nil),
+			Node:       createNode("node1", "10000Mi", "0Mi", false, 100),
+			Expecation: true,
+		},
+		{
+			Name:       "out of pods",
+			Pod:        createPod("pod", "100Mi", "0Mi", "", "0s", nil),
+			Node:       createNode("node1", "10000Mi", "0Mi", false, 0),
+			Expecation: false,
+		},
+		{
+			Name:       "out of ram",
+			Pod:        createPod("pod", "100Mi", "0Mi", "", "0s", nil),
+			Node:       createNode("node1", "10Mi", "0Mi", false, 100),
+			Expecation: false,
+		},
+		{
+			Name:       "out of ephemeral storage",
+			Pod:        createPod("pod", "100Mi", "10Mi", "", "0s", nil),
+			Node:       createNode("node1", "10000Mi", "0Mi", false, 0),
+			Expecation: false,
+		},
+	}
+
+	ramSafetyBuffer := res.MustParse("0Mi")
+	for _, test := range tests {
+
+		t.Run(test.Name, func(t *testing.T) {
+			state := sched.ComputeState([]*corev1.Node{test.Node}, nil, nil, &ramSafetyBuffer, true, defaultTestNamespace)
+
+			act := sched.FitsOnNode(test.Pod, state.Nodes[test.Node.Name])
+			if diff := cmp.Diff(test.Expecation, act); diff != "" {
+				t.Errorf("unexpected FitsOnNode() result (-want +got):\n%s", diff)
+			}
+		})
+	}
 }
