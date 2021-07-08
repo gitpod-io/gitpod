@@ -214,14 +214,15 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
         const possibleBranches = await this.gitlabApi.run<GitLab.Branch[]>(user, async g => {
             return g.Branches.all(`${owner}/${repoName}`, { search });
         });
-        if (!GitLab.ApiError.is(possibleBranches)) {
-            for (let candidate of possibleBranches) {
-                const name = candidate.name;
-                const nameSegements = candidate.name.split('/');
-                if (segments.length >= nameSegements.length && segments.slice(0, nameSegements.length).join('/') === name) {
-                    branchOrTagObject = { type: 'branch', name, revision: candidate.commit.id };
-                    break;
-                }
+        if (GitLab.ApiError.is(possibleBranches)) {
+            throw new Error(`GitLab ApiError on searching for possible branches for ${owner}/${repoName}/tree/${segments.join('/')}: ${possibleBranches}`);
+        }
+        for (let candidate of possibleBranches) {
+            const name = candidate.name;
+            const nameSegements = candidate.name.split('/');
+            if (segments.length >= nameSegements.length && segments.slice(0, nameSegements.length).join('/') === name) {
+                branchOrTagObject = { type: 'branch', name, revision: candidate.commit.id };
+                break;
             }
         }
 
@@ -229,14 +230,15 @@ export class GitlabContextParser extends AbstractContextParser implements IConte
             const possibleTags = await this.gitlabApi.run<GitLab.Tag[]>(user, async g => {
                 return g.Tags.all(`${owner}/${repoName}`, { search });
             });
-            if (!GitLab.ApiError.is(possibleTags)) {
-                for (let candidate of possibleTags) {
-                    const name = candidate.name;
-                    const nameSegements = candidate.name.split('/');
-                    if (segments.length >= nameSegements.length && segments.slice(0, nameSegements.length).join('/') === name) {
-                        branchOrTagObject = { type: 'tag', name, revision: candidate.commit.id };
-                        break;
-                    }
+            if (GitLab.ApiError.is(possibleTags)) {
+                throw new Error(`GitLab ApiError on searching for possible tags for ${owner}/${repoName}/tree/${segments.join('/')}: ${possibleTags}`);
+            }
+            for (let candidate of possibleTags) {
+                const name = candidate.name;
+                const nameSegements = candidate.name.split('/');
+                if (segments.length >= nameSegements.length && segments.slice(0, nameSegements.length).join('/') === name) {
+                    branchOrTagObject = { type: 'tag', name, revision: candidate.commit.id };
+                    break;
                 }
             }
         }

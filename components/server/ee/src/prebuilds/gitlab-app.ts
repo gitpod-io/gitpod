@@ -14,6 +14,7 @@ import { StartPrebuildResult } from './github-app';
 import { TokenService } from '../../../src/user/token-service';
 import { HostContextProvider } from '../../../src/auth/host-context-provider';
 import { GitlabService } from './gitlab-service';
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
 @injectable()
 export class GitLabApp {
@@ -29,12 +30,12 @@ export class GitLabApp {
     @postConstruct()
     protected init() {
         this._router.post('/', async (req, res) => {
-            console.log(req.header('X-Gitlab-Event'));
-            if (req.header('X-Gitlab-Event') === 'Push Hook') {
+            const event = req.header('X-Gitlab-Event');
+            if (event === 'Push Hook') {
                 const context = req.body as GitLabPushHook;
                 const span = TraceContext.startSpan("GitLapApp.handleEvent", {});
                 span.setTag("request", context);
-                console.log(JSON.stringify(context, undefined, '  '));
+                log.debug("GitLab push hook received", { event, context });
                 const user = await this.findUser({span},context, req);
                 if (!user) {
                     res.statusCode = 503;
@@ -42,6 +43,8 @@ export class GitLabApp {
                     return;
                 }
                 this.handlePushHook({span},context, user);
+            } else {
+                log.debug("Unknown GitLab event received", { event });
             }
             res.send('OK');
         });
@@ -53,7 +56,7 @@ export class GitLabApp {
             const secretToken = req.header('X-Gitlab-Token');
             span.setTag('secret-token', secretToken);
             if (!secretToken) {
-                throw new Error('No sceretToken provided.');
+                throw new Error('No secretToken provided.');
             }
             const [userid, tokenValue] = secretToken.split('|');
             const user = await this.userDB.findUserById(userid);
@@ -85,14 +88,15 @@ export class GitLabApp {
         const span = TraceContext.startSpan("GitLapApp.handlePushHook", ctx);
         try {
             const contextURL = this.createContextUrl(body);
-            span.setTag('contextURl', contextURL);
+            log.debug({ userId: user.id }, "GitLab push hook: Context URL", { context: body, contextURL });
+            span.setTag('contextURL', contextURL);
             const config = await this.prebuildManager.fetchConfig({ span }, user, contextURL);
             if (!this.prebuildManager.shouldPrebuild(config)) {
-                console.log('No config. No prebuild.');
+                log.debug({ userId: user.id }, "GitLab push hook: There is no prebuild config.", { context: body, contextURL });
                 return undefined;
             }
 
-            console.log('Starting prebuild.', { contextURL, commit: body.after, gitUrl: body.repository.git_http_url })
+            log.debug({ userId: user.id }, "GitLab push hook: Starting prebuild", { context: body, contextURL });
             const ws = await this.prebuildManager.startPrebuild({ span }, user, contextURL, body.repository.git_http_url, body.after);
             return ws;
         } finally {
@@ -102,9 +106,8 @@ export class GitLabApp {
 
     protected createContextUrl(body: GitLabPushHook) {
         const repoUrl = body.repository.git_http_url;
-        const contextUrl = `${repoUrl.substr(0, repoUrl.length - 4)}/tree${body.ref.substr('refs/head/'.length)}`;
-        console.log(contextUrl);
-        return contextUrl;
+        const contextURL = `${repoUrl.substr(0, repoUrl.length - 4)}/-/tree${body.ref.substr('refs/head/'.length)}`;
+        return contextURL;
     }
 
     get router(): express.Router {
