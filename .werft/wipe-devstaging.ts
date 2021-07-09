@@ -34,12 +34,8 @@ async function k3sCleanup() {
 
         // Since werft creates static external IP for ws-proxy of k3s using gcloud
         // we delete it here. We retry because the ws-proxy-service which binds to this IP might not be deleted immediately
-        const k3sWsProxyIP = exec(`gcloud compute addresses describe ${namespace_raw} --region europe-west1 | grep 'address:' | cut -c 10-`, { silent: true }).trim();
-        if (k3sWsProxyIP.indexOf("ERROR:") == -1 && k3sWsProxyIP != "") {
-            deleteExternalIp(k3sWsProxyIP, namespace_raw)
-        } else {
-            werft.log("wipe", `no external static IP with matching name ${namespace_raw} found`)
-        }
+        const k3sWsProxyIP =
+            deleteExternalIp("wipe", namespace_raw)
     } else {
         werft.log("wipe", `file /workspace/k3s-external.yaml does not exist, no cleanup for k3s cluster`)
     }
