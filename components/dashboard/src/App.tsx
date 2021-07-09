@@ -62,11 +62,12 @@ function App() {
     useEffect(() => {
         (async () => {
             try {
-                const [ user, teams ] = await Promise.all([
-                    getGitpodService().server.getLoggedInUser(),
-                    getGitpodService().server.getTeams(),
-                ]);
+                const teamsPromise = getGitpodService().server.getTeams();
+
+                const user = await getGitpodService().server.getLoggedInUser();
                 setUser(user);
+
+                const teams = await teamsPromise;
                 setTeams(teams);
             } catch (error) {
                 console.error(error);
