@@ -7,7 +7,7 @@
 import { injectable, inject } from "inversify";
 import { GitpodServerImpl } from "../../../src/workspace/gitpod-server-impl";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { GitpodServer, GitpodClient, AdminGetListRequest, User, AdminGetListResult, Permission, AdminBlockUserRequest, AdminModifyRoleOrPermissionRequest, RoleOrPermission, AdminModifyPermanentWorkspaceFeatureFlagRequest, UserFeatureSettings, AdminGetWorkspacesRequest, WorkspaceAndInstance, GetWorkspaceTimeoutResult, WorkspaceTimeoutDuration, WorkspaceTimeoutValues, SetWorkspaceTimeoutResult, WorkspaceContext, CreateWorkspaceMode, WorkspaceCreationResult, PrebuiltWorkspaceContext, CommitContext, PrebuiltWorkspace, PermissionName, WorkspaceInstance, EduEmailDomain, ProviderRepository, PrebuildInfo } from "@gitpod/gitpod-protocol";
+import { GitpodServer, GitpodClient, AdminGetListRequest, User, AdminGetListResult, Permission, AdminBlockUserRequest, AdminModifyRoleOrPermissionRequest, RoleOrPermission, AdminModifyPermanentWorkspaceFeatureFlagRequest, UserFeatureSettings, AdminGetWorkspacesRequest, WorkspaceAndInstance, GetWorkspaceTimeoutResult, WorkspaceTimeoutDuration, WorkspaceTimeoutValues, SetWorkspaceTimeoutResult, WorkspaceContext, CreateWorkspaceMode, WorkspaceCreationResult, PrebuiltWorkspaceContext, CommitContext, PrebuiltWorkspace, PermissionName, WorkspaceInstance, EduEmailDomain, ProviderRepository, PrebuildInfo, Queue } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import { TakeSnapshotRequest, AdmissionLevel, ControlAdmissionRequest, StopWorkspacePolicy, DescribeWorkspaceRequest, SetTimeoutRequest } from "@gitpod/ws-manager/lib";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -1236,36 +1236,42 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         return await this.findAssigneeThrottled(logCtx, identityStr);
     }
 
+    protected updateTeamSubscriptionQueue = new Queue();
+
     async tsDeactivateSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void> {
         const user = this.checkAndBlockUser('tsDeactivateSlot');
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
 
-        // Check number of currently active slots
-        const newQuantity = (await this.tsGetActiveSlotQuantity(teamSubscriptionId)) - 1;
-        try {
-            const now = new Date();
-            // Downgrade by 1 unit
-            await this.doUpdateTeamSubscription(user.id, ts.id, newQuantity, false);
-            await this.teamSubscriptionService.deactivateSlot(ts, teamSubscriptionSlotId, now);
-        } catch (err) {
-            log.error({ userId: user.id }, 'tsDeactivateSlot', err);
-        }
+        this.updateTeamSubscriptionQueue.enqueue(async () => {
+            // Check number of currently active slots
+            const newQuantity = (await this.tsGetActiveSlotQuantity(teamSubscriptionId)) - 1;
+            try {
+                const now = new Date();
+                // Downgrade by 1 unit
+                await this.doUpdateTeamSubscription(user.id, ts.id, newQuantity, false);
+                await this.teamSubscriptionService.deactivateSlot(ts, teamSubscriptionSlotId, now);
+            } catch (err) {
+                log.error({ userId: user.id }, 'tsDeactivateSlot', err);
+            }
+        });
     }
 
     async tsReactivateSlot(teamSubscriptionId: string, teamSubscriptionSlotId: string): Promise<void> {
         const user = this.checkAndBlockUser('tsReactivateSlot');
         const ts = await this.internalGetTeamSubscription(teamSubscriptionId, user.id);
 
-        // Check number of currently active slots
-        const newQuantity = (await this.tsGetActiveSlotQuantity(teamSubscriptionId)) + 1;
-        try {
-            const now = new Date();
-            // Upgrade by 1 unit (but don't charge again!)
-            await this.doUpdateTeamSubscription(user.id, ts.id, newQuantity, false);
-            await this.teamSubscriptionService.reactivateSlot(ts, teamSubscriptionSlotId, now);
-        } catch (err) {
-            log.error({ userId: user.id }, 'tsReactivateSlot', err);
-        }
+        this.updateTeamSubscriptionQueue.enqueue(async () => {
+            // Check number of currently active slots
+            const newQuantity = (await this.tsGetActiveSlotQuantity(teamSubscriptionId)) + 1;
+            try {
+                const now = new Date();
+                // Upgrade by 1 unit (but don't charge again!)
+                await this.doUpdateTeamSubscription(user.id, ts.id, newQuantity, false);
+                await this.teamSubscriptionService.reactivateSlot(ts, teamSubscriptionSlotId, now);
+            } catch (err) {
+                log.error({ userId: user.id }, 'tsReactivateSlot', err);
+            }
+        });
     }
 
     async getGithubUpgradeUrls(): Promise<GithubUpgradeURL[]> {
