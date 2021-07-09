@@ -6,6 +6,7 @@ require (
 	github.com/StackExchange/wmi v0.0.0-20210224194228-fe8f1750fd46 // indirect
 	github.com/alecthomas/jsonschema v0.0.0-20190504002508-159cbd5dba26
 	github.com/alecthomas/repr v0.0.0-20200325044227-4184120f674c
+	github.com/containerd/cgroups v1.0.1
 	github.com/containerd/containerd v1.5.2
 	github.com/containerd/typeurl v1.0.2
 	github.com/docker/docker v20.10.5+incompatible

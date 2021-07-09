@@ -50,9 +50,12 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	if nodename == "" {
 		return nil, xerrors.Errorf("NODENAME env var isn't set")
 	}
+	cgCustomizer := &CgroupCustomizer{}
+	cgCustomizer.WithCgroupBasePath(config.Resources.CGroupsBasePath)
 	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename,
 		resources.NewDispatchListener(&config.Resources, reg),
 		&Containerd4214Workaround{},
+		cgCustomizer,
 	)
 	if err != nil {
 		return nil, err
