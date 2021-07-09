@@ -317,7 +317,13 @@ components:
     imageName: "service-waiter"
 
   paymentEndpoint:
+    name: "payment-endpoint"
     disabled: true
+    ports:
+      http:
+        expose: true
+        containerPort: 3002
+        servicePort: 3002
 
   workspace:
     ports:

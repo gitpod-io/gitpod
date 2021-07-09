@@ -1,5 +1,6 @@
 import * as shell from 'shelljs';
 import * as fs from 'fs';
+import * as path from 'path';
 import { werft, exec, gitTag } from './util/shell';
 import { wipeAndRecreateNamespace, setKubectlContextNamespace, deleteNonNamespaceObjects, findFreeHostPorts, createNamespace } from './util/kubectl';
 import { issueCertficate, installCertficate, IssueCertificateParams, InstallCertificateParams } from './util/certs';
@@ -100,6 +101,7 @@ export async function build(context, version) {
     const retag = ("with-retag" in buildConfig) ? "" : "--dont-retag";
     const cleanSlateDeployment = mainBuild || ("with-clean-slate-deployment" in buildConfig);
     const installEELicense = !("without-ee-license" in buildConfig);
+    const withPayment= "with-payment" in buildConfig;
 
     werft.log("job config", JSON.stringify({
         buildConfig,
@@ -234,6 +236,7 @@ export async function build(context, version) {
         sweeperImage,
         installEELicense,
         k3sWsCluster,
+        withPayment,
     };
     await deployToDev(deploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage);
     await triggerIntegrationTests(deploymentConfig.version, deploymentConfig.namespace, context.Owner, !withIntegrationTests)
@@ -250,6 +253,7 @@ interface DeploymentConfig {
     cleanSlateDeployment: boolean;
     sweeperImage: string;
     installEELicense: boolean;
+    withPayment: boolean;
 }
 
 /**
@@ -361,11 +365,11 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
     // core-dev specific section end
 
     // deployment config
-    let commonFlags = addDeploymentFlags();
     try {
         shell.cd("chart");
         werft.log('helm', 'installing Gitpod');
 
+        const commonFlags = addDeploymentFlags();
         installGitpod(commonFlags);
         if (k3sWsCluster) {
             installGitpodOnK3sWsCluster(commonFlags, getK3sWsKubeConfigPath(), k3sWsProxyIP);
@@ -465,6 +469,13 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
             // We're adding the license rather late just to prevent accidentially printing it.
             // If anyone got ahold of the license not much would be lost, but hey, no need to plaster it on the walls.
             flags += ` --set license=${fs.readFileSync('/mnt/secrets/gpsh-coredev/license').toString()}`
+        }
+        if (deploymentConfig.withPayment) {
+            flags += ` -f ../.werft/values.payment.yaml`;
+            exec(`cp /mnt/secrets/payment-provider-config/providerOptions payment-core-dev-options.json`);
+            flags += ` --set payment.chargebee.providerOptionsFile=payment-core-dev-options.json`;
+            exec(`cp /mnt/secrets/payment-webhook-config/webhook payment-core-dev-webhook.json`);
+            flags += ` --set components.paymentEndpoint.webhookFile="payment-core-dev-webhook.json"`;
         }
         return flags;
     }

@@ -52,8 +52,13 @@ spec:
 {{ include "gitpod.container.defaultEnv" $this | indent 8 }}
 {{ include "gitpod.container.dbEnv" $this | indent 8 }}
 {{ include "gitpod.container.tracingEnv" $this | indent 8 }}
+{{- if .Values.components.paymentEndpoint.webhookFile }}
+        - name: CHARGEBEE_WEBHOOK
+          value: '{{ .Files.Get .Values.components.paymentEndpoint.webhookFile }}'
+{{- else if .Values.components.paymentEndpoint.webhook }}
         - name: CHARGEBEE_WEBHOOK
           value: '{{ .Values.components.paymentEndpoint.webhook | toJson }}'
+{{- end }}
 {{- if $server.github.app }}
         - name: GITPOD_GITHUB_APP_ENABLED
           value: "{{ $server.github.app.enabled | default "false" }}"
