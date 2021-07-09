@@ -27,6 +27,6 @@ export async function deleteExternalIp(phase: string, name: string, region = "eu
     }
 }
 
-function getExternalIp(name: string, region = "europe-west1"){
+function getExternalIp(name: string, region = "europe-west1") {
     return exec(`gcloud compute addresses describe ${name} --region ${region}| grep 'address:' | cut -c 10-`, { silent: true }).trim();
 }
