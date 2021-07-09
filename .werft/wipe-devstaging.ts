@@ -45,9 +45,11 @@ async function k3sCleanup() {
     }
 }
 
+// clean up the dev cluster in gitpod-core-dev
 async function devCleanup() {
     await wipePreviewCluster("")
 }
+
 // sweeper runs in the dev cluster so we need to delete the k3s cluster first and then delete self contained namespace
 k3sCleanup().then(() => {
     devCleanup()
