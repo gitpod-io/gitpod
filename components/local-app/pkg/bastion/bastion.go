@@ -6,6 +6,10 @@ package bastion
 
 import (
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
@@ -24,7 +28,6 @@ import (
 	supervisor "github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/google/uuid"
 	"github.com/kevinburke/ssh_config"
-	"github.com/prometheus/common/log"
 	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
@@ -78,6 +81,8 @@ type Workspace struct {
 	tunnelListeners   map[uint32]*TunnelListener
 
 	localSSHListener *TunnelListener
+	SSHPrivateFN     string
+	SSHPublicKey     string
 
 	ctx    context.Context
 	cancel context.CancelFunc
@@ -125,14 +130,17 @@ func (s *SSHConfigWritingCallback) InstanceUpdate(w *Workspace) {
 	}
 	if w.localSSHListener == nil || w.Phase == "stopping" {
 		delete(s.workspaces, w.WorkspaceID)
-	} else {
+	} else if _, exists := s.workspaces[w.WorkspaceID]; !exists {
 		s.workspaces[w.WorkspaceID] = w
 	}
 
 	var cfg ssh_config.Config
 	for _, ws := range s.workspaces {
-		// TODO(cw): don't ignore error
-		p, _ := ssh_config.NewPattern(ws.WorkspaceID)
+		p, err := ssh_config.NewPattern(ws.WorkspaceID)
+		if err != nil {
+			logrus.WithError(err).Warn("cannot produce ssh_config entry")
+			continue
+		}
 
 		host, port, _ := net.SplitHostPort(ws.localSSHListener.LocalAddr)
 		cfg.Hosts = append(cfg.Hosts, &ssh_config.Host{
@@ -141,6 +149,7 @@ func (s *SSHConfigWritingCallback) InstanceUpdate(w *Workspace) {
 				&ssh_config.KV{Key: "HostName", Value: host},
 				&ssh_config.KV{Key: "User", Value: "gitpod"},
 				&ssh_config.KV{Key: "Port", Value: port},
+				&ssh_config.KV{Key: "IdentityFile", Value: ws.SSHPrivateFN},
 			},
 		})
 	}
@@ -294,11 +303,19 @@ func (b *Bastion) handleUpdate(u *gitpod.WorkspaceInstance) {
 		}
 
 		if ws.localSSHListener == nil && ws.supervisorClient != nil {
-			var err error
-			ws.localSSHListener, err = b.establishSSHTunnel(ws)
-			if err != nil {
-				logrus.WithError(err).Error("cannot establish SSH tunnel")
-			}
+			func() {
+				var err error
+				ws.SSHPrivateFN, ws.SSHPublicKey, err = generateSSHKeys(ws.InstanceID)
+				if err != nil {
+					logrus.WithError(err).WithField("workspaceInstanceID", ws.InstanceID).Error("cannot produce SSH keypair")
+					return
+				}
+
+				ws.localSSHListener, err = b.establishSSHTunnel(ws)
+				if err != nil {
+					logrus.WithError(err).Error("cannot establish SSH tunnel")
+				}
+			}()
 		}
 
 	case "stopping", "stopped":
@@ -310,6 +327,63 @@ func (b *Bastion) handleUpdate(u *gitpod.WorkspaceInstance) {
 
 	b.workspaces[u.ID] = ws
 	b.Callbacks.InstanceUpdate(ws)
+}
+
+func generateSSHKeys(instanceID string) (privateKeyFN string, publicKey string, err error) {
+	privateKeyFN = filepath.Join(os.TempDir(), fmt.Sprintf("gitpod_%s_id_rsa", instanceID))
+	useRrandomFile := func() {
+		var tmpf *os.File
+		tmpf, err = ioutil.TempFile("", "gitpod_*_id_rsa")
+		if err != nil {
+			return
+		}
+		tmpf.Close()
+		privateKeyFN = tmpf.Name()
+	}
+	if stat, serr := os.Stat(privateKeyFN); serr == nil && stat.IsDir() {
+		useRrandomFile()
+	} else if serr == nil {
+		var publicKeyRaw []byte
+		publicKeyRaw, err = ioutil.ReadFile(privateKeyFN + ".pub")
+		publicKey = string(publicKeyRaw)
+		if err == nil {
+			// we've loaded a pre-existing key - all is well
+			return
+		}
+
+		logrus.WithError(err).WithField("instance", instanceID).WithField("privateKeyFN", privateKeyFN).Warn("cannot load public SSH key for this workspace")
+		useRrandomFile()
+	}
+
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return
+	}
+	err = privateKey.Validate()
+	if err != nil {
+		return
+	}
+
+	privDER := x509.MarshalPKCS1PrivateKey(privateKey)
+	privBlock := pem.Block{
+		Type:    "RSA PRIVATE KEY",
+		Headers: nil,
+		Bytes:   privDER,
+	}
+	privatePEM := pem.EncodeToMemory(&privBlock)
+	err = ioutil.WriteFile(privateKeyFN, privatePEM, 0600)
+	if err != nil {
+		return
+	}
+
+	publicRsaKey, err := ssh.NewPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		return
+	}
+	publicKey = string(ssh.MarshalAuthorizedKey(publicRsaKey))
+	_ = ioutil.WriteFile(privateKeyFN+".pub", []byte(publicKey), 0644)
+
+	return
 }
 
 func (b *Bastion) connectTunnelClient(ctx context.Context, ws *Workspace) error {
@@ -502,30 +576,16 @@ func (b *Bastion) establishTunnel(ctx context.Context, ws *Workspace, logprefix 
 }
 
 func (b *Bastion) establishSSHTunnel(ws *Workspace) (listener *TunnelListener, err error) {
-	key, err := readPublicSSHKey()
-	if err != nil {
-		// TODO(cw): surface to the user and ask them to run ssh-keygen
-		logrus.WithError(err).Warn("no id_rsa.pub file found - will not be able to login via SSH")
+	if ws.SSHPublicKey == "" {
+		return nil, fmt.Errorf("no public key generated")
 	}
-	err = installSSHAuthorizedKey(ws, key)
+
+	err = installSSHAuthorizedKey(ws, ws.SSHPublicKey)
 	if err != nil {
-		// TODO(cw): surface to the user and ask them install the key manually
-		logrus.WithError(err).Warn("cannot install authorized key")
+		return nil, fmt.Errorf("cannot install authorized key: %w", err)
 	}
 	listener, err = b.establishTunnel(ws.ctx, ws, "ssh", 23001, 0, supervisor.TunnelVisiblity_host)
 	return listener, err
-}
-
-func readPublicSSHKey() (key string, err error) {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
-	}
-	res, err := ioutil.ReadFile(filepath.Join(home, ".ssh", "id_rsa.pub"))
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(string(res)), nil
 }
 
 func installSSHAuthorizedKey(ws *Workspace, key string) error {
@@ -539,17 +599,50 @@ func installSSHAuthorizedKey(ws *Workspace, key string) error {
 	//nolint:errcheck
 	defer term.Shutdown(ctx, &supervisor.ShutdownTerminalRequest{Alias: tres.Terminal.Alias})
 
+	done := make(chan bool, 1)
+	recv, err := term.Listen(ctx, &supervisor.ListenTerminalRequest{Alias: tres.Terminal.Alias})
+	if err != nil {
+		return err
+	}
+
+	go func() {
+		defer close(done)
+		for {
+			resp, err := recv.Recv()
+			if err != nil {
+				return
+			}
+			if resp.Output == nil {
+				continue
+			}
+			out, ok := resp.Output.(*supervisor.ListenTerminalResponse_Data)
+			if !ok {
+				continue
+			}
+			c := strings.TrimSpace(string(out.Data))
+			if strings.HasPrefix(c, "write done") {
+				done <- true
+				return
+			}
+		}
+	}()
 	_, err = term.Write(ctx, &supervisor.WriteTerminalRequest{
 		Alias: tres.Terminal.Alias,
-		Stdin: []byte(fmt.Sprintf("mkdir -p ~/.ssh; echo %s >> ~/.ssh/authorized_keys\n", key)),
+		Stdin: []byte(fmt.Sprintf("mkdir -p ~/.ssh; echo %s >> ~/.ssh/authorized_keys; echo write done\r\n", strings.TrimSpace(key))),
 	})
 	if err != nil {
 		return err
 	}
 
 	// give the command some time to execute
-	// TODO(cw): synchronize this properly
-	time.Sleep(500 * time.Millisecond)
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case success := <-done:
+		if !success {
+			return fmt.Errorf("unable to upload SSH key")
+		}
+	}
 
 	return nil
 }
@@ -659,7 +752,7 @@ func (b *Bastion) notify(ws *Workspace) {
 		select {
 		case sub.updates <- status:
 		case <-time.After(5 * time.Second):
-			log.Error("ports subscription dropped out")
+			logrus.Error("ports subscription dropped out")
 			sub.Close()
 		}
 	}
