@@ -619,7 +619,10 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
 
         const span = opentracing.globalTracer().startSpan("adminRestoreSoftDeletedWorkspace");
         await this.workspaceDb.trace({ span }).transaction(async db => {
-            const ws = await this.internalGetWorkspace(id, db);
+            const ws = await db.findById(id);
+            if (!ws) {
+                throw new ResponseError(ErrorCodes.NOT_FOUND, `No workspace with id '${id}' found.`);
+            }
             if (!ws.softDeleted) {
                 return;
             }
