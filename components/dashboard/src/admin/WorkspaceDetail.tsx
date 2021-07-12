@@ -62,12 +62,13 @@ export default function WorkspaceDetail(props: { workspace: WorkspaceAndInstance
                 <div className="flex w-full mt-6">
                     <Property name="User"><Link className="text-blue-400 dark:text-blue-600 hover:text-blue-600 dark:hover:text-blue-400" to={"/admin/users/" + props.workspace.ownerId}>{user?.name || props.workspace.ownerId}</Link></Property>
                     <Property name="Sharing">{workspace.shareable ? 'Enabled' : 'Disabled'}</Property>
-                    <Property name="Soft Deleted" actions={(!!workspace.softDeleted && !workspace.contentDeletedTime) && [{
+                    <Property name="Soft Deleted" actions={(!!workspace.softDeleted && !workspace.contentDeletedTime) ? [{
                         label: 'Restore & Pin',
-                        onClick: () => {
-                            getGitpodService().server.adminRestoreSoftDeletedWorkspace(workspace.workspaceId);
+                        onClick: async () => {
+                            await getGitpodService().server.adminRestoreSoftDeletedWorkspace(workspace.workspaceId);
+                            await reload();
                         }
-                    }] || undefined}>{workspace.softDeleted ? `'${workspace.softDeleted}' ${moment(workspace.softDeletedTime).fromNow()}` : 'No'}</Property>
+                    }] : undefined}>{workspace.softDeleted ? `'${workspace.softDeleted}' ${moment(workspace.softDeletedTime).fromNow()}` : 'No'}</Property>
                 </div>
                 <div className="flex w-full mt-12">
                     <Property name="Latest Instance ID">
