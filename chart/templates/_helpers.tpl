@@ -360,6 +360,7 @@ storage:
     cp /etc/ssl/gitpod-ca.crt /usr/local/share/ca-certificates
     update-ca-certificates
     cp /etc/ssl/certs/* /ssl-certs
+    echo "OK"
   volumeMounts:
     - name: cacerts
       mountPath: "/ssl-certs"

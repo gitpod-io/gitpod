@@ -419,6 +419,10 @@ components:
       seccompProfileInstaller:
         enabled: true
         imageName: "seccomp-profile-installer"
+    ports:
+      rpc:
+        expose: true
+        containerPort: 8080
 
   wsScheduler:
     name: "ws-scheduler"

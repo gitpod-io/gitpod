@@ -40,6 +40,10 @@ spec:
 {{ include "gitpod.workspaceAffinity" $this | indent 6 }}
       priorityClassName: system-node-critical
       serviceAccountName: ws-daemon
+      hostAliases:
+        - ip: "127.0.0.1"
+          hostnames:
+          - {{ (printf "reg.%s" (.Values.components.registryFacade.hostname | default .Values.hostname)) | quote }}
       hostPID: true
       volumes:
       - hostPath:
