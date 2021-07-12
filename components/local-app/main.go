@@ -6,6 +6,8 @@ package main
 
 import (
 	_ "embed"
+	"path/filepath"
+	"runtime"
 	"strconv"
 	"time"
 
@@ -37,6 +39,15 @@ var (
 )
 
 func main() {
+	sshConfig := os.Getenv("GITPOD_LCA_SSH_CONFIG")
+	if sshConfig == "" {
+		if runtime.GOOS == "windows" {
+			sshConfig = filepath.Join(os.TempDir(), "gitpod_ssh_config")
+		} else {
+			sshConfig = filepath.Join("/tmp", "gitpod_ssh_config")
+		}
+	}
+
 	app := cli.App{
 		Name:                 "gitpod-local-companion",
 		Usage:                "connect your Gitpod workspaces",
@@ -78,8 +89,8 @@ func main() {
 				Flags: []cli.Flag{
 					&cli.PathFlag{
 						Name:  "ssh_config",
-						Usage: "produce and update an OpenSSH compatible ssh_config file",
-						Value: "/tmp/gitpod_ssh_config",
+						Usage: "produce and update an OpenSSH compatible ssh_config file (defaults to $GITPOD_LCA_SSH_CONFIG)",
+						Value: sshConfig,
 					},
 				},
 			},
@@ -98,6 +109,8 @@ func DefaultCommand(name string) cli.ActionFunc {
 }
 
 func run(origin, sshConfig string, apiPort int, allowCORSFromPort bool) error {
+	logrus.WithField("ssh_config", sshConfig).Info("writing workspace ssh_config file")
+
 	// Trailing slash(es) result in connection issues, so remove them preemptively
 	origin = strings.TrimRight(origin, "/")
 	tkn, err := auth.GetToken(origin)
