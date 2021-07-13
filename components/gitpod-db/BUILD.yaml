@@ -78,6 +78,8 @@ packages:
     srcs:
       - migrate.sh
       - migrate_gcp.sh
+      - typeorm.sh
+      - typeorm_gcp.sh
     deps:
       - :migrations
     argdeps:
