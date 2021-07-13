@@ -5,7 +5,6 @@ All notable changes to this project will be documented in this file.
 ## July 2021
 
 - Fix `image.context` in `.gitpod.yml` ([#4715](https://github.com/gitpod-io/gitpod/pull/4715))
-- Support custom commit email address for GitHub and GitLab (keep email private). Thanks to [@philschatz](https://github.com/philschatz) for the contribution! ([#4115](https://github.com/gitpod-io/gitpod/pull/4115))
 
 ## June 2021
 

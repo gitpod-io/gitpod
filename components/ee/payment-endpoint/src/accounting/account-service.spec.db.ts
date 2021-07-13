@@ -72,6 +72,7 @@ const end = new Date(Date.UTC(2000, 2, 1)).toISOString();
                 authProviderId: 'github.com',
                 authId: 'Sven',
                 authName: 'Sven',
+                tokens: []
             }]
         });
         await this.workspaceDb.store({
