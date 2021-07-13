@@ -198,10 +198,10 @@ class TestGithubContextParser {
             "isFile": true,
             "repository": {
                 "host": "github.com",
-                "owner": "TypeFox",
+                "owner": "gitpod-io",
                 "name": "gitpod-test-repo",
                 "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
-                "private": true
+                "private": false
             },
             "title": "gitpod-io/gitpod-test-repo - nametest/src"
         })
@@ -214,10 +214,10 @@ class TestGithubContextParser {
                 "title": "gitpod-io/gitpod-test-repo - 499efbbc:folder1/folder2",
                 "repository": {
                     "host": "github.com",
-                    "owner": "TypeFox",
+                    "owner": "gitpod-io",
                     "name": "gitpod-test-repo",
                     "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
-                    "private": true
+                    "private": false
                 },
                 "revision": "499efbbcb50e7e6e5e2883053f72a34cd5396be3",
                 "isFile": false,
@@ -292,10 +292,10 @@ class TestGithubContextParser {
             "isFile": false,
             "repository": {
                 "host": "github.com",
-                "owner": "TypeFox",
+                "owner": "gitpod-io",
                 "name": "gitpod-test-repo",
                 "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
-                "private": true
+                "private": false
             },
             "title": "gitpod-io/gitpod-test-repo - 4test"
         })
@@ -311,10 +311,10 @@ class TestGithubContextParser {
             "isFile": false,
             "repository": {
                 "host": "github.com",
-                "owner": "TypeFox",
+                "owner": "gitpod-io",
                 "name": "gitpod-test-repo",
                 "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
-                "private": true
+                "private": false
             },
             "title": "gitpod-io/gitpod-test-repo - Test 3"
         })
@@ -425,12 +425,12 @@ class TestGithubContextParser {
                 "title": "Test issue web-extension",
                 "repository": {
                     "host": "github.com",
-                    "owner": "TypeFox",
+                    "owner": "gitpod-io",
                     "name": "gitpod-test-repo",
                     "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
-                    "private": true
+                    "private": false
                 },
-                "owner": "TypeFox",
+                "owner": "gitpod-io",
                 "nr": 42,
                 "ref": "1test",
                 "refType": "branch",
@@ -443,19 +443,16 @@ class TestGithubContextParser {
         const result = await this.parser.handle({}, this.user, 'https://github.com/gitpod-io/gitpod-test-repo/issues');
         expect(result).to.deep.include(
             {
-                "title": "Test issue web-extension",
+                "title": "gitpod-io/gitpod-test-repo - 1test",
                 "repository": {
                     "host": "github.com",
-                    "owner": "TypeFox",
+                    "owner": "gitpod-io",
                     "name": "gitpod-test-repo",
                     "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
-                    "private": true
+                    "private": false
                 },
-                "owner": "TypeFox",
-                "nr": 42,
                 "ref": "1test",
                 "refType": "branch",
-                "localBranch": "master"
             }
         )
     }
@@ -468,12 +465,12 @@ class TestGithubContextParser {
                 "title": "Test issue web-extension",
                 "repository": {
                     "host": "github.com",
-                    "owner": "TypeFox",
+                    "owner": "gitpod-io",
                     "name": "gitpod-test-repo",
                     "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
-                    "private": true
+                    "private": false
                 },
-                "owner": "TypeFox",
+                "owner": "gitpod-io",
                 "nr": 42,
                 "ref": "1test",
                 "refType": "branch",
@@ -489,10 +486,10 @@ class TestGithubContextParser {
                 "title": "gitpod-io/gitpod-test-repo - aba298d5:test-comment-01.md",
                 "repository": {
                     "host": "github.com",
-                    "owner": "TypeFox",
+                    "owner": "gitpod-io",
                     "name": "gitpod-test-repo",
                     "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
-                    "private": true
+                    "private": false
                 },
                 "revision": "aba298d5084a817cdde3dd1f26692bc2a216e2b9",
                 "isFile": true,
@@ -508,10 +505,10 @@ class TestGithubContextParser {
                 "title": "gitpod-io/gitpod-test-repo - 499efbbc:folder1/folder2/content2",
                 "repository": {
                     "host": "github.com",
-                    "owner": "TypeFox",
+                    "owner": "gitpod-io",
                     "name": "gitpod-test-repo",
                     "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
-                    "private": true
+                    "private": false
                 },
                 "revision": "499efbbcb50e7e6e5e2883053f72a34cd5396be3",
                 "isFile": true,
@@ -527,10 +524,10 @@ class TestGithubContextParser {
                 "title": "gitpod-io/gitpod-test-repo - 499efbbc:folder1/folder2/content2",
                 "repository": {
                     "host": "github.com",
-                    "owner": "TypeFox",
+                    "owner": "gitpod-io",
                     "name": "gitpod-test-repo",
                     "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
-                    "private": true
+                    "private": false
                 },
                 "revision": "499efbbcb50e7e6e5e2883053f72a34cd5396be3",
                 "isFile": true,
@@ -546,10 +543,10 @@ class TestGithubContextParser {
                 "title": "gitpod-io/gitpod-test-repo - 499efbbc:folder1/folder2/content2",
                 "repository": {
                     "host": "github.com",
-                    "owner": "TypeFox",
+                    "owner": "gitpod-io",
                     "name": "gitpod-test-repo",
                     "cloneUrl": "https://github.com/gitpod-io/gitpod-test-repo.git",
-                    "private": true
+                    "private": false
                 },
                 "revision": "499efbbcb50e7e6e5e2883053f72a34cd5396be3",
                 "isFile": true,
