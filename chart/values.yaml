@@ -515,6 +515,10 @@ mysql:
   initdbScriptsConfigMap: db-init-scripts
   volumePermissions:
     enabled: true
+  resources:
+    requests:
+      cpu: 200m
+      memory: 250Mi
 
 rabbitmq:
   enabled: true
