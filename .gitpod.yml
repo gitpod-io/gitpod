@@ -30,6 +30,11 @@ ports:
     onOpen: ignore
 # Dev Theia
   - port: 13444
+# qemu
+  - port: 2222
+    onOpen: ignore
+  - port: 1234
+    onOpen: ignore
 tasks:
   - name: Prepare Agent Smith BPF dev environment
     init: leeway run components/ee/agent-smith:prepare-environment
@@ -45,7 +50,6 @@ vscode:
     - bradlc.vscode-tailwindcss
     - EditorConfig.EditorConfig
     - golang.go
-    - hangxingliu.vscode-nginx-conf-hint
     - hashicorp.terraform
     - ms-azuretools.vscode-docker
     - ms-kubernetes-tools.vscode-kubernetes-tools

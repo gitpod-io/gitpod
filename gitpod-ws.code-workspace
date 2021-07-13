@@ -19,7 +19,6 @@
       { "path": "components/ws-daemon" },
       { "path": "components/ws-manager" },
       { "path": "components/ws-proxy" },
-      { "path": "install/installer" },
       { "path": "test" },
       { "path": "dev/blowtorch" },
       { "path": "dev/gpctl" },
