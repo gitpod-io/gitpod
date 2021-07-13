@@ -13,6 +13,7 @@
 	# https://caddyserver.com/docs/caddyfile/directives#directive-order
 	order gitpod.cors_origin         before header
 	order gitpod.workspace_download  before redir
+	order gitpod.sec_websocket_key   before header
 }
 
 (compression) {
@@ -143,22 +144,14 @@ https://{$GITPOD_DOMAIN} {
 		redir {http.gitpod.workspace_download_url} 303
 	}
 
-	@backend_wss_hdr {
-			header sec-websocket-key *
+	@backend_wss {
 			path /api/gitpod
 	}
-	handle @backend_wss_hdr {
-			uri strip_prefix /api
-			reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-					import upstream_headers
-			}
-	}
-
-	@backend_wss path /api/gitpod
 	handle @backend_wss {
+			gitpod.sec_websocket_key
+
 			uri strip_prefix /api
 			reverse_proxy server.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:3000 {
-					header_up +sec-websocket-key "bxQxhPbGKQYJK1buwLGVpg=="
 					import upstream_headers
 			}
 	}
