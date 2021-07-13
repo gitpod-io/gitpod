@@ -5,4 +5,5 @@
 
 set -euo pipefail
 
-/app/typeorm.sh migrations:run
+yarn --cwd /app/node_modules/@gitpod/gitpod-db run wait-for-db
+yarn --cwd /app/node_modules/@gitpod/gitpod-db typeorm "$@"
