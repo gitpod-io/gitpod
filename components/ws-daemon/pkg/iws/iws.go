@@ -346,7 +346,7 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 		}
 	}
 
-	err = moveMount(int(procPID), nodeStaging, req.Target)
+	err = moveMount(wbs.Session.InstanceID, int(procPID), nodeStaging, req.Target)
 	if err != nil {
 		return nil, err
 	}
@@ -506,7 +506,7 @@ func (wbs *InWorkspaceServiceServer) UmountProc(ctx context.Context, req *api.Um
 	return &api.UmountProcResponse{}, nil
 }
 
-func moveMount(targetPid int, source, target string) error {
+func moveMount(instanceID string, targetPid int, source, target string) error {
 	mntfd, err := syscallOpenTree(unix.AT_FDCWD, source, flagOpenTreeClone|flagAtRecursive)
 	if err != nil {
 		return xerrors.Errorf("cannot open tree: %w", err)
@@ -514,7 +514,7 @@ func moveMount(targetPid int, source, target string) error {
 	mntf := os.NewFile(mntfd, "")
 	defer mntf.Close()
 
-	err = nsinsider("", targetPid, func(c *exec.Cmd) {
+	err = nsinsider(instanceID, targetPid, func(c *exec.Cmd) {
 		c.Args = append(c.Args, "move-mount", "--target", target, "--pipe-fd", "3")
 		c.ExtraFiles = append(c.ExtraFiles, mntf)
 	})
