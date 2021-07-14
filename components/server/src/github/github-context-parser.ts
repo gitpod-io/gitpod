@@ -40,6 +40,12 @@ export class GithubContextParser extends AbstractContextParser implements IConte
                     case 'commits': {
                         return await this.handleTreeContext({span}, user, host, owner, repoName, moreSegments.slice(1));
                     }
+                    case 'releases': {
+                        if (moreSegments.length > 1 && moreSegments[1] === "tag") {
+                            return await this.handleTreeContext({ span }, user, host, owner, repoName, moreSegments.slice(2));
+                        }
+                        break;
+                    }
                     case 'issues': {
                         const issueNr = parseInt(moreSegments[1], 10);
                         if (isNaN(issueNr))

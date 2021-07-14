@@ -283,6 +283,27 @@ class TestGithubContextParser {
         )
     }
 
+    @test public async testReleasesContext_tag_01() {
+        const result = await this.parser.handle({}, this.user, 'https://github.com/gitpod-io/gitpod/releases/tag/v0.9.0');
+        expect(result).to.deep.include(
+            {
+                "ref": "v0.9.0",
+                "refType": "tag",
+                "isFile": false,
+                "path": "",
+                "title": "gitpod-io/gitpod - v0.9.0",
+                "revision": "25ece59c495d525614f28971d41d5708a31bf1e3",
+                "repository": {
+                    "cloneUrl": "https://github.com/gitpod-io/gitpod.git",
+                    "host": "github.com",
+                    "name": "gitpod",
+                    "owner": "gitpod-io",
+                    "private": false
+                }
+            }
+        )
+    }
+
     @test public async testCommitsContext_01() {
         const result = await this.parser.handle({}, this.user, 'https://github.com/gitpod-io/gitpod-test-repo/commits/4test');
         expect(result).to.deep.include({
