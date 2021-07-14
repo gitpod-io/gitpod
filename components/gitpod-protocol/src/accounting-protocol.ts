@@ -193,9 +193,6 @@ export namespace Subscription {
     export function isDowngraded(s: Subscription) {
         return s.paymentData && s.paymentData.downgradeDate;
     };
-    export function isCancelled(s: Subscription) {
-        return !!s.cancellationDate;
-    };
     export function calculateCurrentPeriod(startDate: string, now: Date) {
         let nextStartDate = startDate;
         do {
