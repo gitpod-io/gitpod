@@ -252,7 +252,7 @@ export class EligibilityService {
             return true;
         }
 
-        return this.subscriptionService.hasActiveAndNotYetCancelledPaidSubscription(user.id, date);
+        return this.subscriptionService.hasActivePaidSubscription(user.id, date);
     }
 
     /**
@@ -286,24 +286,6 @@ export class EligibilityService {
     }
 
     /**
-     * the time left for the trial in milliseconds or `undefined` if the trial hasn't started or the user already has a paid subscription.
-     * A negative number denotes the milliseconds the trial is over.
-     *
-     * @param user
-     * @param date The date for which we want to know how much time the user has left (depends on active subscription)
-     */
-    async getPrivateRepoTrialTimeLeft(user: User, date: Date = new Date()): Promise<number | undefined> {
-        const start = this.getPrivateRepoTrialStart(user);
-        if (start === undefined) {
-            return undefined;
-        }
-        if (await this.subscriptionService.hasActiveAndNotYetCancelledPaidSubscription(user.id, date)) {
-            return undefined;
-        }
-        return EligibilityService.DURATION_30_DAYS_MILLIS + start.getTime() - date.getTime();
-    }
-
-    /**
      * End date for the users free private trial or `undefined` if the trial hasn't started or the user already has a paid subscription.
      *
      * @param user
@@ -314,7 +296,7 @@ export class EligibilityService {
         if (start === undefined) {
             return undefined;
         }
-        if (await this.subscriptionService.hasActiveAndNotYetCancelledPaidSubscription(user.id, date)) {
+        if (await this.subscriptionService.hasActivePaidSubscription(user.id, date)) {
             return undefined;
         }
         return new Date(EligibilityService.DURATION_30_DAYS_MILLIS + start.getTime());
