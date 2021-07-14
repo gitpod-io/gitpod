@@ -51,6 +51,8 @@
 	redir /.well-known/security.txt https://www.gitpod.io/.well-known/security.txt permanent
 	redir /environment-variables /settings/ permanent
 
+	rewrite /schemas/gitpod-schema.json /static/schemas/gitpod-schema.json
+
 	header -Server
 
 	root * /www
