@@ -507,6 +507,9 @@ mysql:
       # OFF is the default as documented [here](https://dev.mysql.com/doc/refman/5.7/en/server-system-variables.html#sysvar_explicit_defaults_for_timestamp) (we also see this in GCP), but not for this chart.
     - name: MYSQL_EXTRA_FLAGS
       value: --explicit-defaults-for-timestamp=OFF
+    resources:
+      requests:
+        memory: 128Mi
   auth:
     existingSecret: db-password
   serviceAccount:
@@ -515,10 +518,6 @@ mysql:
   initdbScriptsConfigMap: db-init-scripts
   volumePermissions:
     enabled: true
-  resources:
-    requests:
-      cpu: 200m
-      memory: 250Mi
 
 rabbitmq:
   enabled: true
