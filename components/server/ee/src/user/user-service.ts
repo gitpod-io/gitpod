@@ -11,16 +11,20 @@ import { LicenseEvaluator } from "@gitpod/licensor/lib";
 import { Feature } from "@gitpod/licensor/lib/api";
 import { AuthException } from "../../../src/auth/errors";
 import { EligibilityService } from "./eligibility-service";
+import { EnvEE } from "../env";
 
 export class UserServiceEE extends UserService {
+    @inject(EnvEE) protected readonly env: EnvEE;
     @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
     @inject(EligibilityService) protected readonly eligibilityService: EligibilityService;
 
     async getDefaultWorkspaceTimeout(user: User, date: Date): Promise<WorkspaceTimeoutDuration> {
-        // todo@at: how to select the timeout for SaaS?
-        // return this.eligibilityService.getDefaultWorkspaceTimeout(user, date);
+        if (this.env.enablePayment) {
+            // the SAAS case
+            return this.eligibilityService.getDefaultWorkspaceTimeout(user, date);
+        }
 
-
+        // the self-hosted case
         if (!this.licenseEvaluator.isEnabled(Feature.FeatureSetTimeout)) {
             return "30m";
         }
