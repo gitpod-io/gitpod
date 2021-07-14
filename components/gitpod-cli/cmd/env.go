@@ -12,8 +12,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"unicode"
-	"unicode/utf8"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -293,101 +291,11 @@ func printVarFromTheia(v theialib.EnvironmentVariable, export bool) {
 	}
 }
 
-// helper to parse words (i.e space delimited or quoted strings) in a statement.
-// The quotes are preserved as part of this function and they are stripped later
-// as part of processWords().
-// From moby-parser - https://github.com/moby/buildkit/tree/master/frontend/dockerfile/parser
-func parseWords(rest string) []string {
-	const (
-		inSpaces = iota // looking for start of a word
-		inWord
-		inQuote
-	)
-
-	escapeToken := '\\'
-	words := []string{}
-	phase := inSpaces
-	word := ""
-	quote := '\000'
-	blankOK := false
-	var ch rune
-	var chWidth int
-
-	for pos := 0; pos <= len(rest); pos += chWidth {
-		if pos != len(rest) {
-			ch, chWidth = utf8.DecodeRuneInString(rest[pos:])
-		}
-
-		if phase == inSpaces { // Looking for start of word
-			if pos == len(rest) { // end of input
-				break
-			}
-			if unicode.IsSpace(ch) { // skip spaces
-				continue
-			}
-			phase = inWord // found it, fall through
-		}
-		if (phase == inWord || phase == inQuote) && (pos == len(rest)) {
-			if blankOK || len(word) > 0 {
-				words = append(words, word)
-			}
-			break
-		}
-		if phase == inWord {
-			if unicode.IsSpace(ch) {
-				phase = inSpaces
-				if blankOK || len(word) > 0 {
-					words = append(words, word)
-				}
-				word = ""
-				blankOK = false
-				continue
-			}
-			if ch == '\'' || ch == '"' {
-				quote = ch
-				blankOK = true
-				phase = inQuote
-			}
-			if ch == escapeToken {
-				if pos+chWidth == len(rest) {
-					continue // just skip an escape token at end of line
-				}
-				// If we're not quoted and we see an escape token, then always just
-				// add the escape token plus the char to the word, even if the char
-				// is a quote.
-				word += string(ch)
-				pos += chWidth
-				ch, chWidth = utf8.DecodeRuneInString(rest[pos:])
-			}
-			word += string(ch)
-			continue
-		}
-		if phase == inQuote {
-			if ch == quote {
-				phase = inWord
-			}
-			// The escape token is special except for ' quotes - can't escape anything for '
-			if ch == escapeToken && quote != '\'' {
-				if pos+chWidth == len(rest) {
-					phase = inWord
-					continue // just skip the escape token at end
-				}
-				pos += chWidth
-				word += string(ch)
-				ch, chWidth = utf8.DecodeRuneInString(rest[pos:])
-			}
-			word += string(ch)
-		}
-	}
-
-	return words
-}
-
 func parseArgs(args []string, pattern string) ([]*serverapi.UserEnvVarValue, error) {
 	vars := make([]*serverapi.UserEnvVarValue, len(args))
 	for i, arg := range args {
-		kv := parseWords(arg)
-		if len(kv) != 1 {
+		kv := strings.SplitN(arg, "=", 1)
+		if len(kv) != 1 || kv[0] == "" {
 			return nil, fmt.Errorf("empty string (correct format is key=value)")
 		}
 
