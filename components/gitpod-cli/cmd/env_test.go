@@ -38,6 +38,31 @@ func TestParseArgs(t *testing.T) {
 			"",
 		},
 		{"key value empty quoted value", []string{"key=\"\""}, nil, "variable must have a value; use -u to unset a variable"},
+		{"key value containing spaces", []string{"key=\"hello world\""}, []*serverapi.UserEnvVarValue{
+			{Name: "key", Value: "hello world"},
+		},
+			"",
+		},
+		{"key value containing space, quotes stripped by shell", []string{"key=hello world"}, []*serverapi.UserEnvVarValue{
+			{Name: "key", Value: "hello world"},
+		},
+			"",
+		},
+		{"key value containing newline", []string{"key=hello\nworld"}, []*serverapi.UserEnvVarValue{
+			{Name: "key", Value: "hello\nworld"},
+		},
+			"",
+		},
+		{"value containing equals sign", []string{"key=hello=world"}, []*serverapi.UserEnvVarValue{
+			{Name: "key", Value: "hello=world"},
+		},
+			"",
+		},
+		{"value containing quoted equals sign", []string{"key=\"hello=world\""}, []*serverapi.UserEnvVarValue{
+			{Name: "key", Value: "hello=world"},
+		},
+			"",
+		},
 	}
 
 	for _, test := range tests {
