@@ -57,6 +57,7 @@ type FakeExecutor struct {
 
 // StartWorkspace starts a new workspace
 func (fe *FakeExecutor) StartWorkspace(spec *StartWorkspaceSpec) (callDuration time.Duration, err error) {
+	log.WithField("spec", spec).Info("StartWorkspace")
 	go fe.produceUpdates(spec)
 	callDuration = time.Duration(rand.Uint32()%5000) * time.Millisecond
 	return
@@ -100,7 +101,8 @@ func (fe *FakeExecutor) StopAll() error {
 
 // WsmanExecutor talks to a ws manager
 type WsmanExecutor struct {
-	C api.WorkspaceManagerClient
+	C   api.WorkspaceManagerClient
+	Sub []context.CancelFunc
 }
 
 // StartWorkspace starts a new workspace
@@ -122,11 +124,16 @@ func (w *WsmanExecutor) StartWorkspace(spec *StartWorkspaceSpec) (callDuration t
 // Observe observes all workspaces started by the excecutor
 func (w *WsmanExecutor) Observe() (<-chan WorkspaceUpdate, error) {
 	res := make(chan WorkspaceUpdate)
-	sub, err := w.C.Subscribe(context.Background(), &api.SubscribeRequest{})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	w.Sub = append(w.Sub, cancel)
+
+	sub, err := w.C.Subscribe(ctx, &api.SubscribeRequest{})
 	if err != nil {
 		return nil, err
 	}
 	go func() {
+		defer close(res)
 		for {
 			resp, err := sub.Recv()
 			if err != nil {
@@ -155,6 +162,9 @@ func (w *WsmanExecutor) Observe() (<-chan WorkspaceUpdate, error) {
 
 // StopAll stops all workspaces started by the executor
 func (w *WsmanExecutor) StopAll() error {
+	for _, s := range w.Sub {
+		s()
+	}
 	fmt.Println("kubectl delete pod -l component=workspace")
 	return nil
 }

@@ -73,11 +73,11 @@ func (s *Session) Run() error {
 
 	obs, err := s.Executor.Observe()
 	if err != nil {
-		close(updates)
 		return err
 	}
 	infraWG.Add(1)
 	go func() {
+		defer close(updates)
 		defer infraWG.Done()
 
 		<-start
@@ -133,11 +133,13 @@ func (s *Session) Run() error {
 		s.PostLoadWait()
 	}
 	updates <- &SessionEvent{Kind: SessionDone}
+	err = s.Executor.StopAll()
+	if err != nil {
+		return err
+	}
 
 	infraWG.Wait()
-	close(updates)
-
-	return s.Executor.StopAll()
+	return nil
 }
 
 func (s *Session) distributeUpdates(wg *sync.WaitGroup, updates <-chan *SessionEvent) {

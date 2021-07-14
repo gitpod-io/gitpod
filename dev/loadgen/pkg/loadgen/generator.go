@@ -13,6 +13,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/gitpod-io/gitpod/common-go/namegen"
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
@@ -150,4 +151,48 @@ func (f *FixedLoadGenerator) Generate() <-chan struct{} {
 func (f *FixedLoadGenerator) Close() error {
 	close(f.close)
 	return nil
+}
+
+type WorkspaceCfg struct {
+	CloneURL       string `json:"cloneURL"`
+	WorkspaceImage string `json:"workspaceImage"`
+}
+
+type MultiWorkspaceGenerator struct {
+	Template *api.StartWorkspaceRequest
+	Repos    []WorkspaceCfg
+}
+
+func (f *MultiWorkspaceGenerator) Generate() (*StartWorkspaceSpec, error) {
+	instanceID, err := uuid.NewRandom()
+	if err != nil {
+		return nil, err
+	}
+	workspaceID, err := namegen.GenerateWorkspaceID()
+	if err != nil {
+		return nil, err
+	}
+
+	repo := f.Repos[rand.Intn(len(f.Repos))]
+
+	out := proto.Clone(f.Template).(*api.StartWorkspaceRequest)
+	out.Id = instanceID.String()
+	out.Metadata.MetaId = workspaceID
+	out.ServicePrefix = workspaceID
+	out.Spec.Initializer = &csapi.WorkspaceInitializer{
+		Spec: &csapi.WorkspaceInitializer_Git{
+			Git: &csapi.GitInitializer{
+				CheckoutLocation: "",
+				CloneTaget:       "main",
+				RemoteUri:        repo.CloneURL,
+				TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
+				Config: &csapi.GitConfig{
+					Authentication: csapi.GitAuthMethod_NO_AUTH,
+				},
+			},
+		},
+	}
+	out.Spec.WorkspaceImage = repo.WorkspaceImage
+	r := StartWorkspaceSpec(*out)
+	return &r, nil
 }

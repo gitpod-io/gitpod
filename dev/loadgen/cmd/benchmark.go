@@ -20,27 +20,38 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"sigs.k8s.io/yaml"
 
-	csapi "github.com/gitpod-io/gitpod/content-service/api"
 	"github.com/gitpod-io/gitpod/loadgen/pkg/loadgen"
 	"github.com/gitpod-io/gitpod/loadgen/pkg/observer"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
-var runOpts struct {
+var benchmarkOpts struct {
 	TLSPath string
+	Host    string
 }
 
-// runCmd represents the run command
-var runCmd = &cobra.Command{
-	Use:   "run",
-	Short: "runs the load generator",
+// benchmarkCommand represents the run command
+var benchmarkCommand = &cobra.Command{
+	Use:   "benchmark <scenario.yaml>",
+	Short: "starts a bunch of workspaces for benchmarking startup time",
+	Args:  cobra.MinimumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-		const workspaceCount = 5
+		fn := args[0]
+		fc, err := ioutil.ReadFile(fn)
+		if err != nil {
+			log.WithError(err).WithField("fn", fn).Fatal("cannot read scenario file")
+		}
+		var scenario BenchmarkScenario
+		err = yaml.Unmarshal(fc, &scenario)
+		if err != nil {
+			log.WithError(err).WithField("fn", fn).Fatal("cannot unmarshal scenario file")
+		}
 
 		var load loadgen.LoadGenerator
 		load = loadgen.NewFixedLoadGenerator(500*time.Millisecond, 300*time.Millisecond)
-		load = loadgen.NewWorkspaceCountLimitingGenerator(load, workspaceCount)
+		load = loadgen.NewWorkspaceCountLimitingGenerator(load, scenario.Workspaces)
 
 		template := &api.StartWorkspaceRequest{
 			Id: "will-be-overriden",
@@ -51,29 +62,16 @@ var runCmd = &cobra.Command{
 			},
 			ServicePrefix: "will-be-overriden",
 			Spec: &api.StartWorkspaceSpec{
-				IdeImage:         "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-8c1466008dedabe79d82cbb91931a16f7ce7994c",
+				IdeImage:         scenario.IDEImage,
 				Admission:        api.AdmissionLevel_ADMIT_OWNER_ONLY,
 				CheckoutLocation: "gitpod",
 				Git: &api.GitSpec{
 					Email:    "test@gitpod.io",
 					Username: "foobar",
 				},
-				FeatureFlags: []api.WorkspaceFeatureFlag{},
-				Initializer: &csapi.WorkspaceInitializer{
-					Spec: &csapi.WorkspaceInitializer_Git{
-						Git: &csapi.GitInitializer{
-							CheckoutLocation: "",
-							CloneTaget:       "main",
-							RemoteUri:        "https://github.com/gitpod-io/gitpod.git",
-							TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
-							Config: &csapi.GitConfig{
-								Authentication: csapi.GitAuthMethod_NO_AUTH,
-							},
-						},
-					},
-				},
+				FeatureFlags:      []api.WorkspaceFeatureFlag{},
 				Timeout:           "5m",
-				WorkspaceImage:    "eu.gcr.io/gitpod-dev/workspace-images:3fcaad7ba5a5a4695782cb4c366b82f927f1e6c1cf0c88fd4f14d985f7eb21f6",
+				WorkspaceImage:    "will-be-overriden",
 				WorkspaceLocation: "gitpod",
 				Envvars: []*api.EnvironmentVariable{
 					{
@@ -86,14 +84,14 @@ var runCmd = &cobra.Command{
 		}
 
 		var opts []grpc.DialOption
-		if runOpts.TLSPath != "" {
-			ca, err := ioutil.ReadFile(filepath.Join(runOpts.TLSPath, "ca.crt"))
+		if benchmarkOpts.TLSPath != "" {
+			ca, err := ioutil.ReadFile(filepath.Join(benchmarkOpts.TLSPath, "ca.crt"))
 			if err != nil {
 				log.Fatal(err)
 			}
 			capool := x509.NewCertPool()
 			capool.AppendCertsFromPEM(ca)
-			cert, err := tls.LoadX509KeyPair(filepath.Join(runOpts.TLSPath, "tls.crt"), filepath.Join(runOpts.TLSPath, "tls.key"))
+			cert, err := tls.LoadX509KeyPair(filepath.Join(benchmarkOpts.TLSPath, "tls.crt"), filepath.Join(benchmarkOpts.TLSPath, "tls.key"))
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -107,22 +105,24 @@ var runCmd = &cobra.Command{
 			opts = append(opts, grpc.WithInsecure())
 		}
 
-		conn, err := grpc.Dial("localhost:8080", opts...)
+		conn, err := grpc.Dial(benchmarkOpts.Host, opts...)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer conn.Close()
-		client := api.NewWorkspaceManagerClient(conn)
-		executor := &loadgen.WsmanExecutor{C: client}
 
 		session := &loadgen.Session{
-			Executor: executor,
-			Load:     load,
-			Specs:    &loadgen.FixedWorkspaceGenerator{Template: template},
-			Worker:   5,
+			Executor: &loadgen.WsmanExecutor{C: api.NewWorkspaceManagerClient(conn)},
+			// Executor: loadgen.NewFakeExecutor(),
+			Load: load,
+			Specs: &loadgen.MultiWorkspaceGenerator{
+				Template: template,
+				Repos:    scenario.Repos,
+			},
+			Worker: 5,
 			Observer: []chan<- *loadgen.SessionEvent{
 				observer.NewLogObserver(true),
-				observer.NewProgressBarObserver(workspaceCount),
+				observer.NewProgressBarObserver(scenario.Workspaces),
 				observer.NewStatsObserver(func(s *observer.Stats) {
 					fc, err := json.Marshal(s)
 					if err != nil {
@@ -154,7 +154,14 @@ var runCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(runCmd)
+	rootCmd.AddCommand(benchmarkCommand)
 
-	runCmd.Flags().StringVar(&runOpts.TLSPath, "tls", "", "path to ws-manager's TLS certificates")
+	benchmarkCommand.Flags().StringVar(&benchmarkOpts.TLSPath, "tls", "", "path to ws-manager's TLS certificates")
+	benchmarkCommand.Flags().StringVar(&benchmarkOpts.Host, "host", "localhost:8080", "ws-manager host to talk to")
+}
+
+type BenchmarkScenario struct {
+	Workspaces int                    `json:"workspaces"`
+	IDEImage   string                 `json:"ideImage"`
+	Repos      []loadgen.WorkspaceCfg `json:"repos"`
 }
