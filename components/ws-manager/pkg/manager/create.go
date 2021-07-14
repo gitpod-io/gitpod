@@ -285,6 +285,9 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 		// We're using a custom seccomp profile for user namespaces to allow clone, mount and chroot.
 		// Those syscalls don't make much sense in a non-userns setting, where we default to runtime/default using the PodSecurityPolicy.
 		"seccomp.security.alpha.kubernetes.io/pod": m.Config.SeccompProfile,
+		// prevent cluster-autoscaler from removing a node
+		// https://github.com/kubernetes/autoscaler/blob/master/cluster-autoscaler/FAQ.md#what-types-of-pods-can-prevent-ca-from-removing-a-node
+		"cluster-autoscaler.kubernetes.io/safe-to-evict": "false",
 	}
 	if req.Spec.Timeout != "" {
 		_, err := time.ParseDuration(req.Spec.Timeout)
