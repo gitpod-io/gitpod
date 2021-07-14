@@ -40,7 +40,7 @@ spec:
     - 'hostPath'
   hostNetwork: true
   hostIPC: false
-  hostPID: false
+  hostPID: true
   hostPorts:
   - min: 30000
     max: 33000

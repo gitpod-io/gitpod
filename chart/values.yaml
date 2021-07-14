@@ -22,7 +22,7 @@ installNetworkPolicies: true
 installPodSecurityPolicies: true
 imagePullPolicy: IfNotPresent
 
-# configure default log level
+# configure default log level of gitpod.io components
 log:
   level: trace
 
@@ -225,7 +225,6 @@ components:
         cpu: 100m
         memory: 128Mi
     alpineImage: alpine:3.14
-    selfBuildBaseImage: ""
     ports:
       rpc:
         expose: true
@@ -304,7 +303,6 @@ components:
       debug:
         expose: false
         containerPort: 9229
-    serviceSessionAffinity: None
     serverContainer:
       volumeMounts: null
       env: null
@@ -368,7 +366,6 @@ components:
         containerPort: 443
     loadBalancerIP: null
     serviceType: "LoadBalancer"
-    serviceSessionAffinity: "None"
     serviceExternalTrafficPolicy: null
 
   wsManager:
@@ -428,6 +425,10 @@ components:
       seccompProfileInstaller:
         enabled: true
         imageName: "seccomp-profile-installer"
+    ports:
+      rpc:
+        expose: true
+        containerPort: 8080
 
   wsScheduler:
     name: "ws-scheduler"
@@ -512,7 +513,6 @@ mysql:
   serviceAccount:
     create: false
     name: db
-  initdbScriptsConfigMap: db-init-scripts
   volumePermissions:
     enabled: true
   resources:
@@ -658,10 +658,17 @@ rabbitmq:
     {{- end }}
 
 cert-manager:
-  enabled: false
+  # assume cert-manager is already installed in the cluster
+  install: false
+  # gitpod Certificate
+  certificate:
+    # by default use the gitpod CA issuer
+    issuerName: null
+    # allow additional names to *.ws<shortname>.<hostname> and *.<hostname>
+    additionalDNSNames: []
   installCRDs: true
+  # custom CA for certificates used by gitpod
+  # this certificates are internal to the namespace where gitpod is running
   ca:
     issuerName: ca-issuer
-    certificate:
-      selfSigned: true
-      secretName: gitpod-ca-certificate
+    secretName: gitpod-ca-certificate

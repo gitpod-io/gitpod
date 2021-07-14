@@ -77,8 +77,18 @@ spec:
         - mountPath: /var/lib/docker
           name: dind-storage
 {{- range $idx, $sec := $comp.registryCerts }}
-        - mountPath: /etc/docker/certs.d/{{- if eq $sec.name "builtin" -}}{{ template "gitpod.builtinRegistry.name" $this.root }}{{ else }}{{ $sec.name }}{{ end }}
+        - mountPath: /etc/docker/certs.d/{{- if eq $sec.name "builtin" -}}{{ template "gitpod.builtinRegistry.name" $this.root }}{{ else }}{{ $sec.name }}{{ end }}/tls.cert
           name: docker-tls-certs-{{ $idx }}
+          subPath: tls.crt
+        - mountPath: /etc/docker/certs.d/{{- if eq $sec.name "builtin" -}}{{ template "gitpod.builtinRegistry.name" $this.root }}{{ else }}{{ $sec.name }}{{ end }}/tls.crt
+          name: docker-tls-certs-{{ $idx }}
+          subPath: tls.crt
+        - mountPath: /etc/docker/certs.d/{{- if eq $sec.name "builtin" -}}{{ template "gitpod.builtinRegistry.name" $this.root }}{{ else }}{{ $sec.name }}{{ end }}/tls.key
+          name: docker-tls-certs-{{ $idx }}
+          subPath: tls.key
+        - mountPath: /etc/docker/certs.d/{{- if eq $sec.name "builtin" -}}{{ template "gitpod.builtinRegistry.name" $this.root }}{{ else }}{{ $sec.name }}{{ end }}/ca.crt
+          name: docker-tls-certs-{{ $idx }}
+          subPath: ca.crt
 {{- end }}
 {{- if $comp.dindResources }}
         resources:
