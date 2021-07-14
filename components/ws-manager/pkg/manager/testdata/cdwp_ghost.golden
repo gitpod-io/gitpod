@@ -16,6 +16,7 @@
                 "workspaceType": "ghost"
             },
             "annotations": {
+                "cluster-autoscaler.kubernetes.io/safe-to-evict": "false",
                 "container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
                 "gitpod.io/requiredNodeServices": "ws-daemon,registry-facade",
                 "gitpod/admission": "admit_owner_only",
