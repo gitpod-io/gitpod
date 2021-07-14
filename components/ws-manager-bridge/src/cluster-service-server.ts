@@ -175,10 +175,17 @@ export class ClusterService implements IClusterServiceServer {
                                 if (v.type !== c.type) {
                                     return true;
                                 }
-                                if (v.type === "has-permission" && v.permission === (c as AdmissionConstraintHasRole).permission) {
-                                    return true;
+
+                                switch (v.type) {
+                                    case "has-feature-preview":
+                                        return false;
+                                    case "has-permission":
+                                        if (v.permission === (c as AdmissionConstraintHasRole).permission) {
+                                            return false;
+                                        }
+                                        break;
                                 }
-                                return false;
+                                return true;
                             })
                         }
                     }
