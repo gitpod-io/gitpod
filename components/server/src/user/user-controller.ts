@@ -216,8 +216,8 @@ export class UserController {
             const name = `_${cookiePrefix}_ws_${instanceID}_owner_`;
             res.cookie(name, token, {
                 path: "/",
-                httpOnly: false,
-                secure: false,
+                httpOnly: true,
+                secure: true,
                 maxAge: 1000 * 60 * 60 * 24 * 1,    // 1 day
                 sameSite: "lax",                    // default: true. "Lax" needed for cookie to work in the workspace domain.
                 domain: `.${this.env.hostUrl.url.host}`
