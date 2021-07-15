@@ -222,6 +222,7 @@ export class WorkspaceStarter {
             // We may have never actually started the workspace which means that ws-manager-bridge never set a workspace status.
             // We have to set that status ourselves.
             instance.status.phase = 'stopped';
+            instance.stoppingTime = new Date().toISOString();
             instance.stoppedTime = new Date().toISOString();
 
             instance.status.conditions.failed = err.toString();

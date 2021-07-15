@@ -260,7 +260,7 @@ export class AccountServiceImpl implements AccountService {
             .map<OpenDebit>(s => {
                 const wsi = s.instance;
                 const sessionStartDate = oldest(wsi.startedTime!, startDate);
-                const sessionEndDate = earliest(wsi.stoppedTime || endDate, endDate);
+                const sessionEndDate = earliest(wsi.stoppingTime || wsi.stoppedTime || endDate, endDate);
                 return {
                     userId,
                     amount: -durationInHours(sessionEndDate, wsi.startedTime!),
