@@ -2,29 +2,24 @@
 
 For smaller setups or to test Gitpod Self-Hosted on your local machine you can run a complete Gitpod installation as a Docker container. The Gitpod Docker image [`gitpod-k3s`](https://console.cloud.google.com/gcr/images/gitpod-core-dev/EU/build/gitpod-k3s) is based on the [`k3s` Docker image](https://hub.docker.com/r/rancher/k3s).
 
+## Prerequisites
+
+To run the Gitpod Docker image you need SSL certificates for HTTPS and DNS entries that point to your Docker container. See [Configure Ingress to your Gitpod installation](https://www.gitpod.io/docs/self-hosted/latest/install/configure-ingress) for details.
+
 ## Running Gitpod using `docker run`
 
-The easiest way to get Gitpod up with `docker run` is as follows:
-
-1. Create a file with some random keys for MinIO called `minio-secrets.yaml`:
-```
-minio:
-  accessKey: add-here-a-random-string
-  secretKey: add-here-another-random-string
-```
-
-2. Then run docker like this:
+Save your SSL certificates to `./certs` and execute the following Docker command to start Gitpod in a Docker container (replace your domain):
 ```
 $ docker run \
     --privileged \
     --name gitpod \
     --publish 443:443 --publish 80:80 \
-    --env DOMAIN=10-0-0-5.ip.mygitpod.com \
-    --volume $(pwd)/minio-secrets.yaml:/values/minio-secrets.yaml \
+    --env DOMAIN=your-domain.example.com \
+    --volume $(pwd)/certs:/certs \
     eu.gcr.io/gitpod-core-dev/build/gitpod-k3s
 ```
 
-Make sure to replace `10-0-0-5` with the IP address of your machine (replace dots with dashes). [See below](#customize-your-gitpod-installation) how to customize your installation (e.g. with an own domain).
+Wait until all pods are running (see below) and open `https://your-domain.example.com` in your browser.
 
 ## Running Gitpod using `docker-compose`
 
@@ -33,8 +28,10 @@ To run Gitpod you can also use our sample [`docker-compose.yaml`](./examples/git
 At first, you need to set your domain as an environment variable. You can do this by creating an `.env` file next to the `docker-compose.yaml` file like this:
 
 ```
-DOMAIN=10-0-0-5.ip.mygitpod.com
+DOMAIN=your-domain.example.com
 ```
+
+Then, you need to save your SSL certificates to `./certs`.
 
 After that, simple run:
 ```
@@ -47,9 +44,20 @@ $ docker-compose up
 
 You can add custom `values.yaml` files for the Gitpod `helm` installation. Simple add a `*.yaml` file to the `/values/` directory of the Docker container. All files are merged to one file where the files in the `/values/` folder override values of the built-in file in case of a conflict.
 
-### Use your own domain and HTTPS certificates
+### Override default MinIO and RabbitMQ credentials
 
-Instead of using the `*.ip.mygitpod.com` domain you can also use your custom domain like `gitpod.example.com` with your own HTTPS certificates. You just need to set the `DOMAIN` environment variable accordingly and mount a directory with your certificates as `/certs` in the Gitpod Docker container.
+It is recommended that you override the default MinIO and RabbitMQ credentials with custom random values. For this, create a YAML file with the following content:
+```
+minio:
+  accessKey: add-here-a-random-string
+  secretKey: add-here-another-random-string
+rabbitmq:
+  auth:
+    username: gitpod
+    password: add-here-a-random-string
+```
+
+and mount it into the `/values/` folder as described above.
 
 ### Specify a base domain
 

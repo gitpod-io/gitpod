@@ -2,7 +2,7 @@ version: '3'
 services:
 
   gitpod:
-    image: eu.gcr.io/gitpod-core-dev/build/gitpod-k3s:${VERSION:-latest}
+    image: gcr.io/gitpod-io/self-hosted/gitpod-k3s:${VERSION:-latest}
     command: --flannel-backend=none --disable-network-policy
     privileged: true
     volumes:
@@ -13,7 +13,7 @@ services:
       - gitpod-mysql:/var/gitpod/mysql
       - gitpod-workspaces:/var/gitpod/workspaces
       - ./values:/values
-      # - ./certs:/certs
+      - ./certs:/certs
     ports:
       - 443:443
       - 80:80
