@@ -169,7 +169,7 @@
                         "failureThreshold": 600
                     },
                     "terminationMessagePolicy": "File",
-                    "imagePullPolicy": "Always",
+                    "imagePullPolicy": "IfNotPresent",
                     "securityContext": {
                         "capabilities": {
                             "add": [

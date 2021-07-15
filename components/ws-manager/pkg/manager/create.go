@@ -468,7 +468,7 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 		Name:            "workspace",
 		Image:           image,
 		SecurityContext: sec,
-		ImagePullPolicy: corev1.PullAlways,
+		ImagePullPolicy: corev1.PullIfNotPresent,
 		Ports: []corev1.ContainerPort{
 			{ContainerPort: startContext.IDEPort},
 		},

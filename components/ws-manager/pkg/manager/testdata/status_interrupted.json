@@ -159,7 +159,7 @@
           },
           "terminationMessagePath": "/dev/termination-log",
           "terminationMessagePolicy": "File",
-          "imagePullPolicy": "Always",
+          "imagePullPolicy": "IfNotPresent",
           "securityContext": {
             "capabilities": {
               "add": [
