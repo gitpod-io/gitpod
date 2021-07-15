@@ -53,11 +53,13 @@ export class ConfigProvider {
                 customConfig = parseResult.config;
                 customConfig._origin = 'additional-content';
                 if (parseResult.validationErrors) {
-                    log.error(logContext, `Invalid config. Errors are ${parseResult.validationErrors.join(',')}`, { repoCloneUrl: commit.repository.cloneUrl, revision: commit.revision, customConfigString });
+                    const err = new InvalidGitpodYMLError(parseResult.validationErrors);
+                    // this is not a system error but a user misconfiguration
+                    log.info(logContext, err.message, { repoCloneUrl: commit.repository.cloneUrl, revision: commit.revision, customConfigString });
+                    throw err;
                 }
             }
             if (!customConfig) {
-
                 // try and find config file in the context repo or remote in
                 const host = commit.repository.host;
                 const hostContext = this.hostContextProvider.get(host);
@@ -90,7 +92,10 @@ export class ConfigProvider {
                     customConfig = parseResult.config
                     await this.fillInDefaultLocations(customConfig, inferredConfig);
                     if (parseResult.validationErrors) {
-                        log.error(logContext, `Skipping invalid config. Errors are ${parseResult.validationErrors.join(',')}`, { repoCloneUrl: commit.repository.cloneUrl, revision: commit.revision, customConfigString });
+                        const err = new InvalidGitpodYMLError(parseResult.validationErrors);
+                        // this is not a system error but a user misconfiguration
+                        log.info(logContext, err.message, { repoCloneUrl: commit.repository.cloneUrl, revision: commit.revision, customConfigString });
+                        throw err;
                     }
                     customConfig._origin = fromDefinitelyGp ? 'definitely-gp' : 'repo';
                 } else {
@@ -309,4 +314,18 @@ export class ConfigProvider {
         return normalizedPath.includes('..') || pathSegments.slice(0, 2).join('/') != POD_PATH_WORKSPACE_BASE;
     }
 
+}
+
+export class InvalidGitpodYMLError extends Error {
+    public readonly errorType = "invalidGitpodYML";
+
+    constructor(public readonly validationErrors: string[]) {
+        super("Invalid gitpod.yml: " + validationErrors.join(','));
+    }
+}
+
+export namespace InvalidGitpodYMLError {
+    export function is(obj: object): obj is InvalidGitpodYMLError {
+        return 'errorType' in obj && (obj as any).errorType === "invalidGitpodYML" && 'validationErrors' in obj;
+    }
 }
