@@ -15,7 +15,6 @@ import { GitpodCookie } from "../auth/gitpod-cookie";
 import { AuthorizationService } from "./authorization-service";
 import { Permission } from "@gitpod/gitpod-protocol/lib/permission";
 import { UserService } from "./user-service";
-import { WorkspacePortAuthorizationService } from "./workspace-port-auth-service";
 import { parseWorkspaceIdFromHostname } from "@gitpod/gitpod-protocol/lib/util/parse-workspace-id";
 import { SessionHandlerProvider } from "../session-handler";
 import { URL } from 'url';
@@ -42,7 +41,6 @@ export class UserController {
     @inject(TosCookie) protected readonly tosCookie: TosCookie;
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
     @inject(UserService) protected readonly userService: UserService;
-    @inject(WorkspacePortAuthorizationService) protected readonly workspacePortAuthService: WorkspacePortAuthorizationService;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(SessionHandlerProvider) protected readonly sessionHandlerProvider: SessionHandlerProvider;
@@ -291,11 +289,6 @@ export class UserController {
             }
 
             res.sendStatus(200);
-        });
-        router.get("/auth/workspace-port/:port", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-            const authenticatedUser = req.isAuthenticated() && User.is(req.user) && req.user || undefined;
-            const access = await this.workspacePortAuthService.authorizeWorkspacePortAccess(req.params.port, req.hostname, authenticatedUser, req.header("x-gitpod-port-auth"));
-            res.sendStatus(access ? 200 : 403);
         });
         router.get("/auth/monitor", async (req: express.Request, res: express.Response, next: express.NextFunction) => {
             if (!req.isAuthenticated() || !User.is(req.user)) {
