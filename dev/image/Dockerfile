@@ -180,7 +180,7 @@ RUN mkdir -p ~/.terraform \
     && curl -fsSL -o terraform_linux_amd64.zip ${RELEASE_URL} \
     && unzip *.zip \
     && rm -f *.zip \
-    && printf "terraform -install-autocomplete\n" >>~/.bashrc
+    && printf "terraform -install-autocomplete 2> /dev/null\n" >>~/.bashrc
 
 # Install GraphViz to help debug terraform scripts
 RUN sudo install-packages graphviz

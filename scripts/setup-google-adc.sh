@@ -16,7 +16,7 @@ if [ ! -f "$GCLOUD_ADC_PATH" ]; then
         return;
     fi
     echo "$GCP_ADC_FILE" > "$GCLOUD_ADC_PATH"
-    echo "Set GOOGLE_APPLICATION_CREDENTIALS value based on contents from GCP_ADC_FILE"
+    #echo "Set GOOGLE_APPLICATION_CREDENTIALS value based on contents from GCP_ADC_FILE"
 fi
 export GOOGLE_APPLICATION_CREDENTIALS="$GCLOUD_ADC_PATH"
 
