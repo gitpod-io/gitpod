@@ -32,7 +32,7 @@ export interface WorkspacePortsAuthData {
     workspace: WorkspaceAuthData;
 }
 
-export type WorkspaceInstanceSession = Pick<WorkspaceInstance, "id" | "startedTime" | "stoppedTime">;
+export type WorkspaceInstanceSession = Pick<WorkspaceInstance, "id" | "startedTime"| "stoppingTime" | "stoppedTime">;
 export type WorkspaceSessionData = Pick<Workspace, "id" | "contextURL" | "context" | "type">;
 export interface WorkspaceInstanceSessionWithWorkspace {
     instance: WorkspaceInstanceSession;

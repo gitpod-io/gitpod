@@ -48,6 +48,7 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
         creationTime: this.timeBefore,
         startedTime: undefined,
         deployedTime: undefined,
+        stoppingTime: undefined,
         stoppedTime: undefined,
         status: {
             phase: "preparing",
@@ -68,6 +69,7 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
         creationTime: this.timeAfter,
         startedTime: undefined,
         deployedTime: undefined,
+        stoppingTime: undefined,
         stoppedTime: undefined,
         status: {
             phase: "running",
@@ -102,6 +104,7 @@ import { DBWorkspaceInstance } from './typeorm/entity/db-workspace-instance';
         creationTime: this.timeBefore,
         startedTime: undefined,
         deployedTime: undefined,
+        stoppingTime: undefined,
         stoppedTime: undefined,
         status: {
             phase: "preparing",

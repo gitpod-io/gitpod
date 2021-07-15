@@ -40,6 +40,20 @@ export class DBWorkspaceInstance implements WorkspaceInstance {
     })
     deployedTime?: string;
 
+    /**
+     * StoppingTime is the time the workspace first entered the STOPPING phase, i.e.
+     * began to shut down on the cluster.
+     */
+    @Column({
+        default: '',
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+    })
+    stoppingTime?: string;
+
+    /**
+     * StoppedTime is the time the workspace entered the STOPPED phase, i.e.
+     * was actually stopped on the cluster.
+     */
     @Column({
         default: '',
         transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED

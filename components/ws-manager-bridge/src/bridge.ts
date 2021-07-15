@@ -219,10 +219,20 @@ export class WorkspaceManagerBridge implements Disposable {
                     break;
                 case WorkspacePhase.STOPPING:
                     instance.status.phase = "stopping";
+                    if (!instance.stoppingTime) {
+                        // The first time a workspace enters stopping we record that as it's stoppingTime time.
+                        // This way we don't take the time a workspace requires to stop into account when
+                        // computing the time a workspace instance was running.
+                        instance.stoppingTime = new Date().toISOString();
+                    }
                     break;
                 case WorkspacePhase.STOPPED:
-                    instance.stoppedTime = new Date().toISOString();
                     instance.status.phase = "stopped";
+                    if (!instance.stoppingTime) {
+                        // It's possible we've never seen a stopping update, hence have not set the `stoppingTime`
+                        // yet. Just for this case we need to set it now.
+                        instance.stoppingTime = new Date().toISOString();
+                    }
                     lifecycleHandler = () => this.onInstanceStopped({span}, userId, instance);
                     break;
             }
@@ -299,6 +309,7 @@ export class WorkspaceManagerBridge implements Disposable {
 
             log.info({instanceId, workspaceId: instance.workspaceId}, "Database says the instance is starting for too long or running, but wsman does not know about it. Marking as stopped in database.", {installation});
             instance.status.phase = "stopped";
+            instance.stoppingTime = new Date().toISOString();
             instance.stoppedTime = new Date().toISOString();
             promises.push(this.workspaceDB.trace({}).storeInstance(instance));
             promises.push(this.onInstanceStopped({}, ri.workspace.ownerId, instance));

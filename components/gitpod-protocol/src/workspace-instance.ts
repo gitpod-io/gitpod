@@ -23,6 +23,9 @@ export interface WorkspaceInstance {
     // The time an instance has switched phase to 'Running'
     startedTime?: string;
 
+    // The time an instance has switched phase to 'Stopping' */
+    stoppingTime?: string;
+
     // The time an instance has switched phase to 'Stopped' */
     stoppedTime?: string;
 
