@@ -1,6 +1,6 @@
 # Gitpod running in k3s Docker container with 3 nodes
 
-This examples illustrates how to use the `gitpod-k3s` Docker images with 3 nodes (1 master node, 2 worker nodes). Add MinIO secrets in `values/minio-secrets.yaml`, your domain in a `.env` file, probably your HTTPS certs (uncomment `certs/` mount in `docker-compose.yaml`), and run `docker-compose up`.
+This examples illustrates how to use the `gitpod-k3s` Docker images with 3 nodes (1 master node, 2 worker nodes). Add MinIO secrets in `values/minio-secrets.yaml`, your domain in a `.env` file, your HTTPS certs, and run `docker-compose up`.
 
 ## How to add additional nodes on a different server
 
