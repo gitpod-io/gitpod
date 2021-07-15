@@ -517,7 +517,7 @@ export class UserController {
             properties: {
                 "auth_provider": user.identities[0].authProviderId,
                 "email": User.getPrimaryEmail(user),
-                "name": User.getName(user),
+                "name": user.identities[0].authName,
                 "full_name": user.fullName,
                 "created_at": user.creationDate,
                 "unsubscribed": !user.allowsMarketingCommunication,
