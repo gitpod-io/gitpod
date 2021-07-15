@@ -7,7 +7,7 @@
  import {MigrationInterface, QueryRunner} from "typeorm";
  import { tableExists, columnExists } from "./helper/helper";
 
-export class AddProjectIdToPrebuiltWorkspace1624962141719 implements MigrationInterface {
+export class AddProjectIdToPrebuiltWorkspace1626351957505 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<any> {
         if (await tableExists(queryRunner, "d_b_prebuilt_workspace")) {
