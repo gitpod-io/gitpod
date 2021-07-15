@@ -48,7 +48,6 @@ import { ImageSourceProvider } from './workspace/image-source-provider';
 import { WorkspaceGarbageCollector } from './workspace/garbage-collector';
 import { TokenGarbageCollector } from './user/token-garbage-collector';
 import { WorkspaceDownloadService } from './workspace/workspace-download-service';
-import { WorkspacePortAuthorizationService } from './user/workspace-port-auth-service';
 import { WebsocketConnectionManager } from './websocket-connection-manager';
 import { OneTimeSecretServer } from './one-time-secret-server';
 import { GitpodServer, GitpodClient } from '@gitpod/gitpod-protocol';
@@ -174,8 +173,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(WorkspaceGarbageCollector).toSelf().inSingletonScope();
     bind(WorkspaceDownloadService).toSelf().inSingletonScope();
-
-    bind(WorkspacePortAuthorizationService).toSelf().inSingletonScope();
 
     bind(OneTimeSecretServer).toSelf().inSingletonScope();
 
