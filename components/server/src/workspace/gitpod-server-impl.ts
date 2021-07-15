@@ -49,6 +49,7 @@ import { WorkspaceFactory } from './workspace-factory';
 import { WorkspaceStarter } from './workspace-starter';
 import { HeadlessLogUrls } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { HeadlessLogService } from "./headless-log-service";
+import { InvalidGitpodYMLError } from "./config-provider";
 
 @injectable()
 export class GitpodServerImpl<Client extends GitpodClient, Server extends GitpodServer> implements GitpodServer, Disposable {
@@ -863,6 +864,9 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             }
             if (UnauthorizedError.is(error)) {
                 throw new ResponseError(ErrorCodes.NOT_AUTHENTICATED, "Unauthorized", error.data);
+            }
+            if (InvalidGitpodYMLError.is(error)) {
+                throw new ResponseError(ErrorCodes.INVALID_GITPOD_YML, error.message);
             }
 
             TraceContext.logError({ span }, error);

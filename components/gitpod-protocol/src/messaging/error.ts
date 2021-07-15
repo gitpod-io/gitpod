@@ -34,6 +34,9 @@ export namespace ErrorCodes {
     // 460 Context Parse Error (custom status code)
     export const CONTEXT_PARSE_ERROR = 460;
 
+    // 461 Invalid gitpod yml
+    export const INVALID_GITPOD_YML = 461;
+
     // 450 Payment error
     export const PAYMENT_ERROR = 450;
 
