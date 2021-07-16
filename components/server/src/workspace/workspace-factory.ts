@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB } from '@gitpod/gitpod-db/lib';
+import { DBWithTracing, TracedWorkspaceDB, WorkspaceDB, ProjectDB } from '@gitpod/gitpod-db/lib';
 import { CommitContext, IssueContext, PullRequestContext, Repository, SnapshotContext, User, Workspace, WorkspaceConfig, WorkspaceContext, WorkspaceProbeContext } from '@gitpod/gitpod-protocol';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 import { generateWorkspaceID } from '@gitpod/gitpod-protocol/lib/util/generate-workspace-id';
@@ -19,6 +19,7 @@ import { ImageSourceProvider } from './image-source-provider';
 export class WorkspaceFactory {
 
     @inject(TracedWorkspaceDB) protected readonly db: DBWithTracing<WorkspaceDB>;
+    @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(ConfigProvider) protected configProvider: ConfigProvider;
     @inject(ImageSourceProvider) protected imageSourceProvider: ImageSourceProvider;
 
@@ -135,7 +136,10 @@ export class WorkspaceFactory {
         const span = TraceContext.startSpan("createForCommit", ctx);
 
         try {
-            const config = await this.configProvider.fetchConfig({span}, user, context);
+            const [ config, project ] = await Promise.all([
+                this.configProvider.fetchConfig({ span }, user, context),
+                this.projectDB.findProjectByCloneUrl(context.repository.cloneUrl),
+            ]);
             const imageSource = await this.imageSourceProvider.getImageSource(ctx, user, context, config);
 
             const id = await generateWorkspaceID();
@@ -144,6 +148,7 @@ export class WorkspaceFactory {
                 type: "regular",
                 creationTime: new Date().toISOString(),
                 contextURL: normalizedContextURL,
+                projectId: project?.id,
                 description: this.getDescription(context),
                 ownerId: user.id,
                 context,

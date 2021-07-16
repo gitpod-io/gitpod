@@ -166,6 +166,7 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 type: "regular",
                 creationTime: new Date().toISOString(),
                 contextURL: normalizedContextURL,
+                projectId: context.prebuiltWorkspace.projectId,
                 description: this.getDescription(context),
                 ownerId: user.id,
                 context: <WorkspaceContext & WithSnapshot & WithPrebuild>{

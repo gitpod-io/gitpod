@@ -394,6 +394,7 @@ export interface Workspace {
     contextURL: string;
     description: string;
     ownerId: string;
+    projectId?: string;
     context: WorkspaceContext;
     config: WorkspaceConfig;
 

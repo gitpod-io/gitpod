@@ -24,6 +24,16 @@ export class ProjectDBImpl implements ProjectDB {
         return (await this.getEntityManager()).getRepository<DBProject>(DBProject);
     }
 
+    async findProjectByCloneUrl(cloneUrl: string): Promise<Project | undefined> {
+        const repo = await this.getRepo();
+        return repo.findOne({ cloneUrl });
+    }
+
+    async findProjectByInstallationId(appInstallationId: string): Promise<Project | undefined> {
+        const repo = await this.getRepo();
+        return repo.findOne({ appInstallationId });
+    }
+
     public async findProjectsByTeam(teamId: string): Promise<Project[]> {
         const repo = await this.getRepo();
         return repo.find({ teamId });
@@ -31,6 +41,9 @@ export class ProjectDBImpl implements ProjectDB {
 
     public async createProject(name: string, cloneUrl: string, teamId: string, appInstallationId: string): Promise<Project> {
         const repo = await this.getRepo();
+        if (repo.findOne({ cloneUrl })) {
+            throw new Error('A project with the same clone URL already exists');
+        }
 
         const project: Project = {
             id: uuidv4(),
@@ -41,12 +54,6 @@ export class ProjectDBImpl implements ProjectDB {
             creationTime: new Date().toISOString(),
         }
         await repo.save(project);
-        return project;
-    }
-
-    async findProjectByInstallationId(appInstallationId: string): Promise<Project | undefined> {
-        const repo = await this.getRepo();
-        const project = await repo.findOne({ appInstallationId });
         return project;
     }
 }
