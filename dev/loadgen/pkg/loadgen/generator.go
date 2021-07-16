@@ -156,6 +156,7 @@ func (f *FixedLoadGenerator) Close() error {
 type WorkspaceCfg struct {
 	CloneURL       string `json:"cloneURL"`
 	WorkspaceImage string `json:"workspaceImage"`
+	CloneTarget    string `json:"cloneTarget"`
 }
 
 type MultiWorkspaceGenerator struct {
@@ -183,7 +184,7 @@ func (f *MultiWorkspaceGenerator) Generate() (*StartWorkspaceSpec, error) {
 		Spec: &csapi.WorkspaceInitializer_Git{
 			Git: &csapi.GitInitializer{
 				CheckoutLocation: "",
-				CloneTaget:       "main",
+				CloneTaget:       repo.CloneTarget,
 				RemoteUri:        repo.CloneURL,
 				TargetMode:       csapi.CloneTargetMode_REMOTE_BRANCH,
 				Config: &csapi.GitConfig{
