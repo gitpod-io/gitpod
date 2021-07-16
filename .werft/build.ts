@@ -50,7 +50,7 @@ export async function build(context, version) {
     werft.phase('validate-changes', 'validating changes');
 
     try {
-        exec(`pre-commit run --from-ref origin/HEAD --to-ref HEAD`);
+        exec(`pre-commit run --all-files --show-diff-on-failure`);
         werft.result("validate changes", "github-check-changes", "conclusion success");
         werft.done('validate-changes');
     } catch (err) {

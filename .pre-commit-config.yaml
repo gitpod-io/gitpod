@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.0.0
+  rev: v4.0.1
   hooks:
     #- id: check-yaml
     #  args: [--allow-multiple-documents]
@@ -8,6 +8,11 @@ repos:
     - id: trailing-whitespace
     - id: check-symlinks
     - id: mixed-line-ending
+    - id: check-case-conflict
+    - id: check-executables-have-shebangs
+    - id: check-shebang-scripts-are-executable
+    - id: check-merge-conflict
+
 
 # keep fork in sync!
 - repo: https://github.com/gitpod-io/pre-commit-hooks
@@ -17,7 +22,8 @@ repos:
       exclude: |
         (?x)^(
           .*example-layer.tar.gz|
-          .*\.(png|svg|ico|gpg)
+          .*\.(png|svg|ico|gpg)|
+          dev/version-manifest/version-manifest
         )$
     - id: script-must-have-extension
     - id: shellcheck
