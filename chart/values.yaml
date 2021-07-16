@@ -414,9 +414,10 @@ components:
         socket: /run/containerd/containerd.sock
       nodeRoots:
       - /var/lib
-      - /run/containerd/io.containerd.runtime.v1.linux/k8s.io
+      - /run/containerd/io.containerd.runtime.v2.task/k8s.io
       # On some hosts systems containerd uses different paths to store it's containers in, for example:
       # Find out by ssh onto a node and "mount | grep rootfs" and have a look at the paths
+      # - /run/containerd/io.containerd.runtime.v1.linux/k8s.io
       # - /run/containerd/io.containerd.runtime.v1.linux/moby
       # - /run/containerd/io.containerd.runtime.v2.task/k8s.io
     userNamespaces:
