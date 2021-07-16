@@ -802,6 +802,29 @@ export namespace WithPrebuild {
     }
 }
 
+/**
+ * WithDefaultConfig contexts disable the download of the gitpod.yml from the repository
+ * and fall back to the built-in configuration.
+ */
+export interface WithDefaultConfig {
+    withDefaultConfig: true;
+}
+
+export namespace WithDefaultConfig {
+    export function is(context: any): context is WithDefaultConfig {
+        return context
+            && 'withDefaultConfig' in context
+            && context.withDefaultConfig;
+    }
+
+    export function mark(ctx: WorkspaceContext): WorkspaceContext & WithDefaultConfig {
+        return {
+            ...ctx,
+            withDefaultConfig: true
+        }
+    }
+}
+
 export interface SnapshotContext extends WorkspaceContext, WithSnapshot {
     snapshotId: string;
 }

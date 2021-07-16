@@ -9,7 +9,7 @@ import fetch from 'node-fetch';
 import * as path from 'path';
 
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { User, WorkspaceConfig, CommitContext, Repository, ImageConfigString, ExternalImageConfigFile, ImageConfigFile, Commit, NamedWorkspaceFeatureFlag, AdditionalContentContext } from "@gitpod/gitpod-protocol";
+import { User, WorkspaceConfig, CommitContext, Repository, ImageConfigString, ExternalImageConfigFile, ImageConfigFile, Commit, NamedWorkspaceFeatureFlag, AdditionalContentContext, WithDefaultConfig } from "@gitpod/gitpod-protocol";
 import { GitpodFileParser } from "@gitpod/gitpod-protocol/lib/gitpod-file-parser";
 
 import { MaybeContent } from "../repohost/file-provider";
@@ -47,6 +47,78 @@ export class ConfigProvider {
         let configBasePath = '';
         try {
             let customConfig: WorkspaceConfig | undefined;
+
+            if (!WithDefaultConfig.is(commit)) {
+                const cc = await this.fetchCustomConfig(ctx, user, commit);
+                if (!!cc) {
+                    customConfig = cc.customConfig;
+                    configBasePath = cc.configBasePath;
+                }
+            }
+
+            if (!customConfig) {
+                log.debug(logContext, 'Config string undefined, using default config', { repoCloneUrl: commit.repository.cloneUrl, revision: commit.revision });
+                const config = this.defaultConfig();
+                if (!ImageConfigString.is(config.image)) {
+                    throw new Error(`Default config must contain a base image!`);
+                }
+                config._origin = 'default';
+                return config;
+            }
+
+            const config = customConfig;
+            if (!config.image) {
+                config.image = this.env.workspaceDefaultImage;
+            } else if (ImageConfigFile.is(config.image)) {
+                let dockerfilePath = [configBasePath, config.image.file].filter(s => !!s).join('/');
+                let repo = commit.repository;
+                let rev = commit.revision;
+                let image = config.image!;
+
+                if (config._origin === 'definitely-gp') {
+                    repo = ConfigProvider.DEFINITELY_GP_REPO;
+                    rev = 'master';
+                    image.file = dockerfilePath;
+                }
+                if (!(AdditionalContentContext.is(commit) && commit.additionalFiles[dockerfilePath])) {
+                    config.image = <ExternalImageConfigFile>{
+                        ...image,
+                        externalSource: await this.fetchWorkspaceImageSourceDocker({ span }, repo, rev, user, dockerfilePath)
+                    }
+                }
+            }
+
+            config.vscode = {
+                extensions: config && config.vscode && config.vscode.extensions || []
+            };
+            await this.validateConfig(config, user);
+
+            /**
+             * Some feature flags get attached to any workspace they create - others remain specific to the user.
+             * Here we attach the workspace-persisted feature flags to the workspace.
+             */
+            delete (config._featureFlags);
+            if (!!user.featureFlags) {
+                const workspacePersistedFlags: NamedWorkspaceFeatureFlag[] = ["full_workspace_backup"];
+                config._featureFlags = workspacePersistedFlags.filter(f => (user.featureFlags!.permanentWSFeatureFlags || []).includes(f));
+            }
+
+            return config;
+        } catch (e) {
+            TraceContext.logError({ span }, e);
+            throw e;
+        } finally {
+            span.finish();
+        }
+    }
+
+    protected async fetchCustomConfig(ctx: TraceContext, user: User, commit: CommitContext): Promise<{customConfig: WorkspaceConfig, configBasePath: string} | undefined> {
+        const span = TraceContext.startSpan("fetchCustomConfig", ctx);
+        const logContext: LogContext = { userId: user.id };
+
+        try {
+            let customConfig: WorkspaceConfig | undefined;
+            let configBasePath = "";
             if (AdditionalContentContext.is(commit) && commit.additionalFiles['.gitpod.yml']) {
                 const customConfigString = commit.additionalFiles['.gitpod.yml'];
                 const parseResult = this.gitpodParser.parse(customConfigString);
@@ -110,53 +182,10 @@ export class ConfigProvider {
             }
 
             if (!customConfig) {
-                log.debug(logContext, 'Config string undefined, using default config', { repoCloneUrl: commit.repository.cloneUrl, revision: commit.revision });
-                const config = this.defaultConfig();
-                if (!ImageConfigString.is(config.image)) {
-                    throw new Error(`Default config must contain a base image!`);
-                }
-                config._origin = 'default';
-                return config;
+                return undefined;
             }
 
-            const config = customConfig;
-            if (!config.image) {
-                config.image = this.env.workspaceDefaultImage;
-            } else if (ImageConfigFile.is(config.image)) {
-                let dockerfilePath = [configBasePath, config.image.file].filter(s => !!s).join('/');
-                let repo = commit.repository;
-                let rev = commit.revision;
-                let image = config.image!;
-
-                if (config._origin === 'definitely-gp') {
-                    repo = ConfigProvider.DEFINITELY_GP_REPO;
-                    rev = 'master';
-                    image.file = dockerfilePath;
-                }
-                if (!(AdditionalContentContext.is(commit) && commit.additionalFiles[dockerfilePath])) {
-                    config.image = <ExternalImageConfigFile>{
-                        ...image,
-                        externalSource: await this.fetchWorkspaceImageSourceDocker({ span }, repo, rev, user, dockerfilePath)
-                    }
-                }
-            }
-
-            config.vscode = {
-                extensions: config && config.vscode && config.vscode.extensions || []
-            };
-            await this.validateConfig(config, user);
-
-            /**
-             * Some feature flags get attached to any workspace they create - others remain specific to the user.
-             * Here we attach the workspace-persisted feature flags to the workspace.
-             */
-            delete (config._featureFlags);
-            if (!!user.featureFlags) {
-                const workspacePersistedFlags: NamedWorkspaceFeatureFlag[] = ["full_workspace_backup"];
-                config._featureFlags = workspacePersistedFlags.filter(f => (user.featureFlags!.permanentWSFeatureFlags || []).includes(f));
-            }
-
-            return config;
+            return { customConfig, configBasePath };
         } catch (e) {
             TraceContext.logError({ span }, e);
             throw e;

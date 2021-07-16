@@ -42,7 +42,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
     this.createWorkspace();
   }
 
-  async createWorkspace(mode = CreateWorkspaceMode.SelectIfRunning) {
+  async createWorkspace(mode = CreateWorkspaceMode.SelectIfRunning, forceDefaultConfig = false) {
     // Invalidate any previous result.
     this.setState({ result: undefined, stillParsing: true });
 
@@ -52,7 +52,8 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
     try {
       const result = await getGitpodService().server.createWorkspace({
         contextUrl: this.props.contextUrl,
-        mode
+        mode,
+        forceDefaultConfig
       });
       if (result.workspaceURL) {
         window.location.href = result.workspaceURL;
@@ -113,6 +114,11 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
         case ErrorCodes.CONTEXT_PARSE_ERROR:
           statusMessage = <div className="text-center">
             <p className="text-base mt-2">Learn more about <a className="text-blue" href="https://www.gitpod.io/docs/context-urls/">supported context URLs</a></p>
+          </div>;
+          break;
+        case ErrorCodes.INVALID_GITPOD_YML:
+          statusMessage = <div className="mt-2 flex flex-col space-y-8">
+            <button className="" onClick={() => { this.createWorkspace(CreateWorkspaceMode.Default, true) }}>Continue with default configuration</button>
           </div>;
           break;
         case ErrorCodes.NOT_AUTHENTICATED:

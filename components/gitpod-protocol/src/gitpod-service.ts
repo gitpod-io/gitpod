@@ -292,6 +292,7 @@ export namespace GitpodServer {
     export interface CreateWorkspaceOptions {
         contextUrl: string;
         mode?: CreateWorkspaceMode;
+        forceDefaultConfig?: boolean;
     }
     export interface StartWorkspaceOptions {
         forceDefaultImage: boolean;
