@@ -64,6 +64,7 @@ export default function PrebuildLogs(props: { workspaceId?: string }) {
         // Preparing means that we haven't actually started the workspace instance just yet, but rather
         // are still preparing for launch. This means we're building the Docker image for the workspace.
         case "preparing":
+          // return <ImageBuildView workspaceId={this.state.workspaceInstance.workspaceId} />;
           service.server.watchWorkspaceImageBuildLogs(workspace!.id);
           break;
 
@@ -71,36 +72,90 @@ export default function PrebuildLogs(props: { workspaceId?: string }) {
         // some space within the cluster. If for example the cluster needs to scale up to accomodate the
         // workspace, the workspace will be in Pending state until that happened.
         case "pending":
+          // setPhase(StartPhase.Preparing);
+          // statusMessage = <p className="text-base text-gray-400">Allocating resources …</p>;
           break;
 
         // Creating means the workspace is currently being created. That includes downloading the images required
         // to run the workspace over the network. The time spent in this phase varies widely and depends on the current
         // network speed, image size and cache states.
         case "creating":
+          // setPhase(StartPhase.Creating);
+          // statusMessage = <p className="text-base text-gray-400">Pulling container image …</p>;
           break;
 
         // Initializing is the phase in which the workspace is executing the appropriate workspace initializer (e.g. Git
         // clone or backup download). After this phase one can expect the workspace to either be Running or Failed.
         case "initializing":
+          // setPhase(StartPhase.Starting);
+          // statusMessage = <p className="text-base text-gray-400">{isPrebuilt ? 'Loading prebuild …' : 'Initializing content …'}</p>;
           break;
 
         // Running means the workspace is able to actively perform work, either by serving a user through Theia,
         // or as a headless workspace.
         case "running":
+          // if (isHeadless) {
+          //   return <HeadlessWorkspaceView instanceId={this.state.workspaceInstance.id} />;
+          // }
+          // setPhase(StartPhase.Running);
+          // statusMessage = <p className="text-base text-gray-400">Opening IDE …</p>;
           break;
 
         // Interrupted is an exceptional state where the container should be running but is temporarily unavailable.
         // When in this state, we expect it to become running or stopping anytime soon.
         case "interrupted":
+          // setPhase(StartPhase.Running);
+          // statusMessage = <p className="text-base text-gray-400">Checking workspace …</p>;
           break;
 
         // Stopping means that the workspace is currently shutting down. It could go to stopped every moment.
         case "stopping":
+          // if (isHeadless) {
+          //   return <HeadlessWorkspaceView instanceId={this.state.workspaceInstance.id} />;
+          // }
+          // setPhase(StartPhase.Stopping);
+          // statusMessage = <div>
+          //   <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 bg-gray-100 dark:bg-gray-800">
+          //     <div className="rounded-full w-3 h-3 text-sm bg-gitpod-kumquat">&nbsp;</div>
+          //     <div>
+          //       <p className="text-gray-700 dark:text-gray-200 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
+          //       <a target="_parent" href={this.state.workspace?.contextURL}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{this.state.workspace?.contextURL}</p></a>
+          //     </div>
+          //   </div>
+          //   <div className="mt-10 flex justify-center">
+          //     <a target="_parent" href={gitpodHostUrl.asDashboard().toString()}><button className="secondary">Go to Dashboard</button></a>
+          //   </div>
+          // </div>;
           break;
 
         // Stopped means the workspace ended regularly because it was shut down.
         case "stopped":
+          // setPhase(StartPhase.Stopped);
+          // if (this.state.hasImageBuildLogs) {
+          //   const restartWithDefaultImage = (event: React.MouseEvent) => {
+          //     (event.target as HTMLButtonElement).disabled = true;
+          //     this.startWorkspace(true, true);
+          //   }
+          //   return <ImageBuildView workspaceId={this.state.workspaceInstance.workspaceId} onStartWithDefaultImage={restartWithDefaultImage} phase={phase} error={error} />;
           service.server.watchWorkspaceImageBuildLogs(workspace!.id);
+          // }
+          // if (!isHeadless && this.state.workspaceInstance.status.conditions.timeout) {
+          //   title = 'Timed Out';
+          // }
+          // statusMessage = <div>
+          //   <div className="flex space-x-3 items-center text-left rounded-xl m-auto px-4 h-16 w-72 mt-4 mb-2 bg-gray-100 dark:bg-gray-800">
+          //     <div className="rounded-full w-3 h-3 text-sm bg-gray-300">&nbsp;</div>
+          //     <div>
+          //       <p className="text-gray-700 dark:text-gray-200 font-semibold">{this.state.workspaceInstance.workspaceId}</p>
+          //       <a target="_parent" href={this.state.workspace?.contextURL}><p className="w-56 truncate hover:text-blue-600 dark:hover:text-blue-400" >{this.state.workspace?.contextURL}</p></a>
+          //     </div>
+          //   </div>
+          //   <PendingChangesDropdown workspaceInstance={this.state.workspaceInstance} />
+          //   <div className="mt-10 justify-center flex space-x-2">
+          //     <a target="_parent" href={gitpodHostUrl.asDashboard().toString()}><button className="secondary">Go to Dashboard</button></a>
+          //     <a target="_parent" href={gitpodHostUrl.asStart(this.state.workspaceInstance?.workspaceId).toString()}><button>Open Workspace</button></a>
+          //   </div>
+          // </div>;
           break;
     }
     if (workspaceInstance?.status.conditions.failed) {
