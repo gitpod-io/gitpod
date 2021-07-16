@@ -266,16 +266,16 @@ func (c *Client) Clone(ctx context.Context) (err error) {
 
 	args := make([]string, 0)
 	args = append(args, c.RemoteURI)
+
 	for key, value := range c.Config {
 		args = append(args, "--config")
 		args = append(args, strings.TrimSpace(key)+"="+strings.TrimSpace(value))
 	}
-	args = append(args, ".")
-	if err := c.Git(ctx, "clone", args...); err != nil {
-		return err
-	}
 
-	return nil
+	args = append(args, "--filter=blob:none")
+	args = append(args, ".")
+
+	return c.Git(ctx, "clone", args...)
 }
 
 // Fetch runs git fetch
