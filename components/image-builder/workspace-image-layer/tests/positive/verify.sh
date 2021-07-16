@@ -6,11 +6,11 @@ if [ "$USER_ID" -ne 33333 ]; then
     exit 1
 fi
 
-if [ -z "$(which git)" ]; then
+if [ -z "$(command -v git)" ]; then
     echo "git not installed!"
 fi
 
-if [ -z "$(which bash)" ]; then
+if [ -z "$(command -v bash)" ]; then
     echo "bash not installed!"
 fi
 
