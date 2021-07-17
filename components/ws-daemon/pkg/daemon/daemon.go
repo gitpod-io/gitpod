@@ -54,7 +54,6 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	cgCustomizer.WithCgroupBasePath(config.Resources.CGroupsBasePath)
 	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename,
 		resources.NewDispatchListener(&config.Resources, reg),
-		&Containerd4214Workaround{},
 		cgCustomizer,
 	)
 	if err != nil {
