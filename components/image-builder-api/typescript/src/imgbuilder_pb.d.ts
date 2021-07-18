@@ -332,6 +332,11 @@ export class BuildResponse extends jspb.Message {
     getMessage(): string;
     setMessage(value: string): BuildResponse;
 
+    hasInfo(): boolean;
+    clearInfo(): void;
+    getInfo(): BuildInfo | undefined;
+    setInfo(value?: BuildInfo): BuildResponse;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): BuildResponse.AsObject;
     static toObject(includeInstance: boolean, msg: BuildResponse): BuildResponse.AsObject;
@@ -348,6 +353,7 @@ export namespace BuildResponse {
         baseRef: string,
         status: BuildStatus,
         message: string,
+        info?: BuildInfo.AsObject,
     }
 }
 
@@ -438,6 +444,8 @@ export namespace ListBuildsResponse {
 export class BuildInfo extends jspb.Message {
     getRef(): string;
     setRef(value: string): BuildInfo;
+    getBaseRef(): string;
+    setBaseRef(value: string): BuildInfo;
     getStatus(): BuildStatus;
     setStatus(value: BuildStatus): BuildInfo;
     getStartedAt(): number;
@@ -456,6 +464,7 @@ export class BuildInfo extends jspb.Message {
 export namespace BuildInfo {
     export type AsObject = {
         ref: string,
+        baseRef: string,
         status: BuildStatus,
         startedAt: number,
     }

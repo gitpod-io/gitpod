@@ -190,7 +190,10 @@ func (m *Manager) StartWorkspace(ctx context.Context, req *api.StartWorkspaceReq
 	span.LogKV("event", "pod created")
 
 	// all workspaces get a service now
-	okResponse := &api.StartWorkspaceResponse{Url: startContext.WorkspaceURL}
+	okResponse := &api.StartWorkspaceResponse{
+		Url:        startContext.WorkspaceURL,
+		OwnerToken: startContext.OwnerToken,
+	}
 
 	// mandatory Theia service
 	servicePrefix := getServicePrefix(req)
