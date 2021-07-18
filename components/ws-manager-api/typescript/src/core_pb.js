@@ -1565,7 +1565,8 @@ proto.wsman.StartWorkspaceResponse.prototype.toObject = function(opt_includeInst
  */
 proto.wsman.StartWorkspaceResponse.toObject = function(includeInstance, msg) {
   var f, obj = {
-    url: jspb.Message.getFieldWithDefault(msg, 1, "")
+    url: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    ownerToken: jspb.Message.getFieldWithDefault(msg, 2, "")
   };
 
   if (includeInstance) {
@@ -1606,6 +1607,10 @@ proto.wsman.StartWorkspaceResponse.deserializeBinaryFromReader = function(msg, r
       var value = /** @type {string} */ (reader.readString());
       msg.setUrl(value);
       break;
+    case 2:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setOwnerToken(value);
+      break;
     default:
       reader.skipField();
       break;
@@ -1642,6 +1647,13 @@ proto.wsman.StartWorkspaceResponse.serializeBinaryToWriter = function(message, w
       f
     );
   }
+  f = message.getOwnerToken();
+  if (f.length > 0) {
+    writer.writeString(
+      2,
+      f
+    );
+  }
 };
 
 
@@ -1660,6 +1672,24 @@ proto.wsman.StartWorkspaceResponse.prototype.getUrl = function() {
  */
 proto.wsman.StartWorkspaceResponse.prototype.setUrl = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional string owner_token = 2;
+ * @return {string}
+ */
+proto.wsman.StartWorkspaceResponse.prototype.getOwnerToken = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 2, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.wsman.StartWorkspaceResponse} returns this
+ */
+proto.wsman.StartWorkspaceResponse.prototype.setOwnerToken = function(value) {
+  return jspb.Message.setProto3StringField(this, 2, value);
 };
 
 

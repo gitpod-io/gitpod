@@ -14,6 +14,7 @@ import (
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -27,6 +28,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/image-builder/api"
 	protocol "github.com/gitpod-io/gitpod/image-builder/api"
 	"github.com/gitpod-io/gitpod/image-builder/pkg/auth"
 	"github.com/gitpod-io/gitpod/image-builder/pkg/resolve"
@@ -166,7 +168,7 @@ func NewOrchestratingBuilder(cfg Configuration) (res *Orchestrator, err error) {
 		return
 	}
 
-	return &Orchestrator{
+	o := &Orchestrator{
 		Config: cfg,
 		Auth:   authentication,
 		AuthResolver: auth.Resolver{
@@ -179,10 +181,12 @@ func NewOrchestratingBuilder(cfg Configuration) (res *Orchestrator, err error) {
 		gplayerHash:    gplayerHash,
 		buildListener:  make(map[string]map[buildListener]struct{}),
 		logListener:    make(map[string]map[logListener]struct{}),
-		runningBuilds:  make(map[string]*protocol.BuildInfo),
 		censorship:     make(map[string][]string),
 		builderAuthKey: builderAuthKey,
-	}, nil
+	}
+	o.monitor = newBuildMonitor(o, o.wsman)
+
+	return o, nil
 }
 
 func computeGitpodLayerHash(gitpodLayerLoc string) (string, error) {
@@ -217,20 +221,20 @@ type Orchestrator struct {
 	gplayerHash string
 	wsman       wsmanapi.WorkspaceManagerClient
 
-	builderAuthKey  [32]byte
-	buildListener   map[string]map[buildListener]struct{}
-	logListener     map[string]map[logListener]struct{}
-	runningBuilds   map[string]*protocol.BuildInfo
-	runningBuildsMu sync.RWMutex
-	censorship      map[string][]string
-	mu              sync.RWMutex
+	builderAuthKey [32]byte
+	buildListener  map[string]map[buildListener]struct{}
+	logListener    map[string]map[logListener]struct{}
+	censorship     map[string][]string
+	mu             sync.RWMutex
+
+	monitor *buildMonitor
 
 	protocol.UnimplementedImageBuilderServer
 }
 
 // Start fires up the internals of this image builder
 func (o *Orchestrator) Start(ctx context.Context) error {
-	go o.monitor()
+	go o.monitor.Run()
 	return nil
 }
 
@@ -392,15 +396,25 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	})
 
 	// push some log to the client before starting the job, just in case the build workspace takes a while to start up
-	o.publishLog(buildID, "starting image build")
+	o.PublishLog(buildID, "starting image build")
 
-	err = retryIfUnavailable(ctx, func(ctx context.Context) (err error) {
-		_, err = o.wsman.StartWorkspace(ctx, &wsmanapi.StartWorkspaceRequest{
-			Id: buildID,
+	retryIfUnavailable1 := func(err error) bool {
+		if st, ok := status.FromError(err); ok && st.Code() == codes.Unavailable {
+			return true
+		}
+		return false
+	}
+
+	var swr *wsmanapi.StartWorkspaceResponse
+	err = retry(ctx, func(ctx context.Context) (err error) {
+		swr, err = o.wsman.StartWorkspace(ctx, &wsmanapi.StartWorkspaceRequest{
+			Id:            buildID,
+			ServicePrefix: buildID,
 			Metadata: &wsmanapi.WorkspaceMetadata{
 				MetaId: buildID,
 				Annotations: map[string]string{
-					"ref": wsrefstr,
+					annotationRef:     wsrefstr,
+					annotationBaseRef: baseref,
 				},
 				// TODO(cw): use the actual image build owner here and move to annotation based filter
 				//           when retrieving running image builds.
@@ -428,17 +442,16 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 			Type: wsmanapi.WorkspaceType_IMAGEBUILD,
 		})
 		return
-	}, 1*time.Second, 5)
+	}, retryIfUnavailable1, 1*time.Second, 5)
 	if status.Code(err) == codes.AlreadyExists {
 		// build is already running - do not add it to the list of builds
+	} else if errors.Is(err, errOutOfRetries) {
+		return status.Error(codes.Unavailable, "workspace services are currently unavailable")
 	} else if err != nil {
 		return status.Errorf(codes.Internal, "cannot start build: %q", err)
 	} else {
-		o.runningBuilds[buildID] = &protocol.BuildInfo{
-			Ref:       wsrefstr,
-			Status:    protocol.BuildStatus_running,
-			StartedAt: time.Now().Unix(),
-		}
+		o.monitor.RegisterNewBuild(buildID, wsrefstr, baseref, swr.Url, swr.OwnerToken)
+		o.PublishLog(buildID, "starting image build ...\n")
 	}
 
 	updates, cancel := o.registerBuildListener(buildID)
@@ -466,16 +479,49 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	return nil
 }
 
+// publishStatus broadcasts a build status update to all listeners
+func (o *Orchestrator) PublishStatus(buildID string, resp *api.BuildResponse) {
+	o.mu.RLock()
+	listener, ok := o.buildListener[buildID]
+	o.mu.RUnlock()
+
+	// we don't have any log listener for this build
+	if !ok {
+		return
+	}
+
+	log.WithField("buildID", buildID).WithField("resp", resp).Debug("publishing status")
+
+	for l := range listener {
+		select {
+		case l <- resp:
+			continue
+
+		case <-time.After(5 * time.Second):
+			log.Warn("timeout while forwarding status to listener - dropping listener")
+			o.mu.Lock()
+			ll := o.buildListener[buildID]
+			// In the meantime the listener list may have been removed/cleared by a call to clearListener.
+			// We don't have to do any work in this case.
+			if ll != nil {
+				close(l)
+				delete(ll, l)
+			}
+			o.mu.Unlock()
+		}
+	}
+}
+
 // Logs listens to the build output of an ongoing Docker build identified build the build ID
 func (o *Orchestrator) Logs(req *protocol.LogsRequest, resp protocol.ImageBuilder_LogsServer) (err error) {
-	span, ctx := opentracing.StartSpanFromContext(resp.Context(), "Build")
+	span, ctx := opentracing.StartSpanFromContext(resp.Context(), "Logs")
 	defer tracing.FinishSpan(span, &err)
 	tracing.LogRequestSafe(span, req)
 
-	rb, err := o.getAllRunningBuilds(ctx)
+	rb, err := o.monitor.GetAllRunningBuilds(ctx)
 	var found bool
 	for _, bld := range rb {
-		if bld.Ref == req.BuildRef {
+		if bld.Info.Ref == req.BuildRef {
 			found = true
 			break
 		}
@@ -508,32 +554,17 @@ func (o *Orchestrator) ListBuilds(ctx context.Context, req *protocol.ListBuildsR
 	span, ctx := opentracing.StartSpanFromContext(ctx, "ListBuilds")
 	defer tracing.FinishSpan(span, &err)
 
-	res, err := o.getAllRunningBuilds(ctx)
+	builds, err := o.monitor.GetAllRunningBuilds(ctx)
 	if err != nil {
 		return
 	}
 
+	res := make([]*protocol.BuildInfo, 0, len(builds))
+	for _, ws := range builds {
+		res = append(res, &ws.Info)
+	}
+
 	return &protocol.ListBuildsResponse{Builds: res}, nil
-}
-
-func extractBuildStatus(ws *wsmanapi.WorkspaceStatus) *protocol.BuildInfo {
-	return &protocol.BuildInfo{
-		Ref:       ws.Metadata.Annotations["ref"],
-		StartedAt: ws.Metadata.StartedAt.Seconds,
-		Status:    protocol.BuildStatus_running,
-	}
-}
-
-func (o *Orchestrator) getAllRunningBuilds(ctx context.Context) (res []*protocol.BuildInfo, err error) {
-	o.runningBuildsMu.RLock()
-	defer o.runningBuildsMu.RUnlock()
-
-	res = make([]*protocol.BuildInfo, 0, len(o.runningBuilds))
-	for _, ws := range o.runningBuilds {
-		res = append(res, ws)
-	}
-
-	return
 }
 
 func (o *Orchestrator) checkImageExists(ctx context.Context, ref string, authentication *auth.Authentication) (exists bool, err error) {
@@ -677,8 +708,12 @@ func (c *parentCantCancelContext) Value(key interface{}) interface{} {
 
 func computeBuildID(ref string) string {
 	// The buildID will be used as workspaceID which must not be longer than 63 characters because it's a kubernetes label.
-	// Using sha224 makes sure our hash is shorter than 63 charts. SHA256 would be 64 chars when printed as hex.
-	return fmt.Sprintf("%x", sha256.Sum224([]byte(ref)))
+	hash := fmt.Sprintf("%x", sha256.Sum256([]byte(ref)))
+
+	// Truncating hashes is fine according to NIST - and StackOverflow :)
+	// Note: the buildID is also used as servicePrefix for the StartWorkspace request and must match
+	//       the workspaceIDIdentifier regexp in ws-proxy
+	return fmt.Sprintf("%s-%s-%s", hash[0:16], hash[16:32], hash[32:40])
 }
 
 // source: https://astaxie.gitbooks.io/build-web-application-with-golang/en/09.6.html
@@ -723,4 +758,119 @@ func (o *Orchestrator) getAuthFor(inp auth.AllowedAuthFor, refs ...string) (res 
 	}
 
 	return
+}
+
+type buildListener chan *api.BuildResponse
+
+type logListener chan *api.LogsResponse
+
+func (o *Orchestrator) registerBuildListener(buildID string) (c <-chan *api.BuildResponse, cancel func()) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	l := make(buildListener)
+	ls := o.buildListener[buildID]
+	if ls == nil {
+		ls = make(map[buildListener]struct{})
+	}
+	ls[l] = struct{}{}
+	o.buildListener[buildID] = ls
+
+	cancel = func() {
+		o.mu.Lock()
+		defer o.mu.Unlock()
+		ls := o.buildListener[buildID]
+		if ls == nil {
+			return
+		}
+		delete(ls, l)
+		o.buildListener[buildID] = ls
+	}
+	return l, cancel
+}
+
+func (o *Orchestrator) registerLogListener(buildID string) (c <-chan *api.LogsResponse, cancel func()) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	l := make(logListener)
+	ls := o.logListener[buildID]
+	if ls == nil {
+		ls = make(map[logListener]struct{})
+	}
+	ls[l] = struct{}{}
+	o.logListener[buildID] = ls
+	log.WithField("buildID", buildID).WithField("listener", len(ls)).Debug("registered log listener")
+
+	cancel = func() {
+		o.mu.Lock()
+		defer o.mu.Unlock()
+		ls := o.logListener[buildID]
+		if ls == nil {
+			return
+		}
+		delete(ls, l)
+		o.logListener[buildID] = ls
+
+		log.WithField("buildID", buildID).WithField("listener", len(ls)).Debug("deregistered log listener")
+	}
+	return l, cancel
+}
+
+// clearListener removes all listener for a particular build
+func (o *Orchestrator) clearListener(buildID string) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	delete(o.buildListener, buildID)
+	delete(o.logListener, buildID)
+	delete(o.censorship, buildID)
+}
+
+// censor registers tokens that are censored in the log output
+func (o *Orchestrator) censor(buildID string, words []string) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
+	o.censorship[buildID] = words
+}
+
+// PublishLog broadcasts log output to all registered listener
+func (o *Orchestrator) PublishLog(buildID string, message string) {
+	o.mu.RLock()
+	listener, ok := o.logListener[buildID]
+	o.mu.RUnlock()
+
+	// we don't have any log listener for this build
+	if !ok {
+		return
+	}
+
+	o.mu.RLock()
+	wds := o.censorship[buildID]
+	o.mu.RUnlock()
+	for _, w := range wds {
+		message = strings.ReplaceAll(message, w, "")
+	}
+
+	for l := range listener {
+		select {
+		case l <- &api.LogsResponse{
+			Content: []byte(message),
+		}:
+			continue
+
+		case <-time.After(5 * time.Second):
+			log.WithField("buildID", buildID).Warn("timeout while forwarding log to listener - dropping listener")
+			o.mu.Lock()
+			ll := o.logListener[buildID]
+			// In the meantime the listener list may have been removed/cleared by a call to clearListener.
+			// We don't have to do any work in this case.
+			if ll != nil {
+				close(l)
+				delete(ll, l)
+			}
+			o.mu.Unlock()
+		}
+	}
 }

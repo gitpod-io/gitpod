@@ -128,6 +128,8 @@ export namespace StartWorkspaceRequest {
 export class StartWorkspaceResponse extends jspb.Message {
     getUrl(): string;
     setUrl(value: string): StartWorkspaceResponse;
+    getOwnerToken(): string;
+    setOwnerToken(value: string): StartWorkspaceResponse;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StartWorkspaceResponse.AsObject;
@@ -142,6 +144,7 @@ export class StartWorkspaceResponse extends jspb.Message {
 export namespace StartWorkspaceResponse {
     export type AsObject = {
         url: string,
+        ownerToken: string,
     }
 }
 
