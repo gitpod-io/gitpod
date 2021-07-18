@@ -4,7 +4,8 @@
       { "path": "../image-builder-mk3" },
       { "path": "../ws-manager" },
       { "path": "../server" },
-      { "path": "../../test" }
+      { "path": "../../test" },
+      { "path": "../../dev/gpctl" }
    ],
    "settings": {
       "typescript.tsdk": "gitpod/node_modules/typescript/lib",

@@ -92,6 +92,9 @@ message StartWorkspaceRequest {
 message StartWorkspaceResponse {
     // URL is the external URL of the workspace
     string url = 1;
+
+    // OwnerToken is the token of the workspace owner used for authentication
+    string owner_token = 2;
 }
 
 // StopWorkspaceRequest requests that the workspace manager stops a workspace

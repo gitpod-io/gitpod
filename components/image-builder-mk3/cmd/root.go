@@ -25,7 +25,7 @@ import (
 
 var (
 	// ServiceName is the name we use for tracing/logging
-	ServiceName = "image-builder"
+	ServiceName = "image-builder-mk3"
 	// Version of this service - set during build
 	Version = ""
 )
@@ -33,7 +33,7 @@ var (
 var verbose bool
 var configFile string
 var rootCmd = &cobra.Command{
-	Use:   "image-builder",
+	Use:   "image-builder-mk3",
 	Short: "Workspace image-builder service",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		log.Init(ServiceName, Version, verbose && !isatty.IsTerminal(os.Stdout.Fd()), verbose)
@@ -42,7 +42,7 @@ var rootCmd = &cobra.Command{
 
 // Execute runs this main command
 func Execute() {
-	closer := tracing.Init("image-builder")
+	closer := tracing.Init(ServiceName)
 	if closer != nil {
 		defer closer.Close()
 	}

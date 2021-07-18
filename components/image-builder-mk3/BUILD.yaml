@@ -10,6 +10,7 @@ packages:
   - components/content-service-api/go:lib
   - components/content-service:lib
   - components/image-builder-api/go:lib
+  - components/supervisor-api/go:lib
   - components/ws-manager-api/go:lib
   - components/registry-facade-api/go:lib
   env:
@@ -30,4 +31,4 @@ packages:
       helm-component: imageBuilderMk3
     image:
     - ${imageRepoBase}/image-builder-mk3:${version}
-    - ${imageRepoBase}/image-builder-mk3:${__git_commit}
+    - ${imageRepoBase}/image-builder-mk3:commit-${__git_commit}

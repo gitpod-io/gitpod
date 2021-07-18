@@ -64,6 +64,12 @@ var imagebuildsBuildCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
+		b, _ = marshaler.Marshal(&source)
+		fmt.Println("actual config:")
+		fmt.Fprint(os.Stdout, string(b))
+		fmt.Println()
+
+		forceRebuild, _ := cmd.Flags().GetBool("force-rebuild")
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -75,7 +81,8 @@ var imagebuildsBuildCmd = &cobra.Command{
 		defer conn.Close()
 
 		br, err := client.Build(ctx, &builder.BuildRequest{
-			Source: &source,
+			Source:       &source,
+			ForceRebuild: forceRebuild,
 		})
 		if err != nil {
 			log.Fatal(err)
@@ -105,17 +112,19 @@ var imagebuildsBuildCmd = &cobra.Command{
 			log.Fatal(err)
 		}
 		log.Info("listening for build logs")
-		buildMessage, logs := make(chan builder.BuildResponse), make(chan []byte)
+		buildMessage, logs := make(chan *builder.BuildResponse), make(chan []byte)
 		go func() {
 			r, err := br.Recv()
 			if err != nil {
 				if err != io.EOF {
 					log.Fatal(err)
+				} else {
+					log.Info("logs ended")
 				}
 
 				return
 			}
-			buildMessage <- *r
+			buildMessage <- r
 		}()
 		go func() {
 			for {
@@ -154,4 +163,5 @@ func init() {
 	imagebuildsCmd.AddCommand(imagebuildsBuildCmd)
 
 	imagebuildsBuildCmd.Flags().Bool("censor", false, "censor the log output")
+	imagebuildsBuildCmd.Flags().Bool("force-rebuild", false, "force an image build even if the image exists already")
 }
