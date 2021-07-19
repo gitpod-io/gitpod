@@ -48,7 +48,8 @@ data:
             },
             {{- end -}}
             "builderImage": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" $comp.builderImage) }}",
-            "builderAuthKeyFile": "/config/authkey"
+            "builderAuthKeyFile": "/config/authkey",
+            "useStargz": {{ $comp.useStargz | default false }}
         },
         "refCache": {
             "interval": "6h",

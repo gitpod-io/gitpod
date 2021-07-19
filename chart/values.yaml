@@ -239,6 +239,7 @@ components:
     dependsOn:
     - "image-builder-mk3-configmap.yaml"
     alpineImage: alpine:3.13
+    useStargz: false
     builderImage:
       imageName: "image-builder-mk3/bob"
     ports:

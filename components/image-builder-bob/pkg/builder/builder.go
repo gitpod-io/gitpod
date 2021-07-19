@@ -49,10 +49,10 @@ func (b *Builder) Build() error {
 
 		if err != nil {
 			log.Warn("cannot connect to node-local buildkitd - falling back to pod-local one")
-			cl, teardown, err = StartBuildkit(buildkitdSocketPath)
+			cl, teardown, err = StartBuildkit(buildkitdSocketPath, b.Config.Stargz)
 		}
 	} else {
-		cl, teardown, err = StartBuildkit(buildkitdSocketPath)
+		cl, teardown, err = StartBuildkit(buildkitdSocketPath, b.Config.Stargz)
 	}
 	if err != nil {
 		return err
@@ -250,7 +250,7 @@ func waitForBuildContext(ctx context.Context) error {
 }
 
 // StartBuildkit starts a local buildkit daemon
-func StartBuildkit(socketPath string) (cl *client.Client, teardown func() error, err error) {
+func StartBuildkit(socketPath string, useStargz bool) (cl *client.Client, teardown func() error, err error) {
 	stderr, err := ioutil.TempFile(os.TempDir(), "buildkitd_stderr")
 	if err != nil {
 		return nil, nil, fmt.Errorf("cannot create buildkitd log file: %w", err)
@@ -260,7 +260,15 @@ func StartBuildkit(socketPath string) (cl *client.Client, teardown func() error,
 		return nil, nil, fmt.Errorf("cannot create buildkitd log file: %w", err)
 	}
 
-	cmd := exec.Command("buildkitd", "--addr="+socketPath, "--oci-worker-net=host", "--root=/workspace/buildkit")
+	var args []string
+	args = append(args, "--addr="+socketPath)
+	args = append(args, "--root=/workspace/buildkit")
+	args = append(args, "--oci-worker-net=host")
+	if useStargz {
+		args = append(args, "--oci-worker-snapshotter=stargz")
+	}
+
+	cmd := exec.Command("buildkitd", args...)
 	cmd.SysProcAttr = &syscall.SysProcAttr{Credential: &syscall.Credential{Uid: 0, Gid: 0}}
 	cmd.Stderr = stderr
 	cmd.Stdout = stdout

@@ -27,6 +27,7 @@ type Config struct {
 	Dockerfile        string
 	ContextDir        string
 	ExternalBuildkitd string
+	Stargz            bool
 	localCacheImport  string
 }
 
@@ -42,6 +43,7 @@ func GetConfigFromEnv() (*Config, error) {
 		Dockerfile:        os.Getenv("BOB_DOCKERFILE_PATH"),
 		ContextDir:        os.Getenv("BOB_CONTEXT_DIR"),
 		ExternalBuildkitd: os.Getenv("BOB_EXTERNAL_BUILDKITD"),
+		Stargz:            os.Getenv("BOB_USE_STARGZ") == "true",
 		localCacheImport:  os.Getenv("BOB_LOCAL_CACHE_IMPORT"),
 	}
 

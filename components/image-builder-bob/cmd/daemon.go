@@ -34,7 +34,7 @@ var daemonCmd = &cobra.Command{
 		}
 
 		skt := args[0]
-		cl, teardown, err := builder.StartBuildkit(skt)
+		cl, teardown, err := builder.StartBuildkit(skt, false)
 		if err != nil {
 			log.WithError(err).Fatal("cannot start daemon")
 		}

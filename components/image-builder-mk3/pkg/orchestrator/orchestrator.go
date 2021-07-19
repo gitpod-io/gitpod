@@ -21,6 +21,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -81,6 +82,9 @@ type Configuration struct {
 	// BuilderAuthKeyFile points to a keyfile shared by the builder workspaces and this service.
 	// The key is used to encypt authentication data shipped across environment varibales.
 	BuilderAuthKeyFile string `json:"builderAuthKeyFile,omitempty"`
+
+	// UseStargz enables the stargz snapshotter if set to true
+	UseStargz bool `json:"useStargz,omitempty"`
 }
 
 // NewOrchestratingBuilder creates a new orchestrating image builder
@@ -436,6 +440,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 					{Name: "BOB_DOCKERFILE_PATH", Value: dockerfilePath},
 					{Name: "BOB_CONTEXT_DIR", Value: contextPath},
 					{Name: "BOB_AUTH_KEY", Value: string(o.builderAuthKey[:])},
+					{Name: "BOB_USE_STARGZ", Value: strconv.FormatBool(o.Config.UseStargz)},
 					{Name: "GITPOD_TASKS", Value: `[{"name": "build", "init": "sudo -E /app/bob build"}]`},
 				},
 			},
