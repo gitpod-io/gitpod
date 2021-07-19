@@ -377,10 +377,14 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
 
     public async findSessionsInPeriod(userId: string, periodStart: string, periodEnd: string): Promise<WorkspaceInstanceSessionWithWorkspace[]> {
         const workspaceInstanceRepo = await this.getWorkspaceInstanceRepo();
+        // The query basically selects all workspace instances for the given owner, whose startDate is within the period, and which are either:
+        //  - not stopped yet, or
+        //  - is stopped or stopping.
         const sessions = await workspaceInstanceRepo.query(`
                 SELECT wsi.id AS wsi_id,
                         wsi.startedTime AS wsi_startedTime,
                         wsi.stoppedTime AS wsi_stoppedTime,
+                        wsi.stoppingTime AS wsi_stoppingTime,
                         ws.id AS ws_id,
                         ws.type AS ws_type,
                         ws.contextURL AS ws_contextURL,
@@ -388,9 +392,10 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
                     FROM d_b_workspace_instance AS wsi
                     INNER JOIN d_b_workspace AS ws ON wsi.workspaceId = ws.id
                     WHERE ws.ownerId = ?
-                        AND wsi.startedTime < ? AND (wsi.stoppedTime IS NULL OR wsi.stoppedTime = '' OR wsi.stoppedTime >= ?)
+                        AND wsi.startedTime < ?
+                        AND (wsi.stoppedTime IS NULL OR wsi.stoppedTime = '' OR wsi.stoppedTime >= ? OR wsi.stoppingTime >= ?)
                     ORDER BY wsi.creationTime ASC;
-            `, [userId, periodEnd, periodStart]);
+            `, [userId, periodEnd, periodStart, periodStart]);
 
         const resultSessions: WorkspaceInstanceSessionWithWorkspace[] = [];
         for (const session of sessions) {
@@ -404,7 +409,8 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
                 instance: {
                     id: session.wsi_id,
                     startedTime: !session.wsi_startedTime ? undefined : session.wsi_startedTime,    // Copy the TypeORM behavior according to column config
-                    stoppedTime: !session.wsi_stoppedTime ? undefined : session.wsi_stoppedTime     // Copy the TypeORM behavior according to column config
+                    stoppedTime: !session.wsi_stoppedTime ? undefined : session.wsi_stoppedTime,    // Copy the TypeORM behavior according to column config
+                    stoppingTime: !session.wsi_stoppingTime ? undefined : session.wsi_stoppingTime  // Copy the TypeORM behavior according to column config
                 }
             });
         }
