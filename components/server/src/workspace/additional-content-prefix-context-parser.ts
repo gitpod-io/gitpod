@@ -27,7 +27,6 @@ export class AdditionalContentPrefixContextParser implements IPrefixContextParse
                 return result[0];
             }
         }
-        log.error("Someone tried additionalcontent URL prefix.", {context});
         return undefined;
     }
 
