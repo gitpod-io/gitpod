@@ -50,16 +50,14 @@
 (enable_log) {
 	log {
 		output stdout
-		format filter {
-			wrap json
-			fields {
-				logger			delete
-				msg				delete
-				size			delete
-				status			delete
-				resp_headers	delete
-				request			delete
-			}
+		format if {
+			status ne 200
+		} jsonselect "{severity} {timestamp} {logName}" {
+			level_key "severity"
+			level_format "upper"
+			time_key "timestamp"
+			time_format "rfc3339_nano"
+			name_key "logName"
 		}
 	}
 }
