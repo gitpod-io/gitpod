@@ -227,11 +227,13 @@ export class WorkspaceManagerBridge implements Disposable {
                     }
                     break;
                 case WorkspacePhase.STOPPED:
+                    const now = new Date().toISOString();
+                    instance.stoppedTime = now;
                     instance.status.phase = "stopped";
                     if (!instance.stoppingTime) {
                         // It's possible we've never seen a stopping update, hence have not set the `stoppingTime`
                         // yet. Just for this case we need to set it now.
-                        instance.stoppingTime = new Date().toISOString();
+                        instance.stoppingTime = now;
                     }
                     lifecycleHandler = () => this.onInstanceStopped({span}, userId, instance);
                     break;
