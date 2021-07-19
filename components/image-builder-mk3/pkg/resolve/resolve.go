@@ -15,6 +15,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	"github.com/gitpod-io/gitpod/image-builder/pkg/auth"
 
+	"github.com/containerd/containerd/remotes"
 	dockerremote "github.com/containerd/containerd/remotes/docker"
 	"github.com/docker/distribution/reference"
 	"github.com/opentracing/opentracing-go"
@@ -25,10 +26,12 @@ import (
 var ErrNotFound = fmt.Errorf("not found")
 
 // StandaloneRefResolver can resolve image references without a Docker daemon
-type StandaloneRefResolver struct{}
+type StandaloneRefResolver struct {
+	ResolverFactory func() remotes.Resolver
+}
 
 // Resolve resolves a mutable Docker tag to its absolute digest form by asking the corresponding Docker registry
-func (*StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts ...DockerRefResolverOption) (res string, err error) {
+func (sr *StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts ...DockerRefResolverOption) (res string, err error) {
 	span, ctx := opentracing.StartSpanFromContext(ctx, "StandaloneRefResolver.Resolve")
 	defer func() {
 		var rerr error
@@ -40,15 +43,20 @@ func (*StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts ...D
 
 	options := getOptions(opts)
 
-	r := dockerremote.NewResolver(dockerremote.ResolverOptions{
-		Authorizer: dockerremote.NewDockerAuthorizer(dockerremote.WithAuthCreds(func(host string) (username, password string, err error) {
-			if options.Auth == nil {
-				return
-			}
+	var r remotes.Resolver
+	if sr.ResolverFactory == nil {
+		r = dockerremote.NewResolver(dockerremote.ResolverOptions{
+			Authorizer: dockerremote.NewDockerAuthorizer(dockerremote.WithAuthCreds(func(host string) (username, password string, err error) {
+				if options.Auth == nil {
+					return
+				}
 
-			return options.Auth.Username, options.Auth.Password, nil
-		})),
-	})
+				return options.Auth.Username, options.Auth.Password, nil
+			})),
+		})
+	} else {
+		r = sr.ResolverFactory()
+	}
 
 	// The ref may be what Docker calls a "familiar" name, e.g. ubuntu:latest instead of docker.io/library/ubuntu:latest.
 	// To make this a valid digested form we first need to normalize that familiar name.
@@ -61,6 +69,14 @@ func (*StandaloneRefResolver) Resolve(ctx context.Context, ref string, opts ...D
 	if _, ok := pref.(reference.Canonical); ok {
 		span.LogKV("result", ref)
 		return ref, nil
+	}
+
+	// Some users don't specify a tag, and Docker assumes "latest" - we follow the same convention
+	if _, ok := pref.(reference.Tagged); !ok {
+		pref, err = reference.WithTag(pref, "latest")
+		if err != nil {
+			return "", err
+		}
 	}
 
 	nref := pref.String()
