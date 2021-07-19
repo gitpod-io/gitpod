@@ -92,7 +92,7 @@ export async function build(context, version) {
     const workspaceFeatureFlags = (buildConfig["ws-feature-flags"] || "").split(",").map(e => e.trim())
     const dynamicCPULimits = "dynamic-cpu-limits" in buildConfig;
     const withInstaller = "with-installer" in buildConfig || mainBuild;
-    const noPreview = "no-preview" in buildConfig || publishRelease;
+    const noPreview = ("no-preview" in buildConfig && buildConfig["no-preview"] !== "false") || publishRelease;
     const storage = buildConfig["storage"] || "";
     const withIntegrationTests = "with-integration-tests" in buildConfig;
     const publishToNpm = "publish-to-npm" in buildConfig || mainBuild;
