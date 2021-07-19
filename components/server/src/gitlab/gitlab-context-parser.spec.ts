@@ -531,9 +531,6 @@ class TestGitlabContextParser {
     @test public async testEmptyProject() {
         const result = await this.parser.handle({}, this.user, 'https://gitlab.com/gp-test-group/gp-test-empty-project');
         expect(result).to.deep.include({
-            "ref": undefined,
-            "refType": undefined,
-            "revision": undefined,
             "isFile": false,
             "repository": {
                 "host": "gitlab.com",
@@ -541,9 +538,9 @@ class TestGitlabContextParser {
                 "name": "gp-test-empty-project",
                 "cloneUrl": "https://gitlab.com/gp-test-group/gp-test-empty-project.git",
                 "private": false,
-                "defaultBranch": null
+                "defaultBranch": "main"
             },
-            "title": "gp-test-group/gp-test-empty-project"
+            "title": "gp-test-group/gp-test-empty-project - main"
         })
     }
 
