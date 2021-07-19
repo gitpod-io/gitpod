@@ -25,6 +25,8 @@ RUN git clone -b http2 https://github.com/aledbf/caddy caddy-fork
 RUN xcaddy build \
   --output /caddy \
   --with github.com/caddyserver/caddy/v2=$PWD/caddy-fork \
+  --with github.com/leodido/caddy-conditional-logging \
+  --with github.com/leodido/caddy-jsonselect-encoder \
   --with github.com/gitpod-io/gitpod/proxy/plugins=/plugins
 
 FROM alpine:3.14
