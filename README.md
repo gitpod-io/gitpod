@@ -50,7 +50,7 @@ For example, see [Introduction](https://www.gitpod.io/docs) and [Getting Started
 
 ## Questions
 
-For questions and support please use the [community forum](http://community.gitpod.io).
+For questions and support please use the [community forum](http://community.gitpod.io) or the [community discord server](https://www.gitpod.io/chat).
 Join the conversation, and connect with other community members. 💬
 
 You can also follow [`@gitpod`](https://twitter.com/gitpod) for announcements and updates from our team.
