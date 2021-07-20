@@ -5,7 +5,6 @@
  */
 
 import { GitpodToken, GitpodTokenType, Identity, IdentityLookup, Token, TokenEntry, User, UserEnvVar } from "@gitpod/gitpod-protocol";
-import { Without } from "@gitpod/gitpod-protocol/lib/util/without";
 import { OAuthTokenRepository, OAuthUserRepository } from "@jmondi/oauth2-server";
 import { Repository } from "typeorm";
 import { DBUser } from "./typeorm/entity/db-user";
@@ -117,7 +116,7 @@ export interface UserDB extends OAuthUserRepository, OAuthTokenRepository {
     deleteGitpodToken(tokenHash: string): Promise<void>;
     deleteGitpodTokensNamedLike(userId: string, namePattern: string): Promise<void>;
 }
-export type PartialUserUpdate = Partial<Without<User, "identities">> & Pick<User, "id">
+export type PartialUserUpdate = Partial<Omit<User, "identities">> & Pick<User, "id">
 
 export const BUILTIN_WORKSPACE_PROBE_USER_NAME = "builtin-workspace-prober";
 

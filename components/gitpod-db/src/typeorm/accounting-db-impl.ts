@@ -12,7 +12,6 @@ import { EntityManager, Repository } from "typeorm";
 import { DBSubscription, DBSubscriptionAdditionalData, DBPaymentSourceInfo } from "./entity/db-subscription";
 import { injectable, inject } from "inversify";
 import * as uuidv4 from 'uuid/v4';
-import { Without } from "@gitpod/gitpod-protocol/lib/util/without";
 import { DBUser } from "../typeorm/entity/db-user";
 import { TypeORM } from "./typeorm";
 
@@ -36,7 +35,7 @@ export class TypeORMAccountingDBImpl implements AccountingDB {
         return (await this.getEntityManager()).getRepository(DBAccountEntry);
     }
 
-    async newAccountEntry(accountEntry: Without<AccountEntry, 'uid'>): Promise<AccountEntry> {
+    async newAccountEntry(accountEntry: Omit<AccountEntry, 'uid'>): Promise<AccountEntry> {
         const newEntry = new DBAccountEntry();
         AccountEntry.create(newEntry);
         Object.assign(newEntry, accountEntry)
@@ -99,7 +98,7 @@ export class TypeORMAccountingDBImpl implements AccountingDB {
         return (await this.getEntityManager()).getRepository(DBPaymentSourceInfo);
     }
 
-    async newSubscription(subscription: Without<Subscription, 'uid'>): Promise<Subscription> {
+    async newSubscription(subscription: Omit<Subscription, 'uid'>): Promise<Subscription> {
         const newSubscription = new DBSubscription();
         Subscription.create(newSubscription);
         Object.assign(newSubscription, subscription)

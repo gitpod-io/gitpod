@@ -5,7 +5,6 @@
  */
 
  import * as uuidv4 from 'uuid/v4';
-import { Without } from "./util/without";
 import { User } from './protocol';
 import { oneMonthLater } from './util/timeutil';
 
@@ -47,7 +46,7 @@ export interface AccountEntry {
     description?: object;
 }
 export namespace AccountEntry {
-    export function create<T extends AccountEntry>(entry: Without<T, 'uid'>): T {
+    export function create<T extends AccountEntry>(entry: Omit<T, 'uid'>): T {
         const result = entry as T;
         result.uid = uuidv4();
         return result;
@@ -164,7 +163,7 @@ export namespace AssignedTeamSubscription {
 }
 
 export namespace Subscription {
-    export function create(newSubscription: Without<Subscription, 'uid'>) {
+    export function create(newSubscription: Omit<Subscription, 'uid'>) {
         const subscription = newSubscription as Subscription;
         subscription.uid = uuidv4();
         return subscription;
@@ -212,7 +211,7 @@ export interface Period {
 
 export type MaybePeriod = Period | undefined;
 
-export type AccountEntryFixedPeriod = Without<AccountEntry, 'uid'> & { expiryDate: string };
+export type AccountEntryFixedPeriod = Omit<AccountEntry, 'uid'> & { expiryDate: string };
 export interface AccountStatement extends Period {
     userId: string;
     /**

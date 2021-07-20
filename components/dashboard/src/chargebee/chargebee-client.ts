@@ -6,7 +6,6 @@
 
 import * as chargebee from 'chargebee';
 
-import { Without } from '@gitpod/gitpod-protocol/lib/util/without';
 import { GitpodServer } from '@gitpod/gitpod-protocol';
 import { getGitpodService } from '../service/service';
 
@@ -57,7 +56,7 @@ export class ChargebeeClient {
         return chargebeeClient;
     }
 
-    checkout(hostedPage: (paymentServer: GitpodServer) => Promise<{}>, params: Without<chargebee.CheckoutCallbacks, 'hostedPage'> = { success: noOp })  {
+    checkout(hostedPage: (paymentServer: GitpodServer) => Promise<{}>, params: Omit<chargebee.CheckoutCallbacks, 'hostedPage'> = { success: noOp })  {
         const paymentServer = getGitpodService().server;
         this.client.openCheckout({
             ...params,
@@ -67,7 +66,7 @@ export class ChargebeeClient {
         });
     }
 
-    checkoutExisting(hostedPage: (paymentServer: GitpodServer) => Promise<{}>, params: Without<chargebee.CheckoutCallbacks, 'hostedPage'> = { success: noOp }) {
+    checkoutExisting(hostedPage: (paymentServer: GitpodServer) => Promise<{}>, params: Omit<chargebee.CheckoutCallbacks, 'hostedPage'> = { success: noOp }) {
         const paymentServer = getGitpodService().server;
         this.client.openCheckout({
             ...params,

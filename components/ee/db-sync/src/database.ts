@@ -6,13 +6,12 @@
 
 import { createConnection, Connection, QueryOptions } from "mysql";
 import { NamedConnectionConfig } from "./config";
-import { Without } from '@gitpod/gitpod-protocol/lib/util/without';
 
 export type NamedConnection = Connection & { name: string };
 
 export async function connect(db: NamedConnectionConfig): Promise<NamedConnection> {
     const conn = createConnection({
-        ...db as Without<NamedConnectionConfig, 'name'>,
+        ...db as Omit<NamedConnectionConfig, 'name'>,
         multipleStatements: true,
         charset: 'utf8mb4',
 
@@ -35,7 +34,7 @@ export async function connect(db: NamedConnectionConfig): Promise<NamedConnectio
     });
 }
 
-export async function query(conn: Connection, sql: string, args?: Without<QueryOptions, "sql">) {
+export async function query(conn: Connection, sql: string, args?: Omit<QueryOptions, "sql">) {
     return new Promise((resolve, reject) => {
         conn.query({ sql, ...args }, (err, rows) => {
             if (err) {

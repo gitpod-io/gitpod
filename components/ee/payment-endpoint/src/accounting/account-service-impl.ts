@@ -17,7 +17,6 @@ import { Accounting } from "./accounting";
 import { orderByExpiryDateDesc, SortedArray, orderCreditFirst, within } from "./accounting-util";
 import { AccountService } from "./account-service";
 import { SubscriptionService } from "./subscription-service";
-import { Without } from "@gitpod/gitpod-protocol/lib/util/without";
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 
 /**
@@ -477,7 +476,7 @@ export class AccountServiceImpl implements AccountService {
         delete (ourDebit as any).endDate; // Introduced by spread
 
         const debitEntry = AccountEntry.create<Debit>({
-            ...(ourDebit as Without<OpenDebit, "endDate">),
+            ...(ourDebit as Omit<OpenDebit, "endDate">),
             amount: millisecondsToHours(amount),
             // TODO This looks really strange: Judging by amount, endDate is inclusive; here it looks like it's not!
             // Maybe some irregularity aroun endDate and debits? Add tests and clarify!
@@ -568,7 +567,7 @@ interface CreditChange {
     amount: number
 }
 
-type OpenDebit = Without<AccountEntry, 'uid'> & {
+type OpenDebit = Omit<AccountEntry, 'uid'> & {
     endDate: string;
     kind: DebitAccountEntryKind;
 }
