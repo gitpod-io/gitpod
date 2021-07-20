@@ -128,8 +128,9 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
         }
     ).inSingletonScope();
 
-    bind(ImageBuilderClientConfig).toDynamicValue(() => {
-        return { address: "image-builder-mk3:8080" }
+    bind(ImageBuilderClientConfig).toDynamicValue(ctx => {
+        const env = ctx.container.get<Env>(Env);
+        return { address: env.imageBuilderAddress }
     });
     bind(CachingImageBuilderClientProvider).toSelf().inSingletonScope();
     bind(ImageBuilderClientProvider).toService(CachingImageBuilderClientProvider);
