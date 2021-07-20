@@ -7,7 +7,7 @@
 import {MigrationInterface, QueryRunner} from "typeorm";
 import { columnExists, tableExists } from "./helper/helper";
 
-export class WorkspaceInstanceStoppingTime1626350762001 implements MigrationInterface {
+export class WorkspaceInstanceStoppingTime1626784647462 implements MigrationInterface {
 
     public async up(queryRunner: QueryRunner): Promise<any> {
         if (await tableExists(queryRunner, "d_b_workspace_instance")) {
