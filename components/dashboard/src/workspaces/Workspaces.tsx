@@ -66,70 +66,71 @@ export default class Workspaces extends React.Component<WorkspacesProps, Workspa
         const onAll = () => wsModel!.active = false;
         return <>
             <Header title="Workspaces" subtitle="Manage recent and stopped workspaces." />
-
-            <div className="lg:px-28 px-10 pt-8 flex">
-                <div className="flex">
-                    <div className="py-4">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="16" height="16"><path fill="#A8A29E" d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z"/></svg>
-                    </div>
-                    <input type="search" placeholder="Search Workspaces" onChange={(v) => { if (wsModel) wsModel.setSearch(v.target.value) }} />
-                </div>
-                <div className="flex-1" />
-                <div className="py-3">
-                    <DropDown prefix="Filter: " contextMenuWidth="w-32" activeEntry={wsModel?.active ? 'Active' : 'All'} entries={[{
-                        title: 'Active',
-                        onClick: onActive
-                    }, {
-                        title: 'All',
-                        onClick: onAll
-                    }]} />
-                </div>
-                <div className="py-3 pl-3">
-                    <DropDown prefix="Limit: " contextMenuWidth="w-32" activeEntry={wsModel ? wsModel?.limit+'' : undefined} entries={[{
-                        title: '50',
-                        onClick: () => { if (wsModel) wsModel.limit = 50; }
-                    }, {
-                        title: '100',
-                        onClick: () => { if (wsModel) wsModel.limit = 100; }
-                    }, {
-                        title: '200',
-                        onClick: () => { if (wsModel) wsModel.limit = 200; }
-                    }]} />
-                </div>
-                {wsModel && this.state?.workspaces.length > 0 ?
-                 <button onClick={this.showStartWSModal} className="ml-2">New Workspace</button>
-                 : null
-                }
-            </div>
             {wsModel && (
                 this.state?.workspaces.length > 0 || wsModel.searchTerm ?
-                    <ItemsList className="lg:px-28 px-10">
-                        <Item header={true} className="px-6">
-                            <ItemFieldIcon />
-                            <ItemField className="w-3/12">Name</ItemField>
-                            <ItemField className="w-4/12">Context</ItemField>
-                            <ItemField className="w-2/12">Pending Changes</ItemField>
-                            <ItemField className="w-2/12">Last Start</ItemField>
-                            <ItemFieldContextMenu />
-                        </Item>
-                        {
-                            wsModel.active || wsModel.searchTerm ? null :
-                                <Item className="w-full bg-gitpod-kumquat-light py-6 px-6">
-                                    <ItemFieldIcon>
-                                        <img src={exclamation} alt="Exclamation Mark" className="m-auto" />
-                                    </ItemFieldIcon>
-                                    <ItemField className=" flex flex-col">
-                                        <div className="text-gitpod-red font-semibold">Garbage Collection</div>
-                                        <p className="text-gray-500">Unpinned workspaces that have been stopped for more than 14 days will be automatically deleted. <a className="text-blue-600 learn-more hover:text-gray-800 hover:dark:text-gray-100" href="https://www.gitpod.io/docs/life-of-workspace/#garbage-collection">Learn more</a></p>
-                                    </ItemField>
-                                </Item>
-                        }
-                        {
-                            this.state?.workspaces.map(e => {
-                                return <WorkspaceEntry key={e.workspace.id} desc={e} model={wsModel} stopWorkspace={wsId => getGitpodService().server.stopWorkspace(wsId)}/>
-                            })
-                        }
-                    </ItemsList>
+                    <div>
+                        <div className="lg:px-28 px-10 pt-8 flex">
+                            <div className="flex">
+                                <div className="py-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="16" height="16"><path fill="#A8A29E" d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z"/></svg>
+                                </div>
+                                <input type="search" placeholder="Search Workspaces" onChange={(v) => { if (wsModel) wsModel.setSearch(v.target.value) }} />
+                            </div>
+                            <div className="flex-1" />
+                            <div className="py-3">
+                                <DropDown prefix="Filter: " contextMenuWidth="w-32" activeEntry={wsModel?.active ? 'Active' : 'All'} entries={[{
+                                    title: 'Active',
+                                    onClick: onActive
+                                }, {
+                                    title: 'All',
+                                    onClick: onAll
+                                }]} />
+                            </div>
+                            <div className="py-3 pl-3">
+                                <DropDown prefix="Limit: " contextMenuWidth="w-32" activeEntry={wsModel ? wsModel?.limit+'' : undefined} entries={[{
+                                    title: '50',
+                                    onClick: () => { if (wsModel) wsModel.limit = 50; }
+                                }, {
+                                    title: '100',
+                                    onClick: () => { if (wsModel) wsModel.limit = 100; }
+                                }, {
+                                    title: '200',
+                                    onClick: () => { if (wsModel) wsModel.limit = 200; }
+                                }]} />
+                            </div>
+                            {wsModel && this.state?.workspaces.length > 0 ?
+                                <button onClick={this.showStartWSModal} className="ml-2">New Workspace</button>
+                                : null
+                            }
+                        </div>
+                        <ItemsList className="lg:px-28 px-10">
+                            <Item header={true} className="px-6">
+                                <ItemFieldIcon />
+                                <ItemField className="w-3/12">Name</ItemField>
+                                <ItemField className="w-4/12">Context</ItemField>
+                                <ItemField className="w-2/12">Pending Changes</ItemField>
+                                <ItemField className="w-2/12">Last Start</ItemField>
+                                <ItemFieldContextMenu />
+                            </Item>
+                            {
+                                wsModel.active || wsModel.searchTerm ? null :
+                                    <Item className="w-full bg-gitpod-kumquat-light py-6 px-6">
+                                        <ItemFieldIcon>
+                                            <img src={exclamation} alt="Exclamation Mark" className="m-auto" />
+                                        </ItemFieldIcon>
+                                        <ItemField className=" flex flex-col">
+                                            <div className="text-gitpod-red font-semibold">Garbage Collection</div>
+                                            <p className="text-gray-500">Unpinned workspaces that have been stopped for more than 14 days will be automatically deleted. <a className="text-blue-600 learn-more hover:text-gray-800 hover:dark:text-gray-100" href="https://www.gitpod.io/docs/life-of-workspace/#garbage-collection">Learn more</a></p>
+                                        </ItemField>
+                                    </Item>
+                            }
+                            {
+                                this.state?.workspaces.map(e => {
+                                    return <WorkspaceEntry key={e.workspace.id} desc={e} model={wsModel} stopWorkspace={wsId => getGitpodService().server.stopWorkspace(wsId)}/>
+                                })
+                            }
+                        </ItemsList>
+                    </div>
                     :
                     <div className="lg:px-28 px-10 flex flex-col space-y-2">
                         <div className="px-6 py-3 flex justify-between space-x-2 text-gray-400 border-t border-gray-200 dark:border-gray-800 h-96">
