@@ -336,19 +336,32 @@ function RunningPrebuildView(props: RunningPrebuildViewProps) {
   const logsEmitter = new EventEmitter();
   const service = getGitpodService();
   let pollTimeout: NodeJS.Timeout | undefined;
+  let prebuildDoneTriggered: boolean = false;
 
   useEffect(() => {
+    const checkIsPrebuildDone = async (): Promise<boolean> => {
+      if (prebuildDoneTriggered) {
+        console.debug("prebuild done already triggered, doing nothing");
+        return true;
+      }
+
+      const done = await service.server.isPrebuildDone(props.runningPrebuild.prebuildID);
+      if (done) {
+        // note: this treats "done" as "available" which is not equivalent.
+        // This works because the backend ignores prebuilds which are not "available", and happily starts a workspace as if there was no prebuild at all.
+        prebuildDoneTriggered = true;
+        props.onPrebuildSucceeded();
+        return true;
+      }
+      return false;
+    };
     const pollIsPrebuildDone = async () => {
       clearTimeout(pollTimeout!);
-      const available = await service.server.isPrebuildDone(props.runningPrebuild.prebuildID);
-      if (available) {
-        props.onPrebuildSucceeded();
-        return;
-      }
+      await checkIsPrebuildDone();
       pollTimeout = setTimeout(pollIsPrebuildDone, 10000);
     };
 
-    const disposables = watchHeadlessLogs(service.server, props.runningPrebuild.instanceID, (chunk) => logsEmitter.emit('logs', chunk), pollIsPrebuildDone);
+    const disposables = watchHeadlessLogs(service.server, props.runningPrebuild.instanceID, (chunk) => logsEmitter.emit('logs', chunk), checkIsPrebuildDone);
     return function cleanup() {
       clearTimeout(pollTimeout!);
       disposables.dispose();
