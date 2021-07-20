@@ -6,6 +6,7 @@ package builder
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -21,7 +22,6 @@ import (
 	"github.com/moby/buildkit/session"
 	"github.com/moby/buildkit/util/progress/progressui"
 	"golang.org/x/sync/errgroup"
-	"golang.org/x/xerrors"
 )
 
 const (
@@ -79,7 +79,7 @@ func (b *Builder) buildBaseLayer(ctx context.Context, cl *client.Client) error {
 		return nil
 	}
 
-	fmt.Printf("waiting for build context\n")
+	log.Info("waiting for build context")
 	waitctx, cancel := context.WithTimeout(ctx, 30*time.Minute)
 	defer cancel()
 	err := waitForBuildContext(waitctx)
@@ -87,7 +87,7 @@ func (b *Builder) buildBaseLayer(ctx context.Context, cl *client.Client) error {
 		return err
 	}
 
-	fmt.Printf("building base image\n")
+	log.Info("building base image")
 
 	var sess []session.Attachable
 	if baselayerAuth := b.Config.BaseLayerAuth; baselayerAuth != "" {
@@ -120,6 +120,12 @@ func (b *Builder) buildBaseLayer(ctx context.Context, cl *client.Client) error {
 	eg.Go(func() error {
 		_, err := cl.Solve(ectx, nil, solveOpt, ch)
 		if err != nil {
+			// buildkit errors are wrapped to contain the stack - that does not make for a pretty
+			// sight when printing it to the user.
+			if u := errors.Unwrap(err); u != nil {
+				return u
+			}
+
 			return err
 		}
 		return nil
@@ -158,6 +164,12 @@ func (b *Builder) buildBaseLayer(ctx context.Context, cl *client.Client) error {
 	eg.Go(func() error {
 		_, err := cl.Solve(ectx, nil, solveOpt, ch)
 		if err != nil {
+			// buildkit errors are wrapped to contain the stack - that does not make for a pretty
+			// sight when printing it to the user.
+			if u := errors.Unwrap(err); u != nil {
+				return u
+			}
+
 			return err
 		}
 		return nil
@@ -171,7 +183,7 @@ func (b *Builder) buildBaseLayer(ctx context.Context, cl *client.Client) error {
 		return err
 	}
 
-	fmt.Printf("base image done\n")
+	log.Info("base image done")
 	return err
 }
 
@@ -212,7 +224,7 @@ func (b *Builder) buildGPLayer(ctx context.Context, cl *client.Client) (err erro
 	eg.Go(func() error {
 		_, err := cl.Solve(ctx, nil, solveOpt, ch)
 		if err != nil {
-			return xerrors.Errorf("cannot build Gitpod layer: %w", err)
+			return fmt.Errorf("cannot build Gitpod layer: %w", err)
 		}
 		return nil
 	})
