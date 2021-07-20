@@ -10,7 +10,6 @@ import { Repository } from "typeorm";
 import { ProjectDB } from "../project-db";
 import { DBProject } from "./entity/db-project";
 import { Project } from "@gitpod/gitpod-protocol";
-import * as uuidv4 from 'uuid/v4';
 
 @injectable()
 export class ProjectDBImpl implements ProjectDB {
@@ -24,29 +23,23 @@ export class ProjectDBImpl implements ProjectDB {
         return (await this.getEntityManager()).getRepository<DBProject>(DBProject);
     }
 
+    async findProjectByCloneUrl(cloneUrl: string): Promise<Project | undefined> {
+        const repo = await this.getRepo();
+        return repo.findOne({ cloneUrl });
+    }
+
+    async findProjectByInstallationId(appInstallationId: string): Promise<Project | undefined> {
+        const repo = await this.getRepo();
+        return repo.findOne({ appInstallationId });
+    }
+
     public async findProjectsByTeam(teamId: string): Promise<Project[]> {
         const repo = await this.getRepo();
         return repo.find({ teamId });
     }
 
-    public async createProject(name: string, cloneUrl: string, teamId: string, appInstallationId: string): Promise<Project> {
+    public async storeProject(project: Project): Promise<Project> {
         const repo = await this.getRepo();
-
-        const project: Project = {
-            id: uuidv4(),
-            name,
-            teamId,
-            cloneUrl,
-            appInstallationId,
-            creationTime: new Date().toISOString(),
-        }
-        await repo.save(project);
-        return project;
-    }
-
-    async findProjectByInstallationId(appInstallationId: string): Promise<Project | undefined> {
-        const repo = await this.getRepo();
-        const project = await repo.findOne({ appInstallationId });
-        return project;
+        return repo.save(project);
     }
 }

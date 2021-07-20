@@ -9,9 +9,12 @@ import {
     WhitelistedRepository, WorkspaceImageBuild, AuthProviderInfo, Branding, CreateWorkspaceMode,
     Token, UserEnvVarValue, ResolvePluginsParams, PreparePluginUploadParams, Terms,
     ResolvedPlugins, Configuration, InstallPluginsParams, UninstallPluginParams, UserInfo, GitpodTokenType,
-    GitpodToken, AuthProviderEntry, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team, TeamMemberInfo,
-    TeamMembershipInvite, Project, ProjectInfo, PrebuildInfo, TeamMemberRole
+    GitpodToken, AuthProviderEntry, GuessGitTokenScopesParams, GuessedGitTokenScopes
 } from './protocol';
+import {
+    Team, TeamMemberInfo,
+    TeamMembershipInvite, Project, ProjectInfo, PrebuildInfo, TeamMemberRole
+} from './teams-projects-protocol';
 import { JsonRpcProxy, JsonRpcServer } from './messaging/proxy-factory';
 import { Disposable, CancellationTokenSource } from 'vscode-jsonrpc';
 import { HeadlessLogEvent, HeadlessLogUrls } from './headless-workspace-log';

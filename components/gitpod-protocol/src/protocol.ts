@@ -6,6 +6,7 @@
 
 import { WorkspaceInstance, PortVisibility } from "./workspace-instance";
 import { RoleOrPermission } from "./permission";
+import { Project } from "./teams-projects-protocol";
 
 export interface UserInfo {
     name?: string
@@ -394,6 +395,7 @@ export interface Workspace {
     contextURL: string;
     description: string;
     ownerId: string;
+    projectId?: string;
     context: WorkspaceContext;
     config: WorkspaceConfig;
 
@@ -1223,62 +1225,4 @@ export interface Terms {
     readonly updateMessage: string;
     readonly content: string;
     readonly formElements?: object;
-}
-
-export interface Project {
-    id: string;
-    name: string;
-    cloneUrl: string;
-    teamId: string;
-    appInstallationId: string;
-    creationTime: string;
-    /** This is a flag that triggers the HARD DELETION of this entity */
-    deleted?: boolean;
-}
-
-export interface ProjectInfo extends Project {
-    lastPrebuild?: PrebuildInfo;
-}
-
-export interface PrebuildInfo {
-    id: string;
-    teamId: string;
-    project: string;
-    cloneUrl: string;
-    branch: string;
-    startedAt: string;
-    startedBy: string;
-    status: PrebuiltWorkspaceState;
-}
-
-export interface Team {
-    id: string;
-    name: string;
-    slug: string;
-    creationTime: string;
-    /** This is a flag that triggers the HARD DELETION of this entity */
-    deleted?: boolean;
-}
-
-export type TeamMemberRole = "owner" | "member";
-
-export interface TeamMemberInfo {
-    userId: string;
-    fullName?: string;
-    primaryEmail?: string;
-    avatarUrl?: string;
-    role: TeamMemberRole;
-    memberSince: string;
-}
-
-export interface TeamMembershipInvite {
-    id: string;
-    teamId: string;
-    role: TeamMemberRole;
-    creationTime: string;
-    invalidationTime: string;
-    invitedEmail?: string;
-
-    /** This is a flag that triggers the HARD DELETION of this entity */
-    deleted?: boolean;
 }

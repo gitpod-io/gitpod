@@ -1920,7 +1920,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         const { name, cloneUrl, teamId, appInstallationId } = params;
         // Anyone who can read a team's information (i.e. any team member) can create a new project.
         await this.guardTeamOperation(teamId, "get");
-        return this.projectDB.createProject(name, cloneUrl, teamId, appInstallationId);
+        return this.projectDB.storeProject(Project.create({name, cloneUrl, teamId, appInstallationId}));
     }
     public async getProjects(teamId: string): Promise<ProjectInfo[]> {
         this.checkUser("getProjects");
