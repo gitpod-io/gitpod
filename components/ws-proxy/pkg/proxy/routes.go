@@ -71,7 +71,6 @@ type RouteHandler = func(r *mux.Router, config *RouteHandlerConfig)
 // installWorkspaceRoutes configures routing of workspace and IDE requests
 func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip WorkspaceInfoProvider) {
 	r.Use(logHandler)
-	r.Use(handlers.CompressHandler)
 
 	// Note: the order of routes defines their priority.
 	//       Routes registered first have priority over those that come afterwards.
@@ -80,6 +79,7 @@ func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip Worksp
 	// The favicon warants special handling, because we pull that from the supervisor frontend
 	// rather than the IDE.
 	faviconRouter := r.Path("/favicon.ico").Subrouter()
+	faviconRouter.Use(handlers.CompressHandler)
 	faviconRouter.Use(func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
 			req.URL.Path = "/_supervisor/frontend/favicon.ico"
@@ -97,18 +97,25 @@ func installWorkspaceRoutes(r *mux.Router, config *RouteHandlerConfig, ip Worksp
 		routes.HandleDirectIDERoute(r.PathPrefix(pp))
 	}
 
-	routes.HandleSupervisorFrontendRoute(r.PathPrefix("/_supervisor/frontend"))
+	routes.HandleSupervisorFrontendRoute(enableCompression(r).PathPrefix("/_supervisor/frontend"))
+
 	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor/v1/status/supervisor"), false)
 	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor/v1/status/ide"), false)
 	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor/v1"), true)
 	routes.HandleDirectSupervisorRoute(r.PathPrefix("/_supervisor"), true)
 
-	routes.HandleDirectIDERoute(r.MatcherFunc(func(req *http.Request, m *mux.RouteMatch) bool {
+	routes.HandleDirectIDERoute(enableCompression(r).MatcherFunc(func(req *http.Request, m *mux.RouteMatch) bool {
 		// this handles all foreign (none-IDE) content
 		return m.Vars != nil && m.Vars[foreignOriginIdentifier] != ""
 	}))
 
-	routes.HandleRoot(r.NewRoute())
+	routes.HandleRoot(enableCompression(r).NewRoute())
+}
+
+func enableCompression(r *mux.Router) *mux.Router {
+	res := r.NewRoute().Subrouter()
+	res.Use(handlers.CompressHandler)
+	return res
 }
 
 func newIDERoutes(config *RouteHandlerConfig, ip WorkspaceInfoProvider) *ideRoutes {
