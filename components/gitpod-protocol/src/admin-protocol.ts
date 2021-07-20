@@ -5,7 +5,6 @@
  */
 
 import { User, Workspace, NamedWorkspaceFeatureFlag } from "./protocol";
-import { Without } from "./util/without";
 import { WorkspaceInstance, WorkspaceInstancePhase } from "./workspace-instance";
 import { RoleOrPermission } from "./permission";
 import { AccountStatement } from "./accounting-protocol";
@@ -66,7 +65,7 @@ export interface AdminModifyPermanentWorkspaceFeatureFlagRequest {
     }[]
 }
 
-export interface WorkspaceAndInstance extends Without<Workspace, "id"|"creationTime">, Without<WorkspaceInstance, "id"|"creationTime"> {
+export interface WorkspaceAndInstance extends Omit<Workspace, "id"|"creationTime">, Omit<WorkspaceInstance, "id"|"creationTime"> {
     workspaceId: string;
     workspaceCreationTime: string;
     instanceId: string;

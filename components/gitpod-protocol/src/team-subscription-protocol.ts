@@ -4,7 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Without } from "./util/without";
 import uuidv4 = require("uuid/v4");
 import { Subscription } from "./accounting-protocol";
 
@@ -22,7 +21,7 @@ export interface TeamSubscription {
 }
 
 export namespace TeamSubscription {
-    export const create = (ts: Without<TeamSubscription, 'id'>): TeamSubscription => {
+    export const create = (ts: Omit<TeamSubscription, 'id'>): TeamSubscription => {
         const withId = ts as TeamSubscription;
         withId.id = uuidv4();
         return withId;
@@ -49,7 +48,7 @@ export type TeamSubscriptionSlotAssigned = TeamSubscriptionSlot & TeamSubscripti
 export type TeamSubscriptionSlotState = 'unassigned' | 'assigned' | 'deactivated' | 'cancelled';
 
 export namespace TeamSubscriptionSlot {
-    export const create = (ts: Without<TeamSubscriptionSlot, 'id'>): TeamSubscriptionSlot => {
+    export const create = (ts: Omit<TeamSubscriptionSlot, 'id'>): TeamSubscriptionSlot => {
         const withId = ts as TeamSubscriptionSlot;
         withId.id = uuidv4();
         return withId;

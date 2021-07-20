@@ -5,19 +5,18 @@
  */
 
 import { AccountEntry, Subscription, SubscriptionAndUser, Credit } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
-import { Without } from "@gitpod/gitpod-protocol/lib/util/without";
 import { DBSubscriptionAdditionalData, DBPaymentSourceInfo } from "./typeorm/entity/db-subscription";
 import { DeepPartial } from "typeorm";
 
 export const AccountingDB = Symbol('AccountingDB');
 
 export interface AccountingDB {
-    newAccountEntry(entry: Without<AccountEntry, 'uid'>): Promise<AccountEntry>;
+    newAccountEntry(entry: Omit<AccountEntry, 'uid'>): Promise<AccountEntry>;
     storeAccountEntry(AccountEntry: AccountEntry): void;
     findAccountEntriesFor(userId: string, fromDate: string, toDate: string): Promise<AccountEntry[]>;
     findOpenCredits(userId: string, date: string): Promise<Credit[]>;
 
-    newSubscription(subscription: Without<Subscription, 'uid'>): Promise<Subscription>;
+    newSubscription(subscription: Omit<Subscription, 'uid'>): Promise<Subscription>;
     storeSubscription(subscription: Subscription): Promise<Subscription>;
     findSubscriptionById(id: string): Promise<Subscription | undefined>;
     deleteSubscription(subscription: Subscription): Promise<void>

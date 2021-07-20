@@ -4,7 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Without } from "./util/without";
 import uuidv4 = require("uuid/v4");
 
 export type EMailState = "scheduledInternal"
@@ -59,7 +58,7 @@ export type EMail = {
 } & EMailStatus;
 
 export namespace EMail {
-    export const create = (ts: Without<EMail, 'uid'>): EMail => {
+    export const create = (ts: Omit<EMail, 'uid'>): EMail => {
         const withId = ts as EMail;
         withId.uid = uuidv4();
         return withId;

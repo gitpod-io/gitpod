@@ -4,7 +4,6 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Without } from "./util/without";
 
 export const IAnalyticsWriter = Symbol("IAnalyticsWriter");
 
@@ -29,7 +28,7 @@ export type TrackMessage = Message & Identity & {
     context?: any;
 };
 
-export type RemoteTrackMessage = Without<TrackMessage, "timestamp" | "userId" | "anonymousId">;
+export type RemoteTrackMessage = Omit<TrackMessage, "timestamp" | "userId" | "anonymousId">;
 
 export interface IAnalyticsWriter {
 

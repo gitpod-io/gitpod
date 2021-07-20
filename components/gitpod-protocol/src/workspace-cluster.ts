@@ -7,7 +7,6 @@
 import * as fs from 'fs';
 import { filePathTelepresenceAware } from './env';
 import { DeepPartial } from "./util/deep-partial";
-import { Without } from './util/without';
 import { PermissionName } from './permission';
 
 export interface WorkspaceCluster {
@@ -50,7 +49,7 @@ export interface TLSConfig {
 export namespace TLSConfig {
     export const loadFromBase64File = (path: string): string => fs.readFileSync(filePathTelepresenceAware(path)).toString("base64");
 }
-export type WorkspaceClusterWoTLS = Without<WorkspaceCluster, "tls">;
+export type WorkspaceClusterWoTLS = Omit<WorkspaceCluster, "tls">;
 export type WorkspaceManagerConnectionInfo = Pick<WorkspaceCluster, "name" | "url" | "tls">;
 
 export type AdmissionConstraint = AdmissionConstraintFeaturePreview | AdmissionConstraintHasRole;
