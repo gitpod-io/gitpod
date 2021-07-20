@@ -27,6 +27,12 @@ export class DBWorkspace implements Workspace {
     @Column("text")
     contextURL: string;
 
+    @Column({
+        default: '',
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+    })
+    projectId?: string;
+
     @Column()
     description: string;
 

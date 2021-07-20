@@ -8,7 +8,8 @@ import { Project } from "@gitpod/gitpod-protocol";
 
 export const ProjectDB = Symbol('ProjectDB');
 export interface ProjectDB {
-    findProjectsByTeam(teamId: string): Promise<Project[]>;
+    findProjectByCloneUrl(cloneUrl: string): Promise<Project | undefined>;
     findProjectByInstallationId(installationId: string): Promise<Project | undefined>;
-    createProject(name: string, cloneUrl: string, teamId: string, appInstallationId: string): Promise<Project>;
+    findProjectsByTeam(teamId: string): Promise<Project[]>;
+    storeProject(project: Project): Promise<Project>;
 }
