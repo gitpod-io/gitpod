@@ -362,7 +362,6 @@ func TestRoutes(t *testing.T) {
 				Header: http.Header{
 					"Content-Length": {"50"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
-					"Vary":           {"Accept-Encoding"},
 				},
 				Body: "supervisor hit: /_supervisor/v1/status/supervisor\n",
 			},
@@ -377,7 +376,6 @@ func TestRoutes(t *testing.T) {
 				Header: http.Header{
 					"Content-Length": {"43"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
-					"Vary":           {"Accept-Encoding"},
 				},
 				Body: "supervisor hit: /_supervisor/v1/status/ide\n",
 			},
@@ -389,9 +387,6 @@ func TestRoutes(t *testing.T) {
 			),
 			Expectation: Expectation{
 				Status: http.StatusUnauthorized,
-				Header: http.Header{
-					"Vary": {"Accept-Encoding"},
-				},
 			},
 		},
 		{
@@ -405,7 +400,6 @@ func TestRoutes(t *testing.T) {
 				Header: http.Header{
 					"Content-Length": {"47"},
 					"Content-Type":   {"text/plain; charset=utf-8"},
-					"Vary":           {"Accept-Encoding"},
 				},
 				Body: "supervisor hit: /_supervisor/v1/status/content\n",
 			},

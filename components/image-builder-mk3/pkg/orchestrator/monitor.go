@@ -5,7 +5,6 @@
 package orchestrator
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"errors"
@@ -325,23 +324,19 @@ func listenToHeadlessLogs(ctx context.Context, url, authToken string, callback l
 		} `json:"result"`
 	}
 
-	r := bufio.NewScanner(resp.Body)
-	for r.Scan() {
-		err := json.Unmarshal(r.Bytes(), &line)
-		if err != nil {
-			callback(nil, err)
-			continue
+	dec := json.NewDecoder(resp.Body)
+	for err == nil {
+		err = dec.Decode(&line)
+		if errors.Is(err, io.EOF) {
+			// EOF is not an error in this case
+			err = nil
+			break
 		}
+		if err != nil {
+			break
+		}
+
 		callback(line.Result.Data, nil)
-	}
-	err = r.Err()
-	if errors.Is(err, io.EOF) {
-		// EOF is not an error in this case
-		err = nil
-		return
-	}
-	if err != nil {
-		return
 	}
 }
 
