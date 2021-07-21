@@ -79,8 +79,13 @@ export class LoginCompletionHandler {
         this.gitpodCookie.setCookie(response);
 
         if (authHost) {
+
             increaseLoginCounter("succeeded", authHost);
-            this.analytics.identify({ anonymousId: request.sessionID, userId: user.id });
+
+            //read anonymous ID set by analytics.js
+            let anonymousId = request.cookies.ajs_anonymous_id;
+            //make identify call if anonymous ID was found
+            if (anonymousId) this.analytics.identify({anonymousId: anonymousId.replace(/(^"|"$)/g, ''),userId:user.id});
             this.analytics.track({
                 userId: user.id,
                 event: "login",

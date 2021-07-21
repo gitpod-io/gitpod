@@ -8,6 +8,7 @@ import * as http from 'http';
 import * as express from 'express';
 import * as ws from 'ws';
 import * as bodyParser from 'body-parser';
+import * as cookieParser from 'cookie-parser';
 import { injectable, inject } from 'inversify';
 import * as prom from 'prom-client';
 import { SessionHandlerProvider } from './session-handler';
@@ -97,6 +98,8 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // Read bodies as JSON
         app.use(bodyParser.json())
         app.use(bodyParser.urlencoded({ extended: true }))
+        // Add cookie Parser
+        app.use(cookieParser());
         app.set('trust proxy', 1)   // trust first proxy
 
         // Install Sessionhandler
