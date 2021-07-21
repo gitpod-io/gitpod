@@ -53,6 +53,8 @@ import { BlockedUserFilter } from "../../src/auth/blocked-user-filter";
 import { EMailDomainService, EMailDomainServiceImpl } from "./auth/email-domain-service";
 import { UserDeletionServiceEE } from "./user/user-deletion-service";
 import { GitHubAppSupport } from "./github/github-app-support";
+import { Config } from "../../src/config";
+import { EnvConfigEE } from "./config";
 
 export const productionEEContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     rebind(Server).to(ServerEE).inSingletonScope();
@@ -87,6 +89,11 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     // various
     bind(EnvEE).toSelf().inSingletonScope();
     rebind(Env).to(EnvEE).inSingletonScope();
+    rebind(Config).toDynamicValue(ctx => {
+        const env = ctx.container.get<EnvEE>(EnvEE);
+        return EnvConfigEE.fromEnv(env);
+    }).inSingletonScope();
+
     rebind(MessageBusIntegration).to(MessageBusIntegrationEE).inSingletonScope();
     rebind(HostContainerMapping).to(HostContainerMappingEE).inSingletonScope();
     bind(EMailDomainService).to(EMailDomainServiceImpl).inSingletonScope();

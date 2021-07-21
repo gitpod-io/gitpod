@@ -78,9 +78,14 @@ import { HeadlessLogService } from './workspace/headless-log-service';
 import { HeadlessLogController } from './workspace/headless-log-controller';
 import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
 import { HeadlessLogServiceClient } from '@gitpod/content-service/lib/headless-log_grpc_pb';
+import { EnvConfig, Config } from './config';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Env).toSelf().inSingletonScope();
+    bind(Config).toDynamicValue(ctx => {
+        const env = ctx.container.get<Env>(Env);
+        return EnvConfig.fromEnv(env);
+    }).inSingletonScope();
 
     bind(UserService).toSelf().inSingletonScope();
     bind(UserDeletionService).toSelf().inSingletonScope();
