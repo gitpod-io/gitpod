@@ -60,7 +60,6 @@ func createAndRunc(runcPath string) error {
 	}
 
 	cfg.Process.OOMScoreAdj = &defaultOOMScoreAdj
-	replaceSysMount(&cfg)
 
 	fc, err = json.Marshal(cfg)
 	if err != nil {
@@ -78,27 +77,4 @@ func createAndRunc(runcPath string) error {
 		return fmt.Errorf("exec %s: %w", runcPath, err)
 	}
 	return nil
-}
-
-func replaceSysMount(cfg *specs.Spec) {
-	var n int
-	for _, m := range cfg.Mounts {
-		if m.Destination == "/sys" {
-			continue
-		}
-
-		cfg.Mounts[n] = m
-		n++
-	}
-
-	cfg.Mounts = cfg.Mounts[:n]
-	cfg.Mounts = append(cfg.Mounts, specs.Mount{
-		Destination: "/sys",
-		Options: []string{
-			"rbind",
-			"rprivate",
-		},
-		Source: "/sys",
-		Type:   "bind",
-	})
 }
