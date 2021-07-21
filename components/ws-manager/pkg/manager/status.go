@@ -576,12 +576,6 @@ func extractFailure(wso workspaceObjects) (string, *api.WorkspacePhase) {
 		return reason, nil
 	}
 
-	tpe, err := wso.WorkspaceType()
-	if err != nil {
-		log.WithError(err).Warn("cannot determine workspace type - assuming this is a regular")
-		tpe = api.WorkspaceType_REGULAR
-	}
-
 	status := pod.Status
 	if status.Phase == corev1.PodFailed && (status.Reason != "" || status.Message != "") {
 		// Don't force the phase to UNKNONWN here to leave a chance that we may detect the actual phase of
@@ -621,8 +615,8 @@ func extractFailure(wso workspaceObjects) (string, *api.WorkspacePhase) {
 					return fmt.Sprintf("container %s ran with an error: exit code %d", cs.Name, terminationState.ExitCode), nil
 				}
 			} else if terminationState.Reason == "Completed" {
-				if tpe == api.WorkspaceType_PREBUILD {
-					// default way for prebuilds to be done
+				if wso.IsWorkspaceHeadless() {
+					// default way for headless workspaces to be done
 					return "", nil
 				}
 				return fmt.Sprintf("container %s completed; containers of a workspace pod are not supposed to do that", cs.Name), nil
