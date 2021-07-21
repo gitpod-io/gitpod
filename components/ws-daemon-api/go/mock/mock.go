@@ -259,6 +259,26 @@ func (mr *MockInWorkspaceServiceClientMockRecorder) MountProc(arg0, arg1 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MountProc", reflect.TypeOf((*MockInWorkspaceServiceClient)(nil).MountProc), varargs...)
 }
 
+// MountSysfs mocks base method.
+func (m *MockInWorkspaceServiceClient) MountSysfs(arg0 context.Context, arg1 *api.MountProcRequest, arg2 ...grpc.CallOption) (*api.MountProcResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "MountSysfs", varargs...)
+	ret0, _ := ret[0].(*api.MountProcResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// MountSysfs indicates an expected call of MountSysfs.
+func (mr *MockInWorkspaceServiceClientMockRecorder) MountSysfs(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MountSysfs", reflect.TypeOf((*MockInWorkspaceServiceClient)(nil).MountSysfs), varargs...)
+}
+
 // PrepareForUserNS mocks base method.
 func (m *MockInWorkspaceServiceClient) PrepareForUserNS(arg0 context.Context, arg1 *api.PrepareForUserNSRequest, arg2 ...grpc.CallOption) (*api.PrepareForUserNSResponse, error) {
 	m.ctrl.T.Helper()
@@ -317,6 +337,26 @@ func (mr *MockInWorkspaceServiceClientMockRecorder) UmountProc(arg0, arg1 interf
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]interface{}{arg0, arg1}, arg2...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UmountProc", reflect.TypeOf((*MockInWorkspaceServiceClient)(nil).UmountProc), varargs...)
+}
+
+// UmountSysfs mocks base method.
+func (m *MockInWorkspaceServiceClient) UmountSysfs(arg0 context.Context, arg1 *api.UmountProcRequest, arg2 ...grpc.CallOption) (*api.UmountProcResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "UmountSysfs", varargs...)
+	ret0, _ := ret[0].(*api.UmountProcResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UmountSysfs indicates an expected call of UmountSysfs.
+func (mr *MockInWorkspaceServiceClientMockRecorder) UmountSysfs(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UmountSysfs", reflect.TypeOf((*MockInWorkspaceServiceClient)(nil).UmountSysfs), varargs...)
 }
 
 // WriteIDMapping mocks base method.

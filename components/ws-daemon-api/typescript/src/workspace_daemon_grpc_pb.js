@@ -180,6 +180,34 @@ umountProc: {
     responseSerialize: serialize_iws_UmountProcResponse,
     responseDeserialize: deserialize_iws_UmountProcResponse,
   },
+  // MountSysfs mounts a masked sysfs in the container's rootfs.
+// The PID must be in the PID namespace of the workspace container.
+// The path is relative to the mount namespace of the PID.
+mountSysfs: {
+    path: '/iws.InWorkspaceService/MountSysfs',
+    requestStream: false,
+    responseStream: false,
+    requestType: workspace_daemon_pb.MountProcRequest,
+    responseType: workspace_daemon_pb.MountProcResponse,
+    requestSerialize: serialize_iws_MountProcRequest,
+    requestDeserialize: deserialize_iws_MountProcRequest,
+    responseSerialize: serialize_iws_MountProcResponse,
+    responseDeserialize: deserialize_iws_MountProcResponse,
+  },
+  // UmountSysfs unmounts a masked sysfs from the container's rootfs.
+// The PID must be in the PID namespace of the workspace container.
+// The path is relative to the mount namespace of the PID.
+umountSysfs: {
+    path: '/iws.InWorkspaceService/UmountSysfs',
+    requestStream: false,
+    responseStream: false,
+    requestType: workspace_daemon_pb.UmountProcRequest,
+    responseType: workspace_daemon_pb.UmountProcResponse,
+    requestSerialize: serialize_iws_UmountProcRequest,
+    requestDeserialize: deserialize_iws_UmountProcRequest,
+    responseSerialize: serialize_iws_UmountProcResponse,
+    responseDeserialize: deserialize_iws_UmountProcResponse,
+  },
   // Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
 // when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
 teardown: {
