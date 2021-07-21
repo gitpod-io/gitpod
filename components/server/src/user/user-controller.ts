@@ -510,7 +510,6 @@ export class UserController {
 
         await this.userService.updateUserEnvVarsOnLogin(user, envVars);
         await this.userService.acceptCurrentTerms(user);
-        this.analytics.identify({ anonymousId: req.sessionID || "unknown", userId: user.id, });
         this.analytics.track({
             userId: user.id,
             event: "signup",

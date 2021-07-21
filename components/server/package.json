@@ -47,6 +47,7 @@
     "bitbucket": "^2.4.2",
     "body-parser": "^1.18.2",
     "cookie": "^0.4.1",
+    "cookie-parser": "^1.4.5",
     "cors": "^2.8.4",
     "deep-equal": "^1.0.1",
     "deepmerge": "^2.2.1",
@@ -82,6 +83,7 @@
     "ws": "^7.4.6"
   },
   "devDependencies": {
+    "@types/cookie-parser": "^1.4.2",
     "@graphql-codegen/cli": "^1.19.4",
     "@graphql-codegen/introspection": "^1.18.1",
     "@graphql-codegen/typescript": "^1.19.0",
