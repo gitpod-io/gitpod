@@ -17,7 +17,7 @@ import { URL } from 'url';
 import { runInNewContext } from "vm";
 import { AuthFlow, AuthProvider } from "../auth/auth-provider";
 import { AuthProviderParams, AuthUserSetup } from "../auth/auth-provider";
-import { AuthException, EmailAddressAlreadyTakenException, SelectAccountException } from "../auth/errors";
+import { AuthException, EmailAddressAlreadyTakenException, SelectAccountException, UnconfirmedUserException } from "../auth/errors";
 import { GitpodCookie } from "./gitpod-cookie";
 import { Env } from "../env";
 import { getRequestingClientInfo } from "../express-util";
@@ -315,8 +315,6 @@ export class GenericAuthProvider implements AuthProvider {
                 authenticate(request, response, next);
             })
         } catch (error) {
-            increaseLoginCounter("failed", this.host);
-
             response.redirect(this.getSorryUrl(`OAuth2 error. (${error})`));
             return;
         }
@@ -359,7 +357,10 @@ export class GenericAuthProvider implements AuthProvider {
                 message = 'OAuth Error. Please try again.'; // this is a 5xx response from authorization service
             }
 
-            increaseLoginCounter("failed", this.host);
+            if (!UnconfirmedUserException.is(error)) {
+                // user did not accept ToS. Don't count this towards the error burn rate.
+                increaseLoginCounter("failed", this.host);
+            }
 
             log.error(context, `(${strategyName}) Redirect to /sorry from verify callback`, err, { ...defaultLogPayload, err });
             response.redirect(this.getSorryUrl(message));
