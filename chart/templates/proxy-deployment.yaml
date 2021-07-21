@@ -86,9 +86,6 @@ spec:
             secretKeyRef:
               name: server-proxy-apikey
               key: apikey
-{{ include "gitpod.container.defaultEnv" (dict "root" . "gp" $.Values "comp" $wsProxy "noVersion" true) | indent 8 }}
-        securityContext:
-          privileged: false
       volumes:
       - name: vhosts
         configMap:
