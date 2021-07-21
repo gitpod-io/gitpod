@@ -4,7 +4,7 @@
 
 FROM golang:1.16 as builder
 
-ENV TRIGGER_REBUILD=1
+ENV TRIGGER_REBUILD=2
 
 RUN curl -fsSL https://github.com/caddyserver/xcaddy/releases/download/v0.1.9/xcaddy_0.1.9_linux_amd64.tar.gz \
   | tar -xzv -C /usr/local/bin/ xcaddy
