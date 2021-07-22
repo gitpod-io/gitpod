@@ -8,7 +8,7 @@ import { injectable } from "inversify";
 import { AbstractMessageBusIntegration, MessageBusHelper, AbstractTopicListener, TopicListener, MessageBusHelperImpl, MessagebusListener } from "@gitpod/gitpod-messagebus/lib";
 import { Disposable, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { HeadlessLogEvent, HeadlessWorkspaceEventType } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
+import { HeadlessWorkspaceEvent, HeadlessWorkspaceEventType } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { Channel, Message } from "amqplib";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import * as opentracing from "opentracing";
@@ -26,26 +26,10 @@ export class WorkspaceInstanceUpdateListener extends AbstractTopicListener<Works
     }
 }
 
-export class HeadlessWorkspaceLogListener extends AbstractTopicListener<HeadlessLogEvent> {
-
-    constructor(protected readonly messageBusHelper: MessageBusHelper, listener: TopicListener<HeadlessLogEvent>, protected readonly workspaceID: string) {
-        super(messageBusHelper.workspaceExchange, listener);
-    }
-
-    topic() {
-        return this.messageBusHelper.getWsTopicForListening(undefined, this.workspaceID, "headless-log");
-    }
-
-    async dispose(): Promise<void> {
-        log.debug({ workspaceId: this.workspaceID }, "disposing HeadlessWorkspaceLogListener");
-        super.dispose();
-    }
-}
-
 export class PrebuildUpdatableQueueListener implements MessagebusListener {
     protected channel: Channel | undefined;
     protected consumerTag: string | undefined;
-    constructor(protected readonly callback: (ctx: TraceContext, evt: HeadlessLogEvent) => void) { }
+    constructor(protected readonly callback: (ctx: TraceContext, evt: HeadlessWorkspaceEvent) => void) { }
 
     async establish(channel: Channel): Promise<void> {
         this.channel = channel;
@@ -70,7 +54,7 @@ export class PrebuildUpdatableQueueListener implements MessagebusListener {
         try {
             const content = message.content;
             const jsonContent = JSON.parse(content.toString());
-            msg = jsonContent as HeadlessLogEvent;
+            msg = jsonContent as HeadlessWorkspaceEvent;
         } catch (e) {
             log.warn('Caught message without or with invalid JSON content', e, { message });
         }
@@ -114,15 +98,7 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
         }
     }
 
-    listenForHeadlessWorkspaceLogs(workspaceID: string, callback: (ctx: TraceContext, evt: HeadlessLogEvent) => void): Disposable {
-        const listener = new HeadlessWorkspaceLogListener(this.messageBusHelper, callback, workspaceID);
-        const cancellationTokenSource = new CancellationTokenSource()
-        this.listen(listener, cancellationTokenSource.token);
-        increaseMessagebusTopicReads(listener.topic())
-        return Disposable.create(() => cancellationTokenSource.cancel())
-    }
-
-    listenForPrebuildUpdatableQueue(callback: (ctx: TraceContext, evt: HeadlessLogEvent) => void): Disposable {
+    listenForPrebuildUpdatableQueue(callback: (ctx: TraceContext, evt: HeadlessWorkspaceEvent) => void): Disposable {
         const listener = new PrebuildUpdatableQueueListener(callback);
         const cancellationTokenSource = new CancellationTokenSource()
         this.listen(listener, cancellationTokenSource.token);
@@ -148,7 +124,7 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
     }
 
     // copied from ws-manager-bridge/messagebus-integration
-    async notifyHeadlessUpdate(ctx: TraceContext, userId: string, workspaceId: string, evt: HeadlessLogEvent) {
+    async notifyHeadlessUpdate(ctx: TraceContext, userId: string, workspaceId: string, evt: HeadlessWorkspaceEvent) {
         if (!this.channel) {
             throw new Error("Not connected to message bus");
         }

@@ -9,7 +9,7 @@ import { injectable, inject } from 'inversify';
 import { WorkspaceDB, TracedWorkspaceDB, DBWithTracing } from '@gitpod/gitpod-db/lib';
 import { v4 as uuidv4 } from 'uuid'
 import { MessageBusIntegration } from '../../../src/workspace/messagebus-integration';
-import { HeadlessLogEvent } from '@gitpod/gitpod-protocol/lib/headless-workspace-log';
+import { HeadlessWorkspaceEvent } from '@gitpod/gitpod-protocol/lib/headless-workspace-log';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { PrebuiltWorkspaceUpdatable, PrebuiltWorkspace, Disposable } from '@gitpod/gitpod-protocol';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
@@ -116,7 +116,7 @@ export class PrebuildStatusMaintainer implements Disposable {
         }
     }
 
-    protected async handlePrebuildFinished(ctx: TraceContext, msg: HeadlessLogEvent) {
+    protected async handlePrebuildFinished(ctx: TraceContext, msg: HeadlessWorkspaceEvent) {
         const span = TraceContext.startSpan("PrebuildStatusMaintainer.handlePrebuildFinished", ctx)
 
         try {

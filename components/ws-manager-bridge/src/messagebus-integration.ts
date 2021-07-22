@@ -7,9 +7,8 @@
 import { injectable, inject } from 'inversify';
 import { MessageBusHelper, AbstractMessageBusIntegration, TopicListener, AbstractTopicListener, MessageBusHelperImpl } from "@gitpod/gitpod-messagebus/lib";
 import { Disposable, CancellationTokenSource } from 'vscode-jsonrpc';
-import { WorkspaceStatus, WorkspaceLogMessage } from '@gitpod/ws-manager/lib';
-import { WorkspaceInstance } from '@gitpod/gitpod-protocol';
-import { HeadlessLogEvent, HeadlessWorkspaceEventType } from '@gitpod/gitpod-protocol/lib/headless-workspace-log';
+import { WorkspaceStatus } from '@gitpod/ws-manager/lib';
+import { HeadlessWorkspaceEventType, WorkspaceInstance, HeadlessWorkspaceEvent } from '@gitpod/gitpod-protocol';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 
 @injectable()
@@ -35,13 +34,6 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
         return Disposable.create(() => cancellationTokenSource.cancel())
     }
 
-    listenForWorkspaceLogs(topic: string, callback: (ctx: TraceContext, status: WorkspaceLogMessage.AsObject) => void): Disposable {
-        const listener = new WorkspaceLogListener(callback, MessageBusIntegration.WORKSPACE_EXCHANGE, topic);
-        const cancellationTokenSource = new CancellationTokenSource()
-        this.listen(listener, cancellationTokenSource.token);
-        return Disposable.create(() => cancellationTokenSource.cancel())
-    }
-
     async notifyOnInstanceUpdate(ctx: TraceContext, userId: string, instance: WorkspaceInstance) {
         const span = TraceContext.startSpan("notifyOnInstanceUpdate", ctx);
         try {
@@ -62,7 +54,7 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
         }
     }
 
-    async notifyHeadlessUpdate(ctx: TraceContext, userId: string, workspaceId: string, evt: HeadlessLogEvent) {
+    async notifyHeadlessUpdate(ctx: TraceContext, userId: string, workspaceId: string, evt: HeadlessWorkspaceEvent) {
         if (!this.channel) {
             throw new Error("Not connected to message bus");
         }
@@ -101,17 +93,6 @@ export namespace MessageBusIntegration {
 class WorkspaceStatusUpdateListener extends AbstractTopicListener<WorkspaceStatus.AsObject> {
 
     constructor(listener: TopicListener<WorkspaceStatus.AsObject>, workspaceExchange: string, protected readonly _topic: string) {
-        super(MessageBusIntegration.WORKSPACE_EXCHANGE, listener);
-    }
-
-    topic() {
-        return this._topic;
-    }
-}
-
-class WorkspaceLogListener extends AbstractTopicListener<WorkspaceLogMessage.AsObject> {
-
-    constructor(listener: TopicListener<WorkspaceLogMessage.AsObject>, workspaceExchange: string, protected readonly _topic: string) {
         super(MessageBusIntegration.WORKSPACE_EXCHANGE, listener);
     }
 

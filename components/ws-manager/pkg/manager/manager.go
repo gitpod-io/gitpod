@@ -932,8 +932,8 @@ func (m *Manager) onChange(ctx context.Context, status *api.WorkspaceStatus) {
 	}
 
 	m.publishToSubscribers(ctx, &api.SubscribeResponse{
-		Payload: &api.SubscribeResponse_Status{Status: status},
-		Header:  header,
+		Status: status,
+		Header: header,
 	})
 
 	m.metrics.OnChange(status)

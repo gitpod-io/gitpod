@@ -66,7 +66,6 @@ function readConfig(): RateLimiterConfig {
         "updateWorkspaceUserPin": { group: "default", points: 1 },
         "sendHeartBeat": { group: "default", points: 1 },
         "watchWorkspaceImageBuildLogs": { group: "default", points: 1 },
-        "watchHeadlessWorkspaceLogs": { group: "default", points: 1 },
         "isPrebuildDone": { group: "default", points: 1 },
         "getHeadlessLog": { group: "default", points: 1 },
         "setWorkspaceTimeout": { group: "default", points: 1 },

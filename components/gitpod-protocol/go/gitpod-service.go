@@ -53,7 +53,6 @@ type APIInterface interface {
 	UpdateWorkspaceUserPin(ctx context.Context, id string, action *PinAction) (err error)
 	SendHeartBeat(ctx context.Context, options *SendHeartBeatOptions) (err error)
 	WatchWorkspaceImageBuildLogs(ctx context.Context, workspaceID string) (err error)
-	WatchHeadlessWorkspaceLogs(ctx context.Context, workspaceID string) (err error)
 	IsPrebuildDone(ctx context.Context, pwsid string) (res bool, err error)
 	SetWorkspaceTimeout(ctx context.Context, workspaceID string, duration *WorkspaceTimeoutDuration) (res *SetWorkspaceTimeoutResult, err error)
 	GetWorkspaceTimeout(ctx context.Context, workspaceID string) (res *GetWorkspaceTimeoutResult, err error)
@@ -147,8 +146,6 @@ const (
 	FunctionSendHeartBeat FunctionName = "sendHeartBeat"
 	// FunctionWatchWorkspaceImageBuildLogs is the name of the watchWorkspaceImageBuildLogs function
 	FunctionWatchWorkspaceImageBuildLogs FunctionName = "watchWorkspaceImageBuildLogs"
-	// FunctionWatchHeadlessWorkspaceLogs is the name of the watchHeadlessWorkspaceLogs function
-	FunctionWatchHeadlessWorkspaceLogs FunctionName = "watchHeadlessWorkspaceLogs"
 	// FunctionIsPrebuildDone is the name of the isPrebuildDone function
 	FunctionIsPrebuildDone FunctionName = "isPrebuildDone"
 	// FunctionSetWorkspaceTimeout is the name of the setWorkspaceTimeout function
@@ -840,24 +837,6 @@ func (gp *APIoverJSONRPC) WatchWorkspaceImageBuildLogs(ctx context.Context, work
 	_params = append(_params, workspaceID)
 
 	err = gp.C.Call(ctx, "watchWorkspaceImageBuildLogs", _params, nil)
-	if err != nil {
-		return
-	}
-
-	return
-}
-
-// WatchHeadlessWorkspaceLogs calls watchHeadlessWorkspaceLogs on the server
-func (gp *APIoverJSONRPC) WatchHeadlessWorkspaceLogs(ctx context.Context, workspaceID string) (err error) {
-	if gp == nil {
-		err = errNotConnected
-		return
-	}
-	var _params []interface{}
-
-	_params = append(_params, workspaceID)
-
-	err = gp.C.Call(ctx, "watchHeadlessWorkspaceLogs", _params, nil)
 	if err != nil {
 		return
 	}

@@ -861,20 +861,6 @@ func (mr *MockAPIInterfaceMockRecorder) UpdateWorkspaceUserPin(ctx, id, action i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWorkspaceUserPin", reflect.TypeOf((*MockAPIInterface)(nil).UpdateWorkspaceUserPin), ctx, id, action)
 }
 
-// WatchHeadlessWorkspaceLogs mocks base method.
-func (m *MockAPIInterface) WatchHeadlessWorkspaceLogs(ctx context.Context, workspaceID string) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WatchHeadlessWorkspaceLogs", ctx, workspaceID)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// WatchHeadlessWorkspaceLogs indicates an expected call of WatchHeadlessWorkspaceLogs.
-func (mr *MockAPIInterfaceMockRecorder) WatchHeadlessWorkspaceLogs(ctx, workspaceID interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WatchHeadlessWorkspaceLogs", reflect.TypeOf((*MockAPIInterface)(nil).WatchHeadlessWorkspaceLogs), ctx, workspaceID)
-}
-
 // WatchWorkspaceImageBuildLogs mocks base method.
 func (m *MockAPIInterface) WatchWorkspaceImageBuildLogs(ctx context.Context, workspaceID string) error {
 	m.ctrl.T.Helper()

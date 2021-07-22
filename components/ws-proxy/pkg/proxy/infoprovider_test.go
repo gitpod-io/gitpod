@@ -40,7 +40,7 @@ func TestRemoteInfoProvider(t *testing.T) {
 			Steps: []Step{
 				{
 					Update: &wsapi.SubscribeResponse{
-						Payload: &wsapi.SubscribeResponse_Status{Status: testWorkspaceStatus},
+						Status: testWorkspaceStatus,
 					},
 				},
 				{
@@ -81,7 +81,7 @@ func TestRemoteInfoProvider(t *testing.T) {
 					Parallel:    true,
 					DelayUpdate: 10 * time.Millisecond,
 					Update: &wsapi.SubscribeResponse{
-						Payload: &wsapi.SubscribeResponse_Status{Status: testWorkspaceStatus},
+						Status: testWorkspaceStatus,
 					},
 				},
 			},
@@ -106,7 +106,7 @@ func TestRemoteInfoProvider(t *testing.T) {
 					Parallel:    true,
 					DelayUpdate: 10 * time.Millisecond,
 					Update: &wsapi.SubscribeResponse{
-						Payload: &wsapi.SubscribeResponse_Status{Status: testWorkspaceStatus},
+						Status: testWorkspaceStatus,
 					},
 				},
 			},
