@@ -25,6 +25,18 @@ export class DBWorkspaceInstance implements WorkspaceInstance {
     @Column()
     region: string;
 
+    @Column({
+        default: '',
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+    })
+    projectName: string;
+
+    @Column({
+        default: '',
+        transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+    })
+    clusterName: string;
+
     @Column()
     creationTime: string;
 

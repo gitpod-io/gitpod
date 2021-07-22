@@ -37,6 +37,12 @@ export interface WorkspaceInstance {
     // Note: this is nitially empty, filled during starting process!
     region: string;
 
+    // projectName is the name of the project where the workspace is deployed
+    projectName?: string;
+
+    // clusterName is the name of the cluster where the workspace is deployed
+    clusterName?: string;
+
     // workspaceImage is the name of the Docker image this instance runs
     // Note: this is nitially empty, filled during starting process!
     workspaceImage: string;
@@ -78,6 +84,9 @@ export interface WorkspaceInstanceStatus {
 
     // podName is the name of the pod of this instance
     podName?: string;
+
+    // namespaceName is the namespace where the instance is deployed
+    namespaceName?: string;
 
     // nodeIp is the IP of the node the workspace is running on
     nodeIp?: string;
