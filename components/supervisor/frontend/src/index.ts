@@ -137,6 +137,15 @@ const loadingIDE = new Promise(resolve => window.addEventListener('DOMContentLoa
     ideService.onDidChange(() => {
         updateLoadingState();
         updateCurrentFrame();
+
+        window.gitpod.service.server.trackEvent({
+            event: "status_rendered",
+            properties: {
+                workspaceId: gitpodServiceClient.info.latestInstance?.workspaceId,
+                phase: `ide-${ideService.state}`,
+                error: ideService.failureCause?.message,
+            },
+        });
     });
     //#endregion
 
