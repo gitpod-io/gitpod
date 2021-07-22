@@ -75,10 +75,10 @@ export class TeamDBImpl implements TeamDB {
         if (!name) {
             throw new Error('Team name cannot be empty');
         }
-        if (!/^[A-Za-z0-9 _-]+$/.test(name)) {
-            throw new Error('Please choose a team name containing only letters, numbers, -, _, or spaces.');
+        if (!/^[A-Za-z0-9 '_-]+$/.test(name)) {
+            throw new Error('Please choose a team name containing only letters, numbers, -, _, \', or spaces.');
         }
-        const slug = name.toLocaleLowerCase().replace(/ /g, '-');
+        const slug = name.toLocaleLowerCase().replace(/[ ']/g, '-');
         const teamRepo = await this.getTeamRepo();
         const existingTeam = await teamRepo.findOne({ slug, deleted: false });
         if (!!existingTeam) {
