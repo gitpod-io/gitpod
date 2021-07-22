@@ -13,7 +13,7 @@
 #  - /etc/os-release to contain the distro 'ID='
 # Postconditions:
 #  - stores result in file '/workspace/distro'
-#  - valid values: debian | alpine | "amzn" | UNDEFINED
+#  - valid values: debian | alpine | "amzn" | archlinux | UNDEFINED
 
 if [ ! -f /etc/os-release ]; then
     DISTRO="UNDEFINED"
@@ -37,12 +37,13 @@ case "$DISTRO" in
     "alpine")
         DISTRO="alpine"
         ;;
-
+    "arch")
+        DISTRO="archlinux"
+        ;;
     *)
         DISTRO="UNDEFINED"
         ;;
 esac
-
 OUT_FILE="/workspace/distro"
 printf '%s\n' "$DISTRO" > "$OUT_FILE"
 printf '%s\n' "Found distro: $DISTRO. Wrote file $OUT_FILE."
