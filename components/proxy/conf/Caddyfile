@@ -2,7 +2,7 @@
 	# disable automatic SSL certificate generation
 	auto_https off
 	# disable admin API server
-	admin off
+	#admin off
 
 	# set default SNI for old clients
 	default_sni {$GITPOD_DOMAIN}
@@ -14,6 +14,7 @@
 	order gitpod.cors_origin         before header
 	order gitpod.workspace_download  before redir
 	order gitpod.sec_websocket_key   before header
+	order http_cache                 before reverse_proxy
 }
 
 (compression) {

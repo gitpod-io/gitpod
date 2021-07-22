@@ -31,7 +31,10 @@ data:
                     "workdir": "/ide",
                     "replacements": [
                         { "search": "vscode-webview.net", "replacement": "{{ .Values.hostname }}", "path": "/ide/out/vs/workbench/workbench.web.api.js" },
-                        { "search": "vscode-webview.net", "replacement": "{{ .Values.hostname }}", "path": "/ide/out/vs/workbench/services/extensions/worker/extensionHostWorker.js" }
+                        { "search": "vscode-webview.net", "replacement": "{{ .Values.hostname }}", "path": "/ide/out/vs/workbench/services/extensions/worker/extensionHostWorker.js" },
+                        { "search": "this.extensionsGalleryUrl = config && config.serviceUrl;", "replacement": "this.extensionsGalleryUrl = 'https://open-vsx.{{ .Values.hostname }}/vscode/gallery';", "path": "/ide/out/vs/platform/extensionManagement/common/extensionGalleryService.js" },
+                        { "search": "${this.productService.extensionsGallery!.serviceUrl}", "replacement": "https://open-vsx.{{ .Values.hostname }}/vscode/gallery", "path": "/ide/out/vs/workbench/contrib/extensions/browser/extensionsActions.js" },
+                        { "search": "${this.productService.extensionsGallery.itemUrl}", "replacement": "https://open-vsx.{{ .Values.hostname }}/vscode/item", "path": "/ide/out/vs/workbench/contrib/extensions/browser/extensionsWorkbenchService.js" }
                     ],
                     "inlineStatic": [
                         { "search": "${window.location.origin}", "replacement": "." },

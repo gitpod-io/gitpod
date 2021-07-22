@@ -51,6 +51,43 @@ data:
       }
     }
 {{- end }}
+  vhost.open-vsx: |
+    https://open-vsx.{$GITPOD_DOMAIN} {
+      #import enable_log
+      import remove_server_header
+      import ssl_configuration
+
+      reverse_proxy {
+        to https://open-vsx.org
+        flush_interval -1
+
+        header_up Host "open-vsx.org"
+        header_up -Connection
+
+        #header_down Cache-Control "max-age=3600, public"  # cache for 60 minutes
+        header_down Cache-Control "max-age=60, public"  # cache for 1 minutes
+        header_down -Vary
+        header_down -Pragma
+        header_down -Expires
+      }
+
+      log {
+        output stdout
+        format filter {
+          wrap json
+        }
+      }
+
+      http_cache {
+        cache_type file
+        path /tmp/openvsx-cache
+        match_path /
+        match_methods GET HEAD POST
+        # cache_key "{http.request.method} {http.request.host}{http.request.uri.path}?{http.request.uri.query}"   # default
+        # cache_key "{http.request.method} {http.request.host}{http.request.uri.path}?{http.request.uri.query} {http.request.contentlength} {http.request.bodyhash}"
+        cache_key "{http.request.method} {http.request.host}{http.request.uri.path}?{http.request.uri.query} {http.request.contentlength}"
+      }
+    }
 
 {{- if not .Values.components.paymentEndpoint.disabled }}
   vhost.payment-endpoint: |
