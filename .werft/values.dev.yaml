@@ -49,13 +49,12 @@ components:
 
   server:
     replicas: 1
-    makeNewUsersAdmin: true # for development
+    makeNewUsersAdmin: false
     theiaPluginsBucketName: gitpod-core-dev-plugins
     enableLocalApp: true
     enableOAuthServer: true
-    blockNewUsers: true
-    blockNewUsersPasslist:
-    - "gitpod.io"
+    blockNewUsers: false
+    blockNewUsersPasslist: []
 
   registryFacade:
     daemonSet: true
