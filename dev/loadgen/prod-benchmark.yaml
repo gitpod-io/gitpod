@@ -13,15 +13,15 @@ repos:
     # image: gitpod/workspace-full:latest
     workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:63bf2cbae693a7ecf60a40fb1eadc90b83a99919a2a010019a336a81b0c54b84
   - cloneURL: https://github.com/gitpod-io/template-python-django/
-    cloneTarget: master
+    cloneTarget: main
     # image: gitpod/workspace-full:latest
     workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:63bf2cbae693a7ecf60a40fb1eadc90b83a99919a2a010019a336a81b0c54b84
   - cloneURL: https://github.com/gitpod-io/template-python-flask
-    cloneTarget: master
+    cloneTarget: main
     # image: gitpod/workspace-full:latest
     workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:63bf2cbae693a7ecf60a40fb1eadc90b83a99919a2a010019a336a81b0c54b84
   - cloneURL: https://github.com/gitpod-io/spring-petclinic/
-    cloneTarget: main
+    cloneTarget: master
     # image: gitpod/workspace-full:latest
     workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:63bf2cbae693a7ecf60a40fb1eadc90b83a99919a2a010019a336a81b0c54b84
 #  - cloneURL: https://github.com/gitpod-io/template-php-drupal-ddev
@@ -34,18 +34,18 @@ repos:
     # image: (dockerfile)
     #workspaceImage:
   - cloneURL: https://github.com/gitpod-io/template-golang-cli/
-    cloneTarget: master
+    cloneTarget: main
     # image: gitpod/workspace-full:latest
     workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:63bf2cbae693a7ecf60a40fb1eadc90b83a99919a2a010019a336a81b0c54b84
   - cloneURL: https://github.com/gitpod-io/template-rust-cli/
-    cloneTarget: main
+    cloneTarget: master
     # image: gitpod/workspace-full:latest
     workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:63bf2cbae693a7ecf60a40fb1eadc90b83a99919a2a010019a336a81b0c54b84
   - cloneURL: https://github.com/gitpod-io/template-dotnet-core-cli-csharp/
-    cloneTarget: main
+    cloneTarget: master
     # image: gitpod/workspace-dotnet
     workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:0b62a3c575c8f00b9130f8a6572d9b4fd935e06de4498cef4ec2db8507cd6159
   - cloneURL: https://github.com/gitpod-io/template-sveltejs/
-    cloneTarget: main
+    cloneTarget: master
     # image: gitpod/workspace-full:latest
     workspaceImage: eu.gcr.io/gitpod-dev/workspace-images:63bf2cbae693a7ecf60a40fb1eadc90b83a99919a2a010019a336a81b0c54b84
