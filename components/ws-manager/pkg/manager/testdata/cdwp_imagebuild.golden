@@ -49,6 +49,18 @@
                         "path": "/tmp/workspaces/foobar-daemon",
                         "type": "DirectoryOrCreate"
                     }
+                },
+                {
+                    "name": "gitpod-ca-certificate",
+                    "secret": {
+                        "secretName": "ws-manager-tls"
+                    }
+                },
+                {
+                    "name": "image-builder-mk3-config",
+                    "configMap": {
+                        "name": "image-builder-mk3-config"
+                    }
                 }
             ],
             "containers": [
@@ -155,6 +167,16 @@
                             "name": "daemon-mount",
                             "mountPath": "/.workspace",
                             "mountPropagation": "HostToContainer"
+                        },
+                        {
+                            "name": "gitpod-ca-certificate",
+                            "mountPath": "/usr/local/share/ca-certificates/gitpod-ca.crt",
+                            "subPath": "ca.crt"
+                        },
+                        {
+                            "name": "image-builder-mk3-config",
+                            "mountPath": "/etc/buildkit/buildkitd.toml",
+                            "subPath": "buildkitd.toml"
                         }
                     ],
                     "readinessProbe": {
