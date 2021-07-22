@@ -76,7 +76,7 @@ export default function () {
         const configString = await getGitpodService().server.fetchProjectRepositoryConfiguration(project.id);
         if (configString) {
           // TODO(janx): Link to .gitpod.yml directly instead of just the cloneUrl.
-          setEditorError(<span>A Gitpod configuration already exists in the project's <a className="learn-more" href={project.cloneUrl}>repository</a>. Please <a className="learn-more" href={`/#${project.cloneUrl}`}>edit it in Gitpod</a> instead.</span>);
+          setEditorError(<span>A Gitpod configuration already exists in the project's <a className="learn-more" href={project.cloneUrl}>repository</a>.<br/>Please <a className="learn-more" href={`/#${project.cloneUrl}`}>edit it in Gitpod</a> instead.</span>);
           setGitpodYml(configString);
         } else {
           setIsEditorDisabled(false);
@@ -113,10 +113,10 @@ export default function () {
     <div className="mt-4 w-full flex">
       <div className="flex-1 m-8">
         {editorError && <AlertBox className="mb-2">{editorError}</AlertBox>}
-        <select className="w-full" defaultValue="" disabled={isEditorDisabled} onChange={e => setGitpodYml(e.target.value)}>
+        {!isEditorDisabled && <select className="w-full" defaultValue="" onChange={e => setGitpodYml(e.target.value)}>
           <option value="" disabled={true}>…</option>
           {Object.entries(TASKS).map(([ name, value ]) => <option value={value}>{name}</option>)}
-        </select>
+        </select>}
         {!!dockerfile && <div className="flex justify-center border-b border-gray-200 dark:border-gray-800">
           <TabMenuItem name=".gitpod.yml" selected={selectedEditor === '.gitpod.yml'} onClick={() => setSelectedEditor('.gitpod.yml')} />
           <TabMenuItem name=".gitpod.Dockerfile" selected={selectedEditor === '.gitpod.Dockerfile'} onClick={() => setSelectedEditor('.gitpod.Dockerfile')} />
