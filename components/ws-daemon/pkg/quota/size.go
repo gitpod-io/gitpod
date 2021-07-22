@@ -31,7 +31,7 @@ const (
 )
 
 var (
-	sizeRegexp = regexp.MustCompile(`(\d+)(k|m|g|t)?`)
+	sizeRegexp = regexp.MustCompile(`^(\d+)(k|m|g|t)?$`)
 
 	// ErrInvalidSize is returned by ParseSize if input was not a valid size
 	ErrInvalidSize = errors.New("invalid size")
