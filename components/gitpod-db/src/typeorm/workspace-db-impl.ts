@@ -326,7 +326,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
 
     public async findRunningInstancesWithWorkspaces(installation?: string, userId?: string): Promise<RunningWorkspaceInfo[]> {
         const params: any = {};
-        const conditions = ["wsi.phasePersisted != 'stopped'", "wsi.deleted != TRUE"];
+        const conditions = ["wsi.phasePersisted != 'stopped'", "wsi.phasePersisted != 'stopping'", "wsi.deleted != TRUE"];
         if (installation) {
             params.region = installation;
             conditions.push("wsi.region = :region");
