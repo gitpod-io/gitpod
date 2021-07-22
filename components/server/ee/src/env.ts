@@ -10,8 +10,6 @@ import { getEnvVar, filePathTelepresenceAware } from '@gitpod/gitpod-protocol/li
 import { readOptionsFromFile } from '@gitpod/gitpod-payment-endpoint/lib/chargebee';
 import { Env } from '../../src/env';
 
-
-
 @injectable()
 export class EnvEE extends Env {
     readonly chargebeeProviderOptions = readOptionsFromFile(filePathTelepresenceAware('/chargebee/providerOptions'));

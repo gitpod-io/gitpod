@@ -21,12 +21,13 @@ import uuid = require('uuid');
 import { accessCodeSyncStorage, UserRateLimiter } from '../auth/rate-limiter';
 import { increaseApiCallUserCounter } from '../prometheus-metrics';
 import { TheiaPluginService } from '../theia-plugin/theia-plugin-service';
+import { Env } from '../env';
 
 // By default: 5 kind of resources * 20 revs * 1Mb = 100Mb max in the content service for user data.
 const defautltRevLimit = 20;
 // It should keep it aligned with client_max_body_size for /code-sync location.
 const defaultContentLimit = '1Mb';
-const codeSyncConfig: Partial<{
+export type CodeSyncConfig = Partial<{
     revLimit: number
     contentLimit: number
     resources: {
@@ -34,7 +35,7 @@ const codeSyncConfig: Partial<{
             revLimit?: number
         }
     }
-}> = JSON.parse(process.env.CODE_SYNC_CONFIG || "{}");
+}>;
 
 const objectPrefix = 'code-sync/';
 function toObjectName(resource: ServerResource, rev: string): string {
@@ -55,6 +56,9 @@ const userSettingsUri = 'user_storage:settings.json';
 @injectable()
 export class CodeSyncService {
 
+    @inject(Env)
+    private readonly env: Env;
+
     @inject(BearerAuth)
     private readonly auth: BearerAuth;
 
@@ -71,6 +75,7 @@ export class CodeSyncService {
     private readonly userStorageResourcesDB: UserStorageResourcesDB;
 
     get apiRouter(): express.Router {
+        const config = this.env.codeSyncConfig;
         const router = express.Router();
         router.use((_, res, next) => {
             // to correlate errors reported by users with errors logged by the server
@@ -87,7 +92,7 @@ export class CodeSyncService {
             const id = req.user.id;
             increaseApiCallUserCounter(accessCodeSyncStorage, id);
             try {
-                await UserRateLimiter.instance().consume(id, accessCodeSyncStorage);
+                await UserRateLimiter.instance(this.env.rateLimiter).consume(id, accessCodeSyncStorage);
             } catch (e) {
                 if (e instanceof Error) {
                     throw e;
@@ -207,7 +212,7 @@ export class CodeSyncService {
             res.send(content);
         });
         router.post('/v1/resource/:resource', bodyParser.text({
-            limit: codeSyncConfig?.contentLimit || defaultContentLimit
+            limit: config?.contentLimit || defaultContentLimit
         }), async (req, res) => {
             if (!User.is(req.user)) {
                 res.sendStatus(204);
@@ -222,7 +227,7 @@ export class CodeSyncService {
             if (latestRev === fromTheiaRev) {
                 latestRev = undefined;
             }
-            const revLimit = resourceKey === 'machines' ? 1 : codeSyncConfig.resources?.[resourceKey]?.revLimit || codeSyncConfig?.revLimit || defautltRevLimit;
+            const revLimit = resourceKey === 'machines' ? 1 : config.resources?.[resourceKey]?.revLimit || config?.revLimit || defautltRevLimit;
             const userId = req.user.id;
             let oldObject: string | undefined;
             const contentType = req.headers['content-type'] || '*/*';

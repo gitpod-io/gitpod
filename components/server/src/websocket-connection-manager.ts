@@ -14,7 +14,7 @@ import * as express from "express";
 import { ErrorCodes as RPCErrorCodes, MessageConnection, ResponseError } from "vscode-jsonrpc";
 import { AllAccessFunctionGuard, FunctionAccessGuard, WithFunctionAccessGuard } from "./auth/function-access";
 import { HostContextProvider } from "./auth/host-context-provider";
-import { RateLimiter, UserRateLimiter } from "./auth/rate-limiter";
+import { RateLimiter, RateLimiterConfig, UserRateLimiter } from "./auth/rate-limiter";
 import { CompositeResourceAccessGuard, OwnerResourceGuard, ResourceAccessGuard, SharedWorkspaceAccessGuard, WithResourceAccessGuard, WorkspaceLogAccessGuard } from "./auth/resource-access";
 import { increaseApiCallCounter, increaseApiConnectionClosedCounter, increaseApiConnectionCounter, increaseApiCallUserCounter } from "./prometheus-metrics";
 import { GitpodServerImpl } from "./workspace/gitpod-server-impl";
@@ -36,7 +36,8 @@ export class WebsocketConnectionManager<C extends GitpodClient, S extends Gitpod
 
     constructor(
         protected readonly serverFactory: GitpodServiceFactory<C, S>,
-        protected readonly hostContextProvider: HostContextProvider) {
+        protected readonly hostContextProvider: HostContextProvider,
+        protected readonly rateLimiterConfig: RateLimiterConfig) {
         this.jsonRpcConnectionHandler = new GitpodJsonRpcConnectionHandler<C>(
             this.path,
             this.createProxyTarget.bind(this),
@@ -104,7 +105,7 @@ export class WebsocketConnectionManager<C extends GitpodClient, S extends Gitpod
         const id = user?.id || (!!sessionId ? `session-${sessionId}` : undefined) || "anonymous";
         return {
             user: id,
-            consume: (method) => UserRateLimiter.instance().consume(id, method),
+            consume: (method) => UserRateLimiter.instance(this.rateLimiterConfig).consume(id, method),
         }
     }
 

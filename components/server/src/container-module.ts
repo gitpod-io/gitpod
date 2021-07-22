@@ -48,7 +48,6 @@ import { ImageSourceProvider } from './workspace/image-source-provider';
 import { WorkspaceGarbageCollector } from './workspace/garbage-collector';
 import { TokenGarbageCollector } from './user/token-garbage-collector';
 import { WorkspaceDownloadService } from './workspace/workspace-download-service';
-import { WorkspacePortAuthorizationService } from './user/workspace-port-auth-service';
 import { WebsocketConnectionManager } from './websocket-connection-manager';
 import { OneTimeSecretServer } from './one-time-secret-server';
 import { GitpodServer, GitpodClient } from '@gitpod/gitpod-protocol';
@@ -79,9 +78,14 @@ import { HeadlessLogService } from './workspace/headless-log-service';
 import { HeadlessLogController } from './workspace/headless-log-controller';
 import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
 import { HeadlessLogServiceClient } from '@gitpod/content-service/lib/headless-log_grpc_pb';
+import { EnvConfig, Config } from './config';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     bind(Env).toSelf().inSingletonScope();
+    bind(Config).toDynamicValue(ctx => {
+        const env = ctx.container.get<Env>(Env);
+        return EnvConfig.fromEnv(env);
+    }).inSingletonScope();
 
     bind(UserService).toSelf().inSingletonScope();
     bind(UserDeletionService).toSelf().inSingletonScope();
@@ -124,7 +128,8 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(WebsocketConnectionManager).toDynamicValue(ctx => {
             const serverFactory = () => ctx.container.get<GitpodServerImpl<GitpodClient, GitpodServer>>(GitpodServerImpl);
             const hostContextProvider = ctx.container.get<HostContextProvider>(HostContextProvider);
-            return new WebsocketConnectionManager<GitpodClient, GitpodServer>(serverFactory, hostContextProvider);
+            const env = ctx.container.get<Env>(Env);
+            return new WebsocketConnectionManager<GitpodClient, GitpodServer>(serverFactory, hostContextProvider, env.rateLimiter);
         }
     ).inSingletonScope();
 
@@ -173,8 +178,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(WorkspaceGarbageCollector).toSelf().inSingletonScope();
     bind(WorkspaceDownloadService).toSelf().inSingletonScope();
 
-    bind(WorkspacePortAuthorizationService).toSelf().inSingletonScope();
-
     bind(OneTimeSecretServer).toSelf().inSingletonScope();
 
     bind(AuthProviderService).toSelf().inSingletonScope();
@@ -182,17 +185,26 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
 
     bind(TermsProvider).toSelf().inSingletonScope();
 
-    const contentServiceAddress = process.env.CONTENT_SERVICE_ADDRESS || "content-service:8080";
-    const contentServiceClient = new ContentServiceClient(contentServiceAddress, grpc.credentials.createInsecure())
-    bind(ContentServiceClient).toConstantValue(contentServiceClient);
-    const blobServiceClient = new BlobServiceClient(contentServiceAddress, grpc.credentials.createInsecure())
-    bind(BlobServiceClient).toConstantValue(blobServiceClient);
-    const workspaceServiceClient = new WorkspaceServiceClient(contentServiceAddress, grpc.credentials.createInsecure())
-    bind(WorkspaceServiceClient).toConstantValue(workspaceServiceClient);
-    const idePluginServiceClient = new IDEPluginServiceClient(contentServiceAddress, grpc.credentials.createInsecure())
-    bind(IDEPluginServiceClient).toConstantValue(idePluginServiceClient);
-    const headlessLogServiceClient = new HeadlessLogServiceClient(contentServiceAddress, grpc.credentials.createInsecure())
-    bind(HeadlessLogServiceClient).toConstantValue(headlessLogServiceClient);
+    bind(ContentServiceClient).toDynamicValue(ctx => {
+        const env = ctx.container.get<Env>(Env);
+        return new ContentServiceClient(env.contentServiceAddress, grpc.credentials.createInsecure());
+    });
+    bind(BlobServiceClient).toDynamicValue(ctx => {
+        const env = ctx.container.get<Env>(Env);
+        return new BlobServiceClient(env.contentServiceAddress, grpc.credentials.createInsecure());
+    });
+    bind(WorkspaceServiceClient).toDynamicValue(ctx => {
+        const env = ctx.container.get<Env>(Env);
+        return new WorkspaceServiceClient(env.contentServiceAddress, grpc.credentials.createInsecure());
+    });
+    bind(IDEPluginServiceClient).toDynamicValue(ctx => {
+        const env = ctx.container.get<Env>(Env);
+        return new IDEPluginServiceClient(env.contentServiceAddress, grpc.credentials.createInsecure());
+    });
+    bind(HeadlessLogServiceClient).toDynamicValue(ctx => {
+        const env = ctx.container.get<Env>(Env);
+        return new HeadlessLogServiceClient(env.contentServiceAddress, grpc.credentials.createInsecure());
+    });
 
     bind(StorageClient).to(ContentServiceStorageClient).inSingletonScope();
 
