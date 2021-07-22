@@ -141,6 +141,9 @@ components:
       path: gcp-sa-registry-auth
     registryCerts: []
 
+  imageBuilderMk3:
+    useStargz: true
+
   wsDaemon:
     hostWorkspaceArea: /mnt/disks/ssd0/workspaces
     volumes:

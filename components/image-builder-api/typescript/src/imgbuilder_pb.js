@@ -2543,7 +2543,8 @@ proto.builder.BuildResponse.toObject = function(includeInstance, msg) {
     ref: jspb.Message.getFieldWithDefault(msg, 1, ""),
     baseRef: jspb.Message.getFieldWithDefault(msg, 4, ""),
     status: jspb.Message.getFieldWithDefault(msg, 2, 0),
-    message: jspb.Message.getFieldWithDefault(msg, 3, "")
+    message: jspb.Message.getFieldWithDefault(msg, 3, ""),
+    info: (f = msg.getInfo()) && proto.builder.BuildInfo.toObject(includeInstance, f)
   };
 
   if (includeInstance) {
@@ -2595,6 +2596,11 @@ proto.builder.BuildResponse.deserializeBinaryFromReader = function(msg, reader) 
     case 3:
       var value = /** @type {string} */ (reader.readString());
       msg.setMessage(value);
+      break;
+    case 5:
+      var value = new proto.builder.BuildInfo;
+      reader.readMessage(value,proto.builder.BuildInfo.deserializeBinaryFromReader);
+      msg.setInfo(value);
       break;
     default:
       reader.skipField();
@@ -2651,6 +2657,14 @@ proto.builder.BuildResponse.serializeBinaryToWriter = function(message, writer) 
     writer.writeString(
       3,
       f
+    );
+  }
+  f = message.getInfo();
+  if (f != null) {
+    writer.writeMessage(
+      5,
+      f,
+      proto.builder.BuildInfo.serializeBinaryToWriter
     );
   }
 };
@@ -2725,6 +2739,43 @@ proto.builder.BuildResponse.prototype.getMessage = function() {
  */
 proto.builder.BuildResponse.prototype.setMessage = function(value) {
   return jspb.Message.setProto3StringField(this, 3, value);
+};
+
+
+/**
+ * optional BuildInfo info = 5;
+ * @return {?proto.builder.BuildInfo}
+ */
+proto.builder.BuildResponse.prototype.getInfo = function() {
+  return /** @type{?proto.builder.BuildInfo} */ (
+    jspb.Message.getWrapperField(this, proto.builder.BuildInfo, 5));
+};
+
+
+/**
+ * @param {?proto.builder.BuildInfo|undefined} value
+ * @return {!proto.builder.BuildResponse} returns this
+*/
+proto.builder.BuildResponse.prototype.setInfo = function(value) {
+  return jspb.Message.setWrapperField(this, 5, value);
+};
+
+
+/**
+ * Clears the message field making it undefined.
+ * @return {!proto.builder.BuildResponse} returns this
+ */
+proto.builder.BuildResponse.prototype.clearInfo = function() {
+  return this.setInfo(undefined);
+};
+
+
+/**
+ * Returns whether this field is set.
+ * @return {boolean}
+ */
+proto.builder.BuildResponse.prototype.hasInfo = function() {
+  return jspb.Message.getField(this, 5) != null;
 };
 
 
@@ -3336,6 +3387,7 @@ proto.builder.BuildInfo.prototype.toObject = function(opt_includeInstance) {
 proto.builder.BuildInfo.toObject = function(includeInstance, msg) {
   var f, obj = {
     ref: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    baseRef: jspb.Message.getFieldWithDefault(msg, 4, ""),
     status: jspb.Message.getFieldWithDefault(msg, 2, 0),
     startedAt: jspb.Message.getFieldWithDefault(msg, 3, 0)
   };
@@ -3377,6 +3429,10 @@ proto.builder.BuildInfo.deserializeBinaryFromReader = function(msg, reader) {
     case 1:
       var value = /** @type {string} */ (reader.readString());
       msg.setRef(value);
+      break;
+    case 4:
+      var value = /** @type {string} */ (reader.readString());
+      msg.setBaseRef(value);
       break;
     case 2:
       var value = /** @type {!proto.builder.BuildStatus} */ (reader.readEnum());
@@ -3422,6 +3478,13 @@ proto.builder.BuildInfo.serializeBinaryToWriter = function(message, writer) {
       f
     );
   }
+  f = message.getBaseRef();
+  if (f.length > 0) {
+    writer.writeString(
+      4,
+      f
+    );
+  }
   f = message.getStatus();
   if (f !== 0.0) {
     writer.writeEnum(
@@ -3454,6 +3517,24 @@ proto.builder.BuildInfo.prototype.getRef = function() {
  */
 proto.builder.BuildInfo.prototype.setRef = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional string base_ref = 4;
+ * @return {string}
+ */
+proto.builder.BuildInfo.prototype.getBaseRef = function() {
+  return /** @type {string} */ (jspb.Message.getFieldWithDefault(this, 4, ""));
+};
+
+
+/**
+ * @param {string} value
+ * @return {!proto.builder.BuildInfo} returns this
+ */
+proto.builder.BuildInfo.prototype.setBaseRef = function(value) {
+  return jspb.Message.setProto3StringField(this, 4, value);
 };
 
 

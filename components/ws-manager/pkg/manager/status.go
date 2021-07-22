@@ -343,10 +343,18 @@ func getContainer(pod *corev1.Pod, name string) *corev1.Container {
 // getWorkspaceMetadata extracts a workspace's metadata from pod labels
 func getWorkspaceMetadata(pod *corev1.Pod) *api.WorkspaceMetadata {
 	started := timestamppb.New(pod.CreationTimestamp.Time)
+	annotations := make(map[string]string)
+	for k, v := range pod.Annotations {
+		if !strings.HasPrefix(k, workspaceAnnotationPrefix) {
+			continue
+		}
+		annotations[strings.TrimPrefix(k, workspaceAnnotationPrefix)] = v
+	}
 	return &api.WorkspaceMetadata{
-		Owner:     pod.ObjectMeta.Labels[wsk8s.OwnerLabel],
-		MetaId:    pod.ObjectMeta.Labels[wsk8s.MetaIDLabel],
-		StartedAt: started,
+		Owner:       pod.ObjectMeta.Labels[wsk8s.OwnerLabel],
+		MetaId:      pod.ObjectMeta.Labels[wsk8s.MetaIDLabel],
+		StartedAt:   started,
+		Annotations: annotations,
 	}
 }
 

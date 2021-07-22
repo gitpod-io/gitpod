@@ -234,6 +234,9 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 		//
 		// Beware: do not else-if this condition with the other phases as we don't want the stop
 		//         login in any other phase, too.
+		m.initializerMapLock.Lock()
+		delete(m.initializerMap, pod.Name)
+		m.initializerMapLock.Unlock()
 	} else if status.Conditions.Failed != "" || status.Conditions.Timeout != "" {
 		// the workspace has failed to run/start - shut it down
 		// we should mark the workspace as failedBeforeStopping - this way the failure status will persist
@@ -390,7 +393,7 @@ func (m *Monitor) writeEventTraceLog(status *api.WorkspaceStatus, wso *workspace
 		}
 		for _, c := range twso.Pod.Spec.Containers {
 			for i, env := range c.Env {
-				isGitpodVar := strings.HasPrefix(env.Name, "GITPOD_") || strings.HasPrefix(env.Name, "THEIA_")
+				isGitpodVar := strings.HasPrefix(env.Name, "GITPOD_") || strings.HasPrefix(env.Name, "SUPERVISOR_") || strings.HasPrefix(env.Name, "BOB_") || strings.HasPrefix(env.Name, "THEIA_")
 				if isGitpodVar {
 					continue
 				}

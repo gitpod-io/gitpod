@@ -85,10 +85,18 @@ message BuildRegistryAuthSelective {
 }
 
 message BuildResponse {
+    // deprecated(cw): expect this field to go away in a future version.
+    //                 it's redundant with the build info.
     string ref = 1;
+
     string base_ref = 4;
+
+    // deprecated(cw): expect this field to go away in a future version.
+    //                 it's redundant with the build info.
     BuildStatus status = 2;
+
     string message = 3;
+    BuildInfo info = 5;
 }
 
 enum BuildStatus {
@@ -115,6 +123,7 @@ message ListBuildsResponse {
 
 message BuildInfo {
     string ref = 1;
+    string base_ref = 4;
     BuildStatus status = 2;
     int64 started_at = 3;
 }

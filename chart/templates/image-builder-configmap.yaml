@@ -4,16 +4,6 @@
 {{ $comp := .Values.components.imageBuilder -}}
 {{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
 
-{{- define "registry-name" -}}
-{{- $comp := .comp -}}
-{{- $ := .root -}}
-{{- if eq $comp.registry.name "builtin" -}}
-{{ template "gitpod.builtinRegistry.name" $ }}
-{{- else -}}
-{{ $comp.registry.name }}
-{{- end -}}
-{{- end -}}
-
 {{- if not $comp.disabled -}}
 apiVersion: v1
 kind: ConfigMap

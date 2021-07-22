@@ -26,6 +26,7 @@ var imagebuildsCmd = &cobra.Command{
 
 func init() {
 	imagebuildsCmd.PersistentFlags().StringP("tls", "t", "", "TLS certificate when connecting to a secured gRPC endpoint")
+	imagebuildsCmd.PersistentFlags().Bool("mk3", true, "use image-builder mk3")
 
 	rootCmd.AddCommand(imagebuildsCmd)
 }
@@ -40,8 +41,13 @@ func getImagebuildsClient(ctx context.Context) (*grpc.ClientConn, api.ImageBuild
 		return nil, nil, err
 	}
 
+	comp := "image-builder"
+	if mk3, _ := imagebuildsCmd.PersistentFlags().GetBool("mk3"); mk3 {
+		comp = "image-builder-mk3"
+	}
+
 	port := "20202:8080"
-	podName, err := util.FindAnyPodForComponent(clientSet, namespace, "image-builder")
+	podName, err := util.FindAnyPodForComponent(clientSet, namespace, comp)
 	if err != nil {
 		return nil, nil, err
 	}

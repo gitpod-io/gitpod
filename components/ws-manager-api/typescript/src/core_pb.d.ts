@@ -14,7 +14,40 @@ import * as jspb from "google-protobuf";
 import * as content_service_api_initializer_pb from "@gitpod/content-service/lib";
 import * as google_protobuf_timestamp_pb from "google-protobuf/google/protobuf/timestamp_pb";
 
+export class MetadataFilter extends jspb.Message {
+    getOwner(): string;
+    setOwner(value: string): MetadataFilter;
+    getMetaId(): string;
+    setMetaId(value: string): MetadataFilter;
+
+    getAnnotationsMap(): jspb.Map<string, string>;
+    clearAnnotationsMap(): void;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): MetadataFilter.AsObject;
+    static toObject(includeInstance: boolean, msg: MetadataFilter): MetadataFilter.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: MetadataFilter, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): MetadataFilter;
+    static deserializeBinaryFromReader(message: MetadataFilter, reader: jspb.BinaryReader): MetadataFilter;
+}
+
+export namespace MetadataFilter {
+    export type AsObject = {
+        owner: string,
+        metaId: string,
+
+        annotationsMap: Array<[string, string]>,
+    }
+}
+
 export class GetWorkspacesRequest extends jspb.Message {
+
+    hasMustMatch(): boolean;
+    clearMustMatch(): void;
+    getMustMatch(): MetadataFilter | undefined;
+    setMustMatch(value?: MetadataFilter): GetWorkspacesRequest;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): GetWorkspacesRequest.AsObject;
@@ -28,6 +61,7 @@ export class GetWorkspacesRequest extends jspb.Message {
 
 export namespace GetWorkspacesRequest {
     export type AsObject = {
+        mustMatch?: MetadataFilter.AsObject,
     }
 }
 
@@ -94,6 +128,8 @@ export namespace StartWorkspaceRequest {
 export class StartWorkspaceResponse extends jspb.Message {
     getUrl(): string;
     setUrl(value: string): StartWorkspaceResponse;
+    getOwnerToken(): string;
+    setOwnerToken(value: string): StartWorkspaceResponse;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): StartWorkspaceResponse.AsObject;
@@ -108,6 +144,7 @@ export class StartWorkspaceResponse extends jspb.Message {
 export namespace StartWorkspaceResponse {
     export type AsObject = {
         url: string,
+        ownerToken: string,
     }
 }
 
@@ -199,6 +236,11 @@ export namespace DescribeWorkspaceResponse {
 
 export class SubscribeRequest extends jspb.Message {
 
+    hasMustMatch(): boolean;
+    clearMustMatch(): void;
+    getMustMatch(): MetadataFilter | undefined;
+    setMustMatch(value?: MetadataFilter): SubscribeRequest;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): SubscribeRequest.AsObject;
     static toObject(includeInstance: boolean, msg: SubscribeRequest): SubscribeRequest.AsObject;
@@ -211,6 +253,7 @@ export class SubscribeRequest extends jspb.Message {
 
 export namespace SubscribeRequest {
     export type AsObject = {
+        mustMatch?: MetadataFilter.AsObject,
     }
 }
 
@@ -655,6 +698,9 @@ export class WorkspaceMetadata extends jspb.Message {
     getStartedAt(): google_protobuf_timestamp_pb.Timestamp | undefined;
     setStartedAt(value?: google_protobuf_timestamp_pb.Timestamp): WorkspaceMetadata;
 
+    getAnnotationsMap(): jspb.Map<string, string>;
+    clearAnnotationsMap(): void;
+
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): WorkspaceMetadata.AsObject;
     static toObject(includeInstance: boolean, msg: WorkspaceMetadata): WorkspaceMetadata.AsObject;
@@ -670,6 +716,8 @@ export namespace WorkspaceMetadata {
         owner: string,
         metaId: string,
         startedAt?: google_protobuf_timestamp_pb.Timestamp.AsObject,
+
+        annotationsMap: Array<[string, string]>,
     }
 }
 
@@ -902,4 +950,5 @@ export enum WorkspaceType {
     PREBUILD = 1,
     PROBE = 2,
     GHOST = 3,
+    IMAGEBUILD = 4,
 }
