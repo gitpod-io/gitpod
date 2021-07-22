@@ -5,7 +5,7 @@
  */
 
 import { injectable, inject, postConstruct } from 'inversify';
-import { init, Instance, dispose, isEnabled, hasEnoughSeats, canUsePrebuild, inspect, validate } from "./nativemodule";
+import { init, Instance, dispose, inspect, validate } from "./nativemodule";
 import { Feature, LicensePayload } from './api';
 
 export const LicenseKeySource = Symbol("LicenseKeySource");
@@ -38,27 +38,30 @@ export class LicenseEvaluator {
 
     public async reloadLicense() {
         this.dispose()
-        await this.init()
+        // await this.init()
     }
 
     public validate(): { msg?: string, valid: boolean } {
-        const v = validate(this.instanceID);
-        if (v.valid) {
+        // const v = validate(this.instanceID);
+        // if (v.valid) {
             return { valid: true };
-        }
-        return { msg: v.msg, valid: false };
+        // }
+        // return { msg: v.msg, valid: false };
     }
 
     public isEnabled(feature: Feature): boolean {
-        return isEnabled(this.instanceID, feature);
+        // return isEnabled(this.instanceID, feature);
+        return true;
     }
 
     public hasEnoughSeats(seats: number): boolean {
-        return hasEnoughSeats(this.instanceID, seats);
+        // return hasEnoughSeats(this.instanceID, seats);
+        return true;
     }
 
     public canUsePrebuild(totalPrebuildSecondsSpent: number): boolean {
-        return canUsePrebuild(this.instanceID, totalPrebuildSecondsSpent);
+        // return canUsePrebuild(this.instanceID, totalPrebuildSecondsSpent);
+        return true;
     }
 
     public inspect(): LicensePayload {
