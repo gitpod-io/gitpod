@@ -22,23 +22,10 @@ export namespace HeadlessWorkspaceEventType {
     }
 }
 
-export interface HeadlessLogEvent {
+export interface HeadlessWorkspaceEvent {
     workspaceID: string;
     text: string;
     type: HeadlessWorkspaceEventType;
-}
-
-export enum TheiaHeadlessLogType {
-    TaskLogLabel = "workspaceTaskOutput",
-    TaskFailedLabel = "workspaceTaskFailed",
-    TaskSuccessfulLabel = "workspaceTaskDone"
-}
-
-export interface TheiaHeadlessLogMessage {
-    type: TheiaHeadlessLogType;
-    data?: string;
-    error?: string;
-    snapshotURL?: string;
 }
 
 export interface HeadlessLogUrls {

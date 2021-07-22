@@ -7,11 +7,10 @@
 import { inject, injectable } from "inversify";
 import { MessageBusIntegration } from "./messagebus-integration";
 import { Disposable, WorkspaceInstance, Queue, WorkspaceInstancePort, PortVisibility, RunningWorkspaceInfo } from "@gitpod/gitpod-protocol";
-import { WorkspaceStatus, WorkspacePhase, GetWorkspacesRequest, WorkspaceConditionBool, WorkspaceLogMessage, PortVisibility as WsManPortVisibility, WorkspaceType, PromisifiedWorkspaceManagerClient } from "@gitpod/ws-manager/lib";
+import { WorkspaceStatus, WorkspacePhase, GetWorkspacesRequest, WorkspaceConditionBool, PortVisibility as WsManPortVisibility, WorkspaceType, PromisifiedWorkspaceManagerClient } from "@gitpod/ws-manager/lib";
 import { WorkspaceDB } from "@gitpod/gitpod-db/lib/workspace-db";
 import { UserDB } from "@gitpod/gitpod-db/lib/user-db";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { HeadlessLogEvent } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { TracedWorkspaceDB, TracedUserDB, DBWithTracing } from '@gitpod/gitpod-db/lib/traced-db';
@@ -84,16 +83,13 @@ export class WorkspaceManagerBridge implements Disposable {
         const subscriber = new WsmanSubscriber(clientProvider);
         this.disposables.push(subscriber);
 
-        const onHeadlessLog = (ctx: TraceContext, s: WorkspaceLogMessage) => {
-            this.serializeMessagesByInstanceId<WorkspaceLogMessage>(ctx, s, msg => msg.getId(), (ctx, s) => this.handleHeadlessLog(ctx, s.toObject()))
-        };
         const onReconnect = (ctx: TraceContext, s: WorkspaceStatus[]) => {
             s.forEach(sx => this.serializeMessagesByInstanceId<WorkspaceStatus>(ctx, sx, m => m.getId(), (ctx, msg) => this.handleStatusUpdate(ctx, msg)))
         };
         const onStatusUpdate = (ctx: TraceContext, s: WorkspaceStatus) => {
             this.serializeMessagesByInstanceId<WorkspaceStatus>(ctx, s, msg => msg.getId(), (ctx, s) => this.handleStatusUpdate(ctx, s))
         };
-        await subscriber.subscribe({ onHeadlessLog, onReconnect, onStatusUpdate }, logPayload);
+        await subscriber.subscribe({ onReconnect, onStatusUpdate }, logPayload);
     }
 
     protected serializeMessagesByInstanceId<M>(ctx: TraceContext, msg: M, getInstanceId: (msg: M) => string, handler: (ctx: TraceContext, msg: M) => Promise<void>) {
@@ -257,18 +253,6 @@ export class WorkspaceManagerBridge implements Disposable {
         } finally {
             span.finish();
         }
-    }
-
-    public async handleHeadlessLog(ctx: TraceContext, evt: WorkspaceLogMessage.AsObject): Promise<void> {
-        const userID = evt.metadata!.owner;
-        const workspaceID = evt.metadata!.metaId;
-
-        // we deliberately do not pass the tracing information along to prevent spamming our trace system with headless-log messages
-        await this.messagebus.notifyHeadlessUpdate({}, userID, workspaceID, <HeadlessLogEvent>{
-            text: evt.message,
-            type: "log-output",
-            workspaceID,
-        });
     }
 
     protected startController(clientProvider: ClientProvider, installation: string, controllerIntervalSeconds: number, controllerMaxDisconnectSeconds: number, maxTimeToRunningPhaseSeconds = 60 * 60) {

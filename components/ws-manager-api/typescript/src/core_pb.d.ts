@@ -264,15 +264,8 @@ export class SubscribeResponse extends jspb.Message {
     getStatus(): WorkspaceStatus | undefined;
     setStatus(value?: WorkspaceStatus): SubscribeResponse;
 
-    hasLog(): boolean;
-    clearLog(): void;
-    getLog(): WorkspaceLogMessage | undefined;
-    setLog(value?: WorkspaceLogMessage): SubscribeResponse;
-
     getHeaderMap(): jspb.Map<string, string>;
     clearHeaderMap(): void;
-
-    getPayloadCase(): SubscribeResponse.PayloadCase;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): SubscribeResponse.AsObject;
@@ -287,17 +280,9 @@ export class SubscribeResponse extends jspb.Message {
 export namespace SubscribeResponse {
     export type AsObject = {
         status?: WorkspaceStatus.AsObject,
-        log?: WorkspaceLogMessage.AsObject,
 
         headerMap: Array<[string, string]>,
     }
-
-    export enum PayloadCase {
-        PAYLOAD_NOT_SET = 0,
-        STATUS = 1,
-        LOG = 2,
-    }
-
 }
 
 export class MarkActiveRequest extends jspb.Message {
@@ -875,35 +860,6 @@ export namespace EnvironmentVariable {
     export type AsObject = {
         name: string,
         value: string,
-    }
-}
-
-export class WorkspaceLogMessage extends jspb.Message {
-    getId(): string;
-    setId(value: string): WorkspaceLogMessage;
-
-    hasMetadata(): boolean;
-    clearMetadata(): void;
-    getMetadata(): WorkspaceMetadata | undefined;
-    setMetadata(value?: WorkspaceMetadata): WorkspaceLogMessage;
-    getMessage(): string;
-    setMessage(value: string): WorkspaceLogMessage;
-
-    serializeBinary(): Uint8Array;
-    toObject(includeInstance?: boolean): WorkspaceLogMessage.AsObject;
-    static toObject(includeInstance: boolean, msg: WorkspaceLogMessage): WorkspaceLogMessage.AsObject;
-    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
-    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
-    static serializeBinaryToWriter(message: WorkspaceLogMessage, writer: jspb.BinaryWriter): void;
-    static deserializeBinary(bytes: Uint8Array): WorkspaceLogMessage;
-    static deserializeBinaryFromReader(message: WorkspaceLogMessage, reader: jspb.BinaryReader): WorkspaceLogMessage;
-}
-
-export namespace WorkspaceLogMessage {
-    export type AsObject = {
-        id: string,
-        metadata?: WorkspaceMetadata.AsObject,
-        message: string,
     }
 }
 

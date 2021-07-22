@@ -8,7 +8,7 @@ import { WorkspaceManagerBridge } from "../../src/bridge";
 import { injectable } from "inversify";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { WorkspaceStatus, WorkspaceType, WorkspacePhase } from "@gitpod/ws-manager/lib";
-import { HeadlessLogEvent, HeadlessWorkspaceEventType } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
+import { HeadlessWorkspaceEvent, HeadlessWorkspaceEventType } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 
@@ -62,7 +62,7 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
                 prebuild.state = "building";
 
                 await this.workspaceDB.trace({span}).storePrebuiltWorkspace(prebuild);
-                await this.messagebus.notifyHeadlessUpdate({span}, userId, workspaceId, <HeadlessLogEvent>{
+                await this.messagebus.notifyHeadlessUpdate({span}, userId, workspaceId, <HeadlessWorkspaceEvent>{
                     type: HeadlessWorkspaceEventType.Started,
                     workspaceID: workspaceId,
                 });
@@ -89,16 +89,9 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
                 }
                 await this.workspaceDB.trace({span}).storePrebuiltWorkspace(prebuild);
 
-                await this.messagebus.notifyHeadlessUpdate({span}, userId, workspaceId, <HeadlessLogEvent>{
+                await this.messagebus.notifyHeadlessUpdate({span}, userId, workspaceId, <HeadlessWorkspaceEvent>{
                     type: headlessUpdateType,
                     workspaceID: workspaceId,
-                });
-            } else {
-                // give the people waiting for the prebuild something to see if we're pulling images or just starting up
-                await this.messagebus.notifyHeadlessUpdate({}, userId, workspaceId, <HeadlessLogEvent>{
-                    type: HeadlessWorkspaceEventType.LogOutput,
-                    workspaceID: workspaceId,
-                    text: status.message + "\n"
                 });
             }
         } catch (e) {
