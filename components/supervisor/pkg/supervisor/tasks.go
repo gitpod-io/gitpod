@@ -197,7 +197,7 @@ func (tm *tasksManager) init(ctx context.Context) {
 			successChan: make(chan bool, 1),
 			title:       title,
 		}
-		task.command = tm.getCommand(task)
+		task.command = getCommand(task, tm.config.isHeadless(), tm.contentSource, tm.storeLocation)
 		if tm.config.isHeadless() && task.command == "exit" {
 			task.State = api.TaskState_closed
 			task.successChan <- true
@@ -291,15 +291,15 @@ func (tm *tasksManager) Run(ctx context.Context, wg *sync.WaitGroup, successChan
 	successChan <- success
 }
 
-func (tm *tasksManager) getCommand(task *task) string {
-	commands := tm.getCommands(task)
+func getCommand(task *task, isHeadless bool, contentSource csapi.WorkspaceInitSource, storeLocation string) string {
+	commands := getCommands(task, isHeadless, contentSource, storeLocation)
 	command := composeCommand(composeCommandOptions{
 		commands: commands,
 		format:   "{\n%s\n}",
 		sep:      " && ",
 	})
 
-	if tm.config.isHeadless() {
+	if isHeadless {
 		// it's important that prebuild tasks exit eventually
 		// also, we need to save the log output in the workspace
 		if strings.TrimSpace(command) == "" {
@@ -308,7 +308,7 @@ func (tm *tasksManager) getCommand(task *task) string {
 		return command + "; exit"
 	}
 
-	histfileCommand := tm.getHistfileCommand(task, commands)
+	histfileCommand := getHistfileCommand(task, commands, contentSource, storeLocation)
 	if strings.TrimSpace(command) == "" {
 		return histfileCommand
 	}
@@ -318,9 +318,9 @@ func (tm *tasksManager) getCommand(task *task) string {
 	return histfileCommand + "; " + command
 }
 
-func (tm *tasksManager) getHistfileCommand(task *task, commands []*string) string {
+func getHistfileCommand(task *task, commands []*string, contentSource csapi.WorkspaceInitSource, storeLocation string) string {
 	histfileCommands := commands
-	if tm.contentSource == csapi.WorkspaceInitFromPrebuild {
+	if contentSource == csapi.WorkspaceInitFromPrebuild {
 		histfileCommands = []*string{task.config.Before, task.config.Init, task.config.Prebuild, task.config.Command}
 	}
 	histfileContent := composeCommand(composeCommandOptions{
@@ -331,7 +331,7 @@ func (tm *tasksManager) getHistfileCommand(task *task, commands []*string) strin
 		return ""
 	}
 
-	histfile := tm.storeLocation + "/cmd-" + task.Id
+	histfile := storeLocation + "/cmd-" + task.Id
 	err := os.WriteFile(histfile, []byte(histfileContent), 0644)
 	if err != nil {
 		log.WithField("histfile", histfile).WithError(err).Error("cannot write histfile")
@@ -343,29 +343,28 @@ func (tm *tasksManager) getHistfileCommand(task *task, commands []*string) strin
 	return " HISTFILE=" + histfile + " history -r"
 }
 
-func (tm *tasksManager) getCommands(task *task) []*string {
-	if tm.config.isHeadless() {
+func getCommands(task *task, isHeadless bool, contentSource csapi.WorkspaceInitSource, storeLocation string) []*string {
+	if isHeadless {
 		// prebuild
 		return []*string{task.config.Before, task.config.Init, task.config.Prebuild}
 	}
-	if tm.contentSource == csapi.WorkspaceInitFromPrebuild {
+	if contentSource == csapi.WorkspaceInitFromPrebuild {
 		// prebuilt
-		prebuildLogFileName := tm.prebuildLogFileName(task)
+		prebuildLogFileName := prebuildLogFileName(task, storeLocation)
 		legacyPrebuildLogFileName := logs.LegacyPrebuildLogFileName(task.Id)
 		printlogs := "[ -r " + legacyPrebuildLogFileName + " ] && cat " + legacyPrebuildLogFileName + "; [ -r " + prebuildLogFileName + " ] && cat " + prebuildLogFileName + "; true"
 		return []*string{task.config.Before, &printlogs, task.config.Command}
 	}
-	if tm.contentSource == csapi.WorkspaceInitFromBackup {
+	if contentSource == csapi.WorkspaceInitFromBackup {
 		// restart
 		return []*string{task.config.Before, task.config.Command}
 	}
 	// init
 	return []*string{task.config.Before, task.config.Init, task.config.Command}
-
 }
 
-func (tm *tasksManager) prebuildLogFileName(task *task) string {
-	return logs.PrebuildLogFileName(tm.storeLocation, task.Id)
+func prebuildLogFileName(task *task, storeLocation string) string {
+	return logs.PrebuildLogFileName(storeLocation, task.Id)
 }
 
 func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
@@ -382,7 +381,7 @@ func (tm *tasksManager) watch(task *task, terminal *terminal.Term) {
 		defer stdout.Close()
 
 		var (
-			fileName    = tm.prebuildLogFileName(task)
+			fileName    = prebuildLogFileName(task, tm.storeLocation)
 			oldFileName = fileName + "-old"
 		)
 		if _, err := os.Stat(fileName); err == nil {

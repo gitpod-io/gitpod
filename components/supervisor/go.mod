@@ -21,8 +21,8 @@ require (
 	github.com/improbable-eng/grpc-web v0.14.0
 	github.com/mailru/easygo v0.0.0-20190618140210-3c14a0dc985f
 	github.com/prometheus/procfs v0.6.0
-	github.com/sirupsen/logrus v1.8.1
 	github.com/rs/cors v1.7.0 // indirect
+	github.com/sirupsen/logrus v1.8.1
 	github.com/soheilhy/cmux v0.1.4
 	github.com/spf13/cobra v1.1.3
 	golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf
