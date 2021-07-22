@@ -465,11 +465,13 @@ var (
 	}
 )
 
-func findBindMountCandidates(procMounts io.Reader, readlink func(path string) (dest string, err error)) (mounts []string, err error) {
+func findBindMountCandidates(procMounts io.Reader, readlink func(path string) (dest string, err error)) ([]string, error) {
+	mounts := []string{}
 	scanner := bufio.NewScanner(procMounts)
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
 		if len(fields) < 4 {
+			log.WithField("mount", fields).Error("invalid mount definition")
 			continue
 		}
 
@@ -487,6 +489,8 @@ func findBindMountCandidates(procMounts io.Reader, readlink func(path string) (d
 		if accept {
 			mounts = append(mounts, path)
 			continue
+		} else {
+			log.WithField("path", path).Error("invalid path")
 		}
 
 		// reject known filesystems
@@ -499,6 +503,7 @@ func findBindMountCandidates(procMounts io.Reader, readlink func(path string) (d
 			reject = true
 		}
 		if reject {
+			log.WithField("path", path).WithField("fd", fs).Error("invalid path FS")
 			continue
 		}
 
@@ -515,6 +520,7 @@ func findBindMountCandidates(procMounts io.Reader, readlink func(path string) (d
 
 		mounts = append(mounts, path)
 	}
+
 	return mounts, scanner.Err()
 }
 
