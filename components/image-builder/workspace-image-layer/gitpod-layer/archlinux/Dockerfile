@@ -49,7 +49,10 @@ pacman -S --noconfirm reflector \
   --sort rate \
   --save /etc/pacman.d/mirrorlist
 # ─── INSTALLING CORE PACKAGES ───────────────────────────────────────────────────
-ARG CORE_PACKAGES="\
+RUN \
+set -xue ; \
+[ -r /usr/bin/gp ] && ln -sf /usr/bin/gp /usr/bin/gp-preview ; \
+pacman -Sy --noconfirm --needed \
   git \
   base-devel \
   bash-completion \
@@ -58,16 +61,7 @@ ARG CORE_PACKAGES="\
   wget \
   curl \
   sudo \
-  perl \
-  "
-RUN \
-set -xue ; \
-[ -r /usr/bin/gp ] && ln -sf /usr/bin/gp /usr/bin/gp-preview ; \
-IFS=' ' read -a PACKAGES <<< "$CORE_PACKAGES" ; \
-for pkg in "${PACKAGES[@]}"; do \
-! pacman -Qi "${pkg}" > /dev/null 2>&1 \
-&& pacman -Sy --noconfirm --needed "${pkg}" \
-done
+  perl
 # ─── SUDO SETUP ─────────────────────────────────────────────────────────────────
 RUN \
 set -xue ; \
