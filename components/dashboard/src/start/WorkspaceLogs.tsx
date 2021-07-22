@@ -87,13 +87,11 @@ export default class WorkspaceLogs extends React.Component<WorkspaceLogsProps, W
   }
 }
 
-export function watchHeadlessLogs(server: GitpodServer, instanceId: string, onLog: (chunk: string) => void, checkIsDone: () => Promise<boolean>): DisposableCollection {
+export function watchHeadlessLogs(server: GitpodServer, instanceId: string, onLog: (chunk: string) => void, checkIsDone: () => Promise<void> | void): DisposableCollection {
   const disposables = new DisposableCollection();
 
   const startWatchingLogs = async () => {
-    if (await checkIsDone()) {
-      return;
-    }
+    await checkIsDone();
 
     const retry = async (reason: string, err?: Error) => {
       console.debug("re-trying headless-logs because: " + reason, err);
@@ -157,9 +155,7 @@ export function watchHeadlessLogs(server: GitpodServer, instanceId: string, onLo
       }
       reader.cancel()
 
-      if (await checkIsDone()) {
-        return;
-      }
+      await checkIsDone();
     } catch(err) {
       reader?.cancel().catch(console.debug);
       await retry("error while listening to stream", err);

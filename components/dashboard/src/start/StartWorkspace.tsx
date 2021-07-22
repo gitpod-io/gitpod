@@ -346,7 +346,7 @@ function HeadlessWorkspaceView(props: { instanceId: string }) {
 
   useEffect(() => {
     const service = getGitpodService();
-    const disposables = watchHeadlessLogs(service.server, props.instanceId, (chunk) => logsEmitter.emit('logs', chunk), async () => { return false; });
+    const disposables = watchHeadlessLogs(service.server, props.instanceId, (chunk) => logsEmitter.emit('logs', chunk), () => {});
     return function cleanup() {
       disposables.dispose();
     };
