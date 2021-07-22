@@ -273,11 +273,13 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 				Name:      "gitpod-ca-certificate",
 				MountPath: "/usr/local/share/ca-certificates/gitpod-ca.crt",
 				SubPath:   "ca.crt",
+				ReadOnly:  true,
 			},
 			corev1.VolumeMount{
 				Name:      "image-builder-mk3-config",
 				MountPath: "/etc/buildkit/buildkitd.toml",
 				SubPath:   "buildkitd.toml",
+				ReadOnly:  true,
 			},
 		)
 	default:
@@ -420,6 +422,9 @@ func (m *Manager) createDefiniteWorkspacePod(startContext *startWorkspaceContext
 			VolumeSource: corev1.VolumeSource{
 				Secret: &corev1.SecretVolumeSource{
 					SecretName: "ws-manager-tls",
+					Items: []corev1.KeyToPath{
+						{Key: "ca.crt", Path: "ca.crt"},
+					},
 				},
 			},
 		}, corev1.Volume{
