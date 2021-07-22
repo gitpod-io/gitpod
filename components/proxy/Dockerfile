@@ -1,10 +1,8 @@
-# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
 FROM golang:1.16 as builder
-
-ENV TRIGGER_REBUILD=2
 
 RUN curl -fsSL https://github.com/caddyserver/xcaddy/releases/download/v0.1.9/xcaddy_0.1.9_linux_amd64.tar.gz \
   | tar -xzv -C /usr/local/bin/ xcaddy
@@ -23,12 +21,20 @@ COPY plugins /plugins
 # TODO (aledbf): use upstream once the fixes are applied.
 RUN git clone -b http2 https://github.com/aledbf/caddy caddy-fork
 
+# Adding the GitHub API's representation of the plugins repos to dummy locations
+# so that in case they change, the cache gets invalidated.
+ADD https://api.github.com/repos/leodido/caddy-conditional-logging/git/refs/heads/main version-if-plugin.json
+ADD https://api.github.com/repos/leodido/caddy-jsonselect-encoder/git/refs/heads/main version-jsonselect-plugin.json
+
+RUN git clone -b main https://github.com/leodido/caddy-conditional-logging if
+RUN git clone -b main https://github.com/leodido/caddy-jsonselect-encoder jsonselect
+
 # build caddy
 RUN xcaddy build \
   --output /caddy \
   --with github.com/caddyserver/caddy/v2=$PWD/caddy-fork \
-  --with github.com/leodido/caddy-conditional-logging \
-  --with github.com/leodido/caddy-jsonselect-encoder \
+  --with github.com/leodido/caddy-conditional-logging=$PWD/if \
+  --with github.com/leodido/caddy-jsonselect-encoder=$PWD/jsonselect \
   --with github.com/gitpod-io/gitpod/proxy/plugins=/plugins
 
 FROM alpine:3.14
