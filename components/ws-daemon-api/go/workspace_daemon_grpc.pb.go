@@ -40,6 +40,14 @@ type InWorkspaceServiceClient interface {
 	// The PID must be in the PID namespace of the workspace container.
 	// The path is relative to the mount namespace of the PID.
 	UmountProc(ctx context.Context, in *UmountProcRequest, opts ...grpc.CallOption) (*UmountProcResponse, error)
+	// MountSysfs mounts a masked sysfs in the container's rootfs.
+	// The PID must be in the PID namespace of the workspace container.
+	// The path is relative to the mount namespace of the PID.
+	MountSysfs(ctx context.Context, in *MountProcRequest, opts ...grpc.CallOption) (*MountProcResponse, error)
+	// UmountSysfs unmounts a masked sysfs from the container's rootfs.
+	// The PID must be in the PID namespace of the workspace container.
+	// The path is relative to the mount namespace of the PID.
+	UmountSysfs(ctx context.Context, in *UmountProcRequest, opts ...grpc.CallOption) (*UmountProcResponse, error)
 	// Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
 	// when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
 	Teardown(ctx context.Context, in *TeardownRequest, opts ...grpc.CallOption) (*TeardownResponse, error)
@@ -89,6 +97,24 @@ func (c *inWorkspaceServiceClient) UmountProc(ctx context.Context, in *UmountPro
 	return out, nil
 }
 
+func (c *inWorkspaceServiceClient) MountSysfs(ctx context.Context, in *MountProcRequest, opts ...grpc.CallOption) (*MountProcResponse, error) {
+	out := new(MountProcResponse)
+	err := c.cc.Invoke(ctx, "/iws.InWorkspaceService/MountSysfs", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *inWorkspaceServiceClient) UmountSysfs(ctx context.Context, in *UmountProcRequest, opts ...grpc.CallOption) (*UmountProcResponse, error) {
+	out := new(UmountProcResponse)
+	err := c.cc.Invoke(ctx, "/iws.InWorkspaceService/UmountSysfs", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *inWorkspaceServiceClient) Teardown(ctx context.Context, in *TeardownRequest, opts ...grpc.CallOption) (*TeardownResponse, error) {
 	out := new(TeardownResponse)
 	err := c.cc.Invoke(ctx, "/iws.InWorkspaceService/Teardown", in, out, opts...)
@@ -120,6 +146,14 @@ type InWorkspaceServiceServer interface {
 	// The PID must be in the PID namespace of the workspace container.
 	// The path is relative to the mount namespace of the PID.
 	UmountProc(context.Context, *UmountProcRequest) (*UmountProcResponse, error)
+	// MountSysfs mounts a masked sysfs in the container's rootfs.
+	// The PID must be in the PID namespace of the workspace container.
+	// The path is relative to the mount namespace of the PID.
+	MountSysfs(context.Context, *MountProcRequest) (*MountProcResponse, error)
+	// UmountSysfs unmounts a masked sysfs from the container's rootfs.
+	// The PID must be in the PID namespace of the workspace container.
+	// The path is relative to the mount namespace of the PID.
+	UmountSysfs(context.Context, *UmountProcRequest) (*UmountProcResponse, error)
 	// Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
 	// when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
 	Teardown(context.Context, *TeardownRequest) (*TeardownResponse, error)
@@ -141,6 +175,12 @@ func (UnimplementedInWorkspaceServiceServer) MountProc(context.Context, *MountPr
 }
 func (UnimplementedInWorkspaceServiceServer) UmountProc(context.Context, *UmountProcRequest) (*UmountProcResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UmountProc not implemented")
+}
+func (UnimplementedInWorkspaceServiceServer) MountSysfs(context.Context, *MountProcRequest) (*MountProcResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MountSysfs not implemented")
+}
+func (UnimplementedInWorkspaceServiceServer) UmountSysfs(context.Context, *UmountProcRequest) (*UmountProcResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UmountSysfs not implemented")
 }
 func (UnimplementedInWorkspaceServiceServer) Teardown(context.Context, *TeardownRequest) (*TeardownResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Teardown not implemented")
@@ -230,6 +270,42 @@ func _InWorkspaceService_UmountProc_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _InWorkspaceService_MountSysfs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MountProcRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InWorkspaceServiceServer).MountSysfs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/iws.InWorkspaceService/MountSysfs",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InWorkspaceServiceServer).MountSysfs(ctx, req.(*MountProcRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _InWorkspaceService_UmountSysfs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UmountProcRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(InWorkspaceServiceServer).UmountSysfs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/iws.InWorkspaceService/UmountSysfs",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(InWorkspaceServiceServer).UmountSysfs(ctx, req.(*UmountProcRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _InWorkspaceService_Teardown_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(TeardownRequest)
 	if err := dec(in); err != nil {
@@ -270,6 +346,14 @@ var InWorkspaceService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UmountProc",
 			Handler:    _InWorkspaceService_UmountProc_Handler,
+		},
+		{
+			MethodName: "MountSysfs",
+			Handler:    _InWorkspaceService_MountSysfs_Handler,
+		},
+		{
+			MethodName: "UmountSysfs",
+			Handler:    _InWorkspaceService_UmountSysfs_Handler,
 		},
 		{
 			MethodName: "Teardown",

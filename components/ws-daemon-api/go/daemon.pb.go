@@ -461,7 +461,7 @@ type DisposeWorkspaceRequest struct {
 	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	// Backup triggers a final backup prior to disposal
 	Backup bool `protobuf:"varint,2,opt,name=backup,proto3" json:"backup,omitempty"`
-	// Backup logs triggers the
+	// backup_logs triggers the upload of terminal logs
 	BackupLogs bool `protobuf:"varint,3,opt,name=backup_logs,json=backupLogs,proto3" json:"backupLogs,omitempty"`
 }
 

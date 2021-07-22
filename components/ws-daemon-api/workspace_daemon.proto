@@ -27,6 +27,16 @@ service InWorkspaceService {
     // The path is relative to the mount namespace of the PID.
     rpc UmountProc(UmountProcRequest) returns (UmountProcResponse) {}
 
+    // MountSysfs mounts a masked sysfs in the container's rootfs.
+    // The PID must be in the PID namespace of the workspace container.
+    // The path is relative to the mount namespace of the PID.
+    rpc MountSysfs(MountProcRequest) returns (MountProcResponse) {}
+
+    // UmountSysfs unmounts a masked sysfs from the container's rootfs.
+    // The PID must be in the PID namespace of the workspace container.
+    // The path is relative to the mount namespace of the PID.
+    rpc UmountSysfs(UmountProcRequest) returns (UmountProcResponse) {}
+
     // Teardown prepares workspace content backups and unmounts shiftfs mounts. The canary is supposed to be triggered
     // when the workspace is about to shut down, e.g. using the PreStop hook of a Kubernetes container.
     rpc Teardown(TeardownRequest) returns (TeardownResponse) {}

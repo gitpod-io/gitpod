@@ -19,6 +19,8 @@ interface IInWorkspaceServiceService extends grpc.ServiceDefinition<grpc.Untyped
     writeIDMapping: IInWorkspaceServiceService_IWriteIDMapping;
     mountProc: IInWorkspaceServiceService_IMountProc;
     umountProc: IInWorkspaceServiceService_IUmountProc;
+    mountSysfs: IInWorkspaceServiceService_IMountSysfs;
+    umountSysfs: IInWorkspaceServiceService_IUmountSysfs;
     teardown: IInWorkspaceServiceService_ITeardown;
 }
 
@@ -58,6 +60,24 @@ interface IInWorkspaceServiceService_IUmountProc extends grpc.MethodDefinition<w
     responseSerialize: grpc.serialize<workspace_daemon_pb.UmountProcResponse>;
     responseDeserialize: grpc.deserialize<workspace_daemon_pb.UmountProcResponse>;
 }
+interface IInWorkspaceServiceService_IMountSysfs extends grpc.MethodDefinition<workspace_daemon_pb.MountProcRequest, workspace_daemon_pb.MountProcResponse> {
+    path: "/iws.InWorkspaceService/MountSysfs";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<workspace_daemon_pb.MountProcRequest>;
+    requestDeserialize: grpc.deserialize<workspace_daemon_pb.MountProcRequest>;
+    responseSerialize: grpc.serialize<workspace_daemon_pb.MountProcResponse>;
+    responseDeserialize: grpc.deserialize<workspace_daemon_pb.MountProcResponse>;
+}
+interface IInWorkspaceServiceService_IUmountSysfs extends grpc.MethodDefinition<workspace_daemon_pb.UmountProcRequest, workspace_daemon_pb.UmountProcResponse> {
+    path: "/iws.InWorkspaceService/UmountSysfs";
+    requestStream: false;
+    responseStream: false;
+    requestSerialize: grpc.serialize<workspace_daemon_pb.UmountProcRequest>;
+    requestDeserialize: grpc.deserialize<workspace_daemon_pb.UmountProcRequest>;
+    responseSerialize: grpc.serialize<workspace_daemon_pb.UmountProcResponse>;
+    responseDeserialize: grpc.deserialize<workspace_daemon_pb.UmountProcResponse>;
+}
 interface IInWorkspaceServiceService_ITeardown extends grpc.MethodDefinition<workspace_daemon_pb.TeardownRequest, workspace_daemon_pb.TeardownResponse> {
     path: "/iws.InWorkspaceService/Teardown";
     requestStream: false;
@@ -75,6 +95,8 @@ export interface IInWorkspaceServiceServer extends grpc.UntypedServiceImplementa
     writeIDMapping: grpc.handleUnaryCall<workspace_daemon_pb.WriteIDMappingRequest, workspace_daemon_pb.WriteIDMappingResponse>;
     mountProc: grpc.handleUnaryCall<workspace_daemon_pb.MountProcRequest, workspace_daemon_pb.MountProcResponse>;
     umountProc: grpc.handleUnaryCall<workspace_daemon_pb.UmountProcRequest, workspace_daemon_pb.UmountProcResponse>;
+    mountSysfs: grpc.handleUnaryCall<workspace_daemon_pb.MountProcRequest, workspace_daemon_pb.MountProcResponse>;
+    umountSysfs: grpc.handleUnaryCall<workspace_daemon_pb.UmountProcRequest, workspace_daemon_pb.UmountProcResponse>;
     teardown: grpc.handleUnaryCall<workspace_daemon_pb.TeardownRequest, workspace_daemon_pb.TeardownResponse>;
 }
 
@@ -91,6 +113,12 @@ export interface IInWorkspaceServiceClient {
     umountProc(request: workspace_daemon_pb.UmountProcRequest, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.UmountProcResponse) => void): grpc.ClientUnaryCall;
     umountProc(request: workspace_daemon_pb.UmountProcRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.UmountProcResponse) => void): grpc.ClientUnaryCall;
     umountProc(request: workspace_daemon_pb.UmountProcRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.UmountProcResponse) => void): grpc.ClientUnaryCall;
+    mountSysfs(request: workspace_daemon_pb.MountProcRequest, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.MountProcResponse) => void): grpc.ClientUnaryCall;
+    mountSysfs(request: workspace_daemon_pb.MountProcRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.MountProcResponse) => void): grpc.ClientUnaryCall;
+    mountSysfs(request: workspace_daemon_pb.MountProcRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.MountProcResponse) => void): grpc.ClientUnaryCall;
+    umountSysfs(request: workspace_daemon_pb.UmountProcRequest, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.UmountProcResponse) => void): grpc.ClientUnaryCall;
+    umountSysfs(request: workspace_daemon_pb.UmountProcRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.UmountProcResponse) => void): grpc.ClientUnaryCall;
+    umountSysfs(request: workspace_daemon_pb.UmountProcRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.UmountProcResponse) => void): grpc.ClientUnaryCall;
     teardown(request: workspace_daemon_pb.TeardownRequest, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.TeardownResponse) => void): grpc.ClientUnaryCall;
     teardown(request: workspace_daemon_pb.TeardownRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.TeardownResponse) => void): grpc.ClientUnaryCall;
     teardown(request: workspace_daemon_pb.TeardownRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.TeardownResponse) => void): grpc.ClientUnaryCall;
@@ -110,6 +138,12 @@ export class InWorkspaceServiceClient extends grpc.Client implements IInWorkspac
     public umountProc(request: workspace_daemon_pb.UmountProcRequest, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.UmountProcResponse) => void): grpc.ClientUnaryCall;
     public umountProc(request: workspace_daemon_pb.UmountProcRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.UmountProcResponse) => void): grpc.ClientUnaryCall;
     public umountProc(request: workspace_daemon_pb.UmountProcRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.UmountProcResponse) => void): grpc.ClientUnaryCall;
+    public mountSysfs(request: workspace_daemon_pb.MountProcRequest, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.MountProcResponse) => void): grpc.ClientUnaryCall;
+    public mountSysfs(request: workspace_daemon_pb.MountProcRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.MountProcResponse) => void): grpc.ClientUnaryCall;
+    public mountSysfs(request: workspace_daemon_pb.MountProcRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.MountProcResponse) => void): grpc.ClientUnaryCall;
+    public umountSysfs(request: workspace_daemon_pb.UmountProcRequest, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.UmountProcResponse) => void): grpc.ClientUnaryCall;
+    public umountSysfs(request: workspace_daemon_pb.UmountProcRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.UmountProcResponse) => void): grpc.ClientUnaryCall;
+    public umountSysfs(request: workspace_daemon_pb.UmountProcRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.UmountProcResponse) => void): grpc.ClientUnaryCall;
     public teardown(request: workspace_daemon_pb.TeardownRequest, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.TeardownResponse) => void): grpc.ClientUnaryCall;
     public teardown(request: workspace_daemon_pb.TeardownRequest, metadata: grpc.Metadata, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.TeardownResponse) => void): grpc.ClientUnaryCall;
     public teardown(request: workspace_daemon_pb.TeardownRequest, metadata: grpc.Metadata, options: Partial<grpc.CallOptions>, callback: (error: grpc.ServiceError | null, response: workspace_daemon_pb.TeardownResponse) => void): grpc.ClientUnaryCall;

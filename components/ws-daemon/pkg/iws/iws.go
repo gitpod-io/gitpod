@@ -52,7 +52,7 @@ var (
 	// Compared to the origin of this list, we imply the /proc prefix.
 	// That means we don't list the prefix, but also we only list files/dirs here which
 	// reside in /proc (e.g. not /sys/firmware).
-	defaultMaskedPaths = []string{
+	procDefaultMaskedPaths = []string{
 		"acpi",
 		"kcore",
 		"keys",
@@ -62,13 +62,16 @@ var (
 		"sched_debug",
 		"scsi",
 	}
-	defaultReadonlyPaths = []string{
+	procDefaultReadonlyPaths = []string{
 		"asound",
 		"bus",
 		"fs",
 		"irq",
 		"sys",
 		"sysrq-trigger",
+	}
+	sysfsDefaultMaskedPaths = []string{
+		"firmware",
 	}
 )
 
@@ -333,13 +336,13 @@ func (wbs *InWorkspaceServiceServer) MountProc(ctx context.Context, req *api.Mou
 		return nil, xerrors.Errorf("mount new proc at %s: %w", nodeStaging, err)
 	}
 
-	for _, mask := range defaultMaskedPaths {
+	for _, mask := range procDefaultMaskedPaths {
 		err = maskPath(filepath.Join(nodeStaging, mask))
 		if err != nil {
 			return nil, xerrors.Errorf("cannot mask %s: %w", mask, err)
 		}
 	}
-	for _, rdonly := range defaultReadonlyPaths {
+	for _, rdonly := range procDefaultReadonlyPaths {
 		err = readonlyPath(filepath.Join(nodeStaging, rdonly))
 		if err != nil {
 			return nil, xerrors.Errorf("cannot mount readonly %s: %w", rdonly, err)
@@ -506,6 +509,67 @@ func (wbs *InWorkspaceServiceServer) UmountProc(ctx context.Context, req *api.Um
 	return &api.UmountProcResponse{}, nil
 }
 
+func (wbs *InWorkspaceServiceServer) MountSysfs(ctx context.Context, req *api.MountProcRequest) (resp *api.MountProcResponse, err error) {
+	var (
+		reqPID  = req.Pid
+		procPID uint64
+	)
+	defer func() {
+		if err == nil {
+			return
+		}
+
+		log.WithError(err).WithField("procPID", procPID).WithField("reqPID", reqPID).Error("cannot mount proc")
+		if _, ok := status.FromError(err); !ok {
+			err = status.Error(codes.Internal, "cannot mount proc")
+		}
+	}()
+
+	rt := wbs.Uidmapper.Runtime
+	if rt == nil {
+		return nil, status.Errorf(codes.FailedPrecondition, "not connected to container runtime")
+	}
+	wscontainerID, err := rt.WaitForContainer(ctx, wbs.Session.InstanceID)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot find workspace container")
+	}
+
+	containerPID, err := rt.ContainerPID(ctx, wscontainerID)
+	if err != nil {
+		return nil, xerrors.Errorf("cannot find container PID for containerID %v: %w", wscontainerID, err)
+	}
+
+	procPID, err = wbs.Uidmapper.findHostPID(containerPID, uint64(req.Pid))
+	if err != nil {
+		return nil, xerrors.Errorf("cannot map in-container PID %d (container PID: %d): %w", req.Pid, containerPID, err)
+	}
+
+	nodeStaging, err := os.MkdirTemp("", "sysfs-staging")
+	if err != nil {
+		return nil, xerrors.Errorf("cannot prepare proc staging: %w", err)
+	}
+	err = nsinsider(wbs.Session.InstanceID, int(procPID), func(c *exec.Cmd) {
+		c.Args = append(c.Args, "mount-sysfs", "--target", nodeStaging)
+	}, enterMountNS(false), enterNetNS(true))
+	if err != nil {
+		return nil, xerrors.Errorf("mount new sysfs at %s: %w", nodeStaging, err)
+	}
+
+	for _, mask := range sysfsDefaultMaskedPaths {
+		err = maskPath(filepath.Join(nodeStaging, mask))
+		if err != nil {
+			return nil, xerrors.Errorf("cannot mask %s: %w", mask, err)
+		}
+	}
+
+	err = moveMount(wbs.Session.InstanceID, int(procPID), nodeStaging, req.Target)
+	if err != nil {
+		return nil, err
+	}
+
+	return &api.MountProcResponse{}, nil
+}
+
 func moveMount(instanceID string, targetPid int, source, target string) error {
 	mntfd, err := syscallOpenTree(unix.AT_FDCWD, source, flagOpenTreeClone|flagAtRecursive)
 	if err != nil {
@@ -527,6 +591,7 @@ func moveMount(instanceID string, targetPid int, source, target string) error {
 type nsinsiderOpts struct {
 	MountNS bool
 	PidNS   bool
+	NetNS   bool
 }
 
 func enterMountNS(enter bool) nsinsiderOpt {
@@ -538,6 +603,12 @@ func enterMountNS(enter bool) nsinsiderOpt {
 func enterPidNS(enter bool) nsinsiderOpt {
 	return func(o *nsinsiderOpts) {
 		o.PidNS = enter
+	}
+}
+
+func enterNetNS(enter bool) nsinsiderOpt {
+	return func(o *nsinsiderOpts) {
+		o.NetNS = enter
 	}
 }
 
@@ -571,6 +642,9 @@ func nsinsider(instanceID string, targetPid int, mod func(*exec.Cmd), opts ...ns
 	}
 	if cfg.PidNS {
 		nss = append(nss, mnt{"_LIBNSENTER_PIDNSFD", fmt.Sprintf("/proc/%d/ns/pid", targetPid), os.O_RDONLY})
+	}
+	if cfg.NetNS {
+		nss = append(nss, mnt{"_LIBNSENTER_NETNSFD", fmt.Sprintf("/proc/%d/ns/net", targetPid), os.O_RDONLY})
 	}
 
 	stdioFdCount := 3

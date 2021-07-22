@@ -253,6 +253,34 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 		return 0, 0, 0
 	}
 
+	if filesystem == "sysfs" {
+		target := filepath.Join(h.Ring2Rootfs, dest)
+		stat, err := os.Lstat(target)
+		if os.IsNotExist(err) {
+			err = os.MkdirAll(target, 0755)
+		}
+		if err != nil {
+			log.WithField("dest", dest).WithError(err).Error("cannot stat mountpoint")
+			return Errno(unix.EFAULT)
+		} else if stat != nil && stat.Mode()&os.ModeDir == 0 {
+			log.WithField("dest", dest).WithError(err).Error("sysfs must be mounted on an ordinary directory")
+			return Errno(unix.EPERM)
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		_, err = h.Daemon.MountSysfs(ctx, &daemonapi.MountProcRequest{
+			Target: dest,
+			Pid:    int64(req.Pid),
+		})
+		if err != nil {
+			log.WithField("target", target).WithError(err).Error("cannot mount sysfs")
+			return Errno(unix.EFAULT)
+		}
+
+		return 0, 0, 0
+	}
+
 	// let the kernel do the work
 	return 0, 0, libseccomp.NotifRespFlagContinue
 }

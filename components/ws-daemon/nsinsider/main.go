@@ -178,6 +178,19 @@ func main() {
 				},
 			},
 			{
+				Name:  "mount-sysfs",
+				Usage: "mounts sysfs",
+				Flags: []cli.Flag{
+					&cli.StringFlag{
+						Name:     "target",
+						Required: true,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					return unix.Mount("sysfs", c.String("target"), "sysfs", 0, "")
+				},
+			},
+			{
 				Name:  "unmount",
 				Usage: "unmounts a mountpoint",
 				Flags: []cli.Flag{
