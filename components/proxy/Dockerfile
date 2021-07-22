@@ -9,8 +9,6 @@ RUN curl -fsSL https://github.com/caddyserver/xcaddy/releases/download/v0.1.9/xc
 
 WORKDIR /plugins
 
-COPY plugins/go.* /plugins/
-
 COPY plugins /plugins
 
 # the fork contains two changes:
