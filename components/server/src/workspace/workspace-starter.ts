@@ -691,6 +691,7 @@ export class WorkspaceStarter {
             "function:getEnvVars",
             "function:setEnvVar",
             "function:deleteEnvVar",
+            "function:trackEvent",
 
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspace", subjectID: workspace.id, operations: ["get", "update"]}),
             "resource:"+ScopedResourceGuard.marshalResourceScope({kind: "workspaceInstance", subjectID: instance.id, operations: ["get", "update", "delete"]}),

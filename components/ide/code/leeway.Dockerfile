@@ -42,7 +42,7 @@ RUN curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh |
     && npm install -g yarn node-gyp
 ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 
-ENV GP_CODE_COMMIT 6cf68cedd9ab62af8e426a364d97ed206bbe0a02
+ENV GP_CODE_COMMIT 356bb7ada7e22a36ed3801cf85f1901a1e5af5af
 RUN mkdir gp-code \
     && cd gp-code \
     && git init \
