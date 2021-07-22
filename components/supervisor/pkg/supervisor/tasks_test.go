@@ -16,7 +16,8 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
-	"github.com/gitpod-io/gitpod/content-service/api"
+	csapi "github.com/gitpod-io/gitpod/content-service/api"
+	"github.com/gitpod-io/gitpod/supervisor/api"
 	"github.com/gitpod-io/gitpod/supervisor/pkg/terminal"
 )
 
@@ -28,7 +29,7 @@ func TestTaskManager(t *testing.T) {
 	tests := []struct {
 		Desc        string
 		Headless    bool
-		Source      api.WorkspaceInitSource
+		Source      csapi.WorkspaceInitSource
 		GitpodTasks *[]TaskConfig
 
 		ExpectedReporter testHeadlessTaskProgressReporter
@@ -36,7 +37,7 @@ func TestTaskManager(t *testing.T) {
 		{
 			Desc:     "headless prebuild should finish without tasks",
 			Headless: true,
-			Source:   api.WorkspaceInitFromOther,
+			Source:   csapi.WorkspaceInitFromOther,
 
 			ExpectedReporter: testHeadlessTaskProgressReporter{
 				Done:    true,
@@ -46,7 +47,7 @@ func TestTaskManager(t *testing.T) {
 		{
 			Desc:        "headless prebuild should finish without init tasks",
 			Headless:    true,
-			Source:      api.WorkspaceInitFromOther,
+			Source:      csapi.WorkspaceInitFromOther,
 			GitpodTasks: &[]TaskConfig{{Command: &skipCommand}},
 
 			ExpectedReporter: testHeadlessTaskProgressReporter{
@@ -57,7 +58,7 @@ func TestTaskManager(t *testing.T) {
 		{
 			Desc:        "headless prebuild should finish with successful init tasks",
 			Headless:    true,
-			Source:      api.WorkspaceInitFromOther,
+			Source:      csapi.WorkspaceInitFromOther,
 			GitpodTasks: &[]TaskConfig{{Init: &skipCommand}, {Init: &skipCommand}},
 
 			ExpectedReporter: testHeadlessTaskProgressReporter{
@@ -68,7 +69,7 @@ func TestTaskManager(t *testing.T) {
 		{
 			Desc:        "headless prebuild should finish with failed init tasks",
 			Headless:    true,
-			Source:      api.WorkspaceInitFromOther,
+			Source:      csapi.WorkspaceInitFromOther,
 			GitpodTasks: &[]TaskConfig{{Init: &failCommand}, {Init: &failCommand}},
 
 			ExpectedReporter: testHeadlessTaskProgressReporter{
@@ -79,7 +80,7 @@ func TestTaskManager(t *testing.T) {
 		{
 			Desc:        "headless prebuild should finish with at least one failed init tasks (first)",
 			Headless:    true,
-			Source:      api.WorkspaceInitFromOther,
+			Source:      csapi.WorkspaceInitFromOther,
 			GitpodTasks: &[]TaskConfig{{Init: &failCommand}, {Init: &skipCommand}},
 
 			ExpectedReporter: testHeadlessTaskProgressReporter{
@@ -90,7 +91,7 @@ func TestTaskManager(t *testing.T) {
 		{
 			Desc:        "headless prebuild should finish with at least one failed init tasks (second)",
 			Headless:    true,
-			Source:      api.WorkspaceInitFromOther,
+			Source:      csapi.WorkspaceInitFromOther,
 			GitpodTasks: &[]TaskConfig{{Init: &skipCommand}, {Init: &failCommand}},
 
 			ExpectedReporter: testHeadlessTaskProgressReporter{
@@ -153,4 +154,57 @@ func (r *testHeadlessTaskProgressReporter) write(data string, task *task, termin
 func (r *testHeadlessTaskProgressReporter) done(success bool) {
 	r.Done = true
 	r.Success = success
+}
+
+func TestGetTask(t *testing.T) {
+	p := func(v string) *string { return &v }
+	allTasks := TaskConfig{
+		Name:     p("hello world"),
+		Before:   p("before"),
+		Init:     p("init"),
+		Prebuild: p("prebuild"),
+		Command:  p("command"),
+	}
+	tests := []struct {
+		Name          string
+		Task          TaskConfig
+		IsHeadless    bool
+		ContentSource csapi.WorkspaceInitSource
+		Expectation   string
+	}{
+		{
+			Name:          "prebuild",
+			Task:          allTasks,
+			IsHeadless:    true,
+			ContentSource: csapi.WorkspaceInitFromOther,
+			Expectation:   "{\nbefore\n} && {\ninit\n} && {\nprebuild\n}; exit",
+		},
+		{
+			Name:          "from prebuild",
+			Task:          allTasks,
+			ContentSource: csapi.WorkspaceInitFromPrebuild,
+			Expectation:   "{\nbefore\n} && {\n[ -r /workspace/.prebuild-log-0 ] && cat /workspace/.prebuild-log-0; [ -r //prebuild-log-0 ] && cat //prebuild-log-0; true\n} && {\ncommand\n}",
+		},
+		{
+			Name:          "from other",
+			Task:          allTasks,
+			ContentSource: csapi.WorkspaceInitFromOther,
+			Expectation:   "{\nbefore\n} && {\ninit\n} && {\ncommand\n}",
+		},
+		{
+			Name:          "from backup",
+			Task:          allTasks,
+			ContentSource: csapi.WorkspaceInitFromOther,
+			Expectation:   "{\nbefore\n} && {\ninit\n} && {\ncommand\n}",
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			command := getCommand(&task{config: test.Task, TaskStatus: api.TaskStatus{Id: "0"}}, test.IsHeadless, test.ContentSource, "/")
+			if diff := cmp.Diff(test.Expectation, command); diff != "" {
+				t.Errorf("unexpected getCommand() (-want +got):\n%s", diff)
+			}
+		})
+	}
 }
