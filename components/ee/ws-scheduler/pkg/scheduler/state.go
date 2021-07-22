@@ -32,6 +32,7 @@ type Node struct {
 
 	RAM              ResourceUsage
 	EphemeralStorage ResourceUsage
+	CPU 			 ResourceUsage
 
 	Services map[string]struct{}
 
@@ -125,6 +126,8 @@ func (n *Node) copy() *Node {
 		Services:         n.Services,
 		RAM:              *n.RAM.DeepCopy(),
 		EphemeralStorage: *n.EphemeralStorage.DeepCopy(),
+		CPU: 			  *n.CPU.DeepCopy(),
+
 		PodSlots: PodSlots{
 			Total:     n.PodSlots.Total,
 			Available: n.PodSlots.Available,
@@ -224,6 +227,7 @@ func (n *Node) update(namespace string, ramSafetyBuffer *res.Quantity, ghostsAre
 	allocatableRAMWithSafetyBuffer.Sub(*ramSafetyBuffer)
 	n.RAM = newResourceUsage(&allocatableRAMWithSafetyBuffer)
 	n.EphemeralStorage = newResourceUsage(n.Node.Status.Allocatable.StorageEphemeral())
+	n.CPU = newResourceUsage(n.Node.Status.Allocatable.Cpu())
 	n.Services = make(map[string]struct{})
 
 	var assignedPods []*corev1.Pod
@@ -256,25 +260,31 @@ func (n *Node) update(namespace string, ramSafetyBuffer *res.Quantity, ghostsAre
 			n.Services[service] = struct{}{}
 		}
 
-		var ram, eph *res.Quantity
+		var ram, eph, cpu *res.Quantity
 		if isGhostWorkspace(pod, namespace) {
 			ram = n.RAM.UsedGhost
 			eph = n.EphemeralStorage.UsedGhost
+			cpu = n.CPU.UsedGhost
 		} else if wsk8s.IsHeadlessWorkspace(pod) {
 			ram = n.RAM.UsedHeadless
 			eph = n.EphemeralStorage.UsedHeadless
+			cpu = n.CPU.UsedHeadless
 		} else if wsk8s.IsRegularWorkspace(pod) {
 			ram = n.RAM.UsedRegular
 			eph = n.EphemeralStorage.UsedRegular
+			cpu = n.CPU.UsedRegular
 		} else {
 			ram = n.RAM.UsedOther
 			eph = n.EphemeralStorage.UsedOther
+			cpu = n.CPU.UsedOther
 		}
 		ram.Add(podRAMRequest(pod))
 		eph.Add(podEphemeralStorageRequest(pod))
+		cpu.Add(podCPURequest(pod))
 	}
 	n.RAM.updateAvailable(ghostsAreVisible)
 	n.EphemeralStorage.updateAvailable(ghostsAreVisible)
+	n.CPU.updateAvailable(ghostsAreVisible)
 }
 
 // we only handle ghost workspaces as "ghost" if they are from our namespace!
@@ -420,6 +430,15 @@ func podEphemeralStorageRequest(pod *corev1.Pod) res.Quantity {
 		requestedEphStorage.Add(*c.Resources.Requests.StorageEphemeral())
 	}
 	return *requestedEphStorage
+}
+
+// podCPURequest calculates the amount of CPU requested by all containers of the given pod
+func podCPURequest(pod *corev1.Pod) res.Quantity {
+	requestedCPU := res.NewQuantity(0, res.BinarySI)
+	for _, c := range pod.Spec.Containers {
+		requestedCPU.Add(*c.Resources.Requests.Cpu())
+	}
+	return *requestedCPU
 }
 
 // NodeMapToList returns a slice of entry of the map

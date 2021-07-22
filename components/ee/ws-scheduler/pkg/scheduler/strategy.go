@@ -240,6 +240,7 @@ func (s *DensityAndExperience) Select(state *State, pod *corev1.Pod) (string, er
 func FitsOnNode(pod *corev1.Pod, node *Node) bool {
 	ramReq := podRAMRequest(pod)
 	ephStorageReq := podEphemeralStorageRequest(pod)
+	cpuReq := podCPURequest(pod)
 
 	if ramReq.Cmp(*node.RAM.Available) > 0 {
 		// out of RAM
@@ -248,6 +249,11 @@ func FitsOnNode(pod *corev1.Pod, node *Node) bool {
 
 	if ephStorageReq.CmpInt64(0) != 0 && ephStorageReq.Cmp(*node.EphemeralStorage.Available) > 0 {
 		// out of ephemeral storage
+		return false
+	}
+
+	if cpuReq.Cmp(*node.CPU.Available) > 0 {
+		// out of CPU
 		return false
 	}
 
