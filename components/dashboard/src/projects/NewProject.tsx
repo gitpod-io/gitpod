@@ -411,7 +411,7 @@ function NewTeam(props: {
 
 async function openReconfigureWindow(params: { account?: string, onSuccess: (p: any) => void }) {
     const { account, onSuccess } = params;
-    const state = btoa(JSON.stringify({ from: "/reconfigure", next: "/new" }));
+    const state = btoa(JSON.stringify({ from: "/reconfigure", next: "/new" })); // TODO: `/new?team={team?.slug}` ?
     const url = gitpodHostUrl.withApi({
         pathname: '/apps/github/reconfigure',
         search: `account=${account}&state=${encodeURIComponent(state)}`

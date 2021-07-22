@@ -35,6 +35,10 @@ export default function MonacoEditor(props: { classes: string, disabled?: boolea
   }, [ props.value ]);
 
   useEffect(() => {
+    monaco.editor.setTheme(document.documentElement.classList.contains('dark') ? 'vs-dark' : 'vs');
+  }, []);
+
+  useEffect(() => {
     if (editorRef.current) {
       editorRef.current.updateOptions({ readOnly: props.disabled });
     }
