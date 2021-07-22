@@ -13,6 +13,7 @@ export type MaybeWorkspaceInstance = WorkspaceInstance | undefined;
 
 export interface FindWorkspacesOptions {
     userId: string
+    projectId?: string
     limit?: number
     searchString?: string
     includeHeadless?: boolean
@@ -112,5 +113,6 @@ export interface WorkspaceDB {
 
     hardDeleteWorkspace(workspaceID: string): Promise<void>;
 
-    findPrebuiltWorkspacesByProject(projectId: string): Promise<PrebuiltWorkspace[]>;
+    findPrebuiltWorkspacesByProject(projectId: string, branch?: string, limit?: number): Promise<PrebuiltWorkspace[]>;
+    findPrebuiltWorkspacesById(prebuildId: string): Promise<PrebuiltWorkspace | undefined>;
 }

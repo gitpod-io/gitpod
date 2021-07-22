@@ -11,10 +11,12 @@ export interface DropDownProps {
     prefix?: string;
     contextMenuWidth?: string;
     activeEntry?: string,
-    entries: {
-        title: string,
-        onClick: ()=>void
-    }[];
+    entries: DropDownEntry[];
+}
+
+export interface DropDownEntry {
+    title: string,
+    onClick: ()=>void
 }
 
 function Arrow(props: {up: boolean}) {

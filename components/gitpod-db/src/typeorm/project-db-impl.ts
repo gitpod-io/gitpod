@@ -25,22 +25,39 @@ export class ProjectDBImpl implements ProjectDB {
 
     public async findProjectById(projectId: string): Promise<Project | undefined> {
         const repo = await this.getRepo();
-        return repo.findOne({ id: projectId });
+        return repo.findOne({ id: projectId, markedDeleted: false });
     }
 
     public async findProjectByCloneUrl(cloneUrl: string): Promise<Project | undefined> {
         const repo = await this.getRepo();
-        return repo.findOne({ cloneUrl });
+        return repo.findOne({ cloneUrl, markedDeleted: false });
+    }
+
+    public async findProjectsByCloneUrl(cloneUrls: string[]): Promise<Project[]> {
+        if (cloneUrls.length === 0) {
+            return [];
+        }
+        const repo = await this.getRepo();
+        const q = repo.createQueryBuilder("project")
+            .where("project.markedDeleted = false")
+            .andWhere(`project.cloneUrl in (${ cloneUrls.map(u => `'${u}'`).join(", ") })`)
+        const result = await q.getMany();
+        return result;
+    }
+
+    public async findProject(teamId: string, projectName: string): Promise<Project | undefined> {
+        const projects = await this.findProjectsByTeam(teamId);
+        return projects.find(p => p.name === projectName);
     }
 
     public async findProjectByInstallationId(appInstallationId: string): Promise<Project | undefined> {
         const repo = await this.getRepo();
-        return repo.findOne({ appInstallationId });
+        return repo.findOne({ appInstallationId, markedDeleted: false });
     }
 
     public async findProjectsByTeam(teamId: string): Promise<Project[]> {
         const repo = await this.getRepo();
-        return repo.find({ teamId });
+        return repo.find({ teamId, markedDeleted: false });
     }
 
     public async storeProject(project: Project): Promise<Project> {
@@ -56,5 +73,14 @@ export class ProjectDBImpl implements ProjectDB {
         }
         project.config = config;
         await repo.save(project);
+    }
+
+    public async markDeleted(projectId: string): Promise<void> {
+        const repo = await this.getRepo();
+        const project = await repo.findOne({ id: projectId });
+        if (project) {
+            project.markedDeleted = true;
+            await repo.save(project);
+        }
     }
 }

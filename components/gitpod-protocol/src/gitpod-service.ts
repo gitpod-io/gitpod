@@ -13,7 +13,7 @@ import {
 } from './protocol';
 import {
     Team, TeamMemberInfo,
-    TeamMembershipInvite, Project, ProjectInfo, PrebuildInfo, TeamMemberRole
+    TeamMembershipInvite, Project, PrebuildInfo, TeamMemberRole
 } from './teams-projects-protocol';
 import { JsonRpcProxy, JsonRpcServer } from './messaging/proxy-factory';
 import { Disposable, CancellationTokenSource } from 'vscode-jsonrpc';
@@ -126,8 +126,11 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     // Projects
     getProviderRepositoriesForUser(params: GetProviderRepositoriesParams): Promise<ProviderRepository[]>;
     createProject(params: CreateProjectParams): Promise<Project>;
-    getProjects(teamId: string): Promise<ProjectInfo[]>;
-    getPrebuilds(teamId: string, projectId: string): Promise<PrebuildInfo[]>;
+    deleteProject(projectId: string): Promise<void>;
+    getProjects(teamId: string): Promise<Project[]>;
+    getProjectOverview(teamId: string, projectName: string): Promise<Project.Overview | undefined>;
+    findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildInfo[]>;
+    triggerPrebuild(projectId: string, branch: string): Promise<void>;
     setProjectConfiguration(projectId: string, configString: string): Promise<void>;
     fetchProjectRepositoryConfiguration(projectId: string): Promise<string | undefined>;
 
@@ -231,6 +234,13 @@ export interface CreateProjectParams {
     teamId: string;
     appInstallationId: string;
 }
+export interface FindPrebuildsParams {
+    teamId: string;
+    projectName: string;
+    branch?: string;
+    latest?: boolean;
+    prebuildId?: string;
+}
 export interface GetProviderRepositoriesParams {
     provider: string;
     hints?: { installationId: string } | object;
@@ -243,6 +253,8 @@ export interface ProviderRepository {
     updatedAt: string;
     installationId?: number;
     installationUpdatedAt?: string;
+
+    inUse?: boolean;
 }
 
 export const WorkspaceTimeoutValues = ["30m", "60m", "180m"] as const;
@@ -288,12 +300,15 @@ export namespace GitpodServer {
         limit?: number;
         searchString?: string;
         pinnedOnly?: boolean;
+        projectId?: string;
     }
     export interface GetAccountStatementOptions {
         date?: string;
     }
     export interface CreateWorkspaceOptions {
         contextUrl: string;
+        branch?: string;
+        projectId?: string;
         mode?: CreateWorkspaceMode;
         forceDefaultConfig?: boolean;
     }
