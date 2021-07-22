@@ -850,9 +850,7 @@ func matchesMetadataFilter(filter *api.MetadataFilter, md *api.WorkspaceMetadata
 
 func (f *filteringSubscriber) Send(resp *api.SubscribeResponse) error {
 	var md *api.WorkspaceMetadata
-	if lg := resp.GetLog(); lg != nil {
-		md = lg.Metadata
-	} else if sts := resp.GetStatus(); sts != nil {
+	if sts := resp.GetStatus(); sts != nil {
 		md = sts.Metadata
 	}
 	if md == nil {
@@ -989,8 +987,8 @@ func (m *Manager) onChange(ctx context.Context, status *api.WorkspaceStatus) {
 	}
 
 	m.publishToSubscribers(ctx, &api.SubscribeResponse{
-		Payload: &api.SubscribeResponse_Status{Status: status},
-		Header:  header,
+		Status: status,
+		Header: header,
 	})
 
 	m.metrics.OnChange(status)

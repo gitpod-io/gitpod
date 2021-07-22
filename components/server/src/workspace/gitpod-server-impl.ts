@@ -1204,42 +1204,6 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         return urls;
     }
 
-    async watchHeadlessWorkspaceLogs(workspaceId: string): Promise<void> {
-        const user = this.checkAndBlockUser();
-        const context: LogContext = { userId: user.id, workspaceId };
-        log.info(context, 'watchHeadlessWorkspaceLogs', { workspaceId });
-
-        const { instance, workspace } = await this.internGetCurrentWorkspaceInstance(user.id, workspaceId)
-        if (!this.client) {
-            return;
-        }
-        if (!instance) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, `Workspace ${workspaceId} has no running instance`);
-        }
-        if (workspace.type !== "prebuild") {
-            throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `Cannot watch logs for ${workspaceId}.`)
-        }
-
-        /* TODO: who is allowed to watch these logs? At the moment everyone can watch anything. That's not good.
-         *    #security #permissions #concept-needed
-         */
-
-        if (this.headlessLogRegistry.has(workspaceId)) {
-            // we're already registered
-            return;
-        }
-
-        try {
-            log.info({ workspaceId, userId: user.id }, "Registering headless log listener")
-            this.headlessLogRegistry.set(workspaceId, true);
-
-            this.disposables.push(this.messageBusIntegration.listenForHeadlessWorkspaceLogs(workspaceId, (ctx, evt) => this.client?.onHeadlessWorkspaceLogs(evt)));
-        } catch (err) {
-            log.warn(`Cannot watch logs for workspaceId ${workspaceId}:`, err);
-            this.headlessLogRegistry.delete(workspaceId);
-        }
-    }
-
     protected async internGetCurrentWorkspaceInstance(userId: string, workspaceId: string): Promise<{ workspace: Workspace, instance: WorkspaceInstance | undefined }> {
         const workspace = await this.internalGetWorkspace(workspaceId, this.workspaceDb.trace({}));
 

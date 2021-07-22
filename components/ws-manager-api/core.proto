@@ -137,11 +137,9 @@ message SubscribeRequest {
 
 // SubscribeResponse notifies a client when a workspace's status changes
 message SubscribeResponse {
-    oneof payload {
-        WorkspaceStatus status = 1;
-        WorkspaceLogMessage log = 2;
-    }
-
+    WorkspaceStatus status = 1;
+    // was used for logs
+    reserved 2;
     map<string, string> header = 3;
 }
 
@@ -514,16 +512,4 @@ enum WorkspaceType {
 
     // Imagebuild workspaces build a workspace, incl. their Gitpod layer. They run headless and have no direct user-interaction.
     IMAGEBUILD = 4;
-}
-
-// HeadlessWorkspaceEvent is a log statement issued by a headless workspace
-message WorkspaceLogMessage {
-    // ID is the ID of the workspace this event eminated from
-    string id = 1;
-
-    // metadata is the workspace metadata
-    WorkspaceMetadata metadata = 2;
-
-    // Message is the payload associated with this event
-    string message = 4;
 }

@@ -9,7 +9,7 @@ import { TracedWorkspaceDB, DBWithTracing, TracedUserDB, UserDB, WorkspaceDB } f
 import { MessageBusIntegration } from "../../../src/workspace/messagebus-integration";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { HeadlessLogEvent, HeadlessWorkspaceEventType } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
+import { HeadlessWorkspaceEvent, HeadlessWorkspaceEventType } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { Disposable, PrebuiltWorkspace } from "@gitpod/gitpod-protocol";
 import { PrebuildRateLimiter } from "./prebuild-rate-limiter";
 import { WorkspaceStarter } from "../../../src/workspace/workspace-starter";
@@ -37,7 +37,7 @@ export class PrebuildQueueMaintainer implements Disposable {
         log.debug("prebuild queue maintainer started");
     }
 
-    protected async handlePrebuildFinished(ctx: TraceContext, msg: HeadlessLogEvent) {
+    protected async handlePrebuildFinished(ctx: TraceContext, msg: HeadlessWorkspaceEvent) {
         const span = TraceContext.startSpan("PrebuildQueueMaintainer.handlePrebuildFinished", ctx)
 
         // in the following it's fine for us to just return/ignore missing parts as the periodic maintainance will eventually remove too old prebuilds.
@@ -163,7 +163,7 @@ export class PrebuildQueueMaintainer implements Disposable {
                 userId = 'unknown';
             }
 
-            await this.messagebus.notifyHeadlessUpdate({span}, userId, prebuild.buildWorkspaceId, <HeadlessLogEvent>{
+            await this.messagebus.notifyHeadlessUpdate({span}, userId, prebuild.buildWorkspaceId, <HeadlessWorkspaceEvent>{
                 type: HeadlessWorkspaceEventType.Aborted,
                 workspaceID: prebuild.buildWorkspaceId,
             });

@@ -17,7 +17,7 @@ import {
 } from './teams-projects-protocol';
 import { JsonRpcProxy, JsonRpcServer } from './messaging/proxy-factory';
 import { Disposable, CancellationTokenSource } from 'vscode-jsonrpc';
-import { HeadlessLogEvent, HeadlessLogUrls } from './headless-workspace-log';
+import { HeadlessLogUrls } from './headless-workspace-log';
 import { WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstancePhase } from './workspace-instance';
 import { AdminServer } from './admin-protocol';
 import { GitpodHostUrl } from './util/gitpod-host-url';
@@ -33,7 +33,6 @@ import { RemoteTrackMessage } from './analytics';
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
     onWorkspaceImageBuildLogs: WorkspaceImageBuild.LogCallback;
-    onHeadlessWorkspaceLogs(evt: HeadlessLogEvent): void;
 
     onCreditAlert(creditAlert: CreditAlert): void;
 
@@ -87,7 +86,6 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     updateWorkspaceUserPin(id: string, action: GitpodServer.PinAction): Promise<void>;
     sendHeartBeat(options: GitpodServer.SendHeartBeatOptions): Promise<void>;
     watchWorkspaceImageBuildLogs(workspaceId: string): Promise<void>;
-    watchHeadlessWorkspaceLogs(workspaceId: string): Promise<void>;
     isPrebuildDone(pwsid: string): Promise<boolean>;
     getHeadlessLog(instanceId: string): Promise<HeadlessLogUrls>;
 
@@ -382,18 +380,6 @@ export class GitpodCompositeClient<Client extends GitpodClient> implements Gitpo
             if (client.onWorkspaceImageBuildLogs) {
                 try {
                     client.onWorkspaceImageBuildLogs(info, content);
-                } catch (error) {
-                    console.error(error)
-                }
-            }
-        }
-    }
-
-    onHeadlessWorkspaceLogs(evt: HeadlessLogEvent): void {
-        for (const client of this.clients) {
-            if (client.onHeadlessWorkspaceLogs) {
-                try {
-                    client.onHeadlessWorkspaceLogs(evt);
                 } catch (error) {
                     console.error(error)
                 }

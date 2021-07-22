@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { WorkspaceStatus, WorkspaceLogMessage, SubscribeRequest, SubscribeResponse, GetWorkspacesRequest, PromisifiedWorkspaceManagerClient } from "@gitpod/ws-manager/lib";
+import { WorkspaceStatus, SubscribeRequest, SubscribeResponse, GetWorkspacesRequest, PromisifiedWorkspaceManagerClient } from "@gitpod/ws-manager/lib";
 import { Disposable } from "@gitpod/gitpod-protocol";
 import { ClientReadableStream } from "@grpc/grpc-js";
 import { log, LogPayload } from "@gitpod/gitpod-protocol/lib/util/logging";
@@ -21,7 +21,6 @@ export class WsmanSubscriber implements Disposable {
 
     public async subscribe(callbacks: {
         onStatusUpdate: (ctx: TraceContext, s: WorkspaceStatus) => void,
-        onHeadlessLog: (ctx: TraceContext, s: WorkspaceLogMessage) => void,
         onReconnect: (ctx: TraceContext, s: WorkspaceStatus[]) => void,
     }, logPayload?: LogPayload) {
         const payload = logPayload || {} as LogPayload;
@@ -42,7 +41,6 @@ export class WsmanSubscriber implements Disposable {
 
                     this.sub.on('data', (incoming: SubscribeResponse) => {
                         const status = incoming.getStatus();
-                        const logmsg = incoming.getLog();
                         if (!!status) {
                             let header: any = {};
                             if (!!incoming.getHeaderMap()) {
@@ -52,8 +50,6 @@ export class WsmanSubscriber implements Disposable {
                             const span = !!spanCtx ? opentracing.globalTracer().startSpan('incomingSubscriptionResponse', {references: [opentracing.childOf(spanCtx!)]}) : undefined;
 
                             callbacks.onStatusUpdate({ span }, status);
-                        } else if (!!logmsg) {
-                            callbacks.onHeadlessLog({}, logmsg);
                         }
                     });
                     this.sub.on('end', function() {
