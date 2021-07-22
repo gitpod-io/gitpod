@@ -1,4 +1,15 @@
-FROM archlinux:base
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the GNU Affero General Public License (AGPL).
+# See License-AGPL.txt in the project root for license information.
+
+# 'FROM ${BASE_IMAGE}' prepended here
+
+###############################################################################
+# REQUIRED
+###############################################################################
+# !!! We expect users to configure their containers as root !!!
+USER root
+
 # ─── INITIAL SETUP ──────────────────────────────────────────────────────────────
 USER root
 RUN \
