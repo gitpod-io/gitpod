@@ -22,7 +22,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN \
 set -xue ; \
 getent passwd "gitpod" > /dev/null 2>&1 \
-&& [ "$(id -u gitpod" )" != "33333" ] \
+&& [ "$(id -u gitpod )" != "33333" ] \
 && echo >&2 "Error: User 'gitpod' exists but does not have user-id 33333. The user-id is $(id -u)" \
 && exit 1
 # ─── CONFIGURING PACMAN ─────────────────────────────────────────────────────────
