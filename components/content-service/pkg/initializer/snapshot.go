@@ -30,7 +30,7 @@ func (s *SnapshotInitializer) Run(ctx context.Context, mappings []archive.IDMapp
 	span.SetTag("snapshot", s.Snapshot)
 	defer tracing.FinishSpan(span, &err)
 
-	src = csapi.WorkspaceInitFromOther
+	src = csapi.WorkspaceInitFromBackup
 
 	ok, err := s.Storage.DownloadSnapshot(ctx, s.Location, s.Snapshot, mappings)
 	if err != nil {
