@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react";
 import Modal from "../components/Modal";
 import TabMenuItem from "../components/TabMenuItem";
+import { getGitpodService } from "../service/service";
 
 export interface WsStartEntry {
     title: string
@@ -28,9 +29,18 @@ export function StartWorkspaceModal(p: StartWorkspaceModalProps) {
     const computeSelection = () => p.selected || (p.recent.length > 0 ? 'Recent' : 'Examples');
     const [selection, setSelection] = useState(computeSelection());
     useEffect(() => { !p.visible && setSelection(computeSelection()) }, [p.visible, p.recent, p.selected]);
+    const trackWorkspaceClick = (startUrl: string) => {
+        getGitpodService().server.trackEvent({
+            event:"workspace_new_clicked",
+            properties:{
+                context: selection,
+                contextUrl: startUrl.split("#")[1]
+            }
+        });
+    }
 
     const list = (selection === 'Recent' ? p.recent : p.examples).map((e, i) =>
-        <a key={`item-${i}-${e.title}`} href={e.startUrl} className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex p-4 my-1">
+        <a key={`item-${i}-${e.title}`} href={e.startUrl} onClick={() => trackWorkspaceClick(e.startUrl)} className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex p-4 my-1">
             <div className="w-full">
                 <p className="text-base text-gray-800 dark:text-gray-200 font-semibold">{e.title}</p>
                 <p>{e.description}</p>

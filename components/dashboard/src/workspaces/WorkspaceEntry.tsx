@@ -14,6 +14,7 @@ import { Item, ItemField, ItemFieldContextMenu, ItemFieldIcon } from '../compone
 import PendingChangesDropdown from '../components/PendingChangesDropdown';
 import Tooltip from '../components/Tooltip';
 import { WorkspaceModel } from './workspace-model';
+import { getGitpodService } from "../service/service";
 
 function getLabel(state: WorkspaceInstancePhase, conditions?: WorkspaceInstanceConditions) {
     if (conditions?.failed) {
@@ -41,10 +42,21 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
     const downloadURL = new GitpodHostUrl(window.location.href).with({
         pathname: `/workspace-download/get/${ws.id}`
     }).toString();
+    const trackWorkspaceClick = (context:string) => {
+        getGitpodService().server.trackEvent({
+            event:"workspace_open_clicked",
+            properties:{
+                workspaceId: ws.id,
+                context: context,
+                state: state
+            }
+        });
+    }
     const menuEntries: ContextMenuEntry[] = [
         {
             title: 'Open',
-            href: startUrl.toString()
+            href: startUrl.toString(),
+            onClick: () => trackWorkspaceClick("button")
         }];
     if (state === 'running') {
         menuEntries.push({
@@ -90,7 +102,7 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
             <WorkspaceStatusIndicator instance={desc?.latestInstance} />
         </ItemFieldIcon>
         <ItemField className="w-3/12 flex flex-col">
-            <a href={startUrl.toString()}><div className="font-medium text-gray-800 dark:text-gray-200 truncate hover:text-blue-600 dark:hover:text-blue-400">{ws.id}</div></a>
+            <a href={startUrl.toString()} onClick= {() => trackWorkspaceClick("link")}><div className="font-medium text-gray-800 dark:text-gray-200 truncate hover:text-blue-600 dark:hover:text-blue-400">{ws.id}</div></a>
             <a href={project ? 'https://' + project : undefined}><div className="text-sm overflow-ellipsis truncate text-gray-400 dark:text-gray-500 hover:text-blue-600 dark:hover:text-blue-400">{project || 'Unknown'}</div></a>
         </ItemField>
         <ItemField className="w-4/12 flex flex-col">
