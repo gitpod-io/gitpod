@@ -1,31 +1,27 @@
-# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
-# Licensed under the GNU Affero General Public License (AGPL).
-# See License-AGPL.txt in the project root for license information.
-
-# 'FROM ${BASE_IMAGE}' prepended here
-
-###############################################################################
-# REQUIRED
-###############################################################################
-# !!! We expect users to configure their containers as root !!!
-USER root
+FROM archlinux:base
 # ─── INITIAL SETUP ──────────────────────────────────────────────────────────────
+USER root
 RUN \
-  pacman-key --init \
-  && pacman-key --populate archlinux \
-  && pacman -Syyu --noconfirm \
-  && pacman -S --noconfirm bash
+  pacman-key --init > /dev/null 2>&1 \
+  && pacman-key --populate archlinux > /dev/null 2>&1 \
+  && pacman -Syyu --noconfirm >/dev/null 2>&1 \
+  && pacman -S --noconfirm bash >/dev/null 2>&1
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # ─── INITIAL VALIDATIONS ────────────────────────────────────────────────────────
+USER root
 # [ NOTE ] in case gitpod user exists and has a uid
 # that is not 33333, this run statement will fail.
 RUN \
 set -xue ; \
-getent passwd "gitpod" > /dev/null 2>&1 \
-&& [ "$(id -u gitpod )" != "33333" ] \
+if getent passwd "gitpod" > /dev/null 2>&1; then \
+[ "$(id -u gitpod)" != "33333" ] \
 && echo >&2 "Error: User 'gitpod' exists but does not have user-id 33333. The user-id is $(id -u)" \
-&& exit 1
+&& exit 1 ; \
+else \
+exit 0 ; \
+fi
 # ─── CONFIGURING PACMAN ─────────────────────────────────────────────────────────
+USER root
 RUN \
 set -xue ; \
 sed -i \
@@ -38,17 +34,8 @@ sed -i \
   -e '/\[options\]/a Color' \
   -e '/\[options\]/a ILoveCandy' \
 /etc/pacman.conf ;
-# ─── FINDING FASTEST SOURCES ────────────────────────────────────────────────────
-RUN \
-set -xue ; \
-pacman -S --noconfirm reflector \
-&& reflector \
-  --verbose \
-  -p https \
-  --latest 5 \
-  --sort rate \
-  --save /etc/pacman.d/mirrorlist
 # ─── INSTALLING CORE PACKAGES ───────────────────────────────────────────────────
+USER root
 RUN \
 set -xue ; \
 [ -r /usr/bin/gp ] && ln -sf /usr/bin/gp /usr/bin/gp-preview ; \
@@ -56,13 +43,12 @@ pacman -Sy --noconfirm --needed \
   git \
   base-devel \
   bash-completion \
-  pacman-contrib \
-  expac \
   wget \
   curl \
   sudo \
-  perl
+> /dev/null 2>&1 ;
 # ─── SUDO SETUP ─────────────────────────────────────────────────────────────────
+USER root
 RUN \
 set -xue ; \
 ! getent group sudo > /dev/null && groupadd sudo \
@@ -75,6 +61,9 @@ echo "%wheel ALL=(ALL) ALL" ; \
 echo "%wheel ALL=(ALL) NOPASSWD: ALL" ; \
 ) | tee -a /etc/sudoers > /dev/null ;
 # ─── USER SETUP ─────────────────────────────────────────────────────────────────
+USER root
+# [ NOTE ] => user password was generated through the following command
+# perl -e 'print crypt($ARGV[0], "password")' "gitpod"
 RUN \
 set -xue ; \
 ! getent group "gitpod" > /dev/null \
@@ -88,10 +77,7 @@ set -xue ; \
   --uid "33333" \
   --groups sudo \
   --shell "/bin/bash" \
-  --password \
-  $(perl \
-    -e 'print crypt($ARGV[0], "password")' \
-      "gitpod_33333" 2>/dev/null) \
+  --password "paF0XkFNewMcY" \
   "gitpod" && \
 cp -R /root/. /home/gitpod ;
 RUN \
@@ -102,28 +88,41 @@ echo "gitpod:gitpod" | chpasswd \
 && passwd -l root || true
 # ─── PARU INSTALL ───────────────────────────────────────────────────────────────
 USER "gitpod"
+# [ NOTE ] => this run statement tries to install paru up to five failures
+# as sometimes, aur may be temporarily unavailable
 RUN \
-  git clone https://aur.archlinux.org/paru.git /tmp/paru
-WORKDIR /tmp/paru
-RUN \
-for i in {1..5}; do makepkg -sic --noconfirm && break || sleep 15; done
+set -xue ; \
+[ ! -d "/home/gitpod/.cargo" ] && clean_cargo="true" || clean_cargo=="false" ; \
+git clone https://aur.archlinux.org/paru.git /tmp/paru \
+&& pushd /tmp/paru > /dev/null 2>&1 \
+&& for i in {1..5}; do makepkg --noconfirm -sicr > /dev/null 2>&1 && break || sleep 15; done \
+&& paru --version > /dev/null 2>&1 \
+! cargo --version > /dev/null 2>&1 \
+&& popd > /dev/null 2>&1 \
+&& [[ "${clean_cargo}" == "true" ]] && rm -r "/home/gitpod/.cargo" ;
 # ─── COPY CONFIG AND LAYER SCRIPT ───────────────────────────────────────────────
 COPY ./gitpod /var/gitpod
 # ─── CONFIGURE USER SHELL ───────────────────────────────────────────────────────
+USER "gitpod"
 # TODO Remove this in the near future when we do not need ~/.bashrc appends/prepends any more
 RUN \
-    touch ~/.hushlogin                                                   && \
-    BASH_RC=~/.bashrc; if [ -f "$BASH_RC" ]; then cp "$BASH_RC" ~/.bashrc-org; else touch ~/.bashrc-org; fi && \
-    cat /var/gitpod/.bashrc-prepend > "$BASH_RC"                            && \
-    cat ~/.bashrc-org >> "$BASH_RC"                                         && \
-    cat /var/gitpod/.bashrc-append >> "$BASH_RC"
+set -xue ; \
+BASH_RC=~/.bashrc; \
+[ ! -d "/home/gitpod" ] && echo >&2 "'gitpod' user home directory not found" && exit 1 ; \
+[ -r "$BASH_RC" ] && cp "$BASH_RC" ~/.bashrc-org || touch ~/.bashrc-org ; \
+touch ~/.hushlogin ; \
+cat /var/gitpod/.bashrc-prepend > "$BASH_RC" \
+&& cat ~/.bashrc-org >> "$BASH_RC" \
+&& cat /var/gitpod/.bashrc-append >> "$BASH_RC"
 # ─── CLEANUP AND FINALIZATIONS ──────────────────────────────────────────────────
 USER root
 RUN \
-  chown "$(id -u gitpod):$(id -g gitpod)" "${HOME}" -R \
-  && pacman -Rcns --noconfirm rust > /dev/null 2>&1 || true \
-  && pacman -Qdtq | sudo pacman -Rs - > /dev/null 2>&1 || true \
-  && rm -rf \
-    /tmp/*
+set -xue ; \
+chown "$(id -u gitpod):$(id -g gitpod)" "/home/gitpod" -R \
+&& pacman -Qdtq | sudo pacman -Rs - > /dev/null 2>&1 || true \
+&& pacman --noconfirm -Scc > /dev/null 2>&1 \
+&& rm -rf \
+  /var/cache/pacman/pkg/* \
+  /tmp/*
 # ────────────────────────────────────────────────────────────────────────────────
 USER gitpod

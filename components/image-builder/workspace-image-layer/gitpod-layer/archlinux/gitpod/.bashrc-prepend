@@ -5,7 +5,7 @@
 ###############################################################################
 
 # Prompt color and bash_completion
-export PS1='\[\e]0;\u \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u\[\033[00m\] \[\033[01;34m\]\w \$ \[\033[00m\]'
+export PS1='[\u@\h \W]\$ '
 #source /etc/bash_completion
 
 # editor config - should be removed when registry facade is default
@@ -25,7 +25,7 @@ if [ -n "$GITPOD_MEMORY" ]; then
 fi
 
 # Completion for gp command
-. <(gp completion)
+command -- gp -h >/dev/null 2>&1 && . <(gp completion)
 # ide cli config - should be removed when registry facade is default
 if [ ! -d "/ide/bin/" ]; then
     alias open='gp open'
