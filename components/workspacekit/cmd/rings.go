@@ -5,8 +5,12 @@
 package cmd
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net"
 	"os"
 	"os/exec"
@@ -243,14 +247,19 @@ var ring1Cmd = &cobra.Command{
 			log.WithField("fsshift", fsshift).Fatal("unknown FS shift method")
 		}
 
-		mnts = append(mnts,
-			mnte{Target: "/sys", Flags: unix.MS_BIND | unix.MS_REC},
-			mnte{Target: "/dev", Flags: unix.MS_BIND | unix.MS_REC},
-			mnte{Target: "/etc/hosts", Flags: unix.MS_BIND | unix.MS_REC},
-			mnte{Target: "/etc/hostname", Flags: unix.MS_BIND | unix.MS_REC},
-			mnte{Target: "/etc/resolv.conf", Flags: unix.MS_BIND | unix.MS_REC},
-			mnte{Target: "/tmp", Source: "tmpfs", FSType: "tmpfs"},
-		)
+		procMounts, err := ioutil.ReadFile("/proc/mounts")
+		if err != nil {
+			log.WithError(err).Fatal("cannot read /proc/mounts")
+		}
+
+		candidates, err := findBindMountCandidates(bytes.NewReader(procMounts), os.Readlink)
+		if err != nil {
+			log.WithError(err).Fatal("cannot detect mount candidates")
+		}
+		for _, c := range candidates {
+			mnts = append(mnts, mnte{Target: c, Flags: unix.MS_BIND | unix.MS_REC})
+		}
+		mnts = append(mnts, mnte{Target: "/tmp", Source: "tmpfs", FSType: "tmpfs"})
 
 		// FWB workspaces do not require mounting /workspace
 		// if that is done, the backup will not contain any change in the directory
@@ -443,6 +452,70 @@ var ring1Cmd = &cobra.Command{
 		}
 		exitCode = 0 // once we get here everythings good
 	},
+}
+
+var (
+	knownMountCandidatePaths = []string{
+		"/workspace",
+		"/sys",
+		"/dev",
+		"/etc/hosts",
+		"/etc/hostname",
+		"/etc/resolv.conf",
+	}
+)
+
+func findBindMountCandidates(procMounts io.Reader, readlink func(path string) (dest string, err error)) (mounts []string, err error) {
+	scanner := bufio.NewScanner(procMounts)
+	for scanner.Scan() {
+		fields := strings.Fields(scanner.Text())
+		if len(fields) < 4 {
+			continue
+		}
+
+		// accept known paths
+		var (
+			path   = fields[1]
+			accept bool
+		)
+		for _, p := range knownMountCandidatePaths {
+			if p == path {
+				accept = true
+				break
+			}
+		}
+		if accept {
+			mounts = append(mounts, path)
+			continue
+		}
+
+		// reject known filesystems
+		var (
+			fs     = fields[0]
+			reject bool
+		)
+		switch fs {
+		case "cgroup", "devpts", "mqueue", "shm", "proc", "sysfs":
+			reject = true
+		}
+		if reject {
+			continue
+		}
+
+		// test remaining candidates if they're a Kubernetes configMap or secret
+		ln, err := readlink(filepath.Join(path, "..data"))
+		if err != nil {
+			log.WithField("path", path).Debug("not bind-mounting because this doesn't look like a configMap")
+			continue
+		}
+		if !strings.HasPrefix(ln, "..") {
+			log.WithField("path", path).WithField("ln", ln).Debug("not bind-mounting because this doesn't look like a configMap")
+			continue
+		}
+
+		mounts = append(mounts, path)
+	}
+	return mounts, scanner.Err()
 }
 
 func receiveSeccmpFd(conn *net.UnixConn) (libseccomp.ScmpFd, error) {
