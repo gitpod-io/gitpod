@@ -134,7 +134,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
          *      thus GREATEST gives us the highest (newest) timestamp on the running instance which correlates to the last activity on that workspace
          */
         const repo = await this.getWorkspaceRepo();
-        let qb = repo
+        const qb = repo
             .createQueryBuilder('ws')
             // We need to put the subquery into the join condition (ON) here to be able to reference `ws.id` which is
             // not possible in a subquery on JOIN (e.g. 'LEFT JOIN (SELECT ... WHERE i.workspaceId = ws.id)')
@@ -152,20 +152,23 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
                     .from(DBWorkspaceInstance, 'i2')
                     .where('i2.phasePersisted = "running"');
             }, 'wsiRunning', 'ws.id = wsiRunning.workspaceId')
-            .where('ws.ownerId = :userId', options)
+            .where('ws.ownerId = :userId', { userId: options.userId })
             .andWhere('ws.softDeleted IS NULL')
             .andWhere('ws.deleted != TRUE')
             .orderBy('wsiRunning.workspaceId', 'DESC')
             .addOrderBy('GREATEST(ws.creationTime, wsi.creationTime, wsi.startedTime, wsi.stoppedTime)', 'DESC')
             .limit(options.limit || 10);
         if (options.searchString) {
-            qb = qb.andWhere("ws.description LIKE :searchString", {searchString: `%${options.searchString}%`});
+            qb.andWhere("ws.description LIKE :searchString", {searchString: `%${options.searchString}%`});
         }
         if (!options.includeHeadless) {
-            qb = qb.andWhere("ws.type = 'regular'");
+            qb.andWhere("ws.type = 'regular'");
         }
         if (options.pinnedOnly) {
-            qb = qb.andWhere("ws.pinned = true");
+            qb.andWhere("ws.pinned = true");
+        }
+        if (options.projectId) {
+            qb.andWhere('ws.projectId = :projectId', { projectId: options.projectId })
         }
 
         const rawResults = await qb.getMany() as any as (Workspace & { latestInstance?: WorkspaceInstance })[]; // see leftJoinAndMapOne above
@@ -819,16 +822,34 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         return <WorkspaceAndInstance>(res);
     }
 
-    async findPrebuiltWorkspacesByProject(projectId: string): Promise<PrebuiltWorkspace[]> {
+    async findPrebuiltWorkspacesByProject(projectId: string, branch?: string, limit?: number): Promise<PrebuiltWorkspace[]> {
         const repo = await this.getPrebuiltWorkspaceRepo();
 
         const query = repo.createQueryBuilder('pws')
             .orderBy('pws.creationTime', 'ASC')
             .innerJoinAndMapOne('pws.workspace', DBWorkspace, 'ws', 'pws.buildWorkspaceId = ws.id')
-            .andWhere('pws.projectId = :projectId', { projectId })
+            .andWhere('pws.projectId = :projectId', { projectId });
+
+        if (branch) {
+            query.andWhere('pws.branch = :branch', { branch });
+        }
+        if (limit) {
+            query.limit(limit);
+        }
 
         const res = await query.getMany();
         return res;
+    }
+
+    async findPrebuiltWorkspacesById(id: string): Promise<PrebuiltWorkspace | undefined> {
+        const repo = await this.getPrebuiltWorkspaceRepo();
+
+        const query = repo.createQueryBuilder('pws')
+            .orderBy('pws.creationTime', 'ASC')
+            .innerJoinAndMapOne('pws.workspace', DBWorkspace, 'ws', 'pws.buildWorkspaceId = ws.id')
+            .andWhere('pws.id = :id', { id });
+
+        return query.getOne();
     }
 
 }

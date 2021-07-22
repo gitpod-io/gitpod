@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { ContextURL, GitpodToken, Snapshot, Team, TeamMemberInfo, Token, User, UserEnvVar, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { ContextURL, GitpodToken, Project, Snapshot, Team, TeamMemberInfo, Token, User, UserEnvVar, Workspace, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "./host-context-provider";
 
 declare var resourceInstance: GuardedResource;
@@ -21,6 +21,7 @@ export type GuardedResource =
     GuardedContentBlob |
     GuardEnvVar |
     GuardedTeam |
+    // GuardedProject |
     GuardedWorkspaceLog
     ;
 
@@ -86,6 +87,11 @@ export interface GuardedTeam {
     kind: "team";
     subject: Team;
     members: TeamMemberInfo[];
+}
+
+export interface GuardedProject {
+    kind: "project";
+    subject: Project;
 }
 
 export interface GuardedGitpodToken {

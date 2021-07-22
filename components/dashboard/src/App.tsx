@@ -36,6 +36,7 @@ const ConfigureProject = React.lazy(() => import(/* webpackPrefetch: true */ './
 const Projects = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Projects'));
 const Project = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Project'));
 const Prebuilds = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Prebuilds'));
+const Prebuild = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Prebuild'));
 const Settings = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Settings'));
 const InstallGitHubApp = React.lazy(() => import(/* webpackPrefetch: true */ './prebuilds/InstallGitHubApp'));
 const FromReferrer = React.lazy(() => import(/* webpackPrefetch: true */ './FromReferrer'));
@@ -199,24 +200,24 @@ function App() {
                     <Route exact path={`/${team.slug}`}>
                         <Redirect to={`/${team.slug}/projects`} />
                     </Route>
-                    <Route exact path={`/${team.slug}/:maybeProject/:subResource?`} render={(props) => {
-                        const { maybeProject, subResource } = props.match.params;
+                    <Route exact path={`/${team.slug}/:maybeProject/:resourceOrPrebuild?`} render={(props) => {
+                        const { maybeProject, resourceOrPrebuild } = props.match.params;
                         if (maybeProject === "projects") {
                             return <Projects />;
                         }
                         if (maybeProject === "members") {
                             return <Members />;
                         }
-                        if (subResource === "configure") {
+                        if (resourceOrPrebuild === "configure") {
                             return <ConfigureProject />;
                         }
-                        if (subResource === "prebuilds") {
+                        if (resourceOrPrebuild === "prebuilds") {
                             return <Prebuilds />;
                         }
-                        if (subResource === "settings") {
+                        if (resourceOrPrebuild === "settings") {
                             return <Settings />;
                         }
-                        return <Project />;
+                        return resourceOrPrebuild ? <Prebuild /> : <Project />;
                     }} />
                 </Route>)}
                 <Route path="*" render={
