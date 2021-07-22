@@ -65,6 +65,24 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     this.toDispose.dispose();
   }
 
+  componentDidUpdate(prevPros: StartWorkspaceProps, prevState: StartWorkspaceState) {
+    const newPhase = this.state?.workspaceInstance?.status.phase;
+    const oldPhase = prevState.workspaceInstance?.status.phase;
+    if (newPhase !== oldPhase) {
+      getGitpodService().server.trackEvent({
+        event: "status_rendered",
+        properties: { workspaceId: this.state?.workspaceInstance?.workspaceId, "phase": newPhase },
+      });
+    }
+
+    if (!!this.state.error && this.state.error !== prevState.error) {
+      getGitpodService().server.trackEvent({
+        event: "error_rendered",
+        properties: { workspaceId: this.state?.workspaceInstance?.workspaceId, "error": this.state.error },
+      });
+    }
+  }
+
   async startWorkspace(restart = false, forceDefaultImage = false) {
     const state = this.state;
     if (state) {
