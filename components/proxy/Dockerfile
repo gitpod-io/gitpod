@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Copyright (c) 2021 Gitpod GmbH. All rights reserved.
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
@@ -10,8 +10,6 @@ RUN curl -fsSL https://github.com/caddyserver/xcaddy/releases/download/v0.1.9/xc
 WORKDIR /plugins
 
 COPY plugins/go.* /plugins/
-
-RUN go mod download
 
 COPY plugins /plugins
 
@@ -25,7 +23,11 @@ RUN git clone -b http2 https://github.com/aledbf/caddy caddy-fork
 RUN xcaddy build \
   --output /caddy \
   --with github.com/caddyserver/caddy/v2=$PWD/caddy-fork \
-  --with github.com/gitpod-io/gitpod/proxy/plugins=/plugins
+  --with github.com/gitpod-io/gitpod/proxy/plugins/corsorigin=/plugins/corsorigin \
+  --with github.com/gitpod-io/gitpod/proxy/plugins/secwebsocketkey=/plugins/secwebsocketkey \
+  --with github.com/gitpod-io/gitpod/proxy/plugins/workspacedownload=/plugins/workspacedownload \
+  --with github.com/gitpod-io/gitpod/proxy/plugins/logif=/plugins/logif \
+  --with github.com/gitpod-io/gitpod/proxy/plugins/jsonselect=/plugins/jsonselect
 
 FROM alpine:3.14
 
