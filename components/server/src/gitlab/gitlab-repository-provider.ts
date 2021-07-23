@@ -6,7 +6,7 @@
 
 import { injectable, inject } from 'inversify';
 
-import { User, Repository } from "@gitpod/gitpod-protocol"
+import { User, Repository, Branch, CommitInfo } from "@gitpod/gitpod-protocol"
 import { GitLabApi, GitLab } from "./api";
 import { RepositoryProvider } from '../repohost/repository-provider';
 import { parseRepoUrl } from '../repohost/repo-url';
@@ -28,5 +28,15 @@ export class GitlabRepositoryProvider implements RepositoryProvider {
         const avatarUrl = response.owner.avatar_url || undefined;
         const webUrl = response.web_url;
         return { host, owner, name, cloneUrl, description, avatarUrl, webUrl };
+    }
+
+    async getBranches(user: User, owner: string, repo: string): Promise<Branch[]> {
+        // todo
+        return [];
+    }
+
+    async getCommitInfo(user: User, owner: string, repo: string, ref: string): Promise<CommitInfo | undefined> {
+        // todo
+        return undefined;
     }
 }

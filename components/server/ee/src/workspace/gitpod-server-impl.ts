@@ -7,7 +7,7 @@
 import { injectable, inject } from "inversify";
 import { GitpodServerImpl } from "../../../src/workspace/gitpod-server-impl";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { GitpodServer, GitpodClient, AdminGetListRequest, User, AdminGetListResult, Permission, AdminBlockUserRequest, AdminModifyRoleOrPermissionRequest, RoleOrPermission, AdminModifyPermanentWorkspaceFeatureFlagRequest, UserFeatureSettings, AdminGetWorkspacesRequest, WorkspaceAndInstance, GetWorkspaceTimeoutResult, WorkspaceTimeoutDuration, WorkspaceTimeoutValues, SetWorkspaceTimeoutResult, WorkspaceContext, CreateWorkspaceMode, WorkspaceCreationResult, PrebuiltWorkspaceContext, CommitContext, PrebuiltWorkspace, PermissionName, WorkspaceInstance, EduEmailDomain, ProviderRepository, PrebuildInfo, Queue } from "@gitpod/gitpod-protocol";
+import { GitpodServer, GitpodClient, AdminGetListRequest, User, AdminGetListResult, Permission, AdminBlockUserRequest, AdminModifyRoleOrPermissionRequest, RoleOrPermission, AdminModifyPermanentWorkspaceFeatureFlagRequest, UserFeatureSettings, AdminGetWorkspacesRequest, WorkspaceAndInstance, GetWorkspaceTimeoutResult, WorkspaceTimeoutDuration, WorkspaceTimeoutValues, SetWorkspaceTimeoutResult, WorkspaceContext, CreateWorkspaceMode, WorkspaceCreationResult, PrebuiltWorkspaceContext, CommitContext, PrebuiltWorkspace, PermissionName, WorkspaceInstance, EduEmailDomain, ProviderRepository, Queue } from "@gitpod/gitpod-protocol";
 import { ResponseError } from "vscode-jsonrpc";
 import { TakeSnapshotRequest, AdmissionLevel, ControlAdmissionRequest, StopWorkspacePolicy, DescribeWorkspaceRequest, SetTimeoutRequest } from "@gitpod/ws-manager/lib";
 import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
@@ -1451,34 +1451,39 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         const user = this.checkAndBlockUser("getProviderRepositoriesForUser");
 
         const repositories = await this.githubAppSupport.getProviderRepositoriesForUser({ user, ...params });
+
+        const cloneUrls = repositories.map(r => r.cloneUrl);
+        const projects = await this.projectDB.findProjectsByCloneUrl(cloneUrls);
+
+        const cloneUrlsInUse = new Set(projects.map(p => p.cloneUrl));
+        repositories.forEach(r => { r.inUse = cloneUrlsInUse.has(r.cloneUrl) });
+
         return repositories;
     }
 
-    public async getPrebuilds(teamId: string, projectName: string): Promise<PrebuildInfo[]> {
-        this.checkAndBlockUser("getPrebuilds");
-        const span = opentracing.globalTracer().startSpan("getPrebuilds");
-        span.setTag("teamId", teamId);
-        span.setTag("projectName", projectName);
-        const result: PrebuildInfo[] = [];
+    async triggerPrebuild(projectId: string, branch: string): Promise<void> {
+        const user = this.checkAndBlockUser("triggerPrebuild");
 
-        const project = (await this.projectDB.findProjectsByTeam(teamId)).find(p => p.name === projectName);
-        if (project) {
-            const pwss = await this.workspaceDb.trace({ span }).findPrebuiltWorkspacesByProject(project.id);
-
-            for (const pws of pwss) {
-                result.push({
-                    id: pws.id,
-                    startedAt: pws.creationTime,
-                    startedBy: "UNKNOWN",
-                    teamId,
-                    project: projectName,
-                    branch: pws.branch || "unknown",
-                    cloneUrl: pws.cloneURL,
-                    status: pws.state
-                });
-            }
+        const project = await this.projectsService.getProject(projectId);
+        if (!project) {
+            return;
         }
+        await this.guardTeamOperation(project.teamId, "get");
 
-        return result;
+        const span = opentracing.globalTracer().startSpan("triggerPrebuild");
+        span.setTag("userId", user.id);
+
+        const contextURL = `${project.cloneUrl.replace(".git", "")}/tree/${branch}`; // just a quick hack!
+
+        const context = await this.contextParser.handle({ span }, user, contextURL) as CommitContext;
+
+        await this.prebuildManager.startPrebuild({ span }, {
+            contextURL,
+            cloneURL: project.cloneUrl,
+            commit: context.revision,
+            user,
+            branch,
+            project
+        });
     }
 }

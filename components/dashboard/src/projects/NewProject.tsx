@@ -219,11 +219,15 @@ export default function NewProject() {
                                     <div className="text-base text-gray-900 dark:text-gray-50 font-medium rounded-xl whitespace-nowrap">{toSimpleName(r.name)}</div>
                                     <p>Updated {moment(r.updatedAt).fromNow()}</p>
                                 </div>
-                                <div className="flex justify-end">
-                                    <div className="h-full my-auto flex self-center opacity-0 group-hover:opacity-100">
-                                        <button className="primary" onClick={() => setSelectedRepo(r.name)}>Select</button>
+                                    <div className="flex justify-end">
+                                        <div className="h-full my-auto flex self-center opacity-0 group-hover:opacity-100">
+                                            {!r.inUse ? (
+                                                <button className="primary" onClick={() => setSelectedRepo(r.name)}>Select</button>
+                                            ) : (
+                                                <p className="my-auto">already taken</p>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
                             </div>
                         ))}
                     </div>

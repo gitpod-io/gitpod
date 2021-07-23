@@ -332,11 +332,10 @@ function ImageBuildView(props: ImageBuildViewProps) {
   const logsEmitter = new EventEmitter();
 
   useEffect(() => {
-    const service = getGitpodService();
-    const watchBuild = () => service.server.watchWorkspaceImageBuildLogs(props.workspaceId);
+    const watchBuild = () => getGitpodService().server.watchWorkspaceImageBuildLogs(props.workspaceId);
     watchBuild();
 
-    const toDispose = service.registerClient({
+    const toDispose = getGitpodService().registerClient({
       notifyDidOpenConnection: () => watchBuild(),
       onWorkspaceImageBuildLogs: (info: WorkspaceImageBuild.StateInfo, content?: WorkspaceImageBuild.LogContent) => {
         if (!content) {
@@ -363,8 +362,7 @@ function HeadlessWorkspaceView(props: { instanceId: string }) {
   const logsEmitter = new EventEmitter();
 
   useEffect(() => {
-    const service = getGitpodService();
-    const disposables = watchHeadlessLogs(service.server, props.instanceId, (chunk) => logsEmitter.emit('logs', chunk), async () => { return false; });
+    const disposables = watchHeadlessLogs(props.instanceId, (chunk) => logsEmitter.emit('logs', chunk), async () => { return false; });
     return function cleanup() {
       disposables.dispose();
     };

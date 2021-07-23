@@ -6,7 +6,7 @@
 
 import React, { Suspense, useContext, useEffect, useState } from "react";
 import { useLocation, useRouteMatch } from "react-router";
-import { CreateWorkspaceMode, ProjectInfo, WorkspaceCreationResult } from "@gitpod/gitpod-protocol";
+import { CreateWorkspaceMode, Project, WorkspaceCreationResult } from "@gitpod/gitpod-protocol";
 import PrebuildLogs from "../components/PrebuildLogs";
 import TabMenuItem from "../components/TabMenuItem";
 import { getGitpodService } from "../service/service";
@@ -53,7 +53,7 @@ export default function () {
   const location = useLocation();
   const team = getCurrentTeam(location, teams);
   const routeMatch = useRouteMatch<{ teamSlug: string, projectSlug: string }>("/:teamSlug/:projectSlug/configure");
-  const [ project, setProject ] = useState<ProjectInfo | undefined>();
+  const [ project, setProject ] = useState<Project | undefined>();
   const [ gitpodYml, setGitpodYml ] = useState<string>('');
   const [ dockerfile, setDockerfile ] = useState<string>('');
   const [ editorError, setEditorError ] = useState<React.ReactNode | null>(null);

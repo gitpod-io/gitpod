@@ -21,6 +21,7 @@ export interface Project {
     creationTime: string;
     /** This is a flag that triggers the HARD DELETION of this entity */
     deleted?: boolean;
+    markedDeleted?: boolean;
 }
 
 export namespace Project {
@@ -31,21 +32,47 @@ export namespace Project {
             creationTime: new Date().toISOString()
         };
     }
-}
 
-export interface ProjectInfo extends Project {
-    lastPrebuild?: PrebuildInfo;
+    export interface Overview {
+        branches: BranchDetails[]
+    }
+
+    export interface BranchDetails {
+        name: string;
+        branchUrl: string;
+        isDefault: boolean;
+
+        // Latest commit
+        changeTitle: string;
+        changeDate?: string;
+        changeAuthor?: string;
+        changeAuthorAvatar?: string;
+        changePR?: string;
+        changeUrl?: string;
+        changeHash: string;
+    }
 }
 
 export interface PrebuildInfo {
     id: string;
     teamId: string;
-    project: string;
+    projectName: string;
     cloneUrl: string;
     branch: string;
+    branchPrebuildNumber: string;
+    buildWorkspaceId: string;
+
     startedAt: string;
     startedBy: string;
+    startedByAvatar?: string;
     status: PrebuiltWorkspaceState;
+    changeTitle: string;
+    changeDate: string;
+    changeAuthor: string;
+    changeAuthorAvatar?: string;
+    changePR?: string;
+    changeUrl?: string;
+    changeHash: string;
 }
 
 export interface Team {

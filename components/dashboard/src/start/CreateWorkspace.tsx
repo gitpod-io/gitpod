@@ -247,7 +247,6 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
   const [statusMessage, setStatusMessage] = useState<React.ReactNode>();
   useEffect(() => {
     (async () => {
-      const service = getGitpodService();
       const { host, owner, repoName, userIsOwner, userScopes, lastUpdate } = p.error.data;
       console.log('host', host);
       console.log('owner', owner);
@@ -256,12 +255,12 @@ function RepositoryNotFoundView(p: { error: StartWorkspaceError }) {
       console.log('userScopes', userScopes);
       console.log('lastUpdate', lastUpdate);
 
-      if ((await service.server.mayAccessPrivateRepo()) === false) {
+      if ((await getGitpodService().server.mayAccessPrivateRepo()) === false) {
         setStatusMessage(<LimitReachedPrivateRepoModal />);
         return;
       }
 
-      const authProvider = (await service.server.getAuthProviders()).find(p => p.host === host);
+      const authProvider = (await getGitpodService().server.getAuthProviders()).find(p => p.host === host);
       if (!authProvider) {
         return;
       }
@@ -334,7 +333,6 @@ interface RunningPrebuildViewProps {
 
 function RunningPrebuildView(props: RunningPrebuildViewProps) {
   const logsEmitter = new EventEmitter();
-  const service = getGitpodService();
   let pollTimeout: NodeJS.Timeout | undefined;
   let prebuildDoneTriggered: boolean = false;
 
@@ -345,7 +343,7 @@ function RunningPrebuildView(props: RunningPrebuildViewProps) {
         return true;
       }
 
-      const done = await service.server.isPrebuildDone(props.runningPrebuild.prebuildID);
+      const done = await getGitpodService().server.isPrebuildDone(props.runningPrebuild.prebuildID);
       if (done) {
         // note: this treats "done" as "available" which is not equivalent.
         // This works because the backend ignores prebuilds which are not "available", and happily starts a workspace as if there was no prebuild at all.
@@ -361,7 +359,7 @@ function RunningPrebuildView(props: RunningPrebuildViewProps) {
       pollTimeout = setTimeout(pollIsPrebuildDone, 10000);
     };
 
-    const disposables = watchHeadlessLogs(service.server, props.runningPrebuild.instanceID, (chunk) => logsEmitter.emit('logs', chunk), checkIsPrebuildDone);
+    const disposables = watchHeadlessLogs(props.runningPrebuild.instanceID, (chunk) => logsEmitter.emit('logs', chunk), checkIsPrebuildDone);
     return function cleanup() {
       clearTimeout(pollTimeout!);
       disposables.dispose();

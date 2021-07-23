@@ -7,16 +7,16 @@
 import Separator from "./Separator";
 
 export interface HeaderProps {
-    title: string;
-    subtitle: string;
+    title: string | React.ReactElement;
+    subtitle: string | React.ReactElement;
 }
 
 export default function Header(p: HeaderProps) {
     return <div className="lg:px-28 px-10 border-gray-200 dark:border-gray-800">
         <div className="flex pb-8 pt-6">
             <div className="">
-                <h1 className="tracking-tight">{p.title}</h1>
-                <h2 className="tracking-wide">{p.subtitle}</h2>
+                {typeof p.title === "string" ? (<h1 className="tracking-tight">{p.title}</h1>) : p.title}
+                {typeof p.subtitle === "string" ? (<h2 className="tracking-wide">{p.subtitle}</h2>) : p.subtitle}
             </div>
         </div>
         <Separator />

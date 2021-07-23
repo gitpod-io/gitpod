@@ -6,7 +6,7 @@
 
 import EventEmitter from "events";
 import React, { Suspense, useEffect, useState } from "react";
-import { Workspace, WorkspaceInstance, DisposableCollection, WorkspaceImageBuild, GitpodServer, HEADLESS_LOG_STREAM_STATUS_CODE_REGEX } from "@gitpod/gitpod-protocol";
+import { Workspace, WorkspaceInstance, DisposableCollection, WorkspaceImageBuild, HEADLESS_LOG_STREAM_STATUS_CODE_REGEX } from "@gitpod/gitpod-protocol";
 import { getGitpodService } from "../service/service";
 
 const WorkspaceLogs = React.lazy(() => import('./WorkspaceLogs'));
@@ -15,8 +15,7 @@ export default function PrebuildLogs(props: { workspaceId?: string }) {
   const [ workspace, setWorkspace ] = useState<Workspace | undefined>();
   const [ workspaceInstance, setWorkspaceInstance ] = useState<WorkspaceInstance | undefined>();
   const [ error, setError ] = useState<Error | undefined>();
-  const logsEmitter = new EventEmitter();
-  const service = getGitpodService();
+  const [ logsEmitter ] = useState(new EventEmitter());
 
   useEffect(() => {
     const disposables = new DisposableCollection();
@@ -25,12 +24,12 @@ export default function PrebuildLogs(props: { workspaceId?: string }) {
         return;
       }
       try {
-        const info = await service.server.getWorkspace(props.workspaceId);
+        const info = await getGitpodService().server.getWorkspace(props.workspaceId);
         if (info.latestInstance) {
           setWorkspace(info.workspace);
           setWorkspaceInstance(info.latestInstance);
         }
-        disposables.push(service.registerClient({
+        disposables.push(getGitpodService().registerClient({
           onInstanceUpdate: setWorkspaceInstance,
           onWorkspaceImageBuildLogs: (info: WorkspaceImageBuild.StateInfo, content?: WorkspaceImageBuild.LogContent) => {
             if (!content) {
@@ -40,7 +39,7 @@ export default function PrebuildLogs(props: { workspaceId?: string }) {
           },
         }));
         if (info.latestInstance) {
-          disposables.push(watchHeadlessLogs(service.server, info.latestInstance.id, chunk => {
+          disposables.push(watchHeadlessLogs(info.latestInstance.id, chunk => {
             logsEmitter.emit('logs', chunk);
           }, async () => workspaceInstance?.status.phase === 'stopped'));
         }
@@ -64,7 +63,7 @@ export default function PrebuildLogs(props: { workspaceId?: string }) {
         // Preparing means that we haven't actually started the workspace instance just yet, but rather
         // are still preparing for launch. This means we're building the Docker image for the workspace.
         case "preparing":
-          service.server.watchWorkspaceImageBuildLogs(workspace!.id);
+          getGitpodService().server.watchWorkspaceImageBuildLogs(workspace!.id);
           break;
 
         // Pending means the workspace does not yet consume resources in the cluster, but rather is looking for
@@ -100,7 +99,7 @@ export default function PrebuildLogs(props: { workspaceId?: string }) {
 
         // Stopped means the workspace ended regularly because it was shut down.
         case "stopped":
-          service.server.watchWorkspaceImageBuildLogs(workspace!.id);
+          getGitpodService().server.watchWorkspaceImageBuildLogs(workspace!.id);
           break;
     }
     if (workspaceInstance?.status.conditions.failed) {
@@ -109,7 +108,7 @@ export default function PrebuildLogs(props: { workspaceId?: string }) {
   }, [ workspaceInstance?.status.phase ]);
 
   return <>
-    <div className="capitalize">{workspaceInstance?.status.phase}</div>
+    {/* <div className="capitalize">{workspaceInstance?.status.phase}</div> */}
     <Suspense fallback={<div />}>
       <WorkspaceLogs classes="h-64 w-full" logsEmitter={logsEmitter} errorMessage={error?.message} />
     </Suspense>
@@ -121,7 +120,7 @@ export default function PrebuildLogs(props: { workspaceId?: string }) {
   </>;
 }
 
-export function watchHeadlessLogs(server: GitpodServer, instanceId: string, onLog: (chunk: string) => void, checkIsDone: () => Promise<boolean>): DisposableCollection {
+export function watchHeadlessLogs(instanceId: string, onLog: (chunk: string) => void, checkIsDone: () => Promise<boolean>): DisposableCollection {
   const disposables = new DisposableCollection();
 
   const startWatchingLogs = async () => {
@@ -140,7 +139,7 @@ export function watchHeadlessLogs(server: GitpodServer, instanceId: string, onLo
     let response: Response | undefined = undefined;
     let reader: ReadableStreamDefaultReader<Uint8Array> | undefined = undefined;
     try {
-      const logSources = await server.getHeadlessLog(instanceId);
+      const logSources = await getGitpodService().server.getHeadlessLog(instanceId);
       // TODO(gpl) Only listening on first stream for now
       const streamIds = Object.keys(logSources.streams);
       if (streamIds.length < 1) {
