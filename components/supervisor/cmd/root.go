@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -30,9 +31,25 @@ var (
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	log.Init(ServiceName, Version, false, true)
+	log.Log.Logger.AddHook(fatalTerminationLogHook{})
 
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+}
+
+type fatalTerminationLogHook struct{}
+
+func (fatalTerminationLogHook) Levels() []logrus.Level {
+	return []logrus.Level{logrus.FatalLevel}
+}
+
+func (fatalTerminationLogHook) Fire(e *logrus.Entry) error {
+	msg := e.Message
+	if err := e.Data[logrus.ErrorKey]; err != nil {
+		msg += ": " + err.(error).Error()
+	}
+
+	return os.WriteFile("/dev/termination-log", []byte(msg), 0644)
 }

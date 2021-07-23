@@ -52,6 +52,11 @@ import (
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 )
 
+const (
+	gitpodUID = 33333
+	gitpodGID = 33333
+)
+
 var (
 	additionalServices []RegisterableService
 	apiEndpointOpts    []grpc.ServerOption
@@ -122,6 +127,11 @@ func Run(options ...RunOption) {
 		return
 	}
 
+	err = AddGitpodUserIfNotExists()
+	if err != nil {
+		log.WithError(err).Fatal("cannot ensure Gitpod user exists")
+	}
+
 	buildIDEEnv(&Config{})
 	configureGit(cfg)
 
@@ -185,8 +195,8 @@ func Run(options ...RunOption) {
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
 	termMuxSrv.Env = buildIDEEnv(cfg)
 	termMuxSrv.DefaultCreds = &syscall.Credential{
-		Uid: 33333,
-		Gid: 33333,
+		Uid: gitpodUID,
+		Gid: gitpodGID,
 	}
 
 	apiServices := []RegisterableService{
@@ -522,8 +532,8 @@ func prepareIDELaunch(cfg *Config) *exec.Cmd {
 		Setpgid:   true,
 		Pdeathsig: syscall.SIGKILL,
 		Credential: &syscall.Credential{
-			Uid: 33333,
-			Gid: 33333,
+			Uid: gitpodUID,
+			Gid: gitpodGID,
 		},
 	}
 
@@ -1019,7 +1029,7 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 	if err != nil {
 		log.WithError(err).Error("cannot provide Docker activation socket")
 	}
-	_ = os.Chown(fn, 33333, 33333)
+	_ = os.Chown(fn, gitpodUID, gitpodGID)
 	err = activation.Listen(ctx, l, func(socketFD *os.File) error {
 		cmd := exec.Command("docker-up")
 		cmd.Env = append(os.Environ(), "LISTEN_FDS=1")
@@ -1117,7 +1127,7 @@ func runAsGitpodUser(cmd *exec.Cmd) *exec.Cmd {
 	if cmd.SysProcAttr.Credential == nil {
 		cmd.SysProcAttr.Credential = &syscall.Credential{}
 	}
-	cmd.SysProcAttr.Credential.Gid = 33333
-	cmd.SysProcAttr.Credential.Uid = 33333
+	cmd.SysProcAttr.Credential.Uid = gitpodUID
+	cmd.SysProcAttr.Credential.Gid = gitpodGID
 	return cmd
 }
