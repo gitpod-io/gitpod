@@ -22,7 +22,6 @@ packages:
   type: docker
   deps:
   - :app
-  - components/image-builder-mk3/workspace-image-layer:pack
   argdeps:
       - imageRepoBase
   config:

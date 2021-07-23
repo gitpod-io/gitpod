@@ -19,6 +19,7 @@ import (
 
 	"github.com/containerd/console"
 	"github.com/moby/buildkit/client"
+	"github.com/moby/buildkit/client/llb"
 	"github.com/moby/buildkit/session"
 	"github.com/moby/buildkit/util/progress/progressui"
 	"golang.org/x/sync/errgroup"
@@ -28,7 +29,6 @@ const (
 	buildkitdSocketPath      = "unix:///run/buildkit/buildkitd.sock"
 	maxConnectionAttempts    = 10
 	initialConnectionTimeout = 2 * time.Second
-	gplayerDir               = "/app/gplayer"
 )
 
 // Builder builds images using buildkit
@@ -66,7 +66,7 @@ func (b *Builder) Build() error {
 	if err != nil {
 		return err
 	}
-	err = b.buildGPLayer(ctx, cl)
+	err = b.buildWorkspaceImage(ctx, cl)
 	if err != nil {
 		return err
 	}
@@ -152,7 +152,7 @@ func (b *Builder) buildBaseLayer(ctx context.Context, cl *client.Client) error {
 			},
 		},
 	}
-	if lauth := b.Config.GPLayerAuth; lauth != "" {
+	if lauth := b.Config.WorkspaceLayerAuth; lauth != "" {
 		auth, err := newAuthProviderFromEnvvar(lauth)
 		if err != nil {
 			return fmt.Errorf("invalid gp layer authentication: %w", err)
@@ -187,9 +187,9 @@ func (b *Builder) buildBaseLayer(ctx context.Context, cl *client.Client) error {
 	return err
 }
 
-func (b *Builder) buildGPLayer(ctx context.Context, cl *client.Client) (err error) {
+func (b *Builder) buildWorkspaceImage(ctx context.Context, cl *client.Client) (err error) {
 	var sess []session.Attachable
-	if gplayerAuth := b.Config.GPLayerAuth; gplayerAuth != "" {
+	if gplayerAuth := b.Config.WorkspaceLayerAuth; gplayerAuth != "" {
 		auth, err := newAuthProviderFromEnvvar(gplayerAuth)
 		if err != nil {
 			return err
@@ -197,15 +197,12 @@ func (b *Builder) buildGPLayer(ctx context.Context, cl *client.Client) (err erro
 		sess = append(sess, auth)
 	}
 
+	def, err := llb.Image(b.Config.BaseRef).Marshal(context.Background())
+	if err != nil {
+		return err
+	}
+
 	solveOpt := client.SolveOpt{
-		Frontend: "dockerfile.v0",
-		LocalDirs: map[string]string{
-			"context":    gplayerDir,
-			"dockerfile": gplayerDir,
-		},
-		FrontendAttrs: map[string]string{
-			"build-arg:baseref": b.Config.BaseRef,
-		},
 		Exports: []client.ExportEntry{
 			{
 				Type: "image",
@@ -222,7 +219,7 @@ func (b *Builder) buildGPLayer(ctx context.Context, cl *client.Client) (err erro
 	eg, ctx := errgroup.WithContext(ctx)
 	ch := make(chan *client.SolveStatus)
 	eg.Go(func() error {
-		_, err := cl.Solve(ctx, nil, solveOpt, ch)
+		_, err := cl.Solve(ctx, def, solveOpt, ch)
 		if err != nil {
 			return fmt.Errorf("cannot build Gitpod layer: %w", err)
 		}

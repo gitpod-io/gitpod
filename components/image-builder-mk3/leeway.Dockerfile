@@ -11,7 +11,5 @@ RUN  apk upgrade --no-cache \
 COPY components-image-builder-mk3--app/image-builder /app/
 RUN chmod +x /app/image-builder
 
-COPY components-image-builder-mk3-workspace-image-layer--pack/pack.tar /app/workspace-image-layer.tar.gz
-
 ENTRYPOINT [ "/app/image-builder" ]
 CMD [ "-v", "help" ]
