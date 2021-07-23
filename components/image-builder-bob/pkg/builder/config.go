@@ -18,31 +18,31 @@ import (
 
 // Config configures a builder
 type Config struct {
-	TargetRef         string
-	BaseRef           string
-	BaseContext       string
-	BuildBase         bool
-	BaseLayerAuth     string
-	GPLayerAuth       string
-	Dockerfile        string
-	ContextDir        string
-	ExternalBuildkitd string
-	localCacheImport  string
+	TargetRef          string
+	BaseRef            string
+	BaseContext        string
+	BuildBase          bool
+	BaseLayerAuth      string
+	WorkspaceLayerAuth string
+	Dockerfile         string
+	ContextDir         string
+	ExternalBuildkitd  string
+	localCacheImport   string
 }
 
 // GetConfigFromEnv extracts configuration from environment variables
 func GetConfigFromEnv() (*Config, error) {
 	cfg := &Config{
-		TargetRef:         os.Getenv("BOB_TARGET_REF"),
-		BaseRef:           os.Getenv("BOB_BASE_REF"),
-		BaseContext:       os.Getenv("THEIA_WORKSPACE_ROOT"),
-		BuildBase:         os.Getenv("BOB_BUILD_BASE") == "true",
-		BaseLayerAuth:     os.Getenv("BOB_BASELAYER_AUTH"),
-		GPLayerAuth:       os.Getenv("BOB_GPLAYER_AUTH"),
-		Dockerfile:        os.Getenv("BOB_DOCKERFILE_PATH"),
-		ContextDir:        os.Getenv("BOB_CONTEXT_DIR"),
-		ExternalBuildkitd: os.Getenv("BOB_EXTERNAL_BUILDKITD"),
-		localCacheImport:  os.Getenv("BOB_LOCAL_CACHE_IMPORT"),
+		TargetRef:          os.Getenv("BOB_TARGET_REF"),
+		BaseRef:            os.Getenv("BOB_BASE_REF"),
+		BaseContext:        os.Getenv("THEIA_WORKSPACE_ROOT"),
+		BuildBase:          os.Getenv("BOB_BUILD_BASE") == "true",
+		BaseLayerAuth:      os.Getenv("BOB_BASELAYER_AUTH"),
+		WorkspaceLayerAuth: os.Getenv("BOB_WSLAYER_AUTH"),
+		Dockerfile:         os.Getenv("BOB_DOCKERFILE_PATH"),
+		ContextDir:         os.Getenv("BOB_CONTEXT_DIR"),
+		ExternalBuildkitd:  os.Getenv("BOB_EXTERNAL_BUILDKITD"),
+		localCacheImport:   os.Getenv("BOB_LOCAL_CACHE_IMPORT"),
 	}
 
 	if cfg.BaseRef == "" {
@@ -86,15 +86,15 @@ func GetConfigFromEnv() (*Config, error) {
 				return nil, fmt.Errorf("cannot decrypt BOB_BASELAYER_AUTH: %w", err)
 			}
 		}
-		if cfg.GPLayerAuth != "" {
-			dec := make([]byte, base64.RawStdEncoding.DecodedLen(len(cfg.GPLayerAuth)))
-			_, err := base64.RawStdEncoding.Decode(dec, []byte(cfg.GPLayerAuth))
+		if cfg.WorkspaceLayerAuth != "" {
+			dec := make([]byte, base64.RawStdEncoding.DecodedLen(len(cfg.WorkspaceLayerAuth)))
+			_, err := base64.RawStdEncoding.Decode(dec, []byte(cfg.WorkspaceLayerAuth))
 			if err != nil {
-				return nil, fmt.Errorf("BOB_GPLAYER_AUTH is not base64 encoded but BOB_AUTH_KEY is present")
+				return nil, fmt.Errorf("BOB_WSLAYER_AUTH is not base64 encoded but BOB_AUTH_KEY is present")
 			}
-			cfg.GPLayerAuth, err = decrypt(dec, authKey)
+			cfg.WorkspaceLayerAuth, err = decrypt(dec, authKey)
 			if err != nil {
-				return nil, fmt.Errorf("cannot decrypt BOB_GPLAYER_AUTH: %w", err)
+				return nil, fmt.Errorf("cannot decrypt BOB_WSLAYER_AUTH: %w", err)
 			}
 		}
 	}

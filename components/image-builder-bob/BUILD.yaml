@@ -20,7 +20,6 @@ packages:
   - ide-startup.sh
   deps:
   - :app
-  - components/image-builder-mk3/workspace-image-layer:pack
   config:
     argdeps:
         - imageRepoBase

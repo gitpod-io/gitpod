@@ -14,13 +14,6 @@ RUN apk --no-cache add sudo bash \
 COPY components-image-builder-bob--app/bob /app/
 RUN chmod 4755 /app/bob
 
-COPY components-image-builder-mk3-workspace-image-layer--pack/pack.tar /app/workspace-image-layer.tar.gz
-RUN mkdir /app/gplayer \
-    && cd /app/gplayer \
-    && tar xzf /app/workspace-image-layer.tar.gz \
-    && rm -r /app/workspace-image-layer.tar.gz \
-    && mv gitpod-layer/* .
-
 RUN mkdir /ide
 COPY ide-startup.sh /ide/startup.sh
 COPY supervisor-ide-config.json /ide/

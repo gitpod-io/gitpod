@@ -49,6 +49,10 @@ const (
 
 	// maxBuildRuntime is the maximum time a build is allowed to take
 	maxBuildRuntime = 60 * time.Minute
+
+	// workspaceBuildProcessVersion controls how we build workspace images.
+	// Incrementing this value will trigger a rebuild of all workspace images.
+	workspaceBuildProcessVersion = 1
 )
 
 // Configuration configures the orchestrator
@@ -72,9 +76,6 @@ type Configuration struct {
 	// Note that the workspace nodes/kubelets need access to this repository.
 	WorkspaceImageRepository string `json:"workspaceImageRepository"`
 
-	// GitpodLayerLoc is the path to the Gitpod layer tar file
-	GitpodLayerLoc string `json:"gitpodLayerLoc"`
-
 	// BuilderImage is an image ref to the workspace builder image
 	BuilderImage string `json:"builderImage"`
 
@@ -96,11 +97,6 @@ func NewOrchestratingBuilder(cfg Configuration) (res *Orchestrator, err error) {
 		if err != nil {
 			return
 		}
-	}
-
-	gplayerHash, err := computeGitpodLayerHash(cfg.GitpodLayerLoc)
-	if err != nil {
-		return
 	}
 
 	var builderAuthKey [32]byte
@@ -178,7 +174,6 @@ func NewOrchestratingBuilder(cfg Configuration) (res *Orchestrator, err error) {
 		RefResolver: &resolve.StandaloneRefResolver{},
 
 		wsman:          wsmanapi.NewWorkspaceManagerClient(conn),
-		gplayerHash:    gplayerHash,
 		buildListener:  make(map[string]map[buildListener]struct{}),
 		logListener:    make(map[string]map[logListener]struct{}),
 		censorship:     make(map[string][]string),
@@ -189,28 +184,6 @@ func NewOrchestratingBuilder(cfg Configuration) (res *Orchestrator, err error) {
 	return o, nil
 }
 
-func computeGitpodLayerHash(gitpodLayerLoc string) (string, error) {
-	if tproot := os.Getenv("TELEPRESENCE_ROOT"); tproot != "" {
-		gitpodLayerLoc = filepath.Join(tproot, gitpodLayerLoc)
-	}
-	if fn := os.Getenv("GITPOD_LAYER_LOC"); fn != "" {
-		gitpodLayerLoc = fn
-	}
-
-	inpt, err := os.OpenFile(gitpodLayerLoc, os.O_RDONLY, 0600)
-	if err != nil {
-		return "", xerrors.Errorf("cannot compute gitpod layer hash: %w", err)
-	}
-	defer inpt.Close()
-
-	hash := sha256.New()
-	_, err = io.Copy(hash, inpt)
-	if err != nil {
-		return "", xerrors.Errorf("cannot compute gitpod layer hash: %w", err)
-	}
-	return fmt.Sprintf("%x", hash.Sum([]byte{})), nil
-}
-
 // Orchestrator runs image builds by orchestrating headless build workspaces
 type Orchestrator struct {
 	Config       Configuration
@@ -218,8 +191,7 @@ type Orchestrator struct {
 	AuthResolver auth.Resolver
 	RefResolver  resolve.DockerRefResolver
 
-	gplayerHash string
-	wsman       wsmanapi.WorkspaceManagerClient
+	wsman wsmanapi.WorkspaceManagerClient
 
 	builderAuthKey [32]byte
 	buildListener  map[string]map[buildListener]struct{}
@@ -432,7 +404,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 					{Name: "BOB_BASE_REF", Value: baseref},
 					{Name: "BOB_BUILD_BASE", Value: buildBase},
 					{Name: "BOB_BASELAYER_AUTH", Value: baseLayerAuth},
-					{Name: "BOB_GPLAYER_AUTH", Value: gplayerAuth},
+					{Name: "BOB_WSLAYER_AUTH", Value: gplayerAuth},
 					{Name: "BOB_DOCKERFILE_PATH", Value: dockerfilePath},
 					{Name: "BOB_CONTEXT_DIR", Value: contextPath},
 					{Name: "BOB_AUTH_KEY", Value: string(o.builderAuthKey[:])},
@@ -655,11 +627,7 @@ func (o *Orchestrator) getBaseImageRef(ctx context.Context, bs *protocol.BuildSo
 }
 
 func (o *Orchestrator) getWorkspaceImageRef(ctx context.Context, baseref string, allowedAuth auth.AllowedAuthFor) (ref string, err error) {
-	//nolint:staticcheck,ineffassign
-	span, ctx := opentracing.StartSpanFromContext(ctx, "getWorkspaceImageRef")
-	defer tracing.FinishSpan(span, &err)
-
-	cnt := []byte(fmt.Sprintf("%s\n%s\n", baseref, o.gplayerHash))
+	cnt := []byte(fmt.Sprintf("%s\n%d\n", baseref, workspaceBuildProcessVersion))
 	hash := sha256.New()
 	n, err := hash.Write(cnt)
 	if err != nil {
