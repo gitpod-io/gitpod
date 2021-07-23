@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { Repository, User } from "@gitpod/gitpod-protocol";
+import { Branch, CommitInfo, Repository, User } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from 'inversify';
 import { parseRepoUrl } from '../repohost/repo-url';
 import { RepositoryProvider } from '../repohost/repository-provider';
@@ -24,5 +24,15 @@ export class BitbucketRepositoryProvider implements RepositoryProvider {
         const avatarUrl = repo.owner!.links!.avatar!.href;
         const webUrl = repo.links!.html!.href;
         return { host, owner, name, cloneUrl, description, avatarUrl, webUrl };
+    }
+
+    async getBranches(user: User, owner: string, repo: string): Promise<Branch[]> {
+        // todo
+        return [];
+    }
+
+    async getCommitInfo(user: User, owner: string, repo: string, ref: string): Promise<CommitInfo | undefined> {
+        // todo
+        return undefined;
     }
 }

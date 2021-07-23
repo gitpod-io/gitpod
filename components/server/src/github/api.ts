@@ -9,7 +9,7 @@ import { Octokit, RestEndpointMethodTypes } from "@octokit/rest"
 import { OctokitResponse } from "@octokit/types"
 import { OctokitOptions } from "@octokit/core/dist-types/types"
 
-import { User } from "@gitpod/gitpod-protocol"
+import { Branch, CommitInfo, User } from "@gitpod/gitpod-protocol"
 import { injectable, inject } from 'inversify';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { GitHubScope } from './scopes';
@@ -241,9 +241,40 @@ export class GitHubRestApi {
     }
 
     public async getRepository(user: User, params: RestEndpointMethodTypes["repos"]["get"]["parameters"]): Promise<Repository> {
-        const key = `getRepository:${params.owner}/${params.owner}:${user.id}`
+        const key = `getRepository:${params.owner}/${params.owner}:${user.id}`;
         const response = await this.runWithCache(key, user, (api) => api.repos.get(params));
         return response.data;
+    }
+
+    public async getBranches(user: User, params: RestEndpointMethodTypes["repos"]["listBranches"]["parameters"]): Promise<Branch[]> {
+        const key = `getBranches:${params.owner}/${params.owner}:${user.id}`;
+        const listBranchesResponse = (await this.runWithCache(key, user, (api) => api.repos.listBranches(params))) as RestEndpointMethodTypes["repos"]["listBranches"]["response"];
+
+        const result: Branch[] = [];
+
+        for (const branch of listBranchesResponse.data) {
+            const { commit: { sha } } = branch;
+            const commit = await this.getCommit(user, { ...params, ref: sha });
+            result.push({
+                name: branch.name,
+                commit
+            });
+        }
+
+        return result;
+    }
+
+    public async getCommit(user: User, params: RestEndpointMethodTypes["repos"]["getCommit"]["parameters"]): Promise<CommitInfo> {
+        const key = `getCommit:${params.owner}/${params.owner}/${params.ref}:${user.id}`;
+        const getCommitResponse = (await this.runWithCache(key, user, (api) => api.repos.getCommit(params))) as RestEndpointMethodTypes["repos"]["getCommit"]["response"];
+        const { sha, commit, author } = getCommitResponse.data;
+        return {
+            sha,
+            author: commit.author?.name || "nobody",
+            authorAvatarUrl: author?.avatar_url,
+            authorDate: commit.author?.date,
+            commitMessage: commit.message,
+        }
     }
 
 }
@@ -327,7 +358,7 @@ export interface BranchRef {
     name: string
     commit: CommitRef
     protected: boolean
-    protection_url: string
+    protection_url?: string
 }
 
 export interface CommitDetails {

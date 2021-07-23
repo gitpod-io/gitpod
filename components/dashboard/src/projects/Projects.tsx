@@ -12,8 +12,10 @@ import { useHistory, useLocation } from "react-router";
 import { useContext, useEffect, useState } from "react";
 import { getGitpodService } from "../service/service";
 import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
-import { ProjectInfo } from "@gitpod/gitpod-protocol";
+import { PrebuildInfo, Project } from "@gitpod/gitpod-protocol";
 import DropDown from "../components/DropDown";
+import { toRemoteURL } from "./render-utils";
+import ContextMenu from "../components/ContextMenu";
 
 export default function () {
     const location = useLocation();
@@ -21,29 +23,44 @@ export default function () {
 
     const { teams } = useContext(TeamsContext);
     const team = getCurrentTeam(location, teams);
-    const [projects, setProjects] = useState<ProjectInfo[]>([]);
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [lastPrebuilds, setLastPrebuilds] = useState<Map<string, PrebuildInfo>>(new Map());
 
     useEffect(() => {
+        updateProjects();
+    }, [team]);
+
+    const updateProjects = async () => {
         if (!team) {
             return;
         }
-        (async () => {
-            const infos = await getGitpodService().server.getProjects(team.id);
-            setProjects(infos);
-        })();
-    }, [team]);
+        const infos = await getGitpodService().server.getProjects(team.id);
+        setProjects(infos);
+
+        for (const p of infos) {
+            const lastPrebuild = await getGitpodService().server.findPrebuilds({
+                projectName: p.name,
+                teamId: team.id,
+                latest: true,
+            });
+            if (lastPrebuild[0]) {
+                setLastPrebuilds(prev => new Map(prev).set(p.id, lastPrebuild[0]));
+            }
+        }
+    }
 
     const onSearchProjects = (searchString: string) => { }
     const onNewProject = () => {
         history.push(`/new?team=${team?.slug}`);
     }
 
-    const viewAllPrebuilds = (p: ProjectInfo) => {
+    const viewAllPrebuilds = (p: Project) => {
         history.push(`/${team?.slug}/${p.name}/prebuilds`);
     }
 
-    const toRemoteURL = (cloneURL: string) => {
-        return cloneURL.replace("https://", "");
+    const onRemoveProject = async (p: Project) => {
+        await getGitpodService().server.deleteProject(p.id);
+        await updateProjects();
     }
 
     return <>
@@ -84,21 +101,32 @@ export default function () {
                 <div className="mt-4 grid grid-cols-3 gap-4">
                     {projects.map(p => (<div key={`project-${p.id}`} className="h-48">
                         <div className="h-5/6 border border-gray-200 dark:border-gray-800 rounded-t-xl">
-                            <div className="h-3/4  p-6">
-                                <div className="text-base text-gray-900 dark:text-gray-50 font-medium"><Link to={`/${team?.slug}/${p.name}`}>{p.name}</Link></div>
+                            <div className="h-3/4 p-6">
+                                <div className="flex self-center text-base text-gray-900 dark:text-gray-50 font-medium">
+                                    <Link to={`/${team?.slug}/${p.name}`}>
+                                        {p.name}
+                                    </Link>
+                                    <span className="flex-grow" />
+                                    <div className="justify-end">
+                                        <ContextMenu menuEntries={[{
+                                            title: "Remove Project",
+                                            customFontStyle: 'text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300',
+                                            onClick: () => onRemoveProject(p)
+                                        }]} />
+                                    </div>
+                                </div>
                                 <p>{toRemoteURL(p.cloneUrl)}</p>
                             </div>
                             <div className="h-1/4 px-6 py-1"><p>__ Active Branches</p></div>
                         </div>
-                        <div className="h-1/6 px-6 border rounded-b-xl dark:border-gray-800 bg-gray-200 cursor-pointer"
-                            onClick={() => viewAllPrebuilds(p)}>
-                            {p.lastPrebuild
+                        <div className="h-1/6 px-6 border rounded-b-xl dark:border-gray-800 bg-gray-200 cursor-pointer" onClick={() => viewAllPrebuilds(p)}>
+                            {lastPrebuilds.get(p.id)
                                 ? (<div className="flex flex-row space-x-3 h-full text-sm">
                                     <div className={"my-auto rounded-full w-3 h-3 text-sm align-middle " + (true ? "bg-green-500" : "bg-gray-400")}>
                                         &nbsp;
                                     </div>
-                                    <div className="my-auto">{p.lastPrebuild.branch}</div>
-                                    <div className="my-auto text-gray-400">{moment(p.lastPrebuild.startedAt, "YYYYMMDD").fromNow()}</div>
+                                    <div className="my-auto">{lastPrebuilds.get(p.id)!.branch}</div>
+                                    <div className="my-auto text-gray-400">{moment(lastPrebuilds.get(p.id)!.startedAt, "YYYYMMDD").fromNow()}</div>
                                     <div className="my-auto text-gray-400 flex-grow text-right">View All ⟶</div>
                                 </div>)
                                 : (<div className="flex h-full text-md">

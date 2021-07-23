@@ -91,7 +91,10 @@ function readConfig(): RateLimiterConfig {
         "getProviderRepositoriesForUser":  { group: "default", points: 1 },
         "createProject":  { group: "default", points: 1 },
         "getProjects":  { group: "default", points: 1 },
-        "getPrebuilds":  { group: "default", points: 1 },
+        "deleteProject":  { group: "default", points: 1 },
+        "findPrebuilds":  { group: "default", points: 1 },
+        "getProjectOverview":  { group: "default", points: 1 },
+        "triggerPrebuild":  { group: "default", points: 1 },
         "setProjectConfiguration":  { group: "default", points: 1 },
         "fetchProjectRepositoryConfiguration":  { group: "default", points: 1 },
         "getContentBlobUploadUrl": { group: "default", points: 1 },
@@ -131,9 +134,6 @@ function readConfig(): RateLimiterConfig {
 
         accesHeadlessLogs: { group: "default", points: 1 },
 
-        /**
-         * gitpod.io concerns
-         */
         "adminAddStudentEmailDomain":  { group: "default", points: 1 },
         "adminGetAccountStatement":  { group: "default", points: 1 },
         "adminIsStudent":  { group: "default", points: 1 },

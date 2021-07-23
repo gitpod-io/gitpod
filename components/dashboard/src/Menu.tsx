@@ -11,6 +11,7 @@ import { useLocation, useRouteMatch } from "react-router";
 import { Location } from "history";
 import gitpodIcon from './icons/gitpod.svg';
 import CaretDown from "./icons/CaretDown.svg";
+import CaretUpDown from "./icons/CaretUpDown.svg";
 import { getGitpodService, gitpodHostUrl } from "./service/service";
 import { UserContext } from "./user-context";
 import { TeamsContext, getCurrentTeam } from "./teams/teams-context";
@@ -27,11 +28,6 @@ interface Entry {
     alternatives?: string[]
 }
 
-function isSelected(entry: Entry, location: Location<any>) {
-    const all = [entry.link, ...(entry.alternatives||[])];
-    const path = location.pathname.toLowerCase();
-    return all.some(n => n === path || n+'/' === path);
-}
 
 export default function Menu() {
     const { user } = useContext(UserContext);
@@ -39,13 +35,25 @@ export default function Menu() {
     const history = useHistory();
     const location = useLocation();
 
-    const match = useRouteMatch<{ team: string, resource: string }>("/:team/:resource");
+    const match = useRouteMatch<{ segment1?: string, segment2?: string, segment3?: string }>("/:segment1/:segment2?/:segment3?");
     const projectName = (() => {
-        const resource = match?.params?.resource;
-        if (resource !== "projects" && resource !== "members") {
+        const resource = match?.params?.segment2;
+        if (resource && !["projects", "members", "users", "workspaces"].includes(resource)) {
             return resource;
         }
     })();
+    const prebuildId = (() => {
+        const resource = projectName && match?.params?.segment3;
+        if (resource !== "prebuilds" && resource !== "settings" && resource !== "configure") {
+            return resource;
+        }
+    })();
+
+    function isSelected(entry: Entry, location: Location<any>) {
+        const all = [entry.link, ...(entry.alternatives||[])].map(l => l.toLowerCase());
+        const path = location.pathname.toLowerCase();
+        return all.some(n => n === path || n+'/' === path);
+    }
 
     const userFullName = user?.fullName || user?.name || '...';
     const showTeamsUI = user?.rolesOrPermissions?.includes('teams-and-projects');
@@ -135,7 +143,6 @@ export default function Menu() {
             <div className="flex p-1 pl-3 ">
                 <div className="flex h-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1">
                     <Link to={team ? `/${team.slug}/projects` : "/workspaces"}>
-
                         <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{team?.name || userFullName}</span>
                     </Link>
                 </div>
@@ -171,14 +178,22 @@ export default function Menu() {
                             onClick: () => history.push("/teams/new"),
                         }
                     ]}>
-                        <div className="flex h-full p-2 mt-0.5">
-                            <img className="filter-grayscale m-auto" src={CaretDown} />
+                        <div className="flex h-full px-2 py-1.5">
+                            <img className="filter-grayscale m-auto" src={CaretUpDown} />
                         </div>
                     </ContextMenu>
                 </div>
                 { projectName && (
+                    <div className="flex h-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1">
+                        <Link to={`/${team?.slug}/${projectName}${prebuildId ? "/prebuilds" : ""}`}>
+                            <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{projectName}</span>
+                        </Link>
+                    </div>
+                )}
+                { prebuildId && (
                     <div className="flex h-full ml-2 py-1">
-                        <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{projectName}</span>
+                        <img className="mr-3 filter-grayscale m-auto transform -rotate-90" src={CaretDown} />
+                        <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{prebuildId}</span>
                     </div>
                 )}
             </div>
@@ -237,8 +252,8 @@ export default function Menu() {
                     </div>
                 </div>
             </div>
-            {!isMinimalUI && showTeamsUI && <div className="flex">
-                {leftMenu.map(entry => <TabMenuItem name={entry.title} selected={isSelected(entry, location)} link={entry.link}/>)}
+            {!isMinimalUI && showTeamsUI && !prebuildId && <div className="flex">
+                {leftMenu.map((entry: Entry) => <TabMenuItem name={entry.title} selected={isSelected(entry, location)} link={entry.link}/>)}
             </div>}
         </header>
         {showTeamsUI && <Separator />}

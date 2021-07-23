@@ -7,7 +7,7 @@
 import { BlobServiceClient } from "@gitpod/content-service/lib/blobs_grpc_pb";
 import { DownloadUrlRequest, DownloadUrlResponse, UploadUrlRequest, UploadUrlResponse } from '@gitpod/content-service/lib/blobs_pb';
 import { AppInstallationDB, UserDB, UserMessageViewsDB, WorkspaceDB, DBWithTracing, TracedWorkspaceDB, DBGitpodToken, DBUser, UserStorageResourcesDB, ProjectDB, TeamDB } from '@gitpod/gitpod-db/lib';
-import { AuthProviderEntry, AuthProviderInfo, Branding, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team, TeamMemberInfo, TeamMembershipInvite, CreateProjectParams, ProjectInfo, Project, ProviderRepository, PrebuildInfo, TeamMemberRole, WithDefaultConfig } from '@gitpod/gitpod-protocol';
+import { AuthProviderEntry, AuthProviderInfo, Branding, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team, TeamMemberInfo, TeamMembershipInvite, CreateProjectParams, Project, ProviderRepository, PrebuildInfo, TeamMemberRole, WithDefaultConfig, FindPrebuildsParams } from '@gitpod/gitpod-protocol';
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { AdminBlockUserRequest, AdminGetListRequest, AdminGetListResult, AdminGetWorkspacesRequest, AdminModifyPermanentWorkspaceFeatureFlagRequest, AdminModifyRoleOrPermissionRequest, WorkspaceAndInstance } from '@gitpod/gitpod-protocol/lib/admin-protocol';
 import { GetLicenseInfoResult, LicenseFeature, LicenseValidationResult } from '@gitpod/gitpod-protocol/lib/license-protocol';
@@ -51,6 +51,7 @@ import { WorkspaceStarter } from './workspace-starter';
 import { HeadlessLogUrls } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { HeadlessLogService } from "./headless-log-service";
 import { InvalidGitpodYMLError } from "./config-provider";
+import { ProjectsService } from "../projects/projects-service";
 
 @injectable()
 export class GitpodServerImpl<Client extends GitpodClient, Server extends GitpodServer> implements GitpodServer, Disposable {
@@ -94,6 +95,8 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     @inject(GitTokenScopeGuesser) protected readonly gitTokenScopeGuesser: GitTokenScopeGuesser;
 
     @inject(HeadlessLogService) protected readonly headlessLogService: HeadlessLogService;
+
+    @inject(ProjectsService) protected readonly projectsService: ProjectsService;
 
     /** Id the uniquely identifies this server instance */
     public readonly uuid: string = uuidv4();
@@ -1495,30 +1498,51 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     }
 
     async getProviderRepositoriesForUser(params: { provider: string }): Promise<ProviderRepository[]> {
-        this.checkUser("getProviderRepositoriesForUser");
+        this.checkAndBlockUser("getProviderRepositoriesForUser");
         // Note: this operation is per-user only, hence needs no resource guard
+
+        // implemented in EE
         return [];
     }
-
-    public async createProject(params: CreateProjectParams): Promise<Project> {
-        this.checkAndBlockUser("createProject");
-        const { name, cloneUrl, teamId, appInstallationId } = params;
+    async createProject(params: CreateProjectParams): Promise<Project> {
+        this.checkUser("createProject");
         // Anyone who can read a team's information (i.e. any team member) can create a new project.
-        await this.guardTeamOperation(teamId, "get");
-        return this.projectDB.storeProject(Project.create({name, cloneUrl, teamId, appInstallationId}));
+        await this.guardTeamOperation(params.teamId, "get");
+        return this.projectsService.createProject(params);
     }
-
-    public async getProjects(teamId: string): Promise<ProjectInfo[]> {
+    async deleteProject(projectId: string): Promise<void> {
+        this.checkUser("deleteProject");
+        const project = await this.projectsService.getProject(projectId);
+        if (!project) {
+            return;
+        }
+        await this.guardTeamOperation(project.teamId, "delete"); // this is actually not deletion of a team ;-)
+        return this.projectsService.deleteProject(projectId);
+    }
+    async getProjects(teamId: string): Promise<Project[]> {
         this.checkUser("getProjects");
         await this.guardTeamOperation(teamId, "get");
-        return this.projectDB.findProjectsByTeam(teamId);
+
+        return this.projectsService.getProjects(teamId);
+    }
+    async findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildInfo[]> {
+        const user = this.checkAndBlockUser("getPrebuilds");
+        await this.guardTeamOperation(params.teamId, "get");
+
+        return this.projectsService.findPrebuilds(user, params);
+    }
+    async getProjectOverview(teamId: string, projectName: string): Promise<Project.Overview | undefined> {
+        const user = this.checkAndBlockUser("getProjectOverview");
+        await this.guardTeamOperation(teamId, "get");
+
+        return this.projectsService.getProjectOverview(user, teamId, projectName);
+    }
+    async triggerPrebuild(projectId: string, branch: string): Promise<void> {
+        this.checkAndBlockUser("triggerPrebuild");
+
+        // implemented in EE
     }
 
-    public async getPrebuilds(teamId: string, projectId: string): Promise<PrebuildInfo[]> {
-        this.checkUser("getPrebuilds");
-        await this.guardTeamOperation(teamId, "get");
-        return [];
-    }
 
     public async setProjectConfiguration(projectId: string, configString: string): Promise<void> {
         this.checkAndBlockUser("setProjectConfiguration");
@@ -1974,4 +1998,5 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     }
     //
     //#endregion
+
 }
