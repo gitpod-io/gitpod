@@ -32,6 +32,7 @@ spec:
         stage: {{ .Values.installation.stage }}
         gitpod.io/nodeService: registry-facade
     spec:
+      priorityClassName: system-node-critical
 {{ include "gitpod.workspaceAffinity" $this | indent 6 }}
       serviceAccountName: registry-facade
       enableServiceLinks: false

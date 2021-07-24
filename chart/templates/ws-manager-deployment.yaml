@@ -37,6 +37,7 @@ spec:
       annotations:
         checksum/tlskey: {{ include (print $.Template.BasePath "/ws-daemon-tlssecret.yaml") $ | sha256sum }}
     spec:
+      priorityClassName: system-node-critical
 {{ include "gitpod.pod.affinity" $this | indent 6 }}
       serviceAccountName: ws-manager
       securityContext:

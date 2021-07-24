@@ -35,6 +35,7 @@ spec:
         kind: pod
         stage: {{ .Values.installation.stage }}
     spec:
+      priorityClassName: system-node-critical
 {{ include "gitpod.pod.affinity" $this | indent 6 }}
       serviceAccountName: ws-proxy
       securityContext:
