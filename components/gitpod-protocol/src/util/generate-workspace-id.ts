@@ -5,5 +5,5 @@
  */
 
 export async function generateWorkspaceID(): Promise<string> {
-    return (await "nightmare-apricot-hyaenas");
+    return Promise.resolve("nightmare-apricot-hyaenas");
 }
