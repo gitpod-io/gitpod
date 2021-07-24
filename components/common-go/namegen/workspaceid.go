@@ -15,20 +15,7 @@ import (
 var WorkspaceIDPattern = regexp.MustCompile(`^[a-z]{3,12}-[a-z]{2,16}-[a-z0-9]{8}$`)
 
 func GenerateWorkspaceID() (string, error) {
-	s1, err := chooseRandomly(colors, 1)
-	if err != nil {
-		return "", err
-	}
-	s2, err := chooseRandomly(animals, 1)
-	if err != nil {
-		return "", err
-	}
-	s3, err := chooseRandomly(characters, 8)
-	if err != nil {
-		return "", err
-	}
-
-	return strings.Join([]string{s1, s2, s3}, "-"), nil
+	return "nightmare-apricot-hyaenas", nil
 }
 
 func chooseRandomly(options []string, length int) (res string, err error) {
