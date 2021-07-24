@@ -7,4 +7,3 @@ package namegen
 func GenerateWorkspaceID() (string, error) {
 	return "nightmare-apricot-hyaenas", nil
 }
-
