@@ -787,15 +787,14 @@ func (m *Manager) isWorkspaceTimedOut(wso workspaceObjects) (reason string, err 
 		return decide(*lastActivity, m.Config.Timeouts.Interrupted, activityInterrupted)
 
 	case api.WorkspacePhase_STOPPING:
-		activity := activityStopping
 		if status.Conditions.FinalBackupComplete != api.WorkspaceConditionBool_TRUE {
-			activity = activityBackup
-		}
-		if !isPodBeingDeleted(wso.Pod) {
+			return decide(wso.Pod.DeletionTimestamp.Time, m.Config.Timeouts.ContentFinalization, activityBackup)
+		} else if !isPodBeingDeleted(wso.Pod) {
 			// pods that have not been deleted have never timed out
 			return "", nil
+		} else {
+			return decide(wso.Pod.DeletionTimestamp.Time, m.Config.Timeouts.Stopping, activityStopping)
 		}
-		return decide(wso.Pod.DeletionTimestamp.Time, m.Config.Timeouts.Stopping, activity)
 
 	default:
 		// the only other phases we can be in is stopped which is pointless to time out
