@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"bytes"
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
@@ -54,15 +55,15 @@ func Execute() {
 func getConfig() *config {
 	ctnt, err := os.ReadFile(configFile)
 	if err != nil {
-		log.WithError(xerrors.Errorf("cannot read config: %w", err)).Error("cannot read configuration. Maybe missing --config?")
-		os.Exit(1)
+		log.WithError(err).Fatal("cannot read configuration. Maybe missing --config?")
 	}
 
 	var cfg config
-	err = json.Unmarshal(ctnt, &cfg)
+	dec := json.NewDecoder(bytes.NewReader(ctnt))
+	dec.DisallowUnknownFields()
+	err = dec.Decode(&cfg)
 	if err != nil {
-		log.WithError(err).Error("cannot read configuration. Maybe missing --config?")
-		os.Exit(1)
+		log.WithError(err).Fatal("cannot decode configuration. Maybe missing --config?")
 	}
 
 	return &cfg
