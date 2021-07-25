@@ -103,6 +103,7 @@ spec:
 {{ toYaml $comp.volumes | indent 6 }}
 {{- end }}
       enableServiceLinks: false
+      priorityClassName: system-node-critical
 {{- if (or $comp.userNamespaces.shiftfsModuleLoader.enabled $comp.userNamespaces.seccompProfileInstaller.enabled) }}
       initContainers:
 {{- end }}
