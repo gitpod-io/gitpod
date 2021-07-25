@@ -229,14 +229,33 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 	}
 
 	if status.Phase == api.WorkspacePhase_STOPPING || status.Phase == api.WorkspacePhase_STOPPED {
-		// With regards to workspace failure, we don't do anything if the workspace is already stopping/stopped
-		// only if the workspace is in any other state do we care
-		//
 		// Beware: do not else-if this condition with the other phases as we don't want the stop
 		//         login in any other phase, too.
 		m.initializerMapLock.Lock()
 		delete(m.initializerMap, pod.Name)
 		m.initializerMapLock.Unlock()
+
+		// Special case: workspaces timing out during backup. Normally a timed out workspace would just be stopped
+		//               regularly. When a workspace times out during backup though, stopping it won't do any good.
+		//               The workspace is already shutting down, it just fails to do so properly. Instead, we need
+		//               to update the disposal status to reflect this timeout situation.
+		if status.Conditions.Timeout != "" && strings.Contains(status.Conditions.Timeout, string(activityBackup)) {
+			err = func() error {
+				b, err := json.Marshal(workspaceDisposalStatus{BackupComplete: true, BackupFailure: status.Conditions.Timeout})
+				if err != nil {
+					return err
+				}
+
+				err = m.manager.markWorkspace(ctx, workspaceID, addMark(disposalStatusAnnotation, string(b)))
+				if err != nil {
+					return err
+				}
+				return nil
+			}()
+			if err != nil {
+				log.WithError(err).Error("was unable to update pod's disposal state - this will break someone's experience")
+			}
+		}
 	} else if status.Conditions.Failed != "" || status.Conditions.Timeout != "" {
 		// the workspace has failed to run/start - shut it down
 		// we should mark the workspace as failedBeforeStopping - this way the failure status will persist
