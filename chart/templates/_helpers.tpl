@@ -349,7 +349,6 @@ storage:
     region: {{ $remoteStorageMinio.region | default "local" }}
     parallelUpload: {{ $remoteStorageMinio.parallelUpload | default "" }}
     maxBackupSize: {{ $remoteStorageMinio.maxBackupSize | default "" }}
-    tmpdir: {{ $remoteStorageMinio.tmpdir | default "/tmp" }}
 {{- else }}
 {{ toYaml .remoteStorage | indent 2 }}
 {{- end -}}

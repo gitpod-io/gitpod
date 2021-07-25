@@ -4,6 +4,7 @@
         "workingArea": "/tmp/wsdaemon",
         "backupPeriod": "30m",
         "workspaceSizeLimit": "20g",
+        "tempDir": "/tmp",
         "storage": {
             "kind": "minio",
             "stage": "dev",
@@ -13,14 +14,12 @@
                 "project": "gitpod-dev",
                 "parallelUpload": 4,
                 "maximumBackupSize": 32212254720,
-                "maximumBackupCount": 20,
-                "tmpdir": "/tmp/gcloud"
+                "maximumBackupCount": 20
             },
             "minio": {
                 "endpoint": "127.0.0.1:9000",
                 "accessKeyID": "C1GL0KSOR9ERG1R5GW92",
-                "secretAccessKey": "CNmBGC9T5u7UC3xQfd+MVrVnfAVRkS0X2N3+B0RS",
-                "tmpdir": "/tmp/upload"
+                "secretAccessKey": "CNmBGC9T5u7UC3xQfd+MVrVnfAVRkS0X2N3+B0RS"
             }
         }
     },

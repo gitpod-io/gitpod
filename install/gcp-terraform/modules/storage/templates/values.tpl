@@ -15,7 +15,6 @@ components:
         projectId: ${project}
         region: ${region}
         credentialsFile: /credentials/key.json
-        tmpdir: /mnt/sync-tmp
         parallelUpload: 6
 
   wsDaemon:
@@ -23,6 +22,7 @@ components:
     hostWorkspaceArea: /var/gitpod/workspaces
     servicePort: 8080
     workspaceSizeLimit: ""
+    backupTempDir: /mnt/sync-tmp
     containerRuntime:
       runtime: containerd
       containerd:
