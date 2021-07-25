@@ -26,6 +26,7 @@ daemon:
     {{- if (and $comp.workspaceSizeLimit (not (eq $comp.workspaceSizeLimit ""))) }}
     workspaceSizeLimit: {{ ($comp.workspaceSizeLimit | default "0g") | quote }}
     {{- end }}
+    tempDir: {{ $comp.backupTempDir | default "/tmp" }}
 {{ include "gitpod.remoteStorage.config" (dict "root" . "remoteStorage" .Values.components.contentService.remoteStorage) | indent 4 }}
     backup:
       timeout: "5m"
@@ -61,8 +62,9 @@ daemon:
         - name: {{ (printf "reg.%s" (.Values.components.registryFacade.hostname | default .Values.hostname)) | quote }}
           addr: 127.0.0.1
   disk:
-    path: "/mnt/wsdaemon-workingarea"
-    minBytesAvail: 21474836480
+    locations:
+    - path: "/mnt/wsdaemon-workingarea"
+      minBytesAvail: 21474836480
 service:
   address: ":{{ $comp.servicePort }}"
   tls:

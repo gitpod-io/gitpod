@@ -42,7 +42,7 @@ type Config struct {
 
 		// Attempts configures how many backup attempts we will make.
 		// Detaults to 3
-		Attempts int `json:"backupAttempts"`
+		Attempts int `json:"attempts"`
 
 		// Period is the time between regular workspace backups
 		Period util.Duration `json:"period"`
