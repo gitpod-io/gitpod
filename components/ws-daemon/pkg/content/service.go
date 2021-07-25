@@ -464,9 +464,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		}
 		defer func() {
 			tmpf.Close()
-			if err != nil {
-				os.Remove(tmpf.Name())
-			}
+			os.Remove(tmpf.Name())
 		}()
 
 		var opts []archive.TarOption
