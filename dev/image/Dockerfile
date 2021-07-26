@@ -5,7 +5,7 @@
 FROM gitpod/workspace-full-vnc:latest
 
 ENV TRIGGER_REBUILD 12
-ENV WORKSPACE_KERNEL 5.4.0-1033-gke
+ENV WORKSPACE_KERNEL 5.4.0-1044-gke
 
 USER root
 
@@ -15,6 +15,10 @@ RUN ln -s /usr/lib/sftp-server /usr/libexec/sftp-server
 
 ### Clang and LLVM
 RUN install-packages clang-7 llvm-7
+
+### Build QEMU VM
+COPY config prepare-bpf-dev-environment.sh code workspace.mount workspace.automount /root/
+RUN /root/prepare-bpf-dev-environment.sh
 
 ### cloud_sql_proxy ###
 ARG CLOUD_SQL_PROXY=/usr/local/bin/cloud_sql_proxy

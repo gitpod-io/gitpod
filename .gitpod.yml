@@ -37,7 +37,6 @@ ports:
     onOpen: ignore
 tasks:
   - name: Prepare Agent Smith BPF dev environment
-    init: leeway run components/ee/agent-smith:prepare-environment
     command: leeway run components/ee/agent-smith:qemu
   - before: scripts/branch-namespace.sh
     init: yarn --network-timeout 100000 && yarn build
