@@ -47,8 +47,6 @@ packages:
     config:
       commands: [["echo"]]
 scripts:
-  - name: prepare-environment
-    script: scripts/prepare-bpf-dev-environment.sh
   - name: qemu
     script: scripts/qemu.sh
   - name: copy-to-qemu
