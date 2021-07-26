@@ -83,7 +83,7 @@ data:
                 "initialization": "30m",
                 "regularWorkspace": "30m",
                 "startup": "60m",
-                "contentFinalization": "15m",
+                "contentFinalization": "60m",
                 "stopping": "60m",
                 "interrupted": "5m"
             },
