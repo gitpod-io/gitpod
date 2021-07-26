@@ -10,11 +10,9 @@ import { createWindowMessageConnection } from '@gitpod/gitpod-protocol/lib/messa
 import { JsonRpcProxyFactory } from '@gitpod/gitpod-protocol/lib/messaging/proxy-factory';
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { gitpodServiceMock } from './service-mock';
 
 export const gitpodHostUrl = new GitpodHostUrl(window.location.toString());
 
-// @ts-ignore
 function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
     if (window.top !== window.self && process.env.NODE_ENV === 'production') {
         const connection = createWindowMessageConnection('gitpodServer', window.parent, '*');
@@ -53,14 +51,7 @@ function createGitpodService<C extends GitpodClient, S extends GitpodServer>() {
 function getGitpodService(): GitpodService {
     const w = window as any;
     const _gp = w._gp || (w._gp = {});
-    const createService = () => {
-        if (window.location.search.includes("mock")) {
-            return gitpodServiceMock;
-        } else {
-            return createGitpodService();
-        }
-    }
-    const service = _gp.gitpodService || (_gp.gitpodService = createService());
+    const service = _gp.gitpodService || (_gp.gitpodService = createGitpodService());
     return service;
 }
 
