@@ -5,6 +5,7 @@
 package proxy
 
 import (
+	"errors"
 	"fmt"
 	"net"
 	"net/http"
@@ -106,7 +107,12 @@ func proxyPass(config *RouteHandlerConfig, resolver targetResolver, opts ...prox
 				return
 			}
 
-			log.WithField("url", originalURL.String()).WithError(err).Error("proxied request failed")
+			var dnsError *net.DNSError
+			if !errors.As(err, &dnsError) {
+				// skip "no such host" errors (workspace service not available, yet)
+				log.WithField("url", originalURL.String()).WithError(err).Error("proxied request failed")
+			}
+
 			rw.WriteHeader(http.StatusBadGateway)
 		}
 
