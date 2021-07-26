@@ -47,7 +47,7 @@ export default function () {
         return (<h1 className="tracking-tight">{prebuild.branch} <span className="text-gray-200">#{prebuild.branchPrebuildNumber}</span></h1>);
     };
 
-    const renderSubbitle = () => {
+    const renderSubtitle = () => {
         if (!prebuild) {
             return "";
         }
@@ -71,7 +71,7 @@ export default function () {
     };
 
     return <>
-        <Header title={renderTitle()} subtitle={renderSubbitle()} />
+        <Header title={renderTitle()} subtitle={renderSubtitle()} />
         <div className="w-full"><PrebuildLogs workspaceId={prebuild?.buildWorkspaceId}/></div>
     </>
 

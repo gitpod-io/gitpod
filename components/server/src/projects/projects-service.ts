@@ -28,7 +28,7 @@ export class ProjectsService {
     }
 
     async getProjectOverview(user: User, teamId: string, projectName: string): Promise<Project.Overview | undefined> {
-        const project = await this.projectDB.findProject(teamId, projectName);
+        const project = await this.projectDB.findProjectByTeamAndName(teamId, projectName);
         if (!project) {
             return undefined;
         }
@@ -60,7 +60,7 @@ export class ProjectsService {
             const { name, commit } = branch;
             result.push({
                 name,
-                branchUrl: `${repository.webUrl}/tree/${branch.name}`, // todo: compute in repositoryProvider
+                url: `${repository.webUrl}/tree/${branch.name}`, // todo: compute in repositoryProvider
                 changeAuthor: commit.author,
                 changeDate: commit.authorDate,
                 changeHash: commit.sha,
@@ -93,7 +93,7 @@ export class ProjectsService {
 
     async findPrebuilds(user: User, params: FindPrebuildsParams): Promise<PrebuildInfo[]> {
         const { teamId, projectName, prebuildId } = params;
-        const project = await this.projectDB.findProject(teamId, projectName);
+        const project = await this.projectDB.findProjectByTeamAndName(teamId, projectName);
         if (!project) {
             return [];
         }

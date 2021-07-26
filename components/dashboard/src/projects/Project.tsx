@@ -117,7 +117,7 @@ export default function () {
     }
 
     const onNewWorkspace = (branch: Project.BranchDetails) => {
-        window.location.href = gitpodHostUrl.withContext(`${branch.branchUrl}`).toString();
+        window.location.href = gitpodHostUrl.withContext(`${branch.url}`).toString();
     }
 
     const triggerPrebuild = (branch: Project.BranchDetails) => {
@@ -191,7 +191,9 @@ export default function () {
                                 {prebuild ? (<><div className="inline-block align-text-bottom mr-2 w-4 h-4">{statusIcon}</div>{status}</>) : (<span>–</span>)}
                             </div>
                             <span className="flex-grow" />
-                            <button className={`primary mr-2 py-2 ${branch.isDefault ? "" : "opacity-0"} group-hover:opacity-100`} onClick={() => onNewWorkspace(branch)}>New Workspace</button>
+                            <a href={gitpodHostUrl.withContext(`${branch.url}`).toString()}>
+                                <button className={`primary mr-2 py-2 ${branch.isDefault ? "" : "opacity-0"} group-hover:opacity-100`}>New Workspace</button>
+                            </a>
                             <ItemFieldContextMenu className="py-0.5" menuEntries={branchContextMenu(branch)} />
                         </ItemField>
                     </Item>

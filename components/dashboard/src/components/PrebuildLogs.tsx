@@ -108,7 +108,6 @@ export default function PrebuildLogs(props: { workspaceId?: string }) {
   }, [ workspaceInstance?.status.phase ]);
 
   return <>
-    {/* <div className="capitalize">{workspaceInstance?.status.phase}</div> */}
     <Suspense fallback={<div />}>
       <WorkspaceLogs classes="h-64 w-full" logsEmitter={logsEmitter} errorMessage={error?.message} />
     </Suspense>
