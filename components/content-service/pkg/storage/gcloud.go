@@ -7,6 +7,7 @@ package storage
 import (
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"hash/crc32"
 	"io"
@@ -937,7 +938,10 @@ func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, q
 	if query.Name != "" {
 		err = client.Bucket(bucket).Object(query.Name).Delete(ctx)
 		if err != nil {
-			log.WithField("bucket", bucket).WithField("object", query.Name).WithError(err).Error("cannot delete objects")
+			if !errors.Is(err, gcpstorage.ErrBucketNotExist) {
+				log.WithField("bucket", bucket).WithField("object", query.Name).WithError(err).Error("cannot delete objects")
+			}
+
 			if err == gcpstorage.ErrBucketNotExist || err == gcpstorage.ErrObjectNotExist {
 				return ErrNotFound
 			}
