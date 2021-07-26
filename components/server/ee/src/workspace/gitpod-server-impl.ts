@@ -262,8 +262,8 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         try {
             const pws = await this.workspaceDb.trace(ctx).findPrebuildByID(pwsid);
             if (!pws) {
-                // there is no prebuild - that's as good one being done
-                return true;
+                // there is no prebuild - so it's not done (yet)
+                return false;
             }
 
             return PrebuiltWorkspace.isDone(pws);
