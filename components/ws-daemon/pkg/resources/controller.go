@@ -7,7 +7,9 @@ package resources
 import (
 	"container/ring"
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -282,7 +284,9 @@ func (gov *Controller) controlProcessPriorities() {
 	fn := filepath.Join(gov.CGroupBasePath, "pids", gov.CGroupPath, "tasks")
 	fc, err := os.ReadFile(fn)
 	if err != nil {
-		gov.log.WithError(err).Warn("cannot read tasks file")
+		if !errors.Is(err, fs.ErrNotExist) {
+			gov.log.WithError(err).Warn("cannot read tasks file")
+		}
 		return
 	}
 
