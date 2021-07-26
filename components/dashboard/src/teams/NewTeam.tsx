@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { FormEvent, useContext, useState } from "react";
+import { FormEvent, useContext, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { getGitpodService } from "../service/service";
 import { TeamsContext } from "./teams-context";
@@ -27,6 +27,9 @@ export default function () {
             setCreationError(error);
         }
     }
+
+    useEffect(() => { document.title = 'New Team — Gitpod' }, []);
+
     return <div className="flex flex-col w-96 mt-24 mx-auto items-center">
         <h1>New Team</h1>
         <p className="text-gray-500 text-center text-base">Teams allow you to <strong>group multiple projects</strong>, <strong>collaborate with others</strong>, <strong>manage subscriptions</strong> with one centralized billing, and more. <a className="learn-more" href="https://www.gitpod.io/docs/teams/">Learn more</a></p>

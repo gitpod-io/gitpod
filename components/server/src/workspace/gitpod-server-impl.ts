@@ -6,7 +6,7 @@
 
 import { BlobServiceClient } from "@gitpod/content-service/lib/blobs_grpc_pb";
 import { DownloadUrlRequest, DownloadUrlResponse, UploadUrlRequest, UploadUrlResponse } from '@gitpod/content-service/lib/blobs_pb';
-import { AppInstallationDB, UserDB, UserMessageViewsDB, WorkspaceDB, DBWithTracing, TracedWorkspaceDB, DBGitpodToken, DBUser, UserStorageResourcesDB, ProjectDB, TeamDB } from '@gitpod/gitpod-db/lib';
+import { AppInstallationDB, UserDB, UserMessageViewsDB, WorkspaceDB, DBWithTracing, TracedWorkspaceDB, DBGitpodToken, DBUser, UserStorageResourcesDB, TeamDB } from '@gitpod/gitpod-db/lib';
 import { AuthProviderEntry, AuthProviderInfo, Branding, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team, TeamMemberInfo, TeamMembershipInvite, CreateProjectParams, Project, ProviderRepository, PrebuildInfo, TeamMemberRole, WithDefaultConfig, FindPrebuildsParams } from '@gitpod/gitpod-protocol';
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { AdminBlockUserRequest, AdminGetListRequest, AdminGetListResult, AdminGetWorkspacesRequest, AdminModifyPermanentWorkspaceFeatureFlagRequest, AdminModifyRoleOrPermissionRequest, WorkspaceAndInstance } from '@gitpod/gitpod-protocol/lib/admin-protocol';
@@ -77,7 +77,6 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     @inject(UserDeletionService) protected readonly userDeletionService: UserDeletionService;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(AuthorizationService) protected readonly authorizationService: AuthorizationService;
-    @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
 
     @inject(AppInstallationDB) protected readonly appInstallationDB: AppInstallationDB;
@@ -1388,6 +1387,15 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         await this.userDB.deleteEnvVar(envvar);
     }
 
+    protected async guardTeamOperation(teamId: string | undefined, op: ResourceAccessOp): Promise<void> {
+        const team = await this.teamDB.findTeamById(teamId || "");
+        if (!team) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
+        }
+        const members = await this.teamDB.findMembersByTeam(team.id);
+        await this.guardAccess({ kind: "team", subject: team, members }, op);
+    }
+
     public async getTeams(): Promise<Team[]> {
         // Note: this operation is per-user only, hence needs no resource guard
         const user = this.checkUser("getTeams");
@@ -1452,75 +1460,91 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         return this.teamDB.resetGenericInvite(teamId);
     }
 
-    protected async guardTeamOperation(teamId: string, op: ResourceAccessOp): Promise<void> {
-        const team = await this.teamDB.findTeamById(teamId);
-        if (!team) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Team not found");
+    protected async guardProjectOperation(user: User, projectId: string, op: ResourceAccessOp): Promise<void> {
+        const project = await this.projectsService.getProject(projectId);
+        if (!project) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Project not found");
         }
-        const members = await this.teamDB.findMembersByTeam(team.id);
-        await this.guardAccess({ kind: "team", subject: team, members }, op);
+        // TODO(janx): This if/else block should probably become a GuardedProject.
+        if (project.userId) {
+            if (user.id !== project.userId) {
+                // Projects owned by a single user can only be accessed by that user
+                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, "Not allowed to access this project");
+            }
+        } else {
+            // Anyone who can read a team's information (i.e. any team member) can manage team projects
+            await this.guardTeamOperation(project.teamId, "get");
+        }
     }
 
-    async getProviderRepositoriesForUser(params: { provider: string }): Promise<ProviderRepository[]> {
+    public async getProviderRepositoriesForUser(params: { provider: string }): Promise<ProviderRepository[]> {
         this.checkAndBlockUser("getProviderRepositoriesForUser");
         // Note: this operation is per-user only, hence needs no resource guard
 
         // implemented in EE
         return [];
     }
-    async createProject(params: CreateProjectParams): Promise<Project> {
-        this.checkUser("createProject");
-        // Anyone who can read a team's information (i.e. any team member) can create a new project.
-        await this.guardTeamOperation(params.teamId, "get");
+
+    public async createProject(params: CreateProjectParams): Promise<Project> {
+        const user = this.checkUser("createProject");
+        if (params.userId) {
+            if (params.userId !== user.id) {
+                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `Cannot create Projects for other users`);
+            }
+        } else {
+            // Anyone who can read a team's information (i.e. any team member) can create a new project.
+            await this.guardTeamOperation(params.teamId, "get");
+        }
         return this.projectsService.createProject(params);
     }
-    async deleteProject(projectId: string): Promise<void> {
-        this.checkUser("deleteProject");
-        const project = await this.projectsService.getProject(projectId);
-        if (!project) {
-            return;
-        }
-        await this.guardTeamOperation(project.teamId, "delete"); // this is actually not deletion of a team ;-)
+
+    public async deleteProject(projectId: string): Promise<void> {
+        const user = this.checkUser("deleteProject");
+        await this.guardProjectOperation(user, projectId, "delete");
         return this.projectsService.deleteProject(projectId);
     }
-    async getProjects(teamId: string): Promise<Project[]> {
-        this.checkUser("getProjects");
+
+    public async getTeamProjects(teamId: string): Promise<Project[]> {
+        this.checkUser("getTeamProjects");
         await this.guardTeamOperation(teamId, "get");
-
-        return this.projectsService.getProjects(teamId);
+        return this.projectsService.getTeamProjects(teamId);
     }
-    async findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildInfo[]> {
-        const user = this.checkAndBlockUser("getPrebuilds");
-        await this.guardTeamOperation(params.teamId, "get");
 
+    public async getUserProjects(): Promise<Project[]> {
+        // Note: this operation is per-user only, hence needs no resource guard
+        const user = this.checkAndBlockUser("getUserProjects");
+        return this.projectsService.getUserProjects(user.id);
+    }
+
+    public async findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildInfo[]> {
+        const user = this.checkAndBlockUser("getPrebuilds");
+        await this.guardProjectOperation(user, params.projectId, "get");
         return this.projectsService.findPrebuilds(user, params);
     }
-    async getProjectOverview(teamId: string, projectName: string): Promise<Project.Overview | undefined> {
+
+    public async getProjectOverview(projectId: string): Promise<Project.Overview | undefined> {
         const user = this.checkAndBlockUser("getProjectOverview");
-        await this.guardTeamOperation(teamId, "get");
-
-        return this.projectsService.getProjectOverview(user, teamId, projectName);
-    }
-    async triggerPrebuild(projectId: string, branch: string): Promise<void> {
-        this.checkAndBlockUser("triggerPrebuild");
-
-        // implemented in EE
-    }
-
-
-    public async setProjectConfiguration(projectId: string, configString: string): Promise<void> {
-        this.checkAndBlockUser("setProjectConfiguration");
-        const project = await this.projectDB.findProjectById(projectId);
+        const project = await this.projectsService.getProject(projectId);
         if (!project) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Project not found");
         }
-        // Anyone who can read a team's information (i.e. any team member) can (re-)configure a project.
-        await this.guardTeamOperation(project.teamId, "get");
+        await this.guardProjectOperation(user, projectId, "get");
+        return this.projectsService.getProjectOverview(user, project);
+    }
+
+    public async triggerPrebuild(projectId: string, branch: string): Promise<void> {
+        this.checkAndBlockUser("triggerPrebuild");
+        // implemented in EE
+    }
+
+    public async setProjectConfiguration(projectId: string, configString: string): Promise<void> {
+        const user = this.checkAndBlockUser("setProjectConfiguration");
+        await this.guardProjectOperation(user, projectId, "update");
         const parseResult = this.gitpodParser.parse(configString);
         if (parseResult.validationErrors) {
             throw new Error(`This configuration could not be parsed: ${parseResult.validationErrors.join(', ')}`);
         }
-        await this.projectDB.setProjectConfiguration(projectId, { '.gitpod.yml': configString });
+        await this.projectsService.setProjectConfiguration(projectId, { '.gitpod.yml': configString });
     }
 
     public async fetchProjectRepositoryConfiguration(projectId: string): Promise<string | undefined> {
@@ -1528,12 +1552,11 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         const span = opentracing.globalTracer().startSpan("fetchProjectRepositoryConfiguration");
         span.setTag("projectId", projectId);
 
-        const project = await this.projectDB.findProjectById(projectId);
+        const project = await this.projectsService.getProject(projectId);
         if (!project) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, "Project not found");
         }
-        // Anyone who can read a team's information (i.e. any team member) can (re-)configure a project.
-        await this.guardTeamOperation(project.teamId, "get");
+        await this.guardProjectOperation(user, projectId, "get");
 
         const normalizedContextUrl = this.contextParser.normalizeContextURL(project.cloneUrl);
         const context = (await this.contextParser.handle({ span }, user, normalizedContextUrl)) as CommitContext;

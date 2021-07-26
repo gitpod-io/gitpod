@@ -79,7 +79,10 @@ const gitpodServiceMock = createServiceMock({
             teamId: "team1",
         }
     },
-    getProjects: async () => {
+    getTeamProjects: async () => {
+        return [pr1]
+    },
+    getUserProjects: async () => {
         return [pr1]
     },
     getProjectOverview: async () => {
@@ -98,14 +101,15 @@ const gitpodServiceMock = createServiceMock({
         }
     },
     findPrebuilds: async (p) => {
-        const { projectName, teamId } = p;
+        const { projectId } = p;
         return [{
             id: "pb1",
             branch: "main",
             buildWorkspaceId: "123",
             branchPrebuildNumber: "123342",
-            projectName,
-            teamId,
+            teamId: "t1",
+            projectId,
+            projectName: "pb1",
             cloneUrl: pr1.cloneUrl,
             startedAt: t1,
             startedBy: u1.id,
@@ -123,8 +127,9 @@ const gitpodServiceMock = createServiceMock({
             branch: "foo/bar",
             buildWorkspaceId: "1234",
             branchPrebuildNumber: "3",
-            projectName,
-            teamId,
+            teamId: "t1",
+            projectId,
+            projectName: "pb1",
             cloneUrl: pr1.cloneUrl,
             startedAt: t1,
             startedBy: u1.id,

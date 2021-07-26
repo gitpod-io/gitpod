@@ -77,46 +77,56 @@ export default function Menu() {
         })();
     }, [ teams ]);
 
+    const teamOrUserSlug = !!team ? team.slug : 'projects';
     const leftMenu: Entry[] = (() => {
-        if (!team) {
+        // Project menu
+        if (projectName) {
             return [
                 {
-                    title: 'Workspaces',
-                    link: '/workspaces',
-                    alternatives: ['/']
+                    title: 'Overview',
+                    link: `/${teamOrUserSlug}/${projectName}`
                 },
                 {
-                    title: 'Settings',
-                    link: '/settings',
-                    alternatives: settingsMenu.flatMap(e => e.link)
+                    title: 'Prebuilds',
+                    link: `/${teamOrUserSlug}/${projectName}/prebuilds`
+                },
+                {
+                    title: 'Configure',
+                    link: `/${teamOrUserSlug}/${projectName}/configure`
                 }
             ];
         }
-        return projectName ? [
-            {
-                title: 'Overview',
-                link: `/${team.slug}/${projectName}`,
-                alternatives: [`/${team.slug}`]
-            },
-            {
-                title: 'Prebuilds',
-                link: `/${team.slug}/${projectName}/prebuilds`
-            },
-            {
-                title: 'Configure',
-                link: `/${team.slug}/${projectName}/configure`
-            }
-        ] : [
-            {
+        // Team menu
+        if (team) {
+            return [
+                {
+                    title: 'Projects',
+                    link: `/${team.slug}/projects`,
+                    alternatives: [`/${team.slug}`]
+                },
+                {
+                    title: 'Members',
+                    link: `/${team.slug}/members`
+                }
+            ];
+        }
+        // User menu
+        return [
+            ...(showTeamsUI ? [{
                 title: 'Projects',
-                link: `/${team.slug}/projects`,
-                alternatives: [`/${team.slug}`]
+                link: '/projects'
+            }] : []),
+            {
+                title: 'Workspaces',
+                link: '/workspaces',
+                alternatives: ['/']
             },
             {
-                title: 'Members',
-                link: `/${team.slug}/members`
+                title: 'Settings',
+                link: '/settings',
+                alternatives: settingsMenu.flatMap(e => e.link)
             }
-        ]
+        ];
     })();
     const rightMenu: Entry[] = [
         ...(user?.rolesOrPermissions?.includes('admin') ? [{
@@ -181,7 +191,7 @@ export default function Menu() {
                 </div>
                 { projectName && (
                     <div className="flex h-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1">
-                        <Link to={`/${team?.slug}/${projectName}${prebuildId ? "/prebuilds" : ""}`}>
+                        <Link to={`/${teamOrUserSlug}/${projectName}${prebuildId ? "/prebuilds" : ""}`}>
                             <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{projectName}</span>
                         </Link>
                     </div>

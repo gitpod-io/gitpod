@@ -15,7 +15,8 @@ export interface Project {
     id: string;
     name: string;
     cloneUrl: string;
-    teamId: string;
+    teamId?: string;
+    userId?: string;
     appInstallationId: string;
     config?: ProjectConfig;
     creationTime: string;

@@ -125,8 +125,9 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getProviderRepositoriesForUser(params: GetProviderRepositoriesParams): Promise<ProviderRepository[]>;
     createProject(params: CreateProjectParams): Promise<Project>;
     deleteProject(projectId: string): Promise<void>;
-    getProjects(teamId: string): Promise<Project[]>;
-    getProjectOverview(teamId: string, projectName: string): Promise<Project.Overview | undefined>;
+    getTeamProjects(teamId: string): Promise<Project[]>;
+    getUserProjects(): Promise<Project[]>;
+    getProjectOverview(projectId: string): Promise<Project.Overview | undefined>;
     findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildInfo[]>;
     triggerPrebuild(projectId: string, branch: string): Promise<void>;
     setProjectConfiguration(projectId: string, configString: string): Promise<void>;
@@ -229,12 +230,12 @@ export interface CreateProjectParams {
     account: string;
     provider: string;
     cloneUrl: string;
-    teamId: string;
+    teamId?: string;
+    userId?: string;
     appInstallationId: string;
 }
 export interface FindPrebuildsParams {
-    teamId: string;
-    projectName: string;
+    projectId: string;
     branch?: string;
     latest?: boolean;
     prebuildId?: string;
