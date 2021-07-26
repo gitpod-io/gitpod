@@ -118,6 +118,7 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 		ClientID:     "gplctl-1.0",
 		ClientSecret: "gplctl-1.0-secret", // Required (even though it is marked as optional?!)
 		Scopes: []string{
+			"function:getWorkspace",
 			"function:getWorkspaces",
 			"function:listenForWorkspaceInstanceUpdates",
 			"resource:workspace::*::get",

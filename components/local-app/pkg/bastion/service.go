@@ -5,6 +5,8 @@
 package bastion
 
 import (
+	"context"
+
 	"github.com/gitpod-io/gitpod/local-app/api"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -53,4 +55,9 @@ func (s *LocalAppService) TunnelStatus(req *api.TunnelStatusRequest, srv api.Loc
 			}
 		}
 	}
+}
+
+func (s *LocalAppService) AutoTunnel(ctx context.Context, req *api.AutoTunnelRequest) (*api.AutoTunnelResponse, error) {
+	s.b.AutoTunnel(req.InstanceId, req.Enabled)
+	return &api.AutoTunnelResponse{}, nil
 }

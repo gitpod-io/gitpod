@@ -11,6 +11,7 @@ import "supervisor-api/port.proto";
 
 service LocalApp {
   rpc TunnelStatus(TunnelStatusRequest) returns (stream TunnelStatusResponse) {}
+  rpc AutoTunnel(AutoTunnelRequest) returns (AutoTunnelResponse) {}
 }
 message TunnelStatusRequest {
   string instance_id = 1;
@@ -24,3 +25,9 @@ message TunnelStatus {
   uint32 local_port = 2;
   supervisor.TunnelVisiblity visibility = 3;
 }
+
+message AutoTunnelRequest {
+  string instance_id = 1;
+  bool enabled = 2;
+}
+message AutoTunnelResponse {}

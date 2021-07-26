@@ -77,8 +77,10 @@ type Workspace struct {
 	supervisorListener *TunnelListener
 	supervisorClient   *grpc.ClientConn
 
-	tunnelListenersMu sync.RWMutex
-	tunnelListeners   map[uint32]*TunnelListener
+	tunnelMu        sync.RWMutex
+	tunnelListeners map[uint32]*TunnelListener
+	tunnelEnabled   bool
+	cancelTunnel    context.CancelFunc
 
 	localSSHListener *TunnelListener
 	SSHPrivateFN     string
@@ -89,12 +91,11 @@ type Workspace struct {
 
 	tunnelClient          chan chan *TunnelClient
 	tunnelClientConnected bool
-	portsTunneled         bool
 }
 
 func (ws *Workspace) Status() []*app.TunnelStatus {
-	ws.tunnelListenersMu.RLock()
-	defer ws.tunnelListenersMu.RUnlock()
+	ws.tunnelMu.RLock()
+	defer ws.tunnelMu.RUnlock()
 	res := make([]*app.TunnelStatus, 0, len(ws.tunnelListeners))
 	for _, listener := range ws.tunnelListeners {
 		res = append(res, &app.TunnelStatus{
@@ -239,6 +240,17 @@ func (b *Bastion) FullUpdate() {
 	}
 }
 
+func (b *Bastion) Update(workspaceID string) {
+	ws, err := b.Client.GetWorkspace(b.ctx, workspaceID)
+	if err != nil {
+		logrus.WithError(err).WithField("WorkspaceID", workspaceID).Warn("cannot get workspace")
+	}
+	if ws.LatestInstance == nil {
+		return
+	}
+	b.updates <- ws.LatestInstance
+}
+
 func (b *Bastion) handleUpdate(u *gitpod.WorkspaceInstance) {
 	b.workspacesMu.Lock()
 	defer b.workspacesMu.Unlock()
@@ -258,6 +270,7 @@ func (b *Bastion) handleUpdate(u *gitpod.WorkspaceInstance) {
 
 			tunnelClient:    make(chan chan *TunnelClient, 1),
 			tunnelListeners: make(map[uint32]*TunnelListener),
+			tunnelEnabled:   true,
 		}
 	}
 	ws.Phase = u.Status.Phase
@@ -297,8 +310,7 @@ func (b *Bastion) handleUpdate(u *gitpod.WorkspaceInstance) {
 			}
 		}
 
-		if ws.supervisorClient != nil && !ws.portsTunneled {
-			ws.portsTunneled = true
+		if ws.supervisorClient != nil {
 			go b.tunnelPorts(ws)
 		}
 
@@ -648,13 +660,27 @@ func installSSHAuthorizedKey(ws *Workspace, key string) error {
 }
 
 func (b *Bastion) tunnelPorts(ws *Workspace) {
+	ws.tunnelMu.Lock()
+	if !ws.tunnelEnabled || ws.cancelTunnel != nil {
+		ws.tunnelMu.Unlock()
+		return
+	}
+	ctx, cancel := context.WithCancel(ws.ctx)
+	ws.cancelTunnel = cancel
+	ws.tunnelMu.Unlock()
+
 	defer func() {
-		ws.portsTunneled = false
+		ws.tunnelMu.Lock()
+		defer ws.tunnelMu.Unlock()
+
+		ws.cancelTunnel = nil
 		logrus.WithField("workspace", ws.WorkspaceID).Info("ports tunneling finished")
 	}()
+
 	for {
 		logrus.WithField("workspace", ws.WorkspaceID).Info("tunneling ports...")
-		err := b.doTunnelPorts(ws)
+
+		err := b.doTunnelPorts(ctx, ws)
 		if ws.ctx.Err() != nil {
 			return
 		}
@@ -662,15 +688,16 @@ func (b *Bastion) tunnelPorts(ws *Workspace) {
 			logrus.WithError(err).WithField("workspace", ws.WorkspaceID).Warn("ports tunneling failed, retrying...")
 		}
 		select {
-		case <-ws.ctx.Done():
+		case <-ctx.Done():
 			return
 		case <-time.After(1 * time.Second):
 		}
 	}
 }
-func (b *Bastion) doTunnelPorts(ws *Workspace) error {
+
+func (b *Bastion) doTunnelPorts(ctx context.Context, ws *Workspace) error {
 	statusService := supervisor.NewStatusServiceClient(ws.supervisorClient)
-	status, err := statusService.PortsStatus(ws.ctx, &supervisor.PortsStatusRequest{
+	status, err := statusService.PortsStatus(ctx, &supervisor.PortsStatusRequest{
 		Observe: true,
 	})
 	if err != nil {
@@ -678,8 +705,8 @@ func (b *Bastion) doTunnelPorts(ws *Workspace) error {
 	}
 	defer b.notify(ws)
 	defer func() {
-		ws.tunnelListenersMu.Lock()
-		defer ws.tunnelListenersMu.Unlock()
+		ws.tunnelMu.Lock()
+		defer ws.tunnelMu.Unlock()
 		for port, t := range ws.tunnelListeners {
 			delete(ws.tunnelListeners, port)
 			t.Cancel()
@@ -690,7 +717,7 @@ func (b *Bastion) doTunnelPorts(ws *Workspace) error {
 		if err != nil {
 			return err
 		}
-		ws.tunnelListenersMu.Lock()
+		ws.tunnelMu.Lock()
 		currentTunneled := make(map[uint32]struct{})
 		for _, port := range resp.Ports {
 			visibility := supervisor.TunnelVisiblity_none
@@ -730,7 +757,7 @@ func (b *Bastion) doTunnelPorts(ws *Workspace) error {
 				listener.Cancel()
 			}
 		}
-		ws.tunnelListenersMu.Unlock()
+		ws.tunnelMu.Unlock()
 		b.notify(ws)
 	}
 }
@@ -805,4 +832,24 @@ func (b *Bastion) Subscribe(instanceID string) (*StatusSubscription, error) {
 	// makes sure that no updates can happen between clients receiving an initial status and subscribing
 	sub.updates <- b.Status(instanceID)
 	return sub, nil
+}
+
+func (b *Bastion) AutoTunnel(instanceID string, enabled bool) {
+	ws, ok := b.getWorkspace(instanceID)
+	if !ok {
+		return
+	}
+	ws.tunnelMu.Lock()
+	defer ws.tunnelMu.Unlock()
+	if ws.tunnelEnabled == enabled {
+		return
+	}
+	ws.tunnelEnabled = enabled
+	if enabled {
+		if ws.cancelTunnel == nil {
+			b.Update(ws.WorkspaceID)
+		}
+	} else if ws.cancelTunnel != nil {
+		ws.cancelTunnel()
+	}
 }
