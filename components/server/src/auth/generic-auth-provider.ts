@@ -296,16 +296,16 @@ export class GenericAuthProvider implements AuthProvider {
 
         // check OAuth2 errors
         const callbackParams = new URL(`https://anyhost${request.originalUrl}`).searchParams;
-        const error = callbackParams.get("error");
-        const description: string | null = callbackParams.get("error_description");
+        const callbackError = callbackParams.get("error");
+        const callbackErrorDescription: string | null = callbackParams.get("error_description");
 
-        if (error) { // e.g. "access_denied"
+        if (callbackError) { // e.g. "access_denied"
             // Clean up the session
             await AuthFlow.clear(request.session);
             await TosFlow.clear(request.session);
 
             increaseLoginCounter("failed", this.host);
-            return this.sendCompletionRedirectWithError(response, { error, description });
+            return this.sendCompletionRedirectWithError(response, { error: callbackError, description: callbackErrorDescription });
         }
 
         let result: Parameters<VerifyCallback>;
@@ -357,7 +357,7 @@ export class GenericAuthProvider implements AuthProvider {
                 message = 'OAuth Error. Please try again.'; // this is a 5xx response from authorization service
             }
 
-            if (!UnconfirmedUserException.is(error)) {
+            if (!UnconfirmedUserException.is(err)) {
                 // user did not accept ToS. Don't count this towards the error burn rate.
                 increaseLoginCounter("failed", this.host);
             }
