@@ -23,6 +23,7 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type LocalAppClient interface {
 	TunnelStatus(ctx context.Context, in *TunnelStatusRequest, opts ...grpc.CallOption) (LocalApp_TunnelStatusClient, error)
+	AutoTunnel(ctx context.Context, in *AutoTunnelRequest, opts ...grpc.CallOption) (*AutoTunnelResponse, error)
 }
 
 type localAppClient struct {
@@ -65,11 +66,21 @@ func (x *localAppTunnelStatusClient) Recv() (*TunnelStatusResponse, error) {
 	return m, nil
 }
 
+func (c *localAppClient) AutoTunnel(ctx context.Context, in *AutoTunnelRequest, opts ...grpc.CallOption) (*AutoTunnelResponse, error) {
+	out := new(AutoTunnelResponse)
+	err := c.cc.Invoke(ctx, "/localapp.LocalApp/AutoTunnel", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // LocalAppServer is the server API for LocalApp service.
 // All implementations must embed UnimplementedLocalAppServer
 // for forward compatibility
 type LocalAppServer interface {
 	TunnelStatus(*TunnelStatusRequest, LocalApp_TunnelStatusServer) error
+	AutoTunnel(context.Context, *AutoTunnelRequest) (*AutoTunnelResponse, error)
 	mustEmbedUnimplementedLocalAppServer()
 }
 
@@ -79,6 +90,9 @@ type UnimplementedLocalAppServer struct {
 
 func (UnimplementedLocalAppServer) TunnelStatus(*TunnelStatusRequest, LocalApp_TunnelStatusServer) error {
 	return status.Errorf(codes.Unimplemented, "method TunnelStatus not implemented")
+}
+func (UnimplementedLocalAppServer) AutoTunnel(context.Context, *AutoTunnelRequest) (*AutoTunnelResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AutoTunnel not implemented")
 }
 func (UnimplementedLocalAppServer) mustEmbedUnimplementedLocalAppServer() {}
 
@@ -114,13 +128,36 @@ func (x *localAppTunnelStatusServer) Send(m *TunnelStatusResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
+func _LocalApp_AutoTunnel_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AutoTunnelRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LocalAppServer).AutoTunnel(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/localapp.LocalApp/AutoTunnel",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LocalAppServer).AutoTunnel(ctx, req.(*AutoTunnelRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // LocalApp_ServiceDesc is the grpc.ServiceDesc for LocalApp service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var LocalApp_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "localapp.LocalApp",
 	HandlerType: (*LocalAppServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "AutoTunnel",
+			Handler:    _LocalApp_AutoTunnel_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "TunnelStatus",
