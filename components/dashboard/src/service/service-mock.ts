@@ -86,7 +86,7 @@ const gitpodServiceMock = createServiceMock({
         return {
             branches: [{
                 name: "main",
-                branchUrl: "branchUrl",
+                url: "branchUrl",
                 changeDate: t1,
                 changeAuthor: u1.fullName!,
                 changeAuthorAvatar: u1.avatarUrl,

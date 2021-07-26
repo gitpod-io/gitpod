@@ -11,8 +11,7 @@ export interface ProjectDB {
     findProjectById(projectId: string): Promise<Project | undefined>;
     findProjectByCloneUrl(cloneUrl: string): Promise<Project | undefined>;
     findProjectsByCloneUrl(cloneUrls: string[]): Promise<Project[]>;
-    findProjectById(projectId: string): Promise<Project | undefined>;
-    findProject(teamId: string, projectName: string): Promise<Project | undefined>;
+    findProjectByTeamAndName(teamId: string, projectName: string): Promise<Project | undefined>;
     findProjectByInstallationId(installationId: string): Promise<Project | undefined>;
     findProjectsByTeam(teamId: string): Promise<Project[]>;
     storeProject(project: Project): Promise<Project>;

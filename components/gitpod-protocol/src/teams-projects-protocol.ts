@@ -39,7 +39,7 @@ export namespace Project {
 
     export interface BranchDetails {
         name: string;
-        branchUrl: string;
+        url: string;
         isDefault: boolean;
 
         // Latest commit
