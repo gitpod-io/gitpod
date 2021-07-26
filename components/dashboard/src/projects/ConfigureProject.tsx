@@ -62,14 +62,16 @@ export default function () {
   const [ workspaceCreationResult, setWorkspaceCreationResult ] = useState<WorkspaceCreationResult | undefined>();
 
   useEffect(() => {
-    if (!team) {
-      return;
-    }
     // Disable editing while loading, or when the config comes from Git.
     setIsEditorDisabled(true);
     setEditorError(null);
+    if (!teams) {
+      return;
+    }
     (async () => {
-      const projects = await getGitpodService().server.getProjects(team.id);
+      const projects = (!!team
+        ? await getGitpodService().server.getTeamProjects(team.id)
+        : await getGitpodService().server.getUserProjects());
       const project = projects.find(p => p.name === routeMatch?.params.projectSlug);
       if (project) {
         setProject(project);
@@ -84,7 +86,7 @@ export default function () {
         }
       }
     })();
-  }, [ team ]);
+  }, [ teams, team ]);
 
   const buildProject = async (event: React.MouseEvent) => {
     if (!project) {
@@ -106,6 +108,8 @@ export default function () {
       setEditorError(<span>{String(error)}</span>);
     }
   }
+
+  useEffect(() => { document.title = 'Configure Project — Gitpod' }, []);
 
   return <div className="flex flex-col mt-24 mx-auto items-center">
     <h1>Configure Project</h1>

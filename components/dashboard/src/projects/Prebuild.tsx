@@ -23,22 +23,28 @@ export default function () {
     const prebuildId = match?.params?.prebuildId;
     const team = getCurrentTeam(location, teams);
 
-    const [prebuild, setPrebuild] = useState<PrebuildInfo | undefined>();
+    const [ prebuild, setPrebuild ] = useState<PrebuildInfo | undefined>();
 
     useEffect(() => {
-        if (!team || !projectName || !prebuildId) {
+        if (!teams || !projectName || !prebuildId) {
             return;
         }
         (async () => {
+            const projects = (!!team
+                ? await getGitpodService().server.getTeamProjects(team.id)
+                : await getGitpodService().server.getUserProjects());
+            const project = projects.find(p => p.name === projectName);
+            if (!project) {
+                console.error(new Error(`Project not found! (teamId: ${team?.id}, projectName: ${projectName})`));
+                return;
+            }
             const prebuilds = await getGitpodService().server.findPrebuilds({
-                projectName,
-                teamId: team.id,
+                projectId: project.id,
                 prebuildId
             });
             setPrebuild(prebuilds[0]);
         })();
-    }, [team]);
-
+    }, [ teams, team ]);
 
     const renderTitle = () => {
         if (!prebuild) {
@@ -69,6 +75,8 @@ export default function () {
             </div>
         </div>)
     };
+
+    useEffect(() => { document.title = 'Prebuild — Gitpod' }, []);
 
     return <>
         <Header title={renderTitle()} subtitle={renderSubtitle()} />

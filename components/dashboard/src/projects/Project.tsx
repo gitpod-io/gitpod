@@ -33,13 +33,15 @@ export default function () {
 
     useEffect(() => {
         updateProject();
-    }, [team]);
+    }, [ teams, team ]);
 
     const updateProject = async () => {
-        if (!team || !projectName) {
+        if (!teams || !projectName) {
             return;
         }
-        const projects = await getGitpodService().server.getProjects(team.id);
+        const projects = (!!team
+            ? await getGitpodService().server.getTeamProjects(team.id)
+            : await getGitpodService().server.getUserProjects());
 
         const project = projectName && projects.find(p => p.name === projectName);
         if (!project) {
@@ -48,7 +50,7 @@ export default function () {
 
         setProject(project);
 
-        const details = await getGitpodService().server.getProjectOverview(team.id, project.name);
+        const details = await getGitpodService().server.getProjectOverview(project.id);
         if (details) {
             // default branch on top of the rest
             const branches = details.branches.sort((a, b) => (b.isDefault as any) - (a.isDefault as any)) || [];
@@ -56,8 +58,7 @@ export default function () {
 
             for (const b of branches) {
                 const lastPrebuild = await getGitpodService().server.findPrebuilds({
-                    projectName,
-                    teamId: team.id,
+                    projectId: project.id,
                     branch: b.name,
                     latest: true,
                 });
@@ -102,7 +103,7 @@ export default function () {
     }
 
     const openPrebuild = (pb: PrebuildInfo) => {
-        history.push(`/${team?.slug}/${projectName}/${pb.id}`);
+        history.push(`/${!!team ? team.slug : 'projects'}/${projectName}/${pb.id}`);
     }
 
     const formatDate = (date: string | undefined) => {
@@ -110,7 +111,7 @@ export default function () {
     }
 
     return <>
-        <Header title={"Branches"} subtitle={<h2>View recent active branches for <a className="text-gray-400 hover:text-gray-600" href={project?.cloneUrl}>{project?.name}</a>.</h2>} />
+        <Header title="Branches" subtitle={<h2>View recent active branches for <a className="text-gray-400 hover:text-gray-600" href={project?.cloneUrl}>{project?.name}</a>.</h2>} />
         <div className="lg:px-28 px-10">
             <div className="flex mt-8">
                 <div className="flex">

@@ -7,6 +7,7 @@
 import { Entity, Column, PrimaryColumn, Index } from "typeorm";
 import { TypeORM } from "../typeorm";
 import { ProjectConfig } from "@gitpod/gitpod-protocol";
+import { Transformer } from "../transformer";
 
 @Entity()
 // on DB but not Typeorm: @Index("ind_lastModified", ["_lastModified"])   // DBSync
@@ -20,9 +21,19 @@ export class DBProject {
   @Column()
   cloneUrl: string;
 
-  @Column(TypeORM.UUID_COLUMN_TYPE)
+  @Column({
+    default: '',
+    transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+  })
   @Index("ind_teamId")
-  teamId: string;
+  teamId?: string;
+
+  @Column({
+    default: '',
+    transformer: Transformer.MAP_EMPTY_STR_TO_UNDEFINED
+  })
+  @Index("ind_userId")
+  userId?: string;
 
   @Column()
   appInstallationId: string;

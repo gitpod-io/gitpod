@@ -34,29 +34,28 @@ export default function () {
     const [prebuilds, setPrebuilds] = useState<PrebuildInfo[]>([]);
 
     useEffect(() => {
-        if (!team) {
+        if (!teams) {
             return;
         }
         (async () => {
-            const projects = await getGitpodService().server.getProjects(team.id);
+            const projects = (!!team
+                ? await getGitpodService().server.getTeamProjects(team.id)
+                : await getGitpodService().server.getUserProjects());
 
             const project = projectName && projects.find(p => p.name === projectName);
             if (project) {
                 setProject(project);
 
-                const prebuilds = await getGitpodService().server.findPrebuilds({
-                    projectName: project.name,
-                    teamId: team.id
-                });
+                const prebuilds = await getGitpodService().server.findPrebuilds({ projectId: project.id });
                 setPrebuilds(prebuilds);
 
-                const details = await getGitpodService().server.getProjectOverview(team.id, project.name);
+                const details = await getGitpodService().server.getProjectOverview(project.id);
                 if (details?.branches) {
                     setDefaultBranch(details.branches.find(b => b.isDefault)?.name);
                 }
             }
         })();
-    }, [team]);
+    }, [ teams, team ]);
 
     const prebuildContextMenu = (p: PrebuildInfo) => {
         const running = p.status === "building";
@@ -106,7 +105,7 @@ export default function () {
     const filteredPrebuilds = prebuilds.filter(filter);
 
     const openPrebuild = (pb: PrebuildInfo) => {
-        history.push(`/${team?.slug}/${projectName}/${pb.id}`);
+        history.push(`/${!!team ? team.slug : 'projects'}/${projectName}/${pb.id}`);
     }
 
     const triggerPrebuild = (branchName: string) => {

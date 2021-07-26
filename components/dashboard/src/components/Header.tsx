@@ -4,6 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import { useEffect } from "react";
 import Separator from "./Separator";
 
 export interface HeaderProps {
@@ -12,6 +13,12 @@ export interface HeaderProps {
 }
 
 export default function Header(p: HeaderProps) {
+    useEffect(() => {
+        if (typeof p.title !== "string") {
+            return;
+        }
+        document.title = `${p.title} — Gitpod`;
+    }, []);
     return <div className="lg:px-28 px-10 border-gray-200 dark:border-gray-800">
         <div className="flex pb-8 pt-6">
             <div className="">

@@ -32,5 +32,8 @@ export default function() {
             }
         })();
     }, []);
+
+    useEffect(() => { document.title = 'Joining Team — Gitpod' }, []);
+
     return <div className="mt-16 text-center text-gitpod-red">{String(joinError)}</div>
 }

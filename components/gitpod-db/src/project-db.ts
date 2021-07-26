@@ -10,10 +10,11 @@ export const ProjectDB = Symbol('ProjectDB');
 export interface ProjectDB {
     findProjectById(projectId: string): Promise<Project | undefined>;
     findProjectByCloneUrl(cloneUrl: string): Promise<Project | undefined>;
-    findProjectsByCloneUrl(cloneUrls: string[]): Promise<Project[]>;
+    findProjectsByCloneUrls(cloneUrls: string[]): Promise<Project[]>;
     findProjectByTeamAndName(teamId: string, projectName: string): Promise<Project | undefined>;
     findProjectByInstallationId(installationId: string): Promise<Project | undefined>;
-    findProjectsByTeam(teamId: string): Promise<Project[]>;
+    findTeamProjects(teamId: string): Promise<Project[]>;
+    findUserProjects(userId: string): Promise<Project[]>;
     storeProject(project: Project): Promise<Project>;
     setProjectConfiguration(projectId: string, config: ProjectConfig): Promise<void>;
     markDeleted(projectId: string): Promise<void>;

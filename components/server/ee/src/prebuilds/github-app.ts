@@ -335,7 +335,9 @@ export class GithubApp {
         //
         const project = await this.projectDB.findProjectByInstallationId(String(installationId));
         if (project) {
-            const owner = (await this.teamDB.findMembersByTeam(project.teamId)).filter(m => m.role === "owner")[0];
+            const owner = !!project.userId
+                ? { userId: project.userId }
+                : (await this.teamDB.findMembersByTeam(project.teamId || '')).filter(m => m.role === "owner")[0];
             if (owner) {
                 const user = await this.userDB.findUserById(owner.userId);
                 if (user) {

@@ -192,6 +192,19 @@ function App() {
                         <p className="mt-4 text-lg text-gitpod-red">{decodeURIComponent(getURLHash())}</p>
                     </div>
                 </Route>
+                <Route path="/projects">
+                    <Route exact path="/projects" component={Projects} />
+                    <Route exact path="/projects/:projectName/:resourceOrPrebuild?" render={(props) => {
+                        const { resourceOrPrebuild } = props.match.params;
+                        if (resourceOrPrebuild === "configure") {
+                            return <ConfigureProject />;
+                        }
+                        if (resourceOrPrebuild === "prebuilds") {
+                            return <Prebuilds />;
+                        }
+                        return resourceOrPrebuild ? <Prebuild /> : <Project />;
+                    }} />
+                </Route>
                 <Route path="/teams">
                     <Route exact path="/teams" component={Teams} />
                     <Route exact path="/teams/new" component={NewTeam} />

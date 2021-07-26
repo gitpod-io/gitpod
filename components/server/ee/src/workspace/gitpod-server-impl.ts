@@ -1451,9 +1451,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         const user = this.checkAndBlockUser("getProviderRepositoriesForUser");
 
         const repositories = await this.githubAppSupport.getProviderRepositoriesForUser({ user, ...params });
-
-        const cloneUrls = repositories.map(r => r.cloneUrl);
-        const projects = await this.projectDB.findProjectsByCloneUrl(cloneUrls);
+        const projects = await this.projectsService.getProjectsByCloneUrls(repositories.map(r => r.cloneUrl));
 
         const cloneUrlsInUse = new Set(projects.map(p => p.cloneUrl));
         repositories.forEach(r => { r.inUse = cloneUrlsInUse.has(r.cloneUrl) });
@@ -1468,7 +1466,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         if (!project) {
             return;
         }
-        await this.guardTeamOperation(project.teamId, "get");
+        await this.guardProjectOperation(user, projectId, "update");
 
         const span = opentracing.globalTracer().startSpan("triggerPrebuild");
         span.setTag("userId", user.id);
