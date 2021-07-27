@@ -607,7 +607,7 @@ func extractFailure(wso workspaceObjects) (string, *api.WorkspacePhase) {
 			// can go in this state and that's ok. However, if the workspace was shutting down due to deletion,
 			// we would not be here as we've checked for a DeletionTimestamp prior. So let's find out why the
 			// container is terminating.
-			if terminationState.Message != "" {
+			if terminationState.ExitCode != 0 && terminationState.Message != "" {
 				// the container itself told us why it was terminated - use that as failure reason
 				return extractFailureFromLogs([]byte(terminationState.Message)), nil
 			} else if terminationState.Reason == "Error" {
