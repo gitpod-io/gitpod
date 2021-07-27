@@ -5,11 +5,10 @@
  */
 
 import moment from "moment";
-import { PrebuildInfo, PrebuiltWorkspaceState, Project } from "@gitpod/gitpod-protocol";
+import { PrebuildInfo, Project } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { useHistory, useLocation, useRouteMatch } from "react-router";
 import Header from "../components/Header";
-import DropDown, { DropDownEntry } from "../components/DropDown";
 import { ItemsList, Item, ItemField, ItemFieldContextMenu } from "../components/ItemsList";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
@@ -31,7 +30,6 @@ export default function () {
     const [lastPrebuilds, setLastPrebuilds] = useState<Map<string, PrebuildInfo>>(new Map());
 
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
-    const [statusFilter, setStatusFilter] = useState<PrebuiltWorkspaceState | undefined>();
 
     useEffect(() => {
         updateProject();
@@ -90,26 +88,9 @@ export default function () {
         return entries;
     }
 
-    const statusFilterEntries = () => {
-        const entries: DropDownEntry[] = [];
-        entries.push({
-            title: 'All',
-            onClick: () => setStatusFilter(undefined)
-        });
-        entries.push({
-            title: 'READY',
-            onClick: () => setStatusFilter("available")
-        });
-        return entries;
-    }
-
     const lastPrebuild = (branch: Project.BranchDetails) => lastPrebuilds.get(branch.name);
 
     const filter = (branch: Project.BranchDetails) => {
-        const prebuild = lastPrebuild(branch);
-        if (statusFilter && prebuild && statusFilter !== prebuild.status) {
-            return false;
-        }
         if (searchFilter && `${branch.changeTitle} ${branch.name}`.toLowerCase().includes(searchFilter.toLowerCase()) === false) {
             return false;
         }
@@ -146,7 +127,6 @@ export default function () {
                 </div>
                 <div className="flex-1" />
                 <div className="py-3 pl-3">
-                    <DropDown prefix="Prebuild Status: " contextMenuWidth="w-32" entries={statusFilterEntries()} />
                 </div>
             </div>
             <ItemsList className="mt-2">
