@@ -137,6 +137,9 @@ export default function () {
                     </ItemField>
                 </Item>
                 {branches.map((branch, index) => {
+                    if (!filter(branch)) {
+                        return undefined;
+                    }
 
                     const branchName = branch.name;
                     const prebuild = lastPrebuild(branch);
@@ -145,16 +148,12 @@ export default function () {
                     const statusIcon = prebuild?.status && prebuildStatusIcon(prebuild.status);
                     const status = prebuild?.status && prebuildStatusLabel(prebuild.status);
                     console.log(`status for ${branchName} is ${prebuild?.status} (${lastPrebuilds.size})`)
-                    if (!filter(branch)) {
-                        // return undefined;
-                    }
                     return <Item key={`branch-${index}-${branchName}`} className="grid grid-cols-3 group">
                         <ItemField className="flex items-center">
                             <div>
                                 <div className="text-base text-gray-900 dark:text-gray-50 font-medium mb-1">
                                     {branchName}
                                 </div>
-                                <p>Updated _ minutes ago</p>
                             </div>
                         </ItemField>
                         <ItemField className="flex items-center">
