@@ -14,7 +14,7 @@ import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
 import { prebuildStatusIcon, prebuildStatusLabel } from "./Prebuilds";
 import { ContextMenuEntry } from "../components/ContextMenu";
-import { shortCommitMessage, toRemoteURL } from "./render-utils";
+import { shortCommitMessage } from "./render-utils";
 
 export default function () {
     const history = useHistory();
@@ -76,7 +76,7 @@ export default function () {
             onClick: () => onNewWorkspace(branch)
         });
         entries.push({
-            title: "Trigger Prebuild",
+            title: "Rerun Prebuild",
             onClick: () => triggerPrebuild(branch),
         });
         return entries;
@@ -110,7 +110,7 @@ export default function () {
     }
 
     return <>
-        <Header title={project?.name || ""} subtitle={toRemoteURL(project?.cloneUrl || "")} />
+        <Header title={"Branches"} subtitle={<h2>View recent active branches for <a className="text-gray-400 hover:text-gray-600" href={project?.cloneUrl}>{project?.name}</a>.</h2>} />
         <div className="lg:px-28 px-10">
             <div className="flex mt-8">
                 <div className="flex">
@@ -169,7 +169,7 @@ export default function () {
                             </div>
                             <span className="flex-grow" />
                             <a href={gitpodHostUrl.withContext(`${branch.url}`).toString()}>
-                                <button className={`primary mr-2 py-2 ${branch.isDefault ? "" : "opacity-0"} group-hover:opacity-100`}>New Workspace</button>
+                                <button className={`primary mr-2 py-2 opacity-0 group-hover:opacity-100`}>New Workspace</button>
                             </a>
                             <ItemFieldContextMenu className="py-0.5" menuEntries={branchContextMenu(branch)} />
                         </ItemField>
