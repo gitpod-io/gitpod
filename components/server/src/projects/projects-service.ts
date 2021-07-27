@@ -78,7 +78,8 @@ export class ProjectsService {
                 changeUrl: "changeUrl", // todo: compute in repositoryProvider
             });
         }
-        return result;
+        result.sort((a, b) => (b.changeDate || "").localeCompare(a.changeDate || ""));
+        return result.slice(0, 30);
     }
 
     async createProject({ name, cloneUrl, teamId, appInstallationId }: CreateProjectParams): Promise<Project> {

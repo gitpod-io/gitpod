@@ -7,7 +7,7 @@
 import { injectable, inject } from 'inversify';
 
 import { User, Repository } from "@gitpod/gitpod-protocol"
-import { GitHubRestApi } from "./api";
+import { GitHubGraphQlEndpoint, GitHubRestApi } from "./api";
 import { RepositoryProvider } from '../repohost/repository-provider';
 import { parseRepoUrl } from '../repohost/repo-url';
 import { Branch, CommitInfo } from '@gitpod/gitpod-protocol/src/protocol';
@@ -15,6 +15,7 @@ import { Branch, CommitInfo } from '@gitpod/gitpod-protocol/src/protocol';
 @injectable()
 export class GithubRepositoryProvider implements RepositoryProvider {
     @inject(GitHubRestApi) protected readonly github: GitHubRestApi;
+    @inject(GitHubGraphQlEndpoint) protected readonly githubQueryApi: GitHubGraphQlEndpoint;
 
     async getRepo(user: User, owner: string, repo: string): Promise<Repository> {
         const repository = await this.github.getRepository(user, { owner, repo });
@@ -33,7 +34,71 @@ export class GithubRepositoryProvider implements RepositoryProvider {
     }
 
     async getBranches(user: User, owner: string, repo: string): Promise<Branch[]> {
-        const branches = await this.github.getBranches(user, { repo, owner });
+        const branches: Branch[] = [];
+        let endCursor: string | undefined;
+        let hasNextPage: boolean = true;
+
+        while (hasNextPage) {
+            const result: any = await this.githubQueryApi.runQuery(user, `
+                query {
+                    repository(name: "${repo}", owner: "${owner}") {
+                        refs(refPrefix: "refs/heads/", orderBy: {field: TAG_COMMIT_DATE, direction: ASC}, first: 100 ${endCursor ? `, after: "${endCursor}"` : ""}) {
+                            nodes {
+                                name
+                                target {
+                                    ... on Commit {
+                                        oid
+                                        history(first: 1) {
+                                            nodes {
+                                                messageHeadline
+                                                committedDate
+                                                oid
+                                                authoredDate
+                                                tree {
+                                                    id
+                                                }
+                                                treeUrl
+                                                author {
+                                                    avatarUrl
+                                                    name
+                                                    date
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            pageInfo {
+                                endCursor
+                                hasNextPage
+                                hasPreviousPage
+                                startCursor
+                            }
+                            totalCount
+                        }
+                    }
+                }
+            `);
+
+            endCursor = result.data.repository?.refs?.pageInfo?.endCursor;
+            hasNextPage = result.data.repository?.refs?.pageInfo?.hasNextPage;
+
+            const nodes = result.data.repository?.refs?.nodes;
+            for (const node of (nodes || [])) {
+
+                branches.push({
+                    name: node.name,
+                    commit: {
+                        sha: node.target.oid,
+                        commitMessage: node.target.history.nodes[0].messageHeadline,
+                        author: node.target.history.nodes[0].author.name,
+                        authorAvatarUrl: node.target.history.nodes[0].author.avatarUrl,
+                        authorDate: node.target.history.nodes[0].author.date,
+                    },
+                    htmlUrl: node.target.history.nodes[0].treeUrl.replace(node.target.oid, node.name)
+                });
+            }
+        }
         return branches;
     }
 
