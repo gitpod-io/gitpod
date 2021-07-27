@@ -37,7 +37,6 @@ const Projects = React.lazy(() => import(/* webpackPrefetch: true */ './projects
 const Project = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Project'));
 const Prebuilds = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Prebuilds'));
 const Prebuild = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Prebuild'));
-const Settings = React.lazy(() => import(/* webpackPrefetch: true */ './projects/Settings'));
 const InstallGitHubApp = React.lazy(() => import(/* webpackPrefetch: true */ './prebuilds/InstallGitHubApp'));
 const FromReferrer = React.lazy(() => import(/* webpackPrefetch: true */ './FromReferrer'));
 const UserSearch = React.lazy(() => import(/* webpackPrefetch: true */ './admin/UserSearch'));
@@ -213,9 +212,6 @@ function App() {
                         }
                         if (resourceOrPrebuild === "prebuilds") {
                             return <Prebuilds />;
-                        }
-                        if (resourceOrPrebuild === "settings") {
-                            return <Settings />;
                         }
                         return resourceOrPrebuild ? <Prebuild /> : <Project />;
                     }} />

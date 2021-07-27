@@ -103,10 +103,6 @@ export default function Menu() {
                 link: `/${team.slug}/${projectName}/prebuilds`
             },
             {
-                title: 'Settings',
-                link: `/${team.slug}/${projectName}/settings`
-            },
-            {
                 title: 'Configure',
                 link: `/${team.slug}/${projectName}/configure`
             }
