@@ -10,19 +10,16 @@ import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url'
 import { AbstractComponentEnv, getEnvVar } from '@gitpod/gitpod-protocol/lib/env';
 import { AuthProviderParams, parseAuthProviderParamsFromEnv } from './auth/auth-provider';
 
-import * as fs from "fs";
 import { Branding, NamedWorkspaceFeatureFlag, WorkspaceFeatureFlags } from '@gitpod/gitpod-protocol';
 
 import { BrandingParser } from './branding-parser';
+import { RateLimiterConfig } from './auth/rate-limiter';
 
 @injectable()
 export class Env extends AbstractComponentEnv {
     readonly serverVersion = process.env.SERVER_VERSION || 'dev';
-
     readonly hostUrl = new GitpodHostUrl(process.env.HOST_URL || 'https://gitpod.io');
-    readonly localhostUrl?: GitpodHostUrl = process.env.LOCALHOST_URL ? new GitpodHostUrl(process.env.LOCALHOST_URL) : undefined;
 
-    readonly theiaPort = Number.parseInt(process.env.THEIA_PORT || '23000', 10) || 23000;
     get theiaHeartbeatInterval() {
         const envValue = process.env.THEIA_HEARTBEAT_INTERVAL;
         return envValue ? parseInt(envValue, 10) : (1 * 60 * 1000);
@@ -34,7 +31,6 @@ export class Env extends AbstractComponentEnv {
 
     readonly theiaVersion = process.env.THEIA_VERSION || this.serverVersion;
     readonly theiaImageRepo = process.env.THEIA_IMAGE_REPO || 'unknown';
-    readonly theiaMounted = process.env.THEIA_MOUNTED === "true";
     readonly ideDefaultImage = `${this.theiaImageRepo}:${this.theiaVersion}`;
     readonly workspaceDefaultImage = process.env.WORKSPACE_DEFAULT_IMAGE || "gitpod/workspace-full:latest";
 
@@ -66,8 +62,6 @@ export class Env extends AbstractComponentEnv {
         return value;
     }
 
-    readonly gitpodRegion: string = process.env.GITPOD_REGION || 'unknown';
-
     readonly sessionMaxAgeMs: number = Number.parseInt(process.env.SESSION_MAX_AGE_MS || '259200000' /* 3 days */, 10);
 
     readonly githubAppEnabled: boolean = process.env.GITPOD_GITHUB_APP_ENABLED == "true";
@@ -77,6 +71,7 @@ export class Env extends AbstractComponentEnv {
     readonly githubAppCertPath: string = process.env.GITPOD_GITHUB_APP_CERT_PATH || "unknown";
     readonly githubAppMarketplaceName: string = process.env.GITPOD_GITHUB_APP_MKT_NAME || "unknown";
     readonly githubAppLogLevel?: string = process.env.LOG_LEVEL;
+    readonly githubAppGHEHost?: string = process.env.GHE_HOST;
 
     readonly definitelyGpDisabled: boolean = process.env.GITPOD_DEFINITELY_GP_DISABLED == "true";
 
@@ -132,28 +127,6 @@ export class Env extends AbstractComponentEnv {
     })()
     readonly incrementalPrebuildsCommitHistory: number = Number.parseInt(process.env.INCREMENTAL_PREBUILDS_COMMIT_HISTORY || '100', 10) || 100;
 
-    protected gitpodLayernameFromFilesystem: string | null | undefined;
-    protected readGitpodLayernameFromFilesystem(): string | undefined {
-        if (this.gitpodLayernameFromFilesystem === null) {
-            // we've tried reading in the past, but were not able to do so
-            return undefined;
-        }
-        if (this.gitpodLayernameFromFilesystem !== undefined) {
-            // we have read this name previously and it worked
-            return this.gitpodLayernameFromFilesystem;
-        }
-
-        try {
-            this.gitpodLayernameFromFilesystem = fs.readFileSync("/gplayername.txt").toString().trim().split("\n")[0];
-        } catch (err) {
-            console.debug('unable to read /gplayername.txt - this might be ok', err)
-            this.gitpodLayernameFromFilesystem = null;
-            return undefined;
-        }
-
-        return this.gitpodLayernameFromFilesystem;
-    }
-
     protected parseBool(name: string) {
         return getEnvVar(name, 'false') === 'true';
     }
@@ -188,12 +161,7 @@ export class Env extends AbstractComponentEnv {
         }
     })();
 
-    /** defaults to: false */
-    readonly portAccessForUsersOnly: boolean = this.parsePortAccessForUsersOnly();
-    protected parsePortAccessForUsersOnly() {
-        return getEnvVar('PORT_ACCESS_FOR_USERS_ONLY', 'false') === 'true';
-    }
-
+    // TODO(gpl): can we remove this?
     readonly insecureNoDomain: boolean = getEnvVar('SERVE_INSECURE_NO_DOMAIN', 'false') === 'true';
 
     readonly sessionSecret = this.parseSessionSecret();
@@ -207,4 +175,13 @@ export class Env extends AbstractComponentEnv {
     readonly oauthServerJWTSecret = getEnvVar("OAUTH_SERVER_JWT_SECRET");
 
     readonly imageBuilderAddress = getEnvVar('IMAGE_BUILDER_SERVICE', "image-builder-mk3:8080");
+
+    readonly rateLimiter: RateLimiterConfig = JSON.parse(process.env.RATE_LIMITER_CONFIG || "{}");
+
+    readonly contentServiceAddress = process.env.CONTENT_SERVICE_ADDRESS || "content-service:8080";
+
+    /** TODO(gpl) Looks like this is not used anymore! Verify and remove */
+    readonly serverProxyApiKey = process.env.SERVER_PROXY_APIKEY;
+
+    readonly codeSyncConfig = JSON.parse(process.env.CODE_SYNC_CONFIG || "{}");
 }

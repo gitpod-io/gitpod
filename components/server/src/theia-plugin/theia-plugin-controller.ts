@@ -20,8 +20,6 @@ export class TheiaPluginController {
     @inject(TheiaPluginDB) protected readonly pluginDB: TheiaPluginDB;
     @inject(TheiaPluginService) protected readonly pluginService: TheiaPluginService;
 
-    protected readonly SERVER_PROXY_APIKEY = process.env.SERVER_PROXY_APIKEY;
-
     get apiRouter(): express.Router {
         const router = express.Router();
         this.addPreflightHandler(router);
@@ -36,7 +34,7 @@ export class TheiaPluginController {
          */
         router.get("/preflight", async (req, res, next) => {
             const token = req.query.token || req.headers["token"] || "unauthorized";
-            if (this.SERVER_PROXY_APIKEY != token) {
+            if (this.env.serverProxyApiKey != token) {
                 log.warn("Unauthorized attempted to access the /plugins/preflight endpoint", req);
                 res.sendStatus(401);
                 return;
@@ -67,7 +65,7 @@ export class TheiaPluginController {
 
         router.get("/checkin", async (req, res, next) => {
             const token = req.query.token || req.headers["token"] || "unauthorized";
-            if (this.SERVER_PROXY_APIKEY != token) {
+            if (this.env.serverProxyApiKey != token) {
                 log.warn("Unauthorized attempted to access the /plugins/checkin endpoint", req);
                 res.sendStatus(401);
                 return;
