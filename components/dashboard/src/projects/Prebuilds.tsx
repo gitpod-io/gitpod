@@ -116,13 +116,8 @@ export default function () {
     }
 
     const formatDate = (date: string | undefined) => {
-        return date ? moment(date).fromNow() : "–";
+        return date ? moment(date).fromNow() : "";
     }
-
-    const formatHash = (longHash: string) => {
-        return longHash ? longHash.substring(0, 8) : "–";
-    }
-
 
     return <>
         <Header title="Prebuilds" subtitle={`View all recent prebuilds for all active branches.`} />
@@ -166,7 +161,7 @@ export default function () {
                     <ItemField className="flex items-center">
                         <div>
                             <div className="text-base text-gray-500 dark:text-gray-50 font-medium mb-1">{shortCommitMessage(p.changeTitle)}</div>
-                            <p>{p.changeAuthorAvatar && <img className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2" src={p.changeAuthorAvatar || ''} alt={p.changeAuthor} />}Authored {formatDate(p.changeDate)} · {formatHash(p.changeHash)}</p>
+                            <p>{p.changeAuthorAvatar && <img className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2" src={p.changeAuthorAvatar || ''} alt={p.changeAuthor} />}Authored {formatDate(p.changeDate)} · {p.changeHash?.substring(0, 8)}</p>
                         </div>
                     </ItemField>
                     <ItemField className="flex items-center">

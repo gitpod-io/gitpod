@@ -130,6 +130,10 @@ export default function () {
         history.push(`/${team?.slug}/${projectName}/${pb.id}`);
     }
 
+    const formatDate = (date: string | undefined) => {
+        return date ? moment(date).fromNow() : "";
+    }
+
     return <>
         <Header title={project?.name || ""} subtitle={toRemoteURL(project?.cloneUrl || "")} />
         <div className="lg:px-28 px-10">
@@ -164,7 +168,6 @@ export default function () {
                     const prebuild = lastPrebuild(branch);
 
                     const avatar = branch.changeAuthorAvatar && <img className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2" src={branch.changeAuthorAvatar || ''} alt={branch.changeAuthor} />;
-                    const fakeShortHash = branch.changeHash.substring(0, 10);
                     const statusIcon = prebuild?.status && prebuildStatusIcon(prebuild.status);
                     const status = prebuild?.status && prebuildStatusLabel(prebuild.status);
                     console.log(`status for ${branchName} is ${prebuild?.status} (${lastPrebuilds.size})`)
@@ -183,12 +186,12 @@ export default function () {
                         <ItemField className="flex items-center">
                             <div>
                                 <div className="text-base text-gray-500 dark:text-gray-50 font-medium mb-1">{shortCommitMessage(branch.changeTitle)}</div>
-                                <p>{avatar}Authored {moment(branch.changeDate).fromNow()} · {fakeShortHash}</p>
+                                <p>{avatar}Authored {formatDate(branch.changeDate)} · {branch.changeHash?.substring(0, 8)}</p>
                             </div>
                         </ItemField>
                         <ItemField className="flex items-center">
                             <div className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1 cursor-pointer" onClick={() => prebuild && openPrebuild(prebuild)}>
-                                {prebuild ? (<><div className="inline-block align-text-bottom mr-2 w-4 h-4">{statusIcon}</div>{status}</>) : (<span>–</span>)}
+                                {prebuild ? (<><div className="inline-block align-text-bottom mr-2 w-4 h-4">{statusIcon}</div>{status}</>) : (<span> </span>)}
                             </div>
                             <span className="flex-grow" />
                             <a href={gitpodHostUrl.withContext(`${branch.url}`).toString()}>
