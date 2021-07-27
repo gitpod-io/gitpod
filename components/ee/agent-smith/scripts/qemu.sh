@@ -16,7 +16,8 @@ outdir="/root/_output"
 
 
 rm -Rf ~/.ssh
-cp -r "${outdir}/.ssh" ~/.ssh
+sudo cp -r "${outdir}/.ssh" ~/.ssh
+sudo chown -R "$(id -u):$(id -g)" ~/.ssh
 
 sudo qemu-system-x86_64 -kernel "${vmlinuz}" \
 -boot c -m 2049M -hda "${outdir}/bionic-server-cloudimg-amd64.qcow2" \
