@@ -1461,7 +1461,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         return repositories;
     }
 
-    async triggerPrebuild(projectId: string, branch: string): Promise<void> {
+    async triggerPrebuild(projectId: string, branchName: string): Promise<void> {
         const user = this.checkAndBlockUser("triggerPrebuild");
 
         const project = await this.projectsService.getProject(projectId);
@@ -1473,7 +1473,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
         const span = opentracing.globalTracer().startSpan("triggerPrebuild");
         span.setTag("userId", user.id);
 
-        const contextURL = `${project.cloneUrl.replace(".git", "")}/tree/${branch}`; // just a quick hack!
+        const branchDetails = await this.projectsService.getBranchDetails(user, project, branchName);
+        if (branchDetails.length !== 1) {
+            log.debug({ userId: user.id }, 'Cannot find branch details.', { project, branchName });
+        }
+        const contextURL = branchDetails[0].url;
 
         const context = await this.contextParser.handle({ span }, user, contextURL) as CommitContext;
 
@@ -1482,7 +1486,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
             cloneURL: project.cloneUrl,
             commit: context.revision,
             user,
-            branch,
+            branch: branchName,
             project
         });
     }

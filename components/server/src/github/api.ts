@@ -246,6 +246,20 @@ export class GitHubRestApi {
         return response.data;
     }
 
+    public async getBranch(user: User, params: RestEndpointMethodTypes["repos"]["getBranch"]["parameters"]): Promise<Branch> {
+        const key = `getBranch:${params.owner}/${params.owner}/${params.branch}:${user.id}`;
+        const getBranchResponse = (await this.runWithCache(key, user, (api) => api.repos.getBranch(params))) as RestEndpointMethodTypes["repos"]["getBranch"]["response"];
+        const { commit: { sha }, name, _links: { html } } = getBranchResponse.data;
+
+        const commit = await this.getCommit(user, { ...params, ref: sha });
+
+        return {
+            name,
+            commit,
+            htmlUrl: html
+        };
+    }
+
     public async getBranches(user: User, params: RestEndpointMethodTypes["repos"]["listBranches"]["parameters"]): Promise<Branch[]> {
         const key = `getBranches:${params.owner}/${params.owner}:${user.id}`;
         const listBranchesResponse = (await this.runWithCache(key, user, (api) => api.repos.listBranches(params))) as RestEndpointMethodTypes["repos"]["listBranches"]["response"];
@@ -255,9 +269,15 @@ export class GitHubRestApi {
         for (const branch of listBranchesResponse.data) {
             const { commit: { sha } } = branch;
             const commit = await this.getCommit(user, { ...params, ref: sha });
+
+            const key = `getBranch:${params.owner}/${params.owner}/${params.branch}:${user.id}`;
+            const getBranchResponse = (await this.runWithCache(key, user, (api) => api.repos.listBranches(params))) as RestEndpointMethodTypes["repos"]["getBranch"]["response"];
+            const htmlUrl = getBranchResponse.data._links.html;
+
             result.push({
                 name: branch.name,
-                commit
+                commit,
+                htmlUrl
             });
         }
 
