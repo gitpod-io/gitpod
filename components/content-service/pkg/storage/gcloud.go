@@ -44,9 +44,7 @@ type GCPConfig struct {
 	Project         string `json:"projectId"`
 	ParallelUpload  int    `json:"parallelUpload"`
 
-	// The maximum size a workspace can have before backup is disabled. 0 disables these checks.
-	MaximumBackupSize  int64 `json:"maximumBackupSize"`
-	MaximumBackupCount int   `json:"maximumBackupCount"`
+	MaximumBackupCount int `json:"maximumBackupCount"`
 }
 
 var validateExistsInFilesystem = validation.By(func(o interface{}) error {
@@ -365,11 +363,6 @@ func (rs *DirectGCPStorage) Upload(ctx context.Context, source string, name stri
 	}
 	totalSize = stat.Size()
 	span.SetTag("totalSize", totalSize)
-
-	if rs.GCPConfig.MaximumBackupSize > 0 && totalSize > rs.GCPConfig.MaximumBackupSize {
-		err = xerrors.Errorf("Workspace is too big and cannot be uploaded. Workspace size is %d bytes, max size is %d bytes", totalSize, rs.GCPConfig.MaximumBackupSize)
-		return
-	}
 
 	uploadSpan := opentracing.StartSpan("remote-upload", opentracing.ChildOf(span.Context()))
 	uploadSpan.SetTag("bucket", rs.bucketName())

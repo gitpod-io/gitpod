@@ -468,6 +468,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		}()
 
 		var opts []archive.TarOption
+		opts = append(opts, archive.TarbalMaxSize(int64(s.config.WorkspaceSizeLimit)))
 		if !sess.FullWorkspaceBackup {
 			mappings := []archive.IDMapping{
 				{ContainerID: 0, HostID: wsinit.GitpodUID, Size: 1},
