@@ -15,7 +15,7 @@ import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
 import { prebuildStatusIcon, prebuildStatusLabel } from "./Prebuilds";
 import { ContextMenuEntry } from "../components/ContextMenu";
-import { toRemoteURL } from "./render-utils";
+import { shortCommitMessage, toRemoteURL } from "./render-utils";
 
 export default function () {
     const history = useHistory();
@@ -182,7 +182,7 @@ export default function () {
                         </ItemField>
                         <ItemField className="flex items-center">
                             <div>
-                                <div className="text-base text-gray-500 dark:text-gray-50 font-medium mb-1">{branch.changeTitle}</div>
+                                <div className="text-base text-gray-500 dark:text-gray-50 font-medium mb-1">{shortCommitMessage(branch.changeTitle)}</div>
                                 <p>{avatar}Authored {moment(branch.changeDate).fromNow()} · {fakeShortHash}</p>
                             </div>
                         </ItemField>

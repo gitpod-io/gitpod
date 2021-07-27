@@ -10,6 +10,6 @@ export function toRemoteURL(cloneURL: string) {
 }
 
 export function shortCommitMessage(message: string) {
-    const firstLine = message.split("/n")[0];
+    const firstLine = message.split("\n")[0];
     return firstLine.length > 50 ? firstLine.substring(0, 45) + " …" : firstLine;
 }
