@@ -1011,6 +1011,7 @@ export interface Repository {
 export interface Branch {
     name: string;
     commit: CommitInfo;
+    htmlUrl: string;
 }
 
 export interface CommitInfo {

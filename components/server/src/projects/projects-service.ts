@@ -9,6 +9,7 @@ import { DBWithTracing, ProjectDB, TeamDB, TracedWorkspaceDB, WorkspaceDB } from
 import { Branch, CommitInfo, CreateProjectParams, FindPrebuildsParams, PrebuildInfo, PrebuiltWorkspace, Project, User } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { parseRepoUrl } from "../repohost";
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
 @injectable()
 export class ProjectsService {
@@ -42,7 +43,7 @@ export class ProjectsService {
         return repositoryProvider;
     }
 
-    async getBranchDetails(user: User, project: Project): Promise<Project.BranchDetails[]> {
+    async getBranchDetails(user: User, project: Project, branchName?: string): Promise<Project.BranchDetails[]> {
         const parsedUrl = parseRepoUrl(project.cloneUrl);
         if (!parsedUrl) {
             return [];
@@ -53,14 +54,20 @@ export class ProjectsService {
             return [];
         }
         const repository = await repositoryProvider.getRepo(user, owner, repo);
-        const branches = await repositoryProvider.getBranches(user, owner, repo);
+        const branches: Branch[] = [];
+        if (branchName) {
+            const details = await repositoryProvider.getBranch(user, owner, repo, branchName);
+            branches.push(details);
+        } else {
+            branches.push(...(await repositoryProvider.getBranches(user, owner, repo)));
+        }
 
         const result: Project.BranchDetails[] = [];
         for (const branch of branches) {
-            const { name, commit } = branch;
+            const { name, commit, htmlUrl } = branch;
             result.push({
                 name,
-                url: `${repository.webUrl}/tree/${branch.name}`, // todo: compute in repositoryProvider
+                url: htmlUrl,
                 changeAuthor: commit.author,
                 changeDate: commit.authorDate,
                 changeHash: commit.sha,
@@ -126,9 +133,13 @@ export class ProjectsService {
         }
 
         for (const prebuild of prebuilds) {
-            const commit = await repositoryProvider?.getCommitInfo(user, owner, repo, prebuild.commit);
-            if (commit) {
-                result.push(await this.toPrebuildInfo(project, prebuild, commit));
+            try {
+                const commit = await repositoryProvider.getCommitInfo(user, owner, repo, prebuild.commit);
+                if (commit) {
+                    result.push(await this.toPrebuildInfo(project, prebuild, commit));
+                }
+            } catch (error) {
+                log.debug(`Could not fetch commit info.`, error, { owner, repo, prebuildCommit: prebuild.commit });
             }
         }
         return result;
