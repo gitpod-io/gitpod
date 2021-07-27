@@ -87,6 +87,7 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     // various
     bind(EnvEE).toSelf().inSingletonScope();
     rebind(Env).to(EnvEE).inSingletonScope();
+
     rebind(MessageBusIntegration).to(MessageBusIntegrationEE).inSingletonScope();
     rebind(HostContainerMapping).to(HostContainerMappingEE).inSingletonScope();
     bind(EMailDomainService).to(EMailDomainServiceImpl).inSingletonScope();

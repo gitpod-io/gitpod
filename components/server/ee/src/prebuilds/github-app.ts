@@ -55,14 +55,15 @@ export class GithubApp {
                     appId: env.githubAppAppID,
                     privateKey: GithubApp.loadPrivateKey(env.githubAppCertPath),
                     secret: env.githubAppWebhookSecret,
-                    logLevel: env.githubAppLogLevel as Options["logLevel"]
+                    logLevel: env.githubAppLogLevel as Options["logLevel"],
+                    baseUrl: env.githubAppGHEHost,
                 })
-            })
+            });
             log.debug("Starting GitHub app integration", {
                 appId: env.githubAppAppID,
                 cert: env.githubAppCertPath,
                 secret: env.githubAppWebhookSecret
-            })
+            });
             this.server.load(this.buildApp.bind(this));
         }
     }

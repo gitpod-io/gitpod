@@ -9,7 +9,6 @@ import { injectable, inject } from 'inversify';
 import { ResolvePluginsParams, ResolvedPlugins, TheiaPlugin, PreparePluginUploadParams, InstallPluginsParams, UninstallPluginParams, ResolvedPluginKind } from '@gitpod/gitpod-protocol';
 import { TheiaPluginDB, UserStorageResourcesDB } from "@gitpod/gitpod-db/lib";
 import { Env } from '../env';
-import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { ResponseError } from 'vscode-jsonrpc';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
@@ -152,7 +151,7 @@ export class TheiaPluginService {
     }
 
     protected getPublicPluginURL(pluginEntryId: string) {
-        return new GitpodHostUrl(process.env.HOST_URL)
+        return this.env.hostUrl
             .with({
                 pathname: '/plugins',
                 search: `id=${pluginEntryId}`

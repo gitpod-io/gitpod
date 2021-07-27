@@ -24,12 +24,12 @@ type FunctionsConfig = {
         points: number,
     }
 }
-type RateLimiterConfig = {
+export type RateLimiterConfig = {
     groups: GroupsConfig,
     functions: FunctionsConfig,
 };
 
-function readConfig(): RateLimiterConfig {
+function getConfig(config: RateLimiterConfig): RateLimiterConfig {
     const defaultGroups: GroupsConfig = {
         default: {
             points: 60000, // 1,000 calls per user per second
@@ -167,11 +167,9 @@ function readConfig(): RateLimiterConfig {
         "trackEvent":  { group: "default", points: 1 },
     };
 
-    const fromEnv = JSON.parse(process.env.RATE_LIMITER_CONFIG || "{}")
-
     return {
-        groups: { ...defaultGroups, ...fromEnv.groups },
-        functions: { ...defaultFunctions, ...fromEnv.functions }
+        groups: { ...defaultGroups, ...config.groups },
+        functions: { ...defaultFunctions, ...config.functions }
     };
 }
 
@@ -184,9 +182,9 @@ export class UserRateLimiter {
 
     private static instance_: UserRateLimiter;
 
-    public static instance(): UserRateLimiter {
+    public static instance(config: RateLimiterConfig): UserRateLimiter {
         if (!UserRateLimiter.instance_) {
-            UserRateLimiter.instance_ = new UserRateLimiter();
+            UserRateLimiter.instance_ = new UserRateLimiter(config);
         }
         return UserRateLimiter.instance_;
     }
@@ -194,9 +192,8 @@ export class UserRateLimiter {
     private readonly config: RateLimiterConfig;
     private readonly limiters: { [key: string]: RateLimiterMemory };
 
-    private constructor() {
-        this.config = readConfig();
-
+    private constructor(config: RateLimiterConfig) {
+        this.config = getConfig(config);
         this.limiters = {};
         Object.keys(this.config.groups).forEach(group => {
             this.limiters[group] = new RateLimiterMemory({
