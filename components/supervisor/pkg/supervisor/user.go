@@ -91,6 +91,7 @@ func addGroup(name string, gid int) error {
 	if err != nil {
 		return fmt.Errorf("%w: %s", err, string(out))
 	}
+	log.WithField("args", args).Debug("addgroup")
 
 	return nil
 }

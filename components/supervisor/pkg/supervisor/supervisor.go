@@ -132,7 +132,6 @@ func Run(options ...RunOption) {
 		log.WithError(err).Fatal("cannot ensure Gitpod user exists")
 	}
 
-	buildIDEEnv(&Config{})
 	configureGit(cfg)
 
 	tokenService := NewInMemoryTokenService()
@@ -193,7 +192,7 @@ func Run(options ...RunOption) {
 	go analyseConfigChanges(ctx, cfg, analytics, gitpodConfigService)
 
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
-	termMuxSrv.Env = buildIDEEnv(cfg)
+	termMuxSrv.Env = buildChildProcEnv(cfg)
 	termMuxSrv.DefaultCreds = &syscall.Credential{
 		Uid: gitpodUID,
 		Gid: gitpodGID,
@@ -524,18 +523,20 @@ func prepareIDELaunch(cfg *Config) *exec.Cmd {
 	log.WithField("args", args).WithField("entrypoint", cfg.Entrypoint).Info("launching IDE")
 
 	cmd := exec.Command(cfg.Entrypoint, args...)
-	cmd.Env = buildIDEEnv(cfg)
-
-	// We need the IDE to run in its own process group, s.t. we can suspend and resume
-	// IDE and its children.
 	cmd.SysProcAttr = &syscall.SysProcAttr{
+		// We need the child process to run in its own process group, s.t. we can suspend and resume
+		// IDE and its children.
 		Setpgid:   true,
 		Pdeathsig: syscall.SIGKILL,
+
+		// All supervisor children run as gitpod user. The environment variables we produce are also
+		// gitpod user specific.
 		Credential: &syscall.Credential{
 			Uid: gitpodUID,
 			Gid: gitpodGID,
 		},
 	}
+	cmd.Env = buildChildProcEnv(cfg)
 
 	// Here we must resist the temptation to "neaten up" the IDE output for headless builds.
 	// This would break the JSON parsing of the headless builds.
@@ -551,28 +552,44 @@ func prepareIDELaunch(cfg *Config) *exec.Cmd {
 	return cmd
 }
 
-func buildIDEEnv(cfg *Config) []string {
-	var env, envn []string
+func buildChildProcEnv(cfg *Config) []string {
+	envs := make(map[string]string)
 	for _, e := range os.Environ() {
 		segs := strings.Split(e, "=")
 		if len(segs) < 2 {
 			log.Printf("\"%s\" has invalid format, not including in IDE environment", e)
 			continue
 		}
-		nme := segs[0]
+		nme, val := segs[0], segs[1]
 
 		if isBlacklistedEnvvar(nme) {
 			continue
 		}
 
-		env = append(env, e)
-		envn = append(envn, nme)
+		envs[nme] = val
 	}
+	envs["SUPERVISOR_ADDR"] = fmt.Sprintf("localhost:%d", cfg.APIEndpointPort)
 
-	ce := map[string]string{
-		"SUPERVISOR_ADDR": fmt.Sprintf("localhost:%d", cfg.APIEndpointPort),
-	}
-	for nme, val := range ce {
+	// We're forcing basic environment variables here, because supervisor acts like a login process at this point.
+	// The gitpod user might not have existed when supervisor was started, hence the HOME coming
+	// from the container runtime is probably wrong ("/" to be exact).
+	//
+	// Wait, how does this env var stuff work on Linux?
+	//   First, the kernel does not care or set environment variables, it's all userland.
+	//   It's the login process (e.g. /bin/login called by e.g. getty) that sets conventional
+	//   environment variables such as HOME and sometimes PATH or TERM.
+	//
+	// Where can I read up on this, e.g. how others do it?
+	//   BusyBox is a good place to start, because it's small enough to be easy to understand.
+	//   Start here:
+	//     - https://github.com/mirror/busybox/blob/24198f652f10dca5603df7c704263358ca21f5ce/libbb/setup_environment.c#L32
+	//     - https://github.com/mirror/busybox/blob/24198f652f10dca5603df7c704263358ca21f5ce/libbb/login.c#L140-L170
+	//
+	envs["HOME"] = "/home/gitpod"
+	envs["USER"] = "gitpod"
+
+	var env, envn []string
+	for nme, val := range envs {
 		log.WithField("envvar", nme).Debug("passing environment variable to IDE")
 		env = append(env, fmt.Sprintf("%s=%s", nme, val))
 		envn = append(envn, nme)
@@ -841,14 +858,28 @@ func startSSHServer(ctx context.Context, cfg *Config, wg *sync.WaitGroup) {
 	hostkeyFN.Close()
 	os.Remove(hostkeyFN.Name())
 
-	out, err := exec.Command(dropbearkey, "-t", "rsa", "-f", hostkeyFN.Name()).CombinedOutput()
+	keycmd := exec.Command(dropbearkey, "-t", "rsa", "-f", hostkeyFN.Name())
+	// We need to force HOME because the Gitpod user might not have existed at the start of the container
+	// which makes the container runtime set an invalid HOME value.
+	keycmd.Env = func() []string {
+		env := os.Environ()
+		res := make([]string, 0, len(env))
+		for _, e := range env {
+			if strings.HasPrefix(e, "HOME=") {
+				e = "HOME=/root"
+			}
+			res = append(res, e)
+		}
+		return res
+	}()
+	out, err := keycmd.CombinedOutput()
 	if err != nil {
 		log.WithError(err).WithField("out", string(out)).Error("cannot create hostkey file")
 		return
 	}
 
 	cmd := exec.Command(dropbear, "-F", "-E", "-w", "-s", "-p", fmt.Sprintf(":%d", cfg.SSHPort), "-r", hostkeyFN.Name())
-	cmd.Env = buildIDEEnv(cfg)
+	cmd.Env = buildChildProcEnv(cfg)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Start()
