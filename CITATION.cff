@@ -1,0 +1,14 @@
+# YAML 1.2
+---
+abstract: "Gitpod automates the provisioning of ready-to-code development environments."
+authors:
+  -
+    affiliation: "Gitpod GmbH"
+    family-names:
+    given-names:
+cff-version: "1.1.0"
+license: "Affero General Public License v1.0"
+message: "If you use this software, please cite it using these metadata."
+repository-code: "https://github.com/gitpod-io/gitpod"
+title: Gitpod
+...
