@@ -34,7 +34,6 @@ type MinIOConfig struct {
 
 	Region         string `json:"region"`
 	ParallelUpload uint   `json:"parallelUpload,omitempty"`
-	MaxBackupSize  int64  `json:"maxBackupSize,omitempty"`
 }
 
 // Validate checks if the GCloud storage MinIOconfig is valid
