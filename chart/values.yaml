@@ -418,7 +418,7 @@ components:
     servicePort: 8080
     clusterIP: "None"
     selectorKind: daemonset
-    workspaceSizeLimit: ""
+    workspaceSizeLimit: "50g"
     containerRuntime:
       enabled: true
       runtime: containerd
