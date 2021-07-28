@@ -8,6 +8,7 @@ import { useContext, useState } from "react";
 import { getGitpodService } from "../service/service";
 import SelectableCard from "../components/SelectableCard";
 import { UserContext } from "../user-context";
+import { ThemeContext } from "../theme-context";
 import theia from '../images/theia-gray.svg';
 import vscode from '../images/vscode.svg';
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
@@ -18,6 +19,7 @@ type Theme = 'light' | 'dark' | 'system';
 
 export default function Preferences() {
     const { user } = useContext(UserContext);
+    const { setIsDark } = useContext(ThemeContext);
     const [ defaultIde, setDefaultIde ] = useState<string>(user?.additionalData?.ideSettings?.defaultIde || 'theia');
     const actuallySetDefaultIde = async (value: string) => {
         const additionalData = user?.additionalData || {};
@@ -39,7 +41,7 @@ export default function Preferences() {
             localStorage.removeItem('theme');
         }
         const isDark = localStorage.theme === 'dark' || (localStorage.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-        document.documentElement.classList.toggle('dark', isDark);
+        setIsDark(isDark);
         setTheme(theme);
     }
 

@@ -13,6 +13,7 @@ import { useHistory, useLocation } from "react-router";
 import { useContext, useEffect, useState } from "react";
 import { getGitpodService } from "../service/service";
 import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
+import { ThemeContext } from "../theme-context";
 import { PrebuildInfo, Project } from "@gitpod/gitpod-protocol";
 import DropDown from "../components/DropDown";
 import { toRemoteURL } from "./render-utils";
@@ -26,6 +27,8 @@ export default function () {
     const team = getCurrentTeam(location, teams);
     const [projects, setProjects] = useState<Project[]>([]);
     const [lastPrebuilds, setLastPrebuilds] = useState<Map<string, PrebuildInfo>>(new Map());
+
+    const { isDark } = useContext(ThemeContext);
 
     useEffect(() => {
         updateProjects();
@@ -68,7 +71,7 @@ export default function () {
         <Header title="Projects" subtitle="Manage recently added projects." />
         {projects.length < 1 && (
             <div>
-                <img alt="Projects (empty)" className="h-44 mt-24 mx-auto" role="presentation" src={document.documentElement.classList.contains('dark') ? projectsEmptyDark : projectsEmpty} />
+                <img alt="Projects (empty)" className="h-44 mt-24 mx-auto" role="presentation" src={isDark ? projectsEmptyDark : projectsEmpty} />
                 <h3 className="text-center text-gray-500 mt-8">No Recent Projects</h3>
                 <p className="text-center text-base text-gray-500 mt-4">Add projects to enable and manage Prebuilds.<br /><a className="learn-more" href="https://www.gitpod.io/docs/prebuilds/">Learn more about Prebuilds</a></p>
                 <div className="flex space-x-2 justify-center mt-7">
