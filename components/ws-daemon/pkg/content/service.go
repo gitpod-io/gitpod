@@ -35,7 +35,6 @@ import (
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/container"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/internal/session"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/iws"
-	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
 )
 
 // WorkspaceService implements the InitService and WorkspaceService
@@ -45,7 +44,6 @@ type WorkspaceService struct {
 	store       *session.Store
 	ctx         context.Context
 	stopService context.CancelFunc
-	sandboxes   quota.SandboxProvider
 	runtime     container.Runtime
 
 	api.UnimplementedInWorkspaceServiceServer
@@ -242,11 +240,6 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 
 func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest) session.WorkspaceFactory {
 	return func(ctx context.Context, location string) (res *session.Workspace, err error) {
-		err = s.createSandbox(ctx, req, location)
-		if err != nil {
-			return nil, err
-		}
-
 		return &session.Workspace{
 			Location:              location,
 			CheckoutLocation:      getCheckoutLocation(req),
@@ -262,49 +255,6 @@ func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest) session.Worksp
 			ServiceLocNode:   filepath.Join(s.config.WorkingAreaNode, req.Id+"-daemon"),
 		}, nil
 	}
-}
-
-func (s *WorkspaceService) createSandbox(ctx context.Context, req *api.InitWorkspaceRequest, location string) (err error) {
-	if s.config.WorkspaceSizeLimit == 0 {
-		return
-	}
-
-	//nolint:ineffassign
-	span, ctx := opentracing.StartSpanFromContext(ctx, "createSandbox")
-	defer tracing.FinishSpan(span, &err)
-
-	owi := log.OWI(req.Metadata.Owner, req.Metadata.MetaId, req.Id)
-	if req.FullWorkspaceBackup {
-		msg := "cannot create sandboxes for workspaces with full workspace backup - skipping sandbox"
-		span.LogKV("warning", msg)
-		log.WithFields(owi).Warn(msg)
-		return
-	}
-
-	// Create and mount sandbox
-	mode := os.FileMode(0755)
-	sandbox := filepath.Join(s.store.Location, req.Id+".sandbox")
-	err = s.sandboxes.Create(ctx, sandbox, s.config.WorkspaceSizeLimit)
-	if err != nil {
-		log.WithFields(owi).WithField("sandbox", sandbox).WithField("location", location).WithError(err).Error("cannot create sandbox")
-		return status.Error(codes.Internal, "cannot create sandbox")
-	}
-	if _, err := os.Stat(location); os.IsNotExist(err) {
-		// in the very unlikely event that the workspace Pod did not mount (and thus create) the workspace directory, create it
-		err = os.Mkdir(location, mode)
-		if os.IsExist(err) {
-			log.WithError(err).WithField("location", location).Debug("ran into non-atomic workspce location existence check")
-		} else if err != nil {
-			log.WithFields(owi).WithError(err).Error("cannot create workspace mount point")
-			return status.Error(codes.Internal, "cannot create workspace")
-		}
-	}
-	err = s.sandboxes.Mount(ctx, sandbox, location)
-	if err != nil {
-		log.WithFields(owi).WithField("sandbox", sandbox).WithField("location", location).WithError(err).Error("cannot mount sandbox")
-		return status.Error(codes.Internal, "cannot mount sandbox")
-	}
-	return nil
 }
 
 // getCheckoutLocation returns the first checkout location found of any Git initializer configured by this request
@@ -397,17 +347,6 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 	}
 	if repo != nil {
 		resp.GitStatus = repo
-	}
-
-	if s.config.WorkspaceSizeLimit > 0 && !sess.FullWorkspaceBackup {
-		// We can delete the sandbox here (rather than in the store) because WaitOrMarkForDisposal
-		// ensures we're doing this exclusively for this workspace.
-		err = s.sandboxes.Dispose(ctx, sess.Location)
-		if err != nil {
-			log.WithError(err).WithField("workspaceId", req.Id).Error("cannot dispose sandbox")
-			span.LogKV("error", err.Error())
-			return nil, status.Error(codes.Internal, "cannot dispose sandbox")
-		}
 	}
 
 	err = s.store.Delete(ctx, req.Id)
