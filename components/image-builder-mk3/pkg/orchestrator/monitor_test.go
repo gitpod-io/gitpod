@@ -8,11 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gitpod-io/gitpod/image-builder/api"
-	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/gitpod-io/gitpod/image-builder/api"
+	wsmanapi "github.com/gitpod-io/gitpod/ws-manager/api"
 )
 
 func TestExtractBuildResponse(t *testing.T) {

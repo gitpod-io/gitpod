@@ -11,10 +11,11 @@ import (
 
 	"github.com/containerd/containerd/errdefs"
 	"github.com/containerd/containerd/remotes"
-	"github.com/gitpod-io/gitpod/image-builder/pkg/resolve"
 	"github.com/google/go-cmp/cmp"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
+
+	"github.com/gitpod-io/gitpod/image-builder/pkg/resolve"
 )
 
 func TestStandaloneResolver(t *testing.T) {
