@@ -36,6 +36,7 @@ type TeamClaimModal = {
 
 export default function () {
     const { user } = useContext(UserContext);
+    const [ showPaymentUI, setShowPaymentUI ] = useState<boolean>(false);
     const [ accountStatement, setAccountStatement ] = useState<AccountStatement>();
     const [ isChargebeeCustomer, setIsChargebeeCustomer ] = useState<boolean>();
     const [ isStudent, setIsStudent ] = useState<boolean>();
@@ -52,6 +53,7 @@ export default function () {
     useEffect(() => {
         const { server } = getGitpodService();
         Promise.all([
+            server.getShowPaymentUI().then(v => () => setShowPaymentUI(v)),
             server.getAccountStatement({}).then(v => () => setAccountStatement(v)),
             server.isChargebeeCustomer().then(v => () => setIsChargebeeCustomer(v)),
             server.isStudent().then(v => () => setIsStudent(v)),
@@ -429,7 +431,7 @@ export default function () {
 
     return <div>
         <PageWithSubMenu subMenu={settingsMenu}  title='Plans' subtitle='Manage account usage and billing.'>
-            <div className="w-full text-center">
+            {showPaymentUI && <div className="w-full text-center">
                 <p className="text-xl text-gray-500">You are currently using the <span className="font-bold">{Plans.getById(assignedTs?.planId)?.name || currentPlan.name}</span> plan.</p>
                 {!assignedTs && (
                     <p className="text-base w-96 m-auto">Upgrade your plan to get access to private repositories or more parallel workspaces.</p>
@@ -449,7 +451,7 @@ export default function () {
                         : <><a className="text-blue-light hover:underline" href="javascript:void(0)" onClick={() => setCurrency('EUR')}>€</a> / $</>}
                     </span>}
                 </p>
-            </div>
+            </div>}
             <div className="mt-4 flex justify-center space-x-3 2xl:space-x-7">{planCards}</div>
             <InfoBox className="w-2/3 mt-14 mx-auto">
                 If you are interested in purchasing a plan for a team, purchase a Team plan with one centralized billing. <a className="underline" href="https://www.gitpod.io/docs/teams/">Learn more</a>
