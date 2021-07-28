@@ -9,13 +9,13 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/gitpod-io/gitpod/image-builder/api"
-
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
-	"github.com/gitpod-io/gitpod/common-go/log"
 	"golang.org/x/xerrors"
+
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/gitpod-io/gitpod/image-builder/api"
 )
 
 // RegistryAuthenticator can provide authentication for some registries
