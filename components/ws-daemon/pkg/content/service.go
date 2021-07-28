@@ -174,25 +174,31 @@ func (s *WorkspaceService) InitWorkspace(ctx context.Context, req *api.InitWorks
 	}
 
 	if !req.FullWorkspaceBackup {
-		rs, ok := workspace.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
-		if rs == nil || !ok {
-			log.Error("workspace has no remote storage")
-			return nil, status.Error(codes.Internal, "workspace has no remote storage")
-		}
-		ps, err := storage.NewPresignedAccess(&s.config.Storage)
-		if err != nil {
-			log.WithError(err).Error("cannot create presigned storage")
-			return nil, status.Error(codes.Internal, "no presigned storage available")
-		}
+		var remoteContent map[string]storage.DownloadInfo
 
-		remoteContent, err := collectRemoteContent(ctx, rs, ps, workspace.Owner, req.Initializer)
-		if err != nil && errors.Is(err, errCannotFindSnapshot) {
-			log.WithError(err).Error("cannot find snapshot")
-			return nil, status.Error(codes.NotFound, "cannot find snapshot")
-		}
-		if err != nil {
-			log.WithError(err).Error("cannot collect remote content")
-			return nil, status.Error(codes.Internal, "remote content error")
+		// some workspaces don't have remote storage enabled. For those workspaces we clearly
+		// cannot collect remote content (i.e. the backup or prebuilds) and hence must not try.
+		if !req.RemoteStorageDisabled {
+			rs, ok := workspace.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
+			if rs == nil || !ok {
+				log.Error("workspace has no remote storage")
+				return nil, status.Error(codes.FailedPrecondition, "workspace has no remote storage")
+			}
+			ps, err := storage.NewPresignedAccess(&s.config.Storage)
+			if err != nil {
+				log.WithError(err).Error("cannot create presigned storage")
+				return nil, status.Error(codes.Internal, "no presigned storage available")
+			}
+
+			remoteContent, err = collectRemoteContent(ctx, rs, ps, workspace.Owner, req.Initializer)
+			if err != nil && errors.Is(err, errCannotFindSnapshot) {
+				log.WithError(err).Error("cannot find snapshot")
+				return nil, status.Error(codes.NotFound, "cannot find snapshot")
+			}
+			if err != nil {
+				log.WithError(err).Error("cannot collect remote content")
+				return nil, status.Error(codes.Internal, "remote content error")
+			}
 		}
 
 		// This task/call cannot be canceled. Once it's started it's brought to a conclusion, independent of the caller disconnecting
@@ -242,14 +248,15 @@ func (s *WorkspaceService) creator(req *api.InitWorkspaceRequest) session.Worksp
 		}
 
 		return &session.Workspace{
-			Location:            location,
-			CheckoutLocation:    getCheckoutLocation(req),
-			CreatedAt:           time.Now(),
-			Owner:               req.Metadata.Owner,
-			WorkspaceID:         req.Metadata.MetaId,
-			InstanceID:          req.Id,
-			FullWorkspaceBackup: req.FullWorkspaceBackup,
-			ContentManifest:     req.ContentManifest,
+			Location:              location,
+			CheckoutLocation:      getCheckoutLocation(req),
+			CreatedAt:             time.Now(),
+			Owner:                 req.Metadata.Owner,
+			WorkspaceID:           req.Metadata.MetaId,
+			InstanceID:            req.Id,
+			FullWorkspaceBackup:   req.FullWorkspaceBackup,
+			ContentManifest:       req.ContentManifest,
+			RemoteStorageDisabled: req.RemoteStorageDisabled,
 
 			ServiceLocDaemon: filepath.Join(s.config.WorkingArea, req.Id+"-daemon"),
 			ServiceLocNode:   filepath.Join(s.config.WorkingAreaNode, req.Id+"-daemon"),
@@ -362,6 +369,10 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 	}
 
 	if req.Backup {
+		if sess.RemoteStorageDisabled {
+			return nil, status.Errorf(codes.FailedPrecondition, "workspace has no remote storage")
+		}
+
 		var (
 			backupName = storage.DefaultBackup
 			mfName     = storage.DefaultBackupManifest
@@ -713,6 +724,9 @@ func (s *WorkspaceService) TakeSnapshot(ctx context.Context, req *api.TakeSnapsh
 	if !sess.IsReady() {
 		return nil, status.Error(codes.FailedPrecondition, "workspace is not ready")
 	}
+	if sess.RemoteStorageDisabled {
+		return nil, status.Error(codes.FailedPrecondition, "workspace has no remote storage")
+	}
 	rs, ok := sess.NonPersistentAttrs[session.AttrRemoteStorage].(storage.DirectAccess)
 	if rs == nil || !ok {
 		log.WithFields(sess.OWI()).WithError(err).Error("cannot upload snapshot: no remote storage configured")
@@ -783,7 +797,7 @@ func (c *cannotCancelContext) Value(key interface{}) interface{} {
 
 func workspaceLifecycleHooks(cfg Config, kubernetesNamespace string, workspaceExistenceCheck WorkspaceExistenceCheck, uidmapper *iws.Uidmapper) map[session.WorkspaceState][]session.WorkspaceLivecycleHook {
 	var setupWorkspace session.WorkspaceLivecycleHook = func(ctx context.Context, ws *session.Workspace) error {
-		if _, ok := ws.NonPersistentAttrs[session.AttrRemoteStorage]; !ok {
+		if _, ok := ws.NonPersistentAttrs[session.AttrRemoteStorage]; !ws.RemoteStorageDisabled && !ok {
 			remoteStorage, err := storage.NewDirectAccess(&cfg.Storage)
 			if err != nil {
 				return xerrors.Errorf("cannot use configured storage: %w", err)

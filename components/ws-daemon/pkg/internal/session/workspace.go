@@ -67,6 +67,8 @@ type Workspace struct {
 	ServiceLocNode   string `json:"serviceLocNode"`
 	ServiceLocDaemon string `json:"serviceLocDaemon"`
 
+	RemoteStorageDisabled bool `json:"remoteStorageDisabled,omitempty"`
+
 	NonPersistentAttrs map[string]interface{} `json:"-"`
 
 	store              *Store
