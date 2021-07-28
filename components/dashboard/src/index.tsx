@@ -9,6 +9,7 @@ import ReactDOM from 'react-dom';
 import App from './App';
 import { UserContextProvider } from './user-context';
 import { TeamsContextProvider } from './teams/teams-context';
+import { ThemeContextProvider } from './theme-context';
 
 import "./index.css"
 
@@ -16,7 +17,9 @@ ReactDOM.render(
     <React.StrictMode>
         <UserContextProvider>
             <TeamsContextProvider>
-                <App />
+                <ThemeContextProvider>
+                    <App />
+                </ThemeContextProvider>
             </TeamsContextProvider>
         </UserContextProvider>
     </React.StrictMode>,

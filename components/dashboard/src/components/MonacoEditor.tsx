@@ -4,12 +4,14 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { useEffect, useRef } from "react";
+import { useContext, useEffect, useRef } from "react";
 import * as monaco from "monaco-editor";
+import { ThemeContext } from "../theme-context";
 
 export default function MonacoEditor(props: { classes: string, disabled?: boolean, language: string, value: string, onChange: (value: string) => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<monaco.editor.IStandaloneCodeEditor>();
+  const { isDark } = useContext(ThemeContext);
 
   useEffect(() => {
     if (containerRef.current) {
@@ -35,8 +37,8 @@ export default function MonacoEditor(props: { classes: string, disabled?: boolea
   }, [ props.value ]);
 
   useEffect(() => {
-    monaco.editor.setTheme(document.documentElement.classList.contains('dark') ? 'vs-dark' : 'vs');
-  }, []);
+    monaco.editor.setTheme(isDark ? 'vs-dark' : 'vs');
+  }, [ isDark ]);
 
   useEffect(() => {
     if (editorRef.current) {

@@ -12,6 +12,7 @@ import { Redirect, Route, Switch } from "react-router";
 import { Login } from './Login';
 import { UserContext } from './user-context';
 import { TeamsContext } from './teams/teams-context';
+import { ThemeContext } from './theme-context';
 import { getGitpodService } from './service/service';
 import { shouldSeeWhatsNew, WhatsNew } from './whatsnew/WhatsNew';
 import gitpodIcon from './icons/gitpod.svg';
@@ -56,6 +57,7 @@ function isGitpodIo() {
 function App() {
     const { user, setUser } = useContext(UserContext);
     const { teams, setTeams } = useContext(TeamsContext);
+    const { setIsDark } = useContext(ThemeContext);
 
     const [ loading, setLoading ] = useState<boolean>(true);
     const [ isWhatsNewShown, setWhatsNewShown ] = useState(false);
@@ -86,7 +88,7 @@ function App() {
     useEffect(() => {
         const updateTheme = () => {
             const isDark = localStorage.theme === 'dark' || (localStorage.theme === 'system' && window.matchMedia("(prefers-color-scheme: dark)").matches);
-            document.documentElement.classList.toggle('dark', isDark);
+            setIsDark(isDark);
         }
         updateTheme();
         const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
