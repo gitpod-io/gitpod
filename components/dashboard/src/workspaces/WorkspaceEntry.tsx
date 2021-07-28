@@ -101,7 +101,7 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
         </ItemField>
         <ItemField className="w-2/12 flex flex-col">
             <div className="text-gray-500 dark:text-gray-400 overflow-ellipsis truncate">{currentBranch}</div>
-            <PendingChangesDropdown workspaceInstance={desc.latestInstance} />
+            <div className="mr-auto"><PendingChangesDropdown workspaceInstance={desc.latestInstance} /></div>
         </ItemField>
         <ItemField className="w-2/12 flex">
             <Tooltip content={`Created ${moment(desc.workspace.creationTime).fromNow()}`}>
