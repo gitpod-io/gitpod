@@ -258,7 +258,8 @@ proto.wsdaemon.InitWorkspaceRequest.toObject = function(includeInstance, msg) {
     metadata: (f = msg.getMetadata()) && proto.wsdaemon.WorkspaceMetadata.toObject(includeInstance, f),
     initializer: (f = msg.getInitializer()) && content$service$api_initializer_pb.WorkspaceInitializer.toObject(includeInstance, f),
     fullWorkspaceBackup: jspb.Message.getBooleanFieldWithDefault(msg, 4, false),
-    contentManifest: msg.getContentManifest_asB64()
+    contentManifest: msg.getContentManifest_asB64(),
+    remoteStorageDisabled: jspb.Message.getBooleanFieldWithDefault(msg, 7, false)
   };
 
   if (includeInstance) {
@@ -316,6 +317,10 @@ proto.wsdaemon.InitWorkspaceRequest.deserializeBinaryFromReader = function(msg, 
     case 5:
       var value = /** @type {!Uint8Array} */ (reader.readBytes());
       msg.setContentManifest(value);
+      break;
+    case 7:
+      var value = /** @type {boolean} */ (reader.readBool());
+      msg.setRemoteStorageDisabled(value);
       break;
     default:
       reader.skipField();
@@ -380,6 +385,13 @@ proto.wsdaemon.InitWorkspaceRequest.serializeBinaryToWriter = function(message, 
   if (f.length > 0) {
     writer.writeBytes(
       5,
+      f
+    );
+  }
+  f = message.getRemoteStorageDisabled();
+  if (f) {
+    writer.writeBool(
+      7,
       f
     );
   }
@@ -535,6 +547,24 @@ proto.wsdaemon.InitWorkspaceRequest.prototype.getContentManifest_asU8 = function
  */
 proto.wsdaemon.InitWorkspaceRequest.prototype.setContentManifest = function(value) {
   return jspb.Message.setProto3BytesField(this, 5, value);
+};
+
+
+/**
+ * optional bool remote_storage_disabled = 7;
+ * @return {boolean}
+ */
+proto.wsdaemon.InitWorkspaceRequest.prototype.getRemoteStorageDisabled = function() {
+  return /** @type {boolean} */ (jspb.Message.getBooleanFieldWithDefault(this, 7, false));
+};
+
+
+/**
+ * @param {boolean} value
+ * @return {!proto.wsdaemon.InitWorkspaceRequest} returns this
+ */
+proto.wsdaemon.InitWorkspaceRequest.prototype.setRemoteStorageDisabled = function(value) {
+  return jspb.Message.setProto3BooleanField(this, 7, value);
 };
 
 

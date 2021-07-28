@@ -8,7 +8,7 @@ import "content-service-api/initializer.proto";
 
 service WorkspaceContentService {
     // initWorkspace intialises a new workspace folder in the working area
-	rpc InitWorkspace(InitWorkspaceRequest) returns (InitWorkspaceResponse) {}
+    rpc InitWorkspace(InitWorkspaceRequest) returns (InitWorkspaceResponse) {}
 
     // WaitForInit waits until a workspace is fully initialized.
     // If the workspace is already initialized, this function returns immediately.
@@ -18,14 +18,14 @@ service WorkspaceContentService {
     // TakeSnapshot creates a backup/snapshot of a workspace
     rpc TakeSnapshot(TakeSnapshotRequest) returns (TakeSnapshotResponse) {}
 
-	// disposeWorkspace cleans up a workspace, possibly after taking a final backup
-	rpc DisposeWorkspace(DisposeWorkspaceRequest) returns (DisposeWorkspaceResponse) {}
+    // disposeWorkspace cleans up a workspace, possibly after taking a final backup
+    rpc DisposeWorkspace(DisposeWorkspaceRequest) returns (DisposeWorkspaceResponse) {}
 }
 
 // InitWorkspaceRequest intialises a new workspace folder in the working area
 message InitWorkspaceRequest {
-	// ID is a unique identifier of this workspace. No other workspace with the same name must exist in the realm of this daemon
-	string id = 1;
+    // ID is a unique identifier of this workspace. No other workspace with the same name must exist in the realm of this daemon
+    string id = 1;
 
     // Metadata is data associated with this workspace that's required for other parts of Gitpod to function
     WorkspaceMetadata metadata = 2;
@@ -44,12 +44,16 @@ message InitWorkspaceRequest {
 
     // Was used for user_namespaced
     reserved 6;
+
+    // remote_storage_disabled disables any support for remote storage operations, specifically backups and snapshots.
+    // When any such operation is attempted, a FAILED_PRECONDITION error will be the result.
+    bool remote_storage_disabled = 7;
 }
 
 // WorkspaceMetadata is data associated with a workspace that's required for other parts of the system to function
 message WorkspaceMetadata {
-	// owner is the ID of the Gitpod user to whom we'll bill this workspace and who we consider responsible for its content
-	string owner = 1;
+    // owner is the ID of the Gitpod user to whom we'll bill this workspace and who we consider responsible for its content
+    string owner = 1;
 
     // meta_id is the workspace ID of this currently running workspace instance on the "meta pool" side
     string meta_id = 2;
@@ -60,15 +64,15 @@ message InitWorkspaceResponse {}
 // WaitForInitRequest waits for a workspace to be initialized
 message WaitForInitRequest {
     // ID is a unique identifier of the workspace
-	string id = 1;
+    string id = 1;
 }
 
 message WaitForInitResponse {}
 
 // TakeSnapshotRequest creates a backup/snapshot of a workspace
 message TakeSnapshotRequest {
-	// ID is the identifier of the workspace of which we want to create a snapshot of
-	string id = 1;
+    // ID is the identifier of the workspace of which we want to create a snapshot of
+    string id = 1;
 }
 
 message TakeSnapshotResponse {
@@ -95,7 +99,7 @@ enum WorkspaceContentState {
 
 message DisposeWorkspaceRequest {
     // ID is a unique identifier of the workspace to dispose of
-	string id = 1;
+    string id = 1;
 
     // Backup triggers a final backup prior to disposal
     bool backup = 2;
