@@ -412,10 +412,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		if err != nil {
 			return
 		}
-		defer func() {
-			tmpf.Close()
-			os.Remove(tmpf.Name())
-		}()
+		defer tmpf.Close()
 
 		var opts []archive.TarOption
 		opts = append(opts, archive.TarbalMaxSize(int64(s.config.WorkspaceSizeLimit)))
@@ -460,9 +457,8 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 		return xerrors.Errorf("cannot create archive: %w", err)
 	}
 	defer func() {
-		if err == nil && tmpf != nil {
-			// we only remove the layer archive when there was no error during
-			// upload, just as some sort of safety net.
+		if tmpf != nil {
+			// always remove the archive file to not fill up the node needlessly
 			os.Remove(tmpf.Name())
 		}
 	}()
