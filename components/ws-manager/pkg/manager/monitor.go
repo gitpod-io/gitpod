@@ -703,9 +703,10 @@ func (m *Monitor) initializeWorkspaceContent(ctx context.Context, pod *corev1.Po
 				Owner:  workspaceMeta.Owner,
 				MetaId: workspaceMeta.MetaId,
 			},
-			Initializer:         &initializer,
-			FullWorkspaceBackup: fullWorkspaceBackup,
-			ContentManifest:     contentManifest,
+			Initializer:           &initializer,
+			FullWorkspaceBackup:   fullWorkspaceBackup,
+			ContentManifest:       contentManifest,
+			RemoteStorageDisabled: shouldDisableRemoteStorage(pod),
 		})
 		return err
 	})
@@ -745,6 +746,21 @@ func retryIfUnavailable(ctx context.Context, op func(ctx context.Context) error)
 
 	// we've maxed out our retry attempts
 	return grpc_status.Error(codes.Unavailable, "workspace content initialization is currently unavailable")
+}
+
+func shouldDisableRemoteStorage(pod *corev1.Pod) bool {
+	wso := &workspaceObjects{Pod: pod}
+	tpe, err := wso.WorkspaceType()
+	if err != nil {
+		log.WithFields(wso.GetOWI()).WithError(err).Warn("cannot determine workspace type - assuming this is a regular")
+		tpe = api.WorkspaceType_REGULAR
+	}
+	switch tpe {
+	case api.WorkspaceType_GHOST, api.WorkspaceType_IMAGEBUILD:
+		return true
+	default:
+		return false
+	}
 }
 
 // finalizeWorkspaceContent talks to a ws-daemon daemon on the node of the pod and creates a backup of the workspace content.
