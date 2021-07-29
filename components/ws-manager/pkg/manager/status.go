@@ -787,7 +787,9 @@ func (m *Manager) isWorkspaceTimedOut(wso workspaceObjects) (reason string, err 
 		return decide(*lastActivity, m.Config.Timeouts.Interrupted, activityInterrupted)
 
 	case api.WorkspacePhase_STOPPING:
-		if status.Conditions.FinalBackupComplete != api.WorkspaceConditionBool_TRUE {
+		if isPodBeingDeleted(wso.Pod) && status.Conditions.FinalBackupComplete != api.WorkspaceConditionBool_TRUE {
+			// Beware: we apply the ContentFinalization timeout only to workspaces which are currently being deleted.
+			//         We basically don't expect a workspace to be in content finalization before it's been deleted.
 			return decide(wso.Pod.DeletionTimestamp.Time, m.Config.Timeouts.ContentFinalization, activityBackup)
 		} else if !isPodBeingDeleted(wso.Pod) {
 			// pods that have not been deleted have never timed out
