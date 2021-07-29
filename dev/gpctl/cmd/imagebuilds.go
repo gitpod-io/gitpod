@@ -6,6 +6,8 @@ package cmd
 
 import (
 	"context"
+	"fmt"
+	"net"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/xerrors"
@@ -46,7 +48,12 @@ func getImagebuildsClient(ctx context.Context) (*grpc.ClientConn, api.ImageBuild
 		comp = "image-builder-mk3"
 	}
 
-	port := "20202:8080"
+	freePort, err := GetFreePort()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	port := fmt.Sprintf("%d:8080", freePort)
 	podName, err := util.FindAnyPodForComponent(clientSet, namespace, comp)
 	if err != nil {
 		return nil, nil, err
@@ -71,9 +78,21 @@ func getImagebuildsClient(ctx context.Context) (*grpc.ClientConn, api.ImageBuild
 		secopt = grpc.WithTransportCredentials(creds)
 	}
 
-	conn, err := grpc.Dial("localhost:20202", secopt)
+	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", freePort), secopt)
 	if err != nil {
 		return nil, nil, err
 	}
 	return conn, api.NewImageBuilderClient(conn), nil
+}
+
+func GetFreePort() (port int, err error) {
+	var a *net.TCPAddr
+	if a, err = net.ResolveTCPAddr("tcp", "localhost:0"); err == nil {
+		var l *net.TCPListener
+		if l, err = net.ListenTCP("tcp", a); err == nil {
+			defer l.Close()
+			return l.Addr().(*net.TCPAddr).Port, nil
+		}
+	}
+	return
 }

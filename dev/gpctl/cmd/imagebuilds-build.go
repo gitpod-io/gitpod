@@ -83,6 +83,7 @@ var imagebuildsBuildCmd = &cobra.Command{
 		br, err := client.Build(ctx, &builder.BuildRequest{
 			Source:       &source,
 			ForceRebuild: forceRebuild,
+			Auth:         &builder.BuildRegistryAuth{Mode: &builder.BuildRegistryAuth_Total{Total: &builder.BuildRegistryAuthTotal{AllowAll: true}}},
 		})
 		if err != nil {
 			log.Fatal(err)
