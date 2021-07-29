@@ -115,6 +115,15 @@ func (a AllowedAuthFor) Elevate(ref string) AllowedAuthFor {
 	return AllowedAuthFor{a.All, append(a.Explicit, reference.Domain(pref))}
 }
 
+// ExplicitlyAll produces an AllowedAuthFor that allows authentication for all
+// registries, yet carries the original Explicit list which affects GetAuthForImageBuild
+func (a AllowedAuthFor) ExplicitlyAll() AllowedAuthFor {
+	return AllowedAuthFor{
+		All:      true,
+		Explicit: a.Explicit,
+	}
+}
+
 // Resolver resolves an auth request determining which authentication is actually allowed
 type Resolver struct {
 	BaseImageRepository      string
