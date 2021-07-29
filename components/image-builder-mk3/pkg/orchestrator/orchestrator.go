@@ -383,7 +383,7 @@ func (o *Orchestrator) Build(req *protocol.BuildRequest, resp protocol.ImageBuil
 	if err != nil {
 		return
 	}
-	gplayerAuth, err := o.getAuthFor(auth.AllowedAuthForAll, wsrefstr, baseref)
+	gplayerAuth, err := o.getAuthFor(reqauth.ExplicitlyAll(), wsrefstr, baseref)
 	if err != nil {
 		return
 	}
