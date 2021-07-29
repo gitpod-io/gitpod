@@ -69,8 +69,10 @@ export class WorkspaceModel implements Disposable, Partial<GitpodClient> {
                 try {
                     this.currentlyFetching.add(instance.workspaceId);
                     const info = await getGitpodService().server.getWorkspace(instance.workspaceId);
-                    this.workspaces.set(instance.workspaceId, info);
-                    this.notifyWorkpaces();
+                    if (info.workspace.type === 'regular') {
+                        this.workspaces.set(instance.workspaceId, info);
+                        this.notifyWorkpaces();
+                    }
                 } finally {
                     this.currentlyFetching.delete(instance.workspaceId);
                 }
