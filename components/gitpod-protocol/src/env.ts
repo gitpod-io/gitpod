@@ -13,16 +13,18 @@ const legacyStagenameTranslation: { [key: string]: KubeStage } = {
     "dev": "dev"
 }
 
+export function translateLegacyStagename(kubeStage: string): KubeStage {
+    const stage = legacyStagenameTranslation[kubeStage];
+    if (!stage) {
+        throw new Error(`Invalid KUBE_STAGE: ${kubeStage}`);
+    }
+
+    return stage;
+}
+
 @injectable()
 export abstract class AbstractComponentEnv {
-    readonly kubeStage: KubeStage = getEnvVarParsed('KUBE_STAGE', (kubeStage) => {
-        const stage = legacyStagenameTranslation[kubeStage];
-        if (!stage) {
-            throw new Error(`Environment variable invalid: KUBE_STAGE=${kubeStage}`);
-        }
-
-        return stage;
-    });
+    readonly kubeStage: KubeStage = getEnvVarParsed('KUBE_STAGE', translateLegacyStagename);
     readonly kubeNamespace: string = getEnvVar('KUBE_NAMESPACE');
 
     readonly installationLongname: string = getEnvVar("GITPOD_INSTALLATION_LONGNAME")

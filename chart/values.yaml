@@ -304,7 +304,8 @@ components:
     wsman: []
     defaultBaseImageRegistryWhitelist: []
     session:
-      maxAgeMs: 259200000  # 3 days
+      # 3 days
+      maxAgeMs: 259200000
       secret: Important!Really-Change-This-Key!
     previewFeatureFlags: []
     defaultFeatureFlags: []

@@ -79,8 +79,10 @@ import { HeadlessLogServiceClient } from '@gitpod/content-service/lib/headless-l
 import { ProjectsService } from './projects/projects-service';
 import { NewsletterSubscriptionController } from './user/newsletter-subscription-controller';
 import { Config, ConfigFile } from './config';
+import { Env } from './env';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
+    bind(Env).toSelf().inSingletonScope();
     bind(Config).toConstantValue(ConfigFile.fromFile());
 
     bind(UserService).toSelf().inSingletonScope();
