@@ -6,7 +6,6 @@
   "scripts": {
     "start": "node ./dist/src/index.js",
     "start-ee": "node ./dist/ee/src/index.js",
-
     "prepare": "yarn clean && yarn build",
     "build": "npx tsc",
     "build:clean": "yarn clean && yarn build",
@@ -26,9 +25,9 @@
     "@gitpod/gitpod-db": "0.1.5",
     "@gitpod/gitpod-messagebus": "0.1.5",
     "@gitpod/gitpod-protocol": "0.1.5",
+    "@gitpod/ws-daemon": "0.1.5",
     "@gitpod/ws-manager": "0.1.5",
     "@gitpod/ws-manager-bridge-api": "0.1.5",
-    "@gitpod/ws-daemon": "0.1.5",
     "amqplib": "^0.5.2",
     "express": "^4.16.1",
     "grpc": "^1.21.1",

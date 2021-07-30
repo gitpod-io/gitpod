@@ -83,7 +83,6 @@
     "ws": "^7.4.6"
   },
   "devDependencies": {
-    "@types/cookie-parser": "^1.4.2",
     "@graphql-codegen/cli": "^1.19.4",
     "@graphql-codegen/introspection": "^1.18.1",
     "@graphql-codegen/typescript": "^1.19.0",
@@ -95,6 +94,7 @@
     "@types/body-parser": "^1.16.5",
     "@types/chai": "^4.1.2",
     "@types/chai-http": "^3.0.4",
+    "@types/cookie-parser": "^1.4.2",
     "@types/cors": "^2.8.3",
     "@types/deep-equal": "^1.0.1",
     "@types/dotenv": "^4.0.2",

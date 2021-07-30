@@ -28,15 +28,15 @@
   },
   "devDependencies": {
     "@types/argparse": "^1.0.35",
-    "@types/mysql": "^2.15.0",
-    "@types/progress": "^2.0.1",
     "@types/chai": "^4.0.4",
     "@types/mocha": "^5.2.7",
-    "rimraf": "^2.6.1",
+    "@types/mysql": "^2.15.0",
+    "@types/progress": "^2.0.1",
     "chai": "^4.1.2",
-    "ts-node": "<7.0.0",
     "mocha": "^4.1.0",
     "mocha-typescript": "^1.1.17",
+    "rimraf": "^2.6.1",
+    "ts-node": "<7.0.0",
     "typescript": "^3.1.3"
   }
 }

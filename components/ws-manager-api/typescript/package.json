@@ -21,12 +21,12 @@
     "opentracing": "^0.14.4"
   },
   "devDependencies": {
+    "@testdeck/mocha": "0.1.2",
+    "@types/chai": "^4.1.2",
     "@types/google-protobuf": "^3.7.4",
     "@types/node": "^10",
     "grpc-tools": "^1.11.1",
     "grpc_tools_node_protoc_ts": "^5.2.1",
-    "typescript-formatter": "^7.2.2",
-    "@testdeck/mocha": "0.1.2",
-    "@types/chai": "^4.1.2"
+    "typescript-formatter": "^7.2.2"
   }
 }
