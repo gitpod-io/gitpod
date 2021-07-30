@@ -14,6 +14,7 @@ import vscode from '../images/vscode.svg';
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import settingsMenu from "./settings-menu";
 import AlertBox from "../components/AlertBox";
+import Tooltip from "../components/Tooltip";
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -54,13 +55,21 @@ export default function Preferences() {
             </AlertBox>
             <div className="mt-4 space-x-4 flex">
                 <SelectableCard className="w-36 h-40" title="VS Code" selected={defaultIde === 'code'} onClick={() => actuallySetDefaultIde('code')}>
-                    <div className="flex-grow flex justify-center items-center">
-                        <img className="w-16 filter-grayscale" src={vscode}/>
+                    <div className="flex justify-center mt-3">
+                        <img className="w-16 filter-grayscale self-center" src={vscode} />
                     </div>
                 </SelectableCard>
+                <Tooltip content={'Early access version, still subject to testing.'} >
+                    <SelectableCard className="w-36 h-40" title="VS Code" selected={defaultIde === 'code-latest'} onClick={() => actuallySetDefaultIde('code-latest')}>
+                        <div className="flex justify-center mt-3">
+                            <img className="w-16 filter-grayscale self-center" src={vscode} />
+                        </div>
+                        <span className="mt-2 ml-2 self-center rounded-xl py-0.5 px-2 text-sm bg-orange-100 text-orange-700 dark:bg-orange-600 dark:text-orange-100 font-semibold">LATEST</span>
+                    </SelectableCard>
+                </Tooltip>
                 <SelectableCard className="w-36 h-40" title="Theia" selected={defaultIde === 'theia'} onClick={() => actuallySetDefaultIde('theia')}>
-                    <div className="flex-grow flex justify-center items-center">
-                        <img className="w-16 dark:filter-invert" src={theia}/>
+                    <div className="flex justify-center mt-3">
+                        <img className="w-16 h-16 dark:filter-invert self-center" src={theia} />
                     </div>
                 </SelectableCard>
             </div>
