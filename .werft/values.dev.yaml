@@ -42,12 +42,14 @@ components:
   server:
     replicas: 1
     makeNewUsersAdmin: true # for development
-    theiaPluginsBucketName: gitpod-core-dev-plugins
+    theiaPluginsBucketNameOverride: gitpod-core-dev-plugins
     enableLocalApp: true
-    enableOAuthServer: true
-    blockNewUsers: true
-    blockNewUsersPasslist:
-    - "gitpod.io"
+    oauthServer:
+      enabled: true
+    blockNewUsers:
+      enabled: true
+      passlist:
+      - "gitpod.io"
     resources:
       # in preview envs, we want deployments to push scale-up early
       memory: 350Mi

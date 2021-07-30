@@ -39,17 +39,21 @@ export interface AuthProviderParams extends AuthProviderEntry {
     readonly icon: string;
 }
 export function parseAuthProviderParamsFromEnv(json: object): AuthProviderParams[] {
-    const result: AuthProviderParams[] = [];
     if (Array.isArray(json)) {
-        for (const o of json) {
-            result.push({
-                ...o,
-                ownerId: "",
-                builtin: true,
-                status: "verified",
-                verified: true,
-            })
-        }
+        return normalizeAuthProviderParamsFromEnv(json as AuthProviderParams[]);
+    }
+    return [];
+}
+export function normalizeAuthProviderParamsFromEnv(params: Omit<AuthProviderParams, "ownerId" | "builtin" | "status" | "verified">[]): AuthProviderParams[] {
+    const result: AuthProviderParams[] = [];
+    for (const p of params) {
+        result.push({
+            ...p,
+            ownerId: "",
+            builtin: true,
+            status: "verified",
+            verified: true,
+        })
     }
     return result;
 }
@@ -72,7 +76,7 @@ export interface AuthUser {
 export const AuthProvider = Symbol('AuthProvider');
 export interface AuthProvider {
     readonly authProviderId: string;
-    readonly config: AuthProviderParams;
+    readonly params: AuthProviderParams;
     readonly info: AuthProviderInfo;
     readonly authCallbackPath: string;
     callback(req: express.Request, res: express.Response, next: express.NextFunction): Promise<void>;

@@ -7,7 +7,7 @@
 import { HostContext } from "./host-context";
 import { interfaces, injectable, inject } from "inversify";
 import { AuthProviderParams } from "./auth-provider";
-import { Env } from "../env";
+import { Config } from "../config";
 import { AuthProviderService } from "./auth-provider-service";
 import { HostContextProvider, HostContextProviderFactory } from "./host-context-provider";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
@@ -19,8 +19,8 @@ export class HostContextProviderImpl implements HostContextProvider {
     protected fixedHosts = new Map<string, HostContext>();
     protected dynamicHosts = new Map<string, HostContext>();
 
-    @inject(Env)
-    protected env: Env;
+    @inject(Config)
+    protected readonly config: Config;
 
     @inject(AuthProviderService)
     protected authProviderService: AuthProviderService;
@@ -59,7 +59,7 @@ export class HostContextProviderImpl implements HostContextProvider {
     }
 
     protected createFixedHosts() {
-        const apConfigs = this.env.authProviderConfigs;
+        const apConfigs = this.config.authProviderConfigs;
         for (const apConfig of apConfigs) {
             const container = this.factory.createHostContext(apConfig);
             if (container) {
@@ -76,7 +76,7 @@ export class HostContextProviderImpl implements HostContextProvider {
             const { host } = config;
 
             const existingContext = this.dynamicHosts.get(host);
-            const existingConfig = existingContext && existingContext.authProvider.config;
+            const existingConfig = existingContext && existingContext.authProvider.params;
             if (existingConfig && config.id === existingConfig.id) {
                 if (existingConfig.host !== config.host) {
                     log.warn("Ignoring host update for dynamic Auth Provider: " + host, { config, existingConfig });

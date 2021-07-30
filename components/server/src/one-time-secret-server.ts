@@ -7,15 +7,15 @@
 import { injectable, inject } from "inversify";
 import * as express from 'express';
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { Env } from "./env";
 import { OneTimeSecretDB, DBWithTracing, TracedOneTimeSecretDB } from "@gitpod/gitpod-db/lib";
 import { Disposable } from "@gitpod/gitpod-protocol";
 import * as opentracing from 'opentracing';
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
+import { Config } from "./config";
 
 @injectable()
 export class OneTimeSecretServer implements Disposable {
-    @inject(Env) protected readonly env: Env;
+    @inject(Config) protected readonly config: Config;
     @inject(TracedOneTimeSecretDB) protected readonly oneTimeSecretDB: DBWithTracing<OneTimeSecretDB>;
 
     protected pruneTimeout: NodeJS.Timeout | undefined;
@@ -73,7 +73,7 @@ export class OneTimeSecretServer implements Disposable {
      */
     public async serve(ctx: TraceContext, secret: string, expirationTime: Date): Promise<{token: string, disposable: Disposable}> {
         const key = await this.oneTimeSecretDB.trace(ctx).register(secret, expirationTime);
-        const token = this.env.hostUrl.withApi({ pathname: `/ots/get/${key}` }).toString();
+        const token = this.config.hostUrl.withApi({ pathname: `/ots/get/${key}` }).toString();
         const disposable: Disposable = {
             dispose: () => this.oneTimeSecretDB.trace({}).remove(key)
         };

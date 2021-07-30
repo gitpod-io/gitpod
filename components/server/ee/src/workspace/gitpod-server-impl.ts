@@ -37,10 +37,10 @@ import { ChargebeeProvider, UpgradeHelper } from "@gitpod/gitpod-payment-endpoin
 import { ChargebeeCouponComputer } from "../user/coupon-computer";
 import { ChargebeeService } from "../user/chargebee-service";
 import { Chargebee as chargebee } from '@gitpod/gitpod-payment-endpoint/lib/chargebee';
-import { EnvEE } from "../env";
 
 import { GitHubAppSupport } from "../github/github-app-support";
 import { GitLabAppSupport } from "../gitlab/gitlab-app-support";
+import { Config } from "../../../src/config";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodServer> {
@@ -71,7 +71,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
     @inject(GitHubAppSupport) protected readonly githubAppSupport: GitHubAppSupport;
     @inject(GitLabAppSupport) protected readonly gitLabAppSupport: GitLabAppSupport;
 
-    @inject(EnvEE) protected readonly env: EnvEE;
+    @inject(Config) protected readonly config: Config;
 
     initialize(client: GitpodClient | undefined, clientRegion: string | undefined, user: User, accessGuard: ResourceAccessGuard): void {
         super.initialize(client, clientRegion, user, accessGuard);
@@ -751,7 +751,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
                 }
                 const result = makeResult(wsi.id);
 
-                const inSameCluster = wsi.region === this.env.installationShortname;
+                const inSameCluster = wsi.region === this.config.installationShortname;
                 if (!inSameCluster) {
                     if (mode === CreateWorkspaceMode.UsePrebuild) {
                         /* We need to wait for this prebuild to finish before we return from here.
@@ -885,7 +885,11 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
     // chargebee
     async getChargebeeSiteId(): Promise<string> {
         this.checkUser('getChargebeeSiteId');
-        return this.env.chargebeeProviderOptions.site;
+        if (!this.config.chargebeeProviderOptions) {
+            log.error("config error: expected chargebeeProviderOptions but found none!");
+            return "none";
+        }
+        return this.config.chargebeeProviderOptions.site;
     }
 
     public async isStudent(): Promise<boolean> {
@@ -895,7 +899,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
 
     async getShowPaymentUI(): Promise<boolean> {
         this.checkUser('getShowPaymentUI');
-        return this.env.enablePayment;
+        return !!this.config.enablePayment;
     }
 
     async isChargebeeCustomer(): Promise<boolean> {
@@ -1320,7 +1324,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
             log.debug({ userId: user.id }, "user has no GitHub identity - cannot provide plan upgrade URLs");
             return [];
         }
-        const produceUpgradeURL = (planID: number) => `https://www.github.com/marketplace/${this.env.githubAppMarketplaceName}/upgrade/${planID}/${ghidentity.authId}`;
+        const produceUpgradeURL = (planID: number) => `https://www.github.com/marketplace/${this.config.githubApp?.marketplaceName}/upgrade/${planID}/${ghidentity.authId}`;
 
         // GitHub plans are USD
         return Plans.getAvailablePlans('USD')

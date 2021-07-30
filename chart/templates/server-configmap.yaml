@@ -1,0 +1,71 @@
+# Copyright (c) 2020 Gitpod GmbH. All rights reserved.
+# Licensed under the MIT License. See License-MIT.txt in the project root for license information.
+
+{{ $comp := .Values.components.server -}}
+{{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: server-config
+  labels:
+    app: {{ template "gitpod.fullname" . }}
+    chart: "{{ .Chart.Name }}-{{ .Chart.Version }}"
+    release: "{{ .Release.Name }}"
+    heritage: "{{ .Release.Service }}"
+data:
+  config.json: |-
+    {
+        "version": "{{ template "gitpod.comp.version" $this }}",
+        "hostUrl": "https://{{ .Values.hostname }}",
+        "installationShortname": "{{ template "gitpod.installation.shortname" $this }}",
+        "stage": "{{ .Values.installation.stage }}",
+{{- if .Values.devBranch }}
+        "devBranch": "{{ .Values.devBranch }}",
+{{- end }}
+        "license": "{{ .Values.license }}",
+        "trialLicensePrivateKey": "{{ .Values.trialLicensePrivateKey }}",
+        "workspaceHeartbeat": {{ $comp.workspaceHeartbeat | toJson }},
+        "workspaceDefaults": {
+            "ideVersion": "{{ template "gitpod.comp.version" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) }}",
+            "ideImageRepo": "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.theiaImage) }}",
+            "ideImageAliases": {{ (dict "code" (include "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage))) | toJson }},
+            "workspaceImage": "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.defaultImage) }}",
+            "previewFeatureFlags": {{ $comp.previewFeatureFlags | toJson }},
+            "defaultFeatureFlags": {{ $comp.defaultFeatureFlags | toJson }}
+        },
+        "session": {{ $comp.session | toJson }},
+{{- if $comp.github.app }}
+        "githubApp": {{ $comp.github.app | toJson }},
+{{- end }}
+        "definitelyGpDisabled": {{ $comp.definitelyGpDisabled }},
+        "workspaceGarbageCollection": {{ $comp.garbageCollection | toJson }},
+        "enableLocalApp": {{ $comp.enableLocalApp }},
+        "authProviderConfigs": {{ .Values.authProviders | toJson }},
+        "disableDynamicAuthProviderLogin": {{ $comp.disableDynamicAuthProviderLogin }},
+        "brandingConfig": {{ .Values.branding | toJson }},
+        "maxEnvvarPerUserCount": {{ $comp.maxEnvvarPerUserCount }},
+        "maxConcurrentPrebuildsPerRef": {{ $comp.maxConcurrentPrebuildsPerRef }},
+        "incrementalPrebuilds": {{ $comp.incrementalPrebuilds | toJson }},
+        "blockNewUsers": {{ $comp.blockNewUsers | toJson }},
+        "makeNewUsersAdmin": {{ $comp.makeNewUsersAdmin }},
+{{- if $comp.theiaPluginsBucketNameOverride }}
+        "theiaPluginsBucketNameOverride": "{{ $comp.theiaPluginsBucketNameOverride }}",
+{{- end }}
+        "defaultBaseImageRegistryWhitelist": {{ $comp.defaultBaseImageRegistryWhitelist | toJson }},
+        "runDbDeleter": {{ $comp.runDbDeleter }},
+        "oauthServer": {
+            "enabled": {{ $comp.oauthServer.enabled }}
+{{- if $comp.oauthServer.enabled }}
+            , "jwtSecret": {{ (randAlphaNum 20) | quote }}
+{{- end }}
+        },
+        "rateLimiter": {{ $comp.rateLimiter | toJson }},
+        "contentServiceAddr": {{ $comp.contentServiceAddr | quote }},
+        "imageBuilderAddr": {{ $comp.imageBuilderAddr | quote }},
+{{- if $comp.serverProxyApiKey }}
+        "serverProxyApiKey": "{{ $comp.serverProxyApiKey }}",
+{{- end }}
+        "codeSync": {{ $comp.codeSync | toJson }},
+        "enablePayment": {{ $comp.enablePayment }},
+        "insecureNoDomain": {{ $comp.insecureNoDomain }}
+    }

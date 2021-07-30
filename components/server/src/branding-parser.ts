@@ -9,19 +9,20 @@ import { Branding } from "@gitpod/gitpod-protocol";
 export namespace BrandingParser {
     export function parse(jsonString: string): Branding {
         const result = JSON.parse(jsonString)
-
+        return normalize(result as Branding);
+    }
+    export function normalize(branding: Branding): Branding {
         // apply branding defaults
-
-        if (!result.name) {
-            result.name = "Gitpod";
+        const b = branding as any;
+        if (!b.name) {
+            b.name = "Gitpod";
         }
-        if (result.showProductivityTips === undefined) {
-            result.showProductivityTips = true;
+        if (b.showProductivityTips === undefined) {
+            b.showProductivityTips = true;
         }
-        if (result.showReleaseNotes === undefined) {
-            result.showReleaseNotes = true;
+        if (b.showReleaseNotes === undefined) {
+            b.showReleaseNotes = true;
         }
-
-        return result as Branding;
+        return branding;
     }
 }

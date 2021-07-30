@@ -9,7 +9,7 @@ import { User, Identity, WorkspaceTimeoutDuration, UserEnvVarValue, Token } from
 import { TermsAcceptanceDB, UserDB } from "@gitpod/gitpod-db/lib";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
-import { Env } from "../env";
+import { Config } from "../config";
 import { AuthProviderParams, AuthUser } from "../auth/auth-provider";
 import { BlockedUserFilter } from "../auth/blocked-user-filter";
 import * as uuidv4 from 'uuid/v4';
@@ -51,7 +51,7 @@ export class UserService {
     @inject(BlockedUserFilter) protected readonly blockedUserFilter: BlockedUserFilter;
     @inject(UserDB) protected readonly userDb: UserDB;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
-    @inject(Env) protected readonly env: Env;
+    @inject(Config) protected readonly config: Config;
     @inject(TermsAcceptanceDB) protected readonly termsAcceptanceDb: TermsAcceptanceDB;
     @inject(TermsProvider) protected readonly termsProvider: TermsProvider;
 
@@ -138,13 +138,13 @@ export class UserService {
         return newUser;
     }
     protected handleNewUser(newUser: User, isFirstUser: boolean) {
-        if (this.env.blockNewUsers) {
-            const emailDomainInPasslist = (mail: string) => this.env.blockNewUsersPassList.some(e => mail.endsWith(`@${e}`));
+        if (this.config.blockNewUsers.enabled) {
+            const emailDomainInPasslist = (mail: string) => this.config.blockNewUsers.passlist.some(e => mail.endsWith(`@${e}`));
             const canPass = newUser.identities.some(i => !!i.primaryEmail && emailDomainInPasslist(i.primaryEmail));
 
             newUser.blocked = !canPass;
         }
-        if (!newUser.blocked && (isFirstUser || this.env.makeNewUsersAdmin)) {
+        if (!newUser.blocked && (isFirstUser || this.config.makeNewUsersAdmin)) {
             newUser.rolesOrPermissions = ['admin'];
         }
     }
@@ -300,11 +300,11 @@ export class UserService {
 
         const externalIdentities = currentUser.identities.filter(i => i.authProviderId !== TokenService.GITPOD_AUTH_PROVIDER_ID);
         const loginIdentityOfCurrentUser = externalIdentities[externalIdentities.length - 1];
-        const authProviderConfigOfCurrentUser = this.hostContextProvider.getAll().find(c => c.authProvider.authProviderId === loginIdentityOfCurrentUser.authProviderId)?.authProvider?.config;
+        const authProviderConfigOfCurrentUser = this.hostContextProvider.getAll().find(c => c.authProvider.authProviderId === loginIdentityOfCurrentUser.authProviderId)?.authProvider?.params;
         const loginHostOfCurrentUser = authProviderConfigOfCurrentUser?.host;
         const authProviderTypeOfCurrentUser = authProviderConfigOfCurrentUser?.type;
 
-        const authProviderTypeOfOtherUser = this.hostContextProvider.getAll().find(c => c.authProvider.authProviderId === candidate.authProviderId)?.authProvider?.config?.type;
+        const authProviderTypeOfOtherUser = this.hostContextProvider.getAll().find(c => c.authProvider.authProviderId === candidate.authProviderId)?.authProvider?.params?.type;
 
         const payload: SelectAccountPayload = {
             currentUser: {

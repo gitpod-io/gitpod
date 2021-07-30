@@ -20,7 +20,7 @@ import { inject, injectable } from "inversify";
 import * as uuidv4 from 'uuid/v4';
 import { HostContextProvider } from "../auth/host-context-provider";
 import { ScopedResourceGuard } from '../auth/resource-access';
-import { Env } from "../env";
+import { Config } from "../config";
 import { OneTimeSecretServer } from "../one-time-secret-server";
 import { TheiaPluginService } from "../theia-plugin/theia-plugin-service";
 import { AuthorizationService } from "../user/authorization-service";
@@ -39,7 +39,7 @@ export interface StartWorkspaceOptions {
 @injectable()
 export class WorkspaceStarter {
     @inject(WorkspaceManagerClientProvider) protected readonly clientProvider: WorkspaceManagerClientProvider;
-    @inject(Env) protected readonly env: Env;
+    @inject(Config) protected readonly config: Config;
     @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
     @inject(TracedUserDB) protected readonly userDB: DBWithTracing<UserDB>;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
@@ -74,7 +74,7 @@ export class WorkspaceStarter {
 
             if (options.forceDefaultImage) {
                 const req = new ResolveBaseImageRequest();
-                req.setRef(this.env.workspaceDefaultImage);
+                req.setRef(this.config.workspaceDefaults.workspaceImage);
                 const allowAll = new BuildRegistryAuthTotal();
                 allowAll.setAllowAll(true);
                 const auth = new BuildRegistryAuth();
@@ -275,8 +275,8 @@ export class WorkspaceStarter {
      * @param workspace the workspace to create an instance for
      */
     protected async newInstance(workspace: Workspace, user: User, excludeFeatureFlags: NamedWorkspaceFeatureFlag[]): Promise<WorkspaceInstance> {
-        const theiaVersion = this.env.theiaVersion;
-        const ideImage = this.env.ideDefaultImage;
+        const theiaVersion = this.config.workspaceDefaults.ideVersion;
+        const ideImage = this.config.workspaceDefaults.ideImage;
 
         // TODO(cw): once we allow changing the IDE in the workspace config (i.e. .gitpod.yml), we must
         //           give that value precedence over the default choice.
@@ -287,7 +287,7 @@ export class WorkspaceStarter {
 
         const ideChoice = user.additionalData?.ideSettings?.defaultIde;
         if (!!ideChoice) {
-            const mappedImage = this.env.ideImageAliases[ideChoice];
+            const mappedImage = this.config.workspaceDefaults.ideImageAliases[ideChoice];
             if (!!mappedImage) {
                 configuration.ideImage = mappedImage;
             } else if (this.authService.hasPermission(user, "ide-settings")) {
@@ -298,7 +298,7 @@ export class WorkspaceStarter {
         }
 
         let featureFlags: NamedWorkspaceFeatureFlag[] = workspace.config._featureFlags || [];
-        featureFlags = featureFlags.concat(this.env.defaultFeatureFlags);
+        featureFlags = featureFlags.concat(this.config.workspaceDefaults.defaultFeatureFlags);
         if (user.featureFlags && user.featureFlags.permanentWSFeatureFlags) {
             featureFlags = featureFlags.concat(featureFlags, user.featureFlags.permanentWSFeatureFlags);
         }
@@ -306,7 +306,7 @@ export class WorkspaceStarter {
         // if the user has feature preview enabled, we need to add the respective feature flags.
         // Beware: all feature flags we add here are not workspace-persistent feature flags, e.g. no full-workspace backup.
         if (!!user.additionalData?.featurePreview) {
-            featureFlags = featureFlags.concat(this.env.previewFeatureFlags.filter(f => !featureFlags.includes(f)));
+            featureFlags = featureFlags.concat(this.config.workspaceDefaults.previewFeatureFlags.filter(f => !featureFlags.includes(f)));
         }
 
         featureFlags = featureFlags.filter(f => !excludeFeatureFlags.includes(f));
@@ -372,7 +372,7 @@ export class WorkspaceStarter {
                 auth.setTotal(totalAuth);
             } else {
                 const selectiveAuth = new BuildRegistryAuthSelective();
-                selectiveAuth.setAnyOfList(this.env.defaultBaseImageRegistryWhitelist);
+                selectiveAuth.setAnyOfList(this.config.defaultBaseImageRegistryWhitelist);
                 auth.setSelective(selectiveAuth);
             }
             if (WorkspaceImageSourceDocker.is(imgsrc)) {
@@ -619,7 +619,7 @@ export class WorkspaceStarter {
                 tokenOTS: ots.token,
                 token: "ots",
                 kind: "gitpod",
-                host: this.env.hostUrl.url.host,
+                host: this.config.hostUrl.url.host,
                 scope: scopes,
                 expiryDate: tokenExpirationTime.toISOString(),
                 reuse: 2
@@ -668,7 +668,7 @@ export class WorkspaceStarter {
         if (!!instance.configuration?.ideImage) {
             ideImage = instance.configuration?.ideImage;
         } else {
-            ideImage = this.env.ideDefaultImage;
+            ideImage = this.config.workspaceDefaults.ideImage;
         }
 
         const spec = new StartWorkspaceSpec();
@@ -883,7 +883,7 @@ export class WorkspaceStarter {
         gitConfig.setAuthentication(GitAuthMethod.BASIC_AUTH_OTS);
         gitConfig.setAuthOts(tokenOTS);
 
-        if (this.env.insecureNoDomain) {
+        if (this.config.insecureNoDomain) {
             const token = await this.tokenProvider.getTokenForHost(user, host);
             gitConfig.setAuthentication(GitAuthMethod.BASIC_AUTH);
             gitConfig.setAuthUser(token.username || "oauth2");

@@ -11,11 +11,9 @@ import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Permission, User } from "@gitpod/gitpod-protocol";
 import { StorageClient } from "../storage/storage-client";
 import { AuthorizationService } from "../user/authorization-service";
-import { Env } from "../env";
 
 @injectable()
 export class WorkspaceDownloadService {
-    @inject(Env) protected readonly env: Env;
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
     @inject(StorageClient) protected readonly storageClient: StorageClient;
     @inject(AuthorizationService) protected readonly authorizationService: AuthorizationService;

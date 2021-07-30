@@ -90,7 +90,13 @@ export async function build(context, version) {
     const dontTest = "no-test" in buildConfig;
     const cacheLevel = "no-cache" in buildConfig ? "remote-push" : "remote";
     const publishRelease = "publish-release" in buildConfig;
-    const workspaceFeatureFlags = (buildConfig["ws-feature-flags"] || "").split(",").map(e => e.trim())
+    const workspaceFeatureFlags: string[] = ((): string[] => {
+        const raw: string = buildConfig["ws-feature-flags"] || "";
+        if (!raw) {
+            return [];
+        }
+        return raw.split(",").map(e => e.trim());
+    })();
     const dynamicCPULimits = "dynamic-cpu-limits" in buildConfig;
     const withInstaller = "with-installer" in buildConfig || mainBuild;
     const noPreview = ("no-preview" in buildConfig && buildConfig["no-preview"] !== "false") || publishRelease;
@@ -257,7 +263,7 @@ interface DeploymentConfig {
 /**
  * Deploy dev
  */
-export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceFeatureFlags, dynamicCPULimits, storage) {
+export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceFeatureFlags: string[], dynamicCPULimits, storage) {
     werft.phase("deploy", "deploying to dev");
     const { version, destname, namespace, domain, url, k3sWsCluster } = deploymentConfig;
     const [wsdaemonPortMeta, registryNodePortMeta] = findFreeHostPorts("", [

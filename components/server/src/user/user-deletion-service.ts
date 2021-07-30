@@ -7,7 +7,6 @@
 import { injectable, inject } from "inversify";
 import { UserDB, WorkspaceDB, UserStorageResourcesDB } from '@gitpod/gitpod-db/lib';
 import { User, Workspace } from "@gitpod/gitpod-protocol";
-import { Env } from "../env";
 import { StorageClient } from "../storage/storage-client";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { WorkspaceManagerClientProvider } from "@gitpod/ws-manager/lib/client-provider";
@@ -15,10 +14,11 @@ import { StopWorkspaceRequest, StopWorkspacePolicy } from "@gitpod/ws-manager/li
 import { WorkspaceDeletionService } from "../workspace/workspace-deletion-service";
 import { AuthProviderService } from "../auth/auth-provider-service";
 import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
+import { Config } from "../config";
 
 @injectable()
 export class UserDeletionService {
-    @inject(Env) protected readonly env: Env;
+    @inject(Config) protected readonly config: Config;
     @inject(UserDB) protected readonly db: UserDB;
     @inject(WorkspaceDB) protected readonly workspaceDb: WorkspaceDB;
     @inject(UserStorageResourcesDB) protected readonly userStorageResourcesDb: UserStorageResourcesDB;

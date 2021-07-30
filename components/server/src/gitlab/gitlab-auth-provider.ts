@@ -35,8 +35,8 @@ export class GitLabAuthProvider extends GenericAuthProvider {
      * Augmented OAuthConfig for GitLab
      */
     protected get oauthConfig() {
-        const oauth = this.config.oauth!;
-        const defaultUrls = oauthUrls(this.config.host);
+        const oauth = this.params.oauth!;
+        const defaultUrls = oauthUrls(this.params.host);
         const scopeSeparator = " ";
         return <typeof oauth>{
             ...oauth,
@@ -53,7 +53,7 @@ export class GitLabAuthProvider extends GenericAuthProvider {
     }
 
     protected get baseURL() {
-        return `https://${this.config.host}`;
+        return `https://${this.params.host}`;
     }
 
     protected readAuthUserSetup = async (accessToken: string, tokenResponse: object) => {

@@ -11,19 +11,19 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { OAuthException, OAuthRequest, OAuthResponse } from "@jmondi/oauth2-server";
 import * as express from 'express';
 import { inject, injectable } from "inversify";
-import { Env } from "../env";
+import { Config } from '../config';
 import { clientRepository, createAuthorizationServer } from './oauth-authorization-server';
 
 @injectable()
 export class OAuthController {
-    @inject(Env) protected readonly env: Env;
+    @inject(Config) protected readonly config: Config;
     @inject(UserDB) protected readonly userDb: UserDB;
     @inject(AuthCodeRepositoryDB) protected readonly authCodeRepositoryDb: AuthCodeRepositoryDB;
 
     private getValidUser(req: express.Request, res: express.Response): User | null {
         if (!req.isAuthenticated() || !User.is(req.user)) {
-            const redirectTarget = encodeURIComponent(`${this.env.hostUrl}api${req.originalUrl}`);
-            const redirectTo = `${this.env.hostUrl}login?returnTo=${redirectTarget}`;
+            const redirectTarget = encodeURIComponent(`${this.config.hostUrl}api${req.originalUrl}`);
+            const redirectTo = `${this.config.hostUrl}login?returnTo=${redirectTarget}`;
             res.redirect(redirectTo)
             return null;
         }
@@ -70,8 +70,8 @@ export class OAuthController {
             if (!oauthClientsApproved || !oauthClientsApproved[clientID]) {
                 const client = await clientRepository.getByIdentifier(clientID)
                 if (client) {
-                    const redirectTarget = encodeURIComponent(`${this.env.hostUrl}api${req.originalUrl}`);
-                    const redirectTo = `${this.env.hostUrl}oauth-approval?clientID=${client.id}&clientName=${client.name}&returnTo=${redirectTarget}`;
+                    const redirectTarget = encodeURIComponent(`${this.config.hostUrl}api${req.originalUrl}`);
+                    const redirectTo = `${this.config.hostUrl}oauth-approval?clientID=${client.id}&clientName=${client.name}&returnTo=${redirectTarget}`;
                     res.redirect(redirectTo)
                     return false;
                 } else {
@@ -86,12 +86,12 @@ export class OAuthController {
 
     get oauthRouter(): express.Router {
         const router = express.Router();
-        if (!this.env.enableOAuthServer) {
+        if (!this.config.oauthServer.enabled) {
             log.warn('OAuth server disabled!')
             return router;
         }
 
-        const authorizationServer = createAuthorizationServer(this.authCodeRepositoryDb, this.userDb, this.userDb, this.env.oauthServerJWTSecret);
+        const authorizationServer = createAuthorizationServer(this.authCodeRepositoryDb, this.userDb, this.userDb, this.config.oauthServer.jwtSecret);
         router.get("/oauth/authorize", async (req: express.Request, res: express.Response) => {
             const clientID = req.query.client_id;
             if (!clientID) {

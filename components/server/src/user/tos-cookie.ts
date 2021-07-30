@@ -6,11 +6,11 @@
 
 import * as express from 'express';
 import { injectable, inject } from 'inversify';
-import { Env } from '../env';
+import { Config } from '../config';
 
 @injectable()
 export class TosCookie {
-    @inject(Env) protected readonly env: Env;
+    @inject(Config) protected readonly config: Config;
 
     set(res: express.Response, tosHints: object) {
         if (res.headersSent) {
@@ -18,7 +18,7 @@ export class TosCookie {
         }
         res.cookie("tosHints", JSON.stringify(tosHints), {
             httpOnly: false, // we need this hin on frontend
-            domain: `${this.env.hostUrl.url.host}`
+            domain: `${this.config.hostUrl.url.host}`
         });
     }
 
@@ -28,7 +28,7 @@ export class TosCookie {
         }
         res.clearCookie('tosHints', {
             path: "/",
-            domain: `.${this.env.hostUrl.url.host}`
+            domain: `.${this.config.hostUrl.url.host}`
         });
     }
 }

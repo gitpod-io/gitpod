@@ -35,8 +35,6 @@ import { WorkspaceFactoryEE } from "./workspace/workspace-factory";
 import { MonitoringEndpointsAppEE } from "./monitoring-endpoint-ee";
 import { MonitoringEndpointsApp } from "../../src/monitoring-endpoints";
 import { WorkspaceHealthMonitoring } from "./workspace/workspace-health-monitoring";
-import { EnvEE } from "./env";
-import { Env } from "../../src/env";
 import { AccountService } from "@gitpod/gitpod-payment-endpoint/lib/accounting/account-service";
 import { AccountServiceImpl, SubscriptionService, TeamSubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
 import { ChargebeeProvider, ChargebeeProviderOptions, UpgradeHelper } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
@@ -54,6 +52,7 @@ import { EMailDomainService, EMailDomainServiceImpl } from "./auth/email-domain-
 import { UserDeletionServiceEE } from "./user/user-deletion-service";
 import { GitHubAppSupport } from "./github/github-app-support";
 import { GitLabAppSupport } from "./gitlab/gitlab-app-support";
+import { Config } from "../../src/config";
 
 export const productionEEContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     rebind(Server).to(ServerEE).inSingletonScope();
@@ -87,9 +86,6 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(AccountStatementProvider).toSelf().inRequestScope();
 
     // various
-    bind(EnvEE).toSelf().inSingletonScope();
-    rebind(Env).to(EnvEE).inSingletonScope();
-
     rebind(MessageBusIntegration).to(MessageBusIntegrationEE).inSingletonScope();
     rebind(HostContainerMapping).to(HostContainerMappingEE).inSingletonScope();
     bind(EMailDomainService).to(EMailDomainServiceImpl).inSingletonScope();
@@ -110,8 +106,8 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     // payment/billing
     bind(ChargebeeProvider).toSelf().inSingletonScope();
     bind(ChargebeeProviderOptions).toDynamicValue(ctx => {
-        const env = ctx.container.get(EnvEE);
-        return env.chargebeeProviderOptions;
+        const config = ctx.container.get<Config>(Config);
+        return config.chargebeeProviderOptions;
     }).inSingletonScope();
     bind(UpgradeHelper).toSelf().inSingletonScope();
     bind(ChargebeeCouponComputer).toSelf().inSingletonScope();

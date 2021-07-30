@@ -18,6 +18,7 @@ installation:
   shortname: ""
   kubedomain: "svc.cluster.local"
 license: ""
+trialLicensePrivateKey: ""
 installNetworkPolicies: true
 installPodSecurityPolicies: true
 imagePullPolicy: IfNotPresent
@@ -132,7 +133,6 @@ branding:
         url: https://www.gitpod.io/terms/
 workspaceScheduler: workspace-scheduler
 serverProxyApiKey: "fF7+aCPvF9Pa0AEjmoZ+yWVh6PqBjM5VEA0wyQs3FH4="
-previewFeatureFlags: []
 
 components:
 
@@ -290,20 +290,23 @@ components:
 
   server:
     name: "server"
-    dependsOn:
-    - "server-proxy-apikey-secret.yaml"
-    - "auth-providers-configmap.yaml"
-    sessionSecret: Important!Really-Change-This-Key!
+    dependsOn: []
     resources:
       cpu: "200m"
     github:
-      app: {}
-    blockNewUsers: false
-    blockNewUsersPasslist: []
+      app:
+        enabled: false
+    blockNewUsers:
+      enabled: false
+      passlist: []
     runDbDeleter: true
     storage: {}
     wsman: []
     defaultBaseImageRegistryWhitelist: []
+    session:
+      maxAgeMs: 259200000  # 3 days
+      secret: Important!Really-Change-This-Key!
+    previewFeatureFlags: []
     defaultFeatureFlags: []
     incrementalPrebuilds:
       repositoryPasslist: []
@@ -325,8 +328,44 @@ components:
       env: null
     volumes: null
     garbageCollection:
-      disabled: "false"
+      disabled: false
+      startDate: null
+      chunkLimit: 1000
+      minAgeDays: 14
+      minAgePrebuildDays: 7
+      contentRetentionPeriodDays: 21
+      contentChunkLimit: 1000
     definitelyGpDisabled: "false"
+    enableLocalApp: true
+    disableDynamicAuthProviderLogin: false
+    maxEnvvarPerUserCount: 4048
+    maxConcurrentPrebuildsPerRef: 10
+    makeNewUsersAdmin: false
+    theiaPluginsBucketNameOverride: null
+    oauthServer:
+      enabled: false
+    rateLimiter:
+      groups:
+        inWorkspaceUserAction:
+          points: 10
+          durationsSec: 2
+      functions:
+        openPort:
+          group: inWorkspaceUserAction
+        closePort:
+          group: inWorkspaceUserAction
+        controlAdmission:
+          group: inWorkspaceUserAction
+        shareSnapshot:
+          group: inWorkspaceUserAction
+    contentServiceAddr: "content-service:8080"
+    imageBuilderAddr: "image-builder-mk3:8080"
+    codeSync: {}
+    enablePayment: false
+    workspaceHeartbeat:
+      intervalSeconds: 60
+      timeoutSeconds: 300
+    insecureNoDomain: false
 
   serviceWaiter:
     imageName: "service-waiter"
@@ -375,7 +414,6 @@ components:
     svcName: "proxy"
     dependsOn:
     - "proxy-configmap.yaml"
-    - "server-proxy-apikey-secret.yaml"
     ports:
       http:
         containerPort: 80

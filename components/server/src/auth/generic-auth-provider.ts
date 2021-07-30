@@ -19,7 +19,7 @@ import { AuthFlow, AuthProvider } from "../auth/auth-provider";
 import { AuthProviderParams, AuthUserSetup } from "../auth/auth-provider";
 import { AuthException, EmailAddressAlreadyTakenException, SelectAccountException, UnconfirmedUserException } from "../auth/errors";
 import { GitpodCookie } from "./gitpod-cookie";
-import { Env } from "../env";
+import { Config } from '../config';
 import { getRequestingClientInfo } from "../express-util";
 import { TokenProvider } from '../user/token-provider';
 import { UserService } from "../user/user-service";
@@ -27,7 +27,6 @@ import { AuthProviderService } from './auth-provider-service';
 import { LoginCompletionHandler } from './login-completion-handler';
 import { TosFlow } from '../terms/tos-flow';
 import { increaseLoginCounter } from '../../src/prometheus-metrics';
-
 /**
  * This is a generic implementation of OAuth2-based AuthProvider.
  * --
@@ -58,10 +57,10 @@ import { increaseLoginCounter } from '../../src/prometheus-metrics';
 @injectable()
 export class GenericAuthProvider implements AuthProvider {
 
-    @inject(AuthProviderParams) config: AuthProviderParams;
+    @inject(AuthProviderParams) params: AuthProviderParams;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
     @inject(UserDB) protected userDb: UserDB;
-    @inject(Env) protected env: Env;
+    @inject(Config) protected config: Config;
     @inject(GitpodCookie) protected gitpodCookie: GitpodCookie;
     @inject(UserService) protected readonly userService: UserService;
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
@@ -79,7 +78,7 @@ export class GenericAuthProvider implements AuthProvider {
 
     protected defaultInfo(): AuthProviderInfo {
         const scopes = this.oauthScopes;
-        const { id, type, icon, host, ownerId, verified, hiddenOnDashboard, disallowLogin, description, loginContextMatcher } = this.config;
+        const { id, type, icon, host, ownerId, verified, hiddenOnDashboard, disallowLogin, description, loginContextMatcher } = this.params;
         return {
             authProviderId: id,
             authProviderType: type,
@@ -109,13 +108,13 @@ export class GenericAuthProvider implements AuthProvider {
         return `Auth-With-${this.host}`;
     }
     get host() {
-        return this.config.host;
+        return this.params.host;
     }
     get authProviderId() {
-        return this.config.id;
+        return this.params.id;
     }
     protected get oauthConfig() {
-        return this.config.oauth!;
+        return this.params.oauth!;
     }
     protected get oauthScopes() {
         if (!this.oauthConfig.scope) {
@@ -270,7 +269,7 @@ export class GenericAuthProvider implements AuthProvider {
         if (isAlreadyLoggedIn) {
             if (!authFlow) {
                 log.warn(cxt, `(${strategyName}) User is already logged in. No auth info provided. Redirecting to dashboard.`, { request, clientInfo });
-                response.redirect(this.env.hostUrl.asDashboard().toString());
+                response.redirect(this.config.hostUrl.asDashboard().toString());
                 return;
             }
         }
@@ -378,7 +377,7 @@ export class GenericAuthProvider implements AuthProvider {
                 // attach the sign up info to the session, in order to proceed after acceptance of terms
                 await TosFlow.attach(request.session!, flowContext);
 
-                response.redirect(this.env.hostUrl.withApi({ pathname: '/tos', search: "mode=login" }).toString());
+                response.redirect(this.config.hostUrl.withApi({ pathname: '/tos', search: "mode=login" }).toString());
                 return;
             } else  {
                 const { user, elevateScopes } = flowContext as TosFlow.WithUser;
@@ -394,7 +393,7 @@ export class GenericAuthProvider implements AuthProvider {
     protected sendCompletionRedirectWithError(response: express.Response, error: object): void {
         log.info(`(${this.strategyName}) Send completion redirect with error`, { error });
 
-        const url = this.env.hostUrl.with({ pathname: '/complete-auth', search: "message=error:" + Buffer.from(JSON.stringify(error), "utf-8").toString('base64') }).toString();
+        const url = this.config.hostUrl.with({ pathname: '/complete-auth', search: "message=error:" + Buffer.from(JSON.stringify(error), "utf-8").toString('base64') }).toString();
         response.redirect(url);
     }
 
@@ -409,7 +408,7 @@ export class GenericAuthProvider implements AuthProvider {
      */
     protected async verify(req: express.Request, accessToken: string, refreshToken: string | undefined, tokenResponse: any, _profile: undefined, done: VerifyCallback) {
         let flowContext: VerifyResult;
-        const { strategyName, config } = this;
+        const { strategyName, params: config } = this;
         const clientInfo = getRequestingClientInfo(req);
         const authProviderId = this.authProviderId;
         const authFlow = AuthFlow.get(req.session)!; // asserted in `callback` allready
@@ -573,7 +572,7 @@ export class GenericAuthProvider implements AuthProvider {
     }
 
     protected createGhProxyIdentity(originalIdentity: Identity) {
-        const githubTokenValue = this.config.params && this.config.params.githubToken;
+        const githubTokenValue = this.params.params && this.params.params.githubToken;
         if (!githubTokenValue) {
             return {};
         }
@@ -605,7 +604,7 @@ export class GenericAuthProvider implements AuthProvider {
 
     protected get defaultStrategyOptions(): StrategyOptionsWithRequest {
         const { authorizationUrl, tokenUrl, clientId, clientSecret, callBackUrl, scope, scopeSeparator, authorizationParams } = this.oauthConfig;
-        const augmentedAuthParams = this.env.devBranch ? { ...authorizationParams, state: this.env.devBranch } : authorizationParams;
+        const augmentedAuthParams = this.config.devBranch ? { ...authorizationParams, state: this.config.devBranch } : authorizationParams;
         return {
             authorizationURL: authorizationUrl,
             tokenURL: tokenUrl,
@@ -622,7 +621,7 @@ export class GenericAuthProvider implements AuthProvider {
     }
 
     protected getSorryUrl(message: string) {
-        return this.env.hostUrl.asSorry(message).toString();
+        return this.config.hostUrl.asSorry(message).toString();
     }
 
     protected retry = async <T>(fn: () => Promise<T>) => {

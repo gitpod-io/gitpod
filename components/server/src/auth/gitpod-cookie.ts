@@ -6,11 +6,11 @@
 
 import * as express from 'express';
 import { injectable, inject } from 'inversify';
-import { Env } from '../env';
+import { Config } from '../config';
 
 @injectable()
 export class GitpodCookie {
-    @inject(Env) protected readonly env: Env;
+    @inject(Config) protected readonly env: Config;
     /**
      * The cookie is used to distinguish between users and new website visitors.
      */

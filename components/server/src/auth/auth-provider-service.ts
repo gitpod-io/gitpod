@@ -8,7 +8,7 @@ import { injectable, inject } from "inversify";
 import { AuthProviderEntry as AuthProviderEntry, User } from "@gitpod/gitpod-protocol";
 import { AuthProviderParams } from "./auth-provider";
 import { AuthProviderEntryDB } from "@gitpod/gitpod-db/lib";
-import { Env } from "../env";
+import { Config } from "../config";
 import * as uuidv4 from 'uuid/v4';
 import { oauthUrls as githubUrls } from "../github/github-urls";
 import { oauthUrls as gitlabUrls } from "../gitlab/gitlab-urls";
@@ -20,8 +20,8 @@ export class AuthProviderService {
     @inject(AuthProviderEntryDB)
     protected authProviderDB: AuthProviderEntryDB;
 
-    @inject(Env)
-    protected env: Env;
+    @inject(Config)
+    protected readonly config: Config;
 
     /**
      * Returns all auth providers.
@@ -145,10 +145,10 @@ export class AuthProviderService {
 
     protected callbackUrl = (host: string) => {
         const pathname = `/auth/${host}/callback`;
-        if (this.env.devBranch) {
+        if (this.config.devBranch) {
             // for example: https://staging.gitpod-dev.com/auth/mydomain.com/gitlab/callback
-            return this.env.hostUrl.withoutDomainPrefix(1).with({ pathname }).toString();
+            return this.config.hostUrl.withoutDomainPrefix(1).with({ pathname }).toString();
         }
-        return this.env.hostUrl.with({ pathname }).toString();
+        return this.config.hostUrl.with({ pathname }).toString();
     };
 }

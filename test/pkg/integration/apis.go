@@ -167,18 +167,13 @@ func (c *ComponentAPI) GitpodServer(opts ...GitpodServerOpt) (res gitpod.APIInte
 			c.serverStatus.Token[options.User] = tkn
 		}
 
-		pods, err := c.t.clientset.CoreV1().Pods(c.t.namespace).List(context.Background(), metav1.ListOptions{
-			LabelSelector: "component=server",
-		})
+		cfg, err := c.t.GetServerConfig()
 		if err != nil {
 			return err
 		}
-		hostURL, err := envvarFromPod(pods, "HOST_URL", "server")
-		if err != nil {
-			return err
-		}
+		hostURL := cfg.HostURL
 		if hostURL == "" {
-			return xerrors.Errorf("did not find HOST_URL env var on server pod")
+			return xerrors.Errorf("server config: empty HostURL")
 		}
 		hostURL = strings.ReplaceAll(hostURL, "http://", "ws://")
 		hostURL = strings.ReplaceAll(hostURL, "https://", "wss://")

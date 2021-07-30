@@ -34,8 +34,8 @@ export class GitHubAuthProvider extends GenericAuthProvider {
      * Augmented OAuthConfig for GitHub
      */
     protected get oauthConfig() {
-        const oauth = this.config.oauth!;
-        const defaultUrls = oauthUrls(this.config.host);
+        const oauth = this.params.oauth!;
+        const defaultUrls = oauthUrls(this.params.host);
         const scopeSeparator = ",";
         return <typeof oauth>{
             ...oauth!,
@@ -59,7 +59,7 @@ export class GitHubAuthProvider extends GenericAuthProvider {
      * +----+------------------------------------------+--------------------------------+
      */
     protected get baseURL() {
-        return (this.config.host === 'github.com') ? 'https://api.github.com' : `https://${this.config.host}/api/v3`;
+        return (this.params.host === 'github.com') ? 'https://api.github.com' : `https://${this.params.host}/api/v3`;
     }
 
     protected readAuthUserSetup = async (accessToken: string, _tokenResponse: object) => {
@@ -99,9 +99,9 @@ export class GitHubAuthProvider extends GenericAuthProvider {
             );
 
             const filterPrimaryEmail = (emails: typeof userEmails) => {
-                if (this.env.blockNewUsers) {
+                if (this.config.blockNewUsers) {
                     // if there is any verified email with a domain that is in the blockNewUsersPassList then use this email as primary email
-                    const emailDomainInPasslist = (mail: string) => this.env.blockNewUsersPassList.some(e => mail.endsWith(`@${e}`));
+                    const emailDomainInPasslist = (mail: string) => this.config.blockNewUsers.passlist.some(e => mail.endsWith(`@${e}`));
                     const result = emails.filter(e => e.verified).filter(e => emailDomainInPasslist(e.email))
                     if (result.length > 0) {
                         return result[0].email;

@@ -19,7 +19,7 @@ import { HostContextProvider } from "../auth/host-context-provider";
 import { AuthorizationService } from "../user/authorization-service";
 import { TheiaPluginService } from "../theia-plugin/theia-plugin-service";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { Env } from "../env";
+import { Config } from "../config";
 
 const POD_PATH_WORKSPACE_BASE = "/workspace";
 
@@ -38,7 +38,7 @@ export class ConfigProvider {
     @inject(AuthorizationService) protected readonly authService: AuthorizationService;
     @inject(TheiaPluginService) protected readonly pluginService: TheiaPluginService;
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
-    @inject(Env) protected readonly env: Env;
+    @inject(Config) protected readonly config: Config;
 
     public async fetchConfig(ctx: TraceContext, user: User, commit: CommitContext): Promise<WorkspaceConfig> {
         const span = TraceContext.startSpan("fetchConfig", ctx);
@@ -70,7 +70,7 @@ export class ConfigProvider {
 
             const config = customConfig;
             if (!config.image) {
-                config.image = this.env.workspaceDefaultImage;
+                config.image = this.config.workspaceDefaults.workspaceImage;
             } else if (ImageConfigFile.is(config.image)) {
                 let dockerfilePath = [configBasePath, config.image.file].filter(s => !!s).join('/');
                 let repo = commit.repository;
@@ -213,7 +213,7 @@ export class ConfigProvider {
                 port: 3000
             }],
             tasks: [],
-            image: this.env.workspaceDefaultImage
+            image: this.config.workspaceDefaults.workspaceImage,
         };
     }
 
@@ -269,7 +269,7 @@ export class ConfigProvider {
         const span = TraceContext.startSpan("fetchExternalGitpodFileContent", ctx);
         span.setTag("repo", `${repository.owner}/${repository.name}`);
 
-        if (this.env.definitelyGpDisabled) {
+        if (this.config.definitelyGpDisabled) {
             return {
                 content: undefined,
                 basePath: `${repository.name}`

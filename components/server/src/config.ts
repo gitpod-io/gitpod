@@ -5,38 +5,65 @@
  */
 
 import { GitpodHostUrl } from '@gitpod/gitpod-protocol/lib/util/gitpod-host-url';
-import { AuthProviderParams } from './auth/auth-provider';
+import { AuthProviderParams, normalizeAuthProviderParamsFromEnv } from './auth/auth-provider';
 
 import { Branding, NamedWorkspaceFeatureFlag } from '@gitpod/gitpod-protocol';
 
 import { RateLimiterConfig } from './auth/rate-limiter';
-import { Env } from './env';
 import { CodeSyncConfig } from './code-sync/code-sync-service';
-import { ChargebeeProviderOptions } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
-import { EnvEE } from '../ee/src/env';
+import { ChargebeeProviderOptions, readOptionsFromFile } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
+import * as fs from 'fs';
+import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { filePathTelepresenceAware, KubeStage } from '@gitpod/gitpod-protocol/lib/env';
+import { BrandingParser } from './branding-parser';
 
 export const Config = Symbol("Config");
-export interface Config {
-    version: string;
+export type Config = Omit<ConfigSerialized, "hostUrl" | "chargebeeProviderOptionsFile"> & {
     hostUrl: GitpodHostUrl;
+    workspaceDefaults: WorkspaceDefaults;
+    chargebeeProviderOptions?: ChargebeeProviderOptions;
+}
 
-    license: string | undefined;
-    trialLicensePrivateKey: string | undefined;
+export interface WorkspaceDefaults {
+    ideVersion: string;
+    ideImageRepo: string;
+    ideImage: string;
+    ideImageAliases: { [index: string]: string };
+    workspaceImage: string;
+    previewFeatureFlags: NamedWorkspaceFeatureFlag[];
+    defaultFeatureFlags: NamedWorkspaceFeatureFlag[];
+}
 
-    heartbeat: {
+export interface WorkspaceGarbageCollection {
+    disabled: boolean;
+    startDate: number;
+    chunkLimit: number;
+    minAgeDays: number;
+    minAgePrebuildDays: number;
+    contentRetentionPeriodDays: number;
+    contentChunkLimit: number;
+}
+
+/**
+ * This is the config shape as found in the configuration file, e.g. server-configmap.yaml
+ */
+export interface ConfigSerialized {
+    version: string;
+    hostUrl: string;
+    installationShortname: string;
+    stage: KubeStage;
+    devBranch: string;
+    insecureNoDomain: boolean;
+
+    license?: string;
+    trialLicensePrivateKey?: string;
+
+    workspaceHeartbeat: {
         intervalSeconds: number;
         timeoutSeconds: number,
     };
 
-    workspaceDefaults: {
-        ideVersion: string;
-        ideImageRepo: string;
-        ideImage: string;
-        ideImageAliases: { [index: string]: string };
-        workspaceImage: string;
-        previewFeatureFlags: NamedWorkspaceFeatureFlag[];
-        defaultFeatureFlags: NamedWorkspaceFeatureFlag[];
-    };
+    workspaceDefaults: Omit<WorkspaceDefaults, "ideImage">;
 
     session: {
         maxAgeMs: number;
@@ -46,31 +73,25 @@ export interface Config {
     githubApp?: {
         enabled: boolean;
         appId: number;
+        baseUrl?: string;
         webhookSecret: string;
         authProviderId: string;
         certPath: string;
         marketplaceName: string;
         logLevel?: string;
+        githubHost?: string;
     };
 
     definitelyGpDisabled: boolean;
 
-    workspaceGarbageCollection: {
-        disabled: boolean;
-        startDate: number;
-        chunkLimit: number;
-        minAgeDays: number;
-        minAgePrebuildDays: number;
-        contentRetentionPeriodDays: number;
-        contentChunkLimit: number;
-    };
+    workspaceGarbageCollection: WorkspaceGarbageCollection;
 
     enableLocalApp: boolean;
 
     authProviderConfigs: AuthProviderParams[];
+    builtinAuthProvidersConfigured: boolean;
     disableDynamicAuthProviderLogin: boolean;
 
-    // TODO(gpl) Can we remove this?
     brandingConfig: Branding;
 
     /**
@@ -83,7 +104,7 @@ export interface Config {
     maxConcurrentPrebuildsPerRef: number;
 
     incrementalPrebuilds: {
-        repositoryPassList: string[];
+        repositoryPasslist: string[];
         commitHistory: number;
     };
 
@@ -95,13 +116,10 @@ export interface Config {
     makeNewUsersAdmin: boolean;
 
     /** this value - if present - overrides the default naming scheme for the GCloud bucket that Theia Plugins are stored in */
-    theiaPluginsBucketNameOverride: string | undefined;
+    theiaPluginsBucketNameOverride?: string;
 
     /** defaultBaseImageRegistryWhitelist is the list of registryies users get acces to by default */
     defaultBaseImageRegistryWhitelist: string[];
-
-    // TODO(gpl): can we remove this? We never set the value anywhere it seems
-    insecureNoDomain: boolean;
 
     runDbDeleter: boolean;
 
@@ -119,100 +137,73 @@ export interface Config {
      * The address content service clients connect to
      * Example: content-service:8080
     */
-    contentServiceAddress: string;
+    contentServiceAddr: string;
 
     /**
-     * TODO(gpl) Looks like this is not used anymore! Verify and remove
-     */
-    serverProxyApiKey?: string;
+     * The address content service clients connect to
+     * Example: image-builder:8080
+    */
+    imageBuilderAddr: string;
 
-    codeSyncConfig: CodeSyncConfig;
+    codeSync: CodeSyncConfig;
 
     /**
      * Payment related options
      */
-    chargebeeProviderOptions?: ChargebeeProviderOptions;
+    chargebeeProviderOptionsFile?: string;
     enablePayment?: boolean;
 }
 
-export namespace EnvConfig {
-    export function fromEnv(env: Env): Config {
-        return {
-            version: env.version,
-            hostUrl: env.hostUrl,
-            license: env.gitpodLicense,
-            trialLicensePrivateKey: env.trialLicensePrivateKey,
-            heartbeat: {
-                intervalSeconds: env.theiaHeartbeatInterval,
-                timeoutSeconds: env.workspaceUserTimeout,
-            },
-            workspaceDefaults: {
-                ideVersion: env.theiaVersion,
-                ideImageRepo: env.theiaImageRepo,
-                ideImage: env.ideDefaultImage,
-                ideImageAliases: env.ideImageAliases,
-                workspaceImage: env.workspaceDefaultImage,
-                previewFeatureFlags: env.previewFeatureFlags,
-                defaultFeatureFlags: env.defaultFeatureFlags,
-            },
-            session: {
-                maxAgeMs: env.sessionMaxAgeMs,
-                secret: env.sessionSecret,
-            },
-            githubApp: {
-                enabled: env.githubAppEnabled,
-                appId: env.githubAppAppID,
-                webhookSecret: env.githubAppWebhookSecret,
-                authProviderId: env.githubAppAuthProviderId,
-                certPath: env.githubAppCertPath,
-                marketplaceName: env.githubAppMarketplaceName,
-                logLevel: env.githubAppLogLevel,
-            },
-            definitelyGpDisabled: env.definitelyGpDisabled,
-            workspaceGarbageCollection: {
-                disabled: env.garbageCollectionDisabled,
-                startDate: env.garbageCollectionStartDate,
-                chunkLimit: env.garbageCollectionLimit,
-                minAgeDays: env.daysBeforeGarbageCollection,
-                minAgePrebuildDays: env.daysBeforeGarbageCollectingPrebuilds,
-                contentRetentionPeriodDays: env.workspaceDeletionRetentionPeriodDays,
-                contentChunkLimit: env.workspaceDeletionLimit,
-            },
-            enableLocalApp: env.enableLocalApp,
-            authProviderConfigs: env.authProviderConfigs,
-            disableDynamicAuthProviderLogin: env.disableDynamicAuthProviderLogin,
-            brandingConfig: env.brandingConfig,
-            maxEnvvarPerUserCount: env.maxUserEnvvarCount,
-            maxConcurrentPrebuildsPerRef: env.maxConcurrentPrebuildsPerRef,
-            incrementalPrebuilds: {
-                repositoryPassList: env.incrementalPrebuildsRepositoryPassList,
-                commitHistory: env.incrementalPrebuildsCommitHistory,
-            },
-            blockNewUsers: {
-                enabled: env.blockNewUsers,
-                passlist: env.blockNewUsersPassList,
-            },
-            makeNewUsersAdmin: env.makeNewUsersAdmin,
-            theiaPluginsBucketNameOverride: env.theiaPluginsBucketNameOverride,
-            defaultBaseImageRegistryWhitelist: env.defaultBaseImageRegistryWhitelist,
-            insecureNoDomain: env.insecureNoDomain,
-            runDbDeleter: env.runDbDeleter,
-            oauthServer: {
-                enabled: env.enableOAuthServer,
-                jwtSecret: env.oauthServerJWTSecret,
-            },
-            rateLimiter: env.rateLimiter,
-            contentServiceAddress: env.contentServiceAddress,
-            serverProxyApiKey: env.serverProxyApiKey,
-            codeSyncConfig: env.codeSyncConfig,
-        };
+export namespace ConfigFile {
+    export function fromFile(path: string | undefined = process.env.CONFIG_PATH): Config {
+        if (!path) {
+            throw new Error("config load error: CONFIG_PATH not set!");
+        }
+        try {
+            const configStr = fs.readFileSync(filePathTelepresenceAware(path), { encoding: "utf-8" }).toString();
+            const configSerialized: ConfigSerialized = JSON.parse(configStr);
+            return loadAndCompleteConfig(configSerialized);
+        } catch (err) {
+            log.error("config parse error", err);
+            process.exit(1);
+        }
     }
-    export function fromEnvEE(env: EnvEE): Config {
-        const config = EnvConfig.fromEnv(env);
+
+    function loadAndCompleteConfig(config: ConfigSerialized): Config {
+        const hostUrl = new GitpodHostUrl(config.hostUrl);
+        let authProviderConfigs = config.authProviderConfigs
+        if (authProviderConfigs) {
+            authProviderConfigs = normalizeAuthProviderParamsFromEnv(authProviderConfigs);
+        }
+        const builtinAuthProvidersConfigured = authProviderConfigs.length > 0;
+        let chargebeeProviderOptions: ChargebeeProviderOptions | undefined = undefined;
+        if (config.chargebeeProviderOptionsFile) {
+            chargebeeProviderOptions = readOptionsFromFile(filePathTelepresenceAware(config.chargebeeProviderOptionsFile));
+        }
+        let brandingConfig = config.brandingConfig;
+        if (brandingConfig) {
+            brandingConfig = BrandingParser.normalize(brandingConfig);
+        }
+        const ideImage = `${config.workspaceDefaults.ideImageRepo}:${config.workspaceDefaults.ideVersion}`;
         return {
             ...config,
-            chargebeeProviderOptions: env.chargebeeProviderOptions,
-            enablePayment: env.enablePayment,
+            hostUrl,
+            authProviderConfigs,
+            builtinAuthProvidersConfigured,
+            brandingConfig,
+            chargebeeProviderOptions,
+            workspaceDefaults: {
+                ...config.workspaceDefaults,
+                ideImage,
+                ideImageAliases: {
+                    ...config.workspaceDefaults.ideImageAliases,
+                    "theia": ideImage,
+                }
+            },
+            workspaceGarbageCollection: {
+                ...config.workspaceGarbageCollection,
+                startDate: config.workspaceGarbageCollection.startDate ? new Date(config.workspaceGarbageCollection.startDate).getTime() : Date.now(),
+            },
         }
     }
 }

@@ -81,11 +81,6 @@ spec:
 {{ include "gitpod.container.defaultEnv" (dict "root" . "gp" $.Values "comp" $comp) | indent 8 }}
         - name: PROXY_DOMAIN
           value: "{{ $.Values.hostname }}"
-        - name: SERVER_PROXY_APIKEY
-          valueFrom:
-            secretKeyRef:
-              name: server-proxy-apikey
-              key: apikey
       volumes:
       - name: vhosts
         configMap:

@@ -33,13 +33,13 @@ class DummyAuthProvider implements AuthProvider {
             authProviderType: "GitHub",
             verified: true,
             host: "github.com",
-            icon: this.config.icon,
-            description: this.config.description,
+            icon: this.params.icon,
+            description: this.params.description,
         }
     }
     readonly host = "github.com";
     readonly authProviderId = "GitHub";
-    readonly config = {} as any;
+    readonly params = {} as any;
     readonly authCallbackPath = "";
     readonly callback = () => { throw new Error("Method not implemented.") };
     readonly strategy = new DummyStrategy(async done => {

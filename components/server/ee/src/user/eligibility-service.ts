@@ -15,9 +15,9 @@ import { Plans, MAX_PARALLEL_WORKSPACES } from "@gitpod/gitpod-protocol/lib/plan
 import { Accounting, SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
 import { millisecondsToHours} from "@gitpod/gitpod-protocol/lib/util/timeutil";
 import { AccountStatementProvider, CachedAccountStatement } from "./account-statement-provider";
-import { EnvEE } from "../env";
 import { EMailDomainService } from "../auth/email-domain-service";
 import fetch from "node-fetch";
+import { Config } from "../../../src/config";
 
 export interface MayStartWorkspaceResult {
     hitParallelWorkspaceLimit?: HitParallelWorkspaceLimit;
@@ -45,7 +45,7 @@ export interface GitHubEducationPack {
 export class EligibilityService {
     static readonly DURATION_30_DAYS_MILLIS = 30 * 24 * 60 * 60 * 1000;
 
-    @inject(EnvEE) protected readonly env: EnvEE;
+    @inject(Config) protected readonly config: Config;
     @inject(UserDB) protected readonly userDb: UserDB;
     @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
@@ -122,7 +122,7 @@ export class EligibilityService {
      * @param runningInstances
      */
     async mayStartWorkspace(user: User, date: Date, runningInstances: Promise<WorkspaceInstance[]>): Promise<MayStartWorkspaceResult> {
-        if (!this.env.enablePayment) {
+        if (!this.config.enablePayment) {
             return { enoughCredits: true };
         }
 
@@ -157,7 +157,7 @@ export class EligibilityService {
      */
     protected async getMaxParallelWorkspaces(user: User, date: Date = new Date()): Promise<number> {
         // if payment is not enabled users can start as many parallel workspaces as they want
-        if (!this.env.enablePayment) {
+        if (!this.config.enablePayment) {
             return MAX_PARALLEL_WORKSPACES;
         }
 
@@ -221,7 +221,7 @@ export class EligibilityService {
      * @param date The date for which we want to know whether the user is allowed to set a timeout (depends on active subscription)
      */
     async mayOpenPrivateRepo(user: User | string, date: Date = new Date()): Promise<boolean> {
-        if (!this.env.enablePayment) {
+        if (!this.config.enablePayment) {
             // when payment is disabled users can do everything
             return true;
         }
@@ -294,7 +294,7 @@ export class EligibilityService {
      * @param date The date for which we want to know whether the user is allowed to set a timeout (depends on active subscription)
      */
     async maySetTimeout(user: User, date: Date = new Date()): Promise<boolean> {
-        if (!this.env.enablePayment) {
+        if (!this.config.enablePayment) {
             // when payment is disabled users can do everything
             return true;
         }

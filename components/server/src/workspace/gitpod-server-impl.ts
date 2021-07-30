@@ -32,7 +32,7 @@ import { IAnalyticsWriter } from "@gitpod/gitpod-protocol/lib/analytics";
 import { AuthProviderService } from '../auth/auth-provider-service';
 import { HostContextProvider } from '../auth/host-context-provider';
 import { GuardedResource, ResourceAccessGuard, ResourceAccessOp } from '../auth/resource-access';
-import { Env } from '../env';
+import { Config } from '../config';
 import { NotFoundError, UnauthorizedError } from '../errors';
 import { parseRepoUrl } from '../repohost/repo-url';
 import { TermsProvider } from '../terms/terms-provider';
@@ -56,7 +56,7 @@ import { ProjectsService } from "../projects/projects-service";
 @injectable()
 export class GitpodServerImpl<Client extends GitpodClient, Server extends GitpodServer> implements GitpodServer, Disposable {
 
-    @inject(Env) protected readonly env: Env;
+    @inject(Config) protected readonly config: Config;
     @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
     @inject(WorkspaceFactory) protected readonly workspaceFactory: WorkspaceFactory;
     @inject(WorkspaceDeletionService) protected readonly workspaceDeletionService: WorkspaceDeletionService;
@@ -241,7 +241,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         // execute the check for the setup to be shown until the setup is not required.
         // cf. evaluation of the condition in `checkUser`
         if (!this.showSetupCondition || this.showSetupCondition.value === true) {
-            const hasAnyStaticProviders = this.hostContextProvider.getAll().some(hc => hc.authProvider.config.builtin === true);
+            const hasAnyStaticProviders = this.hostContextProvider.getAll().some(hc => hc.authProvider.params.builtin === true);
             if (!hasAnyStaticProviders) {
                 const userCount = await this.userDB.getUserCount();
                 this.showSetupCondition = { value: userCount === 0 };
@@ -299,7 +299,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
      * If there are built-in auth providers configured, only these are returned.
      */
     public async getAuthProviders(): Promise<AuthProviderInfo[]> {
-        const { builtinAuthProvidersConfigured } = this.env;
+        const { builtinAuthProvidersConfigured } = this.config;
 
         const hostContexts = this.hostContextProvider.getAll();
         const authProviders = hostContexts.map(hc => hc.authProvider.info);
@@ -348,13 +348,13 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     }
 
     public async getBranding(): Promise<Branding> {
-        return this.env.brandingConfig;
+        return this.config.brandingConfig;
     }
 
     public async getConfiguration(): Promise<Configuration> {
         return {
-            garbageCollectionStartDate: this.env.garbageCollectionStartDate,
-            daysBeforeGarbageCollection: this.env.daysBeforeGarbageCollection
+            garbageCollectionStartDate: this.config.workspaceGarbageCollection.startDate,
+            daysBeforeGarbageCollection: this.config.workspaceGarbageCollection.minAgeDays,
         }
     }
 
@@ -717,7 +717,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
         // Note: there's no need to try and guard the users below, they're not complete users but just enough to
         //       to support the workspace sharing. The access guard above is enough.
-        return await this.workspaceDb.trace({}).getWorkspaceUsers(workspaceId, this.env.workspaceUserTimeout);
+        return await this.workspaceDb.trace({}).getWorkspaceUsers(workspaceId, this.config.workspaceHeartbeat.timeoutSeconds * 1000);
     }
 
     protected async internalGetWorkspace(id: string, db: WorkspaceDB): Promise<Workspace> {
@@ -1236,7 +1236,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     async registerGithubApp(installationId: string): Promise<void> {
         const user = this.checkAndBlockUser();
 
-        if (!this.env.githubAppEnabled) {
+        if (!this.config.githubApp?.enabled) {
             throw new ResponseError(ErrorCodes.NOT_FOUND, 'No GitHub app enabled for this installation. Please talk to your administrator.');
         }
 
@@ -1343,8 +1343,8 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         if (!variable.id) {
             // this is a new variable - make sure the user does not have too many (don't DOS our database using gp env)
             const varCount = existingVars.length;
-            if (varCount > this.env.maxUserEnvvarCount) {
-                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `cannot have more than ${this.env.maxUserEnvvarCount} environment variables`)
+            if (varCount > this.config.maxEnvvarPerUserCount) {
+                throw new ResponseError(ErrorCodes.PERMISSION_DENIED, `cannot have more than ${this.config.maxEnvvarPerUserCount} environment variables`)
             }
         }
 
@@ -1840,7 +1840,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
                 const hostContext = this.hostContextProvider.get(host);
                 if (hostContext) {
-                    const builtInExists = hostContext.authProvider.config.ownerId === undefined;
+                    const builtInExists = hostContext.authProvider.params.ownerId === undefined;
                     log.debug(`Attempt to override existing auth provider.`, { entry, safeProvider, builtInExists });
                     throw new Error("Provider for this host already exists.");
                 }

@@ -6,7 +6,6 @@ package integration
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"sync"
@@ -17,7 +16,6 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/gitpod-io/gitpod/common-go/namegen"
@@ -132,25 +130,11 @@ func LaunchWorkspaceDirectly(it *Test, opts ...LaunchWorkspaceDirectlyOpt) (res 
 
 	ideImage := options.IdeImage
 	if ideImage == "" {
-		pods, err := it.clientset.CoreV1().Pods(it.namespace).List(context.Background(), metav1.ListOptions{
-			LabelSelector: "component=server",
-		})
+		cfg, err := it.GetServerConfig()
 		if err != nil {
-			it.t.Fatalf("cannot find server pod: %q", err)
+			it.t.Fatalf("cannot find server config: %q", err)
 		}
-		imageAliases, err := envvarFromPod(pods, "IDE_IMAGE_ALIASES", "server")
-		if err != nil {
-			it.t.Fatal(err)
-		}
-		var aliases struct {
-			Code string `json:"code"`
-		}
-		err = json.Unmarshal([]byte(imageAliases), &aliases)
-		if err != nil {
-			it.t.Fatalf("cannot unmarshal image aliases from server: %v", err)
-		}
-
-		ideImage = aliases.Code
+		ideImage = cfg.WorkspaceDefaults.IDEImageAliases.Code
 	}
 
 	req := &wsmanapi.StartWorkspaceRequest{

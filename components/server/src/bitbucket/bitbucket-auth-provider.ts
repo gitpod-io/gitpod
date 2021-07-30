@@ -32,13 +32,13 @@ export class BitbucketAuthProvider extends GenericAuthProvider {
      * Augmented OAuthConfig for Bitbucket
      */
     protected get oauthConfig() {
-        const oauth = this.config.oauth!;
+        const oauth = this.params.oauth!;
         const scopeSeparator = " ";
         return <typeof oauth>{
             ...oauth,
-            authorizationUrl: oauth.authorizationUrl || `https://${this.config.host}/site/oauth2/authorize`,
-            tokenUrl: oauth.tokenUrl || `https://${this.config.host}/site/oauth2/access_token`,
-            settingsUrl: oauth.settingsUrl || `https://${this.config.host}/account/settings/app-authorizations/`,
+            authorizationUrl: oauth.authorizationUrl || `https://${this.params.host}/site/oauth2/authorize`,
+            tokenUrl: oauth.tokenUrl || `https://${this.params.host}/site/oauth2/access_token`,
+            settingsUrl: oauth.settingsUrl || `https://${this.params.host}/account/settings/app-authorizations/`,
             scope: BitbucketOAuthScopes.ALL.join(scopeSeparator),
             scopeSeparator
         };
@@ -53,7 +53,7 @@ export class BitbucketAuthProvider extends GenericAuthProvider {
     }
 
     protected get baseURL() {
-        return `https://${this.config.host}`;
+        return `https://${this.params.host}`;
     }
 
     protected readAuthUserSetup = async (accessToken: string, _tokenResponse: object) => {
@@ -61,7 +61,7 @@ export class BitbucketAuthProvider extends GenericAuthProvider {
 
             const options = {
                 auth: { token: accessToken },
-                baseUrl: `https://api.${this.config.host}/2.0`,
+                baseUrl: `https://api.${this.params.host}/2.0`,
             };
             const api = new Bitbucket(options);
 

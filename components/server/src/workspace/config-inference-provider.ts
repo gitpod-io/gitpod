@@ -7,14 +7,14 @@
 import { inject, injectable, postConstruct } from "inversify";
 import { CommitContext, User, WorkspaceConfig } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
-import { Env } from "../env";
+import { Config } from "../config";
 
 export type LanguageConfigProvider = (language: string, user: User, commit: CommitContext) => Promise<WorkspaceConfig | undefined>;
 
 @injectable()
 export class ConfigInferenceProvider {
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
-    @inject(Env) protected readonly env: Env;
+    @inject(Config) protected readonly config: Config;
 
     protected readonly languageConfigProvider = new Map<string, LanguageConfigProvider>();
 
@@ -65,7 +65,7 @@ export class ConfigInferenceProvider {
                     init: `test -f go.mod && go get -v ./...`
                 }
             ],
-            image: this.env.workspaceDefaultImage
+            image: this.config.workspaceDefaults.workspaceImage,
         } as WorkspaceConfig;
     }
 
