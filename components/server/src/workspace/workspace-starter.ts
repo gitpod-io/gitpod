@@ -303,7 +303,7 @@ export class WorkspaceStarter {
             workspaceId: workspace.id,
             creationTime: now,
             ideUrl: '', // Initially empty, filled during starting process
-            region: this.env.installationShortname, // Shortname set to bridge can cleanup workspaces stuck preparing
+            region: this.config.installationShortname, // Shortname set to bridge can cleanup workspaces stuck preparing
             workspaceImage: '', // Initially empty, filled during starting process
             status: {
                 conditions: {},
@@ -337,7 +337,7 @@ export class WorkspaceStarter {
                 // The base image is not neccesarily stored on the Gitpod registry, but might also come
                 // from a private whitelisted registry also. Hence allowBaserep is not enough, and we also
                 // need to explicitly allow all whitelisted registry when resolving the base image.
-                nauth.setAnyOfList(this.env.defaultBaseImageRegistryWhitelist);
+                nauth.setAnyOfList(this.config.defaultBaseImageRegistryWhitelist);
                 const auth = new BuildRegistryAuth();
                 auth.setSelective(nauth);
 
@@ -537,7 +537,7 @@ export class WorkspaceStarter {
         });
 
         const ideAlias = user.additionalData?.ideSettings?.defaultIde;
-        if (ideAlias && this.env.ideImageAliases[ideAlias]) {
+        if (ideAlias && this.config.workspaceDefaults.ideImageAliases[ideAlias]) {
             const ideAliasEnv = new EnvironmentVariable();
             ideAliasEnv.setName('GITPOD_IDE_ALIAS');
             ideAliasEnv.setValue(ideAlias);

@@ -37,7 +37,7 @@ class TestGithubContextParser {
         const container = new Container();
         container.load(new ContainerModule((bind, unbind, isBound, rebind) => {
             bind(Config).toConstantValue({
-
+                // meant to appease DI, but Config is never actually used here
             });
             bind(GithubContextParser).toSelf().inSingletonScope();
             bind(GitHubGraphQlEndpoint).toSelf().inSingletonScope();

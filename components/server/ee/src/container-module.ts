@@ -53,6 +53,8 @@ import { UserDeletionServiceEE } from "./user/user-deletion-service";
 import { GitHubAppSupport } from "./github/github-app-support";
 import { GitLabAppSupport } from "./gitlab/gitlab-app-support";
 import { Config } from "../../src/config";
+import { EnvEE } from "./env";
+import { Env } from "../../src/env";
 
 export const productionEEContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     rebind(Server).to(ServerEE).inSingletonScope();
@@ -86,6 +88,9 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(AccountStatementProvider).toSelf().inRequestScope();
 
     // various
+    bind(EnvEE).toSelf().inSingletonScope();
+    rebind(Env).to(EnvEE).inSingletonScope();
+
     rebind(MessageBusIntegration).to(MessageBusIntegrationEE).inSingletonScope();
     rebind(HostContainerMapping).to(HostContainerMappingEE).inSingletonScope();
     bind(EMailDomainService).to(EMailDomainServiceImpl).inSingletonScope();

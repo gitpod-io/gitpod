@@ -14,11 +14,14 @@ import { CodeSyncConfig } from './code-sync/code-sync-service';
 import { ChargebeeProviderOptions, readOptionsFromFile } from "@gitpod/gitpod-payment-endpoint/lib/chargebee";
 import * as fs from 'fs';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { filePathTelepresenceAware, KubeStage } from '@gitpod/gitpod-protocol/lib/env';
+import { filePathTelepresenceAware, KubeStage, translateLegacyStagename } from '@gitpod/gitpod-protocol/lib/env';
 import { BrandingParser } from './branding-parser';
+import { Env } from './env';
+import { EnvEE } from '../ee/src/env';
 
 export const Config = Symbol("Config");
 export type Config = Omit<ConfigSerialized, "hostUrl" | "chargebeeProviderOptionsFile"> & {
+    stage: KubeStage;
     hostUrl: GitpodHostUrl;
     workspaceDefaults: WorkspaceDefaults;
     chargebeeProviderOptions?: ChargebeeProviderOptions;
@@ -51,7 +54,7 @@ export interface ConfigSerialized {
     version: string;
     hostUrl: string;
     installationShortname: string;
-    stage: KubeStage;
+    stage: string;
     devBranch: string;
     insecureNoDomain: boolean;
 
@@ -187,6 +190,7 @@ export namespace ConfigFile {
         const ideImage = `${config.workspaceDefaults.ideImageRepo}:${config.workspaceDefaults.ideVersion}`;
         return {
             ...config,
+            stage: translateLegacyStagename(config.stage),
             hostUrl,
             authProviderConfigs,
             builtinAuthProvidersConfigured,
@@ -204,6 +208,136 @@ export namespace ConfigFile {
                 ...config.workspaceGarbageCollection,
                 startDate: config.workspaceGarbageCollection.startDate ? new Date(config.workspaceGarbageCollection.startDate).getTime() : Date.now(),
             },
+        }
+    }
+}
+
+// TODO(gpl) Remove after config is deployed.
+export namespace ConfigEnv {
+    export function validateAgainstConfigFromEnv(_n: Config, _o: Config): boolean {
+        const deepCopySorted = <T>(unordered: T): T => Object.keys(unordered).sort().reduce(
+            (obj, key) => {
+                let val = (unordered as any)[key];
+                if (typeof val === "object") {
+                    val = deepCopySorted(val);
+                }
+                (obj as any)[key] = val;
+                return obj as T;
+            },
+            {} as T
+        );
+        const n = deepCopySorted(_n);
+        const o = deepCopySorted(_o);
+
+        // Changed
+        if (o.chargebeeProviderOptions?.api_key === "" && o.chargebeeProviderOptions?.site === "") {
+            delete (o as any).chargebeeProviderOptions;
+        }
+
+        if (o.githubApp?.enabled === false && n.githubApp?.enabled === false) {
+            delete (n as any).githubApp;
+            delete (o as any).githubApp;
+        }
+
+        // Unique
+        delete (n as any).workspaceGarbageCollection.startDate;
+        delete (o as any).workspaceGarbageCollection.startDate;
+
+        delete (n as any).oauthServer.jwtSecret;
+        delete (o as any).oauthServer.jwtSecret;
+
+        log.info('config', { config: JSON.stringify(n, undefined, 2) });
+        log.info('oldConfig', { oldConfig: JSON.stringify(o, undefined, 2) });
+
+        return JSON.stringify(n, undefined, 2) === JSON.stringify(o, undefined, 2);
+    }
+    export function fromEnv(env: Env): Config {
+        const config: Config = {
+            version: env.version,
+            hostUrl: env.hostUrl,
+            installationShortname: env.installationShortname,
+            devBranch: env.devBranch,
+            stage: env.kubeStage,
+            builtinAuthProvidersConfigured: env.builtinAuthProvidersConfigured,
+            license: env.gitpodLicense,
+            trialLicensePrivateKey: env.trialLicensePrivateKey,
+            workspaceHeartbeat: {
+                intervalSeconds: env.theiaHeartbeatInterval / 1000,
+                timeoutSeconds: env.workspaceUserTimeout / 1000,
+            },
+            workspaceDefaults: {
+                ideVersion: env.theiaVersion,
+                ideImageRepo: env.theiaImageRepo,
+                ideImage: env.ideDefaultImage,
+                ideImageAliases: env.ideImageAliases,
+                workspaceImage: env.workspaceDefaultImage,
+                previewFeatureFlags: env.previewFeatureFlags,
+                defaultFeatureFlags: env.defaultFeatureFlags,
+            },
+            session: {
+                maxAgeMs: env.sessionMaxAgeMs,
+                secret: env.sessionSecret,
+            },
+            githubApp: {
+                enabled: env.githubAppEnabled,
+                appId: env.githubAppAppID,
+                webhookSecret: env.githubAppWebhookSecret,
+                authProviderId: env.githubAppAuthProviderId,
+                certPath: env.githubAppCertPath,
+                marketplaceName: env.githubAppMarketplaceName,
+                logLevel: env.githubAppLogLevel,
+            },
+            definitelyGpDisabled: env.definitelyGpDisabled,
+            workspaceGarbageCollection: {
+                disabled: env.garbageCollectionDisabled,
+                startDate: env.garbageCollectionStartDate,
+                chunkLimit: env.garbageCollectionLimit,
+                minAgeDays: env.daysBeforeGarbageCollection,
+                minAgePrebuildDays: env.daysBeforeGarbageCollectingPrebuilds,
+                contentRetentionPeriodDays: env.workspaceDeletionRetentionPeriodDays,
+                contentChunkLimit: env.workspaceDeletionLimit,
+            },
+            enableLocalApp: env.enableLocalApp,
+            authProviderConfigs: env.authProviderConfigs,
+            disableDynamicAuthProviderLogin: env.disableDynamicAuthProviderLogin,
+            brandingConfig: env.brandingConfig,
+            maxEnvvarPerUserCount: env.maxUserEnvvarCount,
+            maxConcurrentPrebuildsPerRef: env.maxConcurrentPrebuildsPerRef,
+            incrementalPrebuilds: {
+                repositoryPasslist: env.incrementalPrebuildsRepositoryPassList,
+                commitHistory: env.incrementalPrebuildsCommitHistory,
+            },
+            blockNewUsers: {
+                enabled: env.blockNewUsers,
+                passlist: env.blockNewUsersPassList,
+            },
+            makeNewUsersAdmin: env.makeNewUsersAdmin,
+            theiaPluginsBucketNameOverride: env.theiaPluginsBucketNameOverride,
+            defaultBaseImageRegistryWhitelist: env.defaultBaseImageRegistryWhitelist,
+            insecureNoDomain: env.insecureNoDomain,
+            runDbDeleter: env.runDbDeleter,
+            oauthServer: {
+                enabled: env.enableOAuthServer,
+                jwtSecret: env.oauthServerJWTSecret,
+            },
+            rateLimiter: env.rateLimiter,
+            contentServiceAddr: env.contentServiceAddress,
+            imageBuilderAddr: env.imageBuilderAddress,
+            codeSync: env.codeSyncConfig,
+        };
+
+        if (!env.trialLicensePrivateKey) {
+            delete config.trialLicensePrivateKey;
+        }
+
+        return config;
+    }
+    export function fromEnvEE(env: EnvEE): Config {
+        const config = ConfigEnv.fromEnv(env);
+        return {
+            ...config,
+            chargebeeProviderOptions: env.chargebeeProviderOptions,
+            enablePayment: env.enablePayment,
         }
     }
 }

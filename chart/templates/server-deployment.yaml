@@ -105,12 +105,15 @@ spec:
           privileged: false
           runAsUser: 31001
         volumeMounts:
+        - mountPath: /config
+          name: config
+          readOnly: true
         - mountPath: /ws-manager-client-tls-certs
           name: ws-manager-client-tls-certs
           readOnly: true
-{{- if $comp.github.app }}
+{{- if and $comp.github.app $comp.github.app.enabled }}
         - name: github-app-cert-secret
-          mountPath: "/github-app-cert"
+          mountPath: "{{ dir $comp.github.app.certPath }}"
           readOnly: true
 {{- end }}
 {{- if $comp.serverContainer.volumeMounts }}
@@ -121,12 +124,14 @@ spec:
 {{ include "gitpod.container.tracingEnv" $this | indent 8 }}
 {{ include "gitpod.container.analyticsEnv" $this | indent 8 }}
 {{ include "gitpod.container.messagebusEnv" $this | indent 8 }}
+        - name: CONFIG_PATH
+          value: "/config/config.json"
         - name: RATE_LIMITER_CONFIG
           value: {{ (include "rate-limiter-config" $this) | fromYaml | toJson | quote }}
         - name: GITPOD_LICENSE
           value: "{{ .Values.license }}"
         - name: VERSION
-          value: "${{ .Values.version }}"
+          value: "{{ .Values.version }}"
 {{- if $comp.github.app }}
         - name: GITPOD_GITHUB_APP_ENABLED
           value: "{{ $comp.github.app.enabled | default "false" }}"
@@ -138,12 +143,12 @@ spec:
           value: "{{ $comp.github.app.authProviderId }}"
 {{- if $comp.github.app.githubHost }}
         - name: GHE_HOST
-          value: "{{ $comp.github.app.githubHost }}"
+          value: "{{ $comp.github.app.baseUrl }}"
 {{- end }}
         - name: GITPOD_GITHUB_APP_CERT_PATH
           value: "/github-app-cert/cert"
         - name: GITPOD_GITHUB_APP_MKT_NAME
-          value: "{{ $comp.github.app.marketPlaceName }}"
+          value: "{{ $comp.github.app.marketplaceName }}"
 {{- end }}
         - name: GITPOD_DEFINITELY_GP_DISABLED
           value: "{{ $comp.definitelyGpDisabled | default "false" }}"
@@ -162,16 +167,16 @@ spec:
         - name: CODE_IMAGE_REPO
           value: "{{ template "gitpod.comp.imageRepo" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage) }}"
         - name: EXPERIMENTAL_FEATURE_FLAGS
-          value: {{ .Values.previewFeatureFlags | toJson | quote }}
+          value: {{ $comp.previewFeatureFlags | toJson | quote }}
         - name: WORKSPACE_DEFAULT_IMAGE
           value: "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.defaultImage) }}"
         - name: IDE_IMAGE_ALIASES
           value: {{ (dict "code-latest" (include "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage)) "code" (include "stable-image-full" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage))) | toJson | quote }}
     {{- if $comp.blockNewUsers }}
         - name: BLOCK_NEW_USERS
-          value: {{ $comp.blockNewUsers | quote }}
+          value: {{ $comp.blockNewUsers.enabled | quote }}
         - name: BLOCK_NEW_USERS_PASSLIST
-          value: {{ $comp.blockNewUsersPasslist | toJson | quote }}
+          value: {{ $comp.blockNewUsers.passlist | toJson | quote }}
     {{- end }}
     {{- if $comp.makeNewUsersAdmin }}
         - name: MAKE_NEW_USERS_ADMIN
@@ -181,7 +186,7 @@ spec:
         - name: ENABLE_LOCAL_APP
           value: "true"
     {{- end }}
-    {{- if $comp.enableOAuthServer }}
+    {{- if $comp.oauthServer.enabled }}
         - name: ENABLE_OAUTH_SERVER
           value: "true"
     {{- end }}
@@ -189,19 +194,19 @@ spec:
         - name: PORT_ACCESS_FOR_USERS_ONLY
           value: "true"
     {{- end }}
-    {{- if $comp.sessionMaxAgeMs }}
+    {{- if $comp.session.maxAgeMs }}
         - name: SESSION_MAX_AGE_MS
-          value: {{ $comp.sessionMaxAgeMs | quote }}
+          value: "{{ $comp.session.maxAgeMs | toJson }}"
     {{- end }}
         - name: SESSION_SECRET
-          value: {{ $comp.sessionSecret | quote }}
+          value: {{ $comp.session.secret | quote }}
     {{- if .Values.components.workspace.localTheia }}
         - name: LOCAL_THEIA
           value: "true"
     {{- end }}
-    {{- if $comp.theiaPluginsBucketName }}
+    {{- if $comp.theiaPluginsBucketNameOverride }}
         - name: THEIA_PLUGINS_BUCKET_NAME_OVERRIDE
-          value: {{ $comp.theiaPluginsBucketName }}
+          value: {{ $comp.theiaPluginsBucketNameOverride }}
     {{- end }}
     {{- if .Values.devBranch }}
         - name: DEV_BRANCH
@@ -232,11 +237,6 @@ spec:
         - name: RUN_DB_DELETER
           value: {{ $comp.runDbDeleter | quote }}
     {{- end }}
-        - name: SERVER_PROXY_APIKEY
-          valueFrom:
-            secretKeyRef:
-              name: server-proxy-apikey
-              key: apikey
         - name: GITPOD_GARBAGE_COLLECTION_DISABLED
           value: {{ $comp.garbageCollection.disabled | default "false" | quote }}
         - name: OAUTH_SERVER_JWT_SECRET
@@ -246,13 +246,16 @@ spec:
 {{- end }}
 {{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
       volumes:
+      - name: config
+        configMap:
+          name: server-config
       - name: ws-manager-client-tls-certs
         secret:
           secretName: {{ .Values.components.wsManager.tls.client.secretName }}
-{{- if $comp.github.app }}
+{{- if and $comp.github.app $comp.github.app.enabled }}
       - name: github-app-cert-secret
         secret:
-          secretName: {{ $comp.github.app.appCert }}
+          secretName: {{ $comp.github.app.certSecretName }}
 {{- end }}
 {{- if $comp.volumes }}
 {{ toYaml $comp.volumes | indent 6 }}
