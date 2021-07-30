@@ -120,7 +120,8 @@ USER gitpod
 ARG GITPOD_NODE_VERSION=12.22.1
 RUN bash -c ". .nvm/nvm.sh \
     && nvm install $GITPOD_NODE_VERSION \
-    && npm install -g typescript yarn"
+    && npm install -g typescript yarn \
+    && yarn set version 3.x"
 ENV PATH=/home/gitpod/.nvm/versions/node/v${GITPOD_NODE_VERSION}/bin:$PATH
 
 # Go
