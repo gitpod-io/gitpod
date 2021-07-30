@@ -6,13 +6,13 @@
 
 import { LicenseKeySource } from "@gitpod/licensor/lib";
 import { inject, injectable } from "inversify";
-import { Env } from "../../src/env";
 import { LicenseDB } from "@gitpod/gitpod-db/lib";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
+import { Config } from "../../src/config";
 
 @injectable()
 export class DBLicenseKeySource implements LicenseKeySource {
-    @inject(Env) protected readonly env: Env;
+    @inject(Config) protected readonly config: Config;
     @inject(LicenseDB) protected readonly licenseDB: LicenseDB;
 
     async getKey(): Promise<{ key: string; domain: string; }> {
@@ -23,8 +23,8 @@ export class DBLicenseKeySource implements LicenseKeySource {
             log.error("cannot get license key - even if you have a license, the EE features won't work", err);
         }
         return {
-            key: key || this.env.gitpodLicense || "",
-            domain: this.env.hostUrl.url.host,
+            key: key || this.config.license || "",
+            domain: this.config.hostUrl.url.host,
         };
     }
 }

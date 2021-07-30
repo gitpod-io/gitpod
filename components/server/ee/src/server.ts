@@ -24,7 +24,7 @@ export class ServerEE<C extends GitpodClient, S extends GitpodServer> extends Se
         await super.registerRoutes(app);
 
         app.use("/graphql", await this.adminGraphQLController.apiRouter());
-        if (this.env.githubAppEnabled && this.githubApp.server) {
+        if (this.config.githubApp?.enabled && this.githubApp.server) {
             log.info("Registered GitHub app at /apps/github")
             app.use('/apps/github/', this.githubApp.server?.expressApp);
             log.debug(`GitHub app ready under ${this.githubApp.server.expressApp.path()}`);

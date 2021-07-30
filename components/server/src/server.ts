@@ -14,7 +14,6 @@ import * as prom from 'prom-client';
 import { SessionHandlerProvider } from './session-handler';
 import { Authenticator } from './auth/authenticator';
 import { UserController } from './user/user-controller';
-import { Env } from './env';
 import { EventEmitter } from 'events';
 import { toIWebSocket } from '@gitpod/gitpod-protocol/lib/messaging/node/connection';
 import { WsExpressHandler, WsRequestHandler } from './express/ws-handler';
@@ -24,7 +23,6 @@ import { MessageBusIntegration } from './workspace/messagebus-integration';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { EnforcementController } from './user/enforcement-endpoint';
 import { AddressInfo } from 'net';
-import { TheiaPluginController } from './theia-plugin/theia-plugin-controller';
 import { URL } from 'url';
 import { ConsensusLeaderQorum } from './consensus/consensus-leader-quorum';
 import { RabbitMQConsensusLeaderMessenger } from './consensus/rabbitmq-consensus-leader-messenger';
@@ -48,13 +46,11 @@ import { Config } from './config';
 export class Server<C extends GitpodClient, S extends GitpodServer> {
     static readonly EVENT_ON_START = 'start';
 
-    @inject(Env) protected readonly env: Env;
     @inject(Config) protected readonly config: Config;
     @inject(SessionHandlerProvider) protected sessionHandlerProvider: SessionHandlerProvider;
     @inject(Authenticator) protected authenticator: Authenticator;
     @inject(UserController) protected readonly userController: UserController;
     @inject(EnforcementController) protected readonly enforcementController: EnforcementController;
-    @inject(TheiaPluginController) protected readonly pluginController: TheiaPluginController;
     @inject(WebsocketConnectionManager) protected websocketConnectionHandler: WebsocketConnectionManager<C, S>;
     @inject(MessageBusIntegration) protected readonly messagebus: MessageBusIntegration;
     @inject(WorkspaceDownloadService) protected readonly workspaceDownloadService: WorkspaceDownloadService;
@@ -125,8 +121,8 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
             // We rely on the origin header being set correctly (needed by regular clients to use Gitpod:
             // CORS allows subdomains to access gitpod.io)
             const verifyCSRF = (origin: string) => {
-                let allowedRequest = isAllowedWebsocketDomain(origin, this.env.hostUrl.url.hostname);
-                if (this.env.kubeStage === 'prodcopy' || this.env.kubeStage === 'staging') {
+                let allowedRequest = isAllowedWebsocketDomain(origin, this.config.hostUrl.url.hostname);
+                if (this.config.stage === 'prodcopy' || this.config.stage === 'staging') {
                     // On staging and devstaging, we want to allow Theia to be able to connect to the server from this magic port
                     // This enables debugging Theia from inside Gitpod
                     const url = new URL(origin);
@@ -134,7 +130,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                         allowedRequest = true;
                     }
                 }
-                if (!allowedRequest && this.env.insecureNoDomain) {
+                if (!allowedRequest && this.config.insecureNoDomain) {
                     log.warn("Websocket connection CSRF guard disabled");
                     allowedRequest = true;
                 }
@@ -207,7 +203,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                 || req.originalUrl === '/favicon.ico'
                 || req.originalUrl === '/robots.txt') {
                 // Redirect to gitpod.io/<pathname>
-                res.redirect(this.env.hostUrl.with({ pathname: req.originalUrl }).toString());
+                res.redirect(this.config.hostUrl.with({ pathname: req.originalUrl }).toString());
                 return;
             }
             return next(new Error("Unhandled request: " + req.method + " " + req.originalUrl));
@@ -264,7 +260,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         log.info('Initialized');
     }
     protected async startDbDeleter() {
-        if (!this.env.runDbDeleter) {
+        if (!this.config.runDbDeleter) {
             return;
         }
         const areWeLeader = await this.qorum.areWeLeader();
@@ -277,13 +273,12 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         app.use(this.userController.apiRouter);
         app.use(this.oneTimeSecretServer.apiRouter);
         app.use('/enforcement', this.enforcementController.apiRouter);
-        app.use('/plugins', this.pluginController.apiRouter);
         app.use('/workspace-download', this.workspaceDownloadService.apiRouter);
         app.use('/code-sync', this.codeSyncService.apiRouter);
         app.use('/headless-logs', this.headlessLogController.apiRouter);
         app.use(this.newsletterSubscriptionController.apiRouter);
         app.use("/version", (req: express.Request, res: express.Response, next: express.NextFunction) => {
-            res.send(this.env.version);
+            res.send(this.config.version);
         });
         app.use(this.oauthController.oauthRouter);
     }

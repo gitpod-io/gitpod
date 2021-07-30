@@ -10,7 +10,7 @@ import { inject, injectable } from "inversify";
 import { GitLabApi, GitLab } from "../../../src/gitlab/api";
 import { AuthProviderParams } from "../../../src/auth/auth-provider";
 import { GitLabApp } from "./gitlab-app";
-import { Env } from "../../../src/env";
+import { Config } from "../../../src/config";
 import { TokenService } from "../../../src/user/token-service";
 import { GitlabContextParser } from "../../../src/gitlab/gitlab-context-parser";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
@@ -21,14 +21,14 @@ export class GitlabService extends RepositoryService {
     static PREBUILD_TOKEN_SCOPE = 'prebuilds';
 
     @inject(GitLabApi) protected api: GitLabApi;
-    @inject(Env) protected env: Env;
-    @inject(AuthProviderParams) protected config: AuthProviderParams;
+    @inject(Config) protected readonly config: Config;
+    @inject(AuthProviderParams) protected authProviderConfig: AuthProviderParams;
 	@inject(TokenService) protected tokenService: TokenService;
 	@inject(GitlabContextParser) protected gitlabContextParser: GitlabContextParser;
 
     async canInstallAutomatedPrebuilds(user: User, cloneUrl: string): Promise<boolean> {
         const { host, owner, repoName } = await this.gitlabContextParser.parseURL(user, cloneUrl);
-        if (host !== this.config.host) {
+        if (host !== this.authProviderConfig.host) {
             return false;
         }
         const api = await this.api.create(user);
@@ -86,7 +86,7 @@ export class GitlabService extends RepositoryService {
     }
 
     protected getHookUrl() {
-        return this.env.hostUrl.with({
+        return this.config.hostUrl.with({
             pathname: GitLabApp.path
         }).toString();
     }

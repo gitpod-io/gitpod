@@ -10,7 +10,7 @@ import { inject, injectable } from "inversify";
 import { BitbucketApiFactory } from "../../../src/bitbucket/bitbucket-api-factory";
 import { AuthProviderParams } from "../../../src/auth/auth-provider";
 import { BitbucketApp } from "./bitbucket-app";
-import { Env } from "../../../src/env";
+import { Config } from "../../../src/config";
 import { TokenService } from "../../../src/user/token-service";
 import { BitbucketContextParser } from "../../../src/bitbucket/bitbucket-context-parser";
 
@@ -20,14 +20,14 @@ export class BitbucketService extends RepositoryService {
     static PREBUILD_TOKEN_SCOPE = 'prebuilds';
 
     @inject(BitbucketApiFactory) protected api: BitbucketApiFactory;
-    @inject(Env) protected env: Env;
-    @inject(AuthProviderParams) protected config: AuthProviderParams;
+    @inject(Config) protected readonly config: Config;
+    @inject(AuthProviderParams) protected authProviderConfig: AuthProviderParams;
     @inject(TokenService) protected tokenService: TokenService;
     @inject(BitbucketContextParser) protected bitbucketContextParser: BitbucketContextParser;
 
     async canInstallAutomatedPrebuilds(user: User, cloneUrl: string): Promise<boolean> {
         const { host } = await this.bitbucketContextParser.parseURL(user, cloneUrl);
-        return host === this.config.host;
+        return host === this.authProviderConfig.host;
     }
 
     async installAutomatedPrebuilds(user: User, cloneUrl: string): Promise<void> {
@@ -50,7 +50,7 @@ export class BitbucketService extends RepositoryService {
                 workspace: owner,
                 // see https://developer.atlassian.com/bitbucket/api/2/reference/resource/repositories/%7Bworkspace%7D/%7Brepo_slug%7D/hooks#post
                 _body: {
-                    "description": `Gitpod Prebuilds for ${this.env.hostUrl}.`,
+                    "description": `Gitpod Prebuilds for ${this.config.hostUrl}.`,
                     "url": hookUrl + `?token=${user.id + '|' + tokenEntry.token.value}`,
                     "active": true,
                     "events": [
@@ -68,7 +68,7 @@ export class BitbucketService extends RepositoryService {
     }
 
     protected getHookUrl() {
-        return this.env.hostUrl.with({
+        return this.config.hostUrl.with({
             pathname: BitbucketApp.path
         }).toString();
     }

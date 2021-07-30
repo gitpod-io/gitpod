@@ -8,7 +8,6 @@ import { ContainerModule } from 'inversify';
 
 import { Server } from './server';
 import { Authenticator } from './auth/authenticator';
-import { Env } from './env';
 import { SessionHandlerProvider } from './session-handler';
 import { GitpodFileParser } from '@gitpod/gitpod-protocol/lib/gitpod-file-parser';
 import { WorkspaceFactory } from './workspace/workspace-factory';
@@ -38,7 +37,6 @@ import { WorkspaceStarter } from './workspace/workspace-starter';
 import { TracingManager } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { AuthorizationService, AuthorizationServiceImpl } from './user/authorization-service';
 import { TheiaPluginService } from './theia-plugin/theia-plugin-service';
-import { TheiaPluginController } from './theia-plugin/theia-plugin-controller';
 import { ConsensusLeaderMessenger } from './consensus/consensus-leader-messenger';
 import { RabbitMQConsensusLeaderMessenger } from './consensus/rabbitmq-consensus-leader-messenger';
 import { ConsensusLeaderQorum } from './consensus/consensus-leader-quorum';
@@ -79,15 +77,11 @@ import { HeadlessLogController } from './workspace/headless-log-controller';
 import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
 import { HeadlessLogServiceClient } from '@gitpod/content-service/lib/headless-log_grpc_pb';
 import { ProjectsService } from './projects/projects-service';
-import { EnvConfig, Config } from './config';
 import { NewsletterSubscriptionController } from './user/newsletter-subscription-controller';
+import { Config, ConfigFile } from './config';
 
 export const productionContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
-    bind(Env).toSelf().inSingletonScope();
-    bind(Config).toDynamicValue(ctx => {
-        const env = ctx.container.get<Env>(Env);
-        return EnvConfig.fromEnv(env);
-    }).inSingletonScope();
+    bind(Config).toConstantValue(ConfigFile.fromFile());
 
     bind(UserService).toSelf().inSingletonScope();
     bind(UserDeletionService).toSelf().inSingletonScope();
@@ -118,7 +112,6 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(UserController).toSelf().inSingletonScope();
     bind(EnforcementControllerServerFactory).toAutoFactory(GitpodServerImpl);
     bind(EnforcementController).toSelf().inSingletonScope();
-    bind(TheiaPluginController).toSelf().inSingletonScope();
 
     bind(MessagebusConfiguration).toSelf().inSingletonScope();
     bind(MessageBusHelper).to(MessageBusHelperImpl).inSingletonScope();
@@ -130,14 +123,14 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(WebsocketConnectionManager).toDynamicValue(ctx => {
             const serverFactory = () => ctx.container.get<GitpodServerImpl<GitpodClient, GitpodServer>>(GitpodServerImpl);
             const hostContextProvider = ctx.container.get<HostContextProvider>(HostContextProvider);
-            const env = ctx.container.get<Env>(Env);
-            return new WebsocketConnectionManager<GitpodClient, GitpodServer>(serverFactory, hostContextProvider, env.rateLimiter);
+            const config = ctx.container.get<Config>(Config);
+            return new WebsocketConnectionManager<GitpodClient, GitpodServer>(serverFactory, hostContextProvider, config.rateLimiter);
         }
     ).inSingletonScope();
 
     bind(ImageBuilderClientConfig).toDynamicValue(ctx => {
-        const env = ctx.container.get<Env>(Env);
-        return { address: env.imageBuilderAddress }
+        const config = ctx.container.get<Config>(Config);
+        return { address: config.imageBuilderAddr }
     });
     bind(CachingImageBuilderClientProvider).toSelf().inSingletonScope();
     bind(ImageBuilderClientProvider).toService(CachingImageBuilderClientProvider);
@@ -189,24 +182,24 @@ export const productionContainerModule = new ContainerModule((bind, unbind, isBo
     bind(TermsProvider).toSelf().inSingletonScope();
 
     bind(ContentServiceClient).toDynamicValue(ctx => {
-        const env = ctx.container.get<Env>(Env);
-        return new ContentServiceClient(env.contentServiceAddress, grpc.credentials.createInsecure());
+        const config = ctx.container.get<Config>(Config);
+        return new ContentServiceClient(config.contentServiceAddr, grpc.credentials.createInsecure());
     });
     bind(BlobServiceClient).toDynamicValue(ctx => {
-        const env = ctx.container.get<Env>(Env);
-        return new BlobServiceClient(env.contentServiceAddress, grpc.credentials.createInsecure());
+        const config = ctx.container.get<Config>(Config);
+        return new BlobServiceClient(config.contentServiceAddr, grpc.credentials.createInsecure());
     });
     bind(WorkspaceServiceClient).toDynamicValue(ctx => {
-        const env = ctx.container.get<Env>(Env);
-        return new WorkspaceServiceClient(env.contentServiceAddress, grpc.credentials.createInsecure());
+        const config = ctx.container.get<Config>(Config);
+        return new WorkspaceServiceClient(config.contentServiceAddr, grpc.credentials.createInsecure());
     });
     bind(IDEPluginServiceClient).toDynamicValue(ctx => {
-        const env = ctx.container.get<Env>(Env);
-        return new IDEPluginServiceClient(env.contentServiceAddress, grpc.credentials.createInsecure());
+        const config = ctx.container.get<Config>(Config);
+        return new IDEPluginServiceClient(config.contentServiceAddr, grpc.credentials.createInsecure());
     });
     bind(HeadlessLogServiceClient).toDynamicValue(ctx => {
-        const env = ctx.container.get<Env>(Env);
-        return new HeadlessLogServiceClient(env.contentServiceAddress, grpc.credentials.createInsecure());
+        const config = ctx.container.get<Config>(Config);
+        return new HeadlessLogServiceClient(config.contentServiceAddr, grpc.credentials.createInsecure());
     });
 
     bind(StorageClient).to(ContentServiceStorageClient).inSingletonScope();

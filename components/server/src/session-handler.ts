@@ -11,30 +11,30 @@ import * as uuidv4 from "uuid/v4"
 import { injectable, inject , postConstruct } from 'inversify';
 
 import * as MySQLStore from 'express-mysql-session';
-import { Config } from '@gitpod/gitpod-db/lib/config';
-import { Env } from './env';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
+import { Config as DBConfig } from '@gitpod/gitpod-db/lib/config';
+import { Config } from './config';
 
 
 @injectable()
 export class SessionHandlerProvider {
-    @inject(Config) protected readonly dbConfig: Config;
-    @inject(Env) protected readonly env: Env;
+    @inject(Config) protected readonly config: Config;
+    @inject(DBConfig) protected readonly dbConfig: DBConfig;
 
     public sessionHandler: express.RequestHandler
 
     @postConstruct()
     public init() {
         const options: SessionOptions = {} as SessionOptions
-        options.cookie = this.getCookieOptions(this.env);
+        options.cookie = this.getCookieOptions(this.config);
         options.genid = function (req: any) {
             return uuidv4() // use UUIDs for session IDs
         },
-        options.name = SessionHandlerProvider.getCookieName(this.env);
+        options.name = SessionHandlerProvider.getCookieName(this.config);
         // options.proxy = true    // TODO SSL Proxy
         options.resave = true   // TODO Check with store! See docu
         options.rolling = true // default, new cookie and maxAge
-        options.secret = this.env.sessionSecret;
+        options.secret = this.config.session.secret;
         options.saveUninitialized = false   // Do not save new cookie without content (uninitialized)
 
         options.store = this.createStore();
@@ -42,11 +42,11 @@ export class SessionHandlerProvider {
         this.sessionHandler = session(options);
     }
 
-    protected getCookieOptions(env: Env): express.CookieOptions {
-        const hostName = env.hostUrl.url.host;
+    protected getCookieOptions(config: Config): express.CookieOptions {
+        const hostName = config.hostUrl.url.host;
 
         let domain = hostName;
-        if (env.devBranch) {
+        if (config.devBranch) {
             // Use cookie for base domain to allow cookies being sent via ingress proxy in preview environments
             //
             // Otherwise, clients (in this case Chrome) may ignore (as in: save it, but don't send it on consequent requests) the 'Set-Cookie:...' send with a redirect (302, to github oauth)
@@ -59,8 +59,7 @@ export class SessionHandlerProvider {
             const baseDomain = hostParts.slice(hostParts.length - 2).join('.');
             domain = `.${baseDomain}`;
         }
-
-        if (this.env.insecureNoDomain) {
+        if (this.config.insecureNoDomain) {
             domain = hostName.split(":")[0];
         }
 
@@ -68,22 +67,22 @@ export class SessionHandlerProvider {
             path: "/",                    // default
             httpOnly: true,               // default
             secure: false,                // default, TODO SSL! Config proxy
-            maxAge: env.sessionMaxAgeMs,  // configured in Helm chart, defaults to 3 days.
+            maxAge: config.session.maxAgeMs,  // configured in Helm chart, defaults to 3 days.
             sameSite: "lax",              // default: true. "Lax" needed for OAuth.
             domain: `${domain}`
         };
     }
 
-    static getCookieName(env: Env) {
-        return env.hostUrl.toString()
+    static getCookieName(config: Config) {
+        return config.hostUrl.toString()
             .replace(/https?/, '')
             .replace(/[\W_]+/g, "_");
     }
 
-    public clearSessionCookie(res: express.Response, env: Env): void {
+    public clearSessionCookie(res: express.Response, config: Config): void {
         // http://expressjs.com/en/api.html#res.clearCookie
-        const name = SessionHandlerProvider.getCookieName(env);
-        const options = { ...this.getCookieOptions(env) };
+        const name = SessionHandlerProvider.getCookieName(config);
+        const options = { ...this.getCookieOptions(config) };
         delete options.expires;
         delete options.maxAge;
         res.clearCookie(name, options);

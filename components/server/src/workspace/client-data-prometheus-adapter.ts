@@ -14,11 +14,11 @@ export interface IClientDataPrometheusAdapter {
 
 import * as prom from 'prom-client';
 import { injectable, inject } from "inversify";
-import { Env } from "../env";
+import { Config } from "../config";
 
 @injectable()
 export class ClientDataPrometheusAdapterImpl implements IClientDataPrometheusAdapter {
-    @inject(Env) protected readonly env: Env;
+    @inject(Config) protected readonly config: Config;
     protected readonly roundTripTimeGauge: prom.Gauge;
     protected readonly prebuildQueueSizeGauge: prom.Gauge;
 
@@ -36,11 +36,11 @@ export class ClientDataPrometheusAdapterImpl implements IClientDataPrometheusAda
     }
 
     storeWorkspaceRoundTripTimeSample(time: Date, user: User, workspaceId: string, roundTripTimeInMilliseconds: number): void {
-        this.roundTripTimeGauge.set({ user: user.id, workspace: workspaceId, region: this.env.installationShortname }, roundTripTimeInMilliseconds, time);
+        this.roundTripTimeGauge.set({ user: user.id, workspace: workspaceId, region: this.config.installationShortname }, roundTripTimeInMilliseconds, time);
     }
 
     storePrebuildQueueLength(time: Date, cloneURL: string, queueLength: number): void {
-        this.prebuildQueueSizeGauge.set({ cloneURL, region: this.env.installationShortname }, queueLength, time);
+        this.prebuildQueueSizeGauge.set({ cloneURL, region: this.config.installationShortname }, queueLength, time);
     }
 
 }

@@ -9,7 +9,7 @@ import { getPrivateKey } from '@probot/get-private-key';
 import {WebhookEvent, EventPayloads} from "@octokit/webhooks/dist-types"
 import * as fs from 'fs-extra';
 import { injectable, inject } from 'inversify';
-import { Env } from '../../../src/env';
+import { Config } from '../../../src/config';
 import { AppInstallationDB, TracedWorkspaceDB, DBWithTracing, UserDB, WorkspaceDB, ProjectDB, TeamDB } from '@gitpod/gitpod-db/lib';
 import * as express from 'express';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
@@ -46,23 +46,23 @@ export class GithubApp {
     readonly server: Server | undefined;
 
     constructor(
-        @inject(Env) protected readonly env: Env,
+        @inject(Config) protected readonly config: Config,
         @inject(PrebuildStatusMaintainer) protected readonly statusMaintainer: PrebuildStatusMaintainer,
     ) {
-        if (env.githubAppEnabled) {
+        if (config.githubApp?.enabled) {
             this.server = new Server({
                 Probot: Probot.defaults({
-                    appId: env.githubAppAppID,
-                    privateKey: GithubApp.loadPrivateKey(env.githubAppCertPath),
-                    secret: env.githubAppWebhookSecret,
-                    logLevel: env.githubAppLogLevel as Options["logLevel"],
-                    baseUrl: env.githubAppGHEHost,
+                    appId: config.githubApp.appId,
+                    privateKey: GithubApp.loadPrivateKey(config.githubApp.certPath),
+                    secret: config.githubApp.webhookSecret,
+                    logLevel: config.githubApp.logLevel as Options["logLevel"],
+                    baseUrl: config.githubApp.baseUrl,
                 })
             });
             log.debug("Starting GitHub app integration", {
-                appId: env.githubAppAppID,
-                cert: env.githubAppCertPath,
-                secret: env.githubAppWebhookSecret
+                appId: config.githubApp.appId,
+                cert: config.githubApp.certPath,
+                secret: config.githubApp.webhookSecret
             });
             this.server.load(this.buildApp.bind(this));
         }
@@ -90,7 +90,7 @@ export class GithubApp {
             // cf. https://docs.github.com/en/developers/webhooks-and-events/webhooks/webhook-events-and-payloads#installation
             const authId = `${ctx.payload.sender.id}`;
 
-            const user = await this.userDB.findUserByIdentity({ authProviderId: this.env.githubAppAuthProviderId, authId });
+            const user = await this.userDB.findUserByIdentity({ authProviderId: this.config.githubApp?.authProviderId || "unknown", authId });
             const userId = user ? user.id : undefined;
             await this.appInstallationDB.recordNewInstallation("github", 'platform', installationId, userId, authId);
             log.debug({ userId }, "New installation recorded", { userId, authId, targetAccountName })
@@ -145,10 +145,10 @@ export class GithubApp {
             req.query
 
             if (state) {
-                const url = this.env.hostUrl.with({ pathname: '/complete-auth', search: "message=payload:" + Buffer.from(JSON.stringify(payload), "utf-8").toString('base64') }).toString();
+                const url = this.config.hostUrl.with({ pathname: '/complete-auth', search: "message=payload:" + Buffer.from(JSON.stringify(payload), "utf-8").toString('base64') }).toString();
                 res.redirect(url);
             } else {
-                const url = this.env.hostUrl.with({ pathname: 'install-github-app', search: `installation_id=${installationId}` }).toString();
+                const url = this.config.hostUrl.with({ pathname: 'install-github-app', search: `installation_id=${installationId}` }).toString();
                 res.redirect(url);
             }
 
@@ -263,7 +263,7 @@ export class GithubApp {
             await this.statusMaintainer.registerCheckRun({ span }, ctx.payload.installation.id, pws, {
                 ...ctx.repo(),
                 head_sha: ctx.payload.pull_request.head.sha,
-                details_url: this.env.hostUrl.withContext(ctx.payload.pull_request.html_url).toString()
+                details_url: this.config.hostUrl.withContext(ctx.payload.pull_request.html_url).toString()
             });
         } catch (err) {
             TraceContext.logError({ span }, err);
@@ -303,7 +303,7 @@ export class GithubApp {
         const pr = ctx.payload.pull_request;
         const contextURL = pr.html_url;
         const body: string = pr.body;
-        const button = `<a href="${this.env.hostUrl.withContext(contextURL)}"><img src="${this.getBadgeImageURL()}"/></a>`;
+        const button = `<a href="${this.config.hostUrl.withContext(contextURL)}"><img src="${this.getBadgeImageURL()}"/></a>`;
         if (body.includes(button)) {
             // the button is already in the comment
             return;
@@ -321,7 +321,7 @@ export class GithubApp {
 
         const pr = ctx.payload.pull_request;
         const contextURL = pr.html_url;
-        const button = `<a href="${this.env.hostUrl.withContext(contextURL)}"><img src="${this.getBadgeImageURL()}"/></a>`;
+        const button = `<a href="${this.config.hostUrl.withContext(contextURL)}"><img src="${this.getBadgeImageURL()}"/></a>`;
         const comments = await ctx.octokit.issues.listComments(ctx.issue());
         const existingComment = comments.data.find((c: any) => c.body.indexOf(button) > -1);
         if (existingComment) {
@@ -334,7 +334,7 @@ export class GithubApp {
     }
 
     protected getBadgeImageURL(): string {
-        return this.env.hostUrl.with({ pathname: '/button/open-in-gitpod.svg' }).toString();
+        return this.config.hostUrl.with({ pathname: '/button/open-in-gitpod.svg' }).toString();
     }
 
     protected async findProjectOwner(cloneURL: string): Promise<{user: User, project?: Project} | undefined> {

@@ -19,7 +19,7 @@ import { NotFoundError } from '../errors';
 import { GithubContextParser } from './github-context-parser';
 import { User } from "@gitpod/gitpod-protocol";
 import { ContainerModule, Container } from "inversify";
-import { Env } from "../env";
+import { Config } from "../config";
 import { DevData } from "../dev/dev-data";
 import { AuthProviderParams } from "../auth/auth-provider";
 import { TokenProvider } from "../user/token-provider";
@@ -36,7 +36,9 @@ class TestGithubContextParser {
     public before() {
         const container = new Container();
         container.load(new ContainerModule((bind, unbind, isBound, rebind) => {
-            bind(Env).toSelf().inSingletonScope();
+            bind(Config).toConstantValue({
+
+            });
             bind(GithubContextParser).toSelf().inSingletonScope();
             bind(GitHubGraphQlEndpoint).toSelf().inSingletonScope();
             bind(AuthProviderParams).toConstantValue(TestGithubContextParser.AUTH_HOST_CONFIG);

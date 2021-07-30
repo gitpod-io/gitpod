@@ -8,7 +8,7 @@ import * as url from 'url';
 import { injectable, inject } from 'inversify';
 import { ResolvePluginsParams, ResolvedPlugins, TheiaPlugin, PreparePluginUploadParams, InstallPluginsParams, UninstallPluginParams, ResolvedPluginKind } from '@gitpod/gitpod-protocol';
 import { TheiaPluginDB, UserStorageResourcesDB } from "@gitpod/gitpod-db/lib";
-import { Env } from '../env';
+import { Config } from '../config';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { ResponseError } from 'vscode-jsonrpc';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
@@ -29,7 +29,7 @@ export interface ResolvedPluginsResult {
 @injectable()
 export class TheiaPluginService {
 
-    @inject(Env) protected readonly env: Env;
+    @inject(Config) protected readonly config: Config;
     @inject(StorageClient) protected readonly storageClient: StorageClient;
     @inject(TheiaPluginDB) protected readonly pluginDB: TheiaPluginDB;
     @inject(UserStorageResourcesDB) protected readonly userStorageResourcesDB: UserStorageResourcesDB;
@@ -42,12 +42,12 @@ export class TheiaPluginService {
     }
 
     get bucketName(): string {
-        const bucketNameOverride = this.env.theiaPluginsBucketNameOverride;
+        const bucketNameOverride = this.config.theiaPluginsBucketNameOverride;
         if (bucketNameOverride) {
             return bucketNameOverride;
         }
 
-        const hostDenominator = this.env.hostUrl.url.hostname.replace(/\./g, '--');
+        const hostDenominator = this.config.hostUrl.url.hostname.replace(/\./g, '--');
         return `gitpod-${hostDenominator}-plugins`;
     }
 
@@ -151,7 +151,7 @@ export class TheiaPluginService {
     }
 
     protected getPublicPluginURL(pluginEntryId: string) {
-        return this.env.hostUrl
+        return this.config.hostUrl
             .with({
                 pathname: '/plugins',
                 search: `id=${pluginEntryId}`

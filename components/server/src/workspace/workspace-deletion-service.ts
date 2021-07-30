@@ -8,14 +8,14 @@ import { inject, injectable } from "inversify";
 import { WorkspaceSoftDeletion } from "@gitpod/gitpod-protocol";
 import { WorkspaceDB, WorkspaceAndOwner, WorkspaceOwnerAndSoftDeleted, TracedWorkspaceDB, DBWithTracing } from "@gitpod/gitpod-db/lib";
 import { StorageClient } from "../storage/storage-client";
-import { Env } from "../env";
+import { Config } from "../config";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 
 @injectable()
 export class WorkspaceDeletionService {
     @inject(TracedWorkspaceDB) protected readonly db: DBWithTracing<WorkspaceDB>;
     @inject(StorageClient) protected readonly storageClient: StorageClient;
-    @inject(Env) protected readonly env: Env;
+    @inject(Config) protected readonly config: Config;
 
     /**
      * This method does nothing beyond marking the given workspace as 'softDeleted' with the given cause and sets the 'softDeletedTime' to now.

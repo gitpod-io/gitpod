@@ -17,7 +17,7 @@ import { SubscriptionService } from '@gitpod/gitpod-payment-endpoint/lib/account
 import { DBSubscription } from '@gitpod/gitpod-db/lib/typeorm/entity/db-subscription';
 import { TokenService } from '../../../src/user/token-service';
 import { TokenProvider } from '../../../src/user/token-provider';
-import { Env } from '../../../src/env';
+import { Config } from '../../../src/config';
 import { TokenGarbageCollector } from '../../../src/user/token-garbage-collector';
 import { ConsensusLeaderQorum } from '../../../src/consensus/consensus-leader-quorum';
 import { ConsensusLeaderMessenger } from '../../../src/consensus/consensus-leader-messenger';
@@ -52,7 +52,8 @@ const userServiceTestContainerModule = new ContainerModule((bind, unbind, isBoun
 
     // TODO: something pulls in env which makes this test really difficult.
     //       How do we deal with this in other scenarios?
-    bind(Env).toSelf();
+    //       Answer: Now that we have Config it's a tad easier to bind a (partial) Config for these tests here
+    bind(Config).toSelf();
 });
 function getContainer() {
     const userServiceTestContainer = testContainer.createChild();

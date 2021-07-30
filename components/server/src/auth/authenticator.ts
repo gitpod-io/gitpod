@@ -10,7 +10,7 @@ import { injectable, postConstruct, inject } from 'inversify';
 import { User } from '@gitpod/gitpod-protocol';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { UserDB } from '@gitpod/gitpod-db/lib';
-import { Env } from '../env';
+import { Config } from '../config';
 import { HostContextProvider } from './host-context-provider';
 import { AuthProvider, AuthFlow } from './auth-provider';
 import { TokenProvider } from '../user/token-provider';
@@ -24,7 +24,7 @@ export class Authenticator {
     protected passportInitialize: express.Handler;
     protected passportSession: express.Handler;
 
-    @inject(Env) protected env: Env;
+    @inject(Config) protected readonly config: Config;
     @inject(UserDB) protected userDb: UserDB;
     @inject(HostContextProvider) protected hostContextProvider: HostContextProvider;
     @inject(TokenProvider) protected readonly tokenProvider: TokenProvider;
@@ -100,7 +100,7 @@ export class Authenticator {
             log.info({ sessionId: req.sessionID }, `Stored returnTo URL: ${returnTo}`, { 'login-flow': true });
         }
         // returnTo defaults to workspaces url
-        const workspaceUrl = this.env.hostUrl.asDashboard().toString();
+        const workspaceUrl = this.config.hostUrl.asDashboard().toString();
         returnTo = returnTo || workspaceUrl;
 
         const host: string = req.query.host;
@@ -110,9 +110,9 @@ export class Authenticator {
             res.redirect(this.getSorryUrl(`Bad request: missing parameters.`));
             return;
         }
-        if (this.env.disableDynamicAuthProviderLogin && !authProvider.config.builtin) {
+        if (this.config.disableDynamicAuthProviderLogin && !authProvider.params.builtin) {
             log.info({ sessionId: req.sessionID }, `Auth Provider is not allowed.`, { req, ap: authProvider.info });
-            res.redirect(this.getSorryUrl(`Login with ${authProvider.config.host} is not allowed.`));
+            res.redirect(this.getSorryUrl(`Login with ${authProvider.params.host} is not allowed.`));
             return;
         }
         if (!req.session) {
@@ -138,7 +138,7 @@ export class Authenticator {
         authProvider.authorize(req, res, next);
     }
     protected async isInSetupMode() {
-        const hasAnyStaticProviders = this.hostContextProvider.getAll().some(hc => hc.authProvider.config.builtin === true);
+        const hasAnyStaticProviders = this.hostContextProvider.getAll().some(hc => hc.authProvider.params.builtin === true);
         if (hasAnyStaticProviders) {
             return false;
         }
@@ -153,7 +153,7 @@ export class Authenticator {
             res.redirect(this.getSorryUrl(`Not authenticated. Please login.`));
             return;
         }
-        const returnTo: string = req.query.returnTo || this.env.hostUrl.asDashboard().toString();
+        const returnTo: string = req.query.returnTo || this.config.hostUrl.asDashboard().toString();
         const host: string | undefined = req.query.host;
 
         const authProvider = host && await this.getAuthProviderForHost(host);
@@ -232,7 +232,7 @@ export class Authenticator {
     protected async getCurrentScopes(user: any, authProvider: AuthProvider){
         if (User.is(user)) {
             try {
-                const token = await this.tokenProvider.getTokenForHost(user, authProvider.config.host);
+                const token = await this.tokenProvider.getTokenForHost(user, authProvider.params.host);
                 return token.scopes;
             } catch {
                 // no token
@@ -241,6 +241,6 @@ export class Authenticator {
         return [];
     }
     protected getSorryUrl(message: string) {
-        return this.env.hostUrl.asSorry(message).toString();
+        return this.config.hostUrl.asSorry(message).toString();
     }
 }

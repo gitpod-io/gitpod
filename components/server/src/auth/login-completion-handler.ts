@@ -9,7 +9,7 @@ import * as express from 'express';
 import { User } from '@gitpod/gitpod-protocol';
 import { GitpodCookie } from './gitpod-cookie';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
-import { Env } from "../env";
+import { Config } from "../config";
 import { AuthFlow } from './auth-provider';
 import { HostContextProvider } from './host-context-provider';
 import { AuthProviderService } from './auth-provider-service';
@@ -24,7 +24,7 @@ import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
 export class LoginCompletionHandler {
 
     @inject(GitpodCookie) protected gitpodCookie: GitpodCookie;
-    @inject(Env) protected env: Env;
+    @inject(Config) protected readonly config: Config;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     @inject(IAnalyticsWriter) protected readonly analytics: IAnalyticsWriter;
     @inject(AuthProviderService) protected readonly authProviderService: AuthProviderService;
@@ -51,14 +51,14 @@ export class LoginCompletionHandler {
                 increaseLoginCounter("failed", authHost)
             }
             log.error(logContext, `Redirect to /sorry on login`, err, { err, session: request.session });
-            response.redirect(this.env.hostUrl.asSorry("Oops! Something went wrong during login.").toString());
+            response.redirect(this.config.hostUrl.asSorry("Oops! Something went wrong during login.").toString());
             return;
         }
 
         // Update session info
-        let returnTo = returnToUrl || this.env.hostUrl.asDashboard().toString();
+        let returnTo = returnToUrl || this.config.hostUrl.asDashboard().toString();
         if (elevateScopes) {
-            const elevateScopesUrl = this.env.hostUrl.withApi({
+            const elevateScopesUrl = this.config.hostUrl.withApi({
                 pathname: '/authorize',
                 search: `returnTo=${encodeURIComponent(returnTo)}&host=${authHost}&scopes=${elevateScopes.join(',')}`
             }).toString();
@@ -101,7 +101,7 @@ export class LoginCompletionHandler {
     protected async updateAuthProviderAsVerified(hostname: string, user: User) {
         const hostCtx = this.hostContextProvider.get(hostname);
         if (hostCtx) {
-            const { config } = hostCtx.authProvider;
+            const { params: config } = hostCtx.authProvider;
             const { id, verified, ownerId, builtin } = config;
             if (!builtin && !verified) {
                 try {

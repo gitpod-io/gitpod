@@ -14,7 +14,7 @@ import { ResponseStream, TerminalServiceClient } from "@gitpod/supervisor-api-gr
 import { ListenTerminalRequest, ListenTerminalResponse } from "@gitpod/supervisor-api-grpcweb/lib/terminal_pb";
 import { WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import * as grpc from '@grpc/grpc-js';
-import { Env } from "../env";
+import { Config } from "../config";
 import * as browserHeaders from "browser-headers";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TextDecoder } from "util";
@@ -28,7 +28,7 @@ export class HeadlessLogService {
     static readonly SUPERVISOR_API_PATH = "/_supervisor/v1";
 
     @inject(WorkspaceDB) protected readonly db: WorkspaceDB;
-    @inject(Env) protected readonly env: Env;
+    @inject(Config) protected readonly config: Config;
     @inject(HeadlessLogServiceClient) protected readonly headlessLogClient: HeadlessLogServiceClient;
 
     public async getHeadlessLogURLs(userId: string, wsi: WorkspaceInstance, maxTimeoutSecs: number = 30): Promise<HeadlessLogUrls | undefined> {
@@ -127,7 +127,7 @@ export class HeadlessLogService {
                 // to be sure to get hold of all terminals created.
                 throw new Error(`instance's ${wsi.id} task ${task.getId} has no terminal yet`);
             }
-            streams[taskId] = this.env.hostUrl.with({
+            streams[taskId] = this.config.hostUrl.with({
                 pathname: `/headless-logs/${wsi.id}/${terminalId}`,
             }).toString();
         }

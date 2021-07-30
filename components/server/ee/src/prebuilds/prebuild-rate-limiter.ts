@@ -8,12 +8,12 @@ import { User, PrebuiltWorkspace } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { WorkspaceDB, DBWithTracing, TracedWorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { Env } from "../../../src/env";
+import { Config } from "../../../src/config";
 
 @injectable()
 export class PrebuildRateLimiter {
     @inject(TracedWorkspaceDB) protected readonly workspaceDB: DBWithTracing<WorkspaceDB>;
-    @inject(Env) protected readonly env: Env;
+    @inject(Config) protected readonly config: Config;
 
     async canBuildNow(ctx: TraceContext, user: User | string, cloneURL: string): Promise<boolean> {
         const span = TraceContext.startSpan("canBuildNow", ctx);
@@ -21,7 +21,7 @@ export class PrebuildRateLimiter {
         try {
             const runningPrebuildCount = await this.workspaceDB.trace({span}).countRunningPrebuilds(cloneURL);
             span.log({runningPrebuildCount, cloneURL});
-            if (runningPrebuildCount >= this.env.maxConcurrentPrebuildsPerRef) {
+            if (runningPrebuildCount >= this.config.maxConcurrentPrebuildsPerRef) {
                 return false;
             }
         } catch(e) {

@@ -7,13 +7,13 @@
 import { User, WorkspaceContext, StartPrebuildContext, CommitContext, ContextURL } from "@gitpod/gitpod-protocol";
 import { inject, injectable } from "inversify";
 import { URL } from "url";
-import { Env } from '../../../src/env';
+import { Config } from '../../../src/config';
 import { HostContextProvider } from "../../../src/auth/host-context-provider";
 import { IPrefixContextParser } from "../../../src/workspace/context-parser";
 
 @injectable()
 export class StartIncrementalPrebuildContextParser implements IPrefixContextParser {
-    @inject(Env) protected env: Env;
+    @inject(Config) protected readonly config: Config;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
     static PREFIX = ContextURL.INCREMENTAL_PREBUILD_PREFIX + '/';
 
@@ -30,7 +30,7 @@ export class StartIncrementalPrebuildContextParser implements IPrefixContextPars
 
         const host = new URL(context.repository.cloneUrl).hostname;
         const hostContext = this.hostContextProvider.get(host);
-        const maxDepth = this.env.incrementalPrebuildsCommitHistory;
+        const maxDepth = this.config.incrementalPrebuilds.commitHistory;
         const result: StartPrebuildContext = {
             title: `Prebuild of "${context.title}"`,
             actual: context,

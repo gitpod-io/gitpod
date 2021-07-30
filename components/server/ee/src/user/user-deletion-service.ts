@@ -9,7 +9,6 @@ import { UserDeletionService } from "../../../src/user/user-deletion-service";
 import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting/subscription-service";
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import { ChargebeeService } from "./chargebee-service";
-import { EnvEE } from "../env";
 import { TeamSubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/accounting";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 
@@ -17,7 +16,6 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 export class UserDeletionServiceEE extends UserDeletionService {
     @inject(ChargebeeService) protected readonly chargebeeService: ChargebeeService;
     @inject(SubscriptionService) protected readonly subscriptionService: SubscriptionService;
-    @inject(EnvEE) protected readonly env: EnvEE;
     @inject(TeamSubscriptionService) protected readonly teamSubscriptionService: TeamSubscriptionService;
 
     async deleteUser(id: string): Promise<void> {
@@ -27,7 +25,7 @@ export class UserDeletionServiceEE extends UserDeletionService {
         }
 
         const errors = [];
-        if (this.env.enablePayment) {
+        if (this.config.enablePayment) {
             const now = new Date();
             const subscriptions = await this.subscriptionService.getNotYetCancelledSubscriptions(user, now.toISOString());
             for (const subscription of subscriptions) {

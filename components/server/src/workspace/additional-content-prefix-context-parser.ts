@@ -8,7 +8,7 @@ import { AdditionalContentContext, User, WorkspaceContext } from "@gitpod/gitpod
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { base64decode } from "@jmondi/oauth2-server";
 import { inject, injectable } from "inversify";
-import { Env } from "../env";
+import { Config } from "../config";
 import { IPrefixContextParser } from "./context-parser";
 
 
@@ -17,11 +17,11 @@ import { IPrefixContextParser } from "./context-parser";
  */
 @injectable()
 export class AdditionalContentPrefixContextParser implements IPrefixContextParser {
-    @inject(Env) protected readonly env: Env;
+    @inject(Config) protected readonly config: Config;
     static PREFIX = /^\/?additionalcontent\/([^\/]*)\//;
 
     findPrefix(user: User, context: string): string | undefined {
-        if (this.env.hostUrl.url.host !== 'gitpod.io') {
+        if (this.config.hostUrl.url.host !== 'gitpod.io') {
             const result = AdditionalContentPrefixContextParser.PREFIX.exec(context);
             if (result) {
                 return result[0];
