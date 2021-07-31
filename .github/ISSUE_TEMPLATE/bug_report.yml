@@ -28,7 +28,7 @@ body:
   id: example-repository
   attributes:
     label: Example repository
-    description: If possible, please create an [minimal, reproducible example](https://stackoverflow.com/help/minimal-reproducible-example) of the bug and link it here in the bug report
+    description: If possible, please [share a Gitpod workspace snapshot](https://www.gitpod.io/docs/sharing-and-collaboration#sharing-snapshots) or create an [minimal, reproducible example](https://stackoverflow.com/help/minimal-reproducible-example) of the bug and link it here in the bug report.
 - type: textarea
   id: anything-else
   attributes:
