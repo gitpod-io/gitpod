@@ -1,17 +1,17 @@
 #!/bin/bash
 
 install_dependencies() {
-    go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.26.0
+    go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.27.1
 
-    go get google.golang.org/protobuf/runtime/protoimpl@v1.26.0
-    go get google.golang.org/protobuf/reflect/protoreflect@v1.26.0
-	go get google.golang.org/protobuf/types/known/timestamppb@v1.26.0
+    go get google.golang.org/protobuf/runtime/protoimpl@v1.27.1
+    go get google.golang.org/protobuf/reflect/protoreflect@v1.27.1
+	go get google.golang.org/protobuf/types/known/timestamppb@v1.27.1
 
     go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.1.0
 
-    go get github.com/golang/mock/mockgen@v1.5.0
+    go get github.com/golang/mock/mockgen@v1.6.0
 
-    go get github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.2.0
+    go get github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-grpc-gateway@v2.5.0
 }
 
 go_protoc() {
