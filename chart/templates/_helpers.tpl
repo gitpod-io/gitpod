@@ -182,6 +182,8 @@ env:
   value: "https://{{ $gp.hostname }}"
 - name: GITPOD_REGION
   value: {{ $gp.installation.region | quote }}
+- name: GITPOD_WS_DNS_LABEL
+  value: "ws-{{ $gp.installation.cluster }}"
 - name: GITPOD_INSTALLATION_LONGNAME
   value: {{ template "gitpod.installation.longname" . }}
 - name: GITPOD_INSTALLATION_SHORTNAME

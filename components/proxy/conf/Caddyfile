@@ -255,7 +255,7 @@ https://*.*.{$GITPOD_DOMAIN} {
 	}
 
 	# foreign content origin should be decoupled from the workspace (port) origin but the workspace (port) prefix should be the path root for routing
-	@foreign_content header_regexp host Host ^(.*)(foreign).ws(-[a-z0-9]+)?.{$GITPOD_DOMAIN}
+	@foreign_content header_regexp host Host ^(.*)(foreign).{$GITPOD_WS_DNS_LABEL}.{$GITPOD_DOMAIN}
 	handle @foreign_content {
 		reverse_proxy https://ws-proxy.{$KUBE_NAMESPACE}.{$KUBE_DOMAIN}:9090 {
 			import workspace_transport
