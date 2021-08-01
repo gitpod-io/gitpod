@@ -21,7 +21,7 @@ import (
 // imagebuildsBuildCmd represents the build command
 var imagebuildsBuildCmd = &cobra.Command{
 	Use:   "build <source.json>",
-	Short: "Runs a full workspace build",
+	Short: "Runs a full workspace image build",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		fc, err := os.ReadFile(args[0])
