@@ -271,7 +271,7 @@ func RegisterPortServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.PortService/Tunnel")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.PortService/Tunnel", runtime.WithHTTPPathPattern("/v1/port/tunnel/{port}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -294,7 +294,7 @@ func RegisterPortServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.PortService/CloseTunnel")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.PortService/CloseTunnel", runtime.WithHTTPPathPattern("/v1/port/tunnel/{port}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -317,7 +317,7 @@ func RegisterPortServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.PortService/AutoTunnel")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.PortService/AutoTunnel", runtime.WithHTTPPathPattern("/v1/port/tunnel/auto/{enabled}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -340,7 +340,7 @@ func RegisterPortServiceHandlerServer(ctx context.Context, mux *runtime.ServeMux
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.PortService/RetryAutoExpose")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.PortService/RetryAutoExpose", runtime.WithHTTPPathPattern("/v1/port/ports/exposed/retry/{port}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -402,7 +402,7 @@ func RegisterPortServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.PortService/Tunnel")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.PortService/Tunnel", runtime.WithHTTPPathPattern("/v1/port/tunnel/{port}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -422,7 +422,7 @@ func RegisterPortServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.PortService/CloseTunnel")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.PortService/CloseTunnel", runtime.WithHTTPPathPattern("/v1/port/tunnel/{port}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -442,7 +442,7 @@ func RegisterPortServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.PortService/AutoTunnel")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.PortService/AutoTunnel", runtime.WithHTTPPathPattern("/v1/port/tunnel/auto/{enabled}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -462,7 +462,7 @@ func RegisterPortServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.PortService/RetryAutoExpose")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.PortService/RetryAutoExpose", runtime.WithHTTPPathPattern("/v1/port/ports/exposed/retry/{port}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
