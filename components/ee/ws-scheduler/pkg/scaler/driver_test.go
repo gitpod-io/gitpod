@@ -71,17 +71,17 @@ func TestWorkspaceManagerPrescaleDriverRenewal(t *testing.T) {
 
 			statusUp := make(chan struct{}, 100)
 			wsman := wsmock.NewMockWorkspaceManagerClient(ctrl)
-			wsman.EXPECT().GetWorkspaces(gomock.Any(), gomock.Any()).Do(func(a, b interface{}) { statusUp <- struct{}{} }).Return(&api.GetWorkspacesResponse{
+			wsman.EXPECT().GetWorkspaces(gomock.Any(), gomock.Any(), gomock.Any()).Do(func(a, b interface{}, _ ...interface{}) { statusUp <- struct{}{} }).Return(&api.GetWorkspacesResponse{
 				Status: test.Workspaces,
 			}, nil)
-			wsman.EXPECT().Subscribe(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, _ interface{}) (api.WorkspaceManager_SubscribeClient, error) {
+			wsman.EXPECT().Subscribe(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, _ interface{}, _ ...interface{}) (api.WorkspaceManager_SubscribeClient, error) {
 				sub := wsmock.NewMockWorkspaceManager_SubscribeClient(ctrl)
 				sub.EXPECT().Recv().Do(func() { <-ctx.Done() })
 				return sub, nil
 			}).AnyTimes()
 
 			delchan := make(chan string)
-			wsman.EXPECT().StopWorkspace(gomock.Any(), gomock.Any()).Do(func(ctx context.Context, req *api.StopWorkspaceRequest) (*api.StopWorkspaceResponse, error) {
+			wsman.EXPECT().StopWorkspace(gomock.Any(), gomock.Any()).Do(func(ctx context.Context, req *api.StopWorkspaceRequest, _ ...interface{}) (*api.StopWorkspaceResponse, error) {
 				delchan <- req.Id
 				return &api.StopWorkspaceResponse{}, nil
 			}).AnyTimes()
@@ -207,23 +207,23 @@ func TestWorkspaceManagerPrescaleDriverControl(t *testing.T) {
 
 			statusUp := make(chan struct{}, 100)
 			wsman := wsmock.NewMockWorkspaceManagerClient(ctrl)
-			wsman.EXPECT().GetWorkspaces(gomock.Any(), gomock.Any()).Do(func(a, b interface{}) { statusUp <- struct{}{} }).Return(&api.GetWorkspacesResponse{
+			wsman.EXPECT().GetWorkspaces(gomock.Any(), gomock.Any()).Do(func(a, b interface{}, _ ...interface{}) { statusUp <- struct{}{} }).Return(&api.GetWorkspacesResponse{
 				Status: test.Workspaces,
 			}, nil)
-			wsman.EXPECT().Subscribe(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, _ interface{}) (api.WorkspaceManager_SubscribeClient, error) {
+			wsman.EXPECT().Subscribe(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, _ interface{}, _ ...interface{}) (api.WorkspaceManager_SubscribeClient, error) {
 				sub := wsmock.NewMockWorkspaceManager_SubscribeClient(ctrl)
 				sub.EXPECT().Recv().Do(func() { <-ctx.Done() })
 				return sub, nil
 			}).AnyTimes()
 
 			var starts int
-			wsman.EXPECT().StartWorkspace(gomock.Any(), gomock.Any()).Do(func(ctx context.Context, req *api.StartWorkspaceRequest) (*api.StartWorkspaceResponse, error) {
+			wsman.EXPECT().StartWorkspace(gomock.Any(), gomock.Any()).Do(func(ctx context.Context, req *api.StartWorkspaceRequest, _ ...interface{}) (*api.StartWorkspaceResponse, error) {
 				starts++
 				return &api.StartWorkspaceResponse{}, nil
 			}).AnyTimes()
 
 			var stops int
-			wsman.EXPECT().StopWorkspace(gomock.Any(), gomock.Any()).Do(func(ctx context.Context, req *api.StopWorkspaceRequest) (*api.StopWorkspaceResponse, error) {
+			wsman.EXPECT().StopWorkspace(gomock.Any(), gomock.Any()).Do(func(ctx context.Context, req *api.StopWorkspaceRequest, _ ...interface{}) (*api.StopWorkspaceResponse, error) {
 				stops++
 				return &api.StopWorkspaceResponse{}, nil
 			}).AnyTimes()

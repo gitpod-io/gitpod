@@ -273,7 +273,7 @@ func RegisterTerminalServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.TerminalService/Shutdown")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.TerminalService/Shutdown", runtime.WithHTTPPathPattern("/v1/terminal/shutdown/{alias}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -296,7 +296,7 @@ func RegisterTerminalServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.TerminalService/Get")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.TerminalService/Get", runtime.WithHTTPPathPattern("/v1/terminal/get/{alias}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -319,7 +319,7 @@ func RegisterTerminalServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.TerminalService/List")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.TerminalService/List", runtime.WithHTTPPathPattern("/v1/terminal/list"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -349,7 +349,7 @@ func RegisterTerminalServiceHandlerServer(ctx context.Context, mux *runtime.Serv
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.TerminalService/Write")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.TerminalService/Write", runtime.WithHTTPPathPattern("/v1/terminal/write/{alias}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -411,7 +411,7 @@ func RegisterTerminalServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.TerminalService/Shutdown")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.TerminalService/Shutdown", runtime.WithHTTPPathPattern("/v1/terminal/shutdown/{alias}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -431,7 +431,7 @@ func RegisterTerminalServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.TerminalService/Get")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.TerminalService/Get", runtime.WithHTTPPathPattern("/v1/terminal/get/{alias}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -451,7 +451,7 @@ func RegisterTerminalServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.TerminalService/List")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.TerminalService/List", runtime.WithHTTPPathPattern("/v1/terminal/list"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -471,7 +471,7 @@ func RegisterTerminalServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.TerminalService/Listen")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.TerminalService/Listen", runtime.WithHTTPPathPattern("/v1/terminal/listen/{alias}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -491,7 +491,7 @@ func RegisterTerminalServiceHandlerClient(ctx context.Context, mux *runtime.Serv
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.TerminalService/Write")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.TerminalService/Write", runtime.WithHTTPPathPattern("/v1/terminal/write/{alias}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return

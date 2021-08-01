@@ -445,7 +445,7 @@ func RegisterTokenServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.TokenService/GetToken")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.TokenService/GetToken", runtime.WithHTTPPathPattern("/v1/token/{kind}/{host}/{scope}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -468,7 +468,7 @@ func RegisterTokenServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.TokenService/SetToken")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.TokenService/SetToken", runtime.WithHTTPPathPattern("/v1/token/{kind}/{host}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -491,7 +491,7 @@ func RegisterTokenServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.TokenService/ClearToken")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.TokenService/ClearToken", runtime.WithHTTPPathPattern("/v1/token/{kind}/{value}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -514,7 +514,7 @@ func RegisterTokenServiceHandlerServer(ctx context.Context, mux *runtime.ServeMu
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.TokenService/ClearToken")
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/supervisor.TokenService/ClearToken", runtime.WithHTTPPathPattern("/v1/token/{kind}/clear/all/{all=true}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -576,7 +576,7 @@ func RegisterTokenServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.TokenService/GetToken")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.TokenService/GetToken", runtime.WithHTTPPathPattern("/v1/token/{kind}/{host}/{scope}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -596,7 +596,7 @@ func RegisterTokenServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.TokenService/SetToken")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.TokenService/SetToken", runtime.WithHTTPPathPattern("/v1/token/{kind}/{host}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -616,7 +616,7 @@ func RegisterTokenServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.TokenService/ClearToken")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.TokenService/ClearToken", runtime.WithHTTPPathPattern("/v1/token/{kind}/{value}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -636,7 +636,7 @@ func RegisterTokenServiceHandlerClient(ctx context.Context, mux *runtime.ServeMu
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.TokenService/ClearToken")
+		rctx, err := runtime.AnnotateContext(ctx, mux, req, "/supervisor.TokenService/ClearToken", runtime.WithHTTPPathPattern("/v1/token/{kind}/clear/all/{all=true}"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
