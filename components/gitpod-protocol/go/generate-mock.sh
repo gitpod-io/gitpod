@@ -5,7 +5,7 @@
 
 set -x
 
-go get github.com/golang/mock/mockgen@v1.5.0
+go get github.com/golang/mock/mockgen@v1.6.0
 
 mockgen \
     -package=protocol \
