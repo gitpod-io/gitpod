@@ -2,7 +2,7 @@
 # Licensed under the GNU Affero General Public License (AGPL).
 # See License-AGPL.txt in the project root for license information.
 
-FROM gitpod/workspace-full-vnc:latest
+FROM gitpod/workspace-full-vnc:branch-aledbf-update
 
 ENV TRIGGER_REBUILD 12
 ENV WORKSPACE_KERNEL 5.4.0-1044-gke
