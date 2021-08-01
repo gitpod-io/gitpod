@@ -5,8 +5,8 @@ go 1.16
 require (
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.0.1
-	google.golang.org/grpc v1.38.0
-	google.golang.org/protobuf v1.26.0
+	google.golang.org/grpc v1.39.0
+	google.golang.org/protobuf v1.27.1
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway

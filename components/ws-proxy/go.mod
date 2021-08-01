@@ -6,7 +6,7 @@ require (
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
 	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible
-	github.com/golang/mock v1.5.0
+	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.6
 	github.com/google/tcpproxy v0.0.0-20200125044825-b6bb9b5b8252
 	github.com/gorilla/handlers v1.5.1
@@ -16,7 +16,7 @@ require (
 	github.com/spf13/cobra v1.1.3
 	golang.org/x/time v0.0.0-20210220033141-f8bda1e9f3ba
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
-	google.golang.org/grpc v1.38.0
+	google.golang.org/grpc v1.39.0
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../common-go // leeway

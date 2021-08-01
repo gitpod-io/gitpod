@@ -16,8 +16,8 @@ require (
 	github.com/xtgo/uuid v0.0.0-20140804021211-a0b114877d4c // indirect
 	go.uber.org/atomic v1.8.0 // indirect
 	golang.org/x/time v0.0.0-20200630173020-3af7569d3a1e
-	google.golang.org/grpc v1.38.0
-	google.golang.org/protobuf v1.26.0
+	google.golang.org/grpc v1.39.0
+	google.golang.org/protobuf v1.27.1
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0
 	k8s.io/api v0.21.1
 	k8s.io/apimachinery v0.21.1

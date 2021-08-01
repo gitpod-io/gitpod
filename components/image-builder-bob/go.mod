@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/containerd/console v1.0.2
-	github.com/containerd/containerd v1.5.3
+	github.com/containerd/containerd v1.5.5
 	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
 	github.com/gofrs/flock v0.8.0 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
@@ -15,11 +15,9 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.1.3
 	go.opencensus.io v0.23.0 // indirect
-	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
-	golang.org/x/net v0.0.0-20210510120150-4163338589ed // indirect
+	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	google.golang.org/genproto v0.0.0-20210518161634-ec7691c0a37d // indirect
-	google.golang.org/grpc v1.38.0
+	google.golang.org/grpc v1.39.0
 )
 
 // copied from https://github.com/moby/buildkit/blob/master/go.mod#L73-L82

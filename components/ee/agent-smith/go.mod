@@ -11,12 +11,10 @@ require (
 	github.com/google/go-cmp v0.5.6
 	github.com/h2non/filetype v1.0.8
 	github.com/hashicorp/golang-lru v0.5.1
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/parnurzeal/gorequest v0.2.16 // indirect
 	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/procfs v0.6.0
-	github.com/smartystreets/goconvey v1.6.4 // indirect
-	github.com/spf13/cobra v0.0.3
+	github.com/spf13/cobra v1.1.3
 	golang.org/x/sys v0.0.0-20210603081109-ebe580a85c40
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	k8s.io/apimachinery v0.21.1

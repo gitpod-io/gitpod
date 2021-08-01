@@ -4,7 +4,7 @@ go 1.16
 
 require (
 	github.com/fsnotify/fsnotify v1.4.9
-	github.com/golang/mock v1.5.0
+	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.6
 	github.com/gorilla/websocket v1.4.2
 	github.com/sirupsen/logrus v1.8.1
