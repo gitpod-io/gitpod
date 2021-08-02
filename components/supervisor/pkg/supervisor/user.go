@@ -14,27 +14,41 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
 
-type AddUserOpts struct {
-	Name         string
-	UID          int
-	Group        int
-	Home         string
-	DefaultShell string
+type lookup interface {
+	LookupGroup(name string) (grp *user.Group, err error)
+	LookupGroupId(id string) (grp *user.Group, err error)
+	Lookup(name string) (grp *user.User, err error)
+	LookupId(id string) (grp *user.User, err error)
 }
 
+type osLookup struct{}
+
+func (osLookup) LookupGroup(name string) (grp *user.Group, err error) { return user.LookupGroup(name) }
+func (osLookup) LookupGroupId(id string) (grp *user.Group, err error) { return user.LookupGroupId(id) }
+func (osLookup) Lookup(name string) (grp *user.User, err error)       { return user.Lookup(name) }
+func (osLookup) LookupId(id string) (grp *user.User, err error)       { return user.LookupId(id) }
+
+var defaultLookup lookup = osLookup{}
+
 func AddGitpodUserIfNotExists() error {
-	ok, err := hasGitpodGroup()
+	ok, err := hasGroup(gitpodGroupName, gitpodGID)
 	if err != nil {
 		return err
 	}
 	if !ok {
-		err = addGroup("gitpod", gitpodGID)
+		err = addGroup(gitpodGroupName, gitpodGID)
 		if err != nil {
 			return err
 		}
 	}
 
-	ok, err = hasGitpodUser()
+	targetUser := &user.User{
+		Uid:      strconv.Itoa(gitpodUID),
+		Gid:      strconv.Itoa(gitpodGID),
+		Username: gitpodUserName,
+		HomeDir:  "/home/" + gitpodUserName,
+	}
+	ok, err = hasUser(targetUser)
 	if err != nil {
 		return err
 	}
@@ -42,41 +56,83 @@ func AddGitpodUserIfNotExists() error {
 		return nil
 	}
 
-	return addUser(AddUserOpts{
-		Name:         "gitpod",
-		UID:          gitpodUID,
-		Group:        gitpodGID,
-		Home:         "/home/gitpod",
-		DefaultShell: "/bin/sh",
-	})
+	return addUser(targetUser)
 }
 
-func hasGitpodGroup() (bool, error) {
-	gid := strconv.Itoa(gitpodGID)
-	_, err := user.LookupGroupId(gid)
-	if err == user.UnknownGroupIdError(gid) {
-		return false, nil
+func hasGroup(name string, gid int) (bool, error) {
+	grpByName, err := defaultLookup.LookupGroup(name)
+	if err == user.UnknownGroupError(name) {
+		err = nil
 	}
 	if err != nil {
 		return false, err
 	}
+	grpByID, err := defaultLookup.LookupGroupId(strconv.Itoa(gid))
+	if err == user.UnknownGroupIdError(strconv.Itoa(gid)) {
+		err = nil
+	}
+	if err != nil {
+		return false, err
+	}
+
+	if grpByID == nil && grpByName == nil {
+		// group does not exist
+		return false, nil
+	}
+	if grpByID != nil && grpByName == nil {
+		// a group with this GID exists already, but has a different name
+		return true, fmt.Errorf("group %s already uses GID %d", grpByID.Name, gid)
+	}
+	if grpByID == nil && grpByName != nil {
+		// a group with this name already exists, but has a different GID
+		return true, fmt.Errorf("group named %s exists but uses different GID %s", name, grpByName.Gid)
+	}
+
+	// group exists and all is well
 	return true, nil
 }
 
-func hasGitpodUser() (bool, error) {
-	usr, err := user.Lookup("gitpod")
-	if err == user.UnknownUserError("gitpod") {
-		return false, nil
+func hasUser(u *user.User) (bool, error) {
+	userByName, err := defaultLookup.Lookup(u.Username)
+	if err == user.UnknownUserError(u.Username) {
+		err = nil
 	}
 	if err != nil {
 		return false, err
 	}
-	if usr.Uid != strconv.Itoa(gitpodUID) {
-		return true, fmt.Errorf("gitpod user UID is not %d", gitpodUID)
+	userByID, err := defaultLookup.LookupId(u.Uid)
+	uid, _ := strconv.Atoi(u.Uid)
+	if err == user.UnknownUserIdError(uid) {
+		err = nil
 	}
-	if usr.Gid != strconv.Itoa(gitpodGID) {
-		return true, fmt.Errorf("gitpod user GID is not %d", gitpodGID)
+	if err != nil {
+		return false, err
 	}
+
+	if userByID == nil && userByName == nil {
+		// user does not exist
+		return false, nil
+	}
+	if userByID != nil && userByName == nil {
+		// a user with this GID exists already, but has a different name
+		return true, fmt.Errorf("user %s already uses UID %s", userByID.Username, u.Uid)
+	}
+	if userByID == nil && userByName != nil {
+		// a user with this name already exists, but has a different GID
+		return true, fmt.Errorf("user named %s exists but uses different UID %s", u.Username, userByName.Uid)
+	}
+
+	// at this point it doesn't matter if we use userByID or byName - they're likely the same
+	// because of the way we looked them up.
+	existingUser := userByID
+	if existingUser.Gid != u.Gid {
+		return true, fmt.Errorf("existing user %s has different GID %s (instead of %s)", existingUser.Username, existingUser.Gid, u.Gid)
+	}
+	if existingUser.HomeDir != u.HomeDir {
+		return true, fmt.Errorf("existing user %s has different home directory %s (instead of %s)", existingUser.Username, existingUser.HomeDir, u.HomeDir)
+	}
+
+	// user exists and all is well
 	return true, nil
 }
 
@@ -96,7 +152,7 @@ func addGroup(name string, gid int) error {
 	return nil
 }
 
-func addUser(opts AddUserOpts) error {
+func addUser(opts *user.User) error {
 	flavour := determineAdduserFlavour()
 	if flavour == adduserUnknown {
 		return fmt.Errorf("no adduser command found")
@@ -114,7 +170,7 @@ func addUser(opts AddUserOpts) error {
 
 func determineAdduserFlavour() adduserFlavour {
 	for flavour, gen := range adduserCommand {
-		args := gen(AddUserOpts{})
+		args := gen(&user.User{})
 		var flags []string
 		for _, a := range args {
 			if len(a) > 0 && a[0] == '-' {
@@ -150,15 +206,17 @@ const (
 	adduserUseradd
 )
 
-var adduserCommand = map[adduserFlavour]func(AddUserOpts) []string{
-	adduserBusybox: func(opts AddUserOpts) []string {
-		return []string{"adduser", "-h", opts.Home, "-s", opts.DefaultShell, "-D", "-G", strconv.Itoa(opts.Group), "-u", strconv.Itoa(opts.UID), opts.Name}
+const defaultShell = "/bin/sh"
+
+var adduserCommand = map[adduserFlavour]func(*user.User) []string{
+	adduserBusybox: func(opts *user.User) []string {
+		return []string{"adduser", "-h", opts.HomeDir, "-s", defaultShell, "-D", "-G", opts.Gid, "-u", opts.Uid, opts.Username}
 	},
-	adduserDebian: func(opts AddUserOpts) []string {
-		return []string{"adduser", "--home", opts.Home, "--shell", opts.DefaultShell, "--disabled-login", "--gid", strconv.Itoa(opts.Group), "--uid", strconv.Itoa(opts.UID), opts.Name}
+	adduserDebian: func(opts *user.User) []string {
+		return []string{"adduser", "--home", opts.HomeDir, "--shell", defaultShell, "--disabled-login", "--gid", opts.Gid, "--uid", opts.Uid, opts.Username}
 	},
-	adduserUseradd: func(opts AddUserOpts) []string {
-		return []string{"useradd", "-m", "--home-dir", opts.Home, "--shell", opts.DefaultShell, "--gid", strconv.Itoa(opts.Group), "--uid", strconv.Itoa(opts.UID), opts.Name}
+	adduserUseradd: func(opts *user.User) []string {
+		return []string{"useradd", "-m", "--home-dir", opts.HomeDir, "--shell", defaultShell, "--gid", opts.Gid, "--uid", opts.Uid, opts.Username}
 	},
 }
 

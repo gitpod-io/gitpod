@@ -53,8 +53,10 @@ import (
 )
 
 const (
-	gitpodUID = 33333
-	gitpodGID = 33333
+	gitpodUID       = 33333
+	gitpodUserName  = "gitpod"
+	gitpodGID       = 33333
+	gitpodGroupName = "gitpod"
 )
 
 var (
