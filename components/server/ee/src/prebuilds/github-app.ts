@@ -100,6 +100,21 @@ export class GithubApp {
             await this.appInstallationDB.recordUninstallation("github", 'platform', installationId);
         });
 
+        app.on('repository.renamed', async ctx => {
+            const { action, repository, installation } = ctx.payload;
+            if (!installation) {
+                return;
+            }
+            if (action === "renamed") {
+                const project = await this.projectDB.findProjectByInstallationId(String(installation.id))
+                if (project) {
+                    project.cloneUrl = repository.clone_url;
+                    await this.projectDB.storeProject(project);
+                }
+            }
+            // TODO(at): handle deleted as well
+        });
+
         app.on('push', async ctx => {
             await this.handlePushEvent(ctx);
         });
