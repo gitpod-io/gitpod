@@ -135,10 +135,6 @@ export class ProjectsService {
         } else {
             const limit = params.latest ? 1 : undefined;
             let branch = params.branch;
-            if (limit && !branch) {
-                const repository = await repositoryProvider.getRepo(user, owner, repo);
-                branch = repository.defaultBranch;
-            }
             prebuilds = await this.workspaceDb.trace({}).findPrebuiltWorkspacesByProject(project.id, branch, limit);
         }
 
