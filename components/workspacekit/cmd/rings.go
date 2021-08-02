@@ -737,6 +737,10 @@ func handleExit(ec *int) {
 }
 
 func sleepForDebugging() {
+	if os.Getenv("GITPOD_WORKSPACEKIT_SLEEP_FOR_DEBUGGING") != "true" {
+		return
+	}
+
 	log.Info("sleeping five minutes to allow debugging")
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
