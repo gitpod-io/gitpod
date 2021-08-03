@@ -615,6 +615,9 @@ func buildChildProcEnv(cfg *Config) []string {
 	envs["HOME"] = "/home/gitpod"
 	envs["USER"] = "gitpod"
 
+	// Particular Java optimisation: Java pre v10 did not gauge it's available memory correctly, and needed explicitly setting "-Xmx" for all Hotspot/openJDK VMs
+	envs["JAVA_TOOL_OPTIONS"] += fmt.Sprintf(" -Xmx%sm", os.Getenv("GITPOD_MEMORY"))
+
 	var env, envn []string
 	for nme, val := range envs {
 		log.WithField("envvar", nme).Debug("passing environment variable to IDE")
