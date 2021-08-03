@@ -11,7 +11,6 @@
 /* eslint-disable */
 
 import * as grpc from "@grpc/grpc-js";
-import {handleClientStreamingCall} from "@grpc/grpc-js/build/src/server-call";
 import * as headless_log_pb from "./headless-log_pb";
 
 interface IHeadlessLogServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
