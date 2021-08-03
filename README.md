@@ -40,8 +40,8 @@ Gitpod is provided as a [managed Saas version](https://gitpod.io) with a free su
 You can start using Gitpod with one or more of the following ways:
 1. [Use a Prefixed URL](https://www.gitpod.io/docs/getting-started/#prefixed-url)
 1. [Install Browser Extension](https://www.gitpod.io/docs/getting-started#browser-extension)
-1. [Enable GitLab Integration](https://www.gitpod.io/docs/getting-started#gitlab-integration)
-1. Quick start using an [Example Project](https://www.gitpod.io/docs/getting-started/#example-project) or [OSS Project](https://www.gitpod.io/docs/getting-started/#gitpodified-open-source-project)
+1. [Enable GitLab Integration](https://www.gitpod.io/docs/gitlab-integration#gitlab-integration)
+1. Quick start using an [Example Project](https://www.gitpod.io/docs/quickstart) or [OSS Project](https://contribute.dev/)
 
 ## Documentation
 
