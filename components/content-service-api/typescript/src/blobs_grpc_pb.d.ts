@@ -11,7 +11,6 @@
 /* eslint-disable */
 
 import * as grpc from "@grpc/grpc-js";
-import {handleClientStreamingCall} from "@grpc/grpc-js/build/src/server-call";
 import * as blobs_pb from "./blobs_pb";
 
 interface IBlobServiceService extends grpc.ServiceDefinition<grpc.UntypedServiceImplementation> {
