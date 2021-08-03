@@ -133,7 +133,7 @@ func Run(options ...RunOption) {
 	if err != nil {
 		log.WithError(err).Fatal("cannot ensure Gitpod user exists")
 	}
-
+	symlinkBinaries(cfg)
 	configureGit(cfg)
 
 	tokenService := NewInMemoryTokenService()
@@ -327,6 +327,31 @@ func createExposedPortsImpl(cfg *Config, gitpodService *gitpod.APIoverJSONRPC) p
 		return &ports.NoopExposedPorts{}
 	}
 	return ports.NewGitpodExposedPorts(cfg.WorkspaceID, cfg.WorkspaceInstanceID, gitpodService)
+}
+
+// supervisor ships some binaries we want in the PATH. We could just add some directory to the path, but
+// instead of producing a strange path setup, we symlink the binary to /usr/bin.
+func symlinkBinaries(cfg *Config) {
+	bin, err := os.Executable()
+	if err != nil {
+		log.WithError(err).Error("cannot get executable path - hence cannot symlink binaries")
+		return
+	}
+	base := filepath.Dir(bin)
+
+	binaries := map[string]string{
+		"gitpod-cli": "gp",
+	}
+	for k, v := range binaries {
+		var (
+			from = filepath.Join(base, k)
+			to   = filepath.Join("/usr/bin", v)
+		)
+		err = os.Symlink(from, to)
+		if err != nil {
+			log.WithError(err).WithField("from", from).WithField("to", to).Warn("cannot create symlink")
+		}
+	}
 }
 
 func configureGit(cfg *Config) {

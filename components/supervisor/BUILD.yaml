@@ -25,6 +25,7 @@ packages:
       - components/supervisor/frontend:app
       - components/workspacekit:app
       - components/workspacekit:fuse-overlayfs
+      - components/gitpod-cli:app
     argdeps:
       - imageRepoBase
     config:

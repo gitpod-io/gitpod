@@ -14,6 +14,7 @@ COPY components-supervisor--app/supervisor \
      supervisor-config.json \
      components-workspacekit--app/workspacekit \
      components-workspacekit--fuse-overlayfs/fuse-overlayfs \
+     components-gitpod-cli--app/gitpod-cli \
      ./
 WORKDIR "/.supervisor/dropbear"
 COPY components-supervisor--dropbear/dropbear \
