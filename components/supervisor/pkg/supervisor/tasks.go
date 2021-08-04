@@ -506,7 +506,7 @@ func (r *loggingHeadlessTaskProgressReporter) write(data string, task *task, ter
 
 func (r *loggingHeadlessTaskProgressReporter) done(success bool) {
 	workspaceLog := log.WithField("component", "workspace")
-	workspaceLog.WithField("taskLogMsg", taskLogMessage{Type: "workspaceTaskOutput", Data: "🚛 uploading prebuilt workspace"}).Info()
+	workspaceLog.WithField("taskLogMsg", taskLogMessage{Type: "workspaceTaskOutput", Data: "🚛 uploading workspace image"}).Info()
 	if !success {
 		workspaceLog.WithField("error", "one of the tasks failed with non-zero exit code").
 			WithField("taskLogMsg", taskLogMessage{Type: "workspaceTaskFailed"}).Info()
