@@ -334,6 +334,10 @@ export class WorkspaceStarter {
                 // All they need access to is the base image repository, as we're building the Gitpod layer only.
                 const nauth = new BuildRegistryAuthSelective();
                 nauth.setAllowBaserep(true);
+                // The base image is not neccesarily stored on the Gitpod registry, but might also come
+                // from a private whitelisted registry also. Hence allowBaserep is not enough, and we also
+                // need to explicitly allow all whitelisted registry when resolving the base image.
+                nauth.setAnyOfList(this.env.defaultBaseImageRegistryWhitelist);
                 const auth = new BuildRegistryAuth();
                 auth.setSelective(nauth);
 
