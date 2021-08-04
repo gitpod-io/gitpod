@@ -22,6 +22,7 @@ import { WorkspaceManagerClientProviderCompositeSource, WorkspaceManagerClientPr
 import { ClusterService, ClusterServiceServer } from './cluster-service-server';
 import { IAnalyticsWriter } from '@gitpod/gitpod-protocol/lib/analytics';
 import { newAnalyticsWriterFromEnv } from '@gitpod/gitpod-protocol/lib/util/analytics';
+import { MetaInstanceController } from './meta-instance-controller';
 
 export const containerModule = new ContainerModule(bind => {
 
@@ -30,6 +31,8 @@ export const containerModule = new ContainerModule(bind => {
     bind(MessageBusIntegration).toSelf().inSingletonScope();
 
     bind(BridgeController).toSelf().inSingletonScope();
+
+    bind(MetaInstanceController).toSelf().inSingletonScope();
 
     bind(WorkspaceManagerClientProvider).toSelf().inSingletonScope();
     bind(WorkspaceManagerClientProviderCompositeSource).toSelf().inSingletonScope();

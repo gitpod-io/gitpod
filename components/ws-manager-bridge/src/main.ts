@@ -13,6 +13,7 @@ import { TypeORM } from '@gitpod/gitpod-db/lib/typeorm/typeorm';
 import { TracingManager } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { ClusterServiceServer } from './cluster-service-server';
 import { BridgeController } from './bridge-controller';
+import { MetaInstanceController } from './meta-instance-controller';
 
 log.enableJSONLogging('ws-manager-bridge', process.env.VERSION);
 
@@ -42,6 +43,9 @@ export const start = async (container: Container) => {
 
         const clusterServiceServer = container.get<ClusterServiceServer>(ClusterServiceServer);
         await clusterServiceServer.start();
+
+        const metaInstanceController = container.get<MetaInstanceController>(MetaInstanceController);
+        metaInstanceController.start();
 
         process.on('SIGTERM', async () => {
             log.info("SIGTERM received, stopping");

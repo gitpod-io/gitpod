@@ -303,7 +303,7 @@ export class WorkspaceStarter {
             workspaceId: workspace.id,
             creationTime: now,
             ideUrl: '', // Initially empty, filled during starting process
-            region: '', // Initially empty, filled during starting process
+            region: this.env.installationShortname, // Shortname set to bridge can cleanup workspaces stuck preparing
             workspaceImage: '', // Initially empty, filled during starting process
             status: {
                 conditions: {},
