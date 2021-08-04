@@ -27,7 +27,8 @@ export default function () {
     const [project, setProject] = useState<Project | undefined>();
 
     const [branches, setBranches] = useState<Project.BranchDetails[]>([]);
-    const [lastPrebuilds, setLastPrebuilds] = useState<Map<string, PrebuildInfo>>(new Map());
+    const [lastPrebuilds, setLastPrebuilds] = useState<Map<string, PrebuildInfo | undefined>>(new Map());
+    const [prebuildLoaders] = useState<Set<string>>(new Set());
 
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
 
@@ -55,19 +56,7 @@ export default function () {
             // default branch on top of the rest
             const branches = details.branches.sort((a, b) => (b.isDefault as any) - (a.isDefault as any)) || [];
             setBranches(branches);
-
-            for (const b of branches) {
-                const lastPrebuild = await getGitpodService().server.findPrebuilds({
-                    projectId: project.id,
-                    branch: b.name,
-                    latest: true,
-                });
-                if (lastPrebuild[0]) {
-                    setLastPrebuilds(prev => new Map(prev).set(b.name, lastPrebuild[0]));
-                }
-            }
         }
-
     }
 
     const branchContextMenu = (branch: Project.BranchDetails) => {
@@ -83,7 +72,33 @@ export default function () {
         return entries;
     }
 
-    const lastPrebuild = (branch: Project.BranchDetails) => lastPrebuilds.get(branch.name);
+    const lastPrebuild = (branch: Project.BranchDetails) => {
+        const lastPrebuild = lastPrebuilds.get(branch.name);
+        if (!lastPrebuild) {
+            // do not await here.
+            loadPrebuild(branch);
+        }
+        return lastPrebuild;
+    }
+
+    const loadPrebuild = async (branch: Project.BranchDetails) => {
+        if (prebuildLoaders.has(branch.name) || lastPrebuilds.has(branch.name)) {
+            // `lastPrebuilds.has(branch.name)` will be true even if loading finished with no prebuild found.
+            // TODO(at): this need to be revised once prebuild events are integrated
+            return;
+        }
+        if (!team || !project) {
+            return;
+        }
+        prebuildLoaders.add(branch.name);
+        const lastPrebuild = await getGitpodService().server.findPrebuilds({
+            projectId: project.id,
+            branch: branch.name,
+            latest: true,
+        });
+        setLastPrebuilds(prev => new Map(prev).set(branch.name, lastPrebuild[0]));
+        prebuildLoaders.delete(branch.name);
+    }
 
     const filter = (branch: Project.BranchDetails) => {
         if (searchFilter && `${branch.changeTitle} ${branch.name}`.toLowerCase().includes(searchFilter.toLowerCase()) === false) {
@@ -137,18 +152,15 @@ export default function () {
                         <ItemFieldContextMenu />
                     </ItemField>
                 </Item>
-                {branches.map((branch, index) => {
-                    if (!filter(branch)) {
-                        return undefined;
-                    }
+                {branches.filter(filter).slice(0, 10).map((branch, index) => {
 
                     const branchName = branch.name;
-                    const prebuild = lastPrebuild(branch);
+                    const prebuild = lastPrebuild(branch); // this might lazily trigger fetching of prebuild details
 
                     const avatar = branch.changeAuthorAvatar && <img className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2" src={branch.changeAuthorAvatar || ''} alt={branch.changeAuthor} />;
                     const statusIcon = prebuild?.status && prebuildStatusIcon(prebuild.status);
                     const status = prebuild?.status && prebuildStatusLabel(prebuild.status);
-                    console.log(`status for ${branchName} is ${prebuild?.status} (${lastPrebuilds.size})`)
+
                     return <Item key={`branch-${index}-${branchName}`} className="grid grid-cols-3 group">
                         <ItemField className="flex items-center">
                             <div>

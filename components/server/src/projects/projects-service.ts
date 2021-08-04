@@ -82,7 +82,7 @@ export class ProjectsService {
             });
         }
         result.sort((a, b) => (b.changeDate || "").localeCompare(a.changeDate || ""));
-        return result.slice(0, 30);
+        return result;
     }
 
     async createProject({ name, cloneUrl, teamId, userId, appInstallationId }: CreateProjectParams): Promise<Project> {
