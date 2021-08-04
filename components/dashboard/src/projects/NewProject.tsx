@@ -14,6 +14,7 @@ import ContextMenu, { ContextMenuEntry } from "../components/ContextMenu";
 import CaretDown from "../icons/CaretDown.svg";
 import Plus from "../icons/Plus.svg";
 import Switch from "../icons/Switch.svg";
+import NoAccess from "../icons/NoAccess.svg";
 import search from "../icons/search.svg";
 import moment from "moment";
 
@@ -250,16 +251,18 @@ export default function NewProject() {
             <div className="h-3 border rounded-b-xl border-gray-100 bg-gray-100"></div>
         </div>);
 
-        const renderEmptyState = () => (<div className="mt-8 border rounded-xl border-gray-100 flex-col">
-            <div className="p-10">
-                <div className="p-6 text-center text-gray-500 bg-gray-100 rounded-xl">
-                    <h3 className="mb-6">
-                        Continue on GitHub
+        const renderEmptyState = () => (<div className="mt-8 border rounded-xl border-gray-100 dark:border-gray-700 flex-col">
+            <div>
+                <div className="px-12 py-16 text-center text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                    <img src={NoAccess} title="No Access" className="m-auto mb-4" />
+                    <h3 className="mb-2 text-gray-600 dark:text-gray-400">
+                        No Access
                     </h3>
-                    <span className="">
-                        Install the GitHub app on selected Repositories to continue.
+                    <span className="dark:text-gray-500">
+                        Authorize GitHub (github.com) or select a different account.
                     </span>
-                    <button className="mt-6" onClick={() => reconfigure()}>Configure</button>
+                    <br/>
+                    <button className="mt-6" onClick={() => reconfigure()}>Authorize Provider</button>
                 </div>
             </div>
         </div>)
@@ -272,8 +275,6 @@ export default function NewProject() {
         }
 
         return (<>
-            <h3 className="pb-2 mt-8">Select Repository</h3>
-
             {(loaded && empty) ? renderEmptyState() : (showGitProviders ? (<GitProviders onHostSelected={onGitProviderSeleted} />) : renderRepos())}
         </>)
     };
@@ -312,7 +313,7 @@ export default function NewProject() {
 
     return (<div className="flex flex-col w-96 mt-24 mx-auto items-center">
         <h1>New Project</h1>
-        <p className="text-gray-500 text-center text-base">Projects allow you to set up and acess Prebuilds.</p>
+        <p className="text-gray-500 text-center text-base">Select a git repository.</p>
 
         {!selectedRepo && renderSelectRepository()}
 
