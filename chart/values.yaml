@@ -414,6 +414,9 @@ components:
 
   wsDaemon:
     name: "ws-daemon"
+    # Use an initContainer to use local SSDs to setup a RAID0 for the workspace area
+    # The raid skips the first two disks (/dev/sda and /dev/sdb), i.e., we can use up to six disks.
+    setupSSDRaid: false
     hostWorkspaceArea: /var/gitpod/workspaces
     servicePort: 8080
     clusterIP: "None"
