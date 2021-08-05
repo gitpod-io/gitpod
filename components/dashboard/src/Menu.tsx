@@ -6,7 +6,7 @@
 
 import { User, TeamMemberInfo } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
-import { Link, useHistory } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useLocation, useRouteMatch } from "react-router";
 import { Location } from "history";
 import gitpodIcon from './icons/gitpod.svg';
@@ -32,7 +32,6 @@ interface Entry {
 export default function Menu() {
     const { user } = useContext(UserContext);
     const { teams } = useContext(TeamsContext);
-    const history = useHistory();
     const location = useLocation();
 
     const match = useRouteMatch<{ segment1?: string, segment2?: string, segment3?: string }>("/:segment1/:segment2?/:segment3?");
@@ -147,12 +146,12 @@ export default function Menu() {
     const renderTeamMenu = () => {
         return (
             <div className="flex p-1 pl-3 ">
-                <div className="flex h-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1">
+                { projectName && <div className="flex h-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1">
                     <Link to={team ? `/${team.slug}/projects` : "/workspaces"}>
                         <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{team?.name || userFullName}</span>
                     </Link>
-                </div>
-                <div className="flex h-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 py-1">
+                </div> }
+                <div className="flex h-full rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800">
                     <ContextMenu classes="w-64 left-0" menuEntries={[
                         {
                             title: userFullName,
@@ -161,7 +160,7 @@ export default function Menu() {
                                 <span className="">Personal Account</span>
                             </div>,
                             separator: true,
-                            onClick: () => history.push("/"),
+                            link: '/',
                         },
                         ...(teams || []).map(t => ({
                             title: t.name,
@@ -173,7 +172,7 @@ export default function Menu() {
                                 }</span>
                             </div>,
                             separator: true,
-                            onClick: () => history.push(`/${t.slug}`),
+                            link: `/${t.slug}`,
                         })).sort((a, b) => a.title.toLowerCase() > b.title.toLowerCase() ? 1 : -1),
                         {
                             title: 'Create a new team',
@@ -181,11 +180,12 @@ export default function Menu() {
                                 <span className="flex-1 font-semibold">New Team</span>
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14" className="w-3.5"><path fill="currentColor" fill-rule="evenodd" d="M7 0a1 1 0 011 1v5h5a1 1 0 110 2H8v5a1 1 0 11-2 0V8H1a1 1 0 010-2h5V1a1 1 0 011-1z" clip-rule="evenodd" /></svg>
                             </div>,
-                            onClick: () => history.push("/teams/new"),
+                            link: '/teams/new',
                         }
                     ]}>
-                        <div className="flex h-full px-2 py-1.5">
-                            <img className="filter-grayscale m-auto" src={CaretUpDown} />
+                        <div className="flex h-full px-2 py-1 space-x-3.5">
+                            { !projectName && <span className="text-base text-gray-600 dark:text-gray-400 font-semibold">{team?.name || userFullName}</span>}
+                            <img className="filter-grayscale" style={{marginTop: 5, marginBottom: 5}} src={CaretUpDown} />
                         </div>
                     </ContextMenu>
                 </div>
