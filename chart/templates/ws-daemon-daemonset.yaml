@@ -52,6 +52,9 @@ spec:
       serviceAccountName: ws-daemon
       hostPID: true
       volumes:
+      - name: hostfs
+        hostPath:
+          path: /
       - hostPath:
           path: {{ $comp.hostWorkspaceArea }}
           type: DirectoryOrCreate
@@ -101,6 +104,86 @@ spec:
       enableServiceLinks: false
 {{- if (or $comp.userNamespaces.shiftfsModuleLoader.enabled $comp.userNamespaces.seccompProfileInstaller.enabled) }}
       initContainers:
+{{- end }}
+{{- if $comp.setupSSDRaid }}
+      - name: raid-local-disks
+        image: scylladb/raid-setup:0.1
+        env:
+          - name: READYZ_FILE
+            value: "/tmp/readyz"
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: hostfs
+          mountPath: /mnt/hostfs
+          mountPropagation: Bidirectional
+        command:
+          - "/bin/bash"
+          - "-c"
+        args:
+          - |
+            set -euExo pipefail
+
+            RAID_DEVICE="/dev/md42"
+            RAID_DIR="/mnt/hostfs/mnt/raid-disk"
+            DISK_DEV_PREFIX="/dev/sd"
+
+            ls -l /dev/md*
+            cat /proc/mdstat
+
+            # If the disk has already been created, sleep indefinitely
+            if [ -b "${RAID_DEVICE}" && -d "${RAID_DIR}" ]; then
+                echo "raid array already created!"
+                touch "${READYZ_FILE}"
+            fi
+
+            # Discover how many disks there are
+            DISK_DEV_SUFFIX=(c d e f g h i)
+            MAX_NUM_DISKS=8
+            NUM_DISKS=0
+            declare -a DISKS
+            for i in `seq 0 $((MAX_NUM_DISKS-1))`;
+            do
+                CURR_DISK="${DISK_DEV_PREFIX}${DISK_DEV_SUFFIX[$i]}"
+                if [ ! -b "$CURR_DISK" ]; then
+                  break
+                fi
+                DISKS[$i]="$CURR_DISK"
+                NUM_DISKS=$((i+1))
+            done
+
+            if [ $NUM_DISKS -eq 0 ]; then
+              echo "no local disks detected!"
+              touch "${READYZ_FILE}"
+            fi
+
+            # Unmount disks from host filesystem
+            for i in `seq 0 $((NUM_DISKS-1))`;
+            do
+                CURR_DISK=${DISKS[$i]}
+                DISCARD_FLAG_PATH="/sys/block/${CURR_DISK#'/dev/'}/queue/discard_granularity"
+                umount $CURR_DISK &> /dev/null || echo "Disk $CURR_DISK already unmounted."
+                if [ "`cat $DISCARD_FLAG_PATH`" != "0" ]; then
+                    blkdiscard $CURR_DISK || true
+                fi
+            done
+            # Waits till udev reread device data
+            udevadm settle
+            # Create a raid array
+            mdadm --create "${RAID_DEVICE}" --force --level=0 -c1024 --raid-devices="${NUM_DISKS}" "${DISKS[@]}"
+            # Waits till udev reread md0 device data
+            udevadm settle
+            # Format the raid array as xfs
+            mkfs.xfs "${RAID_DEVICE}"
+
+            # Mount the raid array in a predefined location
+            mkdir -p "${RAID_DIR}"
+            mount -o noatime "${RAID_DEVICE}" "${RAID_DIR}"
+
+            ls -l /dev/md*
+            cat /proc/mdstat
+
+            touch "${READYZ_FILE}"
 {{- end }}
 {{- if $comp.userNamespaces.shiftfsModuleLoader.enabled }}
       - name: shiftfs-module-loader
