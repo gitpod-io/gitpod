@@ -108,9 +108,6 @@ spec:
 {{- if $comp.setupSSDRaid }}
       - name: raid-local-disks
         image: scylladb/raid-setup:0.1
-        env:
-          - name: READYZ_FILE
-            value: "/tmp/readyz"
         securityContext:
           privileged: true
         volumeMounts:
@@ -118,27 +115,24 @@ spec:
           mountPath: /mnt/hostfs
           mountPropagation: Bidirectional
         command:
-          - "/bin/bash"
-          - "-c"
+          - /bin/bash
+          - -c
         args:
           - |
             set -euExo pipefail
-
             RAID_DEVICE="/dev/md42"
-            RAID_DIR="/mnt/hostfs/mnt/raid-disk"
+            RAID_DIR="/mnt/hostfs{{ $comp.hostWorkspaceArea }}"
             DISK_DEV_PREFIX="/dev/sd"
-
             ls -l /dev/md*
             cat /proc/mdstat
-
             # If the disk has already been created, sleep indefinitely
-            if [ -b "${RAID_DEVICE}" && -d "${RAID_DIR}" ]; then
+            if [ -b "${RAID_DEVICE}" ] && [ -d "${RAID_DIR}" ]; then
                 echo "raid array already created!"
-                touch "${READYZ_FILE}"
+                mount -o noatime "${RAID_DEVICE}" "${RAID_DIR}" || true
+                exit 0
             fi
-
             # Discover how many disks there are
-            DISK_DEV_SUFFIX=(c d e f g h i)
+            DISK_DEV_SUFFIX=(b c d e f g h i j)
             MAX_NUM_DISKS=8
             NUM_DISKS=0
             declare -a DISKS
@@ -151,12 +145,10 @@ spec:
                 DISKS[$i]="$CURR_DISK"
                 NUM_DISKS=$((i+1))
             done
-
             if [ $NUM_DISKS -eq 0 ]; then
               echo "no local disks detected!"
-              touch "${READYZ_FILE}"
+              exit 1
             fi
-
             # Unmount disks from host filesystem
             for i in `seq 0 $((NUM_DISKS-1))`;
             do
@@ -175,15 +167,11 @@ spec:
             udevadm settle
             # Format the raid array as xfs
             mkfs.xfs "${RAID_DEVICE}"
-
             # Mount the raid array in a predefined location
             mkdir -p "${RAID_DIR}"
             mount -o noatime "${RAID_DEVICE}" "${RAID_DIR}"
-
             ls -l /dev/md*
             cat /proc/mdstat
-
-            touch "${READYZ_FILE}"
 {{- end }}
 {{- if $comp.userNamespaces.shiftfsModuleLoader.enabled }}
       - name: shiftfs-module-loader
