@@ -257,7 +257,9 @@ func (gov *Controller) controlCPU() {
 		// and chances are the container isn't running anyways.
 		return
 	} else if err != nil {
-		gov.log.WithError(err).WithField("newLimit", newLimit).Warn("cannot set new CPU limit")
+		gov.log.WithField("newLimit", newLimit).WithField("bdgtSpent", bdgtSpent).WithField("sample", sample).WithField("prev", prev).
+			WithError(err).
+			Warn("cannot set new CPU limit")
 		return
 	}
 }
