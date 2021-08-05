@@ -28,7 +28,7 @@ export interface User {
 
     identities: Identity[]
 
-    allowsMarketingCommunication: boolean;
+    allowsMarketingCommunication?: boolean;
 
     /**
      * Whether the user has been blocked to use our service, because of TOS violation for example.
@@ -109,7 +109,8 @@ export interface AdditionalUserData {
 }
 
 export interface EmailNotificationSettings {
-    disallowTransactionalEmails?: boolean;
+    allowsChangelogMail?: boolean;
+    allowsDevXMail?: boolean;
 }
 
 export type IDESettings = {

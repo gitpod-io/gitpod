@@ -270,22 +270,13 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         const user = this.checkUser('updateLoggedInUser');
         await this.guardAccess({ kind: "user", subject: user }, "update");
 
-        const allowedFields: (keyof User)[] = ['avatarUrl', 'fullName', 'allowsMarketingCommunication', 'additionalData'];
+        const allowedFields: (keyof User)[] = ['avatarUrl', 'fullName', 'additionalData'];
         for (const p of allowedFields) {
             if (p in partialUser) {
                 (user[p] as any) = partialUser[p];
             }
         }
 
-        if (partialUser['allowsMarketingCommunication'] !== undefined) {
-            this.analytics.track({
-                userId: user.id,
-                event: "notification_change",
-                properties: {
-                    "unsubscribed": !partialUser['allowsMarketingCommunication']
-                }
-            });
-        }
         await this.userDB.updateUserPartial(user);
         return user;
     }

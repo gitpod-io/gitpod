@@ -14,50 +14,65 @@ import settingsMenu from "./settings-menu";
 export default function Notifications() {
     const { user, setUser } = useContext(UserContext);
 
-    const [isTransactionalMail, setTransactionMail] = useState(!user?.additionalData?.emailNotificationSettings?.disallowTransactionalEmails);
-    const toggleTransactionalMail = async () => {
-        if (user) {
-            user.additionalData = {
-                ...{
+    const [isChangelogMail, setChangelogMail] = useState(!!user?.additionalData?.emailNotificationSettings?.allowsChangelogMail);
+    const toggleChangelogMail = async () => {
+        if (user && user.additionalData && user.additionalData.emailNotificationSettings) {
+            await getGitpodService().server.updateLoggedInUser({
+                additionalData: {
                     ...user.additionalData,
                     emailNotificationSettings: {
-                        ...user.additionalData?.emailNotificationSettings,
-                        disallowTransactionalEmails: isTransactionalMail
+                        ...user.additionalData.emailNotificationSettings,
+                        allowsChangelogMail: !isChangelogMail
                     }
                 }
-            }
-            await getGitpodService().server.updateLoggedInUser({
-                additionalData: user.additionalData
             });
+            await getGitpodService().server.trackEvent({
+                event: "notification_change",
+                properties: { "unsubscribed_changelog": isChangelogMail }
+            })
             setUser(user);
-            setTransactionMail(!isTransactionalMail);
+            setChangelogMail(!isChangelogMail);
         }
-    };
+    }
 
-    const [isMarketingMail, setMarketingMail] = useState(!!user?.allowsMarketingCommunication);
-    const toggleMarketingMail = async () => {
-        if (user) {
-            user.allowsMarketingCommunication = !isMarketingMail;
+    const [isDevXMail, setDevXMail] = useState(!!user?.additionalData?.emailNotificationSettings?.allowsDevXMail);
+    const toggleDevXMail = async () => {
+        if (user && user.additionalData && user.additionalData.emailNotificationSettings) {
             await getGitpodService().server.updateLoggedInUser({
-                allowsMarketingCommunication: user.allowsMarketingCommunication
+                additionalData: {
+                    ...user.additionalData,
+                    emailNotificationSettings: {
+                        ...user.additionalData.emailNotificationSettings,
+                        allowsDevXMail: !isDevXMail
+                    }
+                }
             });
+            await getGitpodService().server.trackEvent({
+                event: "notification_change",
+                properties: { "unsubscribed_devx": isDevXMail }
+            })
             setUser(user);
-            setMarketingMail(!isMarketingMail);
+            setDevXMail(!isDevXMail);
         }
     }
     return <div>
         <PageWithSubMenu subMenu={settingsMenu} title='Notifications' subtitle='Choose when to be notified.'>
             <h3>Email Notification Preferences</h3>
             <CheckBox
-                title="Account Notifications"
-                desc="Receive emails about changes to your account"
-                checked={isTransactionalMail}
-                onChange={toggleTransactionalMail} />
+                title="Account Notifications [required]"
+                desc="Receive essential emails about changes to your account"
+                checked={true}
+                disabled={true} />
             <CheckBox
-                title="Product Notifications"
-                desc="Receive emails about product updates and news"
-                checked={isMarketingMail}
-                onChange={toggleMarketingMail} />
+                title="Changelog"
+                desc="Be the first to learn about new features and overall product improvements"
+                checked={isChangelogMail}
+                onChange={toggleChangelogMail} />
+            <CheckBox
+                title="Developer Experience & Product Tips"
+                desc="Bring back joy and speed to your workflows"
+                checked={isDevXMail}
+                onChange={toggleDevXMail} />
         </PageWithSubMenu>
     </div>;
 }
