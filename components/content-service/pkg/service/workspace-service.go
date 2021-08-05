@@ -6,6 +6,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"github.com/opentracing/opentracing-go"
@@ -51,7 +52,7 @@ func (cs *WorkspaceService) WorkspaceDownloadURL(ctx context.Context, req *api.W
 			WithField("blobName", blobName).
 			WithError(err).
 			Error("error getting SignDownload URL")
-		if err == storage.ErrNotFound {
+		if errors.Is(err, storage.ErrNotFound) {
 			return nil, status.Error(codes.NotFound, err.Error())
 		}
 		return nil, status.Error(codes.Unknown, err.Error())
@@ -77,7 +78,7 @@ func (cs *WorkspaceService) DeleteWorkspace(ctx context.Context, req *api.Delete
 		}
 		err = cs.s.DeleteObject(ctx, cs.s.Bucket(req.OwnerId), &storage.DeleteObjectQuery{Prefix: prefix})
 		if err != nil {
-			if err == storage.ErrNotFound {
+			if errors.Is(err, storage.ErrNotFound) {
 				log.WithError(err).Debug("deleting workspace backup: NotFound")
 				return &api.DeleteWorkspaceResponse{}, nil
 			}
@@ -90,7 +91,7 @@ func (cs *WorkspaceService) DeleteWorkspace(ctx context.Context, req *api.Delete
 	blobName := cs.s.BackupObject(req.WorkspaceId, storage.DefaultBackup)
 	err = cs.s.DeleteObject(ctx, cs.s.Bucket(req.OwnerId), &storage.DeleteObjectQuery{Name: blobName})
 	if err != nil {
-		if err == storage.ErrNotFound {
+		if errors.Is(err, storage.ErrNotFound) {
 			log.WithError(err).Debug("deleting workspace backup: NotFound, ", blobName)
 			return &api.DeleteWorkspaceResponse{}, nil
 		}
@@ -101,7 +102,7 @@ func (cs *WorkspaceService) DeleteWorkspace(ctx context.Context, req *api.Delete
 	trailPrefix := cs.s.BackupObject(req.WorkspaceId, "trail-")
 	err = cs.s.DeleteObject(ctx, cs.s.Bucket(req.OwnerId), &storage.DeleteObjectQuery{Prefix: trailPrefix})
 	if err != nil {
-		if err == storage.ErrNotFound {
+		if errors.Is(err, storage.ErrNotFound) {
 			log.WithError(err).Debug("deleting workspace backup: NotFound, ", trailPrefix)
 			return &api.DeleteWorkspaceResponse{}, nil
 		}
