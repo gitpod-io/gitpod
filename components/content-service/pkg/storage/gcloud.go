@@ -167,6 +167,13 @@ func gcpEnsureExists(ctx context.Context, client *gcpstorage.Client, bucketName 
 	log.WithField("bucketName", bucketName).Debug("Creating bucket")
 	err = hdl.Create(ctx, gcpConfig.Project, &gcpstorage.BucketAttrs{
 		Location: gcpConfig.Region,
+		CORS: []gcpstorage.CORS{
+			{
+				Origins: []string{"*"},
+				Methods: []string{"GET"},
+				MaxAge:  6 * time.Hour,
+			},
+		},
 	})
 	if e, ok := err.(*googleapi.Error); ok && e.Code == http.StatusConflict && strings.Contains(strings.ToLower(e.Message), "you already own this bucket") {
 		// Looks like we had a bucket creation race and lost.

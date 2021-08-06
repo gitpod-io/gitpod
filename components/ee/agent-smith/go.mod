@@ -18,6 +18,7 @@ require (
 	golang.org/x/sys v0.0.0-20210603081109-ebe580a85c40
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	k8s.io/apimachinery v0.21.1
+	k8s.io/client-go v1.5.2
 	moul.io/http2curl v1.0.0 // indirect
 )
 

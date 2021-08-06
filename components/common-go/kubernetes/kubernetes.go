@@ -49,7 +49,7 @@ const (
 	TraceIDAnnotation = "gitpod/traceid"
 
 	// CPULimitAnnotation enforces a strict CPU limit on a workspace by virtue of ws-daemon
-	CPULimitAnnotation = "gitpod/cpuLimit"
+	CPULimitAnnotation = "gitpod.io/cpuLimit"
 
 	// RequiredNodeServicesAnnotation lists all Gitpod services required on the node
 	RequiredNodeServicesAnnotation = "gitpod.io/requiredNodeServices"
