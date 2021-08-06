@@ -102,7 +102,7 @@ export default function () {
                             onClick: () => { /* TODO */ }
                         }]} />
                     </div>
-                    <Link to="./members"><button className="ml-2 secondary">Invite Members</button></Link>
+                    <Link to="./members" className="flex"><button className="ml-2 secondary">Invite Members</button></Link>
                     <button className="ml-2" onClick={() => onNewProject()}>New Project</button>
                 </div>
                 <div className="mt-4 grid grid-cols-3 gap-4">
