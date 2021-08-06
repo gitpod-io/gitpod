@@ -124,7 +124,19 @@ export default function () {
                                 </div>
                                 <p>{toRemoteURL(p.cloneUrl)}</p>
                             </div>
-                            <div className="h-1/4 px-6 py-1"><p>__ Active Branches</p></div>
+                            <div className="h-1/4 px-6 py-1 text-gray-400 text-sm">
+                                <span className="hover:text-gray-600">
+                                    <Link to={`/`}>
+                                        Branches
+                                    </Link>
+                                </span>
+                                <span className="mx-2 my-auto">·</span>
+                                <span className="hover:text-gray-600">
+                                    <Link to={`/`}>
+                                        Prebuilds
+                                    </Link>
+                                </span>
+                            </div>
                         </div>
                         <div className="h-1/6 px-6 border rounded-b-xl dark:border-gray-800 bg-gray-200 cursor-pointer" onClick={() => viewAllPrebuilds(p)}>
                             {lastPrebuilds.get(p.id)
