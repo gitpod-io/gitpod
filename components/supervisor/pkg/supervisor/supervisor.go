@@ -405,26 +405,43 @@ func hasMetadataAccess() bool {
 func reaper(terminatingReaper <-chan bool) {
 	defer log.Debug("reaper shutdown")
 
+	notifications := make(chan struct{}, 128)
+	go func() {
+		sigs := make(chan os.Signal, 3)
+		signal.Notify(sigs, syscall.SIGCHLD)
+		for {
+			<-sigs
+			select {
+			case notifications <- struct{}{}:
+			default:
+				// Notification channel is full, so we drop the notification.
+				// Because we're reaping with PID -1, we'll catch the child process for
+				// which we've missed the notification anyways.
+			}
+		}
+	}()
+
 	var terminating bool
-	sigs := make(chan os.Signal, 128)
-	signal.Notify(sigs, syscall.SIGCHLD)
 	for {
 		select {
-		case <-sigs:
+		case <-notifications:
 		case terminating = <-terminatingReaper:
 			continue
 		}
 
-		// "pid: 0, options: 0" to follow https://github.com/ramr/go-reaper/issues/11 to make agent-smith work again
-		pid, err := unix.Wait4(0, nil, 0, nil)
-
+		// wait on the process, hence remove it from the process table
+		pid, err := unix.Wait4(-1, nil, 0, nil)
+		// if we've been interrupted, try again until we're done
+		for err == syscall.EINTR {
+			pid, err = unix.Wait4(-1, nil, 0, nil)
+		}
 		if err == unix.ECHILD {
 			// The calling process does not have any unwaited-for children.
-			continue
+			// Not really an error for us
+			err = nil
 		}
 		if err != nil {
 			log.WithField("pid", pid).WithError(err).Debug("cannot call waitpid() for re-parented child")
-			continue
 		}
 
 		if !terminating {
