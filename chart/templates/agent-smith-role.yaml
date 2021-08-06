@@ -22,5 +22,11 @@ rules:
   - "use"
   resourceNames:
   - "{{ .Release.Namespace }}-ns-privileged-unconfined"
-
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+  - update
 {{- end -}}
