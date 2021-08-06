@@ -132,7 +132,7 @@ spec:
                 exit 0
             fi
             # Discover how many disks there are
-            DISK_DEV_SUFFIX=(b c d e f g h i j)
+            DISK_DEV_SUFFIX=(c d e f g h i j)
             MAX_NUM_DISKS=8
             NUM_DISKS=0
             declare -a DISKS
