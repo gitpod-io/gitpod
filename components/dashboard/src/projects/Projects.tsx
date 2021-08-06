@@ -106,10 +106,10 @@ export default function () {
                     <button className="ml-2" onClick={() => onNewProject()}>New Project</button>
                 </div>
                 <div className="mt-4 grid grid-cols-3 gap-4">
-                    {projects.map(p => (<div key={`project-${p.id}`} className="h-48">
-                        <div className="h-5/6 border border-gray-200 dark:border-gray-800 rounded-t-xl">
-                            <div className="h-3/4 p-6">
-                                <div className="flex self-center text-base text-gray-900 dark:text-gray-50 font-medium">
+                    {projects.map(p => (<div key={`project-${p.id}`} className="h-52">
+                        <div className="h-42 border border-gray-100 dark:border-gray-100 rounded-t-xl">
+                            <div className="h-32 p-6">
+                                <div className="flex text-xl font-semibold text-gray-700 dark:text-gray-50 font-medium">
                                     <Link to={`/${!!team ? team.slug : 'projects'}/${p.name}`}>
                                         {p.name}
                                     </Link>
@@ -122,9 +122,11 @@ export default function () {
                                         }]} />
                                     </div>
                                 </div>
-                                <p>{toRemoteURL(p.cloneUrl)}</p>
+                                <Link to={`/`}>
+                                    <p className="hover:text-gray-600">{toRemoteURL(p.cloneUrl)}</p>
+                                </Link>
                             </div>
-                            <div className="h-1/4 px-6 py-1 text-gray-400 text-sm">
+                            <div className="h-10 px-6 py-1 text-gray-400 text-sm">
                                 <span className="hover:text-gray-600">
                                     <Link to={`/`}>
                                         Branches
@@ -138,15 +140,20 @@ export default function () {
                                 </span>
                             </div>
                         </div>
-                        <div className="h-1/6 px-6 border rounded-b-xl dark:border-gray-800 bg-gray-200 cursor-pointer" onClick={() => viewAllPrebuilds(p)}>
+                        <div className="h-10 px-4 border rounded-b-xl dark:border-gray-800 bg-gray-100 border-gray-100" onClick={() => viewAllPrebuilds(p)}>
                             {lastPrebuilds.get(p.id)
-                                ? (<div className="flex flex-row space-x-3 h-full text-sm">
-                                    <div className={"my-auto rounded-full w-3 h-3 text-sm align-middle " + (true ? "bg-green-500" : "bg-gray-400")}>
-                                        &nbsp;
-                                    </div>
-                                    <div className="my-auto">{lastPrebuilds.get(p.id)!.branch}</div>
-                                    <div className="my-auto text-gray-400">{moment(lastPrebuilds.get(p.id)!.startedAt, "YYYYMMDD").fromNow()}</div>
-                                    <div className="my-auto text-gray-400 flex-grow text-right">View All ⟶</div>
+                                ? (<div className="flex flex-row h-full text-sm justify-between">
+                                    <Link to={`/`} className="flex my-auto group space-x-2">
+                                        <div className={"my-auto rounded-full w-3 h-3 text-sm align-middle " + (true ? "bg-green-500" : "bg-gray-400")}>
+                                            &nbsp;
+                                        </div>
+                                        <div className="my-auto font-semibold text-gray-500">{lastPrebuilds.get(p.id)!.branch}</div>
+                                        <span className="mx-1 my-auto text-gray-300">·</span>
+                                        <div className="my-auto text-gray-400 flex-grow hover:text-gray-800">{moment(lastPrebuilds.get(p.id)!.startedAt, "YYYYMMDD").fromNow()}</div>
+                                    </Link>
+                                    <Link to={`/`} className="my-auto group">
+                                        <div className="flex my-auto text-gray-400 flex-grow text-right group-hover:text-gray-600">View All &rarr;</div>
+                                    </Link>
                                 </div>)
                                 : (<div className="flex h-full text-md">
                                     <p className="my-auto ">No recent prebuilds</p>
@@ -154,7 +161,7 @@ export default function () {
                         </div>
                     </div>))}
                     <div key="new-project"
-                        className="h-48 border-dashed border-2 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl focus:bg-gitpod-kumquat-light transition ease-in-out group">
+                        className="h-52 border-dashed border-2 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl focus:bg-gitpod-kumquat-light transition ease-in-out group">
                         <Link to={newProjectUrl}>
                             <div className="flex h-full">
                                 <div className="m-auto">New Project</div>
