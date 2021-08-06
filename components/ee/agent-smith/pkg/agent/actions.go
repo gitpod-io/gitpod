@@ -8,9 +8,13 @@ import (
 	"context"
 	"fmt"
 
+	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
+
 	"golang.org/x/sys/unix"
+	corev1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/util/retry"
 )
 
 // all functions in this file deal directly with Kubernetes and make several assumptions
@@ -45,6 +49,29 @@ func (agent *Smith) blockUser(ownerID string) error {
 }
 
 func (agent *Smith) limitCPUUse(podname string) error {
-	// todo(fntlnz): limiting CPU usage via editing the cgroup or using nice/renice seems to be the only option here
+	if agent.Kubernetes == nil {
+		return fmt.Errorf("not connected to Kubernetes - cannot limit CPU usage")
+	}
+	if agent.Config.Enforcement.CPULimitPenalty == "" {
+		return fmt.Errorf("no CPU limit penalty specified - cannot limit CPU usage")
+	}
+
+	ctx := context.Background()
+	retry.RetryOnConflict(retry.DefaultBackoff, func() error {
+		pods := agent.Kubernetes.CoreV1().Pods(agent.Config.KubernetesNamespace)
+		pod, err := pods.Get(ctx, podname, corev1.GetOptions{})
+		if err != nil {
+			return err
+		}
+
+		pod.Annotations[wsk8s.CPULimitAnnotation] = agent.Config.Enforcement.CPULimitPenalty
+		_, err = pods.Update(ctx, pod, corev1.UpdateOptions{})
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
 	return nil
 }

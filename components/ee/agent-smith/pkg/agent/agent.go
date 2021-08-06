@@ -32,6 +32,9 @@ import (
 	"golang.org/x/xerrors"
 
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 const (
@@ -46,6 +49,7 @@ type Smith struct {
 	Config           Config
 	GitpodAPI        gitpod.APIInterface
 	EnforcementRules map[string]EnforcementRules
+	Kubernetes       kubernetes.Interface
 	metrics          *metrics
 
 	notifiedInfringements *lru.Cache
@@ -110,6 +114,11 @@ func NewAgentSmith(cfg Config) (*Smith, error) {
 		return nil, err
 	}
 
+	// establish default CPU limit penalty
+	if cfg.Enforcement.CPULimitPenalty == "" {
+		cfg.Enforcement.CPULimitPenalty = "500m"
+	}
+
 	var api gitpod.APIInterface
 	if cfg.GitpodAPI.HostURL != "" {
 		u, err := url.Parse(cfg.GitpodAPI.HostURL)
@@ -125,6 +134,29 @@ func NewAgentSmith(cfg Config) (*Smith, error) {
 		})
 		if err != nil {
 			return nil, xerrors.Errorf("cannot connect to Gitpod API: %w", err)
+		}
+	}
+
+	var clientset kubernetes.Interface
+	if cfg.Kubernetes.Enabled {
+		if cfg.Kubernetes.Kubeconfig != "" {
+			res, err := clientcmd.BuildConfigFromFlags("", cfg.Kubernetes.Kubeconfig)
+			if err != nil {
+				return nil, xerrors.Errorf("cannot connect to kubernetes: %w", err)
+			}
+			clientset, err = kubernetes.NewForConfig(res)
+			if err != nil {
+				return nil, xerrors.Errorf("cannot connect to kubernetes: %w", err)
+			}
+		} else {
+			k8s, err := rest.InClusterConfig()
+			if err != nil {
+				return nil, xerrors.Errorf("cannot connect to kubernetes: %w", err)
+			}
+			clientset, err = kubernetes.NewForConfig(k8s)
+			if err != nil {
+				return nil, xerrors.Errorf("cannot connect to kubernetes: %w", err)
+			}
 		}
 	}
 
@@ -146,6 +178,7 @@ func NewAgentSmith(cfg Config) (*Smith, error) {
 		},
 		Config:                    cfg,
 		GitpodAPI:                 api,
+		Kubernetes:                clientset,
 		notifiedInfringements:     notificationCache,
 		perfHandler:               make(chan perfHandlerFunc, 10),
 		metrics:                   m,

@@ -45,6 +45,9 @@ data:
           "baseBudget": "2Gi",
           "perDtThreshold": "250Mi"
         }
+      },
+      "kubernetes": {
+        "enabled": true
       }
     }
 {{- end -}}
