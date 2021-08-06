@@ -159,6 +159,7 @@ export default function Menu() {
                                 <span className="text-gray-800 dark:text-gray-100 text-base font-semibold">{userFullName}</span>
                                 <span className="">Personal Account</span>
                             </div>,
+                            active: !team,
                             separator: true,
                             link: '/',
                         },
@@ -171,6 +172,7 @@ export default function Menu() {
                                     : '...'
                                 }</span>
                             </div>,
+                            active: team && team.id === t.id,
                             separator: true,
                             link: `/${t.slug}`,
                         })).sort((a, b) => a.title.toLowerCase() > b.title.toLowerCase() ? 1 : -1),
