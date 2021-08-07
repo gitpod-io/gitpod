@@ -59,7 +59,7 @@
     }
 
     a.learn-more {
-        @apply underline underline-thickness-thin underline-offset-small;
+        @apply underline underline-thickness-thin underline-offset-small text-gray-400 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-500;
     }
 
     input[type=text], input[type=search], input[type=password], select {
