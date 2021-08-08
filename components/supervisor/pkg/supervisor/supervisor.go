@@ -599,7 +599,7 @@ func prepareIDELaunch(cfg *Config) *exec.Cmd {
 func buildChildProcEnv(cfg *Config) []string {
 	envs := make(map[string]string)
 	for _, e := range os.Environ() {
-		segs := strings.Split(e, "=")
+		segs := strings.SplitN(e, "=", 2)
 		if len(segs) < 2 {
 			log.Printf("\"%s\" has invalid format, not including in IDE environment", e)
 			continue
