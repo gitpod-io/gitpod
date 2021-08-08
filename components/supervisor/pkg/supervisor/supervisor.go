@@ -194,7 +194,7 @@ func Run(options ...RunOption) {
 	go analyseConfigChanges(ctx, cfg, analytics, gitpodConfigService)
 
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
-	termMuxSrv.Env = buildChildProcEnv(cfg)
+	termMuxSrv.Env = buildChildProcEnv(cfg, nil)
 	termMuxSrv.DefaultCreds = &syscall.Credential{
 		Uid: gitpodUID,
 		Gid: gitpodGID,
@@ -580,7 +580,7 @@ func prepareIDELaunch(cfg *Config) *exec.Cmd {
 			Gid: gitpodGID,
 		},
 	}
-	cmd.Env = buildChildProcEnv(cfg)
+	cmd.Env = buildChildProcEnv(cfg, nil)
 
 	// Here we must resist the temptation to "neaten up" the IDE output for headless builds.
 	// This would break the JSON parsing of the headless builds.
@@ -596,9 +596,15 @@ func prepareIDELaunch(cfg *Config) *exec.Cmd {
 	return cmd
 }
 
-func buildChildProcEnv(cfg *Config) []string {
+// buildChildProcEnv computes the environment variables passed to a child process, based on the total list
+// of envvars. If envvars is nil, os.Environ() is used.
+func buildChildProcEnv(cfg *Config, envvars []string) []string {
+	if envvars == nil {
+		envvars = os.Environ()
+	}
+
 	envs := make(map[string]string)
-	for _, e := range os.Environ() {
+	for _, e := range envvars {
 		segs := strings.SplitN(e, "=", 2)
 		if len(segs) < 2 {
 			log.Printf("\"%s\" has invalid format, not including in IDE environment", e)
@@ -633,7 +639,9 @@ func buildChildProcEnv(cfg *Config) []string {
 	envs["USER"] = "gitpod"
 
 	// Particular Java optimisation: Java pre v10 did not gauge it's available memory correctly, and needed explicitly setting "-Xmx" for all Hotspot/openJDK VMs
-	envs["JAVA_TOOL_OPTIONS"] += fmt.Sprintf(" -Xmx%sm", os.Getenv("GITPOD_MEMORY"))
+	if mem, ok := envs["GITPOD_MEMORY"]; ok {
+		envs["JAVA_TOOL_OPTIONS"] += fmt.Sprintf(" -Xmx%sm", mem)
+	}
 
 	var env, envn []string
 	for nme, val := range envs {
@@ -926,7 +934,7 @@ func startSSHServer(ctx context.Context, cfg *Config, wg *sync.WaitGroup) {
 	}
 
 	cmd := exec.Command(dropbear, "-F", "-E", "-w", "-s", "-p", fmt.Sprintf(":%d", cfg.SSHPort), "-r", hostkeyFN.Name())
-	cmd.Env = buildChildProcEnv(cfg)
+	cmd.Env = buildChildProcEnv(cfg, nil)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Start()
