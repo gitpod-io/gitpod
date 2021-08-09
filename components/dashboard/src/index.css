@@ -58,7 +58,7 @@
         @apply cursor-default opacity-50 pointer-events-none;
     }
 
-    a.learn-more {
+    a.gp-link {
         @apply underline underline-thickness-thin underline-offset-small text-gray-400 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-500;
     }
 

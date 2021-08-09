@@ -78,7 +78,7 @@ export default function () {
         const configString = await getGitpodService().server.fetchProjectRepositoryConfiguration(project.id);
         if (configString) {
           // TODO(janx): Link to .gitpod.yml directly instead of just the cloneUrl.
-          setEditorError(<span>A Gitpod configuration already exists in the project's <a className="learn-more" href={project.cloneUrl}>repository</a>.<br/>Please <a className="learn-more" href={`/#${project.cloneUrl}`}>edit it in Gitpod</a> instead.</span>);
+          setEditorError(<span>A Gitpod configuration already exists in the project's <a className="gp-link" href={project.cloneUrl}>repository</a>.<br/>Please <a className="gp-link" href={`/#${project.cloneUrl}`}>edit it in Gitpod</a> instead.</span>);
           setGitpodYml(configString);
         } else {
           setIsEditorDisabled(false);
@@ -113,7 +113,7 @@ export default function () {
 
   return <div className="flex flex-col mt-24 mx-auto items-center">
     <h1>Configure Project</h1>
-    <p className="text-gray-500 text-center text-base">Fully-automate your project's dev setup. <a className="learn-more" href="https://www.gitpod.io/docs/references/gitpod-yml">Learn more</a></p>
+    <p className="text-gray-500 text-center text-base">Fully-automate your project's dev setup. <a className="gp-link" href="https://www.gitpod.io/docs/references/gitpod-yml">Learn more</a></p>
     <div className="mt-4 w-full flex">
       <div className="flex-1 m-8">
         {editorError && <AlertBox className="mb-2">{editorError}</AlertBox>}

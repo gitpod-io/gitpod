@@ -45,7 +45,7 @@ export default function Setup() {
 
                     <div className="flex">
                         <span className="text-gray-500">
-                            By using Gitpod, you agree to our <a className="learn-more hover:text-gray-600" target="gitpod-terms" href="https://www.gitpod.io/self-hosted-terms/">terms</a>.
+                            By using Gitpod, you agree to our <a className="gp-link" target="gitpod-terms" href="https://www.gitpod.io/self-hosted-terms/">terms</a>.
                         </span>
                     </div>
                 </div>

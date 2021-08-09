@@ -208,7 +208,7 @@ export default function EnvVars() {
             ? <div className="bg-gray-100 dark:bg-gray-800 rounded-xl w-full h-96">
                 <div className="pt-28 flex flex-col items-center w-96 m-auto">
                     <h3 className="text-center pb-3 text-gray-500 dark:text-gray-400">No Environment Variables</h3>
-                    <div className="text-center pb-6 text-gray-500">In addition to user-specific environment variables you can also pass variables through a workspace creation URL. <a className="text-gray-400 learn-more hover:text-gray-600" href="https://www.gitpod.io/docs/environment-variables/#using-the-account-settings">Learn more</a></div>
+                    <div className="text-center pb-6 text-gray-500">In addition to user-specific environment variables you can also pass variables through a workspace creation URL. <a className="gp-link" href="https://www.gitpod.io/docs/environment-variables/#using-the-account-settings">Learn more</a></div>
                     <button onClick={add}>New Variable</button>
                 </div>
             </div>
