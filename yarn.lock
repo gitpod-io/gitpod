@@ -20066,6 +20066,11 @@ text-table@0.2.0, text-table@^0.2.0, text-table@~0.2.0:
   version "0.2.0"
   resolved "https://registry.yarnpkg.com/text-table/-/text-table-0.2.0.tgz#7f5ee823ae805207c00af2df4a84ec3fcfa570b4"
 
+the-big-username-blacklist@^1.5.2:
+  version "1.5.2"
+  resolved "https://registry.yarnpkg.com/the-big-username-blacklist/-/the-big-username-blacklist-1.5.2.tgz#0a4e88fe636e39552c9306b72e7722c99b6eece6"
+  integrity sha512-bKRIZbu3AoDhEkjNcErodWLpR18vZQQqg9DEab/zELgGw++M1x0KBeTGdoEPHPw0ghmx1jf/B6kZKuwDDPhGBQ==
+
 thenify-all@^1.0.0:
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/thenify-all/-/thenify-all-1.6.0.tgz#1a1918d402d8fc3f98fbf234db0bcc8cc10e9726"
