@@ -20,6 +20,7 @@ import { ErrorCodes } from "@gitpod/gitpod-protocol/lib/messaging/error";
 import { poll, PollOptions } from "../utils";
 import settingsMenu from "./settings-menu";
 import { Disposable } from "@gitpod/gitpod-protocol";
+import { Item, ItemField, ItemsList } from "../components/ItemsList";
 
 export default function Teams() {
 
@@ -527,6 +528,16 @@ function AllTeams() {
                 <div className="flex-grow ">
                     <h3 className="self-center">All Teams</h3>
                     <h2>Manage teams and team members.</h2>
+                    <ItemsList className="pt-2">
+                        <Item className="w-full bg-yellow-200 hover:bg-yellow-200 py-6 px-6">
+                            <ItemField className=" flex flex-col">
+                                <div className="text-yellow-600 font-semibold">DEPRECATION NOTICE</div>
+                                <p className="text-yellow-800">
+                                    Hey! We're introducing <strong>Teams & Projects</strong> to surface <strong>Prebuilds</strong> in the dashboard. All existing teams will be migrated over the upcoming weeks. There's no action required on your side. <a href="/new" className="learn-more">Learn more about Teams & Projects</a> or <a href="/new" className="learn-more">Create a New Team</a>.
+                                </p>
+                            </ItemField>
+                        </Item>
+                    </ItemsList>
                 </div>
             </div>
         )}
