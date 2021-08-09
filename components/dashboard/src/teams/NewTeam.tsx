@@ -38,7 +38,7 @@ export default function () {
                 <h3 className="text-center text-xl mb-6">What's your team's name?</h3>
                 <h4>Team Name</h4>
                 <input className={`w-full${!!creationError ? ' error' : ''}`} type="text" onChange={event => name = event.target.value} />
-                {!!creationError && <p className="text-gitpod-red">{creationError.message}</p>}
+                {!!creationError && <p className="text-gitpod-red">{creationError.message.replace(/Request \w+ failed with message: /, '')}</p>}
             </div>
             <div className="flex flex-row-reverse space-x-2 space-x-reverse mt-2">
                 <button type="submit">Create Team</button>
