@@ -341,7 +341,8 @@ function GitProviders(props: {
 
     useEffect(() => {
         (async () => {
-            setAuthProviders(await getGitpodService().server.getAuthProviders());
+            const providers = await getGitpodService().server.getAuthProviders();
+            setAuthProviders(providers.filter(p => ["github.com", "gitlab.com"].includes(p.host)));
         })();
     }, []);
 
