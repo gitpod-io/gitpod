@@ -17,7 +17,7 @@ export const WhatsNewEntry202108: WhatsNewEntry = {
                 <p className="pb-2 text-gray-900 dark:text-gray-100 text-base font-medium">Teams & Projects <PillLabel>New Feature</PillLabel></p>
                 <p className="pb-2 text-gray-500 dark:text-gray-400 text-sm">Hey! We're introducing <strong>Teams & Projects</strong> to surface <strong>Prebuilds</strong> in the dashboard. All existing teams will be migrated over the upcoming weeks. No action is required on your side. 🎉</p>
                 <p className="pb-2 text-gray-500 dark:text-gray-400 text-sm">You can create as many teams as you need and import repositories as projects from the top navigation. 💡</p>
-                <p className="pb-2 text-gray-500 dark:text-gray-400 text-sm">We welcome any input on this first iteration in <a href="/new" className="learn-more">the feedback issue</a>. 📝</p>
+                <p className="pb-2 text-gray-500 dark:text-gray-400 text-sm">We welcome any input on this first iteration in <a href="https://github.com/gitpod-io/gitpod/issues/5095" className="learn-more">the feedback issue</a>. 📝</p>
             </div>
         </>;
     },
