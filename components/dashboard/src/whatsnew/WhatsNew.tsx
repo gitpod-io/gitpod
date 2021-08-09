@@ -8,6 +8,7 @@ import { User } from "@gitpod/gitpod-protocol";
 import Modal from "../components/Modal";
 import { WhatsNewEntry202104 } from "./WhatsNew-2021-04";
 import { WhatsNewEntry202106 } from "./WhatsNew-2021-06";
+import { WhatsNewEntry202108 } from "./WhatsNew-2021-08";
 import { UserContext } from "../user-context";
 import { useContext, useState } from "react";
 import { getGitpodService } from "../service/service";
@@ -15,6 +16,7 @@ import { getGitpodService } from "../service/service";
 const allEntries: WhatsNewEntry[] = [
     WhatsNewEntry202106,
     WhatsNewEntry202104,
+    WhatsNewEntry202108
 ]
 
 export const shouldSeeWhatsNew = (user: User, news: { newsKey: string, maxUserCreationDate: string }[] = allEntries) => {
