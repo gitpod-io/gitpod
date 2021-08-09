@@ -6,6 +6,7 @@ package log
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/sirupsen/logrus"
@@ -128,4 +129,30 @@ func (f *gcpFormatter) Format(entry *log.Entry) ([]byte, error) {
 	}
 
 	return f.JSONFormatter.Format(entry)
+}
+
+// Writer produces a writer that wraps everything that's written to it in a log message.
+// Callers are expected to close the returned writer.
+//
+// Beware: due to logEntry not being synchronised, writes to the returned writer must not
+//         concurrent.
+func Writer(logEntry *logrus.Entry) io.WriteCloser {
+	rd, rw := io.Pipe()
+	go func() {
+		b := make([]byte, 4096)
+		for {
+			n, err := rd.Read(b)
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				log.WithError(err).Error("cannot read from content initializer output")
+				return
+			}
+
+			logEntry.Debug(string(b[:n]))
+		}
+	}()
+
+	return rw
 }

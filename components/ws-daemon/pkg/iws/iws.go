@@ -665,8 +665,11 @@ func nsinsider(instanceID string, targetPid int, mod func(*exec.Cmd), opts ...ns
 		cmd.ExtraFiles = append(cmd.ExtraFiles, f)
 	}
 
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	rw := log.Writer(log.WithFields(log.OWI("", "", instanceID)))
+	defer rw.Close()
+
+	cmd.Stdout = rw
+	cmd.Stderr = rw
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("cannot run nsinsider: %w", err)
