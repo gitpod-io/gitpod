@@ -70,8 +70,8 @@ func main() {
 		Type:       ebpf.Hash,
 		Name:       "considered_pids_map",
 		MaxEntries: pidMax,
-		KeySize:    4,
-		ValueSize:  4,
+		KeySize:    8,
+		ValueSize:  1,
 	})
 
 	if err != nil {
@@ -79,8 +79,6 @@ func main() {
 	}
 
 	defer consideredPids.Close()
-
-	// todo(fntlnz): use consideredPids in the program to filter
 
 	rd, err := perf.NewReader(events, os.Getpagesize())
 	if err != nil {
@@ -104,7 +102,6 @@ func main() {
 		asm.JNE.Imm(asm.R1, 0, "exit"),
 
 		// call 14
-		// *(u64 *)(r10 - 8) = r0
 		asm.FnGetCurrentPidTgid.Call(),
 
 		// r0 >>= 32
@@ -112,6 +109,57 @@ func main() {
 
 		// *(u64 *)(r10 - 8) = r0
 		asm.StoreMem(asm.RFP, -8, asm.R0, asm.DWord),
+
+		// r2 = r10
+		asm.Mov.Reg(asm.R2, asm.RFP),
+
+		// r2 += -8
+		asm.Add.Imm(asm.R2, -8),
+
+		// r1 = 0 ll
+		asm.LoadMapPtr(asm.R1, consideredPids.FD()),
+
+		// call 1
+		asm.FnMapLookupElem.Call(),
+
+		// if r0 != 0 goto +11 <LBB0_3>
+		asm.JNE.Imm(asm.R0, 0, "not_considered"),
+
+		// r1 = 0
+		asm.Mov.Imm(asm.R1, 0),
+
+		// *(u8 *)(r10 - 9) = r1
+		asm.StoreMem(asm.RFP, -9, asm.R1, asm.Byte),
+
+		// r2 = r10
+		asm.Mov.Reg(asm.R2, asm.RFP),
+
+		// r2 += -8
+		asm.Add.Imm(asm.R2, -8),
+
+		// r3 = r10
+		asm.Mov.Reg(asm.R3, asm.RFP),
+
+		// r3 += -9
+		asm.Add.Imm(asm.R3, -9),
+
+		// r1 = 0 ll
+		asm.LoadMapPtr(asm.R1, consideredPids.FD()),
+
+		// r4 = 0
+		asm.Mov.Imm(asm.R4, 0),
+
+		// call 2
+		asm.FnMapUpdateElem.Call(),
+
+		// goto +11 <LBB0_5>
+		asm.Ja.Label("exit"),
+
+		// r1 = *(u8 *)(r0 + 0)
+		asm.LoadMem(asm.R1, asm.R0, 0, asm.Byte).Sym("not_considered"),
+
+		// if r1 == 0 goto +9 <LBB0_5>
+		asm.JEq.Imm(asm.R1, 0, "exit"),
 
 		// r4 = r10
 		asm.Mov.Reg(asm.R4, asm.RFP),
@@ -128,7 +176,7 @@ func main() {
 		// r3 = 4294967295 ll
 		asm.LoadImm(asm.R3, bpfFCurrentCPU, asm.DWord),
 
-		// r5  = 8
+		// r5 = 8
 		asm.Mov.Imm(asm.R5, 8),
 
 		// call 25
@@ -165,7 +213,6 @@ func main() {
 			log.Fatalf("reading from reader: %s", err)
 		}
 
-		// todo(fntlnz): detect system endianness on init?
 		data := endian.Uint64(record.RawSample)
 		fmt.Println(data)
 	}
