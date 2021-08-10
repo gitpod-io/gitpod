@@ -78,6 +78,10 @@ var (
 // ServeWorkspace establishes the IWS server for a workspace
 func ServeWorkspace(uidmapper *Uidmapper, fsshift api.FSShiftMethod) func(ctx context.Context, ws *session.Workspace) error {
 	return func(ctx context.Context, ws *session.Workspace) (err error) {
+		if _, running := ws.NonPersistentAttrs[session.AttrWorkspaceServer]; running {
+			return nil
+		}
+
 		//nolint:ineffassign
 		span, ctx := opentracing.StartSpanFromContext(ctx, "iws.ServeWorkspace")
 		defer tracing.FinishSpan(span, &err)
