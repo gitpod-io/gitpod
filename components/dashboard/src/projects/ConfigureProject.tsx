@@ -75,6 +75,7 @@ export default function () {
       const project = projects.find(p => p.name === routeMatch?.params.projectSlug);
       if (project) {
         setProject(project);
+        getGitpodService().server.guessProjectConfiguration(project.id).then(conf => console.log('guessed', conf)).catch(err => console.error('could not guess', err));
         const configString = await getGitpodService().server.fetchProjectRepositoryConfiguration(project.id);
         if (configString) {
           // TODO(janx): Link to .gitpod.yml directly instead of just the cloneUrl.

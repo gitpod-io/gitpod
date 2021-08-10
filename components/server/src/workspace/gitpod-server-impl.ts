@@ -7,7 +7,7 @@
 import { BlobServiceClient } from "@gitpod/content-service/lib/blobs_grpc_pb";
 import { DownloadUrlRequest, DownloadUrlResponse, UploadUrlRequest, UploadUrlResponse } from '@gitpod/content-service/lib/blobs_pb';
 import { AppInstallationDB, UserDB, UserMessageViewsDB, WorkspaceDB, DBWithTracing, TracedWorkspaceDB, DBGitpodToken, DBUser, UserStorageResourcesDB, TeamDB } from '@gitpod/gitpod-db/lib';
-import { AuthProviderEntry, AuthProviderInfo, Branding, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team, TeamMemberInfo, TeamMembershipInvite, CreateProjectParams, Project, ProviderRepository, PrebuildInfo, TeamMemberRole, WithDefaultConfig, FindPrebuildsParams } from '@gitpod/gitpod-protocol';
+import { AuthProviderEntry, AuthProviderInfo, Branding, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team, TeamMemberInfo, TeamMembershipInvite, CreateProjectParams, Project, ProviderRepository, PrebuildInfo, TeamMemberRole, WithDefaultConfig, FindPrebuildsParams, WorkspaceConfig } from '@gitpod/gitpod-protocol';
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { AdminBlockUserRequest, AdminGetListRequest, AdminGetListResult, AdminGetWorkspacesRequest, AdminModifyPermanentWorkspaceFeatureFlagRequest, AdminModifyRoleOrPermissionRequest, WorkspaceAndInstance } from '@gitpod/gitpod-protocol/lib/admin-protocol';
 import { GetLicenseInfoResult, LicenseFeature, LicenseValidationResult } from '@gitpod/gitpod-protocol/lib/license-protocol';
@@ -52,6 +52,7 @@ import { HeadlessLogUrls } from "@gitpod/gitpod-protocol/lib/headless-workspace-
 import { HeadlessLogService } from "./headless-log-service";
 import { InvalidGitpodYMLError } from "./config-provider";
 import { ProjectsService } from "../projects/projects-service";
+import { ConfigInferrer } from "gitpod-yml-inferrer";
 
 @injectable()
 export class GitpodServerImpl<Client extends GitpodClient, Server extends GitpodServer> implements GitpodServer, Disposable {
@@ -1559,6 +1560,48 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         const repoHost = hostContext.services;
         const configString = await repoHost.fileProvider.getGitpodFileContent(context, user);
         return configString;
+    }
+
+    public async guessProjectConfiguration(projectId: string): Promise<string | undefined> {
+        const user = this.checkUser("guessProjectConfiguration");
+        const span = opentracing.globalTracer().startSpan("guessProjectConfiguration");
+        span.setTag("projectId", projectId);
+
+        const project = await this.projectsService.getProject(projectId);
+        if (!project) {
+            throw new ResponseError(ErrorCodes.NOT_FOUND, "Project not found");
+        }
+        await this.guardProjectOperation(user, projectId, "get");
+
+        const normalizedContextUrl = this.contextParser.normalizeContextURL(project.cloneUrl);
+        const context = (await this.contextParser.handle({ span }, user, normalizedContextUrl)) as CommitContext;
+        const { host } = context.repository;
+        const hostContext = this.hostContextProvider.get(host);
+        if (!hostContext || !hostContext.services) {
+            throw new Error(`Cannot fetch repository configuration for host: ${host}`);
+        }
+        const repoHost = hostContext.services;
+        const cache: { [path: string]: string } = {};
+        const readFile = async (path: string) => {
+            if (path in cache) {
+                return cache[path];
+            }
+            const content = await repoHost.fileProvider.getFileContent(context, user, path);
+            if (content) {
+                cache[path] = content;
+            }
+            return content;
+        }
+        const config: WorkspaceConfig = await new ConfigInferrer().getConfig({
+            config: {},
+            read: readFile,
+            exists: async (path: string) => !!(await readFile(path)),
+        });
+        if (config.tasks) {
+            const configString = `tasks:\n  - ${config.tasks.map(task => Object.entries(task).map(([phase, command]) => `${phase}: ${command}`).join('\n    ')).join('\n  - ')}`;
+            return configString;
+        }
+        return;
     }
 
     public async getContentBlobUploadUrl(name: string): Promise<string> {

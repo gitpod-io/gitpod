@@ -11096,6 +11096,11 @@ gitconfiglocal@^1.0.0:
   dependencies:
     ini "^1.3.2"
 
+gitpod-yml-inferrer@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/gitpod-yml-inferrer/-/gitpod-yml-inferrer-1.1.1.tgz#79392c981abb5ef5f33ba9f7ac46d832b87ac0c9"
+  integrity sha512-ccQ4o3iEV7SX07HPSzmqRW5S82xyGiDXP2JfJ9bQVjWKa5JKe0w+jBsmPZImCkOfP9fM/LmgctIHBIcZ3KrPKA==
+
 glob-parent@^3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/glob-parent/-/glob-parent-3.1.0.tgz#9e6af6299d8d3bd2bd40430832bd113df906c5ae"
