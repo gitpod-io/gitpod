@@ -5,6 +5,8 @@
 package resources
 
 import (
+	"time"
+
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/prometheus/procfs"
 )
@@ -112,6 +114,9 @@ type BudgetedGlobalUseLimiterConfig struct {
 type BudgetedGlobalUseLimiter struct {
 	Config BudgetedGlobalUseLimiterConfig
 
+	prevLoad, prevIdle float64
+	prevT              time.Time
+
 	// Stat provides system-wide CPU use statistics
 	Stat func() (load, idle float64, err error)
 }
@@ -139,7 +144,21 @@ func (bl *BudgetedGlobalUseLimiter) Limit(budgetSpent int64) (newLimit int64) {
 		log.WithError(err).Error("BudgetedGlobalUseLimiter: cannot stat CPU")
 		return bl.Config.Default.Limit
 	}
-	saturation := (idle / (load + idle)) * 100
+
+	if bl.prevT.IsZero() {
+		bl.prevT, bl.prevIdle, bl.prevLoad = time.Now(), idle, load
+		return bl.Config.Default.Limit
+	}
+
+	var (
+		dt    = time.Since(bl.prevT).Seconds()
+		dIdle = (idle - bl.prevIdle) / dt
+		dLoad = (load - bl.prevLoad) / dt
+	)
+	bl.prevT, bl.prevIdle, bl.prevLoad = time.Now(), idle, load
+
+	saturation := (1 - dIdle) * 100
+	log.WithField("budgetSpent", budgetSpent).WithField("dt", dt).WithField("saturation", saturation).WithField("load", dLoad).WithField("idle", dIdle).WithField("defaultUsedUp", defaultUsedUp).Debug("BudgetedGlobalUseLimiter.Limit")
 	if saturation > float64(bl.Config.SaturationThreshold) && defaultUsedUp {
 		return bl.Config.Limited.Limit
 	}
