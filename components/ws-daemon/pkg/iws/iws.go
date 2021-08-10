@@ -582,10 +582,12 @@ func moveMount(instanceID string, targetPid int, source, target string) error {
 	mntf := os.NewFile(mntfd, "")
 	defer mntf.Close()
 
+	// Note(cw): we also need to enter the target PID namespace because the mount target
+	// 			 might refer to proc.
 	err = nsinsider(instanceID, targetPid, func(c *exec.Cmd) {
 		c.Args = append(c.Args, "move-mount", "--target", target, "--pipe-fd", "3")
 		c.ExtraFiles = append(c.ExtraFiles, mntf)
-	})
+	}, enterPidNS(true))
 	if err != nil {
 		return xerrors.Errorf("cannot move mount: %w", err)
 	}
