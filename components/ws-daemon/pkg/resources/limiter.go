@@ -4,6 +4,11 @@
 
 package resources
 
+import (
+	"github.com/gitpod-io/gitpod/common-go/log"
+	"github.com/prometheus/procfs"
+)
+
 // ResourceLimiter implements a strategy to limit the resurce use of a workspace
 type ResourceLimiter interface {
 	Limit(budgetLeft int64) (newLimit int64)
@@ -93,4 +98,51 @@ func (bl *ClampingBucketLimiter) Limit(budgetSpent int64) (newLimit int64) {
 
 	// empty bucket list
 	return 0
+}
+
+type BudgetedGlobalUseLimiterConfig struct {
+	Default Bucket `json:"default"`
+	Limited Bucket `json:"limited"`
+	// SaturationThreshold is a saturation percentage between 0 and 100
+	SaturationThreshold int `json:"saturationThreshold"`
+	// DesaturationThreshold is the percentage at which we go back to the default bucket
+	DesaturationThreshold int `json:"desaturationThreshold"`
+}
+
+type BudgetedGlobalUseLimiter struct {
+	Config BudgetedGlobalUseLimiterConfig
+
+	// Stat provides system-wide CPU use statistics
+	Stat func() (load, idle float64, err error)
+}
+
+func defaultSystemStat() (func() (load, idle float64, err error), error) {
+	proc, err := procfs.NewDefaultFS()
+	if err != nil {
+		return nil, err
+	}
+
+	return func() (load, idle float64, err error) {
+		stat, err := proc.Stat()
+		load = stat.CPUTotal.User + stat.CPUTotal.System
+		idle = stat.CPUTotal.Idle
+		return
+	}, nil
+}
+
+// Limit decides on a CPU use limit
+func (bl *BudgetedGlobalUseLimiter) Limit(budgetSpent int64) (newLimit int64) {
+	defaultUsedUp := budgetSpent > bl.Config.Default.Budget
+
+	load, idle, err := bl.Stat()
+	if err != nil {
+		log.WithError(err).Error("BudgetedGlobalUseLimiter: cannot stat CPU")
+		return bl.Config.Default.Limit
+	}
+	saturation := (idle / (load + idle)) * 100
+	if saturation > float64(bl.Config.SaturationThreshold) && defaultUsedUp {
+		return bl.Config.Limited.Limit
+	}
+
+	return bl.Config.Default.Limit
 }

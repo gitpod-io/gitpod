@@ -6,6 +6,7 @@ package resources
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -20,11 +21,46 @@ import (
 
 // Config configures the containerd resource governer dispatch
 type Config struct {
+	CPULimiter        CPULimiterConfig    `json:"cpuLimiter"`
 	CPUBuckets        []Bucket            `json:"cpuBuckets"`
 	ControlPeriod     string              `json:"controlPeriod"`
 	SamplingPeriod    string              `json:"samplingPeriod"`
 	CGroupsBasePath   string              `json:"cgroupBasePath"`
 	ProcessPriorities map[ProcessType]int `json:"processPriorities"`
+}
+
+type CPULimiterConfig struct {
+	Kind              CPULimiterKind                 `json:"kind"`
+	Bucket            []Bucket                       `json:"bucket"`
+	BudgetedGlobalUse BudgetedGlobalUseLimiterConfig `json:"budgetedGlobalUse"`
+}
+
+type CPULimiterKind string
+
+const (
+	CPULimiterBucket            CPULimiterKind = "bucket"
+	CPULimiterBudgetedGlobalUse CPULimiterKind = "budgetedGlobalUse"
+)
+
+// NewCPULimiter produces a new limiter from configuration
+func NewCPULimiter(cfg *CPULimiterConfig) (ResourceLimiter, error) {
+	switch cfg.Kind {
+	case CPULimiterBucket:
+		return BucketLimiter(cfg.Bucket), nil
+	case CPULimiterBudgetedGlobalUse:
+		stat, err := defaultSystemStat()
+		if err != nil {
+			return nil, err
+		}
+		return &BudgetedGlobalUseLimiter{
+			Config: cfg.BudgetedGlobalUse,
+			Stat:   stat,
+		}, nil
+	case "":
+		// no limiter configured - that's fine
+		return nil, nil
+	}
+	return nil, fmt.Errorf("unknown limiter %s", cfg.Kind)
 }
 
 // NewDispatchListener creates a new resource governer dispatch listener
@@ -67,11 +103,6 @@ func (d *DispatchListener) WorkspaceAdded(ctx context.Context, ws *dispatch.Work
 	}
 	defer d.mu.Unlock()
 
-	var totalBudget int64
-	for _, bkt := range d.Config.CPUBuckets {
-		totalBudget += bkt.Budget
-	}
-
 	disp := dispatch.GetFromContext(ctx)
 	if disp == nil {
 		return xerrors.Errorf("no dispatch available")
@@ -93,10 +124,15 @@ func (d *DispatchListener) WorkspaceAdded(ctx context.Context, ws *dispatch.Work
 		scaledLimit = limit.MilliValue() / 10
 		cpuLimiter = FixedLimiter(scaledLimit)
 	} else if len(d.Config.CPUBuckets) > 0 {
+		// Deprecated behaviour to avoid config surface breakage.
+		// TODO(cw): remove once all config has been migrated.
+		log.Warn("using deprecated cpuBuckets config - please switch to cpuLimiter")
 		cpuLimiter = &ClampingBucketLimiter{Buckets: d.Config.CPUBuckets}
 	} else {
-		// There's no limiter configured - neither buckets nor a fixed one.
-		// We'll leave cpuLimiter nil which effectively disables the CPU limiting.
+		cpuLimiter, err = NewCPULimiter(&d.Config.CPULimiter)
+		if err != nil {
+			return err
+		}
 	}
 
 	log := log.WithFields(wsk8s.GetOWIFromObject(&ws.Pod.ObjectMeta)).WithField("containerID", ws.ContainerID)
