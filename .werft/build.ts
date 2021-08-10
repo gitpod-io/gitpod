@@ -439,6 +439,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         let flags = ""
         flags += ` --namespace ${namespace}`;
         flags += ` --set components.imageBuilder.hostDindData=/mnt/disks/ssd0/docker-${namespace}`;
+        flags += ` --set components.wsDaemon.hostWorkspaceArea=/mnt/disks/ssd0/workspaces-${namespace}`;
         flags += ` --set version=${version}`;
         flags += ` --set hostname=${domain}`;
         flags += ` --set devBranch=${destname}`;
