@@ -524,11 +524,9 @@ func findBindMountCandidates(procMounts io.Reader, readlink func(path string) (d
 		// test remaining candidates if they're a Kubernetes configMap or secret
 		ln, err := readlink(filepath.Join(path, "..data"))
 		if err != nil {
-			log.WithField("path", path).Debug("not bind-mounting because this doesn't look like a configMap")
 			continue
 		}
 		if !strings.HasPrefix(ln, "..") {
-			log.WithField("path", path).WithField("ln", ln).Debug("not bind-mounting because this doesn't look like a configMap")
 			continue
 		}
 
