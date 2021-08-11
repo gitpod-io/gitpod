@@ -119,7 +119,7 @@ export default function () {
     }
 
     return <>
-        <Header title="Prebuilds" subtitle={`View all recent prebuilds for all active branches.`} />
+        <Header title="Prebuilds" subtitle={`View recent prebuilds for active branches.`} />
         <div className="lg:px-28 px-10">
             <div className="flex mt-8">
                 <div className="flex">

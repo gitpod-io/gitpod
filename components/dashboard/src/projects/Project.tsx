@@ -126,7 +126,7 @@ export default function () {
     }
 
     return <>
-        <Header title="Branches" subtitle={<h2>View recent active branches for <a className="text-gray-400 hover:text-gray-600" href={project?.cloneUrl}>{project?.name}</a>.</h2>} />
+        <Header title="Branches" subtitle={<h2 className="tracking-wide">View recent active branches for <a className="text-gray-500 hover:text-gray-800 font-semibold" href={project?.cloneUrl}>{project?.name}</a>.</h2>} />
         <div className="lg:px-28 px-10">
             <div className="flex mt-8">
                 <div className="flex">
