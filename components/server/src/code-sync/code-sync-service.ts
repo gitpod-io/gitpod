@@ -212,7 +212,7 @@ export class CodeSyncService {
             res.send(content);
         });
         router.post('/v1/resource/:resource', bodyParser.text({
-            limit: config?.contentLimit || defaultContentLimit
+            limit: '100kb' // config?.contentLimit || defaultContentLimit
         }), async (req, res) => {
             if (!User.is(req.user)) {
                 res.sendStatus(204);
