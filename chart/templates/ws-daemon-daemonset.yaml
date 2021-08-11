@@ -208,6 +208,7 @@ spec:
               sysctl -w "net.ipv4.tcp_tw_reuse=1" &&
               sysctl -w fs.inotify.max_user_watches=1000000 &&
               sysctl -w "kernel.dmesg_restrict=1"
+              sysctl -w vm.unprivileged_userfaultfd=0
             ) && echo "done!" || echo "failed!"
       containers:
       - name: ws-daemon
