@@ -20,6 +20,7 @@ package content
 import (
 	"archive/tar"
 	"bufio"
+	"bytes"
 	"errors"
 	"io"
 	"os"
@@ -86,7 +87,10 @@ func TarWithOptions(srcPath string, options *TarOptions) (io.ReadCloser, error) 
 			}
 
 			if relFilePath != "." {
-				relFilePath = strings.Join([]string{".", relFilePath}, string(filepath.Separator))
+				buffer := bytes.NewBufferString(".")
+				_, _ = buffer.WriteRune(filepath.Separator)
+				_, _ = buffer.WriteString(relFilePath)
+				relFilePath = buffer.String()
 			}
 
 			if seen[relFilePath] {
