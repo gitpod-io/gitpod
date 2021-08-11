@@ -10,6 +10,7 @@ import { SubscriptionService } from "@gitpod/gitpod-payment-endpoint/lib/account
 import { Plans } from "@gitpod/gitpod-protocol/lib/plans";
 import { ChargebeeService } from "./chargebee-service";
 import { EnvEE } from "../env";
+import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 @injectable()
 export class UserDeletionServiceEE extends UserDeletionService {
     @inject(ChargebeeService) protected readonly chargebeeService: ChargebeeService;
@@ -28,16 +29,24 @@ export class UserDeletionServiceEE extends UserDeletionService {
             for (const subscription of subscriptions) {
                 const planId = subscription.planId!;
                 if (Plans.isFreeNonTransientPlan(planId)) {
-                    // only delete those plans that are persisted in the DB
-                    await this.subscriptionService.unsubscribe(user.id, now, planId);
+                    // only try delete those plans that are persisted in the DB
+                    try {
+                        await this.subscriptionService.unsubscribe(user.id, now, planId);
+                    } catch (e) {
+                        log.info(e);
+                    }
                 } else if (Plans.isFreePlan(planId)) {
                     // we do not care about transient plans
                     continue;
                 } else {
-                    // cancel Chargebee subscriptions
+                    // try cancel Chargebee subscriptions
                     const subscriptionId = subscription.uid;
                     const chargebeeSubscriptionId = subscription.paymentReference!;
-                    await this.chargebeeService.cancelSubscription(chargebeeSubscriptionId, { userId: user.id }, { subscriptionId, chargebeeSubscriptionId });
+                    try {
+                        await this.chargebeeService.cancelSubscription(chargebeeSubscriptionId, { userId: user.id }, { subscriptionId, chargebeeSubscriptionId });
+                    } catch (e) {
+                        log.info(e);
+                    }
                 }
             }
         }
