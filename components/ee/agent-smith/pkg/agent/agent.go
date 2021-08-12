@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -754,7 +755,10 @@ func (agent *Smith) handleExecveEvent(execve Execve) func() (*InfringingWorkspac
 
 		ws, err := getWorkspaceFromProcess(execve.TID)
 		if err != nil {
-			log.WithField("tid", execve.TID).WithError(err).Warn("cannot get workspace details from process")
+			// do not log errors about processes not running.
+			if !errors.Is(err, &os.PathError{}) {
+				log.WithField("tid", execve.TID).WithError(err).Warn("cannot get workspace details from process")
+			}
 			ws = &InfringingWorkspace{}
 		}
 		ws.Infringements = res
