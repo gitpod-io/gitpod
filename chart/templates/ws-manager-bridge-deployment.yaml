@@ -64,8 +64,6 @@ spec:
 {{ include "gitpod.container.messagebusEnv" $this | indent 8 }}
         - name: WSMAN_BRIDGE_CONFIGPATH
           value: /config/ws-manager-bridge.json
-        - name: VERSION
-          value: "${{ .Values.version }}"
       volumes:
       - name: config
         configMap:
