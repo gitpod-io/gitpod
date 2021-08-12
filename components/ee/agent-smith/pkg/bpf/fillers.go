@@ -6,7 +6,9 @@ package bpf
 
 // fillersHash needs to be in sync with the generated ppm_fillers.go file
 // add new mappings here as the enum expands
-var fillersHash = map[string]ppm_filler_id{
+var fillersHash = map[string]PPMFillerID{
+	"bpf_sys_autofill":       PPM_FILLER_sys_autofill,
+	"bpf_sys_connect_x":      PPM_FILLER_sys_connect_x,
 	"bpf_sys_execve_e":       PPM_FILLER_sys_execve_e,
 	"bpf_proc_startupdate":   PPM_FILLER_proc_startupdate,
 	"bpf_proc_startupdate_2": PPM_FILLER_proc_startupdate_2,
