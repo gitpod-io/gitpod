@@ -58,6 +58,9 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
             href: downloadURL
         });
     if (!isAdmin) {
+        // Workspaces can only be deleted if not preparing
+        const canDelete = state !== 'preparing';
+
         menuEntries.push(
             {
                 title: 'Share',
@@ -69,19 +72,22 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
             {
                 title: 'Pin',
                 active: !!ws.pinned,
-                separator: true,
+                separator: canDelete,
                 onClick: () => {
                     model.togglePinned(ws.id);
                 }
             },
-            {
+        );
+
+        if (canDelete) {
+            menuEntries.push({
                 title: 'Delete',
                 customFontStyle: 'text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300',
                 onClick: () => {
                     setModalVisible(true);
                 }
-            }
-        );
+            });
+        }
     }
     const project = getProject(ws);
 
