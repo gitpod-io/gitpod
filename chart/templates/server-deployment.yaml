@@ -118,6 +118,8 @@ spec:
           value: {{ (include "rate-limiter-config" $this) | fromYaml | toJson | quote }}
         - name: GITPOD_LICENSE
           value: "{{ .Values.license }}"
+        - name: VERSION
+          value: "${{ .Values.version }}"
 {{- if $comp.github.app }}
         - name: GITPOD_GITHUB_APP_ENABLED
           value: "{{ $comp.github.app.enabled | default "false" }}"
