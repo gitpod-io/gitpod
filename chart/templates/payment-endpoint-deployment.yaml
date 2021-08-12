@@ -52,8 +52,6 @@ spec:
 {{ include "gitpod.container.defaultEnv" $this | indent 8 }}
 {{ include "gitpod.container.dbEnv" $this | indent 8 }}
 {{ include "gitpod.container.tracingEnv" $this | indent 8 }}
-        - name: VERSION
-          value: "${{ .Values.version }}"
 {{- if .Values.components.paymentEndpoint.webhookFile }}
         - name: CHARGEBEE_WEBHOOK
           value: '{{ .Files.Get .Values.components.paymentEndpoint.webhookFile }}'
