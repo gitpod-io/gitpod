@@ -41,8 +41,9 @@ const (
 	defaultSnapLen = 80
 )
 
-// Settings is the Go representation of the settings map in the falco-libs BPF probe
-// the C counterpart can be found here
+// Settings is the Go representation of the settings map in the falco-libs BPF probe.
+//
+// The C counterpart can be found here
 // https://github.com/falcosecurity/libs/blob/a75b361ca1df8713acc0636b943dd154144ea30d/driver/bpf/types.h#L190-L204
 type Settings struct {
 	bootTime                  uint64
