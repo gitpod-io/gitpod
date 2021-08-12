@@ -201,28 +201,14 @@ export class EligibilityService {
 
     /**
      * Whether the given user may open a workspace on the given context.
-     * A user may open private repos if they either:
-     *  - not started their free "private repo trial" yet
-     *  - is has been no longer than 30 days since they started their "private repo trial"
-     *  - has a paid subscription
-     *  - has assigned team subscription
+     * A user may open private repos always.
+     * We previously limited private repo access to subscribed users.
      * @param user
      * @param context
      * @param date The date for which we want to know whether the user is allowed to set a timeout (depends on active subscription)
      */
     async mayOpenContext(user: User, context: WorkspaceContext, date: Date): Promise<boolean> {
-        if (!this.env.enablePayment) {
-            return true;
-        }
-
-        if (!this.isPrivateRepoContext(context)) {
-            return true;
-        }
-        const mayOpenPrivateRepo = await this.mayOpenPrivateRepo(user, date)
-        this.ensureFreePrivateRepoTrialStarted(user, date.toISOString())
-            .catch((err) => log.error(err));
-
-        return mayOpenPrivateRepo;
+        return true;
     }
 
     /**
