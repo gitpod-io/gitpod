@@ -67,13 +67,18 @@ const end = new Date(Date.UTC(2000, 2, 1)).toISOString();
             id: 'Sven',
             creationDate: start,
             fullName: 'Sven',
-            allowsMarketingCommunication: false,
             identities: [{
                 authProviderId: 'github.com',
                 authId: 'Sven',
                 authName: 'Sven',
                 tokens: []
-            }]
+            }],
+            additionalData: {
+                emailNotificationSettings: {
+                    allowsChangelogMail: true,
+                    allowsDevXMail: true
+                }
+            }
         });
         await this.workspaceDb.store({
             id: '1',
