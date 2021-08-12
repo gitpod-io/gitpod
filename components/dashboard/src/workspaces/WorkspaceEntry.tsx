@@ -74,13 +74,14 @@ export function WorkspaceEntry({ desc, model, isAdmin, stopWorkspace }: Props) {
                     model.togglePinned(ws.id);
                 }
             },
-            {
-                title: 'Delete',
-                customFontStyle: 'text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300',
-                onClick: () => {
-                    setModalVisible(true);
-                }
-            }
+            // {
+            //     title: 'Delete',
+            //     customFontStyle: 'text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300',
+            //     active: ws.,
+            //     onClick: () => {
+            //         setModalVisible(true);
+            //     }
+            // }
         );
     }
     const project = getProject(ws);
