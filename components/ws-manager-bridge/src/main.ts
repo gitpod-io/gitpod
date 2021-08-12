@@ -15,7 +15,7 @@ import { ClusterServiceServer } from './cluster-service-server';
 import { BridgeController } from './bridge-controller';
 import { MetaInstanceController } from './meta-instance-controller';
 
-log.enableJSONLogging('ws-manager-bridge', process.env.VERSION);
+log.enableJSONLogging('ws-manager-bridge', undefined);
 
 export const start = async (container: Container) => {
     try {
