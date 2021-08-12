@@ -28,8 +28,6 @@ export interface User {
 
     identities: Identity[]
 
-    allowsMarketingCommunication?: boolean;
-
     /**
      * Whether the user has been blocked to use our service, because of TOS violation for example.
      * Optional for backwards compatibility.
