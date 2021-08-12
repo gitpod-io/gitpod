@@ -17,6 +17,7 @@ import copy from '../images/copy.svg';
 import { getGitpodService } from "../service/service";
 import { UserContext } from "../user-context";
 import { TeamsContext, getCurrentTeam } from "./teams-context";
+import { trackEvent } from "../Analytics";
 
 
 export default function() {
@@ -131,7 +132,13 @@ export default function() {
                         onClick: () => setRoleFilter('member')
                     }]} />
                 </div>
-                <button onClick={() => setShowInviteModal(true)} className="ml-2">Invite Members</button>
+                <button onClick={() => {
+                    trackEvent("invite_url_requested",{
+                        invite_url: getInviteURL(genericInvite!.id)
+                    });
+                    setShowInviteModal(true);
+                }
+                } className="ml-2">Invite Members</button>
             </div>
             <ItemsList className="mt-2">
                 <Item header={true} className="grid grid-cols-3">

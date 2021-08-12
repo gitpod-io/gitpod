@@ -18,6 +18,7 @@ import NoAccess from "../icons/NoAccess.svg";
 import search from "../icons/search.svg";
 import moment from "moment";
 import { UserContext } from "../user-context";
+import { trackEvent } from "../Analytics";
 
 export default function NewProject() {
     const location = useLocation();
@@ -143,6 +144,10 @@ export default function NewProject() {
             account: selectedAccount,
             onSuccess: (p: { installationId: string, setupAction?: string }) => {
                 updateReposInAccounts(p.installationId);
+                trackEvent("organisation_authorised", {
+                    installation_id: p.installationId,
+                    setup_action: p.setupAction
+                });
             }
         });
     }
@@ -241,7 +246,7 @@ export default function NewProject() {
 
         const renderRepos = () => (<>
             <div className={`mt-10 border rounded-xl border-gray-100 dark:border-gray-800 flex-col`}>
-                <div className="px-8 pt-8 flex flex-col space-y-2">
+                <div className="px-8 pt-8 flex flex-col space-y-2" data-analytics='{"label":"Identity"}'>
                     <ContextMenu classes="w-full left-0 cursor-pointer" menuEntries={getDropDownEntries(accounts)}>
                         <div className="w-full">
                             {icon && (

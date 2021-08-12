@@ -6,7 +6,6 @@
 
 import React, { Suspense, useContext, useEffect, useState } from 'react';
 import Menu from './Menu';
-import { BrowserRouter } from "react-router-dom";
 import { Redirect, Route, Switch } from "react-router";
 
 import { Login } from './Login';
@@ -17,6 +16,9 @@ import { getGitpodService } from './service/service';
 import { shouldSeeWhatsNew, WhatsNew } from './whatsnew/WhatsNew';
 import gitpodIcon from './icons/gitpod.svg';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
+import { useHistory } from 'react-router-dom';
+import { trackButtonOrAnchor, trackPathChange, trackLocation } from './Analytics';
+import { User } from '@gitpod/gitpod-protocol';
 
 const Setup = React.lazy(() => import(/* webpackPrefetch: true */ './Setup'));
 const Workspaces = React.lazy(() => import(/* webpackPrefetch: true */ './workspaces/Workspaces'));
@@ -70,13 +72,15 @@ function App() {
     const [ loading, setLoading ] = useState<boolean>(true);
     const [ isWhatsNewShown, setWhatsNewShown ] = useState(false);
     const [ isSetupRequired, setSetupRequired ] = useState(false);
+    const history = useHistory();
 
     useEffect(() => {
         (async () => {
+            var user: User | undefined;
             try {
                 const teamsPromise = getGitpodService().server.getTeams();
 
-                const user = await getGitpodService().server.getLoggedInUser();
+                user = await getGitpodService().server.getLoggedInUser();
                 setUser(user);
 
                 const teams = await teamsPromise;
@@ -88,8 +92,11 @@ function App() {
                         setSetupRequired(true);
                     }
                 }
+            } finally {
+                trackLocation(!!user);
             }
             setLoading(false);
+            (window as any)._gp.path = window.location.pathname; //store current path to have access to previous when path changes
         })();
     }, []);
 
@@ -116,6 +123,34 @@ function App() {
             }
             window.removeEventListener('storage', updateTheme);
         }
+    }, []);
+
+    // listen and notify Segment of client-side path updates
+    useEffect(() => {
+        return history.listen((location: any) => {
+            const path = window.location.pathname;
+            trackPathChange({
+                prev: (window as any)._gp.path,
+                path: path
+            });
+            (window as any)._gp.path = path;
+        })
+    }, [history])
+
+    useEffect(() => {
+        const handleButtonOrAnchorTracking = (props: MouseEvent) => {
+            var curr = props.target as HTMLElement;
+            //check if current target or any ancestor up to document is button or anchor
+            while (!(curr instanceof Document)) {
+                if (curr instanceof HTMLButtonElement || curr instanceof HTMLAnchorElement || (curr instanceof HTMLDivElement && curr.onclick)) {
+                    trackButtonOrAnchor(curr, !!user);
+                    break; //finding first ancestor is sufficient
+                }
+                curr = curr.parentNode as HTMLElement;
+            }
+        }
+        window.addEventListener("click", handleButtonOrAnchorTracking);
+        return () => window.removeEventListener("click", handleButtonOrAnchorTracking, true);
     }, []);
 
     // redirect to website for any website slugs
@@ -274,11 +309,9 @@ function App() {
     }
 
     return (
-        <BrowserRouter>
-            <Suspense fallback={<Loading />}>
-                {toRender}
-            </Suspense>
-        </BrowserRouter>
+        <Suspense fallback={<Loading />}>
+            {toRender}
+        </Suspense>
     );
 }
 
