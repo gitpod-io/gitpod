@@ -78,7 +78,7 @@ spec:
 {{- end }}
         - name: config-certificates
           mountPath: "/etc/caddy/certificates"
-{{ include "gitpod.container.defaultEnv" (dict "root" . "gp" $.Values "comp" $comp "noVersion" true) | indent 8 }}
+{{ include "gitpod.container.defaultEnv" (dict "root" . "gp" $.Values "comp" $comp) | indent 8 }}
         - name: PROXY_DOMAIN
           value: "{{ $.Values.hostname }}"
         - name: SERVER_PROXY_APIKEY
