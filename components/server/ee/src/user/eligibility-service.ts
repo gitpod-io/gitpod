@@ -235,24 +235,7 @@ export class EligibilityService {
      * @param date The date for which we want to know whether the user is allowed to set a timeout (depends on active subscription)
      */
     async mayOpenPrivateRepo(user: User | string, date: Date = new Date()): Promise<boolean> {
-        if (!this.env.enablePayment) {
-            // when payment is disabled users can do everything
-            return true;
-        }
-
-        user = await this.getUser(user);
-        const freeTrialTimeStart = this.getPrivateRepoTrialStart(user);
-        if (freeTrialTimeStart === undefined) {
-            // Not started their free trial yet
-            return true;
-        }
-
-        if (EligibilityService.DURATION_30_DAYS_MILLIS + freeTrialTimeStart.getTime() - date.getTime() > 0) {
-            // Has already started free trial but still is within 30 days
-            return true;
-        }
-
-        return this.subscriptionService.hasActivePaidSubscription(user.id, date);
+        return true;
     }
 
     /**
