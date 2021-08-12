@@ -74,8 +74,6 @@ spec:
         securityContext:
           privileged: false
 {{ include "gitpod.container.defaultEnv" $this | indent 8 }}
-        - name: VERSION
-          value: "${{ .Values.version }}"
       - name: db-sync-sessions
         image: {{ template "gitpod.comp.imageFull" $this }}
         command: [ "node", "--max-old-space-size=2048", "lib/main.js" ]
