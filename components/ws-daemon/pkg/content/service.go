@@ -311,11 +311,13 @@ func (s *WorkspaceService) DisposeWorkspace(ctx context.Context, req *api.Dispos
 		return resp, nil
 	}
 
-	// Ok, we have to do all the work
-	err = s.uploadWorkspaceLogs(ctx, sess)
-	if err != nil {
-		log.WithError(err).WithFields(sess.OWI()).Error("log backup failed")
-		// atm we do not fail the workspace here, yet, because we still might succeed with its content!
+	if req.BackupLogs {
+		// Ok, we have to do all the work
+		err = s.uploadWorkspaceLogs(ctx, sess)
+		if err != nil {
+			log.WithError(err).WithFields(sess.OWI()).Error("log backup failed")
+			// atm we do not fail the workspace here, yet, because we still might succeed with its content!
+		}
 	}
 
 	if req.Backup {
