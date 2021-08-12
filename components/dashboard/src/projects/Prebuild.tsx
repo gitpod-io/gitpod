@@ -82,7 +82,11 @@ export default function () {
 
     return <>
         <Header title={renderTitle()} subtitle={renderSubtitle()} />
-        <div className="w-full"><PrebuildLogs workspaceId={prebuild?.buildWorkspaceId}/></div>
-    </>
+        <div className="lg:px-28 px-10 mt-8">
+            <div className="h-96 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex flex-col">
+                <PrebuildLogs workspaceId={prebuild?.buildWorkspaceId}/>
+            </div>
+        </div>
+    </>;
 
 }
