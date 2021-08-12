@@ -81,7 +81,7 @@ function ContextMenu(props: ContextMenuProps) {
                 {children}
             </div>
             {expanded ?
-                <div className={`mt-2 z-50 bg-white dark:bg-gray-900 absolute flex flex-col border border-gray-200 dark:border-gray-800 rounded-lg truncated ${props.classes || 'w-48 right-0'}`}>
+                <div className={`mt-2 z-50 bg-white dark:bg-gray-900 absolute flex flex-col border border-gray-200 dark:border-gray-800 rounded-lg truncated ${props.classes || 'w-48 right-0'}`} data-analytics='{"button_type":"context_menu"}'>
                     {props.menuEntries.map((e, index) => {
                         const clickable = e.href || e.onClick || e.link;
                         const entry = <div className={`px-4 flex py-3 ${clickable ? 'hover:bg-gray-100 dark:hover:bg-gray-700' : ''} ${e.active ? 'bg-gray-50 dark:bg-gray-800' : ''} ${index === 0 ? 'rounded-t-lg' : ''} ${index === props.menuEntries.length - 1 ? 'rounded-b-lg' : ''} text-sm leading-1 ${e.customFontStyle || font} ${e.separator ? ' border-b border-gray-200 dark:border-gray-800' : ''}`} title={e.title}>

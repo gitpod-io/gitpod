@@ -7,7 +7,7 @@
 import { BlobServiceClient } from "@gitpod/content-service/lib/blobs_grpc_pb";
 import { DownloadUrlRequest, DownloadUrlResponse, UploadUrlRequest, UploadUrlResponse } from '@gitpod/content-service/lib/blobs_pb';
 import { AppInstallationDB, UserDB, UserMessageViewsDB, WorkspaceDB, DBWithTracing, TracedWorkspaceDB, DBGitpodToken, DBUser, UserStorageResourcesDB, TeamDB } from '@gitpod/gitpod-db/lib';
-import { AuthProviderEntry, AuthProviderInfo, Branding, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team, TeamMemberInfo, TeamMembershipInvite, CreateProjectParams, Project, ProviderRepository, TeamMemberRole, WithDefaultConfig, FindPrebuildsParams, PrebuildWithStatus, StartPrebuildResult } from '@gitpod/gitpod-protocol';
+import { AuthProviderEntry, AuthProviderInfo, Branding, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team, TeamMemberInfo, TeamMembershipInvite, CreateProjectParams, Project, ProviderRepository, TeamMemberRole, WithDefaultConfig, FindPrebuildsParams, PrebuildWithStatus, StartPrebuildResult, ClientHeaderFields } from '@gitpod/gitpod-protocol';
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { AdminBlockUserRequest, AdminGetListRequest, AdminGetListResult, AdminGetWorkspacesRequest, AdminModifyPermanentWorkspaceFeatureFlagRequest, AdminModifyRoleOrPermissionRequest, WorkspaceAndInstance } from '@gitpod/gitpod-protocol/lib/admin-protocol';
 import { GetLicenseInfoResult, LicenseFeature, LicenseValidationResult } from '@gitpod/gitpod-protocol/lib/license-protocol';
@@ -18,7 +18,7 @@ import { TeamSubscription, TeamSubscriptionSlot, TeamSubscriptionSlotResolved } 
 import { Cancelable } from '@gitpod/gitpod-protocol/lib/util/cancelable';
 import { log, LogContext } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
-import { RemoteTrackMessage, TrackMessage } from '@gitpod/gitpod-protocol/lib/analytics';
+import { PageMessage, RemotePageMessage, RemoteTrackMessage, TrackMessage } from '@gitpod/gitpod-protocol/lib/analytics';
 import { ImageBuilderClientProvider, LogsRequest } from '@gitpod/image-builder/lib';
 import { WorkspaceManagerClientProvider } from '@gitpod/ws-manager/lib/client-provider';
 import { ControlPortRequest, DescribeWorkspaceRequest, MarkActiveRequest, PortSpec, PortVisibility as ProtoPortVisibility, StopWorkspacePolicy, StopWorkspaceRequest } from '@gitpod/ws-manager/lib/core_pb';
@@ -101,28 +101,28 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     public readonly uuid: string = uuidv4();
     protected client: Client | undefined;
     protected user?: User;
-    protected clientRegion: string | undefined;
     protected readonly disposables = new DisposableCollection();
     protected headlessLogRegistry = new Map<string, boolean>();
     protected resourceAccessGuard: ResourceAccessGuard;
+    protected clientHeaderFields: ClientHeaderFields | undefined;
 
     dispose(): void {
         this.disposables.dispose();
     }
 
-    initialize(client: Client | undefined, clientRegion: string | undefined, user: User, accessGuard: ResourceAccessGuard): void {
+    initialize(client: Client | undefined, user: User, accessGuard: ResourceAccessGuard, clientHeaderFields: ClientHeaderFields | undefined): void {
         if (client) {
             this.disposables.push(Disposable.create(() => this.client = undefined));
         }
         this.client = client;
         this.user = user;
-        this.clientRegion = clientRegion;
         this.resourceAccessGuard = accessGuard;
 
-        log.debug({ userId: this.user?.id }, `clientRegion: ${this.clientRegion}`);
+        log.debug({ userId: this.user?.id }, `clientRegion: ${clientHeaderFields?.clientRegion}`);
         log.debug({ userId: this.user?.id }, 'initializeClient');
 
         this.listenForWorkspaceInstanceUpdates();
+        this.clientHeaderFields = clientHeaderFields;
     }
 
     protected listenForWorkspaceInstanceUpdates(): void {
@@ -292,7 +292,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
     public async getClientRegion(): Promise<string | undefined> {
         this.checkUser("getClientRegion");
-        return this.clientRegion;
+        return this.clientHeaderFields?.clientRegion;
     }
 
     /**
@@ -1418,7 +1418,18 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     public async createTeam(name: string): Promise<Team> {
         // Note: this operation is per-user only, hence needs no resource guard
         const user = this.checkAndBlockUser("createTeam");
-        return this.teamDB.createTeam(user.id, name);
+        const team = await this.teamDB.createTeam(user.id, name);
+        this.analytics.track({
+            userId: user.id,
+            event: "team_created",
+            properties: {
+                id: team.id,
+                name: team.name,
+                slug: team.slug,
+                created_at: team.creationTime
+            }
+        })
+        return team;
     }
 
     public async joinTeam(inviteId: string): Promise<Team> {
@@ -1433,6 +1444,14 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
 
         await this.ensureTeamsEnabled();
 
+        this.analytics.track({
+            userId: user.id,
+            event: "team_joined",
+            properties: {
+                team_id: invite.teamId,
+                invite_id: inviteId
+            }
+        })
         return team!;
     }
 
@@ -1457,6 +1476,14 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         // Users are free to leave any team themselves, but only owners can remove others from their teams.
         await this.guardTeamOperation(teamId, user.id === userId ? "get" : "update");
         await this.teamDB.removeMemberFromTeam(userId, teamId);
+        this.analytics.track({
+            userId: user.id,
+            event: "team_user_removed",
+            properties: {
+                team_id: teamId,
+                removed_user_id: userId
+            }
+        })
     }
 
     public async getGenericInvite(teamId: string): Promise<TeamMembershipInvite> {
@@ -1510,12 +1537,33 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             // Anyone who can read a team's information (i.e. any team member) can create a new project.
             await this.guardTeamOperation(params.teamId, "get");
         }
-        return this.projectsService.createProject(params);
+        const project = this.projectsService.createProject(params);
+        this.analytics.track({
+            userId: user.id,
+            event: "project_created",
+            properties: {
+                name: params.name,
+                clone_url: params.cloneUrl,
+                account: params.account,
+                provider: params.provider,
+                owner_type: !!params.teamId ? "team" : "user",
+                owner_id: !!params.teamId ? params.teamId : params.userId,
+                app_installation_id: params.appInstallationId
+            }
+        })
+        return project;
     }
 
     public async deleteProject(projectId: string): Promise<void> {
         const user = this.checkUser("deleteProject");
         await this.guardProjectOperation(user, projectId, "delete");
+        this.analytics.track({
+            userId: user.id,
+            event: "project_deleted",
+            properties: {
+                project_id: projectId
+            }
+        })
         return this.projectsService.deleteProject(projectId);
     }
 
@@ -1893,24 +1941,63 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
     }
 
     public async trackEvent(event: RemoteTrackMessage): Promise<void> {
-        if (!this.user) {
-            // we cannot track events if don't know the user, because we have no sensible means
-            // to produce a correlatable anonymousId.
-            return;
-        }
-
         // Beware: DO NOT just event... the message, but consume it individually as the message is coming from
         //         the wire and we have no idea what's in it. Even passing the context and properties directly
         //         is questionable. Considering we're handing down the msg and do not know how the analytics library
         //         handles potentially broken or malicious input, we better err on the side of caution.
-        const msg: TrackMessage = {
-            userId: this.user.id,
+        const msg = {
             event: event.event,
             messageId: event.messageId,
             context: event.context,
-            properties: event.properties,
+            properties: event.properties
         }
-        this.analytics.track(msg);
+
+        //either the user is authenticated...
+        if (this.user) {
+            const trackMessage: TrackMessage = {
+                userId: this.user.id,
+                ...msg
+            }
+            this.analytics.track(trackMessage);
+            return;
+        }
+
+        //... or an anonymous id was passed. else, no tracking call is made
+        if (event.anonymousId) {
+            const trackMessage: TrackMessage = {
+                anonymousId: event.anonymousId,
+                ...msg
+            }
+            this.analytics.track(trackMessage);
+        };
+    }
+
+    public async trackLocation(event: RemotePageMessage): Promise<void> {
+        //either an anonymousId was passed, signifying that we want to make a privacy preserving page call...
+        if (event.anonymousId) {
+            // we are making a reduced page call that respects user's privacy by not using any PII
+            this.analytics.page({
+                anonymousId: event.anonymousId,
+                messageId: event.messageId,
+                context: {},
+                properties: event.properties
+            });
+            return;
+        }
+
+        //...or we associate the page call with the authenticated user. else no page call is made.
+        if (this.user) {
+            const msg: PageMessage = {
+                userId: this.user.id,
+                messageId: event.messageId,
+                context: {
+                    ip: this.clientHeaderFields?.ip,
+                    userAgent: this.clientHeaderFields?.userAgent
+                },
+                properties: event.properties,
+            }
+            this.analytics.page(msg);
+        }
     }
 
     async getTerms(): Promise<Terms> {

@@ -6,6 +6,7 @@
   "dependencies": {
     "@gitpod/gitpod-protocol": "0.1.5",
     "countries-list": "^2.6.1",
+    "js-cookie": "^3.0.1",
     "moment": "^2.29.1",
     "monaco-editor": "^0.25.2",
     "react": "^17.0.1",
@@ -29,6 +30,7 @@
     "@types/react-router": "^5.1.13",
     "@types/react-router-dom": "^5.1.7",
     "@types/uuid": "^3.4.5",
+    "@types/js-cookie": "^2.2.7",
     "@typescript-eslint/eslint-plugin": "^4.21.0",
     "@typescript-eslint/parser": "^4.21.0",
     "autoprefixer": "^9.8.6",

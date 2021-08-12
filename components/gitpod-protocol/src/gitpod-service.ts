@@ -28,7 +28,7 @@ import { Emitter } from './util/event';
 import { AccountStatement, CreditAlert } from './accounting-protocol';
 import { GithubUpgradeURL, PlanCoupon } from './payment-protocol';
 import { TeamSubscription, TeamSubscriptionSlot, TeamSubscriptionSlotResolved } from './team-subscription-protocol';
-import { RemoteTrackMessage } from './analytics';
+import { RemotePageMessage, RemoteTrackMessage } from './analytics';
 
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
@@ -227,6 +227,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
      * Analytics
      */
     trackEvent(event: RemoteTrackMessage): Promise<void>;
+    trackLocation(event: RemotePageMessage): Promise<void>;
 }
 
 export interface CreateProjectParams {
@@ -260,6 +261,13 @@ export interface ProviderRepository {
     installationUpdatedAt?: string;
 
     inUse?: boolean;
+}
+
+export interface ClientHeaderFields{
+    ip?:string;
+    userAgent?:string;
+    dnt?:number;
+    clientRegion?:string;
 }
 
 export const WorkspaceTimeoutValues = ["30m", "60m", "180m"] as const;

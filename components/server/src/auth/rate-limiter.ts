@@ -167,6 +167,7 @@ function getConfig(config: RateLimiterConfig): RateLimiterConfig {
         "tsReactivateSlot":  { group: "default", points: 1 },
         "tsReassignSlot":  { group: "default", points: 1 },
         "trackEvent":  { group: "default", points: 1 },
+        "trackLocation": { group: "default", points: 1}
     };
 
     return {

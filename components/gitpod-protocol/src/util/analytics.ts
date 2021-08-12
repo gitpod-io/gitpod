@@ -5,7 +5,7 @@
  */
 
 import Analytics = require("analytics-node");
-import { IAnalyticsWriter, IdentifyMessage, TrackMessage } from "../analytics";
+import { IAnalyticsWriter, IdentifyMessage, TrackMessage, PageMessage } from "../analytics";
 import { log } from './logging';
 
 
@@ -52,6 +52,18 @@ class SegmentAnalyticsWriter implements IAnalyticsWriter {
         }
     }
 
+    page(msg: PageMessage) {
+        try{
+            this.analytics.page(msg, (err: Error) => {
+                if (err) {
+                    log.warn("analytics.page failed", err);
+                }
+            });
+        } catch (err) {
+            log.warn("analytics.page failed", err);
+        }
+    }
+
 }
 
 class LogAnalyticsWriter implements IAnalyticsWriter {
@@ -62,10 +74,14 @@ class LogAnalyticsWriter implements IAnalyticsWriter {
     track(msg: TrackMessage): void {
         log.debug("analytics track", msg);
     }
+    page(msg: PageMessage): void {
+        log.debug("analytics page", msg);
+    }
 
 }
 
 class NoAnalyticsWriter implements IAnalyticsWriter {
     identify(msg: IdentifyMessage): void {}
     track(msg: TrackMessage): void {}
+    page(msg: PageMessage): void {}
 }

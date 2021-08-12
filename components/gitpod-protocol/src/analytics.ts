@@ -28,12 +28,25 @@ export type TrackMessage = Message & Identity & {
     context?: any;
 };
 
-export type RemoteTrackMessage = Omit<TrackMessage, "timestamp" | "userId" | "anonymousId">;
+export type PageMessage = Message & Identity & {
+    properties?: any;
+    timestamp?: Date;
+    context?: any;
+};
+
+export type RemoteTrackMessage = Omit<TrackMessage, "timestamp" | "userId" | "anonymousId"> & {
+    anonymousId?: string | number;
+};
+export type RemotePageMessage = Omit<PageMessage, "timestamp" | "userId"> & {
+    anonymousId?: string | number;
+};
 
 export interface IAnalyticsWriter {
 
     identify(msg: IdentifyMessage): void;
 
     track(msg: TrackMessage): void;
+
+    page(msg: PageMessage): void;
 
 }

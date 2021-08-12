@@ -17,6 +17,6 @@ export default function TabMenuItem(p: {
             ? 'text-gray-600 dark:text-gray-400 border-gray-700 dark:border-gray-400'
             : 'text-gray-400 dark:text-gray-600 hover:border-gray-400 dark:hover:border-gray-600');
     return ((!p.link || p.link.startsWith('https://'))
-        ? <a className={classes} href={p.link} onClick={p.onClick}>{p.name}</a>
-        : <Link className={classes} to={p.link} onClick={p.onClick}>{p.name}</Link>);
+        ? <a className={classes} href={p.link} onClick={p.onClick} data-analytics='{"button_type":"tab_menu"}'>{p.name}</a>
+        : <Link className={classes} to={p.link} onClick={p.onClick} data-analytics='{"button_type":"tab_menu"}'>{p.name}</Link>);
 }
