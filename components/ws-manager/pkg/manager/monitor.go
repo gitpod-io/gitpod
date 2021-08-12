@@ -8,6 +8,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -22,6 +23,7 @@ import (
 	grpc_status "google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	corev1 "k8s.io/api/core/v1"
+	k8serr "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/types"
@@ -93,7 +95,10 @@ func (m *Manager) CreateMonitor() (*Monitor, error) {
 		finalizerMap:   make(map[string]context.CancelFunc),
 
 		OnError: func(err error) {
-			log.WithError(err).Error("workspace monitor error")
+			if !errors.Is(err, &k8serr.StatusError{}) {
+				log.WithError(err).Error("workspace monitor error")
+			}
+
 		},
 	}
 	res.eventpool = workpool.NewEventWorkerPool(res.handleEvent)
