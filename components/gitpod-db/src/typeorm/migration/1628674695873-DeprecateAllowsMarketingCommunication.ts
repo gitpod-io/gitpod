@@ -11,7 +11,7 @@ export class DeprecateAllowsMarketingCommunication1628674695873 implements Migra
 
     public async up(queryRunner: QueryRunner): Promise<any> {
         if (await columnExists(queryRunner, "d_b_user", "allowsMarketingCommunication")) {
-            await queryRunner.query("UPDATE d_b_user set additionalData = JSON_MERGE_PATCH(additionalData, JSON_SET('{\"emailNotificationSettings\":{\"allowsChangelogMail\":true}}', '$.emailNotificationSettings.allowsChangelogMail', IF(allowsMarketingCommunication, 'true', 'false')))");
+            await queryRunner.query("UPDATE d_b_user set additionalData = JSON_MERGE_PATCH(IFNULL(additionalData, '{}'), JSON_SET('{\"emailNotificationSettings\":{\"allowsChangelogMail\":true}}', '$.emailNotificationSettings.allowsChangelogMail', IF(allowsMarketingCommunication, 'true', 'false')))");
             await queryRunner.query("ALTER TABLE d_b_user DROP COLUMN allowsMarketingCommunication");
         }
     }
