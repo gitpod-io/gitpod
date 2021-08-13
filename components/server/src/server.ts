@@ -209,7 +209,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                 session: req.session
             });
             if (!this.isAnsweredRequest(req, response)) {
-                response.status(500).send({ error: msg });
+                response.status(err.status || 500).send({ error: msg });
             }
         });
 
