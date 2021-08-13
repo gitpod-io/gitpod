@@ -111,5 +111,5 @@ func init() {
 	imagebuildsCmd.AddCommand(imagebuildsBuildBatch)
 
 	imagebuildsBuildBatch.Flags().Bool("force-rebuild", false, "force an image build even if the image exists already")
-	imagebuildsBuildBatch.Flags().IntP("time-between-builds", "t", 0, "wait N seconds between starting builds")
+	imagebuildsBuildBatch.Flags().IntP("time-between-builds", "", 0, "wait N seconds between starting builds")
 }
