@@ -28,6 +28,7 @@ data:
         "timeouts": {
           "metaInstanceCheckIntervalSeconds": 60,
           "preparingPhaseSeconds": 7200,
+          "stoppingPhaseSeconds": 7200,
           "unknownPhaseSeconds": 600
         },
         "staticBridges": {{ index (include "ws-manager-list" (dict "root" . "gp" $.Values "comp" .Values.components.server) | fromYaml) "manager" | default list | toJson }}
