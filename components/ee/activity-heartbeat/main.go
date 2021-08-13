@@ -154,8 +154,8 @@ func main() {
 		Type:       ebpf.Hash,
 		Name:       "considered_pids_map",
 		MaxEntries: pidMax,
-		KeySize:    8,
-		ValueSize:  1,
+		KeySize:    8, // uint64
+		ValueSize:  1, // bool
 	})
 
 	if err != nil {
