@@ -26,7 +26,7 @@ import { Env } from '../env';
 // By default: 5 kind of resources * 20 revs * 1Mb = 100Mb max in the content service for user data.
 const defautltRevLimit = 20;
 // It should keep it aligned with client_max_body_size for /code-sync location.
-const defaultContentLimit = '1Mb';
+const defaultContentLimit = '1Kb';
 export type CodeSyncConfig = Partial<{
     revLimit: number
     contentLimit: number
