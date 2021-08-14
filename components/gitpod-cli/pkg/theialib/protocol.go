@@ -20,6 +20,7 @@ type TheiaCLIService interface {
 	SetEnvVar(SetEnvvarRequest) (*SetEnvvarResponse, error)
 	DeleteEnvVar(DeleteEnvvarRequest) (*DeleteEnvvarResponse, error)
 	GetPortURL(GetPortURLRequest) (*GetPortURLResponse, error)
+	StopWorkspace(StopWorkspaceRequest) (*StopWorkspaceResponse, error)
 }
 
 // GetGitTokenRequest requests a Git token used by the credential helper
@@ -101,5 +102,13 @@ type GetPortURLRequest struct {
 
 // GetPortURLResponse is the response when asking for a port's public URL
 type GetPortURLResponse struct {
+	URL string `json:"url"`
+}
+
+// StopWorkspaceRequest requests for the workspace be stopped
+type StopWorkspaceRequest struct{}
+
+// StopWorkspaceResponse is the response when asking a workspace to be stopped
+type StopWorkspaceResponse struct {
 	URL string `json:"url"`
 }
