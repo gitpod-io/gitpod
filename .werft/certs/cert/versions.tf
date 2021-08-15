@@ -5,7 +5,6 @@ terraform {
     }
     kubectl = {
       source  = "gavinbunney/kubectl"
-      version = "1.6.1"
     }
     null = {
       source = "hashicorp/null"
@@ -14,5 +13,4 @@ terraform {
       source = "hashicorp/template"
     }
   }
-  required_version = ">= 0.13"
 }
