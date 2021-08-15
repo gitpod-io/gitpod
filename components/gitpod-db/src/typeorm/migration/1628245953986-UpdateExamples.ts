@@ -30,6 +30,7 @@
              { url: 'https://github.com/gitpod-io/template-c', description: 'A C template.', priority: priority-- },
              { url: 'https://github.com/gitpod-io/template-perl', description: 'A Perl template.', priority: priority-- },
              { url: 'https://github.com/gitpod-io/template-julia', description: 'A Julia template.', priority: priority-- },
+             { url: 'https://github.com/gitpod-io/template-nextjs', description: 'A Nextjs template.', priority: priority-- },
 
         ]
          // delete old entries
