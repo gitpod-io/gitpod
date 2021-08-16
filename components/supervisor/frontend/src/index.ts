@@ -77,6 +77,7 @@ const loadingIDE = new Promise(resolve => window.addEventListener('DOMContentLoa
         LoadingFrame.load({ gitpodService: window.gitpod.service }),
         pendingGitpodServiceClient
     ]);
+    const sessionId = await loading.sessionId;
 
     if (gitpodServiceClient.info.workspace.type !== 'regular') {
         return;
@@ -141,7 +142,10 @@ const loadingIDE = new Promise(resolve => window.addEventListener('DOMContentLoa
         window.gitpod.service.server.trackEvent({
             event: "status_rendered",
             properties: {
-                workspaceId: gitpodServiceClient.info.latestInstance?.workspaceId,
+                sessionId,
+                instanceId: gitpodServiceClient.info.latestInstance?.id,
+                workspaceId: gitpodServiceClient.info.workspace.id,
+                type: gitpodServiceClient.info.workspace.type,
                 phase: `ide-${ideService.state}`,
                 error: ideService.failureCause?.message,
             },

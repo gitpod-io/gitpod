@@ -12,6 +12,8 @@ import PendingChangesDropdown from "../components/PendingChangesDropdown";
 import { getGitpodService, gitpodHostUrl } from "../service/service";
 import { StartPage, StartPhase, StartWorkspaceError } from "./StartPage";
 import { watchHeadlessLogs } from "../components/PrebuildLogs";
+import { v4 } from 'uuid';
+const sessionId = v4();
 
 const WorkspaceLogs = React.lazy(() => import('../components/WorkspaceLogs'));
 
@@ -37,6 +39,7 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
   private readonly toDispose = new DisposableCollection();
   componentWillMount() {
     if (this.runsInIFrame()) {
+      window.parent.postMessage({ type: '$setSessionId', sessionId }, '*');
       const setStateEventListener = (event: MessageEvent) => {
         if (event.data.type === 'setState' && 'state' in event.data && typeof event.data['state'] === 'object') {
           if (event.data.state.ideFrontendFailureCause) {
@@ -71,14 +74,26 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     if (newPhase !== oldPhase) {
       getGitpodService().server.trackEvent({
         event: "status_rendered",
-        properties: { workspaceId: this.state?.workspaceInstance?.workspaceId, "phase": newPhase },
+        properties: {
+          sessionId,
+          instanceId: this.state.workspaceInstance?.id,
+          workspaceId: this.state?.workspace?.id,
+          type: this.state.workspace?.type,
+          phase: newPhase
+        },
       });
     }
 
     if (!!this.state.error && this.state.error !== prevState.error) {
       getGitpodService().server.trackEvent({
         event: "error_rendered",
-        properties: { workspaceId: this.state?.workspaceInstance?.workspaceId, "error": this.state.error },
+        properties: {
+          sessionId,
+          instanceId: this.state.workspaceInstance?.id,
+          workspaceId: this.state?.workspace?.id,
+          type: this.state.workspace?.type,
+          error: this.state.error
+        },
       });
     }
   }
@@ -196,9 +211,9 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
 
   redirectTo(url: string) {
     if (this.runsInIFrame()) {
-        window.parent.postMessage({ type: 'relocate', url }, '*');
+      window.parent.postMessage({ type: 'relocate', url }, '*');
     } else {
-        window.location.href = url;
+      window.location.href = url;
     }
   }
 
@@ -370,7 +385,7 @@ function HeadlessWorkspaceView(props: { instanceId: string }) {
 
   return <StartPage title="Prebuild in Progress">
     <Suspense fallback={<div />}>
-      <WorkspaceLogs logsEmitter={logsEmitter}/>
+      <WorkspaceLogs logsEmitter={logsEmitter} />
     </Suspense>
   </StartPage>;
 }
