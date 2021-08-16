@@ -93,5 +93,7 @@ export async function installCertficate(werft, params: InstallCertificateParams)
     }
     if (!notReadyYet) {
         werft.log('certificate', `copied certificate from "${params.certNamespace}/${params.certName}" to "${params.destinationNamespace}/${params.certSecretName}"`);
+    } else {
+        werft.fail('certificate', `failed to copy certificate from "${params.certNamespace}/${params.certName}" to "${params.destinationNamespace}/${params.certSecretName}"`)
     }
 }
