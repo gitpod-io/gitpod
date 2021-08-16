@@ -44,8 +44,8 @@ type Runtime interface {
 	// ContainerPID returns the PID of the container's namespace root process, e.g. the container shim.
 	ContainerPID(ctx context.Context, id ID) (pid uint64, err error)
 
-	// Error listens for errors in the interaction with the container runtime
-	Error() <-chan error
+	// IsContainerdReady returns is the status of containerd.
+	IsContainerdReady(ctx context.Context) (bool, error)
 }
 
 var (
