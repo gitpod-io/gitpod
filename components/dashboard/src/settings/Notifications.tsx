@@ -13,49 +13,55 @@ import settingsMenu from "./settings-menu";
 
 export default function Notifications() {
     const { user, setUser } = useContext(UserContext);
-
     const [isChangelogMail, setChangelogMail] = useState(!!user?.additionalData?.emailNotificationSettings?.allowsChangelogMail);
+    const [isDevXMail, setDevXMail] = useState(!!user?.additionalData?.emailNotificationSettings?.allowsDevXMail);
+
     const toggleChangelogMail = async () => {
         if (user && user.additionalData && user.additionalData.emailNotificationSettings) {
+            const newIsChangelogMail = !isChangelogMail;
+            user.additionalData.emailNotificationSettings.allowsChangelogMail = newIsChangelogMail;
             await getGitpodService().server.updateLoggedInUser({
                 additionalData: {
                     ...user.additionalData,
                     emailNotificationSettings: {
                         ...user.additionalData.emailNotificationSettings,
-                        allowsChangelogMail: !isChangelogMail
+                        allowsChangelogMail: newIsChangelogMail
                     }
                 }
             });
             await getGitpodService().server.trackEvent({
                 event: "notification_change",
-                properties: { "unsubscribed_changelog": isChangelogMail }
+                properties: { "unsubscribed_changelog": !newIsChangelogMail }
             })
             setUser(user);
-            setChangelogMail(!isChangelogMail);
+            setChangelogMail(newIsChangelogMail);
         }
     }
 
-    const [isDevXMail, setDevXMail] = useState(!!user?.additionalData?.emailNotificationSettings?.allowsDevXMail);
     const toggleDevXMail = async () => {
         if (user && user.additionalData && user.additionalData.emailNotificationSettings) {
+            const newIsDevXMail = !isDevXMail
+            user.additionalData.emailNotificationSettings.allowsDevXMail = newIsDevXMail;
             await getGitpodService().server.updateLoggedInUser({
                 additionalData: {
                     ...user.additionalData,
                     emailNotificationSettings: {
                         ...user.additionalData.emailNotificationSettings,
-                        allowsDevXMail: !isDevXMail
+                        allowsDevXMail: newIsDevXMail
                     }
                 }
             });
             await getGitpodService().server.trackEvent({
                 event: "notification_change",
-                properties: { "unsubscribed_devx": isDevXMail }
+                properties: { "unsubscribed_devx": !newIsDevXMail }
             })
             setUser(user);
-            setDevXMail(!isDevXMail);
+            setDevXMail(newIsDevXMail);
         }
     }
-    return <div>
+
+    return (
+    <div>
         <PageWithSubMenu subMenu={settingsMenu} title='Notifications' subtitle='Choose when to be notified.'>
             <h3>Email Notification Preferences</h3>
             <CheckBox
@@ -74,5 +80,6 @@ export default function Notifications() {
                 checked={isDevXMail}
                 onChange={toggleDevXMail} />
         </PageWithSubMenu>
-    </div>;
+    </div>
+    )
 }
