@@ -1,6 +1,7 @@
 {
     "status": {
         "id": "50bff6fd-2b1f-4d33-8b74-5362739add6f",
+        "status_version": 65536,
         "metadata": {
             "owner": "00000000-0000-0000-0000-000000000000",
             "meta_id": "aqua-chimpanzee-35q6f08k",

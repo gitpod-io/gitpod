@@ -1,6 +1,7 @@
 {
     "status": {
         "id": "79be1e8b-a6de-4572-8627-99ef12303a88",
+        "status_version": 65536,
         "metadata": {
             "owner": "fed869a7-6e36-49c5-9949-101a4ae80018",
             "meta_id": "f29012c4-c6b9-4bd1-9c48-151bdeec6940",

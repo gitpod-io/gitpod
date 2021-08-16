@@ -19,6 +19,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
+	"github.com/gitpod-io/gitpod/ws-manager/pkg/clock"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -40,6 +41,7 @@ func TestIsWorkspaceTimedout(t *testing.T) {
 		Test: func(t *testing.T, input interface{}) interface{} {
 			fixture := input.(*fixture)
 			manager := Manager{
+				clock: clock.LogicalOnly(),
 				Config: config.Configuration{
 					Timeouts: config.WorkspaceTimeoutConfiguration{
 						AfterClose:          util.Duration(1 * time.Minute),
@@ -104,7 +106,9 @@ func TestGetWorkspaceStatusWithFixtures(t *testing.T) {
 		Path: "testdata/status_*.json",
 		Test: func(t *testing.T, input interface{}) interface{} {
 			fixture := input.(*workspaceObjects)
-			manager := Manager{}
+			manager := Manager{
+				clock: clock.LogicalOnly(),
+			}
 
 			status, serr := manager.getWorkspaceStatus(*fixture)
 			result := statusTestResult{Status: status}

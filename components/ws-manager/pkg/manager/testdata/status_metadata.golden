@@ -1,6 +1,7 @@
 {
     "status": {
         "id": "foobas",
+        "status_version": 65536,
         "metadata": {
             "owner": "foobar",
             "meta_id": "metameta",

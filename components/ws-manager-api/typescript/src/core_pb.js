@@ -3965,6 +3965,7 @@ proto.wsman.WorkspaceStatus.prototype.toObject = function(opt_includeInstance) {
 proto.wsman.WorkspaceStatus.toObject = function(includeInstance, msg) {
   var f, obj = {
     id: jspb.Message.getFieldWithDefault(msg, 1, ""),
+    statusVersion: jspb.Message.getFieldWithDefault(msg, 10, 0),
     metadata: (f = msg.getMetadata()) && proto.wsman.WorkspaceMetadata.toObject(includeInstance, f),
     spec: (f = msg.getSpec()) && proto.wsman.WorkspaceSpec.toObject(includeInstance, f),
     phase: jspb.Message.getFieldWithDefault(msg, 4, 0),
@@ -4012,6 +4013,10 @@ proto.wsman.WorkspaceStatus.deserializeBinaryFromReader = function(msg, reader) 
     case 1:
       var value = /** @type {string} */ (reader.readString());
       msg.setId(value);
+      break;
+    case 10:
+      var value = /** @type {number} */ (reader.readUint64());
+      msg.setStatusVersion(value);
       break;
     case 2:
       var value = new proto.wsman.WorkspaceMetadata;
@@ -4084,6 +4089,13 @@ proto.wsman.WorkspaceStatus.serializeBinaryToWriter = function(message, writer) 
   if (f.length > 0) {
     writer.writeString(
       1,
+      f
+    );
+  }
+  f = message.getStatusVersion();
+  if (f !== 0) {
+    writer.writeUint64(
+      10,
       f
     );
   }
@@ -4167,6 +4179,24 @@ proto.wsman.WorkspaceStatus.prototype.getId = function() {
  */
 proto.wsman.WorkspaceStatus.prototype.setId = function(value) {
   return jspb.Message.setProto3StringField(this, 1, value);
+};
+
+
+/**
+ * optional uint64 status_version = 10;
+ * @return {number}
+ */
+proto.wsman.WorkspaceStatus.prototype.getStatusVersion = function() {
+  return /** @type {number} */ (jspb.Message.getFieldWithDefault(this, 10, 0));
+};
+
+
+/**
+ * @param {number} value
+ * @return {!proto.wsman.WorkspaceStatus} returns this
+ */
+proto.wsman.WorkspaceStatus.prototype.setStatusVersion = function(value) {
+  return jspb.Message.setProto3IntField(this, 10, value);
 };
 
 

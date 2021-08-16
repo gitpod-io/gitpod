@@ -1,6 +1,7 @@
 {
     "status": {
         "id": "7bc61b1f-60ae-4bfb-b01c-6339a018b3e8",
+        "status_version": 65536,
         "metadata": {
             "owner": "f38dd9ea-edf6-41ba-a3be-4494def1e618",
             "meta_id": "green-mosquito-gvkloyfy",

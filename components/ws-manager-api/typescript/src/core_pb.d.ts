@@ -494,6 +494,8 @@ export namespace ControlAdmissionResponse {
 export class WorkspaceStatus extends jspb.Message {
     getId(): string;
     setId(value: string): WorkspaceStatus;
+    getStatusVersion(): number;
+    setStatusVersion(value: number): WorkspaceStatus;
 
     hasMetadata(): boolean;
     clearMetadata(): void;
@@ -542,6 +544,7 @@ export class WorkspaceStatus extends jspb.Message {
 export namespace WorkspaceStatus {
     export type AsObject = {
         id: string,
+        statusVersion: number,
         metadata?: WorkspaceMetadata.AsObject,
         spec?: WorkspaceSpec.AsObject,
         phase: WorkspacePhase,

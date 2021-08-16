@@ -1,6 +1,7 @@
 {
     "status": {
         "id": "48f13cc4-6311-48c2-950a-4b7ddedc3037",
+        "status_version": 65536,
         "metadata": {
             "owner": "00000000-0000-0000-0000-000000000000",
             "meta_id": "purple-raven-cu9cj532",
