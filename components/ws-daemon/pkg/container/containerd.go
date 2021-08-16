@@ -52,11 +52,10 @@ func NewContainerd(cfg *ContainerdConfig, mounts *NodeMountsLookup, pathMapping 
 		Mounts:  mounts,
 		Mapping: pathMapping,
 
-		cond:    sync.NewCond(&sync.Mutex{}),
-		cntIdx:  make(map[string]*containerInfo),
-		podIdx:  make(map[string]*containerInfo),
-		wsiIdx:  make(map[string]*containerInfo),
-		errchan: make(chan error),
+		cond:   sync.NewCond(&sync.Mutex{}),
+		cntIdx: make(map[string]*containerInfo),
+		podIdx: make(map[string]*containerInfo),
+		wsiIdx: make(map[string]*containerInfo),
 	}
 	go res.start()
 
@@ -69,11 +68,10 @@ type Containerd struct {
 	Mounts  *NodeMountsLookup
 	Mapping PathMapping
 
-	cond    *sync.Cond
-	podIdx  map[string]*containerInfo
-	wsiIdx  map[string]*containerInfo
-	cntIdx  map[string]*containerInfo
-	errchan chan error
+	cond   *sync.Cond
+	podIdx map[string]*containerInfo
+	wsiIdx map[string]*containerInfo
+	cntIdx map[string]*containerInfo
 }
 
 type containerInfo struct {
@@ -104,7 +102,6 @@ func (s *Containerd) start() {
 		cs, err := s.Client.ContainerService().List(ctx)
 		if err != nil {
 			log.WithError(err).Error("cannot list container")
-			s.errchan <- xerrors.Errorf("cannot list container: %w", err)
 			time.Sleep(reconnectionInterval)
 			continue
 		}
@@ -123,7 +120,6 @@ func (s *Containerd) start() {
 		tsks, err := s.Client.TaskService().List(ctx, &tasks.ListTasksRequest{})
 		if err != nil {
 			log.WithError(err).Error("cannot list tasks")
-			s.errchan <- xerrors.Errorf("cannot list tasks: %w", err)
 			time.Sleep(reconnectionInterval)
 			continue
 		}
@@ -144,7 +140,6 @@ func (s *Containerd) start() {
 				s.handleContainerdEvent(ev)
 			case err := <-errchan:
 				log.WithError(err).Error("lost connection to containerd - will attempt to reconnect")
-				s.errchan <- err
 				time.Sleep(reconnectionInterval)
 				break
 			}
@@ -304,11 +299,6 @@ func (s *Containerd) handleNewTask(cid string, rootfs []*types.Mount, pid uint32
 	s.cond.Broadcast()
 }
 
-// Error listens for errors in the interaction with the container runtime
-func (s *Containerd) Error() <-chan error {
-	return s.errchan
-}
-
 // WaitForContainer waits for workspace container to come into existence.
 func (s *Containerd) WaitForContainer(ctx context.Context, workspaceInstanceID string) (cid ID, err error) {
 	//nolint:ineffassign
@@ -458,6 +448,11 @@ func (s *Containerd) ContainerPID(ctx context.Context, id ID) (pid uint64, err e
 	}
 
 	return uint64(info.PID), nil
+}
+
+// ContainerPID returns the PID of the container's namespace root process, e.g. the container shim.
+func (s *Containerd) IsContainerdReady(ctx context.Context) (bool, error) {
+	return s.Client.IsServing(ctx)
 }
 
 // ExtractCGroupPathFromContainer retrieves the CGroupPath from the linux section

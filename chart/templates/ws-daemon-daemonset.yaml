@@ -258,6 +258,12 @@ spec:
             path: "/"
           initialDelaySeconds: 5
           periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            port: 9999
+            path: "/"
+          initialDelaySeconds: 5
+          periodSeconds: 10
         securityContext:
           privileged: true
           procMount: Default
