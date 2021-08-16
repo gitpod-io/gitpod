@@ -219,6 +219,13 @@ message WorkspaceStatus {
     // ID is the unique identifier of the workspace
     string id = 1;
 
+    // version of the status update. Workspace instances themselves are unversioned,
+    // but their statuus has different versions.
+    // The value of this field has no semantic meaning (e.g. don't interpret it as
+    // as a timestemp), but it can be used to impose a partial order.
+    // If a.status_version < b.status_version then a was the status before b.
+    uint64 status_version = 10;
+
     // Metadata is data associated with this workspace that's required for other parts of Gitpod to function
     WorkspaceMetadata metadata = 2;
 

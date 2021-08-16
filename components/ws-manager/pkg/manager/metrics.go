@@ -17,10 +17,15 @@ import (
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
+	"github.com/gitpod-io/gitpod/ws-manager/pkg/clock"
 )
 
 // RegisterMetrics registers the Prometheus metrics of this manager
 func (m *Manager) RegisterMetrics(reg prometheus.Registerer) error {
+	m.clock.ReportBackwardsTime(
+		clock.PrometheusWallTimeMonotonicityReporter(
+			prometheus.WrapRegistererWithPrefix(metricsNamespace+metricsWorkspaceSubsystem, reg)))
+
 	return m.metrics.Register(reg)
 }
 

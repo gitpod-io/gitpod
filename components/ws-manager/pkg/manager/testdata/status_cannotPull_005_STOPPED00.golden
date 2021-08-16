@@ -1,6 +1,7 @@
 {
     "status": {
         "id": "5031df46-db5e-43ae-91bd-1448305c001d",
+        "status_version": 65536,
         "metadata": {
             "owner": "00000000-0000-0000-0000-000000000000",
             "meta_id": "silver-dormouse-is733prg",

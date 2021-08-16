@@ -1,6 +1,7 @@
 {
     "status": {
         "id": "cc1a3979-4e0e-42cc-bba5-a8d66485bdee",
+        "status_version": 65536,
         "metadata": {
             "owner": "26488517-271b-44f5-8739-96a6d9f6759a",
             "meta_id": "amber-swallow-sbhsd9w0",

@@ -1,6 +1,7 @@
 {
     "status": {
         "id": "dbc45dce-611a-49a8-bd76-7afda76a1e24",
+        "status_version": 65536,
         "metadata": {
             "owner": "a0dfe7e6-351b-4fd8-80c2-5ed45814f44a",
             "meta_id": "gray-lemming-0wlyvzy5",

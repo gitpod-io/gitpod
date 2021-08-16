@@ -44,6 +44,7 @@ import (
 	wsdaemon "github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-manager/api"
 	config "github.com/gitpod-io/gitpod/ws-manager/api/config"
+	"github.com/gitpod-io/gitpod/ws-manager/pkg/clock"
 	"github.com/gitpod-io/gitpod/ws-manager/pkg/manager/internal/grpcpool"
 )
 
@@ -56,6 +57,7 @@ type Manager struct {
 	OnChange  func(context.Context, *api.WorkspaceStatus)
 
 	activity sync.Map
+	clock    *clock.HLC
 
 	wsdaemonPool *grpcpool.Pool
 
@@ -118,6 +120,7 @@ func New(config config.Configuration, client client.Client, rawClient kubernetes
 		Clientset:    client,
 		RawClient:    rawClient,
 		Content:      cp,
+		clock:        clock.System(),
 		subscribers:  make(map[string]chan *api.SubscribeResponse),
 		wsdaemonPool: grpcpool.New(wsdaemonConnfactory, checkWSDaemonEndpoint(config.Namespace, client)),
 	}

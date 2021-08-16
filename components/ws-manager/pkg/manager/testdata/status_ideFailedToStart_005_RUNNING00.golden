@@ -1,6 +1,7 @@
 {
     "status": {
         "id": "9ff933b3-d487-4b45-a966-e715767f91df",
+        "status_version": 65536,
         "metadata": {
             "owner": "d20bf9c2-e802-43ba-b647-ffa89f8ff17e",
             "meta_id": "rose-donkey-wfapr095",

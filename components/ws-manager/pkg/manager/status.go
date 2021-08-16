@@ -263,8 +263,9 @@ func (m *Manager) getWorkspaceStatus(wso workspaceObjects) (*api.WorkspaceStatus
 	}
 
 	status = &api.WorkspaceStatus{
-		Id:       id,
-		Metadata: getWorkspaceMetadata(wso.Pod),
+		Id:            id,
+		StatusVersion: m.clock.Tick(),
+		Metadata:      getWorkspaceMetadata(wso.Pod),
 		Spec: &api.WorkspaceSpec{
 			Headless:       wso.IsWorkspaceHeadless(),
 			WorkspaceImage: wsImage,

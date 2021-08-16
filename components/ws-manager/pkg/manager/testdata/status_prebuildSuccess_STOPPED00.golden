@@ -1,6 +1,7 @@
 {
     "status": {
         "id": "8e0bbcdf-a926-4670-8c40-b718f035b2ae",
+        "status_version": 65536,
         "metadata": {
             "owner": "d98c5b92-2066-4fce-bea6-1e08b58642ab",
             "meta_id": "green-wombat-62dzneud",

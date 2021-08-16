@@ -1,6 +1,7 @@
 {
     "status": {
         "id": "60116ccc-1593-41f5-880e-6c4010dc4d1d",
+        "status_version": 65536,
         "metadata": {
             "owner": "71548797-a589-45fa-bf22-6aec554dded0",
             "meta_id": "sapphire-alligator-jakcgz44",
