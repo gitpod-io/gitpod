@@ -71,7 +71,11 @@ export default class StartWorkspace extends React.Component<StartWorkspaceProps,
     if (newPhase !== oldPhase) {
       getGitpodService().server.trackEvent({
         event: "status_rendered",
-        properties: { workspaceId: this.state?.workspaceInstance?.workspaceId, "phase": newPhase },
+        properties: {
+          workspaceId: this.state?.workspaceInstance?.workspaceId,
+          instanceId: this.state?.workspaceInstance?.id,
+          phase: newPhase
+        },
       });
     }
 
