@@ -24,7 +24,7 @@ imagePullPolicy: IfNotPresent
 
 # configure default log level
 log:
-  level: trace
+  level: info
 
 resources:
   default:
