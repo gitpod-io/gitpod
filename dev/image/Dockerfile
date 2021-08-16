@@ -5,7 +5,7 @@
 FROM gitpod/workspace-full-vnc:latest
 
 ENV TRIGGER_REBUILD 12
-ENV WORKSPACE_KERNEL 5.4.0-1044-gke
+ENV WORKSPACE_KERNEL 5.4.0-1046-gke
 
 USER root
 
