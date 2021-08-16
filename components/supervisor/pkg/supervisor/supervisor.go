@@ -194,6 +194,18 @@ func Run(options ...RunOption) {
 	go analyseConfigChanges(ctx, cfg, analytics, gitpodConfigService)
 
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
+	if cfg.WorkspaceRoot != "" {
+		termMuxSrv.DefaultWorkdirProvider = func() string {
+			<-cstate.ContentReady()
+			stat, err := os.Stat(cfg.WorkspaceRoot)
+			if err != nil {
+				log.WithError(err).Error("default workdir provider: cannot resolve the workspace root")
+			} else if stat.IsDir() {
+				return cfg.WorkspaceRoot
+			}
+			return ""
+		}
+	}
 	termMuxSrv.Env = buildChildProcEnv(cfg, nil)
 	termMuxSrv.DefaultCreds = &syscall.Credential{
 		Uid: gitpodUID,
