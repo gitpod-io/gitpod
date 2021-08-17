@@ -710,12 +710,14 @@ func (agent *Smith) handleExecveEvent(execve Execve) func() (*InfringingWorkspac
 		if len(res) == 0 {
 			fd, err := os.Open(filepath.Join("/proc", strconv.Itoa(execve.TID), "exe"))
 			if err != nil {
+				e := log.WithField("tid", execve.TID).WithField("filename", execve.Filename)
 				if os.IsNotExist(err) || strings.Contains(err.Error(), "no such process") {
 					// This happens often enough to be too spammy in the logs. Thus we use a metric instead.
 					// If agent-smith does not work as intended, this metric can be indicative of the reason.
 					agent.metrics.signatureCheckMiss.Inc()
+					e.Debug("cannot find")
 				} else {
-					log.WithError(err).WithField("path", execve.Filename).Warn("cannot open executable to check signatures")
+					e.WithError(err).WithField("path", execve.Filename).Warn("cannot open executable to check signatures")
 				}
 
 				return nil, nil
