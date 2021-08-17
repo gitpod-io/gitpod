@@ -544,7 +544,9 @@ supervisorLoop:
 		case <-ctx.Done():
 			// we've been asked to shut down
 			s = statusShouldShutdown
-			cmd.Process.Signal(os.Interrupt)
+			if cmd != nil && cmd.Process != nil {
+				cmd.Process.Signal(os.Interrupt)
+			}
 			break supervisorLoop
 		}
 	}
