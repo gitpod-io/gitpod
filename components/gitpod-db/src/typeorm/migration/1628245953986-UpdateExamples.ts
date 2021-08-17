@@ -22,7 +22,7 @@
              { url: 'https://github.com/gitpod-io/template-jetbrains-clion', description: 'The Jetbrains CLion IDE.', priority: priority-- },
              { url: 'https://github.com/gitpod-io/template-jetbrains-datagrip', description: 'The Jetbrains DataGrip IDE.', priority: priority-- },
              { url: 'https://github.com/gitpod-io/template-jetbrains-goland', description: 'The Jetbrains GoLand IDE.', priority: priority-- },
-             { url: 'https://github.com/gitpod-io/template-jetbrains-inellij-idea', description: 'The Jetbrains IntelliJ IDEA IDE.', priority: priority-- },
+             { url: 'https://github.com/gitpod-io/template-jetbrains-intellij-idea', description: 'The Jetbrains IntelliJ IDEA IDE.', priority: priority-- },
              { url: 'https://github.com/gitpod-io/template-jetbrains-phpstorm', description: 'The Jetbrains PhpStorm IDE.', priority: priority-- },
              { url: 'https://github.com/gitpod-io/template-jetbrains-pycharm', description: 'The Jetbrains PyCharm IDE.', priority: priority-- },
              { url: 'https://github.com/gitpod-io/template-jetbrains-rider', description: 'The Jetbrains Rider IDE.', priority: priority-- },
