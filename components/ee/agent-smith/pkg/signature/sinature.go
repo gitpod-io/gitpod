@@ -169,7 +169,12 @@ func isELF(head []byte) bool {
 
 // matchELF matches a signature against an ELF file
 func (s *Signature) matchELF(in io.ReaderAt) (bool, error) {
-	symbols, err := ExtractELFSymbols(in)
+	executable, err := elf.NewFile(in)
+	if err != nil {
+		return false, xerrors.Errorf("cannot anaylse ELF file: %w", err)
+	}
+
+	symbols, err := ExtractELFSymbols(executable)
 	if err != nil {
 		return false, err
 	}
@@ -180,16 +185,21 @@ func (s *Signature) matchELF(in io.ReaderAt) (bool, error) {
 			return matches, err
 		}
 	}
+
+	stringSection, err := ExtractELFStrings(executable)
+	if err != nil {
+		return false, err
+	}
+	matches, err := s.matchesString(stringSection)
+	if matches || err != nil {
+		return matches, err
+	}
+
 	return false, nil
 }
 
 // ExtractELFSymbols extracts all ELF symbol names from an ELF binary
-func ExtractELFSymbols(in io.ReaderAt) ([]string, error) {
-	executable, err := elf.NewFile(in)
-	if err != nil {
-		return nil, xerrors.Errorf("cannot anaylse ELF file: %w", err)
-	}
-
+func ExtractELFSymbols(executable *elf.File) ([]string, error) {
 	var symbols []string
 	syms, err := executable.Symbols()
 	if err != nil && err != elf.ErrNoSymbols {
@@ -207,6 +217,19 @@ func ExtractELFSymbols(in io.ReaderAt) ([]string, error) {
 		symbols = append(symbols, s.Name)
 	}
 	return symbols, nil
+}
+
+func ExtractELFStrings(executable *elf.File) (string, error) {
+	data := executable.Section(".rodata")
+	if data == nil {
+		// not having a .rodata section is no error in the strict sense
+		return "", nil
+	}
+	bs, err := data.Data()
+	if err != nil {
+		return "", xerrors.Errorf("cannot get .rodata section: %w", err)
+	}
+	return string(bs), nil
 }
 
 // matchAny matches a signature against a binary file

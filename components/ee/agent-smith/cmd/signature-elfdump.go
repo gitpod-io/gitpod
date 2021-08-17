@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"debug/elf"
 	"fmt"
 	"log"
 	"os"
@@ -25,12 +26,23 @@ var signatureElfdumpCmd = &cobra.Command{
 		}
 		defer f.Close()
 
-		syms, err := signature.ExtractELFSymbols(f)
+		executable, err := elf.NewFile(f)
+		if err != nil {
+			log.Fatalf("cannot anaylze ELF file: %v", err)
+			return
+		}
+
+		syms, err := signature.ExtractELFSymbols(executable)
 		if err != nil {
 			log.Fatal(err)
 		}
-
 		fmt.Println(strings.Join(syms, "\n"))
+
+		strs, err := signature.ExtractELFStrings(executable)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("strings:\n%s", strs)
 	},
 }
 
