@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
+	"runtime/debug"
 	"strings"
 	"time"
 
@@ -129,6 +130,19 @@ func (reg *Server) MustServe() {
 
 // serve serves a single file from an image
 func (reg *Server) serve(w http.ResponseWriter, req *http.Request) {
+	defer func() {
+		if err := recover(); err != nil {
+			path := ""
+			if req != nil && req.URL != nil {
+				path = req.URL.Path
+			}
+			log.
+				WithField("path", path).
+				Errorf("panic in blobserve request handling: %v\n%s", err, debug.Stack())
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+		}
+	}()
+
 	vars := mux.Vars(req)
 	image := vars["image"]
 	pref, err := reference.ParseNamed(image)
