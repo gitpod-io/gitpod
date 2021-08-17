@@ -14,13 +14,14 @@ import vscode from '../images/vscode.svg';
 import { PageWithSubMenu } from "../components/PageWithSubMenu";
 import settingsMenu from "./settings-menu";
 import AlertBox from "../components/AlertBox";
+import Tooltip from "../components/Tooltip";
 
 type Theme = 'light' | 'dark' | 'system';
 
 export default function Preferences() {
     const { user } = useContext(UserContext);
     const { setIsDark } = useContext(ThemeContext);
-    const [ defaultIde, setDefaultIde ] = useState<string>(user?.additionalData?.ideSettings?.defaultIde || 'theia');
+    const [defaultIde, setDefaultIde] = useState<string>(user?.additionalData?.ideSettings?.defaultIde || 'theia');
     const actuallySetDefaultIde = async (value: string) => {
         const additionalData = user?.additionalData || {};
         const settings = additionalData.ideSettings || {};
@@ -33,7 +34,7 @@ export default function Preferences() {
         await getGitpodService().server.updateLoggedInUser({ additionalData });
         setDefaultIde(value);
     }
-    const [ theme, setTheme ] = useState<Theme>(localStorage.theme || 'light');
+    const [theme, setTheme] = useState<Theme>(localStorage.theme || 'light');
     const actuallySetTheme = (theme: Theme) => {
         if (theme === 'dark' || theme === 'system') {
             localStorage.theme = theme;
@@ -54,13 +55,21 @@ export default function Preferences() {
             </AlertBox>
             <div className="mt-4 space-x-4 flex">
                 <SelectableCard className="w-36 h-40" title="VS Code" selected={defaultIde === 'code'} onClick={() => actuallySetDefaultIde('code')}>
-                    <div className="flex-grow flex justify-center items-center">
-                        <img className="w-16 filter-grayscale" src={vscode}/>
+                    <div className="flex justify-center mt-3">
+                        <img className="w-16 filter-grayscale self-center" src={vscode} />
                     </div>
                 </SelectableCard>
+                <Tooltip content={'Early access version, still subject to testing.'} >
+                    <SelectableCard className="w-36 h-40" title="VS Code" selected={defaultIde === 'code-latest'} onClick={() => actuallySetDefaultIde('code-latest')}>
+                        <div className="flex justify-center mt-3">
+                            <img className="w-16 filter-grayscale self-center" src={vscode} />
+                        </div>
+                        <span className="mt-2 ml-2 self-center rounded-xl py-0.5 px-2 text-sm bg-orange-100 text-orange-700 dark:bg-orange-600 dark:text-orange-100 font-semibold">LATEST</span>
+                    </SelectableCard>
+                </Tooltip>
                 <SelectableCard className="w-36 h-40" title="Theia" selected={defaultIde === 'theia'} onClick={() => actuallySetDefaultIde('theia')}>
-                    <div className="flex-grow flex justify-center items-center">
-                        <img className="w-16 dark:filter-invert" src={theia}/>
+                    <div className="flex justify-center mt-3">
+                        <img className="w-16 h-16 dark:filter-invert self-center" src={theia} />
                     </div>
                 </SelectableCard>
             </div>
@@ -69,17 +78,17 @@ export default function Preferences() {
             <div className="mt-4 space-x-4 flex">
                 <SelectableCard className="w-36 h-32" title="Light" selected={theme === 'light'} onClick={() => actuallySetTheme('light')}>
                     <div className="flex-grow flex justify-center items-end">
-                        <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64"><rect width="68" height="40" x="40" fill="#C4C4C4" rx="8"/><rect width="32" height="16" fill="#C4C4C4" rx="8"/><rect width="32" height="16" y="24" fill="#C4C4C4" rx="8"/><rect width="32" height="16" y="48" fill="#C4C4C4" rx="8"/></svg>
+                        <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64"><rect width="68" height="40" x="40" fill="#C4C4C4" rx="8" /><rect width="32" height="16" fill="#C4C4C4" rx="8" /><rect width="32" height="16" y="24" fill="#C4C4C4" rx="8" /><rect width="32" height="16" y="48" fill="#C4C4C4" rx="8" /></svg>
                     </div>
                 </SelectableCard>
                 <SelectableCard className="w-36 h-32" title="Dark" selected={theme === 'dark'} onClick={() => actuallySetTheme('dark')}>
                     <div className="flex-grow flex justify-center items-end">
-                        <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64"><rect width="68" height="40" x="40" fill="#737373" rx="8"/><rect width="32" height="16" fill="#737373" rx="8"/><rect width="32" height="16" y="24" fill="#737373" rx="8"/><rect width="32" height="16" y="48" fill="#737373" rx="8"/></svg>
+                        <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64"><rect width="68" height="40" x="40" fill="#737373" rx="8" /><rect width="32" height="16" fill="#737373" rx="8" /><rect width="32" height="16" y="24" fill="#737373" rx="8" /><rect width="32" height="16" y="48" fill="#737373" rx="8" /></svg>
                     </div>
                 </SelectableCard>
                 <SelectableCard className="w-36 h-32" title="System" selected={theme === 'system'} onClick={() => actuallySetTheme('system')}>
                     <div className="flex-grow flex justify-center items-end">
-                        <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64"><rect width="68" height="40" x="40" fill="#C4C4C4" rx="8"/><path fill="#737373" d="M74.111 3.412A8 8 0 0180.665 0H100a8 8 0 018 8v24a8 8 0 01-8 8H48.5L74.111 3.412z"/><rect width="32" height="16" fill="#C4C4C4" rx="8"/><rect width="32" height="16" y="24" fill="#737373" rx="8"/><rect width="32" height="16" y="48" fill="#C4C4C4" rx="8"/></svg>
+                        <svg className="h-16" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 108 64"><rect width="68" height="40" x="40" fill="#C4C4C4" rx="8" /><path fill="#737373" d="M74.111 3.412A8 8 0 0180.665 0H100a8 8 0 018 8v24a8 8 0 01-8 8H48.5L74.111 3.412z" /><rect width="32" height="16" fill="#C4C4C4" rx="8" /><rect width="32" height="16" y="24" fill="#737373" rx="8" /><rect width="32" height="16" y="48" fill="#C4C4C4" rx="8" /></svg>
                     </div>
                 </SelectableCard>
             </div>
