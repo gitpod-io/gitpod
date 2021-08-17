@@ -43,7 +43,7 @@
              { url: 'https://github.com/gitpod-io/template-rust-cli', description: 'A CLI template, written in Rust.', priority: priority-- },
              { url: 'https://github.com/gitpod-io/template-scala', description: 'A Scala template.', priority: priority-- },
              { url: 'https://github.com/gitpod-io/template-sveltejs', description: 'A Svelte.js app writtten in JavaScript.', priority: priority-- },
-             { url: 'https://github.com/gitpod-io/template-sveltejskit', description: 'A SvelteKit app template.', priority: priority-- },
+             { url: 'https://github.com/gitpod-io/template-sveltekit', description: 'A SvelteKit app template.', priority: priority-- },
              { url: 'https://github.com/gitpod-io/template-tlaplus', description: 'A TLA+ template.', priority: priority-- },
              { url: 'https://github.com/gitpod-io/template-typescript-node', description: 'A Node.js app, written in TypeScript.', priority: priority-- },
              { url: 'https://github.com/gitpod-io/template-typescript-react', description: 'A create-react-app template, written in TypeScript.', priority: priority-- },
