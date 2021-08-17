@@ -172,7 +172,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
               <a href={w.latestInstance?.ideUrl} className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex p-3 my-1">
                 <div className="w-full">
                   <p className="text-base text-black dark:text-gray-100 font-bold">{w.workspace.id}</p>
-                  <p>{w.workspace.contextURL}</p>
+                  <p className="truncate" title={w.workspace.contextURL}>{w.workspace.contextURL}</p>
                 </div>
               </a>
             )}
