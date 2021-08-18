@@ -264,6 +264,7 @@ spec:
             path: "/"
           initialDelaySeconds: 5
           periodSeconds: 10
+          failureThreshold: 10
         securityContext:
           privileged: true
           procMount: Default
