@@ -29,22 +29,29 @@ export class MetaInstanceController {
             const logContext = { instanceId: instance.latestInstance.id };
 
             try {
-                log.debug(logContext, 'MetaInstanceController: Checking for workspaces to stop');
-
                 const now = Date.now();
                 const creationTime = new Date(instance.latestInstance.creationTime).getTime();
                 const stoppingTime = new Date(instance.latestInstance.stoppingTime ?? now).getTime(); // stoppingTime only set if entered stopping state
                 const timedOutInPreparing = now >= creationTime + (this.config.timeouts.preparingPhaseSeconds * 1000);
                 const timedOutInStopping  = now >= stoppingTime + (this.config.timeouts.stoppingPhaseSeconds * 1000);
                 const timedOutInUnknown   = now >= creationTime + (this.config.timeouts.unknownPhaseSeconds * 1000);
-
                 const currentPhase = instance.latestInstance.status.phase;
+
+                log.debug(logContext, 'MetaInstanceController: Checking for workspaces to stop', {
+                    creationTime,
+                    stoppingTime,
+                    timedOutInPreparing,
+                    timedOutInStopping,
+                    timedOutInUnknown,
+                    currentPhase
+                });
+
                 if (
                     (currentPhase === 'preparing' && timedOutInPreparing) ||
                     (currentPhase === 'stopping' && timedOutInStopping) ||
                     (currentPhase === 'unknown' && timedOutInUnknown)
                 ) {
-                    log.info(logContext, 'MetaInstanceController: Setting workspace instance to stopped', {
+                    log.warn(logContext, 'MetaInstanceController: Setting workspace instance to stopped', {
                         creationTime,
                         currentPhase
                     });
