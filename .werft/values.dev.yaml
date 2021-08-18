@@ -56,6 +56,9 @@ components:
     blockNewUsers: true
     blockNewUsersPasslist:
     - "gitpod.io"
+    resources:
+      # in preview envs, we want deployments to push scale-up early
+      memory: 350Mi
 
   registryFacade:
     daemonSet: true
@@ -67,6 +70,9 @@ components:
   contentService:
     remoteStorage:
       blobQuota: 1073741824 # 1 GiB
+    resources:
+      # in preview envs, we want deployments to push scale-up early
+      memory: 350Mi
 
   workspace:
     # configure GCP registry
@@ -127,10 +133,16 @@ components:
     serviceType: "ClusterIP"
     deployIngressService: false
     loadBalancerIP: null
+    resources:
+      # in preview envs, we want deployments to push scale-up early
+      memory: 350Mi
 
   # Enable events trace
   wsManager:
     eventTraceLogLocation: "/tmp/evts.json"
+    resources:
+      # in preview envs, we want deployments to push scale-up early
+      memory: 350Mi
 
   imageBuilder:
     hostDindData: "/mnt/disks/ssd0/builder"
@@ -140,6 +152,9 @@ components:
       secretName: gcp-sa-registry-auth
       path: gcp-sa-registry-auth
     registryCerts: []
+    resources:
+      # in preview envs, we want deployments to push scale-up early
+      memory: 350Mi
 
   wsDaemon:
     hostWorkspaceArea: /mnt/disks/ssd0/workspaces
@@ -172,6 +187,9 @@ components:
         kind: "constant"
         constant:
           setpoint: 1
+    resources:
+      # in preview envs, we want deployments to push scale-up early
+      memory: 350Mi
 
   # Enable ws-proxy in dev
   wsProxy:
@@ -184,6 +202,9 @@ components:
       wsManagerProxy:
         expose: true
         containerPort: 8081
+    resources:
+      # in preview envs, we want deployments to push scale-up early
+      memory: 350Mi
 
 # configure GCP registry
 docker-registry:
@@ -205,6 +226,10 @@ minio:
             operator: In
             values:
             - "workload"
+  resources:
+    requests:
+      # in preview envs, we want deployments to push scale-up early
+      memory: 350Mi
 
 mysql:
   primary:
@@ -218,6 +243,10 @@ mysql:
               operator: In
               values:
               - "workload"
+    resources:
+      requests:
+        # in preview envs, we want deployments to push scale-up early
+        memory: 350Mi
 
 rabbitmq:
   # ensure shovels are configured on boot
@@ -237,6 +266,10 @@ rabbitmq:
             operator: In
             values:
             - "workload"
+  resources:
+    requests:
+      # in preview envs, we want deployments to push scale-up early
+      memory: 350Mi
 
 cert-manager:
   enabled: true
