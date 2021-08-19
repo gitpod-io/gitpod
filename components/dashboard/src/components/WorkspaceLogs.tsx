@@ -5,11 +5,10 @@
  */
 
 import EventEmitter from 'events';
-import React from 'react';
+import { useEffect, useRef } from 'react';
 import { Terminal, ITerminalOptions, ITheme } from 'xterm';
 import { FitAddon } from 'xterm-addon-fit'
 import 'xterm/css/xterm.css';
-import { DisposableCollection } from '@gitpod/gitpod-protocol';
 
 export interface WorkspaceLogsProps {
   logsEmitter: EventEmitter;
@@ -17,23 +16,13 @@ export interface WorkspaceLogsProps {
   classes?: string;
 }
 
-export interface WorkspaceLogsState {
-}
+export default function WorkspaceLogs(props: WorkspaceLogsProps) {
+  const xTermParentRef = useRef<HTMLDivElement>(null);
+  const terminalRef = useRef<Terminal>();
+  const fitAddon = new FitAddon();
 
-export default class WorkspaceLogs extends React.Component<WorkspaceLogsProps, WorkspaceLogsState> {
-  protected xTermParentRef: React.RefObject<HTMLDivElement>;
-  protected terminal: Terminal | undefined;
-  protected fitAddon: FitAddon | undefined;
-
-  constructor(props: WorkspaceLogsProps) {
-    super(props);
-    this.xTermParentRef = React.createRef();
-  }
-
-  private readonly toDispose = new DisposableCollection();
-  componentDidMount() {
-    const element = this.xTermParentRef.current;
-    if (element === null) {
+  useEffect(() => {
+    if (!xTermParentRef.current) {
       return;
     }
     const theme: ITheme = {};
@@ -44,46 +33,42 @@ export default class WorkspaceLogs extends React.Component<WorkspaceLogsProps, W
       theme,
       scrollback: 9999999,
     };
-    this.terminal = new Terminal(options);
-    this.fitAddon = new FitAddon();
-    this.terminal.loadAddon(this.fitAddon);
-    this.terminal.open(element);
-    this.props.logsEmitter.on('logs', logs => {
-      if (this.fitAddon && this.terminal && logs) {
-        this.terminal.write(logs);
+    const terminal = new Terminal(options);
+    terminalRef.current = terminal;
+    terminal.loadAddon(fitAddon);
+    terminal.open(xTermParentRef.current);
+    props.logsEmitter.on('logs', logs => {
+      if (fitAddon && terminal && logs) {
+        terminal.write(logs);
       }
     });
-    this.toDispose.push(this.terminal);
-    this.fitAddon.fit();
+    fitAddon.fit();
+    return function cleanUp() {
+      terminal.dispose();
+    }
+  });
 
+  useEffect(() => {
     // Fit terminal on window resize (debounced)
     let timeout: NodeJS.Timeout | undefined;
     const onWindowResize = () => {
       clearTimeout(timeout!);
-      timeout = setTimeout(() => this.fitAddon!.fit(), 20);
+      timeout = setTimeout(() => fitAddon!.fit(), 20);
     };
     window.addEventListener('resize', onWindowResize);
-    this.toDispose.push({
-      dispose: () => {
-        clearTimeout(timeout!);
-        window.removeEventListener('resize', onWindowResize);
-      }
-    });
-  }
-
-  componentDidUpdate() {
-    if (this.terminal && this.props.errorMessage) {
-      this.terminal.write(`\n\u001b[38;5;196m${this.props.errorMessage}\u001b[0m`);
+    return function cleanUp() {
+      clearTimeout(timeout!);
+      window.removeEventListener('resize', onWindowResize);
     }
-  }
+  });
 
-  componentWillUnmount() {
-    this.toDispose.dispose();
-  }
+  useEffect(() => {
+    if (terminalRef.current && props.errorMessage) {
+      terminalRef.current.write(`\n\u001b[38;5;196m${props.errorMessage}\u001b[0m`);
+    }
+  }, [ terminalRef.current, props.errorMessage ]);
 
-  render() {
-    return <div className={`mt-6 ${this.props.classes || 'h-72 w-11/12 lg:w-3/5'} rounded-xl bg-black relative`}>
-      <div className="absolute top-0 left-0 bottom-0 right-0 m-6" ref={this.xTermParentRef}></div>
-    </div>;
-  }
+  return <div className={`mt-6 ${props.classes || 'h-72 w-11/12 lg:w-3/5'} rounded-xl bg-black relative`}>
+    <div className="absolute top-0 left-0 bottom-0 right-0 m-6" ref={xTermParentRef}></div>
+  </div>;
 }
