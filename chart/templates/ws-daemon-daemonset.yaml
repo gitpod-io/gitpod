@@ -105,6 +105,36 @@ spec:
 {{- if (or $comp.userNamespaces.shiftfsModuleLoader.enabled $comp.userNamespaces.seccompProfileInstaller.enabled) }}
       initContainers:
 {{- end }}
+{{- if $comp.disableKubeHealthMonitor }}
+      - name: disable-kube-health-monitor
+        # 20.4 is Ubuntu Focal, which we run on GKE atm
+        image: ubuntu:20.04
+        securityContext:
+          privileged: true
+          procMount: Default
+        # use nsenter to run code on the node
+        command:
+          - /usr/bin/nsenter
+          - -t
+          - "1"
+          - -a
+          - /bin/bash
+          - -c
+        args:
+          - |
+            exec {BASH_XTRACEFD}>&1 # this causes 'set -x' to write to stdout insted of stderr
+            set -euExo pipefail
+            systemctl status kube-container-runtime-monitor.service || true
+            if [ "$(systemctl is-active kube-container-runtime-monitor.service)" == "active" ]
+            then
+                echo "kube-container-runtime-monitor.service is active"
+                systemctl stop kube-container-runtime-monitor.service
+                systemctl disable kube-container-runtime-monitor.service
+                systemctl status kube-container-runtime-monitor.service || true
+            else
+                echo "kube-container-runtime-monitor.service is not active, not doing anything"
+            fi
+{{- end }}
 {{- if $comp.setupSSDRaid }}
       - name: raid-local-disks
         image: scylladb/raid-setup:0.1
