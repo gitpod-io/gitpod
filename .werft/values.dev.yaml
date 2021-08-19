@@ -158,6 +158,7 @@ components:
 
   wsDaemon:
     hostWorkspaceArea: /mnt/disks/ssd0/workspaces
+    disableKubeHealthMonitor: true
     volumes:
     - name: gcloud-tmp
       hostPath:
