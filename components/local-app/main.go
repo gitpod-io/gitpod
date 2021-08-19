@@ -74,7 +74,24 @@ func main() {
 			&cli.IntFlag{
 				Name:  "api-port",
 				Usage: "Local App API endpoint's port",
+				EnvVars: []string{
+					"GITPOD_LCA_API_PORT",
+				},
 				Value: 63100,
+			},
+			&cli.BoolFlag{
+				Name:  "auto-tunnel",
+				Usage: "Enable auto tunneling",
+				EnvVars: []string{
+					"GITPOD_LCA_AUTO_TUNNEL",
+				},
+				Value: true,
+			},
+			&cli.StringFlag{
+				Name: "auth-redirect-url",
+				EnvVars: []string{
+					"GITPOD_LCA_AUTH_REDIRECT_URL",
+				},
 			},
 		},
 		Commands: []*cli.Command{
@@ -84,7 +101,7 @@ func main() {
 					if c.Bool("mock-keyring") {
 						keyring.MockInit()
 					}
-					return run(c.String("gitpod-host"), c.String("ssh_config"), c.Int("api-port"), c.Bool("allow-cors-from-port"))
+					return run(c.String("gitpod-host"), c.String("ssh_config"), c.Int("api-port"), c.Bool("allow-cors-from-port"), c.Bool("auto-tunnel"), c.String("auth-redirect-url"))
 				},
 				Flags: []cli.Flag{
 					&cli.PathFlag{
@@ -108,14 +125,14 @@ func DefaultCommand(name string) cli.ActionFunc {
 	}
 }
 
-func run(origin, sshConfig string, apiPort int, allowCORSFromPort bool) error {
+func run(origin, sshConfig string, apiPort int, allowCORSFromPort bool, autoTunnel bool, authRedirectUrl string) error {
 	logrus.WithField("ssh_config", sshConfig).Info("writing workspace ssh_config file")
 
 	// Trailing slash(es) result in connection issues, so remove them preemptively
 	origin = strings.TrimRight(origin, "/")
 	tkn, err := auth.GetToken(origin)
 	if errors.Is(err, keyring.ErrNotFound) {
-		tkn, err = auth.Login(context.Background(), auth.LoginOpts{GitpodURL: origin})
+		tkn, err = auth.Login(context.Background(), auth.LoginOpts{GitpodURL: origin, RedirectURL: authRedirectUrl})
 		if tkn != "" {
 			err = auth.SetToken(origin, tkn)
 			if err != nil {
@@ -146,8 +163,9 @@ func run(origin, sshConfig string, apiPort int, allowCORSFromPort bool) error {
 	cb := bastion.CompositeCallbacks{
 		&logCallbacks{},
 	}
+	s := &bastion.SSHConfigWritingCallback{Path: sshConfig}
 	if sshConfig != "" {
-		cb = append(cb, &bastion.SSHConfigWritingCallback{Path: sshConfig})
+		cb = append(cb, s)
 	}
 
 	var b *bastion.Bastion
@@ -171,8 +189,9 @@ func run(origin, sshConfig string, apiPort int, allowCORSFromPort bool) error {
 	}
 
 	b = bastion.New(client, cb)
+	b.EnableAutoTunnel = autoTunnel
 	grpcServer := grpc.NewServer()
-	appapi.RegisterLocalAppServer(grpcServer, bastion.NewLocalAppService(b))
+	appapi.RegisterLocalAppServer(grpcServer, bastion.NewLocalAppService(b, s))
 	allowOrigin := func(origin string) bool {
 		// Is the origin a subdomain of the installations hostname?
 		return hostRegex.Match([]byte(origin))

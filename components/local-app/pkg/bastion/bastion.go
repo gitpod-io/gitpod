@@ -170,14 +170,19 @@ func New(client gitpod.APIInterface, cb Callbacks) *Bastion {
 		workspaces:    make(map[string]*Workspace),
 		ctx:           ctx,
 		stop:          cancel,
-		updates:       make(chan *gitpod.WorkspaceInstance, 10),
+		updates:       make(chan *WorkspaceUpdateRequest, 10),
 		subscriptions: make(map[*StatusSubscription]struct{}, 10),
 	}
 }
 
+type WorkspaceUpdateRequest struct {
+	instance *gitpod.WorkspaceInstance
+	done     chan *Workspace
+}
+
 type Bastion struct {
 	id      string
-	updates chan *gitpod.WorkspaceInstance
+	updates chan *WorkspaceUpdateRequest
 
 	Client    gitpod.APIInterface
 	Callbacks Callbacks
@@ -190,6 +195,8 @@ type Bastion struct {
 
 	subscriptionsMu sync.RWMutex
 	subscriptions   map[*StatusSubscription]struct{}
+
+	EnableAutoTunnel bool
 }
 
 func (b *Bastion) Run() error {
@@ -221,7 +228,9 @@ func (b *Bastion) Run() error {
 	b.FullUpdate()
 
 	for u := range updates {
-		b.updates <- u
+		b.updates <- &WorkspaceUpdateRequest{
+			instance: u,
+		}
 	}
 	return nil
 }
@@ -235,23 +244,39 @@ func (b *Bastion) FullUpdate() {
 			if ws.LatestInstance == nil {
 				continue
 			}
-			b.updates <- ws.LatestInstance
+			b.updates <- &WorkspaceUpdateRequest{
+				instance: ws.LatestInstance,
+			}
 		}
 	}
 }
 
-func (b *Bastion) Update(workspaceID string) {
+func (b *Bastion) Update(workspaceID string) *Workspace {
 	ws, err := b.Client.GetWorkspace(b.ctx, workspaceID)
 	if err != nil {
 		logrus.WithError(err).WithField("WorkspaceID", workspaceID).Warn("cannot get workspace")
 	}
 	if ws.LatestInstance == nil {
-		return
+		return nil
 	}
-	b.updates <- ws.LatestInstance
+	done := make(chan *Workspace)
+	b.updates <- &WorkspaceUpdateRequest{
+		instance: ws.LatestInstance,
+		done:     done,
+	}
+	return <-done
 }
 
-func (b *Bastion) handleUpdate(u *gitpod.WorkspaceInstance) {
+func (b *Bastion) handleUpdate(ur *WorkspaceUpdateRequest) {
+	var ws *Workspace
+	u := ur.instance
+	defer func() {
+		if ur.done != nil {
+			ur.done <- ws
+			close(ur.done)
+		}
+	}()
+
 	b.workspacesMu.Lock()
 	defer b.workspacesMu.Unlock()
 
@@ -310,7 +335,7 @@ func (b *Bastion) handleUpdate(u *gitpod.WorkspaceInstance) {
 			}
 		}
 
-		if ws.supervisorClient != nil {
+		if ws.supervisorClient != nil && b.EnableAutoTunnel {
 			go b.tunnelPorts(ws)
 		}
 
@@ -846,7 +871,7 @@ func (b *Bastion) AutoTunnel(instanceID string, enabled bool) {
 	}
 	ws.tunnelEnabled = enabled
 	if enabled {
-		if ws.cancelTunnel == nil {
+		if ws.cancelTunnel == nil && b.EnableAutoTunnel {
 			b.Update(ws.WorkspaceID)
 		}
 	} else if ws.cancelTunnel != nil {
