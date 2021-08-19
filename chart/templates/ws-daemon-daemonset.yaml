@@ -149,6 +149,7 @@ spec:
           - -c
         args:
           - |
+            exec {BASH_XTRACEFD}>&1 # this causes 'set -x' to write to stdout insted of stderr
             set -euExo pipefail
             RAID_DEVICE="/dev/md42"
             RAID_DIR="/mnt/hostfs{{ $comp.hostWorkspaceArea }}"
