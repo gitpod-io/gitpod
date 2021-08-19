@@ -71,6 +71,11 @@ spec:
         - name: https-certificates
           mountPath: "/mnt/certificates"
         {{- end }}
+        {{- range $idx, $sec := $comp.registryCerts }}
+        - mountPath: /etc/ssl/certs/{{ $sec.name }}.pem
+          name: docker-tls-certs-{{ $idx }}
+          subPath: tls.cert
+        {{- end }}
 {{ include "gitpod.kube-rbac-proxy" $this | indent 6 }}
       volumes:
       - name: cache
@@ -90,6 +95,11 @@ spec:
       - name: https-certificates
         secret:
           secretName: {{ .Values.certificatesSecret.secretName }}
+      {{- end }}
+      {{- range $idx, $sec := $comp.registryCerts }}
+      - name: docker-tls-certs-{{ $idx }}
+        secret:
+          secretName: {{ $sec.secret }}
       {{- end }}
 {{ toYaml .Values.defaults | indent 6 }}
 {{ end }}

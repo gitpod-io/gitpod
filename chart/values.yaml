@@ -274,6 +274,7 @@ components:
     svcLabels:
       feature: registry
     serviceType: "ClusterIP"
+    registryCerts: []
 
   # enabled cronjob to restart the proxy deployment
   restarter:
