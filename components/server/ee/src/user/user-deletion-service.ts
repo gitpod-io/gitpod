@@ -61,7 +61,7 @@ export class UserDeletionServiceEE extends UserDeletionService {
         }
 
         await super.deleteUser(id);
-        if (errors) {
+        if (errors.length > 0) {
             throw new Error(errors.join("\n"))
         }
     }
