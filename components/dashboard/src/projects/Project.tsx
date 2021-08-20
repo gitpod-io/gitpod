@@ -18,11 +18,13 @@ import { shortCommitMessage } from "./render-utils";
 
 export default function () {
     const history = useHistory();
-    const { teams } = useContext(TeamsContext);
     const location = useLocation();
+
+    const { teams } = useContext(TeamsContext);
+    const team = getCurrentTeam(location, teams);
+
     const match = useRouteMatch<{ team: string, resource: string }>("/:team/:resource");
     const projectName = match?.params?.resource;
-    const team = getCurrentTeam(location, teams);
 
     const [project, setProject] = useState<Project | undefined>();
 
@@ -34,7 +36,7 @@ export default function () {
 
     useEffect(() => {
         updateProject();
-    }, [ teams, team ]);
+    }, [ teams ]);
 
     const updateProject = async () => {
         if (!teams || !projectName) {
@@ -87,7 +89,7 @@ export default function () {
             // TODO(at): this need to be revised once prebuild events are integrated
             return;
         }
-        if (!team || !project) {
+        if (!project) {
             return;
         }
         prebuildLoaders.add(branch.name);

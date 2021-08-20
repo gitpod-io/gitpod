@@ -18,11 +18,13 @@ import { shortCommitMessage } from "./render-utils";
 
 export default function () {
     const history = useHistory();
-    const { teams } = useContext(TeamsContext);
     const location = useLocation();
+
+    const { teams } = useContext(TeamsContext);
+    const team = getCurrentTeam(location, teams);
+
     const match = useRouteMatch<{ team: string, resource: string }>("/:team/:resource");
     const projectName = match?.params?.resource;
-    const team = getCurrentTeam(location, teams);
 
     // @ts-ignore
     const [project, setProject] = useState<Project | undefined>();
@@ -55,7 +57,7 @@ export default function () {
                 }
             }
         })();
-    }, [ teams, team ]);
+    }, [ teams ]);
 
     const prebuildContextMenu = (p: PrebuildInfo) => {
         const running = p.status === "building";

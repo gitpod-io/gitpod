@@ -32,7 +32,7 @@ export default function () {
 
     useEffect(() => {
         updateProjects();
-    }, [ teams, team ]);
+    }, [ teams ]);
 
     const updateProjects = async () => {
         if (!teams) {

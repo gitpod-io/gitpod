@@ -5,7 +5,7 @@
  */
 
 import { inject, injectable } from "inversify";
-import { DBWithTracing, ProjectDB, TeamDB, TracedWorkspaceDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
+import { DBWithTracing, ProjectDB, TeamDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
 import { Branch, CommitInfo, CreateProjectParams, FindPrebuildsParams, PrebuildInfo, PrebuiltWorkspace, Project, ProjectConfig, User } from "@gitpod/gitpod-protocol";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { parseRepoUrl } from "../repohost";
@@ -16,6 +16,7 @@ export class ProjectsService {
 
     @inject(ProjectDB) protected readonly projectDB: ProjectDB;
     @inject(TeamDB) protected readonly teamDB: TeamDB;
+    @inject(UserDB) protected readonly userDB: UserDB;
     @inject(TracedWorkspaceDB) protected readonly workspaceDb: DBWithTracing<WorkspaceDB>;
     @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
 
@@ -92,7 +93,32 @@ export class ProjectsService {
             ...(!!userId ? { userId } : { teamId }),
             appInstallationId
         });
-        return this.projectDB.storeProject(project);
+        await this.projectDB.storeProject(project);
+        await this.onDidCreateProject(project);
+        return project;
+    }
+
+    protected async onDidCreateProject(project: Project) {
+        let { userId, teamId, cloneUrl } = project;
+        const parsedUrl = parseRepoUrl(project.cloneUrl);
+        if ("gitlab.com" === parsedUrl?.host) {
+            const repositoryService = this.hostContextProvider.get(parsedUrl?.host)?.services?.repositoryService;
+            if (repositoryService) {
+                if (teamId) {
+                    const owner = (await this.teamDB.findMembersByTeam(teamId)).find(m => m.role === "owner");
+                    userId = owner?.userId;
+                }
+                const user = userId && await this.userDB.findUserById(userId);
+                if (user) {
+                    if (await repositoryService.canInstallAutomatedPrebuilds(user, cloneUrl)) {
+                        log.info("Update prebuild installation for project.", { cloneUrl, teamId, userId });
+                        await repositoryService.installAutomatedPrebuilds(user, cloneUrl);
+                    }
+                } else {
+                    log.error("Cannot find user for project.", { cloneUrl })
+                }
+            }
+        }
     }
 
     async deleteProject(projectId: string): Promise<void> {

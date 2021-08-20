@@ -59,7 +59,7 @@ export class GitHubAppSupport {
                         name: r.name,
                         cloneUrl: r.clone_url,
                         account: r.owner.login,
-                        accountAvatarUrl: r.owner.avatar_url,
+                        accountAvatarUrl: r.owner?.avatar_url,
                         updatedAt: r.updated_at,
                         installationId: installation.data.id,
                         installationUpdatedAt: installation.data.updated_at
