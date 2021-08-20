@@ -448,7 +448,7 @@ var ring1Cmd = &cobra.Command{
 		}
 
 		go func() {
-			err := lift.ServeLift(lift.DefaultSocketPath)
+			err := lift.ServeLift(ctx, lift.DefaultSocketPath)
 			if err != nil {
 				log.WithError(err).Error("failed to serve ring1 command lift")
 			}

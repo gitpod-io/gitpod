@@ -10,6 +10,7 @@ package lift
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -29,7 +30,7 @@ type LiftRequest struct {
 	Command []string `json:"command"`
 }
 
-func ServeLift(socket string) error {
+func ServeLift(ctx context.Context, socket string) error {
 	skt, err := net.Listen("unix", socket)
 	if err != nil {
 		return err
@@ -43,6 +44,13 @@ func ServeLift(socket string) error {
 	}()
 
 	for {
+		select {
+		case <-ctx.Done():
+			break
+		default:
+			// pass through
+		}
+
 		conn, err := skt.Accept()
 		if err != nil {
 			log.WithError(err).Error("cannot accept lift connection")
