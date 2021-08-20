@@ -218,9 +218,16 @@ export async function build(context, version) {
         return
     }
 
+    const MAX_DOMAIN_LENGTH = 63;
+    const BASEDOMAIN = ".staging.gitpod-dev.com";
+
     const destname = version.split(".")[0];
     const namespace = `staging-${destname}`;
-    const domain = `${destname}.staging.gitpod-dev.com`;
+    let subdomain = destname.substr(0, MAX_DOMAIN_LENGTH - BASEDOMAIN.length);
+    while (subdomain.slice(-1) === "-") {
+        subdomain = subdomain.slice(0, -1);
+    }
+    const domain = `${subdomain}${BASEDOMAIN}`;
     const url = `https://${domain}`;
     const deploymentConfig = {
         version,
