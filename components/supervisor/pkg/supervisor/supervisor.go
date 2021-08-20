@@ -112,7 +112,8 @@ const (
 
 // Run serves as main entrypoint to the supervisor
 func Run(options ...RunOption) {
-	defer log.Info("supervisor shut down")
+	exitCode := 0
+	defer handleExit(&exitCode)
 
 	opts := runOptions{
 		Args: os.Args,
@@ -277,7 +278,6 @@ func Run(options ...RunOption) {
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-	var exitCode int
 	select {
 	case <-sigChan:
 	case shutdownReason := <-shutdown:
@@ -297,9 +297,6 @@ func Run(options ...RunOption) {
 	terminateChildProcesses()
 
 	wg.Wait()
-
-	log.WithField("exitCode", exitCode).Debug("supervisor exit")
-	os.Exit(exitCode)
 }
 
 func createGitpodService(cfg *Config, tknsrv api.TokenServiceServer) *gitpod.APIoverJSONRPC {
@@ -1238,4 +1235,10 @@ func runAsGitpodUser(cmd *exec.Cmd) *exec.Cmd {
 	cmd.SysProcAttr.Credential.Uid = gitpodUID
 	cmd.SysProcAttr.Credential.Gid = gitpodGID
 	return cmd
+}
+
+func handleExit(ec *int) {
+	exitCode := *ec
+	log.WithField("exitCode", exitCode).Debug("supervisor exit")
+	os.Exit(exitCode)
 }
