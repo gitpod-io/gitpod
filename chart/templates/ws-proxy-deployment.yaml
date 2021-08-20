@@ -67,6 +67,15 @@ spec:
           httpGet:
             path: /
             port: 60088
+        livenessProbe:
+          initialDelaySeconds: 2
+          periodSeconds: 5
+          failureThreshold: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+          httpGet:
+            path: /
+            port: 60088
         volumeMounts:
         - name: config
           mountPath: "/config"
