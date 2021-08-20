@@ -67,7 +67,9 @@ export class NewsletterSubscriptionController {
                 else {
                     this.analytics.identify({
                         userId: email,
-                        [newsletterProperties[newsletterType].property]: true
+                        traits: {
+                            [newsletterProperties[newsletterType].property]: true
+                        }
                     });
                     res.redirect(successPageUrl);
                 }
