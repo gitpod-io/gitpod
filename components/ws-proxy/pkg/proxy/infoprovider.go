@@ -17,9 +17,12 @@ import (
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation"
+	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
+	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/keepalive"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/util"
@@ -123,7 +126,20 @@ func defaultWsmanagerDialer(target string, dialOption grpc.DialOption) (io.Close
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	conn, err := grpc.DialContext(ctx, target, dialOption, grpc.WithBlock())
+	opts := []grpc.DialOption{
+		grpc.WithUnaryInterceptor(grpc_opentracing.UnaryClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer()))),
+		grpc.WithStreamInterceptor(grpc_opentracing.StreamClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer()))),
+		grpc.WithBlock(),
+		grpc.WithBackoffMaxDelay(5 * time.Second),
+		grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:                5 * time.Second,
+			Timeout:             time.Second,
+			PermitWithoutStream: true,
+		}),
+	}
+	opts = append(opts, dialOption)
+
+	conn, err := grpc.DialContext(ctx, target, opts...)
 	if err != nil {
 		return nil, nil, err
 	}
