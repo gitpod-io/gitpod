@@ -10,6 +10,7 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -1142,7 +1143,7 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 		})
 		return err
 	})
-	if err != nil {
+	if err != nil && !errors.Is(err, context.Canceled) {
 		log.WithError(err).Error("cannot provide Docker activation socket")
 	}
 }
