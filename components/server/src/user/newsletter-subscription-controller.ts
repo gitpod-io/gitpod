@@ -65,12 +65,9 @@ export class NewsletterSubscriptionController {
                 }
 
                 else {
-                    this.analytics.track({
+                    this.analytics.identify({
                         userId: email,
-                        event: "notification_change",
-                        properties: {
-                            [newsletterProperties[newsletterType].property]: true
-                        }
+                        [newsletterProperties[newsletterType].property]: true
                     });
                     res.redirect(successPageUrl);
                 }
