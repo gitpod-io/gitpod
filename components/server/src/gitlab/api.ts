@@ -204,7 +204,17 @@ export namespace GitLab {
         private_profile: boolean;
     }
     export interface Permissions {
-        project_access: {
+        project_access?: {
+            /**`
+             * 10 => Guest access
+             * 20 => Reporter access
+             * 30 => Developer access
+             * 40 => Maintainer access
+             * 50 => Owner accesss
+            `*/
+            access_level: number;
+        },
+        group_access?: {
             /**`
              * 10 => Guest access
              * 20 => Reporter access
@@ -217,7 +227,22 @@ export namespace GitLab {
     }
     export namespace Permissions {
         export function hasWriteAccess(repo: Project): boolean {
-            return repo.permissions.project_access.access_level >= 30;
+            if (repo.permissions.project_access) {
+                return repo.permissions.project_access.access_level >= 30;
+            }
+            if (repo.permissions.group_access) {
+                return repo.permissions.group_access.access_level >= 30;
+            }
+            return false;
+        }
+        export function hasMaintainerAccess(repo: Project): boolean {
+            if (repo.permissions.project_access) {
+                return repo.permissions.project_access.access_level >= 40;
+            }
+            if (repo.permissions.group_access) {
+                return repo.permissions.group_access.access_level >= 40;
+            }
+            return false;
         }
     }
     export interface Commit {
@@ -225,12 +250,15 @@ export namespace GitLab {
         short_id: string;
         title: string;
         message: string;
-        parent_ids: string[];
+        parent_ids: string[] | null;
+        author_name: string;
+        authored_date: string;
     }
     export interface Branch {
         commit: Commit;
         name: string;
         default: boolean;
+        web_url: string;
     }
     export interface Tag {
         name: string,

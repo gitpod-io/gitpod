@@ -16,12 +16,14 @@ import PrebuildLogs from "../components/PrebuildLogs";
 import { shortCommitMessage } from "./render-utils";
 
 export default function () {
-    const { teams } = useContext(TeamsContext);
     const location = useLocation();
+
+    const { teams } = useContext(TeamsContext);
+    const team = getCurrentTeam(location, teams);
+
     const match = useRouteMatch<{ team: string, project: string, prebuildId: string }>("/:team/:project/:prebuildId");
     const projectName = match?.params?.project;
     const prebuildId = match?.params?.prebuildId;
-    const team = getCurrentTeam(location, teams);
 
     const [ prebuild, setPrebuild ] = useState<PrebuildInfo | undefined>();
 
@@ -44,7 +46,7 @@ export default function () {
             });
             setPrebuild(prebuilds[0]);
         })();
-    }, [ teams, team ]);
+    }, [ teams ]);
 
     const renderTitle = () => {
         if (!prebuild) {
