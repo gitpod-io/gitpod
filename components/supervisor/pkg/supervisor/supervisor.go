@@ -1128,7 +1128,14 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 	l, err := net.Listen("unix", fn)
 	if err != nil {
 		log.WithError(err).Error("cannot provide Docker activation socket")
+		return
 	}
+
+	go func() {
+		<-ctx.Done()
+		l.Close()
+	}()
+
 	_ = os.Chown(fn, gitpodUID, gitpodGID)
 	err = activation.Listen(ctx, l, func(socketFD *os.File) error {
 		cmd := exec.Command("docker-up")
