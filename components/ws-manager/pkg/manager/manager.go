@@ -369,8 +369,8 @@ func (m *Manager) stopWorkspace(ctx context.Context, workspaceID string, gracePe
 	}
 
 	status, _ := m.getWorkspaceStatus(workspaceObjects{Pod: pod})
-	span.SetTag("phase", status.Phase)
 	if status != nil {
+		span.SetTag("phase", status.Phase)
 		// If the status is nil (e.g. because an error occured), we'll still try and stop the workspace
 		// This is merely an optimization that prevents deleting the workspace pod multiple times.
 		// If we do try and delete the pod a few times though, that's ok, too.
