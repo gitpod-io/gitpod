@@ -24,7 +24,7 @@ import { Disposable } from "@gitpod/gitpod-protocol";
 export default function Teams() {
 
     return (<div>
-        <PageWithSubMenu subMenu={settingsMenu} title='Teams' subtitle='View and and manage subscriptions for your team with one centralized billing.'>
+        <PageWithSubMenu subMenu={settingsMenu} title='Teams' subtitle='View and manage subscriptions for your team with one centralized billing.'>
             <AllTeams />
         </PageWithSubMenu>
     </div>);
