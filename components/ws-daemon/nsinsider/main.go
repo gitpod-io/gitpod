@@ -19,6 +19,13 @@ import (
 	_ "github.com/gitpod-io/gitpod/ws-daemon/nsinsider/pkg/nsenter"
 )
 
+const (
+	commonFlags = uintptr(unix.MS_BIND | unix.MS_REC | unix.MS_PRIVATE)
+	devFlags    = commonFlags | unix.MS_NOEXEC | unix.MS_NOSUID | unix.MS_RDONLY
+	procFlags   = devFlags | unix.MS_NODEV
+	sysFlags    = devFlags | unix.MS_NODEV
+)
+
 func main() {
 	app := &cli.App{
 		Commands: []*cli.Command{
@@ -174,7 +181,7 @@ func main() {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					return unix.Mount("proc", c.String("target"), "proc", 0, "")
+					return unix.Mount("proc", c.String("target"), "proc", procFlags, "")
 				},
 			},
 			{
@@ -187,7 +194,7 @@ func main() {
 					},
 				},
 				Action: func(c *cli.Context) error {
-					return unix.Mount("sysfs", c.String("target"), "sysfs", 0, "")
+					return unix.Mount("sysfs", c.String("target"), "sysfs", sysFlags, "")
 				},
 			},
 			{
