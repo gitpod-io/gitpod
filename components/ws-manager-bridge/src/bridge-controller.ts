@@ -86,12 +86,14 @@ export class BridgeController {
         const bridge = this.bridgeFactory() as WorkspaceManagerBridge;
         const clientProvider = async () => {
             const grpcOptions = {
-                "grpc.keepalive_timeout_ms": 20000,
+                "grpc.keepalive_timeout_ms": 1000,
+                "grpc.keepalive_time_ms": 5000,
                 "grpc.http2.min_time_between_pings_ms": 1000,
-                "grpc.keepalive_time_ms": 30000,
                 "grpc.keepalive_permit_without_calls": 1,
                 "grpc-node.max_session_memory": 50,
+                "grpc.max_reconnect_backoff_ms": 5000,
             };
+
             return this.clientProvider.get(cluster.name, grpcOptions);
         }
         bridge.start(cluster, clientProvider);
