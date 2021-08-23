@@ -89,6 +89,13 @@ func TestBuildTarbalMaxSize(t *testing.T) {
 		err = BuildTarbal(context.Background(), wd, tgt.Name(), false, carchive.TarbalMaxSize(test.MaxSize))
 		if (err == nil && test.Err != nil) || (err != nil && test.Err == nil) || (err != nil && test.Err != nil && err.Error() != test.Err.Error()) {
 			t.Errorf("%s: unexpected error: expected \"%v\", actual \"%v\"", test.Name, test.Err, err)
+		} else {
+
+			_, doesNotExistErr := os.Stat(tgt.Name())
+			doesNotExist := doesNotExistErr != nil && os.IsNotExist(doesNotExistErr)
+			if err != nil && !doesNotExist {
+				t.Errorf("The file should be deleted when buildTarbal failed.")
+			}
 		}
 	}
 
