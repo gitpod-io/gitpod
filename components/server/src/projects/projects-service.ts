@@ -159,7 +159,10 @@ export class ProjectsService {
                 prebuilds.push(pbws);
             }
         } else {
-            const limit = params.latest ? 1 : undefined;
+            let limit = params.limit !== undefined ? params.limit : 30;
+            if (params.latest) {
+                limit = 1;
+            }
             let branch = params.branch;
             prebuilds = await this.workspaceDb.trace({}).findPrebuiltWorkspacesByProject(project.id, branch, limit);
         }
