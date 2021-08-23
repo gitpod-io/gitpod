@@ -15,7 +15,6 @@ import { getGitpodService } from "../service/service";
 import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { ThemeContext } from "../theme-context";
 import { PrebuildInfo, Project } from "@gitpod/gitpod-protocol";
-import DropDown from "../components/DropDown";
 import { toRemoteURL } from "./render-utils";
 import ContextMenu from "../components/ContextMenu";
 
@@ -29,6 +28,8 @@ export default function () {
     const [ lastPrebuilds, setLastPrebuilds ] = useState<Map<string, PrebuildInfo>>(new Map());
 
     const { isDark } = useContext(ThemeContext);
+
+    const [searchFilter, setSearchFilter] = useState<string | undefined>();
 
     useEffect(() => {
         updateProjects();
@@ -55,7 +56,6 @@ export default function () {
     }
 
     const newProjectUrl = !!team ? `/new?team=${team.slug}` : '/new';
-    const onSearchProjects = (searchString: string) => { }
     const onNewProject = () => {
         history.push(newProjectUrl);
     }
@@ -67,6 +67,13 @@ export default function () {
     const onRemoveProject = async (p: Project) => {
         await getGitpodService().server.deleteProject(p.id);
         await updateProjects();
+    }
+
+    const filter = (project: Project) => {
+        if (searchFilter && `${project.name}`.toLowerCase().includes(searchFilter.toLowerCase()) === false) {
+            return false;
+        }
+        return true;
     }
 
     return <>
@@ -90,23 +97,16 @@ export default function () {
                         <div className="py-4">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="16" height="16"><path fill="#A8A29E" d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z" /></svg>
                         </div>
-                        <input type="search" placeholder="Search Projects" onChange={(e) => onSearchProjects(e.target.value)} />
+                        <input type="search" placeholder="Search Projects" onChange={e => setSearchFilter(e.target.value)} />
                     </div>
                     <div className="flex-1" />
                     <div className="py-3 pl-3">
-                        <DropDown prefix="Status: " contextMenuWidth="w-32" activeEntry={'Recent'} entries={[{
-                            title: 'Recent',
-                            onClick: () => { /* TODO */ }
-                        }, {
-                            title: 'All',
-                            onClick: () => { /* TODO */ }
-                        }]} />
                     </div>
                     <Link to="./members" className="flex"><button className="ml-2 secondary">Invite Members</button></Link>
                     <button className="ml-2" onClick={() => onNewProject()}>New Project</button>
                 </div>
                 <div className="mt-4 grid grid-cols-3 gap-4">
-                    {projects.map(p => (<div key={`project-${p.id}`} className="h-48">
+                    {projects.filter(filter).map(p => (<div key={`project-${p.id}`} className="h-48">
                         <div className="h-5/6 border border-gray-200 dark:border-gray-800 rounded-t-xl">
                             <div className="h-3/4 p-6">
                                 <div className="flex self-center text-base text-gray-900 dark:text-gray-50 font-medium">
@@ -141,14 +141,16 @@ export default function () {
                                 </div>)}
                         </div>
                     </div>))}
-                    <div key="new-project"
-                        className="h-48 border-dashed border-2 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl focus:bg-gitpod-kumquat-light transition ease-in-out group">
-                        <Link to={newProjectUrl}>
-                            <div className="flex h-full">
-                                <div className="m-auto">New Project</div>
-                            </div>
-                        </Link>
-                    </div>
+                    {!searchFilter && (
+                        <div key="new-project"
+                            className="h-48 border-dashed border-2 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl focus:bg-gitpod-kumquat-light transition ease-in-out group">
+                            <Link to={newProjectUrl}>
+                                <div className="flex h-full">
+                                    <div className="m-auto">New Project</div>
+                                </div>
+                            </Link>
+                        </div>
+                    )}
                 </div>
             </div>
         )}
