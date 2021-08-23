@@ -239,6 +239,8 @@ export interface FindPrebuildsParams {
     branch?: string;
     latest?: boolean;
     prebuildId?: string;
+    // default: 30
+    limit?: number;
 }
 export interface GetProviderRepositoriesParams {
     provider: string;
