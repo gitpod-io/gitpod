@@ -108,7 +108,6 @@ export class CodeSyncService {
             }
             return next();
         });
-        router.use(bodyParser.text());
         router.get('/v1/manifest', async (req, res) => {
             if (!User.is(req.user)) {
                 res.sendStatus(204);

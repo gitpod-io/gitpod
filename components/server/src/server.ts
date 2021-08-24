@@ -199,8 +199,10 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
         // Generic error handler
         app.use((err: any, req: express.Request, response: express.Response, next: express.NextFunction) => {
             let msg: string;
+            let status = 500;
             if (err instanceof Error) {
                 msg = err.toString() + "\nStack: " + err.stack;
+                status = typeof (err as any).status === 'number' ? (err as any).status : 500;
             } else {
                 msg = err.toString();
             }
@@ -211,7 +213,7 @@ export class Server<C extends GitpodClient, S extends GitpodServer> {
                 session: req.session
             });
             if (!this.isAnsweredRequest(req, response)) {
-                response.status(500).send({ error: msg });
+                response.status(status).send({ error: msg });
             }
         });
 
