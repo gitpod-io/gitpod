@@ -54,10 +54,9 @@ export class NewsletterSubscriptionController {
                             }
                         }
                     });
-                    this.analytics.track({
+                    this.analytics.identify({
                         userId: user.id,
-                        event: "notification_change",
-                        properties: {
+                        traits: {
                             [newsletterProperties[newsletterType].property]: true
                         }
                     });
