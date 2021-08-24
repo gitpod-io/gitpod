@@ -1,0 +1,24 @@
+{
+    "actions": [
+        {
+            "Func": "markWorkspace",
+            "Params": {
+                "annotations": [
+                    {
+                        "Name": "gitpod/failedBeforeStopping",
+                        "Value": "true",
+                        "Delete": false
+                    }
+                ],
+                "workspaceID": "foobar"
+            }
+        },
+        {
+            "Func": "stopWorkspace",
+            "Params": {
+                "gracePeriod": 30000000000,
+                "workspaceID": "foobar"
+            }
+        }
+    ]
+}

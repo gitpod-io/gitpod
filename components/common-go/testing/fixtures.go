@@ -25,11 +25,12 @@ var force = flag.Bool("force", false, "overwrite .golden files even if they alre
 
 // FixtureTest is a test that is based on fixture and golden files. This is very convenient to test a largely variable surface with many variants.
 type FixtureTest struct {
-	T       *testing.T
-	Path    string
-	Test    FixtureTestFunc
-	Fixture func() interface{}
-	Gold    func() interface{}
+	T        *testing.T
+	Path     string
+	GoldPath func(path string) string
+	Test     FixtureTestFunc
+	Fixture  func() interface{}
+	Gold     func() interface{}
 }
 
 // FixtureTestFunc implements the actual fixture test
@@ -90,6 +91,9 @@ func (ft *FixtureTest) Run() {
 			}
 
 			goldenFilePath := fmt.Sprintf("%s.golden", strings.TrimSuffix(fn, filepath.Ext(fn)))
+			if ft.GoldPath != nil {
+				goldenFilePath = ft.GoldPath(fn)
+			}
 			if *update {
 				if _, err := os.Stat(goldenFilePath); *force || os.IsNotExist(err) {
 					err = os.WriteFile(goldenFilePath, actual, 0600)

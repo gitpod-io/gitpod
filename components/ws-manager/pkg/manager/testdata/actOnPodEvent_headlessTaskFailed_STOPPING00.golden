@@ -1,0 +1,17 @@
+{
+    "actions": [
+        {
+            "Func": "clearInitializerFromMap",
+            "Params": {
+                "podName": "prebuild-60116ccc-1593-41f5-880e-6c4010dc4d1d"
+            }
+        },
+        {
+            "Func": "stopWorkspace",
+            "Params": {
+                "gracePeriod": 30000000000,
+                "workspaceID": "60116ccc-1593-41f5-880e-6c4010dc4d1d"
+            }
+        }
+    ]
+}

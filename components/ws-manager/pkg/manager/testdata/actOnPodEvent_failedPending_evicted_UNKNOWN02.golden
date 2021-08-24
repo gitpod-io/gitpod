@@ -1,0 +1,10 @@
+{
+    "actions": [
+        {
+            "Func": "clearInitializerFromMap",
+            "Params": {
+                "podName": "ws-cecf2a75-7225-4056-a125-fa3144b9c012"
+            }
+        }
+    ]
+}
