@@ -81,12 +81,12 @@ func BuildTarbal(ctx context.Context, src string, dst string, fullWorkspaceBacku
 	if err != nil {
 		return xerrors.Errorf("cannot open archive for writing: %w", err)
 	}
-	defer fout.Close()
-	defer func(e *error) {
+	defer func(e error) {
 		if e != nil {
 			os.Remove(dst)
 		}
-	}(&err)
+	}(err)
+	defer fout.Close()
 	fbout := bufio.NewWriter(fout)
 	defer fbout.Flush()
 
