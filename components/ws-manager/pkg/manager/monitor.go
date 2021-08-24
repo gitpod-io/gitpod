@@ -355,12 +355,13 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 				break
 			}
 		}
-		if _, gone := wso.Pod.Annotations[wsk8s.ContainerIsGoneAnnotation]; !terminated && gone {
+		if _, gone := wso.Pod.Annotations[wsk8s.ContainerIsGoneAnnotation]; gone {
 			// workaround for https://github.com/containerd/containerd/pull/4214 which can prevent pod status
 			// propagation. ws-daemon observes the pods and propagates this state out-of-band via the annotation.
-			terminated = true
-		}
-		if terminated {
+			if !terminated {
+				go m.finalizeWorkspaceContent(ctx, wso)
+			}
+		} else {
 			go m.finalizeWorkspaceContent(ctx, wso)
 		}
 	}
