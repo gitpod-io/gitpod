@@ -12,13 +12,21 @@ cat << EOF > "$DIR/../affinity.yaml"
 affinity:
   nodeAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
-      - labelSelector:
-        matchExpressions:
+      nodeSelectorTerms:
+      - matchExpressions:
         - key: kubernetes.io/hostname
           operator: In
           values:
           - $DEPLOY_TO_NODE
-        topologyKey: kubernetes.io/hostname
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - labelSelector:
+        matchExpressions:
+        - key: app
+          operator: In
+          values:
+          - gitpod
+      topologyKey: "kubernetes.io/hostname"
 
 components:
   workspace:
@@ -28,11 +36,19 @@ components:
     affinity:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-            matchExpressions:
+          nodeSelectorTerms:
+          - matchExpressions:
             - key: kubernetes.io/hostname
               operator: In
               values:
               - $DEPLOY_TO_NODE
-            topologyKey: kubernetes.io/hostname
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchExpressions:
+            - key: app
+              operator: In
+              values:
+              - gitpod
+          topologyKey: "kubernetes.io/hostname"
 EOF
