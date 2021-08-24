@@ -168,7 +168,6 @@ export default function () {
                     <ItemField className="flex items-center">
                         <div className="flex space-x-2">
                             <span className="font-medium text-gray-500 dark:text-gray-50">{p.branch}</span>
-                            <span className="text-gray-400">#{p.branchPrebuildNumber}</span>
                         </div>
                         <span className="flex-grow" />
                         <ItemFieldContextMenu menuEntries={prebuildContextMenu(p)} />

@@ -52,7 +52,7 @@ export default function () {
         if (!prebuild) {
             return "unknown prebuild";
         }
-        return (<h1 className="tracking-tight">{prebuild.branch} <span className="text-gray-200">#{prebuild.branchPrebuildNumber}</span></h1>);
+        return (<h1 className="tracking-tight">{prebuild.branch} </h1>);
     };
 
     const renderSubtitle = () => {
