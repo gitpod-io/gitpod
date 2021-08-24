@@ -431,6 +431,7 @@ func (s *WorkspaceService) uploadWorkspaceContent(ctx context.Context, sess *ses
 
 		err = BuildTarbal(ctx, loc, tmpf.Name(), sess.FullWorkspaceBackup, opts...)
 		if err != nil {
+			log.WithField("err", err).WithFields(sess.OWI()).Error("Build tarball error")
 			return
 		}
 		err = tmpf.Sync()
