@@ -593,7 +593,6 @@ type Execve struct {
 	Filename string
 	Argv     []string
 	TID      int
-	Envp     []string
 }
 
 // todo(fntlnz): move this to a package for parsers and write a test
@@ -701,7 +700,10 @@ func (agent *Smith) handleExecveEvent(execve Execve) func() (*InfringingWorkspac
 
 			for _, b := range bl.Binaries {
 				if strings.Contains(execve.Filename, b) || strings.Contains(strings.Join(execve.Argv, "|"), b) {
-					infr := Infringement{Description: fmt.Sprintf("user ran %s blacklisted command: %s", s, execve.Filename), Kind: GradeKind(InfringementExecBlacklistedCmd, s)}
+					infr := Infringement{
+						Description: fmt.Sprintf("user ran %s blacklisted command: %s %v", s, execve.Filename, execve.Argv),
+						Kind:        GradeKind(InfringementExecBlacklistedCmd, s),
+					}
 					res = append(res, infr)
 				}
 			}
