@@ -10,14 +10,15 @@ DEPLOY_TO_NODE=$(kubectl get pods -l app=gitpod -A --no-headers  -o=custom-colum
 
 cat << EOF > "$DIR/../affinity.yaml"
 affinity:
-  nodeAffinity:
+  podAntiAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-        - matchExpressions:
+    - labelSelector:
+        matchExpressions:
           - key: kubernetes.io/hostname
             operator: In
             values:
             - $DEPLOY_TO_NODE
+      topologyKey: kubernetes.io/hostname
 
 components:
   workspace:
@@ -25,12 +26,13 @@ components:
     pullSecret:
       secretName: gcp-sa-registry-auth
     affinity:
-      nodeAffinity:
+      podAntiAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-            - matchExpressions:
+        - labelSelector:
+            matchExpressions:
               - key: kubernetes.io/hostname
                 operator: In
                 values:
                 - $DEPLOY_TO_NODE
+          topologyKey: kubernetes.io/hostname
 EOF
