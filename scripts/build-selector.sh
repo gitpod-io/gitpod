@@ -12,17 +12,13 @@ cat << EOF > "$DIR/../affinity.yaml"
 affinity:
   nodeAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-      - matchExpressions:
-        - key: gitpod.io/workload_meta
-          operator: In
-          values:
-          - "true"
       - labelSelector:
+        matchExpressions:
         - key: kubernetes.io/hostname
           operator: In
           values:
           - $DEPLOY_TO_NODE
+        topologyKey: kubernetes.io/hostname
   workspace:
     # configure GCP registry
     pullSecret:
@@ -30,15 +26,11 @@ affinity:
     affinity:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: gitpod.io/workload_meta
-              operator: In
-              values:
-              - "true"
           - labelSelector:
+            matchExpressions:
             - key: kubernetes.io/hostname
               operator: In
               values:
               - $DEPLOY_TO_NODE
+            topologyKey: kubernetes.io/hostname
 EOF
