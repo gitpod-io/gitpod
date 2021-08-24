@@ -277,7 +277,7 @@ func (d *Dispatch) handlePodDeleted(pod *corev1.Pod) {
 
 	state, ok := d.ctxs[instanceID]
 	if !ok {
-		log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Error("received pod deletion for a workspace, but have not seen it before. Ignoring update.")
+		log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Debug("received pod deletion for a workspace, but have not seen it before. Probably another node. Ignoring update.")
 		return
 	}
 	if state.Cancel != nil {
