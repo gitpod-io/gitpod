@@ -46,7 +46,7 @@ export function SelectAccountModal(props: SelectAccountPayload & {
         <p className="pb-2 text-gray-500 text-base">You are trying to authorize a provider that is already connected with another account on Gitpod.</p>
 
         <InfoBox className="mt-4 w-full mx-auto">
-            Disconnect a provider in one of you accounts, if you like to continue with the other account.
+            Disconnect a provider in one of your accounts, if you would like to continue with the other account.
         </InfoBox>
 
         <div className="mt-10 mb-6 flex-grow flex flex-row justify-around align-center">
