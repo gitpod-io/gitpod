@@ -201,7 +201,6 @@ export class ProjectsService {
             changeTitle: commit.commitMessage,
             // changePR
             // changeUrl
-            branchPrebuildNumber: "42"
         };
     }
 

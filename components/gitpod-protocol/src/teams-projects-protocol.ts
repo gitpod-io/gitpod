@@ -60,7 +60,6 @@ export interface PrebuildInfo {
     projectName: string;
     cloneUrl: string;
     branch: string;
-    branchPrebuildNumber: string;
     buildWorkspaceId: string;
 
     startedAt: string;
