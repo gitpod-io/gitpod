@@ -19,6 +19,8 @@ affinity:
           values:
           - $DEPLOY_TO_NODE
         topologyKey: kubernetes.io/hostname
+
+components:
   workspace:
     # configure GCP registry
     pullSecret:
