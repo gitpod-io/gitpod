@@ -356,7 +356,9 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
                 | yq r - data.authProviders \
                 | base64 -d -w 0 \
                 > authProviders`, { slice: "authProviders" });
-        exec(`yq merge --inplace .werft/values.dev.yaml ./authProviders`, { slice: "authProviders" })
+        exec(`./scripts/build-selector.sh`);
+        exec(`yq merge --inplace .werft/values.dev.yaml ./authProviders ./affinity.yaml`, { slice: "authProviders" });
+
         werft.done('authProviders');
     } catch (err) {
         werft.fail('authProviders', err);
