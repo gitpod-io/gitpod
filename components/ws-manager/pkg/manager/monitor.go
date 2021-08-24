@@ -74,6 +74,8 @@ type Monitor struct {
 	finalizerMap     map[string]context.CancelFunc
 	finalizerMapLock sync.Mutex
 
+	act actingManager
+
 	OnError func(error)
 }
 
@@ -97,6 +99,10 @@ func (m *Manager) CreateMonitor() (*Monitor, error) {
 		},
 	}
 	res.eventpool = workpool.NewEventWorkerPool(res.handleEvent)
+	res.act = struct {
+		*Monitor
+		*Manager
+	}{&res, m}
 
 	return &res, nil
 }
@@ -202,7 +208,7 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 	}()
 
 	m.writeEventTraceLog(status, wso)
-	err = m.actOnPodEvent(ctx, status, wso)
+	err = actOnPodEvent(ctx, m.act, status, wso)
 
 	// To make the tracing work though we have to re-sync with OnChange. But we don't want OnChange to block our event
 	// handling, thus we wait for it to finish in a Go routine.
@@ -216,7 +222,7 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 
 // actOnPodEvent performs actions when a kubernetes event comes in. For example we shut down failed workspaces or start
 // polling the ready state of initializing ones.
-func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus, wso *workspaceObjects) (err error) {
+func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceStatus, wso *workspaceObjects) (err error) {
 	pod := wso.Pod
 
 	span, ctx := tracing.FromContext(ctx, "actOnPodEvent")
@@ -231,9 +237,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 	if status.Phase == api.WorkspacePhase_STOPPING || status.Phase == api.WorkspacePhase_STOPPED {
 		// Beware: do not else-if this condition with the other phases as we don't want the stop
 		//         login in any other phase, too.
-		m.initializerMapLock.Lock()
-		delete(m.initializerMap, pod.Name)
-		m.initializerMapLock.Unlock()
+		m.clearInitializerFromMap(pod.Name)
 
 		// Special case: workspaces timing out during backup. Normally a timed out workspace would just be stopped
 		//               regularly. When a workspace times out during backup though, stopping it won't do any good.
@@ -246,7 +250,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 					return err
 				}
 
-				err = m.manager.markWorkspace(ctx, workspaceID, addMark(disposalStatusAnnotation, string(b)))
+				err = m.markWorkspace(ctx, workspaceID, addMark(disposalStatusAnnotation, string(b)))
 				if err != nil {
 					return err
 				}
@@ -264,7 +268,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 		if status.Conditions.Failed != "" && !hasFailureAnnotation {
 			// If this marking operation failes that's ok - we'll still continue to shut down the workspace.
 			// The failure message won't persist while stopping the workspace though.
-			err := m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceFailedBeforeStoppingAnnotation, "true"))
+			err := m.markWorkspace(ctx, workspaceID, addMark(workspaceFailedBeforeStoppingAnnotation, "true"))
 			if err != nil {
 				log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).WithError(err).Debug("cannot mark workspace as workspaceFailedBeforeStoppingAnnotation")
 			}
@@ -277,7 +281,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 		// The alternative is to stop the pod only when the workspaceFailedBeforeStoppingAnnotation is present.
 		// However, that's much more brittle than stopping the workspace twice (something that Kubernetes can handle).
 		// It is important that we do not fail here if the pod is already gone, i.e. when we lost the race.
-		err := m.manager.stopWorkspace(ctx, workspaceID, stopWorkspaceNormallyGracePeriod)
+		err := m.stopWorkspace(ctx, workspaceID, stopWorkspaceNormallyGracePeriod)
 		if err != nil && !isKubernetesObjNotFoundError(err) {
 			return xerrors.Errorf("cannot stop workspace: %w", err)
 		}
@@ -292,7 +296,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 
 			if err != nil {
 				// workspace initialization failed, which means the workspace as a whole failed
-				err = m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, err.Error()))
+				err = m.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, err.Error()))
 				if err != nil {
 					log.WithError(err).Warn("was unable to mark workspace as failed")
 				}
@@ -309,7 +313,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 
 			if err != nil {
 				// workspace initialization failed, which means the workspace as a whole failed
-				err = m.manager.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, err.Error()))
+				err = m.markWorkspace(ctx, workspaceID, addMark(workspaceExplicitFailAnnotation, err.Error()))
 				if err != nil {
 					log.WithError(err).Warn("was unable to mark workspace as failed")
 				}
@@ -320,7 +324,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 	if status.Phase == api.WorkspacePhase_RUNNING {
 		// We need to register the finalizer before the pod is deleted (see https://book.kubebuilder.io/reference/using-finalizers.html).
 		// TODO (cw): Figure out if we can replace the "neverReady" flag.
-		err = m.manager.modifyFinalizer(ctx, workspaceID, gitpodFinalizerName, true)
+		err = m.modifyFinalizer(ctx, workspaceID, gitpodFinalizerName, true)
 		if err != nil {
 			return xerrors.Errorf("cannot add gitpod finalizer: %w", err)
 		}
@@ -330,7 +334,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 		//
 		// Also, in case the pod gets evicted we would not know the hostIP that pod ran on anymore.
 		// In preparation for those cases, we'll add it as an annotation.
-		err := m.manager.markWorkspace(ctx, workspaceID, deleteMark(wsk8s.TraceIDAnnotation), addMark(nodeNameAnnotation, wso.NodeName()))
+		err := m.markWorkspace(ctx, workspaceID, deleteMark(wsk8s.TraceIDAnnotation), addMark(nodeNameAnnotation, wso.NodeName()))
 		if err != nil {
 			log.WithError(err).Warn("was unable to remove traceID and/or add host IP annotation from/to workspace")
 		}
@@ -339,7 +343,7 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 	if status.Phase == api.WorkspacePhase_STOPPING {
 		if !isPodBeingDeleted(pod) {
 			// this might be the case if a headless workspace has just completed but has not been deleted by anyone, yet
-			err := m.manager.stopWorkspace(ctx, workspaceID, stopWorkspaceNormallyGracePeriod)
+			err := m.stopWorkspace(ctx, workspaceID, stopWorkspaceNormallyGracePeriod)
 			if err != nil && !isKubernetesObjNotFoundError(err) {
 				return xerrors.Errorf("cannot stop workspace: %w", err)
 			}
@@ -368,10 +372,28 @@ func (m *Monitor) actOnPodEvent(ctx context.Context, status *api.WorkspaceStatus
 
 	if status.Phase == api.WorkspacePhase_STOPPED {
 		// we've disposed already - try to remove the finalizer and call it a day
-		return m.manager.modifyFinalizer(ctx, workspaceID, gitpodFinalizerName, false)
+		return m.modifyFinalizer(ctx, workspaceID, gitpodFinalizerName, false)
 	}
 
 	return nil
+}
+
+// actingManager contains all functions needed by actOnPodEvent
+type actingManager interface {
+	waitForWorkspaceReady(ctx context.Context, pod *corev1.Pod) (err error)
+	stopWorkspace(ctx context.Context, workspaceID string, gracePeriod time.Duration) (err error)
+	markWorkspace(ctx context.Context, workspaceID string, annotations ...*annotation) error
+
+	clearInitializerFromMap(podName string)
+	initializeWorkspaceContent(ctx context.Context, pod *corev1.Pod) (err error)
+	finalizeWorkspaceContent(ctx context.Context, wso *workspaceObjects)
+	modifyFinalizer(ctx context.Context, workspaceID string, finalizer string, add bool) error
+}
+
+func (m *Monitor) clearInitializerFromMap(podName string) {
+	m.initializerMapLock.Lock()
+	delete(m.initializerMap, podName)
+	m.initializerMapLock.Unlock()
 }
 
 // doHouskeeping is called regularly by the monitor and removes timed out or dangling workspaces/services

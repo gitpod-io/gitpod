@@ -1,0 +1,18 @@
+{
+    "actions": [
+        {
+            "Func": "clearInitializerFromMap",
+            "Params": {
+                "podName": "ws-cc1a3979-4e0e-42cc-bba5-a8d66485bdee"
+            }
+        },
+        {
+            "Func": "modifyFinalizer",
+            "Params": {
+                "add": false,
+                "finalizer": "gitpod.io/finalizer",
+                "workspaceID": "cc1a3979-4e0e-42cc-bba5-a8d66485bdee"
+            }
+        }
+    ]
+}
