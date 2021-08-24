@@ -42,7 +42,7 @@ RUN curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh |
     && npm install -g yarn node-gyp
 ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 
-ENV GP_CODE_COMMIT 77c0ff0c18222149c9c5c7f01b8856cdb41071cc
+ENV GP_CODE_COMMIT 50f2bea99c20d24b876e5e2c6c4dbab31da7e3cc
 RUN mkdir gp-code \
     && cd gp-code \
     && git init \
@@ -51,7 +51,7 @@ RUN mkdir gp-code \
     && git reset --hard FETCH_HEAD
 WORKDIR /gp-code
 RUN yarn
-RUN yarn gitpod:link
+RUN yarn --cwd ./extensions compile
 RUN yarn gulp gitpod-min
 
 # grant write permissions for built-in extensions
