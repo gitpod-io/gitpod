@@ -12,6 +12,7 @@ import (
 	"io"
 	"os"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/docker/docker/pkg/archive"
 	"github.com/docker/docker/pkg/idtools"
 	"github.com/opentracing/opentracing-go"
@@ -77,15 +78,20 @@ func BuildTarbal(ctx context.Context, src string, dst string, fullWorkspaceBacku
 		return xerrors.Errorf("cannot create tar: %w", err)
 	}
 
+	log.Debug("Creating tar file")
+
 	fout, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE, 0744)
 	if err != nil {
 		return xerrors.Errorf("cannot open archive for writing: %w", err)
 	}
 	defer fout.Close()
 	defer func(e *error) {
-		span.LogKV("msg", "Cleanup on exit", "err", e)
+		span.LogKV("msg", "Cleanup  on exit", "err", e)
 		if e != nil {
+			log.WithError(*e).Error("Cleanup on exit went wrong")
 			os.Remove(dst)
+		} else {
+			log.Debug("Cleanup on error was successful")
 		}
 	}(&err)
 	fbout := bufio.NewWriter(fout)
