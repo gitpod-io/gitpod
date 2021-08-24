@@ -18,6 +18,7 @@ affinity:
           operator: In
           values:
           - "true"
+      - labelSelector:
         - key: kubernetes.io/hostname
           operator: In
           values:
@@ -35,6 +36,7 @@ affinity:
               operator: In
               values:
               - "true"
+          - labelSelector:
             - key: kubernetes.io/hostname
               operator: In
               values:
