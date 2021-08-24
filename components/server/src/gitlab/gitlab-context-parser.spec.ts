@@ -528,6 +528,66 @@ class TestGitlabContextParser {
         })
     }
 
+    @test public async testTreeContextBranchWithHashSign01() {
+        const result = await this.parser.handle({}, this.user, 'https://gitlab.com/gp-test-group/gp-test-project/-/tree/feature/%23123-issue');
+        expect(result).to.deep.include({
+            "ref": "feature/#123-issue",
+            "refType": "branch",
+            "path": "",
+            "revision": "8b389233c0a3a55a5cd75f89d2c96761420bf2c8",
+            "isFile": false,
+            "repository": {
+                "host": "gitlab.com",
+                "owner": "gp-test-group",
+                "name": "gp-test-project",
+                "cloneUrl": "https://gitlab.com/gp-test-group/gp-test-project.git",
+                "defaultBranch": "master",
+                "private": false
+            },
+            "title": "gp-test-group/gp-test-project - feature/#123-issue"
+        })
+    }
+
+    @test public async testTreeContextBranchWithHashSign02() {
+        const result = await this.parser.handle({}, this.user, 'https://gitlab.com/gp-test-group/gp-test-project/-/tree/issue-%23123');
+        expect(result).to.deep.include({
+            "ref": "issue-#123",
+            "refType": "branch",
+            "path": "",
+            "revision": "8b389233c0a3a55a5cd75f89d2c96761420bf2c8",
+            "isFile": false,
+            "repository": {
+                "host": "gitlab.com",
+                "owner": "gp-test-group",
+                "name": "gp-test-project",
+                "cloneUrl": "https://gitlab.com/gp-test-group/gp-test-project.git",
+                "defaultBranch": "master",
+                "private": false
+            },
+            "title": "gp-test-group/gp-test-project - issue-#123"
+        })
+    }
+
+    @test public async testTreeContextBranchWithAndSign() {
+        const result = await this.parser.handle({}, this.user, 'https://gitlab.com/gp-test-group/gp-test-project/-/tree/another&amp;branch');
+        expect(result).to.deep.include({
+            "ref": "another&amp;branch",
+            "refType": "branch",
+            "path": "",
+            "revision": "8b389233c0a3a55a5cd75f89d2c96761420bf2c8",
+            "isFile": false,
+            "repository": {
+                "host": "gitlab.com",
+                "owner": "gp-test-group",
+                "name": "gp-test-project",
+                "cloneUrl": "https://gitlab.com/gp-test-group/gp-test-project.git",
+                "defaultBranch": "master",
+                "private": false
+            },
+            "title": "gp-test-group/gp-test-project - another&amp;branch"
+        })
+    }
+
     @test public async testEmptyProject() {
         const result = await this.parser.handle({}, this.user, 'https://gitlab.com/gp-test-group/gp-test-empty-project');
         expect(result).to.deep.include({
