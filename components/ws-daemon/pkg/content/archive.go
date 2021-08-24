@@ -83,6 +83,7 @@ func BuildTarbal(ctx context.Context, src string, dst string, fullWorkspaceBacku
 	}
 	defer fout.Close()
 	defer func(e *error) {
+		span.LogKV("msg", "Cleanup on exit", "err", e)
 		if e != nil {
 			os.Remove(dst)
 		}
