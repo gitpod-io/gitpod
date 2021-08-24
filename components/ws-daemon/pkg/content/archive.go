@@ -17,6 +17,7 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
 
+	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
 	carchive "github.com/gitpod-io/gitpod/content-service/pkg/archive"
 )
@@ -83,7 +84,9 @@ func BuildTarbal(ctx context.Context, src string, dst string, fullWorkspaceBacku
 	}
 	defer fout.Close()
 	defer func(e *error) {
+		log.Debug("defer called.")
 		if e != nil {
+			log.WithError(err).Warn("removing tar file on error.")
 			os.Remove(dst)
 		}
 	}(&err)
