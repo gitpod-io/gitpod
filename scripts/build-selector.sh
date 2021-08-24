@@ -13,20 +13,11 @@ affinity:
   nodeAffinity:
     requiredDuringSchedulingIgnoredDuringExecution:
       nodeSelectorTerms:
-      - matchExpressions:
-        - key: kubernetes.io/hostname
-          operator: In
-          values:
-          - $DEPLOY_TO_NODE
-  podAntiAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-    - labelSelector:
-        matchExpressions:
-        - key: app
-          operator: In
-          values:
-          - gitpod
-      topologyKey: "kubernetes.io/hostname"
+        - matchExpressions:
+          - key: kubernetes.io/hostname
+            operator: In
+            values:
+            - $DEPLOY_TO_NODE
 
 components:
   workspace:
@@ -37,18 +28,9 @@ components:
       nodeAffinity:
         requiredDuringSchedulingIgnoredDuringExecution:
           nodeSelectorTerms:
-          - matchExpressions:
-            - key: kubernetes.io/hostname
-              operator: In
-              values:
-              - $DEPLOY_TO_NODE
-      podAntiAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-        - labelSelector:
-            matchExpressions:
-            - key: app
-              operator: In
-              values:
-              - gitpod
-          topologyKey: "kubernetes.io/hostname"
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - $DEPLOY_TO_NODE
 EOF
