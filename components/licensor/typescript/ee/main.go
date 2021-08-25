@@ -19,7 +19,7 @@ var (
 	nextID    int                         = 1
 )
 
-// Init initalizes the global license evaluator from an environment variable
+// Init initializes the global license evaluator from an environment variable
 //export Init
 func Init(key *C.char, domain *C.char) (id int) {
 	id = nextID
