@@ -6,7 +6,7 @@
 
 import { inject, injectable } from "inversify";
 import { DBWithTracing, ProjectDB, TeamDB, TracedWorkspaceDB, UserDB, WorkspaceDB } from "@gitpod/gitpod-db/lib";
-import { Branch, CommitContext, CommitInfo, CreateProjectParams, FindPrebuildsParams, PrebuildInfo, PrebuiltWorkspace, Project, ProjectConfig, User, WorkspaceConfig } from "@gitpod/gitpod-protocol";
+import { Branch, CommitContext, PrebuildWithStatus, CreateProjectParams, FindPrebuildsParams, Project, ProjectConfig, User, WorkspaceConfig } from "@gitpod/gitpod-protocol";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
 import { HostContextProvider } from "../auth/host-context-provider";
 import { FileProvider, parseRepoUrl } from "../repohost";
@@ -129,16 +129,7 @@ export class ProjectsService {
         return this.projectDB.markDeleted(projectId);
     }
 
-    protected async getLastPrebuild(project: Project, branch: Branch): Promise<PrebuildInfo | undefined> {
-        const prebuilds = await this.workspaceDb.trace({}).findPrebuiltWorkspacesByProject(project.id, branch?.name);
-        const prebuild = prebuilds[prebuilds.length - 1];
-        if (!prebuild) {
-            return undefined;
-        }
-        return await this.toPrebuildInfo(project, prebuild, branch.commit);
-    }
-
-    async findPrebuilds(user: User, params: FindPrebuildsParams): Promise<PrebuildInfo[]> {
+    async findPrebuilds(user: User, params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
         const { projectId, prebuildId } = params;
         const project = await this.projectDB.findProjectById(projectId);
         if (!project) {
@@ -148,19 +139,13 @@ export class ProjectsService {
         if (!parsedUrl) {
             return [];
         }
-        const { owner, repo, host } = parsedUrl;
-        const repositoryProvider = this.hostContextProvider.get(host)?.services?.repositoryProvider;
-        if (!repositoryProvider) {
-            return [];
-        }
-
-        let prebuilds: PrebuiltWorkspace[] = [];
-        const result: PrebuildInfo[] = [];
+        const result: PrebuildWithStatus[] = [];
 
         if (prebuildId) {
-            const pbws = await this.workspaceDb.trace({}).findPrebuiltWorkspacesById(prebuildId);
-            if (pbws) {
-                prebuilds.push(pbws);
+            const pbws = await this.workspaceDb.trace({}).findPrebuiltWorkspaceById(prebuildId);
+            const info = (await this.workspaceDb.trace({}).findPrebuildInfos([prebuildId]))[0];
+            if (info && pbws) {
+                result.push({ info, status: pbws.state });
             }
         } else {
             let limit = params.limit !== undefined ? params.limit : 30;
@@ -168,44 +153,11 @@ export class ProjectsService {
                 limit = 1;
             }
             let branch = params.branch;
-            prebuilds = await this.workspaceDb.trace({}).findPrebuiltWorkspacesByProject(project.id, branch, limit);
-        }
-
-        for (const prebuild of prebuilds) {
-            try {
-                const commit = await repositoryProvider.getCommitInfo(user, owner, repo, prebuild.commit);
-                if (commit) {
-                    result.push(await this.toPrebuildInfo(project, prebuild, commit));
-                }
-            } catch (error) {
-                log.debug(`Could not fetch commit info.`, error, { owner, repo, prebuildCommit: prebuild.commit });
-            }
+            const prebuilds = await this.workspaceDb.trace({}).findPrebuiltWorkspacesByProject(project.id, branch, limit);
+            const infos = await this.workspaceDb.trace({}).findPrebuildInfos([...prebuilds.map(p => p.id)]);
+            result.push(...infos.map(info => ({ info, status: prebuilds.find(p => p.id === info.id)?.state! })));
         }
         return result;
-    }
-
-    protected async toPrebuildInfo(project: Project, prebuild: PrebuiltWorkspace, commit: CommitInfo): Promise<PrebuildInfo> {
-        const { teamId, name: projectName } = project;
-
-        return {
-            id: prebuild.id,
-            buildWorkspaceId: prebuild.buildWorkspaceId,
-            startedAt: prebuild.creationTime,
-            startedBy: "", // TODO
-            startedByAvatar: "", // TODO
-            teamId: teamId || "", // TODO
-            projectName,
-            branch: prebuild.branch || "unknown",
-            cloneUrl: prebuild.cloneURL,
-            status: prebuild.state,
-            changeAuthor: commit.author,
-            changeAuthorAvatar: commit.authorAvatarUrl,
-            changeDate: commit.authorDate || "",
-            changeHash: commit.sha,
-            changeTitle: commit.commitMessage,
-            // changePR
-            // changeUrl
-        };
     }
 
     async setProjectConfiguration(projectId: string, config: ProjectConfig): Promise<void> {

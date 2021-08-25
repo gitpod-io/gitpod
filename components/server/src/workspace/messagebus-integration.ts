@@ -6,7 +6,7 @@
 
 import { injectable } from "inversify";
 import { AbstractMessageBusIntegration, MessageBusHelper, AbstractTopicListener, TopicListener, MessageBusHelperImpl, MessagebusListener } from "@gitpod/gitpod-messagebus/lib";
-import { Disposable, WorkspaceInstance } from "@gitpod/gitpod-protocol";
+import { Disposable, PrebuildWithStatus, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { HeadlessWorkspaceEvent, HeadlessWorkspaceEventType } from "@gitpod/gitpod-protocol/lib/headless-workspace-log";
 import { Channel, Message } from "amqplib";
@@ -23,6 +23,17 @@ export class WorkspaceInstanceUpdateListener extends AbstractTopicListener<Works
 
     topic() {
         return this.messageBusHelper.getWsTopicForListening(this.userId, undefined, "updates");
+    }
+}
+
+export class PrebuildUpdateListener extends AbstractTopicListener<PrebuildWithStatus> {
+
+    constructor(protected readonly messageBusHelper: MessageBusHelper, listener: TopicListener<PrebuildWithStatus>, protected readonly projectId?: string) {
+        super(messageBusHelper.workspaceExchange, listener);
+    }
+
+    topic() {
+        return `prebuild.update.${this.projectId ? `project-${this.projectId}` : "*"}`;
     }
 }
 
@@ -113,6 +124,26 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
         return Disposable.create(() => cancellationTokenSource.cancel())
     }
 
+    listenForPrebuildUpdates(
+        callback: (ctx: TraceContext, evt: PrebuildWithStatus) => void,
+        projectId?: string): Disposable {
+        const listener = new PrebuildUpdateListener(this.messageBusHelper, callback, projectId);
+        const cancellationTokenSource = new CancellationTokenSource()
+        this.listen(listener, cancellationTokenSource.token);
+        return Disposable.create(() => cancellationTokenSource.cancel())
+    }
+
+    async notifyOnPrebuildUpdate(prebuildInfo: PrebuildWithStatus) {
+        if (!this.channel) {
+            throw new Error("Not connected to message bus");
+        }
+        const topic = `prebuild.update.project-${prebuildInfo.info.projectId}`;
+        await this.messageBusHelper.assertWorkspaceExchange(this.channel);
+
+        // TODO(at) clarify on the exchange level
+        await super.publish(MessageBusHelperImpl.WORKSPACE_EXCHANGE, topic, Buffer.from(JSON.stringify(prebuildInfo)));
+    }
+
     async notifyOnInstanceUpdate(userId: string, instance: WorkspaceInstance) {
         if (!this.channel) {
             throw new Error("Not connected to message bus");
@@ -120,7 +151,7 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
 
         const topic = this.messageBusHelper.getWsTopicForPublishing(userId, instance.workspaceId, 'updates');
         await this.messageBusHelper.assertWorkspaceExchange(this.channel);
-        await super.publish(MessageBusHelperImpl.WORKSPACE_EXCHANGE_LOCAL, topic, new Buffer(JSON.stringify(instance)));
+        await super.publish(MessageBusHelperImpl.WORKSPACE_EXCHANGE_LOCAL, topic, Buffer.from(JSON.stringify(instance)));
     }
 
     // copied from ws-manager-bridge/messagebus-integration
@@ -130,7 +161,7 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
         }
 
         const topic = this.messageBusHelper.getWsTopicForPublishing(userId, workspaceId, 'headless-log');
-        const msg = new Buffer(JSON.stringify(evt));
+        const msg = Buffer.from(JSON.stringify(evt));
         await this.messageBusHelper.assertWorkspaceExchange(this.channel);
         await super.publish(MessageBusHelperImpl.WORKSPACE_EXCHANGE_LOCAL, topic, msg, {
             trace: ctx,

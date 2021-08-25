@@ -7,7 +7,7 @@
 import { BlobServiceClient } from "@gitpod/content-service/lib/blobs_grpc_pb";
 import { DownloadUrlRequest, DownloadUrlResponse, UploadUrlRequest, UploadUrlResponse } from '@gitpod/content-service/lib/blobs_pb';
 import { AppInstallationDB, UserDB, UserMessageViewsDB, WorkspaceDB, DBWithTracing, TracedWorkspaceDB, DBGitpodToken, DBUser, UserStorageResourcesDB, TeamDB } from '@gitpod/gitpod-db/lib';
-import { AuthProviderEntry, AuthProviderInfo, Branding, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team, TeamMemberInfo, TeamMembershipInvite, CreateProjectParams, Project, ProviderRepository, PrebuildInfo, TeamMemberRole, WithDefaultConfig, FindPrebuildsParams } from '@gitpod/gitpod-protocol';
+import { AuthProviderEntry, AuthProviderInfo, Branding, CommitContext, Configuration, CreateWorkspaceMode, DisposableCollection, GetWorkspaceTimeoutResult, GitpodClient, GitpodServer, GitpodToken, GitpodTokenType, InstallPluginsParams, PermissionName, PortVisibility, PrebuiltWorkspace, PrebuiltWorkspaceContext, PreparePluginUploadParams, ResolvedPlugins, ResolvePluginsParams, SetWorkspaceTimeoutResult, StartPrebuildContext, StartWorkspaceResult, Terms, Token, UninstallPluginParams, User, UserEnvVar, UserEnvVarValue, UserInfo, WhitelistedRepository, Workspace, WorkspaceContext, WorkspaceCreationResult, WorkspaceImageBuild, WorkspaceInfo, WorkspaceInstance, WorkspaceInstancePort, WorkspaceInstanceUser, WorkspaceTimeoutDuration, GuessGitTokenScopesParams, GuessedGitTokenScopes, Team, TeamMemberInfo, TeamMembershipInvite, CreateProjectParams, Project, ProviderRepository, TeamMemberRole, WithDefaultConfig, FindPrebuildsParams, PrebuildWithStatus } from '@gitpod/gitpod-protocol';
 import { AccountStatement } from "@gitpod/gitpod-protocol/lib/accounting-protocol";
 import { AdminBlockUserRequest, AdminGetListRequest, AdminGetListResult, AdminGetWorkspacesRequest, AdminModifyPermanentWorkspaceFeatureFlagRequest, AdminModifyRoleOrPermissionRequest, WorkspaceAndInstance } from '@gitpod/gitpod-protocol/lib/admin-protocol';
 import { GetLicenseInfoResult, LicenseFeature, LicenseValidationResult } from '@gitpod/gitpod-protocol/lib/license-protocol';
@@ -118,6 +118,10 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         this.user = user;
         this.clientRegion = clientRegion;
         this.resourceAccessGuard = accessGuard;
+
+        log.debug({ userId: this.user?.id }, `clientRegion: ${this.clientRegion}`);
+        log.info({ userId: this.user?.id }, 'initializeClient');
+
         this.listenForWorkspaceInstanceUpdates();
     }
 
@@ -125,8 +129,6 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         if (!this.user || !this.client) {
             return;
         }
-        log.debug({ userId: this.user.id }, `clientRegion: ${this.clientRegion}`);
-        log.info({ userId: this.user.id }, 'initializeClient');
 
         const withTrace = (ctx: TraceContext, cb: () => void) => {
             // if we don't have a parent span, don't create a trace here as those <trace-without-root-spans> are not useful.
@@ -152,6 +154,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
             this.user.id,
             (ctx: TraceContext, instance: WorkspaceInstance) => withTrace(ctx, () => this.client?.onInstanceUpdate(this.censorInstance(instance)))
         ));
+
     }
 
     setClient(client: Client | undefined): void {
@@ -1512,7 +1515,7 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         return this.projectsService.getUserProjects(user.id);
     }
 
-    public async findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildInfo[]> {
+    public async findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]> {
         const user = this.checkAndBlockUser("getPrebuilds");
         await this.guardProjectOperation(user, params.projectId, "get");
         return this.projectsService.findPrebuilds(user, params);

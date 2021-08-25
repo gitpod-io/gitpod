@@ -13,7 +13,7 @@ import {
 } from './protocol';
 import {
     Team, TeamMemberInfo,
-    TeamMembershipInvite, Project, PrebuildInfo, TeamMemberRole
+    TeamMembershipInvite, Project, TeamMemberRole, PrebuildWithStatus
 } from './teams-projects-protocol';
 import { JsonRpcProxy, JsonRpcServer } from './messaging/proxy-factory';
 import { Disposable, CancellationTokenSource } from 'vscode-jsonrpc';
@@ -33,6 +33,8 @@ import { RemoteTrackMessage } from './analytics';
 export interface GitpodClient {
     onInstanceUpdate(instance: WorkspaceInstance): void;
     onWorkspaceImageBuildLogs: WorkspaceImageBuild.LogCallback;
+
+    onPrebuildUpdate(update: PrebuildWithStatus): void;
 
     onCreditAlert(creditAlert: CreditAlert): void;
 
@@ -129,7 +131,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     getTeamProjects(teamId: string): Promise<Project[]>;
     getUserProjects(): Promise<Project[]>;
     getProjectOverview(projectId: string): Promise<Project.Overview | undefined>;
-    findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildInfo[]>;
+    findPrebuilds(params: FindPrebuildsParams): Promise<PrebuildWithStatus[]>;
     triggerPrebuild(projectId: string, branch: string): Promise<void>;
     setProjectConfiguration(projectId: string, configString: string): Promise<void>;
     fetchProjectRepositoryConfiguration(projectId: string): Promise<string | undefined>;
@@ -373,6 +375,18 @@ export class GitpodCompositeClient<Client extends GitpodClient> implements Gitpo
             if (client.onInstanceUpdate) {
                 try {
                     client.onInstanceUpdate(instance);
+                } catch (error) {
+                    console.error(error)
+                }
+            }
+        }
+    }
+
+    onPrebuildUpdate(update: PrebuildWithStatus): void {
+        for (const client of this.clients) {
+            if (client.onPrebuildUpdate) {
+                try {
+                    client.onPrebuildUpdate(update);
                 } catch (error) {
                     console.error(error)
                 }
