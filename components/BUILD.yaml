@@ -148,7 +148,7 @@ scripts:
       - components/**/*
       - test/**/*
     script: |
-      leeway exec --filter-type go -v -- go mod tidy -v
+      leeway exec --filter-type go -v -- go mod tidy -compat=1.17
 
   - name: unblock-user
     deps:

@@ -9,7 +9,7 @@
     "lib"
   ],
   "scripts": {
-    "preinstall": "if [ ! -e ee/lib/liblicensor.a ]; then cd ee && go mod tidy -v && go build -buildmode=c-archive -o lib/liblicensor.a && go run genapi.go; fi",
+    "preinstall": "if [ ! -e ee/lib/liblicensor.a ]; then cd ee && go mod tidy -compat=1.17 -v && go build -buildmode=c-archive -o lib/liblicensor.a && go run genapi.go; fi",
     "build": "yarn preinstall && node-gyp configure build && tsc && cp -f ee/src/*.js lib",
     "watch": "leeway exec --package .:lib --transitive-dependencies --filter-type yarn --components --parallel -- tsc -w --preserveWatchOutput"
   },
