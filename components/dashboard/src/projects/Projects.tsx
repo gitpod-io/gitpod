@@ -60,10 +60,6 @@ export default function () {
         history.push(newProjectUrl);
     }
 
-    const viewAllPrebuilds = (p: Project) => {
-        history.push(`/${!!team ? team.slug : 'projects'}/${p.name}/prebuilds`);
-    }
-
     const onRemoveProject = async (p: Project) => {
         await getGitpodService().server.deleteProject(p.id);
         await updateProjects();
@@ -142,10 +138,10 @@ export default function () {
                                 </span>
                             </div>
                         </div>
-                        <div className="h-10 px-4 border rounded-b-xl dark:border-gray-800 bg-gray-100 border-gray-100 dark:bg-gray-800" onClick={() => viewAllPrebuilds(p)}>
+                        <div className="h-10 px-4 border rounded-b-xl dark:border-gray-800 bg-gray-100 border-gray-100 dark:bg-gray-800">
                             {lastPrebuilds.get(p.id)
                                 ? (<div className="flex flex-row h-full text-sm justify-between">
-                                    <Link to={`/`} className="flex my-auto group space-x-2">
+                                    <Link to={`/${teamOrUserSlug}/${p.name}/${lastPrebuilds.get(p.id)!.id}`} className="flex my-auto group space-x-2">
                                         <div className={"my-auto rounded-full w-3 h-3 text-sm align-middle " + (true ? "bg-green-500" : "bg-gray-400")}>
                                             &nbsp;
                                         </div>
@@ -153,7 +149,7 @@ export default function () {
                                         <span className="mx-1 my-auto text-gray-600">·</span>
                                         <div className="my-auto text-gray-400 flex-grow hover:text-gray-800 dark:hover:text-gray-300">{moment(lastPrebuilds.get(p.id)!.startedAt, "YYYYMMDD").fromNow()}</div>
                                     </Link>
-                                    <Link to={`/`} className="my-auto group">
+                                    <Link to={`/${teamOrUserSlug}/${p.name}/prebuilds`} className="my-auto group">
                                         <div className="flex my-auto text-gray-400 flex-grow text-right group-hover:text-gray-600 dark:hover:text-gray-300">View All &rarr;</div>
                                     </Link>
                                 </div>)
