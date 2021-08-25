@@ -591,6 +591,7 @@ func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest)
 		GitpodHost:           is.cfg.GitpodHost,
 		WorkspaceContextUrl:  is.cfg.WorkspaceContextURL,
 		WorkspaceClusterHost: is.cfg.WorkspaceClusterHost,
+		WorkspaceUrl:         is.cfg.WorkspaceUrl,
 	}
 
 	commit, err := is.cfg.getCommit()
