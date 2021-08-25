@@ -2,6 +2,7 @@
 // Licensed under the Gitpod Enterprise Source Code License,
 // See License.enterprise.txt in the project root folder.
 
+//go:build linux
 // +build linux
 
 package signature
