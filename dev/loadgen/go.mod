@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/loadgen
 
-go 1.16
+go 1.17
 
 require (
 	github.com/cheggaaa/pb/v3 v3.0.5
@@ -13,6 +13,24 @@ require (
 	google.golang.org/grpc v1.39.1
 	google.golang.org/protobuf v1.27.1
 	sigs.k8s.io/yaml v1.2.0
+)
+
+require (
+	github.com/VividCortex/ewma v1.1.1 // indirect
+	github.com/fatih/color v1.7.0 // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/mattn/go-colorable v0.1.2 // indirect
+	github.com/mattn/go-isatty v0.0.12 // indirect
+	github.com/mattn/go-runewidth v0.0.7 // indirect
+	github.com/opencontainers/go-digest v1.0.0 // indirect
+	github.com/opencontainers/image-spec v1.0.1 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
+	golang.org/x/net v0.0.0-20210520170846-37e1c6afe023 // indirect
+	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22 // indirect
+	golang.org/x/text v0.3.6 // indirect
+	google.golang.org/genproto v0.0.0-20201019141844-1ed22bb0c154 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../../components/common-go // leeway

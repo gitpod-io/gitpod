@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/gitpod-protocol
 
-go 1.16
+go 1.17
 
 require (
 	github.com/fsnotify/fsnotify v1.4.9
@@ -12,3 +12,5 @@ require (
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	gopkg.in/yaml.v2 v2.4.0
 )
+
+require golang.org/x/sys v0.0.0-20210510120138-977fb7262007 // indirect

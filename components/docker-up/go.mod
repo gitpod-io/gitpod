@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/docker-up
 
-go 1.16
+go 1.17
 
 require (
 	github.com/opencontainers/runtime-spec v1.0.2
@@ -10,3 +10,5 @@ require (
 	golang.org/x/sys v0.0.0-20210119212857-b64e53b001e4
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 )
+
+require github.com/pkg/errors v0.9.1 // indirect

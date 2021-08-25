@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/blowtorch
 
-go 1.16
+go 1.17
 
 require (
 	github.com/Pallinder/go-randomdata v1.2.0
@@ -10,6 +10,34 @@ require (
 	k8s.io/api v0.0.0-20190620084959-7cf5895f2711
 	k8s.io/apimachinery v0.0.0-20190612205821-1799e75a0719
 	k8s.io/client-go v0.0.0-00010101000000-000000000000
+)
+
+require (
+	cloud.google.com/go v0.46.3 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/docker/spdystream v0.0.0-20160310174837-449fdfce4d96 // indirect
+	github.com/gogo/protobuf v1.2.1 // indirect
+	github.com/golang/protobuf v1.3.2 // indirect
+	github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf // indirect
+	github.com/googleapis/gnostic v0.0.0-20170729233727-0c5108395e2d // indirect
+	github.com/imdario/mergo v0.3.5 // indirect
+	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/json-iterator/go v1.1.6 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
+	golang.org/x/crypto v0.0.0-20190605123033-f99c8df09eb5 // indirect
+	golang.org/x/net v0.0.0-20190620200207-3b0461eec859 // indirect
+	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45 // indirect
+	golang.org/x/sys v0.0.0-20191026070338-33540a1f6037 // indirect
+	golang.org/x/text v0.3.2 // indirect
+	golang.org/x/time v0.0.0-20190308202827-9d24e82272b4 // indirect
+	google.golang.org/appengine v1.6.1 // indirect
+	gopkg.in/inf.v0 v0.9.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
+	k8s.io/klog v0.3.1 // indirect
+	k8s.io/utils v0.0.0-20190221042446-c2654d5206da // indirect
+	sigs.k8s.io/yaml v1.1.0 // indirect
 )
 
 replace k8s.io/api => k8s.io/api v0.0.0-20190620084959-7cf5895f2711
