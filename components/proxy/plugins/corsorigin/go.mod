@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/proxy/plugins/corsorigin
 
-go 1.16
+go 1.17
 
 require (
 	github.com/caddyserver/caddy/v2 v2.4.3

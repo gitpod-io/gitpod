@@ -1,6 +1,6 @@
 module github.com/gitpod-io/gitpod/ws-daemon/api
 
-go 1.16
+go 1.17
 
 require (
 	github.com/fatih/gomodifytags v1.13.0
@@ -8,6 +8,19 @@ require (
 	github.com/golang/mock v1.6.0
 	google.golang.org/grpc v1.39.1
 	google.golang.org/protobuf v1.27.1
+)
+
+require (
+	github.com/fatih/camelcase v1.0.0 // indirect
+	github.com/fatih/structtag v1.2.0 // indirect
+	github.com/golang/protobuf v1.5.0 // indirect
+	github.com/opencontainers/go-digest v1.0.0 // indirect
+	github.com/opencontainers/image-spec v1.0.1 // indirect
+	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4 // indirect
+	golang.org/x/sys v0.0.0-20210510120138-977fb7262007 // indirect
+	golang.org/x/text v0.3.3 // indirect
+	golang.org/x/tools v0.1.1 // indirect
+	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
 )
 
 replace github.com/gitpod-io/gitpod/common-go => ../../common-go // leeway
