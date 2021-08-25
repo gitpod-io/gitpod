@@ -5,7 +5,7 @@
  */
 
 import moment from "moment";
-import { PrebuildInfo, Project } from "@gitpod/gitpod-protocol";
+import { PrebuildInfo, PrebuildWithStatus, Project } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { useHistory, useLocation, useRouteMatch } from "react-router";
 import Header from "../components/Header";
@@ -29,7 +29,7 @@ export default function () {
     const [project, setProject] = useState<Project | undefined>();
 
     const [branches, setBranches] = useState<Project.BranchDetails[]>([]);
-    const [lastPrebuilds, setLastPrebuilds] = useState<Map<string, PrebuildInfo | undefined>>(new Map());
+    const [lastPrebuilds, setLastPrebuilds] = useState<Map<string, PrebuildWithStatus | undefined>>(new Map());
     const [prebuildLoaders] = useState<Set<string>>(new Set());
 
     const [searchFilter, setSearchFilter] = useState<string | undefined>();
@@ -160,8 +160,8 @@ export default function () {
                     const prebuild = lastPrebuild(branch); // this might lazily trigger fetching of prebuild details
 
                     const avatar = branch.changeAuthorAvatar && <img className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2" src={branch.changeAuthorAvatar || ''} alt={branch.changeAuthor} />;
-                    const statusIcon = prebuild?.status && prebuildStatusIcon(prebuild.status);
-                    const status = prebuild?.status && prebuildStatusLabel(prebuild.status);
+                    const statusIcon = prebuildStatusIcon(prebuild?.status);
+                    const status = prebuildStatusLabel(prebuild?.status);
 
                     return <Item key={`branch-${index}-${branchName}`} className="grid grid-cols-3 group">
                         <ItemField className="flex items-center">
@@ -179,7 +179,7 @@ export default function () {
                             </div>
                         </ItemField>
                         <ItemField className="flex items-center">
-                            <div className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1 cursor-pointer" onClick={() => prebuild && openPrebuild(prebuild)}>
+                            <div className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase mb-1 cursor-pointer" onClick={() => prebuild && openPrebuild(prebuild.info)}>
                                 {prebuild ? (<><div className="inline-block align-text-bottom mr-2 w-4 h-4">{statusIcon}</div>{status}</>) : (<span> </span>)}
                             </div>
                             <span className="flex-grow" />

@@ -8,7 +8,7 @@ import { injectable, inject } from 'inversify';
 import { MessageBusHelper, AbstractMessageBusIntegration, TopicListener, AbstractTopicListener, MessageBusHelperImpl } from "@gitpod/gitpod-messagebus/lib";
 import { Disposable, CancellationTokenSource } from 'vscode-jsonrpc';
 import { WorkspaceStatus } from '@gitpod/ws-manager/lib';
-import { HeadlessWorkspaceEventType, WorkspaceInstance, HeadlessWorkspaceEvent } from '@gitpod/gitpod-protocol';
+import { HeadlessWorkspaceEventType, WorkspaceInstance, HeadlessWorkspaceEvent, PrebuildWithStatus } from '@gitpod/gitpod-protocol';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 
 @injectable()
@@ -32,6 +32,16 @@ export class MessageBusIntegration extends AbstractMessageBusIntegration {
         const cancellationTokenSource = new CancellationTokenSource()
         this.listen(listener, cancellationTokenSource.token);
         return Disposable.create(() => cancellationTokenSource.cancel())
+    }
+
+    async notifyOnPrebuildUpdate(prebuildInfo: PrebuildWithStatus) {
+        if (!this.channel) {
+            throw new Error("Not connected to message bus");
+        }
+        const topic = `prebuild.update.project-${prebuildInfo.info.projectId}`;
+        await this.messageBusHelper.assertWorkspaceExchange(this.channel);
+
+        await super.publish(MessageBusHelperImpl.WORKSPACE_EXCHANGE_LOCAL, topic, Buffer.from(JSON.stringify(prebuildInfo)));
     }
 
     async notifyOnInstanceUpdate(ctx: TraceContext, userId: string, instance: WorkspaceInstance) {

@@ -5,7 +5,7 @@
  */
 
 import moment from "moment";
-import { PrebuildInfo } from "@gitpod/gitpod-protocol";
+import { PrebuildWithStatus } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { useLocation, useRouteMatch } from "react-router";
 import Header from "../components/Header";
@@ -25,7 +25,7 @@ export default function () {
     const projectName = match?.params?.project;
     const prebuildId = match?.params?.prebuildId;
 
-    const [ prebuild, setPrebuild ] = useState<PrebuildInfo | undefined>();
+    const [ prebuild, setPrebuild ] = useState<PrebuildWithStatus | undefined>();
 
     useEffect(() => {
         if (!teams || !projectName || !prebuildId) {
@@ -52,7 +52,7 @@ export default function () {
         if (!prebuild) {
             return "unknown prebuild";
         }
-        return (<h1 className="tracking-tight">{prebuild.branch} </h1>);
+        return (<h1 className="tracking-tight">{prebuild.info.branch} </h1>);
     };
 
     const renderSubtitle = () => {
@@ -61,7 +61,7 @@ export default function () {
         }
         const statusIcon = prebuildStatusIcon(prebuild.status);
         const status = prebuildStatusLabel(prebuild.status);
-        const startedByAvatar = prebuild.startedByAvatar && <img className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2" src={prebuild.startedByAvatar || ''} alt={prebuild.startedBy} />;
+        const startedByAvatar = prebuild.info.startedByAvatar && <img className="rounded-full w-4 h-4 inline-block align-text-bottom mr-2" src={prebuild.info.startedByAvatar || ''} alt={prebuild.info.startedBy} />;
         return (<div className="flex">
             <div className="text-base text-gray-900 dark:text-gray-50 font-medium uppercase">
                 <div className="inline-block align-text-bottom mr-2 w-4 h-4">{statusIcon}</div>
@@ -69,11 +69,11 @@ export default function () {
             </div>
             <p className="mx-2 my-auto">·</p>
             <div className="my-auto">
-                <p>{startedByAvatar}Triggered {moment(prebuild.startedAt).fromNow()}</p>
+                <p>{startedByAvatar}Triggered {moment(prebuild.info.startedAt).fromNow()}</p>
             </div>
             <p className="mx-2 my-auto">·</p>
             <div className="my-auto">
-                <p className="text-gray-500 dark:text-gray-50">{shortCommitMessage(prebuild.changeTitle)}</p>
+                <p className="text-gray-500 dark:text-gray-50">{shortCommitMessage(prebuild.info.changeTitle)}</p>
             </div>
         </div>)
     };
@@ -84,7 +84,7 @@ export default function () {
         <Header title={renderTitle()} subtitle={renderSubtitle()} />
         <div className="lg:px-28 px-10 mt-8">
             <div className="h-96 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex flex-col">
-                <PrebuildLogs workspaceId={prebuild?.buildWorkspaceId}/>
+                <PrebuildLogs workspaceId={prebuild?.info?.buildWorkspaceId}/>
             </div>
         </div>
     </>;

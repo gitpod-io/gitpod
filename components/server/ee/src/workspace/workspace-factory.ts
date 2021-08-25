@@ -8,18 +8,21 @@ import * as uuidv4 from 'uuid/v4';
 import { WorkspaceFactory } from "../../../src/workspace/workspace-factory";
 import { injectable, inject } from "inversify";
 import { TraceContext } from "@gitpod/gitpod-protocol/lib/util/tracing";
-import { User, StartPrebuildContext, Workspace, CommitContext, PrebuiltWorkspaceContext, WorkspaceContext, WithSnapshot, WithPrebuild, TaskConfig } from "@gitpod/gitpod-protocol";
+import { User, StartPrebuildContext, Workspace, CommitContext, PrebuiltWorkspaceContext, WorkspaceContext, WithSnapshot, WithPrebuild, TaskConfig, Project, PrebuiltWorkspace } from "@gitpod/gitpod-protocol";
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { LicenseEvaluator } from '@gitpod/licensor/lib';
 import { Feature } from '@gitpod/licensor/lib/api';
 import { ResponseError } from 'vscode-jsonrpc';
 import { ErrorCodes } from '@gitpod/gitpod-protocol/lib/messaging/error';
 import { generateWorkspaceID } from '@gitpod/gitpod-protocol/lib/util/generate-workspace-id';
+import { HostContextProvider } from '../../../src/auth/host-context-provider';
+import { parseRepoUrl } from '../../../src/repohost';
 
 @injectable()
 export class WorkspaceFactoryEE extends WorkspaceFactory {
 
     @inject(LicenseEvaluator) protected readonly licenseEvaluator: LicenseEvaluator;
+    @inject(HostContextProvider) protected readonly hostContextProvider: HostContextProvider;
 
     protected requireEELicense(feature: Feature) {
         if (!this.licenseEvaluator.isEnabled(feature)) {
@@ -127,6 +130,17 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
                 branch
             });
 
+            { // TODO(at) store prebuild info
+                if (project) {
+                    // do not await
+                    this.storePrebuildInfo(ctx, project, pws, user).catch(err => {
+                        log.error(`failed to store prebuild info`, err);
+                        TraceContext.logError({span}, err);
+                    });
+                }
+            }
+
+
             log.debug({ userId: user.id, workspaceId: ws.id }, `Registered workspace prebuild: ${pws.id} for ${commitContext.repository.cloneUrl}:${commitContext.revision}`);
 
             return ws;
@@ -135,6 +149,41 @@ export class WorkspaceFactoryEE extends WorkspaceFactory {
             throw e;
         } finally {
             span.finish();
+        }
+    }
+
+    protected async storePrebuildInfo(ctx: TraceContext, project: Project, pws: PrebuiltWorkspace, user: User) {
+        const span = TraceContext.startSpan("storePrebuildInfo", ctx);
+        const { userId, teamId, name: projectName, id: projectId } = project;
+        const parsedUrl = parseRepoUrl(project.cloneUrl);
+        if (parsedUrl) {
+            const { owner, repo, host } = parsedUrl;
+            const repositoryProvider = this.hostContextProvider.get(host)?.services?.repositoryProvider;
+            if (repositoryProvider) {
+                const commit = await repositoryProvider.getCommitInfo(user, owner, repo, pws.commit);
+                if (commit) {
+                    await this.db.trace({span}).storePrebuildInfo({
+                        id: pws.id,
+                        buildWorkspaceId: pws.buildWorkspaceId,
+                        teamId,
+                        userId,
+                        projectName,
+                        projectId,
+                        startedAt: pws.creationTime,
+                        startedBy: "", // TODO
+                        startedByAvatar: "", // TODO
+                        cloneUrl: pws.cloneURL,
+                        branch: pws.branch || "unknown",
+                        changeAuthor: commit.author,
+                        changeAuthorAvatar: commit.authorAvatarUrl,
+                        changeDate: commit.authorDate || "",
+                        changeHash: commit.sha,
+                        changeTitle: commit.commitMessage,
+                        // changePR
+                        // changeUrl
+                    });
+                }
+            }
         }
     }
 

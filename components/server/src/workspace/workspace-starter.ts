@@ -193,6 +193,15 @@ export class WorkspaceStarter {
                 }
             });
 
+            {
+                if (type === WorkspaceType.PREBUILD) {
+                    // do not await
+                    this.notifyOnPrebuildQueued(ctx, workspace.id).catch(err => {
+                        log.error("failed to notify on prebuild queued", err);
+                    });
+                }
+            }
+
             return { instanceID: instance.id, workspaceURL: resp.url };
         } catch (err) {
             TraceContext.logError({ span }, err);
@@ -208,6 +217,17 @@ export class WorkspaceStarter {
             return { instanceID: instance.id };
         } finally {
             span.finish();
+        }
+    }
+
+    protected async notifyOnPrebuildQueued(ctx: TraceContext, workspaceId: string) {
+        const span = TraceContext.startAsyncSpan("notifyOnPrebuildQueued", ctx);
+        const prebuild = await this.workspaceDb.trace({span}).findPrebuildByWorkspaceID(workspaceId);
+        if (prebuild) {
+            const info = (await this.workspaceDb.trace({span}).findPrebuildInfos([prebuild.id]))[0];
+            if (info) {
+                this.messageBus.notifyOnPrebuildUpdate({ info, status: "queued" });
+            }
         }
     }
 

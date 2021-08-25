@@ -7,7 +7,7 @@
 import { injectable, inject } from "inversify";
 import { Repository, EntityManager, DeepPartial, UpdateQueryBuilder } from "typeorm";
 import { MaybeWorkspace, MaybeWorkspaceInstance, WorkspaceDB, FindWorkspacesOptions, PrebuiltUpdatableAndWorkspace, WorkspaceInstanceSessionWithWorkspace, PrebuildWithWorkspace, WorkspaceAndOwner, WorkspacePortsAuthData, WorkspaceOwnerAndSoftDeleted } from "../workspace-db";
-import { Workspace, WorkspaceInstance, WorkspaceInfo, WorkspaceInstanceUser, WhitelistedRepository, Snapshot, LayoutData, PrebuiltWorkspace, RunningWorkspaceInfo, PrebuiltWorkspaceUpdatable, WorkspaceAndInstance, WorkspaceType } from "@gitpod/gitpod-protocol";
+import { Workspace, WorkspaceInstance, WorkspaceInfo, WorkspaceInstanceUser, WhitelistedRepository, Snapshot, LayoutData, PrebuiltWorkspace, RunningWorkspaceInfo, PrebuiltWorkspaceUpdatable, WorkspaceAndInstance, WorkspaceType, PrebuildInfo } from "@gitpod/gitpod-protocol";
 import { TypeORM } from "./typeorm";
 import { DBWorkspace } from "./entity/db-workspace";
 import { DBWorkspaceInstance } from "./entity/db-workspace-instance";
@@ -19,6 +19,7 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { DBPrebuiltWorkspace } from "./entity/db-prebuilt-workspace";
 import { DBPrebuiltWorkspaceUpdatable } from "./entity/db-prebuilt-workspace-updatable";
 import { BUILTIN_WORKSPACE_PROBE_USER_NAME } from "../user-db";
+import { DBPrebuildInfo } from "./entity/db-prebuild-info-entry";
 
 type RawTo<T> = (instance: WorkspaceInstance, ws: Workspace) => T;
 interface OrderBy {
@@ -53,6 +54,10 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
 
     protected async getPrebuiltWorkspaceRepo(): Promise<Repository<DBPrebuiltWorkspace>> {
         return await (await this.getManager()).getRepository<DBPrebuiltWorkspace>(DBPrebuiltWorkspace);
+    }
+
+    protected async getPrebuildInfoRepo(): Promise<Repository<DBPrebuildInfo>> {
+        return await (await this.getManager()).getRepository<DBPrebuildInfo>(DBPrebuildInfo);
     }
 
     protected async getPrebuiltWorkspaceUpdatableRepo(): Promise<Repository<DBPrebuiltWorkspaceUpdatable>> {
@@ -830,7 +835,7 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         const repo = await this.getPrebuiltWorkspaceRepo();
 
         const query = repo.createQueryBuilder('pws')
-            .orderBy('pws.creationTime', 'ASC')
+            .orderBy('pws.creationTime', 'DESC')
             .innerJoinAndMapOne('pws.workspace', DBWorkspace, 'ws', 'pws.buildWorkspaceId = ws.id')
             .andWhere('pws.projectId = :projectId', { projectId });
 
@@ -845,15 +850,38 @@ export abstract class AbstractTypeORMWorkspaceDBImpl implements WorkspaceDB {
         return res;
     }
 
-    async findPrebuiltWorkspacesById(id: string): Promise<PrebuiltWorkspace | undefined> {
+    async findPrebuiltWorkspaceById(id: string): Promise<PrebuiltWorkspace | undefined> {
         const repo = await this.getPrebuiltWorkspaceRepo();
 
         const query = repo.createQueryBuilder('pws')
-            .orderBy('pws.creationTime', 'ASC')
+            .orderBy('pws.creationTime', 'DESC')
             .innerJoinAndMapOne('pws.workspace', DBWorkspace, 'ws', 'pws.buildWorkspaceId = ws.id')
             .andWhere('pws.id = :id', { id });
 
         return query.getOne();
+    }
+
+    async storePrebuildInfo(prebuildInfo: PrebuildInfo): Promise<void> {
+        const repo = await this.getPrebuildInfoRepo();
+        await repo.save({
+            prebuildId: prebuildInfo.id,
+            info: prebuildInfo
+        });
+    }
+
+    async findPrebuildInfos(prebuildIds: string[]): Promise<PrebuildInfo[]>{
+        const repo = await this.getPrebuildInfoRepo();
+
+        const query = repo.createQueryBuilder('pi');
+
+        const filteredIds = prebuildIds.filter(id => !!id);
+        if (filteredIds.length === 0) {
+            return [];
+        }
+        query.andWhere(`pi.prebuildId in (${ filteredIds.map(id => `'${id}'`).join(", ") })`)
+
+        const res = await query.getMany();
+        return res.map(r => r.info);
     }
 
 }

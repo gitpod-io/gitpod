@@ -95,6 +95,13 @@ export class WorkspaceManagerBridgeEE extends WorkspaceManagerBridge {
                     workspaceID: workspaceId,
                 });
             }
+
+            { // notify about prebuild updated
+                const info = (await this.workspaceDB.trace({span}).findPrebuildInfos([prebuild.id]))[0];
+                if (info) {
+                    this.messagebus.notifyOnPrebuildUpdate({ info, status: prebuild.state });
+                }
+            }
         } catch (e) {
             TraceContext.logError({span}, e);
             throw e;
