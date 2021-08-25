@@ -214,8 +214,10 @@ export default function NewProject() {
     const renderSelectRepository = () => {
 
         const noReposAvailable = reposInAccounts.length === 0;
-        const filteredRepos = Array.from(reposInAccounts).filter(r => r.account === selectedAccount && r.name.includes(repoSearchFilter));
+        const filteredRepos = Array.from(reposInAccounts).filter(r => r.account === selectedAccount && `${r.name}`.toLowerCase().includes(repoSearchFilter.toLowerCase()));
         const icon = selectedAccount && accounts.get(selectedAccount)?.avatarUrl;
+
+        const showSearchInput = !!repoSearchFilter || filteredRepos.length > 0;
 
         const renderRepos = () => (<>
             <div className={`mt-10 border rounded-xl border-gray-100 flex-col`}>
@@ -229,7 +231,7 @@ export default function NewProject() {
                             <img src={CaretDown} title="Select Account" className="filter-grayscale absolute top-1/2 right-3" />
                         </div>
                     </ContextMenu>
-                    {filteredRepos.length > 0 && (
+                    {showSearchInput && (
                         <div className="w-full relative ">
                             <img src={search} title="Search" className="filter-grayscale absolute top-1/3 left-3" />
                             <input className="w-96 pl-10 border-0" type="text" placeholder="Search Repositories" value={repoSearchFilter}
