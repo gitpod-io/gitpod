@@ -76,6 +76,8 @@ export default function () {
         return true;
     }
 
+    const teamOrUserSlug = !!team ? team.slug : 'projects';
+
     return <>
         <Header title="Projects" subtitle="Manage recently added projects." />
         {projects.length < 1 && (
@@ -134,7 +136,7 @@ export default function () {
                                 </span>
                                 <span className="mx-2 my-auto">·</span>
                                 <span className="hover:text-gray-600 dark:hover:text-gray-300">
-                                    <Link to={`/`}>
+                                    <Link to={`/${teamOrUserSlug}/${p.name}/prebuilds`}>
                                         Prebuilds
                                     </Link>
                                 </span>
