@@ -92,10 +92,10 @@ func adjustPerCPUMaps(maps map[string]*ebpf.MapSpec) {
 func getMap(coll *ebpf.Collection, name string) (*ebpf.Map, error) {
 	mapObj, ok := coll.Maps[name]
 	if !ok {
-		return nil, fmt.Errorf("%s not found", name)
+		return nil, xerrors.Errorf("%s not found", name)
 	}
 	if mapObj == nil {
-		return nil, fmt.Errorf("%s is nil", name)
+		return nil, xerrors.Errorf("%s is nil", name)
 	}
 	return mapObj, nil
 }
@@ -144,7 +144,7 @@ func populateSyscallTableMap(coll *ebpf.Collection) error {
 	}
 	for k, v := range SyscallsTable {
 		if err := syscallTableMap.Update(k, &v, ebpf.UpdateAny); err != nil {
-			return fmt.Errorf("error updating the syscalls table map: %v", err)
+			return xerrors.Errorf("error updating the syscalls table map: %v", err)
 		}
 	}
 	return nil
@@ -157,7 +157,7 @@ func populateFillersTableMap(coll *ebpf.Collection) error {
 	}
 	for k, v := range FillersTable {
 		if err := fillersTableMap.Update(k, &v, ebpf.UpdateAny); err != nil {
-			return fmt.Errorf("error updating the syscalls table map: %v", err)
+			return xerrors.Errorf("error updating the syscalls table map: %v", err)
 		}
 	}
 	return nil
@@ -170,7 +170,7 @@ func populateEventTableMap(coll *ebpf.Collection) error {
 	}
 	for k, v := range EventTable {
 		if err := eventTableMap.Update(k, &v, ebpf.UpdateAny); err != nil {
-			return fmt.Errorf("error updating the event table map: %v", err)
+			return xerrors.Errorf("error updating the event table map: %v", err)
 		}
 	}
 	return nil
@@ -188,7 +188,7 @@ func populateFillersMap(coll *ebpf.Collection) error {
 		fillerID := fillersHash[name]
 		progfd := uint32(prog.FD())
 		if err := tailMapObj.Update(&fillerID, &progfd, ebpf.UpdateAny); err != nil {
-			return fmt.Errorf("error updating the fillers map: %v", err)
+			return xerrors.Errorf("error updating the fillers map: %v", err)
 		}
 	}
 	return nil
@@ -218,18 +218,18 @@ func LoadAndAttach(elfPath string) (*AgentSmithBPFProgram, error) {
 
 	enterProg, ok := coll.Programs[bpfSysEnterProgram]
 	if !ok {
-		return nil, fmt.Errorf("syscall enter program not found")
+		return nil, xerrors.Errorf("syscall enter program not found")
 	}
 	if enterProg == nil {
-		return nil, fmt.Errorf("syscall enter program is nil")
+		return nil, xerrors.Errorf("syscall enter program is nil")
 	}
 
 	exitProg, ok := coll.Programs[bpfSysExitProgram]
 	if !ok {
-		return nil, fmt.Errorf("syscall exit program not found")
+		return nil, xerrors.Errorf("syscall exit program not found")
 	}
 	if exitProg == nil {
-		return nil, fmt.Errorf("syscall exit program is nil")
+		return nil, xerrors.Errorf("syscall exit program is nil")
 	}
 
 	if err := populateFillersMap(coll); err != nil {
@@ -285,7 +285,7 @@ func LoadAndAttach(elfPath string) (*AgentSmithBPFProgram, error) {
 
 	enterHook, err := link.AttachRawTracepoint(enterRawTracepoint)
 	if err != nil {
-		return nil, fmt.Errorf("error registering enter hook for enter raw tracepoint: %s", err.Error())
+		return nil, xerrors.Errorf("error registering enter hook for enter raw tracepoint: %s", err.Error())
 	}
 	abpf.enterLink = &enterHook
 
@@ -296,7 +296,7 @@ func LoadAndAttach(elfPath string) (*AgentSmithBPFProgram, error) {
 
 	exitHook, err := link.AttachRawTracepoint(exitRawTracepoint)
 	if err != nil {
-		return nil, fmt.Errorf("error registering exit hook for exit raw tracepoint: %s", err.Error())
+		return nil, xerrors.Errorf("error registering exit hook for exit raw tracepoint: %s", err.Error())
 	}
 
 	abpf.exitLink = &exitHook
@@ -308,7 +308,7 @@ func LoadAndAttach(elfPath string) (*AgentSmithBPFProgram, error) {
 
 	eventsReader, err := perf.NewReader(perfMapObj, totalSize)
 	if err != nil {
-		return nil, fmt.Errorf("error setting up perf reader for events: %s", err.Error())
+		return nil, xerrors.Errorf("error setting up perf reader for events: %s", err.Error())
 	}
 
 	abpf.reader = eventsReader

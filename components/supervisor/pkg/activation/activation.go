@@ -64,7 +64,7 @@ func Listen(ctx context.Context, l net.Listener, activate Callback) error {
 	case *net.TCPListener:
 		f, err = ll.File()
 	default:
-		return fmt.Errorf("unsuported listener")
+		return xerrors.Errorf("unsuported listener")
 	}
 	if err != nil {
 		return err

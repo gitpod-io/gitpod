@@ -107,7 +107,7 @@ func ForwardPort(ctx context.Context, config *rest.Config, namespace, pod, port 
 		}
 
 		if errOut.Len() != 0 {
-			errchan <- fmt.Errorf(errOut.String())
+			errchan <- xerrors.Errorf(errOut.String())
 			return
 		}
 
@@ -128,7 +128,7 @@ func CertPoolFromSecret(clientSet kubernetes.Interface, namespace, secretName st
 		certFile := secret.Data[file]
 
 		if !cert.AppendCertsFromPEM(certFile) {
-			return nil, fmt.Errorf("credentials: failed to append certificates")
+			return nil, xerrors.Errorf("credentials: failed to append certificates")
 		}
 	}
 	return

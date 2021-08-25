@@ -28,7 +28,7 @@ func TestDockerRegistryResolver(t *testing.T) {
 		{"alpine:latest", "docker.io/library/alpine:latest", nil},
 		{"alpine:3.14", "docker.io/library/alpine:3.14", nil},
 		{"gitpod/workspace-full:build-branch-master", "docker.io/gitpod/workspace-full:build-branch-master", nil},
-		{"gitpod/does-not-exist", "docker.io/gitpod/does-not-exist", fmt.Errorf("does not exist")},
+		{"gitpod/does-not-exist", "docker.io/gitpod/does-not-exist", xerrors.Errorf("does not exist")},
 	}
 
 	ctrl := gomock.NewController(t)

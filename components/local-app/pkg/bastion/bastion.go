@@ -400,13 +400,13 @@ func generateSSHKeys(instanceID string) (privateKeyFN string, publicKey string, 
 
 func (b *Bastion) connectTunnelClient(ctx context.Context, ws *Workspace) error {
 	if ws.URL == "" {
-		return fmt.Errorf("IDE URL is empty")
+		return xerrors.Errorf("IDE URL is empty")
 	}
 	if ws.OwnerToken == "" {
-		return fmt.Errorf("owner token is empty")
+		return xerrors.Errorf("owner token is empty")
 	}
 	if ws.tunnelClientConnected {
-		return fmt.Errorf("tunnel: ssh client is already connected")
+		return xerrors.Errorf("tunnel: ssh client is already connected")
 	}
 	ws.tunnelClientConnected = true
 
@@ -495,10 +495,10 @@ func newTunnelClient(ctx context.Context, ws *Workspace, reconnecting *gitpod.Re
 
 func (b *Bastion) establishTunnel(ctx context.Context, ws *Workspace, logprefix string, remotePort int, targetPort int, visibility supervisor.TunnelVisiblity) (*TunnelListener, error) {
 	if !ws.tunnelClientConnected {
-		return nil, fmt.Errorf("tunnel client is not connected")
+		return nil, xerrors.Errorf("tunnel client is not connected")
 	}
 	if visibility == supervisor.TunnelVisiblity_none {
-		return nil, fmt.Errorf("tunnel visibility is none")
+		return nil, xerrors.Errorf("tunnel visibility is none")
 	}
 
 	targetHost := "127.0.0.1"
@@ -589,12 +589,12 @@ func (b *Bastion) establishTunnel(ctx context.Context, ws *Workspace, logprefix 
 
 func (b *Bastion) establishSSHTunnel(ws *Workspace) (listener *TunnelListener, err error) {
 	if ws.SSHPublicKey == "" {
-		return nil, fmt.Errorf("no public key generated")
+		return nil, xerrors.Errorf("no public key generated")
 	}
 
 	err = installSSHAuthorizedKey(ws, ws.SSHPublicKey)
 	if err != nil {
-		return nil, fmt.Errorf("cannot install authorized key: %w", err)
+		return nil, xerrors.Errorf("cannot install authorized key: %w", err)
 	}
 	listener, err = b.establishTunnel(ws.ctx, ws, "ssh", 23001, 0, supervisor.TunnelVisiblity_host)
 	return listener, err
@@ -652,7 +652,7 @@ func installSSHAuthorizedKey(ws *Workspace, key string) error {
 		return ctx.Err()
 	case success := <-done:
 		if !success {
-			return fmt.Errorf("unable to upload SSH key")
+			return xerrors.Errorf("unable to upload SSH key")
 		}
 	}
 

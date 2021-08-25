@@ -41,13 +41,13 @@ type Config struct {
 // Validate validates the configuration
 func (c Config) Validate() error {
 	if err := c.StaticConfig.Validate(); err != nil {
-		return fmt.Errorf("static supervisor config is invalid: %w", err)
+		return xerrors.Errorf("static supervisor config is invalid: %w", err)
 	}
 	if err := c.IDEConfig.Validate(); err != nil {
-		return fmt.Errorf("IDE config is invalid: %w", err)
+		return xerrors.Errorf("IDE config is invalid: %w", err)
 	}
 	if err := c.WorkspaceConfig.Validate(); err != nil {
-		return fmt.Errorf("Workspace config is invalid: %w", err)
+		return xerrors.Errorf("Workspace config is invalid: %w", err)
 	}
 
 	return nil
@@ -80,16 +80,16 @@ type StaticConfig struct {
 // Validate validates this configuration
 func (c StaticConfig) Validate() error {
 	if c.IDEConfigLocation == "" {
-		return fmt.Errorf("ideConfigLocation is required")
+		return xerrors.Errorf("ideConfigLocation is required")
 	}
 	if c.FrontendLocation == "" {
-		return fmt.Errorf("frontendLocation is required")
+		return xerrors.Errorf("frontendLocation is required")
 	}
 	if !(0 < c.APIEndpointPort && c.APIEndpointPort <= math.MaxUint16) {
-		return fmt.Errorf("apiEndpointPort must be between 0 and %d", math.MaxUint16)
+		return xerrors.Errorf("apiEndpointPort must be between 0 and %d", math.MaxUint16)
 	}
 	if !(0 < c.SSHPort && c.SSHPort <= math.MaxUint16) {
-		return fmt.Errorf("sshPort must be between 0 and %d", math.MaxUint16)
+		return xerrors.Errorf("sshPort must be between 0 and %d", math.MaxUint16)
 	}
 
 	return nil
@@ -136,16 +136,16 @@ type IDEConfig struct {
 // Validate validates this configuration
 func (c IDEConfig) Validate() error {
 	if c.Entrypoint == "" {
-		return fmt.Errorf("entrypoint is required")
+		return xerrors.Errorf("entrypoint is required")
 	}
 	if stat, err := os.Stat(c.Entrypoint); err != nil {
-		return fmt.Errorf("invalid entrypoint: %w", err)
+		return xerrors.Errorf("invalid entrypoint: %w", err)
 	} else if stat.IsDir() {
-		return fmt.Errorf("entrypoint is a directory, but should be a file")
+		return xerrors.Errorf("entrypoint is a directory, but should be a file")
 	}
 
 	if c.IDELogRateLimit < 0 {
-		return fmt.Errorf("logRateLimit must be >= 0")
+		return xerrors.Errorf("logRateLimit must be >= 0")
 	}
 
 	return nil
@@ -231,15 +231,15 @@ type TaskConfig struct {
 // Validate validates this configuration
 func (c WorkspaceConfig) Validate() error {
 	if !(0 < c.IDEPort && c.IDEPort <= math.MaxUint16) {
-		return fmt.Errorf("GITPOD_THEIA_PORT must be between 0 and %d", math.MaxUint16)
+		return xerrors.Errorf("GITPOD_THEIA_PORT must be between 0 and %d", math.MaxUint16)
 	}
 
 	if c.WorkspaceRoot == "" {
-		return fmt.Errorf("THEIA_WORKSPACE_ROOT is required")
+		return xerrors.Errorf("THEIA_WORKSPACE_ROOT is required")
 	}
 
 	if c.WorkspaceLogRateLimit < 0 {
-		return fmt.Errorf("logRateLimit must be >= 0")
+		return xerrors.Errorf("logRateLimit must be >= 0")
 	}
 
 	if _, err := c.GetTokens(false); err != nil {
@@ -262,7 +262,7 @@ func (c WorkspaceConfig) GetTokens(downloadOTS bool) ([]WorkspaceGitpodToken, er
 	var tks []WorkspaceGitpodToken
 	err := json.Unmarshal([]byte(c.Tokens), &tks)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse tokens: %w", err)
+		return nil, xerrors.Errorf("cannot parse tokens: %w", err)
 	}
 
 	if downloadOTS {
@@ -277,15 +277,15 @@ func (c WorkspaceConfig) GetTokens(downloadOTS bool) ([]WorkspaceGitpodToken, er
 
 			resp, err := client.Get(tks[i].TokenOTS)
 			if err != nil {
-				return nil, fmt.Errorf("cannot download token OTS: %w", err)
+				return nil, xerrors.Errorf("cannot download token OTS: %w", err)
 			}
 			if resp.StatusCode != http.StatusOK {
-				return nil, fmt.Errorf("cannot download token OTS: %d (%s)", resp.StatusCode, resp.Status)
+				return nil, xerrors.Errorf("cannot download token OTS: %d (%s)", resp.StatusCode, resp.Status)
 			}
 			tkn, err := io.ReadAll(resp.Body)
 			resp.Body.Close()
 			if err != nil {
-				return nil, fmt.Errorf("cannot download token OTS: %w", err)
+				return nil, xerrors.Errorf("cannot download token OTS: %w", err)
 			}
 			tks[i].Token = string(tkn)
 		}
@@ -322,7 +322,7 @@ func (c WorkspaceConfig) getGitpodTasks() (tasks *[]TaskConfig, err error) {
 	}
 	err = json.Unmarshal([]byte(c.GitpodTasks), &tasks)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse tasks: %w", err)
+		return nil, xerrors.Errorf("cannot parse tasks: %w", err)
 	}
 	return
 }
@@ -334,7 +334,7 @@ func (c WorkspaceConfig) getCommit() (commit *gitpod.Commit, err error) {
 	}
 	err = json.Unmarshal([]byte(c.WorkspaceContext), &commit)
 	if err != nil {
-		return nil, fmt.Errorf("cannot parse workspace context as a commit: %w", err)
+		return nil, xerrors.Errorf("cannot parse workspace context as a commit: %w", err)
 	}
 	return
 }

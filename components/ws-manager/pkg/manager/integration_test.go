@@ -243,7 +243,7 @@ func ensureIntegrationTestTheiaLabelOnNodes(clientset client.Client, namespace s
 	}
 
 	if len(nodes.Items) == 0 {
-		return "", fmt.Errorf("no nodes with the gitpod.io/theia.%s label available", version)
+		return "", xerrors.Errorf("no nodes with the gitpod.io/theia.%s label available", version)
 	}
 
 	return

@@ -16,6 +16,7 @@ import (
 
 	toxiproxy "github.com/Shopify/toxiproxy/client"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/xerrors"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/transport/spdy"
@@ -106,7 +107,7 @@ func forwardPort(ctx context.Context, config *rest.Config, namespace, pod, port 
 		}
 
 		if errOut.Len() != 0 {
-			errchan <- fmt.Errorf(errOut.String())
+			errchan <- xerrors.Errorf(errOut.String())
 			return
 		}
 

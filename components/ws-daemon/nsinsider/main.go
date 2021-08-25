@@ -137,7 +137,7 @@ func main() {
 
 					out, err := cmd.CombinedOutput()
 					if err != nil {
-						return fmt.Errorf("fuse-overlayfs (%v) failed: %q\n%v",
+						return xerrors.Errorf("fuse-overlayfs (%v) failed: %q\n%v",
 							cmd.Args,
 							string(out),
 							err,

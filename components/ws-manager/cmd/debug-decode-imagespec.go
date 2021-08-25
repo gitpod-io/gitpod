@@ -22,7 +22,7 @@ var debugDecodeInitializer = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		spec, err := regapi.ImageSpecFromBase64(args[0])
 		if err != nil {
-			return fmt.Errorf("cannot unmarshal init config: %w", err)
+			return xerrors.Errorf("cannot unmarshal init config: %w", err)
 		}
 
 		marshaler := protojson.MarshalOptions{

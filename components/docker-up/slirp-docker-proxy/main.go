@@ -71,7 +71,7 @@ func xmain(f *os.File) error {
 		if examplePort == 0 {
 			examplePort = 8080
 		}
-		return fmt.Errorf("Workspace (host) port needs to be > 1024, e.g. %d:%d instead of %d:%d", examplePort, *containerPort, *hostPort, *containerPort)
+		return xerrors.Errorf("Workspace (host) port needs to be > 1024, e.g. %d:%d instead of %d:%d", examplePort, *containerPort, *hostPort, *containerPort)
 	}
 
 	id, err := exposePort(socketPath)
@@ -196,7 +196,7 @@ func sendRequest(socketPath string, req request) (resp map[string]interface{}, e
 	}
 
 	if len(rep.Error) > 0 {
-		return nil, fmt.Errorf("error reply: %+v", rep.Error)
+		return nil, xerrors.Errorf("error reply: %+v", rep.Error)
 	}
 	return rep.Return, nil
 }

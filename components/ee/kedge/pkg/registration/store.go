@@ -8,10 +8,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/gitpod-io/gitpod/kedge/pkg/kedge"
+	"golang.org/x/xerrors"
 
 	corev1 "k8s.io/api/core/v1"
 	k8serr "k8s.io/apimachinery/pkg/api/errors"
@@ -77,7 +77,7 @@ func NewKubernetesStore(clientset kubernetes.Interface, namespace, secretName st
 			},
 		}, metav1.CreateOptions{})
 		if err != nil {
-			return nil, fmt.Errorf("cannot create storage secret: %w", err)
+			return nil, xerrors.Errorf("cannot create storage secret: %w", err)
 		}
 	}
 
@@ -106,7 +106,7 @@ func (ks *KubernetesStore) Add(c kedge.Collector) error {
 		}
 
 		if _, exists := obj.Data[c.Name]; exists {
-			return fmt.Errorf("%s: %w", c.Name, ErrAlreadyExists)
+			return xerrors.Errorf("%s: %w", c.Name, ErrAlreadyExists)
 		}
 
 		obj.Data[c.Name] = data

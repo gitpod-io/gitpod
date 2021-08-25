@@ -25,6 +25,7 @@ import (
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
+	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -245,19 +246,19 @@ func DownloadConfig(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.Des
 	if desc.MediaType != images.MediaTypeDockerSchema2Config &&
 		desc.MediaType != ociv1.MediaTypeImageConfig {
 
-		return nil, fmt.Errorf("unsupported media type")
+		return nil, xerrors.Errorf("unsupported media type")
 	}
 
 	rc, err := fetcher.Fetch(ctx, desc)
 	if err != nil {
-		return nil, fmt.Errorf("cannot download config: %w", err)
+		return nil, xerrors.Errorf("cannot download config: %w", err)
 	}
 	defer rc.Close()
 
 	var res ociv1.Image
 	err = json.NewDecoder(rc).Decode(&res)
 	if err != nil {
-		return nil, fmt.Errorf("cannot decode config: %w", err)
+		return nil, xerrors.Errorf("cannot decode config: %w", err)
 	}
 
 	return &res, nil
@@ -303,7 +304,7 @@ func DownloadManifest(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.D
 		placeInStore = true
 		rc, err = fetcher.Fetch(ctx, desc)
 		if err != nil {
-			err = fmt.Errorf("cannot download manifest: %w", err)
+			err = xerrors.Errorf("cannot download manifest: %w", err)
 			return
 		}
 	}
@@ -311,7 +312,7 @@ func DownloadManifest(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.D
 	inpt, err := io.ReadAll(rc)
 	rc.Close()
 	if err != nil {
-		err = fmt.Errorf("cannot download manifest: %w", err)
+		err = xerrors.Errorf("cannot download manifest: %w", err)
 		return
 	}
 
@@ -324,11 +325,11 @@ func DownloadManifest(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.D
 		var list ociv1.Index
 		err = json.Unmarshal(inpt, &list)
 		if err != nil {
-			err = fmt.Errorf("cannot unmarshal index: %w", err)
+			err = xerrors.Errorf("cannot unmarshal index: %w", err)
 			return
 		}
 		if len(list.Manifests) == 0 {
-			err = fmt.Errorf("empty manifest")
+			err = xerrors.Errorf("empty manifest")
 			return
 		}
 
@@ -336,14 +337,14 @@ func DownloadManifest(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.D
 		md := list.Manifests[0]
 		rc, err = fetcher.Fetch(ctx, md)
 		if err != nil {
-			err = fmt.Errorf("cannot download config: %w", err)
+			err = xerrors.Errorf("cannot download config: %w", err)
 			return
 		}
 		rdesc = &md
 		inpt, err = io.ReadAll(rc)
 		rc.Close()
 		if err != nil {
-			err = fmt.Errorf("cannot download manifest: %w", err)
+			err = xerrors.Errorf("cannot download manifest: %w", err)
 			return
 		}
 	}
@@ -351,14 +352,14 @@ func DownloadManifest(ctx context.Context, fetcher remotes.Fetcher, desc ociv1.D
 	switch rdesc.MediaType {
 	case images.MediaTypeDockerSchema2Manifest, ociv1.MediaTypeImageManifest:
 	default:
-		err = fmt.Errorf("unsupported media type")
+		err = xerrors.Errorf("unsupported media type")
 		return
 	}
 
 	var res ociv1.Manifest
 	err = json.Unmarshal(inpt, &res)
 	if err != nil {
-		err = fmt.Errorf("cannot decode config: %w", err)
+		err = xerrors.Errorf("cannot decode config: %w", err)
 		return
 	}
 

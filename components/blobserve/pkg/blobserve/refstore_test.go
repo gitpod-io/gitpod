@@ -10,7 +10,6 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"sync"
@@ -20,6 +19,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	ociv1 "github.com/opencontainers/image-spec/specs-go/v1"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/xerrors"
 )
 
 func TestBlobFor(t *testing.T) {
@@ -172,7 +172,7 @@ func TestBlobFor(t *testing.T) {
 			ExtraAction: func(t *testing.T, s *refstore) (err error) {
 				_, _, err = s.BlobFor(context.Background(), refDescriptor, false)
 				if err == nil {
-					return fmt.Errorf("found layer although we shouldn't have")
+					return xerrors.Errorf("found layer although we shouldn't have")
 				}
 				s.Resolver = func() remotes.Resolver {
 					return &fakeFetcher{
@@ -233,7 +233,7 @@ func TestBlobFor(t *testing.T) {
 						}
 						_, _, err := s.BlobFor(ctx, refDescriptor, false)
 						if err != nil {
-							return fmt.Errorf("client %03d: %w", i, err)
+							return xerrors.Errorf("client %03d: %w", i, err)
 						}
 						return nil
 					})
@@ -355,11 +355,11 @@ func TestBlobFor(t *testing.T) {
 				oadd := bs.Adder
 
 				bs.Adder = func(ctx context.Context, name string, in io.Reader) (err error) {
-					return fmt.Errorf("failed to download")
+					return xerrors.Errorf("failed to download")
 				}
 				_, _, err := s.BlobFor(context.Background(), refDescriptor, false)
 				if err == nil {
-					return fmt.Errorf("first download didn't fail")
+					return xerrors.Errorf("first download didn't fail")
 				}
 
 				bs.Adder = oadd
@@ -457,7 +457,7 @@ func (f *fakeFetcher) Resolve(ctx context.Context, ref string) (name string, des
 	name = ref
 	fc, ok := f.Content[ref]
 	if !ok {
-		err = fmt.Errorf("not found")
+		err = xerrors.Errorf("not found")
 		return
 	}
 	c, err := fc()
@@ -471,7 +471,7 @@ func (f *fakeFetcher) Resolve(ctx context.Context, ref string) (name string, des
 
 // Pusher returns a new pusher for the provided reference
 func (f *fakeFetcher) Pusher(ctx context.Context, ref string) (remotes.Pusher, error) {
-	return nil, fmt.Errorf("not implemented")
+	return nil, xerrors.Errorf("not implemented")
 }
 
 // Fetcher returns a new fetcher for the provided reference.
@@ -484,7 +484,7 @@ func (f *fakeFetcher) Fetcher(ctx context.Context, ref string) (remotes.Fetcher,
 func (f *fakeFetcher) Fetch(ctx context.Context, desc ociv1.Descriptor) (io.ReadCloser, error) {
 	fc, ok := f.Content[desc.Digest.Encoded()]
 	if !ok {
-		return nil, fmt.Errorf("%s not found", desc.Digest.Encoded())
+		return nil, xerrors.Errorf("%s not found", desc.Digest.Encoded())
 	}
 	c, err := fc()
 	if err != nil {

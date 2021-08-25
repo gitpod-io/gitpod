@@ -6,7 +6,6 @@ package registry
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	lru "github.com/hashicorp/golang-lru"
@@ -19,7 +18,7 @@ import (
 )
 
 // ErrRefInvalid is returned by spec provider who cannot interpret the ref
-var ErrRefInvalid = fmt.Errorf("invalid ref")
+var ErrRefInvalid = xerrors.Errorf("invalid ref")
 
 // ImageSpecProvider provide the image spec for an image pull
 // based on the ref

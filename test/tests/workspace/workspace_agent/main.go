@@ -67,7 +67,7 @@ func (*WorkspaceAgent) Exec(req *api.ExecRequest, resp *api.ExecResponse) (err e
 		exitError, ok := err.(*exec.ExitError)
 		if !ok {
 			fullCommand := strings.Join(append([]string{req.Command}, req.Args...), " ")
-			return fmt.Errorf("%s: %w", fullCommand, err)
+			return xerrors.Errorf("%s: %w", fullCommand, err)
 		}
 		rc = exitError.ExitCode()
 	}

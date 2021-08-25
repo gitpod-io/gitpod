@@ -84,7 +84,7 @@ func ParseTaskIDFromPrebuildLogFilePath(filePath string) (string, error) {
 		streamID = strings.TrimPrefix(fileName, prebuildLogFilePrefix)
 	}
 	if streamID == "" {
-		return "", fmt.Errorf("cannot parse stream ID from filePath: '%s'", fileName)
+		return "", xerrors.Errorf("cannot parse stream ID from filePath: '%s'", fileName)
 	}
 
 	return streamID, nil

@@ -8,7 +8,6 @@ import (
 	"archive/tar"
 	"bufio"
 	"context"
-	"fmt"
 	"io"
 	"os"
 
@@ -38,7 +37,7 @@ func BuildTarbal(ctx context.Context, src string, dst string, fullWorkspaceBacku
 
 	// ensure the src actually exists before trying to tar it
 	if _, err := os.Stat(src); err != nil {
-		return fmt.Errorf("Unable to tar files: %v", err.Error())
+		return xerrors.Errorf("Unable to tar files: %v", err.Error())
 	}
 
 	uidMaps := make([]idtools.IDMap, len(cfg.UIDMaps))
@@ -104,7 +103,7 @@ func BuildTarbal(ctx context.Context, src string, dst string, fullWorkspaceBacku
 }
 
 // ErrMaxSizeExceeded is emitted by LimitWriter when a write tries to write beyond the max number of bytes allowed
-var ErrMaxSizeExceeded = fmt.Errorf("maximum size exceeded")
+var ErrMaxSizeExceeded = xerrors.Errorf("maximum size exceeded")
 
 // newLimitWriter wraps a writer such that a maximum of N bytes can be written. Once that limit is exceeded
 // the writer returns io.ErrClosedPipe

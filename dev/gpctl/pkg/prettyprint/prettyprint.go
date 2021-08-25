@@ -87,7 +87,7 @@ type Printer struct {
 func (pp *Printer) Print(obj interface{}) error {
 	formatter, ok := formatter[pp.Format]
 	if !ok {
-		return fmt.Errorf("Unknown format: %s", pp.Format)
+		return xerrors.Errorf("Unknown format: %s", pp.Format)
 	}
 
 	return formatter(pp, obj)

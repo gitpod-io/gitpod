@@ -56,7 +56,7 @@ func getIntegrationTestPrerequisiteObjects(out io.Writer, namespace, gpHelmChart
 		}
 	}
 	if helm == "" {
-		return fmt.Errorf("no helm executable found in path")
+		return xerrors.Errorf("no helm executable found in path")
 	}
 
 	// This command renders the helm template and selects everything workspace related.
@@ -73,7 +73,7 @@ func getIntegrationTestPrerequisiteObjects(out io.Writer, namespace, gpHelmChart
 		helmCmd.Stderr = os.Stderr
 		err := helmCmd.Run()
 		if err != nil {
-			return fmt.Errorf("cannot run helm: %w", err)
+			return xerrors.Errorf("cannot run helm: %w", err)
 		}
 		ro.Close()
 		return nil
@@ -87,7 +87,7 @@ func getIntegrationTestPrerequisiteObjects(out io.Writer, namespace, gpHelmChart
 				break
 			}
 			if err != nil {
-				return fmt.Errorf("cannot read YAML document: %w", err)
+				return xerrors.Errorf("cannot read YAML document: %w", err)
 			}
 
 			var ingest bool
