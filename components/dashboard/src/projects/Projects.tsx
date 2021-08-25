@@ -14,9 +14,13 @@ import { useContext, useEffect, useState } from "react";
 import { getGitpodService } from "../service/service";
 import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { ThemeContext } from "../theme-context";
-import { PrebuildInfo, Project } from "@gitpod/gitpod-protocol";
+import { PrebuildInfo, PrebuiltWorkspaceState, Project } from "@gitpod/gitpod-protocol";
 import { toRemoteURL } from "./render-utils";
 import ContextMenu from "../components/ContextMenu";
+import StatusDone from "../icons/StatusDone.svg";
+import StatusPaused from "../icons/StatusPaused.svg";
+import StatusRunning from "../icons/StatusRunning.svg";
+import StatusFailed from "../icons/StatusFailed.svg";
 
 export default function () {
     const location = useLocation();
@@ -73,6 +77,21 @@ export default function () {
     }
 
     const teamOrUserSlug = !!team ? team.slug : 'projects';
+
+    const getPrebuildStatusIcon = (status: PrebuiltWorkspaceState) => {
+        switch (status) {
+            case undefined: // Fall through
+            case "queued":
+                return StatusPaused;
+            case "building":
+                return StatusRunning;
+            case "aborted": // Fall through
+            case "timeout":
+                return StatusFailed;
+            case "available":
+                return StatusDone;
+        }
+    }
 
     return <>
         <Header title="Projects" subtitle="Manage recently added projects." />
@@ -142,9 +161,7 @@ export default function () {
                             {lastPrebuilds.get(p.id)
                                 ? (<div className="flex flex-row h-full text-sm justify-between">
                                     <Link to={`/${teamOrUserSlug}/${p.name}/${lastPrebuilds.get(p.id)!.id}`} className="flex my-auto group space-x-2">
-                                        <div className={"my-auto rounded-full w-3 h-3 text-sm align-middle " + (true ? "bg-green-500" : "bg-gray-400")}>
-                                            &nbsp;
-                                        </div>
+                                        <img className="h-3 w-3 my-auto" src={getPrebuildStatusIcon(lastPrebuilds.get(p.id)!.status)} />
                                         <div className="my-auto font-semibold text-gray-500">{lastPrebuilds.get(p.id)!.branch}</div>
                                         <span className="mx-1 my-auto text-gray-600">·</span>
                                         <div className="my-auto text-gray-400 flex-grow hover:text-gray-800 dark:hover:text-gray-300">{moment(lastPrebuilds.get(p.id)!.startedAt, "YYYYMMDD").fromNow()}</div>
