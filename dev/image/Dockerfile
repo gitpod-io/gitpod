@@ -4,7 +4,7 @@
 
 FROM gitpod/workspace-full-vnc:latest
 
-ENV TRIGGER_REBUILD 12
+ENV TRIGGER_REBUILD 14
 ENV WORKSPACE_KERNEL 5.4.0-1046-gke
 
 USER root
@@ -35,7 +35,7 @@ RUN mkdir -p /tmp/helm/ \
 
 ### kubernetes ###
 RUN mkdir -p /usr/local/kubernetes/ && \
-    curl -fsSL https://github.com/kubernetes/kubernetes/releases/download/v1.17.16/kubernetes.tar.gz \
+    curl -fsSL https://github.com/kubernetes/kubernetes/releases/download/v1.20.10/kubernetes.tar.gz \
     | tar -xzvC /usr/local/kubernetes/ --strip-components=1 \
     && KUBERNETES_SKIP_CONFIRM=true /usr/local/kubernetes/cluster/get-kube-binaries.sh \
     && chown gitpod:gitpod -R /usr/local/kubernetes
@@ -52,7 +52,7 @@ RUN curl -fsSL https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key a
 RUN curl -fsSL -o /usr/bin/kubectx https://raw.githubusercontent.com/ahmetb/kubectx/master/kubectx && chmod +x /usr/bin/kubectx \
     && curl -fsSL -o /usr/bin/kubens  https://raw.githubusercontent.com/ahmetb/kubectx/master/kubens  && chmod +x /usr/bin/kubens
 
-RUN curl -fsSL https://go.kubebuilder.io/dl/2.3.2/linux/amd64 | tar -xz -C /tmp/ \
+RUN curl -fsSL https://github.com/kubernetes-sigs/kubebuilder/releases/download/v2.3.2/kubebuilder_2.3.2_linux_amd64.tar.gz | tar -xz -C /tmp/ \
     && sudo mkdir -p /usr/local/kubebuilder \
     && sudo mv /tmp/kubebuilder_2.3.2_linux_amd64/* /usr/local/kubebuilder \
     && rm -rf /tmp/*
@@ -61,7 +61,7 @@ RUN curl -fsSL https://go.kubebuilder.io/dl/2.3.2/linux/amd64 | tar -xz -C /tmp/
 RUN install-packages mysql-client
 
 # golangci-lint
-RUN cd /usr/local && curl -fsSL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.39.0
+RUN cd /usr/local && curl -fsSL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s v1.42.0
 
 # leeway
 ENV LEEWAY_NESTED_WORKSPACE=true
@@ -135,7 +135,7 @@ ARG GCS_DIR=/opt/google-cloud-sdk
 ENV PATH=$GCS_DIR/bin:$PATH
 RUN sudo chown gitpod: /opt \
     && mkdir $GCS_DIR \
-    && curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-344.0.0-linux-x86_64.tar.gz \
+    && curl -fsSL https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-354.0.0-linux-x86_64.tar.gz \
     | tar -xzvC /opt \
     && /opt/google-cloud-sdk/install.sh --quiet --usage-reporting=false --bash-completion=true \
     --additional-components docker-credential-gcr alpha beta \
@@ -171,7 +171,7 @@ ENV LEEWAY_REMOTE_CACHE_BUCKET=gitpod-core-leeway-cache-branch
 RUN pip install --no-cache-dir awscli
 
 # Install aws-iam-authenticator
-RUN sudo curl -fsSL -o aws-iam-authenticator "https://amazon-eks.s3-us-west-2.amazonaws.com/1.13.7/2019-06-11/bin/linux/amd64/aws-iam-authenticator" \
+RUN sudo curl -fsSL -o aws-iam-authenticator "https://amazon-eks.s3.us-west-2.amazonaws.com/1.21.2/2021-07-05/bin/linux/amd64/aws-iam-authenticator" \
     && sudo chmod +x ./aws-iam-authenticator \
     && sudo mkdir -p $HOME/.aws-iam \
     && sudo mv ./aws-iam-authenticator $HOME/.aws-iam/aws-iam-authenticator \
