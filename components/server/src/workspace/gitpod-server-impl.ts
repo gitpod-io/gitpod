@@ -270,22 +270,13 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         const user = this.checkUser('updateLoggedInUser');
         await this.guardAccess({ kind: "user", subject: user }, "update");
 
-        const allowedFields: (keyof User)[] = ['avatarUrl', 'fullName', 'allowsMarketingCommunication', 'additionalData'];
+        const allowedFields: (keyof User)[] = ['avatarUrl', 'fullName', 'additionalData'];
         for (const p of allowedFields) {
             if (p in partialUser) {
                 (user[p] as any) = partialUser[p];
             }
         }
 
-        if (partialUser['allowsMarketingCommunication'] !== undefined) {
-            this.analytics.track({
-                userId: user.id,
-                event: "notification_change",
-                properties: {
-                    "unsubscribed": !partialUser['allowsMarketingCommunication']
-                }
-            });
-        }
         await this.userDB.updateUserPartial(user);
         return user;
     }
@@ -1552,22 +1543,17 @@ export class GitpodServerImpl<Client extends GitpodClient, Server extends Gitpod
         const span = opentracing.globalTracer().startSpan("fetchProjectRepositoryConfiguration");
         span.setTag("projectId", projectId);
 
-        const project = await this.projectsService.getProject(projectId);
-        if (!project) {
-            throw new ResponseError(ErrorCodes.NOT_FOUND, "Project not found");
-        }
         await this.guardProjectOperation(user, projectId, "get");
+        return this.projectsService.fetchProjectRepositoryConfiguration({ span }, user, projectId);
+    }
 
-        const normalizedContextUrl = this.contextParser.normalizeContextURL(project.cloneUrl);
-        const context = (await this.contextParser.handle({ span }, user, normalizedContextUrl)) as CommitContext;
-        const { host } = context.repository;
-        const hostContext = this.hostContextProvider.get(host);
-        if (!hostContext || !hostContext.services) {
-            throw new Error(`Cannot fetch repository configuration for host: ${host}`);
-        }
-        const repoHost = hostContext.services;
-        const configString = await repoHost.fileProvider.getGitpodFileContent(context, user);
-        return configString;
+    public async guessProjectConfiguration(projectId: string): Promise<string | undefined> {
+        const user = this.checkUser("guessProjectConfiguration");
+        const span = opentracing.globalTracer().startSpan("guessProjectConfiguration");
+        span.setTag("projectId", projectId);
+
+        await this.guardProjectOperation(user, projectId, "get");
+        return this.projectsService.guessProjectConfiguration({ span }, user, projectId);
     }
 
     public async getContentBlobUploadUrl(name: string): Promise<string> {

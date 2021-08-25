@@ -4,7 +4,7 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
-import { GitpodToken, GitpodTokenType, Identity, IdentityLookup, Token, TokenEntry, User, UserEnvVar } from "@gitpod/gitpod-protocol";
+import { AdditionalUserData, GitpodToken, GitpodTokenType, Identity, IdentityLookup, Token, TokenEntry, User, UserEnvVar } from "@gitpod/gitpod-protocol";
 import { OAuthTokenRepository, OAuthUserRepository } from "@jmondi/oauth2-server";
 import { Repository } from "typeorm";
 import { DBUser } from "./typeorm/entity/db-user";
@@ -125,6 +125,6 @@ export interface OwnerAndRepo {
     repo: string
 }
 
-export type UserEmailContact = Pick<User, 'id' | 'name' | 'allowsMarketingCommunication'> & {
-    primaryEmail: string
-}
+export type UserEmailContact = Pick<User, 'id' | 'name'>
+    & { primaryEmail: string }
+    & { additionalData?: Pick<AdditionalUserData, 'emailNotificationSettings'> }

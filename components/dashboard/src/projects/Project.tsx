@@ -18,11 +18,13 @@ import { shortCommitMessage } from "./render-utils";
 
 export default function () {
     const history = useHistory();
-    const { teams } = useContext(TeamsContext);
     const location = useLocation();
+
+    const { teams } = useContext(TeamsContext);
+    const team = getCurrentTeam(location, teams);
+
     const match = useRouteMatch<{ team: string, resource: string }>("/:team/:resource");
     const projectName = match?.params?.resource;
-    const team = getCurrentTeam(location, teams);
 
     const [project, setProject] = useState<Project | undefined>();
 
@@ -34,7 +36,7 @@ export default function () {
 
     useEffect(() => {
         updateProject();
-    }, [ teams, team ]);
+    }, [ teams ]);
 
     const updateProject = async () => {
         if (!teams || !projectName) {
@@ -87,7 +89,7 @@ export default function () {
             // TODO(at): this need to be revised once prebuild events are integrated
             return;
         }
-        if (!team || !project) {
+        if (!project) {
             return;
         }
         prebuildLoaders.add(branch.name);
@@ -126,7 +128,7 @@ export default function () {
     }
 
     return <>
-        <Header title="Branches" subtitle={<h2>View recent active branches for <a className="text-gray-400 hover:text-gray-600" href={project?.cloneUrl}>{project?.name}</a>.</h2>} />
+        <Header title="Branches" subtitle={<h2 className="tracking-wide">View recent active branches for <a className="text-gray-500 hover:text-gray-800 font-semibold" href={project?.cloneUrl}>{project?.name}</a>.</h2>} />
         <div className="lg:px-28 px-10">
             <div className="flex mt-8">
                 <div className="flex">

@@ -352,24 +352,24 @@ func determineProcessType(p processTypeIndicator) ProcessType {
 
 // enforceCPULimit sets a new CPU spending limit expressed in jiffies/sec
 func (gov *Controller) enforceCPULimit(limit int64) (didChange bool, err error) {
-	quota, period, err := gov.cfsController.GetQuota()
+	currentQuota, period, err := gov.cfsController.GetQuota()
 	if err != nil {
 		return
 	}
 
 	periodToMilliseconds := (time.Duration(period) * time.Microsecond).Milliseconds()
-	quotaInMilliseconds := quota / ((10 /* milli-jiffie per jiffie */) * periodToMilliseconds)
+	newQuota := limit * (10 /* milli-jiffie per jiffie */) * periodToMilliseconds
 	gov.metrics.CPULimit.WithLabelValues(fmt.Sprintf("%d", limit)).Add(gov.SamplingPeriod.Seconds())
-	if quotaInMilliseconds == limit {
+
+	if newQuota == currentQuota {
 		return false, nil
 	}
 
-	newQuota := limit * (10 /* milli-jiffie per jiffie */) * periodToMilliseconds
 	err = gov.cfsController.SetQuota(newQuota)
 	if err != nil {
 		return
 	}
-	gov.log.WithField("quotaInMilliseconds", quotaInMilliseconds).WithField("limit", limit).WithField("quota", newQuota).Info("set new CPU limit")
+	gov.log.WithField("currentQuota", currentQuota).WithField("limit", limit).WithField("quota", newQuota).Info("set new CPU limit")
 
 	return true, nil
 }

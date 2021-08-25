@@ -148,9 +148,12 @@ func (d *Dispatch) Close() error {
 	defer d.mu.Unlock()
 
 	close(d.stopchan)
-	for _, c := range d.ctxs {
-		c.Cancel()
+	for _, state := range d.ctxs {
+		if state != nil && state.Cancel != nil {
+			state.Cancel()
+		}
 	}
+
 	d.ctxs = make(map[string]*workspaceState)
 
 	return nil
@@ -231,7 +234,11 @@ func (d *Dispatch) handlePodUpdate(oldPod, newPod *corev1.Pod) {
 		go func() {
 			// no matter if the container was deleted or not - we've lost our guard that was waiting for that to happen.
 			// Hence, we must stop listening for it to come into existence and cancel the context.
-			d.Runtime.WaitForContainerStop(waitForPodCtx, workspaceInstanceID)
+			err := d.Runtime.WaitForContainerStop(waitForPodCtx, workspaceInstanceID)
+			if err != nil {
+				log.WithError(err).WithFields(owi).Error("unexpected waiting for container to stop")
+			}
+
 			cancel()
 		}()
 
@@ -270,7 +277,7 @@ func (d *Dispatch) handlePodDeleted(pod *corev1.Pod) {
 
 	state, ok := d.ctxs[instanceID]
 	if !ok {
-		log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Error("received pod deletion for a workspace, but have not seen it before. Ignoring update.")
+		log.WithFields(wsk8s.GetOWIFromObject(&pod.ObjectMeta)).Debug("received pod deletion for a workspace, but have not seen it before. Probably another node. Ignoring update.")
 		return
 	}
 	if state.Cancel != nil {

@@ -79,8 +79,9 @@ func BuildTarbal(ctx context.Context, src string, dst string, fullWorkspaceBacku
 
 	fout, err := os.OpenFile(dst, os.O_WRONLY|os.O_CREATE, 0744)
 	if err != nil {
-		return xerrors.Errorf("cannot open archive for writing: %w", err)
+		return cleanCorruptedTarballAndReturnError(dst, xerrors.Errorf("cannot open archive for writing: %w", err))
 	}
+
 	defer fout.Close()
 	fbout := bufio.NewWriter(fout)
 	defer fbout.Flush()
@@ -94,10 +95,10 @@ func BuildTarbal(ctx context.Context, src string, dst string, fullWorkspaceBacku
 
 	_, err = io.Copy(targetOut, tarout)
 	if err != nil {
-		return xerrors.Errorf("cannot write tar file: %w", err)
+		return cleanCorruptedTarballAndReturnError(dst, xerrors.Errorf("cannot write tar file: %w", err))
 	}
 	if err = fbout.Flush(); err != nil {
-		return xerrors.Errorf("cannot flush tar out stream: %w", err)
+		return cleanCorruptedTarballAndReturnError(dst, xerrors.Errorf("cannot flush tar out stream: %w", err))
 	}
 
 	return nil
@@ -105,6 +106,12 @@ func BuildTarbal(ctx context.Context, src string, dst string, fullWorkspaceBacku
 
 // ErrMaxSizeExceeded is emitted by LimitWriter when a write tries to write beyond the max number of bytes allowed
 var ErrMaxSizeExceeded = fmt.Errorf("maximum size exceeded")
+
+// cleanCorruptedTarballAndReturnError cleans up the file located at path dst and returns the error err passed to it
+func cleanCorruptedTarballAndReturnError(dst string, err error) error {
+	os.Remove(dst)
+	return err
+}
 
 // newLimitWriter wraps a writer such that a maximum of N bytes can be written. Once that limit is exceeded
 // the writer returns io.ErrClosedPipe

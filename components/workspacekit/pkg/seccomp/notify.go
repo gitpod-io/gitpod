@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -225,56 +226,50 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 		"fstype": filesystem,
 	}).Info("handling mount syscall")
 
-	if filesystem == "proc" {
+	if filesystem == "proc" || filesystem == "sysfs" {
+		// When a process wants to mount proc relative to `/proc/self` that path has no meaning outside of the processes' context.
+		// runc started doing this in https://github.com/opencontainers/runc/commit/0ca91f44f1664da834bc61115a849b56d22f595f
+		// TODO(cw): there must be a better way to handle this. Find one.
 		target := filepath.Join(h.Ring2Rootfs, dest)
+		if strings.HasPrefix(dest, "/proc/self/") {
+			target = filepath.Join("/proc", strconv.Itoa(int(req.Pid)), strings.TrimPrefix(dest, "/proc/self/"))
+		}
+
 		stat, err := os.Lstat(target)
 		if os.IsNotExist(err) {
 			err = os.MkdirAll(target, 0755)
 		}
 		if err != nil {
-			log.WithField("dest", dest).WithError(err).Error("cannot stat mountpoint")
+			log.WithField("target", target).WithField("dest", dest).WithError(err).Error("cannot stat mountpoint")
 			return Errno(unix.EFAULT)
-		} else if stat != nil && stat.Mode()&os.ModeDir == 0 {
-			log.WithField("dest", dest).WithError(err).Error("proc must be mounted on an ordinary directory")
-			return Errno(unix.EPERM)
+		}
+		if stat != nil {
+			if stat.Mode()&os.ModeSymlink != 0 {
+				// The symlink is already expressed relative to the ring2 mount namespace, no need to faff with the rootfs paths.
+				// In case this was a /proc relative symlink, we'll have that symlink resolved here, hence make it work in the mount namespace of ring2.
+				dest, err = os.Readlink(target)
+				if err != nil {
+					log.WithField("target", target).WithField("dest", dest).WithError(err).Errorf("cannot resolve %s mount target symlink", filesystem)
+					return Errno(unix.EFAULT)
+				}
+			} else if stat.Mode()&os.ModeDir == 0 {
+				log.WithField("target", target).WithField("dest", dest).WithField("mode", stat.Mode()).WithError(err).Errorf("%s must be mounted on an ordinary directory", filesystem)
+				return Errno(unix.EPERM)
+			}
 		}
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		_, err = h.Daemon.MountProc(ctx, &daemonapi.MountProcRequest{
+		call := h.Daemon.MountProc
+		if filesystem == "sysfs" {
+			call = h.Daemon.MountSysfs
+		}
+		_, err = call(ctx, &daemonapi.MountProcRequest{
 			Target: dest,
 			Pid:    int64(req.Pid),
 		})
 		if err != nil {
-			log.WithField("target", target).WithError(err).Error("cannot mount proc")
-			return Errno(unix.EFAULT)
-		}
-
-		return 0, 0, 0
-	}
-
-	if filesystem == "sysfs" {
-		target := filepath.Join(h.Ring2Rootfs, dest)
-		stat, err := os.Lstat(target)
-		if os.IsNotExist(err) {
-			err = os.MkdirAll(target, 0755)
-		}
-		if err != nil {
-			log.WithField("dest", dest).WithError(err).Error("cannot stat mountpoint")
-			return Errno(unix.EFAULT)
-		} else if stat != nil && stat.Mode()&os.ModeDir == 0 {
-			log.WithField("dest", dest).WithError(err).Error("sysfs must be mounted on an ordinary directory")
-			return Errno(unix.EPERM)
-		}
-
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		_, err = h.Daemon.MountSysfs(ctx, &daemonapi.MountProcRequest{
-			Target: dest,
-			Pid:    int64(req.Pid),
-		})
-		if err != nil {
-			log.WithField("target", target).WithError(err).Error("cannot mount sysfs")
+			log.WithField("target", dest).WithError(err).Errorf("cannot mount %s", filesystem)
 			return Errno(unix.EFAULT)
 		}
 

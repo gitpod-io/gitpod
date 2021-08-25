@@ -4,6 +4,8 @@
  * See License-AGPL.txt in the project root for license information.
  */
 
+import 'source-map-support/register';
+
 import { start } from "./init";
 import { log } from "@gitpod/gitpod-protocol/lib/util/logging";
 import { Container } from "inversify";

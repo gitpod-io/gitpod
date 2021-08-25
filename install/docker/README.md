@@ -4,7 +4,7 @@ For smaller setups or to test Gitpod Self-Hosted on your local machine you can r
 
 ## Prerequisites
 
-To run the Gitpod Docker image you need SSL certificates for HTTPS and DNS entries that point to your Docker container. See [Configure Ingress to your Gitpod installation](https://www.gitpod.io/docs/self-hosted/latest/install/configure-ingress) for details.
+To run the Gitpod Docker image you need SSL certificates for HTTPS and DNS entries that point to your Docker container. See [Configure Ingress to your Gitpod installation](https://www.gitpod.io/docs/self-hosted/latest/configuration/ingress) for details.
 
 ## Running Gitpod using `docker run`
 

@@ -214,12 +214,16 @@ export class WorkspaceManagerBridge implements Disposable {
                     instance.status.phase = "interrupted";
                     break;
                 case WorkspacePhase.STOPPING:
-                    instance.status.phase = "stopping";
-                    if (!instance.stoppingTime) {
-                        // The first time a workspace enters stopping we record that as it's stoppingTime time.
-                        // This way we don't take the time a workspace requires to stop into account when
-                        // computing the time a workspace instance was running.
-                        instance.stoppingTime = new Date().toISOString();
+                    if (instance.status.phase != 'stopped') {
+                        instance.status.phase = "stopping";
+                        if (!instance.stoppingTime) {
+                            // The first time a workspace enters stopping we record that as it's stoppingTime time.
+                            // This way we don't take the time a workspace requires to stop into account when
+                            // computing the time a workspace instance was running.
+                            instance.stoppingTime = new Date().toISOString();
+                        }
+                    } else {
+                        log.warn("Got a stopping event for an already stopped workspace.", instance);
                     }
                     break;
                 case WorkspacePhase.STOPPED:

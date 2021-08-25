@@ -290,7 +290,7 @@ func ParseSnapshotName(name string) (bkt, obj string, err error) {
 func (rs *DirectGCPStorage) ListObjects(ctx context.Context, prefix string) (objects []string, err error) {
 	bkt := rs.client.Bucket(rs.bucketName())
 	_, err = bkt.Attrs(ctx)
-	if err == gcpstorage.ErrBucketNotExist {
+	if errors.Is(err, gcpstorage.ErrBucketNotExist) {
 		// bucket does not exist: nothing to list
 		return nil, nil
 	}
@@ -840,7 +840,7 @@ func (p *PresignedGCPStorage) SignDownload(ctx context.Context, bucket, object s
 
 	bkt := client.Bucket(bucket)
 	_, err = bkt.Attrs(ctx)
-	if err == gcpstorage.ErrBucketNotExist {
+	if errors.Is(err, gcpstorage.ErrBucketNotExist) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
@@ -849,7 +849,7 @@ func (p *PresignedGCPStorage) SignDownload(ctx context.Context, bucket, object s
 
 	obj := bkt.Object(object)
 	attrs, err := obj.Attrs(ctx)
-	if err == gcpstorage.ErrObjectNotExist {
+	if errors.Is(err, gcpstorage.ErrObjectNotExist) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
@@ -899,7 +899,7 @@ func (p *PresignedGCPStorage) SignUpload(ctx context.Context, bucket, object str
 
 	bkt := client.Bucket(bucket)
 	_, err = bkt.Attrs(ctx)
-	if err == gcpstorage.ErrBucketNotExist {
+	if errors.Is(err, gcpstorage.ErrBucketNotExist) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
@@ -935,7 +935,7 @@ func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, q
 				log.WithField("bucket", bucket).WithField("object", query.Name).WithError(err).Error("cannot delete objects")
 			}
 
-			if err == gcpstorage.ErrBucketNotExist || err == gcpstorage.ErrObjectNotExist {
+			if errors.Is(err, gcpstorage.ErrBucketNotExist) || errors.Is(err, gcpstorage.ErrObjectNotExist) {
 				return ErrNotFound
 			}
 
@@ -959,17 +959,17 @@ func (p *PresignedGCPStorage) DeleteObject(ctx context.Context, bucket string, q
 		if err == iterator.Done {
 			break
 		}
-		if err != nil {
+		if err != nil && !errors.Is(err, gcpstorage.ErrBucketNotExist) {
 			log.WithField("bucket", bucket).WithError(err).Error("cannot delete objects")
 			return err
 		}
 		err = b.Object(attrs.Name).Delete(ctx)
-		if err != nil {
+		if err != nil && !errors.Is(err, gcpstorage.ErrBucketNotExist) {
 			log.WithField("bucket", bucket).WithField("object", attrs.Name).WithError(err).Error("cannot delete objects")
 		}
 	}
 
-	if err == gcpstorage.ErrBucketNotExist {
+	if errors.Is(err, gcpstorage.ErrBucketNotExist) {
 		return ErrNotFound
 	}
 	return err
@@ -983,7 +983,7 @@ func (p *PresignedGCPStorage) DeleteBucket(ctx context.Context, bucket string) (
 
 	err = p.DeleteObject(ctx, bucket, &DeleteObjectQuery{})
 	if err != nil {
-		if err == gcpstorage.ErrBucketNotExist {
+		if errors.Is(err, gcpstorage.ErrBucketNotExist) {
 			return ErrNotFound
 		}
 		return err
@@ -991,7 +991,7 @@ func (p *PresignedGCPStorage) DeleteBucket(ctx context.Context, bucket string) (
 
 	err = client.Bucket(bucket).Delete(ctx)
 	if err != nil {
-		if err == gcpstorage.ErrBucketNotExist {
+		if errors.Is(err, gcpstorage.ErrBucketNotExist) {
 			return ErrNotFound
 		}
 		return err
@@ -1007,7 +1007,7 @@ func (p *PresignedGCPStorage) ObjectHash(ctx context.Context, bucket string, obj
 
 	attr, err := client.Bucket(bucket).Object(obj).Attrs(ctx)
 	if err != nil {
-		if err == gcpstorage.ErrBucketNotExist {
+		if errors.Is(err, gcpstorage.ErrBucketNotExist) {
 			return "", ErrNotFound
 		}
 		return "", err

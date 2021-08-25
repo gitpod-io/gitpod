@@ -23,29 +23,42 @@ export class MetaInstanceController {
     protected readonly workspaceDB: WorkspaceDB;
 
     protected async checkAndStopWorkspaces() {
-        const instances = await this.workspaceDB.findRunningInstancesWithWorkspaces(this.config.installation);
+        const instances = await this.workspaceDB.findRunningInstancesWithWorkspaces(this.config.installation, undefined, true);
 
         await Promise.all(instances.map(async (instance: RunningWorkspaceInfo) => {
             const logContext = { instanceId: instance.latestInstance.id };
 
             try {
-                log.debug(logContext, 'MetaInstanceController: Checking for workspaces to stop');
-
+                const now = Date.now();
                 const creationTime = new Date(instance.latestInstance.creationTime).getTime();
-                const preparingKillTime = creationTime + (this.config.timeouts.preparingPhaseSeconds * 1000);
-                const unknownKillTime = creationTime + (this.config.timeouts.unknownPhaseSeconds * 1000);
-                const exceededPreparingTime = Date.now() >= preparingKillTime;
-                const exceededUnknownTime = Date.now() >= unknownKillTime;
-                const currentState = instance.latestInstance.status.phase;
+                const stoppingTime = new Date(instance.latestInstance.stoppingTime ?? now).getTime(); // stoppingTime only set if entered stopping state
+                const timedOutInPreparing = now >= creationTime + (this.config.timeouts.preparingPhaseSeconds * 1000);
+                const timedOutInStopping  = now >= stoppingTime + (this.config.timeouts.stoppingPhaseSeconds * 1000);
+                const timedOutInUnknown   = now >= creationTime + (this.config.timeouts.unknownPhaseSeconds * 1000);
+                const currentPhase = instance.latestInstance.status.phase;
 
-                if ((currentState === 'preparing' && exceededPreparingTime) || (currentState === 'unknown' && exceededUnknownTime)) {
-                    log.info(logContext, 'MetaInstanceController: Setting workspace instance to stopped', {
+                log.debug(logContext, 'MetaInstanceController: Checking for workspaces to stop', {
+                    creationTime,
+                    stoppingTime,
+                    timedOutInPreparing,
+                    timedOutInStopping,
+                    timedOutInUnknown,
+                    currentPhase
+                });
+
+                if (
+                    (currentPhase === 'preparing' && timedOutInPreparing) ||
+                    (currentPhase === 'stopping' && timedOutInStopping) ||
+                    (currentPhase === 'unknown' && timedOutInUnknown)
+                ) {
+                    log.warn(logContext, 'MetaInstanceController: Setting workspace instance to stopped', {
                         creationTime,
-                        preparingKillTime,
-                        unknownKillTime,
-                        currentState
+                        currentPhase
                     });
 
+                    const nowISO = new Date(now).toISOString();
+                    instance.latestInstance.stoppingTime = nowISO;
+                    instance.latestInstance.stoppedTime = nowISO;
                     instance.latestInstance.status.phase = 'stopped';
 
                     await this.workspaceDB.storeInstance(instance.latestInstance);

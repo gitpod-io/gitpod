@@ -11,7 +11,12 @@ import { getGitpodService } from "../service/service";
 
 const WorkspaceLogs = React.lazy(() => import('./WorkspaceLogs'));
 
-export default function PrebuildLogs(props: { workspaceId?: string }) {
+export interface PrebuildLogsProps {
+  workspaceId?: string;
+  onInstanceUpdate?: (instance: WorkspaceInstance) => void;
+}
+
+export default function PrebuildLogs(props: PrebuildLogsProps) {
   const [ workspace, setWorkspace ] = useState<Workspace | undefined>();
   const [ workspaceInstance, setWorkspaceInstance ] = useState<WorkspaceInstance | undefined>();
   const [ error, setError ] = useState<Error | undefined>();
@@ -54,6 +59,9 @@ export default function PrebuildLogs(props: { workspaceId?: string }) {
   }, [ props.workspaceId ]);
 
   useEffect(() => {
+    if (props.onInstanceUpdate && workspaceInstance) {
+      props.onInstanceUpdate(workspaceInstance);
+    }
     switch (workspaceInstance?.status.phase) {
       // unknown indicates an issue within the system in that it cannot determine the actual phase of
       // a workspace. This phase is usually accompanied by an error.
@@ -107,16 +115,9 @@ export default function PrebuildLogs(props: { workspaceId?: string }) {
     }
   }, [ workspaceInstance?.status.phase ]);
 
-  return <>
-    <Suspense fallback={<div />}>
-      <WorkspaceLogs classes="h-64 w-full" logsEmitter={logsEmitter} errorMessage={error?.message} />
-    </Suspense>
-    <div className="mt-2 flex justify-center space-x-2">
-      {workspaceInstance?.status.phase === 'stopped'
-        ? <a href={workspace?.contextURL ? '/#' + workspace.contextURL.replace(/^prebuild/, '') : undefined}><button>Open Workspace</button></a>
-        : <button className="secondary disabled" disabled={true}>Open Workspace</button> }
-    </div>
-  </>;
+  return <Suspense fallback={<div />}>
+    <WorkspaceLogs classes="h-full w-full" logsEmitter={logsEmitter} errorMessage={error?.message} />
+  </Suspense>;
 }
 
 export function watchHeadlessLogs(instanceId: string, onLog: (chunk: string) => void, checkIsDone: () => Promise<boolean>): DisposableCollection {

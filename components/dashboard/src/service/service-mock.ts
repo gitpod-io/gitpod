@@ -14,7 +14,6 @@ const u1: User = {
     "avatarUrl": "https://avatars.githubusercontent.com/u/10137?v=4",
     "name": "gp-test",
     "fullName": "Alex",
-    "allowsMarketingCommunication": true,
     "identities": [
         {
             "authProviderId": "Public-GitHub",
@@ -28,6 +27,10 @@ const u1: User = {
         whatsNewSeen: {
             "April-2021": "true",
             "June-2021": "true",
+        },
+        emailNotificationSettings: {
+            allowsChangelogMail: true,
+            allowsDevXMail: true
         }
     }
 }
@@ -106,7 +109,6 @@ const gitpodServiceMock = createServiceMock({
             id: "pb1",
             branch: "main",
             buildWorkspaceId: "123",
-            branchPrebuildNumber: "123342",
             teamId: "t1",
             projectId,
             projectName: "pb1",
@@ -126,7 +128,6 @@ const gitpodServiceMock = createServiceMock({
             id: "pb1",
             branch: "foo/bar",
             buildWorkspaceId: "1234",
-            branchPrebuildNumber: "3",
             teamId: "t1",
             projectId,
             projectName: "pb1",

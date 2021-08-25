@@ -47,6 +47,13 @@ functions:
     group: inWorkspaceUserAction
 {{- end -}}
 
+{{- define "stable-image-full" -}}
+{{- $ := .root -}}
+{{- $gp := .gp -}}
+{{- $comp := .comp -}}
+{{ template "gitpod.comp.imageRepo" . }}:{{ $comp.stableVersion }}
+{{- end -}}
+
 {{ $comp := .Values.components.server -}}
 {{- $this := dict "root" . "gp" $.Values "comp" $comp -}}
 {{- $thisWorkspace := dict "root" . "comp" .Values.components.workspace -}}
@@ -118,6 +125,8 @@ spec:
           value: {{ (include "rate-limiter-config" $this) | fromYaml | toJson | quote }}
         - name: GITPOD_LICENSE
           value: "{{ .Values.license }}"
+        - name: VERSION
+          value: "${{ .Values.version }}"
 {{- if $comp.github.app }}
         - name: GITPOD_GITHUB_APP_ENABLED
           value: "{{ $comp.github.app.enabled | default "false" }}"
@@ -157,7 +166,7 @@ spec:
         - name: WORKSPACE_DEFAULT_IMAGE
           value: "{{ template "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.defaultImage) }}"
         - name: IDE_IMAGE_ALIASES
-          value: {{ (dict "code" (include "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage))) | toJson | quote }}
+          value: {{ (dict "code-latest" (include "gitpod.comp.imageFull" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage)) "code" (include "stable-image-full" (dict "root" . "gp" $.Values "comp" .Values.components.workspace.codeImage))) | toJson | quote }}
     {{- if $comp.blockNewUsers }}
         - name: BLOCK_NEW_USERS
           value: {{ $comp.blockNewUsers | quote }}

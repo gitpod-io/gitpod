@@ -40,6 +40,7 @@ import { Chargebee as chargebee } from '@gitpod/gitpod-payment-endpoint/lib/char
 import { EnvEE } from "../env";
 
 import { GitHubAppSupport } from "../github/github-app-support";
+import { GitLabAppSupport } from "../gitlab/gitlab-app-support";
 
 @injectable()
 export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodServer> {
@@ -68,6 +69,7 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
     @inject(ChargebeeService) protected readonly chargebeeService: ChargebeeService;
 
     @inject(GitHubAppSupport) protected readonly githubAppSupport: GitHubAppSupport;
+    @inject(GitLabAppSupport) protected readonly gitLabAppSupport: GitLabAppSupport;
 
     @inject(EnvEE) protected readonly env: EnvEE;
 
@@ -1450,7 +1452,14 @@ export class GitpodServerEEImpl extends GitpodServerImpl<GitpodClient, GitpodSer
     async getProviderRepositoriesForUser(params: { provider: string, hints?: object }): Promise<ProviderRepository[]> {
         const user = this.checkAndBlockUser("getProviderRepositoriesForUser");
 
-        const repositories = await this.githubAppSupport.getProviderRepositoriesForUser({ user, ...params });
+        const repositories: ProviderRepository[] = [];
+        if (params.provider === "github.com") {
+            repositories.push(...(await this.githubAppSupport.getProviderRepositoriesForUser({ user, ...params })));
+        } else if (params.provider === "gitlab.com") {
+            repositories.push(...(await this.gitLabAppSupport.getProviderRepositoriesForUser({ user, ...params })));
+        } else {
+            log.info({ userId: user.id }, `Unsupported provider: "${params.provider}"`, { params });
+        }
         const projects = await this.projectsService.getProjectsByCloneUrls(repositories.map(r => r.cloneUrl));
 
         const cloneUrlsInUse = new Set(projects.map(p => p.cloneUrl));

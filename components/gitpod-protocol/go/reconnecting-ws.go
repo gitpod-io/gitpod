@@ -86,27 +86,11 @@ func (rc *ReconnectingWebsocket) EnsureConnection(handler func(conn *WebsocketCo
 }
 
 func isJSONError(err error) bool {
-	_, isJsonErr := err.(*json.InvalidUTF8Error)
-	if isJsonErr {
-		return true
-	}
-	_, isJsonErr = err.(*json.InvalidUnmarshalError)
-	if isJsonErr {
-		return true
-	}
-	_, isJsonErr = err.(*json.MarshalerError)
+	_, isJsonErr := err.(*json.MarshalerError)
 	if isJsonErr {
 		return true
 	}
 	_, isJsonErr = err.(*json.SyntaxError)
-	if isJsonErr {
-		return true
-	}
-	_, isJsonErr = err.(*json.UnmarshalFieldError)
-	if isJsonErr {
-		return true
-	}
-	_, isJsonErr = err.(*json.UnmarshalTypeError)
 	if isJsonErr {
 		return true
 	}
@@ -145,7 +129,7 @@ func (rc *ReconnectingWebsocket) Dial() {
 		if conn == nil {
 			return
 		}
-		rc.log.WithField("url", rc.url).Warn("connection is permanently closed")
+		rc.log.WithField("url", rc.url).Debug("connection is permanently closed")
 		conn.Close()
 	}()
 
@@ -157,8 +141,7 @@ func (rc *ReconnectingWebsocket) Dial() {
 			return
 		case connCh := <-rc.connCh:
 			connCh <- conn
-		case err := <-rc.errCh:
-			rc.log.WithError(err).WithField("url", rc.url).Warn("connection has been closed, reconnecting...")
+		case <-rc.errCh:
 			conn.Close()
 
 			time.Sleep(1 * time.Second)
@@ -176,7 +159,7 @@ func (rc *ReconnectingWebsocket) connect() *WebsocketConnection {
 		dialer := websocket.Dialer{HandshakeTimeout: rc.handshakeTimeout}
 		conn, _, err := dialer.Dial(rc.url, rc.reqHeader)
 		if err == nil {
-			rc.log.WithField("url", rc.url).Info("connection was successfully established")
+			rc.log.WithField("url", rc.url).Debug("connection was successfully established")
 			ws, err := NewWebsocketConnection(context.Background(), conn, func(staleErr error) {
 				rc.errCh <- staleErr
 			})

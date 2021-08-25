@@ -11,7 +11,7 @@ function CheckBox(props: {
     desc: string,
     checked: boolean,
     disabled?: boolean,
-    onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+    onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
 }) {
     const inputProps: React.InputHTMLAttributes<HTMLInputElement> = {
         checked: props.checked,

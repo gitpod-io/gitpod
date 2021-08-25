@@ -18,11 +18,13 @@ import { shortCommitMessage } from "./render-utils";
 
 export default function () {
     const history = useHistory();
-    const { teams } = useContext(TeamsContext);
     const location = useLocation();
+
+    const { teams } = useContext(TeamsContext);
+    const team = getCurrentTeam(location, teams);
+
     const match = useRouteMatch<{ team: string, resource: string }>("/:team/:resource");
     const projectName = match?.params?.resource;
-    const team = getCurrentTeam(location, teams);
 
     // @ts-ignore
     const [project, setProject] = useState<Project | undefined>();
@@ -55,7 +57,7 @@ export default function () {
                 }
             }
         })();
-    }, [ teams, team ]);
+    }, [ teams ]);
 
     const prebuildContextMenu = (p: PrebuildInfo) => {
         const running = p.status === "building";
@@ -119,7 +121,7 @@ export default function () {
     }
 
     return <>
-        <Header title="Prebuilds" subtitle={`View all recent prebuilds for all active branches.`} />
+        <Header title="Prebuilds" subtitle={`View recent prebuilds for active branches.`} />
         <div className="lg:px-28 px-10">
             <div className="flex mt-8">
                 <div className="flex">
@@ -166,7 +168,6 @@ export default function () {
                     <ItemField className="flex items-center">
                         <div className="flex space-x-2">
                             <span className="font-medium text-gray-500 dark:text-gray-50">{p.branch}</span>
-                            <span className="text-gray-400">#{p.branchPrebuildNumber}</span>
                         </div>
                         <span className="flex-grow" />
                         <ItemFieldContextMenu menuEntries={prebuildContextMenu(p)} />

@@ -105,6 +105,36 @@ spec:
 {{- if (or $comp.userNamespaces.shiftfsModuleLoader.enabled $comp.userNamespaces.seccompProfileInstaller.enabled) }}
       initContainers:
 {{- end }}
+{{- if $comp.disableKubeHealthMonitor }}
+      - name: disable-kube-health-monitor
+        # 20.4 is Ubuntu Focal, which we run on GKE atm
+        image: ubuntu:20.04
+        securityContext:
+          privileged: true
+          procMount: Default
+        # use nsenter to run code on the node
+        command:
+          - /usr/bin/nsenter
+          - -t
+          - "1"
+          - -a
+          - /bin/bash
+          - -c
+        args:
+          - |
+            exec {BASH_XTRACEFD}>&1 # this causes 'set -x' to write to stdout insted of stderr
+            set -euExo pipefail
+            systemctl status kube-container-runtime-monitor.service || true
+            if [ "$(systemctl is-active kube-container-runtime-monitor.service)" == "active" ]
+            then
+                echo "kube-container-runtime-monitor.service is active"
+                systemctl stop kube-container-runtime-monitor.service
+                systemctl disable kube-container-runtime-monitor.service
+                systemctl status kube-container-runtime-monitor.service || true
+            else
+                echo "kube-container-runtime-monitor.service is not active, not doing anything"
+            fi
+{{- end }}
 {{- if $comp.setupSSDRaid }}
       - name: raid-local-disks
         image: scylladb/raid-setup:0.1
@@ -132,7 +162,7 @@ spec:
                 exit 0
             fi
             # Discover how many disks there are
-            DISK_DEV_SUFFIX=(b c d e f g h i j)
+            DISK_DEV_SUFFIX=(c d e f g h i j)
             MAX_NUM_DISKS=8
             NUM_DISKS=0
             declare -a DISKS
@@ -207,7 +237,8 @@ spec:
               sysctl -w "net.ipv4.ip_local_port_range=5000 65000" &&
               sysctl -w "net.ipv4.tcp_tw_reuse=1" &&
               sysctl -w fs.inotify.max_user_watches=1000000 &&
-              sysctl -w "kernel.dmesg_restrict=1"
+              sysctl -w "kernel.dmesg_restrict=1" &&
+              sysctl -w vm.unprivileged_userfaultfd=0
             ) && echo "done!" || echo "failed!"
       containers:
       - name: ws-daemon
@@ -257,6 +288,13 @@ spec:
             path: "/"
           initialDelaySeconds: 5
           periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            port: 9999
+            path: "/"
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          failureThreshold: 10
         securityContext:
           privileged: true
           procMount: Default

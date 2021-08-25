@@ -5,7 +5,7 @@
 FROM gitpod/workspace-full-vnc:latest
 
 ENV TRIGGER_REBUILD 12
-ENV WORKSPACE_KERNEL 5.4.0-1044-gke
+ENV WORKSPACE_KERNEL 5.4.0-1046-gke
 
 USER root
 
@@ -117,7 +117,7 @@ RUN install-packages gperf \
 USER gitpod
 
 # Fix node version we develop against
-ARG GITPOD_NODE_VERSION=12.22.1
+ARG GITPOD_NODE_VERSION=12.22.4
 RUN bash -c ". .nvm/nvm.sh \
     && nvm install $GITPOD_NODE_VERSION \
     && npm install -g typescript yarn"

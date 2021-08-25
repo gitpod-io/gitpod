@@ -6,8 +6,8 @@
 
 import * as express from 'express';
 import { postConstruct, injectable, inject } from 'inversify';
-import { UserDB } from '@gitpod/gitpod-db/lib';
-import { User } from '@gitpod/gitpod-protocol';
+import { ProjectDB, TeamDB, UserDB } from '@gitpod/gitpod-db/lib';
+import { Project, User } from '@gitpod/gitpod-protocol';
 import { PrebuildManager } from '../prebuilds/prebuild-manager';
 import { TraceContext } from '@gitpod/gitpod-protocol/lib/util/tracing';
 import { StartPrebuildResult } from './prebuild-manager';
@@ -23,6 +23,8 @@ export class GitLabApp {
     @inject(PrebuildManager) protected readonly prebuildManager: PrebuildManager;
     @inject(TokenService) protected readonly tokenService: TokenService;
     @inject(HostContextProvider) protected readonly hostCtxProvider: HostContextProvider;
+    @inject(ProjectDB) protected readonly projectDB: ProjectDB;
+    @inject(TeamDB) protected readonly teamDB: TeamDB;
 
     protected _router = express.Router();
     public static path = '/apps/gitlab/';
@@ -36,13 +38,18 @@ export class GitLabApp {
                 const span = TraceContext.startSpan("GitLapApp.handleEvent", {});
                 span.setTag("request", context);
                 log.debug("GitLab push hook received", { event, context });
-                const user = await this.findUser({span},context, req);
+                let user: User | undefined;
+                try {
+                    user = await this.findUser({ span }, context, req);
+                } catch (error) {
+                    log.error("Cannot find user.", error, { req })
+                }
                 if (!user) {
                     res.statusCode = 503;
                     res.send();
                     return;
                 }
-                this.handlePushHook({span},context, user);
+                this.handlePushHook({ span }, context, user);
             } else {
                 log.debug("Unknown GitLab event received", { event });
             }
@@ -76,7 +83,7 @@ export class GitLabApp {
             }
             if (token.token.scopes.indexOf(GitlabService.PREBUILD_TOKEN_SCOPE) === -1 ||
                 token.token.scopes.indexOf(context.repository.git_http_url) === -1) {
-                    throw new Error(`The provided token is not valid for the repository ${context.repository.git_http_url}.`);
+                throw new Error(`The provided token is not valid for the repository ${context.repository.git_http_url}.`);
             }
             return user;
         } finally {
@@ -97,12 +104,38 @@ export class GitLabApp {
             }
 
             log.debug({ userId: user.id }, "GitLab push hook: Starting prebuild", { body, contextURL });
-            // todo@alex: add branch and project args
-            const ws = await this.prebuildManager.startPrebuild({ span }, { user, contextURL, cloneURL: body.repository.git_http_url, commit: body.after });
+
+            const cloneURL = body.repository.git_http_url;
+            const branch = this.getBranchFromRef(body.ref);
+            const projectOwner = await this.findProjectOwner(cloneURL);
+
+            const ws = await this.prebuildManager.startPrebuild({ span }, {
+                user: projectOwner?.user || user,
+                project: projectOwner?.project,
+                contextURL,
+                cloneURL,
+                commit: body.after,
+                branch,
+            });
 
             return ws;
         } finally {
             span.finish();
+        }
+    }
+
+    protected async findProjectOwner(cloneURL: string): Promise<{ user: User, project?: Project } | undefined> {
+        const project = await this.projectDB.findProjectByCloneUrl(cloneURL);
+        if (project) {
+            const owner = !!project.userId
+                ? { userId: project.userId }
+                : (await this.teamDB.findMembersByTeam(project.teamId || '')).filter(m => m.role === "owner")[0];
+            if (owner) {
+                const user = await this.userDB.findUserById(owner.userId);
+                if (user) {
+                    return { user, project };
+                }
+            }
         }
     }
 
@@ -115,16 +148,41 @@ export class GitLabApp {
     get router(): express.Router {
         return this._router;
     }
+
+    protected getBranchFromRef(ref: string): string | undefined {
+        const headsPrefix = "refs/heads/";
+        if (ref.startsWith(headsPrefix)) {
+            return ref.substring(headsPrefix.length);
+        }
+
+        return undefined;
+    }
 }
 
 interface GitLabPushHook {
     object_kind: 'push';
     before: string;
     after: string; // commit
-    ref: string; // branch
+    ref: string; // e.g. "refs/heads/master"
+    user_avatar: string;
+    user_name: string;
+    project: GitLabProject;
     repository: GitLabRepository;
 }
 
 interface GitLabRepository {
-    git_http_url: string; //e.g. http://example.com/mike/diaspora.git
+    name: string,
+    git_http_url: string; // e.g. http://example.com/mike/diaspora.git
+    visibility_level: number,
+}
+
+interface GitLabProject {
+    id: number,
+    namespace: string,
+    name: string,
+    path_with_namespace: string, // e.g. "mike/diaspora"
+    git_http_url: string; // e.g. http://example.com/mike/diaspora.git
+    web_url: string; // e.g. http://example.com/mike/diaspora
+    visibility_level: number,
+    avatar_url: string | null,
 }

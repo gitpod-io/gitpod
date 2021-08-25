@@ -45,7 +45,7 @@ export async function issueCertficate(werft, params: IssueCertificateParams) {
     && cd ${params.pathToTerraform} \
     && rm -rf .terraform* \
     && export GOOGLE_APPLICATION_CREDENTIALS="${params.gcpSaPath}" \
-    && terraform init -backend-config='prefix=${params.namespace}${params.bucketPrefixTail}' -migrate-state \
+    && terraform init -backend-config='prefix=${params.namespace}${params.bucketPrefixTail}' -migrate-state -upgrade \
     && terraform apply -auto-approve \
         -var 'namespace=${params.namespace}' \
         -var 'dns_zone_domain=${params.dnsZoneDomain}' \
@@ -93,5 +93,7 @@ export async function installCertficate(werft, params: InstallCertificateParams)
     }
     if (!notReadyYet) {
         werft.log('certificate', `copied certificate from "${params.certNamespace}/${params.certName}" to "${params.destinationNamespace}/${params.certSecretName}"`);
+    } else {
+        werft.fail('certificate', `failed to copy certificate from "${params.certNamespace}/${params.certName}" to "${params.destinationNamespace}/${params.certSecretName}"`)
     }
 }

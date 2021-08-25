@@ -801,6 +801,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 	}
 
 	doBackup := wso.WasEverReady() && !wso.IsWorkspaceHeadless()
+	doBackupLogs := !wsk8s.IsGhostWorkspace(wso.Pod)
 	doSnapshot := tpe == api.WorkspaceType_PREBUILD
 	doFinalize := func() (worked bool, gitStatus *csapi.GitStatus, err error) {
 		m.finalizerMapLock.Lock()
@@ -863,7 +864,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 		resp, err := snc.DisposeWorkspace(ctx, &wsdaemon.DisposeWorkspaceRequest{
 			Id:         workspaceID,
 			Backup:     doBackup,
-			BackupLogs: true,
+			BackupLogs: doBackupLogs,
 		})
 		if resp != nil {
 			gitStatus = resp.GitStatus

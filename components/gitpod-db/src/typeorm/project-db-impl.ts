@@ -57,7 +57,7 @@ export class ProjectDBImpl implements ProjectDB {
 
     public async findUserProjects(userId: string): Promise<Project[]> {
         const repo = await this.getRepo();
-        return repo.find({ userId });
+        return repo.find({ userId, markedDeleted: false });
     }
 
     public async storeProject(project: Project): Promise<Project> {
@@ -67,7 +67,7 @@ export class ProjectDBImpl implements ProjectDB {
 
     public async setProjectConfiguration(projectId: string, config: ProjectConfig): Promise<void> {
         const repo = await this.getRepo();
-        const project = await repo.findOne({ id: projectId, deleted: false });
+        const project = await repo.findOne({ id: projectId, markedDeleted: false });
         if (!project) {
             throw new Error('A project with this ID could not be found');
         }

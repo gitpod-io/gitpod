@@ -26,7 +26,7 @@ export default function FromReferrer() {
                     <p>
                         It looks like you are trying to open a workspace, but the referrer URL is empty or has an incomplete path.
                         This happens when the git hoster or browser doesn't send the referrer header.
-                        <br/> Please prefix the repository URL with <pre>https://gitpod.io/#</pre> in order to start a workspace. <a className="text-gray-400 learn-more hover:text-gray-600" href="https://www.gitpod.io/docs/getting-started/">Learn more</a>
+                        <br/> Please prefix the repository URL with <pre>https://gitpod.io/#</pre> in order to start a workspace. <a className="gp-link" href="https://www.gitpod.io/docs/getting-started/">Learn more</a>
                     </p>
                 </div>
                 <span>

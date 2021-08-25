@@ -457,10 +457,11 @@ func (m *Manager) createWorkspaceContainer(startContext *startWorkspaceContext) 
 			// We make the readiness probe more difficult to fail than the liveness probe.
 			// This way, if the workspace really has a problem it will be shut down by Kubernetes rather than end up in
 			// some undefined state.
-			FailureThreshold: 600,
-			PeriodSeconds:    1,
-			SuccessThreshold: 1,
-			TimeoutSeconds:   1,
+			FailureThreshold:    600,
+			PeriodSeconds:       1,
+			SuccessThreshold:    1,
+			TimeoutSeconds:      1,
+			InitialDelaySeconds: 2,
 		}
 	)
 

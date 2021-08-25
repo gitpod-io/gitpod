@@ -23,9 +23,9 @@ export default function NewProject() {
     const location = useLocation();
     const history = useHistory();
     const { teams } = useContext(TeamsContext);
-    const { user } = useContext(UserContext);
+    const { user, setUser } = useContext(UserContext);
 
-    const [provider, setProvider] = useState<string>("github.com");
+    const [provider, setProvider] = useState<string | undefined>();
     const [reposInAccounts, setReposInAccounts] = useState<ProviderRepository[]>([]);
     const [repoSearchFilter, setRepoSearchFilter] = useState<string>("");
     const [selectedAccount, setSelectedAccount] = useState<string | undefined>(undefined);
@@ -38,6 +38,16 @@ export default function NewProject() {
     const [loaded, setLoaded] = useState<boolean>(false);
 
     useEffect(() => {
+        if (user && provider === undefined) {
+            if (user.identities.find(i => i.authProviderId === "Public-GitLab")) {
+                setProvider("gitlab.com");
+            } else if (user.identities.find(i => i.authProviderId === "Public-GitHub")) {
+                setProvider("github.com");
+            }
+        }
+    }, [user]);
+
+    useEffect(() => {
         const params = new URLSearchParams(location.search);
         const teamParam = params.get("team");
         if (teamParam) {
@@ -45,16 +55,6 @@ export default function NewProject() {
             const team = teams?.find(t => t.slug === teamParam);
             setSelectedTeamOrUser(team);
         }
-
-        (async () => {
-            updateOrgsState();
-            const repos = await updateReposInAccounts();
-            const first = repos[0];
-            if (first) {
-                setSelectedAccount(first.account);
-            }
-            setLoaded(true);
-        })();
     }, []);
 
     useEffect(() => {
@@ -77,9 +77,27 @@ export default function NewProject() {
         setRepoSearchFilter("");
     }, [selectedAccount]);
 
+    useEffect(() => {
+        if (!provider) {
+            return;
+        }
+        (async () => {
+            updateOrgsState();
+            const repos = await updateReposInAccounts();
+            const first = repos[0];
+            if (first) {
+                setSelectedAccount(first.account);
+            }
+            setLoaded(true);
+        })();
+    }, [provider]);
+
     const isGitHub = () => provider === "github.com";
 
     const updateReposInAccounts = async (installationId?: string) => {
+        if (!provider) {
+            return [];
+        }
         try {
             const repos = await getGitpodService().server.getProviderRepositoriesForUser({ provider, hints: { installationId } });
             setReposInAccounts(repos);
@@ -96,7 +114,7 @@ export default function NewProject() {
     }
 
     const updateOrgsState = async () => {
-        if (isGitHub()) {
+        if (provider && isGitHub()) {
             try {
                 const ghToken = await getToken(provider);
                 setNoOrgs(ghToken?.scopes.includes("read:org") !== true);
@@ -130,6 +148,9 @@ export default function NewProject() {
     }
 
     const createProject = async (teamOrUser: Team | User, selectedRepo: string) => {
+        if (!provider) {
+            return;
+        }
         const repo = reposInAccounts.find(r => r.account === selectedAccount && r.name === selectedRepo);
         if (!repo) {
             console.error("No repo selected!")
@@ -156,7 +177,6 @@ export default function NewProject() {
         return splitted.shift() && splitted.join("/");
     }
 
-    const reposToRender = Array.from(reposInAccounts).filter(r => r.account === selectedAccount && r.name.includes(repoSearchFilter));
     const accounts = new Map<string, { avatarUrl: string }>();
     reposInAccounts.forEach(r => { if (!accounts.has(r.account)) accounts.set(r.account, { avatarUrl: r.accountAvatarUrl }) });
 
@@ -193,33 +213,42 @@ export default function NewProject() {
 
     const renderSelectRepository = () => {
 
+        const noReposAvailable = reposInAccounts.length === 0;
+        const filteredRepos = Array.from(reposInAccounts).filter(r => r.account === selectedAccount && `${r.name}`.toLowerCase().includes(repoSearchFilter.toLowerCase()));
         const icon = selectedAccount && accounts.get(selectedAccount)?.avatarUrl;
 
-        const renderRepos = () => (<div className="mt-10 border rounded-t-xl border-gray-100 flex-col">
-            <div className="px-8 pt-8 flex flex-col space-y-2">
-                <ContextMenu classes="w-full left-0 cursor-pointer" menuEntries={getDropDownEntries(accounts)}>
-                    <div className="w-full">
-                        <img src={icon} className="rounded-full w-6 h-6 absolute top-1/4 left-4" />
-                        <input className="w-full px-12 cursor-pointer font-semibold" readOnly type="text" value={selectedAccount || ""}></input>
-                        <img src={CaretDown} title="Select Account" className="filter-grayscale absolute top-1/2 right-3" />
-                    </div>
-                </ContextMenu>
-                <div className="w-full relative ">
-                    <img src={search} title="Search" className="filter-grayscale absolute top-1/3 left-3" />
-                    <input className="w-96 pl-10 border-0" type="text" placeholder="Search Repositories" value={repoSearchFilter}
-                        onChange={(e) => setRepoSearchFilter(e.target.value)}></input>
-                </div>
-            </div>
-            <div className="p-6 flex-col">
-                {reposToRender.length > 0 && (
-                    <div className="overscroll-contain max-h-80 overflow-y-auto pr-2">
-                        {reposToRender.map(r => (
-                            <div key={`repo-${r.name}`} className="flex p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light transition ease-in-out group" >
+        const showSearchInput = !!repoSearchFilter || filteredRepos.length > 0;
 
-                                <div className="flex-grow">
-                                    <div className="text-base text-gray-900 dark:text-gray-50 font-medium rounded-xl whitespace-nowrap">{toSimpleName(r.name)}</div>
-                                    <p>Updated {moment(r.updatedAt).fromNow()}</p>
-                                </div>
+        const renderRepos = () => (<>
+            <div className={`mt-10 border rounded-xl border-gray-100 flex-col`}>
+                <div className="px-8 pt-8 flex flex-col space-y-2">
+                    <ContextMenu classes="w-full left-0 cursor-pointer" menuEntries={getDropDownEntries(accounts)}>
+                        <div className="w-full">
+                            {icon && (
+                                <img src={icon} className="rounded-full w-6 h-6 absolute top-1/4 left-4" />
+                            )}
+                            <input className="w-full px-12 cursor-pointer font-semibold" readOnly type="text" value={selectedAccount || ""}></input>
+                            <img src={CaretDown} title="Select Account" className="filter-grayscale absolute top-1/2 right-3" />
+                        </div>
+                    </ContextMenu>
+                    {showSearchInput && (
+                        <div className="w-full relative ">
+                            <img src={search} title="Search" className="filter-grayscale absolute top-1/3 left-3" />
+                            <input className="w-96 pl-10 border-0" type="text" placeholder="Search Repositories" value={repoSearchFilter}
+                                onChange={(e) => setRepoSearchFilter(e.target.value)}></input>
+                        </div>
+                    )}
+                </div>
+                <div className="p-6 flex-col">
+                    {filteredRepos.length > 0 && (
+                        <div className="overscroll-contain max-h-80 overflow-y-auto pr-2">
+                            {filteredRepos.map((r, index) => (
+                                <div key={`repo-${index}-${r.account}-${r.name}`} className="flex p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 focus:bg-gitpod-kumquat-light transition ease-in-out group" >
+
+                                    <div className="flex-grow">
+                                        <div className="text-base text-gray-900 dark:text-gray-50 font-medium rounded-xl whitespace-nowrap">{toSimpleName(r.name)}</div>
+                                        <p>Updated {moment(r.updatedAt).fromNow()}</p>
+                                    </div>
                                     <div className="flex justify-end">
                                         <div className="h-full my-auto flex self-center opacity-0 group-hover:opacity-100">
                                             {!r.inUse ? (
@@ -229,54 +258,73 @@ export default function NewProject() {
                                             )}
                                         </div>
                                     </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-                {reposToRender.length === 0 && (
-                    <p className="text-center ">not found</p>
-                )}
-            </div>
-
-            <div className="px-3 pt-3 bg-gray-100">
-                <div className="text-gray-500 text-center">
-                    Repository not found? <a href="javascript:void(0)" onClick={e => reconfigure()} className="text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600">Reconfigure</a>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    {!noReposAvailable && filteredRepos.length === 0 && (
+                        <p className="text-center">No Results</p>
+                    )}
+                    {loaded && noReposAvailable && isGitHub() && (<div>
+                        <div className="px-12 py-16 text-center text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                            <img src={NoAccess} title="No Access" className="m-auto mb-4" />
+                            <h3 className="mb-2 text-gray-600 dark:text-gray-400">
+                                No Access
+                            </h3>
+                            <span className="dark:text-gray-500">
+                                Authorize GitHub (github.com) or select a different account.
+                            </span>
+                            <br />
+                            <button className="mt-6" onClick={() => reconfigure()}>Authorize</button>
+                        </div>
+                    </div>)}
                 </div>
-                {isGitHub() && noOrgs && (
-                    <div className="text-gray-500 mx-auto text-center">
-                        Missing organizations? <a href="javascript:void(0)" onClick={e => grantReadOrgPermissions()} className="text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600">Grant permissions</a>
-                    </div>
-                )}
-            </div>
-            <div className="h-3 border rounded-b-xl border-gray-100 bg-gray-100"></div>
-        </div>);
 
-        const renderEmptyState = () => (<div className="mt-8 border rounded-xl border-gray-100 dark:border-gray-700 flex-col">
-            <div>
-                <div className="px-12 py-16 text-center text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                    <img src={NoAccess} title="No Access" className="m-auto mb-4" />
-                    <h3 className="mb-2 text-gray-600 dark:text-gray-400">
-                        No Access
-                    </h3>
-                    <span className="dark:text-gray-500">
-                        Authorize GitHub (github.com) or select a different account.
-                    </span>
-                    <br/>
-                    <button className="mt-6" onClick={() => reconfigure()}>Authorize Provider</button>
+            </div>
+            {isGitHub() && (
+                    <div className="pt-3">
+                        <div className="text-gray-500 text-center w-96 mx-8">
+                            Repository not found? <a href="javascript:void(0)" onClick={e => reconfigure()} className="text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600">Reconfigure</a>
+                        </div>
+                        {isGitHub() && noOrgs && (
+                            <div className="text-gray-500 mx-auto text-center">
+                                Missing organizations? <a href="javascript:void(0)" onClick={e => grantReadOrgPermissions()} className="text-gray-400 underline underline-thickness-thin underline-offset-small hover:text-gray-600">Grant permissions</a>
+                            </div>
+                        )}
+                    </div>
+            )}
+        </>
+        );
+
+        const renderEmptyState = () => (<div>
+            <div className="mt-8 border rounded-xl border-gray-100 dark:border-gray-700 flex-col">
+                <div>
+                    <div className="px-12 py-16 text-center text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-xl w-96 h-h96 flex items-center justify-center">
+                        <h3 className="mb-2 text-gray-400 dark:text-gray-600 animate-pulse">
+                            Loading ...
+                        </h3>
+                    </div>
                 </div>
             </div>
         </div>)
 
-        const empty = reposInAccounts.length === 0;
-
-        const onGitProviderSeleted = (host: string) => {
+        const onGitProviderSeleted = async (host: string, updateUser?: boolean) => {
+            if (updateUser) {
+                setUser(await getGitpodService().server.getLoggedInUser());
+            }
             setShowGitProviders(false);
             setProvider(host);
         }
 
-        return (<>
-            {(loaded && empty) ? renderEmptyState() : (showGitProviders ? (<GitProviders onHostSelected={onGitProviderSeleted} />) : renderRepos())}
-        </>)
+        if (!loaded) {
+            return renderEmptyState();
+        }
+
+        if (showGitProviders) {
+            return (<GitProviders onHostSelected={onGitProviderSeleted} />);
+        }
+
+        return renderRepos();
     };
 
     const renderSelectTeam = () => {
@@ -322,7 +370,7 @@ export default function NewProject() {
 
     return (<div className="flex flex-col w-96 mt-24 mx-auto items-center">
         <h1>New Project</h1>
-        <p className="text-gray-500 text-center text-base">Select a git repository.</p>
+        <p className="text-gray-500 text-center text-base">Select a git repository on <strong>{provider}</strong>.</p>
 
         {!selectedRepo && renderSelectRepository()}
 
@@ -335,13 +383,14 @@ export default function NewProject() {
 }
 
 function GitProviders(props: {
-    onHostSelected: (host: string) => void
+    onHostSelected: (host: string, updateUser?: boolean) => void
 }) {
     const [authProviders, setAuthProviders] = useState<AuthProviderInfo[]>([]);
 
     useEffect(() => {
         (async () => {
-            setAuthProviders(await getGitpodService().server.getAuthProviders());
+            const providers = await getGitpodService().server.getAuthProviders();
+            setAuthProviders(providers.filter(p => ["github.com", "gitlab.com"].includes(p.host)));
         })();
     }, []);
 
@@ -354,8 +403,8 @@ function GitProviders(props: {
         await openAuthorizeWindow({
             host: ap.host,
             scopes: ap.requirements?.default,
-            onSuccess: () => {
-                props.onHostSelected(ap.host);
+            onSuccess: async () => {
+                props.onHostSelected(ap.host, true);
             },
             onError: (error) => {
                 console.log(error);

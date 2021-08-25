@@ -6,6 +6,7 @@ package daemon
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 
@@ -40,11 +41,6 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	if containerRuntime == nil {
 		return nil, xerrors.Errorf("no container runtime configured")
 	}
-	go func() {
-		// TODO(cw): handle this case more gracefully
-		err := <-containerRuntime.Error()
-		log.WithError(err).Fatal("container runtime interface error")
-	}()
 
 	nodename := os.Getenv("NODENAME")
 	if nodename == "" {
@@ -54,7 +50,6 @@ func NewDaemon(config Config, reg prometheus.Registerer) (*Daemon, error) {
 	cgCustomizer.WithCgroupBasePath(config.Resources.CGroupsBasePath)
 	dsptch, err := dispatch.NewDispatch(containerRuntime, clientset, config.Runtime.KubernetesNamespace, nodename,
 		resources.NewDispatchListener(&config.Resources, reg),
-		&Containerd4214Workaround{},
 		cgCustomizer,
 	)
 	if err != nil {
@@ -160,6 +155,17 @@ func (d *Daemon) startReadinessSignal() {
 	mux.Handle(path, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if d.hosts != nil && !d.hosts.DidUpdate() {
 			http.Error(w, "host controller not ready yet", http.StatusTooEarly)
+			return
+		}
+
+		isContainerdReady, err := d.dispatch.Runtime.IsContainerdReady(context.Background())
+		if err != nil {
+			http.Error(w, fmt.Sprintf("containerd error: %v", err), http.StatusTooEarly)
+			return
+		}
+
+		if !isContainerdReady {
+			http.Error(w, "containerd is not ready", http.StatusServiceUnavailable)
 			return
 		}
 

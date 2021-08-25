@@ -78,6 +78,10 @@ var (
 // ServeWorkspace establishes the IWS server for a workspace
 func ServeWorkspace(uidmapper *Uidmapper, fsshift api.FSShiftMethod) func(ctx context.Context, ws *session.Workspace) error {
 	return func(ctx context.Context, ws *session.Workspace) (err error) {
+		if _, running := ws.NonPersistentAttrs[session.AttrWorkspaceServer]; running {
+			return nil
+		}
+
 		//nolint:ineffassign
 		span, ctx := opentracing.StartSpanFromContext(ctx, "iws.ServeWorkspace")
 		defer tracing.FinishSpan(span, &err)
@@ -578,10 +582,12 @@ func moveMount(instanceID string, targetPid int, source, target string) error {
 	mntf := os.NewFile(mntfd, "")
 	defer mntf.Close()
 
+	// Note(cw): we also need to enter the target PID namespace because the mount target
+	// 			 might refer to proc.
 	err = nsinsider(instanceID, targetPid, func(c *exec.Cmd) {
 		c.Args = append(c.Args, "move-mount", "--target", target, "--pipe-fd", "3")
 		c.ExtraFiles = append(c.ExtraFiles, mntf)
-	})
+	}, enterPidNS(true))
 	if err != nil {
 		return xerrors.Errorf("cannot move mount: %w", err)
 	}
@@ -661,8 +667,11 @@ func nsinsider(instanceID string, targetPid int, mod func(*exec.Cmd), opts ...ns
 		cmd.ExtraFiles = append(cmd.ExtraFiles, f)
 	}
 
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	rw := log.Writer(log.WithFields(log.OWI("", "", instanceID)))
+	defer rw.Close()
+
+	cmd.Stdout = rw
+	cmd.Stderr = rw
 	err = cmd.Run()
 	if err != nil {
 		return fmt.Errorf("cannot run nsinsider: %w", err)

@@ -272,7 +272,9 @@ func (c *Client) Clone(ctx context.Context) (err error) {
 		args = append(args, strings.TrimSpace(key)+"="+strings.TrimSpace(value))
 	}
 
-	args = append(args, "--filter=blob:none")
+	// TODO(cw): re-introduce this when we have a better story for repo forking
+	// args = append(args, "--filter=blob:none")
+
 	args = append(args, ".")
 
 	return c.Git(ctx, "clone", args...)

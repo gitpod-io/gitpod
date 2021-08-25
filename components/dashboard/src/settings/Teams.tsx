@@ -24,7 +24,7 @@ import { Disposable } from "@gitpod/gitpod-protocol";
 export default function Teams() {
 
     return (<div>
-        <PageWithSubMenu subMenu={settingsMenu} title='Teams' subtitle='View and and manage subscriptions for your team with one centralized billing.'>
+        <PageWithSubMenu subMenu={settingsMenu} title='Teams' subtitle='View and manage subscriptions for your team with one centralized billing.'>
             <AllTeams />
         </PageWithSubMenu>
     </div>);
@@ -460,7 +460,7 @@ function AllTeams() {
             <div className="w-full flex h-80 mt-2 rounded-xl bg-gray-100 dark:bg-gray-900">
                 <div className="m-auto text-center">
                     <h3 className="self-center text-gray-500 dark:text-gray-400 mb-4">No Active Teams</h3>
-                    <div className="text-gray-500 mb-6">Get started by creating a team<br /> and adding team members. <a href="https://www.gitpod.io/docs/teams/" target="_blank" rel="noopener" className="text-gray-400 learn-more hover:text-gray-600">Learn more</a></div>
+                    <div className="text-gray-500 mb-6">Get started by creating a team<br /> and adding team members. <a href="https://www.gitpod.io/docs/teams/" target="_blank" rel="noopener" className="gp-link">Learn more</a></div>
                     <button className="self-center" onClick={() => showCreateTeamModal()}>Create Team</button>
                 </div>
             </div>

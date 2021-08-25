@@ -53,11 +53,6 @@ export class DBUser implements User {
     @Column({
         default: false
     })
-    allowsMarketingCommunication: boolean;
-
-    @Column({
-        default: false
-    })
     blocked?: boolean;
 
     @Column({

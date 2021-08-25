@@ -350,6 +350,10 @@ export class TeamSubscriptionService {
         const subscriptionsFromTS = subscriptions.filter(s => AssignedTeamSubscription.is(s));
         return new SubscriptionModel(userId, subscriptionsFromTS);
     }
+
+    async findTeamSubscriptionSlotsByAssignee(assigneeId: string): Promise<TeamSubscriptionSlot[]> {
+        return this.db.findSlotsByAssignee(assigneeId);
+    }
 }
 
 const flatten = <T>(input: T[][]): T[] => {

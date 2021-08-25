@@ -27,7 +27,8 @@ module.exports = {
     output: {
         filename: 'localapp.js',
         path: path.resolve('./lib'),
-        libraryTarget: 'umd'
+        libraryTarget: 'umd',
+        globalObject: 'typeof self !== \'undefined\' ? self : this'
     },
     externals: {
         '@improbable-eng/grpc-web': 'commonjs2 @improbable-eng/grpc-web',

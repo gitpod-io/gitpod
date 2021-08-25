@@ -448,7 +448,7 @@ var ring1Cmd = &cobra.Command{
 		}
 
 		go func() {
-			err := lift.ServeLift(lift.DefaultSocketPath)
+			err := lift.ServeLift(ctx, lift.DefaultSocketPath)
 			if err != nil {
 				log.WithError(err).Error("failed to serve ring1 command lift")
 			}
@@ -524,11 +524,9 @@ func findBindMountCandidates(procMounts io.Reader, readlink func(path string) (d
 		// test remaining candidates if they're a Kubernetes configMap or secret
 		ln, err := readlink(filepath.Join(path, "..data"))
 		if err != nil {
-			log.WithField("path", path).Debug("not bind-mounting because this doesn't look like a configMap")
 			continue
 		}
 		if !strings.HasPrefix(ln, "..") {
-			log.WithField("path", path).WithField("ln", ln).Debug("not bind-mounting because this doesn't look like a configMap")
 			continue
 		}
 

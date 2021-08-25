@@ -113,7 +113,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
       switch (error.code) {
         case ErrorCodes.CONTEXT_PARSE_ERROR:
           statusMessage = <div className="text-center">
-            <p className="text-base mt-2">Learn more about <a className="text-blue" href="https://www.gitpod.io/docs/context-urls/">supported context URLs</a></p>
+            <p className="text-base mt-2">Are you trying to open a Git repository from a self-hosted instance? <a className="text-blue" href="https://gitpod.io/integrations">Add integration</a></p>
           </div>;
           break;
         case ErrorCodes.INVALID_GITPOD_YML:
@@ -172,7 +172,7 @@ export default class CreateWorkspace extends React.Component<CreateWorkspaceProp
               <a href={w.latestInstance?.ideUrl} className="rounded-xl group hover:bg-gray-100 dark:hover:bg-gray-800 flex p-3 my-1">
                 <div className="w-full">
                   <p className="text-base text-black dark:text-gray-100 font-bold">{w.workspace.id}</p>
-                  <p>{w.workspace.contextURL}</p>
+                  <p className="truncate" title={w.workspace.contextURL}>{w.workspace.contextURL}</p>
                 </div>
               </a>
             )}

@@ -36,7 +36,8 @@ func GetToken(host string) (token string, err error) {
 
 // LoginOpts configure the login process
 type LoginOpts struct {
-	GitpodURL string
+	GitpodURL   string
+	RedirectURL string
 }
 
 const html = `
@@ -87,7 +88,11 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 
 	returnHandler := func(rw http.ResponseWriter, req *http.Request) {
 		queryChan <- req.URL.Query()
-		io.WriteString(rw, html)
+		if opts.RedirectURL != "" {
+			http.Redirect(rw, req, opts.RedirectURL, http.StatusSeeOther)
+		} else {
+			io.WriteString(rw, html)
+		}
 	}
 
 	returnServer := &http.Server{
@@ -118,6 +123,7 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 		ClientID:     "gplctl-1.0",
 		ClientSecret: "gplctl-1.0-secret", // Required (even though it is marked as optional?!)
 		Scopes: []string{
+			"function:getWorkspace",
 			"function:getWorkspaces",
 			"function:listenForWorkspaceInstanceUpdates",
 			"resource:workspace::*::get",

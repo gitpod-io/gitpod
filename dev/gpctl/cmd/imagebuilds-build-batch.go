@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -39,6 +40,9 @@ var imagebuildsBuildBatch = &cobra.Command{
 		}
 		defer conn.Close()
 
+		timeBetweenBuilds, _ := cmd.Flags().GetInt("time-between-builds")
+		delay := time.Duration(timeBetweenBuilds) * time.Second
+
 		var wg sync.WaitGroup
 		scanner := bufio.NewScanner(os.Stdin)
 		for scanner.Scan() {
@@ -49,6 +53,10 @@ var imagebuildsBuildBatch = &cobra.Command{
 
 			wg.Add(1)
 			go buildWorkspaceImage(&wg, ctx, client, forceRebuild, ref)
+
+			if delay > 0 {
+				time.Sleep(delay)
+			}
 		}
 
 		wg.Wait()
@@ -103,4 +111,5 @@ func init() {
 	imagebuildsCmd.AddCommand(imagebuildsBuildBatch)
 
 	imagebuildsBuildBatch.Flags().Bool("force-rebuild", false, "force an image build even if the image exists already")
+	imagebuildsBuildBatch.Flags().IntP("time-between-builds", "", 0, "wait N seconds between starting builds")
 }

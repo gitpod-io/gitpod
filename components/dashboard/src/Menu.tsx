@@ -82,7 +82,7 @@ export default function Menu() {
         if (projectName) {
             return [
                 {
-                    title: 'Overview',
+                    title: 'Branches',
                     link: `/${teamOrUserSlug}/${projectName}`
                 },
                 {
@@ -90,7 +90,7 @@ export default function Menu() {
                     link: `/${teamOrUserSlug}/${projectName}/prebuilds`
                 },
                 {
-                    title: 'Configure',
+                    title: 'Configuration',
                     link: `/${teamOrUserSlug}/${projectName}/configure`
                 }
             ];

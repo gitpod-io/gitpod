@@ -18,10 +18,13 @@ export interface InMemory {
 }
 
 // Scopes
-const getWorkspacesScope: OAuthScope = { name: "function:getWorkspaces" };
-const listenForWorkspaceInstanceUpdatesScope: OAuthScope = { name: "function:listenForWorkspaceInstanceUpdates" };
-const getWorkspaceResourceScope: OAuthScope = { name: "resource:" + ScopedResourceGuard.marshalResourceScope({ kind: "workspace", subjectID: "*", operations: ["get"] }) };
-const getWorkspaceInstanceResourceScope: OAuthScope = { name: "resource:" + ScopedResourceGuard.marshalResourceScope({ kind: "workspaceInstance", subjectID: "*", operations: ["get"] }) };
+const scopes: OAuthScope[] = [
+  { name: "function:getWorkspace" },
+  { name: "function:getWorkspaces" },
+  { name: "function:listenForWorkspaceInstanceUpdates" },
+  { name: "resource:" + ScopedResourceGuard.marshalResourceScope({ kind: "workspace", subjectID: "*", operations: ["get"] }) },
+  { name: "resource:" + ScopedResourceGuard.marshalResourceScope({ kind: "workspaceInstance", subjectID: "*", operations: ["get"] }) }
+];
 
 // Clients
 const localAppClientID = 'gplctl-1.0';
@@ -31,9 +34,9 @@ const localClient: OAuthClient = {
   name: 'Gitpod local control client',
   // Set of valid redirect URIs
   // NOTE: these need to be kept in sync with the port range in the local app
-  redirectUris: Array.from({length: 10}, (_, i) => 'http://127.0.0.1:' + (63110 + i)),
+  redirectUris: Array.from({ length: 10 }, (_, i) => 'http://127.0.0.1:' + (63110 + i)),
   allowedGrants: ['authorization_code'],
-  scopes: [getWorkspacesScope, listenForWorkspaceInstanceUpdatesScope, getWorkspaceResourceScope, getWorkspaceInstanceResourceScope],
+  scopes,
 }
 
 export const inMemoryDatabase: InMemory = {
@@ -41,10 +44,8 @@ export const inMemoryDatabase: InMemory = {
     [localClient.id]: localClient,
   },
   tokens: {},
-  scopes: {
-    [getWorkspacesScope.name]: getWorkspacesScope,
-    [listenForWorkspaceInstanceUpdatesScope.name]: listenForWorkspaceInstanceUpdatesScope,
-    [getWorkspaceResourceScope.name]: getWorkspaceResourceScope,
-    [getWorkspaceInstanceResourceScope.name]: getWorkspaceInstanceResourceScope,
-  },
+  scopes: {},
 };
+for (const scope of scopes) {
+  inMemoryDatabase.scopes[scope.name] = scope;
+}

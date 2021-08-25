@@ -86,7 +86,7 @@ export interface WorkspaceDB {
     findAllWorkspaceInstances(offset: number, limit: number, orderBy: keyof WorkspaceInstance, orderDir: "ASC" | "DESC", ownerId?: string, minCreationTime?: Date, maxCreationTime?: Date, onlyRunning?: boolean, type?: WorkspaceType): Promise<{ total: number, rows: WorkspaceInstance[] }>;
 
     findRegularRunningInstances(userId?: string): Promise<WorkspaceInstance[]>;
-    findRunningInstancesWithWorkspaces(installation?: string, userId?: string): Promise<RunningWorkspaceInfo[]>;
+    findRunningInstancesWithWorkspaces(installation?: string, userId?: string, includeStopping?: boolean): Promise<RunningWorkspaceInfo[]>;
 
     isWhitelisted(repositoryUrl : string): Promise<boolean>;
     getFeaturedRepositories(): Promise<Partial<WhitelistedRepository>[]>;

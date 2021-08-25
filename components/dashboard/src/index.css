@@ -58,8 +58,8 @@
         @apply cursor-default opacity-50 pointer-events-none;
     }
 
-    a.learn-more {
-        @apply underline underline-thickness-thin underline-offset-small;
+    a.gp-link {
+        @apply underline underline-thickness-thin underline-offset-small text-gray-400 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-500;
     }
 
     input[type=text], input[type=search], input[type=password], select {
@@ -79,6 +79,9 @@
     }
     input[type=search] {
         @apply border-0 dark:bg-transparent;
+    }
+    input[type=checkbox] {
+        @apply disabled:opacity-50
     }
 
     progress {

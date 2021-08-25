@@ -132,6 +132,7 @@ export interface GitpodServer extends JsonRpcServer<GitpodClient>, AdminServer, 
     triggerPrebuild(projectId: string, branch: string): Promise<void>;
     setProjectConfiguration(projectId: string, configString: string): Promise<void>;
     fetchProjectRepositoryConfiguration(projectId: string): Promise<string | undefined>;
+    guessProjectConfiguration(projectId: string): Promise<string | undefined>;
 
     // content service
     getContentBlobUploadUrl(name: string): Promise<string>
@@ -239,6 +240,8 @@ export interface FindPrebuildsParams {
     branch?: string;
     latest?: boolean;
     prebuildId?: string;
+    // default: 30
+    limit?: number;
 }
 export interface GetProviderRepositoriesParams {
     provider: string;

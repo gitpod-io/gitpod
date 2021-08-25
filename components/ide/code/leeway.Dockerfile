@@ -4,7 +4,7 @@
 
 # we use latest major version of Node.js distributed VS Code. (see about dialog in your local VS Code)
 # ideallay we should use exact version, but it has criticla bugs in regards to grpc over http2 streams
-ARG NODE_VERSION=14.17.0
+ARG NODE_VERSION=14.17.4
 
 
 FROM node:${NODE_VERSION} AS node_installer
@@ -42,7 +42,7 @@ RUN curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.38.0/install.sh |
     && npm install -g yarn node-gyp
 ENV PATH $NVM_DIR/versions/node/v$NODE_VERSION/bin:$PATH
 
-ENV GP_CODE_COMMIT 06711200f6a3a19af94f91102fd49d921b1145db
+ENV GP_CODE_COMMIT 77c0ff0c18222149c9c5c7f01b8856cdb41071cc
 RUN mkdir gp-code \
     && cd gp-code \
     && git init \
@@ -51,6 +51,7 @@ RUN mkdir gp-code \
     && git reset --hard FETCH_HEAD
 WORKDIR /gp-code
 RUN yarn
+RUN yarn gitpod:link
 RUN yarn gulp gitpod-min
 
 # grant write permissions for built-in extensions
@@ -77,5 +78,5 @@ ENV GITPOD_ENV_SET_EDITOR /ide/bin/code
 ENV GITPOD_ENV_SET_VISUAL "$GITPOD_ENV_SET_EDITOR"
 ENV GITPOD_ENV_SET_GP_OPEN_EDITOR "$GITPOD_ENV_SET_EDITOR"
 ENV GITPOD_ENV_SET_GIT_EDITOR "$GITPOD_ENV_SET_EDITOR --wait"
-ENV GITPOD_ENV_SET_GP_PREVIEW_BROWSER "/ide/bin/code --command gitpod.api.preview"
-ENV GITPOD_ENV_SET_GP_EXTERNAL_BROWSER "/ide/bin/code --open-external"
+ENV GITPOD_ENV_SET_GP_PREVIEW_BROWSER "/ide/bin/code --preview"
+ENV GITPOD_ENV_SET_GP_EXTERNAL_BROWSER "/ide/bin/code --openExternal"

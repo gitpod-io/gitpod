@@ -15,7 +15,6 @@ import { getGitpodService } from "../service/service";
 import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { ThemeContext } from "../theme-context";
 import { PrebuildInfo, Project } from "@gitpod/gitpod-protocol";
-import DropDown from "../components/DropDown";
 import { toRemoteURL } from "./render-utils";
 import ContextMenu from "../components/ContextMenu";
 
@@ -30,9 +29,11 @@ export default function () {
 
     const { isDark } = useContext(ThemeContext);
 
+    const [searchFilter, setSearchFilter] = useState<string | undefined>();
+
     useEffect(() => {
         updateProjects();
-    }, [ teams, team ]);
+    }, [ teams ]);
 
     const updateProjects = async () => {
         if (!teams) {
@@ -55,7 +56,6 @@ export default function () {
     }
 
     const newProjectUrl = !!team ? `/new?team=${team.slug}` : '/new';
-    const onSearchProjects = (searchString: string) => { }
     const onNewProject = () => {
         history.push(newProjectUrl);
     }
@@ -69,13 +69,20 @@ export default function () {
         await updateProjects();
     }
 
+    const filter = (project: Project) => {
+        if (searchFilter && `${project.name}`.toLowerCase().includes(searchFilter.toLowerCase()) === false) {
+            return false;
+        }
+        return true;
+    }
+
     return <>
         <Header title="Projects" subtitle="Manage recently added projects." />
         {projects.length < 1 && (
             <div>
                 <img alt="Projects (empty)" className="h-44 mt-24 mx-auto" role="presentation" src={isDark ? projectsEmptyDark : projectsEmpty} />
                 <h3 className="text-center text-gray-500 mt-8">No Recent Projects</h3>
-                <p className="text-center text-base text-gray-500 mt-4">Add projects to enable and manage Prebuilds.<br /><a className="learn-more" href="https://www.gitpod.io/docs/prebuilds/">Learn more about Prebuilds</a></p>
+                <p className="text-center text-base text-gray-500 mt-4">Add projects to enable and manage Prebuilds.<br /><a className="gp-link" href="https://www.gitpod.io/docs/prebuilds/">Learn more about Prebuilds</a></p>
                 <div className="flex space-x-2 justify-center mt-7">
                     <Link to={newProjectUrl}><button>New Project</button></Link>
                     {team && <Link to="./members"><button className="secondary">Invite Members</button></Link>}
@@ -90,23 +97,16 @@ export default function () {
                         <div className="py-4">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 16 16" width="16" height="16"><path fill="#A8A29E" d="M6 2a4 4 0 100 8 4 4 0 000-8zM0 6a6 6 0 1110.89 3.477l4.817 4.816a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 010 6z" /></svg>
                         </div>
-                        <input type="search" placeholder="Search Projects" onChange={(e) => onSearchProjects(e.target.value)} />
+                        <input type="search" placeholder="Search Projects" onChange={e => setSearchFilter(e.target.value)} />
                     </div>
                     <div className="flex-1" />
                     <div className="py-3 pl-3">
-                        <DropDown prefix="Status: " contextMenuWidth="w-32" activeEntry={'Recent'} entries={[{
-                            title: 'Recent',
-                            onClick: () => { /* TODO */ }
-                        }, {
-                            title: 'All',
-                            onClick: () => { /* TODO */ }
-                        }]} />
                     </div>
-                    <Link to="./members"><button className="ml-2 secondary">Invite Members</button></Link>
+                    <Link to="./members" className="flex"><button className="ml-2 secondary">Invite Members</button></Link>
                     <button className="ml-2" onClick={() => onNewProject()}>New Project</button>
                 </div>
                 <div className="mt-4 grid grid-cols-3 gap-4">
-                    {projects.map(p => (<div key={`project-${p.id}`} className="h-52">
+                    {projects.filter(filter).map(p => (<div key={`project-${p.id}`} className="h-52">
                         <div className="h-42 border border-gray-100 dark:border-gray-800 rounded-t-xl">
                             <div className="h-32 p-6">
                                 <div className="flex text-xl font-semibold text-gray-700 dark:text-gray-200 font-medium">
@@ -160,14 +160,16 @@ export default function () {
                                 </div>)}
                         </div>
                     </div>))}
-                    <div key="new-project"
-                        className="h-52 border-dashed border-2 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl focus:bg-gitpod-kumquat-light transition ease-in-out group">
-                        <Link to={newProjectUrl}>
-                            <div className="flex h-full">
-                                <div className="m-auto">New Project</div>
-                            </div>
-                        </Link>
-                    </div>
+                    {!searchFilter && (
+                        <div key="new-project"
+                            className="h-52 border-dashed border-2 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl focus:bg-gitpod-kumquat-light transition ease-in-out group">
+                            <Link to={newProjectUrl}>
+                                <div className="flex h-full">
+                                    <div className="m-auto">New Project</div>
+                                </div>
+                            </Link>
+                        </div>
+                    )}
                 </div>
             </div>
         )}

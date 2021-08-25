@@ -30,7 +30,12 @@ export namespace DevData {
                     primaryEmail: "somefox@gitpod.io"
                 }
             ],
-            allowsMarketingCommunication: true
+            additionalData: {
+                emailNotificationSettings: {
+                    allowsChangelogMail: true,
+                    allowsDevXMail: true
+                }
+            }
         }
     }
 

@@ -10,6 +10,7 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -111,7 +112,8 @@ const (
 
 // Run serves as main entrypoint to the supervisor
 func Run(options ...RunOption) {
-	defer log.Info("supervisor shut down")
+	exitCode := 0
+	defer handleExit(&exitCode)
 
 	opts := runOptions{
 		Args: os.Args,
@@ -194,7 +196,19 @@ func Run(options ...RunOption) {
 	go analyseConfigChanges(ctx, cfg, analytics, gitpodConfigService)
 
 	termMuxSrv.DefaultWorkdir = cfg.RepoRoot
-	termMuxSrv.Env = buildChildProcEnv(cfg)
+	if cfg.WorkspaceRoot != "" {
+		termMuxSrv.DefaultWorkdirProvider = func() string {
+			<-cstate.ContentReady()
+			stat, err := os.Stat(cfg.WorkspaceRoot)
+			if err != nil {
+				log.WithError(err).Error("default workdir provider: cannot resolve the workspace root")
+			} else if stat.IsDir() {
+				return cfg.WorkspaceRoot
+			}
+			return ""
+		}
+	}
+	termMuxSrv.Env = buildChildProcEnv(cfg, nil)
 	termMuxSrv.DefaultCreds = &syscall.Credential{
 		Uid: gitpodUID,
 		Gid: gitpodGID,
@@ -264,7 +278,6 @@ func Run(options ...RunOption) {
 
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-	var exitCode int
 	select {
 	case <-sigChan:
 	case shutdownReason := <-shutdown:
@@ -284,9 +297,6 @@ func Run(options ...RunOption) {
 	terminateChildProcesses()
 
 	wg.Wait()
-
-	log.WithField("exitCode", exitCode).Debug("supervisor exit")
-	os.Exit(exitCode)
 }
 
 func createGitpodService(cfg *Config, tknsrv api.TokenServiceServer) *gitpod.APIoverJSONRPC {
@@ -405,26 +415,43 @@ func hasMetadataAccess() bool {
 func reaper(terminatingReaper <-chan bool) {
 	defer log.Debug("reaper shutdown")
 
+	notifications := make(chan struct{}, 128)
+	go func() {
+		sigs := make(chan os.Signal, 3)
+		signal.Notify(sigs, syscall.SIGCHLD)
+		for {
+			<-sigs
+			select {
+			case notifications <- struct{}{}:
+			default:
+				// Notification channel is full, so we drop the notification.
+				// Because we're reaping with PID -1, we'll catch the child process for
+				// which we've missed the notification anyways.
+			}
+		}
+	}()
+
 	var terminating bool
-	sigs := make(chan os.Signal, 128)
-	signal.Notify(sigs, syscall.SIGCHLD)
 	for {
 		select {
-		case <-sigs:
+		case <-notifications:
 		case terminating = <-terminatingReaper:
 			continue
 		}
 
-		// "pid: 0, options: 0" to follow https://github.com/ramr/go-reaper/issues/11 to make agent-smith work again
-		pid, err := unix.Wait4(0, nil, 0, nil)
-
+		// wait on the process, hence remove it from the process table
+		pid, err := unix.Wait4(-1, nil, 0, nil)
+		// if we've been interrupted, try again until we're done
+		for err == syscall.EINTR {
+			pid, err = unix.Wait4(-1, nil, 0, nil)
+		}
 		if err == unix.ECHILD {
 			// The calling process does not have any unwaited-for children.
-			continue
+			// Not really an error for us
+			err = nil
 		}
 		if err != nil {
 			log.WithField("pid", pid).WithError(err).Debug("cannot call waitpid() for re-parented child")
-			continue
 		}
 
 		if !terminating {
@@ -527,7 +554,9 @@ supervisorLoop:
 		case <-ctx.Done():
 			// we've been asked to shut down
 			s = statusShouldShutdown
-			cmd.Process.Signal(os.Interrupt)
+			if cmd != nil && cmd.Process != nil {
+				cmd.Process.Signal(os.Interrupt)
+			}
 			break supervisorLoop
 		}
 	}
@@ -563,7 +592,7 @@ func prepareIDELaunch(cfg *Config) *exec.Cmd {
 			Gid: gitpodGID,
 		},
 	}
-	cmd.Env = buildChildProcEnv(cfg)
+	cmd.Env = buildChildProcEnv(cfg, nil)
 
 	// Here we must resist the temptation to "neaten up" the IDE output for headless builds.
 	// This would break the JSON parsing of the headless builds.
@@ -579,10 +608,16 @@ func prepareIDELaunch(cfg *Config) *exec.Cmd {
 	return cmd
 }
 
-func buildChildProcEnv(cfg *Config) []string {
+// buildChildProcEnv computes the environment variables passed to a child process, based on the total list
+// of envvars. If envvars is nil, os.Environ() is used.
+func buildChildProcEnv(cfg *Config, envvars []string) []string {
+	if envvars == nil {
+		envvars = os.Environ()
+	}
+
 	envs := make(map[string]string)
-	for _, e := range os.Environ() {
-		segs := strings.Split(e, "=")
+	for _, e := range envvars {
+		segs := strings.SplitN(e, "=", 2)
 		if len(segs) < 2 {
 			log.Printf("\"%s\" has invalid format, not including in IDE environment", e)
 			continue
@@ -616,7 +651,9 @@ func buildChildProcEnv(cfg *Config) []string {
 	envs["USER"] = "gitpod"
 
 	// Particular Java optimisation: Java pre v10 did not gauge it's available memory correctly, and needed explicitly setting "-Xmx" for all Hotspot/openJDK VMs
-	envs["JAVA_TOOL_OPTIONS"] += fmt.Sprintf(" -Xmx%sm", os.Getenv("GITPOD_MEMORY"))
+	if mem, ok := envs["GITPOD_MEMORY"]; ok {
+		envs["JAVA_TOOL_OPTIONS"] += fmt.Sprintf(" -Xmx%sm", mem)
+	}
 
 	var env, envn []string
 	for nme, val := range envs {
@@ -909,7 +946,7 @@ func startSSHServer(ctx context.Context, cfg *Config, wg *sync.WaitGroup) {
 	}
 
 	cmd := exec.Command(dropbear, "-F", "-E", "-w", "-s", "-p", fmt.Sprintf(":%d", cfg.SSHPort), "-r", hostkeyFN.Name())
-	cmd.Env = buildChildProcEnv(cfg)
+	cmd.Env = buildChildProcEnv(cfg, nil)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Start()
@@ -1089,7 +1126,14 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 	l, err := net.Listen("unix", fn)
 	if err != nil {
 		log.WithError(err).Error("cannot provide Docker activation socket")
+		return
 	}
+
+	go func() {
+		<-ctx.Done()
+		l.Close()
+	}()
+
 	_ = os.Chown(fn, gitpodUID, gitpodGID)
 	err = activation.Listen(ctx, l, func(socketFD *os.File) error {
 		cmd := exec.Command("docker-up")
@@ -1103,7 +1147,7 @@ func socketActivationForDocker(ctx context.Context, wg *sync.WaitGroup, term *te
 		})
 		return err
 	})
-	if err != nil {
+	if err != nil && !errors.Is(err, context.Canceled) {
 		log.WithError(err).Error("cannot provide Docker activation socket")
 	}
 }
@@ -1191,4 +1235,10 @@ func runAsGitpodUser(cmd *exec.Cmd) *exec.Cmd {
 	cmd.SysProcAttr.Credential.Uid = gitpodUID
 	cmd.SysProcAttr.Credential.Gid = gitpodGID
 	return cmd
+}
+
+func handleExit(ec *int) {
+	exitCode := *ec
+	log.WithField("exitCode", exitCode).Debug("supervisor exit")
+	os.Exit(exitCode)
 }

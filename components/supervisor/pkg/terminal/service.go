@@ -49,9 +49,13 @@ type MuxTerminalService struct {
 	Mux *Mux
 
 	DefaultWorkdir string
-	DefaultShell   string
-	Env            []string
-	DefaultCreds   *syscall.Credential
+	// DefaultWorkdirProvider allows dynamically to compute workdir
+	// if returns empty string then DefaultWorkdir is used
+	DefaultWorkdirProvider func() string
+
+	DefaultShell string
+	Env          []string
+	DefaultCreds *syscall.Credential
 
 	api.UnimplementedTerminalServiceServer
 }
@@ -87,10 +91,13 @@ func (srv *MuxTerminalService) OpenWithOptions(ctx context.Context, req *api.Ope
 			Credential: srv.DefaultCreds,
 		}
 	}
-	if req.Workdir == "" {
-		cmd.Dir = srv.DefaultWorkdir
-	} else {
+	if req.Workdir != "" {
 		cmd.Dir = req.Workdir
+	} else if srv.DefaultWorkdirProvider != nil {
+		cmd.Dir = srv.DefaultWorkdirProvider()
+	}
+	if cmd.Dir == "" {
+		cmd.Dir = srv.DefaultWorkdir
 	}
 	cmd.Env = append(srv.Env, "TERM=xterm-color")
 	for key, value := range req.Env {

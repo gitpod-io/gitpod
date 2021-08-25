@@ -20,10 +20,21 @@ const relocateListener = (event: MessageEvent) => {
 };
 window.addEventListener('message', relocateListener, false);
 
+let resolveSessionId: (sessionId: string) => void;
+const sessionId = new Promise<string>(resolve => resolveSessionId = resolve);
+const setSessinoIdListener = (event: MessageEvent) => {
+    if (event.origin === serverOrigin && event.data.type == '$setSessionId' && event.data.sessionId) {
+        window.removeEventListener('message', setSessinoIdListener);
+        resolveSessionId(event.data.sessionId);
+    }
+};
+window.addEventListener('message', setSessinoIdListener, false);
+
 export function load({ gitpodService }: {
     gitpodService: ReturnType<typeof createGitpodService>
 }): Promise<{
     frame: HTMLIFrameElement
+    sessionId: Promise<string>
     setState: (state: object) => void
 }> {
     return new Promise(resolve => {
@@ -45,7 +56,7 @@ export function load({ gitpodService }: {
             const setState = (state: object) => {
                 frameWindow.postMessage({ type: 'setState', state }, serverOrigin);
             }
-            resolve({ frame, setState });
+            resolve({ frame, sessionId, setState });
         };
     });
 }

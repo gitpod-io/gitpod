@@ -172,10 +172,6 @@ env:
       fieldPath: metadata.namespace
 - name: KUBE_DOMAIN
   value: "{{ $gp.installation.kubedomain | default "svc.cluster.local" }}"
-{{- if not .noVersion }}
-- name: VERSION
-  value: "{{ $gp.version }}"
-{{- end }}
 - name: GITPOD_DOMAIN
   value: {{ $gp.hostname | quote }}
 - name: HOST_URL

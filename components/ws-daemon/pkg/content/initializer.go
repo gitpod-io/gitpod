@@ -229,10 +229,12 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 		withDebug = "--debug"
 	}
 
+	rw := log.Writer(log.WithFields(opts.OWI))
+	defer rw.Close()
 	cmd = exec.Command("runc", "--root", "state", withDebug, "--log-format", "json", "run", "gogogo")
 	cmd.Dir = tmpdir
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = rw
+	cmd.Stderr = rw
 	cmd.Stdin = os.Stdin
 	err = cmd.Run()
 	if err != nil {

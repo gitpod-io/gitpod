@@ -43,7 +43,7 @@ pod:
     - name: MYSQL_TCP_PORT
       value: 23306
   - name: build
-    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:geropl-move-qemu-image-build-to-4945.3
+    image: eu.gcr.io/gitpod-core-dev/dev/dev-environment:prs-core-dev-kubeconfig.5
     workingDir: /workspace
     imagePullPolicy: Always
     volumeMounts:

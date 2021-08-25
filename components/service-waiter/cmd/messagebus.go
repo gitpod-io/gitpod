@@ -23,9 +23,8 @@ import (
 var messagebusCmd = &cobra.Command{
 	Use:   "messagebus",
 	Short: "waits for the messagebus to become available",
-	Long: `Uses the default db env config of a Gitpod deployment to try and
-connect to a MySQL database, specifically MESSAGEBUS_HOST, MESSAGEBUS_USERNAME, MESSAGEBUS_PASSWORD,
-MESSAGEBUS_CA, MESSAGEBUS_CERT and MESSAGEBUS_KEY`,
+	Long: `Connects to the messagebus via AMQP protocol using host, port, username and password.
+Optionally, TLS can be used to create the connection.`,
 	PreRun: func(cmd *cobra.Command, args []string) {
 		err := viper.BindPFlags(cmd.Flags())
 		if err != nil {

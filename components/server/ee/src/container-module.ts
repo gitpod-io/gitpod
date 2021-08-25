@@ -53,6 +53,7 @@ import { BlockedUserFilter } from "../../src/auth/blocked-user-filter";
 import { EMailDomainService, EMailDomainServiceImpl } from "./auth/email-domain-service";
 import { UserDeletionServiceEE } from "./user/user-deletion-service";
 import { GitHubAppSupport } from "./github/github-app-support";
+import { GitLabAppSupport } from "./gitlab/gitlab-app-support";
 
 export const productionEEContainerModule = new ContainerModule((bind, unbind, isBound, rebind) => {
     rebind(Server).to(ServerEE).inSingletonScope();
@@ -71,6 +72,7 @@ export const productionEEContainerModule = new ContainerModule((bind, unbind, is
     bind(GithubAppRules).toSelf().inSingletonScope();
     bind(PrebuildStatusMaintainer).toSelf().inSingletonScope();
     bind(GitLabApp).toSelf().inSingletonScope();
+    bind(GitLabAppSupport).toSelf().inSingletonScope();
     bind(BitbucketApp).toSelf().inSingletonScope();
 
     bind(LicenseEvaluator).toSelf().inSingletonScope();

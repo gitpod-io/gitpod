@@ -163,7 +163,7 @@ export function Login() {
                 </div>
                 <div className="flex-none mx-auto h-20 text-center">
                     <span className="text-gray-400">
-                        By signing in, you agree to our <a className="learn-more hover:text-gray-600" target="gitpod-terms" href="https://www.gitpod.io/terms/">terms of service</a>.
+                        By signing in, you agree to our <a className="gp-link hover:text-gray-600" target="gitpod-terms" href="https://www.gitpod.io/terms/">terms of service</a>.
                     </span>
                 </div>
             </div>

@@ -14,7 +14,7 @@ import { productionContainerModule } from './container-module';
 import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { dbContainerModule } from '@gitpod/gitpod-db/lib/container-module';
 
-log.enableJSONLogging('payment-endpoint', process.env.VERSION);
+log.enableJSONLogging('payment-endpoint', undefined);
 
 const init = async () => {
     const container = new Container();

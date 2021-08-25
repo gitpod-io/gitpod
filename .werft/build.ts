@@ -74,7 +74,7 @@ export async function build(context, version) {
     try {
         exec(`gcloud auth activate-service-account --key-file "${GCLOUD_SERVICE_ACCOUNT_PATH}"`);
         exec("gcloud auth configure-docker --quiet");
-        exec('gcloud container clusters get-credentials dev --zone europe-west1-b --project gitpod-core-dev');
+        exec('gcloud container clusters get-credentials core-dev --zone europe-west1-b --project gitpod-core-dev');
 
         if (k3sWsCluster) {
             // get and store the ws cluster kubeconfig to root of the project
@@ -439,6 +439,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         let flags = ""
         flags += ` --namespace ${namespace}`;
         flags += ` --set components.imageBuilder.hostDindData=/mnt/disks/ssd0/docker-${namespace}`;
+        flags += ` --set components.wsDaemon.hostWorkspaceArea=/mnt/disks/ssd0/workspaces-${namespace}`;
         flags += ` --set version=${version}`;
         flags += ` --set hostname=${domain}`;
         flags += ` --set devBranch=${destname}`;
@@ -548,7 +549,7 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
 }
 // returns the static IP address
 function getCoreDevIngressIP(): string {
-    return "34.76.116.244";
+    return "104.199.27.246";
 }
 
 // returns the default K3s ws kubeconfig path

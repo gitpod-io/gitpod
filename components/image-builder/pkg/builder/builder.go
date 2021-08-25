@@ -621,11 +621,11 @@ func (b *DockerBuilder) buildWorkspaceImage(ctx context.Context, bld *build, bas
 		},
 	}, nil, nil, "detectdist-"+bld.ID)
 	if err != nil {
-		return xerrors.Errorf("cannot build workspace image: %w", err)
+		return xerrors.Errorf("cannot build base image: %w", err)
 	}
 	err = b.runContainer(ctx, bld, detectdistContainer.ID)
 	if err != nil {
-		return xerrors.Errorf("cannot build workspace image: %w", err)
+		return xerrors.Errorf("cannot run base image: %w", err)
 	}
 
 	// Run Dockerfile generator
@@ -652,7 +652,7 @@ func (b *DockerBuilder) buildWorkspaceImage(ctx context.Context, bld *build, bas
 	}
 	err = b.runContainer(ctx, bld, dfgenContainer.ID)
 	if err != nil {
-		return xerrors.Errorf("cannot build workspace image: %w", err)
+		return xerrors.Errorf("cannot run workspace image: %w", err)
 	}
 
 	// Run build

@@ -32,6 +32,11 @@ var Lang = gval.NewLanguage(
 	gval.InfixNumberOperator("==", func(lhs, rhs float64) (interface{}, error) { return lhs == rhs, nil }),
 	gval.InfixNumberOperator("!=", func(lhs, rhs float64) (interface{}, error) { return lhs != rhs, nil }),
 
+	gval.InfixNumberOperator("<", func(lhs, rhs float64) (interface{}, error) { return lhs < rhs, nil }),
+	gval.InfixNumberOperator("<=", func(lhs, rhs float64) (interface{}, error) { return lhs <= rhs, nil }),
+	gval.InfixNumberOperator(">", func(lhs, rhs float64) (interface{}, error) { return lhs > rhs, nil }),
+	gval.InfixNumberOperator(">=", func(lhs, rhs float64) (interface{}, error) { return lhs >= rhs, nil }),
+
 	// Text
 
 	gval.InfixEvalOperator("~~", regEx),
@@ -56,6 +61,11 @@ var Lang = gval.NewLanguage(
 	gval.Precedence("==", 40),
 	gval.Precedence("!=", 40),
 	gval.Precedence("~~", 40),
+
+	gval.Precedence("<", 40),
+	gval.Precedence("<=", 40),
+	gval.Precedence(">", 40),
+	gval.Precedence(">=", 40),
 
 	gval.PrefixMetaPrefix(scanner.Ident, parseIdent),
 )

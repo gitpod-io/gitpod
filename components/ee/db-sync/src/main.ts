@@ -11,7 +11,7 @@ import { log } from '@gitpod/gitpod-protocol/lib/util/logging';
 import { ICommand } from "./commands";
 import { Container } from "inversify";
 import { productionContainerModule } from "./container-module";
-log.enableJSONLogging('db-sync', process.env.VERSION);
+log.enableJSONLogging('db-sync', undefined);
 
 const parser = new ArgumentParser({
     version: "0.1.5",

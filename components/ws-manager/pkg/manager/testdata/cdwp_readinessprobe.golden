@@ -159,6 +159,7 @@
                                 "echo"
                             ]
                         },
+                        "initialDelaySeconds": 2,
                         "timeoutSeconds": 1,
                         "periodSeconds": 1,
                         "successThreshold": 1,

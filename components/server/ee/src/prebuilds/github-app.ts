@@ -352,8 +352,8 @@ export class GithubApp {
                 }
             }
         }
-
     }
+
     protected async findInstallationOwner(installationId: number): Promise<{user: User, project?: Project} | undefined> {
         // Legacy mode
         //

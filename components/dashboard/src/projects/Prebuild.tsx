@@ -16,12 +16,14 @@ import PrebuildLogs from "../components/PrebuildLogs";
 import { shortCommitMessage } from "./render-utils";
 
 export default function () {
-    const { teams } = useContext(TeamsContext);
     const location = useLocation();
+
+    const { teams } = useContext(TeamsContext);
+    const team = getCurrentTeam(location, teams);
+
     const match = useRouteMatch<{ team: string, project: string, prebuildId: string }>("/:team/:project/:prebuildId");
     const projectName = match?.params?.project;
     const prebuildId = match?.params?.prebuildId;
-    const team = getCurrentTeam(location, teams);
 
     const [ prebuild, setPrebuild ] = useState<PrebuildInfo | undefined>();
 
@@ -44,13 +46,13 @@ export default function () {
             });
             setPrebuild(prebuilds[0]);
         })();
-    }, [ teams, team ]);
+    }, [ teams ]);
 
     const renderTitle = () => {
         if (!prebuild) {
             return "unknown prebuild";
         }
-        return (<h1 className="tracking-tight">{prebuild.branch} <span className="text-gray-200">#{prebuild.branchPrebuildNumber}</span></h1>);
+        return (<h1 className="tracking-tight">{prebuild.branch} </h1>);
     };
 
     const renderSubtitle = () => {
@@ -80,7 +82,11 @@ export default function () {
 
     return <>
         <Header title={renderTitle()} subtitle={renderSubtitle()} />
-        <div className="w-full"><PrebuildLogs workspaceId={prebuild?.buildWorkspaceId}/></div>
-    </>
+        <div className="lg:px-28 px-10 mt-8">
+            <div className="h-96 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex flex-col">
+                <PrebuildLogs workspaceId={prebuild?.buildWorkspaceId}/>
+            </div>
+        </div>
+    </>;
 
 }

@@ -18,10 +18,10 @@
             "annotations": {
                 "cluster-autoscaler.kubernetes.io/safe-to-evict": "false",
                 "container.apparmor.security.beta.kubernetes.io/workspace": "unconfined",
+                "gitpod.io/cpuLimit": "900m",
                 "gitpod.io/requiredNodeServices": "ws-daemon,registry-facade",
                 "gitpod/admission": "admit_owner_only",
                 "gitpod/contentInitializer": "GmcKZXdvcmtzcGFjZXMvY3J5cHRpYy1pZC1nb2VzLWhlcmcvZmQ2MjgwNGItNGNhYi0xMWU5LTg0M2EtNGU2NDUzNzMwNDhlLnRhckBnaXRwb2QtZGV2LXVzZXItY2hyaXN0ZXN0aW5n",
-                "gitpod/cpuLimit": "900m",
                 "gitpod/id": "test",
                 "gitpod/imageSpec": "Cm1ldS5nY3IuaW8vZ2l0cG9kLWRldi93b3Jrc3BhY2UtYmFzZS1pbWFnZXMvZ2l0aHViLmNvbS90eXBlZm94L2dpdHBvZDo4MGE3ZDQyN2ExZmNkMzQ2ZDQyMDYwM2Q4MGEzMWQ1N2NmNzVhN2FmEjRldS5nY3IuaW8vZ2l0cG9kLWNvcmUtZGV2L2J1aWQvdGhlaWEtaWRlOnNvbWV2ZXJzaW9u",
                 "gitpod/never-ready": "true",
@@ -160,6 +160,7 @@
                             "port": 22999,
                             "scheme": "HTTP"
                         },
+                        "initialDelaySeconds": 2,
                         "timeoutSeconds": 1,
                         "periodSeconds": 1,
                         "successThreshold": 1,
