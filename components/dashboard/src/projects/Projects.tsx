@@ -130,7 +130,7 @@ export default function () {
                             </div>
                             <div className="h-10 px-6 py-1 text-gray-400 text-sm">
                                 <span className="hover:text-gray-600 dark:hover:text-gray-300">
-                                    <Link to={`/`}>
+                                    <Link to={`/${teamOrUserSlug}/${p.name}`}>
                                         Branches
                                     </Link>
                                 </span>
