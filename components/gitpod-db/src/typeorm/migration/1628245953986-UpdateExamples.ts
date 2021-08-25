@@ -30,7 +30,7 @@
              { url: 'https://github.com/gitpod-io/template-jetbrains-webstorm', description: 'The Jetbrains WebStorm IDE.', priority: priority-- },
              { url: 'https://github.com/gitpod-io/template-grain', description: 'A Grain template.', priority: priority-- },
              { url: 'https://github.com/gitpod-io/template-haskell', description: 'A Haskell template.', priority: priority-- },
-             { url: 'https://github.com/gitpod-io/template-hy', description: 'A Hy template.', priority: priority-- },          
+             { url: 'https://github.com/gitpod-io/template-hy', description: 'A Hy template.', priority: priority-- },
              { url: 'https://github.com/gitpod-io/spring-petclinic', description: 'A Spring app written in Java.', priority: priority-- },
              { url: 'https://github.com/gitpod-io/template-julia', description: 'A Julia template.', priority: priority-- },
              { url: 'https://github.com/gitpod-io/template-nextjs', description: 'A Nextjs template.', priority: priority-- },
