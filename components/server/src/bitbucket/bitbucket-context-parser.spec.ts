@@ -208,6 +208,26 @@ class TestBitbucketContextParser {
         })
     }
 
+    @test public async testBranchContext_03() {
+        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/sample-repository/branch/feature/JIRA-123-summary');
+        expect(result).to.deep.include({
+            "ref": "feature/JIRA-123-summary",
+            "refType": "branch",
+            "path": "",
+            "revision": "5a24a0c8a7b42c2e6418593d788e17cb987bda25",
+            "isFile": false,
+            "repository": {
+                "host": "bitbucket.org",
+                "owner": "gitpod",
+                "name": "sample-repository",
+                "cloneUrl": "https://bitbucket.org/gitpod/sample-repository.git",
+                "defaultBranch": "master",
+                "private": false
+            },
+            "title": "gitpod/sample-repository - feature/JIRA-123-summary"
+        })
+    }
+
     @test public async testCommitsContext_02() {
         const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/sample-repository/commits/tag/first-tag');
         expect(result).to.deep.include({
