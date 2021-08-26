@@ -79,7 +79,7 @@ export class TypeORMUserDBImpl implements UserDB {
             identities: [],
             additionalData: {
                 ideSettings: { defaultIde: 'code' },
-                emailNotificationSettings: { allowsChangelogMail: true, allowsDevXMail: true }
+                emailNotificationSettings: { allowsChangelogMail: true, allowsDevXMail: true, allowsOnboardingMail: true }
             },
         };
         await this.storeUser(user);

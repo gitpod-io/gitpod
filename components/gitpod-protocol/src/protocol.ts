@@ -109,6 +109,7 @@ export interface AdditionalUserData {
 export interface EmailNotificationSettings {
     allowsChangelogMail?: boolean;
     allowsDevXMail?: boolean;
+    allowsOnboardingMail?: boolean;
 }
 
 export type IDESettings = {

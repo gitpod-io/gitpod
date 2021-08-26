@@ -13,8 +13,31 @@ import settingsMenu from "./settings-menu";
 
 export default function Notifications() {
     const { user, setUser } = useContext(UserContext);
+    const [isOnboardingMail, setOnboardingMail] = useState(!!user?.additionalData?.emailNotificationSettings?.allowsOnboardingMail);
     const [isChangelogMail, setChangelogMail] = useState(!!user?.additionalData?.emailNotificationSettings?.allowsChangelogMail);
     const [isDevXMail, setDevXMail] = useState(!!user?.additionalData?.emailNotificationSettings?.allowsDevXMail);
+
+    const toggleOnboardingMail = async () => {
+        if (user && user.additionalData && user.additionalData.emailNotificationSettings) {
+            const newIsOnboardingMail = !isOnboardingMail;
+            user.additionalData.emailNotificationSettings.allowsOnboardingMail = newIsOnboardingMail;
+            await getGitpodService().server.updateLoggedInUser({
+                additionalData: {
+                    ...user.additionalData,
+                    emailNotificationSettings: {
+                        ...user.additionalData.emailNotificationSettings,
+                        allowsOnboardingMail: newIsOnboardingMail
+                    }
+                }
+            });
+            await getGitpodService().server.trackEvent({
+                event: "notification_change",
+                properties: { "unsubscribed_onboarding": !newIsOnboardingMail }
+            })
+            setUser(user);
+            setOnboardingMail(newIsOnboardingMail);
+        }
+    }
 
     const toggleChangelogMail = async () => {
         if (user && user.additionalData && user.additionalData.emailNotificationSettings) {
@@ -69,6 +92,11 @@ export default function Notifications() {
                 desc="Receive essential emails about changes to your account"
                 checked={true}
                 disabled={true} />
+            <CheckBox
+                title="Onboarding guide"
+                desc="In the first weeks after you sign up, we'll guide you through the product, so you can get the most out of it"
+                checked={isOnboardingMail}
+                onChange={toggleOnboardingMail} />
             <CheckBox
                 title="Changelog"
                 desc="Be the first to learn about new features and overall product improvements"
