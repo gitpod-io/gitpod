@@ -139,7 +139,7 @@ export default function () {
       setWorkspaceCreationResult(result);
     } catch (error) {
       setPrebuildWasTriggered(false);
-      setEditorMessage(<EditorMessage type="warning" heading="Could not run prebuild." message={String(error)}/>);
+      setEditorMessage(<EditorMessage type="warning" heading="Could not run prebuild." message={String(error).replace(/Error: Request \w+ failed with message: /, '')}/>);
     }
   }
 
