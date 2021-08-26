@@ -56,7 +56,7 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
     return function cleanUp() {
       terminal.dispose();
     }
-  });
+  }, []);
 
   useEffect(() => {
     // Fit terminal on window resize (debounced)
@@ -70,7 +70,7 @@ export default function WorkspaceLogs(props: WorkspaceLogsProps) {
       clearTimeout(timeout!);
       window.removeEventListener('resize', onWindowResize);
     }
-  });
+  }, []);
 
   useEffect(() => {
     if (terminalRef.current && props.errorMessage) {
