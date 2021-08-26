@@ -393,6 +393,20 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 			result.Conditions.Failed = ""
 		}
 
+		var hasFinalizer bool
+		for _, f := range wso.Pod.Finalizers {
+			if f == gitpodFinalizerName {
+				hasFinalizer = true
+				break
+			}
+		}
+		if !hasFinalizer {
+			// We do this independently of the dispostal status because pods only get their finalizer
+			// once they're running. If they fail before they reach the running phase we'll never see
+			// a disposal status, hence would never stop the workspace.
+			result.Phase = api.WorkspacePhase_STOPPED
+		}
+
 		if rawDisposalStatus, ok := pod.Annotations[disposalStatusAnnotation]; ok {
 			var ds workspaceDisposalStatus
 			err := json.Unmarshal([]byte(rawDisposalStatus), &ds)
@@ -419,17 +433,6 @@ func (m *Manager) extractStatusFromPod(result *api.WorkspaceStatus, wso workspac
 					result.Conditions.Failed += "; "
 				}
 				result.Conditions.Failed += fmt.Sprintf("last backup failed: %s. Please contact support if you need the workspace data.", ds.BackupFailure)
-			}
-
-			var hasFinalizer bool
-			for _, f := range wso.Pod.Finalizers {
-				if f == gitpodFinalizerName {
-					hasFinalizer = true
-					break
-				}
-			}
-			if !hasFinalizer {
-				result.Phase = api.WorkspacePhase_STOPPED
 			}
 		}
 

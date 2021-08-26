@@ -13,7 +13,7 @@
             "url": "https://ab451d8b-7a3a-42ec-b173-20a0e49773d4.ws-eu01.gitpod.io",
             "timeout": "60m"
         },
-        "phase": 5,
+        "phase": 6,
         "conditions": {
             "failed": "Evicted: Pod The node was low on resource: [DiskPressure]. ",
             "service_exists": 1,

@@ -1,19 +1,6 @@
 {
     "actions": [
         {
-            "Func": "markWorkspace",
-            "Params": {
-                "annotations": [
-                    {
-                        "Name": "gitpod/failedBeforeStopping",
-                        "Value": "true",
-                        "Delete": false
-                    }
-                ],
-                "workspaceID": "48f13cc4-6311-48c2-950a-4b7ddedc3037"
-            }
-        },
-        {
             "Func": "stopWorkspace",
             "Params": {
                 "gracePeriod": 30000000000,
