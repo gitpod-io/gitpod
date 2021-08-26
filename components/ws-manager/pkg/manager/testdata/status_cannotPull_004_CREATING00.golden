@@ -1,0 +1,38 @@
+{
+    "status": {
+        "id": "5031df46-db5e-43ae-91bd-1448305c001d",
+        "metadata": {
+            "owner": "00000000-0000-0000-0000-000000000000",
+            "meta_id": "silver-dormouse-is733prg",
+            "started_at": {
+                "seconds": 1629371675
+            }
+        },
+        "spec": {
+            "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images:01abb31dd76a1e2885ea1d5c3b06a4ead10ae362ee21348428835d0c8b286e3a",
+            "ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-0941a0805dc3c7345c45bd926317eaf045d4b7fb",
+            "url": "https://silver-dormouse-is733prg.ws-us14.gitpod.io",
+            "exposed_ports": [
+                {
+                    "port": 3000,
+                    "url": "https://3000-silver-dormouse-is733prg.ws-us14.gitpod.io"
+                }
+            ],
+            "timeout": "30m"
+        },
+        "phase": 2,
+        "conditions": {
+            "failed": "cannot pull image: rpc error: code = FailedPrecondition desc = failed to pull and unpack image \"reg.gitpod.io:31001/remote/5031df46-db5e-43ae-91bd-1448305c001d:latest\": failed commit on ref \"layer-sha256:6633ce2524dfae110cac2159a4f8490d198612d12abc1420486c52fbcf30b8b1\": \"layer-sha256:6633ce2524dfae110cac2159a4f8490d198612d12abc1420486c52fbcf30b8b1\" failed size validation: 33554502 != 64598931: failed precondition",
+            "service_exists": 1,
+            "deployed": 1
+        },
+        "runtime": {
+            "node_name": "gke-gp-prod-ws-us14-us-workspace-pool-61eed5be-kq0k",
+            "pod_name": "ws-5031df46-db5e-43ae-91bd-1448305c001d",
+            "node_ip": "10.138.0.78"
+        },
+        "auth": {
+            "owner_token": "4BYvs6dfa-yXpTWZEPzeNsS2Ge.0QMdE"
+        }
+    }
+}

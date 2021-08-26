@@ -14,7 +14,7 @@
             "url": "http://f29012c4-c6b9-4bd1-9c48-151bdeec6940.ws-dev.cw-registry.staging.gitpod-dev.com",
             "timeout": "30m"
         },
-        "phase": 5,
+        "phase": 6,
         "conditions": {
             "failed": "cannot pull image: Back-off pulling image \"reg.gitpod.io:227/i/79be1e8b-a6de-4572-8627-99ef12303a88:latest\"",
             "deployed": 1
