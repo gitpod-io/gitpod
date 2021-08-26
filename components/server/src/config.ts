@@ -146,6 +146,8 @@ export interface ConfigSerialized {
 
     codeSync: CodeSyncConfig;
 
+    vsxRegistryUrl: string;
+
     /**
      * Payment related options
      */

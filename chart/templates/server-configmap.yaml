@@ -70,6 +70,11 @@ data:
         "contentServiceAddr": {{ $comp.contentServiceAddr | quote }},
         "imageBuilderAddr": {{ $comp.imageBuilderAddr | quote }},
         "codeSync": {{ $comp.codeSync | toJson }},
+        {{- if .Values.vsxRegistry.proxy }}
+        "vsxRegistryUrl": "https://open-vsx.{{ .Values.hostname }}",
+        {{- else }}
+        "vsxRegistryUrl": "https://{{ .Values.vsxRegistry.host | default "open-vsx.org" }}",
+        {{- end }}
         "enablePayment": {{ $comp.enablePayment }},
         "insecureNoDomain": {{ $comp.insecureNoDomain }},
         "chargebeeProviderOptionsFile": {{ $comp.chargebeeProviderOptionsFile | quote }}

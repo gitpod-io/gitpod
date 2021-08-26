@@ -174,7 +174,7 @@ export class TheiaPluginService {
                     resolving.push((async () => {
                         try {
                             const resolvedPlugin = await this.resolveFromUploaded(pluginId)
-                                || await this.resovleFromOpenVSX(parsed, vsxRegistryUrl);
+                                || await this.resolveFromOpenVSX(parsed, vsxRegistryUrl);
                             resolved[pluginId] = resolvedPlugin && Object.assign(resolvedPlugin, { kind }) || undefined;
                         } catch (e) {
                             console.error(`Failed to resolve '${pluginId}' plugin:`, e);
@@ -231,7 +231,7 @@ export class TheiaPluginService {
         };
     }
 
-    private async resovleFromOpenVSX({ name, version }: { name: string, version?: string }, vsxRegistryUrl = 'https://open-vsx.org'): Promise<{
+    private async resolveFromOpenVSX({ name, version }: { name: string, version?: string }, vsxRegistryUrl = this.config.vsxRegistryUrl): Promise<{
         url: string
         fullPluginName: string
     } | undefined> {

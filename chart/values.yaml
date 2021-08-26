@@ -132,6 +132,10 @@ branding:
         url: https://www.gitpod.io/terms/
 workspaceScheduler: workspace-scheduler
 
+vsxRegistry:
+  proxy: false
+  host: open-vsx.org
+
 components:
 
   agentSmith:

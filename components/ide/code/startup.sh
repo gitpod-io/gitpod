@@ -32,6 +32,9 @@ export USER=gitpod
 # shellcheck disable=SC1090,SC1091
 [ -s ~/.nvm/nvm-lazy.sh ] && source /home/gitpod/.nvm/nvm-lazy.sh
 
+# Replace OpenVSX URL
+grep -rl open-vsx.org /ide | xargs sed -i "s|https://open-vsx.org|$VSX_REGISTRY_URL|g"
+
 cd /ide || exit
 if [ "$SUPERVISOR_DEBUG_ENABLE" = "true" ]; then
     exec /ide/node/bin/gitpod-node --inspect ./out/gitpod.js "$@" --verbose --log=trace
