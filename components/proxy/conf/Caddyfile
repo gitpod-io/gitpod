@@ -11,10 +11,11 @@
 
 	# configure plugin order
 	# https://caddyserver.com/docs/caddyfile/directives#directive-order
-	order gitpod.cors_origin         	before header
-	order gitpod.workspace_download  	before redir
+	order gitpod.cors_origin            before header
+	order gitpod.workspace_download     before redir
 	order gitpod.headless_log_download  before redir
-	order gitpod.sec_websocket_key   	before header
+	order gitpod.sec_websocket_key      before header
+	order http_cache                    before reverse_proxy
 }
 
 (compression) {
@@ -51,7 +52,17 @@
 (enable_log) {
 	log {
 		output stdout
-		format if "status > 399" jsonselect "{severity:level} {timestamp:ts} {logName:logger} {httpRequest>requestMethod:request>method} {httpRequest>protocol:request>proto} {httpRequest>status:status} {httpRequest>responseSize:size} {httpRequest>userAgent:request>headers>User-Agent>[0]} {httpRequest>requestUrl:request>uri}" {
+		format if "status > 399" jsonselect "{severity:level} {timestamp:ts} {logName:logger} {httpRequest>requestMethod:request>method} {httpRequest>protocol:request>proto} {httpRequest>status:status} {httpRequest>responseSize:size} {httpRequest>userAgent:request>headers>User-Agent>[0]} {httpRequest>requestUrl:request>uri} {httpRequest>requestHost:request>host} {cacheStatus:resp_headers>X-Cache-Status>[0]}" {
+			level_format "upper"
+			time_format "rfc3339_nano"
+		}
+	}
+}
+
+(enable_log_debug) {
+	log {
+		output stdout
+		format jsonselect "{severity:level} {timestamp:ts} {logName:logger} {httpRequest>requestMethod:request>method} {httpRequest>protocol:request>proto} {httpRequest>status:status} {httpRequest>responseSize:size} {httpRequest>userAgent:request>headers>User-Agent>[0]} {httpRequest>requestUrl:request>uri} {httpRequest>requestHost:request>host} {cacheStatus:resp_headers>X-Cache-Status>[0]}" {
 			level_format "upper"
 			time_format "rfc3339_nano"
 		}

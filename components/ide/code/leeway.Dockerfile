@@ -64,13 +64,13 @@ RUN chmod -R ugo+x /ide/bin
 
 FROM scratch
 # copy static web resources in first layer to serve from blobserve
-COPY --from=code_installer /gitpod-pkg-web/ /ide/
-COPY --from=code_installer /gitpod-pkg-server/ /ide/
-COPY --from=node_installer /ide/node /ide/node
-COPY startup.sh supervisor-ide-config.json /ide/
+COPY --from=code_installer --chown=33333:33333 /gitpod-pkg-web/ /ide/
+COPY --from=code_installer --chown=33333:33333 /gitpod-pkg-server/ /ide/
+COPY --from=node_installer --chown=33333:33333 /ide/node /ide/node
+COPY --chown=33333:33333 startup.sh supervisor-ide-config.json /ide/
 
 # cli config
-COPY --from=code_installer /ide/bin /ide/bin
+COPY --from=code_installer --chown=33333:33333 /ide/bin /ide/bin
 ENV GITPOD_ENV_APPEND_PATH /ide/bin:
 
 # editor config

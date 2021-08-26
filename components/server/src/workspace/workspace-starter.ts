@@ -598,6 +598,12 @@ export class WorkspaceStarter {
                 }
             }
         )
+
+        const vsxRegistryUrl = new EnvironmentVariable();
+        vsxRegistryUrl.setName("VSX_REGISTRY_URL");
+        vsxRegistryUrl.setValue(this.config.vsxRegistryUrl);
+        envvars.push(vsxRegistryUrl);
+
         const createGitpodTokenPromise = (async () => {
             const scopes = this.createDefaultGitpodAPITokenScopes(workspace, instance);
             const token = crypto.randomBytes(30).toString('hex');

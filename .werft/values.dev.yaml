@@ -29,6 +29,9 @@ resources:
     # => 32Gi / 100 ~ 328Mi => 350Mi
     memory: 350Mi
 
+vsxRegistry:
+  proxy: true
+
 components:
 
   agentSmith:

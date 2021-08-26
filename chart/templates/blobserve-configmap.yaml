@@ -32,6 +32,11 @@ data:
                     "replacements": [
                         { "search": "vscode-webview.net", "replacement": "{{ .Values.hostname }}", "path": "/ide/out/vs/workbench/workbench.web.api.js" },
                         { "search": "vscode-webview.net", "replacement": "{{ .Values.hostname }}", "path": "/ide/out/vs/workbench/services/extensions/worker/extensionHostWorker.js" }
+                        {{- if .Values.vsxRegistry.proxy }}
+                        , { "search": "open-vsx.org", "replacement": "open-vsx.{{ .Values.hostname }}", "path": "/ide/out/vs/workbench/workbench.web.api.js" }
+                        {{- else if (and .Values.vsxRegistry.host (ne .Values.vsxRegistry.host "open-vsx.org")) }}
+                        , { "search": "open-vsx.org", "replacement": "{{ .Values.vsxRegistry.host }}", "path": "/ide/out/vs/workbench/workbench.web.api.js" }
+                        {{- end }}
                     ],
                     "inlineStatic": [
                         { "search": "${window.location.origin}", "replacement": "." },
