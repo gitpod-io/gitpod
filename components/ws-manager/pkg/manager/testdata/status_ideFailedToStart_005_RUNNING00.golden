@@ -1,0 +1,32 @@
+{
+    "status": {
+        "id": "9ff933b3-d487-4b45-a966-e715767f91df",
+        "metadata": {
+            "owner": "d20bf9c2-e802-43ba-b647-ffa89f8ff17e",
+            "meta_id": "rose-donkey-wfapr095",
+            "started_at": {
+                "seconds": 1629308528
+            }
+        },
+        "spec": {
+            "workspace_image": "eu.gcr.io/gitpod-dev/workspace-images:aeed577d8b4785088120a7d24d056ee2d553a69d2bcc413a572e82a3039cd6cd",
+            "ide_image": "eu.gcr.io/gitpod-core-dev/build/ide/code:commit-0941a0805dc3c7345c45bd926317eaf045d4b7fb",
+            "url": "https://rose-donkey-wfapr095.ws-eu14.gitpod.io",
+            "timeout": "30m"
+        },
+        "phase": 4,
+        "conditions": {
+            "failed": "IDE failed to start: exit status 127",
+            "service_exists": 1,
+            "deployed": 1
+        },
+        "runtime": {
+            "node_name": "gke-gp-prod-ws-eu14-eu-workspace-pool-b6e0759a-3lb1",
+            "pod_name": "ws-9ff933b3-d487-4b45-a966-e715767f91df",
+            "node_ip": "10.132.0.110"
+        },
+        "auth": {
+            "owner_token": "-Jlxl8PUpKylHGFNjZaYXSmhg8qlFbck"
+        }
+    }
+}
