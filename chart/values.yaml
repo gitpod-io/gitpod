@@ -524,12 +524,6 @@ components:
       memory: 64Mi
     replicas: 1
     hostHeader: "x-wsproxy-host"
-    wsManagerProxy:
-      enabled: false
-      listenAddress: ":8081"
-      ratelimit:
-        # Limits the # of requests (per second)
-        maxRPS: 10
     ports:
       httpProxy:
         expose: true

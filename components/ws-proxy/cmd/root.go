@@ -14,7 +14,6 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
-	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/ws-proxy/pkg/proxy"
 )
 
@@ -60,7 +59,6 @@ type Config struct {
 	PProfAddr                   string                            `json:"pprofAddr"`
 	PrometheusAddr              string                            `json:"prometheusAddr"`
 	ReadinessProbeAddr          string                            `json:"readinessProbeAddr"`
-	WSManagerProxy              WSManagerProxyConfig              `json:"wsManagerProxy"`
 }
 
 // Validate validates the configuration to catch issues during startup and not at runtime
@@ -74,38 +72,7 @@ func (c *Config) Validate() error {
 	if err := c.WorkspaceInfoProviderConfig.Validate(); err != nil {
 		return err
 	}
-	if err := c.WSManagerProxy.Validate(); err != nil {
-		return err
-	}
 
-	return nil
-}
-
-// WSManagerProxyConfig configures the ws-manager TCP proxy
-type WSManagerProxyConfig struct {
-	ListenAddress string            `json:"listenAddress"`
-	RateLimiter   RateLimiterConfig `json:"rateLimiter"`
-}
-
-// Validate validates this config
-func (c *WSManagerProxyConfig) Validate() error {
-	if c != nil && len(c.ListenAddress) > 0 {
-		return c.RateLimiter.Validate()
-	}
-	return nil
-}
-
-// RateLimiterConfig configures a rate limiter
-type RateLimiterConfig struct {
-	RefillInterval util.Duration `json:"refillInterval"`
-	BucketSize     int           `json:"bucketSize"`
-}
-
-// Validate validates this config
-func (c *RateLimiterConfig) Validate() error {
-	if c == nil {
-		return xerrors.Errorf("rate limiter config is nil")
-	}
 	return nil
 }
 
