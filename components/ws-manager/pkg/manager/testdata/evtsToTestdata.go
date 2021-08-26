@@ -40,6 +40,7 @@ func main() {
 	}
 	defer file.Close()
 
+	var i int
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		var data EventTraceEntry
@@ -49,18 +50,23 @@ func main() {
 		}
 
 		phase := data.Status.Phase
-		glob, err := filepath.Glob(fmt.Sprintf("status_%s_%s*.json", *prefix, phase))
+		glob, err := filepath.Glob(fmt.Sprintf("status_%s_%03d_%s*.json", *prefix, i, phase))
 		if err != nil {
 			panic(err)
 		}
 
 		idx := len(glob)
-		fn := fmt.Sprintf("status_%s_%s%02d.json", *prefix, phase, idx)
-		err = os.WriteFile(fn, data.Objects, 0644)
+		fn := fmt.Sprintf("status_%s_%03d_%s%02d.json", *prefix, i, phase, idx)
+		ctnt, err := json.MarshalIndent(data.Objects, "", "  ")
+		if err != nil {
+			panic(err)
+		}
+		err = os.WriteFile(fn, ctnt, 0644)
 		if err != nil {
 			panic(err)
 		}
 
+		i++
 		fmt.Printf("Wrote %s\n", fn)
 	}
 }

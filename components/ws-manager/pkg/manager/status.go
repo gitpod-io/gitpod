@@ -591,13 +591,17 @@ func extractFailure(wso workspaceObjects) (string, *api.WorkspacePhase) {
 			if cs.State.Waiting.Reason == "ImagePullBackOff" || cs.State.Waiting.Reason == "ErrImagePull" {
 				// If the image pull failed we were definitely in the api.WorkspacePhase_CREATING phase,
 				// unless of course this pod has been deleted already.
-				var res api.WorkspacePhase
+				var res *api.WorkspacePhase
 				if isPodBeingDeleted(pod) {
-					res = api.WorkspacePhase_STOPPING
+					// The pod is being deleted already and we have to decide the phase based on the presence of the
+					// finalizer and disposal status annotation. That code already exists in the remainder of getStatus,
+					// hence we defer the decision.
+					res = nil
 				} else {
-					res = api.WorkspacePhase_CREATING
+					c := api.WorkspacePhase_CREATING
+					res = &c
 				}
-				return fmt.Sprintf("cannot pull image: %s", cs.State.Waiting.Message), &res
+				return fmt.Sprintf("cannot pull image: %s", cs.State.Waiting.Message), res
 			}
 		}
 
