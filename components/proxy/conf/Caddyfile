@@ -200,6 +200,11 @@ https://{$GITPOD_DOMAIN} {
 		}
 	}
 
+	@legacy_urls path /github.com/* /gitlab.com/* /bitbucket.org/*
+	handle @legacy_urls {
+		redir https://{$GITPOD_DOMAIN}/#{uri} permanent
+	}
+
 	handle_errors {
 		redir https://{$GITPOD_DOMAIN}/sorry/#Error%20{http.reverse_proxy.status_text} 302
 	}
