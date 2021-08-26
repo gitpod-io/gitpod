@@ -21,6 +21,7 @@
             ],
             "timeout": "30m"
         },
+        "phase": 4,
         "conditions": {
             "failed": "IDE failed to start: fork/exec /theia/node_modules/@gitpod/gitpod-ide/startup.sh: no such file or directory",
             "service_exists": 1,

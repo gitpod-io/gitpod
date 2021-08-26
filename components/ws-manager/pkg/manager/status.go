@@ -615,11 +615,21 @@ func extractFailure(wso workspaceObjects) (string, *api.WorkspacePhase) {
 			// we would not be here as we've checked for a DeletionTimestamp prior. So let's find out why the
 			// container is terminating.
 			if terminationState.ExitCode != 0 && terminationState.Message != "" {
+				var phase *api.WorkspacePhase
+				if !isPodBeingDeleted(pod) {
+					// If the wrote a termination message and is not currently being deleted,
+					// then it must have been/be running. If we did not force the phase here,
+					// we'd be in unknown.
+					c := api.WorkspacePhase_RUNNING
+					phase = &c
+				}
+
 				// the container itself told us why it was terminated - use that as failure reason
-				return extractFailureFromLogs([]byte(terminationState.Message)), nil
+				return extractFailureFromLogs([]byte(terminationState.Message)), phase
 			} else if terminationState.Reason == "Error" {
 				if !isPodBeingDeleted(pod) && terminationState.ExitCode != containerKilledExitCode {
-					return fmt.Sprintf("container %s ran with an error: exit code %d", cs.Name, terminationState.ExitCode), nil
+					phase := api.WorkspacePhase_RUNNING
+					return fmt.Sprintf("container %s ran with an error: exit code %d", cs.Name, terminationState.ExitCode), &phase
 				}
 			} else if terminationState.Reason == "Completed" {
 				if wso.IsWorkspaceHeadless() {

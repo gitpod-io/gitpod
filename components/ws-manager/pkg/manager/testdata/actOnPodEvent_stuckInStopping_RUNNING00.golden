@@ -1,0 +1,11 @@
+{
+    "actions": [
+        {
+            "Func": "stopWorkspace",
+            "Params": {
+                "gracePeriod": 30000000000,
+                "workspaceID": "48f13cc4-6311-48c2-950a-4b7ddedc3037"
+            }
+        }
+    ]
+}

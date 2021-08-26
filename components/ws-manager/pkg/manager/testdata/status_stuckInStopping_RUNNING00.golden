@@ -24,6 +24,7 @@
             ],
             "timeout": "30m"
         },
+        "phase": 4,
         "conditions": {
             "failed": "container workspace ran with an error: exit code 1",
             "service_exists": 1,
