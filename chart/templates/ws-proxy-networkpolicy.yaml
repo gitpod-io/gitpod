@@ -26,8 +26,4 @@ spec:
       port: {{ $comp.ports.httpProxy.containerPort }}
     - protocol: TCP
       port: {{ $comp.ports.httpsProxy.containerPort }}
-    {{ if $comp.ports.wsManagerProxy }}
-    - protocol: TCP
-      port: {{ $comp.ports.wsManagerProxy.containerPort }}
-    {{ end }}
 {{ end }}
