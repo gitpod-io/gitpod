@@ -7,16 +7,86 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
 	"github.com/gitpod-io/gitpod/test/tests/workspace/workspace_agent/api"
+	"github.com/prometheus/procfs"
+	"golang.org/x/sys/unix"
 )
 
 func main() {
+	err := enterSupervisorNamespaces()
+	if err != nil {
+		panic(fmt.Sprintf("enterSupervisorNamespaces: %v", err))
+	}
+
 	integration.ServeAgent(new(WorkspaceAgent))
+}
+
+func enterSupervisorNamespaces() error {
+	if os.Getenv("AGENT_IN_RING2") != "" {
+		return nil
+	}
+
+	nsenter, err := exec.LookPath("nsenter")
+	if err != nil {
+		return fmt.Errorf("cannot find nsenter")
+	}
+
+	// This agent expectes to be called using the workspacekit lift (i.e. in ring1).
+	// We then enter the PID and mount namespace of supervisor.
+	// First, we need to find the supervisor process
+	proc, err := procfs.NewFS("/proc")
+	if err != nil {
+		return err
+	}
+	procs, err := proc.AllProcs()
+	if err != nil {
+		return err
+	}
+	var supervisorPID int
+	for _, p := range procs {
+		cmd, _ := p.CmdLine()
+		for _, c := range cmd {
+			if strings.HasSuffix(c, "supervisor") {
+				supervisorPID = p.PID
+				break
+			}
+		}
+		if supervisorPID != 0 {
+			break
+		}
+	}
+	if supervisorPID == 0 {
+		return fmt.Errorf("no supervisor process found")
+	}
+
+	// Then we copy ourselves to a location that we can access from the supervisor NS
+	self, err := os.Executable()
+	if err != nil {
+		return err
+	}
+	fn := fmt.Sprintf("/proc/%d/root/agent", supervisorPID)
+	dst, err := os.OpenFile(fn, os.O_CREATE|os.O_WRONLY, 0755)
+	if err != nil {
+		return err
+	}
+	selfFD, err := os.Open(self)
+	if err != nil {
+		return err
+	}
+	defer selfFD.Close()
+	_, err = io.Copy(dst, selfFD)
+	if err != nil {
+		return fmt.Errorf("error copying agent: %w", err)
+	}
+
+	return unix.Exec(nsenter, append([]string{nsenter, "-t", strconv.Itoa(supervisorPID), "-m", "-p", "/agent"}, os.Args[1:]...), append(os.Environ(), "AGENT_IN_RING2=true"))
 }
 
 // WorkspaceAgent provides ingteration test services from within a workspace
@@ -70,6 +140,7 @@ func (*WorkspaceAgent) Exec(req *api.ExecRequest, resp *api.ExecResponse) (err e
 			return fmt.Errorf("%s: %w", fullCommand, err)
 		}
 		rc = exitError.ExitCode()
+		err = nil
 	}
 
 	*resp = api.ExecResponse{

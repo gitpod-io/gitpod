@@ -12,7 +12,9 @@ require (
 	github.com/gitpod-io/gitpod/ws-manager/api v0.0.0-00010101000000-000000000000
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/google/uuid v1.2.0
+	github.com/prometheus/procfs v0.7.3 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
+	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
 	google.golang.org/grpc v1.39.1
 	k8s.io/api v0.22.0

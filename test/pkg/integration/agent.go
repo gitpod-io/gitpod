@@ -13,13 +13,15 @@ import (
 	"net/rpc"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 )
 
 // ServeAgent is the main entrypoint for agents. It establishes flags and starts an RPC server
 // on a port passed as flag.
 func ServeAgent(rcvr interface{}) {
-	port := flag.Int("rpc-port", 0, "the port on wich to run the RPC server on")
+	defaultPort, _ := strconv.Atoi(os.Getenv("AGENT_RPC_PORT"))
+	port := flag.Int("rpc-port", defaultPort, "the port on wich to run the RPC server on")
 	flag.Parse()
 
 	ta := &testAgent{
