@@ -101,3 +101,14 @@ export function increaseMessagebusTopicReads(topic: string) {
         topic,
     })
 }
+
+const workspaceStartCounter = new prometheusClient.Counter({
+    name: 'gitpod_server_workspace_starts_total',
+    help: 'Duration of workspace start requests',
+    labelNames: ['status', 'type'],
+    registers: [prometheusClient.register]
+});
+
+export function increaseWorkspaceStarts(status: string, type: string) {
+    workspaceStartCounter.inc({status, type});
+}

@@ -28,6 +28,7 @@ import { TokenProvider } from "../user/token-provider";
 import { UserService } from "../user/user-service";
 import { ImageSourceProvider } from "./image-source-provider";
 import { MessageBusIntegration } from "./messagebus-integration";
+import { increaseWorkspaceStarts } from '../../src/prometheus-metrics';
 import * as path from 'path';
 
 export interface StartWorkspaceOptions {
@@ -55,12 +56,13 @@ export class WorkspaceStarter {
 
     public async startWorkspace(ctx: TraceContext, workspace: Workspace, user: User, userEnvVars?: UserEnvVar[], options?: StartWorkspaceOptions): Promise<StartWorkspaceResult> {
         const span = TraceContext.startSpan("WorkspaceStarter.startWorkspace", ctx);
+        const startTime = new Date().getTime();
 
         options = options || {};
         try {
             // Some workspaces do not have an image source.
             // Workspaces without image source are not only legacy, but also happened due to what looks like a bug.
-            // Whenever a such a workspace is re-started we'll give it an image source now. This is in line with how this thing used to work.
+            // Whenever such a workspace is re-started we'll give it an image source now. This is in line with how this thing used to work.
             //
             // At this point any workspace that has no imageSource should have a commit context (we don't have any other contexts which don't resolve
             // to a commit context prior to being started, or which don't get an imageSource).
@@ -121,11 +123,11 @@ export class WorkspaceStarter {
             // If the caller requested that errors be rethrown we must await the actual workspace start to be in the exception path.
             // To this end we disable the needsImageBuild behaviour if rethrow is true.
             if (needsImageBuild && !options.rethrow) {
-                this.actuallyStartWorkspace({ span }, instance, workspace, user, mustHaveBackup, userEnvVars, options.rethrow, forceRebuild);
+                this.actuallyStartWorkspace({ span }, instance, workspace, user, mustHaveBackup, startTime, userEnvVars, options.rethrow, forceRebuild);
                 return { instanceID: instance.id };
             }
 
-            return await this.actuallyStartWorkspace({ span }, instance, workspace, user, mustHaveBackup, userEnvVars, options.rethrow, forceRebuild);
+            return await this.actuallyStartWorkspace({ span }, instance, workspace, user, mustHaveBackup, startTime, userEnvVars, options.rethrow, forceRebuild);
         } catch (e) {
             TraceContext.logError({ span }, e);
             throw e;
@@ -136,7 +138,7 @@ export class WorkspaceStarter {
 
     // Note: this function does not expect to be awaited for by its caller. This means that it takes care of error handling itself
     //       and creates its tracing span as followFrom rather than the usual childOf reference.
-    protected async actuallyStartWorkspace(ctx: TraceContext, instance: WorkspaceInstance, workspace: Workspace, user: User, mustHaveBackup: boolean, userEnvVars?: UserEnvVar[], rethrow?: boolean, forceRebuild?: boolean): Promise<StartWorkspaceResult> {
+    protected async actuallyStartWorkspace(ctx: TraceContext, instance: WorkspaceInstance, workspace: Workspace, user: User, mustHaveBackup: boolean, startTime: number, userEnvVars?: UserEnvVar[], rethrow?: boolean, forceRebuild?: boolean): Promise<StartWorkspaceResult> {
         const span = TraceContext.startAsyncSpan("actuallyStartWorkspace", ctx);
 
         try {
@@ -202,8 +204,10 @@ export class WorkspaceStarter {
                 }
             }
 
+            increaseWorkspaceStarts("succeeded", workspace.type)
             return { instanceID: instance.id, workspaceURL: resp.url };
         } catch (err) {
+            increaseWorkspaceStarts("failed", workspace.type)
             TraceContext.logError({ span }, err);
             await this.failInstanceStart({ span }, err, workspace, instance);
 
