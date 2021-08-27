@@ -102,7 +102,7 @@ export default function () {
                     <div className="flex-1" />
                     <div className="py-3 pl-3">
                     </div>
-                    <Link to="./members" className="flex"><button className="ml-2 secondary">Invite Members</button></Link>
+                    {team && <Link to="./members" className="flex"><button className="ml-2 secondary">Invite Members</button></Link>}
                     <button className="ml-2" onClick={() => onNewProject()}>New Project</button>
                 </div>
                 <div className="mt-4 grid grid-cols-3 gap-4">
