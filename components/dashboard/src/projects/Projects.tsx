@@ -177,10 +177,10 @@ export default function () {
                     </div>))}
                     {!searchFilter && (
                         <div key="new-project"
-                            className="h-52 border-dashed border-2 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl focus:bg-gitpod-kumquat-light transition ease-in-out group">
+                            className="h-52 border-dashed border-2 border-gray-100 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl focus:bg-gitpod-kumquat-light transition ease-in-out group">
                             <Link to={newProjectUrl}>
                                 <div className="flex h-full">
-                                    <div className="m-auto">New Project</div>
+                                    <div className="m-auto text-gray-400 dark:text-gray-600">New Project</div>
                                 </div>
                             </Link>
                         </div>
