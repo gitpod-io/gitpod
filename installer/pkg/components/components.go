@@ -3,17 +3,16 @@ package components
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	wsdaemon "github.com/gitpod-io/gitpod/installer/pkg/components/ws-daemon"
-	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1alpha1"
 
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 type compositeRenderable []common.Renderable
 
-func (cr compositeRenderable) Render(cfg *config.Config) ([]runtime.Object, error) {
+func (cr compositeRenderable) Render(ctx *common.RenderContext) ([]runtime.Object, error) {
 	var res []runtime.Object
 	for _, c := range cr {
-		objs, err := c.Render(cfg)
+		objs, err := c.Render(ctx)
 		if err != nil {
 			return nil, err
 		}

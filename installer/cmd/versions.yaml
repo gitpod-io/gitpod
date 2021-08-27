@@ -1,0 +1,85 @@
+version: not-a-valid-version
+components:
+  agentSmith:
+    version: not-a-valid-version
+
+  blobserve:
+    version: not-a-valid-version
+
+  contentService:
+    version: not-a-valid-version
+
+  dashboard:
+    version: not-a-valid-version
+
+  dbMigrations:
+    version: not-a-valid-version
+
+  dbSync:
+    version: not-a-valid-version
+
+  imageBuilder:
+    version: not-a-valid-version
+
+  imageBuilderMk3:
+    builderImage:
+      version: not-a-valid-version
+
+    version: not-a-valid-version
+
+  integrationTest:
+    version: not-a-valid-version
+
+  kedge:
+    version: not-a-valid-version
+
+  paymentEndpoint:
+    version: not-a-valid-version
+
+  proxy:
+    version: not-a-valid-version
+
+  registryFacade:
+    version: not-a-valid-version
+
+  server:
+    version: not-a-valid-version
+
+  serviceWaiter:
+    version: not-a-valid-version
+
+  workspace:
+    codeImage:
+      version: not-a-valid-version
+
+    dockerUp:
+      version: not-a-valid-version
+
+    supervisor:
+      version: not-a-valid-version
+
+    theiaImage:
+      version: not-a-valid-version
+
+  wsDaemon:
+    userNamespaces:
+      seccompProfileInstaller:
+        version: not-a-valid-version
+
+      shiftfsModuleLoader:
+        version: not-a-valid-version
+
+    version: not-a-valid-version
+
+  wsManager:
+    version: not-a-valid-version
+
+  wsManagerBridge:
+    version: not-a-valid-version
+
+  wsProxy:
+    version: not-a-valid-version
+
+  wsScheduler:
+    version: not-a-valid-version
+

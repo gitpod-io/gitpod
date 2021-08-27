@@ -1,8 +1,10 @@
 package common
 
 import (
+	"fmt"
 	"strings"
 
+	"github.com/docker/distribution/reference"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1alpha1"
 
 	corev1 "k8s.io/api/core/v1"
@@ -121,4 +123,17 @@ func Affinity(orLabels ...string) *corev1.Affinity {
 			},
 		},
 	}
+}
+
+func ImageName(repo, name, tag string) string {
+	ref := fmt.Sprintf("%s/%s:%s", strings.TrimSuffix(repo, "/"), name, tag)
+	pref, err := reference.ParseNamed(ref)
+	if err != nil {
+		panic(fmt.Sprintf("cannot parse image ref %s: %v", ref, err))
+	}
+	if _, ok := pref.(reference.Tagged); !ok {
+		panic(fmt.Sprintf("image ref %s has no tag: %v", ref, err))
+	}
+
+	return ref
 }
