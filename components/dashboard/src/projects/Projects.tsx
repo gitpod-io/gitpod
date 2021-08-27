@@ -161,7 +161,7 @@ export default function () {
                             {lastPrebuilds.get(p.id)
                                 ? (<div className="flex flex-row h-full text-sm justify-between">
                                     <Link to={`/${teamOrUserSlug}/${p.name}/${lastPrebuilds.get(p.id)!.id}`} className="flex my-auto group space-x-2">
-                                        <img className="h-3 w-3 my-auto" src={getPrebuildStatusIcon(lastPrebuilds.get(p.id)!.status)} />
+                                        <img className="h-4 w-4 my-auto" src={getPrebuildStatusIcon(lastPrebuilds.get(p.id)!.status)} />
                                         <div className="my-auto font-semibold text-gray-500 dark:text-gray-400 truncate w-24" title={lastPrebuilds.get(p.id)!.branch}>{lastPrebuilds.get(p.id)!.branch}</div>
                                         <span className="mx-1 my-auto text-gray-600">·</span>
                                         <div className="my-auto text-gray-400 dark:text-gray-500 flex-grow hover:text-gray-800 dark:hover:text-gray-300">{moment(lastPrebuilds.get(p.id)!.startedAt, "YYYYMMDD").fromNow()}</div>
