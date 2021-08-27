@@ -33,11 +33,9 @@ spec:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
         nodeSelectorTerms:
-          - matchExpressions:
-              - key: dev/workload
-                operator: In
-                values:
-                  - workload
+        - matchExpressions:
+          - key: workload/meta
+            operator: Exists
   strategy: allInOne
   storage:
     options:

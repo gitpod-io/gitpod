@@ -10,15 +10,7 @@ certificatesSecret:
   secretName: proxy-config-certificates
 version: not-set
 imagePullPolicy: Always
-affinity:
-  nodeAffinity:
-    requiredDuringSchedulingIgnoredDuringExecution:
-      nodeSelectorTerms:
-      - matchExpressions:
-        - key: gitpod.io/workload_meta
-          operator: In
-          values:
-          - "true"
+
 authProviders: []
 tracing:
   endoint: http://jaeger-collector:14268/api/traces
@@ -78,8 +70,6 @@ components:
     # configure GCP registry
     pullSecret:
       secretName: gcp-sa-registry-auth
-    affinity:
-      default: "gitpod.io/workload_workspace"
     templates:
       default:
         spec:
@@ -217,16 +207,6 @@ minio:
   serviceAccount:
     name: ws-daemon
     create: false
-  # make sure the pod ends up where it's supposed to stay
-  affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-        - matchExpressions:
-          - key: dev/workload
-            operator: In
-            values:
-            - "workload"
   resources:
     requests:
       # in preview envs, we want deployments to push scale-up early
@@ -235,15 +215,6 @@ minio:
 mysql:
   primary:
     # make sure the pod ends up where it's supposed to stay
-    affinity:
-      nodeAffinity:
-        requiredDuringSchedulingIgnoredDuringExecution:
-          nodeSelectorTerms:
-          - matchExpressions:
-            - key: dev/workload
-              operator: In
-              values:
-              - "workload"
     resources:
       requests:
         # in preview envs, we want deployments to push scale-up early
@@ -258,15 +229,6 @@ rabbitmq:
     username: override-me
     password: override-me
   # make sure the pod ends up where it's supposed to stay
-  affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-        - matchExpressions:
-          - key: dev/workload
-            operator: In
-            values:
-            - "workload"
   resources:
     requests:
       # in preview envs, we want deployments to push scale-up early

@@ -9,6 +9,7 @@ import * as semver from 'semver';
 import * as util from 'util';
 import { sleep } from './util/util';
 import * as gpctl from './util/gpctl';
+import { createHash } from "crypto";
 
 const readDir = util.promisify(fs.readdir)
 
@@ -396,6 +397,12 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
         let flags = commonFlags
         flags += ` --set components.wsDaemon.servicePort=${wsdaemonPortMeta}`;
         flags += ` --set components.registryFacade.ports.registry.servicePort=${registryNodePortMeta}`;
+
+        const nodeAffinityValues = [
+            "values.nodeAffinities_0.yaml",
+            "values.nodeAffinities_1.yaml"
+        ]
+
         if (k3sWsCluster) {
             // we do not need meta cluster ws components when k3s ws is enabled
             // TODO: Add flags to disable ws component in the meta cluster
@@ -406,8 +413,15 @@ export async function deployToDev(deploymentConfig: DeploymentConfig, workspaceF
             flags += ` -f ../.werft/values.dev.gcp-storage.yaml`;
         }
 
+        /*  A hash is caclulated from the branch name and a subset of that string is parsed to a number x,
+            x mod the number of different nodepool-sets defined in the files listed in nodeAffinityValues
+            is used to generate a pseudo-random number that consistent as long as the branchname persists.
+            We use it to reduce the number of preview-environments accumulating on a singe nodepool.
+         */
+        const nodepoolIndex = parseInt(createHash('sha256').update(namespace).digest('hex').substring(0,5),16) % nodeAffinityValues.length;
+
         exec(`helm dependencies up`);
-        exec(`/usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/values.dev.yaml ${flags} ${helmInstallName} .`);
+        exec(`/usr/local/bin/helm3 upgrade --install --timeout 10m -f ../.werft/${nodeAffinityValues[nodepoolIndex]} -f ../.werft/values.dev.yaml ${flags} ${helmInstallName} .`);
         exec(`kubectl apply -f ../.werft/jaeger.yaml`);
 
         werft.log('helm', 'installing Sweeper');
