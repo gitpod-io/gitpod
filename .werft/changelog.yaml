@@ -1,0 +1,40 @@
+# debug using `werft run github -f -j .werft/changelog.yaml -a debug=true`
+pod:
+  serviceAccount: werft
+  nodeSelector:
+    cloud.google.com/gke-nodepool: builds
+  containers:
+  - name: build
+    image: eu.gcr.io/gitpod-core-dev/dev/changelog:0.0.13
+    workingDir: /workspace
+    imagePullPolicy: Always
+    env:
+    - name: GITHUB_USER
+      value: roboquat
+    - name: GITHUB_EMAIL
+      value: roboquat@gitpod.io
+    - name: GITHUB_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: github-sh-release-token
+          key: token
+    command:
+      - bash
+      - -c
+      - |
+        sleep 1
+        set -Eeuo pipefail
+
+        export GITHUB_TOKEN=$(echo $GITHUB_TOKEN | xargs)
+        export GIT_REF={{ .Repository.Ref }}
+        export GIT_BRANCH=${GIT_REF/refs\/heads\//}
+        git checkout $GIT_BRANCH
+        /app/changelog -t $GITHUB_TOKEN -o {{ .Repository.Owner }} -r {{ .Repository.Repo }} -b $GIT_BRANCH
+        if [[ $(git status --porcelain) ]]; then
+          git config --global user.name $GITHUB_USER
+          git config --global user.email $GITHUB_EMAIL
+          git config --global credential.helper '/bin/sh -c "echo username=$GITHUB_USER; echo password=$GITHUB_TOKEN"'
+          git add CHANGELOG.md
+          git commit -m "[changelog] updated changelog"
+          git push origin $GIT_BRANCH
+        fi

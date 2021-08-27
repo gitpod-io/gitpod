@@ -1,0 +1,23 @@
+packages:
+  - name: app
+    type: go
+    srcs:
+      - go.mod
+      - go.sum
+      - "**/*.go"
+    env:
+      - CGO_ENABLED=0
+      - GOOS=linux
+    config:
+      dontTest: true
+  - name: docker
+    type: docker
+    deps:
+      - :app
+    argdeps:
+      - imageRepoBase
+    config:
+      dockerfile: leeway.Dockerfile
+      image:
+        - ${imageRepoBase}/changelog:${version}
+        - ${imageRepoBase}/changelog:commit-${__git_commit}
