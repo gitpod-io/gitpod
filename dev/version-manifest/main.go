@@ -13,6 +13,7 @@ import (
 	"sort"
 	"strings"
 
+	"golang.org/x/xerrors"
 	"gopkg.in/yaml.v3"
 )
 
@@ -38,7 +39,7 @@ func produceManifest(out io.Writer, dir fs.FS) error {
 		var mdobj MD
 		err = yaml.Unmarshal(b, &mdobj)
 		if err != nil {
-			return fmt.Errorf("cannot unmarshal %s: %w", md, err)
+			return xerrors.Errorf("cannot unmarshal %s: %w", md, err)
 		}
 		if mdobj.HelmComponent == "" {
 			continue
@@ -46,13 +47,13 @@ func produceManifest(out io.Writer, dir fs.FS) error {
 
 		imgf, err := fs.ReadFile(dir, filepath.Join(filepath.Dir(md), "imgnames.txt"))
 		if err != nil {
-			return fmt.Errorf("cannot read image names for %s: %w", md, err)
+			return xerrors.Errorf("cannot read image names for %s: %w", md, err)
 		}
 		imgs := strings.Split(strings.TrimSpace(string(imgf)), "\n")
 		img := imgs[len(imgs)-1]
 		segs := strings.Split(img, ":")
 		if len(segs) != 2 {
-			return fmt.Errorf("invalid image format: %s", img)
+			return xerrors.Errorf("invalid image format: %s", img)
 		}
 		version := segs[1]
 		versions[mdobj.HelmComponent] = version
@@ -109,7 +110,7 @@ func produceManifest(out io.Writer, dir fs.FS) error {
 				continue
 			}
 
-			return fmt.Errorf("unknown value type - this should never happen")
+			return xerrors.Errorf("unknown value type - this should never happen")
 		}
 		return nil
 	}

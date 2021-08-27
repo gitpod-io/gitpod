@@ -14,6 +14,7 @@ import (
 
 	cli "github.com/urfave/cli/v2"
 	"golang.org/x/sys/unix"
+	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	_ "github.com/gitpod-io/gitpod/ws-daemon/nsinsider/pkg/nsenter"
@@ -137,7 +138,7 @@ func main() {
 
 					out, err := cmd.CombinedOutput()
 					if err != nil {
-						return fmt.Errorf("fuse-overlayfs (%v) failed: %q\n%v",
+						return xerrors.Errorf("fuse-overlayfs (%v) failed: %q\n%v",
 							cmd.Args,
 							string(out),
 							err,

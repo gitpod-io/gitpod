@@ -17,6 +17,7 @@ import (
 	"github.com/gitpod-io/gitpod/test/tests/workspace/workspace_agent/api"
 	"github.com/prometheus/procfs"
 	"golang.org/x/sys/unix"
+	"golang.org/x/xerrors"
 )
 
 func main() {
@@ -35,7 +36,7 @@ func enterSupervisorNamespaces() error {
 
 	nsenter, err := exec.LookPath("nsenter")
 	if err != nil {
-		return fmt.Errorf("cannot find nsenter")
+		return xerrors.Errorf("cannot find nsenter")
 	}
 
 	// This agent expectes to be called using the workspacekit lift (i.e. in ring1).
@@ -63,7 +64,7 @@ func enterSupervisorNamespaces() error {
 		}
 	}
 	if supervisorPID == 0 {
-		return fmt.Errorf("no supervisor process found")
+		return xerrors.Errorf("no supervisor process found")
 	}
 
 	// Then we copy ourselves to a location that we can access from the supervisor NS
@@ -83,7 +84,7 @@ func enterSupervisorNamespaces() error {
 	defer selfFD.Close()
 	_, err = io.Copy(dst, selfFD)
 	if err != nil {
-		return fmt.Errorf("error copying agent: %w", err)
+		return xerrors.Errorf("error copying agent: %w", err)
 	}
 
 	return unix.Exec(nsenter, append([]string{nsenter, "-t", strconv.Itoa(supervisorPID), "-m", "-p", "/agent"}, os.Args[1:]...), append(os.Environ(), "AGENT_IN_RING2=true"))
@@ -137,7 +138,7 @@ func (*WorkspaceAgent) Exec(req *api.ExecRequest, resp *api.ExecResponse) (err e
 		exitError, ok := err.(*exec.ExitError)
 		if !ok {
 			fullCommand := strings.Join(append([]string{req.Command}, req.Args...), " ")
-			return fmt.Errorf("%s: %w", fullCommand, err)
+			return xerrors.Errorf("%s: %w", fullCommand, err)
 		}
 		rc = exitError.ExitCode()
 		err = nil

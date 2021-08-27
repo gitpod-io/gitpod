@@ -123,10 +123,10 @@ func (p *TunneledPortsService) Observe(ctx context.Context) (<-chan []PortTunnel
 
 func (desc *PortTunnelDescription) validate() (err error) {
 	if desc.LocalPort <= 0 || desc.LocalPort > 0xFFFF {
-		return fmt.Errorf("bad local port: %d", desc.LocalPort)
+		return xerrors.Errorf("bad local port: %d", desc.LocalPort)
 	}
 	if desc.TargetPort < 0 || desc.TargetPort > 0xFFFF {
-		return fmt.Errorf("bad target port: %d", desc.TargetPort)
+		return xerrors.Errorf("bad target port: %d", desc.TargetPort)
 	}
 	return nil
 }
@@ -142,7 +142,7 @@ func (p *TunneledPortsService) Tunnel(ctx context.Context, options *TunnelOption
 			if err == nil {
 				err = descErr
 			} else {
-				err = fmt.Errorf("%s\n%s", err, descErr)
+				err = xerrors.Errorf("%s\n%s", err, descErr)
 			}
 			continue
 		}
@@ -195,7 +195,7 @@ func (p *TunneledPortsService) CloseTunnel(ctx context.Context, localPorts ...ui
 				if err == nil {
 					err = closeErr
 				} else {
-					err = fmt.Errorf("%s\n%s", err, closeErr)
+					err = xerrors.Errorf("%s\n%s", err, closeErr)
 				}
 			}
 		}

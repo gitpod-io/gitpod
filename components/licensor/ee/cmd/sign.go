@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/licensor/ee/pkg/licensor"
 )
@@ -29,10 +30,10 @@ var signCmd = &cobra.Command{
 		}
 		block, _ := pem.Decode(fc)
 		if block == nil {
-			return fmt.Errorf("no PEM encoded key found in %s", keyfn)
+			return xerrors.Errorf("no PEM encoded key found in %s", keyfn)
 		}
 		if block.Type != "PRIVATE KEY" {
-			return fmt.Errorf("unknown PEM block type %s", block.Type)
+			return xerrors.Errorf("unknown PEM block type %s", block.Type)
 		}
 		priv, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 		if err != nil {
@@ -47,24 +48,24 @@ var signCmd = &cobra.Command{
 			validFor, _ = cmd.Flags().GetDuration("valid-for")
 		)
 		if domain == "" {
-			return fmt.Errorf("--domain is mandatory")
+			return xerrors.Errorf("--domain is mandatory")
 		}
 		if id == "" {
-			return fmt.Errorf("--id is mandatory")
+			return xerrors.Errorf("--id is mandatory")
 		}
 		if level == "" {
-			return fmt.Errorf("--level is mandatory")
+			return xerrors.Errorf("--level is mandatory")
 		}
 		if seats < 0 {
-			return fmt.Errorf("--seats must be positive")
+			return xerrors.Errorf("--seats must be positive")
 		}
 		if validFor <= 0 {
-			return fmt.Errorf("--valid-for must be positive")
+			return xerrors.Errorf("--valid-for must be positive")
 		}
 
 		lvl, ok := licensor.NamedLevel[level]
 		if !ok {
-			return fmt.Errorf("invalid license level: %s", level)
+			return xerrors.Errorf("invalid license level: %s", level)
 		}
 
 		l := licensor.LicensePayload{

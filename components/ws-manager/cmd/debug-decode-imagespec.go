@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/xerrors"
 	"google.golang.org/protobuf/encoding/protojson"
 
 	regapi "github.com/gitpod-io/gitpod/registry-facade/api"
@@ -22,7 +23,7 @@ var debugDecodeInitializer = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		spec, err := regapi.ImageSpecFromBase64(args[0])
 		if err != nil {
-			return fmt.Errorf("cannot unmarshal init config: %w", err)
+			return xerrors.Errorf("cannot unmarshal init config: %w", err)
 		}
 
 		marshaler := protojson.MarshalOptions{

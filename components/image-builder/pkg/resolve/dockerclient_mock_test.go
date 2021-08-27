@@ -10,9 +10,10 @@ package resolve_test
 
 import (
 	context "context"
+	reflect "reflect"
+
 	registry "github.com/docker/docker/api/types/registry"
 	gomock "github.com/golang/mock/gomock"
-	reflect "reflect"
 )
 
 // MockDistributionAPIClient is a mock of DistributionAPIClient interface

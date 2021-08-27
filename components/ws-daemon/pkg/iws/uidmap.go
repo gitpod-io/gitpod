@@ -156,7 +156,7 @@ func (m *Uidmapper) findHostPID(containerPID, inContainerPID uint64) (uint64, er
 
 	for {
 		if len(paths) == 0 {
-			return 0, fmt.Errorf("cannot find in-container PID %d on the node", inContainerPID)
+			return 0, xerrors.Errorf("cannot find in-container PID %d on the node", inContainerPID)
 		}
 
 		p := paths[0]

@@ -266,7 +266,7 @@ func (it *Test) Instrument(component ComponentType, agentName string, opts ...In
 		if err != nil {
 			return nil, err
 		}
-		return nil, fmt.Errorf("agent stopped unexepectedly")
+		return nil, xerrors.Errorf("agent stopped unexepectedly")
 	case <-time.After(1 * time.Second):
 	}
 
@@ -314,7 +314,7 @@ func (it *Test) Instrument(component ComponentType, agentName string, opts ...In
 			return nil
 		}
 		if err != nil {
-			return fmt.Errorf("cannot shutdown agent: %w", err)
+			return xerrors.Errorf("cannot shutdown agent: %w", err)
 		}
 		return nil
 	})
@@ -399,7 +399,7 @@ func forwardPort(ctx context.Context, config *rest.Config, namespace, pod, port 
 		}
 
 		if errOut.Len() != 0 {
-			errchan <- fmt.Errorf(errOut.String())
+			errchan <- xerrors.Errorf(errOut.String())
 			return
 		}
 
@@ -533,7 +533,7 @@ func (t *Test) buildAgent(name string) (loc string, err error) {
 	)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("%w: %s", err, string(out))
+		return "", xerrors.Errorf("%w: %s", err, string(out))
 	}
 
 	return f.Name(), nil
@@ -610,7 +610,7 @@ func envvarFromPod(pods *corev1.PodList, name, containerName string) (value stri
 		}
 	}
 	if container == nil {
-		return "", fmt.Errorf("envvarFromPod: cannot find container %s", containerName)
+		return "", xerrors.Errorf("envvarFromPod: cannot find container %s", containerName)
 	}
 	for _, e := range container.Env {
 		if e.Name == name {

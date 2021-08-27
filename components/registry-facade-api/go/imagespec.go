@@ -6,8 +6,8 @@ package api
 
 import (
 	"encoding/base64"
-	"fmt"
 
+	"golang.org/x/xerrors"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -19,7 +19,7 @@ func (spec *ImageSpec) ToBase64() (res string, err error) {
 
 	rspec, err := proto.Marshal(spec)
 	if err != nil {
-		return "", fmt.Errorf("cannot marshal image spec: %w", err)
+		return "", xerrors.Errorf("cannot marshal image spec: %w", err)
 	}
 
 	return base64.StdEncoding.EncodeToString(rspec), nil
@@ -33,13 +33,13 @@ func ImageSpecFromBase64(input string) (res *ImageSpec, err error) {
 
 	specPB, err := base64.StdEncoding.DecodeString(input)
 	if err != nil {
-		return nil, fmt.Errorf("cannot decode image spec: %w", err)
+		return nil, xerrors.Errorf("cannot decode image spec: %w", err)
 	}
 
 	var spec ImageSpec
 	err = proto.Unmarshal(specPB, &spec)
 	if err != nil {
-		return nil, fmt.Errorf("cannot unmarshal image spec: %w", err)
+		return nil, xerrors.Errorf("cannot unmarshal image spec: %w", err)
 	}
 
 	return &spec, nil

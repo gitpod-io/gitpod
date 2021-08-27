@@ -161,7 +161,7 @@ func (m *buildMonitor) handleHeadlessLogs(buildID string) listenToHeadlessLogsCa
 	}
 }
 
-var errOutOfRetries = fmt.Errorf("out of retries")
+var errOutOfRetries = xerrors.Errorf("out of retries")
 
 // retry makes multiple attempts to execute op if op returns an UNAVAILABLE gRPC status code
 func retry(ctx context.Context, op func(ctx context.Context) error, retry func(err error) bool, initialBackoff time.Duration, retries int) (err error) {

@@ -6,12 +6,12 @@ package scheduler
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"testing"
 	"time"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
+	"golang.org/x/xerrors"
 
 	corev1 "k8s.io/api/core/v1"
 	res "k8s.io/apimachinery/pkg/api/resource"
@@ -414,7 +414,7 @@ func TestSchedulePod(t *testing.T) {
 					p.Spec.NodeName = nodeName
 					return nil
 				}
-				return fmt.Errorf("could not find pod to bind: %s", pod.Name)
+				return xerrors.Errorf("could not find pod to bind: %s", pod.Name)
 			}
 			createEvent := func(ctx context.Context, namespace string, event *corev1.Event, opts metav1.CreateOptions) error {
 				// drop all events as they are not needed for functionality and the fake clienset does not support them

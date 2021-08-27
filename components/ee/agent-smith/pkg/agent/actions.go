@@ -6,13 +6,13 @@ package agent
 
 import (
 	"context"
-	"fmt"
 
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	protocol "github.com/gitpod-io/gitpod/gitpod-protocol"
 
 	"golang.org/x/sys/unix"
+	"golang.org/x/xerrors"
 	corev1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/retry"
 )
@@ -38,7 +38,7 @@ func (agent *Smith) stopWorkspaceAndBlockUser(supervisorPID int, ownerID string)
 
 func (agent *Smith) blockUser(ownerID string) error {
 	if agent.GitpodAPI == nil {
-		return fmt.Errorf("not connected to Gitpod API")
+		return xerrors.Errorf("not connected to Gitpod API")
 	}
 
 	req := protocol.AdminBlockUserRequest{
@@ -50,10 +50,10 @@ func (agent *Smith) blockUser(ownerID string) error {
 
 func (agent *Smith) limitCPUUse(podname string) error {
 	if agent.Kubernetes == nil {
-		return fmt.Errorf("not connected to Kubernetes - cannot limit CPU usage")
+		return xerrors.Errorf("not connected to Kubernetes - cannot limit CPU usage")
 	}
 	if agent.Config.Enforcement.CPULimitPenalty == "" {
-		return fmt.Errorf("no CPU limit penalty specified - cannot limit CPU usage")
+		return xerrors.Errorf("no CPU limit penalty specified - cannot limit CPU usage")
 	}
 
 	ctx := context.Background()

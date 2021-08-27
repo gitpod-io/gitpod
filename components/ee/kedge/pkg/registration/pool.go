@@ -6,12 +6,12 @@ package registration
 
 import (
 	"errors"
-	"fmt"
 	"sync"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/kedge/pkg/kedge"
+	"golang.org/x/xerrors"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -61,12 +61,12 @@ func (c *CollectorPool) Start(period time.Duration) {
 func (c *CollectorPool) AddCollector(collector kedge.Collector) error {
 	err := c.Store.Add(collector)
 	if err != nil {
-		return fmt.Errorf("cannot add collector: %w", err)
+		return xerrors.Errorf("cannot add collector: %w", err)
 	}
 
 	err = c.collect(collector, true)
 	if err != nil {
-		return fmt.Errorf("initial collection failed: %w", err)
+		return xerrors.Errorf("initial collection failed: %w", err)
 	}
 
 	return nil
@@ -98,14 +98,14 @@ func (c *CollectorPool) collect(collector kedge.Collector, isDynamic bool) error
 			log.Warn("removing dynamic collector")
 			err = c.Store.Remove(name)
 			if err != nil {
-				return fmt.Errorf("cannot remove failed collector from store: %w", err)
+				return xerrors.Errorf("cannot remove failed collector from store: %w", err)
 			}
 		}
 		if failures >= c.FailureTTLService || collectorFailure {
 			log.Warn("removing collected services")
 			err = kedge.ClearServices(c.Clientset, c.Namespace, name)
 			if err != nil {
-				return fmt.Errorf("cannot clear previously collected services: %w", err)
+				return xerrors.Errorf("cannot clear previously collected services: %w", err)
 			}
 		}
 
@@ -116,7 +116,7 @@ func (c *CollectorPool) collect(collector kedge.Collector, isDynamic bool) error
 
 	// maybe the install failed though
 	if err != nil {
-		return fmt.Errorf("cannot install service endpoints: %w", err)
+		return xerrors.Errorf("cannot install service endpoints: %w", err)
 	}
 
 	// everything went according to plan - let's tell the world

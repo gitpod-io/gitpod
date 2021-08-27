@@ -32,7 +32,7 @@ const (
 
 var (
 	// ErrNotFound is returned when an object is not found
-	ErrNotFound = fmt.Errorf("not found")
+	ErrNotFound = xerrors.Errorf("not found")
 )
 
 // BucketNamer provides names for storage buckets

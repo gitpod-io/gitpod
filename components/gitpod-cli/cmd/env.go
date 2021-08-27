@@ -296,18 +296,18 @@ func parseArgs(args []string, pattern string) ([]*serverapi.UserEnvVarValue, err
 	for i, arg := range args {
 		kv := strings.SplitN(arg, "=", 1)
 		if len(kv) != 1 || kv[0] == "" {
-			return nil, fmt.Errorf("empty string (correct format is key=value)")
+			return nil, xerrors.Errorf("empty string (correct format is key=value)")
 		}
 
 		if !strings.Contains(kv[0], "=") {
-			return nil, fmt.Errorf("%s has no equal character (correct format is %s=some_value)", arg, arg)
+			return nil, xerrors.Errorf("%s has no equal character (correct format is %s=some_value)", arg, arg)
 		}
 
 		parts := strings.SplitN(kv[0], "=", 2)
 
 		key := strings.TrimSpace(parts[0])
 		if key == "" {
-			return nil, fmt.Errorf("variable must have a name")
+			return nil, xerrors.Errorf("variable must have a name")
 		}
 
 		// Do not trim value - the user might want whitespace here
@@ -319,7 +319,7 @@ func parseArgs(args []string, pattern string) ([]*serverapi.UserEnvVarValue, err
 		val = strings.ReplaceAll(val, `\ `, " ")
 
 		if val == "" {
-			return nil, fmt.Errorf("variable must have a value; use -u to unset a variable")
+			return nil, xerrors.Errorf("variable must have a value; use -u to unset a variable")
 		}
 
 		vars[i] = &serverapi.UserEnvVarValue{Name: key, Value: val, RepositoryPattern: pattern}

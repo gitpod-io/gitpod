@@ -7,7 +7,6 @@ package builder
 import (
 	"context"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -23,6 +22,7 @@ import (
 	"github.com/moby/buildkit/session"
 	"github.com/moby/buildkit/util/progress/progressui"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/xerrors"
 )
 
 const (
@@ -93,7 +93,7 @@ func (b *Builder) buildBaseLayer(ctx context.Context, cl *client.Client) error {
 	if baselayerAuth := b.Config.BaseLayerAuth; baselayerAuth != "" {
 		auth, err := newAuthProviderFromEnvvar(baselayerAuth)
 		if err != nil {
-			return fmt.Errorf("invalid base layer authentication: %w", err)
+			return xerrors.Errorf("invalid base layer authentication: %w", err)
 		}
 		sess = append(sess, auth)
 	}
@@ -155,7 +155,7 @@ func (b *Builder) buildBaseLayer(ctx context.Context, cl *client.Client) error {
 	if lauth := b.Config.WorkspaceLayerAuth; lauth != "" {
 		auth, err := newAuthProviderFromEnvvar(lauth)
 		if err != nil {
-			return fmt.Errorf("invalid gp layer authentication: %w", err)
+			return xerrors.Errorf("invalid gp layer authentication: %w", err)
 		}
 		solveOpt.Session = []session.Attachable{auth}
 	}
@@ -221,7 +221,7 @@ func (b *Builder) buildWorkspaceImage(ctx context.Context, cl *client.Client) (e
 	eg.Go(func() error {
 		_, err := cl.Solve(ctx, def, solveOpt, ch)
 		if err != nil {
-			return fmt.Errorf("cannot build Gitpod layer: %w", err)
+			return xerrors.Errorf("cannot build Gitpod layer: %w", err)
 		}
 		return nil
 	})
@@ -262,11 +262,11 @@ func waitForBuildContext(ctx context.Context) error {
 func StartBuildkit(socketPath string) (cl *client.Client, teardown func() error, err error) {
 	stderr, err := ioutil.TempFile(os.TempDir(), "buildkitd_stderr")
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot create buildkitd log file: %w", err)
+		return nil, nil, xerrors.Errorf("cannot create buildkitd log file: %w", err)
 	}
 	stdout, err := ioutil.TempFile(os.TempDir(), "buildkitd_stdout")
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot create buildkitd log file: %w", err)
+		return nil, nil, xerrors.Errorf("cannot create buildkitd log file: %w", err)
 	}
 
 	cmd := exec.Command("buildkitd", "--addr="+socketPath, "--oci-worker-net=host", "--root=/workspace/buildkit")
@@ -293,7 +293,7 @@ func StartBuildkit(socketPath string) (cl *client.Client, teardown func() error,
 		log.WithField("buildkitd-stderr", string(serr)).WithField("buildkitd-stdout", string(sout)).Error("buildkitd failure")
 	}()
 	if err != nil {
-		return nil, nil, fmt.Errorf("cannot start buildkitd: %w", err)
+		return nil, nil, xerrors.Errorf("cannot start buildkitd: %w", err)
 	}
 
 	teardown = func() error {
@@ -341,5 +341,5 @@ func connectToBuildkitd(socketPath string) (cl *client.Client, err error) {
 		return
 	}
 
-	return nil, fmt.Errorf("cannot connect to buildkitd")
+	return nil, xerrors.Errorf("cannot connect to buildkitd")
 }

@@ -6,7 +6,6 @@ package imagerbuilder_test
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"testing"
 	"time"
@@ -15,6 +14,7 @@ import (
 	imgapi "github.com/gitpod-io/gitpod/image-builder/api"
 	"github.com/gitpod-io/gitpod/test/pkg/integration"
 	"golang.org/x/sync/errgroup"
+	"golang.org/x/xerrors"
 )
 
 func TestBaseImageBuild(t *testing.T) {
@@ -119,16 +119,16 @@ func TestParallelBaseImageBuild(t *testing.T) {
 		for {
 			msg, err := cl.Recv()
 			if err != nil && err != io.EOF {
-				return fmt.Errorf("image builder error: %v", err)
+				return xerrors.Errorf("image builder error: %v", err)
 			}
 			if err := ctx.Err(); err != nil {
-				return fmt.Errorf("context error: %v", err)
+				return xerrors.Errorf("context error: %v", err)
 			}
 
 			if msg.Status == imgapi.BuildStatus_done_success {
 				break
 			} else if msg.Status == imgapi.BuildStatus_done_failure {
-				return fmt.Errorf("image build failed: %s", msg.Message)
+				return xerrors.Errorf("image build failed: %s", msg.Message)
 			} else {
 				t.Logf("build output: %s", msg.Message)
 			}

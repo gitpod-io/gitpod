@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"golang.org/x/xerrors"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -249,7 +250,7 @@ func LaunchWorkspaceFromContextURL(it *Test, contextURL string, serverOpts ...Gi
 		it.t.Fatalf("cannot get workspace: %q", err)
 	}
 	if nfo.LatestInstance == nil {
-		err = fmt.Errorf("CreateWorkspace did not start the workspace")
+		err = xerrors.Errorf("CreateWorkspace did not start the workspace")
 		it.t.Fatal(err)
 	}
 
@@ -588,7 +589,7 @@ func (it *Test) resolveOrBuildImage(baseRef string) (absref string, err error) {
 		if resp.Status == imgbldr.BuildStatus_done_success {
 			break
 		} else if resp.Status == imgbldr.BuildStatus_done_failure {
-			return "", fmt.Errorf("cannot build workspace image: %s", resp.Message)
+			return "", xerrors.Errorf("cannot build workspace image: %s", resp.Message)
 		}
 	}
 

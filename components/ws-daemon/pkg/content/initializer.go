@@ -8,7 +8,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
@@ -241,7 +240,7 @@ func RunInitializer(ctx context.Context, destination string, initializer *csapi.
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			// The program has exited with an exit code != 0. If it's 42, it was deliberate.
 			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok && status.ExitStatus() == 42 {
-				return fmt.Errorf("content initializer failed")
+				return xerrors.Errorf("content initializer failed")
 			}
 		}
 
@@ -361,12 +360,12 @@ func (rs *remoteContentStorage) Qualify(name string) string {
 
 // Upload does nothing
 func (rs *remoteContentStorage) Upload(ctx context.Context, source string, name string, opts ...storage.UploadOption) (string, string, error) {
-	return "", "", fmt.Errorf("not implemented")
+	return "", "", xerrors.Errorf("not implemented")
 }
 
 // UploadInstance takes all files from a local location and uploads it to the remote storage
 func (rs *remoteContentStorage) UploadInstance(ctx context.Context, source string, name string, options ...storage.UploadOption) (bucket, obj string, err error) {
-	return "", "", fmt.Errorf("not implemented")
+	return "", "", xerrors.Errorf("not implemented")
 }
 
 // Bucket returns an empty string

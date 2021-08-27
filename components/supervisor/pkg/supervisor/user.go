@@ -5,13 +5,13 @@
 package supervisor
 
 import (
-	"fmt"
 	"os/exec"
 	"os/user"
 	"strconv"
 	"strings"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"golang.org/x/xerrors"
 )
 
 type lookup interface {
@@ -81,11 +81,11 @@ func hasGroup(name string, gid int) (bool, error) {
 	}
 	if grpByID != nil && grpByName == nil {
 		// a group with this GID exists already, but has a different name
-		return true, fmt.Errorf("group %s already uses GID %d", grpByID.Name, gid)
+		return true, xerrors.Errorf("group %s already uses GID %d", grpByID.Name, gid)
 	}
 	if grpByID == nil && grpByName != nil {
 		// a group with this name already exists, but has a different GID
-		return true, fmt.Errorf("group named %s exists but uses different GID %s", name, grpByName.Gid)
+		return true, xerrors.Errorf("group named %s exists but uses different GID %s", name, grpByName.Gid)
 	}
 
 	// group exists and all is well
@@ -115,21 +115,21 @@ func hasUser(u *user.User) (bool, error) {
 	}
 	if userByID != nil && userByName == nil {
 		// a user with this GID exists already, but has a different name
-		return true, fmt.Errorf("user %s already uses UID %s", userByID.Username, u.Uid)
+		return true, xerrors.Errorf("user %s already uses UID %s", userByID.Username, u.Uid)
 	}
 	if userByID == nil && userByName != nil {
 		// a user with this name already exists, but has a different GID
-		return true, fmt.Errorf("user named %s exists but uses different UID %s", u.Username, userByName.Uid)
+		return true, xerrors.Errorf("user named %s exists but uses different UID %s", u.Username, userByName.Uid)
 	}
 
 	// at this point it doesn't matter if we use userByID or byName - they're likely the same
 	// because of the way we looked them up.
 	existingUser := userByID
 	if existingUser.Gid != u.Gid {
-		return true, fmt.Errorf("existing user %s has different GID %s (instead of %s)", existingUser.Username, existingUser.Gid, u.Gid)
+		return true, xerrors.Errorf("existing user %s has different GID %s (instead of %s)", existingUser.Username, existingUser.Gid, u.Gid)
 	}
 	if existingUser.HomeDir != u.HomeDir {
-		return true, fmt.Errorf("existing user %s has different home directory %s (instead of %s)", existingUser.Username, existingUser.HomeDir, u.HomeDir)
+		return true, xerrors.Errorf("existing user %s has different home directory %s (instead of %s)", existingUser.Username, existingUser.HomeDir, u.HomeDir)
 	}
 
 	// user exists and all is well
@@ -139,13 +139,13 @@ func hasUser(u *user.User) (bool, error) {
 func addGroup(name string, gid int) error {
 	flavour := determineAdduserFlavour()
 	if flavour == adduserUnknown {
-		return fmt.Errorf("no addgroup command found")
+		return xerrors.Errorf("no addgroup command found")
 	}
 
 	args := addgroupCommand[flavour](name, gid)
 	out, err := exec.Command(args[0], args[1:]...).CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("%w: %s", err, string(out))
+		return xerrors.Errorf("%w: %s", err, string(out))
 	}
 	log.WithField("args", args).Debug("addgroup")
 
@@ -155,13 +155,13 @@ func addGroup(name string, gid int) error {
 func addUser(opts *user.User) error {
 	flavour := determineAdduserFlavour()
 	if flavour == adduserUnknown {
-		return fmt.Errorf("no adduser command found")
+		return xerrors.Errorf("no adduser command found")
 	}
 
 	args := adduserCommand[flavour](opts)
 	out, err := exec.Command(args[0], args[1:]...).CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("%v: %w: %s", args, err, string(out))
+		return xerrors.Errorf("%v: %w: %s", args, err, string(out))
 	}
 	log.WithField("args", args).Debug("adduser")
 

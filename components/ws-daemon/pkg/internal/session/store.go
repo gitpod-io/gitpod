@@ -6,7 +6,6 @@ package session
 
 import (
 	"context"
-	"fmt"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -21,7 +20,7 @@ import (
 
 var (
 	// ErrAlreadyExists is returned when one tries to create a session which exists already
-	ErrAlreadyExists = fmt.Errorf("session already exists")
+	ErrAlreadyExists = xerrors.Errorf("session already exists")
 )
 
 const (

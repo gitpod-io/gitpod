@@ -14,6 +14,7 @@ import (
 	"strconv"
 
 	"golang.org/x/sys/unix"
+	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 )
@@ -67,7 +68,7 @@ func Run(pid int, args []string, addFD []*os.File, enterNamespace ...Namespace) 
 
 		f, err := os.OpenFile(ns.Source, ns.Flags, 0)
 		if err != nil {
-			return fmt.Errorf("cannot open %s: %w", ns.Source, err)
+			return xerrors.Errorf("cannot open %s: %w", ns.Source, err)
 		}
 		defer f.Close()
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%d", ns.Env, stdioFdCount+len(cmd.ExtraFiles)))
@@ -79,7 +80,7 @@ func Run(pid int, args []string, addFD []*os.File, enterNamespace ...Namespace) 
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
 	if err != nil {
-		return fmt.Errorf("cannot run handler: %w", err)
+		return xerrors.Errorf("cannot run handler: %w", err)
 	}
 	return nil
 }

@@ -9,13 +9,13 @@ import (
 	"context"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"io"
 	"os"
 	"testing"
 	"time"
 
 	ctesting "github.com/gitpod-io/gitpod/common-go/testing"
+	"golang.org/x/xerrors"
 
 	"github.com/containerd/containerd/remotes"
 	"github.com/containerd/containerd/remotes/docker"
@@ -134,7 +134,7 @@ func (f *fakeFetcher) Resolve(ctx context.Context, ref string) (name string, des
 	name = ref
 	c, ok := f.Content[ref]
 	if !ok {
-		err = fmt.Errorf("not found")
+		err = xerrors.Errorf("not found")
 		return
 	}
 
@@ -144,7 +144,7 @@ func (f *fakeFetcher) Resolve(ctx context.Context, ref string) (name string, des
 
 // Pusher returns a new pusher for the provided reference
 func (f *fakeFetcher) Pusher(ctx context.Context, ref string) (remotes.Pusher, error) {
-	return nil, fmt.Errorf("not implemented")
+	return nil, xerrors.Errorf("not implemented")
 }
 
 // Fetcher returns a new fetcher for the provided reference.
@@ -157,7 +157,7 @@ func (f *fakeFetcher) Fetcher(ctx context.Context, ref string) (remotes.Fetcher,
 func (f *fakeFetcher) Fetch(ctx context.Context, desc ocispec.Descriptor) (io.ReadCloser, error) {
 	c, ok := f.Content[desc.Digest.Encoded()]
 	if !ok {
-		return nil, fmt.Errorf("not found")
+		return nil, xerrors.Errorf("not found")
 	}
 	return io.NopCloser(bytes.NewReader(c)), nil
 }

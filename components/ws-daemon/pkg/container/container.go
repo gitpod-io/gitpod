@@ -6,7 +6,8 @@ package container
 
 import (
 	"context"
-	"fmt"
+
+	"golang.org/x/xerrors"
 )
 
 // Runtime abstracts over the different container runtimes out there w.r.t. to the features we need from those runtimes
@@ -50,13 +51,13 @@ type Runtime interface {
 
 var (
 	// ErrNotFound means the container was not found
-	ErrNotFound = fmt.Errorf("not found")
+	ErrNotFound = xerrors.Errorf("not found")
 
 	// ErrNoUpperdir means the container has no upperdir
-	ErrNoUpperdir = fmt.Errorf("no upperdir available")
+	ErrNoUpperdir = xerrors.Errorf("no upperdir available")
 
 	// ErrNoCGroup means the container has no cgroup
-	ErrNoCGroup = fmt.Errorf("no cgroup available")
+	ErrNoCGroup = xerrors.Errorf("no cgroup available")
 )
 
 // ID represents the ID of a CRI container

@@ -4,9 +4,7 @@
 
 package terminal
 
-import (
-	"fmt"
-)
+import "golang.org/x/xerrors"
 
 // RingBuffer implements a ring buffer. It is a fixed size,
 // and new writes overwrite older data, such that for a buffer
@@ -23,7 +21,7 @@ type RingBuffer struct {
 // must be greater than 0.
 func NewRingBuffer(size int64) (*RingBuffer, error) {
 	if size <= 0 {
-		return nil, fmt.Errorf("Size must be positive")
+		return nil, xerrors.Errorf("Size must be positive")
 	}
 
 	b := &RingBuffer{

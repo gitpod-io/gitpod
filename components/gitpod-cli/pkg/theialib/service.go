@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"golang.org/x/xerrors"
 )
 
 // HTTPTheiaService provides access to Theia's CLI service
@@ -38,7 +39,7 @@ func NewServiceFromEnv() (*HTTPTheiaService, error) {
 
 	apiToken := os.Getenv("GITPOD_CLI_APITOKEN")
 	if apiToken == "" {
-		return nil, fmt.Errorf("No GITPOD_CLI_APITOKEN environment variable set")
+		return nil, xerrors.Errorf("No GITPOD_CLI_APITOKEN environment variable set")
 	}
 
 	service := &HTTPTheiaService{
@@ -58,7 +59,7 @@ func NewServiceFromEnv() (*HTTPTheiaService, error) {
 			service.ideError = err
 		}
 		if resp.StatusCode != http.StatusOK {
-			service.ideError = fmt.Errorf("IDE is not ready, %d %s", resp.StatusCode, resp.Status)
+			service.ideError = xerrors.Errorf("IDE is not ready, %d %s", resp.StatusCode, resp.Status)
 		}
 	}()
 
@@ -72,7 +73,7 @@ type request struct {
 
 var (
 	// ErrNotFound is returned when an object is not found
-	ErrNotFound = fmt.Errorf("not found")
+	ErrNotFound = xerrors.Errorf("not found")
 )
 
 func (service *HTTPTheiaService) sendRequest(req request) ([]byte, error) {
@@ -98,11 +99,11 @@ func (service *HTTPTheiaService) sendRequest(req request) ([]byte, error) {
 	}
 
 	if resp.StatusCode == 403 {
-		return nil, fmt.Errorf("not authenticated")
+		return nil, xerrors.Errorf("not authenticated")
 	} else if resp.StatusCode == 404 {
 		return nil, ErrNotFound
 	} else if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("invalid request: %v", resp.StatusCode)
+		return nil, xerrors.Errorf("invalid request: %v", resp.StatusCode)
 	}
 
 	res, err := io.ReadAll(resp.Body)
@@ -153,7 +154,7 @@ func (service *HTTPTheiaService) OpenFile(params OpenFileRequest) (*OpenFileResp
 	} else if err != nil {
 		return nil, err
 	} else if stat.IsDir() {
-		return nil, fmt.Errorf("%s is a directory - can only open files", absPath)
+		return nil, xerrors.Errorf("%s is a directory - can only open files", absPath)
 	}
 	params.Path = absPath
 

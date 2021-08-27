@@ -71,17 +71,17 @@ func buildStaticLayer(ctx context.Context, cfg []StaticLayerCfg, newResolver Res
 		case "file":
 			src, err := NewFileLayerSource(ctx, sl.Ref)
 			if err != nil {
-				return nil, fmt.Errorf("cannot source layer from %s: %w", sl.Ref, err)
+				return nil, xerrors.Errorf("cannot source layer from %s: %w", sl.Ref, err)
 			}
 			l = append(l, src)
 		case "image":
 			src, err := NewStaticSourceFromImage(ctx, newResolver(), sl.Ref)
 			if err != nil {
-				return nil, fmt.Errorf("cannot source layer from %s: %w", sl.Ref, err)
+				return nil, xerrors.Errorf("cannot source layer from %s: %w", sl.Ref, err)
 			}
 			l = append(l, src)
 		default:
-			return nil, fmt.Errorf("unknown static layer type: %s", sl.Type)
+			return nil, xerrors.Errorf("unknown static layer type: %s", sl.Type)
 		}
 	}
 	return l, nil

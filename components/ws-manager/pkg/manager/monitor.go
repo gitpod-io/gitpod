@@ -155,7 +155,7 @@ func (m *Monitor) onPodEvent(evt watch.Event) error {
 
 	pod, ok := evt.Object.(*corev1.Pod)
 	if !ok {
-		return fmt.Errorf("received non-pod event")
+		return xerrors.Errorf("received non-pod event")
 	}
 
 	// We start with the default kubernetes operation timeout to not block everything in case completing
@@ -231,7 +231,7 @@ func actOnPodEvent(ctx context.Context, m actingManager, status *api.WorkspaceSt
 
 	workspaceID, ok := pod.Annotations[workspaceIDAnnotation]
 	if !ok {
-		return fmt.Errorf("cannot act on pod %s: has no %s annotation", pod.Name, workspaceIDAnnotation)
+		return xerrors.Errorf("cannot act on pod %s: has no %s annotation", pod.Name, workspaceIDAnnotation)
 	}
 
 	if status.Phase == api.WorkspacePhase_STOPPING || status.Phase == api.WorkspacePhase_STOPPED {
@@ -869,7 +869,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 			if err != nil {
 				tracing.LogError(span, err)
 				log.WithError(err).Warn("cannot take snapshot")
-				err = fmt.Errorf("cannot take snapshot: %v", err)
+				err = xerrors.Errorf("cannot take snapshot: %v", err)
 			}
 
 			if res != nil {
@@ -877,7 +877,7 @@ func (m *Monitor) finalizeWorkspaceContent(ctx context.Context, wso *workspaceOb
 				if err != nil {
 					tracing.LogError(span, err)
 					log.WithError(err).Warn("cannot mark headless workspace with snapshot - that's one prebuild lost")
-					err = fmt.Errorf("cannot remember snapshot: %v", err)
+					err = xerrors.Errorf("cannot remember snapshot: %v", err)
 				}
 			}
 		}
@@ -988,7 +988,7 @@ func (m *Monitor) deleteDanglingServices(ctx context.Context) error {
 
 		workspaceID, ok := endpoints.Labels[wsk8s.WorkspaceIDLabel]
 		if !ok {
-			m.OnError(fmt.Errorf("service endpoint %s does not have %s label", service.Name, wsk8s.WorkspaceIDLabel))
+			m.OnError(xerrors.Errorf("service endpoint %s does not have %s label", service.Name, wsk8s.WorkspaceIDLabel))
 			continue
 		}
 

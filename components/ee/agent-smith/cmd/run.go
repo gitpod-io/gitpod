@@ -22,6 +22,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
+	"golang.org/x/xerrors"
 )
 
 // runCmd represents the run command
@@ -182,7 +183,7 @@ func notifySlack(webhook string, hostURL string, ws agent.InfringingWorkspace, p
 		for i, err := range errs {
 			allerr[i] = err.Error()
 		}
-		return fmt.Errorf("notifySlack: %s", strings.Join(allerr, ", "))
+		return xerrors.Errorf("notifySlack: %s", strings.Join(allerr, ", "))
 	}
 
 	return nil

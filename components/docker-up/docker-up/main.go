@@ -29,6 +29,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"golang.org/x/sys/unix"
+	"golang.org/x/xerrors"
 )
 
 var log *logrus.Entry
@@ -106,7 +107,7 @@ func runWithinNetns() (err error) {
 		return err
 	}
 	if msg.Stage != 1 {
-		return fmt.Errorf("expected stage 1 message, got %+q", msg)
+		return xerrors.Errorf("expected stage 1 message, got %+q", msg)
 	}
 	log.Debug("parent is ready")
 
@@ -284,7 +285,7 @@ func ensurePrerequisites() error {
 		return nil
 	}
 
-	errMissingPrerequisites := fmt.Errorf("missing prerequisites")
+	errMissingPrerequisites := xerrors.Errorf("missing prerequisites")
 	if !opts.AutoInstall {
 		return errMissingPrerequisites
 	}
@@ -323,7 +324,7 @@ func installDocker() error {
 				return nil
 			}
 
-			return fmt.Errorf("Unable to extract container: %v\n", err)
+			return xerrors.Errorf("Unable to extract container: %v\n", err)
 		}
 
 		hdrInfo := hdr.FileInfo()
@@ -340,12 +341,12 @@ func installDocker() error {
 		case tar.TypeReg, tar.TypeRegA:
 			file, err := os.OpenFile(dstpath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, mode)
 			if err != nil {
-				return fmt.Errorf("unable to create file: %v", err)
+				return xerrors.Errorf("unable to create file: %v", err)
 			}
 
 			if _, err := io.Copy(file, tarReader); err != nil {
 				file.Close()
-				return fmt.Errorf("unable to write file: %v", err)
+				return xerrors.Errorf("unable to write file: %v", err)
 			}
 
 			file.Close()

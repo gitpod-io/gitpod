@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -62,7 +63,7 @@ func Discover(clientset kubernetes.Interface, namespace string, services []strin
 	api := clientset.CoreV1()
 	existingServiceList, err := api.Services(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("cannot get services: %w", err)
+		return nil, xerrors.Errorf("cannot get services: %w", err)
 	}
 	existingServiceIdx := make(map[string]corev1.Service)
 	for _, s := range existingServiceList.Items {
@@ -70,7 +71,7 @@ func Discover(clientset kubernetes.Interface, namespace string, services []strin
 	}
 	endpoints, err := api.Endpoints(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("cannot get endpoints: %w", err)
+		return nil, xerrors.Errorf("cannot get endpoints: %w", err)
 	}
 	endpointIdx := make(map[string]corev1.Endpoints)
 	for _, e := range endpoints.Items {
@@ -103,7 +104,7 @@ func Install(clientset kubernetes.Interface, namespace string, source string, se
 	api := clientset.CoreV1()
 	serviceList, err := api.Services(namespace).List(context.Background(), metav1.ListOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("cannot get services: %w", err)
+		return nil, xerrors.Errorf("cannot get services: %w", err)
 	}
 	serviceIdx := make(map[string]corev1.Service)
 	for _, s := range serviceList.Items {
@@ -121,7 +122,7 @@ func Install(clientset kubernetes.Interface, namespace string, source string, se
 			}
 		} else {
 			if err := createTargetService(clientset, namespace, source, serviceName, srv); err != nil {
-				return nil, fmt.Errorf("cannot create target service: %w", err)
+				return nil, xerrors.Errorf("cannot create target service: %w", err)
 			}
 			log.WithField("src", srv.Service.Name).WithField("dst", serviceName).Debug("created service")
 			res = append(res, serviceName)
@@ -129,12 +130,12 @@ func Install(clientset kubernetes.Interface, namespace string, source string, se
 
 		shouldCreateEndpoint, err := clearTargetEndpoints(clientset, namespace, serviceName, srv)
 		if err != nil {
-			return nil, fmt.Errorf("cannot clear target endpoints: %w", err)
+			return nil, xerrors.Errorf("cannot clear target endpoints: %w", err)
 		}
 		if shouldCreateEndpoint {
 			err := createTargetEndpoints(clientset, namespace, source, serviceName, srv)
 			if err != nil {
-				return nil, fmt.Errorf("cannot create target endooints: %w", err)
+				return nil, xerrors.Errorf("cannot create target endooints: %w", err)
 			}
 			log.WithField("src", srv.Service.Name).WithField("dst", serviceName).Debug("created endpoints")
 		}
@@ -151,7 +152,7 @@ func ClearLegacyServices(clientset kubernetes.Interface, namespace string) (err 
 	servicesAPI := clientset.CoreV1().Services(namespace)
 	services, err := servicesAPI.List(context.Background(), metav1.ListOptions{LabelSelector: kedgeLegacyLabelSelector})
 	if err != nil {
-		return fmt.Errorf("cannot get services: %w", err)
+		return xerrors.Errorf("cannot get services: %w", err)
 	}
 	for _, s := range services.Items {
 		err = servicesAPI.Delete(context.Background(), s.Name, metav1.DeleteOptions{
@@ -168,7 +169,7 @@ func ClearLegacyServices(clientset kubernetes.Interface, namespace string) (err 
 	endpointsAPI := clientset.CoreV1().Endpoints(namespace)
 	endpoints, err := endpointsAPI.List(context.Background(), metav1.ListOptions{LabelSelector: kedgeLegacyLabelSelector})
 	if err != nil {
-		return fmt.Errorf("cannot get endpoints: %w", err)
+		return xerrors.Errorf("cannot get endpoints: %w", err)
 	}
 	for _, e := range endpoints.Items {
 		err = endpointsAPI.Delete(context.Background(), e.Name, metav1.DeleteOptions{
@@ -190,7 +191,7 @@ func ClearServices(clientset kubernetes.Interface, namespace, source string) (er
 	servicesAPI := clientset.CoreV1().Services(namespace)
 	services, err := servicesAPI.List(context.Background(), metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", LabelSource, source)})
 	if err != nil {
-		return fmt.Errorf("cannot get services: %w", err)
+		return xerrors.Errorf("cannot get services: %w", err)
 	}
 	for _, s := range services.Items {
 		err = servicesAPI.Delete(context.Background(), s.Name, metav1.DeleteOptions{
@@ -207,7 +208,7 @@ func ClearServices(clientset kubernetes.Interface, namespace, source string) (er
 	endpointsAPI := clientset.CoreV1().Endpoints(namespace)
 	endpoints, err := endpointsAPI.List(context.Background(), metav1.ListOptions{LabelSelector: fmt.Sprintf("%s=%s", LabelSource, source)})
 	if err != nil {
-		return fmt.Errorf("cannot get endpoints: %w", err)
+		return xerrors.Errorf("cannot get endpoints: %w", err)
 	}
 	for _, e := range endpoints.Items {
 		err = endpointsAPI.Delete(context.Background(), e.Name, metav1.DeleteOptions{
@@ -259,7 +260,7 @@ func createTargetService(clientset kubernetes.Interface, namespace, source, name
 
 	_, err := api.Services(namespace).Create(context.Background(), targetService, metav1.CreateOptions{})
 	if err != nil {
-		return fmt.Errorf("cannot create target service: %w", err)
+		return xerrors.Errorf("cannot create target service: %w", err)
 	}
 	return nil
 }
@@ -268,7 +269,7 @@ func clearTargetEndpoints(clientset kubernetes.Interface, namespace string, name
 	api := clientset.CoreV1().Endpoints(namespace)
 	endpoints, err := api.List(context.Background(), metav1.ListOptions{LabelSelector: kedgeLabelSelector})
 	if err != nil {
-		return false, fmt.Errorf("cannot get endpoints: %w", err)
+		return false, xerrors.Errorf("cannot get endpoints: %w", err)
 	}
 
 	found := false
@@ -301,7 +302,7 @@ func clearTargetEndpoints(clientset kubernetes.Interface, namespace string, name
 
 	err = api.Delete(context.Background(), name, metav1.DeleteOptions{PropagationPolicy: &defaultPropagationPolicy})
 	if err != nil {
-		return false, fmt.Errorf("cannot delete existing endpoint: %w", err)
+		return false, xerrors.Errorf("cannot delete existing endpoint: %w", err)
 	}
 	log.WithField("name", name).WithField("namespace", namespace).Debug("deleted previous endpoint")
 
@@ -336,7 +337,7 @@ func clearTargetEndpoints(clientset kubernetes.Interface, namespace string, name
 	case <-done:
 		return true, nil
 	case <-time.After(120 * time.Second):
-		return false, fmt.Errorf("timeout while waiting for the endpoints to be deleted")
+		return false, xerrors.Errorf("timeout while waiting for the endpoints to be deleted")
 	}
 }
 
@@ -365,7 +366,7 @@ func createTargetEndpoints(clientset kubernetes.Interface, namespace, source, na
 
 	_, err := clientset.CoreV1().Endpoints(namespace).Create(context.Background(), targetEndpoint, metav1.CreateOptions{})
 	if err != nil {
-		return fmt.Errorf("cannot create endpoint: %w", err)
+		return xerrors.Errorf("cannot create endpoint: %w", err)
 	}
 	return nil
 }

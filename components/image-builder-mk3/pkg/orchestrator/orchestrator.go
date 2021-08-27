@@ -112,7 +112,7 @@ func NewOrchestratingBuilder(cfg Configuration) (res *Orchestrator, err error) {
 			return
 		}
 		if len(data) != 32 {
-			err = fmt.Errorf("builder auth key must be exactly 32 bytes long")
+			err = xerrors.Errorf("builder auth key must be exactly 32 bytes long")
 			return
 		}
 		copy(builderAuthKey[:], data)

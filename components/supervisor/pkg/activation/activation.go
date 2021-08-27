@@ -6,12 +6,12 @@ package activation
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"os"
 	"sync"
 
 	"github.com/mailru/easygo/netpoll"
+	"golang.org/x/xerrors"
 )
 
 // Callback is called when a listener is written to. Receivers are expected to close socketFD.
@@ -64,7 +64,7 @@ func Listen(ctx context.Context, l net.Listener, activate Callback) error {
 	case *net.TCPListener:
 		f, err = ll.File()
 	default:
-		return fmt.Errorf("unsuported listener")
+		return xerrors.Errorf("unsuported listener")
 	}
 	if err != nil {
 		return err

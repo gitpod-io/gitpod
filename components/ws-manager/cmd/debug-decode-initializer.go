@@ -10,6 +10,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/xerrors"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 
@@ -24,13 +25,13 @@ var debugDecodeImageSpec = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		initializerPB, err := base64.StdEncoding.DecodeString(args[0])
 		if err != nil {
-			return fmt.Errorf("cannot decode init config: %w", err)
+			return xerrors.Errorf("cannot decode init config: %w", err)
 		}
 
 		var initializer csapi.WorkspaceInitializer
 		err = proto.Unmarshal(initializerPB, &initializer)
 		if err != nil {
-			return fmt.Errorf("cannot unmarshal init config: %w", err)
+			return xerrors.Errorf("cannot unmarshal init config: %w", err)
 		}
 
 		marshaler := protojson.MarshalOptions{
