@@ -64,7 +64,7 @@ func newMetrics(m *Manager) *metrics {
 			Subsystem: metricsWorkspaceSubsystem,
 			Name:      "workspace_stops_total",
 			Help:      "total number of workspaces stopped",
-		}, []string{"reason"}),
+		}, []string{"reason", "type"}),
 		totalOpenPortGauge: prometheus.NewGaugeFunc(prometheus.GaugeOpts{
 			Namespace: metricsNamespace,
 			Subsystem: metricsWorkspaceSubsystem,
@@ -144,6 +144,7 @@ func (m *metrics) OnWorkspaceStarted(tpe api.WorkspaceType) {
 
 func (m *metrics) OnChange(status *api.WorkspaceStatus) {
 	var removeFromState bool
+	tpe := api.WorkspaceType_name[int32(status.Spec.Type)]
 	m.mu.Lock()
 	defer func() {
 		if removeFromState {
@@ -165,7 +166,6 @@ func (m *metrics) OnChange(status *api.WorkspaceStatus) {
 		}
 
 		t := status.Metadata.StartedAt.AsTime()
-		tpe := api.WorkspaceType_name[int32(status.Spec.Type)]
 		hist, err := m.startupTimeHistVec.GetMetricWithLabelValues(tpe)
 		if err != nil {
 			log.WithError(err).WithField("type", tpe).Warn("cannot get startup time histogram metric")
@@ -185,7 +185,7 @@ func (m *metrics) OnChange(status *api.WorkspaceStatus) {
 			reason = "regular-stop"
 		}
 
-		counter, err := m.totalStopsCounterVec.GetMetricWithLabelValues(reason)
+		counter, err := m.totalStopsCounterVec.GetMetricWithLabelValues(reason, tpe)
 		if err != nil {
 			log.WithError(err).WithField("reason", reason).Warn("cannot get counter for workspace stops metric")
 			return
