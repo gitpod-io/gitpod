@@ -238,7 +238,7 @@ components:
     name: "image-builder-mk3"
     dependsOn:
     - "image-builder-mk3-configmap.yaml"
-    alpineImage: alpine:3.13
+    alpineImage: alpine:3.14
     builderImage:
       imageName: "image-builder-mk3/bob"
     ports:
