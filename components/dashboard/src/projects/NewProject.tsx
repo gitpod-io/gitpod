@@ -172,16 +172,21 @@ export default function NewProject() {
             return;
         }
 
-        await getGitpodService().server.createProject({
-            name: repo.name,
-            cloneUrl: repo.cloneUrl,
-            account: repo.account,
-            provider,
-            ...(User.is(teamOrUser) ? { userId: teamOrUser.id } : { teamId: teamOrUser.id }),
-            appInstallationId: String(repo.installationId),
-        });
+        try {
+            await getGitpodService().server.createProject({
+                name: repo.name,
+                cloneUrl: repo.cloneUrl,
+                account: repo.account,
+                provider,
+                ...(User.is(teamOrUser) ? { userId: teamOrUser.id } : { teamId: teamOrUser.id }),
+                appInstallationId: String(repo.installationId),
+            });
 
-        history.push(`/${User.is(teamOrUser) ? 'projects' : 't/'+teamOrUser.slug}/${repo.name}/configure`);
+            history.push(`/${User.is(teamOrUser) ? 'projects' : 't/'+teamOrUser.slug}/${repo.name}/configure`);
+        } catch (error) {
+            const message = (error && error?.message) || "Failed to create new project."
+            window.alert(message);
+        }
     }
 
     const toSimpleName = (fullName: string) => {
