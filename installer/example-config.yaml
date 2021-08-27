@@ -1,0 +1,53 @@
+analytics: null
+authProviders: null
+blockNewUsers:
+  enabled: false
+  passlist: null
+certificate:
+  kind: ""
+  name: ""
+containerRegistry:
+  external: null
+  inCluster: null
+database:
+  cloudSQL: null
+  rds: null
+domain: "gitpod.io"
+imagePullSecrets: null
+installNetworkPolicies: false
+kind: Full
+messageBus: { }
+metadata:
+  region: "eu-west1"
+objectStorage:
+  cloudStorage:
+    certificate:
+      name: "gcp-sa"
+  s3: null
+observability:
+  logLevel: ""
+  tracing: null
+repository: "eu.gcr.io/gitpod-core-dev/build/"
+workspace:
+  resources:
+    DynamicLimits:
+      CPU: null
+    Limits:
+      CPU: ""
+      EphemeralStorage: ""
+      Memory: ""
+      Storage: ""
+    Requests:
+      CPU: ""
+      EphemeralStorage: ""
+      Memory: ""
+      Storage: ""
+  runtime:
+    containerdRuntimeDir: ""
+    fsShiftMethod: "fuse"
+  templates:
+    default: null
+    ghost: null
+    image_build: null
+    prebuild: null
+    regular: null
