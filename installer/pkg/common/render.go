@@ -10,3 +10,9 @@ import (
 type Renderable interface {
 	Render(cfg *config.Config) ([]runtime.Object, error)
 }
+
+type RenderContext struct {
+	Version         string
+	VersionManifest map[string]string
+	Config          *config.Config
+}
