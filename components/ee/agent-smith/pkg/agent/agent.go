@@ -227,12 +227,18 @@ func (ws InfringingWorkspace) VID() string {
 }
 
 // DescibeInfringements returns a string representation of all infringements of this workspace
-func (ws InfringingWorkspace) DescibeInfringements() string {
+func (ws InfringingWorkspace) DescribeInfringements(charCount int) string {
 	res := make([]string, len(ws.Infringements))
 	for i, v := range ws.Infringements {
 		res[i] = fmt.Sprintf("%s: %s", v.Kind, v.Description)
 	}
-	return strings.Join(res, "\n")
+
+	infringements := strings.Join(res, "\n")
+	if len(infringements) > charCount {
+		infringements = infringements[:charCount]
+	}
+
+	return infringements
 }
 
 // Infringement reports a users particular wrongdoing

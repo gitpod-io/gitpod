@@ -131,10 +131,11 @@ func startMemoryWatchdog(maxSysMemMib uint64) {
 
 func notifySlack(webhook string, hostURL string, ws agent.InfringingWorkspace, penalties []agent.PenaltyKind) error {
 	var (
-		region       = os.Getenv("GITPOD_REGION")
-		lblDetails   = "Details"
-		lblActions   = "Actions"
-		lblPenalties = "Penalties"
+		region           = os.Getenv("GITPOD_REGION")
+		lblDetails       = "Details"
+		lblActions       = "Actions"
+		lblPenalties     = "Penalties"
+		lblInfringements = "Long Infringements details"
 	)
 
 	attachments := []slack.Attachment{
@@ -171,8 +172,19 @@ func notifySlack(webhook string, hostURL string, ws agent.InfringingWorkspace, p
 		},
 	)
 
+	infringements := make([]*slack.Field, len(ws.Infringements))
+	for _, v := range ws.Infringements {
+		infringements = append(infringements, &slack.Field{
+			Title: string(v.Kind), Value: v.Description,
+		})
+	}
+
+	attachments = append(attachments,
+		slack.Attachment{Title: &lblInfringements, Fields: infringements},
+	)
+
 	payload := slack.Payload{
-		Text:        fmt.Sprintf("Agent Smith: %s", ws.DescibeInfringements()),
+		Text:        fmt.Sprintf("Agent Smith: %s", ws.DescribeInfringements(150)),
 		IconEmoji:   ":-(",
 		Attachments: attachments,
 	}
