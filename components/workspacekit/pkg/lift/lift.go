@@ -20,6 +20,7 @@ import (
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"golang.org/x/sys/unix"
+	"golang.org/x/xerrors"
 )
 
 const (
@@ -98,7 +99,7 @@ func serveLiftClient(conn net.Conn) error {
 	}
 
 	if len(msgs) != 1 {
-		return fmt.Errorf("expected a single socket control message")
+		return xerrors.Errorf("expected a single socket control message")
 	}
 
 	fds, err := unix.ParseUnixRights(&msgs[0])
@@ -107,7 +108,7 @@ func serveLiftClient(conn net.Conn) error {
 	}
 
 	if len(fds) != 3 {
-		return fmt.Errorf("expected three file descriptors")
+		return xerrors.Errorf("expected three file descriptors")
 	}
 
 	rd := bufio.NewReader(f)
@@ -123,7 +124,7 @@ func serveLiftClient(conn net.Conn) error {
 	}
 
 	if len(msg.Command) == 0 {
-		return fmt.Errorf("expected non-empty command")
+		return xerrors.Errorf("expected non-empty command")
 	}
 
 	log.WithField("command", msg.Command).Info("running lifted command")

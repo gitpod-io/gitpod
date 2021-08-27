@@ -10,6 +10,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/xerrors"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -73,7 +74,7 @@ func Inject(cfg *rest.Config, namespace, targetService string, options ...Inject
 		return nil, err
 	}
 	if len(pods.Items) == 0 {
-		return nil, fmt.Errorf("found no pods matching the service selector")
+		return nil, xerrors.Errorf("found no pods matching the service selector")
 	}
 	originalPod := pods.Items[0]
 	log.WithField("name", originalPod.Name).Info("original pods found")
@@ -221,7 +222,7 @@ func Inject(cfg *rest.Config, namespace, targetService string, options ...Inject
 
 	})
 	if err != nil {
-		return nil, fmt.Errorf("cannot wait for proxy pod: %w", err)
+		return nil, xerrors.Errorf("cannot wait for proxy pod: %w", err)
 	}
 	log.Info("proxy pod up and running")
 
@@ -230,19 +231,19 @@ func Inject(cfg *rest.Config, namespace, targetService string, options ...Inject
 		return nil, nil
 	}
 	if len(proxyPods.Items) == 0 {
-		return nil, fmt.Errorf("no proxy pod found")
+		return nil, xerrors.Errorf("no proxy pod found")
 	}
 	tppod := proxyPods.Items[0].Name
 
 	tpc, err := NewProxiedToxiproxy(cfg, namespace, tppod)
 	if err != nil {
-		return nil, fmt.Errorf("cannot start proxy: %w", err)
+		return nil, xerrors.Errorf("cannot start proxy: %w", err)
 	}
 
 	for _, p := range oldService.Spec.Ports {
 		_, err := tpc.CreateProxy(targetService, fmt.Sprintf(":%d", p.TargetPort.IntVal), fmt.Sprintf("%s:%d", renamedService.Name, p.Port))
 		if err != nil {
-			return nil, fmt.Errorf("cannot proxy port %d -> %d: %w", p.TargetPort.IntVal, p.Port, err)
+			return nil, xerrors.Errorf("cannot proxy port %d -> %d: %w", p.TargetPort.IntVal, p.Port, err)
 		}
 		log.WithField("port", p.Port).Infof("toxiproxy for port %d -> %d set up", p.TargetPort.IntVal, p.Port)
 	}

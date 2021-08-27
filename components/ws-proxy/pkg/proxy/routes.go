@@ -607,7 +607,7 @@ func (t *blobserveTransport) DoRoundTrip(req *http.Request) (resp *http.Response
 			}
 
 			// treat any client or server error code as a http error
-			return nil, fmt.Errorf("blobserver error: (%d) %s", resp.StatusCode, string(respBody))
+			return nil, xerrors.Errorf("blobserver error: (%d) %s", resp.StatusCode, string(respBody))
 		}
 		break
 	}

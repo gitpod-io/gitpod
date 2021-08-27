@@ -6,7 +6,6 @@ package resolve
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -23,7 +22,7 @@ import (
 )
 
 // ErrNotFound is returned when the reference was not found
-var ErrNotFound = fmt.Errorf("not found")
+var ErrNotFound = xerrors.Errorf("not found")
 
 // StandaloneRefResolver can resolve image references without a Docker daemon
 type StandaloneRefResolver struct {

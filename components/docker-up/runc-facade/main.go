@@ -6,13 +6,13 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 	"os/exec"
 	"syscall"
 
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/xerrors"
 )
 
 var (
@@ -50,31 +50,31 @@ func main() {
 func createAndRunc(runcPath string) error {
 	fc, err := os.ReadFile("config.json")
 	if err != nil {
-		return fmt.Errorf("cannot read config.json: %w", err)
+		return xerrors.Errorf("cannot read config.json: %w", err)
 	}
 
 	var cfg specs.Spec
 	err = json.Unmarshal(fc, &cfg)
 	if err != nil {
-		return fmt.Errorf("cannot decode config.json: %w", err)
+		return xerrors.Errorf("cannot decode config.json: %w", err)
 	}
 
 	cfg.Process.OOMScoreAdj = &defaultOOMScoreAdj
 
 	fc, err = json.Marshal(cfg)
 	if err != nil {
-		return fmt.Errorf("cannot encode config.json: %w", err)
+		return xerrors.Errorf("cannot encode config.json: %w", err)
 	}
 	for _, fn := range []string{"config.json", "/tmp/debug.json"} {
 		err = os.WriteFile(fn, fc, 0644)
 		if err != nil {
-			return fmt.Errorf("cannot encode config.json: %w", err)
+			return xerrors.Errorf("cannot encode config.json: %w", err)
 		}
 	}
 
 	err = syscall.Exec(runcPath, os.Args, os.Environ())
 	if err != nil {
-		return fmt.Errorf("exec %s: %w", runcPath, err)
+		return xerrors.Errorf("exec %s: %w", runcPath, err)
 	}
 	return nil
 }

@@ -7,9 +7,10 @@ package bastion
 import (
 	"context"
 
-	"github.com/gitpod-io/gitpod/local-app/api"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/gitpod-io/gitpod/local-app/api"
 )
 
 type LocalAppService struct {

@@ -6,10 +6,10 @@ package diskguard
 
 import (
 	"context"
-	"fmt"
 	"syscall"
 	"time"
 
+	"golang.org/x/xerrors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/retry"
@@ -122,7 +122,7 @@ func getAvailableBytes(path string) (bvail uint64, err error) {
 	var stat syscall.Statfs_t
 	err = syscall.Statfs(path, &stat)
 	if err != nil {
-		return 0, fmt.Errorf("cannot stat %s: %w", path, err)
+		return 0, xerrors.Errorf("cannot stat %s: %w", path, err)
 	}
 
 	bvail = stat.Bavail * uint64(stat.Bsize)

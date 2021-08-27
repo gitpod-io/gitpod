@@ -16,6 +16,7 @@ import (
 
 	"github.com/moby/sys/mountinfo"
 	"golang.org/x/sys/unix"
+	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/workspacekit/pkg/readarg"
@@ -50,15 +51,15 @@ func mapHandler(h SyscallHandler) map[string]syscallHandler {
 func LoadFilter() (libseccomp.ScmpFd, error) {
 	filter, err := libseccomp.NewFilter(libseccomp.ActAllow)
 	if err != nil {
-		return 0, fmt.Errorf("cannot create filter: %w", err)
+		return 0, xerrors.Errorf("cannot create filter: %w", err)
 	}
 	err = filter.SetTsync(false)
 	if err != nil {
-		return 0, fmt.Errorf("cannot set tsync: %w", err)
+		return 0, xerrors.Errorf("cannot set tsync: %w", err)
 	}
 	err = filter.SetNoNewPrivsBit(false)
 	if err != nil {
-		return 0, fmt.Errorf("cannot set no_new_privs: %w", err)
+		return 0, xerrors.Errorf("cannot set no_new_privs: %w", err)
 	}
 
 	// we explicitly prohibit open_tree/move_mount to prevent container workloads
@@ -70,11 +71,11 @@ func LoadFilter() (libseccomp.ScmpFd, error) {
 	for _, sc := range deniedSyscalls {
 		syscallID, err := libseccomp.GetSyscallFromName(sc)
 		if err != nil {
-			return 0, fmt.Errorf("unknown syscall %s: %w", sc, err)
+			return 0, xerrors.Errorf("unknown syscall %s: %w", sc, err)
 		}
 		err = filter.AddRule(syscallID, libseccomp.ActErrno.SetReturnCode(int16(unix.EPERM)))
 		if err != nil {
-			return 0, fmt.Errorf("cannot add rule for %s: %w", sc, err)
+			return 0, xerrors.Errorf("cannot add rule for %s: %w", sc, err)
 		}
 	}
 
@@ -82,22 +83,22 @@ func LoadFilter() (libseccomp.ScmpFd, error) {
 	for sc := range handledSyscalls {
 		syscallID, err := libseccomp.GetSyscallFromName(sc)
 		if err != nil {
-			return 0, fmt.Errorf("unknown syscall %s: %w", sc, err)
+			return 0, xerrors.Errorf("unknown syscall %s: %w", sc, err)
 		}
 		err = filter.AddRule(syscallID, libseccomp.ActNotify)
 		if err != nil {
-			return 0, fmt.Errorf("cannot add rule for %s: %w", sc, err)
+			return 0, xerrors.Errorf("cannot add rule for %s: %w", sc, err)
 		}
 	}
 
 	err = filter.Load()
 	if err != nil {
-		return 0, fmt.Errorf("cannot load filter: %w", err)
+		return 0, xerrors.Errorf("cannot load filter: %w", err)
 	}
 
 	fd, err := filter.GetNotifFd()
 	if err != nil {
-		return 0, fmt.Errorf("cannot get inotif fd: %w", err)
+		return 0, xerrors.Errorf("cannot get inotif fd: %w", err)
 	}
 
 	return fd, nil

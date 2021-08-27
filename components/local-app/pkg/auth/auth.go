@@ -18,6 +18,7 @@ import (
 	"github.com/skratchdot/open-golang/open"
 	keyring "github.com/zalando/go-keyring"
 	"golang.org/x/oauth2"
+	"golang.org/x/xerrors"
 )
 
 const (
@@ -78,7 +79,7 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 		defer rl.Close()
 	}
 	if rl == nil {
-		return "", fmt.Errorf("could not open any valid port in range %d - %d", STARTING_PORT_NUM, ENDING_PORT_NUM)
+		return "", xerrors.Errorf("could not open any valid port in range %d - %d", STARTING_PORT_NUM, ENDING_PORT_NUM)
 	}
 
 	var (
@@ -147,7 +148,7 @@ func Login(ctx context.Context, opts LoginOpts) (token string, err error) {
 	// open a browser window to the authorizationURL
 	err = open.Start(authorizationURL)
 	if err != nil {
-		return "", fmt.Errorf("cannot open browser to URL %s: %s\n", authorizationURL, err)
+		return "", xerrors.Errorf("cannot open browser to URL %s: %s\n", authorizationURL, err)
 	}
 
 	var query url.Values

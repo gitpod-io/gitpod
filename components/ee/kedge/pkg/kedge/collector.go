@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/xerrors"
 	"k8s.io/client-go/kubernetes"
 )
 
@@ -21,22 +22,22 @@ func Collect(url, token string) ([]Service, error) {
 	}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create new HTTP request: %w", err)
+		return nil, xerrors.Errorf("cannot create new HTTP request: %w", err)
 	}
 	// req.SetBasicAuth("Bearer", token)
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
 	response, err := client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("unable to make request: %w", err)
+		return nil, xerrors.Errorf("unable to make request: %w", err)
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("HTTP request returned non-OK status: %s", response.Status)
+		return nil, xerrors.Errorf("HTTP request returned non-OK status: %s", response.Status)
 	}
 
 	var result []Service
 	if err := json.NewDecoder(response.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("cannot unmarshal response: %w", err)
+		return nil, xerrors.Errorf("cannot unmarshal response: %w", err)
 	}
 	return result, nil
 }

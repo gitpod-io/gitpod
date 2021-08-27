@@ -247,7 +247,7 @@ func (rs *DirectMinIOStorage) Qualify(name string) string {
 // UploadInstance takes all files from a local location and uploads it to the per-instance remote storage
 func (rs *DirectMinIOStorage) UploadInstance(ctx context.Context, source string, name string, opts ...UploadOption) (bucket, object string, err error) {
 	if rs.InstanceID == "" {
-		return "", "", fmt.Errorf("instanceID is required to comput object name")
+		return "", "", xerrors.Errorf("instanceID is required to comput object name")
 	}
 	return rs.Upload(ctx, source, InstanceObjectName(rs.InstanceID, name), opts...)
 }

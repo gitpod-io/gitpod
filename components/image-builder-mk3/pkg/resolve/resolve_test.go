@@ -6,7 +6,6 @@ package resolve_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/containerd/containerd/errdefs"
@@ -14,6 +13,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/opencontainers/go-digest"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
+	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/image-builder/pkg/resolve"
 )
@@ -101,8 +101,8 @@ func (f *fakeResolver) Resolve(ctx context.Context, ref string) (name string, de
 	return c.Name, c.Desc, nil
 }
 func (*fakeResolver) Fetcher(ctx context.Context, ref string) (remotes.Fetcher, error) {
-	return nil, fmt.Errorf("not supporter")
+	return nil, xerrors.Errorf("not supporter")
 }
 func (*fakeResolver) Pusher(ctx context.Context, ref string) (remotes.Pusher, error) {
-	return nil, fmt.Errorf("not supporter")
+	return nil, xerrors.Errorf("not supporter")
 }

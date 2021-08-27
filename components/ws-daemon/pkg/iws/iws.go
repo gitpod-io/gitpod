@@ -451,7 +451,7 @@ func (wbs *InWorkspaceServiceServer) UmountProc(ctx context.Context, req *api.Um
 			return
 		}
 		if len(msgs) != 1 {
-			fdrecv <- fdresp{Err: fmt.Errorf("expected a single socket control message")}
+			fdrecv <- fdresp{Err: xerrors.Errorf("expected a single socket control message")}
 			return
 		}
 
@@ -461,7 +461,7 @@ func (wbs *InWorkspaceServiceServer) UmountProc(ctx context.Context, req *api.Um
 			return
 		}
 		if len(fds) == 0 {
-			fdrecv <- fdresp{Err: fmt.Errorf("expected a single socket FD")}
+			fdrecv <- fdresp{Err: xerrors.Errorf("expected a single socket FD")}
 			return
 		}
 
@@ -660,7 +660,7 @@ func nsinsider(instanceID string, targetPid int, mod func(*exec.Cmd), opts ...ns
 	for _, ns := range nss {
 		f, err := os.OpenFile(ns.Source, ns.Flags, 0)
 		if err != nil {
-			return fmt.Errorf("cannot open %s: %w", ns.Source, err)
+			return xerrors.Errorf("cannot open %s: %w", ns.Source, err)
 		}
 		defer f.Close()
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%d", ns.Env, stdioFdCount+len(cmd.ExtraFiles)))
@@ -674,7 +674,7 @@ func nsinsider(instanceID string, targetPid int, mod func(*exec.Cmd), opts ...ns
 	cmd.Stderr = rw
 	err = cmd.Run()
 	if err != nil {
-		return fmt.Errorf("cannot run nsinsider: %w", err)
+		return xerrors.Errorf("cannot run nsinsider: %w", err)
 	}
 	return nil
 }

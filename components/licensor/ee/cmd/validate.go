@@ -11,6 +11,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/xerrors"
 
 	"github.com/gitpod-io/gitpod/licensor/ee/pkg/licensor"
 )
@@ -34,7 +35,7 @@ var validateCmd = &cobra.Command{
 		domain, _ := cmd.Flags().GetString("domain")
 		e := licensor.NewEvaluator(lic, domain)
 		if msg, valid := e.Validate(); !valid {
-			return fmt.Errorf(msg)
+			return xerrors.Errorf(msg)
 		}
 
 		b, _ := json.MarshalIndent(e.Inspect(), "", "  ")

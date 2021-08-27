@@ -28,6 +28,7 @@ import (
 	libseccomp "github.com/seccomp/libseccomp-golang"
 	"github.com/spf13/cobra"
 	"golang.org/x/sys/unix"
+	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
@@ -406,7 +407,7 @@ var ring1Cmd = &cobra.Command{
 				ring2Conn = c.(*net.UnixConn)
 				brek = true
 			case <-time.After(ring2StartupTimeout):
-				err = fmt.Errorf("ring2 did not connect in time")
+				err = xerrors.Errorf("ring2 did not connect in time")
 				brek = true
 			}
 			if brek {
@@ -581,7 +582,7 @@ func receiveSeccmpFd(conn *net.UnixConn) (libseccomp.ScmpFd, error) {
 		return 0, err
 	}
 	if len(msgs) != 1 {
-		return 0, fmt.Errorf("expected a single socket control message")
+		return 0, xerrors.Errorf("expected a single socket control message")
 	}
 
 	fds, err := unix.ParseUnixRights(&msgs[0])
@@ -589,7 +590,7 @@ func receiveSeccmpFd(conn *net.UnixConn) (libseccomp.ScmpFd, error) {
 		return 0, err
 	}
 	if len(fds) == 0 {
-		return 0, fmt.Errorf("expected a single socket FD")
+		return 0, xerrors.Errorf("expected a single socket FD")
 	}
 
 	return libseccomp.ScmpFd(fds[0]), nil
@@ -687,12 +688,12 @@ func pivotRoot(rootfs string, fsshift api.FSShiftMethod) error {
 	if fsshift == api.FSShiftMethod_FUSE {
 		err := unix.Chroot(rootfs)
 		if err != nil {
-			return fmt.Errorf("cannot chroot: %v", err)
+			return xerrors.Errorf("cannot chroot: %v", err)
 		}
 
 		err = unix.Chdir("/")
 		if err != nil {
-			return fmt.Errorf("cannot chdir to new root :%v", err)
+			return xerrors.Errorf("cannot chdir to new root :%v", err)
 		}
 
 		return nil
@@ -716,7 +717,7 @@ func pivotRoot(rootfs string, fsshift api.FSShiftMethod) error {
 	}
 
 	if err := unix.PivotRoot(".", "."); err != nil {
-		return fmt.Errorf("pivot_root %s", err)
+		return xerrors.Errorf("pivot_root %s", err)
 	}
 
 	// Currently our "." is oldroot (according to the current kernel code).
@@ -743,7 +744,7 @@ func pivotRoot(rootfs string, fsshift api.FSShiftMethod) error {
 
 	// Switch back to our shiny new root.
 	if err := unix.Chdir("/"); err != nil {
-		return fmt.Errorf("chdir / %s", err)
+		return xerrors.Errorf("chdir / %s", err)
 	}
 
 	return nil
@@ -806,7 +807,7 @@ func connectToInWorkspaceDaemonService(ctx context.Context) (*inWorkspaceService
 		case <-t.C:
 			continue
 		case <-ctx.Done():
-			return nil, fmt.Errorf("socket did not appear before context was canceled")
+			return nil, xerrors.Errorf("socket did not appear before context was canceled")
 		}
 	}
 

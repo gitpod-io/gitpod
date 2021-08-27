@@ -6,10 +6,10 @@ package test
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 
+	"golang.org/x/xerrors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -27,7 +27,7 @@ func GetIntegrationTestClient(kubecfgfn string) (client kubernetes.Interface, na
 		var home string
 		home, err = os.UserHomeDir()
 		if err != nil {
-			err = fmt.Errorf("cannot determine user home dir: %w", err)
+			err = xerrors.Errorf("cannot determine user home dir: %w", err)
 			return
 		}
 		kubeconfig = filepath.Join(home, ".kube", "config")
@@ -41,13 +41,13 @@ func GetIntegrationTestClient(kubecfgfn string) (client kubernetes.Interface, na
 	)
 	namespace, _, err = cfg.Namespace()
 	if err != nil {
-		err = fmt.Errorf("cannot get namespace from kubeconfig: %w", err)
+		err = xerrors.Errorf("cannot get namespace from kubeconfig: %w", err)
 		return
 	}
 
 	res, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
-		err = fmt.Errorf("cannot build kubeconfig: %w", err)
+		err = xerrors.Errorf("cannot build kubeconfig: %w", err)
 		return
 	}
 
@@ -59,7 +59,7 @@ func GetIntegrationTestClient(kubecfgfn string) (client kubernetes.Interface, na
 		log.WithError(err).Warn("cannot ensure there's no ws-manager running - test may fail inexplicably")
 	}
 	if len(ps.Items) > 0 {
-		err = fmt.Errorf("there's a ws-manager running in the namespace %s - this would break the tests. Please scale down that ws-manager prior to running the test (kubectl scale --replicas=0 --namespace=%s deployment/ws-manager)", namespace, namespace)
+		err = xerrors.Errorf("there's a ws-manager running in the namespace %s - this would break the tests. Please scale down that ws-manager prior to running the test (kubectl scale --replicas=0 --namespace=%s deployment/ws-manager)", namespace, namespace)
 		return
 	}
 

@@ -10,7 +10,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
+
+	"golang.org/x/xerrors"
 )
 
 // Env Environment variables to set.
@@ -175,7 +176,7 @@ func (strct *Github) UnmarshalJSON(b []byte) error {
 				return err
 			}
 		default:
-			return fmt.Errorf("additional property not allowed: \"" + k + "\"")
+			return xerrors.Errorf("additional property not allowed: \"" + k + "\"")
 		}
 	}
 	return nil
@@ -335,7 +336,7 @@ func (strct *GitpodConfig) UnmarshalJSON(b []byte) error {
 				return err
 			}
 		default:
-			return fmt.Errorf("additional property not allowed: \"" + k + "\"")
+			return xerrors.Errorf("additional property not allowed: \"" + k + "\"")
 		}
 	}
 	return nil
@@ -394,7 +395,7 @@ func (strct *Image_object) UnmarshalJSON(b []byte) error {
 			}
 			fileReceived = true
 		default:
-			return fmt.Errorf("additional property not allowed: \"" + k + "\"")
+			return xerrors.Errorf("additional property not allowed: \"" + k + "\"")
 		}
 	}
 	// check if file (a required property) was received
@@ -502,7 +503,7 @@ func (strct *PortsItems) UnmarshalJSON(b []byte) error {
 				return err
 			}
 		default:
-			return fmt.Errorf("additional property not allowed: \"" + k + "\"")
+			return xerrors.Errorf("additional property not allowed: \"" + k + "\"")
 		}
 	}
 	// check if port (a required property) was received
@@ -651,7 +652,7 @@ func (strct *TasksItems) UnmarshalJSON(b []byte) error {
 				return err
 			}
 		default:
-			return fmt.Errorf("additional property not allowed: \"" + k + "\"")
+			return xerrors.Errorf("additional property not allowed: \"" + k + "\"")
 		}
 	}
 	return nil
@@ -691,7 +692,7 @@ func (strct *Vscode) UnmarshalJSON(b []byte) error {
 				return err
 			}
 		default:
-			return fmt.Errorf("additional property not allowed: \"" + k + "\"")
+			return xerrors.Errorf("additional property not allowed: \"" + k + "\"")
 		}
 	}
 	return nil

@@ -8,7 +8,6 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/url"
@@ -166,7 +165,7 @@ func (p *RemoteWorkspaceInfoProvider) Run() (err error) {
 			return err
 		}
 		if !certPool.AppendCertsFromPEM(ca) {
-			return fmt.Errorf("failed appending CA cert")
+			return xerrors.Errorf("failed appending CA cert")
 		}
 		cert, err := tls.LoadX509KeyPair(p.Config.TLS.Cert, p.Config.TLS.Key)
 		if err != nil {

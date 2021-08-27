@@ -6,13 +6,13 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
 
 	"github.com/gitpod-io/gitpod/common-go/log"
+	"golang.org/x/xerrors"
 
 	"github.com/spf13/pflag"
 	corev1 "k8s.io/api/core/v1"
@@ -92,7 +92,7 @@ func run() error {
 		for _, cv := range c.VolumeMounts {
 			v, ok := volumes[cv.Name]
 			if !ok {
-				return fmt.Errorf("did not find volume %s in %s", cv.Name, c.Name)
+				return xerrors.Errorf("did not find volume %s in %s", cv.Name, c.Name)
 			}
 
 			err = downloadVolume(ctx, client, namespace, cv, v)
@@ -121,7 +121,7 @@ func downloadVolume(ctx context.Context, client kubernetes.Interface, namespace 
 func downloadConfigMap(ctx context.Context, client kubernetes.Interface, namespace string, mount corev1.VolumeMount, volume corev1.Volume) (err error) {
 	defer func() {
 		if err != nil {
-			err = fmt.Errorf("cannot download config map %s", volume.Name)
+			err = xerrors.Errorf("cannot download config map %s", volume.Name)
 		}
 	}()
 
@@ -149,7 +149,7 @@ func downloadConfigMap(ctx context.Context, client kubernetes.Interface, namespa
 func downloadSecret(ctx context.Context, client kubernetes.Interface, namespace string, mount corev1.VolumeMount, volume corev1.Volume) (err error) {
 	defer func() {
 		if err != nil {
-			err = fmt.Errorf("cannot download config map %s", volume.Name)
+			err = xerrors.Errorf("cannot download config map %s", volume.Name)
 		}
 	}()
 

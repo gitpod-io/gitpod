@@ -9,8 +9,9 @@
 package theialib
 
 import (
-	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
+
+	gomock "github.com/golang/mock/gomock"
 )
 
 // MockTheiaCLIService is a mock of TheiaCLIService interface

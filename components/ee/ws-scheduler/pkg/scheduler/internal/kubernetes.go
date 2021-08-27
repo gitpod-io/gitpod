@@ -5,8 +5,7 @@
 package internal
 
 import (
-	"fmt"
-
+	"golang.org/x/xerrors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
@@ -92,7 +91,7 @@ func nodeSelectorRequirementsAsSelector(nsm []corev1.NodeSelectorRequirement) (l
 		case corev1.NodeSelectorOpLt:
 			op = selection.LessThan
 		default:
-			return nil, fmt.Errorf("%q is not a valid node selector operator", expr.Operator)
+			return nil, xerrors.Errorf("%q is not a valid node selector operator", expr.Operator)
 		}
 		r, err := labels.NewRequirement(expr.Key, op, expr.Values)
 		if err != nil {
@@ -115,20 +114,20 @@ func nodeSelectorRequirementsAsFieldSelector(nsm []corev1.NodeSelectorRequiremen
 		switch expr.Operator {
 		case corev1.NodeSelectorOpIn:
 			if len(expr.Values) != 1 {
-				return nil, fmt.Errorf("unexpected number of value (%d) for node field selector operator %q",
+				return nil, xerrors.Errorf("unexpected number of value (%d) for node field selector operator %q",
 					len(expr.Values), expr.Operator)
 			}
 			selectors = append(selectors, fields.OneTermEqualSelector(expr.Key, expr.Values[0]))
 
 		case corev1.NodeSelectorOpNotIn:
 			if len(expr.Values) != 1 {
-				return nil, fmt.Errorf("unexpected number of value (%d) for node field selector operator %q",
+				return nil, xerrors.Errorf("unexpected number of value (%d) for node field selector operator %q",
 					len(expr.Values), expr.Operator)
 			}
 			selectors = append(selectors, fields.OneTermNotEqualSelector(expr.Key, expr.Values[0]))
 
 		default:
-			return nil, fmt.Errorf("%q is not a valid node field selector operator", expr.Operator)
+			return nil, xerrors.Errorf("%q is not a valid node field selector operator", expr.Operator)
 		}
 	}
 

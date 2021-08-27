@@ -5,13 +5,13 @@
 package content
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	"github.com/gitpod-io/gitpod/ws-daemon/api"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/quota"
+	"golang.org/x/xerrors"
 )
 
 // Config configures the workspace content service
@@ -71,7 +71,7 @@ func (m *FSShiftMethod) UnmarshalJSON(data []byte) error {
 	input := strings.ToUpper(strings.Trim(string(data), "\""))
 	v, ok := api.FSShiftMethod_value[input]
 	if !ok {
-		return fmt.Errorf("invalid shift method: %v", input)
+		return xerrors.Errorf("invalid shift method: %v", input)
 	}
 	*m = FSShiftMethod(v)
 	return nil

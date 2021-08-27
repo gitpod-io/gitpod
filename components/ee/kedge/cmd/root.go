@@ -14,6 +14,7 @@ import (
 	"github.com/gitpod-io/gitpod/common-go/util"
 	"github.com/gitpod-io/gitpod/kedge/pkg/kedge"
 	"github.com/spf13/cobra"
+	"golang.org/x/xerrors"
 )
 
 var (
@@ -53,7 +54,7 @@ func init() {
 func getConfig() (*config, error) {
 	fc, err := ioutil.ReadFile(cfgFile)
 	if err != nil {
-		return nil, fmt.Errorf("cannot read config: %w", err)
+		return nil, xerrors.Errorf("cannot read config: %w", err)
 	}
 
 	var cfg config

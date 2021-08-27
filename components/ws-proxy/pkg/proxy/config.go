@@ -5,7 +5,6 @@
 package proxy
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -132,7 +131,7 @@ func (c *BlobServerConfig) Validate() error {
 		validation.Field(&c.Host, validation.Required),
 	)
 	if err != nil {
-		return fmt.Errorf("invalid blobserver config: %w", err)
+		return xerrors.Errorf("invalid blobserver config: %w", err)
 	}
 	return nil
 }

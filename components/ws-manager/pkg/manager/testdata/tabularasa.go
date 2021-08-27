@@ -2,6 +2,7 @@
 // Licensed under the GNU Affero General Public License (AGPL).
 // See License-AGPL.txt in the project root for license information.
 
+//go:build ignore
 // +build ignore
 
 // Tabularasa tries to remove test fixtures which did no add to the code coverage. It removes every single fixture one by one,
