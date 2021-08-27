@@ -269,7 +269,7 @@ func StartBuildkit(socketPath string) (cl *client.Client, teardown func() error,
 		return nil, nil, fmt.Errorf("cannot create buildkitd log file: %w", err)
 	}
 
-	cmd := exec.Command("buildkitd", "--addr="+socketPath, "--oci-worker-net=host", "--root=/workspace/buildkit")
+	cmd := exec.Command("buildkitd", "--debug", "--config=/etc/buildkit/buildkitd.toml", "--addr="+socketPath, "--oci-worker-net=host", "--root=/workspace/buildkit")
 	cmd.SysProcAttr = &syscall.SysProcAttr{Credential: &syscall.Credential{Uid: 0, Gid: 0}}
 	cmd.Stderr = stderr
 	cmd.Stdout = stdout
