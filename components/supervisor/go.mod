@@ -12,7 +12,6 @@ require (
 	github.com/gitpod-io/gitpod/gitpod-protocol v0.0.0-00010101000000-000000000000
 	github.com/gitpod-io/gitpod/supervisor/api v0.0.0-00010101000000-000000000000
 	github.com/golang/mock v1.6.0
-	github.com/golang/protobuf v1.5.2
 	github.com/google/go-cmp v0.5.6
 	github.com/google/uuid v1.2.0
 	github.com/gorilla/websocket v1.4.2
@@ -47,6 +46,7 @@ require (
 	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/go-ozzo/ozzo-validation v3.5.0+incompatible // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/googleapis/gax-go/v2 v2.0.5 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.11 // indirect
