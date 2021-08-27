@@ -61,6 +61,9 @@ func TestSeats(t *testing.T) {
 		{"beyond limited seats", 50, 150, false, false, false},
 		{"beyond limited seats (edge)", 50, 51, false, false, false},
 		{"invalid license", 50, 50, false, false, true},
+		{"within default license seats", 0, 7, true, true, false},
+		{"within default license seats (edge)", 0, 10, true, true, false},
+		{"beyond default license seats", 0, 11, false, true, false},
 	}
 
 	for _, test := range tests {
@@ -84,6 +87,9 @@ func TestSeats(t *testing.T) {
 					t.Errorf("HasEnoughSeats did not behave as expected: lic=%d probe=%d expected=%v actual=%v", test.Licensed, test.Probe, test.WithinLimits, withinLimits)
 				}
 			},
+		}
+		if test.DefaultLicense {
+			lt.License = nil
 		}
 		lt.Run(t)
 	}

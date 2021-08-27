@@ -37,10 +37,12 @@ type licensePayload struct {
 type LicenseLevel int
 
 const (
-	// LevelTeam is the default license level
+	// LevelTeam is the default license level,
+	// which is the free tier
 	LevelTeam LicenseLevel = 0
 
-	// LevelEnterprise enables enterprise features
+	// LevelEnterprise enables enterprise features,
+	// which applies after buying a license
 	LevelEnterprise LicenseLevel = 1
 )
 
@@ -109,7 +111,8 @@ func (lvl LicenseLevel) allowance() allowance {
 var defaultLicense = LicensePayload{
 	ID:    "default-license",
 	Level: LevelTeam,
-	// Seats, Domain, ValidUntil are free for all
+	Seats: 10,
+	// Domain, ValidUntil are free for all
 }
 
 // NewEvaluator produces a new license evaluator from a license key
