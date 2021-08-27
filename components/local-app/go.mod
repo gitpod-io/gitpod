@@ -49,6 +49,6 @@ require (
 
 replace github.com/gitpod-io/gitpod/gitpod-protocol => ../gitpod-protocol/go // leeway
 
-replace github.com/gitpod-io/gitpod/supervisor/api => ../supervisor-api/go // leeway
-
 replace github.com/gitpod-io/gitpod/local-app/api => ../local-app-api/go // leeway
+
+replace github.com/gitpod-io/gitpod/supervisor/api => ../supervisor-api/go // leeway

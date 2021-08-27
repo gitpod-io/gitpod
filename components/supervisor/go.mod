@@ -152,3 +152,5 @@ replace k8s.io/controller-manager => k8s.io/controller-manager v0.22.0 // leeway
 replace k8s.io/kubectl => k8s.io/kubectl v0.22.0 // leeway indirect from components/common-go:lib
 
 replace k8s.io/mount-utils => k8s.io/mount-utils v0.22.0 // leeway indirect from components/common-go:lib
+
+replace k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.22.0 // leeway indirect from components/common-go:lib

@@ -243,7 +243,6 @@ function makeLogItem(severity: GoogleLogSeverity, context: LogContext | undefine
         severity,
         time: new Date().toISOString(),
         environment: process.env.KUBE_STAGE,
-        region: process.env.GITPOD_REGION,
         context,
         message,
         error,

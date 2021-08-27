@@ -25,7 +25,6 @@ export function translateLegacyStagename(kubeStage: string): KubeStage {
 @injectable()
 export abstract class AbstractComponentEnv {
     readonly kubeStage: KubeStage = getEnvVarParsed('KUBE_STAGE', translateLegacyStagename);
-    readonly kubeNamespace: string = getEnvVar('KUBE_NAMESPACE');
 
     readonly installationLongname: string = getEnvVar("GITPOD_INSTALLATION_LONGNAME")
     readonly installationShortname: string = getEnvVar("GITPOD_INSTALLATION_SHORTNAME")

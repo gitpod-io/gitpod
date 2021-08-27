@@ -1,0 +1,18 @@
+certificate:
+  kind: ""
+  name: ""
+containerRegistry:
+  external: null
+  inCluster: null
+database:
+  cloudSQL: null
+  rds: null
+domain: ""
+imagePullSecrets: null
+kind: ""
+metadata:
+  region: ""
+objectStorage:
+  cloudStorage: null
+  s3: null
+repository: ""

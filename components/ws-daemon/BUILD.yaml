@@ -12,12 +12,24 @@ packages:
       - components/content-service-api/go:lib
       - components/content-service:lib
       - components/ws-daemon-api/go:lib
+  - name: lib
+    type: go
+    srcs:
+      - "cmd/**/*.go"
+      - "pkg/**/*.go"
+      - "main.go"
+      - "go.mod"
+      - "go.sum"
+    deps:
+      - components/common-go:lib
+      - components/content-service-api/go:lib
+      - components/content-service:lib
+      - components/ws-daemon-api/go:lib
     env:
       - CGO_ENABLED=0
       - GOOS=linux
     config:
-      packaging: app
-      buildCommand: ["go", "build", "-trimpath", "-ldflags=-buildid="]
+      packaging: library
   - name: content-initializer
     type: go
     srcs:

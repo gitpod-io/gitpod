@@ -5,6 +5,9 @@ packages:
         - go.mod
         - go.sum
         - "**/*.go"
+      deps:
+        - components/common-go:lib
+        - components/ws-daemon:lib
       env:
         - CGO_ENABLED=0
       config:
