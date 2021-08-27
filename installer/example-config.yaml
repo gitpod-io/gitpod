@@ -1,5 +1,5 @@
 certificate:
-  kind: ""
+  kind: full
   name: ""
 containerRegistry:
   external: null
@@ -9,10 +9,10 @@ database:
   rds: null
 domain: ""
 imagePullSecrets: null
-kind: ""
+kind: Full
 metadata:
   region: ""
 objectStorage:
   cloudStorage: null
   s3: null
-repository: ""
+repository: "eu.gcr.io/gitpod-core-dev/build/"

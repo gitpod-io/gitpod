@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1alpha1"
 	wsdconfig "github.com/gitpod-io/gitpod/ws-daemon/pkg/config"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/daemon"
 
@@ -14,7 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func configmap(cfg *config.Config) (runtime.Object, error) {
+func configmap(ctx *common.RenderContext) (runtime.Object, error) {
 	wsdcfg := wsdconfig.Config{
 		Daemon: daemon.Config{},
 		Prometheus: wsdconfig.Addr{

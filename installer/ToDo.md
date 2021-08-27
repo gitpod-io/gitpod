@@ -1,5 +1,5 @@
 # ToDo
-- Integrate version manifest (@MrSimonEmms, @csweichel)
+- [x] Integrate version manifest (@MrSimonEmms, @csweichel)
 - Wrap up component templates (@MrSimonEmms)
     - workspace
         - [ ] ws-daemon

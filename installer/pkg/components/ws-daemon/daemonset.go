@@ -2,7 +2,6 @@ package wsdaemon
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
-	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1alpha1"
 	"github.com/hexops/valast"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -14,7 +13,8 @@ import (
 	"k8s.io/utils/pointer"
 )
 
-func daemonset(cfg *config.Config) (runtime.Object, error) {
+func daemonset(ctx *common.RenderContext) (runtime.Object, error) {
+	cfg := ctx.Config
 	labels := common.DefaultLabels(component)
 
 	return &appsv1.DaemonSet{
@@ -143,23 +143,23 @@ else
 fi
 `},
 							SecurityContext: &corev1.SecurityContext{
-								Privileged: valast.Addr(true).(*bool),
+								Privileged: pointer.Bool(true),
 								ProcMount:  valast.Addr(corev1.ProcMountType("Default")).(*corev1.ProcMountType),
 							},
 						},
 						corev1.Container{
 							Name:  "shiftfs-module-loader",
-							Image: "eu.gcr.io/gitpod-core-dev/build/shiftfs-module-loader:not-set",
+							Image: common.ImageName(cfg.Repository, "shiftfs-module-loader", ctx.VersionManifest.Components.WSDaemon.UserNamespaces.ShiftFSModuleLoader.Version),
 							VolumeMounts: []corev1.VolumeMount{corev1.VolumeMount{
 								Name:      "node-linux-src",
 								ReadOnly:  true,
 								MountPath: "/usr/src_node",
 							}},
-							SecurityContext: &corev1.SecurityContext{Privileged: valast.Addr(true).(*bool)},
+							SecurityContext: &corev1.SecurityContext{Privileged: pointer.Bool(true)},
 						},
 						corev1.Container{
 							Name:  "seccomp-profile-installer",
-							Image: "eu.gcr.io/gitpod-core-dev/build/seccomp-profile-installer:not-set",
+							Image: common.ImageName(cfg.Repository, "seccomp-profile-installer", ctx.VersionManifest.Components.WSDaemon.UserNamespaces.SeccompProfileInstaller.Version),
 							Command: []string{
 								"/bin/sh",
 								"-c",
@@ -169,11 +169,11 @@ fi
 								Name:      "hostseccomp",
 								MountPath: "/mnt/dst",
 							}},
-							SecurityContext: &corev1.SecurityContext{Privileged: valast.Addr(true).(*bool)},
+							SecurityContext: &corev1.SecurityContext{Privileged: pointer.Bool(true)},
 						},
 						corev1.Container{
 							Name:  "sysctl",
-							Image: "eu.gcr.io/gitpod-core-dev/build/ws-daemon:not-set",
+							Image: common.ImageName(cfg.Repository, "ws-daemon", ctx.VersionManifest.Components.WSDaemon.Version),
 							Command: []string{
 								"sh",
 								"-c",
@@ -188,7 +188,7 @@ fi
 ) && echo "done!" || echo "failed!"
 `,
 							},
-							SecurityContext: &corev1.SecurityContext{Privileged: valast.Addr(true).(*bool)},
+							SecurityContext: &corev1.SecurityContext{Privileged: pointer.Bool(true)},
 						},
 					},
 					Containers: []corev1.Container{
@@ -207,8 +207,8 @@ fi
 								ContainerPort: 8080,
 							}},
 							Env: common.MergeEnv(
-								common.DefaultEnv(cfg),
-								common.TracingEnv(cfg),
+								common.DefaultEnv(&cfg),
+								common.TracingEnv(&cfg),
 							),
 							Resources: corev1.ResourceRequirements{Requests: corev1.ResourceList{
 								corev1.ResourceName("cpu"):    resource.MustParse("1m"),
@@ -279,7 +279,7 @@ fi
 							},
 							ImagePullPolicy: corev1.PullPolicy("Always"),
 							SecurityContext: &corev1.SecurityContext{
-								Privileged: valast.Addr(true).(*bool),
+								Privileged: pointer.Bool(true),
 								ProcMount:  valast.Addr(corev1.ProcMountType("Default")).(*corev1.ProcMountType),
 							},
 						},

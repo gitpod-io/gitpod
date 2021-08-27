@@ -3,8 +3,9 @@ module github.com/gitpod-io/gitpod/installer
 go 1.16
 
 require (
+	github.com/docker/distribution v2.7.1+incompatible
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
-	github.com/gitpod-io/gitpod/ws-daemon v0.0.0-00010101000000-000000000000 // indirect
+	github.com/gitpod-io/gitpod/ws-daemon v0.0.0-00010101000000-000000000000
 	github.com/hexops/valast v1.4.0
 	github.com/spf13/cast v1.4.1 // indirect
 	github.com/spf13/cobra v1.2.1
