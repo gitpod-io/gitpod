@@ -14,9 +14,13 @@ import { useContext, useEffect, useState } from "react";
 import { getGitpodService } from "../service/service";
 import { getCurrentTeam, TeamsContext } from "../teams/teams-context";
 import { ThemeContext } from "../theme-context";
-import { PrebuildInfo, Project } from "@gitpod/gitpod-protocol";
+import { PrebuildInfo, PrebuiltWorkspaceState, Project } from "@gitpod/gitpod-protocol";
 import { toRemoteURL } from "./render-utils";
 import ContextMenu from "../components/ContextMenu";
+import StatusDone from "../icons/StatusDone.svg";
+import StatusPaused from "../icons/StatusPaused.svg";
+import StatusRunning from "../icons/StatusRunning.svg";
+import StatusFailed from "../icons/StatusFailed.svg";
 
 export default function () {
     const location = useLocation();
@@ -60,10 +64,6 @@ export default function () {
         history.push(newProjectUrl);
     }
 
-    const viewAllPrebuilds = (p: Project) => {
-        history.push(`/${!!team ? team.slug : 'projects'}/${p.name}/prebuilds`);
-    }
-
     const onRemoveProject = async (p: Project) => {
         await getGitpodService().server.deleteProject(p.id);
         await updateProjects();
@@ -74,6 +74,23 @@ export default function () {
             return false;
         }
         return true;
+    }
+
+    const teamOrUserSlug = !!team ? team.slug : 'projects';
+
+    const getPrebuildStatusIcon = (status: PrebuiltWorkspaceState) => {
+        switch (status) {
+            case undefined: // Fall through
+            case "queued":
+                return StatusPaused;
+            case "building":
+                return StatusRunning;
+            case "aborted": // Fall through
+            case "timeout":
+                return StatusFailed;
+            case "available":
+                return StatusDone;
+        }
     }
 
     return <>
@@ -106,10 +123,10 @@ export default function () {
                     <button className="ml-2" onClick={() => onNewProject()}>New Project</button>
                 </div>
                 <div className="mt-4 grid grid-cols-3 gap-4">
-                    {projects.filter(filter).map(p => (<div key={`project-${p.id}`} className="h-48">
-                        <div className="h-5/6 border border-gray-200 dark:border-gray-800 rounded-t-xl">
-                            <div className="h-3/4 p-6">
-                                <div className="flex self-center text-base text-gray-900 dark:text-gray-50 font-medium">
+                    {projects.filter(filter).map(p => (<div key={`project-${p.id}`} className="h-52">
+                        <div className="h-42 border border-gray-100 dark:border-gray-800 rounded-t-xl">
+                            <div className="h-32 p-6">
+                                <div className="flex text-xl font-semibold text-gray-700 dark:text-gray-200 font-medium">
                                     <Link to={`/${!!team ? team.slug : 'projects'}/${p.name}`}>
                                         {p.name}
                                     </Link>
@@ -122,19 +139,36 @@ export default function () {
                                         }]} />
                                     </div>
                                 </div>
-                                <p>{toRemoteURL(p.cloneUrl)}</p>
+                                <a href={p.cloneUrl.replace(/\.git$/, '')}>
+                                    <p className="hover:text-gray-600 dark:hover:text-gray-400 dark:text-gray-500">{toRemoteURL(p.cloneUrl)}</p>
+                                </a>
                             </div>
-                            <div className="h-1/4 px-6 py-1"><p>__ Active Branches</p></div>
+                            <div className="h-10 px-6 py-1 text-gray-400 text-sm">
+                                <span className="hover:text-gray-600 dark:hover:text-gray-300">
+                                    <Link to={`/${teamOrUserSlug}/${p.name}`}>
+                                        Branches
+                                    </Link>
+                                </span>
+                                <span className="mx-2 my-auto">·</span>
+                                <span className="hover:text-gray-600 dark:hover:text-gray-300">
+                                    <Link to={`/${teamOrUserSlug}/${p.name}/prebuilds`}>
+                                        Prebuilds
+                                    </Link>
+                                </span>
+                            </div>
                         </div>
-                        <div className="h-1/6 px-6 border rounded-b-xl dark:border-gray-800 bg-gray-200 cursor-pointer" onClick={() => viewAllPrebuilds(p)}>
+                        <div className="h-10 px-4 border rounded-b-xl dark:border-gray-800 bg-gray-100 border-gray-100 dark:bg-gray-800">
                             {lastPrebuilds.get(p.id)
-                                ? (<div className="flex flex-row space-x-3 h-full text-sm">
-                                    <div className={"my-auto rounded-full w-3 h-3 text-sm align-middle " + (true ? "bg-green-500" : "bg-gray-400")}>
-                                        &nbsp;
-                                    </div>
-                                    <div className="my-auto">{lastPrebuilds.get(p.id)!.branch}</div>
-                                    <div className="my-auto text-gray-400">{moment(lastPrebuilds.get(p.id)!.startedAt, "YYYYMMDD").fromNow()}</div>
-                                    <div className="my-auto text-gray-400 flex-grow text-right">View All ⟶</div>
+                                ? (<div className="flex flex-row h-full text-sm justify-between">
+                                    <Link to={`/${teamOrUserSlug}/${p.name}/${lastPrebuilds.get(p.id)!.id}`} className="flex my-auto group space-x-2">
+                                        <img className="h-4 w-4 my-auto" src={getPrebuildStatusIcon(lastPrebuilds.get(p.id)!.status)} />
+                                        <div className="my-auto font-semibold text-gray-500 dark:text-gray-400 truncate w-24" title={lastPrebuilds.get(p.id)!.branch}>{lastPrebuilds.get(p.id)!.branch}</div>
+                                        <span className="mx-1 my-auto text-gray-400 dark:text-gray-600">·</span>
+                                        <div className="my-auto text-gray-400 dark:text-gray-500 flex-grow hover:text-gray-800 dark:hover:text-gray-300">{moment(lastPrebuilds.get(p.id)!.startedAt, "YYYYMMDD").fromNow()}</div>
+                                    </Link>
+                                    <Link to={`/${teamOrUserSlug}/${p.name}/prebuilds`} className="my-auto group">
+                                        <div className="flex my-auto text-gray-400 flex-grow text-right group-hover:text-gray-600 dark:hover:text-gray-300">View All &rarr;</div>
+                                    </Link>
                                 </div>)
                                 : (<div className="flex h-full text-md">
                                     <p className="my-auto ">No recent prebuilds</p>
@@ -143,10 +177,10 @@ export default function () {
                     </div>))}
                     {!searchFilter && (
                         <div key="new-project"
-                            className="h-48 border-dashed border-2 border-gray-200 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl focus:bg-gitpod-kumquat-light transition ease-in-out group">
+                            className="h-52 border-dashed border-2 border-gray-100 dark:border-gray-800 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl focus:bg-gitpod-kumquat-light transition ease-in-out group">
                             <Link to={newProjectUrl}>
                                 <div className="flex h-full">
-                                    <div className="m-auto">New Project</div>
+                                    <div className="m-auto text-gray-400 dark:text-gray-600">New Project</div>
                                 </div>
                             </Link>
                         </div>
