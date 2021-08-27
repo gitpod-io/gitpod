@@ -7,6 +7,7 @@ package seccomp
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -168,10 +169,19 @@ func Errno(err unix.Errno) (val uint64, errno int32, flags uint32) {
 	return ^uint64(0), int32(errno), 0
 }
 
+// IWSClientProvider provides a client to the in-workspace-service.
+// Consumers of this provider will close the client after use.
+type IWSClientProvider func(ctx context.Context) (InWorkspaceServiceClient, error)
+
+type InWorkspaceServiceClient interface {
+	daemonapi.InWorkspaceServiceClient
+	io.Closer
+}
+
 // InWorkspaceHandler is the seccomp notification handler that serves a Gitpod workspace
 type InWorkspaceHandler struct {
 	FD          libseccomp.ScmpFd
-	Daemon      daemonapi.InWorkspaceServiceClient
+	Daemon      IWSClientProvider
 	Ring2PID    int
 	Ring2Rootfs string
 	BindEvents  chan<- BindEvent
@@ -260,9 +270,16 @@ func (h *InWorkspaceHandler) Mount(req *libseccomp.ScmpNotifReq) (val uint64, er
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		call := h.Daemon.MountProc
+		iws, err := h.Daemon(ctx)
+		if err != nil {
+			log.WithField("target", target).WithField("dest", dest).WithField("mode", stat.Mode()).WithError(err).Errorf("cannot get IWS client to mount %s", filesystem)
+			return Errno(unix.EFAULT)
+		}
+		defer iws.Close()
+
+		call := iws.MountProc
 		if filesystem == "sysfs" {
-			call = h.Daemon.MountSysfs
+			call = iws.MountSysfs
 		}
 		_, err = call(ctx, &daemonapi.MountProcRequest{
 			Target: dest,

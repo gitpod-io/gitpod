@@ -361,12 +361,10 @@ var ring1Cmd = &cobra.Command{
 			log.WithError(err).Error("cannot connect to daemon")
 			return
 		}
-
 		_, err = client.MountProc(ctx, &daemonapi.MountProcRequest{
 			Target: procLoc,
 			Pid:    int64(cmd.Process.Pid),
 		})
-
 		client.Close()
 
 		if err != nil {
@@ -442,8 +440,10 @@ var ring1Cmd = &cobra.Command{
 			log.Warn("received 0 as ring2 seccomp fd - syscall handling is broken")
 		} else {
 			handler := &seccomp.InWorkspaceHandler{
-				FD:          scmpfd,
-				Daemon:      client,
+				FD: scmpfd,
+				Daemon: func(ctx context.Context) (seccomp.InWorkspaceServiceClient, error) {
+					return connectToInWorkspaceDaemonService(ctx)
+				},
 				Ring2PID:    cmd.Process.Pid,
 				Ring2Rootfs: ring2Root,
 				BindEvents:  make(chan seccomp.BindEvent),
