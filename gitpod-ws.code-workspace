@@ -23,6 +23,7 @@
       { "path": "components/ws-proxy" },
       { "path": "test" },
       { "path": "dev/blowtorch" },
+      { "path": "dev/changelog" },
       { "path": "dev/gpctl" },
       { "path": "dev/loadgen" },
       { "path": "dev/poolkeeper" },
