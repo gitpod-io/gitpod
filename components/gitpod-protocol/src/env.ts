@@ -23,7 +23,6 @@ export abstract class AbstractComponentEnv {
 
         return stage;
     });
-    readonly kubeNamespace: string = getEnvVar('KUBE_NAMESPACE');
 
     readonly installationLongname: string = getEnvVar("GITPOD_INSTALLATION_LONGNAME")
     readonly installationShortname: string = getEnvVar("GITPOD_INSTALLATION_SHORTNAME")

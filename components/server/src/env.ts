@@ -20,7 +20,7 @@ export class Env extends AbstractComponentEnv {
     readonly version: string = getEnvVar('VERSION');
 
     readonly serverVersion = process.env.SERVER_VERSION || 'dev';
-    readonly hostUrl = new GitpodHostUrl(process.env.HOST_URL || 'https://gitpod.io');
+    readonly hostUrl = new GitpodHostUrl(`https://${process.env.GITPOD_DOMAIN}`);
 
     get theiaHeartbeatInterval() {
         const envValue = process.env.THEIA_HEARTBEAT_INTERVAL;

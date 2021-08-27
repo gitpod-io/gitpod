@@ -2,6 +2,15 @@ module github.com/gitpod-io/gitpod/telepresence-hack
 
 go 1.16
 
+require (
+	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
+	github.com/spf13/pflag v1.0.5
+	k8s.io/api v0.22.0
+	k8s.io/apimachinery v0.22.0
+	k8s.io/client-go v0.22.0
+
+)
+
 replace github.com/gitpod-io/gitpod/common-go => ../../components/common-go // leeway
 
 replace k8s.io/api => k8s.io/api v0.22.0 // leeway indirect from components/common-go:lib
@@ -52,11 +61,4 @@ replace k8s.io/kubectl => k8s.io/kubectl v0.22.0 // leeway indirect from compone
 
 replace k8s.io/mount-utils => k8s.io/mount-utils v0.22.0 // leeway indirect from components/common-go:lib
 
-require (
-	github.com/gitpod-io/gitpod/common-go v0.0.0-00010101000000-000000000000
-	github.com/spf13/pflag v1.0.5
-	k8s.io/api v0.22.0
-	k8s.io/apimachinery v0.22.0
-	k8s.io/client-go v0.22.0
-
-)
+replace k8s.io/pod-security-admission => k8s.io/pod-security-admission v0.22.0 // leeway indirect from components/common-go:lib
