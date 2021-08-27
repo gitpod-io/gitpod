@@ -22,6 +22,8 @@ func (cr compositeRenderable) Render(cfg *config.Config) ([]runtime.Object, erro
 	return res, nil
 }
 
-var Objects common.Renderable = compositeRenderable{
+var MetaObjects common.Renderable = compositeRenderable{}
+
+var WorkspaceObjects common.Renderable = compositeRenderable{
 	wsdaemon.Objects{},
 }

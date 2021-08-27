@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/gitpod-io/gitpod/installer/pkg/common"
 	"github.com/gitpod-io/gitpod/installer/pkg/components"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1alpha1"
 	"github.com/spf13/cobra"
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/yaml"
 )
 
@@ -26,12 +28,26 @@ var renderCmd = &cobra.Command{
 			return err
 		}
 
-		f, err := components.Objects.Render(cfg)
-		if err != nil {
-			return err
+		var renderable []common.Renderable
+		switch cfg.Kind {
+		case config.InstallationFull:
+			renderable = []common.Renderable{components.MetaObjects, components.WorkspaceObjects}
+		case config.InstallationMeta:
+			renderable = []common.Renderable{components.MetaObjects}
+		case config.InstallationWorkspace:
+			renderable = []common.Renderable{components.WorkspaceObjects}
 		}
 
-		for _, o := range f {
+		var objs []runtime.Object
+		for _, r := range renderable {
+			o, err := r.Render(cfg)
+			if err != nil {
+				return err
+			}
+			objs = append(objs, o...)
+		}
+
+		for _, o := range objs {
 			fc, err := yaml.Marshal(o)
 			if err != nil {
 				return err

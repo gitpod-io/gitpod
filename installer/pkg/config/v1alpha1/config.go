@@ -44,6 +44,8 @@ type Config struct {
 	Certificate ObjectRef `json:"certificate"`
 
 	ImagePullSecrets []ObjectRef `json:"imagePullSecrets"`
+
+	WorkspaceRuntime WorkspaceRuntime `json:"workspaceRuntime"`
 }
 
 type InstallationKind string
@@ -71,3 +73,14 @@ type ContainerRegistryExternal struct {
 }
 
 type LogLevel string
+
+type WorkspaceRuntime struct {
+	FSShiftMethod FSShiftMethod `json:"fsShiftMethod"`
+}
+
+type FSShiftMethod string
+
+const (
+	FSShiftFuseFS  FSShiftMethod = "fuse"
+	FSShiftShiftFS FSShiftMethod = "shiftfs"
+)
