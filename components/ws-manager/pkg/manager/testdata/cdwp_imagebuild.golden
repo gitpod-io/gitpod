@@ -49,6 +49,30 @@
                         "path": "/tmp/workspaces/foobar-daemon",
                         "type": "DirectoryOrCreate"
                     }
+                },
+                {
+                    "name": "gitpod-ca-certificate",
+                    "secret": {
+                        "secretName": "gitpod-registry-cert",
+                        "items": [
+                            {
+                                "key": "ca.crt",
+                                "path": "ca.crt"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "image-builder-mk3-config",
+                    "configMap": {
+                        "name": "image-builder-mk3-config",
+                        "items": [
+                            {
+                                "key": "buildkitd.toml",
+                                "path": "buildkitd.toml"
+                            }
+                        ]
+                    }
                 }
             ],
             "containers": [
@@ -132,6 +156,10 @@
                         {
                             "name": "GITPOD_HEADLESS",
                             "value": "true"
+                        },
+                        {
+                            "name": "GITPOD_WORKSPACEKIT_BIND_MOUNTS",
+                            "value": "[\"/etc/buildkit/buildkitd.toml\",\"/usr/local/share/ca-certificates/gitpod-ca.crt\"]"
                         }
                     ],
                     "resources": {
@@ -155,6 +183,18 @@
                             "name": "daemon-mount",
                             "mountPath": "/.workspace",
                             "mountPropagation": "HostToContainer"
+                        },
+                        {
+                            "name": "gitpod-ca-certificate",
+                            "readOnly": true,
+                            "mountPath": "/usr/local/share/ca-certificates/gitpod-ca.crt",
+                            "subPath": "ca.crt"
+                        },
+                        {
+                            "name": "image-builder-mk3-config",
+                            "readOnly": true,
+                            "mountPath": "/etc/buildkit/buildkitd.toml",
+                            "subPath": "buildkitd.toml"
                         }
                     ],
                     "readinessProbe": {
