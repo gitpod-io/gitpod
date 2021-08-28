@@ -61,7 +61,7 @@ class TestBitbucketContextParser {
     }
 
     @test public testCanHandleBitbucketRepo() {
-        expect(this.parser.canHandle(this.user, "https://bitbucket.org/gitpod/sample-repository/src/master/")).to.be.true;
+        expect(this.parser.canHandle(this.user, "https://bitbucket.org/gitpod/integration-tests/src/master/")).to.be.true;
     }
 
     @test public testCanNotHandleGitHubRepo() {
@@ -69,7 +69,7 @@ class TestBitbucketContextParser {
     }
 
     @test public async testShortContext_01() {
-        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/sample-repository');
+        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/integration-tests');
         expect(result).to.deep.include({
             "ref": "master",
             "refType": "branch",
@@ -79,17 +79,17 @@ class TestBitbucketContextParser {
             "repository": {
                 "host": "bitbucket.org",
                 "owner": "gitpod",
-                "name": "sample-repository",
-                "cloneUrl": "https://bitbucket.org/gitpod/sample-repository.git",
+                "name": "integration-tests",
+                "cloneUrl": "https://bitbucket.org/gitpod/integration-tests.git",
                 "defaultBranch": "master",
                 "private": false
             },
-            "title": "gitpod/sample-repository - master"
+            "title": "gitpod/integration-tests - master"
         })
     }
 
     @test public async testSrcContext_01() {
-        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/sample-repository/src/master/');
+        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/integration-tests/src/master/');
         expect(result).to.deep.include({
             "ref": "master",
             "refType": "branch",
@@ -99,17 +99,17 @@ class TestBitbucketContextParser {
             "repository": {
                 "host": "bitbucket.org",
                 "owner": "gitpod",
-                "name": "sample-repository",
-                "cloneUrl": "https://bitbucket.org/gitpod/sample-repository.git",
+                "name": "integration-tests",
+                "cloneUrl": "https://bitbucket.org/gitpod/integration-tests.git",
                 "defaultBranch": "master",
                 "private": false
             },
-            "title": "gitpod/sample-repository - master"
+            "title": "gitpod/integration-tests - master"
         })
     }
 
     @test public async testSrcContext_02() {
-        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/sample-repository/src/8fcf6c869d0cdb570bb6f2f9aa5f8ed72c9d953a/?at=Gitpod%2Ftesttxt-created-online-with-bitbucket-1589277871983');
+        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/integration-tests/src/8fcf6c869d0cdb570bb6f2f9aa5f8ed72c9d953a/?at=Gitpod%2Ftesttxt-created-online-with-bitbucket-1589277871983');
         expect(result).to.deep.include({
             "ref": "Gitpod/testtxt-created-online-with-bitbucket-1589277871983",
             "refType": "branch",
@@ -119,17 +119,17 @@ class TestBitbucketContextParser {
             "repository": {
                 "host": "bitbucket.org",
                 "owner": "gitpod",
-                "name": "sample-repository",
-                "cloneUrl": "https://bitbucket.org/gitpod/sample-repository.git",
+                "name": "integration-tests",
+                "cloneUrl": "https://bitbucket.org/gitpod/integration-tests.git",
                 "defaultBranch": "master",
                 "private": false
             },
-            "title": "gitpod/sample-repository - Gitpod/testtxt-created-online-with-bitbucket-1589277871983"
+            "title": "gitpod/integration-tests - Gitpod/testtxt-created-online-with-bitbucket-1589277871983"
         })
     }
 
     @test public async testSrcContext_03() {
-        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/sample-repository/src/second-branch/');
+        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/integration-tests/src/second-branch/');
         expect(result).to.deep.include({
             "ref": "second-branch",
             "refType": "branch",
@@ -139,17 +139,17 @@ class TestBitbucketContextParser {
             "repository": {
                 "host": "bitbucket.org",
                 "owner": "gitpod",
-                "name": "sample-repository",
-                "cloneUrl": "https://bitbucket.org/gitpod/sample-repository.git",
+                "name": "integration-tests",
+                "cloneUrl": "https://bitbucket.org/gitpod/integration-tests.git",
                 "defaultBranch": "master",
                 "private": false
             },
-            "title": "gitpod/sample-repository - second-branch"
+            "title": "gitpod/integration-tests - second-branch"
         })
     }
 
     @test public async testCommitsContext_01() {
-        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/sample-repository/commits/branch/second-branch');
+        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/integration-tests/commits/branch/second-branch');
         expect(result).to.deep.include({
             "ref": "second-branch",
             "refType": "branch",
@@ -159,17 +159,17 @@ class TestBitbucketContextParser {
             "repository": {
                 "host": "bitbucket.org",
                 "owner": "gitpod",
-                "name": "sample-repository",
-                "cloneUrl": "https://bitbucket.org/gitpod/sample-repository.git",
+                "name": "integration-tests",
+                "cloneUrl": "https://bitbucket.org/gitpod/integration-tests.git",
                 "defaultBranch": "master",
                 "private": false
             },
-            "title": "gitpod/sample-repository - second-branch"
+            "title": "gitpod/integration-tests - second-branch"
         })
     }
 
     @test public async testBranchContext_01() {
-        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/sample-repository/branch/master/');
+        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/integration-tests/branch/master/');
         expect(result).to.deep.include({
             "ref": "master",
             "refType": "branch",
@@ -179,17 +179,17 @@ class TestBitbucketContextParser {
             "repository": {
                 "host": "bitbucket.org",
                 "owner": "gitpod",
-                "name": "sample-repository",
-                "cloneUrl": "https://bitbucket.org/gitpod/sample-repository.git",
+                "name": "integration-tests",
+                "cloneUrl": "https://bitbucket.org/gitpod/integration-tests.git",
                 "defaultBranch": "master",
                 "private": false
             },
-            "title": "gitpod/sample-repository - master"
+            "title": "gitpod/integration-tests - master"
         })
     }
 
     @test public async testBranchContext_02() {
-        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/sample-repository/branch/second-branch');
+        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/integration-tests/branch/second-branch');
         expect(result).to.deep.include({
             "ref": "second-branch",
             "refType": "branch",
@@ -199,17 +199,17 @@ class TestBitbucketContextParser {
             "repository": {
                 "host": "bitbucket.org",
                 "owner": "gitpod",
-                "name": "sample-repository",
-                "cloneUrl": "https://bitbucket.org/gitpod/sample-repository.git",
+                "name": "integration-tests",
+                "cloneUrl": "https://bitbucket.org/gitpod/integration-tests.git",
                 "defaultBranch": "master",
                 "private": false
             },
-            "title": "gitpod/sample-repository - second-branch"
+            "title": "gitpod/integration-tests - second-branch"
         })
     }
 
     @test public async testBranchContext_03() {
-        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/sample-repository/branch/feature/JIRA-123-summary');
+        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/integration-tests/branch/feature/JIRA-123-summary');
         expect(result).to.deep.include({
             "ref": "feature/JIRA-123-summary",
             "refType": "branch",
@@ -219,17 +219,17 @@ class TestBitbucketContextParser {
             "repository": {
                 "host": "bitbucket.org",
                 "owner": "gitpod",
-                "name": "sample-repository",
-                "cloneUrl": "https://bitbucket.org/gitpod/sample-repository.git",
+                "name": "integration-tests",
+                "cloneUrl": "https://bitbucket.org/gitpod/integration-tests.git",
                 "defaultBranch": "master",
                 "private": false
             },
-            "title": "gitpod/sample-repository - feature/JIRA-123-summary"
+            "title": "gitpod/integration-tests - feature/JIRA-123-summary"
         })
     }
 
     @test public async testCommitsContext_02() {
-        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/sample-repository/commits/tag/first-tag');
+        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/integration-tests/commits/tag/first-tag');
         expect(result).to.deep.include({
             "ref": "first-tag",
             "refType": "tag",
@@ -239,17 +239,17 @@ class TestBitbucketContextParser {
             "repository": {
                 "host": "bitbucket.org",
                 "owner": "gitpod",
-                "name": "sample-repository",
-                "cloneUrl": "https://bitbucket.org/gitpod/sample-repository.git",
+                "name": "integration-tests",
+                "cloneUrl": "https://bitbucket.org/gitpod/integration-tests.git",
                 "defaultBranch": "master",
                 "private": false
             },
-            "title": "gitpod/sample-repository - first-tag"
+            "title": "gitpod/integration-tests - first-tag"
         })
     }
 
     @test public async testSrcContext_04() {
-        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/sample-repository/src/first-tag/');
+        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/integration-tests/src/first-tag/');
         expect(result).to.deep.include({
             "ref": "first-tag",
             "refType": "tag",
@@ -259,17 +259,17 @@ class TestBitbucketContextParser {
             "repository": {
                 "host": "bitbucket.org",
                 "owner": "gitpod",
-                "name": "sample-repository",
-                "cloneUrl": "https://bitbucket.org/gitpod/sample-repository.git",
+                "name": "integration-tests",
+                "cloneUrl": "https://bitbucket.org/gitpod/integration-tests.git",
                 "defaultBranch": "master",
                 "private": false
             },
-            "title": "gitpod/sample-repository - first-tag"
+            "title": "gitpod/integration-tests - first-tag"
         })
     }
 
     @test public async testCommitsContext_03() {
-        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/sample-repository/commits/5a24a0c8a7b42c2e6418593d788e17cb987bda25');
+        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/integration-tests/commits/5a24a0c8a7b42c2e6418593d788e17cb987bda25');
         expect(result).to.deep.include({
             "ref": "",
             "refType": "revision",
@@ -279,17 +279,17 @@ class TestBitbucketContextParser {
             "repository": {
                 "host": "bitbucket.org",
                 "owner": "gitpod",
-                "name": "sample-repository",
-                "cloneUrl": "https://bitbucket.org/gitpod/sample-repository.git",
+                "name": "integration-tests",
+                "cloneUrl": "https://bitbucket.org/gitpod/integration-tests.git",
                 "defaultBranch": "master",
                 "private": false
             },
-            "title": "gitpod/sample-repository - 5a24a0c8a7b42c2e6418593d788e17cb987bda25"
+            "title": "gitpod/integration-tests - 5a24a0c8a7b42c2e6418593d788e17cb987bda25"
         })
     }
 
     @test public async testFileContext_01() {
-        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/sample-repository/src/master/README.md');
+        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/integration-tests/src/master/README.md');
         expect(result).to.deep.include({
             "ref": "master",
             "refType": "branch",
@@ -299,17 +299,17 @@ class TestBitbucketContextParser {
             "repository": {
                 "host": "bitbucket.org",
                 "owner": "gitpod",
-                "name": "sample-repository",
-                "cloneUrl": "https://bitbucket.org/gitpod/sample-repository.git",
+                "name": "integration-tests",
+                "cloneUrl": "https://bitbucket.org/gitpod/integration-tests.git",
                 "defaultBranch": "master",
                 "private": false
             },
-            "title": "gitpod/sample-repository - master:README.md"
+            "title": "gitpod/integration-tests - master:README.md"
         })
     }
 
     @test public async testFileContext_02() {
-        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/sample-repository/src/branch-with-dir/my-dir/test.txt');
+        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/integration-tests/src/branch-with-dir/my-dir/test.txt');
         expect(result).to.deep.include({
             "ref": "branch-with-dir",
             "refType": "branch",
@@ -319,17 +319,17 @@ class TestBitbucketContextParser {
             "repository": {
                 "host": "bitbucket.org",
                 "owner": "gitpod",
-                "name": "sample-repository",
-                "cloneUrl": "https://bitbucket.org/gitpod/sample-repository.git",
+                "name": "integration-tests",
+                "cloneUrl": "https://bitbucket.org/gitpod/integration-tests.git",
                 "defaultBranch": "master",
                 "private": false
             },
-            "title": "gitpod/sample-repository - branch-with-dir:my-dir/test.txt"
+            "title": "gitpod/integration-tests - branch-with-dir:my-dir/test.txt"
         })
     }
 
     @test public async testDirectoryContext_01() {
-        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/sample-repository/src/branch-with-dir/my-dir/');
+        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/integration-tests/src/branch-with-dir/my-dir/');
         expect(result).to.deep.include({
             "ref": "branch-with-dir",
             "refType": "branch",
@@ -339,24 +339,24 @@ class TestBitbucketContextParser {
             "repository": {
                 "host": "bitbucket.org",
                 "owner": "gitpod",
-                "name": "sample-repository",
-                "cloneUrl": "https://bitbucket.org/gitpod/sample-repository.git",
+                "name": "integration-tests",
+                "cloneUrl": "https://bitbucket.org/gitpod/integration-tests.git",
                 "defaultBranch": "master",
                 "private": false
             },
-            "title": "gitpod/sample-repository - branch-with-dir:my-dir"
+            "title": "gitpod/integration-tests - branch-with-dir:my-dir"
         })
     }
 
     @test public async testPullRequestContext_01() {
-        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/sample-repository/pull-requests/1/readme-updated/diff');
+        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/integration-tests/pull-requests/1/readme-updated/diff');
         expect(result).to.deep.include({
             "title": "Readme updated",
             "repository": {
                 "host": "bitbucket.org",
                 "owner": "gitpod",
-                "name": "sample-repository",
-                "cloneUrl": "https://bitbucket.org/gitpod/sample-repository.git",
+                "name": "integration-tests",
+                "cloneUrl": "https://bitbucket.org/gitpod/integration-tests.git",
                 "defaultBranch": "master",
                 "private": false,
             },
@@ -368,8 +368,8 @@ class TestBitbucketContextParser {
                 "repository": {
                     "host": "bitbucket.org",
                     "owner": "gitpod",
-                    "name": "sample-repository",
-                    "cloneUrl": "https://bitbucket.org/gitpod/sample-repository.git",
+                    "name": "integration-tests",
+                    "cloneUrl": "https://bitbucket.org/gitpod/integration-tests.git",
                     "defaultBranch": "master",
                     "private": false
                 },
@@ -380,22 +380,22 @@ class TestBitbucketContextParser {
     }
 
     @test public async testPullRequestContext_02() {
-        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/sample-repository/pull-requests/3/say-hello-to-gitpod/diff');
+        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/integration-tests/pull-requests/3/say-hello-to-gitpod/diff');
         expect(result).to.deep.include({
             "title": "Say Hello to Gitpod",
             "repository": {
                 "host": "bitbucket.org",
                 "owner": "corneliusltf",
-                "name": "sample-repository",
-                "cloneUrl": "https://bitbucket.org/corneliusltf/sample-repository.git",
+                "name": "integration-tests",
+                "cloneUrl": "https://bitbucket.org/corneliusltf/integration-tests.git",
                 "defaultBranch": "master",
                 "private": false,
                 "fork": {
                     "parent": {
-                        "cloneUrl": "https://bitbucket.org/gitpod/sample-repository.git",
+                        "cloneUrl": "https://bitbucket.org/gitpod/integration-tests.git",
                         "defaultBranch": "master",
                         "host": "bitbucket.org",
-                        "name": "sample-repository",
+                        "name": "integration-tests",
                         "owner": "gitpod",
                         "private": false,
                     }
@@ -409,8 +409,8 @@ class TestBitbucketContextParser {
                 "repository": {
                     "host": "bitbucket.org",
                     "owner": "gitpod",
-                    "name": "sample-repository",
-                    "cloneUrl": "https://bitbucket.org/gitpod/sample-repository.git",
+                    "name": "integration-tests",
+                    "cloneUrl": "https://bitbucket.org/gitpod/integration-tests.git",
                     "defaultBranch": "master",
                     "private": false
                 },
@@ -421,15 +421,15 @@ class TestBitbucketContextParser {
     }
 
     @test public async testIssueContext_01() {
-        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/sample-repository/issues/1/first-issue');
+        const result = await this.parser.handle({}, this.user, 'https://bitbucket.org/gitpod/integration-tests/issues/1/first-issue');
         expect(result).to.deep.include(
             {
                 "title": "First issue",
                 "repository": {
                     "host": "bitbucket.org",
                     "owner": "gitpod",
-                    "name": "sample-repository",
-                    "cloneUrl": "https://bitbucket.org/gitpod/sample-repository.git",
+                    "name": "integration-tests",
+                    "cloneUrl": "https://bitbucket.org/gitpod/integration-tests.git",
                     "defaultBranch": "master",
                     "private": false
                 },
@@ -473,7 +473,7 @@ class TestBitbucketContextParser {
     }
 
     @test public async testFetchCommitHistory() {
-        const result = await this.parser.fetchCommitHistory({}, this.user, 'https://bitbucket.org/gitpod/sample-repository', 'dd0aef8097a7c521b8adfced795fcf96c9e598ef', 100);
+        const result = await this.parser.fetchCommitHistory({}, this.user, 'https://bitbucket.org/gitpod/integration-tests', 'dd0aef8097a7c521b8adfced795fcf96c9e598ef', 100);
         expect(result).to.deep.equal([
             'da2119f51b0e744cb6b36399f8433b477a4174ef',
         ])
