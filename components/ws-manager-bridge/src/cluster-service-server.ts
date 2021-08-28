@@ -133,7 +133,7 @@ export class ClusterService implements IClusterServiceServer {
                             resolve();
                         }
                     });
-                })
+                });
 
                 await this.clusterDB.save(newCluster);
                 log.warn({}, "cluster registered", {cluster: req.name});
