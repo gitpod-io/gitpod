@@ -1,3 +1,7 @@
+// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
 package common
 
 import (
@@ -5,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/docker/distribution/reference"
+	"github.com/gitpod-io/gitpod/content-service/pkg/storage"
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1alpha1"
 
 	corev1 "k8s.io/api/core/v1"
@@ -136,4 +141,61 @@ func ImageName(repo, name, tag string) string {
 	}
 
 	return ref
+}
+
+func StorageConfig(cfg *config.Config) storage.Config {
+	var res *storage.Config
+	if cfg.ObjectStorage.CloudStorage != nil {
+		// TODO(cw): where do we get the GCP project from? Is it even still needed?
+		res = &storage.Config{
+			Kind: storage.GCloudStorage,
+			GCloudConfig: storage.GCPConfig{
+				Region:             cfg.Metadata.Region,
+				Project:            "TODO",
+				CredentialsFile:    "/mnt/secrets/gcp-storage/service-account.json",
+				ParallelUpload:     6,
+				MaximumBackupCount: 3,
+			},
+		}
+	}
+	if cfg.ObjectStorage.S3 != nil {
+		// TODO(cw): where do we get the AWS secretKey and accessKey from?
+		res = &storage.Config{
+			Kind: storage.MinIOStorage,
+			MinIOConfig: storage.MinIOConfig{
+				Endpoint:        "some-magic-amazon-value?",
+				AccessKeyID:     "TODO",
+				SecretAccessKey: "TODO",
+				Secure:          true,
+				Region:          cfg.Metadata.Region,
+				ParallelUpload:  6,
+			},
+		}
+	}
+	if b := cfg.ObjectStorage.InCluster; b != nil && *b {
+		res = &storage.Config{
+			Kind: storage.MinIOStorage,
+			MinIOConfig: storage.MinIOConfig{
+				Endpoint:        "minio",
+				AccessKeyID:     "TODO",
+				SecretAccessKey: "TODO",
+				Secure:          true,
+				Region:          cfg.Metadata.Region,
+				ParallelUpload:  6,
+			},
+		}
+	}
+
+	if res == nil {
+		panic("no valid storage configuration set")
+	}
+
+	res.BackupTrail = storage.BackupTrailConfig{
+		Enabled:   true,
+		MaxLength: 3,
+	}
+	// 5 GiB
+	res.BlobQuota = 5 * 1024 * 1024 * 1024
+
+	return *res
 }
