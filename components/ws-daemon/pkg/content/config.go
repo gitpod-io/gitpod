@@ -35,32 +35,30 @@ type Config struct {
 	Storage storage.Config `json:"storage"`
 
 	// Backup configures the behaviour of ws-daemon during backup
-	Backup struct {
-		// Timeout configures the maximum time the remote storage upload can take
-		// per attempt. Defaults to 10 minutes.
-		Timeout util.Duration `json:"timeout,omitempty"`
-
-		// Attempts configures how many backup attempts we will make.
-		// Detaults to 3
-		Attempts int `json:"attempts"`
-
-		// Period is the time between regular workspace backups
-		Period util.Duration `json:"period"`
-	} `json:"backup,omitempty"`
+	Backup BackupConfig `json:"backup,omitempty"`
 
 	// UserNamespaces configures the behaviour of the user-namespace support
-	UserNamespaces struct {
-		FSShift FSShiftMethod `json:"fsShift"`
-	} `json:"userNamespaces,omitempty"`
+	UserNamespaces UserNamespacesConfig `json:"userNamespaces,omitempty"`
 
 	// Initializer configures the isolated content initializer runtime
-	Initializer struct {
-		// Command is the path to content-initializer executable
-		Command string `json:"command"`
+	Initializer InitializerConfig `json:"initializer"`
+}
 
-		// Args are additional arguments to pass to the CI runtime
-		Args []string `json:"args"`
-	} `json:"initializer"`
+type BackupConfig struct {
+	// Timeout configures the maximum time the remote storage upload can take
+	// per attempt. Defaults to 10 minutes.
+	Timeout util.Duration `json:"timeout,omitempty"`
+
+	// Attempts configures how many backup attempts we will make.
+	// Detaults to 3
+	Attempts int `json:"attempts"`
+
+	// Period is the time between regular workspace backups
+	Period util.Duration `json:"period"`
+}
+
+type UserNamespacesConfig struct {
+	FSShift FSShiftMethod `json:"fsShift"`
 }
 
 type FSShiftMethod api.FSShiftMethod
@@ -75,4 +73,12 @@ func (m *FSShiftMethod) UnmarshalJSON(data []byte) error {
 	}
 	*m = FSShiftMethod(v)
 	return nil
+}
+
+type InitializerConfig struct {
+	// Command is the path to content-initializer executable
+	Command string `json:"command"`
+
+	// Args are additional arguments to pass to the CI runtime
+	Args []string `json:"args"`
 }

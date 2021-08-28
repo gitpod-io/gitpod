@@ -1,18 +1,18 @@
 certificate:
-  kind: full
   name: ""
 containerRegistry:
-  external: null
-  inCluster: null
+  inCluster: true
 database:
-  cloudSQL: null
-  rds: null
-domain: ""
+  inCluster: true
+domain: "gitpod.io"
 imagePullSecrets: null
 kind: Full
 metadata:
-  region: ""
+  region: "es-west1"
 objectStorage:
-  cloudStorage: null
-  s3: null
+  cloudStorage:
+    certificate:
+      name: "gcp-sa"
 repository: "eu.gcr.io/gitpod-core-dev/build/"
+workspaceRuntime:
+  fsShiftMethod: "fuse"

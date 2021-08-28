@@ -1,3 +1,7 @@
+// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
 package wsdaemon
 
 import (
@@ -15,8 +19,9 @@ type Objects struct {
 
 func (o Objects) Render(ctx *common.RenderContext) ([]runtime.Object, error) {
 	// TODO(cw): add a function that imposes the correct order of runtime objects (e.g. namespace before pods)
-	gen := []func(ctx *common.RenderContext) (runtime.Object, error){
+	gen := []common.RenderFunc{
 		configmap,
+		common.DefaultServiceAccount(component),
 		daemonset,
 	}
 
@@ -26,7 +31,7 @@ func (o Objects) Render(ctx *common.RenderContext) ([]runtime.Object, error) {
 		if err != nil {
 			return nil, err
 		}
-		res = append(res, obj)
+		res = append(res, obj...)
 	}
 
 	return res, nil

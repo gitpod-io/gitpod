@@ -1,7 +1,12 @@
+// Copyright (c) 2021 Gitpod GmbH. All rights reserved.
+// Licensed under the GNU Affero General Public License (AGPL).
+// See License-AGPL.txt in the project root for license information.
+
 package wsdaemon
 
 import (
 	"github.com/gitpod-io/gitpod/installer/pkg/common"
+	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1alpha1"
 	"github.com/hexops/valast"
 
 	appsv1 "k8s.io/api/apps/v1"
@@ -13,11 +18,88 @@ import (
 	"k8s.io/utils/pointer"
 )
 
-func daemonset(ctx *common.RenderContext) (runtime.Object, error) {
+func daemonset(ctx *common.RenderContext) ([]runtime.Object, error) {
 	cfg := ctx.Config
 	labels := common.DefaultLabels(component)
 
-	return &appsv1.DaemonSet{
+	initContainers := []corev1.Container{
+		{
+			Name:  "disable-kube-health-monitor",
+			Image: "ubuntu:20.04",
+			Command: []string{
+				"/usr/bin/nsenter",
+				"-t",
+				"1",
+				"-a",
+				"/bin/bash",
+				"-c",
+			},
+			Args: []string{`exec {BASH_XTRACEFD}>&1 # this causes 'set -x' to write to stdout insted of stderr
+set -euExo pipefail
+systemctl status kube-container-runtime-monitor.service || true
+if [ "$(systemctl is-active kube-container-runtime-monitor.service)" == "active" ]
+then
+echo "kube-container-runtime-monitor.service is active"
+systemctl stop kube-container-runtime-monitor.service
+systemctl disable kube-container-runtime-monitor.service
+systemctl status kube-container-runtime-monitor.service || true
+else
+echo "kube-container-runtime-monitor.service is not active, not doing anything"
+fi
+`},
+			SecurityContext: &corev1.SecurityContext{
+				Privileged: pointer.Bool(true),
+				ProcMount:  valast.Addr(corev1.ProcMountType("Default")).(*corev1.ProcMountType),
+			},
+		},
+		{
+			Name:  "seccomp-profile-installer",
+			Image: common.ImageName(cfg.Repository, "seccomp-profile-installer", ctx.VersionManifest.Components.WSDaemon.UserNamespaces.SeccompProfileInstaller.Version),
+			Command: []string{
+				"/bin/sh",
+				"-c",
+				"cp -f /installer/workspace_default.json /mnt/dst/workspace_default_not-set.json",
+			},
+			VolumeMounts: []corev1.VolumeMount{{
+				Name:      "hostseccomp",
+				MountPath: "/mnt/dst",
+			}},
+			SecurityContext: &corev1.SecurityContext{Privileged: pointer.Bool(true)},
+		},
+		{
+			Name:  "sysctl",
+			Image: common.ImageName(cfg.Repository, "ws-daemon", ctx.VersionManifest.Components.WSDaemon.Version),
+			Command: []string{
+				"sh",
+				"-c",
+				`(
+echo "running sysctls" &&
+sysctl -w net.core.somaxconn=4096 &&
+sysctl -w "net.ipv4.ip_local_port_range=5000 65000" &&
+sysctl -w "net.ipv4.tcp_tw_reuse=1" &&
+sysctl -w fs.inotify.max_user_watches=1000000 &&
+sysctl -w "kernel.dmesg_restrict=1" &&
+sysctl -w vm.unprivileged_userfaultfd=0
+) && echo "done!" || echo "failed!"
+`,
+			},
+			SecurityContext: &corev1.SecurityContext{Privileged: pointer.Bool(true)},
+		},
+	}
+	if cfg.WorkspaceRuntime.FSShiftMethod == config.FSShiftShiftFS {
+		initContainers = append(initContainers, corev1.Container{
+			Name:  "shiftfs-module-loader",
+			Image: common.ImageName(cfg.Repository, "shiftfs-module-loader", ctx.VersionManifest.Components.WSDaemon.UserNamespaces.ShiftFSModuleLoader.Version),
+			VolumeMounts: []corev1.VolumeMount{{
+				Name:      "node-linux-src",
+				ReadOnly:  true,
+				MountPath: "/usr/src_node",
+			}},
+			SecurityContext: &corev1.SecurityContext{Privileged: pointer.Bool(true)},
+		})
+	}
+
+	return []runtime.Object{&appsv1.DaemonSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   component,
 			Labels: labels,
@@ -117,82 +199,9 @@ func daemonset(ctx *common.RenderContext) (runtime.Object, error) {
 							}},
 						},
 					},
-					InitContainers: []corev1.Container{
-						corev1.Container{
-							Name:  "disable-kube-health-monitor",
-							Image: "ubuntu:20.04",
-							Command: []string{
-								"/usr/bin/nsenter",
-								"-t",
-								"1",
-								"-a",
-								"/bin/bash",
-								"-c",
-							},
-							Args: []string{`exec {BASH_XTRACEFD}>&1 # this causes 'set -x' to write to stdout insted of stderr
-set -euExo pipefail
-systemctl status kube-container-runtime-monitor.service || true
-if [ "$(systemctl is-active kube-container-runtime-monitor.service)" == "active" ]
-then
-    echo "kube-container-runtime-monitor.service is active"
-    systemctl stop kube-container-runtime-monitor.service
-    systemctl disable kube-container-runtime-monitor.service
-    systemctl status kube-container-runtime-monitor.service || true
-else
-    echo "kube-container-runtime-monitor.service is not active, not doing anything"
-fi
-`},
-							SecurityContext: &corev1.SecurityContext{
-								Privileged: pointer.Bool(true),
-								ProcMount:  valast.Addr(corev1.ProcMountType("Default")).(*corev1.ProcMountType),
-							},
-						},
-						corev1.Container{
-							Name:  "shiftfs-module-loader",
-							Image: common.ImageName(cfg.Repository, "shiftfs-module-loader", ctx.VersionManifest.Components.WSDaemon.UserNamespaces.ShiftFSModuleLoader.Version),
-							VolumeMounts: []corev1.VolumeMount{corev1.VolumeMount{
-								Name:      "node-linux-src",
-								ReadOnly:  true,
-								MountPath: "/usr/src_node",
-							}},
-							SecurityContext: &corev1.SecurityContext{Privileged: pointer.Bool(true)},
-						},
-						corev1.Container{
-							Name:  "seccomp-profile-installer",
-							Image: common.ImageName(cfg.Repository, "seccomp-profile-installer", ctx.VersionManifest.Components.WSDaemon.UserNamespaces.SeccompProfileInstaller.Version),
-							Command: []string{
-								"/bin/sh",
-								"-c",
-								"cp -f /installer/workspace_default.json /mnt/dst/workspace_default_not-set.json",
-							},
-							VolumeMounts: []corev1.VolumeMount{corev1.VolumeMount{
-								Name:      "hostseccomp",
-								MountPath: "/mnt/dst",
-							}},
-							SecurityContext: &corev1.SecurityContext{Privileged: pointer.Bool(true)},
-						},
-						corev1.Container{
-							Name:  "sysctl",
-							Image: common.ImageName(cfg.Repository, "ws-daemon", ctx.VersionManifest.Components.WSDaemon.Version),
-							Command: []string{
-								"sh",
-								"-c",
-								`(
-  echo "running sysctls" &&
-  sysctl -w net.core.somaxconn=4096 &&
-  sysctl -w "net.ipv4.ip_local_port_range=5000 65000" &&
-  sysctl -w "net.ipv4.tcp_tw_reuse=1" &&
-  sysctl -w fs.inotify.max_user_watches=1000000 &&
-  sysctl -w "kernel.dmesg_restrict=1" &&
-  sysctl -w vm.unprivileged_userfaultfd=0
-) && echo "done!" || echo "failed!"
-`,
-							},
-							SecurityContext: &corev1.SecurityContext{Privileged: pointer.Bool(true)},
-						},
-					},
+					InitContainers: initContainers,
 					Containers: []corev1.Container{
-						corev1.Container{
+						{
 							Name:  component,
 							Image: "eu.gcr.io/gitpod-core-dev/build/ws-daemon:not-set",
 							Args: []string{
@@ -201,7 +210,7 @@ fi
 								"--config",
 								"/config/config.json",
 							},
-							Ports: []corev1.ContainerPort{corev1.ContainerPort{
+							Ports: []corev1.ContainerPort{{
 								Name:          "rpc",
 								HostPort:      8080,
 								ContainerPort: 8080,
@@ -215,47 +224,47 @@ fi
 								corev1.ResourceName("memory"): resource.MustParse("1Mi"),
 							}},
 							VolumeMounts: []corev1.VolumeMount{
-								corev1.VolumeMount{
+								{
 									Name:             "working-area",
 									MountPath:        "/mnt/workingarea",
 									MountPropagation: valast.Addr(corev1.MountPropagationMode("Bidirectional")).(*corev1.MountPropagationMode),
 								},
-								corev1.VolumeMount{
+								{
 									Name:      "config",
 									MountPath: "/config",
 								},
-								corev1.VolumeMount{
+								{
 									Name:      "containerd-socket",
 									MountPath: "/mnt/containerd.sock",
 								},
-								corev1.VolumeMount{
+								{
 									Name:      "node-fs0",
 									MountPath: "/mnt/node0",
 								},
-								corev1.VolumeMount{
+								{
 									Name:      "node-fs1",
 									MountPath: "/mnt/node1",
 								},
-								corev1.VolumeMount{
+								{
 									Name:             "node-mounts",
 									ReadOnly:         true,
 									MountPath:        "/mnt/mounts",
 									MountPropagation: valast.Addr(corev1.MountPropagationMode("HostToContainer")).(*corev1.MountPropagationMode),
 								},
-								corev1.VolumeMount{
+								{
 									Name:             "node-cgroups",
 									MountPath:        "/mnt/node-cgroups",
 									MountPropagation: valast.Addr(corev1.MountPropagationMode("HostToContainer")).(*corev1.MountPropagationMode),
 								},
-								corev1.VolumeMount{
+								{
 									Name:      "node-hosts",
 									MountPath: "/mnt/hosts",
 								},
-								corev1.VolumeMount{
+								{
 									Name:      "tls-certs",
 									MountPath: "/certs",
 								},
-								corev1.VolumeMount{
+								{
 									Name:      "gcloud-tmp",
 									MountPath: "/mnt/sync-tmp",
 								},
@@ -292,17 +301,17 @@ fi
 					HostPID:                       true,
 					Affinity:                      common.Affinity(common.AffinityLabelWorkspaces, common.AffinityLabelHeadless),
 					Tolerations: []corev1.Toleration{
-						corev1.Toleration{
+						{
 							Key:      "node.kubernetes.io/disk-pressure",
 							Operator: corev1.TolerationOperator("Exists"),
 							Effect:   corev1.TaintEffect("NoExecute"),
 						},
-						corev1.Toleration{
+						{
 							Key:      "node.kubernetes.io/memory-pressure",
 							Operator: corev1.TolerationOperator("Exists"),
 							Effect:   corev1.TaintEffect("NoExecute"),
 						},
-						corev1.Toleration{
+						{
 							Key:      "node.kubernetes.io/out-of-disk",
 							Operator: corev1.TolerationOperator("Exists"),
 							Effect:   corev1.TaintEffect("NoExecute"),
@@ -313,5 +322,5 @@ fi
 				},
 			},
 		},
-	}, nil
+	}}, nil
 }

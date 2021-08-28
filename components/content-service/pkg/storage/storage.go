@@ -249,12 +249,14 @@ type Config struct {
 	MinIOConfig MinIOConfig `json:"minio"`
 
 	// BackupTrail maintains a number of backups for the same workspace
-	BackupTrail struct {
-		Enabled   bool `json:"enabled"`
-		MaxLength int  `json:"maxLength"`
-	} `json:"backupTrail"`
+	BackupTrail BackupTrailConfig `json:"backupTrail"`
 
 	BlobQuota int64 `json:"blobQuota"`
+}
+
+type BackupTrailConfig struct {
+	Enabled   bool `json:"enabled"`
+	MaxLength int  `json:"maxLength"`
 }
 
 // Stage represents the deployment environment in which we're operating

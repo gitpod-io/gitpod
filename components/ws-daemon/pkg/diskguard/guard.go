@@ -26,12 +26,14 @@ const (
 
 // Config configures the disk guard
 type Config struct {
-	Enabled   bool          `json:"enabled"`
-	Interval  util.Duration `json:"interval"`
-	Locations []struct {
-		Path          string `json:"path"`
-		MinBytesAvail uint64 `json:"minBytesAvail"`
-	} `json:"locations"`
+	Enabled   bool             `json:"enabled"`
+	Interval  util.Duration    `json:"interval"`
+	Locations []LocationConfig `json:"locations"`
+}
+
+type LocationConfig struct {
+	Path          string `json:"path"`
+	MinBytesAvail uint64 `json:"minBytesAvail"`
 }
 
 // FromConfig produces a set of disk space guards from the configuration
