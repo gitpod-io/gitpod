@@ -15,6 +15,7 @@ func DefaultServiceAccount(component string) RenderFunc {
 	return func(cfg *RenderContext) ([]runtime.Object, error) {
 		return []runtime.Object{
 			&corev1.ServiceAccount{
+				TypeMeta: TypeMetaServiceAccount,
 				ObjectMeta: metav1.ObjectMeta{
 					Name:   component,
 					Labels: DefaultLabels(component),
