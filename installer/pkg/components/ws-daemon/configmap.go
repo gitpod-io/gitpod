@@ -128,6 +128,7 @@ func configmap(ctx *common.RenderContext) ([]runtime.Object, error) {
 	}
 
 	return []runtime.Object{&corev1.ConfigMap{
+		TypeMeta: common.TypeMetaConfigmap,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   component,
 			Labels: common.DefaultLabels(component),

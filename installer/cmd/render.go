@@ -15,7 +15,6 @@ import (
 	config "github.com/gitpod-io/gitpod/installer/pkg/config/v1alpha1"
 	"github.com/gitpod-io/gitpod/installer/pkg/config/versions"
 	"github.com/spf13/cobra"
-	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/yaml"
 )
 
@@ -49,25 +48,21 @@ var renderCmd = &cobra.Command{
 			VersionManifest: versionMF,
 		}
 
-		var renderable []common.Renderable
+		var renderable common.RenderFunc
 		switch cfg.Kind {
 		case config.InstallationFull:
-			renderable = []common.Renderable{components.MetaObjects, components.WorkspaceObjects}
+			renderable = components.FullObjects
 		case config.InstallationMeta:
-			renderable = []common.Renderable{components.MetaObjects}
+			renderable = components.MetaObjects
 		case config.InstallationWorkspace:
-			renderable = []common.Renderable{components.WorkspaceObjects}
+			renderable = components.WorkspaceObjects
 		default:
 			return fmt.Errorf("unsupported installation kind: %s", cfg.Kind)
 		}
 
-		var objs []runtime.Object
-		for _, r := range renderable {
-			o, err := r.Render(ctx)
-			if err != nil {
-				return err
-			}
-			objs = append(objs, o...)
+		objs, err := renderable(ctx)
+		if err != nil {
+			return err
 		}
 
 		for _, o := range objs {

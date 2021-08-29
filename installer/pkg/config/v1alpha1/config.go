@@ -5,51 +5,66 @@
 package config
 
 type Config struct {
-	Kind     InstallationKind `json:"kind"`
-	Domain   string           `json:"domain"`
-	Metadata struct {
-		Region string `json:"region"`
-	} `json:"metadata"`
-	Repository string `json:"repository"`
+	Kind       InstallationKind `json:"kind"`
+	Domain     string           `json:"domain"`
+	Metadata   Metadata         `json:"metadata"`
+	Repository string           `json:"repository"`
 
-	Observability struct {
-		LogLevel *LogLevel `json:"logLevel"`
-		Tracing  *struct {
-			Endpoint  *string `json:"endpoint,omitempty"`
-			AgentHost *string `json:"agentHost,omitempty"`
-		} `json:"tracing"`
-	} `json:"observability"`
+	Observability Observability `json:"observability"`
 
-	Database struct {
-		InCluster *bool `json:"inCluster,omitempty"`
-		RDS       *struct {
-			Certificate ObjectRef `json:"certificate"`
-		} `json:"rds"`
-		CloudSQL *struct {
-			Certificate ObjectRef `json:"certificate"`
-		} `json:"cloudSQL"`
-	} `json:"database"`
+	Database Database `json:"database"`
 
-	ObjectStorage struct {
-		InCluster *bool `json:"inCluster,omitempty"`
-		S3        *struct {
-			Certificate ObjectRef `json:"certificate"`
-		} `json:"s3"`
-		CloudStorage *struct {
-			Certificate ObjectRef `json:"certificate"`
-		} `json:"cloudStorage"`
-	} `json:"objectStorage"`
+	ObjectStorage ObjectStorage `json:"objectStorage"`
 
-	ContainerRegistry struct {
-		InCluster *bool                      `json:"inCluster"`
-		External  *ContainerRegistryExternal `json:"external"`
-	} `json:"containerRegistry"`
+	ContainerRegistry ContainerRegistry `json:"containerRegistry"`
 
 	Certificate ObjectRef `json:"certificate"`
 
 	ImagePullSecrets []ObjectRef `json:"imagePullSecrets"`
 
 	WorkspaceRuntime WorkspaceRuntime `json:"workspaceRuntime"`
+}
+
+type Metadata struct {
+	Region string `json:"region"`
+}
+
+type Observability struct {
+	LogLevel LogLevel `json:"logLevel"`
+	Tracing  *Tracing `json:"tracing"`
+}
+
+type Tracing struct {
+	Endpoint  *string `json:"endpoint,omitempty"`
+	AgentHost *string `json:"agentHost,omitempty"`
+}
+
+type Database struct {
+	InCluster *bool             `json:"inCluster,omitempty"`
+	RDS       *DatabaseRDS      `json:"rds"`
+	CloudSQL  *DatabaseCloudSQL `json:"cloudSQL"`
+}
+
+type DatabaseRDS struct {
+	Certificate ObjectRef `json:"certificate"`
+}
+
+type DatabaseCloudSQL struct {
+	Certificate ObjectRef `json:"certificate"`
+}
+
+type ObjectStorage struct {
+	InCluster    *bool                      `json:"inCluster,omitempty"`
+	S3           *ObjectStorageS3           `json:"s3"`
+	CloudStorage *ObjectStorageCloudStorage `json:"cloudStorage"`
+}
+
+type ObjectStorageS3 struct {
+	Certificate ObjectRef `json:"certificate"`
+}
+
+type ObjectStorageCloudStorage struct {
+	Certificate ObjectRef `json:"certificate"`
 }
 
 type InstallationKind string
@@ -70,6 +85,11 @@ type CertificateRefKind string
 const (
 	CertificateRefSecret CertificateRefKind = "secret"
 )
+
+type ContainerRegistry struct {
+	InCluster *bool                      `json:"inCluster"`
+	External  *ContainerRegistryExternal `json:"external"`
+}
 
 type ContainerRegistryExternal struct {
 	URL         string    `json:"url"`

@@ -100,6 +100,7 @@ sysctl -w vm.unprivileged_userfaultfd=0
 	}
 
 	return []runtime.Object{&appsv1.DaemonSet{
+		TypeMeta: common.TypeMetaDaemonset,
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   component,
 			Labels: labels,

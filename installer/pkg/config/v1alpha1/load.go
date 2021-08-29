@@ -7,6 +7,7 @@ package config
 import (
 	"io/ioutil"
 
+	"k8s.io/utils/pointer"
 	"sigs.k8s.io/yaml"
 )
 
@@ -22,4 +23,34 @@ func Load(fn string) (*Config, error) {
 		return nil, err
 	}
 	return &cfg, nil
+}
+
+// LoadMock produces a valid but non-sensical configuration useful for testing
+func LoadMock() *Config {
+	return &Config{
+		Kind:   InstallationFull,
+		Domain: "gitpod-testing.com",
+		Metadata: Metadata{
+			Region: "eu-west1",
+		},
+		Repository: "eu.gcr.io/gitpod-core-dev/build",
+		Observability: Observability{
+			LogLevel: "debug",
+		},
+		Database: Database{
+			InCluster: pointer.Bool(true),
+		},
+		ObjectStorage: ObjectStorage{
+			InCluster: pointer.Bool(true),
+		},
+		ContainerRegistry: ContainerRegistry{
+			InCluster: pointer.Bool(true),
+		},
+		Certificate: ObjectRef{
+			Name: "https-certs",
+		},
+		WorkspaceRuntime: WorkspaceRuntime{
+			FSShiftMethod: FSShiftFuseFS,
+		},
+	}
 }

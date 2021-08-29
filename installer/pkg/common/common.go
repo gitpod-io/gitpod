@@ -14,6 +14,7 @@ import (
 
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/pointer"
 )
 
@@ -39,8 +40,8 @@ func MergeEnv(envs ...[]corev1.EnvVar) (res []corev1.EnvVar) {
 
 func DefaultEnv(cfg *config.Config) []corev1.EnvVar {
 	logLevel := "debug"
-	if cfg.Observability.LogLevel != nil {
-		logLevel = string(*cfg.Observability.LogLevel)
+	if cfg.Observability.LogLevel != "" {
+		logLevel = string(cfg.Observability.LogLevel)
 	}
 
 	return []corev1.EnvVar{
@@ -199,3 +200,28 @@ func StorageConfig(cfg *config.Config) storage.Config {
 
 	return *res
 }
+
+// TODO(cw): find a better way to do this. Those values must exist in the appropriate places already.
+var (
+	TypeMetaConfigmap = metav1.TypeMeta{
+		APIVersion: "v1",
+		Kind:       "ConfigMap",
+	}
+	TypeMetaServiceAccount = metav1.TypeMeta{
+		APIVersion: "v1",
+		Kind:       "ServiceAccount",
+	}
+	TypeMetaPod = metav1.TypeMeta{
+		APIVersion: "v1",
+		Kind:       "Pod",
+	}
+	TypeMetaDaemonset = metav1.TypeMeta{
+		APIVersion: "apps/v1",
+		Kind:       "DaemonSet",
+	}
+
+	TypeMetaClusterRole = metav1.TypeMeta{
+		APIVersion: "rbac.authorization.k8s.io/v1",
+		Kind:       "ClusterRole",
+	}
+)
