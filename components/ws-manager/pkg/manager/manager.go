@@ -19,13 +19,11 @@ import (
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation"
-	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	"github.com/opentracing/opentracing-go"
 	"golang.org/x/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
@@ -38,6 +36,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	wsk8s "github.com/gitpod-io/gitpod/common-go/kubernetes"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/tracing"
@@ -1178,17 +1177,7 @@ func (m *Manager) connectToWorkspaceDaemon(ctx context.Context, wso workspaceObj
 // newWssyncConnectionFactory creates a new wsdaemon connection factory based on the wsmanager configuration
 func newWssyncConnectionFactory(managerConfig Configuration) (grpcpool.Factory, error) {
 	cfg := managerConfig.WorkspaceDaemon
-	opts := []grpc.DialOption{
-		grpc.WithUnaryInterceptor(grpc_opentracing.UnaryClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer()))),
-		grpc.WithStreamInterceptor(grpc_opentracing.StreamClientInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer()))),
-		grpc.WithBlock(),
-		grpc.WithBackoffMaxDelay(5 * time.Second),
-		grpc.WithKeepaliveParams(keepalive.ClientParameters{
-			Time:                5 * time.Second,
-			Timeout:             time.Second,
-			PermitWithoutStream: true,
-		}),
-	}
+	grpcOpts := common_grpc.DefaultClientOptions()
 	if cfg.TLS.Authority != "" || cfg.TLS.Certificate != "" && cfg.TLS.PrivateKey != "" {
 		ca := cfg.TLS.Authority
 		crt := cfg.TLS.Certificate
@@ -1222,9 +1211,9 @@ func newWssyncConnectionFactory(managerConfig Configuration) (grpcpool.Factory, 
 			RootCAs:      certPool,
 			MinVersion:   tls.VersionTLS12,
 		})
-		opts = append(opts, grpc.WithTransportCredentials(creds))
+		grpcOpts = append(grpcOpts, grpc.WithTransportCredentials(creds))
 	} else {
-		opts = append(opts, grpc.WithInsecure())
+		grpcOpts = append(grpcOpts, grpc.WithInsecure())
 	}
 	port := cfg.Port
 
@@ -1238,7 +1227,7 @@ func newWssyncConnectionFactory(managerConfig Configuration) (grpcpool.Factory, 
 		// Hence upon leaving this function we can safely cancel the conctx.
 		defer cancel()
 
-		conn, err := grpc.DialContext(conctx, addr, opts...)
+		conn, err := grpc.DialContext(conctx, addr, grpcOpts...)
 		if err != nil {
 			log.WithError(err).WithField("addr", addr).Error("cannot connect to ws-daemon")
 

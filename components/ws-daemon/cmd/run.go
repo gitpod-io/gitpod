@@ -10,18 +10,14 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
-	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
-	grpc_opentracing "github.com/grpc-ecosystem/go-grpc-middleware/tracing/opentracing"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
-	"github.com/opentracing/opentracing-go"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/keepalive"
 
+	common_grpc "github.com/gitpod-io/gitpod/common-go/grpc"
 	"github.com/gitpod-io/gitpod/common-go/log"
 	"github.com/gitpod-io/gitpod/common-go/pprof"
 	"github.com/gitpod-io/gitpod/ws-daemon/pkg/daemon"
@@ -44,24 +40,10 @@ var runCmd = &cobra.Command{
 		grpcMetrics.EnableHandlingTimeHistogram()
 		reg.MustRegister(grpcMetrics)
 
-		grpcOpts := []grpc.ServerOption{
-			// terminate the connection if the client pings more than once every 2 seconds
-			grpc.KeepaliveEnforcementPolicy(keepalive.EnforcementPolicy{
-				MinTime:             2 * time.Second,
-				PermitWithoutStream: true,
-			}),
-			// We don't know how good our cients are at closing connections. If they don't close them properly
-			// we'll be leaking goroutines left and right. Closing Idle connections should prevent that.
-			grpc.KeepaliveParams(keepalive.ServerParameters{MaxConnectionIdle: 30 * time.Minute}),
-			grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(
-				grpcMetrics.StreamServerInterceptor(),
-				grpc_opentracing.StreamServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
-			)),
-			grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
-				grpcMetrics.UnaryServerInterceptor(),
-				grpc_opentracing.UnaryServerInterceptor(grpc_opentracing.WithTracer(opentracing.GlobalTracer())),
-			)),
-		}
+		grpcOpts := common_grpc.ServerOptionsWithInterceptors(
+			[]grpc.StreamServerInterceptor{grpcMetrics.StreamServerInterceptor()},
+			[]grpc.UnaryServerInterceptor{grpcMetrics.UnaryServerInterceptor()},
+		)
 		tlsOpt, err := cfg.Service.TLS.ServerOption()
 		if err != nil {
 			log.WithError(err).Fatal("cannot use TLS config")
