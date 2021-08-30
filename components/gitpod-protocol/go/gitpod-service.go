@@ -241,7 +241,7 @@ func ConnectToServer(endpoint string, opts ConnectToServerOpts) (*APIoverJSONRPC
 	}
 	ws := NewReconnectingWebsocket(endpoint, reqHeader, opts.Log)
 	ws.ReconnectionHandler = opts.ReconnectionHandler
-	go ws.Dial()
+	go ws.Dial(opts.Context)
 
 	var res APIoverJSONRPC
 	res.log = opts.Log
