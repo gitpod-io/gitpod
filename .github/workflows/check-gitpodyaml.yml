@@ -20,5 +20,5 @@ jobs:
         run: |
           pull_number=$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")
           curl -s -H "Authorization: token ${GITHUB_TOKEN}" \
-          -X POST -d '{"body": ":warning: Hew reviewer! BE CAREFUL :warning: \n Review the code before opening in your Gitpod. .gitpod.yaml was changed and it might be harfmul."}' \
+          -X POST -d '{"body": ":warning: Hey reviewer! BE CAREFUL :warning: \n Review the code before opening in your Gitpod. .gitpod.yaml was changed and it might be harmful."}' \
           "https://api.github.com/repos/gitpod-io/gitpod/issues/${pull_number}/comments"
