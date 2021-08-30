@@ -57,7 +57,7 @@
     "express-mysql-session": "^2.1.0",
     "express-session": "^1.15.6",
     "fs-extra": "^10.0.0",
-    "gitpod-yml-inferrer": "^1.1.1",
+    "gitpod-yml-inferrer": "^1.2.0",
     "google-protobuf": "3.15.8",
     "graphql": "^14.6.0",
     "graphql-tools": "^4.0.7",
