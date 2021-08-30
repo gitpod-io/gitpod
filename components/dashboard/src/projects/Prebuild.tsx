@@ -5,14 +5,15 @@
  */
 
 import moment from "moment";
-import { PrebuildWithStatus } from "@gitpod/gitpod-protocol";
+import { PrebuildWithStatus, WorkspaceInstance } from "@gitpod/gitpod-protocol";
 import { useContext, useEffect, useState } from "react";
 import { useLocation, useRouteMatch } from "react-router";
 import Header from "../components/Header";
+import PrebuildLogs from "../components/PrebuildLogs";
 import { getGitpodService } from "../service/service";
 import { TeamsContext, getCurrentTeam } from "../teams/teams-context";
-import { prebuildStatusIcon, prebuildStatusLabel } from "./Prebuilds";
-import PrebuildLogs from "../components/PrebuildLogs";
+import { ThemeContext } from "../theme-context";
+import { prebuildStatusIcon, prebuildStatusLabel, PrebuildInstanceStatus } from "./Prebuilds";
 import { shortCommitMessage } from "./render-utils";
 
 export default function () {
@@ -26,6 +27,8 @@ export default function () {
     const prebuildId = match?.params?.prebuildId;
 
     const [ prebuild, setPrebuild ] = useState<PrebuildWithStatus | undefined>();
+    const [ prebuildInstance, setPrebuildInstance ] = useState<WorkspaceInstance | undefined>();
+    const { isDark } = useContext(ThemeContext);
 
     useEffect(() => {
         if (!teams || !projectName || !prebuildId) {
@@ -78,13 +81,25 @@ export default function () {
         </div>)
     };
 
+    const onInstanceUpdate = (instance: WorkspaceInstance) => {
+        setPrebuildInstance(instance);
+    }
+
     useEffect(() => { document.title = 'Prebuild — Gitpod' }, []);
 
     return <>
         <Header title={renderTitle()} subtitle={renderSubtitle()} />
         <div className="lg:px-28 px-10 mt-8">
-            <div className="h-96 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex flex-col">
-                <PrebuildLogs workspaceId={prebuild?.info?.buildWorkspaceId}/>
+            <div className="rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex flex-col">
+                <div className="h-96 flex">
+                    <PrebuildLogs workspaceId={prebuild?.info?.buildWorkspaceId} onInstanceUpdate={onInstanceUpdate} />
+                </div>
+                <div className="h-20 px-6 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-600 flex space-x-2">
+                    {prebuildInstance && <PrebuildInstanceStatus prebuildInstance={prebuildInstance} isDark={isDark} />}
+                    <div className="flex-grow" />
+                    <button className="secondary">New Workspace</button>
+                    <button>Run Prebuild</button>
+                </div>
             </div>
         </div>
     </>;
