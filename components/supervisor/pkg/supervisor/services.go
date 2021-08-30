@@ -592,6 +592,8 @@ func (is *InfoService) WorkspaceInfo(context.Context, *api.WorkspaceInfoRequest)
 		WorkspaceContextUrl:  is.cfg.WorkspaceContextURL,
 		WorkspaceClusterHost: is.cfg.WorkspaceClusterHost,
 		WorkspaceUrl:         is.cfg.WorkspaceUrl,
+		IdeAlias:             is.cfg.IDEAlias,
+		IdePort:              uint32(is.cfg.IDEPort),
 	}
 
 	commit, err := is.cfg.getCommit()

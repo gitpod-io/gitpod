@@ -535,7 +535,7 @@ func (m *Manager) createWorkspaceEnvironment(startContext *startWorkspaceContext
 	// User-defined env vars (i.e. those coming from the request)
 	if spec.Envvars != nil {
 		for _, e := range spec.Envvars {
-			if e.Name == "GITPOD_WORKSPACE_CONTEXT" || e.Name == "GITPOD_WORKSPACE_CONTEXT_URL" || e.Name == "GITPOD_TASKS" || e.Name == "GITPOD_RESOLVED_EXTENSIONS" || e.Name == "GITPOD_EXTERNAL_EXTENSIONS" {
+			if e.Name == "GITPOD_WORKSPACE_CONTEXT" || e.Name == "GITPOD_WORKSPACE_CONTEXT_URL" || e.Name == "GITPOD_TASKS" || e.Name == "GITPOD_RESOLVED_EXTENSIONS" || e.Name == "GITPOD_EXTERNAL_EXTENSIONS" || e.Name == "GITPOD_IDE_ALIAS" {
 				result = append(result, corev1.EnvVar{Name: e.Name, Value: e.Value})
 				continue
 			} else if strings.HasPrefix(e.Name, "GITPOD_") {

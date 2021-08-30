@@ -536,10 +536,13 @@ export class WorkspaceStarter {
             return ev;
         });
 
-        const contextUrlEnv = new EnvironmentVariable();
-        contextUrlEnv.setName('GITPOD_WORKSPACE_CONTEXT_URL');
-        contextUrlEnv.setValue(workspace.contextURL);
-        envvars.push(contextUrlEnv);
+        const ideAlias = user.additionalData?.ideSettings?.defaultIde;
+        if (ideAlias && this.env.ideImageAliases[ideAlias]) {
+            const ideAliasEnv = new EnvironmentVariable();
+            ideAliasEnv.setName('GITPOD_IDE_ALIAS');
+            ideAliasEnv.setValue(ideAlias);
+            envvars.push(ideAliasEnv);
+        }
 
         const contextEnv = new EnvironmentVariable();
         contextEnv.setName('GITPOD_WORKSPACE_CONTEXT');
